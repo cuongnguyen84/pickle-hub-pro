@@ -12,27 +12,49 @@ final class LiveViewModel {
             case .videos: return "Video"
             }
         }
+        var serifTitle: String {
+            switch self {
+            case .live: return "Trực tiếp"
+            case .replays: return "Phát lại"
+            case .videos: return "Video"
+            }
+        }
     }
 
-    enum Phase: Equatable {
-        case loading, loaded, failed(String)
-    }
+    enum Phase: Equatable { case loading, loaded, failed(String) }
 
     var phase: Phase = .loading
-    var streams: [LivestreamSummary] = []
+    var streams: [LivestreamSummary] = []      // live + scheduled
     var replays: [LivestreamSummary] = []
     var videos: [VideoSummary] = []
 
     private let repo = LiveRepository()
-    private var loaded = false
 
-    /// Any stream currently broadcasting — drives the default tab + the live dot.
-    var hasLive: Bool { streams.contains { $0.isLive } }
+    var liveStreams: [LivestreamSummary] { streams.filter { $0.isLive } }
+    var upcoming: [LivestreamSummary] {
+        streams.filter { $0.isScheduled }.sorted { ($0.scheduledDate ?? .distantFuture) < ($1.scheduledDate ?? .distantFuture) }
+    }
+    var hasLive: Bool { !liveStreams.isEmpty }
+
+    /// Replays/videos the user left part-way, newest progress first.
+    var continueWatching: [(id: String, title: String, thumb: URL?, url: URL?, progress: WatchProgress)] {
+        var out: [(String, String, URL?, URL?, WatchProgress, Date)] = []
+        for s in replays {
+            if let p = WatchProgressStore.get(s.id.uuidString), p.isResumable {
+                out.append((s.id.uuidString, s.displayTitle, s.thumbURL, s.playbackURL, p, p.updatedAt))
+            }
+        }
+        for v in videos {
+            if let p = WatchProgressStore.get(v.id.uuidString), p.isResumable {
+                out.append((v.id.uuidString, v.title, v.thumbURL, v.playbackURL, p, p.updatedAt))
+            }
+        }
+        return out.sorted { $0.5 > $1.5 }.map { ($0.0, $0.1, $0.2, $0.3, $0.4) }
+    }
 
     @MainActor
-    func load() async {
-        if loaded { return }
-        phase = .loading
+    func load(force: Bool = false) async {
+        if case .loaded = phase, !force {} else if !force { phase = .loading }
         do {
             async let live = repo.liveAndUpcoming()
             async let replay = repo.replays()
@@ -40,48 +62,78 @@ final class LiveViewModel {
             streams = try await live
             replays = try await replay
             videos = try await vids
-            loaded = true
             phase = .loaded
         } catch {
-            phase = .failed(error.localizedDescription)
+            if streams.isEmpty && replays.isEmpty { phase = .failed(error.localizedDescription) }
         }
-    }
-
-    @MainActor
-    func reload() async {
-        loaded = false
-        await load()
     }
 }
 
-/// Live tab — livestreams (live + scheduled), replays, and highlight videos.
-/// Defaults to Phát lại; auto-selects Trực tiếp when something is broadcasting.
+/// Live tab — cinematic broadcast layout (approved "Phương Án A"): editorial
+/// header, segmented Trực tiếp/Phát lại/Video, a hero court, rails of other live
+/// courts, an upcoming schedule with reminders, and replays with resume.
+/// Only real backend data is shown (no fabricated viewers/scores).
 struct LiveView: View {
     @State private var model = LiveViewModel()
-    @State private var segment: LiveViewModel.Segment = .replays
+    @State private var segment: LiveViewModel.Segment = .live
     @State private var didAutoSelect = false
+    @State private var replayFilter: String? = nil   // org/tournament name chip
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    segmentPicker.padding(.horizontal, 16)
+                VStack(alignment: .leading, spacing: 24) {
+                    editorialHeader
+                    segmentPicker
                     content
                 }
                 .padding(.top, 4)
-                .padding(.bottom, 28)
+                .padding(.bottom, 32)
             }
             .background(TLColor.bg)
-            .navigationTitle("Trực tiếp")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { toolbarButtons }
             .task {
                 await model.load()
-                if !didAutoSelect {
-                    didAutoSelect = true
-                    if model.hasLive { segment = .live }
+                if !didAutoSelect { didAutoSelect = true; segment = model.hasLive ? .live : .replays }
+            }
+            .task(id: segment) {
+                // Poll while on the Live tab so badges/scores reflect status changes
+                // without a manual reload (no websocket backend yet).
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(20))
+                    if Task.isCancelled { break }
+                    if segment == .live { await model.load(force: true) }
                 }
             }
-            .refreshable { await model.reload() }
+            .refreshable { await model.load(force: true) }
+        }
+    }
+
+    // MARK: Header
+
+    private var editorialHeader: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("THEPICKLEHUB").font(TLFont.mono(10, .semibold)).tracking(2.8).foregroundStyle(TLColor.accentText)
+            Text(segment.serifTitle).font(TLFont.serif(28)).foregroundStyle(TLColor.fg)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 22)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarButtons: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            HStack(spacing: 10) {
+                NavigationLink { SearchView() } label: {
+                    Image(systemName: "magnifyingglass").foregroundStyle(TLColor.fg2)
+                }.accessibilityLabel("Tìm kiếm")
+                NavigationLink { ProfileView() } label: {
+                    Image(systemName: "person.crop.circle").foregroundStyle(TLColor.accentText)
+                }.accessibilityLabel("Hồ sơ")
+            }
         }
     }
 
@@ -89,7 +141,10 @@ struct LiveView: View {
         HStack(spacing: 4) {
             ForEach(LiveViewModel.Segment.allCases) { option in
                 let selected = option == segment
-                Button { withAnimation(.easeInOut(duration: 0.18)) { segment = option } } label: {
+                Button {
+                    Haptics.light()
+                    withAnimation(.easeInOut(duration: 0.18)) { segment = option }
+                } label: {
                     HStack(spacing: 5) {
                         if option == .live && model.hasLive {
                             Circle().fill(selected ? TLColor.accentInk : TLColor.live).frame(width: 6, height: 6)
@@ -102,243 +157,242 @@ struct LiveView: View {
                     .background(selected ? TLColor.accent : .clear, in: Capsule())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("\(option.label)\(option == .live && model.hasLive ? ", đang có trận trực tiếp" : "")")
             }
         }
         .padding(4)
         .background(TLColor.surface, in: Capsule())
         .overlay(Capsule().strokeBorder(TLColor.border, lineWidth: 1))
+        .padding(.horizontal, 22)
     }
+
+    // MARK: Content router
 
     @ViewBuilder
     private var content: some View {
         switch model.phase {
-        case .loading:
-            ProgressView().tint(TLColor.accentText).padding(.top, 80)
-        case .failed(let message):
-            errorState(message)
+        case .loading: skeleton
+        case .failed(let message): errorState(message)
         case .loaded:
             switch segment {
-            case .live: streamSection(model.streams, empty: "Chưa có buổi phát nào.")
-            case .replays: streamSection(model.replays, empty: "Chưa có bản phát lại.")
-            case .videos: videoSection(model.videos)
+            case .live: liveContent
+            case .replays: replayContent
+            case .videos: videoContent
             }
         }
     }
 
-    // MARK: Streams (live / replays) — hero + list
+    // MARK: Live segment
 
     @ViewBuilder
-    private func streamSection(_ items: [LivestreamSummary], empty: String) -> some View {
-        if items.isEmpty {
-            emptyState(empty)
+    private var liveContent: some View {
+        let live = model.liveStreams
+        let upcoming = model.upcoming
+        if live.isEmpty && upcoming.isEmpty {
+            emptyState(icon: "dot.radiowaves.up.forward", title: "Hiện chưa có trận trực tiếp",
+                       subtitle: "Các buổi phát sẽ xuất hiện ở đây khi bắt đầu.")
+            if !model.replays.isEmpty { featuredReplays }
         } else {
-            VStack(spacing: 18) {
-                heroLink(for: items[0]) { stream in
-                    HeroMediaCard(thumbURL: stream.thumbURL, title: stream.displayTitle,
-                                  meta: stream.orgName, badge: badge(for: stream), duration: nil)
+            VStack(alignment: .leading, spacing: 26) {
+                if let hero = live.first ?? upcoming.first {
+                    LiveHeroCard(stream: hero, reduceMotion: reduceMotion)
                 }
-                if items.count > 1 {
-                    LazyVStack(spacing: 14) {
-                        ForEach(items.dropFirst()) { stream in
-                            rowLink(for: stream) {
-                                ListMediaCard(thumbURL: stream.thumbURL, title: stream.displayTitle,
-                                              meta: stream.orgName, badge: badge(for: stream), duration: nil)
+                if live.count > 1 {
+                    otherCourtsRail(Array(live.dropFirst()))
+                }
+                if !upcoming.isEmpty {
+                    upcomingSection(upcoming)
+                }
+                if !model.replays.isEmpty { featuredReplays }
+            }
+        }
+    }
+
+    private func otherCourtsRail(_ streams: [LivestreamSummary]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("Sân khác đang live", livePulse: true, trailing: "\(streams.count + 1) sân")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(streams) { s in LiveCourtCard(stream: s, reduceMotion: reduceMotion) }
+                }
+                .padding(.horizontal, 22)
+            }
+        }
+    }
+
+    private func upcomingSection(_ streams: [LivestreamSummary]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("Sắp phát")
+            VStack(spacing: 10) {
+                ForEach(streams) { s in ScheduleRow(stream: s) }
+            }
+            .padding(.horizontal, 22)
+        }
+    }
+
+    private var featuredReplays: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("Phát lại nổi bật")
+            VStack(spacing: 14) {
+                ForEach(model.replays.prefix(4)) { ReplayRow(stream: $0) }
+            }
+            .padding(.horizontal, 22)
+        }
+    }
+
+    // MARK: Replays segment
+
+    @ViewBuilder
+    private var replayContent: some View {
+        if model.replays.isEmpty {
+            emptyState(icon: "play.slash", title: "Chưa có bản phát lại", subtitle: "Các trận đã phát sẽ được lưu lại ở đây.")
+        } else {
+            VStack(alignment: .leading, spacing: 22) {
+                filterChips
+                let cont = model.continueWatching
+                if !cont.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        sectionHeader("Xem tiếp")
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(cont, id: \.id) { item in ContinueCard(item: item) }
                             }
+                            .padding(.horizontal, 22)
                         }
                     }
                 }
-            }
-            .padding(.horizontal, 16)
-        }
-    }
-
-    @ViewBuilder
-    private func videoSection(_ items: [VideoSummary]) -> some View {
-        if items.isEmpty {
-            emptyState("Chưa có video.")
-        } else {
-            VStack(spacing: 18) {
-                if let first = items.first, first.playbackURL != nil {
-                    NavigationLink {
-                        VideoPlayerScreen(url: first.playbackURL!, title: first.title)
-                    } label: {
-                        HeroMediaCard(thumbURL: first.thumbURL, title: first.title,
-                                      meta: first.orgName, badge: nil, duration: first.durationText)
+                VStack(alignment: .leading, spacing: 12) {
+                    sectionHeader("Mới nhất")
+                    VStack(spacing: 14) {
+                        ForEach(filteredReplays) { ReplayRow(stream: $0) }
                     }
-                    .buttonStyle(.plain)
-                }
-                LazyVStack(spacing: 14) {
-                    ForEach(items.dropFirst()) { video in
-                        if let url = video.playbackURL {
-                            NavigationLink {
-                                VideoPlayerScreen(url: url, title: video.title)
-                            } label: {
-                                ListMediaCard(thumbURL: video.thumbURL, title: video.title,
-                                              meta: video.orgName, badge: nil, duration: video.durationText)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
+                    .padding(.horizontal, 22)
                 }
             }
-            .padding(.horizontal, 16)
         }
     }
 
-    private func badge(for stream: LivestreamSummary) -> MediaBadge? {
-        if stream.isLive { return .live }
-        if !stream.isEnded { return .scheduled }
-        return nil
+    private var filterOptions: [String] {
+        var seen = Set<String>()
+        return model.replays.compactMap { $0.orgName }.filter { seen.insert($0).inserted }
+    }
+    private var filteredReplays: [LivestreamSummary] {
+        guard let f = replayFilter else { return model.replays }
+        return model.replays.filter { $0.orgName == f }
     }
 
     @ViewBuilder
-    private func heroLink<Label: View>(for stream: LivestreamSummary, @ViewBuilder label: (LivestreamSummary) -> Label) -> some View {
-        if let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle) } label: { label(stream) }
-                .buttonStyle(.plain)
-        } else {
-            label(stream)
+    private var filterChips: some View {
+        if !filterOptions.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    chip("Tất cả", active: replayFilter == nil) { replayFilter = nil }
+                    ForEach(filterOptions, id: \.self) { name in
+                        chip(name, active: replayFilter == name) { replayFilter = (replayFilter == name ? nil : name) }
+                    }
+                }
+                .padding(.horizontal, 22)
+            }
         }
     }
+
+    private func chip(_ text: String, active: Bool, _ action: @escaping () -> Void) -> some View {
+        Button { Haptics.light(); withAnimation(.easeInOut(duration: 0.15)) { action() } } label: {
+            Text(text).font(TLFont.mono(11, active ? .semibold : .medium))
+                .foregroundStyle(active ? TLColor.accentText : TLColor.fg2)
+                .padding(.horizontal, 14).padding(.vertical, 7)
+                .background(active ? TLColor.accent.opacity(0.12) : TLColor.surface, in: Capsule())
+                .overlay(Capsule().strokeBorder(active ? TLColor.accent.opacity(0.4) : TLColor.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Videos segment
 
     @ViewBuilder
-    private func rowLink<Label: View>(for stream: LivestreamSummary, @ViewBuilder label: () -> Label) -> some View {
-        if let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle) } label: { label() }
-                .buttonStyle(.plain)
+    private var videoContent: some View {
+        if model.videos.isEmpty {
+            emptyState(icon: "film", title: "Chưa có video", subtitle: "Video nổi bật sẽ xuất hiện ở đây.")
         } else {
-            label()
+            VStack(spacing: 14) {
+                ForEach(model.videos) { VideoRow(video: $0) }
+            }
+            .padding(.horizontal, 22)
         }
     }
 
-    private func emptyState(_ text: String) -> some View {
+    // MARK: Shared section header
+
+    private func sectionHeader(_ title: String, livePulse: Bool = false, trailing: String? = nil) -> some View {
+        HStack(spacing: 10) {
+            if livePulse {
+                LivePulseDot(reduceMotion: reduceMotion)
+            } else {
+                RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 14)
+            }
+            Text(title.uppercased()).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
+            Rectangle().fill(LinearGradient(colors: [(livePulse ? TLColor.live : TLColor.accent).opacity(0.4), .clear],
+                                            startPoint: .leading, endPoint: .trailing)).frame(height: 1)
+            if let trailing { Text(trailing).font(TLFont.mono(10)).foregroundStyle(TLColor.fg3) }
+        }
+        .padding(.horizontal, 22)
+    }
+
+    // MARK: States
+
+    private var skeleton: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            RoundedRectangle(cornerRadius: TLRadius.xl, style: .continuous).fill(TLColor.surface)
+                .aspectRatio(16.0 / 9.0, contentMode: .fit).padding(.horizontal, 22)
+            ForEach(0..<3, id: \.self) { _ in
+                HStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: 12).fill(TLColor.surface).frame(width: 138, height: 80)
+                    VStack(alignment: .leading, spacing: 8) {
+                        RoundedRectangle(cornerRadius: 4).fill(TLColor.surface).frame(height: 14)
+                        RoundedRectangle(cornerRadius: 4).fill(TLColor.surface).frame(width: 120, height: 10)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 22)
+            }
+        }
+        .redacted(reason: .placeholder)
+    }
+
+    private func emptyState(icon: String, title: String, subtitle: String) -> some View {
         VStack(spacing: 10) {
-            Image(systemName: "play.slash").font(.system(size: 34)).foregroundStyle(TLColor.fg4)
-            Text(text).font(TLFont.sans(14)).foregroundStyle(TLColor.fg3)
+            Image(systemName: icon).font(.system(size: 34)).foregroundStyle(TLColor.fg4)
+            Text(title).font(TLFont.sans(15, .semibold)).foregroundStyle(TLColor.fg)
+            Text(subtitle).font(TLFont.sans(12.5)).foregroundStyle(TLColor.fg3).multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity).padding(.top, 80)
+        .frame(maxWidth: .infinity).padding(.horizontal, 32).padding(.vertical, 50)
     }
 
     private func errorState(_ message: String) -> some View {
         VStack(spacing: 12) {
-            Image(systemName: "dot.radiowaves.up.forward").font(.largeTitle).foregroundStyle(TLColor.fg3)
-            Text("Không tải được").font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg)
+            Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundStyle(TLColor.fg3)
+            Text("Không kết nối được luồng").font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg)
             Text(message).font(TLFont.sans(12)).foregroundStyle(TLColor.fg3).multilineTextAlignment(.center)
-            Button("Thử lại") { Task { await model.reload() } }.foregroundStyle(TLColor.accentText)
+            Button("Thử lại") { Task { await model.load(force: true) } }.foregroundStyle(TLColor.accentText)
         }
         .frame(maxWidth: .infinity).padding(.horizontal, 32).padding(.top, 60)
     }
 }
 
-enum MediaBadge { case live, scheduled }
+// MARK: - Live pulse dot (respects Reduce Motion)
 
-private struct BadgePill: View {
-    let badge: MediaBadge
+struct LivePulseDot: View {
+    let reduceMotion: Bool
+    @State private var animate = false
     var body: some View {
-        HStack(spacing: 5) {
-            Circle().fill(badge == .live ? TLColor.live : TLColor.gold).frame(width: 6, height: 6)
-            Text(badge == .live ? "TRỰC TIẾP" : "SẮP DIỄN RA")
-                .font(TLFont.mono(9, .bold)).tracking(0.8)
+        ZStack {
+            if !reduceMotion {
+                Circle().fill(TLColor.live.opacity(0.5)).scaleEffect(animate ? 2.1 : 1).opacity(animate ? 0 : 0.5)
+            }
+            Circle().fill(TLColor.live)
         }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 9).padding(.vertical, 5)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 1))
-    }
-}
-
-private struct DurationPill: View {
-    let text: String
-    var body: some View {
-        Text(text)
-            .font(TLFont.mono(10, .semibold)).foregroundStyle(.white)
-            .padding(.horizontal, 7).padding(.vertical, 3)
-            .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 5))
-    }
-}
-
-/// Large editorial hero: full-bleed thumbnail, gradient scrim, title overlaid.
-private struct HeroMediaCard: View {
-    let thumbURL: URL?
-    let title: String
-    let meta: String?
-    let badge: MediaBadge?
-    let duration: String?
-
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            Rectangle().fill(TLColor.surface2)
-                .aspectRatio(16.0 / 9.0, contentMode: .fit)
-                .overlay {
-                    if let thumbURL {
-                        AsyncImage(url: thumbURL) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
-                    } else {
-                        Image(systemName: "play.rectangle").font(.system(size: 40)).foregroundStyle(TLColor.fg4)
-                    }
-                }
-                .clipped()
-
-            LinearGradient(colors: [.clear, .black.opacity(0.85)], startPoint: .center, endPoint: .bottom)
-
-            VStack(alignment: .leading, spacing: 8) {
-                if let badge { BadgePill(badge: badge) }
-                Text(title).font(TLFont.serif(24)).foregroundStyle(.white).lineLimit(3)
-                if let meta = meta?.nonEmpty {
-                    Text(meta.uppercased()).font(TLFont.mono(10, .medium)).tracking(0.6).foregroundStyle(.white.opacity(0.7))
-                }
-            }
-            .padding(16)
-
-            Image(systemName: "play.circle.fill")
-                .font(.system(size: 52)).foregroundStyle(.white.opacity(0.92)).shadow(radius: 8)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-
-            if let duration {
-                DurationPill(text: duration)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(10)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: TLRadius.xl, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: TLRadius.xl, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
-        .shadow(color: .black.opacity(0.3), radius: 14, y: 8)
-    }
-}
-
-/// Compact list row: thumbnail left, title + meta right.
-private struct ListMediaCard: View {
-    let thumbURL: URL?
-    let title: String
-    let meta: String?
-    let badge: MediaBadge?
-    let duration: String?
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack(alignment: .bottomTrailing) {
-                Rectangle().fill(TLColor.surface2)
-                    .frame(width: 132, height: 76)
-                    .overlay {
-                        if let thumbURL {
-                            AsyncImage(url: thumbURL) { $0.resizable().scaledToFill() } placeholder: { Color.clear }
-                        } else {
-                            Image(systemName: "play.rectangle").foregroundStyle(TLColor.fg4)
-                        }
-                    }
-                    .clipped()
-                    .overlay(Image(systemName: "play.circle.fill").font(.system(size: 26)).foregroundStyle(.white.opacity(0.9)))
-                if let duration { DurationPill(text: duration).padding(5) }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 5) {
-                if let badge { BadgePill(badge: badge) }
-                Text(title).font(TLFont.serif(17)).foregroundStyle(TLColor.fg).lineLimit(2)
-                if let meta = meta?.nonEmpty {
-                    Text(meta.uppercased()).font(TLFont.mono(9, .medium)).tracking(0.5).foregroundStyle(TLColor.fg3).lineLimit(1)
-                }
-            }
-            Spacer(minLength: 0)
-        }
+        .frame(width: 7, height: 7)
+        .onAppear { if !reduceMotion { withAnimation(.easeOut(duration: 1.6).repeatForever(autoreverses: false)) { animate = true } } }
+        .accessibilityHidden(true)
     }
 }

@@ -22,6 +22,10 @@ struct LivestreamSummary: Decodable, Identifiable, Equatable {
     var displayTitle: String { title?.nonEmpty ?? "Livestream" }
     var isLive: Bool { status == "live" }
     var isEnded: Bool { status == "ended" }
+    var isScheduled: Bool { status == "scheduled" }
+
+    var scheduledDate: Date? { scheduledStartAt.flatMap { FeedDate.parse($0) } }
+    var endedDate: Date? { endedAt.flatMap { FeedDate.parse($0) } }
 
     var thumbURL: URL? {
         if let path = thumbnailPath?.nonEmpty { return WebRoutes.asset(path) }
