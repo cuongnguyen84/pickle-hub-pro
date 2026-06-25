@@ -119,8 +119,23 @@ Tab **Bảng tin**.
 
 ---
 
+## H2. TRỰC TIẾP — thiết kế lại "cinematic" (Phương Án A) ⭐ MỚI
+- ✅ Header editorial: eyebrow lime "THEPICKLEHUB" + tiêu đề serif đổi theo tab; toolbar phải có 🔍 + 👤.
+- ✅ Segmented Trực tiếp/Phát lại/Video; "Trực tiếp" có chấm đỏ khi có trận live; mặc định mở tab có live.
+- **Tab Trực tiếp:**
+  - ✅ Hero "sân chính": ảnh 16:9 + badge LIVE (nhấp nháy, tắt khi Reduce Motion) + nút play; dưới có tên (serif) + org + "Xem ngay" (→ player) + nút Chia sẻ.
+  - ✅ "Sân khác đang live": dải cuộn ngang các sân (chỉ khi >1 live); chấm đỏ pulse + đếm số sân.
+  - ✅ "Sắp phát": hàng có ô đếm ngược (CÒN N' / giờ) + tên + giờ·org + nút **NHẮC TÔI** (đặt local notification ~10' trước; đổi thành "ĐÃ ĐẶT ✓"; xin quyền lần đầu).
+  - ✅ "Phát lại nổi bật" ở cuối.
+  - ✅ Không có live & sắp phát → empty "Hiện chưa có trận trực tiếp" + vẫn show phát lại.
+- **Tab Phát lại:**
+  - ✅ Chip lọc theo giải/org (Tất cả + tên org); "Xem tiếp" (dải video xem dở) + "Mới nhất" (list).
+- ✅ **Resume**: xem dở 1 replay/video → thoát → thẻ hiện thanh tiến độ + "▸ Còn N phút"; mở lại tiếp đúng giây + nút "Xem từ đầu".
+- ✅ Player: AirPlay + nút PiP của hệ thống (AVKit). Auto-poll 20s ở tab Trực tiếp; pull-to-refresh; skeleton khi tải; "Không kết nối được luồng" khi lỗi.
+- ⚠️ KHÔNG có: chat trực tiếp, đổi sân trong player, chọn chất lượng, mini-player, số người xem/tỉ số real-time (backend `public_livestreams` chưa có field → không bịa số).
+
 ## H. CÁC TAB KHÁC (đã native từ trước — regression nhẹ)
-- ✅ **Trực tiếp**: segmented Trực tiếp/Phát lại/Video; tap phát qua AVPlayer; replay dùng asset HLS (không đen hình).
+- ✅ **Trực tiếp** (cũ): xem H2 ở trên.
 - ✅ **Social**: list sự kiện + chi tiết native. 🌐 "Đăng ký" sự kiện vẫn mở web (OTP/thanh toán — đúng thiết kế).
 - ✅ **Trang chủ**: ticker, partner card, "Tuần này", Tin mới, thống kê, sắp diễn ra, video, newsletter.
 - ✅ **Hồ sơ** (👤): rating card + thống kê + form last-5; "Log trận" mở wizard native.
