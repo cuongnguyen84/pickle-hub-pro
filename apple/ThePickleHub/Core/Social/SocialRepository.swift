@@ -41,6 +41,22 @@ struct SocialRepository {
         return response.count ?? 0
     }
 
+    /// Logged matches within a session (shares the ClubMatch shape — same RPC
+    /// columns). Mirrors web `list_social_event_matches`.
+    func matches(eventID: UUID, limit: Int = 50) async -> [ClubMatch] {
+        struct Params: Encodable { let p_event_id: String; let p_limit: Int }
+        return (try? await client.rpc("list_social_event_matches",
+            params: Params(p_event_id: eventID.uuidString.lowercased(), p_limit: limit)).execute().value) ?? []
+    }
+
+    /// Public roster (active registrations), newest first.
+    func roster(eventID: UUID, limit: Int = 50) async -> [SocialRosterEntry] {
+        (try? await client.from("event_registrations")
+            .select("id, display_name, self_rated_level")
+            .eq("event_id", value: eventID).neq("status", value: "cancelled")
+            .order("registered_at", ascending: true).limit(limit).execute().value) ?? []
+    }
+
     /// Registration counts for several events at once (parallel head-counts).
     func registrationCounts(eventIDs: [UUID]) async -> [UUID: Int] {
         await withTaskGroup(of: (UUID, Int).self) { group in

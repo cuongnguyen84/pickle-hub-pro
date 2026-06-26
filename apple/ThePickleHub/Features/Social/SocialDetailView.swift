@@ -7,6 +7,9 @@ struct SocialDetailView: View {
 
     @State private var registeredCount: Int?
     @State private var showRegister = false
+    @State private var matches: [ClubMatch] = []
+    @State private var roster: [SocialRosterEntry] = []
+    @State private var showAllRoster = false
     private let repo = SocialRepository()
 
     var body: some View {
@@ -23,6 +26,8 @@ struct SocialDetailView: View {
                         .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
                 }
                 actions
+                if !matches.isEmpty { matchesSection }
+                if !roster.isEmpty { rosterSection }
             }
             .padding(20)
         }
@@ -31,6 +36,8 @@ struct SocialDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             registeredCount = try? await repo.registrationCount(eventID: event.id)
+            matches = await repo.matches(eventID: event.id)
+            roster = await repo.roster(eventID: event.id)
         }
         .sheet(isPresented: $showRegister) {
             SafariView(url: WebRoutes.social(slug: event.slug)).ignoresSafeArea()
@@ -112,6 +119,49 @@ struct SocialDetailView: View {
                         .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border2, lineWidth: 1))
                 }
             }
+        }
+    }
+
+    // MARK: Matches in the session (read — scores prominent + DUPR badge)
+
+    private var matchesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("TRẬN ĐẤU TRONG BUỔI · \(matches.count)")
+            VStack(spacing: 11) { ForEach(matches) { ClubMatchCard(match: $0) } }
+        }
+    }
+
+    // MARK: Roster (masked names)
+
+    private var rosterSection: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            sectionHeader("ĐÃ ĐĂNG KÝ · \(roster.count)")
+            VStack(spacing: 0) {
+                ForEach(Array((showAllRoster ? roster : Array(roster.prefix(5))).enumerated()), id: \.element.id) { i, r in
+                    if i > 0 { Rectangle().fill(TLColor.border).frame(height: 1) }
+                    HStack(spacing: 11) {
+                        Text("\(i + 1)").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4).frame(width: 20)
+                        Text(r.maskedName).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
+                        Spacer()
+                        if let level = r.levelText { Text(level).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4) }
+                    }
+                    .padding(.vertical, 10)
+                }
+            }
+            if roster.count > 5 && !showAllRoster {
+                Button { showAllRoster = true } label: {
+                    Text("Xem tất cả \(roster.count) người").font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.fg2)
+                        .frame(maxWidth: .infinity).padding(.vertical, 10)
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border2, lineWidth: 1))
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        HStack(spacing: 10) {
+            Text(title).font(TLFont.mono(11, .semibold)).tracking(1.2).foregroundStyle(TLColor.fg2)
+            Rectangle().fill(LinearGradient(colors: [TLColor.border, .clear], startPoint: .leading, endPoint: .trailing)).frame(height: 1)
         }
     }
 }

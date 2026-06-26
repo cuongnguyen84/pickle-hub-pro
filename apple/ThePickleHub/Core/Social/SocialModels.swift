@@ -70,6 +70,34 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     }
 }
 
+/// One registered player (event_registrations), masked for the public roster.
+struct SocialRosterEntry: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let displayName: String?
+    let selfRatedLevel: Double?
+
+    var maskedName: String { SocialName.mask(displayName) }
+    var levelText: String? { selfRatedLevel.map { String(format: "Tự đánh giá %.1f", $0) } }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case displayName = "display_name"
+        case selfRatedLevel = "self_rated_level"
+    }
+}
+
+/// Public name masking — port of web `maskName.ts`: first word full, rest →
+/// initials. "Nguyễn Văn An" → "Nguyễn V.".
+enum SocialName {
+    static func mask(_ name: String?) -> String {
+        guard let trimmed = name?.trimmingCharacters(in: .whitespaces), !trimmed.isEmpty else { return "Khách" }
+        let parts = trimmed.split(separator: " ").map(String.init)
+        guard parts.count > 1 else { return parts[0] }
+        let initials = parts.dropFirst().compactMap { $0.first.map { String($0).uppercased() } }.joined()
+        return initials.isEmpty ? parts[0] : "\(parts[0]) \(initials)."
+    }
+}
+
 /// ISO-8601 parsing + Vietnamese display formatting for social events.
 enum SocialDate {
     private static let iso: ISO8601DateFormatter = {
