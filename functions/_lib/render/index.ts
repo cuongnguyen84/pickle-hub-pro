@@ -77,6 +77,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           "@type": "Organization",
           "@id": `${siteUrl}#org`,
           name: "ThePickleHub",
+          // Brand-entity consolidation: spaced/variant brand searches
+          // ("the pickle hub", "pickle hub") rank ~pos 9 on / because the
+          // entity name has no space. alternateName binds those variants to
+          // this entity so Google surfaces the homepage for the brand query.
+          alternateName: ["The Pickle Hub", "Pickle Hub", "Picklehub"],
           url: siteUrl,
           logo: DEFAULT_OG_IMAGE,
           description: "Editorial coverage of professional pickleball — PPA, APP, MLP, European Open, Asia Pacific Series. Bilingual Vietnamese-English. Headquartered in Ho Chi Minh City.",
@@ -160,6 +165,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           "@type": "Organization",
           "@id": `${siteUrl}#org`,
           name: "ThePickleHub",
+          // Brand-entity consolidation (see renderHome): bind spaced/variant
+          // brand searches to this entity so the homepage wins the brand query.
+          alternateName: ["The Pickle Hub", "Pickle Hub", "Picklehub"],
           url: siteUrl,
           logo: DEFAULT_OG_IMAGE,
           description: "Đưa tin pickleball chuyên nghiệp toàn cầu — PPA, APP, MLP, European Open, Asia Pacific Series. Song ngữ Việt-Anh. Trụ sở tại TP.HCM.",
