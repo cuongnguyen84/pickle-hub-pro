@@ -51,7 +51,8 @@ const post: BlogPost = {
           content: "If you're reading from Vietnam, Tama's story isn't a foreign sports headline. It's a direct preview of what the next decade looks like at PPA Tour Asia events. Tama beat Ly Hoang Nam decisively in Hanoi just one month ago, then turned around and beat the world #1 in Atlanta. The implication is uncomfortable but clear: the gap between Asian pros and the absolute top of pickleball is closing, and the next generation will close it faster than the current one. Tama started playing pickleball in 2023. Self-taught. No coach. Two years later — semifinal scalp of world #1 and #2 in the same tournament.",
           internalLinks: [
             { text: "How PPA Tour contracts actually work in 2026 — Gold, Standard, New Player, and Futures tiers explained", path: "/blog/app-tour-vs-ppa-tour-contracts-2026" },
-            { text: "Pickleball Tour Wars 2023 — the 10-day window that created the contract structure Tama signed into at 14", path: "/blog/pickleball-tour-wars-2023-explained" }
+            { text: "Pickleball Tour Wars 2023 — the 10-day window that created the contract structure Tama signed into at 14", path: "/blog/pickleball-tour-wars-2023-explained" },
+            { text: "Where Tama competes: a guide to the pro pickleball tours in 2026", path: "/blog/professional-pickleball-tours-guide-2026" }
           ]
         },
         {

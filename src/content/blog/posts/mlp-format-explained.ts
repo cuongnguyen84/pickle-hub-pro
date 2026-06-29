@@ -77,7 +77,8 @@ const post: BlogPost = {
           internalLinks: [
             { text: "Complete comparison: All pickleball tournament formats", path: "/blog/pickleball-tournament-formats-explained" },
             { text: "Doubles strategy that wins dreambreakers", path: "/blog/pickleball-doubles-strategy-guide" },
-            { text: "Free bracket generator for MLP-style events", path: "/blog/free-pickleball-bracket-generator" }
+            { text: "Free bracket generator for MLP-style events", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "See how MLP fits among all the pro tours — PPA, APP, PPA Tour Asia compared", path: "/blog/professional-pickleball-tours-guide-2026" }
           ]
         }
       ]

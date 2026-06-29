@@ -55,6 +55,9 @@ const post: BlogPost = {
             "Required events per year — PPA: 25+ events typically required. APP (Quang Duong's deal): 4 APP + 4 D Joy.",
             "Pro team event — PPA: MLP, up to $250K per winning team. APP: no professional team competition.",
             "Commercial freedom — PPA: paddle, apparel, clinics often need approval. APP: full freedom on equipment and side businesses."
+          ],
+          internalLinks: [
+            { text: "The full picture: every major pro pickleball tour compared for 2026", path: "/blog/professional-pickleball-tours-guide-2026" }
           ]
         },
         {

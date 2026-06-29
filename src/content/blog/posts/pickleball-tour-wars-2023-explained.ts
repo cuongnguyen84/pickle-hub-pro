@@ -49,7 +49,10 @@ const post: BlogPost = {
         },
         {
           heading: "The Merger: War Ends, Empire Begins",
-          content: "Both sides quickly realized the same uncomfortable thing: spending $30M a year on player salaries against revenue that did not yet support it was unsustainable. On September 13, 2023 — fewer than three weeks after the war started — PPA and MLP announced a merger backed by a $50M investment commitment. By early 2024 the deal closed at $75M, and the United Pickleball Association (UPA) was formed as the parent organization controlling both PPA Tour and MLP. Steve Kuhn stepped back from the leadership role he had built MLP from. Connor Pardoe and Tom Dundon emerged in control. Within weeks of the merger, MLP-signed players were asked to take 25–35% pay cuts. PPA-signed players were not. The first cracks of resentment formed inside what had just become a single organization."
+          content: "Both sides quickly realized the same uncomfortable thing: spending $30M a year on player salaries against revenue that did not yet support it was unsustainable. On September 13, 2023 — fewer than three weeks after the war started — PPA and MLP announced a merger backed by a $50M investment commitment. By early 2024 the deal closed at $75M, and the United Pickleball Association (UPA) was formed as the parent organization controlling both PPA Tour and MLP. Steve Kuhn stepped back from the leadership role he had built MLP from. Connor Pardoe and Tom Dundon emerged in control. Within weeks of the merger, MLP-signed players were asked to take 25–35% pay cuts. PPA-signed players were not. The first cracks of resentment formed inside what had just become a single organization.",
+          internalLinks: [
+            { text: "Where the tours stand now — the 2026 pro pickleball tour guide", path: "/blog/professional-pickleball-tours-guide-2026" }
+          ]
         },
         {
           heading: "Financial Reality: The Money Ran Out Faster Than the Plan",
