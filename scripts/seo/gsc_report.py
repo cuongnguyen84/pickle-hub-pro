@@ -95,6 +95,27 @@ def totals(rows):
     }
 
 
+def site_totals(tok, start, end):
+    """True property-wide totals (no dimension split).
+
+    GSC returns a single aggregate row when ``dimensions`` is empty. This is
+    the apples-to-apples figure shown in the GSC Performance UI. We use it for
+    the headline totals + WoW so the comparison is NOT skewed by row-limit
+    asymmetry (previously: top-25 current queries vs top-1000 previous, which
+    made impressions look like they collapsed when the property was growing).
+    """
+    rows = query(tok, start, end, [], row_limit=1)
+    if not rows:
+        return {"clicks": 0, "impressions": 0, "ctr": 0.0, "position": 0.0}
+    r = rows[0]
+    return {
+        "clicks": round(r.get("clicks", 0)),
+        "impressions": round(r.get("impressions", 0)),
+        "ctr": round(r.get("ctr", 0) * 100, 2),
+        "position": round(r.get("position", 0), 1),
+    }
+
+
 def pct(cur, prev):
     if prev == 0:
         return None if cur == 0 else 100.0
@@ -152,17 +173,23 @@ def main():
             })
         return out
 
+    # Property-wide totals (no dimension) — the accurate WoW basis.
+    cur_totals = site_totals(tok, iso(cur_start), iso(cur_end))
+    prev_totals = site_totals(tok, iso(prev_start), iso(prev_end))
+
     report = {
         "site": SITE,
         "window": {"current": [iso(cur_start), iso(cur_end)],
                    "previous": [iso(prev_start), iso(prev_end)]},
         "totals": {
-            "current": totals(cur_q),
-            "previous": totals(prev_q),
+            "current": cur_totals,
+            "previous": prev_totals,
         },
         "wow_pct": {
-            "clicks": pct(totals(cur_q)["clicks"], totals(prev_q)["clicks"]),
-            "impressions": pct(totals(cur_q)["impressions"], totals(prev_q)["impressions"]),
+            "clicks": pct(cur_totals["clicks"], prev_totals["clicks"]),
+            "impressions": pct(cur_totals["impressions"], prev_totals["impressions"]),
+            # Position: lower is better, so report the absolute delta (negative = improved).
+            "position_delta": round(cur_totals["position"] - prev_totals["position"], 1),
         },
         "top_queries": fmt(cur_q, "query"),
         "top_pages": fmt(cur_p, "page"),
