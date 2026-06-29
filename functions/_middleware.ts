@@ -418,7 +418,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2026-06-16 — bumped v18->v19 to invalidate cached /rankings + /vi/rankings
   // HTML after adding reciprocal hreflang en/vi/x-default (renderRankings
   // previously emitted zero hreflang on both bilingual routes).
-  const cacheKey = `pr:v19:${url.pathname}`;
+  // 2026-06-29 — bumped v19->v20 to invalidate cached / + /vi (homepage
+  // Organization alternateName for brand-query consolidation) and /san,
+  // /san/{slug}, /san/khu-vuc/{city} (venue CTR title+meta + blog/news
+  // interlinks). Without the bump bots keep the v19 HTML until the 6h TTL.
+  const cacheKey = `pr:v20:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
