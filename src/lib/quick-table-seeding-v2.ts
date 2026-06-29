@@ -188,3 +188,63 @@ export function generateBracketPairings(seeded: SeededPlayer[]): BracketPairing[
   }
   return pairings;
 }
+
+/**
+ * Giải xung đột cùng bảng cho bracket seed chuẩn (thay resolveGroupConflicts cũ kiểu "đổi match gần nhất").
+ *
+ * Mỗi cặp vòng 1 = 1 "anchor" (seed mạnh hơn = seed nhỏ hơn, luôn là seed nửa trên) + 1 "floater"
+ * (seed yếu hơn, nửa dưới). GIỮ NGUYÊN anchor trong match của nó → cấu trúc nhánh bất biến
+ * (seed#1 & seed#2 vẫn ở 2 nửa, chỉ gặp ở CK). Chỉ gán lại floater sao cho:
+ *   - không floater nào CÙNG BẢNG với anchor của match đó, và
+ *   - anchor MẠNH hơn được gặp floater YẾU hơn (ưu tiên seed nhóm cao gặp seed nhóm thấp).
+ *
+ * Backtracking thử floater yếu nhất trước, duyệt anchor theo thứ tự seed → nghiệm đầu tiên là
+ * phương án tối ưu theo đúng thứ tự ưu tiên đó. Không xung đột → tái tạo y hệt cặp mặc định.
+ * N/2 ≤ 8 nên backtracking rất nhẹ và luôn tìm ra nếu khả thi (BYE hợp lệ với mọi anchor).
+ */
+export function resolveBracketConflicts(pairings: BracketPairing[]): {
+  pairings: BracketPairing[];
+  hasConflicts: boolean;
+} {
+  const sameGroup = (a: SeededPlayer, b: SeededPlayer) =>
+    a.tier !== 'bye' && b.tier !== 'bye' && a.sourceGroupId === b.sourceGroupId;
+
+  const matches = pairings.map(p => {
+    const [anchor, floater] =
+      p.player1.seed <= p.player2.seed ? [p.player1, p.player2] : [p.player2, p.player1];
+    return { anchor, floater, matchNumber: p.matchNumber };
+  });
+
+  const anchors = [...matches].sort((a, b) => a.anchor.seed - b.anchor.seed); // seed#1 trước
+  const floaters = matches.map(m => m.floater);
+  const floaterOrder = floaters
+    .map((f, i) => ({ f, i }))
+    .sort((x, y) => y.f.seed - x.f.seed); // yếu nhất (seed lớn nhất) trước
+
+  const assignment = new Array<SeededPlayer | null>(anchors.length).fill(null);
+  const used = new Array(floaters.length).fill(false);
+
+  const solve = (k: number): boolean => {
+    if (k === anchors.length) return true;
+    for (const { f, i } of floaterOrder) {
+      if (used[i] || sameGroup(anchors[k].anchor, f)) continue;
+      used[i] = true;
+      assignment[k] = f;
+      if (solve(k + 1)) return true;
+      used[i] = false;
+      assignment[k] = null;
+    }
+    return false;
+  };
+
+  if (!solve(0)) {
+    // Cực hiếm: không tồn tại cách tách hết cùng bảng → trả nguyên trạng + cờ báo.
+    return { pairings, hasConflicts: pairings.some(p => sameGroup(p.player1, p.player2)) };
+  }
+
+  const resolved = anchors
+    .map((m, k) => ({ player1: m.anchor, player2: assignment[k]!, matchNumber: m.matchNumber }))
+    .sort((a, b) => a.matchNumber - b.matchNumber);
+
+  return { pairings: resolved, hasConflicts: false };
+}
