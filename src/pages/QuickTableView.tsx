@@ -33,11 +33,14 @@ import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
 import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
 import {
-  resolveGroupConflicts,
   BYE_PLAYER_ID,
   type BracketPairing,
 } from '@/lib/quick-table-playoff';
-import { generateSeedingGeneral, generateBracketPairings } from '@/lib/quick-table-seeding-v2';
+import {
+  generateSeedingGeneral,
+  generateBracketPairings,
+  resolveBracketConflicts,
+} from '@/lib/quick-table-seeding-v2';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -330,7 +333,7 @@ const QuickTableView = () => {
       try {
         const { seeded } = generateSeedingGeneral(groups, players, matches, { advancePerGroup: 2 });
         const pairings = generateBracketPairings(seeded);
-        const resolved = resolveGroupConflicts(pairings);
+        const resolved = resolveBracketConflicts(pairings);
         setPreviewPairings(resolved.pairings);
         setShowPlayoffPreview(true);
       } catch {

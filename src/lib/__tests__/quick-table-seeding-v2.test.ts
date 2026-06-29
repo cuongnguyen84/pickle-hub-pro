@@ -3,8 +3,9 @@ import {
   computeSeedingPlan,
   generateSeedingGeneral,
   generateBracketPairings,
+  resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
-import { resolveGroupConflicts } from '@/lib/quick-table-playoff';
+import type { SeededPlayer } from '@/lib/quick-table-playoff';
 import type { QuickTablePlayer, QuickTableGroup } from '@/hooks/useQuickTable';
 
 const P = (o: Partial<QuickTablePlayer>): QuickTablePlayer => o as QuickTablePlayer;
@@ -104,14 +105,50 @@ describe('wildcard cùng bảng KHÔNG gặp nhau ở vòng playoff đầu tiên
     }
   });
 
-  it('sau resolveGroupConflicts: không cặp vòng 1 nào cùng sourceGroupId (trừ BYE)', () => {
+  it('sau resolveBracketConflicts: không cặp vòng 1 nào cùng sourceGroupId (trừ BYE)', () => {
     const { seeded } = generateSeedingGeneral(groups, players, [], { advancePerGroup: 2 });
     const pairings = generateBracketPairings(seeded);
-    const { pairings: resolved, hasConflicts } = resolveGroupConflicts(pairings);
+    const { pairings: resolved, hasConflicts } = resolveBracketConflicts(pairings);
     expect(hasConflicts).toBe(false);
     for (const m of resolved) {
       if (m.player1.tier === 'bye' || m.player2.tier === 'bye') continue;
       expect(m.player1.sourceGroupId).not.toBe(m.player2.sourceGroupId);
     }
+  });
+});
+
+describe('resolveBracketConflicts — anchor mạnh gặp floater yếu nhất khác bảng', () => {
+  const mk = (seed: number, grp: string): SeededPlayer => ({
+    playerId: `s${seed}`, name: `s${seed}`, seed, sourceGroupId: grp,
+    wins: 0, pointDiff: 0, pointsFor: 0, tier: seed <= 3 ? 'winner' : seed <= 6 ? 'runner_up' : 'wildcard',
+  });
+
+  it('không xung đột → giữ NGUYÊN cặp mặc định (seed1 vs seed8, seed2 vs seed7, ...)', () => {
+    // 8 seed, mỗi seed 1 bảng khác nhau → không thể trùng.
+    const seeded = Array.from({ length: 8 }, (_, i) => mk(i + 1, `g${i + 1}`));
+    const { pairings, hasConflicts } = resolveBracketConflicts(generateBracketPairings(seeded));
+    expect(hasConflicts).toBe(false);
+    const opp = (s: number) => {
+      const m = pairings.find(p => p.player1.seed === s || p.player2.seed === s)!;
+      return m.player1.seed === s ? m.player2.seed : m.player1.seed;
+    };
+    expect(opp(1)).toBe(8);
+    expect(opp(2)).toBe(7);
+    expect(opp(3)).toBe(6);
+    expect(opp(4)).toBe(5);
+  });
+
+  it('seed1 trùng bảng với seed8 → seed1 gặp floater YẾU NHẤT khác bảng (seed7), KHÔNG phải seed mạnh', () => {
+    // seed1 và seed8 cùng bảng A; còn lại khác bảng.
+    const seeded = [
+      mk(1, 'A'), mk(2, 'B'), mk(3, 'C'), mk(4, 'D'),
+      mk(5, 'E'), mk(6, 'F'), mk(7, 'G'), mk(8, 'A'),
+    ];
+    const { pairings, hasConflicts } = resolveBracketConflicts(generateBracketPairings(seeded));
+    expect(hasConflicts).toBe(false);
+    const m1 = pairings.find(p => p.player1.seed === 1 || p.player2.seed === 1)!;
+    const oppOf1 = m1.player1.seed === 1 ? m1.player2.seed : m1.player1.seed;
+    expect(oppOf1).toBe(7); // floater yếu nhất khác bảng (8 bị loại do cùng bảng), KHÔNG phải 4/5/6
+    for (const m of pairings) expect(m.player1.sourceGroupId).not.toBe(m.player2.sourceGroupId);
   });
 });
