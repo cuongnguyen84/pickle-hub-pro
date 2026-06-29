@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-tour-wars-2023-explained",
   publishedDate: "2026-05-05",
-  updatedDate: "2026-05-05",
+  updatedDate: "2026-06-29",
   author: "Cuong Nguyen",
   tags: ["tour wars", "ppa tour", "mlp", "upa", "professional pickleball", "history", "gold contract", "asia"],
   ctaPath: "/blog/app-tour-vs-ppa-tour-contracts-2026",
@@ -56,7 +56,7 @@ const post: BlogPost = {
         },
         {
           heading: "Financial Reality: The Money Ran Out Faster Than the Plan",
-          content: "By January 2025, UPA needed an emergency $10M loan to make payroll. Of the $75M announced investment, reporting indicated only roughly $35M had actually been disbursed. Cash on hand at the end of 2024 was estimated at $2–4M. Pardoe pushed back publicly with a stronger revenue narrative — over $50M in 2024 revenue, projecting $65M in 2025 — but he did not deny the need for additional capital. By June 2025 UPA was forced to restructure player contracts entirely. The original Tour Wars guarantees were cut by roughly two-thirds, and the now-famous tier system — Gold, Standard, New Player, Futures — was introduced. This is the same tier structure that frames every contract analysis we publish today.",
+          content: "By January 2025, UPA needed an emergency $10M loan to make payroll. Of the $75M announced investment, reporting indicated only roughly $35M had actually been disbursed. Cash on hand at the end of 2024 was estimated at $2–4M. Pardoe pushed back publicly with a stronger revenue narrative — over $50M in 2024 revenue, projecting $65M in 2025 — but he did not deny the need for additional capital. By June 2025 UPA was forced to restructure player contracts entirely. The original Tour Wars guarantees were cut by roughly two-thirds, and the now-famous tier system — Gold, Standard, New Player, Futures — was introduced. This is the same tier structure that frames every contract analysis we publish today. The story did not end in crisis: in May 2026, Apollo Sports Capital led a $225 million investment in Pickleball Inc. — the newly named parent of the PPA Tour and MLP, an expansion of the former UPA holding company — valuing the business at roughly $750 million, with Tom Dundon and the Pardoe family remaining majority owners. The empire Tour Wars forced into existence is now, for the first time, backed by major institutional capital.",
           internalLinks: [
             { text: "How APP Tour vs PPA Tour contracts actually work in 2026 — including the Gold/Standard/New Player/Futures breakdown", path: "/blog/app-tour-vs-ppa-tour-contracts-2026" }
           ]
@@ -97,7 +97,7 @@ const post: BlogPost = {
         },
         {
           question: "What is the United Pickleball Association (UPA)?",
-          answer: "The United Pickleball Association is the parent organization formed in 2024 after PPA Tour and MLP merged. The merger was announced just three weeks after Tour Wars and finalized with a $75M investment commitment. UPA now controls both the PPA Tour (individual events) and MLP (team competition) under a single corporate structure led by Connor Pardoe and Tom Dundon."
+          answer: "The United Pickleball Association is the parent organization formed in 2024 after PPA Tour and MLP merged. The merger was announced just three weeks after Tour Wars and finalized with a $75M investment commitment. UPA now controls both the PPA Tour (individual events) and MLP (team competition) under a single corporate structure led by Connor Pardoe and Tom Dundon. In May 2026 the holding company was expanded and renamed Pickleball Inc. after a $225 million investment led by Apollo Sports Capital that valued it at about $750 million; Tom Dundon and the Pardoe family remain majority owners."
         },
         {
           question: "What is a Gold Contract in pickleball?",
@@ -157,7 +157,7 @@ const post: BlogPost = {
         },
         {
           heading: "Thực tế tài chính: Tiền hết trước khi kế hoạch thành",
-          content: "Đến tháng 1/2025, UPA cần khoản vay khẩn cấp 10 triệu USD để trả lương. Trong 75 triệu USD đầu tư công bố, theo nguồn báo cáo chỉ khoảng 35 triệu thực tế đã giải ngân. Tiền mặt cuối 2024 ước tính chỉ còn 2–4 triệu USD. Pardoe phản bác công khai bằng narrative doanh thu mạnh hơn — hơn 50 triệu USD doanh thu 2024, dự kiến 65 triệu năm 2025 — nhưng anh không phủ nhận việc cần huy động thêm vốn. Đến tháng 6/2025 UPA buộc phải tái cấu trúc hợp đồng VĐV hoàn toàn. Bảo đảm Tour Wars gốc bị cắt khoảng 2/3, và hệ thống cấp bậc nổi tiếng giờ đây — Gold, Standard, New Player, Futures — ra đời. Đây chính là cấu trúc tier khung mọi phân tích hợp đồng chúng tôi đăng hôm nay.",
+          content: "Đến tháng 1/2025, UPA cần khoản vay khẩn cấp 10 triệu USD để trả lương. Trong 75 triệu USD đầu tư công bố, theo nguồn báo cáo chỉ khoảng 35 triệu thực tế đã giải ngân. Tiền mặt cuối 2024 ước tính chỉ còn 2–4 triệu USD. Pardoe phản bác công khai bằng narrative doanh thu mạnh hơn — hơn 50 triệu USD doanh thu 2024, dự kiến 65 triệu năm 2025 — nhưng anh không phủ nhận việc cần huy động thêm vốn. Đến tháng 6/2025 UPA buộc phải tái cấu trúc hợp đồng VĐV hoàn toàn. Bảo đảm Tour Wars gốc bị cắt khoảng 2/3, và hệ thống cấp bậc nổi tiếng giờ đây — Gold, Standard, New Player, Futures — ra đời. Đây chính là cấu trúc tier khung mọi phân tích hợp đồng chúng tôi đăng hôm nay. Câu chuyện không kết thúc trong khủng hoảng: tháng 5/2026, Apollo Sports Capital dẫn đầu khoản đầu tư 225 triệu USD vào Pickleball Inc. — công ty mẹ mới của PPA Tour và MLP, mở rộng từ holding UPA trước đây — định giá doanh nghiệp khoảng 750 triệu USD, với Tom Dundon và gia đình Pardoe vẫn là cổ đông đa số. Đế chế mà Tour Wars buộc phải hình thành nay lần đầu tiên có hậu thuẫn vốn tổ chức lớn.",
           internalLinks: [
             { text: "Hợp đồng APP Tour vs PPA Tour 2026 — gồm phân tích Gold/Standard/New Player/Futures", path: "/blog/app-tour-vs-ppa-tour-contracts-2026" }
           ]
@@ -198,7 +198,7 @@ const post: BlogPost = {
         },
         {
           question: "United Pickleball Association (UPA) là gì?",
-          answer: "United Pickleball Association là tổ chức mẹ thành lập 2024 sau khi PPA Tour và MLP sáp nhập. Sáp nhập được công bố chỉ 3 tuần sau Tour Wars và hoàn tất với cam kết đầu tư 75 triệu USD. UPA giờ kiểm soát cả PPA Tour (giải cá nhân) lẫn MLP (giải đồng đội) dưới một cấu trúc doanh nghiệp chung do Connor Pardoe và Tom Dundon dẫn dắt."
+          answer: "United Pickleball Association là tổ chức mẹ thành lập 2024 sau khi PPA Tour và MLP sáp nhập. Sáp nhập được công bố chỉ 3 tuần sau Tour Wars và hoàn tất với cam kết đầu tư 75 triệu USD. UPA giờ kiểm soát cả PPA Tour (giải cá nhân) lẫn MLP (giải đồng đội) dưới một cấu trúc doanh nghiệp chung do Connor Pardoe và Tom Dundon dẫn dắt. Tháng 5/2026, công ty mẹ được mở rộng và đổi tên thành Pickleball Inc. sau khoản đầu tư 225 triệu USD do Apollo Sports Capital dẫn đầu, định giá khoảng 750 triệu USD; Tom Dundon và gia đình Pardoe vẫn là cổ đông đa số."
         },
         {
           question: "Gold Contract trong pickleball là gì?",

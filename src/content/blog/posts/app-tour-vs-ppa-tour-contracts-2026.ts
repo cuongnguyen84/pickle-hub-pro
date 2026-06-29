@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "app-tour-vs-ppa-tour-contracts-2026",
   publishedDate: "2026-05-05",
-  updatedDate: "2026-05-05",
+  updatedDate: "2026-06-29",
   author: "Cuong Nguyen",
   tags: ["app tour", "ppa tour", "professional pickleball", "contracts", "quang duong", "asia", "global pickleball alliance"],
   ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
@@ -28,7 +28,7 @@ const post: BlogPost = {
         },
         {
           heading: "Where the Money Actually Is: $3–4M vs $31M",
-          content: "The single hardest fact in the APP vs PPA debate is the size of the player payouts. APP spends roughly $3–4 million a year on player compensation. PPA spends about $31 million. That is nearly a 10x gap, and it shows up everywhere.",
+          content: "The single hardest fact in the APP vs PPA debate is the size of the player payouts. APP spends roughly $3–4 million a year on player compensation. PPA spends about $31 million. That is nearly a 10x gap, and it shows up everywhere — and it is widening: in May 2026, PPA's parent company (newly named Pickleball Inc.) raised $225 million led by Apollo Sports Capital at a roughly $750 million valuation, while the APP tour is reportedly still losing $8–9 million a year.",
           listItems: [
             "Largest APP event (a 'Major'): around $150,000 total prize pool across all draws.",
             "PPA Slam: men's doubles Gold Contract alone pays approximately $90,000 per pair — and that's before guaranteed salary, MLP earnings, and appearance fees.",
@@ -142,7 +142,7 @@ const post: BlogPost = {
         },
         {
           heading: "Tiền thật sự nằm ở đâu: 3–4 triệu USD vs 31 triệu USD",
-          content: "Sự thật khó nuốt nhất trong tranh luận APP vs PPA là quy mô tiền chi cho VĐV. APP chi khoảng 3–4 triệu USD/năm cho player compensation. PPA chi khoảng 31 triệu USD. Gấp gần 10 lần. Và sự chênh lệch này hiện diện ở mọi thước đo:",
+          content: "Sự thật khó nuốt nhất trong tranh luận APP vs PPA là quy mô tiền chi cho VĐV. APP chi khoảng 3–4 triệu USD/năm cho player compensation. PPA chi khoảng 31 triệu USD. Gấp gần 10 lần — và khoảng cách đang nới rộng: tháng 5/2026, công ty mẹ của PPA (vừa đổi tên thành Pickleball Inc.) huy động 225 triệu USD do Apollo Sports Capital dẫn đầu, định giá khoảng 750 triệu USD, trong khi APP được cho là vẫn lỗ 8–9 triệu USD/năm. Sự chênh lệch hiện diện ở mọi thước đo:",
           listItems: [
             "Giải APP lớn nhất ('Major'): tổng quỹ thưởng khoảng 150.000 USD cho toàn bộ các nội dung.",
             "PPA Slam: riêng đôi nam Gold Contract đã trả khoảng 90.000 USD/cặp — chưa kể lương đảm bảo, thu nhập MLP, appearance fee.",
