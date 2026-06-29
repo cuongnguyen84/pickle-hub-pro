@@ -33,12 +33,11 @@ import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
 import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
 import {
-  generateGlobalSeeding,
-  generateSeededPairings,
   resolveGroupConflicts,
   BYE_PLAYER_ID,
   type BracketPairing,
 } from '@/lib/quick-table-playoff';
+import { generateSeedingGeneral, generateBracketPairings } from '@/lib/quick-table-seeding-v2';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -323,10 +322,14 @@ const QuickTableView = () => {
   const handleStartPlayoff = () => {
     if (!table || !table.group_count) return;
 
-    if (table.group_count === 6) {
+    // === Seeding tổng quát v2 cho bảng 3 và 6 (đã test trên native iOS, nay bật prod). ===
+    // top-2 mỗi bảng + best 3rd → bracket nextPow2(G·2): 3 bảng → 8, 6 bảng → 16.
+    // Seed chuẩn (seed 1 & 2 chỉ gặp ở CK) + tránh cùng bảng vòng 1.
+    // Các số bảng khác giữ nguyên flow cũ (getQualifiedPlayers + wildcard dialog) bên dưới.
+    if (table.group_count === 3 || table.group_count === 6) {
       try {
-        const seeded = generateGlobalSeeding(groups, players, matches);
-        const pairings = generateSeededPairings(seeded);
+        const { seeded } = generateSeedingGeneral(groups, players, matches, { advancePerGroup: 2 });
+        const pairings = generateBracketPairings(seeded);
         const resolved = resolveGroupConflicts(pairings);
         setPreviewPairings(resolved.pairings);
         setShowPlayoffPreview(true);
@@ -420,7 +423,7 @@ const QuickTableView = () => {
         player2: p.player2.playerId !== BYE_PLAYER_ID
           ? (players.find(pl => pl.id === p.player2.playerId) || null)
           : null,
-        bracketPosition: p.matchNumber <= 4 ? 'upper' : 'lower',
+        bracketPosition: p.matchNumber <= confirmedPairings.length / 2 ? 'upper' : 'lower',
         matchNumber: p.matchNumber,
       }));
 
