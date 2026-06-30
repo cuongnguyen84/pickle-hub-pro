@@ -76,7 +76,7 @@ export function useQuickTableMutations() {
 
   const addPlayers = useCallback(async (
     tableId: string,
-    players: Array<{ name: string; team?: string; seed?: number }>,
+    players: Array<{ name: string; player1_name?: string; player2_name?: string; team?: string; seed?: number }>,
   ): Promise<QuickTablePlayer[]> => {
     setPendingFor('addPlayers', true);
     try {
@@ -86,10 +86,12 @@ export function useQuickTableMutations() {
           players.map((p, i) => ({
             table_id: tableId,
             name: p.name,
+            player1_name: p.player1_name || null,
+            player2_name: p.player2_name || null,
             team: p.team || null,
             seed: p.seed || null,
             display_order: i,
-          })),
+          })) as never, // player1_name/player2_name chưa có trong generated types
         )
         .select();
 
