@@ -154,12 +154,15 @@ export function parseCourtsInput(input: string): number[] {
 }
 
 /**
- * Assign courts to matches with STRICT home court preference
- * Algorithm:
- * 1. Groups with home courts: ALL matches go to home court (no balancing)
- * 2. Unassigned groups: matches are distributed across all courts for load balance
- * 
- * This ensures "1 group = 1 court" when possible
+ * Assign courts to matches: "1 group = 1 home court" is the priority, AND any
+ * SPARE courts (more courts than groups) are shared to balance load so none sit
+ * idle. A group's matches stay on [its home court + the spare courts], preferring
+ * the home court on ties (least-loaded otherwise). Groups with no home court
+ * (more groups than courts) balance across every court — same as before.
+ *
+ * Example — 3 groups, courts [1,2,3,4]: groups get home courts 1,2,3; court 4 is
+ * a shared spare, so the round-robin matches spread across all 4 courts instead
+ * of leaving court 4 empty.
  */
 export interface MatchWithCourt {
   matchIndex: number;
@@ -174,47 +177,29 @@ export function assignCourtsToMatches<T extends { groupIndex: number }>(
 ): Map<number, number> {
   if (courts.length === 0) return new Map();
 
-  // Assign home courts to groups (1 group = 1 court)
+  // 1 group = 1 home court (priority). Courts beyond #groups are shared spares.
+  const homeCount = Math.min(numGroups, courts.length);
   const homeCourtByGroup = new Map<number, number>();
-  for (let i = 0; i < Math.min(numGroups, courts.length); i++) {
-    homeCourtByGroup.set(i, courts[i]);
-  }
+  for (let i = 0; i < homeCount; i++) homeCourtByGroup.set(i, courts[i]);
+  const spareCourts = courts.slice(homeCount);
 
-  // Track load per court for unassigned groups
   const loadCount = new Map<number, number>();
   courts.forEach(c => loadCount.set(c, 0));
-
-  // Result: matchIndex -> courtId
   const result = new Map<number, number>();
 
-  // Pass 1: Assign matches from groups WITH home court to their home court
   for (let i = 0; i < matches.length; i++) {
-    const match = matches[i];
-    const homeCourt = homeCourtByGroup.get(match.groupIndex);
-    
-    if (homeCourt !== undefined) {
-      // Group has home court - ALWAYS use it (strict 1 group = 1 court)
-      result.set(i, homeCourt);
-      loadCount.set(homeCourt, (loadCount.get(homeCourt) || 0) + 1);
+    const homeCourt = homeCourtByGroup.get(matches[i].groupIndex);
+    // Home court + shared spares (home preferred on ties). No home court (more
+    // groups than courts) → balance across all courts.
+    const candidates = homeCourt !== undefined ? [homeCourt, ...spareCourts] : courts;
+    let best = candidates[0];
+    let bestLoad = loadCount.get(best) ?? 0;
+    for (const c of candidates) {
+      const l = loadCount.get(c) ?? 0;
+      if (l < bestLoad) { best = c; bestLoad = l; }
     }
-  }
-
-  // Pass 2: Assign matches from groups WITHOUT home court - load balance across all courts
-  for (let i = 0; i < matches.length; i++) {
-    const match = matches[i];
-    const homeCourt = homeCourtByGroup.get(match.groupIndex);
-    
-    if (homeCourt === undefined) {
-      // Unassigned group - find court with minimum load
-      const minLoad = Math.min(...Array.from(loadCount.values()));
-      const courtsWithMinLoad = courts.filter(c => loadCount.get(c) === minLoad);
-      
-      // Tie-break by court order (user input order)
-      const assignedCourt = courtsWithMinLoad[0];
-      
-      result.set(i, assignedCourt);
-      loadCount.set(assignedCourt, (loadCount.get(assignedCourt) || 0) + 1);
-    }
+    result.set(i, best);
+    loadCount.set(best, bestLoad + 1);
   }
 
   return result;
