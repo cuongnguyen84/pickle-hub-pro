@@ -122,6 +122,18 @@ export default function QuickTableRefereeScoring() {
   }, [loaded, state, storeKey]);
   useEffect(() => { if (state) localStorage.setItem(storeKey, JSON.stringify(state)); }, [state, storeKey]);
 
+  // Live-persist the running score (score1/score2, status stays in-progress) so
+  // spectators on the table view see it update in realtime. Final write +
+  // winner + standings happen on finish via updateMatchScore.
+  const liveA = state?.a;
+  const liveB = state?.b;
+  useEffect(() => {
+    if (liveA == null || liveB == null || !loaded) return;
+    void supabase.from('quick_table_matches')
+      .update({ score1: liveA, score2: liveB } as never).eq('id', loaded.matchId)
+      .then(() => undefined, () => undefined);
+  }, [liveA, liveB, loaded]);
+
   // notes (2 sides) restore + persist
   useEffect(() => {
     try { const raw = localStorage.getItem(noteKey); if (raw) { const o = JSON.parse(raw) as Sides & { a?: string; b?: string }; setNoteA((o as { a?: string }).a || ''); setNoteB((o as { b?: string }).b || ''); } } catch { /* ignore */ }
