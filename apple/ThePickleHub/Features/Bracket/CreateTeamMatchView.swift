@@ -22,10 +22,9 @@ final class CreateTeamMatchModel {
     var useDupr = false
     var duprMaxMale: Double = 5.0
     var duprMaxFemale: Double = 4.5
-    // Chế độ tính theo TỔNG điểm: trận = 1 game tới t = số game × điểm/game (tới t là thắng, không deuce).
+    // Chế độ tính theo TỔNG điểm: mỗi game con đấu tới `pointsPerGame`; hết các game, bên nào TỔNG điểm cao hơn thắng (KHÔNG phải đạt mốc cố định).
     var totalScoreMode = false
     var pointsPerGame = 7
-    var totalPoints: Int { templates.count * pointsPerGame }
     var requireMinGames = false
     var templates: [Template] = CreateTeamMatchModel.defaultTemplates(4)
     var hasDreambreaker = false
@@ -250,7 +249,7 @@ struct CreateTeamMatchView: View {
             Text("\(model.templates.count) game\(model.isEvenGames ? " · số chẵn → có thể cần DreamBreaker" : " · số lẻ → ván cuối quyết định")")
                 .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
 
-            toggleRow("Tính theo tổng điểm", "Trận chơi 1 mạch tới tổng điểm, thay vì thắng/thua từng game",
+            toggleRow("Tính theo tổng điểm", "Cộng dồn điểm các game; bên nào tổng cao hơn thắng, thay vì thắng/thua từng game",
                       Binding(get: { model.totalScoreMode }, set: { model.totalScoreMode = $0 }))
             if model.totalScoreMode {
                 field("Điểm mỗi game con") {
@@ -261,7 +260,7 @@ struct CreateTeamMatchView: View {
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
                     .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
                 }
-                infoCard(gold: false, "Trận chơi tới \(model.totalPoints) điểm = \(model.templates.count) game × \(model.pointsPerGame). Tới \(model.totalPoints) là thắng (không deuce).")
+                infoCard(gold: false, "Mỗi cặp thi đấu tới \(model.pointsPerGame) điểm. Hết \(model.templates.count) cặp, bên nào tổng số điểm lớn hơn là thắng.")
             }
 
             ForEach(Array(model.templates.enumerated()), id: \.element.id) { idx, tpl in
