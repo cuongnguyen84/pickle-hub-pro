@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   assignCourtsToMatches, generateCircleMethodMatches, parseCourtsInput,
-  mergeMatchesByRound, optimizeMatchOrder, calculateMatchTimes,
+  mergeMatchesByRound, optimizeMatchOrder, calculateMatchTimes, scheduleMatches,
 } from '@/lib/round-robin';
+import type { SchedulableMatch } from '@/lib/round-robin';
 
 const counts = (assign: Map<number, number>) => {
   const c = new Map<number, number>();
@@ -113,6 +114,75 @@ describe('optimizeMatchOrder', () => {
     const out = optimizeMatchOrder(m);
     expect(out).toHaveLength(4); // ran without error; index 2 no longer all-'a' streak
     expect(out.filter((x) => x.player1 === 'a' || x.player2 === 'a')).toHaveLength(3);
+  });
+});
+
+describe('scheduleMatches — pair-aware (the d941747e7ab4 bug)', () => {
+  // One group of 5 pairs as a naive nested-loop order (the broken data):
+  // p0 vs all, then p1 vs all, ... — pivot pair appears in 4 consecutive rows.
+  const naiveGroup = (g: number, base: number): SchedulableMatch[] => {
+    const P = [0, 1, 2, 3, 4].map((i) => `g${g}p${i}`);
+    const out: SchedulableMatch[] = [];
+    let n = base;
+    for (let i = 0; i < P.length; i++)
+      for (let j = i + 1; j < P.length; j++)
+        out.push({ matchId: `m${n++}`, player1: P[i], player2: P[j], groupIndex: g });
+    return out;
+  };
+
+  const playersAt = (sched: ReturnType<typeof scheduleMatches>, all: SchedulableMatch[]) => {
+    const byId = new Map(all.map((m) => [m.matchId, m]));
+    // slot -> set of players
+    const slotPlayers = new Map<number, string[]>();
+    for (const s of sched) {
+      const m = byId.get(s.matchId)!;
+      const arr = slotPlayers.get(s.slot) ?? [];
+      arr.push(m.player1!, m.player2!);
+      slotPlayers.set(s.slot, arr);
+    }
+    return slotPlayers;
+  };
+
+  it('never double-books a player into the same time slot', () => {
+    const all = [...naiveGroup(0, 0), ...naiveGroup(1, 100), ...naiveGroup(2, 200)];
+    const sched = scheduleMatches(all, [1, 2, 3, 4], 3, '08:30', 20);
+    for (const [, players] of playersAt(sched, all)) {
+      expect(players.length).toBe(new Set(players).size); // no repeat in a slot
+    }
+  });
+
+  it('never schedules two matches on the same court at the same time', () => {
+    const all = [...naiveGroup(0, 0), ...naiveGroup(1, 100), ...naiveGroup(2, 200)];
+    const sched = scheduleMatches(all, [1, 2, 3, 4], 3, '08:30', 20);
+    const seen = new Set<string>();
+    for (const s of sched) {
+      const key = `${s.court}:${s.slot}`;
+      expect(seen.has(key)).toBe(false);
+      seen.add(key);
+    }
+  });
+
+  it('display_order: no pair appears in more than 2 consecutive rows', () => {
+    const all = [...naiveGroup(0, 0), ...naiveGroup(1, 100), ...naiveGroup(2, 200)];
+    const sched = scheduleMatches(all, [1, 2, 3, 4], 3, '08:30', 20);
+    const byId = new Map(all.map((m) => [m.matchId, m]));
+    const ordered = [...sched].sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((s) => byId.get(s.matchId)!);
+    for (const p of new Set(all.flatMap((m) => [m.player1!, m.player2!]))) {
+      let run = 0;
+      for (const m of ordered) {
+        run = (m.player1 === p || m.player2 === p) ? run + 1 : 0;
+        expect(run).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+
+  it('home court preferred; spares shared; empty courts → []', () => {
+    const all = naiveGroup(0, 0);
+    const sched = scheduleMatches(all, [1, 2, 3, 4], 3, null, 20);
+    // group 0 home = court 1; may overflow to spare court 4 only
+    for (const s of sched) expect([1, 4]).toContain(s.court);
+    expect(scheduleMatches(all, [], 3, '08:30', 20)).toEqual([]);
   });
 });
 

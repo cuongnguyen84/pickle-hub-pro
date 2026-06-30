@@ -249,3 +249,120 @@ export function calculateMatchTimes(
 
   return result;
 }
+
+// ---------------------------------------------------------------------------
+// Pair-aware scheduler
+// ---------------------------------------------------------------------------
+// The legacy assignCourtsToMatches + calculateMatchTimes pair only knew a
+// match's groupIndex, never WHICH players were on court. So two matches sharing
+// a player could land on different courts in the same time slot — a pair being
+// asked to play on two courts at once (and, in the match list, appearing in a
+// long consecutive run). This scheduler is the root-cause fix: it tracks player
+// availability per time slot, so a pair never plays twice in one slot. Because
+// display_order is then written in (slot, court) play-order and a pair plays at
+// most once per slot, a pair can appear in at most 2 consecutive list rows.
+
+export interface SchedulableMatch {
+  matchId: string;
+  player1: string | null;
+  player2: string | null;
+  groupIndex: number;
+}
+
+export interface ScheduledMatch {
+  matchId: string;
+  court: number;
+  slot: number;
+  startAt: string | null;
+  displayOrder: number;
+}
+
+export function scheduleMatches(
+  matches: SchedulableMatch[],
+  courts: number[],
+  numGroups: number,
+  startTime: string | null,
+  matchDurationMinutes = 20,
+): ScheduledMatch[] {
+  if (courts.length === 0 || matches.length === 0) return [];
+
+  // 1 group = 1 home court (priority); courts beyond #groups are shared spares.
+  const homeCount = Math.min(numGroups, courts.length);
+  const homeCourtByGroup = new Map<number, number>();
+  for (let i = 0; i < homeCount; i++) homeCourtByGroup.set(i, courts[i]);
+  const spareCourts = courts.slice(homeCount);
+
+  const courtSlotBusy = new Set<string>();   // `${court}:${slot}`
+  const playerSlotBusy = new Set<string>();  // `${playerId}:${slot}`
+  const load = new Map<number, number>();
+  courts.forEach((c) => load.set(c, 0));
+
+  const free = (court: number, slot: number, p1: string | null, p2: string | null) =>
+    !courtSlotBusy.has(`${court}:${slot}`) &&
+    !(p1 && playerSlotBusy.has(`${p1}:${slot}`)) &&
+    !(p2 && playerSlotBusy.has(`${p2}:${slot}`));
+
+  const picked = new Map<string, { court: number; slot: number }>();
+
+  for (const m of matches) {
+    const home = homeCourtByGroup.get(m.groupIndex);
+    // Home court first, then shared spares (preserves "ưu tiên 1 bảng/sân").
+    const candidates = home !== undefined ? [home, ...spareCourts] : courts;
+
+    let best: { court: number; slot: number } | null = null;
+    for (const court of candidates) {
+      let slot = 0;
+      while (!free(court, slot, m.player1, m.player2)) slot++;
+      // Prefer earliest slot; tie → least-loaded court; tie → candidate order (home first).
+      if (
+        best === null ||
+        slot < best.slot ||
+        (slot === best.slot && (load.get(court) ?? 0) < (load.get(best.court) ?? 0))
+      ) {
+        best = { court, slot };
+      }
+    }
+
+    const chosen = best!;
+    picked.set(m.matchId, chosen);
+    courtSlotBusy.add(`${chosen.court}:${chosen.slot}`);
+    if (m.player1) playerSlotBusy.add(`${m.player1}:${chosen.slot}`);
+    if (m.player2) playerSlotBusy.add(`${m.player2}:${chosen.slot}`);
+    load.set(chosen.court, (load.get(chosen.court) ?? 0) + 1);
+  }
+
+  // Parse start time once for slot → clock time.
+  let startMins: number | null = null;
+  if (startTime) {
+    const [h, min] = startTime.split(':').map((s) => parseInt(s, 10));
+    if (!isNaN(h) && !isNaN(min)) startMins = h * 60 + min;
+  }
+  const slotToTime = (slot: number): string | null => {
+    if (startMins === null) return null;
+    const t = startMins + slot * matchDurationMinutes;
+    const hh = Math.floor(t / 60) % 24;
+    const mm = t % 60;
+    return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
+  };
+
+  // display_order follows play order: by slot, then court.
+  const ordered = [...matches].sort((a, b) => {
+    const pa = picked.get(a.matchId)!;
+    const pb = picked.get(b.matchId)!;
+    return pa.slot - pb.slot || pa.court - pb.court;
+  });
+
+  const displayOrderByMatch = new Map<string, number>();
+  ordered.forEach((m, i) => displayOrderByMatch.set(m.matchId, i));
+
+  return matches.map((m) => {
+    const p = picked.get(m.matchId)!;
+    return {
+      matchId: m.matchId,
+      court: p.court,
+      slot: p.slot,
+      startAt: slotToTime(p.slot),
+      displayOrder: displayOrderByMatch.get(m.matchId)!,
+    };
+  });
+}
