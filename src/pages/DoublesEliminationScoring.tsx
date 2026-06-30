@@ -7,6 +7,7 @@ import { useDoublesElimination } from "@/hooks/useDoublesElimination";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { submitDoublesEliminationMatch } from "@/lib/dupr/submitDoublesEliminationMatch";
+import { RefereeScoringScreen, type RefereeLoaded } from "@/components/referee/RefereeScoringScreen";
 import { Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
 import {
   AlertDialog,
@@ -165,6 +166,7 @@ export default function DoublesEliminationScoring() {
 
   const [showEndDialog, setShowEndDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [refereeing, setRefereeing] = useState(false);
 
   // ─── Bilingual short strings (inline ternary, matching PR A pattern) ─────
   const lang = language;
@@ -390,18 +392,20 @@ export default function DoublesEliminationScoring() {
     }
   };
 
-  const handleSaveGame = async () => {
+  const handleSaveGame = async (overrideA?: number, overrideB?: number) => {
     if (!match || !canEdit) return;
-    if (localScoreA === localScoreB) {
+    const sa = overrideA ?? localScoreA;
+    const sb = overrideB ?? localScoreB;
+    if (sa === sb) {
       toast({ title: tx.scoresMustDiffer, variant: "destructive" });
       return;
     }
 
     const newGame: GameScore = {
       game: currentGameNumber,
-      score_a: localScoreA,
-      score_b: localScoreB,
-      winner: localScoreA > localScoreB ? 'a' : 'b',
+      score_a: sa,
+      score_b: sb,
+      winner: sa > sb ? 'a' : 'b',
     };
 
     const existingGames = [...(match.games || [])];
@@ -428,7 +432,7 @@ export default function DoublesEliminationScoring() {
       await supabase
         .from('doubles_elimination_matches')
         .update({
-          games: existingGames as any,
+          games: existingGames as never,
           games_won_a: winsA,
           games_won_b: winsB,
           winner_id: winnerId,
@@ -483,7 +487,7 @@ export default function DoublesEliminationScoring() {
       await supabase
         .from('doubles_elimination_matches')
         .update({
-          games: existingGames as any,
+          games: existingGames as never,
           games_won_a: winsA,
           games_won_b: winsB,
           status: 'live',
@@ -567,6 +571,32 @@ export default function DoublesEliminationScoring() {
     await tryDuprSubmit();
     navigate(`/tools/doubles-elimination/${tournament?.share_id}`);
     setShowEndDialog(false);
+  };
+
+  // ─── Referee live-scoring (engine-driven; feeds the existing save flow) ───
+  const refLoaded: RefereeLoaded | null = match && teamA && teamB ? {
+    matchId: match.id,
+    teamAName: teamA.team_name,
+    teamBName: teamB.team_name,
+    playersA: teamA.player2_name ? [teamA.player1_name, teamA.player2_name] : null,
+    playersB: teamB.player2_name ? [teamB.player1_name, teamB.player2_name] : null,
+    isDoubles: true,
+    backHref: '',
+  } : null;
+  const refFinish = async (a: number, b: number) => {
+    setLocalScoreA(a); setLocalScoreB(b);
+    await handleSaveGame(a, b);
+    setRefereeing(false);
+  };
+  const refLiveScore = (a: number, b: number) => {
+    if (!match) return;
+    void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).then(() => undefined, () => undefined);
+  };
+  const refClaimLive = async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (data.user && match) await supabase.from('doubles_elimination_matches').update({ live_referee_id: data.user.id }).eq('id', match.id).is('live_referee_id', null);
+    } catch { /* ignore */ }
   };
 
   // ─── Loading + 404 states ────────────────────────────────────────────────
@@ -1103,6 +1133,18 @@ export default function DoublesEliminationScoring() {
                 </div>
               </div>
 
+              {/* Referee live-scoring — engine-driven board, fills this game's score */}
+              {canEdit && refLoaded && (
+                <button
+                  type="button"
+                  className="tl-btn green"
+                  onClick={() => setRefereeing(true)}
+                  style={{ width: '100%', justifyContent: 'center', padding: '13px 14px', marginTop: 10 }}
+                >
+                  {lang === 'vi' ? 'CHẤM TRỰC TIẾP' : 'LIVE SCORING'}
+                </button>
+              )}
+
               {/* Action buttons — sticky bottom dock with safe-area padding */}
               <div
                 style={{
@@ -1128,7 +1170,7 @@ export default function DoublesEliminationScoring() {
                   <button
                     type="button"
                     className="tl-btn green"
-                    onClick={handleSaveGame}
+                    onClick={() => handleSaveGame()}
                     disabled={localScoreA === localScoreB}
                     style={{ flex: 1, justifyContent: 'center', padding: '12px 14px' }}
                   >
@@ -1242,6 +1284,20 @@ export default function DoublesEliminationScoring() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {refereeing && refLoaded && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
+          <RefereeScoringScreen
+            loaded={refLoaded}
+            vi={lang === 'vi'}
+            persistKey={`de-ref:${refLoaded.matchId}`}
+            onLiveScore={refLiveScore}
+            onClaimLive={refClaimLive}
+            onFinish={(a, b) => refFinish(a, b)}
+            onBack={() => setRefereeing(false)}
+          />
+        </div>
+      )}
     </TheLineLayout>
   );
 }
