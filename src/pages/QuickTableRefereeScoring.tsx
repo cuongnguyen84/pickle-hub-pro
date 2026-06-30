@@ -89,13 +89,15 @@ export default function QuickTableRefereeScoring() {
           .from('quick_tables').select('id, share_id, name, is_doubles')
           .eq('id', m.table_id).single();
         const ids = [m.player1_id, m.player2_id].filter(Boolean) as string[];
-        const { data: ps } = await supabase
-          .from('quick_table_players').select('id, name, player1_name, player2_name')
-          .in('id', ids);
-        const byId = new Map((ps || []).map((p) => [p.id, p]));
+        // select('*') + cast: player1_name/player2_name chưa có trong generated types.
+        const { data: psRaw } = await supabase
+          .from('quick_table_players').select('*').in('id', ids);
+        type PRow = { id: string; name: string; player1_name: string | null; player2_name: string | null };
+        const ps = (psRaw ?? []) as unknown as PRow[];
+        const byId = new Map(ps.map((p) => [p.id, p]));
         const p1 = m.player1_id ? byId.get(m.player1_id) : undefined;
         const p2 = m.player2_id ? byId.get(m.player2_id) : undefined;
-        const names = (p: typeof p1): [string, string] | null =>
+        const names = (p: PRow | undefined): [string, string] | null =>
           p?.player1_name && p?.player2_name ? [p.player1_name, p.player2_name] : null;
         setLoaded({
           matchId,
@@ -441,7 +443,7 @@ function ConfirmOverlay(props: { vi: boolean; loaded: Loaded; state: ScoreState;
 // ── Small UI helpers ──
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, zIndex: 50 }}>
+    <div className="bg-black/60" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, zIndex: 50 }}>
       <div style={{ ...card, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: 360, width: '100%' }}>{children}</div>
     </div>
   );
