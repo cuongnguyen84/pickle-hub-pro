@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight, StickyNote } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuickTableMutations } from '@/hooks/useQuickTableMutations';
 import { useI18n } from '@/i18n';
@@ -54,6 +54,26 @@ export default function QuickTableRefereeScoring() {
   const [showSwitch, setShowSwitch] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [note, setNote] = useState('');
+  const [showNote, setShowNote] = useState(false);
+  const noteKey = `qt-ref-note:${matchId}`;
+
+  // Auto landscape + fullscreen on phone (Android/Chrome; iOS Safari no-ops gracefully).
+  const goLandscape = useCallback(async () => {
+    try {
+      const el = document.documentElement as HTMLElement & { requestFullscreen?: () => Promise<void> };
+      if (el.requestFullscreen) await el.requestFullscreen();
+      const o = (screen as Screen & { orientation?: { lock?: (s: string) => Promise<void> } }).orientation;
+      if (o?.lock) await o.lock('landscape');
+    } catch { /* unsupported — board works portrait too */ }
+  }, []);
+  const exitLandscape = useCallback(() => {
+    try {
+      (screen as Screen & { orientation?: { unlock?: () => void } }).orientation?.unlock?.();
+      if (document.fullscreenElement) document.exitFullscreen?.();
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => () => exitLandscape(), [exitLandscape]);
 
   // ── Load match + players ──
   useEffect(() => {
@@ -106,6 +126,12 @@ export default function QuickTableRefereeScoring() {
     if (state) localStorage.setItem(storeKey, JSON.stringify(state));
   }, [state, storeKey]);
 
+  // ── Note: restore + persist ──
+  useEffect(() => { try { const n = localStorage.getItem(noteKey); if (n) setNote(n); } catch { /* ignore */ } }, [noteKey]);
+  useEffect(() => {
+    try { if (note) localStorage.setItem(noteKey, note); else localStorage.removeItem(noteKey); } catch { /* ignore */ }
+  }, [note, noteKey]);
+
   const rotationCapable = useMemo(
     () => !!loaded && mode === 'sideOut' && loaded.isDoubles && !!loaded.playersA && !!loaded.playersB,
     [loaded, mode],
@@ -121,7 +147,8 @@ export default function QuickTableRefereeScoring() {
       firstServerIdx: setupServerIdx ?? 0, firstReceiverIdx: setupReceiverIdx ?? 0,
     });
     setHistory([]); setSwitchAnnounced(false); setState(s);
-  }, [loaded, mode, target, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable]);
+    void goLandscape();
+  }, [loaded, mode, target, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape]);
 
   const tap = useCallback((side: ServeSide) => {
     if (!state || isGameOver(state)) return;
@@ -150,12 +177,20 @@ export default function QuickTableRefereeScoring() {
     setSaving(true);
     try {
       await updateMatchScore(loaded.matchId, s.a, s.b);
+      if (note.trim()) {
+        try {
+          await supabase.from('quick_table_matches')
+            .update({ referee_note: note.trim() } as never).eq('id', loaded.matchId);
+        } catch { /* note is best-effort */ }
+      }
       localStorage.removeItem(storeKey);
+      localStorage.removeItem(noteKey);
+      exitLandscape();
       navigate(`/tools/quick-tables/${loaded.shareId}?tab=groups`);
     } finally {
       setSaving(false);
     }
-  }, [loaded, navigate, storeKey, updateMatchScore]);
+  }, [loaded, navigate, storeKey, noteKey, updateMatchScore, note, exitLandscape]);
 
   if (error) return <Centered>{error}</Centered>;
   if (!loaded) return <Centered>{vi ? 'Đang tải…' : 'Loading…'}</Centered>;
@@ -170,6 +205,12 @@ export default function QuickTableRefereeScoring() {
         <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12, color: 'var(--tl-fg-3)' }}>
           {vi ? 'CHẤM TRỰC TIẾP' : 'LIVE SCORING'}
         </span>
+        <div style={{ flex: 1 }} />
+        <button type="button" className="tl-btn" style={{ padding: '6px 10px', ...(note.trim() ? { color: 'var(--tl-green)', borderColor: 'var(--tl-green)' } : {}) }}
+          onClick={() => setShowNote(true)}>
+          <StickyNote className="w-4 h-4" />
+          <span className="hidden sm:inline">{vi ? 'Ghi chú' : 'Note'}</span>
+        </button>
       </header>
 
       {!state ? (
@@ -185,6 +226,7 @@ export default function QuickTableRefereeScoring() {
           onTap={tap} onUndo={undo} canUndo={history.length > 0} onEnd={() => setConfirming(true)} />
       )}
 
+      {showNote && <NoteOverlay vi={vi} note={note} onChange={setNote} onClose={() => setShowNote(false)} />}
       {showSwitch && <SwitchOverlay vi={vi} point={sideSwitchPoint(target)} onDone={() => setShowSwitch(false)} />}
       {confirming && state && (
         <ConfirmOverlay vi={vi} loaded={loaded} state={state} saving={saving}
@@ -352,6 +394,20 @@ function TapZone(props: { name: string; score: number; serving: boolean; onClick
 }
 
 // ── Overlays ──
+function NoteOverlay(props: { vi: boolean; note: string; onChange: (v: string) => void; onClose: () => void }) {
+  return (
+    <Overlay>
+      <div style={{ alignSelf: 'flex-start', fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, letterSpacing: '0.08em', fontSize: 12.5, color: 'var(--tl-fg-3)' }}>
+        {props.vi ? 'GHI CHÚ TRỌNG TÀI' : 'REFEREE NOTE'}
+      </div>
+      <textarea value={props.note} onChange={(e) => props.onChange(e.target.value)} rows={5} autoFocus
+        placeholder={props.vi ? 'Sự cố, hội ý, khiếu nại…' : 'Incidents, timeouts, disputes…'}
+        style={{ width: '100%', resize: 'vertical', background: 'var(--tl-bg)', color: 'var(--tl-fg)', border: '1px solid var(--tl-border)', borderRadius: 'var(--tl-radius)', padding: 10, fontFamily: 'inherit', fontSize: 14, outline: 'none' }} />
+      <button type="button" className="tl-btn green" style={{ width: '100%', justifyContent: 'center', padding: 13 }} onClick={props.onClose}>{props.vi ? 'Xong' : 'Done'}</button>
+    </Overlay>
+  );
+}
+
 function SwitchOverlay(props: { vi: boolean; point: number; onDone: () => void }) {
   return (
     <Overlay>
