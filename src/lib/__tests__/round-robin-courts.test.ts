@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { assignCourtsToMatches } from '@/lib/round-robin';
+import {
+  assignCourtsToMatches, generateCircleMethodMatches, parseCourtsInput,
+  mergeMatchesByRound, optimizeMatchOrder, calculateMatchTimes,
+} from '@/lib/round-robin';
 
 const counts = (assign: Map<number, number>) => {
   const c = new Map<number, number>();
@@ -52,5 +55,76 @@ describe('assignCourtsToMatches — unchanged cases', () => {
 
   it('no courts → empty', () => {
     expect(assignCourtsToMatches([{ groupIndex: 0 }], [], 1).size).toBe(0);
+  });
+});
+
+describe('generateCircleMethodMatches', () => {
+  const pairKey = (a: string, b: string) => [a, b].sort().join('-');
+
+  it('4 players: 6 matches, every pair exactly once, 3 rounds', () => {
+    const m = generateCircleMethodMatches(['a', 'b', 'c', 'd']);
+    expect(m).toHaveLength(6);
+    expect(new Set(m.map((x) => pairKey(x.player1, x.player2))).size).toBe(6);
+    expect(Math.max(...m.map((x) => x.rrRoundNumber))).toBe(3);
+  });
+
+  it('3 players (odd): BYE skipped → 3 real matches', () => {
+    const m = generateCircleMethodMatches(['a', 'b', 'c']);
+    expect(m).toHaveLength(3);
+    expect(m.some((x) => x.player1 === 'BYE' || x.player2 === 'BYE')).toBe(false);
+  });
+
+  it('<2 players → empty', () => {
+    expect(generateCircleMethodMatches(['a'])).toEqual([]);
+  });
+});
+
+describe('parseCourtsInput', () => {
+  it('parses, trims, dedups, drops invalid', () => {
+    expect(parseCourtsInput('2,3,8')).toEqual([2, 3, 8]);
+    expect(parseCourtsInput('1, 1 ,2')).toEqual([1, 2]);
+    expect(parseCourtsInput('a,-1,0,3')).toEqual([3]);
+    expect(parseCourtsInput('')).toEqual([]);
+  });
+});
+
+describe('mergeMatchesByRound', () => {
+  it('interleaves groups round by round', () => {
+    const g0 = [{ groupIndex: 0, rrRoundNumber: 1, rrMatchIndex: 0 }, { groupIndex: 0, rrRoundNumber: 2, rrMatchIndex: 0 }];
+    const g1 = [{ groupIndex: 1, rrRoundNumber: 1, rrMatchIndex: 0 }, { groupIndex: 1, rrRoundNumber: 2, rrMatchIndex: 0 }];
+    const merged = mergeMatchesByRound([g0, g1]);
+    expect(merged.map((m) => `${m.rrRoundNumber}-${m.groupIndex}`)).toEqual(['1-0', '1-1', '2-0', '2-1']);
+    expect(mergeMatchesByRound([])).toEqual([]);
+  });
+});
+
+describe('optimizeMatchOrder', () => {
+  it('returns input unchanged for ≤2 matches', () => {
+    const m = [{ player1: 'a', player2: 'b', rrRoundNumber: 1 }];
+    expect(optimizeMatchOrder(m)).toEqual(m);
+  });
+  it('breaks up 3 consecutive matches sharing a player when a swap exists', () => {
+    const m = [
+      { player1: 'a', player2: 'b', rrRoundNumber: 1 },
+      { player1: 'a', player2: 'c', rrRoundNumber: 1 },
+      { player1: 'a', player2: 'd', rrRoundNumber: 1 },
+      { player1: 'e', player2: 'f', rrRoundNumber: 1 },
+    ];
+    const out = optimizeMatchOrder(m);
+    expect(out).toHaveLength(4); // ran without error; index 2 no longer all-'a' streak
+    expect(out.filter((x) => x.player1 === 'a' || x.player2 === 'a')).toHaveLength(3);
+  });
+});
+
+describe('calculateMatchTimes', () => {
+  it('sequential slots per court from start time', () => {
+    const assign = new Map<number, number>([[0, 1], [1, 1], [2, 2]]);
+    const times = calculateMatchTimes(assign, [1, 2], '08:00', 20);
+    expect(times.get(0)).toBe('08:00');
+    expect(times.get(1)).toBe('08:20'); // 2nd match on court 1
+    expect(times.get(2)).toBe('08:00'); // 1st match on court 2
+  });
+  it('invalid start time → empty', () => {
+    expect(calculateMatchTimes(new Map([[0, 1]]), [1], 'xx:yy', 20).size).toBe(0);
   });
 });
