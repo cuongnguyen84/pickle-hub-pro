@@ -601,6 +601,20 @@ private struct DEScoreSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var rows: [(a: String, b: String)]
+    // Referee live-scoring (doubles elim has no fixed target → referee picks it).
+    @State private var refMode: ScoringMode = .rally
+    @State private var refTarget = 11
+    @State private var refereeing = false
+
+    /// Next game without a decided score (for best-of); BO1 → row 0.
+    private var nextGameIdx: Int {
+        rows.firstIndex { Int($0.a) == nil || Int($0.b) == nil || $0.a == $0.b } ?? max(0, rows.count - 1)
+    }
+    private func teamPlayers(_ id: UUID?) -> [String]? {
+        guard let t = detail.team(id) else { return nil }
+        let names = [t.player1Name, t.player2Name].compactMap { $0?.nonEmpty }
+        return names.isEmpty ? nil : names
+    }
 
     init(detail: DEDetail, match: DEMatch, onSave: @escaping ([(Int, Int)]) -> Void) {
         self.detail = detail
@@ -634,10 +648,28 @@ private struct DEScoreSheet: View {
                     ForEach(rows.indices, id: \.self) { i in
                         gameRow(i)
                     }
+                    refereeSection
                 }
                 .padding(20)
             }
             .background(TLColor.bg)
+            .fullScreenCover(isPresented: $refereeing) {
+                RefereeScoringView(
+                    teamAName: detail.teamLabel(match.teamAID),
+                    teamBName: detail.teamLabel(match.teamBID),
+                    playersA: teamPlayers(match.teamAID),
+                    playersB: teamPlayers(match.teamBID),
+                    mode: refMode, isSingles: false, winTarget: refTarget,
+                    onLiveScore: { a, b in
+                        Task { try? await DoublesElimRepository().updateLiveScore(matchID: match.id, scoreA: a, scoreB: b) }
+                    },
+                    onClaimLive: {
+                        Task { try? await DoublesElimRepository().claimLive(matchID: match.id) }
+                    }) { a, b, _ in
+                    rows[nextGameIdx] = (a: String(a), b: String(b))
+                    Haptics.light(); onSave(pairs)
+                }
+            }
             .navigationTitle(match.isBestOf ? "Nhập tỉ số (BO\(match.bestOf))" : "Nhập tỉ số")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -661,6 +693,32 @@ private struct DEScoreSheet: View {
             Text("vs").font(TLFont.mono(11)).foregroundStyle(TLColor.fg4)
             Text(detail.teamLabel(match.teamBID)).font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg)
                 .frame(maxWidth: .infinity, alignment: .trailing).lineLimit(1)
+        }
+    }
+
+    /// Referee live-scoring entry — pick scoring mode + win target, then tap to
+    /// score the next game with the engine (auto serve rotation, side-out, etc.).
+    private var refereeSection: some View {
+        VStack(spacing: 12) {
+            Rectangle().fill(TLColor.border).frame(height: 1).padding(.vertical, 2)
+            Picker("", selection: $refMode) {
+                Text("Trực tiếp").tag(ScoringMode.rally)
+                Text("Giao bóng").tag(ScoringMode.sideOut)
+            }.pickerStyle(.segmented)
+            Picker("", selection: $refTarget) {
+                ForEach([11, 15, 21], id: \.self) { Text("Tới \($0)").tag($0) }
+            }.pickerStyle(.segmented)
+            Button { Haptics.light(); refereeing = true } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "play.circle.fill").font(.system(size: 14, weight: .bold))
+                    Text(match.isBestOf ? "CHẤM TRỰC TIẾP (G\(nextGameIdx + 1))" : "CHẤM TRỰC TIẾP")
+                        .font(TLFont.mono(12, .bold)).tracking(0.5)
+                }
+                .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 13)
+                .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 11))
+            }
+            .buttonStyle(.plain)
+            .disabled(!match.hasBothTeams)
         }
     }
 

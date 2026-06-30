@@ -729,6 +729,23 @@ struct TeamMatchRepository {
             .execute()
     }
 
+    /// Đẩy điểm ván hiện tại (chưa completed) để người xem thấy realtime —
+    /// mirror QuickTableRepository.updateLiveScore. Best-effort.
+    func updateGameLiveScore(gameID: UUID, scoreA: Int, scoreB: Int) async throws {
+        struct U: Encodable { let score_a: Int; let score_b: Int }
+        try await client.from("team_match_games")
+            .update(U(score_a: scoreA, score_b: scoreB)).eq("id", value: gameID).execute()
+    }
+
+    /// Claim ván làm LIVE (live_referee_id = user hiện tại) để hiện badge —
+    /// mirror QuickTableRepository.claimLive.
+    func claimGameLive(gameID: UUID) async throws {
+        guard let uid = await currentUserID() else { return }
+        struct U: Encodable { let live_referee_id: String }
+        try await client.from("team_match_games")
+            .update(U(live_referee_id: uid.uuidString.lowercased())).eq("id", value: gameID).execute()
+    }
+
     /// Match-level aggregate write — sends explicit null for winner so a downgraded
     /// match clears its winner (web parity).
     private struct MatchResultUpdate: Encodable {

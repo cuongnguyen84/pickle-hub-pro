@@ -22,6 +22,22 @@ struct DoublesElimRepository {
 
     func currentUserID() async -> UUID? { try? await client.auth.session.user.id }
 
+    /// Đẩy điểm ván hiện tại (chưa completed) cho người xem — mirror
+    /// QuickTableRepository.updateLiveScore. Best-effort.
+    func updateLiveScore(matchID: UUID, scoreA: Int, scoreB: Int) async throws {
+        struct U: Encodable { let score_a: Int; let score_b: Int }
+        try await client.from("doubles_elimination_matches")
+            .update(U(score_a: scoreA, score_b: scoreB)).eq("id", value: matchID).execute()
+    }
+
+    /// Claim trận làm LIVE (live_referee_id = user hiện tại) → badge.
+    func claimLive(matchID: UUID) async throws {
+        guard let uid = await currentUserID() else { return }
+        struct U: Encodable { let live_referee_id: String }
+        try await client.from("doubles_elimination_matches")
+            .update(U(live_referee_id: uid.uuidString.lowercased())).eq("id", value: matchID).execute()
+    }
+
     // MARK: Load
 
     func load(shareID: String) async throws -> DEDetail {

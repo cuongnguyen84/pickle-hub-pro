@@ -220,7 +220,13 @@ struct TeamMatchScoringSheet: View {
                         playersB: model.lineupNameArray(row.game.lineupTeamB),
                         mode: row.game.scoringType == "sideout11" ? .sideOut : .rally,
                         isSingles: row.game.gameType == "WS" || row.game.gameType == "MS",
-                        winTarget: row.game.winTarget) { a, b, _ in
+                        winTarget: row.game.winTarget,
+                        onLiveScore: { a, b in
+                            Task { try? await TeamMatchRepository().updateGameLiveScore(gameID: row.game.id, scoreA: a, scoreB: b) }
+                        },
+                        onClaimLive: {
+                            Task { try? await TeamMatchRepository().claimGameLive(gameID: row.game.id) }
+                        }) { a, b, _ in
                         model.bumpTo(teamA: a, teamB: b)
                         Task { await model.saveSelected(onSaved: onSaved) }
                     }
