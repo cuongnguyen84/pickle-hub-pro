@@ -9,7 +9,7 @@
 // ============================================================================
 
 import { useState } from 'react';
-import { Loader2, UserPlus, Clock, CheckCircle2 } from 'lucide-react';
+import { Loader2, UserPlus, Clock, CheckCircle2, ShieldAlert } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -23,10 +23,7 @@ import {
 } from '@/hooks/useTeamMatchTeams';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useDuprConnection, useInvalidateDuprConnection } from '@/hooks/useDuprConnection';
-import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
-import { DuprSsoModal } from '@/components/dupr/DuprSsoModal';
-import { isDuprEligible } from '@/lib/duprEligibility';
+import { useDuprConnection } from '@/hooks/useDuprConnection';
 import { useI18n } from '@/i18n';
 
 const card: React.CSSProperties = {
@@ -78,14 +75,14 @@ export function TeamJoinPanel({
   const { joinTeam, isJoiningTeam, removeRosterMember, isRemovingMember } = useTeamMatchTeamManagement();
 
   const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [showSso, setShowSso] = useState(false);
 
+  // DUPR is informational only — players join now and can connect DUPR later
+  // (via the header DUPR badge). Never blocks the join.
   const { data: duprConn } = useDuprConnection();
-  const invalidateDupr = useInvalidateDuprConnection();
   const duprMax = gender === 'female' ? duprMaxFemale : duprMaxMale;
   const playerDupr = duprConn?.doubles ?? duprConn?.singles ?? null;
   const duprConnected = !!duprConn?.ssoConnected && playerDupr != null;
-  const eligible = isDuprEligible({ requireDupr, connected: duprConnected, rating: playerDupr, max: duprMax });
+  const duprMaxLabel = duprMax != null ? `≤ ${duprMax.toFixed(1)}` : null;
 
   const txt = {
     joinTitle: vi ? 'Tham gia đội này' : 'Join this team',
@@ -100,6 +97,12 @@ export function TeamJoinPanel({
     onOtherTeam: (name: string) =>
       vi ? `Bạn đang ở đội "${name}" trong giải này.` : `You're already on "${name}" in this tournament.`,
     loginToJoin: vi ? 'Đăng nhập để tham gia đội.' : 'Log in to join a team.',
+    duprConnected: (rating: number) =>
+      vi ? `DUPR của bạn: ${rating.toFixed(2)}` : `Your DUPR: ${rating.toFixed(2)}`,
+    duprLater: (label: string | null) =>
+      vi
+        ? `Giải yêu cầu DUPR${label ? ` ${label}` : ''}. Bạn có thể tham gia trước, kết nối DUPR sau ở phần hồ sơ.`
+        : `This tournament requires DUPR${label ? ` ${label}` : ''}. You can join now and connect DUPR later from your profile.`,
   };
 
   // Hidden for organizer / captain.
@@ -156,13 +159,27 @@ export function TeamJoinPanel({
       </div>
 
       {requireDupr && (
-        <DuprEligibilityCheck
-          ratingSource="dupr"
-          isDoubles
-          allowSinglesFallback
-          maxDupr={duprMax}
-          onConnectDupr={() => setShowSso(true)}
-        />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 8,
+            padding: 12,
+            borderRadius: 'var(--tl-radius)',
+            background: duprConnected ? 'rgba(34,197,94,0.08)' : 'var(--tl-surface)',
+            border: `1px solid ${duprConnected ? 'rgba(34,197,94,0.4)' : 'var(--tl-border)'}`,
+            fontSize: 12.5,
+            lineHeight: 1.5,
+            color: 'var(--tl-fg-2)',
+          }}
+        >
+          {duprConnected ? (
+            <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--tl-green)', flexShrink: 0, marginTop: 1 }} />
+          ) : (
+            <ShieldAlert className="h-4 w-4" style={{ color: 'var(--tl-gold)', flexShrink: 0, marginTop: 1 }} />
+          )}
+          <span>{duprConnected ? txt.duprConnected(playerDupr!) : txt.duprLater(duprMaxLabel)}</span>
+        </div>
       )}
 
       <div>
@@ -189,21 +206,12 @@ export function TeamJoinPanel({
             gender,
           })
         }
-        disabled={isJoiningTeam || !eligible}
+        disabled={isJoiningTeam}
         style={{ justifyContent: 'center' }}
       >
         {isJoiningTeam ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
         {txt.join}
       </button>
-
-      <DuprSsoModal
-        open={showSso}
-        onClose={() => setShowSso(false)}
-        onSuccess={() => {
-          setShowSso(false);
-          invalidateDupr();
-        }}
-      />
     </div>
   );
 }
