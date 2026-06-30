@@ -115,10 +115,16 @@ export default function QuickTableRefereeScoring() {
     })();
   }, [matchId, vi]);
 
-  // restore in-progress game
+  // restore in-progress game (+ its mode/target so the board & side-switch match)
   useEffect(() => {
     if (!loaded || state) return;
-    try { const raw = localStorage.getItem(storeKey); if (raw) setState(JSON.parse(raw) as ScoreState); } catch { /* ignore */ }
+    try {
+      const raw = localStorage.getItem(storeKey);
+      if (raw) {
+        const s = JSON.parse(raw) as ScoreState;
+        setState(s); setMode(s.mode); setTarget(s.winTarget);
+      }
+    } catch { /* ignore */ }
   }, [loaded, state, storeKey]);
   useEffect(() => { if (state) localStorage.setItem(storeKey, JSON.stringify(state)); }, [state, storeKey]);
 
@@ -274,7 +280,7 @@ export default function QuickTableRefereeScoring() {
           setupReceiverIdx={setupReceiverIdx} setSetupReceiverIdx={setSetupReceiverIdx} ready={setupReady} onBegin={begin}
         />
       ) : (
-        <Board vi={vi} loaded={loaded} state={state} target={target} mode={mode}
+        <Board vi={vi} loaded={loaded} state={state} target={target}
           onTap={tap} onUndo={undo} canUndo={history.length > 0} onEnd={() => setConfirming(true)}
           regularTO={regularTO} usedReg={usedReg} usedMed={usedMed} onTimeout={startTO} />
       )}
@@ -370,11 +376,12 @@ function Setup(props: {
 
 // ── Board ──
 function Board(props: {
-  vi: boolean; loaded: Loaded; state: ScoreState; target: number; mode: ScoringMode;
+  vi: boolean; loaded: Loaded; state: ScoreState; target: number;
   onTap: (s: ServeSide) => void; onUndo: () => void; canUndo: boolean; onEnd: () => void;
   regularTO: number; usedReg: Sides; usedMed: Sides; onTimeout: (s: ServeSide, k: 'reg' | 'med') => void;
 }) {
-  const { vi, loaded, state, target, mode } = props;
+  const { vi, loaded, state, target } = props;
+  const mode = state.mode; // authoritative (survives localStorage resume; React `mode` may be stale)
   const server = servingPlayer(state); const recv = receivingPlayer(state); const right = servingSideRight(state);
   const servingName = state.serving === 'a' ? loaded.teamAName : loaded.teamBName;
   const otherSide: ServeSide = state.serving === 'a' ? 'b' : 'a';
