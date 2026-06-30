@@ -23,7 +23,8 @@ import {
 } from '@/hooks/useTeamMatchTeams';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useDuprConnection } from '@/hooks/useDuprConnection';
+import { useDuprConnection, useInvalidateDuprConnection } from '@/hooks/useDuprConnection';
+import { DuprSsoModal } from '@/components/dupr/DuprSsoModal';
 import { useI18n } from '@/i18n';
 
 const card: React.CSSProperties = {
@@ -75,10 +76,12 @@ export function TeamJoinPanel({
   const { joinTeam, isJoiningTeam, removeRosterMember, isRemovingMember } = useTeamMatchTeamManagement();
 
   const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [showSso, setShowSso] = useState(false);
 
-  // DUPR is informational only — players join now and can connect DUPR later
-  // (via the header DUPR badge). Never blocks the join.
+  // DUPR never blocks a player's join — they can join now and connect later.
+  // The connect button is offered as a convenience (modal works inside the sheet).
   const { data: duprConn } = useDuprConnection();
+  const invalidateDupr = useInvalidateDuprConnection();
   const duprMax = gender === 'female' ? duprMaxFemale : duprMaxMale;
   const playerDupr = duprConn?.doubles ?? duprConn?.singles ?? null;
   const duprConnected = !!duprConn?.ssoConnected && playerDupr != null;
@@ -99,10 +102,12 @@ export function TeamJoinPanel({
     loginToJoin: vi ? 'Đăng nhập để tham gia đội.' : 'Log in to join a team.',
     duprConnected: (rating: number) =>
       vi ? `DUPR của bạn: ${rating.toFixed(2)}` : `Your DUPR: ${rating.toFixed(2)}`,
+    duprLaterTitle: vi ? 'Tham gia trước, kết nối DUPR sau' : 'Join now, connect DUPR later',
     duprLater: (label: string | null) =>
       vi
-        ? `Giải yêu cầu DUPR${label ? ` ${label}` : ''}. Bạn có thể tham gia trước, kết nối DUPR sau ở phần hồ sơ.`
-        : `This tournament requires DUPR${label ? ` ${label}` : ''}. You can join now and connect DUPR later from your profile.`,
+        ? `Giải yêu cầu DUPR${label ? ` ${label}` : ''}. Bạn vẫn có thể tham gia đội ngay bây giờ và kết nối DUPR sau.`
+        : `This tournament requires DUPR${label ? ` ${label}` : ''}. You can still join the team now and connect DUPR later.`,
+    connectDupr: vi ? 'Kết nối DUPR' : 'Connect DUPR',
   };
 
   // Hidden for organizer / captain.
@@ -178,7 +183,22 @@ export function TeamJoinPanel({
           ) : (
             <ShieldAlert className="h-4 w-4" style={{ color: 'var(--tl-gold)', flexShrink: 0, marginTop: 1 }} />
           )}
-          <span>{duprConnected ? txt.duprConnected(playerDupr!) : txt.duprLater(duprMaxLabel)}</span>
+          {duprConnected ? (
+            <span>{txt.duprConnected(playerDupr!)}</span>
+          ) : (
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, color: 'var(--tl-fg)', marginBottom: 2 }}>{txt.duprLaterTitle}</div>
+              <div style={{ marginBottom: 10 }}>{txt.duprLater(duprMaxLabel)}</div>
+              <button
+                type="button"
+                className="tl-btn"
+                onClick={() => setShowSso(true)}
+                style={{ padding: '6px 12px', fontSize: 12 }}
+              >
+                {txt.connectDupr}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -212,6 +232,15 @@ export function TeamJoinPanel({
         {isJoiningTeam ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
         {txt.join}
       </button>
+
+      <DuprSsoModal
+        open={showSso}
+        onClose={() => setShowSso(false)}
+        onSuccess={() => {
+          setShowSso(false);
+          invalidateDupr();
+        }}
+      />
     </div>
   );
 }
