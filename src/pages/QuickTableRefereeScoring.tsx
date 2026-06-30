@@ -16,6 +16,9 @@ import {
 interface Loaded {
   matchId: string;
   shareId: string;
+  tableId: string;
+  groupId: string | null;
+  isPlayoff: boolean;
   isDoubles: boolean;
   teamAName: string;
   teamBName: string;
@@ -32,7 +35,7 @@ export default function QuickTableRefereeScoring() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { language } = useI18n();
-  const { updateMatchScore } = useQuickTableMutations();
+  const { updateMatchScore, updatePlayerStats } = useQuickTableMutations();
   const vi = language === 'vi';
   const storeKey = `qt-ref:${matchId}`;
   const noteKey = `qt-ref-note:${matchId}`;
@@ -88,7 +91,7 @@ export default function QuickTableRefereeScoring() {
     (async () => {
       try {
         const { data: m, error: me } = await supabase
-          .from('quick_table_matches').select('id, player1_id, player2_id, table_id').eq('id', matchId).single();
+          .from('quick_table_matches').select('id, player1_id, player2_id, table_id, group_id, is_playoff').eq('id', matchId).single();
         if (me || !m) throw me || new Error('match');
         const { data: tb } = await supabase
           .from('quick_tables').select('id, share_id, name, is_doubles').eq('id', m.table_id).single();
@@ -102,7 +105,9 @@ export default function QuickTableRefereeScoring() {
         const names = (p: PRow | undefined): [string, string] | null =>
           p?.player1_name && p?.player2_name ? [p.player1_name, p.player2_name] : null;
         setLoaded({
-          matchId, shareId: tb?.share_id ?? '', isDoubles: tb?.is_doubles === true,
+          matchId, shareId: tb?.share_id ?? '', tableId: m.table_id,
+          groupId: m.group_id ?? null, isPlayoff: m.is_playoff === true,
+          isDoubles: tb?.is_doubles === true,
           teamAName: p1?.name ?? 'Đội A', teamBName: p2?.name ?? 'Đội B',
           playersA: names(p1), playersB: names(p2),
         });
@@ -160,6 +165,17 @@ export default function QuickTableRefereeScoring() {
   }, [tossing]);
   useEffect(() => () => { if (tossTimer.current) window.clearTimeout(tossTimer.current); }, []);
 
+  // Claim the match as LIVE so the table list shows the badge (only if unclaimed).
+  const claimLive = useCallback(async (id: string) => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        await supabase.from('quick_table_matches')
+          .update({ live_referee_id: data.user.id } as never).eq('id', id).is('live_referee_id', null);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   const begin = useCallback(() => {
     if (!loaded || setupServer == null) return;
     setState(startState({
@@ -169,7 +185,8 @@ export default function QuickTableRefereeScoring() {
     }));
     setHistory([]); setSwitchAnnounced(false);
     void goLandscape();
-  }, [loaded, mode, target, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape]);
+    void claimLive(loaded.matchId);
+  }, [loaded, mode, target, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape, claimLive]);
 
   const tap = useCallback((side: ServeSide) => {
     if (!state || isGameOver(state)) return;
@@ -201,6 +218,10 @@ export default function QuickTableRefereeScoring() {
     setSaving(true);
     try {
       await updateMatchScore(loaded.matchId, s.a, s.b);
+      // Recompute group standings so the score lands in the table (web parity).
+      if (!loaded.isPlayoff && loaded.groupId) {
+        try { await updatePlayerStats(loaded.tableId, loaded.groupId); } catch { /* best-effort */ }
+      }
       const parts: string[] = [];
       if (noteA.trim()) parts.push(`${loaded.teamAName}: ${noteA.trim()}`);
       if (noteB.trim()) parts.push(`${loaded.teamBName}: ${noteB.trim()}`);
@@ -211,7 +232,7 @@ export default function QuickTableRefereeScoring() {
       exitLandscape();
       navigate(`/tools/quick-tables/${loaded.shareId}?tab=groups`);
     } finally { setSaving(false); }
-  }, [loaded, navigate, storeKey, noteKey, updateMatchScore, noteA, noteB, exitLandscape]);
+  }, [loaded, navigate, storeKey, noteKey, updateMatchScore, updatePlayerStats, noteA, noteB, exitLandscape]);
 
   if (error) return <Centered>{error}</Centered>;
   if (!loaded) return <Centered>{vi ? 'Đang tải…' : 'Loading…'}</Centered>;
