@@ -71,7 +71,11 @@ jobs:
           node scripts/check-theline.mjs $FILES
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        # Must be `tsc -b` (build mode): root tsconfig.json uses `files: []`
+        # + project references, which plain `tsc --noEmit` does NOT follow, so
+        # it would type-check ZERO files and always pass (silent no-op). `-b`
+        # builds the referenced app/node projects; --noEmit keeps it check-only.
+        run: npx tsc -b --noEmit
 
       - name: Unit tests (Vitest) + coverage summary
         run: npm run test -- --coverage
