@@ -40,6 +40,14 @@ final class TMScoringModel {
     var teamAName: String { detail.teamName(match.teamAID) }
     var teamBName: String { detail.teamName(match.teamBID) }
 
+    // Total-score mode overrides each game's target with pointsPerGame and plays
+    // to it with no deuce (mỗi game tới N điểm, không deuce). Normal mode keeps
+    // the per-game type target (rally 21 / sideout 11) with win-by-2.
+    var isTotalScore: Bool { detail.tournament.isTotalScore }
+    func winTarget(for game: TMGame) -> Int {
+        isTotalScore ? (detail.tournament.pointsPerGame ?? game.winTarget) : game.winTarget
+    }
+
     func lineupNames(_ ids: [UUID]?) -> String? {
         guard let ids, !ids.isEmpty else { return nil }
         return ids.map { detail.rosterName($0) }.joined(separator: " / ")
@@ -196,7 +204,7 @@ struct TeamMatchScoringSheet: View {
                         .font(TLFont.mono(11, .bold)).tracking(0.8)
                         .foregroundStyle(row.game.isDreambreaker == true ? TLColor.live : TLColor.accentText)
                     Spacer()
-                    Text("Tới \(row.game.winTarget)").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
+                    Text("Tới \(model.winTarget(for: row.game))").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
                 }
 
                 Button {
@@ -220,7 +228,8 @@ struct TeamMatchScoringSheet: View {
                         playersB: model.lineupNameArray(row.game.lineupTeamB),
                         mode: row.game.scoringType == "sideout11" ? .sideOut : .rally,
                         isSingles: row.game.gameType == "WS" || row.game.gameType == "MS",
-                        winTarget: row.game.winTarget,
+                        winTarget: model.winTarget(for: row.game),
+                        winByTwo: !model.isTotalScore,
                         onLiveScore: { a, b in
                             Task { try? await TeamMatchRepository().updateGameLiveScore(gameID: row.game.id, scoreA: a, scoreB: b) }
                         },

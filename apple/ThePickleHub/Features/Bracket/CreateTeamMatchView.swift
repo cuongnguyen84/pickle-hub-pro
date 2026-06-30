@@ -310,7 +310,9 @@ struct CreateTeamMatchView: View {
                     .padding(.horizontal, 10).padding(.vertical, 8)
                     .background(TLColor.bg, in: RoundedRectangle(cornerRadius: 8))
                 Picker("", selection: Binding(get: { model.templates[idx].scoringType }, set: { model.templates[idx].scoringType = $0 })) {
-                    Text("Rally 21").tag("rally21"); Text("Sideout 11").tag("sideout11")
+                    // Total mode overrides each game's target with pointsPerGame.
+                    Text("Rally \(model.totalScoreMode ? model.pointsPerGame : 21)").tag("rally21")
+                    Text("Sideout \(model.totalScoreMode ? model.pointsPerGame : 11)").tag("sideout11")
                 }.pickerStyle(.menu).tint(TLColor.accentText)
             }
         }
