@@ -55,6 +55,7 @@ const QuickTableSetup = lazy(() => import("./pages/QuickTableSetup"));
 const QuickTableView = lazy(() => import("./pages/QuickTableView"));
 const ParentTournamentPage = lazy(() => import("./pages/ParentTournamentPage"));
 const MatchScoring = lazy(() => import("./pages/MatchScoring"));
+const QuickTableRefereeScoring = lazy(() => import("./pages/QuickTableRefereeScoring"));
 const JoinTeam = lazy(() => import("./pages/JoinTeam"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
@@ -634,6 +635,7 @@ const App = () => (
                     <Route path="/tools/quick-tables/parent/:shareId" element={<ParentTournamentPage />} />
                     <Route path="/tools/quick-tables/:shareId" element={<ConditionalAuth><QuickTableView /></ConditionalAuth>} />
                     <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
+                    <Route path="/tools/quick-tables/referee/:matchId" element={<QuickTableRefereeScoring />} />
                     {/* Team Match routes */}
                     <Route path="/tools/team-match" element={<TeamMatchList />} />
                     <Route path="/tools/team-match/new" element={<TeamMatchSetup />} />
