@@ -24,6 +24,9 @@ interface PlayerInput {
   seed: string;
   /** Sprint B2.2 — profile id for DUPR auto-seed lookup. */
   userId?: string | null;
+  /** 2 tên VĐV (đôi) → lưu player1_name/player2_name cho màn trọng tài. */
+  player1_name?: string;
+  player2_name?: string | null;
 }
 
 interface BracketSetupDialogProps {
@@ -37,6 +40,9 @@ interface BracketSetupDialogProps {
     skill: number | null;
     /** Sprint B2.2 — required for Auto-seed by DUPR lookup. */
     user_id?: string | null;
+    /** 2 tên VĐV cho màn trọng tài (đôi: 2 tên; đơn: player1_name = tên). */
+    player1_name?: string;
+    player2_name?: string | null;
   }[];
 }
 
@@ -119,6 +125,8 @@ export function BracketSetupDialog({
       team: p.team || '',
       seed: '',
       userId: p.user_id ?? null,
+      player1_name: p.player1_name || undefined,
+      player2_name: p.player2_name || undefined,
     })),
   );
 
@@ -270,6 +278,8 @@ export function BracketSetupDialog({
         name: p.name.trim(),
         team: p.team.trim() || undefined,
         seed: p.seed ? parseInt(p.seed) : undefined,
+        player1_name: p.player1_name || p.name.trim() || undefined,
+        player2_name: p.player2_name || undefined,
       }));
 
       const createdPlayers = await addPlayers(table.id, playerData);
@@ -316,6 +326,8 @@ export function BracketSetupDialog({
         name: p.name.trim(),
         team: p.team.trim() || undefined,
         seed: p.seed ? parseInt(p.seed) : undefined,
+        player1_name: p.player1_name || p.name.trim() || undefined,
+        player2_name: p.player2_name || undefined,
       }));
 
       const createdPlayers = await addPlayers(table.id, playerData);

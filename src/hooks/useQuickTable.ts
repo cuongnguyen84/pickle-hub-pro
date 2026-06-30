@@ -67,6 +67,8 @@ export interface QuickTablePlayer {
   table_id: string;
   group_id: string | null;
   name: string;
+  player1_name: string | null;   // tên VĐV 1 (đôi/đơn) — cho màn trọng tài
+  player2_name: string | null;   // tên VĐV 2 (chỉ đôi)
   team: string | null;
   seed: number | null;
   matches_played: number;
