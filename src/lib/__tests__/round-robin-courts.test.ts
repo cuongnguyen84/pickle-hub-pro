@@ -200,6 +200,16 @@ describe('scheduleMatches — pair-aware (the d941747e7ab4 bug)', () => {
     }
   });
 
+  it('uses all 4 courts (no idle court) and balances load within ±2', () => {
+    const all = [...naiveGroup(0, 0), ...naiveGroup(1, 100), ...naiveGroup(2, 200)];
+    const sched = scheduleMatches(all, [1, 2, 3, 4], 3, '08:30', 20);
+    const used = new Map<number, number>();
+    for (const s of sched) used.set(s.court, (used.get(s.court) ?? 0) + 1);
+    expect([1, 2, 3, 4].every((c) => (used.get(c) ?? 0) > 0)).toBe(true); // none idle
+    const loads = [1, 2, 3, 4].map((c) => used.get(c) ?? 0);
+    expect(Math.max(...loads) - Math.min(...loads)).toBeLessThanOrEqual(2);
+  });
+
   it('home court preferred; spares shared; empty courts → []', () => {
     const all = naiveGroup(0, 0);
     const sched = scheduleMatches(all, [1, 2, 3, 4], 3, null, 20);
