@@ -319,7 +319,7 @@ function ForceLandscape({ children, enabled }: { children: React.ReactNode; enab
       </div>
     );
   }
-  return <div style={{ minHeight: '100dvh', display: 'flex' }}>{children}</div>;
+  return <div style={{ height: '100dvh', display: 'flex', overflow: 'hidden' }}>{children}</div>;
 }
 
 // ── Setup ──
@@ -338,7 +338,7 @@ function Setup(props: {
   const hi = (s: ServeSide) => (tossing ? tossHi === s : props.setupServer === s);
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520, margin: '0 auto', width: '100%' }}>
+    <div style={{ flex: 1, overflowY: 'auto', padding: 24, paddingBottom: 'calc(32px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520, margin: '0 auto', width: '100%' }}>
       <Field label={vi ? 'Thể thức tính điểm' : 'Scoring'}>
         <Segmented options={[['rally', vi ? 'Trực tiếp' : 'Rally'], ['sideOut', vi ? 'Giao bóng' : 'Side-out']]} value={mode} onChange={(v) => setMode(v as ScoringMode)} />
       </Field>

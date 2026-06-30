@@ -36,6 +36,7 @@ const HIDDEN_PREFIXES = [
   "/preview",
   "/embed",
   "/onboarding",
+  "/tools/quick-tables/referee", // full-screen live-scoring tool
 ];
 
 const DESKTOP_BREAKPOINT = "(min-width: 768px)";
