@@ -309,3 +309,17 @@ curl -s https://www.thepicklehub.net/sitemap.xml | grep "$SLUG"
 - `7c888a2` — fix BLOG_POST_META for the 2 May 5 posts
 - `61b4fa8` — fix EN_BLOG_SLUGS for the 2 May 5 posts
 - `3d165d1` — original incident with `pickleball-world-cup-2026-da-nang` (the inline `// Verified 2026-04-23` comment in `_lib/render/index.ts` documents that fix)
+
+---
+
+## Ahrefs / GSC-via-Ahrefs MCP — KHÔNG DÙNG (không có gói trả phí)
+
+**Quyết định 2026-06-29 (Cường):** Bỏ HOÀN TOÀN Ahrefs khỏi quy trình. Anh không mua gói trả phí → mọi endpoint Ahrefs API (kể cả GSC qua Ahrefs, `subscription-info`, `management-projects`) trả `{"error":"Insufficient plan"}`.
+
+**Rule:**
+- KHÔNG gọi bất kỳ tool Ahrefs MCP nào (`site-explorer-*`, `gsc-*`, `keywords-explorer-*`, `rank-tracker-*`, `subscription-info`, `management-*`, `brand-radar-*`, `web-analytics-*`, `site-audit-*`...).
+- KHÔNG "re-test blocker #1" hằng ngày. Bỏ hẳn khái niệm "blocker #1 Ahrefs/GSC" + đếm "run #N" khỏi báo cáo.
+- Metrics khi cần: đọc Google Search Console UI trực tiếp qua **Chrome MCP** (khi Cường mở browser), hoặc GA4. KHÔNG qua Ahrefs.
+- Coi "không có Ahrefs" là điều kiện CỐ ĐỊNH, không phải blocker. Lập kế hoạch không phụ thuộc Ahrefs.
+
+**Verification:** báo cáo hằng ngày không còn mục "re-test Ahrefs / run #N". Doc cũ nhắc "unblock/nâng Ahrefs add-on" = context lịch sử, bỏ qua.

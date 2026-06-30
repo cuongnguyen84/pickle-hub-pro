@@ -35,6 +35,11 @@ dist-ssr
 # Personal SEO/growth planning notes (not part of the codebase)
 growth-tasks/
 
+# GSC indexing queue — runtime state for the gsc-request-indexing scheduled task.
+# Untracked + ignored so it survives `git clean -fd` and branch switches without
+# polluting history or triggering production deploys.
+.gsc-index-queue.json
+
 # Supabase CLI temp
 supabase/.temp/
 
@@ -49,3 +54,11 @@ dist/stats.html
 playwright-report/
 test-results/
 tests/.cache/
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+
+# vite temp config builds
+vite.config.ts.timestamp-*

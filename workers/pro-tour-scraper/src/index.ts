@@ -52,13 +52,11 @@ import {
   PRO_TOUR_HOST_PATTERN,
 } from "@/lib/pro-tour/adapters/rsc-scraper";
 import {
-  parseMlpEventHtml,
-  parseMlpFromBracketsPools,
-  extractBracketsIframeUrl,
-  extractPoolIds,
-  bracketsPoolUrl,
+  parseMlpFromApi,
+  extractEventUuidFromMlpPage,
   extractTournamentName,
   MLP_EVENT_HOST_PATTERN,
+  MLP_API_HOST,
 } from "@/lib/pro-tour/adapters/mlp-event-scraper";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
 
@@ -212,14 +210,13 @@ async function runScrape(
   let parsed: TournamentScrapeResult;
   try {
     if (MLP_EVENT_HOST_PATTERN.test(body.tournament_url)) {
-      // MLP path: scrape data straight from the underlying brackets API
-      // (the iframe source of truth) — no Browser Rendering needed
-      // because brackets.pickleballteamleagues.com serves complete RSC
-      // chunks with team metadata + matchup scores + player lineups on
-      // a raw GET. Earlier Browser Rendering attempts failed because the
-      // MLP page's React island couldn't be coerced to mount in CF's
-      // headless context. See file header comment on mlp-event-scraper.ts.
-      parsed = await scrapeMlpViaBrackets(body.tournament_url);
+      // MLP path (2026-06 rewrite): fetch the event-matchups REST endpoint
+      // of the fau-scores-and-stats WordPress plugin that MLP migrated to.
+      // No Browser Rendering needed — endpoint serves clean JSON with
+      // teams, matchup scores, player lineups, and per-game scores in
+      // one request. See mlp-event-scraper.ts file header for the
+      // migration post-mortem (iframe → plugin API).
+      parsed = await scrapeMlpViaApi(body.tournament_url);
     } else {
       const html = await renderWithBrowserRendering(env, body.tournament_url);
       parsed = parseTournamentHtml(html, body.tournament_url);
@@ -311,66 +308,63 @@ async function runScrape(
   };
 }
 
-/* ─── MLP brackets-direct fetcher (no Browser Rendering) ─────────────── */
+/* ─── MLP fau-scores-and-stats API fetcher (no Browser Rendering) ───── */
 
 /**
  * Orchestrate the MLP scrape by:
- *   1. Raw-fetching the MLP event page to discover the brackets iframe URL.
- *   2. Raw-fetching the brackets overview to extract pool IDs.
- *   3. Raw-fetching each pool URL and handing the HTML to the parser.
+ *   1. Raw-fetching the MLP event page to extract `data-event-uuid` from
+ *      `<div id="event-matches">`.
+ *   2. Raw-fetching the fau-scores-and-stats plugin endpoint
+ *      `/wp-json/fau-scores-and-stats/v1/event-matchups?event_uuid=<uuid>`
+ *      with Origin/Referer pinned to majorleaguepickleball.co (the
+ *      endpoint rejects external origins with 403 otherwise).
  *
- * All fetches are plain HTTP GET — no Browser Rendering because the
- * brackets app is a Next.js SSR app that ships the full matchup payload
- * in the initial HTML (RSC chunks). This is ~3-5s end-to-end vs ~30s for
- * the Browser-Rendering MLP attempt that kept timing out on lazy mount.
+ * Replaces the pre-2026-06 brackets.pickleballteamleagues.com scraper
+ * which broke when MLP moved off the iframe model. See file header on
+ * mlp-event-scraper.ts for the migration trail.
  */
-async function scrapeMlpViaBrackets(
+async function scrapeMlpViaApi(
   mlpEventUrl: string,
 ): Promise<TournamentScrapeResult> {
   const ua =
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
     "(KHTML, like Gecko) Chrome/130.0 Safari/537.36";
 
+  // Step 1 — fetch the MLP page for the event_uuid + tournament name.
   const mlpRes = await fetch(mlpEventUrl, { headers: { "User-Agent": ua } });
   if (!mlpRes.ok) {
     throw new Error(`MLP page fetch failed: HTTP ${mlpRes.status}`);
   }
   const mlpHtml = await mlpRes.text();
-
-  const overviewUrl = extractBracketsIframeUrl(mlpHtml);
-  if (!overviewUrl) {
+  const eventUuid = extractEventUuidFromMlpPage(mlpHtml);
+  if (!eventUuid) {
     throw new Error(
-      "MLP scrape: brackets iframe not found in event page HTML",
+      "MLP scrape: data-event-uuid not found on the event page " +
+        "(<div id=\"event-matches\"> missing or unbound). The page may " +
+        "not have the schedule plugin wired up for this event yet.",
     );
   }
-
   const tournamentName = extractTournamentName(mlpHtml);
 
-  const overviewRes = await fetch(overviewUrl, { headers: { "User-Agent": ua } });
-  if (!overviewRes.ok) {
-    throw new Error(`Brackets overview fetch failed: HTTP ${overviewRes.status}`);
+  // Step 2 — fetch the API. Origin + Referer are required for the
+  // plugin's same-origin gate; without them the endpoint returns 403.
+  const apiUrl = `${MLP_API_HOST}/event-matchups?event_uuid=${encodeURIComponent(eventUuid)}`;
+  const apiRes = await fetch(apiUrl, {
+    headers: {
+      "User-Agent": ua,
+      Origin: "https://majorleaguepickleball.co",
+      Referer: mlpEventUrl,
+      Accept: "application/json",
+    },
+  });
+  if (!apiRes.ok) {
+    throw new Error(
+      `MLP API fetch failed: HTTP ${apiRes.status} ${(await apiRes.text()).slice(0, 200)}`,
+    );
   }
-  const overviewHtml = await overviewRes.text();
+  const api = (await apiRes.json()) as Parameters<typeof parseMlpFromApi>[0];
 
-  const poolIds = extractPoolIds(overviewHtml);
-  if (poolIds.length === 0) {
-    throw new Error("MLP scrape: no pool IDs found in brackets overview");
-  }
-
-  const poolHtmls: string[] = [];
-  for (const poolId of poolIds) {
-    const url = bracketsPoolUrl(overviewUrl, poolId);
-    const r = await fetch(url, { headers: { "User-Agent": ua } });
-    if (!r.ok) {
-      // One pool failing shouldn't kill the whole scrape; skip + continue
-      // so the other pool's matchups still ingest.
-      console.error(`Pool fetch failed (${url}): HTTP ${r.status}`);
-      continue;
-    }
-    poolHtmls.push(await r.text());
-  }
-
-  return parseMlpFromBracketsPools(poolHtmls, mlpEventUrl, tournamentName);
+  return parseMlpFromApi(api, mlpEventUrl, tournamentName);
 }
 
 /* ─── Browser Rendering REST API ─────────────────────────────────────── */

@@ -1,0 +1,32 @@
+# secret-sync — auto-heal Cloudflare Worker
+#
+# Purpose: prevent the "edge SCRAPER_AUTH_SECRET silently rotated" class of
+# outages that happened 2026-05-19, 2026-05-26, and 2026-06-16. Each time,
+# the Supabase project env value for SCRAPER_AUTH_SECRET (read by the
+# news-translate Edge Function) drifted away from the vault value that cron 7
+# uses, producing 401 → news-translate stops → 6-day backlogs.
+#
+# This Worker runs every 30 min:
+#   1. Read vault.scraper_auth_secret + vault.social_poster_auth_secret via
+#      Supabase REST (service_role key).
+#   2. POST each value as x-auth-secret to its corresponding edge function
+#      (news-translate, social-caption) — if either responds 401, the edge
+#      env has drifted from vault.
+#   3. On drift, call Supabase Management API to re-set the project secret
+#      to the vault value. Edge functions auto-reload env in ~20s.
+#   4. Log every check to public.secret_sync_log table for audit.
+#
+# Triggered by Supabase cron via pg_net (job 9) every 30 min. Also exposes
+# POST /heal for manual fire and GET /health for liveness.
+
+name = "secret-sync"
+main = "src/index.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
+SUPABASE_PROJECT_REF = "ajvlcamxemgbxduhiqrl"
+
+[observability]
+enabled = true
