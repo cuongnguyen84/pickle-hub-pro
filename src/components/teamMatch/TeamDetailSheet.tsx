@@ -6,6 +6,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { TeamRosterManager } from './TeamRosterManager';
+import { TeamJoinPanel } from './TeamJoinPanel';
 import { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n';
@@ -49,6 +50,13 @@ interface TeamDetailSheetProps {
   team: TeamMatchTeam | null;
   maxRosterSize: number;
   isOwner?: boolean;
+  /** Join context — when provided, players can request to join this team. */
+  tournament?: {
+    status: string;
+    require_dupr?: boolean;
+    dupr_max_male?: number | null;
+    dupr_max_female?: number | null;
+  };
 }
 
 export function TeamDetailSheet({
@@ -57,6 +65,7 @@ export function TeamDetailSheet({
   team,
   maxRosterSize,
   isOwner = false,
+  tournament,
 }: TeamDetailSheetProps) {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -98,6 +107,23 @@ export function TeamDetailSheet({
                 : c.viewTeamInfo}
           </SheetDescription>
         </SheetHeader>
+
+        {tournament && (
+          <div style={{ marginTop: 20 }}>
+            <TeamJoinPanel
+              teamId={team.id}
+              teamName={team.team_name}
+              tournamentId={team.tournament_id}
+              teamStatus={team.status}
+              tournamentStatus={tournament.status}
+              isCaptain={isCaptain}
+              isOwner={isOwner}
+              requireDupr={tournament.require_dupr ?? false}
+              duprMaxMale={tournament.dupr_max_male ?? null}
+              duprMaxFemale={tournament.dupr_max_female ?? null}
+            />
+          </div>
+        )}
 
         <div style={{ marginTop: 20 }}>
           <TeamRosterManager

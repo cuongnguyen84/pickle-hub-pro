@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Users, Trophy, Calendar, Settings, Copy, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
-import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { useUserTeam, useUserMembership, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchStandings } from '@/hooks/useTeamMatchStandings';
 import { useTeamMatchGroups, useTeamMatchGroupManagement } from '@/hooks/useTeamMatchGroups';
@@ -108,6 +108,7 @@ export default function TeamMatchView() {
 
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
   const { data: userTeam } = useUserTeam(tournament?.id);
+  const { data: membership } = useUserMembership(tournament?.id);
   const { updateTournamentStatus, isUpdatingStatus, deleteTournament } = useTeamMatch();
 
   const { data: teams } = useTeamMatchTeams(tournament?.id);
@@ -172,7 +173,7 @@ export default function TeamMatchView() {
 
   const isOwner = tournament?.created_by === user?.id;
   const canManage = isOwner || isAdmin;
-  const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
+  const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && !membership && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
   const pendingTeamsCount = teams?.filter(t => t.status === 'pending').length || 0;
 
@@ -222,6 +223,61 @@ export default function TeamMatchView() {
           onSuccess={() => setActiveTab('overview')}
         />
       )
+    ) : null;
+
+  // Player who joined a team (not the captain) — show their request status.
+  const memberTeam = membership ? teams?.find((tm) => tm.id === membership.teamId) : null;
+  const membershipBanner =
+    membership && !membership.isCaptain && memberTeam ? (
+      <button
+        type="button"
+        onClick={() => setSelectedTeam(memberTeam)}
+        style={{
+          ...surfaceCard,
+          width: '100%',
+          textAlign: 'left',
+          padding: 16,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          cursor: 'pointer',
+        }}
+      >
+        <div>
+          <p style={{ fontWeight: 500, color: 'var(--tl-fg)', margin: 0, fontSize: 14.5 }}>
+            {language === 'vi' ? `Đội của bạn: ${membership.teamName}` : `Your team: ${membership.teamName}`}
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, margin: 0 }}>
+            {membership.status === 'pending'
+              ? language === 'vi'
+                ? 'Đang chờ đội trưởng duyệt'
+                : 'Awaiting captain approval'
+              : language === 'vi'
+                ? 'Đã được duyệt vào đội'
+                : 'Approved on the team'}
+          </p>
+        </div>
+        <span
+          style={{
+            fontFamily: 'Geist Mono, ui-monospace, monospace',
+            fontSize: 10.5,
+            fontWeight: 500,
+            padding: '3px 9px',
+            borderRadius: 4,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            ...(membership.status === 'pending'
+              ? { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' }
+              : { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' }),
+          }}
+        >
+          {membership.status === 'pending'
+            ? language === 'vi' ? 'Chờ duyệt' : 'Pending'
+            : language === 'vi' ? 'Đã duyệt' : 'Approved'}
+        </span>
+      </button>
     ) : null;
   const hasMatches = matches && matches.length > 0;
   const hasGroups = groups && groups.length > 0;
@@ -617,6 +673,7 @@ export default function TeamMatchView() {
 
             <TabsContent value="overview" className="space-y-4 mt-6">
               {registerCTA}
+              {membershipBanner}
 
               <TeamMatchOverviewTab
                 tournament={{
@@ -645,6 +702,7 @@ export default function TeamMatchView() {
             <TabsContent value="teams" className="mt-6 space-y-4">
               {/* Registration prompt — one-tap for captains, legacy card for owner */}
               {registerCTA}
+              {membershipBanner}
 
               {/* Captain's team roster — child component (deferred PR D.2) */}
               {userTeam && (
@@ -746,6 +804,12 @@ export default function TeamMatchView() {
           team={selectedTeam}
           maxRosterSize={tournament.team_roster_size}
           isOwner={isOwner}
+          tournament={{
+            status: tournament.status,
+            require_dupr: tournament.require_dupr,
+            dupr_max_male: tournament.dupr_max_male,
+            dupr_max_female: tournament.dupr_max_female,
+          }}
         />
 
         <MatchDetailSheet
