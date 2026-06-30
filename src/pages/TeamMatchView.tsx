@@ -28,6 +28,7 @@ import { useState, useCallback } from 'react';
 import {
   CreateTeamDialog,
   TeamRegistrationDialog,
+  QuickRegisterCTA,
   TeamList,
   TeamDetailSheet,
   MatchDetailSheet,
@@ -135,6 +136,7 @@ export default function TeamMatchView() {
   useTeamMatchRealtime(tournament?.id);
 
   const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'select' | 'create' | 'use-existing'>('select');
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<TeamMatchMatch | null>(null);
@@ -173,6 +175,54 @@ export default function TeamMatchView() {
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
   const pendingTeamsCount = teams?.filter(t => t.status === 'pending').length || 0;
+
+  const openRegisterDialog = (mode: 'create' | 'use-existing') => {
+    setDialogMode(mode);
+    setShowCreateTeam(true);
+  };
+
+  // Shared registration CTA — rendered on both Overview and Teams tabs.
+  // Captains get the one-tap QuickRegister; the organizer keeps the legacy
+  // "add a team" card (opens CreateTeamDialog).
+  const registerCTA =
+    canRegister && tournament ? (
+      isOwner ? (
+        <div
+          style={{
+            ...surfaceCard,
+            borderStyle: 'dashed',
+            padding: 18,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <p style={{ fontWeight: 500, color: 'var(--tl-fg)', margin: 0, fontSize: 14.5 }}>
+              {t.teamMatch.view.registerForTournament}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, margin: 0, lineHeight: 1.5 }}>
+              {t.teamMatch.view.createTeamToJoin}
+            </p>
+          </div>
+          <button type="button" className="tl-btn green" onClick={() => openRegisterDialog('create')}>
+            <Plus className="w-4 h-4" />
+            {t.teamMatch.view.createTeam}
+          </button>
+        </div>
+      ) : (
+        <QuickRegisterCTA
+          tournamentId={tournament.id}
+          requireDupr={tournament.require_dupr ?? false}
+          duprMaxMale={tournament.dupr_max_male ?? null}
+          duprMaxFemale={tournament.dupr_max_female ?? null}
+          onOpenDialog={openRegisterDialog}
+          onSuccess={() => setActiveTab('overview')}
+        />
+      )
+    ) : null;
   const hasMatches = matches && matches.length > 0;
   const hasGroups = groups && groups.length > 0;
   const isGroupPlayoffFormat = tournament?.format === 'rr_playoff';
@@ -296,10 +346,10 @@ export default function TeamMatchView() {
 
       setShowPlayoffDialog(false);
       setActiveTab('matches');
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: t.teamMatch.view.errorOccurred,
-        description: error.message || t.teamMatch.view.errorOccurred,
+        description: (error as Error).message || t.teamMatch.view.errorOccurred,
         variant: 'destructive',
       });
     }
@@ -566,6 +616,8 @@ export default function TeamMatchView() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4 mt-6">
+              {registerCTA}
+
               <TeamMatchOverviewTab
                 tournament={{
                   id: tournament.id,
@@ -591,38 +643,8 @@ export default function TeamMatchView() {
             </TabsContent>
 
             <TabsContent value="teams" className="mt-6 space-y-4">
-              {/* Registration prompt — token-styled surface card */}
-              {canRegister && (
-                <div
-                  style={{
-                    ...surfaceCard,
-                    borderStyle: 'dashed',
-                    padding: 18,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <div>
-                    <p style={{ fontWeight: 500, color: 'var(--tl-fg)', margin: 0, fontSize: 14.5 }}>
-                      {t.teamMatch.view.registerForTournament}
-                    </p>
-                    <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, margin: 0, lineHeight: 1.5 }}>
-                      {t.teamMatch.view.createTeamToJoin}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="tl-btn green"
-                    onClick={() => setShowCreateTeam(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t.teamMatch.view.createTeam}
-                  </button>
-                </div>
-              )}
+              {/* Registration prompt — one-tap for captains, legacy card for owner */}
+              {registerCTA}
 
               {/* Captain's team roster — child component (deferred PR D.2) */}
               {userTeam && (
@@ -684,7 +706,7 @@ export default function TeamMatchView() {
                 {hasGroups ? (
                   <GroupStandingsTable
                     tournamentId={tournament.id}
-                    topPerGroup={(tournament as any).top_per_group || 2}
+                    topPerGroup={tournament.top_per_group || 2}
                   />
                 ) : (
                   <StandingsTable tournamentId={tournament.id} />
@@ -701,6 +723,10 @@ export default function TeamMatchView() {
             onOpenChange={setShowCreateTeam}
             tournamentId={tournament.id}
             maxRosterSize={tournament.team_roster_size}
+            requireDupr={tournament.require_dupr ?? false}
+            duprMaxMale={tournament.dupr_max_male ?? null}
+            duprMaxFemale={tournament.dupr_max_female ?? null}
+            initialMode={dialogMode}
             onSuccess={() => setActiveTab('overview')}
           />
         )}

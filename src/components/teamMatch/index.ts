@@ -7,6 +7,7 @@ export { GroupSetupDialog } from './GroupSetupDialog';
 export { GroupMatchList } from './GroupMatchList';
 export { GroupStandingsTable } from './GroupStandingsTable';
 export { TeamRegistrationDialog } from './TeamRegistrationDialog';
+export { QuickRegisterCTA } from './QuickRegisterCTA';
 export { TeamRosterManager } from './TeamRosterManager';
 export { TeamList } from './TeamList';
 export { TeamDetailSheet } from './TeamDetailSheet';

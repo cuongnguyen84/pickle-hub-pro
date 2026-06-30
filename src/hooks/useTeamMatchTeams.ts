@@ -161,7 +161,7 @@ export function useTeamMatchTeamManagement() {
           team_name: safeTeamName,
           captain_user_id: user.id,
           master_team_id: masterTeamId,
-          status: 'pending',
+          status: 'approved', // teams are auto-approved — BTC review step removed
         })
         .select()
         .single();
@@ -201,6 +201,59 @@ export function useTeamMatchTeamManagement() {
         description: error.message,
         variant: 'destructive',
       });
+    },
+  });
+
+  // Register an existing master team into a tournament (copies full roster).
+  // Shared by the 1-tap QuickRegister CTA and the registration dialog.
+  const registerExistingTeamMutation = useMutation({
+    mutationFn: async ({
+      tournamentId,
+      masterTeam,
+      roster,
+    }: {
+      tournamentId: string;
+      masterTeam: { id: string; team_name: string };
+      roster: Array<Pick<TeamMatchRosterMember, 'player_name' | 'gender' | 'skill_level' | 'user_id' | 'is_captain'>>;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: team, error: teamError } = await supabase
+        .from('team_match_teams')
+        .insert({
+          tournament_id: tournamentId,
+          team_name: masterTeam.team_name,
+          captain_user_id: user.id,
+          master_team_id: masterTeam.id,
+          status: 'approved', // captain self-registration is auto-approved (no BTC review)
+        })
+        .select()
+        .single();
+
+      if (teamError) throw teamError;
+
+      const rows = roster.map((m) => ({
+        team_id: team.id,
+        player_name: m.player_name,
+        gender: m.gender,
+        skill_level: m.skill_level,
+        user_id: m.user_id,
+        is_captain: m.is_captain,
+        status: m.is_captain ? 'approved' : 'pending',
+      }));
+
+      const { error: rosterError } = await supabase.from('team_match_roster').insert(rows);
+      if (rosterError) throw rosterError;
+
+      return team as TeamMatchTeam;
+    },
+    onSuccess: (team) => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-teams', team.tournament_id] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-user-team', team.tournament_id] });
+      toast({ title: 'Thành công', description: 'Đã đăng ký đội vào giải' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -348,6 +401,8 @@ export function useTeamMatchTeamManagement() {
   return {
     createTeam: createTeamMutation.mutateAsync,
     isCreatingTeam: createTeamMutation.isPending,
+    registerExistingTeam: registerExistingTeamMutation.mutateAsync,
+    isRegisteringExisting: registerExistingTeamMutation.isPending,
     addRosterMember: addRosterMemberMutation.mutateAsync,
     isAddingMember: addRosterMemberMutation.isPending,
     removeRosterMember: removeRosterMemberMutation.mutateAsync,
