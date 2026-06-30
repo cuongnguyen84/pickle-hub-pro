@@ -162,6 +162,29 @@ describe('scheduleMatches — pair-aware (the d941747e7ab4 bug)', () => {
     }
   });
 
+  it('no pair plays more than 2 consecutive time slots (the real rule)', () => {
+    const all = [...naiveGroup(0, 0), ...naiveGroup(1, 100), ...naiveGroup(2, 200)];
+    const sched = scheduleMatches(all, [1, 2, 3, 4], 3, '08:30', 20);
+    const byId = new Map(all.map((m) => [m.matchId, m]));
+    const slotsByPlayer = new Map<string, number[]>();
+    for (const s of sched) {
+      const m = byId.get(s.matchId)!;
+      for (const p of [m.player1!, m.player2!]) {
+        const arr = slotsByPlayer.get(p) ?? [];
+        arr.push(s.slot);
+        slotsByPlayer.set(p, arr);
+      }
+    }
+    for (const [, slots] of slotsByPlayer) {
+      const sorted = [...new Set(slots)].sort((a, b) => a - b);
+      let run = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        run = sorted[i] === sorted[i - 1] + 1 ? run + 1 : 1;
+        expect(run).toBeLessThanOrEqual(2); // never 3 back-to-back slots
+      }
+    }
+  });
+
   it('display_order: no pair appears in more than 2 consecutive rows', () => {
     const all = [...naiveGroup(0, 0), ...naiveGroup(1, 100), ...naiveGroup(2, 200)];
     const sched = scheduleMatches(all, [1, 2, 3, 4], 3, '08:30', 20);

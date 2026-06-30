@@ -292,15 +292,25 @@ export function scheduleMatches(
   for (let i = 0; i < homeCount; i++) homeCourtByGroup.set(i, courts[i]);
   const spareCourts = courts.slice(homeCount);
 
-  const courtSlotBusy = new Set<string>();   // `${court}:${slot}`
-  const playerSlotBusy = new Set<string>();  // `${playerId}:${slot}`
+  const courtSlotBusy = new Set<string>();         // `${court}:${slot}`
+  const playerSlots = new Map<string, Set<number>>(); // playerId → slots played
   const load = new Map<number, number>();
   courts.forEach((c) => load.set(c, 0));
 
-  const free = (court: number, slot: number, p1: string | null, p2: string | null) =>
+  // A pair must not play more than 2 matches back-to-back: placing player p in
+  // slot s is forbidden if it would complete a run of 3 consecutive slots.
+  const wouldRun3 = (p: string | null, s: number): boolean => {
+    if (!p) return false;
+    const set = playerSlots.get(p);
+    if (!set) return false;
+    const h = (x: number) => set.has(x);
+    return (h(s - 1) && h(s - 2)) || (h(s - 1) && h(s + 1)) || (h(s + 1) && h(s + 2));
+  };
+  const slotOk = (court: number, slot: number, p1: string | null, p2: string | null) =>
     !courtSlotBusy.has(`${court}:${slot}`) &&
-    !(p1 && playerSlotBusy.has(`${p1}:${slot}`)) &&
-    !(p2 && playerSlotBusy.has(`${p2}:${slot}`));
+    !(p1 && playerSlots.get(p1)?.has(slot)) &&   // not double-booked this slot
+    !(p2 && playerSlots.get(p2)?.has(slot)) &&
+    !wouldRun3(p1, slot) && !wouldRun3(p2, slot); // not a 3rd consecutive match
 
   const picked = new Map<string, { court: number; slot: number }>();
 
@@ -312,7 +322,7 @@ export function scheduleMatches(
     let best: { court: number; slot: number } | null = null;
     for (const court of candidates) {
       let slot = 0;
-      while (!free(court, slot, m.player1, m.player2)) slot++;
+      while (!slotOk(court, slot, m.player1, m.player2)) slot++;
       // Prefer earliest slot; tie → least-loaded court; tie → candidate order (home first).
       if (
         best === null ||
@@ -326,8 +336,12 @@ export function scheduleMatches(
     const chosen = best!;
     picked.set(m.matchId, chosen);
     courtSlotBusy.add(`${chosen.court}:${chosen.slot}`);
-    if (m.player1) playerSlotBusy.add(`${m.player1}:${chosen.slot}`);
-    if (m.player2) playerSlotBusy.add(`${m.player2}:${chosen.slot}`);
+    for (const p of [m.player1, m.player2]) {
+      if (!p) continue;
+      const set = playerSlots.get(p) ?? new Set<number>();
+      set.add(chosen.slot);
+      playerSlots.set(p, set);
+    }
     load.set(chosen.court, (load.get(chosen.court) ?? 0) + 1);
   }
 
