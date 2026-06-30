@@ -260,39 +260,80 @@ function Board(props: {
   const server = servingPlayer(state);
   const recv = receivingPlayer(state);
   const right = servingSideRight(state);
+  const servingName = state.serving === 'a' ? loaded.teamAName : loaded.teamBName;
+  const otherSide: ServeSide = state.serving === 'a' ? 'b' : 'a';
 
+  const serveLine = server && recv && right !== null
+    ? `${vi ? 'GIAO' : 'SERVE'}: ${server} (${vi ? 'sân' : 'court'} ${right ? (vi ? 'phải' : 'R') : (vi ? 'trái' : 'L')})  ·  ${vi ? 'ĐỠ' : 'RECV'}: ${recv}`
+    : mode === 'sideOut'
+      ? `${vi ? 'đang giao' : 'serving'}: ${servingName}${state.isSingles ? '' : ` · ${vi ? 'tay' : 'server'} ${state.serverNumber}`}`
+      : (vi ? 'tính điểm trực tiếp' : 'rally scoring');
+
+  const bottom = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: 'var(--tl-surface)' }}>
+      <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 14, opacity: props.canUndo ? 1 : 0.4 }}
+        disabled={!props.canUndo} onClick={props.onUndo}>
+        <RotateCcw className="w-4 h-4" /> {vi ? 'HOÀN TÁC' : 'UNDO'}
+      </button>
+      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-fg-4)' }}>{vi ? 'tới' : 'to'} {target}</span>
+      <button type="button" className="tl-btn green" style={{ flex: 1, justifyContent: 'center', padding: 14 }} onClick={props.onEnd}>
+        {vi ? 'KẾT THÚC' : 'END'}
+      </button>
+    </div>
+  );
+
+  const calloutBar = (
+    <div style={{ textAlign: 'center', padding: '14px 12px', background: 'var(--tl-surface)' }}>
+      <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 'clamp(40px, 12vw, 64px)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+        {callout(state)}
+      </div>
+      <div style={{ marginTop: 4, fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12.5, fontWeight: 700, color: 'var(--tl-green)' }}>{serveLine}</div>
+    </div>
+  );
+
+  // Rally: tap who won the rally (symmetric).
+  if (mode === 'rally') {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {calloutBar}
+        <div style={{ flex: 1, display: 'flex' }}>
+          <TapZone name={loaded.teamAName} score={scoreOf(state, 'a')} serving={false} onClick={() => props.onTap('a')} vi={vi} />
+          <div style={{ width: 1, background: 'var(--tl-border)' }} />
+          <TapZone name={loaded.teamBName} score={scoreOf(state, 'b')} serving={false} onClick={() => props.onTap('b')} vi={vi} />
+        </div>
+        {bottom}
+      </div>
+    );
+  }
+
+  // Side-out: server-relative — trọng tài chỉ nhập ĐIỂM (đội đang giao thắng pha)
+  // hoặc ĐỔI TAY (đội giao mất pha → engine tự tay-2 / side-out).
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ textAlign: 'center', padding: '14px 12px', background: 'var(--tl-surface)' }}>
-        <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 'clamp(40px, 12vw, 64px)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-          {callout(state)}
-        </div>
-        <div style={{ marginTop: 4, fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12.5, fontWeight: 700, color: 'var(--tl-green)' }}>
-          {server && recv && right !== null
-            ? `${vi ? 'GIAO' : 'SERVE'}: ${server} (${vi ? 'sân' : 'court'} ${right ? (vi ? 'phải' : 'R') : (vi ? 'trái' : 'L')})  ·  ${vi ? 'ĐỠ' : 'RECV'}: ${recv}`
-            : mode === 'sideOut'
-              ? `${vi ? 'đang giao' : 'serving'}: ${state.serving === 'a' ? loaded.teamAName : loaded.teamBName}${state.isSingles ? '' : ` · server ${state.serverNumber}`}`
-              : (vi ? 'tính điểm trực tiếp' : 'rally scoring')}
-        </div>
+      {calloutBar}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, padding: '8px 12px', background: 'var(--tl-surface)', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 13.5, fontWeight: 600 }}>
+        <span style={{ color: state.serving === 'a' ? 'var(--tl-green)' : 'var(--tl-fg-2)' }}>{loaded.teamAName} {state.a}</span>
+        <span style={{ color: 'var(--tl-fg-4)' }}>·</span>
+        <span style={{ color: state.serving === 'b' ? 'var(--tl-green)' : 'var(--tl-fg-2)' }}>{loaded.teamBName} {state.b}</span>
       </div>
-
       <div style={{ flex: 1, display: 'flex' }}>
-        <TapZone name={loaded.teamAName} score={scoreOf(state, 'a')} serving={mode === 'sideOut' && state.serving === 'a'} onClick={() => props.onTap('a')} vi={vi} />
+        <ActionZone big={vi ? 'ĐIỂM' : 'POINT'} sub={`${vi ? 'cho' : 'for'} ${servingName}`} tone="green" onClick={() => props.onTap(state.serving)} />
         <div style={{ width: 1, background: 'var(--tl-border)' }} />
-        <TapZone name={loaded.teamBName} score={scoreOf(state, 'b')} serving={mode === 'sideOut' && state.serving === 'b'} onClick={() => props.onTap('b')} vi={vi} />
+        <ActionZone big={vi ? 'ĐỔI TAY' : 'SIDE OUT'} sub={vi ? 'mất giao' : 'loss of serve'} tone="neutral" onClick={() => props.onTap(otherSide)} />
       </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: 'var(--tl-surface)' }}>
-        <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 14, opacity: props.canUndo ? 1 : 0.4 }}
-          disabled={!props.canUndo} onClick={props.onUndo}>
-          <RotateCcw className="w-4 h-4" /> {vi ? 'HOÀN TÁC' : 'UNDO'}
-        </button>
-        <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-fg-4)' }}>{vi ? 'tới' : 'to'} {target}</span>
-        <button type="button" className="tl-btn green" style={{ flex: 1, justifyContent: 'center', padding: 14 }} onClick={props.onEnd}>
-          {vi ? 'KẾT THÚC' : 'END'}
-        </button>
-      </div>
+      {bottom}
     </div>
+  );
+}
+
+function ActionZone(props: { big: string; sub: string; tone: 'green' | 'neutral'; onClick: () => void }) {
+  const green = props.tone === 'green';
+  return (
+    <button type="button" onClick={props.onClick}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, border: 0, cursor: 'pointer', padding: 16, background: green ? 'var(--tl-green-glow)' : 'var(--tl-bg)', color: green ? 'var(--tl-green)' : 'var(--tl-fg)' }}>
+      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 'clamp(34px, 11vw, 56px)', letterSpacing: '0.02em', lineHeight: 1 }}>{props.big}</span>
+      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12, color: green ? 'var(--tl-green)' : 'var(--tl-fg-3)' }}>{props.sub}</span>
+    </button>
   );
 }
 
