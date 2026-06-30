@@ -123,6 +123,8 @@ export default function QuickTableRefereeScoring() {
       if (raw) {
         const s = JSON.parse(raw) as ScoreState;
         setState(s); setMode(s.mode); setTarget(s.winTarget);
+        // Already past the midpoint on resume → the switch already happened; don't re-announce.
+        setSwitchAnnounced(Math.max(s.a, s.b) >= sideSwitchPoint(s.winTarget));
       }
     } catch { /* ignore */ }
   }, [loaded, state, storeKey]);
