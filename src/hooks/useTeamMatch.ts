@@ -26,6 +26,10 @@ export interface TeamMatchTournament {
   updated_at: string;
   group_count: number | null;
   top_per_group: number | null;
+  // MLP DUPR-gated registration
+  require_dupr?: boolean;
+  dupr_max_male?: number | null;
+  dupr_max_female?: number | null;
   // Joined from profiles
   creator_display_name?: string;
 }

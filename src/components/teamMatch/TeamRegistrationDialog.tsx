@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -30,6 +30,10 @@ import { useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useMasterTeams, useMasterTeamWithRoster, useMasterTeamManagement } from '@/hooks/useMasterTeams';
 import { Loader2, Plus, Users, Check, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
+import { DuprSsoModal } from '@/components/dupr/DuprSsoModal';
+import { useDuprConnection, useInvalidateDuprConnection } from '@/hooks/useDuprConnection';
+import { isDuprEligible } from '@/lib/duprEligibility';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -82,6 +86,12 @@ interface TeamRegistrationDialogProps {
   onOpenChange: (open: boolean) => void;
   tournamentId: string;
   maxRosterSize: number;
+  /** MLP DUPR gating — when true, captain must have a verified DUPR within range. */
+  requireDupr?: boolean;
+  duprMaxMale?: number | null;
+  duprMaxFemale?: number | null;
+  /** Skip the mode picker — open straight into create or use-existing. */
+  initialMode?: RegistrationMode;
   onSuccess?: () => void;
 }
 
@@ -92,18 +102,22 @@ export function TeamRegistrationDialog({
   onOpenChange,
   tournamentId,
   maxRosterSize,
+  requireDupr = false,
+  duprMaxMale = null,
+  duprMaxFemale = null,
+  initialMode = 'select',
   onSuccess,
 }: TeamRegistrationDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isCreatingTeam } = useTeamMatchTeamManagement();
+  const { isCreatingTeam, registerExistingTeam } = useTeamMatchTeamManagement();
   const { createMasterTeam } = useMasterTeamManagement();
   const { data: masterTeams, isLoading: isLoadingMasterTeams } = useMasterTeams();
   const { language, t } = useI18n();
   const c = t.teamMatchComponents;
 
-  const [mode, setMode] = useState<RegistrationMode>('select');
+  const [mode, setMode] = useState<RegistrationMode>(initialMode);
   const [selectedMasterTeamId, setSelectedMasterTeamId] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [excludedMemberIds, setExcludedMemberIds] = useState<Set<string>>(new Set());
@@ -215,6 +229,34 @@ export function TeamRegistrationDialog({
   const hasMasterTeams = masterTeams && masterTeams.length > 0;
   const canRegisterWithExisting = selectedMasterTeam && !rosterExceedsLimit;
 
+  // ─── DUPR gating (MLP) ─── captain = logged-in user, MLP is doubles-only.
+  const { data: duprConn } = useDuprConnection();
+  const invalidateDupr = useInvalidateDuprConnection();
+  const [showSso, setShowSso] = useState(false);
+  const captainGender =
+    mode === 'use-existing'
+      ? masterRoster.find((m) => m.is_captain)?.gender ?? 'male'
+      : form.watch('captain_gender');
+  const duprMax = captainGender === 'female' ? duprMaxFemale : duprMaxMale;
+  const captainDupr = duprConn?.doubles ?? null;
+  const duprConnected = !!duprConn?.ssoConnected && captainDupr != null;
+  const duprEligible = isDuprEligible({
+    requireDupr,
+    connected: duprConnected,
+    rating: captainDupr,
+    max: duprMax,
+  });
+
+  // On open: jump straight to the requested mode; when the captain has exactly
+  // one master team in use-existing mode, preselect it (one-tap confirm).
+  useEffect(() => {
+    if (!open) return;
+    setMode(initialMode);
+    if (initialMode === 'use-existing' && masterTeams?.length === 1) {
+      setSelectedMasterTeamId(masterTeams[0].id);
+    }
+  }, [open, initialMode, masterTeams]);
+
   const handleCreateNewTeam = async (values: FormValues) => {
     if (!user) return;
 
@@ -235,7 +277,7 @@ export function TeamRegistrationDialog({
           team_name: values.team_name,
           captain_user_id: user.id,
           master_team_id: masterTeam.id,
-          status: 'pending',
+          status: 'approved', // captain self-registration is auto-approved (no BTC review)
         })
         .select()
         .single();
@@ -275,46 +317,23 @@ export function TeamRegistrationDialog({
 
     setIsRegistering(true);
     try {
-      const { data: tournamentTeam, error: teamError } = await supabase
-        .from('team_match_teams')
-        .insert({
-          tournament_id: tournamentId,
-          team_name: selectedMasterTeam.team_name,
-          captain_user_id: user.id,
-          master_team_id: selectedMasterTeam.id,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (teamError) throw teamError;
-
-      const rosterToInsert = effectiveRoster.map((member) => ({
-        team_id: tournamentTeam.id,
-        player_name: member.player_name,
-        gender: member.gender,
-        skill_level: member.skill_level,
-        user_id: member.user_id,
-        is_captain: member.is_captain,
-        status: member.is_captain ? 'approved' : 'pending',
-      }));
-
-      await supabase.from('team_match_roster').insert(rosterToInsert);
-
-      queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
-      queryClient.invalidateQueries({ queryKey: ['team-match-user-team', tournamentId] });
-
-      toast({ title: txt.successTitle, description: txt.successRegistered });
+      await registerExistingTeam({
+        tournamentId,
+        masterTeam: { id: selectedMasterTeam.id, team_name: selectedMasterTeam.team_name },
+        roster: effectiveRoster.map((member) => ({
+          player_name: member.player_name,
+          gender: member.gender,
+          skill_level: member.skill_level,
+          user_id: member.user_id,
+          is_captain: member.is_captain,
+        })),
+      });
       setMode('select');
       setSelectedMasterTeamId(null);
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
-      toast({
-        title: txt.errorTitle,
-        description: error.message,
-        variant: 'destructive',
-      });
+    } catch {
+      // registerExistingTeam already surfaced the error toast.
     } finally {
       setIsRegistering(false);
     }
@@ -477,6 +496,15 @@ export function TeamRegistrationDialog({
               onSubmit={form.handleSubmit(handleCreateNewTeam)}
               style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '8px 0' }}
             >
+              {requireDupr && (
+                <DuprEligibilityCheck
+                  ratingSource="dupr"
+                  isDoubles
+                  maxDupr={duprMax}
+                  onConnectDupr={() => setShowSso(true)}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="team_name"
@@ -581,7 +609,7 @@ export function TeamRegistrationDialog({
                 <button
                   type="submit"
                   className="tl-btn green"
-                  disabled={isCreatingTeam}
+                  disabled={isCreatingTeam || !duprEligible}
                   style={{ flex: 1, justifyContent: 'center' }}
                 >
                   {isCreatingTeam && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -601,6 +629,14 @@ export function TeamRegistrationDialog({
               </div>
             ) : (
               <>
+                {requireDupr && selectedMasterTeamId && (
+                  <DuprEligibilityCheck
+                    ratingSource="dupr"
+                    isDoubles
+                    maxDupr={duprMax}
+                    onConnectDupr={() => setShowSso(true)}
+                  />
+                )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {masterTeams?.map((team) => {
                     const checked = selectedMasterTeamId === team.id;
@@ -797,7 +833,7 @@ export function TeamRegistrationDialog({
                     type="button"
                     className="tl-btn green"
                     onClick={handleUseExistingTeam}
-                    disabled={!canRegisterWithExisting || isRegistering}
+                    disabled={!canRegisterWithExisting || isRegistering || !duprEligible}
                     style={{ flex: 1, justifyContent: 'center' }}
                   >
                     {isRegistering && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -808,6 +844,15 @@ export function TeamRegistrationDialog({
             )}
           </div>
         )}
+
+        <DuprSsoModal
+          open={showSso}
+          onClose={() => setShowSso(false)}
+          onSuccess={() => {
+            setShowSso(false);
+            invalidateDupr();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
