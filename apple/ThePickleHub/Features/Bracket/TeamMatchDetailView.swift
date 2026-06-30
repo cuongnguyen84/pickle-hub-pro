@@ -8,13 +8,13 @@ final class TeamMatchViewModel {
         case failed(String)
     }
     enum Tab: String, CaseIterable, Identifiable {
-        case matches, standings, teams
+        case matches, playoff, teams
         var id: String { rawValue }
         var label: String {
             switch self {
             case .matches: return "Trận đấu"
-            case .standings: return "Xếp hạng"
-            case .teams: return "Đội"
+            case .playoff: return "Playoff"
+            case .teams: return "Xếp hạng"
             }
         }
     }
@@ -31,9 +31,9 @@ final class TeamMatchViewModel {
     private let repo = TeamMatchRepository()
     var detail: TMDetail? { if case .loaded(let d) = phase { return d } ; return nil }
 
-    /// Tabs available for this tournament — standings only for round-robin formats.
+    /// Tabs — bỏ "Xếp hạng" cho thể thức đồng đội (không cần BXH; playoff vẫn dùng standings ngầm).
     func tabs(for detail: TMDetail) -> [Tab] {
-        detail.hasStandings ? [.matches, .standings, .teams] : [.matches, .teams]
+        detail.hasPlayoff ? [.matches, .playoff, .teams] : [.matches, .teams]
     }
 
     @MainActor
@@ -46,7 +46,6 @@ final class TeamMatchViewModel {
             if detail.tournament.requireRegistration == true && !auth.isCreator {
                 myTeam = await repo.userTeam(tournamentID: detail.tournament.id)
             }
-            if tab == .standings && !detail.hasStandings { tab = .matches }
             phase = .loaded(detail)
         } catch {
             phase = .failed(error.localizedDescription)
@@ -73,31 +72,72 @@ final class TeamMatchViewModel {
     }
 
     @MainActor
-    func generatePlayoff(shareID: String) async {
+    func setupGroups(shareID: String, distribution: [[UUID]]) async {
         guard let d = detail else { return }
-        let target = d.tournament.playoffTeamCount ?? 4
-        let ranked = d.standings.map { $0.team.id.uuidString.lowercased() }
-        let seeded = Array(ranked.prefix(target))
-        guard seeded.count >= 2, seeded.count & (seeded.count - 1) == 0 else {
-            actionError = "Số đội vào playoff phải là 2/4/8 và đủ đội đã xếp hạng."
-            return
-        }
         working = true; actionError = nil
         do {
-            try await repo.generatePlayoffFromSeeds(
-                tournamentID: d.tournament.id, seededTeamIDs: seeded,
-                hasDreambreaker: d.tournament.hasDreambreaker ?? false)
+            try await repo.setupGroups(tournamentID: d.tournament.id, distribution: distribution,
+                                       hasDreambreaker: d.tournament.hasDreambreaker ?? false)
             await load(shareID: shareID)
         } catch { actionError = error.localizedDescription }
         working = false
     }
 
     @MainActor
+    func generatePlayoff(shareID: String) async {
+        guard let d = detail else { return }
+        let target = d.tournament.playoffTeamCount ?? 4
+        working = true; actionError = nil
+        do {
+            // Seed THEO BẢNG khi: rr_playoff + có bảng + playoff = 2×số bảng (top-2 mỗi bảng) + số bảng chẵn.
+            // → nhất bảng gặp nhì bảng khác, 2 đội cùng bảng ở hai nửa (chỉ gặp lại ở chung kết).
+            if d.tournament.format == "rr_playoff", d.hasGroups, target == d.groups.count * 2,
+               let pairs = groupPairedFirstRound(d) {
+                try await repo.generatePlayoffFromGroupPairs(
+                    tournamentID: d.tournament.id, firstRound: pairs,
+                    hasDreambreaker: d.tournament.hasDreambreaker ?? false)
+            } else {
+                // Fallback: BXH tổng + seed-position chuẩn.
+                let seeded = Array(d.standings.map { $0.team.id.uuidString.lowercased() }.prefix(target))
+                guard seeded.count >= 2, seeded.count & (seeded.count - 1) == 0 else {
+                    actionError = "Số đội vào playoff phải là luỹ thừa của 2 và đủ đội đã xếp hạng."
+                    working = false; return
+                }
+                try await repo.generatePlayoffFromSeeds(
+                    tournamentID: d.tournament.id, seededTeamIDs: seeded,
+                    hasDreambreaker: d.tournament.hasDreambreaker ?? false)
+            }
+            await load(shareID: shareID)
+        } catch { actionError = error.localizedDescription }
+        working = false
+    }
+
+    /// First-round theo bảng: nhất/nhì mỗi bảng (per-group standings) → TeamMatchRepository.groupPairings.
+    private func groupPairedFirstRound(_ d: TMDetail) -> [(a: String, b: String)]? {
+        let groups = d.groups.sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }
+        var winners: [String] = [], runnersUp: [String] = []
+        for g in groups {
+            let ids = Set(d.teams.filter { $0.groupID == g.id }.map { $0.id })
+            let st = d.standings(teamIDs: ids)
+            guard st.count >= 2 else { return nil }
+            winners.append(st[0].team.id.uuidString.lowercased())
+            runnersUp.append(st[1].team.id.uuidString.lowercased())
+        }
+        return TeamMatchRepository.groupPairings(winners: winners, runnersUp: runnersUp)
+    }
+
+    @MainActor
     func deleteSchedule(shareID: String) async {
         guard let d = detail else { return }
         working = true; actionError = nil
-        do { try await repo.deleteMatches(tournamentID: d.tournament.id); await load(shareID: shareID) }
-        catch { actionError = error.localizedDescription }
+        do {
+            if d.tournament.format == "rr_playoff" {
+                try await repo.resetGroupStage(tournamentID: d.tournament.id)   // xoá cả bảng, về registration
+            } else {
+                try await repo.deleteMatches(tournamentID: d.tournament.id)
+            }
+            await load(shareID: shareID)
+        } catch { actionError = error.localizedDescription }
         working = false
     }
 }
@@ -114,7 +154,9 @@ struct TeamMatchDetailView: View {
     @State private var openWeb = false
     @State private var showSettings = false
     @State private var showManageTeams = false
+    @State private var showGroupSetup = false
     @State private var showRegister = false
+    @State private var selectedGroupID: UUID?   // bảng đang xem (tab ngang)
     @State private var scoringMatch: TMMatch?
     @State private var lineupMatch: TMMatch?
 
@@ -179,6 +221,18 @@ struct TeamMatchDetailView: View {
             if let detail = model.detail {
                 TeamMatchManageTeamsView(detail: detail) {
                     Task { await model.load(shareID: shareID) }
+                }
+            }
+        }
+        .sheet(isPresented: $showGroupSetup) {
+            if let detail = model.detail {
+                GroupSetupSheet(
+                    teams: detail.teams.filter { $0.status == "approved" }
+                        .sorted { ($0.seed ?? 9999) < ($1.seed ?? 9999) },
+                    working: model.working
+                ) { distribution in
+                    showGroupSetup = false
+                    Task { await model.setupGroups(shareID: shareID, distribution: distribution) }
                 }
             }
         }
@@ -254,7 +308,7 @@ struct TeamMatchDetailView: View {
                 .pickerStyle(.segmented)
                 switch model.tab {
                 case .matches: matchesTab(detail)
-                case .standings: standingsTab(detail)
+                case .playoff: playoffTab(detail)
                 case .teams: teamsTab(detail)
                 }
             }
@@ -289,20 +343,34 @@ struct TeamMatchDetailView: View {
             if !hasAny {
                 if !model.auth.isCreator { note("Chưa có lịch thi đấu.") }
             } else {
-                // Round-robin rounds as lists.
-                ForEach(Array(detail.rrSections.enumerated()), id: \.offset) { _, section in
-                    roundSection(detail, title: section.title, matches: section.matches)
-                }
-                // Playoff as a horizontal bracket tree.
-                if !detail.mlpPlayoffRounds.isEmpty {
-                    if let champ = detail.champion { mlpChampionBanner(detail.teamName(champ)) }
-                    HStack(spacing: 8) {
-                        RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-                        Text("PLAYOFF").font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                if detail.hasGroups {
+                    groupTabs(detail)   // các bảng dạng tab ngang, xem 1 bảng/lúc
+                } else {
+                    // Round-robin phẳng: theo Lượt
+                    ForEach(Array(detail.rrSections.enumerated()), id: \.offset) { _, section in
+                        roundSection(detail, title: section.title, matches: section.matches)
                     }
-                    BracketTreeView(rounds: mlpBracketRounds(detail))
-                    if let tp = detail.thirdPlaceMatch { thirdPlaceCard(detail, tp) }
                 }
+                // Playoff giờ ở tab riêng (playoffTab) để dễ theo dõi.
+            }
+        }
+    }
+
+    // MARK: Playoff (tab riêng)
+
+    @ViewBuilder
+    private func playoffTab(_ detail: TMDetail) -> some View {
+        if detail.mlpPlayoffRounds.isEmpty {
+            note("Chưa sinh vòng Playoff — BTC bấm “Sinh vòng Playoff” ở tab Trận đấu khi vòng bảng xong.")
+        } else {
+            VStack(alignment: .leading, spacing: 14) {
+                if let champ = detail.champion { mlpChampionBanner(detail.teamName(champ)) }
+                HStack(spacing: 8) {
+                    RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
+                    Text("PLAYOFF").font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                }
+                BracketTreeView(rounds: mlpBracketRounds(detail))
+                if let tp = detail.thirdPlaceMatch { thirdPlaceCard(detail, tp) }
             }
         }
     }
@@ -314,6 +382,74 @@ struct TeamMatchDetailView: View {
                 Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
             }
             ForEach(matches) { m in matchCard(detail, m) }
+        }
+    }
+
+    /// Hàng chip cuộn ngang chọn bảng (dùng chung tab Trận đấu + Xếp hạng; chia sẻ selectedGroupID).
+    private func groupChipBar(_ groups: [TMGroup], selected: UUID?) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(groups) { g in
+                    let isSel = g.id == selected
+                    Button { Haptics.light(); selectedGroupID = g.id } label: {
+                        Text(g.name)
+                            .font(TLFont.mono(11, .semibold)).tracking(0.5)
+                            .foregroundStyle(isSel ? TLColor.accentInk : TLColor.fg2)
+                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(isSel ? TLColor.accent : TLColor.surface, in: Capsule())
+                            .overlay(Capsule().strokeBorder(isSel ? Color.clear : TLColor.border, lineWidth: 1))
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 1)
+        }
+    }
+
+    private func selectedGroup(_ sections: [(group: TMGroup, teams: [TMTeam], matches: [TMMatch])]) -> UUID? {
+        sections.first(where: { $0.group.id == selectedGroupID })?.group.id ?? sections.first?.group.id
+    }
+
+    /// Tab Trận đấu: các bảng dạng tab ngang; xem trận của 1 bảng/lúc.
+    @ViewBuilder
+    private func groupTabs(_ detail: TMDetail) -> some View {
+        let sections = detail.groupSections
+        let selected = selectedGroup(sections)
+        VStack(alignment: .leading, spacing: 14) {
+            groupChipBar(sections.map { $0.group }, selected: selected)
+            if let sec = sections.first(where: { $0.group.id == selected }) {
+                groupSection(detail, teams: sec.teams, matches: sec.matches)
+            }
+        }
+    }
+
+    /// Tab Xếp hạng: các bảng dạng tab ngang; bảng xếp hạng của 1 bảng/lúc.
+    @ViewBuilder
+    private func groupStandingsTabs(_ detail: TMDetail) -> some View {
+        let sections = detail.groupSections
+        let selected = selectedGroup(sections)
+        VStack(alignment: .leading, spacing: 14) {
+            groupChipBar(sections.map { $0.group }, selected: selected)
+            if let sec = sections.first(where: { $0.group.id == selected }) {
+                standingsTable(detail.standings(teamIDs: Set(sec.teams.map { $0.id })))
+            }
+        }
+    }
+
+    /// Nội dung 1 bảng: danh sách đội + trận (vòng tròn nội bảng). Tên bảng do tab phía trên hiển thị.
+    private func groupSection(_ detail: TMDetail, teams: [TMTeam], matches: [TMMatch]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("\(teams.count) đội · \(matches.count) trận")
+                .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+            if !teams.isEmpty {
+                Text(teams.map(\.teamName).joined(separator: "  ·  "))
+                    .font(TLFont.sans(12)).foregroundStyle(TLColor.fg3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if matches.isEmpty {
+                note("Chưa có trận trong bảng.")
+            } else {
+                ForEach(matches) { m in matchCard(detail, m) }
+            }
         }
     }
 
@@ -373,21 +509,38 @@ struct TeamMatchDetailView: View {
         let approved = detail.teams.filter { $0.status == "approved" }.count
         VStack(alignment: .leading, spacing: 8) {
             if !hasMatches {
-                Button {
-                    Haptics.success(); Task { await model.generateSchedule(shareID: shareID) }
-                } label: {
-                    HStack(spacing: 6) {
-                        if model.working { ProgressView().tint(TLColor.accentInk) }
-                        else { Image(systemName: "calendar.badge.plus").font(.system(size: 12)) }
-                        Text("Sinh lịch thi đấu").font(TLFont.sans(14, .semibold))
+                if detail.tournament.format == "rr_playoff" {
+                    Button {
+                        Haptics.light(); showGroupSetup = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "rectangle.split.3x1").font(.system(size: 12))
+                            Text("Chia bảng").font(TLFont.sans(14, .semibold))
+                        }
+                        .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
+                        .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
                     }
-                    .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
-                    .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
+                    .buttonStyle(.plain).disabled(model.working || approved < 6)
+                    Text(approved < 6 ? "Cần ≥ 6 đội đã duyệt để chia bảng."
+                                      : "\(approved) đội · chia ngẫu nhiên hoặc thủ công rồi đá vòng bảng")
+                        .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                } else {
+                    Button {
+                        Haptics.success(); Task { await model.generateSchedule(shareID: shareID) }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if model.working { ProgressView().tint(TLColor.accentInk) }
+                            else { Image(systemName: "calendar.badge.plus").font(.system(size: 12)) }
+                            Text("Sinh lịch thi đấu").font(TLFont.sans(14, .semibold))
+                        }
+                        .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
+                        .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain).disabled(model.working || approved < 2)
+                    Text(approved < 2 ? "Cần ≥ 2 đội đã duyệt — thêm đội ở tab Đội."
+                                      : "\(approved) đội · \(detail.tournament.formatLabel)")
+                        .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
                 }
-                .buttonStyle(.plain).disabled(model.working || approved < 2)
-                Text(approved < 2 ? "Cần ≥ 2 đội đã duyệt — thêm đội ở tab Đội."
-                                  : "\(approved) đội · \(detail.tournament.formatLabel)")
-                    .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
             } else {
                 if detail.tournament.format == "rr_playoff" && detail.groupStageComplete && !detail.hasPlayoff {
                     Button {
@@ -430,8 +583,9 @@ struct TeamMatchDetailView: View {
                     }
                     Spacer(minLength: 8)
                     VStack(spacing: 6) {
-                        scorePill(m.gamesWonA, win: aWon)
-                        scorePill(m.gamesWonB, win: bWon)
+                        // Total mode: hiện TỔNG điểm (28–x); thường: số game thắng.
+                        scorePill(detail.tournament.isTotalScore ? (m.totalPointsA ?? 0) : m.gamesWonA, win: aWon)
+                        scorePill(detail.tournament.isTotalScore ? (m.totalPointsB ?? 0) : m.gamesWonB, win: bWon)
                     }
                     Image(systemName: isOpen ? "chevron.up" : "chevron.down")
                         .font(.system(size: 11, weight: .bold)).foregroundStyle(TLColor.fg4)
@@ -538,8 +692,7 @@ struct TeamMatchDetailView: View {
     // MARK: Standings
 
     @ViewBuilder
-    private func standingsTab(_ detail: TMDetail) -> some View {
-        let rows = detail.standings
+    private func standingsTable(_ rows: [TMStanding]) -> some View {
         VStack(spacing: 0) {
             // Header row
             HStack(spacing: 0) {
@@ -590,8 +743,9 @@ struct TeamMatchDetailView: View {
 
     // MARK: Teams
 
+    // Tab "Xếp hạng": quản lý đội (creator) + xếp hạng theo từng bảng (tab ngang). Chưa chia bảng → danh sách đội.
     private func teamsTab(_ detail: TMDetail) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             if model.auth.isCreator {
                 Button { Haptics.light(); showManageTeams = true } label: {
                     HStack(spacing: 6) {
@@ -602,7 +756,11 @@ struct TeamMatchDetailView: View {
                     .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
                 }.buttonStyle(.plain)
             }
-            teamsList(detail)
+            if detail.hasGroups {
+                groupStandingsTabs(detail)
+            } else {
+                teamsList(detail)
+            }
         }
     }
 
@@ -645,5 +803,131 @@ struct TeamMatchDetailView: View {
             Button("Thử lại") { Task { await model.load(shareID: shareID) } }.foregroundStyle(TLColor.accentText)
         }
         .frame(maxWidth: .infinity).padding(.horizontal, 32).padding(.top, 60)
+    }
+}
+
+// MARK: - Chia bảng (Ngẫu nhiên / Thủ công)
+
+private struct GroupSetupSheet: View {
+    let teams: [TMTeam]               // đã duyệt, sort theo seed
+    let working: Bool
+    let onConfirm: ([[UUID]]) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    enum Mode: String, CaseIterable { case random = "Ngẫu nhiên", manual = "Thủ công" }
+    @State private var groupCount = 0
+    @State private var mode: Mode = .random
+    @State private var assign: [UUID: Int] = [:]   // teamID -> group index
+
+    private let names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+    private var suggestions: [GroupSuggestion] { GroupSuggestion.suggest(playerCount: teams.count) }
+    private var distribution: [[UUID]] {
+        guard groupCount >= 2 else { return [] }
+        return (0..<groupCount).map { gi in teams.filter { assign[$0.id] == gi }.map(\.id) }
+    }
+    private var valid: Bool { groupCount >= 2 && distribution.allSatisfy { $0.count >= 2 } }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    if suggestions.isEmpty {
+                        Text("Cần ≥ 6 đội đã duyệt để chia bảng (mỗi bảng tối thiểu 3 đội).")
+                            .font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
+                    } else {
+                        labeled("Số bảng") {
+                            Picker("", selection: $groupCount) {
+                                ForEach(suggestions) { Text("\($0.groupCount) bảng").tag($0.groupCount) }
+                            }.pickerStyle(.segmented)
+                        }
+                        labeled("Cách chia") {
+                            Picker("", selection: $mode) {
+                                ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                            }.pickerStyle(.segmented)
+                        }
+                        if mode == .random {
+                            Button { randomize() } label: {
+                                Label("Chia lại ngẫu nhiên", systemImage: "shuffle")
+                                    .font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.accentText)
+                            }.buttonStyle(.plain)
+                            preview
+                        } else {
+                            manualList
+                        }
+                    }
+                }.padding(16)
+            }
+            .background(TLColor.bg)
+            .navigationTitle("Chia bảng").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Huỷ") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Xác nhận") { onConfirm(distribution) }
+                        .fontWeight(.bold).disabled(!valid || working)
+                }
+            }
+            .onAppear {
+                if groupCount == 0 { groupCount = suggestions.first?.groupCount ?? 0 }
+                randomize()
+            }
+            .onChange(of: groupCount) { _, _ in if mode == .random { randomize() } else { clamp() } }
+            .onChange(of: mode) { _, m in if m == .random { randomize() } }
+        }
+    }
+
+    private func randomize() {
+        guard groupCount >= 2 else { return }
+        var a: [UUID: Int] = [:]
+        for (i, id) in teams.map(\.id).shuffled().enumerated() { a[id] = i % groupCount }
+        assign = a
+    }
+    private func clamp() {
+        for t in teams where (assign[t.id] ?? 0) >= groupCount { assign[t.id] = 0 }
+    }
+
+    @ViewBuilder
+    private func labeled<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title.uppercased()).font(TLFont.mono(10, .medium)).tracking(1).foregroundStyle(TLColor.fg3)
+            content()
+        }
+    }
+
+    private var preview: some View {
+        VStack(spacing: 10) {
+            ForEach(Array(0..<groupCount), id: \.self) { gi in
+                let members = teams.filter { assign[$0.id] == gi }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Bảng \(names[gi])").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg)
+                        Spacer()
+                        Text("\(members.count) đội").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
+                    }
+                    ForEach(members) { t in
+                        Text(t.teamName).font(TLFont.sans(12.5)).foregroundStyle(TLColor.fg2)
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+            }
+        }
+    }
+
+    private var manualList: some View {
+        VStack(spacing: 8) {
+            ForEach(teams) { t in
+                HStack {
+                    Text(t.teamName).font(TLFont.sans(13.5)).foregroundStyle(TLColor.fg)
+                    Spacer()
+                    Picker("", selection: Binding(get: { assign[t.id] ?? 0 }, set: { assign[t.id] = $0 })) {
+                        ForEach(Array(0..<groupCount), id: \.self) { gi in Text("Bảng \(names[gi])").tag(gi) }
+                    }.pickerStyle(.menu).tint(TLColor.accentText)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 9)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 10))
+            }
+        }
     }
 }

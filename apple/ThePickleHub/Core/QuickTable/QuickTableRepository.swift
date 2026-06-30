@@ -25,6 +25,84 @@ struct QuickTableRepository {
         return rows?.isEmpty == false
     }
 
+    // MARK: Referees (parity với TeamMatch — bảng quick_table_referees, FK table_id)
+
+    func fetchReferees(tableID: UUID) async -> [QTReferee] {
+        struct Row: Decodable { let id: UUID; let userID: UUID
+            enum CodingKeys: String, CodingKey { case id; case userID = "user_id" } }
+        guard let rows: [Row] = try? await client
+            .from("quick_table_referees").select("id, user_id")
+            .eq("table_id", value: tableID).execute().value, !rows.isEmpty else { return [] }
+        let names = await refereeDisplayNames(ids: Set(rows.map { $0.userID.uuidString.lowercased() }))
+        return rows.map { QTReferee(id: $0.id, userID: $0.userID,
+                                    displayName: names[$0.userID.uuidString.lowercased()]) }
+    }
+
+    enum AddRefereeOutcome: Equatable { case ok(String?), notFound, alreadyExists, error }
+
+    /// lookup_user_by_email RPC → existence check → insert. Mirror referee-helpers.
+    func addReferee(tableID: UUID, email: String) async -> AddRefereeOutcome {
+        struct LookupRow: Decodable { let id: UUID; let displayName: String?
+            enum CodingKeys: String, CodingKey { case id; case displayName = "display_name" } }
+        let trimmed = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return .error }
+        do {
+            let rows: [LookupRow] = try await client
+                .rpc("lookup_user_by_email", params: ["lookup_email": trimmed])
+                .execute().value
+            guard let profile = rows.first else { return .notFound }
+            struct R: Decodable { let id: UUID }
+            let existing: [R] = try await client
+                .from("quick_table_referees").select("id")
+                .eq("table_id", value: tableID).eq("user_id", value: profile.id)
+                .limit(1).execute().value
+            if !existing.isEmpty { return .alreadyExists }
+            struct Ins: Encodable { let table_id: String; let user_id: String }
+            try await client.from("quick_table_referees")
+                .insert(Ins(table_id: tableID.uuidString.lowercased(),
+                            user_id: profile.id.uuidString.lowercased())).execute()
+            return .ok(profile.displayName)
+        } catch { return .error }
+    }
+
+    func removeReferee(refereeID: UUID) async throws {
+        try await client.from("quick_table_referees").delete().eq("id", value: refereeID).execute()
+    }
+
+    /// Ghi chú trọng tài cho 1 trận (referee_note). Best-effort.
+    func updateRefereeNote(matchID: UUID, note: String) async throws {
+        struct N: Encodable { let referee_note: String }
+        try await client.from("quick_table_matches")
+            .update(N(referee_note: note)).eq("id", value: matchID).execute()
+    }
+
+    /// Đẩy điểm hiện tại (chưa completed) để người xem thấy realtime.
+    func updateLiveScore(matchID: UUID, score1: Int, score2: Int) async throws {
+        struct U: Encodable { let score1: Int; let score2: Int }
+        try await client.from("quick_table_matches")
+            .update(U(score1: score1, score2: score2)).eq("id", value: matchID).execute()
+    }
+
+    /// Claim trận làm LIVE (live_referee_id = user hiện tại) để hiện badge.
+    func claimLive(matchID: UUID) async throws {
+        guard let uid = await currentUserID() else { return }
+        struct U: Encodable { let live_referee_id: String }
+        try await client.from("quick_table_matches")
+            .update(U(live_referee_id: uid.uuidString.lowercased())).eq("id", value: matchID).execute()
+    }
+
+    private func refereeDisplayNames(ids: Set<String>) async -> [String: String] {
+        guard !ids.isEmpty else { return [:] }
+        struct P: Decodable { let id: String; let displayName: String?
+            enum CodingKeys: String, CodingKey { case id; case displayName = "display_name" } }
+        guard let rows: [P] = try? await client
+            .from("public_profiles").select("id, display_name")
+            .in("id", values: Array(ids)).execute().value else { return [:] }
+        var map: [String: String] = [:]
+        for r in rows { if let n = r.displayName, !n.isEmpty { map[r.id.lowercased()] = n } }
+        return map
+    }
+
     // MARK: Load
 
     func load(shareID: String) async throws -> QuickTableDetail {
@@ -44,7 +122,7 @@ struct QuickTableRepository {
             .execute().value
         async let players: [QTPlayer] = client
             .from("quick_table_players")
-            .select("id, group_id, name, team, seed, matches_played, matches_won, points_for, points_against, point_diff, is_qualified, is_wildcard, playoff_seed")
+            .select("id, group_id, name, player1_name, player2_name, team, seed, matches_played, matches_won, points_for, points_against, point_diff, is_qualified, is_wildcard, playoff_seed")
             .eq("table_id", value: table.id)
             .execute().value
         async let matches: [QTMatch] = client
@@ -99,7 +177,7 @@ struct QuickTableRepository {
         let min_skill_level: Double?
         let max_skill_level: Double?
     }
-    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let team: String?; let seed: Int?; let display_order: Int }
+    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let player1_name: String?; let player2_name: String?; let team: String?; let seed: Int?; let display_order: Int }
     private struct CourtSettingsUpdate: Encodable { let courts: [String]; let start_time: String? }
     private struct GroupInsert: Encodable { let table_id: String; let name: String; let display_order: Int }
     private struct InsertedRow: Decodable { let id: UUID; let displayOrder: Int
@@ -125,7 +203,7 @@ struct QuickTableRepository {
                 _requires_skill_level: o.requiresRegistration ? (o.requiresSkillLevel || o.ratingSource != "self") : false,
                 _auto_approve_registrations: o.requiresRegistration ? o.autoApprove : false,
                 _registration_message: o.requiresRegistration ? o.registrationMessage?.nonEmpty : nil,
-                _is_doubles: o.requiresRegistration ? o.isDoubles : true
+                _is_doubles: o.isDoubles
             ))
             .execute().value
         guard result.success, let table = result.table else {
@@ -144,7 +222,13 @@ struct QuickTableRepository {
         return table
     }
 
-    struct RosterEntry { let name: String; let team: String?; let seed: Int? }
+    struct RosterEntry {
+        let name: String                 // nhãn gộp ("A & B" cho đôi, tên cho đơn)
+        var player1Name: String? = nil
+        var player2Name: String? = nil
+        let team: String?
+        let seed: Int?
+    }
 
     /// The setup step (auto, non-registration): add roster (name/team/seed) →
     /// save court+time settings → create groups → snake-draft distribute →
@@ -153,13 +237,17 @@ struct QuickTableRepository {
                      courts: [String], startTime: String?) async throws {
         let tid = tableID.uuidString.lowercased()
         let roster = players
-            .map { RosterEntry(name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines), team: $0.team?.nonEmpty, seed: $0.seed) }
+            .map { RosterEntry(name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                               player1Name: $0.player1Name?.nonEmpty, player2Name: $0.player2Name?.nonEmpty,
+                               team: $0.team?.nonEmpty, seed: $0.seed) }
             .filter { !$0.name.isEmpty }
         let groups = max(1, groupCount)
 
         let inserted: [InsertedRow] = try await client
             .from("quick_table_players")
-            .insert(roster.enumerated().map { PlayerInsert(table_id: tid, name: $1.name, team: $1.team, seed: $1.seed, display_order: $0) })
+            .insert(roster.enumerated().map { PlayerInsert(table_id: tid, name: $1.name,
+                                                           player1_name: $1.player1Name, player2_name: $1.player2Name,
+                                                           team: $1.team, seed: $1.seed, display_order: $0) })
             .select("id, display_order")
             .execute().value
         let ordered = inserted.sorted { $0.displayOrder < $1.displayOrder }
@@ -387,6 +475,8 @@ struct QuickTableRepository {
         let bracket_position: String
         let player1_id: String?
         let player2_id: String?
+        var winner_id: String? = nil
+        var status: String = "pending"
         let display_order: Int
         func encode(to e: Encoder) throws {
             var c = e.container(keyedBy: K.self)
@@ -397,40 +487,43 @@ struct QuickTableRepository {
             try c.encode(bracket_position, forKey: .bracket_position)
             try c.encode(player1_id, forKey: .player1_id)   // null when nil
             try c.encode(player2_id, forKey: .player2_id)
+            try c.encodeIfPresent(winner_id, forKey: .winner_id)  // omit when nil
+            try c.encode(status, forKey: .status)
             try c.encode(display_order, forKey: .display_order)
         }
         enum K: String, CodingKey {
             case table_id, is_playoff, playoff_round, playoff_match_number
-            case bracket_position, player1_id, player2_id, display_order
+            case bracket_position, player1_id, player2_id, winner_id, status, display_order
         }
     }
 
-    /// Pre-create ALL playoff rounds (first round seeded, later rounds empty with
-    /// sequential round/match numbers so the existing positional advance fills them),
-    /// then flip the table to 'playoff'. Bracket result matches web.
+    /// Pre-create ALL playoff rounds, then flip the table to 'playoff'.
+    /// BYE (first-round match với 1 slot nil) được resolve walkover bằng `QTSeedingV2.resolveBracketTree`:
+    /// winner tự đẩy lên vòng sau + match BYE đánh dấu completed, nên không kẹt chờ điểm.
+    /// Match thật ở vòng sau vẫn rỗng cho `advancePlayoff` (positional) lấp dần. Old path (không BYE)
+    /// cho kết quả y như cũ.
     func createPlayoff(tableID: UUID, firstRound: [QTBracketMatch]) async throws {
         let tID = tableID.uuidString.lowercased()
         let n = firstRound.count
         guard n >= 1 else { return }
         let round0 = n <= 2 ? 2 : n <= 4 ? 1 : 0
 
-        var inserts: [PlayoffMatchInsert] = firstRound.enumerated().map { i, b in
-            PlayoffMatchInsert(table_id: tID, playoff_round: round0, playoff_match_number: b.matchNumber,
-                               bracket_position: b.position,
-                               player1_id: b.player1?.uuidString.lowercased(),
-                               player2_id: b.player2?.uuidString.lowercased(), display_order: i)
-        }
-        var count = n, round = round0, maxMN = n, disp = 100
-        while count > 1 {
-            let nextCount = count / 2
-            round += 1
-            for j in 0..<nextCount {
-                let pos = nextCount == 1 ? "final" : (j < (nextCount + 1) / 2 ? "upper" : "lower")
-                inserts.append(PlayoffMatchInsert(table_id: tID, playoff_round: round,
-                                                  playoff_match_number: maxMN + 1 + j, bracket_position: pos,
-                                                  player1_id: nil, player2_id: nil, display_order: disp + j))
-            }
-            maxMN += nextCount; count = nextCount; disp += 100
+        let tree = QTSeedingV2.resolveBracketTree(
+            firstRound: firstRound.map { (p1: $0.player1, p2: $0.player2, matchNumber: $0.matchNumber) })
+
+        var inserts: [PlayoffMatchInsert] = []
+        var matchNumber = 0
+        for node in tree {
+            matchNumber += 1   // round-major theo thứ tự tree → 1..n vòng đầu, rồi n+1.. vòng sau (như cũ)
+            let pos = node.roundCount == 1 ? "final"
+                : (node.position < (node.roundCount + 1) / 2 ? "upper" : "lower")
+            inserts.append(PlayoffMatchInsert(
+                table_id: tID, playoff_round: round0 + node.roundIndex, playoff_match_number: matchNumber,
+                bracket_position: pos,
+                player1_id: node.p1?.uuidString.lowercased(), player2_id: node.p2?.uuidString.lowercased(),
+                winner_id: node.done ? node.winner?.uuidString.lowercased() : nil,
+                status: node.done ? "completed" : "pending",
+                display_order: node.roundIndex * 100 + node.position))
         }
         try await client.from("quick_table_matches").insert(inserts).execute()
         try await client.from("quick_tables").update(TableStatusUpdate(status: "playoff")).eq("id", value: tableID).execute()
@@ -443,6 +536,8 @@ struct QuickTableRepository {
         let score2: Int
         let winner_id: String
         let status = "completed"
+        // live_referee_id: completed matches don't show the LIVE badge (row gates on
+        // !isCompleted), so no need to clear it here.
     }
 
     /// Saves a match score, then recomputes group stats (group stage) or

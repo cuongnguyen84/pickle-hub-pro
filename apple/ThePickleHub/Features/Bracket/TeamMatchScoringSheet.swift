@@ -45,11 +45,23 @@ final class TMScoringModel {
         return ids.map { detail.rosterName($0) }.joined(separator: " / ")
     }
 
+    /// 2 tên riêng cho doubles → bật lớp vị trí giao/đỡ. nil nếu không phải đôi.
+    func lineupNameArray(_ ids: [UUID]?) -> [String]? {
+        guard let ids, ids.count == 2 else { return nil }
+        return ids.map { detail.rosterName($0) }
+    }
+
     func bump(teamA: Bool, by delta: Int) {
         guard rows.indices.contains(selected) else { return }
         if teamA { rows[selected].a = max(0, rows[selected].a + delta) }
         else { rows[selected].b = max(0, rows[selected].b + delta) }
         justSaved = false
+    }
+
+    /// Đặt thẳng tỉ số cuối game (từ engine chấm trực tiếp của trọng tài).
+    func bumpTo(teamA: Int, teamB: Int) {
+        guard rows.indices.contains(selected) else { return }
+        rows[selected].a = teamA; rows[selected].b = teamB; justSaved = false
     }
 
     func reset() {
@@ -85,6 +97,7 @@ struct TeamMatchScoringSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var model: TMScoringModel
+    @State private var refereeing = false
 
     init(detail: TMDetail, match: TMMatch, onSaved: @escaping () -> Void) {
         self.detail = detail
@@ -184,6 +197,33 @@ struct TeamMatchScoringSheet: View {
                         .foregroundStyle(row.game.isDreambreaker == true ? TLColor.live : TLColor.accentText)
                     Spacer()
                     Text("Tới \(row.game.winTarget)").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
+                }
+
+                Button {
+                    Haptics.light(); refereeing = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "play.circle.fill").font(.system(size: 13, weight: .bold))
+                        Text("CHẤM TRỰC TIẾP").font(TLFont.mono(11, .bold)).tracking(0.5)
+                    }
+                    .foregroundStyle(TLColor.accentText).frame(maxWidth: .infinity).padding(.vertical, 11)
+                    .background(TLColor.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
+                    .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.accent.opacity(0.5), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .fullScreenCover(isPresented: $refereeing) {
+                    RefereeScoringView(
+                        teamAName: model.teamAName, teamBName: model.teamBName,
+                        lineupA: model.lineupNames(row.game.lineupTeamA),
+                        lineupB: model.lineupNames(row.game.lineupTeamB),
+                        playersA: model.lineupNameArray(row.game.lineupTeamA),
+                        playersB: model.lineupNameArray(row.game.lineupTeamB),
+                        mode: row.game.scoringType == "sideout11" ? .sideOut : .rally,
+                        isSingles: row.game.gameType == "WS" || row.game.gameType == "MS",
+                        winTarget: row.game.winTarget) { a, b, _ in
+                        model.bumpTo(teamA: a, teamB: b)
+                        Task { await model.saveSelected(onSaved: onSaved) }
+                    }
                 }
 
                 stepperRow(name: model.teamAName, score: row.a, won: row.aWon,

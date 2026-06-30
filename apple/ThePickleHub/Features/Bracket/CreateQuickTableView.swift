@@ -46,7 +46,7 @@ struct CreateQuickTableView: View {
 
     private let repo = QuickTableRepository()
 
-    struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = ""; var team = ""; var seed = "" }
+    struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = ""; var name2 = ""; var team = ""; var seed = "" }
 
     /// Manual group assignment (round-robin, >1 group) is a heavy separate screen
     /// on web — offered here but handed off to the web for the assignment step.
@@ -102,8 +102,15 @@ struct CreateQuickTableView: View {
             labeled("Tên giải / bảng đấu") {
                 inputField("VD: Giải Pickleball Mùa Hè 2024", text: $name)
             }
-            labeled("Số người chơi (dự kiến)") {
-                inputField("VD: 16", text: $playerCountText, keyboard: .numberPad)
+            labeled("Thể thức thi đấu") {
+                Picker("", selection: $isDoubles) {
+                    Text("Đơn").tag(false)
+                    Text("Đôi").tag(true)
+                }
+                .pickerStyle(.segmented)
+            }
+            labeled(isDoubles ? "Số đôi (dự kiến)" : "Số đơn (dự kiến)") {
+                inputField(isDoubles ? "VD: 15 đôi" : "VD: 10 đơn", text: $playerCountText, keyboard: .numberPad)
             }
 
             Rectangle().fill(TLColor.border).frame(height: 1)
@@ -124,10 +131,6 @@ struct CreateQuickTableView: View {
 
     private var registrationOptions: some View {
         VStack(alignment: .leading, spacing: 16) {
-            checkRow(isOn: $isDoubles, icon: "person.2",
-                     title: "Thi đấu đôi",
-                     desc: "VĐV đăng ký theo cặp đôi, có thể mời partner qua link")
-
             labeled("Số ván mặc định") {
                 Picker("", selection: $defaultSets) {
                     Text("Best of 1").tag(1); Text("Best of 3").tag(3); Text("Best of 5").tag(5)
@@ -329,30 +332,8 @@ struct CreateQuickTableView: View {
 
             VStack(spacing: 8) {
                 ForEach(Array($roster.enumerated()), id: \.element.id) { index, $p in
-                    HStack(spacing: 6) {
-                        Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 20)
-                        TextField("Tên VĐV *", text: $p.name)
-                            .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
-                            .padding(.horizontal, 10).padding(.vertical, 9)
-                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
-                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
-                        TextField("Team", text: $p.team)
-                            .font(TLFont.sans(13)).foregroundStyle(TLColor.fg2).frame(width: 60)
-                            .padding(.horizontal, 8).padding(.vertical, 9)
-                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
-                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
-                        TextField("Seed", text: $p.seed)
-                            .keyboardType(.numberPad).multilineTextAlignment(.center)
-                            .font(TLFont.mono(13)).foregroundStyle(TLColor.fg2).frame(width: 46)
-                            .padding(.horizontal, 6).padding(.vertical, 9)
-                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
-                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
-                        Button { if roster.count > 2 { roster.removeAll { $0.id == p.id } } } label: {
-                            Image(systemName: "trash").font(.system(size: 13)).foregroundStyle(TLColor.fg4)
-                        }
-                        .buttonStyle(.plain).disabled(roster.count <= 2)
-                        .accessibilityLabel("Xóa VĐV")
-                    }
+                    if isDoubles { doublesRosterRow(index: index, p: $p) }
+                    else { singlesRosterRow(index: index, p: $p) }
                 }
             }
 
@@ -397,6 +378,62 @@ struct CreateQuickTableView: View {
         }
     }
 
+    private func rosterTextField(_ placeholder: String, _ text: Binding<String>) -> some View {
+        TextField(placeholder, text: text)
+            .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+            .padding(.horizontal, 10).padding(.vertical, 9)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private func seedField(_ text: Binding<String>) -> some View {
+        TextField("Seed", text: text)
+            .keyboardType(.numberPad).multilineTextAlignment(.center)
+            .font(TLFont.mono(13)).foregroundStyle(TLColor.fg2).frame(width: 46)
+            .padding(.horizontal, 6).padding(.vertical, 9)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private func rosterTrash(_ id: UUID) -> some View {
+        Button { if roster.count > 2 { roster.removeAll { $0.id == id } } } label: {
+            Image(systemName: "trash").font(.system(size: 13)).foregroundStyle(TLColor.fg4)
+        }
+        .buttonStyle(.plain).disabled(roster.count <= 2).accessibilityLabel("Xóa VĐV")
+    }
+
+    private func singlesRosterRow(index: Int, p: Binding<PlayerField>) -> some View {
+        HStack(spacing: 6) {
+            Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 20)
+            rosterTextField("Tên VĐV *", p.name)
+            TextField("Team", text: p.team)
+                .font(TLFont.sans(13)).foregroundStyle(TLColor.fg2).frame(width: 60)
+                .padding(.horizontal, 8).padding(.vertical, 9)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+            seedField(p.seed)
+            rosterTrash(p.wrappedValue.id)
+        }
+    }
+
+    /// Đôi: 2 ô tên VĐV → app gộp thành 1 đôi ("A & B") cho logic, giữ 2 tên cho trọng tài.
+    private func doublesRosterRow(index: Int, p: Binding<PlayerField>) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 20).padding(.top, 9)
+            VStack(spacing: 6) {
+                rosterTextField("VĐV 1 *", p.name)
+                rosterTextField("VĐV 2 *", p.name2)
+            }
+            VStack(spacing: 6) {
+                seedField(p.seed)
+                rosterTrash(p.wrappedValue.id)
+            }
+        }
+        .padding(8)
+        .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
     private func assignmentOption(_ value: String, icon: String, title: String, desc: String) -> some View {
         let selected = assignmentMode == value
         return Button { assignmentMode = value } label: {
@@ -433,10 +470,22 @@ struct CreateQuickTableView: View {
         Text("· \(text)").font(TLFont.sans(12)).foregroundStyle(TLColor.fg2).fixedSize(horizontal: false, vertical: true)
     }
 
+    /// Đôi: gộp "A & B" làm nhãn, lưu 2 tên riêng; cần đủ 2 tên. Đơn: 1 tên.
     private var filledRoster: [QuickTableRepository.RosterEntry] {
-        roster.map { QuickTableRepository.RosterEntry(name: $0.name.trimmingCharacters(in: .whitespaces),
-                                                      team: $0.team.nonEmpty, seed: Int($0.seed)) }
-            .filter { !$0.name.isEmpty }
+        roster.compactMap { p in
+            let n1 = p.name.trimmingCharacters(in: .whitespaces)
+            if isDoubles {
+                let n2 = p.name2.trimmingCharacters(in: .whitespaces)
+                guard !n1.isEmpty, !n2.isEmpty else { return nil }
+                return QuickTableRepository.RosterEntry(
+                    name: "\(n1) & \(n2)", player1Name: n1, player2Name: n2,
+                    team: p.team.nonEmpty, seed: Int(p.seed))
+            }
+            guard !n1.isEmpty else { return nil }
+            return QuickTableRepository.RosterEntry(
+                name: n1, player1Name: n1, player2Name: nil,
+                team: p.team.nonEmpty, seed: Int(p.seed))
+        }
     }
 
     // MARK: Actions

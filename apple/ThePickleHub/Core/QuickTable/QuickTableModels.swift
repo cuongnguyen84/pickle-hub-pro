@@ -72,7 +72,9 @@ struct QTGroup: Decodable, Identifiable, Equatable {
 struct QTPlayer: Decodable, Identifiable, Equatable {
     let id: UUID
     let groupID: UUID?
-    let name: String
+    let name: String                 // nhãn gộp hiển thị ("An & Bình" cho đôi)
+    let player1Name: String?         // tên VĐV 1 (đôi/đơn) — cho màn trọng tài
+    let player2Name: String?         // tên VĐV 2 (chỉ đôi)
     let team: String?
     let seed: Int?
     let matchesPlayed: Int
@@ -86,6 +88,8 @@ struct QTPlayer: Decodable, Identifiable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, team, seed
+        case player1Name = "player1_name"
+        case player2Name = "player2_name"
         case groupID = "group_id"
         case matchesPlayed = "matches_played"
         case matchesWon = "matches_won"
@@ -284,6 +288,15 @@ struct QuickTableDetail: Equatable {
         return p.name
     }
 
+    /// 2 tên VĐV của 1 competitor đôi (cho màn trọng tài hiện người giao/đỡ). nil
+    /// nếu không phải đôi hoặc thiếu tên — caller fallback theo competitor.
+    func pairNames(for playerID: UUID?) -> [String]? {
+        guard table.isDoubles == true, let playerID,
+              let p = players.first(where: { $0.id == playerID }),
+              let n1 = p.player1Name?.nonEmpty, let n2 = p.player2Name?.nonEmpty else { return nil }
+        return [n1, n2]
+    }
+
     /// Players in a group, sorted by wins → point diff → points for (web order).
     func standings(groupID: UUID) -> [QTPlayer] {
         players.filter { $0.groupID == groupID }.sorted {
@@ -328,4 +341,11 @@ struct QuickTableDetail: Equatable {
         let gm = matches.filter { !$0.isPlayoff }
         return !gm.isEmpty && gm.allSatisfy { $0.isCompleted }
     }
+}
+
+/// Trọng tài của 1 bảng (quick_table_referees + tên từ public_profiles).
+struct QTReferee: Identifiable, Equatable {
+    let id: UUID
+    let userID: UUID
+    let displayName: String?
 }

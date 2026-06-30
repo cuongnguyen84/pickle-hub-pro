@@ -18,11 +18,32 @@ final class CreateTeamMatchModel {
     var rosterSize = 4
     var teamCount = 4
     var requireRegistration = false
+    // DUPR khi yêu cầu đăng ký — điểm DUPR tối đa theo giới tính.
+    var useDupr = false
+    var duprMaxMale: Double = 5.0
+    var duprMaxFemale: Double = 4.5
+    // Chế độ tính theo TỔNG điểm: trận = 1 game tới t = số game × điểm/game (tới t là thắng, không deuce).
+    var totalScoreMode = false
+    var pointsPerGame = 7
+    var totalPoints: Int { templates.count * pointsPerGame }
     var requireMinGames = false
     var templates: [Template] = CreateTeamMatchModel.defaultTemplates(4)
     var hasDreambreaker = false
     var format = "round_robin"
     var playoffTeamCount = 4
+
+    /// Gợi ý số đội vào playoff theo số đội tham gia: 2 luỹ thừa-của-2 lớn nhất ≤ teamCount.
+    /// Vd 25 → [16, 8], 10 → [8, 4], 6 → [4, 2], ≤3 → [2]. Không fix cứng 2/4/8.
+    var playoffSizeOptions: [Int] {
+        var p = 1
+        while p * 2 <= teamCount { p *= 2 }   // p = luỹ thừa 2 lớn nhất ≤ teamCount
+        if p < 2 { p = 2 }
+        return p > 2 ? [p, p / 2] : [2]
+    }
+    /// Kẹp playoffTeamCount về 1 option hợp lệ (gọi khi vào bước 4 / đổi số đội).
+    func normalizePlayoffCount() {
+        if !playoffSizeOptions.contains(playoffTeamCount) { playoffTeamCount = playoffSizeOptions.first ?? 2 }
+    }
     var hasThirdPlaceMatch = false
 
     var creating = false
@@ -81,6 +102,8 @@ final class CreateTeamMatchModel {
             playoffTeamCount: playoffTeamCount, requireRegistration: requireRegistration,
             hasDreambreaker: effectiveDreambreaker, requireMinGames: requireMinGames,
             hasThirdPlaceMatch: hasThirdPlaceMatch,
+            useDupr: requireRegistration && useDupr, duprMaxMale: duprMaxMale, duprMaxFemale: duprMaxFemale,
+            totalScoreMode: totalScoreMode, pointsPerGame: pointsPerGame,
             templates: templates.enumerated().map {
                 .init(gameType: $1.gameType, scoringType: $1.scoringType,
                       displayName: $1.displayName, orderIndex: $0)
@@ -189,8 +212,27 @@ struct CreateTeamMatchView: View {
             }
             toggleRow("Yêu cầu đăng ký trước", "Đội trưởng tạo đội và mời thành viên",
                       Binding(get: { model.requireRegistration }, set: { model.requireRegistration = $0 }))
+            if model.requireRegistration {
+                toggleRow("Sử dụng DUPR", "Giới hạn điểm DUPR tối đa khi đăng ký",
+                          Binding(get: { model.useDupr }, set: { model.useDupr = $0 }))
+                if model.useDupr {
+                    ratingField("DUPR tối đa — Nam", Binding(get: { model.duprMaxMale }, set: { model.duprMaxMale = $0 }))
+                    ratingField("DUPR tối đa — Nữ", Binding(get: { model.duprMaxFemale }, set: { model.duprMaxFemale = $0 }))
+                }
+            }
             toggleRow("Mỗi VĐV ít nhất 1 game", "Bắt buộc lineup dùng tất cả thành viên",
                       Binding(get: { model.requireMinGames }, set: { model.requireMinGames = $0 }))
+        }
+    }
+
+    private func ratingField(_ title: String, _ value: Binding<Double>) -> some View {
+        field(title) {
+            Stepper(value: value, in: 2.0...8.0, step: 0.25) {
+                Text(String(format: "%.2f", value.wrappedValue)).font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+            .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
         }
     }
 
@@ -207,6 +249,20 @@ struct CreateTeamMatchView: View {
             }
             Text("\(model.templates.count) game\(model.isEvenGames ? " · số chẵn → có thể cần DreamBreaker" : " · số lẻ → ván cuối quyết định")")
                 .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+
+            toggleRow("Tính theo tổng điểm", "Trận chơi 1 mạch tới tổng điểm, thay vì thắng/thua từng game",
+                      Binding(get: { model.totalScoreMode }, set: { model.totalScoreMode = $0 }))
+            if model.totalScoreMode {
+                field("Điểm mỗi game con") {
+                    Stepper(value: Binding(get: { model.pointsPerGame }, set: { model.pointsPerGame = $0 }), in: 1...50) {
+                        Text("\(model.pointsPerGame) điểm").font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                    .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                }
+                infoCard(gold: false, "Trận chơi tới \(model.totalPoints) điểm = \(model.templates.count) game × \(model.pointsPerGame). Tới \(model.totalPoints) là thắng (không deuce).")
+            }
 
             ForEach(Array(model.templates.enumerated()), id: \.element.id) { idx, tpl in
                 templateRow(idx: idx, tpl: tpl)
@@ -299,11 +355,14 @@ struct CreateTeamMatchView: View {
             if model.format == "rr_playoff" {
                 field("Số đội vào Playoff") {
                     Picker("", selection: Binding(get: { model.playoffTeamCount }, set: { model.playoffTeamCount = $0 })) {
-                        Text("2 đội (Chung kết)").tag(2)
-                        Text("4 đội (Bán kết)").tag(4)
-                        Text("8 đội (Tứ kết)").tag(8)
+                        ForEach(model.playoffSizeOptions, id: \.self) { n in
+                            Text("\(n) đội").tag(n)
+                        }
                     }.pickerStyle(.segmented)
                 }
+                .onAppear { model.normalizePlayoffCount() }
+                infoCard(gold: false, "Gợi ý theo \(model.teamCount) đội tham gia — \(model.playoffTeamCount) đội mạnh nhất vào nhánh loại trực tiếp (\(roundName(model.playoffTeamCount))).")
+                repechageRow
             }
             if model.format == "single_elimination" {
                 if model.isValidSECount {
@@ -316,6 +375,38 @@ struct CreateTeamMatchView: View {
                 infoCard(gold: false, "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công (trên web).")
             }
         }
+    }
+
+    private func roundName(_ n: Int) -> String {
+        switch n {
+        case 2: return "Chung kết"
+        case 4: return "Bán kết"
+        case 8: return "Tứ kết"
+        case 16: return "Vòng 1/16"
+        case 32: return "Vòng 1/32"
+        default: return "\(n) đội"
+        }
+    }
+
+    // Nút Vòng Tái sinh — placeholder, logic xử lý sau. ponytail: chưa wire backend.
+    private var repechageRow: some View {
+        Button { Haptics.light() } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "arrow.uturn.backward.circle").foregroundStyle(TLColor.fg3)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Vòng Tái sinh").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg2)
+                    Text("Đội thua có cơ hội đá lại").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
+                }
+                Spacer()
+                Text("SẮP CÓ").font(TLFont.mono(9, .bold)).tracking(1).foregroundStyle(TLColor.fg4)
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(TLColor.surface2, in: Capsule())
+            }
+            .padding(14)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain).disabled(true).opacity(0.7)
     }
 
     private func formatOption(_ value: String, _ title: String, _ desc: String) -> some View {

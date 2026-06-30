@@ -19,7 +19,7 @@ struct TeamMatchRepository {
     func load(shareID: String) async throws -> TMDetail {
         let tournament: TMTournament = try await client
             .from("team_match_tournaments")
-            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by")
+            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game")
             .eq("share_id", value: shareID)
             .single()
             .execute().value
@@ -33,6 +33,12 @@ struct TeamMatchRepository {
         async let matches: [TMMatch] = client
             .from("team_match_matches")
             .select(Self.matchColumns)
+            .eq("tournament_id", value: tournament.id)
+            .order("display_order", ascending: true)
+            .execute().value
+        async let groups: [TMGroup] = client
+            .from("team_match_groups")
+            .select("id, name, display_order")
             .eq("tournament_id", value: tournament.id)
             .order("display_order", ascending: true)
             .execute().value
@@ -55,7 +61,7 @@ struct TeamMatchRepository {
             .execute().value
 
         return TMDetail(tournament: tournament, teams: teamList, roster: try await roster,
-                        matches: matchList, games: try await games)
+                        matches: matchList, games: try await games, groups: try await groups)
     }
 
     // MARK: Permissions
@@ -97,6 +103,11 @@ struct TeamMatchRepository {
         let hasDreambreaker: Bool  // effective: even games && toggle
         let requireMinGames: Bool
         let hasThirdPlaceMatch: Bool
+        let useDupr: Bool
+        let duprMaxMale: Double
+        let duprMaxFemale: Double
+        let totalScoreMode: Bool
+        let pointsPerGame: Int
         let templates: [TMTemplateInput]
     }
 
@@ -177,6 +188,29 @@ struct TeamMatchRepository {
                                game_type: $0.gameType, display_name: $0.displayName, scoring_type: $0.scoringType)
             }
             try await client.from("team_match_game_templates").insert(rows).execute()
+        }
+
+        // DUPR: RPC không biết các cột này → UPDATE sau (creator có quyền sửa giải của mình).
+        if o.useDupr {
+            struct DuprUpdate: Encodable {
+                let require_dupr = true
+                let dupr_max_male: Double
+                let dupr_max_female: Double
+            }
+            try await client.from("team_match_tournaments")
+                .update(DuprUpdate(dupr_max_male: o.duprMaxMale, dupr_max_female: o.duprMaxFemale))
+                .eq("id", value: t.id).execute()
+        }
+
+        // Chế độ tính theo tổng điểm — cũng UPDATE sau create (RPC không biết cột này).
+        if o.totalScoreMode {
+            struct TotalScoreUpdate: Encodable {
+                let total_score_mode = true
+                let points_per_game: Int
+            }
+            try await client.from("team_match_tournaments")
+                .update(TotalScoreUpdate(points_per_game: o.pointsPerGame))
+                .eq("id", value: t.id).execute()
         }
         return t.shareID
     }
@@ -392,30 +426,99 @@ struct TeamMatchRepository {
         try await client.from("team_match_matches").delete().eq("tournament_id", value: tournamentID).execute()
     }
 
+    /// rr_playoff: xoá toàn bộ vòng bảng (trận + bảng) + đưa giải về 'registration' để chia lại sạch.
+    func resetGroupStage(tournamentID: UUID) async throws {
+        try await client.from("team_match_matches").delete().eq("tournament_id", value: tournamentID).execute()
+        try await client.from("team_match_groups").delete().eq("tournament_id", value: tournamentID).execute()
+        struct StatusUpdate: Encodable { let status: String }
+        try await client.from("team_match_tournaments")
+            .update(StatusUpdate(status: "registration")).eq("id", value: tournamentID).execute()
+    }
+
     /// Round-robin (circle method) — port of generateMatchesMutation.
     private struct RRMatchInsert: Encodable {
         let tournament_id: String; let team_a_id: String; let team_b_id: String
         let round_number: Int; let is_playoff: Bool; let status: String; let display_order: Int
         let games_won_a: Int; let games_won_b: Int; let total_points_a: Int; let total_points_b: Int
+        var group_id: String? = nil   // nil = RR phẳng; set khi chia bảng
     }
-    func generateRoundRobin(tournamentID: UUID, hasDreambreaker: Bool) async throws {
-        var sched = try await approvedTeamIDs(tournamentID: tournamentID)
-        guard sched.count >= 2 else { throw GenerateError.tooFewTeams }
+
+    /// Cặp đấu vòng tròn (circle method) cho 1 tập đội. BYE bỏ qua. Dùng chung RR phẳng + theo bảng.
+    static func circlePairs(_ ids: [String]) -> [(a: String, b: String, round: Int)] {
+        var sched = ids
+        guard sched.count >= 2 else { return [] }
         if sched.count % 2 != 0 { sched.append("BYE") }
-        let numRounds = sched.count - 1
-        let half = sched.count / 2
-        let tID = tournamentID.uuidString.lowercased()
-        var rows: [RRMatchInsert] = []
+        let numRounds = sched.count - 1, half = sched.count / 2
+        var out: [(a: String, b: String, round: Int)] = []
         for round in 0..<numRounds {
             for i in 0..<half {
                 let a = sched[i], b = sched[sched.count - 1 - i]
-                if a == "BYE" || b == "BYE" { continue }
-                rows.append(RRMatchInsert(tournament_id: tID, team_a_id: a, team_b_id: b,
-                                          round_number: round + 1, is_playoff: false, status: "pending",
-                                          display_order: rows.count, games_won_a: 0, games_won_b: 0,
-                                          total_points_a: 0, total_points_b: 0))
+                if a != "BYE" && b != "BYE" { out.append((a, b, round + 1)) }
             }
             let last = sched.removeLast(); sched.insert(last, at: 1)
+        }
+        return out
+    }
+
+    func generateRoundRobin(tournamentID: UUID, hasDreambreaker: Bool) async throws {
+        let ids = try await approvedTeamIDs(tournamentID: tournamentID)
+        guard ids.count >= 2 else { throw GenerateError.tooFewTeams }
+        let tID = tournamentID.uuidString.lowercased()
+        let rows = Self.circlePairs(ids).enumerated().map { i, p in
+            RRMatchInsert(tournament_id: tID, team_a_id: p.a, team_b_id: p.b,
+                          round_number: p.round, is_playoff: false, status: "pending",
+                          display_order: i, games_won_a: 0, games_won_b: 0,
+                          total_points_a: 0, total_points_b: 0)
+        }
+        let inserted: [InsertedID] = try await client
+            .from("team_match_matches").insert(rows).select("id").execute().value
+        let templates = try await gameTemplates(tournamentID: tournamentID)
+        try await insertGames(forMatchIDs: inserted.map { $0.id }, templates: templates, hasDreambreaker: hasDreambreaker)
+    }
+
+    /// rr_playoff — chia bảng theo `distribution` (random/manual do UI quyết): tạo team_match_groups,
+    /// gán group_id cho đội, set status 'ongoing' + group_count, sinh RR THEO TỪNG BẢNG + games.
+    /// Port web useTeamMatchGroups.createGroups, hỗ trợ mọi số bảng.
+    func setupGroups(tournamentID: UUID, distribution: [[UUID]], hasDreambreaker: Bool) async throws {
+        let tID = tournamentID.uuidString.lowercased()
+        guard distribution.count >= 2, distribution.allSatisfy({ $0.count >= 2 }) else {
+            throw GenerateError.tooFewTeams
+        }
+        // Clean slate (idempotent): xoá bảng + trận vòng bảng cũ để chia lại không bị tạo trùng.
+        // games cascade theo match; group_id của đội cascade về null khi xoá group.
+        try await client.from("team_match_matches").delete()
+            .eq("tournament_id", value: tournamentID).eq("is_playoff", value: false).execute()
+        try await client.from("team_match_groups").delete()
+            .eq("tournament_id", value: tournamentID).execute()
+        let names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        struct GroupInsert: Encodable { let tournament_id: String; let name: String; let display_order: Int }
+        let groupRows: [InsertedID] = try await client.from("team_match_groups")
+            .insert(distribution.indices.map { i in
+                GroupInsert(tournament_id: tID, name: "Bảng \(names[i])", display_order: i) })
+            .select("id").execute().value
+
+        struct GroupAssign: Encodable { let group_id: String }
+        for (i, teamIDs) in distribution.enumerated() {
+            let gid = groupRows[i].id.uuidString.lowercased()
+            for tid in teamIDs {
+                try await client.from("team_match_teams")
+                    .update(GroupAssign(group_id: gid)).eq("id", value: tid.uuidString.lowercased()).execute()
+            }
+        }
+
+        struct TUpdate: Encodable { let group_count: Int; let status: String }
+        try await client.from("team_match_tournaments")
+            .update(TUpdate(group_count: distribution.count, status: "ongoing"))
+            .eq("id", value: tournamentID).execute()
+
+        var rows: [RRMatchInsert] = []
+        for (i, teamIDs) in distribution.enumerated() {
+            let gid = groupRows[i].id.uuidString.lowercased()
+            for p in Self.circlePairs(teamIDs.map { $0.uuidString.lowercased() }) {
+                rows.append(RRMatchInsert(tournament_id: tID, team_a_id: p.a, team_b_id: p.b,
+                    round_number: p.round, is_playoff: false, status: "pending", display_order: rows.count,
+                    games_won_a: 0, games_won_b: 0, total_points_a: 0, total_points_b: 0, group_id: gid))
+            }
         }
         let inserted: [InsertedID] = try await client
             .from("team_match_matches").insert(rows).select("id").execute().value
@@ -518,16 +621,47 @@ struct TeamMatchRepository {
     /// rr_playoff: seed the playoff bracket from final standings (standard
     /// seeding 1vN, 2vN-1…). `seededTeamIDs` is rank order (rank 1 first),
     /// length must be a power of two. Port of generatePlayoffMatchesMutation.
+    /// Ghép cặp playoff THEO BẢNG (số bảng chẵn): nhất bảng X gặp nhì bảng Y (cặp kề), nhì X gặp nhất Y
+    /// ở nửa đối diện → 2 đội cùng bảng nằm hai nửa, chỉ gặp lại ở chung kết.
+    /// `winners`/`runnersUp` index theo thứ tự bảng (A,B,C…). Trả first-round: nửa trên trước, nửa dưới sau.
+    static func groupPairings(winners: [String], runnersUp: [String]) -> [(a: String, b: String)]? {
+        let g = winners.count
+        guard g >= 2, g % 2 == 0, runnersUp.count == g else { return nil }
+        var top: [(a: String, b: String)] = [], bottom: [(a: String, b: String)] = []
+        var p = 0
+        while p < g {
+            top.append((winners[p], runnersUp[p + 1]))      // X1 vs Y2 → nửa trên
+            bottom.append((winners[p + 1], runnersUp[p]))   // Y1 vs X2 → nửa dưới
+            p += 2
+        }
+        return top + bottom
+    }
+
+    /// Playoff seed theo BXH tổng + seed-position chuẩn (fallback khi không seed theo bảng).
     func generatePlayoffFromSeeds(tournamentID: UUID, seededTeamIDs: [String], hasDreambreaker: Bool) async throws {
         let n = seededTeamIDs.count
-        guard n >= 2 else { throw GenerateError.tooFewTeams }
-        guard n & (n - 1) == 0 else { throw GenerateError.notPowerOfTwo }
+        guard n >= 2, n & (n - 1) == 0 else { throw GenerateError.notPowerOfTwo }
+        let order = DEBracket.seedPositions(n)   // order[slot] = seedIndex (0-based); #1 & #2 hai nửa đối diện
+        let firstRound = (0..<(n / 2)).map { i in (a: seededTeamIDs[order[2 * i]], b: seededTeamIDs[order[2 * i + 1]]) }
+        try await buildPlayoffBracket(tournamentID: tournamentID, firstRound: firstRound, hasDreambreaker: hasDreambreaker)
+    }
+
+    /// Playoff seed theo BẢNG (nhất gặp nhì bảng khác, cùng bảng khác nhánh).
+    func generatePlayoffFromGroupPairs(tournamentID: UUID, firstRound: [(a: String, b: String)], hasDreambreaker: Bool) async throws {
+        try await buildPlayoffBracket(tournamentID: tournamentID, firstRound: firstRound, hasDreambreaker: hasDreambreaker)
+    }
+
+    /// Dựng bracket từ first-round pairs cho trước (chung cho cả 2 cách seed). Match i & i+1 (i chẵn)
+    /// dồn về 1 match vòng sau (k/2) — first-round phải đã xếp đúng nhánh.
+    private func buildPlayoffBracket(tournamentID: UUID, firstRound: [(a: String, b: String)], hasDreambreaker: Bool) async throws {
+        let n = firstRound.count * 2
+        guard n >= 2, n & (n - 1) == 0 else { throw GenerateError.notPowerOfTwo }
         let totalRounds = Int(log2(Double(n)))
         let tID = tournamentID.uuidString.lowercased()
 
         var rows: [POMatchInsert] = []
-        for i in 0..<(n / 2) {
-            rows.append(POMatchInsert(tournament_id: tID, team_a_id: seededTeamIDs[i], team_b_id: seededTeamIDs[n - 1 - i],
+        for (i, pr) in firstRound.enumerated() {
+            rows.append(POMatchInsert(tournament_id: tID, team_a_id: pr.a, team_b_id: pr.b,
                                       playoff_round: totalRounds, bracket_position: i, display_order: i, is_third_place: false))
         }
         for round in stride(from: totalRounds - 1, through: 1, by: -1) {

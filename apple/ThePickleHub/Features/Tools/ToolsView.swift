@@ -14,6 +14,7 @@ final class ToolsViewModel {
 
     var phase: Phase = .loading
     var mine: [MyTournament] = []
+    var refereeing: [MyTournament] = []
     var all: [MyTournament] = []
     var isAdmin = false
     var scope: Scope = .mine
@@ -43,8 +44,10 @@ final class ToolsViewModel {
         if loaded { return }
         phase = .loading
         async let mineTask = repo.myTournaments()
+        async let refTask = repo.myRefereeingTournaments()
         async let adminTask = repo.isCurrentUserAdmin()
         mine = await mineTask
+        refereeing = await refTask
         isAdmin = await adminTask
         loaded = true
         phase = .loaded
@@ -97,6 +100,7 @@ struct ToolsView: View {
                 VStack(alignment: .leading, spacing: 26) {
                     hero
                     formatSection
+                    refereeSection
                     recentSection
                 }
                 .padding(.vertical, 18)
@@ -283,11 +287,28 @@ struct ToolsView: View {
             .accessibilityHidden(true)
     }
 
-    // MARK: Section 02 — my tournaments
+    // MARK: Section — tournaments I referee ("Giải tôi chấm")
+
+    @ViewBuilder
+    private var refereeSection: some View {
+        if model.phase == .loaded && !model.refereeing.isEmpty {
+            VStack(alignment: .leading, spacing: 13) {
+                sectionHeader(num: "02", title: "Giải tôi chấm").padding(.horizontal, 22)
+                VStack(spacing: 12) {
+                    ForEach(model.refereeing) { t in
+                        TournamentCard(tournament: t) { manage(t) }
+                    }
+                }
+                .padding(.horizontal, 22)
+            }
+        }
+    }
+
+    // MARK: Section 03 — my tournaments
 
     private var recentSection: some View {
         VStack(alignment: .leading, spacing: 13) {
-            sectionHeader(num: "02", title: "Giải gần đây").padding(.horizontal, 22)
+            sectionHeader(num: "03", title: "Giải gần đây").padding(.horizontal, 22)
 
             switch model.phase {
             case .loading:

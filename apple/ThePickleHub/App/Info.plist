@@ -18,46 +18,32 @@
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UILaunchScreen</key>
-	<dict/>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<!-- Injected from Config/Secrets.xcconfig at build time -->
-	<key>SupabaseProjectRef</key>
-	<string>$(SUPABASE_PROJECT_REF)</string>
-	<key>SupabaseAnonKey</key>
-	<string>$(SUPABASE_ANON_KEY)</string>
-	<!-- Media loads for Mux HLS playback (used from Phase 6) -->
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoadsForMedia</key>
-		<true/>
-	</dict>
-	<!-- Native Google Sign-In. iOS client id signs the flow; the web client id
-	     as serverClientID makes the returned idToken's audience match what
-	     Supabase's Google provider expects (mirrors useNativeGoogleAuth.ts). -->
-	<key>GIDClientID</key>
-	<string>574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli.apps.googleusercontent.com</string>
-	<key>GIDServerClientID</key>
-	<string>799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- Reversed iOS client id -->
 				<string>com.googleusercontent.apps.574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli</string>
 			</array>
 		</dict>
 	</array>
-	<!-- The Line typeface system, mirroring the web (Geist / Geist Mono /
-	     Instrument Serif). OFL-licensed; bundled under Resources/Fonts. -->
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GIDClientID</key>
+	<string>574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsForMedia</key>
+		<true/>
+	</dict>
+	<key>SupabaseAnonKey</key>
+	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>SupabaseProjectRef</key>
+	<string>$(SUPABASE_PROJECT_REF)</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Geist-Regular.ttf</string>
@@ -69,6 +55,14 @@
 		<string>GeistMono-Bold.ttf</string>
 		<string>InstrumentSerif-Regular.ttf</string>
 		<string>InstrumentSerif-Italic.ttf</string>
+	</array>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

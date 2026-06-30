@@ -14,7 +14,8 @@ final class QuickTableViewModel {
     }
 
     var phase: Phase = .loading
-    var editable = false
+    var editable = false      // can SCORE (creator hoặc referee) — khớp web canEditScores
+    var canManage = false     // can MANAGE: start playoff, duyệt đăng ký (chỉ creator) — khớp web canManageTable
     var tab: Tab = .groups
     var selectedGroupID: UUID?
     var scoringMatch: QTMatch?
@@ -22,6 +23,11 @@ final class QuickTableViewModel {
     // Registration
     var currentUID: UUID?
     var registrations: [QTRegistration] = []
+    var referees: [QTReferee] = []
+    var showReferees = false
+    var newRefEmail = ""
+    var refBusy = false
+    var refMessage: String?
     var myRegistration: QTRegistration?
     var showRegistrations = false
     var showSelfRegister = false
@@ -36,6 +42,23 @@ final class QuickTableViewModel {
     var wildcardCandidates: [QTPlayer] = []
     private var pendingQualified: [(player: QTPlayer, seed: Int)] = []
 
+    // V2: người dùng chọn cỡ bracket (vd 3 bảng → 4/8, 6 bảng → 8/16). BYE tự tính.
+    struct BracketOption: Identifiable {
+        let advancePerGroup: Int
+        let bracketSize: Int
+        let wildcards: Int
+        let byes: Int
+        var id: Int { advancePerGroup }
+        var buttonLabel: String {
+            var parts = ["\(bracketSize) người", advancePerGroup == 2 ? "top-2 mỗi bảng" : "nhất bảng"]
+            if wildcards > 0 { parts.append("+\(wildcards) wildcard") }
+            if byes > 0 { parts.append("+\(byes) BYE") }
+            return parts.joined(separator: " · ")
+        }
+    }
+    var showBracketChoice = false
+    var bracketOptions: [BracketOption] = []
+
     private let repo = QuickTableRepository()
 
     var detail: QuickTableDetail? { if case .loaded(let d) = phase { return d } ; return nil }
@@ -46,7 +69,9 @@ final class QuickTableViewModel {
         do {
             let detail = try await repo.load(shareID: shareID)
             let uid = await repo.currentUserID()
-            if detail.table.creatorUserID != nil && detail.table.creatorUserID == uid {
+            let isOwner = detail.table.creatorUserID != nil && detail.table.creatorUserID == uid
+            canManage = isOwner   // quản lý = chỉ chủ bảng (web canManageTable); referee KHÔNG được
+            if isOwner {
                 editable = true
             } else if let uid {
                 editable = await repo.isReferee(tableID: detail.table.id, userID: uid)
@@ -56,7 +81,10 @@ final class QuickTableViewModel {
             currentUID = uid
             if detail.table.requiresRegistration == true {
                 if let uid { myRegistration = await repo.userRegistration(tableID: detail.table.id, userID: uid) }
-                if editable { registrations = await repo.fetchRegistrations(tableID: detail.table.id) }
+                if canManage {
+                    registrations = await repo.fetchRegistrations(tableID: detail.table.id)
+                    referees = await repo.fetchReferees(tableID: detail.table.id)
+                }
             }
             if selectedGroupID == nil || !detail.groups.contains(where: { $0.id == selectedGroupID }) {
                 selectedGroupID = detail.groups.first?.id
@@ -74,6 +102,19 @@ final class QuickTableViewModel {
     @MainActor
     func startPlayoff(shareID: String) async {
         guard let d = detail else { return }
+        // V2 (native): cho người dùng chọn cỡ bracket (4/8, 8/16…). BYE tự tính.
+        // Web/Android giữ nguyên; đây chỉ là app native /apple.
+        if QTSeedingV2.enabled {
+            let opts = bracketOptionsV2(d)
+            if opts.isEmpty { playoffError = "Không đủ người để sinh playoff."; return }
+            if opts.count == 1 {
+                await runPlayoffV2(shareID: shareID, advancePerGroup: opts[0].advancePerGroup)
+            } else {
+                bracketOptions = opts
+                showBracketChoice = true
+            }
+            return
+        }
         let need = QTPlayoff.wildcardCount(groupCount: d.groups.count)
         let q = QTPlayoff.qualify(groups: d.groups, players: d.players, topPerGroup: d.table.topPerGroup ?? 2)
         pendingQualified = q.qualified
@@ -112,6 +153,58 @@ final class QuickTableViewModel {
             await load(shareID: shareID)
             tab = .playoff
         } catch { playoffError = error.localizedDescription }
+        generatingPlayoff = false
+    }
+
+    /// Cỡ bracket khả dĩ cho số bảng hiện tại: advancePerGroup ∈ {2,1} mà mọi bảng đủ người.
+    /// Mỗi option kèm số wildcard + BYE (tự tính). 2 đứng trước (bracket lớn hơn).
+    func bracketOptionsV2(_ d: QuickTableDetail) -> [BracketOption] {
+        let G = d.groups.count
+        let sizes = d.groups.map { g in d.players.filter { $0.groupID == g.id }.count }
+        var opts: [BracketOption] = []
+        for A in [2, 1] {
+            guard G >= 2, sizes.allSatisfy({ $0 >= A }) else { continue }  // mỗi bảng đủ A người
+            let plan = QTSeedingV2.computeSeedingPlan(groupCount: G, advancePerGroup: A)
+            let candidates = sizes.filter { $0 > A }.count                  // bảng có hạng (A+1)
+            let wild = min(plan.wildcardCount, candidates)
+            let byes = plan.bracketSize - plan.directSpots - wild
+            opts.append(BracketOption(advancePerGroup: A, bracketSize: plan.bracketSize,
+                                      wildcards: wild, byes: byes))
+        }
+        return opts
+    }
+
+    @MainActor
+    func chooseBracket(shareID: String, advancePerGroup: Int) async {
+        showBracketChoice = false
+        await runPlayoffV2(shareID: shareID, advancePerGroup: advancePerGroup)
+    }
+
+    /// V2: seeding tổng quát (QTSeedingV2) — auto chọn wildcard theo best (A+1)-place,
+    /// pad BYE nếu thiếu, cặp đấu theo seed chuẩn + resolve trùng bảng. `advancePerGroup` do user chọn.
+    @MainActor
+    private func runPlayoffV2(shareID: String, advancePerGroup: Int) async {
+        guard let d = detail else { return }
+        generatingPlayoff = true; playoffError = nil
+        do {
+            let result = try QTSeedingV2.generateSeeding(
+                groups: d.groups, players: d.players, matches: d.matches,
+                advancePerGroup: advancePerGroup)
+            let resolved = QTSeedingV2.resolveGroupConflicts(QTSeedingV2.pairings(result.seeded))
+            let bracket = QTSeedingV2.toBracketMatches(resolved)
+            let directs = result.seeded
+                .filter { $0.tier == .winner || $0.tier == .runnerUp }
+                .compactMap { s in s.playerID.map { (playerID: $0, seed: s.seed) } }
+            let wildcards = result.seeded.filter { $0.tier == .wildcard }.compactMap { $0.playerID }
+            try await repo.markPlayersQualified(qualified: directs, wildcards: wildcards)
+            try await repo.createPlayoff(tableID: d.table.id, firstRound: bracket)
+            await load(shareID: shareID)
+            tab = .playoff
+        } catch let e as QTSeedingV2.SeedingError {
+            playoffError = e.message
+        } catch {
+            playoffError = error.localizedDescription
+        }
         generatingPlayoff = false
     }
 
@@ -169,6 +262,31 @@ final class QuickTableViewModel {
     }
 
     @MainActor
+    func loadReferees() async {
+        guard let id = detail?.table.id else { return }
+        referees = await repo.fetchReferees(tableID: id)
+    }
+
+    func addReferee() async {
+        guard let id = detail?.table.id else { return }
+        guard !newRefEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        refBusy = true; refMessage = nil
+        switch await repo.addReferee(tableID: id, email: newRefEmail) {
+        case .ok(let n): refMessage = "Đã thêm trọng tài \(n ?? newRefEmail)"; newRefEmail = ""; await loadReferees()
+        case .notFound: refMessage = "Không tìm thấy người dùng với email này"
+        case .alreadyExists: refMessage = "Người này đã là trọng tài"
+        case .error: refMessage = "Không thể thêm trọng tài"
+        }
+        refBusy = false
+    }
+
+    func removeReferee(_ ref: QTReferee) async {
+        refBusy = true; refMessage = nil
+        do { try await repo.removeReferee(refereeID: ref.id); await loadReferees() }
+        catch { refMessage = error.localizedDescription }
+        refBusy = false
+    }
+
     func submitScore(tableID: UUID, match: QTMatch, score1: Int, score2: Int, shareID: String) async {
         do {
             try await repo.score(tableID: tableID, match: match, score1: score1, score2: score2)
@@ -231,8 +349,21 @@ struct QuickTableDetailView: View {
                 Task { await model.confirmWildcards(shareID: shareID, selectedIDs: selected) }
             }
         }
+        .confirmationDialog("Số người vào Playoff",
+                            isPresented: Binding(get: { model.showBracketChoice }, set: { model.showBracketChoice = $0 }),
+                            titleVisibility: .visible) {
+            ForEach(model.bracketOptions) { opt in
+                Button(opt.buttonLabel) {
+                    Task { await model.chooseBracket(shareID: shareID, advancePerGroup: opt.advancePerGroup) }
+                }
+            }
+            Button("Huỷ", role: .cancel) {}
+        }
         .sheet(isPresented: Binding(get: { model.showRegistrations }, set: { model.showRegistrations = $0 })) {
             QuickTableRegistrationsSheet(model: model)
+        }
+        .sheet(isPresented: Binding(get: { model.showReferees }, set: { model.showReferees = $0 })) {
+            QuickTableRefereesSheet(model: model)
         }
         .sheet(isPresented: Binding(get: { model.showSelfRegister }, set: { model.showSelfRegister = $0 })) {
             QuickTableSelfRegisterSheet(isDoubles: model.detail?.table.isDoubles ?? false, busy: model.regBusy, error: model.regError) {
@@ -242,11 +373,26 @@ struct QuickTableDetailView: View {
         }
     }
 
+    private var refereeManageButton: some View {
+        Button { Haptics.light(); model.showReferees = true } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "whistle.fill").font(.system(size: 15)).foregroundStyle(TLColor.accentText)
+                Text("Trọng tài").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg)
+                Spacer()
+                Text("\(model.referees.count)").font(TLFont.mono(11)).foregroundStyle(TLColor.fg3)
+                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(TLColor.fg4)
+            }
+            .padding(14)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+        }.buttonStyle(.plain)
+    }
+
     // MARK: Registration UI
 
     @ViewBuilder
     private func registrationSection(_ detail: QuickTableDetail) -> some View {
-        if model.editable {
+        if model.canManage {
             let pending = model.registrations.filter { $0.status == "pending" }.count
             Button { Haptics.light(); model.showRegistrations = true } label: {
                 HStack(spacing: 10) {
@@ -320,7 +466,8 @@ struct QuickTableDetailView: View {
             VStack(alignment: .leading, spacing: 18) {
                 header(detail.table)
                 if detail.table.requiresRegistration == true { registrationSection(detail) }
-                if model.editable && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
+                if model.canManage { refereeManageButton }
+                if model.canManage && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
                     advanceBanner
                 }
                 tabPicker(detail)
@@ -785,6 +932,10 @@ private struct ScoreSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var s1: String
     @State private var s2: String
+    @State private var refMode: ScoringMode = .rally
+    @State private var refTarget = 11
+    @State private var refSingles = false
+    @State private var refereeing = false
 
     init(detail: QuickTableDetail, match: QTMatch, onSave: @escaping (Int, Int) -> Void) {
         self.detail = detail
@@ -804,6 +955,8 @@ private struct ScoreSheet: View {
                 row(name: detail.name(for: match.player1ID), text: $s1)
                 Text("–").font(TLFont.serif(24)).foregroundStyle(TLColor.fg4)
                 row(name: detail.name(for: match.player2ID), text: $s2)
+
+                refereeSection
                 Spacer()
             }
             .padding(20)
@@ -827,6 +980,51 @@ private struct ScoreSheet: View {
         .presentationDetents([.medium])
     }
 
+    // Chấm trực tiếp cho trọng tài — chọn thể thức + điểm thắng rồi tap 2 vùng lớn.
+    private var refereeSection: some View {
+        VStack(spacing: 12) {
+            Rectangle().fill(TLColor.border).frame(height: 1).padding(.vertical, 4)
+            Picker("", selection: $refMode) {
+                Text("Trực tiếp").tag(ScoringMode.rally)
+                Text("Giao bóng").tag(ScoringMode.sideOut)
+            }.pickerStyle(.segmented)
+            HStack(spacing: 14) {
+                Picker("", selection: $refTarget) {
+                    ForEach([11, 15, 21], id: \.self) { Text("Tới \($0)").tag($0) }
+                }.pickerStyle(.segmented)
+                if refMode == .sideOut {
+                    Toggle("Đơn", isOn: $refSingles).font(TLFont.mono(11)).fixedSize()
+                }
+            }
+            Button {
+                Haptics.light(); refereeing = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "play.circle.fill").font(.system(size: 14, weight: .bold))
+                    Text("CHẤM TRỰC TIẾP").font(TLFont.mono(12, .bold)).tracking(0.5)
+                }
+                .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 13)
+                .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 11))
+            }
+            .buttonStyle(.plain)
+            .fullScreenCover(isPresented: $refereeing) {
+                RefereeScoringView(
+                    teamAName: detail.name(for: match.player1ID),
+                    teamBName: detail.name(for: match.player2ID),
+                    playersA: detail.pairNames(for: match.player1ID),
+                    playersB: detail.pairNames(for: match.player2ID),
+                    mode: refMode,
+                    isSingles: detail.table.isDoubles == true ? false : refSingles,
+                    winTarget: refTarget,
+                    onLiveScore: { a, b in Task { try? await QuickTableRepository().updateLiveScore(matchID: match.id, score1: a, score2: b) } },
+                    onClaimLive: { Task { try? await QuickTableRepository().claimLive(matchID: match.id) } }) { a, b, note in
+                    Haptics.light(); onSave(a, b)
+                    if let note { Task { try? await QuickTableRepository().updateRefereeNote(matchID: match.id, note: note) } }
+                }
+            }
+        }
+    }
+
     private func row(name: String, text: Binding<String>) -> some View {
         HStack(spacing: 14) {
             Text(name).font(TLFont.sans(16, .medium)).foregroundStyle(TLColor.fg)
@@ -837,6 +1035,63 @@ private struct ScoreSheet: View {
                 .frame(width: 72, height: 52)
                 .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+        }
+    }
+}
+
+/// Quản lý trọng tài cho 1 bảng — thêm/xoá bằng email (parity với TeamMatchSettingsSheet).
+private struct QuickTableRefereesSheet: View {
+    @Bindable var model: QuickTableViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    if model.referees.isEmpty {
+                        Text("Chưa có trọng tài.").font(TLFont.sans(12.5)).foregroundStyle(TLColor.fg3)
+                    } else {
+                        ForEach(model.referees) { ref in
+                            HStack(spacing: 10) {
+                                Image(systemName: "whistle").font(.system(size: 12)).foregroundStyle(TLColor.fg3)
+                                Text(ref.displayName ?? ref.userID.uuidString.prefix(8).description)
+                                    .font(TLFont.sans(13.5)).foregroundStyle(TLColor.fg).lineLimit(1)
+                                Spacer()
+                                Button { Haptics.light(); Task { await model.removeReferee(ref) } } label: {
+                                    Image(systemName: "xmark.circle.fill").font(.system(size: 15)).foregroundStyle(TLColor.fg4)
+                                }.buttonStyle(.plain)
+                            }
+                            .padding(.horizontal, 12).padding(.vertical, 10)
+                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                        }
+                    }
+                    HStack(spacing: 10) {
+                        TextField("Email trọng tài", text: Binding(get: { model.newRefEmail }, set: { model.newRefEmail = $0 }))
+                            .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
+                            .textInputAutocapitalization(.never).keyboardType(.emailAddress).autocorrectionDisabled()
+                            .padding(.horizontal, 12).padding(.vertical, 10)
+                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                            .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                        Button { Haptics.light(); Task { await model.addReferee() } } label: {
+                            Text("Thêm").font(TLFont.mono(11, .bold)).foregroundStyle(TLColor.accentInk)
+                                .padding(.horizontal, 14).padding(.vertical, 11)
+                                .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 11))
+                        }
+                        .buttonStyle(.plain).disabled(model.refBusy)
+                    }
+                    Text("Trọng tài có thể chấm điểm mọi trận của bảng. Người dùng phải đã có tài khoản.")
+                        .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                    if let msg = model.refMessage {
+                        Text(msg).font(TLFont.sans(12)).foregroundStyle(TLColor.fg2)
+                    }
+                }
+                .padding(16)
+            }
+            .background(TLColor.bg)
+            .navigationTitle("Trọng tài")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Xong") { dismiss() }.foregroundStyle(TLColor.accentText) } }
+            .task { await model.loadReferees() }
         }
     }
 }

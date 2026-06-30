@@ -35,6 +35,41 @@ struct ToolsRepository {
         return all.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
     }
 
+    /// Tournaments (MỌI format) mà user hiện tại được phân làm TRỌNG TÀI — cho mục
+    /// "Giải tôi chấm". Mỗi format query bảng `*_referees` rồi nhúng (embed) bảng cha
+    /// qua quan hệ FK. Non-throwing; format nào lỗi trả [] format đó. [] khi đăng xuất.
+    func myRefereeingTournaments() async -> [MyTournament] {
+        guard let uid = try? await client.auth.session.user.id.uuidString.lowercased() else { return [] }
+        async let quick = refereed(refTable: "quick_table_referees",
+            embed: "quick_tables(id, share_id, name, is_doubles, player_count, status, created_at)",
+            format: .quickTable, uid: uid)
+        async let doubles = refereed(refTable: "doubles_elimination_referees",
+            embed: "doubles_elimination_tournaments(id, share_id, name, team_count, status, created_at)",
+            format: .doublesElim, uid: uid)
+        async let team = refereed(refTable: "team_match_referees",
+            embed: "team_match_tournaments(id, share_id, name, status, created_at)",
+            format: .teamMatch, uid: uid)
+        async let flex = refereed(refTable: "flex_tournament_referees",
+            embed: "flex_tournaments(id, share_id, name, status, created_at)",
+            format: .flex, uid: uid)
+        let all = await quick + doubles + team + flex
+        return all.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+    }
+
+    /// Embed bảng cha (alias `t`) vào hàng referee của user → MyTournament. Dùng
+    /// chung `AllToolRow` (cột thừa decode nil) + `lightMap`.
+    private func refereed(refTable: String, embed: String, format: BracketFormat, uid: String) async -> [MyTournament] {
+        struct Wrap: Decodable { let t: AllToolRow? }
+        do {
+            let rows: [Wrap] = try await client
+                .from(refTable)
+                .select("t:\(embed)")
+                .eq("user_id", value: uid)
+                .execute().value
+            return rows.compactMap { $0.t }.map { Self.lightMap($0, format: format) }
+        } catch { return [] }
+    }
+
     // MARK: Admin scope
 
     /// True when the signed-in user holds the `admin` role. Mirrors the web

@@ -17,8 +17,11 @@ struct TMTournament: Decodable, Equatable {
     let playoffTeamCount: Int?
     let requireRegistration: Bool?
     let createdBy: UUID?
+    let totalScoreMode: Bool?   // true = chấm theo TỔNG điểm (1 trận tới t = số game × điểm/game)
+    let pointsPerGame: Int?
 
     var displayName: String { name.nonEmpty ?? "Giải đồng đội" }
+    var isTotalScore: Bool { totalScoreMode == true }
 
     var statusLabel: String {
         switch status {
@@ -49,6 +52,8 @@ struct TMTournament: Decodable, Equatable {
         case playoffTeamCount = "playoff_team_count"
         case requireRegistration = "require_registration"
         case createdBy = "created_by"
+        case totalScoreMode = "total_score_mode"
+        case pointsPerGame = "points_per_game"
     }
 }
 
@@ -63,6 +68,16 @@ struct TMTeam: Decodable, Identifiable, Equatable {
         case id, seed, status
         case teamName = "team_name"
         case groupID = "group_id"
+    }
+}
+
+struct TMGroup: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let name: String
+    let displayOrder: Int?
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case displayOrder = "display_order"
     }
 }
 
@@ -215,6 +230,22 @@ struct TMDetail: Equatable {
     let roster: [TMRosterPlayer]
     let matches: [TMMatch]
     let games: [TMGame]
+    let groups: [TMGroup]
+
+    var hasGroups: Bool { !groups.isEmpty }
+
+    /// Vòng bảng theo TỪNG BẢNG (Bảng A, B…): đội + trận của bảng. Để hiển thị giống Quick Table.
+    var groupSections: [(group: TMGroup, teams: [TMTeam], matches: [TMMatch])] {
+        groups.sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }.map { g in
+            (g,
+             teams.filter { $0.groupID == g.id }.sorted { ($0.seed ?? .max) < ($1.seed ?? .max) },
+             rrMatches.filter { $0.groupID == g.id }.sorted {
+                ($0.roundNumber ?? 0) != ($1.roundNumber ?? 0)
+                    ? ($0.roundNumber ?? 0) < ($1.roundNumber ?? 0)
+                    : ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0)
+             })
+        }
+    }
 
     func teamName(_ id: UUID?) -> String {
         guard let id, let t = teams.first(where: { $0.id == id }) else { return "TBD" }
@@ -280,11 +311,16 @@ struct TMDetail: Equatable {
 
     /// Round-robin standings. Mirrors web `useTeamMatchStandings`: only completed,
     /// non-playoff matches; sort by wins → game diff → points diff.
-    var standings: [TMStanding] {
+    var standings: [TMStanding] { standings(teamIDs: Set(teams.map { $0.id })) }
+
+    /// Xếp hạng cho 1 tập đội (per-group): chỉ tính trận giữa các đội đó.
+    /// Sort wins → game diff → point diff. Toàn giải = truyền tất cả đội.
+    func standings(teamIDs: Set<UUID>) -> [TMStanding] {
         var map: [UUID: TMStanding] = [:]
-        for t in teams { map[t.id] = TMStanding(team: t) }
+        for t in teams where teamIDs.contains(t.id) { map[t.id] = TMStanding(team: t) }
         for m in matches where m.isCompleted && !m.isPlayoff {
             guard let a = m.teamAID, let b = m.teamBID,
+                  teamIDs.contains(a), teamIDs.contains(b),
                   var sa = map[a], var sb = map[b] else { continue }
             sa.played += 1; sb.played += 1
             sa.gamesWon += m.gamesWonA; sa.gamesLost += m.gamesWonB
