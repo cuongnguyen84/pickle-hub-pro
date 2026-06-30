@@ -138,31 +138,13 @@ struct LiveView: View {
     }
 
     private var segmentPicker: some View {
-        HStack(spacing: 4) {
-            ForEach(LiveViewModel.Segment.allCases) { option in
-                let selected = option == segment
-                Button {
-                    Haptics.light()
-                    withAnimation(.easeInOut(duration: 0.18)) { segment = option }
-                } label: {
-                    HStack(spacing: 5) {
-                        if option == .live && model.hasLive {
-                            Circle().fill(selected ? TLColor.accentInk : TLColor.live).frame(width: 6, height: 6)
-                        }
-                        Text(option.label)
-                    }
-                    .font(TLFont.sans(13, selected ? .semibold : .medium))
-                    .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg2)
-                    .frame(maxWidth: .infinity).padding(.vertical, 9)
-                    .background(selected ? TLColor.accent : .clear, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(option.label)\(option == .live && model.hasLive ? ", đang có trận trực tiếp" : "")")
-            }
-        }
-        .padding(4)
-        .background(TLColor.surface, in: Capsule())
-        .overlay(Capsule().strokeBorder(TLColor.border, lineWidth: 1))
+        TLSegmented(
+            options: LiveViewModel.Segment.allCases,
+            selection: $segment,
+            label: { $0.label },
+            indicator: { $0 == .live && model.hasLive },
+            indicatorHint: "đang có trận trực tiếp"
+        )
         .padding(.horizontal, 22)
     }
 

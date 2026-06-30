@@ -50,21 +50,6 @@ struct SocialHubView: View {
     }
 
     private var segmented: some View {
-        HStack(spacing: 4) {
-            ForEach(SubTab.allCases) { option in
-                let selected = option == tab
-                Button { Haptics.light(); withAnimation(.easeInOut(duration: 0.18)) { tab = option } } label: {
-                    Text(option.label)
-                        .font(TLFont.sans(13, .semibold))
-                        .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg2)
-                        .frame(maxWidth: .infinity).padding(.vertical, 9)
-                        .background(selected ? TLColor.accent : .clear, in: Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(4)
-        .background(TLColor.surface, in: Capsule())
-        .overlay(Capsule().strokeBorder(TLColor.border, lineWidth: 1))
+        TLSegmented(options: SubTab.allCases, selection: $tab, label: { $0.label })
     }
 }

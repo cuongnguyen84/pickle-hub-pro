@@ -25,23 +25,9 @@ struct RankingsView: View {
     }
 
     private var formatToggle: some View {
-        HStack(spacing: 4) {
-            ForEach(RankingsRepository.Format.allCases) { option in
-                let selected = option == format
-                Button { format = option } label: {
-                    Text(option.label)
-                        .font(TLFont.sans(14, selected ? .semibold : .medium))
-                        .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg2)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 9)
-                        .background(selected ? TLColor.accent : .clear, in: Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(4)
-        .background(TLColor.surface, in: Capsule())
-        .overlay(Capsule().strokeBorder(TLColor.border, lineWidth: 1))
+        TLSegmented(options: RankingsRepository.Format.allCases,
+                    selection: $format,
+                    label: { $0.label })
     }
 
     @ViewBuilder
