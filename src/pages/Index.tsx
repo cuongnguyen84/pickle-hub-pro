@@ -526,7 +526,7 @@ const Index = () => {
             : null,
           editorialNode ? { key: "editorial", node: editorialNode } : null,
           { key: "news", node: <HomeNewsFeed language={language} limit={4} /> },
-        ].filter((s): s is { key: string; node: ReactNode } => Boolean(s));
+        ].filter((s): s is { key: string; node: JSX.Element } => Boolean(s));
 
         return cluster.map((s) => <Fragment key={s.key}>{s.node}</Fragment>);
       })()}
