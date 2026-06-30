@@ -91,7 +91,7 @@ export function useQuickTableMutations() {
             team: p.team || null,
             seed: p.seed || null,
             display_order: i,
-          })),
+          })) as never, // player1_name/player2_name chưa có trong generated types
         )
         .select();
 

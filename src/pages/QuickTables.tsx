@@ -213,7 +213,7 @@ const QuickTables = () => {
 
     if (table) {
       if (defaultSets > 1) {
-        await supabase.from('quick_tables').update({ default_sets: defaultSets } as any).eq('id', table.id);
+        await supabase.from('quick_tables').update({ default_sets: defaultSets } as never).eq('id', table.id);
       }
       if (parentIdFromUrl) {
         await supabase.from('quick_tables').update({ parent_tournament_id: parentIdFromUrl }).eq('id', table.id);
