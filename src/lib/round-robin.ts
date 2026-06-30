@@ -286,6 +286,36 @@ export function scheduleMatches(
 ): ScheduledMatch[] {
   if (courts.length === 0 || matches.length === 0) return [];
 
+  // Reconstruct round-robin rounds from the players themselves, so scheduling
+  // works regardless of the input order (old data has rr_round_number = NULL and
+  // a naive "p0 vs everyone, then p1 vs everyone" order). The circle method puts
+  // each team in exactly one match per round; ordering matches by (round, group)
+  // means a team's games are spread across rounds, so the greedy below gives each
+  // team the most rest the court count allows (1-on-1-off when 1 court per group).
+  const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+  const playersByGroup = new Map<number, Set<string>>();
+  for (const m of matches) {
+    const set = playersByGroup.get(m.groupIndex) ?? new Set<string>();
+    if (m.player1) set.add(m.player1);
+    if (m.player2) set.add(m.player2);
+    playersByGroup.set(m.groupIndex, set);
+  }
+  const roundOf = new Map<string, number>(); // matchId → round number
+  for (const [gi, set] of playersByGroup) {
+    const circ = generateCircleMethodMatches([...set].sort());
+    const byPair = new Map<string, number>();
+    for (const c of circ) byPair.set(pairKey(c.player1, c.player2), c.rrRoundNumber);
+    for (const m of matches) {
+      if (m.groupIndex !== gi || !m.player1 || !m.player2) continue;
+      roundOf.set(m.matchId, byPair.get(pairKey(m.player1, m.player2)) ?? 999);
+    }
+  }
+  const roundOrdered = [...matches].sort(
+    (a, b) =>
+      (roundOf.get(a.matchId) ?? 999) - (roundOf.get(b.matchId) ?? 999) ||
+      a.groupIndex - b.groupIndex,
+  );
+
   // 1 group = 1 home court (priority); courts beyond #groups are shared spares.
   const homeCount = Math.min(numGroups, courts.length);
   const homeCourtByGroup = new Map<number, number>();
@@ -314,7 +344,7 @@ export function scheduleMatches(
 
   const picked = new Map<string, { court: number; slot: number }>();
 
-  for (const m of matches) {
+  for (const m of roundOrdered) {
     const home = homeCourtByGroup.get(m.groupIndex);
     // Home court first, then shared spares (preserves "ưu tiên 1 bảng/sân").
     const candidates = home !== undefined ? [home, ...spareCourts] : courts;
