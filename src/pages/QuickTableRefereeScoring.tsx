@@ -344,6 +344,7 @@ function Board(props: {
   const { vi, loaded, state, target, mode } = props;
   const server = servingPlayer(state); const recv = receivingPlayer(state); const right = servingSideRight(state);
   const servingName = state.serving === 'a' ? loaded.teamAName : loaded.teamBName;
+  const otherSide: ServeSide = state.serving === 'a' ? 'b' : 'a';
 
   const serveLine = server && recv && right !== null
     ? `${vi ? 'GIAO' : 'SERVE'}: ${server} (${vi ? 'sân' : 'court'} ${right ? (vi ? 'phải' : 'R') : (vi ? 'trái' : 'L')})  ·  ${vi ? 'ĐỠ' : 'RECV'}: ${recv}`
@@ -376,10 +377,27 @@ function Board(props: {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       {calloutBar}
+      {mode === 'sideOut' && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, padding: '6px 12px', background: 'var(--tl-surface)', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 13.5, fontWeight: 600 }}>
+          <span style={{ color: state.serving === 'a' ? 'var(--tl-green)' : 'var(--tl-fg-2)' }}>{loaded.teamAName} {state.a}</span>
+          <span style={{ color: 'var(--tl-fg-4)' }}>·</span>
+          <span style={{ color: state.serving === 'b' ? 'var(--tl-green)' : 'var(--tl-fg-2)' }}>{loaded.teamBName} {state.b}</span>
+        </div>
+      )}
       <div style={{ flex: 1, display: 'flex' }}>
-        <TapZone name={loaded.teamAName} score={scoreOf(state, 'a')} serving={mode === 'sideOut' && state.serving === 'a'} onClick={() => props.onTap('a')} vi={vi} />
-        <div style={{ width: 1, background: 'var(--tl-border)' }} />
-        <TapZone name={loaded.teamBName} score={scoreOf(state, 'b')} serving={mode === 'sideOut' && state.serving === 'b'} onClick={() => props.onTap('b')} vi={vi} />
+        {mode === 'rally' ? (
+          <>
+            <TapZone name={loaded.teamAName} score={scoreOf(state, 'a')} onClick={() => props.onTap('a')} vi={vi} />
+            <div style={{ width: 1, background: 'var(--tl-border)' }} />
+            <TapZone name={loaded.teamBName} score={scoreOf(state, 'b')} onClick={() => props.onTap('b')} vi={vi} />
+          </>
+        ) : (
+          <>
+            <ActionZone big={vi ? 'ĐIỂM' : 'POINT'} sub={`${vi ? 'cho' : 'for'} ${servingName}`} tone="green" onClick={() => props.onTap(state.serving)} />
+            <div style={{ width: 1, background: 'var(--tl-border)' }} />
+            <ActionZone big={vi ? 'ĐỔI GIAO' : 'SIDE OUT'} sub={vi ? 'mất giao' : 'loss of serve'} tone="neutral" onClick={() => props.onTap(otherSide)} />
+          </>
+        )}
       </div>
       {toBar}
       {bottom}
@@ -413,6 +431,17 @@ function TapZone(props: { name: string; score: number; serving?: boolean; onClic
       </span>
       <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 'clamp(54px, 20vw, 96px)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{props.score}</span>
       <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--tl-fg-4)' }}>{props.vi ? 'CHẠM = +1' : 'TAP = +1'}</span>
+    </button>
+  );
+}
+
+function ActionZone(props: { big: string; sub: string; tone: 'green' | 'neutral'; onClick: () => void }) {
+  const green = props.tone === 'green';
+  return (
+    <button type="button" onClick={props.onClick}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, border: 0, cursor: 'pointer', padding: 16, background: green ? 'var(--tl-green-glow)' : 'var(--tl-bg)', color: green ? 'var(--tl-green)' : 'var(--tl-fg)' }}>
+      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 'clamp(32px, 10vw, 54px)', letterSpacing: '0.02em', lineHeight: 1 }}>{props.big}</span>
+      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12, color: green ? 'var(--tl-green)' : 'var(--tl-fg-3)' }}>{props.sub}</span>
     </button>
   );
 }
