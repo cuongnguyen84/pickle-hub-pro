@@ -1,19 +1,20 @@
 import SwiftUI
 
-/// Native Vietnam DUPR leaderboard with a Đôi/Đơn toggle. Tapping a player
-/// pushes their native profile (gated to public profiles).
+/// Native `/rankings` — DUPR leaderboard. Scope selector (Vietnam live + DUPR.com
+/// snapshot for Open/Junior/continents) over per-scope format tabs. Tapping a
+/// live Vietnam player opens their native profile; snapshot rows are inert.
 struct RankingsView: View {
     @State private var model = RankingsViewModel()
-    @State private var format: RankingsRepository.Format = .doubles
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                formatToggle
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
-
+                scopeChips.padding(.bottom, 12)
+                formatChips.padding(.horizontal, 16).padding(.bottom, 16)
                 content
+                if !model.scope.isVietnam {
+                    attribution.padding(.top, 20)
+                }
             }
             .padding(.top, 8)
             .padding(.bottom, 24)
@@ -21,14 +22,51 @@ struct RankingsView: View {
         .background(TLColor.bg)
         .navigationTitle("Xếp hạng")
         .navigationBarTitleDisplayMode(.large)
-        .task(id: format) { await model.load(format: format) }
+        .task { await model.load() }
     }
 
-    private var formatToggle: some View {
-        TLSegmented(options: RankingsRepository.Format.allCases,
-                    selection: $format,
-                    label: { $0.label })
+    // MARK: Scope selector
+
+    private var scopeChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(DuprScope.allCases) { s in
+                    let selected = s == model.scope
+                    Button { Haptics.light(); Task { await model.selectScope(s) } } label: {
+                        Text(s.labelVi)
+                            .font(TLFont.sans(13, selected ? .semibold : .medium))
+                            .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg2)
+                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(selected ? TLColor.accent : TLColor.surface, in: Capsule())
+                            .overlay(Capsule().strokeBorder(selected ? .clear : TLColor.border, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16)
+        }
     }
+
+    // MARK: Format tabs
+
+    private var formatChips: some View {
+        HStack(spacing: 8) {
+            ForEach(model.formats) { f in
+                let selected = f == model.format
+                Button { Haptics.light(); Task { await model.selectFormat(f) } } label: {
+                    Text(f.labelVi)
+                        .font(TLFont.mono(11, selected ? .bold : .medium)).tracking(0.4)
+                        .foregroundStyle(selected ? TLColor.accentText : TLColor.fg3)
+                        .frame(maxWidth: .infinity).padding(.vertical, 8)
+                        .background((selected ? TLColor.accent.opacity(0.12) : .clear), in: Capsule())
+                        .overlay(Capsule().strokeBorder(selected ? TLColor.accent.opacity(0.4) : TLColor.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: Rows
 
     @ViewBuilder
     private var content: some View {
@@ -36,46 +74,39 @@ struct RankingsView: View {
         case .loading:
             ProgressView().tint(TLColor.accentText).padding(.top, 60)
         case .failed(let message):
-            errorState(message)
+            TLErrorState(title: "Không tải được bảng xếp hạng", message: message) { Task { await model.load() } }
         case .loaded where model.rows.isEmpty:
-            Text("Chưa có ai trong bảng xếp hạng.")
-                .font(TLFont.sans(14))
-                .foregroundStyle(TLColor.fg3)
-                .padding(.top, 60)
+            TLEmptyState(icon: "trophy", title: "Chưa có dữ liệu",
+                         subtitle: "Bảng xếp hạng cho mục này sẽ cập nhật sau.")
+                .padding(.top, 40)
         case .loaded:
             LazyVStack(spacing: 0) {
                 ForEach(model.rows) { row in
-                    NavigationLink {
-                        PlayerProfileView(username: row.username)
-                    } label: {
+                    if let username = row.username {
+                        NavigationLink { PlayerProfileView(username: username) } label: {
+                            RankingRowView(row: row)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
                         RankingRowView(row: row)
                     }
-                    .buttonStyle(.plain)
-                    Rectangle().fill(TLColor.border).frame(height: 1)
-                        .padding(.leading, 16)
+                    Rectangle().fill(TLColor.border).frame(height: 1).padding(.leading, 16)
                 }
             }
         }
     }
 
-    private func errorState(_ message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "trophy")
-                .font(.largeTitle).foregroundStyle(TLColor.fg3)
-            Text("Không tải được bảng xếp hạng")
-                .font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg)
-            Text(message)
-                .font(TLFont.sans(12)).foregroundStyle(TLColor.fg3)
-                .multilineTextAlignment(.center)
-            Button("Thử lại") { Task { await model.load(format: format) } }
-                .foregroundStyle(TLColor.accentText)
+    private var attribution: some View {
+        VStack(spacing: 4) {
+            Text("Nguồn: DUPR.com").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3)
+            Text("Ảnh chụp \(duprLastUpdated)").font(TLFont.mono(9)).foregroundStyle(TLColor.fg4)
         }
-        .frame(maxWidth: .infinity).padding(.horizontal, 32).padding(.top, 60)
+        .frame(maxWidth: .infinity)
     }
 }
 
 private struct RankingRowView: View {
-    let row: RankingRow
+    let row: RankRow
 
     private var rankColor: Color {
         switch row.rank {
@@ -95,12 +126,12 @@ private struct RankingRowView: View {
             avatar
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(row.resolvedName)
+                Text(row.name)
                     .font(TLFont.sans(15, .semibold))
                     .foregroundStyle(TLColor.fg)
                     .lineLimit(1)
-                if let city = row.city?.nonEmpty {
-                    Text(city)
+                if let subtitle = row.subtitle?.nonEmpty {
+                    Text(subtitle)
                         .font(TLFont.mono(10))
                         .foregroundStyle(TLColor.fg4)
                         .lineLimit(1)
@@ -133,7 +164,7 @@ private struct RankingRowView: View {
                     TLColor.surface2
                 }
             } else {
-                Text(String(row.resolvedName.prefix(1)).uppercased())
+                Text(String(row.name.prefix(1)).uppercased())
                     .font(TLFont.sans(13, .bold))
                     .foregroundStyle(TLColor.accentText)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
