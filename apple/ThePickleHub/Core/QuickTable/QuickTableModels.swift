@@ -11,6 +11,8 @@ struct QTTable: Decodable, Equatable {
     let creatorUserID: UUID?
     let topPerGroup: Int?
     let requiresRegistration: Bool?
+    let courts: [String]?     // tên/số sân (vd ["1","2","3"])
+    let startTime: String?    // giờ bắt đầu giải "HH:MM"
 
     var displayName: String { name?.nonEmpty ?? "Giải đấu" }
     var isPlayoffStage: Bool { status == "playoff" || status == "completed" }
@@ -32,6 +34,8 @@ struct QTTable: Decodable, Equatable {
         case creatorUserID = "creator_user_id"
         case topPerGroup = "top_per_group"
         case requiresRegistration = "requires_registration"
+        case courts
+        case startTime = "start_time"
     }
 }
 
@@ -115,10 +119,17 @@ struct QTMatch: Decodable, Identifiable, Equatable {
     let winnerID: UUID?
     let status: String
     let courtName: String?
+    let courtID: Int?
+    let startAt: String?      // giờ trận "HH:MM"
     let displayOrder: Int?
 
     var isCompleted: Bool { status == "completed" }
     var hasBothPlayers: Bool { player1ID != nil && player2ID != nil }
+
+    /// Nhãn sân hiển thị: tên tuỳ chỉnh nếu có, else "Sân {số}" từ court_id (web parity).
+    var courtLabel: String? {
+        courtName?.nonEmpty ?? courtID.map { "Sân \($0)" }
+    }
 
     enum CodingKeys: String, CodingKey {
         case id, status, score1, score2
@@ -130,6 +141,8 @@ struct QTMatch: Decodable, Identifiable, Equatable {
         case player2ID = "player2_id"
         case winnerID = "winner_id"
         case courtName = "court_name"
+        case courtID = "court_id"
+        case startAt = "start_at"
         case displayOrder = "display_order"
     }
 }

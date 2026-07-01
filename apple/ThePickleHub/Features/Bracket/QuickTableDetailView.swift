@@ -59,9 +59,37 @@ final class QuickTableViewModel {
     var showBracketChoice = false
     var bracketOptions: [BracketOption] = []
 
+    // Courts + schedule (organizer)
+    var showSchedule = false
+    var scheduleBusy = false
+    var scheduleError: String?
+
     private let repo = QuickTableRepository()
 
     var detail: QuickTableDetail? { if case .loaded(let d) = phase { return d } ; return nil }
+
+    /// Organizer: save courts + start time on the table, then (re)schedule every
+    /// group match onto a court + time slot. Empty courts clears the schedule.
+    @MainActor
+    func saveSchedule(shareID: String, courtsText: String, startTime: String) async {
+        guard let detail else { return }
+        scheduleBusy = true; scheduleError = nil
+        let courtsStrings = courtsText.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let courtInts = courtsStrings.compactMap { Int($0) }
+        let time = startTime.trimmingCharacters(in: .whitespaces).nonEmpty
+        do {
+            try await repo.updateCourtSettings(tableID: detail.table.id, courts: courtsStrings, startTime: time)
+            try await repo.reassignCourtsAndTimes(tableID: detail.table.id, courts: courtInts, startTime: time,
+                                                  groups: detail.groups, matches: detail.matches)
+            scheduleBusy = false
+            showSchedule = false
+            await load(shareID: shareID)
+        } catch {
+            scheduleError = error.localizedDescription
+            scheduleBusy = false
+        }
+    }
 
     @MainActor
     func load(shareID: String) async {
@@ -365,12 +393,40 @@ struct QuickTableDetailView: View {
         .sheet(isPresented: Binding(get: { model.showReferees }, set: { model.showReferees = $0 })) {
             QuickTableRefereesSheet(model: model)
         }
+        .sheet(isPresented: Binding(get: { model.showSchedule }, set: { model.showSchedule = $0 })) {
+            if let detail = model.detail {
+                QuickTableScheduleSheet(
+                    initialCourts: (detail.table.courts ?? []).joined(separator: ", "),
+                    initialStartTime: detail.table.startTime ?? "",
+                    busy: model.scheduleBusy, error: model.scheduleError
+                ) { courtsText, startTime in
+                    Task { await model.saveSchedule(shareID: shareID, courtsText: courtsText, startTime: startTime) }
+                }
+            }
+        }
         .sheet(isPresented: Binding(get: { model.showSelfRegister }, set: { model.showSelfRegister = $0 })) {
             QuickTableSelfRegisterSheet(isDoubles: model.detail?.table.isDoubles ?? false, busy: model.regBusy, error: model.regError) {
                 name, team, rating, skill, link in
                 Task { await model.submitSelfRegistration(displayName: name, team: team, ratingSystem: rating, skillLevel: skill, profileLink: link) }
             }
         }
+    }
+
+    private func scheduleManageButton(_ detail: QuickTableDetail) -> some View {
+        let courtCount = detail.table.courts?.filter { !$0.isEmpty }.count ?? 0
+        return Button { Haptics.light(); model.showSchedule = true } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "sportscourt.fill").font(.system(size: 15)).foregroundStyle(TLColor.accentText)
+                Text("Sân & giờ đấu").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg)
+                Spacer()
+                Text(courtCount > 0 ? "\(courtCount) sân" : "Chưa đặt")
+                    .font(TLFont.mono(courtCount > 0 ? 11 : 10)).foregroundStyle(courtCount > 0 ? TLColor.fg3 : TLColor.fg4)
+                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(TLColor.fg4)
+            }
+            .padding(14)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+        }.buttonStyle(.plain)
     }
 
     private var refereeManageButton: some View {
@@ -467,6 +523,7 @@ struct QuickTableDetailView: View {
                 header(detail.table)
                 if detail.table.requiresRegistration == true { registrationSection(detail) }
                 if model.canManage { refereeManageButton }
+                if model.canManage && !detail.table.isPlayoffStage { scheduleManageButton(detail) }
                 if model.canManage && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
                     advanceBanner
                 }
@@ -642,10 +699,20 @@ struct QuickTableDetailView: View {
             if canScore { Haptics.light(); model.scoringMatch = m }
         } label: {
             VStack(spacing: 6) {
-                if let court = m.courtName?.nonEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "mappin.and.ellipse").font(.system(size: 9)).foregroundStyle(TLColor.fg4)
-                        Text(court).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
+                if m.courtLabel != nil || m.startAt?.nonEmpty != nil {
+                    HStack(spacing: 10) {
+                        if let court = m.courtLabel {
+                            HStack(spacing: 3) {
+                                Image(systemName: "mappin.and.ellipse").font(.system(size: 9)).foregroundStyle(TLColor.fg4)
+                                Text(court).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
+                            }
+                        }
+                        if let time = m.startAt?.nonEmpty {
+                            HStack(spacing: 3) {
+                                Image(systemName: "clock").font(.system(size: 9)).foregroundStyle(TLColor.fg4)
+                                Text(time).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
+                            }
+                        }
                         Spacer()
                     }
                 }
@@ -848,7 +915,7 @@ struct QuickTableDetailView: View {
         if upcoming.isEmpty {
             note("Không còn trận nào trong hàng đợi.")
         } else {
-            let grouped = Dictionary(grouping: upcoming) { $0.courtName?.nonEmpty ?? "Chưa gán sân" }
+            let grouped = Dictionary(grouping: upcoming) { $0.courtLabel ?? "Chưa gán sân" }
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(grouped.keys.sorted(), id: \.self) { court in
                     courtColumn(detail, court: court, matches: grouped[court] ?? [])
@@ -885,6 +952,12 @@ struct QuickTableDetailView: View {
                     Text(detail.name(for: m.player2ID)).font(TLFont.sans(13.5, next ? .semibold : .regular)).foregroundStyle(TLColor.fg2).lineLimit(1)
                 }
                 Spacer(minLength: 6)
+                if let time = m.startAt?.nonEmpty {
+                    HStack(spacing: 3) {
+                        Image(systemName: "clock").font(.system(size: 9)).foregroundStyle(TLColor.fg4)
+                        Text(time).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
+                    }
+                }
                 if next {
                     Text("TIẾP THEO").font(TLFont.mono(8.5, .bold)).tracking(0.5).foregroundStyle(TLColor.accentInk)
                         .padding(.horizontal, 7).padding(.vertical, 3).background(TLColor.accent, in: Capsule())
@@ -920,6 +993,72 @@ struct QuickTableDetailView: View {
             Button("Thử lại") { Task { await model.load(shareID: shareID) } }.foregroundStyle(TLColor.accentText)
         }
         .frame(maxWidth: .infinity).padding(.horizontal, 32).padding(.top, 60)
+    }
+}
+
+/// Organizer sheet to set courts + start time, then auto-schedule every group
+/// match (calls updateCourtSettings + reassignCourtsAndTimes on save).
+private struct QuickTableScheduleSheet: View {
+    let initialCourts: String
+    let initialStartTime: String
+    let busy: Bool
+    let error: String?
+    let onSave: (_ courts: String, _ startTime: String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var courts = ""
+    @State private var startTime = ""
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("Nhập số sân (cách nhau dấu phẩy) và giờ bắt đầu. App tự xếp từng trận theo vòng — tránh trùng người và dồn sân đều.")
+                        .font(TLFont.sans(13)).foregroundStyle(TLColor.fg2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    field("Sân đấu") { tf($courts, "VD: 1, 2, 3").keyboardType(.numbersAndPunctuation) }
+                    field("Giờ bắt đầu (tùy chọn)") { tf($startTime, "VD: 08:00").keyboardType(.numbersAndPunctuation) }
+
+                    if let error { Text(error).font(TLFont.sans(12)).foregroundStyle(TLColor.live) }
+
+                    Button {
+                        Haptics.success(); onSave(courts, startTime)
+                    } label: {
+                        HStack(spacing: 6) {
+                            if busy { ProgressView().tint(TLColor.accentInk) }
+                            Text(busy ? "Đang xếp lịch..." : "Xếp lịch").font(TLFont.sans(14, .bold))
+                        }
+                        .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 13)
+                        .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain).disabled(busy)
+
+                    Text("Để trống ô sân rồi Xếp lịch để xoá phân sân/giờ.")
+                        .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                }
+                .padding(20)
+            }
+            .background(TLColor.bg)
+            .navigationTitle("Sân & giờ đấu")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Đóng") { dismiss() }.foregroundStyle(TLColor.fg3) } }
+            .onAppear { courts = initialCourts; startTime = initialStartTime }
+        }
+    }
+
+    private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+            content()
+        }
+    }
+    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+        TextField(placeholder, text: binding)
+            .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
+            .padding(.horizontal, 11).padding(.vertical, 10)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, lineWidth: 1))
     }
 }
 

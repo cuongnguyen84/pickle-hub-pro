@@ -108,7 +108,7 @@ struct QuickTableRepository {
     func load(shareID: String) async throws -> QuickTableDetail {
         let table: QTTable = try await client
             .from("quick_tables")
-            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration")
+            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration, courts, start_time")
             .eq("share_id", value: shareID)
             .single()
             .execute()
@@ -127,7 +127,7 @@ struct QuickTableRepository {
             .execute().value
         async let matches: [QTMatch] = client
             .from("quick_table_matches")
-            .select("id, group_id, is_playoff, playoff_round, playoff_match_number, player1_id, player2_id, score1, score2, winner_id, status, court_name, display_order")
+            .select("id, group_id, is_playoff, playoff_round, playoff_match_number, player1_id, player2_id, score1, score2, winner_id, status, court_name, court_id, start_at, display_order")
             .eq("table_id", value: table.id)
             .execute().value
 
@@ -279,6 +279,7 @@ struct QuickTableRepository {
             }
         }
 
+        var schedInput: [SchedulableMatch] = []
         for (gIdx, group) in orderedGroups.enumerated() {
             let pairs = Self.circleMethod(buckets[gIdx])
             guard !pairs.isEmpty else { continue }
@@ -287,7 +288,25 @@ struct QuickTableRepository {
                             player1_id: pair.p1.uuidString.lowercased(), player2_id: pair.p2.uuidString.lowercased(),
                             display_order: i, rr_round_number: pair.round, rr_match_index: pair.index)
             }
-            try await client.from("quick_table_matches").insert(inserts).execute()
+            // Capture ids (same order as `pairs` via display_order) so we can schedule below.
+            let rows: [InsertedRow] = try await client.from("quick_table_matches")
+                .insert(inserts).select("id, display_order").execute().value
+            let orderedRows = rows.sorted { $0.displayOrder < $1.displayOrder }
+            for (i, pair) in pairs.enumerated() where i < orderedRows.count {
+                schedInput.append(SchedulableMatch(matchID: orderedRows[i].id, player1: pair.p1, player2: pair.p2, groupIndex: gIdx))
+            }
+        }
+
+        // Auto-assign courts + times when the organizer supplied courts at setup.
+        let courtInts = courts.compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        if !courtInts.isEmpty && !schedInput.isEmpty {
+            let scheduled = Self.scheduleMatches(schedInput, courts: courtInts,
+                                                 numGroups: orderedGroups.count, startTime: startTime?.nonEmpty)
+            for s in scheduled {
+                try await client.from("quick_table_matches")
+                    .update(ScheduleUpdate(court_id: s.court, start_at: s.startAt, display_order: s.displayOrder))
+                    .eq("id", value: s.matchID).execute()
+            }
         }
 
         try await client.from("quick_tables").update(TableStatusUpdate(status: "group_stage")).eq("id", value: tableID).execute()
@@ -387,6 +406,152 @@ struct QuickTableRepository {
             rotating.insert(rotating.removeLast(), at: 0)
         }
         return pairs
+    }
+
+    // MARK: Court + time scheduling (port of round-robin.ts scheduleMatches + reassignCourtsAndTimes)
+
+    struct SchedulableMatch { let matchID: UUID; let player1: UUID?; let player2: UUID?; let groupIndex: Int }
+    struct ScheduledMatch { let matchID: UUID; let court: Int; let startAt: String?; let displayOrder: Int }
+
+    private struct ScheduleUpdate: Encodable { let court_id: Int; let start_at: String?; let display_order: Int }
+    private struct ClearScheduleUpdate: Encodable { let court_id: Int?; let start_at: String? }
+
+    /// Assign group-stage matches to courts + time slots. 1:1 port of web
+    /// `scheduleMatches`: reconstructs RR rounds (circle method) so play spreads
+    /// across rounds, greedily places matches earliest-slot / least-loaded court,
+    /// never double-books a player in a slot nor lets a pair run 3 in a row.
+    static func scheduleMatches(_ matches: [SchedulableMatch], courts: [Int], numGroups: Int,
+                                startTime: String?, matchDurationMinutes: Int = 20) -> [ScheduledMatch] {
+        guard !courts.isEmpty, !matches.isEmpty else { return [] }
+
+        func pairKey(_ a: UUID, _ b: UUID) -> String {
+            let sa = a.uuidString, sb = b.uuidString
+            return sa < sb ? "\(sa)|\(sb)" : "\(sb)|\(sa)"
+        }
+        var playersByGroup: [Int: Set<UUID>] = [:]
+        for m in matches {
+            var set = playersByGroup[m.groupIndex] ?? []
+            if let p = m.player1 { set.insert(p) }
+            if let p = m.player2 { set.insert(p) }
+            playersByGroup[m.groupIndex] = set
+        }
+        var roundOf: [UUID: Int] = [:]
+        for (gi, set) in playersByGroup {
+            let circ = circleMethod(set.sorted { $0.uuidString < $1.uuidString })
+            var byPair: [String: Int] = [:]
+            for c in circ { byPair[pairKey(c.p1, c.p2)] = c.round }
+            for m in matches where m.groupIndex == gi {
+                if let p1 = m.player1, let p2 = m.player2 {
+                    roundOf[m.matchID] = byPair[pairKey(p1, p2)] ?? 999
+                }
+            }
+        }
+        let roundOrdered = matches.sorted {
+            let ra = roundOf[$0.matchID] ?? 999, rb = roundOf[$1.matchID] ?? 999
+            return ra != rb ? ra < rb : $0.groupIndex < $1.groupIndex
+        }
+
+        let homeCount = min(numGroups, courts.count)
+        var homeCourtByGroup: [Int: Int] = [:]
+        for i in 0..<homeCount { homeCourtByGroup[i] = courts[i] }
+        let spareCourts = Array(courts[homeCount...])
+
+        var courtSlotBusy: Set<String> = []
+        var playerSlots: [UUID: Set<Int>] = [:]
+        var load: [Int: Int] = [:]
+        for c in courts { load[c] = 0 }
+
+        func wouldRun3(_ p: UUID?, _ s: Int) -> Bool {
+            guard let p, let set = playerSlots[p] else { return false }
+            func h(_ x: Int) -> Bool { set.contains(x) }
+            return (h(s - 1) && h(s - 2)) || (h(s - 1) && h(s + 1)) || (h(s + 1) && h(s + 2))
+        }
+        func slotOk(_ court: Int, _ slot: Int, _ p1: UUID?, _ p2: UUID?) -> Bool {
+            if courtSlotBusy.contains("\(court):\(slot)") { return false }
+            if let p1, playerSlots[p1]?.contains(slot) == true { return false }
+            if let p2, playerSlots[p2]?.contains(slot) == true { return false }
+            return !wouldRun3(p1, slot) && !wouldRun3(p2, slot)
+        }
+
+        var picked: [UUID: (court: Int, slot: Int)] = [:]
+        for m in roundOrdered {
+            let candidates = homeCourtByGroup[m.groupIndex].map { [$0] + spareCourts } ?? courts
+            var best: (court: Int, slot: Int)?
+            for court in candidates {
+                var slot = 0
+                while !slotOk(court, slot, m.player1, m.player2) { slot += 1 }
+                if best == nil || slot < best!.slot ||
+                    (slot == best!.slot && (load[court] ?? 0) < (load[best!.court] ?? 0)) {
+                    best = (court, slot)
+                }
+            }
+            let chosen = best!
+            picked[m.matchID] = chosen
+            courtSlotBusy.insert("\(chosen.court):\(chosen.slot)")
+            for p in [m.player1, m.player2].compactMap({ $0 }) {
+                var set = playerSlots[p] ?? []
+                set.insert(chosen.slot)
+                playerSlots[p] = set
+            }
+            load[chosen.court] = (load[chosen.court] ?? 0) + 1
+        }
+
+        var startMins: Int?
+        if let startTime {
+            let parts = startTime.split(separator: ":").compactMap { Int($0) }
+            if parts.count == 2 { startMins = parts[0] * 60 + parts[1] }
+        }
+        func slotToTime(_ slot: Int) -> String? {
+            guard let startMins else { return nil }
+            let t = startMins + slot * matchDurationMinutes
+            return String(format: "%02d:%02d", (t / 60) % 24, t % 60)
+        }
+
+        let ordered = matches.sorted {
+            let pa = picked[$0.matchID]!, pb = picked[$1.matchID]!
+            return pa.slot != pb.slot ? pa.slot < pb.slot : pa.court < pb.court
+        }
+        var displayOrderByMatch: [UUID: Int] = [:]
+        for (i, m) in ordered.enumerated() { displayOrderByMatch[m.matchID] = i }
+
+        return matches.map { m in
+            let p = picked[m.matchID]!
+            return ScheduledMatch(matchID: m.matchID, court: p.court,
+                                  startAt: slotToTime(p.slot), displayOrder: displayOrderByMatch[m.matchID]!)
+        }
+    }
+
+    /// Save courts + start time on the table row (web `updateTableCourtSettings`).
+    func updateCourtSettings(tableID: UUID, courts: [String], startTime: String?) async throws {
+        try await client.from("quick_tables")
+            .update(CourtSettingsUpdate(courts: courts, start_time: startTime?.nonEmpty))
+            .eq("id", value: tableID).execute()
+    }
+
+    /// Schedule group-stage matches onto courts + times and rewrite display_order
+    /// (web `reassignCourtsAndTimes`). Empty courts → clear court_id/start_at.
+    func reassignCourtsAndTimes(tableID: UUID, courts: [Int], startTime: String?,
+                                groups: [QTGroup], matches: [QTMatch]) async throws {
+        let groupMatches = matches.filter { !$0.isPlayoff && $0.groupID != nil }
+        if courts.isEmpty {
+            let ids = groupMatches.map { $0.id.uuidString.lowercased() }
+            guard !ids.isEmpty else { return }
+            try await client.from("quick_table_matches")
+                .update(ClearScheduleUpdate(court_id: nil, start_at: nil))
+                .in("id", values: ids).execute()
+            return
+        }
+        let groupIndex = Dictionary(uniqueKeysWithValues: groups.enumerated().map { ($1.id, $0) })
+        let schedulable = groupMatches.map {
+            SchedulableMatch(matchID: $0.id, player1: $0.player1ID, player2: $0.player2ID,
+                             groupIndex: $0.groupID.flatMap { groupIndex[$0] } ?? 0)
+        }
+        let scheduled = Self.scheduleMatches(schedulable, courts: courts, numGroups: groups.count, startTime: startTime?.nonEmpty)
+        for s in scheduled {
+            try await client.from("quick_table_matches")
+                .update(ScheduleUpdate(court_id: s.court, start_at: s.startAt, display_order: s.displayOrder))
+                .eq("id", value: s.matchID).execute()
+        }
     }
 
     // MARK: Registration (port of useRegistration)

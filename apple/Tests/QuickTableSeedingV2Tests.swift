@@ -7,7 +7,8 @@ struct QuickTableSeedingV2Tests {
 
     private func mkGroup(_ name: String) -> QTGroup { QTGroup(id: UUID(), name: name, displayOrder: 0) }
     private func mkPlayer(_ name: String, group: UUID, won: Int, pd: Int, pf: Int) -> QTPlayer {
-        QTPlayer(id: UUID(), groupID: group, name: name, team: nil, seed: nil,
+        QTPlayer(id: UUID(), groupID: group, name: name, player1Name: nil, player2Name: nil,
+                 team: nil, seed: nil,
                  matchesPlayed: 2, matchesWon: won, pointsFor: pf, pointsAgainst: pf - pd,
                  pointDiff: pd, isQualified: nil, isWildcard: nil, playoffSeed: nil)
     }
