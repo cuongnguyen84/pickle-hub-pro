@@ -1406,10 +1406,13 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const p = post as any;
   const url = `${siteUrl}/vi/blog/${slug}`;
 
-  let extraMeta = "";
-  if (p.alternate_en_slug) {
-    extraMeta = `<link rel="alternate" hreflang="en" href="${siteUrl}/blog/${p.alternate_en_slug}"/>\n<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/blog/${p.alternate_en_slug}"/>`;
-  }
+  // VI-first posts (no EN counterpart) still need a self-referencing hreflang
+  // set, mirroring the EN-side fallback in renderBlogPost. Without it, VI-first
+  // pages (/vi/blog/san-pickleball-tphcm, .../san-pickleball-da-nang) emitted
+  // canonical only (zero hreflang), flagged 2026-07-01.
+  let extraMeta = p.alternate_en_slug
+    ? `<link rel="alternate" hreflang="en" href="${siteUrl}/blog/${p.alternate_en_slug}"/>\n<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/blog/${p.alternate_en_slug}"/>`
+    : `<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${url}"/>`;
 
   const articleSchema = {
     "@context": "https://schema.org",
