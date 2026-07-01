@@ -46,7 +46,8 @@ const BottomNav = () => {
     location.pathname.startsWith("/creator") ||
     location.pathname.startsWith("/preview") ||
     location.pathname.startsWith("/embed") ||
-    location.pathname.startsWith("/tools/quick-tables/referee") // full-screen live-scoring tool
+    location.pathname.startsWith("/tools/quick-tables/referee") || // full-screen live-scoring tool
+    /\/tools\/team-match\/match\/[^/]+\/score/.test(location.pathname) // team-match referee scoring
   ) {
     return null;
   }

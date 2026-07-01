@@ -42,7 +42,6 @@ import {
   InviteTeamDialog,
   SingleEliminationSetupDialog,
   TeamMatchSettingsDialog,
-  TeamMatchScoringSheet,
   TeamMatchOverviewTab,
   TeamMatchMatchesTab,
 } from '@/components/teamMatch';
@@ -169,7 +168,6 @@ export default function TeamMatchView() {
   );
 
   const [lineupTeamId, setLineupTeamId] = useState<string | null>(null);
-  const [scoringMatch, setScoringMatch] = useState<TeamMatchMatch | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
   const canManage = isOwner || isAdmin;
@@ -759,7 +757,7 @@ export default function TeamMatchView() {
                   setLineupTeamId(teamId || null);
                 }}
                 onStartRound={handleStartRound}
-                onScoreMatch={(match) => setScoringMatch(match)}
+                onScoreMatch={(match) => navigate(`/tools/team-match/match/${match.id}/score`)}
                 onStartTournament={handleStartTournament}
               />
             </TabsContent>
@@ -825,15 +823,8 @@ export default function TeamMatchView() {
           tournamentId={tournament.id}
           onScoreMatch={(match) => {
             setSelectedMatch(null);
-            setScoringMatch(match);
+            navigate(`/tools/team-match/match/${match.id}/score`);
           }}
-        />
-
-        <TeamMatchScoringSheet
-          open={!!scoringMatch}
-          onOpenChange={(open) => !open && setScoringMatch(null)}
-          match={scoringMatch}
-          tournamentId={tournament.id}
         />
 
         {(userTeam || isOwner) && lineupMatch && (
