@@ -66,19 +66,3 @@ struct TLTextField: View {
         )
     }
 }
-
-/// Pass/fail row used by the connectivity probes.
-struct ProbeRow: View {
-    let result: ProbeResult
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: result.ok ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                .foregroundStyle(result.ok ? TLColor.accentText : TLColor.live)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(result.label).foregroundStyle(TLColor.fg).font(.subheadline.weight(.medium))
-                Text(result.detail).foregroundStyle(TLColor.fg3).font(.caption).textSelection(.enabled)
-            }
-        }
-    }
-}

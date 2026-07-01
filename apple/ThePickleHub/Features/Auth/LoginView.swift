@@ -1,15 +1,12 @@
 import SwiftUI
 
 /// Sign-in entry. Native Google Sign-In (primary for this audience), email /
-/// password, and a phone-OTP path. The public edge-function probe stays as a
-/// quick backend connectivity check during development.
+/// password, and a phone-OTP path.
 struct LoginView: View {
     @Environment(SessionStore.self) private var session
 
     @State private var email = ""
     @State private var password = ""
-    @State private var publicProbe: ProbeResult?
-    @State private var isProbing = false
 
     var body: some View {
         NavigationStack {
@@ -19,7 +16,6 @@ struct LoginView: View {
                     googleButton
                     emailCard
                     phoneLink
-                    connectivitySection
                 }
                 .padding(20)
             }
@@ -90,38 +86,4 @@ struct LoginView: View {
         }
     }
 
-    private var connectivitySection: some View {
-        TLCard {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Kiểm tra kết nối backend")
-                    .font(.headline)
-                    .foregroundStyle(TLColor.fg)
-
-                if let publicProbe {
-                    ProbeRow(result: publicProbe)
-                }
-
-                Button {
-                    Task {
-                        isProbing = true
-                        publicProbe = await BackendProbe.publicEdgeFunction()
-                        isProbing = false
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        if isProbing { ProgressView().tint(TLColor.fg) }
-                        Text("Test public edge function").fontWeight(.medium)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                }
-                .foregroundStyle(TLColor.fg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous)
-                        .strokeBorder(TLColor.border2, lineWidth: 1)
-                )
-                .disabled(isProbing)
-            }
-        }
-    }
 }
