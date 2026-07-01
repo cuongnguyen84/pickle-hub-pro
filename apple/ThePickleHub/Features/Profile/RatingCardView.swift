@@ -62,6 +62,9 @@ struct RatingCardView: View {
         }
         .frame(maxWidth: .infinity)
         .clipped()
+        // The credential face is a fixed dark "card" in both themes (like a
+        // physical DUPR card), so keep its ink resolving to the dark tokens.
+        .environment(\.colorScheme, .dark)
     }
 
     private var brandRow: some View {

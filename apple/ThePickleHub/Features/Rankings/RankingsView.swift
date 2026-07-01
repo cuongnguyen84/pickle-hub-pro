@@ -130,7 +130,7 @@ private struct RankingRowView: View {
                 AsyncImage(url: url) { image in
                     image.resizable().scaledToFill()
                 } placeholder: {
-                    Color(hex: 0x18181B)
+                    TLColor.surface2
                 }
             } else {
                 Text(String(row.resolvedName.prefix(1)).uppercased())

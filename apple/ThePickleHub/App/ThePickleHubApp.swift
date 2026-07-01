@@ -47,14 +47,14 @@ struct ThePickleHubApp: App {
     private static func configureBarAppearance() {
         let nav = UINavigationBarAppearance()
         nav.configureWithOpaqueBackground()
-        nav.backgroundColor = UIColor(TLColor.bg)
+        nav.backgroundColor = TLColor.uiBg
         nav.shadowColor = .clear
         nav.titleTextAttributes = [
-            .foregroundColor: UIColor(TLColor.fg),
+            .foregroundColor: TLColor.uiFg,
             .font: TLFont.UIKitFont.sans(17, .semibold),
         ]
         nav.largeTitleTextAttributes = [
-            .foregroundColor: UIColor(TLColor.fg),
+            .foregroundColor: TLColor.uiFg,
             .font: TLFont.UIKitFont.sans(30, .bold),
         ]
         UINavigationBar.appearance().standardAppearance = nav
@@ -63,15 +63,15 @@ struct ThePickleHubApp: App {
 
         let tab = UITabBarAppearance()
         tab.configureWithOpaqueBackground()
-        tab.backgroundColor = UIColor(TLColor.bg)
+        tab.backgroundColor = TLColor.uiBg
         for item in [tab.stackedLayoutAppearance, tab.inlineLayoutAppearance, tab.compactInlineLayoutAppearance] {
             item.normal.titleTextAttributes = [
                 .font: TLFont.UIKitFont.sans(10, .medium),
-                .foregroundColor: UIColor(TLColor.fg3),
+                .foregroundColor: TLColor.uiFg3,
             ]
             item.selected.titleTextAttributes = [
                 .font: TLFont.UIKitFont.sans(10, .semibold),
-                .foregroundColor: UIColor(TLColor.accent),
+                .foregroundColor: TLColor.uiAccent,
             ]
         }
         UITabBar.appearance().standardAppearance = tab
@@ -82,7 +82,6 @@ struct ThePickleHubApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
-                .preferredColorScheme(.dark)
                 .tint(TLColor.accent)
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
