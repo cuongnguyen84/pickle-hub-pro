@@ -27,6 +27,7 @@ final class ProfileViewModel {
 /// end-to-end check that the user JWT + RLS work via PostgREST.
 struct ProfileView: View {
     @Environment(SessionStore.self) private var session
+    @Environment(ThemeStore.self) private var theme
     @State private var model = ProfileViewModel()
 
     var body: some View {
@@ -38,6 +39,7 @@ struct ProfileView: View {
 
                 case .loaded(let profile):
                     RatingCardView(profile: profile, isOwn: true)
+                    themePicker
                     signOutButton
 
                 case .failed(let message):
@@ -51,6 +53,7 @@ struct ProfileView: View {
                                 .foregroundStyle(TLColor.accentText)
                         }
                     }
+                    themePicker
                     signOutButton
                 }
             }
@@ -60,6 +63,20 @@ struct ProfileView: View {
         .navigationTitle("Hồ sơ")
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.load() }
+    }
+
+    private var themePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Giao diện")
+                .font(TLFont.mono(10, .semibold)).tracking(1).textCase(.uppercase)
+                .foregroundStyle(TLColor.fg3)
+            TLSegmented(
+                options: ThemeMode.allCases,
+                selection: Binding(get: { theme.mode }, set: { theme.mode = $0 }),
+                label: { $0.label }
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var signOutButton: some View {

@@ -38,6 +38,7 @@ enum OrientationLock {
 @main
 struct ThePickleHubApp: App {
     @State private var session = SessionStore()
+    @State private var theme = ThemeStore()
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() { Self.configureBarAppearance() }
@@ -82,6 +83,8 @@ struct ThePickleHubApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
+                .environment(theme)
+                .preferredColorScheme(theme.mode.colorScheme)
                 .tint(TLColor.accent)
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
