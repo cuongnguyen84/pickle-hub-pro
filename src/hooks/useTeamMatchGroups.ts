@@ -67,20 +67,17 @@ export function useTeamMatchGroupManagement() {
       if (groupsError) throw groupsError;
       if (!groups) throw new Error('Failed to create groups');
 
-      // 2. Assign teams to groups
-      for (let i = 0; i < distribution.length; i++) {
-        const group = groups[i];
-        const teamsInGroup = distribution[i];
-
-        for (const team of teamsInGroup) {
-          const { error } = await supabase
-            .from('team_match_teams')
-            .update({ group_id: group.id })
-            .eq('id', team.id);
-
-          if (error) throw error;
-        }
-      }
+      // 2. Assign teams to groups — one atomic statement (a per-team await
+      //    loop could fail partway and leave the draw half-applied).
+      const pairs = distribution.flatMap((teamsInGroup, i) =>
+        teamsInGroup.map((team) => ({ team_id: team.id, group_id: groups[i].id })),
+      );
+      const { error: assignError } = await supabase.rpc(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'assign_team_match_teams_to_groups' as any,
+        { _pairs: pairs },
+      );
+      if (assignError) throw assignError;
 
       // 3. Update tournament with group_count
       const { error: tournamentError } = await supabase
@@ -94,6 +91,7 @@ export function useTeamMatchGroupManagement() {
       if (tournamentError) throw tournamentError;
 
       // 4. Generate round-robin matches for each group
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allMatches: any[] = [];
       let globalDisplayOrder = 0;
 
