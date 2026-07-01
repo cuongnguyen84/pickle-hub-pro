@@ -39,6 +39,7 @@ struct ProfileView: View {
 
                 case .loaded(let profile):
                     RatingCardView(profile: profile, isOwn: true)
+                    communitySection
                     accountSettingsLink(profile)
                     themePicker
                     signOutButton
@@ -64,6 +65,29 @@ struct ProfileView: View {
         .navigationTitle("Hồ sơ")
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.load() }
+    }
+
+    private var communitySection: some View {
+        VStack(spacing: 10) {
+            communityRow(icon: "text.bubble.fill", title: "Diễn đàn") { ForumListView() }
+            communityRow(icon: "figure.pickleball", title: "Tìm bạn chơi") { FindPlayersView() }
+            communityRow(icon: "bubble.left.and.bubble.right.fill", title: "Tin nhắn") { MessagesView() }
+        }
+    }
+
+    private func communityRow<D: View>(icon: String, title: String, @ViewBuilder destination: @escaping () -> D) -> some View {
+        NavigationLink { destination() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: icon).font(.system(size: 15)).foregroundStyle(TLColor.accentText).frame(width: 22)
+                Text(title).font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg)
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(TLColor.fg3)
+            }
+            .padding(14)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 
     private func accountSettingsLink(_ profile: Profile) -> some View {
