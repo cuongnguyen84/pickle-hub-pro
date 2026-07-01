@@ -7,7 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Check, Users, AlertCircle, Shuffle, Sparkles, RotateCcw, ArrowRight } from 'lucide-react';
+import { Check, Users, AlertCircle, AlertTriangle, Shuffle, Sparkles, RotateCcw, ArrowRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { suggestGroupConfigs, distributePlayersToGroups } from '@/hooks/useQuickTable';
 import type { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useI18n } from '@/i18n';
@@ -96,6 +98,9 @@ interface GroupSetupDialogProps {
   onOpenChange: (open: boolean) => void;
   teams: TeamMatchTeam[];
   isCreating: boolean;
+  /** Roster constraints for the pre-draw warning. */
+  rosterSize?: number;
+  requireDupr?: boolean;
   onConfirm: (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>, randomizeGameOrder: boolean) => void;
 }
 
@@ -104,6 +109,8 @@ export function GroupSetupDialog({
   onOpenChange,
   teams,
   isCreating,
+  rosterSize = 4,
+  requireDupr = false,
   onConfirm,
 }: GroupSetupDialogProps) {
   const [selectedGroupCount, setSelectedGroupCount] = useState<number | null>(null);
@@ -120,6 +127,59 @@ export function GroupSetupDialog({
 
   const approvedTeams = useMemo(() => teams.filter((tm) => tm.status === 'approved'), [teams]);
   const teamCount = approvedTeams.length;
+
+  // ─── Roster constraint check (warning only — never blocks the draw) ───
+  const approvedIds = useMemo(() => approvedTeams.map((t) => t.id), [approvedTeams]);
+  const { data: constraintRosters } = useQuery({
+    queryKey: ['group-setup-rosters', [...approvedIds].sort().join(',')],
+    queryFn: async () => {
+      if (approvedIds.length === 0) return [] as { team_id: string; gender: string; user_id: string | null }[];
+      const { data, error } = await supabase
+        .from('team_match_roster').select('team_id, gender, user_id').in('team_id', approvedIds);
+      if (error) throw error;
+      return (data || []) as { team_id: string; gender: string; user_id: string | null }[];
+    },
+    enabled: open && approvedIds.length > 0,
+  });
+  const constraintUserIds = useMemo(
+    () => [...new Set((constraintRosters || []).map((r) => r.user_id).filter((x): x is string => !!x))],
+    [constraintRosters],
+  );
+  const { data: duprSet } = useQuery({
+    queryKey: ['group-setup-dupr', [...constraintUserIds].sort().join(',')],
+    queryFn: async () => {
+      const s = new Set<string>();
+      if (constraintUserIds.length === 0) return s;
+      const { data } = await supabase.from('profiles').select('id, dupr_singles, dupr_doubles').in('id', constraintUserIds);
+      (data || []).forEach((p: { id: string; dupr_singles: number | null; dupr_doubles: number | null }) => {
+        if (p.dupr_doubles != null || p.dupr_singles != null) s.add(p.id);
+      });
+      return s;
+    },
+    enabled: open && requireDupr && constraintUserIds.length > 0,
+  });
+
+  const violations = useMemo(() => {
+    if (!constraintRosters) return [] as { name: string; issues: string[] }[];
+    const byTeam = new Map<string, { gender: string; user_id: string | null }[]>();
+    constraintRosters.forEach((r) => { const l = byTeam.get(r.team_id) ?? []; l.push(r); byTeam.set(r.team_id, l); });
+    const half = Math.floor(rosterSize / 2);
+    const out: { name: string; issues: string[] }[] = [];
+    approvedTeams.forEach((tm) => {
+      const members = byTeam.get(tm.id) ?? [];
+      const issues: string[] = [];
+      if (members.length !== rosterSize) issues.push(vi ? `${members.length}/${rosterSize} người` : `${members.length}/${rosterSize} players`);
+      const males = members.filter((m) => m.gender === 'male').length;
+      const females = members.filter((m) => m.gender === 'female').length;
+      if (males !== half || females !== half) issues.push(vi ? `${males} nam / ${females} nữ (cần ${half}/${half})` : `${males}M / ${females}F (need ${half}/${half})`);
+      if (requireDupr) {
+        const noDupr = members.filter((m) => !m.user_id || !duprSet?.has(m.user_id)).length;
+        if (noDupr > 0) issues.push(vi ? `${noDupr} chưa có DUPR` : `${noDupr} without DUPR`);
+      }
+      if (issues.length) out.push({ name: tm.team_name, issues });
+    });
+    return out;
+  }, [constraintRosters, duprSet, approvedTeams, rosterSize, requireDupr, vi]);
 
   const txt = {
     title: c.groupSetupTitle,
@@ -329,6 +389,38 @@ export function GroupSetupDialog({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22, padding: '8px 0' }}>
           {/* ── Group count selection (config) ── */}
+          {phase === 'config' && violations.length > 0 && (
+            <div
+              style={{
+                padding: 14,
+                borderRadius: 'var(--tl-radius)',
+                background: 'rgba(233, 182, 73, 0.08)',
+                border: '1px solid rgba(233, 182, 73, 0.4)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <AlertTriangle className="h-4 w-4" style={{ color: 'var(--tl-gold)' }} />
+                <span style={{ fontWeight: 600, color: 'var(--tl-fg)', fontSize: 13.5 }}>
+                  {vi ? `${violations.length} đội chưa đạt ràng buộc` : `${violations.length} team(s) don't meet the constraints`}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 8 }}>
+                {violations.map((v) => (
+                  <div key={v.name} style={{ fontSize: 12.5, color: 'var(--tl-fg-2)', lineHeight: 1.5 }}>
+                    <span style={{ fontWeight: 500, color: 'var(--tl-fg)' }}>{v.name}</span>
+                    {' — '}
+                    <span style={{ color: 'var(--tl-gold)' }}>{v.issues.join(' · ')}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--tl-fg-3)' }}>
+                {vi
+                  ? `Yêu cầu: ${rosterSize} người · ${Math.floor(rosterSize / 2)} nam ${Math.floor(rosterSize / 2)} nữ${requireDupr ? ' · tất cả có DUPR' : ''}. Bạn vẫn có thể chia bảng.`
+                  : `Required: ${rosterSize} players · ${Math.floor(rosterSize / 2)}M ${Math.floor(rosterSize / 2)}F${requireDupr ? ' · all with DUPR' : ''}. You can still create the groups.`}
+              </div>
+            </div>
+          )}
+
           {phase === 'config' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <h4 style={fieldLabel}>{txt.chooseGroups}</h4>

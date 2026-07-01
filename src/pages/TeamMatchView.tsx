@@ -876,6 +876,8 @@ export default function TeamMatchView() {
           onOpenChange={setShowGroupSetupDialog}
           teams={teams || []}
           isCreating={isCreatingGroups}
+          rosterSize={tournament.team_roster_size}
+          requireDupr={tournament.require_dupr ?? false}
           onConfirm={handleCreateGroups}
         />
 
