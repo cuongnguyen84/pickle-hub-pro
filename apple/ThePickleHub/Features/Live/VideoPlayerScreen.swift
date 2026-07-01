@@ -12,26 +12,40 @@ struct VideoPlayerScreen: View {
     let url: URL
     let title: String
     var progressKey: String? = nil
+    /// When set, a live-chat panel renders under the player (livestreams/replays).
+    var livestreamID: UUID? = nil
 
     @State private var player: AVPlayer?
     @State private var observer: Any?
 
     var body: some View {
-        VideoPlayer(player: player)
-            .background(Color.black)
-            .ignoresSafeArea(edges: .bottom)
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if progressKey != nil {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Xem từ đầu") { player?.seek(to: .zero) }
-                            .font(TLFont.mono(11, .semibold)).foregroundStyle(TLColor.accentText)
-                    }
+        Group {
+            if let livestreamID {
+                // Player pinned at 16:9 up top, chat fills the rest.
+                VStack(spacing: 0) {
+                    VideoPlayer(player: player)
+                        .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                        .background(Color.black)
+                    ChatPanel(livestreamID: livestreamID.uuidString.lowercased())
+                }
+            } else {
+                VideoPlayer(player: player)
+                    .background(Color.black)
+                    .ignoresSafeArea(edges: .bottom)
+            }
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if progressKey != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Xem từ đầu") { player?.seek(to: .zero) }
+                        .font(TLFont.mono(11, .semibold)).foregroundStyle(TLColor.accentText)
                 }
             }
-            .onAppear(perform: start)
-            .onDisappear(perform: stop)
+        }
+        .onAppear(perform: start)
+        .onDisappear(perform: stop)
     }
 
     private func start() {

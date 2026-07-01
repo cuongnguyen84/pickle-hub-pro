@@ -131,7 +131,7 @@ struct LiveHeroCard: View {
     @ViewBuilder
     private var mediaLink: some View {
         if stream.isLive, let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle) } label: { media }
+            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: { media }
                 .buttonStyle(.plain)
         } else {
             media
@@ -172,7 +172,7 @@ struct LiveHeroCard: View {
             }
             HStack(spacing: 10) {
                 if stream.isLive, let url = stream.playbackURL {
-                    NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle) } label: {
+                    NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: {
                         Label("Xem ngay", systemImage: "play.fill")
                             .font(TLFont.sans(14, .bold)).foregroundStyle(TLColor.accentInk)
                             .frame(maxWidth: .infinity).padding(.vertical, 11)
@@ -222,7 +222,7 @@ struct LiveCourtCard: View {
     @ViewBuilder
     private func link<L: View>(@ViewBuilder _ label: () -> L) -> some View {
         if let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle) } label: { label() }.buttonStyle(.plain)
+            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: { label() }.buttonStyle(.plain)
         } else { label() }
     }
 }
@@ -361,7 +361,7 @@ struct ReplayRow: View {
     @ViewBuilder
     private func link<L: View>(@ViewBuilder _ label: () -> L) -> some View {
         if let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, progressKey: stream.id.uuidString) } label: { label() }
+            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, progressKey: stream.id.uuidString, livestreamID: stream.id) } label: { label() }
                 .buttonStyle(.plain)
         } else { label() }
     }
