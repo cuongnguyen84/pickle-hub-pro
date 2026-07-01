@@ -1,7 +1,8 @@
 import { Users, Check, Clock, UserCheck, AlertCircle, X, Loader2, Play, UserPlus } from 'lucide-react';
-import { TeamMatchTeam, TeamMatchRosterMember, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
+import { TeamMatchTeam, TeamMatchRosterMember, useTeamMatchTeamManagement, useUserMembership } from '@/hooks/useTeamMatchTeams';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n';
 
 // ─── W2.4b shared tokens (mirror MatchList/PlayoffBracket from #103) ─────
@@ -95,8 +96,19 @@ export function RegisteredTeamsSummary({
   onGenerateMatches,
 }: RegisteredTeamsSummaryProps) {
   const { updateTeamStatus, isUpdatingStatus } = useTeamMatchTeamManagement();
+  const { user } = useAuth();
+  const { data: membership } = useUserMembership(tournamentId);
   const { t, language } = useI18n();
   const c = t.teamMatchComponents;
+
+  // Anyone not already on a team (incl. the organizer) can request to join an
+  // approved team they don't captain. The button just opens the detail sheet;
+  // TeamJoinPanel there handles gender/DUPR/confirm.
+  const canRequestJoin = (team: TeamMatchTeam) =>
+    !!user &&
+    !membership &&
+    team.status === 'approved' &&
+    team.captain_user_id !== user.id;
 
   const STATUS_LABELS: Record<StatusKind, string> = {
     pending: c.statusPending,
@@ -243,8 +255,9 @@ export function RegisteredTeamsSummary({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {/* Player: prominent request-to-join (opens detail sheet to confirm) */}
-          {!isOwner && (
+          {/* Prominent request-to-join (opens detail sheet to confirm).
+              Shown for players AND the organizer, when they can still join. */}
+          {canRequestJoin(team) && (
             <button
               type="button"
               className="tl-btn green"

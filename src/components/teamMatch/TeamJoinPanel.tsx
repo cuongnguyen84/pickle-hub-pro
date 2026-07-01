@@ -50,7 +50,6 @@ interface TeamJoinPanelProps {
   teamStatus: string;
   tournamentStatus: string;
   isCaptain: boolean;
-  isOwner: boolean;
   requireDupr?: boolean;
   duprMaxMale?: number | null;
   duprMaxFemale?: number | null;
@@ -63,7 +62,6 @@ export function TeamJoinPanel({
   teamStatus,
   tournamentStatus,
   isCaptain,
-  isOwner,
   requireDupr = false,
   duprMaxMale = null,
   duprMaxFemale = null,
@@ -110,8 +108,9 @@ export function TeamJoinPanel({
     connectDupr: vi ? 'Kết nối DUPR' : 'Connect DUPR',
   };
 
-  // Hidden for organizer / captain.
-  if (isOwner || isCaptain) return null;
+  // Hidden only for this team's captain. The organizer can also join as a
+  // player (creator ≠ excluded from playing).
+  if (isCaptain) return null;
   // Registration closed → no join.
   if (tournamentStatus !== 'registration' && tournamentStatus !== 'setup') return null;
 

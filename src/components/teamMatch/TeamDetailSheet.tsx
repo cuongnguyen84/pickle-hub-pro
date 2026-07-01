@@ -117,7 +117,6 @@ export function TeamDetailSheet({
               teamStatus={team.status}
               tournamentStatus={tournament.status}
               isCaptain={isCaptain}
-              isOwner={isOwner}
               requireDupr={tournament.require_dupr ?? false}
               duprMaxMale={tournament.dupr_max_male ?? null}
               duprMaxFemale={tournament.dupr_max_female ?? null}
