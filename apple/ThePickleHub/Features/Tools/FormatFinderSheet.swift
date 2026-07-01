@@ -1,9 +1,12 @@
 import SwiftUI
 
 /// "Không chắc chọn loại nào?" — a 2-question helper that recommends a format
-/// and opens its (web) creation flow. (Prompt §4 — format finder.)
+/// and launches its **native** creation flow. (Prompt §4 — format finder.)
 struct FormatFinderSheet: View {
-    let onStart: (URL) -> Void
+    /// Which native create flow the recommendation maps to.
+    enum Pick { case quickTable, doublesElim }
+
+    let onStart: (Pick) -> Void
     @Environment(\.dismiss) private var dismiss
 
     enum Size: String, CaseIterable, Identifiable {
@@ -21,21 +24,21 @@ struct FormatFinderSheet: View {
     @State private var size: Size?
     @State private var timeLimited: Bool?
 
-    private var recommendation: (title: String, reason: String, url: URL)? {
+    private var recommendation: (title: String, reason: String, pick: Pick)? {
         guard let size, let timeLimited else { return nil }
         switch size {
         case .large:
             return ("Loại trực tiếp",
                     "Nhiều đội + cần kết thúc nhanh → nhánh loại trực tiếp.",
-                    WebRoutes.toolsDoublesElimination)
+                    .doublesElim)
         case .medium where timeLimited:
             return ("Loại trực tiếp",
                     "Cỡ vừa và giới hạn thời gian → loại trực tiếp gọn hơn.",
-                    WebRoutes.toolsDoublesElimination)
+                    .doublesElim)
         default:
             return ("Bảng đấu nhanh",
                     "Ai cũng được đánh nhiều trận → vòng tròn rồi playoff.",
-                    WebRoutes.toolsQuickTables)
+                    .quickTable)
         }
     }
 
@@ -97,13 +100,13 @@ struct FormatFinderSheet: View {
         .buttonStyle(.plain)
     }
 
-    private func recommendationCard(_ rec: (title: String, reason: String, url: URL)) -> some View {
+    private func recommendationCard(_ rec: (title: String, reason: String, pick: Pick)) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("GỢI Ý").font(TLFont.mono(9, .bold)).tracking(1.6).foregroundStyle(TLColor.accentText)
             Text(rec.title).font(TLFont.serif(24)).italic().foregroundStyle(TLColor.fg)
             Text(rec.reason).font(TLFont.sans(14)).foregroundStyle(TLColor.fg2).lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
-            Button { onStart(rec.url); dismiss() } label: {
+            Button { onStart(rec.pick); dismiss() } label: {
                 HStack(spacing: 6) {
                     Text("Bắt đầu").font(TLFont.sans(14, .bold))
                     Image(systemName: "arrow.right").font(.system(size: 12, weight: .bold))

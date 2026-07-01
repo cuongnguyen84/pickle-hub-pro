@@ -76,11 +76,14 @@ final class ToolsViewModel {
 
 /// Tools tab — Bracket Lab. Design: "Phương Án 2 / luồng" — hero, format picker
 /// (featured + compact rows), then the user's managed tournaments as rich cards.
-/// Creating/scoring still opens the web until the native creation flow ships.
+/// QuickTable, Doubles-Elim and Team-Match create/score natively; the finder now
+/// launches those native flows too. Flex is the lone web fallback (no native
+/// create flow yet).
 struct ToolsView: View {
     @State private var model = ToolsViewModel()
     @State private var openURL: IdentifiedURL?
     @State private var showFinder = false
+    @State private var pendingFinderPick: FormatFinderSheet.Pick?
     @State private var showCreate = false
     @State private var showCreateTeamMatch = false
     @State private var showCreateDoubles = false
@@ -111,8 +114,17 @@ struct ToolsView: View {
             .task { await model.load() }
             .refreshable { await model.reload() }
             .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
-            .sheet(isPresented: $showFinder) {
-                FormatFinderSheet { url in openURL = IdentifiedURL(url: url) }
+            .sheet(isPresented: $showFinder, onDismiss: {
+                // Present the native create flow only after the finder has fully
+                // dismissed — presenting a second sheet mid-dismiss drops it.
+                guard let pick = pendingFinderPick else { return }
+                pendingFinderPick = nil
+                switch pick {
+                case .quickTable:  showCreate = true
+                case .doublesElim: showCreateDoubles = true
+                }
+            }) {
+                FormatFinderSheet { pick in pendingFinderPick = pick }
             }
             .sheet(isPresented: $showCreate) {
                 CreateQuickTableView(onCreated: { shareID, name in
