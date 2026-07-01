@@ -40,6 +40,59 @@ struct ProfileRepository {
         return profile
     }
 
+    // MARK: Account editing (port of Account.tsx + useUserProfile)
+
+    private struct DisplayNameUpdate: Encodable { let display_name: String }
+    private struct AvatarUpdate: Encodable { let avatar_url: String }
+    private struct PublicUpdate: Encodable { let is_public_profile: Bool }
+
+    func updateDisplayName(_ name: String) async throws {
+        let userID = try await client.auth.session.user.id
+        try await client.from("profiles")
+            .update(DisplayNameUpdate(display_name: name))
+            .eq("id", value: userID).execute()
+    }
+
+    func setPublicProfile(_ isPublic: Bool) async throws {
+        let userID = try await client.auth.session.user.id
+        try await client.from("profiles")
+            .update(PublicUpdate(is_public_profile: isPublic))
+            .eq("id", value: userID).execute()
+    }
+
+    func fetchIsPublicProfile() async -> Bool {
+        guard let userID = try? await client.auth.session.user.id else { return false }
+        struct Row: Decodable { let is_public_profile: Bool? }
+        let rows: [Row]? = try? await client.from("profiles")
+            .select("is_public_profile").eq("id", value: userID).limit(1).execute().value
+        return rows?.first?.is_public_profile ?? false
+    }
+
+    /// Upload avatar image data to the `avatars` bucket (path `{uid}/{ts}.{ext}`,
+    /// upsert), set `profiles.avatar_url`, return the public URL — mirrors
+    /// `useUserProfile.uploadAvatar`.
+    func uploadAvatar(data: Data, fileExtension: String) async throws -> String {
+        let userID = try await client.auth.session.user.id
+        let ext = fileExtension.isEmpty ? "jpg" : fileExtension.lowercased()
+        let stamp = Int(Date().timeIntervalSince1970 * 1000)
+        let path = "\(userID.uuidString.lowercased())/\(stamp).\(ext)"
+        let contentType = ext == "png" ? "image/png" : "image/jpeg"
+        _ = try await client.storage.from("avatars")
+            .upload(path, data: data, options: FileOptions(cacheControl: "3600", contentType: contentType, upsert: true))
+        let url = try client.storage.from("avatars").getPublicURL(path: path).absoluteString
+        try await client.from("profiles")
+            .update(AvatarUpdate(avatar_url: url))
+            .eq("id", value: userID).execute()
+        return url
+    }
+
+    /// Invoke the `delete-account` edge function (auth via the session token that
+    /// supabase-swift attaches automatically). Caller signs out on success.
+    func deleteAccount() async throws {
+        struct Result: Decodable { let success: Bool? }
+        let _: Result = try await client.functions.invoke("delete-account")
+    }
+
     /// Aggregate match stats for a player. Wraps the `get_player_stats` RPC;
     /// returns nil when the username doesn't map to a profile (the RPC still
     /// emits one row with a null profile_id in that case).

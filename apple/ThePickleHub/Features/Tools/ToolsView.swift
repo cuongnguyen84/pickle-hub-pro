@@ -76,9 +76,8 @@ final class ToolsViewModel {
 
 /// Tools tab — Bracket Lab. Design: "Phương Án 2 / luồng" — hero, format picker
 /// (featured + compact rows), then the user's managed tournaments as rich cards.
-/// QuickTable, Doubles-Elim and Team-Match create/score natively; the finder now
-/// launches those native flows too. Flex is the lone web fallback (no native
-/// create flow yet).
+/// All four formats (QuickTable, Doubles-Elim, Team-Match, Flex) create/score
+/// natively; the finder launches the native flows too.
 struct ToolsView: View {
     @State private var model = ToolsViewModel()
     @State private var openURL: IdentifiedURL?
@@ -87,10 +86,12 @@ struct ToolsView: View {
     @State private var showCreate = false
     @State private var showCreateTeamMatch = false
     @State private var showCreateDoubles = false
+    @State private var showCreateFlex = false
     @State private var navTarget: MyTournament?
     @State private var createdTarget: CreatedRef?
     @State private var createdTeamMatch: CreatedRef?
     @State private var createdDoubles: CreatedRef?
+    @State private var createdFlex: CreatedRef?
     @State private var recentExpanded = false
 
     private let recentCap = 8
@@ -168,6 +169,15 @@ struct ToolsView: View {
             .navigationDestination(item: $createdDoubles) { ref in
                 DoublesElimDetailView(shareID: ref.id, fallbackName: ref.name)
             }
+            .sheet(isPresented: $showCreateFlex) {
+                CreateFlexView { shareID, name in
+                    Task { await model.reload() }
+                    createdFlex = CreatedRef(id: shareID, name: name)
+                }
+            }
+            .navigationDestination(item: $createdFlex) { ref in
+                FlexDetailView(shareID: ref.id, fallbackName: ref.name)
+            }
         }
     }
 
@@ -201,7 +211,8 @@ struct ToolsView: View {
                                  meta: "Nhánh đơn / đôi · ≥16 đội", url: WebRoutes.toolsDoublesElimination,
                                  action: { Haptics.light(); showCreateDoubles = true })
                 compactFormatRow(icon: "slider.horizontal.3", title: "Giải linh hoạt",
-                                 meta: "Tùy biến hoàn toàn", url: WebRoutes.toolsFlexTournament)
+                                 meta: "Tùy biến hoàn toàn", url: WebRoutes.toolsFlexTournament,
+                                 action: { Haptics.light(); showCreateFlex = true })
                 compactFormatRow(icon: "person.3.fill", title: "Đấu đồng đội",
                                  meta: "Thể thức MLP · đội 4–8", url: WebRoutes.toolsTeamMatch,
                                  action: { Haptics.light(); showCreateTeamMatch = true })

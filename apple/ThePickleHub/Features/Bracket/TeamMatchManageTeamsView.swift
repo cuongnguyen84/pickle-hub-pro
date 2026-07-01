@@ -9,6 +9,7 @@ final class TMManageTeamsModel {
     let tournamentName: String
     var teams: [TMTeam] = []
     var roster: [TMRosterPlayer] = []
+    var dupr: [UUID: Double] = [:]   // userID → DUPR (doubles ?? singles)
     var newTeamName = ""
     var inviteEmail = ""
     var inviteMsg: String?
@@ -40,6 +41,12 @@ final class TMManageTeamsModel {
             teams = r.teams.sorted { ($0.seed ?? Int.max) < ($1.seed ?? Int.max) }
             roster = r.roster
         }
+        await loadDupr()
+    }
+
+    @MainActor func loadDupr() async {
+        let ids = Array(Set(roster.compactMap { $0.userID }))
+        dupr = (try? await repo.duprByUser(ids)) ?? [:]
     }
 
     @MainActor func addTeam() async {
@@ -77,6 +84,13 @@ final class TMManageTeamsModel {
     @MainActor func removeMember(_ id: UUID) async {
         busy = true; error = nil
         do { try await repo.removeRosterMember(id: id); await refresh() }
+        catch { self.error = error.localizedDescription }
+        busy = false
+    }
+
+    @MainActor func approveMember(_ id: UUID) async {
+        busy = true; error = nil
+        do { try await repo.updateRosterStatus(id: id, status: "approved"); await refresh() }
         catch { self.error = error.localizedDescription }
         busy = false
     }
@@ -139,6 +153,7 @@ struct TeamMatchManageTeamsView: View {
                 .padding(16)
             }
             .background(TLColor.bg)
+            .task { await model.loadDupr() }
             .navigationTitle("Quản lý đội")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -230,7 +245,21 @@ struct TeamMatchManageTeamsView: View {
                         Image(systemName: "star.fill").font(.system(size: 8)).foregroundStyle(TLColor.gold)
                     }
                     Spacer()
+                    if let uid = m.userID, let d = model.dupr[uid] {
+                        Text("DUPR \(String(format: "%.2f", d))")
+                            .font(TLFont.mono(9, .medium)).foregroundStyle(TLColor.accentText)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(TLColor.accent.opacity(0.12), in: Capsule())
+                    }
                     Text(m.genderLabel).font(TLFont.mono(9)).foregroundStyle(TLColor.fg4)
+                    if m.status == "pending" {
+                        Text("CHỜ").font(TLFont.mono(8, .bold)).foregroundStyle(TLColor.gold)
+                            .padding(.horizontal, 5).padding(.vertical, 2)
+                            .background(TLColor.gold.opacity(0.12), in: Capsule())
+                        Button { Haptics.success(); Task { await model.approveMember(m.id) } } label: {
+                            Image(systemName: "checkmark.circle.fill").font(.system(size: 15)).foregroundStyle(TLColor.accent)
+                        }.buttonStyle(.plain)
+                    }
                     Button { Haptics.light(); Task { await model.removeMember(m.id) } } label: {
                         Image(systemName: "xmark.circle.fill").font(.system(size: 13)).foregroundStyle(TLColor.fg4)
                     }.buttonStyle(.plain)

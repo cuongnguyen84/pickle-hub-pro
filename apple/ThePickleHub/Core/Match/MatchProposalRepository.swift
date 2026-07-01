@@ -75,6 +75,46 @@ struct MatchProposalRepository {
         )
     }
 
+    // MARK: Confirm / history (mirror Match.tsx useProposals + verify/dispute)
+
+    /// Proposals the caller is involved in (RLS-scoped). `pendingOnly` filters to
+    /// `pending_verify` for the confirm tab; otherwise returns all (history).
+    func myProposals(pendingOnly: Bool) async throws -> [MatchProposalRow] {
+        let base = client.from("match_proposals").select("*")
+        let filtered = pendingOnly ? base.eq("status", value: "pending_verify") : base
+        return try await filtered.order("created_at", ascending: false).limit(50).execute().value
+    }
+
+    private struct ActionBody: Encodable { let action: String; let proposal_id: String; let reason: String? }
+    private struct ActionResult: Decodable { let status: String? }
+
+    func verify(proposalID: String) async throws {
+        let _: ActionResult = try await client.functions.invoke(
+            "match-proposal",
+            options: FunctionInvokeOptions(body: ActionBody(action: "verify", proposal_id: proposalID, reason: nil)))
+    }
+
+    func dispute(proposalID: String, reason: String?) async throws {
+        let trimmed = reason?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let _: ActionResult = try await client.functions.invoke(
+            "match-proposal",
+            options: FunctionInvokeOptions(body: ActionBody(action: "dispute", proposal_id: proposalID,
+                                                            reason: (trimmed?.isEmpty ?? true) ? nil : trimmed)))
+    }
+
+    /// Resolve display names for player user ids via `public_profiles`.
+    func displayNames(ids: [String]) async -> [String: String] {
+        let unique = Set(ids.filter { !$0.isEmpty }.map { $0.lowercased() })
+        guard !unique.isEmpty else { return [:] }
+        struct Row: Decodable { let id: String; let displayName: String?
+            enum CodingKeys: String, CodingKey { case id; case displayName = "display_name" } }
+        guard let rows: [Row] = try? await client.from("public_profiles")
+            .select("id, display_name").in("id", values: Array(unique)).execute().value else { return [:] }
+        var map: [String: String] = [:]
+        for r in rows { if let n = r.displayName, !n.isEmpty { map[r.id.lowercased()] = n } }
+        return map
+    }
+
     /// `match_date` in the server's expected `YYYY-MM-DD` form, local calendar.
     private static func todayString() -> String {
         let formatter = DateFormatter()

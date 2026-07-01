@@ -19,9 +19,14 @@ struct TMTournament: Decodable, Equatable {
     let createdBy: UUID?
     let totalScoreMode: Bool?   // true = chấm theo TỔNG điểm (1 trận tới t = số game × điểm/game)
     let pointsPerGame: Int?
+    let requireDupr: Bool?
+    let duprMaxMale: Double?
+    let duprMaxFemale: Double?
 
     var displayName: String { name.nonEmpty ?? "Giải đồng đội" }
     var isTotalScore: Bool { totalScoreMode == true }
+    var requiresDupr: Bool { requireDupr == true }
+    func duprCap(forGender gender: String) -> Double? { gender == "female" ? duprMaxFemale : duprMaxMale }
 
     var statusLabel: String {
         switch status {
@@ -54,6 +59,9 @@ struct TMTournament: Decodable, Equatable {
         case createdBy = "created_by"
         case totalScoreMode = "total_score_mode"
         case pointsPerGame = "points_per_game"
+        case requireDupr = "require_dupr"
+        case duprMaxMale = "dupr_max_male"
+        case duprMaxFemale = "dupr_max_female"
     }
 }
 
@@ -69,6 +77,15 @@ struct TMTeam: Decodable, Identifiable, Equatable {
         case teamName = "team_name"
         case groupID = "group_id"
     }
+}
+
+/// A signed-in user's roster membership (any team) in a tournament.
+struct TMMembership: Equatable {
+    let id: UUID
+    let teamID: UUID
+    let teamName: String
+    let status: String   // pending | approved | rejected
+    let isCaptain: Bool
 }
 
 struct TMGroup: Decodable, Identifiable, Equatable {
@@ -126,6 +143,7 @@ struct TMMatch: Decodable, Identifiable, Equatable {
     let bracketPosition: Int?
 
     var isCompleted: Bool { status == "completed" }
+    var isLive: Bool { status == "in_progress" }
     var hasBothTeams: Bool { teamAID != nil && teamBID != nil }
 
     init(from decoder: Decoder) throws {

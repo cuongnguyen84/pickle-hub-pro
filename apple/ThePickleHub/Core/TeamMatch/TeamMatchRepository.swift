@@ -9,6 +9,22 @@ struct TeamMatchRepository {
 
     func currentUserID() async -> UUID? { try? await client.auth.session.user.id }
 
+    /// DUPR (doubles preferred, singles fallback) per linked account, for roster
+    /// members with a user_id. profiles readable by authenticated users.
+    func duprByUser(_ userIDs: [UUID]) async throws -> [UUID: Double] {
+        guard !userIDs.isEmpty else { return [:] }
+        struct Row: Decodable {
+            let id: UUID; let singles: Double?; let doubles: Double?
+            enum CodingKeys: String, CodingKey { case id; case singles = "dupr_singles"; case doubles = "dupr_doubles" }
+        }
+        let rows: [Row] = try await client.from("profiles")
+            .select("id, dupr_singles, dupr_doubles")
+            .in("id", values: userIDs.map { $0.uuidString.lowercased() }).execute().value
+        var map: [UUID: Double] = [:]
+        for r in rows { if let v = r.doubles ?? r.singles { map[r.id] = v } }
+        return map
+    }
+
     // MARK: Load
 
     private static let matchColumns =
@@ -19,7 +35,7 @@ struct TeamMatchRepository {
     func load(shareID: String) async throws -> TMDetail {
         let tournament: TMTournament = try await client
             .from("team_match_tournaments")
-            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game")
+            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female")
             .eq("share_id", value: shareID)
             .single()
             .execute().value
@@ -312,6 +328,29 @@ struct TeamMatchRepository {
         return row.id
     }
 
+    /// The captain's most recent team (any tournament) + roster, for one-tap
+    /// "reuse previous team" prefill. Light stand-in for web master teams.
+    func previousCaptainTeam() async -> (name: String, players: [(name: String, gender: String, isCaptain: Bool)])? {
+        guard let uid = await currentUserID() else { return nil }
+        struct T: Decodable {
+            let id: UUID; let teamName: String
+            enum CodingKeys: String, CodingKey { case id; case teamName = "team_name" }
+        }
+        let teams: [T]? = try? await client.from("team_match_teams")
+            .select("id, team_name, created_at").eq("captain_user_id", value: uid)
+            .order("created_at", ascending: false).limit(1).execute().value
+        guard let t = teams?.first else { return nil }
+        struct R: Decodable {
+            let playerName: String; let gender: String?; let isCaptain: Bool?
+            enum CodingKeys: String, CodingKey { case playerName = "player_name"; case gender; case isCaptain = "is_captain" }
+        }
+        let roster: [R]? = try? await client.from("team_match_roster")
+            .select("player_name, gender, is_captain").eq("team_id", value: t.id).execute().value
+        let players = (roster ?? []).map { (name: $0.playerName, gender: $0.gender ?? "male", isCaptain: $0.isCaptain ?? false) }
+        guard !players.isEmpty else { return nil }
+        return (name: t.teamName, players: players)
+    }
+
     /// The signed-in user's own team in this tournament (captain), if any.
     func userTeam(tournamentID: UUID) async -> TMTeam? {
         guard let uid = await currentUserID() else { return nil }
@@ -350,6 +389,66 @@ struct TeamMatchRepository {
     }
     func removeRosterMember(id: UUID) async throws {
         try await client.from("team_match_roster").delete().eq("id", value: id).execute()
+    }
+
+    /// Roster of a single team (captain roster management).
+    func teamRoster(teamID: UUID) async throws -> [TMRosterPlayer] {
+        try await client.from("team_match_roster")
+            .select("id, team_id, player_name, gender, is_captain, user_id, status")
+            .eq("team_id", value: teamID)
+            .order("is_captain", ascending: false).order("created_at", ascending: true)
+            .execute().value
+    }
+
+    enum JoinError: LocalizedError {
+        case notAuthed, alreadyMember
+        var errorDescription: String? {
+            switch self {
+            case .notAuthed: return "Cần đăng nhập để tham gia đội."
+            case .alreadyMember: return "Bạn đã ở trong một đội của giải này."
+            }
+        }
+    }
+
+    /// Player self-joins a team as a pending, non-captain member (RLS: user may
+    /// insert its own pending row). One team per player per tournament.
+    func joinTeam(teamID: UUID, tournamentID: UUID, playerName: String, gender: String) async throws {
+        guard let uid = await currentUserID() else { throw JoinError.notAuthed }
+        if await userMembership(tournamentID: tournamentID) != nil { throw JoinError.alreadyMember }
+        struct JoinInsert: Encodable {
+            let team_id: String; let user_id: String; let player_name: String
+            let gender: String; let is_captain = false; let status = "pending"
+        }
+        try await client.from("team_match_roster").insert(
+            JoinInsert(team_id: teamID.uuidString.lowercased(), user_id: uid.uuidString.lowercased(),
+                       player_name: playerName, gender: gender)).execute()
+    }
+
+    /// Captain/creator approves or rejects a pending roster member.
+    func updateRosterStatus(id: UUID, status: String) async throws {
+        struct U: Encodable { let status: String }
+        try await client.from("team_match_roster").update(U(status: status)).eq("id", value: id).execute()
+    }
+
+    /// My roster membership (any team) in this tournament, if any.
+    func userMembership(tournamentID: UUID) async -> TMMembership? {
+        guard let uid = await currentUserID() else { return nil }
+        struct TeamRef: Decodable { let team_name: String }
+        struct Row: Decodable {
+            let id: UUID; let teamID: UUID; let status: String?; let isCaptain: Bool?; let team: TeamRef?
+            enum CodingKeys: String, CodingKey {
+                case id; case teamID = "team_id"; case status; case isCaptain = "is_captain"
+                case team = "team_match_teams"
+            }
+        }
+        let rows: [Row]? = try? await client.from("team_match_roster")
+            .select("id, team_id, status, is_captain, team_match_teams!inner(team_name, tournament_id)")
+            .eq("user_id", value: uid)
+            .eq("team_match_teams.tournament_id", value: tournamentID)
+            .limit(1).execute().value
+        guard let r = rows?.first else { return nil }
+        return TMMembership(id: r.id, teamID: r.teamID, teamName: r.team?.team_name ?? "",
+                            status: r.status ?? "pending", isCaptain: r.isCaptain ?? false)
     }
     func deleteTeam(id: UUID) async throws {
         try await client.from("team_match_teams").delete().eq("id", value: id).execute()
@@ -401,12 +500,14 @@ struct TeamMatchRepository {
 
     /// Build + insert sub-games for the given match ids from templates (+ dreambreaker
     /// when even count & enabled). Shared by all generators.
-    private func insertGames(forMatchIDs ids: [UUID], templates: [TemplateRow], hasDreambreaker: Bool) async throws {
+    private func insertGames(forMatchIDs ids: [UUID], templates: [TemplateRow], hasDreambreaker: Bool,
+                             randomize: Bool = false) async throws {
         guard !templates.isEmpty, !ids.isEmpty else { return }
         let addDB = hasDreambreaker && templates.count % 2 == 0
         var games: [GameInsert] = []
         for mid in ids {
-            for (i, t) in templates.enumerated() {
+            let ordered = randomize ? templates.shuffled() : templates
+            for (i, t) in ordered.enumerated() {
                 games.append(GameInsert(match_id: mid.uuidString.lowercased(), order_index: i,
                                         game_type: t.gameType, scoring_type: t.scoringType,
                                         display_name: t.displayName, is_dreambreaker: false,
@@ -479,7 +580,7 @@ struct TeamMatchRepository {
     /// rr_playoff — chia bảng theo `distribution` (random/manual do UI quyết): tạo team_match_groups,
     /// gán group_id cho đội, set status 'ongoing' + group_count, sinh RR THEO TỪNG BẢNG + games.
     /// Port web useTeamMatchGroups.createGroups, hỗ trợ mọi số bảng.
-    func setupGroups(tournamentID: UUID, distribution: [[UUID]], hasDreambreaker: Bool) async throws {
+    func setupGroups(tournamentID: UUID, distribution: [[UUID]], hasDreambreaker: Bool, randomizeGameOrder: Bool = false) async throws {
         let tID = tournamentID.uuidString.lowercased()
         guard distribution.count >= 2, distribution.allSatisfy({ $0.count >= 2 }) else {
             throw GenerateError.tooFewTeams
@@ -520,10 +621,13 @@ struct TeamMatchRepository {
                     games_won_a: 0, games_won_b: 0, total_points_a: 0, total_points_b: 0, group_id: gid))
             }
         }
+        // Games start with EMPTY lineups — each captain chooses their own.
+        // Game order optionally randomized per match.
         let inserted: [InsertedID] = try await client
             .from("team_match_matches").insert(rows).select("id").execute().value
         let templates = try await gameTemplates(tournamentID: tournamentID)
-        try await insertGames(forMatchIDs: inserted.map { $0.id }, templates: templates, hasDreambreaker: hasDreambreaker)
+        try await insertGames(forMatchIDs: inserted.map { $0.id }, templates: templates,
+                              hasDreambreaker: hasDreambreaker, randomize: randomizeGameOrder)
     }
 
     /// Single elimination bracket (random pairing) — port of generateSingleEliminationMutation.

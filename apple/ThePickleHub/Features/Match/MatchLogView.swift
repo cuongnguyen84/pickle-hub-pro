@@ -138,6 +138,13 @@ struct MatchLogView: View {
         .background(TLColor.bg)
         .navigationTitle("Log trận")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { MatchConfirmView() } label: {
+                    Image(systemName: "checkmark.seal").foregroundStyle(TLColor.accentText)
+                }
+            }
+        }
         .task { await model.loadSelf() }
         .sheet(item: $pickerSlot) { slot in
             OpponentPickerView(

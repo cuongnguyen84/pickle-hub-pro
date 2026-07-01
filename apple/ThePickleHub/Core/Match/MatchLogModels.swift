@@ -83,6 +83,51 @@ struct CreateMatchResult: Decodable, Equatable {
     }
 }
 
+/// A row from `match_proposals` (RLS returns only rows the caller is involved in).
+/// Mirrors the web `ProposalRow` used by `/match` pending + history tabs.
+struct MatchProposalRow: Decodable, Identifiable, Equatable {
+    let id: String
+    let format: String
+    let matchDate: String?
+    let teamAPlayerIDs: [String]
+    let teamBPlayerIDs: [String]
+    let teamAScores: [Int]
+    let teamBScores: [Int]
+    let status: String
+    let duprMatchCode: String?
+    let createdAt: String?
+
+    var isDoubles: Bool { format == "DOUBLES" }
+
+    enum CodingKeys: String, CodingKey {
+        case id, format, status
+        case matchDate = "match_date"
+        case teamAPlayerIDs = "team_a_player_ids"
+        case teamBPlayerIDs = "team_b_player_ids"
+        case teamAScores = "team_a_scores"
+        case teamBScores = "team_b_scores"
+        case duprMatchCode = "dupr_match_code"
+        case createdAt = "created_at"
+    }
+}
+
+/// Vietnamese status pill labels + colour intent for a proposal status.
+enum MatchProposalStatus {
+    static func label(_ s: String) -> String {
+        switch s {
+        case "pending_verify": return "CHỜ XÁC NHẬN"
+        case "verified": return "ĐÃ XÁC NHẬN"
+        case "approved": return "ĐÃ DUYỆT"
+        case "submitted": return "ĐÃ GỬI DUPR"
+        case "disputed": return "TRANH CHẤP"
+        case "rejected": return "BỊ TỪ CHỐI"
+        default: return s.uppercased()
+        }
+    }
+    static func isAccent(_ s: String) -> Bool { ["verified", "approved", "submitted"].contains(s) }
+    static func isWarn(_ s: String) -> Bool { ["disputed", "rejected"].contains(s) }
+}
+
 /// A shareable confirm link minted for each ghost (invited) opponent.
 struct MatchInvite: Decodable, Identifiable, Equatable {
     let code: String

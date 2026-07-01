@@ -55,6 +55,54 @@ struct FlexRepository {
     score_a, score_b, winner_side, counts_for_standings, display_order
     """
 
+    // MARK: Create (port of useFlexTournament createMutation)
+
+    private struct CreateParams: Encodable { let _name: String; let _is_public: Bool }
+    private struct CreateResult: Decodable { let success: Bool; let error: String?; let tournament: FlexTournament? }
+    private struct PlayerInsert: Encodable { let tournament_id: String; let name: String; let display_order: Int }
+    private struct GroupInsert: Encodable { let tournament_id: String; let name: String; let display_order: Int }
+    private struct MatchInsert: Encodable { let tournament_id: String; let name: String; let match_type: String; let display_order: Int }
+
+    enum CreateError: LocalizedError {
+        case limitReached, message(String)
+        var errorDescription: String? {
+            switch self {
+            case .limitReached: return "Bạn đã đạt giới hạn số giải miễn phí."
+            case .message(let m): return m
+            }
+        }
+    }
+
+    /// Create a Flex tournament via the quota-enforced RPC, then insert players +
+    /// the preset scaffolding (1 group, 1 singles + 1 doubles match) exactly as web
+    /// `createMutation` does. Roster/group editing still happens on web.
+    func createFlex(name: String, playerNames: [String], isPublic: Bool) async throws -> FlexTournament {
+        let safeName = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
+        let result: CreateResult = try await client
+            .rpc("create_flex_tournament_with_quota", params: CreateParams(_name: safeName, _is_public: isPublic))
+            .execute().value
+        guard result.success, let tournament = result.tournament else {
+            if result.error == "LIMIT_REACHED" { throw CreateError.limitReached }
+            throw CreateError.message(result.error ?? "Không tạo được giải")
+        }
+        let tid = tournament.id.uuidString.lowercased()
+
+        let names = playerNames.prefix(200)
+            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100)) }
+            .filter { !$0.isEmpty }
+        if !names.isEmpty {
+            let rows = names.enumerated().map { PlayerInsert(tournament_id: tid, name: $0.element, display_order: $0.offset) }
+            try await client.from("flex_players").insert(rows).execute()
+        }
+        try await client.from("flex_groups")
+            .insert(GroupInsert(tournament_id: tid, name: "Group A", display_order: 0)).execute()
+        try await client.from("flex_matches").insert([
+            MatchInsert(tournament_id: tid, name: "Singles Match 1", match_type: "singles", display_order: 0),
+            MatchInsert(tournament_id: tid, name: "Doubles Match 1", match_type: "doubles", display_order: 1),
+        ]).execute()
+        return tournament
+    }
+
     // MARK: Score (port of updateMatchScore + recomputeGroupStats)
 
     private struct ScoreUpdate: Encodable {

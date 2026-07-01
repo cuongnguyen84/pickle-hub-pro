@@ -39,6 +39,7 @@ struct ProfileView: View {
 
                 case .loaded(let profile):
                     RatingCardView(profile: profile, isOwn: true)
+                    accountSettingsLink(profile)
                     themePicker
                     signOutButton
 
@@ -63,6 +64,23 @@ struct ProfileView: View {
         .navigationTitle("Hồ sơ")
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.load() }
+    }
+
+    private func accountSettingsLink(_ profile: Profile) -> some View {
+        NavigationLink {
+            AccountSettingsView(profile: profile) { Task { await model.load() } }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "gearshape.fill").font(.system(size: 15)).foregroundStyle(TLColor.accentText)
+                Text("Cài đặt tài khoản").font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg)
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(TLColor.fg3)
+            }
+            .padding(14)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 
     private var themePicker: some View {
