@@ -156,17 +156,23 @@ struct ClubDetailView: View {
     @ViewBuilder
     private func membershipButton(_ club: Club) -> some View {
         switch model.membership {
-        case .active, .manager, .creator:
-            Button {
-                if model.membership == .active { Haptics.light(); Task { await model.leave() } }
-            } label: {
-                Text(model.membership == .active ? "Đã tham gia ✓" : "Quản trị")
+        case .manager, .creator:
+            NavigationLink { ClubManageView(club: club) } label: {
+                Text("Quản trị")
+                    .font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.accentText)
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .background(TLColor.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.accent.opacity(0.3), lineWidth: 1))
+            }.buttonStyle(.plain)
+        case .active:
+            Button { Haptics.light(); Task { await model.leave() } } label: {
+                Text("Đã tham gia ✓")
                     .font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.fg2)
                     .padding(.horizontal, 16).padding(.vertical, 12)
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.border2, lineWidth: 1))
             }
-            .buttonStyle(.plain).disabled(model.busy || model.membership != .active)
+            .buttonStyle(.plain).disabled(model.busy)
         case .pending:
             Text("Đang chờ duyệt").font(TLFont.mono(11, .semibold)).foregroundStyle(TLColor.gold)
                 .padding(.horizontal, 16).padding(.vertical, 12)

@@ -44,6 +44,7 @@ final class ClubsViewModel {
 struct ClubsListView: View {
     @State private var model = ClubsViewModel()
     @State private var openWeb: IdentifiedURL?
+    @State private var showCreate = false
 
     var body: some View {
         ScrollView {
@@ -57,6 +58,9 @@ struct ClubsListView: View {
         .task { if case .loading = model.phase { await model.load() } }
         .refreshable { await model.load() }
         .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
+        .sheet(isPresented: $showCreate) {
+            CreateClubView { Task { await model.load() } }
+        }
     }
 
     private var searchRow: some View {
@@ -73,10 +77,11 @@ struct ClubsListView: View {
             Button {
                 Haptics.light()
                 Task {
-                    let url = await model.currentUserID() == nil
-                        ? WebRoutes.base.appending(path: "login")
-                        : WebRoutes.base.appending(path: "clubs/new")
-                    openWeb = IdentifiedURL(url: url)
+                    if await model.currentUserID() == nil {
+                        openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "login"))
+                    } else {
+                        showCreate = true
+                    }
                 }
             } label: {
                 HStack(spacing: 5) {

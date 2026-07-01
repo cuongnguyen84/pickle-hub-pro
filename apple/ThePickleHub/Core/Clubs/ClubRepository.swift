@@ -68,9 +68,89 @@ struct ClubRepository {
 
     /// Leave the club (remove self).
     func leave(clubID: UUID, profileID: UUID) async throws {
-        struct Params: Encodable { let p_club_id: String; let p_profile_id: String }
+        try await removeMember(clubID: clubID, profileID: profileID)
+    }
+
+    // MARK: Member management (organizer)
+
+    private struct MemberParams: Encodable { let p_club_id: String; let p_profile_id: String }
+
+    func approveMember(clubID: UUID, profileID: UUID) async throws {
+        _ = try await client.rpc("approve_club_member",
+            params: MemberParams(p_club_id: clubID.uuidString.lowercased(),
+                                 p_profile_id: profileID.uuidString.lowercased())).execute()
+    }
+    func removeMember(clubID: UUID, profileID: UUID) async throws {
         _ = try await client.rpc("remove_club_member",
-            params: Params(p_club_id: clubID.uuidString.lowercased(),
-                           p_profile_id: profileID.uuidString.lowercased())).execute()
+            params: MemberParams(p_club_id: clubID.uuidString.lowercased(),
+                                 p_profile_id: profileID.uuidString.lowercased())).execute()
+    }
+
+    // MARK: Create / edit (organizer)
+
+    enum ClubWriteError: LocalizedError {
+        case capExceeded, slugTaken, message(String)
+        var errorDescription: String? {
+            switch self {
+            case .capExceeded: return "Bạn đã đạt giới hạn 3 CLB."
+            case .slugTaken: return "Đường dẫn (slug) đã được dùng."
+            case .message(let m): return m
+            }
+        }
+    }
+
+    /// True if a club already uses this slug (web debounced uniqueness check).
+    func slugTaken(_ slug: String) async -> Bool {
+        struct Row: Decodable { let id: UUID }
+        let rows: [Row]? = try? await client.from("clubs")
+            .select("id").eq("slug", value: slug).limit(1).execute().value
+        return !(rows?.isEmpty ?? true)
+    }
+
+    private struct CreateClubParams: Encodable {
+        let p_slug: String; let p_name: String; let p_description: String?
+        let p_location_text: String; let p_logo_url: String?
+    }
+    /// Atomic cap-check + insert (web `create_club_with_cap_check`). Returns new id.
+    func createClub(slug: String, name: String, description: String?, location: String, logoURL: String?) async throws -> UUID {
+        do {
+            let id: UUID = try await client.rpc("create_club_with_cap_check",
+                params: CreateClubParams(p_slug: slug, p_name: name,
+                                         p_description: description?.nonEmpty, p_location_text: location,
+                                         p_logo_url: logoURL)).execute().value
+            return id
+        } catch {
+            let msg = "\(error)".uppercased()
+            if msg.contains("CLUB_CAP_EXCEEDED") { throw ClubWriteError.capExceeded }
+            if msg.contains("CLUBS_SLUG") || msg.contains("DUPLICATE KEY") { throw ClubWriteError.slugTaken }
+            throw error
+        }
+    }
+
+    private struct ClubUpdate: Encodable { let name: String; let description: String?; let location_text: String; let logo_url: String? }
+    func updateClub(id: UUID, name: String, description: String?, location: String, logoURL: String?) async throws {
+        try await client.from("clubs")
+            .update(ClubUpdate(name: name, description: description?.nonEmpty, location_text: location, logo_url: logoURL))
+            .eq("id", value: id).execute()
+    }
+
+    private struct ArchiveUpdate: Encodable { let archived_at: String }
+    func archiveClub(id: UUID) async throws {
+        try await client.from("clubs")
+            .update(ArchiveUpdate(archived_at: ISO8601DateFormatter().string(from: Date())))
+            .eq("id", value: id).execute()
+    }
+
+    /// Upload a club logo to the `clubs-logos` bucket, return the public URL.
+    func uploadLogo(data: Data) async -> String? {
+        guard let uid = await currentUserID() else { return nil }
+        let rand = UUID().uuidString.prefix(6)
+        let stamp = Int(Date().timeIntervalSince1970 * 1000)
+        let path = "\(uid.uuidString.lowercased())/\(stamp)-\(rand).jpg"
+        do {
+            _ = try await client.storage.from("clubs-logos")
+                .upload(path, data: data, options: FileOptions(cacheControl: "31536000", contentType: "image/jpeg", upsert: false))
+            return try? client.storage.from("clubs-logos").getPublicURL(path: path).absoluteString
+        } catch { return nil }
     }
 }
