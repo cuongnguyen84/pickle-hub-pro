@@ -95,6 +95,7 @@ export function TeamJoinPanel({
     pending: vi ? 'Yêu cầu của bạn đang chờ đội trưởng duyệt.' : 'Your request is awaiting the captain.',
     inTeam: vi ? 'Bạn đã ở trong đội này.' : "You're on this team.",
     withdraw: vi ? 'Huỷ yêu cầu' : 'Withdraw request',
+    leaveTeam: vi ? 'Rời đội' : 'Leave team',
     onOtherTeam: (name: string) =>
       vi ? `Bạn đang ở đội "${name}" trong giải này.` : `You're already on "${name}" in this tournament.`,
     loginToJoin: vi ? 'Đăng nhập để tham gia đội.' : 'Log in to join a team.',
@@ -132,18 +133,16 @@ export function TeamJoinPanel({
             )}
             {isPending ? txt.pending : txt.inTeam}
           </div>
-          {isPending && (
-            <button
-              type="button"
-              className="tl-btn"
-              onClick={() => removeRosterMember({ memberId: membership.id, teamId })}
-              disabled={isRemovingMember}
-              style={{ alignSelf: 'flex-start', color: 'var(--tl-live)', borderColor: 'rgba(255,65,54,0.35)' }}
-            >
-              {isRemovingMember && <Loader2 className="h-4 w-4 animate-spin" />}
-              {txt.withdraw}
-            </button>
-          )}
+          <button
+            type="button"
+            className="tl-btn"
+            onClick={() => removeRosterMember({ memberId: membership.id, teamId })}
+            disabled={isRemovingMember}
+            style={{ alignSelf: 'flex-start', color: 'var(--tl-live)', borderColor: 'rgba(255,65,54,0.35)' }}
+          >
+            {isRemovingMember && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isPending ? txt.withdraw : txt.leaveTeam}
+          </button>
         </div>
       );
     }

@@ -15,6 +15,7 @@ interface TeamMatchMatchesTabProps {
     status: string;
     has_dreambreaker: boolean;
     has_third_place_match?: boolean;
+    total_score_mode?: boolean;
   };
   isOwner: boolean;
   userTeam: TeamMatchTeam | null;
@@ -319,6 +320,7 @@ export function TeamMatchMatchesTab({
             userTeamId={userTeam?.id}
             isOwner={isOwner}
             canEditScores={userRole.canEditScores}
+            isTotalScore={tournament.total_score_mode}
             onMatchClick={onMatchClick}
             onLineupClick={(match, teamId) => onLineupClick(match, teamId)}
             onStartRound={onStartRound}
@@ -346,6 +348,7 @@ export function TeamMatchMatchesTab({
             userTeamId={userTeam?.id}
             isOwner={isOwner}
             canEditScores={userRole.canEditScores}
+            isTotalScore={tournament.total_score_mode}
             onMatchClick={onMatchClick}
             onLineupClick={(match, teamId) => onLineupClick(match, teamId)}
             onStartRound={onStartRound}

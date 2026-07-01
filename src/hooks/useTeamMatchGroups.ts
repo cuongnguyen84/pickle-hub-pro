@@ -12,18 +12,7 @@ export interface TeamMatchGroup {
   created_at: string;
 }
 
-// Roster player for auto-lineup.
-interface RosterPlayer { id: string; gender: 'male' | 'female' }
-
-// Gender make-up per game type (mirrors LineupSelectionSheet).
-const GAME_GENDER_REQ: Record<string, { male: number; female: number }> = {
-  WD: { male: 0, female: 2 },
-  MD: { male: 2, female: 0 },
-  MX: { male: 1, female: 1 },
-  WS: { male: 0, female: 1 },
-  MS: { male: 1, female: 0 },
-};
-
+// Fisher-Yates — used to randomize game order per match when requested.
 function shuffleArr<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -31,22 +20,6 @@ function shuffleArr<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
-
-// Auto-pick roster member ids for a game by gender, filling from the rest if a
-// team is short of a gender. Dreambreaker = any 4 players.
-function autoLineup(roster: RosterPlayer[], gameType: string, isDreambreaker: boolean): string[] {
-  if (isDreambreaker) return roster.slice(0, 4).map((r) => r.id);
-  const req = GAME_GENDER_REQ[gameType] ?? { male: 1, female: 1 };
-  const males = roster.filter((r) => r.gender === 'male');
-  const females = roster.filter((r) => r.gender === 'female');
-  const picked = [...males.slice(0, req.male), ...females.slice(0, req.female)];
-  const pickedIds = new Set(picked.map((r) => r.id));
-  for (const r of roster) {
-    if (picked.length >= req.male + req.female) break;
-    if (!pickedIds.has(r.id)) { picked.push(r); pickedIds.add(r.id); }
-  }
-  return picked.map((r) => r.id);
 }
 
 // Hook for fetching groups of a tournament
@@ -119,20 +92,6 @@ export function useTeamMatchGroupManagement() {
       );
       if (assignError) throw assignError;
 
-      // 2b. Load rosters (for auto-lineup) keyed by team.
-      const allTeamIds = distribution.flat().map((t) => t.id);
-      const { data: rosterRows, error: rosterError } = await supabase
-        .from('team_match_roster')
-        .select('id, team_id, gender')
-        .in('team_id', allTeamIds);
-      if (rosterError) throw rosterError;
-      const teamRosters = new Map<string, RosterPlayer[]>();
-      (rosterRows || []).forEach((r) => {
-        const list = teamRosters.get(r.team_id) ?? [];
-        list.push({ id: r.id, gender: r.gender as 'male' | 'female' });
-        teamRosters.set(r.team_id, list);
-      });
-
       // 3. Update tournament with group_count
       const { error: tournamentError } = await supabase
         .from('team_match_tournaments')
@@ -178,9 +137,10 @@ export function useTeamMatchGroupManagement() {
             bracket_position: null,
             next_match_id: null,
             next_match_slot: null,
-            // Auto-filled lineups below → mark as submitted so matches are ready.
-            lineup_a_submitted: true,
-            lineup_b_submitted: true,
+            // Lineups below are only a gender-based DEFAULT (so names show) —
+            // NOT submitted, so each captain still chooses/confirms their lineup.
+            lineup_a_submitted: false,
+            lineup_b_submitted: false,
             display_order: globalDisplayOrder++,
           });
         }
@@ -194,16 +154,14 @@ export function useTeamMatchGroupManagement() {
 
       if (matchError) throw matchError;
 
-      // 5. Create games for each match based on templates. Game order is
-      //    randomized per match when requested; each game's lineup is
-      //    auto-filled from the two teams' rosters by gender.
+      // 5. Create games for each match from templates (game order randomized
+      //    per match when requested). Lineups start EMPTY — each captain
+      //    chooses their own lineup.
       if (insertedMatches && gameTemplates.length > 0) {
         const isEvenGames = gameTemplates.length % 2 === 0;
         const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
 
         const games = insertedMatches.flatMap(match => {
-          const rosterA = teamRosters.get(match.team_a_id) ?? [];
-          const rosterB = teamRosters.get(match.team_b_id) ?? [];
           const ordered = randomizeGameOrder ? shuffleArr(gameTemplates) : gameTemplates;
 
           const regularGames = ordered.map((template, index) => ({
@@ -216,8 +174,6 @@ export function useTeamMatchGroupManagement() {
             score_a: 0,
             score_b: 0,
             status: 'pending',
-            lineup_team_a: autoLineup(rosterA, template.game_type, false),
-            lineup_team_b: autoLineup(rosterB, template.game_type, false),
           }));
 
           // Add dreambreaker as the last game
@@ -232,8 +188,6 @@ export function useTeamMatchGroupManagement() {
               score_a: 0,
               score_b: 0,
               status: 'pending',
-              lineup_team_a: autoLineup(rosterA, 'MS', true),
-              lineup_team_b: autoLineup(rosterB, 'MS', true),
             });
           }
 
