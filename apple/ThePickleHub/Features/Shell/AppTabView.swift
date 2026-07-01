@@ -57,18 +57,15 @@ struct AppTabView: View {
                     }
                 }
                 .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Menu {
-                            Button { homePath.append(HomeRoute.tournaments) } label: {
-                                Label("Giải đấu", systemImage: "trophy")
-                            }
-                            Button { homePath.append(HomeRoute.rankings) } label: {
-                                Label("Bảng xếp hạng", systemImage: "chart.bar")
-                            }
-                        } label: {
-                            Image(systemName: "line.3.horizontal")
-                                .foregroundStyle(TLColor.fg)
+                    ToolbarItemGroup(placement: .topBarLeading) {
+                        Button { homePath.append(HomeRoute.tournaments) } label: {
+                            Image(systemName: "trophy").foregroundStyle(TLColor.fg)
                         }
+                        .accessibilityLabel("Giải đấu")
+                        Button { homePath.append(HomeRoute.rankings) } label: {
+                            Image(systemName: "chart.bar").foregroundStyle(TLColor.fg)
+                        }
+                        .accessibilityLabel("Bảng xếp hạng")
                     }
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         Button { homePath.append(HomeRoute.search) } label: {
