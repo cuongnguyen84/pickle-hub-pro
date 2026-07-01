@@ -54,20 +54,24 @@ const tinyPill: React.CSSProperties = {
   border: '1px solid var(--tl-border)',
 };
 
-// Draw pacing (ms) — ~5s per pick: scan → reveal (highlighted) → fly into group.
-const FLICK_MS = 70;    // name flicker speed while scanning
-const SCAN_MS = 2000;   // scanning duration before the pick locks
-const REVEAL_MS = 1500; // hold the highlighted "Team → Group" reveal
-const FLY_MS = 950;     // team name flies into its slot
+// Draw pacing (ms) — ~4.5s per pick: scan → reveal (highlighted) → fly into group.
+const FLICK_MS = 70;
+const SCAN_MS = 2000;
+const REVEAL_MS = 1500;
+const FLY_MS = 950;
 
 type SubPhase = 'scan' | 'reveal' | 'fly';
+type Phase = 'config' | 'drawing' | 'done';
 
 interface DrawTeam {
   id: string;
   name: string;
   seed?: number;
 }
-
+interface DrawPick {
+  team: DrawTeam;
+  groupIndex: number;
+}
 interface FlyState {
   name: string;
   x: number;
@@ -77,6 +81,16 @@ interface FlyState {
   active: boolean;
 }
 
+// Fisher-Yates. Math.random is fine in the browser (not a workflow sandbox).
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 interface GroupSetupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -84,8 +98,6 @@ interface GroupSetupDialogProps {
   isCreating: boolean;
   onConfirm: (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>) => void;
 }
-
-type Phase = 'config' | 'drawing' | 'done';
 
 export function GroupSetupDialog({
   open,
@@ -100,6 +112,7 @@ export function GroupSetupDialog({
   const [subPhase, setSubPhase] = useState<SubPhase>('scan');
   const [spinName, setSpinName] = useState<string | null>(null);
   const [fly, setFly] = useState<FlyState | null>(null);
+  const [revealOrder, setRevealOrder] = useState<DrawPick[]>([]);
   const { language, t } = useI18n();
   const c = t.teamMatchComponents;
   const vi = language === 'vi';
@@ -122,13 +135,12 @@ export function GroupSetupDialog({
       : 'Need at least 6 teams to create groups (minimum 3 teams per group)',
     groupName: (i: number) => (vi ? `Bảng ${String.fromCharCode(65 + i)}` : `Group ${String.fromCharCode(65 + i)}`),
     snakeHint: vi
-      ? 'Đội được rải theo thứ tự hạt giống (snake draft) để các bảng cân sức.'
-      : 'Teams are seeded in snake-draft order so groups stay balanced.',
+      ? 'Thứ tự bốc ngẫu nhiên; đội vẫn được rải cân sức theo hạt giống (snake).'
+      : 'Random draw order; teams are still spread by seed (snake) for balance.',
     cancel: vi ? 'Hủy' : 'Cancel',
     startDraw: vi ? 'Bốc thăm chia bảng' : 'Run the draw',
     scanning: vi ? 'Đang bốc thăm…' : 'Drawing…',
     pickLabel: (n: number, total: number) => (vi ? `Lượt ${n}/${total}` : `Pick ${n}/${total}`),
-    intoGroup: vi ? 'vào' : 'into',
     skip: vi ? 'Bỏ qua hiệu ứng' : 'Skip animation',
     redraw: vi ? 'Bốc lại' : 'Redraw',
     done: vi ? 'Bốc thăm hoàn tất' : 'Draw complete',
@@ -150,34 +162,33 @@ export function GroupSetupDialog({
     return distributePlayersToGroups(teamsForDistribution, selectedGroupCount) as DrawTeam[][];
   }, [selectedGroupCount, approvedTeams]);
 
-  // Draw order = flatten the distribution round-by-round in snake direction so
-  // the reveal reads like a real seeded draw (seed 1, 2, 3, …).
-  const drawSequence = useMemo(() => {
-    if (!distribution) return [] as Array<{ team: DrawTeam; groupIndex: number }>;
-    const maxLen = Math.max(...distribution.map((g) => g.length), 0);
-    const seq: Array<{ team: DrawTeam; groupIndex: number }> = [];
-    for (let round = 0; round < maxLen; round++) {
-      const order = round % 2 === 0
-        ? distribution.map((_, gi) => gi)
-        : distribution.map((_, gi) => gi).reverse();
-      for (const gi of order) {
-        const team = distribution[gi][round];
-        if (team) seq.push({ team, groupIndex: gi });
-      }
-    }
-    return seq;
+  // Canonical picks (every team + its snake-assigned group). Reveal ORDER is
+  // shuffled at draw time so the ceremony looks random, while the actual group
+  // assignment stays seed-balanced.
+  const allPicks = useMemo(() => {
+    if (!distribution) return [] as DrawPick[];
+    const picks: DrawPick[] = [];
+    distribution.forEach((group, gi) => group.forEach((team) => picks.push({ team, groupIndex: gi })));
+    return picks;
   }, [distribution]);
 
-  const total = drawSequence.length;
-  const revealedIds = useMemo(
-    () => new Set(drawSequence.slice(0, revealed).map((d) => d.team.id)),
-    [drawSequence, revealed],
-  );
-  const currentPick = phase === 'drawing' && revealed < total ? drawSequence[revealed] : null;
+  const total = allPicks.length;
+  const currentPick = phase === 'drawing' && revealed < revealOrder.length ? revealOrder[revealed] : null;
+
+  // Teams already drawn into each group, in the order they were drawn (packed).
+  const drawnByGroup = useMemo(() => {
+    const map = new Map<number, DrawTeam[]>();
+    revealOrder.slice(0, revealed).forEach((p) => {
+      const list = map.get(p.groupIndex) ?? [];
+      list.push(p.team);
+      map.set(p.groupIndex, list);
+    });
+    return map;
+  }, [revealOrder, revealed]);
 
   const boardWrapRef = useRef<HTMLDivElement>(null);
   const lockNameRef = useRef<HTMLSpanElement>(null);
-  const slotRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  const nextSlotRefs = useRef<Map<number, HTMLLIElement>>(new Map()); // groupIndex → next empty slot
   const timers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const flick = useRef<ReturnType<typeof setInterval> | null>(null);
   const clearTimers = () => {
@@ -194,18 +205,20 @@ export function GroupSetupDialog({
     setSubPhase('scan');
     setSpinName(null);
     setFly(null);
+    setRevealOrder([]);
   }, [open, selectedGroupCount]);
 
-  // Per-pick sequence: scan (flicker names) → reveal (hold) → fly into slot.
+  // Per-pick sequence: scan (flicker) → reveal (hold, scroll target into view)
+  // → fly the name into its slot.
   useEffect(() => {
-    if (phase !== 'drawing' || total === 0) return;
-    if (revealed >= total) {
+    if (phase !== 'drawing' || revealOrder.length === 0) return;
+    if (revealed >= revealOrder.length) {
       setSubPhase('scan');
       setPhase('done');
       return;
     }
 
-    const pick = drawSequence[revealed];
+    const pick = revealOrder[revealed];
     const names = approvedTeams.map((tm) => tm.team_name);
     const rand = () => names[Math.floor(Math.random() * names.length)] ?? pick.team.name;
 
@@ -220,13 +233,15 @@ export function GroupSetupDialog({
         setSpinName(pick.team.name);
         setSubPhase('reveal');
 
+        // Bring the destination group into view (auto-scroll) so the team can
+        // fly into a visible slot even when the board overflows the screen.
+        nextSlotRefs.current.get(pick.groupIndex)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
         timers.current.push(
           setTimeout(() => {
-            // Measure the hero name (source) and the target slot (destination),
-            // then fly a clone from one to the other.
             const wrap = boardWrapRef.current?.getBoundingClientRect();
             const src = lockNameRef.current?.getBoundingClientRect();
-            const dst = slotRefs.current.get(pick.team.id)?.getBoundingClientRect();
+            const dst = nextSlotRefs.current.get(pick.groupIndex)?.getBoundingClientRect();
             if (wrap && src && dst) {
               setFly({
                 name: pick.team.name,
@@ -255,7 +270,7 @@ export function GroupSetupDialog({
     );
 
     return clearTimers;
-  }, [phase, revealed, total, drawSequence, approvedTeams]);
+  }, [phase, revealed, revealOrder, approvedTeams]);
 
   const startDraw = () => {
     if (!selectedGroupCount || total === 0) return;
@@ -264,6 +279,7 @@ export function GroupSetupDialog({
     setSpinName(null);
     setSubPhase('scan');
     setRevealed(0);
+    setRevealOrder(shuffle(allPicks));
     setPhase('drawing');
   };
 
@@ -272,7 +288,7 @@ export function GroupSetupDialog({
     setFly(null);
     setSpinName(null);
     setSubPhase('scan');
-    setRevealed(total);
+    setRevealed(revealOrder.length);
     setPhase('done');
   };
 
@@ -300,9 +316,7 @@ export function GroupSetupDialog({
 
         <DialogHeader>
           <DialogTitle style={sectionTitle}>{txt.title}</DialogTitle>
-          <DialogDescription
-            style={{ marginTop: 4, fontFamily: 'inherit', fontSize: 13, color: 'var(--tl-fg-3)' }}
-          >
+          <DialogDescription style={{ marginTop: 4, fontFamily: 'inherit', fontSize: 13, color: 'var(--tl-fg-3)' }}>
             {txt.desc}
           </DialogDescription>
         </DialogHeader>
@@ -368,13 +382,16 @@ export function GroupSetupDialog({
             </div>
           )}
 
-          {/* ── Draw stage (spotlight + board share a positioned wrapper for the fly) ── */}
+          {/* ── Draw stage ── */}
           {phase !== 'config' && (
             <div ref={boardWrapRef} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Hero spotlight */}
+              {/* Sticky hero so the source stays visible while the board scrolls */}
               <div
                 style={{
                   ...surfaceCard,
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 6,
                   padding: 18,
                   minHeight: 96,
                   display: 'flex',
@@ -384,7 +401,7 @@ export function GroupSetupDialog({
                   background: phase === 'done'
                     ? 'var(--tl-green-glow)'
                     : revealing
-                      ? 'linear-gradient(180deg, rgba(34,197,94,0.10), var(--tl-bg-elev))'
+                      ? 'linear-gradient(180deg, rgba(34,197,94,0.12), var(--tl-bg-elev))'
                       : 'var(--tl-bg-elev)',
                   border: `1px solid ${phase === 'done' || revealing ? 'var(--tl-green-dim)' : 'var(--tl-border)'}`,
                   animation: subPhase === 'reveal' && currentPick ? 'tmSpotlight 0.8s ease' : undefined,
@@ -394,69 +411,27 @@ export function GroupSetupDialog({
                 {phase === 'done' ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Sparkles className="h-6 w-6" style={{ color: 'var(--tl-green)' }} />
-                    <span style={{ fontFamily: 'Instrument Serif, serif', fontStyle: 'italic', fontSize: 24, color: 'var(--tl-fg)' }}>
-                      {txt.done}
-                    </span>
+                    <span style={{ fontFamily: 'Instrument Serif, serif', fontStyle: 'italic', fontSize: 24, color: 'var(--tl-fg)' }}>{txt.done}</span>
                   </div>
                 ) : currentPick && !revealing ? (
-                  // Scanning — flicker through team names
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                     <div style={{ ...fieldLabel, color: 'var(--tl-fg-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Shuffle className="h-3.5 w-3.5" />
                       {txt.scanning} · {txt.pickLabel(revealed + 1, total)}
                     </div>
-                    <div
-                      style={{
-                        fontFamily: 'Instrument Serif, serif',
-                        fontStyle: 'italic',
-                        fontSize: 22,
-                        color: 'var(--tl-fg-2)',
-                        maxWidth: '100%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        animation: 'tmScanBlink 0.5s ease-in-out infinite',
-                      }}
-                    >
+                    <div style={{ fontFamily: 'Instrument Serif, serif', fontStyle: 'italic', fontSize: 22, color: 'var(--tl-fg-2)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', animation: 'tmScanBlink 0.5s ease-in-out infinite' }}>
                       {spinName ?? '…'}
                     </div>
                   </div>
                 ) : currentPick ? (
-                  // Locked reveal — big highlighted "Team → Group"
                   <div key={currentPick.team.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, animation: 'tmRevealPop 0.4s ease' }}>
                     <div style={{ ...fieldLabel, color: 'var(--tl-green)' }}>{txt.pickLabel(revealed + 1, total)}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-                      <span
-                        ref={lockNameRef}
-                        style={{
-                          fontFamily: 'Instrument Serif, serif',
-                          fontStyle: 'italic',
-                          fontSize: 28,
-                          lineHeight: 1.1,
-                          color: 'var(--tl-fg)',
-                          maxWidth: 340,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <span ref={lockNameRef} style={{ fontFamily: 'Instrument Serif, serif', fontStyle: 'italic', fontSize: 28, lineHeight: 1.1, color: 'var(--tl-fg)', maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {currentPick.team.name}
                       </span>
                       <ArrowRight className="h-5 w-5" style={{ color: 'var(--tl-green)', animation: 'tmArrow 0.7s ease-in-out infinite' }} />
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '6px 14px',
-                          borderRadius: 999,
-                          background: 'var(--tl-green)',
-                          color: '#0a0a0a',
-                          fontFamily: 'Geist Mono, ui-monospace, monospace',
-                          fontSize: 15,
-                          fontWeight: 700,
-                          letterSpacing: '0.04em',
-                        }}
-                      >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 14px', borderRadius: 999, background: 'var(--tl-green)', color: '#0a0a0a', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em' }}>
                         {txt.groupName(currentPick.groupIndex)}
                       </span>
                     </div>
@@ -464,11 +439,12 @@ export function GroupSetupDialog({
                 ) : null}
               </div>
 
-              {/* Group board */}
+              {/* Group board — each group fills top-down as teams are drawn */}
               {showBoard && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
                   {distribution!.map((group, gi) => {
-                    const filled = group.filter((tm) => revealedIds.has(tm.id)).length;
+                    const drawn = drawnByGroup.get(gi) ?? [];
+                    const emptyCount = group.length - drawn.length;
                     const isTarget = revealing && currentPick?.groupIndex === gi;
                     return (
                       <div
@@ -485,53 +461,55 @@ export function GroupSetupDialog({
                           <span style={{ ...tinyPill, background: isTarget ? 'var(--tl-green-glow)' : 'var(--tl-bg-elev)', color: isTarget ? 'var(--tl-green)' : 'var(--tl-fg-2)' }}>
                             {txt.groupName(gi)}
                           </span>
-                          <span style={{ fontSize: 12, color: 'var(--tl-fg-3)' }}>{filled}/{group.length}</span>
+                          <span style={{ fontSize: 12, color: 'var(--tl-fg-3)' }}>{drawn.length}/{group.length}</span>
                         </div>
                         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {group.map((team, slot) => {
-                            const shown = revealedIds.has(team.id);
-                            return (
-                              <li
-                                key={team.id}
-                                ref={(el) => { if (el) slotRefs.current.set(team.id, el); }}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 8,
-                                  fontSize: 13,
-                                  minHeight: 32,
-                                  padding: '5px 8px',
-                                  borderRadius: 'var(--tl-radius)',
-                                  border: shown ? '1px solid var(--tl-border)' : '1px dashed var(--tl-border-2)',
-                                  background: shown ? 'var(--tl-surface)' : 'transparent',
-                                  color: shown ? 'var(--tl-fg)' : 'var(--tl-fg-3)',
-                                  animation: shown ? 'tmDrawIn 0.4s ease' : undefined,
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    width: 22,
-                                    height: 22,
-                                    flexShrink: 0,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: 999,
-                                    background: shown ? 'var(--tl-green-glow)' : 'var(--tl-surface)',
-                                    color: shown ? 'var(--tl-green)' : 'var(--tl-fg-3)',
-                                    fontFamily: 'Geist Mono, ui-monospace, monospace',
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {slot + 1}
-                                </span>
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {shown ? team.name : txt.emptySlot}
-                                </span>
-                              </li>
-                            );
-                          })}
+                          {drawn.map((team, idx) => (
+                            <li
+                              key={team.id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                fontSize: 13,
+                                minHeight: 32,
+                                padding: '5px 8px',
+                                borderRadius: 'var(--tl-radius)',
+                                border: '1px solid var(--tl-border)',
+                                background: 'var(--tl-surface)',
+                                color: 'var(--tl-fg)',
+                                animation: 'tmDrawIn 0.4s ease',
+                              }}
+                            >
+                              <span style={{ width: 22, height: 22, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 999, background: 'var(--tl-green-glow)', color: 'var(--tl-green)', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, fontWeight: 600 }}>
+                                {idx + 1}
+                              </span>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</span>
+                            </li>
+                          ))}
+                          {Array.from({ length: emptyCount }).map((_, i) => (
+                            <li
+                              key={`empty-${i}`}
+                              ref={(el) => { if (el && i === 0) nextSlotRefs.current.set(gi, el); }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                fontSize: 13,
+                                minHeight: 32,
+                                padding: '5px 8px',
+                                borderRadius: 'var(--tl-radius)',
+                                border: `1px dashed ${isTarget && i === 0 ? 'var(--tl-green)' : 'var(--tl-border-2)'}`,
+                                background: 'transparent',
+                                color: 'var(--tl-fg-3)',
+                              }}
+                            >
+                              <span style={{ width: 22, height: 22, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 999, background: 'var(--tl-surface)', color: 'var(--tl-fg-3)', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, fontWeight: 600 }}>
+                                {drawn.length + i + 1}
+                              </span>
+                              <span>{txt.emptySlot}</span>
+                            </li>
+                          ))}
                         </ul>
                       </div>
                     );
@@ -544,7 +522,7 @@ export function GroupSetupDialog({
                 <span>{txt.snakeHint}</span>
               </p>
 
-              {/* Flying team chip (source hero → destination slot) */}
+              {/* Flying team chip (hero → destination slot) */}
               {fly && (
                 <div
                   aria-hidden
@@ -552,7 +530,7 @@ export function GroupSetupDialog({
                     position: 'absolute',
                     left: fly.x,
                     top: fly.y,
-                    zIndex: 5,
+                    zIndex: 7,
                     pointerEvents: 'none',
                     transform: fly.active ? `translate(${fly.tx - fly.x}px, ${fly.ty - fly.y}px) scale(0.62)` : 'none',
                     opacity: fly.active ? 0.96 : 1,
