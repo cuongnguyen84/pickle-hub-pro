@@ -18,6 +18,7 @@ enum WebRoutes {
     static func tournament(slug: String) -> URL { base.appending(path: "vi/tournament/\(slug)") }
     static func live(id: UUID) -> URL { base.appending(path: "live/\(id.uuidString.lowercased())") }
     static func social(slug: String) -> URL { base.appending(path: "vi/social/\(slug)") }
+    static let dupr = base.appending(path: "dupr")
 
     // Bracket Lab (Tools) — created/scored on the web.
     static let toolsQuickTables = base.appending(path: "tools/quick-tables")

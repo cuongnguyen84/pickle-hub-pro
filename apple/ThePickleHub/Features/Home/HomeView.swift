@@ -17,7 +17,7 @@ struct HomeView: View {
 
                 VStack(alignment: .leading, spacing: 34) {
                     VStack(alignment: .leading, spacing: 18) {
-                        masthead
+                        partnerCard
                         liveBar
                     }
 
@@ -59,44 +59,58 @@ struct HomeView: View {
         .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
     }
 
-    // MARK: Masthead
+    // MARK: Partnership
 
-    /// Dated masthead — replaces the partner banner. VI weekday + date, the lime
-    /// wordmark, and a "Log trận" quick action in the right slot (profile lives
-    /// in the toolbar, so we don't duplicate it here).
-    private var masthead: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(mastheadDate)
-                    .font(TLType.eyebrowMono(9)).tracking(1.5)
-                    .foregroundStyle(TLColor.fg3)
-                HStack(spacing: 7) {
-                    Circle().fill(TLColor.accent).frame(width: 7, height: 7)
-                    Text("ThePickleHub")
-                        .font(TLFont.sans(17, .bold))
-                        .foregroundStyle(TLColor.fg)
-                }
-            }
-            Spacer()
-            NavigationLink { MatchLogView() } label: {
-                Image(systemName: "square.and.pencil")
-                    .font(.system(size: 14, weight: .semibold))
+    /// THEPICKLEHUB × DUPR official-partner banner with the "Log trận" +
+    /// "Hướng dẫn" quick actions (restored — Cuong keeps this as the Home lead).
+    private var partnerCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("OFFICIAL PARTNERSHIP", systemImage: "checkmark.seal.fill")
+                    .font(TLFont.mono(9, .semibold)).tracking(0.6)
                     .foregroundStyle(TLColor.accentText)
-                    .frame(width: 34, height: 34)
-                    .background(TLColor.surface2, in: Circle())
-                    .overlay(Circle().strokeBorder(TLColor.border, lineWidth: 1))
+                Spacer()
+                Text("VERIFIED").font(TLFont.mono(9, .semibold)).foregroundStyle(TLColor.fg3)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Log trận")
+            HStack(spacing: 8) {
+                Text("THEPICKLEHUB").font(TLFont.sans(17, .bold)).foregroundStyle(TLColor.fg)
+                Text("×").font(TLFont.sans(15)).foregroundStyle(TLColor.fg3)
+                Text("DUPR").font(TLFont.sans(17, .bold)).foregroundStyle(TLColor.fg)
+                Text("Official Partner").font(TLFont.serif(17)).foregroundStyle(TLColor.fg3)
+            }
+            Text("GLOBAL STANDARD · 2018 → 2026")
+                .font(TLFont.mono(9)).tracking(0.6).foregroundStyle(TLColor.fg4)
+
+            HStack(spacing: 8) {
+                NavigationLink {
+                    MatchLogView()
+                } label: {
+                    partnerButton("Log trận", systemImage: "plus", filled: true)
+                }
+                .buttonStyle(.plain)
+                NavigationLink {
+                    BlogListView()
+                } label: {
+                    partnerButton("Hướng dẫn", systemImage: "arrow.right", filled: false)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 4)
         }
-        .accessibilityElement(children: .contain)
+        .feedCard()
     }
 
-    private var mastheadDate: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "vi_VN")
-        f.dateFormat = "EEEE '·' dd.MM.yyyy"
-        return f.string(from: Date()).uppercased()
+    private func partnerButton(_ title: String, systemImage: String, filled: Bool) -> some View {
+        HStack(spacing: 5) {
+            if !filled { Text(title) }
+            Image(systemName: systemImage).font(.system(size: 11, weight: .bold))
+            if filled { Text(title) }
+        }
+        .font(TLFont.mono(11, .semibold))
+        .foregroundStyle(filled ? TLColor.accentInk : TLColor.fg2)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(filled ? TLColor.accent : .clear, in: Capsule())
+        .overlay(Capsule().strokeBorder(filled ? .clear : TLColor.border2, lineWidth: 1))
     }
 
     /// Always-present live strip. Shows the current live broadcast (tap → player)
@@ -246,4 +260,5 @@ enum HomeRoute: Hashable {
     case rankings
     case notifications
     case search
+    case profile
 }

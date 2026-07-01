@@ -40,6 +40,38 @@ struct ProfileRepository {
         return profile
     }
 
+    // MARK: DUPR header chip
+
+    /// The signed-in user's current DUPR rating (doubles preferred, like the
+    /// rating card) plus the most recent change from `dupr_rating_history`.
+    /// Returns nil when the user has no DUPR rating (→ "Kết nối" state).
+    struct DuprChip: Equatable { let rating: Double; let delta: Double? }
+
+    func duprChip() async -> DuprChip? {
+        guard let userID = try? await client.auth.session.user.id else { return nil }
+        struct P: Decodable { let dupr_doubles: Double?; let dupr_singles: Double? }
+        guard let prof: P = try? await client.from("profiles")
+            .select("dupr_doubles,dupr_singles").eq("id", value: userID).single().execute().value
+        else { return nil }
+        let preferDoubles = prof.dupr_doubles != nil
+        guard let current = prof.dupr_doubles ?? prof.dupr_singles else { return nil }
+
+        // Delta = change at the latest snapshot (last two history rows, same rating type).
+        struct H: Decodable { let dupr_doubles: Double?; let dupr_singles: Double? }
+        let rows: [H] = (try? await client.from("dupr_rating_history")
+            .select("dupr_doubles,dupr_singles,recorded_at")
+            .eq("profile_id", value: userID)
+            .order("recorded_at", ascending: false)
+            .limit(2).execute().value) ?? []
+        var delta: Double?
+        if rows.count >= 2 {
+            let latest = preferDoubles ? rows[0].dupr_doubles : rows[0].dupr_singles
+            let prev = preferDoubles ? rows[1].dupr_doubles : rows[1].dupr_singles
+            if let l = latest, let p = prev, abs(l - p) > 0.0001 { delta = l - p }
+        }
+        return DuprChip(rating: current, delta: delta)
+    }
+
     // MARK: Account editing (port of Account.tsx + useUserProfile)
 
     private struct DisplayNameUpdate: Encodable { let display_name: String }

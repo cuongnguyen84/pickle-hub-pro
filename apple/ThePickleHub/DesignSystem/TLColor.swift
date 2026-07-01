@@ -36,6 +36,11 @@ enum TLColor {
     static let live      = dyn(dark: 0xFF5147, light: 0xE5352B)
     static let gold      = dyn(dark: 0xEAB64B, light: 0xA97B12)
 
+    // DUPR brand tint for the Home header rating chip — from the design spec
+    // `hsl(151 60% 30% / .1)` fill + `hsl(151 55% 32% / .55)` border (green, both modes).
+    static let duprTint   = Color(hex: 0x1F7A4E, alpha: 0.10)
+    static let duprBorder = Color(hex: 0x257E53, alpha: 0.55)
+
     // UIKit chrome handles (nav/tab bars) — dynamic so they re-resolve on a
     // light↔dark switch. Same hexes as the tokens above.
     static let uiBg     = uiDyn(dark: 0x08090A, light: 0xFBFAF7)
