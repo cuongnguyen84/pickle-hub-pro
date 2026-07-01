@@ -178,9 +178,10 @@ export function useTeamMatchGroupManagement() {
             bracket_position: null,
             next_match_id: null,
             next_match_slot: null,
-            // Auto-filled lineups below → mark as submitted so matches are ready.
-            lineup_a_submitted: true,
-            lineup_b_submitted: true,
+            // Lineups below are only a gender-based DEFAULT (so names show) —
+            // NOT submitted, so each captain still chooses/confirms their lineup.
+            lineup_a_submitted: false,
+            lineup_b_submitted: false,
             display_order: globalDisplayOrder++,
           });
         }
