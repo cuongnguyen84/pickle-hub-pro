@@ -133,7 +133,9 @@ export function TeamMatchOverviewTab({
           tournamentId={tournament.id}
           hasMatches={hasMatches}
           onTeamClick={onTeamClick}
-          onGenerateMatches={onGenerateMatches}
+          // Group/single-elim schedule from Chia bảng / bracket, not a flat
+          // all-teams RR — only offer the flat generator for plain round robin.
+          onGenerateMatches={isGroupPlayoffFormat || isSingleElimination ? undefined : onGenerateMatches}
         />
       )}
 

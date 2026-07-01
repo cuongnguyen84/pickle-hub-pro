@@ -96,7 +96,7 @@ interface GroupSetupDialogProps {
   onOpenChange: (open: boolean) => void;
   teams: TeamMatchTeam[];
   isCreating: boolean;
-  onConfirm: (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>) => void;
+  onConfirm: (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>, randomizeGameOrder: boolean) => void;
 }
 
 export function GroupSetupDialog({
@@ -113,6 +113,7 @@ export function GroupSetupDialog({
   const [spinName, setSpinName] = useState<string | null>(null);
   const [fly, setFly] = useState<FlyState | null>(null);
   const [revealOrder, setRevealOrder] = useState<DrawPick[]>([]);
+  const [randomizeGameOrder, setRandomizeGameOrder] = useState(false);
   const { language, t } = useI18n();
   const c = t.teamMatchComponents;
   const vi = language === 'vi';
@@ -147,6 +148,10 @@ export function GroupSetupDialog({
     confirm: vi ? 'Xác nhận chia bảng' : 'Confirm groups',
     processing: vi ? 'Đang tạo…' : 'Creating…',
     emptySlot: vi ? 'Chờ bốc…' : 'Awaiting…',
+    randomOrderLabel: vi ? 'Thứ tự ra sân ngẫu nhiên' : 'Randomize game order',
+    randomOrderHint: vi
+      ? 'Mỗi trận sẽ có thứ tự các game (đôi nam / đôi nữ / đôi nam nữ) khác nhau, thay vì cố định theo lúc setup.'
+      : 'Each match plays its games in a different order instead of the fixed setup order.',
   };
 
   const groupSuggestions = useMemo(() => suggestGroupConfigs(teamCount), [teamCount]);
@@ -297,6 +302,7 @@ export function GroupSetupDialog({
     onConfirm(
       selectedGroupCount,
       distribution.map((g) => g.map((tm) => ({ id: tm.id, name: tm.name }))),
+      randomizeGameOrder,
     );
   };
 
@@ -379,6 +385,54 @@ export function GroupSetupDialog({
                   <p style={{ margin: 0 }}>{txt.notEnoughTeams}</p>
                 </div>
               )}
+
+              {/* Random game-order toggle */}
+              <button
+                type="button"
+                onClick={() => setRandomizeGameOrder((v) => !v)}
+                style={{
+                  ...surfaceCard,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: 14,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  border: `1px solid ${randomizeGameOrder ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 500, color: 'var(--tl-fg)', fontSize: 14 }}>{txt.randomOrderLabel}</div>
+                  <div style={{ fontSize: 12, color: 'var(--tl-fg-3)', marginTop: 3, lineHeight: 1.5 }}>{txt.randomOrderHint}</div>
+                </div>
+                <span
+                  aria-hidden
+                  style={{
+                    flexShrink: 0,
+                    width: 40,
+                    height: 24,
+                    borderRadius: 999,
+                    background: randomizeGameOrder ? 'var(--tl-green)' : 'var(--tl-surface)',
+                    border: `1px solid ${randomizeGameOrder ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                    position: 'relative',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 2,
+                      left: randomizeGameOrder ? 18 : 2,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 999,
+                      background: randomizeGameOrder ? '#0a0a0a' : 'var(--tl-fg-3)',
+                      transition: 'left 0.15s',
+                    }}
+                  />
+                </span>
+              </button>
             </div>
           )}
 

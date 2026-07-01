@@ -411,7 +411,11 @@ export default function TeamMatchView() {
     }
   };
 
-  const handleCreateGroups = async (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>) => {
+  const handleCreateGroups = async (
+    groupCount: number,
+    distribution: Array<Array<{ id: string; name: string }>>,
+    randomizeGameOrder?: boolean,
+  ) => {
     if (!tournament) return;
 
     try {
@@ -436,6 +440,7 @@ export default function TeamMatchView() {
         distribution,
         gameTemplates,
         hasDreambreaker: tournament.has_dreambreaker,
+        randomizeGameOrder,
       });
 
       setShowGroupSetupDialog(false);
