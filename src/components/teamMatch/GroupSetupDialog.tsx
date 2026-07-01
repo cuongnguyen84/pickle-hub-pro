@@ -54,8 +54,10 @@ const tinyPill: React.CSSProperties = {
   border: '1px solid var(--tl-border)',
 };
 
-// Reveal cadence per pick (ms). Kept snappy so a 24-team draw stays ~11s.
-const PICK_MS = 450;
+// Draw pacing (ms). Each pick: spin through team names, lock, then drop.
+const FLICK_MS = 75;   // how fast names flicker while scanning
+const SPIN_MS = 900;   // scan duration before locking the pick
+const SETTLE_MS = 650; // pause on the locked pick before it drops into the group
 
 interface DrawTeam {
   id: string;
@@ -83,6 +85,8 @@ export function GroupSetupDialog({
   const [selectedGroupCount, setSelectedGroupCount] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>('config');
   const [revealed, setRevealed] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const [spinName, setSpinName] = useState<string | null>(null);
   const { language, t } = useI18n();
   const c = t.teamMatchComponents;
   const vi = language === 'vi';
@@ -165,35 +169,61 @@ export function GroupSetupDialog({
   useEffect(() => {
     setPhase('config');
     setRevealed(0);
+    setSpinning(false);
+    setSpinName(null);
   }, [open, selectedGroupCount]);
 
-  // Drive the reveal timer while drawing.
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Per-pick draw: scan through team names (flicker), lock the real pick, then
+  // drop it into its group. Incrementing `revealed` re-runs this for the next
+  // pick; when all picks are placed we advance to 'done'.
+  const flickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const spinRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const placeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearTimers = () => {
+    if (flickRef.current) clearInterval(flickRef.current);
+    if (spinRef.current) clearTimeout(spinRef.current);
+    if (placeRef.current) clearTimeout(placeRef.current);
+  };
+
   useEffect(() => {
-    if (phase !== 'drawing') return;
-    timerRef.current = setInterval(() => {
-      setRevealed((r) => {
-        if (r + 1 >= total) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          setPhase('done');
-          return total;
-        }
-        return r + 1;
-      });
-    }, PICK_MS);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [phase, total]);
+    if (phase !== 'drawing' || total === 0) return;
+    if (revealed >= total) {
+      setSpinning(false);
+      setPhase('done');
+      return;
+    }
+
+    const pick = drawSequence[revealed];
+    const names = approvedTeams.map((tm) => tm.team_name);
+
+    setSpinning(true);
+    flickRef.current = setInterval(() => {
+      setSpinName(names[Math.floor(Math.random() * names.length)] ?? pick.team.name);
+    }, FLICK_MS);
+
+    spinRef.current = setTimeout(() => {
+      if (flickRef.current) clearInterval(flickRef.current);
+      setSpinning(false);
+      setSpinName(pick.team.name); // lock onto the real pick
+      placeRef.current = setTimeout(() => setRevealed((r) => r + 1), SETTLE_MS);
+    }, SPIN_MS);
+
+    return clearTimers;
+  }, [phase, revealed, total, drawSequence, approvedTeams]);
 
   const startDraw = () => {
     if (!selectedGroupCount || total === 0) return;
+    clearTimers();
+    setSpinning(false);
+    setSpinName(null);
     setRevealed(0);
     setPhase('drawing');
   };
 
   const skipAnimation = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    clearTimers();
+    setSpinning(false);
+    setSpinName(null);
     setRevealed(total);
     setPhase('done');
   };
@@ -355,8 +385,8 @@ export function GroupSetupDialog({
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 {currentPick ? (
-                  <div key={currentPick.team.id} style={{ animation: 'tmDrawIn 0.35s ease' }}>
-                    <div style={{ fontSize: 12, color: 'var(--tl-fg-3)', ...fieldLabel }}>
+                  <div>
+                    <div style={{ ...fieldLabel, color: 'var(--tl-fg-3)' }}>
                       {txt.drawing} {txt.pickCounter(revealed + 1, total)}
                     </div>
                     <div
@@ -370,8 +400,16 @@ export function GroupSetupDialog({
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {currentPick.team.name}
-                      <span style={{ color: 'var(--tl-green)' }}> → {txt.groupName(currentPick.groupIndex)}</span>
+                      {spinning ? (
+                        <span style={{ color: 'var(--tl-fg-2)', opacity: 0.9 }}>
+                          {spinName ?? currentPick.team.name}
+                        </span>
+                      ) : (
+                        <span key={currentPick.team.id} style={{ display: 'inline-block', animation: 'tmDrawIn 0.3s ease' }}>
+                          {currentPick.team.name}
+                          <span style={{ color: 'var(--tl-green)' }}> → {txt.groupName(currentPick.groupIndex)}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -405,7 +443,7 @@ export function GroupSetupDialog({
               >
                 {distribution!.map((group, gi) => {
                   const filled = group.filter((tm) => revealedIds.has(tm.id)).length;
-                  const isTarget = currentPick?.groupIndex === gi;
+                  const isTarget = !spinning && currentPick?.groupIndex === gi;
                   return (
                     <div
                       key={gi}
