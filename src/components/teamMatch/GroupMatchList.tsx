@@ -10,6 +10,8 @@ interface GroupMatchListProps {
   userTeamId?: string;
   isOwner?: boolean;
   canEditScores?: boolean;
+  /** Total-score format → show cumulative points (not games won) as the score. */
+  isTotalScore?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number, groupId?: string) => void;
@@ -66,6 +68,7 @@ export function GroupMatchList({
   userTeamId,
   isOwner,
   canEditScores,
+  isTotalScore,
   onMatchClick,
   onLineupClick,
   onStartRound,
@@ -161,6 +164,7 @@ export function GroupMatchList({
             userTeamId={userTeamId}
             isOwner={isOwner}
             canEditScores={canEditScores}
+            isTotalScore={isTotalScore}
             statusConfig={STATUS_CONFIG}
             c={c}
             language={language}
@@ -183,6 +187,7 @@ function GroupMatches({
   userTeamId,
   isOwner,
   canEditScores,
+  isTotalScore,
   statusConfig,
   c,
   language,
@@ -197,7 +202,9 @@ function GroupMatches({
   userTeamId?: string;
   isOwner?: boolean;
   canEditScores?: boolean;
+  isTotalScore?: boolean;
   statusConfig: Record<StatusKind, StatusEntry>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   c: any;
   language: 'vi' | 'en';
   lineupBtnLabel: string;
@@ -242,10 +249,10 @@ function GroupMatches({
         const missingLineups: string[] = [];
         roundMatches.forEach(match => {
           if (!match.lineup_a_submitted && match.team_a) {
-            missingLineups.push((match.team_a as any)?.team_name || 'Team A');
+            missingLineups.push(match.team_a?.team_name || 'Team A');
           }
           if (!match.lineup_b_submitted && match.team_b) {
-            missingLineups.push((match.team_b as any)?.team_name || 'Team B');
+            missingLineups.push(match.team_b?.team_name || 'Team B');
           }
         });
 
@@ -368,7 +375,7 @@ function GroupMatches({
                               color: teamAColor,
                             }}
                           >
-                            <span>{(match.team_a as any)?.team_name || 'TBD'}</span>
+                            <span>{match.team_a?.team_name || 'TBD'}</span>
                             {match.lineup_a_submitted && (
                               <Check className="h-3 w-3 inline-block ml-1" style={{ color: 'var(--tl-green)' }} />
                             )}
@@ -398,7 +405,7 @@ function GroupMatches({
                                 color: winnerA ? 'var(--tl-green)' : 'var(--tl-fg)',
                               }}
                             >
-                              {match.games_won_a}
+                              {isTotalScore ? match.total_points_a : match.games_won_a}
                             </span>
                             <span style={{ color: 'var(--tl-fg-4)', fontFamily: 'Geist Mono, ui-monospace, monospace' }}>:</span>
                             <span
@@ -410,7 +417,7 @@ function GroupMatches({
                                 color: winnerB ? 'var(--tl-green)' : 'var(--tl-fg)',
                               }}
                             >
-                              {match.games_won_b}
+                              {isTotalScore ? match.total_points_b : match.games_won_b}
                             </span>
                           </div>
 
@@ -432,7 +439,7 @@ function GroupMatches({
                             {match.lineup_b_submitted && (
                               <Check className="h-3 w-3 inline-block mr-1" style={{ color: 'var(--tl-green)' }} />
                             )}
-                            <span>{(match.team_b as any)?.team_name || 'TBD'}</span>
+                            <span>{match.team_b?.team_name || 'TBD'}</span>
                           </div>
                         </div>
                       </div>

@@ -734,6 +734,7 @@ export default function TeamMatchView() {
                   status: tournament.status,
                   has_dreambreaker: tournament.has_dreambreaker,
                   has_third_place_match: tournament.has_third_place_match,
+                  total_score_mode: (tournament as { total_score_mode?: boolean }).total_score_mode,
                 }}
                 isOwner={isOwner}
                 userTeam={userTeam || null}
