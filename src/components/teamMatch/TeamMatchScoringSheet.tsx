@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from '@/components/ui/sheet';
 import { Loader2, Trophy, RotateCcw, Check, Plus, Minus, Radio } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
@@ -24,10 +22,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface TeamMatchScoringSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   match: TeamMatchMatch | null;
   tournamentId: string;
+  /** Render as a full-page scoring view (referee route) instead of a sheet. */
+  asPage?: boolean;
+  /** Back action (page mode header + close). */
+  onBack?: () => void;
 }
 
 // ─── W2.4c shared tokens ─────────────────────────────────────────────────
@@ -83,6 +85,8 @@ export function TeamMatchScoringSheet({
   onOpenChange,
   match,
   tournamentId,
+  asPage = false,
+  onBack,
 }: TeamMatchScoringSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
@@ -189,9 +193,9 @@ export function TeamMatchScoringSheet({
     }
   }, [currentGame?.id, currentGame?.score_a, currentGame?.score_b]);
 
-  // Auto-select first incomplete game when sheet opens
+  // Auto-select first incomplete game when opened (sheet) or mounted (page)
   useEffect(() => {
-    if (open && games.length > 0) {
+    if ((asPage || open) && games.length > 0) {
       const firstIncompleteIndex = games.findIndex(g => !g.winner_team_id);
       if (firstIncompleteIndex !== -1) {
         setSelectedGameIndex(firstIncompleteIndex);
@@ -199,7 +203,7 @@ export function TeamMatchScoringSheet({
         setSelectedGameIndex(0);
       }
     }
-  }, [open, games.length]);
+  }, [open, asPage, games.length]);
 
   const handleScoreChange = (team: 'a' | 'b', delta: number) => {
     if (team === 'a') {
@@ -322,24 +326,8 @@ export function TeamMatchScoringSheet({
     } catch { /* ignore */ }
   };
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto p-0">
-        <SheetHeader
-          style={{
-            padding: '16px 16px 8px',
-            borderBottom: '1px solid var(--tl-border)',
-          }}
-        >
-          <SheetTitle
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              flexWrap: 'wrap',
-            }}
-          >
+  const headerPills = (
+    <>
             <span
               style={{
                 ...statusPillBase,
@@ -373,8 +361,26 @@ export function TeamMatchScoringSheet({
               <Trophy className="h-3 w-3" />
               {txt.matchLabel}
             </span>
-          </SheetTitle>
-        </SheetHeader>
+    </>
+  );
+
+  const scoringBody = (
+    <>
+      <div style={{ padding: '16px 16px 8px', borderBottom: '1px solid var(--tl-border)' }}>
+        {asPage && (
+          <button
+            type="button"
+            className="tl-btn"
+            onClick={onBack}
+            style={{ padding: '6px 12px', fontSize: 13, marginBottom: 10 }}
+          >
+            ← {language === 'vi' ? 'Quay lại' : 'Back'}
+          </button>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {headerPills}
+        </div>
+      </div>
 
         <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Match Header with games score */}
@@ -903,7 +909,6 @@ export function TeamMatchScoringSheet({
             </div>
           )}
         </div>
-      </SheetContent>
 
       {/* Reset Dialog */}
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
@@ -956,6 +961,20 @@ export function TeamMatchScoringSheet({
           />
         </div>
       )}
+    </>
+  );
+
+  if (asPage) {
+    return (
+      <div style={{ maxWidth: 720, margin: '0 auto', minHeight: '100dvh', background: 'var(--tl-bg)' }}>
+        {scoringBody}
+      </div>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto p-0">{scoringBody}</SheetContent>
     </Sheet>
   );
 }

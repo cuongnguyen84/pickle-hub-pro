@@ -26,6 +26,10 @@ export interface TeamMatchTournament {
   updated_at: string;
   group_count: number | null;
   top_per_group: number | null;
+  // MLP DUPR-gated registration
+  require_dupr?: boolean;
+  dupr_max_male?: number | null;
+  dupr_max_female?: number | null;
   // Joined from profiles
   creator_display_name?: string;
 }
@@ -118,6 +122,7 @@ export function useTeamMatch() {
       // Map profiles to tournaments
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return tournaments.map((t: any) => {
         const profile = t.created_by ? profileMap.get(t.created_by) : null;
         return {
@@ -140,6 +145,7 @@ export function useTeamMatch() {
       // profiles.tournament_create_quota (default 3). Game templates are
       // still inserted client-side after the parent row exists.
       const { data: rpcData, error: rpcError } = await supabase.rpc(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'create_team_match_with_quota' as any,
         {
           _name: input.name,

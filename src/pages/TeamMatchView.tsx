@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Users, Trophy, Calendar, Settings, Copy, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
-import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { useUserTeam, useUserMembership, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchStandings } from '@/hooks/useTeamMatchStandings';
 import { useTeamMatchGroups, useTeamMatchGroupManagement } from '@/hooks/useTeamMatchGroups';
@@ -28,6 +28,7 @@ import { useState, useCallback } from 'react';
 import {
   CreateTeamDialog,
   TeamRegistrationDialog,
+  QuickRegisterCTA,
   TeamList,
   TeamDetailSheet,
   MatchDetailSheet,
@@ -41,7 +42,6 @@ import {
   InviteTeamDialog,
   SingleEliminationSetupDialog,
   TeamMatchSettingsDialog,
-  TeamMatchScoringSheet,
   TeamMatchOverviewTab,
   TeamMatchMatchesTab,
 } from '@/components/teamMatch';
@@ -107,6 +107,7 @@ export default function TeamMatchView() {
 
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
   const { data: userTeam } = useUserTeam(tournament?.id);
+  const { data: membership } = useUserMembership(tournament?.id);
   const { updateTournamentStatus, isUpdatingStatus, deleteTournament } = useTeamMatch();
 
   const { data: teams } = useTeamMatchTeams(tournament?.id);
@@ -135,6 +136,7 @@ export default function TeamMatchView() {
   useTeamMatchRealtime(tournament?.id);
 
   const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'select' | 'create' | 'use-existing'>('select');
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<TeamMatchMatch | null>(null);
@@ -166,13 +168,115 @@ export default function TeamMatchView() {
   );
 
   const [lineupTeamId, setLineupTeamId] = useState<string | null>(null);
-  const [scoringMatch, setScoringMatch] = useState<TeamMatchMatch | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
   const canManage = isOwner || isAdmin;
-  const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
+  const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && !membership && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
   const pendingTeamsCount = teams?.filter(t => t.status === 'pending').length || 0;
+
+  const openRegisterDialog = (mode: 'create' | 'use-existing') => {
+    setDialogMode(mode);
+    setShowCreateTeam(true);
+  };
+
+  // Shared registration CTA — rendered on both Overview and Teams tabs.
+  // Captains get the one-tap QuickRegister; the organizer keeps the legacy
+  // "add a team" card (opens CreateTeamDialog).
+  const registerCTA =
+    canRegister && tournament ? (
+      isOwner ? (
+        <div
+          style={{
+            ...surfaceCard,
+            borderStyle: 'dashed',
+            padding: 18,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <p style={{ fontWeight: 500, color: 'var(--tl-fg)', margin: 0, fontSize: 14.5 }}>
+              {t.teamMatch.view.registerForTournament}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, margin: 0, lineHeight: 1.5 }}>
+              {t.teamMatch.view.createTeamToJoin}
+            </p>
+          </div>
+          <button type="button" className="tl-btn green" onClick={() => openRegisterDialog('create')}>
+            <Plus className="w-4 h-4" />
+            {t.teamMatch.view.createTeam}
+          </button>
+        </div>
+      ) : (
+        <QuickRegisterCTA
+          tournamentId={tournament.id}
+          requireDupr={tournament.require_dupr ?? false}
+          duprMaxMale={tournament.dupr_max_male ?? null}
+          duprMaxFemale={tournament.dupr_max_female ?? null}
+          onOpenDialog={openRegisterDialog}
+          onSuccess={() => setActiveTab('overview')}
+        />
+      )
+    ) : null;
+
+  // Player who joined a team (not the captain) — show their request status.
+  const memberTeam = membership ? teams?.find((tm) => tm.id === membership.teamId) : null;
+  const membershipBanner =
+    membership && !membership.isCaptain && memberTeam ? (
+      <button
+        type="button"
+        onClick={() => setSelectedTeam(memberTeam)}
+        style={{
+          ...surfaceCard,
+          width: '100%',
+          textAlign: 'left',
+          padding: 16,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          cursor: 'pointer',
+        }}
+      >
+        <div>
+          <p style={{ fontWeight: 500, color: 'var(--tl-fg)', margin: 0, fontSize: 14.5 }}>
+            {language === 'vi' ? `Đội của bạn: ${membership.teamName}` : `Your team: ${membership.teamName}`}
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, margin: 0 }}>
+            {membership.status === 'pending'
+              ? language === 'vi'
+                ? 'Đang chờ đội trưởng duyệt'
+                : 'Awaiting captain approval'
+              : language === 'vi'
+                ? 'Đã được duyệt vào đội'
+                : 'Approved on the team'}
+          </p>
+        </div>
+        <span
+          style={{
+            fontFamily: 'Geist Mono, ui-monospace, monospace',
+            fontSize: 10.5,
+            fontWeight: 500,
+            padding: '3px 9px',
+            borderRadius: 4,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            ...(membership.status === 'pending'
+              ? { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' }
+              : { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' }),
+          }}
+        >
+          {membership.status === 'pending'
+            ? language === 'vi' ? 'Chờ duyệt' : 'Pending'
+            : language === 'vi' ? 'Đã duyệt' : 'Approved'}
+        </span>
+      </button>
+    ) : null;
   const hasMatches = matches && matches.length > 0;
   const hasGroups = groups && groups.length > 0;
   const isGroupPlayoffFormat = tournament?.format === 'rr_playoff';
@@ -296,16 +400,20 @@ export default function TeamMatchView() {
 
       setShowPlayoffDialog(false);
       setActiveTab('matches');
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: t.teamMatch.view.errorOccurred,
-        description: error.message || t.teamMatch.view.errorOccurred,
+        description: (error as Error).message || t.teamMatch.view.errorOccurred,
         variant: 'destructive',
       });
     }
   };
 
-  const handleCreateGroups = async (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>) => {
+  const handleCreateGroups = async (
+    groupCount: number,
+    distribution: Array<Array<{ id: string; name: string }>>,
+    randomizeGameOrder?: boolean,
+  ) => {
     if (!tournament) return;
 
     try {
@@ -330,6 +438,7 @@ export default function TeamMatchView() {
         distribution,
         gameTemplates,
         hasDreambreaker: tournament.has_dreambreaker,
+        randomizeGameOrder,
       });
 
       setShowGroupSetupDialog(false);
@@ -566,6 +675,9 @@ export default function TeamMatchView() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4 mt-6">
+              {registerCTA}
+              {membershipBanner}
+
               <TeamMatchOverviewTab
                 tournament={{
                   id: tournament.id,
@@ -591,38 +703,9 @@ export default function TeamMatchView() {
             </TabsContent>
 
             <TabsContent value="teams" className="mt-6 space-y-4">
-              {/* Registration prompt — token-styled surface card */}
-              {canRegister && (
-                <div
-                  style={{
-                    ...surfaceCard,
-                    borderStyle: 'dashed',
-                    padding: 18,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <div>
-                    <p style={{ fontWeight: 500, color: 'var(--tl-fg)', margin: 0, fontSize: 14.5 }}>
-                      {t.teamMatch.view.registerForTournament}
-                    </p>
-                    <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, margin: 0, lineHeight: 1.5 }}>
-                      {t.teamMatch.view.createTeamToJoin}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="tl-btn green"
-                    onClick={() => setShowCreateTeam(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t.teamMatch.view.createTeam}
-                  </button>
-                </div>
-              )}
+              {/* Registration prompt — one-tap for captains, legacy card for owner */}
+              {registerCTA}
+              {membershipBanner}
 
               {/* Captain's team roster — child component (deferred PR D.2) */}
               {userTeam && (
@@ -674,7 +757,7 @@ export default function TeamMatchView() {
                   setLineupTeamId(teamId || null);
                 }}
                 onStartRound={handleStartRound}
-                onScoreMatch={(match) => setScoringMatch(match)}
+                onScoreMatch={(match) => navigate(`/tools/team-match/match/${match.id}/score`)}
                 onStartTournament={handleStartTournament}
               />
             </TabsContent>
@@ -684,7 +767,7 @@ export default function TeamMatchView() {
                 {hasGroups ? (
                   <GroupStandingsTable
                     tournamentId={tournament.id}
-                    topPerGroup={(tournament as any).top_per_group || 2}
+                    topPerGroup={tournament.top_per_group || 2}
                   />
                 ) : (
                   <StandingsTable tournamentId={tournament.id} />
@@ -701,6 +784,10 @@ export default function TeamMatchView() {
             onOpenChange={setShowCreateTeam}
             tournamentId={tournament.id}
             maxRosterSize={tournament.team_roster_size}
+            requireDupr={tournament.require_dupr ?? false}
+            duprMaxMale={tournament.dupr_max_male ?? null}
+            duprMaxFemale={tournament.dupr_max_female ?? null}
+            initialMode={dialogMode}
             onSuccess={() => setActiveTab('overview')}
           />
         )}
@@ -720,6 +807,12 @@ export default function TeamMatchView() {
           team={selectedTeam}
           maxRosterSize={tournament.team_roster_size}
           isOwner={isOwner}
+          tournament={{
+            status: tournament.status,
+            require_dupr: tournament.require_dupr,
+            dupr_max_male: tournament.dupr_max_male,
+            dupr_max_female: tournament.dupr_max_female,
+          }}
         />
 
         <MatchDetailSheet
@@ -730,15 +823,8 @@ export default function TeamMatchView() {
           tournamentId={tournament.id}
           onScoreMatch={(match) => {
             setSelectedMatch(null);
-            setScoringMatch(match);
+            navigate(`/tools/team-match/match/${match.id}/score`);
           }}
-        />
-
-        <TeamMatchScoringSheet
-          open={!!scoringMatch}
-          onOpenChange={(open) => !open && setScoringMatch(null)}
-          match={scoringMatch}
-          tournamentId={tournament.id}
         />
 
         {(userTeam || isOwner) && lineupMatch && (

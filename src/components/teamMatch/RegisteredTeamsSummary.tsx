@@ -1,7 +1,8 @@
 import { Users, Check, Clock, UserCheck, AlertCircle, X, Loader2, Play, UserPlus } from 'lucide-react';
-import { TeamMatchTeam, TeamMatchRosterMember, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
+import { TeamMatchTeam, TeamMatchRosterMember, useTeamMatchTeamManagement, useUserMembership } from '@/hooks/useTeamMatchTeams';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n';
 
 // ─── W2.4b shared tokens (mirror MatchList/PlayoffBracket from #103) ─────
@@ -95,8 +96,19 @@ export function RegisteredTeamsSummary({
   onGenerateMatches,
 }: RegisteredTeamsSummaryProps) {
   const { updateTeamStatus, isUpdatingStatus } = useTeamMatchTeamManagement();
+  const { user } = useAuth();
+  const { data: membership } = useUserMembership(tournamentId);
   const { t, language } = useI18n();
   const c = t.teamMatchComponents;
+
+  // Anyone not already on a team (incl. the organizer) can request to join an
+  // approved team they don't captain. The button just opens the detail sheet;
+  // TeamJoinPanel there handles gender/DUPR/confirm.
+  const canRequestJoin = (team: TeamMatchTeam) =>
+    !!user &&
+    !membership &&
+    team.status === 'approved' &&
+    team.captain_user_id !== user.id;
 
   const STATUS_LABELS: Record<StatusKind, string> = {
     pending: c.statusPending,
@@ -118,6 +130,7 @@ export function RegisteredTeamsSummary({
     approvedSection: language === 'vi' ? 'Đã duyệt' : 'Approved',
     awaitingApproval: language === 'vi' ? 'Đang chờ duyệt' : 'Awaiting approval',
     emptyTitle: language === 'vi' ? 'Chưa có đội nào đăng ký' : 'No teams registered yet',
+    requestJoin: language === 'vi' ? 'Yêu cầu tham gia' : 'Request to join',
   };
 
   // Fetch all rosters for the teams
@@ -177,7 +190,7 @@ export function RegisteredTeamsSummary({
     await updateTeamStatus({ teamId, status: 'rejected', tournamentId });
   };
 
-  if (teams.length === 0) {
+  if (teams.length === 0 || (!isOwner && approvedTeams.length === 0)) {
     return (
       <div style={{ ...surfaceCard, padding: 32 }}>
         <div className="tl-empty-card" style={{ margin: 0, padding: '24px 16px' }}>
@@ -242,6 +255,23 @@ export function RegisteredTeamsSummary({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Prominent request-to-join (opens detail sheet to confirm).
+              Shown for players AND the organizer, when they can still join. */}
+          {canRequestJoin(team) && (
+            <button
+              type="button"
+              className="tl-btn green"
+              style={{ padding: '8px 14px', fontSize: 13, flexShrink: 0 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTeamClick?.(team);
+              }}
+            >
+              <UserPlus className="h-4 w-4" />
+              {txt.requestJoin}
+            </button>
+          )}
+
           {/* Add members button for incomplete rosters - BTC only */}
           {isOwner && !isFull && (
             <button
@@ -264,20 +294,23 @@ export function RegisteredTeamsSummary({
             </button>
           )}
 
-          {/* Full roster badge */}
-          {isFull && (
+          {/* Full roster badge — BTC only */}
+          {isOwner && isFull && (
             <span style={{ ...statusPillBase, background: 'var(--tl-green-glow)', color: 'var(--tl-green)' }}>
               <UserCheck className="h-3 w-3" />
               {rosterCount}/{maxRosterSize}
             </span>
           )}
 
-          <span style={{ ...statusPillBase, ...statusPillStyle(kind) }}>
-            {team.status === 'approved' && <Check className="h-3 w-3" />}
-            {team.status === 'pending' && <Clock className="h-3 w-3" />}
-            {team.status === 'rejected' && <X className="h-3 w-3" />}
-            {STATUS_LABELS[kind]}
-          </span>
+          {/* Status pill — BTC only; players just see name + captain + join */}
+          {isOwner && (
+            <span style={{ ...statusPillBase, ...statusPillStyle(kind) }}>
+              {team.status === 'approved' && <Check className="h-3 w-3" />}
+              {team.status === 'pending' && <Clock className="h-3 w-3" />}
+              {team.status === 'rejected' && <X className="h-3 w-3" />}
+              {STATUS_LABELS[kind]}
+            </span>
+          )}
 
           {/* Approve/Reject actions for owner */}
           {isOwner && team.status === 'pending' && (
@@ -326,10 +359,11 @@ export function RegisteredTeamsSummary({
     <section style={{ ...surfaceCard, padding: 16 }}>
       <header style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Users className="h-4 w-4" style={{ color: 'var(--tl-fg-2)' }} />
-        <h3 style={sectionTitle}>{txt.teamsRegisteredTitle} ({teams.length})</h3>
+        <h3 style={sectionTitle}>{txt.teamsRegisteredTitle} ({isOwner ? teams.length : approvedTeams.length})</h3>
       </header>
 
-      {/* Summary stats */}
+      {/* Summary stats — BTC only */}
+      {isOwner && (
       <div
         style={{
           display: 'grid',
@@ -387,6 +421,7 @@ export function RegisteredTeamsSummary({
           <span>{rejectedTeams.length} {txt.rejectedStat}</span>
         </div>
       </div>
+      )}
 
       {/* Quick action: Generate matches button for BTC */}
       {isOwner && !hasMatches && approvedTeams.length >= 2 && onGenerateMatches && (
@@ -419,12 +454,6 @@ export function RegisteredTeamsSummary({
           </>
         )}
 
-        {!isOwner && pendingTeams.length > 0 && (
-          <>
-            <p style={{ ...fieldLabel, margin: '12px 0 4px' }}>{txt.awaitingApproval}</p>
-            {pendingTeams.map(renderTeamRow)}
-          </>
-        )}
       </div>
     </section>
   );
