@@ -52,8 +52,8 @@ export default function AdminUsers() {
     try {
       await updateRole.mutateAsync({ userId, role });
       toast({ title: "Cập nhật vai trò thành công" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
     }
   };
 
@@ -64,8 +64,8 @@ export default function AdminUsers() {
         organizationId: organizationId === "none" ? null : organizationId,
       });
       toast({ title: "Cập nhật tổ chức thành công" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
     }
   };
 
@@ -86,8 +86,8 @@ export default function AdminUsers() {
         delete updated[userId];
         return updated;
       });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
     }
   };
 
@@ -157,7 +157,7 @@ export default function AdminUsers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user: any) => {
+                  {users.map((user) => {
                     const currentQuota = user.tournament_create_quota || 3;
                     const editedQuota = quotaEdits[user.id];
                     const hasQuotaChange = editedQuota !== undefined && editedQuota !== currentQuota;
