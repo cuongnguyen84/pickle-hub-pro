@@ -815,7 +815,7 @@ export default function TeamMatchSetup() {
               <div className="space-y-5">
                 <RadioGroup
                   value={format}
-                  onValueChange={(v) => setFormat(v as any)}
+                  onValueChange={(v) => setFormat(v as 'round_robin' | 'single_elimination' | 'rr_playoff')}
                   className="space-y-3"
                 >
                   {[

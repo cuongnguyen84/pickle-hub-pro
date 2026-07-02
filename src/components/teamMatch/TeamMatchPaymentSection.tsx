@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useI18n } from '@/i18n';
 import { generateVietQRUrl } from '@/lib/payment/vietqr';
 import { findBankByCode } from '@/lib/payment/banks';
-import { useTeamMatchTeams, type TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { useTeamMatchTeamManagement, type TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import type { TeamMatchTournament } from '@/hooks/useTeamMatch';
 
 interface Props {
@@ -86,7 +86,7 @@ function chipStyle(color: string): React.CSSProperties {
 export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams }: Props) {
   const { language } = useI18n();
   const { claimPayment, isClaimingPayment, confirmPayment, isConfirmingPayment } =
-    useTeamMatchTeams(tournament.id);
+    useTeamMatchTeamManagement();
   const [qrOpen, setQrOpen] = useState(false);
 
   const feePlayer = tournament.entry_fee_vnd ?? 0;
