@@ -7,6 +7,7 @@ import {
   useAdminOrganizations,
 } from "@/hooks/useAdminData";
 import { useUpdateUserQuota } from "@/hooks/useAdminQuota";
+import { useDebounce } from "@/hooks/useSearch";
 import { useI18n } from "@/i18n";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,10 @@ export default function AdminUsers() {
   const { t } = useI18n();
   const { toast } = useToast();
 
-  const { data: users, isLoading: usersLoading } = useAdminUsers();
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  const { data: users, isLoading: usersLoading } = useAdminUsers(debouncedSearch);
   const { data: organizations } = useAdminOrganizations();
   const updateRole = useUpdateUserRole();
   const assignOrg = useAssignUserOrganization();
@@ -43,22 +47,13 @@ export default function AdminUsers() {
 
   // Track quota edits locally
   const [quotaEdits, setQuotaEdits] = useState<Record<string, number>>({});
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const q = searchQuery.trim().toLowerCase();
-  const filteredUsers = q
-    ? users?.filter(
-        (u: any) =>
-          u.email?.toLowerCase().includes(q) || u.display_name?.toLowerCase().includes(q)
-      )
-    : users;
 
   const handleRoleChange = async (userId: string, role: "viewer" | "creator" | "admin") => {
     try {
       await updateRole.mutateAsync({ userId, role });
       toast({ title: "Cập nhật vai trò thành công" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
     }
   };
 
@@ -69,8 +64,8 @@ export default function AdminUsers() {
         organizationId: organizationId === "none" ? null : organizationId,
       });
       toast({ title: "Cập nhật tổ chức thành công" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
     }
   };
 
@@ -91,8 +86,8 @@ export default function AdminUsers() {
         delete updated[userId];
         return updated;
       });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
     }
   };
 
@@ -148,7 +143,7 @@ export default function AdminUsers() {
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
-        ) : filteredUsers && filteredUsers.length > 0 ? (
+        ) : users && users.length > 0 ? (
           <Card className="bg-card border-border overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
@@ -162,7 +157,7 @@ export default function AdminUsers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user: any) => {
+                  {users.map((user) => {
                     const currentQuota = user.tournament_create_quota || 3;
                     const editedQuota = quotaEdits[user.id];
                     const hasQuotaChange = editedQuota !== undefined && editedQuota !== currentQuota;
@@ -243,7 +238,7 @@ export default function AdminUsers() {
             <CardContent className="p-8 text-center">
               <Users className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
               <p className="text-foreground-muted">
-                {q ? "Không tìm thấy người dùng nào" : "Chưa có người dùng nào"}
+                {searchQuery.trim() ? "Không tìm thấy người dùng nào" : "Chưa có người dùng nào"}
               </p>
             </CardContent>
           </Card>

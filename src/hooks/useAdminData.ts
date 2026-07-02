@@ -128,20 +128,38 @@ export function useDeleteOrganization() {
 }
 
 // Users hooks
-export function useAdminUsers() {
+export function useAdminUsers(search = "") {
   return useQuery({
-    queryKey: ["admin", "users"],
+    queryKey: ["admin", "users", search],
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
+      // Search must be server-side: profiles has >1000 rows and PostgREST
+      // caps un-limited selects at 1000, so older users never reach the client.
+      // Strip chars that would break the .or() filter syntax or ilike pattern.
+      const q = search.trim().replace(/[%_,()]/g, "");
+      let query = supabase
         .from("profiles")
         // organizations.dupr_linked_by → profiles.id makes the bare embed
         // ambiguous (PGRST201) — must name the FK explicitly
         .select("*, organizations!profiles_organization_id_fkey(id, name)")
         .order("created_at", { ascending: false });
+      if (q) {
+        query = query.or(`email.ilike.%${q}%,display_name.ilike.%${q}%`).limit(100);
+      }
+
+      const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) throw profilesError;
 
-      const { data: roles, error: rolesError } = await supabase.from("user_roles").select("*");
+      // ponytail: without search, roles + browse list are both capped at 1000
+      // newest rows (pre-existing behavior) — paginate if full browsing matters
+      let rolesQuery = supabase.from("user_roles").select("*");
+      if (q) {
+        rolesQuery = rolesQuery.in(
+          "user_id",
+          profiles.map((p) => p.id)
+        );
+      }
+      const { data: roles, error: rolesError } = await rolesQuery;
 
       if (rolesError) throw rolesError;
 
