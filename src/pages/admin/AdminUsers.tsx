@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, Save } from "lucide-react";
+import { Users, Save, Search } from "lucide-react";
 
 export default function AdminUsers() {
   const { t } = useI18n();
@@ -43,6 +43,15 @@ export default function AdminUsers() {
 
   // Track quota edits locally
   const [quotaEdits, setQuotaEdits] = useState<Record<string, number>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const q = searchQuery.trim().toLowerCase();
+  const filteredUsers = q
+    ? users?.filter(
+        (u: any) =>
+          u.email?.toLowerCase().includes(q) || u.display_name?.toLowerCase().includes(q)
+      )
+    : users;
 
   const handleRoleChange = async (userId: string, role: "viewer" | "creator" | "admin") => {
     try {
@@ -123,13 +132,23 @@ export default function AdminUsers() {
           <p className="text-foreground-muted mt-1">Quản lý người dùng, phân quyền và quota tạo giải</p>
         </div>
 
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
+          <Input
+            placeholder="Tìm theo email hoặc tên..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         {usersLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
-        ) : users && users.length > 0 ? (
+        ) : filteredUsers && filteredUsers.length > 0 ? (
           <Card className="bg-card border-border overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
@@ -143,7 +162,7 @@ export default function AdminUsers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user: any) => {
+                  {filteredUsers.map((user: any) => {
                     const currentQuota = user.tournament_create_quota || 3;
                     const editedQuota = quotaEdits[user.id];
                     const hasQuotaChange = editedQuota !== undefined && editedQuota !== currentQuota;
@@ -223,7 +242,9 @@ export default function AdminUsers() {
           <Card className="bg-card border-border">
             <CardContent className="p-8 text-center">
               <Users className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
-              <p className="text-foreground-muted">Chưa có người dùng nào</p>
+              <p className="text-foreground-muted">
+                {q ? "Không tìm thấy người dùng nào" : "Chưa có người dùng nào"}
+              </p>
             </CardContent>
           </Card>
         )}

@@ -134,7 +134,9 @@ export function useAdminUsers() {
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("*, organizations(id, name)")
+        // organizations.dupr_linked_by → profiles.id makes the bare embed
+        // ambiguous (PGRST201) — must name the FK explicitly
+        .select("*, organizations!profiles_organization_id_fkey(id, name)")
         .order("created_at", { ascending: false });
 
       if (profilesError) throw profilesError;
