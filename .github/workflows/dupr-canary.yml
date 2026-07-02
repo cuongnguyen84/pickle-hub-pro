@@ -12,8 +12,13 @@ name: DUPR canary
 # TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID.
 
 on:
-  schedule:
-    - cron: "0 4 * * 1" # weekly, Mondays 04:00 UTC
+  # schedule DISABLED 2026-07-02 — DUPR UAT test users (testuser101=YGONMK,
+  # testuser103=XJYKO7) lack the BASIC_L1 entitlement, so the weekly canary
+  # is red-noise (players_missing_basic_l1 / 412). Re-enable this block once
+  # the UAT fixtures are re-provisioned. Run on-demand meanwhile via the
+  # Actions "Run workflow" button (workflow_dispatch).
+  # schedule:
+  #   - cron: "0 4 * * 1" # weekly, Mondays 04:00 UTC
   workflow_dispatch:
 
 concurrency:
