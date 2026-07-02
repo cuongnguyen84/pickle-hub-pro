@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
 import { Input } from '@/components/ui/input';
@@ -184,6 +184,28 @@ export default function TeamMatchSetup() {
 
   const isEvenGames = templates.length % 2 === 0;
   const effectiveDreambreaker = isEvenGames && hasDreambreaker;
+
+  // Số đội vào playoff — gợi ý theo luỹ thừa-của-2 lớn nhất ≤ teamCount (native
+  // parity). Vd 25→[16,8], 10→[8,4], 6→[4,2], ≤3→[2]. Không fix cứng 2/4/8.
+  const playoffSizeOptions = useMemo(() => {
+    let p = 1;
+    while (p * 2 <= teamCount) p *= 2;
+    if (p < 2) p = 2;
+    return p > 2 ? [p, p / 2] : [2];
+  }, [teamCount]);
+
+  // Kẹp playoffTeamCount về 1 option hợp lệ khi đổi số đội.
+  useEffect(() => {
+    if (!playoffSizeOptions.includes(playoffTeamCount)) {
+      setPlayoffTeamCount(playoffSizeOptions[0]);
+    }
+  }, [playoffSizeOptions, playoffTeamCount]);
+
+  const roundName = (n: number): string => {
+    const vi: Record<number, string> = { 2: 'Chung kết', 4: 'Bán kết', 8: 'Tứ kết', 16: 'Vòng 1/16', 32: 'Vòng 1/32' };
+    const en: Record<number, string> = { 2: 'Finals', 4: 'Semifinals', 8: 'Quarterfinals', 16: 'Round of 16', 32: 'Round of 32' };
+    return (language === 'vi' ? vi : en)[n] ?? `${n} ${language === 'vi' ? 'đội' : 'teams'}`;
+  };
 
   const canProceed = () => {
     switch (step) {
@@ -684,6 +706,8 @@ export default function TeamMatchSetup() {
                   templates={templates}
                   onChange={setTemplates}
                   rosterSize={rosterSize}
+                  totalScoreMode={totalScoreMode}
+                  pointsPerGame={pointsPerGame}
                 />
               </div>
             )}
@@ -940,9 +964,11 @@ export default function TeamMatchSetup() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="2">{language === 'vi' ? '2 đội (Chung kết)' : '2 teams (Finals)'}</SelectItem>
-                        <SelectItem value="4">{language === 'vi' ? '4 đội (Bán kết)' : '4 teams (Semifinals)'}</SelectItem>
-                        <SelectItem value="8">{language === 'vi' ? '8 đội (Tứ kết)' : '8 teams (Quarterfinals)'}</SelectItem>
+                        {playoffSizeOptions.map((n) => (
+                          <SelectItem key={n} value={n.toString()}>
+                            {language === 'vi' ? `${n} đội (${roundName(n)})` : `${n} teams (${roundName(n)})`}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

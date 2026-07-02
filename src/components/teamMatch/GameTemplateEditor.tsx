@@ -41,6 +41,9 @@ interface GameTemplateEditorProps {
   templates: GameTemplateItem[];
   onChange: (templates: GameTemplateItem[]) => void;
   rosterSize: 4 | 6 | 8;
+  // Total-score mode overrides each game's target with pointsPerGame (native parity).
+  totalScoreMode?: boolean;
+  pointsPerGame?: number;
 }
 
 const DEFAULT_TEMPLATES: Record<4 | 6 | 8, GameTemplateItem[]> = {
@@ -70,7 +73,7 @@ export function getDefaultTemplates(rosterSize: 4 | 6 | 8): GameTemplateItem[] {
   return DEFAULT_TEMPLATES[rosterSize].map(t => ({ ...t }));
 }
 
-export function GameTemplateEditor({ templates, onChange, rosterSize }: GameTemplateEditorProps) {
+export function GameTemplateEditor({ templates, onChange, rosterSize, totalScoreMode = false, pointsPerGame = 7 }: GameTemplateEditorProps) {
   const { language } = useI18n();
 
   const txt = {
@@ -95,9 +98,10 @@ export function GameTemplateEditor({ templates, onChange, rosterSize }: GameTemp
     { value: 'MS', label: language === 'vi' ? 'Đơn Nam (MS)' : 'Men’s Singles (MS)' },
   ];
 
+  // Total-score mode: mỗi game con thi đấu tới pointsPerGame (không phải 21/11).
   const SCORING_OPTIONS = [
-    { value: 'rally21', label: 'Rally 21' },
-    { value: 'sideout11', label: 'Sideout 11' },
+    { value: 'rally21', label: `Rally ${totalScoreMode ? pointsPerGame : 21}` },
+    { value: 'sideout11', label: `Sideout ${totalScoreMode ? pointsPerGame : 11}` },
   ];
 
   const addTemplate = () => {
