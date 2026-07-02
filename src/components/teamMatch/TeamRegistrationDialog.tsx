@@ -34,6 +34,7 @@ import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
 import { DuprSsoModal } from '@/components/dupr/DuprSsoModal';
 import { useDuprConnection, useInvalidateDuprConnection } from '@/hooks/useDuprConnection';
 import { isDuprEligible } from '@/lib/duprEligibility';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -109,6 +110,7 @@ export function TeamRegistrationDialog({
   onSuccess,
 }: TeamRegistrationDialogProps) {
   const { user } = useAuth();
+  const { profile } = useUserProfile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { isCreatingTeam, registerExistingTeam } = useTeamMatchTeamManagement();
@@ -238,7 +240,9 @@ export function TeamRegistrationDialog({
       ? masterRoster.find((m) => m.is_captain)?.gender ?? 'male'
       : form.watch('captain_gender');
   const duprMax = captainGender === 'female' ? duprMaxFemale : duprMaxMale;
-  const captainDupr = duprConn?.doubles ?? null;
+  // MLP: doubles rating preferred, fall back to singles when the captain only
+  // has a singles rating (common in VN).
+  const captainDupr = duprConn?.doubles ?? duprConn?.singles ?? null;
   const duprConnected = !!duprConn?.ssoConnected && captainDupr != null;
   const duprEligible = isDuprEligible({
     requireDupr,
@@ -255,7 +259,11 @@ export function TeamRegistrationDialog({
     if (initialMode === 'use-existing' && masterTeams?.length === 1) {
       setSelectedMasterTeamId(masterTeams[0].id);
     }
-  }, [open, initialMode, masterTeams]);
+    // Pre-fill captain name from the logged-in profile (DUPR/account name).
+    if (profile?.display_name && !form.getValues('captain_name')) {
+      form.setValue('captain_name', profile.display_name);
+    }
+  }, [open, initialMode, masterTeams, profile?.display_name, form]);
 
   const handleCreateNewTeam = async (values: FormValues) => {
     if (!user) return;
@@ -303,10 +311,10 @@ export function TeamRegistrationDialog({
       setMode('select');
       onOpenChange(false);
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: txt.errorTitle,
-        description: error.message,
+        description: (error as Error).message,
         variant: 'destructive',
       });
     }
@@ -500,6 +508,7 @@ export function TeamRegistrationDialog({
                 <DuprEligibilityCheck
                   ratingSource="dupr"
                   isDoubles
+                  allowSinglesFallback
                   maxDupr={duprMax}
                   onConnectDupr={() => setShowSso(true)}
                 />
@@ -569,34 +578,6 @@ export function TeamRegistrationDialog({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="captain_skill_level"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel style={fieldLabel}>{txt.skillLabel}</FormLabel>
-                    <Select
-                      onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={txt.skillPh} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((level) => (
-                          <SelectItem key={level} value={level.toString()}>
-                            {level.toFixed(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
                 <button
                   type="button"
@@ -633,6 +614,7 @@ export function TeamRegistrationDialog({
                   <DuprEligibilityCheck
                     ratingSource="dupr"
                     isDoubles
+                    allowSinglesFallback
                     maxDupr={duprMax}
                     onConnectDupr={() => setShowSso(true)}
                   />

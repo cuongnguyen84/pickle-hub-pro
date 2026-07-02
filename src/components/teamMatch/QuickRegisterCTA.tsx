@@ -62,7 +62,7 @@ export function QuickRegisterCTA({
   const [showSso, setShowSso] = useState(false);
   const captainGender = roster.find((m) => m.is_captain)?.gender ?? 'male';
   const duprMax = captainGender === 'female' ? duprMaxFemale : duprMaxMale;
-  const captainDupr = duprConn?.doubles ?? null;
+  const captainDupr = duprConn?.doubles ?? duprConn?.singles ?? null;
   const duprConnected = !!duprConn?.ssoConnected && captainDupr != null;
   const duprEligible = isDuprEligible({
     requireDupr,
@@ -136,6 +136,7 @@ export function QuickRegisterCTA({
         <DuprEligibilityCheck
           ratingSource="dupr"
           isDoubles
+          allowSinglesFallback
           maxDupr={duprMax}
           onConnectDupr={() => setShowSso(true)}
         />

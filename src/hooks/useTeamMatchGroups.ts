@@ -12,6 +12,16 @@ export interface TeamMatchGroup {
   created_at: string;
 }
 
+// Fisher-Yates — used to randomize game order per match when requested.
+function shuffleArr<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 // Hook for fetching groups of a tournament
 export function useTeamMatchGroups(tournamentId: string | undefined) {
   return useQuery({
@@ -39,18 +49,21 @@ export function useTeamMatchGroupManagement() {
 
   // Create groups and assign teams, then generate group stage matches
   const createGroupsMutation = useMutation({
-    mutationFn: async ({ 
-      tournamentId, 
+    mutationFn: async ({
+      tournamentId,
       groupCount,
       distribution,
       gameTemplates,
       hasDreambreaker,
+      randomizeGameOrder,
     }: {
       tournamentId: string;
       groupCount: number;
       distribution: Array<Array<{ id: string; name: string }>>;
       gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
       hasDreambreaker?: boolean;
+      /** Randomize the game order within each match (per match). */
+      randomizeGameOrder?: boolean;
     }) => {
       // 1. Create groups
       const groupsToInsert = distribution.map((_, index) => ({
@@ -67,20 +80,17 @@ export function useTeamMatchGroupManagement() {
       if (groupsError) throw groupsError;
       if (!groups) throw new Error('Failed to create groups');
 
-      // 2. Assign teams to groups
-      for (let i = 0; i < distribution.length; i++) {
-        const group = groups[i];
-        const teamsInGroup = distribution[i];
-
-        for (const team of teamsInGroup) {
-          const { error } = await supabase
-            .from('team_match_teams')
-            .update({ group_id: group.id })
-            .eq('id', team.id);
-
-          if (error) throw error;
-        }
-      }
+      // 2. Assign teams to groups — one atomic statement (a per-team await
+      //    loop could fail partway and leave the draw half-applied).
+      const pairs = distribution.flatMap((teamsInGroup, i) =>
+        teamsInGroup.map((team) => ({ team_id: team.id, group_id: groups[i].id })),
+      );
+      const { error: assignError } = await supabase.rpc(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'assign_team_match_teams_to_groups' as any,
+        { _pairs: pairs },
+      );
+      if (assignError) throw assignError;
 
       // 3. Update tournament with group_count
       const { error: tournamentError } = await supabase
@@ -94,6 +104,7 @@ export function useTeamMatchGroupManagement() {
       if (tournamentError) throw tournamentError;
 
       // 4. Generate round-robin matches for each group
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allMatches: any[] = [];
       let globalDisplayOrder = 0;
 
@@ -126,6 +137,8 @@ export function useTeamMatchGroupManagement() {
             bracket_position: null,
             next_match_id: null,
             next_match_slot: null,
+            // Lineups below are only a gender-based DEFAULT (so names show) —
+            // NOT submitted, so each captain still chooses/confirms their lineup.
             lineup_a_submitted: false,
             lineup_b_submitted: false,
             display_order: globalDisplayOrder++,
@@ -141,13 +154,17 @@ export function useTeamMatchGroupManagement() {
 
       if (matchError) throw matchError;
 
-      // 5. Create games for each match based on templates
+      // 5. Create games for each match from templates (game order randomized
+      //    per match when requested). Lineups start EMPTY — each captain
+      //    chooses their own lineup.
       if (insertedMatches && gameTemplates.length > 0) {
         const isEvenGames = gameTemplates.length % 2 === 0;
         const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
-        
+
         const games = insertedMatches.flatMap(match => {
-          const regularGames = gameTemplates.map((template, index) => ({
+          const ordered = randomizeGameOrder ? shuffleArr(gameTemplates) : gameTemplates;
+
+          const regularGames = ordered.map((template, index) => ({
             match_id: match.id,
             order_index: index,
             game_type: template.game_type,
@@ -158,7 +175,7 @@ export function useTeamMatchGroupManagement() {
             score_b: 0,
             status: 'pending',
           }));
-          
+
           // Add dreambreaker as the last game
           if (shouldAddDreambreaker) {
             regularGames.push({
@@ -173,7 +190,7 @@ export function useTeamMatchGroupManagement() {
               status: 'pending',
             });
           }
-          
+
           return regularGames;
         });
 

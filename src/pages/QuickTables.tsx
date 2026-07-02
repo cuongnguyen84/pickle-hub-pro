@@ -213,7 +213,7 @@ const QuickTables = () => {
 
     if (table) {
       if (defaultSets > 1) {
-        await supabase.from('quick_tables').update({ default_sets: defaultSets } as any).eq('id', table.id);
+        await supabase.from('quick_tables').update({ default_sets: defaultSets } as never).eq('id', table.id);
       }
       if (parentIdFromUrl) {
         await supabase.from('quick_tables').update({ parent_tournament_id: parentIdFromUrl }).eq('id', table.id);
@@ -451,6 +451,37 @@ const QuickTables = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>{language === "vi" ? "Thể thức thi đấu" : "Match format"}</Label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {([false, true] as const).map((dbl) => {
+                      const selected = isDoubles === dbl;
+                      return (
+                        <button
+                          key={String(dbl)}
+                          type="button"
+                          onClick={() => setIsDoubles(dbl)}
+                          style={{
+                            flex: 1,
+                            padding: "10px 12px",
+                            borderRadius: "var(--tl-radius)",
+                            border: `1px solid ${selected ? "var(--tl-green)" : "var(--tl-border)"}`,
+                            background: selected ? "var(--tl-green-glow)" : "var(--tl-bg)",
+                            color: selected ? "var(--tl-green)" : "var(--tl-fg-2)",
+                            fontFamily: "inherit",
+                            fontWeight: 600,
+                            fontSize: 14,
+                            cursor: "pointer",
+                            transition: "border-color 0.15s, background 0.15s",
+                          }}
+                        >
+                          {dbl ? (language === "vi" ? "Đôi" : "Doubles") : (language === "vi" ? "Đơn" : "Singles")}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label>{t.quickTable.playerCount}</Label>
                   <Input
                     type="number"
@@ -458,7 +489,9 @@ const QuickTables = () => {
                     max={200}
                     value={playerCount || ""}
                     onChange={(e) => setPlayerCount(parseInt(e.target.value) || 0)}
-                    placeholder={t.quickTable.playerCountPlaceholder}
+                    placeholder={isDoubles
+                      ? (language === "vi" ? "VD: 15 đôi" : "e.g. 15 pairs")
+                      : (language === "vi" ? "VD: 10 đơn" : "e.g. 10 singles")}
                   />
                 </div>
 
@@ -503,23 +536,6 @@ const QuickTables = () => {
                       }}
                       className="space-y-4"
                     >
-                      <div className="flex items-start space-x-3">
-                        <Checkbox
-                          id="is-doubles"
-                          checked={isDoubles}
-                          onCheckedChange={(checked) => setIsDoubles(!!checked)}
-                        />
-                        <div>
-                          <Label htmlFor="is-doubles" className="cursor-pointer font-medium flex items-center gap-2">
-                            <Users className="w-4 h-4" style={{ color: "var(--tl-green)" }} />
-                            {t.quickTable.doublesMode || 'Doubles'}
-                          </Label>
-                          <p style={{ fontSize: 12, color: "var(--tl-fg-3)", marginTop: 2 }}>
-                            {t.quickTable.doublesModeDesc || 'Players register as pairs and can invite partners via link'}
-                          </p>
-                        </div>
-                      </div>
-
                       <div className="space-y-1">
                         <Label className="text-sm">{t.quickTable.matchScoring.defaultSets}</Label>
                         <Select value={String(defaultSets)} onValueChange={(v) => setDefaultSets(Number(v))}>

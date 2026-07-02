@@ -8,6 +8,8 @@ interface MatchListProps {
   userTeamId?: string;
   isOwner?: boolean;
   canEditScores?: boolean;
+  /** Total-score format → show cumulative points (not games won) as the score. */
+  isTotalScore?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number) => void;
@@ -60,7 +62,7 @@ function statusPillStyle(kind: StatusKind): React.CSSProperties {
   return { background: 'var(--tl-surface)', color: 'var(--tl-fg-3)' };
 }
 
-export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, onMatchClick, onLineupClick, onStartRound, onScoreMatch }: MatchListProps) {
+export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, isTotalScore, onMatchClick, onLineupClick, onStartRound, onScoreMatch }: MatchListProps) {
   const { data: matches, isLoading } = useTeamMatchMatches(tournamentId);
   const { t, language } = useI18n();
   const c = t.teamMatchComponents;
@@ -146,10 +148,10 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
         const missingLineups: string[] = [];
         roundMatches.forEach(match => {
           if (!match.lineup_a_submitted && match.team_a) {
-            missingLineups.push((match.team_a as any)?.team_name || 'Team A');
+            missingLineups.push(match.team_a?.team_name || 'Team A');
           }
           if (!match.lineup_b_submitted && match.team_b) {
-            missingLineups.push((match.team_b as any)?.team_name || 'Team B');
+            missingLineups.push(match.team_b?.team_name || 'Team B');
           }
         });
 
@@ -271,7 +273,7 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
                               color: teamAColor,
                             }}
                           >
-                            <span>{(match.team_a as any)?.team_name || 'TBD'}</span>
+                            <span>{match.team_a?.team_name || 'TBD'}</span>
                             {match.lineup_a_submitted && (
                               <Check className="h-3 w-3 inline-block ml-1" style={{ color: 'var(--tl-green)' }} />
                             )}
@@ -301,7 +303,7 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
                                 color: winnerA ? 'var(--tl-green)' : 'var(--tl-fg)',
                               }}
                             >
-                              {match.games_won_a}
+                              {isTotalScore ? match.total_points_a : match.games_won_a}
                             </span>
                             <span style={{ color: 'var(--tl-fg-4)', fontFamily: 'Geist Mono, ui-monospace, monospace' }}>:</span>
                             <span
@@ -313,7 +315,7 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
                                 color: winnerB ? 'var(--tl-green)' : 'var(--tl-fg)',
                               }}
                             >
-                              {match.games_won_b}
+                              {isTotalScore ? match.total_points_b : match.games_won_b}
                             </span>
                           </div>
 
@@ -335,7 +337,7 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
                             {match.lineup_b_submitted && (
                               <Check className="h-3 w-3 inline-block mr-1" style={{ color: 'var(--tl-green)' }} />
                             )}
-                            <span>{(match.team_b as any)?.team_name || 'TBD'}</span>
+                            <span>{match.team_b?.team_name || 'TBD'}</span>
                           </div>
                         </div>
 
@@ -355,7 +357,11 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
                               letterSpacing: '0.02em',
                             }}
                           >
-                            <span>{txt.points}: {match.total_points_a} - {match.total_points_b}</span>
+                            <span>
+                              {isTotalScore
+                                ? `${language === 'vi' ? 'Ván' : 'Games'}: ${match.games_won_a} - ${match.games_won_b}`
+                                : `${txt.points}: ${match.total_points_a} - ${match.total_points_b}`}
+                            </span>
                           </div>
                         )}
                       </div>

@@ -26,6 +26,13 @@ final class CreateTeamMatchModel {
     var totalScoreMode = false
     var pointsPerGame = 7
     var requireMinGames = false
+    // Bước 5 — Thể lệ & Lệ phí. QR VietQR dựng từ 3 trường bank khi phí > 0.
+    var rulesSummary = ""
+    var entryFeeVnd = 0
+    var entryFeeTeamVnd = 0
+    var bankCode = ""
+    var bankAccountNumber = ""
+    var bankAccountName = ""
     var templates: [Template] = CreateTeamMatchModel.defaultTemplates(4)
     var hasDreambreaker = false
     var format = "round_robin"
@@ -82,12 +89,22 @@ final class CreateTeamMatchModel {
         templates = Self.defaultTemplates(size)   // reset to default for the size (web parity)
     }
 
+    var hasAnyFee: Bool { entryFeeVnd > 0 || entryFeeTeamVnd > 0 }
+    /// Phí > 0 buộc nhập đủ 3 trường tài khoản để dựng QR; miễn phí thì bỏ qua.
+    var feeStepValid: Bool {
+        if !hasAnyFee { return true }
+        return !bankCode.isEmpty
+            && !bankAccountNumber.trimmingCharacters(in: .whitespaces).isEmpty
+            && !bankAccountName.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
     func canProceed() -> Bool {
         switch step {
         case 1: return name.trimmingCharacters(in: .whitespaces).count >= 3 && teamCount >= 2
         case 2: return templates.count >= 1
         case 3: return true
         case 4: return format == "single_elimination" ? isValidSECount : true
+        case 5: return feeStepValid
         default: return false
         }
     }
@@ -103,6 +120,8 @@ final class CreateTeamMatchModel {
             hasThirdPlaceMatch: hasThirdPlaceMatch,
             useDupr: requireRegistration && useDupr, duprMaxMale: duprMaxMale, duprMaxFemale: duprMaxFemale,
             totalScoreMode: totalScoreMode, pointsPerGame: pointsPerGame,
+            rulesSummary: rulesSummary, entryFeeVnd: entryFeeVnd, entryFeeTeamVnd: entryFeeTeamVnd,
+            bankCode: bankCode, bankAccountNumber: bankAccountNumber, bankAccountName: bankAccountName,
             templates: templates.enumerated().map {
                 .init(gameType: $1.gameType, scoringType: $1.scoringType,
                       displayName: $1.displayName, orderIndex: $0)
@@ -123,7 +142,7 @@ struct CreateTeamMatchView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var model = CreateTeamMatchModel()
 
-    private let steps = ["Thông tin", "Game", "DreamBreaker", "Thể thức"]
+    private let steps = ["Thông tin", "Game", "DreamBreaker", "Thể thức", "Lệ phí"]
 
     var body: some View {
         NavigationStack {
@@ -135,7 +154,8 @@ struct CreateTeamMatchView: View {
                         case 1: basicInfo
                         case 2: gameTemplates
                         case 3: dreambreaker
-                        default: formatStep
+                        case 4: formatStep
+                        default: feeStep
                         }
                         if let err = model.error {
                             Text(err).font(TLFont.sans(12)).foregroundStyle(TLColor.live)
@@ -428,6 +448,131 @@ struct CreateTeamMatchView: View {
         }.buttonStyle(.plain)
     }
 
+    // MARK: Step 5 — Thể lệ & Lệ phí
+
+    private var feeStep: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            field("Tóm tắt thể lệ giải") {
+                TextField("VD: Thi đấu MLP, mỗi trận 4 game + DreamBreaker. Check-in trước 15 phút…",
+                          text: Binding(get: { model.rulesSummary }, set: { model.rulesSummary = $0 }),
+                          axis: .vertical)
+                    .lineLimit(3...8)
+                    .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
+                    .padding(.horizontal, 12).padding(.vertical, 11)
+                    .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                    .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+            }
+
+            field("Lệ phí mỗi VĐV (VND)") {
+                TextField("0 = miễn phí",
+                          value: Binding(get: { model.entryFeeVnd }, set: { model.entryFeeVnd = max(0, $0) }),
+                          format: .number)
+                    .keyboardType(.numberPad)
+                    .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                    .padding(.horizontal, 12).padding(.vertical, 11)
+                    .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                    .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+            }
+
+            field("Lệ phí mỗi đội (VND)") {
+                TextField("0 = miễn phí",
+                          value: Binding(get: { model.entryFeeTeamVnd }, set: { model.entryFeeTeamVnd = max(0, $0) }),
+                          format: .number)
+                    .keyboardType(.numberPad)
+                    .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                    .padding(.horizontal, 12).padding(.vertical, 11)
+                    .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                    .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+            }
+
+            if model.hasAnyFee {
+                Text("TÀI KHOẢN NHẬN — TẠO MÃ QR")
+                    .font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.accentText)
+
+                field("Ngân hàng") {
+                    Menu {
+                        ForEach(VNBank.all) { b in
+                            Button("\(b.shortName) (\(b.code))") { model.bankCode = b.code }
+                        }
+                    } label: {
+                        HStack {
+                            Text(bankLabel).font(TLFont.sans(15)).foregroundStyle(model.bankCode.isEmpty ? TLColor.fg3 : TLColor.fg)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(TLColor.fg3)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 11)
+                        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                        .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                    }
+                }
+                field("Số tài khoản") {
+                    TextField("VD: 0123456789",
+                              text: Binding(get: { model.bankAccountNumber }, set: { model.bankAccountNumber = $0 }))
+                        .keyboardType(.numberPad).autocorrectionDisabled()
+                        .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                        .padding(.horizontal, 12).padding(.vertical, 11)
+                        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                        .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                }
+                field("Tên chủ tài khoản") {
+                    TextField("VD: NGUYEN VAN A",
+                              text: Binding(get: { model.bankAccountName }, set: { model.bankAccountName = $0.uppercased() }))
+                        .autocorrectionDisabled().textInputAutocapitalization(.characters)
+                        .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                        .padding(.horizontal, 12).padding(.vertical, 11)
+                        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                        .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                }
+
+                qrPreview
+            } else {
+                infoCard(gold: false, "Miễn phí — không cần tài khoản nhận. Bật lệ phí > 0 để tạo mã QR chuyển khoản cho VĐV.")
+            }
+        }
+    }
+
+    private var bankLabel: String {
+        guard let b = VNBank.all.first(where: { $0.code == model.bankCode }) else { return "Chọn ngân hàng" }
+        return "\(b.shortName) (\(b.code))"
+    }
+
+    // Preview dùng phí đội nếu có, không thì phí VĐV.
+    private var previewAmount: Int { model.entryFeeTeamVnd > 0 ? model.entryFeeTeamVnd : model.entryFeeVnd }
+
+    @ViewBuilder
+    private var qrPreview: some View {
+        if let url = VietQR.imageURL(
+            bankCode: model.bankCode,
+            accountNumber: model.bankAccountNumber,
+            accountName: model.bankAccountName,
+            amountVnd: previewAmount,
+            memo: qrMemo) {
+            VStack(spacing: 10) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let img): img.resizable().scaledToFit()
+                    case .failure: Image(systemName: "qrcode").font(.system(size: 40)).foregroundStyle(TLColor.fg4)
+                    default: ProgressView().tint(TLColor.accentText)
+                    }
+                }
+                .frame(width: 220, height: 260)
+                .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
+                Text("Quét mã để chuyển \(previewAmount.formatted()) đ")
+                    .font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 4)
+        } else {
+            infoCard(gold: true, "Nhập đủ ngân hàng + số tài khoản để xem trước mã QR.")
+        }
+    }
+
+    /// Nội dung chuyển khoản (addInfo). Ngắn gọn, VietQR tự URL-encode diacritics.
+    private var qrMemo: String {
+        let n = model.name.trimmingCharacters(in: .whitespaces)
+        return n.isEmpty ? "Le phi giai" : "Le phi \(n)"
+    }
+
     // MARK: Footer / shared
 
     private var footer: some View {
@@ -440,7 +585,7 @@ struct CreateTeamMatchView: View {
                         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.border, lineWidth: 1))
                 }.buttonStyle(.plain)
             }
-            if model.step < 4 {
+            if model.step < 5 {
                 Button { Haptics.light(); model.step += 1 } label: {
                     Text("Tiếp tục").font(TLFont.sans(14, .bold)).foregroundStyle(TLColor.accentInk)
                         .frame(maxWidth: .infinity).padding(.vertical, 13)

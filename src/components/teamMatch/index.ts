@@ -26,3 +26,4 @@ export { SingleEliminationSetupDialog } from './SingleEliminationSetupDialog';
 export { TeamMatchSettingsDialog } from './TeamMatchSettingsDialog';
 export { TeamMatchOverviewTab } from './TeamMatchOverviewTab';
 export { TeamMatchMatchesTab } from './TeamMatchMatchesTab';
+export { TeamMatchPaymentSection } from './TeamMatchPaymentSection';

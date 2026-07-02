@@ -18,6 +18,7 @@ import { parseCourtsInput } from '@/lib/round-robin';
 interface PlayerInput {
   id: string;
   name: string;
+  name2: string;   // VĐV 2 (chỉ đôi); đôi gộp "name & name2" làm nhãn
   team: string;
   seed: string;
 }
@@ -107,6 +108,7 @@ const QuickTableSetup = () => {
           (_, i) => ({
             id: `new-${i}`,
             name: '',
+            name2: '',
             team: '',
             seed: '',
           }),
@@ -131,7 +133,7 @@ const QuickTableSetup = () => {
   const addPlayerSlot = () => {
     setPlayers(prev => [
       ...prev,
-      { id: `new-${prev.length}`, name: '', team: '', seed: '' },
+      { id: `new-${prev.length}`, name: '', name2: '', team: '', seed: '' },
     ]);
   };
 
@@ -151,7 +153,8 @@ const QuickTableSetup = () => {
     });
   };
 
-  const filledPlayers = players.filter(p => p.name.trim());
+  const isDoubles = table?.is_doubles === true;
+  const filledPlayers = players.filter(p => isDoubles ? (p.name.trim() && p.name2.trim()) : p.name.trim());
 
   const handleProceedToAssignment = () => {
     if (filledPlayers.length < 2) {
@@ -173,7 +176,9 @@ const QuickTableSetup = () => {
 
     try {
       const playerData = filledPlayers.map(p => ({
-        name: p.name.trim(),
+        name: isDoubles ? `${p.name.trim()} & ${p.name2.trim()}` : p.name.trim(),
+        player1_name: p.name.trim(),
+        player2_name: isDoubles ? p.name2.trim() : undefined,
         team: p.team.trim() || undefined,
         seed: p.seed ? parseInt(p.seed) : undefined,
       }));
@@ -244,7 +249,9 @@ const QuickTableSetup = () => {
 
     try {
       const playerData = filledPlayers.map(p => ({
-        name: p.name.trim(),
+        name: isDoubles ? `${p.name.trim()} & ${p.name2.trim()}` : p.name.trim(),
+        player1_name: p.name.trim(),
+        player2_name: isDoubles ? p.name2.trim() : undefined,
         team: p.team.trim() || undefined,
         seed: p.seed ? parseInt(p.seed) : undefined,
       }));
@@ -538,12 +545,29 @@ const QuickTableSetup = () => {
                   >
                     {index + 1}
                   </span>
-                  <Input
-                    value={player.name}
-                    onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                    placeholder={t.quickTable.setup.playerNamePlaceholder}
-                    className="flex-1 min-w-0 h-10 sm:h-9"
-                  />
+                  {isDoubles ? (
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                      <Input
+                        value={player.name}
+                        onChange={(e) => updatePlayer(index, 'name', e.target.value)}
+                        placeholder="VĐV 1"
+                        className="min-w-0 h-10 sm:h-9"
+                      />
+                      <Input
+                        value={player.name2}
+                        onChange={(e) => updatePlayer(index, 'name2', e.target.value)}
+                        placeholder="VĐV 2"
+                        className="min-w-0 h-10 sm:h-9"
+                      />
+                    </div>
+                  ) : (
+                    <Input
+                      value={player.name}
+                      onChange={(e) => updatePlayer(index, 'name', e.target.value)}
+                      placeholder={t.quickTable.setup.playerNamePlaceholder}
+                      className="flex-1 min-w-0 h-10 sm:h-9"
+                    />
+                  )}
                   <Input
                     value={player.team}
                     onChange={(e) => updatePlayer(index, 'team', e.target.value)}

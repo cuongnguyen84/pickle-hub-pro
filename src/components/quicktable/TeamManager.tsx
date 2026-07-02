@@ -942,6 +942,8 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
             name: `${team.player1_display_name}${team.player2_display_name ? ` / ${team.player2_display_name}` : ''}`,
             team: team.player1_team || team.player2_team,
             skill: team.player1_skill_level || null,
+            player1_name: team.player1_display_name,
+            player2_name: team.player2_display_name || undefined,
           }))}
         />
       )}

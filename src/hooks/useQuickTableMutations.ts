@@ -76,7 +76,7 @@ export function useQuickTableMutations() {
 
   const addPlayers = useCallback(async (
     tableId: string,
-    players: Array<{ name: string; team?: string; seed?: number }>,
+    players: Array<{ name: string; player1_name?: string; player2_name?: string; team?: string; seed?: number }>,
   ): Promise<QuickTablePlayer[]> => {
     setPendingFor('addPlayers', true);
     try {
@@ -86,10 +86,12 @@ export function useQuickTableMutations() {
           players.map((p, i) => ({
             table_id: tableId,
             name: p.name,
+            player1_name: p.player1_name || null,
+            player2_name: p.player2_name || null,
             team: p.team || null,
             seed: p.seed || null,
             display_order: i,
-          })),
+          })) as never, // player1_name/player2_name chưa có trong generated types
         )
         .select();
 
@@ -540,8 +542,10 @@ export function useQuickTableMutations() {
         return true;
       }
 
-      const { assignCourtsToMatches, calculateMatchTimes } = await import('@/lib/round-robin');
+      const { scheduleMatches } = await import('@/lib/round-robin');
 
+      // Feed the scheduler in (round, group) order so its output is stable; it
+      // is pair-aware, so a player is never double-booked into one time slot.
       const groupMatches = matches
         .filter(m => !m.is_playoff && m.group_id)
         .sort((a, b) => {
@@ -553,30 +557,26 @@ export function useQuickTableMutations() {
           return groupAIdx - groupBIdx;
         });
 
-      const matchData = groupMatches.map((m, idx) => ({
-        matchIndex: idx,
-        matchId: m.id,
-        groupIndex: groups.findIndex(g => g.id === m.group_id),
-      }));
-
-      const courtAssignments = assignCourtsToMatches(
-        matchData.map(m => ({ groupIndex: m.groupIndex })),
+      const scheduled = scheduleMatches(
+        groupMatches.map(m => ({
+          matchId: m.id,
+          player1: m.player1_id,
+          player2: m.player2_id,
+          groupIndex: groups.findIndex(g => g.id === m.group_id),
+        })),
         courts,
         groups.length,
+        startTime,
+        20,
       );
 
-      const timeAssignments = startTime
-        ? calculateMatchTimes(courtAssignments, courts, startTime, 20)
-        : new Map<number, string>();
-
-      for (const md of matchData) {
-        const courtId = courtAssignments.get(md.matchIndex) || null;
-        const startAt = timeAssignments.get(md.matchIndex) || null;
-
+      // Rewrite court, time AND display_order (play order) — so the match list
+      // shows matches chronologically and no pair runs >2 rows in a row.
+      for (const s of scheduled) {
         await supabase
           .from('quick_table_matches')
-          .update({ court_id: courtId, start_at: startAt })
-          .eq('id', md.matchId);
+          .update({ court_id: s.court, start_at: s.startAt, display_order: s.displayOrder })
+          .eq('id', s.matchId);
       }
 
       return true;

@@ -22,7 +22,10 @@ final class TournamentsViewModel {
     private let live = HomeRepository()
     private let communityRepo = CommunityRepository()
 
-    var hasWatchContent: Bool { !tournaments.isEmpty || liveCount > 0 }
+    // Default to Watch only when there's live creator content — scraped pro-tour
+    // events (often all finished) must NOT force the Watch tab. ponytail: liveCount
+    // only; add ongoing-pro check here if we ever want upcoming pro to default too.
+    var hasWatchContent: Bool { liveCount > 0 }
     var tab: Tab { userTab ?? (hasWatchContent ? .watch : .community) }
     var communityCount: Int { community.count }
 

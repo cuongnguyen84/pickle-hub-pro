@@ -145,6 +145,11 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         inset: 0,
         background: "rgba(0,0,0,0.7)",
         zIndex: 1000,
+        // When opened from inside a Radix Dialog/Sheet (modal), Radix sets
+        // `pointer-events: none` on <body>. This modal is portaled to <body>,
+        // so it inherits that and becomes unclickable (the DUPR iframe can't
+        // be interacted with). Re-enable pointer events for the modal subtree.
+        pointerEvents: "auto",
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >

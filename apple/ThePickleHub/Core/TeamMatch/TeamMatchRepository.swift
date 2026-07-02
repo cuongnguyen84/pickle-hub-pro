@@ -35,14 +35,14 @@ struct TeamMatchRepository {
     func load(shareID: String) async throws -> TMDetail {
         let tournament: TMTournament = try await client
             .from("team_match_tournaments")
-            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female")
+            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name")
             .eq("share_id", value: shareID)
             .single()
             .execute().value
 
         async let teams: [TMTeam] = client
             .from("team_match_teams")
-            .select("id, team_name, seed, group_id, status")
+            .select("id, team_name, seed, group_id, status, payment_status")
             .eq("tournament_id", value: tournament.id)
             .order("seed", ascending: true)
             .execute().value
@@ -124,6 +124,13 @@ struct TeamMatchRepository {
         let duprMaxFemale: Double
         let totalScoreMode: Bool
         let pointsPerGame: Int
+        // Thể lệ + lệ phí + tài khoản nhận (VietQR). Rỗng/0 = miễn phí, bỏ qua.
+        let rulesSummary: String
+        let entryFeeVnd: Int
+        let entryFeeTeamVnd: Int
+        let bankCode: String
+        let bankAccountNumber: String
+        let bankAccountName: String
         let templates: [TMTemplateInput]
     }
 
@@ -228,7 +235,49 @@ struct TeamMatchRepository {
                 .update(TotalScoreUpdate(points_per_game: o.pointsPerGame))
                 .eq("id", value: t.id).execute()
         }
+
+        // Thể lệ + lệ phí + tài khoản nhận — UPDATE sau create (RPC không biết
+        // các cột này). Chỉ ghi khi có dữ liệu; miễn phí thì để trống.
+        let rules = o.rulesSummary.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasFee = o.entryFeeVnd > 0 || o.entryFeeTeamVnd > 0
+        if !rules.isEmpty || hasFee {
+            struct FeeUpdate: Encodable {
+                let rules_summary: String?
+                let entry_fee_vnd: Int?
+                let entry_fee_team_vnd: Int?
+                let bank_code: String?
+                let bank_account_number: String?
+                let bank_account_name: String?
+            }
+            try await client.from("team_match_tournaments")
+                .update(FeeUpdate(
+                    rules_summary: rules.isEmpty ? nil : rules,
+                    entry_fee_vnd: o.entryFeeVnd > 0 ? o.entryFeeVnd : nil,
+                    entry_fee_team_vnd: o.entryFeeTeamVnd > 0 ? o.entryFeeTeamVnd : nil,
+                    bank_code: hasFee ? o.bankCode : nil,
+                    bank_account_number: hasFee ? o.bankAccountNumber : nil,
+                    bank_account_name: hasFee ? o.bankAccountName : nil))
+                .eq("id", value: t.id).execute()
+        }
         return t.shareID
+    }
+
+    // MARK: Payment (team fee claim / confirm)
+
+    private struct TeamIDParam: Encodable { let p_team_id: String }
+    private struct ConfirmParam: Encodable { let p_team_id: String; let p_confirmed: Bool }
+
+    /// Captain marks own team as transferred → status "claimed" (đỏ, chờ BTC).
+    func claimTeamPayment(teamID: UUID) async throws {
+        try await client.rpc("claim_team_payment",
+                             params: TeamIDParam(p_team_id: teamID.uuidString.lowercased())).execute()
+    }
+
+    /// Organizer confirms/un-confirms receipt → "confirmed" (xanh) / back to "claimed".
+    func confirmTeamPayment(teamID: UUID, confirmed: Bool = true) async throws {
+        try await client.rpc("confirm_team_payment",
+                             params: ConfirmParam(p_team_id: teamID.uuidString.lowercased(),
+                                                  p_confirmed: confirmed)).execute()
     }
 
     private static func randomShareID() -> String {
@@ -355,7 +404,7 @@ struct TeamMatchRepository {
     func userTeam(tournamentID: UUID) async -> TMTeam? {
         guard let uid = await currentUserID() else { return nil }
         let rows: [TMTeam]? = try? await client
-            .from("team_match_teams").select("id, team_name, seed, group_id, status")
+            .from("team_match_teams").select("id, team_name, seed, group_id, status, payment_status")
             .eq("tournament_id", value: tournamentID).eq("captain_user_id", value: uid).limit(1)
             .execute().value
         return rows?.first

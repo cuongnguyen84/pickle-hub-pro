@@ -1,6 +1,9 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, Crown, ChevronRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { TeamMatchTeam, useTeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { DuprChip } from '@/components/dupr/DuprChip';
 import { useI18n } from '@/i18n';
 
 // ─── W2.4b shared tokens (mirror MatchList/PlayoffBracket from #103) ─────
@@ -65,6 +68,30 @@ export function TeamRosterDisplay({ team, maxRosterSize, onManageClick }: TeamRo
 
   const rosterCount = roster.length;
   const isFull = rosterCount >= maxRosterSize;
+
+  // DUPR ratings per member (linked accounts only) — profiles are readable by
+  // authenticated users (profiles_authenticated_view_all).
+  const memberUserIds = roster.map((m) => m.user_id).filter((id): id is string => !!id);
+  const { data: duprById } = useQuery({
+    queryKey: ['team-roster-dupr', [...memberUserIds].sort().join(',')],
+    queryFn: async () => {
+      if (memberUserIds.length === 0) return {} as Record<string, { singles: number | null; doubles: number | null }>;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, dupr_singles, dupr_doubles')
+        .in('id', memberUserIds);
+      if (error) throw error;
+      const map: Record<string, { singles: number | null; doubles: number | null }> = {};
+      (data || []).forEach((p) => {
+        map[p.id] = {
+          singles: p.dupr_singles != null ? Number(p.dupr_singles) : null,
+          doubles: p.dupr_doubles != null ? Number(p.dupr_doubles) : null,
+        };
+      });
+      return map;
+    },
+    enabled: memberUserIds.length > 0,
+  });
 
   const txt = {
     captain: language === 'vi' ? 'Đội trưởng' : 'Captain',
@@ -173,16 +200,31 @@ export function TeamRosterDisplay({ team, maxRosterSize, onManageClick }: TeamRo
                 )}
               </div>
             </div>
-            <span
-              style={{
-                ...statusPillBase,
-                background: 'var(--tl-bg-elev)',
-                color: 'var(--tl-fg-2)',
-                border: '1px solid var(--tl-border)',
-              }}
-            >
-              {member.gender === 'male' ? txt.male : txt.female}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {(() => {
+                const d = member.user_id ? duprById?.[member.user_id] : null;
+                const rating = d?.doubles ?? d?.singles ?? null;
+                if (rating == null) return null;
+                const isDoubles = d?.doubles != null;
+                return (
+                  <DuprChip
+                    doubles={isDoubles ? rating : null}
+                    singles={isDoubles ? null : rating}
+                    format={isDoubles ? 'doubles' : 'singles'}
+                  />
+                );
+              })()}
+              <span
+                style={{
+                  ...statusPillBase,
+                  background: 'var(--tl-bg-elev)',
+                  color: 'var(--tl-fg-2)',
+                  border: '1px solid var(--tl-border)',
+                }}
+              >
+                {member.gender === 'male' ? txt.male : txt.female}
+              </span>
+            </div>
           </div>
         ))}
       </div>

@@ -2,14 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from '@/components/ui/sheet';
 import { Loader2, Trophy, RotateCcw, Check, Plus, Minus, Radio } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { RefereeScoringScreen, type RefereeLoaded } from '@/components/referee/RefereeScoringScreen';
 import { useI18n } from '@/i18n';
 import {
   AlertDialog,
@@ -23,10 +22,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface TeamMatchScoringSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   match: TeamMatchMatch | null;
   tournamentId: string;
+  /** Render as a full-page scoring view (referee route) instead of a sheet. */
+  asPage?: boolean;
+  /** Back action (page mode header + close). */
+  onBack?: () => void;
 }
 
 // ─── W2.4c shared tokens ─────────────────────────────────────────────────
@@ -82,6 +85,8 @@ export function TeamMatchScoringSheet({
   onOpenChange,
   match,
   tournamentId,
+  asPage = false,
+  onBack,
 }: TeamMatchScoringSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
@@ -95,6 +100,7 @@ export function TeamMatchScoringSheet({
   const [localScoreB, setLocalScoreB] = useState(0);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [refereeing, setRefereeing] = useState(false);
 
   const GAME_TYPE_LABELS: Record<string, string> = useMemo(() => (
     language === 'vi'
@@ -187,9 +193,9 @@ export function TeamMatchScoringSheet({
     }
   }, [currentGame?.id, currentGame?.score_a, currentGame?.score_b]);
 
-  // Auto-select first incomplete game when sheet opens
+  // Auto-select first incomplete game when opened (sheet) or mounted (page)
   useEffect(() => {
-    if (open && games.length > 0) {
+    if ((asPage || open) && games.length > 0) {
       const firstIncompleteIndex = games.findIndex(g => !g.winner_team_id);
       if (firstIncompleteIndex !== -1) {
         setSelectedGameIndex(firstIncompleteIndex);
@@ -197,7 +203,7 @@ export function TeamMatchScoringSheet({
         setSelectedGameIndex(0);
       }
     }
-  }, [open, games.length]);
+  }, [open, asPage, games.length]);
 
   const handleScoreChange = (team: 'a' | 'b', delta: number) => {
     if (team === 'a') {
@@ -213,15 +219,17 @@ export function TeamMatchScoringSheet({
     setShowResetDialog(false);
   };
 
-  const handleSaveGame = async () => {
+  const handleSaveGame = async (overrideA?: number, overrideB?: number) => {
     if (!match || !currentGame) return;
+    const sa = overrideA ?? localScoreA;
+    const sb = overrideB ?? localScoreB;
 
     try {
       // Update this game's score
       await updateGameScore({
         gameId: currentGame.id,
-        scoreA: localScoreA,
-        scoreB: localScoreB,
+        scoreA: sa,
+        scoreB: sb,
         matchId: match.id,
       });
 
@@ -232,8 +240,8 @@ export function TeamMatchScoringSheet({
       let totalPointsB = 0;
 
       games.forEach((game, index) => {
-        const scoreA = index === selectedGameIndex ? localScoreA : game.score_a;
-        const scoreB = index === selectedGameIndex ? localScoreB : game.score_b;
+        const scoreA = index === selectedGameIndex ? sa : game.score_a;
+        const scoreB = index === selectedGameIndex ? sb : game.score_b;
 
         totalPointsA += scoreA;
         totalPointsB += scoreB;
@@ -264,7 +272,7 @@ export function TeamMatchScoringSheet({
       });
 
       // Move to next game if not the last one and current game completed
-      if (localScoreA !== localScoreB && selectedGameIndex < games.length - 1) {
+      if (sa !== sb && selectedGameIndex < games.length - 1) {
         setSelectedGameIndex(prev => prev + 1);
       }
 
@@ -276,8 +284,8 @@ export function TeamMatchScoringSheet({
 
   if (!match) return null;
 
-  const teamAName = (match.team_a as any)?.team_name || txt.tbd;
-  const teamBName = (match.team_b as any)?.team_name || txt.tbd;
+  const teamAName = (match.team_a as { team_name?: string } | null)?.team_name || txt.tbd;
+  const teamBName = (match.team_b as { team_name?: string } | null)?.team_name || txt.tbd;
 
   // Get player names for current game
   const currentLineupA = currentGame?.lineup_team_a || [];
@@ -290,24 +298,36 @@ export function TeamMatchScoringSheet({
   const winnerA = match.winner_team_id === match.team_a_id;
   const winnerB = match.winner_team_id === match.team_b_id;
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto p-0">
-        <SheetHeader
-          style={{
-            padding: '16px 16px 8px',
-            borderBottom: '1px solid var(--tl-border)',
-          }}
-        >
-          <SheetTitle
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              flexWrap: 'wrap',
-            }}
-          >
+  // ─── Referee live-scoring (engine-driven; feeds the existing save flow) ───
+  const refLineupNames = (ids: string[]): [string, string] | null =>
+    ids.length === 2 ? [rosterMap?.[ids[0]] || ids[0], rosterMap?.[ids[1]] || ids[1]] : null;
+  const refLoaded: RefereeLoaded | null = currentGame ? {
+    matchId: currentGame.id,
+    teamAName,
+    teamBName,
+    playersA: refLineupNames(currentGame.lineup_team_a || []),
+    playersB: refLineupNames(currentGame.lineup_team_b || []),
+    isDoubles: (currentGame.lineup_team_a || []).length === 2,
+    backHref: '',
+  } : null;
+  const refFinish = async (a: number, b: number) => {
+    setLocalScoreA(a); setLocalScoreB(b);
+    await handleSaveGame(a, b);
+    setRefereeing(false);
+  };
+  const refLiveScore = (a: number, b: number) => {
+    if (!currentGame) return;
+    void supabase.from('team_match_games').update({ score_a: a, score_b: b }).eq('id', currentGame.id).then(() => undefined, () => undefined);
+  };
+  const refClaimLive = async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (data.user && currentGame) await supabase.from('team_match_games').update({ live_referee_id: data.user.id } as never).eq('id', currentGame.id).is('live_referee_id', null);
+    } catch { /* ignore */ }
+  };
+
+  const headerPills = (
+    <>
             <span
               style={{
                 ...statusPillBase,
@@ -341,8 +361,26 @@ export function TeamMatchScoringSheet({
               <Trophy className="h-3 w-3" />
               {txt.matchLabel}
             </span>
-          </SheetTitle>
-        </SheetHeader>
+    </>
+  );
+
+  const scoringBody = (
+    <>
+      <div style={{ padding: '16px 16px 8px', borderBottom: '1px solid var(--tl-border)' }}>
+        {asPage && (
+          <button
+            type="button"
+            className="tl-btn"
+            onClick={onBack}
+            style={{ padding: '6px 12px', fontSize: 13, marginBottom: 10 }}
+          >
+            ← {language === 'vi' ? 'Quay lại' : 'Back'}
+          </button>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {headerPills}
+        </div>
+      </div>
 
         <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Match Header with games score */}
@@ -703,6 +741,18 @@ export function TeamMatchScoringSheet({
                       {txt.saveGame(selectedGameIndex + 1)}
                     </button>
                   </div>
+
+                  {refLoaded && (
+                    <button
+                      type="button"
+                      className="tl-btn green"
+                      style={{ width: '100%', justifyContent: 'center', padding: '11px 12px', marginTop: 8 }}
+                      onClick={() => setRefereeing(true)}
+                    >
+                      <Radio className="w-4 h-4" />
+                      {language === 'vi' ? 'CHẤM TRỰC TIẾP' : 'LIVE SCORING'}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -859,7 +909,6 @@ export function TeamMatchScoringSheet({
             </div>
           )}
         </div>
-      </SheetContent>
 
       {/* Reset Dialog */}
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
@@ -894,10 +943,38 @@ export function TeamMatchScoringSheet({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{txt.cancelBtn}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSaveGame}>{txt.confirmBtn}</AlertDialogAction>
+            <AlertDialogAction onClick={() => handleSaveGame()}>{txt.confirmBtn}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {refereeing && refLoaded && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
+          <RefereeScoringScreen
+            loaded={refLoaded}
+            vi={language === 'vi'}
+            persistKey={`tm-ref:${refLoaded.matchId}`}
+            onLiveScore={refLiveScore}
+            onClaimLive={refClaimLive}
+            onFinish={(a, b) => refFinish(a, b)}
+            onBack={() => setRefereeing(false)}
+          />
+        </div>
+      )}
+    </>
+  );
+
+  if (asPage) {
+    return (
+      <div style={{ maxWidth: 720, margin: '0 auto', minHeight: '100dvh', background: 'var(--tl-bg)' }}>
+        {scoringBody}
+      </div>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto p-0">{scoringBody}</SheetContent>
     </Sheet>
   );
 }

@@ -6,14 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, LogIn } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, LogIn, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, CreateTournamentInput } from '@/hooks/useTeamMatch';
 import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
+import { VN_BANKS } from '@/lib/payment/banks';
+import { generateVietQRUrl } from '@/lib/payment/vietqr';
+import { normalizeAccountName } from '@/components/social/create-event/types';
 import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 const isPowerOfTwo = (n: number): boolean => n > 0 && (n & (n - 1)) === 0;
 
@@ -116,6 +119,7 @@ export default function TeamMatchSetup() {
     { id: 2, title: t.teamMatch.setup.stepGameTemplates, icon: Gamepad2 },
     { id: 3, title: t.teamMatch.setup.stepDreambreaker, icon: Zap },
     { id: 4, title: t.teamMatch.setup.stepFormat, icon: Trophy },
+    { id: 5, title: language === 'vi' ? 'Lệ phí' : 'Fees', icon: CreditCard },
   ];
 
   const [step, setStep] = useState<Step>(1);
@@ -128,11 +132,40 @@ export default function TeamMatchSetup() {
 
   const [templates, setTemplates] = useState<GameTemplateItem[]>(() => getDefaultTemplates(4));
 
+  // Chế độ tính theo TỔNG điểm: mỗi game con tới `pointsPerGame`; hết các game,
+  // bên nào tổng điểm cao hơn thắng (không phải đạt mốc cố định). Parity native.
+  const [totalScoreMode, setTotalScoreMode] = useState(false);
+  const [pointsPerGame, setPointsPerGame] = useState(7);
+
   const [hasDreambreaker, setHasDreambreaker] = useState(false);
 
   const [format, setFormat] = useState<'round_robin' | 'single_elimination' | 'rr_playoff'>('round_robin');
   const [playoffTeamCount, setPlayoffTeamCount] = useState(4);
   const [hasThirdPlaceMatch, setHasThirdPlaceMatch] = useState(false);
+
+  // Step 5 — Thể lệ & Lệ phí. QR VietQR dựng từ bank trio khi phí > 0.
+  const [rulesSummary, setRulesSummary] = useState('');
+  const [entryFeeVnd, setEntryFeeVnd] = useState(0);
+  const [entryFeeTeamVnd, setEntryFeeTeamVnd] = useState(0);
+  const [bankCode, setBankCode] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const hasAnyFee = entryFeeVnd > 0 || entryFeeTeamVnd > 0;
+  const feeStepValid =
+    !hasAnyFee ||
+    (bankCode !== '' && /^[0-9]{6,20}$/.test(bankAccountNumber) && bankAccountName.trim().length >= 3);
+  // Số tiền preview: ưu tiên phí/đội, không thì phí/VĐV.
+  const previewAmount = entryFeeTeamVnd > 0 ? entryFeeTeamVnd : entryFeeVnd;
+  const qrPreviewUrl =
+    hasAnyFee && feeStepValid && bankCode
+      ? generateVietQRUrl({
+          bankCode,
+          accountNumber: bankAccountNumber,
+          accountName: bankAccountName,
+          amount: previewAmount,
+          memo: `Le phi ${name.trim() || 'giai'}`,
+        })
+      : null;
 
   const isSingleElimination = format === 'single_elimination';
   const isValidTeamCountForSE = isPowerOfTwo(teamCount) && teamCount >= 4;
@@ -161,6 +194,8 @@ export default function TeamMatchSetup() {
           return isValidTeamCountForSE;
         }
         return true;
+      case 5:
+        return feeStepValid;
       default:
         return false;
     }
@@ -182,6 +217,14 @@ export default function TeamMatchSetup() {
       has_dreambreaker: effectiveDreambreaker,
       require_min_games_per_player: requireMinGames,
       has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
+      total_score_mode: totalScoreMode,
+      points_per_game: pointsPerGame,
+      rules_summary: rulesSummary.trim() || undefined,
+      entry_fee_vnd: entryFeeVnd > 0 ? entryFeeVnd : undefined,
+      entry_fee_team_vnd: entryFeeTeamVnd > 0 ? entryFeeTeamVnd : undefined,
+      bank_code: hasAnyFee ? bankCode : undefined,
+      bank_account_number: hasAnyFee ? bankAccountNumber : undefined,
+      bank_account_name: hasAnyFee ? bankAccountName : undefined,
       game_templates: templates.map(tpl => ({
         order_index: tpl.order_index,
         game_type: tpl.game_type,
@@ -513,11 +556,68 @@ export default function TeamMatchSetup() {
 
             {/* Step 2: Game Templates — child component (deferred PR D.2) */}
             {step === 2 && (
-              <GameTemplateEditor
-                templates={templates}
-                onChange={setTemplates}
-                rosterSize={rosterSize}
-              />
+              <div className="space-y-5">
+                <div style={toggleRowStyle}>
+                  <div>
+                    <Label>{language === 'vi' ? 'Tính theo tổng điểm' : 'Total-score mode'}</Label>
+                    <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                      {language === 'vi'
+                        ? 'Cộng dồn điểm tất cả các game; bên nào tổng điểm cao hơn thắng, thay vì đếm số game thắng/thua.'
+                        : 'Sum points across all games; higher total wins, instead of counting game wins.'}
+                    </p>
+                  </div>
+                  <Switch checked={totalScoreMode} onCheckedChange={setTotalScoreMode} />
+                </div>
+
+                {totalScoreMode && (
+                  <div
+                    style={{
+                      paddingLeft: 16,
+                      borderLeft: '2px solid var(--tl-green)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                    }}
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="pointsPerGame">
+                        {language === 'vi' ? 'Điểm mỗi game con' : 'Points per game'}
+                      </Label>
+                      <Input
+                        id="pointsPerGame"
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={pointsPerGame}
+                        onChange={(e) => setPointsPerGame(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 12,
+                        padding: 16,
+                        borderRadius: 'var(--tl-radius)',
+                        ...infoCardStyle('neutral'),
+                      }}
+                    >
+                      <Info className="w-5 h-5 mt-0.5" style={{ color: infoCardIconColor('neutral') }} />
+                      <p style={{ fontSize: 13, color: 'var(--tl-fg-2)', margin: 0, lineHeight: 1.5 }}>
+                        {language === 'vi'
+                          ? `Mỗi cặp thi đấu tới ${pointsPerGame} điểm. Hết ${templates.length} cặp, bên nào tổng số điểm lớn hơn là thắng.`
+                          : `Each pairing plays to ${pointsPerGame}. After ${templates.length} games, the side with the higher total wins.`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <GameTemplateEditor
+                  templates={templates}
+                  onChange={setTemplates}
+                  rosterSize={rosterSize}
+                />
+              </div>
             )}
 
             {/* Step 3: DreamBreaker */}
@@ -869,6 +969,179 @@ export default function TeamMatchSetup() {
                 )}
               </div>
             )}
+
+            {/* Step 5: Thể lệ & Lệ phí */}
+            {step === 5 && (
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="rulesSummary">
+                    {language === 'vi' ? 'Tóm tắt thể lệ giải' : 'Rules summary'}
+                  </Label>
+                  <textarea
+                    id="rulesSummary"
+                    rows={4}
+                    value={rulesSummary}
+                    onChange={(e) => setRulesSummary(e.target.value)}
+                    placeholder={language === 'vi'
+                      ? 'VD: Thi đấu MLP, mỗi trận 4 game + DreamBreaker. Check-in trước 15 phút…'
+                      : 'e.g. MLP format, 4 games + DreamBreaker per tie. Check in 15 min early…'}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: 'var(--tl-radius)',
+                      border: '1px solid var(--tl-border)',
+                      background: 'var(--tl-surface)',
+                      color: 'var(--tl-fg)',
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="entryFeeVnd">
+                    {language === 'vi' ? 'Lệ phí mỗi VĐV (VND)' : 'Fee per player (VND)'}
+                  </Label>
+                  <Input
+                    id="entryFeeVnd"
+                    type="number"
+                    min={0}
+                    value={entryFeeVnd || ''}
+                    placeholder="0"
+                    onChange={(e) => setEntryFeeVnd(Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="entryFeeTeamVnd">
+                    {language === 'vi' ? 'Lệ phí mỗi đội (VND)' : 'Fee per team (VND)'}
+                  </Label>
+                  <Input
+                    id="entryFeeTeamVnd"
+                    type="number"
+                    min={0}
+                    value={entryFeeTeamVnd || ''}
+                    placeholder="0"
+                    onChange={(e) => setEntryFeeTeamVnd(Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </div>
+
+                {hasAnyFee ? (
+                  <div
+                    style={{
+                      paddingLeft: 16,
+                      borderLeft: '2px solid var(--tl-green)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 14,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        fontSize: 11,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: 'var(--tl-green)',
+                      }}
+                    >
+                      {language === 'vi' ? 'Tài khoản nhận — tạo mã QR' : 'Receiving account — QR'}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{language === 'vi' ? 'Ngân hàng' : 'Bank'}</Label>
+                      <Select value={bankCode} onValueChange={setBankCode}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={language === 'vi' ? 'Chọn ngân hàng' : 'Select bank'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {VN_BANKS.map((b) => (
+                            <SelectItem key={b.code} value={b.code}>
+                              {b.shortName} ({b.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bankAccountNumber">{language === 'vi' ? 'Số tài khoản' : 'Account number'}</Label>
+                      <Input
+                        id="bankAccountNumber"
+                        inputMode="numeric"
+                        value={bankAccountNumber}
+                        placeholder="0123456789"
+                        onChange={(e) => setBankAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bankAccountName">{language === 'vi' ? 'Tên chủ tài khoản' : 'Account holder'}</Label>
+                      <Input
+                        id="bankAccountName"
+                        value={bankAccountName}
+                        placeholder="NGUYEN VAN A"
+                        onChange={(e) => setBankAccountName(e.target.value)}
+                        onBlur={() => setBankAccountName((v) => normalizeAccountName(v))}
+                      />
+                    </div>
+
+                    {qrPreviewUrl ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                        <img
+                          src={qrPreviewUrl}
+                          alt="VietQR preview"
+                          width={220}
+                          style={{ borderRadius: 12, background: '#fff' }}
+                        />
+                        <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-fg-3)' }}>
+                          {language === 'vi'
+                            ? `Quét mã để chuyển ${previewAmount.toLocaleString('vi-VN')} đ`
+                            : `Scan to transfer ${previewAmount.toLocaleString('en-US')} đ`}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: 12,
+                          borderRadius: 'var(--tl-radius)',
+                          ...infoCardStyle('warning'),
+                        }}
+                      >
+                        <Info className="w-4 h-4 mt-0.5" style={{ color: infoCardIconColor('warning') }} />
+                        <p style={{ fontSize: 13, color: 'var(--tl-fg-2)', margin: 0 }}>
+                          {language === 'vi'
+                            ? 'Nhập đủ ngân hàng + số tài khoản (6–20 số) + tên chủ TK để xem trước mã QR.'
+                            : 'Fill bank + account number (6–20 digits) + holder name to preview the QR.'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: 12,
+                      borderRadius: 'var(--tl-radius)',
+                      ...infoCardStyle('neutral'),
+                    }}
+                  >
+                    <Info className="w-4 h-4 mt-0.5" style={{ color: infoCardIconColor('neutral') }} />
+                    <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', margin: 0 }}>
+                      {language === 'vi'
+                        ? 'Miễn phí — không cần tài khoản nhận. Nhập lệ phí > 0 để tạo mã QR chuyển khoản cho VĐV.'
+                        : 'Free — no account needed. Enter a fee > 0 to generate a transfer QR.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Navigation buttons — sticky bottom dock */}
@@ -894,7 +1167,7 @@ export default function TeamMatchSetup() {
               {t.quickTable.back}
             </button>
 
-            {step < 4 ? (
+            {step < 5 ? (
               <button
                 type="button"
                 className="tl-btn green"

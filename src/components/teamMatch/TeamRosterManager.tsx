@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Trash2, Crown, Copy, Loader2, UserPlus, Check } from 'lucide-react';
+import { Users, Plus, Trash2, Crown, Copy, Loader2, UserPlus, Check, X } from 'lucide-react';
 import { useTeamMatchTeam, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -110,7 +110,7 @@ export function TeamRosterManager({
 }: TeamRosterManagerProps) {
   const { toast } = useToast();
   const { roster, isLoading } = useTeamMatchTeam(teamId);
-  const { addRosterMember, isAddingMember, removeRosterMember } = useTeamMatchTeamManagement();
+  const { addRosterMember, isAddingMember, removeRosterMember, updateRosterStatus } = useTeamMatchTeamManagement();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedPreviousMembers, setSelectedPreviousMembers] = useState<Set<string>>(new Set());
   const [isAddingFromPrevious, setIsAddingFromPrevious] = useState(false);
@@ -166,6 +166,9 @@ export function TeamRosterManager({
     male: c.male,
     female: c.female,
     captain: language === 'vi' ? 'Đội trưởng' : 'Captain',
+    pendingLabel: language === 'vi' ? 'Chờ duyệt' : 'Pending',
+    approve: language === 'vi' ? 'Duyệt' : 'Approve',
+    reject: language === 'vi' ? 'Từ chối' : 'Reject',
   };
 
   const addMemberSchema = z.object({
@@ -200,7 +203,10 @@ export function TeamRosterManager({
       if (teamError || !otherTeams?.length) return [];
 
       const latestTeam = otherTeams[0];
-      const tournamentInfo = latestTeam.team_match_tournaments as any;
+      const tournamentInfo = latestTeam.team_match_tournaments as unknown as {
+        created_at: string;
+        name: string;
+      } | null;
 
       const { data: rosterData, error: rosterError } = await supabase
         .from('team_match_roster')
@@ -244,6 +250,14 @@ export function TeamRosterManager({
   const handleRemoveMember = async (memberId: string) => {
     try {
       await removeRosterMember({ memberId, teamId });
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  const handleApproveMember = async (memberId: string) => {
+    try {
+      await updateRosterStatus({ memberId, teamId, status: 'approved' });
     } catch (error) {
       // Error handled in hook
     }
@@ -405,6 +419,11 @@ export function TeamRosterManager({
                       <span style={tinyPill}>
                         {member.gender === 'male' ? txt.male : txt.female}
                       </span>
+                      {member.status === 'pending' && (
+                        <span style={{ ...tinyPill, background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' }}>
+                          {txt.pendingLabel}
+                        </span>
+                      )}
                       {member.skill_level && (
                         <span>
                           {txt.levelLabel}: {member.skill_level.toFixed(1)}
@@ -414,7 +433,37 @@ export function TeamRosterManager({
                   </div>
                 </div>
 
-                {canEdit && !member.is_captain && (
+                {canEdit && !member.is_captain && member.status === 'pending' && (
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      aria-label={txt.approve}
+                      onClick={() => handleApproveMember(member.id)}
+                      className="tl-btn green"
+                      style={{ padding: '6px 10px', fontSize: 12 }}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      {txt.approve}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={txt.reject}
+                      onClick={() => handleRemoveMember(member.id)}
+                      className="tl-btn"
+                      style={{
+                        padding: '6px 10px',
+                        fontSize: 12,
+                        color: 'var(--tl-live)',
+                        borderColor: 'rgba(255, 65, 54, 0.35)',
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      {txt.reject}
+                    </button>
+                  </div>
+                )}
+
+                {canEdit && !member.is_captain && member.status !== 'pending' && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button

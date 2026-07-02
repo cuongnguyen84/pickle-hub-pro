@@ -22,8 +22,19 @@ struct TMTournament: Decodable, Equatable {
     let requireDupr: Bool?
     let duprMaxMale: Double?
     let duprMaxFemale: Double?
+    // Thể lệ + lệ phí + tài khoản nhận (VietQR). Nil = không có.
+    let rulesSummary: String?
+    let entryFeeVnd: Int?
+    let entryFeeTeamVnd: Int?
+    let bankCode: String?
+    let bankAccountNumber: String?
+    let bankAccountName: String?
 
     var displayName: String { name.nonEmpty ?? "Giải đồng đội" }
+    var hasFee: Bool { (entryFeeVnd ?? 0) > 0 || (entryFeeTeamVnd ?? 0) > 0 }
+    var hasBankInfo: Bool {
+        !(bankCode ?? "").isEmpty && !(bankAccountNumber ?? "").isEmpty
+    }
     var isTotalScore: Bool { totalScoreMode == true }
     var requiresDupr: Bool { requireDupr == true }
     func duprCap(forGender gender: String) -> Double? { gender == "female" ? duprMaxFemale : duprMaxMale }
@@ -62,6 +73,12 @@ struct TMTournament: Decodable, Equatable {
         case requireDupr = "require_dupr"
         case duprMaxMale = "dupr_max_male"
         case duprMaxFemale = "dupr_max_female"
+        case rulesSummary = "rules_summary"
+        case entryFeeVnd = "entry_fee_vnd"
+        case entryFeeTeamVnd = "entry_fee_team_vnd"
+        case bankCode = "bank_code"
+        case bankAccountNumber = "bank_account_number"
+        case bankAccountName = "bank_account_name"
     }
 }
 
@@ -71,11 +88,28 @@ struct TMTeam: Decodable, Identifiable, Equatable {
     let seed: Int?
     let groupID: UUID?
     let status: String?
+    let paymentStatus: String?   // unpaid | claimed | confirmed
+
+    var payment: TMPaymentStatus { TMPaymentStatus(rawValue: paymentStatus ?? "unpaid") ?? .unpaid }
 
     enum CodingKeys: String, CodingKey {
         case id, seed, status
         case teamName = "team_name"
         case groupID = "group_id"
+        case paymentStatus = "payment_status"
+    }
+}
+
+/// Trạng thái nộp lệ phí của một đội.
+enum TMPaymentStatus: String {
+    case unpaid, claimed, confirmed
+
+    /// Nhãn hiển thị. `claimed` + `confirmed` cùng chữ "Đã nộp lệ phí" nhưng khác màu.
+    var label: String {
+        switch self {
+        case .unpaid: return "Chưa nộp lệ phí"
+        case .claimed, .confirmed: return "Đã nộp lệ phí"
+        }
     }
 }
 

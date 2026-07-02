@@ -36,6 +36,8 @@ const HIDDEN_PREFIXES = [
   "/preview",
   "/embed",
   "/onboarding",
+  "/tools/quick-tables/referee", // full-screen live-scoring tool
+  "/tools/team-match/match/", // team-match referee scoring (matchId)/score
 ];
 
 const DESKTOP_BREAKPOINT = "(min-width: 768px)";

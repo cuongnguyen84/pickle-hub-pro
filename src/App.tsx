@@ -55,6 +55,8 @@ const QuickTableSetup = lazy(() => import("./pages/QuickTableSetup"));
 const QuickTableView = lazy(() => import("./pages/QuickTableView"));
 const ParentTournamentPage = lazy(() => import("./pages/ParentTournamentPage"));
 const MatchScoring = lazy(() => import("./pages/MatchScoring"));
+const QuickTableRefereeScoring = lazy(() => import("./pages/QuickTableRefereeScoring"));
+const TeamMatchScoring = lazy(() => import("./pages/TeamMatchScoring"));
 const JoinTeam = lazy(() => import("./pages/JoinTeam"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
@@ -634,9 +636,11 @@ const App = () => (
                     <Route path="/tools/quick-tables/parent/:shareId" element={<ParentTournamentPage />} />
                     <Route path="/tools/quick-tables/:shareId" element={<ConditionalAuth><QuickTableView /></ConditionalAuth>} />
                     <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
+                    <Route path="/tools/quick-tables/referee/:matchId" element={<QuickTableRefereeScoring />} />
                     {/* Team Match routes */}
                     <Route path="/tools/team-match" element={<TeamMatchList />} />
                     <Route path="/tools/team-match/new" element={<TeamMatchSetup />} />
+                    <Route path="/tools/team-match/match/:matchId/score" element={<TeamMatchScoring />} />
                     <Route path="/tools/team-match/:id" element={<ConditionalAuth><TeamMatchView /></ConditionalAuth>} />
                     {/* Doubles Elimination routes */}
                     <Route path="/tools/doubles-elimination" element={<DoublesEliminationList />} />
@@ -732,6 +736,7 @@ const App = () => (
                     <Route path="/vi/tools/quick-tables/:shareId/setup" element={<ViLanguageWrapper><QuickTableSetup /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/team-match" element={<ViLanguageWrapper><TeamMatchList /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/team-match/new" element={<ViLanguageWrapper><TeamMatchSetup /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/team-match/match/:matchId/score" element={<ViLanguageWrapper><TeamMatchScoring /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/team-match/:id" element={<ViLanguageWrapper><ConditionalAuth><TeamMatchView /></ConditionalAuth></ViLanguageWrapper>} />
                     <Route path="/vi/tools/doubles-elimination" element={<ViLanguageWrapper><DoublesEliminationList /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/doubles-elimination/new" element={<ViLanguageWrapper><DoublesEliminationSetup /></ViLanguageWrapper>} />

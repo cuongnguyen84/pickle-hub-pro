@@ -32,6 +32,16 @@ export interface TeamMatchTournament {
   dupr_max_female?: number | null;
   // Joined from profiles
   creator_display_name?: string;
+  // Chấm theo tổng điểm
+  total_score_mode?: boolean;
+  points_per_game?: number | null;
+  // Thể lệ + lệ phí + tài khoản nhận (VietQR)
+  rules_summary?: string | null;
+  entry_fee_vnd?: number | null;
+  entry_fee_team_vnd?: number | null;
+  bank_code?: string | null;
+  bank_account_number?: string | null;
+  bank_account_name?: string | null;
 }
 
 export interface GameTemplate {
@@ -56,6 +66,16 @@ export interface CreateTournamentInput {
   require_min_games_per_player: boolean;
   has_third_place_match?: boolean;
   bracket_pairing_type?: 'random' | 'manual';
+  // Chấm theo tổng điểm (RPC không nhận 2 cột này → UPDATE sau create).
+  total_score_mode?: boolean;
+  points_per_game?: number;
+  // Thể lệ + lệ phí + tài khoản nhận (cũng UPDATE sau create).
+  rules_summary?: string;
+  entry_fee_vnd?: number;
+  entry_fee_team_vnd?: number;
+  bank_code?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
   game_templates: Omit<GameTemplate, 'id' | 'tournament_id'>[];
 }
 
@@ -122,6 +142,7 @@ export function useTeamMatch() {
       // Map profiles to tournaments
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return tournaments.map((t: any) => {
         const profile = t.created_by ? profileMap.get(t.created_by) : null;
         return {
@@ -144,6 +165,7 @@ export function useTeamMatch() {
       // profiles.tournament_create_quota (default 3). Game templates are
       // still inserted client-side after the parent row exists.
       const { data: rpcData, error: rpcError } = await supabase.rpc(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'create_team_match_with_quota' as any,
         {
           _name: input.name,
@@ -203,6 +225,32 @@ export function useTeamMatch() {
           .insert(templates);
 
         if (templatesError) throw templatesError;
+      }
+
+      // Total-score + fee/rules/bank — RPC doesn't know these cols, UPDATE after
+      // create. Fee>0 stores the bank trio; free tournaments leave them null.
+      const rules = (input.rules_summary ?? '').trim();
+      const hasFee = (input.entry_fee_vnd ?? 0) > 0 || (input.entry_fee_team_vnd ?? 0) > 0;
+      const extra: Record<string, unknown> = {};
+      if (input.total_score_mode) {
+        extra.total_score_mode = true;
+        extra.points_per_game = input.points_per_game ?? 7;
+      }
+      if (rules) extra.rules_summary = rules;
+      if ((input.entry_fee_vnd ?? 0) > 0) extra.entry_fee_vnd = input.entry_fee_vnd;
+      if ((input.entry_fee_team_vnd ?? 0) > 0) extra.entry_fee_team_vnd = input.entry_fee_team_vnd;
+      if (hasFee) {
+        extra.bank_code = input.bank_code ?? null;
+        extra.bank_account_number = input.bank_account_number ?? null;
+        extra.bank_account_name = input.bank_account_name ?? null;
+      }
+      if (Object.keys(extra).length > 0) {
+        const { error: extraError } = await supabase
+          .from('team_match_tournaments')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .update(extra as any)
+          .eq('id', tournament.id);
+        if (extraError) throw extraError;
       }
 
       return tournament;

@@ -8,10 +8,11 @@ final class TeamMatchViewModel {
         case failed(String)
     }
     enum Tab: String, CaseIterable, Identifiable {
-        case matches, playoff, teams
+        case overview, matches, playoff, teams
         var id: String { rawValue }
         var label: String {
             switch self {
+            case .overview: return "Tổng quan"
             case .matches: return "Trận đấu"
             case .playoff: return "Playoff"
             case .teams: return "Xếp hạng"
@@ -35,7 +36,7 @@ final class TeamMatchViewModel {
 
     /// Tabs — bỏ "Xếp hạng" cho thể thức đồng đội (không cần BXH; playoff vẫn dùng standings ngầm).
     func tabs(for detail: TMDetail) -> [Tab] {
-        detail.hasPlayoff ? [.matches, .playoff, .teams] : [.matches, .teams]
+        detail.hasPlayoff ? [.overview, .matches, .playoff, .teams] : [.overview, .matches, .teams]
     }
 
     @MainActor
@@ -57,6 +58,24 @@ final class TeamMatchViewModel {
         } catch {
             phase = .failed(error.localizedDescription)
         }
+    }
+
+    /// Captain: "Đã chuyển khoản" → team về trạng thái "claimed" (đỏ).
+    @MainActor
+    func claimPayment(shareID: String, teamID: UUID) async {
+        working = true; actionError = nil
+        do { try await repo.claimTeamPayment(teamID: teamID); await load(shareID: shareID) }
+        catch { actionError = error.localizedDescription }
+        working = false
+    }
+
+    /// BTC xác nhận đã nhận → team về trạng thái "confirmed" (xanh, chính thức).
+    @MainActor
+    func confirmPayment(shareID: String, teamID: UUID, confirmed: Bool = true) async {
+        working = true; actionError = nil
+        do { try await repo.confirmTeamPayment(teamID: teamID, confirmed: confirmed); await load(shareID: shareID) }
+        catch { actionError = error.localizedDescription }
+        working = false
     }
 
     @MainActor
@@ -187,6 +206,7 @@ struct TeamMatchDetailView: View {
     @State private var showGroupSetup = false
     @State private var showRegister = false
     @State private var showTeamRoster = false
+    @State private var showPayment = false
     @State private var livePulse = false   // drives the LIVE match card pulse
     @State private var joinTeamTarget: TMTeam?
     @State private var selectedGroupID: UUID?   // bảng đang xem (tab ngang)
@@ -295,6 +315,16 @@ struct TeamMatchDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showPayment) {
+            if let detail = model.detail, let team = model.myTeam {
+                TeamMatchPaymentSheet(tournament: detail.tournament,
+                                      rosterCount: detail.roster.filter { $0.teamID == team.id }.count,
+                                      teamName: team.teamName,
+                                      status: team.payment) {
+                    await model.claimPayment(shareID: shareID, teamID: team.id)
+                }
+            }
+        }
         .sheet(item: $joinTeamTarget) { team in
             if let detail = model.detail {
                 TeamMatchJoinSheet(teamName: team.teamName,
@@ -373,9 +403,43 @@ struct TeamMatchDetailView: View {
                 HStack(spacing: 6) { Image(systemName: "person.2.badge.gearshape"); Text("Quản lý đội hình") }
                     .font(TLFont.mono(10.5, .semibold)).foregroundStyle(TLColor.accentText)
             }.buttonStyle(.plain)
+            if detail.tournament.hasFee && detail.tournament.hasBankInfo {
+                captainPaymentRow(team)
+            }
             if !pending.isEmpty {
                 Text("Yêu cầu tham gia (\(pending.count))").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.gold)
                 ForEach(pending) { m in pendingRequestRow(detail, m) }
+            }
+        }
+    }
+
+    // Captain: nộp lệ phí + trạng thái. unpaid → nút QR; claimed → đỏ, chờ BTC;
+    // confirmed → xanh, đội chính thức.
+    @ViewBuilder
+    private func captainPaymentRow(_ team: TMTeam) -> some View {
+        switch team.payment {
+        case .unpaid:
+            Button { Haptics.light(); showPayment = true } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "qrcode").font(.system(size: 13))
+                    Text("Nộp lệ phí").font(TLFont.sans(13.5, .semibold))
+                }
+                .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 11)
+                .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            }.buttonStyle(.plain)
+        case .claimed:
+            HStack(spacing: 8) {
+                paymentChip("Chờ BTC xác nhận", color: TLColor.gold)
+                Spacer()
+                Button { Haptics.light(); showPayment = true } label: {
+                    Text("Xem QR").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.accentText)
+                }.buttonStyle(.plain)
+            }
+        case .confirmed:
+            HStack(spacing: 8) {
+                paymentChip("Đã nộp lệ phí", color: TLColor.accentText)
+                Text("Đội chính thức tham gia").font(TLFont.mono(10)).foregroundStyle(TLColor.accentText)
+                Spacer()
             }
         }
     }
@@ -469,6 +533,7 @@ struct TeamMatchDetailView: View {
                 }
                 .pickerStyle(.segmented)
                 switch model.tab {
+                case .overview: overviewTab(detail)
                 case .matches: matchesTab(detail)
                 case .playoff: playoffTab(detail)
                 case .teams: teamsTab(detail)
@@ -493,6 +558,72 @@ struct TeamMatchDetailView: View {
                 Text(t.formatLabel).font(TLFont.mono(9, .medium)).tracking(0.5).foregroundStyle(TLColor.fg3)
             }
         }
+    }
+
+    // MARK: Overview (Tổng quan) — thể lệ + lệ phí, hiển thị cho bất kỳ ai
+
+    @ViewBuilder
+    private func overviewTab(_ detail: TMDetail) -> some View {
+        let t = detail.tournament
+        VStack(alignment: .leading, spacing: 14) {
+            if let rules = t.rulesSummary?.trimmingCharacters(in: .whitespacesAndNewlines), !rules.isEmpty {
+                overviewCard(title: "THỂ LỆ GIẢI", icon: "doc.text") {
+                    Text(rules).font(TLFont.sans(14)).foregroundStyle(TLColor.fg2).lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if t.hasFee {
+                overviewCard(title: "LỆ PHÍ THAM GIA", icon: "creditcard") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let f = t.entryFeeVnd, f > 0 { feeRow("Mỗi VĐV", f) }
+                        if let f = t.entryFeeTeamVnd, f > 0 { feeRow("Mỗi đội", f) }
+                    }
+                }
+            }
+            if t.rulesSummary?.isEmpty != false && !t.hasFee {
+                note("Chưa có thông tin thể lệ / lệ phí.")
+            }
+        }
+    }
+
+    private func feeRow(_ label: String, _ vnd: Int) -> some View {
+        HStack {
+            Text(label).font(TLFont.sans(13.5)).foregroundStyle(TLColor.fg2)
+            Spacer()
+            Text("\(vnd.formatted()) đ").font(TLFont.mono(13, .bold)).foregroundStyle(TLColor.accentText)
+        }
+    }
+
+    private func overviewCard<Content: View>(title: String, icon: String, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 11)).foregroundStyle(TLColor.accentText)
+                Text(title).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.accentText)
+            }
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading).padding(14)
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    /// Chip trạng thái nộp lệ phí: claimed = đỏ (chờ), confirmed = xanh (chính thức).
+    @ViewBuilder
+    private func paymentBadge(_ status: TMPaymentStatus) -> some View {
+        switch status {
+        case .unpaid:
+            EmptyView()
+        case .claimed:
+            paymentChip(status.label, color: TLColor.live)
+        case .confirmed:
+            paymentChip(status.label, color: TLColor.accentText)
+        }
+    }
+
+    private func paymentChip(_ text: String, color: Color) -> some View {
+        Text(text).font(TLFont.mono(9, .bold)).tracking(0.4).foregroundStyle(color)
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(color.opacity(0.12), in: Capsule())
     }
 
     // MARK: Matches
@@ -945,12 +1076,26 @@ struct TeamMatchDetailView: View {
                 ForEach(Array(detail.teamsBySeed.enumerated()), id: \.element.id) { index, team in
                     if index > 0 { Rectangle().fill(TLColor.border).frame(height: 1) }
                     let rosterCount = detail.roster.filter { $0.teamID == team.id }.count
-                    HStack(spacing: 12) {
-                        Text("#\(team.seed.map(String.init) ?? "—")")
-                            .font(TLFont.mono(11, .medium)).foregroundStyle(TLColor.fg3).frame(width: 34, alignment: .leading)
-                        Text(team.teamName).font(TLFont.sans(14.5, .medium)).foregroundStyle(TLColor.fg).lineLimit(1)
-                        Spacer()
-                        Text("\(rosterCount) VĐV").font(TLFont.mono(10.5)).foregroundStyle(TLColor.fg3)
+                    VStack(spacing: 8) {
+                        HStack(spacing: 12) {
+                            Text("#\(team.seed.map(String.init) ?? "—")")
+                                .font(TLFont.mono(11, .medium)).foregroundStyle(TLColor.fg3).frame(width: 34, alignment: .leading)
+                            Text(team.teamName).font(TLFont.sans(14.5, .medium)).foregroundStyle(TLColor.fg).lineLimit(1)
+                            paymentBadge(team.payment)
+                            Spacer()
+                            Text("\(rosterCount) VĐV").font(TLFont.mono(10.5)).foregroundStyle(TLColor.fg3)
+                        }
+                        // BTC: xác nhận đã nhận lệ phí khi đội đã báo chuyển khoản.
+                        if model.auth.isCreator && team.payment == .claimed {
+                            Button { Haptics.success(); Task { await model.confirmPayment(shareID: shareID, teamID: team.id) } } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "checkmark.seal.fill").font(.system(size: 11))
+                                    Text("Xác nhận đã nhận lệ phí").font(TLFont.mono(10.5, .bold))
+                                }
+                                .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 8)
+                                .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 8))
+                            }.buttonStyle(.plain).disabled(model.working)
+                        }
                     }
                     .padding(.horizontal, 14).padding(.vertical, 12)
                 }

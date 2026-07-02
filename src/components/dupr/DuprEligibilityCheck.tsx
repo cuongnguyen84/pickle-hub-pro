@@ -27,6 +27,10 @@ interface DuprEligibilityCheckProps {
   ratingSource?: "self" | "dupr" | "either";
   /** Doubles tournament reads dupr_doubles; singles reads dupr_singles. */
   isDoubles?: boolean;
+  /** Doubles table: accept the singles rating as an approximation when the
+   *  player has no doubles rating yet (used by MLP team match). Default off —
+   *  strict doubles tables (doubles-elim, flex) keep requiring a doubles rating. */
+  allowSinglesFallback?: boolean;
   /** Lower bound (inclusive). Null = no lower bound. */
   minDupr?: number | null;
   /** Upper bound (inclusive). Null = no upper bound. */
@@ -38,6 +42,7 @@ interface DuprEligibilityCheckProps {
 export function DuprEligibilityCheck({
   ratingSource = "self",
   isDoubles = true,
+  allowSinglesFallback = false,
   minDupr = null,
   maxDupr = null,
   onConnectDupr,
@@ -66,7 +71,11 @@ export function DuprEligibilityCheck({
   // only have doubles ratings (singles tournaments rare). Doubles tables
   // stay strict — no fallback to singles.
   const primary = isDoubles ? conn?.doubles ?? null : conn?.singles ?? null;
-  const fallback = isDoubles ? null : conn?.doubles ?? null;
+  const fallback = isDoubles
+    ? allowSinglesFallback
+      ? conn?.singles ?? null
+      : null
+    : conn?.doubles ?? null;
   const rating = primary ?? fallback ?? null;
   const isApprox = primary == null && fallback != null;
   const hasSso = !!conn?.ssoConnected && rating != null;
@@ -181,9 +190,11 @@ export function DuprEligibilityCheck({
   // Sprint B fix — show DUPR doubles in chip when fallback applied
   // (otherwise the chip would say "DUPR singles 3.57" while the rating
   // actually came from doubles).
-  const chipDoubles = isApprox || isDoubles ? rating : null;
-  const chipSingles = !isApprox && !isDoubles ? rating : null;
-  const chipFormat: "doubles" | "singles" = isApprox || isDoubles ? "doubles" : "singles";
+  // Which rating did we actually use — an approx fallback flips the format.
+  const usedDoubles = isApprox ? !isDoubles : isDoubles;
+  const chipDoubles = usedDoubles ? rating : null;
+  const chipSingles = usedDoubles ? null : rating;
+  const chipFormat: "doubles" | "singles" = usedDoubles ? "doubles" : "singles";
 
   return (
     <Frame tone="success">
@@ -217,8 +228,8 @@ export function DuprEligibilityCheck({
         <div style={{ fontSize: 13, color: "var(--tl-fg-2)", lineHeight: 1.5 }}>
           {isApprox
             ? vi
-              ? `Em dùng DUPR đôi ${rating!.toFixed(2)} làm ước tính (bạn chưa có DUPR đơn).${rangeLabel ? ` Nằm trong khoảng ${rangeLabel}.` : ""} Rating sẽ tự fill khi đăng ký.`
-              : `Using doubles DUPR ${rating!.toFixed(2)} as an approximation (no singles rating yet).${rangeLabel ? ` Within ${rangeLabel}.` : ""} Rating auto-fills on registration.`
+              ? `Dùng DUPR ${usedDoubles ? "đôi" : "đơn"} ${rating!.toFixed(2)} làm ước tính (bạn chưa có DUPR ${usedDoubles ? "đơn" : "đôi"}).${rangeLabel ? ` Nằm trong khoảng ${rangeLabel}.` : ""}`
+              : `Using ${usedDoubles ? "doubles" : "singles"} DUPR ${rating!.toFixed(2)} as an approximation (no ${usedDoubles ? "singles" : "doubles"} rating yet).${rangeLabel ? ` Within ${rangeLabel}.` : ""}`
             : vi
               ? rangeLabel
                 ? `DUPR ${rating!.toFixed(2)} nằm trong khoảng ${rangeLabel}. Rating sẽ tự fill khi đăng ký.`

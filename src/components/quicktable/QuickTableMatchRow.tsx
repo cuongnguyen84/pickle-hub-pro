@@ -51,7 +51,7 @@ export default function QuickTableMatchRow({
   };
 
   const handleOpenScoring = () => {
-    navigate(`/matches/${match.id}/score`);
+    navigate(`/tools/quick-tables/referee/${match.id}`);
   };
 
   // ─── Token-driven container styling ──────────────────────────────────────
@@ -360,7 +360,7 @@ export default function QuickTableMatchRow({
                   type="button"
                   className="tl-btn"
                   style={{ padding: '6px 10px', fontSize: 11.5 }}
-                  onClick={handleStartEdit}
+                  onClick={isCompleted ? handleStartEdit : handleOpenScoring}
                 >
                   <Pencil className="w-3 h-3" />
                   <span className="hidden sm:inline">

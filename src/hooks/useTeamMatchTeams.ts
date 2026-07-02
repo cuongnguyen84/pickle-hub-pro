@@ -14,6 +14,10 @@ export interface TeamMatchTeam {
   status: string;
   master_team_id: string | null;
   group_id: string | null;
+  // Lệ phí đội: unpaid | claimed (đội trưởng báo CK) | confirmed (BTC xác nhận)
+  payment_status?: 'unpaid' | 'claimed' | 'confirmed';
+  payment_claimed_at?: string | null;
+  payment_confirmed_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -371,6 +375,48 @@ export function useTeamMatchTeamManagement() {
     },
   });
 
+  // Captain: "Đã chuyển khoản" → team về trạng thái "claimed" (chờ BTC).
+  const claimPaymentMutation = useMutation({
+    mutationFn: async ({ teamId, tournamentId }: { teamId: string; tournamentId: string }) => {
+      const { error } = await supabase.rpc(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'claim_team_payment' as any,
+        { p_team_id: teamId },
+      );
+      if (error) throw error;
+      return { teamId, tournamentId };
+    },
+    onSuccess: ({ tournamentId }) => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-user-team'] });
+      toast({ title: 'Đã gửi', description: 'Đã báo chuyển khoản — chờ BTC xác nhận.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // BTC: xác nhận / huỷ xác nhận đã nhận lệ phí.
+  const confirmPaymentMutation = useMutation({
+    mutationFn: async ({ teamId, tournamentId, confirmed = true }: { teamId: string; tournamentId: string; confirmed?: boolean }) => {
+      const { error } = await supabase.rpc(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'confirm_team_payment' as any,
+        { p_team_id: teamId, p_confirmed: confirmed },
+      );
+      if (error) throw error;
+      return { teamId, tournamentId, confirmed };
+    },
+    onSuccess: ({ tournamentId, confirmed }) => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-user-team'] });
+      toast({ title: confirmed ? 'Đã xác nhận' : 'Đã huỷ xác nhận', description: confirmed ? 'Đội đã nộp lệ phí, chính thức tham gia.' : 'Đã đưa về trạng thái chờ.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
+    },
+  });
+
   // Delete team mutation
   const deleteTeamMutation = useMutation({
     mutationFn: async ({ teamId, tournamentId }: { teamId: string; tournamentId: string }) => {
@@ -398,6 +444,87 @@ export function useTeamMatchTeamManagement() {
     },
   });
 
+  // Player self-joins a team as a pending, non-captain member.
+  const joinTeamMutation = useMutation({
+    mutationFn: async ({
+      teamId,
+      tournamentId,
+      playerName,
+      gender,
+    }: {
+      teamId: string;
+      tournamentId: string;
+      playerName: string;
+      gender: 'male' | 'female';
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+      const safeName = sanitizeString(playerName, 100);
+      if (!safeName) throw new Error('Tên không được để trống');
+
+      // One team per player per tournament.
+      const { data: existing } = await supabase
+        .from('team_match_roster')
+        .select('id, team_match_teams!inner(tournament_id)')
+        .eq('user_id', user.id)
+        .eq('team_match_teams.tournament_id', tournamentId);
+      if (existing && existing.length > 0) {
+        throw new Error('Bạn đã ở trong một đội của giải này');
+      }
+
+      const { data, error } = await supabase
+        .from('team_match_roster')
+        .insert({
+          team_id: teamId,
+          user_id: user.id,
+          player_name: safeName,
+          gender,
+          is_captain: false,
+          status: 'pending',
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return { member: data as TeamMatchRosterMember, teamId, tournamentId };
+    },
+    onSuccess: ({ teamId, tournamentId }) => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-roster', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-membership', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
+      toast({ title: 'Đã gửi yêu cầu', description: 'Chờ đội trưởng duyệt' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Captain/creator approves or rejects a pending roster member.
+  const updateRosterStatusMutation = useMutation({
+    mutationFn: async ({
+      memberId,
+      teamId,
+      status,
+    }: {
+      memberId: string;
+      teamId: string;
+      status: 'approved' | 'rejected';
+    }) => {
+      const { error } = await supabase
+        .from('team_match_roster')
+        .update({ status })
+        .eq('id', memberId);
+      if (error) throw error;
+      return { teamId, status };
+    },
+    onSuccess: ({ teamId, status }) => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-roster', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-team', teamId] });
+      toast({ title: status === 'approved' ? 'Đã duyệt thành viên' : 'Đã từ chối' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     createTeam: createTeamMutation.mutateAsync,
     isCreatingTeam: createTeamMutation.isPending,
@@ -409,9 +536,56 @@ export function useTeamMatchTeamManagement() {
     isRemovingMember: removeRosterMemberMutation.isPending,
     updateTeamStatus: updateTeamStatusMutation.mutateAsync,
     isUpdatingStatus: updateTeamStatusMutation.isPending,
+    claimPayment: claimPaymentMutation.mutateAsync,
+    isClaimingPayment: claimPaymentMutation.isPending,
+    confirmPayment: confirmPaymentMutation.mutateAsync,
+    isConfirmingPayment: confirmPaymentMutation.isPending,
     deleteTeam: deleteTeamMutation.mutateAsync,
     isDeletingTeam: deleteTeamMutation.isPending,
+    joinTeam: joinTeamMutation.mutateAsync,
+    isJoiningTeam: joinTeamMutation.isPending,
+    updateRosterStatus: updateRosterStatusMutation.mutateAsync,
+    isUpdatingRosterStatus: updateRosterStatusMutation.isPending,
   };
+}
+
+export interface UserMembership {
+  id: string;
+  teamId: string;
+  teamName: string;
+  status: string;
+  isCaptain: boolean;
+}
+
+// Hook to find the user's roster membership (any team) in a tournament.
+export function useUserMembership(tournamentId: string | undefined) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['team-match-membership', tournamentId, user?.id],
+    queryFn: async (): Promise<UserMembership | null> => {
+      if (!tournamentId || !user) return null;
+
+      const { data, error } = await supabase
+        .from('team_match_roster')
+        .select('id, team_id, status, is_captain, team_match_teams!inner(tournament_id, team_name)')
+        .eq('user_id', user.id)
+        .eq('team_match_teams.tournament_id', tournamentId)
+        .limit(1);
+
+      if (error) throw error;
+      const row = data?.[0];
+      if (!row) return null;
+      return {
+        id: row.id,
+        teamId: row.team_id,
+        teamName: (row.team_match_teams as unknown as { team_name: string }).team_name,
+        status: row.status,
+        isCaptain: row.is_captain,
+      };
+    },
+    enabled: !!tournamentId && !!user,
+  });
 }
 
 // Hook to find user's team in a tournament
