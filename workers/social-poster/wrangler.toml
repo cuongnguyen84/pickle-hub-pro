@@ -1,0 +1,52 @@
+# social-poster Cloudflare Worker
+#
+# Auto-posts new VI news items from `news_items` table to the ThePickleHub
+# Facebook Page. Driven by Supabase DB Webhook on news_items (INSERT/UPDATE).
+# Also exposes a manual /run endpoint for smoke tests + dry-run preview.
+#
+# Triggers:
+#   - POST /        → Supabase DB webhook payload (auto)
+#   - POST /run     → manual trigger (admin); body { news_item_id?, dry_run? }
+#                     Requires header X-Auth-Secret: $SCRAPER_AUTH_SECRET.
+#
+# Bindings + env required:
+#   [vars]
+#     SUPABASE_URL                  Supabase project URL
+#     SITE_URL                      Frontend canonical (https://www.thepicklehub.net)
+#     FB_GRAPH_VERSION              Graph API version (e.g. v20.0)
+#     FB_POST_MIN_GAP_MINUTES       Min gap between posts (default 5)
+#     GEMINI_MODEL                  Gemini model name (e.g. gemini-2.0-flash)
+#
+#   [secrets] (wrangler secret put)
+#     SUPABASE_SERVICE_ROLE_KEY     Reads news_items, upserts fb_post_log.
+#     SCRAPER_AUTH_SECRET           Shared secret for DB webhook + /run.
+#     FB_PAGE_ID                    Numeric Page ID, e.g. 100000123456789.
+#     FB_PAGE_ACCESS_TOKEN          Long-lived (never-expire) Page token.
+#     GEMINI_API_KEY                Google AI Studio key (caption generation).
+#
+# Why a Worker and not a Supabase Edge Function?
+#   - Graph API is sometimes flaky from Supabase's Tokyo region; Cloudflare
+#     edge routes to FB's nearest POP and is more reliable.
+#   - We already run news-fetcher + pro-tour-scraper as Workers; same ops model.
+#   - Workers `[placement] mode = "smart"` lets us co-locate with Supabase.
+
+name = "social-poster"
+main = "src/index.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
+SITE_URL = "https://www.thepicklehub.net"
+FB_GRAPH_VERSION = "v20.0"
+FB_POST_MIN_GAP_MINUTES = "15"
+GEMINI_MODEL = "gemini-flash-lite-latest"
+
+[observability]
+enabled = true
+
+# Note: NOT using [placement] mode = "smart" — Gemini API has region
+# restrictions and was rejecting Tokyo-region calls with FAILED_PRECONDITION
+# "User location is not supported". Letting the Worker run on the requester's
+# nearest POP avoids the issue at the cost of slightly higher Supabase
+# latency (acceptable for this non-time-critical pipeline).

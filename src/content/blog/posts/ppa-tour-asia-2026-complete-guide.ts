@@ -17,7 +17,10 @@ const post: BlogPost = {
       sections: [
         {
           heading: "PPA Tour Asia 2026 — The Biggest Pro Pickleball Tour Outside the US",
-          content: "PPA Tour Asia returns in 2026 with its most ambitious season yet — ten tournament stops across seven markets in Asia, totaling over $2.15 million in prize money. The season opens with the MB Hanoi Cup in Vietnam and closes with the Hong Kong Slam, the largest professional pickleball event ever staged in Asia with up to $1.1 million on the line. Whether you're a fan following the pros or an amateur player looking to compete on the same courts, this guide covers everything you need to know about the 2026 season."
+          content: "PPA Tour Asia returns in 2026 with its most ambitious season yet — ten tournament stops across seven markets in Asia, totaling over $2.15 million in prize money. The season opens with the MB Hanoi Cup in Vietnam and closes with the Hong Kong Slam, the largest professional pickleball event ever staged in Asia with up to $1.1 million on the line. Whether you're a fan following the pros or an amateur player looking to compete on the same courts, this guide covers everything you need to know about the 2026 season.",
+          internalLinks: [
+            { text: "How PPA Tour Asia fits among all the pro tours — PPA, MLP, APP compared for 2026", path: "/blog/professional-pickleball-tours-guide-2026" }
+          ]
         },
         {
           heading: "Complete 2026 Tournament Schedule",
@@ -121,7 +124,10 @@ const post: BlogPost = {
       sections: [
         {
           heading: "PPA Tour Asia 2026 — Giải Pickleball chuyên nghiệp lớn nhất ngoài Mỹ",
-          content: "PPA Tour Asia trở lại năm 2026 với mùa giải hoành tráng nhất từ trước đến nay — 10 chặng đấu tại 7 thị trường châu Á, tổng tiền thưởng hơn 2,15 triệu USD. Mùa giải mở màn với MB Hanoi Cup tại Việt Nam và kết thúc với Hong Kong Slam — giải pickleball chuyên nghiệp lớn nhất từng được tổ chức tại châu Á với tiền thưởng lên tới 1,1 triệu USD. Dù bạn là fan theo dõi các pro hay VĐV nghiệp dư muốn thi đấu trên cùng sân với các ngôi sao, bài viết này cung cấp mọi thứ bạn cần biết về mùa giải 2026."
+          content: "PPA Tour Asia trở lại năm 2026 với mùa giải hoành tráng nhất từ trước đến nay — 10 chặng đấu tại 7 thị trường châu Á, tổng tiền thưởng hơn 2,15 triệu USD. Mùa giải mở màn với MB Hanoi Cup tại Việt Nam và kết thúc với Hong Kong Slam — giải pickleball chuyên nghiệp lớn nhất từng được tổ chức tại châu Á với tiền thưởng lên tới 1,1 triệu USD. Dù bạn là fan theo dõi các pro hay VĐV nghiệp dư muốn thi đấu trên cùng sân với các ngôi sao, bài viết này cung cấp mọi thứ bạn cần biết về mùa giải 2026.",
+          internalLinks: [
+            { text: "PPA Tour Asia trong bức tranh các giải pickleball chuyên nghiệp 2026", path: "/vi/blog/cac-giai-pickleball-chuyen-nghiep-2026-toan-canh" }
+          ]
         },
         {
           heading: "Lịch thi đấu đầy đủ 2026",

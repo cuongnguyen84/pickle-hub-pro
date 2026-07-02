@@ -8,7 +8,12 @@
 
 /* @import removed — fonts now load from index.html non-blocking link */
 
-[data-theme="the-line"] {
+/* :root prefix raises specificity to (0,2,0) so these token overrides beat
+   index.css's `:root` block (0,1,0), which loads later in the bundle and would
+   otherwise win the tie — leaving shadcn --primary/--background on the default
+   teal palette even with data-theme="the-line" set. The light block below
+   ([data-theme][data-mode=light]) is already (0,2,0) and needs no change. */
+:root[data-theme="the-line"] {
   /* -------------------------------------------------------------------
    * Production token overrides — shadcn components (Button, Card, Badge,
    * Dialog, etc.) use these via `hsl(var(--xxx))`. Overriding them inside
@@ -25,8 +30,8 @@
   --card-foreground:     42 23% 95%;
   --popover:             220 7% 6%;
   --popover-foreground:  42 23% 95%;
-  --primary:             151 100% 36%;  /* #00b96b */
-  --primary-foreground:  220 10% 3%;
+  --primary:             80 76% 62%;    /* #b5e853 optic-lime */
+  --primary-foreground:  90 30% 8%;     /* near-black with a green cast, on lime */
   --secondary:           220 7% 8%;     /* #131416 */
   --secondary-foreground: 42 23% 95%;
   --muted:               225 8% 11%;    /* #1a1c1f */
@@ -37,10 +42,15 @@
   --destructive-foreground: 42 23% 95%;
   --border:              225 9% 15%;    /* #22252a */
   --input:               225 9% 15%;
-  --ring:                151 100% 36%;
+  --ring:                80 76% 62%;
   --live:                4 100% 60%;
   --surface:             220 7% 8%;
   --surface-elevated:    225 8% 11%;
+  /* glass-card parity (index.css defines --glass-* for the default theme; override
+     here so .glass-card sits on The Line surfaces, not the teal originals). */
+  --glass-bg:            hsl(220 10% 3% / 0.55);
+  --glass-border:        hsl(42 23% 95% / 0.08);
+  --glass-hover:         hsl(42 23% 95% / 0.05);
   --foreground-secondary: 42 10% 75%;
   --foreground-muted:    42 5% 51%;
 
@@ -56,14 +66,14 @@
   --tl-fg-3:       #86837d;
   --tl-fg-4:       #54514c;
 
-  /* Accent — single */
-  --tl-green:      #00b96b;
-  --tl-green-dim:  #047e48;
-  --tl-green-glow: rgba(0, 185, 107, 0.15);
+  /* Accent — single (optic-lime, the pickleball ball colour) */
+  --tl-green:      #b5e853;
+  --tl-green-dim:  #9ccc3f;
+  --tl-green-glow: rgba(181, 232, 83, 0.16);
 
   /* Semantic */
   --tl-live:       #ff4136;
-  --tl-gold:       #e9b649;
+  --tl-gold:       #e9b649;  /* warm amber secondary — featured / editorial */
 
   /* System */
   --tl-radius:     10px;
@@ -1879,6 +1889,162 @@
   text-underline-offset: 2px; font-weight: 600;
 }
 
+/* ========== Home: live priority section (R3 feed ordering) ========== */
+[data-theme="the-line"] .tl-live-head {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; margin-bottom: 20px;
+}
+[data-theme="the-line"] .tl-live-title {
+  display: inline-flex; align-items: center; gap: 9px; margin: 0;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-style: normal; font-weight: 600;
+  font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--tl-live);
+}
+[data-theme="the-line"] .tl-live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--tl-live);
+  animation: tl-pulse 1.6s ease-in-out infinite;
+}
+[data-theme="the-line"] .tl-live-all {
+  display: inline-flex; align-items: center; min-height: 44px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--tl-green); text-decoration: none;
+}
+[data-theme="the-line"] .tl-live-all:hover { color: var(--tl-fg); }
+
+[data-theme="the-line"] .tl-live-main {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--tl-bg);
+  border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg);
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.2s;
+}
+[data-theme="the-line"] .tl-live-main:hover {
+  border-color: var(--tl-border-2); transform: translateY(-2px);
+}
+[data-theme="the-line"] .tl-live-main-thumb {
+  position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+  background: linear-gradient(160deg, var(--tl-surface-2), var(--tl-bg-elev) 60%, var(--tl-bg));
+}
+[data-theme="the-line"] .tl-live-main-thumb img,
+[data-theme="the-line"] .tl-live-rail-thumb img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform 0.5s ease;
+}
+[data-theme="the-line"] .tl-live-main:hover .tl-live-main-thumb img { transform: scale(1.03); }
+[data-theme="the-line"] .tl-live-thumb-ph {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 30% 30%, var(--tl-green-glow), transparent 55%),
+    linear-gradient(135deg, var(--tl-surface) 0%, var(--tl-bg-elev) 100%);
+}
+[data-theme="the-line"] .tl-live-badge {
+  position: absolute; top: 10px; left: 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: 4px;
+  background: var(--tl-live); color: var(--tl-bg);
+}
+[data-theme="the-line"] .tl-live-badge::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--tl-bg);
+  animation: tl-pulse 1.6s ease-in-out infinite;
+}
+[data-theme="the-line"] .tl-live-badge.sm { top: 8px; left: 8px; font-size: 9px; padding: 3px 6px; }
+
+[data-theme="the-line"] .tl-live-main-body { padding: 16px 18px 18px; }
+[data-theme="the-line"] .tl-live-main-name {
+  font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400;
+  font-size: clamp(20px, 4.5vw, 26px); line-height: 1.18; letter-spacing: -0.015em;
+  color: var(--tl-fg); margin: 0 0 8px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+[data-theme="the-line"] .tl-live-meta {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: 0.02em; color: var(--tl-fg-3);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+[data-theme="the-line"] .tl-live-meta .sep { color: var(--tl-fg-4); }
+
+[data-theme="the-line"] .tl-live-rail {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(46%, 1fr);
+  gap: 12px; margin-top: 14px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch; padding-bottom: 4px;
+}
+@media (min-width: 720px) {
+  [data-theme="the-line"] .tl-live-rail { grid-auto-columns: minmax(220px, 1fr); }
+}
+[data-theme="the-line"] .tl-live-rail-item {
+  scroll-snap-align: start; text-decoration: none; color: inherit;
+  background: var(--tl-bg);
+  border: 1px solid var(--tl-border); border-radius: var(--tl-radius);
+  overflow: hidden; transition: border-color 0.15s;
+}
+[data-theme="the-line"] .tl-live-rail-item:hover { border-color: var(--tl-border-2); }
+[data-theme="the-line"] .tl-live-rail-thumb {
+  position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+  background: linear-gradient(160deg, var(--tl-surface-2), var(--tl-bg-elev) 60%, var(--tl-bg));
+}
+[data-theme="the-line"] .tl-live-rail-name {
+  font-family: "Geist", sans-serif; font-weight: 500;
+  font-size: 13px; line-height: 1.3; color: var(--tl-fg);
+  padding: 10px 12px 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="the-line"] .tl-live-rail-meta {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px; letter-spacing: 0.02em; color: var(--tl-fg-4);
+  padding: 0 12px 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ========== Home: "Tin mới" news feed (R3 feed ordering) ========== */
+[data-theme="the-line"] .tl-news-all {
+  display: inline-flex; align-items: center; min-height: 44px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--tl-green); text-decoration: none;
+}
+[data-theme="the-line"] .tl-news-all:hover { color: var(--tl-fg); }
+[data-theme="the-line"] .tl-news-list {
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-news-item {
+  display: grid; grid-template-columns: 1fr 84px; gap: 16px; align-items: start;
+  padding: 18px 0; min-height: 44px;
+  border-bottom: 1px solid var(--tl-border);
+  text-decoration: none; color: inherit; transition: opacity 0.15s;
+}
+[data-theme="the-line"] .tl-news-item:hover { opacity: 0.92; }
+[data-theme="the-line"] .tl-news-item:hover .tl-news-title { color: var(--tl-green); }
+[data-theme="the-line"] .tl-news-cat {
+  display: block; margin-bottom: 7px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--tl-green);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="the-line"] .tl-news-title {
+  font-family: "Geist", sans-serif; font-weight: 500;
+  font-size: 16px; line-height: 1.32; color: var(--tl-fg); margin: 0 0 8px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  transition: color 0.15s;
+}
+[data-theme="the-line"] .tl-news-time {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.03em; color: var(--tl-fg-4);
+}
+[data-theme="the-line"] .tl-news-thumb {
+  width: 84px; height: 84px; border-radius: var(--tl-radius); overflow: hidden;
+  background: linear-gradient(160deg, var(--tl-surface-2), var(--tl-bg-elev));
+  border: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-news-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 /* ========== Focus + selection ========== */
 [data-theme="the-line"] ::selection { background: var(--tl-green); color: var(--tl-bg); }
 [data-theme="the-line"] a:focus-visible,
@@ -2497,9 +2663,9 @@
   --tl-fg-2:       #3a3933;
   --tl-fg-3:       #6d6a62;
   --tl-fg-4:       #a5a299;
-  --tl-green:      #007e48;
-  --tl-green-dim:  #005a33;
-  --tl-green-glow: rgba(0, 126, 72, 0.12);
+  --tl-green:      #5e7d1f;  /* deep lime — bright lime is illegible on paper */
+  --tl-green-dim:  #4a6418;
+  --tl-green-glow: rgba(94, 125, 31, 0.14);
   --tl-live:       #d83428;
   --tl-gold:       #a37613;
 
@@ -2510,7 +2676,7 @@
   --card-foreground:     220 10% 3%;
   --popover:             42 20% 95%;
   --popover-foreground:  220 10% 3%;
-  --primary:             151 100% 25%;
+  --primary:             80 62% 28%;    /* deep lime, legible on light */
   --primary-foreground:  42 42% 98%;
   --secondary:           42 22% 91%;
   --secondary-foreground: 220 10% 3%;
@@ -2522,10 +2688,14 @@
   --destructive-foreground: 42 42% 98%;
   --border:              42 13% 82%;
   --input:               42 13% 82%;
-  --ring:                151 100% 25%;
+  --ring:                80 62% 28%;
   --live:                4 70% 50%;
   --surface:             42 20% 95%;
   --surface-elevated:    42 22% 91%;
+  /* glass-card parity — light */
+  --glass-bg:            hsl(42 30% 99% / 0.6);
+  --glass-border:        hsl(220 10% 3% / 0.08);
+  --glass-hover:         hsl(220 10% 3% / 0.04);
   --foreground-secondary: 42 10% 30%;
   --foreground-muted:    42 6% 50%;
 }

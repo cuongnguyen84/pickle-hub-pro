@@ -77,6 +77,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           "@type": "Organization",
           "@id": `${siteUrl}#org`,
           name: "ThePickleHub",
+          // Brand-entity consolidation: spaced/variant brand searches
+          // ("the pickle hub", "pickle hub") rank ~pos 9 on / because the
+          // entity name has no space. alternateName binds those variants to
+          // this entity so Google surfaces the homepage for the brand query.
+          alternateName: ["The Pickle Hub", "Pickle Hub", "Picklehub"],
           url: siteUrl,
           logo: DEFAULT_OG_IMAGE,
           description: "Editorial coverage of professional pickleball — PPA, APP, MLP, European Open, Asia Pacific Series. Bilingual Vietnamese-English. Headquartered in Ho Chi Minh City.",
@@ -160,6 +165,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           "@type": "Organization",
           "@id": `${siteUrl}#org`,
           name: "ThePickleHub",
+          // Brand-entity consolidation (see renderHome): bind spaced/variant
+          // brand searches to this entity so the homepage wins the brand query.
+          alternateName: ["The Pickle Hub", "Pickle Hub", "Picklehub"],
           url: siteUrl,
           logo: DEFAULT_OG_IMAGE,
           description: "Đưa tin pickleball chuyên nghiệp toàn cầu — PPA, APP, MLP, European Open, Asia Pacific Series. Song ngữ Việt-Anh. Trụ sở tại TP.HCM.",
@@ -1226,6 +1234,7 @@ const BLOG_POST_META: Record<string, {
   datePublished?: string;
   image?: string;
 }> = {
+  "ppa-beijing-open-2026-recap": { title: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold", description: "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026, beating Miyoshi/Stirling 11-9, 11-7. Full results, the road to the final, Vinh Hien's singles bronze, and the Ly Hoang Nam withdrawal.", datePublished: "2026-06-23", image: "/images/blog/ppa-beijing-open-2026-recap-hero.webp" },
   "pickleball-club-management-software-comparison": { title: "Best Pickleball Club Management Software in 2026 — Honest Comparison", description: "Compare the best pickleball club management software in 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark, Pickle Planner and more. Features, pricing, and a realistic low-cost stack for Vietnamese clubs.", datePublished: "2026-06-15" , image: "/images/blog/pickleball-club-management-software-comparison-hero.webp"},
   "pickleball-tournament-budget-calculator-guide": { title: "Pickleball Tournament Budget: Full Cost Breakdown, Templates & Free Calculator (2026)", description: "How much does it cost to run a pickleball tournament? Full 2026 cost breakdown in USD and VND, 3 ready budget templates, a break-even entry fee formula, and a free spreadsheet.", datePublished: "2026-06-13" , image: "/images/blog/pickleball-tournament-budget-calculator-guide-hero.webp"},
   "ppa-tour-asia-2026-recap": { title: "PPA Tour Asia 2026: Mid-Season Recap & Results So Far", description: "PPA Tour Asia 2026 recap: 3 of 10 stops done — Ly Hoang Nam's historic Hanoi title, Vietnam's Hien Truong winning in KL, Tama's Macao double, and the road to the $1.1M Hong Kong Slam.", datePublished: "2026-06-11", image: "/images/blog/ppa-tour-asia-2026-recap-hero.webp" },
@@ -1397,10 +1406,13 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   const p = post as any;
   const url = `${siteUrl}/vi/blog/${slug}`;
 
-  let extraMeta = "";
-  if (p.alternate_en_slug) {
-    extraMeta = `<link rel="alternate" hreflang="en" href="${siteUrl}/blog/${p.alternate_en_slug}"/>\n<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/blog/${p.alternate_en_slug}"/>`;
-  }
+  // VI-first posts (no EN counterpart) still need a self-referencing hreflang
+  // set, mirroring the EN-side fallback in renderBlogPost. Without it, VI-first
+  // pages (/vi/blog/san-pickleball-tphcm, .../san-pickleball-da-nang) emitted
+  // canonical only (zero hreflang), flagged 2026-07-01.
+  let extraMeta = p.alternate_en_slug
+    ? `<link rel="alternate" hreflang="en" href="${siteUrl}/blog/${p.alternate_en_slug}"/>\n<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/blog/${p.alternate_en_slug}"/>`
+    : `<link rel="alternate" hreflang="vi" href="${url}"/>\n<link rel="alternate" hreflang="x-default" href="${url}"/>`;
 
   const articleSchema = {
     "@context": "https://schema.org",

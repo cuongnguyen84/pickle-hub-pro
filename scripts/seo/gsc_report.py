@@ -42,11 +42,12 @@ except ImportError:
 
 SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
 SA_JSON = os.environ.get("GOOGLE_SA_JSON", ".claude/secrets.local.gsc-ga4-sa.json")
-# Default to the URL-prefix property. The service account is granted access
-# on the URL-prefix property only; the sc-domain property returns 403
-# ("User does not have sufficient permission"). Override via GSC_SITE once the
-# SA email is added to the Domain property in GSC > Settings > Users.
-SITE = os.environ.get("GSC_SITE", "https://www.thepicklehub.net/")
+# Default to the Domain property (covers www + non-www + all subdomains).
+# The service account (firebase-adminsdk-fbsvc@thepicklehub-dee20.iam
+# .gserviceaccount.com) was granted Full access on 2026-06-16, so sc-domain
+# no longer 403s. Override with GSC_SITE="https://www.thepicklehub.net/" to
+# query the URL-prefix property instead.
+SITE = os.environ.get("GSC_SITE", "sc-domain:thepicklehub.net")
 
 
 def token():
@@ -91,6 +92,27 @@ def totals(rows):
     return {
         "clicks": round(sum(x.get("clicks", 0) for x in rows)),
         "impressions": round(sum(x.get("impressions", 0) for x in rows)),
+    }
+
+
+def site_totals(tok, start, end):
+    """True property-wide totals (no dimension split).
+
+    GSC returns a single aggregate row when ``dimensions`` is empty. This is
+    the apples-to-apples figure shown in the GSC Performance UI. We use it for
+    the headline totals + WoW so the comparison is NOT skewed by row-limit
+    asymmetry (previously: top-25 current queries vs top-1000 previous, which
+    made impressions look like they collapsed when the property was growing).
+    """
+    rows = query(tok, start, end, [], row_limit=1)
+    if not rows:
+        return {"clicks": 0, "impressions": 0, "ctr": 0.0, "position": 0.0}
+    r = rows[0]
+    return {
+        "clicks": round(r.get("clicks", 0)),
+        "impressions": round(r.get("impressions", 0)),
+        "ctr": round(r.get("ctr", 0) * 100, 2),
+        "position": round(r.get("position", 0), 1),
     }
 
 
@@ -151,17 +173,23 @@ def main():
             })
         return out
 
+    # Property-wide totals (no dimension) — the accurate WoW basis.
+    cur_totals = site_totals(tok, iso(cur_start), iso(cur_end))
+    prev_totals = site_totals(tok, iso(prev_start), iso(prev_end))
+
     report = {
         "site": SITE,
         "window": {"current": [iso(cur_start), iso(cur_end)],
                    "previous": [iso(prev_start), iso(prev_end)]},
         "totals": {
-            "current": totals(cur_q),
-            "previous": totals(prev_q),
+            "current": cur_totals,
+            "previous": prev_totals,
         },
         "wow_pct": {
-            "clicks": pct(totals(cur_q)["clicks"], totals(prev_q)["clicks"]),
-            "impressions": pct(totals(cur_q)["impressions"], totals(prev_q)["impressions"]),
+            "clicks": pct(cur_totals["clicks"], prev_totals["clicks"]),
+            "impressions": pct(cur_totals["impressions"], prev_totals["impressions"]),
+            # Position: lower is better, so report the absolute delta (negative = improved).
+            "position_delta": round(cur_totals["position"] - prev_totals["position"], 1),
         },
         "top_queries": fmt(cur_q, "query"),
         "top_pages": fmt(cur_p, "page"),

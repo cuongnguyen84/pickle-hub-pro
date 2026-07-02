@@ -18,7 +18,7 @@ Website: https://www.thepicklehub.net
 - **Push:** Firebase Cloud Messaging (FCM via Capacitor)
 - **Email:** Resend
 - **AI translation:** Google Gemini (EN → VI for news)
-- **Analytics:** GA4, Google Search Console, Ahrefs Webmaster Tools
+- **Analytics:** GA4, Google Search Console (read via Chrome when needed). _Ahrefs is NOT used — no paid plan (API returns "Insufficient plan"); do not call Ahrefs MCP tools._
 
 ## Commands
 
@@ -85,7 +85,7 @@ The legacy `prerender-worker` Cloudflare Worker is still active and **MUST be pr
 Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` referencing segment sitemaps:
 
 - `sitemap-static.xml`, `sitemap-blog.xml`, `sitemap-tournaments.xml`, `sitemap-matches.xml`, `sitemap-events.xml`, `sitemap-news.xml`
-- `sitemap-players.xml` and `sitemap-venues.xml` exist but are **currently disabled** in the index (see comments in `sitemap.xml.ts` re Ahrefs orphan URL fixes — re-enable when directory pages ship)
+- `sitemap-players.xml` and `sitemap-venues.xml` exist but are **currently disabled** in the index (see comments in `sitemap.xml.ts` re past orphan-URL audit — re-enable when directory pages ship)
 
 All segments support `xhtml:link` hreflang (en, vi, x-default).
 

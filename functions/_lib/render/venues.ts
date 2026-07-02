@@ -152,6 +152,8 @@ export async function renderVenuesList(
     `<li><a href="${siteUrl}/clubs">${lang === "vi" ? "Câu lạc bộ" : "Clubs"}</a></li>`,
     `<li><a href="${siteUrl}/social">${lang === "vi" ? "Sự kiện cộng đồng" : "Community events"}</a></li>`,
     `<li><a href="${siteUrl}/tournaments">${lang === "vi" ? "Giải đấu" : "Tournaments"}</a></li>`,
+    `<li><a href="${lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`}">${lang === "vi" ? "Blog & mẹo chơi" : "Blog & tips"}</a></li>`,
+    `<li><a href="${lang === "vi" ? `${siteUrl}/vi/news` : `${siteUrl}/news`}">${lang === "vi" ? "Tin tức pickleball" : "Pickleball news"}</a></li>`,
   ].join("");
 
   const emptyMsg = lang === "vi" ? "Chưa có sân nào." : "No courts yet.";
@@ -229,15 +231,43 @@ export async function renderVenueDetail(
   const indoorVi = v.is_indoor == null ? "" : v.is_indoor ? "trong nhà" : "ngoài trời";
   const indoorEn = v.is_indoor == null ? "" : v.is_indoor ? "indoor" : "outdoor";
 
-  const title = buildTitle(name, lang === "vi" ? " | Sân Pickleball · ThePickleHub" : " | Pickleball Court · ThePickleHub");
+  // CTR: front-load the local keyword ("sân pickleball <city>") in the title
+  // when it fits in 60 chars without dropping the brand suffix. buildTitle
+  // returns the bare name (no brand) once name+suffix exceeds 60, so we only
+  // use the longer city suffix when the total still fits; otherwise we keep
+  // the short suffix. Guard against duplicating the city if it's in the name.
+  const cityName = v.city ? v.city.trim() : "";
+  const cityInName = cityName ? name.toLowerCase().includes(cityName.toLowerCase()) : false;
+  const longSuffix =
+    lang === "vi"
+      ? ` | Sân Pickleball ${cityName} · ThePickleHub`
+      : ` | Pickleball Court in ${cityName} · ThePickleHub`;
+  const shortSuffix = lang === "vi" ? " | Sân Pickleball · ThePickleHub" : " | Pickleball Court · ThePickleHub";
+  const brandSuffix = " · ThePickleHub";
+  // Pick the most descriptive suffix that still fits in 60 chars WITH the
+  // brand. buildTitle drops the suffix entirely once name+suffix exceeds 60,
+  // so without this tiering medium-length names would lose the brand; the
+  // brand-only fallback keeps "· ThePickleHub" for names up to ~45 chars.
+  const suffixTiers = [
+    ...(cityName && !cityInName ? [longSuffix] : []),
+    shortSuffix,
+    brandSuffix,
+  ];
+  const suffix = suffixTiers.find((s) => (name + s).length <= 60) ?? brandSuffix;
+  const title = buildTitle(name, suffix);
+
+  // CTR: lead the description with the concrete, search-intent facts (name,
+  // city, court count, indoor/outdoor) then a clear next step. Address is
+  // dropped from the snippet (often long → mid-word truncation at 160) and
+  // surfaced in the body instead; the city keyword carries the local intent.
   const fallbackDescVi =
-    `Sân pickleball ${name}${addr ? ` tại ${addr}` : ""}` +
+    `Sân pickleball ${name}${cityName ? ` tại ${cityName}` : ""}` +
     `${courtsVi ? ` — ${courtsVi}` : ""}${indoorVi ? `, ${indoorVi}` : ""}.` +
-    " Xem địa chỉ, giờ mở cửa và chỉ đường trên ThePickleHub.";
+    ` Địa chỉ, bản đồ, chỉ đường & các sân pickleball${cityName ? ` ở ${cityName}` : " gần bạn"} trên ThePickleHub.`;
   const fallbackDescEn =
-    `${name} pickleball court${addr ? ` at ${addr}` : ""}` +
+    `${name} pickleball court${cityName ? ` in ${cityName}` : ""}` +
     `${courtsEn ? ` — ${courtsEn}` : ""}${indoorEn ? `, ${indoorEn}` : ""}.` +
-    " Address, hours and directions on ThePickleHub.";
+    ` Address, map, directions & other pickleball courts${cityName ? ` in ${cityName}` : " near you"} on ThePickleHub.`;
   const description = pickMetaDescription(null, lang === "vi" ? fallbackDescVi : fallbackDescEn);
 
   const jsonLd: Record<string, unknown> = {
@@ -337,6 +367,19 @@ export async function renderVenueDetail(
       parts.push(`<p><a href="${siteUrl}/san/khu-vuc/${citySlug}">${escapeHtml(allLabel)} →</a></p>`);
     }
   }
+
+  // Distribute crawl + authority from high-impression venue pages into the
+  // editorial surfaces (blog/news), and give visitors a next step beyond the
+  // directory. Blog/news have localized /vi routes, so link the matching lang.
+  const blogHref = lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`;
+  const newsHref = lang === "vi" ? `${siteUrl}/vi/news` : `${siteUrl}/news`;
+  const tipsHeading = lang === "vi" ? "Mẹo chơi & tin tức" : "Tips & news";
+  parts.push(
+    `<nav><h2>${escapeHtml(tipsHeading)}</h2><ul>` +
+      `<li><a href="${blogHref}">${escapeHtml(lang === "vi" ? "Blog & hướng dẫn pickleball" : "Pickleball blog & guides")}</a></li>` +
+      `<li><a href="${newsHref}">${escapeHtml(lang === "vi" ? "Tin tức pickleball mới nhất" : "Latest pickleball news")}</a></li>` +
+      `</ul></nav>`,
+  );
 
   return htmlResponse(
     buildHtml({
@@ -563,6 +606,8 @@ export async function renderVenuesCity(
     `<li><a href="${siteUrl}/san">${escapeHtml(allLabel)}</a></li>`,
     `<li><a href="${siteUrl}/clubs">${lang === "vi" ? "Câu lạc bộ" : "Clubs"}</a></li>`,
     `<li><a href="${siteUrl}/social">${lang === "vi" ? "Sự kiện cộng đồng" : "Community events"}</a></li>`,
+    `<li><a href="${lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`}">${lang === "vi" ? "Blog & mẹo chơi" : "Blog & tips"}</a></li>`,
+    `<li><a href="${lang === "vi" ? `${siteUrl}/vi/news` : `${siteUrl}/news`}">${lang === "vi" ? "Tin tức pickleball" : "Pickleball news"}</a></li>`,
   ].join("");
 
   const bodyContent =

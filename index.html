@@ -1,7 +1,13 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" data-theme="the-line">
   <head>
     <meta charset="UTF-8" />
+    <!-- Single-theme: The Line is the app-wide theme (set here so it applies from
+         first paint, no FOUC). Restore the saved light/dark mode before render so
+         light-mode users don't flash dark. See docs/theline-migration-plan.md. -->
+    <script>
+      try { if (localStorage.getItem('tl-theme-mode') === 'light') document.documentElement.setAttribute('data-mode', 'light'); } catch (e) {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content" />
     
     <!-- Google tag (gtag.js) -->

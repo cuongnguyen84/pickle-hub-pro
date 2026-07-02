@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,11 @@ import {
   Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+// Single-theme migration (P3): load The Line rules on creator pages. Without
+// this import the the-line.css chunk only ships with TheLineLayout, so the
+// data-theme pin below would match nothing and creator would fall back to the
+// default teal palette. See docs/theline-migration-plan.md.
+import "@/styles/the-line.css";
 
 interface CreatorLayoutProps {
   children: ReactNode;
@@ -39,6 +44,27 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Single-theme migration (P3): creator runs on The Line. Pinning data-theme
+  // on <html> remaps the shadcn base tokens (defined under
+  // :root[data-theme="the-line"] in the-line.css), so the shell, shadcn
+  // components, and portaled dialogs recolor to The Line. Mirrors AdminLayout /
+  // TheLineLayout pin + restore and reuses the "tl-theme-mode" preference.
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevTheme = root.getAttribute("data-theme");
+    const prevMode = root.getAttribute("data-mode");
+    root.setAttribute("data-theme", "the-line");
+    const stored = typeof window !== "undefined" ? localStorage.getItem("tl-theme-mode") : null;
+    if (stored === "light") root.setAttribute("data-mode", "light");
+    else root.removeAttribute("data-mode");
+    return () => {
+      if (prevTheme) root.setAttribute("data-theme", prevTheme);
+      else root.removeAttribute("data-theme");
+      if (prevMode) root.setAttribute("data-mode", prevMode);
+      else root.removeAttribute("data-mode");
+    };
+  }, []);
 
   const isIOSDevice = isIOS();
   const isAndroidDevice = isAndroid();
