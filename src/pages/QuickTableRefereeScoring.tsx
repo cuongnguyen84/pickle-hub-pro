@@ -71,7 +71,7 @@ export default function QuickTableRefereeScoring() {
     if (note) {
       try { await supabase.from('quick_table_matches').update({ referee_note: note } as never).eq('id', matchId); } catch { /* best-effort */ }
     }
-    navigate(`/tools/quick-tables/${shareId}?tab=groups`);
+    navigate(`/tools/quick-tables/${shareId}?tab=${isPlayoff ? 'playoff' : 'groups'}`);
   }, [matchId, navigate, updateMatchScore, updatePlayerStats]);
 
   if (error) return <RefereeCentered>{error}</RefereeCentered>;
