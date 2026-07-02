@@ -145,7 +145,10 @@ export interface DuprPlayer {{
   rating: number | null;
 }}
 
-export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> = '''
+export const DUPR_RANKINGS: Record<
+  Exclude<DuprScope, "vietnam">,
+  Record<Exclude<DuprFormat, "singles" | "doubles">, DuprPlayer[]>
+> = '''
 
     footer = f'''
 
