@@ -167,12 +167,17 @@ const QuickTableView = () => {
                 }
               }
             }
+          } else if (allCompleted && roundMatches.length === 1 && maxRound > 0) {
+            // Chung kết chấm qua trang trọng tài chỉ lưu tỉ số — tự chốt giải khi load lại.
+            await updateTableStatus(data.table.id, 'completed');
+            setTable({ ...data.table, status: 'completed' });
+            toast.success(t.quickTable.view.tournamentCompleted);
           }
         }
       }
     }
     setLoading(false);
-  }, [shareId, user, t, getTableByShareId, getUserTeam, getPendingCount, getUserRegistration, createNextPlayoffRound]);
+  }, [shareId, user, t, getTableByShareId, getUserTeam, getPendingCount, getUserRegistration, createNextPlayoffRound, updateTableStatus]);
 
   useEffect(() => { loadData(); }, [loadData]);
 

@@ -374,7 +374,7 @@ const BracketMatchCard = ({
   }, []);
 
   const handleOpenScoring = () => {
-    navigate(`/matches/${match.id}/score`);
+    navigate(`/tools/quick-tables/referee/${match.id}`);
   };
 
   // ─── Token-driven styles ────────────────────────────────────────────────
