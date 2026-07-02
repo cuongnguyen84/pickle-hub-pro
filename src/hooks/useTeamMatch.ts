@@ -66,6 +66,10 @@ export interface CreateTournamentInput {
   require_min_games_per_player: boolean;
   has_third_place_match?: boolean;
   bracket_pairing_type?: 'random' | 'manual';
+  // Ràng buộc DUPR (RPC không nhận → UPDATE sau create).
+  require_dupr?: boolean;
+  dupr_max_male?: number;
+  dupr_max_female?: number;
   // Chấm theo tổng điểm (RPC không nhận 2 cột này → UPDATE sau create).
   total_score_mode?: boolean;
   points_per_game?: number;
@@ -232,6 +236,11 @@ export function useTeamMatch() {
       const rules = (input.rules_summary ?? '').trim();
       const hasFee = (input.entry_fee_vnd ?? 0) > 0 || (input.entry_fee_team_vnd ?? 0) > 0;
       const extra: Record<string, unknown> = {};
+      if (input.require_dupr) {
+        extra.require_dupr = true;
+        extra.dupr_max_male = input.dupr_max_male ?? 5.0;
+        extra.dupr_max_female = input.dupr_max_female ?? 4.5;
+      }
       if (input.total_score_mode) {
         extra.total_score_mode = true;
         extra.points_per_game = input.points_per_game ?? 7;

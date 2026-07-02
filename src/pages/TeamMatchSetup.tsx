@@ -129,6 +129,10 @@ export default function TeamMatchSetup() {
   const [teamCount, setTeamCount] = useState(4);
   const [requireRegistration, setRequireRegistration] = useState(false);
   const [requireMinGames, setRequireMinGames] = useState(false);
+  // Ràng buộc DUPR khi yêu cầu đăng ký — điểm DUPR tối đa theo giới tính (native parity).
+  const [useDupr, setUseDupr] = useState(false);
+  const [duprMaxMale, setDuprMaxMale] = useState(5.0);
+  const [duprMaxFemale, setDuprMaxFemale] = useState(4.5);
 
   const [templates, setTemplates] = useState<GameTemplateItem[]>(() => getDefaultTemplates(4));
 
@@ -214,6 +218,9 @@ export default function TeamMatchSetup() {
       format,
       playoff_team_count: format === 'rr_playoff' ? playoffTeamCount : undefined,
       require_registration: requireRegistration,
+      require_dupr: requireRegistration && useDupr,
+      dupr_max_male: duprMaxMale,
+      dupr_max_female: duprMaxFemale,
       has_dreambreaker: effectiveDreambreaker,
       require_min_games_per_player: requireMinGames,
       has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
@@ -538,6 +545,67 @@ export default function TeamMatchSetup() {
                     onCheckedChange={setRequireRegistration}
                   />
                 </div>
+
+                {requireRegistration && (
+                  <>
+                    <div style={toggleRowStyle}>
+                      <div>
+                        <Label>{language === 'vi' ? 'Sử dụng DUPR' : 'Use DUPR'}</Label>
+                        <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                          {language === 'vi'
+                            ? 'Giới hạn điểm DUPR tối đa khi đăng ký'
+                            : 'Cap max DUPR rating at registration'}
+                        </p>
+                      </div>
+                      <Switch checked={useDupr} onCheckedChange={setUseDupr} />
+                    </div>
+
+                    {useDupr && (
+                      <div
+                        style={{
+                          paddingLeft: 16,
+                          borderLeft: '2px solid var(--tl-green)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 14,
+                        }}
+                      >
+                        <div className="space-y-2">
+                          <Label htmlFor="duprMaxMale">
+                            {language === 'vi' ? 'DUPR tối đa — Nam' : 'Max DUPR — Male'}
+                          </Label>
+                          <Input
+                            id="duprMaxMale"
+                            type="number"
+                            min={2}
+                            max={8}
+                            step={0.25}
+                            value={duprMaxMale}
+                            onChange={(e) =>
+                              setDuprMaxMale(Math.min(8, Math.max(2, Number(e.target.value) || 2)))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="duprMaxFemale">
+                            {language === 'vi' ? 'DUPR tối đa — Nữ' : 'Max DUPR — Female'}
+                          </Label>
+                          <Input
+                            id="duprMaxFemale"
+                            type="number"
+                            min={2}
+                            max={8}
+                            step={0.25}
+                            value={duprMaxFemale}
+                            onChange={(e) =>
+                              setDuprMaxFemale(Math.min(8, Math.max(2, Number(e.target.value) || 2)))
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div style={toggleRowStyle}>
                   <div>
