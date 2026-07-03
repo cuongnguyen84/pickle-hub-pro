@@ -45,4 +45,55 @@ struct VenueRepository {
     }
 
     func currentUserID() async -> UUID? { try? await client.auth.session.user.id }
+
+    /// All venues in a city (web `/san/khu-vuc/:city`), verified/most-courts first.
+    func byCity(_ city: String, limit: Int = 500) async throws -> [VenueListItem] {
+        try await client.from("venues").select(Self.listColumns)
+            .eq("city", value: city)
+            .order("is_verified", ascending: false)
+            .order("num_courts", ascending: false)
+            .order("updated_at", ascending: false)
+            .limit(limit).execute().value
+    }
+
+    // MARK: Submit (web /san/them — auth insert, is_verified=false pending review)
+
+    private func slugTaken(_ slug: String) async -> Bool {
+        struct Row: Decodable { let id: UUID }
+        let rows: [Row]? = try? await client.from("venues")
+            .select("id").eq("slug", value: slug).limit(1).execute().value
+        return !(rows?.isEmpty ?? true)
+    }
+    private func resolveUniqueSlug(_ base: String) async -> String {
+        if !(await slugTaken(base)) { return base }
+        for i in 2...10 { let c = "\(base)-\(i)"; if !(await slugTaken(c)) { return c } }
+        return "\(base)-\(UUID().uuidString.prefix(4).lowercased())"
+    }
+
+    private struct VenueInsert: Encodable {
+        let slug: String; let name: String; let address: String; let district: String?
+        let city: String; let country = "VN"; let num_courts: Int?; let surface_type: String?
+        let is_indoor: Bool; let phone: String?; let website: String?
+        let is_verified = false; let created_by: String
+    }
+
+    /// Insert a community-submitted venue; returns the resolved slug. Pending
+    /// admin review (is_verified=false). Mirrors web VenueSubmit.
+    func submitVenue(name: String, address: String, district: String?, city: String,
+                     numCourts: Int?, surface: String?, isIndoor: Bool,
+                     phone: String?, website: String?) async throws -> String {
+        guard let uid = await currentUserID() else {
+            throw NSError(domain: "venue", code: 401, userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập"])
+        }
+        let base = clubSlugify("\(name) \(city)")
+        let slug = await resolveUniqueSlug(base)
+        try await client.from("venues").insert(VenueInsert(
+            slug: slug, name: name.trimmingCharacters(in: .whitespaces),
+            address: address.trimmingCharacters(in: .whitespaces), district: district?.nonEmpty,
+            city: city.trimmingCharacters(in: .whitespaces), num_courts: numCourts,
+            surface_type: surface?.nonEmpty, is_indoor: isIndoor,
+            phone: phone?.nonEmpty, website: website?.nonEmpty,
+            created_by: uid.uuidString.lowercased())).execute()
+        return slug
+    }
 }
