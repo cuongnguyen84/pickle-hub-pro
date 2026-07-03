@@ -194,6 +194,53 @@ Ký hiệu: ✅ = kết quả mong đợi · ⚠️ = ca biên cần kiểm.
 
 ---
 
+## 12. Sự kiện giao lưu — BTC (organizer) `[chủ sở hữu]`
+
+**Đường vào:** tab **Social** → **Xé vé** → mở sự kiện **mình tạo** (hoặc admin/quản lý CLB). Dưới nút Đăng ký sẽ thấy section **BAN TỔ CHỨC** với 4 dòng: Danh sách đăng ký / Xếp cặp / Điều hành trực tiếp / Sửa-huỷ sự kiện.
+- ⚠️ Mở sự kiện của người khác (không phải admin): section BTC **không hiện**.
+
+12.1 **Tạo sự kiện (từ CLB)**
+- Đường vào: Social → **CLB** → CLB mình quản lý → **Quản trị** → **"Mở buổi chơi (sự kiện)"**.
+- ✅ Form native: tên, mô tả, ngày + giờ bắt đầu/kết thúc, địa điểm, số sân, tối đa (bước 2), hiển thị (Công khai/Chỉ CLB), Zalo, loại bóng, giá vé.
+- ✅ Giá > 0 → hiện mục ngân hàng (menu 20 bank), STK, tên chủ TK, toggle bắt buộc trả trước + hạn giờ. Thiếu bank/STK → nút mờ.
+- ✅ **Đăng sự kiện** → đóng sheet, sự kiện hiện trong section SỰ KIỆN của màn Quản trị + tab Xé vé (nếu công khai). **Lưu nháp** → badge NHÁP, không hiện công khai.
+- ⚠️ Tên trùng sự kiện cũ → slug tự thêm hậu tố, vẫn tạo được.
+
+12.2 **Danh sách đăng ký (roster BTC)**
+- ✅ 3 ô thống kê: Đăng ký / Đã trả (chỉ sự kiện trả phí) / Check-in.
+- ✅ Mỗi dòng: tên, SĐT, trình độ, chip trạng thái + chip thanh toán (sự kiện trả phí: "Báo đã CK" cam khi người chơi claim, "Đã trả" xanh khi BTC xác nhận).
+- ✅ Menu ⋯ từng dòng: **Check-in/Bỏ check-in**, **Đã trả/Chưa trả**, **Ghi chú** (sheet), **Vắng mặt** (confirm), **Xoá đăng ký** (confirm → biến khỏi danh sách).
+- ✅ Nút **+ người** (toolbar) → thêm tay: tên (bắt buộc), SĐT/trình độ tuỳ chọn, trạng thái thanh toán ban đầu (sự kiện trả phí), ghi chú nội bộ → **Thêm** → hiện **link /dang-ky/…** + nút copy; dòng mới có badge "BTC thêm".
+- ⚠️ Kéo xuống để refresh.
+
+12.3 **Xếp cặp (Mexicano / Vòng tròn)**
+- ✅ Chọn người chơi (Tất cả/Bỏ chọn; người đã check-in có dấu ✓ xanh; người vắng mặt không hiện). < 4 người → nút Sinh lịch mờ.
+- ✅ Số vòng + số sân (mặc định = số sân sự kiện). Số người không chia hết 4 → cảnh báo "ngồi ngoài luân phiên".
+- ✅ Mexicano có toggle **"Ưu tiên cân bằng theo DUPR"**: ≥75% người chơi có DUPR → mỗi vòng hiện "cân bằng XX%"; dưới 75% → banner cam "đã ghép ngẫu nhiên".
+- ✅ **Sinh lịch** → lịch theo vòng (Sân N: A & B vs C & D + Ngồi ngoài). Nút copy 📋 → text dán được vào Zalo.
+- ✅ **Lưu vào sự kiện** → nếu đã có lịch cũ → hỏi **ghi đè** (tỉ số cũ mất). Lưu xong hiện banner "lịch đã lưu".
+- ✅ Thoát ra vào lại → tự khôi phục lịch đã lưu + tự chọn sẵn người trong lịch.
+- ⚠️ Người chơi thêm tay chưa có hồ sơ (profile) → báo lỗi tên cụ thể khi lưu, không lưu lịch thiếu FK.
+
+12.4 **Điều hành trực tiếp (live)**
+- ✅ Chưa lưu lịch → empty state "vào Xếp cặp trước".
+- ✅ Dải chip: N đang đấu / N chờ / N xong.
+- ✅ **TIẾP THEO**: trận scheduled đầu tiên + nút **Bắt đầu trận** → chuyển thành card LIVE ở **ĐANG DIỄN RA**.
+- ✅ Card LIVE: 2 ô nhập điểm to (tên đội trên mỗi ô) + **Chốt tỉ số (BTC)** → trận thành completed, BXH cập nhật. Nhập thiếu điểm → nút mờ.
+- ✅ **BẢNG XẾP HẠNG**: đủ mọi người trong lịch (0-0 nếu chưa đấu), cột T/B/+− (điểm hiệu xanh khi dương, đỏ khi âm), top 8 + "Xem tất cả".
+- ⚠️ Màn tự refresh mỗi 5s: sửa tỉ số từ web (trang /live) → native tự cập nhật trong ~5s.
+
+12.5 **Sửa / huỷ sự kiện**
+- ✅ Form prefill đủ trường; **Lưu thay đổi** → "Đã lưu", mở web trang sự kiện thấy thay đổi.
+- ✅ Sự kiện trả phí đã có người báo CK → ô giá **khoá** + cảnh báo cam.
+- ✅ Không giảm "Tối đa" dưới số đăng ký hiện có (nút Lưu mờ).
+- ✅ Sự kiện đã bắt đầu hoặc đã huỷ → form chỉ xem (banner cam), không có nút Lưu/Huỷ.
+- ✅ **Huỷ sự kiện…** → sheet đỏ: phải **gõ đúng tên sự kiện** mới bật nút; lý do tuỳ chọn → huỷ xong quay lại, sự kiện badge ĐÃ HUỶ, toàn bộ đăng ký bị huỷ.
+
+**Lưu ý:** nhóm đăng ký (slots), ưu đãi (free perks), lặp hàng tuần, người chơi tự chấm điểm (magic-token) **chưa có native** — vẫn dùng web.
+
+---
+
 ## Ghi chú
-- Các phần **CHƯA** có (đừng test): event organizer/xếp cặp/live của social event, Tournament Dashboard, luồng đăng ký magic-link/khôi phục/join, đổi mật khẩu/email, mời thành viên CLB bằng tìm kiếm.
+- Các phần **CHƯA** có (đừng test): Tournament Dashboard, luồng đăng ký magic-link/khôi phục/join, đổi mật khẩu/email, mời thành viên CLB bằng tìm kiếm; social event: slots/perks/lặp tuần/người chơi tự chấm (xem 12).
 - Nếu thấy lỗi: chụp màn + ghi bước tái hiện.
