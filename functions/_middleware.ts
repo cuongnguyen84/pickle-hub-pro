@@ -135,13 +135,17 @@ const SECURITY_HEADERS: Record<string, string> = {
     // AdSense domains (pagead2/tpc googlesyndication, doubleclick, adtrafficquality)
     // added 2026-06-10: the AdSense loader was being blocked by CSP — ads never
     // loaded in production and every page logged a console CSP violation.
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google; " +
+    // Funding Choices CMP host (fundingchoicesmessages.google.com) added
+    // 2026-07-03: the AdSense consent/messaging loader was still CSP-blocked
+    // (34 csp_violation reports / 7d in client_errors). Google requires it in
+    // script-src + frame-src. Kept in sync with public/_headers.
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
     "media-src 'self' data: blob: https:; " +
     "connect-src 'self' https: wss:; " +
-    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google; " +
+    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com; " +
     "worker-src 'self' blob:; " +
     "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; " +
     "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
