@@ -39,6 +39,9 @@ struct ProfileView: View {
 
                 case .loaded(let profile):
                     RatingCardView(profile: profile, isOwn: true)
+                    NavigationLink { OnboardingView(profile: profile) { Task { await model.load() } } } label: {
+                        onboardingRowLabel(profile)
+                    }.buttonStyle(.plain)
                     communitySection
                     accountSettingsLink(profile)
                     themePicker
@@ -65,6 +68,27 @@ struct ProfileView: View {
         .navigationTitle("Hồ sơ")
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.load() }
+    }
+
+    /// "Thiết lập hồ sơ" — prompts profile completion (username/skill) when the
+    /// user has no username yet, else offers to edit it.
+    private func onboardingRowLabel(_ profile: Profile) -> some View {
+        let needs = (profile.username?.nonEmpty == nil)
+        return HStack(spacing: 12) {
+            Image(systemName: needs ? "sparkles" : "person.text.rectangle")
+                .font(.system(size: 15)).foregroundStyle(TLColor.accentText).frame(width: 22)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(needs ? "Hoàn tất hồ sơ" : "Thiết lập hồ sơ").font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg)
+                if needs {
+                    Text("Đặt username + trình độ").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(TLColor.fg3)
+        }
+        .padding(14)
+        .background((needs ? TLColor.accent.opacity(0.06) : TLColor.surface), in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(needs ? TLColor.accent.opacity(0.4) : TLColor.border, lineWidth: 1))
     }
 
     private var communitySection: some View {
