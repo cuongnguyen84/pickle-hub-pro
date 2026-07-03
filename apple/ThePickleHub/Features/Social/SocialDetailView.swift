@@ -10,7 +10,9 @@ struct SocialDetailView: View {
     @State private var matches: [ClubMatch] = []
     @State private var roster: [SocialRosterEntry] = []
     @State private var showAllRoster = false
+    @State private var canManage = false
     private let repo = SocialRepository()
+    private let organizerRepo = SocialOrganizerRepository()
 
     var body: some View {
         ScrollView {
@@ -26,6 +28,7 @@ struct SocialDetailView: View {
                         .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
                 }
                 actions
+                if canManage { organizerSection }
                 if !matches.isEmpty { matchesSection }
                 if !roster.isEmpty { rosterSection }
             }
@@ -38,6 +41,7 @@ struct SocialDetailView: View {
             registeredCount = try? await repo.registrationCount(eventID: event.id)
             matches = await repo.matches(eventID: event.id)
             roster = await repo.roster(eventID: event.id)
+            canManage = await organizerRepo.canManage(event: event)
         }
         .sheet(isPresented: $showRegister) {
             SafariView(url: WebRoutes.social(slug: event.slug)).ignoresSafeArea()
@@ -120,6 +124,46 @@ struct SocialDetailView: View {
                 }
             }
         }
+    }
+
+    // MARK: Organizer (BTC) — port web /danh-sach, /xep-cap, /live, /sua
+
+    private var organizerSection: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            sectionHeader("BAN TỔ CHỨC")
+            VStack(spacing: 0) {
+                organizerRow(icon: "list.clipboard", title: "Danh sách đăng ký") {
+                    SocialRosterManageView(event: event)
+                }
+                Rectangle().fill(TLColor.border).frame(height: 1)
+                organizerRow(icon: "person.2.badge.gearshape", title: "Xếp cặp (Mexicano / Vòng tròn)") {
+                    SocialMatchmakingView(event: event)
+                }
+                Rectangle().fill(TLColor.border).frame(height: 1)
+                organizerRow(icon: "dot.radiowaves.left.and.right", title: "Điều hành trực tiếp") {
+                    SocialLiveView(event: event)
+                }
+                Rectangle().fill(TLColor.border).frame(height: 1)
+                organizerRow(icon: "slider.horizontal.3", title: "Sửa / huỷ sự kiện") {
+                    EditSocialEventView(event: event)
+                }
+            }
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(TLColor.border, lineWidth: 1))
+        }
+    }
+
+    private func organizerRow<Dest: View>(icon: String, title: String, @ViewBuilder destination: @escaping () -> Dest) -> some View {
+        NavigationLink { destination() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: icon).font(.system(size: 14)).foregroundStyle(TLColor.accentText).frame(width: 22)
+                Text(title).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(TLColor.fg4)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Matches in the session (read — scores prominent + DUPR badge)

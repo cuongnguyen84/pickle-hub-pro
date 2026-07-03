@@ -19,6 +19,12 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     let ballType: String?
     let freePerks: [String]?
     let status: String?
+    // Organizer-side (nullable để list công khai cũ không vỡ khi thiếu cột)
+    let createdBy: UUID?
+    let clubID: UUID?
+    let visibility: String?
+    let requiresPrepayment: Bool?
+    let prepaymentDeadlineHours: Int?
 
     var title: String { titleVi.nonEmpty ?? titleEn?.nonEmpty ?? "Sự kiện" }
 
@@ -67,6 +73,11 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
         case zaloGroupURL = "zalo_group_url"
         case ballType = "ball_type"
         case freePerks = "free_perks"
+        case createdBy = "created_by"
+        case clubID = "club_id"
+        case visibility
+        case requiresPrepayment = "requires_prepayment"
+        case prepaymentDeadlineHours = "prepayment_deadline_hours"
     }
 }
 
