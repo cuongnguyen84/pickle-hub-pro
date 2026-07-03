@@ -6,9 +6,11 @@ import PhotosUI
 @Observable
 final class ClubManageModel {
     var members: [ClubMember] = []
+    var events: [SocialEvent] = []
     var loaded = false
     var busyID: UUID?
     private let repo = ClubRepository()
+    private let organizerRepo = SocialOrganizerRepository()
     let club: Club
     init(club: Club) { self.club = club }
 
@@ -17,6 +19,7 @@ final class ClubManageModel {
 
     @MainActor func load() async {
         members = await repo.members(clubID: club.id)
+        events = await organizerRepo.clubEvents(clubID: club.id)
         loaded = true
     }
     @MainActor func approve(_ m: ClubMember) async {
@@ -37,6 +40,7 @@ final class ClubManageModel {
 struct ClubManageView: View {
     let club: Club
     @State private var model: ClubManageModel
+    @State private var showCreateEvent = false
 
     init(club: Club) { self.club = club; _model = State(initialValue: ClubManageModel(club: club)) }
 
@@ -55,9 +59,26 @@ struct ClubManageView: View {
                     .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
                 }.buttonStyle(.plain)
 
+                Button { showCreateEvent = true } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "calendar.badge.plus").font(.system(size: 15)).foregroundStyle(TLColor.accentText).frame(width: 22)
+                        Text("Mở buổi chơi (sự kiện)").font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg)
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(TLColor.fg3)
+                    }
+                    .padding(14)
+                    .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+                }.buttonStyle(.plain)
+
                 if !model.loaded {
                     ProgressView().tint(TLColor.accentText).frame(maxWidth: .infinity).padding(.top, 20)
                 } else {
+                    if !model.events.isEmpty {
+                        section("SỰ KIỆN (\(model.events.count))") {
+                            ForEach(model.events) { e in eventRow(e) }
+                        }
+                    }
                     if !model.pending.isEmpty {
                         section("YÊU CẦU THAM GIA (\(model.pending.count))") {
                             ForEach(model.pending) { m in memberRow(m, pending: true) }
@@ -79,6 +100,34 @@ struct ClubManageView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { await model.load() }
         .refreshable { await model.load() }
+        .sheet(isPresented: $showCreateEvent) {
+            CreateSocialEventView(clubID: club.id) { Task { await model.load() } }
+        }
+    }
+
+    private func eventRow(_ e: SocialEvent) -> some View {
+        NavigationLink { SocialDetailView(event: e) } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(e.title).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg).lineLimit(1)
+                    HStack(spacing: 8) {
+                        if let when = e.whenLabel {
+                            Text(when).font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
+                        }
+                        if e.status == "cancelled" {
+                            Text("ĐÃ HUỶ").font(TLFont.mono(9, .bold)).foregroundStyle(TLColor.live)
+                        } else if e.status == "draft" {
+                            Text("NHÁP").font(TLFont.mono(9, .bold)).foregroundStyle(.orange)
+                        }
+                    }
+                }
+                Spacer(minLength: 6)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(TLColor.fg4)
+            }
+            .padding(12)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+        }.buttonStyle(.plain)
     }
 
     private func memberRow(_ m: ClubMember, pending: Bool) -> some View {

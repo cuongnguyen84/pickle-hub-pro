@@ -7,7 +7,7 @@ struct SocialRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
     private static let columns =
-        "id, slug, title_vi, title_en, description_vi, start_at, end_at, location_text, court_count, max_players, level_min, level_max, price_vnd, zalo_group_url, ball_type, free_perks, status"
+        "id, slug, title_vi, title_en, description_vi, start_at, end_at, location_text, court_count, max_players, level_min, level_max, price_vnd, zalo_group_url, ball_type, free_perks, status, created_by, club_id, visibility, requires_prepayment, prepayment_deadline_hours"
 
     /// Published, public events that haven't ended yet, soonest first.
     func upcomingEvents(limit: Int = 30) async throws -> [SocialEvent] {
