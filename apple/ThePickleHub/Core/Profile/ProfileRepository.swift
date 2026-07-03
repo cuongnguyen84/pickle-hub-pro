@@ -40,6 +40,28 @@ struct ProfileRepository {
         return profile
     }
 
+    // MARK: Onboarding / profile setup (web /onboarding ProfileSetup step)
+
+    func usernameAvailable(_ candidate: String) async -> Bool {
+        let ok: Bool? = try? await client
+            .rpc("username_is_available", params: ["p_candidate": candidate]).execute().value
+        return ok ?? false
+    }
+
+    private struct OnboardingUpdate: Encodable {
+        let display_name: String; let username: String; let skill_level: String
+        let onboarding_step: Int; let onboarding_completed_at: String
+    }
+    /// Save the profile-setup fields and mark onboarding complete in one update
+    /// (native skips the optional DUPR / venue / follows steps).
+    func completeOnboarding(displayName: String, username: String, skillLevel: String) async throws {
+        let userID = try await client.auth.session.user.id
+        try await client.from("profiles").update(OnboardingUpdate(
+            display_name: displayName, username: username, skill_level: skillLevel,
+            onboarding_step: 4, onboarding_completed_at: ISO8601DateFormatter().string(from: Date())))
+            .eq("id", value: userID).execute()
+    }
+
     // MARK: DUPR header chip
 
     /// The signed-in user's current DUPR rating (doubles preferred, like the
