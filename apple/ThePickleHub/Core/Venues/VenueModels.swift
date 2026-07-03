@@ -133,6 +133,8 @@ enum VenueSurface {
         guard let value = value?.nonEmpty else { return nil }
         return labels[value.lowercased()] ?? value
     }
+    /// Surface keys for the submit form (web SURFACE_OPTIONS).
+    static let options = ["acrylic", "hard", "asphalt", "concrete", "wood", "synthetic", "other"]
 }
 
 /// Curated city shortcuts for the "Tìm sân theo khu vực" block (port of the

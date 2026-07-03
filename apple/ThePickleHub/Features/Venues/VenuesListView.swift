@@ -48,6 +48,7 @@ final class VenuesViewModel {
 struct VenuesListView: View {
     @State private var model = VenuesViewModel()
     @State private var openWeb: IdentifiedURL?
+    @State private var showSubmit = false
 
     var body: some View {
         ScrollView {
@@ -62,6 +63,7 @@ struct VenuesListView: View {
         .task { if case .loading = model.phase { await model.load() } }
         .refreshable { await model.load() }
         .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
+        .sheet(isPresented: $showSubmit) { VenueSubmitView { Task { await model.load() } } }
     }
 
     // MARK: Search + add
@@ -81,10 +83,11 @@ struct VenuesListView: View {
             Button {
                 Haptics.light()
                 Task {
-                    let url = await model.currentUserID() == nil
-                        ? WebRoutes.base.appending(path: "login")
-                        : WebRoutes.base.appending(path: "san/them")
-                    openWeb = IdentifiedURL(url: url)
+                    if await model.currentUserID() == nil {
+                        openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "login"))
+                    } else {
+                        showSubmit = true
+                    }
                 }
             } label: {
                 HStack(spacing: 5) {
@@ -171,12 +174,7 @@ struct VenuesListView: View {
             Rectangle().fill(TLColor.border).frame(height: 1).padding(.top, 22)
             Text("TÌM SÂN THEO KHU VỰC").font(TLFont.mono(10, .semibold)).tracking(1).foregroundStyle(TLColor.fg3)
             WrapChips(items: VenueCities.all) { city in
-                Button {
-                    Haptics.light()
-                    let slug = city.folding(options: .diacriticInsensitive, locale: .current)
-                        .lowercased().replacingOccurrences(of: ".", with: "").replacingOccurrences(of: " ", with: "-")
-                    openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "san/khu-vuc/\(slug)"))
-                } label: {
+                NavigationLink { VenuesByCityView(city: city) } label: {
                     Text(city).font(TLFont.mono(11)).foregroundStyle(TLColor.fg2)
                         .padding(.horizontal, 11).padding(.vertical, 6)
                         .background(TLColor.surface2, in: Capsule())
