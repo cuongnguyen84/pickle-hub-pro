@@ -1997,6 +1997,48 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_highlights: {
+        Row: {
+          body_en: string | null
+          body_vi: string | null
+          created_at: string
+          dedupe_key: string
+          href: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          published_at: string
+          title_en: string
+          title_vi: string
+        }
+        Insert: {
+          body_en?: string | null
+          body_vi?: string | null
+          created_at?: string
+          dedupe_key: string
+          href?: string | null
+          id?: string
+          is_active?: boolean
+          kind: string
+          published_at?: string
+          title_en: string
+          title_vi: string
+        }
+        Update: {
+          body_en?: string | null
+          body_vi?: string | null
+          created_at?: string
+          dedupe_key?: string
+          href?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          published_at?: string
+          title_en?: string
+          title_vi?: string
+        }
+        Relationships: []
+      }
       flex_group_items: {
         Row: {
           created_at: string

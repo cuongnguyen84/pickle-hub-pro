@@ -12,6 +12,7 @@ import {
 import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
 import { useFeedEmbeds, type FeedEmbedItem } from "@/hooks/social/useFeedEmbeds";
 import { useFeedHappenings, type FeedHappeningItem } from "@/hooks/social/useFeedHappenings";
+import { useFeedHighlights, type FeedHighlightItem } from "@/hooks/social/useFeedHighlights";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
@@ -21,12 +22,13 @@ import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
 import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
 import { FeedEmbedCard } from "@/components/social/feed/FeedEmbedCard";
 import { FeedHappeningCard } from "@/components/social/feed/FeedHappeningCard";
+import { FeedHighlightCard } from "@/components/social/feed/FeedHighlightCard";
 
 // Local union extending the RPC-driven FeedTimelineItem with news items
 // merged client-side (see useFeedNews). News is intentionally NOT in the
 // get_feed_timeline RPC — surfacing it through the same client merge that
 // already handles EN blog overlays keeps the SQL function untouched.
-type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem | FeedHappeningItem;
+type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem | FeedHappeningItem | FeedHighlightItem;
 
 // Tiny FNV-1a 32-bit hash for the per-mount jitter. Deterministic so two
 // renders inside the same mount produce the same ordering — React Query
@@ -86,6 +88,7 @@ const Feed = () => {
   const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
   const embedsFeed = useFeedEmbeds();
   const happeningsFeed = useFeedHappenings();
+  const highlightsFeed = useFeedHighlights();
   const activeQuery = tab === "following" ? followingFeed : timelineFeed;
   const viewed = useFeedViewedTracking();
 
@@ -122,6 +125,7 @@ const Feed = () => {
       ...windowedNews,
       ...windowedEmbeds,
       ...(happeningsFeed.data ?? []),
+      ...(highlightsFeed.data ?? []),
     ];
 
     // Effective score = RPC score × age_mult × viewed_mult × jitter.
@@ -221,6 +225,7 @@ const Feed = () => {
     newsFeed.data,
     embedsFeed.data,
     happeningsFeed.data,
+    highlightsFeed.data,
     viewed.viewedSet,
   ]);
 
@@ -419,6 +424,15 @@ function TimelineRow({
   language: import("@/lib/social/feed-formatters").Language;
   staggerIndex: number;
 }) {
+  if (item.type === "highlight") {
+    return (
+      <FeedHighlightCard
+        item={item}
+        language={language}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
   if (item.type === "happening") {
     return (
       <FeedHappeningCard
