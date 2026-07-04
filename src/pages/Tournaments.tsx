@@ -24,21 +24,102 @@ import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 type Tab = "watch" | "community";
 type Fmt = "quick-tables" | "doubles-elim" | "flex" | "team-match";
+type FmtStatus = "ongoing" | "ended";
 
-const STATUS_LABEL: Record<string, { cls: "active" | "setup" | "completed" | "registration"; label: string }> = {
-  setup: { cls: "setup", label: "Setup" },
-  registration: { cls: "registration", label: "Registering" },
-  group_stage: { cls: "active", label: "Group stage" },
-  playoff: { cls: "active", label: "Playoffs" },
-  ongoing: { cls: "active", label: "Live" },
-  active: { cls: "active", label: "Live" },
-  completed: { cls: "completed", label: "Completed" },
+const STATUS_LABEL: Record<string, { cls: "active" | "setup" | "completed" | "registration"; en: string; vi: string }> = {
+  setup: { cls: "setup", en: "Setup", vi: "Chuẩn bị" },
+  registration: { cls: "registration", en: "Registering", vi: "Đang mở đăng ký" },
+  group_stage: { cls: "active", en: "Group stage", vi: "Vòng bảng" },
+  playoff: { cls: "active", en: "Playoffs", vi: "Playoff" },
+  ongoing: { cls: "active", en: "Live", vi: "Đang diễn ra" },
+  active: { cls: "active", en: "Live", vi: "Đang diễn ra" },
+  completed: { cls: "completed", en: "Completed", vi: "Đã kết thúc" },
 };
+
+// Minimal shared shape across the 4 community bracket types (QuickTablePublic, DoublesEliminationPublic, …)
+interface CommunityBracket {
+  id: string;
+  name: string;
+  share_id: string;
+  status: string;
+  created_at: string;
+  creator_display_name?: string | null;
+  is_doubles?: boolean;
+  player_count?: number;
+  format?: string | null;
+  team_count?: number;
+  team_roster_size?: number;
+}
+
+interface FormatDef {
+  fmt: Fmt;
+  title: string;
+  desc: { en: string; vi: string };
+  accent: string;
+  linkBase: string;
+  createLink: string;
+  renderMeta: (t: CommunityBracket, vi: boolean) => string;
+}
+
+const FORMATS: FormatDef[] = [
+  {
+    fmt: "quick-tables",
+    title: "Quick Tables",
+    desc: {
+      en: "Round robin groups with auto playoffs. 4 to 32 players. Most popular format.",
+      vi: "Vòng tròn chia bảng, tự động playoff. 4–32 người chơi. Thể thức phổ biến nhất.",
+    },
+    accent: "#00b96b",
+    linkBase: "/tools/quick-tables",
+    createLink: "/tools/quick-tables",
+    renderMeta: (t, vi) =>
+      `${t.is_doubles ? (vi ? "Đôi" : "Doubles") : (vi ? "Đơn" : "Singles")} · ${t.player_count} ${vi ? "người chơi" : "players"} · ${t.format ?? "Round robin"}`,
+  },
+  {
+    fmt: "doubles-elim",
+    title: "Doubles Elimination",
+    desc: {
+      en: "Double elimination bracket — lose once, fall to losers bracket, fight back to the final.",
+      vi: "Nhánh thắng nhánh thua — thua một trận rơi xuống nhánh thua, vẫn còn cơ hội vào chung kết.",
+    },
+    accent: "#e9b649",
+    linkBase: "/tools/doubles-elimination",
+    createLink: "/tools/doubles-elimination/new",
+    renderMeta: (t, vi) => `${t.team_count} ${vi ? "đội" : "teams"} · Double elim`,
+  },
+  {
+    fmt: "flex",
+    title: "Flex Format",
+    desc: {
+      en: "Custom bracket — define rounds, pools, seeding rules. For non-standard events.",
+      vi: "Bracket tùy biến — tự định nghĩa vòng đấu, bảng, luật xếp hạt giống. Cho các giải không theo chuẩn.",
+    },
+    accent: "#4f9bff",
+    linkBase: "/tools/flex-tournament",
+    createLink: "/tools/flex-tournament/new",
+    renderMeta: (_t, vi) => (vi ? "Flex · Thể thức tùy biến" : "Flex · Custom format"),
+  },
+  {
+    fmt: "team-match",
+    title: "Team Match",
+    desc: {
+      en: "MLP-style team competitions — Dreambreaker tiebreaker included.",
+      vi: "Thi đấu đồng đội kiểu MLP — có Dreambreaker phân định thắng thua.",
+    },
+    accent: "#ff7a4d",
+    linkBase: "/tools/team-match",
+    createLink: "/tools/team-match/new",
+    renderMeta: (t, vi) => `${t.team_count} ${vi ? "đội" : "teams"} · ${t.team_roster_size}/${vi ? "đội" : "team"}`,
+  },
+];
 
 const Tournaments = () => {
   const { user } = useAuth();
   const { language } = useI18n();
+  const vi = language === "vi";
   const [userTab, setUserTab] = useState<Tab | null>(null);
+  const [fmtTab, setFmtTab] = useState<Fmt>("quick-tables");
+  const [fmtStatus, setFmtStatus] = useState<FmtStatus>("ongoing");
 
   // Pro (Watch) data
   const { data: tournaments = [], isLoading: tournamentsLoading } = useTournaments();
@@ -48,18 +129,19 @@ const Tournaments = () => {
   const tab: Tab = userTab ?? (hasWatchContent ? "watch" : "community");
 
   // Community data — all 4 formats, active + completed
+  // "Ended" has its own tab now — limit 100 so the list is actually complete (86 QT completed as of 2026-07)
   const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
   const { data: activeQuickTables = [] } = useActivePublicQuickTables({ limit: 20 });
-  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 10 });
+  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 100 });
 
   const { data: openTeamMatches = [] } = useOpenTeamMatchTournaments({ limit: 20 });
-  const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 10 });
+  const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 100 });
 
   const { data: activeDoublesElim = [] } = useActiveDoublesElimination({ limit: 20 });
-  const { data: completedDoublesElim = [] } = useCompletedDoublesElimination({ limit: 10 });
+  const { data: completedDoublesElim = [] } = useCompletedDoublesElimination({ limit: 100 });
 
   const { data: activeFlex = [] } = useActiveFlexTournaments({ limit: 20 });
-  const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 10 });
+  const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 100 });
 
   // User's brackets
   const { data: userRegistered = [] } = useUserRegisteredTournaments(user?.id);
@@ -75,11 +157,24 @@ const Tournaments = () => {
     [liveStreams],
   );
 
+  // Setup tables with open registration match BOTH quick-table hooks — dedupe by id
+  const quickTablesOngoing = [
+    ...openRegTables,
+    ...activeQuickTables.filter((t) => !openRegTables.some((o) => o.id === t.id)),
+  ];
+
+  const formatData: Record<Fmt, { ongoing: CommunityBracket[]; ended: CommunityBracket[] }> = {
+    "quick-tables": { ongoing: quickTablesOngoing, ended: completedQuickTables },
+    "doubles-elim": { ongoing: activeDoublesElim, ended: completedDoublesElim },
+    "flex": { ongoing: activeFlex, ended: completedFlex },
+    "team-match": { ongoing: openTeamMatches, ended: completedTeamMatches },
+  };
+
   const communityCount =
-    activeQuickTables.length + openRegTables.length +
-    openTeamMatches.length +
-    activeDoublesElim.length +
-    activeFlex.length;
+    formatData["quick-tables"].ongoing.length +
+    formatData["doubles-elim"].ongoing.length +
+    formatData["flex"].ongoing.length +
+    formatData["team-match"].ongoing.length;
 
   const sortedPro = useMemo(() => {
     return [...tournaments].sort((a, b) => {
@@ -95,10 +190,13 @@ const Tournaments = () => {
 
   const userBrackets = [...userRegistered, ...userCompleted];
 
+  const currentFormat = FORMATS.find((f) => f.fmt === fmtTab)!;
+  const currentList = formatData[fmtTab][fmtStatus];
+
   return (
     <TheLineLayout
-      title={language === "vi" ? "Giải đấu" : "Tournaments"}
-      description={language === "vi"
+      title={vi ? "Giải đấu" : "Tournaments"}
+      description={vi
         ? "Giải đấu pickleball chuyên nghiệp PPA, APP, MLP và cộng đồng — bracket miễn phí cho ban tổ chức và người chơi."
         : "Professional and community pickleball tournaments — PPA, APP, MLP, and free brackets for organizers."}
       active="tournaments"
@@ -108,7 +206,7 @@ const Tournaments = () => {
         <nav className="tl-breadcrumb">
           <Link to="/">Home</Link>
           <span className="sep">/</span>
-          <span className="current">Tournaments</span>
+          <span className="current">{vi ? "Giải đấu" : "Tournaments"}</span>
         </nav>
 
         <header className="tl-page-head">
@@ -191,14 +289,14 @@ const Tournaments = () => {
             className={`tl-tab ${tab === "watch" ? "active" : ""}`}
             onClick={() => setUserTab("watch")}
           >
-            Watch<span className="count">{tournaments.length}</span>
+            {vi ? "Xem Pro" : "Watch"}<span className="count">{tournaments.length}</span>
           </button>
           <button
             type="button"
             className={`tl-tab ${tab === "community" ? "active" : ""}`}
             onClick={() => setUserTab("community")}
           >
-            Community<span className="count">{communityCount}</span>
+            {vi ? "Cộng đồng" : "Community"}<span className="count">{communityCount}</span>
           </button>
         </div>
 
@@ -211,8 +309,10 @@ const Tournaments = () => {
               </div>
             ) : sortedPro.length === 0 ? (
               <div className="tl-empty">
-                <h3>No pro tournaments yet.</h3>
-                <p>Creators haven't scheduled any broadcasts in this window. Check back soon.</p>
+                <h3>{vi ? "Chưa có giải pro nào." : "No pro tournaments yet."}</h3>
+                <p>{vi
+                  ? "Chưa có lịch phát sóng nào trong thời gian này. Quay lại sau nhé."
+                  : "Creators haven't scheduled any broadcasts in this window. Check back soon."}</p>
               </div>
             ) : (
               <div className="tl-list">
@@ -248,10 +348,10 @@ const Tournaments = () => {
                             fontWeight: 600,
                           }}
                         >
-                          {hasLive ? "● Live now" :
-                           t.status === "ongoing" ? "● Ongoing" :
-                           t.status === "upcoming" ? "Register" :
-                           "View results"}
+                          {hasLive ? (vi ? "● Đang live" : "● Live now") :
+                           t.status === "ongoing" ? (vi ? "● Đang diễn ra" : "● Ongoing") :
+                           t.status === "upcoming" ? (vi ? "Đăng ký" : "Register") :
+                           (vi ? "Xem kết quả" : "View results")}
                         </span>
                       </div>
                       <span className="tl-li-arrow">→</span>
@@ -268,8 +368,10 @@ const Tournaments = () => {
                 <section className="tl-format-section">
                   <div className="tl-format-section-head">
                     <div>
-                      <h3>Your brackets</h3>
-                      <p className="desc">Tournaments you've registered for or completed.</p>
+                      <h3>{vi ? "Giải của bạn" : "Your brackets"}</h3>
+                      <p className="desc">{vi
+                        ? "Các giải bạn đã đăng ký hoặc đã hoàn thành."
+                        : "Tournaments you've registered for or completed."}</p>
                     </div>
                     <div className="right">
                       <span className="count-pill">{userBrackets.length}</span>
@@ -277,7 +379,7 @@ const Tournaments = () => {
                   </div>
                   <div className="tl-list" style={{ ["--fc-accent" as string]: "#00b96b" } as React.CSSProperties}>
                     {userBrackets.slice(0, 8).map((b) => {
-                      const status = STATUS_LABEL[b.status] ?? { cls: "active", label: b.status };
+                      const status = STATUS_LABEL[b.status] ?? { cls: "active" as const, en: b.status, vi: b.status };
                       return (
                         <Link
                           key={b.id}
@@ -291,15 +393,15 @@ const Tournaments = () => {
                             <div className="tl-br-meta">
                               <span>Quick Table</span>
                               <span className="sep">·</span>
-                              <span>{b.is_doubles ? "Doubles" : "Singles"}</span>
+                              <span>{b.is_doubles ? (vi ? "Đôi" : "Doubles") : (vi ? "Đơn" : "Singles")}</span>
                               <span className="sep">·</span>
-                              <span>{b.player_count} players</span>
+                              <span>{b.player_count} {vi ? "người chơi" : "players"}</span>
                             </div>
                           </div>
                           <div className="tl-br-creator">
                             {b.creator_display_name ?? "—"}
                           </div>
-                          <span className={`tl-br-status ${status.cls}`}>{status.label}</span>
+                          <span className={`tl-br-status ${status.cls}`}>{vi ? status.vi : status.en}</span>
                         </Link>
                       );
                     })}
@@ -307,152 +409,102 @@ const Tournaments = () => {
                 </section>
               )}
 
-              {/* Quick Tables */}
-              <FormatSection
-                fmt="quick-tables"
-                title="Quick Tables"
-                desc="Round robin groups with auto playoffs. 4 to 32 players. Most popular format."
-                count={activeQuickTables.length + openRegTables.length}
-                active={[...openRegTables, ...activeQuickTables]}
-                completed={completedQuickTables}
-                renderMeta={(t: any) => `${t.is_doubles ? "Doubles" : "Singles"} · ${t.player_count} players · ${t.format ?? "Round robin"}`}
-                linkBase="/tools/quick-tables"
-                createLink="/tools/quick-tables"
-              />
+              {/* Format tabs */}
+              <div className="tl-subtabs" role="tablist" aria-label={vi ? "Thể thức" : "Format"}>
+                {FORMATS.map((f) => (
+                  <button
+                    key={f.fmt}
+                    type="button"
+                    role="tab"
+                    aria-selected={fmtTab === f.fmt}
+                    className={`tl-subtab ${fmtTab === f.fmt ? "active" : ""}`}
+                    style={{ ["--fc-accent" as string]: f.accent } as React.CSSProperties}
+                    onClick={() => setFmtTab(f.fmt)}
+                  >
+                    {f.title}
+                    <span className="count">{formatData[f.fmt].ongoing.length}</span>
+                  </button>
+                ))}
+              </div>
 
-              {/* Doubles Elimination */}
-              <FormatSection
-                fmt="doubles-elim"
-                title="Doubles Elimination"
-                desc="Double elimination bracket — lose once, fall to losers bracket, fight back to the final."
-                count={activeDoublesElim.length}
-                active={activeDoublesElim}
-                completed={completedDoublesElim}
-                renderMeta={(t: any) => `${t.team_count} teams · Double elim`}
-                linkBase="/tools/doubles-elimination"
-                createLink="/tools/doubles-elimination/new"
-              />
+              {/* Status tabs within the selected format */}
+              <div className="tl-subtabs status" role="tablist" aria-label={vi ? "Trạng thái" : "Status"}>
+                {(["ongoing", "ended"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    role="tab"
+                    aria-selected={fmtStatus === s}
+                    className={`tl-subtab ${fmtStatus === s ? "active" : ""}`}
+                    style={{ ["--fc-accent" as string]: currentFormat.accent } as React.CSSProperties}
+                    onClick={() => setFmtStatus(s)}
+                  >
+                    {s === "ongoing" ? (vi ? "Đang diễn ra" : "Ongoing") : (vi ? "Đã kết thúc" : "Ended")}
+                    <span className="count">{formatData[fmtTab][s].length}</span>
+                  </button>
+                ))}
+              </div>
 
-              {/* Flex */}
-              <FormatSection
-                fmt="flex"
-                title="Flex Format"
-                desc="Custom bracket — define rounds, pools, seeding rules. For non-standard events."
-                count={activeFlex.length}
-                active={activeFlex}
-                completed={completedFlex}
-                renderMeta={(_t: any) => "Flex · Custom format"}
-                linkBase="/tools/flex-tournament"
-                createLink="/tools/flex-tournament/new"
-              />
-
-              {/* Team Match */}
-              <FormatSection
-                fmt="team-match"
-                title="Team Match"
-                desc="MLP-style team competitions — Dreambreaker tiebreaker included."
-                count={openTeamMatches.length}
-                active={openTeamMatches}
-                completed={completedTeamMatches}
-                renderMeta={(t: any) => `${t.team_count} teams · ${t.team_roster_size}/team`}
-                linkBase="/tools/team-match"
-                createLink="/tools/team-match/new"
-              />
-
-              {/* Empty state */}
-              {communityCount === 0 && (
-                <div className="tl-empty">
-                  <h3>No community brackets running right now.</h3>
-                  <p>Be the first. Spin up a bracket in under a minute.</p>
-                  <Link to="/tools" className="tl-btn green">
-                    Open Bracket Lab →
-                  </Link>
+              {/* Selected format panel */}
+              <section className="tl-format-section">
+                <div className="tl-format-section-head">
+                  <div>
+                    <h3>{currentFormat.title}</h3>
+                    <p className="desc">{vi ? currentFormat.desc.vi : currentFormat.desc.en}</p>
+                  </div>
+                  <div className="right">
+                    <span className="count-pill">
+                      {formatData[fmtTab].ongoing.length} {vi ? "đang diễn ra" : "active"}
+                    </span>
+                    <Link to={currentFormat.createLink} className="create">{vi ? "Tạo giải →" : "Create →"}</Link>
+                  </div>
                 </div>
-              )}
+
+                {currentList.length === 0 ? (
+                  <div className="tl-empty">
+                    <h3>{fmtStatus === "ongoing"
+                      ? (vi ? "Chưa có giải nào đang diễn ra." : "No tournaments running right now.")
+                      : (vi ? "Chưa có giải nào đã kết thúc." : "No finished tournaments yet.")}</h3>
+                    <p>{vi ? "Tạo giải mới chỉ trong một phút." : "Spin up a bracket in under a minute."}</p>
+                    <Link to={currentFormat.createLink} className="tl-btn green">
+                      {vi ? "Tạo giải →" : "Create one →"}
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="tl-list">
+                    {currentList.map((t) => {
+                      const status = STATUS_LABEL[t.status] ?? { cls: "active" as const, en: t.status, vi: t.status };
+                      return (
+                        <Link
+                          key={t.id}
+                          to={`${currentFormat.linkBase}/${t.share_id}`}
+                          className="tl-bracket-row"
+                          style={{ ["--fc-accent" as string]: currentFormat.accent } as React.CSSProperties}
+                        >
+                          <div className="tl-br-fmt" />
+                          <div className="tl-br-body">
+                            <h4 className="tl-br-name">{t.name}</h4>
+                            <div className="tl-br-meta">
+                              <span>{currentFormat.renderMeta(t, vi)}</span>
+                              <span className="sep">·</span>
+                              <span>{formatRelative(t.created_at)}</span>
+                            </div>
+                          </div>
+                          <div className="tl-br-creator">
+                            {t.creator_display_name ?? "—"}
+                          </div>
+                          <span className={`tl-br-status ${status.cls}`}>{vi ? status.vi : status.en}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
             </>
           )}
         </div>
       </div>
     </TheLineLayout>
-  );
-};
-
-/* ---- Shared format-section component (community) ---- */
-interface FormatSectionProps {
-  fmt: Fmt;
-  title: string;
-  desc: string;
-  count: number;
-  active: Array<any>;
-  completed: Array<any>;
-  renderMeta: (t: any) => string;
-  linkBase: string;
-  createLink: string;
-}
-
-const FormatSection = ({
-  fmt,
-  title,
-  desc,
-  count,
-  active,
-  completed,
-  renderMeta,
-  linkBase,
-  createLink,
-}: FormatSectionProps) => {
-  const display = [...active, ...completed].slice(0, 8);
-  if (display.length === 0) return null;
-
-  const accentVar = `--fc-accent-${fmt}`;
-  const accent =
-    fmt === "quick-tables" ? "#00b96b" :
-    fmt === "doubles-elim" ? "#e9b649" :
-    fmt === "flex" ? "#4f9bff" :
-    "#ff7a4d";
-
-  return (
-    <section className="tl-format-section">
-      <div className="tl-format-section-head">
-        <div>
-          <h3>{title}</h3>
-          <p className="desc">{desc}</p>
-        </div>
-        <div className="right">
-          <span className="count-pill">{count} active</span>
-          <Link to={createLink} className="create">Create →</Link>
-        </div>
-      </div>
-
-      <div className="tl-list">
-        {display.map((t) => {
-          const status = STATUS_LABEL[t.status] ?? { cls: "active" as const, label: t.status };
-          const href = `${linkBase}/${t.share_id}`;
-          return (
-            <Link
-              key={t.id}
-              to={href}
-              className="tl-bracket-row"
-              style={{ ["--fc-accent" as string]: accent } as React.CSSProperties}
-            >
-              <div className="tl-br-fmt" />
-              <div className="tl-br-body">
-                <h4 className="tl-br-name">{t.name}</h4>
-                <div className="tl-br-meta">
-                  <span>{renderMeta(t)}</span>
-                  <span className="sep">·</span>
-                  <span>{formatRelative(t.created_at)}</span>
-                </div>
-              </div>
-              <div className="tl-br-creator">
-                {t.creator_display_name ?? "—"}
-              </div>
-              <span className={`tl-br-status ${status.cls}`}>{status.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
   );
 };
 
