@@ -11,6 +11,7 @@ import {
 } from "@/hooks/social/useFeedTimeline";
 import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
 import { useFeedEmbeds, type FeedEmbedItem } from "@/hooks/social/useFeedEmbeds";
+import { useFeedHappenings, type FeedHappeningItem } from "@/hooks/social/useFeedHappenings";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
@@ -19,12 +20,13 @@ import { FeedBlogCard } from "@/components/social/feed/FeedBlogCard";
 import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
 import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
 import { FeedEmbedCard } from "@/components/social/feed/FeedEmbedCard";
+import { FeedHappeningCard } from "@/components/social/feed/FeedHappeningCard";
 
 // Local union extending the RPC-driven FeedTimelineItem with news items
 // merged client-side (see useFeedNews). News is intentionally NOT in the
 // get_feed_timeline RPC — surfacing it through the same client merge that
 // already handles EN blog overlays keeps the SQL function untouched.
-type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem;
+type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem | FeedHappeningItem;
 
 // Tiny FNV-1a 32-bit hash for the per-mount jitter. Deterministic so two
 // renders inside the same mount produce the same ordering — React Query
@@ -83,6 +85,7 @@ const Feed = () => {
   const timelineFeed = useFeedTimeline();
   const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
   const embedsFeed = useFeedEmbeds();
+  const happeningsFeed = useFeedHappenings();
   const activeQuery = tab === "following" ? followingFeed : timelineFeed;
   const viewed = useFeedViewedTracking();
 
@@ -112,10 +115,13 @@ const Feed = () => {
       ? embeds
       : embeds.filter((e) => e.score >= loadedFloor);
 
+    // Happenings (live/tournament/event) are never windowed — they're
+    // few, actionable, and lose all value if pushed past the fold.
     const merged: StreamItem[] = [
       ...filtered,
       ...windowedNews,
       ...windowedEmbeds,
+      ...(happeningsFeed.data ?? []),
     ];
 
     // Effective score = RPC score × age_mult × viewed_mult × jitter.
@@ -214,6 +220,7 @@ const Feed = () => {
     language,
     newsFeed.data,
     embedsFeed.data,
+    happeningsFeed.data,
     viewed.viewedSet,
   ]);
 
@@ -412,6 +419,15 @@ function TimelineRow({
   language: import("@/lib/social/feed-formatters").Language;
   staggerIndex: number;
 }) {
+  if (item.type === "happening") {
+    return (
+      <FeedHappeningCard
+        item={item}
+        language={language}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
   if (item.type === "embed") {
     return (
       <FeedEmbedCard
