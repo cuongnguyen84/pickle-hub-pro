@@ -129,18 +129,19 @@ const Tournaments = () => {
   const tab: Tab = userTab ?? (hasWatchContent ? "watch" : "community");
 
   // Community data — all 4 formats, active + completed
+  // "Ended" has its own tab now — limit 100 so the list is actually complete (86 QT completed as of 2026-07)
   const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
   const { data: activeQuickTables = [] } = useActivePublicQuickTables({ limit: 20 });
-  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 10 });
+  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 100 });
 
   const { data: openTeamMatches = [] } = useOpenTeamMatchTournaments({ limit: 20 });
-  const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 10 });
+  const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 100 });
 
   const { data: activeDoublesElim = [] } = useActiveDoublesElimination({ limit: 20 });
-  const { data: completedDoublesElim = [] } = useCompletedDoublesElimination({ limit: 10 });
+  const { data: completedDoublesElim = [] } = useCompletedDoublesElimination({ limit: 100 });
 
   const { data: activeFlex = [] } = useActiveFlexTournaments({ limit: 20 });
-  const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 10 });
+  const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 100 });
 
   // User's brackets
   const { data: userRegistered = [] } = useUserRegisteredTournaments(user?.id);
@@ -156,8 +157,14 @@ const Tournaments = () => {
     [liveStreams],
   );
 
+  // Setup tables with open registration match BOTH quick-table hooks — dedupe by id
+  const quickTablesOngoing = [
+    ...openRegTables,
+    ...activeQuickTables.filter((t) => !openRegTables.some((o) => o.id === t.id)),
+  ];
+
   const formatData: Record<Fmt, { ongoing: CommunityBracket[]; ended: CommunityBracket[] }> = {
-    "quick-tables": { ongoing: [...openRegTables, ...activeQuickTables], ended: completedQuickTables },
+    "quick-tables": { ongoing: quickTablesOngoing, ended: completedQuickTables },
     "doubles-elim": { ongoing: activeDoublesElim, ended: completedDoublesElim },
     "flex": { ongoing: activeFlex, ended: completedFlex },
     "team-match": { ongoing: openTeamMatches, ended: completedTeamMatches },
