@@ -3435,7 +3435,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   background: transparent; border: 0;
   padding: 16px 4px 14px; margin-right: 28px;
   font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
-  font-size: 22px; letter-spacing: -0.015em;
+  font-size: 30px; letter-spacing: -0.015em;
   color: var(--tl-fg-3); cursor: pointer;
   position: relative; transition: color 0.15s;
 }
@@ -3443,13 +3443,41 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-tab.active { color: var(--tl-fg); }
 [data-theme="the-line"] .tl-tab.active::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
-  height: 2px; background: var(--tl-green);
+  height: 3px; background: var(--tl-green);
 }
 [data-theme="the-line"] .tl-tab .count {
-  font-family: "Geist Mono"; font-style: normal; font-size: 11px;
-  color: var(--tl-fg-4); letter-spacing: 0.04em; margin-left: 6px;
+  font-family: "Geist Mono"; font-style: normal; font-size: 12px;
+  color: var(--tl-fg-4); letter-spacing: 0.04em; margin-left: 8px;
   font-variant-numeric: tabular-nums;
 }
+[data-theme="the-line"] .tl-tab.active .count { color: var(--tl-green); }
+
+/* ========== Community sub-tabs (format / status) ========== */
+[data-theme="the-line"] .tl-subtabs {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+[data-theme="the-line"] .tl-subtab {
+  background: transparent;
+  border: 1px solid var(--tl-border); border-radius: 999px;
+  padding: 8px 16px;
+  font-family: "Geist"; font-size: 13.5px; font-weight: 500;
+  color: var(--tl-fg-3); cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+[data-theme="the-line"] .tl-subtab:hover { color: var(--tl-fg-2); border-color: var(--tl-fg-4); }
+[data-theme="the-line"] .tl-subtab.active {
+  color: var(--tl-fg);
+  border-color: var(--fc-accent, var(--tl-green));
+  background: color-mix(in srgb, var(--fc-accent, var(--tl-green)) 12%, transparent);
+}
+[data-theme="the-line"] .tl-subtab .count {
+  font-family: "Geist Mono"; font-size: 11px; margin-left: 6px;
+  color: var(--tl-fg-4); font-variant-numeric: tabular-nums;
+}
+[data-theme="the-line"] .tl-subtab.active .count { color: var(--fc-accent, var(--tl-green)); }
+[data-theme="the-line"] .tl-subtabs.status { margin-bottom: 24px; }
+[data-theme="the-line"] .tl-subtabs.status .tl-subtab { padding: 6px 14px; font-size: 12.5px; }
 
 /* ========== Community format section ========== */
 [data-theme="the-line"] .tl-format-section {
