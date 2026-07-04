@@ -36,6 +36,21 @@ const STATUS_LABEL: Record<string, { cls: "active" | "setup" | "completed" | "re
   completed: { cls: "completed", en: "Completed", vi: "Đã kết thúc" },
 };
 
+// Minimal shared shape across the 4 community bracket types (QuickTablePublic, DoublesEliminationPublic, …)
+interface CommunityBracket {
+  id: string;
+  name: string;
+  share_id: string;
+  status: string;
+  created_at: string;
+  creator_display_name?: string | null;
+  is_doubles?: boolean;
+  player_count?: number;
+  format?: string | null;
+  team_count?: number;
+  team_roster_size?: number;
+}
+
 interface FormatDef {
   fmt: Fmt;
   title: string;
@@ -43,7 +58,7 @@ interface FormatDef {
   accent: string;
   linkBase: string;
   createLink: string;
-  renderMeta: (t: any, vi: boolean) => string;
+  renderMeta: (t: CommunityBracket, vi: boolean) => string;
 }
 
 const FORMATS: FormatDef[] = [
@@ -141,7 +156,7 @@ const Tournaments = () => {
     [liveStreams],
   );
 
-  const formatData: Record<Fmt, { ongoing: any[]; ended: any[] }> = {
+  const formatData: Record<Fmt, { ongoing: CommunityBracket[]; ended: CommunityBracket[] }> = {
     "quick-tables": { ongoing: [...openRegTables, ...activeQuickTables], ended: completedQuickTables },
     "doubles-elim": { ongoing: activeDoublesElim, ended: completedDoublesElim },
     "flex": { ongoing: activeFlex, ended: completedFlex },
