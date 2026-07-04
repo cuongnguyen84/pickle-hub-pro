@@ -23,6 +23,7 @@ import {
   BarChart2,
   Zap,
   Newspaper,
+  Instagram,
   Gavel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ const navItems = [
   { path: "/admin/disputes", icon: Gavel, labelKey: "disputes" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
   { path: "/admin/news", icon: Newspaper, labelKey: "news" as const },
+  { path: "/admin/embeds", icon: Instagram, labelKey: "embeds" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
   { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
   { path: "/admin/push", icon: Bell, labelKey: "push" as const },
@@ -166,6 +168,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       viewers: t.admin.viewers.title,
       push: "Push",
       forum: t.forum.title,
+      // "embeds" bypasses i18n like proTour — "IG Reels" reads the same in
+      // VI and EN.
+      embeds: "IG Reels",
       auditLog: t.admin.auditLog?.title || "Audit Log",
       viBlog: "Blog VI",
       analytics: "Analytics",

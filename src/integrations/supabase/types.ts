@@ -1928,6 +1928,75 @@ export type Database = {
           },
         ]
       }
+      feed_embed_sources: {
+        Row: {
+          active: boolean
+          auto_publish: boolean
+          created_at: string
+          id: string
+          last_checked_at: string | null
+          last_error: string | null
+          username: string
+        }
+        Insert: {
+          active?: boolean
+          auto_publish?: boolean
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          username: string
+        }
+        Update: {
+          active?: boolean
+          auto_publish?: boolean
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      feed_embeds: {
+        Row: {
+          author_name: string | null
+          caption: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          published_at: string
+          shortcode: string | null
+          source_username: string | null
+          thumbnail_url: string | null
+          url: string
+        }
+        Insert: {
+          author_name?: string | null
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          published_at?: string
+          shortcode?: string | null
+          source_username?: string | null
+          thumbnail_url?: string | null
+          url: string
+        }
+        Update: {
+          author_name?: string | null
+          caption?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          published_at?: string
+          shortcode?: string | null
+          source_username?: string | null
+          thumbnail_url?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       flex_group_items: {
         Row: {
           created_at: string
