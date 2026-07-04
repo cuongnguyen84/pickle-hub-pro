@@ -48,6 +48,10 @@ verify_jwt = false
 [functions.news-translate]
 verify_jwt = false
 
+# Internal cron (pg_cron x-auth-secret / service_role) — verifies internally
+[functions.feed-embeds-sync]
+verify_jwt = false
+
 [functions.social-caption]
 verify_jwt = false
 
