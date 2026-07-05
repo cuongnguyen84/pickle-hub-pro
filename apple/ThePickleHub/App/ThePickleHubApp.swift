@@ -39,6 +39,7 @@ enum OrientationLock {
 struct ThePickleHubApp: App {
     @State private var session = SessionStore()
     @State private var theme = ThemeStore()
+    @State private var deepLink: DeepLink?
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() { Self.configureBarAppearance() }
@@ -87,7 +88,17 @@ struct ThePickleHubApp: App {
                 .preferredColorScheme(theme.mode.colorScheme)
                 .tint(TLColor.accent)
                 .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
+                    if let link = DeepLink.parse(url) {
+                        deepLink = link
+                    } else {
+                        GIDSignIn.sharedInstance.handle(url)
+                    }
+                }
+                .sheet(item: $deepLink) { link in
+                    DeepLinkDestinationView(link: link)
+                        .environment(session)
+                        .environment(theme)
+                        .preferredColorScheme(theme.mode.colorScheme)
                 }
         }
     }

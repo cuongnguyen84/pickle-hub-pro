@@ -241,6 +241,32 @@ Ký hiệu: ✅ = kết quả mong đợi · ⚠️ = ca biên cần kiểm.
 
 ---
 
+## 13. Deep link — mở app từ URL
+
+**Chuẩn bị:** cần 1 magic token thật (đăng ký 1 sự kiện trên web → link `/dang-ky/<token>` trong màn thành công / SMS / email).
+
+13.1 **Custom scheme (test được ngay, kể cả simulator)**
+- Mở Safari/Notes trên máy, gõ/án: `thepicklehub://dang-ky/<token>` → iOS hỏi "Open in ThePickleHub?" → **Open** → app mở sheet **Đăng ký của tôi**.
+- ✅ `thepicklehub://social/<slug>` → sheet chi tiết sự kiện native.
+- ✅ `thepicklehub://join/<code>` → màn "Tham gia đội" → nút mở giải QuickTable.
+- ⚠️ Token sai định dạng / slug không tồn tại → sheet báo "Không tìm thấy".
+
+13.2 **Universal link (SAU khi merge main + deploy: AASA thêm appID `.dev` với `/dang-ky/*` + `/join/*`)**
+- Gửi link `https://www.thepicklehub.net/dang-ky/<token>` qua iMessage/Notes → tap → mở thẳng app (không qua Safari).
+- ⚠️ Lần đầu cài app iOS cần vài phút tải AASA (CDN Apple); nếu vẫn mở Safari: giữ link → "Open in ThePickleHub". Máy phải cài bản ký team `5S49Q7AB7M`.
+- ⚠️ Link `/vi/dang-ky/<token>` cũng phải mở app.
+
+13.3 **Màn Đăng ký của tôi (magic token)**
+- ✅ Hiện sự kiện (giờ, địa điểm, giá) + trạng thái (Đăng ký thành công / Đã check-in / Đã huỷ) + tên + SĐT.
+- ✅ Sự kiện trả phí chưa trả: **mã VietQR** + nội dung CK (copy được) + nút **"Tôi đã chuyển khoản"** → xác nhận 2 bước → chuyển thành "Đã báo chuyển khoản — chờ BTC xác nhận" (roster BTC hiện chip "Báo đã CK" cam).
+- ✅ BTC xác nhận xong → mở lại link → "BTC đã xác nhận thanh toán".
+- ✅ **Huỷ đăng ký**: hiện dòng đủ/không-đủ điều kiện hoàn phí theo `cancellation_hours`; huỷ (lý do tuỳ chọn) → trạng thái Đã huỷ + nút **Đăng ký lại**.
+- ✅ **Đăng ký lại** khi sự kiện còn chỗ → trạng thái active trở lại. Sự kiện đã đầy → báo lỗi.
+- ⚠️ Sự kiện đã bắt đầu / đã huỷ → không có nút huỷ/đăng-ký-lại.
+- Khôi phục link mất (`/khoi-phuc-dang-ky`) **vẫn web** (cần captcha Turnstile).
+
+---
+
 ## Ghi chú
 - Các phần **CHƯA** có (đừng test): Tournament Dashboard, luồng đăng ký magic-link/khôi phục/join, đổi mật khẩu/email, mời thành viên CLB bằng tìm kiếm; social event: slots/perks/lặp tuần/người chơi tự chấm (xem 12).
 - Nếu thấy lỗi: chụp màn + ghi bước tái hiện.
