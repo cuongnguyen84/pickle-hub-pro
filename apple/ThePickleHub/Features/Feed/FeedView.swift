@@ -118,6 +118,28 @@ private struct FeedTimelineRow: View {
                 FeedVideoCard(video: video, publishedAt: item.publishedAt)
             }
             .buttonStyle(.plain)
+        case .embed(let embed):
+            // Opens instagram.com directly (universal link → IG app when
+            // installed) — the card handles its own tap via openURL.
+            FeedEmbedCard(embed: embed, publishedAt: item.publishedAt)
+        case .happening(let happening):
+            Button {
+                onOpenWeb(happening.url)
+            } label: {
+                FeedHappeningCard(happening: happening)
+            }
+            .buttonStyle(.plain)
+        case .highlight(let highlight):
+            if let url = highlight.url {
+                Button {
+                    onOpenWeb(url)
+                } label: {
+                    FeedHighlightCard(highlight: highlight, publishedAt: item.publishedAt)
+                }
+                .buttonStyle(.plain)
+            } else {
+                FeedHighlightCard(highlight: highlight, publishedAt: item.publishedAt)
+            }
         }
     }
 }

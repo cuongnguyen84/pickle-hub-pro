@@ -53,6 +53,149 @@ struct FeedRepository {
         return rows.compactMap { FeedItem(news: $0, now: now) }
     }
 
+    /// Admin-curated + auto-ingested Instagram reels (feed_embeds), scored
+    /// client-side and merged like news. Mirrors `useFeedEmbeds.ts`.
+    func embeds() async throws -> [FeedItem] {
+        let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-30 * 24 * 60 * 60))
+        let rows: [FeedEmbedRow] = try await client
+            .from("feed_embeds")
+            .select("id, url, caption, author_name, published_at")
+            .eq("is_active", value: true)
+            .gte("published_at", value: windowStart)
+            .order("published_at", ascending: false)
+            .limit(20)
+            .execute()
+            .value
+        let now = Date()
+        return rows.compactMap { FeedItem(embed: $0, now: now) }
+    }
+
+    /// System-generated highlight cards (feed_highlights: milestones, weekly
+    /// movers, pro digests, AI recaps). Mirrors `useFeedHighlights.ts`.
+    func highlights() async throws -> [FeedItem] {
+        let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-14 * 24 * 60 * 60))
+        let rows: [FeedHighlightRow] = try await client
+            .from("feed_highlights")
+            .select("id, kind, title_vi, body_vi, href, published_at")
+            .eq("is_active", value: true)
+            .gte("published_at", value: windowStart)
+            .order("published_at", ascending: false)
+            .limit(20)
+            .execute()
+            .value
+        let now = Date()
+        return rows.map { FeedItem(highlight: $0, now: now) }
+    }
+
+    /// Live platform activity: live streams, open-registration tournaments,
+    /// upcoming social events. Mirrors `useFeedHappenings.ts`; failures in one
+    /// source never sink the others.
+    func happenings() async -> [FeedItem] {
+        struct LiveRow: Decodable {
+            let id: UUID
+            let title: String
+            let startedAt: String?
+            enum CodingKeys: String, CodingKey {
+                case id, title
+                case startedAt = "started_at"
+            }
+        }
+        struct TournamentRow: Decodable {
+            let id: UUID
+            let name: String
+            let shareID: String
+            let teamCount: Int
+            let updatedAt: String
+            enum CodingKeys: String, CodingKey {
+                case id, name
+                case shareID = "share_id"
+                case teamCount = "team_count"
+                case updatedAt = "updated_at"
+            }
+        }
+        struct EventRow: Decodable {
+            let id: UUID
+            let slug: String
+            let titleVi: String?
+            let startAt: String
+            let locationText: String?
+            let maxPlayers: Int?
+            enum CodingKeys: String, CodingKey {
+                case id, slug
+                case titleVi = "title_vi"
+                case startAt = "start_at"
+                case locationText = "location_text"
+                case maxPlayers = "max_players"
+            }
+        }
+
+        let now = Date()
+        var items: [FeedItem] = []
+
+        async let liveRows: [LiveRow]? = try? client
+            .from("livestreams")
+            .select("id, title, started_at")
+            .eq("status", value: "live")
+            .order("started_at", ascending: false)
+            .limit(3)
+            .execute()
+            .value
+        async let tournamentRows: [TournamentRow]? = try? client
+            .from("doubles_elimination_tournaments")
+            .select("id, name, share_id, team_count, updated_at")
+            .eq("status", value: "registration_open")
+            .order("updated_at", ascending: false)
+            .limit(5)
+            .execute()
+            .value
+        async let eventRows: [EventRow]? = try? client
+            .from("social_events")
+            .select("id, slug, title_vi, start_at, location_text, max_players")
+            .eq("status", value: "published")
+            .eq("visibility", value: "public")
+            .gt("start_at", value: ISO8601DateFormatter().string(from: now))
+            .order("start_at", ascending: true)
+            .limit(5)
+            .execute()
+            .value
+
+        for row in await liveRows ?? [] {
+            let date = row.startedAt.flatMap(FeedDate.parse) ?? now
+            let happening = FeedHappening(
+                kind: .live,
+                title: row.title,
+                meta: "Đang phát trực tiếp — bấm để xem",
+                url: WebRoutes.live(id: row.id)
+            )
+            items.append(FeedItem(id: row.id, happening: happening, publishedAt: date, now: now))
+        }
+        for row in await tournamentRows ?? [] {
+            let happening = FeedHappening(
+                kind: .tournament,
+                title: row.name.trimmingCharacters(in: .whitespaces),
+                meta: "Đang mở đăng ký · tối đa \(row.teamCount) đội",
+                url: WebRoutes.toolsDoublesEliminationView(shareID: row.shareID)
+            )
+            items.append(FeedItem(id: row.id, happening: happening, publishedAt: FeedDate.parse(row.updatedAt), now: now))
+        }
+        for row in await eventRows ?? [] {
+            guard let title = row.titleVi?.nonEmpty else { continue }
+            let start = FeedDate.parse(row.startAt)
+            var meta = start.map { $0.formatted(.dateTime.weekday(.abbreviated).day().month().hour().minute()) } ?? ""
+            if let location = row.locationText?.nonEmpty { meta += " · \(location)" }
+            if let cap = row.maxPlayers { meta += " · \(cap) chỗ" }
+            let happening = FeedHappening(
+                kind: .event,
+                title: title,
+                meta: meta,
+                url: WebRoutes.social(slug: row.slug)
+            )
+            // Future start date → age 0 → no decay until the event begins.
+            items.append(FeedItem(id: row.id, happening: happening, publishedAt: start, now: now))
+        }
+        return items
+    }
+
     /// Fetch a single video's playable URL (Mux HLS or storage file) so a feed
     /// video card can play natively via AVPlayer instead of opening the web page.
     func videoPlayback(id: UUID) async -> (url: URL, title: String)? {

@@ -20,7 +20,7 @@ final class FeedViewModel {
     private let repo = FeedRepository()
     private var cursor: FeedCursor?
     private var rpcItems: [FeedItem] = []
-    private var newsItems: [FeedItem] = []
+    private var overlayItems: [FeedItem] = []
     private var seen = Set<UUID>()
 
     @MainActor
@@ -51,9 +51,14 @@ final class FeedViewModel {
         if reset {
             cursor = nil
             reachedEnd = false
-            // News is a static overlay (like the web): fetched once per refresh,
-            // never advancing the RPC cursor.
-            newsItems = (try? await repo.news()) ?? []
+            // Overlays (like the web): fetched once per refresh, never
+            // advancing the RPC cursor — news, IG reels, happenings
+            // (live/tournament/event), and system highlights.
+            async let news = (try? repo.news()) ?? []
+            async let embeds = (try? repo.embeds()) ?? []
+            async let highlights = (try? repo.highlights()) ?? []
+            async let happenings = repo.happenings()
+            overlayItems = await news + embeds + highlights + happenings
         }
         do {
             let page = try await repo.page(cursor: cursor)
@@ -73,12 +78,12 @@ final class FeedViewModel {
         }
     }
 
-    /// Merge the paginated RPC items with the news overlay, sorted by score
+    /// Merge the paginated RPC items with the overlays, sorted by score
     /// (recency tiebreak) — the same ordering the web Trending feed produces.
     private func rebuild() {
         let rpcIDs = Set(rpcItems.map(\.id))
         var merged = rpcItems
-        merged.append(contentsOf: newsItems.filter { !rpcIDs.contains($0.id) })
+        merged.append(contentsOf: overlayItems.filter { !rpcIDs.contains($0.id) })
         merged.sort { lhs, rhs in
             if lhs.score != rhs.score { return lhs.score > rhs.score }
             return (lhs.publishedAt ?? .distantPast) > (rhs.publishedAt ?? .distantPast)

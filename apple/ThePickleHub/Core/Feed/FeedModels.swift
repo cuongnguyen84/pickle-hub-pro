@@ -223,6 +223,74 @@ struct FeedNewsRow: Decodable {
     }
 }
 
+/// Admin-curated Instagram reel (feed_embeds). The card opens the reel on
+/// instagram.com / in the IG app — nothing re-hosted (copyright/ToS safe).
+struct FeedEmbed: Equatable {
+    let url: URL
+    let caption: String?
+    let authorName: String?
+}
+
+struct FeedEmbedRow: Decodable {
+    let id: UUID
+    let url: String
+    let caption: String?
+    let authorName: String?
+    let publishedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, url, caption
+        case authorName = "author_name"
+        case publishedAt = "published_at"
+    }
+}
+
+/// Live platform activity ("happenings"): live streams, open-registration
+/// tournaments, upcoming social events. Built in the repository from three
+/// small queries — mirrors web `useFeedHappenings.ts`.
+struct FeedHappening: Equatable {
+    enum Kind: Equatable { case live, tournament, event }
+    let kind: Kind
+    let title: String
+    let meta: String
+    let url: URL
+}
+
+/// System-generated card (feed_highlights, written by the feed-generate cron):
+/// player milestones, weekly DUPR movers, pro tour digests, AI recaps.
+struct FeedHighlight: Equatable {
+    let kind: String          // milestone | leaderboard | protour | recap
+    let title: String
+    let body: String?
+    let url: URL?
+
+    var badge: String {
+        switch kind {
+        case "milestone":   return "Cột mốc"
+        case "leaderboard": return "BXH tuần"
+        case "protour":     return "Pro tour"
+        case "recap":       return "Tuần qua"
+        default:            return "Tin"
+        }
+    }
+}
+
+struct FeedHighlightRow: Decodable {
+    let id: UUID
+    let kind: String
+    let titleVi: String
+    let bodyVi: String?
+    let href: String?
+    let publishedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, kind, href
+        case titleVi = "title_vi"
+        case bodyVi = "body_vi"
+        case publishedAt = "published_at"
+    }
+}
+
 /// Keyset pagination cursor `(score DESC, item_id DESC)`.
 struct FeedCursor: Equatable {
     let score: Double
@@ -241,6 +309,9 @@ struct FeedItem: Identifiable, Equatable {
         case blog(FeedBlog)
         case video(FeedVideo)
         case news(FeedNews)
+        case embed(FeedEmbed)
+        case happening(FeedHappening)
+        case highlight(FeedHighlight)
     }
 
     var cursor: FeedCursor { FeedCursor(score: score, itemID: id) }
@@ -316,6 +387,36 @@ struct FeedItem: Identifiable, Equatable {
             aiTranslated: row.aiTranslated
         )
         self.init(id: row.id, publishedAt: date, score: score, kind: .news(news))
+    }
+
+    /// IG reel overlay, score `recency_decay + 1.3` (mirrors `useFeedEmbeds.ts`).
+    init?(embed row: FeedEmbedRow, now: Date) {
+        guard let url = URL(string: row.url) else { return nil }
+        let date = FeedDate.parse(row.publishedAt)
+        let ageHours = max(0, now.timeIntervalSince(date ?? now) / 3600)
+        let embed = FeedEmbed(url: url, caption: row.caption, authorName: row.authorName)
+        self.init(id: row.id, publishedAt: date, score: exp(-ageHours / 48.0) + 1.3, kind: .embed(embed))
+    }
+
+    /// System highlight, score `recency_decay + 1.35` (mirrors `useFeedHighlights.ts`).
+    init(highlight row: FeedHighlightRow, now: Date) {
+        let date = FeedDate.parse(row.publishedAt)
+        let ageHours = max(0, now.timeIntervalSince(date ?? now) / 3600)
+        let highlight = FeedHighlight(
+            kind: row.kind,
+            title: row.titleVi,
+            body: row.bodyVi,
+            url: row.href.flatMap { URL(string: $0, relativeTo: WebRoutes.base) }
+        )
+        self.init(id: row.id, publishedAt: date, score: exp(-ageHours / 48.0) + 1.35, kind: .highlight(highlight))
+    }
+
+    /// Happening (live/tournament/event). Live gets bonus 10 ≈ pinned to the
+    /// top while streaming; the rest use 1.5 (mirrors `useFeedHappenings.ts`).
+    init(id: UUID, happening: FeedHappening, publishedAt: Date?, now: Date) {
+        let bonus: Double = happening.kind == .live ? 10 : 1.5
+        let ageHours = max(0, now.timeIntervalSince(publishedAt ?? now) / 3600)
+        self.init(id: id, publishedAt: publishedAt, score: exp(-ageHours / 48.0) + bonus, kind: .happening(happening))
     }
 
     private init(id: UUID, publishedAt: Date?, score: Double, kind: Kind) {
