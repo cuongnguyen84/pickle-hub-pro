@@ -50,6 +50,7 @@ interface IgMedia {
   media_type?: string;
   media_product_type?: string;
   timestamp?: string;
+  thumbnail_url?: string;
 }
 
 function json(body: unknown, status = 200): Response {
@@ -110,7 +111,7 @@ Deno.serve(async (req) => {
     try {
       const fields =
         `business_discovery.username(${source.username})` +
-        `{media.limit(${MEDIA_LIMIT}){permalink,caption,media_type,media_product_type,timestamp}}`;
+        `{media.limit(${MEDIA_LIMIT}){permalink,caption,media_type,media_product_type,timestamp,thumbnail_url}}`;
       const url =
         `https://graph.facebook.com/${GRAPH_VERSION}/${igUserId}` +
         `?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(igToken)}`;
@@ -134,8 +135,8 @@ Deno.serve(async (req) => {
         if (!shortcode) continue;
         const caption =
           (m.caption ?? "").split("\n")[0].slice(0, CAPTION_MAX).trim() || null;
-        // upsert+ignoreDuplicates on the shortcode partial unique index =
-        // insert only if this reel wasn't ingested (or hand-pasted) before.
+        // Insert only if this reel wasn't ingested (or hand-pasted) before —
+        // a full upsert would clobber an admin's is_active=false hide.
         const { error, data } = await supabase
           .from("feed_embeds")
           .upsert(
@@ -147,12 +148,23 @@ Deno.serve(async (req) => {
               source_username: source.username,
               is_active: source.auto_publish,
               published_at: m.timestamp ?? new Date().toISOString(),
+              thumbnail_url: m.thumbnail_url ?? null,
             },
             { onConflict: "shortcode", ignoreDuplicates: true },
           )
           .select("id");
         if (error) throw error;
         inserted += data?.length ?? 0;
+
+        // Existing rows: refresh only the thumbnail. IG CDN URLs carry
+        // expiring signatures, so each hourly run re-stamps a fresh one for
+        // every reel still inside the MEDIA_LIMIT window.
+        if ((data?.length ?? 0) === 0 && m.thumbnail_url) {
+          await supabase
+            .from("feed_embeds")
+            .update({ thumbnail_url: m.thumbnail_url })
+            .eq("shortcode", shortcode);
+        }
       }
 
       await supabase
