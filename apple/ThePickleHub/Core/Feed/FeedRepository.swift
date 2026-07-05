@@ -59,7 +59,7 @@ struct FeedRepository {
         let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-30 * 24 * 60 * 60))
         let rows: [FeedEmbedRow] = try await client
             .from("feed_embeds")
-            .select("id, url, caption, author_name, published_at")
+            .select("id, url, caption, author_name, thumbnail_url, published_at")
             .eq("is_active", value: true)
             .gte("published_at", value: windowStart)
             .order("published_at", ascending: false)

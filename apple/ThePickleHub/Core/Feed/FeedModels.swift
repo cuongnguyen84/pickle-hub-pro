@@ -229,6 +229,9 @@ struct FeedEmbed: Equatable {
     let url: URL
     let caption: String?
     let authorName: String?
+    /// IG CDN poster frame; refreshed hourly by feed-embeds-sync because the
+    /// CDN URLs carry expiring signatures.
+    let thumbnailURL: URL?
 }
 
 struct FeedEmbedRow: Decodable {
@@ -236,11 +239,13 @@ struct FeedEmbedRow: Decodable {
     let url: String
     let caption: String?
     let authorName: String?
+    let thumbnailURL: String?
     let publishedAt: String
 
     enum CodingKeys: String, CodingKey {
         case id, url, caption
         case authorName = "author_name"
+        case thumbnailURL = "thumbnail_url"
         case publishedAt = "published_at"
     }
 }
@@ -394,7 +399,12 @@ struct FeedItem: Identifiable, Equatable {
         guard let url = URL(string: row.url) else { return nil }
         let date = FeedDate.parse(row.publishedAt)
         let ageHours = max(0, now.timeIntervalSince(date ?? now) / 3600)
-        let embed = FeedEmbed(url: url, caption: row.caption, authorName: row.authorName)
+        let embed = FeedEmbed(
+            url: url,
+            caption: row.caption,
+            authorName: row.authorName,
+            thumbnailURL: row.thumbnailURL.flatMap(URL.init(string:))
+        )
         self.init(id: row.id, publishedAt: date, score: exp(-ageHours / 48.0) + 1.3, kind: .embed(embed))
     }
 
