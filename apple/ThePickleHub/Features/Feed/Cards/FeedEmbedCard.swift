@@ -24,6 +24,14 @@ struct FeedEmbedCard: View {
                     EyebrowText.accent("▶ Reel · Instagram")
                 }
 
+                if let thumbnail = embed.thumbnailURL {
+                    FeedThumbnail(
+                        url: thumbnail,
+                        aspect: 4.0 / 3.0,
+                        overlay: AnyView(playOverlay)
+                    )
+                }
+
                 Text(embed.caption?.nonEmpty ?? "Video pickleball trên Instagram")
                     .font(TLFont.serif(22))
                     .foregroundStyle(TLColor.fg)
@@ -40,5 +48,15 @@ struct FeedEmbedCard: View {
             .feedCard()
         }
         .buttonStyle(.plain)
+    }
+
+    /// Big centered play glyph over the poster frame — the visual cue that
+    /// this card is a video, since playback happens on Instagram.
+    private var playOverlay: some View {
+        Image(systemName: "play.circle.fill")
+            .font(.system(size: 44))
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(.white, .black.opacity(0.45))
+            .shadow(radius: 6)
     }
 }
