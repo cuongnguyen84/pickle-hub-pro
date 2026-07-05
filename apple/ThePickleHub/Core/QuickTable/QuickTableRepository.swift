@@ -105,6 +105,21 @@ struct QuickTableRepository {
 
     // MARK: Load
 
+    /// Deep link `/join/:code` — lời mời ghép đôi cũ, giờ chỉ trỏ về giải
+    /// (khớp web JoinTeam.tsx: luồng ghép đôi làm trực tiếp trong trang giải).
+    func tableForInvite(code: String) async -> (shareID: String, name: String)? {
+        struct Invite: Decodable { let table_id: UUID }
+        struct Table: Decodable { let share_id: String; let name: String }
+        guard let invite: Invite = try? await client
+            .from("quick_table_partner_invitations").select("table_id")
+            .eq("invite_code", value: code).single().execute().value,
+        let table: Table = try? await client
+            .from("quick_tables").select("share_id, name")
+            .eq("id", value: invite.table_id).single().execute().value
+        else { return nil }
+        return (table.share_id, table.name)
+    }
+
     func load(shareID: String) async throws -> QuickTableDetail {
         let table: QTTable = try await client
             .from("quick_tables")

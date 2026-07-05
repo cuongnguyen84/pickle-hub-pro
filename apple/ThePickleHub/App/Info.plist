@@ -26,6 +26,12 @@
 				<string>com.googleusercontent.apps.574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>thepicklehub</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>

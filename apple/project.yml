@@ -32,10 +32,17 @@ targets:
     configFiles:
       Debug: Config/Secrets.xcconfig
       Release: Config/Secrets.xcconfig
+    entitlements:
+      path: ThePickleHub/App/ThePickleHub.entitlements
+      properties:
+        com.apple.developer.associated-domains:
+          - applinks:www.thepicklehub.net
+          - applinks:thepicklehub.net
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.thepicklehub.app.dev
         PRODUCT_NAME: ThePickleHub
+        DEVELOPMENT_TEAM: 5S49Q7AB7M
         INFOPLIST_FILE: ThePickleHub/App/Info.plist
         GENERATE_INFOPLIST_FILE: "NO"
         TARGETED_DEVICE_FAMILY: "1"

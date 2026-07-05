@@ -57,6 +57,47 @@ struct SocialRepository {
             .order("registered_at", ascending: true).limit(limit).execute().value) ?? []
     }
 
+    // MARK: Người chơi tự quản lý đăng ký (magic token — web /dang-ky/:token)
+
+    /// RPC read-only `get_registration_by_token` — join event + payment vào 1 dòng.
+    func registrationByToken(_ token: String) async throws -> PlayerRegistrationInfo? {
+        struct Params: Encodable { let p_magic_token: String }
+        let rows: [PlayerRegistrationInfo] = try await client
+            .rpc("get_registration_by_token", params: Params(p_magic_token: token))
+            .execute().value
+        return rows.first
+    }
+
+    /// Edge fn `cancel-registration` (bearer = magic token).
+    func cancelRegistration(token: String, reason: String?) async throws {
+        struct Body: Encodable { let magic_token: String; let reason: String? }
+        struct Resp: Decodable { let ok: Bool?; let code: String? }
+        let resp: Resp = try await client.functions.invoke(
+            "cancel-registration",
+            options: FunctionInvokeOptions(body: Body(magic_token: token, reason: reason)))
+        if let code = resp.code { throw SocialFlowError(code: code) }
+    }
+
+    /// Edge fn `reactivate-registration` — đăng ký lại khi còn chỗ.
+    func reactivateRegistration(token: String) async throws {
+        struct Body: Encodable { let magic_token: String }
+        struct Resp: Decodable { let ok: Bool?; let code: String? }
+        let resp: Resp = try await client.functions.invoke(
+            "reactivate-registration",
+            options: FunctionInvokeOptions(body: Body(magic_token: token)))
+        if let code = resp.code { throw SocialFlowError(code: code) }
+    }
+
+    /// Edge fn `mark-payment-claimed` — người chơi báo đã chuyển khoản.
+    func markPaymentClaimed(orderID: UUID, token: String) async throws {
+        struct Body: Encodable { let order_id: String; let magic_token: String }
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp = try await client.functions.invoke(
+            "mark-payment-claimed",
+            options: FunctionInvokeOptions(body: Body(
+                order_id: orderID.uuidString.lowercased(), magic_token: token)))
+    }
+
     /// Registration counts for several events at once (parallel head-counts).
     func registrationCounts(eventIDs: [UUID]) async -> [UUID: Int] {
         await withTaskGroup(of: (UUID, Int).self) { group in
