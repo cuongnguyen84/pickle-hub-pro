@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "vietnam-pickleball-tournament-calendar-2026",
   "pickleball-club-management-software-comparison",
   "pickleball-tournament-budget-calculator-guide",
   "ppa-tour-asia-2026-recap",
