@@ -7,22 +7,34 @@
 
 ---
 
-## Trạng thái khắc phục (2026-07-06)
+## Trạng thái khắc phục — ĐÃ DEPLOY PRODUCTION (2026-07-06)
 
-Đã fix trên branch `security/critical-high-fixes-2026-07-06` (chưa merge main — cần test preview trước):
+Tất cả 1 Critical + 4 High đã fix và **đã lên `main` + áp dụng production**, verified.
 
 | ID | Mô tả | Trạng thái |
 |----|-------|-----------|
-| 🔴 C1 | Lộ email/phone toàn bộ user (RLS profiles) | ✅ Đã fix — migration khoá quyền cột PII + 7 RPC SECURITY DEFINER + sửa 10 call-site |
-| 🟠 H1 | `.env` bị track | ✅ Đã fix — untrack + gitignore + `.env.example` |
-| 🟠 H2 | SSR blog VI không sanitize | ✅ Đã fix — `sanitizeBlogHtml()` + bump cache `pr:v21` |
-| 🟠 H3 | Deep-link handler tin substring | ✅ Đã fix — parse URL + allowlist scheme/host |
-| 🟠 H4 | 4 webhook fail-open | ✅ Đã fix — fail-closed (⚠️ cần set secret prod trước khi deploy) |
+| 🔴 C1 | Lộ email/phone toàn bộ user (RLS profiles) | ✅ **LIVE** — khoá quyền cột PII + 7 RPC SECURITY DEFINER + 10 call-site (commit `a17054d`) |
+| 🟠 H1 | `.env` bị track | ✅ **LIVE** — untrack + gitignore + `.env.example` (commit `c2abb59`) |
+| 🟠 H2 | SSR blog VI không sanitize | ✅ **LIVE** — `sanitizeBlogHtml()` + cache `pr:v21` (commit `c2abb59`) |
+| 🟠 H3 | Deep-link handler tin substring | ✅ **LIVE** — parse URL + allowlist scheme/host (commit `c2abb59`) |
+| 🟠 H4 | 4 webhook fail-open | ✅ **LIVE** — fail-closed, 4 edge function đã redeploy (commit `a17054d`) |
 
-**Việc Cuong cần làm trước khi merge main:**
-1. **C1** — apply migration `20260706120000_profiles_pii_column_lockdown.sql` lên Supabase **preview** trước; regenerate `types.ts` (`supabase gen types`); test: đăng nhập/xem hồ sơ, search người chơi (kể cả theo SĐT), tạo ghost trùng SĐT, admin user management + push theo email, audit log, BTC xem email người đăng ký, live viewer list, recent opponents. Xác nhận anon/authenticated KHÔNG select được `email`/`phone` nữa (`select('email')` phải trả permission denied).
-2. **H4** — chạy `supabase secrets list --project-ref ajvlcamxemgbxduhiqrl`, xác nhận `MUX_WEBHOOK_SECRET`, `SEND_EMAIL_HOOK_SECRET`, `MAILCHIMP_WEBHOOK_SECRET`, `CRON_SECRET` đã set. **Nếu thiếu secret nào mà deploy, chức năng tương ứng sẽ ngừng (vd auth email → user không đăng ký được).**
-3. **H2** — sau deploy, verify `/vi/blog/<slug>` bằng `curl -A Googlebot` vẫn render đúng nội dung (sanitizer không strip nhầm markup hợp lệ).
+**Cách triển khai C1 (zero-downtime, đã thực hiện qua Supabase Management API):**
+1. Pha A — tạo 7 RPC (additive) trên prod DB. ✓
+2. Pha 2 — merge C1 frontend lên main → Cloudflare Pages deploy `a17054d` success. ✓
+3. Pha B — `REVOKE`/`GRANT` khoá cột PII (sau khi frontend mới live). ✓
+4. Ghi nhận migration `20260706120000` vào `schema_migrations`. ✓
+
+**Verify production:**
+- `has_column_privilege('authenticated','profiles','email')` → `false`; `phone` → `false`; `contact_email` → `false`; `display_name` → `true`. ✓
+- anon REST `GET /profiles?select=email` → **HTTP 401 `42501 permission denied`**. ✓
+- anon `select=id,display_name` → 200; RPC `search_players` → 200. ✓
+
+**Ghi chú H4:** verify prod — `MUX_WEBHOOK_SECRET`, `MAILCHIMP_WEBHOOK_SECRET`, `CRON_SECRET` đã set (hành vi không đổi). `SEND_EMAIL_HOOK_SECRET` **chưa set** nhưng Auth "Send Email" hook đang **tắt** (`hook_send_email_enabled=false`) nên `send-auth-email` không được gọi — thay đổi fail-closed là inert. ⚠️ **Nếu sau này bật hook đó, PHẢI set `SEND_EMAIL_HOOK_SECRET` khớp với secret của hook, nếu không auth email sẽ ngừng.**
+
+**Việc nên làm sau (không gấp):**
+- Regenerate `src/integrations/supabase/types.ts` bằng `supabase gen types` (hiện đang dùng RPC signature thêm tay — đúng nhưng nên đồng bộ lại).
+- Verify `/vi/blog/<slug>` bằng `curl -A Googlebot` để chắc `sanitizeBlogHtml` không strip nhầm markup.
 
 ---
 
