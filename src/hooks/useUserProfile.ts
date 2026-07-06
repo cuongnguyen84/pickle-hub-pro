@@ -25,14 +25,18 @@ export function useUserProfile() {
     queryFn: async () => {
       if (!user?.id) return null;
 
+      // NOTE: `email` is intentionally NOT selected from profiles — the PII
+      // column lockdown (migration 20260706100000-ish) revokes the email column
+      // from the authenticated role, so `select("*")` would fail. The user's own
+      // email is available from the auth session instead.
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, display_name, avatar_url, organization_id, created_at, onboarding_step, onboarding_completed_at")
         .eq("id", user.id)
         .single();
 
       if (error) throw error;
-      return data as UserProfile;
+      return { ...data, email: user.email ?? "" } as UserProfile;
     },
     enabled: !!user?.id,
   });
@@ -41,11 +45,13 @@ export function useUserProfile() {
     mutationFn: async (updates: Partial<Pick<UserProfile, "display_name" | "avatar_url">>) => {
       if (!user?.id) throw new Error("Not authenticated");
 
+      // Return only non-PII columns — `select()` (== select *) would trip the
+      // email column lockdown for the authenticated role.
       const { data, error } = await supabase
         .from("profiles")
         .update(updates)
         .eq("id", user.id)
-        .select()
+        .select("id, display_name, avatar_url")
         .single();
 
       if (error) throw error;

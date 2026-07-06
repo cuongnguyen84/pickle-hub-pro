@@ -60,10 +60,11 @@ export default function AdminPushNotification() {
           return;
         }
 
+        // Admin-only email→id resolver via SECURITY DEFINER RPC (gated by
+        // is_admin()). The PII column lockdown revokes `email` from the
+        // authenticated role, so a direct `.in("email", ...)` no longer works.
         const { data: profiles, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, email")
-          .in("email", emailList);
+          .rpc("admin_lookup_profiles_by_email", { p_emails: emailList });
 
         if (profileError) throw profileError;
 

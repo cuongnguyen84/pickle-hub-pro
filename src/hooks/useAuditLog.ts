@@ -35,6 +35,8 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
     queryKey: ["admin", "audit-logs", filters],
     queryFn: async () => {
       let query = supabase
+        // audit_logs is not in the generated types (admin-only table).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("audit_logs" as any)
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
@@ -57,32 +59,28 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
       if (error) throw error;
 
       // Fetch actor profiles for entries with actor_id
-      const actorIds = [...new Set((data as any[])?.filter((d: any) => d.actor_id).map((d: any) => d.actor_id))];
+      const rows = (data as unknown as AuditLogEntry[] | null) ?? [];
+      const actorIds = [...new Set(rows.filter((d) => d.actor_id).map((d) => d.actor_id as string))];
       
-      let profilesMap: Record<string, { display_name: string | null; email: string }> = {};
+      const profilesMap: Record<string, { display_name: string | null; email: string }> = {};
       if (actorIds.length > 0) {
-        const { data: profiles } = await supabase
-          .rpc("get_public_profiles", { profile_ids: actorIds });
-        
-        if (profiles) {
-          // Also get emails from profiles table for admin context
-          const { data: fullProfiles } = await supabase
-            .from("profiles")
-            .select("id, display_name, email")
-            .in("id", actorIds);
-          
-          if (fullProfiles) {
-            fullProfiles.forEach((p: any) => {
-              profilesMap[p.id] = { display_name: p.display_name, email: p.email };
-            });
-          }
+        // Admin-only id→email map via SECURITY DEFINER RPC (gated by is_admin()).
+        // Direct `profiles.select("email")` no longer works for the
+        // authenticated role after the PII column lockdown.
+        const { data: fullProfiles } = await supabase
+          .rpc("admin_get_profile_emails", { p_ids: actorIds });
+
+        if (fullProfiles) {
+          (fullProfiles as Array<{ id: string; display_name: string | null; email: string }>).forEach((p) => {
+            profilesMap[p.id] = { display_name: p.display_name, email: p.email };
+          });
         }
       }
 
-      const entries: AuditLogEntry[] = (data as any[])?.map((d: any) => ({
+      const entries: AuditLogEntry[] = rows.map((d) => ({
         ...d,
         actor_profile: d.actor_id ? profilesMap[d.actor_id] || null : null,
-      })) || [];
+      }));
 
       return { entries, totalCount: count || 0 };
     },
@@ -101,6 +99,8 @@ export async function logAuditEvent(params: {
   afterData?: Record<string, unknown>;
 }) {
   try {
+    // log_audit_event is not in the generated types (admin-only RPC).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase.rpc("log_audit_event" as any, {
       _event_type: params.eventType,
       _event_category: params.eventCategory,

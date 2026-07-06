@@ -44,7 +44,10 @@ interface ProposalRow {
 interface ProfileMini {
   id: string;
   display_name: string | null;
-  email: string;
+  username?: string | null;
+  // Only ever populated for the current user (from the auth session). Other
+  // users' emails are PII and no longer readable client-side (column lockdown).
+  email?: string | null;
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -99,10 +102,12 @@ function PlayerSearch({
     queryKey: ["profile-search", q],
     enabled: q.length >= 2 && !selected,
     queryFn: async () => {
+      // Search by display_name / username only — email is PII and no longer
+      // selectable client-side (column lockdown, migration 20260706120000).
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, email")
-        .or(`display_name.ilike.%${escapePostgrestSearch(q)}%,email.ilike.%${escapePostgrestSearch(q)}%`)
+        .select("id, display_name, username")
+        .or(`display_name.ilike.%${escapePostgrestSearch(q)}%,username.ilike.%${escapePostgrestSearch(q)}%`)
         .limit(10);
       if (error) throw error;
       return (data ?? []).filter((p) => !excludeIds.includes((p as ProfileMini).id)) as ProfileMini[];
@@ -116,8 +121,8 @@ function PlayerSearch({
         style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)" }}
       >
         <span>
-          <span style={{ color: "var(--tl-fg)" }}>{selected.display_name ?? selected.email}</span>
-          <span className="ml-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>{selected.email}</span>
+          <span style={{ color: "var(--tl-fg)" }}>{selected.display_name ?? selected.username ?? selected.email}</span>
+          <span className="ml-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>{selected.username ?? selected.email}</span>
         </span>
         <button
           type="button"
@@ -159,8 +164,8 @@ function PlayerSearch({
                 className="block w-full px-2 py-1 text-left text-sm hover:bg-black/10"
                 onClick={() => { onChange(p); setQ(""); }}
               >
-                <span style={{ color: "var(--tl-fg)" }}>{p.display_name ?? p.email}</span>
-                <span className="ml-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>{p.email}</span>
+                <span style={{ color: "var(--tl-fg)" }}>{p.display_name ?? p.username ?? "—"}</span>
+                <span className="ml-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>{p.username}</span>
               </button>
             ))
           )}

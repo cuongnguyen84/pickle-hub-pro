@@ -55,8 +55,11 @@ interface AuthHookPayload {
 // SECURITY: Verify HMAC signature from Supabase Auth Hook
 const verifyWebhookSignature = async (payload: string, signatureHeader: string | null): Promise<boolean> => {
   if (!SEND_EMAIL_HOOK_SECRET) {
-    console.warn("SEND_EMAIL_HOOK_SECRET not configured, skipping verification");
-    return true;
+    // SECURITY (fail-closed): reject unverifiable calls when no secret is set.
+    // Previously returned true, letting anyone forge auth-email payloads
+    // (phishing vector via Resend). Set SEND_EMAIL_HOOK_SECRET before deploying.
+    console.error("SEND_EMAIL_HOOK_SECRET not configured — rejecting request");
+    return false;
   }
   
   if (!signatureHeader) {

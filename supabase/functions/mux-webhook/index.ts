@@ -22,8 +22,11 @@ const verifyMuxSignature = async (rawBody: string, signatureHeader: string | nul
   const secret = Deno.env.get("MUX_WEBHOOK_SECRET");
   
   if (!secret) {
-    console.warn("MUX_WEBHOOK_SECRET not configured, skipping signature verification");
-    return true; // Backward compat — allow if not yet configured
+    // SECURITY (fail-closed): reject unverifiable events when no secret is set.
+    // Previously returned true, letting anyone forge Mux events. Set
+    // MUX_WEBHOOK_SECRET before deploying.
+    console.error("MUX_WEBHOOK_SECRET not configured — rejecting webhook");
+    return false;
   }
   
   if (!signatureHeader) {

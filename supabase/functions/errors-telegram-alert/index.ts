@@ -212,7 +212,11 @@ Deno.serve(async (req) => {
       return new Response("Unauthorized", { status: 401 });
     }
   } else {
-    console.warn("[errors-telegram-alert] CRON_SECRET not set — endpoint is unauthenticated");
+    // SECURITY (fail-closed): refuse to run if the shared secret is not set.
+    // Previously this path left the endpoint open, letting anyone trigger the
+    // error scan + Telegram send. Set CRON_SECRET before deploying.
+    console.error("[errors-telegram-alert] CRON_SECRET not set — refusing to run");
+    return new Response("Server misconfigured: CRON_SECRET not set", { status: 503 });
   }
 
   const report = await runAlert();

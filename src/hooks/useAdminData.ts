@@ -136,36 +136,64 @@ export function useAdminUsers(search = "") {
       // caps un-limited selects at 1000, so older users never reach the client.
       // Strip chars that would break the .or() filter syntax or ilike pattern.
       const q = search.trim().replace(/[%_,()]/g, "");
+
+      // email is PII and no longer directly selectable/filterable by the
+      // authenticated role (column lockdown, migration 20260706120000). It is
+      // merged in below via admin-gated SECURITY DEFINER RPCs.
+      const emailMap: Record<string, string> = {};
+      let idFilter: string[] | null = null;
+
+      if (q) {
+        // Admin-only search that can match on email OR display_name.
+        const { data: matches, error: mErr } = await supabase
+          .rpc("admin_search_profiles", { p_query: q, p_limit: 100 });
+        if (mErr) throw mErr;
+        const rows = (matches ?? []) as Array<{ id: string; email: string | null }>;
+        idFilter = rows.map((m) => m.id);
+        rows.forEach((m) => { if (m.email) emailMap[m.id] = m.email; });
+        if (idFilter.length === 0) return [];
+      }
+
+      // organizations.dupr_linked_by → profiles.id makes the bare embed
+      // ambiguous (PGRST201) — must name the FK explicitly. Non-PII columns only.
       let query = supabase
         .from("profiles")
-        // organizations.dupr_linked_by → profiles.id makes the bare embed
-        // ambiguous (PGRST201) — must name the FK explicitly
-        .select("*, organizations!profiles_organization_id_fkey(id, name)")
+        .select(
+          "id, display_name, username, avatar_url, organization_id, created_at, tournament_create_quota, is_ghost, is_verified, is_pro, organizations!profiles_organization_id_fkey(id, name)",
+        )
         .order("created_at", { ascending: false });
-      if (q) {
-        query = query.or(`email.ilike.%${q}%,display_name.ilike.%${q}%`).limit(100);
-      }
+      if (idFilter) query = query.in("id", idFilter);
 
       const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) throw profilesError;
 
+      const ids = (profiles ?? []).map((p) => p.id);
+
+      // Browse mode (no search): fetch emails for the visible rows via the
+      // admin RPC. Search mode already populated emailMap above.
+      if (!q && ids.length > 0) {
+        const { data: emailRows } = await supabase
+          .rpc("admin_get_profile_emails", { p_ids: ids });
+        (emailRows ?? []).forEach((e: { id: string; email: string }) => {
+          emailMap[e.id] = e.email;
+        });
+      }
+
       // ponytail: without search, roles + browse list are both capped at 1000
       // newest rows (pre-existing behavior) — paginate if full browsing matters
       let rolesQuery = supabase.from("user_roles").select("*");
       if (q) {
-        rolesQuery = rolesQuery.in(
-          "user_id",
-          profiles.map((p) => p.id)
-        );
+        rolesQuery = rolesQuery.in("user_id", ids);
       }
       const { data: roles, error: rolesError } = await rolesQuery;
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with their roles
-      return profiles.map((profile) => ({
+      // Combine profiles with their email + roles
+      return (profiles ?? []).map((profile) => ({
         ...profile,
+        email: emailMap[profile.id] ?? null,
         roles: roles.filter((r) => r.user_id === profile.id).map((r) => r.role),
       }));
     },

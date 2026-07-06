@@ -362,7 +362,15 @@ Deno.serve(async (req) => {
       });
     }
   } else {
-    console.warn("[send-blog-blast] MAILCHIMP_WEBHOOK_SECRET not set — skipping secret check");
+    // SECURITY (fail-closed): refuse to run if the shared secret is not
+    // configured. Previously this path fell through and processed the payload,
+    // letting anyone who could reach the function trigger an email blast to
+    // every subscriber. Set MAILCHIMP_WEBHOOK_SECRET before deploying.
+    console.error("[send-blog-blast] MAILCHIMP_WEBHOOK_SECRET not set — refusing to run");
+    return new Response(JSON.stringify({ error: "Server misconfigured: webhook secret not set" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   let payload: SupabaseWebhookPayload;

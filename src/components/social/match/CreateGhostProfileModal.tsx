@@ -121,12 +121,14 @@ export const CreateGhostProfileModal = ({
     if (overLimit) return;
     setSubmitting(true);
     try {
-      // Check phone uniqueness first
-      const { data: existingByPhone } = await supabase
-        .from("profiles")
-        .select("id, username, display_name, avatar_url, dupr_doubles, is_ghost, city")
-        .eq("phone", values.phone)
-        .maybeSingle();
+      // Check phone uniqueness first. Uses the find_profile_by_phone RPC
+      // (SECURITY DEFINER) because the PII column lockdown revokes `phone` from
+      // the authenticated role — a direct `.eq("phone", ...)` would fail. The
+      // RPC matches phone internally and returns only safe display columns.
+      const { data: byPhone } = await supabase.rpc("find_profile_by_phone", {
+        p_phone: values.phone,
+      });
+      const existingByPhone = Array.isArray(byPhone) ? byPhone[0] : byPhone;
       if (existingByPhone) {
         toast({
           title:

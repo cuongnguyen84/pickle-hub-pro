@@ -6954,6 +6954,42 @@ export type Database = {
     }
     Functions: {
       _split_player_names: { Args: { p_name: string }; Returns: string[] }
+      admin_get_profile_emails: {
+        Args: { p_ids: string[] }
+        Returns: { display_name: string; email: string; id: string }[]
+      }
+      admin_lookup_profiles_by_email: {
+        Args: { p_emails: string[] }
+        Returns: { email: string; id: string }[]
+      }
+      admin_search_profiles: {
+        Args: { p_limit?: number; p_query?: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          organization_id: string
+          username: string
+        }[]
+      }
+      find_profile_by_phone: {
+        Args: { p_phone: string }
+        Returns: {
+          avatar_url: string
+          city: string
+          display_name: string
+          dupr_doubles: number
+          id: string
+          is_ghost: boolean
+          username: string
+        }[]
+      }
+      get_table_registration_emails: {
+        Args: { p_table_id: string }
+        Returns: { email: string; user_id: string }[]
+      }
       accept_partner_invitation: {
         Args: {
           _display_name: string

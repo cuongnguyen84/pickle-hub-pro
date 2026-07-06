@@ -19,7 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 export interface RecentOpponent {
   player_id: string;
   display_name: string | null;
-  email: string;
+  /** Always null since the PII column lockdown — kept for type compatibility. */
+  email: string | null;
   username: string | null;
   last_played_at: string;
 }
@@ -65,7 +66,9 @@ export function useRecentOpponents(viewerId: string | null | undefined) {
       const { data: rows, error } = await supabase
         .from("match_participants")
         .select(
-          "match_id, player_id, team, matches!inner(played_at), profiles!inner(display_name, email, username)",
+          // email intentionally omitted — PII column lockdown revokes it from
+          // the authenticated role; the opponents picker only needs names.
+          "match_id, player_id, team, matches!inner(played_at), profiles!inner(display_name, username)",
         )
         .in("match_id", matchIds)
         .neq("player_id", viewerId)
@@ -83,7 +86,7 @@ export function useRecentOpponents(viewerId: string | null | undefined) {
         // Drop teammates: participant must be on the opposite team
         if (viewerTeam && rowTeam && rowTeam === viewerTeam) continue;
 
-        const p = (r as { profiles?: { display_name: string | null; email: string; username: string | null } }).profiles;
+        const p = (r as { profiles?: { display_name: string | null; username: string | null } }).profiles;
         const playedAt =
           (r as { matches?: { played_at: string } }).matches?.played_at ?? new Date().toISOString();
         const pid = (r as { player_id: string }).player_id;
@@ -92,7 +95,7 @@ export function useRecentOpponents(viewerId: string | null | undefined) {
         out.push({
           player_id: pid,
           display_name: p.display_name,
-          email: p.email,
+          email: null,
           username: p.username,
           last_played_at: playedAt,
         });

@@ -32,12 +32,14 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
       .map((v) => v.userId)
       .filter((id): id is string => !!id);
 
-    let profileMap: Record<string, { display_name: string | null; email: string; avatar_url: string | null }> = {};
+    const profileMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
 
     if (userIds.length > 0) {
+      // email intentionally NOT selected — viewer emails are PII and the column
+      // lockdown revokes email from the authenticated role. Display uses names.
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, display_name, email, avatar_url")
+        .select("id, display_name, avatar_url")
         .in("id", userIds);
 
       if (profiles) {
@@ -53,7 +55,7 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
         viewerId: v.viewerId,
         userId: v.userId,
         displayName: profile?.display_name ?? null,
-        email: profile?.email ?? null,
+        email: null,
         avatarUrl: profile?.avatar_url ?? null,
         joinedAt: v.joinedAt,
       };
@@ -95,7 +97,7 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
         for (const [key, presences] of Object.entries(state)) {
           // Skip admin watcher entries
           if (key.startsWith("admin_watcher_")) continue;
-          const presence = (presences as any[])[0];
+          const presence = (presences as Array<{ user_id?: string | null; joined_at?: string | null }>)[0];
           rawViewers.push({
             viewerId: key,
             userId: presence?.user_id ?? null,

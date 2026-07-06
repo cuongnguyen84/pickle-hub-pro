@@ -56,22 +56,21 @@ export function useRegistration() {
       
       if (!registrations || registrations.length === 0) return [];
 
-      // Then get emails for all user_ids
-      const userIds = registrations.map(r => r.user_id);
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .in('id', userIds);
-
-      // Build a map of user_id -> email (profiles query might fail due to RLS, that's OK)
+      // Then get registrant emails via the organizer-gated RPC. Direct reads of
+      // profiles.email are blocked for the authenticated role (PII column
+      // lockdown); get_table_registration_emails (SECURITY DEFINER) returns
+      // emails only to the table's creator or an admin. Degrades to no emails
+      // for non-organizers, which is the intended behavior.
       const emailMap: Record<string, string> = {};
-      if (profiles && !profilesError) {
-        profiles.forEach((p: { id: string; email: string }) => {
-          emailMap[p.id] = p.email;
+      const { data: emailRows, error: emailErr } = await supabase
+        .rpc('get_table_registration_emails', { p_table_id: tableId });
+      if (emailRows && !emailErr) {
+        (emailRows as Array<{ user_id: string; email: string }>).forEach((p) => {
+          emailMap[p.user_id] = p.email;
         });
       }
 
-      return registrations.map((reg: any) => ({
+      return registrations.map((reg: { user_id: string; [key: string]: unknown }) => ({
         ...reg,
         email: emailMap[reg.user_id] || null,
       })) as Registration[];
