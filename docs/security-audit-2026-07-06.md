@@ -38,6 +38,30 @@ Tất cả 1 Critical + 4 High đã fix và **đã lên `main` + áp dụng prod
 
 ---
 
+## Trạng thái Medium — ĐÃ DEPLOY PRODUCTION (2026-07-06, commit `5382fba`)
+
+Tất cả 9 Medium đã fix, merge main, apply DB + deploy edge functions, verified.
+
+| ID | Fix | Trạng thái |
+|----|-----|-----------|
+| M1 | presence_heartbeats: write qua RPC `record_heartbeat`, revoke read trực tiếp | ✅ anon `select presence_heartbeats` → 401; RPC + `get_online_now` OK |
+| M2 | `dupr-webhook-test-fire`: redact `DUPR_CLIENT_KEY` khỏi response | ✅ deploy v21 |
+| M3 | `dupr-user-search`: bỏ search theo email + chỉ admin thấy email | ✅ deploy v10 |
+| M4 | CHECK constraint chặn `javascript:`/`data:`/`vbscript:`/`file:` trên `venues.website` + `social_events.zalo_group_url` | ✅ verified: js chặn, https/scheme-less pass |
+| M5 | `og-organization`: escape `logo_url` | ✅ deploy v39 |
+| M6 | `registration_secrets.magic_token`: `expires_at` 400d + enforce ở `submit-match-score` | ✅ column + backfill applied, deploy v28 |
+| M7 | IndexNow: constant-time compare + rate-limit per-IP (KV) | ✅ trong deploy Cloudflare `5382fba` |
+| M8 | Capacitor: tắt `cleartext`/`allowMixedContent`, bỏ `*.google.com`, ATS media-only | ⚠️ cần rebuild app native mới có tác dụng (không ảnh hưởng web) |
+| M9 | `request-recovery-link`: phản hồi đồng nhất pre-CAPTCHA (hết oracle); `newsletter-subscribe`: rate-limit per-IP/giờ | ✅ deploy v28 / v31 |
+
+**Triển khai:** migration additive (RPC, expiry column, CHECK, rate-limit table) apply trước; frontend + edge deploy; rồi mới revoke presence (zero-downtime, giống C1). 4 migration đã ghi vào `schema_migrations`.
+
+**Lưu ý M8:** thay đổi `capacitor.config.ts` + `Info.plist.patch` chỉ áp dụng khi build lại app iOS/Android (`npx cap sync` + rebuild). App đang chạy chưa đổi.
+
+Còn lại: nhóm **Low/Info** (admin router guard, HSTS/Permissions-Policy blanket, CSP nonce, `?nocache` gate, worker size cap, JWT localStorage…) — chưa xử, không gấp.
+
+---
+
 ## Tóm tắt điều hành
 
 Codebase nhìn chung **có kỷ luật bảo mật tốt**: escape HTML/JSON-LD nhất quán ở tầng SSR, OTP engineering solid (hash + TTL + rate limit + CAPTCHA + budget cap), service_role key không bao giờ lộ ra client, open-redirect defense có test riêng, DUPR postMessage validate origin.
