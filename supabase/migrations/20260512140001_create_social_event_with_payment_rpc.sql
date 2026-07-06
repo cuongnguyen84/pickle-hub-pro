@@ -16,6 +16,9 @@
 -- IDEMPOTENT: replay-safe via CREATE OR REPLACE.
 -- ============================================================================
 
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.create_social_event_with_payment(JSONB, JSONB);
+
 CREATE OR REPLACE FUNCTION public.create_social_event_with_payment(
   p_event   JSONB,
   p_payment JSONB DEFAULT NULL

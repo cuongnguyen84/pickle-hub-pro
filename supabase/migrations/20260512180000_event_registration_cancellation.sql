@@ -42,6 +42,9 @@ COMMENT ON COLUMN public.event_registrations.cancelled_reason IS
 -- that returns the joined event + registration + payment_order view for
 -- a single magic_token. Returns at most one row.
 
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_registration_by_token(UUID);
+
 CREATE OR REPLACE FUNCTION public.get_registration_by_token(p_magic_token UUID)
 RETURNS TABLE (
   registration_id           UUID,

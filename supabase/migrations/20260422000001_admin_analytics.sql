@@ -38,6 +38,9 @@ $$;
 
 -- ─── RPC: get_new_users_daily ──────────────────────────────────────────────
 -- Returns daily new user sign-up counts for a date range
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_new_users_daily(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_new_users_daily(
   p_start DATE,
   p_end   DATE
@@ -59,6 +62,9 @@ $$;
 
 -- ─── RPC: get_content_stats ────────────────────────────────────────────────
 -- Returns aggregate content counts for a date range
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_content_stats(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_content_stats(
   p_start DATE,
   p_end   DATE
@@ -92,6 +98,9 @@ $$;
 
 -- ─── RPC: get_engagement_stats ─────────────────────────────────────────────
 -- Returns engagement metrics (view events) for a date range
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_engagement_stats(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_engagement_stats(
   p_start DATE,
   p_end   DATE
@@ -127,6 +136,9 @@ $$;
 
 -- ─── RPC: get_top_content ──────────────────────────────────────────────────
 -- Returns top 10 most viewed content items in a date range
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_top_content(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_top_content(
   p_start DATE,
   p_end   DATE

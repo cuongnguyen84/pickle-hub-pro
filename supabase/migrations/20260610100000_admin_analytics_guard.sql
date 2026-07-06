@@ -10,6 +10,9 @@
 -- unaffected. `public.has_role(uuid, app_role)` already exists (20251221153808).
 
 -- get_new_users_daily ────────────────────────────────────────────────────────
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_new_users_daily(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_new_users_daily(p_start DATE, p_end DATE)
 RETURNS TABLE (day DATE, count INTEGER)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -26,6 +29,9 @@ BEGIN
 END; $$;
 
 -- get_content_stats ──────────────────────────────────────────────────────────
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_content_stats(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_content_stats(p_start DATE, p_end DATE)
 RETURNS JSON
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -42,6 +48,9 @@ BEGIN
 END; $$;
 
 -- get_engagement_stats ───────────────────────────────────────────────────────
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_engagement_stats(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_engagement_stats(p_start DATE, p_end DATE)
 RETURNS JSON
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -58,6 +67,9 @@ BEGIN
 END; $$;
 
 -- get_top_content ────────────────────────────────────────────────────────────
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_top_content(DATE, DATE);
+
 CREATE OR REPLACE FUNCTION public.get_top_content(p_start DATE, p_end DATE)
 RETURNS TABLE (target_id UUID, target_type TEXT, view_count INTEGER)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$

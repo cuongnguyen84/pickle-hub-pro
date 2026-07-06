@@ -136,6 +136,9 @@ COMMENT ON FUNCTION public.is_club_member(UUID, UUID) IS
 -- call this (RLS is "public SELECT") but pending rows are only surfaced
 -- to organizers — non-organizers always see status='active' rows only.
 
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.list_club_members(UUID);
+
 CREATE OR REPLACE FUNCTION public.list_club_members(p_club_id UUID)
 RETURNS TABLE (
   profile_id    UUID,
@@ -436,6 +439,9 @@ GRANT  EXECUTE ON FUNCTION public.remove_club_member(UUID, UUID) TO service_role
 -- payment + prepayment status: identical to phone-otp-verify path, so
 -- existing payment flow (create-payment-order + QRPaymentStep) still
 -- works without changes downstream.
+
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.register_event_as_member(UUID, TEXT);
 
 CREATE OR REPLACE FUNCTION public.register_event_as_member(
   p_event_id UUID,
