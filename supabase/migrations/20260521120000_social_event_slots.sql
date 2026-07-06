@@ -65,6 +65,9 @@ CREATE INDEX IF NOT EXISTS idx_event_registrations_event_slot
 -- Append `slots` to the INSERT. Defaults to '[]'::jsonb when caller
 -- omits the key (older clients work unchanged).
 
+-- Replay-safety: signature/return may differ from prod-seeded fn (42P13). Drop first.
+DROP FUNCTION IF EXISTS public.create_social_event_with_payment(JSONB, JSONB);
+
 CREATE OR REPLACE FUNCTION public.create_social_event_with_payment(
   p_event   JSONB,
   p_payment JSONB
