@@ -4,14 +4,13 @@
   After running `npx cap add ios`, add these keys to ios/App/App/Info.plist:
 -->
 
-<!-- Allow arbitrary network loads (for Mux video streaming) -->
+<!-- ATS: only relax for MEDIA (Mux HLS may serve some cleartext segments).
+     Do NOT enable the blanket NSAllowsArbitraryLoads / ...InWebContent — all
+     app + API traffic is HTTPS, so a blanket exception needlessly weakens ATS
+     (M8). Mirrors the scoped config already in apple/.../Info.plist. -->
 <key>NSAppTransportSecurity</key>
 <dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
     <key>NSAllowsArbitraryLoadsForMedia</key>
-    <true/>
-    <key>NSAllowsArbitraryLoadsInWebContent</key>
     <true/>
 </dict>
 

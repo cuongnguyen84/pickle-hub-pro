@@ -23,15 +23,13 @@ export function usePresenceHeartbeat() {
 
     const sendHeartbeat = async () => {
       if (document.hidden) return;
-      await supabase.from("presence_heartbeats").upsert(
-        {
-          session_id: sessionId,
-          user_id: user?.id ?? null,
-          last_seen_at: new Date().toISOString(),
-          page_path: window.location.pathname,
-        },
-        { onConflict: "session_id" }
-      );
+      // Write via SECURITY DEFINER RPC — direct table access is revoked so the
+      // presence table can no longer be scraped (M1). user_id is derived from
+      // auth.uid() server-side; we only send the session id + current path.
+      await supabase.rpc("record_heartbeat", {
+        p_session_id: sessionId,
+        p_page_path: window.location.pathname,
+      });
     };
 
     // Send immediately on mount

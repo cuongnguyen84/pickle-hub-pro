@@ -104,6 +104,16 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
+  // SECURITY: only admins may see other users' email addresses in results.
+  // Regular callers (e.g. the match-proposal player picker) get email: null.
+  const { data: adminRole } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+  const isAdmin = !!adminRole;
+
   let body: Body;
   try {
     body = (await req.json()) as Body;
@@ -148,8 +158,11 @@ Deno.serve(async (req) => {
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, display_name, email, username, dupr_id, dupr_singles, dupr_doubles")
+    // SECURITY: do NOT search by email — that turns this endpoint into an
+    // account-existence oracle for any authenticated user. Match on
+    // display_name / username / dupr_id only.
     .or(
-      `display_name.ilike.${ilike},email.ilike.${ilike},username.ilike.${ilike},dupr_id.ilike.${ilike}`,
+      `display_name.ilike.${ilike},username.ilike.${ilike},dupr_id.ilike.${ilike}`,
     )
     .limit(limit * 2);
 
@@ -167,11 +180,12 @@ Deno.serve(async (req) => {
     merged.set(key, {
       source: "internal",
       dupr_id: p.dupr_id,
-      full_name: p.display_name ?? p.email,
+      full_name: p.display_name ?? p.username ?? "(chưa đặt tên)",
       singles_rating: p.dupr_singles,
       doubles_rating: p.dupr_doubles,
       user_id: p.id,
-      email: p.email,
+      // email only surfaced to admins (AdminDuprDashboard); null otherwise.
+      email: isAdmin ? p.email : null,
       username: p.username,
     });
   }

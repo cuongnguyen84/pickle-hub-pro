@@ -8,15 +8,16 @@ const config: CapacitorConfig = {
   // Production: Load directly from thepicklehub.net (WebView wrapper mode)
   server: {
     url: 'https://www.thepicklehub.net',
-    cleartext: true,
-    // Allow navigation to external URLs (including OAuth providers)
+    // All endpoints are HTTPS — do not allow cleartext HTTP (M8).
+    cleartext: false,
+    // Allow navigation to external URLs (including OAuth providers). Scoped to
+    // the specific hosts we actually navigate to — no broad *.google.com (M8).
     allowNavigation: [
-      'thepicklehub.net', 
-      '*.thepicklehub.net', 
-      '*.supabase.co', 
+      'thepicklehub.net',
+      '*.thepicklehub.net',
+      '*.supabase.co',
       '*.mux.com',
-      'accounts.google.com',
-      '*.google.com'
+      'accounts.google.com'
     ]
   },
 
@@ -45,8 +46,8 @@ const config: CapacitorConfig = {
 
   // Android-specific configuration  
   android: {
-    // Allow mixed content (HTTPS + potential HTTP resources)
-    allowMixedContent: true,
+    // All resources are served over HTTPS — block mixed content (M8).
+    allowMixedContent: false,
     // Background color while loading
     backgroundColor: '#111317',
     // Capture all navigation

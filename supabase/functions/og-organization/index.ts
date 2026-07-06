@@ -111,7 +111,7 @@ serve(async (req) => {
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:title" content="${escapeHtml(ogTitle)}">
   <meta property="og:description" content="${escapeHtml(ogDescription)}">
-  <meta property="og:image" content="${ogImage}">
+  <meta property="og:image" content="${escapeHtml(ogImage)}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:locale" content="vi_VN">
   
@@ -120,7 +120,7 @@ serve(async (req) => {
   <meta name="twitter:url" content="${canonicalUrl}">
   <meta name="twitter:title" content="${escapeHtml(ogTitle)}">
   <meta name="twitter:description" content="${escapeHtml(ogDescription)}">
-  <meta name="twitter:image" content="${ogImage}">
+  <meta name="twitter:image" content="${escapeHtml(ogImage)}">
   
   <!-- Canonical URL -->
   <link rel="canonical" href="${canonicalUrl}">

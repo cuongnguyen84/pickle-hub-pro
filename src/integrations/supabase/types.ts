@@ -6990,6 +6990,10 @@ export type Database = {
         Args: { p_table_id: string }
         Returns: { email: string; user_id: string }[]
       }
+      record_heartbeat: {
+        Args: { p_session_id: string; p_page_path: string }
+        Returns: undefined
+      }
       accept_partner_invitation: {
         Args: {
           _display_name: string

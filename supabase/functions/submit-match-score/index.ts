@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
 
   const { data: secret, error: secretErr } = await supabase
     .from("registration_secrets")
-    .select("magic_token")
+    .select("magic_token, expires_at")
     .eq("registration_id", registrationId)
     .maybeSingle();
   if (secretErr) {
@@ -229,6 +229,12 @@ Deno.serve(async (req) => {
   }
   if (!secret || (secret.magic_token as string) !== magicToken) {
     return err("magic_token_mismatch", 401, "magic_token_mismatch");
+  }
+  // SECURITY (M6): reject expired magic tokens. expires_at is null only for
+  // pre-migration rows that were already backfilled; treat missing as valid.
+  const expiresAt = (secret as { expires_at?: string | null }).expires_at;
+  if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
+    return err("magic_token_expired", 401, "magic_token_expired");
   }
 
   const profileId = reg.profile_id as string | null;

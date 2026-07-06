@@ -134,10 +134,16 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: msg }, 502);
   }
 
+  // SECURITY: never echo the real DUPR_CLIENT_KEY back to the caller. In
+  // user-JWT mode any authenticated user could otherwise read it from
+  // payload.clientId and forge RATING webhook events. Redact it in the
+  // response — the internal POST above already used the real key.
+  const safePayload = { ...payload, clientId: "[redacted]" };
+
   return jsonResponse({
     fired: true,
     auth_mode: authMode,
-    payload,
+    payload: safePayload,
     receiver: { status: receiverStatus, body: receiverBody },
   });
 });

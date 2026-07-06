@@ -16,6 +16,32 @@ interface Env {
   INDEXNOW_SECRET: string;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  // Shared prerender KV, reused here as a best-effort rate-limit store.
+  PRERENDER_CACHE?: KVNamespace;
+}
+
+// Constant-time string comparison to avoid leaking the secret via response
+// timing (M7). Returns false immediately on length mismatch is acceptable —
+// the secret length is not sensitive.
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
+// Best-effort per-IP rate limit using the prerender KV (M7). If no KV binding
+// is present it degrades to no limit (secret auth still applies).
+async function isRateLimited(env: Env, ip: string): Promise<boolean> {
+  if (!env.PRERENDER_CACHE) return false;
+  const key = `indexnow:rl:${ip}`;
+  const current = parseInt((await env.PRERENDER_CACHE.get(key)) || "0", 10);
+  if (current >= 10) return true; // >10 requests / 60s window
+  await env.PRERENDER_CACHE.put(key, String(current + 1), { expirationTtl: 60 });
+  return false;
 }
 
 const HOST = "www.thepicklehub.net";
@@ -145,13 +171,23 @@ async function submitToIndexNow(
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const url = new URL(request.url);
-  const secret = url.searchParams.get("key");
+  const secret = url.searchParams.get("key") ?? "";
 
-  // Auth check
-  if (!env.INDEXNOW_SECRET || secret !== env.INDEXNOW_SECRET) {
+  // Auth check (constant-time compare)
+  if (!env.INDEXNOW_SECRET || !timingSafeEqual(secret, env.INDEXNOW_SECRET)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Rate limit (defense-in-depth if the secret ever leaks): the GET path runs
+  // a full Supabase query per call, so cap requests per IP.
+  const ip = request.headers.get("cf-connecting-ip") || "unknown";
+  if (await isRateLimited(env, ip)) {
+    return new Response(JSON.stringify({ error: "Rate limited" }), {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": "60" },
     });
   }
 

@@ -24,6 +24,14 @@ const corsHeaders = {
 // like quoted-local-part are rejected — fine for a newsletter form).
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+const MAX_PER_IP_PER_HOUR = 20;
+
+// SHA-256 hex of the client IP — we store a hash, never the raw IP.
+async function hashIp(ip: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -58,6 +66,29 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  // ─── Rate limit: MAX_PER_IP_PER_HOUR subscribes per IP per hour (M9) ───────
+  const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for") ?? "unknown";
+  const ipHash = await hashIp(ip);
+  const windowHour = new Date();
+  windowHour.setUTCMinutes(0, 0, 0);
+  const wh = windowHour.toISOString();
+  const { data: rl } = await supabase
+    .from("newsletter_rate_limits")
+    .select("count")
+    .eq("ip_hash", ipHash)
+    .eq("window_hour", wh)
+    .maybeSingle();
+  const current = (rl?.count as number | undefined) ?? 0;
+  if (current >= MAX_PER_IP_PER_HOUR) {
+    return new Response(
+      JSON.stringify({ ok: false, code: "rate_limited", message: "Too many requests. Please try again later." }),
+      { status: 429, headers: { ...corsHeaders, "Retry-After": "3600" } },
+    );
+  }
+  await supabase
+    .from("newsletter_rate_limits")
+    .upsert({ ip_hash: ipHash, window_hour: wh, count: current + 1 }, { onConflict: "ip_hash,window_hour" });
 
   // Upsert — if email already subscribed, update language + source but keep
   // existing confirmed flag + created_at. Don't treat duplicates as errors;

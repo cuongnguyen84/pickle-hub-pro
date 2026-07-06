@@ -237,23 +237,21 @@ Deno.serve(async (req) => {
   const allRegs = (rows ?? []) as RegistrationRow[];
   const regs = eventId ? allRegs.filter((r) => r.event_id === eventId) : allRegs;
 
-  if (regs.length === 0) {
-    await supabase
-      .from("recovery_attempts")
-      .insert({ phone_e164: phone, method: "rejected", succeeded: false });
-    return err("no_registration_found", 404, "no_registration_found");
-  }
-
-  // The recovery URL points to the most-recent registration when there
-  // are several. Future improvement: a phone-keyed list page.
-  const target = regs[0];
+  // SECURITY (M9): do NOT reveal whether a phone is registered before the
+  // caller proves control via Turnstile. "No registration" and "registration
+  // without a Zalo/email channel" both return the identical captcha_required
+  // response (no count), so this endpoint can't be used to enumerate which
+  // phone numbers are registered. Existence is only disclosed either by the
+  // auto-send to the owner's own Zalo/email (standard reset behaviour) or
+  // AFTER a valid CAPTCHA.
+  const target = regs.length > 0 ? regs[0] : null;
   const siteUrl =
     Deno.env.get("SITE_URL") ?? "https://www.thepicklehub.net";
-  const recoveryUrl = `${siteUrl}/dang-ky/${target.magic_token}`;
+  const recoveryUrl = target ? `${siteUrl}/dang-ky/${target.magic_token}` : "";
 
   // ─── Channel selection ───────────────────────────────────────────────────
   // 1. Zalo (if zalo_user_id present + secrets configured)
-  if (target.zalo_user_id) {
+  if (target?.zalo_user_id) {
     const ok = await sendZalo({
       phone_no_plus: phone.replace(/^\+/, ""),
       zalo_user_id: target.zalo_user_id,
@@ -265,17 +263,13 @@ Deno.serve(async (req) => {
       await supabase
         .from("recovery_attempts")
         .insert({ phone_e164: phone, method: "zalo", succeeded: true });
-      return jsonResponse({
-        ok: true,
-        channel: "zalo",
-        count: regs.length,
-      });
+      return jsonResponse({ ok: true, channel: "zalo" });
     }
     // fall through to email if Zalo failed
   }
 
   // 2. Email
-  if (target.contact_email) {
+  if (target?.contact_email) {
     const ok = await sendEmail({
       to: target.contact_email,
       event_title: target.event_title_vi,
@@ -289,41 +283,38 @@ Deno.serve(async (req) => {
         /^(.).+(@.+)$/,
         (_m, a, c) => `${a}***${c}`,
       );
-      return jsonResponse({
-        ok: true,
-        channel: "email",
-        masked_email: masked,
-        count: regs.length,
-      });
+      return jsonResponse({ ok: true, channel: "email", masked_email: masked });
     }
   }
 
-  // 3. CAPTCHA — return the token directly when the user passes Turnstile.
-  // We only echo the magic_token here, never via Zalo/email logs.
+  // 3. CAPTCHA — the only path that discloses (non-)existence, and only after
+  // a valid Turnstile solve. We echo the magic_token here, never via logs.
   if (captchaToken) {
     const ip = req.headers.get("cf-connecting-ip") ?? undefined;
     const captchaOk = await verifyTurnstile(captchaToken, ip);
-    if (captchaOk) {
+    if (!captchaOk) {
+      return err("captcha_failed", 400, "captcha_failed");
+    }
+    if (!target) {
       await supabase
         .from("recovery_attempts")
-        .insert({ phone_e164: phone, method: "captcha", succeeded: true });
-      return jsonResponse({
-        ok: true,
-        channel: "captcha",
-        magic_token: target.magic_token,
-        recovery_url: recoveryUrl,
-        count: regs.length,
-      });
+        .insert({ phone_e164: phone, method: "rejected", succeeded: false });
+      return err("no_registration_found", 404, "no_registration_found");
     }
-    return err("captcha_failed", 400, "captcha_failed");
+    await supabase
+      .from("recovery_attempts")
+      .insert({ phone_e164: phone, method: "captcha", succeeded: true });
+    return jsonResponse({
+      ok: true,
+      channel: "captcha",
+      magic_token: target.magic_token,
+      recovery_url: recoveryUrl,
+    });
   }
 
-  // None of the channels resolved → ask client to surface CAPTCHA.
+  // Pre-CAPTCHA, nothing auto-sent → uniform prompt (no count → no oracle).
   await supabase
     .from("recovery_attempts")
     .insert({ phone_e164: phone, method: "rejected", succeeded: false });
-  return jsonResponse(
-    { ok: false, code: "captcha_required", count: regs.length },
-    200,
-  );
+  return jsonResponse({ ok: false, code: "captcha_required" }, 200);
 });
