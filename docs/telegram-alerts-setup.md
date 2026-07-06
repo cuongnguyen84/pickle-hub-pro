@@ -99,3 +99,5 @@ URL: **https://www.thepicklehub.net/admin/errors**
 - Group theo fingerprint (không bị 50 row giống nhau)
 - Realtime — leave open trong khi deploy, error mới xuất hiện ngay
 - Click row → modal hiện full stack trace + URL + user agent + user_id
+
+<!-- ops: verify Supabase preview replay green after schema_migrations baseline restore (2026-07-06) -->
