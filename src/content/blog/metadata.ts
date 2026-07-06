@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["vietnam pickleball tournament calendar 2026", "pickleball tournaments vietnam", "ho chi minh city open 2026", "pickleball world cup 2026 da nang", "ppa tour asia 2026 schedule", "mb hanoi cup", "pickleball vietnam"],
     ctaPath: "/live",
     ctaLabel: { en: "Watch live tournaments on ThePickleHub", vi: "Xem giải trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/vietnam-pickleball-tournament-calendar-2026-hero.webp", alt: "Vietnam pickleball tournament calendar 2026 hero — a stylized teal-green map of Vietnam with location pins on Hanoi, Da Nang and Ho Chi Minh City, beside a paddle, ball and a gold trophy over an abstract calendar-grid background." },
     titleEn: "Vietnam Pickleball Tournament Calendar 2026: Every Major Event",
     titleVi: "Lịch Giải Pickleball Việt Nam 2026: Toàn Bộ Sự Kiện Lớn",
     metaTitleEn: "Vietnam Pickleball Tournament Calendar 2026 | Dates & Venues",

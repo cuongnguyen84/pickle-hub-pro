@@ -19,6 +19,10 @@ const post: BlogPost = {
     en: "Watch live tournaments on ThePickleHub",
     vi: "Xem giải trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/vietnam-pickleball-tournament-calendar-2026-hero.webp",
+    alt: "Vietnam pickleball tournament calendar 2026 hero — a stylized teal-green map of Vietnam with location pins on Hanoi, Da Nang and Ho Chi Minh City, beside a paddle, ball and a gold trophy over an abstract calendar-grid background.",
+  },
   content: {
     en: {
       title: "Vietnam Pickleball Tournament Calendar 2026: Every Major Event",
