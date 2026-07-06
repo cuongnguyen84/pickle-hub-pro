@@ -210,6 +210,9 @@ COMMENT ON FUNCTION public.log_club_match(
 -- Public-readable list of matches logged against a club. Joined with
 -- participant profiles so the UI can render team rosters in one query.
 
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.list_club_matches(UUID, INTEGER);
+
 CREATE OR REPLACE FUNCTION public.list_club_matches(
   p_club_id UUID,
   p_limit   INTEGER DEFAULT 50

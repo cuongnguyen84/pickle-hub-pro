@@ -1,4 +1,7 @@
 -- Public homepage stats — callable by anon + authenticated
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.get_homepage_stats();
+
 CREATE OR REPLACE FUNCTION public.get_homepage_stats()
 RETURNS TABLE (
   total_users bigint,
