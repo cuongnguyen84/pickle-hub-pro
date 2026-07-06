@@ -43,9 +43,6 @@ CREATE POLICY "blog_post_views_admin_select"
   );
 
 -- RPC: single post view count
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.get_blog_post_view_count(blog_lang, TEXT);
-
 CREATE OR REPLACE FUNCTION get_blog_post_view_count(p_lang blog_lang, p_slug TEXT)
 RETURNS INTEGER
 LANGUAGE sql
@@ -60,9 +57,6 @@ $$;
 
 -- RPC: batch view counts for multiple posts
 -- p_pairs: [{"lang": "en", "slug": "some-slug"}, ...]
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.get_blog_post_view_counts_batch(JSONB);
-
 CREATE OR REPLACE FUNCTION get_blog_post_view_counts_batch(p_pairs JSONB)
 RETURNS TABLE (lang blog_lang, slug TEXT, view_count INTEGER)
 LANGUAGE plpgsql
