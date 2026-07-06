@@ -428,7 +428,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Organization alternateName for brand-query consolidation) and /san,
   // /san/{slug}, /san/khu-vuc/{city} (venue CTR title+meta + blog/news
   // interlinks). Without the bump bots keep the v19 HTML until the 6h TTL.
-  const cacheKey = `pr:v20:${url.pathname}`;
+  // 2026-07-06 — bumped v20->v21 (security) to purge cached /vi/blog/* HTML
+  // that was rendered with UNSANITIZED vi_blog_posts.content_html. SSR now
+  // runs sanitizeBlogHtml() over the stored HTML (defense-in-depth against
+  // stored XSS); old cached entries must be invalidated so no pre-fix HTML
+  // survives the TTL.
+  const cacheKey = `pr:v21:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

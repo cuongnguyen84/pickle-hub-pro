@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Environment files — never commit real values. Only .env.example is tracked.
+# (Build-time VITE_* vars are supplied by CI/Cloudflare Pages env settings,
+# not from a committed .env, so untracking .env does not break builds.)
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -54,3 +61,7 @@ ds-bundle/
 .design-sync/.cache/
 .design-sync/learnings/
 .design-sync/node_modules
+
+# Local credential notes at repo root — never commit
+/secrets.local.md
+/secrets.local.*

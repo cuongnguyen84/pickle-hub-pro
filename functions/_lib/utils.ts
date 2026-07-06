@@ -189,6 +189,73 @@ export function absImage(url: string | null | undefined, siteUrl: string): strin
 }
 
 /**
+ * Sanitize stored blog HTML before injecting it into server-rendered pages.
+ *
+ * The Cloudflare Pages Functions / Workers runtime has no DOM, so DOMPurify
+ * (which needs jsdom) cannot run here — the client renderer uses DOMPurify, but
+ * the SSR path (served to bots and cached in KV) previously injected
+ * vi_blog_posts.content_html raw. If the admin CMS or the Gemini translation
+ * pipeline ever wrote hostile HTML, it would execute for every visitor/bot for
+ * the cache TTL. This is a defense-in-depth allowlist-strip: it removes the
+ * common script-execution vectors while leaving normal blog markup (headings,
+ * paragraphs, lists, links, images, tables, blockquotes) intact.
+ *
+ * NOTE: regex sanitizing is not a substitute for a real parser. It is
+ * deliberately aggressive (strip on anything suspicious) rather than clever.
+ */
+export function sanitizeBlogHtml(html: string): string {
+  if (!html) return html;
+  let out = html;
+
+  // 1. Remove dangerous elements entirely (opening tag → closing tag, incl.
+  //    self-closing / unclosed variants).
+  const DANGEROUS_TAGS = [
+    "script", "style", "iframe", "object", "embed", "form", "input",
+    "button", "textarea", "link", "meta", "base", "svg", "math", "template",
+    "noscript", "frame", "frameset", "applet", "portal",
+  ];
+  for (const tag of DANGEROUS_TAGS) {
+    // Paired: <tag ...>...</tag>
+    out = out.replace(new RegExp(`<${tag}\\b[^>]*>[\\s\\S]*?</${tag}>`, "gi"), "");
+    // Any residual opening/self-closing/closing tag
+    out = out.replace(new RegExp(`</?${tag}\\b[^>]*>`, "gi"), "");
+  }
+
+  // 2. Strip inline event handlers: on*="..." / on*='...' / on*=value
+  out = out.replace(/\son[a-z0-9_-]+\s*=\s*"[^"]*"/gi, "");
+  out = out.replace(/\son[a-z0-9_-]+\s*=\s*'[^']*'/gi, "");
+  out = out.replace(/\son[a-z0-9_-]+\s*=\s*[^\s>]+/gi, "");
+
+  // 3. Neutralize dangerous URL schemes in href/src/xlink:href/formaction etc.
+  //    Allow http(s), mailto, tel, protocol-relative //, root-relative /,
+  //    fragments #, and data:image/* (used for inline images). Everything else
+  //    (javascript:, vbscript:, data:text/html, file:, etc.) → '#'.
+  out = out.replace(
+    /\s(href|src|xlink:href|formaction|action|poster|background|cite)\s*=\s*(["'])([\s\S]*?)\2/gi,
+    (match, attr, quote, value) => {
+      // Strip whitespace + control chars so "java\tscript:" style bypasses
+      // can't slip past the scheme check.
+      const v = String(value).replace(/[\s\u0000-\u001f]/g, "").toLowerCase();
+      const safe =
+        v.startsWith("http://") ||
+        v.startsWith("https://") ||
+        v.startsWith("mailto:") ||
+        v.startsWith("tel:") ||
+        v.startsWith("//") ||
+        v.startsWith("/") ||
+        v.startsWith("#") ||
+        v.startsWith("data:image/");
+      return safe ? match : ` ${attr}=${quote}#${quote}`;
+    },
+  );
+
+  // 4. Belt-and-braces: strip any leftover "javascript:" / "vbscript:" tokens.
+  out = out.replace(/(javascript|vbscript)\s*:/gi, "");
+
+  return out;
+}
+
+/**
  * Normalize image src attributes in HTML content.
  */
 export function normalizeImagesInHtml(html: string): string {

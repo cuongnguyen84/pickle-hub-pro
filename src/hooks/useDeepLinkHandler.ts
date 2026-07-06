@@ -102,14 +102,40 @@ export const useDeepLinkHandler = () => {
       const url = event.url;
       console.log('[DeepLink] App opened with URL:', url);
 
-      // Check if this is an OAuth callback
-      if (url.includes('/auth/callback')) {
+      // SECURITY: parse the URL and validate scheme + host BEFORE trusting any
+      // token in it. A substring check like url.includes('/auth/callback') would
+      // accept a hostile deep link (e.g. evil://x/auth/callback#access_token=...)
+      // and feed attacker-controlled tokens straight into setSession().
+      let urlObj: URL;
+      try {
+        urlObj = new URL(url);
+      } catch {
+        console.warn('[DeepLink] Ignoring unparseable deep link');
+        return;
+      }
+
+      // Allowlist: our custom scheme, or our own https origin (universal links).
+      const ALLOWED_SCHEMES = ['thepicklehub:', 'net.thepicklehub.app:'];
+      const ALLOWED_HOSTS = ['www.thepicklehub.net', 'thepicklehub.net'];
+      const isAllowedOrigin =
+        ALLOWED_SCHEMES.includes(urlObj.protocol) ||
+        (urlObj.protocol === 'https:' && ALLOWED_HOSTS.includes(urlObj.hostname));
+      if (!isAllowedOrigin) {
+        console.warn('[DeepLink] Ignoring deep link from untrusted origin:', urlObj.protocol, urlObj.hostname);
+        return;
+      }
+
+      // Check if this is an OAuth callback. Handle both shapes:
+      //  - https://www.thepicklehub.net/auth/callback  → pathname '/auth/callback'
+      //  - thepicklehub://auth/callback                → host 'auth', pathname '/callback'
+      //    (custom-scheme parsing treats the first segment as the host).
+      const isAuthCallback =
+        urlObj.pathname.includes('/auth/callback') ||
+        (urlObj.hostname === 'auth' && urlObj.pathname.includes('/callback'));
+      if (isAuthCallback) {
         await cleanupOAuth();
 
         try {
-          // Parse the URL to extract tokens
-          const urlObj = new URL(url);
-          
           let accessToken: string | null = null;
           let refreshToken: string | null = null;
 

@@ -12,6 +12,7 @@ import {
   buildMetaDescription,
   absImage,
   normalizeImagesInHtml,
+  sanitizeBlogHtml,
   breadcrumb,
   relatedBlogLinks,
   relatedToolLinks,
@@ -1458,7 +1459,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     type: "article",
     lang: "vi",
     extraMeta,
-    bodyContent: `${bc}<article>${normalizeImagesInHtml(p.content_html)}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${sanitizeBlogHtml(normalizeImagesInHtml(p.content_html))}</article>${relatedSection}`,
   }));
 }
 
