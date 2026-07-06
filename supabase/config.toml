@@ -378,3 +378,5 @@ verify_jwt = false
 # threshold within the window.
 [functions.errors-telegram-alert]
 verify_jwt = false
+
+# ops: verify branching migration replay is green (2026-07-06)
