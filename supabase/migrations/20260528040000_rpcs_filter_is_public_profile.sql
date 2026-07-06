@@ -13,9 +13,6 @@
 
 -- ─── dupr_leaderboard_vietnam (Sprint A6 → A2 update) ───────────────────────
 
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.dupr_leaderboard_vietnam(TEXT, INT);
-
 CREATE OR REPLACE FUNCTION public.dupr_leaderboard_vietnam(
   p_format TEXT DEFAULT 'doubles',  -- 'singles' | 'doubles'
   p_limit  INT  DEFAULT 100
@@ -75,9 +72,6 @@ COMMENT ON FUNCTION public.dupr_leaderboard_vietnam(TEXT, INT) IS
   'Sprint A6 → A2 (2026-05-27). Vietnam DUPR leaderboard. Requires is_public_profile = true (Sprint A2 opt-in). Whitelist columns only.';
 
 -- ─── dupr_players_near_rating (Sprint A11 → A2 update) ──────────────────────
-
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.dupr_players_near_rating(NUMERIC, NUMERIC, UUID, INT);
 
 CREATE OR REPLACE FUNCTION public.dupr_players_near_rating(
   p_target_rating    NUMERIC,

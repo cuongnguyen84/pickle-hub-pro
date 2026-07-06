@@ -158,9 +158,6 @@ $$;
 --   CASE WHEN m.source_provider <> 'community' THEN 0 ELSE 1 END
 -- Community tournament finals/semis (which we just started inserting)
 -- now share Tier 0 so pro-tour rows don't crowd them out below LIMIT 100.
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.get_trending_feed(integer, timestamp with time zone, uuid, uuid, integer, integer, integer, integer);
-
 CREATE OR REPLACE FUNCTION public.get_trending_feed(
   p_limit integer DEFAULT 20,
   p_cursor_played_at timestamp with time zone DEFAULT NULL,

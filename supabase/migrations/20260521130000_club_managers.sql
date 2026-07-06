@@ -477,9 +477,6 @@ GRANT  EXECUTE ON FUNCTION public.remove_club_manager(UUID, UUID) TO service_rol
 -- the caller already has the email/phone for. Ghost profiles are excluded
 -- (they can't log in to manage anyway).
 
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.search_profile_for_manager(TEXT);
-
 CREATE OR REPLACE FUNCTION public.search_profile_for_manager(p_query TEXT)
 RETURNS TABLE (
   profile_id    UUID,

@@ -31,9 +31,6 @@
 -- so DUPR-aware callers don't regress.
 -- ============================================================================
 
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.list_club_members(UUID);
-
 CREATE OR REPLACE FUNCTION public.list_club_members(p_club_id UUID)
 RETURNS TABLE (
   profile_id          UUID,

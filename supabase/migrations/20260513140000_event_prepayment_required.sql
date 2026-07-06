@@ -60,10 +60,6 @@ CREATE INDEX IF NOT EXISTS idx_event_registrations_prepayment_pending
 -- that don't pass the keys yet (requires_prepayment = false,
 -- prepayment_deadline_hours = 12).
 
--- Replay-safety: prod-seeded function carries a parameter DEFAULT this body
--- omits; CREATE OR REPLACE cannot remove defaults (42P13). Drop first.
-DROP FUNCTION IF EXISTS public.create_social_event_with_payment(JSONB, JSONB);
-
 CREATE OR REPLACE FUNCTION public.create_social_event_with_payment(
   p_event   JSONB,
   p_payment JSONB
@@ -141,10 +137,6 @@ GRANT  EXECUTE ON FUNCTION public.create_social_event_with_payment(JSONB, JSONB)
 -- ─── 5. Refresh get_registration_by_token RPC ─────────────────────────────
 -- Append two columns to the return row so PlayerRegistration can render
 -- the countdown banner without a second fetch.
-
--- Replay-safety: this refresh grows the RETURNS TABLE; CREATE OR REPLACE
--- cannot change return type of the prod-seeded function (42P13). Drop first.
-DROP FUNCTION IF EXISTS public.get_registration_by_token(UUID);
 
 CREATE OR REPLACE FUNCTION public.get_registration_by_token(p_magic_token UUID)
 RETURNS TABLE (

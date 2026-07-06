@@ -2,9 +2,6 @@
 -- Platform has multiple tournament formats each in its own table:
 --   tournaments (Quick Table), doubles_elimination_tournaments,
 --   flex_tournaments, team_match_tournaments, parent_tournaments
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.get_homepage_stats();
-
 CREATE OR REPLACE FUNCTION public.get_homepage_stats()
 RETURNS TABLE (
   total_users bigint,

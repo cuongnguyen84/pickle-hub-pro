@@ -1,8 +1,5 @@
 -- Fix: count total_users from auth.users (authoritative) not public.profiles
 -- profiles can be missing for some auth accounts (trigger failures, etc.)
--- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
-DROP FUNCTION IF EXISTS public.get_homepage_stats();
-
 CREATE OR REPLACE FUNCTION public.get_homepage_stats()
 RETURNS TABLE (
   total_users bigint,

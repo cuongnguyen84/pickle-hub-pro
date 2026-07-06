@@ -10,9 +10,6 @@
 -- IDEMPOTENT.
 -- ============================================================================
 
--- Replay-safety: grows RETURNS TABLE vs prod-seeded fn (42P13). Drop first.
-DROP FUNCTION IF EXISTS public.get_registration_by_token(UUID);
-
 CREATE OR REPLACE FUNCTION public.get_registration_by_token(p_magic_token UUID)
 RETURNS TABLE (
   registration_id                 UUID,
