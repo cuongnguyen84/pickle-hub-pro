@@ -1233,6 +1233,10 @@ const BLOG_POST_META: Record<string, {
    *  src/content/blog/posts/<slug>.ts. Posts with empty image
    *  fall back to DEFAULT_OG_IMAGE in the renderer. */
   datePublished?: string;
+  /** ai-seo review 2026-07-07 — set when an EN post gets a real content
+   *  update so BlogPosting.dateModified emits a genuine freshness signal
+   *  (AI engines weight recency heavily). Falls back to datePublished. */
+  dateModified?: string;
   image?: string;
 }> = {
   "ppa-beijing-open-2026-recap": { title: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold", description: "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026, beating Miyoshi/Stirling 11-9, 11-7. Full results, the road to the final, Vinh Hien's singles bronze, and the Ly Hoang Nam withdrawal.", datePublished: "2026-06-23", image: "/images/blog/ppa-beijing-open-2026-recap-hero.webp" },
@@ -1344,7 +1348,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
   };
   if (meta.datePublished) {
     jsonLd.datePublished = meta.datePublished;
-    jsonLd.dateModified = meta.datePublished;
+    jsonLd.dateModified = meta.dateModified ?? meta.datePublished;
   }
 
   // SEO-3.1 — wrap BlogPosting + BreadcrumbList in a single @graph
