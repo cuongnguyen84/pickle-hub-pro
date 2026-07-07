@@ -133,17 +133,17 @@ struct HomeView: View {
                     if isLive {
                         LivePulseDot(reduceMotion: reduceMotion)
                     } else {
-                        Image(systemName: "clock")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(TLColor.fg3)
+                        Image(systemName: "clock.badge")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(TLColor.accentText)
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(eyebrow)
                             .font(TLType.eyebrowMono(9)).tracking(1)
-                            .foregroundStyle(isLive ? TLColor.live : TLColor.fg3)
+                            .foregroundStyle(isLive ? TLColor.live : TLColor.accentText)
                             .lineLimit(1)
                         Text(stream.displayTitle)
-                            .font(TLFont.sans(13, .medium))
+                            .font(TLFont.sans(13, isLive ? .medium : .semibold))
                             .foregroundStyle(TLColor.fg)
                             .lineLimit(1)
                     }
@@ -152,8 +152,8 @@ struct HomeView: View {
                         .font(.system(size: 20)).foregroundStyle(TLColor.accentText)
                 }
                 .padding(.horizontal, 14).padding(.vertical, 12)
-                .background(TLColor.surface, in: barShape)
-                .overlay(barShape.strokeBorder(TLColor.border, lineWidth: 1))
+                .background(isLive ? TLColor.surface : TLColor.accent.opacity(0.10), in: barShape)
+                .overlay(barShape.strokeBorder(isLive ? TLColor.border : TLColor.accentDim.opacity(0.5), lineWidth: isLive ? 1 : 1.5))
             }
             .buttonStyle(.plain)
             .accessibilityLabel(
