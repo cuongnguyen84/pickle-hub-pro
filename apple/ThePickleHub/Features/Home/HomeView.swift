@@ -27,8 +27,11 @@ struct HomeView: View {
                     if model.posts.count > 1 {
                         HomeFeatureSection(posts: Array(model.posts.dropFirst()))
                     }
-                    if !model.live.isEmpty {
-                        HomeLiveSection(streams: model.live) { openURL = IdentifiedURL(url: $0) }
+                    if !model.live.isEmpty || !model.scheduled.isEmpty {
+                        HomeLiveSection(
+                            liveStreams: model.live,
+                            scheduledStreams: model.scheduled
+                        ) { openURL = IdentifiedURL(url: $0) }
                     }
                     if !model.news.isEmpty {
                         HomeNewsSection(items: model.news)
@@ -118,17 +121,27 @@ struct HomeView: View {
     @ViewBuilder
     private var liveBar: some View {
         let barShape = RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous)
-        if let stream = model.live.first(where: { $0.isLive }) ?? model.live.first {
+        if let stream = model.live.first ?? model.scheduled.first {
+            let isLive = stream.isLive
+            let eyebrow = isLive
+                ? "LIVE" + (stream.orgName.map { " · \($0)" } ?? "")
+                : "SẮP PHÁT" + (scheduledTimeLabel(stream).map { " · \($0)" } ?? "")
             Button {
                 Haptics.light()
                 openURL = IdentifiedURL(url: WebRoutes.live(id: stream.id))
             } label: {
                 HStack(spacing: 11) {
-                    LivePulseDot(reduceMotion: reduceMotion)
+                    if isLive {
+                        LivePulseDot(reduceMotion: reduceMotion)
+                    } else {
+                        Image(systemName: "clock")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(TLColor.fg3)
+                    }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("LIVE" + (stream.orgName.map { " · \($0)" } ?? ""))
+                        Text(eyebrow)
                             .font(TLType.eyebrowMono(9)).tracking(1)
-                            .foregroundStyle(TLColor.live)
+                            .foregroundStyle(isLive ? TLColor.live : TLColor.fg3)
                             .lineLimit(1)
                         Text(stream.displayTitle)
                             .font(TLFont.sans(13, .medium))
@@ -144,7 +157,11 @@ struct HomeView: View {
                 .overlay(barShape.strokeBorder(TLColor.border, lineWidth: 1))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Đang trực tiếp: \(stream.displayTitle)")
+            .accessibilityLabel(
+                isLive
+                    ? "Đang trực tiếp: \(stream.displayTitle)"
+                    : "Sắp phát sóng: \(stream.displayTitle)"
+            )
         } else {
             HStack(spacing: 11) {
                 Circle().fill(TLColor.fg4).frame(width: 8, height: 8)

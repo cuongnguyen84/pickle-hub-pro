@@ -12,6 +12,7 @@ final class HomeViewModel {
     private(set) var videos: [VideoSummary] = []
     private(set) var upcoming: [Tournament] = []
     private(set) var live: [LivestreamSummary] = []
+    private(set) var scheduled: [LivestreamSummary] = []
     private(set) var tickers: [TickerItem] = []
     private(set) var loaded = false
 
@@ -34,7 +35,9 @@ final class HomeViewModel {
         stats = await statsTask ?? nil
         videos = await videosTask ?? []
         upcoming = upcomingFrom(await tournamentsTask ?? [])
-        live = await liveTask ?? []
+        let streams = await liveTask ?? []
+        live = streams.filter(\.isLive)
+        scheduled = streams.filter(\.isScheduled)
         tickers = Array((await feedTask ?? []).compactMap(TickerItem.from).prefix(8))
         loaded = true
     }

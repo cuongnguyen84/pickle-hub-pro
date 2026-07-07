@@ -52,12 +52,13 @@ struct HomeRepository {
             .value
     }
 
-    /// Currently-live broadcasts for the homepage live section.
+    /// Live + scheduled broadcasts for the homepage live section. Scheduled
+    /// streams must always surface at the top of Home (mirrors web Index.tsx).
     func liveStreams() async throws -> [LivestreamSummary] {
         try await client
             .from("public_livestreams")
-            .select("id, title, thumbnail_url, mux_playback_id, scheduled_start_at, organization:organizations(name)")
-            .eq("status", value: "live")
+            .select("id, title, status, thumbnail_url, mux_playback_id, scheduled_start_at, organization:organizations(name)")
+            .in("status", values: ["live", "scheduled"])
             .order("scheduled_start_at", ascending: true)
             .execute()
             .value
