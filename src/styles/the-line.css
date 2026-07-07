@@ -1929,7 +1929,7 @@
   background: linear-gradient(160deg, var(--tl-surface-2), var(--tl-bg-elev) 60%, var(--tl-bg));
 }
 [data-theme="the-line"] .tl-live-main-thumb img,
-[data-theme="the-line"] .tl-live-rail-thumb img {
+[data-theme="the-line"] .tl-live-row-thumb img {
   width: 100%; height: 100%; object-fit: cover; display: block;
   transition: transform 0.5s ease;
 }
@@ -1968,37 +1968,83 @@
 }
 [data-theme="the-line"] .tl-live-meta .sep { color: var(--tl-fg-4); }
 
-[data-theme="the-line"] .tl-live-rail {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(46%, 1fr);
-  gap: 12px; margin-top: 14px;
-  overflow-x: auto; scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch; padding-bottom: 4px;
+/* Live-count chip next to the section title ("3 sân"). */
+[data-theme="the-line"] .tl-live-count {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+  color: var(--tl-live);
+  padding: 2px 8px; border: 1px solid color-mix(in srgb, var(--tl-live) 45%, transparent);
+  border-radius: 999px;
 }
-@media (min-width: 720px) {
-  [data-theme="the-line"] .tl-live-rail { grid-auto-columns: minmax(220px, 1fr); }
+
+/* Desktop: hero goes split (thumb left, body right) so a single stream no
+   longer eats a full viewport of vertical space. Mobile keeps the stacked
+   card. */
+@media (min-width: 860px) {
+  [data-theme="the-line"] .tl-live-main {
+    display: grid; grid-template-columns: minmax(0, 7fr) minmax(280px, 5fr);
+    align-items: stretch;
+  }
+  [data-theme="the-line"] .tl-live-main-thumb { aspect-ratio: 16 / 9; }
+  [data-theme="the-line"] .tl-live-main-body {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 22px 26px;
+    border-left: 1px solid var(--tl-border);
+  }
+  [data-theme="the-line"] .tl-live-main-name { font-size: clamp(22px, 2.4vw, 30px); -webkit-line-clamp: 3; }
 }
-[data-theme="the-line"] .tl-live-rail-item {
-  scroll-snap-align: start; text-decoration: none; color: inherit;
+
+/* Compact schedule list — every non-featured stream is one dense row
+   (small thumb · title/org · time + countdown), so many streams stay a
+   short scannable lineup instead of stacked full-width cards. */
+[data-theme="the-line"] .tl-live-list {
+  display: flex; flex-direction: column; margin-top: 14px;
   background: var(--tl-bg);
-  border: 1px solid var(--tl-border); border-radius: var(--tl-radius);
-  overflow: hidden; transition: border-color 0.15s;
+  border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg);
+  overflow: hidden;
 }
-[data-theme="the-line"] .tl-live-rail-item:hover { border-color: var(--tl-border-2); }
-[data-theme="the-line"] .tl-live-rail-thumb {
-  position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+[data-theme="the-line"] .tl-live-row {
+  display: grid; grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 14px; align-items: center;
+  padding: 10px 14px 10px 10px;
+  text-decoration: none; color: inherit;
+  transition: background-color 0.15s;
+}
+[data-theme="the-line"] .tl-live-row + .tl-live-row { border-top: 1px solid var(--tl-border); }
+[data-theme="the-line"] .tl-live-row:hover { background: var(--tl-bg-elev); }
+[data-theme="the-line"] .tl-live-row-thumb {
+  position: relative; aspect-ratio: 16 / 9; overflow: hidden;
+  border-radius: var(--tl-radius);
   background: linear-gradient(160deg, var(--tl-surface-2), var(--tl-bg-elev) 60%, var(--tl-bg));
 }
-[data-theme="the-line"] .tl-live-rail-name {
+[data-theme="the-line"] .tl-live-row-thumb .tl-live-badge.sm { top: 6px; left: 6px; }
+[data-theme="the-line"] .tl-live-row-name {
   font-family: "Geist", sans-serif; font-weight: 500;
-  font-size: 13px; line-height: 1.3; color: var(--tl-fg);
-  padding: 10px 12px 2px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13.5px; line-height: 1.35; color: var(--tl-fg);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-[data-theme="the-line"] .tl-live-rail-meta {
+[data-theme="the-line"] .tl-live-row-meta {
   font-family: "Geist Mono", ui-monospace, monospace;
   font-size: 10.5px; letter-spacing: 0.02em; color: var(--tl-fg-4);
-  padding: 0 12px 12px;
+  margin-top: 3px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="the-line"] .tl-live-row-when {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 11px; color: var(--tl-fg-3); text-align: right; white-space: nowrap;
+}
+[data-theme="the-line"] .tl-live-row-when .t { font-weight: 600; color: var(--tl-fg); }
+[data-theme="the-line"] .tl-live-row-when .cd { font-size: 10px; color: var(--tl-green); }
+[data-theme="the-line"] .tl-live-row-when.is-live {
+  font-weight: 600; font-size: 10.5px; letter-spacing: 0.08em; color: var(--tl-live);
+}
+[data-theme="the-line"] .tl-live-row-more {
+  grid-template-columns: 1fr; padding: 12px 14px;
+}
+[data-theme="the-line"] .tl-live-row-more .tl-live-row-name {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--tl-green);
 }
 
 /* ========== Home: "Tin mới" news feed (R3 feed ordering) ========== */
