@@ -433,7 +433,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // runs sanitizeBlogHtml() over the stored HTML (defense-in-depth against
   // stored XSS); old cached entries must be invalidated so no pre-fix HTML
   // survives the TTL.
-  const cacheKey = `pr:v21:${url.pathname}`;
+  const cacheKey = `pr:v22:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

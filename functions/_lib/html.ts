@@ -209,6 +209,7 @@ ${ogLocaleAlternateTag}
 <meta name="twitter:title" content="${escapeHtml(title)}"/>
 <meta name="twitter:description" content="${escapeHtml(description)}"/>
 <meta name="twitter:image" content="${escapeHtml(image)}"/>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="6MywJYt95FkvqAAYCgzVCA" async></script>
 ${extraMeta}
 ${jsonLdScript}
 </head>
