@@ -18,7 +18,7 @@ Website: https://www.thepicklehub.net
 - **Push:** Firebase Cloud Messaging (FCM via Capacitor)
 - **Email:** Resend
 - **AI translation:** Google Gemini (EN → VI for news)
-- **Analytics:** GA4, Google Search Console (read via Chrome when needed). _Ahrefs is NOT used — no paid plan (API returns "Insufficient plan"); do not call Ahrefs MCP tools._
+- **Analytics:** GA4, Google Search Console (read via Chrome when needed), Ahrefs Web Analytics (free — script in `index.html`, data via `web-analytics-*` MCP tools). _Paid Ahrefs API is NOT available ("Insufficient plan"); do not call other Ahrefs MCP tools (site-explorer, keywords-explorer, etc.)._
 
 ## Commands
 
