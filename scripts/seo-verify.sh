@@ -123,6 +123,27 @@ check_route() {
     fail "og:title missing"
   fi
 
+  # ─── og:image (ai-seo review 2026-07-07) ────────────────────
+  if echo "$response" | grep -qE '<meta[^>]+property="og:image"'; then
+    pass "og:image present"
+  else
+    fail "og:image missing"
+  fi
+
+  # ─── meta description (ai-seo review 2026-07-07) ────────────
+  if echo "$response" | grep -qE '<meta[^>]+name="description"[^>]+content="[^"]+"|<meta[^>]+content="[^"]+"[^>]+name="description"'; then
+    pass "meta description present"
+  else
+    fail "meta description missing"
+  fi
+
+  # ─── accidental noindex on public route (ai-seo review) ─────
+  if echo "$response" | grep -qiE '<meta[^>]+name="robots"[^>]+content="[^"]*noindex'; then
+    fail "noindex meta found on PUBLIC route (should never happen)"
+  else
+    pass "no accidental noindex"
+  fi
+
   # ─── Cache hint header (visible in -I but cheap to skip; just log)
 }
 
