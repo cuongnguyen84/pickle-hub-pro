@@ -96,7 +96,12 @@ struct LiveView: View {
             .toolbar { toolbarButtons }
             .task {
                 await model.load()
-                if !didAutoSelect { didAutoSelect = true; segment = model.hasLive ? .live : .replays }
+                if !didAutoSelect {
+                    didAutoSelect = true
+                    // Live OR a scheduled broadcast keeps the Live segment front;
+                    // fall back to replays only on a fully quiet day.
+                    segment = (model.hasLive || !model.upcoming.isEmpty) ? .live : .replays
+                }
             }
             .task(id: segment) {
                 // Poll while on the Live tab so badges/scores reflect status changes
