@@ -521,8 +521,17 @@ const Index = () => {
         ) : null;
 
         const cluster: Array<{ key: string; node: ReactNode }> = [
-          hasLiveData
-            ? { key: "live", node: <LiveSection liveStreams={liveStreams} language={language} /> }
+          hasLiveData || scheduledStreams.length > 0
+            ? {
+                key: "live",
+                node: (
+                  <LiveSection
+                    liveStreams={liveStreams}
+                    scheduledStreams={scheduledStreams}
+                    language={language}
+                  />
+                ),
+              }
             : null,
           editorialNode ? { key: "editorial", node: editorialNode } : null,
           { key: "news", node: <HomeNewsFeed language={language} limit={4} /> },
