@@ -31,7 +31,7 @@ struct HomeView: View {
                         HomeLiveSection(
                             liveStreams: model.live,
                             scheduledStreams: model.scheduled
-                        ) { openURL = IdentifiedURL(url: $0) }
+                        )
                     }
                     if !model.news.isEmpty {
                         HomeNewsSection(items: model.news)
@@ -126,9 +126,8 @@ struct HomeView: View {
             let eyebrow = isLive
                 ? "LIVE" + (stream.orgName.map { " · \($0)" } ?? "")
                 : "SẮP PHÁT" + (scheduledTimeLabel(stream).map { " · \($0)" } ?? "")
-            Button {
-                Haptics.light()
-                openURL = IdentifiedURL(url: WebRoutes.live(id: stream.id))
+            NavigationLink {
+                LiveWatchScreen(stream: stream)
             } label: {
                 HStack(spacing: 11) {
                     if isLive {
