@@ -116,8 +116,6 @@ private struct DurationTag: View {
 struct LiveHeroCard: View {
     let stream: LivestreamSummary
     let reduceMotion: Bool
-    /// Opens the web live page for scheduled streams (no native playback yet).
-    var onOpenWeb: ((URL) -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -130,17 +128,9 @@ struct LiveHeroCard: View {
         .padding(.horizontal, 22)
     }
 
-    @ViewBuilder
     private var mediaLink: some View {
-        if stream.isLive, let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: { media }
-                .buttonStyle(.plain)
-        } else if let onOpenWeb {
-            Button { onOpenWeb(WebRoutes.live(id: stream.id)) } label: { media }
-                .buttonStyle(.plain)
-        } else {
-            media
-        }
+        NavigationLink { LiveWatchScreen(stream: stream) } label: { media }
+            .buttonStyle(.plain)
     }
 
     private var media: some View {
@@ -176,8 +166,8 @@ struct LiveHeroCard: View {
                 Text(LiveTime.clock(d).uppercased()).font(TLFont.mono(10.5)).tracking(0.5).foregroundStyle(TLColor.fg3)
             }
             HStack(spacing: 10) {
-                if stream.isLive, let url = stream.playbackURL {
-                    NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: {
+                if stream.isLive {
+                    NavigationLink { LiveWatchScreen(stream: stream) } label: {
                         Label("Xem ngay", systemImage: "play.fill")
                             .font(TLFont.sans(14, .bold)).foregroundStyle(TLColor.accentInk)
                             .frame(maxWidth: .infinity).padding(.vertical, 11)
@@ -224,11 +214,8 @@ struct LiveCourtCard: View {
         }
     }
 
-    @ViewBuilder
     private func link<L: View>(@ViewBuilder _ label: () -> L) -> some View {
-        if let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: { label() }.buttonStyle(.plain)
-        } else { label() }
+        NavigationLink { LiveWatchScreen(stream: stream) } label: { label() }.buttonStyle(.plain)
     }
 }
 
@@ -236,19 +223,11 @@ struct LiveCourtCard: View {
 
 struct ScheduleRow: View {
     let stream: LivestreamSummary
-    /// Opens the web live page when the row body is tapped.
-    var onOpenWeb: ((URL) -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 13) {
-            Group {
-                if let onOpenWeb {
-                    Button { onOpenWeb(WebRoutes.live(id: stream.id)) } label: { rowBody }
-                        .buttonStyle(.plain)
-                } else {
-                    rowBody
-                }
-            }
+            NavigationLink { LiveWatchScreen(stream: stream) } label: { rowBody }
+                .buttonStyle(.plain)
             Spacer(minLength: 6)
             ReminderButton(stream: stream, style: .outline)
         }

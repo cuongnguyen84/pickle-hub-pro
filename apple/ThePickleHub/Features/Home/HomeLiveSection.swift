@@ -1,15 +1,19 @@
 import SwiftUI
 
-/// "Trực tiếp" — live broadcasts, or upcoming scheduled ones when nothing is
-/// on air (mirrors web LiveSection: scheduled streams must always surface on
-/// Home). Tapping opens the web player (native Mux player is Phase 6).
+/// "Trực tiếp" — one featured stream as a full card (live first, else the
+/// soonest scheduled), the rest as compact schedule rows so many streams no
+/// longer stack full-height down the homepage. Scheduled streams stay visible
+/// under a live broadcast so the upcoming lineup is always readable.
+/// Tapping opens the native player / waiting room (LiveWatchScreen).
 struct HomeLiveSection: View {
     let liveStreams: [LivestreamSummary]
     let scheduledStreams: [LivestreamSummary]
-    let onOpenWeb: (URL) -> Void
 
     private var isLive: Bool { !liveStreams.isEmpty }
-    private var streams: [LivestreamSummary] { isLive ? liveStreams : scheduledStreams }
+    /// Live now (soonest-created first from repo) then upcoming by start time.
+    private var ordered: [LivestreamSummary] { liveStreams + scheduledStreams }
+    private var featured: LivestreamSummary? { ordered.first }
+    private var rest: [LivestreamSummary] { Array(ordered.dropFirst().prefix(5)) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -20,15 +24,36 @@ struct HomeLiveSection: View {
                 Text(isLive ? "Trực tiếp" : "Sắp phát sóng")
                     .font(TLFont.serif(26))
                     .foregroundStyle(TLColor.fg)
+                if liveStreams.count > 1 {
+                    Text("\(liveStreams.count) SÂN")
+                        .font(TLFont.mono(9, .bold)).tracking(0.8)
+                        .foregroundStyle(TLColor.live)
+                        .padding(.horizontal, 7).padding(.vertical, 3)
+                        .overlay(Capsule().strokeBorder(TLColor.live.opacity(0.45), lineWidth: 1))
+                }
             }
 
-            VStack(spacing: 12) {
-                ForEach(streams) { stream in
-                    Button { onOpenWeb(WebRoutes.live(id: stream.id)) } label: {
-                        LiveCard(stream: stream)
-                    }
-                    .buttonStyle(.plain)
+            if let featured {
+                NavigationLink { LiveWatchScreen(stream: featured) } label: {
+                    LiveCard(stream: featured)
                 }
+                .buttonStyle(.plain)
+            }
+
+            if !rest.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(rest.enumerated()), id: \.element.id) { idx, stream in
+                        NavigationLink { LiveWatchScreen(stream: stream) } label: {
+                            CompactStreamRow(stream: stream)
+                        }
+                        .buttonStyle(.plain)
+                        if idx < rest.count - 1 {
+                            Divider().overlay(TLColor.border).padding(.leading, 122)
+                        }
+                    }
+                }
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
             }
         }
     }
@@ -40,6 +65,59 @@ func scheduledTimeLabel(_ stream: LivestreamSummary) -> String? {
     let time = date.formatted(date: .omitted, time: .shortened)
     let comps = Calendar.current.dateComponents([.day, .month], from: date)
     return "\(time) · \(comps.day ?? 0)/\(comps.month ?? 0)"
+}
+
+/// Dense row for the non-featured streams: small thumb + status + title.
+private struct CompactStreamRow: View {
+    let stream: LivestreamSummary
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack(alignment: .topLeading) {
+                if let url = stream.thumbURL {
+                    AsyncImage(url: url) { $0.resizable().scaledToFill() } placeholder: { TLColor.surface2 }
+                } else {
+                    TLColor.surface2
+                }
+            }
+            .frame(width: 98, height: 56)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(alignment: .topLeading) {
+                if stream.isLive {
+                    HStack(spacing: 3) {
+                        Circle().fill(.white).frame(width: 4, height: 4)
+                        Text("LIVE").font(TLFont.mono(7.5, .bold)).tracking(0.6).foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 5).padding(.vertical, 2.5)
+                    .background(TLColor.live, in: RoundedRectangle(cornerRadius: 4))
+                    .padding(4)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(stream.displayTitle)
+                    .font(TLFont.sans(13.5, .semibold))
+                    .foregroundStyle(TLColor.fg)
+                    .lineLimit(2)
+                HStack(spacing: 5) {
+                    if stream.isLive {
+                        Text("ĐANG PHÁT").font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.live)
+                    } else if let when = scheduledTimeLabel(stream) {
+                        Text(when).font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.accentText)
+                    }
+                    if let org = stream.orgName {
+                        Text("· \(org)").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4).lineLimit(1)
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(TLColor.fg4)
+        }
+        .padding(12)
+        .contentShape(Rectangle())
+    }
 }
 
 private struct LiveCard: View {

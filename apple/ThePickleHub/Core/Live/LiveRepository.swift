@@ -23,6 +23,18 @@ struct LiveRepository {
             .value
     }
 
+    /// One stream by id — the waiting room polls this to catch scheduled→live.
+    func stream(id: UUID) async throws -> LivestreamSummary? {
+        let rows: [LivestreamSummary] = try await client
+            .from("public_livestreams")
+            .select(Self.streamColumns)
+            .eq("id", value: id)
+            .limit(1)
+            .execute()
+            .value
+        return rows.first
+    }
+
     /// Ended streams with a playable recording, most recent first.
     func replays(limit: Int = 24) async throws -> [LivestreamSummary] {
         let rows: [LivestreamSummary] = try await client
