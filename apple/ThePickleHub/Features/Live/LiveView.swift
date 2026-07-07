@@ -78,6 +78,7 @@ struct LiveView: View {
     @State private var segment: LiveViewModel.Segment = .live
     @State private var didAutoSelect = false
     @State private var replayFilter: String? = nil   // org/tournament name chip
+    @State private var openURL: IdentifiedURL?       // web live page for scheduled streams
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -108,6 +109,7 @@ struct LiveView: View {
                 }
             }
             .refreshable { await model.load(force: true) }
+            .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
         }
     }
 
@@ -177,7 +179,7 @@ struct LiveView: View {
         } else {
             VStack(alignment: .leading, spacing: 26) {
                 if let hero = live.first ?? upcoming.first {
-                    LiveHeroCard(stream: hero, reduceMotion: reduceMotion)
+                    LiveHeroCard(stream: hero, reduceMotion: reduceMotion) { openURL = IdentifiedURL(url: $0) }
                 }
                 if live.count > 1 {
                     otherCourtsRail(Array(live.dropFirst()))
@@ -206,7 +208,9 @@ struct LiveView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Sắp phát")
             VStack(spacing: 10) {
-                ForEach(streams) { s in ScheduleRow(stream: s) }
+                ForEach(streams) { s in
+                    ScheduleRow(stream: s) { openURL = IdentifiedURL(url: $0) }
+                }
             }
             .padding(.horizontal, 22)
         }

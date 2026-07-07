@@ -116,6 +116,8 @@ private struct DurationTag: View {
 struct LiveHeroCard: View {
     let stream: LivestreamSummary
     let reduceMotion: Bool
+    /// Opens the web live page for scheduled streams (no native playback yet).
+    var onOpenWeb: ((URL) -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -132,6 +134,9 @@ struct LiveHeroCard: View {
     private var mediaLink: some View {
         if stream.isLive, let url = stream.playbackURL {
             NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: { media }
+                .buttonStyle(.plain)
+        } else if let onOpenWeb {
+            Button { onOpenWeb(WebRoutes.live(id: stream.id)) } label: { media }
                 .buttonStyle(.plain)
         } else {
             media
@@ -231,13 +236,18 @@ struct LiveCourtCard: View {
 
 struct ScheduleRow: View {
     let stream: LivestreamSummary
+    /// Opens the web live page when the row body is tapped.
+    var onOpenWeb: ((URL) -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 13) {
-            countdownBox
-            VStack(alignment: .leading, spacing: 4) {
-                Text(stream.displayTitle).font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg).lineLimit(2)
-                Text(metaLine).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3).lineLimit(1)
+            Group {
+                if let onOpenWeb {
+                    Button { onOpenWeb(WebRoutes.live(id: stream.id)) } label: { rowBody }
+                        .buttonStyle(.plain)
+                } else {
+                    rowBody
+                }
             }
             Spacer(minLength: 6)
             ReminderButton(stream: stream, style: .outline)
@@ -245,6 +255,18 @@ struct ScheduleRow: View {
         .padding(13)
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private var rowBody: some View {
+        HStack(spacing: 13) {
+            countdownBox
+            VStack(alignment: .leading, spacing: 4) {
+                Text(stream.displayTitle).font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg).lineLimit(2)
+                Text(metaLine).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3).lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(Rectangle())
     }
 
     private var metaLine: String {
