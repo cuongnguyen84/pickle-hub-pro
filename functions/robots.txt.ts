@@ -107,7 +107,7 @@ Disallow: /vi/su-kien/*/live
 #   ALLOW  search/citation crawlers (PerplexityBot, Google-Extended,
 #          OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User) —
 #          they let Perplexity/Gemini/ChatGPT/Claude cite thepicklehub.net
-#          in AI answers. Allowed bots fall under the default `User-agent: *`
+#          in AI answers. Allowed bots fall under the default "User-agent: *"
 #          group above (public routes only).
 User-agent: GPTBot
 Disallow: /
