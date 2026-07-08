@@ -121,6 +121,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
         <li><a href="${siteUrl}/tournaments">Tournaments</a> — Schedules, brackets, results across PPA Asia and beyond</li>
         <li><a href="${siteUrl}/social">Community events</a> — Open pickleball events you can register for by phone</li>
         <li><a href="${siteUrl}/clubs">Clubs</a> — Pickleball clubs across Vietnam with schedules + events</li>
+        <li><a href="${siteUrl}/san">Courts</a> — Pickleball court directory: 690+ courts across Vietnam, browsable by city</li>
         <li><a href="${siteUrl}/feed">Match feed</a> — Latest community matches, scores, and DUPR ratings</li>
         <li><a href="${siteUrl}/tools">Bracket Lab</a> — Free tournament tools (round robin, single/double elimination, MLP)</li>
         <li><a href="${siteUrl}/rankings">Rankings</a> — Player rankings (placeholder, coming soon)</li>
@@ -128,6 +129,15 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
         <li><a href="${siteUrl}/news">News</a> — Daily pickleball updates</li>
         <li><a href="${siteUrl}/videos">Videos</a> — Match highlights (Courtside)</li>
         <li><a href="${siteUrl}/forum">Forum</a> — Community discussions</li>
+      </ul>
+      <h2>Find pickleball courts by city</h2>
+      <ul>
+        <li><a href="${siteUrl}/san/khu-vuc/tp-hcm">Pickleball courts in TP.HCM</a></li>
+        <li><a href="${siteUrl}/san/khu-vuc/ha-noi">Pickleball courts in Hà Nội</a></li>
+        <li><a href="${siteUrl}/san/khu-vuc/da-nang">Pickleball courts in Đà Nẵng</a></li>
+        <li><a href="${siteUrl}/san/khu-vuc/bac-ninh">Pickleball courts in Bắc Ninh</a></li>
+        <li><a href="${siteUrl}/san/khu-vuc/ha-long">Pickleball courts in Hạ Long</a></li>
+        <li><a href="${siteUrl}/san/khu-vuc/vinh">Pickleball courts in Vinh</a></li>
       </ul>
       ${liveItems ? `<h2>Currently streaming</h2><ul>${liveItems}</ul>` : ""}
       ${videoItems ? `<h2>Latest videos</h2><ul>${videoItems}</ul>` : ""}
@@ -207,6 +217,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
         <li><a href="${siteUrl}/vi/tournaments">Giải đấu</a> — Lịch, bracket, kết quả</li>
         <li><a href="${siteUrl}/social">Sự kiện cộng đồng</a> — Đăng ký sự kiện pickleball mở bằng số điện thoại</li>
         <li><a href="${siteUrl}/clubs">Câu lạc bộ</a> — CLB pickleball khắp Việt Nam, lịch sinh hoạt và sự kiện</li>
+        <li><a href="${siteUrl}/vi/san">Sân pickleball</a> — Danh bạ 690+ sân pickleball khắp Việt Nam, tìm theo khu vực</li>
         <li><a href="${siteUrl}/vi/feed">Bảng tin trận đấu</a> — Trận đấu cộng đồng mới nhất + rating DUPR</li>
         <li><a href="${siteUrl}/vi/tools">Bracket Lab</a> — Công cụ tổ chức miễn phí</li>
         <li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng</a> — Sắp ra mắt</li>
@@ -214,6 +225,15 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
         <li><a href="${siteUrl}/vi/news">Tin tức</a> — Cập nhật pickleball hàng ngày</li>
         <li><a href="${siteUrl}/vi/videos">Video</a> — Highlights trận đấu</li>
         <li><a href="${siteUrl}/vi/forum">Diễn đàn</a> — Thảo luận cộng đồng</li>
+      </ul>
+      <h2>Tìm sân pickleball theo khu vực</h2>
+      <ul>
+        <li><a href="${siteUrl}/vi/san/khu-vuc/tp-hcm">Sân pickleball TP.HCM</a></li>
+        <li><a href="${siteUrl}/vi/san/khu-vuc/ha-noi">Sân pickleball Hà Nội</a></li>
+        <li><a href="${siteUrl}/vi/san/khu-vuc/da-nang">Sân pickleball Đà Nẵng</a></li>
+        <li><a href="${siteUrl}/vi/san/khu-vuc/bac-ninh">Sân pickleball Bắc Ninh</a></li>
+        <li><a href="${siteUrl}/vi/san/khu-vuc/ha-long">Sân pickleball Hạ Long</a></li>
+        <li><a href="${siteUrl}/vi/san/khu-vuc/vinh">Sân pickleball Vinh</a></li>
       </ul>
       ${blogSection}
       ${liveItems ? `<h2>Livestream</h2><ul>${liveItems}</ul>` : ""}
