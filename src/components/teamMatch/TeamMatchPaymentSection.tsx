@@ -19,6 +19,7 @@ import { useI18n } from '@/i18n';
 import { generateVietQRUrl } from '@/lib/payment/vietqr';
 import { findBankByCode } from '@/lib/payment/banks';
 import { useTeamMatchTeamManagement, type TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { discountPercentForSlot } from '@/lib/payment/discounts';
 import type { TeamMatchTournament } from '@/hooks/useTeamMatch';
 
 interface Props {
@@ -98,7 +99,15 @@ export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams }
   // Payment status của đội trưởng lấy từ list (select '*' có payment_status).
   const myTeam = teams.find((t) => t.id === userTeam?.id) ?? userTeam;
   const myStatus = myTeam?.payment_status ?? 'unpaid';
-  const teamAmount = feeTeam > 0 ? feeTeam : feePlayer;
+  const baseAmount = feeTeam > 0 ? feeTeam : feePlayer;
+
+  // Slot của đội = thứ tự đăng ký (created_at) trong các đội chưa bị từ chối.
+  // % giảm theo bậc BTC cài đặt → QR tự tạo số tiền sau giảm.
+  const tiers = tournament.discount_tiers ?? [];
+  const bySignup = [...teams].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const mySlotIndex = myTeam ? bySignup.findIndex((t) => t.id === myTeam.id) : -1;
+  const myDiscount = mySlotIndex >= 0 ? discountPercentForSlot(tiers, mySlotIndex) : 0;
+  const teamAmount = Math.round((baseAmount * (100 - myDiscount)) / 100);
 
   const qrUrl =
     hasBank && teamAmount > 0
@@ -146,6 +155,18 @@ export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams }
                 <strong style={{ color: 'var(--tl-green)' }}>{fmt(feeTeam, language)} đ</strong>
               </div>
             )}
+            {tiers.map((tier, i) => {
+              const from = tiers.slice(0, i).reduce((s, d) => s + d.slots, 0) + 1;
+              const to = from + tier.slots - 1;
+              return (
+                <div key={i} style={feeRow}>
+                  <span>{language === 'vi' ? `Slot ${from}–${to}` : `Slots ${from}–${to}`}</span>
+                  <strong style={{ color: 'var(--tl-gold)' }}>
+                    −{tier.percent}% · {fmt(Math.round((baseAmount * (100 - tier.percent)) / 100), language)} đ
+                  </strong>
+                </div>
+              );
+            })}
           </div>
 
           {/* Đội trưởng — nộp lệ phí / trạng thái */}
@@ -217,6 +238,12 @@ export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams }
               <div style={feeRow}><span>{language === 'vi' ? 'Ngân hàng' : 'Bank'}</span><strong>{findBankByCode(tournament.bank_code ?? '')?.shortName ?? tournament.bank_code}</strong></div>
               <div style={feeRow}><span>{language === 'vi' ? 'Số tài khoản' : 'Account'}</span><strong>{tournament.bank_account_number}</strong></div>
               <div style={feeRow}><span>{language === 'vi' ? 'Chủ tài khoản' : 'Holder'}</span><strong>{tournament.bank_account_name}</strong></div>
+              {myDiscount > 0 && (
+                <div style={feeRow}>
+                  <span>{language === 'vi' ? `Slot #${mySlotIndex + 1} — giảm giá` : `Slot #${mySlotIndex + 1} — discount`}</span>
+                  <strong style={{ color: 'var(--tl-gold)' }}>−{myDiscount}%</strong>
+                </div>
+              )}
               <div style={feeRow}><span>{language === 'vi' ? 'Số tiền' : 'Amount'}</span><strong style={{ color: 'var(--tl-green)' }}>{fmt(teamAmount, language)} đ</strong></div>
             </div>
             {myStatus === 'unpaid' ? (

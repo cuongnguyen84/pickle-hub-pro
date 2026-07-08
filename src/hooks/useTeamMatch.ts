@@ -4,6 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import type { DiscountTier } from '@/lib/payment/discounts';
+
+export type { DiscountTier };
+
 // Types based on database schema
 export interface TeamMatchTournament {
   id: string;
@@ -42,6 +46,10 @@ export interface TeamMatchTournament {
   bank_code?: string | null;
   bank_account_number?: string | null;
   bank_account_name?: string | null;
+  // Ngày tổ chức + địa điểm + bậc giảm giá slot
+  event_date?: string | null;
+  location?: string | null;
+  discount_tiers?: DiscountTier[] | null;
 }
 
 export interface GameTemplate {
@@ -80,6 +88,9 @@ export interface CreateTournamentInput {
   bank_code?: string;
   bank_account_number?: string;
   bank_account_name?: string;
+  event_date?: string;
+  location?: string;
+  discount_tiers?: DiscountTier[];
   game_templates: Omit<GameTemplate, 'id' | 'tournament_id'>[];
 }
 
@@ -252,7 +263,10 @@ export function useTeamMatch() {
         extra.bank_code = input.bank_code ?? null;
         extra.bank_account_number = input.bank_account_number ?? null;
         extra.bank_account_name = input.bank_account_name ?? null;
+        if (input.discount_tiers?.length) extra.discount_tiers = input.discount_tiers;
       }
+      if (input.event_date) extra.event_date = input.event_date;
+      if (input.location?.trim()) extra.location = input.location.trim();
       if (Object.keys(extra).length > 0) {
         const { error: extraError } = await supabase
           .from('team_match_tournaments')

@@ -1,4 +1,4 @@
-import { Mail, LayoutGrid, Trophy, Play, AlertTriangle } from 'lucide-react';
+import { Mail, LayoutGrid, Trophy, Play, AlertTriangle, CalendarDays, MapPin, Gauge, Users } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import {
   RegisteredTeamsSummary,
@@ -49,7 +49,13 @@ interface TeamMatchOverviewTabProps {
     format: string;
     status: string;
     team_roster_size: number;
+    team_count: number;
     top_per_group?: number;
+    event_date?: string | null;
+    location?: string | null;
+    require_dupr?: boolean;
+    dupr_max_male?: number | null;
+    dupr_max_female?: number | null;
   };
   isOwner: boolean;
   userTeam: TeamMatchTeam | null;
@@ -82,9 +88,31 @@ export function TeamMatchOverviewTab({
   onShowGroupSetup,
   onShowSESetup,
 }: TeamMatchOverviewTabProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const isGroupPlayoffFormat = tournament.format === 'rr_playoff';
   const isSingleElimination = tournament.format === 'single_elimination';
+
+  // Thanh slot: đội đã đăng ký (chưa bị từ chối) / tổng slot BTC cài đặt.
+  const totalSlots = tournament.team_count;
+  const filledSlots = displayTeams.length;
+  const slotPct = totalSlots > 0 ? Math.min(100, Math.round((filledSlots / totalSlots) * 100)) : 0;
+  const fmtDate = (d: string) =>
+    new Date(`${d}T00:00:00`).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
+      weekday: 'short', day: 'numeric', month: 'numeric', year: 'numeric',
+    });
+  const duprText = tournament.require_dupr
+    ? language === 'vi'
+      ? `DUPR Nam ≤ ${(tournament.dupr_max_male ?? 0).toFixed(2)} · Nữ ≤ ${(tournament.dupr_max_female ?? 0).toFixed(2)}`
+      : `DUPR Male ≤ ${(tournament.dupr_max_male ?? 0).toFixed(2)} · Female ≤ ${(tournament.dupr_max_female ?? 0).toFixed(2)}`
+    : null;
+
+  const infoRowStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 13.5,
+    color: 'var(--tl-fg-2)',
+  };
 
   const renderActionCard = (
     description: string,
@@ -110,6 +138,50 @@ export function TeamMatchOverviewTab({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Thông tin giải: ngày · địa điểm · yêu cầu DUPR · thanh slot */}
+      <section style={{ ...surfaceCard, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {tournament.event_date && (
+          <div style={infoRowStyle}>
+            <CalendarDays className="h-4 w-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
+            <span>{fmtDate(tournament.event_date)}</span>
+          </div>
+        )}
+        {tournament.location && (
+          <div style={infoRowStyle}>
+            <MapPin className="h-4 w-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
+            <span>{tournament.location}</span>
+          </div>
+        )}
+        {duprText && (
+          <div style={infoRowStyle}>
+            <Gauge className="h-4 w-4" style={{ color: 'var(--tl-gold)', flexShrink: 0 }} />
+            <span style={{ fontWeight: 600 }}>{duprText}</span>
+          </div>
+        )}
+        <div>
+          <div style={{ ...infoRowStyle, justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Users className="h-4 w-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
+              {language === 'vi' ? 'Slot đội' : 'Team slots'}
+            </span>
+            <strong style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 13, color: filledSlots >= totalSlots ? 'var(--tl-live)' : 'var(--tl-fg)' }}>
+              {filledSlots}/{totalSlots}
+            </strong>
+          </div>
+          <div style={{ height: 6, borderRadius: 999, background: 'var(--tl-border)', overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${slotPct}%`,
+                borderRadius: 999,
+                background: filledSlots >= totalSlots ? 'var(--tl-live)' : 'var(--tl-green)',
+                transition: 'width 0.3s',
+              }}
+            />
+          </div>
+        </div>
+      </section>
+
       {userTeam && !isOwner && (
         <>
           <TeamOverviewCard

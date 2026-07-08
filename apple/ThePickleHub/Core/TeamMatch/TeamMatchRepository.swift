@@ -35,14 +35,14 @@ struct TeamMatchRepository {
     func load(shareID: String) async throws -> TMDetail {
         let tournament: TMTournament = try await client
             .from("team_match_tournaments")
-            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name")
+            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name, event_date, location, discount_tiers")
             .eq("share_id", value: shareID)
             .single()
             .execute().value
 
         async let teams: [TMTeam] = client
             .from("team_match_teams")
-            .select("id, team_name, seed, group_id, status, payment_status")
+            .select("id, team_name, seed, group_id, status, payment_status, created_at")
             .eq("tournament_id", value: tournament.id)
             .order("seed", ascending: true)
             .execute().value
@@ -131,6 +131,10 @@ struct TeamMatchRepository {
         let bankCode: String
         let bankAccountNumber: String
         let bankAccountName: String
+        // Ngày tổ chức (yyyy-MM-dd) + địa điểm + bậc giảm giá slot. Rỗng = bỏ qua.
+        let eventDate: String?
+        let location: String
+        let discountTiers: [TMDiscountTier]
         let templates: [TMTemplateInput]
     }
 
@@ -239,8 +243,9 @@ struct TeamMatchRepository {
         // Thể lệ + lệ phí + tài khoản nhận — UPDATE sau create (RPC không biết
         // các cột này). Chỉ ghi khi có dữ liệu; miễn phí thì để trống.
         let rules = o.rulesSummary.trimmingCharacters(in: .whitespacesAndNewlines)
+        let location = o.location.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasFee = o.entryFeeVnd > 0 || o.entryFeeTeamVnd > 0
-        if !rules.isEmpty || hasFee {
+        if !rules.isEmpty || hasFee || o.eventDate != nil || !location.isEmpty {
             struct FeeUpdate: Encodable {
                 let rules_summary: String?
                 let entry_fee_vnd: Int?
@@ -248,6 +253,9 @@ struct TeamMatchRepository {
                 let bank_code: String?
                 let bank_account_number: String?
                 let bank_account_name: String?
+                let event_date: String?
+                let location: String?
+                let discount_tiers: [TMDiscountTier]?
             }
             try await client.from("team_match_tournaments")
                 .update(FeeUpdate(
@@ -256,7 +264,10 @@ struct TeamMatchRepository {
                     entry_fee_team_vnd: o.entryFeeTeamVnd > 0 ? o.entryFeeTeamVnd : nil,
                     bank_code: hasFee ? o.bankCode : nil,
                     bank_account_number: hasFee ? o.bankAccountNumber : nil,
-                    bank_account_name: hasFee ? o.bankAccountName : nil))
+                    bank_account_name: hasFee ? o.bankAccountName : nil,
+                    event_date: o.eventDate,
+                    location: location.isEmpty ? nil : location,
+                    discount_tiers: hasFee && !o.discountTiers.isEmpty ? o.discountTiers : nil))
                 .eq("id", value: t.id).execute()
         }
         return t.shareID

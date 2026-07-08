@@ -8,17 +8,27 @@ struct TeamMatchPaymentSheet: View {
     let rosterCount: Int
     let teamName: String
     let status: TMPaymentStatus
+    /// Slot đăng ký của đội (0-based) — để áp bậc giảm giá slot sớm. Nil = không giảm.
+    let slotIndex: Int?
     /// Gọi khi bấm "Đã chuyển khoản" (parent chạy claim RPC + reload).
     let onConfirmTransfer: () async -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var working = false
 
-    /// Lệ phí đội: ưu tiên phí/đội; nếu không có thì phí/VĐV × sĩ số đội.
-    private var teamAmount: Int {
+    /// Lệ phí gốc của đội: ưu tiên phí/đội; nếu không có thì phí/VĐV × sĩ số đội.
+    private var baseAmount: Int {
         if let f = tournament.entryFeeTeamVnd, f > 0 { return f }
         return (tournament.entryFeeVnd ?? 0) * max(rosterCount, 0)
     }
+
+    /// % giảm theo slot đăng ký — QR tự tạo số tiền sau giảm.
+    private var discountPercent: Int {
+        guard let slotIndex else { return 0 }
+        return tournament.discountPercent(forSlot: slotIndex)
+    }
+
+    private var teamAmount: Int { baseAmount * (100 - discountPercent) / 100 }
 
     private var bankLabel: String {
         let code = tournament.bankCode ?? ""
@@ -94,6 +104,10 @@ struct TeamMatchPaymentSheet: View {
             divider
             infoRow("Chủ tài khoản", tournament.bankAccountName ?? "—")
             divider
+            if discountPercent > 0, let slotIndex {
+                infoRow("Slot #\(slotIndex + 1) — giảm giá", "−\(discountPercent)%")
+                divider
+            }
             infoRow("Số tiền", "\(teamAmount.formatted()) đ", accent: true)
         }
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))

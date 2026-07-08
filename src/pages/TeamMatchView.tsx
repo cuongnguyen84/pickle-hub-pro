@@ -692,7 +692,13 @@ export default function TeamMatchView() {
                   format: tournament.format,
                   status: tournament.status,
                   team_roster_size: tournament.team_roster_size,
+                  team_count: tournament.team_count,
                   top_per_group: tournament.top_per_group,
+                  event_date: tournament.event_date,
+                  location: tournament.location,
+                  require_dupr: tournament.require_dupr,
+                  dupr_max_male: tournament.dupr_max_male,
+                  dupr_max_female: tournament.dupr_max_female,
                 }}
                 isOwner={isOwner}
                 userTeam={userTeam || null}

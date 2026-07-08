@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, LogIn, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useTeamMatch, CreateTournamentInput } from '@/hooks/useTeamMatch';
+import { useTeamMatch, CreateTournamentInput, DiscountTier } from '@/hooks/useTeamMatch';
 import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
 import { VN_BANKS } from '@/lib/payment/banks';
 import { generateVietQRUrl } from '@/lib/payment/vietqr';
@@ -125,6 +125,8 @@ export default function TeamMatchSetup() {
   const [step, setStep] = useState<Step>(1);
 
   const [name, setName] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [location, setLocation] = useState('');
   const [rosterSize, setRosterSize] = useState<4 | 6 | 8>(4);
   const [teamCount, setTeamCount] = useState(4);
   const [requireRegistration, setRequireRegistration] = useState(false);
@@ -154,6 +156,9 @@ export default function TeamMatchSetup() {
   const [bankCode, setBankCode] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
+  // Bậc giảm giá slot đăng ký sớm — BTC tự nhập, cộng dồn theo thứ tự.
+  const [discountTiers, setDiscountTiers] = useState<DiscountTier[]>([]);
+  const validTiers = discountTiers.filter((d) => d.slots > 0 && d.percent > 0 && d.percent <= 100);
   const hasAnyFee = entryFeeVnd > 0 || entryFeeTeamVnd > 0;
   const feeStepValid =
     !hasAnyFee ||
@@ -248,6 +253,9 @@ export default function TeamMatchSetup() {
       has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
       total_score_mode: totalScoreMode,
       points_per_game: pointsPerGame,
+      event_date: eventDate || undefined,
+      location: location.trim() || undefined,
+      discount_tiers: hasAnyFee && validTiers.length > 0 ? validTiers : undefined,
       rules_summary: rulesSummary.trim() || undefined,
       entry_fee_vnd: entryFeeVnd > 0 ? entryFeeVnd : undefined,
       entry_fee_team_vnd: entryFeeTeamVnd > 0 ? entryFeeTeamVnd : undefined,
@@ -455,6 +463,27 @@ export default function TeamMatchSetup() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t.teamMatch.setup.tournamentNamePlaceholder}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="eventDate">{language === 'vi' ? 'Ngày tổ chức' : 'Event date'}</Label>
+                    <Input
+                      id="eventDate"
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">{language === 'vi' ? 'Địa điểm' : 'Location'}</Label>
+                    <Input
+                      id="location"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder={language === 'vi' ? 'VD: Sân ABC, Q.7' : 'e.g. ABC Courts'}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -1120,6 +1149,93 @@ export default function TeamMatchSetup() {
                     onChange={(e) => setEntryFeeTeamVnd(Math.max(0, Number(e.target.value) || 0))}
                   />
                 </div>
+
+                {hasAnyFee && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label>{language === 'vi' ? 'Giảm giá slot đăng ký sớm' : 'Early-slot discounts'}</Label>
+                      <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                        {language === 'vi'
+                          ? 'VD: 10 slot đầu giảm 20%, 5 slot tiếp giảm 15%. Slot tính theo thứ tự đăng ký đội; QR tự áp dụng số tiền sau giảm.'
+                          : 'e.g. first 10 slots -20%, next 5 slots -15%. Slots follow team registration order; the QR applies the discounted amount.'}
+                      </p>
+                    </div>
+                    {discountTiers.map((tier, i) => {
+                      const from = discountTiers.slice(0, i).reduce((s, d) => s + d.slots, 0) + 1;
+                      return (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-fg-3)', minWidth: 52 }}>
+                            {language === 'vi' ? `Slot ${from}+` : `Slot ${from}+`}
+                          </span>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={tier.slots || ''}
+                            placeholder={language === 'vi' ? 'Số slot' : 'Slots'}
+                            onChange={(e) =>
+                              setDiscountTiers((ts) => ts.map((d, j) => (j === i ? { ...d, slots: Math.max(0, Number(e.target.value) || 0) } : d)))
+                            }
+                          />
+                          <Input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={tier.percent || ''}
+                            placeholder={language === 'vi' ? '% giảm' : '% off'}
+                            onChange={(e) =>
+                              setDiscountTiers((ts) => ts.map((d, j) => (j === i ? { ...d, percent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } : d)))
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="tl-btn"
+                            style={{ padding: '8px 12px', color: 'var(--tl-live)' }}
+                            onClick={() => setDiscountTiers((ts) => ts.filter((_, j) => j !== i))}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className="tl-btn"
+                      onClick={() => setDiscountTiers((ts) => [...ts, { slots: 0, percent: 0 }])}
+                    >
+                      + {language === 'vi' ? 'Thêm bậc giảm giá' : 'Add tier'}
+                    </button>
+                    {validTiers.length > 0 && previewAmount > 0 && (
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 'var(--tl-radius)',
+                          ...infoCardStyle('success'),
+                          fontSize: 12.5,
+                          color: 'var(--tl-fg-2)',
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {validTiers.map((tier, i) => {
+                          const from = validTiers.slice(0, i).reduce((s, d) => s + d.slots, 0) + 1;
+                          const to = from + tier.slots - 1;
+                          const amount = Math.round((previewAmount * (100 - tier.percent)) / 100);
+                          return (
+                            <div key={i}>
+                              {language === 'vi'
+                                ? `Slot ${from}–${to}: ${amount.toLocaleString('vi-VN')} đ (−${tier.percent}%)`
+                                : `Slots ${from}–${to}: ${amount.toLocaleString('en-US')} đ (−${tier.percent}%)`}
+                            </div>
+                          );
+                        })}
+                        <div>
+                          {language === 'vi'
+                            ? `Slot còn lại: ${previewAmount.toLocaleString('vi-VN')} đ (giá gốc)`
+                            : `Remaining slots: ${previewAmount.toLocaleString('en-US')} đ (full price)`}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {hasAnyFee ? (
                   <div
