@@ -26,92 +26,106 @@ import ConditionalAuth from "@/components/auth/ConditionalAuth";
 // Initialize Native Google Auth plugin on app startup
 initializeGoogleAuth();
 
-// Lazy load all other pages for code splitting
-const Live = lazy(() => import("./pages/Live"));
-const Videos = lazy(() => import("./pages/Videos"));
-const Tournaments = lazy(() => import("./pages/Tournaments"));
-const TournamentDetail = lazy(() => import("./pages/TournamentDetail"));
-const Login = lazy(() => import("./pages/Login"));
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const WatchVideo = lazy(() => import("./pages/WatchVideo"));
-const WatchLive = lazy(() => import("./pages/WatchLive"));
-const Account = lazy(() => import("./pages/Account"));
-const DuprConnect = lazy(() => import("./pages/DuprConnect"));
-const MatchNewPage = lazy(() => import("./pages/MatchNew"));
-const MatchConfirm = lazy(() => import("./pages/MatchConfirm"));
-const MatchInviteConfirm = lazy(() => import("./pages/MatchInviteConfirm"));
-const AdminDuprDashboard = lazy(() => import("./pages/admin/AdminDuprDashboard"));
-const AdminErrors = lazy(() => import("./pages/admin/AdminErrors"));
-const MatchSubmitPage = lazy(() => import("./pages/Match"));
-const MyTournaments = lazy(() => import("./pages/MyTournaments"));
-const Notifications = lazy(() => import("./pages/Notifications"));
-const Search = lazy(() => import("./pages/Search"));
-const OrganizationDetail = lazy(() => import("./pages/OrganizationDetail"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Tools = lazy(() => import("./pages/Tools"));
-const QuickTables = lazy(() => import("./pages/QuickTables"));
-const QuickTableSetup = lazy(() => import("./pages/QuickTableSetup"));
-const QuickTableView = lazy(() => import("./pages/QuickTableView"));
-const ParentTournamentPage = lazy(() => import("./pages/ParentTournamentPage"));
-const MatchScoring = lazy(() => import("./pages/MatchScoring"));
-const QuickTableRefereeScoring = lazy(() => import("./pages/QuickTableRefereeScoring"));
-const TeamMatchScoring = lazy(() => import("./pages/TeamMatchScoring"));
-const JoinTeam = lazy(() => import("./pages/JoinTeam"));
-const Privacy = lazy(() => import("./pages/Privacy"));
-const Terms = lazy(() => import("./pages/Terms"));
-const Advertise = lazy(() => import("./pages/Advertise"));
-const AffiliateDisclosurePage = lazy(() => import("./pages/AffiliateDisclosure"));
-const TeamMatchList = lazy(() => import("./pages/TeamMatchList"));
-const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
-const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
-const News = lazy(() => import("./pages/News"));
-const NewsArticle = lazy(() => import("./pages/NewsArticle"));
-const ShareRedirect = lazy(() => import("./pages/ShareRedirect"));
+// Lazy load all other pages for code splitting.
+// lazyRetry: thử lại import 1 lần sau 1.5s — lỗi mạng thoáng qua (đang xem
+// live, sóng yếu) không đáng để rơi vào ChunkErrorBoundary + reload cả trang.
+// Nếu vẫn fail (deploy mới, chunk cũ 404 thật) thì boundary xử lý như cũ.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const lazyRetry = <T extends React.ComponentType<any>>(factory: () => Promise<{ default: T }>) =>
+  lazy(() =>
+    factory().catch(
+      () =>
+        new Promise<{ default: T }>((resolve, reject) => {
+          setTimeout(() => factory().then(resolve, reject), 1500);
+        }),
+    ),
+  );
+
+const Live = lazyRetry(() => import("./pages/Live"));
+const Videos = lazyRetry(() => import("./pages/Videos"));
+const Tournaments = lazyRetry(() => import("./pages/Tournaments"));
+const TournamentDetail = lazyRetry(() => import("./pages/TournamentDetail"));
+const Login = lazyRetry(() => import("./pages/Login"));
+const AuthCallback = lazyRetry(() => import("./pages/AuthCallback"));
+const ResetPassword = lazyRetry(() => import("./pages/ResetPassword"));
+const WatchVideo = lazyRetry(() => import("./pages/WatchVideo"));
+const WatchLive = lazyRetry(() => import("./pages/WatchLive"));
+const Account = lazyRetry(() => import("./pages/Account"));
+const DuprConnect = lazyRetry(() => import("./pages/DuprConnect"));
+const MatchNewPage = lazyRetry(() => import("./pages/MatchNew"));
+const MatchConfirm = lazyRetry(() => import("./pages/MatchConfirm"));
+const MatchInviteConfirm = lazyRetry(() => import("./pages/MatchInviteConfirm"));
+const AdminDuprDashboard = lazyRetry(() => import("./pages/admin/AdminDuprDashboard"));
+const AdminErrors = lazyRetry(() => import("./pages/admin/AdminErrors"));
+const MatchSubmitPage = lazyRetry(() => import("./pages/Match"));
+const MyTournaments = lazyRetry(() => import("./pages/MyTournaments"));
+const Notifications = lazyRetry(() => import("./pages/Notifications"));
+const Search = lazyRetry(() => import("./pages/Search"));
+const OrganizationDetail = lazyRetry(() => import("./pages/OrganizationDetail"));
+const NotFound = lazyRetry(() => import("./pages/NotFound"));
+const Tools = lazyRetry(() => import("./pages/Tools"));
+const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
+const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
+const QuickTableView = lazyRetry(() => import("./pages/QuickTableView"));
+const ParentTournamentPage = lazyRetry(() => import("./pages/ParentTournamentPage"));
+const MatchScoring = lazyRetry(() => import("./pages/MatchScoring"));
+const QuickTableRefereeScoring = lazyRetry(() => import("./pages/QuickTableRefereeScoring"));
+const TeamMatchScoring = lazyRetry(() => import("./pages/TeamMatchScoring"));
+const JoinTeam = lazyRetry(() => import("./pages/JoinTeam"));
+const Privacy = lazyRetry(() => import("./pages/Privacy"));
+const Terms = lazyRetry(() => import("./pages/Terms"));
+const Advertise = lazyRetry(() => import("./pages/Advertise"));
+const AffiliateDisclosurePage = lazyRetry(() => import("./pages/AffiliateDisclosure"));
+const TeamMatchList = lazyRetry(() => import("./pages/TeamMatchList"));
+const TeamMatchSetup = lazyRetry(() => import("./pages/TeamMatchSetup"));
+const TeamMatchView = lazyRetry(() => import("./pages/TeamMatchView"));
+const News = lazyRetry(() => import("./pages/News"));
+const NewsArticle = lazyRetry(() => import("./pages/NewsArticle"));
+const ShareRedirect = lazyRetry(() => import("./pages/ShareRedirect"));
 
 // Doubles Elimination pages
-const DoublesEliminationList = lazy(() => import("./pages/DoublesEliminationList"));
-const DoublesEliminationSetup = lazy(() => import("./pages/DoublesEliminationSetup"));
-const DoublesEliminationView = lazy(() => import("./pages/DoublesEliminationView"));
-const DoublesEliminationScoring = lazy(() => import("./pages/DoublesEliminationScoring"));
+const DoublesEliminationList = lazyRetry(() => import("./pages/DoublesEliminationList"));
+const DoublesEliminationSetup = lazyRetry(() => import("./pages/DoublesEliminationSetup"));
+const DoublesEliminationView = lazyRetry(() => import("./pages/DoublesEliminationView"));
+const DoublesEliminationScoring = lazyRetry(() => import("./pages/DoublesEliminationScoring"));
 
 // Flex Tournament pages
-const FlexTournamentList = lazy(() => import("./pages/FlexTournamentList"));
-const FlexTournamentSetup = lazy(() => import("./pages/FlexTournamentSetup"));
-const FlexTournamentView = lazy(() => import("./pages/FlexTournamentView"));
+const FlexTournamentList = lazyRetry(() => import("./pages/FlexTournamentList"));
+const FlexTournamentSetup = lazyRetry(() => import("./pages/FlexTournamentSetup"));
+const FlexTournamentView = lazyRetry(() => import("./pages/FlexTournamentView"));
 
 // Blog pages
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const ViBlogPost = lazy(() => import("./pages/ViBlogPost"));
+const Blog = lazyRetry(() => import("./pages/Blog"));
+const BlogPost = lazyRetry(() => import("./pages/BlogPost"));
+const ViBlogPost = lazyRetry(() => import("./pages/ViBlogPost"));
 
 // Forum pages
-const Forum = lazy(() => import("./pages/Forum"));
-const ForumCategory = lazy(() => import("./pages/ForumCategory"));
-const ForumPostDetail = lazy(() => import("./pages/ForumPostDetail"));
-const ForumPostCreate = lazy(() => import("./pages/ForumPostCreate"));
+const Forum = lazyRetry(() => import("./pages/Forum"));
+const ForumCategory = lazyRetry(() => import("./pages/ForumCategory"));
+const ForumPostDetail = lazyRetry(() => import("./pages/ForumPostDetail"));
+const ForumPostCreate = lazyRetry(() => import("./pages/ForumPostCreate"));
 
 // Bet #1 social — Sprint 2
-const MatchCheckIn = lazy(() => import("./pages/MatchCheckIn"));
-const MatchPage = lazy(() => import("./pages/MatchPage"));
+const MatchCheckIn = lazyRetry(() => import("./pages/MatchCheckIn"));
+const MatchPage = lazyRetry(() => import("./pages/MatchPage"));
 // Bet #1 social — Sprint 3 Phase 3A
-const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Onboarding = lazyRetry(() => import("./pages/Onboarding"));
 // Bet #1 social — Sprint 3 Phase 3B
-const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
+const PlayerProfile = lazyRetry(() => import("./pages/PlayerProfile"));
 // Bet #1 social — Sprint 4 Phase 4A
-const Feed = lazy(() => import("./pages/Feed"));
+const Feed = lazyRetry(() => import("./pages/Feed"));
 // Social Events MVP — Sprint 1 PR2
-const SocialEventDetail = lazy(() => import("./pages/SocialEventDetail"));
-const ClubLanding = lazy(() => import("./pages/ClubLanding"));
+const SocialEventDetail = lazyRetry(() => import("./pages/SocialEventDetail"));
+const ClubLanding = lazyRetry(() => import("./pages/ClubLanding"));
 // Social Events MVP — Sprint 1 PR3 (organizer surfaces)
-const ClubManage = lazy(() => import("./pages/ClubManage"));
-const CreateSocialEvent = lazy(() => import("./pages/CreateSocialEvent"));
-const SocialEventRoster = lazy(() => import("./pages/SocialEventRoster"));
-const SocialEventMatchmaking = lazy(() => import("./pages/SocialEventMatchmaking"));
+const ClubManage = lazyRetry(() => import("./pages/ClubManage"));
+const CreateSocialEvent = lazyRetry(() => import("./pages/CreateSocialEvent"));
+const SocialEventRoster = lazyRetry(() => import("./pages/SocialEventRoster"));
+const SocialEventMatchmaking = lazyRetry(() => import("./pages/SocialEventMatchmaking"));
 // Social Events MVP — Sprint 1.5 PR46 (public collection page)
-const SocialEventList = lazy(() => import("./pages/SocialEventList"));
+const SocialEventList = lazyRetry(() => import("./pages/SocialEventList"));
 // Social Events MVP — Sprint 1.5 PR47 (live event UX)
-const SocialEventLive = lazy(() => import("./pages/SocialEventLive"));
+const SocialEventLive = lazyRetry(() => import("./pages/SocialEventLive"));
 // Social Events MVP — PR53 (public profile + match history + badges)
 // PR79 Phase 2F (audit I-8) — PublicProfile is deprecated. /u/:slug now
 // redirects to the canonical /nguoi-choi/:username (handled by the
@@ -120,45 +134,45 @@ const SocialEventLive = lazy(() => import("./pages/SocialEventLive"));
 // mounted on a route. Delete file once we confirm no external /u/<hex>
 // links are still flowing.
 // Social Events MVP — PR55 (self-service club creation + discovery)
-const ClubsList = lazy(() => import("./pages/ClubsList"));
-const CreateClub = lazy(() => import("./pages/CreateClub"));
+const ClubsList = lazyRetry(() => import("./pages/ClubsList"));
+const CreateClub = lazyRetry(() => import("./pages/CreateClub"));
 // Court finder ("Tìm sân") — venue directory
-const VenuesList = lazy(() => import("./pages/VenuesList"));
-const VenueDetail = lazy(() => import("./pages/VenueDetail"));
-const VenueSubmit = lazy(() => import("./pages/VenueSubmit"));
-const VenuesCity = lazy(() => import("./pages/VenuesCity"));
+const VenuesList = lazyRetry(() => import("./pages/VenuesList"));
+const VenueDetail = lazyRetry(() => import("./pages/VenueDetail"));
+const VenueSubmit = lazyRetry(() => import("./pages/VenueSubmit"));
+const VenuesCity = lazyRetry(() => import("./pages/VenuesCity"));
 // Find players ("Tìm bạn chơi") + in-app messaging
-const FindPlayers = lazy(() => import("./pages/FindPlayers"));
-const Messages = lazy(() => import("./pages/Messages"));
+const FindPlayers = lazyRetry(() => import("./pages/FindPlayers"));
+const Messages = lazyRetry(() => import("./pages/Messages"));
 // Social Events MVP — PR57 (club management polish)
-const EditClub = lazy(() => import("./pages/EditClub"));
+const EditClub = lazyRetry(() => import("./pages/EditClub"));
 // Social Events MVP — PR58 (pre-launch must-haves)
-const PlayerRegistration = lazy(() => import("./pages/PlayerRegistration"));
-const EditSocialEvent = lazy(() => import("./pages/EditSocialEvent"));
+const PlayerRegistration = lazyRetry(() => import("./pages/PlayerRegistration"));
+const EditSocialEvent = lazyRetry(() => import("./pages/EditSocialEvent"));
 // Social Events MVP — PR59 (registration recovery)
-const RecoveryRegistration = lazy(() => import("./pages/RecoveryRegistration"));
+const RecoveryRegistration = lazyRetry(() => import("./pages/RecoveryRegistration"));
 // Dashboard pages
-const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
-const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
+const DashboardPicker = lazyRetry(() => import("./pages/DashboardPicker"));
+const TournamentDashboard = lazyRetry(() => import("./pages/TournamentDashboard"));
 
 // Lazy load embed pages
-const EmbedLive = lazy(() => import("./pages/embed/EmbedLive"));
-const EmbedVideo = lazy(() => import("./pages/embed/EmbedVideo"));
+const EmbedLive = lazyRetry(() => import("./pages/embed/EmbedLive"));
+const EmbedVideo = lazyRetry(() => import("./pages/embed/EmbedVideo"));
 
 // Lazy load preview pages (design directions, feature-flagged, noindex)
-const PreviewTheLine = lazy(() => import("./pages/preview/TheLine"));
-const PreviewLiveList = lazy(() => import("./pages/preview/LiveList"));
-const PreviewLiveWatch = lazy(() => import("./pages/preview/LiveWatch"));
-const PreviewTournamentsList = lazy(() => import("./pages/preview/TournamentsList"));
-const PreviewTournamentDetail = lazy(() => import("./pages/preview/TournamentDetail"));
-const PreviewBlogList = lazy(() => import("./pages/preview/BlogList"));
-const PreviewBlogPost = lazy(() => import("./pages/preview/BlogPostPage"));
-const PreviewWatchVideo = lazy(() => import("./pages/preview/WatchVideo"));
-const PreviewRankings = lazy(() => import("./pages/preview/Rankings"));
-const Rankings = lazy(() => import("./pages/Rankings"));
-const PreviewOrgDetail = lazy(() => import("./pages/preview/OrganizationDetail"));
-const PreviewSearch = lazy(() => import("./pages/preview/Search"));
-const PreviewBracketLab = lazy(() => import("./pages/preview/BracketLab"));
+const PreviewTheLine = lazyRetry(() => import("./pages/preview/TheLine"));
+const PreviewLiveList = lazyRetry(() => import("./pages/preview/LiveList"));
+const PreviewLiveWatch = lazyRetry(() => import("./pages/preview/LiveWatch"));
+const PreviewTournamentsList = lazyRetry(() => import("./pages/preview/TournamentsList"));
+const PreviewTournamentDetail = lazyRetry(() => import("./pages/preview/TournamentDetail"));
+const PreviewBlogList = lazyRetry(() => import("./pages/preview/BlogList"));
+const PreviewBlogPost = lazyRetry(() => import("./pages/preview/BlogPostPage"));
+const PreviewWatchVideo = lazyRetry(() => import("./pages/preview/WatchVideo"));
+const PreviewRankings = lazyRetry(() => import("./pages/preview/Rankings"));
+const Rankings = lazyRetry(() => import("./pages/Rankings"));
+const PreviewOrgDetail = lazyRetry(() => import("./pages/preview/OrganizationDetail"));
+const PreviewSearch = lazyRetry(() => import("./pages/preview/Search"));
+const PreviewBracketLab = lazyRetry(() => import("./pages/preview/BracketLab"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -169,34 +183,34 @@ const QuickTableSetupRedirect = lazy(() =>
 );
 
 // Lazy load admin pages
-const AdminOverview = lazy(() => import("./pages/admin/AdminOverview"));
-const AdminOrganizations = lazy(() => import("./pages/admin/AdminOrganizations"));
-const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
-const AdminTournaments = lazy(() => import("./pages/admin/AdminTournaments"));
-const AdminApiKeys = lazy(() => import("./pages/admin/AdminApiKeys"));
-const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
-const AdminDisputes = lazy(() => import("./pages/admin/AdminDisputes"));
-const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
-const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
-const AdminEmbeds = lazy(() => import("./pages/admin/AdminEmbeds"));
-const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamViewers"));
-const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
-const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
-const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
-const ProTourAdmin = lazy(() => import("./pages/admin/ProTourAdmin"));
-const AdminViBlog = lazy(() => import("./pages/admin/AdminViBlog"));
-const AdminViBlogEditor = lazy(() => import("./pages/admin/AdminViBlogEditor"));
-const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminOverview = lazyRetry(() => import("./pages/admin/AdminOverview"));
+const AdminOrganizations = lazyRetry(() => import("./pages/admin/AdminOrganizations"));
+const AdminUsers = lazyRetry(() => import("./pages/admin/AdminUsers"));
+const AdminTournaments = lazyRetry(() => import("./pages/admin/AdminTournaments"));
+const AdminApiKeys = lazyRetry(() => import("./pages/admin/AdminApiKeys"));
+const AdminModeration = lazyRetry(() => import("./pages/admin/AdminModeration"));
+const AdminDisputes = lazyRetry(() => import("./pages/admin/AdminDisputes"));
+const AdminReports = lazyRetry(() => import("./pages/admin/AdminReports"));
+const AdminNews = lazyRetry(() => import("./pages/admin/AdminNews"));
+const AdminEmbeds = lazyRetry(() => import("./pages/admin/AdminEmbeds"));
+const AdminLivestreamViewers = lazyRetry(() => import("./pages/admin/AdminLivestreamViewers"));
+const AdminPushNotification = lazyRetry(() => import("./pages/admin/AdminPushNotification"));
+const AdminForum = lazyRetry(() => import("./pages/admin/AdminForum"));
+const AdminAuditLog = lazyRetry(() => import("./pages/admin/AdminAuditLog"));
+const ProTourAdmin = lazyRetry(() => import("./pages/admin/ProTourAdmin"));
+const AdminViBlog = lazyRetry(() => import("./pages/admin/AdminViBlog"));
+const AdminViBlogEditor = lazyRetry(() => import("./pages/admin/AdminViBlogEditor"));
+const AdminAnalytics = lazyRetry(() => import("./pages/admin/AdminAnalytics"));
 
 // Lazy load creator pages
-const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
-const CreatorVideos = lazy(() => import("./pages/creator/CreatorVideos"));
-const CreatorVideoForm = lazy(() => import("./pages/creator/CreatorVideoForm"));
-const CreatorLivestreams = lazy(() => import("./pages/creator/CreatorLivestreams"));
-const CreatorLivestreamForm = lazy(() => import("./pages/creator/CreatorLivestreamForm"));
-const CreatorSettings = lazy(() => import("./pages/creator/CreatorSettings"));
-const CreatorAnalytics = lazy(() => import("./pages/creator/CreatorAnalytics"));
-const CreatorTournaments = lazy(() => import("./pages/creator/CreatorTournaments"));
+const CreatorOverview = lazyRetry(() => import("./pages/creator/CreatorOverview"));
+const CreatorVideos = lazyRetry(() => import("./pages/creator/CreatorVideos"));
+const CreatorVideoForm = lazyRetry(() => import("./pages/creator/CreatorVideoForm"));
+const CreatorLivestreams = lazyRetry(() => import("./pages/creator/CreatorLivestreams"));
+const CreatorLivestreamForm = lazyRetry(() => import("./pages/creator/CreatorLivestreamForm"));
+const CreatorSettings = lazyRetry(() => import("./pages/creator/CreatorSettings"));
+const CreatorAnalytics = lazyRetry(() => import("./pages/creator/CreatorAnalytics"));
+const CreatorTournaments = lazyRetry(() => import("./pages/creator/CreatorTournaments"));
 
 // Global React Query defaults tuned for mobile / iOS app.
 // - staleTime 30s: prevents refetch when navigating back within 30s (e.g., home → live → home)
@@ -272,25 +286,15 @@ class ChunkErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean; error: Error | null; giveUp: boolean }
 > {
-  // REVIEW: counter reset delayed (was in componentDidMount, fired before child's
-  // lazy import attempt → defeated MAX_RELOADS cap → infinite reload loop on EN
-  // blog posts 2026-04-27). Now reset only after 5s of error-free mount.
-  private resetTimer: ReturnType<typeof setTimeout> | null = null;
+  // REVIEW: reload cap dùng CỬA SỔ THỜI GIAN, không reset bằng timer.
+  // Lịch sử: timer 5s (fix loop 2026-04-27) lại gây loop kiểu khác — trên mạng
+  // chậm (đang xem live) lazy import fail SAU 5s, counter đã bị xoá nên mỗi
+  // vòng đếm lại từ 0 → reload vô hạn, kẹt "Đang tải lại..." (2026-07-08).
+  // Giờ: quá MAX_RELOADS lần trong 2 phút → dừng, hiện nút tải thủ công.
 
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null, giveUp: false };
-  }
-  componentDidMount() {
-    // Defer reset — if a child's lazy import fails on mount, componentDidCatch
-    // fires before this timer and the counter is preserved so MAX_RELOADS holds.
-    // Only reset when no chunk error has fired for 5s = stale cache resolved.
-    this.resetTimer = setTimeout(() => {
-      try { sessionStorage.removeItem("chunk-reload-count"); } catch { /* ignore */ }
-    }, 5000);
-  }
-  componentWillUnmount() {
-    if (this.resetTimer) clearTimeout(this.resetTimer);
   }
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
@@ -317,20 +321,38 @@ class ChunkErrorBoundary extends Component<
       // Storage may be disabled (private mode, quota) — fall through to reload anyway.
     }
 
-    // Cap reloads so a truly broken deploy doesn't loop forever. After
-    // MAX_RELOADS we render a manual "Tải lại trang" button (see render()).
+    // Cap reloads trong cửa sổ 2 phút — chống loop bất kể lỗi nổ nhanh hay
+    // chậm. Quá MAX_RELOADS → nút "Tải lại trang" thủ công (see render()).
     const KEY = "chunk-reload-count";
+    const TS_KEY = "chunk-reload-first-ts";
     const MAX_RELOADS = 3;
+    const WINDOW_MS = 120_000;
+    const now = Date.now();
     let count = 0;
-    try { count = Number(sessionStorage.getItem(KEY) || "0"); } catch { /* ignore */ }
+    let first = 0;
+    try {
+      count = Number(sessionStorage.getItem(KEY) || "0");
+      first = Number(sessionStorage.getItem(TS_KEY) || "0");
+    } catch { /* ignore */ }
+
+    if (!first || now - first > WINDOW_MS) {
+      count = 0;
+      first = now;
+    }
 
     if (count >= MAX_RELOADS) {
-      try { sessionStorage.removeItem(KEY); } catch { /* ignore */ }
+      try {
+        sessionStorage.removeItem(KEY);
+        sessionStorage.removeItem(TS_KEY);
+      } catch { /* ignore */ }
       this.setState({ giveUp: true });
       return;
     }
 
-    try { sessionStorage.setItem(KEY, String(count + 1)); } catch { /* ignore */ }
+    try {
+      sessionStorage.setItem(KEY, String(count + 1));
+      sessionStorage.setItem(TS_KEY, String(first));
+    } catch { /* ignore */ }
     window.location.reload();
   }
   render() {
