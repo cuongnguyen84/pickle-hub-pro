@@ -22,6 +22,11 @@ final class FeedViewModel {
     private var rpcItems: [FeedItem] = []
     private var overlayItems: [FeedItem] = []
     private var seen = Set<UUID>()
+    // Pull-to-refresh phải cho nội dung MỚI thay vì lặp lại đúng thứ tự cũ
+    // (web làm bằng session shuffle + viewed tracking): item đã hiện ở các
+    // lần trước bị giáng điểm, cộng jitter theo salt đổi mỗi lần refresh.
+    private var shownIDs = Set<UUID>()
+    private var refreshSalt: UInt64 = .random(in: .min ... .max)
 
     @MainActor
     func loadInitial() async {
@@ -32,6 +37,10 @@ final class FeedViewModel {
 
     @MainActor
     func refresh() async {
+        // Những gì đang trên màn hình coi như đã xem → lần này tụt xuống dưới.
+        shownIDs.formUnion(items.prefix(12).map(\.id))
+        if shownIDs.count > 400 { shownIDs.removeAll() } // ponytail: reset thô khi phình
+        refreshSalt = .random(in: .min ... .max)
         await fetch(reset: true)
     }
 
@@ -79,15 +88,31 @@ final class FeedViewModel {
     }
 
     /// Merge the paginated RPC items with the overlays, sorted by score
-    /// (recency tiebreak) — the same ordering the web Trending feed produces.
+    /// (recency tiebreak) — the same ordering the web Trending feed produces,
+    /// điều chỉnh bởi shown-penalty + refresh jitter để mỗi lần refresh nổi
+    /// nội dung khác lên đầu. Salt cố định giữa các trang load-more nên thứ
+    /// tự không nhảy trong lúc cuộn.
     private func rebuild() {
         let rpcIDs = Set(rpcItems.map(\.id))
         var merged = rpcItems
         merged.append(contentsOf: overlayItems.filter { !rpcIDs.contains($0.id) })
         merged.sort { lhs, rhs in
-            if lhs.score != rhs.score { return lhs.score > rhs.score }
+            let l = effectiveScore(lhs)
+            let r = effectiveScore(rhs)
+            if l != r { return l > r }
             return (lhs.publishedAt ?? .distantPast) > (rhs.publishedAt ?? .distantPast)
         }
         items = merged
+    }
+
+    private func effectiveScore(_ item: FeedItem) -> Double {
+        var score = item.score
+        if shownIDs.contains(item.id) { score *= 0.55 } // đã xem → nhường chỗ
+        var hasher = Hasher()
+        hasher.combine(item.id)
+        hasher.combine(refreshSalt)
+        // hash → jitter 0.85–1.15, ổn định trong 1 lần refresh.
+        let unit = Double(UInt64(bitPattern: Int64(hasher.finalize()))) / Double(UInt64.max)
+        return score * (0.85 + unit * 0.3)
     }
 }
