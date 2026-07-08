@@ -5,6 +5,8 @@ import { Countdown } from "@/pages/preview/_Countdown";
 interface LiveSectionProps {
   liveStreams: Livestream[];
   scheduledStreams?: Livestream[];
+  /** Luồng vừa kết thúc (Index đã lọc ≤7 ngày) — hiện dạng replay rows. */
+  endedStreams?: Livestream[];
   language: "en" | "vi";
 }
 
@@ -49,7 +51,7 @@ const rowTime = (iso: string | null | undefined): string => {
 
 const MAX_ROWS = 5;
 
-export function LiveSection({ liveStreams, scheduledStreams = [], language }: LiveSectionProps) {
+export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language }: LiveSectionProps) {
   const isLive = liveStreams.length > 0;
   // Live courts first, then the schedule soonest-first — one merged lineup
   // so the schedule stays visible even while something is on air.
@@ -59,19 +61,24 @@ export function LiveSection({ liveStreams, scheduledStreams = [], language }: Li
     return aT - bT;
   });
   const streams = [...liveStreams, ...upcoming];
-  if (streams.length === 0) return null;
+  if (streams.length === 0 && endedStreams.length === 0) return null;
 
   const [main, ...restAll] = streams;
   const rest = restAll.slice(0, MAX_ROWS);
   const overflow = restAll.length - rest.length;
-  const mainThumb = streamThumb(main);
-  const mainIsLive = main.status === "live";
+  const mainThumb = main ? streamThumb(main) : null;
+  const mainIsLive = main?.status === "live";
   const fallbackTitle = isLive
     ? (language === "vi" ? "Trận đang trực tiếp" : "Live match")
     : (language === "vi" ? "Stream sắp tới" : "Upcoming stream");
-  const mainTitle = main.title ?? fallbackTitle;
+  const mainTitle = main?.title ?? fallbackTitle;
   const broadcastLabel = language === "vi" ? "Phát sóng" : "Broadcast";
   const upcomingBadge = language === "vi" ? "SẮP PHÁT" : "UPCOMING";
+  const headTitle = isLive
+    ? (language === "vi" ? "Đang trực tiếp" : "Live now")
+    : streams.length > 0
+      ? (language === "vi" ? "Sắp phát sóng" : "Upcoming broadcast")
+      : (language === "vi" ? "Vừa phát sóng" : "Recently live");
 
   return (
     <section className="tl-section tl-live-sec" aria-labelledby="home-live-heading">
@@ -79,9 +86,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], language }: Li
         <div className="tl-live-head">
           <h2 id="home-live-heading" className="tl-live-title">
             {isLive && <span className="tl-live-dot" aria-hidden="true" />}
-            {isLive
-              ? (language === "vi" ? "Đang trực tiếp" : "Live now")
-              : (language === "vi" ? "Sắp phát sóng" : "Upcoming broadcast")}
+            {headTitle}
             {liveStreams.length > 1 && (
               <span className="tl-live-count">
                 {liveStreams.length} {language === "vi" ? "sân" : "courts"}
@@ -93,6 +98,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], language }: Li
           </Link>
         </div>
 
+        {main && (
         <Link to={`/live/${main.id}`} className="tl-live-main">
           <div className="tl-live-main-thumb">
             {mainThumb ? (
@@ -123,6 +129,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], language }: Li
             </div>
           </div>
         </Link>
+        )}
 
         {rest.length > 0 && (
           <div
@@ -181,6 +188,55 @@ export function LiveSection({ liveStreams, scheduledStreams = [], language }: Li
               </Link>
             )}
           </div>
+        )}
+
+        {/* Vừa kết thúc (≤7 ngày) — replay rows, mở trang live để xem lại */}
+        {endedStreams.length > 0 && (
+          <>
+            {streams.length > 0 && (
+              <div className="tl-live-head" style={{ marginTop: 20 }}>
+                <h3 className="tl-live-title" style={{ fontSize: "0.95em" }}>
+                  {language === "vi" ? "Vừa kết thúc" : "Just finished"}
+                </h3>
+              </div>
+            )}
+            <div
+              className="tl-live-list"
+              role="list"
+              aria-label={language === "vi" ? "Luồng vừa kết thúc" : "Recently ended streams"}
+            >
+              {endedStreams.map((stream) => {
+                const thumb = streamThumb(stream);
+                const title = stream.title ?? (language === "vi" ? "Buổi phát sóng" : "Broadcast");
+                return (
+                  <Link
+                    key={stream.id}
+                    to={`/live/${stream.id}`}
+                    className="tl-live-row"
+                    role="listitem"
+                  >
+                    <div className="tl-live-row-thumb">
+                      {thumb ? (
+                        <img src={thumb} alt={title} loading="lazy" />
+                      ) : (
+                        <div className="tl-live-thumb-ph" aria-hidden="true" />
+                      )}
+                    </div>
+                    <div className="tl-live-row-body">
+                      <div className="tl-live-row-name">{title}</div>
+                      <div className="tl-live-row-meta">
+                        {stream.organization?.name ?? broadcastLabel}
+                      </div>
+                    </div>
+                    <div className="tl-live-row-when">
+                      <span className="t">{rowTime(stream.ended_at)}</span>
+                      <span className="cd">{language === "vi" ? "XEM LẠI" : "REPLAY"}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </section>

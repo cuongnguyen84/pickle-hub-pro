@@ -92,6 +92,11 @@ const Index = () => {
   const { language } = useI18n();
   const { data: liveStreams = [] } = useLivestreams("live");
   const { data: scheduledStreams = [] } = useLivestreams("scheduled");
+  // Luồng vừa kết thúc — giữ trên home 7 ngày, tối đa 4 dòng replay.
+  const { data: endedStreams = [] } = useLivestreams("ended", 8);
+  const recentEnded = endedStreams
+    .filter((s) => s.ended_at && Date.now() - new Date(s.ended_at).getTime() < 7 * 86_400_000)
+    .slice(0, 4);
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
@@ -521,13 +526,14 @@ const Index = () => {
         ) : null;
 
         const cluster: Array<{ key: string; node: ReactNode }> = [
-          hasLiveData || scheduledStreams.length > 0
+          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
             ? {
                 key: "live",
                 node: (
                   <LiveSection
                     liveStreams={liveStreams}
                     scheduledStreams={scheduledStreams}
+                    endedStreams={recentEnded}
                     language={language}
                   />
                 ),
