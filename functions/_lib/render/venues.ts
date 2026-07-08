@@ -260,13 +260,20 @@ export async function renderVenueDetail(
   // city, court count, indoor/outdoor) then a clear next step. Address is
   // dropped from the snippet (often long → mid-word truncation at 160) and
   // surfaced in the body instead; the city keyword carries the local intent.
+  // CTR: venue-name queries are navigational — the searcher wants to book a
+  // court. Surfacing the booking phone number in the snippet is the single
+  // most actionable fact we hold that Maps/Facebook results often bury.
+  const phoneVi = v.phone ? ` SĐT đặt sân ${v.phone}.` : "";
+  const phoneEn = v.phone ? ` Phone ${v.phone}.` : "";
   const fallbackDescVi =
     `Sân pickleball ${name}${cityName ? ` tại ${cityName}` : ""}` +
     `${courtsVi ? ` — ${courtsVi}` : ""}${indoorVi ? `, ${indoorVi}` : ""}.` +
+    phoneVi +
     ` Địa chỉ, bản đồ, chỉ đường & các sân pickleball${cityName ? ` ở ${cityName}` : " gần bạn"} trên ThePickleHub.`;
   const fallbackDescEn =
     `${name} pickleball court${cityName ? ` in ${cityName}` : ""}` +
     `${courtsEn ? ` — ${courtsEn}` : ""}${indoorEn ? `, ${indoorEn}` : ""}.` +
+    phoneEn +
     ` Address, map, directions & other pickleball courts${cityName ? ` in ${cityName}` : " near you"} on ThePickleHub.`;
   const description = pickMetaDescription(null, lang === "vi" ? fallbackDescVi : fallbackDescEn);
 

@@ -1119,7 +1119,19 @@ export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "v
 </ul>
 <h2>What Bracket Lab actually does</h2>
 <p>Bracket Lab is a free pickleball tournament bracket generator built for clubs, weekend organizers, and pro events across Asia. Pick a format — round robin, single elimination, double elimination, MLP team match, or a fully custom flex tournament — and the tool builds the bracket, schedules matches, rotates courts, and tracks live scores. Share a single link with players and spectators; print a wall bracket if you need one.</p>
-<p>No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by <a href="${siteUrl}/blog/tournament-organizer-hub">ThePickleHub</a>, a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the regional pro circuit.</p>`,
+<p>No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by <a href="${siteUrl}/blog/tournament-organizer-hub">ThePickleHub</a>, a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the regional pro circuit.</p>
+${lang === "vi"
+    ? `<h2>Hướng dẫn cho ban tổ chức</h2>
+<ul>
+  <li><a href="${siteUrl}/vi/blog/du-toan-ngan-sach-giai-pickleball">Tổ chức giải pickleball tốn bao nhiêu? Dự toán chi tiết + file mẫu miễn phí</a></li>
+  <li><a href="${siteUrl}/vi/blog/huong-dan-to-chuc-giai">Hướng dẫn tổ chức giải pickleball từ A-Z</a></li>
+  <li><a href="${siteUrl}/vi/blog/lich-giai-pickleball-viet-nam-2026">Lịch giải pickleball Việt Nam 2026</a></li>
+</ul>`
+    : `<h2>Organizer guides</h2>
+<ul>
+  <li><a href="${siteUrl}/blog/pickleball-tournament-budget-calculator-guide">How much does a pickleball tournament cost? Full budget guide + free template</a></li>
+  <li><a href="${siteUrl}/blog/vietnam-pickleball-tournament-calendar-2026">Vietnam Pickleball Tournament Calendar 2026</a></li>
+</ul>`}`,
     lang,
   }));
 }

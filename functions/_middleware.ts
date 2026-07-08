@@ -438,7 +438,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // directory) and the top-6 /san/khu-vuc/{city} hubs. The venue cluster is
   // the main non-brand growth engine (GSC 28d) but previously received no
   // homepage link equity in prerendered HTML.
-  const cacheKey = `pr:v23:${url.pathname}`;
+  // 2026-07-08 — bumped v23->v24 to invalidate /tools, /vi/tools (organizer
+  // guide interlinks → budget/calendar posts) and /san/{slug} (booking phone
+  // added to meta description for venue-name navigational CTR).
+  const cacheKey = `pr:v24:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
