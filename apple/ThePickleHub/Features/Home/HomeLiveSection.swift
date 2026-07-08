@@ -48,19 +48,11 @@ struct HomeLiveSection: View {
                 .buttonStyle(.plain)
             }
 
-            if !rest.isEmpty {
-                streamRows(rest)
-            }
-
-            // Vừa kết thúc (≤7 ngày) — replay rows, bấm vào xem lại.
-            if !endedStreams.isEmpty {
-                if !ordered.isEmpty {
-                    Text("VỪA KẾT THÚC")
-                        .font(TLFont.mono(10, .semibold)).tracking(1)
-                        .foregroundStyle(TLColor.fg3)
-                        .padding(.top, 4)
-                }
-                streamRows(endedStreams)
+            // Replay "vừa kết thúc" nhập chung list — nhận diện bằng chip
+            // XEM LẠI highlight trong row, không heading riêng chiếm chỗ.
+            let listRows = rest + endedStreams
+            if !listRows.isEmpty {
+                streamRows(listRows)
             }
         }
     }
@@ -133,8 +125,14 @@ private struct CompactStreamRow: View {
                     if stream.isLive {
                         Text("ĐANG PHÁT").font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.live)
                     } else if stream.isEnded {
-                        Text("XEM LẠI\(endedTimeLabel(stream).map { " · \($0)" } ?? "")")
-                            .font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.accentText)
+                        Text("XEM LẠI")
+                            .font(TLFont.mono(8, .bold)).tracking(0.5)
+                            .foregroundStyle(TLColor.accentInk)
+                            .padding(.horizontal, 6).padding(.vertical, 2.5)
+                            .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 4))
+                        if let when = endedTimeLabel(stream) {
+                            Text(when).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                        }
                     } else if let when = scheduledTimeLabel(stream) {
                         Text(when).font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.accentText)
                     }
