@@ -131,7 +131,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
         </Link>
         )}
 
-        {rest.length > 0 && (
+        {(rest.length > 0 || endedStreams.length > 0) && (
           <div
             className="tl-live-list"
             role="list"
@@ -176,6 +176,49 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                         />
                       </>
                     )}
+                  </div>
+                </Link>
+              );
+            })}
+            {/* Vừa kết thúc (≤7 ngày) — chung list, nhận diện bằng chip
+                "XEM LẠI" highlight thay vì heading riêng chiếm chỗ. */}
+            {endedStreams.map((stream) => {
+              const thumb = streamThumb(stream);
+              const title = stream.title ?? (language === "vi" ? "Buổi phát sóng" : "Broadcast");
+              return (
+                <Link
+                  key={stream.id}
+                  to={`/live/${stream.id}`}
+                  className="tl-live-row"
+                  role="listitem"
+                >
+                  <div className="tl-live-row-thumb">
+                    {thumb ? (
+                      <img src={thumb} alt={title} loading="lazy" />
+                    ) : (
+                      <div className="tl-live-thumb-ph" aria-hidden="true" />
+                    )}
+                  </div>
+                  <div className="tl-live-row-body">
+                    <div className="tl-live-row-name">{title}</div>
+                    <div className="tl-live-row-meta">
+                      {stream.organization?.name ?? broadcastLabel}
+                    </div>
+                  </div>
+                  <div className="tl-live-row-when">
+                    <span className="t">{rowTime(stream.ended_at)}</span>
+                    <span
+                      className="cd"
+                      style={{
+                        color: "var(--tl-bg)",
+                        background: "var(--tl-green)",
+                        borderRadius: 4,
+                        padding: "2px 6px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {language === "vi" ? "XEM LẠI" : "REPLAY"}
+                    </span>
                   </div>
                 </Link>
               );
