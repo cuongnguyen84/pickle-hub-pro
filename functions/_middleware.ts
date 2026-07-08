@@ -441,7 +441,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2026-07-08 — bumped v23->v24 to invalidate /tools, /vi/tools (organizer
   // guide interlinks → budget/calendar posts) and /san/{slug} (booking phone
   // added to meta description for venue-name navigational CTR).
-  const cacheKey = `pr:v24:${url.pathname}`;
+  // 2026-07-08 — v24->v25: venue detail enrichment (maps/directions links,
+  // hours, amenities, cover image) + city hub court totals & per-venue facts.
+  const cacheKey = `pr:v25:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
