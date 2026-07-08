@@ -40,10 +40,34 @@ function notify(entry: SharedPresence) {
   entry.listeners.forEach((fn) => fn());
 }
 
-function connect(livestreamId: string, entry: SharedPresence, userId: string | null) {
+async function connect(livestreamId: string, entry: SharedPresence, userId: string | null) {
+  if (entry.disposed) return;
+  const topic = `livestream_presence:${livestreamId}`;
+
+  // realtime-js dedupe theo topic: nếu instance CŨ còn trong list (removeChannel
+  // là async), supabase.channel() trả lại đúng instance đã subscribe → .on()
+  // throw "cannot add presence callbacks after subscribe()" (đã dính prod
+  // 2026-07-08). Gỡ hẳn instance cũ (đợi xong) trước khi tạo mới.
+  const stale = supabase.getChannels().find((c) => c.topic === `realtime:${topic}`);
+  if (stale) {
+    try {
+      await supabase.removeChannel(stale);
+    } catch {
+      // ignore
+    }
+  }
+  if (entry.disposed) return;
+  if (supabase.getChannels().some((c) => c.topic === `realtime:${topic}`)) {
+    // unsubscribe 'timed out' — topic vẫn kẹt, thử lại sau 1s.
+    entry.retryTimer = setTimeout(() => {
+      void connect(livestreamId, entry, userId);
+    }, 1000);
+    return;
+  }
+
   // Key duy nhất per thiết bị/tab — 2 account hay 2 tab đều là 2 viewer.
   const viewerId = `viewer_${uniqueChannelSuffix()}`;
-  const channel = supabase.channel(`livestream_presence:${livestreamId}`, {
+  const channel = supabase.channel(topic, {
     config: {
       presence: {
         key: viewerId,
@@ -91,7 +115,7 @@ function connect(livestreamId: string, entry: SharedPresence, userId: string | n
           } catch {
             // ignore
           }
-          connect(livestreamId, entry, userId);
+          void connect(livestreamId, entry, userId);
         }, delay);
       }
     });
@@ -114,7 +138,7 @@ function acquire(livestreamId: string, userId: string | null): SharedPresence {
     disposed: false,
   };
   sharedEntries.set(livestreamId, entry);
-  connect(livestreamId, entry, userId);
+  void connect(livestreamId, entry, userId);
   return entry;
 }
 

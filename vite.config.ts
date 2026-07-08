@@ -30,6 +30,11 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       // Auto-update SW when new version deploys
       registerType: "autoUpdate",
+      // Đổi tên khỏi sw.js: CDN từng cache /sw.js 29 ngày (rule /*.js immutable
+      // trong _headers) → client cài mãi SW cũ, kẹt bundle cũ. URL mới chưa từng
+      // bị cache; _headers có rule no-cache riêng cho /sw-v2.js. KHÔNG đổi lại
+      // sw.js kể cả khi purge CDN — tên cũ có thể còn kẹt ở cache trung gian.
+      filename: "sw-v2.js",
       // Register SW at runtime (we do manual registration in src/pwa.ts so we can
       // skip it inside Capacitor native WebView — see src/pwa.ts)
       injectRegister: null,
