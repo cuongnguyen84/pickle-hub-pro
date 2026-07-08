@@ -27,3 +27,4 @@ export { TeamMatchSettingsDialog } from './TeamMatchSettingsDialog';
 export { TeamMatchOverviewTab } from './TeamMatchOverviewTab';
 export { TeamMatchMatchesTab } from './TeamMatchMatchesTab';
 export { TeamMatchPaymentSection } from './TeamMatchPaymentSection';
+export { TeamMatchInfoCards } from './TeamMatchInfoCards';

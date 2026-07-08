@@ -567,13 +567,14 @@ struct TeamMatchDetailView: View {
     private func overviewTab(_ detail: TMDetail) -> some View {
         let t = detail.tournament
         VStack(alignment: .leading, spacing: 14) {
-            tournamentInfoCard(detail)
+            // Thứ tự: Thể lệ → Thời gian & địa điểm + DUPR/slot → Lệ phí.
             if let rules = t.rulesSummary?.trimmingCharacters(in: .whitespacesAndNewlines), !rules.isEmpty {
                 overviewCard(title: "THỂ LỆ GIẢI", icon: "doc.text") {
                     Text(rules).font(TLFont.sans(14)).foregroundStyle(TLColor.fg2).lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            tournamentInfoCard(detail)
             if t.hasFee {
                 overviewCard(title: "LỆ PHÍ THAM GIA", icon: "creditcard") {
                     VStack(alignment: .leading, spacing: 8) {

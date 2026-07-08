@@ -27,6 +27,8 @@ interface Props {
   userTeam: TeamMatchTeam | null;
   isOwner: boolean;
   teams: TeamMatchTeam[];
+  /** Chỉ render 1 phần — để chèn card khác vào giữa Thể lệ và Lệ phí. */
+  only?: 'rules' | 'payment';
 }
 
 const card: React.CSSProperties = {
@@ -84,7 +86,7 @@ function chipStyle(color: string): React.CSSProperties {
   };
 }
 
-export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams }: Props) {
+export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams, only }: Props) {
   const { language } = useI18n();
   const { claimPayment, isClaimingPayment, confirmPayment, isConfirmingPayment } =
     useTeamMatchTeamManagement();
@@ -120,11 +122,13 @@ export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams }
         })
       : null;
 
-  if (!rules && !hasFee) return null;
+  const showRules = only !== 'payment';
+  const showPayment = only !== 'rules';
+  if ((!rules || !showRules) && (!hasFee || !showPayment)) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {rules && (
+      {showRules && rules && (
         <section style={card}>
           <div style={eyebrow}>
             <CircleDollarSign className="w-3.5 h-3.5" />
@@ -136,7 +140,7 @@ export function TeamMatchPaymentSection({ tournament, userTeam, isOwner, teams }
         </section>
       )}
 
-      {hasFee && (
+      {showPayment && hasFee && (
         <section style={card}>
           <div style={eyebrow}>
             <CircleDollarSign className="w-3.5 h-3.5" />
