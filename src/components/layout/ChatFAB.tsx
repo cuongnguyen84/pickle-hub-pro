@@ -38,6 +38,8 @@ const HIDDEN_PREFIXES = [
   "/onboarding",
   "/tools/quick-tables/referee", // full-screen live-scoring tool
   "/tools/team-match/match/", // team-match referee scoring (matchId)/score
+  "/live/", // trang xem live — FAB đè lên nút gửi chat (trang danh sách /live vẫn hiện)
+  "/vi/live/",
 ];
 
 const DESKTOP_BREAKPOINT = "(min-width: 768px)";
