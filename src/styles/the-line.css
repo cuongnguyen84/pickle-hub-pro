@@ -64,7 +64,7 @@
   --tl-fg:         #f5f3ee;
   --tl-fg-2:       #c7c3bb;
   --tl-fg-3:       #86837d;
-  --tl-fg-4:       #54514c;
+  --tl-fg-4:       #7c7973;  /* a11y 2026-07-08: was #54514c (2.52:1 on --tl-bg, Lighthouse fail); 4.59:1 now */
 
   /* Accent — single (optic-lime, the pickleball ball colour) */
   --tl-green:      #b5e853;
@@ -555,7 +555,7 @@
 }
 [data-theme="the-line"] .tl-lc-row:first-child { padding-top: 0; }
 [data-theme="the-line"] .tl-lc-seed {
-  font-family: "Geist Mono"; font-size: 10px; color: var(--tl-fg-4);
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-4);
   letter-spacing: 0.04em; text-transform: uppercase;
 }
 [data-theme="the-line"] .tl-lc-name {
@@ -569,7 +569,7 @@
 }
 [data-theme="the-line"] .tl-lc-row.leader .tl-lc-name { color: var(--tl-fg); font-weight: 600; }
 [data-theme="the-line"] .tl-lc-flag {
-  font-family: "Geist Mono"; font-size: 10px; color: var(--tl-fg-4);
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-4);
   padding: 2px 4px; border: 1px solid var(--tl-border); border-radius: 3px;
   letter-spacing: 0.04em; flex: none;
 }
@@ -632,7 +632,7 @@
   --lh-bg-2:        #ede2c4;
   --lh-fg:          #0a0908;
   --lh-fg-2:        #3d3a32;
-  --lh-fg-3:        #7a766a;
+  --lh-fg-3:        #6d695d;  /* a11y 2026-07-08: was #7a766a (3.79:1 on --lh-bg); 4.58:1 now */
   --lh-line:        rgba(10, 9, 8, 0.10);
   --lh-line-strong: rgba(10, 9, 8, 0.20);
   --lh-green:       #016b40;
@@ -665,7 +665,7 @@
   --lh-bg-2:        #11150f;
   --lh-fg:          #f7f5ef;
   --lh-fg-2:        #b8b6ad;
-  --lh-fg-3:        #6e6c63;
+  --lh-fg-3:        #82806f;  /* a11y 2026-07-08: was #6e6c63 (3.73:1 on dark hero); 4.92:1 now */
   --lh-line:        rgba(247, 245, 239, 0.08);
   --lh-line-strong: rgba(247, 245, 239, 0.18);
   --lh-green:       #00cf78;
@@ -1113,7 +1113,7 @@
   max-width: 22ch;
   padding-left: 0.6em;
   font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--tl-fg-3);
@@ -1242,7 +1242,7 @@
 [data-theme="the-line"] .tl-match-thumb-overlay {
   position: absolute; top: 10px; left: 10px;
   display: inline-flex; align-items: center; gap: 5px;
-  font-family: "Geist Mono"; font-size: 10px; font-weight: 600;
+  font-family: "Geist Mono"; font-size: 11px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase;
   padding: 4px 8px; border-radius: 4px;
   background: rgba(8, 9, 10, 0.78);
@@ -1344,7 +1344,7 @@
   letter-spacing: -0.02em; display: block;
 }
 [data-theme="the-line"] .tl-sched-date .m {
-  font-size: 10px; color: var(--tl-fg-3);
+  font-size: 11px; color: var(--tl-fg-3);
   letter-spacing: 0.08em; text-transform: uppercase;
   margin-top: 4px; display: block;
 }
@@ -1385,7 +1385,7 @@
 [data-theme="the-line"] .tl-sched-right .tag {
   display: inline-block;
   padding: 2px 6px; border: 1px solid var(--tl-border); border-radius: 3px;
-  font-size: 10px; color: var(--tl-fg-3);
+  font-size: 11px; color: var(--tl-fg-3);
 }
 [data-theme="the-line"] .tl-sched-right .tag.live {
   color: var(--tl-live); border-color: var(--tl-live);
@@ -1572,7 +1572,7 @@
 }
 [data-theme="the-line"] .tl-story-tag {
   position: absolute; bottom: 12px; left: 12px; z-index: 2;
-  font-family: "Geist Mono"; font-size: 10px; font-weight: 600;
+  font-family: "Geist Mono"; font-size: 11px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase;
   padding: 3px 8px; border-radius: 4px;
   background: rgba(0, 185, 107, 0.9); color: var(--tl-bg);
@@ -1708,7 +1708,7 @@
 }
 [data-theme="the-line"] .tl-thread-qa {
   background: var(--tl-surface); border: 1px solid var(--tl-border);
-  padding: 1px 6px; border-radius: 4px; font-size: 10px;
+  padding: 1px 6px; border-radius: 4px; font-size: 11px;
 }
 [data-theme="the-line"] .tl-thread-title {
   font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
@@ -1736,7 +1736,7 @@
   color: var(--tl-fg); display: block;
 }
 [data-theme="the-line"] .tl-thread-stats .lbl {
-  font-family: "Geist Mono"; font-size: 10px; color: var(--tl-fg-3);
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-3);
   letter-spacing: 0.06em; text-transform: uppercase;
   display: block; margin-top: 4px;
 }
@@ -1836,7 +1836,7 @@
 @media (max-width: 860px) { [data-theme="the-line"] .tl-foot-grid { grid-template-columns: 1fr 1fr; gap: 28px; } }
 [data-theme="the-line"] .tl-foot-tagline {
   font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1944,7 +1944,7 @@
   position: absolute; top: 10px; left: 10px;
   display: inline-flex; align-items: center; gap: 5px;
   font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
   padding: 4px 8px; border-radius: 4px;
   background: var(--tl-live); color: var(--tl-bg);
 }
@@ -1970,7 +1970,7 @@
 
 /* Live-count chip next to the section title ("3 sân"). */
 [data-theme="the-line"] .tl-live-count {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
   color: var(--tl-live);
   padding: 2px 8px; border: 1px solid color-mix(in srgb, var(--tl-live) 45%, transparent);
   border-radius: 999px;
@@ -2034,7 +2034,7 @@
   font-size: 11px; color: var(--tl-fg-3); text-align: right; white-space: nowrap;
 }
 [data-theme="the-line"] .tl-live-row-when .t { font-weight: 600; color: var(--tl-fg); }
-[data-theme="the-line"] .tl-live-row-when .cd { font-size: 10px; color: var(--tl-green); }
+[data-theme="the-line"] .tl-live-row-when .cd { font-size: 11px; color: var(--tl-green); }
 [data-theme="the-line"] .tl-live-row-when.is-live {
   font-weight: 600; font-size: 10.5px; letter-spacing: 0.08em; color: var(--tl-live);
 }
@@ -2207,7 +2207,7 @@
   letter-spacing: -0.02em; display: block;
 }
 [data-theme="the-line"] .tl-li-date .m {
-  font-size: 10px; color: var(--tl-fg-3);
+  font-size: 11px; color: var(--tl-fg-3);
   letter-spacing: 0.08em; text-transform: uppercase;
   margin-top: 5px; display: block;
 }
@@ -2366,7 +2366,7 @@
   letter-spacing: -0.005em;
 }
 [data-theme="the-line"] .tl-chat-msg .time {
-  font-family: "Geist Mono"; font-size: 10px; color: var(--tl-fg-4);
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-4);
   letter-spacing: 0.04em;
 }
 [data-theme="the-line"] .tl-chat-msg .text {
@@ -2407,7 +2407,7 @@
 }
 [data-theme="the-line"] .tl-trn-stat:last-child { border-right: 0; }
 [data-theme="the-line"] .tl-trn-stat .lbl {
-  font-family: "Geist Mono"; font-size: 10px; letter-spacing: 0.08em;
+  font-family: "Geist Mono"; font-size: 11px; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--tl-fg-3);
 }
 [data-theme="the-line"] .tl-trn-stat .val {
@@ -2708,7 +2708,7 @@
   --tl-fg:         #08090a;
   --tl-fg-2:       #3a3933;
   --tl-fg-3:       #6d6a62;
-  --tl-fg-4:       #a5a299;
+  --tl-fg-4:       #787366;  /* a11y 2026-07-08: was #a5a299 (2.42:1 on light bg); 4.55:1 now — mirrors native fg4 light */
   --tl-green:      #5e7d1f;  /* deep lime — bright lime is illegible on paper */
   --tl-green-dim:  #4a6418;
   --tl-green-glow: rgba(94, 125, 31, 0.14);
@@ -2930,7 +2930,7 @@
   border-top: 1px solid var(--tl-border);
 }
 [data-theme="the-line"] .tl-drawer-nav-secondary .tl-drawer-section-label {
-  font-family: "Geist Mono"; font-size: 10px; font-weight: 500;
+  font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--tl-fg-3); margin-bottom: 8px;
 }
@@ -2952,7 +2952,7 @@
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
 }
 [data-theme="the-line"] .tl-drawer-foot-label {
-  font-family: "Geist Mono"; font-size: 10px; letter-spacing: 0.08em;
+  font-family: "Geist Mono"; font-size: 11px; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--tl-fg-3);
 }
 
@@ -3003,7 +3003,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 }
 [data-theme="the-line"] .tl-rank-scope-label {
   font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -3075,7 +3075,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   display: flex; align-items: center; gap: 10px;
 }
 [data-theme="the-line"] .tl-rank-flag {
-  font-family: "Geist Mono"; font-size: 10px;
+  font-family: "Geist Mono"; font-size: 11px;
   padding: 2px 5px; border: 1px solid var(--tl-border); border-radius: 3px;
   color: var(--tl-fg-3); letter-spacing: 0.04em;
 }
@@ -3089,7 +3089,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 }
 [data-theme="the-line"] .tl-rank-form span {
   width: 18px; height: 18px; border-radius: 4px;
-  font-family: "Geist Mono"; font-size: 10px; font-weight: 600;
+  font-family: "Geist Mono"; font-size: 11px; font-weight: 600;
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--tl-bg);
 }
@@ -3315,7 +3315,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 
 [data-theme="the-line"] .tl-pulse-label {
   font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -3601,7 +3601,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--fc-accent, var(--tl-green));
 }
 [data-theme="the-line"] .tl-format-badge {
-  font-family: "Geist Mono"; font-size: 10px; font-weight: 500;
+  font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
   padding: 2px 8px; border-radius: 999px;
   background: var(--tl-surface); color: var(--tl-fg-3);
   border: 1px solid var(--tl-border);
@@ -3871,7 +3871,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   align-items: center;
   gap: 7px;
   font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: 4px 9px 4px 8px;
@@ -4087,7 +4087,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   padding: 64px 0 80px;
   text-align: center;
   font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--tl-fg-3);

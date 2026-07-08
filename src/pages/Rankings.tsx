@@ -466,6 +466,23 @@ function VietnamRankingsTable({
               })}
             </tbody>
           </table>
+          {/* Activation CTA — the table only lists DUPR-linked public profiles
+              (sparse today), so turn the empty tail into a join loop. */}
+          <div
+            style={{
+              padding: "14px 24px 18px",
+              borderTop: "1px solid var(--tl-border)",
+              fontFamily: "Geist Mono",
+              fontSize: 12,
+              letterSpacing: "0.04em",
+            }}
+          >
+            <Link to="/dupr" style={{ color: "var(--tl-green)", textDecoration: "none" }}>
+              {language === "vi"
+                ? "→ Kết nối DUPR để có tên trong bảng này"
+                : "→ Link your DUPR to appear on this board"}
+            </Link>
+          </div>
         </div>
       )}
     </div>

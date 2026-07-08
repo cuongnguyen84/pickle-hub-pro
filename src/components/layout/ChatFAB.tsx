@@ -60,6 +60,39 @@ const ChatFAB = () => {
     return () => mql.removeEventListener("change", onChange);
   }, []);
 
+  // UX audit 2026-07-08: on mobile the two FABs sit in the right thumb zone
+  // and cover list content (news thumbnails). Hide while scrolling down,
+  // reveal on scroll-up or near top. Desktop keeps them always visible.
+  // The Line pages scroll inside `.tl-scroll` (overflow-y: auto), not window
+  // (Codex review P2) — so listen in capture phase on document, which sees
+  // scroll events from any container, and read the offset off the target.
+  const [scrolledAway, setScrolledAway] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const lastYByTarget = new WeakMap<EventTarget, number>();
+    let ticking = false;
+    const onScroll = (e: Event) => {
+      const target = e.target;
+      if (!target) return;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y =
+          target === document
+            ? window.scrollY
+            : ((target as HTMLElement).scrollTop ?? 0);
+        const lastY = lastYByTarget.get(target) ?? y;
+        if (y < 120) setScrolledAway(false);
+        else if (y > lastY + 6) setScrolledAway(true);
+        else if (y < lastY - 6) setScrolledAway(false);
+        lastYByTarget.set(target, y);
+        ticking = false;
+      });
+    };
+    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => document.removeEventListener("scroll", onScroll, { capture: true });
+  }, []);
+
   const shouldHide = HIDDEN_PREFIXES.some((prefix) =>
     location.pathname.startsWith(prefix),
   );
@@ -107,6 +140,10 @@ const ChatFAB = () => {
       style={{
         bottom: getBottomOffset(),
         zIndex: 9990,
+        opacity: !isDesktop && scrolledAway ? 0 : 1,
+        transform: !isDesktop && scrolledAway ? "translateY(12px)" : "none",
+        pointerEvents: !isDesktop && scrolledAway ? "none" : "auto",
+        transition: "opacity 0.2s ease, transform 0.2s ease",
       }}
     >
       <a
