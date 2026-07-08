@@ -46,16 +46,21 @@ struct TMTournament: Decodable, Equatable {
         return 0
     }
 
-    /// "2026-07-08" → "T4, 8/7/2026". Nil nếu không có/không parse được.
-    var eventDateLabel: String? {
+    /// 00:00 ngày tổ chức (giờ máy) — mốc cho đồng hồ đếm ngược.
+    var eventStartDate: Date? {
         guard let eventDate, !eventDate.isEmpty else { return nil }
-        let inFmt = DateFormatter()
-        inFmt.dateFormat = "yyyy-MM-dd"
-        guard let d = inFmt.date(from: eventDate) else { return eventDate }
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.date(from: eventDate)
+    }
+
+    /// "2026-07-08" → "Thứ Tư, 8/7/2026". Nil nếu không có/không parse được.
+    var eventDateLabel: String? {
+        guard let d = eventStartDate else { return eventDate?.nonEmpty }
         let outFmt = DateFormatter()
         outFmt.locale = Locale(identifier: "vi_VN")
         outFmt.dateFormat = "EEEE, d/M/yyyy"
-        return outFmt.string(from: d)
+        return outFmt.string(from: d).capitalized
     }
     var hasFee: Bool { (entryFeeVnd ?? 0) > 0 || (entryFeeTeamVnd ?? 0) > 0 }
     var hasBankInfo: Bool {

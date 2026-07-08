@@ -1,4 +1,5 @@
-import { Mail, LayoutGrid, Trophy, Play, AlertTriangle, CalendarDays, MapPin, Gauge, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Mail, LayoutGrid, Trophy, Play, AlertTriangle, MapPin, Gauge, Users } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import {
   RegisteredTeamsSummary,
@@ -42,6 +43,67 @@ const warningStripe: React.CSSProperties = {
   color: 'var(--tl-fg-2)',
   fontSize: 12.5,
 };
+
+// Đồng hồ đếm ngược tới 00:00 ngày tổ chức — 4 ô Ngày/Giờ/Phút/Giây, tick mỗi giây.
+function CountdownChips({ target, language }: { target: Date; language: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const diff = target.getTime() - now;
+  if (diff <= 0) return null;
+  const values = [
+    Math.floor(diff / 86400000),
+    Math.floor(diff / 3600000) % 24,
+    Math.floor(diff / 60000) % 60,
+    Math.floor(diff / 1000) % 60,
+  ];
+  const units = language === 'vi' ? ['Ngày', 'Giờ', 'Phút', 'Giây'] : ['Days', 'Hrs', 'Min', 'Sec'];
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      {values.map((v, i) => (
+        <div
+          key={units[i]}
+          style={{
+            flex: 1,
+            maxWidth: 84,
+            textAlign: 'center',
+            padding: '10px 0 8px',
+            borderRadius: 'var(--tl-radius)',
+            background: 'var(--tl-green-glow)',
+            border: '1px solid rgba(0, 185, 107, 0.30)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 24,
+              fontWeight: 700,
+              lineHeight: 1,
+              color: 'var(--tl-green)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {String(v).padStart(2, '0')}
+          </div>
+          <div
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 9.5,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--tl-fg-3)',
+              marginTop: 4,
+            }}
+          >
+            {units[i]}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 interface TeamMatchOverviewTabProps {
   tournament: {
@@ -96,9 +158,11 @@ export function TeamMatchOverviewTab({
   const totalSlots = tournament.team_count;
   const filledSlots = displayTeams.length;
   const slotPct = totalSlots > 0 ? Math.min(100, Math.round((filledSlots / totalSlots) * 100)) : 0;
+  const eventTarget = tournament.event_date ? new Date(`${tournament.event_date}T00:00:00`) : null;
+  const eventIsToday = eventTarget ? eventTarget.toDateString() === new Date().toDateString() : false;
   const fmtDate = (d: string) =>
     new Date(`${d}T00:00:00`).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
-      weekday: 'short', day: 'numeric', month: 'numeric', year: 'numeric',
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
   const duprText = tournament.require_dupr
     ? language === 'vi'
@@ -138,20 +202,68 @@ export function TeamMatchOverviewTab({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Thông tin giải: ngày · địa điểm · yêu cầu DUPR · thanh slot */}
+      {/* Thời gian & địa điểm — highlight + đếm ngược tới ngày tổ chức */}
+      {(tournament.event_date || tournament.location) && (
+        <section style={{ ...surfaceCard, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--tl-green)',
+            }}
+          >
+            ◆ {language === 'vi' ? 'Thời gian & địa điểm' : 'When & where'}
+          </div>
+          {tournament.event_date && (
+            <div
+              style={{
+                fontFamily: 'Instrument Serif, serif',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                fontSize: 24,
+                letterSpacing: '-0.015em',
+                lineHeight: 1.15,
+                color: 'var(--tl-fg)',
+              }}
+            >
+              {fmtDate(tournament.event_date)}
+            </div>
+          )}
+          {eventTarget && eventTarget.getTime() > Date.now() && (
+            <CountdownChips target={eventTarget} language={language} />
+          )}
+          {eventIsToday && (
+            <span
+              style={{
+                alignSelf: 'flex-start',
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'var(--tl-green)',
+                background: 'var(--tl-green-glow)',
+                borderRadius: 999,
+                padding: '5px 12px',
+              }}
+            >
+              {language === 'vi' ? '🎾 Hôm nay!' : '🎾 Today!'}
+            </span>
+          )}
+          {tournament.location && (
+            <div style={{ ...infoRowStyle, fontSize: 15.5, fontWeight: 600, color: 'var(--tl-fg)' }}>
+              <MapPin className="h-4.5 w-4.5" style={{ width: 18, height: 18, color: 'var(--tl-green)', flexShrink: 0 }} />
+              <span>{tournament.location}</span>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Thông tin giải: yêu cầu DUPR · thanh slot */}
       <section style={{ ...surfaceCard, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {tournament.event_date && (
-          <div style={infoRowStyle}>
-            <CalendarDays className="h-4 w-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
-            <span>{fmtDate(tournament.event_date)}</span>
-          </div>
-        )}
-        {tournament.location && (
-          <div style={infoRowStyle}>
-            <MapPin className="h-4 w-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
-            <span>{tournament.location}</span>
-          </div>
-        )}
         {duprText && (
           <div style={infoRowStyle}>
             <Gauge className="h-4 w-4" style={{ color: 'var(--tl-gold)', flexShrink: 0 }} />

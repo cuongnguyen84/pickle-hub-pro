@@ -596,14 +596,10 @@ struct TeamMatchDetailView: View {
         let filled = detail.teams.filter { $0.status != "rejected" }.count
         let pct = total > 0 ? min(1, Double(filled) / Double(total)) : 0
         let full = total > 0 && filled >= total
-        return overviewCard(title: "THÔNG TIN GIẢI", icon: "info.circle") {
+        return VStack(alignment: .leading, spacing: 14) {
+            whenWhereCard(t)
+            overviewCard(title: "THÔNG TIN GIẢI", icon: "info.circle") {
             VStack(alignment: .leading, spacing: 10) {
-                if let dateLabel = t.eventDateLabel {
-                    infoLine(icon: "calendar", text: dateLabel)
-                }
-                if let loc = t.location?.trimmingCharacters(in: .whitespaces), !loc.isEmpty {
-                    infoLine(icon: "mappin.and.ellipse", text: loc)
-                }
                 if t.requiresDupr {
                     infoLine(icon: "gauge.with.needle",
                              text: "DUPR Nam ≤ \(String(format: "%.2f", t.duprMaxMale ?? 0)) · Nữ ≤ \(String(format: "%.2f", t.duprMaxFemale ?? 0))",
@@ -628,6 +624,67 @@ struct TeamMatchDetailView: View {
                         .frame(height: 6)
                     }
                 }
+            }
+            }
+        }
+    }
+
+    /// Thời gian & địa điểm — highlight: ngày serif lớn + đồng hồ đếm ngược + địa điểm.
+    @ViewBuilder
+    private func whenWhereCard(_ t: TMTournament) -> some View {
+        if t.eventDateLabel != nil || (t.location?.trimmingCharacters(in: .whitespaces).isEmpty == false) {
+            overviewCard(title: "THỜI GIAN & ĐỊA ĐIỂM", icon: "calendar") {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let dateLabel = t.eventDateLabel {
+                        Text(dateLabel).font(TLFont.serif(22)).italic().foregroundStyle(TLColor.fg)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let target = t.eventStartDate {
+                        if target > Date() {
+                            TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                                countdownChips(to: target, now: ctx.date)
+                            }
+                        } else if Calendar.current.isDateInToday(target) {
+                            Text("🎾 HÔM NAY!")
+                                .font(TLFont.mono(11, .bold)).tracking(0.8).foregroundStyle(TLColor.accentText)
+                                .padding(.horizontal, 12).padding(.vertical, 5)
+                                .background(TLColor.accent.opacity(0.12), in: Capsule())
+                        }
+                    }
+                    if let loc = t.location?.trimmingCharacters(in: .whitespaces), !loc.isEmpty {
+                        HStack(spacing: 8) {
+                            Image(systemName: "mappin.and.ellipse").font(.system(size: 14)).foregroundStyle(TLColor.accentText)
+                            Text(loc).font(TLFont.sans(15.5, .semibold)).foregroundStyle(TLColor.fg)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// 4 ô Ngày/Giờ/Phút/Giây tới 00:00 ngày tổ chức.
+    @ViewBuilder
+    private func countdownChips(to target: Date, now: Date) -> some View {
+        let diff = max(0, Int(target.timeIntervalSince(now)))
+        let parts: [(Int, String)] = [
+            (diff / 86400, "NGÀY"),
+            (diff / 3600 % 24, "GIỜ"),
+            (diff / 60 % 60, "PHÚT"),
+            (diff % 60, "GIÂY"),
+        ]
+        HStack(spacing: 8) {
+            ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                VStack(spacing: 3) {
+                    Text(String(format: "%02d", part.0))
+                        .font(TLFont.mono(22, .bold)).monospacedDigit()
+                        .foregroundStyle(TLColor.accentText)
+                    Text(part.1).font(TLFont.mono(8.5, .semibold)).tracking(0.8)
+                        .foregroundStyle(TLColor.fg3)
+                }
+                .frame(maxWidth: .infinity).padding(.vertical, 10)
+                .background(TLColor.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.accent.opacity(0.3), lineWidth: 1))
             }
         }
     }
