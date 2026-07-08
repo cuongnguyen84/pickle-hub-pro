@@ -12,12 +12,18 @@
     
     <!-- Google tag (gtag.js) -->
     <script>
-      // Defer Google Tag Manager until after first paint
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-JQG63B6NX0', { send_page_view: false, debug_mode: true });
-      requestIdleCallback(function(){var s=document.createElement('script');s.src='https://www.googletagmanager.com/gtag/js?id=G-JQG63B6NX0';document.head.appendChild(s)},{ timeout: 3000 });
+      // Defer Google Tag Manager until after first paint.
+      // Bot guard 2026-07-08: JS-executing datacenter crawlers (headless
+      // Chrome from Boydton/Cheyenne/Des Moines etc.) were ~95% of GA4
+      // "users", drowning real traffic. window.gtag stays undefined for
+      // them — src/utils/ga.ts already no-ops when gtag is missing.
+      if (!(navigator.webdriver || /bot|crawl|spider|headless|lighthouse|slurp|bingpreview/i.test(navigator.userAgent))) {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function(){dataLayer.push(arguments);};
+        window.gtag('js', new Date());
+        window.gtag('config', 'G-JQG63B6NX0', { send_page_view: false, debug_mode: true });
+        requestIdleCallback(function(){var s=document.createElement('script');s.src='https://www.googletagmanager.com/gtag/js?id=G-JQG63B6NX0';document.head.appendChild(s)},{ timeout: 3000 });
+      }
     </script>
     
     <!-- iOS Web App Meta Tags -->
