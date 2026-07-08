@@ -185,17 +185,23 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
           }
 
           if (!foundPending) {
-            const broadcastId = `broadcast-${dbMessage.client_message_id}`;
+            // Dedupe theo client_message_id với MỌI bản đang hiển thị (optimistic
+            // `pending-*` của chính mình, `broadcast-*`, hay bản cũ) — không chỉ
+            // broadcast. Fix bug tin đúp ở màn người gửi khi INSERT realtime về
+            // SAU response HTTP (pending map đã bị xoá nên nhánh trên miss).
             setMessages(prev => {
-              const hasBroadcast = prev.some(m => m.id === broadcastId);
-              if (hasBroadcast) {
-                messageIdsRef.current.add(dbMessage.id);
-                return prev.map(m =>
-                  m.id === broadcastId ? { ...dbMessage, _pending: false, _failed: false } : m
-                );
+              messageIdsRef.current.add(dbMessage.id);
+              const hasCmid = prev.some(m => m.client_message_id === dbMessage.client_message_id);
+              if (hasCmid) {
+                let replaced = false;
+                return prev.flatMap(m => {
+                  if (m.client_message_id !== dbMessage.client_message_id) return [m];
+                  if (replaced) return []; // dọn luôn bản đúp nếu đã lỡ có
+                  replaced = true;
+                  return [{ ...dbMessage, _pending: false, _failed: false }];
+                });
               }
-              if (!messageIdsRef.current.has(dbMessage.id)) {
-                messageIdsRef.current.add(dbMessage.id);
+              if (!prev.some(m => m.id === dbMessage.id)) {
                 return [...prev, { ...dbMessage, _pending: false, _failed: false }];
               }
               return prev;
@@ -413,7 +419,9 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
       ));
     }, SEND_TIMEOUT_MS);
 
-    const { error } = await supabase
+    // .select() để lấy id thật ngay từ response — thay id tạm lập tức, đóng
+    // cửa sổ race với sự kiện realtime INSERT (nguồn gây tin đúp ở người gửi).
+    const { data: inserted, error } = await supabase
       .from('chat_messages')
       .insert({
         livestream_id: livestreamId,
@@ -422,7 +430,9 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
         avatar_url: avatarUrl,
         message: trimmedMessage,
         client_message_id: clientMessageId
-      });
+      })
+      .select()
+      .single();
 
     clearTimeout(timeoutId);
 
@@ -441,9 +451,18 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
     }
 
     pendingMessagesRef.current.delete(tempId);
-    setMessages(prev => prev.map(m =>
-      m.id === tempId ? { ...m, _pending: false, _failed: false } : m
-    ));
+    if (inserted) {
+      // Gán id thật cho tin optimistic; nếu INSERT realtime đã thay trước rồi
+      // (map theo tempId không trúng) thì thôi — id đã được đăng ký chống đúp.
+      messageIdsRef.current.add(inserted.id);
+      setMessages(prev => prev.map(m =>
+        m.id === tempId ? { ...(inserted as ChatMessage), _pending: false, _failed: false } : m
+      ));
+    } else {
+      setMessages(prev => prev.map(m =>
+        m.id === tempId ? { ...m, _pending: false, _failed: false } : m
+      ));
+    }
 
     return true;
   }, [user, userMute, settings, livestreamId, toast, t]);
