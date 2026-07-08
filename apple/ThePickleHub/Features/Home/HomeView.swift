@@ -27,10 +27,11 @@ struct HomeView: View {
                     if model.posts.count > 1 {
                         HomeFeatureSection(posts: Array(model.posts.dropFirst()))
                     }
-                    if !model.live.isEmpty || !model.scheduled.isEmpty {
+                    if !model.live.isEmpty || !model.scheduled.isEmpty || !model.recentEnded.isEmpty {
                         HomeLiveSection(
                             liveStreams: model.live,
-                            scheduledStreams: model.scheduled
+                            scheduledStreams: model.scheduled,
+                            endedStreams: model.recentEnded
                         )
                     }
                     if !model.news.isEmpty {

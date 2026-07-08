@@ -8,6 +8,8 @@ import SwiftUI
 struct HomeLiveSection: View {
     let liveStreams: [LivestreamSummary]
     let scheduledStreams: [LivestreamSummary]
+    /// Luồng vừa kết thúc (repo đã lọc ≤7 ngày) — hàng replay dưới lineup.
+    var endedStreams: [LivestreamSummary] = []
 
     private var isLive: Bool { !liveStreams.isEmpty }
     /// Live now (soonest-created first from repo) then upcoming by start time.
@@ -15,13 +17,19 @@ struct HomeLiveSection: View {
     private var featured: LivestreamSummary? { ordered.first }
     private var rest: [LivestreamSummary] { Array(ordered.dropFirst().prefix(5)) }
 
+    private var headTitle: String {
+        if isLive { return "Trực tiếp" }
+        if !ordered.isEmpty { return "Sắp phát sóng" }
+        return "Vừa phát sóng"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 if isLive {
                     Circle().fill(TLColor.live).frame(width: 8, height: 8)
                 }
-                Text(isLive ? "Trực tiếp" : "Sắp phát sóng")
+                Text(headTitle)
                     .font(TLFont.serif(26))
                     .foregroundStyle(TLColor.fg)
                 if liveStreams.count > 1 {
@@ -41,21 +49,36 @@ struct HomeLiveSection: View {
             }
 
             if !rest.isEmpty {
-                VStack(spacing: 0) {
-                    ForEach(Array(rest.enumerated()), id: \.element.id) { idx, stream in
-                        NavigationLink { LiveWatchScreen(stream: stream) } label: {
-                            CompactStreamRow(stream: stream)
-                        }
-                        .buttonStyle(.plain)
-                        if idx < rest.count - 1 {
-                            Divider().overlay(TLColor.border).padding(.leading, 122)
-                        }
-                    }
+                streamRows(rest)
+            }
+
+            // Vừa kết thúc (≤7 ngày) — replay rows, bấm vào xem lại.
+            if !endedStreams.isEmpty {
+                if !ordered.isEmpty {
+                    Text("VỪA KẾT THÚC")
+                        .font(TLFont.mono(10, .semibold)).tracking(1)
+                        .foregroundStyle(TLColor.fg3)
+                        .padding(.top, 4)
                 }
-                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+                streamRows(endedStreams)
             }
         }
+    }
+
+    private func streamRows(_ streams: [LivestreamSummary]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(streams.enumerated()), id: \.element.id) { idx, stream in
+                NavigationLink { LiveWatchScreen(stream: stream) } label: {
+                    CompactStreamRow(stream: stream)
+                }
+                .buttonStyle(.plain)
+                if idx < streams.count - 1 {
+                    Divider().overlay(TLColor.border).padding(.leading, 122)
+                }
+            }
+        }
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
     }
 }
 
@@ -65,6 +88,13 @@ func scheduledTimeLabel(_ stream: LivestreamSummary) -> String? {
     let time = date.formatted(date: .omitted, time: .shortened)
     let comps = Calendar.current.dateComponents([.day, .month], from: date)
     return "\(time) · \(comps.day ?? 0)/\(comps.month ?? 0)"
+}
+
+/// "8/7" — ngày kết thúc cho hàng replay "Vừa kết thúc".
+func endedTimeLabel(_ stream: LivestreamSummary) -> String? {
+    guard let date = stream.endedDate else { return nil }
+    let comps = Calendar.current.dateComponents([.day, .month], from: date)
+    return "\(comps.day ?? 0)/\(comps.month ?? 0)"
 }
 
 /// Dense row for the non-featured streams: small thumb + status + title.
@@ -102,6 +132,9 @@ private struct CompactStreamRow: View {
                 HStack(spacing: 5) {
                     if stream.isLive {
                         Text("ĐANG PHÁT").font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.live)
+                    } else if stream.isEnded {
+                        Text("XEM LẠI\(endedTimeLabel(stream).map { " · \($0)" } ?? "")")
+                            .font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.accentText)
                     } else if let when = scheduledTimeLabel(stream) {
                         Text(when).font(TLFont.mono(9.5, .semibold)).foregroundStyle(TLColor.accentText)
                     }

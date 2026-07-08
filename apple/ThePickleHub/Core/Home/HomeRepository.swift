@@ -63,5 +63,20 @@ struct HomeRepository {
             .execute()
             .value
     }
+
+    /// Luồng vừa kết thúc (≤7 ngày) cho mục "Vừa kết thúc" trên Home — kèm
+    /// mux_asset_playback_id/vod/hls để phát lại được trong LiveWatchScreen.
+    func recentEndedStreams(limit: Int = 4) async throws -> [LivestreamSummary] {
+        let cutoff = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-7 * 86_400))
+        return try await client
+            .from("public_livestreams")
+            .select("id, title, status, thumbnail_url, mux_playback_id, mux_asset_playback_id, scheduled_start_at, ended_at, vod_url, hls_url, organization:organizations(name)")
+            .eq("status", value: "ended")
+            .gte("ended_at", value: cutoff)
+            .order("ended_at", ascending: false)
+            .limit(limit)
+            .execute()
+            .value
+    }
 }
 
