@@ -45,6 +45,7 @@ import {
   TeamMatchOverviewTab,
   TeamMatchMatchesTab,
   TeamMatchPaymentSection,
+  TeamMatchInfoCards,
 } from '@/components/teamMatch';
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
 import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
@@ -679,11 +680,33 @@ export default function TeamMatchView() {
               {registerCTA}
               {membershipBanner}
 
+              {/* Thứ tự: Thể lệ → Thời gian & địa điểm + DUPR/slot → Lệ phí */}
               <TeamMatchPaymentSection
                 tournament={tournament}
                 userTeam={userTeam || null}
                 isOwner={isOwner}
                 teams={displayTeams}
+                only="rules"
+              />
+
+              <TeamMatchInfoCards
+                tournament={{
+                  team_count: tournament.team_count,
+                  event_date: tournament.event_date,
+                  location: tournament.location,
+                  require_dupr: tournament.require_dupr,
+                  dupr_max_male: tournament.dupr_max_male,
+                  dupr_max_female: tournament.dupr_max_female,
+                }}
+                filledSlots={displayTeams.length}
+              />
+
+              <TeamMatchPaymentSection
+                tournament={tournament}
+                userTeam={userTeam || null}
+                isOwner={isOwner}
+                teams={displayTeams}
+                only="payment"
               />
 
               <TeamMatchOverviewTab

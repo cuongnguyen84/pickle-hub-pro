@@ -29,8 +29,39 @@ struct TMTournament: Decodable, Equatable {
     let bankCode: String?
     let bankAccountNumber: String?
     let bankAccountName: String?
+    // Ngày tổ chức (yyyy-MM-dd) + địa điểm + bậc giảm giá slot đăng ký sớm.
+    let eventDate: String?
+    let location: String?
+    let discountTiers: [TMDiscountTier]?
 
     var displayName: String { name.nonEmpty ?? "Giải đồng đội" }
+
+    /// % giảm cho slot đội thứ `index` (0-based, theo thứ tự đăng ký) — bậc cộng dồn.
+    func discountPercent(forSlot index: Int) -> Int {
+        var start = 0
+        for tier in discountTiers ?? [] {
+            if index < start + tier.slots { return tier.percent }
+            start += tier.slots
+        }
+        return 0
+    }
+
+    /// 00:00 ngày tổ chức (giờ máy) — mốc cho đồng hồ đếm ngược.
+    var eventStartDate: Date? {
+        guard let eventDate, !eventDate.isEmpty else { return nil }
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.date(from: eventDate)
+    }
+
+    /// "2026-07-08" → "Thứ Tư, 8/7/2026". Nil nếu không có/không parse được.
+    var eventDateLabel: String? {
+        guard let d = eventStartDate else { return eventDate?.nonEmpty }
+        let outFmt = DateFormatter()
+        outFmt.locale = Locale(identifier: "vi_VN")
+        outFmt.dateFormat = "EEEE, d/M/yyyy"
+        return outFmt.string(from: d).capitalized
+    }
     var hasFee: Bool { (entryFeeVnd ?? 0) > 0 || (entryFeeTeamVnd ?? 0) > 0 }
     var hasBankInfo: Bool {
         !(bankCode ?? "").isEmpty && !(bankAccountNumber ?? "").isEmpty
@@ -79,7 +110,16 @@ struct TMTournament: Decodable, Equatable {
         case bankCode = "bank_code"
         case bankAccountNumber = "bank_account_number"
         case bankAccountName = "bank_account_name"
+        case eventDate = "event_date"
+        case location
+        case discountTiers = "discount_tiers"
     }
+}
+
+/// Một bậc giảm giá slot: `slots` slot tiếp theo được giảm `percent`%.
+struct TMDiscountTier: Codable, Equatable {
+    let slots: Int
+    let percent: Int
 }
 
 struct TMTeam: Decodable, Identifiable, Equatable {
@@ -89,6 +129,7 @@ struct TMTeam: Decodable, Identifiable, Equatable {
     let groupID: UUID?
     let status: String?
     let paymentStatus: String?   // unpaid | claimed | confirmed
+    let createdAt: String?       // ISO — thứ tự đăng ký (slot giảm giá)
 
     var payment: TMPaymentStatus { TMPaymentStatus(rawValue: paymentStatus ?? "unpaid") ?? .unpaid }
 
@@ -97,6 +138,7 @@ struct TMTeam: Decodable, Identifiable, Equatable {
         case teamName = "team_name"
         case groupID = "group_id"
         case paymentStatus = "payment_status"
+        case createdAt = "created_at"
     }
 }
 
@@ -297,6 +339,14 @@ struct TMDetail: Equatable {
                     : ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0)
              })
         }
+    }
+
+    /// Slot đăng ký (0-based) của đội — thứ tự created_at trong các đội chưa bị
+    /// từ chối. Dùng để tính % giảm giá slot sớm.
+    func signupSlotIndex(of teamID: UUID) -> Int? {
+        teams.filter { $0.status != "rejected" }
+            .sorted { ($0.createdAt ?? "") < ($1.createdAt ?? "") }
+            .firstIndex { $0.id == teamID }
     }
 
     func teamName(_ id: UUID?) -> String {

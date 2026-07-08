@@ -320,7 +320,8 @@ struct TeamMatchDetailView: View {
                 TeamMatchPaymentSheet(tournament: detail.tournament,
                                       rosterCount: detail.roster.filter { $0.teamID == team.id }.count,
                                       teamName: team.teamName,
-                                      status: team.payment) {
+                                      status: team.payment,
+                                      slotIndex: detail.signupSlotIndex(of: team.id)) {
                     await model.claimPayment(shareID: shareID, teamID: team.id)
                 }
             }
@@ -566,22 +567,150 @@ struct TeamMatchDetailView: View {
     private func overviewTab(_ detail: TMDetail) -> some View {
         let t = detail.tournament
         VStack(alignment: .leading, spacing: 14) {
+            // Thứ tự: Thể lệ → Thời gian & địa điểm + DUPR/slot → Lệ phí.
             if let rules = t.rulesSummary?.trimmingCharacters(in: .whitespacesAndNewlines), !rules.isEmpty {
                 overviewCard(title: "THỂ LỆ GIẢI", icon: "doc.text") {
                     Text(rules).font(TLFont.sans(14)).foregroundStyle(TLColor.fg2).lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            tournamentInfoCard(detail)
             if t.hasFee {
                 overviewCard(title: "LỆ PHÍ THAM GIA", icon: "creditcard") {
                     VStack(alignment: .leading, spacing: 8) {
                         if let f = t.entryFeeVnd, f > 0 { feeRow("Mỗi VĐV", f) }
                         if let f = t.entryFeeTeamVnd, f > 0 { feeRow("Mỗi đội", f) }
+                        discountTierRows(t)
                     }
                 }
             }
             if t.rulesSummary?.isEmpty != false && !t.hasFee {
                 note("Chưa có thông tin thể lệ / lệ phí.")
+            }
+        }
+    }
+
+    /// Card thông tin giải: ngày tổ chức · địa điểm · yêu cầu DUPR · thanh slot đội.
+    private func tournamentInfoCard(_ detail: TMDetail) -> some View {
+        let t = detail.tournament
+        let total = t.teamCount ?? 0
+        let filled = detail.teams.filter { $0.status != "rejected" }.count
+        let pct = total > 0 ? min(1, Double(filled) / Double(total)) : 0
+        let full = total > 0 && filled >= total
+        return VStack(alignment: .leading, spacing: 14) {
+            whenWhereCard(t)
+            overviewCard(title: "THÔNG TIN GIẢI", icon: "info.circle") {
+            VStack(alignment: .leading, spacing: 10) {
+                if t.requiresDupr {
+                    infoLine(icon: "gauge.with.needle",
+                             text: "DUPR Nam ≤ \(String(format: "%.2f", t.duprMaxMale ?? 0)) · Nữ ≤ \(String(format: "%.2f", t.duprMaxFemale ?? 0))",
+                             color: TLColor.gold)
+                }
+                if total > 0 {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            infoLine(icon: "person.3", text: "Slot đội")
+                            Spacer()
+                            Text("\(filled)/\(total)")
+                                .font(TLFont.mono(13, .bold))
+                                .foregroundStyle(full ? TLColor.live : TLColor.fg)
+                        }
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(TLColor.border)
+                                Capsule().fill(full ? TLColor.live : TLColor.accent)
+                                    .frame(width: geo.size.width * pct)
+                            }
+                        }
+                        .frame(height: 6)
+                    }
+                }
+            }
+            }
+        }
+    }
+
+    /// Thời gian & địa điểm — highlight: ngày serif lớn + đồng hồ đếm ngược + địa điểm.
+    @ViewBuilder
+    private func whenWhereCard(_ t: TMTournament) -> some View {
+        if t.eventDateLabel != nil || (t.location?.trimmingCharacters(in: .whitespaces).isEmpty == false) {
+            overviewCard(title: "THỜI GIAN & ĐỊA ĐIỂM", icon: "calendar") {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let dateLabel = t.eventDateLabel {
+                        Text(dateLabel).font(TLFont.serif(22)).italic().foregroundStyle(TLColor.fg)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let target = t.eventStartDate {
+                        if target > Date() {
+                            TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                                countdownChips(to: target, now: ctx.date)
+                            }
+                        } else if Calendar.current.isDateInToday(target) {
+                            Text("🎾 HÔM NAY!")
+                                .font(TLFont.mono(11, .bold)).tracking(0.8).foregroundStyle(TLColor.accentText)
+                                .padding(.horizontal, 12).padding(.vertical, 5)
+                                .background(TLColor.accent.opacity(0.12), in: Capsule())
+                        }
+                    }
+                    if let loc = t.location?.trimmingCharacters(in: .whitespaces), !loc.isEmpty {
+                        HStack(spacing: 8) {
+                            Image(systemName: "mappin.and.ellipse").font(.system(size: 14)).foregroundStyle(TLColor.accentText)
+                            Text(loc).font(TLFont.sans(15.5, .semibold)).foregroundStyle(TLColor.fg)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// 4 ô Ngày/Giờ/Phút/Giây tới 00:00 ngày tổ chức.
+    @ViewBuilder
+    private func countdownChips(to target: Date, now: Date) -> some View {
+        let diff = max(0, Int(target.timeIntervalSince(now)))
+        let parts: [(Int, String)] = [
+            (diff / 86400, "NGÀY"),
+            (diff / 3600 % 24, "GIỜ"),
+            (diff / 60 % 60, "PHÚT"),
+            (diff % 60, "GIÂY"),
+        ]
+        HStack(spacing: 8) {
+            ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                VStack(spacing: 3) {
+                    Text(String(format: "%02d", part.0))
+                        .font(TLFont.mono(22, .bold)).monospacedDigit()
+                        .foregroundStyle(TLColor.accentText)
+                    Text(part.1).font(TLFont.mono(8.5, .semibold)).tracking(0.8)
+                        .foregroundStyle(TLColor.fg3)
+                }
+                .frame(maxWidth: .infinity).padding(.vertical, 10)
+                .background(TLColor.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.accent.opacity(0.3), lineWidth: 1))
+            }
+        }
+    }
+
+    private func infoLine(icon: String, text: String, color: Color? = nil) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 12)).foregroundStyle(color ?? TLColor.accentText)
+            Text(text).font(TLFont.sans(13.5, color != nil ? .semibold : .regular))
+                .foregroundStyle(color ?? TLColor.fg2)
+        }
+    }
+
+    /// Các bậc giảm giá slot trong card lệ phí: "Slot 1–10 · −20% · 80.000 đ".
+    @ViewBuilder
+    private func discountTierRows(_ t: TMTournament) -> some View {
+        let base = (t.entryFeeTeamVnd ?? 0) > 0 ? (t.entryFeeTeamVnd ?? 0) : (t.entryFeeVnd ?? 0)
+        let tiers = t.discountTiers ?? []
+        ForEach(Array(tiers.enumerated()), id: \.offset) { idx, tier in
+            let from = tiers.prefix(idx).reduce(0) { $0 + $1.slots } + 1
+            let to = from + tier.slots - 1
+            HStack {
+                Text("Slot \(from)–\(to)").font(TLFont.sans(13.5)).foregroundStyle(TLColor.fg2)
+                Spacer()
+                Text("−\(tier.percent)% · \((base * (100 - tier.percent) / 100).formatted()) đ")
+                    .font(TLFont.mono(12, .bold)).foregroundStyle(TLColor.gold)
             }
         }
     }
