@@ -433,7 +433,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // runs sanitizeBlogHtml() over the stored HTML (defense-in-depth against
   // stored XSS); old cached entries must be invalidated so no pre-fix HTML
   // survives the TTL.
-  const cacheKey = `pr:v22:${url.pathname}`;
+  // 2026-07-08 — bumped v22->v23 to invalidate cached / and /vi HTML after
+  // adding bot-visible internal links from the homepage to /san (court
+  // directory) and the top-6 /san/khu-vuc/{city} hubs. The venue cluster is
+  // the main non-brand growth engine (GSC 28d) but previously received no
+  // homepage link equity in prerendered HTML.
+  const cacheKey = `pr:v23:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
