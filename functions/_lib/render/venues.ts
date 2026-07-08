@@ -45,6 +45,9 @@ interface VenueDetailRow {
   is_indoor: boolean | null;
   phone: string | null;
   website: string | null;
+  amenities: string[] | null;
+  hours_json: unknown;
+  cover_image_url: string | null;
 }
 
 function displayName(v: { name: string; name_vi: string | null }, lang: Lang): string {
@@ -65,6 +68,37 @@ function fullAddress(v: VenueDetailRow): string {
     parts.push(t);
   }
   return parts.join(", ");
+}
+
+// hours_json has no enforced shape (community-contributed). Render the two
+// shapes seen in prod — {"mon":"6:00-22:00",...} object or ["6:00-22:00 hằng
+// ngày"] array — and silently skip anything else.
+// ponytail: defensive flattening, add a real schema if the venue form ever gets one.
+const DAY_LABEL: Record<string, { vi: string; en: string }> = {
+  mon: { vi: "Thứ 2", en: "Mon" },
+  tue: { vi: "Thứ 3", en: "Tue" },
+  wed: { vi: "Thứ 4", en: "Wed" },
+  thu: { vi: "Thứ 5", en: "Thu" },
+  fri: { vi: "Thứ 6", en: "Fri" },
+  sat: { vi: "Thứ 7", en: "Sat" },
+  sun: { vi: "Chủ nhật", en: "Sun" },
+};
+
+function hoursLines(hoursJson: unknown, lang: Lang): string[] {
+  if (!hoursJson) return [];
+  if (Array.isArray(hoursJson)) {
+    return hoursJson.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+  }
+  if (typeof hoursJson === "object") {
+    return Object.entries(hoursJson as Record<string, unknown>)
+      .filter(([, val]) => typeof val === "string" && (val as string).trim().length > 0)
+      .map(([day, val]) => {
+        const label = DAY_LABEL[day.slice(0, 3).toLowerCase()];
+        return label ? `${label[lang]}: ${val}` : `${day}: ${val}`;
+      });
+  }
+  if (typeof hoursJson === "string" && hoursJson.trim().length > 0) return [hoursJson];
+  return [];
 }
 
 // ── /san — list ────────────────────────────────────────────────────────────
@@ -208,7 +242,7 @@ export async function renderVenueDetail(
   const { data, error } = await supabase
     .from("venues")
     .select(
-      "slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website",
+      "slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -299,6 +333,10 @@ export async function renderVenueDetail(
       : {}),
     ...(v.phone ? { telephone: v.phone } : {}),
     ...(v.website ? { sameAs: [v.website] } : {}),
+    ...(v.cover_image_url ? { image: v.cover_image_url } : {}),
+    ...(v.latitude != null && v.longitude != null
+      ? { hasMap: `https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}` }
+      : {}),
   };
 
   const homeLabel = lang === "vi" ? "Trang chủ" : "Home";
@@ -317,17 +355,35 @@ export async function renderVenueDetail(
 
   const lbl =
     lang === "vi"
-      ? { addr: "Địa chỉ", courts: "Số sân", type: "Loại sân", surface: "Mặt sân", phone: "Điện thoại" }
-      : { addr: "Address", courts: "Courts", type: "Type", surface: "Surface", phone: "Phone" };
+      ? { addr: "Địa chỉ", courts: "Số sân", type: "Loại sân", surface: "Mặt sân", phone: "Điện thoại", hours: "Giờ mở cửa", amenities: "Tiện ích", map: "Xem bản đồ", directions: "Chỉ đường" }
+      : { addr: "Address", courts: "Courts", type: "Type", surface: "Surface", phone: "Phone", hours: "Opening hours", amenities: "Amenities", map: "View map", directions: "Directions" };
 
   const parts: string[] = [bc, `<h1>${escapeHtml(name)}</h1>`];
+  if (v.cover_image_url)
+    parts.push(`<img src="${escapeHtml(v.cover_image_url)}" alt="${escapeHtml(name)}" width="1200" height="630"/>`);
   if (addr) parts.push(`<p><strong>${lbl.addr}:</strong> ${escapeHtml(addr)}</p>`);
+  if (v.latitude != null && v.longitude != null) {
+    const q = `${v.latitude},${v.longitude}`;
+    parts.push(
+      `<p><a href="https://www.google.com/maps/search/?api=1&amp;query=${q}" rel="nofollow noopener">${lbl.map}</a> · ` +
+        `<a href="https://www.google.com/maps/dir/?api=1&amp;destination=${q}" rel="nofollow noopener">${lbl.directions}</a></p>`,
+    );
+  }
   if (v.num_courts && v.num_courts > 0)
     parts.push(`<p><strong>${lbl.courts}:</strong> ${v.num_courts}</p>`);
   if (v.is_indoor != null)
     parts.push(`<p><strong>${lbl.type}:</strong> ${escapeHtml(lang === "vi" ? indoorVi : indoorEn)}</p>`);
   if (v.surface_type)
     parts.push(`<p><strong>${lbl.surface}:</strong> ${escapeHtml(v.surface_type)}</p>`);
+  const hours = hoursLines(v.hours_json, lang);
+  if (hours.length > 0)
+    parts.push(
+      `<p><strong>${lbl.hours}:</strong></p><ul>${hours.map((h) => `<li>${escapeHtml(h)}</li>`).join("")}</ul>`,
+    );
+  if (v.amenities && v.amenities.length > 0)
+    parts.push(
+      `<p><strong>${lbl.amenities}:</strong> ${v.amenities.map((a) => escapeHtml(a)).join(" · ")}</p>`,
+    );
   if (v.phone) parts.push(`<p><strong>${lbl.phone}:</strong> ${escapeHtml(v.phone)}</p>`);
   if (v.website)
     parts.push(`<p><a href="${escapeHtml(v.website)}" rel="nofollow noopener">Website</a></p>`);
@@ -395,6 +451,7 @@ export async function renderVenueDetail(
       url,
       siteUrl,
       jsonLd,
+      ...(v.cover_image_url ? { image: v.cover_image_url } : {}),
       bodyContent: parts.join("\n"),
       lang,
       alternates: [
@@ -540,8 +597,12 @@ export async function renderVenuesCity(
   const itemsHtml = rows
     .map((v) => {
       const nm = displayName(v, lang);
-      const loc = locationLine(v);
-      return `<li><a href="${siteUrl}/san/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${loc ? ` — ${escapeHtml(loc)}` : ""}</li>`;
+      const facts = [
+        v.district?.trim() || "",
+        v.num_courts && v.num_courts > 0 ? (lang === "vi" ? `${v.num_courts} sân` : `${v.num_courts} courts`) : "",
+        v.is_indoor == null ? "" : lang === "vi" ? (v.is_indoor ? "trong nhà" : "ngoài trời") : v.is_indoor ? "indoor" : "outdoor",
+      ].filter(Boolean);
+      return `<li><a href="${siteUrl}/san/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${facts.length ? ` — ${escapeHtml(facts.join(" · "))}` : ""}</li>`;
     })
     .join("");
 
@@ -587,10 +648,13 @@ export async function renderVenuesCity(
   // /san/khu-vuc/phuc-yen). Add a localized intro + crawlable internal
   // nav to other city hubs + discover-more links so every hub carries
   // real content and outbound links regardless of venue count.
+  const totalCourts = rows.reduce((s, v) => s + (v.num_courts ?? 0), 0);
+  const totalCourtsVi = totalCourts > 0 ? ` với tổng cộng ${totalCourts} sân đấu` : "";
+  const totalCourtsEn = totalCourts > 0 ? ` totalling ${totalCourts} playing courts` : "";
   const introHtml =
     lang === "vi"
-      ? `<p>Khám phá ${n > 0 ? `${n} ` : ""}sân pickleball tại ${escapeHtml(cityName)} do cộng đồng ThePickleHub đóng góp — kèm địa chỉ, số sân, sân trong nhà/ngoài trời và chỉ đường. Danh sách được cập nhật liên tục khi có sân mới.</p>`
-      : `<p>Discover ${n > 0 ? `${n} ` : ""}community-contributed pickleball courts in ${escapeHtml(cityName)}, Vietnam — address, court count, indoor/outdoor and directions. The list grows as new courts are added.</p>`;
+      ? `<p>Khám phá ${n > 0 ? `${n} ` : ""}sân pickleball tại ${escapeHtml(cityName)}${totalCourtsVi} do cộng đồng ThePickleHub đóng góp — kèm địa chỉ, số sân, sân trong nhà/ngoài trời và chỉ đường. Danh sách được cập nhật liên tục khi có sân mới.</p>`
+      : `<p>Discover ${n > 0 ? `${n} ` : ""}community-contributed pickleball courts in ${escapeHtml(cityName)}, Vietnam${totalCourtsEn} — address, court count, indoor/outdoor and directions. The list grows as new courts are added.</p>`;
 
   const FEATURED_CITY_SLUGS = [
     "tp-hcm", "ha-noi", "da-nang", "hai-phong", "can-tho", "nha-trang",

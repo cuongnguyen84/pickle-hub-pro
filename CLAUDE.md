@@ -18,7 +18,7 @@ Website: https://www.thepicklehub.net
 - **Push:** Firebase Cloud Messaging (FCM via Capacitor)
 - **Email:** Resend
 - **AI translation:** Google Gemini (EN → VI for news)
-- **Analytics:** GA4, Google Search Console (read via Chrome when needed), Ahrefs Web Analytics (free — script in `index.html`, data via `web-analytics-*` MCP tools). _Paid Ahrefs API is NOT available ("Insufficient plan"); do not call other Ahrefs MCP tools (site-explorer, keywords-explorer, etc.)._
+- **Analytics:** GA4, Google Search Console (read via Chrome when needed), Ahrefs Web Analytics (free script in `index.html`, data since 2026-07-04 — read the dashboard via Chrome at app.ahrefs.com/web-analytics). _Ahrefs MCP tools ALL return "Insufficient plan" (even `web-analytics-*`); do not call them._ GA4 caveat: heavily polluted by US datacenter bot traffic — trust the Vietnam segment / Ahrefs numbers instead.
 
 ## Commands
 
@@ -85,7 +85,7 @@ The legacy `prerender-worker` Cloudflare Worker is still active and **MUST be pr
 Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` referencing segment sitemaps:
 
 - `sitemap-static.xml`, `sitemap-blog.xml`, `sitemap-tournaments.xml`, `sitemap-matches.xml`, `sitemap-events.xml`, `sitemap-news.xml`
-- `sitemap-players.xml` and `sitemap-venues.xml` exist but are **currently disabled** in the index (see comments in `sitemap.xml.ts` re past orphan-URL audit — re-enable when directory pages ship)
+- `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: DUPR-linked public profiles only)
 
 All segments support `xhtml:link` hreflang (en, vi, x-default).
 
