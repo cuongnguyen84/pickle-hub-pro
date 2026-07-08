@@ -3,19 +3,23 @@
   Cache-Control: public, max-age=31536000, immutable
   X-Content-Type-Options: nosniff
 
-/*.js
-  Cache-Control: public, max-age=31536000, immutable
+# KHÔNG dùng rule /*.js immutable! Nó từng nuốt cả /sw.js → CDN Cloudflare
+# giữ service worker cũ 29 ngày → mọi client cài lại SW cũ với precache chunk
+# đã 404 → kẹt vòng lặp "Đang tải lại..." bất kể deploy gì (2026-07-08).
+# Cloudflare Pages _headers KHÔNG override theo rule cụ thể hơn — mọi rule
+# khớp đều áp, nên phải BỎ rule rộng thay vì thêm rule đè (bài học sw-v2:
+# rule no-cache đặt sau vẫn thua, CDN cache luôn sw-v2.js immutable).
+# JS hash của Vite đã nằm trọn trong /assets/* ở trên; JS ở root chỉ còn
+# sw-v3.js (no-cache dưới đây) và workbox-<hash>.js (etag revalidate là đủ).
 
-# Service worker — TUYỆT ĐỐI không cache. Rule /*.js ở trên từng nuốt cả
-# /sw.js → CDN Cloudflare giữ SW cũ 29 ngày (age 2.5M giây, cf-cache-status
-# HIT) → mọi client cài lại SW cũ với precache chunk đã 404 → kẹt vòng lặp
-# "Đang tải lại..." bất kể deploy gì (2026-07-08). SW đã đổi tên sw.js →
-# sw-v2.js (vite.config.ts) để né bản cũ còn kẹt trong CDN; cả 2 rule đặt
-# SAU /*.js để thắng khi trùng header.
+# Service worker — TUYỆT ĐỐI không cache, mọi thế hệ tên file.
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
 
 /sw-v2.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/sw-v3.js
   Cache-Control: no-cache, no-store, must-revalidate
 
 /*.css
