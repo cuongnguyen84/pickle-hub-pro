@@ -15,9 +15,9 @@ export type LivestreamWithLogo = Tables<"public_livestreams"> & {
   organization?: OrganizationWithLogo | null;
 };
 
-export function useLivestreams(status?: "live" | "scheduled" | "ended") {
+export function useLivestreams(status?: "live" | "scheduled" | "ended", limit?: number) {
   return useQuery({
-    queryKey: ["livestreams", status],
+    queryKey: ["livestreams", status, limit ?? null],
     queryFn: async () => {
       // Ended replays are surfaced with most-recent-first ordering;
       // live/scheduled (and the unfiltered case) keep earliest-first.
@@ -33,6 +33,9 @@ export function useLivestreams(status?: "live" | "scheduled" | "ended") {
 
       if (status) {
         query = query.eq("status", status);
+      }
+      if (limit) {
+        query = query.limit(limit);
       }
 
       const { data, error } = await query;
