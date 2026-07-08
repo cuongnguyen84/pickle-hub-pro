@@ -67,19 +67,31 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
       return;
     }
 
-    // Remove existing channel to avoid "cannot add callbacks after subscribe()" error
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-
     // Topic PHẢI trùng với topic viewer (useLivePresence) thì admin mới thấy
     // được người xem — chỉ presence key là duy nhất per phiên admin.
-    const sfx = uniqueChannelSuffix();
     const channelName = `livestream_presence:${livestreamId}`;
-    const adminKey = `admin_watcher_${sfx}`;
+    const adminKey = `admin_watcher_${uniqueChannelSuffix()}`;
+    let cancelled = false;
 
-    const channel = supabase.channel(channelName, {
+    (async () => {
+      // realtime-js dedupe theo topic; removeChannel là async — phải đợi gỡ hẳn
+      // instance cũ, nếu không channel() trả lại instance đã subscribe và .on()
+      // throw "cannot add callbacks after subscribe()".
+      const stale = supabase.getChannels().find((c) => c.topic === `realtime:${channelName}`);
+      if (stale) {
+        try {
+          await supabase.removeChannel(stale);
+        } catch {
+          // ignore
+        }
+      }
+      if (cancelled) return;
+      if (supabase.getChannels().some((c) => c.topic === `realtime:${channelName}`)) {
+        // Topic vẫn kẹt (unsubscribe timed out) — bỏ qua, admin mở lại panel sau.
+        return;
+      }
+
+      const channel = supabase.channel(channelName, {
       config: {
         presence: {
           key: adminKey,
@@ -119,8 +131,10 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
           setIsConnected(true);
         }
       });
+    })();
 
     return () => {
+      cancelled = true;
       if (channelRef.current) {
         channelRef.current.untrack().catch(() => {});
         supabase.removeChannel(channelRef.current);

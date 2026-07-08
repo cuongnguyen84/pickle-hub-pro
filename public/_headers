@@ -6,6 +6,18 @@
 /*.js
   Cache-Control: public, max-age=31536000, immutable
 
+# Service worker — TUYỆT ĐỐI không cache. Rule /*.js ở trên từng nuốt cả
+# /sw.js → CDN Cloudflare giữ SW cũ 29 ngày (age 2.5M giây, cf-cache-status
+# HIT) → mọi client cài lại SW cũ với precache chunk đã 404 → kẹt vòng lặp
+# "Đang tải lại..." bất kể deploy gì (2026-07-08). SW đã đổi tên sw.js →
+# sw-v2.js (vite.config.ts) để né bản cũ còn kẹt trong CDN; cả 2 rule đặt
+# SAU /*.js để thắng khi trùng header.
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/sw-v2.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /*.css
   Cache-Control: public, max-age=31536000, immutable
 
