@@ -15,6 +15,7 @@ struct TMTournament: Decodable, Equatable {
     let hasDreambreaker: Bool?
     let hasThirdPlaceMatch: Bool?
     let playoffTeamCount: Int?
+    let hasRepechage: Bool?     // rr_playoff: bật nhánh Tái sinh cho hạng 3,4
     let requireRegistration: Bool?
     let createdBy: UUID?
     let totalScoreMode: Bool?   // true = chấm theo TỔNG điểm (1 trận tới t = số game × điểm/game)
@@ -97,6 +98,7 @@ struct TMTournament: Decodable, Equatable {
         case hasDreambreaker = "has_dreambreaker"
         case hasThirdPlaceMatch = "has_third_place_match"
         case playoffTeamCount = "playoff_team_count"
+        case hasRepechage = "has_repechage"
         case requireRegistration = "require_registration"
         case createdBy = "created_by"
         case totalScoreMode = "total_score_mode"
@@ -209,6 +211,7 @@ struct TMMatch: Decodable, Identifiable, Equatable {
     let roundNumber: Int?
     let isPlayoff: Bool
     let isThirdPlace: Bool
+    let isRepechage: Bool
     let playoffRound: Int?
     let groupID: UUID?
     let displayOrder: Int?
@@ -236,6 +239,7 @@ struct TMMatch: Decodable, Identifiable, Equatable {
         roundNumber = try c.decodeIfPresent(Int.self, forKey: .roundNumber)
         isPlayoff = (try? c.decode(Bool.self, forKey: .isPlayoff)) ?? false
         isThirdPlace = (try? c.decode(Bool.self, forKey: .isThirdPlace)) ?? false
+        isRepechage = (try? c.decode(Bool.self, forKey: .isRepechage)) ?? false
         playoffRound = try c.decodeIfPresent(Int.self, forKey: .playoffRound)
         groupID = try c.decodeIfPresent(UUID.self, forKey: .groupID)
         displayOrder = try c.decodeIfPresent(Int.self, forKey: .displayOrder)
@@ -258,6 +262,7 @@ struct TMMatch: Decodable, Identifiable, Equatable {
         case roundNumber = "round_number"
         case isPlayoff = "is_playoff"
         case isThirdPlace = "is_third_place"
+        case isRepechage = "is_repechage"
         case playoffRound = "playoff_round"
         case groupID = "group_id"
         case displayOrder = "display_order"
@@ -373,8 +378,12 @@ struct TMDetail: Equatable {
     }
 
     var rrMatches: [TMMatch] { matches.filter { !$0.isPlayoff } }
-    var playoffMatches: [TMMatch] { matches.filter { $0.isPlayoff } }
+    var playoffMatches: [TMMatch] { matches.filter { $0.isPlayoff && !$0.isRepechage } }
     var hasPlayoff: Bool { !playoffMatches.isEmpty }
+
+    /// Nhánh Tái sinh (hạng 3,4) — trận is_playoff nhưng is_repechage.
+    var repechageMatches: [TMMatch] { matches.filter { $0.isRepechage } }
+    var hasRepechage: Bool { !repechageMatches.isEmpty }
 
     /// Round-robin matches grouped into "Lượt N" sections (list view).
     var rrSections: [(title: String, matches: [TMMatch])] {
@@ -390,6 +399,14 @@ struct TMDetail: Equatable {
     var mlpPlayoffRounds: [(round: Int, matches: [TMMatch])] {
         let po = playoffMatches.filter { !$0.isThirdPlace }
         let grouped = Dictionary(grouping: po) { $0.playoffRound ?? 0 }
+        return grouped.keys.sorted(by: >).map { r in
+            (r, (grouped[r] ?? []).sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) })
+        }
+    }
+
+    /// Nhánh Tái sinh, first-round → chung kết (giống mlpPlayoffRounds nhưng cho hạng 3,4).
+    var repechageRounds: [(round: Int, matches: [TMMatch])] {
+        let grouped = Dictionary(grouping: repechageMatches) { $0.playoffRound ?? 0 }
         return grouped.keys.sorted(by: >).map { r in
             (r, (grouped[r] ?? []).sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) })
         }
@@ -456,8 +473,8 @@ struct TMDetail: Equatable {
         for r in rrRounds.keys.sorted() {
             result.append(("Lượt \(r)", rrRounds[r]!.sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }))
         }
-        // Playoff grouped by playoff_round, labelled by match count.
-        let po = sorted.filter { $0.isPlayoff }
+        // Playoff grouped by playoff_round, labelled by match count (Tái sinh có tab riêng).
+        let po = sorted.filter { $0.isPlayoff && !$0.isRepechage }
         let poRounds = Dictionary(grouping: po) { $0.playoffRound ?? 0 }
         for r in poRounds.keys.sorted() {
             let ms = poRounds[r]!.sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }

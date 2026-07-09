@@ -28,14 +28,14 @@ struct TeamMatchRepository {
     // MARK: Load
 
     private static let matchColumns =
-        "id, team_a_id, team_b_id, games_won_a, games_won_b, total_points_a, total_points_b, winner_team_id, status, round_number, is_playoff, is_third_place, playoff_round, group_id, display_order, next_match_id, next_match_slot, lineup_a_submitted, lineup_b_submitted, bracket_position"
+        "id, team_a_id, team_b_id, games_won_a, games_won_b, total_points_a, total_points_b, winner_team_id, status, round_number, is_playoff, is_third_place, is_repechage, playoff_round, group_id, display_order, next_match_id, next_match_slot, lineup_a_submitted, lineup_b_submitted, bracket_position"
     private static let gameColumns =
         "id, match_id, game_type, scoring_type, display_name, score_a, score_b, winner_team_id, lineup_team_a, lineup_team_b, is_dreambreaker, order_index, status"
 
     func load(shareID: String) async throws -> TMDetail {
         let tournament: TMTournament = try await client
             .from("team_match_tournaments")
-            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name, event_date, location, discount_tiers")
+            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, has_repechage, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name, event_date, location, discount_tiers")
             .eq("share_id", value: shareID)
             .single()
             .execute().value
@@ -115,6 +115,7 @@ struct TeamMatchRepository {
         let teamCount: Int
         let format: String         // round_robin | single_elimination | rr_playoff
         let playoffTeamCount: Int? // rr_playoff only
+        let hasRepechage: Bool     // rr_playoff only — nhánh Tái sinh hạng 3,4
         let requireRegistration: Bool
         let hasDreambreaker: Bool  // effective: even games && toggle
         let requireMinGames: Bool
@@ -238,6 +239,13 @@ struct TeamMatchRepository {
             try await client.from("team_match_tournaments")
                 .update(TotalScoreUpdate(points_per_game: o.pointsPerGame))
                 .eq("id", value: t.id).execute()
+        }
+
+        // Nhánh Tái sinh (rr_playoff) — RPC không biết cột này, UPDATE sau.
+        if o.format == "rr_playoff" && o.hasRepechage {
+            struct RepechageUpdate: Encodable { let has_repechage = true }
+            try await client.from("team_match_tournaments")
+                .update(RepechageUpdate()).eq("id", value: t.id).execute()
         }
 
         // Thể lệ + lệ phí + tài khoản nhận — UPDATE sau create (RPC không biết
@@ -699,6 +707,7 @@ struct TeamMatchRepository {
         let bracket_position: Int
         let display_order: Int
         let is_third_place: Bool
+        var is_repechage: Bool = false
         func encode(to encoder: Encoder) throws {
             var c = encoder.container(keyedBy: K.self)
             try c.encode(tournament_id, forKey: .tournament_id)
@@ -708,6 +717,7 @@ struct TeamMatchRepository {
             try c.encode(bracket_position, forKey: .bracket_position)
             try c.encode(display_order, forKey: .display_order)
             try c.encode(is_third_place, forKey: .is_third_place)
+            try c.encode(is_repechage, forKey: .is_repechage)
             try c.encode(true, forKey: .is_playoff)
             try c.encode("pending", forKey: .status)
             try c.encode(0, forKey: .games_won_a); try c.encode(0, forKey: .games_won_b)
@@ -715,7 +725,7 @@ struct TeamMatchRepository {
         }
         enum K: String, CodingKey {
             case tournament_id, team_a_id, team_b_id, playoff_round, bracket_position
-            case display_order, is_third_place, is_playoff, status
+            case display_order, is_third_place, is_repechage, is_playoff, status
             case games_won_a, games_won_b, total_points_a, total_points_b
         }
     }
@@ -802,38 +812,48 @@ struct TeamMatchRepository {
     }
 
     /// Playoff seed theo BXH tổng + seed-position chuẩn (fallback khi không seed theo bảng).
-    func generatePlayoffFromSeeds(tournamentID: UUID, seededTeamIDs: [String], hasDreambreaker: Bool) async throws {
+    func generatePlayoffFromSeeds(tournamentID: UUID, seededTeamIDs: [String], hasDreambreaker: Bool,
+                                  isRepechage: Bool = false) async throws {
         let n = seededTeamIDs.count
         guard n >= 2, n & (n - 1) == 0 else { throw GenerateError.notPowerOfTwo }
         let order = DEBracket.seedPositions(n)   // order[slot] = seedIndex (0-based); #1 & #2 hai nửa đối diện
         let firstRound = (0..<(n / 2)).map { i in (a: seededTeamIDs[order[2 * i]], b: seededTeamIDs[order[2 * i + 1]]) }
-        try await buildPlayoffBracket(tournamentID: tournamentID, firstRound: firstRound, hasDreambreaker: hasDreambreaker)
+        try await buildPlayoffBracket(tournamentID: tournamentID, firstRound: firstRound,
+                                      hasDreambreaker: hasDreambreaker, isRepechage: isRepechage)
     }
 
     /// Playoff seed theo BẢNG (nhất gặp nhì bảng khác, cùng bảng khác nhánh).
-    func generatePlayoffFromGroupPairs(tournamentID: UUID, firstRound: [(a: String, b: String)], hasDreambreaker: Bool) async throws {
-        try await buildPlayoffBracket(tournamentID: tournamentID, firstRound: firstRound, hasDreambreaker: hasDreambreaker)
+    /// `isRepechage` = true → cùng logic nhưng dựng nhánh Tái sinh (hạng 3,4).
+    func generatePlayoffFromGroupPairs(tournamentID: UUID, firstRound: [(a: String, b: String)], hasDreambreaker: Bool,
+                                       isRepechage: Bool = false) async throws {
+        try await buildPlayoffBracket(tournamentID: tournamentID, firstRound: firstRound,
+                                      hasDreambreaker: hasDreambreaker, isRepechage: isRepechage)
     }
 
     /// Dựng bracket từ first-round pairs cho trước (chung cho cả 2 cách seed). Match i & i+1 (i chẵn)
     /// dồn về 1 match vòng sau (k/2) — first-round phải đã xếp đúng nhánh.
-    private func buildPlayoffBracket(tournamentID: UUID, firstRound: [(a: String, b: String)], hasDreambreaker: Bool) async throws {
+    /// display_order của nhánh Tái sinh lệch +1000 để không đụng thứ tự với playoff chính.
+    private func buildPlayoffBracket(tournamentID: UUID, firstRound: [(a: String, b: String)], hasDreambreaker: Bool,
+                                     isRepechage: Bool = false) async throws {
         let n = firstRound.count * 2
         guard n >= 2, n & (n - 1) == 0 else { throw GenerateError.notPowerOfTwo }
         let totalRounds = Int(log2(Double(n)))
         let tID = tournamentID.uuidString.lowercased()
+        let orderBase = isRepechage ? 1000 : 0
 
         var rows: [POMatchInsert] = []
         for (i, pr) in firstRound.enumerated() {
             rows.append(POMatchInsert(tournament_id: tID, team_a_id: pr.a, team_b_id: pr.b,
-                                      playoff_round: totalRounds, bracket_position: i, display_order: i, is_third_place: false))
+                                      playoff_round: totalRounds, bracket_position: i, display_order: orderBase + i,
+                                      is_third_place: false, is_repechage: isRepechage))
         }
         for round in stride(from: totalRounds - 1, through: 1, by: -1) {
             let matchesInRound = Int(pow(2.0, Double(round - 1)))
             for j in 0..<matchesInRound {
                 rows.append(POMatchInsert(tournament_id: tID, team_a_id: nil, team_b_id: nil,
                                           playoff_round: round, bracket_position: j,
-                                          display_order: 100 + (totalRounds - round) * 10 + j, is_third_place: false))
+                                          display_order: orderBase + 100 + (totalRounds - round) * 10 + j,
+                                          is_third_place: false, is_repechage: isRepechage))
             }
         }
         let inserted: [POInsertedRow] = try await client
@@ -965,7 +985,8 @@ struct TeamMatchRepository {
         try await setTeamSlot(matchID: nextID, field: slotField, teamID: winner)
 
         // Semifinal (playoff_round == 2) loser drops to the third-place match.
-        if match.playoffRound == 2 {
+        // Nhánh Tái sinh không có trận tranh hạng 3 → bỏ qua.
+        if match.playoffRound == 2 && !match.isRepechage {
             let loser = (match.teamAID == winner) ? match.teamBID : match.teamAID
             if let loser {
                 if let tp = try? await thirdPlaceMatch(tournamentID: tournamentID) {
