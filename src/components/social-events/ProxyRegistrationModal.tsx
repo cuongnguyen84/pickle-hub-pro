@@ -584,7 +584,7 @@ export function ProxyRegistrationModal({
                       onChange={(e) =>
                         patchEntry(entry.id, { level: e.target.value })
                       }
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
                     >
                       <option value="">{t.socialEvents.register.levelOptional}</option>
                       <option value="2.5">2.5</option>

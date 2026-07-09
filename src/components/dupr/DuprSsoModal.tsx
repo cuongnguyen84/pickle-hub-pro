@@ -159,7 +159,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
           top: 8,
           left: "50%",
           transform: "translateX(-50%)",
-          background: "#fff",
+          background: "var(--tl-surface, #fff)",
           borderRadius: 12,
           width: "min(560px, calc(100vw - 16px))",
           bottom: 8,
@@ -176,12 +176,12 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "12px 16px",
-            borderBottom: "1px solid #e5e7eb",
-            background: "#fafafa",
+            borderBottom: "1px solid var(--tl-border, #e5e7eb)",
+            background: "var(--tl-bg-2, #fafafa)",
             flex: "0 0 auto",
           }}
         >
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg, #111)" }}>
             {language === "vi" ? "Kết nối DUPR" : "Connect DUPR"}
           </div>
           <button
@@ -196,7 +196,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#6b7280",
+              color: "var(--tl-fg-3, #6b7280)",
               borderRadius: 4,
             }}
           >
@@ -205,7 +205,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         </div>
 
         {!clientKeyEncoded && (
-          <div style={{ padding: 32, textAlign: "center", color: "#ef4444" }}>
+          <div style={{ padding: 32, textAlign: "center", color: "var(--tl-live, #ef4444)" }}>
             {language === "vi"
               ? "Thiếu cấu hình VITE_DUPR_CLIENT_KEY."
               : "Missing VITE_DUPR_CLIENT_KEY environment variable."}
@@ -234,7 +234,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: "rgba(255,255,255,0.85)",
+                  background: "color-mix(in oklab, var(--tl-surface, #fff) 88%, transparent)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -243,7 +243,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
                 }}
               >
                 <Loader2 size={28} className="animate-spin" />
-                <span style={{ fontSize: 14, color: "#6b7280" }}>
+                <span style={{ fontSize: 14, color: "var(--tl-fg-3, #6b7280)" }}>
                   {language === "vi"
                     ? "Đang kết nối với DUPR..."
                     : "Connecting to DUPR..."}
@@ -259,10 +259,10 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
                   right: 16,
                   bottom: 16,
                   padding: 12,
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
+                  background: "color-mix(in oklab, var(--tl-live, #ef4444) 12%, var(--tl-surface, #fff))",
+                  border: "1px solid color-mix(in oklab, var(--tl-live, #ef4444) 35%, transparent)",
                   borderRadius: 8,
-                  color: "#b91c1c",
+                  color: "var(--tl-live, #b91c1c)",
                   fontSize: 13,
                 }}
               >

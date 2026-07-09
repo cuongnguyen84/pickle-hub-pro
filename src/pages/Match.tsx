@@ -283,7 +283,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
           <select
             value={format}
             onChange={(e) => setFormat(e.target.value as "SINGLES" | "DOUBLES")}
-            className="mt-1 w-full rounded border p-2 text-sm"
+            className="mt-1 w-full rounded border p-2 text-base"
             style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }}
           >
             <option value="SINGLES">SINGLES</option>
@@ -296,7 +296,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
           <select
             value={String(clubId)}
             onChange={(e) => setClubId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="mt-1 w-full rounded border p-2 text-sm"
+            className="mt-1 w-full rounded border p-2 text-base"
             style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }}
           >
             <option value="">{vi ? "— Không club (PARTNER) —" : "— None (PARTNER) —"}</option>
@@ -313,7 +313,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
           <input
             type="date" value={matchDate}
             onChange={(e) => setMatchDate(e.target.value)}
-            className="mt-1 w-full rounded border p-2 text-sm"
+            className="mt-1 w-full rounded border p-2 text-base"
             style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }}
           />
         </label>
@@ -323,7 +323,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
           <input
             type="text" value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 w-full rounded border p-2 text-sm"
+            className="mt-1 w-full rounded border p-2 text-base"
             style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }}
           />
         </label>

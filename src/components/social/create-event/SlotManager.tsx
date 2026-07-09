@@ -116,7 +116,7 @@ function SlotCard({
               id={`slot-skill-${slot.id}`}
               value={slot.skill_level ?? ""}
               onChange={(e) => onPatch({ skill_level: e.target.value })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
             >
               <option value="">{create.slotSkillChoose}</option>
               <option value="newbie">{create.slotSkillNewbie}</option>

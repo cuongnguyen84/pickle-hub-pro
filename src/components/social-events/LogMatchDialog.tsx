@@ -95,7 +95,7 @@ const fieldStyle: CSSProperties = {
   borderBottom: "1px solid var(--tl-border)",
   borderRadius: 0,
   padding: "10px 0",
-  fontSize: 15,
+  fontSize: 16, // >= 16px to prevent iOS auto-zoom on focus
   fontFamily: "inherit",
   color: "var(--tl-fg)",
   outline: "none",

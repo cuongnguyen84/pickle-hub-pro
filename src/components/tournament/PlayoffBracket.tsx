@@ -429,7 +429,7 @@ const BracketMatchCard = ({
   });
 
   const scoreInputCls =
-    'w-12 h-8 text-center text-sm p-1 rounded bg-background focus:outline-none';
+    'w-12 h-8 text-center text-sm p-1 rounded bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   return (
     <div

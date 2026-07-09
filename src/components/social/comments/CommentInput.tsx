@@ -188,7 +188,7 @@ export function CommentInput({
           minHeight: 72,
           padding: "10px 12px",
           fontFamily: "var(--tl-font-body, inherit)",
-          fontSize: 14,
+          fontSize: 16, // >= 16px to prevent iOS auto-zoom on focus
           lineHeight: 1.5,
           background: "var(--tl-bg-2, rgba(255,255,255,0.04))",
           border: "1px solid var(--tl-border, rgba(255,255,255,0.12))",

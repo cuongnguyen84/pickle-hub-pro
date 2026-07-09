@@ -1004,7 +1004,7 @@ function Step3(props: {
         <select
           value={String(props.clubId)}
           onChange={(e) => props.setClubId(e.target.value === "" ? "" : Number(e.target.value))}
-          style={{ width: "100%", background: "transparent", color: "var(--tl-fg)", fontFamily: "'Bricolage Grotesque', system-ui, sans-serif", fontSize: 14, border: "none", outline: "none", padding: "4px 0" }}
+          style={{ width: "100%", background: "transparent", color: "var(--tl-fg)", fontFamily: "'Bricolage Grotesque', system-ui, sans-serif", fontSize: 16, border: "none", outline: "none", padding: "4px 0" }}
         >
           <option value="">{vi ? "— Không club (PARTNER) —" : "— None (PARTNER) —"}</option>
           {props.clubs.map((c) => (

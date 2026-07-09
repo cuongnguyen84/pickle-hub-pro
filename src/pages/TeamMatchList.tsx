@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
-import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, Mail, LogIn } from 'lucide-react';
+import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, Mail, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
 import { useUserCreateQuota } from '@/hooks/useUserCreateQuota';
@@ -41,11 +41,13 @@ function TournamentCard({
   tournament,
   isOwner,
   onDelete,
+  isDeleting,
   t,
 }: {
   tournament: TeamMatchTournament;
   isOwner: boolean;
   onDelete: () => void;
+  isDeleting?: boolean;
   t: any;
 }) {
   const navigate = useNavigate();
@@ -214,8 +216,10 @@ function TournamentCard({
                 <AlertDialogCancel>{t.teamMatch.cancel}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={onDelete}
+                  disabled={isDeleting}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   {t.teamMatch.delete}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -237,7 +241,7 @@ export default function TeamMatchList() {
   useEffect(() => {
     setLanguageFromUrl("en");
   }, [setLanguageFromUrl]);
-  const { myTournaments, isLoading, deleteTournament } = useTeamMatch();
+  const { myTournaments, isLoading, deleteTournament, isDeleting } = useTeamMatch();
   const { quota, used: totalUsed } = useUserCreateQuota();
 
   // TOTAL quota across all 4 tournament tools (Codex P1 fix on #106):
@@ -390,6 +394,7 @@ export default function TeamMatchList() {
                     tournament={tournament}
                     isOwner={true}
                     onDelete={() => deleteTournament(tournament.id)}
+                    isDeleting={isDeleting}
                     t={t}
                   />
                 ))}
