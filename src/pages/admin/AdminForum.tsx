@@ -14,14 +14,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Plus, Pencil, Trash2, FolderOpen, MessageSquare, Pin, EyeOff, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 
 export default function AdminForum() {
   const { t, language } = useI18n();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const locale = language === "vi" ? viLocale : enUS;
 
@@ -40,6 +39,9 @@ export default function AdminForum() {
   // Delete category dialog
   const [deletingCatId, setDeletingCatId] = useState<string | null>(null);
   const [catDeleting, setCatDeleting] = useState(false);
+
+  // Delete post dialog
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   const deletePost = useDeleteForumPost();
   const togglePin = useTogglePinPost();
@@ -80,18 +82,18 @@ export default function AdminForum() {
           .update(payload)
           .eq("id", editingCat.id);
         if (error) throw error;
-        toast({ title: "Đã cập nhật danh mục" });
+        toast.success("Đã cập nhật danh mục");
       } else {
         const { error } = await supabase
           .from("forum_categories")
           .insert(payload);
         if (error) throw error;
-        toast({ title: "Đã tạo danh mục" });
+        toast.success("Đã tạo danh mục");
       }
       queryClient.invalidateQueries({ queryKey: ["forum-categories"] });
       setCatDialogOpen(false);
     } catch (err: any) {
-      toast({ variant: "destructive", title: err.message || "Có lỗi xảy ra" });
+      toast.error(err.message || "Có lỗi xảy ra");
     } finally {
       setCatSaving(false);
     }
@@ -106,11 +108,11 @@ export default function AdminForum() {
         .delete()
         .eq("id", deletingCatId);
       if (error) throw error;
-      toast({ title: "Đã xóa danh mục" });
+      toast.success("Đã xóa danh mục");
       queryClient.invalidateQueries({ queryKey: ["forum-categories"] });
       setDeletingCatId(null);
     } catch (err: any) {
-      toast({ variant: "destructive", title: err.message || "Có lỗi xảy ra" });
+      toast.error(err.message || "Có lỗi xảy ra");
     } finally {
       setCatDeleting(false);
     }
@@ -249,11 +251,7 @@ export default function AdminForum() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive"
-                            onClick={() => {
-                              if (confirm("Bạn có chắc muốn xóa bài viết này?")) {
-                                deletePost.mutate(post.id);
-                              }
-                            }}
+                            onClick={() => setDeletingPostId(post.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -300,6 +298,30 @@ export default function AdminForum() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Post Confirmation */}
+      <AlertDialog open={!!deletingPostId} onOpenChange={(open) => !open && setDeletingPostId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn xóa bài viết này? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingPostId) deletePost.mutate(deletingPostId);
+                setDeletingPostId(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Category Confirmation */}
       <AlertDialog open={!!deletingCatId} onOpenChange={(open) => !open && setDeletingCatId(null)}>

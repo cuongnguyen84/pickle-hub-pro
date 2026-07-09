@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -34,12 +34,14 @@ import { Users, Save, Search } from "lucide-react";
 
 export default function AdminUsers() {
   const { t } = useI18n();
-  const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: users, isLoading: usersLoading } = useAdminUsers(debouncedSearch);
+  const {
+    data: users,
+    isLoading: usersLoading,
+  } = useAdminUsers(debouncedSearch);
   const { data: organizations } = useAdminOrganizations();
   const updateRole = useUpdateUserRole();
   const assignOrg = useAssignUserOrganization();
@@ -51,9 +53,9 @@ export default function AdminUsers() {
   const handleRoleChange = async (userId: string, role: "viewer" | "creator" | "admin") => {
     try {
       await updateRole.mutateAsync({ userId, role });
-      toast({ title: "Cập nhật vai trò thành công" });
+      toast.success("Cập nhật vai trò thành công");
     } catch (error) {
-      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
 
@@ -63,9 +65,9 @@ export default function AdminUsers() {
         userId,
         organizationId: organizationId === "none" ? null : organizationId,
       });
-      toast({ title: "Cập nhật tổ chức thành công" });
+      toast.success("Cập nhật tổ chức thành công");
     } catch (error) {
-      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
 
@@ -80,14 +82,14 @@ export default function AdminUsers() {
 
     try {
       await updateQuota.mutateAsync({ userId, quota: newQuota });
-      toast({ title: "Cập nhật quota thành công" });
+      toast.success("Cập nhật quota thành công");
       setQuotaEdits(prev => {
         const updated = { ...prev };
         delete updated[userId];
         return updated;
       });
     } catch (error) {
-      toast({ variant: "destructive", title: error instanceof Error ? error.message : "Có lỗi xảy ra" });
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
 
@@ -131,6 +133,7 @@ export default function AdminUsers() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
           <Input
             placeholder="Tìm theo email hoặc tên..."
+            aria-label="Tìm người dùng"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -209,6 +212,7 @@ export default function AdminUsers() {
                               type="number"
                               min={0}
                               max={999}
+                              aria-label={`Quota giải của ${user.email}`}
                               value={editedQuota !== undefined ? editedQuota : currentQuota}
                               onChange={(e) => handleQuotaChange(user.id, e.target.value)}
                               className="w-20 h-8"
@@ -218,6 +222,7 @@ export default function AdminUsers() {
                                 size="icon"
                                 variant="ghost"
                                 className="h-8 w-8"
+                                aria-label={`Lưu quota của ${user.email}`}
                                 onClick={() => handleQuotaSave(user.id, currentQuota)}
                                 disabled={updateQuota.isPending}
                               >

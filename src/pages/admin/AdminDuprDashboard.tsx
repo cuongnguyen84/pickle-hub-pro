@@ -35,7 +35,7 @@ import { Loader2, RefreshCw, ExternalLink, AlertCircle, CheckCircle2, Zap } from
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -121,7 +121,6 @@ function KV({ k, v }: { k: string; v: React.ReactNode }) {
 
 function ConnectionSection() {
   const { language } = useI18n();
-  const { toast } = useToast();
   const vi = language === "vi";
   const { data: conn, isLoading, refetch } = useDuprConnection();
   const qc = useQueryClient();
@@ -133,12 +132,12 @@ function ConnectionSection() {
     try {
       const { error } = await supabase.functions.invoke("dupr-disconnect", { body: {} });
       if (error) throw error;
-      toast({ title: vi ? "Đã ngắt kết nối" : "Disconnected" });
+      toast.success(vi ? "Đã ngắt kết nối" : "Disconnected");
       qc.invalidateQueries({ queryKey: ["dupr-connection"] });
       qc.invalidateQueries({ queryKey: ["dupr"], exact: false });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast({ variant: "destructive", title: "Disconnect failed", description: msg });
+      toast.error("Disconnect failed", { description: msg });
     } finally {
       setDisconnecting(false);
     }
@@ -299,7 +298,6 @@ interface ProfileRatingRow {
 function WebhookSection() {
   const { user } = useAuth();
   const { language } = useI18n();
-  const { toast } = useToast();
   const vi = language === "vi";
   const qc = useQueryClient();
   const [firing, setFiring] = useState(false);
@@ -358,12 +356,9 @@ function WebhookSection() {
       );
       if (error) throw error;
       setLastFire(data);
-      toast({
-        title: vi ? "Đã bắn webhook" : "Webhook fired",
-        description: vi
+      toast.success(vi ? "Đã bắn webhook" : "Webhook fired", { description: vi
           ? "Receiver đã xử lý — refresh để xem rating cập nhật."
-          : "Receiver handled it — refresh to see the rating update.",
-      });
+          : "Receiver handled it — refresh to see the rating update." });
       // Invalidate so the live rating + events list both refetch.
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["dupr-webhook-events"] }),
@@ -373,7 +368,7 @@ function WebhookSection() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setLastFire({ error: msg });
-      toast({ variant: "destructive", title: "Fire failed", description: msg });
+      toast.error("Fire failed", { description: msg });
     } finally {
       setFiring(false);
     }
@@ -784,7 +779,6 @@ function OrgLinkSection() {
 function SubmitMatchSection() {
   const { language } = useI18n();
   const vi = language === "vi";
-  const { toast } = useToast();
   const clubs = useDuprClubs();
   const qc = useQueryClient();
 
@@ -842,12 +836,12 @@ function SubmitMatchSection() {
       if (error) throw error;
       setLastResp(data);
       qc.invalidateQueries({ queryKey: ["dupr-submissions"] });
-      toast({ title: vi ? "Đã gửi match" : "Match submitted", description: JSON.stringify(data) });
+      toast.success(vi ? "Đã gửi match" : "Match submitted", { description: JSON.stringify(data) });
       setInternalId(`demo-${Date.now()}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setLastResp({ error: msg });
-      toast({ variant: "destructive", title: vi ? "Lỗi submit" : "Submit error", description: msg });
+      toast.error(vi ? "Lỗi submit" : "Submit error", { description: msg });
     } finally {
       setSubmitting(false);
     }
@@ -1046,7 +1040,6 @@ function SubmissionsSection() {
   const { user } = useAuth();
   const { language } = useI18n();
   const vi = language === "vi";
-  const { toast } = useToast();
   const qc = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditDialogState | null>(null);
@@ -1115,15 +1108,12 @@ function SubmissionsSection() {
       const { data, error } = await supabase.functions.invoke("dupr-match-submit", { body });
       if (error) throw error;
       setEditResp(data);
-      toast({
-        title: vi ? "Đã update" : "Updated",
-        description: `matchCode ${editState.row.match_code}`,
-      });
+      toast.success(vi ? "Đã update" : "Updated", { description: `matchCode ${editState.row.match_code}` });
       qc.invalidateQueries({ queryKey: ["dupr-submissions"] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setEditResp({ error: msg });
-      toast({ variant: "destructive", title: vi ? "Update lỗi" : "Update failed", description: msg });
+      toast.error(vi ? "Update lỗi" : "Update failed", { description: msg });
     } finally {
       setEditBusy(false);
     }
@@ -1141,11 +1131,11 @@ function SubmissionsSection() {
         body: { action: "delete", internal_source: src, internal_match_id: internalId },
       });
       if (error) throw error;
-      toast({ title: vi ? "Đã xoá" : "Deleted", description: JSON.stringify(data) });
+      toast.success(vi ? "Đã xoá" : "Deleted", { description: JSON.stringify(data) });
       qc.invalidateQueries({ queryKey: ["dupr-submissions"] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast({ variant: "destructive", title: "Delete failed", description: msg });
+      toast.error("Delete failed", { description: msg });
     } finally {
       setBusyId(null);
     }

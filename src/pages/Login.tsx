@@ -211,10 +211,21 @@ const Login = () => {
               title: t.auth.emailNotVerified,
               description: t.auth.emailNotVerifiedDesc,
             });
-          } else {
+          } else if (
+            error.message.includes("Invalid login credentials") ||
+            (error as { status?: number }).status === 400
+          ) {
             toast({
               variant: "destructive",
               title: t.auth.invalidCredentials,
+              description: error.message,
+            });
+          } else {
+            // Non-credential failures (rate limit, network, server) get the
+            // generic error title instead of blaming the password.
+            toast({
+              variant: "destructive",
+              title: t.common.error,
               description: error.message,
             });
           }
@@ -249,27 +260,14 @@ const Login = () => {
           setShowVerificationMessage(true);
           
           // GA4 sign_up tracking - multiple methods for reliability
-          console.log("[GA4] === SIGN_UP EVENT START ===");
-          console.log("[GA4] gtag available:", typeof window.gtag === 'function');
-          console.log("[GA4] dataLayer available:", !!window.dataLayer);
-          
-          // Method 1: trackEvent helper
           trackEvent("sign_up", { method: "email" });
-          
-          // Method 2: Direct gtag call
           if (typeof window.gtag === 'function') {
             window.gtag('event', 'sign_up', { method: 'email' });
-            console.log("[GA4] sign_up fired via gtag directly");
           }
-          
-          // Method 3: dataLayer push
           if (window.dataLayer) {
             window.dataLayer.push({ event: "sign_up", method: "email" });
-            console.log("[GA4] sign_up pushed to dataLayer");
           }
-          
-          console.log("[GA4] === SIGN_UP EVENT END ===");
-          
+
           toast({
             title: t.auth.signupSuccess,
           });
@@ -520,6 +518,8 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
+                name="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
@@ -534,6 +534,8 @@ const Login = () => {
               <Input
                 id="password"
                 type="password"
+                name="password"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"

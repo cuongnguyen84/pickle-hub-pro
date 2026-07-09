@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   useTournaments,
   useLivestreams,
@@ -69,7 +69,7 @@ const FORMATS: FormatDef[] = [
       en: "Round robin groups with auto playoffs. 4 to 32 players. Most popular format.",
       vi: "Vòng tròn chia bảng, tự động playoff. 4–32 người chơi. Thể thức phổ biến nhất.",
     },
-    accent: "#00b96b",
+    accent: "var(--tl-accent-qt)",
     linkBase: "/tools/quick-tables",
     createLink: "/tools/quick-tables",
     renderMeta: (t, vi) =>
@@ -82,7 +82,7 @@ const FORMATS: FormatDef[] = [
       en: "Double elimination bracket — lose once, fall to losers bracket, fight back to the final.",
       vi: "Nhánh thắng nhánh thua — thua một trận rơi xuống nhánh thua, vẫn còn cơ hội vào chung kết.",
     },
-    accent: "#e9b649",
+    accent: "var(--tl-accent-elim)",
     linkBase: "/tools/doubles-elimination",
     createLink: "/tools/doubles-elimination/new",
     renderMeta: (t, vi) => `${t.team_count} ${vi ? "đội" : "teams"} · Double elim`,
@@ -94,7 +94,7 @@ const FORMATS: FormatDef[] = [
       en: "Custom bracket — define rounds, pools, seeding rules. For non-standard events.",
       vi: "Bracket tùy biến — tự định nghĩa vòng đấu, bảng, luật xếp hạt giống. Cho các giải không theo chuẩn.",
     },
-    accent: "#4f9bff",
+    accent: "var(--tl-accent-flex)",
     linkBase: "/tools/flex-tournament",
     createLink: "/tools/flex-tournament/new",
     renderMeta: (_t, vi) => (vi ? "Flex · Thể thức tùy biến" : "Flex · Custom format"),
@@ -106,7 +106,7 @@ const FORMATS: FormatDef[] = [
       en: "MLP-style team competitions — Dreambreaker tiebreaker included.",
       vi: "Thi đấu đồng đội kiểu MLP — có Dreambreaker phân định thắng thua.",
     },
-    accent: "#ff7a4d",
+    accent: "var(--tl-accent-team)",
     linkBase: "/tools/team-match",
     createLink: "/tools/team-match/new",
     renderMeta: (t, vi) => `${t.team_count} ${vi ? "đội" : "teams"} · ${t.team_roster_size}/${vi ? "đội" : "team"}`,
@@ -117,8 +117,20 @@ const Tournaments = () => {
   const { user } = useAuth();
   const { language } = useI18n();
   const vi = language === "vi";
-  const [userTab, setUserTab] = useState<Tab | null>(null);
-  const [fmtTab, setFmtTab] = useState<Fmt>("quick-tables");
+  // Tabs are URL-controlled (?tab= / ?fmt=) so they deep-link and survive
+  // refresh — same pattern as /feed. replace:true keeps back-button sane.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const userTab: Tab | null =
+    tabParam === "watch" || tabParam === "community" ? tabParam : null;
+  const fmtParam = searchParams.get("fmt");
+  const fmtTab: Fmt = FORMATS.some((f) => f.fmt === fmtParam)
+    ? (fmtParam as Fmt)
+    : "quick-tables";
+  const setUserTab = (t: Tab) =>
+    setSearchParams((prev) => { prev.set("tab", t); return prev; }, { replace: true });
+  const setFmtTab = (f: Fmt) =>
+    setSearchParams((prev) => { prev.set("fmt", f); return prev; }, { replace: true });
   const [fmtStatus, setFmtStatus] = useState<FmtStatus>("ongoing");
 
   // Pro (Watch) data
@@ -204,81 +216,107 @@ const Tournaments = () => {
       <PullToRefreshIndicator state={ptrState} />
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
-          <Link to="/">Home</Link>
+          <Link to="/">{vi ? "Trang chủ" : "Home"}</Link>
           <span className="sep">/</span>
           <span className="current">{vi ? "Giải đấu" : "Tournaments"}</span>
         </nav>
 
         <header className="tl-page-head">
-          <div className="kicker">◆ Watch or play — your call</div>
+          <div className="kicker">◆ {vi ? "Xem hoặc thi đấu — tùy bạn" : "Watch or play — your call"}</div>
           <h1>
-            Tournaments <em className="tl-serif">worth</em> <br />
-            <span className="dim">watching,</span> <span className="sans">or running.</span>
+            {vi ? (
+              <>
+                Giải đấu <em className="tl-serif">đáng</em> <br />
+                <span className="dim">xem,</span> <span className="sans">hoặc tự tổ chức.</span>
+              </>
+            ) : (
+              <>
+                Tournaments <em className="tl-serif">worth</em> <br />
+                <span className="dim">watching,</span> <span className="sans">or running.</span>
+              </>
+            )}
           </h1>
           <p>
-            Professional broadcasts from PPA, APP, MLP and regional tours — and
-            community brackets you or anyone can spin up in under a minute.
+            {vi
+              ? "Sóng trực tiếp từ PPA, APP, MLP và các tour khu vực — cùng bracket cộng đồng ai cũng có thể tạo trong chưa đầy một phút."
+              : "Professional broadcasts from PPA, APP, MLP and regional tours — and community brackets you or anyone can spin up in under a minute."}
           </p>
         </header>
 
         {/* 2 hero cards — Watch / Play */}
         <div className="tl-hub-cards">
-          <Link to="#" className="tl-hub-card" onClick={(e) => { e.preventDefault(); setUserTab("watch"); }}>
+          {/* a11y: in-page tab switch is a <button>, not a <Link to="#"> */}
+          <button
+            type="button"
+            className="tl-hub-card"
+            style={{ font: "inherit", textAlign: "left", border: 0, cursor: "pointer" }}
+            onClick={() => setUserTab("watch")}
+          >
             <div className="tl-hub-kicker">
               <span className="dot" />
-              <span>Watch the pros</span>
+              <span>{vi ? "Xem giải pro" : "Watch the pros"}</span>
             </div>
             <h2 className="tl-hub-title">
-              Every tour, <span className="sans">one feed.</span>
+              {vi ? (
+                <>Mọi tour đấu, <span className="sans">một nguồn xem.</span></>
+              ) : (
+                <>Every tour, <span className="sans">one feed.</span></>
+              )}
             </h2>
             <p className="tl-hub-desc">
-              Live broadcasts, brackets and replays from the world's pickleball tours.
-              One subscription, 4K on flagship courts.
+              {vi
+                ? "Trực tiếp, bracket và replay từ các tour pickleball hàng đầu thế giới. Một nơi duy nhất, 4K trên sân chính."
+                : "Live broadcasts, brackets and replays from the world's pickleball tours. One subscription, 4K on flagship courts."}
             </p>
             <div className="tl-hub-stats">
               <div>
                 <span className="n">{tournaments.length}</span>
-                tournaments
+                {vi ? "giải đấu" : "tournaments"}
               </div>
               <div>
                 <span className="n">{liveProCount}</span>
-                {liveProCount === 1 ? "live now" : "live now"}
+                {vi ? "đang live" : "live now"}
               </div>
               <div>
                 <span className="n">{liveStreams.length}</span>
-                broadcasts
+                {vi ? "buổi phát" : "broadcasts"}
               </div>
             </div>
-            <span className="tl-hub-arrow">Browse pro tours →</span>
-          </Link>
+            <span className="tl-hub-arrow">{vi ? "Xem các tour pro →" : "Browse pro tours →"}</span>
+          </button>
 
           <Link to="/tools" className="tl-hub-card accent">
             <div className="tl-hub-kicker">
               <span className="dot" />
-              <span>Run your own</span>
+              <span>{vi ? "Tự tổ chức" : "Run your own"}</span>
             </div>
             <h2 className="tl-hub-title">
-              60 seconds <span className="sans">to a bracket.</span>
+              {vi ? (
+                <>60 giây <span className="sans">có ngay bracket.</span></>
+              ) : (
+                <>60 seconds <span className="sans">to a bracket.</span></>
+              )}
             </h2>
             <p className="tl-hub-desc">
-              Quick Tables, Doubles Elim, Flex, Team Match. Free. No signup for viewers.
-              Scoreboard, shareable link, printable bracket.
+              {vi
+                ? "Quick Tables, Doubles Elim, Flex, Team Match. Miễn phí. Người xem không cần tài khoản. Bảng điểm, link chia sẻ, bracket in được."
+                : "Quick Tables, Doubles Elim, Flex, Team Match. Free. No signup for viewers. Scoreboard, shareable link, printable bracket."}
             </p>
             <div className="tl-hub-stats">
               <div>
                 <span className="n">{communityCount}</span>
-                active now
+                {vi ? "đang diễn ra" : "active now"}
               </div>
               <div>
                 <span className="n">4</span>
-                formats
+                {vi ? "thể thức" : "formats"}
               </div>
               <div>
                 <span className="n">60s</span>
-                setup
+                {vi ? "tạo giải" : "setup"}
               </div>
             </div>
-            <span className="tl-hub-arrow">Open Bracket Lab →</span>
+            <span className="tl-hub-arrow">{vi ? "Mở Bracket Lab →" : "Open Bracket Lab →"}</span>
           </Link>
         </div>
 
@@ -304,8 +342,20 @@ const Tournaments = () => {
         <div style={{ paddingBottom: 80 }}>
           {tab === "watch" ? (
             tournamentsLoading ? (
-              <div className="tl-empty">
-                <p style={{ fontFamily: "Geist Mono", fontSize: 12, letterSpacing: "0.04em" }}>Loading tournaments…</p>
+              // Skeleton rows matching .tl-list-item geometry
+              <div className="tl-list" aria-busy="true" aria-label={vi ? "Đang tải giải đấu" : "Loading tournaments"}>
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse"
+                    style={{
+                      height: 72,
+                      borderRadius: "var(--tl-radius)",
+                      background: "var(--tl-surface)",
+                      marginBottom: 12,
+                    }}
+                  />
+                ))}
               </div>
             ) : sortedPro.length === 0 ? (
               <div className="tl-empty">
@@ -329,11 +379,16 @@ const Tournaments = () => {
                       <div className="tl-li-body">
                         <h3>{t.name}</h3>
                         <div className="meta">
-                          <span>{t.status}</span>
+                          <span>
+                            {t.status === "ongoing" ? (vi ? "Đang diễn ra" : "Ongoing") :
+                             t.status === "upcoming" ? (vi ? "Sắp diễn ra" : "Upcoming") :
+                             t.status === "ended" ? (vi ? "Đã kết thúc" : "Ended") :
+                             t.status}
+                          </span>
                           {t.end_date && (
                             <>
                               <span className="sep">·</span>
-                              <span>Ends {endDate.d} {endDate.m}</span>
+                              <span>{vi ? "Kết thúc" : "Ends"} {endDate.d} {endDate.m}</span>
                             </>
                           )}
                         </div>
@@ -348,8 +403,22 @@ const Tournaments = () => {
                             fontWeight: 600,
                           }}
                         >
-                          {hasLive ? (vi ? "● Đang live" : "● Live now") :
-                           t.status === "ongoing" ? (vi ? "● Đang diễn ra" : "● Ongoing") :
+                          {(hasLive || t.status === "ongoing") && (
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                display: "inline-block",
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: "currentColor",
+                                marginRight: 6,
+                                verticalAlign: "middle",
+                              }}
+                            />
+                          )}
+                          {hasLive ? (vi ? "Đang live" : "Live now") :
+                           t.status === "ongoing" ? (vi ? "Đang diễn ra" : "Ongoing") :
                            t.status === "upcoming" ? (vi ? "Đăng ký" : "Register") :
                            (vi ? "Xem kết quả" : "View results")}
                         </span>
@@ -377,7 +446,7 @@ const Tournaments = () => {
                       <span className="count-pill">{userBrackets.length}</span>
                     </div>
                   </div>
-                  <div className="tl-list" style={{ ["--fc-accent" as string]: "#00b96b" } as React.CSSProperties}>
+                  <div className="tl-list" style={{ ["--fc-accent" as string]: "var(--tl-accent-qt)" } as React.CSSProperties}>
                     {userBrackets.slice(0, 8).map((b) => {
                       const status = STATUS_LABEL[b.status] ?? { cls: "active" as const, en: b.status, vi: b.status };
                       return (
@@ -385,7 +454,7 @@ const Tournaments = () => {
                           key={b.id}
                           to={`/tools/quick-tables/${b.share_id}`}
                           className="tl-bracket-row"
-                          style={{ ["--fc-accent" as string]: "#00b96b" } as React.CSSProperties}
+                          style={{ ["--fc-accent" as string]: "var(--tl-accent-qt)" } as React.CSSProperties}
                         >
                           <div className="tl-br-fmt" />
                           <div className="tl-br-body">
@@ -409,14 +478,15 @@ const Tournaments = () => {
                 </section>
               )}
 
-              {/* Format tabs */}
-              <div className="tl-subtabs" role="tablist" aria-label={vi ? "Thể thức" : "Format"}>
+              {/* Format tabs — plain buttons with aria-pressed (no tablist:
+                  the ARIA tab pattern requires roving-tabindex keyboard
+                  support we don't implement) */}
+              <div className="tl-subtabs" aria-label={vi ? "Thể thức" : "Format"}>
                 {FORMATS.map((f) => (
                   <button
                     key={f.fmt}
                     type="button"
-                    role="tab"
-                    aria-selected={fmtTab === f.fmt}
+                    aria-pressed={fmtTab === f.fmt}
                     className={`tl-subtab ${fmtTab === f.fmt ? "active" : ""}`}
                     style={{ ["--fc-accent" as string]: f.accent } as React.CSSProperties}
                     onClick={() => setFmtTab(f.fmt)}
@@ -428,13 +498,12 @@ const Tournaments = () => {
               </div>
 
               {/* Status tabs within the selected format */}
-              <div className="tl-subtabs status" role="tablist" aria-label={vi ? "Trạng thái" : "Status"}>
+              <div className="tl-subtabs status" aria-label={vi ? "Trạng thái" : "Status"}>
                 {(["ongoing", "ended"] as const).map((s) => (
                   <button
                     key={s}
                     type="button"
-                    role="tab"
-                    aria-selected={fmtStatus === s}
+                    aria-pressed={fmtStatus === s}
                     className={`tl-subtab ${fmtStatus === s ? "active" : ""}`}
                     style={{ ["--fc-accent" as string]: currentFormat.accent } as React.CSSProperties}
                     onClick={() => setFmtStatus(s)}
