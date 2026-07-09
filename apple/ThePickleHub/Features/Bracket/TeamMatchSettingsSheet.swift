@@ -1,12 +1,28 @@
 import SwiftUI
 
 /// Creator-only tournament management — port of web TeamMatchSettingsDialog +
-/// useTeamMatch.updateTournamentStatus/delete + referee management. Rename,
-/// start the tournament, add/remove referees, delete.
+/// useTeamMatch.updateTournamentDetails/Status/delete + referee management.
+/// Sửa full thông tin giải (tên, link nhóm chat, ngày, địa điểm, thể lệ, lệ phí,
+/// bank, DUPR), bắt đầu giải, thêm/xoá trọng tài, xoá giải.
 @Observable
 final class TMSettingsModel {
     let detail: TMDetail
+    // Thông tin sửa được (khởi tạo từ giải hiện tại).
     var name: String
+    var chatGroupURL: String
+    var hasEventDate: Bool
+    var eventDate: Date
+    var location: String
+    var rules: String
+    var feeVnd: Int
+    var feeTeamVnd: Int
+    var bankCode: String
+    var bankNumber: String
+    var bankName: String
+    var requireDupr: Bool
+    var duprMale: Double
+    var duprFemale: Double
+
     var referees: [TMReferee] = []
     var newEmail = ""
     var busy = false
@@ -17,23 +33,58 @@ final class TMSettingsModel {
 
     init(detail: TMDetail) {
         self.detail = detail
-        self.name = detail.tournament.name
+        let t = detail.tournament
+        self.name = t.name
+        self.chatGroupURL = t.chatGroupURL ?? ""
+        self.hasEventDate = t.eventStartDate != nil
+        self.eventDate = t.eventStartDate ?? Date()
+        self.location = t.location ?? ""
+        self.rules = t.rulesSummary ?? ""
+        self.feeVnd = t.entryFeeVnd ?? 0
+        self.feeTeamVnd = t.entryFeeTeamVnd ?? 0
+        self.bankCode = t.bankCode ?? ""
+        self.bankNumber = t.bankAccountNumber ?? ""
+        self.bankName = t.bankAccountName ?? ""
+        self.requireDupr = t.requireDupr ?? false
+        self.duprMale = t.duprMaxMale ?? 5.0
+        self.duprFemale = t.duprMaxFemale ?? 4.5
     }
 
     var canStart: Bool {
         detail.tournament.status == "setup" || detail.tournament.status == "registration"
+    }
+    var nameValid: Bool { name.trimmingCharacters(in: .whitespaces).count >= 3 }
+    var hasFee: Bool { feeVnd > 0 || feeTeamVnd > 0 }
+
+    private static func dateStr(_ d: Date) -> String {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: d)
     }
 
     @MainActor func loadReferees() async {
         referees = await repo.fetchReferees(tournamentID: tournamentID)
     }
 
-    @MainActor func saveName() async {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed != detail.tournament.name else { return }
+    @MainActor func saveInfo(onChanged: () -> Void) async {
+        guard nameValid else { return }
         busy = true; message = nil
-        do { try await repo.rename(tournamentID: tournamentID, name: trimmed); message = "Đã lưu tên" }
-        catch { message = error.localizedDescription }
+        let d = TeamMatchRepository.DetailsUpdate(
+            name: name.trimmingCharacters(in: .whitespaces),
+            chatGroupURL: chatGroupURL.nonEmpty,
+            eventDate: hasEventDate ? Self.dateStr(eventDate) : nil,
+            location: location.nonEmpty,
+            rulesSummary: rules.nonEmpty,
+            entryFeeVnd: feeVnd > 0 ? feeVnd : nil,
+            entryFeeTeamVnd: feeTeamVnd > 0 ? feeTeamVnd : nil,
+            bankCode: hasFee ? bankCode.nonEmpty : nil,
+            bankAccountNumber: hasFee ? bankNumber.nonEmpty : nil,
+            bankAccountName: hasFee ? bankName.nonEmpty : nil,
+            requireDupr: requireDupr,
+            duprMaxMale: requireDupr ? duprMale : nil,
+            duprMaxFemale: requireDupr ? duprFemale : nil)
+        do {
+            try await repo.updateDetails(tournamentID: tournamentID, d)
+            message = "Đã lưu thông tin"; onChanged()
+        } catch { message = error.localizedDescription }
         busy = false
     }
 
@@ -89,7 +140,11 @@ struct TeamMatchSettingsSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    nameSection
+                    chatSection
+                    infoSection
+                    feeSection
+                    duprSection
+                    saveButton
                     if model.canStart { startSection }
                     refereeSection
                     deleteSection
@@ -119,23 +174,166 @@ struct TeamMatchSettingsSheet: View {
         Text(t.uppercased()).font(TLFont.mono(10.5, .semibold)).tracking(1).foregroundStyle(TLColor.fg3)
     }
 
-    private var nameSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Tên giải")
-            HStack(spacing: 10) {
-                TextField("Tên giải", text: Binding(get: { model.name }, set: { model.name = $0 }))
-                    .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+    private func input(_ placeholder: String, _ binding: Binding<String>, keyboard: UIKeyboardType = .default,
+                       autocap: TextInputAutocapitalization = .sentences) -> some View {
+        TextField(placeholder, text: binding)
+            .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+            .keyboardType(keyboard).textInputAutocapitalization(autocap).autocorrectionDisabled(keyboard == .URL || keyboard == .emailAddress)
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+            .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    // Tính năng chính — link nhóm chat, để trên cùng.
+    private var chatSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "bubble.left.and.bubble.right.fill").font(.system(size: 11)).foregroundStyle(TLColor.accentText)
+                sectionTitle("Link nhóm chat (Zalo/Telegram…)")
+            }
+            input("https://zalo.me/g/... · https://t.me/...",
+                  Binding(get: { model.chatGroupURL }, set: { model.chatGroupURL = $0 }),
+                  keyboard: .URL, autocap: .never)
+            Text("Người xem bấm nút “Nhóm chat” trên giải là mở thẳng nhóm.")
+                .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+        }
+    }
+
+    private var infoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Thông tin giải")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Tên giải").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                input("Tên giải", Binding(get: { model.name }, set: { model.name = $0 }))
+                if !model.nameValid {
+                    Text("Tên tối thiểu 3 ký tự.").font(TLFont.mono(9.5)).foregroundStyle(TLColor.live)
+                }
+            }
+            HStack {
+                Text("Ngày tổ chức").font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
+                Spacer()
+                Toggle("", isOn: Binding(get: { model.hasEventDate }, set: { model.hasEventDate = $0 })).labelsHidden().tint(TLColor.accent)
+            }
+            if model.hasEventDate {
+                DatePicker("", selection: Binding(get: { model.eventDate }, set: { model.eventDate = $0 }), displayedComponents: .date)
+                    .datePickerStyle(.compact).labelsHidden().tint(TLColor.accent)
+                    .environment(\.locale, Locale(identifier: "vi_VN"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Địa điểm").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                input("VD: Sân ABC, Q.7", Binding(get: { model.location }, set: { model.location = $0 }))
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Tóm tắt thể lệ").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                TextField("VD: MLP, 4 game + DreamBreaker…", text: Binding(get: { model.rules }, set: { model.rules = $0 }), axis: .vertical)
+                    .lineLimit(2...5)
+                    .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
                     .padding(.horizontal, 12).padding(.vertical, 10)
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
                     .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
-                Button { Haptics.light(); Task { await model.saveName() } } label: {
-                    Text("Lưu").font(TLFont.mono(11, .bold)).foregroundStyle(TLColor.accentInk)
-                        .padding(.horizontal, 16).padding(.vertical, 11)
-                        .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 11))
-                }
-                .buttonStyle(.plain).disabled(model.busy)
             }
         }
+    }
+
+    private var feeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Lệ phí & tài khoản nhận")
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Phí / VĐV (đ)").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                    TextField("0", value: Binding(get: { model.feeVnd }, set: { model.feeVnd = max(0, $0) }), format: .number)
+                        .keyboardType(.numberPad)
+                        .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                        .padding(.horizontal, 12).padding(.vertical, 10)
+                        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                        .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Phí / đội (đ)").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                    TextField("0", value: Binding(get: { model.feeTeamVnd }, set: { model.feeTeamVnd = max(0, $0) }), format: .number)
+                        .keyboardType(.numberPad)
+                        .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                        .padding(.horizontal, 12).padding(.vertical, 10)
+                        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                        .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                }
+            }
+            if model.hasFee {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Ngân hàng").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                    Menu {
+                        ForEach(VNBank.all) { b in
+                            Button("\(b.shortName) (\(b.code))") { model.bankCode = b.code }
+                        }
+                    } label: {
+                        HStack {
+                            Text(bankLabel).font(TLFont.sans(15)).foregroundStyle(model.bankCode.isEmpty ? TLColor.fg3 : TLColor.fg)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(TLColor.fg3)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 11)
+                        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+                        .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Số tài khoản").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                    input("VD: 0123456789", Binding(get: { model.bankNumber }, set: { model.bankNumber = $0 }), keyboard: .numberPad)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Tên chủ tài khoản").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                    input("VD: NGUYEN VAN A",
+                          Binding(get: { model.bankName }, set: { model.bankName = $0.uppercased() }),
+                          autocap: .characters)
+                }
+            }
+        }
+    }
+
+    private var bankLabel: String {
+        VNBank.all.first(where: { $0.code == model.bankCode }).map { "\($0.shortName) (\($0.code))" } ?? "Chọn ngân hàng"
+    }
+
+    private var duprSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("DUPR")
+            HStack {
+                Text("Giới hạn điểm DUPR").font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
+                Spacer()
+                Toggle("", isOn: Binding(get: { model.requireDupr }, set: { model.requireDupr = $0 })).labelsHidden().tint(TLColor.accent)
+            }
+            if model.requireDupr {
+                HStack(spacing: 10) {
+                    duprField("Nam tối đa", Binding(get: { model.duprMale }, set: { model.duprMale = $0 }))
+                    duprField("Nữ tối đa", Binding(get: { model.duprFemale }, set: { model.duprFemale = $0 }))
+                }
+            }
+        }
+    }
+
+    private func duprField(_ title: String, _ value: Binding<Double>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+            Stepper(value: value, in: 2.0...8.0, step: 0.25) {
+                Text(String(format: "%.2f", value.wrappedValue)).font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
+            .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
+        }
+    }
+
+    private var saveButton: some View {
+        Button { Haptics.light(); Task { await model.saveInfo { onChanged() } } } label: {
+            HStack(spacing: 6) {
+                if model.busy { ProgressView().tint(TLColor.accentInk) }
+                Text("Lưu thông tin").font(TLFont.sans(14, .bold))
+            }
+            .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 13)
+            .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain).disabled(model.busy || !model.nameValid).opacity(model.nameValid ? 1 : 0.5)
     }
 
     private var startSection: some View {

@@ -239,6 +239,7 @@ struct TeamMatchDetailView: View {
     let fallbackName: String
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var model = TeamMatchViewModel()
     @State private var openWeb = false
     @State private var showSettings = false
@@ -262,6 +263,13 @@ struct TeamMatchDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                // Nhóm chat — mở thẳng Zalo/Telegram… Hiện cho mọi người khi có link.
+                if let chat = model.detail?.tournament.chatGroupURL?.nonEmpty, let url = URL(string: chat) {
+                    Button { Haptics.light(); openURL(url) } label: {
+                        Image(systemName: "bubble.left.and.bubble.right.fill").foregroundStyle(TLColor.accentText)
+                    }
+                    .accessibilityLabel("Nhóm chat")
+                }
                 if model.auth.isCreator {
                     Button { showSettings = true } label: {
                         Image(systemName: "gearshape").foregroundStyle(TLColor.accentText)

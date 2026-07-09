@@ -35,7 +35,7 @@ struct TeamMatchRepository {
     func load(shareID: String) async throws -> TMDetail {
         let tournament: TMTournament = try await client
             .from("team_match_tournaments")
-            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, has_repechage, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name, event_date, location, discount_tiers")
+            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, has_repechage, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name, event_date, location, discount_tiers, chat_group_url")
             .eq("share_id", value: shareID)
             .single()
             .execute().value
@@ -316,6 +316,52 @@ struct TeamMatchRepository {
     func rename(tournamentID: UUID, name: String) async throws {
         try await client.from("team_match_tournaments")
             .update(NameUpdate(name: name)).eq("id", value: tournamentID).execute()
+    }
+
+    /// Cập nhật thông tin mềm của giải (BTC) — port web updateTournamentDetails.
+    /// Nil = xoá giá trị (encode null). Không đụng format/số đội/bracket.
+    struct DetailsUpdate {
+        var name: String
+        var chatGroupURL: String?
+        var eventDate: String?
+        var location: String?
+        var rulesSummary: String?
+        var entryFeeVnd: Int?
+        var entryFeeTeamVnd: Int?
+        var bankCode: String?
+        var bankAccountNumber: String?
+        var bankAccountName: String?
+        var requireDupr: Bool
+        var duprMaxMale: Double?
+        var duprMaxFemale: Double?
+    }
+    private struct DetailsUpdatePayload: Encodable {
+        let d: DetailsUpdate
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: K.self)
+            try c.encode(d.name, forKey: .name)
+            try c.encode(d.chatGroupURL, forKey: .chat_group_url)       // null khi nil
+            try c.encode(d.eventDate, forKey: .event_date)
+            try c.encode(d.location, forKey: .location)
+            try c.encode(d.rulesSummary, forKey: .rules_summary)
+            try c.encode(d.entryFeeVnd, forKey: .entry_fee_vnd)
+            try c.encode(d.entryFeeTeamVnd, forKey: .entry_fee_team_vnd)
+            try c.encode(d.bankCode, forKey: .bank_code)
+            try c.encode(d.bankAccountNumber, forKey: .bank_account_number)
+            try c.encode(d.bankAccountName, forKey: .bank_account_name)
+            try c.encode(d.requireDupr, forKey: .require_dupr)
+            try c.encode(d.duprMaxMale, forKey: .dupr_max_male)
+            try c.encode(d.duprMaxFemale, forKey: .dupr_max_female)
+        }
+        enum K: String, CodingKey {
+            case name, chat_group_url, event_date, location, rules_summary
+            case entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name
+            case require_dupr, dupr_max_male, dupr_max_female
+        }
+    }
+    func updateDetails(tournamentID: UUID, _ d: DetailsUpdate) async throws {
+        try await client.from("team_match_tournaments")
+            .update(DetailsUpdatePayload(d: d)).eq("id", value: tournamentID).execute()
     }
 
     func deleteTournament(tournamentID: UUID) async throws {

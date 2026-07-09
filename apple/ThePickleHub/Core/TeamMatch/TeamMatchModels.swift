@@ -34,6 +34,7 @@ struct TMTournament: Decodable, Equatable {
     let eventDate: String?
     let location: String?
     let discountTiers: [TMDiscountTier]?
+    let chatGroupURL: String?   // link nhóm chat (Zalo/Telegram…)
 
     var displayName: String { name.nonEmpty ?? "Giải đồng đội" }
 
@@ -115,6 +116,7 @@ struct TMTournament: Decodable, Equatable {
         case eventDate = "event_date"
         case location
         case discountTiers = "discount_tiers"
+        case chatGroupURL = "chat_group_url"
     }
 }
 
