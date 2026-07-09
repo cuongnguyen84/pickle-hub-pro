@@ -28,7 +28,7 @@ export function ChatLeaderboardPanel({ leaderboard, isLoading }: ChatLeaderboard
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="flex items-center gap-1.5">
-          <Trophy className="h-3.5 w-3.5" style={{ color: "#FFD700" }} />
+          <Trophy className="h-3.5 w-3.5" style={{ color: "var(--tl-gold, #e9b649)" }} />
           {t.chat.topChatters}
         </span>
         {isOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}

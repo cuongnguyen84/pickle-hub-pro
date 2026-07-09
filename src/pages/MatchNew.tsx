@@ -734,7 +734,7 @@ function SlotRow(props: {
                     </span>
                   )}
                   {sourceTag === "dupr" && (
-                    <span style={{ color: "rgb(239,68,68)" }}>
+                    <span style={{ color: "var(--tl-live)" }}>
                       {vi ? "Chưa có ThePickleHub" : "Not on ThePickleHub"}
                     </span>
                   )}

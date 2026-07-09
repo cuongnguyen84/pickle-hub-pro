@@ -24,13 +24,13 @@ const STATUS_CONFIG: Record<
   group_stage: {
     labelVi: "Vòng bảng",
     labelEn: "Group stage",
-    bg: "rgba(79, 155, 255, 0.12)",
-    fg: "rgb(79, 155, 255)",
+    bg: "var(--tl-blue-glow)",
+    fg: "var(--tl-blue)",
   },
   playoff: {
     labelVi: "Playoff",
     labelEn: "Playoff",
-    bg: "rgba(233, 182, 73, 0.12)",
+    bg: "var(--tl-gold-glow)",
     fg: "var(--tl-gold)",
   },
   completed: {

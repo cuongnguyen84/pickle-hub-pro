@@ -63,9 +63,9 @@ function statusPill(status: string) {
   };
   const { label, ok } = map[status] ?? { label: status, ok: null };
   const color = ok === true
-    ? "rgb(34,197,94)"
+    ? "var(--tl-green)"
     : ok === false
-      ? "rgb(239,68,68)"
+      ? "var(--tl-live)"
       : "var(--tl-fg-3)";
   return (
     <span
@@ -437,7 +437,7 @@ function ProposalCard({
           <div>matchCode: <span className="font-mono">{row.dupr_match_code}</span></div>
         )}
         {row.rejection_reason && (
-          <div className="col-span-2" style={{ color: "rgb(239,68,68)" }}>
+          <div className="col-span-2" style={{ color: "var(--tl-live)" }}>
             {vi ? "Lý do reject" : "Reject reason"}: {row.rejection_reason}
           </div>
         )}

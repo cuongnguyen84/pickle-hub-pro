@@ -13,8 +13,8 @@ export function ChatterBadge({ rank, className }: ChatterBadgeProps) {
     return (
       <Crown
         className={cn("h-3.5 w-3.5 shrink-0", className)}
-        style={{ color: "#FFD700" }}
-        fill="#FFD700"
+        style={{ color: "var(--tl-gold, #e9b649)" }}
+        fill="var(--tl-gold, #e9b649)"
         strokeWidth={1.5}
       />
     );

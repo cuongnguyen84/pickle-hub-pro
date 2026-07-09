@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
+import { statusPillStyle } from '@/lib/statusPillStyle';
 import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, Mail, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
@@ -29,13 +30,6 @@ const surfaceCard: React.CSSProperties = {
   padding: 18,
 };
 
-// Status pill colour map — token-driven so it tracks light/dark mode.
-const statusPillStyle = (status: string): React.CSSProperties => {
-  if (status === 'completed') return { background: 'var(--tl-surface)', color: 'var(--tl-fg-3)' };
-  if (status === 'ongoing') return { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' };
-  if (status === 'registration') return { background: 'rgba(79, 155, 255, 0.12)', color: 'rgb(79, 155, 255)' };
-  return { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' };
-};
 
 function TournamentCard({
   tournament,

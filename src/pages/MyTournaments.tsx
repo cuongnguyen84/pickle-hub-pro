@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { statusPillStyle } from "@/lib/statusPillStyle";
 import { Loader2, Eye, Share2, Trash2, LogIn } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,12 +48,6 @@ const toolBadge = (kind: ToolKind, isVi: boolean): string => {
   return isVi ? "ĐỒNG ĐỘI" : "TEAM MATCH";
 };
 
-const statusPillStyle = (status: string): React.CSSProperties => {
-  if (status === "completed") return { background: "var(--tl-surface)", color: "var(--tl-fg-3)" };
-  if (status === "ongoing" || status === "active") return { background: "var(--tl-green-glow)", color: "var(--tl-green)" };
-  if (status === "registration") return { background: "rgba(79, 155, 255, 0.12)", color: "rgb(79, 155, 255)" };
-  return { background: "rgba(233, 182, 73, 0.12)", color: "var(--tl-gold)" };
-};
 
 const tlTabsListClass =
   "flex w-full overflow-x-auto !p-0 !bg-transparent !border-b !border-[var(--tl-border)] !rounded-none gap-2";

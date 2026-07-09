@@ -80,6 +80,9 @@
   /* Semantic */
   --tl-live:       #ff4136;
   --tl-gold:       #e9b649;  /* warm amber secondary — featured / editorial */
+  --tl-gold-glow:  rgba(233, 182, 73, 0.12);
+  --tl-blue:       #4f9bff;  /* informational — registration/open status */
+  --tl-blue-glow:  rgba(79, 155, 255, 0.12);
 
   /* Per-format accents (Tournaments hub / bracket rows) */
   --tl-accent-qt:   #00b96b;  /* Quick Tables */
@@ -2735,6 +2738,9 @@
   --tl-green-glow: rgba(94, 125, 31, 0.14);
   --tl-live:       #d83428;
   --tl-gold:       #8a6410; /* a11y: 5.2:1 on light --tl-bg (was #a37613 ≈3.9:1) */
+  --tl-gold-glow:  rgba(138, 100, 16, 0.12);
+  --tl-blue:       #1d63c4; /* a11y: darkened blue readable on paper bg */
+  --tl-blue-glow:  rgba(29, 99, 196, 0.12);
   --tl-accent-elim: #8a6410; /* amber retuned for paper bg (matches --tl-gold) */
 
   /* Production HSL token swap — light D4 */
@@ -3741,7 +3747,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-br-status.active { background: rgba(0, 185, 107, 0.12); color: var(--tl-green); }
 [data-theme="the-line"] .tl-br-status.setup { background: rgba(233, 182, 73, 0.12); color: var(--tl-gold); }
 [data-theme="the-line"] .tl-br-status.completed { background: var(--tl-surface); color: var(--tl-fg-3); }
-[data-theme="the-line"] .tl-br-status.registration { background: rgba(79, 155, 255, 0.12); color: #4f9bff; }
+[data-theme="the-line"] .tl-br-status.registration { background: var(--tl-blue-glow); color: var(--tl-blue); }
 
 /* ========== Search ========== */
 [data-theme="the-line"] .tl-search-input {

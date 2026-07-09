@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
+import { statusPillStyle } from '@/lib/statusPillStyle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
@@ -59,13 +60,6 @@ const surfaceCard: React.CSSProperties = {
   borderRadius: 'var(--tl-radius-lg)',
 };
 
-// Status pill — token-driven so it tracks light/dark mode
-const statusPillStyle = (status: string): React.CSSProperties => {
-  if (status === 'completed') return { background: 'var(--tl-surface)', color: 'var(--tl-fg-3)' };
-  if (status === 'ongoing') return { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' };
-  if (status === 'registration') return { background: 'rgba(79, 155, 255, 0.12)', color: 'rgb(79, 155, 255)' };
-  return { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' };
-};
 
 // shadcn TabsList override — flatten the rounded pill bg, replace with token border-bottom + flex.
 const tlTabsListClass =

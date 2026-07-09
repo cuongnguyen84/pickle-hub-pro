@@ -70,9 +70,9 @@ const requiredMarker: React.CSSProperties = {
 
 const statusPillStyle = (kind: 'approved' | 'pending' | 'rejected' | 'info'): React.CSSProperties => {
   if (kind === 'approved') return { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' };
-  if (kind === 'pending') return { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' };
+  if (kind === 'pending') return { background: 'var(--tl-gold-glow)', color: 'var(--tl-gold)' };
   if (kind === 'rejected') return { background: 'rgba(255, 65, 54, 0.10)', color: 'var(--tl-live)' };
-  return { background: 'rgba(79, 155, 255, 0.12)', color: 'rgb(79, 155, 255)' };
+  return { background: 'var(--tl-blue-glow)', color: 'var(--tl-blue)' };
 };
 
 const statusBannerStyle = (variant: 'approved' | 'pending' | 'rejected' | 'info'): React.CSSProperties => {
