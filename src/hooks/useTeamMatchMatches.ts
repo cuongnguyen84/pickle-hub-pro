@@ -17,6 +17,7 @@ export interface TeamMatchMatch {
   status: 'pending' | 'lineup' | 'in_progress' | 'completed';
   round_number: number | null;
   is_playoff: boolean;
+  is_repechage?: boolean;   // nhánh Tái sinh (hạng 3,4) — is_playoff vẫn true
   playoff_round: number | null;
   bracket_position: number | null;
   next_match_id: string | null;
@@ -307,7 +308,7 @@ export function useTeamMatchMatchManagement() {
       // First get the match to check if it's a playoff match
       const { data: match, error: fetchError } = await supabase
         .from('team_match_matches')
-        .select('next_match_id, next_match_slot, is_playoff, playoff_round, team_a_id, team_b_id')
+        .select('next_match_id, next_match_slot, is_playoff, is_repechage, playoff_round, team_a_id, team_b_id')
         .eq('id', matchId)
         .single();
       
@@ -340,8 +341,9 @@ export function useTeamMatchMatchManagement() {
         if (advanceError) throw advanceError;
 
         // Check if this is a semifinal match (playoff_round === 2)
-        // If so, send loser to third-place match
-        if (match.playoff_round === 2 && winnerId) {
+        // If so, send loser to third-place match. Nhánh Tái sinh không có trận
+        // tranh hạng 3 → bỏ qua.
+        if (match.playoff_round === 2 && winnerId && !match.is_repechage) {
           const loserId = match.team_a_id === winnerId ? match.team_b_id : match.team_a_id;
           
           if (loserId) {
@@ -530,12 +532,13 @@ export function useTeamMatchMatchManagement() {
 
   // Generate playoff matches with cross-group seeding support
   const generatePlayoffMatchesMutation = useMutation({
-    mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates, hasDreambreaker, pairings }: {
+    mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates, hasDreambreaker, pairings, isRepechage }: {
       tournamentId: string;
       qualifyingTeams: { teamId: string; seed: number }[];
       gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
       hasDreambreaker?: boolean;
       pairings?: { matchIndex: number; bracketSide: 'left' | 'right'; team1Id: string; team2Id: string }[];
+      isRepechage?: boolean;   // true → dựng nhánh Tái sinh (hạng 3,4), cùng cấu trúc
     }) => {
       const teamCount = qualifyingTeams.length;
       if (teamCount < 2 || (teamCount & (teamCount - 1)) !== 0) {
@@ -543,6 +546,8 @@ export function useTeamMatchMatchManagement() {
       }
 
       const totalRounds = Math.log2(teamCount);
+      // display_order lệch +1000 cho nhánh Tái sinh để không đụng thứ tự playoff chính.
+      const orderBase = isRepechage ? 1000 : 0;
       const matches: Omit<TeamMatchMatch, 'id' | 'created_at' | 'updated_at' | 'team_a' | 'team_b'>[] = [];
       
       // First round matches - use pairings if provided (cross-group seeding)
@@ -569,13 +574,14 @@ export function useTeamMatchMatchManagement() {
             status: 'pending',
             round_number: null,
             is_playoff: true,
+            is_repechage: !!isRepechage,
             playoff_round: totalRounds,
             bracket_position: index,
             next_match_id: null,
             next_match_slot: null,
             lineup_a_submitted: false,
             lineup_b_submitted: false,
-            display_order: index,
+            display_order: orderBase + index,
           });
         });
       } else {
@@ -600,13 +606,14 @@ export function useTeamMatchMatchManagement() {
             status: 'pending',
             round_number: null,
             is_playoff: true,
+            is_repechage: !!isRepechage,
             playoff_round: totalRounds,
             bracket_position: i,
             next_match_id: null,
             next_match_slot: null,
             lineup_a_submitted: false,
             lineup_b_submitted: false,
-            display_order: i,
+            display_order: orderBase + i,
           });
         }
       }
@@ -629,13 +636,14 @@ export function useTeamMatchMatchManagement() {
             status: 'pending',
             round_number: null,
             is_playoff: true,
+            is_repechage: !!isRepechage,
             playoff_round: round,
             bracket_position: i,
             next_match_id: null,
             next_match_slot: null, // Will be set when next_match_id is set
             lineup_a_submitted: false,
             lineup_b_submitted: false,
-            display_order: 100 + (totalRounds - round) * 10 + i,
+            display_order: orderBase + 100 + (totalRounds - round) * 10 + i,
           });
         }
       }
