@@ -6174,6 +6174,7 @@ export type Database = {
       team_match_tournaments: {
         Row: {
           bracket_pairing_type: string | null
+          chat_group_url?: string | null
           created_at: string | null
           created_by: string | null
           dreambreaker_game_type:
@@ -6204,6 +6205,7 @@ export type Database = {
         }
         Insert: {
           bracket_pairing_type?: string | null
+          chat_group_url?: string | null
           created_at?: string | null
           created_by?: string | null
           dreambreaker_game_type?:
@@ -6234,6 +6236,7 @@ export type Database = {
         }
         Update: {
           bracket_pairing_type?: string | null
+          chat_group_url?: string | null
           created_at?: string | null
           created_by?: string | null
           dreambreaker_game_type?:
