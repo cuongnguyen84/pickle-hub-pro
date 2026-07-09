@@ -31,6 +31,7 @@ import DoublesRegistrationForm from '@/components/quicktable/DoublesRegistration
 import TeamManager from '@/components/quicktable/TeamManager';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
+import { useConfirm } from '@/hooks/useConfirm';
 import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
 import {
   BYE_PLAYER_ID,
@@ -49,6 +50,7 @@ const QuickTableView = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t, language } = useI18n();
+  const confirm = useConfirm();
   const {
     getTableByShareId, updateMatchScore, updatePlayerStats,
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches,
@@ -480,7 +482,7 @@ const QuickTableView = () => {
 
   const handleRemovePlayer = async (player: QuickTablePlayer) => {
     if (!table || !player.group_id) return;
-    if (!confirm(t.quickTable.view.removeConfirm.replace('{name}', player.name))) return;
+    if (!(await confirm({ description: t.quickTable.view.removeConfirm.replace('{name}', player.name), destructive: true }))) return;
 
     const success = await removePlayerFromGroup(player.id);
     if (success) {
@@ -505,7 +507,7 @@ const QuickTableView = () => {
 
   const handleDeleteTable = async () => {
     if (!table) return;
-    if (!confirm(t.quickTable.view.deleteConfirmFull.replace('{name}', table.name))) {
+    if (!(await confirm({ description: t.quickTable.view.deleteConfirmFull.replace('{name}', table.name), destructive: true }))) {
       return;
     }
 

@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation, useI18n } from '@/i18n';
+import { useTranslation, useI18n, type Translations } from '@/i18n';
+import { useConfirm } from '@/hooks/useConfirm';
 import { DuprChip } from '@/components/dupr/DuprChip';
 import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
 
@@ -150,6 +151,7 @@ export function RegistrationForm({
   const { user } = useAuth();
   const t = useTranslation();
   const { language } = useI18n();
+  const confirm = useConfirm();
   const { submitRegistration, cancelRegistration, loading } = useRegistration();
   const { data: duprConn, isLoading: duprLoading } = useDuprConnection();
   const navigate = useNavigate();
@@ -303,7 +305,7 @@ export function RegistrationForm({
           type="button"
           className="tl-btn"
           onClick={async () => {
-            if (confirm(t.quickTable.registration.cancelConfirm)) {
+            if (await confirm({ description: t.quickTable.registration.cancelConfirm, destructive: true })) {
               await cancelRegistration(existingRegistration.id);
               onRegistrationComplete?.();
             }
@@ -770,7 +772,7 @@ export function RegistrationForm({
 
 // Helper component for displaying registration info — refreshed visual
 // with token table rows.
-function RegistrationInfo({ registration, t }: { registration: Registration; t: any }) {
+function RegistrationInfo({ registration, t }: { registration: Registration; t: Translations }) {
   const rows: Array<{ label: string; value: React.ReactNode }> = [
     {
       label: t.quickTable.registration.infoName,

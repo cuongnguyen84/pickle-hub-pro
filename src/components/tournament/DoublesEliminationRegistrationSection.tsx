@@ -17,6 +17,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Sparkles, Users, Loader2, UserCircle2, X, Trophy, Lock, ChevronRight, Trash2, ShieldCheck, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
 import { useDuprUserSearch, type DuprSearchHit } from "@/hooks/useDuprUserSearch";
 import { useDoublesElimination, type Tournament, type Team } from "@/hooks/useDoublesElimination";
@@ -85,6 +86,7 @@ export function DoublesEliminationRegistrationSection({
   const { user } = useAuth();
   const { language } = useI18n();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const vi = language === "vi";
   const { data: conn, isLoading: connLoading } = useDuprConnection();
   const { registerTeam, cancelTeamRegistration, organizerAddTeam, organizerRemoveTeam, closeRegistration, generateBracket, loading } = useDoublesElimination();
@@ -103,11 +105,12 @@ export function DoublesEliminationRegistrationSection({
   // Sprint E.4 (2026-05-29). Organizer-specific delete handler — bound here
   // so RegisteredTeamsList stays a pure presenter component.
   const handleOrganizerRemove = async (team: Team) => {
-    const ok = window.confirm(
-      vi
+    const ok = await confirm({
+      description: vi
         ? `Xóa đội "${team.team_name}"? Hành động không thể hoàn tác.`
         : `Remove team "${team.team_name}"? This cannot be undone.`,
-    );
+      destructive: true,
+    });
     if (!ok) return;
     const res = await organizerRemoveTeam(tournament.id, team.id);
     if (res.success) {

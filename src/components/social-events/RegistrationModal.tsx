@@ -213,6 +213,8 @@ export function RegistrationModal({
   const [displayName, setDisplayName] = useState(defaultDisplayName ?? "");
   const [selfRatedLevel, setSelfRatedLevel] = useState<string>("");
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
+  // Inline validation errors shown next to the offending field (was toast-only).
+  const [fieldError, setFieldError] = useState<{ name?: string; slot?: string }>({});
   const [otp, setOtp] = useState("");
 
   // Per-slot active registration counts. Used to grey out + disable a
@@ -387,9 +389,10 @@ export function RegistrationModal({
   }
 
   async function handleSendOtp() {
+    setFieldError({});
     const trimmedName = displayName.trim();
     if (trimmedName.length < 1) {
-      toast({ title: reg.nameRequired, variant: "destructive" });
+      setFieldError({ name: reg.nameRequired });
       return;
     }
     // When the organizer configured slots, the player MUST pick one.
@@ -399,17 +402,17 @@ export function RegistrationModal({
     // slot before paying for an OTP.
     if (hasSlots) {
       if (!selectedSlotId) {
-        toast({ title: reg.slotRequired, variant: "destructive" });
+        setFieldError({ slot: reg.slotRequired });
         return;
       }
       const slot = slotList.find((s) => s.id === selectedSlotId);
       if (!slot) {
-        toast({ title: reg.slotInvalid, variant: "destructive" });
+        setFieldError({ slot: reg.slotInvalid });
         return;
       }
       const taken = slotCounts?.[slot.id] ?? 0;
       if (taken >= slot.capacity) {
-        toast({ title: reg.slotFull, variant: "destructive" });
+        setFieldError({ slot: reg.slotFull });
         return;
       }
     }
@@ -736,7 +739,10 @@ export function RegistrationModal({
                           className="mt-1"
                           checked={checked}
                           disabled={full}
-                          onChange={() => setSelectedSlotId(slot.id)}
+                          onChange={() => {
+                            setSelectedSlotId(slot.id);
+                            if (fieldError.slot) setFieldError((p) => ({ ...p, slot: undefined }));
+                          }}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium">{slot.label}</div>
@@ -760,6 +766,9 @@ export function RegistrationModal({
                     );
                   })}
                 </div>
+                {fieldError.slot && (
+                  <p className="text-sm text-destructive">{fieldError.slot}</p>
+                )}
               </div>
             )}
 
@@ -810,11 +819,18 @@ export function RegistrationModal({
                 type="text"
                 placeholder={reg.namePlaceholder}
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  if (fieldError.name) setFieldError((p) => ({ ...p, name: undefined }));
+                }}
                 maxLength={80}
                 autoComplete="name"
+                aria-invalid={Boolean(fieldError.name)}
                 required
               />
+              {fieldError.name && (
+                <p className="text-sm text-destructive">{fieldError.name}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="ev-level">{reg.levelLabel}</Label>
@@ -822,7 +838,7 @@ export function RegistrationModal({
                 id="ev-level"
                 value={selfRatedLevel}
                 onChange={(e) => setSelfRatedLevel(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
               >
                 <option value="">{reg.levelOptional}</option>
                 <option value="2.5">2.5</option>
@@ -887,7 +903,10 @@ export function RegistrationModal({
                           className="mt-1"
                           checked={checked}
                           disabled={full}
-                          onChange={() => setSelectedSlotId(slot.id)}
+                          onChange={() => {
+                            setSelectedSlotId(slot.id);
+                            if (fieldError.slot) setFieldError((p) => ({ ...p, slot: undefined }));
+                          }}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium">{slot.label}</div>
@@ -920,6 +939,9 @@ export function RegistrationModal({
                     );
                   })}
                 </div>
+                {fieldError.slot && (
+                  <p className="text-sm text-destructive">{fieldError.slot}</p>
+                )}
               </div>
             )}
 

@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useTranslation, useI18n } from '@/i18n';
+import { useTranslation, useI18n, type Translations } from '@/i18n';
+import { useConfirm } from '@/hooks/useConfirm';
 
 interface DoublesRegistrationFormProps {
   tableId: string;
@@ -211,6 +212,7 @@ export function DoublesRegistrationForm({
   const { user } = useAuth();
   const t = useTranslation();
   const { language } = useI18n();
+  const confirm = useConfirm();
   const { createTeam, removePartner, loading: teamLoading } = useTeamRegistration();
   const { data: duprConn } = useDuprConnection();
   const {
@@ -589,7 +591,7 @@ export function DoublesRegistrationForm({
                       type="button"
                       className="tl-btn"
                       onClick={async () => {
-                        if (confirm(t.quickTable.removePartnerConfirm)) {
+                        if (await confirm({ description: t.quickTable.removePartnerConfirm, destructive: true })) {
                           const success = await removePartner(existingTeam.id);
                           if (success) onRegistrationComplete?.();
                         }
@@ -1236,7 +1238,7 @@ function TeamStatusPill({
 }: {
   status: string;
   btcApproved: boolean;
-  t: any;
+  t: Translations;
 }) {
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',

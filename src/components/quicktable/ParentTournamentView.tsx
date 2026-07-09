@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { TheLineLayout } from '@/components/layout';
 import { useI18n } from '@/i18n';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useParentTournament, type ParentTournament } from '@/hooks/useParentTournament';
 import type { QuickTable } from '@/hooks/useQuickTable';
 import { Calendar, MapPin, Plus, Trophy, Trash2, Eye } from 'lucide-react';
@@ -33,6 +34,7 @@ const sectionTitle: React.CSSProperties = {
 
 export default function ParentTournamentView({ shareId }: ParentTournamentViewProps) {
   const { t, language } = useI18n();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const { getParentByShareId, isOwner, deleteParent } = useParentTournament();
   const [parent, setParent] = useState<ParentTournament | null>(null);
@@ -70,7 +72,10 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
   const handleDeleteParent = async () => {
     if (!parent) return;
     if (subEvents.length > 0) return;
-    const confirmed = window.confirm(t.quickTable.parentTournament.deleteParentConfirm);
+    const confirmed = await confirm({
+      description: t.quickTable.parentTournament.deleteParentConfirm,
+      destructive: true,
+    });
     if (!confirmed) return;
     const success = await deleteParent(parent.id);
     if (success) {

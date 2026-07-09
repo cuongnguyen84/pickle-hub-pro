@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
 import CourtTimeSettings from '@/components/quicktable/CourtTimeSettings';
 import { useI18n } from '@/i18n';
+import { useConfirm } from '@/hooks/useConfirm';
 import { parseCourtsInput } from '@/lib/round-robin';
 
 interface PlayerInput {
@@ -65,6 +66,7 @@ const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
   const { t, language } = useI18n();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
   const {
@@ -426,7 +428,7 @@ const QuickTableSetup = () => {
 
   const handleDeleteTable = async () => {
     if (!table) return;
-    if (!confirm(`Bạn có chắc chắn muốn xoá giải "${table.name}"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.`)) {
+    if (!(await confirm({ description: `Bạn có chắc chắn muốn xoá giải "${table.name}"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.`, destructive: true }))) {
       return;
     }
     const success = await deleteTable(table.id);

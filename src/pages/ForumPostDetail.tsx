@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useForumPost } from "@/hooks/useForumPost";
@@ -22,6 +23,7 @@ import { toast } from "@/hooks/use-toast";
 const ForumPostDetail = () => {
   const { postId } = useParams();
   const { t, language } = useI18n();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
@@ -36,8 +38,9 @@ const ForumPostDetail = () => {
   const isOwner = user?.id === post?.user_id;
   const canManage = isOwner || isAdmin;
 
-  const handleDelete = () => {
-    if (!postId || !confirm(t.forum.deletePostConfirm)) return;
+  const handleDelete = async () => {
+    if (!postId) return;
+    if (!(await confirm({ description: t.forum.deletePostConfirm, destructive: true }))) return;
     deletePost.mutate(postId, {
       onSuccess: () => {
         toast({ title: t.forum.deletePost });

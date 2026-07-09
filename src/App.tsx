@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { I18nProvider, useI18n } from "@/i18n";
+import { ConfirmProvider } from "@/hooks/useConfirm";
 import { lazy, Suspense, Component, ReactNode, useLayoutEffect } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -510,6 +511,7 @@ const App = () => (
       <I18nProvider>
         <AuthProvider>
           <TooltipProvider>
+           <ConfirmProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -801,6 +803,7 @@ const App = () => (
                 </Suspense>
               </ChunkErrorBoundary>
             </BrowserRouter>
+           </ConfirmProvider>
           </TooltipProvider>
         </AuthProvider>
       </I18nProvider>

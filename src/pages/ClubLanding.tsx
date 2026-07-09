@@ -11,6 +11,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useI18n } from "@/i18n";
 import { useClub, type ClubEventRow } from "@/hooks/useClub";
 import { formatEventDateRange, interp } from "@/lib/social-events/format";
@@ -87,6 +88,7 @@ function EventCard({
 export default function ClubLanding() {
   const { slug } = useParams<{ slug: string }>();
   const { t, language } = useI18n();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading } = useClub(slug);
@@ -130,7 +132,7 @@ export default function ClubLanding() {
   }
 
   async function handleLeave() {
-    if (!window.confirm(m.leaveConfirm)) return;
+    if (!(await confirm({ description: m.leaveConfirm, destructive: true }))) return;
     try {
       await leaveClub.mutateAsync();
       toast({ title: m.leaveSuccess });

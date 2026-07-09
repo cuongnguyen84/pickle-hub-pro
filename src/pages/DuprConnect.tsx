@@ -12,6 +12,7 @@ import { Loader2, ExternalLink, CheckCircle2, Plug } from "lucide-react";
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ export default function DuprConnect() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const vi = language === "vi";
+  const confirm = useConfirm();
 
   const { data: conn, isLoading, refetch } = useDuprConnection();
   // 30-day rating history for the connected user. Hook returns [] until
@@ -38,7 +40,7 @@ export default function DuprConnect() {
   const [disconnecting, setDisconnecting] = useState(false);
 
   const handleDisconnect = async () => {
-    if (!confirm(vi ? "Ngắt kết nối DUPR?" : "Disconnect from DUPR?")) return;
+    if (!(await confirm({ description: vi ? "Ngắt kết nối DUPR?" : "Disconnect from DUPR?", destructive: true }))) return;
     setDisconnecting(true);
     try {
       const { error } = await supabase.functions.invoke("dupr-disconnect", { body: {} });

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Pencil, Trash2, MessageCircle } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { parseMentions } from "@/lib/social/comment-helpers";
 import {
   resolveDeletePermission,
@@ -55,6 +56,7 @@ export function CommentRow({
   onReplySubmitted,
 }: CommentRowProps) {
   const { language } = useI18n();
+  const confirm = useConfirm();
   const [isEditing, setIsEditing] = useState(false);
   const editMutation = useEditCommentMutation();
   const deleteMutation = useDeleteCommentMutation();
@@ -90,13 +92,12 @@ export function CommentRow({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (
-      window.confirm(
-        language === "vi"
-          ? "Xoá bình luận này?"
-          : "Delete this comment?",
-      )
+      await confirm({
+        description: language === "vi" ? "Xoá bình luận này?" : "Delete this comment?",
+        destructive: true,
+      })
     ) {
       deleteMutation.mutate({ matchId, commentId: comment.comment_id });
     }
