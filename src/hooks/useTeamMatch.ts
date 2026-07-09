@@ -51,6 +51,8 @@ export interface TeamMatchTournament {
   event_date?: string | null;
   location?: string | null;
   discount_tiers?: DiscountTier[] | null;
+  // Link nhóm chat (Zalo/Telegram/Messenger…) — người xem bấm mở thẳng
+  chat_group_url?: string | null;
 }
 
 export interface GameTemplate {
@@ -94,6 +96,28 @@ export interface CreateTournamentInput {
   location?: string;
   discount_tiers?: DiscountTier[];
   game_templates: Omit<GameTemplate, 'id' | 'tournament_id'>[];
+}
+
+// Các trường BTC được sửa sau khi tạo giải (metadata mềm — không đụng
+// format/số đội/bracket). Field nào undefined thì bỏ qua khi update.
+export interface UpdateTournamentDetailsInput {
+  tournamentId: string;
+  name?: string;
+  event_date?: string | null;
+  location?: string | null;
+  chat_group_url?: string | null;
+  rules_summary?: string | null;
+  entry_fee_vnd?: number | null;
+  entry_fee_team_vnd?: number | null;
+  bank_code?: string | null;
+  bank_account_number?: string | null;
+  bank_account_name?: string | null;
+  require_dupr?: boolean;
+  dupr_max_male?: number | null;
+  dupr_max_female?: number | null;
+  total_score_mode?: boolean;
+  points_per_game?: number | null;
+  discount_tiers?: DiscountTier[] | null;
 }
 
 // Generate a random share ID
@@ -361,6 +385,30 @@ export function useTeamMatch() {
     },
   });
 
+  // Cập nhật thông tin giải (BTC) — chỉ ghi field được truyền, bỏ qua undefined.
+  const updateDetailsMutation = useMutation({
+    mutationFn: async ({ tournamentId, ...fields }: UpdateTournamentDetailsInput) => {
+      const payload = Object.fromEntries(
+        Object.entries(fields).filter(([, v]) => v !== undefined),
+      );
+      if (Object.keys(payload).length === 0) return;
+      const { error } = await supabase
+        .from('team_match_tournaments')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(payload as any)
+        .eq('id', tournamentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-tournament'] });
+      toast({ title: 'Đã lưu', description: 'Đã cập nhật thông tin giải đấu' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     myTournaments: myTournaments || [],
     publicTournaments: publicTournaments || [],
@@ -371,6 +419,8 @@ export function useTeamMatch() {
     isDeleting: deleteMutation.isPending,
     updateTournamentStatus: updateStatusMutation.mutateAsync,
     isUpdatingStatus: updateStatusMutation.isPending,
+    updateTournamentDetails: updateDetailsMutation.mutateAsync,
+    isUpdatingDetails: updateDetailsMutation.isPending,
   };
 }
 

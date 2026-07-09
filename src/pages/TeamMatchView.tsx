@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Trophy, Calendar, Settings, Copy, Plus, Trash2, RefreshCw } from 'lucide-react';
+import { Users, Trophy, Calendar, Settings, Copy, Plus, Trash2, RefreshCw, MessageCircle } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useUserMembership, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
@@ -110,7 +110,7 @@ export default function TeamMatchView() {
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
   const { data: userTeam } = useUserTeam(tournament?.id);
   const { data: membership } = useUserMembership(tournament?.id);
-  const { updateTournamentStatus, isUpdatingStatus, deleteTournament } = useTeamMatch();
+  const { updateTournamentStatus, isUpdatingStatus, deleteTournament, updateTournamentDetails, isUpdatingDetails } = useTeamMatch();
 
   const { data: teams } = useTeamMatchTeams(tournament?.id);
   const { data: matches } = useTeamMatchMatches(tournament?.id);
@@ -634,6 +634,18 @@ export default function TeamMatchView() {
                 <Copy className="w-4 h-4" />
                 <span className="hidden sm:inline">{t.teamMatch.view.copyLink}</span>
               </button>
+              {tournament.chat_group_url && (
+                <a
+                  href={tournament.chat_group_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tl-btn"
+                  style={{ color: 'var(--tl-green)', borderColor: 'var(--tl-green)' }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{language === 'vi' ? 'Nhóm chat' : 'Chat group'}</span>
+                </a>
+              )}
               {canManage && (
                 <>
                   <button
@@ -947,11 +959,13 @@ export default function TeamMatchView() {
         <TeamMatchSettingsDialog
           open={showSettingsDialog}
           onOpenChange={setShowSettingsDialog}
-          tournamentName={tournament.name}
+          tournament={tournament}
           referees={referees}
           refereesLoading={refereesLoading}
           onAddReferee={addRefereeByEmail}
           onRemoveReferee={removeReferee}
+          onSave={updateTournamentDetails}
+          saving={isUpdatingDetails}
         />
 
         <AlertDialog open={showStartTournamentDialog} onOpenChange={setShowStartTournamentDialog}>
