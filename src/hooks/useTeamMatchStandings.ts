@@ -52,7 +52,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
 
     // Initialize all approved teams
     approvedTeams.forEach(team => {
-      const group = groups?.find(g => g.id === (team as any).group_id);
+      const group = groups?.find(g => g.id === team.group_id);
       standingsMap.set(team.id, {
         team,
         played: 0,
@@ -63,7 +63,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
         pointsFor: 0,
         pointsAgainst: 0,
         pointsDiff: 0,
-        groupId: (team as any).group_id || undefined,
+        groupId: team.group_id || undefined,
         groupName: group?.name || undefined,
       });
     });
