@@ -212,7 +212,8 @@ export function TeamMatchMatchesTab({
   const v = t.teamMatch.view;
   const isSingleElimination = tournament.format === 'single_elimination';
   const roundRobinMatches = matches?.filter(m => !m.is_playoff) || [];
-  const playoffMatches = matches?.filter(m => m.is_playoff) || [];
+  const playoffMatches = matches?.filter(m => m.is_playoff && !m.is_repechage) || [];
+  const repechageMatches = matches?.filter(m => m.is_repechage) || [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -297,6 +298,26 @@ export function TeamMatchMatchesTab({
             onLineupClick={(match, teamId) => onLineupClick(match, teamId)}
             onScoreMatch={onScoreMatch}
             isSingleElimination={isSingleElimination}
+          />
+        </div>
+      )}
+
+      {/* Repechage bracket (Tái sinh — hạng 3,4) */}
+      {repechageMatches.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <h3 style={{ ...sectionTitle, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Trophy className="h-5 w-5" style={{ color: 'var(--tl-gold)' }} />
+            {language === 'vi' ? 'Vòng Tái sinh (hạng 3,4)' : 'Repechage (3rd–4th)'}
+          </h3>
+          <PlayoffBracket
+            matches={repechageMatches}
+            userTeamId={userTeam?.id}
+            isOwner={isOwner}
+            canEditScores={userRole.canEditScores}
+            onMatchClick={onMatchClick}
+            onLineupClick={(match, teamId) => onLineupClick(match, teamId)}
+            onScoreMatch={onScoreMatch}
+            isSingleElimination={false}
           />
         </div>
       )}

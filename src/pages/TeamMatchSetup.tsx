@@ -148,6 +148,8 @@ export default function TeamMatchSetup() {
   const [format, setFormat] = useState<'round_robin' | 'single_elimination' | 'rr_playoff'>('round_robin');
   const [playoffTeamCount, setPlayoffTeamCount] = useState(4);
   const [hasThirdPlaceMatch, setHasThirdPlaceMatch] = useState(false);
+  // rr_playoff: nhánh Tái sinh — hạng 3,4 mỗi bảng đá bracket phụ (như playoff hạng 1,2).
+  const [hasRepechage, setHasRepechage] = useState(false);
 
   // Step 5 — Thể lệ & Lệ phí. QR VietQR dựng từ bank trio khi phí > 0.
   const [rulesSummary, setRulesSummary] = useState('');
@@ -251,6 +253,7 @@ export default function TeamMatchSetup() {
       has_dreambreaker: effectiveDreambreaker,
       require_min_games_per_player: requireMinGames,
       has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
+      has_repechage: format === 'rr_playoff' ? hasRepechage : false,
       total_score_mode: totalScoreMode,
       points_per_game: pointsPerGame,
       event_date: eventDate || undefined,
@@ -1000,6 +1003,18 @@ export default function TeamMatchSetup() {
                         ))}
                       </SelectContent>
                     </Select>
+
+                    <div style={toggleRowStyle}>
+                      <div>
+                        <Label>{language === 'vi' ? 'Vòng Tái sinh' : 'Repechage'}</Label>
+                        <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                          {language === 'vi'
+                            ? 'Hạng 3,4 mỗi bảng đá thêm nhánh phụ (như playoff cho hạng 1,2). Hạng 3 bảng X gặp hạng 4 bảng Y.'
+                            : 'Teams ranked 3rd–4th in each group play a side bracket (mirrors the 1st–2nd playoff). 3rd of X vs 4th of Y.'}
+                        </p>
+                      </div>
+                      <Switch checked={hasRepechage} onCheckedChange={setHasRepechage} />
+                    </div>
                   </div>
                 )}
 
