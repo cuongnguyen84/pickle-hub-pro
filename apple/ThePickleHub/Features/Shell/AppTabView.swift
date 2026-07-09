@@ -116,11 +116,13 @@ struct AppTabView: View {
             }
             .overlay(alignment: .topTrailing) {
                 if unreadCount > 0 {
-                    Circle().fill(TLColor.live).frame(width: 7, height: 7).offset(x: 1, y: -1)
+                    Circle().fill(TLColor.live).frame(width: 7, height: 7).offset(x: -7, y: 7)
                 }
             }
+            .accessibilityValue(unreadCount > 0 ? "Có thông báo mới" : "")
 
             NavigationLink { ProfileView() } label: { toolbarAvatar }
+                .accessibilityLabel("Hồ sơ")
         }
         .frame(maxWidth: .infinity)
     }
@@ -131,7 +133,8 @@ struct AppTabView: View {
             Image(systemName: system)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(TLColor.accentText)
-                .frame(width: 28, height: 28)
+                .frame(width: 44, height: 44)   // ≥44pt hit target; glyph stays 15pt
+                .contentShape(Rectangle())
         }
         .accessibilityLabel(label)
     }

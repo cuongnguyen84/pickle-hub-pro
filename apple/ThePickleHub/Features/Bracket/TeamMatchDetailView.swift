@@ -60,13 +60,16 @@ final class TeamMatchViewModel {
         }
     }
 
-    /// Captain: "Đã chuyển khoản" → team về trạng thái "claimed" (đỏ).
+    /// Captain: "Đã chuyển khoản" → team về trạng thái "claimed" (đỏ). Trả false nếu RPC fail.
     @MainActor
-    func claimPayment(shareID: String, teamID: UUID) async {
+    @discardableResult
+    func claimPayment(shareID: String, teamID: UUID) async -> Bool {
         working = true; actionError = nil
+        var ok = true
         do { try await repo.claimTeamPayment(teamID: teamID); await load(shareID: shareID) }
-        catch { actionError = error.localizedDescription }
+        catch { actionError = error.localizedDescription; ok = false }
         working = false
+        return ok
     }
 
     /// BTC xác nhận đã nhận → team về trạng thái "confirmed" (xanh, chính thức).
@@ -1472,7 +1475,7 @@ private struct GroupSetupSheet: View {
         let done = drawComplete
         let revealing = subPhase == .reveal && !done
         HStack(spacing: 12) {
-            Image(systemName: done ? "sparkles" : "shuffle").font(.system(size: 18)).foregroundStyle(TLColor.accent)
+            Image(systemName: done ? "sparkles" : "shuffle").font(.system(size: 18)).foregroundStyle(TLColor.accentText)
             if done {
                 Text("Bốc thăm hoàn tất").font(TLFont.serif(21)).foregroundStyle(TLColor.fg)
             } else if revealing, let cur = currentTeam, let gi = currentGroup {
@@ -1481,7 +1484,7 @@ private struct GroupSetupSheet: View {
                     HStack(spacing: 8) {
                         Text(cur.teamName).font(TLFont.serif(23)).foregroundStyle(TLColor.fg).lineLimit(1)
                             .matchedGeometryEffect(id: cur.id, in: flyNS)
-                        Image(systemName: "arrow.right").font(.system(size: 12, weight: .bold)).foregroundStyle(TLColor.accent)
+                        Image(systemName: "arrow.right").font(.system(size: 12, weight: .bold)).foregroundStyle(TLColor.accentText)
                         Text("Bảng \(names[gi])").font(TLFont.mono(13, .bold)).foregroundStyle(TLColor.accentInk)
                             .padding(.horizontal, 10).padding(.vertical, 4).background(TLColor.accent, in: Capsule())
                     }

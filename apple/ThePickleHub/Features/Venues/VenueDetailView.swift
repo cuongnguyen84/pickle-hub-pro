@@ -75,7 +75,7 @@ struct VenueDetailView: View {
                 Text(v.displayName).font(TLFont.serif(28)).foregroundStyle(TLColor.fg)
                     .fixedSize(horizontal: false, vertical: true)
                 if v.isVerified == true {
-                    Image(systemName: "checkmark.seal.fill").font(.system(size: 17)).foregroundStyle(TLColor.accent)
+                    Image(systemName: "checkmark.seal.fill").font(.system(size: 17)).foregroundStyle(TLColor.accentText)
                 }
             }
             Label(v.fullAddress, systemImage: "mappin.and.ellipse")

@@ -14,6 +14,7 @@ final class TMLineupModel {
     var selections: [UUID: [UUID]] = [:]  // gameId → ordered roster ids
     var saving = false
     var error: String?
+    var dirty = false                     // unsaved lineup edits (guards swipe-dismiss)
 
     private let repo = TeamMatchRepository()
 
@@ -72,6 +73,7 @@ final class TMLineupModel {
         var sel = selections[g.id] ?? []
         if let idx = sel.firstIndex(of: player.id) {
             sel.remove(at: idx)
+            dirty = true
         } else if sel.count < totalNeeded(g) {
             if g.isDreambreaker != true {
                 let req = requirement(g)
@@ -80,6 +82,7 @@ final class TMLineupModel {
                 if player.isFemale && chosen.filter({ $0.isFemale }).count >= req.female { return }
             }
             sel.append(player.id)
+            dirty = true
         }
         selections[g.id] = sel
     }
@@ -118,6 +121,7 @@ struct TeamMatchLineupSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var model: TMLineupModel
+    @State private var confirmDiscard = false
 
     init(detail: TMDetail, match: TMMatch, auth: TMScoreAuth, onSaved: @escaping () -> Void) {
         self.detail = detail; self.match = match; self.auth = auth; self.onSaved = onSaved
@@ -146,13 +150,18 @@ struct TeamMatchLineupSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Đóng") { dismiss() }.foregroundStyle(TLColor.fg3)
+                    Button("Đóng") {
+                        if model.dirty { confirmDiscard = true } else { dismiss() }
+                    }.foregroundStyle(TLColor.fg3)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     if model.canEdit {
                         Button {
-                            Haptics.success()
-                            Task { await model.save { onSaved(); dismiss() } }
+                            Haptics.light()
+                            Task {
+                                await model.save { onSaved(); dismiss() }
+                                if model.error == nil { Haptics.success() } else { Haptics.error() }
+                            }
                         } label: {
                             if model.saving { ProgressView().tint(TLColor.accentText) }
                             else { Text("Lưu").font(TLFont.sans(15, .semibold)) }
@@ -162,7 +171,12 @@ struct TeamMatchLineupSheet: View {
                     }
                 }
             }
+            .confirmationDialog("Bỏ thay đổi?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+                Button("Bỏ thay đổi", role: .destructive) { dismiss() }
+                Button("Tiếp tục chỉnh", role: .cancel) {}
+            }
         }
+        .interactiveDismissDisabled(model.dirty)
     }
 
     private var teamPicker: some View {
@@ -188,7 +202,7 @@ struct TeamMatchLineupSheet: View {
                 Text(requirementText(g, req)).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
                 Spacer()
                 Image(systemName: valid ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 13)).foregroundStyle(valid ? TLColor.accent : TLColor.fg4)
+                    .font(.system(size: 13)).foregroundStyle(valid ? TLColor.accentText : TLColor.fg4)
             }
             FlowChips(players: model.editingRoster,
                       isSelected: { model.isSelected(g, $0) },

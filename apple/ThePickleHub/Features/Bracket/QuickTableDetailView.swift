@@ -335,6 +335,7 @@ struct QuickTableDetailView: View {
 
     @State private var model = QuickTableViewModel()
     @State private var openWeb = false
+    @ScaledMetric(relativeTo: .footnote) private var chevronSize: CGFloat = 11
 
     var body: some View {
         ScrollView {
@@ -421,7 +422,7 @@ struct QuickTableDetailView: View {
                 Spacer()
                 Text(courtCount > 0 ? "\(courtCount) sân" : "Chưa đặt")
                     .font(TLFont.mono(courtCount > 0 ? 11 : 10)).foregroundStyle(courtCount > 0 ? TLColor.fg3 : TLColor.fg4)
-                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(TLColor.fg4)
+                Image(systemName: "chevron.right").font(.system(size: chevronSize, weight: .semibold)).foregroundStyle(TLColor.fg4)
             }
             .padding(14)
             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
@@ -436,7 +437,7 @@ struct QuickTableDetailView: View {
                 Text("Trọng tài").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg)
                 Spacer()
                 Text("\(model.referees.count)").font(TLFont.mono(11)).foregroundStyle(TLColor.fg3)
-                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(TLColor.fg4)
+                Image(systemName: "chevron.right").font(.system(size: chevronSize, weight: .semibold)).foregroundStyle(TLColor.fg4)
             }
             .padding(14)
             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
@@ -461,7 +462,7 @@ struct QuickTableDetailView: View {
                     } else {
                         Text("\(model.registrations.count)").font(TLFont.mono(11)).foregroundStyle(TLColor.fg3)
                     }
-                    Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(TLColor.fg4)
+                    Image(systemName: "chevron.right").font(.system(size: chevronSize, weight: .semibold)).foregroundStyle(TLColor.fg4)
                 }
                 .padding(14)
                 .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))

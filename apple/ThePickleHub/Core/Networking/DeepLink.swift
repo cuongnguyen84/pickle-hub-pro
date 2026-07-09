@@ -14,12 +14,15 @@ enum DeepLink: Identifiable, Equatable {
     case joinInvite(code: String)
     /// `/social/:slug` — chi tiết sự kiện giao lưu.
     case socialEvent(slug: String)
+    /// `/live/:id` — livestream (từ notification "Nhắc tôi" hoặc link).
+    case livestream(id: UUID)
 
     var id: String {
         switch self {
         case .registration(let t): "dang-ky/\(t)"
         case .joinInvite(let c): "join/\(c)"
         case .socialEvent(let s): "social/\(s)"
+        case .livestream(let i): "live/\(i.uuidString)"
         }
     }
 
@@ -52,6 +55,9 @@ enum DeepLink: Identifiable, Equatable {
             return .joinInvite(code: segments[1])
         case ("social", 2):
             return .socialEvent(slug: segments[1])
+        case ("live", 2):
+            guard let uuid = UUID(uuidString: segments[1]) else { return nil }
+            return .livestream(id: uuid)
         default:
             return nil
         }

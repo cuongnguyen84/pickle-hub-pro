@@ -257,7 +257,7 @@ struct TeamMatchManageTeamsView: View {
                             .padding(.horizontal, 5).padding(.vertical, 2)
                             .background(TLColor.gold.opacity(0.12), in: Capsule())
                         Button { Haptics.success(); Task { await model.approveMember(m.id) } } label: {
-                            Image(systemName: "checkmark.circle.fill").font(.system(size: 15)).foregroundStyle(TLColor.accent)
+                            Image(systemName: "checkmark.circle.fill").font(.system(size: 15)).foregroundStyle(TLColor.accentText)
                         }.buttonStyle(.plain)
                     }
                     Button { Haptics.light(); Task { await model.removeMember(m.id) } } label: {

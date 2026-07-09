@@ -163,8 +163,13 @@ struct CreateTeamMatchView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var model = CreateTeamMatchModel()
+    @State private var confirmDiscard = false
 
     private let steps = ["Thông tin", "Game", "DreamBreaker", "Thể thức", "Lệ phí"]
+
+    private var hasEdits: Bool {
+        !model.name.isEmpty || !model.location.isEmpty || model.step > 1
+    }
 
     var body: some View {
         NavigationStack {
@@ -190,8 +195,19 @@ struct CreateTeamMatchView: View {
             .background(TLColor.bg)
             .navigationTitle("Tạo giải đồng đội")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) } }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Hủy") {
+                        if hasEdits { confirmDiscard = true } else { dismiss() }
+                    }.foregroundStyle(TLColor.fg3)
+                }
+            }
+            .confirmationDialog("Bỏ thay đổi?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+                Button("Bỏ thay đổi", role: .destructive) { dismiss() }
+                Button("Tiếp tục nhập", role: .cancel) {}
+            }
         }
+        .interactiveDismissDisabled(hasEdits)
     }
 
     private var stepBar: some View {
@@ -475,7 +491,7 @@ struct CreateTeamMatchView: View {
         return Button { Haptics.light(); model.format = value } label: {
             HStack(spacing: 12) {
                 Image(systemName: sel ? "largecircle.fill.circle" : "circle")
-                    .foregroundStyle(sel ? TLColor.accent : TLColor.fg4)
+                    .foregroundStyle(sel ? TLColor.accentText : TLColor.fg4)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg)
                     Text(desc).font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
@@ -694,8 +710,11 @@ struct CreateTeamMatchView: View {
                 }.buttonStyle(.plain).disabled(!model.canProceed()).opacity(model.canProceed() ? 1 : 0.5)
             } else {
                 Button {
-                    Haptics.success()
-                    Task { await model.create { shareID in onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss() } }
+                    Haptics.light()
+                    Task {
+                        await model.create { shareID in onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss() }
+                        if model.error == nil { Haptics.success() } else { Haptics.error() }
+                    }
                 } label: {
                     HStack(spacing: 6) {
                         if model.creating { ProgressView().tint(TLColor.accentInk) }

@@ -11,11 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useSystemSettings, useUpdateSystemSetting } from "@/hooks/useSystemSettings";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function AdminOverview() {
   const { t } = useI18n();
-  const { toast } = useToast();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: liveStreams, isLoading: liveLoading } = useRecentLivestreams(5);
   const { data: recentVideos, isLoading: videosLoading } = useRecentVideos(5);
@@ -24,7 +23,7 @@ export default function AdminOverview() {
 
   const handleSettingChange = (key: string, value: any) => {
     updateSetting.mutate({ key, value }, {
-      onSuccess: () => toast({ title: t.admin.settings.savedSuccess }),
+      onSuccess: () => toast.success(t.admin.settings.savedSuccess),
     });
   };
 

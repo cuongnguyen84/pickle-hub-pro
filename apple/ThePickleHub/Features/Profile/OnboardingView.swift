@@ -32,9 +32,14 @@ final class OnboardingModel {
         return !saving && n.count >= 2 && n.count <= 50 && usernameValid && available == true && skill != nil
     }
 
+    /// User's current username — checking it must read "available" (self-bypass,
+    /// mirrors web ProfileSetup: username_is_available returns false for your own row).
+    private var ownUsername: String?
+
     func seed(from profile: Profile) {
         if displayName.isEmpty { displayName = profile.resolvedDisplayName == "—" ? "" : profile.resolvedDisplayName }
-        if username.isEmpty, let u = profile.username?.nonEmpty { username = u; scheduleCheck() }
+        ownUsername = profile.username?.nonEmpty
+        if username.isEmpty, let u = ownUsername { username = u; scheduleCheck() }
     }
 
     func onUsernameEdit(_ new: String) {
@@ -53,6 +58,7 @@ final class OnboardingModel {
         checkTask?.cancel()
         available = nil
         guard usernameValid else { checking = false; return }
+        if username == ownUsername { available = true; checking = false; return }
         checking = true
         checkTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(350))
@@ -92,7 +98,9 @@ struct OnboardingView: View {
                     .font(TLFont.sans(14)).foregroundStyle(TLColor.fg2).fixedSize(horizontal: false, vertical: true)
 
                 field("Tên hiển thị") {
-                    tf($model.displayName, "Tên của bạn").onChange(of: model.displayName) { _, _ in model.suggestFromName() }
+                    tf($model.displayName, "Tên của bạn")
+                        .textContentType(.name)
+                        .onChange(of: model.displayName) { _, _ in model.suggestFromName() }
                 }
                 field("Username") {
                     VStack(alignment: .leading, spacing: 4) {
@@ -101,6 +109,7 @@ struct OnboardingView: View {
                             TextField("ten-cua-ban", text: Binding(get: { model.username }, set: { model.onUsernameEdit($0) }))
                                 .font(TLFont.mono(14)).foregroundStyle(TLColor.fg)
                                 .autocorrectionDisabled().textInputAutocapitalization(.never)
+                                .textContentType(.username).keyboardType(.asciiCapable)
                         }
                         .padding(.horizontal, 11).padding(.vertical, 10)
                         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 10))
@@ -115,7 +124,11 @@ struct OnboardingView: View {
                 if let err = model.error { Text(err).font(TLFont.sans(12)).foregroundStyle(TLColor.live) }
 
                 Button {
-                    Haptics.success(); Task { await model.save { onDone(); dismiss() } }
+                    Haptics.light()
+                    Task {
+                        await model.save { onDone(); dismiss() }
+                        if model.error == nil { Haptics.success() } else { Haptics.error() }
+                    }
                 } label: {
                     HStack(spacing: 6) {
                         if model.saving { ProgressView().tint(TLColor.accentInk) }
@@ -135,13 +148,13 @@ struct OnboardingView: View {
 
     @ViewBuilder private var usernameStatus: some View {
         if !model.username.isEmpty && !model.usernameValid {
-            Text("3–32 ký tự, chữ thường/số/gạch ngang.").font(TLFont.mono(9.5)).foregroundStyle(TLColor.live)
+            Text("3–32 ký tự, chữ thường/số/gạch ngang.").font(TLFont.mono(11)).foregroundStyle(TLColor.live)
         } else if model.usernameValid && model.checking {
-            Text("Đang kiểm tra…").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+            Text("Đang kiểm tra…").font(TLFont.mono(11)).foregroundStyle(TLColor.fg4)
         } else if model.available == false {
-            Text("Username đã có người dùng.").font(TLFont.mono(9.5)).foregroundStyle(TLColor.live)
+            Text("Username đã có người dùng.").font(TLFont.mono(11)).foregroundStyle(TLColor.live)
         } else if model.available == true {
-            Text("Khả dụng ✓").font(TLFont.mono(9.5)).foregroundStyle(TLColor.accentText)
+            Text("Khả dụng ✓").font(TLFont.mono(11)).foregroundStyle(TLColor.accentText)
         }
     }
 

@@ -15,7 +15,7 @@ struct FeedHappeningCard: View {
     }
 
     private var tint: Color {
-        happening.kind == .live ? Color(red: 0.9, green: 0.28, blue: 0.3) : TLColor.accentText
+        happening.kind == .live ? TLColor.live : TLColor.accentText
     }
 
     private var cta: String {

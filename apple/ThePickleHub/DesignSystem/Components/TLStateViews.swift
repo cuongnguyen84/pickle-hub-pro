@@ -36,9 +36,11 @@ struct TLEmptyState: View {
     var actionTitle: String? = nil
     var action: (() -> Void)? = nil
 
+    @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 34
+
     var body: some View {
         VStack(spacing: TLSpacing.md) {
-            Image(systemName: icon).font(.system(size: 34)).foregroundStyle(TLColor.fg4)
+            Image(systemName: icon).font(.system(size: iconSize)).foregroundStyle(TLColor.fg4)
             Text(title).font(TLType.titleSans(15)).foregroundStyle(TLColor.fg)
             if let subtitle {
                 Text(subtitle)

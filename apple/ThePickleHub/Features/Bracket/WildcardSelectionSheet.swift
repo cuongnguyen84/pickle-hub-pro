@@ -51,7 +51,7 @@ struct WildcardSelectionSheet: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18)).foregroundStyle(isOn ? TLColor.accent : TLColor.fg4)
+                    .font(.system(size: 18)).foregroundStyle(isOn ? TLColor.accentText : TLColor.fg4)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(p.name).font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg).lineLimit(1)
