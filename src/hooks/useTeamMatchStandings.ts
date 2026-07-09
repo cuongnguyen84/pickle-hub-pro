@@ -360,6 +360,86 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
     };
   }, [qualifyingTeams, groups, standingsByGroup]);
 
+  /**
+   * Repechage ("Tái sinh") seeding — cùng logic phân nhánh như playoff nhưng lấy
+   * tầng NGAY SAU nhóm vào playoff (playoff lấy hạng 1,2 → tái sinh lấy hạng 3,4).
+   * `teamCount` = số đội mỗi nhánh (bằng playoff). ponytail: mirror shape của
+   * generatePlayoffSeeding cho 1 bảng / ≠2 bảng (1vN) và đúng 2 bảng (chéo bảng).
+   */
+  const generateRepechageSeeding = useMemo(() => {
+    return (teamCount: number): { seeds: PlayoffSeed[]; pairings: PlayoffPairing[] } => {
+      const twoGroups = groups && groups.length === 2;
+
+      // Không đúng-2-bảng: lấy hạng [teamCount .. 2×teamCount) của BXH tổng, ghép 1vN.
+      if (!twoGroups) {
+        const pool = standings.slice(teamCount, teamCount * 2);
+        const seeds: PlayoffSeed[] = pool.map((standing, index) => ({
+          teamId: standing.team.id,
+          seed: index + 1,
+          groupId: standing.groupId,
+          groupRank: standing.groupRank,
+          standing,
+        }));
+        const pairings: PlayoffPairing[] = [];
+        for (let i = 0; i < teamCount / 2 && seeds[i] && seeds[teamCount - 1 - i]; i++) {
+          pairings.push({
+            matchIndex: i,
+            bracketSide: i < teamCount / 4 ? 'left' : 'right',
+            team1: seeds[i],
+            team2: seeds[teamCount - 1 - i],
+          });
+        }
+        return { seeds, pairings };
+      }
+
+      // Đúng 2 bảng: tầng kế tiếp mỗi bảng (perGroup=teamCount/2). Vd top-2 vào
+      // playoff → tái sinh lấy hạng 3,4 mỗi bảng, ghép chéo bảng như playoff.
+      const [groupAId, groupBId] = Array.from(standingsByGroup.keys());
+      const perGroup = teamCount / 2;
+      const groupATeams = (standingsByGroup.get(groupAId) || []).slice(perGroup, perGroup * 2);
+      const groupBTeams = (standingsByGroup.get(groupBId) || []).slice(perGroup, perGroup * 2);
+
+      const seeds: PlayoffSeed[] = [];
+      const pairings: PlayoffPairing[] = [];
+      const mkSeed = (s: TeamStanding | undefined, seed: number, gId: string, rank: number): PlayoffSeed => ({
+        teamId: s?.team.id || '', seed, groupId: gId, groupRank: rank, standing: s as TeamStanding,
+      });
+
+      if (perGroup === 1) {
+        // Chỉ 1 trận: tầng-2 bảng A vs tầng-2 bảng B.
+        if (groupATeams[0] && groupBTeams[0]) {
+          seeds.push(mkSeed(groupATeams[0], 1, groupAId, perGroup + 1), mkSeed(groupBTeams[0], 2, groupBId, perGroup + 1));
+          pairings.push({ matchIndex: 0, bracketSide: 'left', team1: seeds[0], team2: seeds[1] });
+        }
+        return { seeds, pairings };
+      }
+
+      // perGroup ≥ 2: chéo bảng, tách nửa trái/phải (mirror nhánh 8+ của playoff).
+      let seedIndex = 0;
+      for (let i = 0; i < perGroup / 2; i++) {
+        const a = groupATeams[i], b = groupBTeams[perGroup - 1 - i];
+        if (a && b) {
+          const s1 = mkSeed(a, seedIndex + 1, groupAId, perGroup + 1 + i);
+          const s2 = mkSeed(b, seedIndex + 2, groupBId, perGroup * 2 - i);
+          seeds.push(s1, s2);
+          pairings.push({ matchIndex: pairings.length, bracketSide: 'left', team1: s1, team2: s2 });
+          seedIndex += 2;
+        }
+      }
+      for (let i = 0; i < perGroup / 2; i++) {
+        const b = groupBTeams[i], a = groupATeams[perGroup - 1 - i];
+        if (a && b) {
+          const s1 = mkSeed(b, seedIndex + 1, groupBId, perGroup + 1 + i);
+          const s2 = mkSeed(a, seedIndex + 2, groupAId, perGroup * 2 - i);
+          seeds.push(s1, s2);
+          pairings.push({ matchIndex: pairings.length, bracketSide: 'right', team1: s1, team2: s2 });
+          seedIndex += 2;
+        }
+      }
+      return { seeds, pairings };
+    };
+  }, [standings, groups, standingsByGroup]);
+
   // Check if round-robin is complete
   const roundRobinComplete = useMemo(() => {
     if (!matches || !teams) return false;
@@ -389,6 +469,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
     standingsByGroup,
     qualifyingTeams,
     generatePlayoffSeeding,
+    generateRepechageSeeding,
     isLoading: isLoadingMatches || isLoadingTeams || isLoadingGroups,
     roundRobinComplete,
     hasPlayoff,

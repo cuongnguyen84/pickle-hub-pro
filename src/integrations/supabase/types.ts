@@ -5878,6 +5878,7 @@ export type Database = {
           group_id: string | null
           id: string
           is_playoff: boolean | null
+          is_repechage: boolean | null
           is_third_place: boolean | null
           lineup_a_submitted: boolean | null
           lineup_b_submitted: boolean | null
@@ -5903,6 +5904,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           is_playoff?: boolean | null
+          is_repechage?: boolean | null
           is_third_place?: boolean | null
           lineup_a_submitted?: boolean | null
           lineup_b_submitted?: boolean | null
@@ -5928,6 +5930,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           is_playoff?: boolean | null
+          is_repechage?: boolean | null
           is_third_place?: boolean | null
           lineup_a_submitted?: boolean | null
           lineup_b_submitted?: boolean | null
@@ -6141,6 +6144,7 @@ export type Database = {
           group_count: number | null
           has_dreambreaker: boolean | null
           has_third_place_match: boolean | null
+          has_repechage?: boolean | null
           id: string
           max_dupr_rating: number | null
           min_dupr_rating: number | null
@@ -6170,6 +6174,7 @@ export type Database = {
           group_count?: number | null
           has_dreambreaker?: boolean | null
           has_third_place_match?: boolean | null
+          has_repechage?: boolean | null
           id?: string
           max_dupr_rating?: number | null
           min_dupr_rating?: number | null
@@ -6199,6 +6204,7 @@ export type Database = {
           group_count?: number | null
           has_dreambreaker?: boolean | null
           has_third_place_match?: boolean | null
+          has_repechage?: boolean | null
           id?: string
           max_dupr_rating?: number | null
           min_dupr_rating?: number | null

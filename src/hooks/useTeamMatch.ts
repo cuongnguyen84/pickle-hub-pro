@@ -19,6 +19,7 @@ export interface TeamMatchTournament {
   dreambreaker_scoring_type: string | null;
   require_min_games_per_player: boolean;
   has_third_place_match: boolean;
+  has_repechage?: boolean;   // rr_playoff: nhánh Tái sinh cho hạng 3,4
   bracket_pairing_type: 'random' | 'manual' | null;
   status: string;
   created_by: string | null;
@@ -65,6 +66,7 @@ export interface CreateTournamentInput {
   // The frontend handles the fixed format logic
   require_min_games_per_player: boolean;
   has_third_place_match?: boolean;
+  has_repechage?: boolean;   // rr_playoff only — RPC không nhận, UPDATE sau create
   bracket_pairing_type?: 'random' | 'manual';
   // Ràng buộc DUPR (RPC không nhận → UPDATE sau create).
   require_dupr?: boolean;
@@ -245,6 +247,7 @@ export function useTeamMatch() {
         extra.total_score_mode = true;
         extra.points_per_game = input.points_per_game ?? 7;
       }
+      if (input.has_repechage) extra.has_repechage = true;
       if (rules) extra.rules_summary = rules;
       if ((input.entry_fee_vnd ?? 0) > 0) extra.entry_fee_vnd = input.entry_fee_vnd;
       if ((input.entry_fee_team_vnd ?? 0) > 0) extra.entry_fee_team_vnd = input.entry_fee_team_vnd;

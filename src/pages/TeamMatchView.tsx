@@ -122,6 +122,7 @@ export default function TeamMatchView() {
     hasPlayoff,
     hasGroups: standingsHasGroups,
     generatePlayoffSeeding,
+    generateRepechageSeeding,
   } = useTeamMatchStandings(tournament?.id, {
     topPerGroup: tournament?.top_per_group || 2,
   });
@@ -398,6 +399,27 @@ export default function TeamMatchView() {
           team2Id: p.team2.teamId,
         })),
       });
+
+      // Nhánh Tái sinh (hạng 3,4) — sinh cùng lúc, không chặn Playoff nếu thiếu đội.
+      if (tournament.has_repechage) {
+        const rep = generateRepechageSeeding(teamCount);
+        const repTeams = rep.seeds.filter(s => s.teamId);
+        if (repTeams.length === teamCount && rep.pairings.length === teamCount / 2) {
+          await generatePlayoffMatches({
+            tournamentId: tournament.id,
+            qualifyingTeams: repTeams.map((s, i) => ({ teamId: s.teamId, seed: i + 1 })),
+            gameTemplates,
+            hasDreambreaker: tournament.has_dreambreaker,
+            isRepechage: true,
+            pairings: rep.pairings.map(p => ({
+              matchIndex: p.matchIndex,
+              bracketSide: p.bracketSide,
+              team1Id: p.team1.teamId,
+              team2Id: p.team2.teamId,
+            })),
+          });
+        }
+      }
 
       setShowPlayoffDialog(false);
       setActiveTab('matches');
