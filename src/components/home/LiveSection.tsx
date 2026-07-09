@@ -233,54 +233,6 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
           </div>
         )}
 
-        {/* Vừa kết thúc (≤7 ngày) — replay rows, mở trang live để xem lại */}
-        {endedStreams.length > 0 && (
-          <>
-            {streams.length > 0 && (
-              <div className="tl-live-head" style={{ marginTop: 20 }}>
-                <h3 className="tl-live-title" style={{ fontSize: "0.95em" }}>
-                  {language === "vi" ? "Vừa kết thúc" : "Just finished"}
-                </h3>
-              </div>
-            )}
-            <div
-              className="tl-live-list"
-              role="list"
-              aria-label={language === "vi" ? "Luồng vừa kết thúc" : "Recently ended streams"}
-            >
-              {endedStreams.map((stream) => {
-                const thumb = streamThumb(stream);
-                const title = stream.title ?? (language === "vi" ? "Buổi phát sóng" : "Broadcast");
-                return (
-                  <Link
-                    key={stream.id}
-                    to={`/live/${stream.id}`}
-                    className="tl-live-row"
-                    role="listitem"
-                  >
-                    <div className="tl-live-row-thumb">
-                      {thumb ? (
-                        <img src={thumb} alt={title} loading="lazy" />
-                      ) : (
-                        <div className="tl-live-thumb-ph" aria-hidden="true" />
-                      )}
-                    </div>
-                    <div className="tl-live-row-body">
-                      <div className="tl-live-row-name">{title}</div>
-                      <div className="tl-live-row-meta">
-                        {stream.organization?.name ?? broadcastLabel}
-                      </div>
-                    </div>
-                    <div className="tl-live-row-when">
-                      <span className="t">{rowTime(stream.ended_at)}</span>
-                      <span className="cd">{language === "vi" ? "XEM LẠI" : "REPLAY"}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </>
-        )}
       </div>
     </section>
   );
