@@ -522,20 +522,23 @@ const QuickTableView = () => {
     return (
       <TheLineLayout title="Quick Table" noindex={true} active="lab">
         <div className="tl-shell">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: 400,
-              color: 'var(--tl-fg-3)',
-              fontFamily: 'Geist Mono, ui-monospace, monospace',
-              fontSize: 12,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {t.quickTable.view.loading}
+          {/* Skeleton: page head + tab strip + group card placeholders */}
+          <div aria-busy="true" aria-label={t.quickTable.view.loading} style={{ paddingTop: 32 }}>
+            <div className="animate-pulse" style={{ height: 14, width: 160, borderRadius: 4, background: 'var(--tl-surface-2)', marginBottom: 16 }} />
+            <div className="animate-pulse" style={{ height: 40, width: '55%', borderRadius: 6, background: 'var(--tl-surface-2)', marginBottom: 28 }} />
+            <div className="animate-pulse" style={{ height: 36, width: 280, borderRadius: 6, background: 'var(--tl-surface)', marginBottom: 24 }} />
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                className="animate-pulse"
+                style={{
+                  height: 96,
+                  borderRadius: 'var(--tl-radius)',
+                  background: 'var(--tl-surface)',
+                  marginBottom: 12,
+                }}
+              />
+            ))}
           </div>
         </div>
       </TheLineLayout>
@@ -703,13 +706,14 @@ const QuickTableView = () => {
         )}
 
         <section style={{ marginTop: 32, marginBottom: 56 }}>
-          {/* Primary tabs — TheLine editorial underline style */}
-          <div className="tl-tabs" role="tablist">
+          {/* Primary tabs — TheLine editorial underline style.
+              Plain buttons with aria-pressed (no ARIA tablist — that
+              pattern requires roving-tabindex keyboard support). */}
+          <div className="tl-tabs">
             {table.requires_registration && (
               <button
                 type="button"
-                role="tab"
-                aria-selected={activeTab === 'registration'}
+                aria-pressed={activeTab === 'registration'}
                 className={cn('tl-tab', activeTab === 'registration' && 'active')}
                 onClick={() => setActiveTab('registration')}
               >
@@ -722,8 +726,7 @@ const QuickTableView = () => {
             )}
             <button
               type="button"
-              role="tab"
-              aria-selected={activeTab === 'groups'}
+              aria-pressed={activeTab === 'groups'}
               className={cn('tl-tab', activeTab === 'groups' && 'active')}
               onClick={() => setActiveTab('groups')}
             >
@@ -731,8 +734,7 @@ const QuickTableView = () => {
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={activeTab === 'playoff'}
+              aria-pressed={activeTab === 'playoff'}
               className={cn('tl-tab', activeTab === 'playoff' && 'active')}
               onClick={() => hasPlayoff && setActiveTab('playoff')}
               disabled={!hasPlayoff}
@@ -892,15 +894,13 @@ const QuickTableView = () => {
               {groups.length > 0 && (
                 <div
                   className="tl-filters"
-                  role="tablist"
                   style={{ padding: 0, border: 0, margin: 0 }}
                 >
                   {groups.map(group => (
                     <button
                       key={group.id}
                       type="button"
-                      role="tab"
-                      aria-selected={activeGroupId === group.id}
+                      aria-pressed={activeGroupId === group.id}
                       className={cn('tl-filter', activeGroupId === group.id && 'active')}
                       onClick={() => setActiveGroupId(group.id)}
                     >

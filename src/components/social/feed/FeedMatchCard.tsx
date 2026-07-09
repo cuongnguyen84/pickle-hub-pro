@@ -76,10 +76,11 @@ export function FeedMatchCard({
       : "0ms";
 
   return (
-    <Link
-      to={`/tran-dau/${match.slug}`}
-      role="article"
-      aria-label={ariaLabel}
+    // a11y: wrapper is a plain <article>; the main destination is a
+    // stretched overlay <Link> so nested player/comment links are no
+    // longer anchors inside an anchor (invalid HTML). Interactive
+    // children stack above the overlay via position:relative + zIndex.
+    <article
       className={`tl-feed-card${isFinal ? " tl-feed-card--final" : ""}`}
       style={{
         display: "grid",
@@ -87,7 +88,6 @@ export function FeedMatchCard({
         gap: 18,
         padding: "32px 0",
         borderBottom: "1px solid var(--tl-border)",
-        textDecoration: "none",
         color: "inherit",
         cursor: "pointer",
         position: "relative",
@@ -96,6 +96,12 @@ export function FeedMatchCard({
         animation: `tl-feed-card-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) ${animDelay} forwards`,
       }}
     >
+      <Link
+        to={`/tran-dau/${match.slug}`}
+        aria-label={ariaLabel}
+        className="tl-feed-card-link"
+        style={{ position: "absolute", inset: 0, zIndex: 1 }}
+      />
       {/* Eyebrow + status badge */}
       <div
         style={{
@@ -112,7 +118,7 @@ export function FeedMatchCard({
             alignItems: "center",
             gap: 12,
             fontFamily: "'Geist Mono', monospace",
-            fontSize: 10.5,
+            fontSize: 11,
             textTransform: "uppercase",
             letterSpacing: "0.12em",
             color: "var(--tl-fg-3)",
@@ -154,7 +160,7 @@ export function FeedMatchCard({
         <div
           style={{
             fontFamily: "'Geist Mono', monospace",
-            fontSize: 10.5,
+            fontSize: 11,
             letterSpacing: "0.08em",
             color: "var(--tl-fg-3)",
             textTransform: "uppercase",
@@ -214,12 +220,14 @@ export function FeedMatchCard({
             gap: 14,
           }}
         >
-          <KudosButton
-            matchId={match.match_id}
-            count={match.kudos_count}
-            kudoed={match.viewer_kudoed}
-            variant="feed"
-          />
+          <span style={{ position: "relative", zIndex: 2, display: "inline-flex" }}>
+            <KudosButton
+              matchId={match.match_id}
+              count={match.kudos_count}
+              kudoed={match.viewer_kudoed}
+              variant="feed"
+            />
+          </span>
           <CommentCountChip
             slug={match.slug}
             count={match.comment_count}
@@ -246,7 +254,7 @@ export function FeedMatchCard({
           )}
         </div>
       </div>
-    </Link>
+    </article>
   );
 }
 
@@ -351,7 +359,7 @@ function ProSourceBadge({
         alignItems: "center",
         gap: 6,
         fontFamily: "'Geist Mono', monospace",
-        fontSize: 10,
+        fontSize: 11,
         textTransform: "uppercase",
         letterSpacing: "0.1em",
         padding: "4px 9px",
@@ -400,7 +408,7 @@ function StatusBadge({
         alignItems: "center",
         gap: 6,
         fontFamily: "'Geist Mono', monospace",
-        fontSize: 10,
+        fontSize: 11,
         textTransform: "uppercase",
         letterSpacing: "0.1em",
         padding: "4px 9px",
@@ -483,7 +491,7 @@ function TeamRow({
           alignItems: "baseline",
           gap: 12,
           fontFamily: "'Geist Mono', monospace",
-          fontSize: 10.5,
+          fontSize: 11,
           textTransform: "uppercase",
           letterSpacing: "0.08em",
           color: "var(--tl-fg-3)",
@@ -529,6 +537,8 @@ function PlayerNameLink({
     color: "var(--tl-fg)",
     textDecoration: "none",
     fontStyle: isWinner ? "italic" : "normal",
+    position: "relative",
+    zIndex: 2, // above the card's stretched overlay link
   };
   if (!player.username || player.is_ghost) {
     return <span style={baseStyle}>{name}</span>;
@@ -571,6 +581,8 @@ function CommentCountChip({
         minWidth: 44,
         textDecoration: "none",
         color: count > 0 ? "var(--tl-fg-2)" : "var(--tl-fg-3)",
+        position: "relative",
+        zIndex: 2, // above the card's stretched overlay link
       }}
     >
       <MessageCircle

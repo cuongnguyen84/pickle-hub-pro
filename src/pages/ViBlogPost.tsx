@@ -82,7 +82,7 @@ const ViBlogPost = () => {
           <span>/</span>
           <Link to="/vi/blog" style={{ color: "inherit", textDecoration: "none" }}>Bài viết</Link>
           <span>/</span>
-          <span style={{ color: "var(--tl-fg-1)" }}>{post.title}</span>
+          <span style={{ color: "var(--tl-fg)" }}>{post.title}</span>
         </nav>
 
         <article>

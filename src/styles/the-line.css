@@ -66,6 +66,12 @@
   --tl-fg-3:       #86837d;
   --tl-fg-4:       #7c7973;  /* a11y 2026-07-08: was #54514c (2.52:1 on --tl-bg, Lighthouse fail); 4.59:1 now */
 
+  /* Legacy aliases — feed/comment components still reference these names */
+  --tl-fg-1:       var(--tl-fg);
+  --tl-bg-1:       var(--tl-bg);
+  --tl-bg-2:       var(--tl-bg-elev);
+  --tl-hairline:   var(--tl-border);
+
   /* Accent — single (optic-lime, the pickleball ball colour) */
   --tl-green:      #b5e853;
   --tl-green-dim:  #9ccc3f;
@@ -74,6 +80,12 @@
   /* Semantic */
   --tl-live:       #ff4136;
   --tl-gold:       #e9b649;  /* warm amber secondary — featured / editorial */
+
+  /* Per-format accents (Tournaments hub / bracket rows) */
+  --tl-accent-qt:   #00b96b;  /* Quick Tables */
+  --tl-accent-elim: #e9b649;  /* Doubles Elimination */
+  --tl-accent-flex: #4f9bff;  /* Flex Format */
+  --tl-accent-team: #ff7a4d;  /* Team Match */
 
   /* System */
   --tl-radius:     10px;
@@ -228,6 +240,10 @@
   [data-theme="the-line"] .tl-nav-search span,
   [data-theme="the-line"] .tl-nav-search kbd { display: none; }
 }
+/* ⌘K hint means nothing on touch devices (tablets ≥900px included) */
+@media (hover: none) {
+  [data-theme="the-line"] .tl-nav-search kbd { display: none; }
+}
 
 /* ========== Ticker ========== */
 [data-theme="the-line"] .tl-ticker {
@@ -260,6 +276,11 @@
   animation: tl-ticker 80s linear infinite;
   font-family: "Geist Mono"; font-size: 12px; color: var(--tl-fg-2);
   line-height: 34px;
+}
+/* a11y: let readers/keyboard users stop the marquee */
+[data-theme="the-line"] .tl-ticker:hover .tl-ticker-track,
+[data-theme="the-line"] .tl-ticker:focus-within .tl-ticker-track {
+  animation-play-state: paused;
 }
 [data-theme="the-line"] .tl-ticker-track b { color: var(--tl-fg); font-weight: 500; }
 [data-theme="the-line"] .tl-ticker-track .s { color: var(--tl-green); font-weight: 500; }
@@ -895,7 +916,7 @@
 }
 [data-theme="the-line"] .tl-lh-cd-lbl {
   font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 9.5px;
+  font-size: 11px; /* a11y: was 9.5px — informational text floor 11px */
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--lh-fg-3);
@@ -2713,7 +2734,8 @@
   --tl-green-dim:  #4a6418;
   --tl-green-glow: rgba(94, 125, 31, 0.14);
   --tl-live:       #d83428;
-  --tl-gold:       #a37613;
+  --tl-gold:       #8a6410; /* a11y: 5.2:1 on light --tl-bg (was #a37613 ≈3.9:1) */
+  --tl-accent-elim: #8a6410; /* amber retuned for paper bg (matches --tl-gold) */
 
   /* Production HSL token swap — light D4 */
   --background:          42 42% 98%;
@@ -2754,6 +2776,11 @@
   display: inline-flex; align-items: center; justify-content: center;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
   padding: 0;
+  position: relative;
+}
+/* a11y: 36px visual box, 44px effective hit area (nav row height stays put) */
+[data-theme="the-line"] .tl-icon-btn::after {
+  content: ''; position: absolute; inset: -4px;
 }
 [data-theme="the-line"] .tl-icon-btn:hover {
   border-color: var(--tl-border-2); color: var(--tl-fg); background: var(--tl-surface);
@@ -3161,6 +3188,11 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   font: inherit; color: var(--tl-fg-3);
   transition: color 0.15s;
   border-radius: 4px;
+  position: relative;
+}
+/* a11y: expand the ~23px visual box to a ≥44px effective hit area */
+[data-theme="the-line"] .tl-lang button::after {
+  content: ''; position: absolute; inset: -11px -2px;
 }
 [data-theme="the-line"] .tl-lang button.active { color: var(--tl-fg); font-weight: 600; }
 [data-theme="the-line"] .tl-lang button:hover { color: var(--tl-fg); }
@@ -3510,6 +3542,12 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   font-family: "Geist"; font-size: 13.5px; font-weight: 500;
   color: var(--tl-fg-3); cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
+  position: relative;
+}
+/* a11y: invisible hit-area expansion — pills stay visually compact but
+   the effective touch target reaches ≥44px (status variant is ~30px). */
+[data-theme="the-line"] .tl-subtab::after {
+  content: ''; position: absolute; inset: -7px -4px;
 }
 [data-theme="the-line"] .tl-subtab:hover { color: var(--tl-fg-2); border-color: var(--tl-fg-4); }
 [data-theme="the-line"] .tl-subtab.active {
@@ -3774,10 +3812,13 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   );
 }
 [data-theme="the-line"] .tl-feed-card:hover .tl-feed-team-lost { opacity: 0.75 !important; }
-[data-theme="the-line"] .tl-feed-card:focus-visible {
+/* Focus now lives on the stretched overlay link (.tl-feed-card-link) —
+   the wrapper is a plain <article> since nested anchors were invalid. */
+[data-theme="the-line"] .tl-feed-card:has(> .tl-feed-card-link:focus-visible) {
   outline: 1px solid var(--tl-green);
   outline-offset: 4px;
 }
+[data-theme="the-line"] .tl-feed-card-link:focus-visible { outline: none; }
 
 /* Chevron reveal on card foot — invisible at rest, lime + slide on card hover.
    Mobile + touch keep it visible at fg-3 so the affordance is discoverable. */
@@ -3801,7 +3842,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   pointer-events: none;
 }
 [data-theme="the-line"] .tl-feed-card:hover .tl-feed-card-foot::after,
-[data-theme="the-line"] .tl-feed-card:focus-visible .tl-feed-card-foot::after {
+[data-theme="the-line"] .tl-feed-card:has(> .tl-feed-card-link:focus-visible) .tl-feed-card-foot::after {
   opacity: 1;
   color: var(--tl-green);
   transform: translateX(0);
@@ -3855,11 +3896,11 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
     transparent 100%
   );
 }
-[data-theme="the-line"] .tl-feed-card--final:focus-visible {
+[data-theme="the-line"] .tl-feed-card--final:has(> .tl-feed-card-link:focus-visible) {
   outline-color: var(--tl-gold);
 }
 [data-theme="the-line"] .tl-feed-card--final:hover .tl-feed-card-foot::after,
-[data-theme="the-line"] .tl-feed-card--final:focus-visible .tl-feed-card-foot::after {
+[data-theme="the-line"] .tl-feed-card--final:has(> .tl-feed-card-link:focus-visible) .tl-feed-card-foot::after {
   color: var(--tl-gold);
 }
 

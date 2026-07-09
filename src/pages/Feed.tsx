@@ -312,17 +312,36 @@ const Feed = () => {
         {/* Stream */}
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           {isLoadingFirstPage ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                padding: "64px 0",
-              }}
-            >
-              <Loader2
-                className="h-5 w-5 animate-spin"
-                style={{ color: "var(--tl-fg-3)" }}
-              />
+            // Skeleton rows echoing FeedMatchCard geometry (eyebrow +
+            // two team rows) so the page doesn't jump when data lands.
+            <div aria-busy="true" aria-label={language === "vi" ? "Đang tải bảng tin" : "Loading feed"}>
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse"
+                  style={{ padding: "32px 0", borderBottom: "1px solid var(--tl-border)" }}
+                >
+                  <div style={{ height: 10, width: 180, borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 20 }} />
+                  <div style={{ height: 24, width: "62%", borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 12 }} />
+                  <div style={{ height: 24, width: "45%", borderRadius: 4, background: "var(--tl-surface-2)" }} />
+                </div>
+              ))}
+            </div>
+          ) : activeQuery.isError ? (
+            <div className="tl-empty">
+              <h3>{language === "vi" ? "Không tải được bảng tin." : "Couldn't load the feed."}</h3>
+              <p>
+                {language === "vi"
+                  ? "Có lỗi khi tải dữ liệu. Kiểm tra kết nối mạng rồi thử lại."
+                  : "Something went wrong while loading. Check your connection and try again."}
+              </p>
+              <button
+                type="button"
+                className="tl-btn green"
+                onClick={() => activeQuery.refetch()}
+              >
+                {language === "vi" ? "Thử lại" : "Retry"}
+              </button>
             </div>
           ) : itemCount === 0 ? (
             <FeedEmptyState

@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import { AlertTriangle, CheckCircle2, Loader2, Pencil, Trophy, X } from "lucide-react";
 import {
@@ -82,7 +82,6 @@ function teamNames(players: ResolvableDispute["team_a_players"]): string {
 function DisputeCard({ dispute }: { dispute: ResolvableDispute }) {
   const { language } = useI18n();
   const vi = language === "vi";
-  const { toast } = useToast();
   const resolve = useResolveMatchDispute();
 
   const [editing, setEditing] = useState(false);
@@ -99,7 +98,7 @@ function DisputeCard({ dispute }: { dispute: ResolvableDispute }) {
       : dupr.skipped
         ? vi ? "Đã xác nhận (thiếu DUPR ID nên chưa gửi DUPR)." : "Verified (no DUPR ID — not submitted)."
         : vi ? `Đã xác nhận. Gửi DUPR lỗi: ${dupr.reason ?? ""}` : `Verified. DUPR submit failed: ${dupr.reason ?? ""}`;
-    toast({ title: vi ? "Đã xử lý tranh chấp" : "Dispute resolved", description: desc });
+    toast.success(vi ? "Đã xử lý tranh chấp" : "Dispute resolved", { description: desc });
   }
 
   async function onAccept() {
@@ -107,11 +106,7 @@ function DisputeCard({ dispute }: { dispute: ResolvableDispute }) {
       const res = await resolve.mutateAsync({ dispute, action: "accept" });
       notifyResult(res);
     } catch (e) {
-      toast({
-        variant: "destructive",
-        title: vi ? "Lỗi" : "Failed",
-        description: e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e),
-      });
+      toast.error(vi ? "Lỗi" : "Failed", { description: e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e) });
     }
   }
 
@@ -126,11 +121,7 @@ function DisputeCard({ dispute }: { dispute: ResolvableDispute }) {
       setEditing(false);
       notifyResult(res);
     } catch (e) {
-      toast({
-        variant: "destructive",
-        title: vi ? "Lỗi" : "Failed",
-        description: e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e),
-      });
+      toast.error(vi ? "Lỗi" : "Failed", { description: e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e) });
     }
   }
 

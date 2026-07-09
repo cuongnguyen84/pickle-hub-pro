@@ -7,8 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Trash2, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { Eye, EyeOff, Trash2, Plus, Instagram } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -59,12 +69,14 @@ function usernameFromInput(input: string): string | null {
 }
 
 export default function AdminEmbeds() {
-  const { toast } = useToast();
   const qc = useQueryClient();
   const [url, setUrl] = useState("");
   const [caption, setCaption] = useState("");
   const [author, setAuthor] = useState("");
   const [thumbnail, setThumbnail] = useState("");
+  // Delete confirmations (hard DELETE — no undo)
+  const [deletingEmbedId, setDeletingEmbedId] = useState<string | null>(null);
+  const [deletingSourceId, setDeletingSourceId] = useState<string | null>(null);
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["admin-feed-embeds"],
@@ -105,10 +117,10 @@ export default function AdminEmbeds() {
       setAuthor("");
       setThumbnail("");
       invalidate();
-      toast({ title: "Đã thêm reel vào feed" });
+      toast.success("Đã thêm reel vào feed");
     },
     onError: (e: Error) => {
-      toast({ title: "Không thêm được", description: e.message, variant: "destructive" });
+      toast.error("Không thêm được", { description: e.message });
     },
   });
 
@@ -122,7 +134,10 @@ export default function AdminEmbeds() {
     },
     onSuccess: () => {
       invalidate();
-      toast({ title: "Đã cập nhật" });
+      toast.success("Đã cập nhật");
+    },
+    onError: (e: Error) => {
+      toast.error("Không cập nhật được", { description: e.message });
     },
   });
 
@@ -133,7 +148,10 @@ export default function AdminEmbeds() {
     },
     onSuccess: () => {
       invalidate();
-      toast({ title: "Đã xoá" });
+      toast.success("Đã xoá");
+    },
+    onError: (e: Error) => {
+      toast.error("Không xoá được", { description: e.message });
     },
   });
 
@@ -165,10 +183,10 @@ export default function AdminEmbeds() {
     onSuccess: () => {
       setSourceInput("");
       invalidateSources();
-      toast({ title: "Đã thêm nguồn — cron sẽ quét trong vòng 1 giờ" });
+      toast.success("Đã thêm nguồn — cron sẽ quét trong vòng 1 giờ");
     },
     onError: (e: Error) => {
-      toast({ title: "Không thêm được", description: e.message, variant: "destructive" });
+      toast.error("Không thêm được", { description: e.message });
     },
   });
 
@@ -182,7 +200,10 @@ export default function AdminEmbeds() {
     },
     onSuccess: () => {
       invalidateSources();
-      toast({ title: "Đã cập nhật nguồn" });
+      toast.success("Đã cập nhật nguồn");
+    },
+    onError: (e: Error) => {
+      toast.error("Không cập nhật được", { description: e.message });
     },
   });
 
@@ -196,7 +217,10 @@ export default function AdminEmbeds() {
     },
     onSuccess: () => {
       invalidateSources();
-      toast({ title: "Đã xoá nguồn" });
+      toast.success("Đã xoá nguồn");
+    },
+    onError: (e: Error) => {
+      toast.error("Không xoá được", { description: e.message });
     },
   });
 
@@ -273,48 +297,60 @@ export default function AdminEmbeds() {
                 Thêm nguồn
               </Button>
             </div>
-            <div className="space-y-2">
-              {sources?.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center gap-3 border rounded p-3"
-                >
-                  <Badge
-                    variant={s.active ? "default" : "secondary"}
-                    className="text-xs shrink-0"
+            {(sources?.length ?? 0) === 0 ? (
+              <div className="p-6 text-center">
+                <Instagram className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Chưa có nguồn tự động nào. Thêm username Instagram ở trên.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {sources?.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-3 border rounded p-3"
                   >
-                    {s.active ? "active" : "paused"}
-                  </Badge>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium">@{s.username}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {s.last_checked_at
-                        ? `Quét ${formatDistanceToNow(new Date(s.last_checked_at), { addSuffix: true, locale: vi })}`
-                        : "Chưa quét lần nào"}
-                      {s.last_error ? ` · lỗi: ${s.last_error.slice(0, 80)}` : ""}
+                    <Badge
+                      variant={s.active ? "default" : "secondary"}
+                      className="text-xs shrink-0"
+                    >
+                      {s.active ? "active" : "paused"}
+                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium">@{s.username}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {s.last_checked_at
+                          ? `Quét ${formatDistanceToNow(new Date(s.last_checked_at), { addSuffix: true, locale: vi })}`
+                          : "Chưa quét lần nào"}
+                        {s.last_error ? ` · lỗi: ${s.last_error.slice(0, 80)}` : ""}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={toggleSource.isPending}
+                        onClick={() =>
+                          toggleSource.mutate({ id: s.id, active: !s.active })
+                        }
+                      >
+                        {s.active ? "Tạm dừng" : "Bật"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        aria-label={`Xoá nguồn @${s.username}`}
+                        disabled={removeSource.isPending}
+                        onClick={() => setDeletingSourceId(s.id)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        toggleSource.mutate({ id: s.id, active: !s.active })
-                      }
-                    >
-                      {s.active ? "Tạm dừng" : "Bật"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => removeSource.mutate(s.id)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -375,6 +411,8 @@ export default function AdminEmbeds() {
                       <Button
                         size="sm"
                         variant="outline"
+                        aria-label={row.is_active ? "Ẩn reel khỏi feed" : "Hiện reel trên feed"}
+                        disabled={toggleActive.isPending}
                         onClick={() =>
                           toggleActive.mutate({
                             id: row.id,
@@ -391,7 +429,9 @@ export default function AdminEmbeds() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => remove.mutate(row.id)}
+                        aria-label="Xoá reel"
+                        disabled={remove.isPending}
+                        onClick={() => setDeletingEmbedId(row.id)}
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -403,6 +443,61 @@ export default function AdminEmbeds() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete embed confirmation */}
+      <AlertDialog
+        open={!!deletingEmbedId}
+        onOpenChange={(open) => !open && setDeletingEmbedId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xoá reel này?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Reel sẽ bị xoá vĩnh viễn khỏi feed. Không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletingEmbedId) remove.mutate(deletingEmbedId);
+                setDeletingEmbedId(null);
+              }}
+            >
+              Xoá
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete source confirmation */}
+      <AlertDialog
+        open={!!deletingSourceId}
+        onOpenChange={(open) => !open && setDeletingSourceId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xoá nguồn tự động này?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cron sẽ ngừng quét reel mới từ tài khoản này. Reel đã thêm không
+              bị xoá.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deletingSourceId) removeSource.mutate(deletingSourceId);
+                setDeletingSourceId(null);
+              }}
+            >
+              Xoá
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

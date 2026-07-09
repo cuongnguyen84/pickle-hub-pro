@@ -230,10 +230,10 @@ const NewsArticle = ({ language }: Props) => {
             <figure
               style={{
                 margin: "24px 0 32px",
-                border: "1px solid var(--tl-hairline)",
+                border: "1px solid var(--tl-border)",
                 borderRadius: 8,
                 overflow: "hidden",
-                background: "var(--tl-bg-2)",
+                background: "var(--tl-bg-elev)",
               }}
             >
               <img
@@ -276,9 +276,9 @@ const NewsArticle = ({ language }: Props) => {
               alignItems: "center",
               gap: 12,
               padding: "16px 24px",
-              border: "1px solid var(--tl-fg-1)",
-              background: "var(--tl-fg-1)",
-              color: "var(--tl-bg-1)",
+              border: "1px solid var(--tl-fg)",
+              background: "var(--tl-fg)",
+              color: "var(--tl-bg)",
               textDecoration: "none",
               fontFamily: "'Geist Mono', monospace",
               fontSize: 12,

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -197,7 +197,6 @@ async function triggerScrapeViaEdge(args: {
 /* ─── Tab 1: Manual trigger ────────────────────────────────────────────── */
 
 function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
-  const { toast } = useToast();
   const [url, setUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<TriggerResponse | null>(null);
@@ -220,18 +219,15 @@ function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
       setResult(json);
       if (json.ok) {
         const queued = (json as { queued?: boolean }).queued === true;
-        toast({
-          title: queued
+        toast.success(queued
             ? language === "vi" ? "Đã đưa vào queue" : "Scrape queued"
-            : language === "vi" ? "Bắt đầu scrape" : "Scrape started",
-          description: queued
+            : language === "vi" ? "Bắt đầu scrape" : "Scrape started", { description: queued
             ? language === "vi"
               ? "Worker đang chạy. Mở tab Logs trong 30-90 giây để xem kết quả."
               : "Worker is running. Check the Logs tab in 30-90 seconds."
             : language === "vi"
               ? `Log ID: ${json.log_id} — ${json.matches_extracted} trận, ${json.players_extracted} người chơi`
-              : `Log ID: ${json.log_id} — ${json.matches_extracted} matches, ${json.players_extracted} players`,
-        });
+              : `Log ID: ${json.log_id} — ${json.matches_extracted} matches, ${json.players_extracted} players` });
       }
     } catch (err) {
       setResult({
@@ -351,7 +347,6 @@ const EMPTY_FORM: WatchlistFormValues = {
 };
 
 function WatchlistTab({ language }: { language: "vi" | "en" }) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: rows = [], isLoading, refetch } = useQuery<WatchlistRow[]>({
@@ -418,17 +413,13 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
           .update(payload)
           .eq("id", editingId);
         if (error) throw error;
-        toast({
-          title: language === "vi" ? "Đã cập nhật" : "Updated",
-        });
+        toast.success(language === "vi" ? "Đã cập nhật" : "Updated");
       } else {
         const { error } = await supabase
           .from("pro_tour_watchlist")
           .insert(payload);
         if (error) throw error;
-        toast({
-          title: language === "vi" ? "Đã thêm vào watchlist" : "Added to watchlist",
-        });
+        toast.success(language === "vi" ? "Đã thêm vào watchlist" : "Added to watchlist");
       }
       setDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] });
@@ -446,11 +437,7 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
       .update({ status: next })
       .eq("id", row.id);
     if (error) {
-      toast({
-        title: language === "vi" ? "Lỗi" : "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(language === "vi" ? "Lỗi" : "Error", { description: error.message });
       return;
     }
     await queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] });
@@ -462,14 +449,10 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
       .delete()
       .eq("id", row.id);
     if (error) {
-      toast({
-        title: language === "vi" ? "Lỗi" : "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(language === "vi" ? "Lỗi" : "Error", { description: error.message });
       return;
     }
-    toast({ title: language === "vi" ? "Đã xoá" : "Deleted" });
+    toast.success(language === "vi" ? "Đã xoá" : "Deleted");
     await queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] });
   };
 
@@ -487,22 +470,19 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
         // Distinguish "queued" from "complete" so the toast tells the
         // admin to check the Logs tab in a moment.
         const queued = (res as { queued?: boolean }).queued === true;
-        toast({
-          title: queued
+        toast.success(queued
             ? language === "vi"
               ? "Đã đưa vào queue"
               : "Scrape queued"
             : language === "vi"
               ? "Scrape xong"
-              : "Scrape complete",
-          description: queued
+              : "Scrape complete", { description: queued
             ? language === "vi"
               ? "Worker đang chạy. Mở tab Logs trong 30-90 giây để xem kết quả."
               : "Worker is running. Check the Logs tab in 30-90 seconds."
             : language === "vi"
               ? `${res.matches_extracted ?? 0} trận, ${res.players_extracted ?? 0} người chơi`
-              : `${res.matches_extracted ?? 0} matches, ${res.players_extracted ?? 0} players`,
-        });
+              : `${res.matches_extracted ?? 0} matches, ${res.players_extracted ?? 0} players` });
         // Schedule a delayed refresh so the Logs tab catches the Worker's
         // log row once it lands (typical 30-90s).
         if (queued) {
@@ -517,11 +497,7 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
           ]);
         }
       } else {
-        toast({
-          title: language === "vi" ? "Scrape lỗi" : "Scrape failed",
-          description: res.error,
-          variant: "destructive",
-        });
+        toast.error(language === "vi" ? "Scrape lỗi" : "Scrape failed", { description: res.error });
       }
     } finally {
       setScrapingId(null);

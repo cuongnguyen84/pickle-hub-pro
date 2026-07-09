@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -119,7 +119,6 @@ function useRecentNews(statusFilter: string, languageFilter: string) {
 }
 
 export default function AdminNews() {
-  const { toast } = useToast();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("all");
   const [languageFilter, setLanguageFilter] = useState("all");
@@ -142,7 +141,10 @@ export default function AdminNews() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-news-sources"] });
-      toast({ title: "Đã cập nhật source" });
+      toast.success("Đã cập nhật source");
+    },
+    onError: (e: Error) => {
+      toast.error("Không cập nhật được source", { description: e.message });
     },
   });
 
@@ -156,7 +158,10 @@ export default function AdminNews() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-news-sources"] });
-      toast({ title: "Đã cập nhật auto-publish" });
+      toast.success("Đã cập nhật auto-publish");
+    },
+    onError: (e: Error) => {
+      toast.error("Không cập nhật được auto-publish", { description: e.message });
     },
   });
 
@@ -177,7 +182,10 @@ export default function AdminNews() {
     },
     onSuccess: (n) => {
       qc.invalidateQueries({ queryKey: ["admin-news-translate-stats"] });
-      toast({ title: `Đã re-queue ${n} bài để dịch lại` });
+      toast.success(`Đã re-queue ${n} bài để dịch lại`);
+    },
+    onError: (e: Error) => {
+      toast.error("Không re-queue được", { description: e.message });
     },
   });
 
@@ -194,7 +202,10 @@ export default function AdminNews() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-news-recent"] });
-      toast({ title: "Đã đổi trạng thái" });
+      toast.success("Đã đổi trạng thái");
+    },
+    onError: (e: Error) => {
+      toast.error("Không đổi được trạng thái", { description: e.message });
     },
   });
 
@@ -260,6 +271,7 @@ export default function AdminNews() {
                         <Button
                           size="sm"
                           variant={s.active ? "outline" : "default"}
+                          disabled={toggleActive.isPending}
                           onClick={() =>
                             toggleActive.mutate({ id: s.id, active: !s.active })
                           }
@@ -269,6 +281,7 @@ export default function AdminNews() {
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={toggleAutoPublish.isPending}
                           onClick={() =>
                             toggleAutoPublish.mutate({
                               id: s.id,
@@ -293,7 +306,7 @@ export default function AdminNews() {
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Languages className="w-4 h-4" /> AI translation (Gemini)
             </h2>
-            <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
               {(["pending", "translating", "done", "failed"] as const).map(
                 (k) => (
                   <div key={k} className="border rounded p-3">
@@ -354,6 +367,13 @@ export default function AdminNews() {
             </div>
             {itemsLoading ? (
               <Skeleton className="h-48 w-full" />
+            ) : (items?.length ?? 0) === 0 ? (
+              <div className="p-8 text-center">
+                <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Không có bài nào khớp bộ lọc hiện tại.
+                </p>
+              </div>
             ) : (
               <div className="space-y-2">
                 {items?.map((item) => (
@@ -395,6 +415,7 @@ export default function AdminNews() {
                             }
                             target="_blank"
                             rel="noopener noreferrer"
+                            aria-label={`Xem bài "${item.title}"`}
                           >
                             <Eye className="w-3 h-3" />
                           </a>
@@ -403,6 +424,7 @@ export default function AdminNews() {
                       <Button
                         size="sm"
                         variant="outline"
+                        disabled={setStatus.isPending}
                         onClick={() =>
                           setStatus.mutate({
                             id: item.id,

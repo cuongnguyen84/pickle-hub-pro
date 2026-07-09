@@ -1,5 +1,6 @@
 import { useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Clock, Diamond, CircleDot, Target, Check } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
@@ -346,22 +347,33 @@ const Index = () => {
             </div>
             <div className="tl-ticker-body">
               <div className="tl-ticker-track">
-                {[...ticker.items, ...ticker.items].map((item, idx) => (
-                  <Link
-                    key={`${item.id}-${idx}`}
-                    to={item.href}
-                    className="tl-ticker-item"
+                {/* a11y: the second copy exists only to make the marquee
+                    loop seamless — hide it from AT + tab order. */}
+                {[false, true].map((dup) => (
+                  <span
+                    key={dup ? "dup" : "main"}
+                    aria-hidden={dup || undefined}
+                    style={{ display: "inline-flex", gap: 40 }}
                   >
-                    {item.lead && <span className="lead">{item.lead}</span>}
-                    {item.lead && <span className="sep"> · </span>}
-                    <b>{item.body}</b>
-                    {item.trail && (
-                      <>
-                        <span className="sep"> · </span>
-                        <span className="trail">{item.trail}</span>
-                      </>
-                    )}
-                  </Link>
+                    {ticker.items.map((item, idx) => (
+                      <Link
+                        key={`${item.id}-${idx}`}
+                        to={item.href}
+                        className="tl-ticker-item"
+                        tabIndex={dup ? -1 : undefined}
+                      >
+                        {item.lead && <span className="lead">{item.lead}</span>}
+                        {item.lead && <span className="sep"> · </span>}
+                        <b>{item.body}</b>
+                        {item.trail && (
+                          <>
+                            <span className="sep"> · </span>
+                            <span className="trail">{item.trail}</span>
+                          </>
+                        )}
+                      </Link>
+                    ))}
+                  </span>
                 ))}
               </div>
             </div>
@@ -422,7 +434,7 @@ const Index = () => {
               <Link
                 to="/match/new"
                 aria-label={language === "vi" ? "Log trận đấu lên DUPR" : "Log a match to DUPR"}
-                className="tl-dupr-log-cta inline-flex items-center gap-1.5 rounded-sm border border-[#0e0f12] bg-[#0e0f12] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#ece7d8] shadow-sm transition-colors hover:bg-[#ece7d8] hover:text-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
+                className="tl-dupr-log-cta relative inline-flex items-center gap-1.5 rounded-sm border border-[#0e0f12] bg-[#0e0f12] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#ece7d8] shadow-sm transition-colors hover:bg-[#ece7d8] hover:text-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs before:absolute before:-inset-y-3 before:-inset-x-1 before:content-['']"
                 style={{
                   fontFamily:
                     '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
@@ -435,7 +447,7 @@ const Index = () => {
               <Link
                 to="/vi/blog/huong-dan-dung-dupr-tren-thepicklehub"
                 aria-label={language === "vi" ? "Hướng dẫn sử dụng DUPR" : "DUPR user guide"}
-                className="tl-dupr-guide-cta inline-flex items-center gap-1.5 rounded-sm border border-[#1a1d22]/30 bg-[#ece7d8] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0e0f12] shadow-sm transition-colors hover:bg-[#0e0f12] hover:text-[#ece7d8] hover:border-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
+                className="tl-dupr-guide-cta relative inline-flex items-center gap-1.5 rounded-sm border border-[#1a1d22]/30 bg-[#ece7d8] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0e0f12] shadow-sm transition-colors hover:bg-[#0e0f12] hover:text-[#ece7d8] hover:border-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs before:absolute before:-inset-y-3 before:-inset-x-1 before:content-['']"
                 style={{
                   fontFamily:
                     '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
@@ -569,7 +581,7 @@ const Index = () => {
           )}
           {upcomingCount > 0 && (
             <Link to="/live" className="tl-pulse-chip" role="listitem">
-              <span className="tl-pulse-ico" aria-hidden="true">◷</span>
+              <span className="tl-pulse-ico" aria-hidden="true"><Clock size={12} /></span>
               <span className="tl-pulse-value">{upcomingCount}</span>
               <span className="tl-pulse-label">
                 {language === "vi" ? "SẮP TỚI" : "UPCOMING"}
@@ -577,7 +589,7 @@ const Index = () => {
             </Link>
           )}
           <Link to="/tournaments" className="tl-pulse-chip" role="listitem">
-            <span className="tl-pulse-ico" aria-hidden="true">◇</span>
+            <span className="tl-pulse-ico" aria-hidden="true"><Diamond size={12} /></span>
             <span className="tl-pulse-value">
               {homeStats ? homeStats.total_tournaments.toLocaleString("en-US") : "—"}
             </span>
@@ -586,7 +598,7 @@ const Index = () => {
             </span>
           </Link>
           <div className="tl-pulse-chip" role="listitem">
-            <span className="tl-pulse-ico" aria-hidden="true">◉</span>
+            <span className="tl-pulse-ico" aria-hidden="true"><CircleDot size={12} /></span>
             <span className="tl-pulse-value">
               {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
             </span>
@@ -595,7 +607,7 @@ const Index = () => {
             </span>
           </div>
           <div className="tl-pulse-chip tl-pulse-chip--secondary" role="listitem">
-            <span className="tl-pulse-ico" aria-hidden="true">◎</span>
+            <span className="tl-pulse-ico" aria-hidden="true"><Target size={12} /></span>
             <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
             <span className="tl-pulse-label">PPA ASIA · 2026</span>
           </div>
@@ -842,7 +854,7 @@ const Index = () => {
       {/* Pull-quote — editorial breath between the video grid and the
           stories grid (R2-5 from Round 2 audit). Reinforces the "reporter
           at the court" thesis between two data-heavy content sections. */}
-      <section className="tl-pullquote" aria-hidden="true">
+      <section className="tl-pullquote">
         <div className="tl-shell">
           <blockquote className="tl-pullquote-text">
             <span className="tl-pullquote-mark">"</span>
@@ -884,7 +896,8 @@ const Index = () => {
 
             {subscribed ? (
               <div className="tl-newsletter-success">
-                ✓ {language === "vi" ? "Đã đăng ký. Xem hộp thư của bạn." : "Subscribed. Check your inbox."}
+                <Check size={13} aria-hidden="true" style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
+                {language === "vi" ? "Đã đăng ký. Xem hộp thư của bạn." : "Subscribed. Check your inbox."}
               </div>
             ) : (
               <>
