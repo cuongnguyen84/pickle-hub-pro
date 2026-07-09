@@ -69,7 +69,7 @@ struct QuickTableRegistrationsSheet: View {
             }
             Spacer()
             Button { Haptics.success(); Task { await model.approve(r.id) } } label: {
-                Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(TLColor.accent)
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 22)).foregroundStyle(TLColor.accentText)
             }.buttonStyle(.plain).disabled(model.regBusy)
             Button { Haptics.light(); Task { await model.reject(r.id) } } label: {
                 Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(TLColor.fg4)

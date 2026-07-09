@@ -292,6 +292,8 @@ struct LiveView: View {
                 .padding(.horizontal, 14).padding(.vertical, 7)
                 .background(active ? TLColor.accent.opacity(0.12) : TLColor.surface, in: Capsule())
                 .overlay(Capsule().strokeBorder(active ? TLColor.accent.opacity(0.4) : TLColor.border, lineWidth: 1))
+                .frame(minHeight: 40)             // hit target; capsule stays compact
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

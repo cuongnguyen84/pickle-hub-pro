@@ -20,7 +20,9 @@ enum TLColor {
     static let fg        = dyn(dark: 0xF5F3EE, light: 0x1A1C1F)
     static let fg2       = dyn(dark: 0xC7C3BB, light: 0x3F423F)
     static let fg3       = dyn(dark: 0x8C897F, light: 0x6E6B63)
-    static let fg4       = dyn(dark: 0x54514C, light: 0xA6A29A)
+    // a11y 2026-07-08: was dark 0x54514C (2.52:1) / light 0xA6A29A (2.44:1) —
+    // both failed WCAG; now 4.59:1 / 4.53:1. Mirrors web --tl-fg-4 fix.
+    static let fg4       = dyn(dark: 0x7C7973, light: 0x787366)
 
     // Dual accent system:
     //  • accent     — fills (buttons, score chips, glow) — lime in both modes

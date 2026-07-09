@@ -260,8 +260,11 @@ struct TeamMatchScoringSheet: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        Haptics.success()
-                        Task { await model.saveSelected(onSaved: onSaved) }
+                        Haptics.light()
+                        Task {
+                            await model.saveSelected(onSaved: onSaved)
+                            if model.error == nil { Haptics.success() } else { Haptics.error() }
+                        }
                     } label: {
                         HStack(spacing: 6) {
                             if model.saving { ProgressView().tint(TLColor.accentInk) }
@@ -292,11 +295,13 @@ struct TeamMatchScoringSheet: View {
                 Button { Haptics.light(); model.bump(teamA: teamA, by: -1) } label: {
                     stepIcon("minus")
                 }.buttonStyle(.plain)
+                .accessibilityLabel("Giảm điểm \(name)")
                 Text("\(score)").font(TLFont.mono(26, .bold)).monospacedDigit()
                     .foregroundStyle(won ? TLColor.accentText : TLColor.fg).frame(minWidth: 42)
                 Button { Haptics.light(); model.bump(teamA: teamA, by: 1) } label: {
                     stepIcon("plus")
                 }.buttonStyle(.plain)
+                .accessibilityLabel("Tăng điểm \(name)")
             }
         }
     }

@@ -6,6 +6,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Bell, Send, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,8 +28,17 @@ export default function AdminPushNotification() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  // Set when recipients are resolved → confirm dialog opens. The visible
+  // device count doubles as a sanity check for the known RLS bug where
+  // target=all only sees the admin's own tokens (N=1 = something's wrong).
+  const [confirmInfo, setConfirmInfo] = useState<{
+    userIds: string[];
+    deviceCount: number;
+  } | null>(null);
 
-  const handleSend = async () => {
+  // Resolve recipients + device count, then open the confirm dialog.
+  const prepareSend = async () => {
     if (!title.trim()) {
       toast.error("Vui lòng nhập tiêu đề");
       return;
@@ -29,9 +48,10 @@ export default function AdminPushNotification() {
       return;
     }
 
-    setSending(true);
+    setPreparing(true);
     try {
       let targetUserIds: string[] = [];
+      let deviceCount = 0;
 
       if (target === "all") {
         // Get all unique user_ids from push_tokens
@@ -42,10 +62,10 @@ export default function AdminPushNotification() {
         if (error) throw error;
 
         targetUserIds = [...new Set(tokens?.map((t) => t.user_id) || [])];
+        deviceCount = tokens?.length || 0;
 
         if (targetUserIds.length === 0) {
           toast.warning("Không có user nào đã đăng ký push token");
-          setSending(false);
           return;
         }
       } else {
@@ -56,7 +76,6 @@ export default function AdminPushNotification() {
 
         if (emailList.length === 0) {
           toast.error("Vui lòng nhập ít nhất 1 email");
-          setSending(false);
           return;
         }
 
@@ -71,7 +90,6 @@ export default function AdminPushNotification() {
         const notFound = emailList.filter((e) => !foundEmails.has(e));
         if (notFound.length > 0) {
           toast.error(`Email không tồn tại trong hệ thống: ${notFound.join(", ")}`);
-          setSending(false);
           return;
         }
 
@@ -79,11 +97,33 @@ export default function AdminPushNotification() {
 
         if (targetUserIds.length === 0) {
           toast.error("Vui lòng nhập ít nhất 1 email");
-          setSending(false);
           return;
         }
+
+        const { count, error: countError } = await supabase
+          .from("push_tokens")
+          .select("id", { count: "exact", head: true })
+          .in("user_id", targetUserIds);
+
+        if (countError) throw countError;
+        deviceCount = count ?? 0;
       }
 
+      setConfirmInfo({ userIds: targetUserIds, deviceCount });
+    } catch (err: unknown) {
+      console.error("Prepare push error:", err);
+      toast.error("Lỗi khi chuẩn bị gửi: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!confirmInfo) return;
+    const targetUserIds = confirmInfo.userIds;
+    setConfirmInfo(null);
+    setSending(true);
+    try {
       const { data, error } = await supabase.functions.invoke("send-push-notification", {
         body: {
           user_ids: targetUserIds,
@@ -94,9 +134,14 @@ export default function AdminPushNotification() {
 
       if (error) throw error;
 
-      toast.success(`Đã gửi thành công ${data?.sent || 0}/${data?.total_tokens || 0} thiết bị`);
+      const sent = data?.sent || 0;
+      const failed = data?.errors?.length || 0;
+      toast.success(
+        `Đã gửi thành công ${sent}/${data?.total_tokens || 0} thiết bị`,
+        failed > 0 ? { description: `Thành công ${sent}, lỗi ${failed}` } : undefined,
+      );
 
-      if (data?.errors?.length) {
+      if (failed > 0) {
         console.warn("Push errors:", data.errors);
       }
 
@@ -191,15 +236,15 @@ export default function AdminPushNotification() {
 
             {/* Send button */}
             <Button
-              onClick={handleSend}
-              disabled={sending}
+              onClick={prepareSend}
+              disabled={sending || preparing}
               className="w-full"
               size="lg"
             >
-              {sending ? (
+              {sending || preparing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Đang gửi...
+                  {preparing ? "Đang kiểm tra..." : "Đang gửi..."}
                 </>
               ) : (
                 <>
@@ -211,6 +256,35 @@ export default function AdminPushNotification() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirm dialog */}
+      <AlertDialog
+        open={!!confirmInfo}
+        onOpenChange={(open) => !open && setConfirmInfo(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Gửi đến {confirmInfo?.deviceCount ?? 0} thiết bị?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Thông báo "{title.trim()}" sẽ được gửi đến{" "}
+              {target === "all"
+                ? "tất cả users đã đăng ký push"
+                : `${confirmInfo?.userIds.length ?? 0} user cụ thể`}{" "}
+              ({confirmInfo?.deviceCount ?? 0} thiết bị). Không thể thu hồi sau
+              khi gửi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSend}>
+              <Send className="w-4 h-4 mr-2" />
+              Gửi ngay
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

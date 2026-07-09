@@ -5,15 +5,17 @@ import {
   useUpdateUserRole,
   useAssignUserOrganization,
   useAdminOrganizations,
+  ADMIN_USERS_PAGE_SIZE,
 } from "@/hooks/useAdminData";
 import { useUpdateUserQuota } from "@/hooks/useAdminQuota";
+import { useDebounce } from "@/hooks/useSearch";
 import { useI18n } from "@/i18n";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -29,13 +31,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, Save } from "lucide-react";
+import { Users, Save, Search } from "lucide-react";
 
 export default function AdminUsers() {
   const { t } = useI18n();
-  const { toast } = useToast();
 
-  const { data: users, isLoading: usersLoading } = useAdminUsers();
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const [limit, setLimit] = useState(ADMIN_USERS_PAGE_SIZE);
+
+  const {
+    data: users,
+    isLoading: usersLoading,
+    isFetching: usersFetching,
+  } = useAdminUsers(debouncedSearch, limit);
   const { data: organizations } = useAdminOrganizations();
   const updateRole = useUpdateUserRole();
   const assignOrg = useAssignUserOrganization();
@@ -47,9 +56,9 @@ export default function AdminUsers() {
   const handleRoleChange = async (userId: string, role: "viewer" | "creator" | "admin") => {
     try {
       await updateRole.mutateAsync({ userId, role });
-      toast({ title: "Cập nhật vai trò thành công" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+      toast.success("Cập nhật vai trò thành công");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
 
@@ -59,9 +68,9 @@ export default function AdminUsers() {
         userId,
         organizationId: organizationId === "none" ? null : organizationId,
       });
-      toast({ title: "Cập nhật tổ chức thành công" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+      toast.success("Cập nhật tổ chức thành công");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
 
@@ -76,14 +85,14 @@ export default function AdminUsers() {
 
     try {
       await updateQuota.mutateAsync({ userId, quota: newQuota });
-      toast({ title: "Cập nhật quota thành công" });
+      toast.success("Cập nhật quota thành công");
       setQuotaEdits(prev => {
         const updated = { ...prev };
         delete updated[userId];
         return updated;
       });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
 
@@ -123,6 +132,17 @@ export default function AdminUsers() {
           <p className="text-foreground-muted mt-1">Quản lý người dùng, phân quyền và quota tạo giải</p>
         </div>
 
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
+          <Input
+            placeholder="Tìm theo email hoặc tên..."
+            aria-label="Tìm người dùng"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         {usersLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -143,7 +163,7 @@ export default function AdminUsers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user: any) => {
+                  {users.map((user) => {
                     const currentQuota = user.tournament_create_quota || 3;
                     const editedQuota = quotaEdits[user.id];
                     const hasQuotaChange = editedQuota !== undefined && editedQuota !== currentQuota;
@@ -195,6 +215,7 @@ export default function AdminUsers() {
                               type="number"
                               min={0}
                               max={999}
+                              aria-label={`Quota giải của ${user.email}`}
                               value={editedQuota !== undefined ? editedQuota : currentQuota}
                               onChange={(e) => handleQuotaChange(user.id, e.target.value)}
                               className="w-20 h-8"
@@ -204,6 +225,7 @@ export default function AdminUsers() {
                                 size="icon"
                                 variant="ghost"
                                 className="h-8 w-8"
+                                aria-label={`Lưu quota của ${user.email}`}
                                 onClick={() => handleQuotaSave(user.id, currentQuota)}
                                 disabled={updateQuota.isPending}
                               >
@@ -218,12 +240,26 @@ export default function AdminUsers() {
                 </TableBody>
               </Table>
             </div>
+            {/* Full page returned → probably more rows past the range cap */}
+            {!debouncedSearch.trim() && users.length >= limit && (
+              <div className="p-4 flex justify-center border-t border-border">
+                <Button
+                  variant="outline"
+                  disabled={usersFetching}
+                  onClick={() => setLimit((l) => l + ADMIN_USERS_PAGE_SIZE)}
+                >
+                  {usersFetching ? "Đang tải..." : "Tải thêm"}
+                </Button>
+              </div>
+            )}
           </Card>
         ) : (
           <Card className="bg-card border-border">
             <CardContent className="p-8 text-center">
               <Users className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
-              <p className="text-foreground-muted">Chưa có người dùng nào</p>
+              <p className="text-foreground-muted">
+                {searchQuery.trim() ? "Không tìm thấy người dùng nào" : "Chưa có người dùng nào"}
+              </p>
             </CardContent>
           </Card>
         )}

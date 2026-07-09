@@ -1,15 +1,53 @@
 import SwiftUI
 import UIKit
+import UserNotifications
 import GoogleSignIn
 
 /// Orientation lock — app is portrait by default; the referee scoring screen
 /// forces landscape. The delegate returns `orientationLock`; `OrientationLock`
 /// flips it + requests a geometry update (iOS 16+).
-final class AppDelegate: NSObject, UIApplicationDelegate {
+/// Also the `UNUserNotificationCenter` delegate: shows local notifications in
+/// the foreground and routes a tap into the deep-link sheet (live reminders).
+final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     static var orientationLock: UIInterfaceOrientationMask = .portrait
+
+    /// Set by `ThePickleHubApp` on appear. A tap that arrives before SwiftUI is
+    /// up (cold launch) is buffered in `pendingDeepLink` and replayed on set.
+    static var routeDeepLink: ((DeepLink) -> Void)? {
+        didSet {
+            if let link = pendingDeepLink, let route = routeDeepLink {
+                pendingDeepLink = nil
+                route(link)
+            }
+        }
+    }
+    private static var pendingDeepLink: DeepLink?
+
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+
     func application(_ application: UIApplication,
                      supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         AppDelegate.orientationLock
+    }
+
+    // Foreground: still show the banner (default is to swallow it).
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .list, .sound]
+    }
+
+    // Tap: userInfo["livestreamID"] (set by LiveReminderStore) → open the stream.
+    @MainActor
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse) async {
+        guard let raw = response.notification.request.content.userInfo["livestreamID"] as? String,
+              let id = UUID(uuidString: raw) else { return }
+        let link = DeepLink.livestream(id: id)
+        if let route = Self.routeDeepLink { route(link) } else { Self.pendingDeepLink = link }
     }
 }
 
@@ -94,6 +132,7 @@ struct ThePickleHubApp: App {
                         GIDSignIn.sharedInstance.handle(url)
                     }
                 }
+                .onAppear { AppDelegate.routeDeepLink = { deepLink = $0 } }
                 .sheet(item: $deepLink) { link in
                     DeepLinkDestinationView(link: link)
                         .environment(session)

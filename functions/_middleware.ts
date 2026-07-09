@@ -135,15 +135,17 @@ const SECURITY_HEADERS: Record<string, string> = {
     // AdSense domains (pagead2/tpc googlesyndication, doubleclick, adtrafficquality)
     // added 2026-06-10: the AdSense loader was being blocked by CSP — ads never
     // loaded in production and every page logged a console CSP violation.
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://analytics.ahrefs.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
     "media-src 'self' data: blob: https:; " +
     "connect-src 'self' https: wss:; " +
-    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google; " +
+    // instagram.com added 2026-07-04: /feed renders IG reels via the official
+    // /embed/ iframe endpoint (FeedEmbedCard).
+    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://www.instagram.com; " +
     "worker-src 'self' blob:; " +
-    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; " +
+    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com; " +
     "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
 };
 
@@ -422,7 +424,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Organization alternateName for brand-query consolidation) and /san,
   // /san/{slug}, /san/khu-vuc/{city} (venue CTR title+meta + blog/news
   // interlinks). Without the bump bots keep the v19 HTML until the 6h TTL.
-  const cacheKey = `pr:v20:${url.pathname}`;
+  // v21 2026-07-08: venue detail enrichment (maps/directions links, hours,
+  // amenities, cover image) + city hub court totals.
+  const cacheKey = `pr:v21:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

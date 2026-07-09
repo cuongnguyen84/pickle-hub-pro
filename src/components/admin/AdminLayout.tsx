@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,11 +24,12 @@ import {
   BarChart2,
   Zap,
   Newspaper,
+  Instagram,
   Gavel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getLoginUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
@@ -51,6 +53,7 @@ const navItems = [
   { path: "/admin/disputes", icon: Gavel, labelKey: "disputes" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
   { path: "/admin/news", icon: Newspaper, labelKey: "news" as const },
+  { path: "/admin/embeds", icon: Instagram, labelKey: "embeds" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
   { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
   { path: "/admin/push", icon: Bell, labelKey: "push" as const },
@@ -74,7 +77,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
+  // Giá trị next-themes TRƯỚC khi admin override — cleanup restore lại đúng nó
+  // (không suy từ data-mode: đó là mode của The Line, không phải của next-themes).
+  const prevNextThemeRef = useRef(theme);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Nested routes (e.g. /admin/vi-blog/new) still highlight their sidebar
+  // entry; the /admin root stays exact so it doesn't match everything.
+  const isNavActive = (path: string) =>
+    path === "/admin"
+      ? location.pathname === "/admin"
+      : location.pathname.startsWith(path);
 
   const isIOSDevice = isIOS();
   const isAndroidDevice = isAndroid();
@@ -105,13 +119,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     const stored = typeof window !== "undefined" ? localStorage.getItem("tl-theme-mode") : null;
     if (stored === "light") root.setAttribute("data-mode", "light");
     else root.removeAttribute("data-mode");
+    // Bridge to next-themes: keep its class ("dark"/"light") in sync with
+    // tl-theme-mode so components styled with Tailwind dark: variants agree
+    // with The Line tokens.
+    setTheme(stored === "light" ? "light" : "dark");
     return () => {
       if (prevTheme) root.setAttribute("data-theme", prevTheme);
       else root.removeAttribute("data-theme");
       if (prevMode) root.setAttribute("data-mode", prevMode);
       else root.removeAttribute("data-mode");
+      setTheme(prevNextThemeRef.current === "light" ? "light" : "dark");
     };
-  }, []);
+  }, [setTheme]);
 
   if (isLoading) {
     return (
@@ -166,6 +185,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       viewers: t.admin.viewers.title,
       push: "Push",
       forum: t.forum.title,
+      // "embeds" bypasses i18n like proTour — "IG Reels" reads the same in
+      // VI and EN.
+      embeds: "IG Reels",
       auditLog: t.admin.auditLog?.title || "Audit Log",
       viBlog: "Blog VI",
       analytics: "Analytics",
@@ -183,9 +205,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     (item) => !mobileTabItems.some((tab) => tab.path === item.path)
   );
 
-  const isMoreActive = moreNavItems.some(
-    (item) => location.pathname === item.path
-  );
+  const isMoreActive = moreNavItems.some((item) => isNavActive(item.path));
 
   return (
     <div className="h-[100dvh] min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
@@ -196,6 +216,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <Button
           variant="ghost"
           size="icon"
+          aria-label={sidebarOpen ? "Đóng menu" : "Mở menu"}
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -222,7 +243,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         >
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = isNavActive(item.path);
               return (
                 <Link
                   key={item.path}
@@ -333,7 +354,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = isNavActive(item.path);
             return (
               <Link
                 key={item.path}

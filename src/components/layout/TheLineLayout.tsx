@@ -367,7 +367,13 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     const prevMode = root.getAttribute("data-mode");
     root.setAttribute("data-theme", "the-line");
     const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    const initialMode = stored === "light" ? "light" : "dark";
+    // No stored preference → follow the OS colour scheme
+    const initialMode: "light" | "dark" =
+      stored === "light" || stored === "dark"
+        ? stored
+        : window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "light"
+          : "dark";
     setMode(initialMode);
     if (initialMode === "light") root.setAttribute("data-mode", "light");
     else root.removeAttribute("data-mode");
@@ -386,6 +392,33 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     if (menuOpen) root.classList.add("tl-drawer-open");
     else root.classList.remove("tl-drawer-open");
     return () => root.classList.remove("tl-drawer-open");
+  }, [menuOpen]);
+
+  // Drawer a11y — focus the close button on open + trap Tab inside the
+  // dialog (simple first/last-focusable cycle; Escape handled below).
+  const drawerRef = useRef<HTMLElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    drawerCloseRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !drawerRef.current) return;
+      const focusables = drawerRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
   // Escape closes drawer
@@ -551,14 +584,15 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
           <button
             className="tl-nav-search"
             type="button"
-            aria-label="Search"
+            aria-label={language === "vi" ? "Tìm kiếm" : "Search"}
             onClick={() => navigate("/search")}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
-            <span>Search players, events…</span>
+            <span>{language === "vi" ? "Tìm VĐV, sự kiện…" : "Search players, events…"}</span>
+            {/* ⌘K hint hidden on touch devices via CSS (@media hover:none) */}
             <kbd>⌘K</kbd>
           </button>
 
@@ -715,7 +749,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                           {c.role === "manager" && (
                             <span
                               style={{
-                                fontSize: 9,
+                                fontSize: 11,
                                 letterSpacing: "0.05em",
                                 textTransform: "uppercase",
                                 fontFamily: "Geist Mono",
@@ -788,14 +822,21 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             aria-hidden="true"
             onClick={() => setMenuOpen(false)}
           />
-          <aside className="tl-drawer" role="dialog" aria-label="Navigation menu">
+          <aside
+            className="tl-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label={language === "vi" ? "Menu điều hướng" : "Navigation menu"}
+            ref={drawerRef}
+          >
             <div className="tl-drawer-head">
               <span className="tl-drawer-title">Menu</span>
               <button
                 type="button"
                 className="tl-drawer-close"
-                aria-label="Close menu"
+                aria-label={language === "vi" ? "Đóng menu" : "Close menu"}
                 onClick={() => setMenuOpen(false)}
+                ref={drawerCloseRef}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M6 6l12 12M6 18L18 6" />
@@ -811,6 +852,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 </svg>
                 <input
                   type="search"
+                  aria-label={language === "vi" ? "Tìm vận động viên, giải đấu" : "Search players, events"}
                   placeholder={language === "vi" ? "Tìm vận động viên, giải đấu…" : "Search players, events…"}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}

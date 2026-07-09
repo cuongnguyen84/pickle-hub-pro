@@ -4,9 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { I18nProvider, useI18n } from "@/i18n";
-import { lazy, Suspense, Component, ReactNode } from "react";
+import { lazy, Suspense, Component, ReactNode, useLayoutEffect } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import BottomNav from "@/components/layout/BottomNav";
@@ -178,6 +178,7 @@ const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
 const AdminDisputes = lazy(() => import("./pages/admin/AdminDisputes"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
+const AdminEmbeds = lazy(() => import("./pages/admin/AdminEmbeds"));
 const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamViewers"));
 const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
 const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
@@ -468,6 +469,19 @@ const NavigateUSlugVi = () => {
   return <Navigate to={`/nguoi-choi/${slug}`} replace />;
 };
 
+// Scroll restoration — SPA route changes keep the previous scroll position
+// by default, so deep pages open mid-scroll. Reset to top on PUSH/REPLACE
+// navigations; leave POP (back/forward) alone so the browser's native
+// restoration still works.
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  const navigationType = useNavigationType();
+  useLayoutEffect(() => {
+    if (navigationType !== "POP") window.scrollTo(0, 0);
+  }, [pathname, navigationType]);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
@@ -481,7 +495,8 @@ const App = () => (
               <PushNotificationInitializer />
               <NotificationsRealtimeInitializer />
               <PageTracker />
-              
+              <ScrollToTop />
+
               <BottomNav />
               <ChatFAB />
               <ChunkErrorBoundary>
@@ -686,6 +701,7 @@ const App = () => (
                     <Route path="/admin/disputes" element={<AdminDisputes />} />
                     <Route path="/admin/reports" element={<AdminReports />} />
                     <Route path="/admin/news" element={<AdminNews />} />
+                    <Route path="/admin/embeds" element={<AdminEmbeds />} />
                     <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                     <Route path="/admin/push" element={<AdminPushNotification />} />
                     <Route path="/admin/pro-tour" element={<ProTourAdmin />} />

@@ -39,6 +39,7 @@ struct TLSegmented<T: Hashable>: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(label(option) + (dot ? ", \(indicatorHint)" : ""))
+                .accessibilityAddTraits(selected ? [.isSelected] : [])
             }
         }
         .padding(TLSpacing.xs)

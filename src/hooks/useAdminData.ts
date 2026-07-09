@@ -128,18 +128,47 @@ export function useDeleteOrganization() {
 }
 
 // Users hooks
-export function useAdminUsers() {
+export const ADMIN_USERS_PAGE_SIZE = 1000;
+
+export function useAdminUsers(search = "", limit = ADMIN_USERS_PAGE_SIZE) {
   return useQuery({
-    queryKey: ["admin", "users"],
+    queryKey: ["admin", "users", search, limit],
+    // Keep the previous page visible while "Tải thêm" refetches a bigger range
+    placeholderData: (prev) => prev,
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
+      // Search must be server-side: profiles has >1000 rows and PostgREST
+      // caps un-limited selects at 1000, so older users never reach the client.
+      // Strip chars that would break the .or() filter syntax or ilike pattern.
+      const q = search.trim().replace(/[%_,()]/g, "");
+      let query = supabase
         .from("profiles")
-        .select("*, organizations(id, name)")
+        // organizations.dupr_linked_by → profiles.id makes the bare embed
+        // ambiguous (PGRST201) — must name the FK explicitly
+        .select("*, organizations!profiles_organization_id_fkey(id, name)")
         .order("created_at", { ascending: false });
+      if (q) {
+        query = query.or(`email.ilike.%${q}%,display_name.ilike.%${q}%`).limit(100);
+      } else {
+        // Browse mode: explicit range so "Tải thêm" can extend past the
+        // PostgREST 1000-row default cap.
+        query = query.range(0, limit - 1);
+      }
+
+      const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) throw profilesError;
 
-      const { data: roles, error: rolesError } = await supabase.from("user_roles").select("*");
+      // ponytail: fetching only non-viewer roles keeps this one small query
+      // (viewer is ~99.8% of rows and is already the getPrimaryRole default)
+      // instead of paging the whole user_roles table past its 1000-row cap.
+      let rolesQuery = supabase.from("user_roles").select("*").neq("role", "viewer");
+      if (q) {
+        rolesQuery = rolesQuery.in(
+          "user_id",
+          profiles.map((p) => p.id)
+        );
+      }
+      const { data: roles, error: rolesError } = await rolesQuery;
 
       if (rolesError) throw rolesError;
 

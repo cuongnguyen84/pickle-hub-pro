@@ -293,7 +293,7 @@ private struct VenueRowCard: View {
                     HStack(spacing: 6) {
                         Text(venue.displayName).font(TLFont.serif(20)).foregroundStyle(TLColor.fg).lineLimit(1)
                         if venue.isVerified == true {
-                            Image(systemName: "checkmark.seal.fill").font(.system(size: 13)).foregroundStyle(TLColor.accent)
+                            Image(systemName: "checkmark.seal.fill").font(.system(size: 13)).foregroundStyle(TLColor.accentText)
                         }
                     }
                     Label(venue.locationLine, systemImage: "mappin.and.ellipse")

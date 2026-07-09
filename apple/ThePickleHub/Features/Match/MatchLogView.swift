@@ -438,7 +438,7 @@ private struct SuccessSection: View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(spacing: 10) {
                 Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 44)).foregroundStyle(TLColor.accent)
+                    .font(.system(size: 44)).foregroundStyle(TLColor.accentText)
                 Text("Đã ghi trận!")
                     .font(TLFont.serif(26)).foregroundStyle(TLColor.fg)
                 Text("Đối thủ sẽ nhận thông báo để xác nhận tỉ số.")

@@ -10,6 +10,7 @@ import {
   type FeedTimelineItem,
 } from "@/hooks/social/useFeedTimeline";
 import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
+import { useFeedEmbeds, type FeedEmbedItem } from "@/hooks/social/useFeedEmbeds";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
@@ -17,12 +18,13 @@ import { FeedMlpMatchCard } from "@/components/social/feed/FeedMlpMatchCard";
 import { FeedBlogCard } from "@/components/social/feed/FeedBlogCard";
 import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
 import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
+import { FeedEmbedCard } from "@/components/social/feed/FeedEmbedCard";
 
 // Local union extending the RPC-driven FeedTimelineItem with news items
 // merged client-side (see useFeedNews). News is intentionally NOT in the
 // get_feed_timeline RPC — surfacing it through the same client merge that
 // already handles EN blog overlays keeps the SQL function untouched.
-type StreamItem = FeedTimelineItem | FeedNewsItem;
+type StreamItem = FeedTimelineItem | FeedNewsItem | FeedEmbedItem;
 
 // Tiny FNV-1a 32-bit hash for the per-mount jitter. Deterministic so two
 // renders inside the same mount produce the same ordering — React Query
@@ -80,6 +82,7 @@ const Feed = () => {
   );
   const timelineFeed = useFeedTimeline();
   const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
+  const embedsFeed = useFeedEmbeds();
   const activeQuery = tab === "following" ? followingFeed : timelineFeed;
   const viewed = useFeedViewedTracking();
 
@@ -103,9 +106,17 @@ const Feed = () => {
       ? news
       : news.filter((n) => n.score >= loadedFloor);
 
-    const merged: StreamItem[] = windowedNews.length === 0
-      ? filtered
-      : [...filtered, ...windowedNews];
+    // IG embeds merge the same way news does (client-side, not in the RPC).
+    const embeds = embedsFeed.data ?? [];
+    const windowedEmbeds = isLastPage
+      ? embeds
+      : embeds.filter((e) => e.score >= loadedFloor);
+
+    const merged: StreamItem[] = [
+      ...filtered,
+      ...windowedNews,
+      ...windowedEmbeds,
+    ];
 
     // Effective score = RPC score × age_mult × viewed_mult × jitter.
     //
@@ -202,6 +213,7 @@ const Feed = () => {
     timelineFeed.hasNextPage,
     language,
     newsFeed.data,
+    embedsFeed.data,
     viewed.viewedSet,
   ]);
 
@@ -288,17 +300,36 @@ const Feed = () => {
         {/* Stream */}
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           {isLoadingFirstPage ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                padding: "64px 0",
-              }}
-            >
-              <Loader2
-                className="h-5 w-5 animate-spin"
-                style={{ color: "var(--tl-fg-3)" }}
-              />
+            // Skeleton rows echoing FeedMatchCard geometry (eyebrow +
+            // two team rows) so the page doesn't jump when data lands.
+            <div aria-busy="true" aria-label={language === "vi" ? "Đang tải bảng tin" : "Loading feed"}>
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse"
+                  style={{ padding: "32px 0", borderBottom: "1px solid var(--tl-border)" }}
+                >
+                  <div style={{ height: 10, width: 180, borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 20 }} />
+                  <div style={{ height: 24, width: "62%", borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 12 }} />
+                  <div style={{ height: 24, width: "45%", borderRadius: 4, background: "var(--tl-surface-2)" }} />
+                </div>
+              ))}
+            </div>
+          ) : activeQuery.isError ? (
+            <div className="tl-empty">
+              <h3>{language === "vi" ? "Không tải được bảng tin." : "Couldn't load the feed."}</h3>
+              <p>
+                {language === "vi"
+                  ? "Có lỗi khi tải dữ liệu. Kiểm tra kết nối mạng rồi thử lại."
+                  : "Something went wrong while loading. Check your connection and try again."}
+              </p>
+              <button
+                type="button"
+                className="tl-btn green"
+                onClick={() => activeQuery.refetch()}
+              >
+                {language === "vi" ? "Thử lại" : "Retry"}
+              </button>
             </div>
           ) : itemCount === 0 ? (
             <FeedEmptyState
@@ -400,6 +431,19 @@ function TimelineRow({
   language: import("@/lib/social/feed-formatters").Language;
   staggerIndex: number;
 }) {
+  if (item.type === "embed") {
+    return (
+      <FeedEmbedCard
+        url={item.url}
+        caption={item.caption}
+        author_name={item.author_name}
+        thumbnail_url={item.thumbnail_url}
+        language={language}
+        published_at={item.published_at}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
   if (item.type === "news") {
     return (
       <FeedNewsCard

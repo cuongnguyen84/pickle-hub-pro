@@ -64,7 +64,13 @@
   --tl-fg:         #f5f3ee;
   --tl-fg-2:       #c7c3bb;
   --tl-fg-3:       #86837d;
-  --tl-fg-4:       #54514c;
+  --tl-fg-4:       #8f8b82; /* a11y: 5.9:1 on --tl-bg (was #54514c ≈2.5:1) */
+
+  /* Legacy aliases — feed/comment components still reference these names */
+  --tl-fg-1:       var(--tl-fg);
+  --tl-bg-1:       var(--tl-bg);
+  --tl-bg-2:       var(--tl-bg-elev);
+  --tl-hairline:   var(--tl-border);
 
   /* Accent — single (optic-lime, the pickleball ball colour) */
   --tl-green:      #b5e853;
@@ -74,6 +80,12 @@
   /* Semantic */
   --tl-live:       #ff4136;
   --tl-gold:       #e9b649;  /* warm amber secondary — featured / editorial */
+
+  /* Per-format accents (Tournaments hub / bracket rows) */
+  --tl-accent-qt:   #00b96b;  /* Quick Tables */
+  --tl-accent-elim: #e9b649;  /* Doubles Elimination */
+  --tl-accent-flex: #4f9bff;  /* Flex Format */
+  --tl-accent-team: #ff7a4d;  /* Team Match */
 
   /* System */
   --tl-radius:     10px;
@@ -228,6 +240,10 @@
   [data-theme="the-line"] .tl-nav-search span,
   [data-theme="the-line"] .tl-nav-search kbd { display: none; }
 }
+/* ⌘K hint means nothing on touch devices (tablets ≥900px included) */
+@media (hover: none) {
+  [data-theme="the-line"] .tl-nav-search kbd { display: none; }
+}
 
 /* ========== Ticker ========== */
 [data-theme="the-line"] .tl-ticker {
@@ -260,6 +276,11 @@
   animation: tl-ticker 80s linear infinite;
   font-family: "Geist Mono"; font-size: 12px; color: var(--tl-fg-2);
   line-height: 34px;
+}
+/* a11y: let readers/keyboard users stop the marquee */
+[data-theme="the-line"] .tl-ticker:hover .tl-ticker-track,
+[data-theme="the-line"] .tl-ticker:focus-within .tl-ticker-track {
+  animation-play-state: paused;
 }
 [data-theme="the-line"] .tl-ticker-track b { color: var(--tl-fg); font-weight: 500; }
 [data-theme="the-line"] .tl-ticker-track .s { color: var(--tl-green); font-weight: 500; }
@@ -555,7 +576,7 @@
 }
 [data-theme="the-line"] .tl-lc-row:first-child { padding-top: 0; }
 [data-theme="the-line"] .tl-lc-seed {
-  font-family: "Geist Mono"; font-size: 10px; color: var(--tl-fg-4);
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-4);
   letter-spacing: 0.04em; text-transform: uppercase;
 }
 [data-theme="the-line"] .tl-lc-name {
@@ -569,7 +590,7 @@
 }
 [data-theme="the-line"] .tl-lc-row.leader .tl-lc-name { color: var(--tl-fg); font-weight: 600; }
 [data-theme="the-line"] .tl-lc-flag {
-  font-family: "Geist Mono"; font-size: 10px; color: var(--tl-fg-4);
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-4);
   padding: 2px 4px; border: 1px solid var(--tl-border); border-radius: 3px;
   letter-spacing: 0.04em; flex: none;
 }
@@ -632,7 +653,7 @@
   --lh-bg-2:        #ede2c4;
   --lh-fg:          #0a0908;
   --lh-fg-2:        #3d3a32;
-  --lh-fg-3:        #7a766a;
+  --lh-fg-3:        #5f5a4d; /* a11y: 5.7:1 on cream --lh-bg (was #7a766a ≈3.8:1) */
   --lh-line:        rgba(10, 9, 8, 0.10);
   --lh-line-strong: rgba(10, 9, 8, 0.20);
   --lh-green:       #016b40;
@@ -665,7 +686,7 @@
   --lh-bg-2:        #11150f;
   --lh-fg:          #f7f5ef;
   --lh-fg-2:        #b8b6ad;
-  --lh-fg-3:        #6e6c63;
+  --lh-fg-3:        #918e84; /* a11y: 6.0:1 on dark --lh-bg (was #6e6c63 ≈3.7:1) */
   --lh-line:        rgba(247, 245, 239, 0.08);
   --lh-line-strong: rgba(247, 245, 239, 0.18);
   --lh-green:       #00cf78;
@@ -895,7 +916,7 @@
 }
 [data-theme="the-line"] .tl-lh-cd-lbl {
   font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 9.5px;
+  font-size: 11px; /* a11y: was 9.5px — informational text floor 11px */
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--lh-fg-3);
@@ -2662,12 +2683,13 @@
   --tl-fg:         #08090a;
   --tl-fg-2:       #3a3933;
   --tl-fg-3:       #6d6a62;
-  --tl-fg-4:       #a5a299;
+  --tl-fg-4:       #6e6a60; /* a11y: 5.2:1 on light --tl-bg (was #a5a299 ≈2.5:1) */
   --tl-green:      #5e7d1f;  /* deep lime — bright lime is illegible on paper */
   --tl-green-dim:  #4a6418;
   --tl-green-glow: rgba(94, 125, 31, 0.14);
   --tl-live:       #d83428;
-  --tl-gold:       #a37613;
+  --tl-gold:       #8a6410; /* a11y: 5.2:1 on light --tl-bg (was #a37613 ≈3.9:1) */
+  --tl-accent-elim: #8a6410; /* amber retuned for paper bg (matches --tl-gold) */
 
   /* Production HSL token swap — light D4 */
   --background:          42 42% 98%;
@@ -2708,6 +2730,11 @@
   display: inline-flex; align-items: center; justify-content: center;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
   padding: 0;
+  position: relative;
+}
+/* a11y: 36px visual box, 44px effective hit area (nav row height stays put) */
+[data-theme="the-line"] .tl-icon-btn::after {
+  content: ''; position: absolute; inset: -4px;
 }
 [data-theme="the-line"] .tl-icon-btn:hover {
   border-color: var(--tl-border-2); color: var(--tl-fg); background: var(--tl-surface);
@@ -3115,6 +3142,11 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   font: inherit; color: var(--tl-fg-3);
   transition: color 0.15s;
   border-radius: 4px;
+  position: relative;
+}
+/* a11y: expand the ~23px visual box to a ≥44px effective hit area */
+[data-theme="the-line"] .tl-lang button::after {
+  content: ''; position: absolute; inset: -11px -2px;
 }
 [data-theme="the-line"] .tl-lang button.active { color: var(--tl-fg); font-weight: 600; }
 [data-theme="the-line"] .tl-lang button:hover { color: var(--tl-fg); }
@@ -3435,7 +3467,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   background: transparent; border: 0;
   padding: 16px 4px 14px; margin-right: 28px;
   font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
-  font-size: 22px; letter-spacing: -0.015em;
+  font-size: 30px; letter-spacing: -0.015em;
   color: var(--tl-fg-3); cursor: pointer;
   position: relative; transition: color 0.15s;
 }
@@ -3443,13 +3475,47 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-tab.active { color: var(--tl-fg); }
 [data-theme="the-line"] .tl-tab.active::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
-  height: 2px; background: var(--tl-green);
+  height: 3px; background: var(--tl-green);
 }
 [data-theme="the-line"] .tl-tab .count {
-  font-family: "Geist Mono"; font-style: normal; font-size: 11px;
-  color: var(--tl-fg-4); letter-spacing: 0.04em; margin-left: 6px;
+  font-family: "Geist Mono"; font-style: normal; font-size: 12px;
+  color: var(--tl-fg-4); letter-spacing: 0.04em; margin-left: 8px;
   font-variant-numeric: tabular-nums;
 }
+[data-theme="the-line"] .tl-tab.active .count { color: var(--tl-green); }
+
+/* ========== Community sub-tabs (format / status) ========== */
+[data-theme="the-line"] .tl-subtabs {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+[data-theme="the-line"] .tl-subtab {
+  background: transparent;
+  border: 1px solid var(--tl-border); border-radius: 999px;
+  padding: 8px 16px;
+  font-family: "Geist"; font-size: 13.5px; font-weight: 500;
+  color: var(--tl-fg-3); cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  position: relative;
+}
+/* a11y: invisible hit-area expansion — pills stay visually compact but
+   the effective touch target reaches ≥44px (status variant is ~30px). */
+[data-theme="the-line"] .tl-subtab::after {
+  content: ''; position: absolute; inset: -7px -4px;
+}
+[data-theme="the-line"] .tl-subtab:hover { color: var(--tl-fg-2); border-color: var(--tl-fg-4); }
+[data-theme="the-line"] .tl-subtab.active {
+  color: var(--tl-fg);
+  border-color: var(--fc-accent, var(--tl-green));
+  background: color-mix(in srgb, var(--fc-accent, var(--tl-green)) 12%, transparent);
+}
+[data-theme="the-line"] .tl-subtab .count {
+  font-family: "Geist Mono"; font-size: 11px; margin-left: 6px;
+  color: var(--tl-fg-4); font-variant-numeric: tabular-nums;
+}
+[data-theme="the-line"] .tl-subtab.active .count { color: var(--fc-accent, var(--tl-green)); }
+[data-theme="the-line"] .tl-subtabs.status { margin-bottom: 24px; }
+[data-theme="the-line"] .tl-subtabs.status .tl-subtab { padding: 6px 14px; font-size: 12.5px; }
 
 /* ========== Community format section ========== */
 [data-theme="the-line"] .tl-format-section {
@@ -3700,10 +3766,13 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   );
 }
 [data-theme="the-line"] .tl-feed-card:hover .tl-feed-team-lost { opacity: 0.75 !important; }
-[data-theme="the-line"] .tl-feed-card:focus-visible {
+/* Focus now lives on the stretched overlay link (.tl-feed-card-link) —
+   the wrapper is a plain <article> since nested anchors were invalid. */
+[data-theme="the-line"] .tl-feed-card:has(> .tl-feed-card-link:focus-visible) {
   outline: 1px solid var(--tl-green);
   outline-offset: 4px;
 }
+[data-theme="the-line"] .tl-feed-card-link:focus-visible { outline: none; }
 
 /* Chevron reveal on card foot — invisible at rest, lime + slide on card hover.
    Mobile + touch keep it visible at fg-3 so the affordance is discoverable. */
@@ -3727,7 +3796,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   pointer-events: none;
 }
 [data-theme="the-line"] .tl-feed-card:hover .tl-feed-card-foot::after,
-[data-theme="the-line"] .tl-feed-card:focus-visible .tl-feed-card-foot::after {
+[data-theme="the-line"] .tl-feed-card:has(> .tl-feed-card-link:focus-visible) .tl-feed-card-foot::after {
   opacity: 1;
   color: var(--tl-green);
   transform: translateX(0);
@@ -3781,11 +3850,11 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
     transparent 100%
   );
 }
-[data-theme="the-line"] .tl-feed-card--final:focus-visible {
+[data-theme="the-line"] .tl-feed-card--final:has(> .tl-feed-card-link:focus-visible) {
   outline-color: var(--tl-gold);
 }
 [data-theme="the-line"] .tl-feed-card--final:hover .tl-feed-card-foot::after,
-[data-theme="the-line"] .tl-feed-card--final:focus-visible .tl-feed-card-foot::after {
+[data-theme="the-line"] .tl-feed-card--final:has(> .tl-feed-card-link:focus-visible) .tl-feed-card-foot::after {
   color: var(--tl-gold);
 }
 

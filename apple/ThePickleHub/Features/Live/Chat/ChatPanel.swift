@@ -48,12 +48,16 @@ struct ChatPanel: View {
             Spacer()
             Button { showLeaderboard = true } label: {
                 Image(systemName: "trophy").font(.system(size: 15)).foregroundStyle(TLColor.gold)
+                    .frame(width: 44, height: 44).contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .accessibilityLabel("Bảng xếp hạng bình luận")
             if model.isModerator {
                 Button { showSettings = true } label: {
                     Image(systemName: "slider.horizontal.3").font(.system(size: 15)).foregroundStyle(TLColor.accentText)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel("Cài đặt chat")
             }
         }
@@ -310,6 +314,8 @@ private struct ChatSettingsSheet: View {
                                         .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg2)
                                         .padding(.horizontal, 12).padding(.vertical, 8)
                                         .background(selected ? TLColor.accent : TLColor.surface2, in: Capsule())
+                                        .frame(minHeight: 40)
+                                        .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
                             }

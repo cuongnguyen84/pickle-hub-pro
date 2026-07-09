@@ -17,7 +17,35 @@ struct DeepLinkDestinationView: View {
                 JoinInviteLoaderView(code: code)
             case .socialEvent(let slug):
                 SocialEventLoaderView(slug: slug)
+            case .livestream(let id):
+                LivestreamLoaderView(id: id)
             }
+        }
+    }
+}
+
+/// `/live/:id` (notification tap) → load stream → LiveWatchScreen.
+private struct LivestreamLoaderView: View {
+    let id: UUID
+    @State private var stream: LivestreamSummary?
+    @State private var loaded = false
+
+    var body: some View {
+        Group {
+            if !loaded {
+                ProgressView().tint(TLColor.accentText)
+            } else if let stream {
+                LiveWatchScreen(stream: stream)
+            } else {
+                TLEmptyState(icon: "dot.radiowaves.up.forward", title: "Không tìm thấy livestream",
+                             subtitle: "Buổi phát không tồn tại hoặc đã bị gỡ.")
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(TLColor.bg)
+        .task {
+            stream = (try? await LiveRepository().stream(id: id)) ?? nil
+            loaded = true
         }
     }
 }
