@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,7 @@ interface TournamentFormData {
 
 export default function AdminTournaments() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTournament, setEditingTournament] = useState<any>(null);
   const [formData, setFormData] = useState<TournamentFormData>({
@@ -78,9 +79,9 @@ export default function AdminTournaments() {
       .update({ is_featured: !pt.is_featured })
       .eq('id', pt.id);
     if (error) {
-      toast.error("Không thể cập nhật");
+      toast({ variant: "destructive", title: "Không thể cập nhật" });
     } else {
-      toast.success(pt.is_featured ? "Đã bỏ nổi bật" : "Đã đánh dấu nổi bật");
+      toast({ title: pt.is_featured ? "Đã bỏ nổi bật" : "Đã đánh dấu nổi bật" });
       await loadParentTournaments();
     }
     setTogglingId(null);
@@ -120,7 +121,7 @@ export default function AdminTournaments() {
     e.preventDefault();
 
     if (!formData.name.trim() || !formData.slug.trim()) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
+      toast({ variant: "destructive", title: "Vui lòng điền đầy đủ thông tin" });
       return;
     }
 
@@ -136,15 +137,15 @@ export default function AdminTournaments() {
 
       if (editingTournament) {
         await updateTournament.mutateAsync({ id: editingTournament.id, ...payload });
-        toast.success("Cập nhật giải đấu thành công");
+        toast({ title: "Cập nhật giải đấu thành công" });
       } else {
         await createTournament.mutateAsync(payload);
-        toast.success("Tạo giải đấu thành công");
+        toast({ title: "Tạo giải đấu thành công" });
       }
       setDialogOpen(false);
       resetForm();
     } catch (error: any) {
-      toast.error(error.message || "Có lỗi xảy ra");
+      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
     }
   };
 
