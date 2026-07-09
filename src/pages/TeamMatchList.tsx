@@ -5,7 +5,7 @@ import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, Mail, LogIn, Loade
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
 import { useUserCreateQuota } from '@/hooks/useUserCreateQuota';
-import { useI18n } from '@/i18n';
+import { useI18n, type Translations } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -48,7 +48,7 @@ function TournamentCard({
   isOwner: boolean;
   onDelete: () => void;
   isDeleting?: boolean;
-  t: any;
+  t: Translations;
 }) {
   const navigate = useNavigate();
   const goView = () => navigate(`/tools/team-match/${tournament.share_id}`);

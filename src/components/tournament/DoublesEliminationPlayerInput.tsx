@@ -117,6 +117,10 @@ export function DoublesEliminationPlayerInput({
             padding: 2,
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
+            // Expand hit area well beyond the 14px glyph for touch (was ~18px)
+            minWidth: 40,
+            minHeight: 40,
           }}
         >
           <X className="w-3.5 h-3.5" />

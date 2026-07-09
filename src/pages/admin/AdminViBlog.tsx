@@ -153,7 +153,7 @@ export default function AdminViBlog() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Link to={`/admin/vi-blog/${post.id}/edit`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Edit post">
                             <Pencil className="w-4 h-4" />
                           </Button>
                         </Link>
@@ -163,14 +163,14 @@ export default function AdminViBlog() {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Open published post">
                               <ExternalLink className="w-4 h-4" />
                             </Button>
                           </a>
                         )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Delete post">
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           </AlertDialogTrigger>

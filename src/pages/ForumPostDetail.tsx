@@ -93,7 +93,7 @@ const ForumPostDetail = () => {
             {canManage && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={language === "vi" ? "Tùy chọn bài viết" : "Post options"}>
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -105,9 +105,9 @@ const ForumPostDetail = () => {
                     </DropdownMenuItem>
                   )}
                   {isAdmin && (
-                    <DropdownMenuItem onClick={() => toggleHide.mutate({ postId: post.id, isHidden: !!(post as any).is_hidden })}>
-                      {(post as any).is_hidden ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
-                      {(post as any).is_hidden ? "Hiện bài" : "Ẩn bài"}
+                    <DropdownMenuItem onClick={() => toggleHide.mutate({ postId: post.id, isHidden: !!(post as { is_hidden?: boolean }).is_hidden })}>
+                      {(post as { is_hidden?: boolean }).is_hidden ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                      {(post as { is_hidden?: boolean }).is_hidden ? "Hiện bài" : "Ẩn bài"}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={handleDelete} className="text-destructive">

@@ -179,7 +179,7 @@ export default function AdvertisePage() {
         {/* Inventory & rates */}
         <section style={{ marginTop: 44 }}>
           <h2 style={sectionH}>{c.inventoryTitle}</h2>
-          <div style={{ overflow: "hidden", borderRadius: 12, border: "1px solid var(--tl-border)" }}>
+          <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid var(--tl-border)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
               <thead>
                 <tr style={{ background: "var(--tl-surface)" }}>

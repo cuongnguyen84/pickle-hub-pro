@@ -19,7 +19,7 @@ const TournamentDashboard = () => {
   const dashType = (type as DashboardType) || "quick-table";
   const { tournamentInfo, courts, teamMatchData, isLoading } = useDashboardData(dashType, id || "");
 
-  const tournamentName = (tournamentInfo.data as any)?.name || "";
+  const tournamentName = (tournamentInfo.data as { name?: string } | null | undefined)?.name || "";
 
   // Fullscreen API
   const enterTvMode = useCallback(() => {
@@ -58,7 +58,7 @@ const TournamentDashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
           <div className="flex items-center gap-3 min-w-0">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/tools/dashboard")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/tools/dashboard")} aria-label="Back to dashboard">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="min-w-0">

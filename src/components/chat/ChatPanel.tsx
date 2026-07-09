@@ -204,7 +204,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t.chat.settings}>
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -755,7 +755,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t.chat.settings}>
               <Settings className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -820,7 +820,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
           {isModerator && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t.chat.settings}>
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

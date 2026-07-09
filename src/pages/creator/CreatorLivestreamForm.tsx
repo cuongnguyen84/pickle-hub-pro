@@ -42,7 +42,7 @@ export default function CreatorLivestreamForm() {
     tournament_id: "",
     scheduled_start_at: "",
     status: "scheduled" as Enums<"livestream_status">,
-    streaming_provider: "mux" as "mux",
+    streaming_provider: "mux" as const,
     mux_live_stream_id: "",
     mux_playback_id: "",
     mux_stream_key: "",
@@ -476,10 +476,10 @@ export default function CreatorLivestreamForm() {
                 </Label>
                 <div className="flex items-center gap-2">
                   <Input type={showStreamKey ? "text" : "password"} value={formData.mux_stream_key} readOnly className="font-mono text-sm" />
-                  <Button type="button" variant="outline" size="icon" onClick={() => setShowStreamKey(!showStreamKey)}>
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowStreamKey(!showStreamKey)} aria-label={showStreamKey ? "Hide stream key" : "Show stream key"}>
                     {showStreamKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
-                  <Button type="button" variant="outline" size="icon" onClick={() => copyToClipboard(formData.mux_stream_key, "Stream Key")}>
+                  <Button type="button" variant="outline" size="icon" onClick={() => copyToClipboard(formData.mux_stream_key, "Stream Key")} aria-label="Copy stream key">
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
