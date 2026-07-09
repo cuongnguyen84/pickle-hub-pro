@@ -35,6 +35,7 @@ import { Loader2, RefreshCw, ExternalLink, AlertCircle, CheckCircle2, Zap } from
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -122,12 +123,13 @@ function KV({ k, v }: { k: string; v: React.ReactNode }) {
 function ConnectionSection() {
   const { language } = useI18n();
   const vi = language === "vi";
+  const confirm = useConfirm();
   const { data: conn, isLoading, refetch } = useDuprConnection();
   const qc = useQueryClient();
   const [disconnecting, setDisconnecting] = useState(false);
 
   const handleDisconnect = async () => {
-    if (!confirm(vi ? "Ngắt kết nối DUPR?" : "Disconnect from DUPR?")) return;
+    if (!(await confirm({ description: vi ? "Ngắt kết nối DUPR?" : "Disconnect from DUPR?", destructive: true }))) return;
     setDisconnecting(true);
     try {
       const { error } = await supabase.functions.invoke("dupr-disconnect", { body: {} });
@@ -1040,6 +1042,7 @@ function SubmissionsSection() {
   const { user } = useAuth();
   const { language } = useI18n();
   const vi = language === "vi";
+  const confirm = useConfirm();
   const qc = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditDialogState | null>(null);
@@ -1120,7 +1123,7 @@ function SubmissionsSection() {
   };
 
   const handleDelete = async (row: SubmissionRow) => {
-    if (!confirm(vi ? `Xoá match ${row.match_code}?` : `Delete match ${row.match_code}?`)) return;
+    if (!(await confirm({ description: vi ? `Xoá match ${row.match_code}?` : `Delete match ${row.match_code}?`, destructive: true }))) return;
     setBusyId(row.identifier);
     try {
       const [src, internalId] = (() => {

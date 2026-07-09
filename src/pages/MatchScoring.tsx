@@ -30,12 +30,14 @@ import { Plus, Minus, Undo2, CheckCircle, ChevronRight, ArrowLeft, Radio, Lock, 
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-interface SetScore {
+// Type aliases (not interfaces) so they're assignable to Supabase's `Json`
+// column type when persisted — interfaces lack the implicit index signature.
+type SetScore = {
   s1: number;
   s2: number;
-}
+};
 
-interface HistoryEntry {
+type HistoryEntry = {
   action: 'score' | 'swap_sides' | 'swap_serve' | 'end_set' | 'timeout' | 'medical';
   player?: 1 | 2;
   delta?: number;
@@ -48,7 +50,7 @@ interface HistoryEntry {
   prevCurrentSet?: number;
   prevServerNumber?: number;
   side?: 1 | 2;
-}
+};
 
 interface MatchData {
   id: string;
@@ -111,7 +113,7 @@ const MatchScoring = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   const [match, setMatch] = useState<MatchData | null>(null);
   const [table, setTable] = useState<TableData | null>(null);
@@ -128,6 +130,9 @@ const MatchScoring = () => {
   const [showEndDialog, setShowEndDialog] = useState(false);
   const [showEndSetDialog, setShowEndSetDialog] = useState(false);
   const [updating, setUpdating] = useState(false);
+  // True when the last debounced score save failed — surfaces a persistent
+  // retry banner so a referee never assumes an unsaved score was saved.
+  const [saveFailed, setSaveFailed] = useState(false);
 
   // Local state for optimistic updates
   const [localScore1, setLocalScore1] = useState<number>(0);
@@ -206,8 +211,8 @@ const MatchScoring = () => {
         return;
       }
 
-      const md = matchData as any;
-      setMatch(md as MatchData);
+      const md = matchData as unknown as MatchData;
+      setMatch(md);
       setLocalScore1(md.score1 ?? 0);
       setLocalScore2(md.score2 ?? 0);
       setLocalSetScores((md.set_scores as SetScore[]) ?? []);
@@ -232,7 +237,7 @@ const MatchScoring = () => {
       if (tableData?.default_sets && tableData.default_sets > 1 && (md.total_sets === 1 || !md.total_sets)) {
         setLocalTotalSets(tableData.default_sets);
         // Also persist to match
-        await supabase.from('quick_table_matches').update({ total_sets: tableData.default_sets } as any).eq('id', matchId);
+        await supabase.from('quick_table_matches').update({ total_sets: tableData.default_sets } as TablesUpdate<'quick_table_matches'>).eq('id', matchId);
       }
 
       // Fetch players
@@ -316,7 +321,7 @@ const MatchScoring = () => {
     if (!matchId || !user || isLiveOwner) return;
     const { error } = await supabase
       .from('quick_table_matches')
-      .update({ live_referee_id: user.id } as any)
+      .update({ live_referee_id: user.id } as TablesUpdate<'quick_table_matches'>)
       .eq('id', matchId)
       .is('live_referee_id', null);
     if (!error) {
@@ -327,14 +332,14 @@ const MatchScoring = () => {
   }, [matchId, user, isLiveOwner, t]);
 
   // Persist state to DB with debounce
-  const persistState = useCallback(async (overrides: Record<string, any> = {}) => {
+  const persistState = useCallback(async (overrides: TablesUpdate<'quick_table_matches'> = {}) => {
     if (!matchId || isReadOnly) return;
     if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
 
     updateTimeoutRef.current = setTimeout(async () => {
       setUpdating(true);
       try {
-        const updateData: any = {
+        const updateData: TablesUpdate<'quick_table_matches'> = {
           score1: localScore1,
           score2: localScore2,
           set_scores: localSetScores,
@@ -354,7 +359,10 @@ const MatchScoring = () => {
           .eq('id', matchId);
         if (error) {
           console.error('Error updating:', error);
+          setSaveFailed(true);
           toast.error(t.quickTable.matchScoring.scoreUpdateError);
+        } else {
+          setSaveFailed(false);
         }
       } finally {
         setUpdating(false);
@@ -503,7 +511,7 @@ const MatchScoring = () => {
     const newHistory = localHistory.slice(0, -1);
     setLocalHistory(newHistory);
 
-    const overrides: Record<string, any> = { score_history: newHistory };
+    const overrides: TablesUpdate<'quick_table_matches'> = { score_history: newHistory };
 
     switch (last.action) {
       case 'score':
@@ -640,7 +648,7 @@ const MatchScoring = () => {
           set_scores: finalSetScores,
           match_timer_started_at: null,
           match_timer_elapsed_seconds: finalElapsed,
-        } as any)
+        } as TablesUpdate<'quick_table_matches'>)
         .eq('id', matchId);
 
       if (error) throw error;
@@ -729,7 +737,7 @@ const MatchScoring = () => {
   // Navigate to next match
   const handleNextMatch = async () => {
     if (!match || !table) return;
-    let nextMatch: any = null;
+    let nextMatch: { id: string } | null = null;
     if (match.is_playoff) {
       const { data } = await supabase
         .from('quick_table_matches')
@@ -778,8 +786,8 @@ const MatchScoring = () => {
         .channel(`match-scoring-${matchId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quick_table_matches', filter: `id=eq.${matchId}` },
           (payload) => {
-            const nd = payload.new as any;
-            setMatch(nd as MatchData);
+            const nd = payload.new as unknown as MatchData;
+            setMatch(nd);
             if (nd.live_referee_id !== user?.id) {
               setLocalScore1(nd.score1 ?? 0);
               setLocalScore2(nd.score2 ?? 0);
@@ -936,6 +944,22 @@ const MatchScoring = () => {
           )}
           {isCompleted && <Badge variant="outline">{t.quickTable.matchScoring.ended}</Badge>}
         </div>
+
+        {/* Persistent save-failure banner — a transient toast is easy to miss
+            mid-rally, so keep a retry affordance visible until the save lands. */}
+        {saveFailed && (
+          <Card className="border-2 border-destructive bg-destructive/10">
+            <CardContent className="py-3 flex items-center justify-between gap-3">
+              <div className="text-sm font-medium text-destructive">
+                {t.quickTable.matchScoring.scoreUpdateError}
+              </div>
+              <Button variant="destructive" size="sm" onClick={() => persistState()} disabled={updating}>
+                <RefreshCw className={cn('w-4 h-4 mr-2', updating && 'animate-spin')} />
+                {language === 'vi' ? 'Thử lại' : 'Retry'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Match Info */}
         <Card>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useI18n } from "@/i18n";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useForumCategories, ForumCategory } from "@/hooks/useForumCategories";
 import { useForumPosts, useDeleteForumPost, useTogglePinPost } from "@/hooks/useForumPosts";
 import { useToggleHidePost } from "@/hooks/useForumPost";
@@ -22,6 +23,7 @@ import { vi as viLocale, enUS } from "date-fns/locale";
 export default function AdminForum() {
   const { t, language } = useI18n();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const locale = language === "vi" ? viLocale : enUS;
 
@@ -58,7 +60,7 @@ export default function AdminForum() {
   const openEditCat = (cat: ForumCategory) => {
     setEditingCat(cat);
     setCatName(cat.name);
-    setCatNameEn((cat as any).name_en || "");
+    setCatNameEn((cat as ForumCategory & { name_en?: string | null }).name_en || "");
     setCatSlug(cat.slug);
     setCatOrder(cat.display_order);
     setCatDialogOpen(true);
@@ -90,8 +92,8 @@ export default function AdminForum() {
       }
       queryClient.invalidateQueries({ queryKey: ["forum-categories"] });
       setCatDialogOpen(false);
-    } catch (err: any) {
-      toast({ variant: "destructive", title: err.message || "Có lỗi xảy ra" });
+    } catch (err) {
+      toast({ variant: "destructive", title: err instanceof Error ? err.message : "Có lỗi xảy ra" });
     } finally {
       setCatSaving(false);
     }
@@ -109,8 +111,8 @@ export default function AdminForum() {
       toast({ title: "Đã xóa danh mục" });
       queryClient.invalidateQueries({ queryKey: ["forum-categories"] });
       setDeletingCatId(null);
-    } catch (err: any) {
-      toast({ variant: "destructive", title: err.message || "Có lỗi xảy ra" });
+    } catch (err) {
+      toast({ variant: "destructive", title: err instanceof Error ? err.message : "Có lỗi xảy ra" });
     } finally {
       setCatDeleting(false);
     }
@@ -165,8 +167,8 @@ export default function AdminForum() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{cat.name}</span>
-                          {(cat as any).name_en && (
-                            <Badge variant="outline" className="text-xs">EN: {(cat as any).name_en}</Badge>
+                          {(cat as ForumCategory & { name_en?: string | null }).name_en && (
+                            <Badge variant="outline" className="text-xs">EN: {(cat as ForumCategory & { name_en?: string | null }).name_en}</Badge>
                           )}
                           <Badge variant="secondary" className="text-xs">/{cat.slug}</Badge>
                           <span className="text-xs text-muted-foreground">#{cat.display_order}</span>
@@ -207,13 +209,13 @@ export default function AdminForum() {
             ) : (
               <div className="space-y-2">
                 {posts.map((post) => (
-                  <Card key={post.id} className={(post as any).is_hidden ? "opacity-50" : ""}>
+                  <Card key={post.id} className={(post as { is_hidden?: boolean }).is_hidden ? "opacity-50" : ""}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             {post.is_pinned && <Pin className="w-3.5 h-3.5 text-primary" />}
-                            {(post as any).is_hidden && (
+                            {(post as { is_hidden?: boolean }).is_hidden && (
                               <Badge variant="destructive" className="text-xs">Đã ẩn</Badge>
                             )}
                             <h3 className="font-medium text-sm truncate">{post.title}</h3>
@@ -240,17 +242,17 @@ export default function AdminForum() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => toggleHide.mutate({ postId: post.id, isHidden: !!(post as any).is_hidden })}
-                            title={(post as any).is_hidden ? "Hiện bài" : "Ẩn bài"}
+                            onClick={() => toggleHide.mutate({ postId: post.id, isHidden: !!(post as { is_hidden?: boolean }).is_hidden })}
+                            title={(post as { is_hidden?: boolean }).is_hidden ? "Hiện bài" : "Ẩn bài"}
                           >
-                            {(post as any).is_hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            {(post as { is_hidden?: boolean }).is_hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive"
-                            onClick={() => {
-                              if (confirm("Bạn có chắc muốn xóa bài viết này?")) {
+                            onClick={async () => {
+                              if (await confirm({ description: "Bạn có chắc muốn xóa bài viết này?", destructive: true })) {
                                 deletePost.mutate(post.id);
                               }
                             }}
