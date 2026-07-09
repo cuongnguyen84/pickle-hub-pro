@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export interface SystemSettings {
   require_login_livestream: boolean;
@@ -60,6 +61,16 @@ export function useUpdateSystemSetting() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["system-settings"] });
+    },
+    onError: (error: any) => {
+      console.error("[useSystemSettings] Update failed:", error);
+      toast({
+        title: "Lưu cài đặt thất bại",
+        description: error?.message ?? "Không thể lưu. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+      // Roll back the optimistic switch flip by refetching the true state.
       queryClient.invalidateQueries({ queryKey: ["system-settings"] });
     },
   });
