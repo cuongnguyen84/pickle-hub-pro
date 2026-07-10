@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-// @ts-expect-error — .mjs script has no type declarations; pure fn imported for test.
 import { findMigrationDuplicates } from "../../../scripts/check-migration-duplicates.mjs";
 
 describe("findMigrationDuplicates", () => {

@@ -102,16 +102,14 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Supabase REST — NetworkFirst with fast timeout
+          // Supabase REST — NEVER cache. Responses are per-user (RLS +
+          // bearer token); a URL-keyed cache could serve account A's data to
+          // account B on a shared device when the network times out. The
+          // legacy "supabase-rest" cache from the old NetworkFirst rule is
+          // purged client-side (src/lib/pwa/cache.ts) on boot + sign-out.
           {
             urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/rest\//,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-rest",
-              networkTimeoutSeconds: 3,
-              expiration: { maxEntries: 100, maxAgeSeconds: 5 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
+            handler: "NetworkOnly",
           },
           // Supabase storage images — CacheFirst, long-lived
           {
