@@ -45,6 +45,12 @@ growth-tasks/
 # Supabase CLI temp
 supabase/.temp/
 
+# Build/tooling scratch — never commit
+*.tsbuildinfo
+vite.config.ts.timestamp-*.mjs
+__pycache__/
+.gsc-index-queue.json
+
 # Cloudflare Workers — Wrangler build artifacts
 workers/**/.wrangler/
 workers/**/.dev.vars
