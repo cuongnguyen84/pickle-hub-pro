@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["hcmc open 2026", "ho chi minh city open pickleball", "mb ho chi minh city open", "ppa tour asia 500", "ppa asia ho chi minh", "pickleball tp hcm", "giai pickleball tphcm"],
     ctaPath: "/live",
     ctaLabel: { en: "Watch live tournaments on ThePickleHub", vi: "Xem giải trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/hcmc-open-2026-preview-hero.webp", alt: "MB HCMC Open 2026 hero — outdoor pickleball stadium court at golden hour in Ho Chi Minh City with the city skyline behind a packed grandstand, PPA Asia 500 event banner for August 6-9." },
     titleEn: "HCMC Open 2026 Preview: The PPA Asia 500 Comes to Ho Chi Minh City",
     titleVi: "HCMC Open 2026: Toàn cảnh giải PPA Asia 500 tại TP.HCM",
     metaTitleEn: "HCMC Open 2026 Preview | PPA Asia 500 in Ho Chi Minh City",

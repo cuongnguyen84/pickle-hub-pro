@@ -19,6 +19,10 @@ const post: BlogPost = {
     en: "Watch live tournaments on ThePickleHub",
     vi: "Xem giải trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/hcmc-open-2026-preview-hero.webp",
+    alt: "MB HCMC Open 2026 hero — outdoor pickleball stadium court at golden hour in Ho Chi Minh City with the city skyline behind a packed grandstand, PPA Asia 500 event banner for August 6-9.",
+  },
   content: {
     en: {
       title: "HCMC Open 2026 Preview: The PPA Asia 500 Comes to Ho Chi Minh City",
