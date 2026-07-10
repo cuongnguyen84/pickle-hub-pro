@@ -24,9 +24,10 @@
 // Usage: node scripts/check-migration-drift.mjs
 // ============================================================================
 
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { findMigrationDuplicates } from "./check-migration-duplicates.mjs";
 
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 const REF = process.env.SUPABASE_PROJECT_REF || "ajvlcamxemgbxduhiqrl";
@@ -41,6 +42,21 @@ const MIGRATIONS_DIR = join(__dirname, "..", "supabase", "migrations");
 
 function localVersions() {
   const files = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql"));
+
+  // Guard: two files at the same version silently overwrite in the Map below
+  // (last-writer-wins), so a collision would otherwise pass unnoticed. Fail
+  // hard before doing anything else — a duplicate version breaks fresh replay.
+  const { versionDuplicates } = findMigrationDuplicates(
+    files.map((name) => ({ name, content: "" })),
+  );
+  if (versionDuplicates.length) {
+    console.error("✖ Duplicate migration version(s) — run `node scripts/check-migration-duplicates.mjs`:");
+    for (const { version, files: names } of versionDuplicates) {
+      console.error(`   ${version} → ${names.join("  |  ")}`);
+    }
+    process.exit(1);
+  }
+
   const versions = new Map(); // version -> filename
   for (const f of files) {
     const m = f.match(/^(\d{14})/);
