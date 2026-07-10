@@ -232,11 +232,19 @@ export default defineConfig(({ mode }) => ({
   },
   // Ensure static files in public folder are served with correct MIME types
   assetsInclude: ["**/*.xml"],
-  // Vitest — scope unit tests to src/ so the Playwright specs in tests/
-  // (which use @playwright/test, not vitest) aren't wrongly collected.
+  // Vitest — src/ unit tests PLUS the pure, Deno-free helper tests co-located
+  // under supabase/functions/_shared/__tests__ (dupr-parser, dupr-validation,
+  // token-crypto). Those were vitest-syntax but previously unrun because the
+  // blanket `supabase/**` exclude swallowed them. The exclude now targets only
+  // the edge functions that import `Deno.*` (which can't run under node), not
+  // the shared pure helpers. Playwright specs in tests/ use @playwright/test,
+  // not vitest, so they stay excluded.
   test: {
-    include: ["src/**/*.test.{ts,tsx}"],
-    exclude: ["node_modules/**", "dist/**", "tests/**", "supabase/**"],
+    include: [
+      "src/**/*.test.{ts,tsx}",
+      "supabase/functions/_shared/__tests__/**/*.test.ts",
+    ],
+    exclude: ["node_modules/**", "dist/**", "tests/**"],
     environment: "node",
     // Coverage of test-imported files. Threshold locks the baseline
     // (86.9% statements on 2026-05-29) so a regression that adds untested
