@@ -6,7 +6,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Send, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Bell, Send, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -18,8 +28,16 @@ export default function AdminPushNotification() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  // Recipient IDs resolved + awaiting a second confirmation. Non-null ⇒ the
+  // confirm dialog is open. Holds the exact list that will be sent, so the
+  // count shown is the count that ships — no re-resolve between confirm+send.
+  const [pendingRecipients, setPendingRecipients] = useState<string[] | null>(null);
 
-  const handleSend = async () => {
+  // Validate + resolve the recipient list, then OPEN the confirm dialog.
+  // Never invokes the send function directly — a broadcast to all users must
+  // pass a preview + explicit second confirmation (no one-click accidents).
+  const handleReview = async () => {
     if (!title.trim()) {
       toast.error("Vui lòng nhập tiêu đề");
       return;
@@ -29,7 +47,7 @@ export default function AdminPushNotification() {
       return;
     }
 
-    setSending(true);
+    setResolving(true);
     try {
       let targetUserIds: string[] = [];
 
@@ -45,7 +63,6 @@ export default function AdminPushNotification() {
 
         if (targetUserIds.length === 0) {
           toast.warning("Không có user nào đã đăng ký push token");
-          setSending(false);
           return;
         }
       } else {
@@ -56,7 +73,6 @@ export default function AdminPushNotification() {
 
         if (emailList.length === 0) {
           toast.error("Vui lòng nhập ít nhất 1 email");
-          setSending(false);
           return;
         }
 
@@ -72,7 +88,6 @@ export default function AdminPushNotification() {
         const notFound = emailList.filter((e) => !foundEmails.has(e));
         if (notFound.length > 0) {
           toast.error(`Email không tồn tại trong hệ thống: ${notFound.join(", ")}`);
-          setSending(false);
           return;
         }
 
@@ -80,11 +95,26 @@ export default function AdminPushNotification() {
 
         if (targetUserIds.length === 0) {
           toast.error("Vui lòng nhập ít nhất 1 email");
-          setSending(false);
           return;
         }
       }
 
+      setPendingRecipients(targetUserIds);
+    } catch (err: unknown) {
+      console.error("Resolve recipients error:", err);
+      toast.error("Lỗi khi xác định người nhận: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  // Actual send — only reachable after the confirm dialog's action button.
+  const confirmSend = async () => {
+    if (!pendingRecipients) return;
+    const targetUserIds = pendingRecipients;
+    setPendingRecipients(null);
+    setSending(true);
+    try {
       const { data, error } = await supabase.functions.invoke("send-push-notification", {
         body: {
           user_ids: targetUserIds,
@@ -192,26 +222,67 @@ export default function AdminPushNotification() {
 
             {/* Send button */}
             <Button
-              onClick={handleSend}
-              disabled={sending}
+              onClick={handleReview}
+              disabled={sending || resolving}
               className="w-full"
               size="lg"
             >
-              {sending ? (
+              {sending || resolving ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Đang gửi...
+                  {resolving ? "Đang kiểm tra..." : "Đang gửi..."}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Gửi thông báo
+                  Xem lại & gửi
                 </>
               )}
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Second-confirmation gate — shows recipient count + content preview
+          before any push goes out. Prevents an accidental one-click broadcast
+          to every user. */}
+      <AlertDialog
+        open={pendingRecipients !== null}
+        onOpenChange={(open) => { if (!open) setPendingRecipients(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Xác nhận gửi thông báo
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>
+                  Sắp gửi push đến{" "}
+                  <strong className="text-foreground">
+                    {pendingRecipients?.length ?? 0} người dùng
+                  </strong>{" "}
+                  ({target === "all" ? "Tất cả users" : "User cụ thể"}).
+                  {target === "all" && (pendingRecipients?.length ?? 0) > 50 && (
+                    <span className="text-amber-600"> Đây là broadcast diện rộng — hãy chắc chắn.</span>
+                  )}
+                </p>
+                <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                  <p className="font-semibold text-foreground">{title.trim()}</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{body.trim()}</p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSend}>
+              Gửi cho {pendingRecipients?.length ?? 0} người
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
