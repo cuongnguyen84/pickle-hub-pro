@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl } from "@/lib/auth-config";
+import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
 import { trackEvent } from "@/utils/ga";
 
 interface AuthContextType {
@@ -20,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const signupTrackedRef = useRef(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -29,6 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // On ANY sign-out — manual, token expiry, revoke, or a sign-out in
+        // another tab — drop all client-held user data. onAuthStateChange is
+        // the single source of truth (fires for every path); doing this only
+        // inside signOut() would miss the non-manual cases. Clears the React
+        // Query cache (in-memory RLS data) + the auth-sensitive Cache Storage.
+        if (event === "SIGNED_OUT") {
+          queryClient.clear();
+          void purgeAuthSensitiveCaches();
+        }
 
         // Track sign_up for new users (created within last 2 minutes)
         // Handle both SIGNED_IN and INITIAL_SESSION (OAuth redirects may use either)
@@ -59,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [queryClient]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
