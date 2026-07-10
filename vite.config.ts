@@ -102,16 +102,14 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Supabase REST — NetworkFirst with fast timeout
+          // Supabase REST — NEVER cache. Responses are per-user (RLS +
+          // bearer token); a URL-keyed cache could serve account A's data to
+          // account B on a shared device when the network times out. The
+          // legacy "supabase-rest" cache from the old NetworkFirst rule is
+          // purged client-side (src/lib/pwa/cache.ts) on boot + sign-out.
           {
             urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/rest\//,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-rest",
-              networkTimeoutSeconds: 3,
-              expiration: { maxEntries: 100, maxAgeSeconds: 5 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
+            handler: "NetworkOnly",
           },
           // Supabase storage images — CacheFirst, long-lived
           {
@@ -234,11 +232,19 @@ export default defineConfig(({ mode }) => ({
   },
   // Ensure static files in public folder are served with correct MIME types
   assetsInclude: ["**/*.xml"],
-  // Vitest — scope unit tests to src/ so the Playwright specs in tests/
-  // (which use @playwright/test, not vitest) aren't wrongly collected.
+  // Vitest — src/ unit tests PLUS the pure, Deno-free helper tests co-located
+  // under supabase/functions/_shared/__tests__ (dupr-parser, dupr-validation,
+  // token-crypto). Those were vitest-syntax but previously unrun because the
+  // blanket `supabase/**` exclude swallowed them. The exclude now targets only
+  // the edge functions that import `Deno.*` (which can't run under node), not
+  // the shared pure helpers. Playwright specs in tests/ use @playwright/test,
+  // not vitest, so they stay excluded.
   test: {
-    include: ["src/**/*.test.{ts,tsx}"],
-    exclude: ["node_modules/**", "dist/**", "tests/**", "supabase/**"],
+    include: [
+      "src/**/*.test.{ts,tsx}",
+      "supabase/functions/_shared/__tests__/**/*.test.ts",
+    ],
+    exclude: ["node_modules/**", "dist/**", "tests/**"],
     environment: "node",
     // Coverage of test-imported files. Threshold locks the baseline
     // (86.9% statements on 2026-05-29) so a regression that adds untested
