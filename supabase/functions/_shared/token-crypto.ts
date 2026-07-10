@@ -28,6 +28,31 @@ export const KEY_VERSION = "v1";
 const ENC_PREFIX = "enc:";
 const NONCE_BYTES = 12;
 
+/**
+ * Build the canonical Associated Authenticated Data (AAD) for a stored token.
+ *
+ * AES-GCM authenticates but does not encrypt the AAD; decryption FAILS unless
+ * the exact same AAD is supplied. Binding it to `environment + column +
+ * userId` means a ciphertext cannot be:
+ *   • replayed from one column into another (column binding), or
+ *   • lifted from row A and pasted into row B (userId binding), or
+ *   • copied from a preview/staging DB into prod (environment binding).
+ *
+ * Field-binding alone (column only) does not stop the row-swap attack, so all
+ * three parts are REQUIRED — pass them explicitly at every call site.
+ */
+export function buildTokenAAD(params: {
+  environment: string; // e.g. "prod" | "preview" — the DB/project context
+  column: "access_token" | "refresh_token";
+  userId: string; // dupr_user_tokens.user_id (the row owner)
+}): string {
+  const { environment, column, userId } = params;
+  if (!environment || !userId) {
+    throw new Error("buildTokenAAD requires non-empty environment and userId");
+  }
+  return `v1:${environment}:dupr_user_tokens.${column}:${userId}`;
+}
+
 function toBase64Url(bytes: Uint8Array): string {
   let bin = "";
   for (const b of bytes) bin += String.fromCharCode(b);

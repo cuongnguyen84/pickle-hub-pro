@@ -5,6 +5,7 @@ import {
   isEncrypted,
   encryptToken,
   decryptToken,
+  buildTokenAAD,
 } from "../token-crypto";
 
 // Deterministic 32-byte test key (NOT a real key). base64 of 0x00..0x1f.
@@ -68,5 +69,35 @@ describe("token-crypto — AES-256-GCM envelope", () => {
   it("throws on an unknown key version", async () => {
     const key = await importTokenKeyFromBase64(TEST_KEY_B64);
     await expect(decryptToken("enc:v9:aaaa:bbbb", key, AAD)).rejects.toThrow(/version/);
+  });
+});
+
+describe("buildTokenAAD — environment + column + userId binding", () => {
+  it("produces a canonical, fully-bound AAD string", () => {
+    expect(
+      buildTokenAAD({ environment: "prod", column: "access_token", userId: "u-123" }),
+    ).toBe("v1:prod:dupr_user_tokens.access_token:u-123");
+  });
+
+  it("requires environment and userId", () => {
+    expect(() => buildTokenAAD({ environment: "", column: "access_token", userId: "u-1" })).toThrow();
+    expect(() => buildTokenAAD({ environment: "prod", column: "access_token", userId: "" })).toThrow();
+  });
+
+  it("row-swap is rejected: ciphertext for user A cannot decrypt as user B", async () => {
+    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
+    const aadA = buildTokenAAD({ environment: "prod", column: "access_token", userId: "userA" });
+    const aadB = buildTokenAAD({ environment: "prod", column: "access_token", userId: "userB" });
+    const enc = await encryptToken("tokA", key, aadA);
+    expect(await decryptToken(enc, key, aadA)).toBe("tokA");
+    await expect(decryptToken(enc, key, aadB)).rejects.toThrow();
+  });
+
+  it("environment-swap is rejected: preview ciphertext cannot decrypt as prod", async () => {
+    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
+    const aadPreview = buildTokenAAD({ environment: "preview", column: "refresh_token", userId: "u-1" });
+    const aadProd = buildTokenAAD({ environment: "prod", column: "refresh_token", userId: "u-1" });
+    const enc = await encryptToken("tok", key, aadPreview);
+    await expect(decryptToken(enc, key, aadProd)).rejects.toThrow();
   });
 });

@@ -31,7 +31,12 @@ plaintext/ciphertext table throughout the migration.
 2. **Deploy READERS first** (all 7). Each loads the key and wraps its token
    read in `decryptToken(value, key, aad)`. Because of dual-read this is a
    no-op while the table is still plaintext — but it means every reader can
-   handle ciphertext *before* any exists. AAD = `"dupr_user_tokens.<column>"`.
+   handle ciphertext *before* any exists. **AAD is mandatory-bound** — build it
+   with `buildTokenAAD({ environment, column, userId })`, never a bare column
+   string. Binding `environment + column + userId` blocks column-replay,
+   row-swap (A's ciphertext pasted onto B), and cross-env (preview → prod)
+   attacks. `environment` = the project/DB context (e.g. `prod` / `preview`),
+   derived from an env var or project ref; `userId` = the row's `user_id`.
 
 3. **Deploy the WRITER** (`dupr-sso-callback` + `dupr-refresh-user-token`):
    replace the plaintext INSERT/UPSERT with
