@@ -250,7 +250,7 @@ const Feed = () => {
     >
       <div className="tl-shell" style={{ paddingBottom: 56 }}>
         {/* Page head */}
-        <header className="tl-page-head" style={{ padding: "48px 0 32px" }}>
+        <header className="tl-page-head" style={{ padding: "28px 0 24px" }}>
           <div className="tl-eyebrow" aria-hidden="true">
             <span className="pip" />
             <span>{language === "vi" ? "BẢNG TIN" : "THE FEED"}</span>
@@ -260,8 +260,8 @@ const Feed = () => {
           <h1
             style={{
               fontFamily: "'Instrument Serif', serif",
-              fontSize: "clamp(48px, 7vw, 96px)",
-              lineHeight: 0.95,
+              fontSize: "clamp(36px, 5vw, 64px)",
+              lineHeight: 0.98,
               letterSpacing: "-0.025em",
               margin: "0 0 16px",
               color: "var(--tl-fg)",

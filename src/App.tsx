@@ -651,7 +651,10 @@ const App = () => (
                         working while VN viewers get a localized URL. */}
                     <Route path="/thong-bao" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
-                    <Route path="/news" element={<News language="en" />} />
+                    {/* Canonical /news reads language from i18n context (geo-aware),
+                        so VN visitors get VI like the rest of the site. /vi/news
+                        below stays pinned to "vi". Article detail stays EN-pinned. */}
+                    <Route path="/news" element={<News />} />
                     <Route path="/news/:slug" element={<NewsArticle language="en" />} />
                     <Route path="/rankings" element={<Rankings />} />
                     <Route path="/vi/rankings" element={<Rankings />} />

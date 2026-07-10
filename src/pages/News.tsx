@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useNewsItems } from "@/hooks/useNewsItems";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -17,18 +17,22 @@ interface NewsProps {
 }
 
 const News = ({ language: languageProp }: NewsProps = {}) => {
-  // Fallback: detect from URL pathname for backward compatibility when the
-  // route definition doesn't pass an explicit prop. /vi/news → vi, else en.
-  const { pathname } = useLocation();
+  // Canonical /news reads the display + list language from the i18n context
+  // (geo-aware, same model as /rankings & /feed), so Vietnamese visitors get a
+  // VI page instead of a hardcoded-EN one. The /vi/news route still pins the
+  // prop to "vi" for a deterministic language-scoped list — that prevents EN
+  // rows from leaking onto the VI mirror before the context catches up.
   const { language: i18nLanguage, setLanguageFromUrl } = useI18n();
-  const language =
-    languageProp ?? (pathname.startsWith("/vi/") ? "vi" : "en");
+  const language = languageProp ?? i18nLanguage;
 
-  // Keep the i18n context in sync so the layout's nav switcher reflects
-  // the article's actual language (mirrors BlogPost / NewsArticle).
+  // Only when the route pins a language (/vi/news → "vi") do we push it into
+  // the i18n context so the layout nav switcher reflects it. On the canonical
+  // /news route we read FROM context, so there is nothing to sync.
   useEffect(() => {
-    if (i18nLanguage !== language) setLanguageFromUrl(language);
-  }, [language, i18nLanguage, setLanguageFromUrl]);
+    if (languageProp && i18nLanguage !== languageProp) {
+      setLanguageFromUrl(languageProp);
+    }
+  }, [languageProp, i18nLanguage, setLanguageFromUrl]);
 
   // Phase 4: list is language-scoped. /news returns EN rows, /vi/news
   // returns AI-translated VI rows (with parent_news_id back to EN). This

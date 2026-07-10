@@ -65,6 +65,10 @@
   --tl-fg-2:       #c7c3bb;
   --tl-fg-3:       #86837d;
   --tl-fg-4:       #7c7973;  /* a11y 2026-07-08: was #54514c (2.52:1 on --tl-bg, Lighthouse fail); 4.59:1 now */
+  /* Two-tone display "dim" — one step brighter than fg-3 so the faded serif
+     half of split headlines stays legible (~6:1 on dark) without losing the
+     de-emphasis. Scoped to .dim headline spans, NOT the global meta grey. */
+  --tl-dim:        #9a978f;
 
   /* Legacy aliases — feed/comment components still reference these names */
   --tl-fg-1:       var(--tl-fg);
@@ -511,10 +515,10 @@
     [data-theme="the-line"] .tl-hero-lede { animation: none; }
   }
 }
-[data-theme="the-line"] .tl-hero-title .dim { color: var(--tl-fg-3); }
+[data-theme="the-line"] .tl-hero-title .dim { color: var(--tl-dim); }
 [data-theme="the-line"] .tl-hero-title .sans {
   font-family: "Geist"; font-style: normal; font-weight: 500;
-  letter-spacing: -0.04em; font-size: 0.85em;
+  letter-spacing: -0.02em; font-size: 0.85em;
 }
 
 [data-theme="the-line"] .tl-hero-lede {
@@ -1824,9 +1828,9 @@
   margin: 0 0 40px;
   color: var(--tl-fg);
 }
-[data-theme="the-line"] .tl-manifesto h2 .dim { color: var(--tl-fg-3); }
+[data-theme="the-line"] .tl-manifesto h2 .dim { color: var(--tl-dim); }
 [data-theme="the-line"] .tl-manifesto h2 .sans {
-  font-family: "Geist"; font-style: normal; font-weight: 500; letter-spacing: -0.035em;
+  font-family: "Geist"; font-style: normal; font-weight: 500; letter-spacing: -0.02em;
 }
 [data-theme="the-line"] .tl-manifesto .grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
@@ -2147,20 +2151,23 @@
 [data-theme="the-line"] .tl-breadcrumb .current { color: var(--tl-fg); }
 
 [data-theme="the-line"] .tl-page-head {
-  padding: 32px 0 40px;
+  padding: 28px 0 28px;
   border-bottom: 1px solid var(--tl-border);
 }
-@media (max-width: 800px) { [data-theme="the-line"] .tl-page-head { padding: 24px 0 32px; } }
+@media (max-width: 800px) { [data-theme="the-line"] .tl-page-head { padding: 20px 0 24px; } }
 [data-theme="the-line"] .tl-page-head h1 {
   font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
-  font-size: clamp(40px, 5.2vw, 80px);
-  line-height: 0.98; letter-spacing: -0.025em;
-  margin: 12px 0 16px; color: var(--tl-fg);
+  /* Trimmed cap 80→60 so the editorial hero stops eating the viewport on
+     utility pages (Rankings/Live/Tournaments/etc.) — pulls data above the fold
+     while keeping the magazine character. Home hero is separate (.tl-hero-*). */
+  font-size: clamp(34px, 4.2vw, 60px);
+  line-height: 1.0; letter-spacing: -0.025em;
+  margin: 10px 0 14px; color: var(--tl-fg);
   max-width: 20ch;
 }
-[data-theme="the-line"] .tl-page-head h1 .dim { color: var(--tl-fg-3); }
+[data-theme="the-line"] .tl-page-head h1 .dim { color: var(--tl-dim); }
 [data-theme="the-line"] .tl-page-head h1 .sans {
-  font-family: "Geist"; font-style: normal; font-weight: 500; letter-spacing: -0.04em;
+  font-family: "Geist"; font-style: normal; font-weight: 500; letter-spacing: -0.02em;
 }
 [data-theme="the-line"] .tl-page-head .kicker {
   font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
@@ -2733,6 +2740,7 @@
   --tl-fg-2:       #3a3933;
   --tl-fg-3:       #6d6a62;
   --tl-fg-4:       #787366;  /* a11y 2026-07-08: was #a5a299 (2.42:1 on light bg); 4.55:1 now — mirrors native fg4 light */
+  --tl-dim:        #5a5750;  /* two-tone display "dim" on paper — ~6.4:1 */
   --tl-green:      #5e7d1f;  /* deep lime — bright lime is illegible on paper */
   --tl-green-dim:  #4a6418;
   --tl-green-glow: rgba(94, 125, 31, 0.14);
