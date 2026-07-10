@@ -6,6 +6,7 @@
  */
 import { registerSW } from "virtual:pwa-register";
 import { Capacitor } from "@capacitor/core";
+import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
 
 /**
  * Detect chunk-import failures and force a clean reload. After a deploy,
@@ -105,6 +106,11 @@ export function initPwa() {
   // browser PWA alike. Must register BEFORE any lazy imports fire so
   // the early-route navigation crash can self-heal.
   installChunkErrorRecovery();
+
+  // One-time eviction of the legacy "supabase-rest" cache written by the old
+  // NetworkFirst SW (now NetworkOnly). Runs on every boot; a no-op once the
+  // cache is gone. Prevents stale per-user REST data lingering after upgrade.
+  void purgeAuthSensitiveCaches();
 
   // Do not register SW inside Capacitor native WebView — native handles assets.
   if (Capacitor.isNativePlatform()) {
