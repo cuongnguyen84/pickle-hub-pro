@@ -41,7 +41,8 @@ export function PlayerHeroCard({ player, stats }: PlayerHeroCardProps) {
   } | null>(null);
 
   useEffect(() => {
-    if (!player.favorite_venue_id) {
+    const venueId = player.favorite_venue_id;
+    if (!venueId) {
       setFavoriteVenue(null);
       return undefined;
     }
@@ -50,7 +51,7 @@ export function PlayerHeroCard({ player, stats }: PlayerHeroCardProps) {
       const { data } = await supabase
         .from("venues")
         .select("name, name_vi, slug")
-        .eq("id", player.favorite_venue_id)
+        .eq("id", venueId)
         .maybeSingle();
       if (cancelled || !data) return;
       setFavoriteVenue({

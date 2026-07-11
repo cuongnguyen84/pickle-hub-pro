@@ -82,7 +82,7 @@ export function FeedMlpMatchCard({
   language,
   staggerIndex,
 }: FeedMlpMatchCardProps) {
-  const notes = parseNotes(match.notes);
+  const notes = parseNotes(match.notes ?? null);
   const [expanded, setExpanded] = useState(false);
   // Track the scoreboard area so we can scroll it back into view when the
   // user expands the games panel — without this the layout shift from

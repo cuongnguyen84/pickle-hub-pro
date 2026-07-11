@@ -92,8 +92,8 @@ export function useMatchComments(matchId: string | undefined) {
       const { data, error } = await supabase.rpc("get_match_comments", {
         p_match_id: matchId,
         p_limit: PAGE_SIZE,
-        p_cursor_created_at: pageParam?.created_at ?? null,
-        p_cursor_comment_id: pageParam?.comment_id ?? null,
+        p_cursor_created_at: pageParam?.created_at ?? undefined,
+        p_cursor_comment_id: pageParam?.comment_id ?? undefined,
       });
       if (error) throw error;
       return (data ?? []).map(normalizeRow);
@@ -155,7 +155,7 @@ export function useAddCommentMutation() {
       const { data, error } = await supabase.rpc("add_match_comment", {
         p_match_id: matchId,
         p_body: body,
-        p_parent_comment_id: parentCommentId ?? null,
+        p_parent_comment_id: parentCommentId ?? undefined,
       });
       if (error) throw error;
       const parsed = data as unknown as AddResponse | null;

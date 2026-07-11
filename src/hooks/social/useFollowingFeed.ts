@@ -95,8 +95,8 @@ export function useFollowingFeed(viewerId: string | undefined) {
       const { data, error } = await supabase.rpc("get_following_feed", {
         p_viewer_id: viewerId,
         p_limit: PAGE_SIZE,
-        p_cursor_played_at: pageParam?.played_at ?? null,
-        p_cursor_match_id: pageParam?.match_id ?? null,
+        p_cursor_played_at: pageParam?.played_at ?? undefined,
+        p_cursor_match_id: pageParam?.match_id ?? undefined,
       });
       if (error) throw error;
       return (data ?? []).map(normalizeRow);
