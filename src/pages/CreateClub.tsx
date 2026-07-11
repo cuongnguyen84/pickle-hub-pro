@@ -170,9 +170,9 @@ export default function CreateClub() {
         {
           p_slug: slug,
           p_name: name.trim(),
-          p_description: description.trim() === "" ? null : description.trim(),
+          p_description: description.trim(),
           p_location_text: location.trim(),
-          p_logo_url: logoUrl,
+          p_logo_url: logoUrl ?? "",
         },
       );
       if (rpcErr) {

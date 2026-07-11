@@ -580,8 +580,8 @@ export function useUserMembership(tournamentId: string | undefined) {
         id: row.id,
         teamId: row.team_id,
         teamName: (row.team_match_teams as unknown as { team_name: string }).team_name,
-        status: row.status,
-        isCaptain: row.is_captain,
+        status: row.status ?? 'pending',
+        isCaptain: row.is_captain ?? false,
       };
     },
     enabled: !!tournamentId && !!user,

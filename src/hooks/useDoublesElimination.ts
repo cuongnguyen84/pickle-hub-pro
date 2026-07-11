@@ -509,7 +509,7 @@ export function useDoublesElimination() {
           .in('id', Array.from(creatorIds));
 
         if (profilesData) {
-          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name }));
+          profilesData.forEach(p => { if (p.id) profilesMap.set(p.id, { display_name: p.display_name }); });
         }
       }
 
@@ -608,6 +608,10 @@ export function useDoublesElimination() {
         .single();
 
       if (fetchError) throw fetchError;
+      // Required FK (codegen-nullable). Surface a clear error instead of
+      // running follow-up queries with a null tournament filter.
+      const tournamentId = match.tournament_id;
+      if (!tournamentId) throw new Error('match_missing_tournament_id');
 
       const loserId = match.team_a_id === winnerId ? match.team_b_id : match.team_a_id;
 
@@ -622,7 +626,7 @@ export function useDoublesElimination() {
         const { data: r2Matches } = await supabase
           .from('doubles_elimination_matches')
           .select('*')
-          .eq('tournament_id', match.tournament_id)
+          .eq('tournament_id', tournamentId)
           .eq('round_number', 2);
 
         if (r2Matches) {
@@ -669,7 +673,7 @@ export function useDoublesElimination() {
         await supabase
           .from('doubles_elimination_tournaments')
           .update({ status: 'completed' })
-          .eq('id', match.tournament_id);
+          .eq('id', tournamentId);
       }
 
       return { success: true };

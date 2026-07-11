@@ -169,11 +169,11 @@ export function useQuickTable() {
         _name: safeName,
         _player_count: safePlayerCount,
         _format: format,
-        _group_count: groupCount || null,
+        _group_count: groupCount || undefined,
         _requires_registration: registrationOptions?.requires_registration || false,
         _requires_skill_level: registrationOptions?.requires_skill_level || false,
         _auto_approve_registrations: registrationOptions?.auto_approve_registrations || false,
-        _registration_message: safeMessage,
+        _registration_message: safeMessage ?? undefined,
         _is_doubles: registrationOptions?.is_doubles ?? true,
       });
 
