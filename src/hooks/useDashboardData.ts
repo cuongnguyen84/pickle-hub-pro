@@ -140,7 +140,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
           .eq("table_id", tournamentId)
           .neq("status", "completed")
           .order("display_order");
-        return (data || []).map((m: any) => ({
+        return (data || []).map((m) => ({
           id: m.id,
           courtNumber: m.court_id || 0,
           startTime: m.start_at,
@@ -160,7 +160,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
           .eq("tournament_id", tournamentId)
           .neq("status", "completed")
           .order("display_order");
-        return (data || []).map((m: any) => ({
+        return (data || []).map((m) => ({
           id: m.id,
           courtNumber: m.court_number || 0,
           startTime: m.start_time,
@@ -180,7 +180,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
         .eq("tournament_id", tournamentId)
         .in("status", ["in_progress", "pending", "lineup"])
         .order("display_order");
-      return (data || []).map((m: any) => ({
+      return (data || []).map((m) => ({
         id: m.id,
         courtNumber: 0,
         startTime: null,
@@ -260,7 +260,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
     });
 
     // Get court count from tournament info
-    const courtCount = (tournamentInfo.data as any)?.court_count || courtMap.size || 1;
+    const courtCount = (tournamentInfo.data as { court_count?: number })?.court_count || courtMap.size || 1;
 
     const result: CourtData[] = [];
     for (let i = 1; i <= Math.max(courtCount, ...Array.from(courtMap.keys())); i++) {

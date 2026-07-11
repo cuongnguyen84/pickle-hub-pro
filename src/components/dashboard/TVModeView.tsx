@@ -128,7 +128,7 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
   );
 };
 
-function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
+function TVCard({ slide, t }: { slide: TVSlide; t: ReturnType<typeof useI18n>["t"] }) {
   if (slide.type === "court" && slide.courtData) {
     const court = slide.courtData;
     return (

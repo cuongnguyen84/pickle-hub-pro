@@ -1,5 +1,5 @@
 import MuxPlayerReact from "@mux/mux-player-react";
-import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
+import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffect, type ComponentRef } from "react";
 import { TapToPlayOverlay } from "./TapToPlayOverlay";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +39,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
 }, ref) => {
   const { t } = useI18n();
   const { toast } = useToast();
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<ComponentRef<typeof MuxPlayerReact> | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -222,7 +222,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
     }
   }, [onPlayStateChange]);
 
-  const handleError = useCallback((event: any) => {
+  const handleError = useCallback((event: unknown) => {
     console.error("[MuxPlayer] Error event:", event);
     
     // For live streams, attempt auto-reconnect instead of showing error immediately

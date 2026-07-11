@@ -42,7 +42,7 @@ interface ParsedTitle {
 
 const parseTitle = (raw: string | null | undefined): ParsedTitle => {
   if (!raw) return { round: null, players: "", context: null };
-  const cleaned = raw.replace(/^[<\[].+?[>\]]\s*/, "").trim();
+  const cleaned = raw.replace(/^[<[].+?[>\]]\s*/, "").trim();
   const parts = cleaned.split(/\s*\|\s*/).filter(Boolean);
   if (parts.length >= 2) {
     return { round: parts[0], players: parts[1], context: parts[2] ?? null };

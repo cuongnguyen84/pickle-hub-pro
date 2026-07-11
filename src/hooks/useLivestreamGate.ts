@@ -32,7 +32,9 @@ function hasSeenPreview(livestreamId: string): boolean {
 function markPreviewSeen(livestreamId: string) {
   try {
     localStorage.setItem(getSeenKey(livestreamId), "1");
-  } catch {}
+  } catch {
+    /* ignore — private mode / storage disabled */
+  }
 }
 
 export function useLivestreamGate({
