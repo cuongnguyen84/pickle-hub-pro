@@ -678,7 +678,6 @@ export function TeamRosterManager({
                           <FormControl>
                             <Input
                               id="roster-add-name"
-                              name="roster-add-name"
                               placeholder={txt.namePh}
                               {...field}
                             />

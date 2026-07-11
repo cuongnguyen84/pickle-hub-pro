@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Json } from '@/integrations/supabase/types';
+import { Json, TablesInsert } from '@/integrations/supabase/types';
 import { getBestOfForRound, generateSeedPositions, generateShareId, assignCourtAndTime } from '@/lib/doubles-bracket-utils';
+import { matchWinsNeeded } from '@/lib/doubles-elimination/matchWinsNeeded';
 import { logMutationError } from './_mutationErrors';
 
 const HOOK = 'useDoublesElimination';
@@ -133,7 +134,11 @@ export function useDoublesElimination() {
       // Returns json {success, tournament?, error?, count?, quota?} —
       // LIMIT_REACHED is propagated to caller as a structured result so the
       // setup page can surface a quota-specific toast.
+      // Typing the RPC name propagates arg types that surface a string|null vs
+      // string|undefined mismatch on _start_time, which belongs to the
+      // strictNullChecks data-boundary wave, not this one — keep the name cast.
       const { data: rpcData, error: rpcError } = await supabase.rpc(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'create_doubles_elimination_with_quota' as any,
         {
           _name: name,
@@ -313,7 +318,7 @@ export function useDoublesElimination() {
       const semifinalsFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
       const finalsFormat = (tournament.finals_format || 'bo3') as BestOfFormat;
 
-      const matches: any[] = [];
+      const matches: TablesInsert<'doubles_elimination_matches'>[] = [];
       let displayOrder = 0;
 
       // ROUND 1
@@ -399,8 +404,8 @@ export function useDoublesElimination() {
       // Assign courts/times to R1 & R2
       const courts = courtsInput && courtsInput.length > 0
         ? courtsInput
-        : tournament.court_count > 0
-          ? Array.from({ length: tournament.court_count }, (_, i) => i + 1)
+        : (tournament.court_count ?? 0) > 0
+          ? Array.from({ length: tournament.court_count ?? 0 }, (_, i) => i + 1)
           : [];
 
       if (courts.length > 0 && tournament.start_time) {
@@ -566,7 +571,10 @@ export function useDoublesElimination() {
       const updatedGames = [...games, newGame];
       const winsA = updatedGames.filter((g) => g.winner === 'a').length;
       const winsB = updatedGames.filter((g) => g.winner === 'b').length;
-      const winsNeeded = Math.ceil(match.best_of / 2);
+      const winsNeeded = matchWinsNeeded(match.best_of);
+      if (winsNeeded === null) {
+        return { success: false, error: 'invalid_best_of' };
+      }
       const isCompleted = winsA >= winsNeeded || winsB >= winsNeeded;
 
       const { error: updateError } = await supabase
@@ -915,7 +923,7 @@ export function useDoublesElimination() {
       const sfFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
       const finalsFormat = (tournament.finals_format || 'bo3') as BestOfFormat;
 
-      const playoffMatchesData: any[] = [];
+      const playoffMatchesData: TablesInsert<'doubles_elimination_matches'>[] = [];
       let displayOrder = matches.length;
 
       const now = new Date();

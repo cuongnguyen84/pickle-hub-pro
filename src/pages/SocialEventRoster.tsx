@@ -320,6 +320,7 @@ export default function SocialEventRoster() {
   // inside the modal now.
 
   function downloadCsv() {
+    if (!event) return;
     const csv = buildCsv(registrations ?? []);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
