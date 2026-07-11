@@ -2,102 +2,135 @@ import { describe, it, expect } from "vitest";
 import {
   KEY_VERSION,
   importTokenKeyFromBase64,
+  makeKeyring,
   isEncrypted,
   encryptToken,
   decryptToken,
   buildTokenAAD,
+  projectRefFromSupabaseUrl,
+  type TokenKeyring,
 } from "../token-crypto";
 
-// Deterministic 32-byte test key (NOT a real key). base64 of 0x00..0x1f.
-const TEST_KEY_B64 = btoa(
-  String.fromCharCode(...Array.from({ length: 32 }, (_, i) => i)),
-);
-const AAD = "dupr_user_tokens.access_token";
+// Deterministic 32-byte test keys (NOT real keys).
+const keyB64 = (fill: number) =>
+  btoa(String.fromCharCode(...Array.from({ length: 32 }, (_, i) => (fill === -1 ? i : fill))));
+const AAD = buildTokenAAD({ projectRef: "ajvlcamxemgbxduhiqrl", column: "access_token", userId: "u-1" });
+
+async function ring(version = "v1", fill = -1): Promise<TokenKeyring> {
+  return makeKeyring(version, await importTokenKeyFromBase64(keyB64(fill)));
+}
 
 describe("token-crypto — AES-256-GCM envelope", () => {
   it("round-trips a token (encrypt → decrypt)", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
+    const kr = await ring();
     const secret = "dupr_access_token_abc123";
-    const enc = await encryptToken(secret, key, AAD);
+    const enc = await encryptToken(secret, kr, AAD);
     expect(isEncrypted(enc)).toBe(true);
     expect(enc.startsWith(`enc:${KEY_VERSION}:`)).toBe(true);
-    expect(enc).not.toContain(secret); // plaintext not present in ciphertext
-    expect(await decryptToken(enc, key, AAD)).toBe(secret);
+    expect(enc).not.toContain(secret);
+    expect(await decryptToken(enc, kr, AAD)).toBe(secret);
   });
 
   it("produces a distinct ciphertext each time (random nonce)", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
-    const a = await encryptToken("same", key, AAD);
-    const b = await encryptToken("same", key, AAD);
+    const kr = await ring();
+    const a = await encryptToken("same", kr, AAD);
+    const b = await encryptToken("same", kr, AAD);
     expect(a).not.toBe(b);
-    expect(await decryptToken(a, key, AAD)).toBe("same");
-    expect(await decryptToken(b, key, AAD)).toBe("same");
-  });
-
-  it("DUAL-READ: returns a plaintext (non-enc) value unchanged", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
-    expect(await decryptToken("legacy_plaintext_token", key, AAD)).toBe(
-      "legacy_plaintext_token",
-    );
-  });
-
-  it("fails to decrypt when AAD context differs (field binding)", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
-    const enc = await encryptToken("tok", key, "dupr_user_tokens.access_token");
-    await expect(
-      decryptToken(enc, key, "dupr_user_tokens.refresh_token"),
-    ).rejects.toThrow();
+    expect(await decryptToken(a, kr, AAD)).toBe("same");
   });
 
   it("fails to decrypt with the wrong key", async () => {
-    const key1 = await importTokenKeyFromBase64(TEST_KEY_B64);
-    const otherKeyB64 = btoa(String.fromCharCode(...Array.from({ length: 32 }, () => 0xff)));
-    const key2 = await importTokenKeyFromBase64(otherKeyB64);
-    const enc = await encryptToken("tok", key1, AAD);
-    await expect(decryptToken(enc, key2, AAD)).rejects.toThrow();
+    const enc = await encryptToken("tok", await ring("v1", 0x01), AAD);
+    await expect(decryptToken(enc, await ring("v1", 0xff), AAD)).rejects.toThrow();
+  });
+
+  it("throws on a malformed enc: value", async () => {
+    await expect(decryptToken("enc:v1:onlytwo", await ring(), AAD)).rejects.toThrow(/Malformed/);
   });
 
   it("rejects a key that is not 32 bytes", async () => {
     await expect(importTokenKeyFromBase64(btoa("short"))).rejects.toThrow(/32 bytes/);
   });
+});
 
-  it("throws on a malformed enc: value", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
-    await expect(decryptToken("enc:v1:onlytwo", key, AAD)).rejects.toThrow(/Malformed/);
+describe("dual-read — plaintext handling is explicit (P2)", () => {
+  it("REJECTS a plaintext value by default", async () => {
+    await expect(decryptToken("legacy_plaintext", await ring(), AAD)).rejects.toThrow(/plaintext token rejected/);
   });
 
-  it("throws on an unknown key version", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
-    await expect(decryptToken("enc:v9:aaaa:bbbb", key, AAD)).rejects.toThrow(/version/);
+  it("passes plaintext through ONLY when allowPlaintext is set", async () => {
+    expect(await decryptToken("legacy_plaintext", await ring(), AAD, { allowPlaintext: true })).toBe(
+      "legacy_plaintext",
+    );
+  });
+
+  it("still decrypts ciphertext normally with allowPlaintext set", async () => {
+    const kr = await ring();
+    const enc = await encryptToken("tok", kr, AAD);
+    expect(await decryptToken(enc, kr, AAD, { allowPlaintext: true })).toBe("tok");
   });
 });
 
-describe("buildTokenAAD — environment + column + userId binding", () => {
-  it("produces a canonical, fully-bound AAD string", () => {
-    expect(
-      buildTokenAAD({ environment: "prod", column: "access_token", userId: "u-123" }),
-    ).toBe("v1:prod:dupr_user_tokens.access_token:u-123");
+describe("rotation — keyring selects key by embedded version (P2)", () => {
+  it("v1 ciphertext still decrypts after activeVersion moves to v2", async () => {
+    const v1 = await importTokenKeyFromBase64(keyB64(0x11));
+    const v2 = await importTokenKeyFromBase64(keyB64(0x22));
+    const writeV1: TokenKeyring = makeKeyring("v1", v1);
+    const enc = await encryptToken("tok", writeV1, AAD);
+    expect(enc.startsWith("enc:v1:")).toBe(true);
+
+    // Rotated keyring: active=v2 but v1 retained for decrypt.
+    const rotated: TokenKeyring = { activeVersion: "v2", keys: new Map([["v1", v1], ["v2", v2]]) };
+    expect(await decryptToken(enc, rotated, AAD)).toBe("tok");
+    // New writes now use v2.
+    const enc2 = await encryptToken("tok2", rotated, AAD);
+    expect(enc2.startsWith("enc:v2:")).toBe(true);
   });
 
-  it("requires environment and userId", () => {
-    expect(() => buildTokenAAD({ environment: "", column: "access_token", userId: "u-1" })).toThrow();
-    expect(() => buildTokenAAD({ environment: "prod", column: "access_token", userId: "" })).toThrow();
+  it("throws when the keyring has no key for the token's version", async () => {
+    const enc = await encryptToken("tok", await ring("v1", 0x11), AAD);
+    const onlyV2 = makeKeyring("v2", await importTokenKeyFromBase64(keyB64(0x22)));
+    await expect(decryptToken(enc, onlyV2, AAD)).rejects.toThrow(/no key in keyring/);
   });
 
-  it("row-swap is rejected: ciphertext for user A cannot decrypt as user B", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
-    const aadA = buildTokenAAD({ environment: "prod", column: "access_token", userId: "userA" });
-    const aadB = buildTokenAAD({ environment: "prod", column: "access_token", userId: "userB" });
-    const enc = await encryptToken("tokA", key, aadA);
-    expect(await decryptToken(enc, key, aadA)).toBe("tokA");
-    await expect(decryptToken(enc, key, aadB)).rejects.toThrow();
+  it("encrypt throws if active version has no key", async () => {
+    const broken: TokenKeyring = { activeVersion: "v9", keys: new Map() };
+    await expect(encryptToken("x", broken, AAD)).rejects.toThrow(/no key for active version/);
+  });
+});
+
+describe("AAD binding — projectRef + column + userId", () => {
+  it("derives the immutable project ref from SUPABASE_URL", () => {
+    expect(projectRefFromSupabaseUrl("https://ajvlcamxemgbxduhiqrl.supabase.co")).toBe(
+      "ajvlcamxemgbxduhiqrl",
+    );
+    expect(() => projectRefFromSupabaseUrl("not-a-url")).toThrow();
   });
 
-  it("environment-swap is rejected: preview ciphertext cannot decrypt as prod", async () => {
-    const key = await importTokenKeyFromBase64(TEST_KEY_B64);
-    const aadPreview = buildTokenAAD({ environment: "preview", column: "refresh_token", userId: "u-1" });
-    const aadProd = buildTokenAAD({ environment: "prod", column: "refresh_token", userId: "u-1" });
-    const enc = await encryptToken("tok", key, aadPreview);
-    await expect(decryptToken(enc, key, aadProd)).rejects.toThrow();
+  it("builds a canonical, fully-bound AAD", () => {
+    expect(buildTokenAAD({ projectRef: "ref1", column: "access_token", userId: "u-9" })).toBe(
+      "v1:ref1:dupr_user_tokens.access_token:u-9",
+    );
+  });
+
+  it("requires projectRef and userId", () => {
+    expect(() => buildTokenAAD({ projectRef: "", column: "access_token", userId: "u" })).toThrow();
+    expect(() => buildTokenAAD({ projectRef: "r", column: "access_token", userId: "" })).toThrow();
+  });
+
+  it("row-swap rejected: user A ciphertext cannot decrypt as user B", async () => {
+    const kr = await ring();
+    const aadA = buildTokenAAD({ projectRef: "r", column: "access_token", userId: "A" });
+    const aadB = buildTokenAAD({ projectRef: "r", column: "access_token", userId: "B" });
+    const enc = await encryptToken("tokA", kr, aadA);
+    await expect(decryptToken(enc, kr, aadB)).rejects.toThrow();
+  });
+
+  it("cross-env rejected: preview ciphertext cannot decrypt as prod", async () => {
+    const kr = await ring();
+    const aadPreview = buildTokenAAD({ projectRef: "preview-ref", column: "refresh_token", userId: "u" });
+    const aadProd = buildTokenAAD({ projectRef: "prod-ref", column: "refresh_token", userId: "u" });
+    const enc = await encryptToken("tok", kr, aadPreview);
+    await expect(decryptToken(enc, kr, aadProd)).rejects.toThrow();
   });
 });
