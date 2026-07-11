@@ -159,7 +159,7 @@ export default function DoublesEliminationView() {
   };
 
   const setupRealtimeSubscription = () => {
-    if (!shareId) return;
+    if (!shareId) return undefined;
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {
       channel = supabase

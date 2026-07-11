@@ -62,7 +62,7 @@ export function useNotificationRealtime(userId?: string) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return undefined;
 
     // Remove any existing channel with the same name to avoid
     // "cannot add postgres_changes callbacks after subscribe()" error

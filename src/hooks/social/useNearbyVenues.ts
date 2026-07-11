@@ -28,7 +28,7 @@ export function useNearbyVenues(): {
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setGeo((g) => ({ ...g, status: "unavailable" }));
-      return;
+      return undefined;
     }
     setGeo({ lat: null, lng: null, status: "loading" });
     const id = navigator.geolocation.getCurrentPosition(

@@ -81,7 +81,7 @@ const WatchLive = () => {
   }, [isGated]);
 
   useEffect(() => {
-    if (keyboardHeight <= 0) return;
+    if (keyboardHeight <= 0) return undefined;
 
     const previousHtmlOverscroll = document.documentElement.style.overscrollBehaviorY;
     const previousBodyOverscroll = document.body.style.overscrollBehaviorY;

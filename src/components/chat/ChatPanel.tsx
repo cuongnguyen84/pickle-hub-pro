@@ -320,8 +320,8 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   useEffect(() => {
     const userIds = [...new Set(messages.map(m => m.user_id))];
     const uncachedIds = userIds.filter(id => !(id in creatorCache));
-    
-    if (uncachedIds.length === 0) return;
+
+    if (uncachedIds.length === 0) return undefined;
     
     // Debounce fetching to avoid too many requests during high traffic
     const now = Date.now();

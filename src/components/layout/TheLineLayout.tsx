@@ -313,7 +313,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
   // Click outside / Escape closes avatar dropdown
   useEffect(() => {
-    if (!avatarOpen) return;
+    if (!avatarOpen) return undefined;
     const onClick = (e: MouseEvent) => {
       if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
         setAvatarOpen(false);
@@ -332,7 +332,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
   // PR69 — same click-outside/Escape pattern for nav-parent dropdowns.
   useEffect(() => {
-    if (openNavKey === null) return;
+    if (openNavKey === null) return undefined;
     const onClick = (e: MouseEvent) => {
       if (navDropdownRef.current && !navDropdownRef.current.contains(e.target as Node)) {
         setOpenNavKey(null);
@@ -399,7 +399,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const drawerRef = useRef<HTMLElement>(null);
   const drawerCloseRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) return undefined;
     drawerCloseRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Tab" || !drawerRef.current) return;
@@ -423,7 +423,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
   // Escape closes drawer
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) return undefined;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

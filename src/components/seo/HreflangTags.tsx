@@ -22,7 +22,7 @@ interface HreflangTagsProps {
  */
 export const HreflangTags = ({ enPath, viPath }: HreflangTagsProps) => {
   useEffect(() => {
-    if (!enPath && !viPath) return;
+    if (!enPath && !viPath) return undefined;
 
     const setHreflang = (hreflang: string, href: string) => {
       let link = document.querySelector(

@@ -117,7 +117,7 @@ export function useClubMembers(clubId: string | undefined) {
 
   // ─── Realtime + foreground refetch (PR 20260527) ───────────────────────
   useEffect(() => {
-    if (!clubId) return;
+    if (!clubId) return undefined;
 
     // 1. Supabase Realtime — subscribe to club_members changes for this club.
     const channel = supabase

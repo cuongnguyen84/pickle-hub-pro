@@ -63,7 +63,7 @@ const BlogPost = () => {
     let cancelled = false;
     if (!slug) {
       setPost(undefined);
-      return;
+      return undefined;
     }
     setPost(null);
     getBlogPost(slug).then((p) => {

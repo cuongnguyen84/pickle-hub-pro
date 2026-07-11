@@ -183,7 +183,7 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
     if (!livestreamId || !enabled) {
       setConcurrentViewers(0);
       setIsConnected(false);
-      return;
+      return undefined;
     }
     const entry = acquire(livestreamId, user?.id ?? null);
     const listener = () => {

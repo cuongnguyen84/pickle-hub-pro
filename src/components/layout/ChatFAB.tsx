@@ -53,7 +53,7 @@ const ChatFAB = () => {
   });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return undefined;
     const mql = window.matchMedia(DESKTOP_BREAKPOINT);
     const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
     mql.addEventListener("change", onChange);
@@ -68,7 +68,7 @@ const ChatFAB = () => {
   // scroll events from any container, and read the offset off the target.
   const [scrolledAway, setScrolledAway] = useState(false);
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return undefined;
     const lastYByTarget = new WeakMap<EventTarget, number>();
     let ticking = false;
     const onScroll = (e: Event) => {

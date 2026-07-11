@@ -187,6 +187,7 @@ const MatchScoring = () => {
       }, 1000);
       return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
     }
+    return undefined;
   }, [activeTimeout]);
 
   const formatCountdown = (seconds: number) => {
@@ -779,7 +780,7 @@ const MatchScoring = () => {
 
   // Realtime subscription
   useEffect(() => {
-    if (!matchId) return;
+    if (!matchId) return undefined;
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {
       channel = supabase

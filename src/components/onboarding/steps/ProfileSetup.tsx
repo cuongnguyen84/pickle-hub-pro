@@ -84,7 +84,7 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
 
   // Auto-suggest from display_name unless user has typed their own.
   useEffect(() => {
-    if (userEditedUsername) return;
+    if (userEditedUsername) return undefined;
     const suggested = slugifyDisplayName(state.profile.display_name) || "";
     setUsername(suggested);
   }, [state.profile.display_name, userEditedUsername]);
@@ -93,11 +93,11 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
   useEffect(() => {
     if (!username) {
       setAvailability("idle");
-      return;
+      return undefined;
     }
     if (!USERNAME_RE.test(username)) {
       setAvailability("invalid");
-      return;
+      return undefined;
     }
     setAvailability("checking");
     const handle = setTimeout(async () => {

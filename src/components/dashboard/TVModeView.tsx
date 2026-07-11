@@ -43,7 +43,7 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
 
   // Auto rotate pages
   useEffect(() => {
-    if (!autoRotate || totalPages <= 1) return;
+    if (!autoRotate || totalPages <= 1) return undefined;
     const timer = setInterval(() => {
       setCurrentPage((prev) => (prev + 1) % totalPages);
     }, 10000);
@@ -128,7 +128,7 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
   );
 };
 
-function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
+function TVCard({ slide, t }: { slide: TVSlide; t: ReturnType<typeof useI18n>["t"] }) {
   if (slide.type === "court" && slide.courtData) {
     const court = slide.courtData;
     return (

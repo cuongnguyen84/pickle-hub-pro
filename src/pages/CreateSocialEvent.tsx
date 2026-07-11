@@ -97,7 +97,7 @@ export default function CreateSocialEvent() {
   useEffect(() => {
     if (slugValue.length < 3) {
       setSlugTaken(false);
-      return;
+      return undefined;
     }
     const handle = window.setTimeout(async () => {
       const { data } = await supabase

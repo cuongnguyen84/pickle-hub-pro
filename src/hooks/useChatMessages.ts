@@ -116,7 +116,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
 
   // Unified channel for broadcast + postgres_changes
   useEffect(() => {
-    if (!livestreamId) return;
+    if (!livestreamId) return undefined;
 
     // Remove existing channel to avoid "cannot add callbacks after subscribe()" error
     if (channelRef.current) {
@@ -295,7 +295,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
 
   // Polling fallback
   useEffect(() => {
-    if (!livestreamId) return;
+    if (!livestreamId) return undefined;
 
     const pollMessages = async () => {
       const currentMessages = messages;

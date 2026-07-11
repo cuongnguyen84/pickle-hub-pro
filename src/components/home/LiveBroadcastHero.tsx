@@ -42,7 +42,7 @@ interface ParsedTitle {
 
 const parseTitle = (raw: string | null | undefined): ParsedTitle => {
   if (!raw) return { round: null, players: "", context: null };
-  const cleaned = raw.replace(/^[<\[].+?[>\]]\s*/, "").trim();
+  const cleaned = raw.replace(/^[<[].+?[>\]]\s*/, "").trim();
   const parts = cleaned.split(/\s*\|\s*/).filter(Boolean);
   if (parts.length >= 2) {
     return { round: parts[0], players: parts[1], context: parts[2] ?? null };
@@ -90,7 +90,7 @@ const CountdownBig = ({ to, language }: { to: string; language: "en" | "vi" }) =
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const target = new Date(to).getTime();
-    if (Number.isNaN(target)) return;
+    if (Number.isNaN(target)) return undefined;
     const diff = target - Date.now();
     const intervalMs = Math.abs(diff) > 3600_000 ? 1000 : 1000;
     const id = window.setInterval(() => setNow(Date.now()), intervalMs);

@@ -281,7 +281,7 @@ export function RegistrationModal({
   useEffect(() => {
     if (!open || step !== "phone" || turnstileToken) {
       setTurnstileTimedOut(false);
-      return;
+      return undefined;
     }
     const id = window.setTimeout(() => setTurnstileTimedOut(true), 20000);
     return () => window.clearTimeout(id);
@@ -309,12 +309,13 @@ export function RegistrationModal({
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      return undefined;
     }
   }, [open, memberSkipOtp]);
 
   // Resend cooldown ticker.
   useEffect(() => {
-    if (resendIn <= 0) return;
+    if (resendIn <= 0) return undefined;
     intervalRef.current = window.setInterval(() => {
       setResendIn((prev) => Math.max(0, prev - 1));
     }, 1000);

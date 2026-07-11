@@ -46,10 +46,10 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>): PullToRefre
   }, [pullDistance]);
 
   useEffect(() => {
-    if (!isIOS()) return;
+    if (!isIOS()) return undefined;
 
     const container = document.querySelector<HTMLElement>(".tl-scroll");
-    if (!container) return;
+    if (!container) return undefined;
 
     const handleTouchStart = (e: TouchEvent) => {
       if (refreshingRef.current) return;

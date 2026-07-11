@@ -89,11 +89,11 @@ export function TurnstileWidget({ onVerify, onError }: Props) {
   const siteKey = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ?? "";
 
   useEffect(() => {
-    if (!siteKey || !ref.current) return;
+    if (!siteKey || !ref.current) return undefined;
     // Guard against StrictMode double-mount + any unexpected re-run:
     // if a widget already exists in this container we don't render
     // again.
-    if (widgetIdRef.current) return;
+    if (widgetIdRef.current) return undefined;
 
     let cancelled = false;
     loadTurnstile()

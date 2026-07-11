@@ -190,8 +190,8 @@ export default function SocialEventDetail() {
     };
   }, []);
 
-    useEffect(() => {
-    if (!data) return;
+  useEffect(() => {
+    if (!data) return undefined;
     const script = document.createElement("script");
     script.type = "application/ld+json";
     const url = `${SITE_URL}/social/${data.slug}`;

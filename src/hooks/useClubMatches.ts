@@ -135,7 +135,7 @@ export function useClubMatches(clubId: string | undefined, limit = 50) {
   // the subscription and the club_id=eq filter matches the new-row image on
   // INSERT/UPDATE.
   useEffect(() => {
-    if (!clubId) return;
+    if (!clubId) return undefined;
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {
       channel = supabase

@@ -32,7 +32,9 @@ function hasSeenPreview(livestreamId: string): boolean {
 function markPreviewSeen(livestreamId: string) {
   try {
     localStorage.setItem(getSeenKey(livestreamId), "1");
-  } catch {}
+  } catch {
+    /* ignore — private mode / storage disabled */
+  }
 }
 
 export function useLivestreamGate({
@@ -54,6 +56,7 @@ export function useLivestreamGate({
     if (shouldGate && hasSeenPreview(livestreamId)) {
       setIsGated(true);
       setSecondsRemaining(0);
+      return undefined;
     }
   }, [shouldGate, livestreamId]);
 
@@ -64,7 +67,7 @@ export function useLivestreamGate({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      return;
+      return undefined;
     }
 
     intervalRef.current = setInterval(() => {

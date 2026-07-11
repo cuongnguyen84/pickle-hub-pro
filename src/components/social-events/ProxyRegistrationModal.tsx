@@ -151,10 +151,10 @@ export function ProxyRegistrationModal({
   // anonymous against PostgREST so this relies on the public SELECT
   // policy that allows reading bank info for published+public events.
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     if (resolvedBank || bankInfoProp) {
       if (bankInfoProp && !resolvedBank) setResolvedBank(bankInfoProp);
-      return;
+      return undefined;
     }
     let cancelled = false;
     (async () => {

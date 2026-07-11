@@ -276,11 +276,11 @@ export function GroupSetupDialog({
   // Per-pick sequence: scan (flicker) → reveal (hold, scroll target into view)
   // → fly the name into its slot.
   useEffect(() => {
-    if (phase !== 'drawing' || revealOrder.length === 0) return;
+    if (phase !== 'drawing' || revealOrder.length === 0) return undefined;
     if (revealed >= revealOrder.length) {
       setSubPhase('scan');
       setPhase('done');
-      return;
+      return undefined;
     }
 
     const pick = revealOrder[revealed];

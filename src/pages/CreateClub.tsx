@@ -82,7 +82,7 @@ export default function CreateClub() {
   useEffect(() => {
     if (!SLUG_RE.test(slug) || slug.length < 3) {
       setSlugTaken(false);
-      return;
+      return undefined;
     }
     setSlugChecking(true);
     const handle = window.setTimeout(async () => {

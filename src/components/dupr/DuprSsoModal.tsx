@@ -63,7 +63,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
     : "";
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
 
     const handler = async (event: MessageEvent) => {
       if (event.origin !== DUPR_SSO_ORIGIN) return;
