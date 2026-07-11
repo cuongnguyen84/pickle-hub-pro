@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import type { Livestream } from "@/hooks/useSupabaseData";
 import { Countdown } from "@/pages/preview/_Countdown";
+
+// Lazy so the video vendor chunk (~1MB) only loads when a court is actually
+// live and the inline player renders — never on a homepage with no live.
+const HomeLivePlayer = lazy(() => import("./HomeLivePlayer"));
 
 interface LiveSectionProps {
   liveStreams: Livestream[];
@@ -98,38 +103,61 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
           </Link>
         </div>
 
-        {main && (
-        <Link to={`/live/${main.id}`} className="tl-live-main">
-          <div className="tl-live-main-thumb">
-            {mainThumb ? (
-              <img src={mainThumb} alt={mainTitle} loading="lazy" />
-            ) : (
-              <div className="tl-live-thumb-ph" aria-hidden="true" />
-            )}
-            <span className="tl-live-badge">{mainIsLive ? "LIVE" : upcomingBadge}</span>
-          </div>
-          <div className="tl-live-main-body">
-            <h3 className="tl-live-main-name">{mainTitle}</h3>
-            <div className="tl-live-meta">
-              <span>{main.organization?.name ?? broadcastLabel}</span>
-              <span className="sep" aria-hidden="true">·</span>
-              {mainIsLive ? (
+        {main && (mainIsLive && main.mux_playback_id ? (
+          // Live: embed the actual player inline (same gate/geo as /live), not
+          // a thumbnail. Body still links to the full page for chat etc.
+          <div className="tl-live-main tl-live-main--live">
+            <div className="tl-live-main-media">
+              <Suspense fallback={<div className="tl-live-thumb-ph" aria-hidden="true" />}>
+                <HomeLivePlayer stream={main} />
+              </Suspense>
+            </div>
+            <div className="tl-live-main-body">
+              <Link to={`/live/${main.id}`} className="tl-live-main-name-link">
+                <h3 className="tl-live-main-name">{mainTitle}</h3>
+              </Link>
+              <div className="tl-live-meta">
+                <span>{main.organization?.name ?? broadcastLabel}</span>
+                <span className="sep" aria-hidden="true">·</span>
                 <span>{language === "vi" ? "Đang phát" : "On air"}</span>
-              ) : (
-                <>
-                  <span>{formatTime(main.scheduled_start_at)}</span>
-                  <span className="sep" aria-hidden="true">·</span>
-                  <Countdown
-                    to={main.scheduled_start_at}
-                    pastLabel={language === "vi" ? "Đang phát" : "Live now"}
-                    language={language}
-                  />
-                </>
-              )}
+              </div>
+              <Link to={`/live/${main.id}`} className="tl-live-expand">
+                {language === "vi" ? "Mở trang xem đầy đủ →" : "Open full page →"}
+              </Link>
             </div>
           </div>
-        </Link>
-        )}
+        ) : (
+          <Link to={`/live/${main.id}`} className="tl-live-main">
+            <div className="tl-live-main-thumb">
+              {mainThumb ? (
+                <img src={mainThumb} alt={mainTitle} loading="lazy" />
+              ) : (
+                <div className="tl-live-thumb-ph" aria-hidden="true" />
+              )}
+              <span className="tl-live-badge">{mainIsLive ? "LIVE" : upcomingBadge}</span>
+            </div>
+            <div className="tl-live-main-body">
+              <h3 className="tl-live-main-name">{mainTitle}</h3>
+              <div className="tl-live-meta">
+                <span>{main.organization?.name ?? broadcastLabel}</span>
+                <span className="sep" aria-hidden="true">·</span>
+                {mainIsLive ? (
+                  <span>{language === "vi" ? "Đang phát" : "On air"}</span>
+                ) : (
+                  <>
+                    <span>{formatTime(main.scheduled_start_at)}</span>
+                    <span className="sep" aria-hidden="true">·</span>
+                    <Countdown
+                      to={main.scheduled_start_at}
+                      pastLabel={language === "vi" ? "Đang phát" : "Live now"}
+                      language={language}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          </Link>
+        ))}
 
         {(rest.length > 0 || endedStreams.length > 0) && (
           <div

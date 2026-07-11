@@ -2004,6 +2004,25 @@
   border-radius: 999px;
 }
 
+/* Live inline-player variant of the hero — replaces the thumbnail with the
+   actual Mux player. Not a link, so no hover lift; the player supplies its own
+   16/9 box. Shares the split grid from .tl-live-main below. */
+[data-theme="the-line"] .tl-live-main--live:hover {
+  transform: none; border-color: var(--tl-border);
+}
+[data-theme="the-line"] .tl-live-main-media { position: relative; min-width: 0; }
+[data-theme="the-line"] .tl-live-embed { position: relative; }
+/* Card already clips + rounds; strip the player's own radius so corners meet. */
+[data-theme="the-line"] .tl-live-embed > div { border-radius: 0; }
+[data-theme="the-line"] .tl-live-main-name-link { text-decoration: none; color: inherit; }
+[data-theme="the-line"] .tl-live-expand {
+  margin-top: 12px; align-self: flex-start;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 12px; letter-spacing: 0.02em;
+  color: var(--tl-green); text-decoration: none;
+}
+[data-theme="the-line"] .tl-live-expand:hover { text-decoration: underline; }
+
 /* Desktop: hero goes split (thumb left, body right) so a single stream no
    longer eats a full viewport of vertical space. Mobile keeps the stacked
    card. */
