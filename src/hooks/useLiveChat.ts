@@ -12,7 +12,7 @@ export interface ChatMessage {
   avatar_url: string | null;
   message: string;
   created_at: string;
-  client_message_id?: string;
+  client_message_id?: string | null;
   _pending?: boolean;
   _failed?: boolean;
   _tempId?: string;
