@@ -299,10 +299,10 @@ export function useTeamRegistration() {
         _invitation_code: inviteCode,
         _user_id: user.id,
         _display_name: sanitizeString(formData.display_name, 100),
-        _team: formData.team ? sanitizeString(formData.team, 100) : null,
-        _skill_level: formData.skill_level || null,
+        _team: formData.team ? sanitizeString(formData.team, 100) : undefined,
+        _skill_level: formData.skill_level || undefined,
         _rating_system: formData.rating_system,
-        _profile_link: sanitizeProfileLink(formData.profile_link),
+        _profile_link: sanitizeProfileLink(formData.profile_link) ?? undefined,
       });
 
       if (error) throw error;
@@ -383,7 +383,7 @@ export function useTeamRegistration() {
       const { data, error } = await supabase.rpc('btc_manage_team', {
         _team_id: teamId,
         _action: action,
-        _notes: notes || null,
+        _notes: notes || undefined,
       });
 
       if (error) throw error;

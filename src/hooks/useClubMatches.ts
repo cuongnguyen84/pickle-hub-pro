@@ -188,8 +188,8 @@ export function useLogClubMatch(clubId: string | undefined) {
         p_team_b_score: input.teamBScore,
         p_team_a_players: input.teamAPlayers,
         p_team_b_players: input.teamBPlayers,
-        p_notes: input.notes ?? null,
-        p_court_number: input.courtNumber ?? null,
+        p_notes: input.notes ?? undefined,
+        p_court_number: input.courtNumber ?? undefined,
         p_scoring_format: input.scoringFormat ?? "11_rally",
       });
       if (error) throw toMutationError(error);

@@ -144,7 +144,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
           id: m.id,
           courtNumber: m.court_id || 0,
           startTime: m.start_at,
-          status: m.status,
+          status: m.status ?? "pending",
           scoreA: m.score1,
           scoreB: m.score2,
           teamA: m.quick_table_players?.name || "TBD",
@@ -164,7 +164,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
           id: m.id,
           courtNumber: m.court_number || 0,
           startTime: m.start_time,
-          status: m.status,
+          status: m.status ?? "pending",
           scoreA: m.score_a,
           scoreB: m.score_b,
           teamA: m.team_a?.team_name || "TBD",
@@ -184,7 +184,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
         id: m.id,
         courtNumber: 0,
         startTime: null as string | null,
-        status: m.status === "in_progress" ? "live" : m.status,
+        status: (m.status === "in_progress" ? "live" : m.status) ?? "pending",
         scoreA: m.games_won_a,
         scoreB: m.games_won_b,
         teamA: m.team_a?.team_name || "TBD",
@@ -275,10 +275,10 @@ export const useDashboardData = (type: DashboardType, id: string) => {
       result.push({
         courtNumber: i,
         liveMatch: live
-          ? { id: live.id, teamA: live.teamA, teamB: live.teamB, scoreA: live.scoreA, scoreB: live.scoreB, status: live.status, startTime: live.startTime, displayOrder: live.displayOrder }
+          ? { id: live.id, teamA: live.teamA, teamB: live.teamB, scoreA: live.scoreA, scoreB: live.scoreB, status: live.status ?? "pending", startTime: live.startTime, displayOrder: live.displayOrder }
           : null,
         nextMatch: next
-          ? { id: next.id, teamA: next.teamA, teamB: next.teamB, scoreA: null, scoreB: null, status: next.status, startTime: next.startTime, displayOrder: next.displayOrder }
+          ? { id: next.id, teamA: next.teamA, teamB: next.teamB, scoreA: null, scoreB: null, status: next.status ?? "pending", startTime: next.startTime, displayOrder: next.displayOrder }
           : null,
       });
     }

@@ -743,7 +743,7 @@ export default function TeamMatchView() {
                   format: tournament.format,
                   status: tournament.status,
                   team_roster_size: tournament.team_roster_size,
-                  top_per_group: tournament.top_per_group,
+                  top_per_group: tournament.top_per_group ?? undefined,
                 }}
                 isOwner={isOwner}
                 userTeam={userTeam || null}
@@ -925,7 +925,7 @@ export default function TeamMatchView() {
           open={showPlayoffDialog}
           onOpenChange={setShowPlayoffDialog}
           standings={standings}
-          hasGroups={standingsHasGroups}
+          hasGroups={standingsHasGroups ?? false}
           generatePlayoffSeeding={generatePlayoffSeeding}
           isCreating={isGeneratingPlayoff}
           onConfirm={handleCreatePlayoff}
