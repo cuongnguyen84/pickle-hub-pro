@@ -189,8 +189,8 @@ export function useResolveMatchDispute() {
       const { error } = await supabase.rpc("resolve_match_dispute", {
         p_match_id: input.dispute.id,
         p_action: input.action,
-        p_team_a_score: isEdit ? aScores : null,
-        p_team_b_score: isEdit ? bScores : null,
+        p_team_a_score: isEdit ? aScores : undefined,
+        p_team_b_score: isEdit ? bScores : undefined,
       });
       if (error) throw toMutationError(error);
 

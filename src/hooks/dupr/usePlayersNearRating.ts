@@ -41,7 +41,7 @@ export function usePlayersNearRating({
       const { data, error } = await supabase.rpc("dupr_players_near_rating", {
         p_target_rating: targetRating,
         p_window: window,
-        p_exclude_user_id: excludeUserId,
+        p_exclude_user_id: excludeUserId ?? undefined,
         p_limit: limit,
       });
       if (error) throw error;

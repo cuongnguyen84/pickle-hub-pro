@@ -28,7 +28,7 @@ const parseCourtFromTitle = (title: string | null | undefined): string | null =>
   return null;
 };
 
-export function CourtTabs<T extends { title?: string | null; id?: string }>({
+export function CourtTabs<T extends { title?: string | null; id?: string | null }>({
   items,
   renderItem,
   gridClassName = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6",
