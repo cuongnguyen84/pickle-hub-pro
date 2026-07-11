@@ -8,65 +8,89 @@ rollout to flip it on **without breaking DUPR in production**.
 > deploy + a backfill against prod that cannot be done from this repo alone.
 > Do the steps below in order; do not skip the dual-read phase.
 
+## Function inventory (which functions touch `dupr_user_tokens`)
+
+Not every DUPR function reads the user token — get this right or you deploy
+decrypt logic where it isn't needed and miss it where it is.
+
+- **Writers** (encrypt on write): `dupr-sso-callback` (INSERT on link),
+  `dupr-refresh-user-token` (UPDATE new pair). These also read the old
+  `refresh_token` first, so they are readers too.
+- **Readers** (decrypt on read): the shared-client consumers
+  `dupr-entitlements`, `dupr-clubs`, `dupr-org-link-club` (via `dupr-user-client`),
+  plus `dupr-match-submit` and `dupr-refresh-user-token`.
+- **Not a user-token consumer**: `dupr-partner-token` operates on
+  `dupr_partner_tokens` (a different table) — **no decrypt needed**. Any other
+  function that only touches metadata columns (`dupr_id`, `connected_at`,
+  `revoked_at`) needs no key.
+
+The safest unit of change is the shared `dupr-user-client` helper: wire
+decrypt there once and every consumer inherits it.
+
 ## Why staged
 
-Seven edge functions read these columns:
-`dupr-sso-callback`, `dupr-refresh-user-token`, `dupr-match-submit`,
-`dupr-entitlements`, `dupr-clubs`, `dupr-org-link-club`, `dupr-partner-token`.
-
-If the writer starts encrypting before every reader can decrypt, live DUPR
-calls break. `decryptToken()` is therefore **dual-read**: any value not
-prefixed `enc:` is returned unchanged, so readers work against a mixed
-plaintext/ciphertext table throughout the migration.
+If a writer starts encrypting before every reader can decrypt, live DUPR calls
+break. During migration, readers pass **`{ allowPlaintext: true }`** to
+`decryptToken` so a mixed plaintext/ciphertext table still works. That flag is
+removed at the end so plaintext is rejected loudly (see step 6).
 
 ## Steps
 
 1. **Generate + store the key** (once, outside the DB):
    ```sh
    head -c 32 /dev/urandom | base64            # 32-byte key, base64
-   supabase secrets set DUPR_TOKEN_ENC_KEY='<base64>' --project-ref ajvlcamxemgbxduhiqrl
+   supabase secrets set DUPR_TOKEN_ENC_KEY_V1='<base64>' --project-ref ajvlcamxemgbxduhiqrl
    ```
    Keep an offline copy in the password manager for rotation/disaster recovery.
+   Each function builds its keyring from the secret(s) and its AAD from the
+   **immutable project ref**:
+   ```ts
+   const key = await importTokenKeyFromBase64(Deno.env.get("DUPR_TOKEN_ENC_KEY_V1")!);
+   const keyring = makeKeyring("v1", key);
+   const projectRef = projectRefFromSupabaseUrl(Deno.env.get("SUPABASE_URL")!);
+   const aad = buildTokenAAD({ projectRef, column: "access_token", userId });
+   ```
 
-2. **Deploy READERS first** (all 7). Each loads the key and wraps its token
-   read in `decryptToken(value, key, aad)`. Because of dual-read this is a
-   no-op while the table is still plaintext — but it means every reader can
-   handle ciphertext *before* any exists. **AAD is mandatory-bound** — build it
-   with `buildTokenAAD({ environment, column, userId })`, never a bare column
-   string. Binding `environment + column + userId` blocks column-replay,
-   row-swap (A's ciphertext pasted onto B), and cross-env (preview → prod)
-   attacks. `environment` = the project/DB context (e.g. `prod` / `preview`),
-   derived from an env var or project ref; `userId` = the row's `user_id`.
+2. **Deploy READERS first** with `decryptToken(value, keyring, aad, { allowPlaintext: true })`.
+   Dual-read makes this a no-op while the table is still plaintext, but every
+   reader can now handle ciphertext *before* any exists. Log a metric each time
+   the plaintext branch is taken so you can watch it fall to zero.
 
-3. **Deploy the WRITER** (`dupr-sso-callback` + `dupr-refresh-user-token`):
-   replace the plaintext INSERT/UPSERT with
-   `encryptToken(token, key, aad)`. New links + refreshes now write ciphertext;
-   old rows stay plaintext (still readable via dual-read).
+3. **Deploy the WRITERS** (`dupr-sso-callback`, `dupr-refresh-user-token`):
+   replace the plaintext INSERT/UPSERT with `encryptToken(token, keyring, aad)`.
+   New links + refreshes write ciphertext; old rows stay plaintext (readable via
+   dual-read).
 
-4. **Backfill** existing rows with a trusted one-off (service-role Edge Function
-   or `supabase functions` script, never client-side): read each row, if
-   `!isEncrypted(access_token)` re-write both columns encrypted. Idempotent —
-   safe to re-run.
+4. **Backfill** existing rows with a trusted one-off (service-role Edge Function,
+   never client-side): for each row where `!isEncrypted(access_token)`,
+   re-encrypt both columns with the row's own `user_id` in the AAD. Idempotent.
 
 5. **Verify**: `select count(*) from dupr_user_tokens where access_token not like 'enc:%';`
    should reach 0. Smoke-test a real DUPR refresh + match submit.
 
-6. **Drop dual-read** only after (5) is clean: change readers to reject a
-   non-`enc:` value instead of passing it through, so a future plaintext write
-   can't slip in silently.
+6. **Drop dual-read** only after (5) is clean: remove `{ allowPlaintext: true }`
+   from the readers. `decryptToken` then throws on any non-`enc:` value, so a
+   stray plaintext write fails loudly instead of silently.
 
-## Rotation / revoke
+## Rotation (supported by the keyring)
 
-- **Rotate**: bump `KEY_VERSION` to `v2`, add the new key, keep the old key for
-  decrypt-only; re-encrypt rows lazily on next refresh or via a backfill, then
-  retire `v1`. The `enc:v1:` / `enc:v2:` prefix disambiguates.
-- **Revoke**: existing `revoked_at` column + DUPR's token revoke endpoint;
-  encryption does not change that flow.
+`decryptToken` selects the key by the version embedded in each value, so
+rotation does **not** break old ciphertext:
+
+1. Add the new key as `DUPR_TOKEN_ENC_KEY_V2`; build the keyring with **both**:
+   `{ activeVersion: "v2", keys: Map([["v1", k1], ["v2", k2]]) }`.
+2. New writes use `v2` (`enc:v2:…`); `v1` values still decrypt via the retained
+   `v1` key.
+3. Re-encrypt lazily (on next refresh) or via a backfill, then drop `v1` from
+   the keyring once `select count(*) … where access_token like 'enc:v1:%'` = 0.
+
+**Revoke**: existing `revoked_at` + DUPR's revoke endpoint; encryption does not
+change that flow.
 
 ## Notes
 
-- Supabase secrets are better than plaintext-in-DB but are **not** a managed KMS
-  (no HSM, no per-use audit). If DUPR scales, move the key to a KMS/Vault and
-  have the edge function fetch a data key.
+- Supabase secrets beat plaintext-in-DB but are **not** a managed KMS (no HSM,
+  no per-use audit). If DUPR scales, move to KMS/Vault and fetch a data key.
 - `token-crypto.ts` is pure + Deno-free; unit-tested in
-  `__tests__/token-crypto.test.ts` (runs in the vitest gate).
+  `__tests__/token-crypto.test.ts` (keyring rotation, explicit dual-read, AAD
+  row/env binding) — runs in the vitest gate.

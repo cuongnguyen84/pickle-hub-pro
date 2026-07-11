@@ -3,55 +3,73 @@
 // ----------------------------------------------------------------------------
 // dupr_user_tokens.{access_token,refresh_token} are stored plaintext today. A
 // DB backup or service-role leak would hand over live DUPR access. This module
-// encrypts them at rest with a key held OUTSIDE the database (Supabase secret
-// `DUPR_TOKEN_ENC_KEY`, base64 of 32 random bytes), so the ciphertext in the
-// table is useless without the separately-held key.
+// encrypts them at rest with keys held OUTSIDE the database (Supabase secrets),
+// so the ciphertext in the table is useless without the separately-held key.
 //
 // Design:
 //   • AES-256-GCM, fresh random 12-byte nonce per encryption.
-//   • key_version prefix ("v1") so keys can be rotated without ambiguity.
-//   • Associated Authenticated Data (AAD) binds each ciphertext to its column
-//     context (e.g. "dupr_user_tokens.access_token"), so a value cannot be
-//     lifted from one field and replayed into another.
-//   • Stored format:  enc:v1:<base64url nonce>:<base64url ciphertext+tag>
-//   • DUAL-READ: decryptToken() returns any non-"enc:" value unchanged, so
-//     readers keep working while the table still holds plaintext during the
-//     migration. Deploy readers first, then the writer, then backfill, then
-//     drop dual-read.
+//   • KEYRING (not a single key) so a v2 key can be introduced while v1
+//     ciphertext is still decryptable — decryptToken parses the version from
+//     the stored value and selects the matching key. Rotation = add v2 to the
+//     keyring, set activeVersion="v2"; v1 stays for decrypt until re-encrypted.
+//   • Associated Authenticated Data (AAD) binds each ciphertext to
+//     projectRef + column + userId, so a value cannot be replayed into another
+//     column, swapped between rows, or copied from preview into prod.
+//   • Stored format:  enc:<version>:<base64url nonce>:<base64url ciphertext+tag>
+//   • DUAL-READ is EXPLICIT: decryptToken rejects a plaintext (non-"enc:")
+//     value unless { allowPlaintext: true } is passed. During migration the
+//     readers pass the flag (with telemetry); after backfill the flag is
+//     dropped so a stray plaintext write fails loudly instead of silently.
 //
 // Pure + Deno-free (Web Crypto only) so it runs under both the Deno edge
-// runtime and the Node/vitest test gate. The caller supplies the CryptoKey;
-// env access stays in the edge function.
+// runtime and the Node/vitest test gate. Callers supply the keyring; env
+// access stays in the edge function.
 // ============================================================================
 
-export const KEY_VERSION = "v1";
+export const KEY_VERSION = "v1"; // default active version for NEW encryptions
 const ENC_PREFIX = "enc:";
 const NONCE_BYTES = 12;
 
+/** version -> CryptoKey, plus which version new writes use. */
+export interface TokenKeyring {
+  activeVersion: string;
+  keys: Map<string, CryptoKey>;
+}
+
+// ─── AAD (context binding) ──────────────────────────────────────────────────
+
 /**
- * Build the canonical Associated Authenticated Data (AAD) for a stored token.
- *
- * AES-GCM authenticates but does not encrypt the AAD; decryption FAILS unless
- * the exact same AAD is supplied. Binding it to `environment + column +
- * userId` means a ciphertext cannot be:
- *   • replayed from one column into another (column binding), or
- *   • lifted from row A and pasted into row B (userId binding), or
- *   • copied from a preview/staging DB into prod (environment binding).
- *
- * Field-binding alone (column only) does not stop the row-swap attack, so all
- * three parts are REQUIRED — pass them explicitly at every call site.
+ * Derive the immutable Supabase project ref from SUPABASE_URL
+ * (`https://<ref>.supabase.co`). Using the project ref — not a per-function
+ * "prod"/"preview" literal — as the environment binding means a preview DB and
+ * prod DB get distinct AADs automatically, with no chance of a mislabeled
+ * constant.
+ */
+export function projectRefFromSupabaseUrl(supabaseUrl: string): string {
+  const m = /^https:\/\/([a-z0-9-]+)\.supabase\.(co|in|red)/i.exec(supabaseUrl ?? "");
+  if (!m) throw new Error("Cannot derive project ref from SUPABASE_URL");
+  return m[1];
+}
+
+/**
+ * Build the canonical AAD for a stored token. AES-GCM authenticates (but does
+ * not encrypt) the AAD; decryption FAILS unless the exact same AAD is given.
+ * Binding projectRef + column + userId blocks column-replay, row-swap (A→B),
+ * and cross-env (preview→prod) attacks. All three are REQUIRED.
  */
 export function buildTokenAAD(params: {
-  environment: string; // e.g. "prod" | "preview" — the DB/project context
+  projectRef: string; // immutable DB identity, from projectRefFromSupabaseUrl()
   column: "access_token" | "refresh_token";
   userId: string; // dupr_user_tokens.user_id (the row owner)
 }): string {
-  const { environment, column, userId } = params;
-  if (!environment || !userId) {
-    throw new Error("buildTokenAAD requires non-empty environment and userId");
+  const { projectRef, column, userId } = params;
+  if (!projectRef || !userId) {
+    throw new Error("buildTokenAAD requires non-empty projectRef and userId");
   }
-  return `v1:${environment}:dupr_user_tokens.${column}:${userId}`;
+  return `v1:${projectRef}:dupr_user_tokens.${column}:${userId}`;
 }
+
+// ─── base64url ──────────────────────────────────────────────────────────────
 
 function toBase64Url(bytes: Uint8Array): string {
   let bin = "";
@@ -67,11 +85,13 @@ function fromBase64Url(s: string): Uint8Array {
   return out;
 }
 
+// ─── key import / keyring ───────────────────────────────────────────────────
+
 /** Import a raw 32-byte AES-256 key (base64-encoded) as an AES-GCM CryptoKey. */
 export async function importTokenKeyFromBase64(base64Key: string): Promise<CryptoKey> {
   const bin = atob(base64Key);
   if (bin.length !== 32) {
-    throw new Error(`DUPR_TOKEN_ENC_KEY must decode to 32 bytes, got ${bin.length}`);
+    throw new Error(`token key must decode to 32 bytes, got ${bin.length}`);
   }
   const raw = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i);
@@ -81,16 +101,27 @@ export async function importTokenKeyFromBase64(base64Key: string): Promise<Crypt
   ]);
 }
 
+/** Convenience: single-version keyring (the common non-rotation case). */
+export function makeKeyring(version: string, key: CryptoKey): TokenKeyring {
+  return { activeVersion: version, keys: new Map([[version, key]]) };
+}
+
 export function isEncrypted(stored: string | null | undefined): boolean {
   return typeof stored === "string" && stored.startsWith(ENC_PREFIX);
 }
 
-/** Encrypt a token → `enc:v1:<nonce>:<ciphertext>`. `aad` binds it to context. */
+// ─── encrypt / decrypt ──────────────────────────────────────────────────────
+
+/** Encrypt with the keyring's active version → `enc:<ver>:<nonce>:<ct>`. */
 export async function encryptToken(
   plaintext: string,
-  key: CryptoKey,
+  keyring: TokenKeyring,
   aad: string,
 ): Promise<string> {
+  const key = keyring.keys.get(keyring.activeVersion);
+  if (!key) {
+    throw new Error(`keyring has no key for active version ${keyring.activeVersion}`);
+  }
   const nonce = crypto.getRandomValues(new Uint8Array(NONCE_BYTES));
   const enc = new TextEncoder();
   const ct = new Uint8Array(
@@ -100,36 +131,41 @@ export async function encryptToken(
       enc.encode(plaintext),
     ),
   );
-  return `${ENC_PREFIX}${KEY_VERSION}:${toBase64Url(nonce)}:${toBase64Url(ct)}`;
+  return `${ENC_PREFIX}${keyring.activeVersion}:${toBase64Url(nonce)}:${toBase64Url(ct)}`;
 }
 
 /**
- * Decrypt a stored token. DUAL-READ: a value that is not `enc:`-prefixed is
- * assumed plaintext and returned unchanged (migration compatibility).
- * Throws on a malformed `enc:` value or unknown key version.
+ * Decrypt a stored token, selecting the key by the version embedded in the
+ * value (rotation-safe). Plaintext handling is EXPLICIT: a non-"enc:" value
+ * throws unless { allowPlaintext: true } — used only during the migration
+ * window, never after backfill.
  */
 export async function decryptToken(
   stored: string,
-  key: CryptoKey,
+  keyring: TokenKeyring,
   aad: string,
+  opts: { allowPlaintext?: boolean } = {},
 ): Promise<string> {
-  if (!isEncrypted(stored)) return stored; // plaintext passthrough
+  if (!isEncrypted(stored)) {
+    if (opts.allowPlaintext) return stored; // migration-window passthrough
+    throw new Error("plaintext token rejected (allowPlaintext not set)");
+  }
 
   const parts = stored.slice(ENC_PREFIX.length).split(":");
   if (parts.length !== 3) {
-    throw new Error("Malformed encrypted token: expected v:nonce:ciphertext");
+    throw new Error("Malformed encrypted token: expected version:nonce:ciphertext");
   }
   const [version, nonceB64, ctB64] = parts;
-  if (version !== KEY_VERSION) {
-    throw new Error(`Unknown token key version: ${version}`);
+  const key = keyring.keys.get(version);
+  if (!key) {
+    throw new Error(`no key in keyring for token version: ${version}`);
   }
   const nonce = fromBase64Url(nonceB64);
   const ct = fromBase64Url(ctB64);
-  const dec = new TextDecoder();
   const pt = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: nonce, additionalData: new TextEncoder().encode(aad) },
     key,
     ct,
   );
-  return dec.decode(pt);
+  return new TextDecoder().decode(pt);
 }

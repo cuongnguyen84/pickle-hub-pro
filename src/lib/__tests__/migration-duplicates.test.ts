@@ -52,4 +52,22 @@ describe("findMigrationDuplicates", () => {
     const { versionDuplicates } = findMigrationDuplicates(files);
     expect(versionDuplicates).toEqual([]);
   });
+
+  it("allowlists a reviewed identical-content pair instead of failing it", () => {
+    const body = "grant select on public.t to authenticated;";
+    const files = [
+      { name: "20260101000000_grant_a.sql", content: body },
+      { name: "20260102000000_grant_b.sql", content: body },
+    ];
+    const blocked = findMigrationDuplicates(files);
+    expect(blocked.contentDuplicates).toHaveLength(1);
+    expect(blocked.allowedContentDuplicates).toHaveLength(0);
+
+    const allowed = findMigrationDuplicates(files, [
+      { files: ["20260101000000_grant_a.sql", "20260102000000_grant_b.sql"], reason: "idempotent re-GRANT" },
+    ]);
+    expect(allowed.contentDuplicates).toHaveLength(0);
+    expect(allowed.allowedContentDuplicates).toHaveLength(1);
+    expect(allowed.allowedContentDuplicates[0].reason).toBe("idempotent re-GRANT");
+  });
 });
