@@ -5,6 +5,19 @@ import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 import { visualizer } from "rollup-plugin-visualizer";
 
+// Unique-per-build token appended to the ENTRY chunk filename only.
+// ----------------------------------------------------------------------------
+// 2026-07-11 outage: the entry file (index-[hash].js) was served STALE from
+// immutable caches (browser HTTP cache / SW / CDN edge) because a hashed entry
+// filename ended up reused across builds with different content — the app hung
+// at "Loading…" with no error. Rollup computes the entry hash from content that
+// still references dependency chunks; that hash can collide across builds while
+// the final rewritten content differs. Appending a build token guarantees the
+// entry filename is globally unique every deploy, so no immutable cache can ever
+// serve a mismatched entry. Vendor/lazy chunks keep pure content-[hash] naming,
+// so unchanged chunks stay cached (no needless re-download on Vietnam mobile).
+const BUILD_ID = Date.now().toString(36);
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -205,6 +218,9 @@ export default defineConfig(({ mode }) => ({
     sourcemap: false,
     rollupOptions: {
       output: {
+        // Entry gets a build-unique token (see BUILD_ID note above); other
+        // chunks/assets keep default content-hash names for cross-deploy caching.
+        entryFileNames: `assets/[name]-[hash]-${BUILD_ID}.js`,
         manualChunks: {
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-supabase": ["@supabase/supabase-js"],
