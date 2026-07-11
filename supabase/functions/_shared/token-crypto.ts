@@ -206,6 +206,23 @@ export function tokenVersion(stored: string): string | null {
 }
 
 /**
+ * Classify a stored value relative to the active key version. Used by the
+ * backfill for BOTH the re-encrypt decision and the verification count, so the
+ * "is this done?" logic is one unambiguous JS check — no PostgREST `like`
+ * wildcard semantics involved.
+ *   • "plaintext" — not encrypted yet (needs first encryption)
+ *   • "stale"     — encrypted at an OLDER version (needs rotation re-encrypt)
+ *   • "current"   — encrypted at the active version (done)
+ */
+export function tokenState(
+  stored: string,
+  activeVersion: string,
+): "plaintext" | "stale" | "current" {
+  if (!isEncrypted(stored)) return "plaintext";
+  return tokenVersion(stored) === activeVersion ? "current" : "stale";
+}
+
+/**
  * Decrypt a stored field. When NO key is configured, a plaintext value passes
  * through (pre-rollout) but a CIPHERTEXT value THROWS — never hand `enc:…` to a
  * downstream API as if it were the real token.

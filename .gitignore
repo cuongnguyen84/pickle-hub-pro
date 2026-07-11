@@ -71,3 +71,6 @@ ds-bundle/
 # Local credential notes at repo root — never commit
 /secrets.local.md
 /secrets.local.*
+
+# Deno lockfile (edge functions)
+deno.lock
