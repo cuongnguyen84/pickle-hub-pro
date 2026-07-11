@@ -10,10 +10,13 @@ interface PlayerInput {
   seed: string;
 }
 
-interface ManualGroupAssignmentProps {
-  players: PlayerInput[];
+// Generic over the caller's player shape so richer inputs (e.g. a doubles
+// row carrying name2) survive the round-trip back through onComplete instead
+// of being narrowed to this minimal shape. onComplete may be async.
+interface ManualGroupAssignmentProps<P extends PlayerInput> {
+  players: P[];
   groupCount: number;
-  onComplete: (groupAssignments: Map<number, PlayerInput[]>) => void;
+  onComplete: (groupAssignments: Map<number, P[]>) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -56,18 +59,18 @@ const tinyBadge = (kind: 'count' | 'pill'): React.CSSProperties => ({
   color: 'var(--tl-fg-3)',
 });
 
-export function ManualGroupAssignment({
+export function ManualGroupAssignment<P extends PlayerInput>({
   players,
   groupCount,
   onComplete,
   onCancel,
-}: ManualGroupAssignmentProps) {
+}: ManualGroupAssignmentProps<P>) {
   const { t } = useI18n();
 
-  const [groupAssignments, setGroupAssignments] = useState<Map<number, PlayerInput[]>>(
-    (): Map<number, PlayerInput[]> => new Map(Array.from({ length: groupCount }, (_, i): [number, PlayerInput[]] => [i, []])),
+  const [groupAssignments, setGroupAssignments] = useState<Map<number, P[]>>(
+    (): Map<number, P[]> => new Map(Array.from({ length: groupCount }, (_, i): [number, P[]] => [i, []])),
   );
-  const [selectedPlayer, setSelectedPlayer] = useState<PlayerInput | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<P | null>(null);
 
   const unassignedPlayers = useMemo(() => {
     const assignedIds = new Set<string>();
@@ -86,7 +89,7 @@ export function ManualGroupAssignment({
     String.fromCharCode(65 + i),
   );
 
-  const handlePlayerClick = (player: PlayerInput) => {
+  const handlePlayerClick = (player: P) => {
     if (selectedPlayer?.id === player.id) {
       setSelectedPlayer(null);
     } else {
