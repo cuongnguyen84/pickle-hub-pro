@@ -439,7 +439,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // added to meta description for venue-name navigational CTR).
   // 2026-07-08 — v24->v25: venue detail enrichment (maps/directions links,
   // hours, amenities, cover image) + city hub court totals & per-venue facts.
-  const cacheKey = `pr:v25:${url.pathname}`;
+  // 2026-07-11 — v25->v26: venue title/meta de-dup — 95% of venue names already
+  // embed "Pickleball", so drop the redundant "Sân pickleball"/"pickleball court"
+  // label; append city for local intent instead. CTR fix (rank was fine).
+  const cacheKey = `pr:v26:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

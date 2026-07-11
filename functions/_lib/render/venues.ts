@@ -265,30 +265,26 @@ export async function renderVenueDetail(
   const indoorVi = v.is_indoor == null ? "" : v.is_indoor ? "trong nhà" : "ngoài trời";
   const indoorEn = v.is_indoor == null ? "" : v.is_indoor ? "indoor" : "outdoor";
 
-  // CTR: front-load the local keyword ("sân pickleball <city>") in the title
-  // when it fits in 60 chars without dropping the brand suffix. buildTitle
-  // returns the bare name (no brand) once name+suffix exceeds 60, so we only
-  // use the longer city suffix when the total still fits; otherwise we keep
-  // the short suffix. Guard against duplicating the city if it's in the name.
+  // CTR: 95% of venue names already embed "Pickleball" (309/691 literally start
+  // with "Sân Pickleball"), so the old "<name> | Sân Pickleball · ThePickleHub"
+  // suffix produced a redundant double keyword. Instead: keep the name as-is when
+  // it already carries the keyword, append the city for local intent when it
+  // isn't already in the name, then a single brand. buildTitle handles the >60
+  // truncation (drops brand, adds ellipsis).
   const cityName = v.city ? v.city.trim() : "";
+  const nameHasKw = /pickleball/i.test(name);
   const cityInName = cityName ? name.toLowerCase().includes(cityName.toLowerCase()) : false;
-  const longSuffix =
-    lang === "vi"
-      ? ` | Sân Pickleball ${cityName} · ThePickleHub`
-      : ` | Pickleball Court in ${cityName} · ThePickleHub`;
-  const shortSuffix = lang === "vi" ? " | Sân Pickleball · ThePickleHub" : " | Pickleball Court · ThePickleHub";
-  const brandSuffix = " · ThePickleHub";
-  // Pick the most descriptive suffix that still fits in 60 chars WITH the
-  // brand. buildTitle drops the suffix entirely once name+suffix exceeds 60,
-  // so without this tiering medium-length names would lose the brand; the
-  // brand-only fallback keeps "· ThePickleHub" for names up to ~45 chars.
-  const suffixTiers = [
-    ...(cityName && !cityInName ? [longSuffix] : []),
-    shortSuffix,
-    brandSuffix,
-  ];
-  const suffix = suffixTiers.find((s) => (name + s).length <= 60) ?? brandSuffix;
-  const title = buildTitle(name, suffix);
+  const kwName = nameHasKw
+    ? name
+    : lang === "vi"
+      ? `Sân Pickleball ${name}`
+      : `${name} Pickleball Court`;
+  const cityTail = cityName && !cityInName ? ` – ${cityName}` : "";
+  const brand = " | ThePickleHub";
+  const title =
+    (kwName + cityTail + brand).length <= 60
+      ? kwName + cityTail + brand
+      : buildTitle(kwName, brand);
 
   // CTR: lead the description with the concrete, search-intent facts (name,
   // city, court count, indoor/outdoor) then a clear next step. Address is
@@ -299,13 +295,18 @@ export async function renderVenueDetail(
   // most actionable fact we hold that Maps/Facebook results often bury.
   const phoneVi = v.phone ? ` SĐT đặt sân ${v.phone}.` : "";
   const phoneEn = v.phone ? ` Phone ${v.phone}.` : "";
+  // Same de-dup as the title: skip the "Sân pickleball" / "pickleball court"
+  // label when the name already carries the keyword, so the snippet doesn't read
+  // "Sân pickleball Sân Pickleball FLC Sầm Sơn".
+  const leadVi = nameHasKw ? name : `Sân pickleball ${name}`;
+  const leadEn = nameHasKw ? name : `${name} pickleball court`;
   const fallbackDescVi =
-    `Sân pickleball ${name}${cityName ? ` tại ${cityName}` : ""}` +
+    `${leadVi}${cityName ? ` tại ${cityName}` : ""}` +
     `${courtsVi ? ` — ${courtsVi}` : ""}${indoorVi ? `, ${indoorVi}` : ""}.` +
     phoneVi +
     ` Địa chỉ, bản đồ, chỉ đường & các sân pickleball${cityName ? ` ở ${cityName}` : " gần bạn"} trên ThePickleHub.`;
   const fallbackDescEn =
-    `${name} pickleball court${cityName ? ` in ${cityName}` : ""}` +
+    `${leadEn}${cityName ? ` in ${cityName}` : ""}` +
     `${courtsEn ? ` — ${courtsEn}` : ""}${indoorEn ? `, ${indoorEn}` : ""}.` +
     phoneEn +
     ` Address, map, directions & other pickleball courts${cityName ? ` in ${cityName}` : " near you"} on ThePickleHub.`;
