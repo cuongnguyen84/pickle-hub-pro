@@ -33,7 +33,7 @@ describe("Phase 4B kudos RPC type contracts", () => {
     type Args = Database["public"]["Functions"]["get_trending_feed"]["Args"];
     type Returns = Database["public"]["Functions"]["get_trending_feed"]["Returns"];
     // p_viewer_id is the new optional param Phase 4B adds for trending.
-    expectTypeOf<Args["p_viewer_id"]>().toEqualTypeOf<string | null | undefined>();
+    expectTypeOf<Args["p_viewer_id"]>().toEqualTypeOf<string | undefined>();
     expectTypeOf<Returns[0]["kudos_count"]>().toMatchTypeOf<number>();
     expectTypeOf<Returns[0]["viewer_kudoed"]>().toMatchTypeOf<boolean>();
     expect(true).toBe(true);

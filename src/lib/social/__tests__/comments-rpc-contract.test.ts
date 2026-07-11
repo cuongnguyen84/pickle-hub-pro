@@ -17,7 +17,7 @@ describe("Phase 4C comments RPC type contracts", () => {
     expectTypeOf<Args["p_match_id"]>().toEqualTypeOf<string>();
     expectTypeOf<Args["p_body"]>().toEqualTypeOf<string>();
     expectTypeOf<Args["p_parent_comment_id"]>().toEqualTypeOf<
-      string | null | undefined
+      string | undefined
     >();
     expect(true).toBe(true);
   });
@@ -38,10 +38,10 @@ describe("Phase 4C comments RPC type contracts", () => {
     type Returns = Database["public"]["Functions"]["get_match_comments"]["Returns"];
     expectTypeOf<Args["p_match_id"]>().toEqualTypeOf<string>();
     expectTypeOf<Args["p_cursor_created_at"]>().toEqualTypeOf<
-      string | null | undefined
+      string | undefined
     >();
     expectTypeOf<Args["p_cursor_comment_id"]>().toEqualTypeOf<
-      string | null | undefined
+      string | undefined
     >();
     expectTypeOf<Returns[0]["comment_id"]>().toMatchTypeOf<string>();
     expectTypeOf<Returns[0]["parent_comment_id"]>().toMatchTypeOf<
