@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["pickleball cost vietnam", "chi phi choi pickleball", "gia thue san pickleball", "choi pickleball ton bao nhieu", "pickleball gia re", "pickleball vietnam 2026"],
     ctaPath: "/san",
     ctaLabel: { en: "Find courts and rental prices near you on ThePickleHub", vi: "Tìm sân pickleball và giá thuê gần bạn trên ThePickleHub" },
+    heroImage: { src: "/images/blog/pickleball-cost-vietnam-2026-hero.webp", alt: "Pickleball cost in Vietnam 2026 — flat-lay of a carbon paddle, yellow balls, Vietnamese dong banknotes, a notebook with a handwritten cost table and a calculator on a blue court surface." },
     titleEn: "How Much Does Pickleball Cost in Vietnam? The 2026 Price Guide",
     titleVi: "Chi phí chơi Pickleball ở Việt Nam 2026: sân, vợt, giải đấu hết bao nhiêu?",
     metaTitleEn: "Pickleball Cost in Vietnam 2026 | Courts, Paddles & Tournaments",

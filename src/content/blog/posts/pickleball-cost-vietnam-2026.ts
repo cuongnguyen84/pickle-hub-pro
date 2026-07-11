@@ -18,6 +18,10 @@ const post: BlogPost = {
     en: "Find courts and rental prices near you on ThePickleHub",
     vi: "Tìm sân pickleball và giá thuê gần bạn trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/pickleball-cost-vietnam-2026-hero.webp",
+    alt: "Pickleball cost in Vietnam 2026 — flat-lay of a carbon paddle, yellow balls, Vietnamese dong banknotes, a notebook with a handwritten cost table and a calculator on a blue court surface.",
+  },
   content: {
     en: {
       title: "How Much Does Pickleball Cost in Vietnam? The 2026 Price Guide",
