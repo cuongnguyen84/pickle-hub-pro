@@ -68,6 +68,11 @@ const STATIC_URLS = [
 
 // Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
+  // 2026-07-11 sync: these four were missing vs metadata.ts (see file-header rule)
+  "pickleball-cost-vietnam-2026",
+  "hcmc-open-2026-preview",
+  "vietnam-pickleball-tournament-calendar-2026",
+  "ppa-beijing-open-2026-recap",
   "pickleball-club-management-software-comparison",
   "pickleball-tournament-budget-calculator-guide",
   "ppa-tour-asia-2026-recap",
