@@ -32,17 +32,30 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
       .map((v) => v.userId)
       .filter((id): id is string => !!id);
 
-    const profileMap: Record<string, { display_name: string | null; email: string; avatar_url: string | null }> = {};
+    const profileMap: Record<string, { display_name: string | null; email: string | null; avatar_url: string | null }> = {};
 
     if (userIds.length > 0) {
+      // display_name + avatar_url from profiles. KHÔNG select `email` ở đây:
+      // migration PII lockdown (20260706120000) REVOKE cột email khỏi role
+      // `authenticated`, nên chỉ cần liệt kê email là cả câu SELECT fail
+      // (permission denied) → mất luôn display_name → viewer thành "Ẩn danh".
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, display_name, email, avatar_url")
+        .select("id, display_name, avatar_url")
         .in("id", userIds);
 
       if (profiles) {
         for (const p of profiles) {
-          profileMap[p.id] = p;
+          profileMap[p.id] = { display_name: p.display_name, email: null, avatar_url: p.avatar_url };
+        }
+      }
+
+      // email qua RPC admin-only (SECURITY DEFINER, gated bằng is_admin()).
+      const { data: emails } = await supabase.rpc("admin_get_profile_emails", { p_ids: userIds });
+      if (emails) {
+        for (const e of emails) {
+          if (profileMap[e.id]) profileMap[e.id].email = e.email;
+          else profileMap[e.id] = { display_name: e.display_name, email: e.email, avatar_url: null };
         }
       }
     }
