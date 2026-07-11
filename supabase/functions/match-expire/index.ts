@@ -2,20 +2,24 @@
 // match-expire — Sprint 2 cron implementation
 // ----------------------------------------------------------------------------
 // Daily 04:00 UTC+7 (21:00 UTC). Sweeps pending matches older than 7 days
-// to verification_status = 'expired'. No auth check — invoked by Supabase
-// scheduled trigger with service_role context.
+// to verification_status = 'expired'. The scheduled caller must authenticate
+// with x-cron-secret because verify_jwt is disabled at the gateway.
 //
 // Schedule lives in supabase/config.toml [functions.match-expire].schedule.
-// Manually invokable via POST /functions/v1/match-expire (no body required).
+// Manually invokable via authenticated POST /functions/v1/match-expire.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+  if (authError) return authError;
 
   // service_role bypasses RLS — required for cross-user UPDATE
   const supabase = createClient(

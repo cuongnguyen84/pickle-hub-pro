@@ -8,9 +8,13 @@
 // ============================================================================
 
 import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+  if (authError) return authError;
 
   return jsonResponse({ status: "skeleton", function: "leaderboard-compute", ts: new Date().toISOString() });
 });
