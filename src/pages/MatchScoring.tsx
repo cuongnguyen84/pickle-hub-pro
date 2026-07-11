@@ -722,7 +722,7 @@ const MatchScoring = () => {
         .from('quick_table_matches')
         .update({ [updateField]: winnerId } as TablesUpdate<'quick_table_matches'>)
         .eq('id', currentMatch.next_match_id);
-    } else {
+    } else if (currentMatch.playoff_round != null) {
       const { data: currentRoundMatches } = await supabase
         .from('quick_table_matches')
         .select('id')

@@ -308,7 +308,7 @@ export default function MatchNew() {
             teamA2={teamA2}
             teamB1={teamB1}
             teamB2={teamB2}
-            recents={recent.data ?? []}
+            recents={(recent.data ?? []).map((o) => ({ ...o, email: o.email ?? "" }))}
             excludeIds={excludeIds}
             onPick={pickPlayer}
             onRemove={removePlayer}

@@ -68,7 +68,7 @@ const EmbedLive = () => {
         {isBlocked && <GeoBlockOverlay />}
         <MuxPlayer
           playbackId={playbackId!}
-          title={livestream.title}
+          title={livestream.title ?? undefined}
           poster={livestream.thumbnail_url ?? undefined}
           streamType={streamType}
           type="livestream"

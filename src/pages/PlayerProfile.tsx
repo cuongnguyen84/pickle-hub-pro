@@ -108,7 +108,8 @@ const PlayerProfile = () => {
 
   // ─── 404: missing or ghost ───────────────────────────────────────────────
   const profile = profileQuery.data;
-  if (!profile) {
+  // A public player route is keyed by username; a row without one is a ghost.
+  if (!profile || !profile.username) {
     const notFoundTitle =
       language === "vi" ? "Không tìm thấy người chơi" : "Player not found";
     const notFoundDesc =
@@ -186,7 +187,7 @@ const PlayerProfile = () => {
 };
 
 function buildMetaDescription(
-  profile: { display_name: string | null; username: string; city: string | null; dupr_doubles: number | null },
+  profile: { display_name: string | null; username: string | null; city: string | null; dupr_doubles: number | null },
   stats: { wins?: number; losses?: number } | null | undefined,
   language: "vi" | "en",
 ): string {

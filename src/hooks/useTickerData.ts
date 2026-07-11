@@ -167,7 +167,9 @@ function buildLivestreamItems(
 /* ─── Pro-tour matches (Mode 2) ──────────────────────────────────────── */
 
 interface ParticipantRow {
-  team: "a" | "b";
+  // matches.match_participants.team is a plain string column in the DB;
+  // toProMatchInput narrows it via === "a" / === "b" comparisons.
+  team: string;
   position: number | null;
   player: { display_name: string | null; username: string | null } | null;
 }

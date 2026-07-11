@@ -283,24 +283,26 @@ export default function DoublesEliminationScoring() {
         setTeamB(teamBData as TeamData);
       }
 
-      const { data: tournamentData } = await supabase
-        .from('doubles_elimination_tournaments')
-        .select('*')
-        .eq('id', matchData.tournament_id)
-        .single();
-      setTournament(tournamentData as TournamentData);
-
-      if (user && tournamentData) {
-        const isCreator = user.id === tournamentData.creator_user_id;
-
-        const { data: refereeData } = await supabase
-          .from('doubles_elimination_referees')
-          .select('id')
-          .eq('tournament_id', tournamentData.id)
-          .eq('user_id', user.id)
+      if (matchData.tournament_id) {
+        const { data: tournamentData } = await supabase
+          .from('doubles_elimination_tournaments')
+          .select('*')
+          .eq('id', matchData.tournament_id)
           .single();
+        setTournament(tournamentData as TournamentData);
 
-        setCanEdit(isCreator || !!refereeData);
+        if (user && tournamentData) {
+          const isCreator = user.id === tournamentData.creator_user_id;
+
+          const { data: refereeData } = await supabase
+            .from('doubles_elimination_referees')
+            .select('id')
+            .eq('tournament_id', tournamentData.id)
+            .eq('user_id', user.id)
+            .single();
+
+          setCanEdit(isCreator || !!refereeData);
+        }
       }
     } catch (error) {
       console.error('Load match error:', error);

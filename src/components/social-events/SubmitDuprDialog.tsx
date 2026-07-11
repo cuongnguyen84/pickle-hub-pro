@@ -200,7 +200,7 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
 
     // Hoisted out of try/catch so we can populate it from the response
     // body and read it in the catch path for state setting.
-    let detectedMissing: string[] | null = null;
+    let detectedMissing: string[] = [];
 
     try {
       const totalGames = match.team_a_score.length;
@@ -283,7 +283,7 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
       // If the failure was the BASIC_L1 gate, lift the affected player
       // list into state so the UI can render a friendlier panel below
       // the error banner.
-      if (detectedMissing && detectedMissing.length > 0) {
+      if (detectedMissing.length > 0) {
         setMissingBasicL1(detectedMissing);
       }
       toast({
