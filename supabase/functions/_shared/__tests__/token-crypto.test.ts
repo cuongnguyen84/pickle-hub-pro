@@ -8,6 +8,11 @@ import {
   decryptToken,
   buildTokenAAD,
   projectRefFromSupabaseUrl,
+  buildKeyring,
+  tokenVersion,
+  decryptField,
+  encryptFieldOptional,
+  encryptFieldRequired,
   type TokenKeyring,
 } from "../token-crypto";
 
@@ -132,5 +137,54 @@ describe("AAD binding — projectRef + column + userId", () => {
     const aadProd = buildTokenAAD({ projectRef: "prod-ref", column: "refresh_token", userId: "u" });
     const enc = await encryptToken("tok", kr, aadPreview);
     await expect(decryptToken(enc, kr, aadProd)).rejects.toThrow();
+  });
+});
+
+describe("buildKeyring — from secrets (P2.5)", () => {
+  it("returns null when neither version is present", async () => {
+    expect(await buildKeyring(undefined, undefined)).toBeNull();
+    expect(await buildKeyring("", "")).toBeNull();
+  });
+
+  it("v1 only → activeVersion v1", async () => {
+    const kr = await buildKeyring(keyB64(0x11));
+    expect(kr?.activeVersion).toBe("v1");
+    expect(kr?.keys.has("v1")).toBe(true);
+  });
+
+  it("v1 + v2 → activeVersion v2, both keys retained", async () => {
+    const kr = await buildKeyring(keyB64(0x11), keyB64(0x22));
+    expect(kr?.activeVersion).toBe("v2");
+    expect([...(kr?.keys.keys() ?? [])].sort()).toEqual(["v1", "v2"]);
+  });
+
+  it("tokenVersion reads the embedded version / null for plaintext", async () => {
+    const enc = await encryptToken("t", await ring(), AAD);
+    expect(tokenVersion(enc)).toBe("v1");
+    expect(tokenVersion("plaintext")).toBeNull();
+  });
+});
+
+describe("field policy — no-key handling is fail-safe (P1)", () => {
+  it("no key + plaintext → passthrough", async () => {
+    expect(await decryptField("legacy_plain", null, AAD)).toBe("legacy_plain");
+  });
+
+  it("no key + CIPHERTEXT → throws (never leak enc:… downstream) [P1.1]", async () => {
+    const enc = await encryptToken("tok", await ring(), AAD);
+    await expect(decryptField(enc, null, AAD)).rejects.toThrow(/token_key_not_configured/);
+  });
+
+  it("encryptFieldOptional no-ops without a key", async () => {
+    expect(await encryptFieldOptional("plain", null, AAD)).toBe("plain");
+  });
+
+  it("encryptFieldRequired is fail-closed without a key [P1.3]", async () => {
+    await expect(encryptFieldRequired("plain", null, AAD)).rejects.toThrow(/token_key_not_configured/);
+  });
+
+  it("encryptFieldRequired yields ciphertext with a key", async () => {
+    const out = await encryptFieldRequired("plain", await ring(), AAD);
+    expect(isEncrypted(out)).toBe(true);
   });
 });

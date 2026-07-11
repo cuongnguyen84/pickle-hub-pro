@@ -17,6 +17,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { buildUserApiUrl, getDuprEnv } from "../_shared/dupr-client.ts";
+import { decryptUserToken, encryptUserToken } from "../_shared/dupr-token-keyring.ts";
 
 interface RefreshResponse {
   status?: string;
@@ -71,6 +72,10 @@ Deno.serve(async (req) => {
     return err("dupr_not_connected", 412, "dupr_not_connected");
   }
 
+  // Decrypt the stored refresh token before sending it to DUPR. No-op until
+  // the encryption key is configured; tolerates plaintext during migration.
+  const oldRefresh = await decryptUserToken(tokenRow.refresh_token, "refresh_token", user.id);
+
   // 2. Call DUPR's refresh endpoint on the user API host.
   // Path per DUPR FAQ: POST /auth/v1.0/refresh with refreshToken body.
   let body: RefreshResponse;
@@ -80,7 +85,7 @@ Deno.serve(async (req) => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: tokenRow.refresh_token }),
+        body: JSON.stringify({ refreshToken: oldRefresh }),
       },
     );
     body = (await res.json().catch(() => null)) as RefreshResponse;
@@ -107,16 +112,18 @@ Deno.serve(async (req) => {
     return err("dupr_refresh_failed", 502, "dupr_refresh_failed");
   }
 
-  // 3. Persist the new token pair.
+  // 3. Persist the new token pair (encrypted at rest). Fall back to the
+  // already-decrypted plaintext oldRefresh — NOT tokenRow.refresh_token, which
+  // may be ciphertext — when DUPR doesn't rotate the refresh token.
   const now = new Date().toISOString();
   const newAccess = body.result!.accessToken!;
-  const newRefresh = body.result!.refreshToken ?? tokenRow.refresh_token;
+  const newRefresh = body.result!.refreshToken ?? oldRefresh;
 
   const { error: updateErr } = await supabase
     .from("dupr_user_tokens")
     .update({
-      access_token: newAccess,
-      refresh_token: newRefresh,
+      access_token: await encryptUserToken(newAccess, "access_token", user.id),
+      refresh_token: await encryptUserToken(newRefresh, "refresh_token", user.id),
       last_refreshed_at: now,
     })
     .eq("user_id", user.id);

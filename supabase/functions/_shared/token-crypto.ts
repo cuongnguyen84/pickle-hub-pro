@@ -85,6 +85,13 @@ function fromBase64Url(s: string): Uint8Array {
   return out;
 }
 
+// A Uint8Array is a valid BufferSource at runtime; the cast placates stricter
+// TS lib versions (typed-array generic ArrayBufferLike vs ArrayBuffer) without
+// changing behavior.
+function buf(u8: Uint8Array): BufferSource {
+  return u8 as unknown as BufferSource;
+}
+
 // ─── key import / keyring ───────────────────────────────────────────────────
 
 /** Import a raw 32-byte AES-256 key (base64-encoded) as an AES-GCM CryptoKey. */
@@ -126,9 +133,9 @@ export async function encryptToken(
   const enc = new TextEncoder();
   const ct = new Uint8Array(
     await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: nonce, additionalData: enc.encode(aad) },
+      { name: "AES-GCM", iv: buf(nonce), additionalData: buf(enc.encode(aad)) },
       key,
-      enc.encode(plaintext),
+      buf(enc.encode(plaintext)),
     ),
   );
   return `${ENC_PREFIX}${keyring.activeVersion}:${toBase64Url(nonce)}:${toBase64Url(ct)}`;
@@ -163,9 +170,81 @@ export async function decryptToken(
   const nonce = fromBase64Url(nonceB64);
   const ct = fromBase64Url(ctB64);
   const pt = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: nonce, additionalData: new TextEncoder().encode(aad) },
+    { name: "AES-GCM", iv: buf(nonce), additionalData: buf(new TextEncoder().encode(aad)) },
     key,
-    ct,
+    buf(ct),
   );
   return new TextDecoder().decode(pt);
+}
+
+// ─── keyring construction + field-level policy (pure, unit-tested) ──────────
+// These carry the security-critical decisions that used to live untested in
+// the Deno wrapper: build-from-secrets, no-key handling, and fail-closed
+// encryption. The wrapper only reads env + builds the AAD, then delegates here.
+
+/**
+ * Build a keyring from raw base64 secrets. Returns null only when NEITHER
+ * version is present. `importKey` is injectable so the edge wrapper can supply
+ * a value-keyed cache; the default imports fresh.
+ */
+export async function buildKeyring(
+  v1?: string,
+  v2?: string,
+  importKey: (b64: string) => Promise<CryptoKey> = importTokenKeyFromBase64,
+): Promise<TokenKeyring | null> {
+  if (!v1 && !v2) return null;
+  const keys = new Map<string, CryptoKey>();
+  if (v1) keys.set("v1", await importKey(v1));
+  if (v2) keys.set("v2", await importKey(v2));
+  return { activeVersion: v2 ? "v2" : "v1", keys };
+}
+
+/** The key version embedded in a stored value, or null if it's plaintext. */
+export function tokenVersion(stored: string): string | null {
+  if (!isEncrypted(stored)) return null;
+  return stored.slice(ENC_PREFIX.length).split(":")[0] || null;
+}
+
+/**
+ * Decrypt a stored field. When NO key is configured, a plaintext value passes
+ * through (pre-rollout) but a CIPHERTEXT value THROWS — never hand `enc:…` to a
+ * downstream API as if it were the real token.
+ */
+export async function decryptField(
+  stored: string,
+  keyring: TokenKeyring | null,
+  aad: string,
+  opts: { allowPlaintext?: boolean } = {},
+): Promise<string> {
+  if (!keyring) {
+    if (isEncrypted(stored)) throw new Error("token_key_not_configured");
+    return stored;
+  }
+  return decryptToken(stored, keyring, aad, opts);
+}
+
+/** Encrypt for storage; no-op passthrough when no key (pre-rollout writer). */
+export async function encryptFieldOptional(
+  plaintext: string,
+  keyring: TokenKeyring | null,
+  aad: string,
+): Promise<string> {
+  if (!keyring) return plaintext;
+  return encryptToken(plaintext, keyring, aad);
+}
+
+/**
+ * Fail-closed encryption for the backfill: throws if no key, and asserts the
+ * output is actually ciphertext so a bug can never "encrypt" a row into
+ * plaintext and be counted as done.
+ */
+export async function encryptFieldRequired(
+  plaintext: string,
+  keyring: TokenKeyring | null,
+  aad: string,
+): Promise<string> {
+  if (!keyring) throw new Error("token_key_not_configured");
+  const out = await encryptToken(plaintext, keyring, aad);
+  if (!isEncrypted(out)) throw new Error("encryption produced non-ciphertext");
+  return out;
 }
