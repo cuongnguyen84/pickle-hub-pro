@@ -1,89 +1,96 @@
 // ============================================================================
 // _shared/dupr-token-keyring.ts — edge-runtime glue for token-crypto.
 // ----------------------------------------------------------------------------
-// Thin Deno layer that reads the DUPR_TOKEN_ENC_KEY_* secrets, builds the
-// keyring + AAD, and exposes encrypt/decrypt wrappers the DUPR functions call.
-// All the crypto lives in the pure, unit-tested token-crypto.ts; this file is
-// intentionally trivial (env access only) because it cannot run under vitest.
+// Thin Deno layer: reads the DUPR_TOKEN_ENC_KEY_* secrets, builds the AAD, and
+// delegates every security decision to the pure, unit-tested field helpers in
+// token-crypto.ts (buildKeyring / decryptField / encryptField*).
 //
-// SAFE ROLLOUT ORDERING — both wrappers no-op when NO key is configured:
-//   • decryptUserToken: returns the value unchanged (plaintext era).
-//   • encryptUserToken: returns plaintext unchanged (writer deployed before the
-//     secret exists; setting the secret is what activates encryption).
-// So this code can be deployed to every function BEFORE the secret is set
-// without changing behavior, then flipped on by setting DUPR_TOKEN_ENC_KEY_V1.
+// The keyring is rebuilt from env on EVERY call — Supabase secrets take effect
+// without redeploy, so we must NOT cache the "no key" state or a stale key set,
+// or setting V1 (activation) / V2 (rotation) wouldn't be picked up by a warm
+// isolate. Only the expensive key *import* is cached, keyed by the secret's
+// value, so a changed secret imports fresh.
 //
-// MIGRATION WINDOW: decryptUserToken passes { allowPlaintext: true } so a mixed
-// plaintext/ciphertext table works, and logs a telemetry line each time a
-// plaintext value is read (watch it fall to zero, then remove the flag in the
-// "drop dual-read" step — search DROP_DUAL_READ below).
+// Behavior:
+//   • decryptUserToken — no key + plaintext → passthrough; no key + ciphertext
+//     → THROW (never send `enc:…` to DUPR); key present → decrypt (dual-read
+//     allowPlaintext during migration, with telemetry).
+//   • encryptUserToken — no key → plaintext no-op (writer shipped before secret).
+//   • encryptUserTokenRequired — fail-closed (throws without a key); for backfill.
 // ============================================================================
 
 import {
   importTokenKeyFromBase64,
   projectRefFromSupabaseUrl,
-  encryptToken,
-  decryptToken,
-  buildTokenAAD,
+  buildKeyring,
+  decryptField,
+  encryptFieldOptional,
+  encryptFieldRequired,
   isEncrypted,
+  buildTokenAAD,
   type TokenKeyring,
 } from "./token-crypto.ts";
 
 export type TokenColumn = "access_token" | "refresh_token";
 
-let _keyringPromise: Promise<TokenKeyring | null> | null = null;
-
-async function loadKeyring(): Promise<TokenKeyring | null> {
-  const v1 = Deno.env.get("DUPR_TOKEN_ENC_KEY_V1");
-  const v2 = Deno.env.get("DUPR_TOKEN_ENC_KEY_V2");
-  if (!v1 && !v2) return null; // no key configured → plaintext era
-  const keys = new Map<string, CryptoKey>();
-  if (v1) keys.set("v1", await importTokenKeyFromBase64(v1));
-  if (v2) keys.set("v2", await importTokenKeyFromBase64(v2));
-  return { activeVersion: v2 ? "v2" : "v1", keys };
+// Cache imported CryptoKeys by their base64 value ONLY. Never cache the keyring
+// or the null state — those are recomputed from env each call.
+const _importCache = new Map<string, CryptoKey>();
+async function cachedImport(b64: string): Promise<CryptoKey> {
+  let k = _importCache.get(b64);
+  if (!k) {
+    k = await importTokenKeyFromBase64(b64);
+    _importCache.set(b64, k);
+  }
+  return k;
 }
 
-/** Cached per isolate — the keyring is immutable for the function's lifetime. */
-function getKeyring(): Promise<TokenKeyring | null> {
-  return (_keyringPromise ??= loadKeyring());
+/** Build the current keyring from live env. Null when no key is configured. */
+export function loadKeyring(): Promise<TokenKeyring | null> {
+  return buildKeyring(
+    Deno.env.get("DUPR_TOKEN_ENC_KEY_V1"),
+    Deno.env.get("DUPR_TOKEN_ENC_KEY_V2"),
+    cachedImport,
+  );
 }
 
-function projectRef(): string {
-  return projectRefFromSupabaseUrl(Deno.env.get("SUPABASE_URL") ?? "");
+function aadFor(column: TokenColumn, userId: string): string {
+  const projectRef = projectRefFromSupabaseUrl(Deno.env.get("SUPABASE_URL") ?? "");
+  return buildTokenAAD({ projectRef, column, userId });
 }
 
-/**
- * Decrypt a token read from dupr_user_tokens. No-op passthrough when no key is
- * configured. During the migration window plaintext is tolerated and logged.
- */
+/** Active key version, or null if no key configured (backfill precondition). */
+export async function activeKeyVersion(): Promise<string | null> {
+  return (await loadKeyring())?.activeVersion ?? null;
+}
+
 export async function decryptUserToken(
   stored: string,
   column: TokenColumn,
   userId: string,
 ): Promise<string> {
-  const keyring = await getKeyring();
-  if (!keyring) return stored;
-  if (!isEncrypted(stored)) {
-    // Telemetry: watch this reach zero before dropping dual-read.
+  const keyring = await loadKeyring();
+  if (keyring && !isEncrypted(stored)) {
+    // Migration-window telemetry: watch this reach zero before dropping
+    // dual-read. DROP_DUAL_READ: then pass {} instead of { allowPlaintext }.
     console.log(JSON.stringify({ evt: "dupr_token_plaintext_read", column }));
   }
-  // DROP_DUAL_READ: after backfill verifies 0 plaintext rows, change
-  // { allowPlaintext: true } → {} so a stray plaintext value throws.
-  const aad = buildTokenAAD({ projectRef: projectRef(), column, userId });
-  return decryptToken(stored, keyring, aad, { allowPlaintext: true });
+  return decryptField(stored, keyring, aadFor(column, userId), { allowPlaintext: true });
 }
 
-/**
- * Encrypt a token before writing to dupr_user_tokens. No-op passthrough when no
- * key is configured (so the writer can ship before the secret is set).
- */
 export async function encryptUserToken(
   plaintext: string,
   column: TokenColumn,
   userId: string,
 ): Promise<string> {
-  const keyring = await getKeyring();
-  if (!keyring) return plaintext;
-  const aad = buildTokenAAD({ projectRef: projectRef(), column, userId });
-  return encryptToken(plaintext, keyring, aad);
+  return encryptFieldOptional(plaintext, await loadKeyring(), aadFor(column, userId));
+}
+
+/** Fail-closed: throws if no key is configured. Used by the backfill. */
+export async function encryptUserTokenRequired(
+  plaintext: string,
+  column: TokenColumn,
+  userId: string,
+): Promise<string> {
+  return encryptFieldRequired(plaintext, await loadKeyring(), aadFor(column, userId));
 }

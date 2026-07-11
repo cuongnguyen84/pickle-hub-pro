@@ -61,9 +61,14 @@ removed at the end so plaintext is rejected loudly (see step 6).
    New links + refreshes write ciphertext; old rows stay plaintext (readable via
    dual-read).
 
-4. **Backfill** existing rows with a trusted one-off (service-role Edge Function,
-   never client-side): for each row where `!isEncrypted(access_token)`,
-   re-encrypt both columns with the row's own `user_id` in the AAD. Idempotent.
+4. **Backfill** via the service-role `dupr-token-backfill` function. It brings
+   every value to the **active** key version (plaintext → encrypt; older
+   `enc:v1` → decrypt+re-encrypt for rotation; `enc:<active>` → skip), is
+   **fail-closed** (refuses to run without a key; uses required-encryption that
+   asserts ciphertext before writing), and returns
+   `{ scanned, rows_updated, tokens_encrypted, remaining_plaintext }` where
+   `remaining_plaintext` comes from a fresh count — so "done" means the DB is
+   clean, not just that the loop ran. Idempotent; safe to re-run.
 
 5. **Verify**: `select count(*) from dupr_user_tokens where access_token not like 'enc:%';`
    should reach 0. Smoke-test a real DUPR refresh + match submit.
