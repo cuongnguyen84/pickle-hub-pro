@@ -162,7 +162,14 @@ const WatchLive = () => {
   const isLive = livestream.status === "live";
   const isScheduled = livestream.status === "scheduled";
   const isEnded = livestream.status === "ended";
-  
+
+  // public_livestreams is a Postgres view, so every column is typed nullable
+  // even though a fetched row always carries id/title. Normalize once here so
+  // the JSX below can pass non-null values to child props at the boundary.
+  const streamId = id ?? livestream.id ?? "";
+  const streamTitle = livestream.title ?? "Livestream";
+  const uploadDate = livestream.ended_at ?? livestream.created_at;
+
   // Use asset playback ID for ended streams (replay), otherwise use live playback ID
   const playbackId = isEnded && livestream.mux_asset_playback_id
     ? livestream.mux_asset_playback_id
@@ -191,10 +198,19 @@ const WatchLive = () => {
 
   // Related livestreams for ended streams (same org or tournament)
   const relatedStreams = isEnded
-    ? endedLivestreams.filter((s) => 
-        s.id !== livestream.id && 
-        (s.organization_id === livestream.organization_id || s.tournament_id === livestream.tournament_id)
-      ).slice(0, 4)
+    ? endedLivestreams
+        .filter((s) =>
+          s.id &&
+          s.id !== livestream.id &&
+          (s.organization_id === livestream.organization_id || s.tournament_id === livestream.tournament_id)
+        )
+        .slice(0, 4)
+        .map((s) => ({
+          id: s.id ?? "",
+          title: s.title ?? "Livestream",
+          status: s.status ?? "ended",
+          thumbnail_url: s.thumbnail_url,
+        }))
     : [];
 
   return (
@@ -207,17 +223,17 @@ const WatchLive = () => {
         image={livestream.thumbnail_url ?? undefined}
         type="video.other"
         creator={livestream.organization?.name}
-        publishedTime={livestream.scheduled_start_at ?? livestream.created_at}
+        publishedTime={livestream.scheduled_start_at ?? livestream.created_at ?? undefined}
         url={`https://www.thepicklehub.net/live/${id}`}
       />
       
       {/* VideoObject Schema for ended streams (helps Google Video indexing) */}
-      {isEnded && livestream.mux_asset_playback_id && (
+      {isEnded && livestream.mux_asset_playback_id && uploadDate && (
         <VideoSchema
           name={livestream.title || "Pickleball Replay"}
           description={seoDescription}
           thumbnailUrl={livestream.thumbnail_url || "https://www.thepicklehub.net/og-image.png"}
-          uploadDate={livestream.ended_at || livestream.created_at}
+          uploadDate={uploadDate}
           embedUrl={`https://www.thepicklehub.net/embed/live/${id}`}
         />
       )}
@@ -241,7 +257,7 @@ const WatchLive = () => {
               <MuxPlayer
                 ref={playerRef}
                 playbackId={playbackId!}
-                title={livestream.title}
+                title={streamTitle}
                 poster={livestream.thumbnail_url ?? undefined}
                 streamType={streamType}
                 type="livestream"
@@ -264,7 +280,7 @@ const WatchLive = () => {
                 {livestream.thumbnail_url ? (
                   <img
                     src={livestream.thumbnail_url}
-                    alt={livestream.title}
+                    alt={streamTitle}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -290,7 +306,7 @@ const WatchLive = () => {
                 <MuxPlayer
                   ref={playerRef}
                   playbackId={playbackId!}
-                  title={livestream.title}
+                  title={streamTitle}
                   poster={livestream.thumbnail_url ?? undefined}
                   streamType={streamType}
                   type="livestream"
@@ -313,7 +329,7 @@ const WatchLive = () => {
                   {livestream.thumbnail_url ? (
                     <img
                       src={livestream.thumbnail_url}
-                      alt={livestream.title}
+                      alt={streamTitle}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -344,12 +360,12 @@ const WatchLive = () => {
                     <ChevronUp className="w-4 h-4" />
                   )}
                 </Button>
-                <ChatPanel livestreamId={livestream.id} renderHeaderControls />
+                <ChatPanel livestreamId={streamId} renderHeaderControls />
               </div>
               {!isChatCollapsed && (
                 <div className="mt-2">
                   <ChatPanel
-                    livestreamId={livestream.id}
+                    livestreamId={streamId}
                     className={keyboardHeight > 0 ? "h-[280px]" : "h-[400px]"}
                     hideHeader
                   />
@@ -456,16 +472,16 @@ const WatchLive = () => {
 
               {/* Like & Share Buttons */}
               <div className="flex items-center gap-4 py-2 border-t border-b border-border">
-                <LikeButton targetType="livestream" targetId={livestream.id} />
+                <LikeButton targetType="livestream" targetId={streamId} />
                 <ShareDialog
                   type="live"
-                  id={livestream.id}
+                  id={streamId}
                   title={livestream.title ?? "Livestream"}
                   thumbnail={livestream.thumbnail_url ?? undefined}
                 />
                 <ReportDialog
                   contentType="livestream"
-                  contentId={livestream.id}
+                  contentId={streamId}
                   contentTitle={livestream.title ?? undefined}
                 />
               </div>
@@ -530,14 +546,14 @@ const WatchLive = () => {
             </div>
 
             {/* Comments Section */}
-            <CommentSection targetType="livestream" targetId={livestream.id} />
+            <CommentSection targetType="livestream" targetId={streamId} />
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Desktop Chat Panel */}
             <div className="hidden lg:block">
-              <ChatPanel livestreamId={livestream.id} className="h-[500px]" />
+              <ChatPanel livestreamId={streamId} className="h-[500px]" />
             </div>
 
             {/* Other Live Streams */}
@@ -545,13 +561,13 @@ const WatchLive = () => {
               <h3 className="text-lg font-semibold">{t.home.sections.liveNow}</h3>
               <div className="space-y-4">
                 {otherLivestreams
-                  .filter((s) => s.id !== livestream.id)
+                  .filter((s) => s.id && s.id !== livestream.id)
                   .slice(0, 4)
                   .map((stream) => (
                     <LiveCard
                       key={stream.id}
-                      id={stream.id}
-                      title={stream.title}
+                      id={stream.id ?? ""}
+                      title={stream.title ?? "Livestream"}
                       viewerCount={0}
                       organizationName={stream.organization?.name ?? ""}
                       organizationSlug={stream.organization?.slug}

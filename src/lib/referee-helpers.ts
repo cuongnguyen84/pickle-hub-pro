@@ -121,9 +121,11 @@ export async function fetchRefereesWithProfiles(
     .select('id, display_name')
     .in('id', userIds);
 
-  const profileMap = new Map<string, { display_name: string | null }>(
-    (profilesData ?? []).map((p) => [p.id, { display_name: p.display_name }])
-  );
+  const profileMap = new Map<string, { display_name: string | null }>();
+  for (const p of profilesData ?? []) {
+    // public_profiles is a view → id is typed nullable; skip rows without one.
+    if (p.id) profileMap.set(p.id, { display_name: p.display_name });
+  }
 
   return rows.map((r) => ({
     ...r,

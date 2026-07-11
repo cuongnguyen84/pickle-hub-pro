@@ -76,12 +76,6 @@ jobs:
         # regression). Runs on every PR/push.
         run: node scripts/check-migration-duplicates.mjs
 
-      - name: strictNullChecks ratchet (temporary)
-        # Fails if strictNullChecks diagnostics rise above the baseline while
-        # the flag is being landed across waves. Remove once strictNullChecks
-        # is enabled in tsconfig.app.json.
-        run: node scripts/check-strictnull-baseline.mjs
-
       - name: Typecheck
         # Must be `tsc -b` (build mode): root tsconfig.json uses `files: []`
         # + project references, which plain `tsc --noEmit` does NOT follow, so

@@ -39,18 +39,16 @@ export function useMyRefereeTournaments() {
         .select('table_id')
         .eq('user_id', user.id);
 
-      let quickTables: any[] = [];
-      if (quickTableReferees && quickTableReferees.length > 0) {
-        const tableIds = quickTableReferees.map(r => r.table_id);
-        const { data } = await supabase
-          .from('quick_tables')
-          .select('id, name, share_id, status, player_count, format, start_time, created_at, creator_user_id')
-          .in('id', tableIds);
-        quickTables = data || [];
-        quickTables.forEach(qt => {
-          if (qt.creator_user_id) creatorIds.add(qt.creator_user_id);
-        });
-      }
+      const quickTableIds = (quickTableReferees ?? []).map(r => r.table_id);
+      const quickTables = quickTableIds.length
+        ? (await supabase
+            .from('quick_tables')
+            .select('id, name, share_id, status, player_count, format, start_time, created_at, creator_user_id')
+            .in('id', quickTableIds)).data ?? []
+        : [];
+      quickTables.forEach(qt => {
+        if (qt.creator_user_id) creatorIds.add(qt.creator_user_id);
+      });
 
       // Fetch Doubles Elimination where user is referee
       const { data: doublesReferees } = await supabase
@@ -58,20 +56,18 @@ export function useMyRefereeTournaments() {
         .select('tournament_id')
         .eq('user_id', user.id);
 
-      let doublesTournaments: any[] = [];
-      if (doublesReferees && doublesReferees.length > 0) {
-        const tournamentIds = doublesReferees.map(r => r.tournament_id).filter(Boolean) as string[];
-        if (tournamentIds.length > 0) {
-          const { data } = await supabase
+      const doublesTournamentIds = (doublesReferees ?? [])
+        .map(r => r.tournament_id)
+        .filter(Boolean) as string[];
+      const doublesTournaments = doublesTournamentIds.length
+        ? (await supabase
             .from('doubles_elimination_tournaments')
             .select('id, name, share_id, status, team_count, start_time, created_at, creator_user_id')
-            .in('id', tournamentIds);
-          doublesTournaments = data || [];
-          doublesTournaments.forEach(dt => {
-            if (dt.creator_user_id) creatorIds.add(dt.creator_user_id);
-          });
-        }
-      }
+            .in('id', doublesTournamentIds)).data ?? []
+        : [];
+      doublesTournaments.forEach(dt => {
+        if (dt.creator_user_id) creatorIds.add(dt.creator_user_id);
+      });
 
       // Fetch Team Match where user is referee
       const { data: teamMatchReferees } = await supabase
@@ -79,18 +75,16 @@ export function useMyRefereeTournaments() {
         .select('tournament_id')
         .eq('user_id', user.id);
 
-      let teamMatchTournaments: any[] = [];
-      if (teamMatchReferees && teamMatchReferees.length > 0) {
-        const tournamentIds = teamMatchReferees.map(r => r.tournament_id);
-        const { data } = await supabase
-          .from('team_match_tournaments')
-          .select('id, name, share_id, status, team_count, format, created_at, created_by')
-          .in('id', tournamentIds);
-        teamMatchTournaments = data || [];
-        teamMatchTournaments.forEach(tm => {
-          if (tm.created_by) creatorIds.add(tm.created_by);
-        });
-      }
+      const teamMatchTournamentIds = (teamMatchReferees ?? []).map(r => r.tournament_id);
+      const teamMatchTournaments = teamMatchTournamentIds.length
+        ? (await supabase
+            .from('team_match_tournaments')
+            .select('id, name, share_id, status, team_count, format, created_at, created_by')
+            .in('id', teamMatchTournamentIds)).data ?? []
+        : [];
+      teamMatchTournaments.forEach(tm => {
+        if (tm.created_by) creatorIds.add(tm.created_by);
+      });
 
       // Fetch Flex Tournaments where user is referee (W3.4)
       const { data: flexReferees } = await supabase
@@ -98,23 +92,21 @@ export function useMyRefereeTournaments() {
         .select('tournament_id')
         .eq('user_id', user.id);
 
-      let flexTournaments: any[] = [];
-      if (flexReferees && flexReferees.length > 0) {
-        const tournamentIds = flexReferees.map((r) => r.tournament_id).filter(Boolean) as string[];
-        if (tournamentIds.length > 0) {
-          const { data } = await supabase
+      const flexTournamentIds = (flexReferees ?? [])
+        .map((r) => r.tournament_id)
+        .filter(Boolean) as string[];
+      const flexTournaments = flexTournamentIds.length
+        ? (await supabase
             .from('flex_tournaments')
             .select('id, name, share_id, status, created_at, creator_user_id')
-            .in('id', tournamentIds);
-          flexTournaments = data || [];
-          flexTournaments.forEach((ft) => {
-            if (ft.creator_user_id) creatorIds.add(ft.creator_user_id);
-          });
-        }
-      }
+            .in('id', flexTournamentIds)).data ?? []
+        : [];
+      flexTournaments.forEach((ft) => {
+        if (ft.creator_user_id) creatorIds.add(ft.creator_user_id);
+      });
 
       // Fetch all creator profiles
-      let profilesMap = new Map<string, { display_name: string | null }>();
+      const profilesMap = new Map<string, { display_name: string | null }>();
       if (creatorIds.size > 0) {
         const { data: profilesData } = await supabase
           .from('public_profiles')
@@ -122,13 +114,15 @@ export function useMyRefereeTournaments() {
           .in('id', Array.from(creatorIds));
 
         if (profilesData) {
-          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name }));
+          profilesData.forEach(p => {
+            if (p.id) profilesMap.set(p.id, { display_name: p.display_name });
+          });
         }
       }
 
       // Build tournaments with creator info
       for (const qt of quickTables) {
-        const profile = profilesMap.get(qt.creator_user_id);
+        const profile = qt.creator_user_id ? profilesMap.get(qt.creator_user_id) : undefined;
         allTournaments.push({
           id: qt.id,
           name: qt.name,
@@ -139,13 +133,13 @@ export function useMyRefereeTournaments() {
           format: qt.format,
           start_time: qt.start_time,
           created_at: qt.created_at,
-          creator_user_id: qt.creator_user_id,
+          creator_user_id: qt.creator_user_id ?? undefined,
           creator_display_name: profile?.display_name,
         });
       }
 
       for (const dt of doublesTournaments) {
-        const profile = profilesMap.get(dt.creator_user_id);
+        const profile = dt.creator_user_id ? profilesMap.get(dt.creator_user_id) : undefined;
         allTournaments.push({
           id: dt.id,
           name: dt.name,
@@ -154,14 +148,14 @@ export function useMyRefereeTournaments() {
           type: 'doubles_elimination',
           team_count: dt.team_count,
           start_time: dt.start_time,
-          created_at: dt.created_at,
-          creator_user_id: dt.creator_user_id,
+          created_at: dt.created_at ?? undefined,
+          creator_user_id: dt.creator_user_id ?? undefined,
           creator_display_name: profile?.display_name,
         });
       }
 
       for (const tm of teamMatchTournaments) {
-        const profile = profilesMap.get(tm.created_by);
+        const profile = tm.created_by ? profilesMap.get(tm.created_by) : undefined;
         allTournaments.push({
           id: tm.id,
           name: tm.name,
@@ -171,7 +165,7 @@ export function useMyRefereeTournaments() {
           team_count: tm.team_count,
           format: tm.format,
           created_at: tm.created_at || undefined,
-          creator_user_id: tm.created_by,
+          creator_user_id: tm.created_by ?? undefined,
           creator_display_name: profile?.display_name,
         });
       }

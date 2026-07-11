@@ -137,7 +137,7 @@ const LiveWatch = () => {
             <aside className="tl-watch-side">
               {/* Real ChatPanel from production — inherits D4 tokens via HSL overrides */}
               <div style={{ background: "var(--tl-bg)", border: "1px solid var(--tl-border)", borderRadius: "var(--tl-radius-lg)", overflow: "hidden", minHeight: 500 }}>
-                <ChatPanel livestreamId={stream.id} className="h-[500px]" />
+                <ChatPanel livestreamId={stream.id ?? id} className="h-[500px]" />
               </div>
 
               {tournament && (

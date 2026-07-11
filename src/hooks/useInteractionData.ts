@@ -152,7 +152,7 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
         if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
       });
       
-      let profilesMap = new Map<string, { display_name: string | null }>();
+      const profilesMap = new Map<string, { display_name: string | null }>();
       if (creatorIds.size > 0) {
         const { data: profilesData } = await supabase
           .from("public_profiles")
@@ -160,7 +160,9 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
           .in("id", Array.from(creatorIds));
         
         if (profilesData) {
-          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name }));
+          profilesData.forEach(p => {
+            if (p.id) profilesMap.set(p.id, { display_name: p.display_name });
+          });
         }
       }
       
