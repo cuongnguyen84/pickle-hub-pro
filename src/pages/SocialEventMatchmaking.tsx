@@ -106,7 +106,7 @@ function rebuildScheduleFromSaved(
     .map(([round, matches]) => ({
       round,
       matches: matches.sort((a, b) => a.court - b.court),
-      sittingOut: [],
+      sittingOut: [] as MMRound["sittingOut"],
     }));
 
   const players = new Set<string>();

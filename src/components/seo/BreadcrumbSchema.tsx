@@ -9,7 +9,7 @@ interface BreadcrumbSchemaProps {
   items: BreadcrumbItem[];
 }
 
-export const BreadcrumbSchema = ({ items }: BreadcrumbSchemaProps) => {
+export const BreadcrumbSchema = ({ items }: BreadcrumbSchemaProps): null => {
   useEffect(() => {
     const id = "breadcrumb-schema-jsonld";
     document.getElementById(id)?.remove();

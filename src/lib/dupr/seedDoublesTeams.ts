@@ -63,7 +63,7 @@ export async function computeTeamDuprSeeds(
   if (userIds.size === 0) {
     return teams.map((t) => ({
       id: t.id,
-      dupr_avg_rating: null,
+      dupr_avg_rating: null as number | null,
       dupr_seed_source: "none",
       hasApprox: false,
       isStale: false,

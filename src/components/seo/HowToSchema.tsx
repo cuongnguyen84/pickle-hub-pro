@@ -11,7 +11,7 @@ interface HowToSchemaProps {
   steps: HowToStep[];
 }
 
-export const HowToSchema = ({ name, description, steps }: HowToSchemaProps) => {
+export const HowToSchema = ({ name, description, steps }: HowToSchemaProps): null => {
   useEffect(() => {
     const id = "howto-schema-jsonld";
     document.getElementById(id)?.remove();

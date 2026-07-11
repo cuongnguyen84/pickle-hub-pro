@@ -22,7 +22,7 @@ export const VideoSchema = ({
   duration,
   embedUrl,
   contentUrl,
-}: VideoSchemaProps) => {
+}: VideoSchemaProps): null => {
   useEffect(() => {
     // Create JSON-LD script
     const script = document.createElement("script");

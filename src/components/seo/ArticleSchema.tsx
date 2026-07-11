@@ -20,7 +20,7 @@ export const ArticleSchema = ({
   url,
   inLanguage,
   image,
-}: ArticleSchemaProps) => {
+}: ArticleSchemaProps): null => {
   useEffect(() => {
     const id = "article-schema-jsonld";
     document.getElementById(id)?.remove();

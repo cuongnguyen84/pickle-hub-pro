@@ -20,7 +20,7 @@ interface HreflangTagsProps {
  *
  * Cleans up all hreflang links on unmount.
  */
-export const HreflangTags = ({ enPath, viPath }: HreflangTagsProps) => {
+export const HreflangTags = ({ enPath, viPath }: HreflangTagsProps): null => {
   useEffect(() => {
     if (!enPath && !viPath) return undefined;
 

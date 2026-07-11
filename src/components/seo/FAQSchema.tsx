@@ -9,7 +9,7 @@ interface FAQSchemaProps {
   items: FAQItem[];
 }
 
-export const FAQSchema = ({ items }: FAQSchemaProps) => {
+export const FAQSchema = ({ items }: FAQSchemaProps): null => {
   useEffect(() => {
     const id = "faq-schema-jsonld";
     document.getElementById(id)?.remove();

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export const OrganizationSchema = () => {
+export const OrganizationSchema = (): null => {
   useEffect(() => {
     const id = "org-schema-jsonld";
     if (document.getElementById(id)) return undefined;
