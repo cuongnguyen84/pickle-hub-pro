@@ -55,6 +55,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { partnerFetch, getDuprEnv } from "../_shared/dupr-client.ts";
 import { userFetch } from "../_shared/dupr-user-client.ts";
+import { decryptUserToken } from "../_shared/dupr-token-keyring.ts";
 
 type Action = "create" | "update" | "delete";
 
@@ -377,6 +378,10 @@ async function lazyFetchAndCacheEntitlement(
 
   if (!tokenRow || tokenRow.revoked_at) return false;
 
+  // Decrypt the stored token before use. No-op until the key is configured;
+  // tolerates plaintext during migration.
+  const accessToken = await decryptUserToken(tokenRow.access_token, "access_token", userId);
+
   // 2. Call DUPR /subscription/active using the user's token.
   let duprBody: {
     subscriptions?: Array<{
@@ -387,7 +392,7 @@ async function lazyFetchAndCacheEntitlement(
   };
   try {
     const res = await userFetch(
-      tokenRow.access_token,
+      accessToken,
       "/subscription/active",
       { method: "POST", body: "{}" },
     );

@@ -85,6 +85,13 @@ function fromBase64Url(s: string): Uint8Array {
   return out;
 }
 
+// A Uint8Array is a valid BufferSource at runtime; the cast placates stricter
+// TS lib versions (typed-array generic ArrayBufferLike vs ArrayBuffer) without
+// changing behavior.
+function buf(u8: Uint8Array): BufferSource {
+  return u8 as unknown as BufferSource;
+}
+
 // ─── key import / keyring ───────────────────────────────────────────────────
 
 /** Import a raw 32-byte AES-256 key (base64-encoded) as an AES-GCM CryptoKey. */
@@ -126,9 +133,9 @@ export async function encryptToken(
   const enc = new TextEncoder();
   const ct = new Uint8Array(
     await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: nonce, additionalData: enc.encode(aad) },
+      { name: "AES-GCM", iv: buf(nonce), additionalData: buf(enc.encode(aad)) },
       key,
-      enc.encode(plaintext),
+      buf(enc.encode(plaintext)),
     ),
   );
   return `${ENC_PREFIX}${keyring.activeVersion}:${toBase64Url(nonce)}:${toBase64Url(ct)}`;
@@ -163,9 +170,9 @@ export async function decryptToken(
   const nonce = fromBase64Url(nonceB64);
   const ct = fromBase64Url(ctB64);
   const pt = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: nonce, additionalData: new TextEncoder().encode(aad) },
+    { name: "AES-GCM", iv: buf(nonce), additionalData: buf(new TextEncoder().encode(aad)) },
     key,
-    ct,
+    buf(ct),
   );
   return new TextDecoder().decode(pt);
 }

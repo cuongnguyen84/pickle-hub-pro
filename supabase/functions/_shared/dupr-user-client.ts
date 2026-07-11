@@ -17,6 +17,7 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { buildUserApiUrl, getDuprEnv, type DuprEnv } from "./dupr-client.ts";
+import { decryptUserToken } from "./dupr-token-keyring.ts";
 
 interface UserTokenRow {
   access_token: string;
@@ -41,7 +42,15 @@ export async function getUserAccessToken(
 
   if (error || !data) return null;
   if (data.revoked_at) return null;
-  return data;
+
+  // Decrypt at the single shared read point so every consumer
+  // (entitlements, clubs, org-link-club) inherits it. No-op until the
+  // encryption key is configured; tolerates plaintext during migration.
+  return {
+    ...data,
+    access_token: await decryptUserToken(data.access_token, "access_token", userId),
+    refresh_token: await decryptUserToken(data.refresh_token, "refresh_token", userId),
+  };
 }
 
 /**

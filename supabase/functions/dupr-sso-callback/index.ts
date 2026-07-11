@@ -22,6 +22,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { partnerFetch, subscribeRating } from "../_shared/dupr-client.ts";
+import { encryptUserToken } from "../_shared/dupr-token-keyring.ts";
 
 interface CallbackBody {
   userToken?: unknown;
@@ -184,7 +185,11 @@ Deno.serve(async (req) => {
   }
 
   // ─── 4. Persist user tokens ─────────────────────────────────────────────
-  // TODO(prod): encrypt access_token + refresh_token before INSERT.
+  // Encrypted at rest (envelope AES-256-GCM, AAD-bound to user_id). No-op
+  // passthrough until DUPR_TOKEN_ENC_KEY_V1 is configured — see
+  // _shared/dupr-token-keyring.ts and TOKEN_ENCRYPTION_ROLLOUT.md.
+  const encAccess = await encryptUserToken(accessToken, "access_token", user.id);
+  const encRefresh = await encryptUserToken(refreshToken, "refresh_token", user.id);
   const { error: tokenError } = await supabase
     .from("dupr_user_tokens")
     .upsert(
@@ -192,8 +197,8 @@ Deno.serve(async (req) => {
         user_id: user.id,
         dupr_user_id: duprUserId,
         dupr_id: duprId,
-        access_token: accessToken,
-        refresh_token: refreshToken,
+        access_token: encAccess,
+        refresh_token: encRefresh,
         connected_at: now,
         last_refreshed_at: now,
         revoked_at: null,

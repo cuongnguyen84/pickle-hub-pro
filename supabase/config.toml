@@ -289,6 +289,11 @@ verify_jwt = false
 [functions.dupr-refresh-user-token]
 verify_jwt = false
 
+# dupr-token-backfill — one-off token encryption migration. verify_jwt=false;
+# gates internally on the service-role bearer (backend-to-backend only).
+[functions.dupr-token-backfill]
+verify_jwt = false
+
 # ─── DUPR RaaS (PR3 — rating webhook subscribe + receive) ──────────────────
 # dupr-webhook is PUBLIC — DUPR servers POST RATING events to it. The
 # function validates clientId internally against DUPR_CLIENT_KEY before
