@@ -47,12 +47,12 @@ export const TournamentHero = ({
     upcoming: {
       color: "bg-primary/90 text-primary-foreground border-primary/50",
       text: t.tournament.upcoming,
-      dotClass: null,
+      dotClass: null as string | null,
     },
     ended: {
       color: "bg-muted text-foreground-muted border-border",
       text: t.tournament.ended,
-      dotClass: null,
+      dotClass: null as string | null,
     },
   };
 

@@ -49,7 +49,7 @@ export default function QuickTableRefereeScoring() {
 
   const onLiveScore = useCallback((a: number, b: number) => {
     if (!matchId) return;
-    void supabase.from('quick_table_matches').update({ score1: a, score2: b } as never).eq('id', matchId).then(() => undefined, () => undefined);
+    void supabase.from('quick_table_matches').update({ score1: a, score2: b } as never).eq('id', matchId).then((): void => undefined, (): void => undefined);
   }, [matchId]);
 
   const onClaimLive = useCallback(async () => {

@@ -65,7 +65,7 @@ export function ManualGroupAssignment({
   const { t } = useI18n();
 
   const [groupAssignments, setGroupAssignments] = useState<Map<number, PlayerInput[]>>(
-    () => new Map(Array.from({ length: groupCount }, (_, i) => [i, []])),
+    (): Map<number, PlayerInput[]> => new Map(Array.from({ length: groupCount }, (_, i): [number, PlayerInput[]] => [i, []])),
   );
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerInput | null>(null);
 

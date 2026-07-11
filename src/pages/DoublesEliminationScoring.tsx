@@ -590,7 +590,7 @@ export default function DoublesEliminationScoring() {
   };
   const refLiveScore = (a: number, b: number) => {
     if (!match) return;
-    void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).then(() => undefined, () => undefined);
+    void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).then((): void => undefined, (): void => undefined);
   };
   const refClaimLive = async () => {
     try {

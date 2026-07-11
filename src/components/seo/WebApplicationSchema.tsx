@@ -25,7 +25,7 @@ export const WebApplicationSchema = ({
   browserRequirements = "Requires JavaScript. Works in all modern browsers.",
   offers = { price: "0", priceCurrency: "USD" },
   featureList,
-}: WebApplicationSchemaProps) => {
+}: WebApplicationSchemaProps): null => {
   useEffect(() => {
     const script = document.createElement("script");
     script.type = "application/ld+json";

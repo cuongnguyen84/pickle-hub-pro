@@ -27,7 +27,7 @@ export const SoftwareApplicationSchema = ({
   operatingSystem = "Web",
   offers = { price: "0", priceCurrency: "USD" },
   aggregateRating,
-}: SoftwareApplicationSchemaProps) => {
+}: SoftwareApplicationSchemaProps): null => {
   useEffect(() => {
     const script = document.createElement("script");
     script.type = "application/ld+json";

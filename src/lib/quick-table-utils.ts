@@ -122,7 +122,7 @@ export function distributePlayersToGroups(
     [unseeded[i], unseeded[j]] = [unseeded[j], unseeded[i]];
   }
   
-  const groups: Array<Array<typeof players[0]>> = Array.from({ length: groupCount }, () => []);
+  const groups: Array<Array<typeof players[0]>> = Array.from({ length: groupCount }, (): typeof players[0][] => []);
   
   const getTeamCount = (groupIdx: number, team: string | undefined): number => {
     if (!team) return 0;

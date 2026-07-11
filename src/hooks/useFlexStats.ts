@@ -256,7 +256,7 @@ export function useFlexStats() {
         id: playerId,
         group_id: groupId,
         player_id: playerId,
-        team_id: null,
+        team_id: null as string | null,
         item_type: 'player',
         display_order: 0,
         created_at: new Date().toISOString(),

@@ -221,7 +221,7 @@ export function GroupSetupDialog({
     const teamsForDistribution = approvedTeams.map((tm) => ({
       id: tm.id,
       name: tm.team_name,
-      team: undefined,
+      team: undefined as string | undefined,
       seed: tm.seed || undefined,
     }));
     return distributePlayersToGroups(teamsForDistribution, selectedGroupCount) as DrawTeam[][];

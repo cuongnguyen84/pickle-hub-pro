@@ -404,13 +404,13 @@ class ChunkErrorBoundary extends Component<
 }
 
 // Component to initialize deep link handler
-const DeepLinkInitializer = () => {
+const DeepLinkInitializer = (): null => {
   useDeepLinkHandler();
   return null;
 };
 
 // Component to initialize push notifications
-const PushNotificationInitializer = () => {
+const PushNotificationInitializer = (): null => {
   usePushNotifications();
   return null;
 };
@@ -421,13 +421,13 @@ const PushNotificationInitializer = () => {
 // subscribing inside the bell duplicates Supabase channel subscriptions
 // and runs invalidateQueries 2x per notification. Mounting here keeps
 // it 1-per-session regardless of how many bell instances exist.
-const NotificationsRealtimeInitializer = () => {
+const NotificationsRealtimeInitializer = (): null => {
   useUnifiedNotificationsRealtime();
   return null;
 };
 
 // Component to track page views for GA4
-const PageTracker = () => {
+const PageTracker = (): null => {
   usePageTracking();
   return null;
 };
@@ -496,7 +496,7 @@ const NavigateUSlugVi = () => {
 // by default, so deep pages open mid-scroll. Reset to top on PUSH/REPLACE
 // navigations; leave POP (back/forward) alone so the browser's native
 // restoration still works.
-const ScrollToTop = () => {
+const ScrollToTop = (): null => {
   const { pathname } = useLocation();
   const navigationType = useNavigationType();
   useLayoutEffect(() => {

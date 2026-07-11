@@ -183,7 +183,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
       return (data || []).map((m) => ({
         id: m.id,
         courtNumber: 0,
-        startTime: null,
+        startTime: null as string | null,
         status: m.status === "in_progress" ? "live" : m.status,
         scoreA: m.games_won_a,
         scoreB: m.games_won_b,

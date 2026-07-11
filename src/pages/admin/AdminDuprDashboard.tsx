@@ -720,7 +720,7 @@ function OrgLinkSection() {
   });
 
   // Auto-select first eligible org so the card shows up without an extra click.
-  useMemo(() => {
+  useMemo((): null => {
     if (!selectedOrgId && orgsQ.data && orgsQ.data.length > 0) {
       setSelectedOrgId(orgsQ.data[0].id);
     }

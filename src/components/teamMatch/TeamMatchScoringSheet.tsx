@@ -317,7 +317,7 @@ export function TeamMatchScoringSheet({
   };
   const refLiveScore = (a: number, b: number) => {
     if (!currentGame) return;
-    void supabase.from('team_match_games').update({ score_a: a, score_b: b }).eq('id', currentGame.id).then(() => undefined, () => undefined);
+    void supabase.from('team_match_games').update({ score_a: a, score_b: b }).eq('id', currentGame.id).then((): void => undefined, (): void => undefined);
   };
   const refClaimLive = async () => {
     try {

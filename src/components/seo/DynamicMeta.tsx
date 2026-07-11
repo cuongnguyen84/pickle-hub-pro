@@ -22,7 +22,7 @@ export const DynamicMeta = ({
   noindex = false,
   creator,
   publishedTime,
-}: DynamicMetaProps) => {
+}: DynamicMetaProps): null => {
   const { language } = useI18n();
   // Strip trailing slash for canonical consistency (except root "/")
   const rawUrl = url || (typeof window !== "undefined" ? window.location.href : "https://www.thepicklehub.net");
