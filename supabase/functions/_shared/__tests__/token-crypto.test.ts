@@ -10,6 +10,7 @@ import {
   projectRefFromSupabaseUrl,
   buildKeyring,
   tokenVersion,
+  tokenState,
   decryptField,
   encryptFieldOptional,
   encryptFieldRequired,
@@ -162,6 +163,17 @@ describe("buildKeyring — from secrets (P2.5)", () => {
     const enc = await encryptToken("t", await ring(), AAD);
     expect(tokenVersion(enc)).toBe("v1");
     expect(tokenVersion("plaintext")).toBeNull();
+  });
+
+  it("tokenState classifies plaintext / stale / current for the backfill", async () => {
+    const v1enc = await encryptToken("t", makeKeyring("v1", await importTokenKeyFromBase64(keyB64(0x11))), AAD);
+    const v2enc = await encryptToken("t", makeKeyring("v2", await importTokenKeyFromBase64(keyB64(0x22))), AAD);
+    // Active = v2: plaintext needs work, v1 is stale (rotate), v2 is current.
+    expect(tokenState("raw_plaintext", "v2")).toBe("plaintext");
+    expect(tokenState(v1enc, "v2")).toBe("stale");
+    expect(tokenState(v2enc, "v2")).toBe("current");
+    // Active = v1: v1 is current.
+    expect(tokenState(v1enc, "v1")).toBe("current");
   });
 });
 
