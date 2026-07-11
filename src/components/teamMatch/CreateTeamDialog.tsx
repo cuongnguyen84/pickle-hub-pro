@@ -150,7 +150,6 @@ export function CreateTeamDialog({
                   <FormControl>
                     <Input
                       id="create-team-name"
-                      name="create-team-name"
                       placeholder={txt.teamNamePh}
                       {...field}
                     />
@@ -171,7 +170,6 @@ export function CreateTeamDialog({
                   <FormControl>
                     <Input
                       id="create-team-captain"
-                      name="create-team-captain"
                       placeholder={txt.captainNamePh}
                       {...field}
                     />

@@ -138,7 +138,7 @@ const ForumPostDetail = () => {
             {post.content}
           </div>
 
-          {post.image_urls.length > 0 && (
+          {post.image_urls && post.image_urls.length > 0 && (
             <div className="grid grid-cols-2 gap-2">
               {post.image_urls.map((url: string, i: number) => (
                 <img key={i} src={url} alt="" className="rounded-lg w-full object-cover max-h-64" />
@@ -146,7 +146,7 @@ const ForumPostDetail = () => {
             </div>
           )}
 
-          {post.tags.length > 0 && (
+          {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {post.tags.map((tag: string) => (
                 <Link key={tag} to={`/forum?tag=${tag}`}>

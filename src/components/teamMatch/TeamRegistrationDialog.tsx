@@ -525,7 +525,6 @@ export function TeamRegistrationDialog({
                     <FormControl>
                       <Input
                         id="register-team-name"
-                        name="register-team-name"
                         placeholder={txt.teamNamePh}
                         {...field}
                       />
@@ -546,7 +545,6 @@ export function TeamRegistrationDialog({
                     <FormControl>
                       <Input
                         id="register-captain-name"
-                        name="register-captain-name"
                         placeholder={txt.captainNamePh}
                         {...field}
                       />

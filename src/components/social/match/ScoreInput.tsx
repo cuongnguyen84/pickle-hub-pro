@@ -195,7 +195,7 @@ export const ScoreInput = ({
       </div>
 
       {/* ─── Validation feedback ─────────────────────────────────────── */}
-      {validation && validation.valid && (
+      {validation && validation.valid && validation.winner && (
         <div className="flex items-center gap-2 rounded-xl border border-social-success/40 bg-social-success/10 p-3 text-social-success">
           <Trophy className="h-5 w-5 shrink-0" />
           <div className="text-sm">

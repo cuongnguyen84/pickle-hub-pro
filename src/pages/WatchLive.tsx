@@ -153,6 +153,12 @@ const WatchLive = () => {
     ended: t.live.ended,
   };
 
+  // Null/unknown status can't index the variant/text maps — fall back safely.
+  const statusKey: keyof typeof statusVariant =
+    livestream.status === "live" || livestream.status === "scheduled" || livestream.status === "ended"
+      ? livestream.status
+      : "ended";
+
   const isLive = livestream.status === "live";
   const isScheduled = livestream.status === "scheduled";
   const isEnded = livestream.status === "ended";
@@ -355,8 +361,8 @@ const WatchLive = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <h1 className="text-2xl font-semibold text-foreground">{livestream.title}</h1>
-                <Badge variant={statusVariant[livestream.status]}>
-                  {statusText[livestream.status]}
+                <Badge variant={statusVariant[statusKey]}>
+                  {statusText[statusKey]}
                 </Badge>
               </div>
 
