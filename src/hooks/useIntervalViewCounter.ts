@@ -48,7 +48,7 @@ export function useIntervalViewCounter({
   const totalSentRef = useRef(0);
 
   useEffect(() => {
-    if (!targetId) return;
+    if (!targetId) return undefined;
 
     // Reset session counter when target changes
     totalSentRef.current = 0;

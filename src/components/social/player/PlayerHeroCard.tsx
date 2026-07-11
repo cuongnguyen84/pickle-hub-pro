@@ -43,7 +43,7 @@ export function PlayerHeroCard({ player, stats }: PlayerHeroCardProps) {
   useEffect(() => {
     if (!player.favorite_venue_id) {
       setFavoriteVenue(null);
-      return;
+      return undefined;
     }
     let cancelled = false;
     void (async () => {

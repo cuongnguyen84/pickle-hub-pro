@@ -10,7 +10,7 @@ export function useTeamMatchRealtime(tournamentId: string | undefined) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!tournamentId) return;
+    if (!tournamentId) return undefined;
 
     // Channel for matches updates
     let matchesChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -93,7 +93,7 @@ export function useTeamMatchMatchRealtime(matchId: string | undefined) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!matchId) return;
+    if (!matchId) return undefined;
 
     // Channel for this specific match
     let matchChannel: ReturnType<typeof supabase.channel> | null = null;

@@ -54,7 +54,7 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
 
   // Load initial highlights
   useEffect(() => {
-    if (!livestreamId) return;
+    if (!livestreamId) return undefined;
 
     const load = async () => {
       const { data } = await supabase

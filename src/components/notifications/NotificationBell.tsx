@@ -25,6 +25,7 @@ export const NotificationBell = ({ className }: NotificationBellProps) => {
       const timer = setTimeout(() => setHasNewNotification(false), 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [unreadCount]);
 
   if (!user) return null;

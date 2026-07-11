@@ -73,6 +73,7 @@ export const UnifiedNotificationBell = ({ className }: UnifiedNotificationBellPr
       const t = setTimeout(() => setHighlight(false), 1200);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [unread]);
 
   if (!user) return null;

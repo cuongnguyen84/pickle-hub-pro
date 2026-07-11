@@ -46,7 +46,7 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
 
   // Click outside / Escape closes avatar dropdown
   useEffect(() => {
-    if (!avatarOpen) return;
+    if (!avatarOpen) return undefined;
     const onClick = (e: MouseEvent) => {
       if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
         setAvatarOpen(false);
@@ -104,7 +104,7 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
 
   // Escape closes drawer
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) return undefined;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

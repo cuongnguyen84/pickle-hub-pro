@@ -43,7 +43,7 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
 
   // Auto rotate pages
   useEffect(() => {
-    if (!autoRotate || totalPages <= 1) return;
+    if (!autoRotate || totalPages <= 1) return undefined;
     const timer = setInterval(() => {
       setCurrentPage((prev) => (prev + 1) % totalPages);
     }, 10000);

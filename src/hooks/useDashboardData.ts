@@ -198,7 +198,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
 
   // Realtime subscription
   useEffect(() => {
-    if (!tournamentId) return;
+    if (!tournamentId) return undefined;
 
     let table: string;
     let filterCol: string;

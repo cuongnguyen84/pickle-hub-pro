@@ -38,7 +38,7 @@ const PlayerProfile = () => {
   // source see the structured data without needing react-helmet-async.
   useEffect(() => {
     const profile = profileQuery.data;
-    if (!profile) return;
+    if (!profile) return undefined;
 
     const existing = document.getElementById(JSONLD_ID);
     if (existing) existing.remove();

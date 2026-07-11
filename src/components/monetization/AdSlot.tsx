@@ -40,7 +40,7 @@ export function AdSlot({ slot, className, minHeight = 250, format = "auto" }: Ad
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || seen) return;
+    if (!el || seen) return undefined;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {

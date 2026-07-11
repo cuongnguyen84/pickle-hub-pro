@@ -69,8 +69,8 @@ export function useTrackBlogView(lang: "en" | "vi" | undefined, slug: string | u
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!lang || !slug) return;
-    if (wasRecentlyViewed(lang, slug)) return;
+    if (!lang || !slug) return undefined;
+    if (wasRecentlyViewed(lang, slug)) return undefined;
 
     let cancelled = false;
 

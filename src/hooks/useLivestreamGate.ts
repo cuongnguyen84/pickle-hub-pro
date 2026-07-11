@@ -54,6 +54,7 @@ export function useLivestreamGate({
     if (shouldGate && hasSeenPreview(livestreamId)) {
       setIsGated(true);
       setSecondsRemaining(0);
+      return undefined;
     }
   }, [shouldGate, livestreamId]);
 
@@ -64,7 +65,7 @@ export function useLivestreamGate({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      return;
+      return undefined;
     }
 
     intervalRef.current = setInterval(() => {

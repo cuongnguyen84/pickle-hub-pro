@@ -48,7 +48,7 @@ export const useDeepLinkHandler = () => {
   useEffect(() => {
     // Only set up on native platforms
     if (!isNativeApp()) {
-      return;
+      return undefined;
     }
 
     // Listen for auth state changes - this is the fallback mechanism

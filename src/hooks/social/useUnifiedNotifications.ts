@@ -172,7 +172,7 @@ export function useUnifiedNotificationsRealtime(): void {
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return undefined;
     const legacyChan = supabase
       .channel(`unified-legacy:${userId}`)
       .on(

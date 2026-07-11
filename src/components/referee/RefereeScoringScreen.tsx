@@ -125,7 +125,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, onCl
 
   // timeout countdown
   useEffect(() => {
-    if (!active || active.left <= 0) return;
+    if (!active || active.left <= 0) return undefined;
     const id = window.setInterval(() => setActive((p) => (p ? { ...p, left: Math.max(0, p.left - 1) } : null)), 1000);
     return () => window.clearInterval(id);
   }, [active]);

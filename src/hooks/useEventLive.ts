@@ -241,7 +241,7 @@ export function useEventLive(eventId: string | undefined): {
   // itself is discarded — React Query is the single source of truth so we
   // avoid divergent client-side state from a partial UPDATE event.
   useEffect(() => {
-    if (!eventId) return;
+    if (!eventId) return undefined;
     const channel = supabase
       .channel(`social-event:${eventId}:${Date.now()}_${Math.random().toString(36).slice(2, 7)}`)
       .on(

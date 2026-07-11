@@ -39,7 +39,7 @@ export function useVisibilityRefresh(
 
   // Polling fallback - only when visible
   useEffect(() => {
-    if (!pollingInterval) return;
+    if (!pollingInterval) return undefined;
     const id = setInterval(() => {
       if (document.visibilityState === 'visible') {
         doRefresh();

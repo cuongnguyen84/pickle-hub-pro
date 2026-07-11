@@ -64,7 +64,7 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
     if (!livestreamId || !enabled) {
       setViewers([]);
       setIsConnected(false);
-      return;
+      return undefined;
     }
 
     // Topic PHẢI trùng với topic viewer (useLivePresence) thì admin mới thấy

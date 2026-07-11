@@ -197,7 +197,7 @@ const QuickTableView = () => {
   useEffect(() => {
     if (groups.length === 0) {
       if (activeGroupId !== '') setActiveGroupId('');
-      return;
+      return undefined;
     }
     if (!groups.some(g => g.id === activeGroupId)) {
       setActiveGroupId(groups[0].id);
@@ -213,7 +213,7 @@ const QuickTableView = () => {
   useVisibilityRefresh(loadData, { minInterval: 5000, pollingInterval: 20000 });
 
   useEffect(() => {
-    if (!table?.id) return;
+    if (!table?.id) return undefined;
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {

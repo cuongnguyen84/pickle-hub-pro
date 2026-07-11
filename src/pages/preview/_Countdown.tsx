@@ -19,9 +19,9 @@ export const Countdown = ({ to, pastLabel = "Starting now", prefix, className, l
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!to) return;
+    if (!to) return undefined;
     const target = new Date(to).getTime();
-    if (Number.isNaN(target)) return;
+    if (Number.isNaN(target)) return undefined;
 
     // If target is more than 1 hour away, update every 30s; otherwise every 1s
     const diff = target - Date.now();

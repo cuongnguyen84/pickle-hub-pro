@@ -114,7 +114,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
 
   // Health check for live streams
   useEffect(() => {
-    if (!isLive || !isPlayingRef.current) return;
+    if (!isLive || !isPlayingRef.current) return undefined;
 
     healthCheckIntervalRef.current = setInterval(() => {
       if (!playerRef.current || !isPlayingRef.current) return;

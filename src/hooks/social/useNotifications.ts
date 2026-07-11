@@ -52,7 +52,7 @@ export function useSocialNotifications() {
 
   // ─── Realtime: live INSERT events for THIS user ──────────────────────
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return undefined;
     const channel = supabase
       .channel(`social_notifications:${userId}`)
       .on(

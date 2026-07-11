@@ -375,6 +375,8 @@ export function validateField(
       }
       return null;
     }
+    default:
+      return null;
   }
 }
 

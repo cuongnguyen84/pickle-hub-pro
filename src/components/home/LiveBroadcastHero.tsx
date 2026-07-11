@@ -90,7 +90,7 @@ const CountdownBig = ({ to, language }: { to: string; language: "en" | "vi" }) =
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const target = new Date(to).getTime();
-    if (Number.isNaN(target)) return;
+    if (Number.isNaN(target)) return undefined;
     const diff = target - Date.now();
     const intervalMs = Math.abs(diff) > 3600_000 ? 1000 : 1000;
     const id = window.setInterval(() => setNow(Date.now()), intervalMs);

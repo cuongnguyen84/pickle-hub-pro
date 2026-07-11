@@ -90,7 +90,7 @@ export function FeedMlpMatchCard({
   // viewport and the user loses context.
   const rootRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!expanded || !rootRef.current) return;
+    if (!expanded || !rootRef.current) return undefined;
     // Wait for the games-table layout to commit, then check whether the
     // card top got pushed above the fold. The first useEffect tick runs
     // BEFORE the new DOM nodes are painted, so getBoundingClientRect()

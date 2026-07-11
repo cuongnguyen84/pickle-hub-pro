@@ -73,7 +73,7 @@ export function useSwipeNavigation(containerRef: React.RefObject<HTMLElement | n
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) return undefined;
 
     el.addEventListener("touchstart", handleTouchStart, { passive: true });
     el.addEventListener("touchmove", handleTouchMove, { passive: true });

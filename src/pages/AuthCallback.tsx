@@ -34,7 +34,7 @@ const AuthCallback = () => {
       const redirectToApp = (accessToken: string, refreshToken: string) => {
         if (handledRef.current) return;
         handledRef.current = true;
-        
+
         const customUrl = `thepicklehub://auth/callback?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}`;
         console.log("[AuthCallback] Redirecting to app with tokens");
         window.location.href = customUrl;
@@ -82,7 +82,7 @@ const AuthCallback = () => {
       };
     }
 
-    // Web flow: standard session handling
+    // Web flow: standard session handling; need to return undefined to satisfy noImplicitReturns
     const handleWebCallback = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -116,6 +116,7 @@ const AuthCallback = () => {
     };
 
     handleWebCallback();
+    return undefined;
   }, [navigate, searchParams]);
 
   return (

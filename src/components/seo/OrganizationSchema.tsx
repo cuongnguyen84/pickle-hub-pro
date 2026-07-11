@@ -3,7 +3,7 @@ import { useEffect } from "react";
 export const OrganizationSchema = () => {
   useEffect(() => {
     const id = "org-schema-jsonld";
-    if (document.getElementById(id)) return;
+    if (document.getElementById(id)) return undefined;
 
     const schema = {
       "@context": "https://schema.org",
