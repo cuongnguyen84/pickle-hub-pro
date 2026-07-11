@@ -93,7 +93,9 @@ export function useFeedHappenings() {
       }
 
       for (const row of tourRes.data ?? []) {
-        const publishedAt = row.updated_at;
+        // updated_at is NOT NULL in the DB (codegen types it nullable); it's
+        // the feed sort key, so fall back defensively if a row lacks it.
+        const publishedAt = row.updated_at ?? new Date().toISOString();
         items.push({
           type: "happening",
           kind: "tournament",

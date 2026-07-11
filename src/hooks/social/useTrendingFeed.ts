@@ -49,9 +49,9 @@ export function useTrendingFeed() {
     queryFn: async ({ pageParam }) => {
       const { data, error } = await supabase.rpc("get_trending_feed", {
         p_limit: PAGE_SIZE,
-        p_cursor_played_at: pageParam?.played_at ?? null,
-        p_cursor_match_id: pageParam?.match_id ?? null,
-        p_viewer_id: user?.id ?? null,
+        p_cursor_played_at: pageParam?.played_at ?? undefined,
+        p_cursor_match_id: pageParam?.match_id ?? undefined,
+        p_viewer_id: user?.id ?? undefined,
       });
       if (error) throw error;
       return (data ?? []).map(normalizeRow);

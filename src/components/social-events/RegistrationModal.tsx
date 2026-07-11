@@ -553,7 +553,7 @@ export function RegistrationModal({
         "register_event_as_member",
         {
           p_event_id: eventId,
-          p_slot_id: hasSlots && selectedSlotId ? selectedSlotId : null,
+          p_slot_id: hasSlots && selectedSlotId ? selectedSlotId : undefined,
         },
       );
       if (error) {

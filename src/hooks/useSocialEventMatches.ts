@@ -116,8 +116,8 @@ export function useLogSocialEventMatch(eventId: string | undefined) {
         p_team_b_score: input.teamBScore,
         p_team_a_players: input.teamAPlayers,
         p_team_b_players: input.teamBPlayers,
-        p_notes: input.notes ?? null,
-        p_court_number: input.courtNumber ?? null,
+        p_notes: input.notes ?? undefined,
+        p_court_number: input.courtNumber ?? undefined,
         p_scoring_format: input.scoringFormat ?? "11_rally",
       });
       if (error) throw toMutationError(error);
@@ -152,6 +152,10 @@ export function useLinkEventDuprId(eventId: string | undefined) {
     { duprId: string | null; magicToken?: string | null }
   >({
     mutationFn: async ({ duprId, magicToken }) => {
+      // Required ID — surface a clear error instead of sending null to the RPC.
+      if (!duprId) {
+        throw { code: "missing_dupr_id", message: "missing_dupr_id" } as MutationError;
+      }
       if (magicToken) {
         const { data, error } = await supabase.rpc(
           "link_event_dupr_id_by_token",

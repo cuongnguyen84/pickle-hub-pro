@@ -117,9 +117,9 @@ export function useFeedTimeline() {
     queryFn: async ({ pageParam }) => {
       const { data, error } = await supabase.rpc("get_feed_timeline", {
         p_limit: PAGE_SIZE,
-        p_cursor_score: pageParam?.score ?? null,
-        p_cursor_item_id: pageParam?.item_id ?? null,
-        p_viewer_id: user?.id ?? null,
+        p_cursor_score: pageParam?.score ?? undefined,
+        p_cursor_item_id: pageParam?.item_id ?? undefined,
+        p_viewer_id: user?.id ?? undefined,
       });
       if (error) throw error;
       const dbItems = ((data ?? []) as RpcRow[])
