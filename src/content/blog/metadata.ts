@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["vietnam hosts ppa tour asia", "viet nam dang cai pickleball", "ppa tour asia viet nam", "pickleball vietnam 2026", "hcmc open 2026", "pickleball world cup da nang", "mb hanoi cup"],
     ctaPath: "/live",
     ctaLabel: { en: "Follow Vietnam's tournaments live on ThePickleHub", vi: "Theo dõi các giải đấu tại Việt Nam trên ThePickleHub" },
+    heroImage: { src: "/images/blog/vietnam-hosts-ppa-tour-asia-2026-hero.webp", alt: "Vietnam 2026 — Three Big Events, One Passion: illustrated stadium banner with a doubles pickleball match at sunset under the Vietnamese flag, and three event cards for the MB Hanoi Cup (April), MB HCMC Open (Aug 6–9) and Pickleball World Cup Da Nang (Aug 30–Sep 6)." },
     titleEn: "Vietnam Hosts PPA Tour Asia 2026: HCMC Open, World Cup Da Nang and a Historic Season",
     titleVi: "Việt Nam đăng cai PPA Tour Asia 2026: HCMC Open, World Cup Đà Nẵng và một mùa giải lịch sử",
     metaTitleEn: "Vietnam Hosts PPA Tour Asia 2026 | HCMC Open & World Cup Da Nang",
