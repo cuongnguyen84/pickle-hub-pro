@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "vietnam-hosts-ppa-tour-asia-2026",
+    publishedDate: "2026-07-13",
+    updatedDate: "2026-07-13",
+    author: "Cuong Nguyen",
+    tags: ["vietnam hosts ppa tour asia", "viet nam dang cai pickleball", "ppa tour asia viet nam", "pickleball vietnam 2026", "hcmc open 2026", "pickleball world cup da nang", "mb hanoi cup"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow Vietnam's tournaments live on ThePickleHub", vi: "Theo dõi các giải đấu tại Việt Nam trên ThePickleHub" },
+    titleEn: "Vietnam Hosts PPA Tour Asia 2026: HCMC Open, World Cup Da Nang and a Historic Season",
+    titleVi: "Việt Nam đăng cai PPA Tour Asia 2026: HCMC Open, World Cup Đà Nẵng và một mùa giải lịch sử",
+    metaTitleEn: "Vietnam Hosts PPA Tour Asia 2026 | HCMC Open & World Cup Da Nang",
+    metaTitleVi: "Việt Nam Đăng Cai PPA Tour Asia 2026 | HCMC Open & World Cup Đà Nẵng",
+    metaDescriptionEn: "In 2026 Vietnam hosts two PPA Tour Asia stops — the $300,000 MB Hanoi Cup and the HCMC Open (Aug 6–9) — plus the first Pickleball World Cup ever held in Asia (Da Nang, Aug 30–Sep 6). How Vietnam became the center of Asian pickleball.",
+    metaDescriptionVi: "Năm 2026 Việt Nam đăng cai hai chặng PPA Tour Asia — MB Hanoi Cup 300.000 USD và HCMC Open (6–9/8) — cùng Pickleball World Cup đầu tiên tại châu Á (Đà Nẵng, 30/8–6/9). Vì sao Việt Nam trở thành tâm điểm pickleball châu Á.",
+  },
+  {
     slug: "pickleball-cost-vietnam-2026",
     publishedDate: "2026-07-11",
     updatedDate: "2026-07-11",

@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "vietnam-hosts-ppa-tour-asia-2026",
   "pickleball-cost-vietnam-2026",
   "hcmc-open-2026-preview",
   "vietnam-pickleball-tournament-calendar-2026",
