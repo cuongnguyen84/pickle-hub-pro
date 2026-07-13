@@ -1061,24 +1061,44 @@ export async function renderFlexTournament(supabase: SupabaseClient, shareId: st
 // ─── Tools hub ─────────────────────────────���──────────────
 
 export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "vi" = "en"): Response {
+  const isVi = lang === "vi";
+  const canonical = isVi ? `${siteUrl}/vi/tools` : `${siteUrl}/tools`;
+  // VI SEO (2026-07-13) — /vi/tools previously served the ENGLISH title/meta/
+  // body (only the organizer-guide links switched), and NEITHER /tools nor
+  // /vi/tools emitted hreflang. GSC 7d: all /tools queries are English while
+  // the audience is ~95% VN — the Vietnamese keyword space ("tạo bảng đấu
+  // pickleball", "chia cặp vòng tròn", "phần mềm quản lý giải pickleball")
+  // has no entrenched competitor. Full VI variant below + reciprocal
+  // hreflang en/vi/x-default on both URLs (sitemap-static already declares
+  // the /tools ↔ /vi/tools pair; page-level tags now match it).
   return htmlResponse(buildHtml({
-    title: "Free Pickleball Tournament Tools | ThePickleHub",
-    description: "Free pickleball tournament bracket generator, round robin scheduler, MLP team match manager, and doubles elimination tools. No signup required.",
-    url: `${siteUrl}${rawPath}`,
+    title: isVi
+      ? "Tạo Bảng Đấu Pickleball Miễn Phí – Vòng Tròn, Loại Trực Tiếp | ThePickleHub"
+      : "Free Pickleball Tournament Tools | ThePickleHub",
+    description: isVi
+      ? "Công cụ tạo bảng đấu pickleball miễn phí: chia cặp vòng tròn (round robin), loại trực tiếp đơn/đôi, đấu đồng đội MLP. Chấm điểm trực tiếp trên điện thoại, không cần đăng ký."
+      : "Free pickleball tournament bracket generator, round robin scheduler, MLP team match manager, and doubles elimination tools. No signup required.",
+    url: canonical,
     siteUrl,
+    extraMeta: bilingualHreflang(`${siteUrl}/tools`, `${siteUrl}/vi/tools`),
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "WebApplication",
-          "@id": `${siteUrl}/tools#app`,
-          name: "Bracket Lab — Free Pickleball Tournament Bracket Generator",
-          url: `${siteUrl}/tools`,
+          "@id": `${canonical}#app`,
+          name: isVi
+            ? "Bracket Lab — Công cụ tạo bảng đấu pickleball miễn phí"
+            : "Bracket Lab — Free Pickleball Tournament Bracket Generator",
+          url: canonical,
+          inLanguage: lang,
           applicationCategory: "SportsApplication",
           operatingSystem: "Web",
           browserRequirements: "Requires JavaScript. Requires HTML5.",
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-          description: "Free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, flex format. Live scoring, shareable scoreboard, no signup.",
+          description: isVi
+            ? "Công cụ tạo bảng đấu pickleball miễn phí — vòng tròn tính điểm, loại trực tiếp đơn và đôi, đấu đồng đội MLP, định dạng linh hoạt. Chấm điểm trực tiếp, bảng điểm chia sẻ được, không cần đăng ký."
+            : "Free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, flex format. Live scoring, shareable scoreboard, no signup.",
           // Note: aggregateRating intentionally omitted. Google Rich Results
           // requires verified user reviews; previous fake "4.8 / 120 reviews"
           // value (removed 2026-04-28) was non-compliant. Re-add only when we
@@ -1086,13 +1106,20 @@ export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "v
         },
         {
           "@type": "ItemList",
-          "@id": `${siteUrl}/tools#formats`,
-          itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Quick Tables (Round Robin)", url: `${siteUrl}/tools/quick-tables` },
-            { "@type": "ListItem", position: 2, name: "Doubles Elimination Bracket", url: `${siteUrl}/tools/doubles-elimination` },
-            { "@type": "ListItem", position: 3, name: "Flex Tournament", url: `${siteUrl}/tools/flex-tournament` },
-            { "@type": "ListItem", position: 4, name: "Team Match (MLP Format)", url: `${siteUrl}/tools/team-match` },
-          ],
+          "@id": `${canonical}#formats`,
+          itemListElement: isVi
+            ? [
+              { "@type": "ListItem", position: 1, name: "Bảng đấu nhanh (Vòng tròn tính điểm)", url: `${siteUrl}/vi/tools/quick-tables` },
+              { "@type": "ListItem", position: 2, name: "Loại trực tiếp Đôi", url: `${siteUrl}/vi/tools/doubles-elimination` },
+              { "@type": "ListItem", position: 3, name: "Giải Linh hoạt", url: `${siteUrl}/vi/tools/flex-tournament` },
+              { "@type": "ListItem", position: 4, name: "Đấu đồng đội (Định dạng MLP)", url: `${siteUrl}/vi/tools/team-match` },
+            ]
+            : [
+              { "@type": "ListItem", position: 1, name: "Quick Tables (Round Robin)", url: `${siteUrl}/tools/quick-tables` },
+              { "@type": "ListItem", position: 2, name: "Doubles Elimination Bracket", url: `${siteUrl}/tools/doubles-elimination` },
+              { "@type": "ListItem", position: 3, name: "Flex Tournament", url: `${siteUrl}/tools/flex-tournament` },
+              { "@type": "ListItem", position: 4, name: "Team Match (MLP Format)", url: `${siteUrl}/tools/team-match` },
+            ],
         },
       ],
     },
@@ -1108,7 +1135,30 @@ export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "v
     // H2 (not H1) here — buildHtml already emits <h1>${title}</h1>
     // at the top of <main>; a second H1 in bodyContent caused Ahrefs
     // Site Audit to flag /tools + /vi/tools as "Multiple H1 tags".
-    bodyContent: `<h2>60 seconds to a pickleball bracket.</h2>
+    bodyContent: isVi
+      ? `<h2>60 giây để có bảng đấu pickleball.</h2>
+<p>Trình tạo bảng đấu pickleball miễn phí — chia cặp vòng tròn tính điểm (round robin), loại trực tiếp đơn và đôi, đấu đồng đội kiểu MLP, và định dạng linh hoạt. Chấm điểm trực tiếp trên điện thoại, link bảng điểm chia sẻ được, bracket in được. Không cần cài app, không cần đăng ký, hoàn toàn miễn phí.</p>
+<h2>Các định dạng giải đấu</h2>
+<ul>
+  <li><a href="${siteUrl}/vi/tools/quick-tables">Bảng đấu nhanh – Vòng tròn tính điểm &amp; Loại trực tiếp đơn</a></li>
+  <li><a href="${siteUrl}/vi/tools/team-match">Đấu đồng đội – Định dạng MLP</a></li>
+  <li><a href="${siteUrl}/vi/tools/doubles-elimination">Loại trực tiếp Đôi</a></li>
+  <li><a href="${siteUrl}/vi/tools/flex-tournament">Giải Linh hoạt – Luật tùy chỉnh</a></li>
+</ul>
+<h2>Phần mềm quản lý giải pickleball — Bracket Lab làm gì</h2>
+<p>Bracket Lab là công cụ tạo bảng đấu và quản lý giải pickleball miễn phí, dành cho câu lạc bộ, người tổ chức giải cuối tuần và các sự kiện chuyên nghiệp tại Việt Nam và châu Á. Chọn định dạng — vòng tròn tính điểm, loại trực tiếp đơn, loại trực tiếp đôi, đấu đồng đội MLP, hay giải linh hoạt tùy chỉnh — công cụ sẽ tự chia cặp, dựng bảng đấu, xếp lịch trận, xoay sân và theo dõi tỉ số trực tiếp. Chia sẻ một link duy nhất cho người chơi và khán giả; cần thì in bracket treo tường.</p>
+<p>Không cần đăng ký. Không cần tải về. Không có kiểu dùng thử 14 ngày rồi thành gói $99/tháng. Xây dựng và duy trì bởi <a href="${siteUrl}/vi">ThePickleHub</a>, nền tảng pickleball song ngữ Việt-Anh đưa tin PPA Tour Asia, MLP và các giải pro khu vực.</p>
+<h2>Câu hỏi thường gặp</h2>
+<p><strong>Chia cặp vòng tròn pickleball thế nào cho công bằng?</strong> Nhập danh sách người chơi (4–32 người, đơn hoặc đôi), Bảng đấu nhanh tự chia cặp vòng tròn để ai cũng gặp nhau, tự tính bảng xếp hạng theo trận thắng và hiệu số điểm, rồi tự động vào vòng playoff.</p>
+<p><strong>Có tạo được bảng đấu loại trực tiếp cho giải đôi không?</strong> Có — định dạng Loại trực tiếp Đôi hỗ trợ 4–32 đội, nhánh thắng nhánh thua đầy đủ, thua một trận vẫn còn cơ hội đánh ngược lên chung kết.</p>
+<p><strong>Dùng cho giải câu lạc bộ đông người được không?</strong> Được — định dạng Linh hoạt cho phép tự định nghĩa vòng, bảng và luật hạt giống cho king of the court, ladder hay festival nhiều ngày.</p>
+<h2>Hướng dẫn cho ban tổ chức</h2>
+<ul>
+  <li><a href="${siteUrl}/vi/blog/du-toan-ngan-sach-giai-pickleball">Tổ chức giải pickleball tốn bao nhiêu? Dự toán chi tiết + file mẫu miễn phí</a></li>
+  <li><a href="${siteUrl}/vi/blog/huong-dan-to-chuc-giai">Hướng dẫn tổ chức giải pickleball từ A-Z</a></li>
+  <li><a href="${siteUrl}/vi/blog/lich-giai-pickleball-viet-nam-2026">Lịch giải pickleball Việt Nam 2026</a></li>
+</ul>`
+      : `<h2>60 seconds to a pickleball bracket.</h2>
 <p>A free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL, printable bracket. No apps, no signup, no catch.</p>
 <h2>Tournament formats</h2>
 <ul>
@@ -1120,18 +1170,11 @@ export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "v
 <h2>What Bracket Lab actually does</h2>
 <p>Bracket Lab is a free pickleball tournament bracket generator built for clubs, weekend organizers, and pro events across Asia. Pick a format — round robin, single elimination, double elimination, MLP team match, or a fully custom flex tournament — and the tool builds the bracket, schedules matches, rotates courts, and tracks live scores. Share a single link with players and spectators; print a wall bracket if you need one.</p>
 <p>No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by <a href="${siteUrl}/blog/tournament-organizer-hub">ThePickleHub</a>, a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the regional pro circuit.</p>
-${lang === "vi"
-    ? `<h2>Hướng dẫn cho ban tổ chức</h2>
-<ul>
-  <li><a href="${siteUrl}/vi/blog/du-toan-ngan-sach-giai-pickleball">Tổ chức giải pickleball tốn bao nhiêu? Dự toán chi tiết + file mẫu miễn phí</a></li>
-  <li><a href="${siteUrl}/vi/blog/huong-dan-to-chuc-giai">Hướng dẫn tổ chức giải pickleball từ A-Z</a></li>
-  <li><a href="${siteUrl}/vi/blog/lich-giai-pickleball-viet-nam-2026">Lịch giải pickleball Việt Nam 2026</a></li>
-</ul>`
-    : `<h2>Organizer guides</h2>
+<h2>Organizer guides</h2>
 <ul>
   <li><a href="${siteUrl}/blog/pickleball-tournament-budget-calculator-guide">How much does a pickleball tournament cost? Full budget guide + free template</a></li>
   <li><a href="${siteUrl}/blog/vietnam-pickleball-tournament-calendar-2026">Vietnam Pickleball Tournament Calendar 2026</a></li>
-</ul>`}`,
+</ul>`,
     lang,
   }));
 }

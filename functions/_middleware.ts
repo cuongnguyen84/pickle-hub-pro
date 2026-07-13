@@ -442,7 +442,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2026-07-11 — v25->v26: venue title/meta de-dup — 95% of venue names already
   // embed "Pickleball", so drop the redundant "Sân pickleball"/"pickleball court"
   // label; append city for local intent instead. CTR fix (rank was fine).
-  const cacheKey = `pr:v26:${url.pathname}`;
+  // 2026-07-13 — v26->v27: /vi/tools full Vietnamese SSR variant (title/meta/
+  // body/JSON-LD targeting "tạo bảng đấu pickleball", "chia cặp vòng tròn",
+  // "phần mềm quản lý giải pickleball") + reciprocal hreflang en/vi/x-default
+  // on BOTH /tools and /vi/tools (previously neither emitted hreflang and
+  // /vi/tools served English title/meta).
+  const cacheKey = `pr:v27:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
