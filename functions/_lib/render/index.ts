@@ -1072,11 +1072,16 @@ export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "v
   // hreflang en/vi/x-default on both URLs (sitemap-static already declares
   // the /tools ↔ /vi/tools pair; page-level tags now match it).
   return htmlResponse(buildHtml({
+    // VI title/description are budgeted to buildHtml's SEO byte limits
+    // (60/160 UTF-8 BYTES — Vietnamese diacritics cost 2-3 bytes each;
+    // title = 57B, description = 156B). Longer variants get ellipsis-
+    // truncated by truncateForSeo, which mangles the SERP title AND the
+    // auto-emitted <h1>.
     title: isVi
-      ? "Tạo Bảng Đấu Pickleball Miễn Phí – Vòng Tròn, Loại Trực Tiếp | ThePickleHub"
+      ? "Tạo Bảng Đấu Pickleball Miễn Phí | ThePickleHub"
       : "Free Pickleball Tournament Tools | ThePickleHub",
     description: isVi
-      ? "Công cụ tạo bảng đấu pickleball miễn phí: chia cặp vòng tròn (round robin), loại trực tiếp đơn/đôi, đấu đồng đội MLP. Chấm điểm trực tiếp trên điện thoại, không cần đăng ký."
+      ? "Tạo bảng đấu pickleball miễn phí: chia cặp vòng tròn, loại trực tiếp, đội MLP. Chấm điểm trực tiếp, không cần đăng ký."
       : "Free pickleball tournament bracket generator, round robin scheduler, MLP team match manager, and doubles elimination tools. No signup required.",
     url: canonical,
     siteUrl,

@@ -447,7 +447,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // "phần mềm quản lý giải pickleball") + reciprocal hreflang en/vi/x-default
   // on BOTH /tools and /vi/tools (previously neither emitted hreflang and
   // /vi/tools served English title/meta).
-  const cacheKey = `pr:v27:${url.pathname}`;
+  // 2026-07-13 — v27->v28: shorten /vi/tools VI title+meta to fit the 60/160
+  // UTF-8 byte SEO budget (diacritics = 2-3 bytes/char); v27 cached HTML has
+  // an ellipsis-truncated title/h1 ("…Vòng…").
+  const cacheKey = `pr:v28:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
