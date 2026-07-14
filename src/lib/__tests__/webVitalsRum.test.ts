@@ -1,11 +1,45 @@
-import { describe, expect, it } from "vitest";
+import type { Metric } from "web-vitals";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildWebVitalEvent,
   getDeviceClass,
+  initWebVitalsRum,
   isMarketSegment,
   normalizeRumRoute,
 } from "../webVitalsRum";
 import { marketSegmentForCountry } from "../../../functions/_lib/rum-context";
+
+const rumMocks = vi.hoisted(() => ({
+  getPlatform: vi.fn<() => "ios" | "android" | "web">(() => "web"),
+  onCLS: vi.fn(),
+  onFCP: vi.fn(),
+  onINP: vi.fn(),
+  onLCP: vi.fn(),
+  onTTFB: vi.fn(),
+  trackEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/capacitor-utils", () => ({
+  getPlatform: rumMocks.getPlatform,
+}));
+
+vi.mock("@/utils/ga", () => ({
+  trackEvent: rumMocks.trackEvent,
+}));
+
+vi.mock("web-vitals", () => ({
+  onCLS: rumMocks.onCLS,
+  onFCP: rumMocks.onFCP,
+  onINP: rumMocks.onINP,
+  onLCP: rumMocks.onLCP,
+  onTTFB: rumMocks.onTTFB,
+}));
+
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 describe("normalizeRumRoute", () => {
   it.each([
@@ -76,5 +110,71 @@ describe("RUM dimensions", () => {
       market_segment: "vn",
       sample_rate: 1,
     });
+  });
+
+  it("initializes all observers and reports a cached market segment", async () => {
+    vi.stubEnv("DEV", false);
+    rumMocks.getPlatform.mockReturnValue("ios");
+
+    const requestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
+      callback({
+        didTimeout: false,
+        timeRemaining: () => 50,
+      });
+      return 1;
+    });
+    const sessionStorage = {
+      getItem: vi.fn((key: string) =>
+        key === "rum_market_segment_v1" ? "vn" : null,
+      ),
+      setItem: vi.fn(),
+    };
+
+    vi.stubGlobal("window", {
+      gtag: vi.fn(),
+      innerWidth: 390,
+      location: { pathname: "/vi/social/beijing-open" },
+      requestIdleCallback,
+    });
+    vi.stubGlobal("navigator", { webdriver: false });
+    vi.stubGlobal("localStorage", { getItem: vi.fn(() => null) });
+    vi.stubGlobal("sessionStorage", sessionStorage);
+
+    initWebVitalsRum();
+
+    await vi.waitFor(() => expect(rumMocks.onLCP).toHaveBeenCalledOnce());
+    expect(requestIdleCallback).toHaveBeenCalledOnce();
+    expect(rumMocks.onCLS).toHaveBeenCalledOnce();
+    expect(rumMocks.onFCP).toHaveBeenCalledOnce();
+    expect(rumMocks.onINP).toHaveBeenCalledOnce();
+    expect(rumMocks.onTTFB).toHaveBeenCalledOnce();
+
+    const report = rumMocks.onLCP.mock.calls[0][0] as (metric: Metric) => void;
+    report({
+      delta: 123.456,
+      id: "v5-runtime",
+      name: "LCP",
+      navigationType: "navigate",
+      rating: "good",
+      value: 1234.56,
+    } as Metric);
+
+    await vi.waitFor(() => expect(rumMocks.trackEvent).toHaveBeenCalledOnce());
+    expect(rumMocks.trackEvent).toHaveBeenCalledWith(
+      "web_vital",
+      expect.objectContaining({
+        app_surface: "capacitor_ios",
+        device_class: "mobile",
+        locale: "vi",
+        market_segment: "vn",
+        metric_name: "LCP",
+        metric_value: 1234.56,
+        route: "/social/:id",
+        value: 1235,
+      }),
+    );
+
+    initWebVitalsRum();
+    expect(requestIdleCallback).toHaveBeenCalledOnce();
   });
 });
