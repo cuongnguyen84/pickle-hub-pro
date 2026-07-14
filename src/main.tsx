@@ -7,11 +7,13 @@ import "./index.css";
 import "./styles/the-line.css";
 import { initPwa } from "./pwa";
 import { initErrorReporter } from "./lib/errorReporter";
+import { initWebVitalsRum } from "./lib/webVitalsRum";
 
 // Wire global error handlers BEFORE rendering so we catch boot-time
 // failures (chunk load errors, etc.). Sends to Supabase edge fn
 // `log-client-event`; admin can read via /admin/errors or SQL.
 initErrorReporter();
+initWebVitalsRum();
 
 createRoot(document.getElementById("root")!).render(<App />);
 

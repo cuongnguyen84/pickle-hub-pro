@@ -85,24 +85,25 @@ async function insertHighlights(
   return data?.length ?? 0;
 }
 
-interface PublicProfile {
-  id: string;
+interface FeedProfile {
   display_name: string | null;
   profile_slug: string | null;
 }
 
-async function publicProfilesById(
-  supabase: SupabaseClient,
-  ids: string[],
-): Promise<Map<string, PublicProfile>> {
-  if (ids.length === 0) return new Map();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, display_name, profile_slug")
-    .in("id", ids)
-    .eq("is_public_profile", true);
-  if (error) throw error;
-  return new Map((data ?? []).map((p) => [p.id, p as PublicProfile]));
+interface EventMilestoneCandidate extends FeedProfile {
+  profile_id: string;
+  registration_count: number;
+}
+
+interface DuprBandCrossing extends FeedProfile {
+  profile_id: string;
+  reached_band: number;
+}
+
+interface DuprWeeklyClimber extends FeedProfile {
+  profile_id: string;
+  rating_delta: number;
+  current_rating: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,34 +112,25 @@ async function publicProfilesById(
 
 async function generateEventMilestones(supabase: SupabaseClient): Promise<Highlight[]> {
   const { data, error } = await supabase
-    .from("event_registrations")
-    .select("profile_id, status")
-    .not("profile_id", "is", null)
-    .neq("status", "cancelled");
+    .rpc("feed_event_milestone_candidates", {
+      p_min_count: EVENT_THRESHOLDS[0],
+    });
   if (error) throw error;
 
-  const counts = new Map<string, number>();
-  for (const r of data ?? []) {
-    counts.set(r.profile_id, (counts.get(r.profile_id) ?? 0) + 1);
-  }
-  const candidates = [...counts.entries()].filter(([, n]) => n >= EVENT_THRESHOLDS[0]);
-  const profiles = await publicProfilesById(supabase, candidates.map(([id]) => id));
-
   const rows: Highlight[] = [];
-  for (const [profileId, count] of candidates) {
-    const profile = profiles.get(profileId);
-    if (!profile?.display_name) continue;
+  for (const candidate of (data ?? []) as EventMilestoneCandidate[]) {
+    const count = Number(candidate.registration_count);
     // Emit only the highest threshold reached — the first cron run must not
     // spam a backlog of 5-then-10-then-25 cards for veteran players.
     const reached = EVENT_THRESHOLDS.filter((t) => count >= t).pop()!;
     rows.push({
       kind: "milestone",
-      dedupe_key: `milestone:events:${profileId}:${reached}`,
-      title_vi: `🎉 ${profile.display_name} vừa tham gia sự kiện thứ ${reached}!`,
-      title_en: `🎉 ${profile.display_name} just joined their ${reached}th event!`,
+      dedupe_key: `milestone:events:${candidate.profile_id}:${reached}`,
+      title_vi: `🎉 ${candidate.display_name} vừa tham gia sự kiện thứ ${reached}!`,
+      title_en: `🎉 ${candidate.display_name} just joined their ${reached}th event!`,
       body_vi: "Một cột mốc mới trên hành trình pickleball.",
       body_en: "Another pickleball journey milestone.",
-      href: profile.profile_slug ? `/u/${profile.profile_slug}` : undefined,
+      href: candidate.profile_slug ? `/u/${candidate.profile_slug}` : undefined,
     });
   }
   return rows;
@@ -148,45 +140,24 @@ async function generateDuprBandMilestones(supabase: SupabaseClient): Promise<Hig
   // Recent window only — old crossings shouldn't backfill the feed.
   const windowStart = new Date(Date.now() - 7 * 86400_000).toISOString();
   const { data, error } = await supabase
-    .from("dupr_rating_history")
-    .select("profile_id, dupr_doubles, recorded_at")
-    .gte("recorded_at", windowStart)
-    .not("dupr_doubles", "is", null)
-    .order("profile_id")
-    .order("recorded_at");
+    .rpc("feed_dupr_band_crossings", {
+      p_window_start: windowStart,
+      p_min_band: DUPR_MIN_BAND,
+    });
   if (error) throw error;
 
-  const crossings = new Map<string, number>(); // profile_id → newly reached band
-  let prevProfile: string | null = null;
-  let prevRating: number | null = null;
-  for (const row of data ?? []) {
-    if (row.profile_id !== prevProfile) {
-      prevProfile = row.profile_id;
-      prevRating = row.dupr_doubles;
-      continue;
-    }
-    const prevBand = Math.floor((prevRating ?? 0) * 2) / 2;
-    const currBand = Math.floor(row.dupr_doubles * 2) / 2;
-    if (currBand > prevBand && currBand >= DUPR_MIN_BAND) {
-      crossings.set(row.profile_id, currBand);
-    }
-    prevRating = row.dupr_doubles;
-  }
-
-  const profiles = await publicProfilesById(supabase, [...crossings.keys()]);
   const rows: Highlight[] = [];
-  for (const [profileId, band] of crossings) {
-    const profile = profiles.get(profileId);
-    if (!profile?.display_name) continue;
+  for (const crossing of (data ?? []) as DuprBandCrossing[]) {
+    const band = Number(crossing.reached_band);
     const bandLabel = Number.isInteger(band) ? band.toFixed(1) : String(band);
     rows.push({
       kind: "milestone",
-      dedupe_key: `milestone:dupr:${profileId}:${band}`,
-      title_vi: `📈 ${profile.display_name} vừa vượt mốc DUPR ${bandLabel}!`,
-      title_en: `📈 ${profile.display_name} just crossed DUPR ${bandLabel}!`,
+      dedupe_key: `milestone:dupr:${crossing.profile_id}:${band}`,
+      title_vi: `📈 ${crossing.display_name} vừa vượt mốc DUPR ${bandLabel}!`,
+      title_en: `📈 ${crossing.display_name} just crossed DUPR ${bandLabel}!`,
       body_vi: "Rating đôi mới nhất đã qua một nấc thang mới.",
       body_en: "Their doubles rating just cleared a new band.",
-      href: profile.profile_slug ? `/u/${profile.profile_slug}` : undefined,
+      href: crossing.profile_slug ? `/u/${crossing.profile_slug}` : undefined,
     });
   }
   return rows;
@@ -239,39 +210,26 @@ async function generateLeaderboardDigest(supabase: SupabaseClient): Promise<High
 
   const windowStart = new Date(Date.now() - 7 * 86400_000).toISOString();
   const { data, error } = await supabase
-    .from("dupr_rating_history")
-    .select("profile_id, dupr_doubles, recorded_at")
-    .gte("recorded_at", windowStart)
-    .not("dupr_doubles", "is", null)
-    .order("recorded_at");
+    .rpc("feed_dupr_weekly_climbers", {
+      p_window_start: windowStart,
+      p_limit: CLIMBER_COUNT,
+    });
   if (error) throw error;
 
-  const firstLast = new Map<string, { first: number; last: number }>();
-  for (const row of data ?? []) {
-    const entry = firstLast.get(row.profile_id);
-    if (!entry) firstLast.set(row.profile_id, { first: row.dupr_doubles, last: row.dupr_doubles });
-    else entry.last = row.dupr_doubles;
-  }
-  const climbers = [...firstLast.entries()]
-    .map(([id, { first, last }]) => ({ id, delta: last - first, now: last }))
-    .filter((c) => c.delta > 0.005)
-    .sort((a, b) => b.delta - a.delta);
-
-  const profiles = await publicProfilesById(supabase, climbers.map((c) => c.id));
-  const top = climbers
-    .filter((c) => profiles.get(c.id)?.display_name)
-    .slice(0, CLIMBER_COUNT);
+  const top = (data ?? []) as DuprWeeklyClimber[];
   if (top.length === 0) return [];
 
   const body = top
-    .map((c, i) => `${i + 1}. ${profiles.get(c.id)!.display_name} +${c.delta.toFixed(2)} → ${c.now.toFixed(2)}`)
+    .map((c, i) =>
+      `${i + 1}. ${c.display_name} +${Number(c.rating_delta).toFixed(2)} → ${Number(c.current_rating).toFixed(2)}`
+    )
     .join("\n");
   const week = isoWeek(nowIct);
   return [{
     kind: "leaderboard",
     dedupe_key: `leaderboard:${week}`,
-    title_vi: `📊 BXH tuần: ${profiles.get(top[0].id)!.display_name} leo hạng mạnh nhất (+${top[0].delta.toFixed(2)} DUPR)`,
-    title_en: `📊 Weekly movers: ${profiles.get(top[0].id)!.display_name} climbed the most (+${top[0].delta.toFixed(2)} DUPR)`,
+    title_vi: `📊 BXH tuần: ${top[0].display_name} leo hạng mạnh nhất (+${Number(top[0].rating_delta).toFixed(2)} DUPR)`,
+    title_en: `📊 Weekly movers: ${top[0].display_name} climbed the most (+${Number(top[0].rating_delta).toFixed(2)} DUPR)`,
     body_vi: body,
     body_en: body,
     href: "/rankings",
