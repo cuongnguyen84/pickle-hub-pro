@@ -26,11 +26,16 @@ AS $$
     LEFT JOIN cron.job j ON j.jobname = m.job_name
   ), latest AS (
     SELECT DISTINCT ON (j.jobid)
-      j.jobid, d.started_at, d.finished_at, d.return_message,
+      -- pg_cron exposes start_time/end_time; keep the RPC's original output
+      -- names through aliases so clean migration replay matches production.
+      j.jobid,
+      d.start_time AS started_at,
+      d.end_time AS finished_at,
+      d.return_message,
       d.status
     FROM jobs j
     JOIN cron.job_run_details d ON d.jobid = j.jobid
-    ORDER BY j.jobid, d.started_at DESC
+    ORDER BY j.jobid, d.start_time DESC
   )
   SELECT
     j.job_name,
