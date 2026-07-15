@@ -99,8 +99,15 @@ export default defineConfig(({ mode }) => ({
         // always get the freshest shell after deploy. Prevents the "flash
         // of old UI then auto-reload" pattern that surfaced post Phase 4.
         globPatterns: ["**/*.{js,css,ico,png,svg,woff,woff2}"],
-        // Don't precache huge chunks — let them lazy load on demand
-        globIgnores: ["**/vendor-video*", "**/blog-data*", "**/index.html"],
+        // Keep heavy route chunks and locale dictionaries on demand. In
+        // particular, precaching locale-* would download both languages and
+        // undo PERF-06 even though the provider imports only the active one.
+        globIgnores: [
+          "**/vendor-video*",
+          "**/blog-data*",
+          "**/locale-*",
+          "**/index.html",
+        ],
         // Max single-file precache size
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         cleanupOutdatedCaches: true,
@@ -222,6 +229,8 @@ export default defineConfig(({ mode }) => ({
         // chunks/assets keep default content-hash names for cross-deploy caching.
         entryFileNames: `assets/[name]-[hash]-${BUILD_ID}.js`,
         manualChunks: {
+          "locale-en": [path.resolve(__dirname, "src/i18n/en.ts")],
+          "locale-vi": [path.resolve(__dirname, "src/i18n/vi.ts")],
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-ui": [

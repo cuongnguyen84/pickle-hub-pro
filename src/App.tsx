@@ -248,8 +248,8 @@ prefetchHomeData(queryClient);
 // Minimal route-transition fallback. Centered spinner on the page background
 // — no header, no nav. PageLoader renders inside <I18nProvider> (the Suspense
 // boundary that uses it lives at App.tsx line 366, well inside line 354's
-// I18nProvider) so useI18n() is safe to call here without a localStorage
-// fallback.
+// I18nProvider) so useI18n() is safe to call here after the active dictionary
+// has loaded.
 //
 // a11y (Codex P2): role="status" + aria-live="polite" so screen readers
 // announce the transition; sr-only label gives them a phrase to announce.
