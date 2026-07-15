@@ -39,5 +39,17 @@
 /vi/blog/huong-dan-day-du-ppa-tour-asia-2026        /blog/ppa-tour-asia-2026-complete-guide            301
 /vi/blog/the-thuc-mlp                               /blog/mlp-format-explained                         301
 
+# Missing hashed assets must 404 — never fall through to the SPA shell below.
+# A missing /assets/ chunk (a stale index.html still pointing at a chunk the
+# latest deploy replaced) otherwise matched `/* /index.html 200` and was served
+# AS index.html: 200, text/html, PLUS the `/assets/*` immutable/1yr header from
+# _headers. A CDN edge then pinned that broken "HTML-as-JS" response for a year
+# — the root cause of the 2026-07-11 "Loading…" outage. Cloudflare serves real
+# static files BEFORE consulting _redirects, so these rules only ever catch a
+# genuinely-missing file, turning it into a clean 404 the browser's dynamic
+# import rejects cleanly (ChunkErrorBoundary then reloads to the fresh shell).
+/assets/* /404.html 404
+/static/* /404.html 404
+
 # SPA fallback
 /* /index.html 200

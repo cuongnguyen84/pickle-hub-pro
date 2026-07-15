@@ -319,17 +319,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     STATIC_EXACT.has(pathname)
   ) {
     const assetResponse = await next();
-    // TEMP DIAGNOSTIC — remove after confirming Cloudflare's next() behavior.
-    if (url.searchParams.get("mwdiag") === "1") {
-      return new Response("diag", {
-        status: 299,
-        headers: {
-          "X-Mw-Next-Status": String(assetResponse.status),
-          "X-Mw-Next-CT": assetResponse.headers.get("content-type") || "(none)",
-          "Cache-Control": "no-store",
-        },
-      });
-    }
+    // Note: /assets/* and /static/* are EXCLUDED from Functions in
+    // public/_routes.json, so this branch never sees them — those are handled
+    // by the `/assets/* → 404` rule in public/_redirects. This still covers the
+    // other static prefixes that DO route through Functions (/images/, /fonts/,
+    // /icons/, /og-images/).
+    //
     // A hashed asset that no longer exists — a stale index.html (cached up to
     // 5 min) still pointing at a chunk the latest deploy replaced, a scanner,
     // or a half-propagated edge — otherwise falls through to the SPA rule
