@@ -23,12 +23,19 @@
 //     }
 //   }
 //
-// DUPR does not provide a separate signature header. Production payloads put
-// the partner CLIENT_KEY in clientId, so it is treated as a shared secret:
-//   1. Bound the request body and match clientId against DUPR_CLIENT_KEY.
+// DUPR provides no signature header, and the clientId it sends is the SAME
+// value as the PUBLIC frontend VITE_DUPR_CLIENT_KEY (embedded in the JS
+// bundle — anyone can read it). So clientId is NOT a secret and the webhook
+// body is UNTRUSTED. The rating numbers in the payload are never persisted;
+// they only tell us "this duprId changed". We then PULL the authoritative
+// rating over the partner API (Bearer-authenticated, forge-proof):
+//   1. Bound the request body; secretsMatch(clientId) is a cheap spam filter
+//      only, NOT auth — treat every field as attacker-controlled.
 //   2. Claim a payload digest once so retries cannot duplicate history rows.
-//   3. Look up the duprId in dupr_user_tokens (rejects unknown players).
-//   4. Persist a redacted event + update profile + history.
+//   3. Look up the duprId in dupr_user_tokens (rejects unknown players — no
+//      partner call is made for unlinked/forged duprIds).
+//   4. GET /user/v1.0/{duprId} via partner token; persist the ratings IT
+//      returns, ignoring whatever the payload claimed.
 //
 // MUST return 200 OK within a few seconds (DUPR retries otherwise).
 //
@@ -38,12 +45,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { partnerFetch } from "../_shared/dupr-client.ts";
 import {
   parseJsonObject,
   readBoundedBody,
   secretsMatch,
   sha256Hex,
 } from "./security.ts";
+
+interface DuprUserDetail {
+  status?: string;
+  result?: {
+    id?: string;
+    ratings?: {
+      singles?: number | string | null;
+      doubles?: number | string | null;
+    };
+  };
+}
 
 interface RatingPayload {
   clientId?: string | number;
@@ -105,8 +124,8 @@ Deno.serve(async (req) => {
   }
   const payload = parsedPayload as RatingPayload;
 
-  // DUPR sends the CLIENT_KEY (e.g. "test-ck-abc...") in the clientId field
-  // of webhook payloads. Treat it as the callback's proof of purpose.
+  // clientId == the PUBLIC frontend key. Matching it is a spam filter, not
+  // authentication — the trust boundary is the partner-API pull below.
   const expectedClientKey = Deno.env.get("DUPR_CLIENT_KEY") ?? "";
   const incomingClientId = String(payload.clientId ?? "");
   const event = String(payload.event ?? "");
@@ -121,7 +140,7 @@ Deno.serve(async (req) => {
     );
   }
 
-  // ─── Validate clientId BEFORE persisting (avoid storage amplification) ─
+  // ─── Cheap spam filter BEFORE persisting (avoid storage amplification) ─
   if (!secretsMatch(incomingClientId, expectedClientKey)) {
     console.warn("dupr-webhook: client_key_mismatch");
     return jsonResponse({ status: "ignored", reason: "client_key_mismatch" }, 401);
@@ -196,9 +215,33 @@ Deno.serve(async (req) => {
     return jsonResponse({ status: "ignored", reason: "user_not_found" });
   }
 
-  const rating = payload.message?.rating ?? {};
-  const singles = parseRating(rating.singles);
-  const doubles = parseRating(rating.doubles);
+  // ─── Pull the AUTHORITATIVE rating (payload numbers are untrusted) ──────
+  // GET /user/v1.0/{duprId} over the partner Bearer token. A forged webhook
+  // can make us pull for a real linked duprId, but the value we persist is
+  // whatever DUPR returns here — never what the attacker put in the body.
+  let detail: DuprUserDetail | null = null;
+  try {
+    const detailRes = await partnerFetch(supabase, `/user/v1.0/${duprId}`);
+    detail = (await detailRes.json().catch(() => null)) as DuprUserDetail | null;
+    if (!detailRes.ok || detail?.status !== "SUCCESS" || !detail.result?.id) {
+      await markProcessed("dupr_pull_failed");
+      return jsonResponse({ status: "error", reason: "dupr_pull_failed" });
+    }
+  } catch (e) {
+    console.error("dupr-webhook: partner pull failed", String(e));
+    await markProcessed("dupr_pull_failed");
+    return jsonResponse({ status: "error", reason: "dupr_pull_failed" });
+  }
+
+  // Confirm DUPR echoed the same id we looked up (defense against a payload
+  // duprId that maps to a linked user but a different real account).
+  if (String(detail.result.id).toUpperCase() !== String(duprId).toUpperCase()) {
+    await markProcessed("dupr_id_mismatch");
+    return jsonResponse({ status: "ignored", reason: "dupr_id_mismatch" });
+  }
+
+  const singles = parseRating(detail.result.ratings?.singles);
+  const doubles = parseRating(detail.result.ratings?.doubles);
 
   const now = new Date().toISOString();
   const profileUpdate: Record<string, unknown> = {
