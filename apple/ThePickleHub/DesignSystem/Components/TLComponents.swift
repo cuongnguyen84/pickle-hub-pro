@@ -45,6 +45,7 @@ struct TLTextField: View {
     @Binding var text: String
     var isSecure = false
     var keyboard: UIKeyboardType = .default
+    var textContentType: UITextContentType? = nil
 
     var body: some View {
         Group {
@@ -57,6 +58,7 @@ struct TLTextField: View {
                     .autocorrectionDisabled()
             }
         }
+        .textContentType(textContentType)
         .foregroundStyle(TLColor.fg)
         .padding(14)
         .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))

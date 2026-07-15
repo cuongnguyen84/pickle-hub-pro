@@ -27,8 +27,12 @@ struct HomeView: View {
                     if model.posts.count > 1 {
                         HomeFeatureSection(posts: Array(model.posts.dropFirst()))
                     }
-                    if !model.live.isEmpty {
-                        HomeLiveSection(streams: model.live) { openURL = IdentifiedURL(url: $0) }
+                    if !model.live.isEmpty || !model.scheduled.isEmpty || !model.recentEnded.isEmpty {
+                        HomeLiveSection(
+                            liveStreams: model.live,
+                            scheduledStreams: model.scheduled,
+                            endedStreams: model.recentEnded
+                        )
                     }
                     if !model.news.isEmpty {
                         HomeNewsSection(items: model.news)
@@ -118,20 +122,29 @@ struct HomeView: View {
     @ViewBuilder
     private var liveBar: some View {
         let barShape = RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous)
-        if let stream = model.live.first(where: { $0.isLive }) ?? model.live.first {
-            Button {
-                Haptics.light()
-                openURL = IdentifiedURL(url: WebRoutes.live(id: stream.id))
+        if let stream = model.live.first ?? model.scheduled.first {
+            let isLive = stream.isLive
+            let eyebrow = isLive
+                ? "LIVE" + (stream.orgName.map { " · \($0)" } ?? "")
+                : "SẮP PHÁT" + (scheduledTimeLabel(stream).map { " · \($0)" } ?? "")
+            NavigationLink {
+                LiveWatchScreen(stream: stream)
             } label: {
                 HStack(spacing: 11) {
-                    LivePulseDot(reduceMotion: reduceMotion)
+                    if isLive {
+                        LivePulseDot(reduceMotion: reduceMotion)
+                    } else {
+                        Image(systemName: "clock.badge")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(TLColor.accentText)
+                    }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("LIVE" + (stream.orgName.map { " · \($0)" } ?? ""))
+                        Text(eyebrow)
                             .font(TLType.eyebrowMono(9)).tracking(1)
-                            .foregroundStyle(TLColor.live)
+                            .foregroundStyle(isLive ? TLColor.live : TLColor.accentText)
                             .lineLimit(1)
                         Text(stream.displayTitle)
-                            .font(TLFont.sans(13, .medium))
+                            .font(TLFont.sans(13, isLive ? .medium : .semibold))
                             .foregroundStyle(TLColor.fg)
                             .lineLimit(1)
                     }
@@ -140,11 +153,15 @@ struct HomeView: View {
                         .font(.system(size: 20)).foregroundStyle(TLColor.accentText)
                 }
                 .padding(.horizontal, 14).padding(.vertical, 12)
-                .background(TLColor.surface, in: barShape)
-                .overlay(barShape.strokeBorder(TLColor.border, lineWidth: 1))
+                .background(isLive ? TLColor.surface : TLColor.accent.opacity(0.10), in: barShape)
+                .overlay(barShape.strokeBorder(isLive ? TLColor.border : TLColor.accentDim.opacity(0.5), lineWidth: isLive ? 1 : 1.5))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Đang trực tiếp: \(stream.displayTitle)")
+            .accessibilityLabel(
+                isLive
+                    ? "Đang trực tiếp: \(stream.displayTitle)"
+                    : "Sắp phát sóng: \(stream.displayTitle)"
+            )
         } else {
             HStack(spacing: 11) {
                 Circle().fill(TLColor.fg4).frame(width: 8, height: 8)

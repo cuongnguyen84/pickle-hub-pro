@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
@@ -16,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -40,7 +41,6 @@ import { format } from "date-fns";
 
 export default function AdminModeration() {
   const { t } = useI18n();
-  const { toast } = useToast();
   const [orgFilter, setOrgFilter] = useState<string>("all");
   const [tournamentFilter, setTournamentFilter] = useState<string>("all");
   const [editingLivestream, setEditingLivestream] = useState<any>(null);
@@ -64,28 +64,28 @@ export default function AdminModeration() {
     const newStatus = currentStatus === "published" ? "hidden" : "published";
     try {
       await updateVideoStatus.mutateAsync({ id: videoId, status: newStatus });
-      toast({ title: newStatus === "hidden" ? "Đã ẩn video" : "Đã hiển thị video" });
+      toast.success(newStatus === "hidden" ? "Đã ẩn video" : "Đã hiển thị video");
     } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+      toast.error(error.message || "Có lỗi xảy ra");
     }
   };
 
   const handleEndLivestream = async (livestreamId: string) => {
     try {
       await updateLivestreamStatus.mutateAsync({ id: livestreamId, status: "ended" });
-      toast({ title: "Đã kết thúc livestream" });
+      toast.success("Đã kết thúc livestream");
     } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+      toast.error(error.message || "Có lỗi xảy ra");
     }
   };
 
   const handleSaveLivestream = async (data: { id: string; title: string; description: string; thumbnail_url: string; tournament_id: string | null }) => {
     try {
       await updateLivestream.mutateAsync(data);
-      toast({ title: "Đã cập nhật livestream" });
+      toast.success("Đã cập nhật livestream");
       setEditingLivestream(null);
     } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+      toast.error(error.message || "Có lỗi xảy ra");
     }
   };
 
@@ -93,10 +93,10 @@ export default function AdminModeration() {
     if (!deletingLivestreamId) return;
     try {
       await deleteLivestream.mutateAsync(deletingLivestreamId);
-      toast({ title: "Đã xóa livestream" });
+      toast.success("Đã xóa livestream");
       setDeletingLivestreamId(null);
     } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+      toast.error(error.message || "Có lỗi xảy ra");
     }
   };
 

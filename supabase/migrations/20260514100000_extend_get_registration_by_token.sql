@@ -7,6 +7,9 @@
 -- RPC already returns reference_code + amount; this migration adds the
 -- 3 bank-account fields so the client can build a complete VietQR.
 --
+-- PostgreSQL cannot replace a function when its RETURNS TABLE row type changes.
+DROP FUNCTION IF EXISTS public.get_registration_by_token(UUID);
+
 -- IDEMPOTENT.
 -- ============================================================================
 

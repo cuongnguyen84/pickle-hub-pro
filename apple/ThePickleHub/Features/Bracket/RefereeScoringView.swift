@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import Combine
 
 /// Màn chấm điểm trực tiếp cho trọng tài. Engine (`ScoringEngine`) tự lo điểm, số
@@ -87,11 +88,14 @@ struct RefereeScoringView: View {
                 if var t = activeTO, t.left > 0 { t.left -= 1; activeTO = t }
             }
             .onAppear {
+                // Trận đang chấm — không cho máy tự khóa màn hình giữa chừng.
+                UIApplication.shared.isIdleTimerDisabled = true
                 if mode == .rally && state == nil {
                     state = .start(mode: .rally, isSingles: isSingles, winTarget: winTarget, winByTwo: winByTwo)
                     onClaimLive?(); onLiveScore?(0, 0)
                 }
             }
+            .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         }
     }
 
@@ -338,12 +342,12 @@ struct RefereeScoringView: View {
     private func timeoutGroup(name: String, reg: Int, med: Int, side: ServeSide) -> some View {
         HStack(spacing: 6) {
             Text(name).font(TLFont.mono(10)).foregroundStyle(TLColor.fg4).lineLimit(1).frame(maxWidth: 90, alignment: .leading)
-            toButton(icon: "timer", count: reg, color: TLColor.fg2) { startTO(side, medical: false) }
-            toButton(icon: "cross.fill", count: med, color: TLColor.live) { startTO(side, medical: true) }
+            toButton(icon: "timer", count: reg, color: TLColor.fg2, label: "Timeout thường, còn \(reg)") { startTO(side, medical: false) }
+            toButton(icon: "cross.fill", count: med, color: TLColor.live, label: "Timeout y tế, còn \(med)") { startTO(side, medical: true) }
         }
     }
 
-    private func toButton(icon: String, count: Int, color: Color, action: @escaping () -> Void) -> some View {
+    private func toButton(icon: String, count: Int, color: Color, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 3) {
                 Image(systemName: icon).font(.system(size: 11, weight: .semibold))
@@ -354,8 +358,11 @@ struct RefereeScoringView: View {
             .background(TLColor.bg, in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(TLColor.border, lineWidth: 1))
             .opacity(count <= 0 ? 0.5 : 1)
+            .frame(minWidth: 44, minHeight: 44)   // hit target ≥44pt; visual chip stays compact
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain).disabled(count <= 0)
+        .accessibilityLabel(label)
     }
 
     private func startTO(_ side: ServeSide, medical: Bool) {
@@ -427,6 +434,7 @@ struct RefereeScoringView: View {
                     .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: 11))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Ghi chú trọng tài")
 
             Button { Haptics.light(); confirming = true } label: {
                 Text("KẾT THÚC").font(TLFont.mono(12, .bold)).tracking(0.5)
@@ -546,6 +554,8 @@ struct RefereeScoringView: View {
 /// Rotates its content 90° so a portrait app shows a landscape scoring board,
 /// without ever touching the device interface orientation (which fought the
 /// sheet/cover stack and span forever). Passes through if already landscape.
+// ponytail: visual rotation only — upgrade path is OrientationLock (App/ThePickleHubApp.swift,
+// currently unused) if a real interface-orientation lock is ever needed.
 private struct ForceLandscape<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
@@ -553,6 +563,10 @@ private struct ForceLandscape<Content: View>: View {
             let portrait = geo.size.height >= geo.size.width
             if portrait {
                 content
+                    // After the 90° clockwise rotation the content's trailing edge
+                    // lands on the screen's bottom edge (home indicator) — keep the
+                    // bottom bar's buttons clear of the swipe-home zone.
+                    .padding(.trailing, geo.safeAreaInsets.bottom)
                     .frame(width: geo.size.height, height: geo.size.width)
                     .rotationEffect(.degrees(90))
                     .frame(width: geo.size.width, height: geo.size.height)

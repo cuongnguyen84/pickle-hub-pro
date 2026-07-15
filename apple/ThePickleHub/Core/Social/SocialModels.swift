@@ -19,6 +19,12 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     let ballType: String?
     let freePerks: [String]?
     let status: String?
+    // Organizer-side (nullable để list công khai cũ không vỡ khi thiếu cột)
+    let createdBy: UUID?
+    let clubID: UUID?
+    let visibility: String?
+    let requiresPrepayment: Bool?
+    let prepaymentDeadlineHours: Int?
 
     var title: String { titleVi.nonEmpty ?? titleEn?.nonEmpty ?? "Sự kiện" }
 
@@ -67,6 +73,11 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
         case zaloGroupURL = "zalo_group_url"
         case ballType = "ball_type"
         case freePerks = "free_perks"
+        case createdBy = "created_by"
+        case clubID = "club_id"
+        case visibility
+        case requiresPrepayment = "requires_prepayment"
+        case prepaymentDeadlineHours = "prepayment_deadline_hours"
     }
 }
 
@@ -83,6 +94,83 @@ struct SocialRosterEntry: Decodable, Identifiable, Equatable {
         case id
         case displayName = "display_name"
         case selfRatedLevel = "self_rated_level"
+    }
+}
+
+/// Lỗi có mã từ edge fn (cancel/reactivate registration).
+struct SocialFlowError: LocalizedError {
+    let code: String
+    var errorDescription: String? {
+        switch code {
+        case "already_cancelled": "Đăng ký đã huỷ trước đó."
+        case "event_started": "Sự kiện đã bắt đầu — không thao tác được."
+        case "event_cancelled": "Sự kiện đã bị huỷ."
+        case "event_full": "Sự kiện đã đủ người — không đăng ký lại được."
+        case "not_cancelled": "Đăng ký đang hoạt động."
+        default: "Có lỗi xảy ra (\(code)). Thử lại sau."
+        }
+    }
+}
+
+/// Một dòng từ RPC `get_registration_by_token` — đăng ký + sự kiện + thanh toán.
+struct PlayerRegistrationInfo: Decodable, Equatable {
+    let registrationID: UUID
+    let eventSlug: String
+    let eventTitleVi: String
+    let eventStatus: String
+    let eventStartAt: String
+    let eventEndAt: String?
+    let eventLocationText: String?
+    let eventPriceVnd: Int
+    let eventCancellationHours: Int
+    let eventRequiresPrepayment: Bool?
+    let eventPrepaymentDeadlineHours: Int?
+    let eventBankCode: String?
+    let eventBankAccountNumber: String?
+    let eventBankAccountName: String?
+    let displayName: String
+    let phone: String?
+    let status: String            // registered | checked_in | cancelled | no_show
+    let cancelledAt: String?
+    let cancelledReason: String?
+    let paymentStatus: String     // unpaid | pending_payment | paid | refunded
+    let paymentOrderID: UUID?
+    let paymentReferenceCode: String?
+    let playerClaimedPaid: Bool?
+    let registeredAt: String
+
+    var isCancelled: Bool { status == "cancelled" }
+    var startDate: Date? { SocialDate.parse(eventStartAt) }
+    /// Còn đủ sớm để hoàn tiền (khớp web refundEligible).
+    var refundEligible: Bool {
+        guard let start = startDate else { return false }
+        return start.timeIntervalSinceNow / 3600 >= Double(eventCancellationHours)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case registrationID = "registration_id"
+        case eventSlug = "event_slug"
+        case eventTitleVi = "event_title_vi"
+        case eventStatus = "event_status"
+        case eventStartAt = "event_start_at"
+        case eventEndAt = "event_end_at"
+        case eventLocationText = "event_location_text"
+        case eventPriceVnd = "event_price_vnd"
+        case eventCancellationHours = "event_cancellation_hours"
+        case eventRequiresPrepayment = "event_requires_prepayment"
+        case eventPrepaymentDeadlineHours = "event_prepayment_deadline_hours"
+        case eventBankCode = "event_bank_code"
+        case eventBankAccountNumber = "event_bank_account_number"
+        case eventBankAccountName = "event_bank_account_name"
+        case displayName = "display_name"
+        case phone, status
+        case cancelledAt = "cancelled_at"
+        case cancelledReason = "cancelled_reason"
+        case paymentStatus = "payment_status"
+        case paymentOrderID = "payment_order_id"
+        case paymentReferenceCode = "payment_reference_code"
+        case playerClaimedPaid = "player_claimed_paid"
+        case registeredAt = "registered_at"
     }
 }
 

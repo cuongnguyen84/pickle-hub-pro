@@ -128,14 +128,9 @@ struct LiveHeroCard: View {
         .padding(.horizontal, 22)
     }
 
-    @ViewBuilder
     private var mediaLink: some View {
-        if stream.isLive, let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: { media }
-                .buttonStyle(.plain)
-        } else {
-            media
-        }
+        NavigationLink { LiveWatchScreen(stream: stream) } label: { media }
+            .buttonStyle(.plain)
     }
 
     private var media: some View {
@@ -171,8 +166,8 @@ struct LiveHeroCard: View {
                 Text(LiveTime.clock(d).uppercased()).font(TLFont.mono(10.5)).tracking(0.5).foregroundStyle(TLColor.fg3)
             }
             HStack(spacing: 10) {
-                if stream.isLive, let url = stream.playbackURL {
-                    NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: {
+                if stream.isLive {
+                    NavigationLink { LiveWatchScreen(stream: stream) } label: {
                         Label("Xem ngay", systemImage: "play.fill")
                             .font(TLFont.sans(14, .bold)).foregroundStyle(TLColor.accentInk)
                             .frame(maxWidth: .infinity).padding(.vertical, 11)
@@ -219,11 +214,8 @@ struct LiveCourtCard: View {
         }
     }
 
-    @ViewBuilder
     private func link<L: View>(@ViewBuilder _ label: () -> L) -> some View {
-        if let url = stream.playbackURL {
-            NavigationLink { VideoPlayerScreen(url: url, title: stream.displayTitle, livestreamID: stream.id) } label: { label() }.buttonStyle(.plain)
-        } else { label() }
+        NavigationLink { LiveWatchScreen(stream: stream) } label: { label() }.buttonStyle(.plain)
     }
 }
 
@@ -234,17 +226,26 @@ struct ScheduleRow: View {
 
     var body: some View {
         HStack(spacing: 13) {
-            countdownBox
-            VStack(alignment: .leading, spacing: 4) {
-                Text(stream.displayTitle).font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg).lineLimit(2)
-                Text(metaLine).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3).lineLimit(1)
-            }
+            NavigationLink { LiveWatchScreen(stream: stream) } label: { rowBody }
+                .buttonStyle(.plain)
             Spacer(minLength: 6)
             ReminderButton(stream: stream, style: .outline)
         }
         .padding(13)
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private var rowBody: some View {
+        HStack(spacing: 13) {
+            countdownBox
+            VStack(alignment: .leading, spacing: 4) {
+                Text(stream.displayTitle).font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg).lineLimit(2)
+                Text(metaLine).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3).lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(Rectangle())
     }
 
     private var metaLine: String {

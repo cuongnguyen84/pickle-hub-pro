@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useI18n } from "@/i18n";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -52,7 +53,6 @@ function useReports(statusFilter: string) {
 
 export default function AdminReports() {
   const { t } = useI18n();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("pending");
   const [reviewingReport, setReviewingReport] = useState<any>(null);
@@ -74,7 +74,7 @@ export default function AdminReports() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
-      toast({ title: "Đã cập nhật báo cáo" });
+      toast.success("Đã cập nhật báo cáo");
       setReviewingReport(null);
       setAdminNotes("");
     },
@@ -161,6 +161,7 @@ export default function AdminReports() {
                           <Button
                             variant="outline"
                             size="sm"
+                            aria-label="Xem xét báo cáo"
                             onClick={() => {
                               setReviewingReport(report);
                               setAdminNotes("");
@@ -171,6 +172,8 @@ export default function AdminReports() {
                           <Button
                             variant="outline"
                             size="sm"
+                            aria-label="Đánh dấu đã xử lý"
+                            disabled={updateReport.isPending}
                             onClick={() => updateReport.mutate({ id: report.id, status: "resolved", notes: "" })}
                           >
                             <CheckCircle className="w-4 h-4 text-green-500" />
@@ -178,6 +181,8 @@ export default function AdminReports() {
                           <Button
                             variant="outline"
                             size="sm"
+                            aria-label="Bỏ qua báo cáo"
+                            disabled={updateReport.isPending}
                             onClick={() => updateReport.mutate({ id: report.id, status: "dismissed", notes: "" })}
                           >
                             <XCircle className="w-4 h-4 text-foreground-muted" />

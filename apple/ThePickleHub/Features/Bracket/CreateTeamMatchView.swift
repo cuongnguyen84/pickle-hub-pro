@@ -50,6 +50,8 @@ final class CreateTeamMatchModel {
     var hasDreambreaker = false
     var format = "round_robin"
     var playoffTeamCount = 4
+    // rr_playoff: bật nhánh Tái sinh — hạng 3,4 mỗi bảng đá bracket phụ (cùng logic playoff).
+    var hasRepechage = false
 
     /// Gợi ý số đội vào playoff theo số đội tham gia: 2 luỹ thừa-của-2 lớn nhất ≤ teamCount.
     /// Vd 25 → [16, 8], 10 → [8, 4], 6 → [4, 2], ≤3 → [2]. Không fix cứng 2/4/8.
@@ -134,7 +136,9 @@ final class CreateTeamMatchModel {
         let opts = TeamMatchRepository.CreateOptions(
             name: name.trimmingCharacters(in: .whitespaces),
             rosterSize: rosterSize, teamCount: teamCount, format: format,
-            playoffTeamCount: playoffTeamCount, requireRegistration: requireRegistration,
+            playoffTeamCount: playoffTeamCount,
+            hasRepechage: format == "rr_playoff" && hasRepechage,
+            requireRegistration: requireRegistration,
             hasDreambreaker: effectiveDreambreaker, requireMinGames: requireMinGames,
             hasThirdPlaceMatch: hasThirdPlaceMatch,
             useDupr: requireRegistration && useDupr, duprMaxMale: duprMaxMale, duprMaxFemale: duprMaxFemale,
@@ -163,8 +167,13 @@ struct CreateTeamMatchView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var model = CreateTeamMatchModel()
+    @State private var confirmDiscard = false
 
     private let steps = ["Thông tin", "Game", "DreamBreaker", "Thể thức", "Lệ phí"]
+
+    private var hasEdits: Bool {
+        !model.name.isEmpty || !model.location.isEmpty || model.step > 1
+    }
 
     var body: some View {
         NavigationStack {
@@ -190,8 +199,19 @@ struct CreateTeamMatchView: View {
             .background(TLColor.bg)
             .navigationTitle("Tạo giải đồng đội")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) } }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Hủy") {
+                        if hasEdits { confirmDiscard = true } else { dismiss() }
+                    }.foregroundStyle(TLColor.fg3)
+                }
+            }
+            .confirmationDialog("Bỏ thay đổi?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+                Button("Bỏ thay đổi", role: .destructive) { dismiss() }
+                Button("Tiếp tục nhập", role: .cancel) {}
+            }
         }
+        .interactiveDismissDisabled(hasEdits)
     }
 
     private var stepBar: some View {
@@ -449,25 +469,16 @@ struct CreateTeamMatchView: View {
         }
     }
 
-    // Nút Vòng Tái sinh — placeholder, logic xử lý sau. ponytail: chưa wire backend.
+    // Nhánh Tái sinh: hạng 3,4 mỗi bảng đá bracket phụ (cùng cách phân nhánh/xếp cặp
+    // như playoff, chỉ khác playoff lấy hạng 1,2). BTC sinh nhánh này cùng lúc bấm
+    // "Sinh vòng Playoff" khi vòng bảng xong.
+    @ViewBuilder
     private var repechageRow: some View {
-        Button { Haptics.light() } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "arrow.uturn.backward.circle").foregroundStyle(TLColor.fg3)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Vòng Tái sinh").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg2)
-                    Text("Đội thua có cơ hội đá lại").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
-                }
-                Spacer()
-                Text("SẮP CÓ").font(TLFont.mono(9, .bold)).tracking(1).foregroundStyle(TLColor.fg4)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(TLColor.surface2, in: Capsule())
-            }
-            .padding(14)
-            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.border, lineWidth: 1))
+        toggleRow("Vòng Tái sinh", "Hạng 3,4 mỗi bảng đá thêm nhánh phụ (như playoff cho hạng 1,2)",
+                  Binding(get: { model.hasRepechage }, set: { model.hasRepechage = $0 }))
+        if model.hasRepechage {
+            infoCard(gold: false, "Sau vòng bảng, hạng 3 & 4 mỗi bảng vào nhánh Tái sinh — xếp cặp theo bảng giống playoff (hạng 3 bảng X gặp hạng 4 bảng Y).")
         }
-        .buttonStyle(.plain).disabled(true).opacity(0.7)
     }
 
     private func formatOption(_ value: String, _ title: String, _ desc: String) -> some View {
@@ -475,7 +486,7 @@ struct CreateTeamMatchView: View {
         return Button { Haptics.light(); model.format = value } label: {
             HStack(spacing: 12) {
                 Image(systemName: sel ? "largecircle.fill.circle" : "circle")
-                    .foregroundStyle(sel ? TLColor.accent : TLColor.fg4)
+                    .foregroundStyle(sel ? TLColor.accentText : TLColor.fg4)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg)
                     Text(desc).font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
@@ -694,8 +705,11 @@ struct CreateTeamMatchView: View {
                 }.buttonStyle(.plain).disabled(!model.canProceed()).opacity(model.canProceed() ? 1 : 0.5)
             } else {
                 Button {
-                    Haptics.success()
-                    Task { await model.create { shareID in onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss() } }
+                    Haptics.light()
+                    Task {
+                        await model.create { shareID in onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss() }
+                        if model.error == nil { Haptics.success() } else { Haptics.error() }
+                    }
                 } label: {
                     HStack(spacing: 6) {
                         if model.creating { ProgressView().tint(TLColor.accentInk) }

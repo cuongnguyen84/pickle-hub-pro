@@ -100,6 +100,11 @@ struct TeamMatchRegisterSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var model: TMRegisterModel
+    @State private var confirmDiscard = false
+
+    private var hasEdits: Bool {
+        !model.teamName.isEmpty || model.players.contains { !$0.name.isEmpty }
+    }
 
     init(tournamentID: UUID, rosterSize: Int, requireDupr: Bool = false,
          duprMaxMale: Double? = nil, duprMaxFemale: Double? = nil, onDone: @escaping () -> Void) {
@@ -114,7 +119,7 @@ struct TeamMatchRegisterSheet: View {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: model.duprEligible && model.myDupr != nil ? "checkmark.seal.fill" : "exclamationmark.shield.fill")
                     .font(.system(size: 15))
-                    .foregroundStyle(model.duprEligible && model.myDupr != nil ? TLColor.accent : TLColor.gold)
+                    .foregroundStyle(model.duprEligible && model.myDupr != nil ? TLColor.accentText : TLColor.gold)
                 VStack(alignment: .leading, spacing: 2) {
                     if let d = model.myDupr {
                         Text(model.duprEligible ? "Đủ điều kiện · DUPR \(String(format: "%.2f", d))"
@@ -128,7 +133,7 @@ struct TeamMatchRegisterSheet: View {
                         Text("Đang kiểm tra DUPR…").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
                     }
                     Text("Giải yêu cầu DUPR \(capText) (theo giới tính đội trưởng).")
-                        .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                        .font(TLFont.mono(11)).foregroundStyle(TLColor.fg4)
                 }
                 Spacer()
             }
@@ -185,7 +190,7 @@ struct TeamMatchRegisterSheet: View {
                     }
                     if let err = model.error { Text(err).font(TLFont.sans(12)).foregroundStyle(TLColor.live) }
                     Text("Đăng ký xong đội được duyệt ngay.")
-                        .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                        .font(TLFont.mono(11)).foregroundStyle(TLColor.fg4)
                 }
                 .padding(16)
             }
@@ -194,10 +199,18 @@ struct TeamMatchRegisterSheet: View {
             .navigationTitle("Đăng ký đội")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Hủy") {
+                        if hasEdits { confirmDiscard = true } else { dismiss() }
+                    }.foregroundStyle(TLColor.fg3)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Haptics.success(); Task { await model.submit { onDone(); dismiss() } }
+                        Haptics.light()
+                        Task {
+                            await model.submit { onDone(); dismiss() }
+                            if model.error == nil { Haptics.success() } else { Haptics.error() }
+                        }
                     } label: {
                         if model.busy { ProgressView().tint(TLColor.accentText) }
                         else { Text("Gửi").font(TLFont.sans(15, .semibold)) }
@@ -206,7 +219,12 @@ struct TeamMatchRegisterSheet: View {
                     .disabled(!model.canSubmit || model.busy)
                 }
             }
+            .confirmationDialog("Bỏ thay đổi?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+                Button("Bỏ thay đổi", role: .destructive) { dismiss() }
+                Button("Tiếp tục nhập", role: .cancel) {}
+            }
         }
+        .interactiveDismissDisabled(hasEdits)
     }
 
     private func playerRow(_ i: Int) -> some View {
@@ -221,11 +239,17 @@ struct TeamMatchRegisterSheet: View {
             Button { Haptics.light(); model.players[i].captain.toggle() } label: {
                 Image(systemName: model.players[i].captain ? "star.fill" : "star")
                     .font(.system(size: 13)).foregroundStyle(model.players[i].captain ? TLColor.gold : TLColor.fg4)
+                    .frame(width: 44, height: 44).contentShape(Rectangle())
+                    .padding(.horizontal, -8) // claw back the 44pt hit frame's extra layout width
             }.buttonStyle(.plain)
+            .accessibilityLabel("Đặt làm đội trưởng")
             if model.players.count > 1 {
                 Button { Haptics.light(); model.players.remove(at: i) } label: {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 14)).foregroundStyle(TLColor.fg4)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                        .padding(.horizontal, -8)
                 }.buttonStyle(.plain)
+                .accessibilityLabel("Xóa VĐV")
             }
         }
     }

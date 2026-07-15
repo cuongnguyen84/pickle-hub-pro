@@ -37,47 +37,25 @@ REVOKE SELECT ON public.profiles FROM authenticated;
 -- ⚠️ MAINTENANCE: when you ADD a column to profiles, add it here too (unless
 --    it is itself PII). A column not listed here becomes unreadable by the
 --    frontend. Keep this in sync with the profiles schema.
-GRANT SELECT (
-  id,
-  avatar_url,
-  bio,
-  city,
-  country,
-  country_code,
-  created_at,
-  display_name,
-  display_name_updated_at,
-  dominant_hand,
-  dupr_connected_via,
-  dupr_doubles,
-  dupr_id,
-  dupr_last_attempt_at,
-  dupr_last_error,
-  dupr_profile_url,
-  dupr_singles,
-  dupr_synced_at,
-  external_id,
-  external_url,
-  favorite_venue_id,
-  is_ghost,
-  is_pro,
-  is_public_profile,
-  is_verified,
-  looking_for_game,
-  looking_for_game_note,
-  looking_for_game_until,
-  onboarding_completed_at,
-  onboarding_step,
-  organization_id,
-  preferred_language,
-  preferred_paddle,
-  profile_slug,
-  self_rating,
-  skill_level,
-  source_provider,
-  tournament_create_quota,
-  username
-) ON public.profiles TO anon, authenticated;
+-- Build the grant from the columns that exist in this schema revision. This
+-- keeps fresh-schema replay compatible with production-only historical fields.
+DO $$
+DECLARE
+  column_name TEXT;
+BEGIN
+  FOR column_name IN
+    SELECT c.column_name
+    FROM information_schema.columns AS c
+    WHERE c.table_schema = 'public'
+      AND c.table_name = 'profiles'
+      AND c.column_name NOT IN ('email', 'phone', 'contact_email', 'zalo_user_id')
+  LOOP
+    EXECUTE format(
+      'GRANT SELECT (%I) ON public.profiles TO anon, authenticated',
+      column_name
+    );
+  END LOOP;
+END $$;
 
 -- ─── 2. search_players: partner search, now phone-aware + DEFINER ────────────
 -- Was plain SQL (ran as caller). After lockdown the caller can no longer read

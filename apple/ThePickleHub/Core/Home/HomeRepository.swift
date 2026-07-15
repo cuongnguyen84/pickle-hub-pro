@@ -52,13 +52,29 @@ struct HomeRepository {
             .value
     }
 
-    /// Currently-live broadcasts for the homepage live section.
+    /// Live + scheduled broadcasts for the homepage live section. Scheduled
+    /// streams must always surface at the top of Home (mirrors web Index.tsx).
     func liveStreams() async throws -> [LivestreamSummary] {
         try await client
             .from("public_livestreams")
-            .select("id, title, thumbnail_url, mux_playback_id, scheduled_start_at, organization:organizations(name)")
-            .eq("status", value: "live")
+            .select("id, title, status, thumbnail_url, mux_playback_id, scheduled_start_at, organization:organizations(name)")
+            .in("status", values: ["live", "scheduled"])
             .order("scheduled_start_at", ascending: true)
+            .execute()
+            .value
+    }
+
+    /// Luồng vừa kết thúc (≤7 ngày) cho mục "Vừa kết thúc" trên Home — kèm
+    /// mux_asset_playback_id/vod/hls để phát lại được trong LiveWatchScreen.
+    func recentEndedStreams(limit: Int = 4) async throws -> [LivestreamSummary] {
+        let cutoff = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-7 * 86_400))
+        return try await client
+            .from("public_livestreams")
+            .select("id, title, status, thumbnail_url, mux_playback_id, mux_asset_playback_id, scheduled_start_at, ended_at, vod_url, hls_url, organization:organizations(name)")
+            .eq("status", value: "ended")
+            .gte("ended_at", value: cutoff)
+            .order("ended_at", ascending: false)
+            .limit(limit)
             .execute()
             .value
     }

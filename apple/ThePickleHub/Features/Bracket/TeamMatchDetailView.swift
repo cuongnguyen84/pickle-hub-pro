@@ -60,13 +60,16 @@ final class TeamMatchViewModel {
         }
     }
 
-    /// Captain: "Đã chuyển khoản" → team về trạng thái "claimed" (đỏ).
+    /// Captain: "Đã chuyển khoản" → team về trạng thái "claimed" (đỏ). Trả false nếu RPC fail.
     @MainActor
-    func claimPayment(shareID: String, teamID: UUID) async {
+    @discardableResult
+    func claimPayment(shareID: String, teamID: UUID) async -> Bool {
         working = true; actionError = nil
+        var ok = true
         do { try await repo.claimTeamPayment(teamID: teamID); await load(shareID: shareID) }
-        catch { actionError = error.localizedDescription }
+        catch { actionError = error.localizedDescription; ok = false }
         working = false
+        return ok
     }
 
     /// BTC xác nhận đã nhận → team về trạng thái "confirmed" (xanh, chính thức).
@@ -156,9 +159,46 @@ final class TeamMatchViewModel {
                     tournamentID: d.tournament.id, seededTeamIDs: seeded,
                     hasDreambreaker: d.tournament.hasDreambreaker ?? false)
             }
+            // Nhánh Tái sinh (hạng 3,4) — sinh cùng lúc, không chặn Playoff nếu thiếu đội.
+            if d.tournament.hasRepechage == true {
+                do { try await generateRepechage(d, target: target) }
+                catch { actionError = "Đã sinh Playoff, nhưng chưa sinh được nhánh Tái sinh (cần đủ hạng 3,4 mỗi bảng)." }
+            }
             await load(shareID: shareID)
         } catch { actionError = error.localizedDescription }
         working = false
+    }
+
+    /// Dựng nhánh Tái sinh: hạng 3,4 mỗi bảng, cùng cách xếp cặp như playoff (hạng 1,2).
+    private func generateRepechage(_ d: TMDetail, target: Int) async throws {
+        let db = d.tournament.hasDreambreaker ?? false
+        if d.tournament.format == "rr_playoff", d.hasGroups, target == d.groups.count * 2,
+           let pairs = groupRepechageFirstRound(d) {
+            try await repo.generatePlayoffFromGroupPairs(
+                tournamentID: d.tournament.id, firstRound: pairs, hasDreambreaker: db, isRepechage: true)
+        } else {
+            // Fallback không bảng: hạng target..2×target-1 (ngay sau nhóm vào playoff).
+            let seeded = Array(d.standings.map { $0.team.id.uuidString.lowercased() }.dropFirst(target).prefix(target))
+            guard seeded.count == target, seeded.count & (seeded.count - 1) == 0 else {
+                throw TeamMatchRepository.GenerateError.tooFewTeams
+            }
+            try await repo.generatePlayoffFromSeeds(
+                tournamentID: d.tournament.id, seededTeamIDs: seeded, hasDreambreaker: db, isRepechage: true)
+        }
+    }
+
+    /// First-round Tái sinh theo bảng: hạng 3 gặp hạng 4 bảng khác (mirror groupPairedFirstRound).
+    private func groupRepechageFirstRound(_ d: TMDetail) -> [(a: String, b: String)]? {
+        let groups = d.groups.sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }
+        var thirds: [String] = [], fourths: [String] = []
+        for g in groups {
+            let ids = Set(d.teams.filter { $0.groupID == g.id }.map { $0.id })
+            let st = d.standings(teamIDs: ids)
+            guard st.count >= 4 else { return nil }
+            thirds.append(st[2].team.id.uuidString.lowercased())
+            fourths.append(st[3].team.id.uuidString.lowercased())
+        }
+        return TeamMatchRepository.groupPairings(winners: thirds, runnersUp: fourths)
     }
 
     /// First-round theo bảng: nhất/nhì mỗi bảng (per-group standings) → TeamMatchRepository.groupPairings.
@@ -793,6 +833,16 @@ struct TeamMatchDetailView: View {
                 }
                 BracketTreeView(rounds: mlpBracketRounds(detail))
                 if let tp = detail.thirdPlaceMatch { thirdPlaceCard(detail, tp) }
+                if detail.hasRepechage {
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 1).fill(TLColor.gold).frame(width: 3, height: 15)
+                        Text("VÒNG TÁI SINH").font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                        Text("HẠNG 3,4").font(TLFont.mono(8.5, .bold)).tracking(0.5).foregroundStyle(TLColor.gold)
+                            .padding(.horizontal, 6).padding(.vertical, 3)
+                            .background(TLColor.gold.opacity(0.14), in: Capsule())
+                    }.padding(.top, 6)
+                    BracketTreeView(rounds: repechageBracketRounds(detail))
+                }
             }
         }
     }
@@ -889,6 +939,24 @@ struct TeamMatchDetailView: View {
                     onTap: canScore ? { scoringMatch = m } : nil)
             }
             return BracketRound(id: round.round, title: mlpRoundTitle(round.matches.count),
+                                doneCount: round.matches.filter { $0.isCompleted }.count, slots: slots)
+        }
+    }
+
+    private func repechageBracketRounds(_ detail: TMDetail) -> [BracketRound] {
+        detail.repechageRounds.map { round in
+            let slots = round.matches.map { m -> BracketSlot in
+                let aWon = m.isCompleted && m.winnerTeamID == m.teamAID
+                let bWon = m.isCompleted && m.winnerTeamID == m.teamBID
+                let canScore = model.auth.canScore && m.hasBothTeams && !detail.games(for: m.id).isEmpty
+                return BracketSlot(
+                    id: m.id,
+                    topName: detail.teamName(m.teamAID), botName: detail.teamName(m.teamBID),
+                    topScore: m.isCompleted ? "\(m.gamesWonA)" : "", botScore: m.isCompleted ? "\(m.gamesWonB)" : "",
+                    topWon: aWon, botWon: bWon, completed: m.isCompleted,
+                    onTap: canScore ? { scoringMatch = m } : nil)
+            }
+            return BracketRound(id: 1000 + round.round, title: mlpRoundTitle(round.matches.count),
                                 doneCount: round.matches.filter { $0.isCompleted }.count, slots: slots)
         }
     }
@@ -1472,7 +1540,7 @@ private struct GroupSetupSheet: View {
         let done = drawComplete
         let revealing = subPhase == .reveal && !done
         HStack(spacing: 12) {
-            Image(systemName: done ? "sparkles" : "shuffle").font(.system(size: 18)).foregroundStyle(TLColor.accent)
+            Image(systemName: done ? "sparkles" : "shuffle").font(.system(size: 18)).foregroundStyle(TLColor.accentText)
             if done {
                 Text("Bốc thăm hoàn tất").font(TLFont.serif(21)).foregroundStyle(TLColor.fg)
             } else if revealing, let cur = currentTeam, let gi = currentGroup {
@@ -1481,7 +1549,7 @@ private struct GroupSetupSheet: View {
                     HStack(spacing: 8) {
                         Text(cur.teamName).font(TLFont.serif(23)).foregroundStyle(TLColor.fg).lineLimit(1)
                             .matchedGeometryEffect(id: cur.id, in: flyNS)
-                        Image(systemName: "arrow.right").font(.system(size: 12, weight: .bold)).foregroundStyle(TLColor.accent)
+                        Image(systemName: "arrow.right").font(.system(size: 12, weight: .bold)).foregroundStyle(TLColor.accentText)
                         Text("Bảng \(names[gi])").font(TLFont.mono(13, .bold)).foregroundStyle(TLColor.accentInk)
                             .padding(.horizontal, 10).padding(.vertical, 4).background(TLColor.accent, in: Capsule())
                     }

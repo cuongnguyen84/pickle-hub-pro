@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAdminOrganizations, useCreateOrganization, useUpdateOrganization, useDeleteOrganization } from "@/hooks/useAdminData";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,6 @@ interface OrganizationFormData {
 
 export default function AdminOrganizations() {
   const { t } = useI18n();
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -80,7 +80,7 @@ export default function AdminOrganizations() {
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.slug.trim()) {
-      toast({ variant: "destructive", title: "Vui lòng điền đầy đủ thông tin" });
+      toast.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
@@ -93,7 +93,7 @@ export default function AdminOrganizations() {
           logo_url: formData.logo_url.trim() || null,
           description: formData.description.trim() || null,
         });
-        toast({ title: "Cập nhật tổ chức thành công" });
+        toast.success("Cập nhật tổ chức thành công");
       } else {
         await createOrg.mutateAsync({
           name: formData.name.trim(),
@@ -101,12 +101,12 @@ export default function AdminOrganizations() {
           logo_url: formData.logo_url.trim() || null,
           description: formData.description.trim() || null,
         });
-        toast({ title: "Tạo tổ chức thành công" });
+        toast.success("Tạo tổ chức thành công");
       }
       setDialogOpen(false);
       resetForm();
     } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+      toast.error(error.message || "Có lỗi xảy ra");
     }
   };
 
@@ -123,11 +123,11 @@ export default function AdminOrganizations() {
     if (!orgToDelete) return;
     try {
       await deleteOrg.mutateAsync(orgToDelete.id);
-      toast({ title: "Xoá tổ chức thành công" });
+      toast.success("Xoá tổ chức thành công");
       setDeleteDialogOpen(false);
       setOrgToDelete(null);
     } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Không thể xoá tổ chức. Có thể đang có nội dung liên kết." });
+      toast.error(error.message || "Không thể xoá tổ chức. Có thể đang có nội dung liên kết.");
     }
   };
 

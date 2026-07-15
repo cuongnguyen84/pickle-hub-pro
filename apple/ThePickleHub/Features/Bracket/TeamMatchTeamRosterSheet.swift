@@ -110,7 +110,7 @@ struct TeamMatchTeamRosterSheet: View {
                 Text("CHỜ").font(TLFont.mono(8, .bold)).foregroundStyle(TLColor.gold)
                     .padding(.horizontal, 5).padding(.vertical, 2).background(TLColor.gold.opacity(0.12), in: Capsule())
                 Button { Haptics.success(); Task { await model.approve(m.id) } } label: {
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 15)).foregroundStyle(TLColor.accent)
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 15)).foregroundStyle(TLColor.accentText)
                 }.buttonStyle(.plain)
             }
             if m.isCaptain != true {

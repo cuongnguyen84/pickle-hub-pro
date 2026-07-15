@@ -96,7 +96,12 @@ struct LiveView: View {
             .toolbar { toolbarButtons }
             .task {
                 await model.load()
-                if !didAutoSelect { didAutoSelect = true; segment = model.hasLive ? .live : .replays }
+                if !didAutoSelect {
+                    didAutoSelect = true
+                    // Live OR a scheduled broadcast keeps the Live segment front;
+                    // fall back to replays only on a fully quiet day.
+                    segment = (model.hasLive || !model.upcoming.isEmpty) ? .live : .replays
+                }
             }
             .task(id: segment) {
                 // Poll while on the Live tab so badges/scores reflect status changes
@@ -206,7 +211,9 @@ struct LiveView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Sắp phát")
             VStack(spacing: 10) {
-                ForEach(streams) { s in ScheduleRow(stream: s) }
+                ForEach(streams) { s in
+                    ScheduleRow(stream: s)
+                }
             }
             .padding(.horizontal, 22)
         }
@@ -285,6 +292,8 @@ struct LiveView: View {
                 .padding(.horizontal, 14).padding(.vertical, 7)
                 .background(active ? TLColor.accent.opacity(0.12) : TLColor.surface, in: Capsule())
                 .overlay(Capsule().strokeBorder(active ? TLColor.accent.opacity(0.4) : TLColor.border, lineWidth: 1))
+                .frame(minHeight: 40)             // hit target; capsule stays compact
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

@@ -7,7 +7,7 @@ struct SocialRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
     private static let columns =
-        "id, slug, title_vi, title_en, description_vi, start_at, end_at, location_text, court_count, max_players, level_min, level_max, price_vnd, zalo_group_url, ball_type, free_perks, status"
+        "id, slug, title_vi, title_en, description_vi, start_at, end_at, location_text, court_count, max_players, level_min, level_max, price_vnd, zalo_group_url, ball_type, free_perks, status, created_by, club_id, visibility, requires_prepayment, prepayment_deadline_hours"
 
     /// Published, public events that haven't ended yet, soonest first.
     func upcomingEvents(limit: Int = 30) async throws -> [SocialEvent] {
@@ -55,6 +55,47 @@ struct SocialRepository {
             .select("id, display_name, self_rated_level")
             .eq("event_id", value: eventID).neq("status", value: "cancelled")
             .order("registered_at", ascending: true).limit(limit).execute().value) ?? []
+    }
+
+    // MARK: Người chơi tự quản lý đăng ký (magic token — web /dang-ky/:token)
+
+    /// RPC read-only `get_registration_by_token` — join event + payment vào 1 dòng.
+    func registrationByToken(_ token: String) async throws -> PlayerRegistrationInfo? {
+        struct Params: Encodable { let p_magic_token: String }
+        let rows: [PlayerRegistrationInfo] = try await client
+            .rpc("get_registration_by_token", params: Params(p_magic_token: token))
+            .execute().value
+        return rows.first
+    }
+
+    /// Edge fn `cancel-registration` (bearer = magic token).
+    func cancelRegistration(token: String, reason: String?) async throws {
+        struct Body: Encodable { let magic_token: String; let reason: String? }
+        struct Resp: Decodable { let ok: Bool?; let code: String? }
+        let resp: Resp = try await client.functions.invoke(
+            "cancel-registration",
+            options: FunctionInvokeOptions(body: Body(magic_token: token, reason: reason)))
+        if let code = resp.code { throw SocialFlowError(code: code) }
+    }
+
+    /// Edge fn `reactivate-registration` — đăng ký lại khi còn chỗ.
+    func reactivateRegistration(token: String) async throws {
+        struct Body: Encodable { let magic_token: String }
+        struct Resp: Decodable { let ok: Bool?; let code: String? }
+        let resp: Resp = try await client.functions.invoke(
+            "reactivate-registration",
+            options: FunctionInvokeOptions(body: Body(magic_token: token)))
+        if let code = resp.code { throw SocialFlowError(code: code) }
+    }
+
+    /// Edge fn `mark-payment-claimed` — người chơi báo đã chuyển khoản.
+    func markPaymentClaimed(orderID: UUID, token: String) async throws {
+        struct Body: Encodable { let order_id: String; let magic_token: String }
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp = try await client.functions.invoke(
+            "mark-payment-claimed",
+            options: FunctionInvokeOptions(body: Body(
+                order_id: orderID.uuidString.lowercased(), magic_token: token)))
     }
 
     /// Registration counts for several events at once (parallel head-counts).

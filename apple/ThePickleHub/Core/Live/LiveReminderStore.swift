@@ -36,6 +36,8 @@ final class LiveReminderStore {
         content.title = "Sắp phát trực tiếp"
         content.body = "“\(title)” sắp bắt đầu — vào xem ngay."
         content.sound = .default
+        // Tap routing: AppDelegate.didReceive reads this and opens the stream.
+        content.userInfo = ["livestreamID": key]
         let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: fireAt)
         let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
         let request = UNNotificationRequest(identifier: "live-reminder-\(key)", content: content, trigger: trigger)
