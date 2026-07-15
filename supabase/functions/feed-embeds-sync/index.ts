@@ -26,18 +26,13 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const GRAPH_VERSION = "v21.0";
 // Recent posts per account per run. Hourly cron + active accounts posting
 // a few times a day → 15 is plenty of overlap to never miss one.
 const MEDIA_LIMIT = 15;
 const CAPTION_MAX = 220;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-cron-secret",
-};
 
 interface SourceRow {
   id: string;

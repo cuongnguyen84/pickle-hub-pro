@@ -27,7 +27,8 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { jsonResponse } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 import { normalizeVietnamPhone } from "../_shared/phone.ts";
 import { generateOtpCode, hashOtp } from "../_shared/otp.ts";
 import { sendBrandnameSms } from "../_shared/sms-esms.ts";

@@ -1,0 +1,197 @@
+import { describe, expect, it } from "vitest";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import {
+  authWebhookCorsHeaders,
+  clientEventCorsHeaders,
+  corsHeaders,
+  cronCorsHeaders,
+  cronPostCorsHeaders,
+  internalSecretCorsHeaders,
+  muxWebhookCorsHeaders,
+  newsletterCorsHeaders,
+  simpleCorsHeaders,
+  socialCaptionCorsHeaders,
+  supabaseClientCorsHeaders,
+  supabaseClientPostCorsHeaders,
+  videoProxyCorsHeaders,
+} from "../../../supabase/functions/_shared/cors";
+
+const functionsDir = fileURLToPath(
+  new URL("../../../supabase/functions/", import.meta.url),
+);
+
+const functionSources = new Map(
+  readdirSync(functionsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== "_shared")
+    .filter((entry) =>
+      existsSync(
+        new URL(
+          `../../../supabase/functions/${entry.name}/index.ts`,
+          import.meta.url,
+        ),
+      ),
+    )
+    .map((entry) => {
+      const path = new URL(
+        `../../../supabase/functions/${entry.name}/index.ts`,
+        import.meta.url,
+      );
+      return [entry.name, readFileSync(path, "utf8")] as const;
+    }),
+);
+
+const expectedPresetFiles: Record<string, string[]> = {
+  simpleCorsHeaders: [
+    "api-keys-admin-generate",
+    "api-keys-admin-revoke",
+    "api-keys-generate",
+    "api-keys-list",
+    "api-keys-revoke",
+    "delete-account",
+    "invite-team-to-tournament",
+    "mux-create-livestream",
+    "news-check",
+    "news-ingest",
+    "og-doubles-elimination",
+    "og-flex-tournament",
+    "og-image-club",
+    "og-image-match",
+    "og-image-player",
+    "og-image-social-event",
+    "og-live",
+    "og-organization",
+    "og-quick-table",
+    "og-tournament",
+    "og-video",
+    "send-push-notification",
+    "sitemap",
+  ],
+  cronCorsHeaders: [
+    "feed-embeds-sync",
+    "feed-generate",
+    "mux-sync-assets",
+    "news-translate",
+  ],
+  cronPostCorsHeaders: ["auto-archive-tournaments"],
+  supabaseClientPostCorsHeaders: ["batch-view-events"],
+  supabaseClientCorsHeaders: ["geo-check"],
+  clientEventCorsHeaders: ["log-client-event"],
+  muxWebhookCorsHeaders: ["mux-webhook"],
+  newsletterCorsHeaders: ["newsletter-subscribe"],
+  authWebhookCorsHeaders: ["send-auth-email"],
+  internalSecretCorsHeaders: ["send-event-registration-email"],
+  socialCaptionCorsHeaders: ["social-caption"],
+  videoProxyCorsHeaders: ["video-thumbnail-proxy"],
+};
+
+describe("Edge Function CORS and server entrypoints", () => {
+  it("preserves the characterized CORS policy variants", () => {
+    const origin = { "Access-Control-Allow-Origin": "*" };
+    const standard = "authorization, x-client-info, apikey, content-type";
+    const supabaseClient =
+      `${standard}, x-supabase-client-platform, ` +
+      "x-supabase-client-platform-version, x-supabase-client-runtime, " +
+      "x-supabase-client-runtime-version";
+
+    expect(corsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": `${standard}, x-cron-secret`,
+    });
+    expect(simpleCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Headers": standard,
+    });
+    expect(cronCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Headers": `${standard}, x-cron-secret`,
+    });
+    expect(cronPostCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": `${standard}, x-cron-secret`,
+    });
+    expect(supabaseClientCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Headers": supabaseClient,
+    });
+    expect(supabaseClientPostCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": supabaseClient,
+    });
+    expect(clientEventCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "content-type, authorization, apikey",
+    });
+    expect(muxWebhookCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Headers": `${standard}, mux-signature`,
+    });
+    expect(newsletterCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "authorization, content-type, apikey, x-client-info",
+      "Content-Type": "application/json",
+    });
+    expect(authWebhookCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Headers":
+        `${standard}, x-supabase-webhook-secret`,
+    });
+    expect(internalSecretCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Headers": `${standard}, x-internal-secret`,
+    });
+    expect(socialCaptionCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers":
+        "authorization, content-type, x-auth-secret, apikey, x-client-info",
+      "Content-Type": "application/json",
+    });
+    expect(videoProxyCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+      "Access-Control-Allow-Headers": `${standard}, range`,
+      "Access-Control-Expose-Headers":
+        "content-length, content-range, accept-ranges",
+    });
+  });
+
+  it("routes every former inline CORS declaration through its exact preset", () => {
+    expect(Object.values(expectedPresetFiles).flat()).toHaveLength(37);
+
+    for (const [preset, functionNames] of Object.entries(expectedPresetFiles)) {
+      for (const functionName of functionNames) {
+        expect(functionSources.get(functionName), functionName).toContain(
+          `import { ${preset} as corsHeaders } from "../_shared/cors.ts";`,
+        );
+      }
+    }
+
+    const combined = [...functionSources.values()].join("\n");
+    expect(
+      [...functionSources.values()].filter((source) =>
+        source.includes('_shared/cors.ts"'),
+      ),
+    ).toHaveLength(72);
+    expect(combined).not.toMatch(/const corsHeaders\s*=/);
+    expect(combined).not.toMatch(
+      /import\s*\{[^}]*corsHeaders[^}]*\}\s*from\s*["']\.\.\/_shared\/auth\.ts["']/s,
+    );
+  });
+
+  it("uses Deno.serve for every function entrypoint", () => {
+    expect(functionSources).toHaveLength(76);
+    for (const [functionName, source] of functionSources) {
+      expect(source, functionName).toContain("Deno.serve(");
+      expect(source, functionName).not.toMatch(
+        /deno\.land\/std@[^"']+\/http\/server\.ts/,
+      );
+    }
+  });
+});

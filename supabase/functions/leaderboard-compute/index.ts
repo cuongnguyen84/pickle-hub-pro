@@ -7,7 +7,8 @@
 // Phase 2). Min 5 verified matches in period to qualify.
 // ============================================================================
 
-import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { jsonResponse } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 Deno.serve(async (req) => {

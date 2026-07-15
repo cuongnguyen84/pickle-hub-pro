@@ -24,6 +24,7 @@
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 // BATCH_SIZE chosen with Supabase edge runtime's 25s wall-clock budget
 // in mind. Each row costs ~2-3s (Gemini call + insert + status update)
@@ -42,12 +43,6 @@ const STALE_CLAIM_AGE_MIN = 5;
 // also has the highest free-tier RPM in the 2.x family.
 const GEMINI_MODEL = "gemini-flash-lite-latest";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-cron-secret",
-};
 
 interface NewsEnRow {
   id: string;

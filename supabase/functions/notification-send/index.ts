@@ -10,7 +10,8 @@
 // PR). This skeleton can be wired once that resolves.
 // ============================================================================
 
-import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { jsonResponse } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

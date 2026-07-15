@@ -12,16 +12,12 @@
  * sitemap URL contract).
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const SITE_URL = "https://www.thepicklehub.net";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const xmlHeaders = {
   ...corsHeaders,
@@ -160,13 +156,34 @@ const STATIC_URLS: { loc: string; changefreq: string; priority: string; lastmod?
   { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
 ];
 
-async function buildStatic(supabase: any): Promise<string> {
+interface ViBlogStaticRow {
+  slug: string;
+  alternate_en_slug: string | null;
+}
+
+interface ViBlogPostRow extends ViBlogStaticRow {
+  updated_at: string | null;
+}
+
+interface SlugUpdatedRow {
+  slug: string | null;
+  updated_at: string | null;
+}
+
+interface PlayerSitemapRow {
+  username: string | null;
+  created_at: string | null;
+}
+
+async function buildStatic(supabase: SupabaseClient): Promise<string> {
   const { data: viPosts } = await supabase
     .from("vi_blog_posts")
     .select("slug, alternate_en_slug")
     .eq("status", "published");
   const enToVi = new Map<string, string>();
-  for (const p of viPosts || []) if (p.alternate_en_slug) enToVi.set(p.alternate_en_slug, p.slug);
+  for (const post of (viPosts ?? []) as ViBlogStaticRow[]) {
+    if (post.alternate_en_slug) enToVi.set(post.alternate_en_slug, post.slug);
+  }
 
   const staticEntries = STATIC_URLS.map((u) =>
     buildUrlEntry({ loc: `${SITE_URL}${u.loc}`, lastmod: u.lastmod, changefreq: u.changefreq, priority: u.priority, hreflang: u.hreflang }),
@@ -179,14 +196,14 @@ async function buildStatic(supabase: any): Promise<string> {
   return wrapUrlset([...staticEntries, ...enBlogEntries]);
 }
 
-async function buildBlog(supabase: any): Promise<string> {
+async function buildBlog(supabase: SupabaseClient): Promise<string> {
   const { data: viPosts } = await supabase
     .from("vi_blog_posts")
     .select("slug, updated_at, alternate_en_slug")
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(5000);
-  const entries = (viPosts || []).map((post: any) => {
+  const entries = ((viPosts ?? []) as ViBlogPostRow[]).map((post) => {
     const lastmod = toLastmod(post.updated_at);
     const hreflang = post.alternate_en_slug
       ? [
@@ -209,27 +226,30 @@ async function buildBlog(supabase: any): Promise<string> {
   return wrapUrlset(entries);
 }
 
-async function buildTournaments(supabase: any): Promise<string> {
+async function buildTournaments(supabase: SupabaseClient): Promise<string> {
   const { data: tournaments } = await supabase
     .from("tournaments")
     .select("slug, updated_at")
     .order("start_date", { ascending: false })
     .limit(5000);
-  const entries = (tournaments || [])
-    .filter((t: any) => t.slug && URL_SAFE_SLUG.test(t.slug))
-    .map((t: any) =>
+  const entries = ((tournaments ?? []) as SlugUpdatedRow[])
+    .filter((tournament) => tournament.slug && URL_SAFE_SLUG.test(tournament.slug))
+    .map((tournament) =>
       buildUrlEntry({
-        loc: `${SITE_URL}/tournament/${t.slug}`,
-        lastmod: toLastmod(t.updated_at),
+        loc: `${SITE_URL}/tournament/${tournament.slug}`,
+        lastmod: toLastmod(tournament.updated_at),
         changefreq: "weekly",
         priority: "0.7",
-        hreflang: bilingual(`/tournament/${t.slug}`, `/vi/tournament/${t.slug}`),
+        hreflang: bilingual(
+          `/tournament/${tournament.slug}`,
+          `/vi/tournament/${tournament.slug}`,
+        ),
       }),
     );
   return wrapUrlset(entries);
 }
 
-async function buildMatches(supabase: any): Promise<string> {
+async function buildMatches(supabase: SupabaseClient): Promise<string> {
   const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
   const { data: matches } = await supabase
     .from("matches")
@@ -239,12 +259,12 @@ async function buildMatches(supabase: any): Promise<string> {
     .gte("played_at", cutoff)
     .order("updated_at", { ascending: false })
     .limit(5000);
-  const entries = (matches || [])
-    .filter((m: any) => m.slug && URL_SAFE_SLUG.test(m.slug))
-    .map((m: any) =>
+  const entries = ((matches ?? []) as SlugUpdatedRow[])
+    .filter((match) => match.slug && URL_SAFE_SLUG.test(match.slug))
+    .map((match) =>
       buildUrlEntry({
-        loc: `${SITE_URL}/tran-dau/${m.slug}`,
-        lastmod: toLastmod(m.updated_at),
+        loc: `${SITE_URL}/tran-dau/${match.slug}`,
+        lastmod: toLastmod(match.updated_at),
         changefreq: "weekly",
         priority: "0.7",
       }),
@@ -252,7 +272,7 @@ async function buildMatches(supabase: any): Promise<string> {
   return wrapUrlset(entries);
 }
 
-async function buildPlayers(supabase: any): Promise<string> {
+async function buildPlayers(supabase: SupabaseClient): Promise<string> {
   const { data: players } = await supabase
     .from("profiles")
     .select("username, created_at")
@@ -261,12 +281,14 @@ async function buildPlayers(supabase: any): Promise<string> {
     .not("username", "is", null)
     .order("created_at", { ascending: false })
     .limit(5000);
-  const entries = (players || [])
-    .filter((p: any) => p.username && URL_SAFE_USERNAME.test(p.username))
-    .map((p: any) =>
+  const entries = ((players ?? []) as PlayerSitemapRow[])
+    .filter((player) =>
+      player.username && URL_SAFE_USERNAME.test(player.username)
+    )
+    .map((player) =>
       buildUrlEntry({
-        loc: `${SITE_URL}/nguoi-choi/${p.username}`,
-        lastmod: toLastmod(p.created_at),
+        loc: `${SITE_URL}/nguoi-choi/${player.username}`,
+        lastmod: toLastmod(player.created_at),
         changefreq: "weekly",
         priority: "0.6",
       }),
@@ -274,18 +296,18 @@ async function buildPlayers(supabase: any): Promise<string> {
   return wrapUrlset(entries);
 }
 
-async function buildVenues(supabase: any): Promise<string> {
+async function buildVenues(supabase: SupabaseClient): Promise<string> {
   const { data: venues } = await supabase
     .from("venues")
     .select("slug, updated_at")
     .order("updated_at", { ascending: false })
     .limit(5000);
-  const entries = (venues || [])
-    .filter((v: any) => v.slug && URL_SAFE_SLUG.test(v.slug))
-    .map((v: any) =>
+  const entries = ((venues ?? []) as SlugUpdatedRow[])
+    .filter((venue) => venue.slug && URL_SAFE_SLUG.test(venue.slug))
+    .map((venue) =>
       buildUrlEntry({
-        loc: `${SITE_URL}/san/${v.slug}`,
-        lastmod: toLastmod(v.updated_at),
+        loc: `${SITE_URL}/san/${venue.slug}`,
+        lastmod: toLastmod(venue.updated_at),
         changefreq: "monthly",
         priority: "0.5",
       }),

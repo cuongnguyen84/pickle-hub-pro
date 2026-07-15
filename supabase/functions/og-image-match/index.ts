@@ -34,18 +34,13 @@
  * - Bottom: venue name + date (DD/MM/YYYY VN)
  */
 
-// @ts-expect-error — Deno npm: imports
 import { ImageResponse } from "npm:@vercel/og@0.6.5";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import React from "npm:react@18.3.1";
+import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const URL_SAFE_SLUG = /^[a-z0-9-]+$/;
 
@@ -72,6 +67,14 @@ interface MatchOgData {
   venue_name: string | null;
   team_a_label: string;
   team_b_label: string;
+}
+
+interface MatchParticipantRow {
+  team: "a" | "b";
+  profile: {
+    display_name: string | null;
+    username: string | null;
+  } | null;
 }
 
 async function fetchMatchData(slug: string): Promise<MatchOgData | null> {
@@ -104,10 +107,14 @@ async function fetchMatchData(slug: string): Promise<MatchOgData | null> {
     .order("team", { ascending: true })
     .order("position", { ascending: true });
 
+  const participants = (parts ?? []) as unknown as MatchParticipantRow[];
   const labelFor = (team: "a" | "b") =>
-    (parts ?? [])
-      .filter((p: any) => p.team === team)
-      .map((p: any) => p.profile?.display_name ?? p.profile?.username ?? "?")
+    participants
+      .filter((participant) => participant.team === team)
+      .map(
+        (participant) =>
+          participant.profile?.display_name ?? participant.profile?.username ?? "?",
+      )
       .filter(Boolean)
       .join(" & ") || "?";
 

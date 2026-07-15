@@ -9,16 +9,10 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { newsletterCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info",
-  "Content-Type": "application/json",
-};
 
 // RFC-5322-ish lightweight email regex (not strictly exhaustive; edge cases
 // like quoted-local-part are rejected — fine for a newsletter form).

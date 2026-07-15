@@ -1,4 +1,4 @@
-import * as crypto from "https://deno.land/std@0.168.0/crypto/mod.ts";
+import { authWebhookCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SEND_EMAIL_HOOK_SECRET = Deno.env.get("SEND_EMAIL_HOOK_SECRET");
@@ -24,11 +24,6 @@ const sendEmail = async (to: string, subject: string, html: string) => {
   }
   
   return response.json();
-};
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-webhook-secret",
 };
 
 // Supabase Auth Hook format
@@ -85,7 +80,7 @@ const verifyWebhookSignature = async (payload: string, signatureHeader: string |
     const keyBytes = Uint8Array.from(atob(secretKey), c => c.charCodeAt(0));
     
     // Compute HMAC-SHA256
-    const key = await crypto.subtle.importKey(
+    const key = await globalThis.crypto.subtle.importKey(
       "raw",
       keyBytes,
       { name: "HMAC", hash: "SHA-256" },
@@ -94,7 +89,11 @@ const verifyWebhookSignature = async (payload: string, signatureHeader: string |
     );
     
     const encoder = new TextEncoder();
-    const signatureBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+    const signatureBytes = await globalThis.crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(payload),
+    );
     const computedSignature = btoa(String.fromCharCode(...new Uint8Array(signatureBytes)));
     
     // Constant-time comparison
@@ -115,8 +114,13 @@ const verifyWebhookSignature = async (payload: string, signatureHeader: string |
 };
 
 // Check if request is from Supabase Auth Hook
-const isAuthHookRequest = (body: any): body is AuthHookPayload => {
-  return body && typeof body === 'object' && 'user' in body && 'email_data' in body;
+const isAuthHookRequest = (body: unknown): body is AuthHookPayload => {
+  return Boolean(
+    body &&
+      typeof body === "object" &&
+      "user" in body &&
+      "email_data" in body,
+  );
 };
 
 const getSignupEmailHtml = (confirmationUrl: string) => `
@@ -507,10 +511,11 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-auth-email function:", error);
+    const message = error instanceof Error ? error.message : "unknown_error";
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }

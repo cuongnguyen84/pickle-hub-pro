@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -24,11 +24,6 @@ const sendEmail = async (to: string, subject: string, html: string) => {
   }
   
   return response.json();
-};
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 interface InviteRequest {
@@ -213,13 +208,14 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in invite-team-to-tournament:", error);
+    const message = error instanceof Error ? error.message : "unknown_error";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 };
 
-serve(handler);
+Deno.serve(handler);

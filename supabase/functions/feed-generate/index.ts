@@ -29,18 +29,13 @@
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const ICT_OFFSET_MS = 7 * 3600_000;
 const EVENT_THRESHOLDS = [5, 10, 25, 50, 100];
 const DUPR_MIN_BAND = 3.0; // first celebrated band; below that it's noise
 const CLIMBER_COUNT = 5;
 const GEMINI_MODEL = "gemini-flash-lite-latest";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-cron-secret",
-};
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

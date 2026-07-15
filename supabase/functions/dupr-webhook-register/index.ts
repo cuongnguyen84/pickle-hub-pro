@@ -18,7 +18,8 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { jsonResponse } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 import { partnerFetch, getDuprEnv } from "../_shared/dupr-client.ts";
 
 Deno.serve(async (req) => {

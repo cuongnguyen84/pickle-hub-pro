@@ -14,14 +14,10 @@
 // matches a vault-stored secret so random callers can't spam Resend.
 // ============================================================================
 
+import { internalSecretCorsHeaders as corsHeaders } from "../_shared/cors.ts";
+
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const INTERNAL_SECRET = Deno.env.get("INTERNAL_NOTIFY_SECRET");
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-internal-secret",
-};
 
 interface RequestBody {
   recipient_emails?: unknown;

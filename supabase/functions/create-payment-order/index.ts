@@ -21,7 +21,8 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { jsonResponse } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

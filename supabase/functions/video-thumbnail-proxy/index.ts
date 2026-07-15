@@ -28,14 +28,7 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, range",
-  "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-  "Access-Control-Expose-Headers": "content-length, content-range, accept-ranges",
-};
+import { videoProxyCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const jsonError = (status: number, code: string, message?: string) =>
   new Response(JSON.stringify({ error: code, message }), {

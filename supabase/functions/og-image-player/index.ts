@@ -18,14 +18,10 @@
 import { ImageResponse } from "npm:@vercel/og@0.6.5";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import React from "npm:react@18.3.1";
+import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const URL_SAFE_USERNAME = /^[a-zA-Z0-9_-]{1,64}$/;
 

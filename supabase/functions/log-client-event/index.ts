@@ -3,6 +3,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getAuthUser } from "../_shared/auth.ts";
+import { clientEventCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import {
   MAX_CLIENT_ERROR_BODY_BYTES,
   getClientErrorIp,
@@ -16,12 +17,6 @@ import {
 const RATE_WINDOW_SECONDS = 10 * 60;
 const AUTHENTICATED_EVENT_LIMIT = 60;
 const ANONYMOUS_EVENT_LIMIT = 120;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "content-type, authorization, apikey",
-};
 
 interface RateLimitResult {
   allowed: boolean;

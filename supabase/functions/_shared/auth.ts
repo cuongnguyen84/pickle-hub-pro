@@ -26,6 +26,7 @@
 // ============================================================================
 
 import type { SupabaseClient, User } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { corsHeaders } from "./cors.ts";
 
 /**
  * Extract + verify the bearer token from a Request, returning the
@@ -49,16 +50,6 @@ export async function getAuthUser(
     return null;
   }
 }
-
-/**
- * Standard CORS headers used by every social edge function so the SPA
- * can call them from the browser.
- */
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-};
 
 /** JSON helper — uniform error shape across all 8 social functions. */
 export function jsonResponse(body: unknown, status = 200): Response {

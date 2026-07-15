@@ -25,6 +25,8 @@
 // Response (4xx/5xx): { error: string }
 // ============================================================================
 
+import { socialCaptionCorsHeaders as corsHeaders } from "../_shared/cors.ts";
+
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-lite-latest";
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const SOCIAL_POSTER_SECRET = Deno.env.get("SOCIAL_POSTER_SECRET") ?? "";
@@ -36,13 +38,6 @@ interface RequestBody {
   category: string | null;
   link: string;
 }
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type, x-auth-secret, apikey, x-client-info",
-  "Content-Type": "application/json",
-};
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });

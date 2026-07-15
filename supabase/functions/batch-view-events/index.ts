@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getAuthUser } from "../_shared/auth.ts";
+import { supabaseClientPostCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import {
   MAX_VIEW_EVENT_BODY_BYTES,
   buildInsertViewEvents,
@@ -16,13 +17,6 @@ const DEDUP_WINDOW_SECONDS = 30;
 const RATE_WINDOW_SECONDS = 10 * 60;
 const AUTHENTICATED_EVENT_LIMIT = 120;
 const ANONYMOUS_EVENT_LIMIT = 600;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {

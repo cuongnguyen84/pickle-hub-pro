@@ -15,7 +15,8 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { jsonResponse } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 const CANCELLED_REASON = "auto_cancelled_unpaid_deadline";

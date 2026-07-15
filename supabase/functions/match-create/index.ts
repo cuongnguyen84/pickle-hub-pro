@@ -9,7 +9,8 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import { getAuthUser, corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 import {
   validateScores,
   type ScoringFormat,
