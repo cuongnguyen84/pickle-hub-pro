@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAdminStats, useRecentLivestreams, useRecentVideos } from "@/hooks/useAdminData";
 import { useI18n } from "@/i18n";

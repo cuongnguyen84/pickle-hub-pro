@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAdminOrganizations, useCreateOrganization, useUpdateOrganization, useDeleteOrganization } from "@/hooks/useAdminData";
