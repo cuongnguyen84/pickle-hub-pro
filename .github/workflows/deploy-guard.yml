@@ -33,7 +33,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 2 # need HEAD~1 to diff the push
+          # A direct push can contain multiple commits. Fetch the full span so
+          # function changes in an earlier commit are not silently skipped.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -46,8 +48,14 @@ jobs:
 
       - name: Detect changed edge functions
         id: changed
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'supabase/functions/**')
+          BASE="$PUSH_BEFORE"
+          if [ -z "$BASE" ] || [[ "$BASE" =~ ^0+$ ]] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            BASE="HEAD~1"
+          fi
+          CHANGED=$(git diff --name-only "$BASE" HEAD -- 'supabase/functions/**')
           echo "Changed paths:"; echo "$CHANGED"
           if echo "$CHANGED" | grep -q '^supabase/functions/_shared/'; then
             # Shared helpers changed — every consumer bundle may now be stale,
@@ -57,10 +65,20 @@ jobs:
               | sed 's#supabase/functions/##; s#/$##' \
               | grep -v '^_shared$' | sort -u | tr '\n' ' ')
           else
-            # Only the touched function directories (exclude _shared).
-            FNS=$(echo "$CHANGED" \
+            # Only touched function directories that still exist. A deleted
+            # function is handled explicitly (or manually) and must not be
+            # passed to `supabase functions deploy` with a missing entrypoint.
+            CANDIDATES=$(echo "$CHANGED" \
               | sed -nE 's#^supabase/functions/([^/]+)/.*#\1#p' \
-              | grep -v '^_shared$' | sort -u | tr '\n' ' ')
+              | grep -v '^_shared$' | sort -u)
+            FNS=""
+            for fn in $CANDIDATES; do
+              if [ -f "supabase/functions/$fn/index.ts" ]; then
+                FNS="${FNS:+$FNS }$fn"
+              else
+                echo "→ skipping removed function: $fn"
+              fi
+            done
           fi
           echo "functions=$FNS" >> "$GITHUB_OUTPUT"
           echo "To deploy: ${FNS:-<none>}"
