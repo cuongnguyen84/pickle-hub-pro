@@ -205,4 +205,19 @@ describe("production-seeded migration replay guards", () => {
     expect(sql).toContain(columnGuard);
     expect(sql.indexOf(columnGuard)).toBeLessThan(sql.indexOf(legacyIndex));
   });
+
+  it("drops the production club listing before replaying its older shape", () => {
+    const sql = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260512160000_clubs_self_service.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const dropView = "DROP VIEW IF EXISTS public.club_listing;";
+    const createView = "CREATE VIEW public.club_listing AS";
+
+    expect(sql).toContain(dropView);
+    expect(sql.indexOf(dropView)).toBeLessThan(sql.indexOf(createView));
+  });
 });

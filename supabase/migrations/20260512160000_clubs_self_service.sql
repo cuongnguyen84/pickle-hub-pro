@@ -57,7 +57,12 @@ GRANT  EXECUTE ON FUNCTION public.user_club_count(UUID) TO service_role;
 -- it refresh-free; PR57 will fold this into a richer `club_stats`
 -- view with player counts.
 
-CREATE OR REPLACE VIEW public.club_listing AS
+-- Production-seeded replay can already carry PR57's wider view. Plain DROP
+-- keeps dependencies fail-closed while allowing this historical shape to run;
+-- the next migration drops it again and recreates the current wider shape.
+DROP VIEW IF EXISTS public.club_listing;
+
+CREATE VIEW public.club_listing AS
 SELECT
   c.id,
   c.slug,
