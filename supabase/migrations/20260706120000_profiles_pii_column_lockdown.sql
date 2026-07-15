@@ -44,11 +44,11 @@ DECLARE
   column_name TEXT;
 BEGIN
   FOR column_name IN
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'profiles'
-      AND column_name NOT IN ('email', 'phone', 'contact_email', 'zalo_user_id')
+    SELECT c.column_name
+    FROM information_schema.columns AS c
+    WHERE c.table_schema = 'public'
+      AND c.table_name = 'profiles'
+      AND c.column_name NOT IN ('email', 'phone', 'contact_email', 'zalo_user_id')
   LOOP
     EXECUTE format(
       'GRANT SELECT (%I) ON public.profiles TO anon, authenticated',
