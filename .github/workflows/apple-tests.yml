@@ -1,0 +1,73 @@
+name: Apple tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apple/**"
+      - ".github/workflows/apple-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apple/**"
+      - ".github/workflows/apple-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    timeout-minutes: 30
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install XcodeGen
+        run: |
+          brew install xcodegen
+          xcodegen --version
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        working-directory: apple
+        run: |
+          cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig
+          xcodegen generate
+
+      - name: Select an available iPhone simulator
+        id: simulator
+        run: |
+          SIMULATOR_ID=$(xcrun simctl list devices available --json | jq -er \
+            '[.devices[][] | select(.isAvailable == true and (.name | startswith("iPhone")))] | first | .udid')
+          echo "id=$SIMULATOR_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl list devices | grep "$SIMULATOR_ID"
+          xcrun simctl shutdown "$SIMULATOR_ID" || true
+          xcrun simctl boot "$SIMULATOR_ID"
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+
+      - name: Run native unit tests
+        working-directory: apple
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ThePickleHub.xcodeproj \
+            -scheme ThePickleHub \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -resultBundlePath "$RUNNER_TEMP/ThePickleHubTests.xcresult" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test result on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-test-results
+          path: ${{ runner.temp }}/ThePickleHubTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7

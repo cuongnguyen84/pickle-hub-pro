@@ -34,6 +34,26 @@ xcodebuild -scheme ThePickleHub \
 > `/Library/Developer/CoreSimulator` — Apple does not support relocating it.
 > Only build output is offloaded.
 
+## Tests
+
+Generate the project, then run the native unit-test bundle on any available
+iPhone simulator:
+
+```sh
+cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig # first run only
+xcodegen generate
+xcodebuild test \
+  -project ThePickleHub.xcodeproj \
+  -scheme ThePickleHub \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+The `Apple tests` GitHub Actions workflow runs the same test bundle for every
+pull request or push to `main` that changes `apple/**`. It generates the
+ignored `.xcodeproj` and a placeholder secrets file from the checked-in
+examples, so CI does not require production credentials.
+
 ## What Phase 0 ships
 
 A scaffold that **de-risks the migration** before any feature work:

@@ -17,10 +17,10 @@ settings:
 packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
-    from: "2.0.0"
+    exactVersion: "2.48.0"
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
-    from: "7.1.0"
+    exactVersion: "7.1.0"
 
 targets:
   ThePickleHub:
