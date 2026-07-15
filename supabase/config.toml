@@ -388,3 +388,5 @@ verify_jwt = false
 # threshold within the window.
 [functions.errors-telegram-alert]
 verify_jwt = false
+[functions.cron-health-alert]
+verify_jwt = false
