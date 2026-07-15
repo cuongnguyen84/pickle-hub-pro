@@ -238,4 +238,21 @@ describe("production-seeded migration replay guards", () => {
       sql.indexOf(addConstraint),
     );
   });
+
+  it("drops the active news sources policy before recreating it", () => {
+    const sql = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260519000000_news_aggregator_phase_1.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const dropPolicy =
+      'DROP POLICY IF EXISTS "Active news sources are publicly readable"';
+    const createPolicy =
+      'CREATE POLICY "Active news sources are publicly readable"';
+
+    expect(sql).toContain(dropPolicy);
+    expect(sql.indexOf(dropPolicy)).toBeLessThan(sql.indexOf(createPolicy));
+  });
 });

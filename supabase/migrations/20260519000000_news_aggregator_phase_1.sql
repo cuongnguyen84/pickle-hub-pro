@@ -253,6 +253,8 @@ ON CONFLICT (id) DO UPDATE SET
 ALTER TABLE public.news_sources ENABLE ROW LEVEL SECURITY;
 
 -- Public can read active sources (frontend filter pills, attribution).
+DROP POLICY IF EXISTS "Active news sources are publicly readable"
+  ON public.news_sources;
 CREATE POLICY "Active news sources are publicly readable"
   ON public.news_sources
   FOR SELECT
