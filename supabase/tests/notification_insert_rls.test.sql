@@ -2,10 +2,15 @@ BEGIN;
 
 SELECT plan(4);
 
-SELECT hasnt_policy(
-  'public',
-  'notifications',
-  'Service can insert notifications',
+-- pgTAP in this environment lacks the *_policy helpers; assert against the
+-- native pg_policies catalog view instead.
+SELECT ok(
+  NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'notifications'
+      AND policyname = 'Service can insert notifications'
+  ),
   'the unrestricted notification INSERT policy is removed'
 );
 

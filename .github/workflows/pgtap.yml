@@ -1,0 +1,54 @@
+name: pgTAP
+
+# Runs the pgTAP database regression suite (supabase/tests/*.test.sql) against
+# a throwaway local Supabase Postgres built from the migration files. This is a
+# REAL gate: `supabase db start` applies every migration from scratch, so a
+# broken migration OR a failing pgTAP assertion turns the job red. No live DB,
+# no secrets — nothing to silently skip.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - ".github/workflows/pgtap.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - ".github/workflows/pgtap.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: pgtap-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pgtap:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Fail loudly if there are no pgTAP tests to run
+        # Guards against a silent green when the suite is accidentally emptied
+        # or the glob stops matching.
+        run: |
+          count=$(ls supabase/tests/*.test.sql 2>/dev/null | wc -l | tr -d ' ')
+          echo "Found $count pgTAP test file(s)."
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No supabase/tests/*.test.sql files — nothing to test."
+            exit 1
+          fi
+
+      - name: Start local Postgres from migrations
+        run: supabase db start
+
+      - name: Run pgTAP suite
+        run: supabase test db --local supabase/tests

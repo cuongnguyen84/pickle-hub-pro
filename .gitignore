@@ -44,6 +44,7 @@ growth-tasks/
 
 # Supabase CLI temp
 supabase/.temp/
+supabase/.branches/
 
 # Build/tooling scratch — never commit
 *.tsbuildinfo

@@ -65,10 +65,15 @@ SELECT results_eq(
   'request over remaining capacity is rejected without consuming it'
 );
 
-SELECT hasnt_policy(
-  'public',
-  'view_events',
-  'Validated view event inserts',
+-- pgTAP in this environment lacks the *_policy helpers; assert against the
+-- native pg_policies catalog view instead.
+SELECT ok(
+  NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'view_events'
+      AND policyname = 'Validated view event inserts'
+  ),
   'browser INSERT policy cannot bypass the Edge Function'
 );
 
