@@ -10,7 +10,7 @@
 -- ----------------------------------------------------------------------------
 -- 1. Sources table
 -- ----------------------------------------------------------------------------
-CREATE TABLE public.feed_embed_sources (
+CREATE TABLE IF NOT EXISTS public.feed_embed_sources (
   id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   username         text        NOT NULL UNIQUE,
   active           boolean     NOT NULL DEFAULT true,
@@ -24,6 +24,7 @@ CREATE TABLE public.feed_embed_sources (
 ALTER TABLE public.feed_embed_sources ENABLE ROW LEVEL SECURITY;
 
 -- Admin-only surface; sync function uses service_role (bypasses RLS).
+DROP POLICY IF EXISTS "Admins can manage embed sources" ON public.feed_embed_sources;
 CREATE POLICY "Admins can manage embed sources"
   ON public.feed_embed_sources
   FOR ALL
@@ -39,12 +40,14 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.feed_embed_sources TO authenticat
 -- 2. Dedupe key + provenance on feed_embeds
 -- ----------------------------------------------------------------------------
 ALTER TABLE public.feed_embeds
-  ADD COLUMN shortcode text,
-  ADD COLUMN source_username text;
+  ADD COLUMN IF NOT EXISTS shortcode text,
+  ADD COLUMN IF NOT EXISTS source_username text;
 
 -- Full UNIQUE constraint (not a partial index): PostgREST upsert
 -- onConflict needs a real constraint, and Postgres treats NULLs as
 -- distinct so hand-pasted rows without a shortcode still coexist.
+ALTER TABLE public.feed_embeds
+  DROP CONSTRAINT IF EXISTS feed_embeds_shortcode_key;
 ALTER TABLE public.feed_embeds
   ADD CONSTRAINT feed_embeds_shortcode_key UNIQUE (shortcode);
 

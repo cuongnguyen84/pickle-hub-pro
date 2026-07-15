@@ -288,4 +288,57 @@ describe("production-seeded migration replay guards", () => {
       ).toBeLessThan(policy.index);
     }
   });
+
+  it("makes feed embed schema evolution replayable", () => {
+    const feedEmbeds = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260704100000_feed_embeds.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const feedSources = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260704110000_feed_embed_sources.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(feedEmbeds).toContain(
+      "CREATE TABLE IF NOT EXISTS public.feed_embeds",
+    );
+    expect(feedEmbeds).toContain(
+      "CREATE INDEX IF NOT EXISTS idx_feed_embeds_active_published",
+    );
+    expect(feedSources).toContain(
+      "CREATE TABLE IF NOT EXISTS public.feed_embed_sources",
+    );
+    expect(feedSources).toContain("ADD COLUMN IF NOT EXISTS shortcode text");
+    expect(feedSources).toContain(
+      "ADD COLUMN IF NOT EXISTS source_username text",
+    );
+
+    const dropConstraint =
+      "DROP CONSTRAINT IF EXISTS feed_embeds_shortcode_key;";
+    const addConstraint =
+      "ADD CONSTRAINT feed_embeds_shortcode_key UNIQUE (shortcode);";
+    expect(feedSources).toContain(dropConstraint);
+    expect(feedSources.indexOf(dropConstraint)).toBeLessThan(
+      feedSources.indexOf(addConstraint),
+    );
+
+    for (const sql of [feedEmbeds, feedSources]) {
+      const policies = [
+        ...sql.matchAll(/CREATE POLICY "([^"]+)"\s+ON public\.([a-z_]+)/g),
+      ];
+      expect(policies.length).toBeGreaterThan(0);
+
+      for (const policy of policies) {
+        const [, name, table] = policy;
+        const dropPolicy = `DROP POLICY IF EXISTS "${name}" ON public.${table};`;
+        expect(sql.indexOf(dropPolicy)).toBeLessThan(policy.index);
+      }
+    }
+  });
 });

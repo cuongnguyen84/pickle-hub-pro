@@ -7,7 +7,7 @@
 -- itself, v2 upgrades thumbnail/metadata via the official IG oEmbed API.
 -- ============================================================================
 
-CREATE TABLE public.feed_embeds (
+CREATE TABLE IF NOT EXISTS public.feed_embeds (
   id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   url            text        NOT NULL,
   caption        text,
@@ -21,6 +21,7 @@ CREATE TABLE public.feed_embeds (
 ALTER TABLE public.feed_embeds ENABLE ROW LEVEL SECURITY;
 
 -- Feed is public (anonymous users see Trending) → active rows readable by all.
+DROP POLICY IF EXISTS "Anyone can read active embeds" ON public.feed_embeds;
 CREATE POLICY "Anyone can read active embeds"
   ON public.feed_embeds
   FOR SELECT
@@ -28,6 +29,7 @@ CREATE POLICY "Anyone can read active embeds"
 
 -- Admin manages rows from /admin/embeds via the browser client.
 -- Same convention as news_admin_rls: gate on public.is_admin().
+DROP POLICY IF EXISTS "Admins can manage embeds" ON public.feed_embeds;
 CREATE POLICY "Admins can manage embeds"
   ON public.feed_embeds
   FOR ALL
@@ -40,6 +42,6 @@ CREATE POLICY "Admins can manage embeds"
 -- UI gets "permission denied for table feed_embeds" before RLS even runs.
 GRANT INSERT, UPDATE, DELETE ON public.feed_embeds TO authenticated;
 
-CREATE INDEX idx_feed_embeds_active_published
+CREATE INDEX IF NOT EXISTS idx_feed_embeds_active_published
   ON public.feed_embeds (published_at DESC)
   WHERE is_active;
