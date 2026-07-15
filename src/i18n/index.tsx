@@ -3,7 +3,6 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -72,35 +71,26 @@ const I18nBootstrap = ({
   failed: boolean;
   onRetry: () => void;
 }) => {
-  const copy = language === "vi"
-    ? {
-        loading: "Đang tải ngôn ngữ…",
-        error: "Không thể tải ngôn ngữ.",
-        retry: "Thử lại",
-      }
-    : {
-        loading: "Loading language…",
-        error: "Could not load the language.",
-        retry: "Retry",
-      };
+  const label = language === "vi"
+    ? "Đang tải ngôn ngữ…"
+    : "Loading language…";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-6">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       {failed ? (
-        <div className="text-center" role="alert">
-          <p className="mb-4 text-sm text-muted-foreground">{copy.error}</p>
+        <div role="alert">
           <button
             type="button"
             onClick={onRetry}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
           >
-            {copy.retry}
+            Retry / Thử lại
           </button>
         </div>
       ) : (
         <div role="status" aria-live="polite">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-          <span className="sr-only">{copy.loading}</span>
+          <span className="sr-only">{label}</span>
         </div>
       )}
     </div>
@@ -108,45 +98,34 @@ const I18nBootstrap = ({
 };
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const initialLanguage = useRef(getInitialLanguage()).current;
+  const [initialLanguage] = useState(getInitialLanguage);
   const [activeTranslations, setActiveTranslations] = useState<{
     language: Language;
     translations: Translations;
   } | null>(null);
-  const [loadError, setLoadError] = useState<Language | null>(null);
-  const activeTranslationsRef = useRef(activeTranslations);
-  const pendingLanguageRef = useRef<Language | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const activeLanguageRef = useRef<Language | null>(null);
   const requestedLanguageRef = useRef(initialLanguage);
-  const loadRequestRef = useRef(0);
 
   const activateLanguage = useCallback((language: Language) => {
     requestedLanguageRef.current = language;
 
-    if (
-      activeTranslationsRef.current?.language === language ||
-      pendingLanguageRef.current === language
-    ) {
-      return;
-    }
+    if (activeLanguageRef.current === language) return;
 
-    const requestId = ++loadRequestRef.current;
-    pendingLanguageRef.current = language;
-    setLoadError(null);
+    setLoadFailed(false);
 
     void loadTranslations(language)
       .then((translations) => {
-        if (loadRequestRef.current !== requestId) return;
+        if (requestedLanguageRef.current !== language) return;
 
         const next = { language, translations };
-        activeTranslationsRef.current = next;
-        pendingLanguageRef.current = null;
+        activeLanguageRef.current = language;
         setActiveTranslations(next);
       })
       .catch((error: unknown) => {
-        if (loadRequestRef.current !== requestId) return;
+        if (requestedLanguageRef.current !== language) return;
 
-        pendingLanguageRef.current = null;
-        setLoadError(language);
+        setLoadFailed(true);
         console.error(`[i18n] Failed to load ${language} translations:`, error);
       });
   }, []);
@@ -220,31 +199,22 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = getHtmlLangFromPath();
   }, [activeTranslations?.language]);
 
-  const value = useMemo<I18nContextType | null>(() => {
-    if (!activeTranslations) return null;
-
-    return {
-      language: activeTranslations.language,
-      setLanguage,
-      setLanguageFromUrl,
-      t: activeTranslations.translations,
-    };
-  }, [activeTranslations, setLanguage, setLanguageFromUrl]);
-
-  const retryLanguageLoad = useCallback(() => {
-    pendingLanguageRef.current = null;
-    activateLanguage(requestedLanguageRef.current);
-  }, [activateLanguage]);
-
-  if (!value) {
+  if (!activeTranslations) {
     return (
       <I18nBootstrap
         language={requestedLanguageRef.current}
-        failed={loadError === requestedLanguageRef.current}
-        onRetry={retryLanguageLoad}
+        failed={loadFailed}
+        onRetry={() => activateLanguage(requestedLanguageRef.current)}
       />
     );
   }
+
+  const value: I18nContextType = {
+    language: activeTranslations.language,
+    setLanguage,
+    setLanguageFromUrl,
+    t: activeTranslations.translations,
+  };
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
