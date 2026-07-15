@@ -153,7 +153,12 @@ export function evaluatePgNetCron(
     );
   }
 
-  if (snapshot.scheduler_status && snapshot.scheduler_status !== "succeeded") {
+  // pg_cron reports transient statuses (starting/running/sending/connecting)
+  // while a job is mid-flight; only "failed" is a terminal failure. Treating
+  // any non-"succeeded" status as ran_failed fired false alerts whenever the
+  // health check sampled a job that happened to be running. Let transient
+  // statuses fall through to the dispatch/response timing checks below.
+  if (snapshot.scheduler_status === "failed") {
     return result(
       snapshot,
       "ran_failed",

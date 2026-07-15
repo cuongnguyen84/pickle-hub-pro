@@ -235,15 +235,21 @@ function formatCronHealthMessage(
 }
 
 async function fetchLatestScheduledDuprWorkflow(): Promise<GitHubWorkflowRun | null> {
+  // Authenticate when a token is configured. Unauthenticated calls share the
+  // 60/hr GitHub limit across every function on this Supabase egress IP, so a
+  // busy neighbour would 403 us and (previously) manufacture a false incident.
+  // Any token — even a zero-scope fine-grained one — lifts us to 5000/hr.
+  const ghToken = Deno.env.get("GITHUB_TOKEN")?.trim();
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "ThePickleHub-Cron-Health",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
+
   const response = await fetch(
     "https://api.github.com/repos/cuongnguyen84/pickle-hub-pro/actions/workflows/dupr-refresh.yml/runs?per_page=1&event=schedule",
-    {
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "ThePickleHub-Cron-Health",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    },
+    { headers },
   );
 
   if (!response.ok) {
@@ -293,16 +299,12 @@ async function runCronHealth(): Promise<CronHealthReport> {
       const latestRun = await fetchLatestScheduledDuprWorkflow();
       healthResults.push(evaluateGitHubWorkflow(config, latestRun, now));
     } catch (error) {
+      // A failed health CHECK (GitHub API unreachable / rate-limited) is not
+      // the monitored workflow failing. Record it and skip this monitor so a
+      // transient GitHub outage cannot fire a false "ran_failed" incident; the
+      // monitor's previous state is preserved for the next cycle.
       const message = error instanceof Error ? error.message : String(error);
-      healthResults.push({
-        monitorKey: config.monitor_key,
-        displayName: config.display_name,
-        state: "ran_failed",
-        reason: `Health check failed: ${message}`,
-        lastActivityAt: null,
-        alertAfterSeconds:
-          config.expected_interval_seconds + config.grace_seconds,
-      });
+      report.errors.push(`${config.monitor_key}: github_check_unavailable: ${message}`);
     }
   }
 
