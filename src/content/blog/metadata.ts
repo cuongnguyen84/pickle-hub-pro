@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "vietnam-pickleball-players-to-watch-2026",
+    publishedDate: "2026-07-15",
+    updatedDate: "2026-07-15",
+    author: "Cuong Nguyen",
+    tags: ["vietnamese pickleball players", "ly hoang nam pickleball", "truong vinh hien", "vietnam pickleball players to watch", "pickleball vietnam 2026", "hcmc open 2026", "pickleball world cup da nang"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow Vietnam's players live on ThePickleHub", vi: "Theo dõi các tay vợt Việt Nam trực tiếp trên ThePickleHub" },
+    titleEn: "Vietnamese Pickleball Players to Watch in 2026",
+    titleVi: "Các tay vợt Pickleball Việt Nam đáng chú ý năm 2026",
+    metaTitleEn: "Vietnamese Pickleball Players to Watch in 2026",
+    metaTitleVi: "Tay Vợt Pickleball Việt Nam Đáng Chú Ý Năm 2026",
+    metaDescriptionEn: "The Vietnamese pickleball players to watch in 2026 — Ly Hoang Nam, Truong Vinh Hien, Do Minh Quan and the rising stars chasing titles at the HCMC Open and Da Nang World Cup.",
+    metaDescriptionVi: "Các tay vợt pickleball Việt Nam đáng chú ý 2026: Lý Hoàng Nam, Trương Vinh Hiển, Đỗ Minh Quân và dàn sao trẻ hướng tới HCMC Open và World Cup Đà Nẵng.",
+  },
+  {
     slug: "vietnam-hosts-ppa-tour-asia-2026",
     publishedDate: "2026-07-13",
     updatedDate: "2026-07-13",
