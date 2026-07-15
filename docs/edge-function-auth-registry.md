@@ -104,7 +104,6 @@ The production-parity check must be separate from ordinary pull-request CI becau
 
 | Function(s) | Finding | Owner |
 |---|---|---|
-| `batch-view-events` | Caller-supplied user/organization identity | SEC-02 |
 | `log-client-event` | Caller-supplied user identity, rate/body/retention controls | SEC-03 |
 | `auto-cancel-unpaid-registrations`, `dupr-sync` | Cron gate is not the shared helper | SEC-04 |
 | `feed-embeds-sync`, `feed-generate`, `news-translate` | Scheduled mutation uses the generic scraper secret | SEC-04 |

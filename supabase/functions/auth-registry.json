@@ -59,10 +59,12 @@
     "batch-view-events": {
       "verify_jwt": false,
       "service_role": { "uses_client": true, "accepts_bearer": false },
-      "flows": ["public.write.none.none"],
-      "status": "hardening_required",
-      "follow_up": ["SEC-02"],
-      "notes": "Anonymous telemetry is allowed, but claimed user and organization identity are currently trusted from the body."
+      "flows": [
+        "public.write.none.none",
+        "user.write.user_jwt.derived_identity"
+      ],
+      "status": "classified",
+      "notes": "Anonymous telemetry remains supported; user, organization, target validity, and replay state are derived server-side with atomic rate limiting."
     },
     "cancel-registration": {
       "verify_jwt": false,

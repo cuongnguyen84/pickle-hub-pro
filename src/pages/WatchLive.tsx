@@ -107,9 +107,6 @@ const WatchLive = () => {
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: id,
-    viewerUserId: user?.id ?? null,
-    organizationId: livestream?.organization_id ?? null,
-    isReplay: livestream?.status === "ended",
   });
 
   if (isLoading) {

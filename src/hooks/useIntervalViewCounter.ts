@@ -4,11 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface UseIntervalViewCounterOptions {
   targetType: "livestream" | "video";
   targetId: string | undefined;
-  viewerUserId: string | null;
-  organizationId: string | null | undefined;
   source?: "embed";
-  /** Whether this is a replay view (ended livestream) */
-  isReplay?: boolean;
   /** How often (ms) to accumulate a view event. Default: 30s */
   intervalMs?: number;
   /** How often (ms) to flush the batch to the server. Default: 60s */
@@ -20,10 +16,7 @@ interface UseIntervalViewCounterOptions {
 interface PendingEvent {
   target_type: "livestream" | "video";
   target_id: string;
-  viewer_user_id: string | null;
-  organization_id: string | null;
   source?: "embed";
-  is_replay?: boolean;
 }
 
 /**
@@ -34,10 +27,7 @@ interface PendingEvent {
 export function useIntervalViewCounter({
   targetType,
   targetId,
-  viewerUserId,
-  organizationId,
   source,
-  isReplay = false,
   intervalMs = 30_000,
   flushIntervalMs = 60_000,
   maxEventsPerSession = 20,
@@ -56,10 +46,7 @@ export function useIntervalViewCounter({
     const event: PendingEvent = {
       target_type: targetType,
       target_id: targetId,
-      viewer_user_id: viewerUserId ?? null,
-      organization_id: organizationId ?? null,
       ...(source ? { source } : {}),
-      ...(isReplay ? { is_replay: true } : {}),
     };
 
     // Accumulate one event every intervalMs (only if under cap)
@@ -76,9 +63,10 @@ export function useIntervalViewCounter({
       pendingRef.current = [];
 
       try {
-        await supabase.functions.invoke("batch-view-events", {
+        const { error } = await supabase.functions.invoke("batch-view-events", {
           body: { events: batch },
         });
+        if (error) throw error;
         totalSentRef.current += batch.length;
       } catch (err) {
         // Put events back on failure (but respect cap)
@@ -105,5 +93,5 @@ export function useIntervalViewCounter({
         }
       }
     };
-  }, [targetType, targetId, viewerUserId, organizationId, source, isReplay, intervalMs, flushIntervalMs, maxEventsPerSession]);
+  }, [targetType, targetId, source, intervalMs, flushIntervalMs, maxEventsPerSession]);
 }

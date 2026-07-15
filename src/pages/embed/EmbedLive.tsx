@@ -21,8 +21,6 @@ const EmbedLive = () => {
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: id,
-    viewerUserId: null,
-    organizationId: livestream?.organization_id ?? null,
     source: "embed",
   });
 

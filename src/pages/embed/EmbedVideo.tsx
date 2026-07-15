@@ -30,8 +30,6 @@ const EmbedVideo = () => {
   useIntervalViewCounter({
     targetType: "video",
     targetId: id,
-    viewerUserId: null,
-    organizationId: video?.organization_id ?? null,
     source: "embed",
   });
 

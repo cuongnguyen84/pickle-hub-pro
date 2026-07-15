@@ -1,200 +1,207 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getAuthUser } from "../_shared/auth.ts";
+import {
+  MAX_VIEW_EVENT_BODY_BYTES,
+  buildInsertViewEvents,
+  deduplicateClientViewEvents,
+  extractClientViewEvents,
+  getViewEventClientIp,
+  hashViewEventIdentity,
+  viewTargetKey,
+  type InsertViewEvent,
+  type ViewTarget,
+} from "../_shared/view-events.ts";
+
+const DEDUP_WINDOW_SECONDS = 30;
+const RATE_WINDOW_SECONDS = 10 * 60;
+const AUTHENTICATED_EVENT_LIMIT = 120;
+const ANONYMOUS_EVENT_LIMIT = 600;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface ViewEvent {
-  target_type: "video" | "livestream";
-  target_id: string;
-  viewer_user_id?: string | null;
-  organization_id?: string | null;
-  source?: string;
-  is_replay?: boolean;
+function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json", ...headers },
+  });
 }
 
-interface InsertEvent extends ViewEvent {
-  viewer_ip?: string | null;
+interface TargetRow {
+  id: string;
+  organization_id: string;
+  status: string;
 }
 
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const DEDUP_WINDOW_SECONDS = 30;
-
-function validateEvent(e: unknown): ViewEvent | null {
-  if (!e || typeof e !== "object") return null;
-  const ev = e as Record<string, unknown>;
-  if (ev.target_type !== "video" && ev.target_type !== "livestream") return null;
-  if (typeof ev.target_id !== "string" || !uuidRegex.test(ev.target_id)) return null;
-  return {
-    target_type: ev.target_type as "video" | "livestream",
-    target_id: ev.target_id,
-    viewer_user_id: (typeof ev.viewer_user_id === "string" ? ev.viewer_user_id : null),
-    organization_id: (typeof ev.organization_id === "string" ? ev.organization_id : null),
-    ...(typeof ev.source === "string" ? { source: ev.source } : {}),
-    is_replay: ev.is_replay === true,
-  };
-}
-
-function getClientIp(req: Request): string | null {
-  // Supabase Edge Functions forward client IP via these headers
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
-  const realIp = req.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return null;
+interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  retry_after_seconds: number;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+
+  const declaredLength = Number(req.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_VIEW_EVENT_BODY_BYTES) {
+    return json({ error: "payload_too_large" }, 413);
   }
 
-  if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+    console.error("[batch-view-events] Supabase environment is incomplete");
+    return json({ error: "service_unavailable" }, 503);
   }
 
+  let body: unknown;
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const clientIp = getClientIp(req);
-    const body = await req.json();
-
-    // Support both batch array and single event
-    let rawEvents: unknown[];
-    if (Array.isArray(body.events)) {
-      rawEvents = body.events;
-    } else if (body.target_type && body.target_id) {
-      rawEvents = [body];
-    } else {
-      return new Response(
-        JSON.stringify({ error: "Missing 'events' array or single event fields" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const text = await req.text();
+    if (!text || new TextEncoder().encode(text).byteLength > MAX_VIEW_EVENT_BODY_BYTES) {
+      return json({ error: text ? "payload_too_large" : "empty_body" }, text ? 413 : 400);
     }
+    body = JSON.parse(text);
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
 
-    // Validate and cap at 500
-    const validated: ViewEvent[] = [];
-    for (const raw of rawEvents.slice(0, 500)) {
-      const v = validateEvent(raw);
-      if (v) validated.push(v);
-    }
+  const parsed = extractClientViewEvents(body);
+  if (parsed.tooLarge) return json({ error: "batch_too_large", max_events: 20 }, 413);
+  if (parsed.rawCount === 0) return json({ error: "missing_events" }, 400);
+  if (parsed.events.length === 0) return json({ error: "no_valid_events" }, 400);
 
-    if (validated.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No valid events" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  const clientIp = getViewEventClientIp(req);
+  const authClient = createClient(supabaseUrl, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const user = await getAuthUser(req, authClient);
+  if (!user && !clientIp) {
+    return json({ error: "client_identity_unavailable" }, 400);
+  }
 
-    // --- Server-side deduplication ---
-    // Group events by unique (viewer_user_id || ip, target_id) to dedup
-    const dedupKeys = new Map<string, ViewEvent>();
-    for (const ev of validated) {
-      const viewerKey = ev.viewer_user_id || `ip:${clientIp || "unknown"}`;
-      const key = `${viewerKey}:${ev.target_id}`;
-      // Keep last event per key (they're all the same anyway)
-      dedupKeys.set(key, ev);
-    }
+  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const identity = user ? `user:${user.id}` : `ip:${clientIp}`;
+  const identityHash = await hashViewEventIdentity(identity);
+  const eventLimit = user ? AUTHENTICATED_EVENT_LIMIT : ANONYMOUS_EVENT_LIMIT;
+  const { data: rateData, error: rateError } = await serviceClient
+    .rpc("consume_view_event_rate_limit", {
+      p_identity_hash: identityHash,
+      p_event_count: parsed.rawCount,
+      p_limit: eventLimit,
+      p_window_seconds: RATE_WINDOW_SECONDS,
+    })
+    .single<RateLimitResult>();
 
-    const uniqueEvents = Array.from(dedupKeys.values());
-
-    // Check recent events in DB for each unique viewer+target pair
-    const cutoff = new Date(Date.now() - DEDUP_WINDOW_SECONDS * 1000).toISOString();
-    const eventsToInsert: InsertEvent[] = [];
-
-    // Batch check: for authenticated users
-    const authedEvents = uniqueEvents.filter(e => e.viewer_user_id);
-    const anonEvents = uniqueEvents.filter(e => !e.viewer_user_id);
-
-    if (authedEvents.length > 0) {
-      const userTargetPairs = authedEvents.map(e => ({
-        user_id: e.viewer_user_id!,
-        target_id: e.target_id,
-      }));
-
-      // Check all at once: find any recent events for these user+target combos
-      const { data: recentUserEvents } = await supabase
-        .from("view_events")
-        .select("viewer_user_id, target_id")
-        .gte("created_at", cutoff)
-        .not("viewer_user_id", "is", null)
-        .in("viewer_user_id", [...new Set(userTargetPairs.map(p => p.user_id))])
-        .in("target_id", [...new Set(userTargetPairs.map(p => p.target_id))]);
-
-      const recentSet = new Set(
-        (recentUserEvents ?? []).map(r => `${r.viewer_user_id}:${r.target_id}`)
-      );
-
-      for (const ev of authedEvents) {
-        if (!recentSet.has(`${ev.viewer_user_id}:${ev.target_id}`)) {
-          eventsToInsert.push({ ...ev, viewer_ip: clientIp });
-        }
-      }
-    }
-
-    if (anonEvents.length > 0 && clientIp) {
-      // Check recent anonymous events by IP
-      const { data: recentIpEvents } = await supabase
-        .from("view_events")
-        .select("viewer_ip, target_id")
-        .gte("created_at", cutoff)
-        .is("viewer_user_id", null)
-        .eq("viewer_ip", clientIp)
-        .in("target_id", [...new Set(anonEvents.map(e => e.target_id))]);
-
-      const recentIpSet = new Set(
-        (recentIpEvents ?? []).map(r => `${r.viewer_ip}:${r.target_id}`)
-      );
-
-      for (const ev of anonEvents) {
-        if (!recentIpSet.has(`${clientIp}:${ev.target_id}`)) {
-          eventsToInsert.push({ ...ev, viewer_ip: clientIp });
-        }
-      }
-    } else if (anonEvents.length > 0 && !clientIp) {
-      // No IP available, allow but mark
-      for (const ev of anonEvents) {
-        eventsToInsert.push({ ...ev, viewer_ip: null });
-      }
-    }
-
-    if (eventsToInsert.length === 0) {
-      console.log(`[batch-view-events] All ${validated.length} events deduplicated`);
-      return new Response(
-        JSON.stringify({ success: true, inserted: 0, deduplicated: validated.length }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log(`[batch-view-events] Inserting ${eventsToInsert.length}/${validated.length} events (${validated.length - eventsToInsert.length} deduped)`);
-
-    const { error } = await supabase.from("view_events").insert(eventsToInsert);
-
-    if (error) {
-      console.error("[batch-view-events] Insert error:", error);
-      return new Response(
-        JSON.stringify({ error: "Failed to insert events" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({ success: true, inserted: eventsToInsert.length, deduplicated: validated.length - eventsToInsert.length }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("[batch-view-events] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  if (rateError || !rateData) {
+    console.error("[batch-view-events] Rate limit check failed:", rateError?.message);
+    return json({ error: "rate_limit_unavailable" }, 503);
+  }
+  if (!rateData.allowed) {
+    return json(
+      { error: "rate_limited", retry_after_seconds: rateData.retry_after_seconds },
+      429,
+      { "Retry-After": String(rateData.retry_after_seconds) },
     );
   }
+
+  const uniqueEvents = deduplicateClientViewEvents(parsed.events);
+  const videoIds = uniqueEvents
+    .filter((event) => event.target_type === "video")
+    .map((event) => event.target_id);
+  const livestreamIds = uniqueEvents
+    .filter((event) => event.target_type === "livestream")
+    .map((event) => event.target_id);
+
+  const [videoResult, livestreamResult] = await Promise.all([
+    videoIds.length > 0
+      ? serviceClient.from("videos").select("id, organization_id, status").in("id", videoIds)
+      : Promise.resolve({ data: [], error: null }),
+    livestreamIds.length > 0
+      ? serviceClient.from("livestreams").select("id, organization_id, status").in("id", livestreamIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (videoResult.error || livestreamResult.error) {
+    console.error(
+      "[batch-view-events] Target lookup failed:",
+      videoResult.error?.message ?? livestreamResult.error?.message,
+    );
+    return json({ error: "target_lookup_failed" }, 500);
+  }
+
+  const targets = new Map<string, ViewTarget>();
+  for (const row of (videoResult.data ?? []) as TargetRow[]) {
+    targets.set(viewTargetKey("video", row.id), {
+      target_type: "video",
+      target_id: row.id,
+      organization_id: row.organization_id,
+      is_replay: false,
+    });
+  }
+  for (const row of (livestreamResult.data ?? []) as TargetRow[]) {
+    targets.set(viewTargetKey("livestream", row.id), {
+      target_type: "livestream",
+      target_id: row.id,
+      organization_id: row.organization_id,
+      is_replay: row.status === "ended",
+    });
+  }
+
+  const enriched = buildInsertViewEvents(
+    uniqueEvents,
+    targets,
+    user?.id ?? null,
+    clientIp ?? "authenticated-no-ip",
+  );
+  if (enriched.events.length === 0) {
+    return json({ error: "no_valid_targets", rejected: parsed.rejected + enriched.missingTargets }, 400);
+  }
+
+  const cutoff = new Date(Date.now() - DEDUP_WINDOW_SECONDS * 1000).toISOString();
+  const validTargetIds = [...new Set(enriched.events.map((event) => event.target_id))];
+  let recentQuery = serviceClient
+    .from("view_events")
+    .select("target_type, target_id")
+    .gte("created_at", cutoff)
+    .in("target_id", validTargetIds);
+  recentQuery = user
+    ? recentQuery.eq("viewer_user_id", user.id)
+    : recentQuery.is("viewer_user_id", null).eq("viewer_ip", clientIp!);
+
+  const { data: recentRows, error: recentError } = await recentQuery;
+  if (recentError) {
+    console.error("[batch-view-events] Dedup lookup failed:", recentError.message);
+    return json({ error: "dedup_lookup_failed" }, 500);
+  }
+  const recentKeys = new Set(
+    (recentRows ?? []).map((row) => viewTargetKey(row.target_type, row.target_id)),
+  );
+  const eventsToInsert: InsertViewEvent[] = enriched.events.filter(
+    (event) => !recentKeys.has(viewTargetKey(event.target_type, event.target_id)),
+  );
+
+  if (eventsToInsert.length > 0) {
+    const { error: insertError } = await serviceClient.from("view_events").insert(eventsToInsert);
+    if (insertError) {
+      console.error("[batch-view-events] Insert failed:", insertError.message);
+      return json({ error: "insert_failed" }, 500);
+    }
+  }
+
+  const rejected = parsed.rejected + enriched.missingTargets;
+  return json({
+    success: true,
+    received: parsed.rawCount,
+    inserted: eventsToInsert.length,
+    deduplicated: enriched.events.length - eventsToInsert.length,
+    rejected,
+    rate_limit_remaining: rateData.remaining,
+  });
 });

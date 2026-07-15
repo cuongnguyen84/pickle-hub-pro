@@ -60,9 +60,6 @@ export default function HomeLivePlayer({ stream }: HomeLivePlayerProps) {
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: livestreamId,
-    viewerUserId: user?.id ?? null,
-    organizationId: stream.organization_id ?? null,
-    isReplay: false,
   });
 
   const playbackId = stream.mux_playback_id;

@@ -9,7 +9,6 @@ import { MuxPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
-import { useAuth } from "@/hooks/useAuth";
 import { Eye, Calendar, Clock, Play, BadgeCheck } from "lucide-react";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
@@ -42,7 +41,6 @@ import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 const WatchVideo = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
-  const { user } = useAuth();
   const { isBlocked } = useGeoBlock();
 
   const { data: video, isLoading } = useVideo(id!);
@@ -66,8 +64,6 @@ const WatchVideo = () => {
   useIntervalViewCounter({
     targetType: "video",
     targetId: id,
-    viewerUserId: user?.id ?? null,
-    organizationId: video?.organization_id ?? null,
   });
 
   // Related — prefer same organization, exclude self, cap at 6 cards.
