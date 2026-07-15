@@ -25,6 +25,9 @@
 -- days ago" badge when the rating is stale.
 -- ============================================================================
 
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.dupr_leaderboard_vietnam(TEXT, INT);
+
 CREATE OR REPLACE FUNCTION public.dupr_leaderboard_vietnam(
   p_format TEXT DEFAULT 'doubles',  -- 'singles' | 'doubles'
   p_limit  INT  DEFAULT 100

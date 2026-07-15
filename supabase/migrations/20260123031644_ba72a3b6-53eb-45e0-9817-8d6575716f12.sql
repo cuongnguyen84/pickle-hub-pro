@@ -11,6 +11,9 @@ DROP POLICY IF EXISTS "Team match creators can lookup profiles by email" ON publ
 
 -- Create a SECURITY DEFINER function for safe referee/user lookup by email
 -- This function only returns user_id and display_name, NOT the email
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.lookup_user_by_email(TEXT);
+
 CREATE OR REPLACE FUNCTION public.lookup_user_by_email(lookup_email TEXT)
 RETURNS TABLE (
   user_id UUID,

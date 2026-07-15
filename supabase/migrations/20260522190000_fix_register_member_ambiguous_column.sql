@@ -25,6 +25,9 @@
 -- IDEMPOTENT.
 -- ============================================================================
 
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.register_event_as_member(UUID, TEXT);
+
 CREATE OR REPLACE FUNCTION public.register_event_as_member(
   p_event_id UUID,
   p_slot_id  TEXT DEFAULT NULL

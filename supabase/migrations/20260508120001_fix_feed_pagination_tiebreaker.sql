@@ -20,6 +20,18 @@
 DROP FUNCTION IF EXISTS public.get_following_feed(UUID, INT, TIMESTAMPTZ);
 DROP FUNCTION IF EXISTS public.get_trending_feed(INT, TIMESTAMPTZ, INT, INT, INT);
 
+-- Seed-from-production replay safety (Supabase preview branches clone the
+-- prod schema, which already carries the FINAL 4-arg following / 6-arg
+-- trending overloads whose RETURNS TABLE grew later — kudos/comments/source/
+-- notes columns). A bare CREATE OR REPLACE below then collides with the
+-- pre-existing richer return shape:
+--   ERROR 42P13: cannot change return type of existing function.
+-- Drop the exact signatures we are about to (re)create so the replay lands
+-- cleanly whether the DB is empty (fresh) or seeded from prod. Matches the
+-- DROP-own-signature convention used by every later feed migration.
+DROP FUNCTION IF EXISTS public.get_following_feed(UUID, INT, TIMESTAMPTZ, UUID);
+DROP FUNCTION IF EXISTS public.get_trending_feed(INT, TIMESTAMPTZ, UUID, INT, INT, INT);
+
 -- ─── 1. get_following_feed (with composite cursor) ───────────────────────
 CREATE OR REPLACE FUNCTION public.get_following_feed(
   p_viewer_id        UUID,

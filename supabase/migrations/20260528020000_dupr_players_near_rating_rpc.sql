@@ -19,6 +19,9 @@
 -- visibility model.
 -- ============================================================================
 
+-- Replay-safety (auto): drop prod-seeded overload before signature-changing refresh.
+DROP FUNCTION IF EXISTS public.dupr_players_near_rating(NUMERIC, NUMERIC, UUID, INT);
+
 CREATE OR REPLACE FUNCTION public.dupr_players_near_rating(
   p_target_rating    NUMERIC,
   p_window           NUMERIC DEFAULT 0.3,
