@@ -388,3 +388,20 @@ verify_jwt = false
 # threshold within the window.
 [functions.errors-telegram-alert]
 verify_jwt = false
+
+# Cron-only Zalo OA credential rotation. The gateway JWT verifier is disabled
+# for the project-wide ES256 workaround; the handler requires x-cron-secret.
+[functions.zalo-token-refresh]
+verify_jwt = false
+
+# Public OG/read endpoints and internal notification mailer added after the
+# original config inventory. Keep their gateway behavior explicit so source,
+# deploy config, and the auth registry cannot drift independently.
+[functions.og-doubles-elimination]
+verify_jwt = false
+
+[functions.og-quick-table]
+verify_jwt = false
+
+[functions.send-event-registration-email]
+verify_jwt = false

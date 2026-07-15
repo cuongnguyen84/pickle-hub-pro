@@ -37,6 +37,7 @@ describe("requireCronRequest", () => {
     "match-expire",
     "mux-sync-assets",
     "errors-telegram-alert",
+    "zalo-token-refresh",
   ])("is enforced by the public cron function %s", (functionName) => {
     const source = readFileSync(
       new URL(`../../../supabase/functions/${functionName}/index.ts`, import.meta.url),

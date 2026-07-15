@@ -20,7 +20,8 @@
     "e2e:visual": "VISUAL=1 playwright test --project=visual",
     "e2e:visual:update": "VISUAL=1 playwright test --project=visual --update-snapshots",
     "lhci": "npx --yes @lhci/cli@0.14.x autorun",
-    "drift": "node scripts/check-migration-drift.mjs"
+    "drift": "node scripts/check-migration-drift.mjs",
+    "auth:registry": "node scripts/check-edge-auth-registry.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",

@@ -1,0 +1,537 @@
+{
+  "schema_version": 1,
+  "enforcement": "report",
+  "flow_format": "actor.operation.credential.authorization",
+  "functions": {
+    "add-registration-direct": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": [
+        "public.write.magic_token.resource_scope",
+        "user.write.user_jwt.resource_scope"
+      ],
+      "status": "classified"
+    },
+    "api-keys-admin-generate": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["admin.write.user_jwt.role_check"],
+      "status": "classified"
+    },
+    "api-keys-admin-revoke": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["admin.write.user_jwt.role_check"],
+      "status": "classified"
+    },
+    "api-keys-generate": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": ["internal_service.write.service_role_bearer.shared_secret"],
+      "status": "classified"
+    },
+    "api-keys-list": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["admin.read.user_jwt.role_check"],
+      "status": "classified"
+    },
+    "api-keys-revoke": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": ["internal_service.write.service_role_bearer.shared_secret"],
+      "status": "classified"
+    },
+    "auto-archive-tournaments": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "classified"
+    },
+    "auto-cancel-unpaid-registrations": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "hardening_required",
+      "follow_up": ["SEC-04"],
+      "notes": "Uses an inline cron-secret gate; migrate to requireCronRequest."
+    },
+    "batch-view-events": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.none.none"],
+      "status": "hardening_required",
+      "follow_up": ["SEC-02"],
+      "notes": "Anonymous telemetry is allowed, but claimed user and organization identity are currently trusted from the body."
+    },
+    "cancel-registration": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.magic_token.resource_scope"],
+      "status": "classified"
+    },
+    "create-payment-order": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.magic_token.resource_scope"],
+      "status": "classified"
+    },
+    "delete-account": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-clubs": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.mixed.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-disconnect": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-entitlements": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.mixed.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-event-eligibility": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.read.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-link": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-match-submit": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": [
+        "user.write.user_jwt.resource_scope",
+        "admin.write.user_jwt.role_check"
+      ],
+      "status": "classified"
+    },
+    "dupr-org-link-club": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": [
+        "user.write.user_jwt.resource_scope",
+        "admin.write.user_jwt.role_check"
+      ],
+      "status": "classified"
+    },
+    "dupr-org-unlink-club": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": [
+        "user.write.user_jwt.resource_scope",
+        "admin.write.user_jwt.role_check"
+      ],
+      "status": "classified"
+    },
+    "dupr-partner-token": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": ["internal_service.read.service_role_bearer.shared_secret"],
+      "status": "classified"
+    },
+    "dupr-refresh-user-token": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-sso-callback": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.callback.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-sync": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "cron.write.cron_secret.shared_secret",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "hardening_required",
+      "follow_up": ["SEC-04"],
+      "notes": "Uses Authorization for CRON_SECRET and retains a service-role fallback; standardize on requireCronRequest."
+    },
+    "dupr-token-backfill": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": ["internal_service.write.service_role_bearer.shared_secret"],
+      "status": "classified"
+    },
+    "dupr-user-search": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.read.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "dupr-webhook": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": [
+        "public.read.none.none",
+        "public.callback.client_identifier.client_identifier"
+      ],
+      "status": "hardening_required",
+      "follow_up": ["SEC-04"],
+      "notes": "The payload client identifier is checked, but there is no independent webhook signature."
+    },
+    "dupr-webhook-register": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": ["internal_service.write.service_role_bearer.shared_secret"],
+      "status": "classified"
+    },
+    "dupr-webhook-test-fire": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "user.write.user_jwt.derived_identity",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "classified"
+    },
+    "errors-telegram-alert": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "classified"
+    },
+    "feed-embeds-sync": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "public.read.none.none",
+        "cron.write.shared_secret.shared_secret",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "hardening_required",
+      "follow_up": ["SEC-04"],
+      "notes": "Scheduled mutation uses a generic scraper secret; standardize cron calls on requireCronRequest."
+    },
+    "feed-generate": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "public.read.none.none",
+        "cron.write.shared_secret.shared_secret",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "hardening_required",
+      "follow_up": ["SEC-04"],
+      "notes": "Scheduled mutation uses a generic scraper secret; standardize cron calls on requireCronRequest."
+    },
+    "geo-check": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "invite-team-to-tournament": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.resource_scope"],
+      "status": "classified"
+    },
+    "leaderboard-compute": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": false, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "skeleton"
+    },
+    "log-client-event": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.none.none"],
+      "status": "hardening_required",
+      "follow_up": ["SEC-03"],
+      "notes": "Anonymous browser and CSP telemetry is intentional; user identity, body caps, rate limits, and retention need hardening."
+    },
+    "mark-payment-claimed": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.magic_token.resource_scope"],
+      "status": "classified"
+    },
+    "match-confirm": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.resource_scope"],
+      "status": "classified"
+    },
+    "match-create": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "match-expire": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "classified"
+    },
+    "match-invite-redeem": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "match-proposal": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["user.write.user_jwt.derived_identity"],
+      "status": "classified"
+    },
+    "mux-create-livestream": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": false, "accepts_bearer": false },
+      "flows": ["admin.write.user_jwt.role_check"],
+      "status": "classified",
+      "notes": "Creator and admin roles are accepted."
+    },
+    "mux-sync-assets": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "classified"
+    },
+    "mux-webhook": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.callback.webhook_signature.signature_check"],
+      "status": "classified"
+    },
+    "news-check": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "internal_service.read.api_key.permission_scope",
+        "internal_service.read.service_role_bearer.shared_secret"
+      ],
+      "status": "classified"
+    },
+    "news-ingest": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "internal_service.write.api_key.permission_scope",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "classified"
+    },
+    "news-translate": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "public.read.none.none",
+        "cron.write.shared_secret.shared_secret",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "hardening_required",
+      "follow_up": ["SEC-04"],
+      "notes": "Scheduled mutation uses a generic scraper secret; standardize cron calls on requireCronRequest."
+    },
+    "newsletter-subscribe": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.none.none"],
+      "status": "classified",
+      "notes": "Public subscription is intentionally anonymous and has database-backed IP rate limiting."
+    },
+    "notification-send": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": false, "accepts_bearer": false },
+      "flows": [
+        "public.read.none.none",
+        "internal_service.write.none.none"
+      ],
+      "status": "skeleton",
+      "follow_up": ["SEC-04"],
+      "notes": "No-op skeleton is publicly reachable; require service authentication before implementing mutations."
+    },
+    "og-doubles-elimination": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-flex-tournament": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-image-club": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-image-match": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-image-player": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-image-social-event": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-live": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-organization": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-quick-table": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-tournament": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "og-video": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "phone-otp-send": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.captcha.human_challenge"],
+      "status": "classified"
+    },
+    "phone-otp-verify": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.otp_code.one_time_secret"],
+      "status": "classified"
+    },
+    "pro-tour-ingest": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": ["internal_service.write.service_role_bearer.shared_secret"],
+      "status": "classified"
+    },
+    "pro-tour-trigger-scrape": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["admin.write.user_jwt.role_check"],
+      "status": "classified"
+    },
+    "reactivate-registration": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.write.magic_token.resource_scope"],
+      "status": "classified"
+    },
+    "request-recovery-link": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": [
+        "public.write.none.none",
+        "public.write.captcha.human_challenge"
+      ],
+      "status": "classified"
+    },
+    "send-auth-email": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": false, "accepts_bearer": false },
+      "flows": ["internal_service.callback.webhook_signature.signature_check"],
+      "status": "classified"
+    },
+    "send-blog-blast": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["internal_service.callback.shared_secret.shared_secret"],
+      "status": "classified"
+    },
+    "send-event-registration-email": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": false, "accepts_bearer": false },
+      "flows": ["internal_service.write.shared_secret.shared_secret"],
+      "status": "hardening_required",
+      "follow_up": ["SEC-04"],
+      "notes": "The current secret check is fail-open when INTERNAL_NOTIFY_SECRET is absent."
+    },
+    "send-push-notification": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": true },
+      "flows": [
+        "admin.write.user_jwt.role_check",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "classified"
+    },
+    "sitemap": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["public.read.none.none"],
+      "status": "classified"
+    },
+    "social-caption": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": false, "accepts_bearer": false },
+      "flows": ["internal_service.write.shared_secret.shared_secret"],
+      "status": "classified"
+    },
+    "submit-match-score": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": [
+        "public.write.magic_token.resource_scope",
+        "admin.write.user_jwt.role_check"
+      ],
+      "status": "classified"
+    },
+    "video-thumbnail-proxy": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["admin.read.user_jwt.role_check"],
+      "status": "classified",
+      "notes": "Creator and admin roles are accepted."
+    },
+    "zalo-token-refresh": {
+      "verify_jwt": false,
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "classified"
+    }
+  }
+}

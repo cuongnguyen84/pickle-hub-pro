@@ -115,7 +115,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | BASE-03 | done | 2d | Add route-level Web Vitals RUM segmented by device, with Vietnam as the primary segment and an international segment kept separate | — |
 | BASE-04 | ready | 1d | Inventory only the 5–8 screens on the two north-star journeys, with start point, completion point, and observed drop-off point per journey (trimmed from top-20 routes: measurement, not documentation) | BASE-01 |
 | BASE-05 | done | 1d | Decide mobile source of truth: SwiftUI replaces production Capacitor iOS; Android does not exist yet | — |
-| BASE-06 | ready | 2d | Create the Edge Function auth/service-role registry and CI validator design | — |
+| BASE-06 | done | 2d | Create the Edge Function auth/service-role registry and CI validator design | — |
 | BASE-07 | blocked | 3d | Run five player and five organizer baseline usability sessions | Recruiting participants |
 
 ### Phase 0 exit
@@ -132,7 +132,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | SEC-01 | ready | 4d | Secure the production Capacitor iOS transition: remove tokens from callback with Universal Links + PKCE, unless SwiftUI release retires Capacitor first | BASE-05 |
 | SEC-02 | ready | 3d | Harden `batch-view-events`: derive user and organization server-side, validate target, add rate limits | BASE-06 |
 | SEC-03 | ready | 2d | Harden `log-client-event`: derive/null user, body cap, rate limit, retention | BASE-06 |
-| SEC-04 | ready | 3d | Implement auth registry and fail CI for unclassified `verify_jwt=false` or service-role functions. Classify every function into one of five enforced categories: public read-only (validation + rate limit), user action (JWT + user_id derived from JWT), admin (JWT + role check), cron (`requireCronRequest`), internal service (service-role bearer) | BASE-06 |
+| SEC-04 | ready | 3d | Enforce the auth registry and fail CI for unclassified `verify_jwt=false` or service-role functions. Apply the five actor policies (public, user, admin, cron, internal service) together with operation-specific controls: public reads need validation + rate/cache controls; public mutations/callbacks need proof-of-purpose + abuse controls; user actions derive identity from JWT; admin actions add a role check; cron uses `requireCronRequest`; internal services use an approved machine credential | BASE-06 |
 | SEC-05 | ready | 3d | Audit exposed views, RLS, function grants, and `SECURITY DEFINER search_path` | — |
 | SEC-06 | blocked | 2d | Automate production migration drift check | Supabase CI credential |
 | BE-01 | ready | 2d | Edge Function CORS/serve sweep (2026-07-14 audit): move `corsHeaders` into a new `_shared/cors.ts` (CORS is not auth — don't grow `auth.ts` into a grab-bag) and point all 37 inline copies at it; migrate 7 legacy `std@0.168 serve` functions to `Deno.serve` | SEC-04 |
