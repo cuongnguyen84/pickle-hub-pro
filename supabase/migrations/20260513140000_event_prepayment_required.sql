@@ -68,7 +68,7 @@ DROP FUNCTION IF EXISTS public.create_social_event_with_payment(JSONB, JSONB);
 
 CREATE OR REPLACE FUNCTION public.create_social_event_with_payment(
   p_event   JSONB,
-  p_payment JSONB
+  p_payment JSONB DEFAULT NULL
 )
 RETURNS TABLE (event_id UUID, event_slug TEXT)
 LANGUAGE plpgsql
