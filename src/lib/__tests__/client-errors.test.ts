@@ -139,5 +139,12 @@ describe("client-error ingestion contract", () => {
     expect(getClientErrorIp(request)).toBe("203.0.113.9");
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
     expect(hash).not.toContain("203.0.113.9");
+
+    const forwardedOnly = new Request("https://example.test", {
+      headers: {
+        "x-forwarded-for": "198.51.100.1, 198.51.100.2",
+      },
+    });
+    expect(getClientErrorIp(forwardedOnly)).toBe("198.51.100.2");
   });
 });

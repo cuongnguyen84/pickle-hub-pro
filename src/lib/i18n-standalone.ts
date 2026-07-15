@@ -1,26 +1,12 @@
 // Standalone i18n lookup for non-React contexts (mutation hooks, toasts).
 // Cannot use useI18n() because hook callbacks fire outside the React render tree.
-// Reads the same localStorage key the I18nProvider writes ("pickleball-hub-language").
+// Reads the dictionary already activated by I18nProvider. Importing locale
+// modules here would pull both dictionaries into every route using a mutation
+// hook and undo the provider's lazy-loading boundary.
 
-import { vi } from "@/i18n/vi";
-import { en } from "@/i18n/en";
-
-const STORAGE_KEY = "pickleball-hub-language"; // must match src/i18n/index.tsx
-
-type Language = "vi" | "en";
-const bundles: Record<Language, unknown> = { vi, en };
+import { getActiveTranslationBundle } from "@/i18n/loader";
 
 export type ToastKey = string;
-
-export function getCurrentLanguage(): Language {
-  try {
-    if (typeof window === "undefined") return "en";
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored === "vi" || stored === "en" ? stored : "en";
-  } catch {
-    return "en";
-  }
-}
 
 function getNested(obj: unknown, path: string[]): unknown {
   return path.reduce<unknown>((acc, k) => {
@@ -43,12 +29,11 @@ export function tStandalone(
   key: ToastKey,
   params?: Record<string, string | number>,
 ): string {
-  const lang = getCurrentLanguage();
+  const active = getActiveTranslationBundle();
+  if (!active) return key;
+
   const path = key.split(".");
-  let resolved = getNested(bundles[lang], path);
-  if (typeof resolved !== "string") {
-    resolved = getNested(bundles[lang === "vi" ? "en" : "vi"], path);
-  }
+  const resolved = getNested(active.translations, path);
   if (typeof resolved !== "string") return key;
   return interpolate(resolved, params);
 }

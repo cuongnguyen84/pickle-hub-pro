@@ -188,9 +188,10 @@ export function parseCspClientErrors(
 }
 
 export function getClientErrorIp(req: Request): string | null {
+  const forwardedFor = req.headers.get("x-forwarded-for");
   const raw =
     req.headers.get("cf-connecting-ip") ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    forwardedFor?.split(",").at(-1)?.trim() ??
     req.headers.get("x-real-ip")?.trim() ??
     "";
   if (!raw || raw.length > 64 || !/^[0-9a-f:.]+$/i.test(raw)) return null;

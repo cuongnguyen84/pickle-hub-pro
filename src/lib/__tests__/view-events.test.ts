@@ -100,5 +100,12 @@ describe("view-event input contract", () => {
     expect(getViewEventClientIp(request)).toBe("203.0.113.7");
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
     expect(hash).not.toContain("203.0.113.7");
+
+    const forwardedOnly = new Request("https://example.test", {
+      headers: {
+        "x-forwarded-for": "198.51.100.1, 198.51.100.2",
+      },
+    });
+    expect(getViewEventClientIp(forwardedOnly)).toBe("198.51.100.2");
   });
 });

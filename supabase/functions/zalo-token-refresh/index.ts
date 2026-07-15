@@ -8,6 +8,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { zaloCronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
 interface ZaloRefreshResponse {
   access_token?: string;
@@ -19,15 +20,8 @@ interface ZaloRefreshResponse {
   message?: string;
 }
 
-const responseHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, x-cron-secret",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Content-Type": "application/json",
-};
-
 function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: responseHeaders });
+  return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
 
 function logEvent(payload: Record<string, unknown>): void {
@@ -36,7 +30,7 @@ function logEvent(payload: Record<string, unknown>): void {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: responseHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");

@@ -25,6 +25,7 @@
 // ============================================================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { proTourIngestCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import type {
   TournamentScrapeResult,
   ScrapedPlayer,
@@ -53,13 +54,6 @@ interface IngestResponse {
   players_matched: number;
 }
 
-// CORS — admin UI calls go through here too if we ever bypass the Worker.
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
 // Pro Tour system profile — matches.recorded_by is NOT NULL UUID FK to
 // profiles(id) (Sprint 1 schema). Pro tour matches have no real user
 // recording them, so we attribute to a synthetic system profile seeded
@@ -70,7 +64,7 @@ const SYSTEM_RECORDER_PROFILE_ID = "11111111-1111-1111-1111-111111111111";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS_HEADERS });
+    return new Response("ok", { headers: corsHeaders });
   }
   if (req.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, 405);
@@ -501,7 +495,7 @@ async function insertMatchWithParticipants(
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 

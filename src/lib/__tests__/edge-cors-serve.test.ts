@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   authWebhookCorsHeaders,
@@ -10,11 +11,13 @@ import {
   internalSecretCorsHeaders,
   muxWebhookCorsHeaders,
   newsletterCorsHeaders,
+  proTourIngestCorsHeaders,
   simpleCorsHeaders,
   socialCaptionCorsHeaders,
   supabaseClientCorsHeaders,
   supabaseClientPostCorsHeaders,
   videoProxyCorsHeaders,
+  zaloCronCorsHeaders,
 } from "../../../supabase/functions/_shared/cors";
 
 const functionsDir = fileURLToPath(
@@ -40,6 +43,31 @@ const functionSources = new Map(
       return [entry.name, readFileSync(path, "utf8")] as const;
     }),
 );
+
+function readTypeScriptSources(
+  directory: string,
+  relativeDirectory: string,
+): Array<{ path: string; source: string }> {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const absolutePath = join(directory, entry.name);
+    const relativePath = join(relativeDirectory, entry.name);
+    if (entry.isDirectory()) {
+      return readTypeScriptSources(absolutePath, relativePath);
+    }
+    return entry.isFile() && entry.name.endsWith(".ts")
+      ? [{ path: relativePath, source: readFileSync(absolutePath, "utf8") }]
+      : [];
+  });
+}
+
+const functionTreeSources = readdirSync(functionsDir, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && entry.name !== "_shared")
+  .flatMap((entry) => {
+    const directory = fileURLToPath(
+      new URL(`../../../supabase/functions/${entry.name}/`, import.meta.url),
+    );
+    return readTypeScriptSources(directory, entry.name);
+  });
 
 const expectedPresetFiles: Record<string, string[]> = {
   simpleCorsHeaders: [
@@ -83,6 +111,8 @@ const expectedPresetFiles: Record<string, string[]> = {
   internalSecretCorsHeaders: ["send-event-registration-email"],
   socialCaptionCorsHeaders: ["social-caption"],
   videoProxyCorsHeaders: ["video-thumbnail-proxy"],
+  zaloCronCorsHeaders: ["zalo-token-refresh"],
+  proTourIngestCorsHeaders: ["pro-tour-ingest"],
 };
 
 describe("Edge Function CORS and server entrypoints", () => {
@@ -160,10 +190,21 @@ describe("Edge Function CORS and server entrypoints", () => {
       "Access-Control-Expose-Headers":
         "content-length, content-range, accept-ranges",
     });
+    expect(zaloCronCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "content-type, x-cron-secret",
+      "Content-Type": "application/json",
+    });
+    expect(proTourIngestCorsHeaders).toEqual({
+      ...origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    });
   });
 
-  it("routes every former inline CORS declaration through its exact preset", () => {
-    expect(Object.values(expectedPresetFiles).flat()).toHaveLength(37);
+  it("routes every characterized CORS declaration through its exact preset", () => {
+    expect(Object.values(expectedPresetFiles).flat()).toHaveLength(39);
 
     for (const [preset, functionNames] of Object.entries(expectedPresetFiles)) {
       for (const functionName of functionNames) {
@@ -178,11 +219,17 @@ describe("Edge Function CORS and server entrypoints", () => {
       [...functionSources.values()].filter((source) =>
         source.includes('_shared/cors.ts"'),
       ),
-    ).toHaveLength(72);
-    expect(combined).not.toMatch(/const corsHeaders\s*=/);
+    ).toHaveLength(74);
+    expect(combined).not.toMatch(/const corsHeaders\s*=/i);
     expect(combined).not.toMatch(
       /import\s*\{[^}]*corsHeaders[^}]*\}\s*from\s*["']\.\.\/_shared\/auth\.ts["']/s,
     );
+
+    for (const file of functionTreeSources) {
+      expect(file.source, file.path).not.toMatch(
+        /["']Access-Control-Allow-Origin["']\s*:/,
+      );
+    }
   });
 
   it("uses Deno.serve for every function entrypoint", () => {

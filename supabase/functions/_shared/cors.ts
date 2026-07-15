@@ -70,3 +70,12 @@ export const videoProxyCorsHeaders = createCorsHeaders(
   "GET, HEAD, OPTIONS",
   { "Access-Control-Expose-Headers": "content-length, content-range, accept-ranges" },
 );
+export const zaloCronCorsHeaders = createCorsHeaders(
+  "content-type, x-cron-secret",
+  "POST, OPTIONS",
+  { "Content-Type": "application/json" },
+);
+export const proTourIngestCorsHeaders = createCorsHeaders(
+  "Content-Type, Authorization",
+  "POST, OPTIONS",
+);

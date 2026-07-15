@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import type { Translations } from "./vi";
 import {
+  setActiveTranslationBundle,
   isVietnamesePath,
   loadTranslations,
   type Language,
@@ -120,6 +121,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
         const next = { language, translations };
         activeLanguageRef.current = language;
+        setActiveTranslationBundle(language, translations);
         setActiveTranslations(next);
       })
       .catch((error: unknown) => {

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  getActiveTranslationBundle,
   isVietnamesePath,
   loadTranslations,
+  setActiveTranslationBundle,
   type Language,
 } from "../loader";
 
@@ -34,5 +36,15 @@ describe("loadTranslations", () => {
 
   it("reuses the same promise for an already requested dictionary", () => {
     expect(loadTranslations("en")).toBe(loadTranslations("en"));
+  });
+
+  it("exposes only the dictionary activated by the provider", async () => {
+    const translations = await loadTranslations("vi");
+    setActiveTranslationBundle("vi", translations);
+
+    expect(getActiveTranslationBundle()).toEqual({
+      language: "vi",
+      translations,
+    });
   });
 });

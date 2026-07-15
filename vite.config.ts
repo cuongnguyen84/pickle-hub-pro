@@ -115,6 +115,22 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [
+          // Locale dictionaries stay out of precache so a user downloads only
+          // the active language. Cache the requested hashed chunk at runtime so
+          // subsequent offline launches can resolve I18nProvider instead of
+          // getting stuck on its retry screen.
+          {
+            urlPattern: ({ url, request, sameOrigin }) =>
+              request.destination === "script" &&
+              sameOrigin &&
+              /^\/assets\/locale-(?:en|vi)-[^/]+\.js$/.test(url.pathname),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "locale-dictionaries",
+              expiration: { maxEntries: 4, maxAgeSeconds: 365 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           // Navigation requests (HTML shell) — NetworkFirst with short
           // timeout. Online users always see the latest shell, offline
           // users still get a recent cached copy.

@@ -35,6 +35,19 @@ describe("service worker — Supabase REST must never be cached", () => {
   });
 });
 
+describe("service worker — active locale remains available offline", () => {
+  it("keeps locale chunks out of precache but caches the requested one at runtime", () => {
+    expect(CONFIG).toContain('"**/locale-*"');
+
+    const idx = CONFIG.indexOf('cacheName: "locale-dictionaries"');
+    expect(idx).toBeGreaterThan(-1);
+    const block = CONFIG.slice(Math.max(0, idx - 700), idx + 300);
+    expect(block).toContain('request.destination === "script"');
+    expect(block).toContain("locale-(?:en|vi)");
+    expect(block).toContain('handler: "CacheFirst"');
+  });
+});
+
 describe("purgeAuthSensitiveCaches", () => {
   const originalCaches = (globalThis as { caches?: CacheStorage }).caches;
 
