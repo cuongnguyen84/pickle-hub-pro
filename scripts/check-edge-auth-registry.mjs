@@ -66,7 +66,10 @@ export function detectServiceRoleClient(source) {
   const withoutComments = source
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/^\s*\/\/.*$/gm, "");
-  return /Deno\.env\.get\(["']SUPABASE_SERVICE_ROLE_KEY["']\)/.test(withoutComments);
+  return (
+    /Deno\.env\.get\(["']SUPABASE_SERVICE_ROLE_KEY["']\)/.test(withoutComments) &&
+    /\bcreateClient\s*\(/.test(withoutComments)
+  );
 }
 
 function parseFlow(flow) {
@@ -85,11 +88,11 @@ export function validateRegistrySnapshot(snapshot) {
   if (registry?.schema_version !== 1) {
     findings.push(finding("error", "schema-version", "schema_version must be 1."));
   }
-  if (registry?.enforcement !== "report") {
+  if (registry?.enforcement !== "strict") {
     findings.push(finding(
       "error",
       "enforcement-mode",
-      "BASE-06 registry must stay in report mode until SEC-04 enables enforcement.",
+      "SEC-04 requires registry enforcement=strict.",
     ));
   }
   if (!entries || typeof entries !== "object" || Array.isArray(entries)) {
@@ -210,6 +213,18 @@ export function validateRegistrySnapshot(snapshot) {
           name,
         ));
       }
+      if (
+        flow.actor === "public" &&
+        flow.operation === "callback" &&
+        !["shared_secret", "webhook_signature"].includes(flow.credential)
+      ) {
+        findings.push(finding(
+          "error",
+          "callback-without-proof",
+          "Public callbacks require a shared secret or verified webhook signature.",
+          name,
+        ));
+      }
     }
 
     const hasServiceBearer = parsedFlows.some((flow) => flow.credential === "service_role_bearer");
@@ -261,6 +276,65 @@ export function validateRegistrySnapshot(snapshot) {
   return findings;
 }
 
+export function validateProductionParity(registry, deployedFunctions) {
+  const findings = [];
+  const entries = registry?.functions;
+  if (!entries || typeof entries !== "object" || Array.isArray(entries)) {
+    return [finding("error", "registry-shape", "functions must be an object keyed by function name.")];
+  }
+  if (!Array.isArray(deployedFunctions)) {
+    return [finding("error", "production-shape", "Production function list must be an array.")];
+  }
+
+  const deployedByName = new Map();
+  for (const raw of deployedFunctions) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      findings.push(finding("error", "production-entry-shape", "Production entry must be an object."));
+      continue;
+    }
+    const name = typeof raw.name === "string"
+      ? raw.name
+      : typeof raw.slug === "string"
+        ? raw.slug
+        : "";
+    if (!name) {
+      findings.push(finding("error", "production-name", "Production entry has no name or slug."));
+      continue;
+    }
+    if (deployedByName.has(name)) {
+      findings.push(finding("error", "production-duplicate", "Production lists the function more than once.", name));
+      continue;
+    }
+    deployedByName.set(name, raw);
+  }
+
+  for (const name of Object.keys(entries).sort()) {
+    const deployed = deployedByName.get(name);
+    if (!deployed) {
+      findings.push(finding("error", "missing-production-function", "Registry function is not deployed.", name));
+      continue;
+    }
+    if (typeof deployed.verify_jwt !== "boolean") {
+      findings.push(finding("error", "production-verify-jwt-type", "Production verify_jwt must be boolean.", name));
+    } else if (deployed.verify_jwt !== entries[name].verify_jwt) {
+      findings.push(finding(
+        "error",
+        "production-verify-jwt-drift",
+        `Registry verify_jwt=${entries[name].verify_jwt} but production has ${deployed.verify_jwt}.`,
+        name,
+      ));
+    }
+  }
+
+  for (const name of [...deployedByName.keys()].sort()) {
+    if (!Object.hasOwn(entries, name)) {
+      findings.push(finding("error", "production-orphan", "Deployed function has no registry entry.", name));
+    }
+  }
+
+  return findings;
+}
+
 export function loadRepositorySnapshot(projectRoot) {
   const functionsDir = join(projectRoot, "supabase", "functions");
   const registry = JSON.parse(readFileSync(join(functionsDir, "auth-registry.json"), "utf8"));
@@ -283,10 +357,28 @@ export function loadRepositorySnapshot(projectRoot) {
 
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
 if (isMain) {
-  const strict = process.argv.includes("--strict");
   const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const snapshot = loadRepositorySnapshot(projectRoot);
-  const findings = validateRegistrySnapshot(snapshot);
+  const strict = process.argv.includes("--strict") || snapshot.registry.enforcement === "strict";
+  const findings = [...validateRegistrySnapshot(snapshot)];
+  const productionJsonIndex = process.argv.indexOf("--production-json");
+  if (productionJsonIndex >= 0) {
+    const productionJsonPath = process.argv[productionJsonIndex + 1];
+    if (!productionJsonPath) {
+      findings.push(finding("error", "production-json-path", "--production-json requires a file path."));
+    } else {
+      try {
+        const deployedFunctions = JSON.parse(readFileSync(productionJsonPath, "utf8"));
+        findings.push(...validateProductionParity(snapshot.registry, deployedFunctions));
+      } catch (error) {
+        findings.push(finding(
+          "error",
+          "production-json-read",
+          `Could not read production function metadata: ${error instanceof Error ? error.message : String(error)}`,
+        ));
+      }
+    }
+  }
   const errors = findings.filter((item) => item.severity === "error");
   const warnings = findings.filter((item) => item.severity === "warning");
 
@@ -303,10 +395,10 @@ if (isMain) {
   console.log(`Summary: ${errors.length} error(s), ${warnings.length} warning(s).`);
 
   if (strict && findings.length > 0) {
-    console.error("Strict mode failed. SEC-04 must resolve or explicitly redesign every finding.");
+    console.error("Strict mode failed. Resolve every registry or production-parity finding.");
     process.exit(1);
   }
   if (!strict && findings.length > 0) {
-    console.log("Report mode is non-blocking; SEC-04 will switch the CI invocation to --strict.");
+    console.log("Report mode is non-blocking.");
   }
 }

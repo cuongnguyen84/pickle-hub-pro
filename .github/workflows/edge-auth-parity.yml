@@ -1,0 +1,67 @@
+name: Edge auth production parity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/**"
+      - "supabase/config.toml"
+      - "scripts/check-edge-auth-registry.mjs"
+      - ".github/workflows/edge-auth-parity.yml"
+  schedule:
+    - cron: "17 19 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: edge-auth-production-parity
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_PROJECT_REF: ajvlcamxemgbxduhiqrl
+
+jobs:
+  edge-auth-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Compare production functions with the strict registry
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          METADATA_FILE="$RUNNER_TEMP/edge-functions.json"
+          supabase functions list \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --output json > "$METADATA_FILE"
+          npm run auth:registry -- --strict --production-json "$METADATA_FILE"
+
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping alert"; exit 0
+          fi
+          MSG="🔐 *Edge auth parity FAILED*%0A%0A"
+          MSG="$MSG*Commit:* \`${GITHUB_SHA:0:7}\`%0A"
+          MSG="$MSG*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}%0A"
+          MSG="${MSG}_A deployed function, verify_jwt setting, or registry entry drifted._"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" -d "text=${MSG}" \
+            -d "parse_mode=Markdown" -d "disable_web_page_preview=true" > /dev/null

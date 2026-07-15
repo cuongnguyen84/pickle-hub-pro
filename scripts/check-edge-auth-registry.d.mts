@@ -22,7 +22,18 @@ export interface RegistrySnapshot {
   sourceByName: Map<string, string>;
 }
 
+export interface ProductionFunction {
+  name?: string;
+  slug?: string;
+  verify_jwt?: boolean;
+  [key: string]: unknown;
+}
+
 export function parseFunctionConfig(source: string): Map<string, FunctionConfig>;
 export function detectServiceRoleClient(source: string): boolean;
 export function validateRegistrySnapshot(snapshot: RegistrySnapshot): RegistryFinding[];
+export function validateProductionParity(
+  registry: RegistrySnapshot["registry"],
+  deployedFunctions: ProductionFunction[],
+): RegistryFinding[];
 export function loadRepositorySnapshot(projectRoot: string): RegistrySnapshot;

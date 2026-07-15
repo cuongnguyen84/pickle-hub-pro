@@ -33,10 +33,15 @@ describe("requireCronRequest", () => {
 
   it.each([
     "auto-archive-tournaments",
+    "auto-cancel-unpaid-registrations",
+    "dupr-sync",
     "leaderboard-compute",
     "match-expire",
     "mux-sync-assets",
     "errors-telegram-alert",
+    "feed-embeds-sync",
+    "feed-generate",
+    "news-translate",
     "zalo-token-refresh",
   ])("is enforced by the public cron function %s", (functionName) => {
     const source = readFileSync(

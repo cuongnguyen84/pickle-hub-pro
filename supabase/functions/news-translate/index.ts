@@ -7,8 +7,8 @@
 // Phase 4 SEO pages can link the two together.
 //
 // Triggers:
-//   - POST  /                      — manual run (service_role Bearer or
-//                                    SCRAPER_AUTH_SECRET header)
+//   - POST  /                      — manual run (service_role Bearer) or
+//                                    scheduled run (CRON_SECRET header)
 //   - pg_cron via pg_net every 30m — set up in a separate migration after
 //                                    this function is deployed
 //
@@ -22,7 +22,8 @@
 //     gap between calls → 10 RPM, comfortable margin.
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 // BATCH_SIZE chosen with Supabase edge runtime's 25s wall-clock budget
 // in mind. Each row costs ~2-3s (Gemini call + insert + status update)
@@ -45,7 +46,7 @@ const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-auth-secret",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 interface NewsEnRow {
@@ -120,21 +121,14 @@ Deno.serve(async (req) => {
     return json({ error: "Method not allowed" }, 405);
   }
 
-  // Auth: accept either the service_role Bearer token OR the shared
-  // SCRAPER_AUTH_SECRET header (so pg_cron via pg_net can call without
-  // leaking service_role into more places than necessary).
+  // Manual/internal calls use service_role; pg_cron uses CRON_SECRET.
   const auth = req.headers.get("authorization") ?? "";
-  const sharedSecret = req.headers.get("x-auth-secret") ?? "";
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const scraperSecret = Deno.env.get("SCRAPER_AUTH_SECRET") ?? "";
-
   const authedByService =
     serviceRole !== "" && auth === `Bearer ${serviceRole}`;
-  const authedBySecret =
-    scraperSecret !== "" && sharedSecret === scraperSecret;
-
-  if (!authedByService && !authedBySecret) {
-    return json({ error: "Unauthorized" }, 401);
+  if (!authedByService) {
+    const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+    if (authError) return authError;
   }
 
   const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
@@ -160,8 +154,7 @@ Deno.serve(async (req) => {
 // ---------------------------------------------------------------------------
 
 async function runBatch(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   geminiKey: string
 ): Promise<RunResult> {
   // 0) Recover stale claims — rows stuck in 'translating' for >N min

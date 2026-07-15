@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import {
   detectServiceRoleClient,
   loadRepositorySnapshot,
   parseFunctionConfig,
+  validateProductionParity,
   validateRegistrySnapshot,
   type RegistrySnapshot,
 } from "../../../scripts/check-edge-auth-registry.mjs";
@@ -14,7 +16,7 @@ function minimalSnapshot(overrides: Partial<RegistrySnapshot> = {}): RegistrySna
   return {
     registry: {
       schema_version: 1,
-      enforcement: "report",
+      enforcement: "strict",
       functions: {
         example: {
           verify_jwt: false,
@@ -32,15 +34,15 @@ function minimalSnapshot(overrides: Partial<RegistrySnapshot> = {}): RegistrySna
 }
 
 describe("Edge Function auth registry", () => {
-  it("classifies every repository function without schema or drift errors", () => {
+  it("strictly classifies every repository function without findings", () => {
     const snapshot = loadRepositorySnapshot(projectRoot);
     const findings = validateRegistrySnapshot(snapshot);
 
     expect(snapshot.sourceFunctions).toHaveLength(76);
     expect(snapshot.configFunctions).toHaveLength(76);
     expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(76);
-    expect(findings.filter((item) => item.severity === "error")).toEqual([]);
-    expect(findings.some((item) => item.code === "known-hardening-gap")).toBe(true);
+    expect(snapshot.registry.enforcement).toBe("strict");
+    expect(findings).toEqual([]);
   });
 
   it("finds an unclassified source function", () => {
@@ -65,7 +67,10 @@ describe("Edge Function auth registry", () => {
     const snapshot = minimalSnapshot({
       configFunctions: new Map([["example", { verify_jwt: true }]]),
       sourceByName: new Map([
-        ["example", 'const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");'],
+        [
+          "example",
+          'const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"); createClient(url, key);',
+        ],
       ]),
     });
     const codes = validateRegistrySnapshot(snapshot).map((item) => item.code);
@@ -82,5 +87,56 @@ describe("Edge Function auth registry", () => {
 
     expect(config.get("quoted-name")?.verify_jwt).toBe(false);
     expect(detectServiceRoleClient('// Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")')).toBe(false);
+    expect(detectServiceRoleClient('Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")')).toBe(false);
+    expect(detectServiceRoleClient(`
+      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      const client = createClient(url, key);
+    `)).toBe(true);
+  });
+
+  it("rejects public callbacks without proof of purpose", () => {
+    const snapshot = minimalSnapshot();
+    const example = snapshot.registry.functions?.example as {
+      flows: string[];
+    };
+    example.flows = ["public.callback.client_identifier.client_identifier"];
+
+    expect(validateRegistrySnapshot(snapshot)).toContainEqual(
+      expect.objectContaining({ code: "callback-without-proof", function: "example" }),
+    );
+  });
+
+  it("detects production orphans, missing functions, and verify_jwt drift", () => {
+    const snapshot = minimalSnapshot();
+    const findings = validateProductionParity(snapshot.registry, [
+      { name: "example", verify_jwt: true },
+      { name: "orphan", verify_jwt: false },
+    ]);
+    const codes = findings.map((item) => item.code);
+
+    expect(codes).toContain("production-verify-jwt-drift");
+    expect(codes).toContain("production-orphan");
+    expect(validateProductionParity(snapshot.registry, [])).toContainEqual(
+      expect.objectContaining({ code: "missing-production-function", function: "example" }),
+    );
+  });
+
+  it("keeps representative actor controls in source", () => {
+    const source = (name: string) => readFileSync(
+      new URL(`../../../supabase/functions/${name}/index.ts`, import.meta.url),
+      "utf8",
+    );
+    const duprWebhookSecurity = readFileSync(
+      new URL("../../../supabase/functions/dupr-webhook/security.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(duprWebhookSecurity).toContain("MAX_WEBHOOK_BODY_BYTES");
+    expect(source("dupr-webhook")).toContain("event_key: eventKey");
+    expect(source("delete-account")).toContain("supabaseUser.auth.getUser()");
+    expect(source("api-keys-admin-generate")).toContain('roleData?.role !== "admin"');
+    expect(source("auto-cancel-unpaid-registrations")).toContain("requireCronRequest(req");
+    expect(source("notification-send")).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(source("send-event-registration-email")).toContain("if (!INTERNAL_SECRET)");
   });
 });

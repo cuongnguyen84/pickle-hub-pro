@@ -16,8 +16,8 @@
 //   personal accounts return error #110 and are recorded in last_error.
 //
 // Triggers:
-//   - POST /                    — manual run (service_role Bearer or
-//                                 SCRAPER_AUTH_SECRET x-auth-secret header)
+//   - POST /                    — manual run (service_role Bearer) or
+//                                 scheduled run (CRON_SECRET x-cron-secret)
 //   - pg_cron via pg_net hourly — migration 20260704110000
 //
 // Error policy: per-source try/catch — one broken username never kills the
@@ -25,6 +25,7 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 const GRAPH_VERSION = "v21.0";
 // Recent posts per account per run. Hourly cron + active accounts posting
@@ -35,7 +36,7 @@ const CAPTION_MAX = 220;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-auth-secret",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 interface SourceRow {
@@ -70,15 +71,15 @@ Deno.serve(async (req) => {
   if (req.method === "GET") return json({ name: "feed-embeds-sync", status: "ok" });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  // Auth: service_role Bearer OR shared scraper secret (pg_cron path).
+  // Manual/internal calls use service_role; scheduled calls use the one
+  // project-wide cron credential and fail closed through the shared helper.
   const auth = req.headers.get("authorization") ?? "";
-  const sharedSecret = req.headers.get("x-auth-secret") ?? "";
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const scraperSecret = Deno.env.get("SCRAPER_AUTH_SECRET") ?? "";
-  const authed =
-    (serviceRole && auth === `Bearer ${serviceRole}`) ||
-    (scraperSecret && sharedSecret === scraperSecret);
-  if (!authed) return json({ error: "Unauthorized" }, 401);
+  const authedByService = serviceRole !== "" && auth === `Bearer ${serviceRole}`;
+  if (!authedByService) {
+    const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+    if (authError) return authError;
+  }
 
   const igToken = Deno.env.get("IG_ACCESS_TOKEN") ?? "";
   const igUserId = Deno.env.get("IG_USER_ID") ?? "";

@@ -26,6 +26,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 const BACKFILL_WINDOW_DAYS = 90;
 const HISTORY_BUFFER_DAYS = 60; // extra lookback for "before" rating queries
@@ -50,32 +51,10 @@ Deno.serve(async (req) => {
   }
 
   // ─── 0. Auth gate ─────────────────────────────────────────────────────
-  // Cron-only endpoint. Caller must pass a shared CRON_SECRET in the
-  // Authorization header. Set the secret in Function Settings → Secrets
-  // (any random string), then reference it from the cron SQL job. This
-  // keeps the auth check independent of Supabase service_role key
-  // rotations / new secret_key migration.
-  //
-  // If CRON_SECRET is not set, the function falls back to checking
-  // SUPABASE_SERVICE_ROLE_KEY for backwards compat — but production
-  // setups should always set CRON_SECRET explicitly.
-  const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
+  const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+  if (authError) return authError;
+
   const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const auth = req.headers.get("Authorization") ?? "";
-
-  const expectedCron = CRON_SECRET ? `Bearer ${CRON_SECRET}` : "";
-  const expectedService = SERVICE_ROLE_KEY ? `Bearer ${SERVICE_ROLE_KEY}` : "";
-
-  const ok =
-    (expectedCron && auth === expectedCron) ||
-    (expectedService && auth === expectedService);
-
-  if (!ok) {
-    return jsonResponse(
-      { error: "unauthorized", code: "cron_secret_required" },
-      401,
-    );
-  }
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",

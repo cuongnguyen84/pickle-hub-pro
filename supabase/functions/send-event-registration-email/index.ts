@@ -115,13 +115,15 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "method_not_allowed" }, 405);
   }
 
-  // Internal secret gate to prevent random callers from spamming Resend
-  // even though verify_jwt is off.
-  if (INTERNAL_SECRET) {
-    const provided = req.headers.get("x-internal-secret");
-    if (provided !== INTERNAL_SECRET) {
-      return jsonResponse({ error: "unauthorized" }, 401);
-    }
+  // Internal secret gate to prevent random callers from spamming Resend.
+  // Missing server configuration is an outage, never an auth bypass.
+  if (!INTERNAL_SECRET) {
+    logEvent({ error: "INTERNAL_NOTIFY_SECRET not configured" });
+    return jsonResponse({ error: "internal_secret_not_configured" }, 503);
+  }
+  const provided = req.headers.get("x-internal-secret");
+  if (provided !== INTERNAL_SECRET) {
+    return jsonResponse({ error: "unauthorized" }, 401);
   }
 
   if (!RESEND_API_KEY) {

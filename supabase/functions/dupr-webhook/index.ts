@@ -23,10 +23,12 @@
 //     }
 //   }
 //
-// DUPR does not sign payloads, so the best we can do is:
-//   1. Match the payload's clientId against our configured DUPR_CLIENT_ID.
-//   2. Look up the duprId in dupr_user_tokens (rejects unknown players).
-//   3. Persist the raw event for debugging + update profile + history.
+// DUPR does not provide a separate signature header. Production payloads put
+// the partner CLIENT_KEY in clientId, so it is treated as a shared secret:
+//   1. Bound the request body and match clientId against DUPR_CLIENT_KEY.
+//   2. Claim a payload digest once so retries cannot duplicate history rows.
+//   3. Look up the duprId in dupr_user_tokens (rejects unknown players).
+//   4. Persist a redacted event + update profile + history.
 //
 // MUST return 200 OK within a few seconds (DUPR retries otherwise).
 //
@@ -35,6 +37,12 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import {
+  parseJsonObject,
+  readBoundedBody,
+  secretsMatch,
+  sha256Hex,
+} from "./security.ts";
 
 interface RatingPayload {
   clientId?: string | number;
@@ -85,57 +93,67 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
-  let payload: RatingPayload;
-  try {
-    payload = (await req.json()) as RatingPayload;
-  } catch {
-    return jsonResponse({ error: "invalid_json" }, 400);
+  const rawBody = await readBoundedBody(req);
+  if (rawBody === null) {
+    return jsonResponse({ error: "payload_too_large" }, 413);
   }
 
-  // DUPR sends the CLIENT_KEY (e.g. "test-ck-abc...") in the clientId
-  // field of webhook payloads — NOT the numeric DUPR_CLIENT_ID despite
-  // what the docs example shows. Accept either to be defensive.
+  const parsedPayload = parseJsonObject(rawBody);
+  if (!parsedPayload) {
+    return jsonResponse({ error: "invalid_json" }, 400);
+  }
+  const payload = parsedPayload as RatingPayload;
+
+  // DUPR sends the CLIENT_KEY (e.g. "test-ck-abc...") in the clientId field
+  // of webhook payloads. Treat it as the callback's proof of purpose.
   const expectedClientKey = Deno.env.get("DUPR_CLIENT_KEY") ?? "";
-  const expectedClientId = Deno.env.get("DUPR_CLIENT_ID") ?? "";
   const incomingClientId = String(payload.clientId ?? "");
   const event = String(payload.event ?? "");
   const duprId = payload.message?.duprId ?? null;
 
-  // ─── Fail closed if no expected client id is configured ────────────────
-  // Without secrets set, this public endpoint would accept arbitrary
-  // payloads from anyone — refuse rather than fail open.
-  if (!expectedClientKey && !expectedClientId) {
-    console.error("dupr-webhook: DUPR_CLIENT_KEY/ID secrets unset — refusing");
+  // ─── Fail closed if the callback secret is not configured ──────────────
+  if (!expectedClientKey) {
+    console.error("dupr-webhook: DUPR_CLIENT_KEY is unset — refusing");
     return jsonResponse(
       { status: "error", reason: "server_misconfigured" },
-      500,
+      503,
     );
   }
 
   // ─── Validate clientId BEFORE persisting (avoid storage amplification) ─
-  const clientIdMatch =
-    (expectedClientKey && incomingClientId === expectedClientKey) ||
-    (expectedClientId && incomingClientId === expectedClientId);
-  if (!clientIdMatch) {
-    // Don't log to dupr_webhook_events — unauthenticated callers could
-    // otherwise force unbounded DB inserts from this public endpoint.
-    console.warn("dupr-webhook: client_id_mismatch", incomingClientId);
-    return jsonResponse({ status: "ignored", reason: "client_id_mismatch" });
+  if (!secretsMatch(incomingClientId, expectedClientKey)) {
+    console.warn("dupr-webhook: client_key_mismatch");
+    return jsonResponse({ status: "ignored", reason: "client_key_mismatch" }, 401);
   }
 
-  // ─── Log raw event (clientId already validated) ────────────────────────
-  const { data: logRow } = await supabase
+  // ─── Claim + log event (secret redacted, exact retries deduplicated) ───
+  const eventKey = await sha256Hex(rawBody);
+  const clientFingerprint = (await sha256Hex(incomingClientId)).slice(0, 16);
+  const storedPayload = {
+    ...(payload as unknown as Record<string, unknown>),
+    clientId: "[redacted]",
+  };
+  const { data: logRow, error: logError } = await supabase
     .from("dupr_webhook_events")
     .insert({
       topic: event,
       dupr_id: duprId,
-      client_id: incomingClientId,
-      payload: payload as unknown as Record<string, unknown>,
+      client_id: `sha256:${clientFingerprint}`,
+      event_key: eventKey,
+      payload: storedPayload,
     })
     .select("id")
     .single<{ id: number }>();
 
-  const logId = logRow?.id;
+  if (logError?.code === "23505") {
+    return jsonResponse({ status: "ok", reason: "duplicate_event" });
+  }
+  if (logError || !logRow) {
+    console.error("dupr-webhook: event claim failed", logError?.message ?? "no row");
+    return jsonResponse({ status: "error", reason: "event_claim_failed" }, 503);
+  }
+
+  const logId = logRow.id;
 
   const markProcessed = async (err?: string) => {
     if (!logId) return;

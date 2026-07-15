@@ -28,6 +28,7 @@
 // ============================================================================
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 const ICT_OFFSET_MS = 7 * 3600_000;
 const EVENT_THRESHOLDS = [5, 10, 25, 50, 100];
@@ -38,7 +39,7 @@ const GEMINI_MODEL = "gemini-flash-lite-latest";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-auth-secret",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 function json(body: unknown, status = 200): Response {
@@ -313,13 +314,12 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const auth = req.headers.get("authorization") ?? "";
-  const sharedSecret = req.headers.get("x-auth-secret") ?? "";
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const scraperSecret = Deno.env.get("SCRAPER_AUTH_SECRET") ?? "";
-  const authed =
-    (serviceRole && auth === `Bearer ${serviceRole}`) ||
-    (scraperSecret && sharedSecret === scraperSecret);
-  if (!authed) return json({ error: "Unauthorized" }, 401);
+  const authedByService = serviceRole !== "" && auth === `Bearer ${serviceRole}`;
+  if (!authedByService) {
+    const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+    if (authError) return authError;
+  }
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceRole);
 

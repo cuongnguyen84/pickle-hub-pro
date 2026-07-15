@@ -15,5 +15,21 @@ import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "method_not_allowed" }, 405);
+  }
+
+  const expected = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!expected) {
+    console.error("[notification-send] SUPABASE_SERVICE_ROLE_KEY is not configured");
+    return jsonResponse({ error: "service_auth_not_configured" }, 503);
+  }
+  const presented = (req.headers.get("Authorization") ?? "")
+    .replace(/^Bearer\s+/i, "")
+    .trim();
+  if (presented !== expected) {
+    return jsonResponse({ error: "unauthorized" }, 401);
+  }
+
   return jsonResponse({ status: "skeleton", function: "notification-send", ts: new Date().toISOString() });
 });

@@ -1,6 +1,6 @@
 # Edge Function auth and service-role registry
 
-Status: BASE-06 design complete, validator in non-blocking report mode
+Status: SEC-04 complete, strict source/config/production enforcement enabled
 
 Registry: `supabase/functions/auth-registry.json`
 
@@ -14,7 +14,7 @@ The registry gives every deployed Edge Function one version-controlled caller-au
 2. gateway behavior in `supabase/config.toml`;
 3. the auth and service-role assumptions inside each handler.
 
-BASE-06 creates the complete inventory, schema, validator, and CI design. It deliberately leaves enforcement non-blocking. SEC-04 owns resolving the recorded hardening gaps, changing `enforcement` to strict, and adding the blocking CI step.
+BASE-06 created the inventory, schema, and validator. SEC-04 closed every recorded finding, changed `enforcement` to strict, added a blocking Quality gate, and added a scheduled production-parity guard.
 
 ## Verified baseline (2026-07-15)
 
@@ -25,8 +25,8 @@ BASE-06 creates the complete inventory, schema, validator, and CI design. It del
 | Active production functions | 76 | Matches source after the Zalo drift hotfix |
 | Functions that instantiate a service-role client | 70 | Recorded as `uses_client` |
 | Functions that accept service role as caller bearer | 14 | Recorded separately as `accepts_bearer` |
-| Auth flows | 95 | 33 public, 19 user, 11 admin, 11 cron, 21 internal-service |
-| Known hardening findings | 9 functions | Linked to SEC-02, SEC-03, or SEC-04 |
+| Auth flows | 95 | 32 public, 21 user, 11 admin, 11 cron, 20 internal-service |
+| Known hardening findings | 0 | Strict validator reports zero errors and zero warnings |
 
 The distinction between the last two service-role rows is security-critical. A handler may use a service-role database client after authenticating a user, cron, or webhook caller; that does not make the service-role key a valid caller credential. `uses_client` and `accepts_bearer` must never be inferred from each other.
 
@@ -72,7 +72,7 @@ Allowed statuses:
 - `hardening_required`: the current path is understood but has a linked security follow-up;
 - `skeleton`: the endpoint is not implemented, but its intended boundary is recorded before future mutations are added.
 
-`classified` means inventoried, not permanently exempt. Static policy and tests remain the source of enforcement once SEC-04 turns strict mode on.
+`classified` means inventoried, not permanently exempt. Static policy, contract tests, and production metadata parity remain the enforcement sources.
 
 ## Validator behavior
 
@@ -85,30 +85,33 @@ Allowed statuses:
 - registry schema and flow enum validity;
 - service-role bearer declarations in both the service-role flags and auth flows;
 - JWT/role requirements for user and admin flows;
-- cron flows that do not yet use `cron_secret` plus `requireCronRequest`;
-- known hardening and unauthenticated-internal findings.
+- cron flows that do not use `cron_secret` plus `requireCronRequest`;
+- public callbacks without a shared secret or verified signature;
+- known hardening and unauthenticated-internal findings;
+- optional production name and `verify_jwt` parity from `supabase functions list --output json`.
 
-Current report mode returns exit code 0 and prints 15 warnings: nine known hardening entries, two missing standard cron-helper calls, three scheduled flows using a generic shared secret, and one unauthenticated no-op skeleton. Schema or coverage drift is still visible as `ERROR`, but remains non-blocking until SEC-04.
+Strict mode is the registry default and returns non-zero for any finding. `npm run auth:registry -- --strict` currently reports 76 source, 76 registry, 76 config, zero errors, and zero warnings.
 
-SEC-04 activation sequence:
+Enforcement layers:
 
-1. resolve or deliberately redesign every warning;
-2. add code-level contract tests for each policy class;
-3. change registry enforcement from `report` to `strict`;
-4. add `npm run auth:registry -- --strict` to the Quality workflow;
-5. add a credentialed scheduled production-parity job that compares `supabase functions list --output json` with registry/source and alerts on deployed orphans.
+1. representative source-contract tests cover public, user, admin, cron, and internal-service policies;
+2. the Quality workflow runs the network-free strict registry check on every push and pull request;
+3. `edge-auth-parity.yml` runs on relevant main changes, on demand, and daily at 02:17 ICT;
+4. the credentialed parity job compares deployed names and `verify_jwt` with the registry and alerts on drift.
 
-The production-parity check must be separate from ordinary pull-request CI because it needs `SUPABASE_ACCESS_TOKEN`. It must compare names and `verify_jwt`, never download or print function secrets.
+The production-parity check stays separate from ordinary pull-request CI because it needs `SUPABASE_ACCESS_TOKEN`. It compares only names and `verify_jwt`; it never downloads or prints function secrets.
 
-## Current hardening queue
+## SEC-04 controls delivered
 
-| Function(s) | Finding | Owner |
+| Function(s) | Closed finding | Enforced control |
 |---|---|---|
-| `auto-cancel-unpaid-registrations`, `dupr-sync` | Cron gate is not the shared helper | SEC-04 |
-| `feed-embeds-sync`, `feed-generate`, `news-translate` | Scheduled mutation uses the generic scraper secret | SEC-04 |
-| `dupr-webhook` | Client identifier without an independent signature | SEC-04 |
-| `send-event-registration-email` | Shared-secret check fails open when configuration is missing | SEC-04 |
-| `notification-send` | Publicly reachable no-op skeleton intended for internal use | SEC-04 before implementation |
+| `auto-cancel-unpaid-registrations`, `dupr-sync` | Non-standard cron gates | POST plus shared `requireCronRequest`; service-role fallback removed from the cron-only DUPR sync |
+| `feed-embeds-sync`, `feed-generate`, `news-translate` | Scheduled mutation used the generic scraper secret | Scheduled callers now read `cron_secret` from Vault and send `x-cron-secret`; service-role remains available only for deliberate internal runs |
+| `dupr-webhook` | Callback proof, replay, secret retention, and body-size gaps | Fail-closed CLIENT_KEY shared-secret check, 32 KiB body bound, SHA-256 idempotency key, redacted ledger, and 30-day retention |
+| `send-event-registration-email` | Shared-secret check failed open when configuration was missing | Missing secret returns 503; missing or wrong caller secret returns 401 |
+| `notification-send` | Publicly reachable no-op skeleton intended for internal use | POST-only service-role bearer gate, including fail-closed missing configuration |
+
+Migration `20260715180000_enforce_edge_auth_registry.sql` standardizes the four scheduled callers, removes the duplicate legacy news-translation job when present, adds the callback event key, redacts historical provider credentials, and schedules ledger retention.
 
 ## Production drift incident found during inventory
 

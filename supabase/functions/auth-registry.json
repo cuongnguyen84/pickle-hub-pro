@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "enforcement": "report",
+  "enforcement": "strict",
   "flow_format": "actor.operation.credential.authorization",
   "functions": {
     "add-registration-direct": {
@@ -52,9 +52,8 @@
       "verify_jwt": false,
       "service_role": { "uses_client": true, "accepts_bearer": false },
       "flows": ["cron.write.cron_secret.shared_secret"],
-      "status": "hardening_required",
-      "follow_up": ["SEC-04"],
-      "notes": "Uses an inline cron-secret gate; migrate to requireCronRequest."
+      "status": "classified",
+      "notes": "Cron-only mutation uses requireCronRequest and the Vault-backed project cron secret."
     },
     "batch-view-events": {
       "verify_jwt": false,
@@ -161,14 +160,10 @@
     },
     "dupr-sync": {
       "verify_jwt": false,
-      "service_role": { "uses_client": true, "accepts_bearer": true },
-      "flows": [
-        "cron.write.cron_secret.shared_secret",
-        "internal_service.write.service_role_bearer.shared_secret"
-      ],
-      "status": "hardening_required",
-      "follow_up": ["SEC-04"],
-      "notes": "Uses Authorization for CRON_SECRET and retains a service-role fallback; standardize on requireCronRequest."
+      "service_role": { "uses_client": true, "accepts_bearer": false },
+      "flows": ["cron.write.cron_secret.shared_secret"],
+      "status": "classified",
+      "notes": "Cron-only mutation uses requireCronRequest; the former service-role fallback was removed."
     },
     "dupr-token-backfill": {
       "verify_jwt": false,
@@ -187,11 +182,10 @@
       "service_role": { "uses_client": true, "accepts_bearer": false },
       "flows": [
         "public.read.none.none",
-        "public.callback.client_identifier.client_identifier"
+        "public.callback.shared_secret.shared_secret"
       ],
-      "status": "hardening_required",
-      "follow_up": ["SEC-04"],
-      "notes": "The payload client identifier is checked, but there is no independent webhook signature."
+      "status": "classified",
+      "notes": "DUPR provides no separate signature header; its CLIENT_KEY payload field is treated as a fail-closed shared secret. Bodies are bounded, secret fields are redacted, and a unique digest makes retries idempotent."
     },
     "dupr-webhook-register": {
       "verify_jwt": false,
@@ -219,24 +213,22 @@
       "service_role": { "uses_client": true, "accepts_bearer": true },
       "flows": [
         "public.read.none.none",
-        "cron.write.shared_secret.shared_secret",
+        "cron.write.cron_secret.shared_secret",
         "internal_service.write.service_role_bearer.shared_secret"
       ],
-      "status": "hardening_required",
-      "follow_up": ["SEC-04"],
-      "notes": "Scheduled mutation uses a generic scraper secret; standardize cron calls on requireCronRequest."
+      "status": "classified",
+      "notes": "Public GET is health-only; POST requires service-role bearer or requireCronRequest."
     },
     "feed-generate": {
       "verify_jwt": false,
       "service_role": { "uses_client": true, "accepts_bearer": true },
       "flows": [
         "public.read.none.none",
-        "cron.write.shared_secret.shared_secret",
+        "cron.write.cron_secret.shared_secret",
         "internal_service.write.service_role_bearer.shared_secret"
       ],
-      "status": "hardening_required",
-      "follow_up": ["SEC-04"],
-      "notes": "Scheduled mutation uses a generic scraper secret; standardize cron calls on requireCronRequest."
+      "status": "classified",
+      "notes": "Public GET is health-only; POST requires service-role bearer or requireCronRequest."
     },
     "geo-check": {
       "verify_jwt": false,
@@ -341,12 +333,11 @@
       "service_role": { "uses_client": true, "accepts_bearer": true },
       "flows": [
         "public.read.none.none",
-        "cron.write.shared_secret.shared_secret",
+        "cron.write.cron_secret.shared_secret",
         "internal_service.write.service_role_bearer.shared_secret"
       ],
-      "status": "hardening_required",
-      "follow_up": ["SEC-04"],
-      "notes": "Scheduled mutation uses a generic scraper secret; standardize cron calls on requireCronRequest."
+      "status": "classified",
+      "notes": "Public GET is health-only; POST requires service-role bearer or requireCronRequest."
     },
     "newsletter-subscribe": {
       "verify_jwt": false,
@@ -357,14 +348,10 @@
     },
     "notification-send": {
       "verify_jwt": false,
-      "service_role": { "uses_client": false, "accepts_bearer": false },
-      "flows": [
-        "public.read.none.none",
-        "internal_service.write.none.none"
-      ],
+      "service_role": { "uses_client": false, "accepts_bearer": true },
+      "flows": ["internal_service.write.service_role_bearer.shared_secret"],
       "status": "skeleton",
-      "follow_up": ["SEC-04"],
-      "notes": "No-op skeleton is publicly reachable; require service authentication before implementing mutations."
+      "notes": "The no-op skeleton is POST-only and fail-closed behind a service-role bearer before any future mutation is implemented."
     },
     "og-doubles-elimination": {
       "verify_jwt": false,
@@ -487,9 +474,8 @@
       "verify_jwt": false,
       "service_role": { "uses_client": false, "accepts_bearer": false },
       "flows": ["internal_service.write.shared_secret.shared_secret"],
-      "status": "hardening_required",
-      "follow_up": ["SEC-04"],
-      "notes": "The current secret check is fail-open when INTERNAL_NOTIFY_SECRET is absent."
+      "status": "classified",
+      "notes": "The internal notification secret is mandatory; missing server configuration returns 503 and never bypasses auth."
     },
     "send-push-notification": {
       "verify_jwt": false,

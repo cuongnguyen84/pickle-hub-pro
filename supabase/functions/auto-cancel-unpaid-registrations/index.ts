@@ -16,6 +16,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 const CANCELLED_REASON = "auto_cancelled_unpaid_deadline";
 
@@ -41,20 +42,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-  if (req.method !== "POST") {
-    return jsonResponse({ error: "method_not_allowed" }, 405);
-  }
-
-  // ─── Cron-secret gate ────────────────────────────────────────────────────
-  const expectedSecret = Deno.env.get("CRON_SECRET") ?? "";
-  if (!expectedSecret) {
-    logEvent({ step: "cron_secret_not_configured" });
-    return jsonResponse({ error: "cron_secret_not_configured" }, 500);
-  }
-  const presented = req.headers.get("x-cron-secret") ?? "";
-  if (presented !== expectedSecret) {
+  const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+  if (authError) {
     logEvent({ step: "auth_rejected" });
-    return jsonResponse({ error: "unauthorized" }, 401);
+    return authError;
   }
 
   const supabase = createClient(
