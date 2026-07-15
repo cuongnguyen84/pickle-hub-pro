@@ -44,9 +44,11 @@ interface ReportPayload {
   message: string;
   stack?: string;
   url?: string;
-  user_agent?: string;
-  user_id?: string;
-  details?: Record<string, unknown>;
+  details?: {
+    filename?: string;
+    lineno?: number;
+    colno?: number;
+  };
 }
 
 function send(type: "js_error" | "unhandled_rejection", payload: ReportPayload) {
@@ -107,7 +109,6 @@ export function initErrorReporter(): void {
       message: truncate(message, 1000)!,
       stack: truncate(ev.error?.stack, 4000),
       url: window.location.href,
-      user_agent: navigator.userAgent,
       details: {
         filename: ev.filename,
         lineno: ev.lineno,
@@ -129,7 +130,6 @@ export function initErrorReporter(): void {
       message: truncate(message, 1000)!,
       stack: truncate(reason instanceof Error ? reason.stack : undefined, 4000),
       url: window.location.href,
-      user_agent: navigator.userAgent,
     });
   });
 }

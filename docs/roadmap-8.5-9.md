@@ -132,7 +132,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 |---|---|---:|---|---|
 | SEC-01 | ready | 4d | Secure the production Capacitor iOS transition: remove tokens from callback with Universal Links + PKCE, unless SwiftUI release retires Capacitor first | BASE-05 |
 | SEC-02 | done | 3d | Harden `batch-view-events`: derive user and organization server-side, validate target, add rate limits | BASE-06 |
-| SEC-03 | ready | 2d | Harden `log-client-event`: derive/null user, body cap, rate limit, retention | BASE-06 |
+| SEC-03 | done | 2d | Harden `log-client-event`: derive/null user, body cap, rate limit, retention | BASE-06 |
 | SEC-04 | ready | 3d | Enforce the auth registry and fail CI for unclassified `verify_jwt=false` or service-role functions. Apply the five actor policies (public, user, admin, cron, internal service) together with operation-specific controls: public reads need validation + rate/cache controls; public mutations/callbacks need proof-of-purpose + abuse controls; user actions derive identity from JWT; admin actions add a role check; cron uses `requireCronRequest`; internal services use an approved machine credential | BASE-06 |
 | SEC-05 | ready | 3d | Audit exposed views, RLS, function grants, and `SECURITY DEFINER search_path` | — |
 | SEC-06 | blocked | 2d | Automate production migration drift check | Supabase CI credential |

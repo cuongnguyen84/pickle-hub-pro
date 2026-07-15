@@ -259,10 +259,9 @@
     "log-client-event": {
       "verify_jwt": false,
       "service_role": { "uses_client": true, "accepts_bearer": false },
-      "flows": ["public.write.none.none"],
-      "status": "hardening_required",
-      "follow_up": ["SEC-03"],
-      "notes": "Anonymous browser and CSP telemetry is intentional; user identity, body caps, rate limits, and retention need hardening."
+      "flows": ["public.write.none.none", "user.write.user_jwt.derived_identity"],
+      "status": "classified",
+      "notes": "Anonymous CSP/JS telemetry is intentional. Optional user identity is derived from a valid JWT; body, fields, rate, table grants, and 90-day retention are bounded by SEC-03."
     },
     "mark-payment-claimed": {
       "verify_jwt": false,
