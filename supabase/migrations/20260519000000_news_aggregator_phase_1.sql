@@ -116,6 +116,8 @@ COMMENT ON COLUMN public.news_sources.active       IS 'If false, fetcher skips t
 -- any existing news_items rows are migrated (existing rows have source_id NULL
 -- until manually backfilled in Phase 2).
 ALTER TABLE public.news_items
+  DROP CONSTRAINT IF EXISTS news_items_source_id_fkey;
+ALTER TABLE public.news_items
   ADD CONSTRAINT news_items_source_id_fkey
     FOREIGN KEY (source_id) REFERENCES public.news_sources(id)
     ON UPDATE CASCADE ON DELETE SET NULL;

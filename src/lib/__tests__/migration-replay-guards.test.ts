@@ -220,4 +220,22 @@ describe("production-seeded migration replay guards", () => {
     expect(sql).toContain(dropView);
     expect(sql.indexOf(dropView)).toBeLessThan(sql.indexOf(createView));
   });
+
+  it("drops the existing news source foreign key before recreating it", () => {
+    const sql = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260519000000_news_aggregator_phase_1.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const dropConstraint =
+      "DROP CONSTRAINT IF EXISTS news_items_source_id_fkey;";
+    const addConstraint = "ADD CONSTRAINT news_items_source_id_fkey";
+
+    expect(sql).toContain(dropConstraint);
+    expect(sql.indexOf(dropConstraint)).toBeLessThan(
+      sql.indexOf(addConstraint),
+    );
+  });
 });
