@@ -155,7 +155,9 @@ describe("production-seeded migration replay guards", () => {
           sql.indexOf(unqualifiedCreate, dropIndex),
         );
 
-        expect(dropIndex, `${file}: missing ${guard}`).toBeGreaterThanOrEqual(0);
+        expect(dropIndex, `${file}: missing ${guard}`).toBeGreaterThanOrEqual(
+          0,
+        );
         expect(
           createIndex,
           `${file}: ${guard} must precede its CREATE OR REPLACE`,
@@ -186,8 +188,12 @@ describe("production-seeded migration replay guards", () => {
     expect(prepayment).toContain(
       "DROP CONSTRAINT IF EXISTS event_registrations_payment_check;",
     );
-    expect(prepayment.indexOf("event_registrations_payment_check;")).toBeLessThan(
-      prepayment.indexOf("ADD CONSTRAINT event_registrations_payment_status_check"),
+    expect(
+      prepayment.indexOf("event_registrations_payment_check;"),
+    ).toBeLessThan(
+      prepayment.indexOf(
+        "ADD CONSTRAINT event_registrations_payment_status_check",
+      ),
     );
   });
 
@@ -254,5 +260,32 @@ describe("production-seeded migration replay guards", () => {
 
     expect(sql).toContain(dropPolicy);
     expect(sql.indexOf(dropPolicy)).toBeLessThan(sql.indexOf(createPolicy));
+  });
+
+  it("drops every club manager policy before recreating it", () => {
+    const sql = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260521130000_club_managers.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const policies = [
+      ...sql.matchAll(/CREATE POLICY "([^"]+)" ON public\.([a-z_]+)/g),
+    ];
+
+    expect(policies.length).toBeGreaterThan(0);
+
+    for (const policy of policies) {
+      const [, name, table] = policy;
+      const dropPolicy = `DROP POLICY IF EXISTS "${name}" ON public.${table};`;
+      const dropIndex = sql.indexOf(dropPolicy);
+
+      expect(dropIndex, `missing ${dropPolicy}`).toBeGreaterThanOrEqual(0);
+      expect(
+        dropIndex,
+        `${dropPolicy} must precede its CREATE POLICY`,
+      ).toBeLessThan(policy.index);
+    }
   });
 });

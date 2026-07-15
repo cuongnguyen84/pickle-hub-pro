@@ -160,6 +160,7 @@ COMMENT ON FUNCTION public.is_event_organizer(UUID, UUID) IS
 -- doesn't support column-level policies.
 
 DROP POLICY IF EXISTS "clubs_update_owner_or_admin" ON public.clubs;
+DROP POLICY IF EXISTS "clubs_update_organizer" ON public.clubs;
 CREATE POLICY "clubs_update_organizer" ON public.clubs
   FOR UPDATE
   USING (public.is_club_organizer(id, auth.uid()))
@@ -198,6 +199,7 @@ CREATE TRIGGER trg_clubs_enforce_archive_owner_only
 
 DROP POLICY IF EXISTS "social_events_insert_owner" ON public.social_events;
 DROP POLICY IF EXISTS "social_events_insert_owner_or_admin" ON public.social_events;
+DROP POLICY IF EXISTS "social_events_insert_organizer" ON public.social_events;
 CREATE POLICY "social_events_insert_organizer" ON public.social_events
   FOR INSERT
   WITH CHECK (
@@ -209,6 +211,7 @@ CREATE POLICY "social_events_insert_organizer" ON public.social_events
   );
 
 DROP POLICY IF EXISTS "social_events_update_owner_or_admin" ON public.social_events;
+DROP POLICY IF EXISTS "social_events_update_organizer" ON public.social_events;
 CREATE POLICY "social_events_update_organizer" ON public.social_events
   FOR UPDATE
   USING (
@@ -223,6 +226,7 @@ CREATE POLICY "social_events_update_organizer" ON public.social_events
   );
 
 DROP POLICY IF EXISTS "social_events_delete_owner_or_admin" ON public.social_events;
+DROP POLICY IF EXISTS "social_events_delete_organizer" ON public.social_events;
 CREATE POLICY "social_events_delete_organizer" ON public.social_events
   FOR DELETE
   USING (
@@ -290,6 +294,7 @@ CREATE POLICY "event_payment_config_select_public" ON public.event_payment_confi
   );
 
 DROP POLICY IF EXISTS "event_payment_config_insert_owner" ON public.event_payment_config;
+DROP POLICY IF EXISTS "event_payment_config_insert_organizer" ON public.event_payment_config;
 CREATE POLICY "event_payment_config_insert_organizer" ON public.event_payment_config
   FOR INSERT
   WITH CHECK (
@@ -298,6 +303,7 @@ CREATE POLICY "event_payment_config_insert_organizer" ON public.event_payment_co
   );
 
 DROP POLICY IF EXISTS "event_payment_config_update_owner" ON public.event_payment_config;
+DROP POLICY IF EXISTS "event_payment_config_update_organizer" ON public.event_payment_config;
 CREATE POLICY "event_payment_config_update_organizer" ON public.event_payment_config
   FOR UPDATE
   USING (
@@ -310,6 +316,7 @@ CREATE POLICY "event_payment_config_update_organizer" ON public.event_payment_co
   );
 
 DROP POLICY IF EXISTS "event_payment_config_delete_owner" ON public.event_payment_config;
+DROP POLICY IF EXISTS "event_payment_config_delete_organizer" ON public.event_payment_config;
 CREATE POLICY "event_payment_config_delete_organizer" ON public.event_payment_config
   FOR DELETE
   USING (
