@@ -48,8 +48,8 @@
 # static files BEFORE consulting _redirects, so these rules only ever catch a
 # genuinely-missing file, turning it into a clean 404 the browser's dynamic
 # import rejects cleanly (ChunkErrorBoundary then reloads to the fresh shell).
-/assets/* /index.html 404
-/static/* /index.html 404
+/assets/* /asset-404.html 404
+/static/* /asset-404.html 404
 
 # SPA fallback
 /* /index.html 200
