@@ -41,6 +41,8 @@ COMMENT ON COLUMN public.social_events.prepayment_deadline_hours IS
 -- because none of them use the new value.
 
 ALTER TABLE public.event_registrations
+  DROP CONSTRAINT IF EXISTS event_registrations_payment_check;
+ALTER TABLE public.event_registrations
   DROP CONSTRAINT IF EXISTS event_registrations_payment_status_check;
 ALTER TABLE public.event_registrations
   ADD CONSTRAINT event_registrations_payment_status_check

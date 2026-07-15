@@ -163,4 +163,31 @@ describe("production-seeded migration replay guards", () => {
       }
     },
   );
+
+  it("defers and replaces the historical registration payment constraint", () => {
+    const foundation = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260511120000_social_events_foundation.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const prepayment = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260513140000_event_prepayment_required.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(foundation).toContain(
+      "CHECK (payment_status IN ('unpaid', 'paid', 'refunded')) NOT VALID;",
+    );
+    expect(prepayment).toContain(
+      "DROP CONSTRAINT IF EXISTS event_registrations_payment_check;",
+    );
+    expect(prepayment.indexOf("event_registrations_payment_check;")).toBeLessThan(
+      prepayment.indexOf("ADD CONSTRAINT event_registrations_payment_status_check"),
+    );
+  });
 });

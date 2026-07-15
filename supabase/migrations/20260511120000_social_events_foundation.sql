@@ -230,7 +230,7 @@ ALTER TABLE public.event_registrations
   DROP CONSTRAINT IF EXISTS event_registrations_payment_check;
 ALTER TABLE public.event_registrations
   ADD CONSTRAINT event_registrations_payment_check
-  CHECK (payment_status IN ('unpaid', 'paid', 'refunded'));
+  CHECK (payment_status IN ('unpaid', 'paid', 'refunded')) NOT VALID;
 
 -- Every registration must be reachable: either linked to a profile, or carry
 -- a phone + display_name (guest / ghost path). Both can coexist when an
