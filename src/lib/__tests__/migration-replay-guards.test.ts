@@ -190,4 +190,19 @@ describe("production-seeded migration replay guards", () => {
       prepayment.indexOf("ADD CONSTRAINT event_registrations_payment_status_check"),
     );
   });
+
+  it("creates the legacy user badge index only while user_id exists", () => {
+    const sql = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260512150000_user_badges.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const columnGuard = "AND column_name = 'user_id'";
+    const legacyIndex = "CREATE INDEX IF NOT EXISTS idx_user_badges_user_id";
+
+    expect(sql).toContain(columnGuard);
+    expect(sql.indexOf(columnGuard)).toBeLessThan(sql.indexOf(legacyIndex));
+  });
 });

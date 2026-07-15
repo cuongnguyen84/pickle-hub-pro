@@ -21,8 +21,19 @@ CREATE TABLE IF NOT EXISTS public.user_badges (
   UNIQUE (user_id, badge_code)
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_badges_user_id
-  ON public.user_badges (user_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'user_badges'
+      AND column_name = 'user_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_user_badges_user_id
+      ON public.user_badges (user_id);
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_user_badges_earned_at
   ON public.user_badges (earned_at DESC);
 
