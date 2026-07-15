@@ -1,7 +1,9 @@
 # Edge Function auth and service-role registry
 
-Status: BASE-06 design complete, validator in non-blocking report mode  
-Registry: `supabase/functions/auth-registry.json`  
+Status: BASE-06 design complete, validator in non-blocking report mode
+
+Registry: `supabase/functions/auth-registry.json`
+
 Validator: `npm run auth:registry`
 
 ## Goal and boundary
