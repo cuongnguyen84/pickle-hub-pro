@@ -341,4 +341,30 @@ describe("production-seeded migration replay guards", () => {
       }
     }
   });
+
+  it("makes feed highlights setup replayable", () => {
+    const sql = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260705090000_feed_highlights.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS public.feed_highlights");
+    expect(sql).toContain(
+      "CREATE INDEX IF NOT EXISTS idx_feed_highlights_active_published",
+    );
+
+    const policies = [
+      ...sql.matchAll(/CREATE POLICY "([^"]+)"\s+ON public\.([a-z_]+)/g),
+    ];
+    expect(policies).toHaveLength(2);
+
+    for (const policy of policies) {
+      const [, name, table] = policy;
+      const dropPolicy = `DROP POLICY IF EXISTS "${name}" ON public.${table};`;
+      expect(sql.indexOf(dropPolicy)).toBeLessThan(policy.index);
+    }
+  });
 });

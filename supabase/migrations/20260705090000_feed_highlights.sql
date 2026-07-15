@@ -12,7 +12,7 @@
 -- hour and upsert+ignoreDuplicates guarantees one card per fact.
 -- ============================================================================
 
-CREATE TABLE public.feed_highlights (
+CREATE TABLE IF NOT EXISTS public.feed_highlights (
   id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   kind          text        NOT NULL CHECK (kind IN ('milestone', 'leaderboard', 'protour', 'recap')),
   dedupe_key    text        NOT NULL UNIQUE,
@@ -29,12 +29,14 @@ CREATE TABLE public.feed_highlights (
 ALTER TABLE public.feed_highlights ENABLE ROW LEVEL SECURITY;
 
 -- Feed is public (anonymous Trending) → active rows readable by all.
+DROP POLICY IF EXISTS "Anyone can read active highlights" ON public.feed_highlights;
 CREATE POLICY "Anyone can read active highlights"
   ON public.feed_highlights
   FOR SELECT
   USING (is_active);
 
 -- Admin can hide/delete a bad card from the browser client.
+DROP POLICY IF EXISTS "Admins can manage highlights" ON public.feed_highlights;
 CREATE POLICY "Admins can manage highlights"
   ON public.feed_highlights
   FOR ALL
@@ -45,7 +47,7 @@ CREATE POLICY "Admins can manage highlights"
 -- Management-API DDL grants only SELECT by default (see feed_embeds).
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.feed_highlights TO authenticated;
 
-CREATE INDEX idx_feed_highlights_active_published
+CREATE INDEX IF NOT EXISTS idx_feed_highlights_active_published
   ON public.feed_highlights (published_at DESC)
   WHERE is_active;
 
