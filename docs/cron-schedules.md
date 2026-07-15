@@ -28,11 +28,42 @@ coordinated operation.
 | Function | Schedule (cron) | Frequency | Purpose | Last modified |
 |---|---|---|---|---|
 | `auto-archive-tournaments` | `0 3 * * *` | Daily 03:00 ICT | Move tournaments older than N days from `ongoing` → `completed` so the list views don't grow unbounded. Also clears stale `live_referee_id` on matches that have been "in progress" for >12h (orphaned scoring sessions). | 2026-04-22 |
-| `auto-cancel-unpaid-registrations` | `*/15 * * * *` | Every 15 min | Cancel registrations that have been in `pending_payment` status for >24h. Releases the seat back to the pool so a paying user can claim it. | 2026-03-09 |
+| `auto-cancel-unpaid-registrations` | `0 * * * *` | Hourly | Cancel registrations that have been in `pending_payment` status for >24h. Releases the seat back to the pool so a paying user can claim it. | 2026-07-15 |
 | `news-check` | `0 */6 * * *` | Every 6 hours | Poll RSS feeds + scraper sources for new pickleball headlines. Lightweight check (no full ingest) to detect "is there anything new since last run?" | 2026-04-15 |
 | `news-ingest` | `30 */6 * * *` | Every 6 hours, 30 min after `news-check` | Ingest, dedupe, classify, and write new articles found by `news-check` into `news_articles`. Offset by 30 minutes so the check has finished before ingest starts. | 2026-04-15 |
 | `news-translate` | `30 0 * * *` | Daily 07:30 ICT | Drain pending EN news_items by calling Gemini Flash for EN→VI translation. Inserts VI siblings via parent_news_id. | 2026-05-19 |
 | `mux-sync-assets` | `0 */4 * * *` | Every 4 hours | Reconcile Mux Asset state with our `livestreams` table. Picks up assets that finished after our `mux-webhook` retry budget exhausted, and marks abandoned livestreams as `ended`. | 2026-04-08 |
+| `dupr-sync` | `0 20 * * *` | Daily 03:00 ICT | Backfill rating snapshots into recent match participants. | 2026-07-15 |
+| `match-expire` | `0 21 * * *` | Daily 04:00 ICT | Expire pending match confirmations older than seven days. | 2026-07-15 |
+| `errors-telegram-alert` | `*/10 * * * *` | Every 10 min | Scan browser error spikes and run the OPS-00 cron health checks below. | 2026-07-15 |
+
+## OPS-00 monitored schedules
+
+The first monitoring wave deliberately covers three cadence classes. Alert
+thresholds are stored per monitor as `expected interval + grace`, not as one
+global stale threshold.
+
+| Monitor | Source | Expected | Grace | Alert after |
+|---|---|---:|---:|---:|
+| Mux asset reconciliation | Supabase `pg_cron` → `pg_net` | 4h | 2h | 6h |
+| DUPR daily rating backfill | Supabase `pg_cron` → `pg_net` | 24h | 2h | 26h |
+| DUPR weekly rankings refresh | GitHub Actions scheduled workflow | 7d | 1d | 8d |
+
+`errors-telegram-alert` evaluates each monitor every ten minutes and sends a
+deduplicated Telegram incident plus one recovery message. States are distinct:
+
+- `never_ran`: no scheduler execution or instrumented dispatch exists after
+  the initial alert window.
+- `stale`: the latest scheduler/workflow activity exceeded its own threshold.
+- `ran_failed`: scheduler, transport, HTTP, or workflow execution failed.
+- `partial_success`: HTTP succeeded but the job reported item/business errors.
+- `caller_auth_failed`: the Edge Function caller received HTTP `401` or `503`.
+
+For `pg_net` jobs, `ops_cron_dispatches` persists request IDs and response
+status/body before `net._http_response` retention removes them. The caller
+commands read `cron_secret` from Vault at runtime; no shared secret is stored
+in `cron.job.command` or a migration. The weekly monitor reads the latest
+scheduled run from GitHub's public Actions API.
 
 ## How to change a schedule
 

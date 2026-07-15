@@ -11,7 +11,7 @@
 //   TELEGRAM_CHAT_ID   — Cuong's Telegram chat id (numeric, can be negative)
 //
 // The function is also exposed as a regular HTTP endpoint so it can be:
-//   - Triggered manually via curl for testing
+//   - Triggered manually via authenticated POST for testing
 //   - Hit by an external cron (Cloudflare Worker, GitHub Action)
 //   - Invoked from Supabase Scheduled Functions when available
 //
@@ -19,6 +19,17 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import {
+  evaluateGitHubWorkflow,
+  evaluatePgNetCron,
+  shouldSendCronAlert,
+  type CronAlertState,
+  type CronHealthResult,
+  type CronMonitorConfig,
+  type GitHubWorkflowRun,
+  type PgNetCronSnapshot,
+} from "../_shared/cron-health.ts";
+import { requireCronRequest } from "../_shared/cron-auth.ts";
 
 const SPIKE_THRESHOLD = 3;        // ≥ N occurrences of same fingerprint
 const SPIKE_WINDOW_MIN = 10;      // ...within last 10 minutes
@@ -81,6 +92,14 @@ interface RunReport {
   unique_fingerprints: number;
   alerts_sent: number;
   alerts_suppressed: number;
+}
+
+interface CronHealthReport {
+  checked: number;
+  alerts_sent: number;
+  alerts_suppressed: number;
+  states: Record<string, string>;
+  errors: string[];
 }
 
 async function runAlert(): Promise<RunReport> {
@@ -186,41 +205,177 @@ async function runAlert(): Promise<RunReport> {
   };
 }
 
-// Constant-time string compare to avoid timing oracles on the shared secret.
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
+function formatCronHealthMessage(
+  health: CronHealthResult,
+  kind: "incident" | "recovery",
+): string {
+  const title = kind === "recovery"
+    ? "✅ *ThePickleHub cron recovered*"
+    : "🚨 *ThePickleHub cron unhealthy*";
+  const activity = health.lastActivityAt
+    ? new Date(health.lastActivityAt).toISOString()
+    : "never";
+  const lines = [
+    title,
+    "",
+    `*Job:* ${escapeMarkdown(health.displayName)}`,
+    `*State:* \`${escapeMarkdown(health.state)}\``,
+    `*Reason:* ${escapeMarkdown(health.reason.slice(0, 500))}`,
+    `*Last activity:* ${escapeMarkdown(activity)}`,
+  ];
+
+  if (health.detailsUrl) {
+    lines.push(
+      "",
+      `[Open run details](${escapeMarkdown(health.detailsUrl)})`,
+    );
+  }
+
+  return lines.join("\n");
+}
+
+async function fetchLatestScheduledDuprWorkflow(): Promise<GitHubWorkflowRun | null> {
+  const response = await fetch(
+    "https://api.github.com/repos/cuongnguyen84/pickle-hub-pro/actions/workflows/dupr-refresh.yml/runs?per_page=1&event=schedule",
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "ThePickleHub-Cron-Health",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`GitHub workflow lookup returned HTTP ${response.status}`);
+  }
+
+  const payload = await response.json() as { workflow_runs?: GitHubWorkflowRun[] };
+  return payload.workflow_runs?.[0] ?? null;
+}
+
+async function runCronHealth(): Promise<CronHealthReport> {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  );
+  const report: CronHealthReport = {
+    checked: 0,
+    alerts_sent: 0,
+    alerts_suppressed: 0,
+    states: {},
+    errors: [],
+  };
+
+  const { data: snapshots, error: snapshotError } = await supabase
+    .rpc("ops_refresh_cron_health_snapshot");
+
+  if (snapshotError) {
+    console.error("cron health snapshot failed", snapshotError.message);
+    report.errors.push(`snapshot: ${snapshotError.message}`);
+    return report;
+  }
+
+  const now = new Date();
+  const healthResults: CronHealthResult[] = [];
+
+  for (const raw of snapshots ?? []) {
+    const config = raw as CronMonitorConfig & {
+      source: "pg_net" | "github_actions";
+    };
+
+    if (config.source === "pg_net") {
+      healthResults.push(evaluatePgNetCron(raw as PgNetCronSnapshot, now));
+      continue;
+    }
+
+    try {
+      const latestRun = await fetchLatestScheduledDuprWorkflow();
+      healthResults.push(evaluateGitHubWorkflow(config, latestRun, now));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      healthResults.push({
+        monitorKey: config.monitor_key,
+        displayName: config.display_name,
+        state: "ran_failed",
+        reason: `Health check failed: ${message}`,
+        lastActivityAt: null,
+        alertAfterSeconds:
+          config.expected_interval_seconds + config.grace_seconds,
+      });
+    }
+  }
+
+  for (const health of healthResults) {
+    report.checked++;
+    report.states[health.monitorKey] = health.state;
+
+    const { data: stored, error: stateError } = await supabase
+      .from("ops_cron_alert_state")
+      .select("last_state, last_alerted_at, recovered_at")
+      .eq("monitor_key", health.monitorKey)
+      .maybeSingle<CronAlertState>();
+
+    if (stateError) {
+      report.errors.push(`${health.monitorKey}: ${stateError.message}`);
+      continue;
+    }
+
+    // A fresh pg_net dispatch remains pending for at most ten minutes. Do not
+    // overwrite an open incident until the new response proves recovery.
+    if (health.state === "pending") continue;
+
+    const notification = shouldSendCronAlert(health, stored, now);
+    let sent = false;
+    if (notification) {
+      sent = await sendTelegram(formatCronHealthMessage(health, notification));
+      if (sent) report.alerts_sent++;
+    } else if (health.state !== "healthy" && health.state !== "pending") {
+      report.alerts_suppressed++;
+    }
+
+    if (notification && !sent) {
+      report.errors.push(`${health.monitorKey}: Telegram send failed`);
+      continue;
+    }
+
+    const isRecovery = notification === "recovery";
+    const isIncident = notification === "incident";
+    const previousWasOpenIncident = stored && stored.recovered_at === null &&
+      stored.last_state !== "healthy" && stored.last_state !== "pending";
+
+    const { error: upsertError } = await supabase
+      .from("ops_cron_alert_state")
+      .upsert({
+        monitor_key: health.monitorKey,
+        last_state: health.state,
+        incident_started_at: isIncident
+          ? now.toISOString()
+          : previousWasOpenIncident
+            ? undefined
+            : null,
+        last_alerted_at: isIncident ? now.toISOString() : undefined,
+        recovered_at: isRecovery ? now.toISOString() : isIncident ? null : undefined,
+        last_reason: health.reason.slice(0, 1000),
+        updated_at: now.toISOString(),
+      }, { onConflict: "monitor_key" });
+
+    if (upsertError) {
+      report.errors.push(`${health.monitorKey}: ${upsertError.message}`);
+    }
+  }
+
+  return report;
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
-  if (req.method !== "POST" && req.method !== "GET") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
+  const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+  if (authError) return authError;
 
-  // Shared-secret gate. This endpoint has verify_jwt=false (cron carries no JWT),
-  // so without this anyone could trigger the scan + Telegram send. Enforced only
-  // when CRON_SECRET is configured — set the secret AND add the
-  // `x-cron-secret` header to the cron caller to activate. Backward compatible
-  // until then.
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  if (cronSecret) {
-    const provided = req.headers.get("x-cron-secret") ?? "";
-    if (!timingSafeEqual(provided, cronSecret)) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-  } else {
-    // SECURITY (fail-closed): refuse to run if the shared secret is not set.
-    // Previously this path left the endpoint open, letting anyone trigger the
-    // error scan + Telegram send. Set CRON_SECRET before deploying.
-    console.error("[errors-telegram-alert] CRON_SECRET not set — refusing to run");
-    return new Response("Server misconfigured: CRON_SECRET not set", { status: 503 });
-  }
-
-  const report = await runAlert();
-  return new Response(JSON.stringify(report), {
+  const clientErrors = await runAlert();
+  const cronHealth = await runCronHealth();
+  return new Response(JSON.stringify({ client_errors: clientErrors, cron_health: cronHealth }), {
     headers: { "Content-Type": "application/json" },
   });
 });
