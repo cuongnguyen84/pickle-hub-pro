@@ -19,6 +19,10 @@ const post: BlogPost = {
     en: "Follow Vietnam's players live on ThePickleHub",
     vi: "Theo dõi các tay vợt Việt Nam trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/vietnam-pickleball-players-to-watch-2026-hero.webp",
+    alt: "Vietnamese Pickleball Players to Watch 2026 — hero banner of Vietnam's leading players in national red and gold, with the MB HCMC Open (Aug 6–9) and Da Nang World Cup (Aug 30–Sep 6) event tags.",
+  },
   content: {
     en: {
       title: "Vietnamese Pickleball Players to Watch in 2026",

@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["vietnamese pickleball players", "ly hoang nam pickleball", "truong vinh hien", "vietnam pickleball players to watch", "pickleball vietnam 2026", "hcmc open 2026", "pickleball world cup da nang"],
     ctaPath: "/live",
     ctaLabel: { en: "Follow Vietnam's players live on ThePickleHub", vi: "Theo dõi các tay vợt Việt Nam trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/vietnam-pickleball-players-to-watch-2026-hero.webp", alt: "Vietnamese Pickleball Players to Watch 2026 — hero banner of Vietnam's leading players in national red and gold, with the MB HCMC Open (Aug 6–9) and Da Nang World Cup (Aug 30–Sep 6) event tags." },
     titleEn: "Vietnamese Pickleball Players to Watch in 2026",
     titleVi: "Các tay vợt Pickleball Việt Nam đáng chú ý năm 2026",
     metaTitleEn: "Vietnamese Pickleball Players to Watch in 2026",
