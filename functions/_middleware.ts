@@ -318,7 +318,33 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     STATIC_EXT_RE.test(pathname) ||
     STATIC_EXACT.has(pathname)
   ) {
-    return next();
+    const assetResponse = await next();
+    // A hashed asset that no longer exists — a stale index.html (cached up to
+    // 5 min) still pointing at a chunk the latest deploy replaced, a scanner,
+    // or a half-propagated edge — otherwise falls through to the SPA rule
+    // (`/* /index.html 200`) and is served AS index.html: status 200,
+    // content-type text/html, AND the `/assets/*` `immutable, max-age=1yr`
+    // header. A CDN edge then PINS that broken "HTML-as-JS" response for a
+    // year, turning a momentary miss into a persistent outage — the root cause
+    // of the 2026-07-11 "Loading…" incident. Real assets are js/css/img/font
+    // (never text/html), so a text/html body here means the asset is missing:
+    // return a real, uncacheable 404 instead. The browser's dynamic import
+    // then rejects cleanly and ChunkErrorBoundary reloads to the fresh shell.
+    // (Function response headers win over _headers here — verified: the bot
+    // prerender path's no-store survives the `/` max-age rule.)
+    if (
+      assetResponse.status === 200 &&
+      (assetResponse.headers.get("content-type") || "").includes("text/html")
+    ) {
+      return new Response("Not Found", {
+        status: 404,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+    return assetResponse;
   }
 
   // ─── 3. Bot detection ─────────────────────────────────
