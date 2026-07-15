@@ -367,4 +367,21 @@ describe("production-seeded migration replay guards", () => {
       expect(sql.indexOf(dropPolicy)).toBeLessThan(policy.index);
     }
   });
+
+  it("adds chat room settings to realtime only when absent", () => {
+    const sql = readFileSync(
+      new URL(
+        "../../../supabase/migrations/20260707140000_chat_room_settings_realtime.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const membershipGuard = "FROM pg_publication_tables";
+    const addTable =
+      "ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_room_settings;";
+
+    expect(sql).toContain("IF NOT EXISTS (");
+    expect(sql).toContain(membershipGuard);
+    expect(sql.indexOf(membershipGuard)).toBeLessThan(sql.indexOf(addTable));
+  });
 });

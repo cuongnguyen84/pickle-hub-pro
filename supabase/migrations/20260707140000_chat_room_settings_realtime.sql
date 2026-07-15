@@ -4,4 +4,15 @@
 -- "Unable to subscribe to changes" and receives NO events for its other
 -- bindings either — which silently killed live chat message delivery in the
 -- native app (and the web chat:unified channel).
-ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_room_settings;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'chat_room_settings'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_room_settings;
+  END IF;
+END $$;
