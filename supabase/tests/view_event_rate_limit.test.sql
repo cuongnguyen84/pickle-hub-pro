@@ -1,11 +1,21 @@
 BEGIN;
 
-SELECT plan(9);
+SELECT plan(10);
 
 SELECT has_table(
   'public',
   'view_event_rate_limits',
   'view-event rate-limit table exists'
+);
+
+-- The inline GC deletes by window_start on every call; it needs its own index
+-- because the (identity_hash, window_start) PK can't serve a window_start-only
+-- predicate.
+SELECT has_index(
+  'public',
+  'view_event_rate_limits',
+  'view_event_rate_limits_window_start_idx',
+  'window_start GC index exists'
 );
 
 SELECT ok(

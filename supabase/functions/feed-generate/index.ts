@@ -106,15 +106,28 @@ interface DuprWeeklyClimber extends FeedProfile {
 // A. Milestones
 // ---------------------------------------------------------------------------
 
+// PostgREST caps a single response at 1000 rows, so the milestone RPC (one row
+// per qualifying profile, unbounded over all history) would be silently
+// truncated once >1000 profiles cross a threshold. Page through the full,
+// deterministically-ordered set instead of trusting one capped read.
+const RPC_PAGE_SIZE = 1000;
+
 async function generateEventMilestones(supabase: SupabaseClient): Promise<Highlight[]> {
-  const { data, error } = await supabase
-    .rpc("feed_event_milestone_candidates", {
-      p_min_count: EVENT_THRESHOLDS[0],
-    });
-  if (error) throw error;
+  const candidates: EventMilestoneCandidate[] = [];
+  for (let from = 0; ; from += RPC_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .rpc("feed_event_milestone_candidates", {
+        p_min_count: EVENT_THRESHOLDS[0],
+      })
+      .range(from, from + RPC_PAGE_SIZE - 1);
+    if (error) throw error;
+    const page = (data ?? []) as EventMilestoneCandidate[];
+    candidates.push(...page);
+    if (page.length < RPC_PAGE_SIZE) break;
+  }
 
   const rows: Highlight[] = [];
-  for (const candidate of (data ?? []) as EventMilestoneCandidate[]) {
+  for (const candidate of candidates) {
     const count = Number(candidate.registration_count);
     // Emit only the highest threshold reached — the first cron run must not
     // spam a backlog of 5-then-10-then-25 cards for veteran players.
