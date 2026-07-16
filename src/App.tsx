@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
+import { SkipToContent } from "@/components/layout/SkipToContent";
 import { I18nProvider, useI18n } from "@/i18n";
 import { ConfirmProvider } from "@/hooks/useConfirm";
 import { lazy, Suspense, Component, ReactNode, useLayoutEffect } from "react";
@@ -500,7 +501,13 @@ const ScrollToTop = (): null => {
   const { pathname } = useLocation();
   const navigationType = useNavigationType();
   useLayoutEffect(() => {
-    if (navigationType !== "POP") window.scrollTo(0, 0);
+    if (navigationType !== "POP") {
+      window.scrollTo(0, 0);
+      // A11Y-01: hand focus to the new page's content so screen readers
+      // announce the navigation and Tab starts inside the page, not in the
+      // chrome. POP keeps browser-native focus/scroll restoration.
+      document.getElementById("main-content")?.focus({ preventScroll: true });
+    }
   }, [pathname, navigationType]);
   return null;
 };
@@ -521,9 +528,14 @@ const App = () => (
               <PageTracker />
               <ScrollToTop />
 
+              <SkipToContent />
               <BottomNav />
               <ChatFAB />
               <ChunkErrorBoundary>
+                {/* tabIndex=-1: programmatic focus target for the skip link
+                    and route changes; outline suppressed since it is not a
+                    user-tabbable stop. */}
+                <div id="main-content" tabIndex={-1} className="outline-none">
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Index />} />
@@ -804,6 +816,7 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
+                </div>
               </ChunkErrorBoundary>
             </BrowserRouter>
            </ConfirmProvider>

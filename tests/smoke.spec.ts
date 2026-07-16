@@ -97,3 +97,25 @@ test("homepage has signed-out CTA (login / sign up)", async ({ page }) => {
     (await page.getByRole("link", { name: /log in|đăng nhập/i }).count()) > 0;
   expect(hasLoginAffordance, "expected login affordance on /").toBe(true);
 });
+
+// ── A11Y-01 foundations — skip link + route focus management ──────────────
+
+test("skip link is the first tab stop and moves focus to content", async ({ page }) => {
+  await page.goto("/");
+  await page.keyboard.press("Tab");
+
+  const skipLink = page.locator('a[href="#main-content"]');
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeVisible();
+
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#main-content")).toBeFocused();
+});
+
+test("client-side navigation hands focus to the new page content", async ({ page }) => {
+  await page.goto("/");
+  const link = page.locator('a[href="/tournaments"]').first();
+  await link.click();
+  await page.waitForURL("**/tournaments");
+  await expect(page.locator("#main-content")).toBeFocused();
+});
