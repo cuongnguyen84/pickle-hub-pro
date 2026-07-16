@@ -43,20 +43,34 @@ const ROUTES = [
  */
 function captureErrors(page: Page): { errors: string[]; clearAllowed: () => void } {
   const errors: string[] = [];
+  // Codex review 2026-07-16: the old blanket /Promise rejection/i allow could
+  // swallow exactly the asset-mismatch/lazy-chunk outage class. DENY is
+  // checked FIRST and always fails the run; ALLOW only silences the named
+  // benign noise. Add new allows by exact message, never by broad category.
+  const DENY = [
+    /ChunkLoadError/i,
+    /Loading chunk .* failed/i,
+    /Failed to fetch dynamically imported module/i,
+    /Importing a module script failed/i,
+    /error loading dynamically imported module/i,
+  ];
   const ALLOW = [
     /ResizeObserver loop/i,
     /Failed to load resource.*chrome-extension/i,
     /OneTrustWrapperFn/i,
-    /Promise rejection/i, // Surfaced elsewhere; reduces noise
   ];
+  const record = (kind: string, text: string) => {
+    if (DENY.some((r) => r.test(text))) {
+      errors.push(`${kind} [chunk-load class]: ${text}`);
+      return;
+    }
+    if (!ALLOW.some((r) => r.test(text))) errors.push(`${kind}: ${text}`);
+  };
 
-  page.on("pageerror", (e) => {
-    if (!ALLOW.some((r) => r.test(e.message))) errors.push(`pageerror: ${e.message}`);
-  });
+  page.on("pageerror", (e) => record("pageerror", e.message));
   page.on("console", (msg) => {
     if (msg.type() !== "error") return;
-    const t = msg.text();
-    if (!ALLOW.some((r) => r.test(t))) errors.push(`console.error: ${t}`);
+    record("console.error", msg.text());
   });
 
   return { errors, clearAllowed: () => errors.splice(0, errors.length) };
@@ -119,3 +133,37 @@ test("client-side navigation hands focus to the new page content", async ({ page
   await page.waitForURL("**/tournaments");
   await expect(page.locator("#main-content")).toBeFocused();
 });
+
+// ── Scroll regression guard (2026-07-16 incident: #main-content wrapper
+// broke the #root flex/height chain and killed scrolling site-wide while
+// every render/console assertion stayed green). html/body/#root are
+// overflow:hidden — content scrolls in nested containers, so we find the
+// real scroller and drive it.
+const SCROLL_ROUTES = ["/", "/tournaments", "/vi"];
+
+for (const route of SCROLL_ROUTES) {
+  test(`page actually scrolls: ${route}`, async ({ page }) => {
+    await page.goto(route);
+    await page.waitForLoadState("networkidle").catch(() => {});
+    const result = await page.evaluate(() => {
+      const scroller = [...document.querySelectorAll("*")].find((el) => {
+        const cs = getComputedStyle(el);
+        return (
+          (cs.overflowY === "auto" || cs.overflowY === "scroll") &&
+          el.scrollHeight > el.clientHeight + 50
+        );
+      });
+      if (!scroller) {
+        return {
+          ok: false,
+          detail: `no scrollable container; body=${document.body.scrollHeight} root=${document.getElementById("root")?.scrollHeight ?? 0} viewport=${window.innerHeight}`,
+        };
+      }
+      scroller.scrollTop = 200;
+      return scroller.scrollTop > 0
+        ? { ok: true, detail: "" }
+        : { ok: false, detail: "scroller found but scrollTop stuck at 0" };
+    });
+    expect(result.ok, result.detail).toBe(true);
+  });
+}
