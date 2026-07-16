@@ -535,7 +535,11 @@ const App = () => (
                 {/* tabIndex=-1: programmatic focus target for the skip link
                     and route changes; outline suppressed since it is not a
                     user-tabbable stop. */}
-                <div id="main-content" tabIndex={-1} className="outline-none">
+                <div
+                  id="main-content"
+                  tabIndex={-1}
+                  className="outline-none flex min-h-0 w-full flex-1 flex-col"
+                >
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Index />} />
