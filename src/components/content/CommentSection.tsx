@@ -80,7 +80,9 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
     };
 
     fetchUserInfo();
-  }, [comments]);
+    // userInfoCache in deps is loop-safe: after setUserInfoCache the rerun
+    // computes uncachedIds = [] and returns before fetching.
+  }, [comments, userInfoCache]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

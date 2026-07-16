@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamRegistration, type Team, type TeamFormData } from '@/hooks/useTeamRegistration';
 import { usePairRequest, type PairRequest } from '@/hooks/usePairRequest';
@@ -260,20 +260,20 @@ export function DoublesRegistrationForm({
   const isTableLocked = tableStatus !== 'setup';
   const youLabel = language === 'vi' ? 'Bạn' : 'You';
 
-  useEffect(() => {
-    if (existingTeam && user) {
-      loadPairRequests();
-    }
-  }, [existingTeam, user]);
-
-  const loadPairRequests = async () => {
+  const loadPairRequests = useCallback(async () => {
     const [incoming, outgoing] = await Promise.all([
       getIncomingRequests(tableId),
       getOutgoingRequests(tableId),
     ]);
     setIncomingRequests(incoming);
     setOutgoingRequests(outgoing);
-  };
+  }, [getIncomingRequests, getOutgoingRequests, tableId]);
+
+  useEffect(() => {
+    if (existingTeam && user) {
+      loadPairRequests();
+    }
+  }, [existingTeam, user, loadPairRequests]);
 
   const handleLoginClick = () => {
     const returnUrl = location.pathname + location.search;

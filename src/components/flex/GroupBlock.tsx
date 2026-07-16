@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Grid3X3, Trash2, X, RefreshCw, User, Users } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember, FlexMatch } from '@/hooks/useFlexTournament';
 
 interface GroupBlockProps {
@@ -132,7 +132,7 @@ export function GroupBlock({
     if (teamsInGroup.length > 0 && selectedTeamIds.length === 0) {
       setSelectedTeamIds(teamsInGroup.map(t => t.id));
     }
-  }, [teamsInGroup]);
+  }, [teamsInGroup, selectedTeamIds.length]);
 
   const handleSaveName = () => {
     if (editName.trim() && editName !== group.name) {
@@ -148,10 +148,10 @@ export function GroupBlock({
     return teams.find(t => t.id === item.team_id)?.name || 'Unknown';
   };
 
-  const getSinglesStats = (playerId: string) => {
+  const getSinglesStats = useCallback((playerId: string) => {
     const stats = playerStats.find(s => s.player_id === playerId && s.group_id === group.id);
     return stats || { wins: 0, losses: 0, point_diff: 0 };
-  };
+  }, [playerStats, group.id]);
 
   const sortedSinglesItems = [...items]
     .filter(item => item.item_type === 'player')
@@ -177,7 +177,7 @@ export function GroupBlock({
 
   const includeDoubles = group.include_doubles_in_singles ?? true;
 
-  const getTeamStats = (teamId: string) => {
+  const getTeamStats = useCallback((teamId: string) => {
     let wins = 0;
     let losses = 0;
     let pointDiff = 0;
@@ -210,7 +210,7 @@ export function GroupBlock({
     }
 
     return { wins, losses, point_diff: pointDiff };
-  };
+  }, [matches, group.id]);
 
   const sortedTeams = useMemo(() => {
     return [...teamsInGroup].sort((a, b) => {
@@ -219,7 +219,7 @@ export function GroupBlock({
       if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
       return statsB.point_diff - statsA.point_diff;
     });
-  }, [teamsInGroup, matches, group.id]);
+  }, [teamsInGroup, getTeamStats]);
 
   const playersFromSelectedTeams = useMemo(() => {
     if (selectedTeamIds.length === 0) return [];
@@ -240,7 +240,7 @@ export function GroupBlock({
       if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
       return statsB.point_diff - statsA.point_diff;
     });
-  }, [playersFromSelectedTeams, playerStats]);
+  }, [playersFromSelectedTeams, getSinglesStats]);
 
   const getPlayerTeamName = (playerId: string) => {
     const member = teamMembers.find(m => m.player_id === playerId);

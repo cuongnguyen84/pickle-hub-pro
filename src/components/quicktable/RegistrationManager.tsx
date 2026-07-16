@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRegistration, type Registration } from '@/hooks/useRegistration';
 import { useI18n } from '@/i18n';
 import { Input } from '@/components/ui/input';
@@ -227,7 +227,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
     noRating: language === 'vi' ? 'Chưa có rating' : 'No rating',
   };
 
-  const loadRegistrations = async () => {
+  const loadRegistrations = useCallback(async () => {
     setLoading(true);
     const data = await getTableRegistrations(tableId);
     setRegistrations(data);
@@ -235,7 +235,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
 
     const pendingCount = data.filter(r => r.status === 'pending').length;
     onPendingCountChange?.(pendingCount);
-  };
+  }, [getTableRegistrations, tableId, onPendingCountChange]);
 
   useEffect(() => {
     loadRegistrations();
@@ -264,7 +264,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
     return () => {
       if (channel) supabase.removeChannel(channel);
     };
-  }, [tableId]);
+  }, [tableId, loadRegistrations]);
 
   const pendingRegistrations = registrations.filter(r => r.status === 'pending');
   const approvedRegistrations = registrations.filter(r => r.status === 'approved');

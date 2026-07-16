@@ -45,8 +45,8 @@ interface PlayoffBracketProps {
 const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameUpdate, groupNames }: PlayoffBracketProps) => {
   const { t } = useI18n();
 
-  const getPlayer = (id: string | null): BracketPlayer | undefined =>
-    id ? players.find(p => p.id === id) : undefined;
+  const getPlayer = useCallback((id: string | null): BracketPlayer | undefined =>
+    id ? players.find(p => p.id === id) : undefined, [players]);
 
   const formatPlayerName = (player: BracketPlayer | undefined): string => {
     if (!player) return 'TBD';
@@ -85,7 +85,7 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameU
     const championPlayer = finalMatch?.winner_id ? getPlayer(finalMatch.winner_id) : null;
 
     return { rounds: roundsArray, champion: championPlayer };
-  }, [matches, players]);
+  }, [matches, getPlayer]);
 
   const getGroupName = (player: BracketPlayer | undefined): string | null => {
     if (!player?.group_id || !groupNames) return null;

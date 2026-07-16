@@ -195,6 +195,9 @@ export function TeamMatchScoringSheet({
       setLocalScoreA(currentGame.score_a || 0);
       setLocalScoreB(currentGame.score_b || 0);
     }
+    // Keyed on primitives on purpose: the currentGame object identity
+    // churns on every realtime refetch and would wipe unsaved local taps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGame?.id, currentGame?.score_a, currentGame?.score_b]);
 
   // Auto-select first incomplete game when opened (sheet) or mounted (page)
@@ -207,6 +210,10 @@ export function TeamMatchScoringSheet({
         setSelectedGameIndex(0);
       }
     }
+    // Runs on open (and when games first arrive) only. Depending on `games`
+    // itself would re-run on every score save and yank the referee's
+    // selected game mid-match.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, asPage, games.length]);
 
   const handleScoreChange = (team: 'a' | 'b', delta: number) => {

@@ -83,13 +83,6 @@ export default function DoublesEliminationView() {
   const canManage = isCreator || isAdmin;
 
   useEffect(() => {
-    if (shareId) {
-      loadData();
-      setupRealtimeSubscription();
-    }
-  }, [shareId]);
-
-  useEffect(() => {
     const checkPermissions = async () => {
       if (!user || !tournament) { setCanEdit(false); return; }
       if (isAdmin) { setCanEdit(true); return; }
@@ -105,7 +98,7 @@ export default function DoublesEliminationView() {
     checkPermissions();
   }, [user, tournament, isAdmin]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!shareId) return;
     setLoading(true);
     const data = await getTournamentByShareId(shareId);
@@ -113,7 +106,7 @@ export default function DoublesEliminationView() {
     setTeams(data.teams);
     setMatches(data.matches);
     setLoading(false);
-  };
+  }, [shareId, getTournamentByShareId]);
 
   const softReload = useCallback(async () => {
     if (!shareId) return;
@@ -158,7 +151,7 @@ export default function DoublesEliminationView() {
     }
   };
 
-  const setupRealtimeSubscription = () => {
+  const setupRealtimeSubscription = useCallback(() => {
     if (!shareId) return undefined;
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {
@@ -173,7 +166,14 @@ export default function DoublesEliminationView() {
       console.warn("[DoublesElimination] Realtime setup failed:", err);
     }
     return () => { if (channel) supabase.removeChannel(channel); };
-  };
+  }, [shareId, softReload]);
+
+  useEffect(() => {
+    if (shareId) {
+      loadData();
+      setupRealtimeSubscription();
+    }
+  }, [shareId, loadData, setupRealtimeSubscription]);
 
   const handleShare = async () => {
     const url = `https://www.thepicklehub.net/tools/doubles-elimination/${shareId}`;

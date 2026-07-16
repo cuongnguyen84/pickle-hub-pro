@@ -188,6 +188,10 @@ const MatchScoring = () => {
       return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
     }
     return undefined;
+    // Interval starts once per timeout; countdownSeconds ticks via
+    // functional setState — depending on it would recreate the interval
+    // every second. The toast string is read at fire time by design.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTimeout]);
 
   const formatCountdown = (seconds: number) => {

@@ -437,6 +437,10 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     if (!isLoading && messages.length > 0) {
       scrollToBottom("instant");
     }
+    // Runs once when loading flips false — later message arrivals are
+    // handled by the auto-scroll effect; depending on messages.length here
+    // would force-scroll users who scrolled up.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
   // Detect scroll position

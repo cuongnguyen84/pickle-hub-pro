@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Swords, Trash2, X, User, Users, ChevronDown, Plus, Grid3X3 } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { ChildMatchBlock } from './ChildMatchBlock';
 import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember, FlexGroup } from '@/hooks/useFlexTournament';
 
@@ -224,11 +224,11 @@ export function MatchBlock({
   const hasChildMatches = childMatches.length > 0;
   const isTeamMatchWithTeams = isTeamMatch && (match.slot_a_team_id || match.slot_b_team_id);
 
-  const getPlayerTeam = (playerId: string): FlexTeam | null => {
+  const getPlayerTeam = useCallback((playerId: string): FlexTeam | null => {
     const member = teamMembers.find(m => m.player_id === playerId);
     if (!member) return null;
     return teams.find(t => t.id === member.team_id) || null;
-  };
+  }, [teamMembers, teams]);
 
   const sideATeam = useMemo(() => {
     if (!match.slot_a1_player_id || !match.slot_a2_player_id) return null;
@@ -236,7 +236,7 @@ export function MatchBlock({
     const team2 = getPlayerTeam(match.slot_a2_player_id);
     if (team1 && team2 && team1.id === team2.id) return team1;
     return null;
-  }, [match.slot_a1_player_id, match.slot_a2_player_id, teamMembers, teams]);
+  }, [match.slot_a1_player_id, match.slot_a2_player_id, getPlayerTeam]);
 
   const sideBTeam = useMemo(() => {
     if (!match.slot_b1_player_id || !match.slot_b2_player_id) return null;
@@ -244,7 +244,7 @@ export function MatchBlock({
     const team2 = getPlayerTeam(match.slot_b2_player_id);
     if (team1 && team2 && team1.id === team2.id) return team1;
     return null;
-  }, [match.slot_b1_player_id, match.slot_b2_player_id, teamMembers, teams]);
+  }, [match.slot_b1_player_id, match.slot_b2_player_id, getPlayerTeam]);
 
   const groupName = match.group_id
     ? groups.find(g => g.id === match.group_id)?.name
