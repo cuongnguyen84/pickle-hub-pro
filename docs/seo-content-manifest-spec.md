@@ -63,3 +63,31 @@ Touch points after: (1) post content module, (2) manifest entry,
 - Migration is mechanical: script converts the current dict + arrays into
   manifest entries; diff of generated output vs live surfaces must be empty
   before the swap merges.
+
+## 2026-07-16 progress + revised plan (SEO-02 partial)
+
+Extracting a manifest and generating all surfaces from it turned out to be a
+CONTENT decision, not a pure refactor: a machine diff of the three EN-blog
+surfaces found they disagree on ~37 titles (`BLOG_POST_META.title` is the
+full SSR `<title>`; `metadata.metaTitleEn` is a separate, shorter SEO meta
+title) and on `dateModified` (dict sets it per-post, not equal to
+`updatedDate`). Generating from `metadata.ts` would silently change 37 live
+SSR titles — a deliberate SEO change needing Cuong's call + prod
+verification, not a plumbing swap. The spec's own rule ("diff of generated
+output vs live surfaces must be empty before the swap") is therefore not yet
+satisfiable.
+
+Shipped now (zero-risk half):
+- `BLOG_POST_META` extracted to a pure `functions/_lib/render/blog-meta.ts`
+  module (SEO-04 groundwork; importable by tests).
+- `src/lib/__tests__/blog-seo-surfaces.test.ts` — the SEO-03 slug-parity
+  guard: locks the three surfaces (SSR dict, `EN_BLOG_SLUGS` sitemap,
+  `metadata.ts`) to the SAME slug set. This is the exact HOT-03 failure class
+  (slug in one surface, missing from another) and now fails in CI, not prod.
+
+Deferred (needs a decision, then generation):
+- Reconcile title/dateModified: pick ONE source (recommend `metaTitleEn` as
+  the SSR `<title>` — it is the SEO-optimized field), verify the 37 title
+  changes are wanted, then generate `BLOG_POST_META` + `EN_BLOG_SLUGS` from
+  `metadata.ts` and delete the hand-maintained copies. Bump `pr:vNN` in that
+  PR. Only then does the blog checklist drop from 5 touch points to 3.

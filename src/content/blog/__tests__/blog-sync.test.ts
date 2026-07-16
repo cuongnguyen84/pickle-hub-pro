@@ -35,7 +35,7 @@ import { blogMetadata } from "../metadata";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const POSTS_DIR = resolve(here, "..", "posts");
-const RENDER_INDEX = resolve(here, "..", "..", "..", "..", "functions", "_lib", "render", "index.ts");
+const RENDER_INDEX = resolve(here, "..", "..", "..", "..", "functions", "_lib", "render", "blog-meta.ts");
 
 /** Slugs that have a posts/<slug>.ts file. */
 function postFileSlugs(): string[] {
@@ -44,16 +44,15 @@ function postFileSlugs(): string[] {
     .map((f) => f.replace(/\.ts$/, ""));
 }
 
-/** Top-level keys of the BLOG_POST_META dict in the SSR renderer. */
+/** Top-level keys of the BLOG_POST_META dict (SEO-02: now a pure module,
+ *  parsed by regex to stay decoupled from its exact source formatting). */
 function blogPostMetaSlugs(): string[] {
   const src = readFileSync(RENDER_INDEX, "utf8");
-  const start = src.indexOf("const BLOG_POST_META");
-  expect(start, "BLOG_POST_META declaration found in render/index.ts").toBeGreaterThan(-1);
-  // The data object opens at the first `}> = {` after the type declaration.
+  const start = src.indexOf("BLOG_POST_META");
+  expect(start, "BLOG_POST_META declaration found in render/blog-meta.ts").toBeGreaterThan(-1);
   const objOpen = src.indexOf("}> = {", start);
   const body = src.slice(objOpen, src.indexOf("\n};", objOpen));
   const slugs = new Set<string>();
-  // Each entry is a 2-space-indented quoted key: `  "slug": { ... },`
   const re = /^\s{2}"([a-z0-9-]+)":\s*\{/gm;
   let m: RegExpExecArray | null;
   while ((m = re.exec(body)) !== null) slugs.add(m[1]);
