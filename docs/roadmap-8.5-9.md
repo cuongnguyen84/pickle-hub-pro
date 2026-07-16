@@ -205,7 +205,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | DB-02 | done | 5d | Transactionalize bracket advancement — DB-00 scope: CONFIRMED DoublesElimination R3→R4 client-side slot fill (`DoublesEliminationBracket.tsx:938-998`, stale-state first-empty-slot scan + unguarded UPDATE); quick_table deterministic mapping mostly safe; also dedupe the `match-confirm` double DUPR submit side effect | DB-00, ARCH-03, ARCH-04 |
 | QA-01 | done | 4d | Reduce React Hook warnings to zero with behavior tests | — |
 | QA-02 | later | 8d | Remove `@ts-nocheck`, type critical boundaries, and reach repository lint green (267 grandfathered errors; also re-enable `no-unused-vars` — currently nothing catches dead code). Split by domain, one PR per domain | QA-01 |
-| QA-03 | ready | 4d | Add RLS/auth matrix and concurrency tests against disposable Supabase | SEC-05 |
+| QA-03 | done | 4d | Add RLS/auth matrix and concurrency tests against disposable Supabase. **Shipped:** supabase/tests/rls_auth_matrix.test.sql (19 assertions: blanket RLS-enabled checks, role self-grant/cross-profile/api_keys escalation probes with positive control) + scripts/qa/db-race.mjs (DB-01 capacity RPCs raced from 2 parallel psql sessions, 15 rounds each, wired into pgtap.yml) | SEC-05 |
 | QA-04 | later | 5d | Add stable E2E coverage for ten critical journeys | BASE-04, QA-03 |
 | QA-05 | later | 4d | Add visual regression for key routes, themes, locales, and states | DS-04, BASE-04 |
 | QA-06 | done | 2.5d | Run all 42 `apple/Tests` cases in CI on a macOS runner with XcodeGen + `xcodebuild test`; direct Swift package versions are pinned so clean generations do not drift | — |
