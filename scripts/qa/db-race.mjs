@@ -18,23 +18,20 @@ import { promisify } from "node:util";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const run = promisify(execFile);
-const DB =
-  process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const DEFAULT_DB = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const DB = process.env.DB_URL ?? DEFAULT_DB;
 const ROUNDS = 15;
 const GATE = 430301; // advisory lock key for the start barrier
 
-// Destructive-target guard (Codex P1): this script DELETEs rows and toggles
-// triggers. Refuse anything that is not a local disposable database unless
-// the caller explicitly opts in.
-const host = new URL(DB).hostname;
-if (
-  !["127.0.0.1", "localhost", "::1"].includes(host) &&
-  process.env.QA_DB_RACE_ALLOW_REMOTE !== "yes"
-) {
+// Destructive-target guard (Codex P1, both rounds): this script DELETEs rows
+// and toggles triggers. A hostname allowlist is not enough — localhost can be
+// an SSH tunnel to production — so ANY override of the known disposable
+// default requires an explicit opt-in.
+if (DB !== DEFAULT_DB && process.env.QA_DB_RACE_ALLOW_REMOTE !== "yes") {
   console.error(
-    `refusing to run against non-local database host "${host}" — this harness ` +
-      `deletes rows and disables triggers. Set QA_DB_RACE_ALLOW_REMOTE=yes ` +
-      `only if the target is truly disposable.`,
+    `DB_URL overrides the default disposable target (supabase db start). ` +
+      `This harness deletes rows and disables triggers — set ` +
+      `QA_DB_RACE_ALLOW_REMOTE=yes only if the target is truly disposable.`,
   );
   process.exit(2);
 }
@@ -69,8 +66,11 @@ async function racePair(sqlA, sqlB) {
     "coordinator to hold the gate lock",
   );
 
-  // Racers queue on a SHARED gate lock (blocked behind the exclusive one),
-  // then run their payload. Multiple -c commands share one session.
+  // Racers queue on a SHARED gate lock (blocked behind the exclusive one).
+  // Gate + payload travel in ONE simple-query message (a single -c): after
+  // the gate is granted there is NO client round-trip before the RPC, so
+  // both sessions hit the capacity boundary back-to-back server-side
+  // (Codex round 2: separate -c commands reopened a sequential window).
   const racer = (sql) =>
     run("psql", [
       DB,
@@ -80,9 +80,7 @@ async function racePair(sqlA, sqlB) {
       "-v",
       "ON_ERROR_STOP=1",
       "-c",
-      `SELECT pg_advisory_lock_shared(${GATE})`,
-      "-c",
-      sql,
+      `SELECT pg_advisory_lock_shared(${GATE}); ${sql}`,
     ]).then((r) => r.stdout.trim().split("\n").filter(Boolean).at(-1));
 
   const pA = racer(sqlA);
