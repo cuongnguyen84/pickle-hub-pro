@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useRef, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,36 +74,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error: error as Error | null };
-  };
-
-  const signUp = async (email: string, password: string) => {
-    const redirectUrl = getEmailVerificationRedirectUrl();
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
+  // Memoized so every consumer of useAuth() doesn't re-render whenever the
+  // provider re-renders with unchanged auth state (HOT-05). The sign-in/up/out
+  // functions only touch the module-level supabase client, so they are stable.
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      session,
+      loading,
+      signIn: async (email: string, password: string) => {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        return { error: error as Error | null };
       },
-    });
-    return { error: error as Error | null };
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
-      {children}
-    </AuthContext.Provider>
+      signUp: async (email: string, password: string) => {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: getEmailVerificationRedirectUrl(),
+          },
+        });
+        return { error: error as Error | null };
+      },
+      signOut: async () => {
+        await supabase.auth.signOut();
+      },
+    }),
+    [user, session, loading],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
