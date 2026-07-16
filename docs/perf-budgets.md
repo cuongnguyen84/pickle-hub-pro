@@ -17,10 +17,10 @@
 
 | Metric | Budget | Now | Owner |
 |---|---:|---:|---|
-| Total gz JS (CI-enforced) | ratchet: 1970 now → **1850** after PERF-02 → re-evaluate | 1950 | PERF-02 |
+| Total gz JS (CI-enforced) | hold at 1970 — splitting redistributes but does not shrink the sum (PERF-02 measurement); reductions come from deletion (CLOSE-01 preview pages ~4k lines) or dependency cuts | ~1956 | CLOSE-01 |
 | Entry chunk gz | ≤ 170 KB (no growth) | ~170 | every PR |
-| Any single route chunk gz | ≤ 150 KB new routes; TeamMatchView grandfathered until PERF-02 | 241 max | PERF-02 |
-| PWA precache | ≤ 3 MB | 7.8 MB | PERF-03 |
+| Any single route chunk gz | ≤ 150 KB (no grandfathers — TeamMatchView split to ~136 KB by PERF-02) | 136 max | every PR |
+| PWA precache | ≤ 3 MB | **1.44 MB** (PERF-03 done) | hold |
 | Images on journey screens | responsive srcset + explicit dimensions; no >200 KB above-the-fold image | unaudited | PERF-04 |
 | Mobile p75 (Vietnam RUM, GA4 `web_vital`) | LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1 | collecting since BASE-03 | PERF-05 validates |
 
