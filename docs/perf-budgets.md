@@ -6,8 +6,8 @@
 
 ## Current baseline (2026-07-16)
 
-- Total gzipped JS: **1950.0 KB** (guard at 1970 after two stopgap bumps:
-  1900→1950→1970)
+- Total gzipped JS: **1903.9 KB** (guard at 1970 after two stopgap bumps:
+  1900→1950→1970; CLOSE-01 preview deletion clawed back 46.1 KB)
 - Entry chunk: ~170 KB gz (locale dictionaries split out by PERF-06)
 - Largest route chunk: `TeamMatchView` ~241 KB (known lever, PERF-02)
 - `vendor-video` (Mux/HLS) 1.07 MB and charts 411 KB are already lazy

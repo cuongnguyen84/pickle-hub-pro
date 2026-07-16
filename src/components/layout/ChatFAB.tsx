@@ -33,7 +33,6 @@ const ZALO_URL = "https://zalo.me/2932845421782592643";
 const HIDDEN_PREFIXES = [
   "/admin",
   "/creator",
-  "/preview",
   "/embed",
   "/onboarding",
   "/tools/quick-tables/referee", // full-screen live-scoring tool

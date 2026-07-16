@@ -18,14 +18,8 @@ import "@/styles/the-line.css";
 /* ---------------------------------------------------------------------------
  * The Line layout — production chrome for / and /vi.
  *
- * Promoted from preview/_shell.tsx during 2026-04-25 cutover. Differences
- * vs the preview shell:
- *   - No preview banner (this IS production)
- *   - Nav links point to production routes (/live, /tournaments, etc.)
- *   - Brand link goes to / (or /vi via ViLanguageWrapper)
- *
- * The preview/_shell.tsx remains intact and unchanged so /preview/the-line/*
- * routes continue working through the 14-day rollback window.
+ * Promoted from the preview shell during the 2026-04-25 cutover; the
+ * retired /preview/the-line/* source pages were deleted (CLOSE-01).
  *
  * - Pins data-theme="the-line" on <html> while mounted (cleans up on unmount)
  * - Restores previous data-mode (light/dark) preference from localStorage

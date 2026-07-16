@@ -17,7 +17,7 @@ import { useUserRegisteredTournaments, useUserCompletedTournaments } from "@/hoo
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { formatDate, formatRelative } from "./preview/_shell";
+import { formatDate, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";

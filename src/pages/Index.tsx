@@ -13,7 +13,7 @@ import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { Countdown } from "@/pages/preview/_Countdown";
+import { Countdown } from "@/components/Countdown";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
@@ -23,13 +23,8 @@ import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 
 /**
- * Production homepage. Promoted from preview/the-line on 2026-04-25.
- * The preview source page src/pages/preview/TheLine.tsx remains intact
- * for the 14-day rollback window (cleanup commit on 2026-05-09).
- *
- * Helper utilities are imported from preview/ for now; they can be
- * promoted to a shared lib in a follow-up if other production pages
- * need them.
+ * Production homepage. Promoted from preview/the-line on 2026-04-25;
+ * the retired /preview/the-line/* source pages were deleted (CLOSE-01).
  */
 
 const formatDate = (iso: string | null | undefined): { d: string; m: string; full: string } => {
