@@ -6,7 +6,7 @@
 
 BEGIN;
 
-SELECT plan(18);
+SELECT plan(19);
 
 SELECT has_function(
   'public',
@@ -222,6 +222,25 @@ SELECT is(
   public.social_event_reactivate_registration('00000000-0000-0000-0000-0000db01dead'),
   'not_found',
   'unknown registration id returns not_found'
+);
+
+-- Codex follow-up (20260716150000): only the two registration-identity
+-- constraints map to already_registered; any other unique violation must
+-- propagate. Simulate a foreign constraint with a scratch unique index.
+CREATE UNIQUE INDEX uq_test_foreign_unique
+  ON public.event_registrations (event_id, display_name)
+  WHERE display_name = 'Codex Dup';
+
+INSERT INTO public.event_registrations (event_id, phone, display_name, status)
+VALUES ('00000000-0000-0000-0000-0000db01e002', '+84900000021', 'Codex Dup', 'registered');
+
+SELECT throws_ok(
+  $$SELECT * FROM public.social_event_guest_register(
+    '00000000-0000-0000-0000-0000db01e002', NULL, '+84900000022', 'Codex Dup',
+    NULL, 'unpaid', NULL, NULL)$$,
+  '23505',
+  NULL,
+  'a non-identity unique violation propagates instead of mapping to already_registered'
 );
 
 SELECT * FROM finish();
