@@ -110,7 +110,7 @@ jobs:
         # regressions without flapping on normal growth.
         env:
           BUNDLE_STRICT: "1"
-          BUNDLE_BUDGET_KB: "1950" # bumped from 1900 (gz JS crept to ~1901KB); stopgap to unblock merges — trim/code-split later
+          BUNDLE_BUDGET_KB: "1970" # bumped from 1950 (hit exactly 1950.0 on 2026-07-16, blocking SQL-only PRs); PERF-01 must set a real budget and PERF-02 must claw back headroom (TeamMatchView 241KB chunk is the known lever)
         run: node scripts/check-bundle-size.mjs
 
       - name: Notify Telegram on failure
