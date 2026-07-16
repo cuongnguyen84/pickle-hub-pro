@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang",
   publishedDate: "2026-04-23",
-  updatedDate: "2026-04-23",
+  updatedDate: "2026-07-16",
   author: "The PickleHub Team",
   tags: ["world cup pickleball", "da nang", "vietnam", "tournament", "asia", "2026", "guide"],
   ctaPath: "/tournaments",
@@ -54,7 +54,7 @@ const post: BlogPost = {
         },
         {
           heading: "Prize Money and Stakes",
-          content: "No prize purse has been publicly disclosed for WCP 2026, which is consistent with the event's medal-and-national-pride ethos. For context, the PPA Tour's 2025 Vietnam Cup at the same Da Nang venue carried a $150,000 purse — larger than anything the Pickleball World Cup has historically offered. WCP's appeal is different: this is about playing for your country, collecting medals, and contributing to a global ranking rather than chasing big individual paydays."
+          content: "Organizers disclosed a total prize pool of US$500,000 at the tournament's April 24, 2026 press conference in Da Nang — more than triple the $150,000 purse the PPA Tour's 2025 Vietnam Cup carried at the same venue, and well beyond anything the Pickleball World Cup has previously offered. WCP's appeal still differs from the pro tours: athletes play for their country, collect medals, and feed a global ranking. But with $500,000 on the table, Da Nang 2026 is no longer a medals-only proposition."
         },
         {
           heading: "Why Da Nang? Why Vietnam?",
@@ -172,7 +172,7 @@ const post: BlogPost = {
         },
         {
           heading: "Tiền thưởng và giá trị của giải",
-          content: "Ban tổ chức WCP 2026 chưa công bố tổng tiền thưởng, điều này nhất quán với triết lý \"huy chương và niềm tự hào quốc gia\" của giải. Để so sánh: PPA Tour Vietnam Cup 2025 tổ chức tại cùng Đà Nẵng có tổng thưởng 150.000 USD — lớn hơn bất kỳ kỳ World Cup Pickleball nào trước đây. Sức hút của WCP khác biệt: đây là nơi VĐV thi đấu vì màu cờ sắc áo quốc gia, giành huy chương và đóng góp vào bảng xếp hạng toàn cầu, thay vì tranh tiền thưởng cá nhân lớn."
+          content: "Tại họp báo ngày 24/4/2026 ở Đà Nẵng, ban tổ chức công bố tổng giải thưởng 500.000 USD — gấp hơn ba lần mức 150.000 USD của PPA Tour Vietnam Cup 2025 tổ chức tại cùng địa điểm, và vượt xa mọi kỳ World Cup Pickleball trước đây. Sức hút của WCP vẫn khác các giải nhà nghề: VĐV thi đấu vì màu cờ sắc áo quốc gia, giành huy chương và đóng góp vào bảng xếp hạng toàn cầu. Nhưng với 500.000 USD tiền thưởng, Đà Nẵng 2026 không còn chỉ là cuộc chơi vì huy chương."
         },
         {
           heading: "Vì sao chọn Đà Nẵng? Vì sao Việt Nam?",

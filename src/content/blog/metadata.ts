@@ -496,7 +496,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   },  {
     slug: "pickleball-world-cup-2026-da-nang",
     publishedDate: "2026-04-23",
-    updatedDate: "2026-04-23",
+    updatedDate: "2026-07-16",
     author: "The PickleHub Team",
     tags: ["world cup pickleball", "da nang", "vietnam", "tournament", "asia", "2026", "guide"],
     ctaPath: "/tournaments",
