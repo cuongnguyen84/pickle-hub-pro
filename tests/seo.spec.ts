@@ -21,9 +21,10 @@ const GOOGLEBOT_UA =
 // ── SEO-03 helpers — canonical + JSON-LD validation ─────────────────────────
 
 function extractCanonical(html: string): string | undefined {
+  // \s before rel/href so data-rel=/data-href= can't satisfy the match.
   return (
-    html.match(/<link[^>]+rel\s*=\s*["']canonical["'][^>]*href\s*=\s*["']([^"']+)["']/i)?.[1] ??
-    html.match(/<link[^>]+href\s*=\s*["']([^"']+)["'][^>]*rel\s*=\s*["']canonical["']/i)?.[1]
+    html.match(/<link[^>]*\srel\s*=\s*["']canonical["'][^>]*\shref\s*=\s*["']([^"']+)["']/i)?.[1] ??
+    html.match(/<link[^>]*\shref\s*=\s*["']([^"']+)["'][^>]*\srel\s*=\s*["']canonical["']/i)?.[1]
   );
 }
 
@@ -59,8 +60,9 @@ function collectJsonLdNodes(
 }
 
 /** Parse every <script type="application/ld+json"> block; fail on invalid
- *  JSON or on a known @type missing its required fields. */
-function assertJsonLd(html: string, label: string): void {
+ *  JSON or on a known @type missing its required fields. Returns the block
+ *  count — the sweep uses it to unmask the SPA shell on the root path. */
+function assertJsonLd(html: string, label: string): number {
   const blocks = [
     ...html.matchAll(
       // \s before type= so data-type= can't match; \s*=\s* tolerates
@@ -90,6 +92,7 @@ function assertJsonLd(html: string, label: string): void {
       }
     }
   }
+  return blocks.length;
 }
 
 const SSR_ROUTES = [
@@ -307,10 +310,23 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
         `root canonical, so a mismatch means SSR did not render this page`,
     ).toBe(new URL(target).pathname);
 
-    // Validate whatever JSON-LD the page emits. NOT asserted >0: /clb/:slug
-    // org pages legitimately ship zero JSON-LD today (schema gap, not an
-    // SSR failure — the canonical check above already proves SSR ran).
-    assertJsonLd(html, target);
+    // Validate whatever JSON-LD the page emits. NOT asserted >0 in general:
+    // /clb/:slug org pages legitimately ship zero JSON-LD today (schema gap,
+    // not an SSR failure — the canonical check above already proves SSR ran).
+    const jsonLdBlocks = assertJsonLd(html, target);
+
+    // …EXCEPT on "/": the static segment lists the homepage first, and the
+    // SPA shell ALSO carries the root canonical, so canonical equality is
+    // vacuous there (Codex round-2 P1). The SSR home handler always emits
+    // Organization/WebSite JSON-LD; the shell emits none — that is the
+    // discriminator.
+    if (new URL(target).pathname === "/") {
+      expect(
+        jsonLdBlocks,
+        `JSON-LD on ${target} — zero blocks on the root path means the ` +
+          `SPA fallback shell was served instead of the SSR home render`,
+      ).toBeGreaterThan(0);
+    }
   }
   await ctx.dispose();
 });
