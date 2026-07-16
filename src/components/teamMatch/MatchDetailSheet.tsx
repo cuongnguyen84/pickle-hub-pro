@@ -22,6 +22,8 @@ interface MatchDetailSheetProps {
   isOwner?: boolean;
   tournamentId: string;
   onScoreMatch?: (match: TeamMatchMatch) => void;
+  /** Tournament total_score_mode — winner = higher cumulative total. */
+  totalScoreMode?: boolean;
 }
 
 // ─── W2.4c shared tokens ─────────────────────────────────────────────────
@@ -87,6 +89,7 @@ export function MatchDetailSheet({
   isOwner,
   tournamentId,
   onScoreMatch,
+  totalScoreMode = false,
 }: MatchDetailSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
@@ -191,6 +194,7 @@ export function MatchDetailSheet({
           games.map((game) => scores[game.id] ?? { a: game.score_a, b: game.score_b }),
           match.team_a_id,
           match.team_b_id,
+          totalScoreMode,
         );
 
       await updateMatchResult({

@@ -953,13 +953,16 @@ struct TeamMatchRepository {
         }
     }
 
-    /// Pure match-result computation — QA-07 characterization twin of web
+    /// Pure match-result computation — QA-07 twin of web
     /// `src/lib/teamMatchResult.ts` (pinned by TeamMatchResultTests).
     ///
     /// - totalPoints = SUM of game scores (total-score mode plays each game
-    ///   to 7; a 4-game match totals whatever was scored, NOT a fixed 28).
-    /// - Winner = games-won majority (ceil(games/2)) in EVERY mode;
-    ///   cumulative points never decide the match winner.
+    ///   to points_per_game; a 4-game match is NOT a fixed 28).
+    /// - Default mode: winner = games-won majority (ceil(games/2)).
+    /// - Total-score mode (Cuong's rule 2026-07-16): winner = higher
+    ///   cumulative total, only once every game is decided (a tied/unplayed
+    ///   0-0 game keeps the match in progress, otherwise game 1 would end
+    ///   the match early). Equal totals → no winner (dreambreaker/organizer).
     struct ComputedMatchResult: Equatable {
         let gamesWonA: Int
         let gamesWonB: Int
@@ -969,17 +972,28 @@ struct TeamMatchRepository {
     }
 
     static func computeMatchResult(scores: [(a: Int, b: Int)],
-                                   teamAID: UUID?, teamBID: UUID?) -> ComputedMatchResult {
+                                   teamAID: UUID?, teamBID: UUID?,
+                                   totalScoreMode: Bool = false) -> ComputedMatchResult {
         var gamesWonA = 0, gamesWonB = 0, totalPointsA = 0, totalPointsB = 0
+        var undecidedGames = 0
         for s in scores {
             totalPointsA += s.a; totalPointsB += s.b
-            if s.a > s.b { gamesWonA += 1 } else if s.b > s.a { gamesWonB += 1 }
+            if s.a > s.b { gamesWonA += 1 }
+            else if s.b > s.a { gamesWonB += 1 }
+            else { undecidedGames += 1 }
         }
-        let requiredToWin = Int(ceil(Double(scores.count) / 2.0))
         var winnerID: UUID? = nil
         if !scores.isEmpty {
-            if gamesWonA >= requiredToWin, let a = teamAID { winnerID = a }
-            else if gamesWonB >= requiredToWin, let b = teamBID { winnerID = b }
+            if totalScoreMode {
+                if undecidedGames == 0 {
+                    if totalPointsA > totalPointsB, let a = teamAID { winnerID = a }
+                    else if totalPointsB > totalPointsA, let b = teamBID { winnerID = b }
+                }
+            } else {
+                let requiredToWin = Int(ceil(Double(scores.count) / 2.0))
+                if gamesWonA >= requiredToWin, let a = teamAID { winnerID = a }
+                else if gamesWonB >= requiredToWin, let b = teamBID { winnerID = b }
+            }
         }
         return ComputedMatchResult(gamesWonA: gamesWonA, gamesWonB: gamesWonB,
                                    totalPointsA: totalPointsA, totalPointsB: totalPointsB,
@@ -990,9 +1004,11 @@ struct TeamMatchRepository {
     /// playoff bracket exactly like web updateMatchResult.
     /// `scores` is the full ordered list of (a,b) for the match's games.
     func saveMatchResult(match: TMMatch, scores: [(a: Int, b: Int)],
-                         tournamentID: UUID, hasDreambreaker: Bool) async throws {
+                         tournamentID: UUID, hasDreambreaker: Bool,
+                         totalScoreMode: Bool = false) async throws {
         let result = Self.computeMatchResult(scores: scores,
-                                             teamAID: match.teamAID, teamBID: match.teamBID)
+                                             teamAID: match.teamAID, teamBID: match.teamBID,
+                                             totalScoreMode: totalScoreMode)
         let gamesWonA = result.gamesWonA, gamesWonB = result.gamesWonB
         let totalPointsA = result.totalPointsA, totalPointsB = result.totalPointsB
         let winnerID = result.winnerID
