@@ -6,7 +6,7 @@ const SITE_URL = "https://www.thepicklehub.net";
 const DEFAULT_OG_IMAGE = "https://www.thepicklehub.net/og-image.png";
 const SITE_NAME = "ThePickleHub";
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

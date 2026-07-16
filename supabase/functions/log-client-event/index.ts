@@ -1,7 +1,7 @@
 // Browser JS errors and CSP reports. Successful ingestion returns 204; invalid
 // or abusive requests get an explicit status that browser reporters can ignore.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser } from "../_shared/auth.ts";
 import { clientEventCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import {
