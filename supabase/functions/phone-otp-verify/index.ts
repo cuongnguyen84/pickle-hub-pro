@@ -202,12 +202,14 @@ Deno.serve(async (req) => {
   //      from client is ignored to keep older flows backwards-compat.
   //   2. event.slots non-empty + slot_id missing → reject; the player must
   //      pick a slot before we'll commit a registration.
-  //   3. event.slots non-empty + slot_id present → validate id exists,
-  //      then re-check capacity (race-safe) right before the insert.
+  //   3. event.slots non-empty + slot_id present → validate id exists;
+  //      capacity itself is enforced atomically inside the registration
+  //      RPC below (DB-01).
   const eventSlots: EventSlot[] = Array.isArray(event.slots)
     ? (event.slots as EventSlot[])
     : [];
   let selectedSlot: EventSlot | null = null;
+  let slotCapacity: number | null = null;
   if (eventSlots.length > 0) {
     if (!slotId) {
       return err("slot_required", 400, "slot_required");
@@ -220,19 +222,7 @@ Deno.serve(async (req) => {
     if (!Number.isFinite(cap) || cap < 1) {
       return err("slot_capacity_invalid", 500, "slot_capacity_invalid");
     }
-    const { count: slotCount, error: slotCountErr } = await supabase
-      .from("event_registrations")
-      .select("id", { count: "exact", head: true })
-      .eq("event_id", eventId)
-      .eq("slot_id", slotId)
-      .neq("status", "cancelled");
-    if (slotCountErr) {
-      logEvent({ error: slotCountErr.message, step: "slot_capacity_check" });
-      return err("capacity_check_failed", 500, "capacity_check_failed");
-    }
-    if ((slotCount ?? 0) >= cap) {
-      return err("slot_full", 409, "slot_full");
-    }
+    slotCapacity = cap;
   }
 
   // ─── Find or create ghost profile by phone ──────────────────────────────
@@ -282,21 +272,11 @@ Deno.serve(async (req) => {
     profileId = created.id as string;
   }
 
-  // ─── Capacity check (race-safe: re-check before insert) ─────────────────
-  const { count: activeCount, error: countErr } = await supabase
-    .from("event_registrations")
-    .select("id", { count: "exact", head: true })
-    .eq("event_id", eventId)
-    .neq("status", "cancelled");
-  if (countErr) {
-    logEvent({ error: countErr.message, step: "recapacity_check" });
-    return err("capacity_check_failed", 500, "capacity_check_failed");
-  }
-  if ((activeCount ?? 0) >= (event.max_players as number)) {
-    return err("event_full", 409, "event_full");
-  }
-
-  // ─── Insert registration. Unique indexes catch double-register. ────────
+  // ─── Atomic capacity check + insert (DB-01) ──────────────────────────────
+  // Event and slot capacity are enforced inside the RPC under a per-event
+  // advisory lock: count-then-insert across separate round-trips let two
+  // concurrent verifies both grab the final slot. The RPC also maps a
+  // unique-violation (same phone double-register) to 'already_registered'.
   // PR67: when the event requires prepayment and the price is non-zero,
   // mark the row 'pending_payment' on insert so the auto-cancel cron
   // picks it up after the deadline (even if the player never clicks any
@@ -306,32 +286,25 @@ Deno.serve(async (req) => {
       ? "pending_payment"
       : "unpaid";
 
-  const { data: registration, error: regErr } = await supabase
-    .from("event_registrations")
-    .insert({
-      event_id: eventId,
-      profile_id: profileId,
-      phone,
-      display_name: displayName,
-      self_rated_level: selfRatedLevel,
-      status: "registered",
-      payment_status: initialPaymentStatus,
+  const { data: regRows, error: regErr } = await supabase.rpc(
+    "social_event_guest_register",
+    {
+      p_event_id: eventId,
+      p_profile_id: profileId,
+      p_phone: phone,
+      p_display_name: displayName,
+      p_self_rated_level: selfRatedLevel,
+      p_payment_status: initialPaymentStatus,
       // Only populated when the event has slots configured. NULL =
       // legacy / no-slot registration so the column behaves the same
       // as before for unchanged events.
-      slot_id: selectedSlot ? slotId : null,
-    })
-    .select("id, registered_at")
-    .single();
+      p_slot_id: selectedSlot ? slotId : null,
+      p_slot_capacity: slotCapacity,
+    },
+  );
 
-  if (regErr || !registration) {
-    // Unique-violation race: someone registered the same phone between
-    // the upstream check and this insert. Translate to a friendlier
-    // 409 if that's the case.
-    const msg = (regErr?.message ?? "").toLowerCase();
-    if (msg.includes("uq_event_registrations") || msg.includes("duplicate")) {
-      return err("already_registered", 409, "already_registered");
-    }
+  const regResult = Array.isArray(regRows) ? regRows[0] : null;
+  if (regErr || !regResult) {
     logEvent({
       error: regErr?.message ?? "no_row",
       step: "insert_registration",
@@ -340,6 +313,28 @@ Deno.serve(async (req) => {
     });
     return err("registration_insert_failed", 500, "registration_insert_failed");
   }
+  if (regResult.outcome === "event_full") {
+    return err("event_full", 409, "event_full");
+  }
+  if (regResult.outcome === "slot_full") {
+    return err("slot_full", 409, "slot_full");
+  }
+  if (regResult.outcome === "already_registered") {
+    return err("already_registered", 409, "already_registered");
+  }
+  if (regResult.outcome !== "registered" || !regResult.registration_id) {
+    logEvent({
+      error: `unexpected outcome ${regResult.outcome}`,
+      step: "insert_registration",
+      event_id: eventId,
+    });
+    return err("registration_insert_failed", 500, "registration_insert_failed");
+  }
+
+  const registration = {
+    id: regResult.registration_id as string,
+    registered_at: regResult.registered_at as string,
+  };
 
   // ─── Magic token — write to the private registration_secrets table ─────
   // Post-Codex-review (PR47 bug 1): magic_token no longer lives on
