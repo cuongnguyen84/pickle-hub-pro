@@ -2819,8 +2819,6 @@ export type Database = {
           mux_playback_id: string | null
           mux_stream_key: string | null
           organization_id: string
-          red5_server_url: string | null
-          red5_stream_name: string | null
           scheduled_start_at: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["livestream_status"]
@@ -2842,8 +2840,6 @@ export type Database = {
           mux_playback_id?: string | null
           mux_stream_key?: string | null
           organization_id: string
-          red5_server_url?: string | null
-          red5_stream_name?: string | null
           scheduled_start_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["livestream_status"]
@@ -2865,8 +2861,6 @@ export type Database = {
           mux_playback_id?: string | null
           mux_stream_key?: string | null
           organization_id?: string
-          red5_server_url?: string | null
-          red5_stream_name?: string | null
           scheduled_start_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["livestream_status"]
