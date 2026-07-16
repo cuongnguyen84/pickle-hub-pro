@@ -1,12 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
-
-interface PushPayload {
-  user_ids: string[];
-  title: string;
-  body: string;
-  data?: Record<string, string>;
-}
+import {
+  processPush,
+  type FcmSendResult,
+  type PushPayload,
+  type PushStore,
+  type PushTokenRow,
+} from "./handler.ts";
 
 // --- FCM V1 Auth: Generate OAuth2 access token from service account ---
 
@@ -162,86 +162,74 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const payload: PushPayload = await req.json();
-    const { user_ids, title, body, data } = payload;
 
-    if (!user_ids?.length || !title) {
-      return new Response(
-        JSON.stringify({ error: "user_ids and title are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Recipients resolve through the service-role client here, never through
+    // caller RLS — see handler.ts. order(id) keeps range() pages stable.
+    const store: PushStore = {
+      async fetchTokensPage(userIds, from, to) {
+        let query = supabase
+          .from("push_tokens")
+          .select("id, user_id, token")
+          .order("id")
+          .range(from, to);
+        if (userIds) query = query.in("user_id", userIds);
+        const { data: rows, error } = await query;
+        if (error) console.error("Error fetching tokens:", error);
+        return { rows: (rows ?? []) as PushTokenRow[], error: error?.message ?? null };
+      },
+      async deleteTokens(ids) {
+        const { error } = await supabase.from("push_tokens").delete().in("id", ids);
+        if (error) console.error("Error pruning tokens:", error);
+        return { error: error?.message ?? null };
+      },
+    };
 
-    // Get push tokens for the target users
-    const { data: tokens, error: tokenError } = await supabase
-      .from("push_tokens")
-      .select("token, platform")
-      .in("user_id", user_ids);
-
-    if (tokenError) {
-      console.error("Error fetching tokens:", tokenError);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch tokens" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!tokens?.length) {
-      return new Response(
-        JSON.stringify({ sent: 0, message: "No push tokens found for users" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Get OAuth2 access token for FCM V1 API
-    const accessToken = await getAccessToken(serviceAccount);
+    // OAuth token is fetched lazily (dry_run never needs it) and shared
+    // across all sends in the request.
     const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+    let accessTokenPromise: Promise<string> | null = null;
+    const sendFcm = async (token: string): Promise<FcmSendResult> => {
+      accessTokenPromise ??= getAccessToken(serviceAccount);
+      const accessToken = await accessTokenPromise;
 
-    let totalSent = 0;
-    const errors: string[] = [];
-
-    // Send to each token using FCM V1 API
-    for (const { token } of tokens) {
-      try {
-        const message: Record<string, unknown> = {
+      const fcmResponse = await fetch(fcmUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
           message: {
             token,
-            notification: { title, body },
-            data: data || {},
+            notification: { title: payload.title, body: payload.body },
+            data: payload.data || {},
           },
-        };
+        }),
+      });
 
-        const fcmResponse = await fetch(fcmUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify(message),
-        });
+      const result = await fcmResponse.json().catch(() => ({}));
+      if (fcmResponse.ok) return { ok: true };
 
-        const result = await fcmResponse.json();
+      console.error(`[FCM V1] Error for token ${token.substring(0, 10)}...:`, result);
+      const details = result?.error?.details;
+      const unregistered =
+        fcmResponse.status === 404 ||
+        (Array.isArray(details) &&
+          details.some(
+            (d: { errorCode?: string }) => d?.errorCode === "UNREGISTERED",
+          ));
+      return {
+        ok: false,
+        unregistered,
+        message: result?.error?.message || "Unknown error",
+      };
+    };
 
-        if (fcmResponse.ok) {
-          totalSent++;
-          console.log(`[FCM V1] Sent to token ${token.substring(0, 10)}...`);
-        } else {
-          console.error(`[FCM V1] Error for token ${token.substring(0, 10)}...:`, result);
-          errors.push(`Token ${token.substring(0, 10)}...: ${result.error?.message || "Unknown error"}`);
-        }
-      } catch (e) {
-        console.error(`[FCM V1] Exception:`, e);
-        errors.push(`Token ${token.substring(0, 10)}...: ${e.message}`);
-      }
-    }
-
-    return new Response(
-      JSON.stringify({
-        sent: totalSent,
-        total_tokens: tokens.length,
-        errors: errors.length > 0 ? errors : undefined,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const result = await processPush(payload, store, sendFcm);
+    return new Response(JSON.stringify(result.body), {
+      status: result.status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Send push error:", error);
     return new Response(

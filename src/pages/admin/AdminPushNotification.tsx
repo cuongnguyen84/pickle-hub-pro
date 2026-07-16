@@ -29,15 +29,18 @@ export default function AdminPushNotification() {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [preparing, setPreparing] = useState(false);
-  // Set when recipients are resolved → confirm dialog opens. The visible
-  // device count doubles as a sanity check for the known RLS bug where
-  // target=all only sees the admin's own tokens (N=1 = something's wrong).
+  // Set when recipients are resolved → confirm dialog opens. Recipient
+  // resolution and counting happen server-side (dry_run) with service_role:
+  // querying push_tokens with the admin JWT only returns the admin's own rows
+  // under RLS, which made "all" silently broadcast to one person.
   const [confirmInfo, setConfirmInfo] = useState<{
+    broadcast: boolean;
     userIds: string[];
+    userCount: number;
     deviceCount: number;
   } | null>(null);
 
-  // Resolve recipients + device count, then open the confirm dialog.
+  // Resolve recipients + device count server-side, then open the confirm dialog.
   const prepareSend = async () => {
     if (!title.trim()) {
       toast.error("Vui lòng nhập tiêu đề");
@@ -51,24 +54,8 @@ export default function AdminPushNotification() {
     setPreparing(true);
     try {
       let targetUserIds: string[] = [];
-      let deviceCount = 0;
 
-      if (target === "all") {
-        // Get all unique user_ids from push_tokens
-        const { data: tokens, error } = await supabase
-          .from("push_tokens")
-          .select("user_id");
-
-        if (error) throw error;
-
-        targetUserIds = [...new Set(tokens?.map((t) => t.user_id) || [])];
-        deviceCount = tokens?.length || 0;
-
-        if (targetUserIds.length === 0) {
-          toast.warning("Không có user nào đã đăng ký push token");
-          return;
-        }
-      } else {
+      if (target === "specific") {
         const emailList = userIds
           .split(/[,\n]/)
           .map((e) => e.trim())
@@ -95,22 +82,35 @@ export default function AdminPushNotification() {
         }
 
         targetUserIds = (profiles || []).map((p) => p.id);
-
-        if (targetUserIds.length === 0) {
-          toast.error("Vui lòng nhập ít nhất 1 email");
-          return;
-        }
-
-        const { count, error: countError } = await supabase
-          .from("push_tokens")
-          .select("id", { count: "exact", head: true })
-          .in("user_id", targetUserIds);
-
-        if (countError) throw countError;
-        deviceCount = count ?? 0;
       }
 
-      setConfirmInfo({ userIds: targetUserIds, deviceCount });
+      const { data, error } = await supabase.functions.invoke("send-push-notification", {
+        body: {
+          dry_run: true,
+          title: title.trim(),
+          body: body.trim(),
+          ...(target === "all" ? { broadcast: true } : { user_ids: targetUserIds }),
+        },
+      });
+
+      if (error) throw error;
+
+      const deviceCount = data?.total_tokens ?? 0;
+      if (deviceCount === 0) {
+        toast.warning(
+          target === "all"
+            ? "Không có user nào đã đăng ký push token"
+            : "User này chưa đăng ký push token trên thiết bị nào",
+        );
+        return;
+      }
+
+      setConfirmInfo({
+        broadcast: target === "all",
+        userIds: targetUserIds,
+        userCount: data?.total_users ?? 0,
+        deviceCount,
+      });
     } catch (err: unknown) {
       console.error("Prepare push error:", err);
       toast.error("Lỗi khi chuẩn bị gửi: " + (err instanceof Error ? err.message : "Unknown error"));
@@ -121,15 +121,15 @@ export default function AdminPushNotification() {
 
   const handleSend = async () => {
     if (!confirmInfo) return;
-    const targetUserIds = confirmInfo.userIds;
+    const { broadcast, userIds: targetUserIds } = confirmInfo;
     setConfirmInfo(null);
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-push-notification", {
         body: {
-          user_ids: targetUserIds,
           title: title.trim(),
           body: body.trim(),
+          ...(broadcast ? { broadcast: true } : { user_ids: targetUserIds }),
         },
       });
 
@@ -137,9 +137,16 @@ export default function AdminPushNotification() {
 
       const sent = data?.sent || 0;
       const failed = data?.errors?.length || 0;
+      const pruned = data?.pruned || 0;
+      const detail = [
+        failed > 0 ? `lỗi ${failed}` : null,
+        pruned > 0 ? `${pruned} token chết đã bị xoá` : null,
+      ]
+        .filter(Boolean)
+        .join(", ");
       toast.success(
         `Đã gửi thành công ${sent}/${data?.total_tokens || 0} thiết bị`,
-        failed > 0 ? { description: `Thành công ${sent}, lỗi ${failed}` } : undefined,
+        detail ? { description: detail } : undefined,
       );
 
       if (failed > 0) {
@@ -270,8 +277,8 @@ export default function AdminPushNotification() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               Thông báo "{title.trim()}" sẽ được gửi đến{" "}
-              {target === "all"
-                ? "tất cả users đã đăng ký push"
+              {confirmInfo?.broadcast
+                ? `tất cả ${confirmInfo?.userCount ?? 0} users đã đăng ký push`
                 : `${confirmInfo?.userIds.length ?? 0} user cụ thể`}{" "}
               ({confirmInfo?.deviceCount ?? 0} thiết bị). Không thể thu hồi sau
               khi gửi.
