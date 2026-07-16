@@ -20,7 +20,7 @@
 
 // @ts-expect-error — Deno npm: imports
 import { ImageResponse } from "npm:@vercel/og@0.6.5";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import React from "npm:react@18.3.1";
 import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 

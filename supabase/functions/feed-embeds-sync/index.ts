@@ -24,7 +24,7 @@
 // run. Failures land in feed_embed_sources.last_error for the admin UI.
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
 import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 

@@ -24,7 +24,7 @@
 // satisfies authorization on its own.
 // ============================================================================
 
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.89.0";
 import { proTourIngestCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import type {
   TournamentScrapeResult,

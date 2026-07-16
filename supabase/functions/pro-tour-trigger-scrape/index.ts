@@ -37,7 +37,7 @@
 //                                  PRO_TOUR_SCRAPER_URL=https://pro-tour-scraper.<account>.workers.dev`
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
