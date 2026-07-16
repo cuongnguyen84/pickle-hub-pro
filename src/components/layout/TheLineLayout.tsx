@@ -1110,4 +1110,3 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     </div>
   );
 };
-

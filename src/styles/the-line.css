@@ -1903,20 +1903,6 @@
   color: var(--tl-fg-4); flex-wrap: wrap; gap: 12px;
 }
 
-/* ========== Preview banner ========== */
-[data-theme="the-line"] .tl-preview-banner {
-  background: var(--tl-green);
-  color: var(--tl-bg);
-  padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
-  font-family: "Geist Mono"; font-size: 11px; font-weight: 600;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  text-align: center;
-}
-[data-theme="the-line"] .tl-preview-banner a {
-  color: var(--tl-bg); text-decoration: underline; text-decoration-thickness: 1px;
-  text-underline-offset: 2px; font-weight: 600;
-}
-
 /* ========== Home: live priority section (R3 feed ordering) ========== */
 [data-theme="the-line"] .tl-live-head {
   display: flex; justify-content: space-between; align-items: center;
