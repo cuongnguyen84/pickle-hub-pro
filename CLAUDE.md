@@ -167,21 +167,21 @@ Optional:
 Function `mux-create-livestream` checks for role IN ('creator', 'admin').
 Function `send-push-notification` requires authenticated user but no specific role check (UI gates by admin role).
 
-## Supabase Edge Functions (51 active)
+## Supabase Edge Functions (50 active)
 
 Browse: `supabase/functions/`. Categories:
 
 - **User-facing (verify_jwt=false, ES256 workaround):** `mux-create-livestream`, `delete-account`, `send-push-notification`, `invite-team-to-tournament`
 - **Authenticated admin (verify_jwt=false, internal role check):** `api-keys-list`, `api-keys-admin-generate`, `api-keys-admin-revoke`
 - **Backend-to-backend (service_role only):** `api-keys-generate`, `api-keys-revoke`
-- **Public (no auth):** `geo-check`, `og-*` (9 functions: doubles-elimination, flex-tournament, image-club, image-match, image-social-event, live, organization, quick-table, tournament, video), `sitemap` (legacy — Cloudflare Pages handles production), `video-thumbnail-proxy`, `newsletter-subscribe`
+- **Public (no auth):** `geo-check`, `og-*` (9 functions: doubles-elimination, flex-tournament, image-club, image-match, image-social-event, live, organization, quick-table, tournament, video), `video-thumbnail-proxy`, `newsletter-subscribe`
 - **Event-driven:** `mux-webhook` (Mux → webhook), `send-auth-email` (Supabase Auth Hook), `mark-payment-claimed`
 - **Scheduled/internal cron:** `auto-archive-tournaments`, `auto-cancel-unpaid-registrations`, `news-check`, `news-ingest`, `news-translate`, `batch-view-events`, `mux-sync-assets`, `leaderboard-compute`, `match-expire`, `dupr-sync`, `pro-tour-ingest`, `pro-tour-trigger-scrape`, `feed-generate`
 - **Domain-specific:** `match-create`, `match-confirm`, `submit-match-score`, `cancel-registration`, `reactivate-registration`, `create-payment-order`, `phone-otp-send`, `phone-otp-verify`, `request-recovery-link`, `dupr-link`, `send-blog-blast`, `notification-send`
 
 ## Known Bugs (Not Fixed)
 
-1. **Red5 DB columns residual:** `livestreams.red5_server_url` and `livestreams.red5_stream_name` columns still exist in schema despite Red5 being retired. Nullable, non-functional. Cleanup requires migration to DROP COLUMN + regenerate types.
+_(none currently — Red5 residual columns were dropped by migration `20260716170000`, CLOSE-01)_
 
 ## Coding Standards
 
