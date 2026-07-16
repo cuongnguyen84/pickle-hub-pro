@@ -12,6 +12,7 @@ import { Loader2, Save, Trophy, Play } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { computeTeamMatchResult } from '@/lib/teamMatchResult';
 import { useI18n } from '@/i18n';
 
 interface MatchDetailSheetProps {
@@ -185,28 +186,12 @@ export function MatchDetailSheet({
       }
 
       // Calculate match totals
-      let gamesWonA = 0;
-      let gamesWonB = 0;
-      let totalPointsA = 0;
-      let totalPointsB = 0;
-
-      Object.entries(scores).forEach(([_, score]) => {
-        totalPointsA += score.a;
-        totalPointsB += score.b;
-        if (score.a > score.b) gamesWonA++;
-        else if (score.b > score.a) gamesWonB++;
-      });
-
-      // Determine winner (majority of games)
-      const totalGames = games.length;
-      const requiredToWin = Math.ceil(totalGames / 2);
-      let winnerId: string | null = null;
-
-      if (gamesWonA >= requiredToWin && match.team_a_id) {
-        winnerId = match.team_a_id;
-      } else if (gamesWonB >= requiredToWin && match.team_b_id) {
-        winnerId = match.team_b_id;
-      }
+      const { gamesWonA, gamesWonB, totalPointsA, totalPointsB, winnerId } =
+        computeTeamMatchResult(
+          games.map((game) => scores[game.id] ?? { a: game.score_a, b: game.score_b }),
+          match.team_a_id,
+          match.team_b_id,
+        );
 
       await updateMatchResult({
         matchId: match.id,

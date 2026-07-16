@@ -953,11 +953,23 @@ struct TeamMatchRepository {
         }
     }
 
-    /// Recompute match totals from all its games and persist; advances the
-    /// playoff bracket exactly like web updateMatchResult.
-    /// `scores` is the full ordered list of (a,b) for the match's games.
-    func saveMatchResult(match: TMMatch, scores: [(a: Int, b: Int)],
-                         tournamentID: UUID, hasDreambreaker: Bool) async throws {
+    /// Pure match-result computation — QA-07 characterization twin of web
+    /// `src/lib/teamMatchResult.ts` (pinned by TeamMatchResultTests).
+    ///
+    /// - totalPoints = SUM of game scores (total-score mode plays each game
+    ///   to 7; a 4-game match totals whatever was scored, NOT a fixed 28).
+    /// - Winner = games-won majority (ceil(games/2)) in EVERY mode;
+    ///   cumulative points never decide the match winner.
+    struct ComputedMatchResult: Equatable {
+        let gamesWonA: Int
+        let gamesWonB: Int
+        let totalPointsA: Int
+        let totalPointsB: Int
+        let winnerID: UUID?
+    }
+
+    static func computeMatchResult(scores: [(a: Int, b: Int)],
+                                   teamAID: UUID?, teamBID: UUID?) -> ComputedMatchResult {
         var gamesWonA = 0, gamesWonB = 0, totalPointsA = 0, totalPointsB = 0
         for s in scores {
             totalPointsA += s.a; totalPointsB += s.b
@@ -965,8 +977,25 @@ struct TeamMatchRepository {
         }
         let requiredToWin = Int(ceil(Double(scores.count) / 2.0))
         var winnerID: UUID? = nil
-        if gamesWonA >= requiredToWin, let a = match.teamAID { winnerID = a }
-        else if gamesWonB >= requiredToWin, let b = match.teamBID { winnerID = b }
+        if !scores.isEmpty {
+            if gamesWonA >= requiredToWin, let a = teamAID { winnerID = a }
+            else if gamesWonB >= requiredToWin, let b = teamBID { winnerID = b }
+        }
+        return ComputedMatchResult(gamesWonA: gamesWonA, gamesWonB: gamesWonB,
+                                   totalPointsA: totalPointsA, totalPointsB: totalPointsB,
+                                   winnerID: winnerID)
+    }
+
+    /// Recompute match totals from all its games and persist; advances the
+    /// playoff bracket exactly like web updateMatchResult.
+    /// `scores` is the full ordered list of (a,b) for the match's games.
+    func saveMatchResult(match: TMMatch, scores: [(a: Int, b: Int)],
+                         tournamentID: UUID, hasDreambreaker: Bool) async throws {
+        let result = Self.computeMatchResult(scores: scores,
+                                             teamAID: match.teamAID, teamBID: match.teamBID)
+        let gamesWonA = result.gamesWonA, gamesWonB = result.gamesWonB
+        let totalPointsA = result.totalPointsA, totalPointsB = result.totalPointsB
+        let winnerID = result.winnerID
 
         try await client
             .from("team_match_matches")
