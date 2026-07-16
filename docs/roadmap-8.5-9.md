@@ -114,7 +114,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | BASE-01 | done | 2d | Define player and organizer north-star journeys and activation events | — |
 | BASE-02 | ready | 3d | Instrument player registration and organizer publish funnels | BASE-01 |
 | BASE-03 | done | 2d | Add route-level Web Vitals RUM segmented by device, with Vietnam as the primary segment and an international segment kept separate | — |
-| BASE-04 | ready | 1d | Inventory only the 5–8 screens on the two north-star journeys, with start point, completion point, and observed drop-off point per journey (trimmed from top-20 routes: measurement, not documentation) | BASE-01 |
+| BASE-04 | done | 1d | Inventory only the 5–8 screens on the two north-star journeys, with start point, completion point, and observed drop-off point per journey (trimmed from top-20 routes: measurement, not documentation) | BASE-01 |
 | BASE-05 | done | 1d | Decide mobile source of truth: SwiftUI replaces production Capacitor iOS; Android does not exist yet | — |
 | BASE-06 | done | 2d | Create the Edge Function auth/service-role registry and CI validator design | — |
 | BASE-07 | blocked | 3d | Run five player and five organizer baseline usability sessions | Recruiting participants |
@@ -134,12 +134,12 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | SEC-02 | done | 3d | Harden `batch-view-events`: derive user and organization server-side, validate target, add rate limits | BASE-06 |
 | SEC-03 | done | 2d | Harden `log-client-event`: derive/null user, body cap, rate limit, retention | BASE-06 |
 | SEC-04 | done | 3d | Enforce the auth registry and fail CI for unclassified `verify_jwt=false` or service-role functions. Apply the five actor policies (public, user, admin, cron, internal service) together with operation-specific controls: public reads need validation + rate/cache controls; public mutations/callbacks need proof-of-purpose + abuse controls; user actions derive identity from JWT; admin actions add a role check; cron uses `requireCronRequest`; internal services use an approved machine credential | BASE-06 |
-| SEC-05 | ready | 3d | Audit exposed views, RLS, function grants, and `SECURITY DEFINER search_path` | — |
+| SEC-05 | done | 3d | Audit exposed views, RLS, function grants, and `SECURITY DEFINER search_path` | — |
 | SEC-06 | blocked | 2d | Automate production migration drift check | Supabase CI credential |
 | BE-01 | done | 2d | Edge Function CORS/serve sweep: move `corsHeaders` into `_shared/cors.ts`, preserve all 15 characterized policy variants, remove all inline declarations, and leave all 76 handlers on `Deno.serve` | SEC-04 |
 | BE-03 | later | 3d | Pin one supabase-js version across functions (currently @2.39.0 ×37, @2 ×33, @2.89.0 ×1) — staged, not mechanical: normalize imports, test/deploy one function group, canary it, then roll the rest | BE-01 |
 | BE-02 | done | 3d | Fix admin push broadcast at the root (known bug #1): resolve recipients server-side with service_role, batch FCM sends via `Promise.allSettled` chunks, prune tokens FCM reports UNREGISTERED, add the missing confirm dialog (known bug #2) | SEC-04 |
-| OPS-01 | ready | 2d | Document secret rotation, cron caller update, rollback, and incident procedures | SEC-04 |
+| OPS-01 | done | 2d | Document secret rotation, cron caller update, rollback, and incident procedures | SEC-04 |
 | OPS-02 | blocked | 2d | Run and record a database restore drill | Production/backup access |
 | DB-00 | done | 2d | Verify (do not assume) the suspected race conditions before scheduling DB-01/DB-02: read `cancel-registration`/`reactivate-registration`/bracket advancement paths and attempt a two-concurrent-request reproduction against disposable Supabase. Output: confirmed/refuted per path, which sets DB-01/DB-02 scope | SEC-05 |
 
@@ -154,13 +154,13 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 
 | ID | Status | Effort | Task | Depends on |
 |---|---|---:|---|---|
-| DS-01 | ready | 2d | Standardize the semantic token list (names + meanings), grounded in the 5–8 journey screens from BASE-04 | BASE-05, BASE-04 |
+| DS-01 | done | 2d | Standardize the semantic token list (names + meanings), grounded in the 5–8 journey screens from BASE-04 | BASE-05, BASE-04 |
 | DS-02 | later | 2d | Hand-write one web token file and one Swift token file sharing the DS-01 names, plus a lightweight parity check (checklist or small test) that every required token exists on both platforms. No codegen — build a generator only if parity drift actually recurs | DS-01 |
 | DS-03 | later | 5d | Standardize Button, IconButton, Input, Select, Card, Badge, Dialog, and Sheet | DS-02 |
 | DS-04 | later | 3d | Standardize Empty, Loading, Error, Offline, and Permission states | DS-03 |
-| A11Y-01 | ready | 3d | Add skip link, route focus management, heading rules, and dialog focus tests | BASE-04 |
+| A11Y-01 | done | 3d | Add skip link, route focus management, heading rules, and dialog focus tests | BASE-04 |
 | A11Y-02 | later | 4d | Raise primary mobile touch targets to 44px and provide drag alternatives | DS-03 |
-| A11Y-03 | ready | 3d | Add global reduced-motion behavior and audit animations | BASE-04 |
+| A11Y-03 | done | 3d | Add global reduced-motion behavior and audit animations | BASE-04 |
 | A11Y-04 | later | 4d | Add axe and keyboard tests for the 5–8 screens on the two north-star journeys, then expand by traffic/risk | A11Y-01, DS-03 |
 | A11Y-05 | blocked | 3d | Run VoiceOver, Dynamic Type, keyboard-only, and contrast manual audit | DS-03, test devices |
 
@@ -196,21 +196,21 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 
 | ID | Status | Effort | Task | Depends on |
 |---|---|---:|---|---|
-| ARCH-01 | ready | 2d | Define feature/domain module boundaries and dependency rules | BASE-04 |
+| ARCH-01 | done | 2d | Define feature/domain module boundaries and dependency rules | BASE-04 |
 | ARCH-02 | later | 5d | Refactor Social Event registration/payment into domain/application/infrastructure/UI layers | ARCH-01 |
 | ARCH-03 | later | 5d | Refactor Team Match orchestration and realtime boundaries | ARCH-01 |
 | ARCH-04 | later | 12d | Split across multiple PRs (one format at a time onto the shared core). Extract a shared scoring/setup core for the four tournament formats (QuickTable, TeamMatch, DoublesElimination, Flex), then refactor orchestration onto it. The four formats look alike but carry different rules — write characterization tests per format FIRST (QA-07 is the first of these), refactor second. Evidence: MatchScoring vs DoublesEliminationScoring are ~1,300 near-duplicate lines each; setup pages share 206 identical lines | ARCH-01, QA-07 |
 | ARCH-05 | later | 2d | Collapse the manual `/vi/*` route mirror in `src/App.tsx` (~45 duplicated entries) into one wrapper route or a route-config array mapped twice | ARCH-01 |
 | DB-01 | done | 3d | Transactional RPC for reactivation and final-slot capacity — DB-00 confirmed the race; shipped as advisory-locked RPCs | DB-00 |
-| DB-02 | later | 5d | Transactionalize bracket advancement — DB-00 scope: CONFIRMED DoublesElimination R3→R4 client-side slot fill (`DoublesEliminationBracket.tsx:938-998`, stale-state first-empty-slot scan + unguarded UPDATE); quick_table deterministic mapping mostly safe; also dedupe the `match-confirm` double DUPR submit side effect | DB-00, ARCH-03, ARCH-04 |
+| DB-02 | done | 5d | Transactionalize bracket advancement — DB-00 scope: CONFIRMED DoublesElimination R3→R4 client-side slot fill (`DoublesEliminationBracket.tsx:938-998`, stale-state first-empty-slot scan + unguarded UPDATE); quick_table deterministic mapping mostly safe; also dedupe the `match-confirm` double DUPR submit side effect | DB-00, ARCH-03, ARCH-04 |
 | QA-01 | ready | 4d | Reduce React Hook warnings to zero with behavior tests | — |
 | QA-02 | later | 8d | Remove `@ts-nocheck`, type critical boundaries, and reach repository lint green (267 grandfathered errors; also re-enable `no-unused-vars` — currently nothing catches dead code). Split by domain, one PR per domain | QA-01 |
 | QA-03 | ready | 4d | Add RLS/auth matrix and concurrency tests against disposable Supabase | SEC-05 |
 | QA-04 | later | 5d | Add stable E2E coverage for ten critical journeys | BASE-04, QA-03 |
 | QA-05 | later | 4d | Add visual regression for key routes, themes, locales, and states | DS-04, BASE-04 |
 | QA-06 | done | 2.5d | Run all 42 `apple/Tests` cases in CI on a macOS runner with XcodeGen + `xcodebuild test`; direct Swift package versions are pinned so clean generations do not drift | — |
-| QA-07 | in-progress | 2d | Characterization tests for MLP total-score mode on web AND Swift (each game to 7, match total = sum of games, NOT fixed 28 — the known-trickiest rule, untested on both platforms) | — |
-| QA-08 | ready | 3d | Unit-test the money path: extract `create-payment-order` / `mark-payment-claimed` handler logic into `_shared` and cover with the existing Vitest-over-supabase-shared pattern | — |
+| QA-07 | done | 2d | Characterization tests for MLP total-score mode on web AND Swift (each game to 7, match total = sum of games, NOT fixed 28 — the known-trickiest rule, untested on both platforms) | — |
+| QA-08 | done | 3d | Unit-test the money path: extract `create-payment-order` / `mark-payment-claimed` handler logic into `_shared` and cover with the existing Vitest-over-supabase-shared pattern | — |
 
 ### Phase 4 exit
 
@@ -223,17 +223,17 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 
 | ID | Status | Effort | Task | Depends on |
 |---|---|---:|---|---|
-| PERF-01 | ready | 3d | Establish route, initial JS, CSS, image, and PWA precache budgets | BASE-03 |
+| PERF-01 | done | 3d | Establish route, initial JS, CSS, image, and PWA precache budgets | BASE-03 |
 | PERF-02 | later | 5d | Split Mux/HLS, charts, and heavy workspaces at feature boundaries. Note (2026-07-14 audit): Mux/HLS (`vendor-video`, 1.07 MB) and charts (411 kB) are ALREADY lazy — verify with `ANALYZE=1 npm run build` before spending here; the remaining real targets are `TeamMatchView` (241 kB single route chunk) and the entry itself (see PERF-06) | PERF-01, ARCH-01 |
 | PERF-03 | later | 2d | Reduce PWA precache below 3MB and define offline behavior. Root cause already identified: `globIgnores: ["**/blog-data*"]` in `vite.config.ts:103` matches nothing since blog content became per-slug chunks; fix patterns for blog chunks + `vendor-charts*` + `TeamMatchView*` + `QuickTableView*` | PERF-01 |
 | PERF-04 | later | 4d | Optimize responsive images, aspect ratios, fonts, and content loading | PERF-01 |
 | PERF-05 | later | 3d | Validate CWV p75 targets with Vietnam field data | PERF-02..PERF-04 |
 | PERF-06 | done | 2d | Lazy-load locale dictionaries through `I18nProvider`; standalone consumers read the active bundle, and locale chunks stay out of precache but are runtime-cached for offline reloads | — |
-| SEO-01 | ready | 3d | Specify a single content manifest for React, SSR, sitemap, RSS, hreflang, and OG | — |
+| SEO-01 | done | 3d | Specify a single content manifest for React, SSR, sitemap, RSS, hreflang, and OG | — |
 | SEO-02 | later | 5d | Generate current SEO surfaces from the manifest — must subsume `BLOG_POST_META` (`functions/_lib/render/index.ts:1257`) and `EN_BLOG_SLUGS` (`functions/sitemap-static.xml.ts:26`), collapsing the 5 manual blog touch points to ≤3 | SEO-01 |
 | SEO-03 | later | 3d | Add CI validation for canonical, reciprocal locale links, schema, image, and bot 200 status. Include a fixture test that fails when a `src/content/blog/metadata.ts` slug is missing from any generated SEO surface (automates the exact failure class of HOT-03) | SEO-02 |
 | SEO-04 | later | 3d | Split `functions/_lib/render/index.ts` (2,435 lines, 38 handlers) by domain, following the existing `match-seo.ts`/`venues.ts` pattern; move the ~150-line cache-bump changelog out of the middleware into a doc | SEO-02 |
-| OPS-03 | ready | 3d | Define availability, auth, registration, scoring, cron, and latency SLOs | BASE-02 |
+| OPS-03 | done | 3d | Define availability, auth, registration, scoring, cron, and latency SLOs | BASE-02 |
 | OPS-04 | later | 4d | Build actionable dashboards and alerts tied to SLOs | OPS-03, BASE-03 |
 
 ### Phase 5 exit
@@ -343,6 +343,15 @@ Record durable choices here or link an ADR.
 | 2026-07-15 | QA-06 | Source commit `5fc6d89e`; GitHub Actions run `29401010455` | A clean `macos-15` runner installed XcodeGen 2.45.4, generated the ignored Xcode project and placeholder secrets, then passed 42/42 Swift tests on Xcode 16.4 with an iOS 18.5 iPhone 16 Pro simulator in 6m15s. The same clean-generation path passed 42/42 locally on Xcode 26.3/iOS 26.2. Supabase Swift 2.48.0 and Google Sign-In 7.1.0 are exact direct dependencies; no production credentials are required. Quality, Security, Deploy guard, and Playwright were also green on the source commit. |
 | 2026-07-15 | PERF-06 | Source commits `b8ca5688` + `99755138` plus active-bundle/runtime-cache follow-up | Dynamic imports isolate `en`/`vi`; standalone consumers no longer statically import both dictionaries, and Workbox runtime-caches same-origin locale chunks for offline reloads. Production browser verification remains valid for `/` and `/vi`; rerun bundle/offline checks after deployment. |
 | 2026-07-15 | SEC-04 | Source commit `9142ad1f`; migration `20260715180000`; GitHub Actions runs `29406129841`, `29406129844`, `29406129873`, `29406130179`, and `29406130201` | Registry enforcement is strict across 76 source/config/production functions with zero findings. Quality blocks drift and the new scheduled production guard blocks deployed orphans and `verify_jwt` mismatches. Five scheduled handlers use `requireCronRequest`/Vault `cron_secret`; the obsolete duplicate news job is gone. DUPR callback bodies are capped at 32 KiB, secrets are compared fail-closed, exact retries use a unique SHA-256 event key, all 661 historical payload/client identifiers were redacted, and retention is 30 days. Eight handlers are ACTIVE after deploy (`auto-cancel` v31, `dupr-sync` v42, webhook v33, feed embeds v13, feed generator v42, news translation v30, notification v38, mailer v27). Production probes returned the expected 400/401/413/200 contracts; a synthetic authenticated DUPR event was fingerprinted, redacted, deduplicable, processed, then deleted with the profile snapshot restored. Five cron-authenticated production dispatches returned HTTP 200. Vitest 664 pass/10 skipped with 83.59% statement coverage; targeted ESLint, TypeScript, build, 1,943.2/1,950 KB bundle guard, clean 277-migration replay/duplicate guard, and all eight GitHub checks pass. The first smoke attempt overlapped the Cloudflare asset switch; the unchanged attempt 2 passed after deployment stabilized. Rollback: restore each legacy caller credential before redeploying its prior handler; keep the independently safe callback redaction/index/retention migration and never restore historical secrets. |
+| 2026-07-16 | QA-07 + total-score rule | PRs #325, #327 | Pure computeTeamMatchResult (web) / TeamMatchRepository.computeMatchResult (Swift), web duplication removed; 10 mirrored tests per platform. Product rule shipped: total-score mode awards the match to the higher cumulative total once every game is decided; ties stay undecided |
+| 2026-07-16 | QA-08 | PR #328 | create-payment-order + mark-payment-claimed split into Deno-free handlers; 18 vitest cases incl. exactly-once organizer push on the winning claim transition. No behavior change |
+| 2026-07-16 | DB-02 | PRs #329, #330 | DoublesElim R3→R4: fresh read + guarded slot claim (`IS NULL` UPDATE) + re-propagation idempotency; match-confirm: pending→verified guarded transition gates DUPR auto-submit + notifications to exactly one concurrent winner |
+| 2026-07-16 | SEC-05 | PR #331; migration `20260716120000` applied to prod + ledgered pre-merge | search_path pinned on last 3 unpinned definers; error_alert_dedup RLS'd + grants revoked; 11 gated RPCs stripped of PUBLIC/anon EXECUTE (revoking anon alone is a no-op — ACL default is PUBLIC). pgTAP sec05_hardening pins repo-wide invariants; prod verified incl. anon blog counts still serving |
+| 2026-07-16 | OPS-01 | PR #332 | docs/ops-runbook.md — every command production-proven |
+| 2026-07-16 | ARCH-01 | PR #334 | docs/architecture-boundaries.md |
+| 2026-07-16 | BASE-04 | PR #336 | docs/journey-screens.md — 8 screens, drop-off columns pending BASE-02 |
+| 2026-07-16 | DS-01/PERF-01/SEO-01/OPS-03 | PR #335 | docs/design-tokens.md, perf-budgets.md (guard bumped 1950→1970 in #333, ratchet rule recorded), seo-content-manifest-spec.md, slo.md |
+| 2026-07-16 | A11Y-01 + A11Y-03 | PR #337 | Skip link + route focus management + #main-content target + global reduced-motion; 2 Playwright smoke assertions verified against a production build |
 | 2026-07-16 | BE-02 | PR #322, merge `e120cc10`; `send-push-notification` redeployed by Deploy guard | Root cause fixed: admin broadcast resolved recipients client-side through push_tokens RLS (admin saw only own rows). Recipients/counts now resolve server-side with service_role: `broadcast: true` paginates past the PostgREST 1000-row cap; `dry_run: true` feeds the confirm dialog real counts; FCM sends batched in Promise.allSettled chunks of 50; UNREGISTERED tokens pruned. Handler split Deno-free with 8 vitest cases. Internal callers keep the `user_ids` contract. Production: function 401 without auth after redeploy. Real broadcast send still needs a manual admin-UI verification |
 | 2026-07-16 | HOT-05 | PR #323, merge `9385f9f8` | Auth context value memoized on [user, session, loading]; handlers stable. Vitest 694 pass; tsc/lint/build green |
 | 2026-07-16 | DB-00 | Static analysis + local two-connection repro (no prod mutation) | CONFIRMED: event capacity (reactivate-registration + phone-otp-verify count→check→write, no lock/constraint) and DoublesElimination R3→R4 client-side slot fill. REFUTED: submit-match-score (atomic RPC 20260512110001), create-payment-order (UNIQUE + re-read), mark-payment-claimed (guarded UPDATE). UNCERTAIN: quick_table advance (deterministic column mapping), match-confirm concurrent confirms double-submitting to DUPR (external side effect). Full verdicts in memory `db-00-race-verdicts` |
@@ -359,12 +368,12 @@ Record durable choices here or link an ADR.
 
 ## Current execution checkpoint
 
-Last updated: 2026-07-16 after completing BE-02, HOT-05, DB-00, DB-01.
+Last updated: 2026-07-16 (round 2) after SEC-05, OPS-01, ARCH-01, BASE-04, QA-07/08, DB-02, spec pack, A11Y-01/03.
 
-- Active task: `QA-07` (PR #325, CI pending at last update) — pure `computeTeamMatchResult` extracted on web (deduplicating TeamMatchScoringSheet/MatchDetailSheet) and Swift (`TeamMatchRepository.computeMatchResult`), 7 mirrored characterization cases per platform. Open product question for Cuong: in total-score mode the winner is still games-won majority on both platforms — cumulative totals never decide a match. If the rule should be "higher total wins", change it in the two shared helpers.
-- Complete: `HOT-01`..`HOT-07`, `BASE-01`, minimum-scope `BASE-03`, `BASE-05`, `BASE-06`, `OPS-00`, `SEC-02`, `SEC-03`, `SEC-04`, `BE-01`, `BE-02`, `QA-06`, `PERF-06`, `DB-00`, `DB-01`.
+- Active: none. Complete: `HOT-01`..`HOT-07`, `BASE-01`, min-scope `BASE-03`, `BASE-04`, `BASE-05`, `BASE-06`, `OPS-00`, `OPS-01`, `OPS-03`, `SEC-02`..`SEC-05`, `BE-01`, `BE-02`, `QA-06`, `QA-07`, `QA-08`, `PERF-01`, `PERF-06`, `SEO-01`, `DS-01`, `DB-00`, `DB-01`, `DB-02`, `ARCH-01`, `A11Y-01`, `A11Y-03`. Total-score winner rule shipped per product decision (#327).
 - Manual verification still owed: one real admin push broadcast from `/admin/push-notification` UI (dry_run counts + actual delivery + prune telemetry).
-- Next tasks: `QA-08` (money-path unit tests), then `DB-02` scope from the DB-00 verdicts (DoublesElimination client-side advancement + match-confirm DUPR dedupe).
+- Next tasks queued: `QA-01` (hook warnings → 0, needs behavior-test care), `BASE-02` (funnel instrumentation per the north-star contract). Then Phase-2/5 implementation tasks unblocked by today's specs: DS-02, PERF-02/03, SEO-02, OPS-04, A11Y-02/04.
+- Bundle guard now 1970 KB after two stopgap bumps — the ratchet rule in docs/perf-budgets.md governs any future change.
 - `BE-01` production state: source commit `38e4ec43` has 8/8 green checks. All 76 handlers use `Deno.serve`; 72 handlers import one of 13 exact policies directly from `_shared/cors.ts`; no inline CORS declaration, auth-module CORS re-export, or std HTTP server import remains. Deploy guard processed 76/76 functions, post-deploy auth parity passed, and production preflights matched on 72/72 endpoints (70 HTTP 200, two HTTP 204). The corrected legacy-entrypoint count is six, not the roadmap audit's stale seven.
 - `SEC-04` production state: migration `20260715180000` is recorded as applied; all 76 deployed functions match the strict registry with `verify_jwt=false`. Eight changed handlers are ACTIVE at versions 31/42/33/13/42/30/38/27 respectively. Scheduled callers use Vault-backed `x-cron-secret`; the duplicate news job is removed; the DUPR ledger has a unique event key, redacted history, and 30-day retention. Negative, positive service, cron, and synthetic callback probes all passed and the synthetic callback/profile state was cleaned up. Source commit `9142ad1f` has 8/8 green checks, including Cloudflare Pages, Supabase Preview, production parity, Quality, Security, Deploy guard, and Playwright smoke attempt 2.
 - `PERF-06` production state: `/` loads only the English dictionary and `/vi` loads only the Vietnamese dictionary; both locale chunks return JavaScript 200, document language is correct, and the browser observed no page errors. Source commit `99755138` passed Quality, Playwright smoke, Security (`npm-audit` + CodeQL), and Deploy guard; CI total gzipped JavaScript is 1,949.3 KB against the 1,950 KB budget.
