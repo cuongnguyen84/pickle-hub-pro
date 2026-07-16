@@ -95,14 +95,15 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Migration drift check (advisory)
-        # Advisory only: this project applies migrations via direct SQL
-        # (Management API), so schema_migrations under-reports and would
-        # false-fail. The script exits 0 unless DRIFT_STRICT=1. continue-on-error
-        # is belt-and-suspenders so a drift report never reds the build.
-        continue-on-error: true
+      - name: Migration drift check (strict — SEC-06)
+        # The ledger was fully reconciled 2026-07-16 (283 = 283, zero drift)
+        # and every Management-API-applied migration is now ledgered in the
+        # same session (docs/ops-runbook.md §1). Strict fails on drift in
+        # either direction: repo-ahead (merged but never applied) or
+        # db-ahead (dashboard/hotfix SQL unknown to the repo).
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DRIFT_STRICT: "1"
         run: node scripts/check-migration-drift.mjs
 
       - name: Notify Telegram on failure
