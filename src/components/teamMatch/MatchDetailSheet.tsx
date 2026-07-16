@@ -211,8 +211,8 @@ export function MatchDetailSheet({
 
   if (!match) return null;
 
-  const teamAName = (match.team_a as any)?.team_name || txt.tbd;
-  const teamBName = (match.team_b as any)?.team_name || txt.tbd;
+  const teamAName = (match.team_a as { team_name?: string } | null)?.team_name || txt.tbd;
+  const teamBName = (match.team_b as { team_name?: string } | null)?.team_name || txt.tbd;
 
   // Ready to start = both lineups submitted
   const hasBothTeams = match.team_a_id && match.team_b_id;
