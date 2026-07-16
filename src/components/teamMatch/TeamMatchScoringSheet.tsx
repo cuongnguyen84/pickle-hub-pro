@@ -9,6 +9,7 @@ import { useTeamMatchMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RefereeScoringScreen, type RefereeLoaded } from '@/components/referee/RefereeScoringScreen';
+import { computeTeamMatchResult } from '@/lib/teamMatchResult';
 import { useI18n } from '@/i18n';
 import {
   AlertDialog,
@@ -234,32 +235,15 @@ export function TeamMatchScoringSheet({
       });
 
       // Calculate match totals from all games including current update
-      let gamesWonA = 0;
-      let gamesWonB = 0;
-      let totalPointsA = 0;
-      let totalPointsB = 0;
-
-      games.forEach((game, index) => {
-        const scoreA = index === selectedGameIndex ? sa : game.score_a;
-        const scoreB = index === selectedGameIndex ? sb : game.score_b;
-
-        totalPointsA += scoreA;
-        totalPointsB += scoreB;
-
-        if (scoreA > scoreB) gamesWonA++;
-        else if (scoreB > scoreA) gamesWonB++;
-      });
-
-      // Determine winner (majority of games)
-      const totalGames = games.length;
-      const requiredToWin = Math.ceil(totalGames / 2);
-      let winnerId: string | null = null;
-
-      if (gamesWonA >= requiredToWin && match.team_a_id) {
-        winnerId = match.team_a_id;
-      } else if (gamesWonB >= requiredToWin && match.team_b_id) {
-        winnerId = match.team_b_id;
-      }
+      const { gamesWonA, gamesWonB, totalPointsA, totalPointsB, winnerId } =
+        computeTeamMatchResult(
+          games.map((game, index) => ({
+            a: index === selectedGameIndex ? sa : game.score_a,
+            b: index === selectedGameIndex ? sb : game.score_b,
+          })),
+          match.team_a_id,
+          match.team_b_id,
+        );
 
       await updateMatchResult({
         matchId: match.id,
