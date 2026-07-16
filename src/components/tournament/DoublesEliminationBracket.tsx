@@ -946,30 +946,42 @@ async function propagateWinnerToNextRound(
   // For R3 matches, find corresponding R4 match slot
   // R3 winners fill empty slots in R4 (teams with high point diff already have byes to R4)
   if (match.round_number === 3) {
-    const r4Matches = allMatches
-      .filter(m => m.round_number === 4)
-      .sort((a, b) => a.match_number - b.match_number);
+    // DB-00 confirmed race: two referees completing two R3 matches at the
+    // same time both saw the same "first empty slot" in the stale allMatches
+    // prop and clobbered each other's winner. Read R4 fresh from the DB and
+    // claim a slot with a guarded UPDATE (`.is(field, null)`) — Postgres
+    // serializes the row update, so exactly one claimer wins a slot and the
+    // loser moves on to the next empty one.
+    const { data: r4Fresh } = await supabase
+      .from('doubles_elimination_matches')
+      .select('id, team_a_id, team_b_id, match_number')
+      .eq('tournament_id', match.tournament_id)
+      .eq('round_number', 4)
+      .order('match_number');
+    const r4Matches = r4Fresh ?? [];
 
-    // Find R4 match with an empty slot to fill
+    // Re-propagation guard: a re-scored R3 match must not seat the same
+    // winner into a second R4 slot.
+    if (r4Matches.some(m => m.team_a_id === winnerId || m.team_b_id === winnerId)) {
+      return;
+    }
+
     for (const r4Match of r4Matches) {
-      // Check for empty slots (not already filled)
-      if (!r4Match.team_a_id) {
-        await supabase
+      for (const field of ['team_a_id', 'team_b_id'] as const) {
+        if (r4Match[field]) continue;
+        const { data: claimed } = await supabase
           .from('doubles_elimination_matches')
-          .update({ team_a_id: winnerId })
-          .eq('id', r4Match.id);
-        // Optimistic update for next round match
-        onMatchUpdated?.(r4Match.id, { team_a_id: winnerId });
-        return;
-      }
-      if (!r4Match.team_b_id) {
-        await supabase
-          .from('doubles_elimination_matches')
-          .update({ team_b_id: winnerId })
-          .eq('id', r4Match.id);
-        // Optimistic update for next round match
-        onMatchUpdated?.(r4Match.id, { team_b_id: winnerId });
-        return;
+          .update({ [field]: winnerId } as TablesUpdate<'doubles_elimination_matches'>)
+          .eq('id', r4Match.id)
+          .is(field, null)
+          .select('id')
+          .maybeSingle();
+        if (claimed) {
+          // Optimistic update for next round match
+          onMatchUpdated?.(r4Match.id, { [field]: winnerId });
+          return;
+        }
+        // Slot was taken by a concurrent propagation — try the next one.
       }
     }
   }
@@ -1127,7 +1139,7 @@ const BracketMatchCard = ({
 
     // Optimistic update
     const matchUpdates: Partial<Match> = {
-      games: updatedGames as any,
+      games: updatedGames as Match['games'],
       games_won_a: gamesWonA,
       games_won_b: gamesWonB,
       winner_id: winnerId,
