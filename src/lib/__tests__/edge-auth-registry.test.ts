@@ -130,9 +130,17 @@ describe("Edge Function auth registry", () => {
       new URL("../../../supabase/functions/dupr-webhook/security.ts", import.meta.url),
       "utf8",
     );
+    // The dedup-claim, authoritative-pull and retry-release controls moved from
+    // index.ts into the Deno-free handler.ts (so they can be unit-tested).
+    const duprWebhookHandler = readFileSync(
+      new URL("../../../supabase/functions/dupr-webhook/handler.ts", import.meta.url),
+      "utf8",
+    );
 
     expect(duprWebhookSecurity).toContain("MAX_WEBHOOK_BODY_BYTES");
-    expect(source("dupr-webhook")).toContain("event_key: eventKey");
+    expect(duprWebhookHandler).toContain("claimEvent"); // event dedup
+    expect(duprWebhookHandler).toContain("partnerFetch"); // authoritative pull, not payload
+    expect(duprWebhookHandler).toContain("releaseEvent"); // transient failure is retryable
     expect(source("delete-account")).toContain("supabaseUser.auth.getUser()");
     expect(source("api-keys-admin-generate")).toContain('roleData?.role !== "admin"');
     expect(source("auto-cancel-unpaid-registrations")).toContain("requireCronRequest(req");
