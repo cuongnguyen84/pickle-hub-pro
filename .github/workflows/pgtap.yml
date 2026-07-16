@@ -12,12 +12,14 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
+      - "scripts/qa/**"
       - ".github/workflows/pgtap.yml"
   push:
     branches: [main]
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
+      - "scripts/qa/**"
       - ".github/workflows/pgtap.yml"
   workflow_dispatch:
 
@@ -52,3 +54,9 @@ jobs:
 
       - name: Run pgTAP suite
         run: supabase test db --local supabase/tests
+
+      - name: Run concurrency race harness (QA-03)
+        # pgTAP can't exercise real races (single transaction); this fires the
+        # DB-01 capacity RPCs from two parallel psql sessions against the same
+        # disposable database and requires exactly one winner per round.
+        run: node scripts/qa/db-race.mjs
