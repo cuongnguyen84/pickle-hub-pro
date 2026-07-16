@@ -181,11 +181,7 @@ Browse: `supabase/functions/`. Categories:
 
 ## Known Bugs (Not Fixed)
 
-1. **Admin push notification "send to all users":** Frontend queries `push_tokens` with user JWT, RLS only returns admin's own tokens. Broadcast silently under-delivers. Fix: use service_role or query `profiles` directly. Location: `src/pages/admin/AdminPushNotification.tsx`.
-
-2. **Admin push notification missing confirm dialog:** Admin can accidentally spam notifications to all users with no confirmation step. UX risk.
-
-3. **Red5 DB columns residual:** `livestreams.red5_server_url` and `livestreams.red5_stream_name` columns still exist in schema despite Red5 being retired. Nullable, non-functional. Cleanup requires migration to DROP COLUMN + regenerate types.
+1. **Red5 DB columns residual:** `livestreams.red5_server_url` and `livestreams.red5_stream_name` columns still exist in schema despite Red5 being retired. Nullable, non-functional. Cleanup requires migration to DROP COLUMN + regenerate types.
 
 ## Coding Standards
 
