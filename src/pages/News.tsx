@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useNewsItems } from "@/hooks/useNewsItems";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { formatRelative } from "./preview/_shell";
+import { formatRelative } from "@/lib/format-datetime";
 
 interface NewsProps {
   /**

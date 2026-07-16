@@ -128,13 +128,6 @@ const SocialEventMatchmaking = lazyRetry(() => import("./pages/SocialEventMatchm
 const SocialEventList = lazyRetry(() => import("./pages/SocialEventList"));
 // Social Events MVP — Sprint 1.5 PR47 (live event UX)
 const SocialEventLive = lazyRetry(() => import("./pages/SocialEventLive"));
-// Social Events MVP — PR53 (public profile + match history + badges)
-// PR79 Phase 2F (audit I-8) — PublicProfile is deprecated. /u/:slug now
-// redirects to the canonical /nguoi-choi/:username (handled by the
-// NavigateUSlug alias below + a server 301 in functions/_middleware.ts).
-// The component still exists for any in-flight links but is no longer
-// mounted on a route. Delete file once we confirm no external /u/<hex>
-// links are still flowing.
 // Social Events MVP — PR55 (self-service club creation + discovery)
 const ClubsList = lazyRetry(() => import("./pages/ClubsList"));
 const CreateClub = lazyRetry(() => import("./pages/CreateClub"));
@@ -161,20 +154,7 @@ const TournamentDashboard = lazyRetry(() => import("./pages/TournamentDashboard"
 const EmbedLive = lazyRetry(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazyRetry(() => import("./pages/embed/EmbedVideo"));
 
-// Lazy load preview pages (design directions, feature-flagged, noindex)
-const PreviewTheLine = lazyRetry(() => import("./pages/preview/TheLine"));
-const PreviewLiveList = lazyRetry(() => import("./pages/preview/LiveList"));
-const PreviewLiveWatch = lazyRetry(() => import("./pages/preview/LiveWatch"));
-const PreviewTournamentsList = lazyRetry(() => import("./pages/preview/TournamentsList"));
-const PreviewTournamentDetail = lazyRetry(() => import("./pages/preview/TournamentDetail"));
-const PreviewBlogList = lazyRetry(() => import("./pages/preview/BlogList"));
-const PreviewBlogPost = lazyRetry(() => import("./pages/preview/BlogPostPage"));
-const PreviewWatchVideo = lazyRetry(() => import("./pages/preview/WatchVideo"));
-const PreviewRankings = lazyRetry(() => import("./pages/preview/Rankings"));
 const Rankings = lazyRetry(() => import("./pages/Rankings"));
-const PreviewOrgDetail = lazyRetry(() => import("./pages/preview/OrganizationDetail"));
-const PreviewSearch = lazyRetry(() => import("./pages/preview/Search"));
-const PreviewBracketLab = lazyRetry(() => import("./pages/preview/BracketLab"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -721,19 +701,6 @@ const App = () => (
                     {/* Embed routes - no layout, minimal UI */}
                     <Route path="/embed/live/:id" element={<EmbedLive />} />
                     <Route path="/embed/video/:id" element={<EmbedVideo />} />
-                    {/* Preview routes - design direction exploration, noindex */}
-                    <Route path="/preview/the-line" element={<PreviewTheLine />} />
-                    <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
-                    <Route path="/preview/the-line/live/:id" element={<PreviewLiveWatch />} />
-                    <Route path="/preview/the-line/tournaments" element={<PreviewTournamentsList />} />
-                    <Route path="/preview/the-line/tournament/:slug" element={<PreviewTournamentDetail />} />
-                    <Route path="/preview/the-line/blog" element={<PreviewBlogList />} />
-                    <Route path="/preview/the-line/blog/:slug" element={<PreviewBlogPost />} />
-                    <Route path="/preview/the-line/watch/:id" element={<PreviewWatchVideo />} />
-                    <Route path="/preview/the-line/rankings" element={<PreviewRankings />} />
-                    <Route path="/preview/the-line/org/:slug" element={<PreviewOrgDetail />} />
-                    <Route path="/preview/the-line/search" element={<PreviewSearch />} />
-                    <Route path="/preview/the-line/tools" element={<PreviewBracketLab />} />
                     {/* Admin routes */}
                     <Route path="/admin" element={<AdminOverview />} />
                     <Route path="/admin/organizations" element={<AdminOrganizations />} />

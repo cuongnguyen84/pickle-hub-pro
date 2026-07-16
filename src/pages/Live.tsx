@@ -4,7 +4,7 @@ import { useI18n } from "@/i18n";
 import { useLivestreams } from "@/hooks/useSupabaseData";
 import type { Livestream } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { formatTime, formatRelative } from "./preview/_shell";
+import { formatTime, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";

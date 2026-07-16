@@ -247,7 +247,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 
 | ID | Status | Effort | Task | Depends on |
 |---|---|---:|---|---|
-| CLOSE-01 | later | 3d | Remove deprecated mobile, auth, component, and feature paths — including `src/pages/preview/` (~4,000 lines of the retired "The Line" web redesign, 12 routes still mounted) and `PublicProfile.tsx` (already marked "delete once confirmed", `src/App.tsx:131`) | Earlier phases |
+| CLOSE-01 | partial | 3d | Remove deprecated mobile, auth, component, and feature paths. **Done:** `src/pages/preview/` deleted (~3,900 lines, 12 routes; shared `Countdown` + `formatDate/Time/Relative` helpers extracted to `src/components/Countdown.tsx` + `src/lib/format-datetime.ts`); `PublicProfile.tsx` was already gone — stale marker comment removed. Total gz JS 1950.0 → 1903.8 KB. **Remaining:** other deprecated mobile/auth/component paths | Earlier phases |
 | CLOSE-02 | later | 2d | Update architecture docs, runbooks, and developer onboarding | Earlier phases |
 | CLOSE-03 | later | 3d | Run final UX, accessibility, performance, security, and codebase audit | All phases |
 | CLOSE-04 | later | 1d | Publish scorecard with evidence and remaining exceptions | CLOSE-03 |

@@ -6,8 +6,8 @@
 
 ## Current baseline (2026-07-16)
 
-- Total gzipped JS: **1950.0 KB** (guard at 1970 after two stopgap bumps:
-  1900→1950→1970)
+- Total gzipped JS: **1903.8 KB** (guard at 1970 after two stopgap bumps:
+  1900→1950→1970; CLOSE-01 preview deletion clawed back 46.1 KB)
 - Entry chunk: ~170 KB gz (locale dictionaries split out by PERF-06)
 - Largest route chunk: `TeamMatchView` ~241 KB (known lever, PERF-02)
 - `vendor-video` (Mux/HLS) 1.07 MB and charts 411 KB are already lazy
@@ -17,7 +17,7 @@
 
 | Metric | Budget | Now | Owner |
 |---|---:|---:|---|
-| Total gz JS (CI-enforced) | ratchet: 1970 now → **1850** after PERF-02 → re-evaluate | 1950 | PERF-02 |
+| Total gz JS (CI-enforced) | ratchet: 1970 now → **1850** after PERF-02 → re-evaluate | 1903.8 | PERF-02 |
 | Entry chunk gz | ≤ 170 KB (no growth) | ~170 | every PR |
 | Any single route chunk gz | ≤ 150 KB new routes; TeamMatchView grandfathered until PERF-02 | 241 max | PERF-02 |
 | PWA precache | ≤ 3 MB | 7.8 MB | PERF-03 |

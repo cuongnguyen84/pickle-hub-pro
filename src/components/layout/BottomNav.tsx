@@ -24,7 +24,7 @@ import { useLivestreams } from "@/hooks/useSupabaseData";
  *
  * Design constraints kept from previous version:
  *   - Mobile only (md:hidden)
- *   - Hide on /admin, /creator, /preview, /embed
+ *   - Hide on /admin, /creator, /embed
  *   - Hide when virtual keyboard is open
  *   - iOS / Android Capacitor safe-area padding helpers
  *   - i18n labels unchanged
@@ -44,7 +44,6 @@ const BottomNav = () => {
   if (
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/creator") ||
-    location.pathname.startsWith("/preview") ||
     location.pathname.startsWith("/embed") ||
     location.pathname.startsWith("/tools/quick-tables/referee") || // full-screen live-scoring tool
     /\/tools\/team-match\/match\/[^/]+\/score/.test(location.pathname) // team-match referee scoring
