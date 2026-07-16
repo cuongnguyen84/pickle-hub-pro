@@ -1,6 +1,6 @@
 # Codex Review Request — 2026-07-16 session
 
-**Range:** `3637ab66..7804167d` (20 squash-merged PRs #322–#341 + 1 hotfix, 67 files, +3543/−844)
+**Range:** `3637ab66..0a5d76ed` (20 squash-merged PRs #322–#341 + 2 hotfixes, 67 files)
 **All merged to `main`, all CI green** (quality, smoke, pgTAP, Apple tests, Deploy guard, Edge auth parity). Three migrations are **already applied to production and ledgered** — review findings on them need forward fixes, not reverts.
 
 Review stance requested: adversarial. Each section lists what to attack. Docs-only PRs (#326, #332, #334–#336, #338, #341) are listed at the end for factual spot-checks only.
@@ -49,7 +49,7 @@ Review stance requested: adversarial. Each section lists what to attack. Docs-on
 
 ### #339 QA-01 — 30→0 exhaustive-deps (22 files)
 - Three classes: useCallback for pure helpers/loaders; 8 justified `eslint-disable-next-line` sites (each with an inline reason); 2 real bug fixes (DoublesEliminationScoring keys on `user?.id` not `user`; useChatMessages reconnect reads latest timestamp via `latestMessageAtRef`).
-- **Attack:** each useCallback dep list (stale-closure vs loop); the DoublesEliminationBracket auto-trigger effects gained deps (`isAssigningR3`, hook fns, parent callbacks) — the `hasTriggeredR3Ref`/`matchStatusKey` guards must make refires no-ops, verify no double `checkAndAssignR3`; GroupBlock effect now deps `selectedTeamIds.length` (guarded by `=== 0` — confirm no oscillation when user deselects ALL teams: length 0 + teamsInGroup>0 → re-selects everything. **This is a suspected real behavior change — check first**); CommentSection now deps `userInfoCache` (loop-safe via early return — verify).
+- **Attack:** each useCallback dep list (stale-closure vs loop); the DoublesEliminationBracket auto-trigger effects gained deps (`isAssigningR3`, hook fns, parent callbacks) — the `hasTriggeredR3Ref`/`matchStatusKey` guards must make refires no-ops, verify no double `checkAndAssignR3`; GroupBlock deselect-all regression was CONFIRMED and already fixed in `0a5d76ed` (default-select keys on teamsInGroup only again) — verify the fix; CommentSection now deps `userInfoCache` (loop-safe via early return — verify).
 
 ### #337 A11Y-01/03 — skip link, route focus, reduced motion (`App.tsx`, `SkipToContent.tsx`, `index.css`, `smoke.spec.ts`)
 - **INCIDENT (already hotfixed, review the fix):** the original `#main-content` wrapper broke prod scrolling site-wide for ~40 minutes. `html/body/#root` are `overflow:hidden` + `position:fixed`; pages scroll inside their own containers, and the un-sized wrapper between `#root` (flex column) and the pages collapsed every page's height chain. Hotfix `7804167d` makes the wrapper `flex min-h-0 w-full flex-1 flex-col`; verified by rendering prod and driving a scroll. **Review asks:** (1) is the flex geometry now exactly equivalent to pre-#337 for ALL route layouts (TheLineLayout pages, admin, full-page scoring)? (2) why didn't Playwright smoke catch it — the suite asserts render + console errors but never scrolls; consider requiring a scroll assertion. (3) our local verification for #337 tested skip-link focus but not scroll — process gap noted.
