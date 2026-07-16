@@ -1,5 +1,5 @@
 // ============================================================================
-// Phase 3B — Blog "4-file sync" guard.
+// Phase 3B — Blog "5-file sync" guard.
 // ----------------------------------------------------------------------------
 // CLAUDE.md's #1 recurring trap: a new blog post needs simultaneous changes in
 // several places or bots 404 even though the SPA renders fine. This test
@@ -9,19 +9,28 @@
 //   1. src/content/blog/posts/<slug>.ts   — the full post (SPA route)
 //   2. src/content/blog/metadata.ts       — blogMetadata[] (list pages)
 //   3. functions/_lib/render/index.ts     — BLOG_POST_META dict (bot SSR)
+//   4. functions/_lib/static-blog-slugs.ts — EN_BLOG_SLUGS, the only source of
+//      EN /blog/<slug> <loc> entries in /sitemap-static.xml
 //
-// The 4th leg (Supabase vi_blog_posts for the /vi/blog twin) lives in the DB
+// The 5th leg (Supabase vi_blog_posts for the /vi/blog twin) lives in the DB
 // and can't be checked statically — verify it manually per the checklist.
 //
-// Invariant: every PUBLISHED post (in blogMetadata) MUST have a post file AND
-// a BLOG_POST_META entry. Post files not in metadata are treated as drafts
-// (warning only, not a failure).
+// Invariant: every PUBLISHED post (in blogMetadata) MUST have a post file, a
+// BLOG_POST_META entry AND an EN_BLOG_SLUGS entry. Post files not in metadata
+// are treated as drafts (warning only, not a failure).
+//
+// 2026-07-16: the EN_BLOG_SLUGS leg was added after an audit found
+// "vietnam-pickleball-players-to-watch-2026" published and bot-renderable but
+// absent from every sitemap — its VI twin was submitted, the EN original was
+// not. Bot SSR returned 200, so the existing legs all passed; only the sitemap
+// leg had drifted.
 // ============================================================================
 
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { EN_BLOG_SLUGS } from "../../../../functions/_lib/static-blog-slugs";
 import { blogMetadata } from "../metadata";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -87,6 +96,30 @@ describe("blog 4-file sync guard", () => {
       orphan,
       `BLOG_POST_META slugs with no posts/<slug>.ts:\n  ${orphan.join("\n  ")}`,
     ).toEqual([]);
+  });
+
+  it("every published post is in EN_BLOG_SLUGS (sitemap discovery guard)", () => {
+    // EN_BLOG_SLUGS is `as const` (readonly literal tuple) — widen before
+    // .includes() so TS accepts an arbitrary string probe.
+    const enSlugs: readonly string[] = EN_BLOG_SLUGS;
+    const missing = metaSlugs.filter((s) => !enSlugs.includes(s));
+    expect(
+      missing,
+      `metadata slugs missing from EN_BLOG_SLUGS — the EN post is live and bot-renderable but absent from /sitemap-static.xml, so Google only ever sees the VI twin:\n  ${missing.join("\n  ")}`,
+    ).toEqual([]);
+  });
+
+  it("EN_BLOG_SLUGS has no stale entries", () => {
+    const stale = EN_BLOG_SLUGS.filter((s) => !metaSlugs.includes(s));
+    expect(
+      stale,
+      `EN_BLOG_SLUGS entries with no blogMetadata post — sitemap would advertise a 404:\n  ${stale.join("\n  ")}`,
+    ).toEqual([]);
+  });
+
+  it("EN_BLOG_SLUGS has no duplicate slugs", () => {
+    const dupes = EN_BLOG_SLUGS.filter((s, i) => EN_BLOG_SLUGS.indexOf(s) !== i);
+    expect(dupes, `duplicate slugs in EN_BLOG_SLUGS: ${dupes.join(", ")}`).toEqual([]);
   });
 
   it("reports draft post files not yet published in metadata (warning only)", () => {
