@@ -31,6 +31,8 @@ interface TeamMatchScoringSheetProps {
   asPage?: boolean;
   /** Back action (page mode header + close). */
   onBack?: () => void;
+  /** Tournament total_score_mode — winner = higher cumulative total. */
+  totalScoreMode?: boolean;
 }
 
 // ─── W2.4c shared tokens ─────────────────────────────────────────────────
@@ -88,6 +90,7 @@ export function TeamMatchScoringSheet({
   tournamentId,
   asPage = false,
   onBack,
+  totalScoreMode = false,
 }: TeamMatchScoringSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
@@ -243,6 +246,7 @@ export function TeamMatchScoringSheet({
           })),
           match.team_a_id,
           match.team_b_id,
+          totalScoreMode,
         );
 
       await updateMatchResult({

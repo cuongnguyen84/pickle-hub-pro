@@ -20,6 +20,7 @@ export default function TeamMatchScoring() {
 
   const { match, isLoading } = useTeamMatchMatch(matchId);
   const [shareId, setShareId] = useState<string | null>(null);
+  const [totalScoreMode, setTotalScoreMode] = useState(false);
   const [canEdit, setCanEdit] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -28,11 +29,12 @@ export default function TeamMatchScoring() {
       if (!match || !user) return;
       const { data: tour } = await supabase
         .from('team_match_tournaments')
-        .select('id, share_id, created_by')
+        .select('*')
         .eq('id', match.tournament_id)
         .maybeSingle();
       if (cancelled || !tour) return;
       setShareId(tour.share_id);
+      setTotalScoreMode(Boolean((tour as { total_score_mode?: boolean }).total_score_mode));
 
       if (tour.created_by === user.id) {
         setCanEdit(true);
@@ -85,7 +87,7 @@ export default function TeamMatchScoring() {
 
   return (
     <TheLineLayout title="Team Match Scoring" noindex active="lab">
-      <TeamMatchScoringSheet asPage match={match} tournamentId={match.tournament_id} onBack={goBack} />
+      <TeamMatchScoringSheet asPage match={match} tournamentId={match.tournament_id} onBack={goBack} totalScoreMode={totalScoreMode} />
     </TheLineLayout>
   );
 }

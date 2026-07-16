@@ -87,7 +87,8 @@ final class TMScoringModel {
             try await repo.saveMatchResult(
                 match: match, scores: rows.map { (a: $0.a, b: $0.b) },
                 tournamentID: detail.tournament.id,
-                hasDreambreaker: detail.tournament.hasDreambreaker ?? false)
+                hasDreambreaker: detail.tournament.hasDreambreaker ?? false,
+                totalScoreMode: detail.tournament.isTotalScore)
             justSaved = true
             onSaved()
         } catch {

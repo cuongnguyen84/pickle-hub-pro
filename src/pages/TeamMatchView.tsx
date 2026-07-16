@@ -881,6 +881,7 @@ export default function TeamMatchView() {
           match={selectedMatch}
           isOwner={userRole.canEditScores}
           tournamentId={tournament.id}
+          totalScoreMode={(tournament as { total_score_mode?: boolean }).total_score_mode}
           onScoreMatch={(match) => {
             setSelectedMatch(null);
             navigate(`/tools/team-match/match/${match.id}/score`);
