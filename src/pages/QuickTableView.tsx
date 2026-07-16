@@ -243,6 +243,9 @@ const QuickTableView = () => {
     if (table) {
       refreshUserRole();
     }
+    // Keyed on table?.id on purpose: the table object identity changes on
+    // every refetch and would re-run this for unrelated data updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table?.id, refreshUserRole]);
 
   useEffect(() => {

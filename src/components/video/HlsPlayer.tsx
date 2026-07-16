@@ -162,7 +162,8 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
         hlsRef.current = null;
       }
     };
-  }, [hlsUrl]); // Only reinit when URL changes, not on every retryCount change
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initHls depends on retryCount/triedFallback, which the retry logic mutates; including it would destroy/reinit the player on every retry step and break the backoff. Reinit only on URL change.
+  }, [hlsUrl]);
 
   const handleTapToPlay = useCallback(async () => {
     if (!videoRef.current) return;
@@ -170,9 +171,9 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
       await videoRef.current.play();
       setShowOverlay(false);
       setHasError(false);
-    } catch (error: any) {
+    } catch (error) {
       // AbortError happens when video is removed from DOM during play() - ignore silently
-      if (error?.name === "AbortError") {
+      if (error instanceof Error && error.name === "AbortError") {
         console.log("[HlsPlayer] Play aborted (element removed from DOM), ignoring");
         return;
       }

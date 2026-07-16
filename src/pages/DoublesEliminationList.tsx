@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout";
 import { HreflangTags, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
@@ -42,20 +42,20 @@ export default function DoublesEliminationList() {
 
   const dateLocale = language === 'vi' ? vi : enUS;
 
+  const loadTournaments = useCallback(async () => {
+    setLoading(true);
+    const data = await getUserTournaments();
+    setTournaments(data);
+    setLoading(false);
+  }, [getUserTournaments]);
+
   useEffect(() => {
     if (user) {
       loadTournaments();
     } else {
       setLoading(false);
     }
-  }, [user]);
-
-  const loadTournaments = async () => {
-    setLoading(true);
-    const data = await getUserTournaments();
-    setTournaments(data);
-    setLoading(false);
-  };
+  }, [user, loadTournaments]);
 
   const getStatusLabel = (status: string) => {
     switch (status) {

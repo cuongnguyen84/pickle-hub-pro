@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -17,16 +17,7 @@ export default function JoinTeam() {
   const [tableShareId, setTableShareId] = useState<string | null>(null);
   const [tableName, setTableName] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!inviteCode) {
-      setPageLoading(false);
-      return;
-    }
-
-    loadInvitationData();
-  }, [inviteCode]);
-
-  const loadInvitationData = async () => {
+  const loadInvitationData = useCallback(async () => {
     if (!inviteCode) return;
     
     setPageLoading(true);
@@ -55,9 +46,18 @@ export default function JoinTeam() {
     } catch (error) {
       console.error('Error loading invitation:', error);
     }
-    
+
     setPageLoading(false);
-  };
+  }, [inviteCode]);
+
+  useEffect(() => {
+    if (!inviteCode) {
+      setPageLoading(false);
+      return;
+    }
+
+    loadInvitationData();
+  }, [inviteCode, loadInvitationData]);
 
   const handleGoToTable = () => {
     if (tableShareId) {

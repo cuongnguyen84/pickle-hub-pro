@@ -123,12 +123,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     // tl-theme-mode so components styled with Tailwind dark: variants agree
     // with The Line tokens.
     setTheme(stored === "light" ? "light" : "dark");
+    // Snapshot the ref object once for the cleanup: we WANT the latest
+    // .current at unmount (it tracks next-theme across renders), and the
+    // object identity is stable, which satisfies the lint's stale-ref rule.
+    const themeRef = prevNextThemeRef;
     return () => {
       if (prevTheme) root.setAttribute("data-theme", prevTheme);
       else root.removeAttribute("data-theme");
       if (prevMode) root.setAttribute("data-mode", prevMode);
       else root.removeAttribute("data-mode");
-      setTheme(prevNextThemeRef.current === "light" ? "light" : "dark");
+      setTheme(themeRef.current === "light" ? "light" : "dark");
     };
   }, [setTheme]);
 

@@ -66,12 +66,13 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     );
   };
 
-  // Detect group item type based on existing items
-  const getGroupItemType = (groupId: string): 'player' | 'team' | null => {
+  // Detect group item type based on existing items. useCallback so the
+  // handleAddMatch useCallback below doesn't re-create every render.
+  const getGroupItemType = useCallback((groupId: string): 'player' | 'team' | null => {
     const groupItemsList = data.groupItems.filter(gi => gi.group_id === groupId);
     if (groupItemsList.length === 0) return null; // Empty, any type allowed
     return groupItemsList[0].item_type as 'player' | 'team';
-  };
+  }, [data.groupItems]);
 
   // Check if player already exists in a match
   const isPlayerInMatch = (playerId: string, match: typeof data.matches[0]) => {
@@ -179,7 +180,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       const match = data.matches.find(m => m.id === matchId);
       if (!match) return;
 
-      const updates: any = {};
+      const updates: Record<string, string | null> = {};
       
       if (itemType === 'player') {
         // Check for duplicate player in same match
@@ -215,10 +216,10 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   };
 
   // Check for duplicate player name (case-insensitive)
-  const isDuplicatePlayerName = (name: string) => {
+  const isDuplicatePlayerName = useCallback((name: string) => {
     const normalizedName = name.trim().toLowerCase();
     return data.players.some(p => p.name.toLowerCase() === normalizedName);
-  };
+  }, [data.players]);
 
   // Action handlers
   const handleAddPlayer = useCallback(async (name: string) => {
@@ -232,7 +233,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     }
     await addPlayer(data.tournament.id, name, data.players.length);
     onRefresh();
-  }, [data.tournament.id, data.players, addPlayer, onRefresh, toast, t]);
+  }, [data.tournament.id, data.players, isDuplicatePlayerName, addPlayer, onRefresh, toast, t]);
 
   // Get next negative display order for new items (appear at top)
   const getNextDisplayOrder = (existingItems: { display_order: number }[]) => {
@@ -319,7 +320,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   }, [updateMatchScore, data.tournament.id, recomputeAllGroupStats, onRefresh]);
 
   const handleClearSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => {
-    const updates: any = {};
+    const updates: Record<string, string | null> = {};
     if (slot === 'a1') updates.slot_a1_player_id = null;
     else if (slot === 'a2') updates.slot_a2_player_id = null;
     else if (slot === 'b1') updates.slot_b1_player_id = null;
@@ -383,7 +384,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   }, [updateMatchScore, updateParentMatchScore, data.matches, data.tournament.id, recomputeAllGroupStats, onRefresh]);
 
   const handleClearChildMatchSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => {
-    const updates: any = {};
+    const updates: Record<string, string | null> = {};
     if (slot === 'a1') updates.slot_a1_player_id = null;
     else if (slot === 'a2') updates.slot_a2_player_id = null;
     else if (slot === 'b1') updates.slot_b1_player_id = null;
@@ -408,7 +409,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
   // Handle selecting a player for a child match slot via dropdown
   const handleSelectChildMatchPlayer = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2', playerId: string) => {
-    const updates: any = {};
+    const updates: Record<string, string | null> = {};
     if (slot === 'a1') updates.slot_a1_player_id = playerId;
     else if (slot === 'a2') updates.slot_a2_player_id = playerId;
     else if (slot === 'b1') updates.slot_b1_player_id = playerId;

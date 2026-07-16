@@ -52,6 +52,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
   }>>(new Map());
   const reconnectAttemptsRef = useRef(0);
   const lastFetchTimeRef = useRef<string | null>(null);
+  const latestMessageAtRef = useRef<string | null>(null);
 
   // Load initial data
   useEffect(() => {
@@ -235,14 +236,16 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
     );
 
     const fetchMissedMessages = async () => {
-      const lastMessage = messages[messages.length - 1];
-      if (!lastMessage) return;
+      // Read via ref: the subscribe-time `messages` closure goes stale, so a
+      // late reconnect would re-fetch from the very first page.
+      const lastCreatedAt = latestMessageAtRef.current;
+      if (!lastCreatedAt) return;
 
       const { data: newMessages } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('livestream_id', livestreamId)
-        .gt('created_at', lastMessage.created_at)
+        .gt('created_at', lastCreatedAt)
         .order('created_at', { ascending: true })
         .limit(100);
 
@@ -334,7 +337,13 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
     return () => clearInterval(pollInterval);
   }, [livestreamId, messages]);
 
-  const getUserProfile = async () => {
+  useEffect(() => {
+    latestMessageAtRef.current = messages.length > 0
+      ? messages[messages.length - 1].created_at
+      : null;
+  }, [messages]);
+
+  const getUserProfile = useCallback(async () => {
     if (!user) return null;
     const { data } = await supabase
       .from('profiles')
@@ -342,7 +351,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
       .eq('id', user.id)
       .single();
     return data;
-  };
+  }, [user]);
 
   const sendMessage = useCallback(async (message: string): Promise<boolean> => {
     if (!user) {
@@ -465,7 +474,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
     }
 
     return true;
-  }, [user, userMute, settings, livestreamId, toast, t]);
+  }, [user, userMute, settings, livestreamId, toast, t, getUserProfile]);
 
   const retryMessage = useCallback(async (tempId: string, message: string): Promise<boolean> => {
     const pendingData = pendingMessagesRef.current.get(tempId);

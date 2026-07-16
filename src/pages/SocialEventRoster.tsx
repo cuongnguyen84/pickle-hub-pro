@@ -228,7 +228,7 @@ export default function SocialEventRoster() {
       claimed,
       checkedIn: list.filter((r) => r.status === "checked_in").length,
     };
-  }, [registrations, paymentOrders]);
+  }, [registrations]);
 
   if (permission.state === "loading") {
     return (

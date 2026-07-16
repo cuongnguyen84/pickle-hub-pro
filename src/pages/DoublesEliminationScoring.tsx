@@ -233,13 +233,11 @@ export default function DoublesEliminationScoring() {
     }
   };
 
-  useEffect(() => {
-    if (matchId) {
-      loadMatchData();
-    }
-  }, [matchId]);
+  // user?.id (not the user object) so hourly token refreshes don't re-create
+  // the loader and reload match data mid-scoring.
+  const userId = user?.id;
 
-  const loadMatchData = async () => {
+  const loadMatchData = useCallback(async () => {
     if (!matchId) return;
     setLoading(true);
 
@@ -291,14 +289,14 @@ export default function DoublesEliminationScoring() {
           .single();
         setTournament(tournamentData as TournamentData);
 
-        if (user && tournamentData) {
-          const isCreator = user.id === tournamentData.creator_user_id;
+        if (userId && tournamentData) {
+          const isCreator = userId === tournamentData.creator_user_id;
 
           const { data: refereeData } = await supabase
             .from('doubles_elimination_referees')
             .select('id')
             .eq('tournament_id', tournamentData.id)
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
             .single();
 
           setCanEdit(isCreator || !!refereeData);
@@ -310,7 +308,13 @@ export default function DoublesEliminationScoring() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [matchId, userId, toast, tx.loadError]);
+
+  useEffect(() => {
+    if (matchId) {
+      loadMatchData();
+    }
+  }, [matchId, loadMatchData]);
 
   const handleScoreChange = useCallback(async (team: 'a' | 'b', delta: number) => {
     if (!match || !canEdit) return;

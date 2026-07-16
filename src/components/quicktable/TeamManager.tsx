@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTeamRegistration, type Team } from '@/hooks/useTeamRegistration';
 import { useI18n } from '@/i18n';
 import { Label } from '@/components/ui/label';
@@ -234,7 +234,7 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
     btcPending: language === 'vi' ? 'Chờ duyệt' : 'Pending',
   };
 
-  const loadTeams = async () => {
+  const loadTeams = useCallback(async () => {
     setLoading(true);
     const data = await getTableTeams(tableId);
     setTeams(data);
@@ -244,7 +244,7 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
       tm => !tm.btc_approved && tm.team_status !== 'rejected' && tm.team_status !== 'removed',
     ).length;
     onPendingCountChange?.(pendingCount);
-  };
+  }, [getTableTeams, tableId, onPendingCountChange]);
 
   useEffect(() => {
     loadTeams();
@@ -273,7 +273,7 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
     return () => {
       if (channel) supabase.removeChannel(channel);
     };
-  }, [tableId]);
+  }, [tableId, loadTeams]);
 
   const allRegisteredTeams = teams.filter(tm => tm.team_status !== 'rejected' && tm.team_status !== 'removed');
   const pendingTeams = teams.filter(

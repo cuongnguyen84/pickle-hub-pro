@@ -96,6 +96,7 @@ export default function CreatorVideoForm() {
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only when upload completes: thumbnailHook is a new object every render (useThumbnailGenerator doesn't memoize) so depping it re-runs every render (setUploadedData → infinite loop), and formData.thumbnail_url is set by this very effect / edited by the user.
   }, [uploadHook.storagePath, uploadHook.videoUrl]);
 
   const handleUpload = async (file: File) => {

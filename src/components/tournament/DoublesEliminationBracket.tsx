@@ -204,8 +204,8 @@ const DoublesEliminationBracket = ({
     return matches.map(m => `${m.id}:${m.status}`).join(',');
   }, [matches]);
 
-  const getTeam = (id: string | null): Team | undefined =>
-    id ? teams.find(t => t.id === id) : undefined;
+  const getTeam = React.useCallback((id: string | null): Team | undefined =>
+    id ? teams.find(t => t.id === id) : undefined, [teams]);
 
   const formatTeamName = (team: Team | undefined): string => {
     if (!team) return 'TBD';
@@ -285,7 +285,7 @@ const DoublesEliminationBracket = ({
       r3Completed: r3CompletedCheck,
       playoffNeedsGeneration: playoffNeedsGenerationCheck,
     };
-  }, [matches, teams]);
+  }, [matches, getTeam]);
 
   // Reset trigger flags when match statuses change (after reload)
   React.useEffect(() => {
@@ -308,7 +308,7 @@ const DoublesEliminationBracket = ({
       }
     };
     autoAssign();
-  }, [r1Completed, r2Completed, r3NeedsAssignment, tournamentId, matchStatusKey]);
+  }, [r1Completed, r2Completed, r3NeedsAssignment, tournamentId, matchStatusKey, isAssigningR3, checkAndAssignR3, onR3Assigned, onScoreUpdated]);
 
   // Auto-generate playoff bracket when R3 is completed
   useEffect(() => {
@@ -328,7 +328,7 @@ const DoublesEliminationBracket = ({
       }
     };
     autoGeneratePlayoff();
-  }, [r3Completed, playoffNeedsGeneration, tournamentId, matchStatusKey]);
+  }, [r3Completed, playoffNeedsGeneration, tournamentId, matchStatusKey, isGeneratingPlayoff, checkAndGeneratePlayoff, onScoreUpdated, toast, b.playoffCreated, b.playoffCreatedDesc]);
 
   // Manual trigger for R3 assignment
   const handleManualR3Assignment = async () => {
