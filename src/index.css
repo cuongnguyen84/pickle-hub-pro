@@ -470,3 +470,19 @@
     overflow: hidden;
   }
 }
+
+/* A11Y-03: global reduced-motion kill-switch. The-line.css already pauses
+   its own hero/marquee animations; this covers everything else (Tailwind
+   animate-*, Radix transitions, custom keyframes) in one place. Near-zero
+   durations instead of `none` so animation/transition end events still fire
+   and JS waiting on them cannot hang. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
