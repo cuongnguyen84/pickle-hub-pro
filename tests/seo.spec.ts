@@ -18,6 +18,58 @@ import { test, expect, request } from "@playwright/test";
 const GOOGLEBOT_UA =
   "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
+// ── SEO-03 helpers — canonical + JSON-LD validation ─────────────────────────
+
+function extractCanonical(html: string): string | undefined {
+  return (
+    html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)?.[1] ??
+    html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i)?.[1]
+  );
+}
+
+// Required fields per schema.org @type, for the types whose data source
+// guarantees them (BLOG_POST_META / news_items always carry these). Missing
+// fields on these types have broken Google Rich Results before — that is the
+// exact failure class this gate exists for. Types not listed are only checked
+// for JSON parseability.
+const JSONLD_REQUIRED_FIELDS: Record<string, string[]> = {
+  BlogPosting: ["headline", "datePublished"],
+  NewsArticle: ["headline", "datePublished"],
+};
+
+/** Parse every <script type="application/ld+json"> block; fail on invalid
+ *  JSON or on a known @type missing its required fields. */
+function assertJsonLd(html: string, label: string): void {
+  const blocks = [
+    ...html.matchAll(
+      /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+    ),
+  ].map((m) => m[1]);
+
+  for (const raw of blocks) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error(`invalid JSON-LD on ${label}: ${raw.slice(0, 200)}`);
+    }
+    // A block may be a single node or an array/@graph of nodes.
+    const nodes = Array.isArray(parsed)
+      ? parsed
+      : (parsed as { "@graph"?: unknown[] })["@graph"] ?? [parsed];
+    for (const node of nodes as Record<string, unknown>[]) {
+      const type = node["@type"];
+      const required = typeof type === "string" ? JSONLD_REQUIRED_FIELDS[type] : undefined;
+      for (const field of required ?? []) {
+        expect(
+          node[field],
+          `JSON-LD ${type} on ${label} requires "${field}"`,
+        ).toBeTruthy();
+      }
+    }
+  }
+}
+
 const SSR_ROUTES = [
   {
     path: "/blog/what-is-dupr-pickleball-rating-system",
@@ -75,6 +127,17 @@ for (const route of SSR_ROUTES) {
       expect(html, "hreflang vi").toMatch(/hreflang=["']vi["']/i);
       expect(html, "hreflang x-default").toMatch(/hreflang=["']x-default["']/i);
     }
+
+    // SEO-03: canonical present and points at this path (against the
+    // canonical production origin — SSR always emits absolute prod URLs).
+    const canonical = extractCanonical(html);
+    expect(canonical, `canonical link on ${route.path}`).toBeTruthy();
+    expect(new URL(canonical!).pathname, "canonical path matches route").toBe(
+      route.path,
+    );
+
+    // SEO-03: every JSON-LD block parses and required fields are present.
+    assertJsonLd(html, route.path);
 
     await ctx.dispose();
   });
@@ -150,6 +213,50 @@ test("every child sitemap referenced by the index resolves to a valid urlset", a
     expect(xml, `child sitemap ${target} is a urlset or sitemapindex`).toMatch(
       /<(urlset|sitemapindex)[^>]*>/,
     );
+  }
+  await ctx.dispose();
+});
+
+// ── SEO-03 — sitemap-sampled bot-200 sweep ──────────────────────────────────
+// For every child sitemap in the index, fetch its FIRST <loc> URL as
+// Googlebot and assert 200 + title + canonical + parseable JSON-LD. This
+// covers every SEO surface class (tournaments, matches, news, venues,
+// players, orgs, blog EN/VI, …) without hardcoding slugs: the sitemap is
+// generated from the same DB the render handlers read, so the first entry
+// of each segment must always render for bots. Catches the "SPA renders,
+// bot 404s" class for every non-blog surface the slug-parity guard misses.
+
+test("first URL of every sitemap segment renders for Googlebot", async () => {
+  test.setTimeout(120_000); // up to ~10 segments × 2 fetches, serial
+  const ctx = await request.newContext({
+    extraHTTPHeaders: { "User-Agent": GOOGLEBOT_UA },
+  });
+
+  const idxXml = await (await ctx.get("/sitemap.xml")).text();
+  const childUrls = [...idxXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(
+    (m) => m[1],
+  );
+  expect(childUrls.length).toBeGreaterThan(0);
+
+  for (const child of childUrls) {
+    const childXml = await (await ctx.get(onBaseOrigin(child))).text();
+    // Take the first page URL this segment lists. An empty urlset (e.g. no
+    // livestream currently published) is legal — skip it.
+    const first = childXml.match(/<url>[\s\S]*?<loc>\s*([^<\s]+)\s*<\/loc>/)?.[1];
+    if (!first) continue;
+
+    const target = onBaseOrigin(first);
+    const res = await ctx.get(target, { timeout: 20_000 });
+    expect(res.status(), `bot fetch ${target} (from ${child})`).toBe(200);
+    const html = await res.text();
+
+    const title = html.match(/<title>([^<]*)<\/title>/i)?.[1];
+    expect(title, `<title> on ${target}`).toBeTruthy();
+    expect(title!, `title not empty/undefined on ${target}`).not.toMatch(
+      /^\s*$|undefined/i,
+    );
+    expect(extractCanonical(html), `canonical on ${target}`).toBeTruthy();
+    assertJsonLd(html, target);
   }
   await ctx.dispose();
 });
