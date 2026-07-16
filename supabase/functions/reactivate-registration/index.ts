@@ -126,44 +126,36 @@ Deno.serve(async (req) => {
     return err("event_started", 409, "event_started");
   }
 
-  // ─── 4. Slot capacity check ──────────────────────────────────────────────
-  const { count: activeCount, error: countErr } = await supabase
-    .from("event_registrations")
-    .select("id", { count: "exact", head: true })
-    .eq("event_id", event.id)
-    .is("cancelled_at", null);
+  // ─── 4+5. Atomic capacity check + reactivate (DB-01) ─────────────────────
+  // Count-then-update across two round-trips let two concurrent requests both
+  // grab the final slot; the RPC serializes capacity writes per event with an
+  // advisory lock and does check + flip in one transaction.
+  const { data: outcome, error: rpcErr } = await supabase.rpc(
+    "social_event_reactivate_registration",
+    { p_registration_id: registrationId },
+  );
 
-  if (countErr) {
-    logEvent({ step: "count_active", error: countErr.message });
-    return err("count_failed", 500, "count_failed");
-  }
-
-  const maxPlayers = (event.max_players as number | null) ?? 0;
-  if ((activeCount ?? 0) >= maxPlayers) {
-    return err("event_full", 409, "event_full");
-  }
-
-  // ─── 5. Flip back to registered ──────────────────────────────────────────
-  const { error: updErr } = await supabase
-    .from("event_registrations")
-    .update({
-      status: "registered",
-      cancelled_at: null,
-      cancelled_reason: null,
-    })
-    .eq("id", registrationId)
-    .not("cancelled_at", "is", null);
-
-  if (updErr) {
-    logEvent({ step: "update_registration", error: updErr.message, registration_id: registrationId });
+  if (rpcErr) {
+    logEvent({ step: "reactivate_rpc", error: rpcErr.message, registration_id: registrationId });
     return err("update_failed", 500, "update_failed");
   }
 
-  logEvent({
-    step: "reactivated",
-    registration_id: registrationId,
-    event_id: event.id,
-  });
-
-  return jsonResponse({ ok: true });
+  switch (outcome as string) {
+    case "reactivated":
+      logEvent({
+        step: "reactivated",
+        registration_id: registrationId,
+        event_id: event.id,
+      });
+      return jsonResponse({ ok: true });
+    case "already_active":
+      return jsonResponse({ ok: true, already_active: true });
+    case "event_full":
+      return err("event_full", 409, "event_full");
+    case "not_found":
+      return err("registration_missing", 404, "registration_missing");
+    default:
+      logEvent({ step: "reactivate_rpc", error: `unexpected outcome ${outcome}` });
+      return err("update_failed", 500, "update_failed");
+  }
 });
