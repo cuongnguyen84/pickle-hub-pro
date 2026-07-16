@@ -137,7 +137,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | SEC-05 | done | 3d | Audit exposed views, RLS, function grants, and `SECURITY DEFINER search_path` | — |
 | SEC-06 | done | 2d | Automate production migration drift check | Supabase CI credential |
 | BE-01 | done | 2d | Edge Function CORS/serve sweep: move `corsHeaders` into `_shared/cors.ts`, preserve all 15 characterized policy variants, remove all inline declarations, and leave all 76 handlers on `Deno.serve` | SEC-04 |
-| BE-03 | partial | 3d | Pin one supabase-js version across functions — target @2.89.0 (already proven on mux-create-livestream). **Stage 1 done:** 33 floating @2 imports frozen to @2.89.0 (no-op vs deployed reality — floaters resolve latest at deploy). **Stage 2 (quiet window):** bump the 42×@2.39.0 imports in category batches with canary | BE-01 |
+| BE-03 | partial | 3d | Pin one supabase-js version across functions — target @2.89.0 (already proven on mux-create-livestream). **Stage 1 done:** 34 floating @2 imports frozen to @2.89.0 (no-op vs deployed reality — floaters resolve latest at deploy). **Stage 2 (quiet window):** bump the 42×@2.39.0 imports in category batches with canary | BE-01 |
 | BE-02 | done | 3d | Fix admin push broadcast at the root (known bug #1): resolve recipients server-side with service_role, batch FCM sends via `Promise.allSettled` chunks, prune tokens FCM reports UNREGISTERED, add the missing confirm dialog (known bug #2) | SEC-04 |
 | OPS-01 | done | 2d | Document secret rotation, cron caller update, rollback, and incident procedures | SEC-04 |
 | OPS-02 | blocked | 2d | Run and record a database restore drill | Production/backup access |
