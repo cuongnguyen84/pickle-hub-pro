@@ -485,10 +485,20 @@ Deno.serve(async (req) => {
       matchPatch.ready_for_dupr = true;
     }
 
-    const { error: matchUpdErr } = await supabase
+    // Guarded transition (DB-02b): two opponents confirming concurrently can
+    // both see opponentTeamConfirmed >= 1 after the re-fetch. Only the caller
+    // whose UPDATE actually flips pending → verified fires the DUPR
+    // auto-submit and the "match verified" notifications; the loser matches
+    // zero rows and skips both, so the match is never submitted to DUPR
+    // twice. (Sequential re-confirms are already rejected by the
+    // verification_status !== "pending" check at fetch time.)
+    const { data: verifiedRow, error: matchUpdErr } = await supabase
       .from("matches")
       .update(matchPatch)
-      .eq("id", match.id);
+      .eq("id", match.id)
+      .eq("verification_status", "pending")
+      .select("id")
+      .maybeSingle();
     if (matchUpdErr) {
       console.error(
         JSON.stringify({
@@ -499,6 +509,9 @@ Deno.serve(async (req) => {
         }),
       );
       // Don't fail the request — confirmation succeeded, status update can retry
+    } else if (!verifiedRow) {
+      // A concurrent confirm won the transition and owns the side effects.
+      duprSubmit = { attempted: false, reason: "already_verified_concurrent" };
     } else {
       // ─── Auto-submit to DUPR (best-effort, per 2026-06-02 decision) ─────
       // Runs AFTER the row reads verification_status='verified' so the
