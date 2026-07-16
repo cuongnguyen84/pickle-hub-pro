@@ -6,7 +6,7 @@ import { isNativeApp, isIOS, isAndroid } from "@/lib/capacitor-utils";
 /**
  * Floating chat-with-admin buttons (Messenger + Zalo) anchored to the
  * bottom-right of the viewport. Visible on all public pages; hidden on
- * admin/creator/preview/embed/onboarding surfaces.
+ * admin/creator/embed/onboarding surfaces.
  *
  * Design — editorial restraint matching the rest of the site:
  *   - Same dark fill (var(--tl-bg)) and hairline border (var(--tl-border))

@@ -14,6 +14,7 @@ import { normalizeImageUrl } from "@/lib/url-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
+import { formatDate, formatTime } from "@/lib/format-datetime";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,24 +27,6 @@ import { useTickerData } from "@/hooks/useTickerData";
  * Production homepage. Promoted from preview/the-line on 2026-04-25;
  * the retired /preview/the-line/* source pages were deleted (CLOSE-01).
  */
-
-const formatDate = (iso: string | null | undefined): { d: string; m: string; full: string } => {
-  if (!iso) return { d: "—", m: "—", full: "" };
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return { d: "—", m: "—", full: "" };
-  return {
-    d: dt.getDate().toString().padStart(2, "0"),
-    m: dt.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-    full: dt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-  };
-};
-
-const formatTime = (iso: string | null | undefined): string => {
-  if (!iso) return "";
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return "";
-  return dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-};
 
 /* ISO 8601 week-of-year — used as the editorial issue number on the
    Stories section. Each calendar week is one "issue" of the publication. */

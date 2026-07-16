@@ -24,7 +24,7 @@ import { useLivestreams } from "@/hooks/useSupabaseData";
  *
  * Design constraints kept from previous version:
  *   - Mobile only (md:hidden)
- *   - Hide on /admin, /creator, /preview, /embed
+ *   - Hide on /admin, /creator, /embed
  *   - Hide when virtual keyboard is open
  *   - iOS / Android Capacitor safe-area padding helpers
  *   - i18n labels unchanged
