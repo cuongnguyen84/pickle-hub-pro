@@ -20,7 +20,8 @@
 // DB constraints stay satisfied.
 // ============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -83,6 +84,19 @@ export default function CreateSocialEvent() {
   const { data: clubData } = useClub(slug);
 
   const [step, setStep] = useState<1 | 2>(1);
+
+  // ── BASE-02 journey instrumentation (contract: north-star-journeys.md) ──
+  // Entry condition: the authorized create wizard is usable.
+  const journeyStartedRef = useRef(false);
+  useEffect(() => {
+    if (permission.state === "allowed" && !journeyStartedRef.current) {
+      journeyStartedRef.current = true;
+      startJourney("organizer_event");
+      trackJourneyStep("organizer_event", "organizer_event_creation_started", {
+        auth_state: "authenticated",
+      });
+    }
+  }, [permission.state]);
   const [form, setForm] = useState<FormState>(initialForm);
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -184,6 +198,9 @@ export default function CreateSocialEvent() {
 
   function handleNext() {
     if (step1Result.valid) {
+      trackJourneyStep("organizer_event", "organizer_event_details_completed", {
+        auth_state: "authenticated",
+      });
       setStep(2);
       // Auto-scroll to top of the wizard card so the user lands at the
       // Step-2 heading rather than wherever the Step-1 form happened to
@@ -260,6 +277,16 @@ export default function CreateSocialEvent() {
       toast({ title: create.errorSlugFormat, variant: "destructive" });
       return;
     }
+
+    const organizerProps = {
+      auth_state: "authenticated" as const,
+      submit_action: publish ? ("publish" as const) : ("save_draft" as const),
+      visibility: form.visibility,
+      price_type: form.price_vnd > 0 ? "paid" : "free",
+      requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
+      slot_mode: form.slots.length > 0 ? "configured" : "none",
+    };
+    trackJourneyStep("organizer_event", "organizer_event_submit_attempted", organizerProps);
 
     setSubmitting(true);
     try {
@@ -347,10 +374,22 @@ export default function CreateSocialEvent() {
                 : `${create.errorSlugTaken} (${createdCount}/${repeatCount + 1})`,
               variant: "destructive",
             });
-            if (createdCount === 0) return;
+            if (createdCount === 0) {
+              trackJourneyStep("organizer_event", "organizer_event_publish_failed", {
+                auth_state: "authenticated",
+                failure_stage: "rpc",
+                failure_code: "slug_taken",
+              });
+              return;
+            }
             break;
           }
           console.error("CreateSocialEvent RPC error", error);
+          trackJourneyStep("organizer_event", "organizer_event_publish_failed", {
+            auth_state: "authenticated",
+            failure_stage: "rpc",
+            failure_code: "rpc_error",
+          });
           toast({ title: t.common.error, description: error.message, variant: "destructive" });
           if (createdCount === 0) return;
           break;
@@ -362,6 +401,29 @@ export default function CreateSocialEvent() {
         createdCount++;
       }
 
+      if (createdCount > 0) {
+        const batchProps = {
+          ...organizerProps,
+          requested_event_count: repeatCount + 1,
+          created_event_count: createdCount,
+          batch_result:
+            createdCount === repeatCount + 1 ? ("complete" as const) : ("partial" as const),
+        };
+        if (batchProps.batch_result === "partial") {
+          // Contract: partial repeat batches emit the failure diagnostic
+          // ALONGSIDE the activation event.
+          trackJourneyStep("organizer_event", "organizer_event_publish_failed", {
+            ...batchProps,
+            failure_stage: "rpc",
+            failure_code: "partial_batch",
+          });
+        }
+        completeJourney(
+          "organizer_event",
+          publish ? "organizer_event_published" : "organizer_event_draft_saved",
+          batchProps,
+        );
+      }
       if (repeatCount > 0) {
         toast({
           title: create.bulkCreatedToast.replace("{count}", String(createdCount)),

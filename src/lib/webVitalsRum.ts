@@ -161,7 +161,7 @@ export function buildWebVitalEvent(
   };
 }
 
-function getLocale(pathname: string): "vi" | "en" {
+export function getLocale(pathname: string): "vi" | "en" {
   if (pathname === "/vi" || pathname.startsWith("/vi/")) return "vi";
   try {
     const stored = localStorage.getItem("pickleball-hub-language");
@@ -174,14 +174,14 @@ function getLocale(pathname: string): "vi" | "en" {
   return "en";
 }
 
-function getAppSurface(): RumPageContext["appSurface"] {
+export function getAppSurface(): RumPageContext["appSurface"] {
   const platform = getPlatform();
   if (platform === "ios") return "capacitor_ios";
   if (platform === "android") return "capacitor_android";
   return "web";
 }
 
-async function resolveMarketSegment(): Promise<MarketSegment> {
+export async function resolveMarketSegment(): Promise<MarketSegment> {
   try {
     const cached = sessionStorage.getItem(MARKET_CACHE_KEY);
     if (isMarketSegment(cached)) return cached;

@@ -35,6 +35,8 @@ import { TurnstileWidget } from "@/components/registration/TurnstileWidget";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
 import { useQuery } from "@tanstack/react-query";
 import {
   isValidVietnamPhone,
@@ -274,6 +276,36 @@ export function RegistrationModal({
   const [turnstileKey, setTurnstileKey] = useState(0);
   const intervalRef = useRef<number | null>(null);
 
+  // ── BASE-02 journey instrumentation (contract: north-star-journeys.md) ──
+  const { user } = useAuth();
+  const journeyProps = {
+    event_id: eventId,
+    registration_method: memberSkipOtp ? "member" : "otp",
+    price_type: priceVnd > 0 ? "paid" : "free",
+    requires_prepayment: Boolean(requiresPrepayment),
+    slot_mode: hasSlots ? "required" : "none",
+    auth_state: user ? "authenticated" : "anonymous",
+  } as const;
+  const journeyPropsRef = useRef(journeyProps);
+  journeyPropsRef.current = journeyProps;
+
+  useEffect(() => {
+    if (open) {
+      // Entry condition: the enabled CTA opened the modal. New journey_id
+      // per open = the intent denominator.
+      startJourney("player_registration");
+      trackJourneyStep("player_registration", "player_registration_started", journeyPropsRef.current);
+    }
+  }, [open]);
+
+  const trackFailure = (failureStage: string, failureCode: string | undefined) => {
+    trackJourneyStep("player_registration", "player_registration_failed", {
+      ...journeyPropsRef.current,
+      failure_stage: failureStage,
+      failure_code: failureCode || "unknown",
+    });
+  };
+
   // PR69 v3 — Turnstile callback timeout watchdog. Start a 20s timer when
   // the modal opens on step "phone" without a token; if no token arrives,
   // surface the "Tải lại CAPTCHA" button. Reset when token arrives or
@@ -363,6 +395,7 @@ export function RegistrationModal({
       if (error) {
         const bodyCode = await extractFunctionErrorCode(error);
         console.error("phone-otp-send error", { error, bodyCode });
+        trackFailure("otp_send", bodyCode);
         toast({
           title: translateErrorCode(bodyCode, t),
           variant: "destructive",
@@ -375,6 +408,10 @@ export function RegistrationModal({
       }
       setDevOtp(data?.dev_mode_code ?? null);
       setOtpChannel(data?.channel ?? null);
+      trackJourneyStep("player_registration", "player_registration_verification_requested", {
+        ...journeyPropsRef.current,
+        otp_channel: data?.channel ?? "unknown",
+      });
       setResendIn(RESEND_COOLDOWN_SEC);
       // PR69 — Turnstile tokens are single-use. Force a re-challenge
       // so a subsequent "resend OTP" click gets a fresh token.
@@ -430,6 +467,7 @@ export function RegistrationModal({
     if (!normalizedPhone) return;
     if (otp.length !== 6) return;
     setSubmitting(true);
+    trackJourneyStep("player_registration", "player_registration_submit_attempted", journeyPropsRef.current);
     try {
       const levelNum = selfRatedLevel === "" ? null : Number(selfRatedLevel);
       const { data, error } = await supabase.functions.invoke<
@@ -450,6 +488,7 @@ export function RegistrationModal({
       if (error) {
         const bodyCode = await extractFunctionErrorCode(error);
         console.error("phone-otp-verify error", { error, bodyCode });
+        trackFailure("otp_verify", bodyCode);
         toast({
           title: translateErrorCode(bodyCode, t),
           variant: "destructive",
@@ -466,6 +505,7 @@ export function RegistrationModal({
         display_name: displayName.trim() || null,
         registered_at: data.registered_at,
       });
+      completeJourney("player_registration", "player_registration_completed", journeyPropsRef.current);
       setSuccess(data);
       onSuccess?.();
 
@@ -548,6 +588,7 @@ export function RegistrationModal({
       return;
     }
     setSubmitting(true);
+    trackJourneyStep("player_registration", "player_registration_submit_attempted", journeyPropsRef.current);
     try {
       const { data: rows, error } = await supabase.rpc(
         "register_event_as_member",
@@ -566,6 +607,7 @@ export function RegistrationModal({
         const raw = (error as { message?: string }).message ?? "";
         const known = raw.match(/^[a-z][a-z0-9_]*/)?.[0] ?? "";
         console.error("register_event_as_member error", { raw, known });
+        trackFailure("member_register", known);
         toast({
           title: translateErrorCode(known, t),
           variant: "destructive",
@@ -598,6 +640,7 @@ export function RegistrationModal({
         display_name: defaultDisplayName ?? null,
         registered_at: stored.registered_at,
       });
+      completeJourney("player_registration", "player_registration_completed", journeyPropsRef.current);
       setSuccess(stored);
       onSuccess?.();
 
