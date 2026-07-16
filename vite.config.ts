@@ -95,16 +95,39 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        // Precache hashed build assets only — EXCLUDE index.html so users
-        // always get the freshest shell after deploy. Prevents the "flash
-        // of old UI then auto-reload" pattern that surfaced post Phase 4.
-        globPatterns: ["**/*.{js,css,ico,png,svg,woff,woff2}"],
+        // PERF-03: precache is a WHITELIST of the boot-critical core (entry,
+        // non-heavy vendors, the north-star journey screens) + styles/icons.
+        // The old catch-all "**/*.js" precached ~300 route chunks (~8 MB);
+        // everything not listed here is served network-first and then kept
+        // offline-capable by the lazy-chunks runtime CacheFirst rule below.
+        // index.html stays excluded so users always get the freshest shell.
+        globPatterns: [
+          // Root-level icons + built styles only. og-images/** and
+          // images/** are crawler/content assets (one OG image alone was
+          // 2.26 MB) — they load online and never belong in an install.
+          "*.{ico,png,svg}",
+          "assets/*.css",
+          "assets/index-*.js",
+          "assets/vendor-react-*.js",
+          "assets/vendor-ui-*.js",
+          "assets/vendor-supabase-*.js",
+          "assets/vendor-query-*.js",
+          "assets/vendor-date-*.js",
+          "assets/vendor-capacitor-*.js",
+          "assets/types-*.js",
+          // North-star journey screens (docs/journey-screens.md)
+          "assets/Index-*.js",
+          "assets/Tournaments-*.js",
+          "assets/Feed-*.js",
+          "assets/SocialEventDetail-*.js",
+          "assets/CreateSocialEvent-*.js",
+        ],
         // Keep heavy route chunks and locale dictionaries on demand. In
         // particular, precaching locale-* would download both languages and
         // undo PERF-06 even though the provider imports only the active one.
         globIgnores: [
-          "**/vendor-video*",
-          "**/blog-data*",
+          // Belt-and-braces: these must never precache even if a whitelist
+          // pattern drifts (locale-* would undo PERF-06's one-language rule).
           "**/locale-*",
           "**/index.html",
         ],
@@ -128,6 +151,22 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "locale-dictionaries",
               expiration: { maxEntries: 4, maxAgeSeconds: 365 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Chunks excluded from precache (blog posts, heavy workspaces,
+          // charts/video vendors) — hashed filenames are immutable, so
+          // CacheFirst after the first visit keeps them offline-capable
+          // without shipping ~5 MB to every installing client (PERF-03).
+          {
+            urlPattern: ({ url, request, sameOrigin }) =>
+              request.destination === "script" &&
+              sameOrigin &&
+              /^\/assets\/[^/]+\.js$/.test(url.pathname),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "lazy-chunks",
+              expiration: { maxEntries: 80, maxAgeSeconds: 30 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -244,6 +283,13 @@ export default defineConfig(({ mode }) => ({
         // Entry gets a build-unique token (see BUILD_ID note above); other
         // chunks/assets keep default content-hash names for cross-deploy caching.
         entryFileNames: `assets/[name]-[hash]-${BUILD_ID}.js`,
+        // Per-slug blog content chunks get a stable, globbable prefix so the
+        // PWA precache can exclude them (PERF-03). Their default names are
+        // the slugs themselves, which no globIgnores pattern can target.
+        chunkFileNames: (chunkInfo) =>
+          chunkInfo.facadeModuleId?.includes("/src/content/blog/posts/")
+            ? "assets/blog-post-[name]-[hash].js"
+            : "assets/[name]-[hash].js",
         manualChunks: {
           "locale-en": [path.resolve(__dirname, "src/i18n/en.ts")],
           "locale-vi": [path.resolve(__dirname, "src/i18n/vi.ts")],
