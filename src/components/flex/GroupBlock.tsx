@@ -132,7 +132,11 @@ export function GroupBlock({
     if (teamsInGroup.length > 0 && selectedTeamIds.length === 0) {
       setSelectedTeamIds(teamsInGroup.map(t => t.id));
     }
-  }, [teamsInGroup, selectedTeamIds.length]);
+    // Default-select runs only when the team list itself changes. Depending
+    // on selectedTeamIds.length would instantly re-select everything the
+    // moment a user deselects the last team.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamsInGroup]);
 
   const handleSaveName = () => {
     if (editName.trim() && editName !== group.name) {
