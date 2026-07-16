@@ -22,9 +22,13 @@ const GOOGLEBOT_UA =
 
 function extractCanonical(html: string): string | undefined {
   return (
-    html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)?.[1] ??
-    html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i)?.[1]
+    html.match(/<link[^>]+rel\s*=\s*["']canonical["'][^>]*href\s*=\s*["']([^"']+)["']/i)?.[1] ??
+    html.match(/<link[^>]+href\s*=\s*["']([^"']+)["'][^>]*rel\s*=\s*["']canonical["']/i)?.[1]
   );
+}
+
+function extractTitle(html: string): string | undefined {
+  return html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1];
 }
 
 // Required fields per schema.org @type, for the types whose data source
@@ -37,12 +41,31 @@ const JSONLD_REQUIRED_FIELDS: Record<string, string[]> = {
   NewsArticle: ["headline", "datePublished"],
 };
 
+/** Recursively collect every JSON-LD node, walking arrays and nested
+ *  @graph containers (Codex P2: a BlogPosting buried in a @graph must not
+ *  evade required-field validation). */
+function collectJsonLdNodes(
+  input: unknown,
+  out: Record<string, unknown>[] = [],
+): Record<string, unknown>[] {
+  if (Array.isArray(input)) {
+    for (const item of input) collectJsonLdNodes(item, out);
+  } else if (input && typeof input === "object") {
+    const node = input as Record<string, unknown>;
+    out.push(node);
+    if (node["@graph"]) collectJsonLdNodes(node["@graph"], out);
+  }
+  return out;
+}
+
 /** Parse every <script type="application/ld+json"> block; fail on invalid
  *  JSON or on a known @type missing its required fields. */
 function assertJsonLd(html: string, label: string): void {
   const blocks = [
     ...html.matchAll(
-      /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+      // \s before type= so data-type= can't match; \s*=\s* tolerates
+      // whitespace around the equals sign (Codex P2).
+      /<script[^>]*\stype\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
     ),
   ].map((m) => m[1]);
 
@@ -53,18 +76,17 @@ function assertJsonLd(html: string, label: string): void {
     } catch {
       throw new Error(`invalid JSON-LD on ${label}: ${raw.slice(0, 200)}`);
     }
-    // A block may be a single node or an array/@graph of nodes.
-    const nodes = Array.isArray(parsed)
-      ? parsed
-      : (parsed as { "@graph"?: unknown[] })["@graph"] ?? [parsed];
-    for (const node of nodes as Record<string, unknown>[]) {
-      const type = node["@type"];
-      const required = typeof type === "string" ? JSONLD_REQUIRED_FIELDS[type] : undefined;
-      for (const field of required ?? []) {
-        expect(
-          node[field],
-          `JSON-LD ${type} on ${label} requires "${field}"`,
-        ).toBeTruthy();
+    for (const node of collectJsonLdNodes(parsed)) {
+      // @type may be a string or an array of strings — both are valid JSON-LD.
+      const types = Array.isArray(node["@type"]) ? node["@type"] : [node["@type"]];
+      for (const type of types) {
+        if (typeof type !== "string") continue;
+        for (const field of JSONLD_REQUIRED_FIELDS[type] ?? []) {
+          expect(
+            node[field],
+            `JSON-LD ${type} on ${label} requires "${field}"`,
+          ).toBeTruthy();
+        }
       }
     }
   }
@@ -104,9 +126,8 @@ for (const route of SSR_ROUTES) {
     const html = await res.text();
 
     // Title present + matches expectation.
-    const titleMatch = html.match(/<title>([^<]*)<\/title>/i);
-    expect(titleMatch, `<title> tag for ${route.path}`).toBeTruthy();
-    const title = titleMatch![1];
+    const title = extractTitle(html);
+    expect(title, `<title> tag for ${route.path}`).toBeTruthy();
     expect(title, "title not empty / undefined").not.toMatch(/^\s*$|undefined/i);
     expect(title, "title pattern").toMatch(route.expectedTitlePart);
 
@@ -238,24 +259,57 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   );
   expect(childUrls.length).toBeGreaterThan(0);
 
+  // Segments allowed to serve an empty urlset. Currently NONE — all 11 prod
+  // segments carry URLs (checked 2026-07-16), and sitemap generators swallow
+  // Supabase query errors into an empty 200 urlset (sitemap-news.xml.ts:62),
+  // so an unexpected empty segment must fail loud, not skip silently
+  // (Codex P1). If a segment becomes legitimately emptiable, add it here.
+  const MAY_BE_EMPTY = new Set<string>([]);
+
   for (const child of childUrls) {
     const childXml = await (await ctx.get(onBaseOrigin(child))).text();
-    // Take the first page URL this segment lists. An empty urlset (e.g. no
-    // livestream currently published) is legal — skip it.
-    const first = childXml.match(/<url>[\s\S]*?<loc>\s*([^<\s]+)\s*<\/loc>/)?.[1];
-    if (!first) continue;
+    const segment = new URL(child).pathname.slice(1);
+    // First page URL this segment lists (<loc> may be CDATA-wrapped).
+    const first = childXml.match(
+      /<url[\s>][\s\S]*?<loc>\s*(?:<!\[CDATA\[)?\s*([^<\]\s]+)/,
+    )?.[1];
+    if (!first) {
+      expect(
+        MAY_BE_EMPTY.has(segment),
+        `${segment} returned an empty urlset — either its generator is ` +
+          `broken (query errors degrade to empty 200s) or it is now ` +
+          `legitimately emptiable and belongs in MAY_BE_EMPTY`,
+      ).toBe(true);
+      continue;
+    }
 
     const target = onBaseOrigin(first);
     const res = await ctx.get(target, { timeout: 20_000 });
     expect(res.status(), `bot fetch ${target} (from ${child})`).toBe(200);
     const html = await res.text();
 
-    const title = html.match(/<title>([^<]*)<\/title>/i)?.[1];
+    const title = extractTitle(html);
     expect(title, `<title> on ${target}`).toBeTruthy();
     expect(title!, `title not empty/undefined on ${target}`).not.toMatch(
       /^\s*$|undefined/i,
     );
-    expect(extractCanonical(html), `canonical on ${target}`).toBeTruthy();
+
+    // SPA-fallback guard (Codex P1): when SSR fails, _middleware falls
+    // through to the SPA shell, which carries the ROOT canonical and no
+    // JSON-LD but would otherwise pass a bare "canonical exists" check.
+    // Requiring the canonical path to equal the sampled URL's path proves
+    // the per-route SSR handler actually rendered this page.
+    const canonical = extractCanonical(html);
+    expect(canonical, `canonical on ${target}`).toBeTruthy();
+    expect(
+      new URL(canonical!).pathname,
+      `canonical path on ${target} — the SPA fallback shell carries the ` +
+        `root canonical, so a mismatch means SSR did not render this page`,
+    ).toBe(new URL(target).pathname);
+
+    // Validate whatever JSON-LD the page emits. NOT asserted >0: /clb/:slug
+    // org pages legitimately ship zero JSON-LD today (schema gap, not an
+    // SSR failure — the canonical check above already proves SSR ran).
     assertJsonLd(html, target);
   }
   await ctx.dispose();
