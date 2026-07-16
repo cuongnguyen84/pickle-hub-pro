@@ -59,10 +59,19 @@ function collectJsonLdNodes(
   return out;
 }
 
+// SSR canonicals are built from CANONICAL_HOST (functions/_middleware.ts:377)
+// on prod AND preview alike — asserting this origin catches a misconfigured
+// canonical host, which controls which origin Google indexes (Codex round 3).
+const PROD_ORIGIN = "https://www.thepicklehub.net";
+
 /** Parse every <script type="application/ld+json"> block; fail on invalid
  *  JSON or on a known @type missing its required fields. Returns the block
- *  count — the sweep uses it to unmask the SPA shell on the root path. */
-function assertJsonLd(html: string, label: string): number {
+ *  count and every @type seen — callers assert expected types so a page
+ *  that silently DROPS its article schema still fails (Codex round 3). */
+function assertJsonLd(
+  html: string,
+  label: string,
+): { count: number; types: Set<string> } {
   const blocks = [
     ...html.matchAll(
       // \s before type= so data-type= can't match; \s*=\s* tolerates
@@ -71,6 +80,7 @@ function assertJsonLd(html: string, label: string): number {
     ),
   ].map((m) => m[1]);
 
+  const seenTypes = new Set<string>();
   for (const raw of blocks) {
     let parsed: unknown;
     try {
@@ -83,6 +93,7 @@ function assertJsonLd(html: string, label: string): number {
       const types = Array.isArray(node["@type"]) ? node["@type"] : [node["@type"]];
       for (const type of types) {
         if (typeof type !== "string") continue;
+        seenTypes.add(type);
         for (const field of JSONLD_REQUIRED_FIELDS[type] ?? []) {
           expect(
             node[field],
@@ -92,7 +103,25 @@ function assertJsonLd(html: string, label: string): number {
       }
     }
   }
-  return blocks.length;
+  return { count: blocks.length, types: seenTypes };
+}
+
+/** Canonical must exist, live on the production origin, and (for non-root
+ *  paths) point at the given path. */
+function assertCanonical(html: string, path: string, label: string): void {
+  const canonical = extractCanonical(html);
+  expect(canonical, `canonical link on ${label}`).toBeTruthy();
+  const url = new URL(canonical!);
+  expect(
+    url.origin,
+    `canonical origin on ${label} — SSR canonicals must point at the ` +
+      `production origin (CANONICAL_HOST misconfiguration would deindex it)`,
+  ).toBe(PROD_ORIGIN);
+  expect(
+    url.pathname,
+    `canonical path on ${label} — the SPA fallback shell carries the root ` +
+      `canonical, so a mismatch means SSR did not render this page`,
+  ).toBe(path);
 }
 
 const SSR_ROUTES = [
@@ -100,6 +129,7 @@ const SSR_ROUTES = [
     path: "/blog/what-is-dupr-pickleball-rating-system",
     expectedTitlePart: /dupr/i,
     expectsHreflang: true,
+    expectsJsonLdType: "BlogPosting",
   },
   {
     path: "/rankings",
@@ -152,16 +182,19 @@ for (const route of SSR_ROUTES) {
       expect(html, "hreflang x-default").toMatch(/hreflang=["']x-default["']/i);
     }
 
-    // SEO-03: canonical present and points at this path (against the
-    // canonical production origin — SSR always emits absolute prod URLs).
-    const canonical = extractCanonical(html);
-    expect(canonical, `canonical link on ${route.path}`).toBeTruthy();
-    expect(new URL(canonical!).pathname, "canonical path matches route").toBe(
-      route.path,
-    );
+    // SEO-03: canonical on the prod origin, pointing at this path.
+    assertCanonical(html, route.path, route.path);
 
     // SEO-03: every JSON-LD block parses and required fields are present.
-    assertJsonLd(html, route.path);
+    // Routes that declare an expected @type fail if that schema disappears
+    // entirely (required-fields alone can't catch a dropped block).
+    const { types } = assertJsonLd(html, route.path);
+    if ("expectsJsonLdType" in route) {
+      expect(
+        types.has(route.expectsJsonLdType),
+        `JSON-LD @type ${route.expectsJsonLdType} present on ${route.path} (saw: ${[...types].join(", ") || "none"})`,
+      ).toBe(true);
+    }
 
     await ctx.dispose();
   });
@@ -269,6 +302,14 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   // (Codex P1). If a segment becomes legitimately emptiable, add it here.
   const MAY_BE_EMPTY = new Set<string>([]);
 
+  // Segments whose detail pages must carry a specific article schema.
+  // (sitemap-blog.xml lists /vi/blog/* pages; both blog handlers emit
+  // BlogPosting. sitemap-news.xml lists news details → NewsArticle.)
+  const SEGMENT_JSONLD_TYPE: Record<string, string> = {
+    "sitemap-blog.xml": "BlogPosting",
+    "sitemap-news.xml": "NewsArticle",
+  };
+
   for (const child of childUrls) {
     const childXml = await (await ctx.get(onBaseOrigin(child))).text();
     const segment = new URL(child).pathname.slice(1);
@@ -300,29 +341,34 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
     // SPA-fallback guard (Codex P1): when SSR fails, _middleware falls
     // through to the SPA shell, which carries the ROOT canonical and no
     // JSON-LD but would otherwise pass a bare "canonical exists" check.
-    // Requiring the canonical path to equal the sampled URL's path proves
-    // the per-route SSR handler actually rendered this page.
-    const canonical = extractCanonical(html);
-    expect(canonical, `canonical on ${target}`).toBeTruthy();
-    expect(
-      new URL(canonical!).pathname,
-      `canonical path on ${target} — the SPA fallback shell carries the ` +
-        `root canonical, so a mismatch means SSR did not render this page`,
-    ).toBe(new URL(target).pathname);
+    // Canonical-path equality proves the per-route SSR handler rendered
+    // this page; the origin check catches CANONICAL_HOST misconfiguration.
+    assertCanonical(html, new URL(target).pathname, target);
 
     // Validate whatever JSON-LD the page emits. NOT asserted >0 in general:
     // /clb/:slug org pages legitimately ship zero JSON-LD today (schema gap,
     // not an SSR failure — the canonical check above already proves SSR ran).
-    const jsonLdBlocks = assertJsonLd(html, target);
+    const { count, types } = assertJsonLd(html, target);
 
-    // …EXCEPT on "/": the static segment lists the homepage first, and the
-    // SPA shell ALSO carries the root canonical, so canonical equality is
+    // Segments whose pages must carry a specific article schema — a page
+    // that silently drops its BlogPosting/NewsArticle block must fail even
+    // though required-field checks have nothing to run on (Codex round 3).
+    const expectedType = SEGMENT_JSONLD_TYPE[segment];
+    if (expectedType) {
+      expect(
+        types.has(expectedType),
+        `JSON-LD @type ${expectedType} on ${target} (from ${segment}; saw: ${[...types].join(", ") || "none"})`,
+      ).toBe(true);
+    }
+
+    // On "/": the static segment lists the homepage first, and the SPA
+    // shell ALSO carries the root canonical, so canonical equality is
     // vacuous there (Codex round-2 P1). The SSR home handler always emits
     // Organization/WebSite JSON-LD; the shell emits none — that is the
     // discriminator.
     if (new URL(target).pathname === "/") {
       expect(
-        jsonLdBlocks,
+        count,
         `JSON-LD on ${target} — zero blocks on the root path means the ` +
           `SPA fallback shell was served instead of the SSR home render`,
       ).toBeGreaterThan(0);
