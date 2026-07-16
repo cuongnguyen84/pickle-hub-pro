@@ -134,7 +134,14 @@ export async function renderForumPost(supabase: SupabaseClient, postId: string, 
 
   if (!post) return render404(`/forum/post/${postId}`, siteUrl);
 
-  const rawDesc = (post.content || "").replace(/<[^>]*>/g, "").slice(0, 200);
+  // Strip tags, then drop any leftover angle brackets: a single-pass tag
+  // regex can be tricked into reassembling "<script" (CodeQL
+  // js/incomplete-multi-character-sanitization), and a meta description is
+  // plain text anyway.
+  const rawDesc = (post.content || "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/[<>]/g, "")
+    .slice(0, 200);
   const desc = buildMetaDescription(rawDesc, { type: "forum-post", title: post.title });
   const title = buildTitle(post.title, "");
 
