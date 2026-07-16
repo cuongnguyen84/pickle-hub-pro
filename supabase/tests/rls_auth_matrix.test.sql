@@ -7,7 +7,7 @@
 
 BEGIN;
 
-SELECT plan(19);
+SELECT plan(21);
 
 -- ─── Blanket matrix ─────────────────────────────────────────────────────────
 
@@ -72,7 +72,13 @@ SELECT is(
 -- notification_insert_rls.test.sql). Rolled back with the transaction.
 GRANT SELECT, UPDATE ON public.profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_roles TO authenticated;
-GRANT INSERT ON public.api_keys TO authenticated;
+GRANT SELECT, INSERT ON public.api_keys TO authenticated;
+
+-- Seed one api_keys row so the viewer-read probe below can only pass if RLS
+-- actually filters it out (an accidentally-permissive SELECT policy would
+-- surface this row and fail the assertion).
+INSERT INTO public.api_keys (name, key_hash, key_prefix)
+VALUES ('qa03-seed', 'qa03-seed-hash', 'qa03s_');
 
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '0a030001-0000-4000-8000-000000000001', true);
@@ -110,7 +116,15 @@ WHERE user_id = '0a030001-0000-4000-8000-000000000001'::uuid;
 UPDATE public.profiles SET display_name = 'QA03 Hacked B'
 WHERE id = '0a030002-0000-4000-8000-000000000002'::uuid;
 
--- api_keys is admin-only in every direction.
+-- api_keys is admin-only in every direction: behavioral read probe (policies
+-- are ORed, so a name check alone would greenlight a new permissive SELECT
+-- policy — Codex round 1) plus the write probe.
+SELECT is(
+  (SELECT COUNT(*)::int FROM public.api_keys),
+  0,
+  'viewer sees zero api_keys rows despite a seeded row existing'
+);
+
 SELECT throws_ok(
   $$INSERT INTO public.api_keys (name, key_hash, key_prefix)
     VALUES ('qa03', 'x', 'qa03_')$$,
@@ -120,6 +134,29 @@ SELECT throws_ok(
 );
 
 RESET ROLE;
+
+-- Allow control: promote user A to admin and the same read must now succeed
+-- — proving the deny above came from the policy, not from broken plumbing.
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('0a030001-0000-4000-8000-000000000001'::uuid, 'admin');
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '0a030001-0000-4000-8000-000000000001', true);
+SELECT set_config(
+  'request.jwt.claims',
+  '{"sub":"0a030001-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+
+SELECT is(
+  (SELECT COUNT(*)::int FROM public.api_keys WHERE name = 'qa03-seed'),
+  1,
+  'admin sees the seeded api_keys row (allow control)'
+);
+
+RESET ROLE;
+DELETE FROM public.user_roles
+WHERE user_id = '0a030001-0000-4000-8000-000000000001'::uuid AND role = 'admin';
 
 -- ─── Verify what actually stuck ─────────────────────────────────────────────
 
