@@ -496,21 +496,21 @@ export const blogMetadata: BlogPostMetadata[] = [
   },  {
     slug: "pickleball-world-cup-2026-da-nang",
     publishedDate: "2026-04-23",
-    updatedDate: "2026-07-16",
+    updatedDate: "2026-07-17",
     author: "The PickleHub Team",
     tags: ["world cup pickleball", "da nang", "vietnam", "tournament", "asia", "2026", "guide"],
     ctaPath: "/tournaments",
     ctaLabel: { en: "Browse Tournaments", vi: "Xem các giải đấu" },
     heroImage: {
       src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
-      alt: "Pickleball World Cup 2026 in Da Nang, Vietnam — Aug 30 to Sep 6, 2026, Tien Son Sports Palace, ~80 countries and 4,000 athletes"
+      alt: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam — Aug 30 to Sep 6, 2026, Tien Son Sports Palace, around 80 countries and 4,000 participants"
     },
-    titleEn: "Pickleball World Cup 2026 in Da Nang, Vietnam — Complete Guide",
-    titleVi: "World Cup Pickleball 2026 tại Đà Nẵng — Hướng dẫn đầy đủ",
-    metaTitleEn: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch",
-    metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Lịch thi đấu, Đội tuyển, Cách xem",
-    metaDescriptionEn: "Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). Up to 80 nations, 4,000 athletes. Dates, venues, format, Vietnam team.",
-    metaDescriptionVi: "Đà Nẵng đăng cai World Cup Pickleball 2026 từ 30/8 – 6/9. Gần 80 quốc gia, 4.000 VĐV. Lịch thi đấu, địa điểm, đội tuyển Việt Nam — thông tin đầy đủ.",
+    titleEn: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam — Complete Guide",
+    titleVi: "Heineken Pickleball World Cup 2026 tại Đà Nẵng — Hướng dẫn đầy đủ",
+    metaTitleEn: "Pickleball World Cup 2026 Da Nang | Dates, $500K Prize, Venues, How to Watch",
+    metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Lịch thi đấu, Tiền thưởng 500.000 USD, Cách xem",
+    metaDescriptionEn: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). US$500,000 prize pool, ~80 nations, 39 courts. Dates, venues, format, Vietnam team.",
+    metaDescriptionVi: "Đà Nẵng đăng cai Heineken Pickleball World Cup 2026 từ 30/8 – 6/9. Tổng thưởng 500.000 USD, gần 80 quốc gia, 39 sân. Lịch thi đấu, địa điểm, đội tuyển Việt Nam.",
   },  {
     slug: "best-pickleball-tournament-software-2026",
     publishedDate: "2025-12-15",
