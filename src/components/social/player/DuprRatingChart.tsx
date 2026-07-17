@@ -1,14 +1,6 @@
 import { useMemo } from "react";
 import { Loader2 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import { TinyLineChart } from "@/components/ui/tiny-chart";
 import { useI18n } from "@/i18n";
 import type { DuprHistoryRow } from "@/hooks/social/useDuprRatingHistory";
 
@@ -26,10 +18,10 @@ interface ChartPoint {
 }
 
 /**
- * Editorial chart section — eyebrow tag, hairline divider top, Recharts
- * lines using TheLine green token for the doubles series + dim color for
- * singles. No card border around the chart itself; it lives directly
- * inside the section.
+ * Editorial chart section — eyebrow tag, hairline divider top, SVG lines
+ * (tiny-chart, recharts removed by perf-js-gzip) using TheLine green token
+ * for the doubles series + dim color for singles. No card border around the
+ * chart itself; it lives directly inside the section.
  */
 export function DuprRatingChart({ history, loading }: Props) {
   const { language } = useI18n();
@@ -48,7 +40,7 @@ export function DuprRatingChart({ history, loading }: Props) {
     [history],
   );
 
-  const yDomain = useMemo(() => {
+  const yDomain = useMemo<[number, number]>(() => {
     const values = points.flatMap((p) =>
       [p.doubles, p.singles].filter((v): v is number => v != null),
     );
@@ -97,61 +89,48 @@ export function DuprRatingChart({ history, loading }: Props) {
 
   return (
     <Section label={sectionLabel}>
-      <div style={{ height: 220, width: "100%" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={points}
-            margin={{ left: 0, right: 8, top: 4, bottom: 4 }}
-          >
-            <CartesianGrid stroke="var(--tl-border)" strokeDasharray="3 3" />
-            <XAxis
-              dataKey="dateLabel"
-              tick={{ fontSize: 11, fill: "var(--tl-fg-3)" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              domain={yDomain}
-              tick={{ fontSize: 11, fill: "var(--tl-fg-3)" }}
-              axisLine={false}
-              tickLine={false}
-              width={32}
-            />
-            <Tooltip
-              contentStyle={{
-                background: "var(--tl-bg)",
-                border: "1px solid var(--tl-border)",
-                borderRadius: 8,
-                fontSize: 12,
-                color: "var(--tl-fg)",
-              }}
-              labelStyle={{ color: "var(--tl-fg-3)" }}
-            />
-            <Line
-              type="monotone"
-              dataKey="doubles"
-              name="Doubles"
-              stroke="var(--tl-green)"
-              strokeWidth={2}
-              dot={{ r: 3, fill: "var(--tl-green)" }}
-              activeDot={{ r: 5 }}
-              connectNulls
-            />
-            {hasSinglesSeries && (
-              <Line
-                type="monotone"
-                dataKey="singles"
-                name="Singles"
-                stroke="var(--tl-fg-3)"
-                strokeWidth={1.5}
-                strokeDasharray="4 3"
-                dot={{ r: 2 }}
-                connectNulls
-              />
+      <TinyLineChart
+        height={220}
+        xLabels={points.map((p) => p.dateLabel)}
+        yDomain={yDomain}
+        gridColor="var(--tl-border)"
+        tickColor="var(--tl-fg-3)"
+        ariaLabel={
+          language === "vi" ? "Biểu đồ DUPR 30 ngày" : "DUPR 30-day chart"
+        }
+        series={[
+          {
+            label: "Doubles",
+            values: points.map((p) => p.doubles),
+            color: "var(--tl-green)",
+            strokeWidth: 2,
+            dotRadius: 3,
+          },
+          ...(hasSinglesSeries
+            ? [
+                {
+                  label: "Singles",
+                  values: points.map((p) => p.singles),
+                  color: "var(--tl-fg-3)",
+                  strokeWidth: 1.5,
+                  dashed: true,
+                  dotRadius: 2,
+                },
+              ]
+            : []),
+        ]}
+        renderTooltip={(i) => (
+          <>
+            <div style={{ color: "var(--tl-fg-3)" }}>{points[i].dateLabel}</div>
+            {points[i].doubles != null && (
+              <div>Doubles: {points[i].doubles}</div>
             )}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+            {points[i].singles != null && (
+              <div>Singles: {points[i].singles}</div>
+            )}
+          </>
+        )}
+      />
     </Section>
   );
 }
