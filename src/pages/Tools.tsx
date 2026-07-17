@@ -10,7 +10,7 @@ import {
   useCompletedPublicQuickTables,
 } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { formatRelative } from "./preview/_shell";
+import { formatRelative } from "@/lib/format-datetime";
 
 const Tools = () => {
   const { language } = useI18n();

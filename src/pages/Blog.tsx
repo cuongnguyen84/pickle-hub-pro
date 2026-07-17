@@ -7,7 +7,7 @@ import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCoun
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { formatDate } from "./preview/_shell";
+import { formatDate } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";

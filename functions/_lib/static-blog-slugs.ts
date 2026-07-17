@@ -1,48 +1,9 @@
-export const EN_BLOG_SLUGS = [
-  "vietnam-pickleball-players-to-watch-2026",
-  "vietnam-hosts-ppa-tour-asia-2026",
-  "ppa-beijing-open-2026-recap",
-  "pickleball-cost-vietnam-2026",
-  "hcmc-open-2026-preview",
-  "vietnam-pickleball-tournament-calendar-2026",
-  "pickleball-club-management-software-comparison",
-  "pickleball-tournament-budget-calculator-guide",
-  "ppa-tour-asia-2026-recap",
-  "mlp-vs-ppa-2026-which-tour-to-watch",
-  "vietnam-pickleball-federation-2026",
-  "pickleball-erne-shot-tutorial",
-  "pickleball-doubles-stacking-strategy",
-  "pickleball-third-shot-drop-vs-drive",
-  "pickleball-dink-technique-mastery",
-  "dupr-thepicklehub-user-guide",
-  "pickleball-court-dimensions-setup-guide",
-  "vietnam-dupr-leaderboard-launch",
-  "pickleball-vs-padel-vs-paddle-tennis",
-  "best-pickleball-paddles-beginners-2026",
-  "pickleball-for-tennis-players-2026",
-  "professional-pickleball-tours-guide-2026",
-  "dupr-rating-improvement-30-day-plan",
-  "dupr-algorithm-explained-performance-vs-expectation",
-  "dupr-vietnam-partnership-ta-pickleball-thepicklehub",
-  "tama-shimabukuro-ppa-atlanta-final-15-year-old",
-  "what-is-dupr-pickleball-rating-system",
-  "pickleball-tour-wars-2023-explained",
-  "app-tour-vs-ppa-tour-contracts-2026",
-  "how-to-watch-ppa-tour-live-2026",
-  "ppa-tour-asia-2026-complete-guide",
-  "best-pickleball-tournament-software-2026",
-  "how-to-create-pickleball-bracket",
-  "pickleball-round-robin-generator-guide",
-  "pickleball-scoring-rules-guide",
-  "how-to-organize-pickleball-tournament",
-  "pickleball-doubles-strategy-guide",
-  "pickleball-tournament-formats-explained",
-  "pickleball-live-streaming-guide",
-  "mlp-format-explained",
-  "free-pickleball-bracket-generator",
-  "pickleball-bracket-templates",
-  "pickleball-rules-complete-guide",
-  "pickleball-world-cup-2026-da-nang",
-  "tournament-organizer-hub",
-  "how-to-play-pickleball",
-] as const;
+// SEO-02 (2026-07-17): GENERATED from src/content/blog/metadata.ts — the
+// single blog source of truth. Do not hand-edit. Consumed by
+// sitemap-static.xml.ts; slug parity with BLOG_POST_META is guaranteed by
+// construction (both derive from blogMetadata) and locked by
+// src/lib/__tests__/blog-seo-surfaces.test.ts.
+
+import { blogMetadata } from "../../src/content/blog/metadata";
+
+export const EN_BLOG_SLUGS: readonly string[] = blogMetadata.map((p) => p.slug);

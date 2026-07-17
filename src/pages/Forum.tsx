@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useForumPosts } from "@/hooks/useForumPosts";
 import { useForumCategories } from "@/hooks/useForumCategories";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { formatRelative } from "./preview/_shell";
+import { formatRelative } from "@/lib/format-datetime";
 
 const Forum = () => {
   const { language } = useI18n();

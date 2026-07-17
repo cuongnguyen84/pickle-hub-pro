@@ -6,7 +6,7 @@
 // CRON_SECRET; never expose this handler as a public health-check endpoint.
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
 import { zaloCronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 

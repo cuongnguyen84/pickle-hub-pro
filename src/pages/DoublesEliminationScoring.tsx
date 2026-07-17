@@ -20,12 +20,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface GameScore {
-  game: number;
-  score_a: number;
-  score_b: number;
-  winner: 'a' | 'b';
-}
+import {
+  computeDoublesElimResult,
+  bracketAdvanceTarget,
+  type DoublesElimGame as GameScore,
+} from "@/lib/doublesElimResult";
 
 interface MatchData {
   id: string;
@@ -116,9 +115,7 @@ async function propagateWinnerToNextRound(
       .order('match_number', { ascending: true });
 
     if (nextRoundMatches && nextRoundMatches.length > 0) {
-      const matchIndex = match.match_number - 1;
-      const nextMatchIndex = Math.floor(matchIndex / 2);
-      const slot = matchIndex % 2;
+      const { nextMatchIndex, slot } = bracketAdvanceTarget(match.match_number);
 
       const targetMatch = nextRoundMatches[nextMatchIndex];
       if (targetMatch) {
@@ -127,9 +124,9 @@ async function propagateWinnerToNextRound(
         // generated types reject `{ [string]: string }` because the
         // column union is fully constrained at the type level; the
         // dynamic-key form forced a `never` index signature error
-        // (Scoring.tsx:120 pre-fix). Behaviour is identical — slot 0
-        // writes team_a_id, slot 1 writes team_b_id.
-        if (slot === 0) {
+        // (Scoring.tsx:120 pre-fix). Behaviour is identical — slot 'a'
+        // writes team_a_id, slot 'b' writes team_b_id.
+        if (slot === 'a') {
           await supabase
             .from('doubles_elimination_matches')
             .update({ team_a_id: winnerId })
@@ -426,14 +423,12 @@ export default function DoublesEliminationScoring() {
       existingGames.push(newGame);
     }
 
-    const winsA = existingGames.filter(g => g.winner === 'a').length;
-    const winsB = existingGames.filter(g => g.winner === 'b').length;
-    const winsNeededForMatch = Math.ceil(match.best_of / 2);
-    const isMatchComplete = winsA >= winsNeededForMatch || winsB >= winsNeededForMatch;
+    const result = computeDoublesElimResult(existingGames, match.best_of, match.team_a_id, match.team_b_id);
+    const { gamesWonA: winsA, gamesWonB: winsB } = result;
 
-    if (isMatchComplete) {
-      const winnerId = winsA > winsB ? match.team_a_id : match.team_b_id;
-      const loserId = winsA > winsB ? match.team_b_id : match.team_a_id;
+    if (result.complete) {
+      const winnerId = result.winnerId;
+      const loserId = result.loserId;
 
       await supabase
         .from('doubles_elimination_matches')

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
@@ -8,44 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Layers, LogIn } from "lucide-react";
+import { Loader2, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getLoginUrl } from "@/lib/auth-config";
-
-const surfaceCard: React.CSSProperties = {
-  background: "var(--tl-bg-elev)",
-  border: "1px solid var(--tl-border)",
-  borderRadius: "var(--tl-radius-lg)",
-  padding: 28,
-};
-
-const stepKickerStyle: React.CSSProperties = {
-  fontFamily: "Geist Mono, ui-monospace, monospace",
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "var(--tl-green)",
-  marginBottom: 8,
-};
-
-const stepHeadingStyle: React.CSSProperties = {
-  fontFamily: "Instrument Serif, serif",
-  fontStyle: "italic",
-  fontWeight: 400,
-  fontSize: 28,
-  letterSpacing: "-0.015em",
-  lineHeight: 1.05,
-  margin: 0,
-  color: "var(--tl-fg)",
-};
-
-const stepDescStyle: React.CSSProperties = {
-  fontSize: 14.5,
-  color: "var(--tl-fg-3)",
-  marginTop: 6,
-  lineHeight: 1.5,
-};
+import {
+  SetupBreadcrumb,
+  SetupPageHead,
+  SetupLoginGate,
+} from "@/components/tournament/SetupShell";
+import {
+  surfaceCard,
+  stepKickerStyle,
+  stepHeadingStyle,
+  stepDescStyle,
+} from "@/components/tournament/setup-styles";
 
 const FlexTournamentSetup = () => {
   const { t, language } = useI18n();
@@ -102,80 +77,29 @@ const FlexTournamentSetup = () => {
     }
   };
 
-  // ─── Login gate ──────────────────────────────────────────────────────────
   if (!user) {
     return (
-      <TheLineLayout title="Flex Tournament Setup" active="lab">
-        <div className="tl-shell">
-          <nav className="tl-breadcrumb">
-            <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
-            <span className="sep">/</span>
-            <Link to="/tools/flex-tournament">Flex Tournament</Link>
-            <span className="sep">/</span>
-            <span className="current">{language === "vi" ? "Tạo mới" : "New"}</span>
-          </nav>
-
-          <section style={{ padding: "48px 0 80px" }}>
-            <div
-              style={{
-                ...surfaceCard,
-                maxWidth: 480,
-                margin: "0 auto",
-                textAlign: "center",
-                padding: "40px 28px",
-              }}
-            >
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: "var(--tl-green-glow)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 20,
-                }}
-              >
-                <Layers className="w-7 h-7" style={{ color: "var(--tl-green)" }} />
-              </div>
-              <h2 style={{ ...stepHeadingStyle, fontSize: 24, marginBottom: 10 }}>
-                {t.tools.flexTournament.title}
-              </h2>
-              <p style={{ ...stepDescStyle, marginTop: 0, marginBottom: 24, fontSize: 14 }}>
-                {t.auth.loginRequired}
-              </p>
-              <Link to={getLoginUrl('/tools/flex-tournament/new')} className="tl-btn green">
-                <LogIn className="w-4 h-4" />
-                {t.auth.login}
-              </Link>
-            </div>
-          </section>
-        </div>
-      </TheLineLayout>
+      <SetupLoginGate
+        layoutTitle="Flex Tournament Setup"
+        toolLabel="Flex Tournament"
+        toolPath="/tools/flex-tournament"
+        icon={Layers}
+        title={t.tools.flexTournament.title}
+        desc={t.auth.loginRequired}
+        loginRedirect="/tools/flex-tournament/new"
+      />
     );
   }
 
   return (
     <TheLineLayout title="Flex Tournament Setup" active="lab">
       <div className="tl-shell">
-        <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
-          <span className="sep">/</span>
-          <Link to="/tools/flex-tournament">Flex Tournament</Link>
-          <span className="sep">/</span>
-          <span className="current">{language === "vi" ? "Tạo mới" : "New"}</span>
-        </nav>
+        <SetupBreadcrumb toolLabel="Flex Tournament" toolPath="/tools/flex-tournament" />
 
-        <header className="tl-page-head">
-          <div className="kicker">
-            ◆ {language === "vi" ? "Tạo giải mới · Tự do format" : "New tournament · Custom format"}
-          </div>
-          <h1 style={{ fontSize: "clamp(28px, 4vw, 56px)" }}>
-            <em className="tl-serif">{language === "vi" ? "Tạo" : "Create"}</em>{" "}
-            <span className="sans">{language === "vi" ? "giải đấu." : "tournament."}</span>
-          </h1>
-        </header>
+        <SetupPageHead
+          kicker={language === "vi" ? "Tạo giải mới · Tự do format" : "New tournament · Custom format"}
+          h1Sans={language === "vi" ? "giải đấu." : "tournament."}
+        />
 
         <section style={{ maxWidth: 720, margin: "0 auto", padding: "32px 0 80px", width: "100%" }}>
           <div style={surfaceCard}>

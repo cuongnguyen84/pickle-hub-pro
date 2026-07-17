@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import type { Livestream } from "@/hooks/useSupabaseData";
-import { Countdown } from "@/pages/preview/_Countdown";
+import { Countdown } from "@/components/Countdown";
 
 // Lazy so the video vendor chunk (~1MB) only loads when a court is actually
 // live and the inline player renders — never on a homepage with no live.

@@ -8,13 +8,15 @@
 // diffs the applied version set against the timestamp prefixes of the local
 // migration files.
 //
-// IMPORTANT — advisory by default. ThePickleHub applies migrations by
-// running SQL directly via the Management API (see handoff doc §9), NOT via
-// `supabase db push`, so `supabase_migrations.schema_migrations` is NOT a
-// reliable record of what's applied — it under-reports and produces false
-// "unapplied" positives. Therefore this script only WARNS by default and
-// exits 0. Set DRIFT_STRICT=1 to make repo-ahead-of-DB a hard failure once
-// the schema_migrations ledger has been reconciled.
+// 2026-07-16 (SEC-06): the ledger IS reconciled — 283 local files = 283
+// ledger rows, zero drift in either direction — and the ops runbook now
+// requires every Management-API-applied migration to be ledgered in the
+// same session. DRIFT_STRICT=1 is therefore the intended CI mode and fails
+// on drift in EITHER direction (repo-ahead = merged but never applied /
+// applied without ledgering; db-ahead = dashboard or hotfix SQL unknown to
+// the repo). Default remains advisory for local ad-hoc runs.
+// Reconciliation is always a deliberate human action — NEVER
+// `db push --include-all` (docs/ops-runbook.md §1).
 //
 // Env:
 //   SUPABASE_ACCESS_TOKEN   (required) Management API PAT
@@ -128,8 +130,8 @@ async function appliedVersions() {
       );
     }
 
-    if (strict && missingOnDb.length) {
-      console.error("\n✖ DRIFT_STRICT=1 and repo is ahead of DB — failing.");
+    if (strict && (missingOnDb.length || missingLocally.length)) {
+      console.error("\n✖ DRIFT_STRICT=1 — ledger and repo must match exactly; failing.");
       process.exit(1);
     }
     console.log("\n(advisory mode — not failing the build)");

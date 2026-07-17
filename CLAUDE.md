@@ -45,13 +45,11 @@ npx cap open android # Open Android Studio
 
 ### New blog post checklist (EN + VI bilingual)
 
-Every new blog post requires **5 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
+Every new blog post requires **3 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
 
 1. `src/content/blog/posts/<slug>.ts` — full BlogPost with content.en AND content.vi
-2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array
-3. `functions/_lib/render/index.ts` — add row to `BLOG_POST_META` dict (line ~764). Missing = Googlebot/Bingbot get 404 even though SPA renders fine.
-4. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
-5. `functions/_lib/static-blog-slugs.ts` — add the EN slug to `EN_BLOG_SLUGS`, consumed by `sitemap-static.xml.ts`, until SEO-02 replaces the manual SEO manifests.
+2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array. **Single SEO source of truth** (SEO-02): `BLOG_POST_META` (SSR `<title>` = `metaTitleEn`) and `EN_BLOG_SLUGS` (sitemap) are GENERATED from it — never hand-edit `functions/_lib/render/blog-meta.ts` or `functions/_lib/static-blog-slugs.ts`.
+3. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).
@@ -75,9 +73,9 @@ Key examples: `mux-create-livestream`, `delete-account`, `send-push-notification
 
 SEO prerendering for bot crawlers is handled by `functions/_middleware.ts` + `functions/_lib/render/`, NOT by Supabase edge functions.
 
-- Cache key: **`pr:v26:${pathname}`** in KV namespace `PRERENDER_CACHE` (bump version when changing SSR output to invalidate stale HTML)
+- Cache key: **`pr:v29:${pathname}`** in KV namespace `PRERENDER_CACHE` (bump version when changing SSR output to invalidate stale HTML). The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
 - Per-route handlers: `renderBlog`, `renderViBlog`, `renderTournament`, `renderMatch` (`match-seo.ts`), `renderSocialEvent`, `renderRankings`, `renderLive`, `renderNews`, etc.
-- `BLOG_POST_META` dict in `functions/_lib/render/index.ts` is the SSR truth table for blog posts — missing entry = bot 404
+- `BLOG_POST_META` in `functions/_lib/render/blog-meta.ts` is the SSR truth table for blog posts — missing entry = bot 404. Since SEO-02 (`ce6a0fa`) it is **generated at module load** from `src/content/blog/metadata.ts`; do not hand-edit it, add the metadata entry instead.
 
 The legacy `prerender-worker` Cloudflare Worker is still active and **MUST be preserved**. It serves production traffic for thepicklehub.net.
 
@@ -167,21 +165,21 @@ Optional:
 Function `mux-create-livestream` checks for role IN ('creator', 'admin').
 Function `send-push-notification` requires authenticated user but no specific role check (UI gates by admin role).
 
-## Supabase Edge Functions (51 active)
+## Supabase Edge Functions (50 active)
 
 Browse: `supabase/functions/`. Categories:
 
 - **User-facing (verify_jwt=false, ES256 workaround):** `mux-create-livestream`, `delete-account`, `send-push-notification`, `invite-team-to-tournament`
 - **Authenticated admin (verify_jwt=false, internal role check):** `api-keys-list`, `api-keys-admin-generate`, `api-keys-admin-revoke`
 - **Backend-to-backend (service_role only):** `api-keys-generate`, `api-keys-revoke`
-- **Public (no auth):** `geo-check`, `og-*` (9 functions: doubles-elimination, flex-tournament, image-club, image-match, image-social-event, live, organization, quick-table, tournament, video), `sitemap` (legacy — Cloudflare Pages handles production), `video-thumbnail-proxy`, `newsletter-subscribe`
+- **Public (no auth):** `geo-check`, `og-*` (9 functions: doubles-elimination, flex-tournament, image-club, image-match, image-social-event, live, organization, quick-table, tournament, video), `video-thumbnail-proxy`, `newsletter-subscribe`
 - **Event-driven:** `mux-webhook` (Mux → webhook), `send-auth-email` (Supabase Auth Hook), `mark-payment-claimed`
 - **Scheduled/internal cron:** `auto-archive-tournaments`, `auto-cancel-unpaid-registrations`, `news-check`, `news-ingest`, `news-translate`, `batch-view-events`, `mux-sync-assets`, `leaderboard-compute`, `match-expire`, `dupr-sync`, `pro-tour-ingest`, `pro-tour-trigger-scrape`, `feed-generate`
 - **Domain-specific:** `match-create`, `match-confirm`, `submit-match-score`, `cancel-registration`, `reactivate-registration`, `create-payment-order`, `phone-otp-send`, `phone-otp-verify`, `request-recovery-link`, `dupr-link`, `send-blog-blast`, `notification-send`
 
 ## Known Bugs (Not Fixed)
 
-1. **Red5 DB columns residual:** `livestreams.red5_server_url` and `livestreams.red5_stream_name` columns still exist in schema despite Red5 being retired. Nullable, non-functional. Cleanup requires migration to DROP COLUMN + regenerate types.
+_(none currently — Red5 residual columns were dropped by migration `20260716170000`, CLOSE-01)_
 
 ## Coding Standards
 

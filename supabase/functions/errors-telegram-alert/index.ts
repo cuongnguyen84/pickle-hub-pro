@@ -18,7 +18,7 @@
 // verify_jwt = false (cron invocations carry no JWT)
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import {
   evaluateGitHubWorkflow,
   evaluatePgNetCron,

@@ -17,7 +17,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY  injected by platform
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 // ---------------------------------------------------------------------------
 // Types

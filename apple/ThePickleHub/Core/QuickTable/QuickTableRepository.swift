@@ -720,6 +720,49 @@ struct QuickTableRepository {
         // !isCompleted), so no need to clear it here.
     }
 
+    // MARK: Result rules (ARCH-04 pre-work)
+
+    /// Web twin: src/lib/quickTableResult.ts — keep the rules identical;
+    /// mirror tests in apple/Tests/QuickTableResultTests.swift. Known
+    /// divergence: web saves a tie as completed with a null winner, Swift
+    /// score() refuses to save a tie at all.
+    struct GroupStat: Equatable {
+        var played = 0
+        var won = 0
+        var pf = 0
+        var pa = 0
+    }
+
+    /// Single-elimination playoff advancement: winner at `position` within
+    /// its round seats into next-round match position/2, slot 1 for even
+    /// positions. Web twin: playoffAdvanceTarget.
+    static func advanceTarget(position: Int) -> (nextMatchIndex: Int, slot1: Bool) {
+        (position / 2, position % 2 == 0)
+    }
+
+    /// Group-stage standings accumulation. Matches with a missing player or
+    /// score are skipped; players outside `playerIDs` are ignored; a tie
+    /// counts as played for both, won by neither. Web twin: accumulateGroupStats.
+    static func accumulateGroupStats(
+        matches: [(p1: UUID?, p2: UUID?, s1: Int?, s2: Int?)],
+        playerIDs: [UUID]
+    ) -> [UUID: GroupStat] {
+        var stats: [UUID: GroupStat] = [:]
+        for id in playerIDs { stats[id] = GroupStat() }
+        for m in matches {
+            guard let p1 = m.p1, let p2 = m.p2, let s1 = m.s1, let s2 = m.s2 else { continue }
+            if stats[p1] != nil {
+                stats[p1]!.played += 1; stats[p1]!.pf += s1; stats[p1]!.pa += s2
+                if s1 > s2 { stats[p1]!.won += 1 }
+            }
+            if stats[p2] != nil {
+                stats[p2]!.played += 1; stats[p2]!.pf += s2; stats[p2]!.pa += s1
+                if s2 > s1 { stats[p2]!.won += 1 }
+            }
+        }
+        return stats
+    }
+
     /// Saves a match score, then recomputes group stats (group stage) or
     /// advances the winner (playoff). Caller reloads afterward.
     func score(tableID: UUID, match: QTMatch, score1: Int, score2: Int) async throws {
@@ -762,22 +805,9 @@ struct QuickTableRepository {
             .eq("group_id", value: groupID)
             .execute().value
 
-        struct Stat { var played = 0; var won = 0; var pf = 0; var pa = 0 }
-        var stats: [UUID: Stat] = [:]
-        for p in players { stats[p.id] = Stat() }
-
-        for m in matches {
-            guard let p1 = m.player1ID, let p2 = m.player2ID,
-                  let s1 = m.score1, let s2 = m.score2 else { continue }
-            if stats[p1] != nil {
-                stats[p1]!.played += 1; stats[p1]!.pf += s1; stats[p1]!.pa += s2
-                if s1 > s2 { stats[p1]!.won += 1 }
-            }
-            if stats[p2] != nil {
-                stats[p2]!.played += 1; stats[p2]!.pf += s2; stats[p2]!.pa += s1
-                if s2 > s1 { stats[p2]!.won += 1 }
-            }
-        }
+        let stats = Self.accumulateGroupStats(
+            matches: matches.map { (p1: $0.player1ID, p2: $0.player2ID, s1: $0.score1, s2: $0.score2) },
+            playerIDs: players.map(\.id))
 
         for (playerID, s) in stats {
             try await client
@@ -814,10 +844,10 @@ struct QuickTableRepository {
             .order("playoff_match_number", ascending: true)
             .execute().value
 
-        let nextIndex = position / 2
+        let (nextIndex, slot1) = Self.advanceTarget(position: position)
         if next.count > nextIndex {
             let nextID = next[nextIndex].id
-            if position % 2 == 0 {
+            if slot1 {
                 try await client.from("quick_table_matches").update(Slot1Update(player1_id: winnerID.uuidString)).eq("id", value: nextID).execute()
             } else {
                 try await client.from("quick_table_matches").update(Slot2Update(player2_id: winnerID.uuidString)).eq("id", value: nextID).execute()

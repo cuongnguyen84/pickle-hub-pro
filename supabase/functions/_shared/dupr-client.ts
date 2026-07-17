@@ -15,7 +15,7 @@
 //     functions that need it import buildUserApiUrl().
 // ============================================================================
 
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 export type DuprEnv = "uat" | "prod";
 

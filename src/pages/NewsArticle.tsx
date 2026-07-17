@@ -14,7 +14,7 @@ import {
   useNewsItemBySlug,
   useNewsItemSibling,
 } from "@/hooks/useNewsItemBySlug";
-import { formatRelative } from "./preview/_shell";
+import { formatRelative } from "@/lib/format-datetime";
 
 /**
  * /news/:slug + /vi/news/:slug — News article detail page.

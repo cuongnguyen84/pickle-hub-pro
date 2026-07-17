@@ -1,0 +1,51 @@
+# SEC-06 — daily migration ledger drift check (REPORT-ONLY).
+# Deploy guard already runs the same strict check on every main push; this
+# schedule catches drift that appears WITHOUT a push (dashboard SQL, hotfix
+# applied but not ledgered). It never mutates anything — reconciliation is a
+# deliberate human action per docs/ops-runbook.md §1.
+
+name: Migration drift
+
+on:
+  schedule:
+    - cron: "47 19 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: migration-drift
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Compare repo migrations with the production ledger (strict)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DRIFT_STRICT: "1"
+        run: node scripts/check-migration-drift.mjs
+
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping alert"; exit 0
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="🚨 Migration ledger drift detected (daily check). Repo and production schema_migrations no longer match — see the Migration drift workflow run. Reconcile deliberately per docs/ops-runbook.md §1; never db push --include-all." \
+            >/dev/null
+          echo "alert sent"

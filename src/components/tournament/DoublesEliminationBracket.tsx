@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { TablesUpdate } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/i18n';
+import { computeDoublesElimResult, bracketAdvanceTarget } from '@/lib/doublesElimResult';
 
 // ─── Shared TheLineLayout tokens ─────────────────────────────────────────
 // Match the W2.1 pattern from src/components/quicktable/RegistrationManager.tsx
@@ -992,13 +993,11 @@ async function propagateWinnerToNextRound(
       .sort((a, b) => a.match_number - b.match_number);
 
     // Find the next match based on bracket position
-    const matchIndex = match.match_number - 1;
-    const nextMatchIndex = Math.floor(matchIndex / 2);
-    const slot = matchIndex % 2;
+    const { nextMatchIndex, slot } = bracketAdvanceTarget(match.match_number);
 
     const targetMatch = nextRoundMatches[nextMatchIndex];
     if (targetMatch) {
-      const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
+      const updateField = slot === 'a' ? 'team_a_id' : 'team_b_id';
       await supabase
         .from('doubles_elimination_matches')
         .update({ [updateField]: winnerId } as TablesUpdate<'doubles_elimination_matches'>)
@@ -1129,13 +1128,8 @@ const BracketMatchCard = ({
     };
 
     // Calculate games won
-    const gamesWonA = updatedGames.filter(g => g?.winner === 'a').length;
-    const gamesWonB = updatedGames.filter(g => g?.winner === 'b').length;
-    const winsNeededForMatch = Math.ceil(match.best_of / 2);
-
-    const matchComplete = gamesWonA >= winsNeededForMatch || gamesWonB >= winsNeededForMatch;
-    const winnerId = matchComplete ? (gamesWonA > gamesWonB ? match.team_a_id : match.team_b_id) : null;
-    const loserId = matchComplete ? (gamesWonA > gamesWonB ? match.team_b_id : match.team_a_id) : null;
+    const { gamesWonA, gamesWonB, complete: matchComplete, winnerId, loserId } =
+      computeDoublesElimResult(updatedGames, match.best_of, match.team_a_id, match.team_b_id);
 
     // Optimistic update
     const matchUpdates: Partial<Match> = {

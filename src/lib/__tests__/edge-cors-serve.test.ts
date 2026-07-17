@@ -93,7 +93,6 @@ const expectedPresetFiles: Record<string, string[]> = {
     "og-tournament",
     "og-video",
     "send-push-notification",
-    "sitemap",
   ],
   cronCorsHeaders: [
     "feed-embeds-sync",
@@ -204,7 +203,7 @@ describe("Edge Function CORS and server entrypoints", () => {
   });
 
   it("routes every characterized CORS declaration through its exact preset", () => {
-    expect(Object.values(expectedPresetFiles).flat()).toHaveLength(39);
+    expect(Object.values(expectedPresetFiles).flat()).toHaveLength(38);
 
     for (const [preset, functionNames] of Object.entries(expectedPresetFiles)) {
       for (const functionName of functionNames) {
@@ -219,7 +218,7 @@ describe("Edge Function CORS and server entrypoints", () => {
       [...functionSources.values()].filter((source) =>
         source.includes('_shared/cors.ts"'),
       ),
-    ).toHaveLength(74);
+    ).toHaveLength(73);
     expect(combined).not.toMatch(/const corsHeaders\s*=/i);
     expect(combined).not.toMatch(
       /import\s*\{[^}]*corsHeaders[^}]*\}\s*from\s*["']\.\.\/_shared\/auth\.ts["']/s,
@@ -233,7 +232,7 @@ describe("Edge Function CORS and server entrypoints", () => {
   });
 
   it("uses Deno.serve for every function entrypoint", () => {
-    expect(functionSources).toHaveLength(76);
+    expect(functionSources).toHaveLength(75);
     for (const [functionName, source] of functionSources) {
       expect(source, functionName).toContain("Deno.serve(");
       expect(source, functionName).not.toMatch(

@@ -32,25 +32,16 @@ import { cn } from '@/lib/utils';
 
 // Type aliases (not interfaces) so they're assignable to Supabase's `Json`
 // column type when persisted — interfaces lack the implicit index signature.
-type SetScore = {
-  s1: number;
-  s2: number;
-};
-
-type HistoryEntry = {
-  action: 'score' | 'swap_sides' | 'swap_serve' | 'end_set' | 'timeout' | 'medical';
-  player?: 1 | 2;
-  delta?: number;
-  set?: number;
-  prevServingSide?: number;
-  prevSidesSwapped?: boolean;
-  prevScore1?: number;
-  prevScore2?: number;
-  prevSetScores?: SetScore[];
-  prevCurrentSet?: number;
-  prevServerNumber?: number;
-  side?: 1 | 2;
-};
+import {
+  applyScoreDelta,
+  nextServe,
+  endSetTransition,
+  computeManualWinner,
+  finalizeSetScores,
+  applyUndo,
+  type SetScore,
+  type HistoryEntry,
+} from '@/lib/manualScoring';
 
 interface MatchData {
   id: string;
@@ -396,12 +387,12 @@ const MatchScoring = () => {
     };
 
     if (player === 1) {
-      const newScore = Math.max(0, localScore1 + delta);
+      const newScore = applyScoreDelta(localScore1, delta);
       setLocalScore1(newScore);
       setLocalHistory(prev => [...prev, entry]);
       setTimeout(() => persistState({ score1: newScore, score_history: [...localHistory, entry], match_timer_started_at: timerStartedAt || new Date().toISOString() }), 0);
     } else {
-      const newScore = Math.max(0, localScore2 + delta);
+      const newScore = applyScoreDelta(localScore2, delta);
       setLocalScore2(newScore);
       setLocalHistory(prev => [...prev, entry]);
       setTimeout(() => persistState({ score2: newScore, score_history: [...localHistory, entry], match_timer_started_at: timerStartedAt || new Date().toISOString() }), 0);
@@ -422,28 +413,9 @@ const MatchScoring = () => {
   const handleSwapServe = () => {
     if (isReadOnly || match?.status === 'completed') return;
     const entry: HistoryEntry = { action: 'swap_serve', prevServingSide: localServingSide, prevServerNumber: serverNumber };
-    
-    let newSide = localServingSide;
-    let newServerNum = serverNumber;
-    
-    if (localServingSide === 1 && serverNumber === 2) {
-      // A2 -> B1
-      newSide = 2;
-      newServerNum = 1;
-    } else if (localServingSide === 2 && serverNumber === 1) {
-      // B1 -> B2
-      newSide = 2;
-      newServerNum = 2;
-    } else if (localServingSide === 2 && serverNumber === 2) {
-      // B2 -> A1
-      newSide = 1;
-      newServerNum = 1;
-    } else if (localServingSide === 1 && serverNumber === 1) {
-      // A1 -> A2
-      newSide = 1;
-      newServerNum = 2;
-    }
-    
+
+    const { servingSide: newSide, serverNumber: newServerNum } = nextServe(localServingSide, serverNumber);
+
     setLocalServingSide(newSide);
     setServerNumber(newServerNum);
     setLocalHistory(prev => [...prev, entry]);
@@ -518,33 +490,18 @@ const MatchScoring = () => {
 
     const overrides: TablesUpdate<'quick_table_matches'> = { score_history: newHistory };
 
-    switch (last.action) {
-      case 'score':
-        if (last.prevScore1 !== undefined) { setLocalScore1(last.prevScore1); overrides.score1 = last.prevScore1; }
-        if (last.prevScore2 !== undefined) { setLocalScore2(last.prevScore2); overrides.score2 = last.prevScore2; }
-        break;
-      case 'swap_sides':
-        if (last.prevSidesSwapped !== undefined) { setLocalSidesSwapped(last.prevSidesSwapped); overrides.sides_swapped = last.prevSidesSwapped; }
-        break;
-      case 'swap_serve':
-        if (last.prevServingSide !== undefined) { setLocalServingSide(last.prevServingSide); overrides.serving_side = last.prevServingSide; }
-        if (last.prevServerNumber !== undefined) { setServerNumber(last.prevServerNumber); }
-        break;
-      case 'end_set':
-        if (last.prevScore1 !== undefined) { setLocalScore1(last.prevScore1); overrides.score1 = last.prevScore1; }
-        if (last.prevScore2 !== undefined) { setLocalScore2(last.prevScore2); overrides.score2 = last.prevScore2; }
-        if (last.prevSetScores) { setLocalSetScores(last.prevSetScores); overrides.set_scores = last.prevSetScores; }
-        if (last.prevCurrentSet !== undefined) { setLocalCurrentSet(last.prevCurrentSet); overrides.current_set = last.prevCurrentSet; }
-        break;
-      case 'timeout':
-        if (last.side === 1) setTimeoutsUsed1(prev => Math.max(0, prev - 1));
-        else if (last.side === 2) setTimeoutsUsed2(prev => Math.max(0, prev - 1));
-        break;
-      case 'medical':
-        if (last.side === 1) setMedicalUsed1(prev => Math.max(0, prev - 1));
-        else if (last.side === 2) setMedicalUsed2(prev => Math.max(0, prev - 1));
-        break;
-    }
+    const undo = applyUndo(last);
+    if (undo.score1 !== undefined) { setLocalScore1(undo.score1); overrides.score1 = undo.score1; }
+    if (undo.score2 !== undefined) { setLocalScore2(undo.score2); overrides.score2 = undo.score2; }
+    if (undo.sidesSwapped !== undefined) { setLocalSidesSwapped(undo.sidesSwapped); overrides.sides_swapped = undo.sidesSwapped; }
+    if (undo.servingSide !== undefined) { setLocalServingSide(undo.servingSide); overrides.serving_side = undo.servingSide; }
+    if (undo.serverNumber !== undefined) { setServerNumber(undo.serverNumber); }
+    if (undo.setScores) { setLocalSetScores(undo.setScores); overrides.set_scores = undo.setScores; }
+    if (undo.currentSet !== undefined) { setLocalCurrentSet(undo.currentSet); overrides.current_set = undo.currentSet; }
+    if (undo.timeoutSide === 1) setTimeoutsUsed1(prev => Math.max(0, prev - 1));
+    else if (undo.timeoutSide === 2) setTimeoutsUsed2(prev => Math.max(0, prev - 1));
+    if (undo.medicalSide === 1) setMedicalUsed1(prev => Math.max(0, prev - 1));
+    else if (undo.medicalSide === 2) setMedicalUsed2(prev => Math.max(0, prev - 1));
     persistState(overrides);
   };
 
@@ -560,8 +517,8 @@ const MatchScoring = () => {
       prevCurrentSet: localCurrentSet,
     };
 
-    const newSetScores = [...localSetScores, { s1: localScore1, s2: localScore2 }];
-    const newCurrentSet = localCurrentSet + 1;
+    const { setScores: newSetScores, currentSet: newCurrentSet } =
+      endSetTransition(localSetScores, localCurrentSet, localScore1, localScore2);
 
     setLocalSetScores(newSetScores);
     setLocalCurrentSet(newCurrentSet);
@@ -613,28 +570,13 @@ const MatchScoring = () => {
     if (!matchId || !match || !table || isReadOnly) return;
 
     // Determine winner based on sets or score
-    let winnerId: string | null = null;
-    if (localTotalSets > 1) {
-      let sets1 = 0, sets2 = 0;
-      for (const s of localSetScores) {
-        if (s.s1 > s.s2) sets1++;
-        else if (s.s2 > s.s1) sets2++;
-      }
-      if (localScore1 > localScore2) sets1++;
-      else if (localScore2 > localScore1) sets2++;
-
-      if (sets1 > sets2 && player1) winnerId = player1.id;
-      else if (sets2 > sets1 && player2) winnerId = player2.id;
-    } else {
-      if (localScore1 > localScore2 && player1) winnerId = player1.id;
-      else if (localScore2 > localScore1 && player2) winnerId = player2.id;
-    }
+    const winnerId = computeManualWinner(
+      localTotalSets, localSetScores, localScore1, localScore2,
+      player1?.id ?? null, player2?.id ?? null,
+    );
 
     // If current set has scores, save to set_scores
-    let finalSetScores = [...localSetScores];
-    if (localScore1 > 0 || localScore2 > 0) {
-      finalSetScores = [...localSetScores, { s1: localScore1, s2: localScore2 }];
-    }
+    const finalSetScores = finalizeSetScores(localSetScores, localScore1, localScore2);
 
     try {
       let finalElapsed = timerElapsed;

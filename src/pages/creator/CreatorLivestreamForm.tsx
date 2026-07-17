@@ -155,8 +155,6 @@ export default function CreatorLivestreamForm() {
       ended_at: formData.status === "ended" ? new Date().toISOString() : null,
       streaming_provider: "mux",
       hls_url: null as string | null,
-      red5_stream_name: null as string | null,
-      red5_server_url: null as string | null,
       mux_live_stream_id: formData.mux_live_stream_id || null,
       mux_playback_id: formData.mux_playback_id || null,
       mux_stream_key: formData.mux_stream_key || null,

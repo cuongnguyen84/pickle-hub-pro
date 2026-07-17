@@ -27,7 +27,7 @@
 // Revisit when quick_table_registrations gets adopted.
 // ============================================================================
 
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
 import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 
