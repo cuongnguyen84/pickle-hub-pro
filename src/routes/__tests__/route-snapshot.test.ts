@@ -41,7 +41,10 @@ describe("App.tsx route table characterization", () => {
   });
 
   it("route table matches the checked-in snapshot exactly", () => {
-    expect(actual).toEqual(snapshot);
+    // Order-insensitive: React Router v6 ranks by path specificity, not
+    // source order, so ordering is non-behavioral. Content must be exact.
+    const byPath = (list: RouteEntry[]) => [...list].sort((a, b) => a.path.localeCompare(b.path));
+    expect(byPath(actual)).toEqual(byPath(snapshot as RouteEntry[]));
   });
 
   it("every /vi route keeps its language mechanism or is a redirect", () => {
