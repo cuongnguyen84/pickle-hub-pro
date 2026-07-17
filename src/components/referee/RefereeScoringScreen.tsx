@@ -42,8 +42,11 @@ interface ScreenProps {
    *  the consumer writes it to the row (spectators read serve/set/rotation
    *  from it in realtime). Called with null on finish to clear the row. */
   onLiveState?: (s: RefereeLiveState | null) => void;
-  /** Claim the match as LIVE when the game begins. */
-  onClaimLive?: () => void;
+  /** Claim the match as LIVE when the game begins. Codex review 2026-07-17:
+   *  return `false` when the claim was LOST to another referee (row already
+   *  claimed by someone else) — the screen then refuses to start scoring.
+   *  Returning void/true/undefined keeps the old best-effort behavior. */
+  onClaimLive?: () => Promise<boolean | void> | boolean | void;
   /** S3a contention lockout: another referee holds live_referee_id. The
    *  screen becomes a static snapshot — no actions, no persistence (a
    *  viewer must never overwrite the scoring referee's state). Computed by
@@ -63,10 +66,15 @@ type Active = { side: ServeSide; kind: 'reg' | 'med'; left: number };
 const card: React.CSSProperties = { background: 'var(--tl-surface)', border: '1px solid var(--tl-border)', borderRadius: 'var(--tl-radius-lg)' };
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, initialLiveState, onLiveState, onClaimLive, readOnly = false, onFinish, onBack }: ScreenProps) {
+export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, initialLiveState, onLiveState, onClaimLive, readOnly: readOnlyProp = false, onFinish, onBack }: ScreenProps) {
   const navigate = useNavigate();
   const storeKey = persistKey;
   const noteKey = `${persistKey}:note`;
+
+  // Claim lost at begin (another referee raced us) → same lockout as the
+  // consumer-computed readOnly. Every gate below reads the derived value.
+  const [claimDenied, setClaimDenied] = useState(false);
+  const readOnly = readOnlyProp || claimDenied;
 
   // setup
   const [mode, setMode] = useState<ScoringMode>('rally');
@@ -167,10 +175,14 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     }, 400);
     return () => { if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, history, usedReg, usedMed, noteA, noteB, regularTO]);
+  }, [state, history, usedReg, usedMed, noteA, noteB, regularTO, readOnly]);
   // Unmount flush — a rally scored right before closing must still land.
+  // readOnlyRef mirrors the derived lockout so the flush never writes for
+  // a viewer (Codex review 2026-07-17).
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
   useEffect(() => () => {
-    if (!finishedRef.current && liveStateTimer.current && pendingEnvRef.current) {
+    if (!finishedRef.current && !readOnlyRef.current && liveStateTimer.current && pendingEnvRef.current) {
       onLiveStateRef.current?.(pendingEnvRef.current);
     }
   }, []);
@@ -230,17 +242,20 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   }, [tossing]);
   useEffect(() => () => { if (tossTimer.current) window.clearTimeout(tossTimer.current); }, []);
 
-  const begin = useCallback(() => {
+  const begin = useCallback(async () => {
     if (readOnly || setupServer == null) return;
+    // Codex review 2026-07-17: AWAIT the claim before any writable state
+    // exists — two referees racing an empty claim must not both score.
+    const claim = await onClaimLive?.();
+    if (claim === false) { setClaimDenied(true); return; }
     setState(startState({
-      mode, isSingles: false, winTarget: target, firstServer: setupServer,
+      mode, isSingles: !loaded.isDoubles, winTarget: target, firstServer: setupServer,
       players: rotationCapable ? { a: loaded.playersA!, b: loaded.playersB! } : undefined,
       firstServerIdx: setupServerIdx ?? 0, firstReceiverIdx: setupReceiverIdx ?? 0,
       totalSets: mode === 'manual' ? totalSetsPick : undefined,
     }));
     setHistory([]); setSwitchAnnounced(false);
     void goLandscape();
-    onClaimLive?.();
   }, [loaded, mode, target, totalSetsPick, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape, onClaimLive, readOnly]);
 
   const tap = useCallback((side: ServeSide) => {
@@ -349,7 +364,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
         />
       ) : (
         <Board vi={vi} loaded={loaded} state={state} target={target}
-          onTap={tap} onUndo={undo} canUndo={history.length > 0} onEnd={() => setConfirming(true)}
+          onTap={tap} onUndo={undo} canUndo={history.length > 0} onEnd={() => { if (!readOnly) setConfirming(true); }}
           onManualAdjust={(side, delta) => manualAct((s) => manualAdjust(s, side, delta))}
           onManualServe={() => manualAct(manualNextServe)}
           onManualToggleServer={() => manualAct(manualToggleServer)}

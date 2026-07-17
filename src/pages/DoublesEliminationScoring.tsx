@@ -607,19 +607,37 @@ export default function DoublesEliminationScoring() {
     if (!refereeing || !refMatchId) { setRefInit({ ready: false, value: null, claimedBy: null }); return undefined; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from('doubles_elimination_matches').select('*').eq('id', refMatchId).single();
-      const row = data as unknown as { referee_live_state?: unknown; live_referee_id?: string | null } | null;
-      if (!cancelled) setRefInit({ ready: true, value: row?.referee_live_state ?? null, claimedBy: row?.live_referee_id ?? null });
+      const { data, error } = await supabase.from('doubles_elimination_matches').select('*').eq('id', refMatchId).single();
+      if (cancelled) return;
+      if (error || !data) {
+        // Codex review 2026-07-17: fail CLOSED — a possibly-claimed match
+        // must not become writable because the claim check failed.
+        setRefInit({ ready: true, value: null, claimedBy: 'unknown-fetch-failed' });
+        return;
+      }
+      const row = data as unknown as { referee_live_state?: unknown; live_referee_id?: string | null };
+      setRefInit({ ready: true, value: row.referee_live_state ?? null, claimedBy: row.live_referee_id ?? null });
     })();
     return () => { cancelled = true; };
   }, [refereeing, refMatchId]);
   // S3a: another referee holds the claim -> static snapshot, no writes.
   const refReadOnly = !!refInit.claimedBy && refInit.claimedBy !== user?.id;
-  const refClaimLive = async () => {
+  // Codex review 2026-07-17: report a LOST claim (false) so the screen
+  // refuses to start scoring.
+  const refClaimLive = async (): Promise<boolean | void> => {
     try {
       const { data } = await supabase.auth.getUser();
-      if (data.user && match) await supabase.from('doubles_elimination_matches').update({ live_referee_id: data.user.id }).eq('id', match.id).is('live_referee_id', null);
-    } catch { /* ignore */ }
+      if (!data.user || !match) return undefined;
+      const { data: claimed } = await supabase
+        .from('doubles_elimination_matches')
+        .update({ live_referee_id: data.user.id })
+        .eq('id', match.id).is('live_referee_id', null)
+        .select('id').maybeSingle();
+      if (claimed) return true;
+      const { data: row } = await supabase
+        .from('doubles_elimination_matches').select('live_referee_id').eq('id', match.id).single();
+      return (row as { live_referee_id?: string | null } | null)?.live_referee_id === data.user.id;
+    } catch { return undefined; }
   };
 
   // ─── Loading + 404 states ────────────────────────────────────────────────
