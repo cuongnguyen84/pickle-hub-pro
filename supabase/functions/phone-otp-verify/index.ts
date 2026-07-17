@@ -20,7 +20,7 @@
 // verify_jwt=false; service-role client used internally.
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { normalizeVietnamPhone } from "../_shared/phone.ts";
