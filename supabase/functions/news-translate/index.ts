@@ -140,7 +140,8 @@ Deno.serve(async (req) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[news-translate] fatal:", message);
-    return json({ error: message }, 500);
+    // CodeQL js/stack-trace-exposure: keep the detail in logs, not the body.
+    return json({ error: "internal_error" }, 500);
   }
 });
 

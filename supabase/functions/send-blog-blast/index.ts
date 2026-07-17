@@ -54,9 +54,18 @@ const SITE_URL = "https://www.thepicklehub.net";
 // Content helpers
 // ---------------------------------------------------------------------------
 
-/** Strip HTML tags from a string. */
+/** Strip HTML tags from a string.
+ * Loops to a fixpoint so nested/overlapping fragments cannot reassemble
+ * into a tag after one pass (CodeQL js/incomplete-multi-character-sanitization).
+ */
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, "").trim();
+  let out = html;
+  let prev: string;
+  do {
+    prev = out;
+    out = out.replace(/<[^>]+>/g, "");
+  } while (out !== prev);
+  return out.trim();
 }
 
 /**
@@ -551,9 +560,11 @@ Deno.serve(async (req) => {
       .eq("post_id", post.id)
       .eq("post_language", language);
 
-    // Return 200 so Supabase doesn't retry the webhook indefinitely
+    // Return 200 so Supabase doesn't retry the webhook indefinitely.
+    // CodeQL js/stack-trace-exposure: detail is in posts_blasts (admin UI)
+    // and console.error; the response body stays generic.
     return new Response(
-      JSON.stringify({ success: false, error: msg }),
+      JSON.stringify({ success: false, error: "mailchimp_error" }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   }
