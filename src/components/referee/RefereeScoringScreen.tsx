@@ -5,6 +5,7 @@ import {
   startState, applyRally, callout, isGameOver, scoreOf,
   servingPlayer, receivingPlayer, servingSideRight, sideSwitchPoint,
   makeLiveState, parseLiveState,
+  manualAdjust, manualNextServe, manualToggleServer,
   type ScoreState, type ScoringMode, type ServeSide, type RefereeLiveState,
 } from '@/lib/refereeScoring';
 
@@ -246,6 +247,15 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     else if (!switchAnnounced && Math.max(next.a, next.b) >= sideSwitchPoint(target)) { setSwitchAnnounced(true); setShowSwitch(true); }
   }, [state, switchAnnounced, target, readOnly]);
 
+  // Manual-mode actions: push prev state for undo, apply the pure transition.
+  const manualAct = useCallback((fn: (s: ScoreState) => ScoreState) => {
+    if (readOnly || !state) return;
+    const next = fn(state);
+    if (next === state) return;
+    setHistory((h) => [...h, state]);
+    setState(next);
+  }, [state, readOnly]);
+
   const undo = useCallback(() => {
     if (readOnly) return;
     setHistory((h) => {
@@ -328,6 +338,9 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       ) : (
         <Board vi={vi} loaded={loaded} state={state} target={target}
           onTap={tap} onUndo={undo} canUndo={history.length > 0} onEnd={() => setConfirming(true)}
+          onManualAdjust={(side, delta) => manualAct((s) => manualAdjust(s, side, delta))}
+          onManualServe={() => manualAct(manualNextServe)}
+          onManualToggleServer={() => manualAct(manualToggleServer)}
           regularTO={regularTO} usedReg={usedReg} usedMed={usedMed} onTimeout={startTO} />
       )}
 
@@ -384,11 +397,13 @@ function Setup(props: {
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24, paddingBottom: 'calc(32px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 520, margin: '0 auto', width: '100%' }}>
       <Field label={vi ? 'Thể thức tính điểm' : 'Scoring'}>
-        <Segmented options={[['rally', vi ? 'Trực tiếp' : 'Rally'], ['sideOut', vi ? 'Giao bóng' : 'Side-out']]} value={mode} onChange={(v) => setMode(v as ScoringMode)} />
+        <Segmented options={[['rally', vi ? 'Trực tiếp' : 'Rally'], ['sideOut', vi ? 'Giao bóng' : 'Side-out'], ['manual', vi ? 'Bảng điểm tay' : 'Manual']]} value={mode} onChange={(v) => setMode(v as ScoringMode)} />
       </Field>
-      <Field label={vi ? 'Điểm thắng' : 'Win target'}>
-        <Segmented options={[[11, '11'], [15, '15'], [21, '21']]} value={target} onChange={(v) => setTarget(v as number)} />
-      </Field>
+      {mode !== 'manual' && (
+        <Field label={vi ? 'Điểm thắng' : 'Win target'}>
+          <Segmented options={[[11, '11'], [15, '15'], [21, '21']]} value={target} onChange={(v) => setTarget(v as number)} />
+        </Field>
+      )}
       <Field label={vi ? 'Số timeout mỗi đội' : 'Timeouts / team'}>
         <Segmented options={[[1, '1'], [2, '2'], [3, '3']]} value={props.regularTO} onChange={(v) => props.setRegularTO(v as number)} />
       </Field>
@@ -424,6 +439,8 @@ function Setup(props: {
 function Board(props: {
   vi: boolean; loaded: RefereeLoaded; state: ScoreState; target: number;
   onTap: (s: ServeSide) => void; onUndo: () => void; canUndo: boolean; onEnd: () => void;
+  onManualAdjust: (side: ServeSide, delta: number) => void;
+  onManualServe: () => void; onManualToggleServer: () => void;
   regularTO: number; usedReg: Sides; usedMed: Sides; onTimeout: (s: ServeSide, k: 'reg' | 'med') => void;
 }) {
   const { vi, loaded, state, target } = props;
@@ -434,7 +451,7 @@ function Board(props: {
 
   const serveLine = server && recv && right !== null
     ? `${vi ? 'GIAO' : 'SERVE'}: ${server} (${vi ? 'sân' : 'court'} ${right ? (vi ? 'phải' : 'R') : (vi ? 'trái' : 'L')})  ·  ${vi ? 'ĐỠ' : 'RECV'}: ${recv}`
-    : mode === 'sideOut' ? `${vi ? 'đang giao' : 'serving'}: ${servingName}${state.isSingles ? '' : ` · ${vi ? 'tay' : 'server'} ${state.serverNumber}`}` : (vi ? 'tính điểm trực tiếp' : 'rally scoring');
+    : mode !== 'rally' ? `${vi ? 'đang giao' : 'serving'}: ${servingName}${state.isSingles ? '' : ` · ${vi ? 'tay' : 'server'} ${state.serverNumber}`}` : (vi ? 'tính điểm trực tiếp' : 'rally scoring');
 
   const calloutBar = (
     <div style={{ textAlign: 'center', padding: '12px', background: 'var(--tl-surface)' }}>
@@ -455,7 +472,9 @@ function Board(props: {
       <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 13, opacity: props.canUndo ? 1 : 0.4 }} disabled={!props.canUndo} onClick={props.onUndo}>
         <RotateCcw className="w-4 h-4" /> {vi ? 'HOÀN TÁC' : 'UNDO'}
       </button>
-      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-fg-4)' }}>{vi ? 'tới' : 'to'} {target}</span>
+      {mode !== 'manual' && (
+        <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-fg-4)' }}>{vi ? 'tới' : 'to'} {target}</span>
+      )}
       <button type="button" className="tl-btn green" style={{ flex: 1, justifyContent: 'center', padding: 13 }} onClick={props.onEnd}>{vi ? 'KẾT THÚC' : 'END'}</button>
     </div>
   );
@@ -477,6 +496,14 @@ function Board(props: {
             <div style={{ width: 1, background: 'var(--tl-border)' }} />
             <TapZone name={loaded.teamBName} score={scoreOf(state, 'b')} onClick={() => props.onTap('b')} vi={vi} />
           </>
+        ) : mode === 'manual' ? (
+          <>
+            <ManualZone name={loaded.teamAName} score={state.a} serving={state.serving === 'a'} vi={vi}
+              onPlus={() => props.onManualAdjust('a', 1)} onMinus={() => props.onManualAdjust('a', -1)} />
+            <div style={{ width: 1, background: 'var(--tl-border)' }} />
+            <ManualZone name={loaded.teamBName} score={state.b} serving={state.serving === 'b'} vi={vi}
+              onPlus={() => props.onManualAdjust('b', 1)} onMinus={() => props.onManualAdjust('b', -1)} />
+          </>
         ) : (
           <>
             <ActionZone big={vi ? 'ĐIỂM' : 'POINT'} sub={`${vi ? 'cho' : 'for'} ${servingName}`} tone="green" onClick={() => props.onTap(state.serving)} />
@@ -485,6 +512,18 @@ function Board(props: {
           </>
         )}
       </div>
+      {mode === 'manual' && (
+        <div style={{ display: 'flex', gap: 8, padding: '6px 10px', background: 'var(--tl-surface)', justifyContent: 'center' }}>
+          <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 10, maxWidth: 260 }} onClick={props.onManualServe}>
+            <ArrowLeftRight className="w-4 h-4" /> {vi ? 'ĐỔI GIAO' : 'ROTATE SERVE'}
+          </button>
+          {!state.isSingles && (
+            <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 10, maxWidth: 260 }} onClick={props.onManualToggleServer}>
+              {vi ? `TAY ${state.serverNumber === 1 ? '2' : '1'}` : `SERVER ${state.serverNumber === 1 ? '2' : '1'}`}
+            </button>
+          )}
+        </div>
+      )}
       {toBar}
       {bottom}
     </div>
@@ -518,6 +557,22 @@ function TapZone(props: { name: string; score: number; serving?: boolean; onClic
       <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 'clamp(54px, 20vw, 96px)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{props.score}</span>
       <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--tl-fg-4)' }}>{props.vi ? 'CHẠM = +1' : 'TAP = +1'}</span>
     </button>
+  );
+}
+
+function ManualZone(props: { name: string; score: number; serving: boolean; vi: boolean; onPlus: () => void; onMinus: () => void }) {
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'var(--tl-bg)', padding: 16 }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Instrument Serif, serif', fontStyle: 'italic', fontSize: 22, textAlign: 'center' }}>
+        {props.serving && <span style={{ width: 9, height: 9, borderRadius: 99, background: 'var(--tl-green)', flexShrink: 0 }} />}
+        {props.name}
+      </span>
+      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 'clamp(54px, 20vw, 96px)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{props.score}</span>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button type="button" className="tl-btn" style={{ padding: '10px 22px', fontSize: 18, fontWeight: 700 }} onClick={props.onMinus} disabled={props.score <= 0}>−1</button>
+        <button type="button" className="tl-btn green" style={{ padding: '10px 22px', fontSize: 18, fontWeight: 700 }} onClick={props.onPlus}>+1</button>
+      </div>
+    </div>
   );
 }
 
