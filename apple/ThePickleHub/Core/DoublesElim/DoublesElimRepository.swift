@@ -66,6 +66,36 @@ struct DoublesElimRepository {
 
     // MARK: Score
 
+    /// ARCH-04 pre-work: the doubles-elimination match-result rule, shared by
+    /// score() below. Web twin: src/lib/doublesElimResult.ts
+    /// (computeDoublesElimResult) — keep the rule identical; mirror tests in
+    /// apple/Tests/DoublesElimResultTests.swift.
+    struct DEMatchResult: Equatable {
+        let gamesWonA: Int
+        let gamesWonB: Int
+        let complete: Bool
+        let winnerID: UUID?
+        let loserID: UUID?
+    }
+
+    static func computeMatchResult(games: [DEGame], bestOf: Int, teamAID: UUID?, teamBID: UUID?) -> DEMatchResult {
+        let winsA = games.filter { $0.winner == "a" }.count
+        let winsB = games.filter { $0.winner == "b" }.count
+        let needed = (bestOf + 1) / 2   // ceil(best_of / 2)
+        let complete = winsA >= needed || winsB >= needed
+        return DEMatchResult(
+            gamesWonA: winsA, gamesWonB: winsB, complete: complete,
+            winnerID: complete ? (winsA > winsB ? teamAID : teamBID) : nil,
+            loserID: complete ? (winsA > winsB ? teamBID : teamAID) : nil)
+    }
+
+    /// R4+ bracket advancement: winner of match N seats into next-round match
+    /// N-1 over 2, slot A for odd N. Web twin: bracketAdvanceTarget.
+    static func advanceTarget(matchNumber: Int) -> (nextMatchIndex: Int, slotA: Bool) {
+        let idx = matchNumber - 1
+        return (idx / 2, idx % 2 == 0)
+    }
+
     private struct ScoreBO1Update: Encodable { let score_a: Int; let score_b: Int; let winner_id: String?; let status: String }
     private struct GamesUpdate: Encodable { let games: [DEGame]; let games_won_a: Int; let games_won_b: Int; let winner_id: String?; let status: String }
     private struct TeamAUpdate: Encodable { let team_a_id: String }
@@ -96,14 +126,13 @@ struct DoublesElimRepository {
             let games = valid.enumerated().map { i, s in
                 DEGame(game: i + 1, scoreA: s.0, scoreB: s.1, winner: s.0 > s.1 ? "a" : "b")
             }
-            let winsA = games.filter { $0.winner == "a" }.count
-            let winsB = games.filter { $0.winner == "b" }.count
-            let needed = (match.bestOf + 1) / 2   // ceil(best_of / 2)
-            complete = winsA >= needed || winsB >= needed
-            winnerID = complete ? (winsA > winsB ? match.teamAID : match.teamBID) : nil
-            loserID = complete ? (winsA > winsB ? match.teamBID : match.teamAID) : nil
+            let result = Self.computeMatchResult(games: games, bestOf: match.bestOf,
+                                                 teamAID: match.teamAID, teamBID: match.teamBID)
+            complete = result.complete
+            winnerID = result.winnerID
+            loserID = result.loserID
             try await client.from("doubles_elimination_matches")
-                .update(GamesUpdate(games: games, games_won_a: winsA, games_won_b: winsB,
+                .update(GamesUpdate(games: games, games_won_a: result.gamesWonA, games_won_b: result.gamesWonB,
                                     winner_id: winnerID?.uuidString,
                                     status: complete ? "completed" : "live"))
                 .eq("id", value: match.id).execute()
@@ -171,11 +200,10 @@ struct DoublesElimRepository {
                 .eq("tournament_id", value: match.tournamentID).eq("round_number", value: match.roundNumber + 1)
                 .neq("round_type", value: "third_place")
                 .order("match_number", ascending: true).execute().value
-            let idx = match.matchNumber - 1
-            let nextIdx = idx / 2
+            let (nextIdx, slotA) = Self.advanceTarget(matchNumber: match.matchNumber)
             guard next.count > nextIdx else { return }
             let target = next[nextIdx]
-            if idx % 2 == 0 {
+            if slotA {
                 try await client.from("doubles_elimination_matches").update(TeamAUpdate(team_a_id: winnerID.uuidString)).eq("id", value: target.id).execute()
             } else {
                 try await client.from("doubles_elimination_matches").update(TeamBUpdate(team_b_id: winnerID.uuidString)).eq("id", value: target.id).execute()
