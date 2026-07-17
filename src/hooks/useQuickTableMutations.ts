@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { tStandalone } from '@/lib/i18n-standalone';
 import type { QuickTable, QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickMatchStatus, QuickTableStatus } from './useQuickTable';
 import { generateRoundRobinMatches } from '@/lib/quick-table-utils';
+import { quickTableWinner, playoffAdvanceTarget, accumulateGroupStats } from '@/lib/quickTableResult';
 
 // W1.2 — Helper to extract Postgres error code from a Supabase error.
 // We use this to surface specific user-facing messages for known RLS
@@ -195,8 +196,6 @@ export function useQuickTableMutations() {
   ): Promise<void> => {
     setPendingFor('updateMatchScore', true);
     try {
-      const winnerId = score1 > score2 ? 'player1' : score1 < score2 ? 'player2' : null;
-
       const { data: match } = await supabase
         .from('quick_table_matches')
         .select('player1_id, player2_id, is_playoff, playoff_round, playoff_match_number, table_id, winner_id')
@@ -205,8 +204,7 @@ export function useQuickTableMutations() {
 
       if (!match) return;
 
-      const newWinner = winnerId === 'player1' ? match.player1_id :
-                        winnerId === 'player2' ? match.player2_id : null;
+      const newWinner = quickTableWinner(score1, score2, match.player1_id, match.player2_id);
 
       const { error: updateError } = await supabase
         .from('quick_table_matches')
@@ -242,8 +240,7 @@ export function useQuickTableMutations() {
         if (!currentRoundMatches) return;
 
         const positionInRound = currentRoundMatches.findIndex(m => m.id === matchId);
-        const nextMatchIndex = Math.floor(positionInRound / 2);
-        const slot = positionInRound % 2;
+        const { nextMatchIndex, slot } = playoffAdvanceTarget(positionInRound);
 
         const { data: nextRoundMatches } = await supabase
           .from('quick_table_matches')
@@ -255,7 +252,7 @@ export function useQuickTableMutations() {
 
         if (nextRoundMatches && nextRoundMatches.length > nextMatchIndex) {
           const nextMatch = nextRoundMatches[nextMatchIndex];
-          const updateData = slot === 0
+          const updateData = slot === 'player1'
             ? { player1_id: newWinner }
             : { player2_id: newWinner };
 
@@ -299,31 +296,7 @@ export function useQuickTableMutations() {
 
       if (playerError || !players || players.length === 0) return;
 
-      const stats: Record<string, { played: number; won: number; pf: number; pa: number }> = {};
-
-      for (const player of players) {
-        stats[player.id] = { played: 0, won: 0, pf: 0, pa: 0 };
-      }
-
-      for (const match of matches) {
-        if (match.player1_id && match.player2_id && match.score1 !== null && match.score2 !== null) {
-          const player1Wins = match.score1 > match.score2;
-          const player2Wins = match.score2 > match.score1;
-
-          if (stats[match.player1_id]) {
-            stats[match.player1_id].played++;
-            stats[match.player1_id].pf += match.score1;
-            stats[match.player1_id].pa += match.score2;
-            if (player1Wins) stats[match.player1_id].won++;
-          }
-          if (stats[match.player2_id]) {
-            stats[match.player2_id].played++;
-            stats[match.player2_id].pf += match.score2;
-            stats[match.player2_id].pa += match.score1;
-            if (player2Wins) stats[match.player2_id].won++;
-          }
-        }
-      }
+      const stats = accumulateGroupStats(matches, players.map(p => p.id));
 
       for (const [playerId, stat] of Object.entries(stats)) {
         await supabase
