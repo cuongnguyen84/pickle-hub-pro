@@ -73,10 +73,10 @@ const OrganizationDetail = () => {
     };
 
     // Apply content type filter
-    let filteredLive = contentType === "all" || contentType === "live" ? filterBySearch(live) : [];
+    const filteredLive = contentType === "all" || contentType === "live" ? filterBySearch(live) : [];
     let filteredScheduled = contentType === "all" || contentType === "live" ? filterBySearch(scheduled) : [];
-    let filteredReplay = contentType === "all" || contentType === "replay" ? filterBySearch(replay) : [];
-    let filteredVids = contentType === "all" || contentType === "video" ? filterBySearch(allVideos) : [];
+    const filteredReplay = contentType === "all" || contentType === "replay" ? filterBySearch(replay) : [];
+    const filteredVids = contentType === "all" || contentType === "video" ? filterBySearch(allVideos) : [];
 
     // Sort by sortOption
     if (sortOption === "upcoming") {

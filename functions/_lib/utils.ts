@@ -235,6 +235,7 @@ export function sanitizeBlogHtml(html: string): string {
     (match, attr, quote, value) => {
       // Strip whitespace + control chars so "java\tscript:" style bypasses
       // can't slip past the scheme check.
+      // eslint-disable-next-line no-control-regex -- control chars are exactly what this strips (XSS scheme-bypass defense)
       const v = String(value).replace(/[\s\u0000-\u001f]/g, "").toLowerCase();
       const safe =
         v.startsWith("http://") ||

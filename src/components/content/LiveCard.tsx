@@ -69,7 +69,7 @@ const LiveCard = ({
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading={priority ? "eager" : "lazy"}
             decoding={priority ? "sync" : "async"}
-            // @ts-ignore - fetchpriority is a valid HTML attribute
+            // @ts-expect-error - fetchpriority is a valid HTML attribute missing from React types
             fetchpriority={priority ? "high" : "auto"}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
