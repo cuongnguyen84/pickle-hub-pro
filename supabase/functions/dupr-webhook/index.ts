@@ -22,8 +22,8 @@
 // verify_jwt = false in config.toml; no JWT — public.
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { partnerFetch } from "../_shared/dupr-client.ts";
