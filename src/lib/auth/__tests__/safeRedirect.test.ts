@@ -57,6 +57,17 @@ describe("isValidInternalPath", () => {
     expect(isValidInternalPath("/foo bar")).toBe(false);
     expect(isValidInternalPath("/foo\nbar")).toBe(false);
     expect(isValidInternalPath("/foo\tbar")).toBe(false);
+    expect(isValidInternalPath("/foo\x00bar")).toBe(false);
+    expect(isValidInternalPath("/foo\x1fbar")).toBe(false);
+    expect(isValidInternalPath("/foo\x7fbar")).toBe(false);
+    expect(isValidInternalPath("/foo\u00a0bar")).toBe(false);
+  });
+
+  it("accepts hyphenated slugs (the char class must not swallow '-')", () => {
+    expect(isValidInternalPath("/tim-ban-choi")).toBe(true);
+    expect(isValidInternalPath("/tin-nhan")).toBe(true);
+    expect(isValidInternalPath("/tournament/abc-def")).toBe(true);
+    expect(isValidInternalPath("/vi/bang-xep-hang")).toBe(true);
   });
 });
 
