@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RefereeScoringScreen, type RefereeLoaded } from '@/components/referee/RefereeScoringScreen';
 import type { RefereeLiveState } from '@/lib/refereeScoring';
+import { useAuth } from '@/hooks/useAuth';
 import { computeTeamMatchResult } from '@/lib/teamMatchResult';
 import { useI18n } from '@/i18n';
 import {
@@ -96,6 +97,7 @@ export function TeamMatchScoringSheet({
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
   const { language } = useI18n();
+  const { user } = useAuth();
 
   // Subscribe to realtime updates for this match
   useTeamMatchMatchRealtime(match?.id);
@@ -181,13 +183,14 @@ export function TeamMatchScoringSheet({
   // opens — the query-cache snapshot can be stale by then. (Hook lives
   // above the `if (!match) return null` early return.)
   const refGameId = currentGame?.id;
-  const [refInit, setRefInit] = useState<{ ready: boolean; value: unknown }>({ ready: false, value: null });
+  const [refInit, setRefInit] = useState<{ ready: boolean; value: unknown; claimedBy: string | null }>({ ready: false, value: null, claimedBy: null });
   useEffect(() => {
-    if (!refereeing || !refGameId) { setRefInit({ ready: false, value: null }); return undefined; }
+    if (!refereeing || !refGameId) { setRefInit({ ready: false, value: null, claimedBy: null }); return undefined; }
     let cancelled = false;
     (async () => {
       const { data } = await supabase.from('team_match_games').select('*').eq('id', refGameId).single();
-      if (!cancelled) setRefInit({ ready: true, value: (data as unknown as { referee_live_state?: unknown } | null)?.referee_live_state ?? null });
+      const row = data as unknown as { referee_live_state?: unknown; live_referee_id?: string | null } | null;
+      if (!cancelled) setRefInit({ ready: true, value: row?.referee_live_state ?? null, claimedBy: row?.live_referee_id ?? null });
     })();
     return () => { cancelled = true; };
   }, [refereeing, refGameId]);
@@ -335,6 +338,8 @@ export function TeamMatchScoringSheet({
     if (!currentGame) return;
     void supabase.from('team_match_games').update({ referee_live_state: s } as never).eq('id', currentGame.id).then((): void => undefined, (): void => undefined);
   };
+  // S3a: another referee holds the claim -> static snapshot, no writes.
+  const refReadOnly = !!refInit.claimedBy && refInit.claimedBy !== user?.id;
   const refClaimLive = async () => {
     try {
       const { data } = await supabase.auth.getUser();
@@ -972,6 +977,7 @@ export function TeamMatchScoringSheet({
             persistKey={`tm-ref:${refLoaded.matchId}`}
             initialLiveState={refInit.value}
             onLiveState={refLiveState}
+            readOnly={refReadOnly}
             onLiveScore={refLiveScore}
             onClaimLive={refClaimLive}
             onFinish={(a, b) => refFinish(a, b)}

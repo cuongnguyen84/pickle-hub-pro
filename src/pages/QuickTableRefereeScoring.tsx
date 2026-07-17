@@ -16,6 +16,7 @@ export default function QuickTableRefereeScoring() {
 
   const [loaded, setLoaded] = useState<RefereeLoaded | null>(null);
   const [initialLiveState, setInitialLiveState] = useState<unknown>(null);
+  const [readOnly, setReadOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Quick-Table-only context used by onFinish (kept out of the generic shape).
   const ctx = useRef<{ tableId: string; groupId: string | null; isPlayoff: boolean; shareId: string }>({ tableId: '', groupId: null, isPlayoff: false, shareId: '' });
@@ -30,6 +31,10 @@ export default function QuickTableRefereeScoring() {
           .from('quick_table_matches').select('*').eq('id', matchId).single();
         if (me || !m) throw me || new Error('match');
         setInitialLiveState((m as unknown as { referee_live_state?: unknown }).referee_live_state ?? null);
+        // S3a: another referee holds the claim -> static snapshot, no writes.
+        const lref = (m as unknown as { live_referee_id?: string | null }).live_referee_id ?? null;
+        const { data: auth } = await supabase.auth.getUser();
+        setReadOnly(!!lref && lref !== auth.user?.id);
         const { data: tb } = await supabase
           .from('quick_tables').select('id, share_id, name, is_doubles').eq('id', m.table_id).single();
         const ids = [m.player1_id, m.player2_id].filter(Boolean) as string[];
@@ -91,7 +96,7 @@ export default function QuickTableRefereeScoring() {
   return (
     <RefereeScoringScreen
       loaded={loaded} vi={vi} persistKey={`qt-ref:${matchId}`}
-      initialLiveState={initialLiveState} onLiveState={onLiveState}
+      initialLiveState={initialLiveState} onLiveState={onLiveState} readOnly={readOnly}
       onLiveScore={onLiveScore} onClaimLive={onClaimLive} onFinish={onFinish}
     />
   );
