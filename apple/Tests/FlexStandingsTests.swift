@@ -130,6 +130,22 @@ struct FlexStandingsTests {
         #expect(pairs.first?.pointDiff == 7)
     }
 
+    @Test func pairSkipsSinglesEvenWithTwoPlayersPerSide() {
+        // Full pairs on both sides so only the match-type guard can exclude it.
+        let (d, g) = data(players: [p1, p2, p3, p4], matches: [
+            match(type: "singles", a1: p1, a2: p2, b1: p3, b2: p4, sa: 11, sb: 7),
+        ])
+        #expect(d.pairStandings(g).isEmpty)
+    }
+
+    @Test func pairSkipsNonStandingsAndNoWinnerDoubles() {
+        let (d, g) = data(players: [p1, p2, p3, p4], matches: [
+            match(type: "doubles", a1: p1, a2: p2, b1: p3, b2: p4, sa: 11, sb: 5, counts: false),
+            match(type: "doubles", a1: p1, a2: p2, b1: p3, b2: p4, sa: 8, sb: 8), // tie
+        ])
+        #expect(d.pairStandings(g).isEmpty)
+    }
+
     @Test func teamMatchesAreOneWinOrOneLossWithSignedMargin() {
         let (d, g) = data(players: [], teams: [t1, t2], matches: [
             match(ta: t1, tb: t2, sa: 3, sb: 1),
@@ -142,9 +158,10 @@ struct FlexStandingsTests {
         #expect(line(s, t2)?.pointDiff == 0)
     }
 
-    @Test func teamStandingsSkipTiesAndTeamsOutsideTheGroup() {
+    @Test func teamStandingsSkipTiesNonStandingsAndTeamsOutsideTheGroup() {
         let (d, g) = data(players: [], teams: [t1], matches: [
-            match(ta: t1, tb: t2, sa: 2, sb: 2), // tie → nil winner
+            match(ta: t1, tb: t2, sa: 2, sb: 2),                // tie → nil winner
+            match(ta: t1, tb: t2, sa: 4, sb: 0, counts: false), // excluded
             match(ta: t1, tb: t2, sa: 3, sb: 0),
         ])
         let s = d.teamStandings(g)
@@ -160,5 +177,13 @@ struct FlexStandingsTests {
             FlexStanding(id: "b", name: "b", wins: 1, losses: 0, pointDiff: 12),
         ]
         #expect(rows.sorted(by: FlexData.rankSort).map(\.id) == ["a", "b", "c"])
+    }
+
+    @Test func rankSortTreatsExactTieAsEqual() {
+        // No hidden tertiary ordering: neither row sorts before the other.
+        let x = FlexStanding(id: "x", name: "x", wins: 1, losses: 0, pointDiff: 5)
+        let y = FlexStanding(id: "y", name: "y", wins: 1, losses: 0, pointDiff: 5)
+        #expect(!FlexData.rankSort(x, y))
+        #expect(!FlexData.rankSort(y, x))
     }
 }

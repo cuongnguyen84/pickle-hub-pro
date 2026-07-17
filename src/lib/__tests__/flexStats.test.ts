@@ -138,9 +138,14 @@ describe("computeTeamStats", () => {
     expect(stats.get(T2)).toEqual({ wins: 1, losses: 1, pointDiff: 0 });
   });
 
-  it("skips non-team matches, no-winner matches, and teams outside the group", () => {
+  it("skips non-team matches, no-winner matches, non-standings matches, and teams outside the group", () => {
     const stats = computeTeamStats(
-      [singles(P1, P2, 11, 7), teamMatch(2, 2), teamMatch(3, 0)],
+      [
+        singles(P1, P2, 11, 7),
+        teamMatch(2, 2),
+        match({ ...teamMatch(4, 0), counts_for_standings: false }),
+        teamMatch(3, 0),
+      ],
       new Set([T1]),
     );
     expect(stats.get(T1)).toEqual({ wins: 1, losses: 0, pointDiff: 3 });
@@ -191,8 +196,30 @@ describe("computePairStats", () => {
     expect([...soloSide.keys()]).toEqual([[P2, P3].sort().join("|")]);
   });
 
-  it("skips singles matches entirely", () => {
-    const stats = computePairStats([singles(P1, P2, 11, 7)], new Set([P1, P2]));
+  it("skips singles matches entirely — even with two players per side", () => {
+    // Full pairs on both sides so only the match_type guard can exclude it.
+    const fourPlayerSingles = match({
+      match_type: "singles",
+      slot_a1_player_id: P1,
+      slot_a2_player_id: P2,
+      slot_b1_player_id: P3,
+      slot_b2_player_id: P4,
+      score_a: 11,
+      score_b: 7,
+      winner_side: "a",
+    });
+    const stats = computePairStats([fourPlayerSingles], new Set([P1, P2, P3, P4]));
+    expect(stats.size).toBe(0);
+  });
+
+  it("skips non-standings and no-winner doubles", () => {
+    const stats = computePairStats(
+      [
+        match({ ...doubles([P1, P2], [P3, P4], 11, 5), counts_for_standings: false }),
+        doubles([P1, P2], [P3, P4], 8, 8), // tie → winner_side null
+      ],
+      new Set([P1, P2, P3, P4]),
+    );
     expect(stats.size).toBe(0);
   });
 });
@@ -205,5 +232,9 @@ describe("flexRankSort", () => {
       { id: "b", wins: 1, pointDiff: 12 },
     ];
     expect([...rows].sort(flexRankSort).map((r) => r.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("returns 0 on an exact (wins, pointDiff) tie — no hidden tertiary ordering", () => {
+    expect(flexRankSort({ wins: 1, pointDiff: 5 }, { wins: 1, pointDiff: 5 })).toBe(0);
   });
 });
