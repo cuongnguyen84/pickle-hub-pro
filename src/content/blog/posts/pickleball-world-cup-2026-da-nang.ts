@@ -30,7 +30,7 @@ const post: BlogPost = {
             "Edition: 4th if you count the Lima 2023 \"Special Edition\"; organizers and Vietnamese media usually call Da Nang the 3rd — see the note below",
             "Dates: August 30 – September 6, 2026 (deliberately overlapping Vietnam's National Day holiday week)",
             "Host city: Da Nang, Vietnam",
-            "Venues: Cung Thể thao Tiên Sơn (Tien Son Sports Palace, 8 courts) and Làng Thể thao Tuyên Sơn (Tuyen Son Sports Village, 31 courts), plus club courts in the city centre",
+            "Venues: 7 in total — Tien Son Sports Palace (8 courts) and Tuyen Son Sports Complex (31 courts) as the main sites, plus five satellite club venues: Trang Hoang (16), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7)",
             "Prize pool: US$500,000 total (announced April 24, 2026)",
             "Target scale: ~80 countries and ~4,000 participants — a figure that covers athletes, coaches, referees, officials and family, not athletes alone",
             "Format: national-team competition in 5 divisions plus a parallel Individual Tournament with 150+ events",
@@ -82,7 +82,7 @@ const post: BlogPost = {
         },
         {
           heading: "Registration, Broadcast and Where to Follow",
-          content: "There is no open qualifier for the main country competition — entry is by invitation to national federations. The parallel Individual Tournament has historically been open to public registration, with an active DUPR account required and no minimum or maximum rating limit. Fees for Da Nang 2026 have not been published; for reference, Fort Lauderdale 2025 charged $70–80 for a first event, $30 per additional event, and $40 for juniors and wheelchair athletes, seeded via DUPR — those are last year's prices, not 2026 prices. FPT Play is both a co-organizer and the exclusive Vietnamese broadcaster for WCP 2026, carrying the event across SmartTV, mobile, FPT Play Box and fptplay.vn; it also holds exclusive Vietnamese rights to PPA Tour Asia 2026. The central digital channels are:",
+          content: "There is no open qualifier for the main country competition — entry is by invitation to national federations. The parallel Individual Tournament — officially the 2026 Heineken International Tournament – Pickleball World Cup Edition — is open to public registration through the event's ticketing and entry platform, sporttora.com/pwc2026, which also runs in Vietnamese. Amateur events are bracketed by DUPR rating from 3.0 to 5.0, with separate Pro divisions and Junior and wheelchair categories, and an active DUPR account is required. Entry fees rise in windows as the event nears: the final window, \"Last Chance\", runs July 16–31, 2026 at US$60 for a first category and $20 for each additional one; Pro divisions cost $100 and $75. Da Nang residents aged 8–16 entering Junior categories pay an all-inclusive 500,000₫ per category instead. FPT Play is both a co-organizer and the exclusive Vietnamese broadcaster for WCP 2026, carrying the event across SmartTV, mobile, FPT Play Box and fptplay.vn; it also holds exclusive Vietnamese rights to PPA Tour Asia 2026. The central digital channels are:",
           listItems: [
             "Official website: copamundialdepickleball.com",
             "Instagram: @pickleballworldcupofficial (bio: \"One World, One Game, One Champion\")",
@@ -134,7 +134,7 @@ const post: BlogPost = {
         },
         {
           question: "Where will the Pickleball World Cup 2026 be held?",
-          answer: "Matches will be split between Cung Thể thao Tiên Sơn (Tien Son Sports Palace, 8 courts) and the adjacent Làng Thể thao Tuyên Sơn (Tuyen Son Sports Village, 31 courts) in Da Nang, Vietnam, with additional club courts in the city centre — roughly 39 courts in the two main venues. These are the same venues that hosted the 2025 PPA Tour Asia – MB Vietnam Cup."
+          answer: "Seven venues across Da Nang. The two main sites are Cung Thể thao Tiên Sơn (Tien Son Sports Palace, 8 courts, Phan Dang Luu street) and Làng Thể thao Tuyên Sơn (Tuyen Son Sports Complex, 31 courts, Nai Nam 2 street) — the same venues that hosted the 2025 PPA Tour Asia – MB Vietnam Cup. Five satellite club venues carry the rest: Trang Hoang (16 courts), AK (9), KingKong (8), Hop Thanh Phat (8) and Furama (7). Organizers say more venues are still under consideration."
         },
         {
           question: "How many countries and athletes will compete?",
@@ -146,7 +146,7 @@ const post: BlogPost = {
         },
         {
           question: "Can amateurs register for the Pickleball World Cup 2026?",
-          answer: "The main country competition is invitation-only through national federations. However, there is a parallel Individual Tournament — expanded to 150+ events for Da Nang 2026, bracketed by age and DUPR rating — which requires an active DUPR account with no minimum or maximum rating. Entry fees for 2026 have not been announced. For reference, Fort Lauderdale 2025 charged $70–80 for a first event, $30 per additional event, and $40 for juniors and wheelchair athletes."
+          answer: "Yes. The main country competition is invitation-only through national federations, but the parallel Individual Tournament is open to the public via sporttora.com/pwc2026. Amateur events run by DUPR rating from 3.0 to 5.0, alongside separate Pro, Junior and wheelchair categories; an active DUPR account is required. Registration is priced in windows: the last one, \"Last Chance\", runs July 16–31, 2026 at US$60 for a first category plus $20 per additional category. Pro divisions are $100 and $75. Junior athletes aged 8–16 who live in Da Nang pay a flat 500,000₫ per category."
         },
         {
           question: "Who will represent Vietnam at WCP 2026?",
@@ -179,7 +179,7 @@ const post: BlogPost = {
             "Kỳ thứ 4 nếu tính cả kỳ \"Special Edition\" Lima 2023; ban tổ chức và báo Việt Nam thường gọi Đà Nẵng là kỳ thứ 3 — xem mục giải thích bên dưới",
             "Thời gian: 30/8 – 6/9/2026 (chủ ý trùng với tuần lễ Quốc khánh 2/9)",
             "Địa điểm: Thành phố Đà Nẵng, Việt Nam",
-            "Nhà thi đấu: Cung Thể thao Tiên Sơn (8 sân) và Làng Thể thao Tuyên Sơn (31 sân), cùng các cụm sân/CLB ở trung tâm thành phố",
+            "Nhà thi đấu: 7 địa điểm — chính là Cung Thể thao Tiên Sơn (8 sân) và Làng Thể thao Tuyên Sơn (31 sân), cùng 5 cụm sân vệ tinh: Trang Hoàng (16), AK (9), KingKong (8), Hợp Thành Phát (8) và Furama (7)",
             "Tổng giải thưởng: 500.000 USD (công bố ngày 24/4/2026)",
             "Quy mô mục tiêu: gần 80 quốc gia và khoảng 4.000 người tham dự — con số này gồm cả VĐV, HLV, trọng tài, quan chức và người thân, không phải 4.000 VĐV thuần",
             "Thể thức: Đồng đội quốc gia 5 nội dung + Giải Cá nhân song song với hơn 150 nội dung",
@@ -232,7 +232,7 @@ const post: BlogPost = {
         },
         {
           heading: "Đăng ký, phát sóng và kênh theo dõi",
-          content: "Không có vòng loại mở cho giải đồng đội chính — đội tuyển các nước tham dự qua lời mời tới liên đoàn quốc gia. Tuy nhiên, Giải Cá nhân song song trước nay vẫn cho phép đăng ký tự do, điều kiện là có tài khoản DUPR đang hoạt động, không giới hạn trình độ tối thiểu hay tối đa. Phí dự giải kỳ Đà Nẵng 2026 chưa được công bố; để tham khảo, tại Fort Lauderdale 2025 phí là 70–80 USD cho nội dung đầu tiên, 30 USD cho mỗi nội dung tiếp theo, và 40 USD cho Junior/wheelchair — đây là giá của kỳ trước, không phải giá 2026. FPT Play vừa là đơn vị đồng tổ chức vừa là đơn vị phát sóng độc quyền tại Việt Nam, phát trên SmartTV, di động, FPT Play Box và fptplay.vn; FPT Play cũng nắm bản quyền độc quyền PPA Tour Asia 2026. Các kênh số chính thức gồm:",
+          content: "Không có vòng loại mở cho giải đồng đội chính — đội tuyển các nước tham dự qua lời mời tới liên đoàn quốc gia. Tuy nhiên, Giải Cá nhân song song — tên chính thức là 2026 Heineken International Tournament – Pickleball World Cup Edition — mở đăng ký tự do qua nền tảng vé và đăng ký của giải là sporttora.com/pwc2026 (có sẵn giao diện tiếng Việt). Các nội dung phong trào chia theo trình DUPR từ 3.0 đến 5.0, bên cạnh đó có nhóm Pro riêng cùng các nội dung Junior và xe lăn; bắt buộc có tài khoản DUPR đang hoạt động. Phí đăng ký tăng dần theo từng chặng: chặng cuối \"Last Chance\" kéo dài 16–31/7/2026, giá 60 USD cho nội dung đầu tiên và 20 USD mỗi nội dung thêm; nhóm Pro là 100 USD và 75 USD. Riêng VĐV 8–16 tuổi cư trú tại Đà Nẵng dự nội dung Junior chỉ đóng trọn gói 500.000₫ mỗi nội dung. FPT Play vừa là đơn vị đồng tổ chức vừa là đơn vị phát sóng độc quyền tại Việt Nam, phát trên SmartTV, di động, FPT Play Box và fptplay.vn; FPT Play cũng nắm bản quyền độc quyền PPA Tour Asia 2026. Các kênh số chính thức gồm:",
           listItems: [
             "Website chính thức: copamundialdepickleball.com",
             "Instagram: @pickleballworldcupofficial (bio: \"One World, One Game, One Champion\")",
@@ -284,7 +284,7 @@ const post: BlogPost = {
         },
         {
           question: "World Cup Pickleball 2026 tổ chức ở đâu tại Đà Nẵng?",
-          answer: "Các trận đấu diễn ra tại Cung Thể thao Tiên Sơn (8 sân) và Làng Thể thao Tuyên Sơn (31 sân) ở Đà Nẵng, cùng một số cụm sân/CLB ở trung tâm thành phố — tức khoảng 39 sân tại hai địa điểm chính. Đây cũng là nơi đã tổ chức PPA Tour Asia – MB Vietnam Cup 2025."
+          answer: "Bảy địa điểm trên khắp Đà Nẵng. Hai nơi chính là Cung Thể thao Tiên Sơn (8 sân, đường Phan Đăng Lưu) và Làng Thể thao Tuyên Sơn (31 sân, đường Nại Nam 2) — cũng là nơi đã tổ chức PPA Tour Asia – MB Vietnam Cup 2025. Năm cụm sân vệ tinh gánh phần còn lại: Trang Hoàng (16 sân), AK (9), KingKong (8), Hợp Thành Phát (8) và Furama (7). Ban tổ chức cho biết vẫn đang cân nhắc thêm địa điểm."
         },
         {
           question: "Có bao nhiêu quốc gia và VĐV tham dự?",
@@ -296,7 +296,7 @@ const post: BlogPost = {
         },
         {
           question: "VĐV nghiệp dư có thể đăng ký tham dự World Cup Pickleball 2026 không?",
-          answer: "Giải đồng đội chính chỉ theo lời mời thông qua liên đoàn quốc gia. Tuy nhiên có Giải Cá nhân song song — mở rộng lên hơn 150 nội dung cho kỳ Đà Nẵng 2026, chia theo nhóm tuổi và trình độ DUPR — chỉ yêu cầu có tài khoản DUPR đang hoạt động, không giới hạn trình độ tối thiểu hay tối đa. Phí dự giải 2026 chưa công bố. Để tham khảo, Fort Lauderdale 2025 thu 70–80 USD cho nội dung đầu tiên, 30 USD mỗi nội dung thêm, và 40 USD cho Junior/wheelchair."
+          answer: "Được. Giải đồng đội chính chỉ theo lời mời qua liên đoàn quốc gia, nhưng Giải Cá nhân song song mở đăng ký tự do qua sporttora.com/pwc2026. Các nội dung phong trào chia theo trình DUPR từ 3.0 đến 5.0, ngoài ra có nhóm Pro, Junior và xe lăn riêng; bắt buộc có tài khoản DUPR đang hoạt động. Phí tính theo chặng: chặng cuối \"Last Chance\" từ 16–31/7/2026 giá 60 USD cho nội dung đầu tiên, cộng 20 USD mỗi nội dung thêm. Nhóm Pro 100 USD và 75 USD. VĐV 8–16 tuổi cư trú tại Đà Nẵng dự Junior chỉ đóng 500.000₫ mỗi nội dung."
         },
         {
           question: "Ai sẽ đại diện Việt Nam tại WCP 2026?",
