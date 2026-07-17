@@ -14,7 +14,7 @@
 // verify_jwt = false at the gateway (cron jobs don't carry a user JWT).
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
