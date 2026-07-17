@@ -261,7 +261,7 @@ Project already has eslint config — confirm `react-hooks/rules-of-hooks` is `"
 
 ---
 
-## EN blog post: 4 files MUST stay in sync
+## EN blog post: keep the source files in sync (SUPERSEDED IN PART — see update at end of entry)
 
 **Recurring bug (3 occurrences as of 2026-05-05):**
 - `pickleball-world-cup-2026-da-nang` (2026-04-23) — bot 404, fixed by adding to `BLOG_POST_META`
@@ -278,20 +278,21 @@ Plus a parallel sitemap miss confirmed by GSC URL Inspection 2026-05-05 ("Không
 
 Both are independent of `src/content/blog/metadata.ts` (used by SPA list pages) and `src/content/blog/posts/<slug>.ts` (used by SPA detail page). Shipping a new post by adding only the SPA files leaves the bot path broken.
 
-**Rule:** Every new EN blog post MUST update all 4 files in the same commit (or in a 4-commit batch before deploy):
+**Rule (UPDATED 2026-07-17 — SEO-02, commit `ce6a0fa`):** `BLOG_POST_META` and `EN_BLOG_SLUGS` are now **GENERATED at module load** from `src/content/blog/metadata.ts`. They are no longer hand-edited, and the historical 4-file rule is down to **2 files + Supabase**:
 1. `src/content/blog/posts/<slug>.ts` — full content (SPA detail page)
-2. `src/content/blog/metadata.ts` — list-page metadata (SPA list/related)
-3. `functions/_lib/render/index.ts` — `BLOG_POST_META` dict (bot prerender)
-4. `functions/sitemap.xml.ts` — `EN_BLOG_SLUGS` array (sitemap)
+2. `src/content/blog/metadata.ts` — **the single source of truth**. `BLOG_POST_META` (SSR `<title>` = `metaTitleEn`) and `EN_BLOG_SLUGS` (sitemap) both derive from it.
+3. Supabase `vi_blog_posts` INSERT for the VI version (`alternate_en_slug` -> EN slug)
+
+**Do NOT hand-edit** `functions/_lib/render/blog-meta.ts` or `functions/_lib/static-blog-slugs.ts` — both carry a GENERATED header. Slug parity is guaranteed by construction and locked by `src/lib/__tests__/blog-seo-surfaces.test.ts`.
+
+**Historical paths** (for reading old commits): the dicts used to live in `functions/_lib/render/index.ts` and `functions/sitemap.xml.ts`; the SEO-04 split (`5ca9f94`) moved them to `blog-meta.ts` / `static-blog-slugs.ts`, and SEO-02 (`ce6a0fa`) then made them generated.
 
 **Verify before merging to main:**
 ```bash
 SLUG=<your-new-slug>
-grep "$SLUG" src/content/blog/posts/$SLUG.ts \
-            src/content/blog/metadata.ts \
-            functions/_lib/render/index.ts \
-            functions/sitemap.xml.ts | wc -l
-# Expect ≥4 (one match per file at minimum).
+grep "$SLUG" src/content/blog/posts/$SLUG.ts src/content/blog/metadata.ts | wc -l
+# Expect ≥2. The bot-prerender + sitemap surfaces are generated from metadata.ts,
+# so a metadata entry is sufficient — verify them on the deployed site, not in source.
 ```
 
 Post-deploy verify (2-3 min after Cloudflare Pages build):
@@ -323,3 +324,73 @@ curl -s https://www.thepicklehub.net/sitemap.xml | grep "$SLUG"
 - Coi "không có Ahrefs" là điều kiện CỐ ĐỊNH, không phải blocker. Lập kế hoạch không phụ thuộc Ahrefs.
 
 **Verification:** báo cáo hằng ngày không còn mục "re-test Ahrefs / run #N". Doc cũ nhắc "unblock/nâng Ahrefs add-on" = context lịch sử, bỏ qua.
+
+---
+
+## Verifying production: ALWAYS `mktemp -d`, never a fixed `/tmp/<name>` path
+
+**Occurrence (1 — 2026-07-17, nearly reported a phantom production incident):**
+Verifying the World Cup refresh, `curl -o /tmp/en.html` appeared to show Googlebot
+receiving a *different post entirely* — three times, intermittently. The conclusion
+being drafted was "prerender cache poisoning, severe". It was not.
+
+**Symptom:** production checks return content from a *previous* session's run —
+often a different page — while `curl` reports `200` and a plausible byte count.
+Re-running with a pipe instead of `-o` gives the correct result, so the bug looks
+intermittent and cache-related.
+
+**Cause:** the sandbox `/tmp` **persists across sessions**, and files written by an
+earlier scheduled run are owned by a different user. `curl -o /tmp/en.html` then
+fails to overwrite **silently** — `curl` still prints `200`, `rm` reports
+`Operation not permitted`, and the grep reads yesterday's file. In the 2026-07-17
+case `/tmp/en.html` was dated `2026-07-16 07:48:34`, left by the previous morning's
+run, and contained the player post.
+
+**Rule:** every production verification writes to a fresh directory:
+```bash
+D=$(mktemp -d)
+curl -s -o "$D/en.html" -A "$UA" "$URL"
+```
+Never `-o /tmp/en.html`, `/tmp/vi.html`, `/tmp/post.js` or any other fixed name.
+Piping straight to `grep` is also safe.
+
+**Tell-tale that you are hitting this, not a real bug:** results differ depending on
+whether the check used `-o <fixed path>` or a pipe. A real cache/CDN bug does not
+care how you wrote the file to disk. Also: a stale cache serves the *old version of
+the same page*; getting a *different page* points at your harness, not the edge.
+
+---
+
+## Do not assert "not published" from press silence — check the event's own channels
+
+**Occurrences (2 in one day — 2026-07-17, both on the World Cup pillar):**
+1. Post stated "entry fees for 2026 have not been published". They had been, in full,
+   on the organizer's entry platform — including a deadline **14 days away**. Fixed
+   `88544a7`.
+2. Post stated Vietnam "debuted at the 2025 World Cup in Group H with no notable
+   results". Vietnam has never played a World Cup. The claim traced to a preview
+   published 11 days *before* the 2025 event, written in the future tense
+   ("sẽ tham gia"), sourced to the organizer's *list of participating countries*.
+   An entry list had been read as a result, and "Group H" had no source at all.
+   Fixed `633eeb5`.
+
+**Cause:** both came from treating Vietnamese press coverage as the complete record.
+Local media reports the announcement (the press conference, the entry list) and
+frequently never publishes the follow-up (pricing pages, who actually turned up).
+Absence from the press is not absence from the world.
+
+**Rule — two parts:**
+1. **Before writing that something is unannounced/unpublished, check the entity's own
+   channels**: official site, ticketing/entry platform, federation page, social. A
+   negative claim ("no prize purse", "fees not published", "no date yet") is a factual
+   assertion and needs the same sourcing as a positive one — and it rots fastest,
+   because it is only ever one announcement away from being wrong.
+2. **Distinguish announced / scheduled / registered from happened.** Check the tense
+   and the publication date of the source. A preview saying a team "will compete" is
+   not evidence it competed; look for a post-event result. If no result exists,
+   say what is verifiable ("named on the entry list; no result recorded"), not what
+   is convenient.
+
+**Verification habit:** for any claim about a live event, ask "what would the
+organizer's own page say?" and go read it. `WebFetch` returns an empty shell on
+JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info".
