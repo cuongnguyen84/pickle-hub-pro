@@ -33,10 +33,7 @@ export function VideoUploader({
   existingUrl,
   existingSource,
   disabled,
-  onThumbnailGenerated,
   isGeneratingThumbnail,
-  organizationId,
-  videoId,
 }: VideoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);

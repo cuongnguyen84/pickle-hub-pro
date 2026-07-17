@@ -267,7 +267,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
       }
     };
 
-    channel.subscribe((status, err) => {
+    channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         if (reconnectAttemptsRef.current > 0) fetchMissedMessages();
         reconnectAttemptsRef.current = 0;
@@ -420,9 +420,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
       }).catch(() => {});
     }
 
-    let timedOut = false;
     const timeoutId = setTimeout(() => {
-      timedOut = true;
       setMessages(prev => prev.map(m =>
         m.id === tempId ? { ...m, _pending: true } : m
       ));

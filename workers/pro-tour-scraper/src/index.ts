@@ -52,7 +52,6 @@ import {
   PRO_TOUR_HOST_PATTERN,
 } from "@/lib/pro-tour/adapters/rsc-scraper";
 import {
-  parseMlpEventHtml,
   parseMlpFromBracketsPools,
   extractBracketsIframeUrl,
   extractPoolIds,

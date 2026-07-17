@@ -511,25 +511,6 @@ async function handleApprove(
     return team;
   };
 
-  // Call dupr-match-submit internally (via the partner client). To avoid
-  // re-implementing player gating + identifier formatting, invoke the
-  // function over HTTP as service-role (we're already running with the
-  // service-role key).
-  const matchSubmitBody = {
-    action: "create",
-    internal_source: "match_proposal",
-    internal_match_id: proposal.id,
-    match_date: proposal.match_date,
-    location: proposal.location ?? "",
-    format: proposal.format,
-    match_type: proposal.match_type,
-    event: proposal.event ?? "ThePickleHub match",
-    bracket: proposal.bracket ?? "",
-    club_id: proposal.club_id,
-    team_a: buildTeam(proposal.team_a_player_ids, proposal.team_a_scores),
-    team_b: buildTeam(proposal.team_b_player_ids, proposal.team_b_scores),
-  };
-
   // For the internal HTTP call, mint a token-with-context-of-caller header
   // — actually simplest: call our own RPC version of match-submit. Since
   // match-submit is verify_jwt=false + verifies JWT, we need an auth

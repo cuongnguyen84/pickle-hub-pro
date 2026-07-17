@@ -10,7 +10,7 @@
 // ============================================================================
 
 import { useEffect, useState, useMemo } from "react";
-import { Search, Plus, X, UserPlus, Users } from "lucide-react";
+import { Search, X, UserPlus, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

@@ -19,7 +19,7 @@ interface ShareDialogProps {
   children?: React.ReactNode;
 }
 
-export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialogProps) => {
+export const ShareDialog = ({ type, id, children }: ShareDialogProps) => {
   const { t } = useI18n();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);

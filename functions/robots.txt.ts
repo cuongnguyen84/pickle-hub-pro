@@ -7,8 +7,6 @@ interface Env {
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
-  const url = new URL(context.request.url);
-
   const siteUrl = context.env.CANONICAL_HOST || "https://www.thepicklehub.net";
 
   const body = `User-agent: *

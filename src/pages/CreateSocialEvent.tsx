@@ -25,7 +25,6 @@ import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys"
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";

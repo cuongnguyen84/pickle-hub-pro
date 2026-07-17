@@ -78,7 +78,7 @@ export default function EditSocialEvent() {
   const [cancelling, setCancelling] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
 
-  const { data: bundle, isLoading, refetch } = useQuery({
+  const { data: bundle, isLoading } = useQuery({
     queryKey: ["edit-event", event_slug],
     queryFn: async () => {
       if (!event_slug) return null;

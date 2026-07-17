@@ -8,7 +8,6 @@ import { useFollow, useToggleFollow } from "@/hooks/useFollowData";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getLoginUrl } from "@/lib/auth-config";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface FollowButtonProps {
   targetType: "organization" | "tournament";

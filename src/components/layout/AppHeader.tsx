@@ -14,7 +14,7 @@ import { UnifiedNotificationBell } from "@/components/social/notifications";
 import { getLoginUrl } from "@/lib/auth-config";
 
 const AppHeader = () => {
-  const { t, language, setLanguage } = useI18n();
+  const { t } = useI18n();
   const { user, signOut } = useAuth();
   const { isCreator } = useCreatorAuth();
   const { isAdmin } = useAdminAuth();

@@ -85,7 +85,6 @@ export function LineupSelectionSheet({
   teamId,
   tournamentId,
   isMatchStarted = false,
-  hasDreambreaker = false,
   isOwner = false,
 }: LineupSelectionSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
@@ -308,10 +307,10 @@ export function LineupSelectionSheet({
       });
       setHasChanges(false);
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: txt.toastErrorTitle,
-        description: error.message,
+        description: (error as { message?: string } | null)?.message ?? String(error),
         variant: 'destructive',
       });
     } finally {
@@ -321,8 +320,8 @@ export function LineupSelectionSheet({
 
   if (!match) return null;
 
-  const teamAName = (match.team_a as any)?.team_name || txt.tbd;
-  const teamBName = (match.team_b as any)?.team_name || txt.tbd;
+  const teamAName = (match.team_a as { team_name?: string } | null)?.team_name || txt.tbd;
+  const teamBName = (match.team_b as { team_name?: string } | null)?.team_name || txt.tbd;
   const myTeamName = isTeamA ? teamAName : teamBName;
   const opponentName = isTeamA ? teamBName : teamAName;
   const validationErrors = validateSelections();

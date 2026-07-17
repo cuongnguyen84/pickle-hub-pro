@@ -7,7 +7,7 @@ import { useForumPosts, useDeleteForumPost, useTogglePinPost } from "@/hooks/use
 import { useToggleHidePost } from "@/hooks/useForumPost";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -57,7 +57,6 @@ interface TeamJoinPanelProps {
 
 export function TeamJoinPanel({
   teamId,
-  teamName,
   tournamentId,
   teamStatus,
   tournamentStatus,

@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Check, X, MoreVertical, Pencil, Users, Clock, CheckCircle2, XCircle, RefreshCw, Swords, AlertCircle } from 'lucide-react';
+import { Check, X, MoreVertical, Pencil, Clock, CheckCircle2, XCircle, RefreshCw, Swords, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BracketSetupDialog } from './BracketSetupDialog';
@@ -74,20 +74,6 @@ const statusPillStyle = (kind: 'approved' | 'pending' | 'rejected' | 'neutral'):
   if (kind === 'pending') return { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' };
   if (kind === 'rejected') return { background: 'rgba(255, 65, 54, 0.10)', color: 'var(--tl-live)' };
   return { background: 'var(--tl-surface)', color: 'var(--tl-fg-3)' };
-};
-
-const statusPillBase: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-  fontFamily: 'Geist Mono, ui-monospace, monospace',
-  fontSize: 10.5,
-  fontWeight: 500,
-  padding: '3px 9px',
-  borderRadius: 4,
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-  whiteSpace: 'nowrap',
 };
 
 const duprPillStyle: React.CSSProperties = {
@@ -339,34 +325,6 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
       return <span style={duprPillStyle}>{reg.skill_description}</span>;
     }
     return <span style={{ color: 'var(--tl-fg-4)' }}>—</span>;
-  };
-
-  const renderStatusPill = (status: string) => {
-    if (status === 'pending') {
-      return (
-        <span style={{ ...statusPillBase, ...statusPillStyle('pending') }}>
-          <Clock className="w-3 h-3" />
-          {t.quickTable.pending}
-        </span>
-      );
-    }
-    if (status === 'approved') {
-      return (
-        <span style={{ ...statusPillBase, ...statusPillStyle('approved') }}>
-          <CheckCircle2 className="w-3 h-3" />
-          {t.quickTable.approved}
-        </span>
-      );
-    }
-    if (status === 'rejected') {
-      return (
-        <span style={{ ...statusPillBase, ...statusPillStyle('rejected') }}>
-          <XCircle className="w-3 h-3" />
-          {t.quickTable.rejected}
-        </span>
-      );
-    }
-    return null;
   };
 
   // ─── Loading ────────────────────────────────────────────────────────────

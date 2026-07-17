@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useTeamMatchMatches, TeamMatchMatch } from './useTeamMatchMatches';
+import { useTeamMatchMatches } from './useTeamMatchMatches';
 import { useTeamMatchTeams, TeamMatchTeam } from './useTeamMatchTeams';
 import { useTeamMatchGroups } from './useTeamMatchGroups';
 
@@ -444,7 +444,6 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
   const roundRobinComplete = useMemo(() => {
     if (!matches || !teams) return false;
     
-    const approvedTeams = teams.filter(t => t.status === 'approved');
     const roundRobinMatches = matches.filter(m => !m.is_playoff);
     
     if (roundRobinMatches.length === 0) return false;

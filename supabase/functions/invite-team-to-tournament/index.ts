@@ -113,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
     // Check if team is already registered for this tournament
-    const { data: existingTeam, error: existingError } = await supabase
+    const { data: existingTeam } = await supabase
       .from('team_match_teams')
       .select('id')
       .eq('tournament_id', tournamentId)

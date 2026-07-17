@@ -36,7 +36,6 @@ import {
   computeCountdown,
   formatEventDateRange,
   formatLevelRange,
-  formatPriceVnd,
   interp,
 } from "@/lib/social-events/format";
 import { maskName } from "@/lib/social-events/maskName";

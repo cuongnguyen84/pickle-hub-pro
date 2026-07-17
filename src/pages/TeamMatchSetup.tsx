@@ -41,15 +41,6 @@ const stepHeadingStyle: React.CSSProperties = {
   color: 'var(--tl-fg)',
 };
 
-const stepDescStyle: React.CSSProperties = {
-  fontFamily: 'Geist Mono, ui-monospace, monospace',
-  fontSize: 11,
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-  color: 'var(--tl-fg-3)',
-  marginTop: 6,
-};
-
 // Token-styled toggle row (replaces "rounded-lg border p-4")
 const toggleRowStyle: React.CSSProperties = {
   display: 'flex',

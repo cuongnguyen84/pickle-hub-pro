@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo, forwardRef, KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
-  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3,
-  Pin, X as XIcon, Reply, Star, Heart
+  MoreHorizontal, Copy, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Pin, X as XIcon, Reply, Star, Heart
 } from "lucide-react";
 import { MentionSuggestions, MentionUser, renderMessageWithMentions } from "./MentionSuggestions";
 import { NicknameInput } from "./NicknameInput";
@@ -30,7 +28,6 @@ import { EmojiPicker } from "./EmojiPicker";
 import { ChatterBadge } from "./ChatterBadge";
 import { ChatLeaderboardPanel } from "./ChatLeaderboardPanel";
 import { supabase } from "@/integrations/supabase/client";
-import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
 import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
 import { useChatMessageLikes } from "@/hooks/useChatMessageLike";

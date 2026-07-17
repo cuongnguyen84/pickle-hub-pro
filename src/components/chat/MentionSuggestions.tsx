@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from "react";
 import { UserAvatar } from "@/components/user";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +19,6 @@ export function MentionSuggestions({
   query,
   users,
   onSelect,
-  onClose,
   selectedIndex,
 }: MentionSuggestionsProps) {
   const filtered = users.filter((u) =>

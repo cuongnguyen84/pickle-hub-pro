@@ -9,7 +9,7 @@ import { renderNoindexShell } from "./static-pages";
 
 // ─── Tools hub ─────────────────────────────���──────────────
 
-export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "vi" = "en"): Response {
+export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "vi" = "en"): Response {
   const isVi = lang === "vi";
   const canonical = isVi ? `${siteUrl}/vi/tools` : `${siteUrl}/tools`;
   // VI SEO (2026-07-13) — /vi/tools previously served the ENGLISH title/meta/

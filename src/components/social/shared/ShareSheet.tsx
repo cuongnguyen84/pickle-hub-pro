@@ -5,7 +5,7 @@
 // ============================================================================
 
 import { useState } from "react";
-import { Share2, Link as LinkIcon, Check } from "lucide-react";
+import { Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 

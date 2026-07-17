@@ -1,7 +1,6 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { useLivestream } from "@/hooks/useSupabaseData";
 import { MuxPlayer } from "@/components/video";
-import { supabase } from "@/integrations/supabase/client";
 import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { Loader2 } from "lucide-react";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
@@ -13,7 +12,6 @@ const EmbedLive = () => {
   const { isBlocked } = useGeoBlock();
 
   const showTitle = searchParams.get("title") !== "0";
-  const autoplay = searchParams.get("autoplay") === "1";
 
   const { data: livestream, isLoading } = useLivestream(id!);
 

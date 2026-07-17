@@ -11,7 +11,6 @@ import { MuxPlayer } from "@/components/video";
 import type { MuxPlayerHandle } from "@/components/video/MuxPlayer";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
 import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState, useCallback } from "react";

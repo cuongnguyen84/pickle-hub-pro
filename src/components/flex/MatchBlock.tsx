@@ -221,7 +221,6 @@ export function MatchBlock({
     setScoreB(match.score_b.toString());
   }, [match.score_a, match.score_b]);
 
-  const hasChildMatches = childMatches.length > 0;
   const isTeamMatchWithTeams = isTeamMatch && (match.slot_a_team_id || match.slot_b_team_id);
 
   const getPlayerTeam = useCallback((playerId: string): FlexTeam | null => {

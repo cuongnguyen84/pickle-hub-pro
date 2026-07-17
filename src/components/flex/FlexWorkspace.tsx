@@ -5,9 +5,7 @@ import { PlayerPool } from './PlayerPool';
 import { FloatingPlayerPanel } from './FloatingPlayerPanel';
 import { FloatingAddMatchButton } from './FloatingAddMatchButton';
 import { ActionButtons } from './ActionButtons';
-import { TeamBlock } from './TeamBlock';
 import { TeamSelector } from './TeamSelector';
-import { GroupBlock } from './GroupBlock';
 import { GroupSelector } from './GroupSelector';
 import { MatchBlock } from './MatchBlock';
 import { DraggablePlayer } from './DraggablePlayer';
@@ -45,7 +43,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     updateEntityName,
     generateRoundRobinMatches,
   } = useFlexTournament();
-  const { recomputeGroupStats, recomputeAllGroupStats, updateGroupIncludeDoubles } = useFlexStats();
+  const { recomputeAllGroupStats, updateGroupIncludeDoubles } = useFlexStats();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeName, setActiveName] = useState<string>('');
@@ -255,8 +253,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
   // Create a new match - context-aware based on active tab
   const handleAddMatch = useCallback(async () => {
-    const matchNumber = data.matches.length + 1;
-    
+
     // If on "matches" tab, create standalone match without group
     // If on "groups" tab with a selected group, link match to that group
     const groupId = activeTab === 'groups' && selectedGroupId ? selectedGroupId : null;
@@ -464,10 +461,6 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   // Also filter out matches that belong to a group (they show in group view)
   const standaloneMatches = [...data.matches]
     .filter(m => !m.parent_match_id && !m.group_id)
-    .sort((a, b) => a.display_order - b.display_order);
-
-  const sortedMatches = [...data.matches]
-    .filter(m => !m.parent_match_id)
     .sort((a, b) => a.display_order - b.display_order);
 
   const hasContent = data.teams.length > 0 || data.groups.length > 0 || data.matches.length > 0;

@@ -110,7 +110,7 @@ const KEY_UNREAD = (uid: string | undefined) => ["unified-notifications-unread",
 export function useUnifiedNotifications() {
   const { user } = useAuth();
   const userId = user?.id;
-  const qc = useQueryClient();
+  useQueryClient();
 
   const list = useQuery<UnifiedNotification[]>({
     queryKey: KEY_LIST(userId),

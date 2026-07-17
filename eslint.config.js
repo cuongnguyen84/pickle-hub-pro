@@ -24,7 +24,9 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/no-unused-vars": "off",
+      // QA-02 2/3 (2026-07-17): re-enabled — nothing caught dead code before.
+      // _-prefix opt-out for intentionally-unused args/vars; catch bindings exempt.
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" }],
     },
   },
 );

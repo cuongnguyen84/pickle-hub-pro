@@ -4,8 +4,6 @@ import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoublesElimination, BestOfFormat, RatingSource } from "@/hooks/useDoublesElimination";
 import { useToast } from "@/hooks/use-toast";

@@ -6,8 +6,6 @@ import { logAuditEvent } from "@/hooks/useAuditLog";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type Tournament = Database["public"]["Tables"]["tournaments"]["Row"];
-type Video = Database["public"]["Tables"]["videos"]["Row"];
-type Livestream = Database["public"]["Tables"]["livestreams"]["Row"];
 
 // Stats hooks
 export function useAdminStats() {

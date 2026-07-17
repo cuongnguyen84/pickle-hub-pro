@@ -10,7 +10,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
 import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { ManualGroupAssignment } from './ManualGroupAssignment';
@@ -131,7 +130,7 @@ export function BracketSetupDialog({
   );
 
   // Sprint B2.2 — Auto-seed by DUPR
-  const [autoSeedByDupr, setAutoSeedByDupr] = useState(false);
+  const [, setAutoSeedByDupr] = useState(false);
   const [seedingByDupr, setSeedingByDupr] = useState(false);
   const [seedCoverageInfo, setSeedCoverageInfo] = useState<{
     total: number;

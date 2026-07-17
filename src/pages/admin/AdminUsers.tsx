@@ -12,7 +12,6 @@ import { useI18n } from "@/i18n";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
@@ -90,28 +89,6 @@ export default function AdminUsers() {
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
-    }
-  };
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "destructive";
-      case "creator":
-        return "default";
-      default:
-        return "secondary";
-    }
-  };
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case "admin":
-        return t.admin.user.admin;
-      case "creator":
-        return t.admin.user.creator;
-      default:
-        return t.admin.user.viewer;
     }
   };
 

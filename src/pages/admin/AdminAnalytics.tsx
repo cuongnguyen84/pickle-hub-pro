@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useTopBlogPosts } from "@/hooks/useTopBlogPosts";
 import { useQuery } from "@tanstack/react-query";
-import { subDays, format, eachDayOfInterval, parseISO } from "date-fns";
+import { subDays, format, eachDayOfInterval } from "date-fns";
 import {
   BarChart,
   Bar,
@@ -15,7 +15,6 @@ import {
   Users,
   Eye,
   TrendingUp,
-  Wifi,
   Video,
   Trophy,
   Radio,

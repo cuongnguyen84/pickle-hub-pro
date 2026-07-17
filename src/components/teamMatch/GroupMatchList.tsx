@@ -190,7 +190,6 @@ function GroupMatches({
   isTotalScore,
   statusConfig,
   c,
-  language,
   lineupBtnLabel,
   onMatchClick,
   onLineupClick,

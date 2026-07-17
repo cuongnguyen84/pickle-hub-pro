@@ -52,7 +52,7 @@ function useReports(statusFilter: string) {
 }
 
 export default function AdminReports() {
-  const { t } = useI18n();
+  useI18n();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("pending");
   const [reviewingReport, setReviewingReport] = useState<any>(null);

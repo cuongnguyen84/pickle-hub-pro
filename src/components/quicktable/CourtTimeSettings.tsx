@@ -9,7 +9,7 @@ interface CourtTimeSettingsProps {
   onStartTimeChange: (value: string) => void;
 }
 
-const labelOptional = (s: string): React.CSSProperties => ({
+const labelOptional = (_s: string): React.CSSProperties => ({
   color: 'var(--tl-fg-3)',
   fontWeight: 400,
   fontFamily: 'Geist Mono, ui-monospace, monospace',

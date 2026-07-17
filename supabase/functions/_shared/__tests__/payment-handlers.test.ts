@@ -198,7 +198,7 @@ describe("processCreatePaymentOrder", () => {
     // getOrderByRegistration's first (idempotency) read must miss to model
     // the race window, then the post-conflict re-read must hit.
     let reads = 0;
-    store.getOrderByRegistration = (registrationId: string) => {
+    store.getOrderByRegistration = () => {
       reads++;
       return Promise.resolve(reads === 1 ? null : store.orders[0]);
     };
