@@ -494,6 +494,90 @@ const ScrollToTop = (): null => {
   return null;
 };
 
+// ============================================================================
+// ARCH-05 — EN↔VI mirrored routes, declared ONCE.
+// ----------------------------------------------------------------------------
+// Each entry renders twice inside <Routes>: at `path` (EN) and at
+// `/vi` + path wrapped in <ViLanguageWrapper> (VI). React Router v6 ranks by
+// path specificity, not source order, so mapping changes no matching.
+//   viElement     — VI-specific component/props (ViBlogPost, NewsArticle vi)
+//   viSkipWrapper — SocialEventLive only: court-side live scoring keeps its
+//                   historical unwrapped mount pending a socket audit
+// KEEP entries single-line — src/routes/__tests__/route-snapshot.test.ts
+// parses them statically to verify parity against the checked-in snapshot.
+// New localized page? Add ONE entry here. EN-only/admin/redirect routes stay
+// as literal <Route> lines below.
+// ============================================================================
+interface MirroredRoute {
+  path: string;
+  element: ReactNode;
+  viElement?: ReactNode;
+  viSkipWrapper?: boolean;
+}
+
+const MIRRORED: MirroredRoute[] = [
+  { path: "/", element: <Index /> },
+  { path: "/live", element: <Live /> },
+  { path: "/live/:id", element: <WatchLive /> },
+  { path: "/videos", element: <Videos /> },
+  { path: "/watch/:id", element: <WatchVideo /> },
+  { path: "/tournaments", element: <Tournaments /> },
+  { path: "/tournament/:slug", element: <ConditionalAuth><TournamentDetail /></ConditionalAuth> },
+  { path: "/org/:slug", element: <OrganizationDetail /> },
+  { path: "/login", element: <Login /> },
+  { path: "/account", element: <Account /> },
+  { path: "/account/my-tournaments", element: <RequireAuth><MyTournaments /></RequireAuth> },
+  { path: "/social", element: <SocialEventList /> },
+  { path: "/social/:slug", element: <SocialEventDetail /> },
+  { path: "/social/:slug/danh-sach", element: <SocialEventRoster /> },
+  { path: "/social/:slug/xep-cap", element: <SocialEventMatchmaking /> },
+  { path: "/social/:slug/live", element: <SocialEventLive />, viSkipWrapper: true },
+  { path: "/clubs", element: <ClubsList /> },
+  { path: "/san", element: <VenuesList /> },
+  { path: "/san/them", element: <VenueSubmit /> },
+  { path: "/san/khu-vuc/:city", element: <VenuesCity /> },
+  { path: "/tim-ban-choi", element: <FindPlayers /> },
+  { path: "/tin-nhan", element: <Messages /> },
+  { path: "/san/:slug", element: <VenueDetail /> },
+  { path: "/dang-ky/:magic_token", element: <PlayerRegistration /> },
+  { path: "/khoi-phuc-dang-ky", element: <RecoveryRegistration /> },
+  { path: "/notifications", element: <Notifications /> },
+  { path: "/thong-bao", element: <Notifications /> },
+  { path: "/search", element: <Search /> },
+  { path: "/news", element: <News />, viElement: <News language="vi" /> },
+  { path: "/news/:slug", element: <NewsArticle language="en" />, viElement: <NewsArticle language="vi" /> },
+  { path: "/rankings", element: <Rankings /> },
+  { path: "/feed", element: <Feed /> },
+  { path: "/blog", element: <Blog /> },
+  { path: "/blog/:slug", element: <BlogPost />, viElement: <ViBlogPost /> },
+  { path: "/forum", element: <Forum /> },
+  { path: "/forum/:categorySlug", element: <ForumCategory /> },
+  { path: "/forum/post/:postId", element: <ForumPostDetail /> },
+  { path: "/forum/new", element: <ForumPostCreate /> },
+  { path: "/tools", element: <Tools /> },
+  { path: "/tools/quick-tables", element: <QuickTables /> },
+  { path: "/tools/quick-tables/parent/:shareId", element: <ParentTournamentPage /> },
+  { path: "/tools/quick-tables/:shareId", element: <ConditionalAuth><QuickTableView /></ConditionalAuth> },
+  { path: "/tools/quick-tables/:shareId/setup", element: <QuickTableSetup /> },
+  { path: "/tools/team-match", element: <TeamMatchList /> },
+  { path: "/tools/team-match/new", element: <TeamMatchSetup /> },
+  { path: "/tools/team-match/match/:matchId/score", element: <TeamMatchScoring /> },
+  { path: "/tools/team-match/:id", element: <ConditionalAuth><TeamMatchView /></ConditionalAuth> },
+  { path: "/tools/doubles-elimination", element: <DoublesEliminationList /> },
+  { path: "/tools/doubles-elimination/new", element: <DoublesEliminationSetup /> },
+  { path: "/tools/doubles-elimination/:shareId", element: <ConditionalAuth><DoublesEliminationView /></ConditionalAuth> },
+  { path: "/tools/doubles-elimination/match/:matchId/score", element: <DoublesEliminationScoring /> },
+  { path: "/tools/flex-tournament", element: <FlexTournamentList /> },
+  { path: "/tools/flex-tournament/new", element: <FlexTournamentSetup /> },
+  { path: "/tools/flex-tournament/:shareId", element: <ConditionalAuth><FlexTournamentView /></ConditionalAuth> },
+  { path: "/tools/dashboard", element: <DashboardPicker /> },
+  { path: "/tools/dashboard/:type/:id", element: <TournamentDashboard /> },
+  { path: "/privacy", element: <Privacy /> },
+  { path: "/terms", element: <Terms /> },
+  { path: "/advertise", element: <Advertise /> },
+  { path: "/affiliate-disclosure", element: <AffiliateDisclosurePage /> },
+];
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
@@ -524,22 +608,26 @@ const App = () => (
                 >
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-                    <Route path="/" element={<Index />} />
+                    {MIRRORED.map((r) => (
+                      <Route key={r.path} path={r.path} element={r.element} />
+                    ))}
+                    {MIRRORED.map((r) => {
+                      const el = r.viElement ?? r.element;
+                      const viPath = r.path === "/" ? "/vi" : `/vi${r.path}`;
+                      return (
+                        <Route
+                          key={viPath}
+                          path={viPath}
+                          element={r.viSkipWrapper ? el : <ViLanguageWrapper>{el}</ViLanguageWrapper>}
+                        />
+                      );
+                    })}
                     {/* Primary livestream routes */}
-                    <Route path="/live" element={<Live />} />
-                    <Route path="/live/:id" element={<WatchLive />} />
                     {/* Legacy /livestream routes - 301 redirect to /live */}
                     <Route path="/livestream" element={<Navigate to="/live" replace />} />
                     <Route path="/livestream/:id" element={<LivestreamRedirect />} />
-                    <Route path="/videos" element={<Videos />} />
-                    <Route path="/watch/:id" element={<WatchVideo />} />
-                    <Route path="/tournaments" element={<Tournaments />} />
-                    <Route path="/tournament/:slug" element={<ConditionalAuth><TournamentDetail /></ConditionalAuth>} />
-                    <Route path="/org/:slug" element={<OrganizationDetail />} />
-                    <Route path="/login" element={<Login />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/auth/reset-password" element={<ResetPassword />} />
-                    <Route path="/account" element={<Account />} />
                     <Route path="/dupr" element={<RequireAuth><DuprConnect /></RequireAuth>} />
                     <Route path="/admin/dupr" element={<RequireAuth requiredRole="admin"><AdminDuprDashboard /></RequireAuth>} />
                     <Route path="/admin/errors" element={<RequireAuth requiredRole="admin"><AdminErrors /></RequireAuth>} />
@@ -548,7 +636,6 @@ const App = () => (
                     <Route path="/match/confirm" element={<RequireAuth><MatchConfirm /></RequireAuth>} />
                     {/* Phase A: public invite-to-confirm landing (token = bearer; no auth wrapper) */}
                     <Route path="/match/confirm/:code" element={<MatchInviteConfirm />} />
-                    <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
                     {/* Bet #1: match permalink (Vietnamese canonical /tran-dau/:slug) */}
@@ -563,9 +650,6 @@ const App = () => (
                         client-side `Navigate` aliases below catch any
                         stale SPA-internal Link that still uses the old
                         path so users never see a 404. */}
-                    <Route path="/social" element={<SocialEventList />} />
-                    <Route path="/vi/social" element={<ViLanguageWrapper><SocialEventList /></ViLanguageWrapper>} />
-                    <Route path="/social/:slug" element={<SocialEventDetail />} />
                     {/* 2026-05-20 — VI-canonical mirror for social event detail.
                         Previously only /social/:slug existed and the SPA
                         defaulted to EN for non-VN visitors. The new
@@ -576,13 +660,6 @@ const App = () => (
                         the same prerendered VI HTML. Subroutes mirrored
                         for consistency with /vi/social/:slug/live which
                         shipped earlier. */}
-                    <Route path="/vi/social/:slug" element={<ViLanguageWrapper><SocialEventDetail /></ViLanguageWrapper>} />
-                    <Route path="/social/:slug/danh-sach" element={<SocialEventRoster />} />
-                    <Route path="/vi/social/:slug/danh-sach" element={<ViLanguageWrapper><SocialEventRoster /></ViLanguageWrapper>} />
-                    <Route path="/social/:slug/xep-cap" element={<SocialEventMatchmaking />} />
-                    <Route path="/vi/social/:slug/xep-cap" element={<ViLanguageWrapper><SocialEventMatchmaking /></ViLanguageWrapper>} />
-                    <Route path="/social/:slug/live" element={<SocialEventLive />} />
-                    <Route path="/vi/social/:slug/live" element={<SocialEventLive />} />
                     {/* Legacy /su-kien — SPA-internal Navigate fallback */}
                     <Route path="/su-kien" element={<Navigate to="/social" replace />} />
                     <Route path="/vi/su-kien" element={<Navigate to="/vi/social" replace />} />
@@ -615,85 +692,34 @@ const App = () => (
                     <Route path="/u/:slug" element={<NavigateUSlug />} />
                     <Route path="/vi/u/:slug" element={<NavigateUSlugVi />} />
                     {/* Social Events MVP PR55 — self-service club discovery + creation */}
-                    <Route path="/clubs" element={<ClubsList />} />
-                    <Route path="/vi/clubs" element={<ViLanguageWrapper><ClubsList /></ViLanguageWrapper>} />
                     <Route path="/clubs/new" element={<CreateClub />} />
-                    <Route path="/san" element={<VenuesList />} />
-                    <Route path="/vi/san" element={<ViLanguageWrapper><VenuesList /></ViLanguageWrapper>} />
-                    <Route path="/san/them" element={<VenueSubmit />} />
-                    <Route path="/vi/san/them" element={<ViLanguageWrapper><VenueSubmit /></ViLanguageWrapper>} />
-                    <Route path="/san/khu-vuc/:city" element={<VenuesCity />} />
-                    <Route path="/vi/san/khu-vuc/:city" element={<ViLanguageWrapper><VenuesCity /></ViLanguageWrapper>} />
                     {/* Find players + in-app messaging (auth-gated, noindex) */}
-                    <Route path="/tim-ban-choi" element={<FindPlayers />} />
-                    <Route path="/vi/tim-ban-choi" element={<ViLanguageWrapper><FindPlayers /></ViLanguageWrapper>} />
-                    <Route path="/tin-nhan" element={<Messages />} />
-                    <Route path="/vi/tin-nhan" element={<ViLanguageWrapper><Messages /></ViLanguageWrapper>} />
-                    <Route path="/san/:slug" element={<VenueDetail />} />
-                    <Route path="/vi/san/:slug" element={<ViLanguageWrapper><VenueDetail /></ViLanguageWrapper>} />
                     {/* Social Events MVP PR57 — organizer club settings */}
                     <Route path="/clb/:slug/quan-ly/cai-dat" element={<EditClub />} />
                     {/* Social Events MVP PR58 — player-facing registration page + organizer event edit */}
-                    <Route path="/dang-ky/:magic_token" element={<PlayerRegistration />} />
-                    <Route path="/vi/dang-ky/:magic_token" element={<ViLanguageWrapper><PlayerRegistration /></ViLanguageWrapper>} />
                     {/* PR69 — Edit event route renamed to /social/. */}
                     <Route path="/clb/:slug/quan-ly/social/:event_slug/sua" element={<EditSocialEvent />} />
                     <Route path="/clb/:slug/quan-ly/su-kien/:event_slug/sua" element={<NavigateClbEditEvent />} />
                     {/* Social Events MVP PR59 — phone-keyed recovery page */}
-                    <Route path="/khoi-phuc-dang-ky" element={<RecoveryRegistration />} />
-                    <Route path="/vi/khoi-phuc-dang-ky" element={<ViLanguageWrapper><RecoveryRegistration /></ViLanguageWrapper>} />
-                    <Route path="/notifications" element={<Notifications />} />
                     {/* Sprint 5 PR-C — Vietnamese-friendly alias. Same
                         page renders for both /notifications and /thong-bao
                         so existing inbound links + bell deep-links keep
                         working while VN viewers get a localized URL. */}
-                    <Route path="/thong-bao" element={<Notifications />} />
-                    <Route path="/search" element={<Search />} />
                     {/* Canonical /news reads language from i18n context (geo-aware),
                         so VN visitors get VI like the rest of the site. /vi/news
                         below stays pinned to "vi". Article detail stays EN-pinned. */}
-                    <Route path="/news" element={<News />} />
-                    <Route path="/news/:slug" element={<NewsArticle language="en" />} />
-                    <Route path="/rankings" element={<Rankings />} />
-                    <Route path="/vi/rankings" element={<Rankings />} />
                     {/* Bet #1 Sprint 4 Phase 4A: Feed page */}
-                    <Route path="/feed" element={<Feed />} />
-                    <Route path="/vi/feed" element={<Feed />} />
                     {/* Blog routes */}
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:slug" element={<BlogPost />} />
                     {/* Forum routes */}
-                    <Route path="/forum" element={<Forum />} />
-                    <Route path="/forum/:categorySlug" element={<ForumCategory />} />
-                    <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
-                    <Route path="/forum/new" element={<ForumPostCreate />} />
                     {/* Share redirect routes - for links shared on social media */}
                     <Route path="/share/live/:id" element={<ShareRedirect type="live" />} />
                     <Route path="/share/video/:id" element={<ShareRedirect type="video" />} />
                     {/* Tools routes */}
-                    <Route path="/tools" element={<Tools />} />
-                    <Route path="/tools/quick-tables" element={<QuickTables />} />
-                    <Route path="/tools/quick-tables/parent/:shareId" element={<ParentTournamentPage />} />
-                    <Route path="/tools/quick-tables/:shareId" element={<ConditionalAuth><QuickTableView /></ConditionalAuth>} />
-                    <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
                     <Route path="/tools/quick-tables/referee/:matchId" element={<QuickTableRefereeScoring />} />
                     {/* Team Match routes */}
-                    <Route path="/tools/team-match" element={<TeamMatchList />} />
-                    <Route path="/tools/team-match/new" element={<TeamMatchSetup />} />
-                    <Route path="/tools/team-match/match/:matchId/score" element={<TeamMatchScoring />} />
-                    <Route path="/tools/team-match/:id" element={<ConditionalAuth><TeamMatchView /></ConditionalAuth>} />
                     {/* Doubles Elimination routes */}
-                    <Route path="/tools/doubles-elimination" element={<DoublesEliminationList />} />
-                    <Route path="/tools/doubles-elimination/new" element={<DoublesEliminationSetup />} />
-                    <Route path="/tools/doubles-elimination/:shareId" element={<ConditionalAuth><DoublesEliminationView /></ConditionalAuth>} />
-                    <Route path="/tools/doubles-elimination/match/:matchId/score" element={<DoublesEliminationScoring />} />
                     {/* Flex Tournament routes */}
-                    <Route path="/tools/flex-tournament" element={<FlexTournamentList />} />
-                    <Route path="/tools/flex-tournament/new" element={<FlexTournamentSetup />} />
-                    <Route path="/tools/flex-tournament/:shareId" element={<ConditionalAuth><FlexTournamentView /></ConditionalAuth>} />
                     {/* Dashboard routes */}
-                    <Route path="/tools/dashboard" element={<DashboardPicker />} />
-                    <Route path="/tools/dashboard/:type/:id" element={<TournamentDashboard />} />
                     {/* Legacy Quick Tables redirects */}
                     <Route path="/quick-tables" element={<Navigate to="/tools/quick-tables" replace />} />
                     <Route path="/quick-tables/:shareId" element={<QuickTableRedirect />} />
@@ -735,56 +761,10 @@ const App = () => (
                     <Route path="/creator/settings" element={<CreatorSettings />} />
                     <Route path="/creator/tournaments" element={<CreatorTournaments />} />
                     {/* Public pages */}
-                    <Route path="/privacy" element={<Privacy />} />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/advertise" element={<Advertise />} />
-                    <Route path="/affiliate-disclosure" element={<AffiliateDisclosurePage />} />
 
                     {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}
-                    <Route path="/vi" element={<ViLanguageWrapper><Index /></ViLanguageWrapper>} />
-                    <Route path="/vi/live" element={<ViLanguageWrapper><Live /></ViLanguageWrapper>} />
-                    <Route path="/vi/live/:id" element={<ViLanguageWrapper><WatchLive /></ViLanguageWrapper>} />
-                    <Route path="/vi/videos" element={<ViLanguageWrapper><Videos /></ViLanguageWrapper>} />
-                    <Route path="/vi/watch/:id" element={<ViLanguageWrapper><WatchVideo /></ViLanguageWrapper>} />
-                    <Route path="/vi/tournaments" element={<ViLanguageWrapper><Tournaments /></ViLanguageWrapper>} />
-                    <Route path="/vi/tournament/:slug" element={<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>} />
-                    <Route path="/vi/org/:slug" element={<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>} />
-                    <Route path="/vi/news" element={<ViLanguageWrapper><News language="vi" /></ViLanguageWrapper>} />
-                    <Route path="/vi/news/:slug" element={<ViLanguageWrapper><NewsArticle language="vi" /></ViLanguageWrapper>} />
-                    <Route path="/vi/blog" element={<ViLanguageWrapper><Blog /></ViLanguageWrapper>} />
-                    <Route path="/vi/blog/:slug" element={<ViLanguageWrapper><ViBlogPost /></ViLanguageWrapper>} />
-                    <Route path="/vi/forum" element={<ViLanguageWrapper><Forum /></ViLanguageWrapper>} />
-                    <Route path="/vi/forum/:categorySlug" element={<ViLanguageWrapper><ForumCategory /></ViLanguageWrapper>} />
-                    <Route path="/vi/forum/post/:postId" element={<ViLanguageWrapper><ForumPostDetail /></ViLanguageWrapper>} />
-                    <Route path="/vi/forum/new" element={<ViLanguageWrapper><ForumPostCreate /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools" element={<ViLanguageWrapper><Tools /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/quick-tables" element={<ViLanguageWrapper><QuickTables /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/quick-tables/parent/:shareId" element={<ViLanguageWrapper><ParentTournamentPage /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/quick-tables/:shareId" element={<ViLanguageWrapper><ConditionalAuth><QuickTableView /></ConditionalAuth></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/quick-tables/:shareId/setup" element={<ViLanguageWrapper><QuickTableSetup /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/team-match" element={<ViLanguageWrapper><TeamMatchList /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/team-match/new" element={<ViLanguageWrapper><TeamMatchSetup /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/team-match/match/:matchId/score" element={<ViLanguageWrapper><TeamMatchScoring /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/team-match/:id" element={<ViLanguageWrapper><ConditionalAuth><TeamMatchView /></ConditionalAuth></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/doubles-elimination" element={<ViLanguageWrapper><DoublesEliminationList /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/doubles-elimination/new" element={<ViLanguageWrapper><DoublesEliminationSetup /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/doubles-elimination/:shareId" element={<ViLanguageWrapper><ConditionalAuth><DoublesEliminationView /></ConditionalAuth></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/doubles-elimination/match/:matchId/score" element={<ViLanguageWrapper><DoublesEliminationScoring /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/flex-tournament" element={<ViLanguageWrapper><FlexTournamentList /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/flex-tournament/new" element={<ViLanguageWrapper><FlexTournamentSetup /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/flex-tournament/:shareId" element={<ViLanguageWrapper><ConditionalAuth><FlexTournamentView /></ConditionalAuth></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/dashboard" element={<ViLanguageWrapper><DashboardPicker /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/dashboard/:type/:id" element={<ViLanguageWrapper><TournamentDashboard /></ViLanguageWrapper>} />
-                    <Route path="/vi/search" element={<ViLanguageWrapper><Search /></ViLanguageWrapper>} />
-                    <Route path="/vi/privacy" element={<ViLanguageWrapper><Privacy /></ViLanguageWrapper>} />
-                    <Route path="/vi/terms" element={<ViLanguageWrapper><Terms /></ViLanguageWrapper>} />
-                    <Route path="/vi/advertise" element={<ViLanguageWrapper><Advertise /></ViLanguageWrapper>} />
-                    <Route path="/vi/affiliate-disclosure" element={<ViLanguageWrapper><AffiliateDisclosurePage /></ViLanguageWrapper>} />
-                    <Route path="/vi/login" element={<ViLanguageWrapper><Login /></ViLanguageWrapper>} />
-                    <Route path="/vi/account" element={<ViLanguageWrapper><Account /></ViLanguageWrapper>} />
-                    <Route path="/vi/account/my-tournaments" element={<ViLanguageWrapper><RequireAuth><MyTournaments /></RequireAuth></ViLanguageWrapper>} />
-                    <Route path="/vi/notifications" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
-                    <Route path="/vi/thong-bao" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
+
+                    <Route path="/vi/*" element={<ViLanguageWrapper><NotFound /></ViLanguageWrapper>} />
 
                     <Route path="*" element={<NotFound />} />
                   </Routes>

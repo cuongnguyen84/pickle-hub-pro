@@ -309,7 +309,7 @@
   },
   {
     "path": "/vi/rankings",
-    "element": "<Rankings />"
+    "element": "<ViLanguageWrapper><Rankings /></ViLanguageWrapper>"
   },
   {
     "path": "/feed",
@@ -317,7 +317,7 @@
   },
   {
     "path": "/vi/feed",
-    "element": "<Feed />"
+    "element": "<ViLanguageWrapper><Feed /></ViLanguageWrapper>"
   },
   {
     "path": "/blog",
@@ -766,5 +766,9 @@
   {
     "path": "*",
     "element": "<NotFound />"
+  },
+  {
+    "path": "/vi/*",
+    "element": "<ViLanguageWrapper><NotFound /></ViLanguageWrapper>"
   }
 ]
