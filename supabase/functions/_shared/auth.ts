@@ -10,7 +10,7 @@
 //
 // Usage in a function:
 //
-//   import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+//   import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 //   import { getAuthUser } from "../_shared/auth.ts";
 //
 //   Deno.serve(async (req) => {
@@ -25,7 +25,7 @@
 //   });
 // ============================================================================
 
-import type { SupabaseClient, User } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import type { SupabaseClient, User } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { corsHeaders } from "./cors.ts";
 
 /**

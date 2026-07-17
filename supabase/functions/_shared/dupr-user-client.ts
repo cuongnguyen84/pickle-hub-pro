@@ -15,7 +15,7 @@
 // IS NULL before calling.
 // ============================================================================
 
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { buildUserApiUrl, getDuprEnv, type DuprEnv } from "./dupr-client.ts";
 import { decryptUserToken } from "./dupr-token-keyring.ts";
 
