@@ -15,6 +15,7 @@ import CourtTimeSettings from '@/components/quicktable/CourtTimeSettings';
 import { useI18n } from '@/i18n';
 import { useConfirm } from '@/hooks/useConfirm';
 import { parseCourtsInput } from '@/lib/round-robin';
+import { surfaceCard, stepKickerStyle, stepHeadingStyle, stepDescStyle } from '@/components/tournament/setup-styles';
 
 interface PlayerInput {
   id: string;
@@ -26,41 +27,6 @@ interface PlayerInput {
 
 type AssignmentMode = 'auto' | 'manual';
 type Step = 'input' | 'assignment';
-
-const surfaceCard: React.CSSProperties = {
-  background: 'var(--tl-bg-elev)',
-  border: '1px solid var(--tl-border)',
-  borderRadius: 'var(--tl-radius-lg)',
-  padding: 28,
-};
-
-const stepKickerStyle: React.CSSProperties = {
-  fontFamily: 'Geist Mono, ui-monospace, monospace',
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--tl-green)',
-  marginBottom: 8,
-};
-
-const stepHeadingStyle: React.CSSProperties = {
-  fontFamily: 'Instrument Serif, serif',
-  fontStyle: 'italic',
-  fontWeight: 400,
-  fontSize: 28,
-  letterSpacing: '-0.015em',
-  lineHeight: 1.05,
-  margin: 0,
-  color: 'var(--tl-fg)',
-};
-
-const stepDescStyle: React.CSSProperties = {
-  fontSize: 14.5,
-  color: 'var(--tl-fg-3)',
-  marginTop: 6,
-  lineHeight: 1.5,
-};
 
 const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
