@@ -77,6 +77,10 @@ describe("computeManualWinner", () => {
   it("a missing player id yields null even for the leading side", () => {
     expect(computeManualWinner(1, [], 11, 7, null, P2)).toBeNull();
   });
+
+  it("QUIRK: an empty-string id is a valid winner (old page gated on the object, not the id)", () => {
+    expect(computeManualWinner(1, [], 11, 7, "", P2)).toBe("");
+  });
 });
 
 describe("finalizeSetScores", () => {

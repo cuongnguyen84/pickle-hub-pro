@@ -80,12 +80,14 @@ export function computeManualWinner(
     if (score1 > score2) sets1++;
     else if (score2 > score1) sets2++;
 
-    if (sets1 > sets2 && player1Id) return player1Id;
-    if (sets2 > sets1 && player2Id) return player2Id;
+    // `!== null` (not truthiness): the old page gated on the player OBJECT,
+    // so an empty-string id was still returned. Codex review 2026-07-17.
+    if (sets1 > sets2 && player1Id !== null) return player1Id;
+    if (sets2 > sets1 && player2Id !== null) return player2Id;
     return null;
   }
-  if (score1 > score2 && player1Id) return player1Id;
-  if (score2 > score1 && player2Id) return player2Id;
+  if (score1 > score2 && player1Id !== null) return player1Id;
+  if (score2 > score1 && player2Id !== null) return player2Id;
   return null;
 }
 
