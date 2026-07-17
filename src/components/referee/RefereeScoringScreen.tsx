@@ -155,15 +155,23 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
 
   // S3c: readOnly viewers follow the scoring referee live — each envelope
   // the consumer streams replaces the whole board state. Writers ignore it.
+  // An explicit null AFTER we had a board means the match finished (the
+  // writer cleared the row) — show the ended pill instead of a stale board.
+  const [liveEnded, setLiveEnded] = useState(false);
   useEffect(() => {
     if (!readOnly) return;
     const env = parseLiveState(liveState);
-    if (!env) return;
+    if (!env) {
+      if (liveState === null && state) setLiveEnded(true);
+      return;
+    }
+    setLiveEnded(false);
     setState(env.state); setMode(env.state.mode); setTarget(env.state.winTarget);
     setHistory(env.history);
     setUsedReg(env.usedReg); setUsedMed(env.usedMed);
     setRegularTO(env.regularTO);
     setNoteA(env.notes.a); setNoteB(env.notes.b);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveState, readOnly]);
 
   // S2: debounced full-state push to the consumer (DB row). 400ms collapses
@@ -178,6 +186,11 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   onLiveStateRef.current = onLiveState;
   const pendingEnvRef = useRef<RefereeLiveState | null>(null);
   const finishedRef = useRef(false);
+  // readOnlyRef mirrors the derived lockout — the timer, the unmount flush
+  // and any queued write recheck it at FIRE time, not schedule time
+  // (Codex review round 3: a takeover must stop in-flight writes).
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
   useEffect(() => {
     if (!state || !onLiveState || readOnly) return undefined;
     pendingEnvRef.current = makeLiveState({
@@ -189,16 +202,12 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current);
     liveStateTimer.current = window.setTimeout(() => {
       liveStateTimer.current = null;
-      if (!finishedRef.current && pendingEnvRef.current) onLiveStateRef.current?.(pendingEnvRef.current);
+      if (!finishedRef.current && !readOnlyRef.current && pendingEnvRef.current) onLiveStateRef.current?.(pendingEnvRef.current);
     }, 400);
     return () => { if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, history, usedReg, usedMed, noteA, noteB, regularTO, readOnly]);
   // Unmount flush — a rally scored right before closing must still land.
-  // readOnlyRef mirrors the derived lockout so the flush never writes for
-  // a viewer (Codex review 2026-07-17).
-  const readOnlyRef = useRef(readOnly);
-  readOnlyRef.current = readOnly;
   useEffect(() => () => {
     if (!finishedRef.current && !readOnlyRef.current && liveStateTimer.current && pendingEnvRef.current) {
       onLiveStateRef.current?.(pendingEnvRef.current);
@@ -323,6 +332,11 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     const isManualMulti = s.mode === 'manual' && (s.totalSets ?? 1) > 1;
     if (readOnly || (isManualMulti ? manualMatchWinner(s) === null : s.a === s.b)) return;
     setSaving(true);
+    // Block the debounced push + unmount flush BEFORE awaiting — consumers
+    // navigate inside onFinish, and an unmount mid-await must not republish
+    // the envelope (Codex review round 3). A failed finish restores it.
+    finishedRef.current = true;
+    if (liveStateTimer.current) { window.clearTimeout(liveStateTimer.current); liveStateTimer.current = null; }
     try {
       exitLandscape();
       if (isManualMulti) {
@@ -331,12 +345,12 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       } else {
         await onFinish(s.a, s.b, combinedNote());
       }
-      // Clear resume state only AFTER the final result persisted (Codex
-      // review 2026-07-17: clearing first lost the game if onFinish threw).
-      finishedRef.current = true;
-      if (liveStateTimer.current) { window.clearTimeout(liveStateTimer.current); liveStateTimer.current = null; }
+      // Clear resume state only AFTER the final result persisted.
       localStorage.removeItem(storeKey); localStorage.removeItem(noteKey);
       onLiveState?.(null); // clear the row's live state — the match is final
+    } catch (e) {
+      finishedRef.current = false; // finish failed — resume persistence
+      throw e;
     } finally { setSaving(false); }
   }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote, onLiveState, readOnly]);
 
@@ -353,10 +367,13 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
             fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, fontWeight: 500,
             letterSpacing: '0.06em', textTransform: 'uppercase',
             padding: '3px 9px', borderRadius: 4,
-            background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)',
-            border: '1px solid rgba(233, 182, 73, 0.30)',
+            ...(liveEnded
+              ? { background: 'var(--tl-green-glow)', color: 'var(--tl-green)', border: '1px solid rgba(0, 185, 107, 0.30)' }
+              : { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)', border: '1px solid rgba(233, 182, 73, 0.30)' }),
           }}>
-            {vi ? 'Trọng tài khác đang chấm' : 'Another referee is scoring'}
+            {liveEnded
+              ? (vi ? 'Trận đã kết thúc' : 'Match finished')
+              : (vi ? 'Trọng tài khác đang chấm' : 'Another referee is scoring')}
           </span>
         )}
         {state && !readOnly && (

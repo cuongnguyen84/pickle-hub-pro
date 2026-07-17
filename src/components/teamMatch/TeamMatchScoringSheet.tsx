@@ -202,6 +202,18 @@ export function TeamMatchScoringSheet({
     return () => { cancelled = true; };
   }, [refereeing, refGameId]);
 
+  const liveGameRow = currentGame as unknown as { live_referee_id?: string | null; referee_live_state?: unknown } | undefined;
+  // Codex round 3: once a FOREIGN claim is seen, stay locked until the
+  // overlay reopens — a later claimedBy:null must not unlock a retained board.
+  const [refForeignSeen, setRefForeignSeen] = useState(false);
+  const liveClaim = liveGameRow?.live_referee_id ?? null;
+  useEffect(() => {
+    if (!refereeing) { setRefForeignSeen(false); return; }
+    if (liveClaim && liveClaim !== user?.id) setRefForeignSeen(true);
+  }, [refereeing, liveClaim, user?.id]);
+  const refReadOnly = refForeignSeen || [refInit.claimedBy, liveClaim]
+    .some((c) => !!c && c !== user?.id);
+
   // Calculate games won dynamically from games data
   const calculatedGamesWon = useMemo(() => {
     let gamesWonA = 0;
@@ -334,25 +346,29 @@ export function TeamMatchScoringSheet({
   const refFinish = async (a: number, b: number) => {
     setLocalScoreA(a); setLocalScoreB(b);
     await handleSaveGame(a, b);
+    // Clear the live envelope with plain game-id authority — the screen's
+    // ownership-gated onLiveState(null) may no longer match post-finish.
+    if (currentGame) {
+      try { await supabase.from('team_match_games').update({ referee_live_state: null } as never).eq('id', currentGame.id); } catch { /* best-effort */ }
+    }
     setRefereeing(false);
   };
+  // Codex round 3: every live write carries a server-side ownership
+  // predicate — a queued write from a taken-over referee must not commit.
   const refLiveScore = (a: number, b: number) => {
-    if (!currentGame) return;
-    void supabase.from('team_match_games').update({ score_a: a, score_b: b }).eq('id', currentGame.id).then((): void => undefined, (): void => undefined);
+    if (!currentGame || !user?.id) return;
+    void supabase.from('team_match_games').update({ score_a: a, score_b: b }).eq('id', currentGame.id).eq('live_referee_id', user.id).then((): void => undefined, (): void => undefined);
   };
   // S2: best-effort full-state persistence (referee_live_state jsonb).
   const refLiveState = (s: RefereeLiveState | null) => {
-    if (!currentGame) return;
-    void supabase.from('team_match_games').update({ referee_live_state: s } as never).eq('id', currentGame.id).then((): void => undefined, (): void => undefined);
+    if (!currentGame || !user?.id) return;
+    void supabase.from('team_match_games').update({ referee_live_state: s } as never).eq('id', currentGame.id).eq('live_referee_id', user.id).then((): void => undefined, (): void => undefined);
   };
   // S3a: another referee holds the claim -> static snapshot, no writes.
   // S3c: currentGame refetches via the sheet's existing realtime hook, so
   // its live_referee_id/referee_live_state are LIVE. Lock when EITHER the
   // open-time fetch or the live row reports another referee — conservative
   // on staleness (a viewer stays locked until reopen after a finish).
-  const liveGameRow = currentGame as unknown as { live_referee_id?: string | null; referee_live_state?: unknown } | undefined;
-  const refReadOnly = [refInit.claimedBy, liveGameRow?.live_referee_id ?? null]
-    .some((c) => !!c && c !== user?.id);
   // Codex review 2026-07-17: report a LOST claim (false) so the screen
   // refuses to start scoring.
   const refClaimLive = async (): Promise<boolean | void> => {

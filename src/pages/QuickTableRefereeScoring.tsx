@@ -18,14 +18,23 @@ export default function QuickTableRefereeScoring() {
   const [initialLiveState, setInitialLiveState] = useState<unknown>(null);
   const [readOnly, setReadOnly] = useState(false);
   const [meId, setMeId] = useState<string | null>(null);
+  const meIdRef = useRef<string | null>(null);
   // S3c: live row updates (envelope + claim) from the realtime subscription.
   const [liveRow, setLiveRow] = useState<{ env: unknown; claimedBy: string | null } | null>(null);
+  // Codex round 3: once a FOREIGN claim is seen, stay locked until the page
+  // reloads — a later claimedBy:null (finish/release) must not unlock a
+  // retained board that S2 could then republish.
+  const [foreignClaimSeen, setForeignClaimSeen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Quick-Table-only context used by onFinish (kept out of the generic shape).
   const ctx = useRef<{ tableId: string; groupId: string | null; isPlayoff: boolean; shareId: string }>({ tableId: '', groupId: null, isPlayoff: false, shareId: '' });
 
   useEffect(() => {
     if (!matchId) return;
+    // Codex round 3: reset match-scoped state on matchId change (router
+    // element reuse must not leak the previous match's envelope/claim).
+    setLoaded(null); setInitialLiveState(null); setReadOnly(false);
+    setLiveRow(null); setForeignClaimSeen(false);
     (async () => {
       try {
         // select('*') because referee_live_state is newer than the generated
@@ -37,6 +46,7 @@ export default function QuickTableRefereeScoring() {
         // S3a: another referee holds the claim -> static snapshot, no writes.
         const lref = (m as unknown as { live_referee_id?: string | null }).live_referee_id ?? null;
         const { data: auth } = await supabase.auth.getUser();
+        meIdRef.current = auth.user?.id ?? null;
         setMeId(auth.user?.id ?? null);
         setReadOnly(!!lref && lref !== auth.user?.id);
         const { data: tb } = await supabase
@@ -71,22 +81,25 @@ export default function QuickTableRefereeScoring() {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quick_table_matches', filter: `id=eq.${matchId}` }, (payload) => {
         const row = payload.new as { referee_live_state?: unknown; live_referee_id?: string | null };
         setLiveRow({ env: row.referee_live_state ?? null, claimedBy: row.live_referee_id ?? null });
+        if (row.live_referee_id && row.live_referee_id !== meIdRef.current) setForeignClaimSeen(true);
       })
       .subscribe();
     return () => { void supabase.removeChannel(ch); };
   }, [matchId]);
 
-  const effectiveReadOnly = liveRow ? (!!liveRow.claimedBy && liveRow.claimedBy !== meId) : readOnly;
+  const effectiveReadOnly = foreignClaimSeen || (liveRow ? (!!liveRow.claimedBy && liveRow.claimedBy !== meId) : readOnly);
 
+  // Codex round 3: every live write carries a server-side ownership
+  // predicate — a queued write from a taken-over referee must not commit.
   const onLiveScore = useCallback((a: number, b: number) => {
-    if (!matchId) return;
-    void supabase.from('quick_table_matches').update({ score1: a, score2: b } as never).eq('id', matchId).then((): void => undefined, (): void => undefined);
+    if (!matchId || !meIdRef.current) return;
+    void supabase.from('quick_table_matches').update({ score1: a, score2: b } as never).eq('id', matchId).eq('live_referee_id', meIdRef.current).then((): void => undefined, (): void => undefined);
   }, [matchId]);
 
   // S2: best-effort full-state persistence (referee_live_state jsonb).
   const onLiveState = useCallback((s: RefereeLiveState | null) => {
-    if (!matchId) return;
-    void supabase.from('quick_table_matches').update({ referee_live_state: s } as never).eq('id', matchId).then((): void => undefined, (): void => undefined);
+    if (!matchId || !meIdRef.current) return;
+    void supabase.from('quick_table_matches').update({ referee_live_state: s } as never).eq('id', matchId).eq('live_referee_id', meIdRef.current).then((): void => undefined, (): void => undefined);
   }, [matchId]);
 
   // Codex review 2026-07-17: report a LOST claim (false) so the screen
@@ -112,6 +125,10 @@ export default function QuickTableRefereeScoring() {
     if (!matchId) return;
     const { tableId, groupId, isPlayoff, shareId } = ctx.current;
     await updateMatchScore(matchId, a, b);
+    // Clear the live envelope HERE: updateMatchScore just released the
+    // claim, so the screen's ownership-gated onLiveState(null) can no
+    // longer match — the finisher clears with plain match-id authority.
+    try { await supabase.from('quick_table_matches').update({ referee_live_state: null } as never).eq('id', matchId); } catch { /* best-effort */ }
     if (!isPlayoff && groupId) {
       try { await updatePlayerStats(tableId, groupId); } catch { /* best-effort */ }
     }
