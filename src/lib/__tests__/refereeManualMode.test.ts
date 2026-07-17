@@ -1,6 +1,6 @@
 // ARCH-04 scoring S3b — the engine's manual scoreboard mode. Semantics
 // mirror the legacy MatchScoring scoreboard (characterized in
-// manualScoring.test.ts): clamp-0 adjustments, hand-driven A2→B1→B2→A1
+// characterized pre-S4): clamp-0 adjustments, hand-driven A2→B1→B2→A1
 // serve cycle, no win target, no auto game-over.
 
 import { describe, it, expect } from "vitest";

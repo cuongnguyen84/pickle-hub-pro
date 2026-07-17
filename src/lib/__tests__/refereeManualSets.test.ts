@@ -1,6 +1,6 @@
 // ARCH-04 scoring S3b2 — best-of sets in the engine's manual mode.
 // Winner/finalization semantics mirror the legacy MatchScoring scoreboard
-// (manualScoring.test.ts): the live score votes as one more set; the live
+// characterized pre-S4): the live score votes as one more set; the live
 // score is archived on finish only when at least one side scored.
 
 import { describe, it, expect } from "vitest";
