@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuickTableMutations } from '@/hooks/useQuickTableMutations';
 import { useI18n } from '@/i18n';
 import { RefereeScoringScreen, RefereeCentered, type RefereeLoaded } from '@/components/referee/RefereeScoringScreen';
+import type { RefereeLiveState } from '@/lib/refereeScoring';
 
 /** Quick Table referee live-scoring — thin loader over RefereeScoringScreen. */
 export default function QuickTableRefereeScoring() {
@@ -14,6 +15,7 @@ export default function QuickTableRefereeScoring() {
   const vi = language === 'vi';
 
   const [loaded, setLoaded] = useState<RefereeLoaded | null>(null);
+  const [initialLiveState, setInitialLiveState] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   // Quick-Table-only context used by onFinish (kept out of the generic shape).
   const ctx = useRef<{ tableId: string; groupId: string | null; isPlayoff: boolean; shareId: string }>({ tableId: '', groupId: null, isPlayoff: false, shareId: '' });
@@ -22,9 +24,12 @@ export default function QuickTableRefereeScoring() {
     if (!matchId) return;
     (async () => {
       try {
+        // select('*') because referee_live_state is newer than the generated
+        // types — a typed column list would resolve to SelectQueryError.
         const { data: m, error: me } = await supabase
-          .from('quick_table_matches').select('id, player1_id, player2_id, table_id, group_id, is_playoff').eq('id', matchId).single();
+          .from('quick_table_matches').select('*').eq('id', matchId).single();
         if (me || !m) throw me || new Error('match');
+        setInitialLiveState((m as unknown as { referee_live_state?: unknown }).referee_live_state ?? null);
         const { data: tb } = await supabase
           .from('quick_tables').select('id, share_id, name, is_doubles').eq('id', m.table_id).single();
         const ids = [m.player1_id, m.player2_id].filter(Boolean) as string[];
@@ -50,6 +55,12 @@ export default function QuickTableRefereeScoring() {
   const onLiveScore = useCallback((a: number, b: number) => {
     if (!matchId) return;
     void supabase.from('quick_table_matches').update({ score1: a, score2: b } as never).eq('id', matchId).then((): void => undefined, (): void => undefined);
+  }, [matchId]);
+
+  // S2: best-effort full-state persistence (referee_live_state jsonb).
+  const onLiveState = useCallback((s: RefereeLiveState | null) => {
+    if (!matchId) return;
+    void supabase.from('quick_table_matches').update({ referee_live_state: s } as never).eq('id', matchId).then((): void => undefined, (): void => undefined);
   }, [matchId]);
 
   const onClaimLive = useCallback(async () => {
@@ -80,6 +91,7 @@ export default function QuickTableRefereeScoring() {
   return (
     <RefereeScoringScreen
       loaded={loaded} vi={vi} persistKey={`qt-ref:${matchId}`}
+      initialLiveState={initialLiveState} onLiveState={onLiveState}
       onLiveScore={onLiveScore} onClaimLive={onClaimLive} onFinish={onFinish}
     />
   );

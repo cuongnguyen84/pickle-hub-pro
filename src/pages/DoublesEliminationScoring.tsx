@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { submitDoublesEliminationMatch } from "@/lib/dupr/submitDoublesEliminationMatch";
 import { RefereeScoringScreen, type RefereeLoaded } from "@/components/referee/RefereeScoringScreen";
+import type { RefereeLiveState } from "@/lib/refereeScoring";
 import { Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
 import {
   AlertDialog,
@@ -593,6 +594,24 @@ export default function DoublesEliminationScoring() {
     if (!match) return;
     void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).then((): void => undefined, (): void => undefined);
   };
+  // S2: best-effort full-state persistence (referee_live_state jsonb).
+  const refLiveState = (s: RefereeLiveState | null) => {
+    if (!match) return;
+    void supabase.from('doubles_elimination_matches').update({ referee_live_state: s } as never).eq('id', match.id).then((): void => undefined, (): void => undefined);
+  };
+  // Codex review 2026-07-17: fetch the envelope FRESH when the overlay
+  // opens — the page-load snapshot can be stale by then.
+  const refMatchId = match?.id;
+  const [refInit, setRefInit] = useState<{ ready: boolean; value: unknown }>({ ready: false, value: null });
+  useEffect(() => {
+    if (!refereeing || !refMatchId) { setRefInit({ ready: false, value: null }); return undefined; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('doubles_elimination_matches').select('*').eq('id', refMatchId).single();
+      if (!cancelled) setRefInit({ ready: true, value: (data as unknown as { referee_live_state?: unknown } | null)?.referee_live_state ?? null });
+    })();
+    return () => { cancelled = true; };
+  }, [refereeing, refMatchId]);
   const refClaimLive = async () => {
     try {
       const { data } = await supabase.auth.getUser();
@@ -1286,12 +1305,14 @@ export default function DoublesEliminationScoring() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {refereeing && refLoaded && (
+      {refereeing && refLoaded && refInit.ready && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
           <RefereeScoringScreen
             loaded={refLoaded}
             vi={lang === 'vi'}
             persistKey={`de-ref:${refLoaded.matchId}`}
+            initialLiveState={refInit.value}
+            onLiveState={refLiveState}
             onLiveScore={refLiveScore}
             onClaimLive={refClaimLive}
             onFinish={(a, b) => refFinish(a, b)}
