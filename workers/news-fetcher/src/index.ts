@@ -441,30 +441,28 @@ function textOf(node: any): string {
 }
 
 function stripHtml(html: string): string {
-  // Tag strip loops to a fixpoint so nested/overlapping fragments cannot
-  // reassemble into a tag after one pass, and the paired script/style
-  // patterns tolerate attributes + whitespace in the closing tag
-  // (CodeQL js/incomplete-multi-character-sanitization, js/bad-tag-filter).
+  // Strip + entity-decode inside ONE fixpoint loop: a tag that reassembles
+  // from nested fragments (<scr<script>ipt>) OR materializes from encoded
+  // entities (&lt;script&gt;, &amp;lt;script&amp;gt;) gets stripped on the
+  // following iteration, so the returned text can never contain live markup
+  // (CodeQL js/incomplete-multi-character-sanitization, js/bad-tag-filter,
+  // js/double-escaping). Cost: tag-shaped prose like "x < 5 and y > 3" loses
+  // its middle — acceptable for a scraped plain-text summary.
   let out = html;
   let prev: string;
   do {
     prev = out;
     out = out
       .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*[^>]*>/gi, "")
-      .replace(/<[^>]+>/g, "");
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&");
   } while (out !== prev);
-  // Entity decode AFTER stripping, with &amp; LAST — decoding &amp; first
-  // turned double-escaped input (&amp;lt;) into live tag characters
-  // (CodeQL js/double-escaping).
-  return out
-    .replace(/&nbsp;/g, " ")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ")
-    .trim();
+  return out.replace(/\s+/g, " ").trim();
 }
 
 function truncate(text: string, limit: number): string {
