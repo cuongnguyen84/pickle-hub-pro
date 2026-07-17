@@ -58,6 +58,10 @@ function captureErrors(page: Page): { errors: string[]; clearAllowed: () => void
     /ResizeObserver loop/i,
     /Failed to load resource.*chrome-extension/i,
     /OneTrustWrapperFn/i,
+    // Google's own REPORT-ONLY frame-ancestors policy logs a console error
+    // when /dupr embeds its sign-in iframe — "no further action has been
+    // taken" per the message itself; pure third-party noise (2026-07-17).
+    /Framing 'https:\/\/www\.google\.com\/' violates the following report-only Content Security Policy/,
   ];
   const record = (kind: string, text: string) => {
     if (DENY.some((r) => r.test(text))) {
@@ -70,7 +74,10 @@ function captureErrors(page: Page): { errors: string[]; clearAllowed: () => void
   page.on("pageerror", (e) => record("pageerror", e.message));
   page.on("console", (msg) => {
     if (msg.type() !== "error") return;
-    record("console.error", msg.text());
+    // Append the source URL so a "Failed to load resource: 404" names the
+    // exact asset — 2026-07-17's alert storm was undiagnosable without it.
+    const url = msg.location()?.url;
+    record("console.error", url ? `${msg.text()} [${url}]` : msg.text());
   });
 
   return { errors, clearAllowed: () => errors.splice(0, errors.length) };
