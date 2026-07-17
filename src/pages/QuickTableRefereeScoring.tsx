@@ -121,14 +121,25 @@ export default function QuickTableRefereeScoring() {
     } catch { return undefined; }
   }, [matchId]);
 
-  const onFinish = useCallback(async (a: number, b: number, note: string | null) => {
+  const onFinish = useCallback(async (a: number, b: number, note: string | null, sets?: { setsWon: { a: number; b: number }; setScores: { s1: number; s2: number }[] }) => {
     if (!matchId) return;
     const { tableId, groupId, isPlayoff, shareId } = ctx.current;
+    // Multi-set manual games arrive with sets-won as (a, b) — the correct
+    // winner input for updateMatchScore — plus the archived per-set scores.
     await updateMatchScore(matchId, a, b);
-    // Clear the live envelope HERE: updateMatchScore just released the
+    // Clear the live envelope HERE (updateMatchScore just released the
     // claim, so the screen's ownership-gated onLiveState(null) can no
-    // longer match — the finisher clears with plain match-id authority.
-    try { await supabase.from('quick_table_matches').update({ referee_live_state: null } as never).eq('id', matchId); } catch { /* best-effort */ }
+    // longer match) and archive the per-set scores in the same write.
+    try {
+      await supabase.from('quick_table_matches')
+        .update({
+          referee_live_state: null,
+          ...(sets && sets.setScores.length > 0
+            ? { set_scores: sets.setScores, total_sets: sets.setScores.length }
+            : {}),
+        } as never)
+        .eq('id', matchId);
+    } catch { /* best-effort */ }
     if (!isPlayoff && groupId) {
       try { await updatePlayerStats(tableId, groupId); } catch { /* best-effort */ }
     }

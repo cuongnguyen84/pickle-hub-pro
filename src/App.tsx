@@ -70,7 +70,6 @@ const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
 const QuickTableView = lazyRetry(() => import("./pages/QuickTableView"));
 const ParentTournamentPage = lazyRetry(() => import("./pages/ParentTournamentPage"));
-const MatchScoring = lazyRetry(() => import("./pages/MatchScoring"));
 const QuickTableRefereeScoring = lazyRetry(() => import("./pages/QuickTableRefereeScoring"));
 const TeamMatchScoring = lazyRetry(() => import("./pages/TeamMatchScoring"));
 const JoinTeam = lazyRetry(() => import("./pages/JoinTeam"));
@@ -162,6 +161,9 @@ const QuickTableRedirect = lazy(() =>
 );
 const QuickTableSetupRedirect = lazy(() =>
   import("./pages/redirects/QuickTableRedirects").then((m) => ({ default: m.QuickTableSetupRedirect })),
+);
+const LegacyMatchScoringRedirect = lazy(() =>
+  import("./pages/redirects/QuickTableRedirects").then((m) => ({ default: m.LegacyMatchScoringRedirect })),
 );
 
 // Lazy load admin pages
@@ -696,7 +698,7 @@ const App = () => (
                     <Route path="/quick-tables" element={<Navigate to="/tools/quick-tables" replace />} />
                     <Route path="/quick-tables/:shareId" element={<QuickTableRedirect />} />
                     <Route path="/quick-tables/:shareId/setup" element={<QuickTableSetupRedirect />} />
-                    <Route path="/matches/:matchId/score" element={<MatchScoring />} />
+                    <Route path="/matches/:matchId/score" element={<LegacyMatchScoringRedirect />} />
                     <Route path="/join/:inviteCode" element={<JoinTeam />} />
                     {/* Embed routes - no layout, minimal UI */}
                     <Route path="/embed/live/:id" element={<EmbedLive />} />

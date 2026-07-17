@@ -159,7 +159,8 @@ export const sideSwitchPoint = (winTarget: number): number => Math.floor((winTar
 // ── Manual-mode transitions (ARCH-04 S3b) ────────────────────────────────────
 // Pure, undo-friendly (each returns a NEW state; the screen pushes the prev
 // state onto its history stack). Same semantics as the legacy MatchScoring
-// scoreboard, characterized in src/lib/manualScoring.ts.
+// scoreboard (deleted in ARCH-04 S4; its rules were characterized in
+// manualScoring.test.ts before landing here — these tests now own them).
 
 /** ±1 with a zero clamp; no upper bound, no auto game-over. */
 export function manualAdjust(s: ScoreState, side: ServeSide, delta: number): ScoreState {
@@ -198,7 +199,7 @@ export function manualEndSet(s: ScoreState): ScoreState {
 }
 
 /** Sets won per side. The LIVE score votes as one more set for whichever
- *  side leads it — legacy MatchScoring parity (manualScoring.ts). */
+ *  side leads it — legacy MatchScoring scoreboard parity. */
 export function manualSetsWon(s: ScoreState): { a: number; b: number } {
   let a = 0, b = 0;
   for (const x of s.sets ?? []) {
