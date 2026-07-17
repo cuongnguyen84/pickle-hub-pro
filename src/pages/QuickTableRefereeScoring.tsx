@@ -121,7 +121,7 @@ export default function QuickTableRefereeScoring() {
     } catch { return undefined; }
   }, [matchId]);
 
-  const onFinish = useCallback(async (a: number, b: number, note: string | null, sets?: { setsWon: { a: number; b: number }; setScores: { s1: number; s2: number }[] }) => {
+  const onFinish = useCallback(async (a: number, b: number, note: string | null, sets?: { setsWon: { a: number; b: number }; setScores: { s1: number; s2: number }[]; totalSets: number }) => {
     if (!matchId) return;
     const { tableId, groupId, isPlayoff, shareId } = ctx.current;
     // Multi-set manual games arrive with sets-won as (a, b) — the correct
@@ -135,7 +135,7 @@ export default function QuickTableRefereeScoring() {
         .update({
           referee_live_state: null,
           ...(sets && sets.setScores.length > 0
-            ? { set_scores: sets.setScores, total_sets: sets.setScores.length }
+            ? { set_scores: sets.setScores, total_sets: sets.totalSets }
             : {}),
         } as never)
         .eq('id', matchId);
