@@ -106,7 +106,7 @@ function escapeForRegex(s: string): string {
  * field is absent or set to JSON null / `$undefined`.
  */
 function extractStringField(slice: string, key: string): string | null {
-  const re = new RegExp(`\\\\\"${escapeForRegex(key)}\\\\\"\\s*:\\s*\\\\\"([^\\\\]+)\\\\\"`);
+  const re = new RegExp(`\\\\"${escapeForRegex(key)}\\\\"\\s*:\\s*\\\\"([^\\\\]+)\\\\"`);
   const m = slice.match(re);
   if (!m) return null;
   const val = m[1];
@@ -119,7 +119,7 @@ function extractStringField(slice: string, key: string): string | null {
  * Extract the integer field value. Returns null when missing or null.
  */
 function extractIntField(slice: string, key: string): number | null {
-  const re = new RegExp(`\\\\\"${escapeForRegex(key)}\\\\\"\\s*:\\s*(-?\\d+|null)`);
+  const re = new RegExp(`\\\\"${escapeForRegex(key)}\\\\"\\s*:\\s*(-?\\d+|null)`);
   const m = slice.match(re);
   if (!m || m[1] === "null") return null;
   return parseInt(m[1], 10);
@@ -132,7 +132,7 @@ function extractTeamLogo(slice: string, side: "teamOne" | "teamTwo"): string | n
   // Walk a window after the marker and pull the first url field. Bound the
   // window by either the matching "}" or the next major team marker so the
   // teamTwoLogo's url doesn't leak into teamOneLogo's slot.
-  const markerRe = new RegExp(`\\\\\"${side}Logo\\\\\":`);
+  const markerRe = new RegExp(`\\\\"${side}Logo\\\\":`);
   const m = slice.match(markerRe);
   if (!m) return null;
   const start = (m.index ?? 0) + m[0].length;

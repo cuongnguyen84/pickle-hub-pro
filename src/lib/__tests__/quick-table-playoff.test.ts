@@ -1,4 +1,3 @@
-// @ts-nocheck — vitest types available at test runtime only
 import { describe, it, expect } from 'vitest';
 import {
   generateGlobalSeeding,
@@ -16,6 +15,8 @@ function mockPlayer(
 ): QuickTablePlayer {
   return {
     table_id: 'table-1',
+    player1_name: null,
+    player2_name: null,
     team: null,
     seed: null,
     matches_played: 3,
