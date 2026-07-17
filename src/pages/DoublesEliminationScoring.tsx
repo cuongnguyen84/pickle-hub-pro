@@ -523,6 +523,13 @@ export default function DoublesEliminationScoring() {
 
   const handleEndMatchDirectly = async () => {
     if (!match || !canEdit) return;
+    // ARCH-04 S5 — bug pinned by the #357 characterization notes: a tied
+    // score fell through to "B wins" (eliminating A). The Bracket copy
+    // always guarded this; now both paths refuse a tie.
+    if (localScoreA === localScoreB) {
+      toast({ title: tx.scoresMustDiffer, variant: "destructive" });
+      return;
+    }
 
     const winnerId = localScoreA > localScoreB ? match.team_a_id : match.team_b_id;
     const loserId = localScoreA > localScoreB ? match.team_b_id : match.team_a_id;

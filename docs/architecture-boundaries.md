@@ -80,14 +80,29 @@ Rules (all enforced or precedented by SEC-04/BE-01/QA-08):
   — `TeamMatchRepository.computeMatchResult` is the template; web and Swift
   twins stay case-for-case identical with mirrored test suites.
 
-## Shared scoring core (ARCH-04 pre-work)
+## Shared scoring core (ARCH-04 — DONE 2026-07-17)
 
-The four tournament formats (QuickTable, TeamMatch, DoublesElimination,
-Flex) each carry near-duplicate scoring/setup code (~1,300-line scoring
-sheets, 206 identical setup lines). Before ANY extraction:
-characterization tests per format (QA-07 did TeamMatch total-score; the
-other formats need theirs), then extract into `src/lib/` one format at a
-time — one PR per format, per the roadmap's ARCH-04 split note.
+Shipped across #357-359 (characterization per format), #365-368 (setup
+shell: `SetupShell.tsx` + `setup-styles.ts`), and #369-376 (scoring
+S1-S5). The shared core is:
+
+- **Pure rules** in `src/lib/`: `doublesElimResult`, `quickTableResult`,
+  `flexStats`, `teamMatchResult`, `refereeScoring` (engine: rally,
+  side-out AND manual modes, best-of sets, `RefereeLiveState` envelope).
+- **One scoring surface**: `RefereeScoringScreen` — setup (mode/target/
+  sets/timeouts/coin toss), board, undo, timeouts, notes, DB-persisted
+  resume (`referee_live_state` jsonb on the 3 match tables, realtime-
+  published), contention lockout with foreign-claim latch, spectator
+  live-follow. Formats are thin loaders/overlays wiring RefereeLoaded +
+  claim/persist/finish callbacks (see `QuickTableRefereeScoring` — the
+  template shape).
+- The legacy manual scoreboard page (`MatchScoring.tsx`) is deleted;
+  its route redirects to the QT referee screen.
+
+What deliberately REMAINS per-format: match/bracket management (game
+slots, save-game side-effects, propagation, DUPR submission) — those are
+business rules, not duplication. New scoring features go in the engine +
+screen, never in a format page.
 
 ## Dependency rule enforcement
 
