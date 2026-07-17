@@ -308,7 +308,6 @@ export default defineConfig(({ mode }) => ({
             "@dnd-kit/core",
             "@dnd-kit/utilities",
           ],
-          "vendor-charts": ["recharts"],
           "vendor-date": ["date-fns"],
           "vendor-capacitor": [
             "@capacitor/core",

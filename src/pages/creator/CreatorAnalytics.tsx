@@ -23,18 +23,7 @@ import {
   Play,
   BarChart3,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+import { TinyLineChart, TinyDonut } from "@/components/ui/tiny-chart";
 import { format, parseISO } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 
@@ -205,45 +194,34 @@ export default function CreatorAnalytics() {
                 {chartLoading ? (
                   <Skeleton className="h-[300px] w-full" />
                 ) : viewsOverTime && viewsOverTime.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={viewsOverTime}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis
-                        dataKey="date"
-                        stroke="hsl(var(--foreground-secondary))"
-                        fontSize={12}
-                        tickFormatter={(value) =>
-                          format(parseISO(value), "dd/MM", { locale: dateLocale })
-                        }
-                      />
-                      <YAxis
-                        stroke="hsl(var(--foreground-secondary))"
-                        fontSize={12}
-                        allowDecimals={false}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--surface))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                        }}
-                        labelFormatter={(value) =>
-                          format(parseISO(value as string), "dd MMM yyyy", {
+                  <TinyLineChart
+                    height={300}
+                    xLabels={viewsOverTime.map((d) =>
+                      format(parseISO(d.date), "dd/MM", { locale: dateLocale })
+                    )}
+                    series={[
+                      {
+                        label: t.analytics.views,
+                        values: viewsOverTime.map((d) => d.views),
+                        color: "hsl(var(--primary))",
+                        strokeWidth: 2,
+                        dotRadius: 3,
+                      },
+                    ]}
+                    ariaLabel={t.analytics.viewsOverTime}
+                    renderTooltip={(i) => (
+                      <>
+                        <div className="text-foreground-secondary">
+                          {format(parseISO(viewsOverTime[i].date), "dd MMM yyyy", {
                             locale: dateLocale,
-                          })
-                        }
-                        formatter={(value: number) => [value, t.analytics.views]}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="views"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                          })}
+                        </div>
+                        <div>
+                          {viewsOverTime[i].views} {t.analytics.views}
+                        </div>
+                      </>
+                    )}
+                  />
                 ) : (
                   <div className="h-[300px] flex items-center justify-center text-foreground-secondary">
                     {t.analytics.noViewData}
@@ -350,34 +328,25 @@ export default function CreatorAnalytics() {
                 <CardContent>
                   {viewsByType && (viewsByType.video > 0 || viewsByType.livestream > 0) ? (
                     <div className="flex flex-col items-center">
-                      <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "hsl(var(--surface))",
-                              border: "1px solid hsl(var(--border))",
-                              borderRadius: "8px",
-                            }}
-                            formatter={(value: number) => [
-                              value.toLocaleString(),
-                              t.analytics.views,
-                            ]}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      <TinyDonut
+                        height={200}
+                        innerRadius={60}
+                        outerRadius={80}
+                        segments={pieData.map((p) => ({
+                          value: p.value,
+                          color: p.color,
+                          label: p.name,
+                        }))}
+                        ariaLabel={t.analytics.viewsByType}
+                        renderTooltip={(i) => (
+                          <>
+                            <div className="text-foreground-secondary">{pieData[i].name}</div>
+                            <div>
+                              {pieData[i].value.toLocaleString()} {t.analytics.views}
+                            </div>
+                          </>
+                        )}
+                      />
                       <div className="flex gap-6 mt-4">
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full bg-primary" />
