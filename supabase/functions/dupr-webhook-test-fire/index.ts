@@ -132,7 +132,8 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("test-fire failed:", msg);
-    return jsonResponse({ error: msg }, 502);
+    // CodeQL js/stack-trace-exposure: keep the detail in logs, not the body.
+    return jsonResponse({ error: "upstream_request_failed" }, 502);
   }
 
   // SECURITY: never echo the real DUPR_CLIENT_KEY back to the caller. In
