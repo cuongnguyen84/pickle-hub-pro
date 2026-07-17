@@ -256,11 +256,15 @@ async function runScrape(
         (e) => console.error(`[runScrape] markLogFailed: ${e}`),
       );
     }
+    // CodeQL js/stack-trace-exposure: exception detail goes to the ingestion
+    // log row (markLogFailed above, admin Logs tab) + console.error; the
+    // response carries a generic pointer only.
+    console.error(`[runScrape] failed: ${errMsg}`);
     return {
       ok: false,
       matches_extracted: 0,
       players_extracted: 0,
-      error: errMsg,
+      error: "scrape_failed — chi tiết trong tab Logs (admin) / wrangler tail",
     };
   }
 

@@ -82,10 +82,12 @@ export default {
       const anySynced = results.some((r) => r.action === 'synced');
       return json({ checked: results.length, synced: anySynced, results });
     } catch (err) {
-      // Don't expose stack traces in the response — info leak per CodeQL.
+      // Don't expose error internals in the response — this worker holds the
+      // service-role key + management PAT; detail goes to wrangler tail only
+      // (CodeQL js/stack-trace-exposure).
       const msg = err instanceof Error ? err.message : String(err);
       console.error('FATAL', msg);
-      return json({ error: 'fatal', detail: msg.slice(0, 800) }, 500);
+      return json({ error: 'fatal' }, 500);
     }
   },
 };

@@ -273,7 +273,9 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
       attempt_count: attemptCount,
       error_message: errMsg.slice(0, 500),
     });
-    return json({ posted: false, news_item_id: item.id, error: errMsg }, 500);
+    // CodeQL js/stack-trace-exposure: full detail is already persisted to
+    // fb_post_log.error_message above (admin UI) + console.error.
+    return json({ posted: false, news_item_id: item.id, error: 'post_failed' }, 500);
   }
 }
 
