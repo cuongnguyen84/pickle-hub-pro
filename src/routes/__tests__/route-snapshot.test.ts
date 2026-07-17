@@ -1,15 +1,16 @@
 // ============================================================================
-// ARCH-05 characterization net — snapshot of every <Route> in src/App.tsx.
+// ARCH-05 characterization net — full route table vs checked-in snapshot.
 // ----------------------------------------------------------------------------
-// Locks path + element JSX (component, props, ViLanguageWrapper, auth wrapper)
-// for all routes BEFORE the /vi mirror collapse. The refactor PR must keep
-// this file green except for its declared, intentional diffs — a silently
-// dropped /vi entry falls to the catch-all NotFound while bot prerender stays
-// 200, so no other gate catches it (docs/proposals/arch-05-vi-route-mirror).
+// The snapshot was captured from the PRE-refactor App.tsx (192 literal
+// <Route> lines) and then amended with exactly the three intended ARCH-05
+// changes: /vi/feed + /vi/rankings gain ViLanguageWrapper, /vi/* catch-all
+// added. This test statically expands the post-refactor App.tsx (literal
+// routes + the MIRRORED double-map) and requires content equality — a
+// silently dropped /vi entry falls to catch-all NotFound while bot prerender
+// stays 200, so no other gate catches it.
 //
-// Regenerate after an INTENTIONAL route change:
-//   node -e 'see extractRoutes below — same regex' (or update by hand; the
-//   diff review is the point).
+// MIRRORED entries MUST stay single-line — the parser here depends on it
+// (and asserts it caught every entry, so drift fails loudly).
 // ============================================================================
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -21,7 +22,7 @@ interface RouteEntry {
   element: string;
 }
 
-function extractRoutes(source: string): RouteEntry[] {
+function extractLiteralRoutes(source: string): RouteEntry[] {
   const re = /<Route\s+path="([^"]+)"\s+element=\{([\s\S]*?)\}\s*\/>/g;
   const routes: RouteEntry[] = [];
   let m: RegExpExecArray | null;
@@ -31,13 +32,70 @@ function extractRoutes(source: string): RouteEntry[] {
   return routes;
 }
 
+interface MirroredEntry {
+  path: string;
+  element: string;
+  viElement?: string;
+  viSkipWrapper?: boolean;
+}
+
+function parseMirrored(source: string): MirroredEntry[] {
+  const block = source.match(/const MIRRORED: MirroredRoute\[\] = \[\n([\s\S]*?)\n\];/);
+  if (!block) throw new Error("MIRRORED array not found in App.tsx");
+  const entries: MirroredEntry[] = [];
+  const lines = block[1].split("\n").filter((l) => l.trim().length > 0);
+  for (const raw of lines) {
+    const line = raw.trim().replace(/,$/, "");
+    const m = line.match(/^\{ path: "([^"]+)", (.*) \}$/);
+    if (!m) throw new Error(`unparseable MIRRORED entry: ${raw}`);
+    const entry: MirroredEntry = { path: m[1], element: "" };
+    let rest = m[2];
+    if (rest.endsWith(", viSkipWrapper: true")) {
+      entry.viSkipWrapper = true;
+      rest = rest.slice(0, -", viSkipWrapper: true".length);
+    }
+    const viIdx = rest.indexOf(", viElement: ");
+    if (viIdx >= 0) {
+      entry.viElement = rest.slice(viIdx + ", viElement: ".length);
+      rest = rest.slice(0, viIdx);
+    }
+    if (!rest.startsWith("element: ")) throw new Error(`unparseable MIRRORED entry: ${raw}`);
+    entry.element = rest.slice("element: ".length);
+    entries.push(entry);
+  }
+  return entries;
+}
+
+/** Expand MIRRORED exactly the way App.tsx's two .map() calls render it. */
+function expandMirrored(entries: MirroredEntry[]): RouteEntry[] {
+  const out: RouteEntry[] = [];
+  for (const e of entries) out.push({ path: e.path, element: e.element });
+  for (const e of entries) {
+    const el = e.viElement ?? e.element;
+    out.push({
+      path: e.path === "/" ? "/vi" : `/vi${e.path}`,
+      element: e.viSkipWrapper ? el : `<ViLanguageWrapper>${el}</ViLanguageWrapper>`,
+    });
+  }
+  return out;
+}
+
 describe("App.tsx route table characterization", () => {
   const source = readFileSync(resolve(__dirname, "../../App.tsx"), "utf8");
-  const actual = extractRoutes(source);
+  const literal = extractLiteralRoutes(source);
+  const mirrored = parseMirrored(source);
+  const actual = [...literal, ...expandMirrored(mirrored)];
 
-  it("extractor sees every <Route> tag (guards against JSX shape drift)", () => {
-    const tagCount = (source.match(/<Route /g) ?? []).length;
-    expect(actual.length).toBe(tagCount);
+  it("extractor sees every literal <Route> tag (guards against JSX shape drift)", () => {
+    // 2 of the <Route tags are the .map() templates themselves, not literals.
+    const tagCount = (source.match(/<Route\s/g) ?? []).length - 2;
+    expect(literal.length).toBe(tagCount);
+  });
+
+  it("MIRRORED parser sees every entry (guards against format drift)", () => {
+    const braceCount = (source.match(/^\s*\{ path: "/gm) ?? []).length;
+    expect(mirrored.length).toBe(braceCount);
+    expect(mirrored.length).toBe(60);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {
@@ -55,11 +113,8 @@ describe("App.tsx route table characterization", () => {
       "/vi/su-kien",
       "/vi/su-kien/:slug/live",
       "/vi/u/:slug",
-      // Historical inconsistencies, tracked in ARCH-05 (Feed/Rankings get the
-      // wrapper in the refactor PR; SocialEventLive deferred pending socket audit)
+      // Deferred pending socket audit (ARCH-05 D2): court-side live scoring
       "/vi/social/:slug/live",
-      "/vi/rankings",
-      "/vi/feed",
     ]);
     for (const r of viRoutes) {
       if (KNOWN_UNWRAPPED.has(r.path)) continue;
