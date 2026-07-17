@@ -25,29 +25,31 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { vi as viLocale, enUS } from 'date-fns/locale';
-import { useState, useCallback } from 'react';
-import {
-  CreateTeamDialog,
-  TeamRegistrationDialog,
-  QuickRegisterCTA,
-  TeamList,
-  TeamDetailSheet,
-  MatchDetailSheet,
-  GenerateMatchesDialog,
-  StandingsTable,
-  TeamRosterDisplay,
-  LineupSelectionSheet,
-  PlayoffSetupDialog,
-  GroupSetupDialog,
-  GroupStandingsTable,
-  InviteTeamDialog,
-  SingleEliminationSetupDialog,
-  TeamMatchSettingsDialog,
-  TeamMatchOverviewTab,
-  TeamMatchMatchesTab,
-  TeamMatchPaymentSection,
-  TeamMatchInfoCards,
-} from '@/components/teamMatch';
+import { lazy, Suspense, useState, useCallback } from 'react';
+// PERF-02: eager imports bypass the barrel (it re-exports the whole feature
+// and would pull everything back into this route chunk).
+import { QuickRegisterCTA } from '@/components/teamMatch/QuickRegisterCTA';
+import { TeamList } from '@/components/teamMatch/TeamList';
+import { StandingsTable } from '@/components/teamMatch/StandingsTable';
+import { TeamRosterDisplay } from '@/components/teamMatch/TeamRosterDisplay';
+import { GroupStandingsTable } from '@/components/teamMatch/GroupStandingsTable';
+import { TeamMatchOverviewTab } from '@/components/teamMatch/TeamMatchOverviewTab';
+import { TeamMatchMatchesTab } from '@/components/teamMatch/TeamMatchMatchesTab';
+import { TeamMatchPaymentSection } from '@/components/teamMatch/TeamMatchPaymentSection';
+import { TeamMatchInfoCards } from '@/components/teamMatch/TeamMatchInfoCards';
+// Dialogs/sheets open on demand — each mounts only when its flag flips, so
+// these chunks never load (or execute) on first paint.
+const CreateTeamDialog = lazy(() => import('@/components/teamMatch/CreateTeamDialog').then(m => ({ default: m.CreateTeamDialog })));
+const TeamRegistrationDialog = lazy(() => import('@/components/teamMatch/TeamRegistrationDialog').then(m => ({ default: m.TeamRegistrationDialog })));
+const TeamDetailSheet = lazy(() => import('@/components/teamMatch/TeamDetailSheet').then(m => ({ default: m.TeamDetailSheet })));
+const MatchDetailSheet = lazy(() => import('@/components/teamMatch/MatchDetailSheet').then(m => ({ default: m.MatchDetailSheet })));
+const GenerateMatchesDialog = lazy(() => import('@/components/teamMatch/GenerateMatchesDialog').then(m => ({ default: m.GenerateMatchesDialog })));
+const LineupSelectionSheet = lazy(() => import('@/components/teamMatch/LineupSelectionSheet').then(m => ({ default: m.LineupSelectionSheet })));
+const PlayoffSetupDialog = lazy(() => import('@/components/teamMatch/PlayoffSetupDialog').then(m => ({ default: m.PlayoffSetupDialog })));
+const GroupSetupDialog = lazy(() => import('@/components/teamMatch/GroupSetupDialog').then(m => ({ default: m.GroupSetupDialog })));
+const InviteTeamDialog = lazy(() => import('@/components/teamMatch/InviteTeamDialog').then(m => ({ default: m.InviteTeamDialog })));
+const SingleEliminationSetupDialog = lazy(() => import('@/components/teamMatch/SingleEliminationSetupDialog').then(m => ({ default: m.SingleEliminationSetupDialog })));
+const TeamMatchSettingsDialog = lazy(() => import('@/components/teamMatch/TeamMatchSettingsDialog').then(m => ({ default: m.TeamMatchSettingsDialog })));
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
 import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
@@ -838,7 +840,8 @@ export default function TeamMatchView() {
         </section>
 
         {/* Dialog wiring — all kept intact, child components handle their own visuals */}
-        {!isOwner && (
+        {!isOwner && showCreateTeam && (
+          <Suspense fallback={null}>
           <TeamRegistrationDialog
             open={showCreateTeam}
             onOpenChange={setShowCreateTeam}
@@ -850,18 +853,23 @@ export default function TeamMatchView() {
             initialMode={dialogMode}
             onSuccess={() => setActiveTab('overview')}
           />
+          </Suspense>
         )}
 
-        {isOwner && (
+        {isOwner && showCreateTeam && (
+          <Suspense fallback={null}>
           <CreateTeamDialog
             open={showCreateTeam}
             onOpenChange={setShowCreateTeam}
             tournamentId={tournament.id}
             onSuccess={() => setActiveTab('overview')}
           />
+          </Suspense>
         )}
 
-        <TeamDetailSheet
+        {selectedTeam && (
+          <Suspense fallback={null}>
+          <TeamDetailSheet
           open={!!selectedTeam}
           onOpenChange={(open) => !open && setSelectedTeam(null)}
           team={selectedTeam}
@@ -874,8 +882,12 @@ export default function TeamMatchView() {
             dupr_max_female: tournament.dupr_max_female,
           }}
         />
+          </Suspense>
+        )}
 
-        <MatchDetailSheet
+        {selectedMatch && (
+          <Suspense fallback={null}>
+          <MatchDetailSheet
           open={!!selectedMatch}
           onOpenChange={(open) => !open && setSelectedMatch(null)}
           match={selectedMatch}
@@ -887,8 +899,11 @@ export default function TeamMatchView() {
             navigate(`/tools/team-match/match/${match.id}/score`);
           }}
         />
+          </Suspense>
+        )}
 
         {(userTeam || isOwner) && lineupMatch && (
+          <Suspense fallback={null}>
           <LineupSelectionSheet
             open={!!lineupMatch}
             onOpenChange={(open) => {
@@ -903,16 +918,23 @@ export default function TeamMatchView() {
             hasDreambreaker={tournament.has_dreambreaker}
             isOwner={isOwner}
           />
+          </Suspense>
         )}
 
-        <InviteTeamDialog
+        {showInviteTeamDialog && (
+          <Suspense fallback={null}>
+          <InviteTeamDialog
           open={showInviteTeamDialog}
           onOpenChange={setShowInviteTeamDialog}
           tournamentId={tournament.id}
           tournamentName={tournament.name}
         />
+          </Suspense>
+        )}
 
-        <GenerateMatchesDialog
+        {showGenerateDialog && (
+          <Suspense fallback={null}>
+          <GenerateMatchesDialog
           open={showGenerateDialog}
           onOpenChange={setShowGenerateDialog}
           teams={teams || []}
@@ -921,8 +943,12 @@ export default function TeamMatchView() {
           isGenerating={isGenerating}
           onConfirm={handleGenerateMatches}
         />
+          </Suspense>
+        )}
 
-        <PlayoffSetupDialog
+        {showPlayoffDialog && (
+          <Suspense fallback={null}>
+          <PlayoffSetupDialog
           open={showPlayoffDialog}
           onOpenChange={setShowPlayoffDialog}
           standings={standings}
@@ -931,8 +957,12 @@ export default function TeamMatchView() {
           isCreating={isGeneratingPlayoff}
           onConfirm={handleCreatePlayoff}
         />
+          </Suspense>
+        )}
 
-        <GroupSetupDialog
+        {showGroupSetupDialog && (
+          <Suspense fallback={null}>
+          <GroupSetupDialog
           open={showGroupSetupDialog}
           onOpenChange={setShowGroupSetupDialog}
           teams={teams || []}
@@ -941,8 +971,12 @@ export default function TeamMatchView() {
           requireDupr={tournament.require_dupr ?? false}
           onConfirm={handleCreateGroups}
         />
+          </Suspense>
+        )}
 
-        <SingleEliminationSetupDialog
+        {showSESetupDialog && (
+          <Suspense fallback={null}>
+          <SingleEliminationSetupDialog
           open={showSESetupDialog}
           onOpenChange={setShowSESetupDialog}
           teams={teams || []}
@@ -950,8 +984,12 @@ export default function TeamMatchView() {
           isCreating={isGeneratingSE}
           onConfirm={handleGenerateSingleElimination}
         />
+          </Suspense>
+        )}
 
-        <TeamMatchSettingsDialog
+        {showSettingsDialog && (
+          <Suspense fallback={null}>
+          <TeamMatchSettingsDialog
           open={showSettingsDialog}
           onOpenChange={setShowSettingsDialog}
           tournament={tournament}
@@ -962,6 +1000,8 @@ export default function TeamMatchView() {
           onSave={updateTournamentDetails}
           saving={isUpdatingDetails}
         />
+          </Suspense>
+        )}
 
         <AlertDialog open={showStartTournamentDialog} onOpenChange={setShowStartTournamentDialog}>
           <AlertDialogContent>
