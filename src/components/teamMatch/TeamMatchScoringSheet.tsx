@@ -346,7 +346,13 @@ export function TeamMatchScoringSheet({
     void supabase.from('team_match_games').update({ referee_live_state: s } as never).eq('id', currentGame.id).then((): void => undefined, (): void => undefined);
   };
   // S3a: another referee holds the claim -> static snapshot, no writes.
-  const refReadOnly = !!refInit.claimedBy && refInit.claimedBy !== user?.id;
+  // S3c: currentGame refetches via the sheet's existing realtime hook, so
+  // its live_referee_id/referee_live_state are LIVE. Lock when EITHER the
+  // open-time fetch or the live row reports another referee — conservative
+  // on staleness (a viewer stays locked until reopen after a finish).
+  const liveGameRow = currentGame as unknown as { live_referee_id?: string | null; referee_live_state?: unknown } | undefined;
+  const refReadOnly = [refInit.claimedBy, liveGameRow?.live_referee_id ?? null]
+    .some((c) => !!c && c !== user?.id);
   // Codex review 2026-07-17: report a LOST claim (false) so the screen
   // refuses to start scoring.
   const refClaimLive = async (): Promise<boolean | void> => {
@@ -994,6 +1000,7 @@ export function TeamMatchScoringSheet({
             vi={language === 'vi'}
             persistKey={`tm-ref:${refLoaded.matchId}`}
             initialLiveState={refInit.value}
+            liveState={liveGameRow?.referee_live_state ?? null}
             onLiveState={refLiveState}
             readOnly={refReadOnly}
             onLiveScore={refLiveScore}

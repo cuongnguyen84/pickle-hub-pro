@@ -17,6 +17,9 @@ export default function QuickTableRefereeScoring() {
   const [loaded, setLoaded] = useState<RefereeLoaded | null>(null);
   const [initialLiveState, setInitialLiveState] = useState<unknown>(null);
   const [readOnly, setReadOnly] = useState(false);
+  const [meId, setMeId] = useState<string | null>(null);
+  // S3c: live row updates (envelope + claim) from the realtime subscription.
+  const [liveRow, setLiveRow] = useState<{ env: unknown; claimedBy: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Quick-Table-only context used by onFinish (kept out of the generic shape).
   const ctx = useRef<{ tableId: string; groupId: string | null; isPlayoff: boolean; shareId: string }>({ tableId: '', groupId: null, isPlayoff: false, shareId: '' });
@@ -34,6 +37,7 @@ export default function QuickTableRefereeScoring() {
         // S3a: another referee holds the claim -> static snapshot, no writes.
         const lref = (m as unknown as { live_referee_id?: string | null }).live_referee_id ?? null;
         const { data: auth } = await supabase.auth.getUser();
+        setMeId(auth.user?.id ?? null);
         setReadOnly(!!lref && lref !== auth.user?.id);
         const { data: tb } = await supabase
           .from('quick_tables').select('id, share_id, name, is_doubles').eq('id', m.table_id).single();
@@ -56,6 +60,23 @@ export default function QuickTableRefereeScoring() {
       } catch { setError(vi ? 'Không tải được trận đấu.' : 'Could not load match.'); }
     })();
   }, [matchId, vi]);
+
+  // S3c: follow the row live — spectators see every rally; a takeover
+  // (live_referee_id moving to someone else) locks this screen mid-game.
+  // quick_table_matches joined the realtime publication in 20260717170000.
+  useEffect(() => {
+    if (!matchId) return undefined;
+    const ch = supabase
+      .channel(`qt-ref-live:${matchId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quick_table_matches', filter: `id=eq.${matchId}` }, (payload) => {
+        const row = payload.new as { referee_live_state?: unknown; live_referee_id?: string | null };
+        setLiveRow({ env: row.referee_live_state ?? null, claimedBy: row.live_referee_id ?? null });
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [matchId]);
+
+  const effectiveReadOnly = liveRow ? (!!liveRow.claimedBy && liveRow.claimedBy !== meId) : readOnly;
 
   const onLiveScore = useCallback((a: number, b: number) => {
     if (!matchId) return;
@@ -106,7 +127,8 @@ export default function QuickTableRefereeScoring() {
   return (
     <RefereeScoringScreen
       loaded={loaded} vi={vi} persistKey={`qt-ref:${matchId}`}
-      initialLiveState={initialLiveState} onLiveState={onLiveState} readOnly={readOnly}
+      initialLiveState={initialLiveState} liveState={liveRow?.env ?? null}
+      onLiveState={onLiveState} readOnly={effectiveReadOnly}
       onLiveScore={onLiveScore} onClaimLive={onClaimLive} onFinish={onFinish}
     />
   );

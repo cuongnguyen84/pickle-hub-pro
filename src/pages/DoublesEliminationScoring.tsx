@@ -620,8 +620,25 @@ export default function DoublesEliminationScoring() {
     })();
     return () => { cancelled = true; };
   }, [refereeing, refMatchId]);
+  // S3c: follow the row live while refereeing — spectators see every rally;
+  // a takeover locks this screen mid-game. doubles_elimination_matches
+  // joined the realtime publication in 20260717170000.
+  const [refLiveRow, setRefLiveRow] = useState<{ env: unknown; claimedBy: string | null } | null>(null);
+  useEffect(() => {
+    if (!refereeing || !refMatchId) { setRefLiveRow(null); return undefined; }
+    const ch = supabase
+      .channel(`de-ref-live:${refMatchId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'doubles_elimination_matches', filter: `id=eq.${refMatchId}` }, (payload) => {
+        const row = payload.new as { referee_live_state?: unknown; live_referee_id?: string | null };
+        setRefLiveRow({ env: row.referee_live_state ?? null, claimedBy: row.live_referee_id ?? null });
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [refereeing, refMatchId]);
+
   // S3a: another referee holds the claim -> static snapshot, no writes.
-  const refReadOnly = !!refInit.claimedBy && refInit.claimedBy !== user?.id;
+  const refClaimedBy = refLiveRow ? refLiveRow.claimedBy : refInit.claimedBy;
+  const refReadOnly = !!refClaimedBy && refClaimedBy !== user?.id;
   // Codex review 2026-07-17: report a LOST claim (false) so the screen
   // refuses to start scoring.
   const refClaimLive = async (): Promise<boolean | void> => {
@@ -1333,6 +1350,7 @@ export default function DoublesEliminationScoring() {
             vi={lang === 'vi'}
             persistKey={`de-ref:${refLoaded.matchId}`}
             initialLiveState={refInit.value}
+            liveState={refLiveRow?.env ?? null}
             onLiveState={refLiveState}
             readOnly={refReadOnly}
             onLiveScore={refLiveScore}
