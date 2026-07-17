@@ -5,7 +5,10 @@
 // apple/docs/referee-live-scoring-spec.md.
 
 export type ServeSide = 'a' | 'b';
-export type ScoringMode = 'rally' | 'sideOut';
+export type ScoringMode = 'rally' | 'sideOut' | 'manual';
+// 'manual' (ARCH-04 S3b, Cuong's dual-mode call 2026-07-17): a hand-driven
+// scoreboard — the referee adjusts score/serve directly, no rules derived,
+// no win target, no auto game-over. The legacy MatchScoring page's model.
 
 /** Doubles side-out court positions (for the "next rally" display by name). */
 export interface ServeRotation {
@@ -59,7 +62,7 @@ export function startState(opts: StartOpts): ScoreState {
   }
   return {
     a: 0, b: 0, serving: firstServer,
-    serverNumber: mode === 'sideOut' && !isSingles ? 2 : 1,
+    serverNumber: mode !== 'rally' && !isSingles ? 2 : 1, // doubles start exception (0-0-2)
     mode, isSingles, winTarget, winByTwo, rotation,
   };
 }
@@ -68,6 +71,7 @@ export const scoreOf = (s: ScoreState, side: ServeSide): number => (side === 'a'
 
 // ponytail: no point cap (e.g. 15 in a game to 11). Pickleball has none by default.
 export function isGameOver(s: ScoreState): boolean {
+  if (s.mode === 'manual') return false; // referee ends manually
   if (!(s.a >= s.winTarget || s.b >= s.winTarget)) return false;
   return s.winByTwo ? Math.abs(s.a - s.b) >= 2 : true;
 }
@@ -80,7 +84,7 @@ export function winnerSide(s: ScoreState): ServeSide | null {
 /** Score the referee calls. Side-out is server-relative (doubles adds server#);
  *  rally is plain "a-b". */
 export function callout(s: ScoreState): string {
-  if (s.mode === 'rally') return `${s.a}-${s.b}`;
+  if (s.mode !== 'sideOut') return `${s.a}-${s.b}`;
   const base = `${scoreOf(s, s.serving)}-${scoreOf(s, other(s.serving))}`;
   return s.isSingles ? base : `${base}-${s.serverNumber}`;
 }
@@ -109,6 +113,7 @@ export function receivingPlayer(s: ScoreState): string | null {
 /** Apply one rally. `w` = the team that WON the rally (not necessarily serving).
  *  Game already over → locked, returns input unchanged. Returns a NEW state. */
 export function applyRally(state: ScoreState, w: ServeSide): ScoreState {
+  if (state.mode === 'manual') return state; // manual uses manual* transitions
   if (isGameOver(state)) return state;
   const s: ScoreState = { ...state, rotation: state.rotation ? { ...state.rotation } : null };
 
@@ -142,6 +147,36 @@ export function applyRally(state: ScoreState, w: ServeSide): ScoreState {
 /** Midpoint side switch (11→6, 15→8, 21→11). */
 export const sideSwitchPoint = (winTarget: number): number => Math.floor((winTarget + 1) / 2);
 
+// ── Manual-mode transitions (ARCH-04 S3b) ────────────────────────────────────
+// Pure, undo-friendly (each returns a NEW state; the screen pushes the prev
+// state onto its history stack). Same semantics as the legacy MatchScoring
+// scoreboard, characterized in src/lib/manualScoring.ts.
+
+/** ±1 with a zero clamp; no upper bound, no auto game-over. */
+export function manualAdjust(s: ScoreState, side: ServeSide, delta: number): ScoreState {
+  if (s.mode !== 'manual') return s;
+  return side === 'a'
+    ? { ...s, a: Math.max(0, s.a + delta) }
+    : { ...s, b: Math.max(0, s.b + delta) };
+}
+
+/** Hand-driven serve rotation: A2 → B1 → B2 → A1 → A2 (out-of-domain state
+ *  passes through unchanged — legacy parity). */
+export function manualNextServe(s: ScoreState): ScoreState {
+  if (s.mode !== 'manual') return s;
+  if (s.serving === 'a' && s.serverNumber === 2) return { ...s, serving: 'b', serverNumber: 1 };
+  if (s.serving === 'b' && s.serverNumber === 1) return { ...s, serverNumber: 2 };
+  if (s.serving === 'b' && s.serverNumber === 2) return { ...s, serving: 'a', serverNumber: 1 };
+  if (s.serving === 'a' && s.serverNumber === 1) return { ...s, serverNumber: 2 };
+  return s;
+}
+
+/** Toggle "tay 1"/"tay 2" without moving the serve. */
+export function manualToggleServer(s: ScoreState): ScoreState {
+  if (s.mode !== 'manual') return s;
+  return { ...s, serverNumber: s.serverNumber === 1 ? 2 : 1 };
+}
+
 // ── ARCH-04 scoring S2: live-state persistence envelope ─────────────────────
 // The full in-progress referee state, persisted to the match row
 // (`referee_live_state` jsonb) so a device switch or reload resumes exactly
@@ -174,7 +209,7 @@ function isValidScoreState(x: unknown): x is ScoreState {
   if (typeof s.a !== 'number' || typeof s.b !== 'number') return false;
   if (s.serving !== 'a' && s.serving !== 'b') return false;
   if (typeof s.serverNumber !== 'number') return false;
-  if (s.mode !== 'rally' && s.mode !== 'sideOut') return false;
+  if (s.mode !== 'rally' && s.mode !== 'sideOut' && s.mode !== 'manual') return false;
   if (typeof s.isSingles !== 'boolean') return false;
   if (typeof s.winTarget !== 'number') return false;
   if (typeof s.winByTwo !== 'boolean') return false;
