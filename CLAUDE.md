@@ -45,13 +45,11 @@ npx cap open android # Open Android Studio
 
 ### New blog post checklist (EN + VI bilingual)
 
-Every new blog post requires **5 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
+Every new blog post requires **3 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
 
 1. `src/content/blog/posts/<slug>.ts` — full BlogPost with content.en AND content.vi
-2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array
-3. `functions/_lib/render/index.ts` — add row to `BLOG_POST_META` dict (line ~764). Missing = Googlebot/Bingbot get 404 even though SPA renders fine.
-4. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
-5. `functions/_lib/static-blog-slugs.ts` — add the EN slug to `EN_BLOG_SLUGS`, consumed by `sitemap-static.xml.ts`, until SEO-02 replaces the manual SEO manifests.
+2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array. **Single SEO source of truth** (SEO-02): `BLOG_POST_META` (SSR `<title>` = `metaTitleEn`) and `EN_BLOG_SLUGS` (sitemap) are GENERATED from it — never hand-edit `functions/_lib/render/blog-meta.ts` or `functions/_lib/static-blog-slugs.ts`.
+3. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).

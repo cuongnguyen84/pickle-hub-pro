@@ -394,9 +394,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
   // Prerender cache-key version. Full bump-by-bump changelog moved to
   // docs/prerender-cache-log.md (SEO-04) — append there on every bump.
-  // Current: v28 (2026-07-13 — /vi/tools VI title+meta shortened to the
-  // 60/160 UTF-8-byte SEO budget).
-  const cacheKey = `pr:v28:${url.pathname}`;
+  // Current: v29 (2026-07-17 — SEO-02: BLOG_POST_META generated from
+  // metadata.ts; 28 EN blog <title>s switch to metaTitleEn).
+  const cacheKey = `pr:v29:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
