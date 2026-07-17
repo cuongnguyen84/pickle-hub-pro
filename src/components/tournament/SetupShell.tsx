@@ -103,7 +103,7 @@ export function SetupLoginGate({
             </div>
             <h2 style={{ ...stepHeadingStyle, fontSize: 24, marginBottom: 10 }}>{title}</h2>
             {desc ? (
-              <p style={{ fontSize: 14, color: "var(--tl-fg-3)", marginBottom: 24, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 14, color: "var(--tl-fg-3)", marginTop: 0, marginBottom: 24, lineHeight: 1.5 }}>
                 {desc}
               </p>
             ) : null}
