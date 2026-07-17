@@ -19,6 +19,8 @@ export interface ServeRotation {
   serverIdx: number; // index of the current server within the serving team
 }
 
+export interface ManualSetScore { s1: number; s2: number }
+
 export interface ScoreState {
   a: number;
   b: number;
@@ -29,6 +31,10 @@ export interface ScoreState {
   winTarget: number;
   winByTwo: boolean;
   rotation: ServeRotation | null;
+  /** S3b2 — manual mode only: archived set scores + best-of size. Absent
+   *  in rally/sideOut states and in pre-S3b2 persisted blobs. */
+  sets?: ManualSetScore[];
+  totalSets?: number;
 }
 
 const other = (s: ServeSide): ServeSide => (s === 'a' ? 'b' : 'a');
@@ -42,6 +48,8 @@ export interface StartOpts {
   players?: { a: [string, string]; b: [string, string] };
   firstServerIdx?: number;
   firstReceiverIdx?: number;
+  /** S3b2 — manual mode: best-of set count (1 = single game). */
+  totalSets?: number;
 }
 
 /** Start one game. Doubles side-out starts 0-0-2 (start exception): the first
@@ -49,7 +57,7 @@ export interface StartOpts {
 export function startState(opts: StartOpts): ScoreState {
   const {
     mode, isSingles, winTarget, winByTwo = true, firstServer = 'a',
-    players, firstServerIdx = 0, firstReceiverIdx = 0,
+    players, firstServerIdx = 0, firstReceiverIdx = 0, totalSets,
   } = opts;
   let rotation: ServeRotation | null = null;
   if (players && mode === 'sideOut' && !isSingles) {
@@ -64,6 +72,7 @@ export function startState(opts: StartOpts): ScoreState {
     a: 0, b: 0, serving: firstServer,
     serverNumber: mode !== 'rally' && !isSingles ? 2 : 1, // doubles start exception (0-0-2)
     mode, isSingles, winTarget, winByTwo, rotation,
+    ...(mode === 'manual' && totalSets && totalSets > 1 ? { sets: [], totalSets } : {}),
   };
 }
 
@@ -177,6 +186,49 @@ export function manualToggleServer(s: ScoreState): ScoreState {
   return { ...s, serverNumber: s.serverNumber === 1 ? 2 : 1 };
 }
 
+// ── Manual-mode sets (S3b2 — best-of play for the hand scoreboard) ──────────
+
+/** Archive the live score as a set and reset to 0-0. Only meaningful in a
+ *  multi-set manual game, and only while a later set remains (the final
+ *  set ends via the match end flow, not end-set). */
+export function manualEndSet(s: ScoreState): ScoreState {
+  if (s.mode !== 'manual' || !s.totalSets || s.totalSets <= 1) return s;
+  if ((s.sets?.length ?? 0) >= s.totalSets - 1) return s;
+  return { ...s, sets: [...(s.sets ?? []), { s1: s.a, s2: s.b }], a: 0, b: 0 };
+}
+
+/** Sets won per side. The LIVE score votes as one more set for whichever
+ *  side leads it — legacy MatchScoring parity (manualScoring.ts). */
+export function manualSetsWon(s: ScoreState): { a: number; b: number } {
+  let a = 0, b = 0;
+  for (const x of s.sets ?? []) {
+    if (x.s1 > x.s2) a++;
+    else if (x.s2 > x.s1) b++;
+  }
+  if (s.a > s.b) a++;
+  else if (s.b > s.a) b++;
+  return { a, b };
+}
+
+/** Winner of a manual match: sets-won majority for multi-set, live score
+ *  for single-set. Null on a tie (referee must resolve). */
+export function manualMatchWinner(s: ScoreState): ServeSide | null {
+  if (s.mode !== 'manual') return null;
+  if (s.totalSets && s.totalSets > 1) {
+    const w = manualSetsWon(s);
+    return w.a > w.b ? 'a' : w.b > w.a ? 'b' : null;
+  }
+  return s.a > s.b ? 'a' : s.b > s.a ? 'b' : null;
+}
+
+/** Final archived set list on match end: the live score joins only when at
+ *  least one side scored (legacy finalizeSetScores parity). */
+export function manualFinalSetScores(s: ScoreState): ManualSetScore[] {
+  const sets = [...(s.sets ?? [])];
+  if (s.a > 0 || s.b > 0) sets.push({ s1: s.a, s2: s.b });
+  return sets;
+}
+
 // ── ARCH-04 scoring S2: live-state persistence envelope ─────────────────────
 // The full in-progress referee state, persisted to the match row
 // (`referee_live_state` jsonb) so a device switch or reload resumes exactly
@@ -214,6 +266,14 @@ function isValidScoreState(x: unknown): x is ScoreState {
   if (typeof s.winTarget !== 'number') return false;
   if (typeof s.winByTwo !== 'boolean') return false;
   if (s.rotation === undefined) return false;
+  if (s.sets !== undefined) {
+    if (!Array.isArray(s.sets)) return false;
+    for (const x of s.sets) {
+      const e = x as Partial<ManualSetScore> | null;
+      if (!e || typeof e !== 'object' || typeof e.s1 !== 'number' || typeof e.s2 !== 'number') return false;
+    }
+  }
+  if (s.totalSets !== undefined && typeof s.totalSets !== 'number') return false;
   if (s.rotation !== null) {
     const r = s.rotation as Partial<ServeRotation>;
     const pair = (p: unknown): boolean =>
