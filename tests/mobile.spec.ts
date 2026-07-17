@@ -17,10 +17,22 @@ for (const route of MOBILE_ROUTES) {
     await page.goto(route);
     await page.waitForTimeout(500);
 
-    const { docWidth, viewportWidth } = await page.evaluate(() => ({
-      docWidth: document.documentElement.scrollWidth,
-      viewportWidth: window.innerWidth,
-    }));
+    const measure = () =>
+      page.evaluate(() => ({
+        docWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+      }));
+    let dims;
+    try {
+      dims = await measure();
+    } catch {
+      // A late client-side redirect (SPA router) can destroy the execution
+      // context mid-evaluate. Settle and measure the landed page instead.
+      await page.waitForLoadState();
+      await page.waitForTimeout(500);
+      dims = await measure();
+    }
+    const { docWidth, viewportWidth } = dims;
 
     // Allow 2px slack for sub-pixel borders. Anything more = real overflow.
     expect(

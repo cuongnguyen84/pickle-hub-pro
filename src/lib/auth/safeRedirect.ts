@@ -29,10 +29,14 @@ export function isValidInternalPath(input: string | null | undefined): boolean {
   if (input.startsWith("/\\")) return false;
   if (input.startsWith("/%2F") || input.startsWith("/%2f")) return false;
   if (input.startsWith("/%5C") || input.startsWith("/%5c")) return false;
-  // Reject any control char or whitespace; the URL spec is more lenient
-  // than our use-case can afford.
+  // Reject any control char (C0 range + DEL) or whitespace; the URL spec is
+  // more lenient than our use-case can afford. Written with explicit \xNN
+  // escapes — an earlier revision embedded the raw control bytes, which made
+  // git treat this file as binary and made the class render as "[ -\s]" in
+  // editors/scanners (CodeQL #24 flagged that phantom range). Hyphens and all
+  // normal slug characters are allowed.
   // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001f\u007f\s]/.test(input)) return false;
+  if (/[\x00-\x1F\x7F\s]/.test(input)) return false;
   // Disallow inline scheme tokens — `javascript:alert(1)` etc. could
   // sneak through if the leading slash was added defensively elsewhere.
   // Any `:` before the first `/` after position 0 is a smell; we just
