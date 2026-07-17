@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vite";
+import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
@@ -347,6 +348,11 @@ export default defineConfig(({ mode }) => ({
     coverage: {
       provider: "v8",
       reporter: ["text-summary"],
+      // functions/** (Cloudflare Pages Functions) joined the test include on
+      // 2026-07-18; keep the statements threshold scoped to the original src/
+      // + supabase baseline instead of re-basing it on partially covered SSR
+      // helpers.
+      exclude: [...coverageConfigDefaults.exclude, "functions/**"],
       thresholds: {
         statements: 83,
       },
