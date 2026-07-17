@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { submitDoublesEliminationMatch } from "@/lib/dupr/submitDoublesEliminationMatch";
 import { RefereeScoringScreen, type RefereeLoaded } from "@/components/referee/RefereeScoringScreen";
+import type { RefereeLiveState } from "@/lib/refereeScoring";
 import { Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
 import {
   AlertDialog,
@@ -592,6 +593,11 @@ export default function DoublesEliminationScoring() {
   const refLiveScore = (a: number, b: number) => {
     if (!match) return;
     void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).then((): void => undefined, (): void => undefined);
+  };
+  // S2: best-effort full-state persistence (referee_live_state jsonb).
+  const refLiveState = (s: RefereeLiveState | null) => {
+    if (!match) return;
+    void supabase.from('doubles_elimination_matches').update({ referee_live_state: s } as never).eq('id', match.id).then((): void => undefined, (): void => undefined);
   };
   const refClaimLive = async () => {
     try {
@@ -1292,6 +1298,8 @@ export default function DoublesEliminationScoring() {
             loaded={refLoaded}
             vi={lang === 'vi'}
             persistKey={`de-ref:${refLoaded.matchId}`}
+            initialLiveState={(match as unknown as { referee_live_state?: unknown } | null)?.referee_live_state ?? null}
+            onLiveState={refLiveState}
             onLiveScore={refLiveScore}
             onClaimLive={refClaimLive}
             onFinish={(a, b) => refFinish(a, b)}

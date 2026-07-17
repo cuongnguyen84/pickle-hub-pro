@@ -141,3 +141,67 @@ export function applyRally(state: ScoreState, w: ServeSide): ScoreState {
 
 /** Midpoint side switch (11→6, 15→8, 21→11). */
 export const sideSwitchPoint = (winTarget: number): number => Math.floor((winTarget + 1) / 2);
+
+// ── ARCH-04 scoring S2: live-state persistence envelope ─────────────────────
+// The full in-progress referee state, persisted to the match row
+// (`referee_live_state` jsonb) so a device switch or reload resumes exactly
+// — undo stack, timeouts and notes included — and spectators can read
+// serve/rotation from the row in realtime. Versioned so future shape
+// changes can migrate or discard old blobs instead of crashing.
+
+export interface RefereeLiveState {
+  v: 1;
+  state: ScoreState;
+  history: ScoreState[];
+  usedReg: { a: number; b: number };
+  usedMed: { a: number; b: number };
+  notes: { a: string; b: string };
+}
+
+export function makeLiveState(parts: Omit<RefereeLiveState, 'v'>): RefereeLiveState {
+  return { v: 1, ...parts };
+}
+
+/** Parse a persisted blob (string or already-parsed jsonb). Returns null on
+ *  anything that isn't a valid v1 envelope — callers fall back to a fresh
+ *  setup screen, never crash on a stale/corrupt blob. Missing optional
+ *  sections default to empty. */
+export function parseLiveState(raw: unknown): RefereeLiveState | null {
+  try {
+    const o = typeof raw === 'string' ? (JSON.parse(raw) as unknown) : raw;
+    if (!o || typeof o !== 'object') return null;
+    const c = o as Partial<RefereeLiveState>;
+    const s = c.state;
+    if (
+      c.v !== 1 || !s || typeof s !== 'object' ||
+      typeof s.a !== 'number' || typeof s.b !== 'number' ||
+      (s.serving !== 'a' && s.serving !== 'b') ||
+      typeof s.winTarget !== 'number'
+    ) {
+      return null;
+    }
+    const sides = (x: unknown): { a: number; b: number } => {
+      const v = x as { a?: unknown; b?: unknown } | null | undefined;
+      return v && typeof v.a === 'number' && typeof v.b === 'number'
+        ? { a: v.a, b: v.b }
+        : { a: 0, b: 0 };
+    };
+    const notes = (x: unknown): { a: string; b: string } => {
+      const v = x as { a?: unknown; b?: unknown } | null | undefined;
+      return {
+        a: v && typeof v.a === 'string' ? v.a : '',
+        b: v && typeof v.b === 'string' ? v.b : '',
+      };
+    };
+    return {
+      v: 1,
+      state: s as ScoreState,
+      history: Array.isArray(c.history) ? (c.history as ScoreState[]) : [],
+      usedReg: sides(c.usedReg),
+      usedMed: sides(c.usedMed),
+      notes: notes(c.notes),
+    };
+  } catch {
+    return null;
+  }
+}

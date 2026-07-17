@@ -4,7 +4,8 @@ import { ArrowLeft, RotateCcw, Dice5, ArrowLeftRight, StickyNote, Timer, Cross }
 import {
   startState, applyRally, callout, isGameOver, scoreOf,
   servingPlayer, receivingPlayer, servingSideRight, sideSwitchPoint,
-  type ScoreState, type ScoringMode, type ServeSide,
+  makeLiveState, parseLiveState,
+  type ScoreState, type ScoringMode, type ServeSide, type RefereeLiveState,
 } from '@/lib/refereeScoring';
 
 /** Shared web referee live-scoring screen — referee answers one question per
@@ -30,6 +31,15 @@ interface ScreenProps {
   persistKey: string;
   /** Push the running score each rally (spectator realtime). */
   onLiveScore?: (a: number, b: number) => void;
+  /** S2 persistence contract — the match row's `referee_live_state` jsonb,
+   *  loaded by the consumer. A valid envelope wins over localStorage on
+   *  resume, so a device switch continues exactly (undo stack, timeouts,
+   *  notes included). */
+  initialLiveState?: unknown;
+  /** S2 persistence contract — debounced full-state push on every change;
+   *  the consumer writes it to the row (spectators read serve/set/rotation
+   *  from it in realtime). Called with null on finish to clear the row. */
+  onLiveState?: (s: RefereeLiveState | null) => void;
   /** Claim the match as LIVE when the game begins. */
   onClaimLive?: () => void;
   /** Persist the final result. The screen has already cleared resume state. */
@@ -44,7 +54,7 @@ type Active = { side: ServeSide; kind: 'reg' | 'med'; left: number };
 const card: React.CSSProperties = { background: 'var(--tl-surface)', border: '1px solid var(--tl-border)', borderRadius: 'var(--tl-radius-lg)' };
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, onClaimLive, onFinish, onBack }: ScreenProps) {
+export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, initialLiveState, onLiveState, onClaimLive, onFinish, onBack }: ScreenProps) {
   const navigate = useNavigate();
   const storeKey = persistKey;
   const noteKey = `${persistKey}:note`;
@@ -91,9 +101,22 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, onCl
   }, []);
   useEffect(() => () => exitLandscape(), [exitLandscape]);
 
-  // restore in-progress game (+ its mode/target so the board & side-switch match)
+  // restore in-progress game (+ its mode/target so the board & side-switch match).
+  // S2: a valid DB envelope (referee_live_state) wins over localStorage —
+  // device switches resume with undo stack, timeouts and notes intact.
+  const restoredFromDb = useRef(false);
   useEffect(() => {
     if (state) return;
+    const env = parseLiveState(initialLiveState);
+    if (env) {
+      restoredFromDb.current = true;
+      setState(env.state); setMode(env.state.mode); setTarget(env.state.winTarget);
+      setSwitchAnnounced(Math.max(env.state.a, env.state.b) >= sideSwitchPoint(env.state.winTarget));
+      setHistory(env.history);
+      setUsedReg(env.usedReg); setUsedMed(env.usedMed);
+      setNoteA(env.notes.a); setNoteB(env.notes.b);
+      return;
+    }
     try {
       const raw = localStorage.getItem(storeKey);
       if (raw) {
@@ -106,6 +129,23 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, onCl
   }, [storeKey]);
   useEffect(() => { if (state) localStorage.setItem(storeKey, JSON.stringify(state)); }, [state, storeKey]);
 
+  // S2: debounced full-state push to the consumer (DB row). 400ms collapses
+  // note keystrokes; rallies land within one debounce window anyway.
+  const liveStateTimer = useRef<number | null>(null);
+  useEffect(() => {
+    if (!state || !onLiveState) return undefined;
+    if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current);
+    liveStateTimer.current = window.setTimeout(() => {
+      onLiveState(makeLiveState({
+        state, history,
+        usedReg, usedMed,
+        notes: { a: noteA, b: noteB },
+      }));
+    }, 400);
+    return () => { if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, history, usedReg, usedMed, noteA, noteB]);
+
   // Live-push the running score so spectators see it update in realtime.
   const liveA = state?.a;
   const liveB = state?.b;
@@ -115,8 +155,10 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, onCl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveA, liveB]);
 
-  // notes (2 sides) restore + persist
+  // notes (2 sides) restore + persist — skipped when the DB envelope already
+  // restored them (it is the fresher copy).
   useEffect(() => {
+    if (restoredFromDb.current) return;
     try { const raw = localStorage.getItem(noteKey); if (raw) { const o = JSON.parse(raw) as { a?: string; b?: string }; setNoteA(o.a || ''); setNoteB(o.b || ''); } } catch { /* ignore */ }
   }, [noteKey]);
   useEffect(() => {
@@ -207,10 +249,12 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, onCl
     setSaving(true);
     try {
       localStorage.removeItem(storeKey); localStorage.removeItem(noteKey);
+      if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current);
+      onLiveState?.(null); // clear the row's live state — the match is final
       exitLandscape();
       await onFinish(s.a, s.b, combinedNote());
     } finally { setSaving(false); }
-  }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote]);
+  }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote, onLiveState]);
 
   const inner = (
     <div style={{ flex: 1, minWidth: 0, background: 'var(--tl-bg)', color: 'var(--tl-fg)', display: 'flex', flexDirection: 'column' }}>
