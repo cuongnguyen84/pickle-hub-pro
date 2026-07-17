@@ -66,6 +66,49 @@ jobs:
           echo "::warning::Preview deploy never went green — falling back to production for smoke"
           echo "PLAYWRIGHT_BASE_URL=https://www.thepicklehub.net" >> "$GITHUB_ENV"
 
+      # Deploy-settle guard: right after a deploy the CDN can serve a stale
+      # cached index.html that references hashed chunks the (atomic) new
+      # deployment no longer has — smoke then fails on asset 404s (/blog
+      # most often). Poll until the HTML we actually get and the assets it
+      # references are consistent. No cache-buster on purpose: we must
+      # observe the same cached HTML Playwright would get.
+      # Codex review 2026-07-17: CDN caches HTML per-path, so probe /blog
+      # (the most common flake route) as well as /; grep-no-match must not
+      # kill the step under the default `bash -e -o pipefail`; curls get
+      # --max-time so a stalled request can't eat the retry budget.
+      - name: Wait for deploy to settle (HTML/asset consistency)
+        run: |
+          probe() {
+            ROUTE="$1"
+            STATUS=$(curl -s --max-time 10 -o /tmp/settle.html -w '%{http_code}' "$PLAYWRIGHT_BASE_URL$ROUTE" || echo 000)
+            if [ "$STATUS" != "200" ]; then
+              echo "  $ROUTE -> HTTP $STATUS"
+              return 1
+            fi
+            ASSETS=$(grep -oE '/assets/[A-Za-z0-9._/-]+\.(js|css)' /tmp/settle.html | sort -u || true)
+            if [ -z "$ASSETS" ]; then
+              echo "  $ROUTE -> no hashed assets found in HTML"
+              return 1
+            fi
+            for A in $ASSETS; do
+              ST=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' "$PLAYWRIGHT_BASE_URL$A" || echo 000)
+              if [ "$ST" != "200" ]; then
+                echo "  $ROUTE -> $A -> $ST (stale HTML/asset mismatch)"
+                return 1
+              fi
+            done
+            return 0
+          }
+          for i in $(seq 1 10); do
+            echo "[$i] probing / and /blog"
+            if probe "/" && probe "/blog"; then
+              echo "Deploy settled: HTML and referenced assets consistent"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::warning::HTML/asset consistency never settled after 10 tries — running smoke anyway"
+
       - name: Run Playwright tests
         run: npm run e2e
 
