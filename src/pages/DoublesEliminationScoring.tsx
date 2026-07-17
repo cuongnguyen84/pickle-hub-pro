@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
@@ -588,16 +588,23 @@ export default function DoublesEliminationScoring() {
   const refFinish = async (a: number, b: number) => {
     setLocalScoreA(a); setLocalScoreB(b);
     await handleSaveGame(a, b);
+    // Clear the live envelope with plain match-id authority — the screen's
+    // ownership-gated onLiveState(null) may no longer match post-finish.
+    if (match) {
+      try { await supabase.from('doubles_elimination_matches').update({ referee_live_state: null } as never).eq('id', match.id); } catch { /* best-effort */ }
+    }
     setRefereeing(false);
   };
+  // Codex round 3: every live write carries a server-side ownership
+  // predicate — a queued write from a taken-over referee must not commit.
   const refLiveScore = (a: number, b: number) => {
-    if (!match) return;
-    void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).then((): void => undefined, (): void => undefined);
+    if (!match || !user?.id) return;
+    void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).eq('live_referee_id', user.id).then((): void => undefined, (): void => undefined);
   };
   // S2: best-effort full-state persistence (referee_live_state jsonb).
   const refLiveState = (s: RefereeLiveState | null) => {
-    if (!match) return;
-    void supabase.from('doubles_elimination_matches').update({ referee_live_state: s } as never).eq('id', match.id).then((): void => undefined, (): void => undefined);
+    if (!match || !user?.id) return;
+    void supabase.from('doubles_elimination_matches').update({ referee_live_state: s } as never).eq('id', match.id).eq('live_referee_id', user.id).then((): void => undefined, (): void => undefined);
   };
   // Codex review 2026-07-17: fetch the envelope + claim FRESH when the
   // overlay opens — the page-load snapshot can be stale by then.
@@ -620,8 +627,31 @@ export default function DoublesEliminationScoring() {
     })();
     return () => { cancelled = true; };
   }, [refereeing, refMatchId]);
+  // S3c: follow the row live while refereeing — spectators see every rally;
+  // a takeover locks this screen mid-game. doubles_elimination_matches
+  // joined the realtime publication in 20260717170000.
+  const [refLiveRow, setRefLiveRow] = useState<{ env: unknown; claimedBy: string | null } | null>(null);
+  // Codex round 3: once a FOREIGN claim is seen, stay locked until the
+  // overlay reopens — a later claimedBy:null must not unlock a retained board.
+  const [refForeignSeen, setRefForeignSeen] = useState(false);
+  const refMeRef = useRef<string | null>(null);
+  refMeRef.current = user?.id ?? null;
+  useEffect(() => {
+    if (!refereeing || !refMatchId) { setRefLiveRow(null); setRefForeignSeen(false); return undefined; }
+    const ch = supabase
+      .channel(`de-ref-live:${refMatchId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'doubles_elimination_matches', filter: `id=eq.${refMatchId}` }, (payload) => {
+        const row = payload.new as { referee_live_state?: unknown; live_referee_id?: string | null };
+        setRefLiveRow({ env: row.referee_live_state ?? null, claimedBy: row.live_referee_id ?? null });
+        if (row.live_referee_id && row.live_referee_id !== refMeRef.current) setRefForeignSeen(true);
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [refereeing, refMatchId]);
+
   // S3a: another referee holds the claim -> static snapshot, no writes.
-  const refReadOnly = !!refInit.claimedBy && refInit.claimedBy !== user?.id;
+  const refClaimedBy = refLiveRow ? refLiveRow.claimedBy : refInit.claimedBy;
+  const refReadOnly = refForeignSeen || (!!refClaimedBy && refClaimedBy !== user?.id);
   // Codex review 2026-07-17: report a LOST claim (false) so the screen
   // refuses to start scoring.
   const refClaimLive = async (): Promise<boolean | void> => {
@@ -1333,6 +1363,7 @@ export default function DoublesEliminationScoring() {
             vi={lang === 'vi'}
             persistKey={`de-ref:${refLoaded.matchId}`}
             initialLiveState={refInit.value}
+            liveState={refLiveRow?.env ?? null}
             onLiveState={refLiveState}
             readOnly={refReadOnly}
             onLiveScore={refLiveScore}
