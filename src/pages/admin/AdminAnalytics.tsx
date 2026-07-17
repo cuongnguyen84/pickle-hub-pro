@@ -2,15 +2,7 @@ import { useState, useMemo } from "react";
 import { useTopBlogPosts } from "@/hooks/useTopBlogPosts";
 import { useQuery } from "@tanstack/react-query";
 import { subDays, format, eachDayOfInterval } from "date-fns";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { TinyBarChart } from "@/components/ui/tiny-chart";
 import {
   Users,
   Eye,
@@ -330,28 +322,19 @@ export default function AdminAnalytics() {
             {loadingDaily ? (
               <Skeleton className="h-48 w-full" />
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis
-                    dataKey="day"
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{ fontSize: 12, borderRadius: 6 }}
-                    formatter={(v: number) => [v, "users mới"]}
-                  />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <TinyBarChart
+                height={200}
+                xLabels={chartData.map((d) => d.day)}
+                values={chartData.map((d) => d.count)}
+                barColor="hsl(var(--primary))"
+                ariaLabel="Người dùng mới theo ngày"
+                renderTooltip={(i) => (
+                  <>
+                    <div className="text-muted-foreground">{chartData[i].day}</div>
+                    <div>{chartData[i].count} users mới</div>
+                  </>
+                )}
+              />
             )}
           </CardContent>
         </Card>
