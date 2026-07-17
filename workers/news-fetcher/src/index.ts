@@ -441,16 +441,28 @@ function textOf(node: any): string {
 }
 
 function stripHtml(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<[^>]+>/g, "")
+  // Tag strip loops to a fixpoint so nested/overlapping fragments cannot
+  // reassemble into a tag after one pass, and the paired script/style
+  // patterns tolerate attributes + whitespace in the closing tag
+  // (CodeQL js/incomplete-multi-character-sanitization, js/bad-tag-filter).
+  let out = html;
+  let prev: string;
+  do {
+    prev = out;
+    out = out
+      .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*[^>]*>/gi, "")
+      .replace(/<[^>]+>/g, "");
+  } while (out !== prev);
+  // Entity decode AFTER stripping, with &amp; LAST — decoding &amp; first
+  // turned double-escaped input (&amp;lt;) into live tag characters
+  // (CodeQL js/double-escaping).
+  return out
     .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
     .replace(/\s+/g, " ")
     .trim();
 }
