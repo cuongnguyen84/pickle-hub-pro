@@ -24,10 +24,12 @@ export default function QuickTableRefereeScoring() {
     if (!matchId) return;
     (async () => {
       try {
+        // select('*') because referee_live_state is newer than the generated
+        // types — a typed column list would resolve to SelectQueryError.
         const { data: m, error: me } = await supabase
-          .from('quick_table_matches').select('id, player1_id, player2_id, table_id, group_id, is_playoff, referee_live_state').eq('id', matchId).single();
+          .from('quick_table_matches').select('*').eq('id', matchId).single();
         if (me || !m) throw me || new Error('match');
-        setInitialLiveState((m as { referee_live_state?: unknown }).referee_live_state ?? null);
+        setInitialLiveState((m as unknown as { referee_live_state?: unknown }).referee_live_state ?? null);
         const { data: tb } = await supabase
           .from('quick_tables').select('id, share_id, name, is_doubles').eq('id', m.table_id).single();
         const ids = [m.player1_id, m.player2_id].filter(Boolean) as string[];
