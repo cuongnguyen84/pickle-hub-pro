@@ -56,8 +56,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const entries = (players || [])
-      .filter((p: any) => p.username && URL_SAFE_USERNAME_RE.test(p.username))
-      .map((p: any) => {
+      .filter((p: { username: string | null }) => p.username && URL_SAFE_USERNAME_RE.test(p.username))
+      .map((p: { username: string; created_at: string | null }) => {
         const lastmod = toLastmod(p.created_at, TODAY);
         const profileUrl = `${siteUrl}/nguoi-choi/${p.username}`;
         // Sprint 4 Phase 4D: profile URL is single-canonical (no /vi/nguoi-choi/*

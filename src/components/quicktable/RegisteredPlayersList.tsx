@@ -121,6 +121,29 @@ function useAllTeams(tableId: string, enabled: boolean) {
   });
 }
 
+// Union view of a singles registration row / doubles team row — only the
+// fields this list actually reads. Rows from either hook are structurally
+// assignable; fields absent on one shape are simply undefined.
+interface RegisteredItem {
+  id: string;
+  display_name?: string | null;
+  team?: string | null;
+  status?: string | null;
+  rating_system?: string | null;
+  skill_level?: number | null;
+  skill_system_name?: string | null;
+  skill_description?: string | null;
+  btc_approved?: boolean | null;
+  team_status?: string | null;
+  player1_display_name?: string | null;
+  player2_display_name?: string | null;
+  player1_team?: string | null;
+  player2_team?: string | null;
+  player1_rating_system?: string | null;
+  player1_skill_level?: number | null;
+  player2_user_id?: string | null;
+}
+
 interface HeaderProps {
   count: number | null;
   label: string;
@@ -188,7 +211,7 @@ export function RegisteredPlayersList({ tableId, isDoubles = false }: Registered
   // The DUPR integration coming in 1-2 weeks will populate
   // rating_system + skill_level via API, and this same renderer will
   // pick up the value with no change here.
-  const formatSkill = (reg: any): string | null => {
+  const formatSkill = (reg: RegisteredItem): string | null => {
     if (reg.rating_system === 'DUPR' || reg.player1_rating_system === 'DUPR') {
       const level = reg.skill_level || reg.player1_skill_level;
       return level ? `DUPR ${level}` : 'DUPR';
@@ -201,14 +224,14 @@ export function RegisteredPlayersList({ tableId, isDoubles = false }: Registered
     return reg.skill_description || null;
   };
 
-  const isApproved = (item: any) => {
+  const isApproved = (item: RegisteredItem) => {
     if (isDoubles) {
       return item.btc_approved || item.team_status === 'approved';
     }
     return item.status === 'approved';
   };
 
-  const getDisplayName = (item: any) => {
+  const getDisplayName = (item: RegisteredItem) => {
     if (isDoubles) {
       let name = item.player1_display_name;
       if (item.player2_display_name) {
@@ -219,7 +242,7 @@ export function RegisteredPlayersList({ tableId, isDoubles = false }: Registered
     return item.display_name;
   };
 
-  const getTeam = (item: any) => {
+  const getTeam = (item: RegisteredItem) => {
     if (isDoubles) {
       const teams = [item.player1_team, item.player2_team].filter(Boolean);
       return teams.length > 0 ? teams.join(' / ') : null;
@@ -227,7 +250,7 @@ export function RegisteredPlayersList({ tableId, isDoubles = false }: Registered
     return item.team;
   };
 
-  const getPartnerStatus = (item: any) => {
+  const getPartnerStatus = (item: RegisteredItem) => {
     if (!isDoubles) return null;
     if (item.player2_user_id) {
       return t.quickTable.hasPartnerStatus;
@@ -306,7 +329,7 @@ export function RegisteredPlayersList({ tableId, isDoubles = false }: Registered
             </tr>
           </thead>
           <tbody>
-            {data.map((item: any, idx: number) => {
+            {data.map((item: RegisteredItem, idx: number) => {
               const approved = isApproved(item);
               const teamLabel = getTeam(item);
               const skill = formatSkill(item);

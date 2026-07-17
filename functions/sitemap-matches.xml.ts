@@ -54,10 +54,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // `qt-` prefix = QuickTable share IDs (admin-internal bracket tool
       // exports, not real competitive matches). `-test` suffix = seed
       // data accounts. Real PPA Tour matches (ppa_tour-* prefix) stay.
-      .filter((m: any) => m.slug && URL_SAFE_SLUG_RE.test(m.slug))
-      .filter((m: any) => !m.slug.startsWith("qt-"))
-      .filter((m: any) => !m.slug.includes("-test"))
-      .map((m: any) => {
+      .filter((m: { slug: string | null }) => m.slug && URL_SAFE_SLUG_RE.test(m.slug))
+      .filter((m: { slug: string }) => !m.slug.startsWith("qt-"))
+      .filter((m: { slug: string }) => !m.slug.includes("-test"))
+      .map((m: { slug: string; updated_at: string | null }) => {
         const lastmod = toLastmod(m.updated_at, TODAY);
         return buildUrlEntry({
           loc: `${siteUrl}/tran-dau/${m.slug}`,

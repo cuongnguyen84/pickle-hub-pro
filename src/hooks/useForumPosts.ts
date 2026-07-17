@@ -70,8 +70,8 @@ export const useForumPosts = ({ categorySlug, tag, limit = 20 }: UseForumPostsOp
           : { data: [] },
       ]);
 
-      const profileMap = new Map((profilesRes.data || []).map((p: any) => [p.id, p]));
-      const categoryMap = new Map((categoriesRes.data || []).map((c: any) => [c.id, c]));
+      const profileMap = new Map((profilesRes.data || []).map((p) => [p.id, p] as const));
+      const categoryMap = new Map((categoriesRes.data || []).map((c) => [c.id, c] as const));
 
       return posts.map((post) => {
         const profile = profileMap.get(post.user_id);

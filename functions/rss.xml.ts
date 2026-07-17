@@ -137,7 +137,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     if (error) {
       console.error("Error fetching vi_blog_posts for RSS:", error);
     } else {
-      viItems = (viPosts || []).map((post: any) => ({
+      viItems = (viPosts || []).map((post: { slug: string; title: string | null; meta_description: string | null; published_at: string | null }) => ({
         title: post.title || "",
         link: `/vi/blog/${post.slug}`,
         description: post.meta_description || "",

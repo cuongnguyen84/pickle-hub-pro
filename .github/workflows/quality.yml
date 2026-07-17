@@ -33,27 +33,11 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Lint (changed files only)
-        # The repo carries ~267 pre-existing lint errors (mostly no-explicit-any)
-        # that are out of scope to fix here. Linting the whole tree would keep
-        # the gate permanently red, so we lint ONLY the .ts/.tsx files changed
-        # in this PR/push — new + edited code must be clean, legacy debt is
-        # grandfathered. Tighten to `npm run lint` once the backlog is cleared.
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          else
-            BASE_SHA="$(git rev-parse HEAD~1 2>/dev/null || echo '')"
-          fi
-          if [ -z "$BASE_SHA" ]; then
-            echo "No base ref — skipping changed-file lint"; exit 0
-          fi
-          FILES=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" HEAD -- '*.ts' '*.tsx' | tr '\n' ' ')
-          if [ -z "$FILES" ]; then
-            echo "No TS/TSX changes — skipping lint"; exit 0
-          fi
-          echo "Linting changed files: $FILES"
-          npx eslint $FILES
+      - name: Lint (repo-wide)
+        # QA-02 (2026-07-17): the 267-error backlog is cleared — the whole
+        # tree lints green (incl. no-unused-vars, re-enabled). Keep it that
+        # way: the gate now lints EVERYTHING, not just changed files.
+        run: npm run lint
 
       - name: TheLine conformance (changed files)
         # HARD: <TheLineLayout> missing `title` fails the gate. Color + page-wrap

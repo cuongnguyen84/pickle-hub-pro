@@ -32,7 +32,7 @@ export function useChatLeaderboard(livestreamId: string): UseChatLeaderboardResu
 
     if (!error && data) {
       setLeaderboard(
-        (data as any[]).map((d) => ({
+        data.map((d) => ({
           user_id: d.user_id,
           display_name: d.display_name,
           avatar_url: d.avatar_url,

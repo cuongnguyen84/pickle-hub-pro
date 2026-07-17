@@ -137,7 +137,7 @@ export function GroupStandingsTable({
 
     // Initialize standings per group
     groups.forEach(group => {
-      const teamsInGroup = approvedTeams.filter(t => (t as any).group_id === group.id);
+      const teamsInGroup = approvedTeams.filter(t => t.group_id === group.id);
       const standingsMap = new Map<string, TeamStanding>();
 
       teamsInGroup.forEach(team => {

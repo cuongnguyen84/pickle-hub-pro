@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil, Trophy, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface TournamentFormData {
   name: string;
@@ -40,7 +41,7 @@ export default function CreatorTournaments() {
   const { t } = useI18n();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTournament, setEditingTournament] = useState<any>(null);
+  const [editingTournament, setEditingTournament] = useState<Tables<'tournaments'> | null>(null);
   const [formData, setFormData] = useState<TournamentFormData>({
     name: "",
     slug: "",
@@ -71,7 +72,7 @@ export default function CreatorTournaments() {
     setDialogOpen(true);
   };
 
-  const openEditDialog = (tournament: any) => {
+  const openEditDialog = (tournament: Tables<'tournaments'>) => {
     setEditingTournament(tournament);
     setFormData({
       name: tournament.name,
@@ -111,8 +112,8 @@ export default function CreatorTournaments() {
       }
       setDialogOpen(false);
       resetForm();
-    } catch (error: any) {
-      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    } catch (error) {
+      toast({ variant: "destructive", title: error instanceof Error && error.message ? error.message : "Có lỗi xảy ra" });
     }
   };
 

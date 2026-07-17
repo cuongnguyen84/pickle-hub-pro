@@ -1,8 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sanitizeString } from "@/lib/validation";
+
+type FlexEntityTable = 'flex_players' | 'flex_teams' | 'flex_groups' | 'flex_matches';
 
 const MAX_NAME_LENGTH = 100;
 const MAX_PLAYERS_CREATE = 200;
@@ -176,7 +179,7 @@ export function useFlexTournament() {
       // error?, count?, quota?} — LIMIT_REACHED surfaces as a friendly
       // toast; other errors fall through to the existing onError handler.
       const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'create_flex_tournament_with_quota' as any,
+        'create_flex_tournament_with_quota',
         {
           _name: safeName,
           _is_public: input.isPublic,
@@ -191,7 +194,7 @@ export function useFlexTournament() {
       const result = rpcData as {
         success: boolean;
         error?: string;
-        tournament?: FlexTournament;
+        tournament?: unknown;
         count?: number;
         quota?: number;
       };
@@ -439,7 +442,7 @@ export function useFlexTournament() {
       return null;
     }
     
-    const insertData: any = {
+    const insertData: TablesInsert<'flex_group_items'> = {
       group_id: groupId,
       item_type: itemType,
       display_order: displayOrder,
@@ -609,9 +612,9 @@ export function useFlexTournament() {
   }
 
   // Delete entity
-  async function deleteEntity(table: string, id: string): Promise<boolean> {
+  async function deleteEntity(table: FlexEntityTable, id: string): Promise<boolean> {
     const { error } = await supabase
-      .from(table as any)
+      .from(table)
       .delete()
       .eq('id', id);
 
@@ -623,9 +626,9 @@ export function useFlexTournament() {
   }
 
   // Update entity name
-  async function updateEntityName(table: string, id: string, name: string): Promise<boolean> {
+  async function updateEntityName(table: FlexEntityTable, id: string, name: string): Promise<boolean> {
     const { error } = await supabase
-      .from(table as any)
+      .from(table)
       .update({ name })
       .eq('id', id);
 
@@ -667,7 +670,7 @@ export function useFlexTournament() {
 
     // Create matches
     const matchesToInsert = pairings.map((pair, index) => {
-      const match: any = {
+      const match: TablesInsert<'flex_matches'> = {
         tournament_id: tournamentId,
         group_id: groupId,
         name: `${pair.a.name} vs ${pair.b.name}`,
