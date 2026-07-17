@@ -23,8 +23,8 @@
 // Cron: daily 03:00 UTC+7 (= 20:00 UTC previous day) via Supabase Dashboard.
 // ============================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
