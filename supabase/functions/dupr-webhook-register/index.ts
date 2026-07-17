@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("webhook registration failed:", msg);
-    return jsonResponse({ error: msg }, 500);
+    // CodeQL js/stack-trace-exposure: keep the detail in logs, not the body.
+    return jsonResponse({ error: "internal_error" }, 500);
   }
 });

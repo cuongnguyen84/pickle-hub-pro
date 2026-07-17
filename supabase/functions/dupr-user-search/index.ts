@@ -153,7 +153,13 @@ Deno.serve(async (req) => {
   // ─── 2. Internal profiles search (ILIKE name + email + dupr_id) ────────
   // Drop @-handle prefix if present so users can paste "@cuong" or "cuong".
   const internalQuery = rawQuery.replace(/^@/, "").toLowerCase();
-  const escapedQuery = internalQuery.replace(/%/g, "\\%").replace(/_/g, "\\_");
+  // Escape the escape char FIRST, then the ILIKE wildcards (CodeQL
+  // js/incomplete-sanitization: a trailing "\" would otherwise corrupt the
+  // pattern and 500 the whole search).
+  const escapedQuery = internalQuery
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_");
   const ilike = `%${escapedQuery}%`;
 
   const { data: profiles } = await supabase
