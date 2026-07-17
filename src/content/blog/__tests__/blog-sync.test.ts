@@ -27,15 +27,15 @@
 // ============================================================================
 
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { EN_BLOG_SLUGS } from "../../../../functions/_lib/static-blog-slugs";
+import { BLOG_POST_META } from "../../../../functions/_lib/render/blog-meta";
 import { blogMetadata } from "../metadata";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const POSTS_DIR = resolve(here, "..", "posts");
-const RENDER_INDEX = resolve(here, "..", "..", "..", "..", "functions", "_lib", "render", "blog-meta.ts");
 
 /** Slugs that have a posts/<slug>.ts file. */
 function postFileSlugs(): string[] {
@@ -44,19 +44,11 @@ function postFileSlugs(): string[] {
     .map((f) => f.replace(/\.ts$/, ""));
 }
 
-/** Top-level keys of the BLOG_POST_META dict (SEO-02: now a pure module,
- *  parsed by regex to stay decoupled from its exact source formatting). */
+/** Keys of the BLOG_POST_META module. SEO-02: the dict is now GENERATED
+ *  from blogMetadata, so this leg is tautological by construction — it
+ *  stays as a guard against anyone reverting to a hand-maintained dict. */
 function blogPostMetaSlugs(): string[] {
-  const src = readFileSync(RENDER_INDEX, "utf8");
-  const start = src.indexOf("BLOG_POST_META");
-  expect(start, "BLOG_POST_META declaration found in render/blog-meta.ts").toBeGreaterThan(-1);
-  const objOpen = src.indexOf("}> = {", start);
-  const body = src.slice(objOpen, src.indexOf("\n};", objOpen));
-  const slugs = new Set<string>();
-  const re = /^\s{2}"([a-z0-9-]+)":\s*\{/gm;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(body)) !== null) slugs.add(m[1]);
-  return [...slugs];
+  return Object.keys(BLOG_POST_META);
 }
 
 describe("blog 4-file sync guard", () => {

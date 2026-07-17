@@ -84,3 +84,9 @@ on BOTH /tools and /vi/tools (previously neither emitted hreflang and
 2026-07-13 — v27->v28: shorten /vi/tools VI title+meta to fit the 60/160
 UTF-8 byte SEO budget (diacritics = 2-3 bytes/char); v27 cached HTML has
 an ellipsis-truncated title/h1 ("…Vòng…").
+2026-07-17 — v28->v29: SEO-02 full — BLOG_POST_META + EN_BLOG_SLUGS now
+GENERATED from src/content/blog/metadata.ts (single source). 28 EN blog
+<title>s switch from the hand-dict full title to metaTitleEn (the
+SEO-optimized field, Cuong's call 2026-07-17); 1 description reconciled
+(ppa-tour-asia-2026-complete-guide); 7 posts gain real dateModified from
+updatedDate; pickleball-rules-complete-guide gains its hero og:image.
