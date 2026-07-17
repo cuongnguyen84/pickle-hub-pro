@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { ContentCard, LiveCard, EmptyState } from "@/components/content";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/i18n";
 import { useTournamentBySlug, useTournamentContent } from "@/hooks/useSupabaseData";
 import { TournamentHero, ContentSection, CourtTabs } from "@/components/tournament";

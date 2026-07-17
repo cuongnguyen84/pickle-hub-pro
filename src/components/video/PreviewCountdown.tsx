@@ -5,8 +5,8 @@ interface PreviewCountdownProps {
   progress: number; // 0-100 (how much time has elapsed)
 }
 
-export function PreviewCountdown({ secondsRemaining, progress }: PreviewCountdownProps) {
-  const { t } = useI18n();
+export function PreviewCountdown({ progress }: PreviewCountdownProps) {
+  useI18n();
 
   // Color based on remaining percentage: green > yellow > red
   const remainingPercent = 100 - progress;

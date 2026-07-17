@@ -57,13 +57,6 @@ const fieldLabel: React.CSSProperties = {
   color: 'var(--tl-fg-2)',
 };
 
-const fieldHelpText: React.CSSProperties = {
-  fontSize: 12.5,
-  color: 'var(--tl-fg-3)',
-  margin: '4px 0 0',
-  lineHeight: 1.5,
-};
-
 const requiredMarker: React.CSSProperties = {
   color: 'var(--tl-green)',
   marginLeft: 2,
@@ -153,7 +146,7 @@ export function RegistrationForm({
   const { language } = useI18n();
   const confirm = useConfirm();
   const { submitRegistration, cancelRegistration, loading } = useRegistration();
-  const { data: duprConn, isLoading: duprLoading } = useDuprConnection();
+  const { data: duprConn } = useDuprConnection();
   const navigate = useNavigate();
   const location = useLocation();
   const vi = language === 'vi';

@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tStandalone } from '@/lib/i18n-standalone';
-import type { QuickTable, QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickMatchStatus, QuickTableStatus } from './useQuickTable';
+import type { QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickMatchStatus, QuickTableStatus } from './useQuickTable';
 import { generateRoundRobinMatches } from '@/lib/quick-table-utils';
 import { quickTableWinner, playoffAdvanceTarget, accumulateGroupStats } from '@/lib/quickTableResult';
 

@@ -181,7 +181,6 @@ const DoublesEliminationBracket = ({
   matches,
   teams,
   tournamentId,
-  onMatchClick,
   showPreliminaryOnly = false,
   showPlayoffOnly = false,
   canEdit = false,

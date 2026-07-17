@@ -11,13 +11,12 @@ import { PostCommentSection } from "@/components/forum";
 import { UserAvatar } from "@/components/user";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Heart, Pin, HelpCircle, Trash2, MoreVertical, EyeOff, Eye, Flag } from "lucide-react";
+import { ArrowLeft, Heart, Pin, HelpCircle, Trash2, MoreVertical, EyeOff, Eye } from "lucide-react";
 import { ReportDialog } from "@/components/report";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { DynamicMeta } from "@/components/seo";
 import { toast } from "@/hooks/use-toast";
 
 const ForumPostDetail = () => {

@@ -2,7 +2,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { generateCircleMethodMatches } from '@/lib/round-robin';
-import type { TeamMatchTeam } from './useTeamMatchTeams';
 
 export interface TeamMatchGroup {
   id: string;

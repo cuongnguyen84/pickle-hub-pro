@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
 
 interface CourtTabsProps<T extends { title?: string | null }> {
   items: T[];

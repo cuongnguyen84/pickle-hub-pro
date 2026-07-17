@@ -55,7 +55,6 @@ const ContentCard = ({
   organizationLogo,
   isVerifiedCreator = true,
   type = "long",
-  publishedAt,
   className,
 }: ContentCardProps) => {
   const { t } = useI18n();

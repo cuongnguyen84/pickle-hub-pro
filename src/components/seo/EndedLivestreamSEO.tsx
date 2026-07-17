@@ -23,7 +23,7 @@ export const EndedLivestreamSEO = ({
   relatedLivestreams = [],
   tournamentSlug,
 }: EndedLivestreamSEOProps) => {
-  const { t, language } = useI18n();
+  const { language } = useI18n();
   const dateLocale = language === "vi" ? viLocale : enUS;
 
   const matchDate = livestream.ended_at

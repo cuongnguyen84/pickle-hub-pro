@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
 import { useDuprRatingHistory } from "@/hooks/social/useDuprRatingHistory";
-import { DuprSsoModal, type DuprSsoResult } from "@/components/dupr/DuprSsoModal";
+import { DuprSsoModal } from "@/components/dupr/DuprSsoModal";
 import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
 
 export default function DuprConnect() {

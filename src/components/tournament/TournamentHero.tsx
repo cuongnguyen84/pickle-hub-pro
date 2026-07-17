@@ -34,7 +34,6 @@ export const TournamentHero = ({
   status,
   startDate,
   endDate,
-  slug,
 }: TournamentHeroProps) => {
   const { t } = useI18n();
 

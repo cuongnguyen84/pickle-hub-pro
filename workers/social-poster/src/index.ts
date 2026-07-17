@@ -97,7 +97,7 @@ interface RunBody {
 // ---------------------------------------------------------------------------
 
 export default {
-  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
 
     if (req.method === 'GET' && url.pathname === '/health') {
@@ -583,40 +583,6 @@ async function generateCaption(env: Env, item: NewsItem): Promise<string> {
   return sanitizeCaption(data.caption);
 }
 
-function buildGeminiPrompt(env: Env, item: NewsItem): string {
-  // Plain-text summary from content_html (strip tags) to give Gemini context.
-  const bodyText = htmlToPlainText(item.content_html ?? item.summary ?? '').slice(0, 1500);
-  const link = buildNewsLink(env, item);
-
-  return `Bạn là chuyên gia content pickleball cho Facebook Page ThePickleHub (cộng đồng pickleball Việt Nam).
-
-NHIỆM VỤ: Viết bài đăng Facebook bằng tiếng Việt từ tin tức bên dưới. Mục tiêu: tăng engagement, kéo traffic về website.
-
-NGUYÊN TẮC:
-- 100% tiếng Việt. Giữ nguyên thuật ngữ tiếng Anh phổ thông (dink, drive, drop, erne, ATP, stacking, rally, match point, PPA, MLP, APP). Giữ nguyên tên người + tên giải.
-- Tone chuyên nghiệp, chuẩn báo chí thể thao. Câu ngắn, có nhịp. Không clickbait rẻ tiền.
-- Cấu trúc: Hook 1-2 câu → Thân bài 1-2 đoạn → CTA → 3-5 hashtag cuối.
-- Tổng độ dài 150-300 từ. Tối đa 2-3 emoji. Không lạm dụng hashtag.
-- KHÔNG bịa số liệu. Chỉ dùng thông tin trong tin gốc.
-- Kết bài luôn mời người đọc bấm link để đọc đầy đủ.
-
-ĐỊNH DẠNG OUTPUT: Chỉ trả về nội dung bài đăng (không tiêu đề meta, không markdown, không tag "BÀI ĐĂNG FACEBOOK"). Kết thúc bằng 3-5 hashtag.
-
-LINK PHẢI CHÈN NGUYÊN VĂN VÀO CUỐI THÂN BÀI (trước hashtag):
-${link}
-
---- TIN GỐC ---
-Tiêu đề: ${item.title}
-Hạng mục: ${item.category ?? 'general'}
-Tóm tắt: ${item.summary ?? '(không có)'}
-
-Nội dung:
-${bodyText || '(không có nội dung — dựa vào tiêu đề và tóm tắt)'}
---- HẾT TIN GỐC ---
-
-Viết bài đăng:`;
-}
-
 function sanitizeCaption(text: string): string {
   // Strip code fences if Gemini wrapped in ```
   let out = text.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();
@@ -625,32 +591,6 @@ function sanitizeCaption(text: string): string {
   // Collapse 3+ newlines.
   out = out.replace(/\n{3,}/g, '\n\n');
   return out;
-}
-
-function htmlToPlainText(html: string): string {
-  // Iteratively strip tags until no more change (max 10 iters), then
-  // remove any leftover stray < or > so the result can never contain a
-  // partial tag fragment. Output flows to Gemini as a prompt, not
-  // rendered as HTML — stripping stray brackets is fine.
-  let out = html;
-  let prev: string;
-  let i = 0;
-  do {
-    prev = out;
-    out = out.replace(/<[^<>]*>/g, '');
-    i++;
-  } while (out !== prev && i < 10);
-  out = out.replace(/[<>]/g, '');
-
-  // Single-pass entity decode; chained .replace() of &amp; first would
-  // double-unescape "&amp;lt;" to "<" instead of "&lt;".
-  const entities: Record<string, string> = {
-    '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>',
-    '&quot;': '"', '&#39;': "'", '&apos;': "'",
-  };
-  out = out.replace(/&(?:nbsp|amp|lt|gt|quot|apos|#39);/g, (m) => entities[m] ?? m);
-
-  return out.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 // ---------------------------------------------------------------------------

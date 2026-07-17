@@ -42,7 +42,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   const playerRef = useRef<ComponentRef<typeof MuxPlayerReact> | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  const [, setIsReady] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 

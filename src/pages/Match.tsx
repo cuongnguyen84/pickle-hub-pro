@@ -187,7 +187,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
   const [format, setFormat] = useState<"SINGLES" | "DOUBLES">("SINGLES");
   const [clubId, setClubId] = useState<number | "">("");
   const [matchDate, setMatchDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [event, setEvent] = useState("Friendly");
+  const [event] = useState("Friendly");
   const [location, setLocation] = useState("");
 
   // Self auto-selected on team A.

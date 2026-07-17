@@ -13,13 +13,11 @@ import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Phone, MessageCircle, Mail, ShieldCheck, ExternalLink } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import {
   isValidVietnamPhone,
   normalizeVietnamPhone,

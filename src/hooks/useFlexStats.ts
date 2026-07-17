@@ -151,8 +151,7 @@ export function useFlexStats() {
   // Get standings for a group (sorted by wins, then point diff)
   function getGroupStandings(
     groupItems: { id: string; name: string; type: 'player' | 'team' }[],
-    playerStats: FlexPlayerStats[],
-    players: { id: string; name: string }[]
+    playerStats: FlexPlayerStats[]
   ) {
     const statsMap = new Map<string, { wins: number; losses: number; pointDiff: number }>();
     

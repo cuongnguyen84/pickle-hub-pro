@@ -30,7 +30,6 @@ import type {
   TournamentScrapeResult,
   ScrapedPlayer,
   ScrapedMatch,
-  ScrapedTeam,
   SourceProvider,
 } from "../_shared/pro-tour-types.ts";
 

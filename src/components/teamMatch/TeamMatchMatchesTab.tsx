@@ -197,7 +197,6 @@ export function TeamMatchMatchesTab({
   approvedTeamsCount,
   pendingTeamsCount,
   userRole,
-  isUpdatingStatus,
   onGenerateMatches,
   onShowSESetup,
   onShowStartTournament,
@@ -206,7 +205,6 @@ export function TeamMatchMatchesTab({
   onLineupClick,
   onStartRound,
   onScoreMatch,
-  onStartTournament,
 }: TeamMatchMatchesTabProps) {
   const { t, language } = useI18n();
   const v = t.teamMatch.view;

@@ -401,7 +401,6 @@ function MyRegistrationCard({
 
 function NoticeCard({
   tone,
-  vi,
   children,
 }: {
   tone: "info" | "warn";

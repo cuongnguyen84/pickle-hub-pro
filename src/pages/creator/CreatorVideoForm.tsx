@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoUploader } from "@/components/video/VideoUploader";
-import { ChevronLeft, Save, Upload, Loader2, ImageIcon, RefreshCw } from "lucide-react";
+import { ChevronLeft, Save, Upload, Loader2, RefreshCw } from "lucide-react";
 import type { Enums } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";

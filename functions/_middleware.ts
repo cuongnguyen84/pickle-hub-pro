@@ -30,7 +30,7 @@ import {
   renderLivestreamList, renderRankings, renderPrivacy, renderTerms,
   renderNotificationsShell,
   renderNoindexShell,
-  renderDefault, render404,
+  render404,
 } from "./_lib/render";
 
 // ─── PR72 (SEO Phase 2A I-7) — noindex route patterns ────────

@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       query = query.eq("key_prefix", body.key_prefix);
     }
 
-    const { data, error, count } = await query.select("id, name, key_prefix");
+    const { data, error } = await query.select("id, name, key_prefix");
 
     if (error) {
       console.error("[api-keys-revoke] Update error:", error);

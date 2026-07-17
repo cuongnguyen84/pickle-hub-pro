@@ -180,7 +180,7 @@ export async function renderVideo(supabase: SupabaseClient, id: string, siteUrl:
 
   if (!v) return render404(`/watch/${id}`, siteUrl);
 
-  const [orgRes, tournRes] = await Promise.all([
+  const [, tournRes] = await Promise.all([
     v.organization_id ? supabase.from("organizations").select("name").eq("id", v.organization_id).single() : Promise.resolve({ data: null }),
     v.tournament_id ? supabase.from("tournaments").select("name").eq("id", v.tournament_id).single() : Promise.resolve({ data: null }),
   ]);

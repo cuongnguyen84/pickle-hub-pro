@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Save, Loader2, Copy, Radio, ExternalLink, Eye, EyeOff, Zap, AlertCircle } from "lucide-react";
+import { ChevronLeft, Save, Loader2, Copy, Radio, Eye, EyeOff, Zap, AlertCircle } from "lucide-react";
 import type { Enums } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 

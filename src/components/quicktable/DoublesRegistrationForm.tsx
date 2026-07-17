@@ -5,7 +5,6 @@ import { usePairRequest, type PairRequest } from '@/hooks/usePairRequest';
 import { useDuprConnection } from '@/hooks/useDuprConnection';
 import type { SkillRatingSystem } from '@/hooks/useRegistration';
 import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
-import { DuprChip } from '@/components/dupr/DuprChip';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -196,7 +195,6 @@ function StatusBanner({
 export function DoublesRegistrationForm({
   tableId,
   tableName,
-  shareId,
   requiresSkillLevel = true,
   registrationMessage,
   existingTeam,

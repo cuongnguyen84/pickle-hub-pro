@@ -46,13 +46,6 @@ const statusPillBase: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-function onRowEnter(e: React.MouseEvent<HTMLElement>) {
-  (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg)';
-}
-function onRowLeave(e: React.MouseEvent<HTMLElement>) {
-  (e.currentTarget as HTMLElement).style.background = 'transparent';
-}
-
 type StatusKind = 'pending' | 'lineup' | 'in_progress' | 'completed';
 
 function statusPillStyle(kind: StatusKind): React.CSSProperties {

@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDuprClubs } from "@/hooks/useDuprClubs";
 import { useRecentOpponents } from "@/hooks/useRecentOpponents";
 import { useDuprUserSearch } from "@/hooks/useDuprUserSearch";

@@ -35,8 +35,6 @@ export default function AdminLivestreamViewers() {
     !!selectedLivestreamId
   );
 
-  const selectedStream = liveStreams.find((s) => s.id === selectedLivestreamId);
-
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -72,7 +70,7 @@ export default function AdminLivestreamViewers() {
                         )}
                         <span>{stream.title}</span>
                         <span className="text-foreground-muted text-xs">
-                          — {(stream.organization as any)?.name}
+                          — {(stream.organization as { name?: string } | null)?.name}
                         </span>
                       </div>
                     </SelectItem>

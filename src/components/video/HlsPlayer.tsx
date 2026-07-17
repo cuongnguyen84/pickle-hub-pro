@@ -35,7 +35,6 @@ const getFallbackUrl = (url: string): string | null => {
 
 export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
   hlsUrl,
-  title,
   poster,
   className = "",
   type = "livestream",

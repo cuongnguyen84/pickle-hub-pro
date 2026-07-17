@@ -50,36 +50,6 @@ interface PostRecord {
 const DEFAULT_OG_IMAGE = "https://www.thepicklehub.net/og-image.png";
 const SITE_URL = "https://www.thepicklehub.net";
 
-// ICT = UTC+7; 8:30 AM ICT = 01:30 UTC
-const SEND_HOUR_UTC = 1;
-const SEND_MINUTE_UTC = 30;
-
-// Only send on Tue(2), Wed(3), Thu(4)
-const ALLOWED_DOW = new Set([2, 3, 4]);
-
-// ---------------------------------------------------------------------------
-// Schedule helper: find next Tue/Wed/Thu at 01:30 UTC
-// ---------------------------------------------------------------------------
-
-function getNextSendTime(from: Date = new Date()): Date {
-  const dt = new Date(from);
-  // Start from today if current UTC time is before 01:30, else start from tomorrow
-  if (
-    dt.getUTCHours() > SEND_HOUR_UTC ||
-    (dt.getUTCHours() === SEND_HOUR_UTC && dt.getUTCMinutes() >= SEND_MINUTE_UTC)
-  ) {
-    dt.setUTCDate(dt.getUTCDate() + 1);
-  }
-  dt.setUTCHours(SEND_HOUR_UTC, SEND_MINUTE_UTC, 0, 0);
-
-  // Walk forward until we land on Tue/Wed/Thu
-  for (let i = 0; i < 7; i++) {
-    if (ALLOWED_DOW.has(dt.getUTCDay())) break;
-    dt.setUTCDate(dt.getUTCDate() + 1);
-  }
-  return dt;
-}
-
 // ---------------------------------------------------------------------------
 // Content helpers
 // ---------------------------------------------------------------------------
@@ -500,7 +470,8 @@ Deno.serve(async (req) => {
   });
 
   // 14/5/2026: scheduled send removed — fire immediately. sentAt is logged
-  // for posts_blasts traceability; getNextSendTime() retained above for rollback.
+  // for posts_blasts traceability. (QA-02: the unused getNextSendTime
+  // rollback helper was deleted 2026-07-17 — git history has it.)
   const sentAt = new Date();
 
   // -------------------------------------------------------------------------

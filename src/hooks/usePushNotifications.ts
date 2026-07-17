@@ -22,8 +22,8 @@ export const usePushNotifications = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const registeredRef = useRef(false);
-  const saveTokenRef = useRef<(token: string) => Promise<void>>(null as any);
-  const handleTapRef = useRef<(data: Record<string, unknown>) => void>(null as any);
+  const saveTokenRef = useRef<((token: string) => Promise<void>) | null>(null);
+  const handleTapRef = useRef<((data: Record<string, unknown>) => void) | null>(null);
 
   // Save token to database
   const saveToken = useCallback(async (token: string) => {
@@ -72,7 +72,6 @@ export const usePushNotifications = () => {
     console.log('[Push] Notification tapped, data:', data);
 
     const entityType = data.entity_type as string;
-    const entityId = data.entity_id as string;
     const relatedId = data.related_id as string;
 
     if (!entityType) return;
@@ -107,7 +106,7 @@ export const usePushNotifications = () => {
       // Set up ALL listeners BEFORE calling register()
       await PushNotifications.addListener('registration', (token) => {
         console.log('🔥 FCM TOKEN:', token.value);
-        saveTokenRef.current(token.value);
+        void saveTokenRef.current?.(token.value);
       });
 
       await PushNotifications.addListener('registrationError', (err) => {
@@ -123,7 +122,7 @@ export const usePushNotifications = () => {
             action: notification.data?.entity_type
               ? {
                   label: 'Xem',
-                  onClick: () => handleTapRef.current(notification.data || {}),
+                  onClick: () => handleTapRef.current?.(notification.data || {}),
                 }
               : undefined,
           });
@@ -134,7 +133,7 @@ export const usePushNotifications = () => {
         'pushNotificationActionPerformed',
         (action) => {
           console.log('[Push] Notification action:', action);
-          handleTapRef.current(action.notification.data || {});
+          handleTapRef.current?.(action.notification.data || {});
         }
       );
 

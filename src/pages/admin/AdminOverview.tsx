@@ -5,7 +5,6 @@ import { useI18n } from "@/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, Video, Radio, Eye, Settings, Globe, Trophy } from "lucide-react";
-import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";

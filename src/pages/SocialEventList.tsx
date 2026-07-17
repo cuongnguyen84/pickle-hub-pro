@@ -69,7 +69,7 @@ function EventCard({ event, lang }: { event: UpcomingEventRow; lang: "vi" | "en"
 }
 
 export default function SocialEventList() {
-  const { t, language } = useI18n();
+  const { language } = useI18n();
   const { data, isLoading } = useUpcomingSocialEvents(30);
 
   const events = data ?? [];

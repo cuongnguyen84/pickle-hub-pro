@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl, getPasswordResetRedirectUrl, getSiteUrl } from "@/lib/auth-config";
 import { safeInternalPath } from "@/lib/auth/safeRedirect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
 import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";

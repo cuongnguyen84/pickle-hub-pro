@@ -33,7 +33,6 @@ import PlayerSelector, {
 } from "@/components/social/match/PlayerSelector";
 import ScoreInput from "@/components/social/match/ScoreInput";
 import MatchConfirmation, {
-  type MatchType,
   type ConfirmationState,
 } from "@/components/social/match/MatchConfirmation";
 import { useMatchCreate, type Venue } from "@/hooks/social";

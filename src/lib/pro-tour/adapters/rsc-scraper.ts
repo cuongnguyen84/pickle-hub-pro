@@ -61,7 +61,6 @@ import type {
   TournamentScrapeResult,
   ScrapedMatch,
   ScrapedPlayer,
-  ScrapedTeam,
 } from "../types";
 
 import type { Fetcher } from "@cloudflare/workers-types";

@@ -29,7 +29,6 @@ interface OrganizationHeroProps {
 export const OrganizationHero = ({
   id,
   name,
-  slug,
   description,
   logoUrl,
   isVerifiedCreator = true, // Organizations are always verified creators
