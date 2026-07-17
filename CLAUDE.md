@@ -32,6 +32,12 @@ npm run test       # Vitest single run
 npm run test:watch # Vitest watch mode
 ```
 
+Regenerate Supabase types (canonical command — `--schema public` is REQUIRED; without it older CLI runs silently dropped tables):
+
+```sh
+npx supabase gen types typescript --project-id ajvlcamxemgbxduhiqrl --schema public > src/integrations/supabase/types.ts
+```
+
 Mobile (Capacitor) — see [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md). Common commands:
 
 ```sh
