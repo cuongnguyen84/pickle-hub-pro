@@ -6,7 +6,8 @@ import {
   servingPlayer, receivingPlayer, servingSideRight, sideSwitchPoint,
   makeLiveState, parseLiveState,
   manualAdjust, manualNextServe, manualToggleServer,
-  type ScoreState, type ScoringMode, type ServeSide, type RefereeLiveState,
+  manualEndSet, manualSetsWon, manualMatchWinner, manualFinalSetScores,
+  type ScoreState, type ScoringMode, type ServeSide, type RefereeLiveState, type ManualSetScore,
 } from '@/lib/refereeScoring';
 
 /** Shared web referee live-scoring screen — referee answers one question per
@@ -41,15 +42,20 @@ interface ScreenProps {
    *  the consumer writes it to the row (spectators read serve/set/rotation
    *  from it in realtime). Called with null on finish to clear the row. */
   onLiveState?: (s: RefereeLiveState | null) => void;
-  /** Claim the match as LIVE when the game begins. */
-  onClaimLive?: () => void;
+  /** Claim the match as LIVE when the game begins. Codex review 2026-07-17:
+   *  return `false` when the claim was LOST to another referee (row already
+   *  claimed by someone else) — the screen then refuses to start scoring.
+   *  Returning void/true/undefined keeps the old best-effort behavior. */
+  onClaimLive?: () => Promise<boolean | void> | boolean | void;
   /** S3a contention lockout: another referee holds live_referee_id. The
    *  screen becomes a static snapshot — no actions, no persistence (a
    *  viewer must never overwrite the scoring referee's state). Computed by
    *  the consumer at load time; realtime spectator updates are S3c. */
   readOnly?: boolean;
-  /** Persist the final result. The screen has already cleared resume state. */
-  onFinish: (a: number, b: number, note: string | null) => Promise<void>;
+  /** Persist the final result. The screen has already cleared resume state.
+   *  Multi-set manual games pass sets-won as (a, b) plus a 4th arg with the
+   *  archived set scores — consumers that predate S3b2 simply ignore it. */
+  onFinish: (a: number, b: number, note: string | null, sets?: { setsWon: { a: number; b: number }; setScores: ManualSetScore[] }) => Promise<void>;
   /** When embedded as an overlay, close instead of navigating to backHref. */
   onBack?: () => void;
 }
@@ -60,14 +66,20 @@ type Active = { side: ServeSide; kind: 'reg' | 'med'; left: number };
 const card: React.CSSProperties = { background: 'var(--tl-surface)', border: '1px solid var(--tl-border)', borderRadius: 'var(--tl-radius-lg)' };
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, initialLiveState, onLiveState, onClaimLive, readOnly = false, onFinish, onBack }: ScreenProps) {
+export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, initialLiveState, onLiveState, onClaimLive, readOnly: readOnlyProp = false, onFinish, onBack }: ScreenProps) {
   const navigate = useNavigate();
   const storeKey = persistKey;
   const noteKey = `${persistKey}:note`;
 
+  // Claim lost at begin (another referee raced us) → same lockout as the
+  // consumer-computed readOnly. Every gate below reads the derived value.
+  const [claimDenied, setClaimDenied] = useState(false);
+  const readOnly = readOnlyProp || claimDenied;
+
   // setup
   const [mode, setMode] = useState<ScoringMode>('rally');
   const [target, setTarget] = useState(11);
+  const [totalSetsPick, setTotalSetsPick] = useState(1); // manual mode: best-of
   const [regularTO, setRegularTO] = useState(2);
   const [setupServer, setSetupServer] = useState<ServeSide | null>(null);
   const [setupServerIdx, setSetupServerIdx] = useState<number | null>(null);
@@ -163,10 +175,14 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     }, 400);
     return () => { if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, history, usedReg, usedMed, noteA, noteB, regularTO]);
+  }, [state, history, usedReg, usedMed, noteA, noteB, regularTO, readOnly]);
   // Unmount flush — a rally scored right before closing must still land.
+  // readOnlyRef mirrors the derived lockout so the flush never writes for
+  // a viewer (Codex review 2026-07-17).
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
   useEffect(() => () => {
-    if (!finishedRef.current && liveStateTimer.current && pendingEnvRef.current) {
+    if (!finishedRef.current && !readOnlyRef.current && liveStateTimer.current && pendingEnvRef.current) {
       onLiveStateRef.current?.(pendingEnvRef.current);
     }
   }, []);
@@ -226,17 +242,21 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   }, [tossing]);
   useEffect(() => () => { if (tossTimer.current) window.clearTimeout(tossTimer.current); }, []);
 
-  const begin = useCallback(() => {
+  const begin = useCallback(async () => {
     if (readOnly || setupServer == null) return;
+    // Codex review 2026-07-17: AWAIT the claim before any writable state
+    // exists — two referees racing an empty claim must not both score.
+    const claim = await onClaimLive?.();
+    if (claim === false) { setClaimDenied(true); return; }
     setState(startState({
-      mode, isSingles: false, winTarget: target, firstServer: setupServer,
+      mode, isSingles: !loaded.isDoubles, winTarget: target, firstServer: setupServer,
       players: rotationCapable ? { a: loaded.playersA!, b: loaded.playersB! } : undefined,
       firstServerIdx: setupServerIdx ?? 0, firstReceiverIdx: setupReceiverIdx ?? 0,
+      totalSets: mode === 'manual' ? totalSetsPick : undefined,
     }));
     setHistory([]); setSwitchAnnounced(false);
     void goLandscape();
-    onClaimLive?.();
-  }, [loaded, mode, target, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape, onClaimLive, readOnly]);
+  }, [loaded, mode, target, totalSetsPick, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape, onClaimLive, readOnly]);
 
   const tap = useCallback((side: ServeSide) => {
     if (readOnly || !state || isGameOver(state)) return;
@@ -282,11 +302,17 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   }, [noteA, noteB, loaded]);
 
   const finish = useCallback(async (s: ScoreState) => {
-    if (readOnly || s.a === s.b) return;
+    const isManualMulti = s.mode === 'manual' && (s.totalSets ?? 1) > 1;
+    if (readOnly || (isManualMulti ? manualMatchWinner(s) === null : s.a === s.b)) return;
     setSaving(true);
     try {
       exitLandscape();
-      await onFinish(s.a, s.b, combinedNote());
+      if (isManualMulti) {
+        const w = manualSetsWon(s);
+        await onFinish(w.a, w.b, combinedNote(), { setsWon: w, setScores: manualFinalSetScores(s) });
+      } else {
+        await onFinish(s.a, s.b, combinedNote());
+      }
       // Clear resume state only AFTER the final result persisted (Codex
       // review 2026-07-17: clearing first lost the game if onFinish threw).
       finishedRef.current = true;
@@ -329,6 +355,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       ) : !state ? (
         <Setup
           vi={vi} loaded={loaded} mode={mode} setMode={setMode} target={target} setTarget={setTarget}
+          totalSetsPick={totalSetsPick} setTotalSetsPick={setTotalSetsPick}
           regularTO={regularTO} setRegularTO={setRegularTO}
           rotationCapable={rotationCapable} setupServer={setupServer} tossing={tossing} tossHi={tossHi}
           setSetupServer={(s) => { setSetupServer(s); setSetupServerIdx(null); setSetupReceiverIdx(null); }}
@@ -337,10 +364,11 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
         />
       ) : (
         <Board vi={vi} loaded={loaded} state={state} target={target}
-          onTap={tap} onUndo={undo} canUndo={history.length > 0} onEnd={() => setConfirming(true)}
+          onTap={tap} onUndo={undo} canUndo={history.length > 0} onEnd={() => { if (!readOnly) setConfirming(true); }}
           onManualAdjust={(side, delta) => manualAct((s) => manualAdjust(s, side, delta))}
           onManualServe={() => manualAct(manualNextServe)}
           onManualToggleServer={() => manualAct(manualToggleServer)}
+          onManualEndSet={() => manualAct(manualEndSet)}
           regularTO={regularTO} usedReg={usedReg} usedMed={usedMed} onTimeout={startTO} />
       )}
 
@@ -382,7 +410,9 @@ function ForceLandscape({ children, enabled }: { children: React.ReactNode; enab
 // ── Setup ──
 function Setup(props: {
   vi: boolean; loaded: RefereeLoaded; mode: ScoringMode; setMode: (m: ScoringMode) => void;
-  target: number; setTarget: (n: number) => void; regularTO: number; setRegularTO: (n: number) => void;
+  target: number; setTarget: (n: number) => void;
+  totalSetsPick: number; setTotalSetsPick: (n: number) => void;
+  regularTO: number; setRegularTO: (n: number) => void;
   rotationCapable: boolean; setupServer: ServeSide | null; tossing: boolean; tossHi: ServeSide | null;
   setSetupServer: (s: ServeSide) => void; onToss: () => void;
   setupServerIdx: number | null; setSetupServerIdx: (n: number) => void;
@@ -399,9 +429,13 @@ function Setup(props: {
       <Field label={vi ? 'Thể thức tính điểm' : 'Scoring'}>
         <Segmented options={[['rally', vi ? 'Trực tiếp' : 'Rally'], ['sideOut', vi ? 'Giao bóng' : 'Side-out'], ['manual', vi ? 'Bảng điểm tay' : 'Manual']]} value={mode} onChange={(v) => setMode(v as ScoringMode)} />
       </Field>
-      {mode !== 'manual' && (
+      {mode !== 'manual' ? (
         <Field label={vi ? 'Điểm thắng' : 'Win target'}>
           <Segmented options={[[11, '11'], [15, '15'], [21, '21']]} value={target} onChange={(v) => setTarget(v as number)} />
+        </Field>
+      ) : (
+        <Field label={vi ? 'Số ván' : 'Sets'}>
+          <Segmented options={[[1, vi ? '1 ván' : '1'], [3, 'BO3'], [5, 'BO5']]} value={props.totalSetsPick} onChange={(v) => props.setTotalSetsPick(v as number)} />
         </Field>
       )}
       <Field label={vi ? 'Số timeout mỗi đội' : 'Timeouts / team'}>
@@ -440,7 +474,7 @@ function Board(props: {
   vi: boolean; loaded: RefereeLoaded; state: ScoreState; target: number;
   onTap: (s: ServeSide) => void; onUndo: () => void; canUndo: boolean; onEnd: () => void;
   onManualAdjust: (side: ServeSide, delta: number) => void;
-  onManualServe: () => void; onManualToggleServer: () => void;
+  onManualServe: () => void; onManualToggleServer: () => void; onManualEndSet: () => void;
   regularTO: number; usedReg: Sides; usedMed: Sides; onTimeout: (s: ServeSide, k: 'reg' | 'med') => void;
 }) {
   const { vi, loaded, state, target } = props;
@@ -513,13 +547,25 @@ function Board(props: {
         )}
       </div>
       {mode === 'manual' && (
-        <div style={{ display: 'flex', gap: 8, padding: '6px 10px', background: 'var(--tl-surface)', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, padding: '6px 10px', background: 'var(--tl-surface)', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {(state.totalSets ?? 1) > 1 && (
+            <span style={{ alignSelf: 'center', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12, fontWeight: 700, color: 'var(--tl-fg-2)' }}>
+              {vi ? 'Ván' : 'Set'} {(state.sets?.length ?? 0) + 1}/{state.totalSets}
+              {' · '}
+              {(state.sets ?? []).filter((x) => x.s1 > x.s2).length}–{(state.sets ?? []).filter((x) => x.s2 > x.s1).length}
+            </span>
+          )}
           <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 10, maxWidth: 260 }} onClick={props.onManualServe}>
             <ArrowLeftRight className="w-4 h-4" /> {vi ? 'ĐỔI GIAO' : 'ROTATE SERVE'}
           </button>
           {!state.isSingles && (
             <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 10, maxWidth: 260 }} onClick={props.onManualToggleServer}>
               {vi ? `TAY ${state.serverNumber === 1 ? '2' : '1'}` : `SERVER ${state.serverNumber === 1 ? '2' : '1'}`}
+            </button>
+          )}
+          {(state.totalSets ?? 1) > 1 && (state.sets?.length ?? 0) < (state.totalSets ?? 1) - 1 && (
+            <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 10, maxWidth: 260 }} onClick={props.onManualEndSet}>
+              {vi ? 'HẾT VÁN' : 'END SET'}
             </button>
           )}
         </div>
@@ -637,12 +683,22 @@ function SwitchOverlay(props: { vi: boolean; point: number; onDone: () => void }
 
 function ConfirmOverlay(props: { vi: boolean; loaded: RefereeLoaded; state: ScoreState; saving: boolean; onEdit: () => void; onConfirm: () => void }) {
   const { state, loaded, vi } = props;
-  const tie = state.a === state.b;
-  const wName = tie ? null : state.a > state.b ? loaded.teamAName : loaded.teamBName;
+  const isManualMulti = state.mode === 'manual' && (state.totalSets ?? 1) > 1;
+  const setsWon = isManualMulti ? manualSetsWon(state) : null;
+  const tie = isManualMulti ? setsWon!.a === setsWon!.b : state.a === state.b;
+  const winA = isManualMulti ? setsWon!.a > setsWon!.b : state.a > state.b;
+  const wName = tie ? null : winA ? loaded.teamAName : loaded.teamBName;
   return (
     <Overlay>
       {wName && <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, letterSpacing: '0.1em', fontSize: 13, color: 'var(--tl-green)' }}>{wName} {vi ? 'THẮNG' : 'WINS'}</div>}
-      <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 42, fontVariantNumeric: 'tabular-nums' }}>{state.a} – {state.b}</div>
+      <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 700, fontSize: 42, fontVariantNumeric: 'tabular-nums' }}>
+        {isManualMulti ? `${setsWon!.a} – ${setsWon!.b}` : `${state.a} – ${state.b}`}
+      </div>
+      {isManualMulti && (
+        <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 13, color: 'var(--tl-fg-3)' }}>
+          {manualFinalSetScores(state).map((x) => `${x.s1}-${x.s2}`).join('  ·  ')}
+        </div>
+      )}
       {tie && <div style={{ fontSize: 12, color: 'var(--tl-live)' }}>{vi ? 'Tỉ số hoà — chưa có đội thắng.' : 'Tie — no winner.'}</div>}
       <div style={{ display: 'flex', gap: 12, width: '100%' }}>
         <button type="button" className="tl-btn" style={{ flex: 1, justifyContent: 'center', padding: 13 }} onClick={props.onEdit}>{vi ? 'Sửa' : 'Edit'}</button>

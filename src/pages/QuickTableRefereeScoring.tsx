@@ -68,13 +68,23 @@ export default function QuickTableRefereeScoring() {
     void supabase.from('quick_table_matches').update({ referee_live_state: s } as never).eq('id', matchId).then((): void => undefined, (): void => undefined);
   }, [matchId]);
 
-  const onClaimLive = useCallback(async () => {
+  // Codex review 2026-07-17: report a LOST claim (false) so the screen
+  // refuses to start — two referees racing an empty claim must not both
+  // score. Errors stay best-effort (void).
+  const onClaimLive = useCallback(async (): Promise<boolean | void> => {
     try {
       const { data } = await supabase.auth.getUser();
-      if (data.user && matchId) {
-        await supabase.from('quick_table_matches').update({ live_referee_id: data.user.id } as never).eq('id', matchId).is('live_referee_id', null);
-      }
-    } catch { /* ignore */ }
+      if (!data.user || !matchId) return undefined;
+      const { data: claimed } = await supabase
+        .from('quick_table_matches')
+        .update({ live_referee_id: data.user.id } as never)
+        .eq('id', matchId).is('live_referee_id', null)
+        .select('id').maybeSingle();
+      if (claimed) return true;
+      const { data: row } = await supabase
+        .from('quick_table_matches').select('live_referee_id').eq('id', matchId).single();
+      return (row as { live_referee_id?: string | null } | null)?.live_referee_id === data.user.id;
+    } catch { return undefined; }
   }, [matchId]);
 
   const onFinish = useCallback(async (a: number, b: number, note: string | null) => {
