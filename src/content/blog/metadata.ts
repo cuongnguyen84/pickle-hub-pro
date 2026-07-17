@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-world-cup-2026-da-nang-how-to-watch",
+    publishedDate: "2026-07-17",
+    updatedDate: "2026-07-17",
+    author: "The PickleHub Team",
+    tags: ["world cup pickleball", "da nang", "vietnam", "how to watch", "registration", "2026", "guide"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Watch live on ThePickleHub", vi: "Xem trực tiếp trên ThePickleHub" },
+    heroImage: {
+      src: "/images/blog/pickleball-world-cup-2026-da-nang-how-to-watch-hero.webp",
+      alt: "How to watch the Heineken Pickleball World Cup 2026 in Da Nang — a spectator's view from the stands over brightly lit indoor pickleball courts, with flags of many nations around the arena"
+    },
+    titleEn: "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
+    titleVi: "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
+    metaTitleEn: "Pickleball World Cup 2026 Da Nang: How to Watch, Venues & Register",
+    metaTitleVi: "Cẩm nang World Cup Pickleball 2026 Đà Nẵng: Lịch, Địa điểm, Đăng ký",
+    metaDescriptionEn: "Practical guide to the Heineken Pickleball World Cup 2026 in Da Nang (Aug 30–Sep 6): day-by-day schedule, all 7 venues, how to register (entries close July 31), fees and how to watch.",
+    metaDescriptionVi: "Cẩm nang thực tế Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9): lịch từng ngày, đủ 7 địa điểm, cách đăng ký thi đấu (hạn 31/7), phí và cách xem.",
+  },
+  {
     slug: "vietnam-pickleball-players-to-watch-2026",
     publishedDate: "2026-07-15",
     updatedDate: "2026-07-15",

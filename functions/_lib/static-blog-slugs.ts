@@ -1,4 +1,5 @@
 export const EN_BLOG_SLUGS = [
+  "pickleball-world-cup-2026-da-nang-how-to-watch",
   "vietnam-pickleball-players-to-watch-2026",
   "vietnam-hosts-ppa-tour-asia-2026",
   "ppa-beijing-open-2026-recap",

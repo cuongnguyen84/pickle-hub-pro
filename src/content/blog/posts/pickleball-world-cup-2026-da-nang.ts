@@ -91,6 +91,7 @@ const post: BlogPost = {
             "ThePickleHub — bilingual English + Vietnamese coverage, schedules, and live updates"
           ],
           internalLinks: [
+            { text: "How to watch and enter — schedule, all 7 venues, fees and deadlines", path: "/blog/pickleball-world-cup-2026-da-nang-how-to-watch" },
             { text: "Follow live tournaments on ThePickleHub", path: "/live" }
           ]
         },
@@ -241,6 +242,7 @@ const post: BlogPost = {
             "ThePickleHub — bài viết song ngữ Việt – Anh, lịch thi đấu và cập nhật trực tiếp"
           ],
           internalLinks: [
+            { text: "Cẩm nang xem và thi đấu — lịch, 7 địa điểm, phí và hạn đăng ký", path: "/vi/blog/cam-nang-xem-pickleball-world-cup-2026-da-nang" },
             { text: "Theo dõi livestream trên ThePickleHub", path: "/vi/live" }
           ]
         },
