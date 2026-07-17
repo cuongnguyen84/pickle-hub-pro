@@ -102,6 +102,9 @@ async function racePair(sqlA, sqlB) {
 
 const EVENT = "00000000-0000-0000-0000-00000a03e001";
 const USER = "0a03f001-0000-4000-8000-000000000001";
+// First 12 hex chars must differ from USER: handle_new_user derives
+// profiles.profile_slug from them (unique index).
+const USER2 = "0a03f002-0000-4000-8000-000000000002";
 const CANCELLED_1 = "00000000-0000-0000-0000-00000a03c001";
 const CANCELLED_2 = "00000000-0000-0000-0000-00000a03c002";
 
@@ -135,6 +138,32 @@ await psql(`
     '{"provider":"test","providers":["test"]}'::jsonb,
     '{"display_name":"QA-03 Race"}'::jsonb, NOW(), NOW()
   );
+  DELETE FROM auth.users WHERE id = '${USER2}';
+  INSERT INTO auth.users (
+    id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  ) VALUES (
+    '${USER2}', '00000000-0000-0000-0000-000000000000', 'authenticated',
+    'authenticated', 'qa03-race-2@thepicklehub.test', '', NOW(),
+    '{"provider":"test","providers":["test"]}'::jsonb,
+    '{"display_name":"QA-03 Race 2"}'::jsonb, NOW(), NOW()
+  );
+  -- DB-01c member race calls register_event_as_member, whose INSERT copies
+  -- display_name from profiles (NOT NULL on event_registrations). The
+  -- handle_new_user trigger normally creates these rows; make them explicit
+  -- so the harness does not depend on trigger drift in the local db.
+  UPDATE public.profiles SET display_name = 'QA-03 Race'   WHERE id = '${USER}'  AND COALESCE(display_name, '') = '';
+  UPDATE public.profiles SET display_name = 'QA-03 Race 2' WHERE id = '${USER2}' AND COALESCE(display_name, '') = '';
+  -- Exception-safe wrapper: register_event_as_member RAISEs on a full event,
+  -- which would abort the racer session under ON_ERROR_STOP. Map it to text.
+  CREATE OR REPLACE FUNCTION public.qa03_try_member_register(p_event UUID)
+  RETURNS TEXT LANGUAGE plpgsql SECURITY DEFINER AS $qa03$
+  BEGIN
+    PERFORM * FROM public.register_event_as_member(p_event, NULL);
+    RETURN 'registered';
+  EXCEPTION WHEN OTHERS THEN
+    RETURN SQLERRM;
+  END $qa03$;
   ALTER TABLE public.event_registrations DISABLE TRIGGER USER;
   INSERT INTO public.social_events (
     id, slug, title_vi, start_at, end_at, created_by, max_players
@@ -192,17 +221,46 @@ try {
       `reactivate round ${i + 1}: active == max_players`,
     );
   }
+
+  // ─── Race 3 (DB-01c): two concurrent MEMBER registrations, one seat left ─
+  // register_event_as_member (unlike the guest/reactivate RPCs) validates
+  // event status; the fixture event is created in the default draft state.
+  await psql(
+    `UPDATE public.social_events SET status = 'published' WHERE id = '${EVENT}'`,
+  );
+  const memberReg = (uid) =>
+    `SELECT set_config('request.jwt.claims',
+       '{"sub":"${uid}","role":"authenticated"}', false);
+     SELECT public.qa03_try_member_register('${EVENT}')`;
+  for (let i = 0; i < ROUNDS; i++) {
+    await resetRegistrations();
+    await psql(
+      `INSERT INTO public.event_registrations (event_id, phone, display_name, status)
+       VALUES ('${EVENT}', '+84900033000', 'Seed', 'registered')`,
+    );
+    const results = (await racePair(memberReg(USER), memberReg(USER2))).sort();
+    check(
+      results[0] === "event_full" && results[1] === "registered",
+      `member_register round ${i + 1}/${ROUNDS}: exactly one winner (got: ${results.join(", ")})`,
+    );
+    check(
+      (await activeCount()) === "2",
+      `member_register round ${i + 1}: active == max_players`,
+    );
+  }
 } finally {
   // ─── Cleanup (the local db is disposable, but leave it consistent) ────────
   await psql(`
     ALTER TABLE public.event_registrations ENABLE TRIGGER USER;
+    DROP FUNCTION IF EXISTS public.qa03_try_member_register(UUID);
     DELETE FROM public.event_registrations WHERE event_id = '${EVENT}';
     DELETE FROM public.social_events WHERE id = '${EVENT}';
     DELETE FROM auth.users WHERE id = '${USER}';
+    DELETE FROM auth.users WHERE id = '${USER2}';
   `);
 }
 
 console.log(
-  failures === 0 ? `\nAll ${ROUNDS * 4} race assertions passed.` : `\n${failures} FAILED`,
+  failures === 0 ? `\nAll ${ROUNDS * 6} race assertions passed.` : `\n${failures} FAILED`,
 );
 process.exit(failures === 0 ? 0 : 1);
