@@ -123,9 +123,15 @@ test("homepage has signed-out CTA (login / sign up)", async ({ page }) => {
 
 test("skip link is the first tab stop and moves focus to content", async ({ page }) => {
   await page.goto("/");
+
+  // Flake fix 2026-07-17: pressing Tab before React hydrates sends focus
+  // somewhere else entirely, and no expect-retry can undo a wrong Tab.
+  // The skip link is React-rendered — its attachment proves the app
+  // mounted; only then is Tab meaningful.
+  const skipLink = page.locator('a[href="#main-content"]');
+  await skipLink.waitFor({ state: "attached" });
   await page.keyboard.press("Tab");
 
-  const skipLink = page.locator('a[href="#main-content"]');
   await expect(skipLink).toBeFocused();
   await expect(skipLink).toBeVisible();
 
@@ -135,6 +141,11 @@ test("skip link is the first tab stop and moves focus to content", async ({ page
 
 test("client-side navigation hands focus to the new page content", async ({ page }) => {
   await page.goto("/");
+  // Flake fix 2026-07-17: clicking a not-yet-hydrated anchor triggers a
+  // FULL page navigation — the route-focus effect only runs on client-side
+  // transitions, so the assertion could never pass. Wait for React mount
+  // (skip link attached) before clicking.
+  await page.locator('a[href="#main-content"]').waitFor({ state: "attached" });
   const link = page.locator('a[href="/tournaments"]').first();
   await link.click();
   await page.waitForURL("**/tournaments");
