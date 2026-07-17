@@ -166,7 +166,9 @@ Deno.serve(async (req) => {
         payload: { scrape_result: body.scrape_result },
       })
       .eq("id", log_id);
-    return jsonResponse({ error: msg, log_id }, 500);
+    // CodeQL js/stack-trace-exposure: detail already persisted to
+    // pro_tour_ingestion_logs.error_message above; body stays generic.
+    return jsonResponse({ error: "ingest_failed", log_id }, 500);
   }
 });
 
