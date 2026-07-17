@@ -72,27 +72,38 @@ jobs:
       # most often). Poll until the HTML we actually get and the assets it
       # references are consistent. No cache-buster on purpose: we must
       # observe the same cached HTML Playwright would get.
+      # Codex review 2026-07-17: CDN caches HTML per-path, so probe /blog
+      # (the most common flake route) as well as /; grep-no-match must not
+      # kill the step under the default `bash -e -o pipefail`; curls get
+      # --max-time so a stalled request can't eat the retry budget.
       - name: Wait for deploy to settle (HTML/asset consistency)
         run: |
-          for i in $(seq 1 10); do
-            HTML=$(curl -s "$PLAYWRIGHT_BASE_URL/" || true)
-            ASSETS=$(echo "$HTML" | grep -oE '/assets/[A-Za-z0-9._-]+\.(js|css)' | sort -u)
-            if [ -n "$ASSETS" ]; then
-              STALE=0
-              for A in $ASSETS; do
-                STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$PLAYWRIGHT_BASE_URL$A" || echo 000)
-                if [ "$STATUS" != "200" ]; then
-                  echo "[$i] $A -> $STATUS (stale HTML/asset mismatch)"
-                  STALE=1
-                  break
-                fi
-              done
-              if [ "$STALE" = "0" ]; then
-                echo "Deploy settled: $(echo "$ASSETS" | wc -l | tr -d ' ') assets all 200"
-                exit 0
+          probe() {
+            ROUTE="$1"
+            STATUS=$(curl -s --max-time 10 -o /tmp/settle.html -w '%{http_code}' "$PLAYWRIGHT_BASE_URL$ROUTE" || echo 000)
+            if [ "$STATUS" != "200" ]; then
+              echo "  $ROUTE -> HTTP $STATUS"
+              return 1
+            fi
+            ASSETS=$(grep -oE '/assets/[A-Za-z0-9._/-]+\.(js|css)' /tmp/settle.html | sort -u || true)
+            if [ -z "$ASSETS" ]; then
+              echo "  $ROUTE -> no hashed assets found in HTML"
+              return 1
+            fi
+            for A in $ASSETS; do
+              ST=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' "$PLAYWRIGHT_BASE_URL$A" || echo 000)
+              if [ "$ST" != "200" ]; then
+                echo "  $ROUTE -> $A -> $ST (stale HTML/asset mismatch)"
+                return 1
               fi
-            else
-              echo "[$i] no hashed assets found in HTML"
+            done
+            return 0
+          }
+          for i in $(seq 1 10); do
+            echo "[$i] probing / and /blog"
+            if probe "/" && probe "/blog"; then
+              echo "Deploy settled: HTML and referenced assets consistent"
+              exit 0
             fi
             sleep 15
           done
