@@ -99,10 +99,19 @@ jobs:
             done
             return 0
           }
+          # 2026-07-17: probe EVERY smoke route — the CDN caches HTML per
+          # path, so /rankings can serve a stale shell (404ing chunks)
+          # while / and /blog have already settled. Route list mirrors
+          # tests/smoke.spec.ts ROUTES.
+          ROUTES="/ /dupr /match/new /match/confirm /rankings /feed /tournaments /blog /clubs /live"
           for i in $(seq 1 10); do
-            echo "[$i] probing / and /blog"
-            if probe "/" && probe "/blog"; then
-              echo "Deploy settled: HTML and referenced assets consistent"
+            echo "[$i] probing all smoke routes"
+            ALL_OK=1
+            for R in $ROUTES; do
+              if ! probe "$R"; then ALL_OK=0; break; fi
+            done
+            if [ "$ALL_OK" = "1" ]; then
+              echo "Deploy settled: every route's HTML and referenced assets consistent"
               exit 0
             fi
             sleep 15
