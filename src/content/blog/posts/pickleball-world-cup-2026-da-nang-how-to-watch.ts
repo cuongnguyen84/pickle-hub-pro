@@ -20,7 +20,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "The Short Version",
-          content: "The Heineken Pickleball World Cup 2026 runs August 30 – September 6, 2026 across seven venues in Da Nang, Vietnam. Our main guide covers what the tournament is and why it matters; this one is the practical companion — when to turn up, where the courts actually are, how to watch if you are not in Da Nang, and how to enter if you want to play. The single most time-sensitive fact on this page: public registration for the individual tournament closes July 31, 2026, and the current price window is the last one.",
+          content: "The Heineken Pickleball World Cup 2026 runs August 30 – September 6, 2026 across seven venues in Da Nang, Vietnam. Our main guide covers what the tournament is and why it matters; this one is the practical companion — when to turn up, where the courts actually are, how to watch if you are not in Da Nang, and how to enter if you want to play. Two things worth knowing up front. The most time-sensitive: public registration for the individual tournament closes July 31, 2026, and the current price window is the last one. The most significant for Vietnamese readers: this will be Vietnam's first appearance at the Pickleball World Cup, as hosts — the country has never fielded a team at a previous edition.",
           internalLinks: [
             { text: "Read the full Heineken Pickleball World Cup 2026 guide", path: "/blog/pickleball-world-cup-2026-da-nang" }
           ]
@@ -138,7 +138,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Tóm tắt nhanh",
-          content: "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại bảy địa điểm ở Đà Nẵng. Bài trụ cột của chúng tôi trả lời \"giải này là gì\"; bài này là phần thực tế đi kèm — đi lúc nào, sân nằm ở đâu, không ở Đà Nẵng thì xem bằng cách nào, và muốn thi đấu thì đăng ký ra sao. Thông tin gấp nhất trên trang này: đăng ký thi đấu Giải Cá nhân đóng ngày 31/7/2026, và chặng giá hiện tại là chặng cuối cùng.",
+          content: "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại bảy địa điểm ở Đà Nẵng. Bài trụ cột của chúng tôi trả lời \"giải này là gì\"; bài này là phần thực tế đi kèm — đi lúc nào, sân nằm ở đâu, không ở Đà Nẵng thì xem bằng cách nào, và muốn thi đấu thì đăng ký ra sao. Hai điều đáng biết trước. Gấp nhất: đăng ký thi đấu Giải Cá nhân đóng ngày 31/7/2026, và chặng giá hiện tại là chặng cuối cùng. Đáng chú ý nhất với người Việt: đây sẽ là lần đầu tiên Việt Nam góp mặt tại World Cup Pickleball, với tư cách chủ nhà — các kỳ trước Việt Nam chưa từng có đội tuyển thi đấu.",
           internalLinks: [
             { text: "Đọc bài đầy đủ về Heineken Pickleball World Cup 2026", path: "/vi/blog/world-cup-pickleball-2026-da-nang" }
           ]
