@@ -60,7 +60,7 @@ interface ScreenProps {
   /** Persist the final result. The screen has already cleared resume state.
    *  Multi-set manual games pass sets-won as (a, b) plus a 4th arg with the
    *  archived set scores — consumers that predate S3b2 simply ignore it. */
-  onFinish: (a: number, b: number, note: string | null, sets?: { setsWon: { a: number; b: number }; setScores: ManualSetScore[] }) => Promise<void>;
+  onFinish: (a: number, b: number, note: string | null, sets?: { setsWon: { a: number; b: number }; setScores: ManualSetScore[]; totalSets: number }) => Promise<void>;
   /** When embedded as an overlay, close instead of navigating to backHref. */
   onBack?: () => void;
 }
@@ -339,9 +339,14 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     if (liveStateTimer.current) { window.clearTimeout(liveStateTimer.current); liveStateTimer.current = null; }
     try {
       exitLandscape();
-      if (isManualMulti) {
+      if (s.mode === 'manual') {
+        // Codex review on #376: EVERY manual finish carries the archive —
+        // single-set games also record their {s1,s2}, and totalSets keeps
+        // the legacy meaning (configured BO count, not sets played).
         const w = manualSetsWon(s);
-        await onFinish(w.a, w.b, combinedNote(), { setsWon: w, setScores: manualFinalSetScores(s) });
+        const sets = { setsWon: w, setScores: manualFinalSetScores(s), totalSets: s.totalSets ?? 1 };
+        if (isManualMulti) await onFinish(w.a, w.b, combinedNote(), sets);
+        else await onFinish(s.a, s.b, combinedNote(), sets);
       } else {
         await onFinish(s.a, s.b, combinedNote());
       }
