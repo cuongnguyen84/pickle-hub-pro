@@ -21,6 +21,7 @@ const envelope = () =>
     usedReg: { a: 1, b: 0 },
     usedMed: { a: 0, b: 1 },
     notes: { a: "net cord", b: "" },
+    regularTO: 3,
   });
 
 describe("makeLiveState / parseLiveState round-trip", () => {
@@ -48,8 +49,16 @@ describe("parseLiveState rejects garbage", () => {
     ["missing state", { v: 1 }],
     ["state without scores", { v: 1, state: { serving: "a" } }],
     ["state with bad serving side", { v: 1, state: { a: 1, b: 0, serving: "x", winTarget: 11 } }],
+    ["state with malformed rotation", { v: 1, state: { ...freshState(), rotation: { aPlayers: "oops" } } }],
+    ["state missing mode/flags", { v: 1, state: { a: 1, b: 0, serving: "a", winTarget: 11 } }],
   ])("%s -> null", (_label, input) => {
     expect(parseLiveState(input)).toBeNull();
+  });
+
+  it("a history containing ANY invalid entry is dropped whole (partial undo stacks are inconsistent)", () => {
+    const parsed = parseLiveState({ ...envelope(), history: [freshState(), null] });
+    expect(parsed).not.toBeNull();
+    expect(parsed!.history).toEqual([]);
   });
 });
 
@@ -62,6 +71,7 @@ describe("parseLiveState defaults missing optional sections", () => {
     expect(parsed!.usedReg).toEqual({ a: 0, b: 0 });
     expect(parsed!.usedMed).toEqual({ a: 0, b: 0 });
     expect(parsed!.notes).toEqual({ a: "", b: "" });
+    expect(parsed!.regularTO).toBe(2);
   });
 
   it("replaces malformed sections with defaults instead of failing", () => {

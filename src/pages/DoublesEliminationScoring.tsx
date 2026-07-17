@@ -599,6 +599,19 @@ export default function DoublesEliminationScoring() {
     if (!match) return;
     void supabase.from('doubles_elimination_matches').update({ referee_live_state: s } as never).eq('id', match.id).then((): void => undefined, (): void => undefined);
   };
+  // Codex review 2026-07-17: fetch the envelope FRESH when the overlay
+  // opens — the page-load snapshot can be stale by then.
+  const refMatchId = match?.id;
+  const [refInit, setRefInit] = useState<{ ready: boolean; value: unknown }>({ ready: false, value: null });
+  useEffect(() => {
+    if (!refereeing || !refMatchId) { setRefInit({ ready: false, value: null }); return undefined; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('doubles_elimination_matches').select('*').eq('id', refMatchId).single();
+      if (!cancelled) setRefInit({ ready: true, value: (data as unknown as { referee_live_state?: unknown } | null)?.referee_live_state ?? null });
+    })();
+    return () => { cancelled = true; };
+  }, [refereeing, refMatchId]);
   const refClaimLive = async () => {
     try {
       const { data } = await supabase.auth.getUser();
@@ -1292,13 +1305,13 @@ export default function DoublesEliminationScoring() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {refereeing && refLoaded && (
+      {refereeing && refLoaded && refInit.ready && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
           <RefereeScoringScreen
             loaded={refLoaded}
             vi={lang === 'vi'}
             persistKey={`de-ref:${refLoaded.matchId}`}
-            initialLiveState={(match as unknown as { referee_live_state?: unknown } | null)?.referee_live_state ?? null}
+            initialLiveState={refInit.value}
             onLiveState={refLiveState}
             onLiveScore={refLiveScore}
             onClaimLive={refClaimLive}

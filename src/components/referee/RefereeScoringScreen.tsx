@@ -114,6 +114,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       setSwitchAnnounced(Math.max(env.state.a, env.state.b) >= sideSwitchPoint(env.state.winTarget));
       setHistory(env.history);
       setUsedReg(env.usedReg); setUsedMed(env.usedMed);
+      setRegularTO(env.regularTO);
       setNoteA(env.notes.a); setNoteB(env.notes.b);
       return;
     }
@@ -131,20 +132,37 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
 
   // S2: debounced full-state push to the consumer (DB row). 400ms collapses
   // note keystrokes; rallies land within one debounce window anyway.
+  // Codex review 2026-07-17: callback + latest envelope live in refs so the
+  // timer never fires a stale closure, and unmount FLUSHES the pending
+  // write instead of dropping it (finishedRef suppresses the flush after
+  // finish already cleared the row).
   const liveStateTimer = useRef<number | null>(null);
+  const onLiveStateRef = useRef(onLiveState);
+  onLiveStateRef.current = onLiveState;
+  const pendingEnvRef = useRef<RefereeLiveState | null>(null);
+  const finishedRef = useRef(false);
   useEffect(() => {
     if (!state || !onLiveState) return undefined;
+    pendingEnvRef.current = makeLiveState({
+      state, history,
+      usedReg, usedMed,
+      notes: { a: noteA, b: noteB },
+      regularTO,
+    });
     if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current);
     liveStateTimer.current = window.setTimeout(() => {
-      onLiveState(makeLiveState({
-        state, history,
-        usedReg, usedMed,
-        notes: { a: noteA, b: noteB },
-      }));
+      liveStateTimer.current = null;
+      if (!finishedRef.current && pendingEnvRef.current) onLiveStateRef.current?.(pendingEnvRef.current);
     }, 400);
     return () => { if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, history, usedReg, usedMed, noteA, noteB]);
+  }, [state, history, usedReg, usedMed, noteA, noteB, regularTO]);
+  // Unmount flush — a rally scored right before closing must still land.
+  useEffect(() => () => {
+    if (!finishedRef.current && liveStateTimer.current && pendingEnvRef.current) {
+      onLiveStateRef.current?.(pendingEnvRef.current);
+    }
+  }, []);
 
   // Live-push the running score so spectators see it update in realtime.
   const liveA = state?.a;
@@ -248,11 +266,14 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     if (s.a === s.b) return;
     setSaving(true);
     try {
-      localStorage.removeItem(storeKey); localStorage.removeItem(noteKey);
-      if (liveStateTimer.current) window.clearTimeout(liveStateTimer.current);
-      onLiveState?.(null); // clear the row's live state — the match is final
       exitLandscape();
       await onFinish(s.a, s.b, combinedNote());
+      // Clear resume state only AFTER the final result persisted (Codex
+      // review 2026-07-17: clearing first lost the game if onFinish threw).
+      finishedRef.current = true;
+      if (liveStateTimer.current) { window.clearTimeout(liveStateTimer.current); liveStateTimer.current = null; }
+      localStorage.removeItem(storeKey); localStorage.removeItem(noteKey);
+      onLiveState?.(null); // clear the row's live state — the match is final
     } finally { setSaving(false); }
   }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote, onLiveState]);
 

@@ -177,6 +177,21 @@ export function TeamMatchScoringSheet({
   // Current selected game
   const currentGame = games[selectedGameIndex];
 
+  // Codex review 2026-07-17: fetch the envelope FRESH when the overlay
+  // opens — the query-cache snapshot can be stale by then. (Hook lives
+  // above the `if (!match) return null` early return.)
+  const refGameId = currentGame?.id;
+  const [refInit, setRefInit] = useState<{ ready: boolean; value: unknown }>({ ready: false, value: null });
+  useEffect(() => {
+    if (!refereeing || !refGameId) { setRefInit({ ready: false, value: null }); return undefined; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('team_match_games').select('*').eq('id', refGameId).single();
+      if (!cancelled) setRefInit({ ready: true, value: (data as unknown as { referee_live_state?: unknown } | null)?.referee_live_state ?? null });
+    })();
+    return () => { cancelled = true; };
+  }, [refereeing, refGameId]);
+
   // Calculate games won dynamically from games data
   const calculatedGamesWon = useMemo(() => {
     let gamesWonA = 0;
@@ -949,13 +964,13 @@ export function TeamMatchScoringSheet({
         </AlertDialogContent>
       </AlertDialog>
 
-      {refereeing && refLoaded && (
+      {refereeing && refLoaded && refInit.ready && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
           <RefereeScoringScreen
             loaded={refLoaded}
             vi={language === 'vi'}
             persistKey={`tm-ref:${refLoaded.matchId}`}
-            initialLiveState={(currentGame as { referee_live_state?: unknown } | null)?.referee_live_state ?? null}
+            initialLiveState={refInit.value}
             onLiveState={refLiveState}
             onLiveScore={refLiveScore}
             onClaimLive={refClaimLive}

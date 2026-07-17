@@ -156,30 +156,56 @@ export interface RefereeLiveState {
   usedReg: { a: number; b: number };
   usedMed: { a: number; b: number };
   notes: { a: string; b: string };
+  /** Configured regular timeouts per side (1-3). Codex review 2026-07-17:
+   *  omitting it made every resume default back to 2. */
+  regularTO: number;
 }
 
 export function makeLiveState(parts: Omit<RefereeLiveState, 'v'>): RefereeLiveState {
   return { v: 1, ...parts };
 }
 
+/** Full ScoreState validation — a persisted blob is untrusted input. A
+ *  malformed rotation or history entry must yield null/empty, never a
+ *  render crash (Codex review 2026-07-17). */
+function isValidScoreState(x: unknown): x is ScoreState {
+  if (!x || typeof x !== 'object') return false;
+  const s = x as Partial<ScoreState>;
+  if (typeof s.a !== 'number' || typeof s.b !== 'number') return false;
+  if (s.serving !== 'a' && s.serving !== 'b') return false;
+  if (typeof s.serverNumber !== 'number') return false;
+  if (s.mode !== 'rally' && s.mode !== 'sideOut') return false;
+  if (typeof s.isSingles !== 'boolean') return false;
+  if (typeof s.winTarget !== 'number') return false;
+  if (typeof s.winByTwo !== 'boolean') return false;
+  if (s.rotation === undefined) return false;
+  if (s.rotation !== null) {
+    const r = s.rotation as Partial<ServeRotation>;
+    const pair = (p: unknown): boolean =>
+      Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === 'string');
+    if (
+      !r || typeof r !== 'object' ||
+      !pair(r.aPlayers) || !pair(r.bPlayers) ||
+      typeof r.aRightIdx !== 'number' || typeof r.bRightIdx !== 'number' ||
+      typeof r.serverIdx !== 'number'
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /** Parse a persisted blob (string or already-parsed jsonb). Returns null on
  *  anything that isn't a valid v1 envelope — callers fall back to a fresh
  *  setup screen, never crash on a stale/corrupt blob. Missing optional
- *  sections default to empty. */
+ *  sections default to empty; a history with ANY invalid entry is dropped
+ *  whole (a partial undo stack would be inconsistent). */
 export function parseLiveState(raw: unknown): RefereeLiveState | null {
   try {
     const o = typeof raw === 'string' ? (JSON.parse(raw) as unknown) : raw;
     if (!o || typeof o !== 'object') return null;
     const c = o as Partial<RefereeLiveState>;
-    const s = c.state;
-    if (
-      c.v !== 1 || !s || typeof s !== 'object' ||
-      typeof s.a !== 'number' || typeof s.b !== 'number' ||
-      (s.serving !== 'a' && s.serving !== 'b') ||
-      typeof s.winTarget !== 'number'
-    ) {
-      return null;
-    }
+    if (c.v !== 1 || !isValidScoreState(c.state)) return null;
     const sides = (x: unknown): { a: number; b: number } => {
       const v = x as { a?: unknown; b?: unknown } | null | undefined;
       return v && typeof v.a === 'number' && typeof v.b === 'number'
@@ -193,13 +219,18 @@ export function parseLiveState(raw: unknown): RefereeLiveState | null {
         b: v && typeof v.b === 'string' ? v.b : '',
       };
     };
+    const history =
+      Array.isArray(c.history) && c.history.every(isValidScoreState)
+        ? (c.history as ScoreState[])
+        : [];
     return {
       v: 1,
-      state: s as ScoreState,
-      history: Array.isArray(c.history) ? (c.history as ScoreState[]) : [],
+      state: c.state as ScoreState,
+      history,
       usedReg: sides(c.usedReg),
       usedMed: sides(c.usedMed),
       notes: notes(c.notes),
+      regularTO: typeof c.regularTO === 'number' ? c.regularTO : 2,
     };
   } catch {
     return null;
