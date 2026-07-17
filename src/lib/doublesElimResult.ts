@@ -27,9 +27,14 @@ export interface DoublesElimResult {
  * Games-won majority decides the match: first side to ceil(best_of / 2)
  * game wins completes it. Games arrays can be sparse (the bracket inline
  * edit writes by index), so holes count for neither side.
+ *
+ * Deliberate delta vs the old scoring-page copy (Codex review 2026-07-17):
+ * that copy used `g.winner` and CRASHED on a null entry (a bracket-edit
+ * hole JSON-round-tripped through the DB). Skipping it is strictly safer;
+ * pinned by the null-entry test.
  */
 export function computeDoublesElimResult(
-  games: ReadonlyArray<DoublesElimGame | undefined>,
+  games: ReadonlyArray<DoublesElimGame | undefined | null>,
   bestOf: number,
   teamAId: string | null,
   teamBId: string | null,

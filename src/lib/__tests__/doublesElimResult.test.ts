@@ -79,6 +79,14 @@ describe("computeDoublesElimResult", () => {
     expect(r.complete).toBe(false);
   });
 
+  it("DELTA: a materialized null game entry (bracket hole after a DB JSON round-trip) is skipped, where the old scoring-page copy crashed", () => {
+    const r = computeDoublesElimResult([null, g(2, 11, 8), g(3, 11, 5)], 3, A, B);
+    expect(r.gamesWonA).toBe(2);
+    expect(r.gamesWonB).toBe(0);
+    expect(r.complete).toBe(true);
+    expect(r.winnerId).toBe(A);
+  });
+
   it("QUIRK: a 0-0 placeholder game (scoring-page padding) counts as a win for A", () => {
     // DoublesEliminationScoring.tsx pads skipped game slots with
     // { score_a: 0, score_b: 0, winner: 'a' } — saving game 2 without game 1
