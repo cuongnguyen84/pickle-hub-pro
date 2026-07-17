@@ -39,7 +39,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       console.error("sitemap-blog: query error:", error);
     }
 
-    const entries = (viPosts || []).map((post: any) => {
+    const entries = (viPosts || []).map((post: { slug: string; updated_at: string | null; alternate_en_slug: string | null }) => {
       const lastmod = toLastmod(post.updated_at, TODAY);
       const hreflang = post.alternate_en_slug
         ? [

@@ -27,7 +27,7 @@ const ForumCategoryNav = ({ activeSlug, onSelect }: ForumCategoryNavProps) => {
           {t.forum.allCategories}
         </button>
         {categories.map((cat) => {
-          const displayName = language === "en" && (cat as any).name_en ? (cat as any).name_en : cat.name;
+          const displayName = language === "en" && cat.name_en ? cat.name_en : cat.name;
           return (
             <button
               key={cat.id}

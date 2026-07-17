@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 
 export interface SystemSettings {
@@ -34,7 +35,7 @@ async function fetchSystemSettings(): Promise<SystemSettings> {
   for (const row of data || []) {
     const key = row.key as keyof SystemSettings;
     if (key in settings) {
-      (settings as any)[key] = row.value;
+      (settings as Record<string, Json>)[key] = row.value;
     }
   }
   return settings;
@@ -52,7 +53,7 @@ export function useUpdateSystemSetting() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: any }) => {
+    mutationFn: async ({ key, value }: { key: string; value: Json }) => {
       const { error } = await supabase
         .from("system_settings")
         .update({ value, updated_at: new Date().toISOString() })
@@ -63,7 +64,7 @@ export function useUpdateSystemSetting() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["system-settings"] });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("[useSystemSettings] Update failed:", error);
       toast({
         title: "Lưu cài đặt thất bại",

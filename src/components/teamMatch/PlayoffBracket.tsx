@@ -174,7 +174,7 @@ function renderMatchCard({
               whiteSpace: 'nowrap',
             }}
           >
-            {(match.team_a as any)?.team_name || (isThirdPlace ? thirdPlaceTbd : 'TBD')}
+            {match.team_a?.team_name || (isThirdPlace ? thirdPlaceTbd : 'TBD')}
           </span>
           {match.lineup_a_submitted && (
             <Check className="h-3 w-3 flex-shrink-0" style={{ color: accentColor }} />
@@ -234,7 +234,7 @@ function renderMatchCard({
               whiteSpace: 'nowrap',
             }}
           >
-            {(match.team_b as any)?.team_name || (isThirdPlace ? thirdPlaceTbd : 'TBD')}
+            {match.team_b?.team_name || (isThirdPlace ? thirdPlaceTbd : 'TBD')}
           </span>
           {match.lineup_b_submitted && (
             <Check className="h-3 w-3 flex-shrink-0" style={{ color: accentColor }} />
@@ -347,8 +347,8 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
 
   // Group playoff matches by round - separate third-place match (round 0)
   const allPlayoffMatches = matches.filter(m => m.is_playoff);
-  const thirdPlaceMatch = allPlayoffMatches.find(m => (m as any).is_third_place === true || m.playoff_round === 0);
-  const regularPlayoffMatches = allPlayoffMatches.filter(m => (m as any).is_third_place !== true && m.playoff_round !== 0);
+  const thirdPlaceMatch = allPlayoffMatches.find(m => (m as TeamMatchMatch & { is_third_place?: boolean }).is_third_place === true || m.playoff_round === 0);
+  const regularPlayoffMatches = allPlayoffMatches.filter(m => (m as TeamMatchMatch & { is_third_place?: boolean }).is_third_place !== true && m.playoff_round !== 0);
 
   const matchesByRound = regularPlayoffMatches
     .reduce((acc, match) => {
@@ -380,8 +380,8 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
   const finalMatch = matchesByRound[1]?.[0];
   const champion = finalMatch?.winner_team_id
     ? (finalMatch.winner_team_id === finalMatch.team_a_id
-        ? (finalMatch.team_a as any)?.team_name
-        : (finalMatch.team_b as any)?.team_name)
+        ? finalMatch.team_a?.team_name
+        : finalMatch.team_b?.team_name)
     : null;
 
   return (

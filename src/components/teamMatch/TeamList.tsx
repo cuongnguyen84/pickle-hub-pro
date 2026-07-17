@@ -14,6 +14,7 @@ import {
 import { Users, Trash2, ChevronRight, Check, Clock, X } from 'lucide-react';
 import { useTeamMatchTeams, useTeamMatchTeamManagement, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useI18n } from '@/i18n';
+import type { Translations } from '@/i18n';
 
 // ─── W2.4b shared tokens (mirror MatchList/PlayoffBracket from #103) ─────
 const surfaceCard: React.CSSProperties = {
@@ -131,7 +132,7 @@ interface TeamCardProps {
   team: TeamMatchTeam;
   isOwner: boolean;
   statusLabels: Record<StatusKind, string>;
-  c: any;
+  c: Translations['teamMatchComponents'];
   onDelete?: () => void;
   onClick?: () => void;
   isProcessing?: boolean;

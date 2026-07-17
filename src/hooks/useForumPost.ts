@@ -69,13 +69,13 @@ export const useForumComments = (postId: string | undefined) => {
         .order("created_at", { ascending: true });
       if (error) throw error;
 
-      const userIds = [...new Set(data.map((c: any) => c.user_id))];
+      const userIds = [...new Set(data.map((c) => c.user_id))];
       const { data: profiles } = await supabase.rpc("get_public_profiles", { profile_ids: userIds });
-      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const profileMap = new Map((profiles || []).map((p) => [p.id, p] as const));
 
-      return data.map((comment: any) => {
+      return data.map((comment) => {
         const profile = profileMap.get(comment.user_id);
-        const parentComment = comment.parent_id ? data.find((c: any) => c.id === comment.parent_id) : null;
+        const parentComment = comment.parent_id ? data.find((c) => c.id === comment.parent_id) : null;
         const parentProfile = parentComment ? profileMap.get(parentComment.user_id) : null;
         return {
           ...comment,
@@ -97,7 +97,7 @@ export const useCreateForumComment = () => {
     mutationFn: async (comment: { post_id: string; user_id: string; content: string; parent_id?: string | null; image_urls?: string[] }) => {
       const { data, error } = await supabase
         .from("forum_comments")
-        .insert(comment as any)
+        .insert(comment)
         .select()
         .single();
       if (error) throw error;
@@ -159,7 +159,7 @@ export const useToggleHidePost = () => {
     mutationFn: async ({ postId, isHidden }: { postId: string; isHidden: boolean }) => {
       const { error } = await supabase
         .from("forum_posts")
-        .update({ is_hidden: !isHidden } as any)
+        .update({ is_hidden: !isHidden })
         .eq("id", postId);
       if (error) throw error;
     },

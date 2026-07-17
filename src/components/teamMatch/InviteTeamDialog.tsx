@@ -147,10 +147,10 @@ export function InviteTeamDialog({
         onOpenChange(false);
         setSuccessMessage('');
       }, 2000);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: txt.errorTitle,
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     } finally {

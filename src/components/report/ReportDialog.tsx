@@ -63,12 +63,12 @@ export function ReportDialog({ contentType, contentId, contentTitle, trigger }: 
         ? `${selectedReason}: ${additionalInfo}`
         : selectedReason;
 
-      const { error } = await supabase.from("content_reports" as any).insert({
+      const { error } = await supabase.from("content_reports").insert({
         reporter_user_id: user.id,
         content_type: contentType,
         content_id: contentId,
         reason,
-      } as any);
+      });
 
       if (error) {
         if (error.code === "23505") {

@@ -70,11 +70,11 @@ export function useVideoUpload(organizationId: string | null) {
         });
 
         return { storagePath: path, videoUrl };
-      } catch (err: any) {
+      } catch (err) {
         setState((s) => ({
           ...s,
           isUploading: false,
-          error: err.message || "Upload failed",
+          error: err instanceof Error && err.message ? err.message : "Upload failed",
         }));
         return null;
       }
