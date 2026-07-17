@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoublesElimination, BestOfFormat, RatingSource } from "@/hooks/useDoublesElimination";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, ArrowRight, Plus, Trash2, Shuffle, Trophy, LogIn, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2, Shuffle, Trophy, Sparkles } from "lucide-react";
 import { parseCourtsInput } from "@/lib/round-robin";
 import { useI18n } from "@/i18n";
-import { getLoginUrl } from "@/lib/auth-config";
 import { DoublesEliminationPlayerInput, type PlayerSlot } from "@/components/tournament/DoublesEliminationPlayerInput";
 import { computeTeamDuprSeeds, teamSeedCoverage } from "@/lib/dupr/seedDoublesTeams";
 import { SeedExplainerCard } from "@/components/dupr/SeedExplainerCard";
+import { SetupBreadcrumb, SetupPageHead, SetupLoginGate } from "@/components/tournament/SetupShell";
+import { surfaceCard, stepKickerStyle, stepHeadingStyle, stepDescStyle } from "@/components/tournament/setup-styles";
 
 interface TeamInput {
   id: string;
@@ -39,40 +40,6 @@ type Step = 'info' | 'format' | 'teams';
 
 const SUGGESTED_COUNTS = [40, 48, 64, 80, 96, 128];
 
-const surfaceCard: React.CSSProperties = {
-  background: 'var(--tl-bg-elev)',
-  border: '1px solid var(--tl-border)',
-  borderRadius: 'var(--tl-radius-lg)',
-  padding: 28,
-};
-
-const stepKickerStyle: React.CSSProperties = {
-  fontFamily: 'Geist Mono, ui-monospace, monospace',
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--tl-green)',
-  marginBottom: 8,
-};
-
-const stepHeadingStyle: React.CSSProperties = {
-  fontFamily: 'Instrument Serif, serif',
-  fontStyle: 'italic',
-  fontWeight: 400,
-  fontSize: 28,
-  letterSpacing: '-0.015em',
-  lineHeight: 1.05,
-  margin: 0,
-  color: 'var(--tl-fg)',
-};
-
-const stepDescStyle: React.CSSProperties = {
-  fontSize: 14.5,
-  color: 'var(--tl-fg-3)',
-  marginTop: 6,
-  lineHeight: 1.5,
-};
 
 // DUPR Phase 1 (2026-05-29). Collect already-linked profile ids across
 // teams so the search dropdown of OTHER teams excludes them (prevents one
@@ -587,54 +554,15 @@ export default function DoublesEliminationSetup() {
   // ─── Login gate ──────────────────────────────────────────────────────────
   if (!user) {
     return (
-      <TheLineLayout title={t.doublesElimination.setup.title} noindex={true} active="lab">
-        <div className="tl-shell">
-          <nav className="tl-breadcrumb">
-            <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
-            <span className="sep">/</span>
-            <Link to="/tools/doubles-elimination">Doubles Elimination</Link>
-            <span className="sep">/</span>
-            <span className="current">{language === 'vi' ? 'Tạo mới' : 'New'}</span>
-          </nav>
-          <section style={{ padding: '48px 0 80px' }}>
-            <div
-              style={{
-                ...surfaceCard,
-                maxWidth: 480,
-                margin: '0 auto',
-                textAlign: 'center',
-                padding: '40px 28px',
-              }}
-            >
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: '50%',
-                  background: 'var(--tl-green-glow)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 20,
-                }}
-              >
-                <Trophy className="w-7 h-7" style={{ color: 'var(--tl-green)' }} />
-              </div>
-              <h2 style={{ ...stepHeadingStyle, fontSize: 24, marginBottom: 10 }}>
-                {t.doublesElimination.loginRequired}
-              </h2>
-              <button
-                type="button"
-                className="tl-btn green"
-                onClick={() => navigate(getLoginUrl('/tools/doubles-elimination/new'))}
-              >
-                <LogIn className="w-4 h-4" />
-                {t.auth.login}
-              </button>
-            </div>
-          </section>
-        </div>
-      </TheLineLayout>
+      <SetupLoginGate
+        layoutTitle={t.doublesElimination.setup.title}
+        noindex={true}
+        toolLabel="Doubles Elimination"
+        toolPath="/tools/doubles-elimination"
+        icon={Trophy}
+        title={t.doublesElimination.loginRequired}
+        loginRedirect="/tools/doubles-elimination/new"
+      />
     );
   }
 
@@ -645,27 +573,12 @@ export default function DoublesEliminationSetup() {
   return (
     <TheLineLayout title={t.doublesElimination.setup.title} description={t.doublesElimination.description} noindex={true} active="lab">
       <div className="tl-shell">
-        <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
-          <span className="sep">/</span>
-          <Link to="/tools/doubles-elimination">Doubles Elimination</Link>
-          <span className="sep">/</span>
-          <span className="current">{language === 'vi' ? 'Tạo mới' : 'New'}</span>
-        </nav>
+        <SetupBreadcrumb toolLabel="Doubles Elimination" toolPath="/tools/doubles-elimination" />
 
-        <header className="tl-page-head">
-          <div className="kicker">
-            ◆ {language === 'vi' ? 'Tạo giải mới · Loại kép' : 'New tournament · Double elimination'}
-          </div>
-          <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
-            <em className="tl-serif">
-              {language === 'vi' ? 'Tạo' : 'Create'}
-            </em>{' '}
-            <span className="sans">
-              {language === 'vi' ? 'giải đấu.' : 'tournament.'}
-            </span>
-          </h1>
-        </header>
+        <SetupPageHead
+          kicker={language === 'vi' ? 'Tạo giải mới · Loại kép' : 'New tournament · Double elimination'}
+          h1Sans={language === 'vi' ? 'giải đấu.' : 'tournament.'}
+        />
 
         {/* Progress indicator */}
         <section style={{ marginTop: 32, marginBottom: 20 }}>
