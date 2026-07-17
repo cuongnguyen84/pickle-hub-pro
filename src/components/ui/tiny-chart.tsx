@@ -105,6 +105,8 @@ interface TinyLineChartProps {
   /** Rendered inside the tooltip for the hovered/tapped x index */
   renderTooltip?: (index: number) => React.ReactNode;
   ariaLabel: string;
+  /** Skip ResizeObserver and render at this width (fixed-width hosts, tests) */
+  fixedWidth?: number;
 }
 
 export function TinyLineChart({
@@ -116,8 +118,10 @@ export function TinyLineChart({
   tickColor = "var(--tl-fg-3, hsl(var(--foreground-secondary)))",
   renderTooltip,
   ariaLabel,
+  fixedWidth,
 }: TinyLineChartProps) {
-  const [ref, width] = useContainerWidth();
+  const [ref, measured] = useContainerWidth();
+  const width = fixedWidth ?? measured;
   const [tip, setTip] = useState<TooltipState | null>(null);
 
   const n = xLabels.length;
@@ -253,6 +257,8 @@ interface TinyBarChartProps {
   tickColor?: string;
   renderTooltip?: (index: number) => React.ReactNode;
   ariaLabel: string;
+  /** Skip ResizeObserver and render at this width (fixed-width hosts, tests) */
+  fixedWidth?: number;
 }
 
 export function TinyBarChart({
@@ -264,8 +270,10 @@ export function TinyBarChart({
   tickColor = "hsl(var(--foreground-secondary))",
   renderTooltip,
   ariaLabel,
+  fixedWidth,
 }: TinyBarChartProps) {
-  const [ref, width] = useContainerWidth();
+  const [ref, measured] = useContainerWidth();
+  const width = fixedWidth ?? measured;
   const [tip, setTip] = useState<TooltipState | null>(null);
 
   const n = values.length;
@@ -366,6 +374,8 @@ interface TinyDonutProps {
   outerRadius?: number;
   renderTooltip?: (index: number) => React.ReactNode;
   ariaLabel: string;
+  /** Skip ResizeObserver and render at this width (fixed-width hosts, tests) */
+  fixedWidth?: number;
 }
 
 export function TinyDonut({
@@ -375,8 +385,10 @@ export function TinyDonut({
   outerRadius = 80,
   renderTooltip,
   ariaLabel,
+  fixedWidth,
 }: TinyDonutProps) {
-  const [ref, width] = useContainerWidth();
+  const [ref, measured] = useContainerWidth();
+  const width = fixedWidth ?? measured;
   const [tip, setTip] = useState<TooltipState | null>(null);
 
   const total = segments.reduce((s, seg) => s + Math.max(0, seg.value), 0);

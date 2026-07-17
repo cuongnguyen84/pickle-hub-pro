@@ -42,6 +42,91 @@ describe("TinyLineChart sparse data", () => {
   });
 });
 
+describe("full render at fixed width", () => {
+  it("line chart renders grid, thinned x labels, polyline, dots and both series", () => {
+    const html = renderToStaticMarkup(
+      <TinyLineChart
+        height={220}
+        fixedWidth={600}
+        xLabels={Array.from({ length: 20 }, (_, i) => `${i + 1}/07`)}
+        yDomain={[2, 7]}
+        series={[
+          {
+            label: "Doubles",
+            values: Array.from({ length: 20 }, (_, i) => 3 + (i % 5) * 0.1),
+            color: "green",
+            dotRadius: 3,
+          },
+          {
+            label: "Singles",
+            values: Array.from({ length: 20 }, (_, i) => (i % 3 === 0 ? null : 2.8)),
+            color: "gray",
+            dashed: true,
+            dotRadius: 2,
+          },
+        ]}
+        ariaLabel="dupr chart"
+        renderTooltip={(i) => <div>{i}</div>}
+      />,
+    );
+    expect(html).toContain("<svg");
+    expect(html).toContain("aria-label=\"dupr chart\"");
+    expect(html).toContain("<polyline");
+    expect(html).toContain("stroke-dasharray");
+    expect(html).toContain("<circle");
+    // 20 labels must be thinned, not all rendered
+    expect((html.match(/\/07</g) ?? []).length).toBeLessThan(20);
+  });
+
+  it("single-point series renders a dot without a polyline", () => {
+    const html = renderToStaticMarkup(
+      <TinyLineChart
+        height={100}
+        fixedWidth={400}
+        xLabels={["a"]}
+        series={[{ label: "s", values: [3.5], color: "green", dotRadius: 3 }]}
+        ariaLabel="one point"
+      />,
+    );
+    expect(html).toContain("<circle");
+    expect(html).not.toContain("<polyline");
+  });
+
+  it("bar chart renders one rect per value with y ticks", () => {
+    const html = renderToStaticMarkup(
+      <TinyBarChart
+        height={200}
+        fixedWidth={600}
+        xLabels={["T2", "T3", "T4"]}
+        values={[0, 5, 12]}
+        barColor="blue"
+        ariaLabel="new users"
+        renderTooltip={(i) => <div>{i}</div>}
+      />,
+    );
+    expect((html.match(/<rect/g) ?? []).length).toBe(3);
+    expect(html).toContain("T2");
+    expect(html).toContain("12");
+  });
+
+  it("donut renders one arc path per positive segment", () => {
+    const html = renderToStaticMarkup(
+      <TinyDonut
+        height={200}
+        fixedWidth={400}
+        segments={[
+          { value: 70, color: "green", label: "Video" },
+          { value: 30, color: "red", label: "Livestream" },
+        ]}
+        ariaLabel="views by type"
+        renderTooltip={(i) => <div>{i}</div>}
+      />,
+    );
+    expect((html.match(/<path/g) ?? []).length).toBe(2);
+    expect(html).toContain("aria-label=\"views by type\"");
+  });
+});
+
 describe("TinyBarChart / TinyDonut sparse data", () => {
   it("bar chart tolerates empty values", () => {
     expect(() =>
