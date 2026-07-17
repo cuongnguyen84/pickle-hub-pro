@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";

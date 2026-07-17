@@ -357,12 +357,12 @@ export function TeamMatchScoringSheet({
   // predicate — a queued write from a taken-over referee must not commit.
   const refLiveScore = (a: number, b: number) => {
     if (!currentGame || !user?.id) return;
-    void supabase.from('team_match_games').update({ score_a: a, score_b: b }).eq('id', currentGame.id).eq('live_referee_id', user.id).then((): void => undefined, (): void => undefined);
+    void supabase.from('team_match_games').update({ score_a: a, score_b: b }).eq('id', currentGame.id).filter('live_referee_id', 'eq', user.id).then((): void => undefined, (): void => undefined);
   };
   // S2: best-effort full-state persistence (referee_live_state jsonb).
   const refLiveState = (s: RefereeLiveState | null) => {
     if (!currentGame || !user?.id) return;
-    void supabase.from('team_match_games').update({ referee_live_state: s } as never).eq('id', currentGame.id).eq('live_referee_id', user.id).then((): void => undefined, (): void => undefined);
+    void supabase.from('team_match_games').update({ referee_live_state: s } as never).eq('id', currentGame.id).filter('live_referee_id', 'eq', user.id).then((): void => undefined, (): void => undefined);
   };
   // S3a: another referee holds the claim -> static snapshot, no writes.
   // S3c: currentGame refetches via the sheet's existing realtime hook, so
