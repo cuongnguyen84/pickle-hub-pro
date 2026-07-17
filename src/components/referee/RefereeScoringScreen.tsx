@@ -42,6 +42,11 @@ interface ScreenProps {
   onLiveState?: (s: RefereeLiveState | null) => void;
   /** Claim the match as LIVE when the game begins. */
   onClaimLive?: () => void;
+  /** S3a contention lockout: another referee holds live_referee_id. The
+   *  screen becomes a static snapshot — no actions, no persistence (a
+   *  viewer must never overwrite the scoring referee's state). Computed by
+   *  the consumer at load time; realtime spectator updates are S3c. */
+  readOnly?: boolean;
   /** Persist the final result. The screen has already cleared resume state. */
   onFinish: (a: number, b: number, note: string | null) => Promise<void>;
   /** When embedded as an overlay, close instead of navigating to backHref. */
@@ -54,7 +59,7 @@ type Active = { side: ServeSide; kind: 'reg' | 'med'; left: number };
 const card: React.CSSProperties = { background: 'var(--tl-surface)', border: '1px solid var(--tl-border)', borderRadius: 'var(--tl-radius-lg)' };
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, initialLiveState, onLiveState, onClaimLive, onFinish, onBack }: ScreenProps) {
+export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, initialLiveState, onLiveState, onClaimLive, readOnly = false, onFinish, onBack }: ScreenProps) {
   const navigate = useNavigate();
   const storeKey = persistKey;
   const noteKey = `${persistKey}:note`;
@@ -128,7 +133,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeKey]);
-  useEffect(() => { if (state) localStorage.setItem(storeKey, JSON.stringify(state)); }, [state, storeKey]);
+  useEffect(() => { if (state && !readOnly) localStorage.setItem(storeKey, JSON.stringify(state)); }, [state, storeKey, readOnly]);
 
   // S2: debounced full-state push to the consumer (DB row). 400ms collapses
   // note keystrokes; rallies land within one debounce window anyway.
@@ -136,13 +141,14 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   // timer never fires a stale closure, and unmount FLUSHES the pending
   // write instead of dropping it (finishedRef suppresses the flush after
   // finish already cleared the row).
+  // readOnly viewers never write — they'd clobber the scoring referee.
   const liveStateTimer = useRef<number | null>(null);
   const onLiveStateRef = useRef(onLiveState);
   onLiveStateRef.current = onLiveState;
   const pendingEnvRef = useRef<RefereeLiveState | null>(null);
   const finishedRef = useRef(false);
   useEffect(() => {
-    if (!state || !onLiveState) return undefined;
+    if (!state || !onLiveState || readOnly) return undefined;
     pendingEnvRef.current = makeLiveState({
       state, history,
       usedReg, usedMed,
@@ -168,7 +174,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   const liveA = state?.a;
   const liveB = state?.b;
   useEffect(() => {
-    if (liveA == null || liveB == null) return;
+    if (liveA == null || liveB == null || readOnly) return;
     onLiveScore?.(liveA, liveB);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveA, liveB]);
@@ -180,8 +186,9 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     try { const raw = localStorage.getItem(noteKey); if (raw) { const o = JSON.parse(raw) as { a?: string; b?: string }; setNoteA(o.a || ''); setNoteB(o.b || ''); } } catch { /* ignore */ }
   }, [noteKey]);
   useEffect(() => {
+    if (readOnly) return;
     try { if (noteA || noteB) localStorage.setItem(noteKey, JSON.stringify({ a: noteA, b: noteB })); else localStorage.removeItem(noteKey); } catch { /* ignore */ }
-  }, [noteA, noteB, noteKey]);
+  }, [noteA, noteB, noteKey, readOnly]);
 
   // timeout countdown
   useEffect(() => {
@@ -219,7 +226,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   useEffect(() => () => { if (tossTimer.current) window.clearTimeout(tossTimer.current); }, []);
 
   const begin = useCallback(() => {
-    if (setupServer == null) return;
+    if (readOnly || setupServer == null) return;
     setState(startState({
       mode, isSingles: false, winTarget: target, firstServer: setupServer,
       players: rotationCapable ? { a: loaded.playersA!, b: loaded.playersB! } : undefined,
@@ -228,18 +235,19 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
     setHistory([]); setSwitchAnnounced(false);
     void goLandscape();
     onClaimLive?.();
-  }, [loaded, mode, target, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape, onClaimLive]);
+  }, [loaded, mode, target, setupServer, setupServerIdx, setupReceiverIdx, rotationCapable, goLandscape, onClaimLive, readOnly]);
 
   const tap = useCallback((side: ServeSide) => {
-    if (!state || isGameOver(state)) return;
+    if (readOnly || !state || isGameOver(state)) return;
     const next = applyRally(state, side);
     setHistory((h) => [...h, state]);
     setState(next);
     if (isGameOver(next)) setConfirming(true);
     else if (!switchAnnounced && Math.max(next.a, next.b) >= sideSwitchPoint(target)) { setSwitchAnnounced(true); setShowSwitch(true); }
-  }, [state, switchAnnounced, target]);
+  }, [state, switchAnnounced, target, readOnly]);
 
   const undo = useCallback(() => {
+    if (readOnly) return;
     setHistory((h) => {
       if (!h.length) return h;
       const prev = h[h.length - 1];
@@ -247,13 +255,14 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       if (Math.max(prev.a, prev.b) < sideSwitchPoint(target)) setSwitchAnnounced(false);
       return h.slice(0, -1);
     });
-  }, [target]);
+  }, [target, readOnly]);
 
   const startTO = useCallback((side: ServeSide, kind: 'reg' | 'med') => {
+    if (readOnly) return;
     if (kind === 'reg') { if (usedReg[side] >= regularTO) return; setUsedReg((u) => ({ ...u, [side]: u[side] + 1 })); }
     else { if (usedMed[side] >= 1) return; setUsedMed((u) => ({ ...u, [side]: u[side] + 1 })); }
     setActive({ side, kind, left: kind === 'reg' ? 60 : 300 });
-  }, [usedReg, usedMed, regularTO]);
+  }, [usedReg, usedMed, regularTO, readOnly]);
 
   const combinedNote = useCallback((): string | null => {
     const parts: string[] = [];
@@ -263,7 +272,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
   }, [noteA, noteB, loaded]);
 
   const finish = useCallback(async (s: ScoreState) => {
-    if (s.a === s.b) return;
+    if (readOnly || s.a === s.b) return;
     setSaving(true);
     try {
       exitLandscape();
@@ -275,7 +284,7 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
       localStorage.removeItem(storeKey); localStorage.removeItem(noteKey);
       onLiveState?.(null); // clear the row's live state — the match is final
     } finally { setSaving(false); }
-  }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote, onLiveState]);
+  }, [storeKey, noteKey, exitLandscape, onFinish, combinedNote, onLiveState, readOnly]);
 
   const inner = (
     <div style={{ flex: 1, minWidth: 0, background: 'var(--tl-bg)', color: 'var(--tl-fg)', display: 'flex', flexDirection: 'column' }}>
@@ -285,14 +294,29 @@ export function RefereeScoringScreen({ loaded, vi, persistKey, onLiveScore, init
         </button>
         <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 12, color: 'var(--tl-fg-3)' }}>{vi ? 'CHẤM TRỰC TIẾP' : 'LIVE SCORING'}</span>
         <div style={{ flex: 1 }} />
-        {state && (
+        {readOnly && (
+          <span style={{
+            fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, fontWeight: 500,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+            padding: '3px 9px', borderRadius: 4,
+            background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)',
+            border: '1px solid rgba(233, 182, 73, 0.30)',
+          }}>
+            {vi ? 'Trọng tài khác đang chấm' : 'Another referee is scoring'}
+          </span>
+        )}
+        {state && !readOnly && (
           <button type="button" className="tl-btn" style={{ padding: '6px 10px', ...((noteA.trim() || noteB.trim()) ? { color: 'var(--tl-green)', borderColor: 'var(--tl-green)' } : {}) }} onClick={() => setShowNote(true)}>
             <StickyNote className="w-4 h-4" /><span className="hidden sm:inline">{vi ? 'Ghi chú' : 'Note'}</span>
           </button>
         )}
       </header>
 
-      {!state ? (
+      {!state && readOnly ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tl-fg-3)', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 13, padding: 24, textAlign: 'center' }}>
+          {vi ? 'Trọng tài khác đang chấm trận này — chưa có dữ liệu để xem.' : 'Another referee is scoring this match — nothing to view yet.'}
+        </div>
+      ) : !state ? (
         <Setup
           vi={vi} loaded={loaded} mode={mode} setMode={setMode} target={target} setTarget={setTarget}
           regularTO={regularTO} setRegularTO={setRegularTO}
