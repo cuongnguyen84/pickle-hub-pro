@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, LogIn, CreditCard } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, CreateTournamentInput, DiscountTier } from '@/hooks/useTeamMatch';
 import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
@@ -15,6 +15,8 @@ import { generateVietQRUrl } from '@/lib/payment/vietqr';
 import { normalizeAccountName } from '@/components/social/create-event/types';
 import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
+import { SetupBreadcrumb, SetupPageHead, SetupLoginGate } from '@/components/tournament/SetupShell';
+import { surfaceCard, stepKickerStyle } from '@/components/tournament/setup-styles';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -26,23 +28,8 @@ const ROSTER_SIZE_OPTIONS = [
   { value: 8, label: '8' },
 ];
 
-const surfaceCard: React.CSSProperties = {
-  background: 'var(--tl-bg-elev)',
-  border: '1px solid var(--tl-border)',
-  borderRadius: 'var(--tl-radius-lg)',
-  padding: 28,
-};
-
-const stepKickerStyle: React.CSSProperties = {
-  fontFamily: 'Geist Mono, ui-monospace, monospace',
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--tl-green)',
-  marginBottom: 8,
-};
-
+// TM keeps its local heading/desc variants (26px serif + mono caps desc) —
+// the shared setup-styles tokens are the QT/Flex/DE 28px/prose variant.
 const stepHeadingStyle: React.CSSProperties = {
   fontFamily: 'Instrument Serif, serif',
   fontStyle: 'italic',
@@ -284,57 +271,16 @@ export default function TeamMatchSetup() {
   // ─── Login gate ──────────────────────────────────────────────────────────
   if (!user) {
     return (
-      <TheLineLayout title={t.teamMatch.setup.title} noindex={true} active="lab">
-        <div className="tl-shell">
-          <nav className="tl-breadcrumb">
-            <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
-            <span className="sep">/</span>
-            <Link to="/tools/team-match">Team Match</Link>
-            <span className="sep">/</span>
-            <span className="current">{language === 'vi' ? 'Tạo mới' : 'New'}</span>
-          </nav>
-          <section style={{ padding: '48px 0 80px' }}>
-            <div
-              style={{
-                ...surfaceCard,
-                maxWidth: 480,
-                margin: '0 auto',
-                textAlign: 'center',
-                padding: '40px 28px',
-              }}
-            >
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: '50%',
-                  background: 'var(--tl-green-glow)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 20,
-                }}
-              >
-                <Users className="w-7 h-7" style={{ color: 'var(--tl-green)' }} />
-              </div>
-              <h2 style={{ ...stepHeadingStyle, fontSize: 24, marginBottom: 10 }}>
-                {t.teamMatch.setup.loginRequired}
-              </h2>
-              <p style={{ fontSize: 14, color: 'var(--tl-fg-3)', marginBottom: 24, lineHeight: 1.5 }}>
-                {t.teamMatch.setup.loginRequiredDesc}
-              </p>
-              <button
-                type="button"
-                className="tl-btn green"
-                onClick={() => navigate(getLoginUrl('/tools/team-match/new'))}
-              >
-                <LogIn className="w-4 h-4" />
-                {t.auth.login}
-              </button>
-            </div>
-          </section>
-        </div>
-      </TheLineLayout>
+      <SetupLoginGate
+        layoutTitle={t.teamMatch.setup.title}
+        noindex={true}
+        toolLabel="Team Match"
+        toolPath="/tools/team-match"
+        icon={Users}
+        title={t.teamMatch.setup.loginRequired}
+        desc={t.teamMatch.setup.loginRequiredDesc}
+        loginRedirect="/tools/team-match/new"
+      />
     );
   }
 
@@ -344,24 +290,13 @@ export default function TeamMatchSetup() {
   return (
     <TheLineLayout title={t.teamMatch.setup.title} noindex={true} active="lab">
       <div className="tl-shell">
-        <nav className="tl-breadcrumb">
-          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
-          <span className="sep">/</span>
-          <Link to="/tools/team-match">Team Match</Link>
-          <span className="sep">/</span>
-          <span className="current">{language === 'vi' ? 'Tạo mới' : 'New'}</span>
-        </nav>
+        <SetupBreadcrumb toolLabel="Team Match" toolPath="/tools/team-match" />
 
-        <header className="tl-page-head">
-          <div className="kicker">
-            ◆ {language === 'vi' ? 'Tạo giải mới · Team Match MLP' : 'New tournament · Team Match MLP'}
-          </div>
-          <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
-            <em className="tl-serif">{language === 'vi' ? 'Tạo' : 'Create'}</em>{' '}
-            <span className="sans">{language === 'vi' ? 'team match.' : 'team match.'}</span>
-          </h1>
-          <p>{t.teamMatch.setup.subtitle}</p>
-        </header>
+        <SetupPageHead
+          kicker={language === 'vi' ? 'Tạo giải mới · Team Match MLP' : 'New tournament · Team Match MLP'}
+          h1Sans="team match."
+          subtitle={t.teamMatch.setup.subtitle}
+        />
 
         {/* Step indicators — token-driven, mono caps below */}
         <section style={{ marginTop: 32, marginBottom: 8 }}>
