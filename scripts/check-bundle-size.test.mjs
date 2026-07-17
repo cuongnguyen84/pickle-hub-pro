@@ -59,6 +59,16 @@ describe("initialLoadFiles", () => {
 });
 
 describe("precachePatterns", () => {
+  it("ignores commented-out patterns (a disabled glob must not count as coverage)", () => {
+    const cfg = `globPatterns: [
+      "assets/index-*.js",
+      // "assets/vendor-react-*.js",
+    ]`;
+    const patterns = precachePatterns(cfg);
+    expect(patterns.some((re) => re.test("assets/index-abc.js"))).toBe(true);
+    expect(patterns.some((re) => re.test("assets/vendor-react-abc.js"))).toBe(false);
+  });
+
   it("extracts globPatterns and matches hashed chunk names", () => {
     const cfg = `workbox: { globPatterns: [
       "*.{ico,png,svg}",

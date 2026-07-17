@@ -37,6 +37,18 @@ function niceTicks(min: number, max: number, count = 4): number[] {
   return Array.from({ length: count + 1 }, (_, i) => min + i * step);
 }
 
+// Count data (views, users) needs whole-number ticks whose labels sit exactly
+// on their gridlines — rounding fractional ticks mislabels the grid (the
+// recharts allowDecimals behaviour this replaces).
+function integerTicks(max: number, count = 4): number[] {
+  if (!Number.isFinite(max) || max <= 0) return [0];
+  const step = Math.max(1, Math.ceil(max / count));
+  const out = [];
+  for (let t = 0; t <= max; t += step) out.push(t);
+  if (out[out.length - 1] !== max) out.push(max);
+  return out;
+}
+
 /** Thin x labels down to at most `max` evenly spread entries. */
 function thinLabels(labels: string[], max = 8): (string | null)[] {
   if (labels.length <= max) return labels;
@@ -128,14 +140,16 @@ export function TinyLineChart({
   const plotW = Math.max(0, width - AXIS_W - 8);
   const plotH = Math.max(0, height - PAD_TOP - PAD_BOTTOM);
 
+  // Without an explicit yDomain the data is count-like (views, users): anchor
+  // at zero like recharts' [0, "auto"] did — an all-zero series must not
+  // invent a [-1, 1] domain with negative ticks.
   const [yMin, yMax] = useMemo(() => {
     if (yDomain) return yDomain;
     const vals = series.flatMap((s) => s.values).filter((v): v is number => v != null);
-    if (vals.length === 0) return [0, 1];
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    return min === max ? [min - 1, max + 1] : [min, max];
+    const max = vals.length ? Math.max(0, ...vals) : 0;
+    return [0, max > 0 ? max : 1];
   }, [series, yDomain]);
+  const autoDomain = !yDomain;
 
   const xAt = (i: number) => AXIS_W + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW);
   const yAt = (v: number) => PAD_TOP + plotH - ((v - yMin) / (yMax - yMin || 1)) * plotH;
@@ -165,7 +179,7 @@ export function TinyLineChart({
         onPointerLeave={() => setTip(null)}
         style={{ touchAction: "pan-y", display: "block" }}
       >
-        {niceTicks(yMin, yMax).map((t) => (
+        {(autoDomain ? integerTicks(yMax) : niceTicks(yMin, yMax)).map((t) => (
           <g key={t}>
             <line
               x1={AXIS_W}
@@ -307,7 +321,7 @@ export function TinyBarChart({
         onPointerLeave={() => setTip(null)}
         style={{ touchAction: "pan-y", display: "block" }}
       >
-        {niceTicks(0, yMax).map((t) => (
+        {integerTicks(yMax).map((t) => (
           <g key={t}>
             <line
               x1={AXIS_W}
@@ -319,7 +333,7 @@ export function TinyBarChart({
               opacity={0.3}
             />
             <text x={AXIS_W - 6} y={yAt(t) + 3} textAnchor="end" fontSize={FONT} fill={tickColor}>
-              {Math.round(t)}
+              {t}
             </text>
           </g>
         ))}
@@ -400,11 +414,14 @@ export function TinyDonut({
     if (total <= 0) return [];
     let angle = -Math.PI / 2;
     return segments.map((seg) => {
-      const frac = Math.max(0, seg.value) / total;
-      const start = angle + gapRad / 2;
-      const end = angle + frac * 2 * Math.PI - gapRad / 2;
-      angle += frac * 2 * Math.PI;
-      return { start, end: Math.max(start, end), seg };
+      const sweep = (Math.max(0, seg.value) / total) * 2 * Math.PI;
+      // Gap shrinks for thin slices so a small-but-positive segment keeps at
+      // least half its sweep instead of collapsing to an invisible arc.
+      const gap = Math.min(gapRad, sweep / 2);
+      const start = angle + gap / 2;
+      const end = angle + sweep - gap / 2;
+      angle += sweep;
+      return { start, end, seg };
     });
   }, [segments, total]);
 

@@ -89,11 +89,13 @@ export function initialLoadFiles(dist) {
   return [...seen].map((f) => f.replace(abs, ""));
 }
 
-// PWA precache globPatterns from vite.config.ts, as regexes.
+// PWA precache globPatterns from vite.config.ts, as regexes. Line comments
+// are stripped first so a commented-out pattern is not counted as covering.
 export function precachePatterns(viteConfigSource) {
   const block = viteConfigSource.match(/globPatterns:\s*\[([^\]]*)\]/);
   if (!block) return [];
-  return [...block[1].matchAll(/["']([^"']+)["']/g)].map(
+  const cleaned = block[1].replace(/\/\/[^\n]*/g, "");
+  return [...cleaned.matchAll(/["']([^"']+)["']/g)].map(
     (m) => new RegExp("^" + m[1].replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*") + "$"),
   );
 }
@@ -166,9 +168,14 @@ function main() {
   // Boot-critical ⊆ precache whitelist (offline PWA launch needs every
   // initial-load chunk precached; a drifted manualChunks name bricks it).
   const patterns = precachePatterns(readFileSync("vite.config.ts", "utf8"));
-  for (const f of initialFiles)
-    if (patterns.length && !patterns.some((re) => re.test(f)))
-      breaches.push(`initial-load chunk ${f} matches no precache globPattern in vite.config.ts`);
+  if (!patterns.length) {
+    // Parse failure must fail loud — an empty list would silently disable the guard.
+    breaches.push("could not parse any globPatterns from vite.config.ts — precache-coverage guard has nothing to check");
+  } else {
+    for (const f of initialFiles)
+      if (!patterns.some((re) => re.test(f)))
+        breaches.push(`initial-load chunk ${f} matches no precache globPattern in vite.config.ts`);
+  }
 
   if (breaches.length) {
     for (const b of breaches) console.error(`${STRICT ? "✖" : "⚠"} ${b}`);
