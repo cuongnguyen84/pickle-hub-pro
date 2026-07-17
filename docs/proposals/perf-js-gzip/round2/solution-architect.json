@@ -1,0 +1,37 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "action": "REFINE",
+      "move": "REFINE",
+      "topic": "Gate đo gì: CODE aggregate <1800 hay initial-load parse từ dist/index.html",
+      "myRound1Position": "Sửa check-bundle-size.mjs tách CODE vs CONTENT, gate CODE aggregate <1800; đây là fix phép đo cho budget-creep-mỗi-bài-blog.",
+      "argument": "Hai gate BỔ SUNG, không loại trừ — và tôi có bằng chứng mới cho thấy gate initial-load của pre-mortem bắt được một vấn đề THẬT ngay bây giờ mà CODE aggregate của tôi mù hoàn toàn. dist/index.html modulepreload cả vendor-charts (recharts 108KB gz) và entry static-import `import{c as yi}from\"./vendor-charts\"` → recharts đang nằm trên critical initial-load path của MỌI route. CODE aggregate (1577KB, xanh) không phân biệt được 108KB này với một blog chunk lazy. Ngược lại, blog-post-*.js KHÔNG nằm trong modulepreload/precache (vite.config.ts:104-124) nên gate initial-load KHÔNG bao giờ thấy blog creep — đúng thứ CODE/CONTENT split của tôi sinh ra để chặn. Không gate nào bao trùm gate kia. Gộp parser ~30 dòng của pre-mortem vào cùng file check-bundle-size.mjs trong Option A, in thêm 'initial-load gz' + 'số request critical-path', gate BUNDLE_STRICT trên số initial-load. Effort Option A: 1 → 1.5 half-days (cùng 1 file, cùng 1 PR). Giữ nguyên CODE/CONTENT split.",
+      "evidence": [
+        "dist/index.html — <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-charts-BfXEjRFr.js\"> : recharts 108KB gz trên initial-load path mọi route",
+        "dist/assets/index-BiMJSNB8-mrp3dg73.js — top-level `base-CEPi0g9O.js\";import{c as yi}from\"./vendor-charts-BfXEjRFr.js\";` = static import, kéo cả chunk vào critical path",
+        "scripts/check-bundle-size.mjs:50 — totalGz cộng dồn mọi *.js, không tách initial-load; CODE aggregate cũng không phân biệt vendor-charts (preload) với blog-post-* (lazy)",
+        "vite.config.ts:104-124 globPatterns — không có blog-post-* → gate initial-load mù với blog creep; CODE/CONTENT split vẫn cần"
+      ],
+      "note": "REFINE chứ không CONCEDE: lập trường CODE/CONTENT split vẫn đúng và vẫn cần (chỉ nó bắt được blog creep). Tôi mở rộng scope Option A để gộp cả gate initial-load — hai gate bổ sung, +0.5 half-day."
+    },
+    {
+      "id": "D2",
+      "action": "HOLD",
+      "move": "HOLD",
+      "topic": "react-dom có trong entry không; fix manualChunks có gây waterfall regression không",
+      "myRound1Position": "react-dom nằm trong vendor-ui (grep fingerprint entry 0 / vendor-ui 6); dời qua lại = 0 KB; sự cố waterfall của pre-mortem không áp dụng.",
+      "argument": "(a) Fingerprint đủ chắc — đã verify bằng fingerprint THỨ HAI độc lập: entry onRecoverableError=0 VÀ flushSync=0 (cả 3 file entry), vendor-react 0/0, vendor-ui onRecoverableError=6 + flushSync=4 + 'Minified React error'=1. react-dom chắc chắn trong vendor-ui. Tiền đề của sự cố 3 (react-dom trong entry) sai về sự thật. (c) NGAY CẢ trong kịch bản giả định dời react-dom sang vendor-react: dist/index.html đã modulepreload vendor-react → browser fetch song song với entry ngay khi parse HTML, KHÔNG phải round-trip tuần tự sau khi parse entry. Luận điểm 'thêm hop tuần tự trên critical path' của pre-mortem yếu đi đáng kể vì modulepreload đã parallelize. (b) Luận điểm rộng áp cho Option B: gỡ recharts KHÔNG đổi boot path theo chiều xấu — nó GỠ một chunk đang được modulepreload+static-import khỏi initial-load → giảm initial-load, không thêm waterfall. Vậy rủi ro waterfall của sự cố 3 không áp dụng cho việc tôi đề xuất. HOLD.",
+      "evidence": [
+        "dist/assets/index-B-Ic66Ze.js / index-BYaF8a2K.js / index-BiMJSNB8-mrp3dg73.js: onRecoverableError=0, flushSync=0",
+        "dist/assets/vendor-react-DY-a3ET9.js: onRecoverableError=0, flushSync=0",
+        "dist/assets/vendor-ui-vmWIsUcg.js: onRecoverableError=6, flushSync=4, 'Minified React error'=1 → react-dom in vendor-ui (2 fingerprint độc lập)",
+        "dist/index.html — <link rel=\"modulepreload\" href=\"/assets/vendor-react-DY-a3ET9.js\"> : vendor-react fetch song song entry, không tạo hop tuần tự",
+        "dist/index.html + dist/assets/index-*.js static import vendor-charts — Option B gỡ recharts = bỏ 1 chunk đã preload, initial-load giảm, không thêm hop"
+      ],
+      "note": "HOLD trên cơ chế waterfall. NHƯNG đính chính round1 của chính tôi: tôi đã sai khi nói recharts 'lazy, không initial-load' (round1 dòng ~27,30) — recharts ĐANG ở initial-load qua static import + modulepreload. Điều này (i) TĂNG giá trị Option B: gỡ recharts là first-paint win thật cho mobile VN chứ không chỉ cosmetics aggregate; (ii) KHÔNG cứu luận điểm waterfall của pre-mortem. Con số initial-load ~336KB ở round1 thiếu ~108KB recharts; goal (a) chưa tối ưu như tôi tuyên bố."
+    }
+  ],
+  "newDisagreements": []
+}

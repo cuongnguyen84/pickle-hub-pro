@@ -1,0 +1,114 @@
+{
+  "base": "https://feat-perf-js-gzip.pickle-hub-pro.pages.dev",
+  "capturedAt": "2026-07-17T16:43:52.034Z",
+  "shots": [
+    {
+      "route": "/",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "home__mobile.png",
+      "status": 200,
+      "title": "Pickleball Asia: Live, Brackets & News | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/vi",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "vi__mobile.png",
+      "status": 200,
+      "title": "Pickleball Việt Nam — Giải đấu, Livestream & Tin tức | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/rankings",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "rankings__mobile.png",
+      "status": 200,
+      "title": "Bảng xếp hạng DUPR | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/nguoi-choi/thecuong-685w",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "nguoi-choi-thecuong-685w__mobile.png",
+      "status": 200,
+      "title": "CM10 (@thecuong-685w) — DUPR 3.57 | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/nguoi-choi/congle",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "nguoi-choi-congle__mobile.png",
+      "status": 200,
+      "title": "Congle (@congle) — DUPR 3.24 | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/nguoi-choi/sontung",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "nguoi-choi-sontung__mobile.png",
+      "status": 200,
+      "title": "sontung (@sontung) — DUPR 3.42 | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "home__desktop.png",
+      "status": 200,
+      "title": "Pickleball Việt Nam — Giải đấu, Livestream & Tin tức | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/vi",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "vi__desktop.png",
+      "status": 200,
+      "title": "Pickleball Việt Nam — Giải đấu, Livestream & Tin tức | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/rankings",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "rankings__desktop.png",
+      "status": 200,
+      "title": "Bảng xếp hạng DUPR | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/nguoi-choi/thecuong-685w",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "nguoi-choi-thecuong-685w__desktop.png",
+      "status": 200,
+      "title": "CM10 (@thecuong-685w) — DUPR 3.57 | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/nguoi-choi/congle",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "nguoi-choi-congle__desktop.png",
+      "status": 200,
+      "title": "Congle (@congle) — DUPR 3.24 | ThePickleHub",
+      "consoleErrors": []
+    },
+    {
+      "route": "/nguoi-choi/sontung",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "nguoi-choi-sontung__desktop.png",
+      "status": 200,
+      "title": "sontung (@sontung) — DUPR 3.42 | ThePickleHub",
+      "consoleErrors": []
+    }
+  ]
+}

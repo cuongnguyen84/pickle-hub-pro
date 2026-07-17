@@ -394,3 +394,23 @@ Absence from the press is not absence from the world.
 **Verification habit:** for any claim about a live event, ask "what would the
 organizer's own page say?" and go read it. `WebFetch` returns an empty shell on
 JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info".
+
+## 2026-07-17 — CodeQL #24: "bug sống" hoá ra là byte vô hình
+- `safeRedirect.ts` chứa raw control bytes trong regex → mọi tool hiển thị thành `[ -\s]`;
+  4 agent (kể cả GPT-5.6 "runtime verify") đều test CHUỖI HIỂN THỊ chứ không phải byte thật
+  → đồng thuận chéo-vendor vẫn sai vì cùng nhìn qua một lớp render dối.
+- Tín hiệu lẽ ra phải bắt được NGAY: test suite xanh có sẵn case hyphen (`/su-kien/foo`)
+  mâu thuẫn trực tiếp với claim. LUẬT: trước khi tin một "bug sống", chạy test hiện có +
+  hexdump dòng code nghi vấn. Panel /idea nên thêm bước "đối chiếu claim với test đang xanh".
+- Cùng phiên: chính orchestrator suýt lặp lỗi — dán NBSP thô vào test. Escape tường minh
+  (\xNN, \uNNNN) là chuẩn cho mọi ký tự ngoài ASCII in được.
+
+## 2026-07-18 — perf-js-gzip (PR #389)
+
+- **Đừng suy initial-load từ precache-membership hay aggregate.** vendor-charts (recharts 107,8 KB gz) bị modulepreload + entry static-import → eager trên MỌI trang suốt nhiều tháng, dù mọi consumer là lazy route; không gate nào nhìn thấy vì check-bundle-size chỉ cộng tổng. Cách đo đúng: parse dist/index.html (entry script + modulepreload + static imports đệ quy) — giờ là gate INITIAL trong check-bundle-size.mjs.
+- **manualChunks object-form kéo chunk "lazy" vào eager graph.** Khai báo `"vendor-charts": ["recharts"]` khiến Rollup hoist chunk vào import graph của entry (shared cjs internals). Chunk được cho là lazy phải verify bằng dist/index.html, không tin config.
+- **`npm uninstall` một dep → luôn clean-regen lockfile** (rm node_modules package-lock && npm install && npm ci verify) trước khi push, không thì CI chết ở `npm ci` EUSAGE (dính lần 2, lần đầu 2026-07-08).
+- **Coverage threshold 83% sẽ bắt component mới thiếu test render-path.** Component đo kích thước bằng ResizeObserver không render gì ở server/test (width=0) → thêm prop `fixedWidth` để test exercise được SVG paths.
+- **Smoke đỏ ngay sau push branch: nghi deploy-race trước khi nghi code.** 3 lần đỏ = 3 test khác nhau (chunk 404, SW-reload navigation destroyed, focus flake), đều pass khi rerun trên preview ổn định. Phân biệt: chạy đúng test đó local với PLAYWRIGHT_BASE_URL=preview — pass ngay = môi trường.
+- **PWA offline test tay trên iPhone cần đợi ≥30s sau lần mở đầu từ icon** — iOS standalone container cài lại SW + precache từ đầu, tách biệt Safari. Màn trắng khi test vội không phải bug. Repro chuẩn: Playwright context.setOffline sau khi SW controlled.
+- **risk-tier.mjs classify theo working tree, không theo PR** — dính file untracked của phiên khác (apple/, android/) làm RED reason sai. Đọc kỹ `files` trong output trước khi tin reasons.

@@ -1,0 +1,10 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6",
+  "requestedAt": "2026-07-17T15:31:25.507Z",
+  "latencyMs": 106587,
+  "promptChars": 4736,
+  "replyChars": 11995,
+  "promptFile": "docs/proposals/perf-js-gzip/external/risk-auditor-prompt.md",
+  "systemPrompt": "You are a hostile staff SRE reviewing a change to a live product run by one person. Your job is to find the specific failure this change causes in production. Be concrete: name the mechanism, the trigger, the user-visible symptom. Reject generic risk language. If a category is genuinely safe, say so plainly and briefly."
+}

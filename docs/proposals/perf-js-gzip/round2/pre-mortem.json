@@ -1,0 +1,45 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Gate bundle nen do gi: CODE/CONTENT split (architect) hay initial-load parse tu dist/index.html (pre-mortem)",
+      "myRound1Position": "Gate aggregate mu voi initial-load; phai parse dist/index.html -> initial-load gz + so request critical-path, khong phai tong cong don.",
+      "move": "HOLD",
+      "action": "HOLD",
+      "argument": "Hai de xuat KHONG mau thuan va KHONG thay the nhau — chung sua hai bien dang khac nhau, phai lam CA HAI. CODE/CONTENT split cua architect sua bien dang 'blog content creep lam phong so' — that va nen giu. Nhung no van la mot con so AGGREGATE: no cong byte, khong biet byte do duoc fetch EAGER hay LAZY. Bang chung song, tu verify tren dist hien tai: dist/index.html emit <link rel=modulepreload href=vendor-charts-BfXEjRFr.js> ngay trong <head>, va entry index-*.js chua static import `from\"./vendor-charts-BfXEjRFr.js\"` -> recharts (107.8 KB gz) bi trinh duyet fetch EAGER tren initial load cua MOI trang, du moi consumer (DuprRatingChart/PlayerProfile/DuprConnect/Admin+CreatorAnalytics) deu la lazy route. Architect tinh 'initial-load ~336 KB' bang cach cong cac chunk trong precache whitelist (solution-architect.md:24) va LOAI vendor-charts vi no khong nam trong globPatterns (vite.config.ts:104-124) — nhung trinh duyet van tai 107.8 KB do that. Nghia la: precache-membership != initial-load, va aggregate (ke ca CODE-aggregate) mu voi viec 107.8 KB nam eager hay lazy. Mot thay doi tuong lai keo 100 KB tu lazy vao shell eager se de CODE-aggregate NGUYEN VEN (cung tong byte, chi doi bucket) -> gate xanh -> first-paint regress khong ai thay: dung co che su co 3, gio da co bang chung thuc te. Nen: giu CODE/CONTENT split cua architect (chan content-creep) VA them mot gate parse dist/index.html (entry module + modulepreload + static-import de quy) do initial-load gz — bat buoc bo sung, khong thay the. He qua phu: vi recharts THAT SU eager, go recharts (Option B cua chinh architect) cat 107.8 KB khoi initial-load that -> first-paint win that, khong phai cosmetic nhu architect ket luan ('goal a coi nhu da dat, khong con don bay lon'); gate cua toi lo ra dieu nay, gate cua architect thi khong.",
+      "note": "Khong mau thuan — bo sung. CODE-split can-nhung-khong-du. Initial-load gate bat buoc. Bang chung recharts eager la truong hop that chung minh aggregate/CODE-aggregate/precache-membership deu khong do duoc initial-load.",
+      "evidence": [
+        "dist/index.html:<head> — <link rel=\"modulepreload\" href=\"/assets/vendor-charts-BfXEjRFr.js\"> nam canh vendor-react/vendor-ui/vendor-query = eager fetch tren initial load moi trang",
+        "dist/assets/index-BiMJSNB8-mrp3dg73.js — chua static import: from\"./vendor-charts-BfXEjRFr.js\" (khong phai dynamic import(), khong phai __vite__mapDeps) => entry keo vendor-charts vao do thi eager",
+        "vendor-charts-BfXEjRFr.js = 107.8 KB gz (do bang gzip -c | wc -c)",
+        "vite.config.ts:104-124 — globPatterns (precache whitelist) KHONG co assets/vendor-charts-*.js; architect suy initial-load tu precache nen loai 107.8 KB nay (solution-architect.md:24 '~336 KB', :27 'vendor-charts KHONG trong precache — da lazy that')",
+        "scripts/check-bundle-size.mjs — cong aggregate dist/**/*.js; CODE-split chi tru blog-post-*.js -> recharts van la CODE, dem 107.8 KB du eager hay lazy => gate khong phan biet vi tri eager/lazy",
+        "src/App.tsx:56,115,187,196 — DuprConnect/PlayerProfile/AdminAnalytics/CreatorAnalytics deu lazyRetry, xac nhan recharts LE RA phai lazy nhung dist cho thay no eager => dung loai regression aggregate khong bat"
+      ]
+    },
+    {
+      "id": "D2",
+      "topic": "react-dom co nam trong entry khong, va fix manualChunks co gay waterfall regression khong",
+      "myRound1Position": "Su co 3 (xac suat CAO): keo react-dom khoi entry vao vendor-react them mot hop tuan tu tren critical path -> first load mobile VN cham hon trong khi gate xanh.",
+      "move": "CONCEDE",
+      "action": "CONCEDE",
+      "argument": "Tu verify tren dist hien tai, do do cua architect dung: react-dom KHONG nam trong entry. Fingerprint react-dom (onRecoverableError) tren dist/assets: index-*.js = 0, vendor-react-*.js = 0, vendor-ui-*.js = 6 -> react-dom da nam trong vendor-ui, khong phai entry. Va dist/index.html modulepreload CA vendor-ui LAN vendor-react ngay trong <head> = ca hai deu initial-load; vite.config.ts:111-112 xac nhan ca hai trong precache whitelist. Vi react-dom von KHONG o entry, khong ton tai hanh dong 'keo react-dom RA KHOI entry' — co che tien de cua su co 3 cua toi la HU CAU. Doi react-dom giua vendor-ui <-> vendor-react = 0 KB net, ca hai deu da eager-preloaded => khong them hop tuan tu moi, khong waterfall moi. Luat cho phep hu cau hau qua, khong hu cau co che; co che nay khong dung nen toi CONCEDE. LUU Y phan gia tri con lai cua su co 3 (gate khong do initial-load — ap cho MOI thay doi bundle tuong lai) da tach sang D1 va toi HOLD o do.",
+      "note": "CONCEDE dung tien de co che 'react-dom trong entry'. Gia tri metric-blindspot khong nam o day — no thuoc D1.",
+      "evidence": [
+        "dist/assets/index-BiMJSNB8-mrp3dg73.js — grep onRecoverableError = 0 (react-dom internals khong o entry; chi co createRoot string tu src/main.tsx)",
+        "dist/assets/vendor-react-DY-a3ET9.js — grep onRecoverableError = 0; chunk chi 7.8 KB gz (stub react + scheduler)",
+        "dist/assets/vendor-ui-vmWIsUcg.js — grep onRecoverableError = 6 => react-dom nam trong vendor-ui (81.5 KB gz)",
+        "dist/index.html:<head> — modulepreload CA vendor-ui-vmWIsUcg.js LAN vendor-react-DY-a3ET9.js => ca hai la initial-load, doi qua lai khong them round-trip",
+        "vite.config.ts:111-112 — globPatterns co 'assets/vendor-react-*.js' va 'assets/vendor-ui-*.js' => ca hai precached/initial-load"
+      ]
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Architect ket luan 'initial-load coi nhu da dat, khong con don bay lon' (solution-architect.md:23-30) dua tren tap precache-whitelist, nhung tap initial-load THAT (parse tu dist/index.html) bao gom vendor-charts 107.8 KB eager -> initial-load con don bay lon (go recharts = -107.8 KB first-paint that, khong chi cosmetic aggregate)",
+      "with": "solution-architect",
+      "myPosition": "Option B (go recharts) co gia tri initial-load THAT ma architect danh gia thap; va viec architect suy initial-load tu precache-membership la chinh loi phep do ma D1 gate se sua."
+    }
+  ]
+}

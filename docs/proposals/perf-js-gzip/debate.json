@@ -1,0 +1,45 @@
+{
+  "slug": "perf-js-gzip",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Gate bundle nên đo gì: aggregate CODE (loại blog content) hay initial-load thật",
+      "positions": {
+        "solution-architect": "Sửa check-bundle-size.mjs tách CODE vs CONTENT, đặt target <1800 vào CODE aggregate (hiện ~1577 KB), giữ trần 20 KB/bài blog. Sửa lỗi phép đo, không phải gaming metric.",
+        "pre-mortem": "Sự cố P1: gate aggregate (kể cả CODE aggregate) vẫn mù với initial-load — số đi đúng chiều trong khi first paint mobile VN đi ngược. Gate phải đo initial-load gz + số request critical-path parse từ dist/index.html."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "dist/index.html modulepreload vendor-charts-BfXEjRFr.js + dist/assets/index-BiMJSNB8-mrp3dg73.js static-import vendor-charts → recharts 108KB gz nằm trên initial-load MỌI route, CODE aggregate mù; ngược lại blog-post-*.js không preload nên gate initial-load mù blog creep (vite.config.ts:104-124). Hai gate bổ sung — gộp parser ~30 dòng của pre-mortem vào Option A (scripts/check-bundle-size.mjs), effort 1 → 1.5 half-days, giữ CODE/CONTENT split."
+        },
+        "pre-mortem": {
+          "move": "HOLD",
+          "evidence": "dist/index.html <head> modulepreload vendor-charts-BfXEjRFr.js (107.8 KB gz đo bằng gzip -c|wc -c) dù mọi consumer là lazy route (src/App.tsx:56,115,187,196) và chunk KHÔNG nằm trong precache whitelist (vite.config.ts:104-124) → precache-membership ≠ initial-load; aggregate/CODE-aggregate không phân biệt eager/lazy. Initial-load gate là bắt buộc BỔ SUNG, không thay thế CODE/CONTENT split."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "note": "Hai phía đã HỘI TỤ về nội dung: làm CẢ HAI gate trong cùng scripts/check-bundle-size.mjs (CODE/CONTENT split chặn blog-creep + initial-load gz/critical-path parse từ dist/index.html chặn eager-regression). Không có CONCEDE nên theo luật ledger vẫn là OPEN — điểm thực sự cần Cuong quyết: đổi định nghĩa gate BUNDLE_STRICT (từ aggregate 1970 sang initial-load + CODE) là thay đổi chính sách CI, cần anh duyệt."
+    },
+    {
+      "id": "D2",
+      "topic": "react-dom có nằm trong entry không, và fix manualChunks có rủi ro waterfall regression không",
+      "positions": {
+        "solution-architect": "Đã bác bằng đo đạc: grep fingerprint onRecoverableError → entry 0, vendor-react 0, vendor-ui 6. react-dom nằm trong vendor-ui, cả hai precached/initial-load. Dời qua lại = 0 KB. Sự cố waterfall không áp dụng.",
+        "pre-mortem": "Sự cố 3 (P1): kéo react-dom khỏi entry vào vendor-react thêm hop tuần tự trên critical path → first load mobile VN chậm hơn trong khi gate xanh."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "HOLD",
+          "evidence": "Fingerprint thứ hai độc lập: dist/assets/index-*.js flushSync=0 + onRecoverableError=0 (cả 3 file), vendor-ui-vmWIsUcg.js onRecoverableError=6 + flushSync=4 + 'Minified React error'=1. dist/index.html modulepreload vendor-react → fetch song song, không hop tuần tự. Đính chính round1 của chính mình: recharts KHÔNG lazy như đã nói — nó eager qua static-import + modulepreload → Option B (gỡ recharts) là first-paint win thật, không chỉ cosmetic aggregate."
+        },
+        "pre-mortem": {
+          "move": "CONCEDE",
+          "evidence": "Tự verify: dist/assets/index-BiMJSNB8-mrp3dg73.js grep onRecoverableError=0; dist/assets/vendor-react-DY-a3ET9.js =0 (7.8 KB gz stub); dist/assets/vendor-ui-vmWIsUcg.js =6 → react-dom trong vendor-ui. dist/index.html modulepreload cả vendor-ui lẫn vendor-react; vite.config.ts:111-112 cả hai trong precache. react-dom vốn không ở entry → cơ chế tiền đề sự cố 3 là hư cấu, dời giữa 2 chunk eager-preloaded = 0 KB, 0 hop mới."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "react-dom nằm trong vendor-ui (không phải entry), cả vendor-ui lẫn vendor-react đều modulepreload + precache → không tồn tại việc 'kéo react-dom khỏi entry', không có waterfall regression. Sự cố 3 của pre-mortem bị loại về cơ chế; phần giá trị còn lại (gate mù initial-load) chuyển sang D1. Phát hiện phụ quan trọng từ đối chất: vendor-charts (recharts 107.8 KB gz) đang EAGER trên mọi trang — gỡ recharts là first-paint win thật."
+    }
+  ]
+}
