@@ -18,8 +18,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/live",
     ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
     heroImage: {
-      src: "/images/blog/singapore-open-2026-preview-hero.webp",
-      alt: "PPA Asia 500 Leapmotor Singapore Open 2026 preview — indoor pickleball courts under arena lighting at Singapore Expo, with the July 23-26 dates and the flags of the competing Asian nations"
+      src: "/images/blog/ppa-tour-asia-2026-hero.webp",
+      alt: "PPA Tour Asia court scene — hero image for the Leapmotor Singapore Open 2026 preview."
     },
     titleEn: "Leapmotor Singapore Open 2026: Preview of PPA Tour Asia's Singapore Debut",
     titleVi: "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
