@@ -34,10 +34,17 @@ import { FollowOaBanner } from "@/components/social-events/FollowOaBanner";
 import { TurnstileWidget } from "@/components/registration/TurnstileWidget";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
-import { useQuery } from "@tanstack/react-query";
+import {
+  createPaymentOrder,
+  registerAsMember,
+  saveContactEmail,
+  sendOtp,
+  useSlotCounts,
+  verifyOtp,
+  type MemberRegistrationRow,
+} from "@/components/social-events/registrationApi";
 import {
   isValidVietnamPhone,
   maskPhone,
@@ -224,29 +231,7 @@ export function RegistrationModal({
   // under each radio. Re-fetches whenever the modal opens so the player
   // sees up-to-date numbers (someone else may have grabbed the slot
   // between page-load and clicking Register).
-  const { data: slotCounts } = useQuery<Record<string, number>>({
-    queryKey: ["event-slot-counts", eventId, open],
-    queryFn: async () => {
-      if (!hasSlots) return {};
-      const { data, error } = await supabase.rpc("get_event_slot_counts", {
-        p_event_id: eventId,
-      });
-      if (error) {
-        console.error("get_event_slot_counts failed", error);
-        return {};
-      }
-      const map: Record<string, number> = {};
-      for (const row of (data ?? []) as Array<{
-        slot_id: string;
-        registered_count: number;
-      }>) {
-        if (row?.slot_id) map[row.slot_id] = row.registered_count ?? 0;
-      }
-      return map;
-    },
-    enabled: hasSlots && open,
-    staleTime: 15_000,
-  });
+  const { data: slotCounts } = useSlotCounts(eventId, open, hasSlots);
   const [submitting, setSubmitting] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [success, setSuccess] = useState<VerifyResponse | null>(null);
@@ -373,22 +358,11 @@ export function RegistrationModal({
     setSubmitting(true);
     setNormalizedPhone(norm);
     try {
-      const { data, error } = await supabase.functions.invoke<{
-        ok?: true;
-        expires_at?: string;
-        dev_mode_code?: string;
-        channel?: "zalo" | "sms" | "dev";
-        error?: string;
-        code?: string;
-      }>("phone-otp-send", {
-        body: {
-          phone: norm,
-          event_id: eventId,
-          ...(opts?.forceChannel ? { force_channel: opts.forceChannel } : {}),
-          // PR69 — Cloudflare Turnstile token. Server rejects with
-          // 'captcha_failed' when missing/invalid in production.
-          turnstile_token: turnstileToken ?? undefined,
-        },
+      const { data, error } = await sendOtp({
+        phone: norm,
+        eventId,
+        forceChannel: opts?.forceChannel,
+        turnstileToken,
       });
       // supabase.functions.invoke wraps non-2xx into `error`. We re-read
       // the response body to surface the structured `code` field.
@@ -470,20 +444,13 @@ export function RegistrationModal({
     trackJourneyStep("player_registration", "player_registration_submit_attempted", journeyPropsRef.current);
     try {
       const levelNum = selfRatedLevel === "" ? null : Number(selfRatedLevel);
-      const { data, error } = await supabase.functions.invoke<
-        VerifyResponse & { error?: string; code?: string }
-      >("phone-otp-verify", {
-        body: {
-          phone: normalizedPhone,
-          event_id: eventId,
-          code: otp,
-          display_name: displayName.trim(),
-          self_rated_level: levelNum,
-          // Only forward when set — older events without slots stay
-          // backwards compatible (server treats missing/empty as "no
-          // slot" and falls back to max_players gate).
-          slot_id: hasSlots && selectedSlotId ? selectedSlotId : undefined,
-        },
+      const { data, error } = await verifyOtp({
+        phone: normalizedPhone,
+        eventId,
+        code: otp,
+        displayName: displayName.trim(),
+        selfRatedLevel: levelNum,
+        slotId: hasSlots && selectedSlotId ? selectedSlotId : undefined,
       });
       if (error) {
         const bodyCode = await extractFunctionErrorCode(error);
@@ -515,20 +482,9 @@ export function RegistrationModal({
       // club hasn't onboarded payment yet and we fall back to the same
       // success step (which already shows a "pay at the venue" hint).
       if (priceVnd > 0) {
-        const orderResp = await supabase.functions.invoke<{
-          ok?: true;
-          code?: string;
-          order_id?: string;
-          reference_code?: string;
-          amount_vnd?: number;
-          player_claimed_paid?: boolean;
-          player_claimed_at?: string | null;
-          bank?: { code: string; account_number: string; account_name: string };
-        }>("create-payment-order", {
-          body: {
-            registration_id: data.registration_id,
-            magic_token: data.magic_token,
-          },
+        const orderResp = await createPaymentOrder({
+          registrationId: data.registration_id,
+          magicToken: data.magic_token,
         });
         const payload = orderResp.data;
         if (
@@ -590,13 +546,10 @@ export function RegistrationModal({
     setSubmitting(true);
     trackJourneyStep("player_registration", "player_registration_submit_attempted", journeyPropsRef.current);
     try {
-      const { data: rows, error } = await supabase.rpc(
-        "register_event_as_member",
-        {
-          p_event_id: eventId,
-          p_slot_id: hasSlots && selectedSlotId ? selectedSlotId : undefined,
-        },
-      );
+      const { data: rows, error } = await registerAsMember({
+        eventId,
+        slotId: hasSlots && selectedSlotId ? selectedSlotId : undefined,
+      });
       if (error) {
         // PG RAISE EXCEPTION arrives as { message: 'event_started_or_ended',
         // code: '22023', details: '', hint: '' } in supabase-js. But
@@ -616,12 +569,7 @@ export function RegistrationModal({
       }
       const row =
         Array.isArray(rows) && rows.length > 0
-          ? (rows[0] as {
-              registration_id: string;
-              profile_id: string;
-              magic_token: string;
-              registered_at: string;
-            })
+          ? (rows[0] as MemberRegistrationRow)
           : null;
       if (!row) {
         toast({ title: reg.networkError, variant: "destructive" });
@@ -649,20 +597,9 @@ export function RegistrationModal({
       // an order + bank config; payment_not_enabled fallback shows the
       // pay-at-venue success message.
       if (priceVnd > 0) {
-        const orderResp = await supabase.functions.invoke<{
-          ok?: true;
-          code?: string;
-          order_id?: string;
-          reference_code?: string;
-          amount_vnd?: number;
-          player_claimed_paid?: boolean;
-          player_claimed_at?: string | null;
-          bank?: { code: string; account_number: string; account_name: string };
-        }>("create-payment-order", {
-          body: {
-            registration_id: stored.registration_id,
-            magic_token: stored.magic_token,
-          },
+        const orderResp = await createPaymentOrder({
+          registrationId: stored.registration_id,
+          magicToken: stored.magic_token,
         });
         const payload = orderResp.data;
         if (
@@ -1311,13 +1248,10 @@ export function RegistrationModal({
                       if (!success?.magic_token) return;
                       setContactSaving(true);
                       try {
-                        const { error } = await supabase.rpc(
-                          "update_profile_contact_from_magic",
-                          {
-                            p_magic_token: success.magic_token,
-                            p_email: contactEmail.trim(),
-                          },
-                        );
+                        const { error } = await saveContactEmail({
+                          magicToken: success.magic_token,
+                          email: contactEmail.trim(),
+                        });
                         if (error) {
                           toast({
                             title: t.socialEvents.recoveryOptIn.saveError,
