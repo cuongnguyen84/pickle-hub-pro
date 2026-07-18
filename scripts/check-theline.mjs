@@ -13,6 +13,13 @@
 //              class instead. `hsl(var(--x))` is fine (token-based).
 //   [advisory] A new routed page (src/pages/<name>.tsx) should render inside
 //              TheLineLayout so it inherits nav/footer/theme.
+//   [advisory] DS-03 ratchet: a changed file must not INCREASE its `.tl-btn`
+//              (legacy CSS-class button) count vs the base revision — new
+//              buttons are <Button variant="outline|default|tl-primary">.
+//              Changed-files-only by design (a full-tree count flaps on
+//              unrelated PRs and ends up `|| true`-ed — see
+//              theline-audit.yml). Report-only during the trial window;
+//              promote to HARD after 2026-08-01 if no false positives.
 //
 // Exit 1 only on HARD violations. Set THELINE_STRICT=1 to also fail advisories.
 //
@@ -39,18 +46,21 @@ const COLOR_ALLOW = [
 // arg (so `hsl(var(--primary))` token usage is NOT flagged).
 const COLOR_RE = /#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla)\(\s*[\d.]/g;
 
+function baseSha() {
+  if (process.env.BASE_SHA) return process.env.BASE_SHA;
+  try {
+    return execSync("git rev-parse HEAD~1", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return null;
+  }
+}
+
 function targetFiles() {
   if (process.argv.length > 2) return process.argv.slice(2);
-  let base = process.env.BASE_SHA;
-  if (!base) {
-    try {
-      base = execSync("git rev-parse HEAD~1", { stdio: ["ignore", "pipe", "ignore"] })
-        .toString()
-        .trim();
-    } catch {
-      return [];
-    }
-  }
+  const base = baseSha();
+  if (!base) return [];
   try {
     return execSync(
       `git diff --name-only --diff-filter=ACMR ${base} HEAD -- '*.tsx' '*.css'`,
@@ -126,6 +136,33 @@ for (const f of files) {
       advisory.push(
         `${f}  page does not reference TheLineLayout — wrap it so it gets the nav/footer/theme`,
       );
+    }
+  }
+
+  // Rule 4 — DS-03 ratchet (advisory during trial; see header). Count
+  // `.tl-btn` inside string literals (className strings — comments and prose
+  // don't match) and compare against the same file at base.
+  if (f.endsWith(".tsx")) {
+    const RATCHET_RE = /["'`][^"'`\n]*\btl-btn\b[^"'`\n]*["'`]/g;
+    const now = (src.match(RATCHET_RE) || []).length;
+    if (now > 0) {
+      const base = baseSha();
+      let before = 0;
+      if (base) {
+        try {
+          const baseSrc = execSync(`git show ${base}:${f}`, {
+            stdio: ["ignore", "pipe", "ignore"],
+          }).toString();
+          before = (baseSrc.match(RATCHET_RE) || []).length;
+        } catch {
+          before = 0; // new file — every occurrence is an increase
+        }
+      }
+      if (now > before) {
+        advisory.push(
+          `${f}  RATCHET: .tl-btn count ${before} → ${now} — new buttons must be <Button variant="outline|default|tl-primary"> (docs/design-tokens.md)`,
+        );
+      }
     }
   }
 }
