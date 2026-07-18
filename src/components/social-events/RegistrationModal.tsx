@@ -1129,8 +1129,8 @@ export function RegistrationModal({
                     <span
                       className="tl-format-badge"
                       style={{
-                        borderColor: "hsl(38 92% 50%)",
-                        color: "hsl(38 92% 50%)",
+                        borderColor: "var(--tl-gold)",
+                        color: "var(--tl-gold)",
                       }}
                     >
                       {t.socialEvents.payment.unpaidStatusBadge}
