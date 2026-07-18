@@ -148,7 +148,7 @@ function PlayerSearch({
       {q.length >= 2 && (
         <div
           className="mt-1 rounded border"
-          style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-2)" }}
+          style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-elev)" }}
         >
           {results.isLoading ? (
             <div className="p-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>
@@ -415,7 +415,7 @@ function ProposalCard({
   return (
     <div
       className="rounded border p-3 text-sm"
-      style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-2)" }}
+      style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-elev)" }}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>

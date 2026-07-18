@@ -51,18 +51,24 @@ Names are web-form (`--tl-*`); the Swift twin is the camelCase of the stem
 | body | system/Geist sans |
 | numeric | mono + `tabular-nums` (scores) |
 
-## Parity status (2026-07-16)
+## Parity status (2026-07-18 — DS-02 shipped)
 
-- Web has, Swift lacks: `fg-1`/`bg-1`/`bg-2` aliases (web-only legacy — DS-02
-  should DELETE the aliases rather than port them), `hairline`, `blue`,
-  format accents (`accent-qt/team/elim/flex`), `green-dim/glow` variants.
-- Swift has, web lacks: `accentInk`, `accentText`, `uiBg/uiFg/uiAccent`
-  (pre-Line remnants — candidates for deletion), `duprTint/duprBorder`
-  (domain tokens; add to web IF web DUPR surfaces need them, else Swift-local).
-- DS-02 acceptance: every token in the canonical set exists on both
-  platforms with the same meaning; anything outside the set is deleted or
-  documented as platform-local; a checklist test (or small script) asserts
-  the name list matches both files.
+- Canonical set exists on BOTH platforms; asserted by
+  `src/lib/__tests__/design-token-parity.test.ts` (fails on a missing
+  canonical token on either side, and on any undocumented Swift extra).
+- Web legacy aliases `fg-1`/`bg-1`/`bg-2` DELETED; all call sites migrated
+  to canonical names. `hairline` kept (canonical).
+- Swift platform-local (documented, allowed by the parity test):
+  - `accent`, `accentInk`, `accentText`, `accentDim` — deliberate dual-accent
+    system (fill vs text legibility on paper), NOT pre-Line remnants as the
+    2026-07-16 audit guessed. Canonical `green` maps to the text-legible
+    variant, matching web's light-mode retune of `--tl-green`.
+  - `duprTint`/`duprBorder` — DUPR brand chip; add to web IF web DUPR
+    surfaces need them.
+  - `uiBg`/`uiFg`/`uiFg3`/`uiAccent` — UIKit chrome handles (nav/tab bars),
+    must stay `UIColor`-dynamic.
+- Adding a token: meaning row here first → both files → the test's canonical
+  list. The test bounces anything else.
 
 ## Rules
 

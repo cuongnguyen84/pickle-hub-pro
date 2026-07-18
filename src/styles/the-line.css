@@ -70,10 +70,8 @@
      de-emphasis. Scoped to .dim headline spans, NOT the global meta grey. */
   --tl-dim:        #9a978f;
 
-  /* Legacy aliases — feed/comment components still reference these names */
-  --tl-fg-1:       var(--tl-fg);
-  --tl-bg-1:       var(--tl-bg);
-  --tl-bg-2:       var(--tl-bg-elev);
+  /* DS-02: legacy aliases fg-1/bg-1/bg-2 deleted — canonical names only.
+     hairline stays: it is a canonical token (thinnest separator). */
   --tl-hairline:   var(--tl-border);
 
   /* Accent — single (optic-lime, the pickleball ball colour) */
@@ -214,7 +212,7 @@
   color: var(--tl-fg-2); text-decoration: none; font-size: 13.5px;
   transition: background 0.15s, color 0.15s;
 }
-[data-theme="the-line"] .tl-nav-submenu a:hover { color: var(--tl-fg); background: var(--tl-bg-2, rgba(255,255,255,0.04)); }
+[data-theme="the-line"] .tl-nav-submenu a:hover { color: var(--tl-fg); background: var(--tl-bg-elev, rgba(255,255,255,0.04)); }
 [data-theme="the-line"] .tl-nav-submenu a.active { color: var(--tl-fg); }
 
 @media (max-width: 900px) { [data-theme="the-line"] .tl-nav-links { display: none; } }

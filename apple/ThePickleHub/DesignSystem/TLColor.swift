@@ -38,6 +38,30 @@ enum TLColor {
     static let live      = dyn(dark: 0xFF5147, light: 0xE5352B)
     static let gold      = dyn(dark: 0xEAB64B, light: 0xA97B12)
 
+    // ── DS-02 canonical parity with web `--tl-*` (docs/design-tokens.md) ──
+    // The accent* family above stays as the platform-local dual-accent
+    // implementation (fill vs text); `green` maps to the text-legible
+    // variant, matching web's light-mode retune of --tl-green.
+    static let green      = dyn(dark: 0xB5E853, light: 0x5C7A1E)
+    static let greenDim   = dyn(dark: 0x9CCC3F, light: 0x4A6418)
+    static let greenGlow  = dynAlpha(dark: 0xB5E853, light: 0x5E7D1F,
+                                     darkAlpha: 0.16, lightAlpha: 0.14)
+    static let goldGlow   = dynAlpha(dark: 0xE9B649, light: 0x8A6410,
+                                     darkAlpha: 0.12, lightAlpha: 0.12)
+    static let blue       = dyn(dark: 0x4F9BFF, light: 0x1D63C4)
+    static let blueGlow   = dynAlpha(dark: 0x4F9BFF, light: 0x1D63C4,
+                                     darkAlpha: 0.12, lightAlpha: 0.12)
+    /// Two-tone display "dim" — the faded half of split serif headlines.
+    static let dim        = dyn(dark: 0x9A978F, light: 0x5A5750)
+    /// Thinnest separator (web alias of border; a real token here).
+    static let hairline   = dyn(dark: 0x22252A, light: 0xE7E3DA)
+    // Per-tournament-format identity accents (web has no light retune for
+    // qt/team/flex; elim mirrors --tl-gold's paper-legible amber).
+    static let accentQt   = dyn(dark: 0x00B96B, light: 0x00B96B)
+    static let accentElim = dyn(dark: 0xE9B649, light: 0x8A6410)
+    static let accentFlex = dyn(dark: 0x4F9BFF, light: 0x4F9BFF)
+    static let accentTeam = dyn(dark: 0xFF7A4D, light: 0xFF7A4D)
+
     // DUPR brand tint for the Home header rating chip — from the design spec
     // `hsl(151 60% 30% / .1)` fill + `hsl(151 55% 32% / .55)` border (green, both modes).
     static let duprTint   = Color(hex: 0x1F7A4E, alpha: 0.10)
@@ -53,6 +77,17 @@ enum TLColor {
     /// Dynamic color that flips with the interface style.
     private static func dyn(dark: UInt, light: UInt) -> Color {
         Color(uiColor: uiDyn(dark: dark, light: light))
+    }
+
+    /// Dynamic translucent color (glow tokens) — hue and alpha per mode.
+    private static func dynAlpha(
+        dark: UInt, light: UInt, darkAlpha: CGFloat, lightAlpha: CGFloat
+    ) -> Color {
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hex: dark, alpha: darkAlpha)
+                : UIColor(hex: light, alpha: lightAlpha)
+        })
     }
 
     /// UIKit handle (bar appearances) — must stay dynamic so the nav/tab chrome

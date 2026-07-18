@@ -64,7 +64,7 @@ function Section({
       className="rounded-md border"
       style={{
         borderColor: "var(--tl-border)",
-        background: "var(--tl-bg-2)",
+        background: "var(--tl-bg-elev)",
         padding: 20,
         marginBottom: 20,
       }}
@@ -477,7 +477,7 @@ function WebhookSection() {
         {lastFire != null && (
           <div
             className="mt-3 rounded border p-2 text-xs"
-            style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-2)" }}
+            style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-elev)" }}
           >
             <pre style={{ color: "var(--tl-fg)", whiteSpace: "pre-wrap" }}>
               {JSON.stringify(lastFire, null, 2)}
@@ -1225,7 +1225,7 @@ function SubmissionsSection() {
         >
           <div
             className="w-full max-w-md rounded-lg border p-4"
-            style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-2)" }}
+            style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-elev)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">

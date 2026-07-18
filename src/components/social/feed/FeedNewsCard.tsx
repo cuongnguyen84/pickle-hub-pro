@@ -175,7 +175,7 @@ export function FeedNewsCard({
               width: "100%",
               aspectRatio: "4 / 3",
               overflow: "hidden",
-              background: "var(--tl-bg-2, rgba(255,255,255,0.04))",
+              background: "var(--tl-bg-elev, rgba(255,255,255,0.04))",
               border: "1px solid var(--tl-border)",
             }}
           >
