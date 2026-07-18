@@ -943,9 +943,7 @@ export function RegistrationModal({
             {!turnstileToken && (
               <div className="space-y-1.5 text-center">
                 <p className="text-xs text-muted-foreground">
-                  {turnstileTimedOut
-                    ? "Xác minh trình duyệt quá lâu. Hãy thử tải lại CAPTCHA."
-                    : "Đang xác minh trình duyệt (vài giây)…"}
+                  {turnstileTimedOut ? reg.turnstileTimeout : reg.turnstileVerifying}
                 </p>
                 {turnstileTimedOut && (
                   <Button
@@ -957,7 +955,7 @@ export function RegistrationModal({
                       setTurnstileKey((k) => k + 1);
                     }}
                   >
-                    Tải lại CAPTCHA
+                    {reg.turnstileReload}
                   </Button>
                 )}
               </div>
@@ -1020,7 +1018,7 @@ export function RegistrationModal({
               </div>
               {devOtp && (
                 <p className="rounded-md border border-amber-400/50 bg-amber-50 px-3 py-2 text-center text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                  Dev mode OTP: <strong>{devOtp}</strong>
+                  {reg.devOtpLabel} <strong>{devOtp}</strong>
                 </p>
               )}
             </div>
@@ -1322,9 +1320,7 @@ export function RegistrationModal({
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
-              {language === "vi"
-                ? `Lưu liên kết: thepicklehub.net/social/${eventSlug}`
-                : `Bookmark: thepicklehub.net/social/${eventSlug}`}
+              {`${reg.bookmarkLabel} thepicklehub.net/social/${eventSlug}`}
             </p>
           </div>
         )}

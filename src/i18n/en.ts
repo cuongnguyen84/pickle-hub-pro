@@ -1776,6 +1776,11 @@ export const en: Translations = {
       slotInvalid: "Invalid group — please refresh the page",
       slotFull: "This group is full — please choose another",
       notAMember: "You're not a member of this club yet. Request to join the club first before registering.",
+      turnstileVerifying: "Verifying your browser (a few seconds)…",
+      turnstileTimeout: "Browser verification is taking too long. Try reloading the CAPTCHA.",
+      turnstileReload: "Reload CAPTCHA",
+      devOtpLabel: "Dev mode OTP:",
+      bookmarkLabel: "Bookmark:",
     },
     proxyRegister: {
       proxyRegisterCta: "Register a friend",

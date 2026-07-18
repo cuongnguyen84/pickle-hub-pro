@@ -1766,6 +1766,12 @@ export interface Translations {
       slotInvalid: string;
       slotFull: string;
       notAMember: string;
+      // ARCH-02 increment 5 — previously hardcoded in RegistrationModal
+      turnstileVerifying: string;
+      turnstileTimeout: string;
+      turnstileReload: string;
+      devOtpLabel: string;
+      bookmarkLabel: string;
     };
     // Proxy + Manual registration (PR: feat/proxy-and-manual-registration)
     proxyRegister: {
@@ -4633,6 +4639,12 @@ export const vi: Translations = {
       slotInvalid: "Nhóm chơi không hợp lệ — vui lòng tải lại trang",
       slotFull: "Nhóm này đã đầy — vui lòng chọn nhóm khác",
       notAMember: "Bạn chưa phải là thành viên CLB. Hãy yêu cầu tham gia CLB trước khi đăng ký.",
+      // Byte-for-byte moves of strings previously hardcoded in RegistrationModal.
+      turnstileVerifying: "Đang xác minh trình duyệt (vài giây)…",
+      turnstileTimeout: "Xác minh trình duyệt quá lâu. Hãy thử tải lại CAPTCHA.",
+      turnstileReload: "Tải lại CAPTCHA",
+      devOtpLabel: "Dev mode OTP:",
+      bookmarkLabel: "Lưu liên kết:",
     },
     proxyRegister: {
       proxyRegisterCta: "Đăng ký hộ bạn bè",
