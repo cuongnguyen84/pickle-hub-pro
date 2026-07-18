@@ -25,6 +25,7 @@ import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys"
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
@@ -531,68 +532,47 @@ export default function CreateSocialEvent() {
                   + Save-draft are neutral inline / outline pills so the
                   primary action stays the visual anchor. */}
               {step === 1 ? (
-                <button
+                /* DS-03: .tl-btn.green → variant default (lime). type="button"
+                   stays explicit on every wizard button — Next must never
+                   become an implicit form submit (blocker B3). */
+                <Button
                   type="button"
-                  className="tl-btn green"
                   onClick={handleNext}
                   disabled={step1Disabled}
-                  style={{
-                    opacity: step1Disabled ? 0.5 : 1,
-                    cursor: step1Disabled ? "not-allowed" : "pointer",
-                    minWidth: 140,
-                    justifyContent: "center",
-                  }}
+                  className="min-w-[140px]"
                 >
                   {create.nextButton}
-                </button>
+                </Button>
               ) : (
                 <>
+                  {/* De-emphasized mono back link — deliberately NOT a
+                      Button variant (characterization: transparent, no
+                      hover fill). Inline styles moved to classes. */}
                   <button
                     type="button"
                     onClick={handleBack}
                     disabled={submitting}
-                    style={{
-                      background: "none",
-                      border: 0,
-                      padding: "10px 14px",
-                      cursor: submitting ? "not-allowed" : "pointer",
-                      color: "var(--tl-fg-3)",
-                      fontFamily: "Geist Mono",
-                      fontSize: 11,
-                      letterSpacing: "0.04em",
-                      textTransform: "uppercase",
-                    }}
-                    className="hover:underline"
+                    className="tl-mono tl-caps px-3.5 py-2.5 text-[11px] tracking-[0.04em] text-[var(--tl-fg-3)] hover:underline disabled:cursor-not-allowed"
                   >
                     {create.backButton}
                   </button>
-                  <button
+                  <Button
                     type="button"
-                    className="tl-btn"
+                    variant="outline"
                     disabled={submitDisabled}
                     onClick={() => submit(false)}
-                    style={{
-                      opacity: submitDisabled ? 0.5 : 1,
-                      cursor: submitDisabled ? "not-allowed" : "pointer",
-                    }}
                   >
                     {create.saveDraft}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="tl-btn green"
                     disabled={submitDisabled}
                     onClick={() => submit(true)}
-                    style={{
-                      opacity: submitDisabled ? 0.5 : 1,
-                      cursor: submitDisabled ? "not-allowed" : "pointer",
-                      minWidth: 140,
-                      justifyContent: "center",
-                    }}
+                    className="min-w-[140px]"
                   >
                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                     {submitting ? create.submitting : `${create.publishNow} →`}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

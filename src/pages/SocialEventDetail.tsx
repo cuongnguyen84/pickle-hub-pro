@@ -458,46 +458,27 @@ export default function SocialEventDetail() {
               still need a way back so we also point at /dang-ky/:token
               (PlayerRegistration handles the reactivate flow). */}
           {myStored && !isCancelled ? (
-            <a
-              className="tl-btn green"
-              href={`/dang-ky/${myStored.magic_token}`}
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                fontSize: 15,
-                padding: "14px 22px",
-                textDecoration: "none",
-              }}
-            >
-              {t.socialEvents.playerRegistration.alreadyRegisteredCta} →
-            </a>
+            /* DS-03: .tl-btn.green → variant default; asChild keeps the
+               real <a> deep-link (characterization — no nested interactive). */
+            <Button asChild size="lg" className="flex-1 text-[15px]">
+              <a href={`/dang-ky/${myStored.magic_token}`}>
+                {t.socialEvents.playerRegistration.alreadyRegisteredCta} →
+              </a>
+            </Button>
           ) : myStored && isCancelled ? (
-            <a
-              className="tl-btn"
-              href={`/dang-ky/${myStored.magic_token}`}
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                fontSize: 15,
-                padding: "14px 22px",
-                textDecoration: "none",
-              }}
-            >
-              {t.socialEvents.playerRegistration.reregisterCta} →
-            </a>
+            <Button asChild size="lg" variant="outline" className="flex-1 text-[15px]">
+              <a href={`/dang-ky/${myStored.magic_token}`}>
+                {t.socialEvents.playerRegistration.reregisterCta} →
+              </a>
+            </Button>
           ) : (
-            /* TheLine vibrant-green pill primary CTA — bracket-lab pattern. */
-            <button
+            /* TheLine vibrant-green pill primary CTA — bracket-lab pattern.
+               Disabled look stays opacity 0.5 (Button's disabled:opacity-50
+               matches the old inline style). */
+            <Button
               type="button"
-              className="tl-btn green"
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                fontSize: 15,
-                padding: "14px 22px",
-                opacity: canRegister ? 1 : 0.5,
-                cursor: canRegister ? "pointer" : "not-allowed",
-              }}
+              size="lg"
+              className="flex-1 text-[15px]"
               disabled={!canRegister}
               onClick={() => setModalOpen(true)}
             >
@@ -510,7 +491,7 @@ export default function SocialEventDetail() {
                     : remaining === 0
                       ? (language === "vi" ? "Hết chỗ" : "Sold out")
                       : `${t.socialEvents.detail.registerCta} →`}
-            </button>
+            </Button>
           )}
           {myStored && (
             <p className="mt-2 text-xs text-center text-muted-foreground">
@@ -525,20 +506,15 @@ export default function SocialEventDetail() {
               add-registration-direct with mode='proxy' using the
               viewer's magic_token from localStorage. */}
           {myStored && !isCancelled && canRegister && (
-            <button
+            <Button
               type="button"
-              className="tl-btn"
+              variant="outline"
+              className="mt-2.5 w-full"
               onClick={() => setProxyOpen(true)}
-              style={{
-                marginTop: 10,
-                width: "100%",
-                justifyContent: "center",
-                fontSize: 14,
-              }}
             >
               <UserPlus className="h-4 w-4" />
               {t.socialEvents.proxyRegister.proxyRegisterCta} →
-            </button>
+            </Button>
           )}
           {/* PR59 — lost-link recovery CTA. Subtle, only relevant when
               we don't already know the viewer is registered. */}
