@@ -51,6 +51,7 @@ import {
   normalizeVietnamPhone,
 } from "@/lib/phone";
 import { formatPriceVnd, interp } from "@/lib/social-events/format";
+import { slotAvailability } from "@/lib/social-events/slotCapacity";
 import { QRPaymentStep, type PaymentOrder } from "@/components/payment/QRPaymentStep";
 import { saveMyRegistration } from "@/lib/social-events/myRegistration";
 import type { SocialEventSlot } from "@/hooks/useSocialEvent";
@@ -422,8 +423,7 @@ export function RegistrationModal({
         setFieldError({ slot: reg.slotInvalid });
         return;
       }
-      const taken = slotCounts?.[slot.id] ?? 0;
-      if (taken >= slot.capacity) {
+      if (slotAvailability(slot.capacity, slotCounts?.[slot.id]).full) {
         setFieldError({ slot: reg.slotFull });
         return;
       }
@@ -684,9 +684,10 @@ export function RegistrationModal({
                 <p className="text-xs text-muted-foreground">{reg.slotPickerHint}</p>
                 <div className="space-y-1.5">
                   {slotList.map((slot) => {
-                    const taken = slotCounts?.[slot.id] ?? 0;
-                    const remaining = Math.max(0, slot.capacity - taken);
-                    const full = remaining === 0;
+                    const { remaining, full } = slotAvailability(
+                      slot.capacity,
+                      slotCounts?.[slot.id],
+                    );
                     const checked = selectedSlotId === slot.id;
                     const meta: string[] = [];
                     if (slot.kind === "skill" && slot.skill_level) {
@@ -842,9 +843,10 @@ export function RegistrationModal({
                 </p>
                 <div className="space-y-1.5">
                   {slotList.map((slot) => {
-                    const taken = slotCounts?.[slot.id] ?? 0;
-                    const remaining = Math.max(0, slot.capacity - taken);
-                    const full = remaining === 0;
+                    const { remaining, full } = slotAvailability(
+                      slot.capacity,
+                      slotCounts?.[slot.id],
+                    );
                     const checked = selectedSlotId === slot.id;
                     const meta: string[] = [];
                     if (slot.kind === "skill" && slot.skill_level) {
