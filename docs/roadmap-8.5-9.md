@@ -155,7 +155,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | ID | Status | Effort | Task | Depends on |
 |---|---|---:|---|---|
 | DS-01 | done | 2d | Standardize the semantic token list (names + meanings), grounded in the 5–8 journey screens from BASE-04 | BASE-05, BASE-04 |
-| DS-02 | later | 2d | Hand-write one web token file and one Swift token file sharing the DS-01 names, plus a lightweight parity check (checklist or small test) that every required token exists on both platforms. No codegen — build a generator only if parity drift actually recurs | DS-01 |
+| DS-02 | done | 2d | Hand-write one web token file and one Swift token file sharing the DS-01 names, plus a lightweight parity check. **Shipped 2026-07-18** (#401): Swift gains 12 canonical tokens (green/dim/glow, gold-glow, blue/glow, dim, hairline, 4 format accents — dynamic dark+light); web deletes legacy aliases fg-1/bg-1/bg-2 (14 call sites migrated); `src/lib/__tests__/design-token-parity.test.ts` (54 assertions) fails on missing canonical token either side or undocumented Swift extra. accentInk/accentText kept as documented platform-local (deliberate dual-accent, not remnants). No codegen | DS-01 |
 | DS-03 | later | 5d | Standardize Button, IconButton, Input, Select, Card, Badge, Dialog, and Sheet | DS-02 |
 | DS-04 | later | 3d | Standardize Empty, Loading, Error, Offline, and Permission states | DS-03 |
 | A11Y-01 | done | 3d | Add skip link, route focus management, heading rules, and dialog focus tests | BASE-04 |
