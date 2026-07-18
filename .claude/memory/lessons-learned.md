@@ -414,3 +414,9 @@ JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info
 - **Smoke đỏ ngay sau push branch: nghi deploy-race trước khi nghi code.** 3 lần đỏ = 3 test khác nhau (chunk 404, SW-reload navigation destroyed, focus flake), đều pass khi rerun trên preview ổn định. Phân biệt: chạy đúng test đó local với PLAYWRIGHT_BASE_URL=preview — pass ngay = môi trường.
 - **PWA offline test tay trên iPhone cần đợi ≥30s sau lần mở đầu từ icon** — iOS standalone container cài lại SW + precache từ đầu, tách biệt Safari. Màn trắng khi test vội không phải bug. Repro chuẩn: Playwright context.setOffline sau khi SW controlled.
 - **risk-tier.mjs classify theo working tree, không theo PR** — dính file untracked của phiên khác (apple/, android/) làm RED reason sai. Đọc kỹ `files` trong output trước khi tin reasons.
+
+## 2026-07-18 — DS-03 ship
+- `git stash` là REPO-WIDE, chung giữa mọi worktree/phiên: `git stash pop`/`drop` bừa trong worktree có thể nuốt stash của phiên khác (đã lỡ drop "WIP Add auth gate wrapper", cứu lại bằng `git fsck --unreachable` + `git stash store`). Đừng bao giờ pop/drop stash không phải mình tạo.
+- npm >=11 install qua symlink node_modules sẽ PHÁ symlink thành thư mục thật → worktree tách khỏi node_modules chính; và lock npm-11 bị `npm ci` npm-10 (CI) từ chối — luôn `npx npm@10.8.2 install --package-lock-only` khi đổi deps.
+- risk-tier.mjs coi MỌI file `apple/` là RED tại merge — nếu proposal đã refine "merge revertable, submit mới RED" thì release-pilot vẫn dừng đúng luật; hoặc tách PR native, hoặc Cuong duyệt trực tiếp trong phiên. Cân nhắc thêm nhãn `apple-source-only` cho classifier.
+- Smoke main sau merge đỏ vì deploy-race asset 404 (flake đã biết, rerun qua) — ĐỪNG revert theo phản xạ: verify tay entry chunk trước (curl file hash từng 404 → 200 = race, không phải regression).
