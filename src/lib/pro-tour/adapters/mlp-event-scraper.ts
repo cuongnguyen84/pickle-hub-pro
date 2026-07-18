@@ -540,8 +540,15 @@ export function bracketsPoolUrl(overviewUrl: string, poolId: string): string {
 export function extractTournamentName(mlpHtml: string): string {
   const h1 = mlpHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
   if (h1) {
-    const txt = h1[1]
-      .replace(/<[^>]+>/g, "")
+    // Fixpoint tag-strip so nested fragments cannot reassemble into a tag
+    // after one pass (CodeQL js/incomplete-multi-character-sanitization).
+    let stripped = h1[1];
+    let prev: string;
+    do {
+      prev = stripped;
+      stripped = stripped.replace(/<[^>]+>/g, "");
+    } while (stripped !== prev);
+    const txt = stripped
       .replace(/\s+/g, " ")
       .trim()
       .replace(/\s+tournament$/i, "");

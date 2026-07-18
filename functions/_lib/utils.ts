@@ -89,7 +89,16 @@ export function buildMetaDescription(
  */
 export function normalizeImageUrl(url: string): string {
   if (!url) return "";
-  if (url.includes("googleusercontent.com")) return url;
+  // Hostname check, not substring — `evil.com/googleusercontent.com` must not
+  // short-circuit (CodeQL js/incomplete-url-substring-sanitization).
+  try {
+    const host = new URL(url).hostname;
+    if (host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")) {
+      return url;
+    }
+  } catch {
+    // not an absolute URL — fall through to the Drive-ID extraction below
+  }
   const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (fileIdMatch) return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
   const idParamMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
@@ -214,17 +223,24 @@ export function sanitizeBlogHtml(html: string): string {
     "button", "textarea", "link", "meta", "base", "svg", "math", "template",
     "noscript", "frame", "frameset", "applet", "portal",
   ];
-  for (const tag of DANGEROUS_TAGS) {
-    // Paired: <tag ...>...</tag>
-    out = out.replace(new RegExp(`<${tag}\\b[^>]*>[\\s\\S]*?</${tag}>`, "gi"), "");
-    // Any residual opening/self-closing/closing tag
-    out = out.replace(new RegExp(`</?${tag}\\b[^>]*>`, "gi"), "");
-  }
+  // Steps 1–2 loop to a fixpoint so nested/overlapping fragments cannot
+  // reassemble into a tag or handler after one pass (e.g. `<scr<script>ipt>`,
+  // ` onclonclick=ick=x`) — CodeQL js/incomplete-multi-character-sanitization.
+  let prev: string;
+  do {
+    prev = out;
+    for (const tag of DANGEROUS_TAGS) {
+      // Paired: <tag ...>...</tag>
+      out = out.replace(new RegExp(`<${tag}\\b[^>]*>[\\s\\S]*?</${tag}>`, "gi"), "");
+      // Any residual opening/self-closing/closing tag
+      out = out.replace(new RegExp(`</?${tag}\\b[^>]*>`, "gi"), "");
+    }
 
-  // 2. Strip inline event handlers: on*="..." / on*='...' / on*=value
-  out = out.replace(/\son[a-z0-9_-]+\s*=\s*"[^"]*"/gi, "");
-  out = out.replace(/\son[a-z0-9_-]+\s*=\s*'[^']*'/gi, "");
-  out = out.replace(/\son[a-z0-9_-]+\s*=\s*[^\s>]+/gi, "");
+    // 2. Strip inline event handlers: on*="..." / on*='...' / on*=value
+    out = out.replace(/\son[a-z0-9_-]+\s*=\s*"[^"]*"/gi, "");
+    out = out.replace(/\son[a-z0-9_-]+\s*=\s*'[^']*'/gi, "");
+    out = out.replace(/\son[a-z0-9_-]+\s*=\s*[^\s>]+/gi, "");
+  } while (out !== prev);
 
   // 3. Neutralize dangerous URL schemes in href/src/xlink:href/formaction etc.
   //    Allow http(s), mailto, tel, protocol-relative //, root-relative /,

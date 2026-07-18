@@ -9,7 +9,16 @@
  */
 export function normalizeImageUrl(url: string | null | undefined): string {
   if (!url) return "";
-  if (url.includes("googleusercontent.com")) return url;
+  // Hostname check, not substring — `evil.com/googleusercontent.com` must not
+  // short-circuit (CodeQL js/incomplete-url-substring-sanitization).
+  try {
+    const host = new URL(url).hostname;
+    if (host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")) {
+      return url;
+    }
+  } catch {
+    // not an absolute URL — fall through to the Drive-ID extraction below
+  }
 
   const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (fileIdMatch) {
