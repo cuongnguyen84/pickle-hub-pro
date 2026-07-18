@@ -552,7 +552,8 @@ export default function CreateSocialEvent() {
                     type="button"
                     onClick={handleBack}
                     disabled={submitting}
-                    className="tl-mono tl-caps px-3.5 py-2.5 text-[11px] tracking-[0.04em] text-[var(--tl-fg-3)] hover:underline disabled:cursor-not-allowed"
+                    className="tl-mono tl-caps px-3.5 py-2.5 text-[11px] text-[var(--tl-fg-3)] hover:underline disabled:cursor-not-allowed"
+                    style={{ letterSpacing: "0.04em" }} // .tl-caps (0.06em) would win over a tracking-* class
                   >
                     {create.backButton}
                   </button>
