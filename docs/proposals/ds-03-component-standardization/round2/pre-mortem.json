@@ -1,0 +1,28 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Thiết kế ratchet gate: aggregate toàn repo vs changed-files-regex vs ESLint AST",
+      "myRound1Position": "Changed-files (tái dùng targetFiles() của check-theline.mjs:42-65) + report-only 2 tuần trước khi enforce",
+      "move": "REFINE",
+      "evidence": "scripts/check-theline.mjs:42-65 — kỷ luật changed-files; quality.yml:36-40 — ESLint đã cài & chạy repo-wide",
+      "note": "GIỮ scope changed-files + rollout report-only 2 tuần chống lại aggregate của solution-architect: sự cố #2 của tôi (aggregate flap → gate bị hạ || true như theline-audit.yml:27) là bằng chứng aggregate chết âm thầm. NHƯNG đổi detector từ regex sang ESLint AST-rule: regex per-file vẫn dính hố xoá-1-thêm-1 cùng file + false-positive từ string/comment — đúng loại red-không-giải-thích-được sinh flap. ESLint là dep đã cài, no-restricted-syntax chạy tự nhiên trên diff, AST-aware → ít false-positive = ít bị tắt. AST phục vụ chính luận điểm chống-flap, không mâu thuẫn."
+    },
+    {
+      "id": "D3",
+      "topic": "Double-submit money-path: có overbook thật không, kể cả qua đường registration?",
+      "myRound1Position": "Cơ chế double-submit→2-payment-order KHÔNG tồn tại (UNIQUE registration_id + handler idempotent + OTP single-use)",
+      "move": "HOLD",
+      "evidence": "supabase/migrations/20260717200000_db01c_member_capacity_lock.sql — register_event_as_member lấy pg_advisory_xact_lock('event_capacity:'||event_id) + check already_registered (EXISTS profile_id) TRONG lock; 20260716090000_db01_atomic_event_capacity.sql — social_event_guest_register cùng lock key, catch unique_violation→already_registered; 20260511120000_social_events_foundation.sql:256,263 — uq_event_registrations_event_profile + uq_event_registrations_event_phone; phone-otp-verify/index.ts:134-139 — OTP .is('used_at',null) rồi mark used",
+      "note": "Đã tự mở cả hai path. Overbook KHÔNG tồn tại trên đường registration: advisory lock serialize member+guest+reactivate cùng key; unique index + already_registered check → cùng user double-tap không lấy được 2 slot; OTP single-use → verify lần 2 fail trước khi tới RPC. Nếu DS-03 làm rơi type/disabled và mở lại double-submit, hậu quả tệ nhất là 1 click thừa bị server từ chối, KHÔNG phải overbook. risk-auditor giữ RED là quyền của họ, nhưng cơ chế money-loss cụ thể không có chân trong repo."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Native cùng đợt (D2): submit App Store cùng increment khi apple-tests.yml 0 UI/snapshot test + 0 trục Dynamic Type/iPad",
+      "with": "solution-architect",
+      "myPosition": "Đứng về phía risk-auditor: sự cố #3 (TLSheet cắt nửa dưới ở Dynamic Type lớn — im lặng tuyệt đối) chứng minh native cần snapshot test .dynamicTypeSize(.accessibility3) + test tay trước submit; App Store không có nút revert"
+    }
+  ]
+}

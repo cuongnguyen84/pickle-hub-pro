@@ -1,0 +1,36 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Ratchet gate: aggregate baseline count toàn repo vs changed-files diff + report-only",
+      "myRound1Position": "Baseline count toàn repo trong JSON committed, fail nếu TĂNG; per-file/AST là YAGNI",
+      "move": "CONCEDE",
+      "evidence": ".github/workflows/theline-audit.yml:27 — full-tree scan chạy `node scripts/check-theline.mjs $FILES || true`, tức mọi lần scan TOÀN CÂY đều bị hạ report-only vì không dùng làm merge-gate được; đây đúng số phận aggregate-count sẽ gặp. Cộng scripts/check-theline.mjs:42-65 — targetFiles() đã có sẵn cơ chế diff changed-files.",
+      "note": "Chuyển sang ratchet changed-files tái dùng targetFiles(): một file đã đổi không được tăng số .tl-btn so với base. Vừa an toàn hơn (không flap, bịt lỗ xoá-A-thêm-B vì B là file đã đổi → đỏ), vừa ÍT code hơn baseline-JSON (không phải maintain file baseline). Report-only 2 tuần khớp precedent theline-audit. Đây là dữ kiện mới lật kết luận, không phải bị thuyết phục."
+    },
+    {
+      "id": "D2",
+      "topic": "Native cùng increment với web vs tách release native; 'thêm component' có ép 'submit App Store' không",
+      "myRound1Position": "Native TLButton ở inc.1, TLBadge/Select/Sheet/Dialog ở inc.4 — cùng các increment với web, không tách lịch release",
+      "move": "REFINE",
+      "evidence": ".github/workflows/apple-tests.yml — chỉ chạy job unit-tests; apple/Tests/ toàn engine logic (ScoringEngineTests, QuickTable*, DoublesElim*), 0 UI/snapshot test",
+      "note": "Làm rõ: 'thêm component vào TLComponents.swift + migrate màn native' KHÔNG đồng nghĩa submit App Store — code tới tay user chỉ khi Cuong tự cut một release, đó là bước tay tách rời. REFINE: xây native components song song trong cùng increment (dev), nhưng RELEASE native decoupled — chỉ submit SAU khi web ổn định + thêm 1 snapshot test + test tay VI/Dynamic Type/VoiceOver. Không hạ RED của risk-auditor. Cụm 'không tách lịch release' ở vòng 1 là nói cẩu thả — phần bất đồng ẢO."
+    },
+    {
+      "id": "D4",
+      "topic": "Button API: thêm 3 variant TL mới vs map vào variant shadcn có sẵn; loading prop ở inc.1 hay defer",
+      "myRound1Position": "Mapping không 1:1 → PHẢI thêm 3 variant TL riêng; thêm loading prop ngay inc.1",
+      "move": "REFINE",
+      "evidence": "src/styles/the-line.css:35 (--secondary=#131416, fill TỐI) vs :64 (--tl-fg=#f5f3ee, kem) vs :545 (tl-btn.primary fill var(--tl-fg), chữ tối)",
+      "note": "Giữ phần lõi nhưng thu hẹp: CHỈ tl-primary là variant mới bắt buộc (map primary→secondary sẽ ĐẢO nút kem-fill thành tối-fill, regress ~30 site). green→default và base→outline TÁI DÙNG được (chờ screenshot xác nhận green ≈ lime) → '3 variant mới' là quá tay, REFINE xuống 1 mới + 2 reuse. Loading prop: CHỦ ĐỘNG rút — thuộc DS-04, DS-03 chỉ cần GIỮ hành vi loading hiện có. Tự áp YAGNI, không phải nhượng vì critic."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Bảng map B1 của ui-ux-critic có 1 dòng sai: primary→secondary bị ĐẢO fill/text, sẽ đổi hình ~30 nút primary",
+      "with": "ui-ux-critic",
+      "myPosition": "Chấp nhận map tường minh cho green→default và base→outline, nhưng primary BẮT BUỘC là variant riêng — dùng secondary là regression thị giác"
+    }
+  ]
+}

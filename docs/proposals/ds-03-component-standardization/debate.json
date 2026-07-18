@@ -1,0 +1,121 @@
+{
+  "slug": "ds-03-component-standardization",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Thiết kế ratchet gate (DoD b): đếm aggregate baseline toàn repo hay chỉ changed-files/AST + trial report-only?",
+      "positions": {
+        "solution-architect": "Baseline count toàn repo trong JSON committed, fail nếu TĂNG; per-file/AST là YAGNI cho tới khi thấy lách thật",
+        "risk-auditor": "Aggregate count là rủi ro TB#5 (xoá 1 + thêm 1 = xanh giả, miss raw <button>/multiline); phải ESLint AST-aware trên changed lines, debt count chỉ báo cáo",
+        "pre-mortem": "Sự cố ưu tiên #1: full-tree count flap trên PR không liên quan → gate bị hạ `|| true` như theline-audit.yml:27 → chết âm thầm; phải changed-files (tái dùng targetFiles() của check-theline.mjs:42-65) + report-only 2 tuần trước khi enforce"
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": ".github/workflows/theline-audit.yml:27 — full-tree scan chạy `node scripts/check-theline.mjs $FILES || true`, tức mọi lần scan TOÀN CÂY đều bị hạ report-only vì không dùng làm merge-gate được; đây đúng số phận aggregate-count sẽ gặp. Cộng scripts/check-theline.mjs:42-65 — targetFiles() đã có sẵn cơ chế diff changed-files.",
+          "note": "Chuyển sang ratchet changed-files tái dùng targetFiles(): một file đã đổi không được tăng số .tl-btn so với base. Vừa an toàn hơn (không flap, bịt lỗ xoá-A-thêm-B vì B là file đã đổi → đỏ), vừa ÍT code hơn baseline-JSON (không phải maintain file baseline). Report-only 2 tuần khớp precedent theline-audit. Đây là dữ kiện mới lật kết luận, không phải bị thuyết phục."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": ".github/workflows/theline-audit.yml:27 — full-tree scan chạy `node scripts/check-theline.mjs $FILES || true`, đúng là gate toàn cây đã bị hạ thành advisory; scripts/check-theline.mjs:42-65 — targetFiles() đã diff changed-files sẵn có.",
+          "note": "Bỏ yêu cầu AST-only. Mối lo gốc (aggregate flap + chặn PR không liên quan) được giải quyết bằng SCOPING changed-files, không cần AST. Chốt: tái dùng targetFiles() + report-only 2 tuần như pre-mortem đề xuất. AST là refinement cấp 2, YAGNI cho tới khi thấy lách class multiline thật. Đồng ý-có-thu-hẹp, không nhượng bộ."
+        },
+        "pre-mortem": {
+          "move": "REFINE",
+          "evidence": "scripts/check-theline.mjs:42-65 — kỷ luật changed-files; quality.yml:36-40 — ESLint đã cài & chạy repo-wide",
+          "note": "GIỮ scope changed-files + rollout report-only 2 tuần chống lại aggregate của solution-architect: sự cố #2 của tôi (aggregate flap → gate bị hạ || true như theline-audit.yml:27) là bằng chứng aggregate chết âm thầm. NHƯNG đổi detector từ regex sang ESLint AST-rule: regex per-file vẫn dính hố xoá-1-thêm-1 cùng file + false-positive từ string/comment — đúng loại red-không-giải-thích-được sinh flap. ESLint là dep đã cài, no-restricted-syntax chạy tự nhiên trên diff, AST-aware → ít false-positive = ít bị tắt. AST phục vụ chính luận điểm chống-flap, không mâu thuẫn."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "Hội tụ 4/4: ratchet CHANGED-FILES tái dùng targetFiles() (check-theline.mjs:42-65) — file đã đổi không được tăng số .tl-btn/raw-element so với base; rollout REPORT-ONLY 2 tuần trước khi enforce (precedent theline-audit.yml:27). solution-architect CONCEDE có bằng chứng. Residual nhỏ về detector (regex vs ESLint AST — risk-auditor và pre-mortem đổi chỗ cho nhau): bắt đầu bằng regex changed-files, nâng lên ESLint no-restricted-syntax nếu 2 tuần report-only lộ false-positive/lách."
+    },
+    {
+      "id": "D2",
+      "topic": "Native cùng đợt (intake của Cuong) vs tách release native sau khi web ổn định (mitigation RED của risk-auditor) — và 'thêm component vào TLComponents.swift' có đồng nghĩa 'release App Store' không?",
+      "positions": {
+        "solution-architect": "Native TLButton ở increment 1, TLBadge/Select/Sheet/Dialog ở increment 4 — cùng các increment với web, không tách lịch release",
+        "risk-auditor": "TLComponents.swift = RED cứng (App Store không có nút revert, 0 UI/snapshot test trong apple-tests.yml); tách release native SAU khi web ổn định + thêm snapshot test + test tay VI/Dynamic Type/VoiceOver trước submit"
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": ".github/workflows/apple-tests.yml — chỉ chạy job unit-tests; apple/Tests/ toàn engine logic (ScoringEngineTests, QuickTable*, DoublesElim*), 0 UI/snapshot test",
+          "note": "Làm rõ: 'thêm component vào TLComponents.swift + migrate màn native' KHÔNG đồng nghĩa submit App Store — code tới tay user chỉ khi Cuong tự cut một release, đó là bước tay tách rời. REFINE: xây native components song song trong cùng increment (dev), nhưng RELEASE native decoupled — chỉ submit SAU khi web ổn định + thêm 1 snapshot test + test tay VI/Dynamic Type/VoiceOver. Không hạ RED của risk-auditor. Cụm 'không tách lịch release' ở vòng 1 là nói cẩu thả — phần bất đồng ẢO."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": ".github/workflows/apple-tests.yml:54-64 — CI chỉ xcodebuild test (compile + unit engine), 0 UI/snapshot; TLComponents.swift là code trong git, revert được như mọi file web.",
+          "note": "Định vị lại RED cho chính xác: merge/viết TLComponents.swift KHÔNG phải hành động RED (git-revertable). Hành động không-revert-được là SUBMIT App Store một build chứa TLDialog/TLSheet/TLSelect/TLIconButton MỚI mà chưa verify trên thiết bị. Vì release native là cổng thủ công riêng của Cuong, CHẤP NHẬN code native merge cùng đợt web — RED chỉ gắn vào bước submit, bị chặn tới khi có: snapshot/UI test có mục tiêu cho DesignSystem/Components + test tay VI/Dynamic Type/VoiceOver/keyboard trên máy nhỏ. Thu hẹp phạm vi, KHÔNG hạ RED."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": "[ĐỀ XUẤT THỐNG NHẤT CỦA PANEL — chờ Cuong gật] Định vị lại RED giải tan bất đồng: CODE native (TLComponents.swift) merge cùng đợt web như intake Cuong muốn — git-revertable, không phải RED. RED neo vào bước SUBMIT App Store (không revert được), bị chặn tới khi: (1) snapshot/UI test cho DesignSystem/Components incl. .dynamicTypeSize(.accessibility3), (2) TLSheet luôn bọc ScrollView, (3) test tay VI/Dynamic Type/VoiceOver trên máy nhỏ. Release native vốn là cổng thủ công của Cuong nên không xung đột 'cùng đợt'."
+    },
+    {
+      "id": "D3",
+      "topic": "Mức độ rủi ro double-submit money-path (risk #1, một nửa lý do RED phần web): có cơ chế thật không khi DB đã có UNIQUE + handler idempotent + OTP single-use?",
+      "positions": {
+        "risk-auditor": "Cao — migration làm rơi type=/disabled → double-submit → server race confirm cả 2 → overbook sự kiện thu phí (SLO 3); cần test double-click = 1 rpc call",
+        "pre-mortem": "Cơ chế double-submit→2-payment-order KHÔNG tồn tại: payment_orders.registration_id UNIQUE (20260512130001_payment_orders.sql:24), create-payment-order/handler.ts:146-178 idempotent xử lý đúng race, OTP single-use nên verify lần 2 fail — đã chủ động loại khỏi pre-mortem"
+      },
+      "round2": {
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20260512130001_payment_orders.sql:24 — registration_id UUID NOT NULL UNIQUE; supabase/functions/create-payment-order/handler.ts:146-178 — check existing-order + xử lý race registration_id (re-read + trả cùng order); RegistrationModal có mã lỗi already_registered + OTP single-use.",
+          "note": "Đã tự mở cả 3 file. Pre-mortem ĐÚNG về cơ chế: double-submit KHÔNG tạo được 2 payment order và KHÔNG tạo được 2 registration (server-side, độc lập nút bấm). Risk #1 hạ Cao→Thấp. Tier: web VẪN AMBER — vì risk #3 (Select onValueChange vs onChange → payload corruption) chưa bị lật, vẫn Cao-nhưng-revert-được. Global RED KHÔNG đổi: neo vào native submit (D2), không vào risk #1. Overbooking race DB-01c là bug server có SẴN đã vá, độc lập DS-03."
+        },
+        "pre-mortem": {
+          "move": "HOLD",
+          "evidence": "supabase/migrations/20260717200000_db01c_member_capacity_lock.sql — register_event_as_member lấy pg_advisory_xact_lock('event_capacity:'||event_id) + check already_registered (EXISTS profile_id) TRONG lock; 20260716090000_db01_atomic_event_capacity.sql — social_event_guest_register cùng lock key, catch unique_violation→already_registered; 20260511120000_social_events_foundation.sql:256,263 — uq_event_registrations_event_profile + uq_event_registrations_event_phone; phone-otp-verify/index.ts:134-139 — OTP .is('used_at',null) rồi mark used",
+          "note": "Đã tự mở cả hai path. Overbook KHÔNG tồn tại trên đường registration: advisory lock serialize member+guest+reactivate cùng key; unique index + already_registered check → cùng user double-tap không lấy được 2 slot; OTP single-use → verify lần 2 fail trước khi tới RPC. Nếu DS-03 làm rơi type/disabled và mở lại double-submit, hậu quả tệ nhất là 1 click thừa bị server từ chối, KHÔNG phải overbook. risk-auditor giữ RED là quyền của họ, nhưng cơ chế money-loss cụ thể không có chân trong repo."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": "[ĐỀ XUẤT THỐNG NHẤT CỦA PANEL — chờ Cuong gật] risk-auditor REFINE hạ risk #1 Cao→Thấp sau khi tự kiểm chứng bằng chứng của pre-mortem (UNIQUE payment_orders.registration_id, handler idempotent, advisory lock DB-01/01c, unique index registrations, OTP single-use — double-submit tệ nhất = 1 click thừa bị server từ chối). Web tier = AMBER (còn risk #3 Select payload). Global RED giữ nguyên, neo vào D2 native submit."
+    },
+    {
+      "id": "D4",
+      "topic": "API Button: thêm variant TL mới (tl/tl-primary/tl-green) hay map vào variant shadcn có sẵn (green→default, primary→secondary, base→outline)? Và `loading` prop vào ngay increment 1 hay defer?",
+      "positions": {
+        "solution-architect": "Mapping không 1:1 (tl-btn.primary = fill --tl-fg kem, không trùng variant nào) → PHẢI thêm 3 variant TL riêng; thêm loading?: boolean ngay increment 1 để dọn đường DS-04/A11Y",
+        "ui-ux-critic": "Map vào variant có sẵn: green→default (cùng lime), primary→secondary (kem), base→outline — bảng map tường minh là Blocker B1; loading prop hạ xuống tuỳ chọn S4, DoD chỉ cần GIỮ hành vi loading hiện có, đừng nống scope (GPT-5.6 ngược lại muốn loading first-class)"
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "src/styles/the-line.css:35 (--secondary=#131416, fill TỐI) vs :64 (--tl-fg=#f5f3ee, kem) vs :545 (tl-btn.primary fill var(--tl-fg), chữ tối)",
+          "note": "Giữ phần lõi nhưng thu hẹp: CHỈ tl-primary là variant mới bắt buộc (map primary→secondary sẽ ĐẢO nút kem-fill thành tối-fill, regress ~30 site). green→default và base→outline TÁI DÙNG được (chờ screenshot xác nhận green ≈ lime) → '3 variant mới' là quá tay, REFINE xuống 1 mới + 2 reuse. Loading prop: CHỦ ĐỘNG rút — thuộc DS-04, DS-03 chỉ cần GIỮ hành vi loading hiện có. Tự áp YAGNI, không phải nhượng vì critic."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "the-line.css:35 (--secondary: 220 7% 8% = #131416 dark) + :36 fg off-white; the-line.css:546 (.tl-btn.primary background var(--tl-fg)) + :64 (--tl-fg #f5f3ee cream); the-line.css:33 (--primary #b5e853) vs :549-550 (.tl-btn.green var(--tl-green) #b5e853); the-line.css:536 (.tl-btn base transparent + --tl-border) vs button.tsx:14 (outline border-input); 00-intake.md:15 (DS-04/A11Y-04 depends DS-03)",
+          "note": "Tự mở kiểm chứng: architect ĐÚNG về hàng KEM — secondary dưới theme là #131416 dark, ngược hẳn .tl-btn.primary cream fill → KHÔNG variant có sẵn nào là cream → cần variant mới tl-primary. Nhưng 'PHẢI 3 variant MỚI' là over-broad: green→default khớp #b5e853 1:1 và base→outline khớp trên theme này (chỉ khác nit radius/hover/weight — N1/N2). Chốt: 1 variant mới bắt buộc (tl-primary cream), tl-green/tl là tuỳ chọn cho pixel-exact. Core B1 (chặn codemod đoán-theo-tên lật cream→lime) VẪN SỐNG. Loading: rút S4 — loading?: boolean là ~5 dòng và intake nói DS-03 phải mở đường A11Y-04/DS-04, thêm ở inc1 = một lần chạm button.tsx thay vì hai; giữ yêu cầu characterization nhãn có ngữ cảnh + không CLS."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": "[ĐỀ XUẤT THỐNG NHẤT CỦA PANEL — chờ Cuong gật] Hội tụ 2 chiều có bằng chứng cùng file (the-line.css:35 vs :545-546): CHỈ tl-primary (kem, fill --tl-fg) là variant MỚI bắt buộc; green→default (#b5e853 khớp 1:1) và base→outline TÁI DÙNG. Bảng map tường minh là blocker giữ nguyên (chặn codemod đoán tên lật kem→lime ~30 nút). Residual nhỏ: loading prop — hai bên ĐỔI CHỖ (critic giờ muốn inc.1, architect tự rút về DS-04); mặc định DEFER theo YAGNI, thêm ngay khi increment nào đụng spinner thật."
+    }
+  ],
+  "newDisagreementsRound2": [
+    {
+      "from": "ui-ux-critic",
+      "topic": "Ratchet phải chặn occurrence MỚI cấp changed-file trên journey screens",
+      "dispositio": "SUBSUMED vào resolution D1 (changed-files check phủ mọi file đổi, gồm journey)"
+    },
+    {
+      "from": "risk-auditor",
+      "topic": "Bất biến migration: accessible-name + .disabled semantics + test double-click = 1 call",
+      "dispositio": "Không ai phản đối — đưa thẳng vào DoD/verify checklist của proposal"
+    },
+    {
+      "from": "pre-mortem",
+      "topic": "Native submit cần snapshot Dynamic Type + ScrollView",
+      "dispositio": "Trùng resolution D2 — đã nhập"
+    },
+    {
+      "from": "solution-architect",
+      "topic": "Dòng primary→secondary trong B1 của critic sai (đảo fill)",
+      "dispositio": "Critic đã REFINE cùng kết luận — đã nhập vào resolution D4"
+    }
+  ]
+}

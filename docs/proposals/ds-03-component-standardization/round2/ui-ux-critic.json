@@ -1,0 +1,20 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D4",
+      "topic": "Button API — map .tl-btn vào variant shadcn có sẵn vs đẻ variant TL mới; loading prop inc1 vs deferred",
+      "myRound1Position": "Map vào variant CÓ SẴN (green→default, primary→secondary, base→outline) và hạ loading xuống tuỳ chọn (S4).",
+      "move": "REFINE",
+      "evidence": "the-line.css:35 (--secondary: 220 7% 8% = #131416 dark) + :36 fg off-white; the-line.css:546 (.tl-btn.primary background var(--tl-fg)) + :64 (--tl-fg #f5f3ee cream); the-line.css:33 (--primary #b5e853) vs :549-550 (.tl-btn.green var(--tl-green) #b5e853); the-line.css:536 (.tl-btn base transparent + --tl-border) vs button.tsx:14 (outline border-input); 00-intake.md:15 (DS-04/A11Y-04 depends DS-03)",
+      "note": "Tự mở kiểm chứng: architect ĐÚNG về hàng KEM — secondary dưới theme là #131416 dark, ngược hẳn .tl-btn.primary cream fill → KHÔNG variant có sẵn nào là cream → cần variant mới tl-primary. Nhưng 'PHẢI 3 variant MỚI' là over-broad: green→default khớp #b5e853 1:1 và base→outline khớp trên theme này (chỉ khác nit radius/hover/weight — N1/N2). Chốt: 1 variant mới bắt buộc (tl-primary cream), tl-green/tl là tuỳ chọn cho pixel-exact. Core B1 (chặn codemod đoán-theo-tên lật cream→lime) VẪN SỐNG. Loading: rút S4 — loading?: boolean là ~5 dòng và intake nói DS-03 phải mở đường A11Y-04/DS-04, thêm ở inc1 = một lần chạm button.tsx thay vì hai; giữ yêu cầu characterization nhãn có ngữ cảnh + không CLS."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Ratchet granularity — baseline-count toàn repo cho phép file A giảm che file B thêm .tl-btn mới trên journey screen hot-path; GPT-5.6 của tôi cũng đòi fail theo changed-file",
+      "with": "solution-architect",
+      "myPosition": "Ratchet phải chặn occurrence MỚI ở cấp changed-file cho các journey screen, không chỉ tổng repo giảm"
+    }
+  ]
+}

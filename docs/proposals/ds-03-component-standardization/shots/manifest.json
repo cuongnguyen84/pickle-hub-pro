@@ -1,0 +1,52 @@
+{
+  "base": "https://0d3a4be6.pickle-hub-pro.pages.dev",
+  "capturedAt": "2026-07-18T12:39:40.541Z",
+  "shots": [
+    {
+      "route": "/clb/sportcaree-pickleball",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "clb-sportcaree-pickleball__mobile.png",
+      "status": 200,
+      "title": "SportCaree Pickleball | ThePickleHub",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    },
+    {
+      "route": "/clb/122-dinh-cong",
+      "viewport": "mobile",
+      "scheme": "light",
+      "file": "clb-122-dinh-cong__mobile.png",
+      "status": 200,
+      "title": "122 Định Công | ThePickleHub",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    },
+    {
+      "route": "/clb/sportcaree-pickleball",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "clb-sportcaree-pickleball__desktop.png",
+      "status": 200,
+      "title": "SportCaree Pickleball | ThePickleHub",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    },
+    {
+      "route": "/clb/122-dinh-cong",
+      "viewport": "desktop",
+      "scheme": "light",
+      "file": "clb-122-dinh-cong__desktop.png",
+      "status": 200,
+      "title": "122 Định Công | ThePickleHub",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 ()"
+      ]
+    }
+  ]
+}

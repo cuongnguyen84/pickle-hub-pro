@@ -1,0 +1,36 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Thiết kế ratchet gate (DoD b): aggregate baseline toàn repo vs changed-files/AST",
+      "myRound1Position": "Aggregate count là rủi ro giả (xoá-1-thêm-1 = xanh giả, miss raw <button>); phải ESLint AST-aware trên changed lines.",
+      "move": "REFINE",
+      "evidence": ".github/workflows/theline-audit.yml:27 — full-tree scan chạy `node scripts/check-theline.mjs $FILES || true`, đúng là gate toàn cây đã bị hạ thành advisory; scripts/check-theline.mjs:42-65 — targetFiles() đã diff changed-files sẵn có.",
+      "note": "Bỏ yêu cầu AST-only. Mối lo gốc (aggregate flap + chặn PR không liên quan) được giải quyết bằng SCOPING changed-files, không cần AST. Chốt: tái dùng targetFiles() + report-only 2 tuần như pre-mortem đề xuất. AST là refinement cấp 2, YAGNI cho tới khi thấy lách class multiline thật. Đồng ý-có-thu-hẹp, không nhượng bộ."
+    },
+    {
+      "id": "D2",
+      "topic": "Native cùng đợt vs tách release; 'thêm component vào TLComponents.swift' có = 'release App Store' không",
+      "myRound1Position": "TLComponents.swift = RED cứng, tách release native SAU khi web ổn định.",
+      "move": "REFINE",
+      "evidence": ".github/workflows/apple-tests.yml:54-64 — CI chỉ xcodebuild test (compile + unit engine), 0 UI/snapshot; TLComponents.swift là code trong git, revert được như mọi file web.",
+      "note": "Định vị lại RED cho chính xác: merge/viết TLComponents.swift KHÔNG phải hành động RED (git-revertable). Hành động không-revert-được là SUBMIT App Store một build chứa TLDialog/TLSheet/TLSelect/TLIconButton MỚI mà chưa verify trên thiết bị. Vì release native là cổng thủ công riêng của Cuong, CHẤP NHẬN code native merge cùng đợt web — RED chỉ gắn vào bước submit, bị chặn tới khi có: snapshot/UI test có mục tiêu cho DesignSystem/Components + test tay VI/Dynamic Type/VoiceOver/keyboard trên máy nhỏ. Thu hẹp phạm vi, KHÔNG hạ RED."
+    },
+    {
+      "id": "D3",
+      "topic": "Mức độ double-submit money-path (risk #1): có cơ chế thật khi đã có UNIQUE + handler idempotent + OTP single-use?",
+      "myRound1Position": "Cao — migration làm rơi type=/disabled → double-submit → server race → overbook sự kiện thu phí (SLO 3).",
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20260512130001_payment_orders.sql:24 — registration_id UUID NOT NULL UNIQUE; supabase/functions/create-payment-order/handler.ts:146-178 — check existing-order + xử lý race registration_id (re-read + trả cùng order); RegistrationModal có mã lỗi already_registered + OTP single-use.",
+      "note": "Đã tự mở cả 3 file. Pre-mortem ĐÚNG về cơ chế: double-submit KHÔNG tạo được 2 payment order và KHÔNG tạo được 2 registration (server-side, độc lập nút bấm). Risk #1 hạ Cao→Thấp. Tier: web VẪN AMBER — vì risk #3 (Select onValueChange vs onChange → payload corruption) chưa bị lật, vẫn Cao-nhưng-revert-được. Global RED KHÔNG đổi: neo vào native submit (D2), không vào risk #1. Overbooking race DB-01c là bug server có SẴN đã vá, độc lập DS-03."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Ràng buộc risk cho D4 bất kể chọn API nào: migration RegistrationModal phải giữ accessible-name + .disabled semantics (21 test money-path pin đúng hai thứ đó); variant TL mới = bề mặt chưa test",
+      "with": "solution-architect + ui-ux-critic",
+      "myPosition": "DoD phải thêm 1 test 'double-click submit = đúng 1 rpc/invoke call' + giữ bất biến accessible-name; variant TL mới phải có test render-path trước khi chạm màn money-path"
+    }
+  ]
+}
