@@ -32,7 +32,7 @@ describe("getBestOfForRound", () => {
   });
 
   it("earlier rounds use the early format", () => {
-    expect(getBestOfForRound("round_of_16", "bo3", "bo1", "bo1")).toBe(3);
+    expect(getBestOfForRound("elimination", "bo3", "bo1", "bo1")).toBe(3);
     expect(getBestOfForRound("quarterfinal", "bo5", "bo1", "bo1")).toBe(5);
     expect(getBestOfForRound("quarterfinal", "bo1", "bo3", "bo5")).toBe(1);
   });
