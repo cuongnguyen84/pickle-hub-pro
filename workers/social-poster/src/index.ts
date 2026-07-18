@@ -273,7 +273,10 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
       attempt_count: attemptCount,
       error_message: errMsg.slice(0, 500),
     });
-    return json({ posted: false, news_item_id: item.id, error: errMsg }, 500);
+    // Generic error in the HTTP body (CodeQL stack-trace-exposure) — full
+    // detail is in the fb_post_log row above + wrangler tail.
+    console.error('social-poster post failed:', errMsg);
+    return json({ posted: false, news_item_id: item.id, error: 'post_failed' }, 500);
   }
 }
 

@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "singapore-open-2026-preview",
+    publishedDate: "2026-07-18",
+    updatedDate: "2026-07-18",
+    author: "The PickleHub Team",
+    tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball singapore", "ppa asia 500", "2026"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    heroImage: {
+      src: "/images/blog/singapore-open-2026-preview-hero.webp",
+      alt: "PPA Asia 500 Leapmotor Singapore Open 2026 preview — indoor pickleball courts under arena lighting at Singapore Expo, with the July 23-26 dates and the flags of the competing Asian nations"
+    },
+    titleEn: "Leapmotor Singapore Open 2026: Preview of PPA Tour Asia's Singapore Debut",
+    titleVi: "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
+    metaTitleEn: "Singapore Open 2026 Pickleball: Schedule, Draw & How to Watch",
+    metaTitleVi: "Singapore Open 2026: Lịch, Bảng đấu & Cách xem từ Việt Nam",
+    metaDescriptionEn: "Preview of the PPA Asia 500 Leapmotor Singapore Open (July 23-26): Vietnam's Truong Vinh Hien is the top seed, plus schedule, prizes and how to watch free.",
+    metaDescriptionVi: "Preview PPA Asia 500 Leapmotor Singapore Open (23-26/7): Trương Vinh Hiển là hạt giống số 1 đơn nam, kèm lịch theo giờ VN và cách xem miễn phí.",
+  },
+  {
     slug: "pickleball-world-cup-2026-da-nang-how-to-watch",
     publishedDate: "2026-07-17",
     updatedDate: "2026-07-17",
@@ -688,7 +707,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["pickleball rules", "beginner", "kitchen rule", "serving", "scoring", "ppa tour asia"],
     ctaPath: "/tools/quick-tables",
     ctaLabel: { en: "Try Free Scoring Tool", vi: "Dùng thử chấm điểm miễn phí" },
-    heroImage: { src: "/images/blog/pickleball-rules-complete-guide-hero.webp", alt: "Pickleball court with players at the kitchen line showing the Non-Volley Zone and serving positions under PPA Tour Asia rules" },
+    heroImage: { src: "/images/blog/how-to-play-pickleball-hero.webp", alt: "Pickleball court with players at the kitchen line showing the Non-Volley Zone and serving positions under PPA Tour Asia rules" },
     titleEn: "Pickleball Rules 2026: The Complete Guide (With Asia's Hardest Calls Explained)",
     titleVi: "Luật Pickleball 2026 — Hướng dẫn đầy đủ (kèm 5 tình huống tranh cãi nhất ở châu Á)",
     metaTitleEn: "Pickleball Rules 2026 | Complete Guide with Asia's Hardest Calls Explained",

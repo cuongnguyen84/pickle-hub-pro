@@ -90,3 +90,7 @@ GENERATED from src/content/blog/metadata.ts (single source). 28 EN blog
 SEO-optimized field, Cuong's call 2026-07-17); 1 description reconciled
 (ppa-tour-asia-2026-complete-guide); 7 posts gain real dateModified from
 updatedDate; pickleball-rules-complete-guide gains its hero og:image.
+2026-07-18 — v29->v30: sanitizeBlogHtml now loops tag/handler strips to a
+fixpoint and normalizeImageUrl uses a hostname check (CodeQL #45/46/47,
+#22). Output identical for well-formed content; bump purges any cached
+page whose HTML a single-pass strip under-sanitized.
