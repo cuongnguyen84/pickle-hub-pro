@@ -21,8 +21,8 @@ const post: BlogPost = {
     vi: "Xem bảng xếp hạng DUPR Việt Nam",
   },
   heroImage: {
-    src: "/images/blog/vietnam-dupr-leaderboard-launch-hero.webp",
-    alt: "Vietnam DUPR pickleball leaderboard on ThePickleHub.net showing top Vietnamese players with live DUPR doubles and singles ratings, ranked highest to lowest in a dark editorial table layout.",
+    src: "/images/blog/dupr-thepicklehub-user-guide-hero.webp",
+    alt: "DUPR ratings on ThePickleHub — hero image for the Vietnam DUPR leaderboard launch announcement.",
   },
   content: {
     en: {

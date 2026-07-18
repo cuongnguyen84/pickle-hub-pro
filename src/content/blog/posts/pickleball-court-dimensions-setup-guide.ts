@@ -21,8 +21,8 @@ const post: BlogPost = {
     vi: "Tiếp theo: Hướng dẫn chơi Pickleball — lộ trình 7 ngày cho người mới",
   },
   heroImage: {
-    src: "/images/blog/pickleball-court-dimensions-setup-guide-hero.webp",
-    alt: "Top-down diagrammatic illustration of a regulation pickleball court with measurements labeled in both feet and meters — 44 feet by 20 feet playing area, 7-foot non-volley kitchen on each side of the net, 22-foot service area depth, and 36-inch net height — color-coded zones on a clean technical-drawing background for the 2026 court dimensions and setup guide.",
+    src: "/images/blog/how-to-play-pickleball-hero.webp",
+    alt: "Pickleball court with players at the net — hero image for the 2026 court dimensions and setup guide.",
   },
   content: {
     en: {

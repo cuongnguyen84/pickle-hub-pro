@@ -336,8 +336,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/blog/how-to-play-pickleball",
     ctaLabel: { en: "Next: How to Play Pickleball — 7-Day Beginner Plan", vi: "Tiếp theo: Hướng dẫn chơi Pickleball — lộ trình 7 ngày cho người mới" },
     heroImage: {
-      src: "/images/blog/pickleball-court-dimensions-setup-guide-hero.webp",
-      alt: "Top-down diagrammatic illustration of a regulation pickleball court with measurements labeled in both feet and meters — 44 feet by 20 feet playing area, 7-foot non-volley kitchen on each side of the net, 22-foot service area depth, and 36-inch net height — color-coded zones on a clean technical-drawing background for the 2026 court dimensions and setup guide."
+      src: "/images/blog/how-to-play-pickleball-hero.webp",
+      alt: "Pickleball court with players at the net — hero image for the 2026 court dimensions and setup guide."
     },
     titleEn: "Pickleball Court Dimensions & Setup Guide 2026 | Sizes + Diagram",
     titleVi: "Kích Thước Sân Pickleball Tiêu Chuẩn 2026 | Sơ Đồ + Cách Vẽ Sân",
@@ -355,8 +355,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     ctaPath: "/rankings",
     ctaLabel: { en: "View the Vietnam DUPR Leaderboard", vi: "Xem bảng xếp hạng DUPR Việt Nam" },
     heroImage: {
-      src: "/images/blog/vietnam-dupr-leaderboard-launch-hero.webp",
-      alt: "Vietnam DUPR pickleball leaderboard on ThePickleHub.net showing top Vietnamese players with live DUPR doubles and singles ratings, ranked highest to lowest in a dark editorial table layout."
+      src: "/images/blog/dupr-thepicklehub-user-guide-hero.webp",
+      alt: "DUPR ratings on ThePickleHub — hero image for the Vietnam DUPR leaderboard launch announcement."
     },
     titleEn: "Vietnam DUPR Leaderboard Launches on ThePickleHub | Live Rankings, Bracket Seeding, Balanced Matchmaking",
     titleVi: "Bảng xếp hạng DUPR Việt Nam ra mắt trên ThePickleHub | Cập nhật real-time, seed bracket tự động, ghép cặp cân bằng",

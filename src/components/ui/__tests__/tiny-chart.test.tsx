@@ -127,6 +127,60 @@ describe("full render at fixed width", () => {
   });
 });
 
+describe("codex findings (PR #389 hotfix)", () => {
+  it("auto domain anchors count data at zero — all-zero series shows no negative ticks", () => {
+    const html = renderToStaticMarkup(
+      <TinyLineChart
+        height={300}
+        fixedWidth={600}
+        xLabels={["a", "b", "c"]}
+        series={[{ label: "views", values: [0, 0, 0], color: "blue", dotRadius: 3 }]}
+        ariaLabel="views"
+      />,
+    );
+    expect(html).not.toContain(">-1<");
+    expect(html).not.toContain(">-0.5<");
+    expect(html).toContain(">0<");
+  });
+
+  it("integer ticks sit exactly on their gridlines (no rounded labels)", () => {
+    const html = renderToStaticMarkup(
+      <TinyBarChart
+        height={200}
+        fixedWidth={600}
+        xLabels={["a"]}
+        values={[1]}
+        barColor="blue"
+        ariaLabel="bars"
+      />,
+    );
+    // max=1 must yield ticks 0 and 1 exactly once each — not 0,0,1,1,1
+    expect((html.match(/>0</g) ?? []).length).toBe(1);
+    expect((html.match(/>1</g) ?? []).length).toBe(1);
+  });
+
+  it("donut keeps a tiny positive segment visible (1000 vs 1)", () => {
+    const html = renderToStaticMarkup(
+      <TinyDonut
+        height={200}
+        fixedWidth={400}
+        segments={[
+          { value: 1000, color: "green", label: "Video" },
+          { value: 1, color: "red", label: "Livestream" },
+        ]}
+        ariaLabel="views by type"
+      />,
+    );
+    const paths = html.match(/<path[^>]+d="([^"]+)"/g) ?? [];
+    expect(paths.length).toBe(2);
+    // the tiny slice's outer arc must span a nonzero angle: its two arc
+    // endpoints must differ (a collapsed arc repeats the same point)
+    const d = paths[1];
+    const nums = [...d.matchAll(/(-?\d+\.?\d*) (-?\d+\.?\d*)/g)].map((m) => m[0]);
+    expect(nums[0]).not.toEqual(nums[1]);
+  });
+});
+
 describe("TinyBarChart / TinyDonut sparse data", () => {
   it("bar chart tolerates empty values", () => {
     expect(() =>
