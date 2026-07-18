@@ -219,6 +219,35 @@ describe("member path", () => {
     });
   }
 
+  it("rapid double-click on confirm fires exactly ONE register RPC (DS-03 risk constraint)", async () => {
+    // The `submitting` guard on the <form onSubmit> must swallow the second
+    // click before another RPC leaves the client — server defenses (advisory
+    // lock, unique index, already_registered) are the backstop, not the norm.
+    let resolveRpc: (v: unknown) => void = () => {};
+    rpcMock.mockImplementation((fn: string) => {
+      if (fn === "get_event_slot_counts") {
+        return Promise.resolve({ data: [], error: null });
+      }
+      return new Promise((resolve) => {
+        resolveRpc = resolve;
+      });
+    });
+    renderModal({ memberSkipOtp: true, priceVnd: 0 });
+
+    const cta = screen.getByRole("button", { name: "Xác nhận đăng ký →" });
+    fireEvent.click(cta);
+    fireEvent.click(cta);
+    fireEvent.click(cta);
+
+    const registerCalls = rpcMock.mock.calls.filter(
+      (c) => c[0] === "register_event_as_member",
+    );
+    expect(registerCalls).toHaveLength(1);
+
+    resolveRpc({ data: [MEMBER_ROW], error: null });
+    await screen.findByText("Đăng ký thành công!");
+  });
+
   it("free event: RPC ok → success step, localStorage handle, onSuccess, NO payment order", async () => {
     mockMemberRegisterOk();
     const onSuccess = vi.fn();
