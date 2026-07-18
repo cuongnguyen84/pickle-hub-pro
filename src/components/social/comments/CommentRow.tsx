@@ -294,7 +294,7 @@ function CommentAvatar({
         borderRadius: "50%",
         background: dim
           ? "var(--tl-bg-3, rgba(255,255,255,0.06))"
-          : "var(--tl-bg-2, rgba(255,255,255,0.08))",
+          : "var(--tl-bg-elev, rgba(255,255,255,0.08))",
         overflow: "hidden",
         flexShrink: 0,
         fontFamily: "'Geist Mono', monospace",
@@ -435,7 +435,7 @@ function CommentBody({
       style={{
         fontSize: 14,
         lineHeight: 1.55,
-        color: "var(--tl-fg-1, var(--tl-fg))",
+        color: "var(--tl-fg, var(--tl-fg))",
         margin: 0,
         whiteSpace: "pre-wrap",
         wordBreak: "break-word",

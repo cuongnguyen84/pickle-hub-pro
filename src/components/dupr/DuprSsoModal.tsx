@@ -177,7 +177,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
             justifyContent: "space-between",
             padding: "12px 16px",
             borderBottom: "1px solid var(--tl-border, #e5e7eb)",
-            background: "var(--tl-bg-2, #fafafa)",
+            background: "var(--tl-bg-elev, #fafafa)",
             flex: "0 0 auto",
           }}
         >

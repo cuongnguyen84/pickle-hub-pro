@@ -487,7 +487,7 @@ export default function SocialEventMatchmaking() {
                   gap: 8,
                   padding: "6px 10px",
                   borderRadius: 6,
-                  background: selected.has(r.id) ? "rgba(59,130,246,0.08)" : "var(--tl-bg-2, rgba(0,0,0,0.03))",
+                  background: selected.has(r.id) ? "rgba(59,130,246,0.08)" : "var(--tl-bg-elev, rgba(0,0,0,0.03))",
                   cursor: "pointer",
                 }}
               >
@@ -662,7 +662,7 @@ export default function SocialEventMatchmaking() {
                         style={{
                           padding: "8px 12px",
                           borderRadius: 6,
-                          background: "var(--tl-bg-2, rgba(0,0,0,0.03))",
+                          background: "var(--tl-bg-elev, rgba(0,0,0,0.03))",
                           display: "flex",
                           gap: 12,
                           alignItems: "center",

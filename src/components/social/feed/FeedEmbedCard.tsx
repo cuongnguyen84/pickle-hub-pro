@@ -167,7 +167,7 @@ export function FeedEmbedCard({
             height: 480,
             border: "1px solid var(--tl-border)",
             borderRadius: 4,
-            background: "var(--tl-bg-2, rgba(255,255,255,0.04))",
+            background: "var(--tl-bg-elev, rgba(255,255,255,0.04))",
             justifySelf: "center",
           }}
         />

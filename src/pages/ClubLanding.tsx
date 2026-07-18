@@ -198,7 +198,7 @@ export default function ClubLanding() {
                   height: 64,
                   borderRadius: 14,
                   objectFit: "cover",
-                  background: "var(--tl-bg-2, rgba(0,0,0,0.04))",
+                  background: "var(--tl-bg-elev, rgba(0,0,0,0.04))",
                   flexShrink: 0,
                   marginTop: 8,
                 }}

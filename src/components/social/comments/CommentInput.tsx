@@ -190,7 +190,7 @@ export function CommentInput({
           fontFamily: "var(--tl-font-body, inherit)",
           fontSize: 16, // >= 16px to prevent iOS auto-zoom on focus
           lineHeight: 1.5,
-          background: "var(--tl-bg-2, rgba(255,255,255,0.04))",
+          background: "var(--tl-bg-elev, rgba(255,255,255,0.04))",
           border: "1px solid var(--tl-border, rgba(255,255,255,0.12))",
           borderRadius: 4,
           color: "var(--tl-fg, inherit)",
@@ -293,7 +293,7 @@ export function CommentInput({
             margin: 0,
             padding: 4,
             listStyle: "none",
-            background: "var(--tl-bg-1, #0a0a0a)",
+            background: "var(--tl-bg, #0a0a0a)",
             border: "1px solid var(--tl-border)",
             borderRadius: 4,
             boxShadow: "0 8px 24px rgba(0,0,0,0.4)",

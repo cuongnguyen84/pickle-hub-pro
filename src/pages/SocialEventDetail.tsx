@@ -713,7 +713,7 @@ export default function SocialEventDetail() {
                   style={{
                     fontSize: 14,
                     padding: "8px 10px",
-                    background: "var(--tl-bg-2, rgba(0,0,0,0.03))",
+                    background: "var(--tl-bg-elev, rgba(0,0,0,0.03))",
                     borderRadius: 6,
                     display: "flex",
                     justifyContent: "space-between",

@@ -194,7 +194,7 @@ function Thumbnail({
         width: "100%",
         aspectRatio: aspect,
         overflow: "hidden",
-        background: "var(--tl-bg-2, rgba(255,255,255,0.04))",
+        background: "var(--tl-bg-elev, rgba(255,255,255,0.04))",
         border: "1px solid var(--tl-border)",
         position: "relative",
       }}

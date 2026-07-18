@@ -217,7 +217,7 @@ const Notifications = () => {
             margin: "0 auto",
             border: "1px solid var(--tl-border)",
             borderRadius: 4,
-            background: "var(--tl-bg-2, transparent)",
+            background: "var(--tl-bg-elev, transparent)",
             overflow: "hidden",
           }}
         >

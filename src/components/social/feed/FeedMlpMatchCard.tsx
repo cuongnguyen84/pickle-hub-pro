@@ -496,7 +496,7 @@ function GameRow({
         padding: "10px 12px",
         border: "1px solid var(--tl-hairline, var(--tl-border))",
         borderRadius: 2,
-        background: "var(--tl-bg-2, transparent)",
+        background: "var(--tl-bg-elev, transparent)",
       }}
     >
       <div
