@@ -15,12 +15,22 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // DS-03: The Line cream-fill CTA — mirror of `.tl-btn.primary`
+        // (background --tl-fg, ink --tl-bg). The other two .tl-btn looks map
+        // onto EXISTING variants: `.tl-btn` base → outline, `.tl-btn.green`
+        // → default (both optic-lime under the theme). Never map this one to
+        // `secondary`: secondary resolves to a DARK fill under
+        // [data-theme="the-line"] (--secondary #131416).
+        "tl-primary":
+          "border border-[var(--tl-fg)] bg-[var(--tl-fg)] text-[var(--tl-bg)] hover:opacity-[0.88]",
       },
+      // DS-03/A11Y-02: default and icon meet the 44px touch target; lg is
+      // the 48px hot-path CTA. sm stays 36px for dense secondary actions.
       size: {
-        default: "h-10 px-4 py-2",
+        default: "h-11 px-4 py-2",
         sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        lg: "h-12 rounded-md px-8",
+        icon: "h-11 w-11",
       },
     },
     defaultVariants: {
