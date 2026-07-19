@@ -1,0 +1,30 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D3",
+      "topic": "Presence-gated có ship đợt này không, và làm sao để nó không thành no-op giả",
+      "myRound1Position": "Cần cho admin (tách 'Đang xem' vs 'Chờ đăng nhập') — giữ trong scope, mức hẹp: 1 field + 1 badge.",
+      "move": "REFINE",
+      "evidence": "src/hooks/useLivePresence.ts:88-98 — channel.track() chỉ chạy 1 lần lúc status==='SUBSCRIBED', payload chụp trạng thái ungated (preview đang chạy); :124-128 acquire() tái dùng entry/channel cũ; :182-201 deps effect = [livestreamId, enabled], state cố ý loại khỏi deps → không có đường re-track tự nhiên.",
+      "note": "Giá trị UX (admin cần tách con số) KHÔNG bị lật — pre-mortem không phản bác điều đó. Nhưng file xác nhận cách làm ngây thơ (nhét 'gated' vào payload) là no-op giả đóng bug thật. REFINE phạm vi: giữ presence-gated trong scope NHƯNG điều kiện ship = phải có re-track khi isGated đổi + một runtime assert test khẳng định track() được gọi LẠI khi gated flip. Không có test đó thì cắt sang PR sau (đặt cuối, tách PR), không ship 1 field câm."
+    },
+    {
+      "id": "D4",
+      "topic": "CTA embed gate: có redirect về /live/:id sau auth không, và param đúng là gì",
+      "myRound1Position": "Redirect KHÔNG vô nghĩa vì tab mới là top-level; sau auth redirect về /live/:id; param đúng là mode= chứ không phải tab=.",
+      "move": "HOLD",
+      "evidence": "src/pages/Login.tsx:31-32 — isLogin đọc searchParams.get('mode') !== 'signup', KHÔNG đọc 'tab'; :51 redirectUrl = safeInternalPath(searchParams.get('redirect')); :62-64 navigate(targetUrl) dùng chính redirect đó sau auth.",
+      "note": "Lập luận 'redirect vô nghĩa trong iframe' của architect nhầm đích: CTA mở tab MỚI top-level first-party, không phải iframe — trong tab đó Login.tsx:51-64 đọc và dùng redirect bình thường. Và param architect đề xuất (?tab=signup) là dead param (Login đọc mode=) — đúng lại lỗi class của round1 #1. Không có dữ kiện mới lật được. Giữ: /login?mode=signup&redirect=/live/:id&source=embed_live_gate."
+    },
+    {
+      "id": "D5",
+      "topic": "Re-pause khi gated: self re-pause trong MuxPlayer đủ, hay bắt buộc thoát native fullscreen/PiP trước khi hiện overlay",
+      "myRound1Position": "Blocker: re-pause câm trong native fullscreen/PiP = màn đen tự dừng không lý do, cảm giác app hỏng; MuxPlayerHandle phải thêm exitFullscreen()/exitPip() và chủ động thoát trước khi hiện overlay.",
+      "move": "HOLD",
+      "evidence": "src/components/video/MuxPlayer.tsx:9-12 — MuxPlayerHandle chỉ có play()/pause(), không có exitFullscreen/exitPip; guard 'self-pause trên mọi onPlay' của architect chặn resume nhưng không làm overlay HTML hiện được khi player đang ở native OS-level fullscreen/PiP.",
+      "note": "Architect giải quyết 'ngăn phát lại', tôi nói về 'lộ lý do' — hai vấn đề khác nhau. 1 guard vẫn để user kẹt màn đen/frame đơ không giải thích trong native fullscreen. Không có dữ kiện mới chứng minh overlay render được ở lớp đó. Blocker vòng 1 không có dữ kiện mới → vẫn Blocker, để lên bàn Cuong."
+    }
+  ],
+  "newDisagreements": []
+}

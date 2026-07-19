@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl } from "@/lib/auth-config";
 import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
 import { trackEvent } from "@/utils/ga";
+import { completeJourney } from "@/lib/journeys";
 
 interface AuthContextType {
   user: User | null;
@@ -54,6 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const method = session.user.app_metadata?.provider || "email";
               console.log("[GA4] sign_up event fired!", { method, ageMs });
               trackEvent("sign_up", { method });
+              // Livestream-gate funnel attribution: no-op unless the gate
+              // overlay started a journey in this browser session.
+              completeJourney("livestream_gate", "livestream_gate_signup_completed", {
+                method,
+                auth_state: "authenticated",
+              });
               // Fallback: push to dataLayer directly
               if (window.dataLayer) {
                 window.dataLayer.push({ event: "sign_up", method });

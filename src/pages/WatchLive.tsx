@@ -8,12 +8,11 @@ import { ReportDialog } from "@/components/report";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
 import { MuxPlayer } from "@/components/video";
-import type { MuxPlayerHandle } from "@/components/video/MuxPlayer";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
@@ -34,12 +33,11 @@ import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isBlocked } = useGeoBlock();
   const keyboardHeight = useKeyboardHeight();
   const [isChatCollapsed, setIsChatCollapsed] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const playerRef = useRef<MuxPlayerHandle>(null);
 
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
@@ -64,20 +62,16 @@ const WatchLive = () => {
       (gateAppliesTo === "replay" && isReplay))
   );
 
-  const { isGated, secondsRemaining, progress, showCountdown } = useLivestreamGate({
+  const { isGated, secondsRemaining, progress, showCountdown, sessionSeconds } = useLivestreamGate({
     livestreamId: id!,
+    surface: "watch",
     previewSeconds: systemSettings?.livestream_preview_seconds ?? 30,
-    isEnabled: gateEnabled,
+    // Wait for auth restore before arming the gate — a slow session restore
+    // must never pause a logged-in viewer's live (`!!user` alone races it).
+    isEnabled: gateEnabled && !authLoading,
     isAuthenticated: !!user,
     isPlaying: isVideoPlaying,
   });
-
-  // Pause video when gated
-  useEffect(() => {
-    if (isGated && playerRef.current) {
-      playerRef.current.pause();
-    }
-  }, [isGated]);
 
   useEffect(() => {
     if (keyboardHeight <= 0) return undefined;
@@ -102,10 +96,12 @@ const WatchLive = () => {
 
   const dateLocale = language === "vi" ? viLocale : enUS;
 
-  // Record view events every 30s, max 20/session (~10 min)
+  // Record view events every 30s, max 20/session (~10 min) — only while the
+  // viewer is actually watching (playing and not stuck at the login gate).
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: id,
+    active: isVideoPlaying && !isGated,
   });
 
   if (isLoading) {
@@ -248,16 +244,16 @@ const WatchLive = () => {
           <div className="aspect-video bg-surface-elevated overflow-hidden relative paywall">
               {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
               {isBlocked && <GeoBlockOverlay />}
-              {isGated && <LivestreamGateOverlay livestreamId={id!} />}
+              {isGated && <LivestreamGateOverlay livestreamId={id!} surface="watch" sessionSeconds={sessionSeconds} />}
             {hasPlayback ? (
               <MuxPlayer
-                ref={playerRef}
                 playbackId={playbackId!}
                 title={streamTitle}
                 poster={livestream.thumbnail_url ?? undefined}
                 streamType={streamType}
                 type="livestream"
                 isLive={isLive}
+                gated={isGated}
                 onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
               />
             ) : isScheduled ? (
@@ -297,16 +293,16 @@ const WatchLive = () => {
             <div className="hidden lg:block aspect-video bg-surface-elevated rounded-xl overflow-hidden relative paywall">
               {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
               {isBlocked && <GeoBlockOverlay />}
-              {isGated && <LivestreamGateOverlay livestreamId={id!} />}
+              {isGated && <LivestreamGateOverlay livestreamId={id!} surface="watch" sessionSeconds={sessionSeconds} />}
               {hasPlayback ? (
                 <MuxPlayer
-                  ref={playerRef}
                   playbackId={playbackId!}
                   title={streamTitle}
                   poster={livestream.thumbnail_url ?? undefined}
                   streamType={streamType}
                   type="livestream"
                   isLive={isLive}
+                  gated={isGated}
                   onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
                 />
               ) : isScheduled ? (

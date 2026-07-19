@@ -425,10 +425,14 @@ export interface Translations {
     hubTitle: string;
     hubDescription: string;
     previewRemaining: string;
+    previewEndingSoon: string;
     previewEnded: string;
     signupToWatch: string;
     loginToWatch: string;
     createAccount: string;
+    embedGateTitle: string;
+    embedGateBody: string;
+    streamNotAvailable: string;
     seo: {
       tournamentsTitle: string;
       tournamentsDesc: string;
@@ -3309,11 +3313,15 @@ export const vi: Translations = {
     replay: "Xem lại",
     watchingTooltip: "Số người đang xem trực tiếp ngay bây giờ",
     totalViewsTooltip: "Tổng số lượt xem từ khi bắt đầu phát",
-    previewRemaining: "Còn {seconds}s xem thử",
-    previewEnded: "Hết thời gian xem thử",
-    signupToWatch: "Đăng ký miễn phí để tiếp tục xem",
-    loginToWatch: "Đăng nhập để xem",
+    previewRemaining: "Xem thử miễn phí · Còn {seconds} giây",
+    previewEndingSoon: "Còn {seconds} giây · Đăng ký để xem tiếp",
+    previewEnded: "Xem tiếp trận đấu",
+    signupToWatch: "Thời gian xem thử đã kết thúc. Tạo tài khoản miễn phí để xem tiếp.",
+    loginToWatch: "Đã có tài khoản? Đăng nhập",
     createAccount: "Tạo tài khoản miễn phí",
+    embedGateTitle: "Xem tiếp trên ThePickleHub",
+    embedGateBody: "Thời gian xem thử đã kết thúc. Mở ThePickleHub để tạo tài khoản miễn phí và xem tiếp.",
+    streamNotAvailable: "Buổi phát không khả dụng",
     // SEO Hub content
     hubTitle: "Xem Livestream Pickleball",
     hubDescription: "Xem trực tiếp các giải pickleball trên ThePickleHub – điểm đến cho những ai yêu thích pickleball.",

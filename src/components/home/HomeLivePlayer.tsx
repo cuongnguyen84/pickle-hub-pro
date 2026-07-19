@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { MuxPlayer } from "@/components/video";
-import type { MuxPlayerHandle } from "@/components/video/MuxPlayer";
 import { PreviewCountdown } from "@/components/video/PreviewCountdown";
 import { LivestreamGateOverlay } from "@/components/video/LivestreamGateOverlay";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
@@ -27,11 +26,10 @@ interface HomeLivePlayerProps {
  * viewer chooses to play, exactly like /live.
  */
 export default function HomeLivePlayer({ stream }: HomeLivePlayerProps) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isBlocked } = useGeoBlock();
   const { data: systemSettings } = useSystemSettings();
   const [isPlaying, setIsPlaying] = useState(false);
-  const playerRef = useRef<MuxPlayerHandle>(null);
 
   // public_livestreams is a VIEW → every column is typed nullable. LiveSection
   // only mounts this for a real, live row, so id/playback are present.
@@ -43,23 +41,23 @@ export default function HomeLivePlayer({ stream }: HomeLivePlayerProps) {
     (gateAppliesTo === "all" || gateAppliesTo === "live")
   );
 
-  const { isGated, secondsRemaining, progress, showCountdown } = useLivestreamGate({
+  const { isGated, secondsRemaining, progress, showCountdown, sessionSeconds } = useLivestreamGate({
     livestreamId,
+    surface: "home",
     previewSeconds: systemSettings?.livestream_preview_seconds ?? 15,
-    isEnabled: gateEnabled,
+    // Wait for auth restore before arming the gate — a slow session restore
+    // must never pause a logged-in viewer's live.
+    isEnabled: gateEnabled && !authLoading,
     isAuthenticated: !!user,
     isPlaying,
   });
 
-  // Stop playback the instant the preview window closes.
-  useEffect(() => {
-    if (isGated) playerRef.current?.pause();
-  }, [isGated]);
-
-  // Count homepage watch-time the same way the full page does.
+  // Count homepage watch-time the same way the full page does — only while
+  // actually playing and not gated.
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: livestreamId,
+    active: isPlaying && !isGated,
   });
 
   const playbackId = stream.mux_playback_id;
@@ -69,15 +67,15 @@ export default function HomeLivePlayer({ stream }: HomeLivePlayerProps) {
     <div className="tl-live-embed">
       {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
       {isBlocked && <GeoBlockOverlay />}
-      {isGated && <LivestreamGateOverlay livestreamId={livestreamId} />}
+      {isGated && <LivestreamGateOverlay livestreamId={livestreamId} surface="home" sessionSeconds={sessionSeconds} />}
       <MuxPlayer
-        ref={playerRef}
         playbackId={playbackId}
         title={stream.title ?? undefined}
         poster={stream.thumbnail_url ?? undefined}
         streamType="live"
         type="livestream"
         isLive
+        gated={isGated}
         onPlayStateChange={setIsPlaying}
       />
     </div>

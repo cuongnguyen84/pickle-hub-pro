@@ -4,6 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 interface UseIntervalViewCounterOptions {
   targetType: "livestream" | "video";
   targetId: string | undefined;
+  /**
+   * Whether this tab currently counts as "watching". REQUIRED (no default)
+   * on purpose: this hook is shared by video AND livestream surfaces, and a
+   * silent default here once meant a wrong flag could stop a whole target
+   * type from counting without any compile error. Video pages pass `true`
+   * (anonymous open-page viewing counts, unchanged); livestream pages pass
+   * `isPlaying && !isGated`.
+   */
+  active: boolean;
   source?: "embed";
   /** How often (ms) to accumulate a view event. Default: 30s */
   intervalMs?: number;
@@ -27,6 +36,7 @@ interface PendingEvent {
 export function useIntervalViewCounter({
   targetType,
   targetId,
+  active,
   source,
   intervalMs = 30_000,
   flushIntervalMs = 60_000,
@@ -36,6 +46,12 @@ export function useIntervalViewCounter({
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const flushRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const totalSentRef = useRef(0);
+  // Read via ref inside the tick so toggling play/pause does NOT re-key the
+  // effect (re-keying would reset the interval and the session cap).
+  const activeRef = useRef(active);
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
 
   useEffect(() => {
     if (!targetId) return undefined;
@@ -49,8 +65,9 @@ export function useIntervalViewCounter({
       ...(source ? { source } : {}),
     };
 
-    // Accumulate one event every intervalMs (only if under cap)
+    // Accumulate one event every intervalMs (only while active and under cap)
     tickRef.current = setInterval(() => {
+      if (!activeRef.current) return;
       if (totalSentRef.current + pendingRef.current.length < maxEventsPerSession) {
         pendingRef.current.push({ ...event });
       }

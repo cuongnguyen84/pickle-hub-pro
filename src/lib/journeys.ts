@@ -19,7 +19,11 @@ export type JourneyKind =
   | "organizer_event"
   // UX-01..05: the 4 tournament creation flows (prop `tool` distinguishes
   // flex | quicktable | teammatch | doubles).
-  | "organizer_tournament";
+  | "organizer_tournament"
+  // Livestream login gate → signup funnel. Starts when the gate overlay is
+  // shown; completes at the existing sign_up point in useAuth. Prop
+  // `surface` distinguishes home | watch | embed.
+  | "livestream_gate";
 
 const JOURNEY_SCHEMA_VERSION = 1;
 const storageKey = (kind: JourneyKind) => `journey_${kind}_id`;
