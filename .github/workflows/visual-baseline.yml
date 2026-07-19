@@ -38,6 +38,8 @@ jobs:
           PLAYWRIGHT_BASE_URL: ${{ inputs.base_url }}
         run: npx playwright test --project=visual --project=visual-mobile --update-snapshots
       - name: Commit baselines
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -46,6 +48,17 @@ jobs:
             echo "No baseline changes to commit."
             exit 0
           fi
-          git commit -m "test(visual): update TheLine baselines [skip ci]"
-          git push
-          echo "Baselines committed. The Visual regression PR job is now active."
+          git commit -m "test(visual): update TheLine baselines"
+          # Direct push to a protected branch (main) is rejected (GH006 —
+          # run 29692578668). Push to the branch we ran on when possible;
+          # otherwise open a PR from a throwaway branch.
+          if git push 2>/dev/null; then
+            echo "Baselines committed to $GITHUB_REF_NAME."
+          else
+            BR="chore/visual-baselines-${{ github.run_number }}"
+            git switch -c "$BR"
+            git push -u origin "$BR"
+            gh pr create --fill --title "test(visual): refresh baselines (run ${{ github.run_number }})" \
+              --body "Automated baseline refresh from the Visual baseline (capture) workflow. Review the PNG diffs, then merge."
+            echo "Protected branch — opened a PR from $BR instead."
+          fi
