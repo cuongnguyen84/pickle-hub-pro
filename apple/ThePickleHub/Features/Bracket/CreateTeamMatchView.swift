@@ -130,6 +130,97 @@ final class CreateTeamMatchModel {
         }
     }
 
+    // ── UX-04 autosave snapshot (parity web draft:teammatch:new) ─────────
+    // Ranh giới D3/CodeQL: bankCode / bankAccountNumber / bankAccountName
+    // KHÔNG có trong snapshot — nhập lại sau khi khôi phục, giống web.
+    struct Draft: Codable, Equatable {
+        struct Template: Codable, Equatable { var gameType: String; var displayName: String; var scoringType: String }
+        struct Tier: Codable, Equatable { var slots: Int; var percent: Int }
+        var step: Int
+        var name: String
+        var hasEventDate: Bool
+        var eventDate: Date
+        var location: String
+        var rosterSize: Int
+        var teamCount: Int
+        var requireRegistration: Bool
+        var useDupr: Bool
+        var duprMaxMale: Double
+        var duprMaxFemale: Double
+        var totalScoreMode: Bool
+        var pointsPerGame: Int
+        var requireMinGames: Bool
+        var rulesSummary: String
+        var entryFeeVnd: Int
+        var entryFeeTeamVnd: Int
+        var discountTiers: [Tier]
+        var templates: [Template]
+        var hasDreambreaker: Bool
+        var format: String
+        var playoffTeamCount: Int
+        var hasRepechage: Bool
+        var hasThirdPlaceMatch: Bool
+    }
+
+    var draftSnapshot: Draft {
+        .init(step: step, name: name, hasEventDate: hasEventDate, eventDate: eventDate,
+              location: location, rosterSize: rosterSize, teamCount: teamCount,
+              requireRegistration: requireRegistration, useDupr: useDupr,
+              duprMaxMale: duprMaxMale, duprMaxFemale: duprMaxFemale,
+              totalScoreMode: totalScoreMode, pointsPerGame: pointsPerGame,
+              requireMinGames: requireMinGames, rulesSummary: rulesSummary,
+              entryFeeVnd: entryFeeVnd, entryFeeTeamVnd: entryFeeTeamVnd,
+              discountTiers: discountTiers.map { .init(slots: $0.slots, percent: $0.percent) },
+              templates: templates.map { .init(gameType: $0.gameType, displayName: $0.displayName, scoringType: $0.scoringType) },
+              hasDreambreaker: hasDreambreaker, format: format,
+              playoffTeamCount: playoffTeamCount, hasRepechage: hasRepechage,
+              hasThirdPlaceMatch: hasThirdPlaceMatch)
+    }
+
+    func apply(_ d: Draft) {
+        name = d.name
+        hasEventDate = d.hasEventDate
+        eventDate = d.eventDate
+        location = d.location
+        if [4, 6, 8].contains(d.rosterSize) { rosterSize = d.rosterSize }
+        teamCount = min(max(2, d.teamCount), 32)
+        requireRegistration = d.requireRegistration
+        useDupr = d.useDupr
+        duprMaxMale = d.duprMaxMale
+        duprMaxFemale = d.duprMaxFemale
+        totalScoreMode = d.totalScoreMode
+        pointsPerGame = min(max(1, d.pointsPerGame), 50)
+        requireMinGames = d.requireMinGames
+        rulesSummary = d.rulesSummary
+        entryFeeVnd = max(0, d.entryFeeVnd)
+        entryFeeTeamVnd = max(0, d.entryFeeTeamVnd)
+        discountTiers = d.discountTiers.map { DiscountTier(slots: $0.slots, percent: $0.percent) }
+        if !d.templates.isEmpty {
+            templates = d.templates.map {
+                Template(gameType: $0.gameType, displayName: $0.displayName, scoringType: $0.scoringType)
+            }
+        }
+        hasDreambreaker = d.hasDreambreaker
+        if ["round_robin", "single_elimination", "rr_playoff"].contains(d.format) { format = d.format }
+        playoffTeamCount = d.playoffTeamCount
+        normalizePlayoffCount()
+        hasRepechage = d.hasRepechage
+        hasThirdPlaceMatch = d.hasThirdPlaceMatch
+        step = min(max(1, d.step), 5)
+    }
+
+    func resetForm() {
+        step = 1; name = ""; hasEventDate = false; eventDate = Date(); location = ""
+        rosterSize = 4; teamCount = 4; requireRegistration = false
+        useDupr = false; duprMaxMale = 5.0; duprMaxFemale = 4.5
+        totalScoreMode = false; pointsPerGame = 7; requireMinGames = false
+        rulesSummary = ""; entryFeeVnd = 0; entryFeeTeamVnd = 0
+        bankCode = ""; bankAccountNumber = ""; bankAccountName = ""
+        discountTiers = []; templates = Self.defaultTemplates(4)
+        hasDreambreaker = false; format = "round_robin"; playoffTeamCount = 4
+        hasRepechage = false; hasThirdPlaceMatch = false; error = nil
+    }
+
     @MainActor
     func create(onCreated: (String) -> Void) async {
         creating = true; error = nil
@@ -166,8 +257,12 @@ struct CreateTeamMatchView: View {
     let onCreated: (_ shareID: String, _ name: String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model = CreateTeamMatchModel()
     @State private var confirmDiscard = false
+    @State private var draft = DraftStore<CreateTeamMatchModel.Draft>(flow: "teammatch")
+    @State private var restoredDraft = false
+    @State private var restoreApplied = false
 
     private let steps = ["Thông tin", "Game", "DreamBreaker", "Thể thức", "Lệ phí"]
 
@@ -181,6 +276,12 @@ struct CreateTeamMatchView: View {
                 stepBar
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
+                        if restoredDraft {
+                            DraftRestoredBanner {
+                                model.resetForm()
+                                draft.clear(current: model.draftSnapshot)
+                            }
+                        }
                         switch model.step {
                         case 1: basicInfo
                         case 2: gameTemplates
@@ -194,6 +295,7 @@ struct CreateTeamMatchView: View {
                     }
                     .padding(16)
                 }
+                DraftSaveStatusLine(savedAt: draft.lastSavedAt).padding(.horizontal, 16)
                 footer
             }
             .background(TLColor.bg)
@@ -207,8 +309,22 @@ struct CreateTeamMatchView: View {
                 }
             }
             .confirmationDialog("Bỏ thay đổi?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+                // ponytail: đóng sheet KHÔNG xoá draft — autosave giữ lại,
+                // mở lại sẽ có banner khôi phục + "Bắt đầu lại" để xoá hẳn.
                 Button("Bỏ thay đổi", role: .destructive) { dismiss() }
                 Button("Tiếp tục nhập", role: .cancel) {}
+            }
+            .onAppear {
+                guard !restoreApplied else { return }
+                restoreApplied = true
+                if let d = draft.restore() {
+                    model.apply(d)
+                    restoredDraft = true
+                }
+            }
+            .onChange(of: model.draftSnapshot) { _, snap in draft.save(snap) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { draft.flush(model.draftSnapshot) }
             }
         }
         .interactiveDismissDisabled(hasEdits)
@@ -707,7 +823,10 @@ struct CreateTeamMatchView: View {
                 Button {
                     Haptics.light()
                     Task {
-                        await model.create { shareID in onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss() }
+                        await model.create { shareID in
+                            draft.clear(current: model.draftSnapshot)
+                            onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss()
+                        }
                         if model.error == nil { Haptics.success() } else { Haptics.error() }
                     }
                 } label: {

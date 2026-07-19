@@ -27,6 +27,25 @@ final class CreateFlexModel {
         name.trimmingCharacters(in: .whitespaces).count >= 1
     }
 
+    // ── UX-04 autosave snapshot (parity web draft:flex:new) ──────────────
+    struct Draft: Codable, Equatable {
+        var name: String
+        var playersText: String
+        var isPublic: Bool
+    }
+
+    var draftSnapshot: Draft { .init(name: name, playersText: playersText, isPublic: isPublic) }
+
+    func apply(_ d: Draft) {
+        name = d.name
+        playersText = d.playersText
+        isPublic = d.isPublic
+    }
+
+    func resetForm() {
+        name = ""; playersText = ""; isPublic = false; error = nil
+    }
+
     @MainActor
     func create(onDone: (String) -> Void) async {
         creating = true; error = nil
@@ -44,13 +63,23 @@ struct CreateFlexView: View {
     let onCreated: (_ shareID: String, _ name: String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model = CreateFlexModel()
+    @State private var draft = DraftStore<CreateFlexModel.Draft>(flow: "flex")
+    @State private var restoredDraft = false
+    @State private var restoreApplied = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
+                        if restoredDraft {
+                            DraftRestoredBanner {
+                                model.resetForm()
+                                draft.clear(current: model.draftSnapshot)
+                            }
+                        }
                         field("Tên giải đấu") { tf($model.name, "VD: Giải linh hoạt 2026") }
 
                         toggleRow("Công khai", model.isPublic ? "Ai có link đều xem được" : "Chỉ bạn quản lý",
@@ -93,13 +122,26 @@ struct CreateFlexView: View {
             .navigationTitle("Tạo giải linh hoạt")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) } }
+            .onAppear {
+                guard !restoreApplied else { return }
+                restoreApplied = true
+                if let d = draft.restore() {
+                    model.apply(d)
+                    restoredDraft = true
+                }
+            }
+            .onChange(of: model.draftSnapshot) { _, snap in draft.save(snap) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { draft.flush(model.draftSnapshot) }
+            }
         }
     }
 
-    private var footer: some View {
+    private var footerButton: some View {
         Button {
             Haptics.success()
             Task { await model.create { shareID in
+                draft.clear(current: model.draftSnapshot)
                 onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss()
             } }
         } label: {
@@ -113,6 +155,13 @@ struct CreateFlexView: View {
         .buttonStyle(.plain)
         .disabled(!model.canProceed() || model.creating)
         .opacity(model.canProceed() ? 1 : 0.5)
+    }
+
+    private var footer: some View {
+        VStack(spacing: 6) {
+            DraftSaveStatusLine(savedAt: draft.lastSavedAt)
+            footerButton
+        }
         .padding(16)
     }
 

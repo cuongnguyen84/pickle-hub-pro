@@ -44,6 +44,98 @@ struct CreateQuickTableView: View {
     @State private var working = false
     @State private var errorMessage: String?
 
+    // ── UX-04 autosave (parity web draft:quicktable:<shareId>; native gom cả
+    // wizard tiền-tạo lẫn bước roster vào 1 key draft:quicktable:new vì đây
+    // là 1 sheet duy nhất, không có route riêng theo shareId như web) ──────
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var draft = DraftStore<QTDraft>(flow: "quicktable")
+    @State private var restoredDraft = false
+    @State private var restoreApplied = false
+
+    struct QTDraft: Codable, Equatable {
+        struct Player: Codable, Equatable { var name: String; var name2: String; var team: String; var seed: String }
+        var name: String
+        var playerCountText: String
+        var requiresRegistration: Bool
+        var isDoubles: Bool
+        var defaultSets: Int
+        var requiresSkillLevel: Bool
+        var ratingSource: String
+        var minDupr: String
+        var maxDupr: String
+        var autoApprove: Bool
+        var registrationMessage: String
+        var selectedFormat: String
+        var selectedGroupCount: Int?
+        // Bảng đã tạo giữa chừng (bước roster) — đủ để finishSetup tiếp tục.
+        var createdTableID: UUID?
+        var createdShareID: String?
+        var roster: [Player]
+        var assignmentMode: String
+        var courts: String
+        var startTime: String
+    }
+
+    private var draftSnapshot: QTDraft {
+        .init(name: name, playerCountText: playerCountText,
+              requiresRegistration: requiresRegistration, isDoubles: isDoubles,
+              defaultSets: defaultSets, requiresSkillLevel: requiresSkillLevel,
+              ratingSource: ratingSource, minDupr: minDupr, maxDupr: maxDupr,
+              autoApprove: autoApprove, registrationMessage: registrationMessage,
+              selectedFormat: selectedFormat, selectedGroupCount: selectedGroupCount,
+              createdTableID: createdTable?.id, createdShareID: createdTable?.shareID,
+              roster: roster.map { .init(name: $0.name, name2: $0.name2, team: $0.team, seed: $0.seed) },
+              assignmentMode: assignmentMode, courts: courts, startTime: startTime)
+    }
+
+    private func applyDraft(_ d: QTDraft) {
+        name = d.name
+        playerCountText = d.playerCountText
+        requiresRegistration = d.requiresRegistration
+        isDoubles = d.isDoubles
+        defaultSets = d.defaultSets
+        requiresSkillLevel = d.requiresSkillLevel
+        if ["self", "dupr", "either"].contains(d.ratingSource) { ratingSource = d.ratingSource }
+        minDupr = d.minDupr
+        maxDupr = d.maxDupr
+        autoApprove = d.autoApprove
+        registrationMessage = d.registrationMessage
+        selectedFormat = d.selectedFormat
+        selectedGroupCount = d.selectedGroupCount
+        if d.assignmentMode == "auto" || d.assignmentMode == "manual" { assignmentMode = d.assignmentMode }
+        courts = d.courts
+        startTime = d.startTime
+        // Bảng đã tạo → nhảy thẳng về bước roster với danh sách đã gõ dở.
+        if let id = d.createdTableID, let shareID = d.createdShareID {
+            createdTable = QTTable(id: id, shareID: shareID, name: d.name.nonEmpty,
+                                   status: "setup", format: d.selectedFormat.nonEmpty,
+                                   isDoubles: d.isDoubles, creatorUserID: nil, topPerGroup: nil,
+                                   requiresRegistration: d.requiresRegistration,
+                                   courts: nil, startTime: nil)
+            roster = d.roster.map { PlayerField(name: $0.name, name2: $0.name2, team: $0.team, seed: $0.seed) }
+            while roster.count < 2 { roster.append(PlayerField()) }
+            step = .roster
+        }
+        // Chưa tạo bảng → về bước 1 với các trường đã điền (đi lại wizard nhanh).
+    }
+
+    /// "Bắt đầu lại": đã có bảng → chỉ xoá phần roster (bảng vẫn tồn tại DB,
+    /// khớp resetToInitial của web); chưa có bảng → xoá sạch form.
+    private func startOverFromDraft() {
+        if createdTable != nil {
+            roster = (0..<max(2, playerCount)).map { _ in PlayerField() }
+            assignmentMode = "auto"; courts = ""; startTime = ""
+        } else {
+            name = ""; playerCountText = ""; requiresRegistration = false; isDoubles = false
+            defaultSets = 1; requiresSkillLevel = false; ratingSource = "self"
+            minDupr = ""; maxDupr = ""; autoApprove = false; registrationMessage = ""
+            selectedFormat = ""; selectedGroupCount = nil; suggestedFormat = nil; suggestions = []
+            roster = []; assignmentMode = "auto"; courts = ""; startTime = ""
+            step = .count
+        }
+        draft.clear(current: draftSnapshot)
+    }
+
     private let repo = QuickTableRepository()
 
     struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = ""; var name2 = ""; var team = ""; var seed = "" }
@@ -60,6 +152,9 @@ struct CreateQuickTableView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
+                    if restoredDraft {
+                        DraftRestoredBanner { startOverFromDraft() }
+                    }
                     switch step {
                     case .count: stepCount
                     case .format: stepFormat
@@ -69,6 +164,7 @@ struct CreateQuickTableView: View {
                     if let errorMessage {
                         Text(errorMessage).font(TLFont.sans(13)).foregroundStyle(TLColor.live)
                     }
+                    DraftSaveStatusLine(savedAt: draft.lastSavedAt)
                 }
                 .padding(20)
             }
@@ -79,6 +175,18 @@ struct CreateQuickTableView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3)
                 }
+            }
+            .onAppear {
+                guard !restoreApplied else { return }
+                restoreApplied = true
+                if let d = draft.restore() {
+                    applyDraft(d)
+                    restoredDraft = true
+                }
+            }
+            .onChange(of: draftSnapshot) { _, snap in draft.save(snap) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { draft.flush(draftSnapshot) }
             }
         }
     }
@@ -508,6 +616,7 @@ struct CreateQuickTableView: View {
                 roster = (0..<max(2, playerCount)).map { _ in PlayerField() }
                 step = .roster
             } else {
+                draft.clear(current: draftSnapshot)
                 Haptics.success()
                 dismiss()
                 onOpenWeb(WebRoutes.quickTable(shareID: table.shareID))
@@ -523,6 +632,7 @@ struct CreateQuickTableView: View {
         guard let table = createdTable else { return }
         // Manual group assignment is a separate web screen — hand off.
         if assignmentMode == "manual" && manualAvailable {
+            draft.clear(current: draftSnapshot)
             Haptics.success()
             dismiss()
             onOpenWeb(WebRoutes.base.appending(path: "tools/quick-tables/\(table.shareID)/setup"))
@@ -535,6 +645,7 @@ struct CreateQuickTableView: View {
             try await repo.setupRoster(tableID: table.id, players: filledRoster,
                                        groupCount: selectedGroupCount ?? 1,
                                        courts: courtList, startTime: startTime)
+            draft.clear(current: draftSnapshot)
             Haptics.success()
             dismiss()
             onCreated(table.shareID, name.trimmingCharacters(in: .whitespaces))

@@ -42,6 +42,58 @@ final class CreateDEModel {
         }
     }
 
+    // ── UX-04 autosave snapshot (parity web draft:doubles:new) ───────────
+    struct Draft: Codable, Equatable {
+        struct Team: Codable, Equatable { var name: String; var p1: String; var p2: String; var seed: String }
+        var step: Int
+        var name: String
+        var teamCount: Int
+        var courtsText: String
+        var startTime: String
+        var ratingSource: String
+        var minDupr: String
+        var maxDupr: String
+        var earlyFormat: String
+        var semiSel: String
+        var finalsSel: String
+        var hasThirdPlace: Bool
+        var teams: [Team]
+    }
+
+    var draftSnapshot: Draft {
+        .init(step: step, name: name, teamCount: teamCount, courtsText: courtsText,
+              startTime: startTime, ratingSource: ratingSource, minDupr: minDupr, maxDupr: maxDupr,
+              earlyFormat: earlyFormat, semiSel: semiSel, finalsSel: finalsSel,
+              hasThirdPlace: hasThirdPlace,
+              teams: teams.map { .init(name: $0.name, p1: $0.p1, p2: $0.p2, seed: $0.seed) })
+    }
+
+    func apply(_ d: Draft) {
+        name = d.name
+        teamCount = max(2, d.teamCount)
+        courtsText = d.courtsText
+        startTime = d.startTime
+        if ["self", "either", "dupr"].contains(d.ratingSource) { ratingSource = d.ratingSource }
+        minDupr = d.minDupr
+        maxDupr = d.maxDupr
+        if ["bo1", "bo3", "bo5"].contains(d.earlyFormat) { earlyFormat = d.earlyFormat }
+        if ["inherit", "bo3", "bo5"].contains(d.semiSel) { semiSel = d.semiSel }
+        if ["inherit", "bo3", "bo5"].contains(d.finalsSel) { finalsSel = d.finalsSel }
+        hasThirdPlace = d.hasThirdPlace
+        if !d.teams.isEmpty {
+            teams = d.teams.map { TeamRow(name: $0.name, p1: $0.p1, p2: $0.p2, seed: $0.seed) }
+            while teams.count < 2 { teams.append(TeamRow()) }
+        }
+        step = min(max(1, d.step), lastStep)
+    }
+
+    func resetForm() {
+        step = 1; name = ""; teamCount = 8; courtsText = ""; startTime = ""
+        ratingSource = "self"; minDupr = ""; maxDupr = ""
+        earlyFormat = "bo1"; semiSel = "inherit"; finalsSel = "inherit"
+        hasThirdPlace = false; teams = [TeamRow(), TeamRow()]; error = nil
+    }
+
     @MainActor
     func create(onDone: (String) -> Void) async {
         creating = true; error = nil
@@ -70,7 +122,11 @@ struct CreateDoublesElimView: View {
     let onCreated: (_ shareID: String, _ name: String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model = CreateDEModel()
+    @State private var draft = DraftStore<CreateDEModel.Draft>(flow: "doubles")
+    @State private var restoredDraft = false
+    @State private var restoreApplied = false
 
     var body: some View {
         NavigationStack {
@@ -78,6 +134,12 @@ struct CreateDoublesElimView: View {
                 stepBar
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
+                        if restoredDraft {
+                            DraftRestoredBanner {
+                                model.resetForm()
+                                draft.clear(current: model.draftSnapshot)
+                            }
+                        }
                         switch model.step {
                         case 1: infoStep
                         case 2: formatStep
@@ -87,12 +149,25 @@ struct CreateDoublesElimView: View {
                     }
                     .padding(16)
                 }
+                DraftSaveStatusLine(savedAt: draft.lastSavedAt).padding(.horizontal, 16)
                 footer
             }
             .background(TLColor.bg)
             .navigationTitle("Tạo loại trực tiếp")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) } }
+            .onAppear {
+                guard !restoreApplied else { return }
+                restoreApplied = true
+                if let d = draft.restore() {
+                    model.apply(d)
+                    restoredDraft = true
+                }
+            }
+            .onChange(of: model.draftSnapshot) { _, snap in draft.save(snap) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { draft.flush(model.draftSnapshot) }
+            }
         }
     }
 
@@ -239,7 +314,10 @@ struct CreateDoublesElimView: View {
             } else {
                 Button {
                     Haptics.success()
-                    Task { await model.create { shareID in onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss() } }
+                    Task { await model.create { shareID in
+                        draft.clear(current: model.draftSnapshot)
+                        onCreated(shareID, model.name.trimmingCharacters(in: .whitespaces)); dismiss()
+                    } }
                 } label: {
                     HStack(spacing: 6) {
                         if model.creating { ProgressView().tint(TLColor.accentInk) }
