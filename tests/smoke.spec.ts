@@ -112,11 +112,13 @@ for (const route of ROUTES) {
 
 test("homepage has signed-out CTA (login / sign up)", async ({ page }) => {
   await page.goto("/");
-  // Either the inline login button or the mobile pill should be visible.
-  const hasLoginAffordance =
-    (await page.getByRole("link", { name: /sign in|đăng nhập/i }).count()) > 0 ||
-    (await page.getByRole("link", { name: /log in|đăng nhập/i }).count()) > 0;
-  expect(hasLoginAffordance, "expected login affordance on /").toBe(true);
+  // Flake fix 2026-07-19: count() snapshots one instant — khi có luồng live
+  // homepage mount nặng hơn và link login chưa kịp render → false negative.
+  // toBeVisible() auto-retries đến khi React vẽ xong.
+  await expect(
+    page.getByRole("link", { name: /sign in|log in|đăng nhập/i }).first(),
+    "expected login affordance on /",
+  ).toBeVisible();
 });
 
 // ── A11Y-01 foundations — skip link + route focus management ──────────────
@@ -162,7 +164,12 @@ const SCROLL_ROUTES = ["/", "/tournaments", "/vi"];
 for (const route of SCROLL_ROUTES) {
   test(`page actually scrolls: ${route}`, async ({ page }) => {
     await page.goto(route);
-    await page.waitForLoadState("networkidle").catch(() => {});
+    // Flake fix 2026-07-19: BOUNDED networkidle. Khi có livestream đang phát,
+    // realtime websocket + HLS/poll làm network KHÔNG BAO GIỜ idle — không có
+    // timeout riêng (actionTimeout=0) thì chờ tới chết test 30s. 5s là đủ để
+    // trang tĩnh settle; trang "ồn" thì evaluate bên dưới vẫn chạy được
+    // (verified against prod mid-livestream: scroll OK, evaluate <5ms).
+    await page.waitForLoadState("networkidle", { timeout: 5_000 }).catch(() => {});
     const result = await page.evaluate(() => {
       const scroller = [...document.querySelectorAll("*")].find((el) => {
         const cs = getComputedStyle(el);
