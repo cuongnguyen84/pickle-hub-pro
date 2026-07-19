@@ -2223,6 +2223,7 @@ export interface Translations {
       bankCodeLabel: string;
       bankAccountNumberLabel: string;
       bankAccountNameLabel: string;
+      bankConfirmLabel: string;
       save: string;
       saving: string;
       cancelBtn: string;
@@ -5137,6 +5138,8 @@ export const vi: Translations = {
       bankCodeLabel: "Mã ngân hàng",
       bankAccountNumberLabel: "Số tài khoản",
       bankAccountNameLabel: "Tên chủ TK",
+      bankConfirmLabel:
+        "Tiền sẽ chuyển vào: {name} – {number} ({bank}). Tôi xác nhận đây đúng là tài khoản nhận tiền cho buổi này.",
       save: "Lưu thay đổi",
       saving: "Đang lưu…",
       cancelBtn: "Huỷ",

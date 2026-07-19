@@ -2273,6 +2273,8 @@ export const en: Translations = {
       bankCodeLabel: "Bank code",
       bankAccountNumberLabel: "Account number",
       bankAccountNameLabel: "Account holder",
+      bankConfirmLabel:
+        "Payments will go to: {name} – {number} ({bank}). I confirm this is the correct receiving account for this event.",
       save: "Save changes",
       saving: "Saving…",
       cancelBtn: "Cancel",
