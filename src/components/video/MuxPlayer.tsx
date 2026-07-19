@@ -220,6 +220,9 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   }));
 
   const handleTapToPlay = useCallback(async () => {
+    // Screen readers can activate the tap target through the gate overlay
+    // (rotor navigation ignores z-index) — never trust the DOM to block it.
+    if (gatedRef.current) return;
     if (!playerRef.current) return;
 
     try {
@@ -350,7 +353,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         type={type}
         isLive={isLive}
         onTap={handleTapToPlay}
-        isVisible={showOverlay && !isReconnecting}
+        isVisible={showOverlay && !isReconnecting && !gated}
         poster={poster}
       />
 

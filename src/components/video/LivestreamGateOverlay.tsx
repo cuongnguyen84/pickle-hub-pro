@@ -13,6 +13,19 @@ interface LivestreamGateOverlayProps {
   sessionSeconds?: number;
 }
 
+/** Set only on a real CTA click; useAuth completes the journey only when
+ * this is present, so an unrelated later signup in the same tab (viewer saw
+ * the gate, left, signed up from the header) is not attributed to the gate. */
+export const GATE_CTA_FLAG = "journey_livestream_gate_cta";
+
+function markCtaClicked() {
+  try {
+    sessionStorage.setItem(GATE_CTA_FLAG, "1");
+  } catch {
+    /* attribution is best-effort */
+  }
+}
+
 export function LivestreamGateOverlay({
   livestreamId,
   surface,
@@ -87,9 +100,10 @@ export function LivestreamGateOverlay({
           <a
             href={signupHref}
             {...(isEmbed ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-            onClick={() =>
-              trackJourneyStep("livestream_gate", "live_gate_signup_clicked", { surface })
-            }
+            onClick={() => {
+              markCtaClicked();
+              trackJourneyStep("livestream_gate", "live_gate_signup_clicked", { surface });
+            }}
           >
             {t.live.createAccount}
           </a>
@@ -97,9 +111,10 @@ export function LivestreamGateOverlay({
         <a
           href={loginHref}
           {...(isEmbed ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-          onClick={() =>
-            trackJourneyStep("livestream_gate", "live_gate_login_clicked", { surface })
-          }
+          onClick={() => {
+            markCtaClicked();
+            trackJourneyStep("livestream_gate", "live_gate_login_clicked", { surface });
+          }}
           className="text-sm text-white/70 hover:text-white underline underline-offset-4"
         >
           {t.live.loginToWatch}

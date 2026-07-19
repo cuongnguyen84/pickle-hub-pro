@@ -126,10 +126,14 @@ window has ended, on any of the three surfaces (`home` hero, `watch` page,
 third-party `embed`).
 
 **Completion:** the existing `sign_up` point in `useAuth` fires for a freshly
-created account while a `livestream_gate` journey is active in the session.
-The completion inherits the `sign_up` age heuristic (account < 120s old), so
+created account while a `livestream_gate` journey is active in the session
+AND a gate-CTA click flag is present (set only by a real click on the overlay
+CTAs; prevents attributing unrelated later signups in the same tab). The
+completion inherits the `sign_up` age heuristic (account < 120s old), so
 email-verify flows slower than 2 minutes are not attributed — a known
-undercount, not a bug.
+undercount, not a bug. Embed CTAs open a new tab whose sessionStorage is
+separate, so embed completions undercount; the `source=embed_live_gate` URL
+param on the login page remains the embed-side signal.
 
 | Order | Event | Emit condition |
 |---:|---|---|
