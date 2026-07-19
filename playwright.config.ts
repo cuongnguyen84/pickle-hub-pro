@@ -106,5 +106,12 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       testMatch: /visual\.spec\.ts/,
     },
+    {
+      // QA-05 — the same pixel-diffs at mobile width (audience is
+      // mobile-heavy; desktop-only baselines miss stacked-layout breakage).
+      name: "visual-mobile",
+      use: { ...devices["Pixel 7"] },
+      testMatch: /visual\.spec\.ts/,
+    },
   ],
 });

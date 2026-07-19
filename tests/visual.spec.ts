@@ -44,11 +44,18 @@ test.describe("visual regression", () => {
     { name: "tools", path: "/tools" },
     { name: "feed", path: "/feed" },
     { name: "home-vi", path: "/vi" },
+    // QA-05 locales: VI mirrors of the two most content-distinct routes.
+    { name: "rankings-vi", path: "/vi/rankings" },
+    { name: "news-vi", path: "/vi/news" },
   ];
 
   for (const p of PAGES) {
     test(`${p.name} matches baseline`, async ({ page }) => {
-      await page.goto(p.path, { waitUntil: "networkidle" });
+      // Full-page shots of heavy pages can exceed the global 30s budget.
+      test.setTimeout(60_000);
+      // NOT networkidle: realtime channels + analytics beacons keep the
+      // network busy forever on / — capture run 29692427270 timed out there.
+      await page.goto(p.path, { waitUntil: "load" });
       // Settle fonts + lazy images.
       await page.waitForTimeout(1200);
       await page.evaluate(() => document.fonts?.ready);

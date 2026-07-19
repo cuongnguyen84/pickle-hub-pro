@@ -36,7 +36,7 @@ jobs:
         env:
           VISUAL: "1"
           PLAYWRIGHT_BASE_URL: ${{ inputs.base_url }}
-        run: npx playwright test --project=visual --update-snapshots
+        run: npx playwright test --project=visual --project=visual-mobile --update-snapshots
       - name: Commit baselines
         run: |
           git config user.name "github-actions[bot]"

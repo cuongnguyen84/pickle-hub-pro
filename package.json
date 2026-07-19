@@ -17,8 +17,8 @@
     "e2e:auth": "playwright test --project=auth",
     "e2e:contract": "playwright test --project=contract",
     "e2e:dupr": "DUPR_E2E=1 playwright test --project=dupr-e2e",
-    "e2e:visual": "VISUAL=1 playwright test --project=visual",
-    "e2e:visual:update": "VISUAL=1 playwright test --project=visual --update-snapshots",
+    "e2e:visual": "VISUAL=1 playwright test --project=visual --project=visual-mobile",
+    "e2e:visual:update": "VISUAL=1 playwright test --project=visual --project=visual-mobile --update-snapshots",
     "lhci": "npx --yes @lhci/cli@0.14.x autorun",
     "drift": "node scripts/check-migration-drift.mjs",
     "auth:registry": "node scripts/check-edge-auth-registry.mjs"

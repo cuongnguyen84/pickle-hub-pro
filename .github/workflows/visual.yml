@@ -62,7 +62,7 @@ jobs:
         continue-on-error: true
         env:
           VISUAL: "1"
-        run: npx playwright test --project=visual
+        run: npx playwright test --project=visual --project=visual-mobile
 
       - name: Upload diff artifacts
         # continue-on-error makes the step succeed at the job level, so use the
