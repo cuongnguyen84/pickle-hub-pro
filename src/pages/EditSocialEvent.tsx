@@ -77,6 +77,11 @@ export default function EditSocialEvent() {
   const [cancelTyped, setCancelTyped] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
+  // Bank-prefill confirm (proposal ux-01-05, việc tách riêng): với club_managers,
+  // người đang sửa có thể KHÔNG phải người đã nhập STK — form prefill STK cũ và
+  // re-publish làm tiền chảy vào tài khoản của organizer đã rời CLB. Bắt tick
+  // xác nhận tên chủ TK trước khi lưu event có phí mà bank đến từ prefill.
+  const [bankConfirmed, setBankConfirmed] = useState(false);
 
   const { data: bundle, isLoading } = useQuery({
     queryKey: ["edit-event", event_slug],
@@ -235,6 +240,12 @@ export default function EditSocialEvent() {
     : false;
   const readOnly = eventStarted || isCancelled;
 
+  const bankPrefilled = Boolean(
+    (bundle?.pc as { bank_account_number?: string } | null)?.bank_account_number,
+  );
+  const bankConfirmNeeded =
+    Boolean(form && form.price_vnd > 0) && bankPrefilled && !readOnly;
+
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
     setTouched((p) => ({ ...p, [key]: true }));
@@ -242,6 +253,7 @@ export default function EditSocialEvent() {
 
   async function handleSave() {
     if (!form || !eventId || !allValid || readOnly) return;
+    if (bankConfirmNeeded && !bankConfirmed) return;
     setSaving(true);
     try {
       const startIso = localToIso(form.start_date, form.start_time);
@@ -690,6 +702,24 @@ export default function EditSocialEvent() {
                     </div>
                   </div>
 
+                  {bankConfirmNeeded && (
+                    <div className="mt-3 flex items-start gap-3 rounded-md border border-border p-3">
+                      <input
+                        id="ev-bank-confirm"
+                        type="checkbox"
+                        checked={bankConfirmed}
+                        onChange={(e) => setBankConfirmed(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-border"
+                      />
+                      <Label htmlFor="ev-bank-confirm" className="cursor-pointer text-sm font-normal leading-snug">
+                        {edit.bankConfirmLabel
+                          .replace("{name}", form.bank_account_name || "—")
+                          .replace("{number}", form.bank_account_number || "—")
+                          .replace("{bank}", form.bank_code || "—")}
+                      </Label>
+                    </div>
+                  )}
+
                   {/* PR67 — prepayment toggle + deadline. Same UX as the
                       CreateSocialEvent wizard's Step2Payment block. */}
                   <div className="mt-4 space-y-3 border-t border-border pt-4">
@@ -748,11 +778,17 @@ export default function EditSocialEvent() {
               <button
                 type="button"
                 className="tl-btn green"
-                disabled={!allValid || saving || readOnly}
+                disabled={!allValid || saving || readOnly || (bankConfirmNeeded && !bankConfirmed)}
                 onClick={handleSave}
                 style={{
-                  opacity: !allValid || saving || readOnly ? 0.5 : 1,
-                  cursor: !allValid || saving || readOnly ? "not-allowed" : "pointer",
+                  opacity:
+                    !allValid || saving || readOnly || (bankConfirmNeeded && !bankConfirmed)
+                      ? 0.5
+                      : 1,
+                  cursor:
+                    !allValid || saving || readOnly || (bankConfirmNeeded && !bankConfirmed)
+                      ? "not-allowed"
+                      : "pointer",
                 }}
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
