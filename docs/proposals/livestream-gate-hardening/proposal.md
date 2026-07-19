@@ -1,6 +1,6 @@
 # Vá gate "đăng nhập để xem livestream" + đo đạc thật
 
-> Slug: `livestream-gate-hardening` · Ngày: `2026-07-20` · Trạng thái: `approved`
+> Slug: `livestream-gate-hardening` · Ngày: `2026-07-20` · Trạng thái: `shipped`
 > **Quyết định của Cuong (2026-07-20):** duyệt theo đề xuất orchestrator mục 0 —
 > D2 = tách key preview theo bề mặt (`_home_`/`_watch_`) + vẫn log `secondsWatchedBeforeGate`;
 > D3 = duyệt điều kiện panel (presence-gated PR riêng cuối, cấm vào subscribe deps, merge-gate = runtime re-track test, không sạch thì cắt);
@@ -222,6 +222,11 @@ Không có — ledger `--strict` pass 0 vi phạm. Cả 2 CONCEDE đều kèm fi
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
+- SHA: `f46caf1f` · PR: #415 · Ngày: 2026-07-20
 - Khác kế hoạch:
-- Học được (→ append `.claude/memory/lessons-learned.md`):
+  - Copy body overlay bỏ "15 giây" hard-code (previewSeconds là setting DB, hard-code sẽ sai khi đổi setting) — ui-ux-verifier ghi nhận lệch-theo-hướng-tốt.
+  - `completeJourney` dời khỏi `useAuth.tsx` sang `src/lib/livestreamGateAttribution.ts` (listener riêng, cùng heuristic <120s): release-pilot chặn RED vì đụng auth surface — refactor về AMBER thay vì xin duyệt RED. Kèm điều kiện mới từ QA: chỉ attribute khi có CTA-click flag thật (chống thổi phồng funnel bởi signup organic cùng tab).
+  - QA finding: TapToPlayOverlay unmount khi gated + guard trong handleTapToPlay (screen-reader rotor xuyên z-index).
+  - 2 fix trong CI: mock supabase client cho overlay test (env-less CI), thêm test coverage cho useLivestreamGateAttribution (83.12% > 83%).
+  - Increment 7 (presence-gated) deferred PR riêng đúng kế hoạch — CHƯA làm.
+- Học được (→ append `.claude/memory/lessons-learned.md`): risk-tier working-tree mode vs commit-diff mode; alias preview Cloudflare cắt 28 ký tự; auth surface = RED kể cả khi chỉ thêm analytics.

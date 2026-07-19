@@ -430,3 +430,12 @@ JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info
 - **Smoke main đỏ ngay sau merge = nghi deploy-race flake trước** (lần 2 xảy ra, test focus A11Y-01): rerun --failed trước khi đào bới; 2 lần retry trong 1 run vẫn có thể cùng đập vào deploy đang settle.
 - **2 agent song song sửa chung i18n vi.ts/en.ts OK nếu chia vùng namespace rõ** (common/teamMatch vs socialEvents.create) — dặn rõ trong prompt vùng nào của ai.
 - **QuickTable draft scope**: web theo shareId (row pre-created), native theo "new" (1 sheet) — chấp nhận lệch, ghi ở proposal §9; đừng ép parity mù.
+
+## 2026-07-20 — livestream-gate-hardening (PR #415)
+
+- **`risk-tier.mjs --base` quét cả working tree (untracked).** Máy Cuong có rác untracked (android/.gradle, .claude/agents, scripts/agents) → classifier báo RED giả (native shell + guardrail). Tier thật của một branch = `--files "$(git diff --name-only origin/main ...)"` trên diff COMMIT. release-pilot đã dừng đúng vì RED — cách gỡ đúng là làm cho diff sạch (dời code khỏi file RED-tier), không phải cãi classifier.
+- **Đụng `useAuth.tsx` = RED kể cả khi chỉ thêm analytics.** Attribution/tracking cần listener `onAuthStateChange` RIÊNG trong module khác (xem `src/lib/livestreamGateAttribution.ts`), đừng nhét vào AuthProvider.
+- **Cloudflare Pages preview alias cắt 28 ký tự.** Branch `feat/livestream-gate-hardening` → `feat-livestream-gate-hardeni.pickle-hub-pro.pages.dev`. Đặt tên branch dài là phải dò alias, đừng poll URL đầy đủ chờ 200.
+- **Module top-level import supabase client sẽ nổ trong CI env-less** (`supabaseUrl is required`) khi bị component test kéo vào. Test nào render component đụng chuỗi import đó phải mock `@/integrations/supabase/client`.
+- **Gate overlay: z-index không phải rào a11y.** Screen-reader rotor kích hoạt được element bị che → element nguy hiểm phải unmount/`inert` khi gated, và handler phải tự check cờ (`handleTapToPlay` check `gatedRef`).
+- **CÒN NỢ (PR riêng):** presence-gated cho admin viewer list — merge-gate = runtime test khẳng định `channel.track()` được gọi LẠI khi `isGated→true`; TUYỆT ĐỐI không đưa `gated` vào subscribe deps (collision 2026-07-08). Native /apple hoàn toàn chưa có gate (đợi cùng đợt signed playback — tầng 3).
