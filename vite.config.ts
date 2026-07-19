@@ -25,6 +25,12 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  // Baked into the client so src/lib/staleShell.ts can compare itself against
+  // the deployed /build-id.txt (emitted below) and preemptively reload before
+  // a stale lazy chunk 404s.
+  define: {
+    __BUILD_ID__: JSON.stringify(mode === "production" ? BUILD_ID : "dev"),
+  },
   // Strip noisy console.log/debug/info from production bundles (incl. realtime
   // payload dumps). console.warn/error are kept for prod diagnostics.
   esbuild: {
@@ -32,6 +38,17 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // /build-id.txt — freshness beacon for staleShell.ts. Root-level txt is
+    // outside every precache glob (whitelist) and navigateFallback denylists
+    // txt, so a fetch always reaches the CDN and a missing file 404s instead
+    // of returning index.html.
+    {
+      name: "emit-build-id",
+      apply: "build" as const,
+      generateBundle() {
+        this.emitFile({ type: "asset", fileName: "build-id.txt", source: BUILD_ID });
+      },
+    },
     // Bundle analysis — opt-in via ANALYZE=1 to avoid slowing every prod build.
     process.env.ANALYZE === "1" &&
       visualizer({

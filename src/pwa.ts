@@ -8,6 +8,7 @@ import { registerSW } from "virtual:pwa-register";
 import { Capacitor } from "@capacitor/core";
 import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
 import { isChunkErrorMessage } from "@/lib/chunkError";
+import { installStaleShellGuard } from "@/lib/staleShell";
 
 /**
  * Detect chunk-import failures and force a clean reload. After a deploy,
@@ -99,6 +100,14 @@ export function initPwa() {
   // browser PWA alike. Must register BEFORE any lazy imports fire so
   // the early-route navigation crash can self-heal.
   installChunkErrorRecovery();
+
+  // Preventive layer: detect a newer deploy BEFORE a stale lazy chunk 404s.
+  // Runs in Capacitor WebView too (remote URL, no SW — this is its only
+  // freshness signal besides the reactive boundary above). Skip in dev:
+  // there's no build-id.txt and Vite serves modules unhashed.
+  if (!import.meta.env.DEV) {
+    installStaleShellGuard();
+  }
 
   // One-time eviction of the legacy "supabase-rest" cache written by the old
   // NetworkFirst SW (now NetworkOnly). Runs on every boot; a no-op once the
