@@ -420,3 +420,13 @@ JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info
 - npm >=11 install qua symlink node_modules sẽ PHÁ symlink thành thư mục thật → worktree tách khỏi node_modules chính; và lock npm-11 bị `npm ci` npm-10 (CI) từ chối — luôn `npx npm@10.8.2 install --package-lock-only` khi đổi deps.
 - risk-tier.mjs coi MỌI file `apple/` là RED tại merge — nếu proposal đã refine "merge revertable, submit mới RED" thì release-pilot vẫn dừng đúng luật; hoặc tách PR native, hoặc Cuong duyệt trực tiếp trong phiên. Cân nhắc thêm nhãn `apple-source-only` cho classifier.
 - Smoke main sau merge đỏ vì deploy-race asset 404 (flake đã biết, rerun qua) — ĐỪNG revert theo phản xạ: verify tay entry chunk trước (curl file hash từng 404 → 200 = race, không phải regression).
+
+## 2026-07-19 — cụm ux-01-05-organizer-wizard (#406-#409)
+
+- **CodeQL chặn bank-fields-vào-localStorage** (`js/clear-text-storage-of-sensitive-data`, high): autosave form có field ngân hàng sẽ đỏ check. Fix đúng = loại field nhạy cảm khỏi draft serialization (cả web lẫn native), không dismiss. Ranh giới trùng luật D3 template — "payment account không persist ngoài DB" giờ là invariant có test 2 nền.
+- **Panel /idea đảo ngược nhau ở vòng 2 là bình thường**: architect tự siết (nhận instrument-first) đúng lúc pre-mortem rút gate (thấy localStorage giết cơ chế sự cố) — đối chất làm cả hai phía DI CHUYỂN, ledger bắt được vì có bằng chứng file:line. REFINE-hội-tụ vẫn phải OPEN_FOR_CUONG.
+- **Recon 1 lượt có thể sai dữ kiện then chốt** ("form 1 trang khổng lồ" — thực tế đã là stepped wizard): agent vòng 1 nào xây phương án trên recon PHẢI tự verify claim load-bearing; ui-ux-critic bắt được vì đọc code thật.
+- **Session limit giết agent giữa release**: release-pilot chết khi đang soak → merge/deploy/smoke làm tay được nhưng soak 30' chính quy mất. Phiên dài nhiều agent: để release-pilot chạy SỚM trong ngày, đừng dồn cuối.
+- **Smoke main đỏ ngay sau merge = nghi deploy-race flake trước** (lần 2 xảy ra, test focus A11Y-01): rerun --failed trước khi đào bới; 2 lần retry trong 1 run vẫn có thể cùng đập vào deploy đang settle.
+- **2 agent song song sửa chung i18n vi.ts/en.ts OK nếu chia vùng namespace rõ** (common/teamMatch vs socialEvents.create) — dặn rõ trong prompt vùng nào của ai.
+- **QuickTable draft scope**: web theo shareId (row pre-created), native theo "new" (1 sheet) — chấp nhận lệch, ghi ở proposal §9; đừng ép parity mù.

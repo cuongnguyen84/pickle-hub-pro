@@ -2,7 +2,7 @@
 
 Gom tất cả mục cần mắt người / điện thoại thật, để test 1 thể. Mỗi mục có nguồn gốc (PR / phiên). Test xong tick ✅ và ghi ngày; lệch gu/regression thì mở issue hoặc nhắn Claude phiên sau.
 
-_Cập nhật lần cuối: 2026-07-18 (tối — thêm mục 7, 8 DS-03)._
+_Cập nhật lần cuối: 2026-07-19 (thêm mục 9 — cụm UX-01..05)._
 
 ## 1. Money path — flow đăng ký social event (ARCH-02, PR #399/#400, 2026-07-18)
 
@@ -54,3 +54,19 @@ TLButton/TLSheet/TLDialog/TLSelect/TLBadge/TLIconButton mới đã merge nhưng 
 - [ ] VoiceOver lướt 1 sheet: icon button phải đọc đúng nhãn tiếng Việt.
 - [ ] Bàn phím mở che sheet: field + nút vẫn thao tác được.
 - [ ] `TLComponentsRenderTests` xanh trong CI (tự động — đã có).
+
+## 9. Cụm UX-01..05 organizer wizard (PR #406-#409, 2026-07-19)
+
+Autosave/fee-mode/recovery đều sau login wall — cả 2 lượt ui-ux-verifier chỉ verify tĩnh được. Cần mắt anh + máy thật:
+
+- [ ] **Autosave round-trip social (ca ngoài sân):** `/clb/<slug>/social/moi` → điền dở bước 2 → khoá màn hình 5 phút → mở lại → banner "Đã khôi phục bản nháp trên thiết bị này" + đúng bước/đúng data; 3 trường ngân hàng phải TRỐNG (bank không vào localStorage — cố ý).
+- [ ] **Card "Bản nháp" ClubManage:** có nháp → trang quản lý CLB hiện card đúng tên + giờ; nút Tiếp tục/Xoá chạy; đổi CLB qua menu → card KHÔNG hiện nháp CLB khác.
+- [ ] **Autosave 4 flow tournament:** teammatch/doubles/flex/quicktable — điền → kill tab → mở lại → khôi phục đúng (quicktable scope theo shareId).
+- [ ] **Bank prefill guard (#406):** manager sửa event cũ có phí → phải tick xác nhận tên chủ STK mới lưu được.
+- [ ] **Fee-mode clear-state (#409):** tạo event CÓ phí → điền bank → đổi radio "Miễn phí" → publish → check DB `event_payment_config` KHÔNG còn STK cũ.
+- [ ] **Panel recovery:** đứng step 2 bấm dòng lỗi thuộc step 1 → lật step + focus đúng ô (mobile thật).
+- [ ] **Weekly-repeat partial retry:** ép fail giữa batch (trùng slug) → Publish lại → chỉ tạo tuần thiếu, không double.
+- [ ] **TeamMatch Dreambreaker (5→4 bước):** game chẵn bật toggle / game lẻ disable → `has_dreambreaker` xuống DB đúng như bản cũ.
+- [ ] **3 template:** apply → không field bank nào prefill; chip biến mất sau khi form dirty.
+- [ ] **Native (#408, cùng RED-gate mục 8):** 5 màn tạo trên iPhone thật — autosave khôi phục sau khi kill app; VoiceOver đọc banner/status tiếng Việt.
+- [ ] **Fail-loud quota:** Safari private mode → dòng status đỏ "Chưa thể lưu thay đổi", không hiện "Đã lưu".

@@ -1,6 +1,6 @@
 # Cụm UX-01..05 — Organizer wizard (checklist · templates · disclosure · autosave · validation)
 
-> Slug: `ux-01-05-organizer-wizard` · Ngày: `2026-07-19` · Trạng thái: `approved`
+> Slug: `ux-01-05-organizer-wizard` · Ngày: `2026-07-19` · Trạng thái: `shipped`
 > **Cuong duyệt 2026-07-19 (kèm "duyệt RED"):** D4 = SHIP dashboard "Bản nháp" cùng autosave · D3 = preset TĨNH cấm bank fields ("nhân bản buổi cũ" để đợt sau kèm guard) · lỗ hổng EditSocialEvent bank prefill = fix TRƯỚC, PR riêng.
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6) ·
 > `risk-auditor` (+GPT-5.6) · `pre-mortem`. Model ngoài chính xác: xem `external/*.meta.json`.
@@ -213,6 +213,18 @@ Không có — ledger strict pass ngay lần đầu.
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
-- Khác kế hoạch:
-- Học được (→ append `.claude/memory/lessons-learned.md`):
+- **SHA/PR (4 PR, cùng ngày 2026-07-19):**
+  - #406 `fix(payment)` bank prefill confirm guard (việc-tách-riêng từ mục 0) — merged trước cụm.
+  - #407 `0cd79c22` — PR1: autosave 5 wizard + card "Bản nháp" ClubManage + journey organizer_tournament.
+  - #408 `71227258` — PR3 native: DraftStore.swift + autosave 5 màn SwiftUI (83 native tests pass; RED merge theo duyệt trước của Cuong trong /ship).
+  - #409 `45d18743` — PR2: StepHeader hợp nhất, TeamMatch 5→4, fee-mode radio + clear-state, panel recovery jump-to-field, batch retry, 3 template tĩnh.
+- **Khác kế hoạch:**
+  - CodeQL chặn bank-trio-vào-localStorage (js/clear-text-storage) → loại bank fields khỏi draft ở CẢ web lẫn native (nhất quán ranh giới D3) — organizer nhập lại 3 field khi restore. Proposal ban đầu chấp nhận lưu local, thực tế siết hơn.
+  - Kicker "Bước n/3" của QuickTable nằm ở QuickTables.tsx (create wizard), không phải QuickTableSetup.tsx như spec — StepHeader áp vào chỗ đúng.
+  - Native CreateQuickTableView dùng key `draft:quicktable:new` (1 sheet) thay vì theo shareId như web.
+  - Panel recovery dùng div role=alert tự dựng thay vì component Alert shadcn; StepHeader giữ tiền tố "◆".
+  - Nits #7/#8 (checkbox 16px, nút Quay lại 40px) deferred — không thuộc increment 4.
+  - Thứ tự increment thực tế: autosave social + tournament + native đi TRƯỚC instrumentation-đọc-số (journey đã wire trong #407 nhưng chưa có 2 tuần data) — đúng D1 resolution, ràng buộc "không claim completion metric cho tournament flows" vẫn giữ.
+  - release-pilot chết giữa chừng vì session limit → merge/deploy/smoke làm tay; smoke main đỏ 1 lần do deploy-race flake (precedent 2026-07-18), rerun xanh. Soak 30' chính quy KHÔNG chạy — thay bằng smoke rerun + prod curl sạch.
+- **Metric:** funnel organizer_tournament bắt đầu có số từ 2026-07-19; đọc sau ~2 tuần trước khi quyết template/disclosure mở rộng cho bracket flows (cổng evidence §4 increment 5).
+- **Học được:** xem `.claude/memory/lessons-learned.md` entry 2026-07-19.

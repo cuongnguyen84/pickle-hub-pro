@@ -175,11 +175,11 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 
 | ID | Status | Effort | Task | Depends on |
 |---|---|---:|---|---|
-| UX-01 | later | 4d | Design and implement organizer setup checklist/status model. May start from analytics, support feedback, and the first 3–5 usability sessions; the full BASE-07 baseline is only required before UX-09 concludes effectiveness | DS-03, partial BASE-07 |
-| UX-02 | later | 5d | Add tournament/event templates for the five most common formats | UX-01 |
-| UX-03 | later | 5d | Apply progressive disclosure to advanced tournament settings | UX-01 |
-| UX-04 | later | 4d | Add draft autosave and visible last-saved state | UX-01 |
-| UX-05 | later | 4d | Add pre-publish validation with direct recovery actions | UX-01 |
+| UX-01 | done | 4d | Design and implement organizer setup checklist/status model. **Shipped 2026-07-19** (#407/#409, proposal ux-01-05-organizer-wizard): card "Bản nháp" resume trên ClubManage (D4) + StepHeader hợp nhất 5 flow (một ngôn ngữ wizard duy nhất, WizardProgress xoá). Checklist đầy đủ hơn (per-step status model) để lại cho vòng UX-09 nếu evidence đòi | DS-03, partial BASE-07 |
+| UX-02 | done | 5d | Add tournament/event templates for the five most common formats. **Shipped 2026-07-19** (#409, scope D3 Cuong chốt): 3 preset TĨNH cho social wizard, whitelist type CẤM bank trio; template cho 4 bracket flow GATED bằng funnel organizer_tournament (~2 tuần data) theo journey-screens.md — "clone từ buổi cũ" = feature riêng kèm guard STK | UX-01 |
+| UX-03 | done | 5d | Apply progressive disclosure to advanced tournament settings. **Shipped 2026-07-19** (#409, D2 resolution — 3 việc consolidation, không chờ funnel): TeamMatch 5→4 bước (Dreambreaker → toggle trong Thể thức, payload không đổi), fee-mode radio Miễn phí/Có thu phí với clear-state khi Free (guard risk #4), StepHeader thay 2 hệ kicker | UX-01 |
+| UX-04 | done | 4d | Add draft autosave and visible last-saved state. **Shipped 2026-07-19** (#407 web + #408 native): useAutosaveDraft/DraftStore.swift — localStorage/UserDefaults-only (KHÔNG DB, không enum — thiết kế đã gỡ RED vòng 1), debounce 750ms + flush background, "Đã lưu trên thiết bị lúc HH:MM" reserve-height aria-live, fail-loud quota; bank trio bị LOẠI khỏi draft (CodeQL clear-text-storage) | UX-01 |
+| UX-05 | done | 4d | Add pre-publish validation with direct recovery actions. **Shipped 2026-07-19** (#409 + #406): panel missingFields → role=alert semantic + mỗi dòng = nút jump-to-field (lật step + focus); weekly-repeat partial có retry thật (batchResumeIndex, chỉ tạo tuần thiếu); guard xác nhận tên chủ STK khi bank prefill (#406 — chặn lỗ hổng prod tiền-vào-STK-cũ pre-mortem tìm ra) | UX-01 |
 | UX-06 | later | 4d | Add undo/rollback for reversible destructive organizer actions | UX-01 |
 | UX-07 | later | 4d | Simplify player discovery-to-registration journey. Same relaxed dependency as UX-01: start on partial research, conclude on full baseline | DS-03, partial BASE-07 |
 | UX-08 | later | 3d | Standardize mobile back, deep-link, scroll, and state restoration behavior | BASE-05, DS-03 |
