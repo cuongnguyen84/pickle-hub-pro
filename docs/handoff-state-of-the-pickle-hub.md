@@ -1,6 +1,24 @@
 # State of ThePickleHub — handoff cho conversation mới
 
-*Cập nhật: 29/5/2026. Đọc file này + `CLAUDE.md` + `.claude/secrets.local.md` là làm việc được ngay.*
+*Snapshot gốc: 29/5/2026 · mục 0 refresh 2026-07-19 (CLOSE-02). Đọc file này + `CLAUDE.md` + `~/Downloads/secrets.local.md` là làm việc được ngay. Trạng thái task mới nhất: `docs/roadmap-8.5-9.md`.*
+
+---
+
+## 0. Bắt đầu làm việc với repo này (cập nhật 2026-07-19)
+
+Thứ tự đọc cho một phiên mới:
+
+1. `CLAUDE.md` — rule + stack, luôn mới nhất.
+2. `docs/roadmap-8.5-9.md` — plan chính thức 8.5→9, trạng thái từng task + completion log.
+3. `docs/architecture-boundaries.md` — module boundaries, layering, shared UI building blocks (PageStates, wizard StepHeader/DraftAutosave, tokens, journeys).
+4. `docs/ops-runbook.md` — vận hành prod: migration/secret/cron/rollback/incident + CI gates 2026-07.
+5. File này (mục 1-11) — deep-dive DUPR, observability, CI history (một số chi tiết là snapshot 29/5, đã đánh dấu chỗ lỗi thời).
+
+**Workflow chuẩn cho feature mới:** `/idea "<ý tưởng>"` → panel agent (idea-recon → solution-architect + ui-ux-critic + risk-auditor + pre-mortem, 2 vòng Claude + GPT-5.6) → proposal ở `docs/proposals/<slug>/` → Cuong duyệt → `/ship <slug>` → qa-verifier (verify loop tới green) → release-pilot (PR, CI, preview verify, merge, deploy watch, smoke, auto-revert; refuse RED nếu Cuong chưa duyệt). Chi tiết + phân tầng rủi ro: `docs/agent-idea-pipeline.md`. Agent definitions nằm local ở `.claude/agents/` (không commit).
+
+**Manual test:** việc gì cần mắt người / điện thoại thật thì KHÔNG chặn ship — ghi vào `docs/manual-test-backlog.md` (mỗi mục có nguồn PR/phiên, Cuong test gộp rồi tick ✅).
+
+**Memory:** `.claude/memory/MEMORY.md` (index) + `.claude/memory/lessons-learned.md` (append-only, rule + recurring bugs) — committed, đọc đầu session. Session memory chi tiết hơn nằm ngoài repo ở `~/.claude/projects/-Users-cm10-pickle-hub-pro/memory/`.
 
 ---
 
@@ -25,7 +43,7 @@ Stack chi tiết + workflow notes ở `CLAUDE.md`.
 
 **Auth user ID Cuong (`thecuong`):** `5040f0f2-f564-401c-9737-4b030b6371d7`
 
-**Tất cả secrets:** `.claude/secrets.local.md` (gitignored).
+**Tất cả secrets:** `~/Downloads/secrets.local.md` (NGOÀI repo — đường dẫn cũ `.claude/secrets.local.md` không còn).
 Đã có sẵn: Supabase Management API, GitHub PAT (scope `repo`+`workflow`), Cloudflare token, DUPR partner credentials, Telegram bot.
 
 **3 test users (Supabase Auth):**
@@ -140,7 +158,7 @@ Pause cron: `SELECT cron.unschedule('errors-telegram-alert-10min');` trong SQL E
 
 ### Cấu hình
 
-- `playwright.config.ts` — 3 project (desktop / mobile Pixel-7 / SSR bot)
+- `playwright.config.ts` — 10 project (2026-07): `desktop-chromium` / `mobile-chromium` (Pixel 7) / `mobile-webkit` (iPhone 13, A11Y-04) / `a11y` (axe + keyboard, A11Y-04) / `ssr-bot` / `auth` / `contract` / `dupr-e2e` / `visual` / `visual-mobile`; project gated tự skip khi thiếu env
 - Target: `PLAYWRIGHT_BASE_URL` env var, default `https://www.thepicklehub.net`
 - User-Agent suffix `ThePickleHub-Playwright-CI` → filter khỏi GA4
 
@@ -242,7 +260,7 @@ node scripts/check-bundle-size.mjs   # 3F (sau npm run build)
 
 Design system: `src/styles/the-line.css` (token `--tl-*` + class `.tl-*`), khung `src/components/layout/TheLineLayout.tsx`.
 
-**Visual regression (2C) — cần bấm 1 lần để bật:** Actions → "Visual baseline (capture)" → Run workflow → chụp + commit `tests/visual.spec.ts-snapshots/`. Sau đó `visual.yml` tự so mỗi PR (advisory, không chặn).
+**Visual regression (2C/QA-05) — ĐÃ BẬT 2026-07-19 (#411):** 24 baseline CI-Linux đã commit ở `tests/visual.spec.ts-snapshots/` (12 route × desktop + mobile); `visual.yml` tự so mỗi PR (advisory, không chặn). Refresh baseline = chạy workflow "Visual baseline (capture)" (đừng chụp từ Mac — tên file `*-linux.png` bám platform); push thẳng main bị GH006 → workflow fallback mở PR. Chi tiết vận hành: `docs/ops-runbook.md` §7.2.
 
 ---
 
@@ -260,13 +278,12 @@ Auth issue JWTs ES256 nhưng Edge Functions gateway verify HS256. User-facing fu
 `_headers` override dashboard-level headers. CSP đã đặt trong `_headers` rồi — đừng đặt lại trong Cloudflare Dashboard nếu không muốn conflict.
 
 ### SEO prerender (Pages Functions)
-`functions/_middleware.ts` + `functions/_lib/render/` handle bot crawler SSR. Khi add blog post: 4-file sync:
+`functions/_middleware.ts` + `functions/_lib/render/` handle bot crawler SSR. Khi add blog post (SEO-02, từ `ce6a0fa` — rule "4 files" cũ đã lỗi thời): chỉ 3 chỗ:
 1. `src/content/blog/posts/<slug>.ts`
-2. `src/content/blog/metadata.ts`
-3. `functions/_lib/render/index.ts` — add to `BLOG_POST_META` dict (line ~764)
-4. Supabase `vi_blog_posts` INSERT
+2. `src/content/blog/metadata.ts` — **nguồn SEO duy nhất**; `BLOG_POST_META` + `EN_BLOG_SLUGS` được GENERATE từ đây, KHÔNG hand-edit `functions/_lib/render/blog-meta.ts` / `functions/_lib/static-blog-slugs.ts`
+3. Supabase `vi_blog_posts` INSERT
 
-Miss bất kỳ file nào → Googlebot/Bingbot 404 dù SPA render OK.
+Miss chỗ nào → Googlebot/Bingbot 404 dù SPA render OK. Checklist đầy đủ: `CLAUDE.md`.
 
 ### Response shape camelCase vs snake_case
 Edge functions trả flat snake_case (`data.match_code`, `data.hashed_match_code`). KHÔNG nested `data.result.matchCode`. Đã có nhiều bug shape mismatch lịch sử.
@@ -296,6 +313,8 @@ Lighthouse fetch bằng UA browser → nhận SPA chưa hydrate (seo ~0.66), KH�
 
 ## 8. Cron jobs đã active
 
+> Snapshot 29/5/2026 — danh sách hiện hành xem `docs/cron-schedules.md` + query prod (`SELECT jobname, schedule, active FROM cron.job;`). Cron mới đều gate bằng `x-cron-secret` (Vault `cron_secret`, `_shared/cron-auth.ts`) — xem `docs/ops-runbook.md` §2.1/§3.
+
 ```
 match-expire-daily               0 21 * * *
 dupr-sync-daily                  0 20 * * *
@@ -316,7 +335,7 @@ Query: `SELECT jobname, schedule, active FROM cron.job;`
 
 ### Apply migration prod
 ```bash
-SBP=$(grep -E "^SUPABASE_ACCESS_TOKEN" /Users/cuongmit/pickle-hub-pro/.claude/secrets.local.md | awk '{print $NF}')
+SBP=$(grep -E "^SUPABASE_ACCESS_TOKEN" ~/Downloads/secrets.local.md | awk '{print $NF}')
 python3 -c "import json;print(json.dumps({'query':open('supabase/migrations/<FILE>.sql').read()}))" > /tmp/sql.json
 curl -s -X POST "https://api.supabase.com/v1/projects/ajvlcamxemgbxduhiqrl/database/query" \
   -H "Authorization: Bearer $SBP" -H "Content-Type: application/json" \
@@ -325,7 +344,7 @@ curl -s -X POST "https://api.supabase.com/v1/projects/ajvlcamxemgbxduhiqrl/datab
 
 ### Deploy edge function
 ```bash
-SBP=$(grep -E "^SUPABASE_ACCESS_TOKEN" .claude/secrets.local.md | awk '{print $NF}')
+SBP=$(grep -E "^SUPABASE_ACCESS_TOKEN" ~/Downloads/secrets.local.md | awk '{print $NF}')
 SUPABASE_ACCESS_TOKEN=$SBP npx supabase functions deploy <name> \
   --project-ref ajvlcamxemgbxduhiqrl --no-verify-jwt
 ```
@@ -334,7 +353,7 @@ SUPABASE_ACCESS_TOKEN=$SBP npx supabase functions deploy <name> \
 PAT mới (`ghp_v7qJk...`) đã có scope `repo` + `workflow` → push thẳng workflow files được.
 
 ```bash
-GH_TOKEN=$(grep -E "^GITHUB_PAT:" .claude/secrets.local.md | awk '{print $NF}')
+GH_TOKEN=$(grep -E "^GITHUB_PAT:" ~/Downloads/secrets.local.md | awk '{print $NF}')
 REPO="cuongnguyen84/pickle-hub-pro"
 FILE="path/to/file"
 SHA=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
@@ -423,7 +442,10 @@ Khi thêm feature mới, bám đúng "người gác" tương ứng để không 
 ## 11. Docs liên quan
 
 - `CLAUDE.md` — Project rules + stack details (đọc đầu mỗi session)
-- `.claude/secrets.local.md` — Tất cả credentials (KHÔNG commit)
+- `~/Downloads/secrets.local.md` — Tất cả credentials (NGOÀI repo, KHÔNG commit)
+- `docs/architecture-boundaries.md` — Module boundaries + shared UI building blocks
+- `docs/ops-runbook.md` — Ops runbook (migration, cron, rollback, incident, CI gates)
+- `docs/agent-idea-pipeline.md` — Pipeline /idea → /ship + agents
 - `docs/telegram-alerts-setup.md` — Telegram bot setup guide
 - `docs/playwright-setup.md` — Playwright setup
 - `docs/playwright-workflow.yml` — Workflow YAML reference

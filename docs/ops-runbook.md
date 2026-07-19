@@ -3,7 +3,8 @@
 > Single-operator procedures for ThePickleHub production. Written 2026-07-16
 > from incidents and changes actually performed; every command here has been
 > run in production at least once. Companion docs: `cron-schedules.md`,
-> `edge-function-auth-registry.md`, `docs/adr/`.
+> `edge-function-auth-registry.md`, `perf-budgets.md`, `docs/adr/`.
+> Refreshed 2026-07-19 (CLOSE-02): added §5.5 + §7 (2026-07 CI gates).
 
 Credentials live OUTSIDE the repository at `~/Downloads/secrets.local.md`
 (Supabase PAT `sbp_…`, service keys). Read them at runtime; never paste them
@@ -179,9 +180,78 @@ and prunes UNREGISTERED tokens. If deliveries drop: check function logs for
 `[FCM V1] Error`, then `pruned` counts in responses — mass prunes after an
 app update usually mean the native token refresh broke, not FCM.
 
+### 5.5 Playwright smoke red right after a push/merge (deploy-race flake)
+
+Known pattern (hit repeatedly 2026-07): smoke fails on main or a fresh PR
+preview while Cloudflare Pages is still settling — symptoms rotate (chunk
+404, SW-reload "navigation destroyed", skip-link focus). Procedure:
+
+1. **Suspect deploy-race before code.** `gh run rerun --failed` first;
+   2 in-run retries can still both hit the settling deploy.
+2. Distinguish: run exactly the failing test locally against the stable
+   preview (`PLAYWRIGHT_BASE_URL=<preview> npx playwright test <spec>`) —
+   immediate pass = environment, not regression.
+3. Main asset-404 case: curl the previously-404 hashed file; 404→200 on
+   retry = race. Do NOT reflex-revert — verify by hand first.
+
+Root fix is still open backlog; until then rerun-green + a clean manual
+prod check is the accepted evidence.
+
 ## 6. Restore drill (OPS-02 — pending)
 
 PITR is enabled on the Supabase project. The drill (restore to a new
 project, point a preview build at it, verify critical reads) has NOT been
 performed yet — tracked as OPS-02, blocked on scheduling a window. Do not
 treat backups as verified until that drill is recorded here.
+
+## 7. CI gates added 2026-07 (what blocks a PR and what is advisory)
+
+### 7.1 Bundle budgets (INITIAL / CODE / CONTENT)
+
+`quality.yml` → `scripts/check-bundle-size.mjs` enforces three gz numbers
+(model in `docs/perf-budgets.md`, perf-js-gzip #389):
+
+- **INITIAL** ≤ 280 KB — what the browser fetches on first paint (entry +
+  modulepreloads + their recursive static imports). Catches a lazy chunk
+  silently going eager (the recharts bug class).
+- **CODE** ≤ 1800 KB — all JS except `blog-post-*` chunks.
+- **CONTENT** — blog-post chunks, per-chunk cap 20 KB.
+- Total backstop 1970 KB, ratchets DOWN only.
+
+STRICT mode also asserts every initial-load chunk matches a PWA precache
+glob (a boot-critical chunk missing from precache bricks installed PWAs
+offline). Budgets only move per the rules in `perf-budgets.md` — a bump
+needs a paying-back task named in that file.
+
+### 7.2 Visual regression (QA-05)
+
+- `visual.yml` — advisory pixel-diff on every PR (continue-on-error; live
+  data makes hard-gating flaky). 24 baselines committed under
+  `tests/visual.spec.ts-snapshots/` (12 public routes incl. /vi pages ×
+  Desktop Chrome + Pixel 7), captured on CI Linux — do NOT refresh them
+  from a Mac (`*-linux.png` names are platform-bound).
+- Refresh/seed: run the "Visual baseline (capture)" workflow
+  (`visual-baseline.yml`). Direct push to protected main is rejected
+  (GH006), so the workflow falls back to opening a baseline PR — merge it.
+- Known stale baseline: home/home-vi were captured while a livestream was
+  on-air — recapture once when convenient.
+
+### 7.3 Playwright projects beyond smoke (A11Y-04)
+
+`playwright.yml` runs `npm run e2e` (chromium + webkit installed); gated
+projects self-skip without env. Notable projects in `playwright.config.ts`:
+
+- `a11y` — axe wcag2a/aa failing on serious/critical (color-contrast
+  temporarily off — pre-existing Lighthouse debt) for P1 event detail, O1
+  club landing, P2 modal + keyboard contract (focus trap, Escape). O2
+  wizard part needs mint env + `PLAYWRIGHT_ORGANIZER_CLUB_SLUG`, skips on CI.
+- `mobile-webkit` — iPhone 13 WebKit running mobile.spec (iOS Safari blind
+  spot).
+
+### 7.4 TheLine `.tl-btn` ratchet (DS-03)
+
+`scripts/check-theline.mjs` Rule 4: a changed file must not INCREASE its
+`.tl-btn` count — new buttons use `<Button variant="outline|default|
+tl-primary">` (see `docs/design-tokens.md`). Advisory during trial;
+**promote to HARD after 2026-08-01** if no false positives (roadmap loose
+end — flip the rule in the script header).
