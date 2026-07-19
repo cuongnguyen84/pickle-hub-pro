@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 export interface MuxPlayerHandle {
   play: () => Promise<void>;
   pause: () => void;
+  /** Best-effort exit from element fullscreen, iOS native video fullscreen and PiP. */
+  exitNativeSurfaces: () => void;
 }
 
 interface MuxPlayerProps {
@@ -19,6 +21,13 @@ interface MuxPlayerProps {
   streamType?: "on-demand" | "live" | "ll-live" | "live:dvr";
   type?: "video" | "livestream";
   isLive?: boolean;
+  /**
+   * Login-gate flag. When true the player pauses itself and re-pauses on
+   * EVERY play event — fullscreen controls, PiP, media keys and lock-screen
+   * resumes all route through `onPlay`, so one guard here covers every
+   * call-site instead of each page wiring its own one-shot pause effect.
+   */
+  gated?: boolean;
   onPlayStateChange?: (playing: boolean) => void;
 }
 
@@ -35,6 +44,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   streamType = "on-demand",
   type = "video",
   isLive = false,
+  gated = false,
   onPlayStateChange,
 }, ref) => {
   const { t } = useI18n();
@@ -52,6 +62,44 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   const healthCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlayingRef = useRef(false);
+  const gatedRef = useRef(gated);
+
+  // The overlay the gate shows is a DOM sibling — it cannot render on top of
+  // OS-level video fullscreen or a PiP window, so a silent pause there looks
+  // like the app broke. Always exit those surfaces first, then pause.
+  // ponytail: always-exit (no wrapper-fullscreen branch); add detection only
+  // if real users complain about being kicked out of element fullscreen.
+  const exitNativeSurfaces = useCallback(() => {
+    try {
+      if (document.fullscreenElement) void document.exitFullscreen();
+      const doc = document as Document & {
+        webkitFullscreenElement?: Element;
+        webkitExitFullscreen?: () => void;
+      };
+      if (doc.webkitFullscreenElement) doc.webkitExitFullscreen?.();
+      if (document.pictureInPictureElement) void document.exitPictureInPicture();
+      // iOS Safari video-only fullscreen lives on the <video>, not document.
+      const video = (playerRef.current as unknown as {
+        media?: { nativeEl?: HTMLVideoElement };
+      } | null)?.media?.nativeEl as
+        | (HTMLVideoElement & {
+            webkitDisplayingFullscreen?: boolean;
+            webkitExitFullscreen?: () => void;
+          })
+        | undefined;
+      if (video?.webkitDisplayingFullscreen) video.webkitExitFullscreen?.();
+    } catch {
+      /* best effort — worst case the pause still lands, just without exit */
+    }
+  }, []);
+
+  useEffect(() => {
+    gatedRef.current = gated;
+    if (gated && playerRef.current) {
+      exitNativeSurfaces();
+      playerRef.current.pause();
+    }
+  }, [gated, exitNativeSurfaces]);
 
   // Cleanup function
   const clearAllTimeouts = useCallback(() => {
@@ -168,9 +216,13 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         playerRef.current.pause();
       }
     },
+    exitNativeSurfaces,
   }));
 
   const handleTapToPlay = useCallback(async () => {
+    // Screen readers can activate the tap target through the gate overlay
+    // (rotor navigation ignores z-index) — never trust the DOM to block it.
+    if (gatedRef.current) return;
     if (!playerRef.current) return;
 
     try {
@@ -203,13 +255,20 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
 
   const handlePlay = useCallback(() => {
     console.log("[MuxPlayer] Play event");
+    if (gatedRef.current) {
+      // Re-pause every resume attempt while gated (fullscreen controls,
+      // media keys, PiP). Never report `playing` upstream for these.
+      exitNativeSurfaces();
+      playerRef.current?.pause();
+      return;
+    }
     setShowOverlay(false);
     setHasError(false);
     setIsReconnecting(false);
     setRetryCount(0);
     isPlayingRef.current = true;
     onPlayStateChange?.(true);
-  }, [onPlayStateChange]);
+  }, [onPlayStateChange, exitNativeSurfaces]);
 
   const handlePause = useCallback(() => {
     console.log("[MuxPlayer] Pause event");
@@ -294,7 +353,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         type={type}
         isLive={isLive}
         onTap={handleTapToPlay}
-        isVisible={showOverlay && !isReconnecting}
+        isVisible={showOverlay && !isReconnecting && !gated}
         poster={poster}
       />
 

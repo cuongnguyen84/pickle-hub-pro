@@ -1,0 +1,27 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Chữ ký param mới của useIntervalViewCounter: optional default-true (architect) hay required (pre-mortem)",
+      "myRound1Position": "Giữ default = hành vi hiện tại nếu không truyền cờ (tức mặc-định-đếm), nhưng cập nhật + test cả 5 caller trong cùng PR (risk #1).",
+      "move": "REFINE",
+      "note": "Đã verify useIntervalViewCounter.ts: hôm nay KHÔNG có param active, 1 setInterval on-mount (:53), hook dùng chung video+livestream (:5), inflation bị chặn bởi maxEventsPerSession=20 (:12-13,:54). Kết luận: hướng hỏng nguy hiểm (video view rớt về 0 im lặng, mất data vĩnh viễn) CHỈ xảy ra với default=FALSE — không ai đề xuất. default-true của architect fail về phía over-count, mà over-count đã bị cap 20 chặn = non-destructive. Nên em KHÔNG ép required (nó buộc sửa 3 file video ngoài scope: WatchVideo/EmbedVideo/EmbedLive). Em thu hẹp lập trường: cuộc tranh cãi required-vs-default-true là thứ yếu — MERGE GATE ràng buộc là một test khẳng định useIntervalViewCounter với targetType:'video' và KHÔNG truyền active vẫn tick (đúng risk #1 + pre-mortem cheapest-fix #1). default-true PASS gate đó; default-false FAIL. Không phải nhượng bộ cho pre-mortem: em từ chối 'required', giữ nguyên control an toàn thật (test regression video)."
+    },
+    {
+      "id": "D2",
+      "topic": "Ngân sách preview 15s dùng chung giữa homepage hero và trang xem (localStorage key chỉ theo livestreamId)",
+      "myRound1Position": "Trung lập: chấp nhận có chủ đích HOẶC tách namespace key theo bề mặt — nhưng phải ghi rõ quyết định vào proposal (risk #5).",
+      "move": "REFINE",
+      "note": "Đã verify useLivestreamGate.ts:20-22 (key chỉ theo id, không theo surface) + HomeLivePlayer.tsx:41-52 (homepage ARM gate thật với cùng key, markPreviewSeen tại :77). Đây là dữ kiện em đã có ở round1 #5, không phải mới → không đủ điều kiện CONCEDE. Nhưng em sắc lại 'trung lập': về RELIABILITY cả hai lựa chọn đều revert sạch (client-only, không migration/native) nên tier vẫn AMBER, không nâng. Về SUCCESS METRIC thì option 'shared budget / chấp nhận có chủ đích' của architect chủ động phá chính phễu signup mà proposal muốn tăng (gate giây-0 trên /live sau khi đốt preview ở hero — cơ chế xác nhận). Vậy: nếu Cuong GIỮ shared budget, nó BẮT BUỘC ship kèm instrument secondsWatchedBeforeGate để pathology gate-giây-0 quan sát được — nếu không, tổn thất phễu là vô hình. Refine 'document the decision' → 'document + instrument the decision'. Không side mù theo pre-mortem: em không tuyên bố 'phải split', em tuyên bố 'nếu shared thì phải đo được'."
+    },
+    {
+      "id": "D3",
+      "topic": "Presence-gated có ship đợt này không, và làm sao để track() re-fire khi gated đổi (cơ chế track() là của em, risk #2/#10)",
+      "myRound1Position": "Cập nhật payload qua channel.track() SAU subscribe, KHÔNG cho gated vào dependency array của effect subscribe (tránh tái diễn collision 2026-07-08) — risk #2.",
+      "move": "HOLD",
+      "note": "Tự verify độc lập (không nod theo pre-mortem): useLivePresence.ts track() fire ĐÚNG 1 lần trong nhánh SUBSCRIBED (:94-98); acquire() trả entry cũ không re-track (:124-129); effect cố ý loại mọi state khỏi deps (:200-201); hook chỉ return {concurrentViewers,isConnected}, KHÔNG expose entry.channel (:203-206). Nghĩa là: thêm gated vào payload track() sẽ chụp trạng thái LÚC subscribe (gated:false, vì gate nổ ~15s sau) và không bao giờ cập nhật = no-op fake-fix — pre-mortem đúng vì CƠ CHẾ có thật, không phải vì nó viết chắc giọng. Lập trường em giữ: presence-gated (a) phải là increment CUỐI, PR riêng để rollback độc lập; (b) re-track phải qua effect RIÊNG phản ứng gated gọi entry.channel.track(), TUYỆT ĐỐI không đưa gated vào subscribe deps (guard collision của em); (c) merge-gate = một runtime test khẳng định track() được gọi LẠI khi isGated→true — test đó đỏ với kiến trúc hiện tại, phơi bày no-op TRƯỚC khi ship; (d) nếu (b)+(c) không làm sạch được thì CẮT (admin-only nicety, đúng như architect nói 'cut if risk>value'). Không mâu thuẫn với architect/ui-ux-critic về scope — chỉ thêm điều kiện kỹ thuật để nó không thành fix giả."
+    }
+  ],
+  "newDisagreements": []
+}

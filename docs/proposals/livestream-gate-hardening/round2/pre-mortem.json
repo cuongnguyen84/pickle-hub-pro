@@ -1,0 +1,30 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Chữ ký param mới của useIntervalViewCounter: optional default-true hay required",
+      "myRound1Position": "Param phải REQUIRED — optional-default là bẫy sinh ra P0 video-view chết im.",
+      "move": "CONCEDE",
+      "evidence": "src/hooks/useIntervalViewCounter.ts:53-55 — tick hiện push event VÔ ĐIỀU KIỆN (video đang luôn đếm); solution-architect.md:66-69 — param là `active?: boolean` default `true`, caller video không truyền ⇒ mặc định true ⇒ giữ nguyên hành vi đếm.",
+      "note": "Incident 1 của tôi giả định default `false` (pre-mortem.md:31,37-41). Dữ kiện lật: architect chọn default `true`, không phải false. Với default-true, bỏ qua param = tiếp tục đếm y như hiện tại, nên cơ chế 'video telemetry chết im 3 tuần' KHÔNG thể nổ. Sức nặng lập trường của tôi nằm hết ở mất-data-im-lặng; default-true xoá đúng nó. Residual duy nhất: một caller livestream MỚI trong tương lai quên truyền cờ sẽ over-count — nhưng đó là hỏng HỮU HÌNH (thổi phồng livestream, baseline bắt được), tốt hơn silent theo đúng thang xếp hạng của tôi. Chỉ giữ một yêu cầu: guard phải literal default `true`, tuyệt đối không đổi thành false."
+    },
+    {
+      "id": "D2",
+      "topic": "Ngân sách preview 15s dùng chung giữa homepage hero và trang xem (localStorage key chỉ theo livestreamId)",
+      "myRound1Position": "Key chung + homepage arm gate thật = user đốt preview ở ô nhỏ trang chủ rồi vào /live/:id bị chặn giây-0 đêm live → phễu signup sập; phải tách key theo bề mặt.",
+      "move": "HOLD",
+      "evidence": "",
+      "note": "architect KHÔNG phản bác cơ chế — anh ấy chọn shared-budget CÓ CHỦ ĐÍCH (debate.json D2). Nhưng bất đồng này là bất đồng THẬT về đánh giá, không phải bất đồng ảo. Verify source: useLivestreamGate.ts:3,20-21 (key chỉ theo id) + :77 (markPreviewSeen ghi chung khi hết giờ); cả HomeLivePlayer và WatchLive gọi cùng hook cùng id. risk-auditor #5 độc lập xác nhận 'Hero tiêu preview trước'. Tệ hơn: key elapsed MỚI architect thêm (`pkl_preview_elapsed_<id>`) cũng surface-blind ⇒ mỗi giây xem ở hero rút thẳng ngân sách của /live, không cần đốt đủ 15s. Vì failure rơi trúng success-metric (signup) đúng lúc traffic đỉnh, 'ghi rõ quyết định vào proposal' (đề xuất trung lập của risk-auditor) là chưa đủ — tối thiểu phải prefix bề mặt vào getSeenKey/elapsed-key hoặc chỉ tính preview trên trang xem."
+    },
+    {
+      "id": "D3",
+      "topic": "Presence-gated: làm sao không thành no-op giả (track chỉ chạy 1 lần lúc SUBSCRIBED)",
+      "myRound1Position": "Đừng ship nếu không có runtime assert khẳng định track() được gọi LẠI khi isGated đổi — nếu không nó đóng bug thật dưới vỏ 'đã fix'.",
+      "move": "HOLD",
+      "evidence": "",
+      "note": "Verify source xác nhận cơ chế: useLivePresence.ts:88-98 track() chỉ trong nhánh SUBSCRIBED (chạy 1 lần), payload :94-98 KHÔNG có field gated; acquire :124-129 chỉ refs++ và trả entry cũ (channel dùng chung, không re-track); deps :200-201 cố ý loại state khỏi dependency (eslint-disable). architect Option A step 5 CÓ đề xuất re-track khi gated đổi — nhưng test list (solution-architect.md:50) KHÔNG có test presence nào, và chính architect tự nhận trong 'Điều em không chắc' rằng re-track trên channel refcount là last-write-wins, chưa verify ca home-hero(ungated)+watch(gated) cùng browser. Nghĩa là: code re-track được thêm nhưng KHÔNG có assert chứng minh nó chạy lại và không flip-flop. Đó chính xác là fake-fix tôi cảnh báo. Yêu cầu runtime assert của tôi không bị lật — nó càng CẦN THIẾT hơn vì kiến trúc shared-channel mà architect thừa nhận là chưa chắc. Giữ nguyên: presence-gated không được merge nếu thiếu test khẳng định track được gọi lại khi isGated→true."
+    }
+  ],
+  "newDisagreements": []
+}

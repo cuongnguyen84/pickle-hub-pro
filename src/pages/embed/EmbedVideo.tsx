@@ -26,10 +26,12 @@ const EmbedVideo = () => {
     return null;
   }, [video?.source, video?.storage_path]);
 
-  // Record view events every 30s, max 20/session (~10 min), embed source
+  // Record view events every 30s, max 20/session (~10 min), embed source.
+  // active: true = deliberate open-page counting for plain video (unchanged).
   useIntervalViewCounter({
     targetType: "video",
     targetId: id,
+    active: true,
     source: "embed",
   });
 

@@ -1,0 +1,48 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Chữ ký param mới của useIntervalViewCounter: optional default-true hay required",
+      "myRound1Position": "Thêm `active?: boolean` default `true` — video callers không đổi, 0 file ngoài scope.",
+      "move": "REFINE",
+      "note": "Giữ hướng 'thêm cờ vào hook dùng chung', nhưng đổi từ optional-default sang REQUIRED. Xác nhận tại useIntervalViewCounter.ts:27-34,53-57: hook thực sự dùng chung video+livestream, một setInterval on-mount, không có test. Default-true của em đã tránh được P0 default-false của pre-mortem, nhưng required rẻ hơn về dài hạn: TS đỏ ở cả 5 caller buộc mỗi caller khai báo tường minh (WatchVideo/EmbedVideo truyền `active={true}` giữ nguyên hành vi đếm-luôn; livestream truyền `active={isPlaying && !isGated}`). Required subsume luôn mitigation của risk-auditor ('test cả 5 caller cùng PR') vì compiler tự ép — không ai quên được, kể cả caller thứ 6 sau này. Chi phí: +2 dòng ở 2 file video. Không mâu thuẫn goal risk-auditor (video vẫn đếm), chỉ bỏ cái default có thể bị lật im lặng."
+    },
+    {
+      "id": "D2",
+      "topic": "Ngân sách preview 15s dùng chung giữa homepage hero và trang xem (key chỉ theo livestreamId)",
+      "myRound1Position": "Persist elapsed theo `pkl_preview_elapsed_<id>`, một ngân sách chung mọi bề mặt, không tách surface.",
+      "move": "REFINE",
+      "note": "Giữ persist-elapsed (fix reload-reset là đúng), nhưng REFINE quyết định phụ: tách key theo bề mặt (`_home_`/`_watch_`) thay vì dùng chung. Verify cơ chế: HomeLivePlayer.tsx:46-63 gọi CÙNG useLivestreamGate với cùng livestreamId, và useLivestreamGate.ts:20-22,77 ghi `pkl_preview_seen_<id>` rồi markPreviewSeen khi hết giờ → key chia sẻ là THẬT. Sắc thái làm nhẹ pre-mortem: HomeLivePlayer là tap-to-play, không autoplay (comment :24-27), nên preview chỉ cháy nếu user CHỦ ĐỘNG play trên hero — không phải 'ai vào / cũng cháy'. Nhưng khi họ có play thật thì đúng là mất preview ở trang xem → gate giây-0 → hại đúng metric signup. Tách key gần như miễn phí (thêm prefix vào getSeenKey) và không đóng cửa nào; đánh đổi duy nhất là user có thể nếm 2×15s (home + watch) — với mục tiêu conversion, đó là lợi. Em đảo quyết định 'không tách' của vòng 1 vì cân lại theo success-metric, không vì có file mới (em đã biết key chung ở vòng 1)."
+    },
+    {
+      "id": "D3",
+      "topic": "Presence-gated có ship đợt này không, và làm sao không thành no-op giả",
+      "myRound1Position": "Ship nhưng defer PR cuối, re-track qua channel.track() khi gated đổi, cắt nếu rủi ro > giá trị.",
+      "move": "REFINE",
+      "note": "Giữ lập trường (defer + cuttable), nhưng REFINE điều kiện ship: chỉ ship nếu có runtime test khẳng định track() được gọi LẠI khi isGated→true; không có test đó thì CẮT, lùi về Option C. Verify cơ chế pre-mortem chỉ ra là chính xác: useLivePresence.ts:88-98 track() chỉ chạy 1 lần trong callback SUBSCRIBED; :124-128 acquire() refcount tái dùng entry cũ (home-hero rồi /live dùng lại channel, không track lại); :180-182,201 deps `[livestreamId, enabled]` cố ý loại mọi state → hook KHÔNG nhận isGated để re-track. Nên 'gated trong payload' đúng là no-op nếu chỉ thêm field. Em vòng 1 đã nêu rủi ro này ở 'Điều em không chắc'; pre-mortem sắc hoá nó thành tripwire cụ thể — em adopt tripwire đó làm điều kiện merge của increment 6. Đây là siết phạm vi, không phải nhượng: presence-gated vẫn là nicety admin, defer/cắt được."
+    },
+    {
+      "id": "D4",
+      "topic": "CTA của embed gate: có redirect về /live/:id sau auth không + tên param signup",
+      "myRound1Position": "Bỏ ?redirect (vô nghĩa trong iframe), trỏ thẳng /login?tab=signup.",
+      "move": "CONCEDE",
+      "evidence": "src/pages/Login.tsx:32 — `searchParams.get(\"mode\") !== \"signup\"`, KHÔNG đọc `tab`; và Login.tsx:51,62-64 — `redirectUrl = safeInternalPath(get(\"redirect\"))` rồi `navigate(targetUrl)` sau auth.",
+      "note": "Hai lỗi vòng 1 của em, tự mở file xác nhận: (1) param đúng là `mode=signup` — `tab=signup` sẽ mở nhầm tab đăng nhập, đúng cái nút gánh toàn bộ metric signup. (2) 'redirect vô nghĩa trong iframe' sai vì CTA mở target=_blank = tab top-level FIRST-PARTY, không phải iframe; trong tab đó Login.tsx:51,62-64 tôn trọng redirect và điều hướng /live/:id sau auth (user đã login → shouldGate=false, không double-gate). Link đúng: `/login?mode=signup&redirect=/live/:id&source=embed_live_gate`."
+    },
+    {
+      "id": "D5",
+      "topic": "Re-pause khi gated: self re-pause trong MuxPlayer đủ, hay phải thoát native fullscreen/PiP trước khi hiện overlay",
+      "myRound1Position": "MuxPlayer nhận prop gated, self re-pause trên mọi onPlay — 1 guard che mọi ca resume, coi là đủ.",
+      "move": "REFINE",
+      "note": "Kiến trúc 'MuxPlayer sở hữu gate + self-pause 1 guard' GIỮ NGUYÊN (nó vẫn dừng playback ở mọi call-site và mọi ca native-resume). Nhưng 'coi là đủ' thiếu cho UX: xác nhận MuxPlayer.tsx:9-12 MuxPlayerHandle chỉ có play/pause — không có exitFullscreen/exitPip. Trên iOS native video-fullscreen/PiP, overlay DOM không render được → pause câm = màn đen tự dừng không lý do (đúng lo của ui-ux-critic), và đây là luồng web-mobile 95% audience, không phải native /apple. REFINE phạm vi: thêm `exitFullscreen()`/`exitPip()` vào handle và chủ động thoát TRƯỚC khi hiện overlay. Không phải CONCEDE vì lõi (gate sống trong MuxPlayer) không đổi; chỉ mở rộng handle. Cần verify hành vi fullscreen thực của @mux/mux-player (Android element-fullscreen có thể vẫn cho overlay) trước khi chốt độ phức tạp."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Chiến lược fullscreen: ui-ux-critic muốn phân biệt 'fullscreen là player-wrapper → render overlay trong wrapper giữ fullscreen' vs 'native video-only → exit rồi overlay'. Em đề xuất đơn giản hoá cho solo-maintainer: LUÔN exitFullscreen()+exitPip() rồi hiện overlay, không phân nhánh detect wrapper-vs-native. Ít code hơn, robust hơn, không phải dò loại fullscreen mỗi nền tảng.",
+      "with": "ui-ux-critic",
+      "myPosition": "Always-exit-then-overlay; bỏ nhánh 'giữ fullscreen render overlay trong wrapper' — phân nhánh đó là chi phí bảo trì không tương xứng cho một overlay gate."
+    }
+  ]
+}

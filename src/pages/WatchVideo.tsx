@@ -61,9 +61,12 @@ const WatchVideo = () => {
 
   // Record view events every 30s, max 20/session (~10 min). Kept on the
   // page (not gated behind authentication) so anonymous viewers count.
+  // active: true = deliberate open-page counting for plain video (unchanged
+  // behavior); only livestream surfaces tie this to playback state.
   useIntervalViewCounter({
     targetType: "video",
     targetId: id,
+    active: true,
   });
 
   // Related — prefer same organization, exclude self, cap at 6 cards.

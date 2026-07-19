@@ -1,0 +1,133 @@
+{
+  "slug": "livestream-gate-hardening",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Chữ ký param mới của useIntervalViewCounter: optional default-true hay required",
+      "positions": {
+        "solution-architect": "Thêm `active?: boolean` default `true` — video callers không đổi = 0 thay đổi hành vi, không đụng file ngoài scope.",
+        "risk-auditor": "Giữ default = hành vi hiện tại nếu không truyền cờ, nhưng cập nhật + test cả 5 caller trong cùng PR.",
+        "pre-mortem": "Param phải REQUIRED (không default) — TS đỏ ở mọi caller buộc quyết định tường minh; optional-default là đúng cái bẫy sinh ra sự cố P0 (video ngừng đếm im lặng nếu ai đó sau này đổi default hoặc hiểu nhầm)."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "note": "Giữ hướng 'thêm cờ vào hook dùng chung', nhưng đổi từ optional-default sang REQUIRED: TS đỏ ở cả 5 caller buộc khai báo tường minh (video truyền active={true}, livestream truyền isPlaying && !isGated). Required subsume mitigation của risk-auditor vì compiler tự ép — kể cả caller thứ 6 sau này. Chi phí +2 dòng ở 2 file video."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "note": "Hướng hỏng nguy hiểm (video view về 0 im lặng) CHỈ xảy ra với default=false — không ai đề xuất. default-true fail về phía over-count, đã bị cap maxEventsPerSession=20 chặn. Không ép required (đụng 3 file video ngoài scope). MERGE GATE ràng buộc: test khẳng định useIntervalViewCounter targetType:'video' không truyền active vẫn tick — default-true PASS, default-false FAIL."
+        },
+        "pre-mortem": {
+          "move": "CONCEDE",
+          "evidence": "src/hooks/useIntervalViewCounter.ts:53-55 — tick hiện push event VÔ ĐIỀU KIỆN (video luôn đếm); docs/proposals/livestream-gate-hardening/round1/solution-architect.md:66-69 — param đề xuất là `active?: boolean` default `true`, caller video không truyền ⇒ giữ nguyên hành vi đếm.",
+          "note": "Incident 1 giả định default false; dữ kiện lật: architect chọn default true — bỏ qua param = tiếp tục đếm, kịch bản mất-data-im-lặng không thể nổ. Residual: caller livestream mới quên cờ sẽ over-count, nhưng đó là hỏng hữu hình. Điều kiện giữ lại: nếu chọn optional thì default phải là literal true."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "Kịch bản P0 mất-data-im-lặng chết bằng bằng chứng (hook hiện đếm vô điều kiện; default-true giữ nguyên hành vi video). Chữ ký chốt: REQUIRED param theo architect round-2 (thoả luôn merge-gate của auditor); bắt buộc kèm test 'video vẫn đếm' trong cùng PR."
+    },
+    {
+      "id": "D2",
+      "topic": "Ngân sách preview 15s dùng chung giữa homepage hero và trang xem (localStorage key chỉ theo livestreamId)",
+      "positions": {
+        "solution-architect": "Persist elapsed theo key `pkl_preview_elapsed_<id>` — một ngân sách chung cho mọi bề mặt (không tách theo surface).",
+        "pre-mortem": "Key chung + gate homepage arm thật = user đốt 15s ở ô nhỏ trang chủ rồi vào /live/:id bị chặn giây-0 đêm live → phễu signup sập; phải tách key theo bề mặt hoặc chỉ tính preview trên trang xem.",
+        "risk-auditor": "Trung lập: chấp nhận có chủ đích HOẶC tách namespace — nhưng phải ghi rõ quyết định vào proposal."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "note": "Giữ persist-elapsed nhưng đảo quyết định phụ: tách key theo bề mặt (_home_/_watch_). Sắc thái làm nhẹ pre-mortem: HomeLivePlayer là tap-to-play không autoplay (comment :24-27) nên preview chỉ cháy khi user chủ động play trên hero — nhưng khi có play thật thì đúng là gate giây-0 trên trang xem, hại metric signup. Tách key gần miễn phí; đánh đổi: user nếm tối đa 2×15s. Đảo vì cân lại theo success-metric, không phải file mới."
+        },
+        "pre-mortem": {
+          "move": "HOLD",
+          "note": "Architect không phản bác cơ chế — bất đồng THẬT về đánh giá. Tệ hơn round 1: key elapsed MỚI (pkl_preview_elapsed_<id>) cũng surface-blind ⇒ mỗi giây xem ở hero rút thẳng ngân sách của /live, không cần đốt đủ 15s. Failure rơi trúng success-metric đúng lúc traffic đỉnh — 'ghi rõ quyết định' là chưa đủ, tối thiểu phải prefix bề mặt vào key hoặc chỉ tính preview trên trang xem."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "note": "Về reliability cả hai lựa chọn revert sạch → tier vẫn AMBER. Về success metric: shared budget chủ động phá chính phễu signup proposal muốn tăng. Refine 'document the decision' → 'document + INSTRUMENT': nếu Cuong giữ shared budget, bắt buộc ship kèm secondsWatchedBeforeGate để pathology gate-giây-0 quan sát được."
+        }
+      },
+      "status": "OPEN_FOR_CUONG"
+    },
+    {
+      "id": "D3",
+      "topic": "Presence-gated có ship trong đợt này không, và làm sao để nó không thành no-op giả",
+      "positions": {
+        "solution-architect": "Ship, nhưng defer PR cuối; re-track qua channel.track() khi gated đổi; cắt nếu rủi ro > giá trị (admin-only nicety).",
+        "ui-ux-critic": "Cần cho admin (tách 'Đang xem' vs 'Chờ đăng nhập') — giữ trong scope, mức hẹp: 1 field + 1 badge.",
+        "pre-mortem": "Rủi ro cao nhất là fake-fix: track() chỉ chạy 1 lần lúc SUBSCRIBED, refcount channel dùng chung không cho re-track tự nhiên — không có runtime assert thì đừng ship, vì nó đóng bug thật dưới vỏ đã-fix."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "note": "Giữ defer + cuttable, refine điều kiện ship: CHỈ ship nếu có runtime test khẳng định track() được gọi LẠI khi isGated→true; không có thì cắt, lùi về Option C. Verify cơ chế pre-mortem là chính xác (useLivePresence.ts:88-98, :124-128, :180-182,201). Adopt tripwire làm điều kiện merge."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "note": "Giá trị UX (admin cần tách con số) không bị lật, nhưng file xác nhận cách làm ngây thơ là no-op giả. Refine: giữ presence-gated trong scope NHƯNG điều kiện ship = re-track khi isGated đổi + runtime assert test track() gọi lại khi gated flip. Không có test thì cắt sang PR sau, không ship 1 field câm."
+        },
+        "risk-auditor": {
+          "move": "HOLD",
+          "note": "Tự verify độc lập: track() fire đúng 1 lần trong nhánh SUBSCRIBED; acquire() trả entry cũ không re-track; hook không expose channel. Lập trường giữ: (a) increment CUỐI, PR riêng; (b) re-track qua effect RIÊNG gọi entry.channel.track(), TUYỆT ĐỐI không đưa gated vào subscribe deps (guard collision 2026-07-08); (c) merge-gate = runtime test track() gọi lại khi isGated→true; (d) nếu (b)+(c) không sạch thì CẮT."
+        },
+        "pre-mortem": {
+          "move": "HOLD",
+          "note": "Architect Option A có đề xuất re-track nhưng test list không có test presence nào, và chính architect tự nhận re-track trên channel refcount là last-write-wins chưa verify ca home-hero+watch cùng browser. Yêu cầu runtime assert càng cần thiết. Giữ: presence-gated không được merge nếu thiếu test khẳng định track được gọi lại khi isGated→true."
+        }
+      },
+      "status": "OPEN_FOR_CUONG"
+    },
+    {
+      "id": "D4",
+      "topic": "CTA của embed gate: có redirect về /live/:id sau auth không + tên param signup",
+      "positions": {
+        "solution-architect": "Bỏ ?redirect (vô nghĩa trong iframe), trỏ thẳng /login?tab=signup.",
+        "ui-ux-critic": "Redirect KHÔNG vô nghĩa: tab mới là top-level, sau auth tab đó redirect về /live/:id và user xem tiếp ở first-party — phải là /login?mode=signup&redirect=/live/:id&source=embed_live_gate (param đúng là mode= chứ không phải tab= — Login.tsx:32)."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "src/pages/Login.tsx:32 — searchParams.get(\"mode\") !== \"signup\", KHÔNG đọc `tab`; và src/pages/Login.tsx:51,62-64 — redirect được tôn trọng sau auth.",
+          "note": "Hai lỗi vòng 1: (1) param đúng là mode=signup, tab=signup mở nhầm tab; (2) 'redirect vô nghĩa trong iframe' sai vì CTA mở target=_blank = tab top-level first-party, Login điều hướng /live/:id sau auth (đã login → shouldGate=false, không double-gate)."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "note": "Lập luận 'redirect vô nghĩa trong iframe' nhầm đích: CTA mở tab MỚI top-level, Login.tsx:51-64 đọc và dùng redirect bình thường. Param architect đề xuất (?tab=signup) là dead param. Giữ: /login?mode=signup&redirect=/live/:id&source=embed_live_gate."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "CTA embed = /login?mode=signup&redirect=/live/:id&source=embed_live_gate (target=_blank). Đồng thời sửa luôn bug đang sống: nút 'Tạo tài khoản' của overlay hiện tại trỏ &tab=signup — dead param, mở nhầm tab Đăng nhập (LivestreamGateOverlay.tsx:38 vs Login.tsx:32)."
+    },
+    {
+      "id": "D5",
+      "topic": "Re-pause khi gated: tự pause trong MuxPlayer là đủ, hay bắt buộc thoát native fullscreen/PiP trước khi hiện overlay",
+      "positions": {
+        "solution-architect": "MuxPlayer nhận prop gated, self re-pause trên mọi onPlay — 1 guard che mọi ca resume, coi là đủ.",
+        "ui-ux-critic": "Blocker: re-pause câm trong native fullscreen = màn đen tự dừng không lý do, cảm giác app hỏng; MuxPlayerHandle phải thêm exitFullscreen()/exitPip() và chủ động thoát trước khi hiện overlay."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "note": "Kiến trúc 'MuxPlayer sở hữu gate + self-pause' GIỮ. Xác nhận MuxPlayer.tsx:9-12 handle chỉ có play/pause; trên iOS native fullscreen/PiP overlay DOM không render → pause câm = màn đen không lý do. Refine: thêm exitFullscreen()/exitPip() vào handle, thoát trước khi hiện overlay. Cần verify hành vi fullscreen thực của @mux/mux-player trước khi chốt."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "note": "Architect giải quyết 'ngăn phát lại', tôi nói về 'lộ lý do' — hai vấn đề khác nhau. 1 guard vẫn để user kẹt màn đen không giải thích trong native fullscreen. Blocker vòng 1 giữ nguyên."
+        }
+      },
+      "status": "OPEN_FOR_CUONG"
+    },
+    {
+      "id": "D6",
+      "topic": "Chiến lược thoát fullscreen (mới, phát sinh vòng 2): luôn exit-rồi-overlay, hay phân nhánh wrapper-fullscreen giữ nguyên + overlay trong wrapper vs native-exit",
+      "positions": {
+        "solution-architect": "Always-exit-then-overlay; bỏ nhánh giữ-fullscreen — ít code, robust hơn cho solo-maintainer.",
+        "ui-ux-critic": "Phân nhánh: wrapper-fullscreen thì render overlay trong wrapper giữ fullscreen; chỉ native video-only fullscreen mới exit rồi hiện overlay; PiP thì exitPictureInPicture."
+      },
+      "round2": {},
+      "status": "OPEN_FOR_CUONG"
+    }
+  ]
+}

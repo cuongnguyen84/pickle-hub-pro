@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useLivestream } from "@/hooks/useSupabaseData";
 import { MuxPlayer } from "@/components/video";
@@ -5,20 +6,58 @@ import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { Loader2 } from "lucide-react";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
+import { useAuth } from "@/hooks/useAuth";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { useLivestreamGate } from "@/hooks/useLivestreamGate";
+import { PreviewCountdown } from "@/components/video/PreviewCountdown";
+import { LivestreamGateOverlay } from "@/components/video/LivestreamGateOverlay";
+import { useI18n } from "@/i18n";
 
 const EmbedLive = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const { isBlocked } = useGeoBlock();
+  const { t } = useI18n();
+  const { user, loading: authLoading } = useAuth();
+  const { data: systemSettings } = useSystemSettings();
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const showTitle = searchParams.get("title") !== "0";
 
   const { data: livestream, isLoading } = useLivestream(id!);
 
-  // Record view events every 30s, max 20/session (~10 min), embed source
+  const isLive = livestream?.status === "live";
+  const isEnded = livestream?.status === "ended";
+
+  // Same gate rules as /live/:id — the embed is not a side door. Mirrors the
+  // full applies_to branching so a replay stays open when the gate is
+  // configured live-only.
+  const gateAppliesTo = systemSettings?.livestream_gate_applies_to ?? "all";
+  const gateEnabled = !!(
+    systemSettings?.require_login_livestream &&
+    (gateAppliesTo === "all" ||
+      (gateAppliesTo === "live" && isLive) ||
+      (gateAppliesTo === "replay" && isEnded))
+  );
+
+  const { isGated, secondsRemaining, progress, showCountdown, sessionSeconds } = useLivestreamGate({
+    livestreamId: id!,
+    surface: "embed",
+    previewSeconds: systemSettings?.livestream_preview_seconds ?? 30,
+    // Note: inside a third-party iframe Safari partitions storage, so a
+    // logged-in first-party session may not be visible here — those viewers
+    // see the gate and continue on the first-party tab the CTA opens.
+    isEnabled: gateEnabled && !authLoading,
+    isAuthenticated: !!user,
+    isPlaying,
+  });
+
+  // Record view events every 30s, max 20/session (~10 min), embed source —
+  // only while actually playing and not gated.
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: id,
+    active: isPlaying && !isGated,
     source: "embed",
   });
 
@@ -33,13 +72,10 @@ const EmbedLive = () => {
   if (!livestream) {
     return (
       <div className="w-full h-full min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white/70 text-sm">Stream not available</p>
+        <p className="text-white/70 text-sm">{t.live.streamNotAvailable}</p>
       </div>
     );
   }
-
-  const isLive = livestream.status === "live";
-  const isEnded = livestream.status === "ended";
 
   // Use asset playback ID for ended streams (replay), otherwise use live playback ID
   const playbackId = isEnded && livestream.mux_asset_playback_id
@@ -52,7 +88,7 @@ const EmbedLive = () => {
   if (!hasPlayback) {
     return (
       <div className="w-full h-full min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white/70 text-sm">Stream not available</p>
+        <p className="text-white/70 text-sm">{t.live.streamNotAvailable}</p>
       </div>
     );
   }
@@ -61,7 +97,9 @@ const EmbedLive = () => {
     <div className="w-full h-full min-h-screen bg-black flex flex-col">
       {/* Video Player - Full screen */}
       <div className="flex-1 relative">
+        {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
         {isBlocked && <GeoBlockOverlay />}
+        {isGated && <LivestreamGateOverlay livestreamId={id!} surface="embed" sessionSeconds={sessionSeconds} />}
         <MuxPlayer
           playbackId={playbackId!}
           title={livestream.title ?? undefined}
@@ -69,6 +107,8 @@ const EmbedLive = () => {
           streamType={streamType}
           type="livestream"
           isLive={isLive}
+          gated={isGated}
+          onPlayStateChange={setIsPlaying}
           className="w-full h-full absolute inset-0"
         />
       </div>

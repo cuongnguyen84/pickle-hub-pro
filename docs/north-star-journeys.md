@@ -115,6 +115,37 @@ but draft-to-published transitions cannot be timed reliably. `BASE-02` must add
 a server-side publication timestamp or immutable transition event before the
 database is used as the canonical organizer activation series.
 
+## Livestream gate journey
+
+Added 2026-07-20 by `livestream-gate-hardening`. A diagnostic conversion
+journey, not a role activation: it measures whether the livestream login gate
+produces accounts.
+
+**Entry:** the gate overlay is shown to an anonymous viewer whose preview
+window has ended, on any of the three surfaces (`home` hero, `watch` page,
+third-party `embed`).
+
+**Completion:** the existing `sign_up` point in `useAuth` fires for a freshly
+created account while a `livestream_gate` journey is active in the session
+AND a gate-CTA click flag is present (set only by a real click on the overlay
+CTAs; prevents attributing unrelated later signups in the same tab). The
+completion inherits the `sign_up` age heuristic (account < 120s old), so
+email-verify flows slower than 2 minutes are not attributed — a known
+undercount, not a bug. Embed CTAs open a new tab whose sessionStorage is
+separate, so embed completions undercount; the `source=embed_live_gate` URL
+param on the login page remains the embed-side signal.
+
+| Order | Event | Emit condition |
+|---:|---|---|
+| 1 | `live_gate_shown` | Gate overlay mounts; this is the intent denominator |
+| 2 | `live_gate_signup_clicked` / `live_gate_login_clicked` | CTA click on the overlay |
+| 3 | `livestream_gate_signup_completed` | `sign_up` fires with an active journey |
+
+Journey-specific properties (allow-listed): `surface` (`home` | `watch` |
+`embed`), `seconds_watched_session` (integer; 0 at gate time flags a viewer
+blocked on arrival — the budget-consumed-elsewhere pathology), `method`
+(auth provider, completion only).
+
 ## Measurement rules
 
 - Report Vietnam (`market_segment = 'vn'`) as the primary view and keep
