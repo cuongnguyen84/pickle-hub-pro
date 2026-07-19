@@ -7,6 +7,7 @@
 import { registerSW } from "virtual:pwa-register";
 import { Capacitor } from "@capacitor/core";
 import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
+import { isChunkErrorMessage } from "@/lib/chunkError";
 
 /**
  * Detect chunk-import failures and force a clean reload. After a deploy,
@@ -23,15 +24,7 @@ import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
  */
 function installChunkErrorRecovery(): void {
   const RELOAD_FLAG = "__chunk_reload_pending__";
-  const isChunkError = (msg: unknown): boolean => {
-    if (typeof msg !== "string") return false;
-    return (
-      msg.includes("Importing a module script failed") ||
-      msg.includes("Failed to fetch dynamically imported module") ||
-      msg.includes("error loading dynamically imported module") ||
-      msg.includes("Loading chunk ") // webpack-style fallback
-    );
-  };
+  const isChunkError = isChunkErrorMessage;
 
   // In-memory backup flag for environments that block sessionStorage
   // (sandboxed iframes, opaque origins, strict-privacy WebViews). Survives

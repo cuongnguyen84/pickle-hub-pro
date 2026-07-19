@@ -234,19 +234,9 @@ prefetchHomeData(queryClient);
 // after the active dictionary has loaded.
 const PageLoader = () => <LoadingState fullScreen />;
 
-// Helper: detect a "chunk error" — covers both classic Vite/webpack chunk
-// load failures AND the SPA-fallback signature (HTML served as JS → parser
-// hits "<" first character).
-const isChunkErrorMessage = (msg: string | undefined): boolean => {
-  if (!msg) return false;
-  return (
-    msg.includes("Failed to fetch dynamically imported module") ||
-    msg.includes("Loading chunk") ||
-    msg.includes("ChunkLoadError") ||
-    msg.includes("Unexpected token '<'") ||
-    msg.includes("Unexpected token <")
-  );
-};
+// Chunk-error detection lives in @/lib/chunkError — shared with pwa.ts so
+// the browser-specific message list can never drift between the two again.
+import { isChunkErrorMessage } from "@/lib/chunkError";
 
 // Error boundary for lazy-loaded chunks (handles stale cache after deploy)
 class ChunkErrorBoundary extends Component<
