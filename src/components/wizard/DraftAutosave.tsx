@@ -33,7 +33,7 @@ export function DraftRestoredBanner({ onStartOver }: { onStartOver: () => void }
           {t.drafts.startOver}
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => setDismissed(true)}>
-          OK
+          {t.common.close}
         </Button>
       </div>
     </div>

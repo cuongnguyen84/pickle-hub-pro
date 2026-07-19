@@ -7,9 +7,12 @@
 // here so different events run by different organizers in the same club
 // can each receive into their own bank account.
 //
-// Free events skip the bank fields entirely and show a "no payment step"
-// hint instead — the validator already short-circuits the bank-trio when
-// price_vnd === 0.
+// UX-03 (proposal ux-01-05 §5 issue #3): the free/paid split is an EXPLICIT
+// radio question at the top of the step — no more inferring intent from
+// price_vnd === 0. Choosing "Miễn phí" clears all fee state in the parent
+// (price, bank trio, requires_prepayment) so no hidden fee data survives.
+// Validation stays keyed on the persisted price_vnd (validator
+// short-circuits the bank-trio when price_vnd === 0), never on visibility.
 // ============================================================================
 
 import { useMemo } from "react";
@@ -36,6 +39,9 @@ interface Props {
   onBlur: (key: keyof FormState) => void;
   /** Locale code for thousand-separator formatting. */
   language: "vi" | "en";
+  /** Explicit fee branching (UX-03). Owned by the wizard container. */
+  feeMode: "free" | "paid";
+  onFeeModeChange: (mode: "free" | "paid") => void;
 }
 
 function ErrorText({ msg }: { msg: string | null | undefined }) {
@@ -43,13 +49,22 @@ function ErrorText({ msg }: { msg: string | null | undefined }) {
   return <p className="mt-1 text-xs text-destructive">{msg}</p>;
 }
 
-export function Step2Payment({ form, errors, touched, onChange, onBlur, language }: Props) {
+export function Step2Payment({
+  form,
+  errors,
+  touched,
+  onChange,
+  onBlur,
+  language,
+  feeMode,
+  onFeeModeChange,
+}: Props) {
   const { t } = useI18n();
   const create = t.socialEvents.create;
   const showError = (k: keyof FormState) => (touched[k] ? errors[k] : null);
 
   const priceLocale = language === "vi" ? "vi-VN" : "en-US";
-  const isFree = form.price_vnd === 0;
+  const isFree = feeMode === "free";
 
   // Preview QR shows up only when the bank trio + price are all valid;
   // until then we keep the slot empty so a bad URL never paints.
@@ -79,38 +94,64 @@ export function Step2Payment({ form, errors, touched, onChange, onBlur, language
         <h2 className="text-xl font-semibold">{create.step2PaymentHeading}</h2>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="ev-price">{create.priceAmount} *</Label>
-        <Input
-          id="ev-price"
-          type="text"
-          inputMode="numeric"
-          value={form.price_vnd === 0 ? "" : form.price_vnd.toLocaleString(priceLocale)}
-          placeholder="0"
-          onChange={(e) => {
-            const digitsOnly = e.target.value.replace(/\D+/g, "");
-            onChange("price_vnd", digitsOnly === "" ? 0 : Number(digitsOnly));
-          }}
-          onBlur={() => onBlur("price_vnd")}
-        />
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-xs text-muted-foreground">{create.priceFreeHint}</p>
-          {form.price_vnd > 0 && (
-            <p className="font-mono text-sm font-semibold text-foreground">
-              {form.price_vnd.toLocaleString(priceLocale)} ₫
-            </p>
-          )}
+      {/* UX-03 — explicit fee branching. Same native-radio pattern as the
+          visibility field on Step 1. */}
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">{create.feeModeQuestion}</legend>
+        <div className="space-y-1">
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              id="ev-fee-free"
+              type="radio"
+              name="ev-fee-mode"
+              checked={feeMode === "free"}
+              onChange={() => onFeeModeChange("free")}
+            />
+            <span>{create.feeModeFree}</span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              id="ev-fee-paid"
+              type="radio"
+              name="ev-fee-mode"
+              checked={feeMode === "paid"}
+              onChange={() => onFeeModeChange("paid")}
+            />
+            <span>{create.feeModePaid}</span>
+          </label>
         </div>
-        <ErrorText msg={showError("price_vnd")} />
-      </div>
+      </fieldset>
 
       {isFree ? (
         <div className="flex items-start gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-sm">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-          <p>{create.paymentBannerFree}</p>
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <p>
+            {create.paymentBannerFree} {create.feeModeFreeHelper}
+          </p>
         </div>
       ) : (
         <>
+          <div className="space-y-2">
+            <Label htmlFor="ev-price">{create.priceAmount} *</Label>
+            <Input
+              id="ev-price"
+              type="text"
+              inputMode="numeric"
+              value={form.price_vnd === 0 ? "" : form.price_vnd.toLocaleString(priceLocale)}
+              placeholder="0"
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/\D+/g, "");
+                onChange("price_vnd", digitsOnly === "" ? 0 : Number(digitsOnly));
+              }}
+              onBlur={() => onBlur("price_vnd")}
+            />
+            {form.price_vnd > 0 && (
+              <p className="text-right font-mono text-sm font-semibold text-foreground">
+                {form.price_vnd.toLocaleString(priceLocale)} ₫
+              </p>
+            )}
+            <ErrorText msg={showError("price_vnd")} />
+          </div>
           <div className="space-y-4 border-t pt-5">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {create.bankInfoHeading}
@@ -181,8 +222,10 @@ export function Step2Payment({ form, errors, touched, onChange, onBlur, language
             </div>
           </div>
 
-          <p className="rounded-md border border-blue-400/30 bg-blue-50 px-3 py-2 text-xs text-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
-            ⓘ {create.bankDisclaimer}
+          {/* UX-05 issue #5 — semantic tokens, no raw blue-* / emoji. */}
+          <p className="flex items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>{create.bankDisclaimer}</span>
           </p>
 
           {/* PR67 — prepayment toggle + deadline. Only relevant for paid

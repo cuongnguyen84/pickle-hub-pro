@@ -7,6 +7,7 @@ export const en: Translations = {
     loading: "Loading...",
     error: "An error occurred",
     retry: "Retry",
+    stepOf: "Step {n}/{total}",
     save: "Save",
     cancel: "Cancel",
     delete: "Delete",
@@ -1220,6 +1221,9 @@ export const en: Translations = {
       stepGameTemplates: "Game Templates",
       stepDreambreaker: "DreamBreaker",
       stepFormat: "Format",
+      stepFees: "Fees",
+      dreambreakerToggle: "Use Dreambreaker on a tie",
+      dreambreakerToggleDesc: "Add a tiebreaker game when teams are tied on games won",
       tournamentName: "Tournament name",
       tournamentNamePlaceholder: "E.g.: MLP Spring 2026",
       playersPerTeam: "Players per team",
@@ -1904,7 +1908,6 @@ export const en: Translations = {
       errorSlugFormat: "Slug must be lowercase letters, digits, hyphens (3–100 chars)",
       successDraft: "Draft saved",
       successPublished: "Published — event is accepting registrations",
-      stepIndicator: "Step {n} of 2",
       step1Heading: "Event details",
       step1Subheading: "Tell us the basics about your session.",
       step2Heading: "Participation fee",
@@ -1917,7 +1920,6 @@ export const en: Translations = {
       startTime: "Start time",
       endTime: "End time",
       priceAmount: "Amount (VND)",
-      priceFreeHint: "Enter 0 for a free event.",
       paymentBannerFree:
         "This event is free. Players won't see a payment step.",
       paymentBannerNotConfigured:
@@ -1961,6 +1963,15 @@ export const en: Translations = {
       repeatWeeksPreview: "→ Will create {count} identical events. Last one on {last}.",
       errorRepeatWeeksRange: "Repeat weeks must be between 0 and 12.",
       bulkCreatedToast: "Created {count} identical events.",
+      // UX-01-05 wizard consolidation (PR2-Y)
+      feeModeQuestion: "Is this a paid event?",
+      feeModeFree: "Free",
+      feeModePaid: "Paid",
+      feeModeFreeHelper: "No bank information is needed.",
+      missingFieldsTitle: "Check {count} items before publishing.",
+      partialBatchToast:
+        "Created {created}/{total} sessions. Press Publish now to create the missing ones.",
+      templatesLabel: "Quick templates — pick one to prefill",
       // Slots
       slotsHeading: "Registration groups (optional)",
       slotsSubheading:
