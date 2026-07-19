@@ -16,6 +16,7 @@ import { useI18n } from "@/i18n";
 import { useClub, type ClubEventRow } from "@/hooks/useClub";
 import { formatEventDateRange, interp } from "@/lib/social-events/format";
 import { EntityNotFound } from "@/components/EntityNotFound";
+import { LoadingState, ErrorState } from "@/components/states/PageStates";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { useMyMembership } from "@/hooks/useClubMembers";
 import { ClubMatches } from "@/components/social-events/ClubMatches";
@@ -91,7 +92,7 @@ export default function ClubLanding() {
   const confirm = useConfirm();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data, isLoading } = useClub(slug);
+  const { data, isLoading, isError, refetch } = useClub(slug);
   // PR63 — same gate used by /clb/:slug/quan-ly so an admin or the
   // CLB creator sees a Manage entry on each event card. Anonymous
   // viewers + non-owners get `denied` / `anonymous` and don't.
@@ -144,8 +145,16 @@ export default function ClubLanding() {
   if (isLoading) {
     return (
       <TheLineLayout title="Loading…" active="events">
+        <LoadingState />
+      </TheLineLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <TheLineLayout title={t.errors.networkError} active="events" noindex>
         <div className="tl-shell" style={{ padding: "60px 16px" }}>
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+          <ErrorState onRetry={() => refetch()} />
         </div>
       </TheLineLayout>
     );

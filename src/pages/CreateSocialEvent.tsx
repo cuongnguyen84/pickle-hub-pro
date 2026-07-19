@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { LoadingState } from "@/components/states/PageStates";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -440,9 +441,7 @@ export default function CreateSocialEvent() {
   if (permission.state === "loading") {
     return (
       <TheLineLayout title="Loading…" active="events" noindex>
-        <div className="tl-shell" style={{ padding: "60px 16px" }}>
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <LoadingState />
       </TheLineLayout>
     );
   }

@@ -16,7 +16,8 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, LayoutGrid, Link as LinkIcon, UserPlus } from "lucide-react";
+import { MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, LayoutGrid, Link as LinkIcon, UserPlus } from "lucide-react";
+import { LoadingState, ErrorState } from "@/components/states/PageStates";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -91,7 +92,7 @@ export default function SocialEventDetail() {
   // new sign-ups.
   const [proxyOpen, setProxyOpen] = useState(false);
 
-  const { data, isLoading, refetch } = useSocialEvent(slug);
+  const { data, isLoading, isError, refetch } = useSocialEvent(slug);
   const { data: registrations, refetch: refetchRegistrations } =
     useEventRegistrations(data?.id);
 
@@ -244,8 +245,16 @@ export default function SocialEventDetail() {
   if (isLoading) {
     return (
       <TheLineLayout title="Loading…" active="events">
+        <LoadingState />
+      </TheLineLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <TheLineLayout title={t.errors.networkError} active="events" noindex>
         <div className="tl-shell" style={{ padding: "60px 16px" }}>
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+          <ErrorState onRetry={() => refetch()} />
         </div>
       </TheLineLayout>
     );

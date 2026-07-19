@@ -101,9 +101,11 @@ export function useSocialEvent(slug: string | undefined) {
         .maybeSingle();
       if (error) {
         // RLS blocks return as data=null, error=null. A real error means
-        // schema drift or network — log so we don't silently 404.
+        // schema drift or network — throw so react-query retries and the
+        // page can show ErrorState instead of a false "event not found"
+        // (DS-04; previously this returned null and rendered a 404).
         console.error("useSocialEvent: lookup error", { slug, error });
-        return null;
+        throw error;
       }
       if (!data) return null;
 

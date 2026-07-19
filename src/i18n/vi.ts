@@ -668,6 +668,7 @@ export interface Translations {
     networkErrorDesc: string;
     goHome: string;
     error: string;
+    offline: string;
   };
   ads: {
     advertisement: string;
@@ -3534,6 +3535,7 @@ export const vi: Translations = {
     networkErrorDesc: "Không thể kết nối đến máy chủ.",
     goHome: "Về trang chủ",
     error: "Lỗi",
+    offline: "Mất kết nối mạng — sẽ tự tải lại khi có mạng.",
   },
   ads: {
     advertisement: "Quảng cáo",
