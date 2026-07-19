@@ -671,6 +671,7 @@ export const en: Translations = {
     networkErrorDesc: "Unable to connect to the server.",
     goHome: "Go home",
     error: "Error",
+    offline: "You're offline — content will refresh when the connection returns.",
   },
   ads: {
     advertisement: "Advertisement",

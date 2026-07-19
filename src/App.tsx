@@ -6,7 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { SkipToContent } from "@/components/layout/SkipToContent";
-import { I18nProvider, useI18n } from "@/i18n";
+import { I18nProvider } from "@/i18n";
+import { LoadingState, OfflineBanner } from "@/components/states/PageStates";
 import { ConfirmProvider } from "@/hooks/useConfirm";
 import { lazy, Suspense, Component, ReactNode, useLayoutEffect } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
@@ -228,28 +229,10 @@ const queryClient = new QueryClient({
 import { prefetchHomeData } from "@/lib/prefetch";
 prefetchHomeData(queryClient);
 
-// Minimal route-transition fallback. Centered spinner on the page background
-// — no header, no nav. PageLoader renders inside <I18nProvider> (the Suspense
-// boundary that uses it lives at App.tsx line 366, well inside line 354's
-// I18nProvider) so useI18n() is safe to call here after the active dictionary
-// has loaded.
-//
-// a11y (Codex P2): role="status" + aria-live="polite" so screen readers
-// announce the transition; sr-only label gives them a phrase to announce.
-const PageLoader = () => {
-  const { language } = useI18n();
-  const label = language === "en" ? "Loading..." : "Đang tải...";
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-background"
-      role="status"
-      aria-live="polite"
-    >
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-      <span className="sr-only">{label}</span>
-    </div>
-  );
-};
+// Route-transition fallback = shared LoadingState (DS-04). It calls useI18n(),
+// which is safe: the Suspense boundary using it renders inside I18nProvider
+// after the active dictionary has loaded.
+const PageLoader = () => <LoadingState fullScreen />;
 
 // Helper: detect a "chunk error" — covers both classic Vite/webpack chunk
 // load failures AND the SPA-fallback signature (HTML served as JS → parser
@@ -587,6 +570,7 @@ const App = () => (
            <ConfirmProvider>
             <Toaster />
             <Sonner />
+            <OfflineBanner />
             <BrowserRouter>
               <DeepLinkInitializer />
               <PushNotificationInitializer />

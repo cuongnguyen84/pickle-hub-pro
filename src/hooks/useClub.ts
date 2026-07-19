@@ -53,8 +53,10 @@ export function useClub(slug: string | undefined) {
         .eq("slug", slug)
         .maybeSingle();
       if (clubErr) {
+        // Throw so react-query retries and pages can show ErrorState instead
+        // of a false "club not found" (DS-04).
         console.error("useClub: lookup error", { slug, error: clubErr });
-        return null;
+        throw clubErr;
       }
       if (!club) return null;
 
