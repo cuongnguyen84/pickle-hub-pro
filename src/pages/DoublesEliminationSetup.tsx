@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import { DraftRestoredBanner, DraftSaveStatus } from "@/components/wizard/DraftAutosave";
+import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
 import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -194,6 +197,91 @@ export default function DoublesEliminationSetup() {
 
   const [teams, setTeams] = useState<TeamInput[]>([]);
 
+  // ── UX-05 journey instrumentation (organizer_tournament, tool=doubles) ───
+  const journeyStartedRef = useRef(false);
+  useEffect(() => {
+    if (user && !journeyStartedRef.current) {
+      journeyStartedRef.current = true;
+      startJourney('organizer_tournament');
+      trackJourneyStep('organizer_tournament', 'organizer_tournament_creation_started', {
+        tool: 'doubles',
+        auth_state: 'authenticated',
+      });
+    }
+  }, [user]);
+
+  // ── UX-04 autosave (local-first, docs/proposals/ux-01-05) ────────────────
+  // autoSeedSummary is deliberately NOT saved: it is a computed coverage
+  // report — after a restore the organizer re-runs Auto-seed if needed
+  // (manual seed numbers on teams still restore and still work).
+  const draftValue = useMemo(
+    () => ({
+      step, name, teamCount, courts, startTime,
+      earlyRoundsFormat, semifinalsFormat, finalsFormat, hasThirdPlace,
+      ratingSource, minDuprRating, maxDuprRating, teams,
+    }),
+    [
+      step, name, teamCount, courts, startTime,
+      earlyRoundsFormat, semifinalsFormat, finalsFormat, hasThirdPlace,
+      ratingSource, minDuprRating, maxDuprRating, teams,
+    ],
+  );
+  // Dirty = differs from the pristine first-render snapshot (captured before
+  // the restore effect applies any saved draft).
+  const draftJson = JSON.stringify(draftValue);
+  const initialJsonRef = useRef<string | null>(null);
+  if (initialJsonRef.current === null) initialJsonRef.current = draftJson;
+  const dirty = draftJson !== initialJsonRef.current;
+  const draft = useAutosaveDraft<typeof draftValue>({
+    key: 'draft:doubles:new',
+    value: draftValue,
+    enabled: dirty && !loading,
+  });
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  useEffect(() => {
+    // Apply once at mount. Shape-guard against hand-edited payloads.
+    const d = draft.initial;
+    if (!d || typeof d.name !== 'string' || !Array.isArray(d.teams)) return;
+    setName(d.name);
+    if (typeof d.teamCount === 'number') setTeamCount(d.teamCount);
+    if (typeof d.courts === 'string') setCourts(d.courts);
+    if (typeof d.startTime === 'string') setStartTime(d.startTime);
+    if (['bo1', 'bo3', 'bo5'].includes(d.earlyRoundsFormat)) setEarlyRoundsFormat(d.earlyRoundsFormat);
+    if (['inherit', 'bo3', 'bo5'].includes(d.semifinalsFormat)) setSemifinalsFormat(d.semifinalsFormat);
+    if (['inherit', 'bo3', 'bo5'].includes(d.finalsFormat)) setFinalsFormat(d.finalsFormat);
+    if (typeof d.hasThirdPlace === 'boolean') setHasThirdPlace(d.hasThirdPlace);
+    if (['self', 'either', 'dupr'].includes(d.ratingSource)) setRatingSource(d.ratingSource);
+    if (typeof d.minDuprRating === 'string') setMinDuprRating(d.minDuprRating);
+    if (typeof d.maxDuprRating === 'string') setMaxDuprRating(d.maxDuprRating);
+    const restoredTeams = d.teams.filter(
+      (tm) => tm && typeof tm.name === 'string' && tm.player1 && tm.player2,
+    );
+    if (restoredTeams.length > 0) setTeams(restoredTeams);
+    // Never land on the team-list step with an empty list.
+    if (d.step === 'teams' && restoredTeams.length === 0) setStep('format');
+    else if (['info', 'format', 'teams'].includes(d.step)) setStep(d.step);
+    setRestoredDraft(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const resetToInitial = () => {
+    draft.clear();
+    setStep('info');
+    setName('');
+    setTeamCount(40);
+    setCourts('');
+    setStartTime('');
+    setEarlyRoundsFormat('bo1');
+    setSemifinalsFormat('inherit');
+    setFinalsFormat('inherit');
+    setHasThirdPlace(false);
+    setRatingSource('self');
+    setMinDuprRating('');
+    setMaxDuprRating('');
+    setTeams([]);
+    setAutoSeedSummary(null);
+  };
+
   // Sprint E.3 (2026-05-29). DUPR flow skips Step 3 — tournament is
   // created immediately at status='registration_open' from Step 2.
   const dynamicStepLabels = (() => {
@@ -375,6 +463,10 @@ export default function DoublesEliminationSetup() {
   // validation is shared with the manual path so we keep one source of
   // truth in handleCreate but skip the team list + bracket steps here.
   const handleCreateRegistrationOpen = async () => {
+    trackJourneyStep('organizer_tournament', 'organizer_tournament_submit_attempted', {
+      tool: 'doubles',
+      auth_state: 'authenticated',
+    });
     // Validate DUPR range numerics (mirrors handleCreate validation).
     const minNum = minDuprRating ? parseFloat(minDuprRating) : NaN;
     const maxNum = maxDuprRating ? parseFloat(maxDuprRating) : NaN;
@@ -423,11 +515,20 @@ export default function DoublesEliminationSetup() {
       });
       return;
     }
+    draft.clear();
+    completeJourney('organizer_tournament', 'organizer_tournament_created', {
+      tool: 'doubles',
+      auth_state: 'authenticated',
+    });
     toast({ title: language === 'vi' ? 'Đã mở đăng ký' : 'Registration open' });
     navigate(`/tools/doubles-elimination/${result.tournament.share_id}`);
   };
 
   const handleCreate = async () => {
+    trackJourneyStep('organizer_tournament', 'organizer_tournament_submit_attempted', {
+      tool: 'doubles',
+      auth_state: 'authenticated',
+    });
     // DUPR Phase 1 (2026-05-29). A team is "filled" when it has either:
     //   - a team_name typed, OR
     //   - at least one player slot filled (text or linked).
@@ -545,6 +646,11 @@ export default function DoublesEliminationSetup() {
       return;
     }
 
+    draft.clear();
+    completeJourney('organizer_tournament', 'organizer_tournament_created', {
+      tool: 'doubles',
+      auth_state: 'authenticated',
+    });
     toast({ title: t.doublesElimination.setup.createSuccess || "Tournament created!" });
     navigate(`/tools/doubles-elimination/${result.tournament.share_id}`);
   };
@@ -646,6 +752,7 @@ export default function DoublesEliminationSetup() {
         </section>
 
         <section style={{ maxWidth: 720, margin: '0 auto', padding: '12px 0 0', width: '100%' }}>
+          {restoredDraft && <DraftRestoredBanner onStartOver={resetToInitial} />}
           {/* Step 1: Info */}
           {step === 'info' && (
             <div style={surfaceCard}>
@@ -992,6 +1099,7 @@ export default function DoublesEliminationSetup() {
                   )}
                 </div>
 
+                <DraftSaveStatus lastSavedAt={draft.lastSavedAt} saveFailed={draft.saveFailed} />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8 }}>
                   <button type="button" className="tl-btn green" onClick={handleNext}>
                     {t.quickTable.continue}
@@ -1173,6 +1281,7 @@ export default function DoublesEliminationSetup() {
                   </span>
                 </button>
 
+                <DraftSaveStatus lastSavedAt={draft.lastSavedAt} saveFailed={draft.saveFailed} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8 }}>
                   <button type="button" className="tl-btn" onClick={handleBack}>
                     <ArrowLeft className="w-4 h-4" />
@@ -1386,8 +1495,6 @@ export default function DoublesEliminationSetup() {
 
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
                   paddingTop: 16,
                   marginTop: 16,
                   borderTop: '1px solid var(--tl-border)',
@@ -1396,6 +1503,8 @@ export default function DoublesEliminationSetup() {
                   background: 'var(--tl-bg-elev)',
                 }}
               >
+                <DraftSaveStatus lastSavedAt={draft.lastSavedAt} saveFailed={draft.saveFailed} />
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <button type="button" className="tl-btn" onClick={handleBack}>
                   <ArrowLeft className="w-4 h-4" />
                   {t.quickTable.back}
@@ -1409,6 +1518,7 @@ export default function DoublesEliminationSetup() {
                   {loading ? t.doublesElimination.setup.creating : t.doublesElimination.setup.createBtn}
                   <Trophy className="w-4 h-4" />
                 </button>
+                </div>
               </div>
             </div>
           )}

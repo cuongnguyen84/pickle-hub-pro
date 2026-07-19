@@ -673,6 +673,16 @@ export const en: Translations = {
     error: "Error",
     offline: "You're offline — content will refresh when the connection returns.",
   },
+  drafts: {
+    restoredBanner: "Draft restored on this device.",
+    startOver: "Start over",
+    savedLocalAt: "Saved on this device at {time}",
+    saveFailed: "Changes couldn't be saved. Please try again.",
+    sectionTitle: "Drafts",
+    editedAt: "Edited at {time}",
+    continueSetup: "Continue setup",
+    deleteDraft: "Delete draft",
+  },
   ads: {
     advertisement: "Advertisement",
     skip: "Skip",

@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useAutosaveDraft } from '@/hooks/useAutosaveDraft';
+import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftAutosave';
+import { completeJourney, startJourney, trackJourneyStep } from '@/lib/journeys';
 import { TheLineLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable } from '@/hooks/useQuickTable';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -50,6 +53,85 @@ const QuickTableSetup = () => {
 
   const [courts, setCourts] = useState('');
   const [startTime, setStartTime] = useState('');
+
+  // ── UX-05 journey instrumentation (organizer_tournament, tool=quicktable) ─
+  // Entry condition: the pre-created table loaded and the roster form renders.
+  const journeyStartedRef = useRef(false);
+  useEffect(() => {
+    if (!loading && table && !journeyStartedRef.current) {
+      journeyStartedRef.current = true;
+      startJourney('organizer_tournament');
+      trackJourneyStep('organizer_tournament', 'organizer_tournament_creation_started', {
+        tool: 'quicktable',
+        auth_state: user ? 'authenticated' : 'anonymous',
+      });
+    }
+  }, [loading, table, user]);
+
+  // ── UX-04 autosave (local-first, docs/proposals/ux-01-05) ────────────────
+  // The table row is pre-created upstream, so shareId scopes the draft.
+  // ManualGroupAssignment's internal drag state is child-owned and not
+  // serialized — restoring on the assignment step re-starts the grouping.
+  const draftValue = useMemo(
+    () => ({ players, assignmentMode, step, courts, startTime }),
+    [players, assignmentMode, step, courts, startTime],
+  );
+  // Initial state = all-empty roster rows + defaults, so "dirty" is simply
+  // "any field has content / any non-default choice".
+  const dirty =
+    players.some(p => p.name || p.name2 || p.team || p.seed) ||
+    courts !== '' ||
+    startTime !== '' ||
+    assignmentMode !== 'auto';
+  const draft = useAutosaveDraft<typeof draftValue>({
+    key: shareId ? `draft:quicktable:${shareId}` : null,
+    value: draftValue,
+    enabled: dirty && !saving,
+  });
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  const restoreAppliedRef = useRef(false);
+  useEffect(() => {
+    // Apply once, AFTER loadTable seeded the empty roster (mount-time apply
+    // would be clobbered by setPlayers(initialPlayers)). Shape-guarded.
+    if (loading || !table || restoreAppliedRef.current) return;
+    restoreAppliedRef.current = true;
+    const d = draft.initial;
+    if (!d || !Array.isArray(d.players)) return;
+    const restoredPlayers: PlayerInput[] = d.players
+      .filter((p): p is PlayerInput => Boolean(p) && typeof p.name === 'string')
+      .map((p, i) => ({
+        id: typeof p.id === 'string' ? p.id : `new-${i}`,
+        name: p.name,
+        name2: typeof p.name2 === 'string' ? p.name2 : '',
+        team: typeof p.team === 'string' ? p.team : '',
+        seed: typeof p.seed === 'string' ? p.seed : '',
+      }));
+    if (restoredPlayers.length < 2) return;
+    setPlayers(restoredPlayers);
+    if (d.assignmentMode === 'auto' || d.assignmentMode === 'manual') setAssignmentMode(d.assignmentMode);
+    if (typeof d.courts === 'string') setCourts(d.courts);
+    if (typeof d.startTime === 'string') setStartTime(d.startTime);
+    if (d.step === 'input' || d.step === 'assignment') setStep(d.step);
+    setRestoredDraft(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, table]);
+
+  const resetToInitial = () => {
+    draft.clear();
+    setPlayers(
+      Array.from({ length: table?.player_count ?? 0 }, (_, i) => ({
+        id: `new-${i}`,
+        name: '',
+        name2: '',
+        team: '',
+        seed: '',
+      })),
+    );
+    setAssignmentMode('auto');
+    setStep('input');
+    setCourts('');
+    setStartTime('');
+  };
 
   useEffect(() => {
     const loadTable = async () => {
@@ -139,6 +221,10 @@ const QuickTableSetup = () => {
 
   const handleAutoSubmit = async () => {
     if (!table) return;
+    trackJourneyStep('organizer_tournament', 'organizer_tournament_submit_attempted', {
+      tool: 'quicktable',
+      auth_state: user ? 'authenticated' : 'anonymous',
+    });
 
     setSaving(true);
 
@@ -200,6 +286,11 @@ const QuickTableSetup = () => {
         await updateTableStatus(table.id, 'group_stage');
       }
 
+      draft.clear();
+      completeJourney('organizer_tournament', 'organizer_tournament_created', {
+        tool: 'quicktable',
+        auth_state: user ? 'authenticated' : 'anonymous',
+      });
       toast.success(t.quickTable.setup.createdSuccess);
       navigate(`/tools/quick-tables/${shareId}`);
     } catch (error) {
@@ -212,6 +303,10 @@ const QuickTableSetup = () => {
 
   const handleManualAssignmentComplete = async (groupAssignments: Map<number, PlayerInput[]>) => {
     if (!table || !table.group_count) return;
+    trackJourneyStep('organizer_tournament', 'organizer_tournament_submit_attempted', {
+      tool: 'quicktable',
+      auth_state: user ? 'authenticated' : 'anonymous',
+    });
 
     setSaving(true);
 
@@ -260,6 +355,11 @@ const QuickTableSetup = () => {
 
       await updateTableStatus(table.id, 'group_stage');
 
+      draft.clear();
+      completeJourney('organizer_tournament', 'organizer_tournament_created', {
+        tool: 'quicktable',
+        auth_state: user ? 'authenticated' : 'anonymous',
+      });
       toast.success(t.quickTable.setup.manualSuccess);
       navigate(`/tools/quick-tables/${shareId}`);
     } catch (error) {
@@ -356,6 +456,7 @@ const QuickTableSetup = () => {
 
           <section style={{ padding: '32px 0 80px', maxWidth: 960, margin: '0 auto' }}>
             <div style={surfaceCard}>
+              {restoredDraft && <DraftRestoredBanner onStartOver={resetToInitial} />}
               <div style={{ marginBottom: 20 }}>
                 <div style={stepKickerStyle}>
                   <Hand className="inline w-3 h-3" style={{ verticalAlign: 'middle', marginRight: 4 }} />
@@ -478,6 +579,7 @@ const QuickTableSetup = () => {
 
         <section style={{ padding: '32px 0 0', maxWidth: 720, margin: '0 auto', width: '100%' }}>
           <div style={surfaceCard}>
+            {restoredDraft && <DraftRestoredBanner onStartOver={resetToInitial} />}
             <div
               style={{
                 display: 'flex',
@@ -650,6 +752,7 @@ const QuickTableSetup = () => {
                 zIndex: 5,
               }}
             >
+              <DraftSaveStatus lastSavedAt={draft.lastSavedAt} saveFailed={draft.saveFailed} />
               <button
                 type="button"
                 className="tl-btn green"

@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import { DraftRestoredBanner, DraftSaveStatus } from "@/components/wizard/DraftAutosave";
+import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -22,6 +25,8 @@ import {
   stepDescStyle,
 } from "@/components/tournament/setup-styles";
 
+const FLEX_INITIAL = { name: "", playersText: "", isPublic: false };
+
 const FlexTournamentSetup = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
@@ -33,8 +38,48 @@ const FlexTournamentSetup = () => {
   const [playersText, setPlayersText] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
+  // ── UX-05 journey instrumentation (organizer_tournament, tool=flex) ──────
+  const journeyStartedRef = useRef(false);
+  useEffect(() => {
+    if (user && !journeyStartedRef.current) {
+      journeyStartedRef.current = true;
+      startJourney("organizer_tournament");
+      trackJourneyStep("organizer_tournament", "organizer_tournament_creation_started", {
+        tool: "flex",
+        auth_state: "authenticated",
+      });
+    }
+  }, [user]);
+
+  // ── UX-04 autosave (local-first, docs/proposals/ux-01-05) ────────────────
+  const draftValue = useMemo(
+    () => ({ name, playersText, isPublic }),
+    [name, playersText, isPublic],
+  );
+  const dirty = JSON.stringify(draftValue) !== JSON.stringify(FLEX_INITIAL);
+  const draft = useAutosaveDraft<typeof draftValue>({
+    key: "draft:flex:new",
+    value: draftValue,
+    enabled: dirty && !isCreating,
+  });
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  useEffect(() => {
+    // Apply once at mount. Shape-guard against hand-edited payloads.
+    const d = draft.initial;
+    if (!d || typeof d !== "object") return;
+    if (typeof d.name === "string") setName(d.name);
+    if (typeof d.playersText === "string") setPlayersText(d.playersText);
+    if (typeof d.isPublic === "boolean") setIsPublic(d.isPublic);
+    setRestoredDraft(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackJourneyStep("organizer_tournament", "organizer_tournament_submit_attempted", {
+      tool: "flex",
+      auth_state: "authenticated",
+    });
 
     if (!name.trim()) {
       toast({ title: t.common.error, description: t.tools.flexTournament.tournamentName, variant: "destructive" });
@@ -54,6 +99,11 @@ const FlexTournamentSetup = () => {
         isPublic,
       });
 
+      draft.clear();
+      completeJourney("organizer_tournament", "organizer_tournament_created", {
+        tool: "flex",
+        auth_state: "authenticated",
+      });
       toast({ title: t.tools.flexTournament.createSuccess });
       navigate(`/tools/flex-tournament/${tournament.share_id}`);
     } catch (error) {
@@ -103,6 +153,16 @@ const FlexTournamentSetup = () => {
 
         <section style={{ maxWidth: 720, margin: "0 auto", padding: "32px 0 80px", width: "100%" }}>
           <div style={surfaceCard}>
+            {restoredDraft && (
+              <DraftRestoredBanner
+                onStartOver={() => {
+                  draft.clear();
+                  setName(FLEX_INITIAL.name);
+                  setPlayersText(FLEX_INITIAL.playersText);
+                  setIsPublic(FLEX_INITIAL.isPublic);
+                }}
+              />
+            )}
             <div style={{ marginBottom: 24 }}>
               <div style={stepKickerStyle}>
                 ◆ {language === "vi" ? "Thông tin cơ bản" : "Basics"}
@@ -190,6 +250,7 @@ const FlexTournamentSetup = () => {
                   background: "var(--tl-bg-elev)",
                 }}
               >
+                <DraftSaveStatus lastSavedAt={draft.lastSavedAt} saveFailed={draft.saveFailed} />
                 <button
                   type="submit"
                   className="tl-btn green"
