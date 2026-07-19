@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -16,6 +16,7 @@ import {
   useVietnamRankings,
   type VietnamRankingFormat,
 } from "@/hooks/dupr/useVietnamRankings";
+import { useUrlBackedState } from "@/hooks/useUrlBackedState";
 
 /**
  * Production /rankings page — DUPR snapshot.
@@ -33,8 +34,22 @@ import {
 
 const Rankings = () => {
   const { language } = useI18n();
-  const [scope, setScope] = useState<DuprScope>("vietnam");
-  const [format, setFormat] = useState<DuprFormat>(defaultFormatForScope("vietnam"));
+  // UX-08 — scope/format are URL-backed (?scope= / ?format=) so they
+  // deep-link and survive back/refresh. Same resolve-once/mirror/write
+  // pattern as useFeedTab. Default stays vietnam.
+  const [scope, setScope] = useUrlBackedState<DuprScope>({
+    param: "scope",
+    parse: (raw) =>
+      DUPR_SCOPES.some((s) => s.key === raw) ? (raw as DuprScope) : null,
+    fallback: "vietnam",
+  });
+  const [format, setFormat] = useUrlBackedState<DuprFormat>({
+    param: "format",
+    parse: (raw) =>
+      DUPR_FORMATS.some((f) => f.key === raw) ? (raw as DuprFormat) : null,
+    // `scope` above is already resolved (deep-link or default) on first render.
+    fallback: defaultFormatForScope(scope),
+  });
 
   // Switching scope might leave `format` invalid for the new scope's
   // available formats (e.g. vietnam → europe). Reset to a sensible
@@ -44,7 +59,7 @@ const Rankings = () => {
     if (!available.includes(format)) {
       setFormat(defaultFormatForScope(scope));
     }
-  }, [scope, format]);
+  }, [scope, format, setFormat]);
 
   const isVietnamScope = scope === "vietnam";
   const availableFormats = useMemo(() => getAvailableFormats(scope), [scope]);

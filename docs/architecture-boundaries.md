@@ -144,6 +144,25 @@ CSS tokens:
   template expansion). Journey screens list: `docs/journey-screens.md`,
   `docs/north-star-journeys.md`.
 
+## Navigation conventions (UX-08)
+
+- **Back**: history-first. `TheLineLayout` renders the back affordance —
+  `navigate(-1)` when there is history; on a deep-link landing (no history,
+  non-root path) it becomes a `Link` to the section root derived from the
+  pathname (`sectionRootFor`, locale-aware `/vi`). Pages don't roll their
+  own back buttons.
+- **List/tab/filter state**: URL search params, NOT `useState` — pattern is
+  `useFeedTab` / `src/hooks/useUrlBackedState.ts` (resolve once from
+  `?param` on mount, mirror with replace, write on change). Any state worth
+  keeping across back/refresh belongs in the URL.
+- **Scroll**: `ScrollToTop` in `App.tsx` resets on PUSH/REPLACE only; POP
+  keeps browser-native restoration. Pages must not scroll themselves.
+- **Wizard steps**: never in history — draft autosave (UX-04) is the
+  restoration mechanism; back exits the wizard.
+- **Deferred, with reasons**: Capacitor hardware backButton handler (no
+  Android release yet — BASE-05); native content deep-links (SwiftUI app
+  replaces the Capacitor shell).
+
 ## Dependency rule enforcement
 
 Lightweight for now (solo repo): this document + review. If violations

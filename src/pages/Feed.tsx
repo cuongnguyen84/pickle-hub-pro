@@ -64,13 +64,34 @@ import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
  * useTrendingFeed remains exported for backward compatibility but is
  * intentionally no longer wired up here.
  */
+
+// UX-08 — see sessionSeedRef comment inside Feed for the rationale.
+const FEED_SHUFFLE_SEED_KEY = "feed_shuffle_seed";
+const getSessionShuffleSeed = (): number => {
+  const fresh = (Math.random() * 0x7fffffff) | 0;
+  try {
+    const stored = sessionStorage.getItem(FEED_SHUFFLE_SEED_KEY);
+    if (stored !== null && Number.isFinite(Number(stored))) {
+      return Number(stored) | 0;
+    }
+    sessionStorage.setItem(FEED_SHUFFLE_SEED_KEY, String(fresh));
+  } catch {
+    // sessionStorage unavailable (private mode / storage quota) —
+    // fall back to the old per-mount seed.
+  }
+  return fresh;
+};
 const Feed = () => {
   const { language } = useI18n();
   const { user } = useAuth();
-  // Per-mount stable jitter seed for tie-breaking in the score sort. Resets
-  // on every page navigation TO /feed (React unmounts/remounts the route)
-  // so each visit reshuffles items in the same score band.
-  const sessionSeedRef = useRef(((Math.random() * 0x7fffffff) | 0));
+  // UX-08 — jitter seed for tie-breaking in the score sort, stable per tab
+  // session. This used to be per-mount random, which re-seeded on every
+  // navigation TO /feed, so backing out of a post reordered the feed under
+  // the user. sessionStorage keeps the order stable within one tab session
+  // (back = same order); a new tab/session gets a fresh seed, preserving
+  // the "session shuffle" intent. Trade-off: revisits within one tab no
+  // longer reshuffle — new content arriving still changes the stream.
+  const sessionSeedRef = useRef(getSessionShuffleSeed());
   const isAuthenticated = !!user;
 
   const followingCountQuery = useFollowingCount(user?.id);

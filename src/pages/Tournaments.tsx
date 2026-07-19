@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   useTournaments,
@@ -131,7 +131,11 @@ const Tournaments = () => {
     setSearchParams((prev) => { prev.set("tab", t); return prev; }, { replace: true });
   const setFmtTab = (f: Fmt) =>
     setSearchParams((prev) => { prev.set("fmt", f); return prev; }, { replace: true });
-  const [fmtStatus, setFmtStatus] = useState<FmtStatus>("ongoing");
+  // UX-08 — ongoing/ended sub-tab joins the same URL-controlled pattern.
+  const statusParam = searchParams.get("status");
+  const fmtStatus: FmtStatus = statusParam === "ended" ? "ended" : "ongoing";
+  const setFmtStatus = (s: FmtStatus) =>
+    setSearchParams((prev) => { prev.set("status", s); return prev; }, { replace: true });
 
   // Pro (Watch) data
   const { data: tournaments = [], isLoading: tournamentsLoading } = useTournaments();

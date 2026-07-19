@@ -94,6 +94,31 @@ const NAV_ITEMS: NavItem[] = [
 const localizedPath = (path: string, language: "vi" | "en"): string =>
   language === "vi" ? `/vi${path}` : path;
 
+/**
+ * UX-08 — deep-link back fallback. A fresh tab landing directly on a
+ * detail page (history.length <= 1) has nothing to pop, so the back
+ * affordance becomes a Link to the section's root listing derived from
+ * the pathname. Unknown sections fall back to home in the right locale.
+ */
+const SECTION_ROOTS: Record<string, string> = {
+  social: "/social",
+  clb: "/clubs",
+  tournament: "/tournaments",
+  san: "/san",
+  news: "/news",
+  blog: "/blog",
+  live: "/live",
+  watch: "/live",
+};
+
+const sectionRootFor = (pathname: string): string => {
+  const isVi = pathname === "/vi" || pathname.startsWith("/vi/");
+  const bare = isVi ? pathname.slice(3) || "/" : pathname;
+  const root = SECTION_ROOTS[bare.split("/")[1] ?? ""];
+  if (!root) return isVi ? "/vi" : "/";
+  return isVi ? `/vi${root}` : root;
+};
+
 export const TheLineLayout = ({ title, description, noindex = false, active, children }: TheLineLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -144,7 +169,8 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const hasHistory =
     typeof window !== "undefined" && window.history.length > 1;
   const onRootPath = ROOT_PATHS.has(location.pathname);
-  const showBackButton = hasHistory && !onRootPath;
+  // UX-08: no history (deep-link landing) no longer hides the affordance —
+  // it renders as a Link to the section root instead (sectionRootFor).
   const { language, setLanguage } = useI18n();
 
   // Phase 4 news fix (2026-05-19): clicking EN/VI in the global toggle used
@@ -448,16 +474,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
       <div className="tl-scroll">
       <nav className="tl-nav">
-        {/* PR63 — back affordance. Only shown when there's somewhere
-            to go back to and we're not on a root listing page. */}
-        {showBackButton && (
-          <button
-            type="button"
-            className="tl-icon-btn tl-back-btn"
-            aria-label={language === "vi" ? "Quay lại" : "Back"}
-            title={language === "vi" ? "Quay lại" : "Back"}
-            onClick={() => navigate(-1)}
-          >
+        {/* PR63 — back affordance, hidden on root listing pages. UX-08:
+            with history it pops (navigate(-1)); on a deep-link landing
+            with no history it links to the section root instead. */}
+        {!onRootPath && (() => {
+          const backIcon = (
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -471,8 +492,29 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             >
               <path d="M15 18l-6-6 6-6" />
             </svg>
-          </button>
-        )}
+          );
+          const backLabel = language === "vi" ? "Quay lại" : "Back";
+          return hasHistory ? (
+            <button
+              type="button"
+              className="tl-icon-btn tl-back-btn"
+              aria-label={backLabel}
+              title={backLabel}
+              onClick={() => navigate(-1)}
+            >
+              {backIcon}
+            </button>
+          ) : (
+            <Link
+              to={sectionRootFor(location.pathname)}
+              className="tl-icon-btn tl-back-btn"
+              aria-label={backLabel}
+              title={backLabel}
+            >
+              {backIcon}
+            </Link>
+          );
+        })()}
         <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="The PickleHub home">
           <span className="tl-brand-mark" aria-hidden="true" />
           <span className="tl-brand-text">
