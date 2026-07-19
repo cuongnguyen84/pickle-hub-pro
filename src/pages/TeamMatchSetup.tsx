@@ -173,22 +173,24 @@ export default function TeamMatchSetup() {
   }, [user]);
 
   // ── UX-04 autosave (local-first, docs/proposals/ux-01-05) ────────────────
+  // Bank trio deliberately EXCLUDED from the draft (same rule as UX-02
+  // templates, D3): payment account details never persist outside the DB —
+  // CodeQL js/clear-text-storage-of-sensitive-data. Organizer re-enters
+  // them on restore.
   const draftValue = useMemo(
     () => ({
       step, name, eventDate, location, rosterSize, teamCount,
       requireRegistration, requireMinGames, useDupr, duprMaxMale, duprMaxFemale,
       templates, totalScoreMode, pointsPerGame, hasDreambreaker,
       format, playoffTeamCount, hasThirdPlaceMatch, hasRepechage,
-      rulesSummary, entryFeeVnd, entryFeeTeamVnd,
-      bankCode, bankAccountNumber, bankAccountName, discountTiers,
+      rulesSummary, entryFeeVnd, entryFeeTeamVnd, discountTiers,
     }),
     [
       step, name, eventDate, location, rosterSize, teamCount,
       requireRegistration, requireMinGames, useDupr, duprMaxMale, duprMaxFemale,
       templates, totalScoreMode, pointsPerGame, hasDreambreaker,
       format, playoffTeamCount, hasThirdPlaceMatch, hasRepechage,
-      rulesSummary, entryFeeVnd, entryFeeTeamVnd,
-      bankCode, bankAccountNumber, bankAccountName, discountTiers,
+      rulesSummary, entryFeeVnd, entryFeeTeamVnd, discountTiers,
     ],
   );
   // Dirty = differs from the pristine first-render snapshot (captured before
@@ -231,9 +233,6 @@ export default function TeamMatchSetup() {
     if (typeof d.rulesSummary === 'string') setRulesSummary(d.rulesSummary);
     if (typeof d.entryFeeVnd === 'number') setEntryFeeVnd(d.entryFeeVnd);
     if (typeof d.entryFeeTeamVnd === 'number') setEntryFeeTeamVnd(d.entryFeeTeamVnd);
-    if (typeof d.bankCode === 'string') setBankCode(d.bankCode);
-    if (typeof d.bankAccountNumber === 'string') setBankAccountNumber(d.bankAccountNumber);
-    if (typeof d.bankAccountName === 'string') setBankAccountName(d.bankAccountName);
     if (Array.isArray(d.discountTiers)) {
       setDiscountTiers(
         d.discountTiers.filter((tier) => tier && typeof tier.slots === 'number' && typeof tier.percent === 'number'),

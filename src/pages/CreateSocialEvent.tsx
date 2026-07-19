@@ -110,8 +110,17 @@ export default function CreateSocialEvent() {
     () => JSON.stringify(form) !== JSON.stringify(initialForm),
     [form],
   );
-  const draftValue = useMemo(() => ({ form, step }), [form, step]);
-  const draft = useAutosaveDraft<{ form: FormState; step: 1 | 2 }>({
+  // Bank trio deliberately EXCLUDED from the draft (same rule as UX-02
+  // templates, D3): payment account details never persist outside the DB —
+  // CodeQL js/clear-text-storage-of-sensitive-data. Re-entered on restore.
+  const draftValue = useMemo(() => {
+    const { bank_code: _bc, bank_account_number: _ban, bank_account_name: _bn, ...safeForm } = form;
+    return { form: safeForm, step };
+  }, [form, step]);
+  const draft = useAutosaveDraft<{
+    form: Omit<FormState, "bank_code" | "bank_account_number" | "bank_account_name">;
+    step: 1 | 2;
+  }>({
     key: slug ? `draft:social:${slug}` : null,
     value: draftValue,
     enabled: !submitting && dirty,
