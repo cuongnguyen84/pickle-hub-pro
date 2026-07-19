@@ -182,7 +182,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | UX-05 | done | 4d | Add pre-publish validation with direct recovery actions. **Shipped 2026-07-19** (#409 + #406): panel missingFields → role=alert semantic + mỗi dòng = nút jump-to-field (lật step + focus); weekly-repeat partial có retry thật (batchResumeIndex, chỉ tạo tuần thiếu); guard xác nhận tên chủ STK khi bank prefill (#406 — chặn lỗ hổng prod tiền-vào-STK-cũ pre-mortem tìm ra) | UX-01 |
 | UX-06 | later | 4d | Add undo/rollback for reversible destructive organizer actions | UX-01 |
 | UX-07 | later | 4d | Simplify player discovery-to-registration journey. Same relaxed dependency as UX-01: start on partial research, conclude on full baseline | DS-03, partial BASE-07 |
-| UX-08 | later | 3d | Standardize mobile back, deep-link, scroll, and state restoration behavior | BASE-05, DS-03 |
+| UX-08 | done | 3d | Standardize mobile back, deep-link, scroll, and state restoration behavior. **Shipped 2026-07-19** (#414 `7e0bec2e`): Rankings scope/format + Tournaments status → URL params (hook chung `useUrlBackedState`, mẫu useFeedTab); TheLineLayout back fallback về section root khi landing deep-link không history (95% traffic FB deep-link); Feed shuffle seed → sessionStorage (back không reorder, đúng ý "session shuffle"); xoá dead useSwipeNavigation; convention chốt ở architecture-boundaries.md §Navigation. Deferred có lý do: wizard-step vào history (autosave UX-04 đã cứu), Capacitor backButton (không có Android — BASE-05), content deep-link native (SwiftUI thay Capacitor) | BASE-05, DS-03 |
 | UX-09 | blocked | 3d | Repeat usability sessions and calculate task success, time, and SUS | UX-01..UX-08, participants |
 
 ### Phase 3 exit

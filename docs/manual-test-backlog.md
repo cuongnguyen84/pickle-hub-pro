@@ -70,3 +70,9 @@ Autosave/fee-mode/recovery đều sau login wall — cả 2 lượt ui-ux-verifi
 - [ ] **3 template:** apply → không field bank nào prefill; chip biến mất sau khi form dirty.
 - [ ] **Native (#408, cùng RED-gate mục 8):** 5 màn tạo trên iPhone thật — autosave khôi phục sau khi kill app; VoiceOver đọc banner/status tiếng Việt.
 - [ ] **Fail-loud quota:** Safari private mode → dòng status đỏ "Chưa thể lưu thay đổi", không hiện "Đã lưu".
+
+## 10. UX-08 navigation (PR #414, 2026-07-19)
+
+- [ ] Mở link `/social/<slug>` từ tab MỚI (deep-link, không history) → nút back phải HIỆN và về `/social` (thử thêm /clb/x → /clubs, bài blog → /blog, bản /vi giữ /vi).
+- [ ] /rankings: đổi scope sang Thế giới + format → sang trang khác → back → scope/format GIỮ NGUYÊN (và URL share được).
+- [ ] /feed: cuộn sâu → mở 1 post → back → thứ tự feed KHÔNG xáo lại, vị trí cuộn giữ; đóng tab mở lại → feed xáo mới (đúng thiết kế).
