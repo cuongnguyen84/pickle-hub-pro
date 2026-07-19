@@ -1,5 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAutosaveDraft } from '@/hooks/useAutosaveDraft';
+import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftAutosave';
+import { completeJourney, startJourney, trackJourneyStep } from '@/lib/journeys';
 import { TheLineLayout } from '@/components/layout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -156,6 +159,120 @@ export default function TeamMatchSetup() {
         })
       : null;
 
+  // ── UX-05 journey instrumentation (organizer_tournament, tool=teammatch) ──
+  const journeyStartedRef = useRef(false);
+  useEffect(() => {
+    if (user && !journeyStartedRef.current) {
+      journeyStartedRef.current = true;
+      startJourney('organizer_tournament');
+      trackJourneyStep('organizer_tournament', 'organizer_tournament_creation_started', {
+        tool: 'teammatch',
+        auth_state: 'authenticated',
+      });
+    }
+  }, [user]);
+
+  // ── UX-04 autosave (local-first, docs/proposals/ux-01-05) ────────────────
+  const draftValue = useMemo(
+    () => ({
+      step, name, eventDate, location, rosterSize, teamCount,
+      requireRegistration, requireMinGames, useDupr, duprMaxMale, duprMaxFemale,
+      templates, totalScoreMode, pointsPerGame, hasDreambreaker,
+      format, playoffTeamCount, hasThirdPlaceMatch, hasRepechage,
+      rulesSummary, entryFeeVnd, entryFeeTeamVnd,
+      bankCode, bankAccountNumber, bankAccountName, discountTiers,
+    }),
+    [
+      step, name, eventDate, location, rosterSize, teamCount,
+      requireRegistration, requireMinGames, useDupr, duprMaxMale, duprMaxFemale,
+      templates, totalScoreMode, pointsPerGame, hasDreambreaker,
+      format, playoffTeamCount, hasThirdPlaceMatch, hasRepechage,
+      rulesSummary, entryFeeVnd, entryFeeTeamVnd,
+      bankCode, bankAccountNumber, bankAccountName, discountTiers,
+    ],
+  );
+  // Dirty = differs from the pristine first-render snapshot (captured before
+  // the restore effect applies any saved draft).
+  const draftJson = JSON.stringify(draftValue);
+  const initialJsonRef = useRef<string | null>(null);
+  if (initialJsonRef.current === null) initialJsonRef.current = draftJson;
+  const dirty = draftJson !== initialJsonRef.current;
+  const draft = useAutosaveDraft<typeof draftValue>({
+    key: 'draft:teammatch:new',
+    value: draftValue,
+    enabled: dirty && !isCreating,
+  });
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  useEffect(() => {
+    // Apply once at mount. Shape-guard against hand-edited payloads.
+    const d = draft.initial;
+    if (!d || typeof d.name !== 'string' || !Array.isArray(d.templates)) return;
+    setStep([1, 2, 3, 4, 5].includes(d.step) ? d.step : 1);
+    setName(d.name);
+    if (typeof d.eventDate === 'string') setEventDate(d.eventDate);
+    if (typeof d.location === 'string') setLocation(d.location);
+    if ([4, 6, 8].includes(d.rosterSize)) setRosterSize(d.rosterSize);
+    if (typeof d.teamCount === 'number') setTeamCount(d.teamCount);
+    if (typeof d.requireRegistration === 'boolean') setRequireRegistration(d.requireRegistration);
+    if (typeof d.requireMinGames === 'boolean') setRequireMinGames(d.requireMinGames);
+    if (typeof d.useDupr === 'boolean') setUseDupr(d.useDupr);
+    if (typeof d.duprMaxMale === 'number') setDuprMaxMale(d.duprMaxMale);
+    if (typeof d.duprMaxFemale === 'number') setDuprMaxFemale(d.duprMaxFemale);
+    if (d.templates.every((tpl) => tpl && typeof tpl.display_name === 'string')) {
+      setTemplates(d.templates);
+    }
+    if (typeof d.totalScoreMode === 'boolean') setTotalScoreMode(d.totalScoreMode);
+    if (typeof d.pointsPerGame === 'number') setPointsPerGame(d.pointsPerGame);
+    if (typeof d.hasDreambreaker === 'boolean') setHasDreambreaker(d.hasDreambreaker);
+    if (['round_robin', 'single_elimination', 'rr_playoff'].includes(d.format)) setFormat(d.format);
+    if (typeof d.playoffTeamCount === 'number') setPlayoffTeamCount(d.playoffTeamCount);
+    if (typeof d.hasThirdPlaceMatch === 'boolean') setHasThirdPlaceMatch(d.hasThirdPlaceMatch);
+    if (typeof d.hasRepechage === 'boolean') setHasRepechage(d.hasRepechage);
+    if (typeof d.rulesSummary === 'string') setRulesSummary(d.rulesSummary);
+    if (typeof d.entryFeeVnd === 'number') setEntryFeeVnd(d.entryFeeVnd);
+    if (typeof d.entryFeeTeamVnd === 'number') setEntryFeeTeamVnd(d.entryFeeTeamVnd);
+    if (typeof d.bankCode === 'string') setBankCode(d.bankCode);
+    if (typeof d.bankAccountNumber === 'string') setBankAccountNumber(d.bankAccountNumber);
+    if (typeof d.bankAccountName === 'string') setBankAccountName(d.bankAccountName);
+    if (Array.isArray(d.discountTiers)) {
+      setDiscountTiers(
+        d.discountTiers.filter((tier) => tier && typeof tier.slots === 'number' && typeof tier.percent === 'number'),
+      );
+    }
+    setRestoredDraft(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const resetToInitial = () => {
+    draft.clear();
+    setStep(1);
+    setName('');
+    setEventDate('');
+    setLocation('');
+    setRosterSize(4);
+    setTeamCount(4);
+    setRequireRegistration(false);
+    setRequireMinGames(false);
+    setUseDupr(false);
+    setDuprMaxMale(5.0);
+    setDuprMaxFemale(4.5);
+    setTemplates(getDefaultTemplates(4));
+    setTotalScoreMode(false);
+    setPointsPerGame(7);
+    setHasDreambreaker(false);
+    setFormat('round_robin');
+    setPlayoffTeamCount(4);
+    setHasThirdPlaceMatch(false);
+    setHasRepechage(false);
+    setRulesSummary('');
+    setEntryFeeVnd(0);
+    setEntryFeeTeamVnd(0);
+    setBankCode('');
+    setBankAccountNumber('');
+    setBankAccountName('');
+    setDiscountTiers([]);
+  };
+
   const isSingleElimination = format === 'single_elimination';
   const isValidTeamCountForSE = isPowerOfTwo(teamCount) && teamCount >= 4;
   const teamCountWarning = isSingleElimination && !isValidTeamCountForSE
@@ -217,6 +334,10 @@ export default function TeamMatchSetup() {
       navigate(getLoginUrl('/tools/team-match/new'));
       return;
     }
+    trackJourneyStep('organizer_tournament', 'organizer_tournament_submit_attempted', {
+      tool: 'teammatch',
+      auth_state: 'authenticated',
+    });
 
     const input: CreateTournamentInput = {
       name: name.trim(),
@@ -253,6 +374,11 @@ export default function TeamMatchSetup() {
 
     try {
       const result = await createTournament(input);
+      draft.clear();
+      completeJourney('organizer_tournament', 'organizer_tournament_created', {
+        tool: 'teammatch',
+        auth_state: 'authenticated',
+      });
       navigate(`/tools/team-match/${result.share_id}`);
     } catch (error) {
       // Error handled in hook
@@ -371,6 +497,7 @@ export default function TeamMatchSetup() {
 
         <section style={{ maxWidth: 720, margin: '0 auto', padding: '24px 0 0', width: '100%' }}>
           <div style={surfaceCard}>
+            {restoredDraft && <DraftRestoredBanner onStartOver={resetToInitial} />}
             <div style={{ marginBottom: 24 }}>
               <div style={stepKickerStyle}>
                 ◆ {language === 'vi' ? `Bước ${step}/${STEPS.length}` : `Step ${step}/${STEPS.length}`}
@@ -1298,9 +1425,6 @@ export default function TeamMatchSetup() {
           {/* Navigation buttons — sticky bottom dock */}
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 8,
               marginTop: 24,
               position: 'sticky',
               bottom: 16,
@@ -1308,6 +1432,8 @@ export default function TeamMatchSetup() {
               background: 'linear-gradient(to top, var(--tl-bg) 50%, transparent)',
             }}
           >
+            <DraftSaveStatus lastSavedAt={draft.lastSavedAt} saveFailed={draft.saveFailed} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <button
               type="button"
               className="tl-btn"
@@ -1339,6 +1465,7 @@ export default function TeamMatchSetup() {
                 <Check className="w-4 h-4" />
               </button>
             )}
+            </div>
           </div>
         </section>
         <div style={{ height: 80 }} />

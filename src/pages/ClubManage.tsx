@@ -6,7 +6,7 @@
 // matchmaking + public landing.
 // ============================================================================
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList, Settings, Pencil } from "lucide-react";
@@ -23,6 +23,8 @@ import { useNoindex } from "@/hooks/useNoindex";
 import { ClubManagers } from "@/components/social-events/ClubManagers";
 import { ClubMembers } from "@/components/social-events/ClubMembers";
 import { supabase } from "@/integrations/supabase/client";
+import { readDraft } from "@/hooks/useAutosaveDraft";
+import { Button } from "@/components/ui/button";
 
 export default function ClubManage() {
   // PR72 (SEO Phase 2A I-7): organizer dashboard — private surface.
@@ -34,6 +36,29 @@ export default function ClubManage() {
   const permission = useClubOwnership(slug);
   const { data: clubData } = useClub(slug);
   const { data: events, isLoading } = useClubEventsManage(clubData?.club.id);
+
+  // UX-01 (D4): local wizard draft for THIS club, surfaced so an organizer
+  // who abandoned mid-create can find their way back (the "Tạo MỚI" CTA
+  // alone doesn't read as "resume"). Device-local by design.
+  // Re-read on slug change: the route element is shared across clubs (no
+  // remount via the club-switcher menu), so a lazy useState would show —
+  // and worse, DELETE — the wrong club's draft.
+  const [localDraft, setLocalDraft] = useState<ReturnType<
+    typeof readDraft<{ form?: { title?: string } }>
+  > | null>(null);
+  useEffect(() => {
+    setLocalDraft(
+      slug ? readDraft<{ form?: { title?: string } }>(`draft:social:${slug}`) : null,
+    );
+  }, [slug]);
+  const discardLocalDraft = () => {
+    try {
+      localStorage.removeItem(`draft:social:${slug}`);
+    } catch {
+      /* removal best-effort */
+    }
+    setLocalDraft(null);
+  };
 
   // Fetch the creator's display name + avatar for the ClubManagers card.
   // The clubs row only carries created_by (UUID); we hit profiles
@@ -188,6 +213,39 @@ export default function ClubManage() {
             </Link>
           </div>
         </header>
+
+        {/* UX-01 (D4) — resume entry for a device-local wizard draft. */}
+        {localDraft && (
+          <Card className="mb-6 flex flex-wrap items-center justify-between gap-3 p-5">
+            <div>
+              <div className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                {t.drafts.sectionTitle}
+              </div>
+              <div className="mt-1 font-medium">
+                {localDraft.data.form?.title?.trim() || manage.newEventCta}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t.drafts.editedAt.replace(
+                  "{time}",
+                  new Date(localDraft.savedAt).toLocaleString(
+                    language === "vi" ? "vi-VN" : "en-US",
+                    { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" },
+                  ),
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button asChild size="sm">
+                <Link to={`/clb/${clubData.club.slug}/social/moi`}>
+                  {t.drafts.continueSetup} →
+                </Link>
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={discardLocalDraft}>
+                {t.drafts.deleteDraft}
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Managers section — visible to all organizers, mutation gated to
             creator + admin. Hidden until the club row loaded so we can

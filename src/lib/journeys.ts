@@ -14,7 +14,12 @@ import {
   resolveMarketSegment,
 } from "./webVitalsRum";
 
-export type JourneyKind = "player_registration" | "organizer_event";
+export type JourneyKind =
+  | "player_registration"
+  | "organizer_event"
+  // UX-01..05: the 4 tournament creation flows (prop `tool` distinguishes
+  // flex | quicktable | teammatch | doubles).
+  | "organizer_tournament";
 
 const JOURNEY_SCHEMA_VERSION = 1;
 const storageKey = (kind: JourneyKind) => `journey_${kind}_id`;

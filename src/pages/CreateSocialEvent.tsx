@@ -47,6 +47,8 @@ import {
 } from "@/components/social/create-event/types";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { useNoindex } from "@/hooks/useNoindex";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
+import { DraftRestoredBanner, DraftSaveStatus } from "@/components/wizard/DraftAutosave";
 
 function slugify(input: string): string {
   return input
@@ -102,6 +104,29 @@ export default function CreateSocialEvent() {
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [slugTaken, setSlugTaken] = useState(false);
+
+  // ── UX-04 autosave (local-first, xem docs/proposals/ux-01-05) ────────────
+  const dirty = useMemo(
+    () => JSON.stringify(form) !== JSON.stringify(initialForm),
+    [form],
+  );
+  const draftValue = useMemo(() => ({ form, step }), [form, step]);
+  const draft = useAutosaveDraft<{ form: FormState; step: 1 | 2 }>({
+    key: slug ? `draft:social:${slug}` : null,
+    value: draftValue,
+    enabled: !submitting && dirty,
+  });
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  useEffect(() => {
+    // Apply once at mount. Shape-guard: an envelope from a future schema is
+    // already filtered by the hook; this guards a hand-edited payload.
+    const d = draft.initial;
+    if (!d || typeof d.form !== "object" || d.form === null) return;
+    setForm({ ...initialForm, ...d.form });
+    setStep(d.step === 2 ? 2 : 1);
+    setRestoredDraft(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-generate slug from the title; user can't edit it directly in the
   // wizard (the field is hidden) but we still want a clean URL.
@@ -403,6 +428,7 @@ export default function CreateSocialEvent() {
       }
 
       if (createdCount > 0) {
+        draft.clear();
         const batchProps = {
           ...organizerProps,
           requested_event_count: repeatCount + 1,
@@ -482,6 +508,16 @@ export default function CreateSocialEvent() {
 
         <Card>
           <CardContent className="pt-6">
+            {restoredDraft && (
+              <DraftRestoredBanner
+                onStartOver={() => {
+                  draft.clear();
+                  setForm(initialForm);
+                  setStep(1);
+                  setTouched({});
+                }}
+              />
+            )}
             <WizardProgress step={step} />
             {step === 1 ? (
               <Step1Info
@@ -525,7 +561,10 @@ export default function CreateSocialEvent() {
 
             {/* Footer button bar. Sticky-ish via mt-8; full-width on
                 mobile, right-aligned on sm+. */}
-            <div className="mt-4 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+            <div className="mt-4 border-t pt-3">
+              <DraftSaveStatus lastSavedAt={draft.lastSavedAt} saveFailed={draft.saveFailed} />
+            </div>
+            <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:justify-end">
               {/* Footer buttons. TheLine vibrant-green pill for the
                   primary CTA (Next on step 1, Publish on step 2). Back
                   + Save-draft are neutral inline / outline pills so the

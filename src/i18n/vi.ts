@@ -670,6 +670,16 @@ export interface Translations {
     error: string;
     offline: string;
   };
+  drafts: {
+    restoredBanner: string;
+    startOver: string;
+    savedLocalAt: string;
+    saveFailed: string;
+    sectionTitle: string;
+    editedAt: string;
+    continueSetup: string;
+    deleteDraft: string;
+  };
   ads: {
     advertisement: string;
     skip: string;
@@ -3536,6 +3546,16 @@ export const vi: Translations = {
     goHome: "Về trang chủ",
     error: "Lỗi",
     offline: "Mất kết nối mạng — sẽ tự tải lại khi có mạng.",
+  },
+  drafts: {
+    restoredBanner: "Đã khôi phục bản nháp trên thiết bị này.",
+    startOver: "Bắt đầu lại",
+    savedLocalAt: "Đã lưu trên thiết bị lúc {time}",
+    saveFailed: "Chưa thể lưu thay đổi. Vui lòng thử lại.",
+    sectionTitle: "Bản nháp",
+    editedAt: "Đã chỉnh sửa lúc {time}",
+    continueSetup: "Tiếp tục thiết lập",
+    deleteDraft: "Xóa bản nháp",
   },
   ads: {
     advertisement: "Quảng cáo",
