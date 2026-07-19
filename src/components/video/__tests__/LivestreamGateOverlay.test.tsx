@@ -25,6 +25,11 @@ vi.mock("@/lib/journeys", () => ({
   trackJourneyStep: vi.fn(),
 }));
 
+// The overlay imports markGateCtaClicked from livestreamGateAttribution, which
+// statically imports the supabase client — createClient throws without env in
+// CI. Mock the client (repo convention; see useIntervalViewCounter.test.ts).
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
+
 afterEach(cleanup);
 
 const ID = "abc-123";
