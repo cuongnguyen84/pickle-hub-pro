@@ -35,7 +35,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browser (Chromium only)
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       # For PRs from non-fork branches, hit the Cloudflare preview deploy
       # instead of prod. Branch name pattern: <branch>.pickle-hub-pro.pages.dev
