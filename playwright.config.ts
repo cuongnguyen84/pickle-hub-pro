@@ -54,6 +54,24 @@ export default defineConfig({
       testMatch: /mobile\.spec\.ts/,
     },
     {
+      // iOS Safari blind spot (95% VN audience is mobile-heavy): run the
+      // mobile viewport regressions on real WebKit too. CI must install
+      // webkit alongside chromium (see playwright.yml).
+      name: "mobile-webkit",
+      use: { ...devices["iPhone 13"] },
+      testMatch: /mobile\.spec\.ts/,
+    },
+    {
+      // A11Y-04 — axe + keyboard tests on the journey screens. Runs its
+      // tests sequentially in one worker: slug discovery walks several live
+      // pages and is cached at module scope, and parallel axe scans against
+      // prod are needlessly flaky.
+      name: "a11y",
+      fullyParallel: false,
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /a11y\.spec\.ts/,
+    },
+    {
       name: "ssr-bot",
       // SSR/SEO tests are fetch-only (no browser), but Playwright
       // requires a "browser" — we still spawn Chromium per project.
