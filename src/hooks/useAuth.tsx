@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl } from "@/lib/auth-config";
 import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
 import { trackEvent } from "@/utils/ga";
-import { completeJourney } from "@/lib/journeys";
 
 interface AuthContextType {
   user: User | null;
@@ -55,23 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const method = session.user.app_metadata?.provider || "email";
               console.log("[GA4] sign_up event fired!", { method, ageMs });
               trackEvent("sign_up", { method });
-              // Livestream-gate funnel attribution — only when the signup
-              // followed a REAL gate-CTA click (flag set by the overlay).
-              // Without this check, any later organic signup in a tab that
-              // once showed the gate would inflate the funnel. Embed CTAs
-              // open a new tab whose sessionStorage is separate, so embed
-              // completions undercount — known, documented in the contract.
-              try {
-                if (sessionStorage.getItem("journey_livestream_gate_cta") === "1") {
-                  sessionStorage.removeItem("journey_livestream_gate_cta");
-                  completeJourney("livestream_gate", "livestream_gate_signup_completed", {
-                    method,
-                    auth_state: "authenticated",
-                  });
-                }
-              } catch {
-                /* attribution is best-effort */
-              }
               // Fallback: push to dataLayer directly
               if (window.dataLayer) {
                 window.dataLayer.push({ event: "sign_up", method });

@@ -3,6 +3,7 @@ import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import { startJourney, trackJourneyStep } from "@/lib/journeys";
+import { markGateCtaClicked } from "@/lib/livestreamGateAttribution";
 import type { GateSurface } from "@/hooks/useLivestreamGate";
 
 interface LivestreamGateOverlayProps {
@@ -13,18 +14,6 @@ interface LivestreamGateOverlayProps {
   sessionSeconds?: number;
 }
 
-/** Set only on a real CTA click; useAuth completes the journey only when
- * this is present, so an unrelated later signup in the same tab (viewer saw
- * the gate, left, signed up from the header) is not attributed to the gate. */
-export const GATE_CTA_FLAG = "journey_livestream_gate_cta";
-
-function markCtaClicked() {
-  try {
-    sessionStorage.setItem(GATE_CTA_FLAG, "1");
-  } catch {
-    /* attribution is best-effort */
-  }
-}
 
 export function LivestreamGateOverlay({
   livestreamId,
@@ -101,7 +90,7 @@ export function LivestreamGateOverlay({
             href={signupHref}
             {...(isEmbed ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             onClick={() => {
-              markCtaClicked();
+              markGateCtaClicked();
               trackJourneyStep("livestream_gate", "live_gate_signup_clicked", { surface });
             }}
           >
@@ -112,7 +101,7 @@ export function LivestreamGateOverlay({
           href={loginHref}
           {...(isEmbed ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           onClick={() => {
-            markCtaClicked();
+            markGateCtaClicked();
             trackJourneyStep("livestream_gate", "live_gate_login_clicked", { surface });
           }}
           className="text-sm text-white/70 hover:text-white underline underline-offset-4"

@@ -12,6 +12,7 @@ import { ConfirmProvider } from "@/hooks/useConfirm";
 import { lazy, Suspense, Component, ReactNode, useLayoutEffect } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { useLivestreamGateAttribution } from "@/lib/livestreamGateAttribution";
 import BottomNav from "@/components/layout/BottomNav";
 import ChatFAB from "@/components/layout/ChatFAB";
 import AppHeader from "@/components/layout/AppHeader";
@@ -388,6 +389,13 @@ const PageTracker = (): null => {
   return null;
 };
 
+// Livestream-gate signup attribution — kept out of useAuth (auth surface is
+// release-tier RED; this is pure analytics).
+const LivestreamGateAttribution = (): null => {
+  useLivestreamGateAttribution();
+  return null;
+};
+
 // Redirect component for /livestream/:id → /live/:id
 const LivestreamRedirect = () => {
   const params = window.location.pathname.match(/\/livestream\/(.+)/);
@@ -566,6 +574,7 @@ const App = () => (
               <PushNotificationInitializer />
               <NotificationsRealtimeInitializer />
               <PageTracker />
+              <LivestreamGateAttribution />
               <ScrollToTop />
 
               <SkipToContent />
