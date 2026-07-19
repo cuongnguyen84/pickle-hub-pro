@@ -176,6 +176,64 @@ final class SocialEventFormModel {
         }
     }
 
+    // ── UX-04 autosave snapshot (parity web draft:social:<slug>; native scope
+    // theo clubID). Chỉ dùng cho flow TẠO MỚI — edit đã có dữ liệu trên DB.
+    // Ranh giới D3/CodeQL: bankCode / bankAccountNumber / bankAccountName
+    // KHÔNG có trong snapshot — nhập lại sau khi khôi phục, giống web.
+    struct Draft: Codable, Equatable {
+        var title: String
+        var descriptionText: String
+        var date: Date
+        var startTime: Date
+        var endTime: Date
+        var locationText: String
+        var courtCount: Int
+        var maxPlayers: Int
+        var priceText: String
+        var zaloURL: String
+        var ballType: String
+        var visibility: String
+        var requiresPrepayment: Bool
+        var deadlineHours: Int
+    }
+
+    var draftSnapshot: Draft {
+        .init(title: title, descriptionText: descriptionText, date: date,
+              startTime: startTime, endTime: endTime, locationText: locationText,
+              courtCount: courtCount, maxPlayers: maxPlayers, priceText: priceText,
+              zaloURL: zaloURL, ballType: ballType, visibility: visibility,
+              requiresPrepayment: requiresPrepayment, deadlineHours: deadlineHours)
+    }
+
+    func apply(_ d: Draft) {
+        title = d.title
+        descriptionText = d.descriptionText
+        date = d.date
+        startTime = d.startTime
+        endTime = d.endTime
+        locationText = d.locationText
+        courtCount = max(1, d.courtCount)
+        maxPlayers = max(4, d.maxPlayers)
+        priceText = d.priceText
+        zaloURL = d.zaloURL
+        ballType = d.ballType
+        if ["public", "club_only"].contains(d.visibility) { visibility = d.visibility }
+        requiresPrepayment = d.requiresPrepayment
+        deadlineHours = min(max(1, d.deadlineHours), 168)
+    }
+
+    func resetForm() {
+        title = ""; descriptionText = ""
+        date = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        startTime = Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: Date()) ?? Date()
+        endTime = Calendar.current.date(bySettingHour: 21, minute: 0, second: 0, of: Date()) ?? Date()
+        locationText = ""; courtCount = 2; maxPlayers = 16; priceText = ""
+        zaloURL = ""; ballType = ""; visibility = "public"
+        requiresPrepayment = false; deadlineHours = 24
+        bankCode = ""; bankAccountNumber = ""; bankAccountName = ""
+        errorText = nil
+    }
+
     @MainActor func cancelEvent(reason: String) async -> Bool {
         guard let e = existing else { return false }
         busy = true; errorText = nil
@@ -253,20 +311,42 @@ private struct SocialEventFormFields: View {
 struct CreateSocialEventView: View {
     @State private var model: SocialEventFormModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     var onCreated: (() -> Void)? = nil
+
+    // UX-04 — draft device-local theo CLB (web scope theo slug, native theo id).
+    @State private var draft: DraftStore<SocialEventFormModel.Draft>
+    @State private var restoredDraft = false
+    @State private var restoreApplied = false
 
     init(clubID: UUID, onCreated: (() -> Void)? = nil) {
         _model = State(initialValue: SocialEventFormModel(existing: nil, clubID: clubID))
+        _draft = State(initialValue: DraftStore(flow: "social", scope: clubID.uuidString.lowercased()))
         self.onCreated = onCreated
     }
 
     var body: some View {
         NavigationStack {
             Form {
+                if restoredDraft {
+                    Section {
+                        DraftRestoredBanner {
+                            model.resetForm()
+                            draft.clear(current: model.draftSnapshot)
+                        }
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                    }
+                }
                 SocialEventFormFields(model: model)
                 Section {
                     Button {
-                        Task { if await model.create(publish: true) { onCreated?(); dismiss() } }
+                        Task {
+                            if await model.create(publish: true) {
+                                draft.clear(current: model.draftSnapshot)
+                                onCreated?(); dismiss()
+                            }
+                        }
                     } label: {
                         HStack {
                             if model.busy { ProgressView().controlSize(.small) }
@@ -275,15 +355,34 @@ struct CreateSocialEventView: View {
                     }
                     .disabled(!model.valid || model.busy)
                     Button("Lưu nháp") {
-                        Task { if await model.create(publish: false) { onCreated?(); dismiss() } }
+                        Task {
+                            if await model.create(publish: false) {
+                                draft.clear(current: model.draftSnapshot)
+                                onCreated?(); dismiss()
+                            }
+                        }
                     }
                     .disabled(!model.valid || model.busy)
+                } footer: {
+                    DraftSaveStatusLine(savedAt: draft.lastSavedAt)
                 }
             }
             .navigationTitle("Mở buổi chơi")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Huỷ") { dismiss() } }
+            }
+            .onAppear {
+                guard !restoreApplied else { return }
+                restoreApplied = true
+                if let d = draft.restore() {
+                    model.apply(d)
+                    restoredDraft = true
+                }
+            }
+            .onChange(of: model.draftSnapshot) { _, snap in draft.save(snap) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { draft.flush(model.draftSnapshot) }
             }
         }
     }
