@@ -1,0 +1,24 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "verdict": "REFINE",
+      "reasoning": "Hai ngôn ngữ wizard là bất nhất CÓ THẬT trong code, không phải 'mở rộng suy đoán' cần chờ funnel: WizardProgress (social) và stepKickerStyle/surfaceCard (tournament) cùng tồn tại. Ba việc cụ thể của UX-03 — hợp nhất 2 step-header, collapse Dreambreaker 5→4, payment branching tường minh — là sửa bất nhất đã biết, verify được, không cần bằng chứng traffic. Nhưng architect đúng ở một điểm: bất kỳ template/disclosure MỚI cho flow bracket vượt quá 3 việc đó thì đúng là phải gate bằng funnel theo journey-screens.md 'expand only from traffic/risk evidence'.",
+      "evidence": "src/components/social/create-event/WizardProgress.tsx + src/components/tournament/setup-styles.ts:12 (stepKickerStyle) — hai style header rời nhau",
+      "refined_position": "Ship 3 fix consolidation cụ thể (unify header, Dreambreaker collapse, payment branching) KHÔNG chờ funnel; STOP-AND-LOOK chỉ áp cho mở rộng template/disclosure bracket vượt ngoài 3 việc đó."
+    },
+    {
+      "id": "D3",
+      "verdict": "HOLD",
+      "reasoning": "Không phải bất đồng thật lật được gì. Guard bank config của pre-mortem tôi đã đồng thuận ngay vòng 1 (consensus_notable) và EditSocialEvent.tsx:172-175 xác nhận pattern prefill bank vào form state là có thật — nên P0 chính đáng. Nhưng lập trường vòng 1 của tôi là SẮP XẾP (UX-02 templates xếp cuối, đo usage sau autosave), không mâu thuẫn với guard: guard là điều kiện-khi-xây, không ép templates lên sớm. P0 không cung cấp dữ kiện nào lật thứ tự.",
+      "evidence": "src/pages/EditSocialEvent.tsx:172-175 — bank_account_name/number prefill thẳng vào FormState, xác nhận rủi ro pre-mortem có cơ sở"
+    },
+    {
+      "id": "D4",
+      "verdict": "HOLD",
+      "reasoning": "Cơ chế restore-in-wizard của architect ĐÚNG về mặt kỹ thuật nhưng tôi đã tính tới ở vòng 1 (issue #6 + ghi chú Restore state) — không có dữ kiện MỚI. Kiểm chứng luồng thật: đường duy nhất tới DraftRestoredBanner là nút CTA nhãn 'Tạo sự kiện mới'/'Create new event' (vi.ts:4865). Organizer bị gọi ra sân, tab chết, mở lại app fresh — với họ nút 'Tạo MỚI' báo hiệu 'làm lại từ đầu', không ai bấm nó để MONG khôi phục việc dở; họ nghĩ đã mất. Autosave lưu xong mà entry point duy nhất là nút 'mới' = vòng lặp bỏ-dở→quay-lại KHÔNG khép, đúng metric O2→O4 mà cả proposal nhắm tới. Section 'Bản nháp' trên dashboard vẫn bắt buộc ship cùng UX-04. Rẻ-hơn-nhưng-không-tìm-thấy không phải là khép vòng — đây là quyết định của Cuong, không phải chỗ tôi rút cho tiện.",
+      "evidence": "src/i18n/vi.ts:4865 (newEventCta='Tạo sự kiện mới') + src/pages/ClubManage.tsx:183-188 — CTA vào wizard nhãn 'mới', không có entry point 'resume/Bản nháp' nào trên dashboard"
+    }
+  ]
+}

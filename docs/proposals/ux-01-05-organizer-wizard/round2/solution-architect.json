@@ -1,0 +1,31 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "REFINE",
+      "reasoning": "Kiến trúc autosave localStorage của em đứng vững, nhưng thứ tự increment nên đảo: instrument 4 flow tournament TRƯỚC khi wire autosave vào chúng. Social giữ nguyên vị trí (đã có BASE-02 funnel). Lý do em nhận: autosave-restore có thể ghi lại state hỏng làm completion tụt, và không có funnel thì hồi quy đó vô hình — đúng như pre-mortem/risk-auditor nói. Đây không phải dữ kiện mới (vòng 1 em đã biết 4 flow mù instrumentation, journeys.ts chỉ có organizer_event=social), mà là đánh giá rủi ro đúng và rẻ: chỉ hoán increment 2↔3, chi phí ~0. Không phải CONCEDE vì không lật kiến trúc, chỉ siết scope thứ tự.",
+      "evidence": "src/lib/journeys.ts — chỉ player_registration + organizer_event(social); 4 setup page không có journey. Đảo thứ tự: instrument 4 flow → rồi mới autosave vào chúng.",
+      "refined_position": "Increment 2 = journey organizer_tournament vào 4 setup page (web+native). Increment 3 = autosave 4 flow tournament. Social autosave vẫn increment 1. Cổng cứng của pre-mortem 'funnel mở sang tournament trước UX-04/05' — em chấp nhận cho phần tournament, không cho social."
+    },
+    {
+      "id": "D2",
+      "verdict": "CONCEDE",
+      "reasoning": "Em tự mở code kiểm: cả ba flow ĐÃ là stepped wizard, không phải 'form-một-trang khổng lồ' như recon vòng 1 em dựa vào. Recon sai. Vì lý biện minh cho STOP-AND-LOOK của em một nửa dựa trên recon đó ('ép form 1400 dòng vào step-machine = refactor RED'), phần đó chết. Việc thật của UX-03 (hợp nhất 2 step-header + collapse Dreambreaker 5→4) là việc đã biết rõ, effort thấp, KHÔNG cần chờ funnel vì nó là fix nhất-quán/đúng-đắn chứ không phải mở rộng tính năng suy đoán. Lưu ý kèm: phần 'payment branching tường minh' của UX-03 vẫn phải cưỡi guard của risk-auditor #4 (validate server-side theo payment mode đã persist, clear state khi ẩn field) — không phải trivial, nhưng đó là điều kiện thực thi, không phải lý do HOLD chống ui-ux-critic.",
+      "evidence": "TeamMatchSetup.tsx:21,95-103,376 (type Step=1..5, STEPS[], '◆ Bước {step}/5'); DoublesEliminationSetup.tsx:37,168 (type Step='info'|'format'|'teams'); QuickTableSetup.tsx:29,49 (type Step='input'|'assignment'). Flex là flow 1-trang duy nhất (211 dòng, không step machine)."
+    },
+    {
+      "id": "D3",
+      "verdict": "REFINE",
+      "reasoning": "Thiết kế vòng 1 của em là templates.ts = preset TĨNH trong content file — theo cấu tạo KHÔNG mang STK thật của ai, nên kịch bản P0 (tiền vào STK chủ nhiệm cũ) KHÔNG áp vào phương án em đề. Em tự kiểm: prefill bank trio nằm ở luồng EDIT (EditSocialEvent), không phải template. Pre-mortem giả định 'UX-02 chắc chắn tái dùng shape prefill này' — giả định đó sai với static preset. Nhưng debate.json đúng khi bắt lỗi em 'không nói rõ có loại trừ bank fields' — nên em siết: templates.ts CẤM chứa bank fields, và guard checkbox-xác-nhận-tên của pre-mortem chỉ bắt buộc NẾU scope sau này mở sang 'nhân bản từ buổi cũ'.",
+      "evidence": "EditSocialEvent.tsx:97-100,171-175 — prefill bank_code/account_number/account_name từ event_payment_config; đây là luồng EDIT, không phải template. templates.ts em đề (src/content/social-event-templates.ts) là hằng số tĩnh, không đọc event_payment_config.",
+      "refined_position": "UX-02 = preset tĩnh, whitelist field prefill (tên/giờ/giá/thể lệ), TUYỆT ĐỐI không bank_code/account_number/account_name. Nếu Cuong muốn 'clone từ buổi cũ' → đó là feature riêng, khi đó guard hiển-thị-tên-STK của pre-mortem thành bắt buộc."
+    },
+    {
+      "id": "D4",
+      "verdict": "HOLD",
+      "reasoning": "Lập luận 'autosave lưu xong mà không entry point thì vô nghĩa' SAI với thiết kế của em: entry point CHÍNH là re-entry qua đúng CTA 'Tạo' của club — mở lại wizard cùng scope (club slug / shareId) thì DraftRestoredBanner tự hiện. Vòng lặp bỏ-dở→quay-lại KHÉP tại đó với chi phí gần zero. Section 'Bản nháp' trên dashboard là nâng cấp discoverability (cứu trường hợp organizer quên hẳn, không bao giờ bấm 'Tạo' lại), không phải điều kiện tiên quyết cho metric O2→O4. Với draft localStorage-only còn phải đọc/tái dựng key across flow trên trang dashboard = việc thật, device-local ('Trên thiết bị này'). Đây đúng là chỗ 'làm 30% rồi đo': ship in-wizard restore trước, thêm dashboard list nếu usage cho thấy pattern quên-rồi-quay-lại-qua-dashboard. Không có file mới nào lật được điểm này — chỉ là bất đồng giá trị UX, và 'vô nghĩa' là nói quá.",
+      "evidence": "Không có dữ kiện file mới từ ui-ux-critic lật được: re-entry qua CTA club → wizard cùng scope → banner là entry point đã đủ khép vòng data-loss. Dashboard 'Bản nháp' = tăng cường, sequence sau khi autosave chứng minh usage."
+    }
+  ]
+}

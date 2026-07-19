@@ -1,0 +1,107 @@
+{
+  "slug": "ux-01-05-organizer-wizard",
+  "consensus_notable": [
+    "Autosave local-first (localStorage/@AppStorage), KHÔNG thêm 'draft' vào enum tournament, KHÔNG DB-draft cho 4 bảng tournament — hội tụ độc lập: solution-architect (Claude), ui-ux-critic (Claude) VÀ GPT-5.6 trong CẢ HAI brief external (ui + risk). Đây là đồng thuận cross-vendor, có trọng lượng.",
+    "Templates KHÔNG được tự bật fee/copy nguyên bank config không xác nhận — risk-auditor (AMBER condition) + pre-mortem P0 + architect (static presets).",
+    "Metric O2→O4 chỉ đo được social; 4 flow tournament đang mù instrumentation — cả 4 agent nói cùng ý (2 Claude finder + GPT-5.6 risk pass)."
+  ],
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Thứ tự ship: autosave trước hay instrumentation trước cho 4 flow tournament",
+      "positions": {
+        "solution-architect": "Increment 1-2 = autosave (social rồi 4 flow + native), increment 3 mới là journey organizer_tournament. Autosave là pain #1, localStorage không rủi ro nên không cần đo trước.",
+        "pre-mortem": "Gate cứng: mở journey funnel sang 4 flow tournament TRƯỚC khi merge UX-04/05, nếu không mọi hồi quy flow tournament vô hình. GPT-5.6 (risk pass) độc lập cũng xếp instrument đầu tiên trong slice order — cross-vendor.",
+        "risk-auditor": "Slice order khuyến nghị (đồng ý với GPT-5.6): instrument → backend additive → social autosave → tournament không tiền → có tiền → native cuối."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "src/lib/journeys.ts — chỉ player_registration + organizer_event(social); 4 setup page không có journey.",
+          "refined_position": "Increment 2 = journey organizer_tournament vào 4 setup page (web+native). Increment 3 = autosave 4 flow tournament. Social autosave vẫn increment 1."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "round1/solution-architect.md:9,47 (Data: none, localStorage-only) + src/pages/QuickTableSetup.tsx:54-91 (row pre-created qua shareId, autosave không thêm INSERT)",
+          "refined_position": "Instrument-first KHÔNG là gate an toàn cho autosave localStorage — chỉ là gate claims-integrity: cấm claim metric completion cho 4 flow tournament tới khi journey organizer_tournament live. Native vẫn tách PR (RED)."
+        },
+        "pre-mortem": {
+          "move": "CONCEDE",
+          "evidence": "docs/proposals/ux-01-05-organizer-wizard/round1/solution-architect.md:9,47 — autosave localStorage/@AppStorage thuần, không DB write → cơ chế sự cố 2 (row draft dưới USING(true)) và sự cố 3 (RLS .update() 0-row) đều chết; gate funnel-trước-merge mất cơ sở an toàn, chỉ còn giá trị đo lường."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "localStorage-only triệt tiêu cơ sở an toàn của gate instrument-first (pre-mortem CONCEDE có bằng chứng). Thứ tự chốt (architect tự siết): (1) autosave social → (2) instrument organizer_tournament 4 flow → (3) autosave 4 flow tournament. Ràng buộc còn lại từ risk-auditor: không tuyên bố 'tăng completion' cho 4 flow tournament trước khi funnel live; native tách PR riêng."
+    },
+    {
+      "id": "D2",
+      "topic": "UX-03 consolidation cho tournament flows: làm ngay hay chờ evidence",
+      "positions": {
+        "solution-architect": "STOP-AND-LOOK: chỉ làm template/disclosure cho flow bracket khi funnel organizer_tournament (2 tuần) chỉ ra drop-off thật — theo journey-screens.md 'expand only from traffic/risk evidence'. (Dựa một phần trên recon 'form 1 trang khổng lồ'.)",
+        "ui-ux-critic": "Recon SAI — TeamMatch/DoublesElim/QuickTable ĐÃ là stepped wizard. UX-03 thật = hợp nhất 2 ngôn ngữ wizard + collapse Dreambreaker (5→4 bước) + payment branching tường minh — việc đã biết rõ, không cần chờ funnel."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "TeamMatchSetup.tsx:21,95-103,376 (type Step=1..5, STEPS[], '◆ Bước {step}/5'); DoublesEliminationSetup.tsx:37,168 (type Step='info'|'format'|'teams'); QuickTableSetup.tsx:29,49 (type Step='input'|'assignment') — recon vòng 1 sai, các flow đã là stepped wizard; nửa lý do STOP-AND-LOOK sụp."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "src/components/social/create-event/WizardProgress.tsx + src/components/tournament/setup-styles.ts:12 — hai style header rời nhau",
+          "refined_position": "Ship 3 fix consolidation cụ thể (unify step-header, Dreambreaker collapse 5→4, payment branching) KHÔNG chờ funnel; STOP-AND-LOOK chỉ áp cho template/disclosure bracket vượt ngoài 3 việc đó."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "UX-03 = 3 việc consolidation đã biết (unify step-header cả 5 flow, Dreambreaker collapse TeamMatch 5→4, payment branching tường minh) — làm ngay, không chờ funnel. Payment branching phải kèm guard risk-auditor #4 (validate server-side theo payment mode đã persist, clear state khi ẩn). Mọi mở rộng template/disclosure bracket vượt 3 việc này vẫn qua cổng evidence."
+    },
+    {
+      "id": "D3",
+      "topic": "UX-02 templates: nguồn template và ranh giới an toàn bank config",
+      "positions": {
+        "solution-architect": "templates.ts = 2-3 preset TĨNH prefill FormState (vòng 1 không nói rõ có loại trừ bank fields không).",
+        "pre-mortem": "P0: template sinh từ event cũ kéo nguyên bank trio → 3 tuần tiền vào STK người đã rời CLB. Đòi guard: checkbox xác nhận hiển thị bank_account_name khi bank đến từ prefill.",
+        "ui-ux-critic": "UX-02 xếp CUỐI (nice-to-have) — đo usage sau khi autosave live rồi hãy đầu tư."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "EditSocialEvent.tsx:97-100,171-175 — prefill bank trio là luồng EDIT, không phải template; templates.ts đề xuất là hằng số tĩnh không đọc event_payment_config.",
+          "refined_position": "UX-02 = preset tĩnh, whitelist field (tên/giờ/giá/thể lệ), TUYỆT ĐỐI không bank_code/account_number/account_name. 'Clone từ buổi cũ' nếu muốn = feature riêng, khi đó guard của pre-mortem thành bắt buộc."
+        },
+        "pre-mortem": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20260521130000_club_managers.sql:212-227 + src/pages/EditSocialEvent.tsx:171-175,296-300 — cơ chế tiền-vào-STK-cũ đang LIVE trên prod HÔM NAY qua EditSocialEvent + club_managers, độc lập với cụm UX này.",
+          "refined_position": "Concede vector UX-02 (static preset loại bank → sự cố 1 qua template chết). Guard bank_account_name re-file thành hạng mục prod-hardening ĐỘC LẬP cho luồng EditSocialEvent + club_managers."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "evidence": "src/pages/EditSocialEvent.tsx:172-175 — guard chính đáng nhưng là điều-kiện-khi-xây, không lật thứ tự UX-02 xếp cuối."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": null,
+      "note_for_cuong": "Các phía hội tụ qua REFINE (không có CONCEDE đủ chuẩn ledger): templates = preset tĩnh cấm bank fields, xếp cuối. Còn 2 việc cần anh xác nhận: (1) chốt scope UX-02 đợt này là static-preset-only — 'nhân bản từ buổi cũ' để đợt sau kèm guard; (2) LỖ HỔNG PROD ĐANG SỐNG do pre-mortem phát hiện: manager mới sửa event cũ qua EditSocialEvent sẽ re-publish với STK của chủ nhiệm cũ — cần fix riêng ngoài cụm UX (guard hiển thị tên STK khi prefill)."
+    },
+    {
+      "id": "D4",
+      "topic": "UX-01 resume-slice: dashboard 'Bản nháp' có bắt buộc ship cùng autosave không",
+      "positions": {
+        "solution-architect": "Không cần — restore xảy ra ngay trong wizard khi mở lại cùng scope (DraftRestoredBanner). Dashboard section = nâng cấp discoverability, ship sau nếu usage chứng minh.",
+        "ui-ux-critic": "Bắt buộc ship cùng UX-04 — entry point duy nhất là nút 'Tạo sự kiện mới' (vi.ts:4865), organizer bỏ dở không bấm nút 'MỚI' để mong khôi phục; vòng lặp không khép."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "HOLD",
+          "evidence": "Re-entry qua CTA club → wizard cùng scope → banner tự hiện; dashboard 'Bản nháp' với localStorage-only còn phải tái dựng key cross-flow = việc thật, device-local. Ship 30% rồi đo."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "evidence": "src/i18n/vi.ts:4865 (newEventCta='Tạo sự kiện mới') + src/pages/ClubManage.tsx:183-188 — không entry point resume nào trên dashboard; nút nhãn 'mới' không mời gọi khôi phục."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": null,
+      "note_for_cuong": "Bất đồng giá trị UX thật, cả hai HOLD có căn cứ. Câu hỏi cho anh: ship autosave đợt đầu CÓ kèm section 'Bản nháp' trên club dashboard không (thêm ~1-1.5 nửa ngày, cứu ca organizer nghĩ-là-mất-nên-không-quay-lại), hay ship restore-in-wizard trước rồi đo?"
+    }
+  ]
+}

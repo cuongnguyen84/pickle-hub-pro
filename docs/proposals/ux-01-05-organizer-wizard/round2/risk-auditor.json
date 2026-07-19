@@ -1,0 +1,32 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "REFINE",
+      "reasoning": "Slice order instrument-first của tôi vòng 1 bị điều kiện hoá trên giả định autosave ghi DB — khi đó funnel là cổng an toàn vì hồi quy flow tournament vô hình. Với Option A localStorage-only, autosave KHÔNG chạm DB/RLS/enum/publish path: hồi quy restore hiện ra ngay trong manual test (increment 1-2: reload → banner khôi phục state), không cần funnel để AN TOÀN. Nên instrument-first không còn là gate an toàn cho autosave — nó chỉ còn cần để CHỨNG MINH claim completion O2→O4 trên 4 flow tournament. Architect được phép ship autosave localStorage TRƯỚC instrumentation; nhưng KHÔNG được claim metric cho 4 flow đó cho tới khi journey 'organizer_tournament' live. Gate cứng của pre-mortem ('instrument trước khi merge') hạ từ điều-kiện-reliability xuống điều-kiện-claims-integrity.",
+      "evidence": "docs/proposals/ux-01-05-organizer-wizard/round1/solution-architect.md:11,22 (Data: none, localStorage, không migration/RLS) + src/pages/QuickTableSetup.tsx:54-91 (row pre-created qua shareId trước setup; autosave không thêm INSERT)",
+      "refined_position": "Instrument-first KHÔNG bắt buộc trước autosave (localStorage không có rủi ro rollback/DB). Nó CHỈ bắt buộc trước bất kỳ tuyên bố metric completion nào trên 4 flow tournament. Thứ tự ship của architect (autosave social → autosave 4-flow+native → journey → social polish) hợp lệ VỚI ĐIỀU KIỆN: (a) native tách PR riêng vì vẫn RED; (b) không phát ngôn 'tăng completion' cho flex/quicktable/teammatch/doubles cho tới khi increment 3 có số."
+    }
+  ],
+  "tier_update": {
+    "overall": "RED",
+    "per_increment": {
+      "autosave_social_localStorage": "GREEN",
+      "autosave_tournament_localStorage": "GREEN",
+      "UX-05_recovery": "AMBER",
+      "UX-03_consolidation": "AMBER",
+      "UX-02_static_templates": "AMBER",
+      "native": "RED"
+    },
+    "conditions": [
+      "HẠ RED→GREEN cho autosave 4-flow CHỈ KHI xác nhận localStorage/@AppStorage-only: không thêm INSERT/UPDATE vào quick_tables/tournaments/doubles/team_match; restore chỉ fill client form-state; publish vẫn là DB-write đơn hiện có. Nếu bất kỳ flow nào đổi sang DB-draft → RED trở lại (enum #2 + RLS #1 + publish race #3 sống dậy nguyên vẹn).",
+      "autosave GREEN kèm 1 điều kiện fail-loud: chip 'Đã lưu' phải bắt QuotaExceededError/Safari private-mode throw của setItem → hiện 'chưa lưu được', KHÔNG hiện xanh dối (đây là residual duy nhất còn lại của pre-mortem sự cố 3 sau khi localStorage giết cơ chế RLS 0-row).",
+      "UX-02 giữ AMBER (money path, không hạ GREEN): template phải STATIC preset hardcode và LOẠI TRỪ bank trio (bank_code/bank_account_number/bank_account_name). Nếu template GENERATED từ event cũ HOẶC prefill bank → RED (sự cố 1 pre-mortem: tiền vào STK chủ nhiệm cũ, ~9-12tr, không revert được vì tiền đã đi). Guard rẻ: query cảnh báo khi STK buổi mới ≠ STK buổi gần nhất cùng club_id.",
+      "UX-03 AMBER độc lập với localStorage: progressive disclosure ẩn field payment nhưng state vẫn nằm trong form (rủi ro #4 vòng 1 sống). Điều kiện: validation payment server-side dựa trên mode ĐÃ PERSIST, không dựa field visibility; clear state khi ẩn.",
+      "UX-05 AMBER→GREEN nếu chỉ mở rộng panel missingFields presentation-only trên validation publish hiện có, không thêm đường bypass.",
+      "native GIỮ RED tại merge (DS-03 precedent): @AppStorage ship qua App Store = không có nút revert; cộng merge-conflict với nhánh feat/mlp-captain-registration 19 commit (#5). Bắt buộc tách PR native + Cuong duyệt tay + test 5 màn tạo trên simulator sau resolve conflict. Đây là lý do overall vẫn RED — web autosave đã hết RED.",
+      "Không lean vào pre-mortem sự cố 2/3 để giữ RED: cả hai dựng trên autosave-ghi-DB (sự cố 2 'ghi row draft xuống DB', sự cố 3 RLS 0-row trên .update()). Option A localStorage giết cả hai cơ chế. Chỉ sự cố 1 (template bank) sống sót và đã được bắt bằng điều kiện UX-02 trên."
+    ]
+  }
+}

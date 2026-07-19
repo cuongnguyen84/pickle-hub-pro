@@ -1,0 +1,18 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "CONCEDE",
+      "reasoning": "Option A là autosave localStorage/@AppStorage thuần, không ghi DB cho 4 bảng tournament. Sự cố 2 của tôi (draft lộ ra listing/search) cần một ROW draft tồn tại dưới `tournaments FOR SELECT USING(true)` — không có DB write thì không có row, cơ chế chết. Sự cố 3 (manager `.update()` khớp 0 row trả `{data:[],error:null}`, chip 'đã lưu' nói dối) cần một `.update()` lên bảng tournament dưới RLS — localStorage luôn ghi thành công, không chạm RLS, cơ chế cũng chết. Vì cả hai cơ chế hồi quy DB biến mất, gate 'funnel 4 flow trước khi merge UX-04/05' MẤT cơ sở AN TOÀN: không còn hồi quy nào để làm vô hình. Nó tụt xuống thành gate ĐO LƯỜNG thuần — verify autosave có thật sự nâng completion + lấy số quyết UX-03 — và việc đo lường KHÔNG biện minh cho chặn merge. Tôi bỏ gate-cứng-trước-merge, đồng ý xếp instrument vào increment 3 như architect. Nói thẳng: giữ nó làm gate an toàn lúc này chỉ là quán tính.",
+      "evidence": "docs/proposals/ux-01-05-organizer-wizard/round1/solution-architect.md:47 (autosave chỉ ghi localStorage/@AppStorage, không đẩy remote) + :9 (Data: none, không migration/RLS) — khớp với sự cố 2/3 trong pre-mortem.md:43,77 vốn đều phụ thuộc DB write"
+    },
+    {
+      "id": "D3",
+      "verdict": "REFINE",
+      "reasoning": "Preset TĨNH không chứa bank fields TRIỆT TIÊU đúng vector tôi gán cho UX-02: template không thể kéo bank trio của người khác nữa. Concede phần quy trách nhiệm cho UX-02. NHƯNG cơ chế tiền-vào-STK-cũ y hệt đang LIVE trên prod hôm nay, độc lập với cụm UX này: `club_managers` cấp cho MỌI manager quyền UPDATE lên social_events của CLB qua `is_club_organizer` (không giới hạn creator gốc), và EditSocialEvent prefill nguyên `bank_account_number` của chủ nhiệm cũ từ `event_payment_config`, rồi re-upsert khi save. Manager mới mở sửa buổi cũ → form điền sẵn STK người đã rời CLB → save/publish lại → tiền chảy nhầm. Đây KHÔNG phải luồng edit-same-event vô hại; là cross-organizer qua carve-out club_managers. Vậy guard tôi đòi (hiển thị/confirm `bank_account_name` khi bank đến từ prefill) là fix ĐỘC LẬP với UX-01-05, không phải gate cụm này. Refined: gỡ guard khỏi vai trò chặn UX-02; re-file làm việc-tách-riêng cho luồng EditSocialEvent + club_managers trên prod.",
+      "evidence": "supabase/migrations/20260521130000_club_managers.sql:212-227 (social_events_update_organizer: is_club_organizer → mọi manager UPDATE) + src/pages/EditSocialEvent.tsx:171-175 (prefill bank_account_number từ event_payment_config) + :296-300 (re-upsert khi save)",
+      "refined_position": "CONCEDE vector UX-02 template (static presets loại bank → sự cố 1 qua template chết). Guard bank_account_name KHÔNG còn là gate của UX-01-05, mà là hạng mục prod-hardening độc lập cho cửa EditSocialEvent + club_managers (đang live hôm nay) — orchestrator đưa vào mục việc-tách-riêng."
+    }
+  ]
+}
