@@ -23,6 +23,10 @@ import {
 import { useI18n } from "@/i18n";
 import type { FormState, FormErrors } from "./types";
 import { SlotManager } from "./SlotManager";
+import {
+  SOCIAL_EVENT_TEMPLATES,
+  type SocialEventTemplate,
+} from "@/content/social-event-templates";
 
 interface Props {
   form: FormState;
@@ -30,6 +34,9 @@ interface Props {
   touched: Partial<Record<keyof FormState, boolean>>;
   onChange: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
   onBlur: (key: keyof FormState) => void;
+  /** UX-02 — template chips render only while the form is still pristine. */
+  showTemplates?: boolean;
+  onApplyTemplate?: (tpl: SocialEventTemplate) => void;
 }
 
 function ErrorText({ msg }: { msg: string | null | undefined }) {
@@ -37,8 +44,16 @@ function ErrorText({ msg }: { msg: string | null | undefined }) {
   return <p className="mt-1 text-xs text-destructive">{msg}</p>;
 }
 
-export function Step1Info({ form, errors, touched, onChange, onBlur }: Props) {
-  const { t } = useI18n();
+export function Step1Info({
+  form,
+  errors,
+  touched,
+  onChange,
+  onBlur,
+  showTemplates,
+  onApplyTemplate,
+}: Props) {
+  const { t, language } = useI18n();
   const create = t.socialEvents.create;
   const showError = (k: keyof FormState) => (touched[k] ? errors[k] : null);
 
@@ -48,6 +63,27 @@ export function Step1Info({ form, errors, touched, onChange, onBlur }: Props) {
         <h2 className="text-xl font-semibold">{create.step1Heading}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{create.step1Subheading}</p>
       </div>
+
+      {/* UX-02 — static template chips (src/content/social-event-templates.ts).
+          Pristine-form only; once anything is typed (or a template applied)
+          the row disappears and the organizer edits freely. */}
+      {showTemplates && onApplyTemplate && (
+        <div className="space-y-2">
+          <Label>{create.templatesLabel}</Label>
+          <div className="flex flex-wrap gap-2">
+            {SOCIAL_EVENT_TEMPLATES.map((tpl) => (
+              <button
+                type="button"
+                key={tpl.id}
+                onClick={() => onApplyTemplate(tpl)}
+                className="inline-flex items-center rounded-full border border-input bg-background px-3 py-1 text-xs transition hover:bg-accent"
+              >
+                {language === "vi" ? tpl.labelVi : tpl.labelEn}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="ev-name">{create.eventName} *</Label>

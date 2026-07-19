@@ -5,6 +5,7 @@ export interface Translations {
     loading: string;
     error: string;
     retry: string;
+    stepOf: string;
     save: string;
     cancel: string;
     delete: string;
@@ -1217,6 +1218,9 @@ export interface Translations {
       stepGameTemplates: string;
       stepDreambreaker: string;
       stepFormat: string;
+      stepFees: string;
+      dreambreakerToggle: string;
+      dreambreakerToggleDesc: string;
       tournamentName: string;
       tournamentNamePlaceholder: string;
       playersPerTeam: string;
@@ -1899,7 +1903,6 @@ export interface Translations {
       successDraft: string;
       successPublished: string;
       // ── PR50a wizard additions ────────────────────────────────────
-      stepIndicator: string;
       step1Heading: string;
       step1Subheading: string;
       step2Heading: string;
@@ -1912,7 +1915,6 @@ export interface Translations {
       startTime: string;
       endTime: string;
       priceAmount: string;
-      priceFreeHint: string;
       paymentBannerFree: string;
       paymentBannerNotConfigured: string;
       paymentBannerNotConfiguredCta: string;
@@ -1953,6 +1955,14 @@ export interface Translations {
       repeatWeeksPreview: string;
       errorRepeatWeeksRange: string;
       bulkCreatedToast: string;
+      // ── UX-01-05 wizard consolidation (PR2-Y) ─────────────────────
+      feeModeQuestion: string;
+      feeModeFree: string;
+      feeModePaid: string;
+      feeModeFreeHelper: string;
+      missingFieldsTitle: string;
+      partialBatchToast: string;
+      templatesLabel: string;
       // Slots — registration sub-buckets (skill / duration / general).
       slotsHeading: string;
       slotsSubheading: string;
@@ -2882,6 +2892,7 @@ export const vi: Translations = {
     loading: "Đang tải...",
     error: "Có lỗi xảy ra",
     retry: "Thử lại",
+    stepOf: "Bước {n}/{total}",
     save: "Lưu",
     cancel: "Hủy",
     delete: "Xóa",
@@ -4095,6 +4106,9 @@ export const vi: Translations = {
       stepGameTemplates: "Game Templates",
       stepDreambreaker: "DreamBreaker",
       stepFormat: "Thể thức",
+      stepFees: "Lệ phí",
+      dreambreakerToggle: "Dùng Dreambreaker khi hòa",
+      dreambreakerToggleDesc: "Thêm ván quyết định khi 2 đội hòa về số game thắng",
       tournamentName: "Tên giải đấu",
       tournamentNamePlaceholder: "VD: MLP Mùa Xuân 2026",
       playersPerTeam: "Số VĐV mỗi đội",
@@ -4780,7 +4794,6 @@ export const vi: Translations = {
       errorSlugFormat: "Slug chỉ chứa chữ thường, số, dấu gạch ngang (3–100 ký tự)",
       successDraft: "Đã lưu nháp",
       successPublished: "Đã xuất bản — sự kiện đang nhận đăng ký",
-      stepIndicator: "Bước {n}/2",
       step1Heading: "Thông tin sự kiện",
       step1Subheading: "Nhập chi tiết cơ bản về buổi chơi của bạn.",
       step2Heading: "Phí tham gia",
@@ -4793,7 +4806,6 @@ export const vi: Translations = {
       startTime: "Giờ bắt đầu",
       endTime: "Giờ kết thúc",
       priceAmount: "Số tiền (VND)",
-      priceFreeHint: "Nhập 0 nếu sự kiện miễn phí.",
       paymentBannerFree:
         "Sự kiện miễn phí. Người chơi sẽ không thấy bước thanh toán.",
       paymentBannerNotConfigured:
@@ -4837,6 +4849,15 @@ export const vi: Translations = {
       repeatWeeksPreview: "→ Sẽ tạo {count} event giống hệt, event cuối cùng vào {last}.",
       errorRepeatWeeksRange: "Số tuần lặp phải từ 0 đến 12.",
       bulkCreatedToast: "Đã tạo {count} event giống hệt.",
+      // UX-01-05 wizard consolidation (PR2-Y)
+      feeModeQuestion: "Sự kiện này có thu phí không?",
+      feeModeFree: "Miễn phí",
+      feeModePaid: "Có thu phí",
+      feeModeFreeHelper: "Không cần thông tin ngân hàng.",
+      missingFieldsTitle: "Còn {count} mục cần kiểm tra trước khi đăng.",
+      partialBatchToast:
+        "Đã tạo {created}/{total} buổi. Bấm Xuất bản ngay để tạo tiếp các buổi còn thiếu.",
+      templatesLabel: "Mẫu nhanh — chọn để điền sẵn",
       // Slots
       slotsHeading: "Nhóm đăng ký (tuỳ chọn)",
       slotsSubheading:

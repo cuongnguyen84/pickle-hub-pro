@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAutosaveDraft } from '@/hooks/useAutosaveDraft';
 import { DraftRestoredBanner, DraftSaveStatus } from '@/components/wizard/DraftAutosave';
+import { StepHeader } from '@/components/wizard/StepHeader';
 import { completeJourney, startJourney, trackJourneyStep } from '@/lib/journeys';
 import { TheLineLayout } from '@/components/layout';
 import { Input } from '@/components/ui/input';
@@ -19,9 +20,10 @@ import { normalizeAccountName } from '@/components/social/create-event/types';
 import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { SetupBreadcrumb, SetupPageHead, SetupLoginGate } from '@/components/tournament/SetupShell';
-import { surfaceCard, stepKickerStyle } from '@/components/tournament/setup-styles';
+import { surfaceCard } from '@/components/tournament/setup-styles';
 
-type Step = 1 | 2 | 3 | 4 | 5;
+// UX-03 (D2): Dreambreaker collapsed into the Format step — 4 steps, was 5.
+type Step = 1 | 2 | 3 | 4;
 
 const isPowerOfTwo = (n: number): boolean => n > 0 && (n & (n - 1)) === 0;
 
@@ -98,9 +100,8 @@ export default function TeamMatchSetup() {
   const STEPS = [
     { id: 1, title: t.teamMatch.setup.stepBasicInfo, icon: Users },
     { id: 2, title: t.teamMatch.setup.stepGameTemplates, icon: Gamepad2 },
-    { id: 3, title: t.teamMatch.setup.stepDreambreaker, icon: Zap },
-    { id: 4, title: t.teamMatch.setup.stepFormat, icon: Trophy },
-    { id: 5, title: language === 'vi' ? 'Lệ phí' : 'Fees', icon: CreditCard },
+    { id: 3, title: t.teamMatch.setup.stepFormat, icon: Trophy },
+    { id: 4, title: t.teamMatch.setup.stepFees, icon: CreditCard },
   ];
 
   const [step, setStep] = useState<Step>(1);
@@ -132,7 +133,7 @@ export default function TeamMatchSetup() {
   // rr_playoff: nhánh Tái sinh — hạng 3,4 mỗi bảng đá bracket phụ (như playoff hạng 1,2).
   const [hasRepechage, setHasRepechage] = useState(false);
 
-  // Step 5 — Thể lệ & Lệ phí. QR VietQR dựng từ bank trio khi phí > 0.
+  // Step 4 — Thể lệ & Lệ phí. QR VietQR dựng từ bank trio khi phí > 0.
   const [rulesSummary, setRulesSummary] = useState('');
   const [entryFeeVnd, setEntryFeeVnd] = useState(0);
   const [entryFeeTeamVnd, setEntryFeeTeamVnd] = useState(0);
@@ -209,7 +210,10 @@ export default function TeamMatchSetup() {
     // Apply once at mount. Shape-guard against hand-edited payloads.
     const d = draft.initial;
     if (!d || typeof d.name !== 'string' || !Array.isArray(d.templates)) return;
-    setStep([1, 2, 3, 4, 5].includes(d.step) ? d.step : 1);
+    // Old drafts (pre UX-03 collapse) saved steps 1-5 — clamp 5 (Fees) onto the
+    // new last step 4. Old step 3 (Dreambreaker) now lands on Format, which
+    // hosts the collapsed Dreambreaker toggle.
+    setStep([1, 2, 3, 4, 5].includes(d.step) ? (Math.min(d.step, 4) as Step) : 1);
     setName(d.name);
     if (typeof d.eventDate === 'string') setEventDate(d.eventDate);
     if (typeof d.location === 'string') setLocation(d.location);
@@ -315,13 +319,11 @@ export default function TeamMatchSetup() {
       case 2:
         return templates.length >= 1;
       case 3:
-        return true;
-      case 4:
         if (format === 'single_elimination') {
           return isValidTeamCountForSE;
         }
         return true;
-      case 5:
+      case 4:
         return feeStepValid;
       default:
         return false;
@@ -498,9 +500,7 @@ export default function TeamMatchSetup() {
           <div style={surfaceCard}>
             {restoredDraft && <DraftRestoredBanner onStartOver={resetToInitial} />}
             <div style={{ marginBottom: 24 }}>
-              <div style={stepKickerStyle}>
-                ◆ {language === 'vi' ? `Bước ${step}/${STEPS.length}` : `Step ${step}/${STEPS.length}`}
-              </div>
+              <StepHeader step={step} total={STEPS.length} label={STEPS[stepIndex].title} />
               <h2 style={stepHeadingStyle}>{STEPS[stepIndex].title}</h2>
             </div>
 
@@ -796,198 +796,8 @@ export default function TeamMatchSetup() {
               </div>
             )}
 
-            {/* Step 3: DreamBreaker */}
+            {/* Step 3: Format — Dreambreaker collapsed in below (UX-03 D2, was its own step) */}
             {step === 3 && (
-              <div className="space-y-5">
-                {!isEvenGames ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 12,
-                      padding: 16,
-                      borderRadius: 'var(--tl-radius)',
-                      ...infoCardStyle('neutral'),
-                    }}
-                  >
-                    <Info className="w-5 h-5 mt-0.5" style={{ color: infoCardIconColor('neutral') }} />
-                    <div>
-                      <p style={{ fontWeight: 500, color: 'var(--tl-fg)', fontSize: 14, margin: 0 }}>
-                        {language === 'vi'
-                          ? `Số game là số lẻ (${templates.length} games)`
-                          : `Odd number of games (${templates.length} games)`}
-                      </p>
-                      <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.5 }}>
-                        {language === 'vi'
-                          ? 'Không cần DreamBreaker vì đã có ván quyết định (ván cuối cùng).'
-                          : 'No DreamBreaker needed as the last game serves as tiebreaker.'}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 12,
-                        padding: 16,
-                        borderRadius: 'var(--tl-radius)',
-                        ...infoCardStyle('warning'),
-                      }}
-                    >
-                      <Info className="w-5 h-5 mt-0.5" style={{ color: infoCardIconColor('warning') }} />
-                      <div>
-                        <p style={{ fontWeight: 600, color: 'var(--tl-gold)', fontSize: 14, margin: 0 }}>
-                          {language === 'vi'
-                            ? `Số game là số chẵn (${templates.length} games)`
-                            : `Even number of games (${templates.length} games)`}
-                        </p>
-                        <p style={{ fontSize: 13, color: 'var(--tl-fg-2)', marginTop: 4, lineHeight: 1.5 }}>
-                          {language === 'vi'
-                            ? 'Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định. Khi bật, ván lẻ cuối cùng sẽ là ván Dreambreaker.'
-                            : 'When teams tie on game wins, DreamBreaker determines the winner.'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div style={toggleRowStyle}>
-                      <div>
-                        <Label>{language === 'vi' ? 'Bật DreamBreaker' : 'Enable DreamBreaker'}</Label>
-                        <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
-                          {language === 'vi'
-                            ? 'Thêm ván quyết định khi 2 đội hòa về số game thắng'
-                            : 'Add tiebreaker when teams are tied on games won'}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={hasDreambreaker}
-                        onCheckedChange={setHasDreambreaker}
-                      />
-                    </div>
-
-                    {hasDreambreaker && (
-                      <div
-                        style={{
-                          paddingLeft: 16,
-                          borderLeft: '2px solid var(--tl-green)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 14,
-                        }}
-                      >
-                        <div
-                          style={{
-                            ...surfaceCard,
-                            background: 'var(--tl-bg)',
-                            padding: 16,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 12,
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Zap className="w-5 h-5" style={{ color: 'var(--tl-green)' }} />
-                            <span
-                              style={{
-                                fontFamily: 'Instrument Serif, serif',
-                                fontStyle: 'italic',
-                                fontSize: 18,
-                                fontWeight: 400,
-                                color: 'var(--tl-fg)',
-                              }}
-                            >
-                              {language === 'vi' ? 'Ván Dreambreaker (Ván cuối cùng)' : 'Dreambreaker Game (Final Game)'}
-                            </span>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: 13 }}>
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '10px 0',
-                                borderBottom: '1px solid var(--tl-border)',
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
-                                  fontSize: 11,
-                                  color: 'var(--tl-fg-3)',
-                                  letterSpacing: '0.06em',
-                                  textTransform: 'uppercase',
-                                }}
-                              >
-                                {language === 'vi' ? 'Hình thức' : 'Format'}
-                              </span>
-                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>
-                                {language === 'vi' ? 'Đánh Đơn (Singles)' : 'Singles'}
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '10px 0',
-                                borderBottom: '1px solid var(--tl-border)',
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
-                                  fontSize: 11,
-                                  color: 'var(--tl-fg-3)',
-                                  letterSpacing: '0.06em',
-                                  textTransform: 'uppercase',
-                                }}
-                              >
-                                {language === 'vi' ? 'Số VĐV mỗi đội' : 'Players per team'}
-                              </span>
-                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>
-                                {language === 'vi' ? '4 VĐV (Tự do chọn nam/nữ)' : '4 players (any gender)'}
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '10px 0',
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
-                                  fontSize: 11,
-                                  color: 'var(--tl-fg-3)',
-                                  letterSpacing: '0.06em',
-                                  textTransform: 'uppercase',
-                                }}
-                              >
-                                {language === 'vi' ? 'Cách tính điểm' : 'Scoring'}
-                              </span>
-                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>Rally Scoring</span>
-                            </div>
-                          </div>
-
-                          <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', margin: 0, lineHeight: 1.55 }}>
-                            {language === 'vi'
-                              ? 'Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm. Đội trưởng sẽ chọn 4 VĐV bất kỳ (không phân biệt giới tính) khi line up.'
-                              : 'MLP-standard Dreambreaker: 4 singles players, rally scoring. Captain chooses 4 players (any gender) during lineup.'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Step 4: Format */}
-            {step === 4 && (
               <div className="space-y-5">
                 <RadioGroup
                   value={format}
@@ -1157,11 +967,169 @@ export default function TeamMatchSetup() {
                     </div>
                   </div>
                 )}
+                {/* Dreambreaker — collapsed from its own step into a toggle here (UX-03 D2) */}
+                {!isEvenGames ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: 16,
+                      borderRadius: 'var(--tl-radius)',
+                      ...infoCardStyle('neutral'),
+                    }}
+                  >
+                    <Info className="w-5 h-5 mt-0.5" style={{ color: infoCardIconColor('neutral') }} />
+                    <div>
+                      <p style={{ fontWeight: 500, color: 'var(--tl-fg)', fontSize: 14, margin: 0 }}>
+                        {language === 'vi'
+                          ? `Số game là số lẻ (${templates.length} games)`
+                          : `Odd number of games (${templates.length} games)`}
+                      </p>
+                      <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.5 }}>
+                        {language === 'vi'
+                          ? 'Không cần DreamBreaker vì đã có ván quyết định (ván cuối cùng).'
+                          : 'No DreamBreaker needed as the last game serves as tiebreaker.'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={toggleRowStyle}>
+                      <div>
+                        <Label>{t.teamMatch.setup.dreambreakerToggle}</Label>
+                        <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                          {t.teamMatch.setup.dreambreakerToggleDesc}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={hasDreambreaker}
+                        onCheckedChange={setHasDreambreaker}
+                      />
+                    </div>
+
+                    {hasDreambreaker && (
+                      <div
+                        style={{
+                          paddingLeft: 16,
+                          borderLeft: '2px solid var(--tl-green)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 14,
+                        }}
+                      >
+                        <div
+                          style={{
+                            ...surfaceCard,
+                            background: 'var(--tl-bg)',
+                            padding: 16,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 12,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Zap className="w-5 h-5" style={{ color: 'var(--tl-green)' }} />
+                            <span
+                              style={{
+                                fontFamily: 'Instrument Serif, serif',
+                                fontStyle: 'italic',
+                                fontSize: 18,
+                                fontWeight: 400,
+                                color: 'var(--tl-fg)',
+                              }}
+                            >
+                              {language === 'vi' ? 'Ván Dreambreaker (Ván cuối cùng)' : 'Dreambreaker Game (Final Game)'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: 13 }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 0',
+                                borderBottom: '1px solid var(--tl-border)',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                  fontSize: 11,
+                                  color: 'var(--tl-fg-3)',
+                                  letterSpacing: '0.06em',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {language === 'vi' ? 'Hình thức' : 'Format'}
+                              </span>
+                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>
+                                {language === 'vi' ? 'Đánh Đơn (Singles)' : 'Singles'}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 0',
+                                borderBottom: '1px solid var(--tl-border)',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                  fontSize: 11,
+                                  color: 'var(--tl-fg-3)',
+                                  letterSpacing: '0.06em',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {language === 'vi' ? 'Số VĐV mỗi đội' : 'Players per team'}
+                              </span>
+                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>
+                                {language === 'vi' ? '4 VĐV (Tự do chọn nam/nữ)' : '4 players (any gender)'}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 0',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                  fontSize: 11,
+                                  color: 'var(--tl-fg-3)',
+                                  letterSpacing: '0.06em',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {language === 'vi' ? 'Cách tính điểm' : 'Scoring'}
+                              </span>
+                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>Rally Scoring</span>
+                            </div>
+                          </div>
+
+                          <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', margin: 0, lineHeight: 1.55 }}>
+                            {language === 'vi'
+                              ? 'Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm. Đội trưởng sẽ chọn 4 VĐV bất kỳ (không phân biệt giới tính) khi line up.'
+                              : 'MLP-standard Dreambreaker: 4 singles players, rally scoring. Captain chooses 4 players (any gender) during lineup.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
-            {/* Step 5: Thể lệ & Lệ phí */}
-            {step === 5 && (
+            {/* Step 4: Thể lệ & Lệ phí */}
+            {step === 4 && (
               <div className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="rulesSummary">
@@ -1443,7 +1411,7 @@ export default function TeamMatchSetup() {
               {t.quickTable.back}
             </button>
 
-            {step < 5 ? (
+            {step < STEPS.length ? (
               <button
                 type="button"
                 className="tl-btn green"

@@ -23,7 +23,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { LoadingState } from "@/components/states/PageStates";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import { useClub } from "@/hooks/useClub";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { WizardProgress } from "@/components/social/create-event/WizardProgress";
+import { StepHeader } from "@/components/wizard/StepHeader";
 import { Step1Info } from "@/components/social/create-event/Step1Info";
 import { Step2Payment } from "@/components/social/create-event/Step2Payment";
 import {
@@ -45,6 +45,7 @@ import {
   type FormState,
   type FormErrors,
 } from "@/components/social/create-event/types";
+import type { SocialEventTemplate } from "@/content/social-event-templates";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { useNoindex } from "@/hooks/useNoindex";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
@@ -72,6 +73,33 @@ function composeIso(dateStr: string, timeStr: string): string | null {
   const d = new Date(`${dateStr}T${timeStr}:00`);
   if (Number.isNaN(d.getTime())) return null;
   return d.toISOString();
+}
+
+// UX-05 recovery panel — map each validated field to its input's DOM id
+// (ids live in Step1Info/Step2Payment) so a missing-field row can scroll
+// + focus the exact control.
+const FIELD_DOM_ID: Partial<Record<keyof FormState, string>> = {
+  title: "ev-name",
+  start_date: "ev-date",
+  start_time: "ev-start-time",
+  end_time: "ev-end-time",
+  location_text: "ev-location",
+  court_count: "ev-courts",
+  max_players: "ev-max",
+  zalo_group_url: "ev-zalo",
+  repeat_weeks: "ev-repeat",
+  price_vnd: "ev-price",
+  bank_code: "ev-bank-code",
+  bank_account_number: "ev-account-number",
+  bank_account_name: "ev-account-name",
+  prepayment_deadline_hours: "ev-prepayment-deadline",
+};
+
+interface MissingField {
+  /** DOM id of the offending input, or null when there is no single field
+   *  to jump to (slot-level errors). */
+  fieldId: string | null;
+  text: string;
 }
 
 export default function CreateSocialEvent() {
@@ -104,6 +132,16 @@ export default function CreateSocialEvent() {
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [slugTaken, setSlugTaken] = useState(false);
+  // UX-03 — explicit fee branching. Not part of FormState: validation +
+  // submit stay keyed on the persisted price_vnd (proposal §6 condition);
+  // this only drives which Step-2 fields render.
+  const [feeMode, setFeeMode] = useState<"free" | "paid">("free");
+  // UX-05 O4 — weekly-repeat partial retry. Index of the first batch copy
+  // that has NOT been created yet; > 0 means the previous publish stopped
+  // mid-batch and the next submit resumes from there (keeps the -tuanN
+  // slug suffixes and +7d date offsets aligned with the copies already in
+  // the DB).
+  const [batchResumeIndex, setBatchResumeIndex] = useState(0);
 
   // ── UX-04 autosave (local-first, xem docs/proposals/ux-01-05) ────────────
   const dirty = useMemo(
@@ -133,6 +171,12 @@ export default function CreateSocialEvent() {
     if (!d || typeof d.form !== "object" || d.form === null) return;
     setForm({ ...initialForm, ...d.form });
     setStep(d.step === 2 ? 2 : 1);
+    // Restore the fee branch from the persisted price. A paid draft with
+    // price still 0 re-opens as "free" — the bank trio is never in the
+    // draft anyway, so nothing paid-side is lost.
+    if (typeof d.form.price_vnd === "number" && d.form.price_vnd > 0) {
+      setFeeMode("paid");
+    }
     setRestoredDraft(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -176,8 +220,8 @@ export default function CreateSocialEvent() {
   // validation only flagged invalid fields with inline red text, which
   // is easy to miss on a long form).
   const slotResult = validateSlots(form.slots, form.max_players, t);
-  const missingFields = useMemo<string[]>(() => {
-    const list: string[] = [];
+  const missingFields = useMemo<MissingField[]>(() => {
+    const list: MissingField[] = [];
     const fieldLabel: Partial<Record<keyof FormState, string>> = {
       title:           create.eventName,
       start_date:      create.startDate,
@@ -199,19 +243,24 @@ export default function CreateSocialEvent() {
       : step1Result.errors;
     for (const [key, msg] of Object.entries(errors)) {
       if (!msg) continue;
-      const label = fieldLabel[key as keyof FormState] ?? key;
-      list.push(`${label}: ${msg}`);
+      const k = key as keyof FormState;
+      const label = fieldLabel[k] ?? key;
+      list.push({ fieldId: FIELD_DOM_ID[k] ?? null, text: `${label}: ${msg}` });
     }
-    if (slotResult.totalError) list.push(slotResult.totalError);
+    if (slotResult.totalError) {
+      // Capacity overflow — Max players is the field the message points at.
+      list.push({ fieldId: "ev-max", text: slotResult.totalError });
+    }
     for (const [slotId, slotErr] of Object.entries(slotResult.errors)) {
       if (!slotErr) continue;
       const slotIdx = form.slots.findIndex((s) => s.id === slotId);
       const slotLabel = (form.slots[slotIdx]?.label?.trim() || `${language === "vi" ? "Nhóm" : "Group"} ${slotIdx + 1}`);
       for (const msg of Object.values(slotErr)) {
-        if (msg) list.push(`${slotLabel}: ${msg}`);
+        if (msg) list.push({ fieldId: null, text: `${slotLabel}: ${msg}` });
       }
     }
-    if (slugTaken) list.push(create.errorSlugTaken);
+    // Slug is derived from the title — fixing it means renaming the event.
+    if (slugTaken) list.push({ fieldId: "ev-name", text: create.errorSlugTaken });
     return list;
   }, [
     step,
@@ -226,9 +275,56 @@ export default function CreateSocialEvent() {
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+    // Editing the slug family or the batch shape invalidates a pending
+    // partial-batch resume — the -tuanN offsets no longer line up.
+    if (batchResumeIndex > 0 && (key === "title" || key === "start_date" || key === "repeat_weeks")) {
+      setBatchResumeIndex(0);
+    }
   }
   function markTouched(key: keyof FormState) {
     setTouched((tch) => ({ ...tch, [key]: true }));
+  }
+
+  // UX-03 — choosing "Miễn phí" must CLEAR all fee state (risk-auditor #4:
+  // no hidden fee data may survive under a free event), not just hide it.
+  function handleFeeModeChange(mode: "free" | "paid") {
+    setFeeMode(mode);
+    if (mode === "free") {
+      setForm((f) => ({
+        ...f,
+        price_vnd: 0,
+        bank_code: "",
+        bank_account_number: "",
+        bank_account_name: "",
+        requires_prepayment: false,
+      }));
+    }
+  }
+
+  // UX-02 — apply a static template over a pristine form. Bank trio can
+  // never be in a preset (whitelist type, D3), so feeMode derives cleanly
+  // from the preset price.
+  function applyTemplate(tpl: SocialEventTemplate) {
+    setForm({ ...initialForm, ...tpl.preset });
+    setFeeMode((tpl.preset.price_vnd ?? 0) > 0 ? "paid" : "free");
+  }
+
+  // UX-05 recovery — scroll + focus the offending field. Step-1 fields can
+  // be listed while the user is on Step 2 (and vice versa), so flip the
+  // step first when the element isn't mounted.
+  function jumpToField(fieldId: string) {
+    const go = () => {
+      const el = document.getElementById(fieldId);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus({ preventScroll: true });
+    };
+    if (document.getElementById(fieldId)) {
+      go();
+      return;
+    }
+    setStep((s) => (s === 1 ? 2 : 1));
+    window.setTimeout(go, 60); // let the other step render first
   }
 
   function handleNext() {
@@ -366,9 +462,14 @@ export default function CreateSocialEvent() {
       const startMs = new Date(startIso).getTime();
       const endMs = new Date(endIso).getTime();
 
+      // UX-05 O4 — resume support: after a partial batch we stay in the
+      // wizard and the next submit continues from the first missing week
+      // (same slug suffixes, same +7d offsets) instead of re-creating the
+      // whole batch.
+      const startIndex = Math.min(batchResumeIndex, repeatCount);
       let firstSlug = finalSlug;
       let createdCount = 0;
-      for (let i = 0; i <= repeatCount; i++) {
+      for (let i = startIndex; i <= repeatCount; i++) {
         const offsetMs = i * 7 * 24 * 60 * 60 * 1000;
         const iterStart = new Date(startMs + offsetMs).toISOString();
         const iterEnd = new Date(endMs + offsetMs).toISOString();
@@ -436,16 +537,18 @@ export default function CreateSocialEvent() {
         createdCount++;
       }
 
+      // Cumulative across resume passes: copies 0..startIndex-1 already
+      // exist in the DB from the previous partial run.
+      const totalCreated = startIndex + createdCount;
+      const complete = totalCreated === repeatCount + 1;
       if (createdCount > 0) {
-        draft.clear();
         const batchProps = {
           ...organizerProps,
           requested_event_count: repeatCount + 1,
-          created_event_count: createdCount,
-          batch_result:
-            createdCount === repeatCount + 1 ? ("complete" as const) : ("partial" as const),
+          created_event_count: totalCreated,
+          batch_result: complete ? ("complete" as const) : ("partial" as const),
         };
-        if (batchProps.batch_result === "partial") {
+        if (!complete) {
           // Contract: partial repeat batches emit the failure diagnostic
           // ALONGSIDE the activation event.
           trackJourneyStep("organizer_event", "organizer_event_publish_failed", {
@@ -454,15 +557,35 @@ export default function CreateSocialEvent() {
             failure_code: "partial_batch",
           });
         }
-        completeJourney(
-          "organizer_event",
-          publish ? "organizer_event_published" : "organizer_event_draft_saved",
-          batchProps,
-        );
+        if (startIndex === 0) {
+          // Activation fires once per wizard session — a resume pass after
+          // a partial batch must not double-count the journey.
+          completeJourney(
+            "organizer_event",
+            publish ? "organizer_event_published" : "organizer_event_draft_saved",
+            batchProps,
+          );
+        }
       }
+
+      if (!complete) {
+        // Stay in the wizard with the form intact (and the local draft
+        // kept) so the organizer can hit Publish again to create the
+        // missing weeks.
+        setBatchResumeIndex(totalCreated);
+        toast({
+          title: create.partialBatchToast
+            .replace("{created}", String(totalCreated))
+            .replace("{total}", String(repeatCount + 1)),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      draft.clear();
       if (repeatCount > 0) {
         toast({
-          title: create.bulkCreatedToast.replace("{count}", String(createdCount)),
+          title: create.bulkCreatedToast.replace("{count}", String(totalCreated)),
         });
       } else {
         toast({ title: publish ? create.successPublished : create.successDraft });
@@ -527,7 +650,11 @@ export default function CreateSocialEvent() {
                 }}
               />
             )}
-            <WizardProgress step={step} />
+            <StepHeader
+              step={step}
+              total={2}
+              label={step === 1 ? create.step1Heading : create.step2Heading}
+            />
             {step === 1 ? (
               <Step1Info
                 form={form}
@@ -535,6 +662,8 @@ export default function CreateSocialEvent() {
                 touched={touched}
                 onChange={setField}
                 onBlur={markTouched}
+                showTemplates={!dirty}
+                onApplyTemplate={applyTemplate}
               />
             ) : (
               <Step2Payment
@@ -544,25 +673,44 @@ export default function CreateSocialEvent() {
                 onChange={setField}
                 onBlur={markTouched}
                 language={language}
+                feeMode={feeMode}
+                onFeeModeChange={handleFeeModeChange}
               />
             )}
 
-            {/* 2026-05-22 — missing-fields panel. Renders when the
-                current step's submit button would be disabled by a
-                validation error. Helps the organizer spot what to
-                fix without scrolling the long form. */}
+            {/* UX-05 recovery panel (issue #5). Renders when the current
+                step's submit button would be disabled by a validation
+                error. Semantic tokens only; each row with a known field
+                is a button that scrolls + focuses the exact input. */}
             {((step === 1 && step1Disabled) ||
               (step === 2 && submitDisabled && !submitting)) &&
               missingFields.length > 0 && (
-                <div className="mt-6 rounded-md border-2 border-amber-400/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                  <p className="font-semibold">
-                    {language === "vi"
-                      ? "⚠️ Vui lòng kiểm tra các mục sau:"
-                      : "⚠️ Please review the following:"}
+                <div
+                  role="alert"
+                  className="mt-6 rounded-md border border-border px-4 py-3 text-sm"
+                >
+                  <p className="flex items-center gap-2 font-semibold text-destructive">
+                    <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {create.missingFieldsTitle.replace(
+                      "{count}",
+                      String(missingFields.length),
+                    )}
                   </p>
-                  <ul className="mt-1.5 list-disc pl-5 space-y-0.5">
-                    {missingFields.map((msg, i) => (
-                      <li key={i}>{msg}</li>
+                  <ul className="mt-1.5 space-y-0.5">
+                    {missingFields.map((item, i) => (
+                      <li key={i}>
+                        {item.fieldId ? (
+                          <button
+                            type="button"
+                            onClick={() => jumpToField(item.fieldId as string)}
+                            className="py-1 text-left text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                          >
+                            {item.text}
+                          </button>
+                        ) : (
+                          <span className="text-muted-foreground">{item.text}</span>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </div>

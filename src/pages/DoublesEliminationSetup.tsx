@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { DraftRestoredBanner, DraftSaveStatus } from "@/components/wizard/DraftAutosave";
+import { StepHeader } from "@/components/wizard/StepHeader";
 import { completeJourney, startJourney, trackJourneyStep } from "@/lib/journeys";
 import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -757,9 +758,11 @@ export default function DoublesEliminationSetup() {
           {step === 'info' && (
             <div style={surfaceCard}>
               <div style={{ marginBottom: 24 }}>
-                <div style={stepKickerStyle}>
-                  ◆ {language === 'vi' ? 'Bước 1 / 3' : 'Step 1 of 3'}
-                </div>
+                <StepHeader
+                  step={1}
+                  total={3}
+                  label={language === 'vi' ? 'Thông tin giải đấu' : 'Tournament info'}
+                />
                 <h2 style={stepHeadingStyle}>
                   {language === 'vi' ? 'Thông tin giải đấu' : 'Tournament info'}
                 </h2>
@@ -1114,9 +1117,11 @@ export default function DoublesEliminationSetup() {
           {step === 'format' && (
             <div style={surfaceCard}>
               <div style={{ marginBottom: 24 }}>
-                <div style={stepKickerStyle}>
-                  ◆ {language === 'vi' ? 'Bước 2 / 3' : 'Step 2 of 3'}
-                </div>
+                <StepHeader
+                  step={2}
+                  total={3}
+                  label={language === 'vi' ? 'Format thi đấu' : 'Match format'}
+                />
                 <h2 style={stepHeadingStyle}>
                   {language === 'vi' ? 'Format thi đấu' : 'Match format'}
                 </h2>
@@ -1312,9 +1317,11 @@ export default function DoublesEliminationSetup() {
                 }}
               >
                 <div>
-                  <div style={stepKickerStyle}>
-                    ◆ {language === 'vi' ? 'Bước 3 / 3' : 'Step 3 of 3'}
-                  </div>
+                  <StepHeader
+                    step={3}
+                    total={3}
+                    label={language === 'vi' ? 'Danh sách đội' : 'Team list'}
+                  />
                   <h2 style={stepHeadingStyle}>
                     {language === 'vi' ? 'Danh sách đội' : 'Team list'}{' '}
                     <span style={{ color: 'var(--tl-fg-3)', fontSize: 18 }}>

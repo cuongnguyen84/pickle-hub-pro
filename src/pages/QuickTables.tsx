@@ -26,6 +26,7 @@ import { vi } from "date-fns/locale";
 import { HreflangTags, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent, FAQSchema } from "@/components/seo";
 import { getLoginUrl } from "@/lib/auth-config";
 import CreateParentTournamentDialog from "@/components/quicktable/CreateParentTournamentDialog";
+import { StepHeader } from "@/components/wizard/StepHeader";
 
 type Step = "count" | "format" | "groups" | "players";
 
@@ -35,16 +36,6 @@ const surfaceCard: React.CSSProperties = {
   border: "1px solid var(--tl-border)",
   borderRadius: "var(--tl-radius-lg)",
   padding: 28,
-};
-
-const stepKickerStyle: React.CSSProperties = {
-  fontFamily: "Geist Mono, ui-monospace, monospace",
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "var(--tl-green)",
-  marginBottom: 8,
 };
 
 const stepHeadingStyle: React.CSSProperties = {
@@ -432,9 +423,7 @@ const QuickTables = () => {
           {step === "count" && (
             <div style={surfaceCard}>
               <div style={{ marginBottom: 24 }}>
-                <div style={stepKickerStyle}>
-                  ◆ {language === "vi" ? "Bước 1 / 3" : "Step 1 of 3"}
-                </div>
+                <StepHeader step={1} total={3} label={t.quickTable.step1Title} />
                 <h2 style={stepHeadingStyle}>{t.quickTable.step1Title}</h2>
                 <p style={stepDescStyle}>{t.quickTable.step1Desc}</p>
               </div>
@@ -761,9 +750,7 @@ const QuickTables = () => {
           {step === "format" && (
             <div style={surfaceCard}>
               <div style={{ marginBottom: 24 }}>
-                <div style={stepKickerStyle}>
-                  ◆ {language === "vi" ? "Bước 2 / 3" : "Step 2 of 3"}
-                </div>
+                <StepHeader step={2} total={3} label={t.quickTable.step2Title} />
                 <h2 style={stepHeadingStyle}>{t.quickTable.step2Title}</h2>
                 <p style={stepDescStyle}>
                   {playerCount} {t.quickTable.players} —{" "}
@@ -810,9 +797,7 @@ const QuickTables = () => {
           {step === "groups" && (
             <div style={surfaceCard}>
               <div style={{ marginBottom: 24 }}>
-                <div style={stepKickerStyle}>
-                  ◆ {language === "vi" ? "Bước 3 / 3" : "Step 3 of 3"}
-                </div>
+                <StepHeader step={3} total={3} label={t.quickTable.step3Title} />
                 <h2 style={stepHeadingStyle}>{t.quickTable.step3Title}</h2>
                 <p style={stepDescStyle}>{playerCount} {t.quickTable.players}</p>
               </div>
