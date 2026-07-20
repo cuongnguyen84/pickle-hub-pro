@@ -131,15 +131,38 @@ export async function advancePlayoffResult(
 
   // The next-round slot is assigned at bracket generation (1 = A, 2 = B), so
   // sibling matches write disjoint columns and cannot lose each other's
-  // update — no claim needed here, unlike the third-place match below.
-  const nextField: SlotField = match.next_match_slot === 1 ? 'team_a_id' : 'team_b_id';
+  // update — no claim needed on that path.
+  //
+  // But nothing at the DB level ENFORCES that slot is 1 or 2. A NULL used to
+  // fall into the `team_b_id` branch, so two siblings that both had a NULL
+  // slot would both write team_b_id and the second would clobber the first —
+  // reintroducing exactly the lost-update bug this module fixes for the
+  // third-place match. Prod currently has zero rows with next_match_id set and
+  // next_match_slot NULL, so the invariant holds today; it just holds by
+  // convention. Treat an unknown slot as "claim whatever is free" instead of
+  // guessing, which is correct under concurrency and costs one extra read on a
+  // path that should never execute.
+  if (match.next_match_slot === 1 || match.next_match_slot === 2) {
+    const nextField: SlotField = match.next_match_slot === 1 ? 'team_a_id' : 'team_b_id';
 
-  const { error: advanceError } = await supabase
-    .from('team_match_matches')
-    .update({ [nextField]: winnerId } as { team_a_id?: string; team_b_id?: string })
-    .eq('id', match.next_match_id);
+    const { error: advanceError } = await supabase
+      .from('team_match_matches')
+      .update({ [nextField]: winnerId } as { team_a_id?: string; team_b_id?: string })
+      .eq('id', match.next_match_id);
 
-  if (advanceError) throw advanceError;
+    if (advanceError) throw advanceError;
+  } else {
+    const { data: nextMatch, error: readError } = await supabase
+      .from('team_match_matches')
+      .select('id, team_a_id, team_b_id')
+      .eq('id', match.next_match_id)
+      .maybeSingle();
+
+    if (readError) throw readError;
+    if (nextMatch) {
+      await claimEmptySlot(nextMatch.id, winnerId, nextMatch);
+    }
+  }
 
   // Semifinal (playoff_round 2) losers meet in the third-place match. Nhánh
   // Tái sinh không có trận tranh hạng 3 → bỏ qua.

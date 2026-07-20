@@ -209,6 +209,41 @@ describe('advancePlayoffResult', () => {
     expect(unguardedThirdPlace).toHaveLength(0);
   });
 
+  it('claims a slot instead of guessing when next_match_slot is not 1 or 2', async () => {
+    // Nothing in the schema enforces slot in {1,2}. A NULL used to fall into
+    // the team_b_id branch and write it unguarded, so two siblings both
+    // carrying a NULL slot would clobber each other — the same lost update
+    // this module exists to prevent one round earlier.
+    respond = (q) =>
+      !isUpdate(q) && has(q, 'maybeSingle')
+        ? { data: { id: 'final-1', team_a_id: null, team_b_id: null }, error: null }
+        : { data: { id: 'final-1' }, error: null };
+
+    await advancePlayoffResult({ ...SEMI, next_match_slot: null, playoff_round: 3 }, {
+      winnerId: 'team-winner',
+      tournamentId: 't1',
+    });
+
+    const advances = queries.filter((q) => isUpdate(q) && argOf(q, 'eq')?.[1] === 'final-1');
+    expect(advances).toHaveLength(1);
+    // The regression: an unguarded write to the next match.
+    expect(has(advances[0], 'is')).toBe(true);
+    expect(argOf(advances[0], 'is')).toEqual(['team_a_id', null]);
+  });
+
+  it('still writes the fixed slot directly when it is known', async () => {
+    respond = () => ({ data: null, error: null });
+
+    await advancePlayoffResult({ ...SEMI, next_match_slot: 2, playoff_round: 3 }, {
+      winnerId: 'team-winner',
+      tournamentId: 't1',
+    });
+
+    const advance = queries.filter(isUpdate)[0];
+    expect(argOf(advance, 'update')).toEqual([{ team_b_id: 'team-winner' }]);
+    expect(has(advance, 'is')).toBe(false); // disjoint columns — a claim would be waste
+  });
+
   it('skips the third-place match for the repechage branch', async () => {
     respond = () => ({ data: null, error: null });
 
