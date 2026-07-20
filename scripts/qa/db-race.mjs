@@ -108,6 +108,22 @@ const USER2 = "0a03f002-0000-4000-8000-000000000002";
 const CANCELLED_1 = "00000000-0000-0000-0000-00000a03c001";
 const CANCELLED_2 = "00000000-0000-0000-0000-00000a03c002";
 
+// UX-07: doubles-elimination open registration. Four users — each racer
+// registers a DISTINCT pair, so the (tournament_id, playerN_user_id) unique
+// indexes cannot stand in for the missing lock; only the advisory lock in
+// register_team_for_doubles_elimination can decide the winner.
+// First 12 hex chars must differ per user (profile_slug is derived from them).
+const DE_TOURNAMENT = "00000000-0000-0000-0000-00000a07d001";
+const DE_USERS = [
+  "0a07f001-0000-4000-8000-000000000001",
+  "0a07f002-0000-4000-8000-000000000002",
+  "0a07f003-0000-4000-8000-000000000003",
+  "0a07f004-0000-4000-8000-000000000004",
+];
+// doubles_elimination_tournaments_team_count_check requires team_count >= 40,
+// so "one seat left" means 39 seeded teams, not 1.
+const DE_CAPACITY = 40;
+
 let failures = 0;
 const check = (cond, label) => {
   console.log(`${cond ? "ok" : "not ok"} - ${label}`);
@@ -170,6 +186,40 @@ await psql(`
   ) VALUES (
     '${EVENT}', 'qa03-race', 'QA-03 Race',
     NOW() + INTERVAL '1 day', NOW() + INTERVAL '1 day 2 hours', '${USER}', 2
+  );
+`);
+
+// ─── Fixture: UX-07 doubles-elimination registration ────────────────────────
+
+await psql(`
+  DELETE FROM public.doubles_elimination_teams WHERE tournament_id = '${DE_TOURNAMENT}';
+  DELETE FROM public.doubles_elimination_tournaments WHERE id = '${DE_TOURNAMENT}';
+  DELETE FROM auth.users WHERE id IN (${DE_USERS.map((u) => `'${u}'`).join(", ")});
+  INSERT INTO auth.users (
+    id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  ) VALUES
+  ${DE_USERS.map(
+    (u, i) => `(
+      '${u}', '00000000-0000-0000-0000-000000000000', 'authenticated',
+      'authenticated', 'qa07-race-${i + 1}@thepicklehub.test', '', NOW(),
+      '{"provider":"test","providers":["test"]}'::jsonb,
+      '{"display_name":"QA-07 Racer ${i + 1}"}'::jsonb, NOW(), NOW()
+    )`,
+  ).join(",\n  ")};
+  -- register_team_for_doubles_elimination rejects with MISSING_DUPR unless
+  -- dupr_doubles_with_fallback returns a rating; that helper just reads
+  -- profiles.dupr_doubles (falling back to dupr_singles), so seeding the
+  -- column is enough — no dupr_link / webhook fixture needed.
+  UPDATE public.profiles
+  SET display_name = COALESCE(NULLIF(display_name, ''), 'QA-07 Racer'),
+      dupr_doubles = 3.50
+  WHERE id IN (${DE_USERS.map((u) => `'${u}'`).join(", ")});
+  INSERT INTO public.doubles_elimination_tournaments (
+    id, name, share_id, creator_user_id, team_count, status, rating_source
+  ) VALUES (
+    '${DE_TOURNAMENT}', 'QA-07 Race', 'qa07race', '${DE_USERS[0]}',
+    ${DE_CAPACITY}, 'registration_open', 'dupr'
   );
 `);
 
@@ -248,6 +298,45 @@ try {
       `member_register round ${i + 1}: active == max_players`,
     );
   }
+
+  // ─── Race 4 (UX-07): two concurrent DE registrations, one seat left ──────
+  // The RPC reads auth.uid(), so the JWT claim and the call must share ONE
+  // simple-query message (same reason as memberReg above). The RPC returns
+  // JSON rather than raising, so map it to the error code or 'registered'.
+  const deReg = (caller, partner) =>
+    `SELECT set_config('request.jwt.claims',
+       '{"sub":"${caller}","role":"authenticated"}', false);
+     SELECT COALESCE(
+       public.register_team_for_doubles_elimination(
+         '${DE_TOURNAMENT}', '${partner}')->>'error',
+       'registered')`;
+  const deTeamCount = () =>
+    psql(
+      `SELECT COUNT(*) FROM public.doubles_elimination_teams
+       WHERE tournament_id = '${DE_TOURNAMENT}'`,
+    );
+  for (let i = 0; i < ROUNDS; i++) {
+    await psql(`
+      DELETE FROM public.doubles_elimination_teams WHERE tournament_id = '${DE_TOURNAMENT}';
+      INSERT INTO public.doubles_elimination_teams (tournament_id, team_name, player1_name)
+      SELECT '${DE_TOURNAMENT}', 'Seed ' || g, 'Seed P' || g
+      FROM generate_series(1, ${DE_CAPACITY - 1}) g;
+    `);
+    const results = (
+      await racePair(
+        deReg(DE_USERS[0], DE_USERS[1]),
+        deReg(DE_USERS[2], DE_USERS[3]),
+      )
+    ).sort();
+    check(
+      results[0] === "TOURNAMENT_FULL" && results[1] === "registered",
+      `de_register round ${i + 1}/${ROUNDS}: exactly one winner (got: ${results.join(", ")})`,
+    );
+    check(
+      (await deTeamCount()) === String(DE_CAPACITY),
+      `de_register round ${i + 1}: teams == team_count`,
+    );
+  }
 } finally {
   // ─── Cleanup (the local db is disposable, but leave it consistent) ────────
   await psql(`
@@ -257,10 +346,13 @@ try {
     DELETE FROM public.social_events WHERE id = '${EVENT}';
     DELETE FROM auth.users WHERE id = '${USER}';
     DELETE FROM auth.users WHERE id = '${USER2}';
+    DELETE FROM public.doubles_elimination_teams WHERE tournament_id = '${DE_TOURNAMENT}';
+    DELETE FROM public.doubles_elimination_tournaments WHERE id = '${DE_TOURNAMENT}';
+    DELETE FROM auth.users WHERE id IN (${DE_USERS.map((u) => `'${u}'`).join(", ")});
   `);
 }
 
 console.log(
-  failures === 0 ? `\nAll ${ROUNDS * 6} race assertions passed.` : `\n${failures} FAILED`,
+  failures === 0 ? `\nAll ${ROUNDS * 8} race assertions passed.` : `\n${failures} FAILED`,
 );
 process.exit(failures === 0 ? 0 : 1);
