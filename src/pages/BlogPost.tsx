@@ -19,6 +19,7 @@ import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { blogHeroSrcSet } from "@/lib/image-utils";
 import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -238,6 +239,8 @@ const BlogPost = () => {
             >
               <img
                 src={post.heroImage.src}
+                srcSet={blogHeroSrcSet(post.heroImage.src)?.srcSet}
+                sizes="(max-width: 900px) 100vw, 832px"
                 alt={post.heroImage.alt}
                 fetchPriority="high"
                 decoding="async"

@@ -6,6 +6,7 @@ import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { blogHeroSrcSet } from "@/lib/image-utils";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatDate } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
@@ -234,6 +235,8 @@ const FeaturedImage = ({ src, alt }: { src: string | null; alt: string }) => {
   return (
     <img
       src={src}
+      srcSet={blogHeroSrcSet(src)?.srcSet}
+      sizes="(max-width: 900px) 100vw, 45vw"
       alt={alt}
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       loading="eager"
@@ -250,7 +253,8 @@ const BlogCard = ({ post, viewCount }: { post: UnifiedPost; viewCount: number })
       <div className="tl-blog-card-img">
         {showImg ? (
           <img
-            src={post.coverImageUrl!}
+            // Small grid card — the 768w variant is plenty when one exists
+            src={blogHeroSrcSet(post.coverImageUrl)?.small ?? post.coverImageUrl!}
             alt={post.title}
             loading="lazy"
             onError={() => setFailed(true)}
