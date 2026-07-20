@@ -45,7 +45,7 @@ vi.mock('@/integrations/supabase/client', () => {
   return { supabase: { from: (table: string) => makeBuilder(table) } };
 });
 
-import { advancePlayoffResult, claimEmptySlot } from '../teamMatchAdvancement';
+import { advancePlayoffResult, claimEmptySlot, createGamesIfMissing } from '../teamMatchAdvancement';
 
 /** Chained op lookup, e.g. `argOf(q, 'is')` → ['team_a_id', null]. */
 const argOf = (q: RecordedQuery, fn: string) => q.ops.find((o) => o.fn === fn)?.args;
@@ -112,6 +112,43 @@ describe('claimEmptySlot', () => {
 
     expect(seated).toBe('tp-1');
     expect(queries.filter(isUpdate)).toHaveLength(0);
+  });
+});
+
+describe('createGamesIfMissing', () => {
+  const templates = [
+    { game_type: 'WD', scoring_type: 'rally21', display_name: 'G1' },
+    { game_type: 'MD', scoring_type: 'rally21', display_name: 'G2' },
+  ];
+
+  it('bails without touching templates when the match already has games', async () => {
+    respond = () => ({ data: [{ id: 'game-1' }], error: null });
+
+    await createGamesIfMissing('m1', 't1', true);
+
+    expect(queries.map((q) => q.table)).toEqual(['team_match_games']);
+  });
+
+  it('inserts one game per template plus the Dreambreaker on an even count', async () => {
+    respond = (q) =>
+      q.table === 'team_match_game_templates'
+        ? { data: templates, error: null }
+        : { data: [], error: null };
+
+    await createGamesIfMissing('m1', 't1', true);
+
+    const insert = queries.find((q) => has(q, 'insert'));
+    const rows = argOf(insert!, 'insert')?.[0] as Array<{ is_dreambreaker: boolean }>;
+    expect(rows).toHaveLength(3);
+    expect(rows.filter((r) => r.is_dreambreaker)).toHaveLength(1);
+  });
+
+  it('inserts nothing when the tournament has no templates', async () => {
+    respond = () => ({ data: [], error: null });
+
+    await createGamesIfMissing('m1', 't1', false);
+
+    expect(queries.some((q) => has(q, 'insert'))).toBe(false);
   });
 });
 
