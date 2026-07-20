@@ -56,9 +56,17 @@ test.describe("visual regression", () => {
       // NOT networkidle: realtime channels + analytics beacons keep the
       // network busy forever on / — capture run 29692427270 timed out there.
       await page.goto(p.path, { waitUntil: "load" });
-      // Settle fonts + lazy images.
-      await page.waitForTimeout(1200);
-      await page.evaluate(() => document.fonts?.ready);
+      // Settle fonts + lazy images. A late SPA navigation (locale redirect on
+      // /) can destroy the execution context mid-evaluate — same failure class
+      // mobile.spec handles; settle again on the landed page (run 29717406856).
+      try {
+        await page.waitForTimeout(1200);
+        await page.evaluate(() => document.fonts?.ready);
+      } catch {
+        await page.waitForLoadState();
+        await page.waitForTimeout(1200);
+        await page.evaluate(() => document.fonts?.ready).catch(() => undefined);
+      }
 
       // Mask volatile content so only structural changes trip the diff.
       const masks = [
