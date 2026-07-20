@@ -1,5 +1,6 @@
 import { Users, Crown, Clock, Check, X, UserPlus, Loader2 } from 'lucide-react';
 import { TeamMatchTeam, useTeamMatchTeam, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useI18n } from '@/i18n';
 
 // ─── W2.4b shared tokens (mirror MatchList/PlayoffBracket from #103) ─────
@@ -69,6 +70,7 @@ interface TeamOverviewCardProps {
 export function TeamOverviewCard({ team, maxRosterSize, totalTeamsRegistered }: TeamOverviewCardProps) {
   const { roster } = useTeamMatchTeam(team.id);
   const { t, language } = useI18n();
+  const confirm = useConfirm();
   const c = t.teamMatchComponents;
   const { updateRosterStatus, removeRosterMember, isUpdatingRosterStatus, isRemovingMember } =
     useTeamMatchTeamManagement();
@@ -86,6 +88,22 @@ export function TeamOverviewCard({ team, maxRosterSize, totalTeamsRegistered }: 
     female: language === 'vi' ? 'Nữ' : 'Female',
     approve: language === 'vi' ? 'Duyệt' : 'Approve',
     reject: language === 'vi' ? 'Từ chối' : 'Reject',
+    rejectConfirmTitle: language === 'vi' ? 'Từ chối yêu cầu này?' : 'Reject this request?',
+    rejectConfirmDesc: (name: string) =>
+      language === 'vi'
+        ? `Yêu cầu tham gia của ${name} sẽ bị xoá khỏi đội. Người chơi phải gửi lại yêu cầu mới nếu muốn vào đội.`
+        : `${name}'s join request will be removed from the team. They must send a new request to join again.`,
+  };
+
+  const handleReject = async (memberId: string, playerName: string) => {
+    const ok = await confirm({
+      title: jt.rejectConfirmTitle,
+      description: jt.rejectConfirmDesc(playerName),
+      confirmText: jt.reject,
+      destructive: true,
+    });
+    if (!ok) return;
+    removeRosterMember({ memberId, teamId: team.id });
   };
 
   const STATUS_LABELS: Record<StatusKind, string> = {
@@ -262,7 +280,7 @@ export function TeamOverviewCard({ team, maxRosterSize, totalTeamsRegistered }: 
                     className="tl-btn"
                     style={{ padding: '6px 10px', fontSize: 12, color: 'var(--tl-live)', borderColor: 'rgba(255, 65, 54, 0.35)' }}
                     disabled={busy}
-                    onClick={() => removeRosterMember({ memberId: m.id, teamId: team.id })}
+                    onClick={() => void handleReject(m.id, m.player_name)}
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>

@@ -11,13 +11,18 @@
 
 import { safeInternalPath } from './safeRedirect';
 
-/** Destination once a session exists (Login). */
+/**
+ * Destination once a session exists (Login).
+ *
+ * Revalidates even though today's only caller already passed the value through
+ * `safeInternalPath` — this is an open-redirect boundary, and a second caller
+ * forgetting that step should be harmless, not exploitable.
+ */
 export function postLoginTarget(redirectUrl: string, onboarded: boolean): string {
-  if (onboarded) return redirectUrl;
+  const safe = safeInternalPath(redirectUrl);
+  if (onboarded) return safe;
   // Carry the destination INTO onboarding rather than discarding it.
-  return redirectUrl && redirectUrl !== '/'
-    ? `/onboarding?redirect=${encodeURIComponent(redirectUrl)}`
-    : '/onboarding';
+  return safe !== '/' ? `/onboarding?redirect=${encodeURIComponent(safe)}` : '/onboarding';
 }
 
 /**

@@ -212,6 +212,52 @@ const MyTournaments = () => {
     team: unified.filter((t) => t.toolKind === "team").length,
   }), [unified]);
 
+  // What the organizer is about to destroy, in numbers. Only fetched when the
+  // delete dialog is actually open — the list page must not pay for this.
+  // ponytail: one round trip per kind; team match reads payment_status rows
+  // (a handful) instead of a second count query.
+  const { data: impact, isLoading: loadingImpact, isError: impactErrored } = useQuery({
+    queryKey: ["my-tournaments", "delete-impact", deleteTarget?.toolKind ?? null, deleteTarget?.id ?? null],
+    enabled: Boolean(deleteTarget),
+    staleTime: 0,
+    retry: false,
+    queryFn: async (): Promise<{ entrants: number; paidTeams: number }> => {
+      const target = deleteTarget!;
+      if (target.toolKind === "team") {
+        const { data, error } = await supabase
+          .from("team_match_teams")
+          .select("payment_status")
+          .eq("tournament_id", target.id);
+        if (error) throw error;
+        const rows = data ?? [];
+        return {
+          entrants: rows.length,
+          paidTeams: rows.filter((r) => r.payment_status === "claimed" || r.payment_status === "confirmed").length,
+        };
+      }
+
+      const head = { count: "exact", head: true } as const;
+      const query =
+        target.toolKind === "quick"
+          ? supabase.from("quick_table_players").select("id", head).eq("table_id", target.id)
+          : target.toolKind === "doubles"
+            ? supabase.from("doubles_elimination_teams").select("id", head).eq("tournament_id", target.id)
+            : supabase.from("flex_players").select("id", head).eq("tournament_id", target.id);
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return { entrants: count ?? 0, paidTeams: 0 };
+    },
+  });
+
+  // "3 đội" vs "3 người chơi" — doubles/team register as teams, the rest as players.
+  const entrantNoun = (kind: ToolKind, n: number): string => {
+    const isTeam = kind === "doubles" || kind === "team";
+    if (isVi) return `${n} ${isTeam ? "đội" : "người chơi"}`;
+    if (isTeam) return `${n} team${n === 1 ? "" : "s"}`;
+    return `${n} player${n === 1 ? "" : "s"}`;
+  };
+
   const handleShare = async (row: UnifiedTournament) => {
     try {
       await navigator.clipboard.writeText(row.shareUrl);
@@ -558,6 +604,57 @@ const MyTournaments = () => {
                 : `"${deleteTarget?.name ?? ""}" will be permanently deleted along with all related data. This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {deleteTarget && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                padding: "10px 12px",
+                borderRadius: "var(--tl-radius)",
+                background: "var(--tl-surface)",
+                border: "1px solid var(--tl-border)",
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: "var(--tl-fg-2)",
+              }}
+            >
+              {loadingImpact ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--tl-fg-3)" }}>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {isVi ? "Đang kiểm tra dữ liệu sẽ mất..." : "Checking what will be lost..."}
+                </span>
+              ) : impactErrored || !impact ? (
+                // Fail soft: RLS hiccup or transient error must not park the
+                // dialog spinning forever — fall back to the generic warning.
+                <span>
+                  {isVi
+                    ? "Không kiểm tra được số lượng đăng ký sẽ mất. Xóa vẫn sẽ xóa toàn bộ dữ liệu liên quan."
+                    : "Could not check how many registrations will be lost. Deleting will still remove all related data."}
+                </span>
+              ) : (
+                <>
+                  <span>
+                    {impact.entrants === 0
+                      ? isVi
+                        ? "Giải này chưa có ai đăng ký."
+                        : "Nobody has registered for this tournament yet."
+                      : isVi
+                        ? `Sẽ mất đăng ký của ${entrantNoun(deleteTarget.toolKind, impact.entrants)} cùng toàn bộ trận đấu và kết quả.`
+                        : `You will lose the registration of ${entrantNoun(deleteTarget.toolKind, impact.entrants)}, plus every match and result.`}
+                  </span>
+                  {impact.paidTeams > 0 && (
+                    <span style={{ color: "var(--tl-live)", fontWeight: 600 }}>
+                      {isVi
+                        ? `⚠️ ${impact.paidTeams} đội đã báo/đã xác nhận đóng tiền. Xóa giải là xóa luôn bằng chứng đóng tiền của họ — hệ thống KHÔNG hoàn tiền và không khôi phục lại được.`
+                        : `⚠️ ${impact.paidTeams} team${impact.paidTeams === 1 ? " has" : "s have"} claimed or confirmed payment. Deleting the tournament also deletes their payment record — the system does NOT refund and this cannot be restored.`}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>
               {isVi ? "Hủy" : "Cancel"}

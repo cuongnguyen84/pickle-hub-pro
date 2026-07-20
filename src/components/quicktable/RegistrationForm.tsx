@@ -212,7 +212,11 @@ export function RegistrationForm({
     }
     // Intentionally keyed on the bracket + auth state only: re-running on every
     // field edit would re-mint the journey id and inflate the denominator.
-  }, [tableId, user]);
+    // user?.id (not `user`) — Supabase mints a NEW user object on every
+    // TOKEN_REFRESHED event (same identity, new reference), which would
+    // otherwise re-mint the journey id on every silent token refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableId, user?.id]);
 
   // ─── State 1: Not logged in ────────────────────────────────────────────
   if (!user) {

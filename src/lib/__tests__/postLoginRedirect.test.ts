@@ -37,6 +37,15 @@ describe('post-login redirect survives onboarding', () => {
     expect(postOnboardingTarget(null, null)).toBe('/');
   });
 
+  it('refuses an off-site destination at BOTH hops, not just the wizard', () => {
+    // postLoginTarget is an exported open-redirect boundary; a future caller
+    // that forgets safeInternalPath must not turn it into a trampoline.
+    for (const hostile of ['//evil.com', '/\\evil.com', 'https://evil.com']) {
+      expect(postLoginTarget(hostile, true)).toBe('/');
+      expect(postLoginTarget(hostile, false)).toBe('/onboarding');
+    }
+  });
+
   it('refuses an off-site destination smuggled through the wizard URL', () => {
     // The redirect reaches the wizard through the URL, so it is attacker
     // input by the time we read it — revalidate, never trust Login's pass.
