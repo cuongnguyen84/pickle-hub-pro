@@ -706,7 +706,7 @@ export function RegistrationModal({
                     return (
                       <label
                         key={slot.id}
-                        className={`flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
+                        className={`flex min-h-11 cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
                           checked
                             ? "border-primary bg-primary/5"
                             : full
@@ -718,7 +718,7 @@ export function RegistrationModal({
                         <input
                           type="radio"
                           name="ev-slot-member"
-                          className="mt-1"
+                          className="mt-1 h-5 w-5 shrink-0"
                           checked={checked}
                           disabled={full}
                           onChange={() => {
@@ -871,7 +871,7 @@ export function RegistrationModal({
                     return (
                       <label
                         key={slot.id}
-                        className={`flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
+                        className={`flex min-h-11 cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
                           checked
                             ? "border-primary bg-primary/5"
                             : full
@@ -883,7 +883,7 @@ export function RegistrationModal({
                         <input
                           type="radio"
                           name="ev-slot"
-                          className="mt-1"
+                          className="mt-1 h-5 w-5 shrink-0"
                           checked={checked}
                           disabled={full}
                           onChange={() => {

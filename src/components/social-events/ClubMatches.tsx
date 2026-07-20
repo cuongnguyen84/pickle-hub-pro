@@ -501,6 +501,7 @@ function MatchCard({
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 8,
+                      minHeight: 44, // A11Y-02: 44px touch target via label row
                       cursor: "pointer",
                       fontSize: 12,
                       color: "var(--tl-fg-2)",
@@ -513,8 +514,9 @@ function MatchCard({
                       disabled={markReady.isPending}
                       onChange={(e) => void handleToggleReady(e.target.checked)}
                       style={{
-                        width: 16,
-                        height: 16,
+                        width: 20,
+                        height: 20,
+                        flexShrink: 0,
                         accentColor: "var(--tl-green)",
                         cursor: "pointer",
                       }}

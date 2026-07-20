@@ -99,21 +99,23 @@ export function Step2Payment({
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">{create.feeModeQuestion}</legend>
         <div className="space-y-1">
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
             <input
               id="ev-fee-free"
               type="radio"
               name="ev-fee-mode"
+              className="h-5 w-5 shrink-0"
               checked={feeMode === "free"}
               onChange={() => onFeeModeChange("free")}
             />
             <span>{create.feeModeFree}</span>
           </label>
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
             <input
               id="ev-fee-paid"
               type="radio"
               name="ev-fee-mode"
+              className="h-5 w-5 shrink-0"
               checked={feeMode === "paid"}
               onChange={() => onFeeModeChange("paid")}
             />
@@ -232,13 +234,13 @@ export function Step2Payment({
               events (parent block hides when isFree). Checkbox controls
               whether the hours input renders. */}
           <div className="space-y-3 border-t pt-5">
-            <div className="flex items-start gap-3">
+            <div className="flex min-h-11 items-start gap-3">
               <input
                 id="ev-requires-prepayment"
                 type="checkbox"
                 checked={form.requires_prepayment}
                 onChange={(e) => onChange("requires_prepayment", e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-border"
+                className="mt-0.5 h-5 w-5 shrink-0 rounded border-border"
               />
               <div className="flex-1">
                 <Label htmlFor="ev-requires-prepayment" className="cursor-pointer">

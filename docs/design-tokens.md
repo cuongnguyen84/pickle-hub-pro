@@ -79,3 +79,15 @@ Names are web-form (`--tl-*`); the Swift twin is the camelCase of the stem
    bounced to this doc.
 3. Light/dark: tokens are theme-resolved at the CSS-var/Asset-catalog layer;
    components never branch on theme.
+
+## Touch targets (A11Y-02)
+
+- Any control whose visual size is ≤20px MUST carry a ≥44px hit area:
+  either an after-inset pseudo-element on the control
+  (`relative after:absolute after:-inset-3 after:content-['']` — the shadcn
+  Checkbox/RadioGroupItem/Switch primitives already do this) or a full-row
+  wrapping label (`min-h-11 items-center cursor-pointer`).
+- Contract test: `src/components/ui/__tests__/touch-targets.test.tsx` pins
+  the primitive classes; Button sizes are pinned by `button-ds03.test.tsx`.
+- Drag is never the only path: flex mobile uses tabs, quicktable manual
+  group assignment uses tap-to-select (player row → group card).
