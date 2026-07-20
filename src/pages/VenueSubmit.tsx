@@ -222,12 +222,12 @@ export default function VenueSubmit() {
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={isIndoor}
                 onChange={(e) => setIsIndoor(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
+                className="h-5 w-5 shrink-0 rounded border-border"
               />
               {vi ? "Sân trong nhà (indoor)" : "Indoor court"}
             </label>

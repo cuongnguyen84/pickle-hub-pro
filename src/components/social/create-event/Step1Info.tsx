@@ -218,19 +218,21 @@ export function Step1Info({
       <div className="space-y-2">
         <Label>{create.visibility}</Label>
         <div className="space-y-1">
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
             <input
               type="radio"
               name="visibility"
+              className="h-5 w-5 shrink-0"
               checked={form.visibility === "public"}
               onChange={() => onChange("visibility", "public")}
             />
             <span>{create.visibilityPublic}</span>
           </label>
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
             <input
               type="radio"
               name="visibility"
+              className="h-5 w-5 shrink-0"
               checked={form.visibility === "club_only"}
               onChange={() => onChange("visibility", "club_only")}
             />

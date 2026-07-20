@@ -254,6 +254,7 @@ export function ManualGroupAssignment<P extends PlayerInput>({
                           display: 'flex',
                           alignItems: 'center',
                           gap: 8,
+                          minHeight: 44, // A11Y-02: 44px tap row
                           padding: '8px 10px',
                           borderRadius: 6,
                           cursor: 'pointer',
@@ -366,6 +367,8 @@ export function ManualGroupAssignment<P extends PlayerInput>({
                       {groupPlayers.map(player => (
                         <span
                           key={player.id}
+                          // A11Y-02: chip ~26px tall — vertical after-inset extends tap height to ~44px
+                          className="relative after:absolute after:inset-x-0 after:-inset-y-[9px] after:content-['']"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveFromGroup(groupIndex, player.id);

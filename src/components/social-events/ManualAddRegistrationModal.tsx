@@ -224,36 +224,36 @@ export function ManualAddRegistrationModal({
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {proxy.paymentStatusLabel}
                 </p>
-                <label className="flex items-start gap-3 text-sm cursor-pointer">
+                <label className="flex min-h-11 items-center gap-3 text-sm cursor-pointer">
                   <input
                     type="radio"
                     name="payment-status"
                     value="unpaid"
                     checked={paymentChoice === "unpaid"}
                     onChange={() => setPaymentChoice("unpaid")}
-                    className="mt-0.5"
+                    className="h-5 w-5 shrink-0"
                   />
                   <span>{proxy.paymentStatusUnpaid}</span>
                 </label>
-                <label className="flex items-start gap-3 text-sm cursor-pointer">
+                <label className="flex min-h-11 items-center gap-3 text-sm cursor-pointer">
                   <input
                     type="radio"
                     name="payment-status"
                     value="claimed_paid"
                     checked={paymentChoice === "claimed_paid"}
                     onChange={() => setPaymentChoice("claimed_paid")}
-                    className="mt-0.5"
+                    className="h-5 w-5 shrink-0"
                   />
                   <span>{proxy.paymentStatusClaimedPaid}</span>
                 </label>
-                <label className="flex items-start gap-3 text-sm cursor-pointer">
+                <label className="flex min-h-11 items-center gap-3 text-sm cursor-pointer">
                   <input
                     type="radio"
                     name="payment-status"
                     value="waived"
                     checked={paymentChoice === "waived"}
                     onChange={() => setPaymentChoice("waived")}
-                    className="mt-0.5"
+                    className="h-5 w-5 shrink-0"
                   />
                   <span>{proxy.paymentStatusWaived}</span>
                 </label>

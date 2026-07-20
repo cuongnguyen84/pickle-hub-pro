@@ -703,13 +703,13 @@ export default function EditSocialEvent() {
                   </div>
 
                   {bankConfirmNeeded && (
-                    <div className="mt-3 flex items-start gap-3 rounded-md border border-border p-3">
+                    <div className="mt-3 flex min-h-11 items-start gap-3 rounded-md border border-border p-3">
                       <input
                         id="ev-bank-confirm"
                         type="checkbox"
                         checked={bankConfirmed}
                         onChange={(e) => setBankConfirmed(e.target.checked)}
-                        className="mt-0.5 h-4 w-4 rounded border-border"
+                        className="mt-0.5 h-5 w-5 shrink-0 rounded border-border"
                       />
                       <Label htmlFor="ev-bank-confirm" className="cursor-pointer text-sm font-normal leading-snug">
                         {edit.bankConfirmLabel
@@ -723,13 +723,13 @@ export default function EditSocialEvent() {
                   {/* PR67 — prepayment toggle + deadline. Same UX as the
                       CreateSocialEvent wizard's Step2Payment block. */}
                   <div className="mt-4 space-y-3 border-t border-border pt-4">
-                    <div className="flex items-start gap-3">
+                    <div className="flex min-h-11 items-start gap-3">
                       <input
                         id="ev-edit-requires-prepayment"
                         type="checkbox"
                         checked={form.requires_prepayment}
                         onChange={(e) => setField("requires_prepayment", e.target.checked)}
-                        className="mt-0.5 h-4 w-4 rounded border-border"
+                        className="mt-0.5 h-5 w-5 shrink-0 rounded border-border"
                         disabled={readOnly}
                       />
                       <div className="flex-1">
