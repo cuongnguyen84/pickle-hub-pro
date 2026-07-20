@@ -2207,7 +2207,20 @@
   font-family: "Geist Mono"; font-size: 11px;
   color: var(--tl-fg-4); font-variant-numeric: tabular-nums;
 }
-[data-theme="the-line"] .tl-filter.active .count { color: var(--tl-fg-3); }
+/* The active pill INVERTS its background (--tl-fg above), so --tl-fg-3 — a
+   muted tone built to sit on --tl-bg — lands on the wrong surface and drops to
+   3.69:1 in light and 3.41:1 in dark. Both fail AA, and have since long before
+   anyone noticed: Lighthouse only started catching it once UX-08 (#414) put
+   the filter state in the URL and the axe snapshot began landing after the row
+   rendered. The green runs before that were false greens, not a healthy gate.
+   Mixing toward the pill's own background keeps the "quieter than the label"
+   look and re-derives itself per theme: 6.12:1 light, 6.18:1 dark. The plain
+   declaration below is the fallback for engines without color-mix — louder
+   than intended, but never unreadable. */
+[data-theme="the-line"] .tl-filter.active .count {
+  color: var(--tl-bg);
+  color: color-mix(in oklab, var(--tl-bg) 60%, var(--tl-fg));
+}
 
 /* ========== Large list (tournaments page) ========== */
 [data-theme="the-line"] .tl-list {
