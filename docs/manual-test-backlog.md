@@ -76,3 +76,9 @@ Autosave/fee-mode/recovery đều sau login wall — cả 2 lượt ui-ux-verifi
 - [ ] Mở link `/social/<slug>` từ tab MỚI (deep-link, không history) → nút back phải HIỆN và về `/social` (thử thêm /clb/x → /clubs, bài blog → /blog, bản /vi giữ /vi).
 - [ ] /rankings: đổi scope sang Thế giới + format → sang trang khác → back → scope/format GIỮ NGUYÊN (và URL share được).
 - [ ] /feed: cuộn sâu → mở 1 post → back → thứ tự feed KHÔNG xáo lại, vị trí cuộn giữ; đóng tab mở lại → feed xáo mới (đúng thiết kế).
+
+## 11. A11Y-02 touch targets (PR #418, 2026-07-20)
+
+- [ ] Trên điện thoại thật: tick checkbox/radio trong wizard social (bước phí) + registration modal bằng NGÓN CÁI — phải trúng phát một, kể cả bấm lệch ~10px quanh control.
+- [ ] Bảng admin có checkbox dày: hit-area chồng nhau có gây tick nhầm hàng không (trade-off đã chấp nhận — nếu tệ thì báo).
+- [ ] ManualGroupAssignment (quicktable): tap chọn VĐV + gỡ khỏi bảng bằng chip — dễ bấm hơn trước.
