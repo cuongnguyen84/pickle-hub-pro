@@ -1,0 +1,45 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "topic": "Giải đã có người trả tiền: chặn hẳn hay cho đường thoát gõ-lại-tên?",
+      "myRound1Position": "Bỏ ô gõ tên, giữ CON SỐ hậu quả, chặn hẳn (không render nút xoá) khi đã có thanh toán xác nhận.",
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20260516125412_quota_rpcs_flex_doubles_team_match.sql:41-46 — count_user_tournaments đếm COUNT(*) trên cả 4 bảng, KHÔNG lọc status; supabase/migrations/20260529120000_doubles_elimination_open_registration.sql:28 — status đã có giá trị 'completed'",
+      "note": "Giữ nguyên 'chặn hẳn', nhưng mở rộng phạm vi: thế kẹt của organizer KHÔNG phải lý do để cho xoá bằng chứng thanh toán — nó là một bug đếm quota. Quota đếm cả giải đã 'completed', nên một giải xong việc chiếm slot VĨNH VIỄN và đường duy nhất lấy lại slot là xoá cứng. Đường thoát typed-name của solution-architect chữa triệu chứng ở đúng chỗ đắt nhất (luồng tiền); sửa mệnh đề WHERE của count_user_tournaments rẻ hơn một bậc và không đụng bằng chứng nào. Đề xuất UX cụ thể thay cho typed-name: (1) count_user_tournaments chỉ đếm giải chưa 'completed'/'archived'; (2) MyTournaments.tsx:340-365 tách stat thành 'Đang chạy {n}/{quota}' + 'Đã kết thúc {m} · không tính hạn mức'; (3) hành động chính trên giải đã có tiền đổi từ 'Xoá' thành 'Kết thúc giải' (set status='completed', trả slot ngay, giữ nguyên sổ sách) — đây là thứ organizer THẬT SỰ muốn lúc 21:41, họ gõ tên giải không phải vì muốn xoá sổ sách mà vì muốn slot. (4) Chỉ giải RỖNG mới còn nút xoá cứng. Nếu Cuong không muốn đụng RPC quota đợt này thì lối thoát tạm rẻ nhất là admin nâng profiles.tournament_create_quota — vẫn KHÔNG phải typed-name. Lập trường vòng 1 về ma sát không đổi: ô gõ tên chống nhầm tay, ở đây là nhầm ý định, nó chỉ làm gate cảm thấy an toàn hơn (pre-mortem sự cố 1, mục 'Vì sao mọi gate vẫn xanh')."
+    },
+    {
+      "id": "D3",
+      "topic": "Sửa 2 bug luồng đăng ký ngay, hay vá race sức chứa trước?",
+      "myRound1Position": "Tách đôi: #1 (tab mặc định + redirect) là sửa bug, ship ngay cùng đo; #2 (đường khách) chờ số.",
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20260529120000_doubles_elimination_open_registration.sql:112-118,157-165 — em tự mở, xác nhận SELECT count(*) rồi INSERT, không advisory lock, không FOR UPDATE; nhưng cùng file dòng 100-110 hàm lấy _caller = auth.uid() và từ chối rating_source='self'",
+      "note": "Dữ kiện lock là THẬT và em ghi nhận, nhưng nó không lật được thứ tự của #1. Lý do: RPC đó chỉ chạy cho người ĐÃ đăng nhập (_caller = auth.uid()) và chỉ cho giải DUPR — tường đăng nhập ở RegistrationForm.tsx:201-229 vẫn đứng nguyên sau khi đảo tab mặc định. Đảo một dòng ternary trên trang list không thêm được người vào cửa đó; thứ thêm người là #2 (đường khách), mà em đã xếp phải chờ từ vòng 1. Điểm em CHỈNH: race này đang sống trên prod HÔM NAY, độc lập với cụm này — nên nó không phải 'điều kiện tiên quyết của UX-07', nó là một bug P0 riêng nên có ticket riêng và không được dùng làm lý do hoãn một sửa bug 1 dòng cho người chơi. Ràng buộc em nhận: vá lock là gate CỨNG chặn #2 (đường khách), ghi thành điều kiện merge, không phải khuyến nghị. Nếu risk-auditor giữ RED trên #2 vì lý do này thì em không tranh."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Ai sở hữu thế kẹt quota=3 — đây là ràng buộc sản phẩm hay là bug đếm?",
+      "with": "solution-architect, pre-mortem",
+      "myPosition": "Cả hai đều coi quota=3 là ràng buộc bất biến rồi thiết kế đường thoát quanh nó (typed-name / cảnh báo tốt hơn). Em cho đó là bug: count_user_tournaments (20260516125412:41-46) đếm cả giải đã kết thúc, biến một hạn mức 'đang chạy' thành hạn mức 'trọn đời'. Sửa mệnh đề đếm làm bốc hơi động cơ xoá-vì-tiếc-slot, tức là làm bốc hơi luôn LIVE-2 và phần lớn sự cố 1 — rẻ hơn mọi đường thoát UI đang bàn."
+    }
+  ],
+  "extras": [
+    {
+      "id": "E1",
+      "finding": "Tab mặc định Tournaments.tsx:144-145 là code chết — hasWatchContent luôn true trên prod (useTournamentData.ts:21-33 select('*') không lọc status), nhánh 'community' không bao giờ chạy. Orchestrator đã curl prod xác nhận: sitemap 11 giải, trang có PPA/MLP.",
+      "effort": "0,5 ngày",
+      "breakdown": "Sửa 1 dòng (const tab = userTab ?? 'community') + nhãn tab VI (#8, cùng file) + gắn trackJourneyStep player_registration với prop ui_version để đọc trước/sau. Phần lớn nửa ngày là đo và verify, không phải code.",
+      "priority": "P0 — cao nhất trong UX-07 sau khi loại đường khách. Đây là thứ duy nhất trong cụm vừa RẺ, vừa GREEN (chỉ src/pages), vừa chạm 100% người đến từ link /tournaments, vừa không tăng tải lên bất kỳ đường ghi nào. Ship cùng release với E2-copyfix và các fix a11y của UX-06.",
+      "risk": "GREEN — git revert 5 phút. Không đụng schema, không đụng edge function."
+    },
+    {
+      "id": "E2",
+      "finding": "'Giải của bạn' (Tournaments.tsx:440-482) chỉ phủ Quick Tables — useUserRegisteredTournaments/useUserCompletedTournaments (useInteractionData.ts:117-140,208-230) chỉ query quick_table_registrations + quick_table_teams; link hardcode /tools/quick-tables/${share_id} (:459), nhãn meta hardcode 'Quick Table' (:467). Người đăng ký Doubles Elim / Flex / Team Match không thấy giải của mình, dù tiêu đề hứa 'Các giải bạn đã đăng ký' (:446).",
+      "effort": "0,5 ngày cho bản đúng; 15 phút cho bản vá copy",
+      "breakdown": "Bản vá copy (đổi tiêu đề thành 'Quick Table của bạn') = 15 phút, xoá ngay lời hứa sai. Bản đúng = mở rộng 2 hook sang 3 bảng đăng ký còn lại + link theo linkBase của format thật ≈ nửa ngày, nhưng nó thêm 6 query nữa vào một trang deep-link trên 4G — phải là 1 RPC gộp hoặc lazy theo tab, không phải 6 useQuery song song (ngân sách Vietnam p75 LCP ≤ 2,5s).",
+      "priority": "P2 — dưới E1 và dưới guard tiền của UX-06. Lý do: nó phục vụ người QUAY LẠI, mà cụm này đang mất người ở lần ĐẦU. Làm bản vá copy ngay trong release của E1 (đừng để copy hứa nhiều hơn code làm — đó là mất tin, không phải thiếu tính năng), hoãn bản đúng cho tới khi số của E1 cho thấy có lưu lượng quay lại đáng để trả 6 query."
+    }
+  ]
+}

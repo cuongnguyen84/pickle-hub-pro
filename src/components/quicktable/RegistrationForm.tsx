@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { startJourney, trackJourneyStep, completeJourney } from '@/lib/journeys';
 import { useAuth } from '@/hooks/useAuth';
 import { useRegistration, type RegistrationFormData, type Registration, type SkillRatingSystem } from '@/hooks/useRegistration';
 import { useDuprConnection } from '@/hooks/useDuprConnection';
@@ -193,9 +194,25 @@ export function RegistrationForm({
           : null;
 
   const handleLoginClick = () => {
+    trackJourneyStep('player_registration', 'auth_wall_click', { format: 'quicktable' });
     const returnUrl = location.pathname + location.search;
     navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
   };
+
+  // UX-07 increment 3 — the tournament branch had ZERO journey coverage, so
+  // "the login wall is what loses players" was never more than a hypothesis
+  // (panel disagreement D5). Start the journey when the form becomes usable,
+  // and record the wall separately: a high wall_view / low complete ratio
+  // argues for a guest path, a near-zero wall_view says nobody reaches this
+  // screen at all and the problem is upstream.
+  useEffect(() => {
+    startJourney('player_registration');
+    if (!user) {
+      trackJourneyStep('player_registration', 'auth_wall_viewed', { format: 'quicktable' });
+    }
+    // Intentionally keyed on the bracket + auth state only: re-running on every
+    // field edit would re-mint the journey id and inflate the denominator.
+  }, [tableId, user]);
 
   // ─── State 1: Not logged in ────────────────────────────────────────────
   if (!user) {
@@ -342,6 +359,10 @@ export function RegistrationForm({
 
     const result = await submitRegistration(tableId, formData);
     if (result) {
+      completeJourney('player_registration', 'registration_complete', {
+        format: 'quicktable',
+        rating_system: ratingSystem,
+      });
       onRegistrationComplete?.();
     }
   };

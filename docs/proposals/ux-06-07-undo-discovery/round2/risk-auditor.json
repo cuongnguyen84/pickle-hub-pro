@@ -1,0 +1,41 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Guard chống xoá nhầm đặt ở TRIGGER tầng DB hay ở RPC?",
+      "myRound1Position": "Một RPC xoá có kiểm tra là đủ; từ chối xoá khi còn đăng ký / đã có người trả tiền / đã có trận xong.",
+      "move": "CONCEDE",
+      "evidence": "supabase/migrations/20260107133349_4d81fec4-b11a-4c56-9afa-20bedccb7bfa.sql:302-305 (CREATE POLICY ... ON public.team_match_teams FOR DELETE USING (public.is_team_match_creator(tournament_id, auth.uid()))) + supabase/migrations/20260513000000_grant_mutations_on_tournament_tables.sql:45 (GRANT SELECT, INSERT, UPDATE, DELETE ON public.team_match_teams TO authenticated) + src/hooks/useTeamMatchTeams.ts:421-427 (.from('team_match_teams').delete().eq('id', teamId), không đọc payment_status)",
+      "note": "Em mở policy ra kiểm và dữ kiện lật kết luận của em: cả 5 bảng đều có FOR DELETE USING (creator = auth.uid()) CỘNG GRANT DELETE cho authenticated (20251223034604:152-154 quick_tables, 20260122020801:92-93 doubles_elimination_tournaments, 20260123142717:186-188 flex_tournaments, 20260107133349:238-242 team_match_tournaments). Client .delete() thẳng qua PostgREST hôm nay là hợp lệ, và useTeamMatchTeams.ts:421 đang làm đúng thế. RPC vì vậy không phải guard, chỉ là đề nghị lịch sự — bất kỳ caller nào (native binary đã phát hành, script tay, caller tương lai) đều đi vòng được. Trigger BEFORE DELETE là chỗ đúng. HAI ĐIỀU KIỆN em giữ nguyên và không nhượng: (1) trigger là migration → git revert KHÔNG lùi được, increment này vẫn RED-tier, cần Cuong ký duyệt; (2) trigger phải RAISE với ERRCODE riêng, có pgTAP, và test bằng ĐÚNG role authenticated qua PostgREST chứ không phải SQL editor superuser — đây là lớp lỗi 42501 đã tái diễn 3+ lần (.claude/memory/lessons-learned.md:8, chính là lý do 20260513000000 phải ra đời)."
+    },
+    {
+      "id": "D2",
+      "topic": "Khi giải đã có người trả tiền: CHẶN HẲN hay cho đường thoát gõ-lại-tên?",
+      "myRound1Position": "Chặn hẳn, chấm hết, khi còn đăng ký / đã có người trả tiền / đã có trận xong; hard-delete chỉ cho giải rỗng.",
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20251230114611_df84bff6-e114-4f36-8c39-0113866cc180.sql:67 (CREATE OR REPLACE FUNCTION public.set_user_quota(_user_id uuid, _new_quota integer)) + src/hooks/useAdminQuota.ts:10 (supabase.rpc('set_user_quota')) + supabase/migrations/20260701140000_team_match_payment_status.sql:13-14 (CHECK payment_status IN ('unpaid','claimed','confirmed'))",
+      "note": "Em thu hẹp phạm vi 'chặn hẳn' xuống ĐÚNG chỗ có tiền, và em trả lời được câu hỏi organizer-kẹt-quota mà không cần phá bằng chứng: đường thoát đã tồn tại và KHÔNG destructive — admin gọi set_user_quota nâng trần (mô tả ở 20260516125412:24-27, đã wire ở useAdminQuota.ts). Với 1 admin và số organizer nhỏ đây là đường khả thi, không cần archive/enum mới (ADD VALUE enum không revert được). Phạm vi chốt lại: (a) team_match_tournaments / team_match_teams có payment_status IN ('claimed','confirmed') → CHẶN CỨNG ở trigger, không typed-name, không đường thoát UI, vì repo không có một hàm refund nào; (b) quick_tables / doubles_elimination / flex — architect chứng minh đúng ở round1 §0.2(a) rằng payment_orders.registration_id FK về event_registrations nên 3 loại này KHÔNG có đường tiền — ở đây em CHẤP NHẬN đường thoát typed-name vì thiệt hại là đăng ký của người khác chứ không phải bằng chứng thanh toán. Điều em KHÔNG nhượng: 'chặn cứng' phải nằm ở trigger, không phải ở việc UI không render nút — không render nút không chặn được useTeamMatchTeams.ts:421 lẫn binary native đã phát hành."
+    },
+    {
+      "id": "D3",
+      "topic": "Sửa 2 bug luồng đăng ký NGAY, hay phải vá race sức chứa trước?",
+      "myRound1Position": "Thứ tự cứng: vá lock doubles-elimination trước, mọi thứ đụng phễu đăng ký chờ sau.",
+      "move": "REFINE",
+      "evidence": "src/pages/Login.tsx:62 (const targetUrl = onboarded ? redirectUrl : \"/onboarding\") + src/pages/Tournaments.tsx:144-145 (hasWatchContent ternary) — cả hai đều là đường điều hướng/render, không file nào trong tập sửa gọi register_team_for_doubles_elimination hay .insert() vào quick_table_registrations",
+      "note": "Em rút lại phần chặn SAI của mình: bug #1 (tab mặc định) và redirect bị nuốt nằm trên đường điều hướng, không nằm trên đường ghi. Sửa chúng không thêm một INSERT đồng thời nào vào register_team_for_doubles_elimination — nó chỉ đưa người dùng tới form đúng chỗ. ui-ux-critic và architect đúng ở #1; ship ngay, GREEN-tier, git revert 5 phút. Em GIỮ NGUYÊN chặn với đường khách (#2 / UX-07 Option C) và nêu ngưỡng rõ như được yêu cầu: race ở 20260529120000_doubles_elimination_open_registration.sql:113-118 vs :158 nổ khi có ≥2 INSERT vào ĐÚNG suất cuối của CÙNG một giải rơi vào cùng cửa sổ transaction (mili-giây) — hôm nay hiếm vì mỗi lượt đăng ký tốn một lần tạo tài khoản, tức là hàng đợi người thật cách nhau hàng chục giây. Cái làm nó nổ không phải tổng tải mà là ĐỘ ĐỒNG THỜI: bỏ tường đăng nhập + link Zalo phát cùng lúc vào nhóm = nhiều người bấm gửi trong cùng vài giây trên một giải sắp đầy. Đó là lý do lock là điều kiện tiên quyết của đường khách, KHÔNG phải của 2 bug điều hướng. Kèm luôn: quick_table_registrations không có check sức chứa nào ở DB (guard duy nhất là UNIQUE(table_id, user_id), 20251225041737:33) — mở khách xoá luôn guard đó."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "pre-mortem Sự cố 2 (restore_social_event dựng dậy 6 người tự huỷ, 22/16) mô tả rủi ro của một hàm KHÔNG TỒN TẠI và KHÔNG agent nào đề xuất — grep restore_social_event trong supabase/ và src/ ra 0 kết quả. Cơ chế nền (cancelled_at là kênh một chiều, 20260521130000_club_managers.sql:573-579) em kiểm chứng là THẬT, nên em không bác cơ chế; em bác việc xếp nó P1 trong cụm này.",
+      "with": "pre-mortem",
+      "myPosition": "Không tính vào rủi ro của UX-06/07 và không được dùng để biện minh cho bất kỳ increment nào. Cả bốn agent đã chốt KHÔNG làm undo/restore — một kịch bản dựng trên tính năng bị loại bỏ chỉ làm phồng phạm vi. Ghi lại thành ghi chú thiết kế cho bất kỳ ai sau này định viết restore_social_event, không ghi vào bảng rủi ro."
+    },
+    {
+      "topic": "Verdict tier: em GIỮ RED cho cụm, không nâng không hạ, nhưng thu hẹp phạm vi RED sau vòng 2.",
+      "with": "solution-architect",
+      "myPosition": "RED chỉ còn nằm ở đúng 2 chỗ: (1) migration trigger BEFORE DELETE (increment 3) — không revert được bằng git, cần migration down riêng; (2) UX-07 Option C guest+OTP — chạm phone-otp-send/verify (verify_jwt=false, ES256 workaround) + tiền OTP thật + nới NOT NULL trên otp_codes.event_id (20260511120000:350) là thay đổi không revert thẳng được khi đã có hàng NULL. Phần còn lại của cụm (bug tab mặc định, redirect Login.tsx:62, journey instrumentation, confirm dialog, xoá dead code) em hạ xuống GREEN/AMBER: git revert + redeploy là đủ, ~5 phút. Đây là REFINE phạm vi theo đúng quyền được phép, không phải hạ RED."
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl, getPasswordResetRedirectUrl, getSiteUrl } from "@/lib/auth-config";
 import { safeInternalPath } from "@/lib/auth/safeRedirect";
+import { postLoginTarget } from "@/lib/auth/postLoginRedirect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
@@ -59,8 +60,9 @@ const Login = () => {
     const onboarded = (
       profile as { onboarding_completed_at?: string | null } | null | undefined
     )?.onboarding_completed_at;
-    const targetUrl = onboarded ? redirectUrl : "/onboarding";
-    navigate(targetUrl, { replace: true });
+    // Onboarding still comes first, but it no longer EATS the destination —
+    // see lib/auth/postLoginRedirect for the rule and its tests.
+    navigate(postLoginTarget(redirectUrl, Boolean(onboarded)), { replace: true });
   }, [user, authLoading, profileLoading, profile, navigate, redirectUrl]);
 
   // Pin TheLine theme tokens on the document while Login is mounted so the
