@@ -15,15 +15,20 @@ export function optimizeImageUrl(
   // Mux thumbnails support width/height natively (same pattern as
   // streamThumb in LiveSection.tsx). fit_mode=smartcrop requires BOTH
   // dimensions — with width only, Mux resizes preserving aspect ratio.
-  if (url.includes('image.mux.com') && (width || height)) {
+  // Hostname is checked via URL parsing, not substring — a crafted URL like
+  // https://evil.test/image.mux.com must not match (CodeQL js/incomplete-
+  // url-substring-sanitization).
+  if (width || height) {
     try {
       const muxUrl = new URL(url);
-      if (width) muxUrl.searchParams.set('width', String(width));
-      if (height) muxUrl.searchParams.set('height', String(height));
-      if (width && height) muxUrl.searchParams.set('fit_mode', 'smartcrop');
-      return muxUrl.toString();
+      if (muxUrl.hostname === 'image.mux.com') {
+        if (width) muxUrl.searchParams.set('width', String(width));
+        if (height) muxUrl.searchParams.set('height', String(height));
+        if (width && height) muxUrl.searchParams.set('fit_mode', 'smartcrop');
+        return muxUrl.toString();
+      }
     } catch {
-      return url;
+      // Relative/invalid URL — fall through to the Supabase path below.
     }
   }
 
