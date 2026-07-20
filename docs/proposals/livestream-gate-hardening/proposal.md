@@ -228,5 +228,6 @@ Không có — ledger `--strict` pass 0 vi phạm. Cả 2 CONCEDE đều kèm fi
   - `completeJourney` dời khỏi `useAuth.tsx` sang `src/lib/livestreamGateAttribution.ts` (listener riêng, cùng heuristic <120s): release-pilot chặn RED vì đụng auth surface — refactor về AMBER thay vì xin duyệt RED. Kèm điều kiện mới từ QA: chỉ attribute khi có CTA-click flag thật (chống thổi phồng funnel bởi signup organic cùng tab).
   - QA finding: TapToPlayOverlay unmount khi gated + guard trong handleTapToPlay (screen-reader rotor xuyên z-index).
   - 2 fix trong CI: mock supabase client cho overlay test (env-less CI), thêm test coverage cho useLivestreamGateAttribution (83.12% > 83%).
-  - Increment 7 (presence-gated) deferred PR riêng đúng kế hoạch — CHƯA làm.
+  - Increment 7 (presence-gated) ship sau ở PR #416 (`ec82b407`, 2026-07-20) — merge-gate test D3 pass (track() gọi lại khi gated flip, không re-subscribe), coverage bù bằng useLivePresence.core.test.ts.
+  - 2026-07-20 Cuong CLOSE lỗi này. Tầng 3 (Mux signed playback) + gate cho native /apple vẫn MỞ có chủ đích — cần proposal riêng khi Cuong yêu cầu.
 - Học được (→ append `.claude/memory/lessons-learned.md`): risk-tier working-tree mode vs commit-diff mode; alias preview Cloudflare cắt 28 ký tự; auth surface = RED kể cả khi chỉ thêm analytics.
