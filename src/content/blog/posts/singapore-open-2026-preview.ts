@@ -9,8 +9,8 @@ const post: BlogPost = {
   ctaPath: "/live",
   ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
   heroImage: {
-    src: "/images/blog/ppa-tour-asia-2026-hero.webp",
-    alt: "PPA Tour Asia court scene — hero image for the Leapmotor Singapore Open 2026 preview."
+    src: "/images/blog/singapore-open-2026-preview-hero.webp",
+    alt: "Leapmotor Singapore Open 2026 preview — an indoor pickleball championship court under arena spotlights at Singapore Expo, with a teal-green surface and tiered spectator seating."
   },
   content: {
     en: {
@@ -279,3 +279,4 @@ const post: BlogPost = {
 };
 
 export default post;
+
