@@ -14,7 +14,7 @@ import { buildTeamMatchGames } from '@/lib/teamMatchGames';
 export interface CompletedPlayoffMatch {
   next_match_id: string | null;
   next_match_slot: number | null;
-  is_playoff: boolean;
+  is_playoff: boolean | null;
   is_repechage?: boolean | null;
   playoff_round: number | null;
   team_a_id: string | null;

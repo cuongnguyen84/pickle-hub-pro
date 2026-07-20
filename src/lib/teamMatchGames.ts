@@ -14,7 +14,7 @@
 export interface TeamMatchGameTemplate {
   game_type: string;
   scoring_type: string;
-  display_name: string;
+  display_name: string | null;
 }
 
 export interface TeamMatchGameInsert {
@@ -22,7 +22,7 @@ export interface TeamMatchGameInsert {
   order_index: number;
   game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS';
   scoring_type: 'rally21' | 'sideout11';
-  display_name: string;
+  display_name: string | null;
   is_dreambreaker: boolean;
   score_a: number;
   score_b: number;
