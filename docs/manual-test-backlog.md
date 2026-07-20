@@ -82,3 +82,13 @@ Autosave/fee-mode/recovery đều sau login wall — cả 2 lượt ui-ux-verifi
 - [ ] Trên điện thoại thật: tick checkbox/radio trong wizard social (bước phí) + registration modal bằng NGÓN CÁI — phải trúng phát một, kể cả bấm lệch ~10px quanh control.
 - [ ] Bảng admin có checkbox dày: hit-area chồng nhau có gây tick nhầm hàng không (trade-off đã chấp nhận — nếu tệ thì báo).
 - [ ] ManualGroupAssignment (quicktable): tap chọn VĐV + gỡ khỏi bảng bằng chip — dễ bấm hơn trước.
+
+## 12. ARCH-03 TeamMatch playoff propagation (PR #421, 2026-07-20)
+
+Bug race trận tranh hạng 3 chỉ nổ khi HAI bán kết kết thúc gần như đồng thời — test đơn + mock đã pin logic, nhưng cần một lượt xác nhận trên bracket thật:
+
+- [ ] **Hai bán kết xong đồng thời:** 1 giải TeamMatch có playoff + trận tranh hạng 3 → 2 máy/2 tab, mỗi bên chấm xong 1 bán kết rồi bấm lưu CÙNG LÚC → trận hạng 3 phải có **đủ 2 đội thua** (trước đây 1 đội biến mất), chung kết đủ 2 đội thắng.
+- [ ] **Games tự sinh:** ngay khi trận hạng 3 / chung kết đủ 2 đội → danh sách game sinh đúng số + Dreambreaker chỉ xuất hiện khi số game CHẴN và giải có bật.
+- [ ] **Chấm lại bán kết:** sửa điểm 1 bán kết đã xong (giữ nguyên đội thắng) → lưu lại → KHÔNG nhân đôi đội trong trận hạng 3, KHÔNG sinh thêm bộ game thứ 2.
+- [ ] **Realtime không xuyên giải:** mở giải A trên máy 1, giải B trên máy 2, chấm điểm ở B → màn giải A KHÔNG nhấp nháy/refetch (trước đây mọi thay đổi game toàn site đều làm mọi bracket refetch).
+- [ ] Nhánh Tái sinh: giải có repechage → vẫn KHÔNG sinh trận tranh hạng 3.
