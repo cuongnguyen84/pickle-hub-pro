@@ -30,7 +30,7 @@ export default function AdminLivestreamViewers() {
     refetchInterval: 30000, // refresh every 30s
   });
 
-  const { viewers, isConnected, viewerCount } = useLiveViewerList(
+  const { viewers, isConnected } = useLiveViewerList(
     selectedLivestreamId,
     !!selectedLivestreamId
   );
@@ -92,8 +92,13 @@ export default function AdminLivestreamViewers() {
                 </span>
                 <div className="flex items-center gap-3">
                   <Badge variant="secondary" className="text-sm">
-                    {viewerCount} {t.admin.viewers.watching}
+                    {viewers.filter((v) => !v.gated).length} {t.admin.viewers.watching}
                   </Badge>
+                  {viewers.some((v) => v.gated) && (
+                    <Badge variant="outline" className="text-sm border-amber-500/50 text-amber-500">
+                      {viewers.filter((v) => v.gated).length} {t.admin.viewers.gatedCount}
+                    </Badge>
+                  )}
                   {isConnected ? (
                     <span className="flex items-center gap-1 text-xs text-green-500">
                       <Wifi className="w-3 h-3" /> {t.admin.viewers.connected}

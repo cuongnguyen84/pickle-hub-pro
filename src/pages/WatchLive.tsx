@@ -45,11 +45,6 @@ const WatchLive = () => {
   // For ended streams, also fetch ended streams for related content
   const { data: endedLivestreams = [] } = useLivestreams("ended");
   
-  // Real-time concurrent viewers using Supabase Presence
-  // Only enabled when livestream is live
-  const isLiveStatus = livestream?.status === "live";
-  const { concurrentViewers, isConnected } = useLivePresence(id!, isLiveStatus);
-
   // System settings for livestream gate
   const { data: systemSettings } = useSystemSettings();
   const isLiveStream = livestream?.status === "live";
@@ -72,6 +67,12 @@ const WatchLive = () => {
     isAuthenticated: !!user,
     isPlaying: isVideoPlaying,
   });
+
+  // Real-time concurrent viewers using Supabase Presence (only when live).
+  // Passes isGated so the admin viewer list can tell "watching" from "stuck
+  // at the login gate" — this page owns the gate, other consumers omit it.
+  const isLiveStatus = livestream?.status === "live";
+  const { concurrentViewers, isConnected } = useLivePresence(id!, isLiveStatus, isGated);
 
   useEffect(() => {
     if (keyboardHeight <= 0) return undefined;
