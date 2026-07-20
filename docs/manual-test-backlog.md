@@ -92,3 +92,34 @@ Bug race trận tranh hạng 3 chỉ nổ khi HAI bán kết kết thúc gần n
 - [ ] **Chấm lại bán kết:** sửa điểm 1 bán kết đã xong (giữ nguyên đội thắng) → lưu lại → KHÔNG nhân đôi đội trong trận hạng 3, KHÔNG sinh thêm bộ game thứ 2.
 - [ ] **Realtime không xuyên giải:** mở giải A trên máy 1, giải B trên máy 2, chấm điểm ở B → màn giải A KHÔNG nhấp nháy/refetch (trước đây mọi thay đổi game toàn site đều làm mọi bracket refetch).
 - [ ] Nhánh Tái sinh: giải có repechage → vẫn KHÔNG sinh trận tranh hạng 3.
+
+## 13. Cụm UX-06/07 — increment 1-7 (PR #423, 2026-07-20)
+
+Cụm này bắt đầu từ 2 task UX nhưng thực chất là vá 7 lỗi đang sống trên prod. Phần lớn nằm sau login wall hoặc cần 2 thiết bị, CI không phủ được.
+
+**Luồng người chơi (UX-07)**
+
+- [ ] **Tab mặc định:** mở `/tournaments` bằng tab ẩn danh (chưa từng vào) → phải rơi vào tab **Cộng đồng**, không phải "Xem Pro". Trước đây luôn rơi vào Xem Pro vì nhánh community là code chết.
+- [ ] **Đường Zalo thật (quan trọng nhất):** gửi link 1 giải `/tools/quick-tables/<share_id>` cho một **tài khoản mới hoàn toàn** → bấm đăng ký → tường đăng nhập → tạo tài khoản → qua hết onboarding → phải quay lại **đúng giải đó**, không phải trang cá nhân. Đây là bug #4, trước đây mất giải luôn.
+- [ ] Người **đã onboard sẵn** theo cùng link → đăng nhập xong về thẳng giải, không ghé onboarding.
+- [ ] **Nhãn VI:** ở chế độ tiếng Việt, 4 thể thức hiện `Quick Tables · Chia bảng`, `Doubles Elimination · Loại kép`, `Flex Format · Tùy chỉnh`, `Team Match · Đồng đội`.
+- [ ] **"Quick Table của bạn":** mục này giờ chỉ hứa Quick Table (trước hứa "Các giải bạn đã đăng ký" nhưng chỉ hiện 1/4 thể thức). Nếu anh đăng ký Doubles/Flex/TeamMatch thì chúng vẫn KHÔNG hiện — đúng thiết kế đợt này, bản mở rộng là P2.
+
+**Thao tác phá huỷ (UX-06)**
+
+- [ ] **Gỡ thành viên có xác nhận:** trong Team Match, rời đội (`TeamJoinPanel`) và đội trưởng từ chối yêu cầu (`TeamOverviewCard`) → phải hiện hộp xác nhận. Trước đây bấm là mất luôn, không hỏi gì.
+- [ ] **Dialog xoá giải có CON SỐ:** `/giai-dau-cua-toi` → xoá 1 giải có người đăng ký → dialog phải nêu rõ sẽ mất bao nhiêu đội/người chơi. Giải rỗng thì nói "chưa có ai đăng ký".
+- [ ] **Cảnh báo tiền:** giải Team Match có đội đã bấm "Đã chuyển khoản" hoặc BTC đã xác nhận → dialog phải có dòng đỏ nói hệ thống KHÔNG hoàn tiền và không khôi phục được.
+- [ ] **Dialog không treo:** ngắt mạng rồi mở dialog xoá → phải hiện cảnh báo chung, KHÔNG kẹt spinner mãi (bug này bắt được lúc verify).
+- [ ] **Native xoá đội:** trên iPhone thật, Team Match → quản lý đội → bấm icon thùng rác → phải hiện confirm. Trước đây **một chạm là mất đội**, nút lại nằm sát badge trạng thái. Kiểm cả hit area có dễ bấm không.
+
+**Guard tầng DB (increment 6-7, đã áp migration prod)**
+
+- [ ] **Chặn xoá đội đã trả tiền:** thử xoá 1 đội có trạng thái "đã chuyển khoản"/"đã xác nhận" → phải bị chặn, hiện lỗi. Thử trên CẢ web lẫn native (trigger nằm ở DB nên phải chặn cả hai).
+- [ ] **Chặn xoá cả giải:** thử xoá nguyên giải Team Match có đội đã trả tiền → cũng phải bị chặn (qua cascade). Đây là đường quan trọng nhất vì quota 3 giải trọn đời đẩy anh về phía nút xoá.
+- [ ] **Không chặn nhầm:** giải Team Match mà mọi đội đều "chưa nộp" → xoá bình thường, không vướng gì.
+- [ ] **Đường thoát:** nếu anh thật sự cần xoá đội đã trả tiền → đổi trạng thái thanh toán về "chưa nộp" trước, rồi xoá được. Nếu kẹt quota thì nâng ở `/admin/users` chứ đừng xoá giải cũ.
+
+## 14. Vá race next_match_slot NULL (PR #424, 2026-07-20)
+
+- [ ] Không có gì để test tay — prod hiện 0 hàng rơi vào nhánh này, và unit test đã pin (gỡ guard là đỏ). Ghi ở đây để anh biết nó tồn tại: nếu sau này bracket generation sinh trận có `next_match_id` mà thiếu `next_match_slot`, hệ thống giờ claim ô trống thay vì đoán và đè lên nhau.
