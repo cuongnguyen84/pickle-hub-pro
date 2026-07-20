@@ -644,6 +644,8 @@ export const en: Translations = {
       noViewers: "No viewers yet",
       anonymous: "Anonymous",
       loggedIn: "Logged in",
+      gated: "Awaiting login",
+      gatedCount: "awaiting login",
       joinedAt: "Joined at",
       type: "Type",
     },

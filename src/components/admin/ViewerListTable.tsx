@@ -12,6 +12,7 @@ interface ViewerProfile {
   email: string | null;
   avatarUrl: string | null;
   joinedAt: string;
+  gated: boolean;
 }
 
 interface ViewerListTableProps {
@@ -76,6 +77,10 @@ export function ViewerListTable({ viewers, isLoading }: ViewerListTableProps) {
               {viewer.userId ? (
                 <Badge variant="secondary" className="text-xs">
                   {t.admin.viewers.loggedIn}
+                </Badge>
+              ) : viewer.gated ? (
+                <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-500">
+                  {t.admin.viewers.gated}
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-xs">

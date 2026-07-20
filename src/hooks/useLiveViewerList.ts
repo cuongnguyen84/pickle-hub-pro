@@ -7,6 +7,7 @@ interface ViewerInfo {
   viewerId: string;
   userId: string | null;
   joinedAt: string;
+  gated: boolean;
 }
 
 interface ViewerProfile {
@@ -16,6 +17,8 @@ interface ViewerProfile {
   email: string | null;
   avatarUrl: string | null;
   joinedAt: string;
+  /** Stuck at the login gate. Missing field (legacy client) = false. */
+  gated: boolean;
 }
 
 /**
@@ -69,6 +72,7 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
         email: profile?.email ?? null,
         avatarUrl: profile?.avatar_url ?? null,
         joinedAt: v.joinedAt,
+        gated: v.gated,
       };
     });
   }, []);
@@ -122,11 +126,14 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
         for (const [key, presences] of Object.entries(state)) {
           // Skip admin watcher entries
           if (key.startsWith("admin_watcher_")) continue;
-          const presence = (presences as Array<{ user_id?: string | null; joined_at?: string }>)[0];
+          const presence = (presences as Array<{ user_id?: string | null; joined_at?: string; gated?: boolean }>)[0];
           rawViewers.push({
             viewerId: key,
             userId: presence?.user_id ?? null,
             joinedAt: presence?.joined_at ?? new Date().toISOString(),
+            // Optional-chain on purpose: tabs running the pre-gated client
+            // send no `gated` field — treat legacy as watching, never filter.
+            gated: presence?.gated === true,
           });
         }
 

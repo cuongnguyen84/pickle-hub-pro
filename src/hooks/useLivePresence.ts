@@ -24,6 +24,12 @@ interface SharedPresence {
   retryCount: number;
   retryTimer: ReturnType<typeof setTimeout> | null;
   disposed: boolean;
+  /** Base payload tracked at join — reused verbatim on re-track so
+   * joined_at never resets when only `gated` changes. */
+  payload: { joined_at: string; user_id: string | null; user_agent: string } | null;
+  /** Latest gate state for this client; SUBSCRIBED handler reads it so a
+   * reconnect after the gate fired still reports gated: true. */
+  gated: boolean;
 }
 
 const sharedEntries = new Map<string, SharedPresence>();
@@ -91,11 +97,14 @@ async function connect(livestreamId: string, entry: SharedPresence, userId: stri
         entry.retryCount = 0;
         notify(entry);
         try {
-          await channel.track({
+          // Reuse the original payload on reconnect so joined_at is stable;
+          // gated reads the LATEST value (gate may have fired mid-retry).
+          entry.payload ??= {
             joined_at: new Date().toISOString(),
             user_id: userId,
             user_agent: navigator.userAgent.slice(0, 100),
-          });
+          };
+          await channel.track({ ...entry.payload, gated: entry.gated });
         } catch (trackErr) {
           console.warn("[Presence] Track error (non-critical):", trackErr);
         }
@@ -136,10 +145,32 @@ function acquire(livestreamId: string, userId: string | null): SharedPresence {
     retryCount: 0,
     retryTimer: null,
     disposed: false,
+    payload: null,
+    gated: false,
   };
   sharedEntries.set(livestreamId, entry);
   void connect(livestreamId, entry, userId);
   return entry;
+}
+
+/**
+ * Update this client's `gated` presence meta via channel.track() on the
+ * ALREADY-subscribed shared channel. Deliberately NOT part of the subscribe
+ * effect: putting `gated` in its deps would release()/acquire() the channel
+ * on every gate flip — the exact re-subscribe churn behind the 2026-07-08
+ * collision incident. track() on a live channel merely replaces this key's
+ * presence meta; no re-join happens.
+ */
+function setGated(livestreamId: string, gated: boolean) {
+  const entry = sharedEntries.get(livestreamId);
+  if (!entry || entry.disposed || entry.gated === gated) return;
+  entry.gated = gated;
+  if (entry.channel && entry.connected && entry.payload) {
+    entry.channel
+      .track({ ...entry.payload, gated })
+      .catch((err) => console.warn("[Presence] Gated re-track error (non-critical):", err));
+  }
+  // Not yet subscribed → the SUBSCRIBED handler picks up entry.gated.
 }
 
 function release(livestreamId: string, entry: SharedPresence) {
@@ -170,9 +201,16 @@ function release(livestreamId: string, entry: SharedPresence) {
  *
  * @param livestreamId - The ID of the livestream to track
  * @param enabled - Whether to enable presence tracking (default: true)
+ * @param gated - Optional: this viewer is stuck at the login gate. Only pass
+ *   from the surface that owns the gate (WatchLive); consumers that omit it
+ *   never overwrite the shared entry's gate state.
  * @returns Object with concurrentViewers count and isConnected status
  */
-export function useLivePresence(livestreamId: string, enabled: boolean = true) {
+export function useLivePresence(
+  livestreamId: string,
+  enabled: boolean = true,
+  gated?: boolean,
+) {
   const { user } = useAuth();
   const [concurrentViewers, setConcurrentViewers] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
@@ -199,6 +237,13 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [livestreamId, enabled]);
+
+  // Separate effect ON PURPOSE — `gated` must never enter the subscribe
+  // effect's deps (see setGated). undefined = consumer doesn't manage gating.
+  useEffect(() => {
+    if (!livestreamId || !enabled || gated === undefined) return;
+    setGated(livestreamId, gated);
+  }, [livestreamId, enabled, gated]);
 
   return {
     concurrentViewers,

@@ -645,6 +645,8 @@ export interface Translations {
       noViewers: string;
       anonymous: string;
       loggedIn: string;
+      gated: string;
+      gatedCount: string;
       joinedAt: string;
       type: string;
     };
@@ -3533,6 +3535,8 @@ export const vi: Translations = {
       noViewers: "Chưa có ai đang xem",
       anonymous: "Ẩn danh",
       loggedIn: "Đã đăng nhập",
+      gated: "Chờ đăng nhập",
+      gatedCount: "chờ đăng nhập",
       joinedAt: "Tham gia lúc",
       type: "Loại",
     },
