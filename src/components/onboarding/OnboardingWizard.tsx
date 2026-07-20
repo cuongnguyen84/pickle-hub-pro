@@ -1,5 +1,5 @@
 import { useReducer, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { OnboardingProgress } from "./OnboardingProgress";
@@ -13,6 +13,7 @@ import {
   type StepNumber,
   type OnboardingState,
 } from "./wizard-reducer";
+import { postOnboardingTarget } from "@/lib/auth/postLoginRedirect";
 
 // Re-export types for step component prop typing.
 export type { StepNumber, OnboardingState };
@@ -23,6 +24,12 @@ export function OnboardingWizard() {
   const { profile } = useUserProfile();
   const navigate = useNavigate();
   const { user } = useAuth();
+  // Destination the player was heading for before the auth wall interrupted
+  // them (set by Login). Re-validated here rather than trusted: this value
+  // reaches us through the URL, so it is attacker-controlled input at this
+  // point regardless of who wrote it last.
+  const [searchParams] = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
 
   // ─── Resume support ────────────────────────────────────────────────────
   // If profile.onboarding_step is N, the user has completed step N — start
@@ -83,10 +90,12 @@ export function OnboardingWizard() {
     // ProfileSetup step 1 success. Fall back to homepage if username is
     // somehow missing — shouldn't happen since step 1 is gating, but
     // belt-and-suspenders against a partial-state wizard exit.
-    const target = state.profile.username
-      ? `/nguoi-choi/${state.profile.username}`
-      : "/";
-    navigate(target, { replace: true });
+    // A player who arrived from a bracket/event link goes BACK to it — finishing
+    // onboarding should not cost them the thing they came to do. Only fall back
+    // to the profile-first landing when they started onboarding on their own.
+    navigate(postOnboardingTarget(redirectParam, state.profile.username ?? null), {
+      replace: true,
+    });
   };
 
   return (

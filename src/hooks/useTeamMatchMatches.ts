@@ -350,33 +350,6 @@ export function useTeamMatchMatchManagement() {
     },
   });
 
-  // Delete all matches of a tournament
-  const deleteMatchesMutation = useMutation({
-    mutationFn: async (tournamentId: string) => {
-      const { error } = await supabase
-        .from('team_match_matches')
-        .delete()
-        .eq('tournament_id', tournamentId);
-
-      if (error) throw error;
-      return tournamentId;
-    },
-    onSuccess: (tournamentId) => {
-      queryClient.invalidateQueries({ queryKey: ['team-match-matches', tournamentId] });
-      toast({
-        title: 'Đã xóa',
-        description: 'Đã xóa tất cả trận đấu',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Lỗi',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
   // Generate playoff matches with cross-group seeding support
   const generatePlayoffMatchesMutation = useMutation({
     mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates, hasDreambreaker, pairings, isRepechage }: {
@@ -862,7 +835,5 @@ export function useTeamMatchMatchManagement() {
     isUpdatingScore: updateGameScoreMutation.isPending,
     updateMatchResult: updateMatchResultMutation.mutateAsync,
     isUpdatingResult: updateMatchResultMutation.isPending,
-    deleteMatches: deleteMatchesMutation.mutateAsync,
-    isDeletingMatches: deleteMatchesMutation.isPending,
   };
 }

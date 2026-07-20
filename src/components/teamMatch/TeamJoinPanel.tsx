@@ -25,6 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDuprConnection, useInvalidateDuprConnection } from '@/hooks/useDuprConnection';
 import { DuprSsoModal } from '@/components/dupr/DuprSsoModal';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useI18n } from '@/i18n';
 
 const card: React.CSSProperties = {
@@ -67,6 +68,7 @@ export function TeamJoinPanel({
 }: TeamJoinPanelProps) {
   const { user } = useAuth();
   const { language } = useI18n();
+  const confirm = useConfirm();
   const vi = language === 'vi';
   const { profile } = useUserProfile();
   const { data: membership } = useUserMembership(tournamentId);
@@ -106,6 +108,25 @@ export function TeamJoinPanel({
         ? `Giải yêu cầu DUPR${label ? ` ${label}` : ''}. Bạn vẫn có thể tham gia đội ngay bây giờ và kết nối DUPR sau.`
         : `This tournament requires DUPR${label ? ` ${label}` : ''}. You can still join the team now and connect DUPR later.`,
     connectDupr: vi ? 'Kết nối DUPR' : 'Connect DUPR',
+    withdrawConfirmTitle: vi ? 'Huỷ yêu cầu tham gia?' : 'Withdraw your request?',
+    withdrawConfirmDesc: vi
+      ? 'Yêu cầu của bạn sẽ bị xoá khỏi đội. Bạn có thể gửi lại yêu cầu nếu đội còn chỗ.'
+      : 'Your request will be removed from the team. You can request again if the team still has room.',
+    leaveConfirmTitle: vi ? 'Rời khỏi đội?' : 'Leave this team?',
+    leaveConfirmDesc: vi
+      ? 'Bạn sẽ bị xoá khỏi danh sách đội. Muốn quay lại, bạn phải gửi yêu cầu mới và chờ đội trưởng duyệt lại.'
+      : 'You will be removed from the roster. To come back you must send a new request and wait for the captain to approve it again.',
+  };
+
+  const handleLeave = async (isPending: boolean, memberId: string) => {
+    const ok = await confirm({
+      title: isPending ? txt.withdrawConfirmTitle : txt.leaveConfirmTitle,
+      description: isPending ? txt.withdrawConfirmDesc : txt.leaveConfirmDesc,
+      confirmText: isPending ? txt.withdraw : txt.leaveTeam,
+      destructive: true,
+    });
+    if (!ok) return;
+    removeRosterMember({ memberId, teamId });
   };
 
   // Hidden only for this team's captain. The organizer can also join as a
@@ -135,7 +156,7 @@ export function TeamJoinPanel({
           <button
             type="button"
             className="tl-btn"
-            onClick={() => removeRosterMember({ memberId: membership.id, teamId })}
+            onClick={() => void handleLeave(isPending, membership.id)}
             disabled={isRemovingMember}
             style={{ alignSelf: 'flex-start', color: 'var(--tl-live)', borderColor: 'rgba(255,65,54,0.35)' }}
           >

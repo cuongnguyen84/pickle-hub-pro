@@ -1,0 +1,113 @@
+{
+  "slug": "ux-06-07-undo-discovery",
+  "round": 2,
+  "note_on_consensus": "Cả bốn agent đồng ý KHÔNG làm undo tổng quát / soft-delete cho 4 bảng tournament. Nhưng solution-architect + pre-mortem + risk-auditor đều là Claude — sự đồng ý của chúng KHÔNG phải bằng chứng độc lập. Đồng thuận cross-vendor DUY NHẤT đáng tính: ui-ux-critic + GPT-5.6 độc lập cùng bác toast-undo 5 giây, và cùng chỉ tường đăng nhập là đòn bẩy số 1. risk-auditor ĐÃ BÁC 3 claim của GPT-5.6 sau khi mở file — ghi nhận là GPT mù repo nên bịa được, không phải GPT vô dụng.",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Guard chống xoá nhầm đặt ở TRIGGER tầng DB hay ở RPC?",
+      "why_it_matters": "Khác nhau về vùng phủ. Trigger BEFORE DELETE chặn MỌI đường ghi kể cả `.delete()` trực tiếp từ client và kể cả binary native ĐÃ phát hành (App Store đang RED-gated nên không ép update được). RPC chỉ chặn caller nào chịu gọi nó — client vẫn `.delete()` thẳng được trừ khi RLS cấm. Ngược lại trigger khó chẩn đoán hơn khi nó chặn nhầm, và không trả được thông báo giàu ngữ cảnh cho UI.",
+      "positions": {
+        "solution-architect": "Option A: trigger `BEFORE DELETE` ở tầng DB + 3 RPC mô phỏng `delete_quick_table` đã có. Lý do dứt điểm: guard ở DB bảo vệ luôn binary native đã phát hành. 4 nửa ngày.",
+        "risk-auditor": "Một RPC xoá có kiểm tra, từ chối xoá khi còn đăng ký / đã có người trả tiền / đã có trận xong; hard-delete chỉ với giải rỗng. Không cột `deleted_at`, không undo, không migration lớn.",
+        "pre-mortem": "Fix rẻ nhất cho P0: trigger `BEFORE DELETE` trên `team_match_teams` (~8 dòng SQL) — chặn cùng lúc web, native và cascade, cách DUY NHẤT vá cả ba mặt bằng một diff."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "HOLD",
+          "evidence": "supabase/migrations/20260122020801_220449dd-ee22-4f21-8b1b-d58a20ac5676.sql:92-93",
+          "note": "Em tự mở file kiểm chứng đúng cái dữ kiện được yêu cầu: policy hiện hành là `CREATE POLICY \"Creators can delete their tournaments\" ... FOR DELETE USING (auth.uid() = creator_user_id)` — client ĐƯỢC phép DELETE trực tiếp, và `src/pages/MyTournaments.tsx:240-246` đang làm đúng thế cho cả 3 bảng doubles/flex/team_match. Nên RPC-only KHÔNG phủ được gì cả trừ khi đồng thời REVOKE policy DELETE đó; mà revoke = bản web cũ trong cache SW và bản native đã phát hành (App Store submit đang RED-gated) gãy nút xoá ngay lập tức, không có đường lùi. Đó chính là kịch bản risk-auditor xếp 'không revert được'. Chấp nhận phản biện về chẩn đoán: trigger RAISE EXCEPTION kèm ERRCODE riêng + số lượng trong MESSAGE, và dialog lấy số từ query đếm riêng chứ không parse exception — nên UI vẫn có thông báo giàu ngữ cảnh, chỉ dùng exception làm lưới cuối."
+        },
+        "risk-auditor": {
+          "move": "CONCEDE",
+          "evidence": "supabase/migrations/20260107133349_4d81fec4-b11a-4c56-9afa-20bedccb7bfa.sql:302-305 (CREATE POLICY ... ON public.team_match_teams FOR DELETE USING (public.is_team_match_creator(tournament_id, auth.uid()))) + supabase/migrations/20260513000000_grant_mutations_on_tournament_tables.sql:45 (GRANT SELECT, INSERT, UPDATE, DELETE ON public.team_match_teams TO authenticated) + src/hooks/useTeamMatchTeams.ts:421-427 (.from('team_match_teams').delete().eq('id', teamId), không đọc payment_status)",
+          "note": "Em mở policy ra kiểm và dữ kiện lật kết luận của em: cả 5 bảng đều có FOR DELETE USING (creator = auth.uid()) CỘNG GRANT DELETE cho authenticated (20251223034604:152-154 quick_tables, 20260122020801:92-93 doubles_elimination_tournaments, 20260123142717:186-188 flex_tournaments, 20260107133349:238-242 team_match_tournaments). Client .delete() thẳng qua PostgREST hôm nay là hợp lệ, và useTeamMatchTeams.ts:421 đang làm đúng thế. RPC vì vậy không phải guard, chỉ là đề nghị lịch sự — bất kỳ caller nào (native binary đã phát hành, script tay, caller tương lai) đều đi vòng được. Trigger BEFORE DELETE là chỗ đúng. HAI ĐIỀU KIỆN em giữ nguyên và không nhượng: (1) trigger là migration → git revert KHÔNG lùi được, increment này vẫn RED-tier, cần Cuong ký duyệt; (2) trigger phải RAISE với ERRCODE riêng, có pgTAP, và test bằng ĐÚNG role authenticated qua PostgREST chứ không phải SQL editor superuser — đây là lớp lỗi 42501 đã tái diễn 3+ lần (.claude/memory/lessons-learned.md:8, chính là lý do 20260513000000 phải ra đời)."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "TRIGGER thắng. risk-auditor CONCEDE có bằng chứng: cả 5 bảng đều có RLS `FOR DELETE USING (creator = auth.uid())` CỘNG `GRANT DELETE ... TO authenticated`, và `MyTournaments.tsx:240-246` + `useTeamMatchTeams.ts:421` đang `.delete()` thẳng từ browser. RPC không phải guard — client bỏ qua được. Trigger BEFORE DELETE phủ cả web, native binary đã phát hành, và caller tương lai. Điều kiện risk-auditor KHÔNG nhượng và được giữ: migration này không git-revert được → increment đó vẫn RED-tier cần Cuong ký; trigger phải RAISE ERRCODE riêng + pgTAP + test bằng đúng role `authenticated` qua PostgREST (lớp lỗi 42501 đã tái diễn 3+ lần)."
+    },
+    {
+      "id": "D2",
+      "topic": "Khi giải đã có người trả tiền: CHẶN HẲN hay cho đường thoát gõ-lại-tên?",
+      "why_it_matters": "pre-mortem LIVE-2 chỉ ra quota=3 (`useUserCreateQuota.ts:27`) khiến đường DUY NHẤT để tạo giải mới là xoá giải cũ. Chặn hẳn = organizer kẹt cứng, không tạo được giải mới, và sẽ tìm cách lách (đổi tên giải cũ, nhờ tài khoản khác). Cho đường thoát = vẫn xoá được bằng chứng thanh toán, chỉ thêm ma sát. ui-ux-critic nói thẳng: ma sát chống nhầm TAY, không chống nhầm Ý ĐỊNH — mà đây là nhầm ý định.",
+      "positions": {
+        "solution-architect": "Có đường thoát typed-name: guard chặn mặc định nhưng organizer gõ lại tên giải thì vẫn xoá được.",
+        "risk-auditor": "Từ chối xoá, chấm hết, khi còn đăng ký / đã có người trả tiền / đã có trận xong. Hard-delete chỉ dành cho giải rỗng.",
+        "ui-ux-critic": "Bỏ ô gõ tên (giữ lại CON SỐ hậu quả), chặn hẳn khi đã có thanh toán xác nhận — vì không có refund flow nào trong repo, xoá chính là xoá bằng chứng để hoàn tiền."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "src/hooks/useAdminQuota.ts:10 — `supabase.rpc('set_user_quota', ...)`, dùng ở src/pages/admin/AdminUsers.tsx:9; RPC định nghĩa tại supabase/migrations/20251230114611_df84bff6-e114-4f36-8c39-0113866cc180.sql:67",
+          "note": "Tiền đề giữ đường thoát của em là LIVE-2: quota=3 làm xoá giải cũ thành đường DUY NHẤT để tạo giải mới. Tiền đề đó SAI — em chưa thấy file này ở vòng 1. Có sẵn `set_user_quota` (admin RPC) + hook + UI ở /admin/users, tức tồn tại một đường thoát KHÔNG phá dữ liệu: Cuong nâng quota. Khi có escape valve không mất mát thì đường thoát mất-mát không còn lý do tồn tại, và em không trả lời được câu 'xoá bằng chứng thanh toán rồi thì người đã đóng tiền đòi lại bằng cách nào' (repo không có hàm refund nào). Chốt: giải đã có thanh toán claim/confirm → trigger chặn cứng, KHÔNG có đường thoát trong UI, không render nút xoá (theo copy ui-ux-critic). Em giữ typed-name CHỈ cho nhánh có-đăng-ký-nhưng-chưa-có-tiền — nhánh đó không nằm trong phạm vi D2."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20251230114611_df84bff6-e114-4f36-8c39-0113866cc180.sql:67 (CREATE OR REPLACE FUNCTION public.set_user_quota(_user_id uuid, _new_quota integer)) + src/hooks/useAdminQuota.ts:10 (supabase.rpc('set_user_quota')) + supabase/migrations/20260701140000_team_match_payment_status.sql:13-14 (CHECK payment_status IN ('unpaid','claimed','confirmed'))",
+          "note": "Em thu hẹp phạm vi 'chặn hẳn' xuống ĐÚNG chỗ có tiền, và em trả lời được câu hỏi organizer-kẹt-quota mà không cần phá bằng chứng: đường thoát đã tồn tại và KHÔNG destructive — admin gọi set_user_quota nâng trần (mô tả ở 20260516125412:24-27, đã wire ở useAdminQuota.ts). Với 1 admin và số organizer nhỏ đây là đường khả thi, không cần archive/enum mới (ADD VALUE enum không revert được). Phạm vi chốt lại: (a) team_match_tournaments / team_match_teams có payment_status IN ('claimed','confirmed') → CHẶN CỨNG ở trigger, không typed-name, không đường thoát UI, vì repo không có một hàm refund nào; (b) quick_tables / doubles_elimination / flex — architect chứng minh đúng ở round1 §0.2(a) rằng payment_orders.registration_id FK về event_registrations nên 3 loại này KHÔNG có đường tiền — ở đây em CHẤP NHẬN đường thoát typed-name vì thiệt hại là đăng ký của người khác chứ không phải bằng chứng thanh toán. Điều em KHÔNG nhượng: 'chặn cứng' phải nằm ở trigger, không phải ở việc UI không render nút — không render nút không chặn được useTeamMatchTeams.ts:421 lẫn binary native đã phát hành."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20260516125412_quota_rpcs_flex_doubles_team_match.sql:41-46 — count_user_tournaments đếm COUNT(*) trên cả 4 bảng, KHÔNG lọc status; supabase/migrations/20260529120000_doubles_elimination_open_registration.sql:28 — status đã có giá trị 'completed'",
+          "note": "Giữ nguyên 'chặn hẳn', nhưng mở rộng phạm vi: thế kẹt của organizer KHÔNG phải lý do để cho xoá bằng chứng thanh toán — nó là một bug đếm quota. Quota đếm cả giải đã 'completed', nên một giải xong việc chiếm slot VĨNH VIỄN và đường duy nhất lấy lại slot là xoá cứng. Đường thoát typed-name của solution-architect chữa triệu chứng ở đúng chỗ đắt nhất (luồng tiền); sửa mệnh đề WHERE của count_user_tournaments rẻ hơn một bậc và không đụng bằng chứng nào. Đề xuất UX cụ thể thay cho typed-name: (1) count_user_tournaments chỉ đếm giải chưa 'completed'/'archived'; (2) MyTournaments.tsx:340-365 tách stat thành 'Đang chạy {n}/{quota}' + 'Đã kết thúc {m} · không tính hạn mức'; (3) hành động chính trên giải đã có tiền đổi từ 'Xoá' thành 'Kết thúc giải' (set status='completed', trả slot ngay, giữ nguyên sổ sách) — đây là thứ organizer THẬT SỰ muốn lúc 21:41, họ gõ tên giải không phải vì muốn xoá sổ sách mà vì muốn slot. (4) Chỉ giải RỖNG mới còn nút xoá cứng. Nếu Cuong không muốn đụng RPC quota đợt này thì lối thoát tạm rẻ nhất là admin nâng profiles.tournament_create_quota — vẫn KHÔNG phải typed-name. Lập trường vòng 1 về ma sát không đổi: ô gõ tên chống nhầm tay, ở đây là nhầm ý định, nó chỉ làm gate cảm thấy an toàn hơn (pre-mortem sự cố 1, mục 'Vì sao mọi gate vẫn xanh')."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "CHẶN CỨNG thắng, không có đường thoát typed-name cho nhánh có tiền. solution-architect CONCEDE có bằng chứng: tiền đề của nó (quota=3 khiến xoá là đường DUY NHẤT) SAI — `set_user_quota` đã tồn tại (`20251230114611:67`, wired `useAdminQuota.ts:10`, UI `/admin/users`), tức có escape valve KHÔNG phá dữ liệu. Và không ai trả lời được \"xoá bằng chứng thanh toán rồi thì người đã đóng tiền đòi lại bằng cách nào\" — repo không có hàm refund nào. Phạm vi chốt: (a) team_match có `payment_status IN (claimed,confirmed)` → trigger chặn cứng, UI không render nút xoá; (b) quick_tables/doubles/flex không có đường tiền (payment_orders FK về event_registrations) → typed-name chấp nhận được. LƯU Ý: ui-ux-critic REFINE và chỉ ra một fix GỐC rẻ hơn cả hai — xem D4."
+    },
+    {
+      "id": "D3",
+      "topic": "Sửa 2 bug luồng đăng ký (tab mặc định + redirect bị nuốt) NGAY, hay phải vá race sức chứa trước?",
+      "why_it_matters": "Hai bug đó đang CHẶN người chơi hoàn tất đăng ký. Vá chúng = nhiều người đăng ký thành công hơn = nhiều INSERT đồng thời hơn đổ vào `register_team_for_doubles_elimination` (check-then-insert KHÔNG lock, đã kiểm chứng: grep `pg_advisory|FOR UPDATE` = 0) và vào `quick_table_registrations` (client `.insert()` thẳng, DB không check sức chứa). Tức là sửa UX có thể kích hoạt một race đang ngủ.",
+      "positions": {
+        "solution-architect": "Option A UX-07 'không đụng schema' — sửa lỗi redirect + gắn đo, ship ngay. Lập luận: bắt chờ 2 tuần baseline để sửa một redirect bị nuốt là áp dụng nguyên tắc D1 sai chỗ, và baseline đo trên luồng đang hỏng thì cũng không so sánh được.",
+        "risk-auditor": "Thứ tự đúng: (a) vá lock doubles-elimination, (b) quyết QuickTable là 'đăng ký có sức chứa' hay 'xin tham gia chờ duyệt' rồi enforce trong DB, (c) gắn journey lấy baseline, (d) rồi mới bàn luồng khách. Nếu chỉ ship được một thứ: vá lock + gắn journey.",
+        "ui-ux-critic": "Tách đôi: #1 (tab mặc định + redirect) là SỬA BUG, ship ngay cùng đo; #2 (đường khách) là thí nghiệm phễu thật, đụng luồng tiền, đúng là phải chờ số. GPT-5.6 đúng cho #2, tôi đúng cho #1."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "HOLD",
+          "evidence": "supabase/migrations/20260529120000_doubles_elimination_open_registration.sql:113-158 (check-then-insert, không lock) + số liệu prod em tự query",
+          "note": "Race là THẬT (em không tranh cãi dòng code), nhưng tải để kích hoạt nó thì không có. Em query prod qua Management API: `quick_table_registrations` = 0 hàng, TỪNG NÀO TỚI GIỜ; chỉ 12/105 quick_tables bật `requires_registration` và 0 cái trong 60 ngày gần nhất. Nhánh doubles-elim: 178 hàng `doubles_elimination_teams` nhưng 4/5 giải có `max(created_at)-min(created_at) = 00:00:00` — organizer nhập roster hàng loạt, không phải tự đăng ký; giải DUY NHẤT đi đường mở đăng ký có 2 đội, cách nhau 20 phút. Tức RPC không-lock đó đã sinh ~2 hàng trong ~2 tháng. Sửa một redirect bị nuốt không tạo ra hai INSERT tranh suất cuối trong cùng mili-giây ở cadence này. Thứ tự của risk-auditor đúng về mặt nguyên tắc nhưng đang bắt một bug chặn-đường-người-dùng xếp hàng sau một race chưa có tải; em giữ ship trước, và đồng ý vá lock đi kèm TRƯỚC khi bàn luồng khách (đúng chỗ tải thật sự tăng)."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "src/pages/Login.tsx:62 (const targetUrl = onboarded ? redirectUrl : \"/onboarding\") + src/pages/Tournaments.tsx:144-145 (hasWatchContent ternary) — cả hai đều là đường điều hướng/render, không file nào trong tập sửa gọi register_team_for_doubles_elimination hay .insert() vào quick_table_registrations",
+          "note": "Em rút lại phần chặn SAI của mình: bug #1 (tab mặc định) và redirect bị nuốt nằm trên đường điều hướng, không nằm trên đường ghi. Sửa chúng không thêm một INSERT đồng thời nào vào register_team_for_doubles_elimination — nó chỉ đưa người dùng tới form đúng chỗ. ui-ux-critic và architect đúng ở #1; ship ngay, GREEN-tier, git revert 5 phút. Em GIỮ NGUYÊN chặn với đường khách (#2 / UX-07 Option C) và nêu ngưỡng rõ như được yêu cầu: race ở 20260529120000_doubles_elimination_open_registration.sql:113-118 vs :158 nổ khi có ≥2 INSERT vào ĐÚNG suất cuối của CÙNG một giải rơi vào cùng cửa sổ transaction (mili-giây) — hôm nay hiếm vì mỗi lượt đăng ký tốn một lần tạo tài khoản, tức là hàng đợi người thật cách nhau hàng chục giây. Cái làm nó nổ không phải tổng tải mà là ĐỘ ĐỒNG THỜI: bỏ tường đăng nhập + link Zalo phát cùng lúc vào nhóm = nhiều người bấm gửi trong cùng vài giây trên một giải sắp đầy. Đó là lý do lock là điều kiện tiên quyết của đường khách, KHÔNG phải của 2 bug điều hướng. Kèm luôn: quick_table_registrations không có check sức chứa nào ở DB (guard duy nhất là UNIQUE(table_id, user_id), 20251225041737:33) — mở khách xoá luôn guard đó."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20260529120000_doubles_elimination_open_registration.sql:112-118,157-165 — em tự mở, xác nhận SELECT count(*) rồi INSERT, không advisory lock, không FOR UPDATE; nhưng cùng file dòng 100-110 hàm lấy _caller = auth.uid() và từ chối rating_source='self'",
+          "note": "Dữ kiện lock là THẬT và em ghi nhận, nhưng nó không lật được thứ tự của #1. Lý do: RPC đó chỉ chạy cho người ĐÃ đăng nhập (_caller = auth.uid()) và chỉ cho giải DUPR — tường đăng nhập ở RegistrationForm.tsx:201-229 vẫn đứng nguyên sau khi đảo tab mặc định. Đảo một dòng ternary trên trang list không thêm được người vào cửa đó; thứ thêm người là #2 (đường khách), mà em đã xếp phải chờ từ vòng 1. Điểm em CHỈNH: race này đang sống trên prod HÔM NAY, độc lập với cụm này — nên nó không phải 'điều kiện tiên quyết của UX-07', nó là một bug P0 riêng nên có ticket riêng và không được dùng làm lý do hoãn một sửa bug 1 dòng cho người chơi. Ràng buộc em nhận: vá lock là gate CỨNG chặn #2 (đường khách), ghi thành điều kiện merge, không phải khuyến nghị. Nếu risk-auditor giữ RED trên #2 vì lý do này thì em không tranh."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "note_orchestrator": "Về THỰC CHẤT đã hội tụ: risk-auditor tự rút lại phần chặn (\"Em rút lại phần chặn SAI của mình\" — 2 bug nằm trên đường điều hướng, không phải đường ghi), architect HOLD kèm SỐ PROD THẬT (quick_table_registrations = 0 hàng từ trước tới nay; 0/60 ngày có quick_table bật requires_registration; nhánh doubles-elim chỉ 1 giải đi đường mở đăng ký, 2 đội cách nhau 20 phút → RPC không-lock sinh ~2 hàng trong ~2 tháng). Cả ba chốt: ship 2 bug NGAY; vá lock là gate CỨNG chỉ chặn đường khách, không chặn 2 bug. Nhưng ledger KHÔNG có CONCEDE kèm bằng chứng ở D3 nên theo luật phải là OPEN_FOR_CUONG. Orchestrator KHÔNG tự chốt. Quyết định của Cuong ở đây gần như hình thức."
+    },
+    {
+      "id": "D4",
+      "topic": "quota=3 là ràng buộc sản phẩm, hay là một BUG ĐẾM? (nảy sinh ở vòng 2, chưa qua đối chất)",
+      "why_it_matters": "Nếu là bug đếm thì sửa nó làm bốc hơi động cơ xoá giải đã thu tiền — tức xoá luôn phần lớn lý do tồn tại của UX-06. Đây là fix GỐC thay vì fix triệu chứng, và rẻ hơn mọi đường thoát UI đang bàn.",
+      "positions": {
+        "ui-ux-critic": "BUG ĐẾM. `count_user_tournaments` (`20260516125412:41-46`) đếm COUNT(*) trên cả 4 bảng KHÔNG lọc status, mà `status=completed` có thật (`20260529120000:28`) → giải đã kết thúc chiếm slot VĨNH VIỄN. Hạn mức \"đang chạy\" bị cài nhầm thành hạn mức \"trọn đời\". Đề xuất: (1) chỉ đếm giải chưa completed/archived; (2) tách stat \"Đang chạy n/quota\" + \"Đã kết thúc m · không tính hạn mức\"; (3) đổi hành động chính từ \"Xoá\" thành \"Kết thúc giải\" (trả slot, giữ sổ sách); (4) chỉ giải RỖNG mới còn nút xoá cứng.",
+        "solution-architect + pre-mortem": "Coi quota=3 là ràng buộc bất biến và thiết kế đường thoát UI quanh nó (typed-name / cảnh báo hậu quả tốt hơn).",
+        "risk-auditor": "Chấp nhận đường thoát KHÔNG destructive nhưng chọn cái rẻ nhất về rủi ro: admin nâng trần bằng `set_user_quota`, không đụng RPC đếm."
+      },
+      "round2": {},
+      "status": "OPEN_FOR_CUONG"
+    },
+    {
+      "id": "D5",
+      "topic": "\"Tường đăng nhập là đòn bẩy số 1 của UX-07\" — có phải DỮ KIỆN hay mới là GIẢ THUYẾT?",
+      "why_it_matters": "Quyết định UX-07 có đáng làm tiếp hay không. Nếu tính năng đơn giản không ai bật thì mở đường khách là giải sai bài toán, và cả cụm UX-07 nên rút về đúng 2 bug điều hướng + gắn đo.",
+      "positions": {
+        "ui-ux-critic": "Tường đăng nhập là đòn bẩy số 1 (đồng thuận cross-vendor với GPT-5.6 — hai vendor độc lập cùng kết luận).",
+        "solution-architect": "BÁC như dữ kiện. `quick_table_registrations` = 0 hàng vĩnh viễn tương thích với CẢ HAI giả thuyết: \"tường giết 100%\" HOẶC \"organizer đơn giản không bật tính năng\" — mà 12/105 bảng bật requires_registration và 0 cái trong 60 ngày ủng hộ vế sau mạnh hơn. Chưa đo được gì cả; đây chính là lý do increment gắn journey phải ship trước.",
+        "risk-auditor": "Không phán về đòn bẩy, nhưng giữ RED trên đường khách vì lý do độc lập (race chưa vá + tiền OTP + nới NOT NULL không revert được)."
+      },
+      "round2": {},
+      "status": "OPEN_FOR_CUONG"
+    }
+  ]
+}

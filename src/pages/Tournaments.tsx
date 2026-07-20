@@ -54,6 +54,10 @@ interface CommunityBracket {
 interface FormatDef {
   fmt: Fmt;
   title: string;
+  /** VI suffix appended to `title`. The format names are product nouns we keep
+   *  in English, but a Vietnamese player reading "Doubles Elimination" cold has
+   *  no idea whether it is the bracket their friend invited them to. */
+  titleVi: string;
   desc: { en: string; vi: string };
   accent: string;
   linkBase: string;
@@ -65,6 +69,7 @@ const FORMATS: FormatDef[] = [
   {
     fmt: "quick-tables",
     title: "Quick Tables",
+    titleVi: "Chia bảng",
     desc: {
       en: "Round robin groups with auto playoffs. 4 to 32 players. Most popular format.",
       vi: "Vòng tròn chia bảng, tự động playoff. 4–32 người chơi. Thể thức phổ biến nhất.",
@@ -78,6 +83,7 @@ const FORMATS: FormatDef[] = [
   {
     fmt: "doubles-elim",
     title: "Doubles Elimination",
+    titleVi: "Loại kép",
     desc: {
       en: "Double elimination bracket — lose once, fall to losers bracket, fight back to the final.",
       vi: "Nhánh thắng nhánh thua — thua một trận rơi xuống nhánh thua, vẫn còn cơ hội vào chung kết.",
@@ -90,6 +96,7 @@ const FORMATS: FormatDef[] = [
   {
     fmt: "flex",
     title: "Flex Format",
+    titleVi: "Tùy chỉnh",
     desc: {
       en: "Custom bracket — define rounds, pools, seeding rules. For non-standard events.",
       vi: "Bracket tùy biến — tự định nghĩa vòng đấu, bảng, luật xếp hạt giống. Cho các giải không theo chuẩn.",
@@ -102,6 +109,7 @@ const FORMATS: FormatDef[] = [
   {
     fmt: "team-match",
     title: "Team Match",
+    titleVi: "Đồng đội",
     desc: {
       en: "MLP-style team competitions — Dreambreaker tiebreaker included.",
       vi: "Thi đấu đồng đội kiểu MLP — có Dreambreaker phân định thắng thua.",
@@ -141,8 +149,16 @@ const Tournaments = () => {
   const { data: tournaments = [], isLoading: tournamentsLoading } = useTournaments();
   const { data: liveStreams = [] } = useLivestreams("live");
 
-  const hasWatchContent = tournaments.length > 0 || liveStreams.length > 0;
-  const tab: Tab = userTab ?? (hasWatchContent ? "watch" : "community");
+  // Default to Community, not Watch.
+  //
+  // The old default was `hasWatchContent ? "watch" : "community"` — but
+  // `useTournaments()` selects every pro tournament ever, with no status
+  // filter, so `hasWatchContent` is always true in production and the
+  // "community" branch was dead code. A player handed a bracket link ("đăng ký
+  // đi anh") landed on a list of finished PPA broadcasts and had to discover a
+  // second tab on their own. Community brackets are the only thing on this
+  // page anyone can actually register for, so they lead.
+  const tab: Tab = userTab ?? "community";
 
   // Community data — all 4 formats, active + completed
   // "Ended" has its own tab now — limit 100 so the list is actually complete (86 QT completed as of 2026-07)
@@ -441,10 +457,15 @@ const Tournaments = () => {
                 <section className="tl-format-section">
                   <div className="tl-format-section-head">
                     <div>
-                      <h3>{vi ? "Giải của bạn" : "Your brackets"}</h3>
+                      <h3>{vi ? "Quick Table của bạn" : "Your Quick Tables"}</h3>
+                      {/* Copy pinned to what the query actually returns:
+                          useUserRegisteredTournaments/useUserCompletedTournaments
+                          read quick_table_* only. Promising "your tournaments"
+                          while showing 1 of 4 formats reads as data loss to the
+                          3 other formats' players. Widening the query is P2. */}
                       <p className="desc">{vi
-                        ? "Các giải bạn đã đăng ký hoặc đã hoàn thành."
-                        : "Tournaments you've registered for or completed."}</p>
+                        ? "Các giải Quick Table bạn đã đăng ký hoặc đã hoàn thành."
+                        : "Quick Table brackets you've registered for or completed."}</p>
                     </div>
                     <div className="right">
                       <span className="count-pill">{userBrackets.length}</span>
@@ -495,7 +516,7 @@ const Tournaments = () => {
                     style={{ ["--fc-accent" as string]: f.accent } as React.CSSProperties}
                     onClick={() => setFmtTab(f.fmt)}
                   >
-                    {f.title}
+                    {vi ? `${f.title} · ${f.titleVi}` : f.title}
                     <span className="count">{formatData[f.fmt].ongoing.length}</span>
                   </button>
                 ))}
@@ -522,7 +543,7 @@ const Tournaments = () => {
               <section className="tl-format-section">
                 <div className="tl-format-section-head">
                   <div>
-                    <h3>{currentFormat.title}</h3>
+                    <h3>{vi ? `${currentFormat.title} · ${currentFormat.titleVi}` : currentFormat.title}</h3>
                     <p className="desc">{vi ? currentFormat.desc.vi : currentFormat.desc.en}</p>
                   </div>
                   <div className="right">
