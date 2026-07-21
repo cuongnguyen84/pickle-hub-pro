@@ -73,28 +73,13 @@ jobs:
           upload: never
           output: codeql-results
 
-      - name: Gate on CodeQL findings (local SARIF)
-        run: |
-          node -e '
-            const fs = require("fs");
-            const dir = "codeql-results";
-            const files = fs.readdirSync(dir).filter(f => f.endsWith(".sarif"));
-            if (files.length === 0) { console.error("no SARIF produced — analysis step broken"); process.exit(1); }
-            let total = 0;
-            for (const f of files) {
-              const sarif = JSON.parse(fs.readFileSync(`${dir}/${f}`, "utf8"));
-              for (const run of sarif.runs ?? []) {
-                for (const r of run.results ?? []) {
-                  total++;
-                  console.log(`[${r.level ?? "warning"}] ${r.ruleId}: ${r.message?.text?.slice(0, 160) ?? ""}`);
-                  const loc = r.locations?.[0]?.physicalLocation;
-                  if (loc) console.log(`    ${loc.artifactLocation?.uri}:${loc.region?.startLine}`);
-                }
-              }
-            }
-            if (total > 0) { console.error(`\n${total} CodeQL finding(s) — failing (repo policy: zero findings since 2026-07-18)`); process.exit(1); }
-            console.log("CodeQL: 0 findings");
-          '
+      # Fails on any finding NOT in scripts/codeql-baseline.json — the same
+      # semantic the upload path had (new findings block, human-dismissed
+      # ones don't). Dismissals died with the upload entitlement; the
+      # baseline file, with written reasons, replaces them (Cuong-approved
+      # design, PR #432).
+      - name: Gate on CodeQL findings (local SARIF vs baseline)
+        run: node scripts/codeql-gate.mjs codeql-results
 
       - name: Upload SARIF artifact (inspection without Security tab)
         if: always()
