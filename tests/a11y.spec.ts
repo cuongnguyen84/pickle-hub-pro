@@ -13,9 +13,43 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-// color-contrast is disabled: the public pages have known pre-existing
-// contrast issues (Lighthouse has flagged them repo-wide since 2026-07).
-// Re-enable when that debt is paid — everything else fails the build.
+// color-contrast is disabled HERE, for whole-page scans only, because the
+// public pages carry older contrast debt that would drown out new failures.
+//
+// Treat that exemption with suspicion. It was originally written as "Lighthouse
+// has flagged them repo-wide" — a belief that turned out to be wrong, and it
+// cost us: `.tl-filter.active .count` sat at 3.69:1 for months precisely
+// because the one tool that could see it had been told not to look. Lighthouse
+// only caught it once UX-08 changed render timing; the green runs before that
+// were false greens.
+//
+// So: new surfaces get contrast checked explicitly (see expectNoContrastViolations
+// below). Do not extend this blanket disable to cover new debt.
+/**
+ * Contrast-only scan of one component, with the rule ENABLED.
+ *
+ * Scoped rather than page-wide so a new surface can be held to AA without
+ * first paying off every older violation on the same page.
+ */
+async function expectNoContrastViolations(page: Page, selector: string, context: string) {
+  const results = await new AxeBuilder({ page })
+    .include(selector)
+    .withRules(["color-contrast"])
+    .analyze();
+
+  // `incomplete` counts as failure here, and that is the whole point of this
+  // helper. Scan this page too early and axe returns "Element content is too
+  // short to determine if it is actual text content" — the counts have not
+  // loaded yet — which lands in `incomplete`, leaves `violations` empty, and
+  // reads exactly like a pass. That is how the real 3.68:1 failure stayed
+  // invisible: not because anything said it was fine, but because nothing said
+  // anything. An inconclusive contrast check is a broken check.
+  const problems = [...results.violations, ...results.incomplete].flatMap((v) =>
+    v.nodes.map((n) => n.failureSummary ?? `${v.id}: inconclusive`),
+  );
+  expect(problems, `${context} contrast problems:\n${problems.join("\n")}`).toEqual([]);
+}
+
 async function expectNoViolations(page: Page, context: string) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa"])
@@ -179,4 +213,24 @@ test("O2 create wizard step 1 passes axe", async ({ page }) => {
     timeout: 15_000,
   });
   await expectNoViolations(page, "create wizard step 1");
+});
+
+// ── Filter pills ────────────────────────────────────────────────────────────
+// The active pill inverts its background, so anything inside it that uses a
+// token built for the normal background silently loses contrast. That is what
+// bit `.count` (3.69:1 light / 3.41:1 dark). `.tl-filter` is shared by
+// /rankings, /news, /forum, /videos, /blog, /live and the bracket views, so one
+// scan here protects all of them.
+test("filter pills meet AA contrast in both states", async ({ page }) => {
+  // networkidle, not domcontentloaded: the pill counts arrive with the data,
+  // and axe cannot judge contrast on an empty span.
+  await page.goto("/rankings", { waitUntil: "networkidle" });
+  const active = page.locator(".tl-filters .tl-filter.active").first();
+  // An ACTIVE pill must exist, or this test passes without ever checking the
+  // inverted background — the only state that was broken.
+  await expect(active).toBeVisible({ timeout: 15_000 });
+  // And its count must actually have rendered a number, or axe returns
+  // "content too short" and the scan proves nothing.
+  await expect(active.locator(".count")).toHaveText(/\d/, { timeout: 15_000 });
+  await expectNoContrastViolations(page, ".tl-filters", "filter pills");
 });
