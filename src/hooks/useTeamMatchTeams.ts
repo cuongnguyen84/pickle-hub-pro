@@ -6,7 +6,7 @@ import { sanitizeString } from '@/lib/validation';
 
 // Every team_match_teams column EXCEPT invite_code. The invite code is a join
 // secret locked down at the DB layer (column-level GRANT, migration
-// 20260722090000) — selecting '*' (or RETURNING *) would 42501 the whole query
+// 20260722000000) — selecting '*' (or RETURNING *) would 42501 the whole query
 // for anon/authenticated, so every read and insert-returning must use this list.
 export const TEAM_MATCH_TEAM_COLUMNS =
   'id, tournament_id, team_name, captain_user_id, seed, status, master_team_id, group_id, payment_status, payment_claimed_at, payment_confirmed_at, created_at, updated_at';
