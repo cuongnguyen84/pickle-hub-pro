@@ -28,7 +28,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22, exactly: supabase-js needs native WebSocket (Node 22+) for the
+          # auth session-mint helper, and node 24 broke loading that same
+          # helper in Playwright before (see memory 2026-07-19).
+          node-version: 22
           cache: npm
 
       - name: Install npm deps
