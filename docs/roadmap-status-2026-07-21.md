@@ -66,8 +66,8 @@ built); near-zero wall_view → close UX-07, the problem is upstream.
 
 | Task | Effort | Blocked on |
 |---|---|---|
-| **QA-04** stable E2E for 10 journeys | 5d | Cuong adds CI secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`. Without them the auth-gated journeys self-skip. |
-| **OPS-04** SLO dashboards + alerts | 4d | Cuong picks tooling (GA4 dashboard / Grafana / extend the existing Telegram alert). Ties cost + where Cuong actually looks. |
+| **QA-04** stable E2E for 10 journeys | 5d | **UNBLOCKED 2026-07-21**: secrets set + wired into `playwright.yml` (PR #431). Remaining work is writing the ten journeys — run in a fresh session. |
+| **OPS-04** SLO dashboards + alerts | 4d | **UNBLOCKED 2026-07-21**: Cuong picked option A — extend the existing Telegram alert (`errors-telegram-alert` + CI Telegram secrets already in place). |
 | **PERF-05** validate CWV p75 with VN field data | 3d | Time — needs ~1 week of RUM post-PERF-04. Earliest ~2026-07-24. |
 | **CLOSE-03** final UX/a11y/perf/security/codebase audit | 3d | "All phases" — now nearly satisfiable; the a11y gate hole (below) is exactly the kind of thing it should catch. |
 | **CLOSE-04** publish scorecard | 1d | CLOSE-03. |
