@@ -14,14 +14,30 @@
 // ============================================================================
 
 import { test, expect } from "@playwright/test";
-import { hasAuthEnv } from "./helpers/supabase-admin";
-import { loginAs } from "./helpers/auth";
+import { authEnvOrFailInCI, mintSessionForEmail } from "./helpers/supabase-admin";
+import { loginAs, TEST_USERS } from "./helpers/auth";
 
 test.describe("auth-gated flows", () => {
+  // QA-04: on CI, missing auth env THROWS (fail-hard) instead of skipping —
+  // a silently-skipped suite reads as green while the guard is off
+  // (pre-mortem incident 1). Local runs without secrets still skip.
   test.skip(
-    !hasAuthEnv(),
-    "Auth env (SUPABASE_URL/SERVICE_ROLE/ANON) not set — skipping 2A",
+    !authEnvOrFailInCI(),
+    "Auth env (SUPABASE_URL/SERVICE_ROLE/ANON) not set — local run, skipping 2A",
   );
+
+  test("canonical magic-link round-trip stays alive (SLO-2 detector)", async () => {
+    // The other tests reuse the session cached by auth.setup.ts; this one
+    // deliberately consumes a FRESH magic-link end to end every run, so a
+    // broken generateLink/verifyOtp path fails CI even with a warm cache
+    // (D4 resolution, proposal auto-milestone-run-2026-07). Node-side only —
+    // no page involved. Minting a new link does not invalidate the cached
+    // session (sessions survive later generateLink calls; only unverified
+    // TOKENS are superseded, and nothing else mints mid-run).
+    const minted = await mintSessionForEmail(TEST_USERS.viewer);
+    expect(minted.session.access_token).toBeTruthy();
+    expect(minted.session.refresh_token).toBeTruthy();
+  });
 
   test("authenticated viewer reaches a RequireAuth route without /login redirect", async ({
     page,

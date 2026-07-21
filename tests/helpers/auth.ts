@@ -8,10 +8,34 @@
 // logged in normally.
 // ============================================================================
 
+import { existsSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { mintSessionForEmail, storageKeyForUrl } from "./supabase-admin";
 
 export type Role = "admin" | "viewer" | "viewerConnected" | "opponent";
+
+/** Where tests/auth.setup.ts caches one minted session per role. */
+export const AUTH_CACHE_DIR = "playwright/.auth";
+
+// Cached sessions older than this are ignored (access token TTL is 1h; the
+// setup project refreshes the pair, but a stale file from a previous local
+// run must not leak into a new one).
+const CACHE_MAX_AGE_MS = 50 * 60_000;
+
+function cachedSession(
+  role: Role,
+): { storageKey: string; storageValue: string } | null {
+  try {
+    const path = `${AUTH_CACHE_DIR}/${role}.json`;
+    if (!existsSync(path)) return null;
+    const parsed = JSON.parse(readFileSync(path, "utf8"));
+    if (!parsed?.storageKey || !parsed?.storageValue) return null;
+    if (Date.now() - (parsed.mintedAt ?? 0) > CACHE_MAX_AGE_MS) return null;
+    return { storageKey: parsed.storageKey, storageValue: parsed.storageValue };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Role -> test-user email map. Override via env so CI can point at whatever
@@ -42,8 +66,13 @@ export async function loginAs(
   role: Role,
   navigateTo?: string,
 ): Promise<void> {
+  // Prefer the session minted once by tests/auth.setup.ts — per-test minting
+  // for the same fixed email raced across parallel workers (magic-link tokens
+  // are single-use + superseded) and was the root cause of the auth flake
+  // (QA-04). Fallback mint keeps one-off local `--project=auth` runs working.
   const email = TEST_USERS[role];
-  const { storageKey, storageValue } = await mintSessionForEmail(email);
+  const { storageKey, storageValue } =
+    cachedSession(role) ?? (await mintSessionForEmail(email));
 
   // Inject before any app JS runs so supabase-js reads it on first init.
   await page.addInitScript(

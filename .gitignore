@@ -75,3 +75,6 @@ ds-bundle/
 
 # Deno lockfile (edge functions)
 deno.lock
+
+# QA-04: cached minted auth sessions (tests/auth.setup.ts) — real tokens, never commit
+playwright/.auth/

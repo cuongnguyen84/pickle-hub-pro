@@ -70,6 +70,7 @@ export default defineConfig({
       fullyParallel: false,
       use: { ...devices["Desktop Chrome"] },
       testMatch: /a11y\.spec\.ts/,
+      dependencies: ["auth-setup"],
     },
     {
       name: "ssr-bot",
@@ -79,11 +80,21 @@ export default defineConfig({
       testMatch: /seo\.spec\.ts/,
     },
 
-    // ── Phase 2A — auth-gated flows (self-skips without mint env) ──────────
+    // ── Phase 2A — auth-gated flows ────────────────────────────────────────
+    // auth-setup mints ONE session per role sequentially (QA-04: per-test
+    // minting for the same email raced across workers — magic-link tokens
+    // are single-use). Skips itself locally without mint env; on CI missing
+    // env FAILS hard (authEnvOrFailInCI).
+    {
+      name: "auth-setup",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /auth\.setup\.ts/,
+    },
     {
       name: "auth",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /auth\.spec\.ts/,
+      dependencies: ["auth-setup"],
     },
 
     // ── Phase 2E — edge function contract tests (request-only) ─────────────
