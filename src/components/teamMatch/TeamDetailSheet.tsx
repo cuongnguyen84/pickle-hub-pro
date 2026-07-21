@@ -130,7 +130,6 @@ export function TeamDetailSheet({
             maxRosterSize={maxRosterSize}
             isCaptain={isCaptain}
             isOwner={isOwner}
-            inviteCode={team.invite_code}
             masterTeamId={team.master_team_id}
             tournamentId={team.tournament_id}
           />

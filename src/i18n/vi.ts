@@ -1583,6 +1583,8 @@ export interface Translations {
     manageAsOrganizer: string;
     viewTeamInfo: string;
     noTeams: string;
+    loadTeamsError: string;
+    retry: string;
     deleteTeamTitle: string;
     deleteTeamDesc: string;
     cancelBtn: string;
@@ -4481,6 +4483,8 @@ export const vi: Translations = {
     manageAsOrganizer: "Quản lý đội hình với quyền BTC",
     viewTeamInfo: "Xem thông tin đội",
     noTeams: "Chưa có đội nào",
+    loadTeamsError: "Không tải được danh sách đội.",
+    retry: "Thử lại",
     deleteTeamTitle: "Xóa đội?",
     deleteTeamDesc: "Bạn có chắc muốn xóa đội \"{name}\"? Hành động này không thể hoàn tác.",
     cancelBtn: "Hủy",

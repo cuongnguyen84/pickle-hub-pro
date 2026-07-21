@@ -68,7 +68,7 @@ interface TeamListProps {
 }
 
 export function TeamList({ tournamentId, isOwner, onTeamClick }: TeamListProps) {
-  const { data: teams, isLoading } = useTeamMatchTeams(tournamentId);
+  const { data: teams, isLoading, isError, refetch } = useTeamMatchTeams(tournamentId);
   const { deleteTeam, isDeletingTeam } = useTeamMatchTeamManagement();
   const { t } = useI18n();
   const c = t.teamMatchComponents;
@@ -89,6 +89,29 @@ export function TeamList({ tournamentId, isOwner, onTeamClick }: TeamListProps) 
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-20 w-full" />
         ))}
+      </div>
+    );
+  }
+
+  // A failed query must not render as "no teams yet" — that reads as valid
+  // emptiness and hides real outages (e.g. permission errors) from everyone.
+  if (isError) {
+    return (
+      <div style={{ ...surfaceCard, padding: 32 }} role="status" aria-live="polite">
+        <div className="tl-empty-card" style={{ margin: 0, padding: '32px 16px' }}>
+          <span className="tl-empty-card-mark">
+            <Users className="h-6 w-6" />
+          </span>
+          <span className="tl-empty-card-label">{c.loadTeamsError}</span>
+          <button
+            type="button"
+            className="tl-btn"
+            onClick={() => refetch()}
+            style={{ marginTop: 12, minHeight: 44, padding: '10px 18px' }}
+          >
+            {c.retry}
+          </button>
+        </div>
       </div>
     );
   }

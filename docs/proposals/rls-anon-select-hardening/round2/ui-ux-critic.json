@@ -1,0 +1,24 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Copy invite-code button (TeamRosterManager.tsx:358-366): keep via SECURITY DEFINER RPC, or delete as dead-end?",
+      "myRound1Position": "DELETE the button/prop/toast — the copied code feeds no join flow.",
+      "move": "HOLD",
+      "action": "HOLD",
+      "evidence": "src/pages/JoinTeam.tsx:28-31 (only /join route reads quick_table_partner_invitations, not team_match_teams); src/hooks/useTeamMatchTeams.ts:615 useTeamByInviteCode has 0 callers; src/components/teamMatch/InviteTeamDialog.tsx:108 is the live email invite path.",
+      "note": "Neither architect nor risk-auditor produced a file:line showing a live consumer of team_match_teams.invite_code — both concede join-by-code is dead. Confirmed by my own read: a captain who copies the code shares a string no flow can redeem (JoinTeam only understands QuickTable partner codes; useTeamByInviteCode is dead). The email edge fn (InviteTeamDialog) is the only surviving invite door, so invite_code readability serves no live or planned join. risk-auditor's 'risk #3 = lose the share button' assumes the button works; you cannot break a flow that is already dead-ended. Building a captain-gated RPC just to keep feeding a button whose output nothing consumes is infra for a broken promise (YAGNI). A share button that shares a code leading nowhere is a worse UX than no button. Self-correction to my r1: the replacement is not a header Copy-link (none exists in TeamDetailSheet) — it is the existing InviteTeamDialog email flow, which needs zero new code. Verdict unchanged: DELETE, do not build the RPC."
+    },
+    {
+      "id": "D2",
+      "topic": "Ship mechanism: single atomic migration in one PR vs expand-then-contract (RPC additive first, deploy web, confirm live, then REVOKE).",
+      "myRound1Position": "Ship migration + client fix in ONE PR — do not split (blocker #1).",
+      "move": "REFINE",
+      "action": "REFINE",
+      "evidence": "src/hooks/useTeamMatchTeams.ts:62,83 (select('*') hooks that must be narrowed before REVOKE); risk-auditor round1 §'Thứ tự deploy expand-then-contract'.",
+      "note": "No real conflict on my axis. My blocker was about PR atomicity — the client narrow/RPC-read must ship WITH the migration, not in a later PR. Expand-then-contract keeps everything in one PR (both migrations + client code); it only sequences the prod APPLY (additive RPC → deploy web → confirm SPA live → then REVOKE). That satisfies my blocker and actively protects the exact user I speak for: without sequencing, the 3-5min web-old × schema-new window blanks the live team-match table for court-side and native users mid-deploy. So I refine 'atomic single migration' toward risk-auditor's two-phase apply and side with risk-auditor over architect's single-atomic-apply on availability grounds. 'Same PR' and 'sequenced apply' are compatible, not opposed — the D2 framing as a disagreement is largely phantom, born from my r1 not addressing apply-order."
+    }
+  ],
+  "newDisagreements": []
+}

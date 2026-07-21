@@ -4,12 +4,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sanitizeString } from '@/lib/validation';
 
+// Every team_match_teams column EXCEPT invite_code. The invite code is a join
+// secret locked down at the DB layer (column-level GRANT, migration
+// 20260722000000) — selecting '*' (or RETURNING *) would 42501 the whole query
+// for anon/authenticated, so every read and insert-returning must use this list.
+export const TEAM_MATCH_TEAM_COLUMNS =
+  'id, tournament_id, team_name, captain_user_id, seed, status, master_team_id, group_id, payment_status, payment_claimed_at, payment_confirmed_at, created_at, updated_at';
+
 export interface TeamMatchTeam {
   id: string;
   tournament_id: string;
   team_name: string;
   captain_user_id: string | null;
-  invite_code: string | null;
   seed: number | null;
   status: string;
   master_team_id: string | null;
@@ -59,11 +65,11 @@ export function useTeamMatchTeams(tournamentId: string | undefined) {
       
       const { data, error } = await supabase
         .from('team_match_teams')
-        .select('*')
+        .select(TEAM_MATCH_TEAM_COLUMNS)
         .eq('tournament_id', tournamentId)
         .order('seed', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: true });
-      
+
       if (error) throw error;
       return data as TeamMatchTeam[];
     },
@@ -80,10 +86,10 @@ export function useTeamMatchTeam(teamId: string | undefined) {
       
       const { data, error } = await supabase
         .from('team_match_teams')
-        .select('*')
+        .select(TEAM_MATCH_TEAM_COLUMNS)
         .eq('id', teamId)
         .single();
-      
+
       if (error) throw error;
       return data as TeamMatchTeam;
     },
@@ -167,7 +173,7 @@ export function useTeamMatchTeamManagement() {
           master_team_id: masterTeamId,
           status: 'approved', // teams are auto-approved — BTC review step removed
         })
-        .select()
+        .select(TEAM_MATCH_TEAM_COLUMNS)
         .single();
 
       if (teamError) throw teamError;
@@ -231,7 +237,7 @@ export function useTeamMatchTeamManagement() {
           master_team_id: masterTeam.id,
           status: 'approved', // captain self-registration is auto-approved (no BTC review)
         })
-        .select()
+        .select(TEAM_MATCH_TEAM_COLUMNS)
         .single();
 
       if (teamError) throw teamError;
@@ -599,34 +605,14 @@ export function useUserTeam(tournamentId: string | undefined) {
       
       const { data, error } = await supabase
         .from('team_match_teams')
-        .select('*')
+        .select(TEAM_MATCH_TEAM_COLUMNS)
         .eq('tournament_id', tournamentId)
         .eq('captain_user_id', user.id)
         .maybeSingle();
-      
+
       if (error) throw error;
       return data as TeamMatchTeam | null;
     },
     enabled: !!tournamentId && !!user,
-  });
-}
-
-// Hook to find team by invite code
-export function useTeamByInviteCode(inviteCode: string | undefined) {
-  return useQuery({
-    queryKey: ['team-match-team-invite', inviteCode],
-    queryFn: async () => {
-      if (!inviteCode) return null;
-      
-      const { data, error } = await supabase
-        .from('team_match_teams')
-        .select('*, team_match_tournaments(*)')
-        .eq('invite_code', inviteCode)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!inviteCode,
   });
 }

@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
+import { useTeamMatchTeamManagement, TEAM_MATCH_TEAM_COLUMNS } from '@/hooks/useTeamMatchTeams';
 import { useMasterTeams, useMasterTeamWithRoster, useMasterTeamManagement } from '@/hooks/useMasterTeams';
 import { Loader2, Plus, Users, Check, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -287,7 +287,7 @@ export function TeamRegistrationDialog({
           master_team_id: masterTeam.id,
           status: 'approved', // captain self-registration is auto-approved (no BTC review)
         })
-        .select()
+        .select(TEAM_MATCH_TEAM_COLUMNS)
         .single();
 
       if (teamError) throw teamError;
