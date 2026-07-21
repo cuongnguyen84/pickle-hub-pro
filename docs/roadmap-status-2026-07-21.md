@@ -117,13 +117,23 @@ higher priority than the `later` rows above.
    can silently pass. Prefer the settled-route axe suite (A11Y-04) for
    contrast, not Lighthouse.
 
-4. **Team-match payment flow may be dead, not just unused.** Prod: 19 teams,
-   100% `unpaid`; exactly 1 of 15 tournaments has a fee configured
-   (`MLP Hà Nội lần 1`, created 07-09) and it has **0 teams**. Not a code bug
-   (RPCs are SECURITY DEFINER, web/native parity holds), but a fee tournament
-   with zero signups two weeks on is a live data point for D5 — a funnel
-   question, not a payment one. Worth Cuong confirming whether that tournament
-   is real.
+4. **Team-match payment flow is unused, not dead — and its 0-signup tournament
+   is NOT D5 evidence.** Prod: 19 teams, 100% `unpaid`; exactly 1 of 15
+   tournaments has a fee configured (`MLP Hà Nội lần 1`, created 07-09) with
+   **0 teams**. Not a code bug (RPCs are SECURITY DEFINER, web/native parity
+   holds). Cuong confirmed 2026-07-21 the reason for 0 signups: **no marketing
+   has run for it yet, and overall awareness of thepicklehub is still too low**
+   — a top-of-funnel/awareness constraint, not a login-wall or discovery-UX
+   problem. So this tournament corroborates neither side of D5; do not read it
+   as a login-wall signal.
+
+   **Implication for the ~08-02 funnel read:** if awareness is the binding
+   constraint site-wide, the funnel will likely show thin volume across every
+   step regardless of the login wall. That is the report's own "near-zero
+   wall_view → problem is upstream, close UX-07" branch, and Cuong's point is
+   direct evidence it may land there. It strengthens the case for NOT building
+   the guest-registration path speculatively — a lower wall converts nobody if
+   nobody arrives.
 
 5. **Loose ends carried from prior checkpoints** (still open): enforce `.tl-btn`
    ratchet HARD after 2026-08-01 (`check-theline` Rule 4); manual admin push
