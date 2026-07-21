@@ -1590,6 +1590,8 @@ export const en: Translations = {
     manageAsOrganizer: "Manage team as organizer",
     viewTeamInfo: "View team info",
     noTeams: "No teams yet",
+    loadTeamsError: "Couldn't load the team list.",
+    retry: "Try again",
     deleteTeamTitle: "Delete team?",
     deleteTeamDesc: "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
     cancelBtn: "Cancel",

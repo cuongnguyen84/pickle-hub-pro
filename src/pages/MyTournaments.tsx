@@ -664,7 +664,7 @@ const MyTournaments = () => {
                 e.preventDefault();
                 performDelete();
               }}
-              disabled={isDeleting}
+              disabled={isDeleting || loadingImpact}
             >
               {isDeleting ? (isVi ? "Đang xóa..." : "Deleting...") : (isVi ? "Xóa" : "Delete")}
             </AlertDialogAction>

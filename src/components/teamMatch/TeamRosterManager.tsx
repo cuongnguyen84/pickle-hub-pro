@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Trash2, Crown, Copy, Loader2, UserPlus, Check, X } from 'lucide-react';
+import { Users, Plus, Trash2, Crown, Loader2, UserPlus, Check, X } from 'lucide-react';
 import { useTeamMatchTeam, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -94,7 +94,6 @@ interface TeamRosterManagerProps {
   maxRosterSize: number;
   isCaptain: boolean;
   isOwner?: boolean;
-  inviteCode?: string | null;
   masterTeamId?: string | null;
   tournamentId?: string;
 }
@@ -104,7 +103,6 @@ export function TeamRosterManager({
   maxRosterSize,
   isCaptain,
   isOwner = false,
-  inviteCode,
   masterTeamId,
   tournamentId,
 }: TeamRosterManagerProps) {
@@ -121,9 +119,6 @@ export function TeamRosterManager({
     listTitle: language === 'vi' ? 'Danh sách thành viên' : 'Member list',
     counterShort: (n: number, max: number) =>
       language === 'vi' ? `${n}/${max} người` : `${n}/${max} players`,
-    inviteCode: (code: string) =>
-      language === 'vi' ? `Mã mời: ${code}` : `Invite code: ${code}`,
-    inviteCopied: language === 'vi' ? 'Đã sao chép mã mời!' : 'Invite code copied!',
     noMembers: language === 'vi' ? 'Chưa có thành viên nào' : 'No members yet',
     levelLabel: language === 'vi' ? 'Level' : 'Level',
     deleteTitle: language === 'vi' ? 'Xóa thành viên?' : 'Remove member?',
@@ -263,13 +258,6 @@ export function TeamRosterManager({
     }
   };
 
-  const handleCopyInviteCode = () => {
-    if (inviteCode) {
-      navigator.clipboard.writeText(inviteCode);
-      toast({ title: txt.inviteCopied });
-    }
-  };
-
   // Add selected members from previous tournament roster
   const handleAddFromPrevious = async () => {
     if (selectedPreviousMembers.size === 0) return;
@@ -355,17 +343,6 @@ export function TeamRosterManager({
             {txt.counterShort(roster.length, maxRosterSize)}
           </p>
         </div>
-        {(isCaptain || isOwner) && inviteCode && (
-          <button
-            type="button"
-            className="tl-btn"
-            onClick={handleCopyInviteCode}
-            style={{ padding: '5px 10px', fontSize: 12 }}
-          >
-            <Copy className="h-3.5 w-3.5" />
-            {txt.inviteCode(inviteCode)}
-          </button>
-        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
