@@ -129,7 +129,7 @@ describe('createGamesIfMissing', () => {
     expect(queries.map((q) => q.table)).toEqual(['team_match_games']);
   });
 
-  it('inserts one game per template plus the Dreambreaker on an even count', async () => {
+  it('upserts one game per template plus the Dreambreaker, ignoring slot conflicts', async () => {
     respond = (q) =>
       q.table === 'team_match_game_templates'
         ? { data: templates, error: null }
@@ -137,18 +137,24 @@ describe('createGamesIfMissing', () => {
 
     await createGamesIfMissing('m1', 't1', true);
 
-    const insert = queries.find((q) => has(q, 'insert'));
-    const rows = argOf(insert!, 'insert')?.[0] as Array<{ is_dreambreaker: boolean }>;
+    const write = queries.find((q) => has(q, 'upsert'));
+    const [rows, opts] = argOf(write!, 'upsert') as [
+      Array<{ is_dreambreaker: boolean }>,
+      { onConflict: string; ignoreDuplicates: boolean },
+    ];
     expect(rows).toHaveLength(3);
     expect(rows.filter((r) => r.is_dreambreaker)).toHaveLength(1);
+    // The regression this guards: a plain insert let a concurrent second
+    // propagation double the game list. Conflicts on the slot must no-op.
+    expect(opts).toEqual({ onConflict: 'match_id,order_index', ignoreDuplicates: true });
   });
 
-  it('inserts nothing when the tournament has no templates', async () => {
+  it('writes nothing when the tournament has no templates', async () => {
     respond = () => ({ data: [], error: null });
 
     await createGamesIfMissing('m1', 't1', false);
 
-    expect(queries.some((q) => has(q, 'insert'))).toBe(false);
+    expect(queries.some((q) => has(q, 'upsert') || has(q, 'insert'))).toBe(false);
   });
 });
 
