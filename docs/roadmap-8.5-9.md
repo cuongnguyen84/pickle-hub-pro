@@ -384,9 +384,11 @@ Record durable choices here or link an ADR.
 
 ## Current execution checkpoint
 
-Last updated: 2026-07-19 after DS-04 (#404) + A11Y-04 (#405) shipped — the DS chain and the first axe/keyboard e2e coverage are done; `mobile-webkit` Playwright project now covers the iOS Safari blind spot. Sessions 2026-07-18 closed ARCH-02 (#399/#400), DS-02 (#401), DS-03 (#403), perf-js-gzip (#389), CodeQL backlog (0 alerts) — details in the task table + memory `session-2026-07-18b-arch02-done`.
+Last updated: 2026-07-21 after ARCH-03 (#422), UX-06/07 cluster (#423, +2 prod migrations), null-slot guard (#424), a11y contrast (#426). Full snapshot: `docs/roadmap-status-2026-07-21.md`. Counts: 66 done · 1 partial (UX-07) · 5 later · 4 blocked.
 
-Remaining open work: UX-01..09 (Phase 3 — UX-01..05 organizer cluster is the highest-value next block, unblocked by DS-03/04) · QA-04/05 · PERF-04/05 (PERF-05 waits for RUM ~24/07) · OPS-04 · CLOSE-03/04 (CLOSE-02 done 2026-07-19) · blocked: BASE-07 (participants), OPS-02 (backup access), A11Y-05 (devices) · loose ends: enforce `.tl-btn` ratchet HARD after 2026-08-01 (check-theline Rule 4), `docs/manual-test-backlog.md` 8 items waiting on Cuong, gen Supabase types (`--schema public`), manual admin push broadcast verify, 2 bugs from /idea (member overbooking DB-01c confirmed race; /vi stuck EN), optional GITHUB_TOKEN for cron-health.
+Remaining open work: **QA-04** (needs CI secrets from Cuong) · **OPS-04** (needs tooling decision) · **PERF-05** (RUM ~24/07) · **UX-07** partial — continue-or-close on the ~02/08 funnel read (D5 unmeasured) · **CLOSE-03/04** (now nearly satisfiable) · blocked: BASE-07 (participants), UX-09 (participants), OPS-02 (backup access), A11Y-05 (devices).
+
+Debt not tracked as rows, arguably higher priority than some `later` rows — see `docs/roadmap-status-2026-07-21.md` §"Open risks": (1) **RED approval gate unenforceable** — pipeline writes to GitHub as Cuong; release-pilot now hands off instead of merging RED; real fix = separate bot identity + fine-grained PAT, needs Cuong; (2) **a11y page-wide contrast still disabled** in the axe suite — real debt behind the blanket rule, CLOSE-03 should quantify; (3) Lighthouse "green" is timing-dependent, not proof; (4) team-match payment may be dead not just unused (1/15 fee tournaments, 0 teams). Older loose ends still open: `.tl-btn` ratchet HARD after 2026-08-01, manual admin push verify, gen Supabase types (`--schema public`), SEC-06 ledger reconciliation, `docs/manual-test-backlog.md` items 8–14.
 
 Previous checkpoint (2026-07-16 round 3) follows for history:
 
