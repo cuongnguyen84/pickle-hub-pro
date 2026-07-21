@@ -1,0 +1,10 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.6",
+  "requestedAt": "2026-07-21T02:57:28.551Z",
+  "latencyMs": 58261,
+  "promptChars": 5759,
+  "replyChars": 5791,
+  "promptFile": "/private/tmp/claude-501/-Users-cm10-pickle-hub-pro/de1a423f-66b2-4510-9a05-5dee731a2bb1/scratchpad/idea-risk-brief.md",
+  "systemPrompt": "You are a hostile staff SRE reviewing a change to a live product run by one person. Your job is to find the specific failure this change causes in production. Be concrete: name the mechanism, the trigger, the user-visible symptom. Reject generic risk language. If the change is genuinely safe, say so plainly and briefly."
+}

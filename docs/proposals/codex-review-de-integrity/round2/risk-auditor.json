@@ -1,0 +1,19 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D3",
+      "topic": "P1 residual: vá 3 dòng re-check status dưới lock (architect) vs BỎ hẳn (em), và pre-mortem đề xuất guard riêng cái organizer-add seed=NULL",
+      "myRound1Position": "BỎ hẳn P1; migration downside (SLO-3, không git-revert) lớn hơn residual (1 đội seed=NULL, hồi phục được, path dùng đúng 1 lần ở prod)",
+      "move": "HOLD",
+      "note": "Giữ BỎ toàn bộ P1, KHÔNG tách seed=NULL orphan thành mục riêng. Em tự mở supabase/migrations/20260529140000_doubles_elim_organizer_add_team.sql:56-58 — organizer_add_team CÓ guard `IF _t.status <> 'registration_open' THEN REGISTRATION_CLOSED`. Nên cơ chế pre-mortem nêu ('organizer thêm đội SAU khi close gán seed') bị chặn thẳng ở đường tuần tự: sau close, RPC từ chối. Seed=NULL orphan chỉ đạt được qua RACE close/add đồng thời — mà chính organizer là người bấm close, phải tự double-action cùng lúc = gần như không thể ở luồng 1 người vận hành. Thêm nữa capacity-recheck DƯỚI lock ở 20260721010000:83-88 đã backstop luôn nhánh self-register (full vẫn full). Kết: không có bug tuần tự nào cần vá; và nếu race hiếm có fire, row seed=NULL vẫn HIỆN trong danh sách đội, organizer thấy ngay, backfill seed được. Không migration, không frontend guard suy đoán — YAGNI. Verdict tier không đổi: AMBER cho P2+P3, RED CHỈ khi gói kèm migration."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "pre-mortem đề xuất 'nên guard riêng cái organizer-add-post-close seed=NULL'. Em bác: đường tuần tự đã bị chặn bởi status guard 20260529140000:56-58 (REGISTRATION_CLOSED). Chỉ còn một race đòi organizer tự double-action đúng thời điểm close — không đạt được ở luồng 1 người, row lại hiện+hồi phục được. Guard này bảo vệ một path không tồn tại trên thực tế. pre-mortem được hư cấu hậu quả (seed=NULL orphan), nhưng cơ chế (add SAU close) không survive verification.",
+      "with": "pre-mortem",
+      "myPosition": "Không thêm guard nào — cả migration lẫn frontend re-query. BỎ toàn bộ P1."
+    }
+  ]
+}

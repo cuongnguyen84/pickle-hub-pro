@@ -1,0 +1,74 @@
+{
+  "slug": "codex-review-de-integrity",
+  "round": 2,
+  "note_on_consensus": "P3(a) start-if-absent + P3(b) tách JourneyKind mới là ĐỒNG THUẬN cả 4 agent — nhưng 4 đều Claude, không phải bằng chứng độc lập. Đồng thuận cross-vendor DUY NHẤT đáng tính: GPT-5.6 (qua risk-auditor) ĐỘC LẬP bắt được rằng fix P1 tối thiểu KHÔNG đóng được race vì `close_doubles_elimination_registration` (20260529120000:215) cũng không lấy lock — orchestrator đã verify grep, đúng. Điều này nghiêng D3 mạnh về BỎ P1. risk-auditor cũng tự xác nhận thêm: `kind` KHÔNG phải GA4 dimension (emit chỉ gửi journey_id + event name) → tách kind 0 ảnh hưởng dashboard cũ, gỡ nỗi lo duy nhất của P3(b).",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "P2 progress bar: BỎ hẳn, hay xây feature count MỚI?",
+      "why_it_matters": "Quyết định P2 có tồn tại không. risk-auditor grep xác nhận (orchestrator verify lại) `OpenRegistrationSection` KHÔNG có caller render nào — chỉ barrel re-export. Home bỏ ở ae641d93. Nên 'sửa hard-code 25%' = 0 thay đổi người dùng. architect + critic vòng 1 xây phương án trên tiền đề recon SAI (bar đang hiển thị).",
+      "positions": {
+        "risk-auditor": "Dead code — grep xác nhận 0 caller. 'Fix' = 0 user change. Nếu Cuong muốn count đăng ký thật thì đó là FEATURE MỚI trên Tournaments.tsx (thêm 1 aggregate GROUP BY query, xử lý lỗi kẻo throw sập cả list, verify GRANT anon), không phải vá bug.",
+        "solution-architect": "(vòng 1, trên tiền đề sai) count per-card trong OpenRegistrationCard, không nhét vào useOpenRegistrationTables.",
+        "ui-ux-critic": "(vòng 1, trên tiền đề sai) bỏ thanh fill gây hiểu nhầm, giữ tỉ lệ X/Y dạng text."
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution_note": "Sự thật đã giải quyết phần 'bug hay không': KHÔNG phải bug (dead code). Còn lại là câu hỏi PHẠM VI cho Cuong: có muốn xây feature count đăng ký thật trên /tournaments không, hay bỏ P2? Orchestrator KHÔNG tự quyết feature mới.",
+      "round2": {
+        "ui-ux-critic": {
+          "move": "CONCEDE",
+          "evidence": "src/components/quicktable/index.ts:4 — chỉ có re-export barrel; grep toàn src/ KHÔNG có render caller <OpenRegistrationSection/> nào (chỉ định nghĩa tại OpenRegistrationSection.tsx:79 + barrel). useOpenRegistrationTables được Tools.tsx:19/Tournaments.tsx:165 dùng nhưng 2 trang đó render card RIÊNG, không render component chứa bar 25%. Home bỏ ở ae641d93.",
+          "note": "Tự mở kiểm chứng: bar 25% render cho 0 người. Tiền đề load-bearing của critique vòng 1 ('nói dối tín hiệu còn-chỗ với người đang cân nhắc đăng ký') SAI — không ai thấy. Vậy đây không phải bug UX sống. Nhượng phần 'sửa bug'. NHƯNG giữ nguyên phần spec: copy 'Lượt đăng ký', over-target trung tính 'vẫn đang nhận' (KHÔNG 'Full'/%), error KHÔNG fallback 25%/0, bar aria-hidden + text là nguồn sự thật — tất cả vẫn là spec ĐÚNG cho luồng NẾU Cuong xây feature count thật trên card Tournaments.tsx. Đó là feature mới, không phải vá; scope-decision thuộc Cuong."
+        }
+      },
+      "resolution": "Dead code — ui-ux-critic CONCEDE có bằng chứng (`src/components/quicktable/index.ts:4` chỉ re-export, 0 render caller; orchestrator verify). 'Sửa progress bar' KHÔNG phải bug fix. CÒN LẠI cho Cuong (phạm vi): xây feature count thật trên card /tournaments không? Nếu có: 1 aggregate GROUP BY (KHÔNG per-card N+1 trên limit=20), query TÁCH BIỆT kẻo lỗi throw sập list, verify GRANT anon. Nếu không: xoá dead component."
+    },
+    {
+      "id": "D2",
+      "topic": "TeamMatch/DoublesElim anon: bỏ qua (chỉ instrument Singles+Doubles), hay THÊM CTA 'Đăng nhập để đăng ký'?",
+      "why_it_matters": "Hai agent nói về HAI TRỤC khác nhau, dễ nhầm là mâu thuẫn thuần. architect nói về INSTRUMENT (đo); critic nói về UX (ngõ cụt). Nhưng chúng giao nhau ở một điểm thật: thêm CTA anon CHÍNH LÀ manh nha của guest-path mà D5 chưa quyết — làm sớm có mâu thuẫn với 'đừng xây guest path suy đoán' không.",
+      "positions": {
+        "solution-architect": "P3(c) Option A: chỉ instrument Singles (fix) + Doubles (mặc định). BỎ DoublesElim + TeamMatch vì (1) instrument chúng = xây CTA anon MỚI = chính guest-path D5 chưa quyết, (2) awareness thấp → traffic ~0, data quá thưa để đọc.",
+        "ui-ux-critic": "`TeamMatchView.tsx:185` anon TRỐNG hoàn toàn = **Blocker UX** độc lập với chuyện đo — ngõ cụt cho người vào từ deep-link Facebook. Thêm CTA 'Đăng nhập để đăng ký' full-width ≥44px `<a href>` tới `?redirect=`. Đây là fix UX THẬT, không phải analytics theater. DoublesElim (`:181` chỉ text tĩnh) = Nên-sửa-cao."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "src/pages/TeamMatchView.tsx:173,223 — canRegister gated `&& user`; anon roi qua ternary `canRegister && tournament ? (...) : null` = null (nga cut), CTA login se tro toi /login?redirect=",
+          "note": "Tu mo file kiem: mot login-CTA dieu huong toi /login van bat dang nhap moi dang ky duoc — KHONG phai guest-register, nen ly do 'guest-path' cua em SAI, em bo no. Nhung ket luan cat DE/TeamMatch khoi INSTRUMENT D5 van dung vi traffic ~0 (critic khong phan bac truc nay). Refine: nga cut anon TeamMatch (:223 null) la fix UX ROI RAC de Cuong quyet doc lap voi chuyen do; no khong keo DE/TeamMatch vao goi instrument."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "evidence": "",
+          "note": "Tự mở xác minh: TeamMatchView.tsx:185-223 `registerCTA = canRegister && tournament ? (...) : null`, mà canRegister buộc `&& user` (:173) → anon nhận null, KHÔNG một nút nào. Ngõ cụt xác nhận thật. Phân biệt trục mà deb.json D2 chỉ ra ĐÚNG: nút 'Đăng nhập để đăng ký' chỉ điều hướng tới /login?redirect= (getLoginUrl + postLoginTarget guard, đã hardened PR52) — KHÔNG mở luồng guest-register-không-login. Nên nỗi lo của architect ('thêm CTA = xây guest-path D5 chưa quyết') là lỗi phân loại, không áp cho CTA-tới-login → không lật được Blocker. Không có dữ kiện MỚI: awareness-thấp đã biết ở vòng 1, tôi vẫn gọi Blocker khi biết điều đó. Theo luật vòng 2, Blocker vòng 1 + 0 dữ kiện mới = vẫn Blocker → HOLD, để lên bàn Cuong. LÀM RÕ scope: tôi KHÔNG tranh cãi quyết định của architect về việc KHÔNG instrument DE/TeamMatch cho D5 — đó là trục ĐO, khác trục UX, ở trục đó architect đúng. Blocker của tôi tách khỏi telemetry: telemetry ship được mà không cần nó; ngõ cụt vẫn là defect UX Blocker-tier chờ Cuong lịch riêng (cùng native parity)."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": "HỘI TỤ trục ĐO: chỉ instrument Singles+Doubles cho D5, KHÔNG kéo DE/TeamMatch vào gói đo (architect REFINE bỏ lý do guest-path sai; critic không tranh trục này). CÒN MỞ cho Cuong (trục UX rời rạc): `TeamMatchView.tsx:185` anon TRỐNG = ngõ cụt deep-link; thêm CTA 'Đăng nhập để đăng ký' (chỉ điều hướng /login, KHÔNG guest-register) — critic Blocker HOLD. Làm/không tuỳ Cuong; nếu làm native theo."
+    },
+    {
+      "id": "D3",
+      "topic": "P1 residual (self-register vs close/cancel): vá 3 dòng re-check status dưới lock, hay BỎ hẳn?",
+      "why_it_matters": "risk-auditor sở hữu verdict tier; migration = RED (không git-revert). Nếu vá sai, downside SLO-3 (`CREATE OR REPLACE` hỏng → mọi đăng ký DoublesElim 500) lớn hơn chính residual (1 đội seed=NULL, hồi phục được, path dùng đúng 1 lần ở prod).",
+      "positions": {
+        "solution-architect": "Vá 3 dòng re-check status dưới lock (migration mới, KHÔNG mở lock ra organizer). Ưu tiên thấp nhất, defer được.",
+        "risk-auditor": "BỎ hẳn P1. Fix tối thiểu KHÔNG đóng được race — `close_doubles_elimination_registration` (20260529120000:215) cũng không lấy lock nên close vẫn chạy song song; 3 dòng chỉ giảm cửa sổ. Đóng THẬT cần lock cả close+cancel = migration rộng, thuộc một DB release có test riêng chứ không phải follow-up vội. Verdict AMBER cho P2+P3, RED nếu gói kèm migration P1.",
+        "pre-mortem": "Phần self-register gần như đã đóng bởi capacity-recheck-under-lock; lỗ THẬT là organizer-add sau close+seed (Cuong cho vượt cap nhưng đội seed=NULL orphan khỏi bracket là chuyện khác) — nếu vá thì guard đúng chỗ đó, không phải self-register."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20260529120000_doubles_elimination_open_registration.sql:215 — close_doubles_elimination_registration KHONG co pg_advisory_xact_lock (grep 0 hit trong file)",
+          "note": "Du kien 'close unlocked' em CO o vong 1 (muc 'Dieu em khong chac': cancel/close khong lock), nhung em rut ket luan SAI khi noi 3 dong 'dong dung invariant DB-01'. Tu mo :215 xac nhan close khong lay lock → 3 dong chi THU HEP cua so (con lai khe close-commit-giua-status-read-va-insert), khong GUARANTEE dong. Mot mitigation khong dam bao, tren mot CREATE OR REPLACE live cua register RPC (downside SLO-3 neu than ham sai) > residual 1 doi seed=NULL hoi phuc duoc. Refine: bo P1 khoi goi nay; neu lam thi lam DUNG (lock ca close+cancel) trong mot DB release co test rieng, khong phai follow-up 3 dong. Trung khuyen nghi risk-auditor."
+        },
+        "risk-auditor": {
+          "move": "HOLD",
+          "evidence": "",
+          "note": "Giữ BỎ toàn bộ P1, KHÔNG tách seed=NULL orphan thành mục riêng. Em tự mở supabase/migrations/20260529140000_doubles_elim_organizer_add_team.sql:56-58 — organizer_add_team CÓ guard `IF _t.status <> 'registration_open' THEN REGISTRATION_CLOSED`. Nên cơ chế pre-mortem nêu ('organizer thêm đội SAU khi close gán seed') bị chặn thẳng ở đường tuần tự: sau close, RPC từ chối. Seed=NULL orphan chỉ đạt được qua RACE close/add đồng thời — mà chính organizer là người bấm close, phải tự double-action cùng lúc = gần như không thể ở luồng 1 người vận hành. Thêm nữa capacity-recheck DƯỚI lock ở 20260721010000:83-88 đã backstop luôn nhánh self-register (full vẫn full). Kết: không có bug tuần tự nào cần vá; và nếu race hiếm có fire, row seed=NULL vẫn HIỆN trong danh sách đội, organizer thấy ngay, backfill seed được. Không migration, không frontend guard suy đoán — YAGNI. Verdict tier không đổi: AMBER cho P2+P3, RED CHỈ khi gói kèm migration."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": "Panel HỘI TỤ: BỎ P1. architect REFINE rút kết luận 'đóng invariant' (sai vì close cũng unlocked, 20260529120000:215); risk-auditor HOLD giữ BỎ + verify organizer_add_team CÓ status guard (20260529140000:56-57) chặn orphan tuần tự. GPT-5.6 cross-vendor độc lập bắt 'close unlocked'. Residual = 1 đội seed=NULL hồi phục được, path prod dùng 1 lần; migration vá đúng mang downside SLO-3 > phần thưởng. Cuong chỉ cần xác nhận CHẤP NHẬN để residual, hoặc xếp một DB release riêng có test (KHÔNG follow-up vội)."
+    }
+  ]
+}

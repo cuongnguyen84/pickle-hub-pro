@@ -1,0 +1,22 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "topic": "Instrument Singles+Doubles thoi, hay them CTA anon cho TeamMatch/DoublesElim?",
+      "myRound1Position": "Cat DE/TeamMatch vi instrument chung = xay guest-path D5 chua quyet, va traffic ~0.",
+      "move": "REFINE",
+      "evidence": "src/pages/TeamMatchView.tsx:173,223 — canRegister gated `&& user`; anon roi qua ternary `canRegister && tournament ? (...) : null` = null (nga cut), CTA login se tro toi /login?redirect=",
+      "note": "Tu mo file kiem: mot login-CTA dieu huong toi /login van bat dang nhap moi dang ky duoc — KHONG phai guest-register, nen ly do 'guest-path' cua em SAI, em bo no. Nhung ket luan cat DE/TeamMatch khoi INSTRUMENT D5 van dung vi traffic ~0 (critic khong phan bac truc nay). Refine: nga cut anon TeamMatch (:223 null) la fix UX ROI RAC de Cuong quyet doc lap voi chuyen do; no khong keo DE/TeamMatch vao goi instrument."
+    },
+    {
+      "id": "D3",
+      "topic": "P1 residual: va 3 dong re-check status duoi lock, hay bo?",
+      "myRound1Position": "Va 3 dong re-check status duoi lock (migration moi), uu tien thap nhat, defer duoc.",
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20260529120000_doubles_elimination_open_registration.sql:215 — close_doubles_elimination_registration KHONG co pg_advisory_xact_lock (grep 0 hit trong file)",
+      "note": "Du kien 'close unlocked' em CO o vong 1 (muc 'Dieu em khong chac': cancel/close khong lock), nhung em rut ket luan SAI khi noi 3 dong 'dong dung invariant DB-01'. Tu mo :215 xac nhan close khong lay lock → 3 dong chi THU HEP cua so (con lai khe close-commit-giua-status-read-va-insert), khong GUARANTEE dong. Mot mitigation khong dam bao, tren mot CREATE OR REPLACE live cua register RPC (downside SLO-3 neu than ham sai) > residual 1 doi seed=NULL hoi phuc duoc. Refine: bo P1 khoi goi nay; neu lam thi lam DUNG (lock ca close+cancel) trong mot DB release co test rieng, khong phai follow-up 3 dong. Trung khuyen nghi risk-auditor."
+    }
+  ],
+  "newDisagreements": []
+}

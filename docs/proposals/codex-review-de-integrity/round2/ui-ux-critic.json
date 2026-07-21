@@ -1,0 +1,27 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "P2 progress bar 25%: fix bug hiển thị, hay là dead code không ai thấy?",
+      "myRound1Position": "Bar hard-code 25% ở OpenRegistrationSection.tsx:59 đang bịa mức lấp chỗ trên MỌI giải mở, đánh lừa người chơi court-side — Nên sửa.",
+      "move": "CONCEDE",
+      "evidence": "src/components/quicktable/index.ts:4 — chỉ có re-export barrel; grep toàn src/ KHÔNG có render caller <OpenRegistrationSection/> nào (chỉ định nghĩa tại OpenRegistrationSection.tsx:79 + barrel). useOpenRegistrationTables được Tools.tsx:19/Tournaments.tsx:165 dùng nhưng 2 trang đó render card RIÊNG, không render component chứa bar 25%. Home bỏ ở ae641d93.",
+      "note": "Tự mở kiểm chứng: bar 25% render cho 0 người. Tiền đề load-bearing của critique vòng 1 ('nói dối tín hiệu còn-chỗ với người đang cân nhắc đăng ký') SAI — không ai thấy. Vậy đây không phải bug UX sống. Nhượng phần 'sửa bug'. NHƯNG giữ nguyên phần spec: copy 'Lượt đăng ký', over-target trung tính 'vẫn đang nhận' (KHÔNG 'Full'/%), error KHÔNG fallback 25%/0, bar aria-hidden + text là nguồn sự thật — tất cả vẫn là spec ĐÚNG cho luồng NẾU Cuong xây feature count thật trên card Tournaments.tsx. Đó là feature mới, không phải vá; scope-decision thuộc Cuong."
+    },
+    {
+      "id": "D2",
+      "topic": "CTA anon TeamMatch/DoublesElim: Blocker UX (giữ) hay bỏ vì awareness thấp/traffic ~0 (architect)?",
+      "myRound1Position": "TeamMatchView.tsx:185 anon = 0 CTA = ngõ cụt hoàn toàn cho người vào từ deep-link Facebook → Blocker UX độc lập với chuyện đo.",
+      "move": "HOLD",
+      "note": "Tự mở xác minh: TeamMatchView.tsx:185-223 `registerCTA = canRegister && tournament ? (...) : null`, mà canRegister buộc `&& user` (:173) → anon nhận null, KHÔNG một nút nào. Ngõ cụt xác nhận thật. Phân biệt trục mà deb.json D2 chỉ ra ĐÚNG: nút 'Đăng nhập để đăng ký' chỉ điều hướng tới /login?redirect= (getLoginUrl + postLoginTarget guard, đã hardened PR52) — KHÔNG mở luồng guest-register-không-login. Nên nỗi lo của architect ('thêm CTA = xây guest-path D5 chưa quyết') là lỗi phân loại, không áp cho CTA-tới-login → không lật được Blocker. Không có dữ kiện MỚI: awareness-thấp đã biết ở vòng 1, tôi vẫn gọi Blocker khi biết điều đó. Theo luật vòng 2, Blocker vòng 1 + 0 dữ kiện mới = vẫn Blocker → HOLD, để lên bàn Cuong. LÀM RÕ scope: tôi KHÔNG tranh cãi quyết định của architect về việc KHÔNG instrument DE/TeamMatch cho D5 — đó là trục ĐO, khác trục UX, ở trục đó architect đúng. Blocker của tôi tách khỏi telemetry: telemetry ship được mà không cần nó; ngõ cụt vẫn là defect UX Blocker-tier chờ Cuong lịch riêng (cùng native parity)."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Hình dạng count-query cho P2 NẾU feature được xây: architect P2 Option A đếm per-card (OpenRegistrationSection.tsx:123-132, '3–6 count query/màn'); nhưng bề mặt Cuong thực sự sẽ xây là card Tournaments.tsx (limit=20) → per-card = 20 round-trip trên 4G Android tầm trung = hại INP/LCP. Tôi đứng cùng risk-auditor (#5): PHẢI 1 aggregate GROUP BY quick_table_id, KHÔNG N+1.",
+      "with": "solution-architect",
+      "myPosition": "Count = 1 query gộp GROUP BY tách biệt (để lỗi count không throw sập cả list qua useTournamentData `if(error) throw`), verify GRANT anon trước. Per-card N-query vi phạm perf-budget Vietnam p75. Conditional: chỉ áp nếu Cuong quyết xây count (xem D1 CONCEDE)."
+    }
+  ]
+}
