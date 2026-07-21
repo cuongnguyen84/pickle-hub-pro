@@ -93,10 +93,18 @@ test.describe("auth-gated flows", () => {
     page,
   }) => {
     await loginAs(page, "viewer", "/dupr");
-    await page.waitForTimeout(1500);
+    // QA-04 investigation (proposal auto-milestone-run-2026-07): the old hard
+    // fail here was NOT CSP and NOT a missing client key — the modal lives in
+    // the entry bundle and prod/preview CSP both allow dupr domains (verified
+    // 2026-07-21 against both bundles). What actually happened: a lazy chunk
+    // 404 right after a preview deploy fires the global chunk-error reload,
+    // which navigates the page and unmounts the modal mid-assertion. Let the
+    // page finish fetching its chunks before interacting (bounded — a page
+    // with long-polling must not hang the test).
+    await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 
     const connectBtn = page
-      .getByRole("button", { name: /(kết nối với dupr|connect with dupr|connect dupr)/i })
+      .getByRole("button", { name: /(kết nối với dupr|connect with dupr|kết nối dupr|connect dupr)/i })
       .first();
 
     if ((await connectBtn.count()) === 0) {
