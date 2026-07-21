@@ -124,6 +124,9 @@ export default defineConfig(({ mode }) => ({
           // images/** are crawler/content assets (one OG image alone was
           // 2.26 MB) — they load online and never belong in an install.
           "*.{ico,png,svg}",
+          // Self-hosted UI fonts are part of the installed shell. Keeping all
+          // Latin + Vietnamese subsets offline also avoids a late font swap.
+          "fonts/*.woff2",
           "assets/*.css",
           "assets/index-*.js",
           "assets/vendor-react-*.js",

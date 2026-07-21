@@ -1,3 +1,5 @@
+import { normalizeImageUrl } from "./url-utils";
+
 /**
  * Optimizes Supabase Storage image URLs using the built-in image transformation API.
  * Adds width, height, and format parameters to serve properly sized WebP images.
@@ -70,4 +72,56 @@ export function blogHeroSrcSet(
   }
   const small = path.replace(/\.webp$/, '-768.webp') + (query ? `?${query}` : '');
   return { srcSet: `${small} 768w, ${src} 1600w`, small };
+}
+
+/**
+ * Return a bounded thumbnail URL that is safe to use on high-traffic listing
+ * surfaces. Remote publishers frequently expose multi-megabyte originals for
+ * images that render at 84–224px; loading those originals on the homepage was
+ * responsible for ~5MB per visit.
+ *
+ * Sources with a proven resize contract are transformed. Unknown remote
+ * origins deliberately return undefined so callers render their existing
+ * lightweight placeholder instead of hotlinking an unbounded original.
+ */
+export function homepageThumbnailUrl(
+  source: string | null | undefined,
+  options: { width: number; height: number; quality?: number },
+): string | undefined {
+  if (!source) return undefined;
+
+  const normalized = normalizeImageUrl(source);
+  const transformed = optimizeImageUrl(normalized, options);
+  if (transformed && transformed !== normalized) return transformed;
+
+  // Committed/local assets already have a controlled byte budget.
+  if (normalized.startsWith("/")) return normalized;
+
+  try {
+    const url = new URL(normalized);
+    const host = url.hostname.toLowerCase();
+
+    // Google Drive direct images use the Google Photos CDN transform suffix.
+    if (host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")) {
+      const base = url.toString().replace(/=w\d+(?:-h\d+)?(?:-[a-z]+)?$/i, "");
+      return `${base}=w${options.width}-h${options.height}-c`;
+    }
+
+    // YouTube's maxres image is often 100–200KB for an 84px news thumb.
+    // hqdefault is a bounded 480px derivative and remains crisp at 2x DPR.
+    if (host === "img.youtube.com" || host === "i.ytimg.com") {
+      const match = url.pathname.match(/^\/vi\/([^/]+)\/[^/]+$/);
+      if (!match) return undefined;
+      return `https://i.ytimg.com/vi/${match[1]}/hqdefault.jpg`;
+    }
+
+    // Same-origin absolute URLs are as controlled as root-relative assets.
+    if (host === "thepicklehub.net" || host === "www.thepicklehub.net") {
+      return `${url.pathname}${url.search}`;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
 }

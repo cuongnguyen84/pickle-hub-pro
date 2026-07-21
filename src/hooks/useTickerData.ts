@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useLivestreams, type LivestreamWithLogo } from "@/hooks/useLivestreamData";
+import type { LivestreamWithLogo } from "@/hooks/useLivestreamData";
 import { blogMetadata } from "@/content/blog/metadata";
-import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import {
   formatProMatchTicker,
   lastNameFromDisplayName,
@@ -39,20 +38,23 @@ interface UseTickerDataResult {
   isLoading: boolean;
 }
 
-export function useTickerData(language: Language): UseTickerDataResult {
-  const liveQ = useLivestreams("live");
-  const scheduledQ = useLivestreams("scheduled");
+interface TickerSources {
+  live: LivestreamWithLogo[];
+  scheduled: LivestreamWithLogo[];
+  isLoading?: boolean;
+}
+
+export function useTickerData(language: Language, sources: TickerSources): UseTickerDataResult {
   const matchesQ = useRecentProMatches();
-  const viBlogQ = usePublishedViBlogPosts();
 
   const upcomingStreams = useMemo(
-    () => filterUpcomingWithin24h(scheduledQ.data ?? []),
-    [scheduledQ.data],
+    () => filterUpcomingWithin24h(sources.scheduled),
+    [sources.scheduled],
   );
 
   const liveItems = useMemo(
-    () => buildLivestreamItems(liveQ.data ?? [], upcomingStreams, language),
-    [liveQ.data, upcomingStreams, language],
+    () => buildLivestreamItems(sources.live, upcomingStreams, language),
+    [sources.live, upcomingStreams, language],
   );
 
   const matchItems = useMemo(
@@ -61,12 +63,12 @@ export function useTickerData(language: Language): UseTickerDataResult {
   );
 
   const blogItems = useMemo(
-    () => buildBlogItems(language, viBlogQ.data ?? []),
-    [language, viBlogQ.data],
+    () => buildBlogItems(language),
+    [language],
   );
 
   const mode = resolveTickerMode({
-    liveCount: liveQ.data?.length ?? 0,
+    liveCount: sources.live.length,
     upcomingCount: upcomingStreams.length,
     matchCount: matchItems.length,
     blogCount: blogItems.length,
@@ -94,7 +96,7 @@ export function useTickerData(language: Language): UseTickerDataResult {
   return {
     mode,
     items,
-    isLoading: liveQ.isLoading || scheduledQ.isLoading || matchesQ.isLoading,
+    isLoading: Boolean(sources.isLoading) || matchesQ.isLoading,
   };
 }
 
@@ -256,33 +258,18 @@ function toProMatchInput(row: RawMatchRow): ProMatchTickerInput {
 
 /* ─── Blog (Mode 3) ──────────────────────────────────────────────────── */
 
-interface ViBlogPost {
-  slug?: string;
-  title?: string | null;
-  meta_description?: string | null;
-  published_at?: string | null;
-}
-
-function buildBlogItems(language: Language, viPosts: ViBlogPost[]): TickerItem[] {
-  if (language === "vi") {
-    return viPosts.slice(0, BLOG_LIMIT).map((p, idx) => ({
-      id: `blog-${p.slug ?? idx}`,
-      lead: "TIN TỨC",
-      body: p.title ?? "",
-      trail: truncateExcerpt(p.meta_description),
-      href: `/vi/blog/${p.slug ?? ""}`,
-    }));
-  }
-  // EN: static metadata, sort DESC by publishedDate
+function buildBlogItems(language: Language): TickerItem[] {
   return [...blogMetadata]
     .sort((a, b) => b.publishedDate.localeCompare(a.publishedDate))
     .slice(0, BLOG_LIMIT)
     .map((p) => ({
       id: `blog-${p.slug}`,
-      lead: "BLOG",
-      body: p.titleEn,
-      trail: truncateExcerpt(p.metaDescriptionEn),
-      href: `/blog/${p.slug}`,
+      lead: language === "vi" ? "TIN TỨC" : "BLOG",
+      body: language === "vi" ? p.titleVi : p.titleEn,
+      trail: truncateExcerpt(
+        language === "vi" ? p.metaDescriptionVi : p.metaDescriptionEn,
+      ),
+      href: language === "vi" ? `/vi/blog/${p.slug}` : `/blog/${p.slug}`,
     }));
 }
 

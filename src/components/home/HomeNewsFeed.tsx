@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { useNewsItems } from "@/hooks/useNewsItems";
+import type { NewsItem } from "@/hooks/useNewsItems";
+import { homepageThumbnailUrl } from "@/lib/image-utils";
 
 interface HomeNewsFeedProps {
   language: "en" | "vi";
   limit?: number;
+  news: NewsItem[];
 }
 
 /**
@@ -33,21 +35,16 @@ const relativeTime = (iso: string, language: "en" | "vi"): string => {
   });
 };
 
-export function HomeNewsFeed({ language, limit = 4 }: HomeNewsFeedProps) {
-  const { data: news = [], isLoading } = useNewsItems({
-    limit: limit + 6,
-    language,
-  });
-
+export function HomeNewsFeed({ language, limit = 4, news }: HomeNewsFeedProps) {
   const items = news.filter((item) => item.slug).slice(0, limit);
-  if (!isLoading && items.length === 0) return null;
+  if (items.length === 0) return null;
 
   const allHref = language === "vi" ? "/vi/news" : "/news";
   const detailHref = (slug: string) =>
     language === "vi" ? `/vi/news/${slug}` : `/news/${slug}`;
 
   return (
-    <section className="tl-section tl-news-sec" aria-labelledby="home-news-heading">
+    <section className="tl-section tl-news-sec tl-deferred-section" aria-labelledby="home-news-heading">
       <div className="tl-shell">
         <div className="tl-sec-head">
           <h2 id="home-news-heading">
@@ -67,28 +64,42 @@ export function HomeNewsFeed({ language, limit = 4 }: HomeNewsFeedProps) {
         </div>
 
         <div className="tl-news-list">
-          {items.map((item) => (
-            <Link
-              key={item.id}
-              to={detailHref(item.slug as string)}
-              className="tl-news-item"
-            >
-              <div className="tl-news-body">
-                {item.source && (
-                  <span className="tl-news-cat">{item.source}</span>
-                )}
-                <h3 className="tl-news-title">{item.title}</h3>
-                <span className="tl-news-time">
-                  {relativeTime(item.published_at, language)}
-                </span>
-              </div>
-              <div className="tl-news-thumb">
-                {item.image_url ? (
-                  <img src={item.image_url} alt={item.title} loading="lazy" />
-                ) : null}
-              </div>
-            </Link>
-          ))}
+          {items.map((item) => {
+            const thumbnail = homepageThumbnailUrl(item.image_url, {
+              width: 168,
+              height: 168,
+              quality: 70,
+            });
+            return (
+              <Link
+                key={item.id}
+                to={detailHref(item.slug as string)}
+                className="tl-news-item"
+              >
+                <div className="tl-news-body">
+                  {item.source && (
+                    <span className="tl-news-cat">{item.source}</span>
+                  )}
+                  <h3 className="tl-news-title">{item.title}</h3>
+                  <span className="tl-news-time">
+                    {relativeTime(item.published_at, language)}
+                  </span>
+                </div>
+                <div className="tl-news-thumb">
+                  {thumbnail ? (
+                    <img
+                      src={thumbnail}
+                      alt=""
+                      width={84}
+                      height={84}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : null}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

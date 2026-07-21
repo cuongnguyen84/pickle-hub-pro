@@ -7,6 +7,11 @@ interface VideoThumbnailProps {
   className?: string;
   /** Show lucide Video icon as final fallback when both thumbnail and storage_path missing */
   showIconFallback?: boolean;
+  /**
+   * Allow fetching the video itself to paint its first frame. Disable on dense
+   * listing/home surfaces: some MOV files require multi-megabyte metadata reads.
+   */
+  allowVideoFallback?: boolean;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -17,12 +22,13 @@ export function VideoThumbnail({
   title,
   className = "w-full h-full object-cover",
   showIconFallback = true,
+  allowVideoFallback = true,
 }: VideoThumbnailProps) {
   if (thumbnailUrl) {
     return <img src={thumbnailUrl} alt={title} loading="lazy" className={className} />;
   }
 
-  if (storagePath) {
+  if (storagePath && allowVideoFallback) {
     const videoUrl = `${SUPABASE_URL}/storage/v1/object/public/videos/${storagePath}`;
     return (
       <video

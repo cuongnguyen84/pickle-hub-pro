@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import type { Livestream } from "@/hooks/useSupabaseData";
 import { Countdown } from "@/components/Countdown";
+import { homepageThumbnailUrl } from "@/lib/image-utils";
 
 // Lazy so the video vendor chunk (~1MB) only loads when a court is actually
 // live and the inline player renders — never on a homepage with no live.
@@ -16,8 +17,8 @@ interface LiveSectionProps {
 }
 
 /**
- * Home "ĐANG TRỰC TIẾP" priority block. Leads the home feed cluster when
- * at least one court is live OR a broadcast is scheduled.
+ * Home "ĐANG TRỰC TIẾP" priority block. Appears after the synchronous
+ * editorial anchor when at least one court is live OR a broadcast is scheduled.
  *
  * Layout (2026-07 redesign): only the FIRST stream (live first, else the
  * soonest scheduled) gets the full hero card — split thumb/body on desktop
@@ -27,11 +28,17 @@ interface LiveSectionProps {
  * homepage. Scheduled streams stay visible below a live broadcast so the
  * upcoming lineup is always readable.
  */
-const streamThumb = (s: Livestream): string | null =>
-  s.thumbnail_url
-  ?? (s.mux_playback_id
-    ? `https://image.mux.com/${s.mux_playback_id}/thumbnail.jpg?width=1280&height=720&fit_mode=smartcrop`
-    : null);
+const streamThumb = (
+  s: Livestream,
+  size: { width: number; height: number },
+): string | undefined =>
+  homepageThumbnailUrl(
+    s.thumbnail_url
+      ?? (s.mux_playback_id
+        ? `https://image.mux.com/${s.mux_playback_id}/thumbnail.jpg`
+        : null),
+    size,
+  );
 
 const formatTime = (iso: string | null | undefined): string => {
   if (!iso) return "";
@@ -57,6 +64,7 @@ const rowTime = (iso: string | null | undefined): string => {
 const MAX_ROWS = 5;
 
 export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language }: LiveSectionProps) {
+  const [inlinePlaybackRequested, setInlinePlaybackRequested] = useState(false);
   const isLive = liveStreams.length > 0;
   // Live courts first, then the schedule soonest-first — one merged lineup
   // so the schedule stays visible even while something is on air.
@@ -71,7 +79,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
   const [main, ...restAll] = streams;
   const rest = restAll.slice(0, MAX_ROWS);
   const overflow = restAll.length - rest.length;
-  const mainThumb = main ? streamThumb(main) : null;
+  const mainThumb = main ? streamThumb(main, { width: 1280, height: 720 }) : undefined;
   const mainIsLive = main?.status === "live";
   const fallbackTitle = isLive
     ? (language === "vi" ? "Trận đang trực tiếp" : "Live match")
@@ -86,7 +94,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
       : (language === "vi" ? "Vừa phát sóng" : "Recently live");
 
   return (
-    <section className="tl-section tl-live-sec" aria-labelledby="home-live-heading">
+    <section className="tl-section tl-live-sec tl-deferred-section" aria-labelledby="home-live-heading">
       <div className="tl-shell">
         <div className="tl-live-head">
           <h2 id="home-live-heading" className="tl-live-title">
@@ -108,9 +116,34 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
           // a thumbnail. Body still links to the full page for chat etc.
           <div className="tl-live-main tl-live-main--live">
             <div className="tl-live-main-media">
-              <Suspense fallback={<div className="tl-live-thumb-ph" aria-hidden="true" />}>
-                <HomeLivePlayer stream={main} />
-              </Suspense>
+              {inlinePlaybackRequested ? (
+                <Suspense fallback={<div className="tl-live-thumb-ph" aria-hidden="true" />}>
+                  <HomeLivePlayer stream={main} />
+                </Suspense>
+              ) : (
+                <button
+                  type="button"
+                  className="tl-live-inline-start"
+                  onClick={() => setInlinePlaybackRequested(true)}
+                  aria-label={language === "vi" ? `Phát ${mainTitle}` : `Play ${mainTitle}`}
+                >
+                  {mainThumb ? (
+                    <img
+                      src={mainThumb}
+                      alt=""
+                      width={1280}
+                      height={720}
+                      loading="lazy"
+                      fetchPriority="low"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span className="tl-live-thumb-ph" aria-hidden="true" />
+                  )}
+                  <span className="tl-live-start-icon" aria-hidden="true">▶</span>
+                  <span className="tl-live-badge">LIVE</span>
+                </button>
+              )}
             </div>
             <div className="tl-live-main-body">
               <Link to={`/live/${main.id}`} className="tl-live-main-name-link">
@@ -130,7 +163,15 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
           <Link to={`/live/${main.id}`} className="tl-live-main">
             <div className="tl-live-main-thumb">
               {mainThumb ? (
-                <img src={mainThumb} alt={mainTitle} loading="lazy" />
+                <img
+                  src={mainThumb}
+                  alt=""
+                  width={1280}
+                  height={720}
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
+                />
               ) : (
                 <div className="tl-live-thumb-ph" aria-hidden="true" />
               )}
@@ -166,7 +207,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
             aria-label={language === "vi" ? "Các luồng khác" : "Other streams"}
           >
             {rest.map((stream) => {
-              const thumb = streamThumb(stream);
+              const thumb = streamThumb(stream, { width: 224, height: 126 });
               const title = stream.title ?? fallbackTitle;
               const rowIsLive = stream.status === "live";
               return (
@@ -178,7 +219,14 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                 >
                   <div className="tl-live-row-thumb">
                     {thumb ? (
-                      <img src={thumb} alt={title} loading="lazy" />
+                      <img
+                        src={thumb}
+                        alt=""
+                        width={224}
+                        height={126}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
                       <div className="tl-live-thumb-ph" aria-hidden="true" />
                     )}
@@ -211,7 +259,7 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
             {/* Vừa kết thúc (≤7 ngày) — chung list, nhận diện bằng chip
                 "XEM LẠI" highlight thay vì heading riêng chiếm chỗ. */}
             {endedStreams.map((stream) => {
-              const thumb = streamThumb(stream);
+              const thumb = streamThumb(stream, { width: 224, height: 126 });
               const title = stream.title ?? (language === "vi" ? "Buổi phát sóng" : "Broadcast");
               return (
                 <Link
@@ -222,7 +270,14 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                 >
                   <div className="tl-live-row-thumb">
                     {thumb ? (
-                      <img src={thumb} alt={title} loading="lazy" />
+                      <img
+                        src={thumb}
+                        alt=""
+                        width={224}
+                        height={126}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
                       <div className="tl-live-thumb-ph" aria-hidden="true" />
                     )}

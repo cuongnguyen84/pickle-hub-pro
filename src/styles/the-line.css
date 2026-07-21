@@ -1,12 +1,11 @@
 /* ============================================================================
  * The Line — Preview theme (Direction 04)
  * Scoped under [data-theme="the-line"]. Does not leak into production styles.
- * Fonts loaded from index.html as a non-blocking <link rel="stylesheet"
- * media="print" onload="this.media='all'"> — see R2-8. The original
- * @import here forced an extra round-trip after the-line.css arrived.
+ * Fonts are self-hosted and declared in index.html critical CSS — see R2-8.
+ * The original @import here forced an extra round-trip after this CSS arrived.
  * ========================================================================== */
 
-/* @import removed — fonts now load from index.html non-blocking link */
+/* @import removed — fonts now load from self-hosted WOFF2 files. */
 
 /* :root prefix raises specificity to (0,2,0) so these token overrides beat
    index.css's `:root` block (0,1,0), which loads later in the bundle and would
@@ -1205,6 +1204,13 @@
 }
 @media (max-width: 800px) { [data-theme="the-line"] .tl-section { padding: 40px 0; } }
 
+/* Skip layout/paint work for the long tail of the homepage until it nears the
+   viewport. Intrinsic size prevents the browser from collapsing that space. */
+[data-theme="the-line"] .tl-deferred-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
 [data-theme="the-line"] .tl-sec-head {
   display: flex; justify-content: space-between; align-items: flex-end;
   gap: 20px; flex-wrap: wrap; margin-bottom: 32px;
@@ -1994,7 +2000,10 @@
 [data-theme="the-line"] .tl-live-main--live:hover {
   transform: none; border-color: var(--tl-border);
 }
-[data-theme="the-line"] .tl-live-main-media { position: relative; min-width: 0; }
+[data-theme="the-line"] .tl-live-main-media {
+  position: relative; min-width: 0; aspect-ratio: 16 / 9; overflow: hidden;
+  background: linear-gradient(160deg, var(--tl-surface-2), var(--tl-bg-elev) 60%, var(--tl-bg));
+}
 [data-theme="the-line"] .tl-live-embed { position: relative; }
 /* Card already clips + rounds; strip the player's own radius so corners meet. */
 [data-theme="the-line"] .tl-live-embed > div { border-radius: 0; }
@@ -2006,6 +2015,23 @@
   color: var(--tl-green); text-decoration: none;
 }
 [data-theme="the-line"] .tl-live-expand:hover { text-decoration: underline; }
+[data-theme="the-line"] .tl-live-inline-start {
+  position: relative; display: block; width: 100%; height: 100%;
+  padding: 0; border: 0; background: transparent; cursor: pointer;
+  color: inherit;
+}
+[data-theme="the-line"] .tl-live-inline-start > img {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+}
+[data-theme="the-line"] .tl-live-start-icon {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: grid; place-items: center; width: 56px; height: 56px;
+  padding-left: 3px; border-radius: 50%;
+  background: color-mix(in srgb, var(--tl-bg) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tl-fg) 38%, transparent);
+  color: var(--tl-fg); font-size: 19px;
+  backdrop-filter: blur(8px);
+}
 
 /* Desktop: hero goes split (thumb left, body right) so a single stream no
    longer eats a full viewport of vertical space. Mobile keeps the stacked

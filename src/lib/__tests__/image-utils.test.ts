@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { optimizeImageUrl, blogHeroSrcSet } from "../image-utils";
+import {
+  optimizeImageUrl,
+  blogHeroSrcSet,
+  homepageThumbnailUrl,
+} from "../image-utils";
 
 describe("optimizeImageUrl", () => {
   it("transforms Supabase storage URLs to render/image with params", () => {
@@ -56,5 +60,51 @@ describe("blogHeroSrcSet", () => {
     expect(blogHeroSrcSet("https://cdn.example.com/hero.webp")).toBeUndefined();
     expect(blogHeroSrcSet("/images/blog/x-hero-768.webp")).toBeUndefined();
     expect(blogHeroSrcSet(null)).toBeUndefined();
+  });
+});
+
+describe("homepageThumbnailUrl", () => {
+  it("uses bounded Supabase and Mux transforms", () => {
+    expect(
+      homepageThumbnailUrl(
+        "https://example.supabase.co/storage/v1/object/public/thumbs/a.jpg",
+        { width: 168, height: 168 },
+      ),
+    ).toContain("/storage/v1/render/image/public/");
+
+    const mux = homepageThumbnailUrl(
+      "https://image.mux.com/abc/thumbnail.jpg",
+      { width: 224, height: 126 },
+    )!;
+    expect(new URL(mux).searchParams.get("width")).toBe("224");
+    expect(new URL(mux).searchParams.get("height")).toBe("126");
+  });
+
+  it("bounds Google Drive and YouTube thumbnails", () => {
+    expect(
+      homepageThumbnailUrl("https://drive.google.com/file/d/abc_123/view", {
+        width: 224,
+        height: 126,
+      }),
+    ).toBe("https://lh3.googleusercontent.com/d/abc_123=w224-h126-c");
+
+    expect(
+      homepageThumbnailUrl("https://img.youtube.com/vi/video123/maxresdefault.jpg", {
+        width: 168,
+        height: 168,
+      }),
+    ).toBe("https://i.ytimg.com/vi/video123/hqdefault.jpg");
+  });
+
+  it("rejects unbounded third-party originals and keeps controlled local assets", () => {
+    expect(
+      homepageThumbnailUrl("https://storage.ghost.io/content/images/huge.png", {
+        width: 168,
+        height: 168,
+      }),
+    ).toBeUndefined();
+    expect(
+      homepageThumbnailUrl("/images/blog/local.webp", { width: 168, height: 168 }),
+    ).toBe("/images/blog/local.webp");
   });
 });

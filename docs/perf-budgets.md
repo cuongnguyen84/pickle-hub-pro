@@ -33,7 +33,7 @@ the perf-js-gzip pre-mortem).
 - CONTENT: **353.2 KB gz** across 47 blog chunks (max single chunk ~15 KB)
 - Total: **~1822 KB gz** (backstop unchanged at 1970)
 - Entry chunk: ~102 KB gz (the old "~170 KB" line in this doc was stale)
-- PWA precache: **~1.44 MB** (PERF-03)
+- PWA precache: **~1.63 MB** (includes self-hosted Latin/Vietnamese fonts)
 
 ## Budgets
 
@@ -44,8 +44,10 @@ the perf-js-gzip pre-mortem).
 | Per blog-post content chunk (CI-enforced) | ≤ 20 KB | 15 max | every PR |
 | Total gz JS backstop (CI-enforced) | 1970 KB — ratchets DOWN only | ~1822 | deletion/dependency cuts |
 | Any single route chunk gz | ≤ 150 KB (no grandfathers) | 136 max | every PR |
-| PWA precache | ≤ 3 MB | 1.44 MB | hold |
-| Images on journey screens | responsive srcset + explicit dimensions; no >200 KB above-the-fold image | unaudited | PERF-04 |
+| PWA precache | ≤ 3 MB | 1.63 MB | hold |
+| Homepage total transfer (clean desktop lab) | ≤ 3 MB | 0.84 MB | Lighthouse |
+| Homepage media before user play | 0 bytes | 0 bytes | Lighthouse |
+| Images on journey screens | responsive srcset + explicit dimensions; no >200 KB above-the-fold image | homepage compliant | PERF-04 |
 | Mobile p75 (Vietnam RUM, GA4 `web_vital`) | LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1 | collecting since BASE-03 | PERF-05 validates |
 
 ## Rules
@@ -68,3 +70,12 @@ the perf-js-gzip pre-mortem).
 - 2026-07-17 (perf-js-gzip): measurement split into INITIAL/CODE/CONTENT with
   precache-coverage guard; recharts removed (−107.8 KB INITIAL, −122 KB total);
   INITIAL budget set at 280 KB.
+- 2026-07-21 (homepage transfer/CLS): clean desktop Lighthouse transfer
+  13.6 MB → 0.84 MB; media 6.7 MB → 0 before interaction; image transfer
+  5.6 MB → ~0.33 MB; desktop LCP 4.0–6.9s → 1.34–1.38s and Lighthouse CLS
+  0.18–0.24 → 0.000 across three runs. A synchronous editorial anchor plus
+  fixed section ordering removed the direct-observer CLS spike (previously
+  0.91 desktop / 1.46 mobile). Self-hosted font subsets removed cold-run font
+  stalls. Mobile simulated Lighthouse is now stable at 0.70, LCP 5.93–6.23s
+  and CLS 0.000 across three runs; real-user p75 remains the release metric.
+  PWA precache is 1.63 MB, still well below its 3 MB budget.

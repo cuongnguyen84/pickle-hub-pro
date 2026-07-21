@@ -9,8 +9,8 @@ import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { blogMetadata } from "@/content/blog";
-import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { blogHeroSrcSet } from "@/lib/image-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
@@ -22,6 +22,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
 import { useTickerData } from "@/hooks/useTickerData";
+import { useNewsItems } from "@/hooks/useNewsItems";
 
 /**
  * Production homepage. Promoted from preview/the-line on 2026-04-25;
@@ -67,12 +68,20 @@ const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"
     : (diff > 0 ? `in ${days}d` : `${days}d ago`);
 };
 
+const HOME_NEWS_LIMIT = 4;
+
 const Index = () => {
   const { language } = useI18n();
-  const { data: liveStreams = [] } = useLivestreams("live");
-  const { data: scheduledStreams = [] } = useLivestreams("scheduled");
+  const liveQuery = useLivestreams("live");
+  const scheduledQuery = useLivestreams("scheduled");
   // Luồng vừa kết thúc — giữ trên home 7 ngày, tối đa 4 dòng replay.
-  const { data: endedStreams = [] } = useLivestreams("ended", 8);
+  const endedQuery = useLivestreams("ended", 8);
+  const liveStreams = useMemo(() => liveQuery.data ?? [], [liveQuery.data]);
+  const scheduledStreams = useMemo(
+    () => scheduledQuery.data ?? [],
+    [scheduledQuery.data],
+  );
+  const endedStreams = useMemo(() => endedQuery.data ?? [], [endedQuery.data]);
   const recentEnded = endedStreams
     .filter((s) => s.ended_at && Date.now() - new Date(s.ended_at).getTime() < 7 * 86_400_000)
     .slice(0, 4);
@@ -80,8 +89,10 @@ const Index = () => {
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
 
-  // VI published blog posts (Supabase) — only queried when on VI locale to save a request
-  const { data: viBlogPosts = [] } = usePublishedViBlogPosts();
+  const homeNewsQuery = useNewsItems({
+    limit: HOME_NEWS_LIMIT + 6,
+    language,
+  });
 
   // Re-order the home feed in realtime when a stream goes live / ends.
   // Invalidates the ["livestreams"] queries so hasLiveData flips without
@@ -96,10 +107,9 @@ const Index = () => {
     await queryClient.invalidateQueries();
   });
 
-  // Featured stories — 6 most recent, language-aware:
-  //   EN: blogMetadata (static content with heroImage)
-  //   VI: usePublishedViBlogPosts (Supabase vi_blog_posts.cover_image_url)
-  // Normalized into a common shape so the render loop stays simple.
+  // Featured stories come from the generated bilingual content manifest.
+  // Keeping both locales synchronous gives the homepage an immediate LCP and
+  // prevents the VI editorial section from being inserted after first paint.
   type Story = {
     slug: string;
     title: string;
@@ -113,34 +123,21 @@ const Index = () => {
   };
 
   const stories: Story[] = useMemo(() => {
-    if (language === "vi") {
-      return viBlogPosts.slice(0, 6).map((p) => ({
-        slug: p.slug,
-        title: p.title,
-        summary: p.excerpt ?? "",
-        tag: p.category ?? (p.tags?.[0] ?? null),
-        image: p.cover_image_url,
-        imageAlt: p.title,
-        author: "The PickleHub",
-        date: p.published_at,
-        href: `/vi/blog/${p.slug}`,
-      }));
-    }
     return [...blogMetadata]
       .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
       .slice(0, 6)
       .map((p) => ({
         slug: p.slug,
-        title: p.titleEn,
-        summary: p.metaDescriptionEn,
+        title: language === "vi" ? p.titleVi : p.titleEn,
+        summary: language === "vi" ? p.metaDescriptionVi : p.metaDescriptionEn,
         tag: p.tags[0] ?? null,
         image: p.heroImage?.src ?? null,
-        imageAlt: p.heroImage?.alt ?? p.titleEn,
+        imageAlt: p.heroImage?.alt ?? (language === "vi" ? p.titleVi : p.titleEn),
         author: p.author,
         date: p.publishedDate,
-        href: `/blog/${p.slug}`,
+        href: language === "vi" ? `/vi/blog/${p.slug}` : `/blog/${p.slug}`,
       }));
-  }, [language, viBlogPosts]);
+  }, [language]);
 
   // Ticker — 3-mode priority resolver:
   //   live (active or scheduled within 24h) → pro-tour matches (last 3d)
@@ -149,7 +146,11 @@ const Index = () => {
   // surfaces fresh content even on quiet broadcast days. Hook returns
   // { mode, items } so the JSX below can colour the head label by mode
   // (red for live, gold for matches, muted for blog).
-  const ticker = useTickerData(language);
+  const ticker = useTickerData(language, {
+    live: liveStreams,
+    scheduled: scheduledStreams,
+    isLoading: liveQuery.isLoading || scheduledQuery.isLoading,
+  });
 
   const upcomingTournaments = useMemo(() => {
     const now = Date.now();
@@ -441,16 +442,12 @@ const Index = () => {
         );
       })()}
 
-      {/* ── Priority feed cluster (R3) — Live → Editorial → News ──
-          The home feed is treated as an ordered array of sections whose
-          order re-prioritises by live state. When any court is live the
-          LiveSection leads the cluster and pushes the editorial feature
-          down; otherwise the editorial feature leads, with the "Tin mới"
-          news feed directly beneath it. useLiveStatusRealtime keeps the
-          live query fresh so the cluster re-orders in realtime without a
-          reload. The old standalone "Live courts" grid + empty state was
-          retired here — the live block now renders only when something is
-          actually on air. */}
+      {/* ── Stable priority feed — Editorial → Live → News ──
+          Editorial renders synchronously and anchors the first viewport.
+          Realtime live/news results are inserted below it, so async query
+          completion cannot push the LCP candidate around or create a large
+          layout shift. The live block still renders only when useful data
+          exists, and the ticker above surfaces live status immediately. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -477,33 +474,47 @@ const Index = () => {
               {/* Only the 2 most recent on the home feed — the rest live
                   behind the "see all stories" button below. */}
               <div className="tl-stories-grid">
-                {stories.slice(0, 2).map((story) => (
-                  <Link key={story.slug} to={story.href} className="tl-story">
-                    <div className="tl-story-img">
-                      {story.image ? (
-                        <img
-                          src={normalizeImageUrl(story.image)}
-                          alt={story.imageAlt}
-                          loading="lazy"
-                        />
-                      ) : null}
-                      {story.tag && <span className="tl-story-tag">{story.tag}</span>}
-                    </div>
-                    <div className="tl-story-body">
-                      <h3 className="tl-story-title">{story.title}</h3>
-                      {story.summary && <p className="tl-story-summary">{story.summary}</p>}
-                      <div className="tl-story-foot">
-                        <b>{story.author}</b>
-                        {story.date && (
-                          <>
-                            <span>·</span>
-                            <span>{formatDate(story.date).full}</span>
-                          </>
-                        )}
+                {stories.slice(0, 2).map((story, index) => {
+                  const image = normalizeImageUrl(story.image);
+                  const responsive = blogHeroSrcSet(image);
+                  return (
+                    <Link key={story.slug} to={story.href} className="tl-story">
+                      <div className="tl-story-img">
+                        {image ? (
+                          <img
+                            src={responsive?.small ?? image}
+                            srcSet={responsive?.srcSet}
+                            sizes={
+                              index === 0
+                                ? "(min-width: 1100px) 800px, (min-width: 640px) 50vw, calc(100vw - 32px)"
+                                : "(min-width: 1100px) 390px, (min-width: 640px) 50vw, calc(100vw - 32px)"
+                            }
+                            alt={story.imageAlt}
+                            width={1600}
+                            height={900}
+                            loading={index === 0 ? "eager" : "lazy"}
+                            fetchPriority={index === 0 ? "high" : "auto"}
+                            decoding="async"
+                          />
+                        ) : null}
+                        {story.tag && <span className="tl-story-tag">{story.tag}</span>}
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                      <div className="tl-story-body">
+                        <h3 className="tl-story-title">{story.title}</h3>
+                        {story.summary && <p className="tl-story-summary">{story.summary}</p>}
+                        <div className="tl-story-foot">
+                          <b>{story.author}</b>
+                          {story.date && (
+                            <>
+                              <span>·</span>
+                              <span>{formatDate(story.date).full}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
 
               <div style={{ textAlign: "center", marginTop: 32 }}>
@@ -516,6 +527,7 @@ const Index = () => {
         ) : null;
 
         const cluster: Array<{ key: string; node: ReactNode }> = [
+          editorialNode ? { key: "editorial", node: editorialNode } : null,
           hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
             ? {
                 key: "live",
@@ -529,8 +541,16 @@ const Index = () => {
                 ),
               }
             : null,
-          editorialNode ? { key: "editorial", node: editorialNode } : null,
-          { key: "news", node: <HomeNewsFeed language={language} limit={4} /> },
+          {
+            key: "news",
+            node: (
+              <HomeNewsFeed
+                language={language}
+                limit={HOME_NEWS_LIMIT}
+                news={homeNewsQuery.data ?? []}
+              />
+            ),
+          },
         ].filter((s): s is { key: string; node: JSX.Element } => Boolean(s));
 
         return cluster.map((s) => <Fragment key={s.key}>{s.node}</Fragment>);
@@ -595,7 +615,7 @@ const Index = () => {
       {/* Manifesto — moved up from end-of-page (Round 2 audit P0-A).
           Brand thesis arrives early, while user is still scrolling.
           Kicker renumbered / 04 → / 02 to match new position. */}
-      <section className="tl-manifesto">
+      <section className="tl-manifesto tl-deferred-section">
         <div className="tl-shell">
           <div className="tl-manifesto-inner">
             {language === "vi" ? (
@@ -676,7 +696,7 @@ const Index = () => {
       {/* Schedule — single unified timeline now (R2-9). Always renders so
           even an empty state ("No upcoming events yet") gives users a stable
           anchor instead of the section disappearing entirely. */}
-      <section className="tl-section">
+      <section className="tl-section tl-deferred-section">
         <div className="tl-shell">
           <div className="tl-sec-head">
             <h2>
@@ -765,7 +785,7 @@ const Index = () => {
 
       {/* Courtside — video highlights. Hide entire section if 0 videos. */}
       {videos.length > 0 && (
-        <section className="tl-section">
+        <section className="tl-section tl-deferred-section">
           <div className="tl-shell">
             <div className="tl-sec-head">
               <h2>
@@ -792,6 +812,7 @@ const Index = () => {
                       storagePath={v.storage_path}
                       title={v.title}
                       showIconFallback={false}
+                      allowVideoFallback={false}
                     />
                     <div className="tl-video-play-icon">
                       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -832,7 +853,7 @@ const Index = () => {
       {/* Pull-quote — editorial breath between the video grid and the
           stories grid (R2-5 from Round 2 audit). Reinforces the "reporter
           at the court" thesis between two data-heavy content sections. */}
-      <section className="tl-pullquote">
+      <section className="tl-pullquote tl-deferred-section">
         <div className="tl-shell">
           <blockquote className="tl-pullquote-text">
             <span className="tl-pullquote-mark">"</span>
@@ -855,7 +876,7 @@ const Index = () => {
       </section>
 
       {/* Newsletter — editorial convention ("Daily Brief") */}
-      <section className="tl-newsletter">
+      <section className="tl-newsletter tl-deferred-section">
         <div className="tl-shell">
           <div className="tl-newsletter-inner">
             <div className="tl-newsletter-kicker">◆ {language === "vi" ? "Bản tin hàng ngày" : "The Daily Brief"}</div>
