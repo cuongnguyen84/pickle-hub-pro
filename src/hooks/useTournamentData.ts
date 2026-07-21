@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { attachQuickTableApprovedCounts, attachTeamMatchApprovedCounts } from "@/lib/registrationCounts";
 import type { Livestream } from "./useLivestreamData";
 import type { Video } from "./useVideoData";
 
@@ -92,11 +93,17 @@ export type QuickTablePublic = {
   created_at: string;
   creator_user_id?: string;
   creator_display_name?: string;
+  /** Live count of APPROVED registrations — singles from quick_table_registrations,
+   *  doubles from quick_table_teams. Undefined when the count query degraded (never
+   *  block the list). Used for the social-proof badge; approved-only on purpose
+   *  (pending is self-serve + never auto-resolves → would inflate). */
+  registered_count?: number;
 };
 
 export function useOpenRegistrationTables(options?: { limit?: number }) {
   return useQuery({
     queryKey: ["open-registration-tables", options],
+    staleTime: 30_000,
     queryFn: async () => {
       let query = supabase
         .from("quick_tables")
@@ -113,21 +120,22 @@ export function useOpenRegistrationTables(options?: { limit?: number }) {
       const { data: tables, error } = await query;
       if (error) throw error;
       if (!tables || tables.length === 0) return [];
-      
+
+      const withCounts = await attachQuickTableApprovedCounts(tables);
+
       const creatorIds = [...new Set(tables.map(t => t.creator_user_id).filter(Boolean))] as string[];
-      
       if (creatorIds.length === 0) {
-        return tables as QuickTablePublic[];
+        return withCounts as QuickTablePublic[];
       }
-      
+
       const { data: profiles } = await supabase
         .from("public_profiles")
         .select("id, display_name")
         .in("id", creatorIds);
-      
+
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-      
-      return tables.map((t) => {
+
+      return withCounts.map((t) => {
         const profile = t.creator_user_id ? profileMap.get(t.creator_user_id) : null;
         return {
           ...t,
@@ -149,11 +157,15 @@ export type TeamMatchTournamentPublic = {
   created_at: string;
   created_by?: string;
   creator_display_name?: string;
+  /** Live count of APPROVED teams (team_match_teams.status='approved'). Undefined
+   *  when the count query degraded. Social-proof badge, approved-only. */
+  registered_count?: number;
 };
 
 export function useOpenTeamMatchTournaments(options?: { limit?: number }) {
   return useQuery({
     queryKey: ["open-team-match-tournaments", options],
+    staleTime: 30_000,
     queryFn: async () => {
       let query = supabase
         .from("team_match_tournaments")
@@ -169,10 +181,11 @@ export function useOpenTeamMatchTournaments(options?: { limit?: number }) {
       if (error) throw error;
       if (!tournaments || tournaments.length === 0) return [];
 
-      const creatorIds = [...new Set(tournaments.map(t => t.created_by).filter(Boolean))] as string[];
+      const withCounts = await attachTeamMatchApprovedCounts(tournaments);
 
+      const creatorIds = [...new Set(tournaments.map(t => t.created_by).filter(Boolean))] as string[];
       if (creatorIds.length === 0) {
-        return tournaments as TeamMatchTournamentPublic[];
+        return withCounts as TeamMatchTournamentPublic[];
       }
 
       const { data: profiles } = await supabase
@@ -182,7 +195,7 @@ export function useOpenTeamMatchTournaments(options?: { limit?: number }) {
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-      return tournaments.map((t) => {
+      return withCounts.map((t) => {
         const profile = t.created_by ? profileMap.get(t.created_by) : null;
         return {
           ...t,

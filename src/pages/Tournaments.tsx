@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { trackEvent } from "@/utils/ga";
+import { REG_BADGE_MIN, regBadgeCount } from "@/lib/regBadge";
 import {
   useTournaments,
   useLivestreams,
@@ -49,6 +51,10 @@ interface CommunityBracket {
   format?: string | null;
   team_count?: number;
   team_roster_size?: number;
+  requires_registration?: boolean;
+  /** Live approved-registration count (open-reg QuickTable + registration-open
+   *  Team Match only). Undefined = no data / count query degraded. */
+  registered_count?: number;
 }
 
 interface FormatDef {
@@ -62,8 +68,19 @@ interface FormatDef {
   accent: string;
   linkBase: string;
   createLink: string;
-  renderMeta: (t: CommunityBracket, vi: boolean) => string;
+  renderMeta: (t: CommunityBracket, vi: boolean) => React.ReactNode;
 }
+
+/** Social-proof token — REPLACES the quota token when a row is registration-open
+ *  and has ≥ REG_BADGE_MIN approved. Never shown alongside quota (avoids the
+ *  "which number is which" trap). */
+const regBadge = (n: number, doubles: boolean, vi: boolean) => (
+  <span className="tl-br-reg">
+    {doubles
+      ? (vi ? `${n} đội đã đăng ký` : `${n} teams registered`)
+      : (vi ? `${n} người đã đăng ký` : `${n} players registered`)}
+  </span>
+);
 
 const FORMATS: FormatDef[] = [
   {
@@ -77,8 +94,15 @@ const FORMATS: FormatDef[] = [
     accent: "var(--tl-accent-qt)",
     linkBase: "/tools/quick-tables",
     createLink: "/tools/quick-tables",
-    renderMeta: (t, vi) =>
-      `${t.is_doubles ? (vi ? "Đôi" : "Doubles") : (vi ? "Đơn" : "Singles")} · ${t.player_count} ${vi ? "người chơi" : "players"} · ${t.format ?? "Round robin"}`,
+    renderMeta: (t, vi) => {
+      const unit = t.is_doubles ? (vi ? "Đôi" : "Doubles") : (vi ? "Đơn" : "Singles");
+      const fmt = t.format ?? "Round robin";
+      const n = regBadgeCount(t, "quick-tables");
+      if (n !== null) {
+        return <>{unit} · {regBadge(n, !!t.is_doubles, vi)} · {fmt}</>;
+      }
+      return `${unit} · ${t.player_count} ${vi ? "người chơi" : "players"} · ${fmt}`;
+    },
   },
   {
     fmt: "doubles-elim",
@@ -117,7 +141,14 @@ const FORMATS: FormatDef[] = [
     accent: "var(--tl-accent-team)",
     linkBase: "/tools/team-match",
     createLink: "/tools/team-match/new",
-    renderMeta: (t, vi) => `${t.team_count} ${vi ? "đội" : "teams"} · ${t.team_roster_size}/${vi ? "đội" : "team"}`,
+    renderMeta: (t, vi) => {
+      const roster = `${t.team_roster_size}/${vi ? "đội" : "team"}`;
+      const n = regBadgeCount(t, "team-match");
+      if (n !== null) {
+        return <>{regBadge(n, true, vi)} · {roster}</>;
+      }
+      return `${t.team_count} ${vi ? "đội" : "teams"} · ${roster}`;
+    },
   },
 ];
 
@@ -224,6 +255,28 @@ const Tournaments = () => {
 
   const currentFormat = FORMATS.find((f) => f.fmt === fmtTab)!;
   const currentList = formatData[fmtTab][fmtStatus];
+
+  // D3 telemetry — is the social-proof badge actually earning its keep, or is it
+  // invisible because QuickTable registrations sit unapproved/sparse? Emit one
+  // impression per format view: how many eligible rows COULD show a badge
+  // (count≥1) vs actually DO (count≥threshold). Keyed on the stable query arrays
+  // (not currentList, which is a fresh array each render) so it fires per
+  // view/data-change, not per render.
+  useEffect(() => {
+    if (tab !== "community" || fmtStatus !== "ongoing") return;
+    let eligible: { registered_count?: number }[];
+    if (fmtTab === "quick-tables") eligible = openRegTables;
+    else if (fmtTab === "team-match") eligible = openTeamMatches.filter((t) => t.status === "registration");
+    else return;
+    if (eligible.length === 0) return;
+    trackEvent("reg_count_badge_impression", {
+      fmt: fmtTab,
+      eligible: eligible.length,
+      with_data: eligible.filter((t) => (t.registered_count ?? 0) >= 1).length,
+      shown: eligible.filter((t) => (t.registered_count ?? 0) >= REG_BADGE_MIN).length,
+      threshold: REG_BADGE_MIN,
+    });
+  }, [tab, fmtTab, fmtStatus, openRegTables, openTeamMatches]);
 
   return (
     <TheLineLayout
@@ -567,7 +620,16 @@ const Tournaments = () => {
                 ) : (
                   <div className="tl-list">
                     {currentList.map((t) => {
-                      const status = STATUS_LABEL[t.status] ?? { cls: "active" as const, en: t.status, vi: t.status };
+                      // QuickTable "open registration" lives under status='setup'
+                      // (the enum has no 'registration' value), so it renders the
+                      // gold "Chuẩn bị" pill that reads as "not open yet". Override
+                      // to the blue "Đang mở đăng ký" pill so the CTA surface stops
+                      // signalling "not ready" — especially below the badge threshold.
+                      const statusKey =
+                        currentFormat.fmt === "quick-tables" && t.requires_registration && t.status === "setup"
+                          ? "registration"
+                          : t.status;
+                      const status = STATUS_LABEL[statusKey] ?? { cls: "active" as const, en: t.status, vi: t.status };
                       return (
                         <Link
                           key={t.id}

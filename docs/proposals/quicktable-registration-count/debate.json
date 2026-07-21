@@ -1,0 +1,65 @@
+{
+  "slug": "quicktable-registration-count",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "N+1 count fan-out vs 1 truy vấn gộp (batched table_id=in.(...))",
+      "positions": {
+        "solution-architect": "N+1 fan-out theo pattern useUpcomingSocialEvents đủ vì tập open-reg cap limit 20.",
+        "risk-auditor": "N+1 là Blocker: tab Ended load limit 100+100 (Tournaments.tsx:167,170) → ~200 round-trip giết p75 mobile VN. BẮT BUỘC 1 query gộp.",
+        "ui-ux-critic": "N+1 per-card = Blocker (CLS + 4G). Count phải có sẵn lúc row render, batch 1 query.",
+        "pre-mortem": "N+1 trong queryFn chặn render list ongoing (tab mặc định anon) tới count chậm nhất; mất staleTime → refetch storm."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "src/pages/Tournaments.tsx:161,193-196 — tab mặc định 'community' render CẢ 4 format ongoing cho mọi khách kể cả anon; quickTablesOngoing là union 2 hook limit-20, fan-out rộng 4-format không phải 1 list cap-20. useUpcomingSocialEvents.ts:64 — pattern gốc chịu được nhờ staleTime:30_000 mà hook mới thiếu.",
+          "note": "1 query ?select=table_id&status=eq.approved&table_id=in.(ids), đếm client, 1 round-trip cho mọi id đang hiện — ít code hơn Promise.all, hoà tan tranh cãi phạm vi. Đính chính: '200 round-trip' của risk-auditor thổi phồng (giả định gắn completed + đếm rejected); query gộp làm moot."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "1 truy vấn gộp table_id=in.(ids các list ongoing/open-reg), đếm client-side. KHÔNG N+1, KHÔNG gắn tab Ended/completed. 4 agent (2 vendor) hội tụ; architect CONCEDE kèm file."
+    },
+    {
+      "id": "D2",
+      "topic": "Đếm status nào: approved-only vs include-pending vs hybrid (pending khi auto_approve=true)",
+      "positions": {
+        "solution-architect": "R1: status != 'rejected' (gồm pending) vì auto_approve per-table → approved-only đếm 0 ở giải duyệt-tay.",
+        "risk-auditor": "approved-only (.eq status,approved). Data prod team_match_teams 15 approved/19 total; include-pending quảng cáo đội bị-từ-chối là 'đã đăng ký'.",
+        "pre-mortem": "Hybrid: approved-only, +pending chỉ khi auto_approve=true (pending thoáng qua)."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "src/hooks/useInteractionData.ts:88 — useApprovedRegistrations đã cố ý lọc status='approved' làm hợp đồng hiển thị công khai; badge chọn != rejected mâu thuẫn nội bộ. Mig 20251225041737:8 auto_approve DEFAULT false; :54-56 INSERT self-serve gameable.",
+          "note": "Từ bỏ include-pending; nhận hybrid pre-mortem (approved-only + pending khi auto_approve=true)."
+        },
+        "risk-auditor": {
+          "move": "HOLD",
+          "evidence": "src/hooks/useRegistration.ts:123 — INSERT KHÔNG set status → luôn 'pending'; không trigger/logic nào flip theo cờ auto_approve (cờ chỉ đọc ở useQuickTable.ts:175 + QuickTables.tsx:189 lúc tạo bàn). useTeamMatchTeams.ts:168 — team_match_teams INSERT thẳng 'approved', bảng không có cờ.",
+          "note": "Hybrid dựa trên cơ chế KHÔNG tồn tại: 'auto_approve=true → INSERT→approved ngay' sai; đơn nằm pending tới khi BTC duyệt tay. Nhánh auto_approve=true của hybrid tái mở đúng rủi ro phồng-số gameable. approved-only là số THẬT; khoảng trống social-proof vá bằng NHÃN trung thực, không trộn 2 số."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "approved-only. Orchestrator TỰ KIỂM CHỨNG risk-auditor: useRegistration.ts:123 INSERT luôn pending; trigger duy nhất trên bảng là timestamp (mig 20251225041737:85-88); 0 consumer auto_approve trong code/edge/migration. → hybrid dựa cơ chế không tồn tại, BỊ LOẠI. approved-only cho quick_table_registrations; team_match_teams đếm team_status='approved' (INSERT sẵn approved). Defect phụ lộ ra: toggle auto_approve_registrations (QuickTables.tsx:189) hiện KHÔNG làm gì."
+    },
+    {
+      "id": "D3",
+      "topic": "PREMISE: QuickTable có ĐỦ data approved để làm social proof không?",
+      "positions": {
+        "ship-quicktable": "Làm cho QuickTable như intake yêu cầu (badge trên card QuickTable).",
+        "refocus-or-measure": "Data approved thật gần như chỉ có ở team_match_teams (INSERT sẵn approved). quick_table_registrations nằm pending tới khi BTC duyệt tay + prod thưa (~86 QT/nhiều tháng) → approved-only badge QuickTable gần như KHÔNG BAO GIỜ hiện. Nên: chuyển trọng tâm team_match, HOẶC ship + telemetry đo trước khi tin."
+      },
+      "status": "OPEN_FOR_CUONG"
+    },
+    {
+      "id": "D4",
+      "topic": "Có kèm sửa pill 'CHUẨN BỊ' (gold) → 'Đang mở đăng ký' (blue) không?",
+      "positions": {
+        "include-pill-fix": "ui-ux-critic #6: enum quick_table_status không có 'registration' (types.ts:8655); mở đăng ký hiện pill gold CHUẨN BỊ đọc như 'chưa mở'. Chỗ dựa dưới-ngưỡng không tồn tại nếu không override pill.",
+        "defer-pill-fix": "Tách riêng — badge social-proof ship độc lập, pill là scope khác."
+      },
+      "status": "OPEN_FOR_CUONG"
+    }
+  ]
+}

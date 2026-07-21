@@ -1,0 +1,28 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "N+1 fan-out (per-bracket count) vs 1 truy vấn gộp table_id=in.(...)",
+      "myRound1Position": "N+1 fan-out theo pattern useUpcomingSocialEvents đủ vì tập open-reg cap limit 20.",
+      "move": "CONCEDE",
+      "evidence": "src/pages/Tournaments.tsx:161,193-196 — tab mặc định = 'community' render CẢ 4 format ongoing cho mọi khách kể cả anon; quickTablesOngoing (193-196) tự nó là union của 2 hook limit-20. Fan-out thực = 4 format rộng trên bề mặt mặc định, không phải một list cap-20 như em nói vòng 1. useUpcomingSocialEvents.ts:53-64 xác nhận pattern gốc chặn render bằng Promise.all trong queryFn và chỉ chịu được vì có staleTime:30_000 (dòng 64) mà hook mới useOpenRegistrationTables thiếu.",
+      "note": "1 query ?select=table_id&status=eq.approved&table_id=in.(ids)&head, đếm client-side, là 1 round-trip cho MỌI id đang hiện — ít code hơn Promise.all và hoà tan luôn tranh cãi phạm vi (chạy đúng cho 20 hay 100). Đính chính: con số '200 round-trip' của risk-auditor giả định badge gắn vào list completed + đếm cả rejected; query gộp làm điểm đó thành moot nên em không cần cãi số."
+    },
+    {
+      "id": "D2",
+      "topic": "approved-only vs include-pending (status != 'rejected') cho count badge",
+      "myRound1Position": "Dùng != 'rejected' (gồm pending) vì auto_approve per-table → approved-only đếm 0 ở giải duyệt-tay.",
+      "move": "CONCEDE",
+      "evidence": "src/hooks/useInteractionData.ts:80-96 (esp :88) — useApprovedRegistrations ĐÃ cố ý lọc status='approved' làm hợp đồng hiển thị công khai; badge chọn != rejected mâu thuẫn nội bộ. Mig 20251225041737:8 auto_approve_registrations DEFAULT false → tồn tại giải duyệt-tay nơi pending = 'chờ BTC', chưa phải đăng ký thật. :54-56 INSERT self-serve WITH CHECK(user_id=auth.uid()) → raw pending gameable (ai cũng bơm được).",
+      "note": "Nhận hybrid của pre-mortem: mặc định approved-only; chỉ gồm pending KHI auto_approve_registrations=true (cột đã có trong select) — lúc đó pending chỉ thoáng qua nên vô hại và bắt được cửa sổ race. Lo ngại vòng 1 'đếm 0' của em chỉ đúng cho bảng auto (được hybrid giữ nguyên); trên bảng manual thì '0 tới khi BTC duyệt' MỚI là trạng thái trung thực, không phải bug."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Badge KHÔNG nên xuất hiện trên tab Ended/completed — count đăng ký trên bracket đã đóng không gắn với hành động nào của user, chỉ tổng số row cuối. Scope badge = ongoing/open-reg. Điều này tự cắt query khỏi 2 list limit-100 (Tournaments.tsx:167,170) bất kể hình dạng query.",
+      "with": "risk-auditor",
+      "myPosition": "Query gộp chỉ cần chạy trên ids của các list ongoing (open-reg + active), bỏ hẳn completed; giải toả gốc lo p75 của risk-auditor mà không cần đụng tới hình dạng completed list."
+    }
+  ]
+}

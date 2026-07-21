@@ -1,0 +1,14 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "topic": "approved-only vs include-pending vs hybrid (include-pending khi auto_approve_registrations=true)",
+      "myRound1Position": "Badge đếm approved-only (.eq status,approved); include-pending thổi số vì quảng cáo đội pending/rejected là 'đã đăng ký'.",
+      "move": "HOLD",
+      "evidence": "src/hooks/useRegistration.ts:123 — INSERT vào quick_table_registrations KHÔNG set status (dùng DB default 'pending'); không có trigger/logic nào flip pending→approved theo cờ auto_approve. Cờ auto_approve_registrations chỉ được đọc ở useQuickTable.ts:50/143/175 và QuickTables.tsx:189 (set lúc tạo bàn), tuyệt đối không dùng để duyệt đơn. supabase/migrations/20251225041737_...:54-57 — self-serve INSERT WITH CHECK (user_id=auth.uid()), status mặc định pending, bất kỳ user auth nào cũng chèn được. useTeamMatchTeams.ts:168 — team_match_teams INSERT thẳng status:'approved' và bảng này KHÔNG có cờ auto_approve.",
+      "note": "Hybrid KHÔNG đóng được rủi ro #1. Tiền đề của nó — 'auto_approve=true thì INSERT→approved ngay nên pending chỉ thoáng qua' — không tồn tại trong repo: không có trigger nào duyệt tự động, đơn nằm 'pending' cho tới khi BTC duyệt tay. Kết hợp self-serve INSERT (mig :54-57), bất kỳ user nào cũng inject được pending không bao giờ resolve, và ở nhánh auto_approve=true những pending đó BỊ ĐẾM → đúng là phồng số giả gameable mà em cảnh báo, chỉ khác là giờ nằm sau một cờ. Đây là cơ chế bịa (pre-mortem được hư cấu hậu quả, không được hư cấu cơ chế). Với team_match_teams (dữ liệu 15/19 được trích) bảng không có cờ auto_approve nên hybrid tự thoái về approved-only — đúng lập trường em, không có bất đồng ở badge đó. Về lo ngại của solution-architect (giải duyệt-tay đếm ~0 lúc mới mở): đó là vấn đề GIÁ TRỊ (badge ẩn), KHÔNG phải correctness — 0 approved là con số THẬT và trung thực; hiển thị 'X đã đăng ký' khi 0 đội được duyệt mới là nói dối. Khoảng trống social-proof đó phải vá bằng NHÃN trung thực ('X chờ duyệt' tách khỏi 'X đã duyệt'), không phải bằng cách trộn hai con số vào một count."
+    }
+  ],
+  "newDisagreements": []
+}
