@@ -119,6 +119,12 @@ jobs:
           echo "::warning::HTML/asset consistency never settled after 10 tries — running smoke anyway"
 
       - name: Run Playwright tests
+        env:
+          # QA-04: auth-gated journeys mint test sessions via these; without
+          # them tests/helpers/supabase-admin.ts self-skips the whole suite.
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run e2e
 
       - name: Upload Playwright report on failure
