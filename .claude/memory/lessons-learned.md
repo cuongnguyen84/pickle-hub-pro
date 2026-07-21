@@ -439,3 +439,10 @@ JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info
 - **Module top-level import supabase client sẽ nổ trong CI env-less** (`supabaseUrl is required`) khi bị component test kéo vào. Test nào render component đụng chuỗi import đó phải mock `@/integrations/supabase/client`.
 - **Gate overlay: z-index không phải rào a11y.** Screen-reader rotor kích hoạt được element bị che → element nguy hiểm phải unmount/`inert` khi gated, và handler phải tự check cờ (`handleTapToPlay` check `gatedRef`).
 - **CÒN NỢ (PR riêng):** presence-gated cho admin viewer list — merge-gate = runtime test khẳng định `channel.track()` được gọi LẠI khi `isGated→true`; TUYỆT ĐỐI không đưa `gated` vào subscribe deps (collision 2026-07-08). Native /apple hoàn toàn chưa có gate (đợi cùng đợt signed playback — tầng 3).
+
+## 2026-07-21 — Column-level REVOKE (invite_code lockdown, PR #430)
+
+- **`?select=*` sau REVOKE 1 cột = 42501 chết CẢ query, KHÔNG degrade êm.** Chốt bằng curl thực nghiệm trên prod. PostgREST expand `*` từ schema cache role-agnostic → luôn liệt kê cả cột bị thu quyền. Mọi migration REVOKE cột sau này: client phải narrow select TRƯỚC, xác nhận web live, RỒI mới áp REVOKE (expand-then-contract). Panel từng cãi nhau 2 vòng về điểm này — 1 lệnh curl trả lời được.
+- **INSERT/UPDATE `.select()` không tham số = RETURNING \* — cũng cần SELECT privilege trên MỌI cột.** Grep cả `.select()` (không arg) chứ không chỉ `select('*')` khi rà consumer trước một column-REVOKE. Panel 4 agent + GPT-5.6 đều sót; lộ ra lúc đọc code để implement.
+- **Cột bị native binary nêu tên (kể cả trong WHERE/.eq) là cột KHÔNG THỂ revoke** — user không update app. Trước mọi column-REVOKE: `grep -rn "<col>" apple/`.
+- Release-pilot từ chối merge RED dù được nhắn "Cuong đã duyệt" — đúng thiết kế (agent message không phải consent). Flow đúng: orchestrator giữ kênh user thật tự merge sau khi có duyệt tường minh trong phiên.

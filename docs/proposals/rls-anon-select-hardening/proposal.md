@@ -1,6 +1,6 @@
 # Siết anon SELECT trên team_match_teams — khóa cột invite_code
 
-> Slug: `rls-anon-select-hardening` · Ngày: `2026-07-21` · Trạng thái: `draft`
+> Slug: `rls-anon-select-hardening` · Ngày: `2026-07-21` · Trạng thái: `shipped`
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6) ·
 > `risk-auditor` (+GPT-5.6) · `pre-mortem`. Model ngoài chính xác: xem `external/*.meta.json`.
 > Model thiếu key trong lần chạy này: `none`
@@ -186,6 +186,10 @@ Không có — ledger --strict exit 0. Mọi CONCEDE đều kèm file:line đã 
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
-- Khác kế hoạch:
-- Học được (→ append `.claude/memory/lessons-learned.md`):
+- SHA: `c2c4010d` · PR: #430 · Ngày: 2026-07-21
+- Migration `20260722000000` áp prod qua Management API SAU khi web live (đúng runbook D2); ledger ghi cả `20260722000000` + `20260721040000` (reconcile drift #427).
+- Verify post-migration: anon `?select=invite_code` → 42501 ✅ · `?select=id,team_name,status` → 200 ✅ · badge #429 query → 200 ✅ · narrow full list → 200 ✅.
+- **Crux D2 chốt bằng thực nghiệm: anon `?select=*` → 42501 (chết cả query, KHÔNG degrade êm).** Pre-mortem đúng, claim "PostgREST expand `*` thành tập cột được phép" của risk-auditor vòng 1 (và architect vòng 2 dựa theo) SAI. Nếu áp REVOKE trước khi web live, mọi bundle cũ đã trắng trang team-match.
+- Increment 3 đã chạy: rotate 19 `invite_code` (mã lộ trước đó hết hiệu lực).
+- Khác kế hoạch: (1) phát hiện thêm lúc code — 3 chỗ INSERT `.select()` không tham số (= RETURNING \*) cũng phải narrow, panel không bắt được; (2) error-card đặt ở `TeamList.tsx` thay vì `TeamMatchView.tsx` (đúng chỗ chức năng); (3) guard MyTournaments chỉ disable khi `loadingImpact` — nhánh lỗi giữ fail-soft có cảnh báo chữ (quyết định có chủ đích sẵn trong code, không phá); (4) release-pilot từ chối merge RED theo luật cổng → orchestrator merge trên kênh user thật (đúng thiết kế bot-identity 2026-07-20).
+- Học được: xem `.claude/memory/lessons-learned.md` mục 2026-07-21 (RETURNING \* + select=\* 42501).
