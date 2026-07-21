@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTeamRegistration, type Team, type TeamFormData } from '@/hooks/useTeamRegistration';
 import { usePairRequest, type PairRequest } from '@/hooks/usePairRequest';
 import { useDuprConnection } from '@/hooks/useDuprConnection';
+import { startJourneyOnce, trackJourneyStep, completeJourney } from '@/lib/journeys';
 import type { SkillRatingSystem } from '@/hooks/useRegistration';
 import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
 import { Input } from '@/components/ui/input';
@@ -273,7 +274,21 @@ export function DoublesRegistrationForm({
     }
   }, [existingTeam, user, loadPairRequests]);
 
+  // D5 telemetry for the DEFAULT QuickTable branch (doubles). Without this,
+  // "near-zero auth_wall_viewed" would only mean "near-zero on the singles
+  // branch" and say nothing about the surface most players actually hit.
+  // Same shared `quicktable_registration` kind as singles, distinguished by
+  // format; startJourneyOnce so the anon→login remount does not orphan the id.
+  useEffect(() => {
+    startJourneyOnce('quicktable_registration');
+    if (!user) {
+      trackJourneyStep('quicktable_registration', 'auth_wall_viewed', { format: 'doubles' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableId, user?.id]);
+
   const handleLoginClick = () => {
+    trackJourneyStep('quicktable_registration', 'auth_wall_click', { format: 'doubles' });
     const returnUrl = location.pathname + location.search;
     navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
   };
@@ -908,6 +923,13 @@ export function DoublesRegistrationForm({
 
     const result = await createTeam(tableId, formData);
     if (result) {
+      // Registering a new team is the funnel's completion. The pair-request
+      // path (joining an existing team's open slot) is a different intent and
+      // is deliberately left out so the D5 denominator stays clean.
+      completeJourney('quicktable_registration', 'registration_complete', {
+        format: 'doubles',
+        rating_system: ratingSystem,
+      });
       onRegistrationComplete?.();
     }
   };

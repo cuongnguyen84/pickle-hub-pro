@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
 import { statusPillStyle } from '@/lib/statusPillStyle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -54,6 +54,7 @@ import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManage
 import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
+import { buildLoginRedirect } from '@/lib/auth/safeRedirect';
 import { useQueryClient } from '@tanstack/react-query';
 
 const surfaceCard: React.CSSProperties = {
@@ -85,6 +86,7 @@ const tlTabsTriggerClass = [
 export default function TeamMatchView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
   const { toast } = useToast();
@@ -220,6 +222,24 @@ export default function TeamMatchView() {
           onSuccess={() => setActiveTab('overview')}
         />
       )
+    ) : null;
+
+  // Anonymous visitor on an open tournament used to hit a dead end: canRegister
+  // requires `&& user`, so registerCTA was null and a player arriving from a
+  // shared link saw no way in. This is a login CTA (navigates to /login), NOT a
+  // guest-registration path — you still sign in to register. `buildLoginRedirect`
+  // reuses the hardened open-redirect guard.
+  const registrationOpen =
+    tournament?.status === 'registration' || tournament?.status === 'setup';
+  const anonRegisterCTA =
+    !user && registrationOpen && tournament ? (
+      <Link
+        to={buildLoginRedirect(location.pathname + location.search)}
+        className="tl-btn green"
+        style={{ display: 'flex', width: '100%', minHeight: 44, justifyContent: 'center', marginBottom: 12 }}
+      >
+        {language === 'vi' ? 'Đăng nhập để đăng ký đội' : 'Sign in to register a team'}
+      </Link>
     ) : null;
 
   // Player who joined a team (not the captain) — show their request status.
@@ -708,6 +728,7 @@ export default function TeamMatchView() {
 
             <TabsContent value="overview" className="space-y-4 mt-6">
               {registerCTA}
+              {anonRegisterCTA}
               {membershipBanner}
 
               {/* Thứ tự: Thể lệ → Thời gian & địa điểm + DUPR/slot → Lệ phí */}
@@ -766,6 +787,7 @@ export default function TeamMatchView() {
             <TabsContent value="teams" className="mt-6 space-y-4">
               {/* Registration prompt — one-tap for captains, legacy card for owner */}
               {registerCTA}
+              {anonRegisterCTA}
               {membershipBanner}
 
               {/* Captain's team roster — child component (deferred PR D.2) */}

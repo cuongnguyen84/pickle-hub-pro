@@ -24,6 +24,8 @@ import { useDoublesElimination, type Tournament, type Team } from "@/hooks/useDo
 import { DuprConnectButton } from "@/components/dupr/DuprConnectButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
+import { Link, useLocation } from "react-router-dom";
+import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { useToast } from "@/hooks/use-toast";
 
 // Sprint E.4 (2026-05-29). Map of profile id -> dupr_doubles (with singles
@@ -88,6 +90,7 @@ export function DoublesEliminationRegistrationSection({
   const { toast } = useToast();
   const confirm = useConfirm();
   const vi = language === "vi";
+  const location = useLocation();
   const { data: conn, isLoading: connLoading } = useDuprConnection();
   const { registerTeam, cancelTeamRegistration, organizerAddTeam, organizerRemoveTeam, closeRegistration, generateBracket, loading } = useDoublesElimination();
 
@@ -180,7 +183,16 @@ export function DoublesEliminationRegistrationSection({
         </>
       ) : !user ? (
         <NoticeCard tone="info" vi={vi}>
-          {vi ? "Đăng nhập để đăng ký đội." : "Sign in to register a team."}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <span>{vi ? "Đăng nhập để đăng ký đội." : "Sign in to register a team."}</span>
+            <Link
+              to={buildLoginRedirect(location.pathname + location.search)}
+              className="tl-btn green"
+              style={{ display: "flex", width: "100%", minHeight: 44, justifyContent: "center" }}
+            >
+              {vi ? "Đăng nhập để đăng ký đội" : "Sign in to register a team"}
+            </Link>
+          </div>
         </NoticeCard>
       ) : connLoading ? (
         <NoticeCard tone="info" vi={vi}>

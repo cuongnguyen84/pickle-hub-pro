@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { startJourney, trackJourneyStep, completeJourney } from '@/lib/journeys';
+import { startJourneyOnce, trackJourneyStep, completeJourney } from '@/lib/journeys';
 import { useAuth } from '@/hooks/useAuth';
 import { useRegistration, type RegistrationFormData, type Registration, type SkillRatingSystem } from '@/hooks/useRegistration';
 import { useDuprConnection } from '@/hooks/useDuprConnection';
@@ -194,7 +194,7 @@ export function RegistrationForm({
           : null;
 
   const handleLoginClick = () => {
-    trackJourneyStep('player_registration', 'auth_wall_click', { format: 'quicktable' });
+    trackJourneyStep('quicktable_registration', 'auth_wall_click', { format: 'singles' });
     const returnUrl = location.pathname + location.search;
     navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
   };
@@ -206,15 +206,15 @@ export function RegistrationForm({
   // argues for a guest path, a near-zero wall_view says nobody reaches this
   // screen at all and the problem is upstream.
   useEffect(() => {
-    startJourney('player_registration');
+    // startJourneyOnce, not startJourney: this effect re-runs on the
+    // anon→authenticated transition (user?.id changes), and on a full-page
+    // OAuth round-trip the form remounts entirely. A fresh mint on either would
+    // orphan the anonymous `auth_wall_viewed` id from the eventual
+    // `registration_complete`, which is exactly the join D5 needs.
+    startJourneyOnce('quicktable_registration');
     if (!user) {
-      trackJourneyStep('player_registration', 'auth_wall_viewed', { format: 'quicktable' });
+      trackJourneyStep('quicktable_registration', 'auth_wall_viewed', { format: 'singles' });
     }
-    // Intentionally keyed on the bracket + auth state only: re-running on every
-    // field edit would re-mint the journey id and inflate the denominator.
-    // user?.id (not `user`) — Supabase mints a NEW user object on every
-    // TOKEN_REFRESHED event (same identity, new reference), which would
-    // otherwise re-mint the journey id on every silent token refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableId, user?.id]);
 
@@ -363,7 +363,7 @@ export function RegistrationForm({
 
     const result = await submitRegistration(tableId, formData);
     if (result) {
-      completeJourney('player_registration', 'registration_complete', {
+      completeJourney('quicktable_registration', 'registration_complete', {
         format: 'quicktable',
         rating_system: ratingSystem,
       });

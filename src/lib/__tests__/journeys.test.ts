@@ -14,7 +14,7 @@ vi.mock("../webVitalsRum", () => ({
   resolveMarketSegment: async () => "vn",
 }));
 
-import { startJourney, trackJourneyStep, completeJourney } from "../journeys";
+import { startJourney, startJourneyOnce, trackJourneyStep, completeJourney } from "../journeys";
 
 function stubBrowserGlobals() {
   const store = new Map<string, string>();
@@ -89,5 +89,43 @@ describe("journeys", () => {
     completeJourney("organizer_event", "organizer_event_published"); // never started
     await flush();
     expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  // Regression for the collision that shipped past Codex + CI: the QuickTable
+  // flow used to reuse the `player_registration` kind, so it shared the
+  // sessionStorage key with the Social Event modal. Two concurrent journeys of
+  // those kinds must now hold INDEPENDENT ids — otherwise one flow's completion
+  // clears the other's id and the D5 funnel blends two flows.
+  it("player_registration and quicktable_registration keep independent ids", async () => {
+    const social = startJourney("player_registration");
+    const quicktable = startJourney("quicktable_registration");
+    expect(quicktable).not.toBe(social);
+    // Completing one must not disturb the other's active id.
+    completeJourney("quicktable_registration", "registration_complete");
+    trackEvent.mockClear();
+    trackJourneyStep("player_registration", "player_registration_submit_attempted");
+    await flush();
+    // The social step still fires → its id survived the quicktable completion.
+    expect(trackEvent).toHaveBeenCalled();
+  });
+
+  describe("startJourneyOnce", () => {
+    it("reuses the active id instead of minting a new one", () => {
+      const first = startJourneyOnce("quicktable_registration");
+      const second = startJourneyOnce("quicktable_registration");
+      expect(second).toBe(first);
+    });
+
+    it("mints a fresh id once the previous journey is stale", () => {
+      vi.useFakeTimers();
+      try {
+        const first = startJourneyOnce("quicktable_registration");
+        vi.advanceTimersByTime(61 * 60 * 1000); // past the 1h abandon window
+        const second = startJourneyOnce("quicktable_registration");
+        expect(second).not.toBe(first);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

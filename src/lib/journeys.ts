@@ -16,6 +16,12 @@ import {
 
 export type JourneyKind =
   | "player_registration"
+  // QuickTable tournament registration (singles + doubles). SEPARATE from
+  // player_registration on purpose: that one is the Social Event OTP flow
+  // (RegistrationModal) with its own event vocabulary, and the two used to
+  // share the sessionStorage key `journey_player_registration_id` — a real
+  // collision that also blended the D5 funnel. Distinct kind = distinct key.
+  | "quicktable_registration"
   | "organizer_event"
   // UX-01..05: the 4 tournament creation flows (prop `tool` distinguishes
   // flex | quicktable | teammatch | doubles).
@@ -26,11 +32,28 @@ export type JourneyKind =
   | "livestream_gate";
 
 const JOURNEY_SCHEMA_VERSION = 1;
+// A journey older than this is treated as abandoned: sessionStorage only
+// clears on completeJourney, so a tab left open for days would otherwise let a
+// LATER registration attempt reuse a stale id and merge two funnels.
+const JOURNEY_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
 const storageKey = (kind: JourneyKind) => `journey_${kind}_id`;
+const stampKey = (kind: JourneyKind) => `journey_${kind}_at`;
 
 function readActiveId(kind: JourneyKind): string | null {
   try {
     return sessionStorage.getItem(storageKey(kind));
+  } catch {
+    return null;
+  }
+}
+
+function readFreshId(kind: JourneyKind): string | null {
+  try {
+    const id = sessionStorage.getItem(storageKey(kind));
+    if (!id) return null;
+    const at = Number(sessionStorage.getItem(stampKey(kind)) ?? 0);
+    if (!at || Date.now() - at > JOURNEY_MAX_AGE_MS) return null;
+    return id;
   } catch {
     return null;
   }
@@ -45,10 +68,25 @@ export function startJourney(kind: JourneyKind): string {
   const id = crypto.randomUUID();
   try {
     sessionStorage.setItem(storageKey(kind), id);
+    sessionStorage.setItem(stampKey(kind), String(Date.now()));
   } catch {
     // Journey still tracks within this page's lifetime via the return value.
   }
   return id;
+}
+
+/**
+ * Start a journey ONLY if there isn't already a fresh one for this kind —
+ * otherwise return the existing id. This is what a registration form must
+ * call: its start effect re-runs on the anon→authenticated transition (and on
+ * a full-page OAuth round-trip), and a plain startJourney there would mint a
+ * NEW id, orphaning the `auth_wall_viewed` denominator from the eventual
+ * `..._complete`. A stale journey (older than JOURNEY_MAX_AGE_MS, e.g. a tab
+ * left open) is treated as absent so a later attempt gets a clean id.
+ */
+export function startJourneyOnce(kind: JourneyKind): string {
+  const existing = readFreshId(kind);
+  return existing ?? startJourney(kind);
 }
 
 /** Journey-specific properties. PII is forbidden by the contract — only
@@ -102,6 +140,7 @@ export function completeJourney(
   if (!id) return;
   try {
     sessionStorage.removeItem(storageKey(kind));
+    sessionStorage.removeItem(stampKey(kind));
   } catch {
     // Best effort — the emit below still happens exactly once per read.
   }
