@@ -37,7 +37,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 import {
   attachQuickTableApprovedCounts,
   attachTeamMatchApprovedCounts,
-} from "../useTournamentData";
+} from "@/lib/registrationCounts";
 
 beforeEach(() => {
   calls.length = 0;
