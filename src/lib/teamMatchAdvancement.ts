@@ -26,10 +26,13 @@ type SlotField = 'team_a_id' | 'team_b_id';
 /**
  * Seed the game slots for a match that just had both teams assigned.
  *
- * Idempotent by design: two propagations can land on the same match (a
- * re-scored playoff, or both semifinals resolving at once), so we bail if any
- * game already exists. Shared by the third-place and next-match paths, which
- * used to carry byte-identical copies of this block.
+ * Idempotent under concurrency, not just on paper. The existence pre-check is a
+ * cheap fast path, but two propagations can pass it at the same instant (both
+ * semifinals resolving at once, or a re-scored playoff), so the insert itself
+ * must also be safe: it upserts on the `(match_id, order_index)` UNIQUE
+ * constraint with duplicates ignored, so the second writer no-ops at the DB
+ * instead of doubling the game list. Shared by the third-place and next-match
+ * paths, which used to carry byte-identical copies of this block.
  */
 export async function createGamesIfMissing(
   matchId: string,
@@ -54,7 +57,9 @@ export async function createGamesIfMissing(
 
   const games = buildTeamMatchGames(templates, matchId, hasDreambreaker);
   if (games.length > 0) {
-    await supabase.from('team_match_games').insert(games);
+    await supabase
+      .from('team_match_games')
+      .upsert(games, { onConflict: 'match_id,order_index', ignoreDuplicates: true });
   }
 }
 
