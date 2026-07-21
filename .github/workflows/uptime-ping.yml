@@ -1,0 +1,105 @@
+# ============================================================================
+# OPS-04 inc1 — independent uptime pinger (closes docs/slo.md "Known gaps":
+# SLO-1 was deploy-time only; nothing watched the live site between deploys).
+#
+# Every 10 minutes: probe / and /feed. A route only alerts after failing
+# TWO probes 30s apart (dampens single network blips). Alert cadence is
+# self-limiting: at most one Telegram per failing route per run (10 min).
+#
+# Also the WATCHDOG for milestone-due.yml (D1 convergence, proposal
+# auto-milestone-run-2026-07): if the daily milestone dispatcher hasn't had a
+# successful run in >26h, say so — a dead reminder must not die silently.
+# ponytail: no state/recovery messages in v1 — pings stop when the site is
+# back; stateful healthy→breached transitions arrive with the burn-alert
+# (OPS-04 inc2, deferred until funnel events are queryable).
+# ============================================================================
+
+name: Uptime ping
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read # watchdog reads milestone-due.yml run history
+
+jobs:
+  ping:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe routes (double-check before alerting)
+        id: probe
+        run: |
+          FAILED=""
+          for ROUTE in / /feed; do
+            S1=$(curl -s --max-time 15 -o /dev/null -w '%{http_code}' "https://www.thepicklehub.net$ROUTE" || echo 000)
+            if [ "$S1" = "200" ]; then continue; fi
+            sleep 30
+            S2=$(curl -s --max-time 15 -o /dev/null -w '%{http_code}' "https://www.thepicklehub.net$ROUTE" || echo 000)
+            if [ "$S2" != "200" ]; then
+              FAILED="$FAILED $ROUTE:$S2"
+            fi
+          done
+          echo "failed=${FAILED# }" >> "$GITHUB_OUTPUT"
+          if [ -n "$FAILED" ]; then echo "DOWN:$FAILED"; fi
+
+      - name: Alert Telegram if down
+        if: steps.probe.outputs.failed != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping alert"; exit 0
+          fi
+          # First line carries the whole meaning — it is all a lock screen shows.
+          MSG="🔴 P1 · www.thepicklehub.net KHÔNG phản hồi 200: ${{ steps.probe.outputs.failed }}%0A"
+          MSG="$MSG%0AKiểm 2 lần cách 30s, vẫn lỗi. Ảnh hưởng: người dùng không mở được trang."
+          MSG="$MSG%0AViệc cần làm: mở site kiểm tra, xem deploy gần nhất trên Cloudflare Pages, cân nhắc rollback."
+          MSG="$MSG%0ARun: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MSG}" \
+            -d "parse_mode=Markdown" >/dev/null || true
+
+      - name: Watchdog — milestone-due.yml alive?
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          # Throttle: evaluate once daily (~09:0x ICT, the 02:0x UTC tick) so a
+          # sick dispatcher pages ONCE a day, not every 10 minutes (alert-storm
+          # → mute → blind channel is the exact failure OPS-04 must avoid).
+          # workflow_dispatch always evaluates, for manual verification.
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            if [ "$(date -u +%H)" != "02" ] || [ "$(date -u +%M)" -ge 10 ]; then
+              echo "watchdog throttled to the daily 02:0x UTC tick"; exit 0
+            fi
+          fi
+          # Latest completed run of the milestone dispatcher. 404/empty = never
+          # ran (workflow just landed) — warn in the log only, don't page.
+          LAST=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/milestone-due.yml/runs?per_page=1&status=completed" \
+            -q '.workflow_runs[0] | "\(.conclusion) \(.updated_at)"' 2>/dev/null || echo "")
+          if [ -z "$LAST" ]; then
+            echo "milestone-due.yml has no completed runs yet — skipping watchdog"
+            exit 0
+          fi
+          CONCLUSION=$(echo "$LAST" | cut -d' ' -f1)
+          UPDATED=$(echo "$LAST" | cut -d' ' -f2)
+          AGE_H=$(( ( $(date +%s) - $(date -d "$UPDATED" +%s) ) / 3600 ))
+          echo "milestone-due last run: $CONCLUSION, ${AGE_H}h ago"
+          if [ "$AGE_H" -le 26 ] && [ "$CONCLUSION" = "success" ]; then exit 0; fi
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping watchdog alert"; exit 0
+          fi
+          MSG="🟠 P2 · Watchdog: milestone-due.yml ${CONCLUSION}, chạy lần cuối ${AGE_H}h trước%0A"
+          MSG="$MSG%0ANhắc mốc theo ngày có thể đang TRỄ — kiểm tra Actions."
+          MSG="$MSG%0Ahttps://github.com/${GITHUB_REPOSITORY}/actions/workflows/milestone-due.yml"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MSG}" \
+            -d "parse_mode=Markdown" >/dev/null || true
