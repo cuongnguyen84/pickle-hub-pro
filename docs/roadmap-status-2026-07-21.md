@@ -92,17 +92,15 @@ built); near-zero wall_view → close UX-07, the problem is upstream.
 These are the items I would most want a second opinion on — some are arguably
 higher priority than the `later` rows above.
 
-1. **The RED approval gate is unenforceable as built.** The local `gh` session
-   authenticates as Cuong's own account, so every comment/review/push the agent
-   pipeline makes carries his identity. GitHub cannot distinguish Cuong from
-   automation; neither can a relayed agent quote. The RED gate said "wait for
-   Cuong's explicit approval" but gave agents no channel that can verify it.
-   Mitigation shipped: `release-pilot` now never merges RED, it hands off to
-   whoever holds the direct user channel (`ops-runbook §1b`,
-   `.claude/agents/release-pilot.md`). **Real fix needs Cuong:** a separate
-   bot identity (machine account / GitHub App) + a fine-grained PAT scoped to
-   this repo, replacing the classic `repo`-scope PAT in
-   `~/Downloads/secrets.local.md`.
+1. **The RED approval gate — FIXED 2026-07-21.** Machine account
+   `thepicklehubnet` (Write collaborator, this repo only) + classic PAT
+   `GITHUB_BOT_PAT` in `~/Downloads/secrets.local.md` (classic because
+   fine-grained PATs cannot target another personal account's repo; blast
+   radius is still one repo). `release-pilot` now runs all `gh` ops as the bot
+   and — per Cuong's explicit decision — may merge RED **only** on an APPROVED
+   PR review authored by `cuongnguyen84`, which the bot token cannot produce.
+   Comments and relayed quotes remain untrusted. (`ops-runbook §1b`,
+   `.claude/agents/release-pilot.md`.)
 
 2. **The a11y gate was blind, and half of it still is.** `tests/a11y.spec.ts`
    disabled `color-contrast` outright ("Lighthouse flagged them repo-wide" — a
