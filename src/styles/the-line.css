@@ -3757,6 +3757,12 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   letter-spacing: 0.02em; margin-top: 2px;
 }
 [data-theme="the-line"] .tl-br-meta .sep { color: var(--tl-fg-4); margin: 0 5px; }
+/* Social-proof registration count — green + 600 to stand out from the muted
+   mono meta line. Uses --tl-green-DIM (not --tl-green): the brighter lime sits at
+   ~4.6:1 in light mode (#5e7d1f on cream) — a borderline pass, exactly the blind
+   spot that shipped #426. -dim resolves to a darker green in both modes (~6:1
+   light, ~11:1 dark), comfortably clear of WCAG AA either way. */
+[data-theme="the-line"] .tl-br-reg { color: var(--tl-green-dim); font-weight: 600; }
 [data-theme="the-line"] .tl-br-creator {
   font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-3);
   letter-spacing: 0.02em;
