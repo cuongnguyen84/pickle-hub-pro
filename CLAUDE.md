@@ -49,6 +49,10 @@ npx cap open android # Open Android Studio
 
 ## Critical Workflow Notes
 
+### Mốc hẹn ngày
+
+Đầu mỗi phiên autonomous: `node scripts/due-milestones.mjs` — mốc nào due thì thực thi theo PREDICATE trong `docs/milestones.md` hoặc ghi lý do defer vào dòng mốc; xong tick `[x]` cùng commit với bằng chứng.
+
 ### New blog post checklist (EN + VI bilingual)
 
 Every new blog post requires **3 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
