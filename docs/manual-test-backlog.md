@@ -123,3 +123,13 @@ Cụm này bắt đầu từ 2 task UX nhưng thực chất là vá 7 lỗi đan
 ## 14. Vá race next_match_slot NULL (PR #424, 2026-07-20)
 
 - [ ] Không có gì để test tay — prod hiện 0 hàng rơi vào nhánh này, và unit test đã pin (gỡ guard là đỏ). Ghi ở đây để anh biết nó tồn tại: nếu sau này bracket generation sinh trận có `next_match_id` mà thiếu `next_match_slot`, hệ thống giờ claim ô trống thay vì đoán và đè lên nhau.
+
+## 15. QuickTable telemetry + login CTA (PR TBD, 2026-07-21)
+
+Ship gói P3 (codex-review-de-integrity). Telemetry ẩn — cần mắt anh + đo thật:
+
+- [ ] **Journey join anon→login (D5):** mở `/tools/quick-tables/<id>` khi CHƯA đăng nhập → bấm "Đăng nhập để đăng ký" → đăng nhập (thử cả email/pw lẫn Google) → quay lại → hoàn tất đăng ký. Trong GA4/DebugView: `auth_wall_viewed` và `registration_complete` phải CÙNG `journey_id`. Thử cả singles và doubles (mặc định).
+- [ ] **CTA anon TeamMatch (D2, blocker cũ):** mở giải TeamMatch đang mở đăng ký khi chưa login → phải thấy nút "Đăng nhập để đăng ký đội" (trước đây TRỐNG). Bấm → về đúng giải sau login.
+- [ ] **CTA anon DoublesElim:** tương tự, giải DE `registration_open`.
+- [ ] **NỢ NATIVE (/apple):** 2 CTA login trên (TeamMatch + DoublesElim) CHƯA làm bản native — cần port theo standing "fix cả web lẫn native". Ghi ở đây, chưa làm trong PR web.
+- [ ] Journey KHÔNG trộn: đăng ký 1 Social Event (OTP) và 1 QuickTable trong cùng phiên → 2 funnel riêng, không nuốt nhau (đã có unit test, nhưng xác nhận số GA4 thật khi có traffic).
