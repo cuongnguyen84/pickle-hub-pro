@@ -1,0 +1,28 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Giữ nút invite-code qua RPC vs xóa hẳn — rủi ro #3 mất luồng mời còn không nếu xóa nút",
+      "myRound1Position": "GIỮ nút qua RPC; mất nút chia sẻ mã là rủi ro #3 (TB).",
+      "move": "CONCEDE",
+      "evidence": "src/hooks/useTeamMatchTeams.ts:615 — useTeamByInviteCode, grep toàn src/ chỉ ra đúng 1 dòng (định nghĩa), 0 caller = dead code; src/pages/JoinTeam.tsx:28-30 — route /join đọc quick_table_partner_invitations (bảng khác), KHÔNG đọc team_match_teams.invite_code",
+      "note": "Rủi ro #3 của em dựng trên giả định có luồng mời đang sống. Không có: mã copy ra từ team_match_teams.invite_code không có route/input nào tiêu thụ. Xóa nút không mất chức năng nào — nó là lời hứa gãy. Bỏ RPC đi; xóa nút + prop inviteCode (TeamRosterManager.tsx:358-366, TeamDetailSheet.tsx:133)."
+    },
+    {
+      "id": "D2",
+      "topic": "Cơ chế ship: 2 file migration (expand-then-contract) vs 1 migration + thứ tự deploy-web-trước",
+      "myRound1Position": "Expand-then-contract BẮT BUỘC — 2 đợt áp: additive RPC trước, REVOKE sau.",
+      "move": "REFINE",
+      "note": "Bỏ yêu cầu 2 FILE migration — 1 file là đủ. Vì D1 đã CONCEDE (xóa nút → KHÔNG cần RPC additive), client chỉ còn narrow select('*')→cột hẹp, tương thích ngược 100% với schema cũ (schema cũ grant đủ cột, select tập con chạy nguyên). Nên chỉ cần thứ tự: deploy web (narrow) → chờ Cloudflare xanh → xác nhận bundle mới live → RỒI mới áp REVOKE. Bất biến giữ nguyên là THỨ TỰ, không phải số file. Bác 'atomic 1 PR' của architect ở điểm ngôn từ: merge PR KHÔNG áp migration (migration đi qua Management API out-of-band), nên '1 PR' không tự cưỡng chế thứ tự — operator vẫn có thể áp REVOKE lúc Cloudflare đang build 3-5 phút = mở đúng cửa sổ Sự cố 1. Runbook phải ghi rõ 'áp REVOKE sau khi xác nhận web live', không được coi 1 PR là đủ an toàn."
+    },
+    {
+      "id": "D3",
+      "topic": "Verdict tier cho scope hẹp (chỉ revoke invite_code, native 0 file): RED hay YELLOW",
+      "myRound1Position": "RED cho cả gói — migration không revert bằng git revert.",
+      "move": "REFINE",
+      "note": "Thu hẹp RED xuống ĐÚNG file migration REVOKE, KHÔNG phải cả gói. Bỏ hai lý do RED nay đã ngoài scope: (a) native trắng màn không-update-được và (b) organizer xoá mù mất dữ liệu — cả hai bám vào revoke payment_status/captain_user_id, đã loại. Xác minh scope hẹp = native 0 impact: TeamMatchRepository.swift:44 select KHÔNG có invite_code, mọi invite_code native là QuickTable. Nhưng file migration VẪN RED, không hạ AMBER, vì hai cơ chế sống sót qua scope hẹp: (1) áp qua Management API bỏ qua toàn bộ deploy-gate, git revert PR KHÔNG hoàn tác REVOKE đã áp — muốn lùi phải migration ngược (GRANT lại), đúng tiêu chí 'không revert bằng git'; (2) Sự cố 1 vẫn đúng CHO CẢ invite_code-only: bundle web CŨ dùng select('*') expand ra invite_code → 42501 → trắng bảng đấu live 3-5 phút nếu áp REVOKE trước khi web mới live, và KHÔNG stage CI nào test web-CŨ×schema-MỚI. RED này là process-risk (không-git-revert + có thể trắng bảng live), không phải mất-dữ-liệu-vĩnh-viễn. Phần client PR (narrow select + xóa nút) = AMBER, git-revert được. Reverse migration là 1 dòng GRANT SELECT(invite_code), blast radius 0 — nên nếu Cuong muốn, ổng có thẩm quyền hạ; em thì giữ RED trên file migration theo luật vòng 2."
+    }
+  ],
+  "newDisagreements": []
+}

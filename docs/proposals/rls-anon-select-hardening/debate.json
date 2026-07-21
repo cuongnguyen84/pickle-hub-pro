@@ -1,0 +1,94 @@
+{
+  "slug": "rls-anon-select-hardening",
+  "consensus": [
+    {
+      "topic": "Scope revoke: chỉ invite_code; payment_status + captain_user_id GIỮ NGUYÊN grant (native binary hardcode 2 cột này trong query, không update được)",
+      "agents": ["solution-architect", "risk-auditor", "pre-mortem", "GPT-5.6 (x2, độc lập qua risk-auditor và ui-ux-critic)"],
+      "note": "Cross-vendor: GPT-5.6 và các agent Claude tới cùng kết luận độc lập — tín hiệu mạnh thật sự."
+    },
+    {
+      "topic": "Narrow client select('*') phải đi cùng đợt với migration; grant re-list phải chứa mọi cột client nêu tên (kể cả trong WHERE/.eq)",
+      "agents": ["solution-architect", "ui-ux-critic", "risk-auditor", "pre-mortem"]
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Nút 'Copy invite code' (TeamRosterManager.tsx:358-366): giữ và nuôi bằng RPC SECURITY DEFINER, hay xóa hẳn vì là dead-end?",
+      "positions": {
+        "solution-architect": "GIỮ qua RPC team_match_get_invite_code (captain/organizer). Là lời giải cho ràng buộc ROLE; effort 1 RPC. (Option B increment 1)",
+        "risk-auditor": "GIỮ qua RPC — coi mất nút chia sẻ mã là rủi ro #3 (TB), migration PHẢI kèm RPC + rewire client.",
+        "ui-ux-critic": "XÓA nút + prop + toast. Đã verify: không route/input nào tiêu thụ team_match_teams.invite_code (join flow là bảng quick_table_partner_invitations khác); mã copy ra là ngõ cụt. Đồng thuận Claude+GPT-5.6. Không xây RPC để giữ lời hứa gãy."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "src/hooks/useTeamMatchTeams.ts:615 — useTeamByInviteCode là reader DUY NHẤT của team_match_teams.invite_code, 0 caller (dead code); src/pages/JoinTeam.tsx:28 — route /join/:inviteCode đọc quick_table_partner_invitations, KHÁC bảng.",
+          "note": "Đã tự mở 2 file. Xóa nút + prop inviteCode + toast; bỏ luôn RPC → ít code hơn plan cũ."
+        },
+        "risk-auditor": {
+          "move": "CONCEDE",
+          "evidence": "src/hooks/useTeamMatchTeams.ts:615 — grep toàn src/ ra đúng 1 dòng định nghĩa, 0 caller; src/pages/JoinTeam.tsx:28-30 — /join đọc quick_table_partner_invitations, KHÔNG đọc team_match_teams.invite_code.",
+          "note": "Rủi ro #3 dựng trên giả định có luồng mời đang sống — không có. Xóa nút không mất chức năng nào. Bỏ RPC."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "note": "Không dữ kiện mới nào lật. Tự đọc lại xác nhận: đường mời còn sống duy nhất là InviteTeamDialog.tsx:108 → edge fn invite-team-to-tournament (email, service_role) — thay thế với 0 code mới. Tự sửa r1: thay thế KHÔNG phải nút Copy-link ở header (không tồn tại trong TeamDetailSheet) mà là dialog mời email sẵn có."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "XÓA nút copy invite-code + prop inviteCode + toast (TeamRosterManager.tsx:358-366, TeamDetailSheet.tsx:133). KHÔNG xây RPC. Đường mời còn sống = InviteTeamDialog (email, edge fn service_role). Architect + risk-auditor cùng CONCEDE với evidence độc lập."
+    },
+    {
+      "id": "D2",
+      "topic": "Cơ chế ship: 1 migration atomic áp cùng lúc, hay bắt buộc thứ tự deploy-web-live-trước → áp REVOKE sau? (Crux factual: bundle CŨ select('*') sau REVOKE → 42501 chết cả query, hay degrade êm?)",
+      "positions": {
+        "solution-architect": "Atomic 1 PR; sau r2: nhận ordering là 'vệ sinh free' nhưng xếp Sự cố 1 xuống lỗi mỹ phẩm vì tin claim degrade-êm (risk#3 r1 của risk-auditor).",
+        "ui-ux-critic": "Cùng 1 PR (blocker #1); r2: 'same PR' và 'sequenced apply' tương thích — nghiêng theo risk-auditor về thứ tự áp.",
+        "risk-auditor": "r1: expand-then-contract 2 file; r2 REFINE: 1 file đủ, bất biến là THỨ TỰ — deploy web narrow, xác nhận live, RỒI áp REVOKE. Lưu ý r2 tự sửa r1: bundle cũ select('*') → 42501 (KHÔNG degrade êm như risk#3 r1 đã viết).",
+        "pre-mortem": "HOLD: select('*') → whole-request 403 → throw → bảng đấu live trắng trong cửa sổ 3-5 phút. PostgREST schema cache role-agnostic, không trim '*' theo role. Sự cố 1 VẪN đứng cho cả scope invite_code-only. Ordering bắt buộc, '1 PR' không tự cưỡng chế thứ tự vì migration đi Management API out-of-band."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "note": "Nhận thứ tự expand-then-contract; giữ 1 PR ở tầng code. Hạ mức Sự cố 1 xuống 'mỹ phẩm' — NHƯNG premise degrade-êm bị pre-mortem + risk-auditor(r2) bác."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "note": "Hai lập trường tương thích: 1 PR code + áp prod có thứ tự. Nghiêng risk-auditor về availability."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "note": "Bỏ yêu cầu 2 file migration; giữ bất biến THỨ TỰ ÁP. Merge PR không áp migration → '1 PR' không đủ an toàn; runbook phải ghi 'áp REVOKE sau khi xác nhận web live'."
+        },
+        "pre-mortem": {
+          "move": "HOLD",
+          "note": "Giữ Sự cố 1. Evidence: src/hooks/useTeamMatchTeams.ts:60-68,80-90 (select('*') + throw error, không nhánh degrade); solution-architect.md r1 dòng 'select(*) sẽ 403 sau REVOKE' — chính architect r1 cùng kết luận; 20260706120000_profiles_pii_column_lockdown.sql:30-58 coi cột ngoài grant-list là unreadable-by-frontend. Chưa curl live được (sandbox chặn network) — cần verify empirically trước khi áp."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "resolution": ""
+    },
+    {
+      "id": "D3",
+      "topic": "Verdict tier cho scope ĐÃ thu hẹp (chỉ revoke invite_code, native 0 file): RED hay thấp hơn?",
+      "positions": {
+        "solution-architect": "Dự kiến YELLOW — migration RLS/grant không chạm auth/payments/config.toml, native không đổi.",
+        "risk-auditor": "RED — migration prod không revert bằng git revert; giữ RED, chỉ REFINE phạm vi."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "scripts/agents/risk-tier.mjs:33 — { tier: 'RED', re: /^supabase\\/migrations\\// } chấm MỌI file migration là RED tất định; classifier chỉ có GREEN/AMBER/RED, 'YELLOW' không phải output hợp lệ.",
+          "note": "Đã mở risk-tier.mjs. RED, Cuong ký duyệt. Không tranh xuống."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "note": "RED thu hẹp vào ĐÚNG file migration REVOKE (Management API bypass deploy-gate + không git-revert; muốn lùi = migration ngược GRANT lại). Client PR (narrow select + xóa nút) = AMBER, git-revert được. Native 0 impact đã verify: TeamMatchRepository.swift:44 không có invite_code. Reverse migration = 1 dòng GRANT, blast radius 0 — Cuong có thẩm quyền cân nhắc, nhưng auditor giữ RED."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "RED đứng — cho phần migration (áp prod, chỉ lùi được bằng migration ngược). Client PR = AMBER. Architect CONCEDE với evidence risk-tier.mjs:33. RED → cần Cuong duyệt trước /ship."
+    }
+  ]
+}

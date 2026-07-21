@@ -1,0 +1,18 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "action": "HOLD",
+      "evidence": "src/hooks/useTeamMatchTeams.ts:60-68,80-90 — cả hai site vẫn chạy .select('*') và ngay sau là `if (error) throw error;`, không có nhánh nào lọc/degrade cột; PostgREST 403 → throw → React Query error state → bảng đấu live trắng. Đối chiếu solution-architect round1 (docs/proposals/rls-anon-select-hardening/round1/solution-architect.md:44,89): '`select('*')` sẽ 403 sau REVOKE vì `*` cần priv trên MỌI cột' — architect đọc code và tới cùng kết luận với tôi, KHÁC với risk-auditor. Live precedent cùng khuôn: supabase/migrations/20260706120000_profiles_pii_column_lockdown.sql:30-58 (REVOKE SELECT + GRANT SELECT(col) loop) — maintenance note coi cột không nằm trong grant-list là 'unreadable by the frontend', tức phá query chứ không lặng lẽ bỏ cột.",
+      "note": "Claim graceful-degrade của risk-auditor SAI về cơ chế: PostgREST expand `*` bằng schema cache dựng MỘT LẦN lúc boot bởi authenticator role — cache role-agnostic, không có danh sách cột theo từng role để trim, nên `*` luôn liệt kê cả invite_code → Postgres ném 42501 → CẢ request 403, không phải tập cột được phép. Nếu claim đó được chấp nhận thì Sự cố 1 mới biến mất; nó không đúng, nên Sự cố 1 (cửa sổ web-CŨ × schema-MỚI 3-5 phút → trắng bảng đấu live) VẪN đứng. Không kèm curl live được vì network + secrets bị sandbox chặn — kết luận rút từ kiến trúc PostgREST tài liệu hoá + code client, không phải 403 bắt tận tay. REFINE phạm vi (không lật lập trường): hiểm hoạ là THỨ TỰ ÁP, không phải số PR — atomic-1-PR của architect chấp nhận được MIỄN LÀ trình tự deploy = đẩy web narrow, xác nhận SPA live, RỒI mới áp REVOKE; vì migration (Management API, tức thì) và Cloudflare build (3-5 phút) là hai pipeline độc lập, gói chung 1 PR KHÔNG đảm bảo áp đồng thời."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Cơ chế PostgREST `select('*')` sau REVOKE 1 cột: whole-request 403 (throw) — KHÔNG degrade êm thành tập cột được phép. Nếu dùng nhầm cơ chế degrade thì suy ra sai rằng thứ tự áp không quan trọng.",
+      "with": "risk-auditor",
+      "myPosition": "`*` fail cả request (42501→403); client throw error → bảng đấu trắng. Cache PostgREST role-agnostic nên không thể trim `*` theo role. Kết luận expand-then-contract của risk-auditor ĐÚNG nhưng phải dựng trên cơ chế query-dies, không phải graceful-degrade."
+    }
+  ]
+}

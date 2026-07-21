@@ -1,0 +1,36 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Nút Copy invite-code: giữ qua RPC hay xóa vì dead-end?",
+      "myRound1Position": "GIỮ nút qua RPC team_match_get_invite_code (captain/organizer).",
+      "move": "CONCEDE",
+      "evidence": "src/hooks/useTeamMatchTeams.ts:615 — useTeamByInviteCode là reader DUY NHẤT của team_match_teams.invite_code và không có caller (dead code); src/pages/JoinTeam.tsx:28 — route /join/:inviteCode đọc quick_table_partner_invitations, KHÁC bảng. Không flow nào tiêu thụ mã copy ra.",
+      "note": "Đã tự mở 2 file: mã copy là ngõ cụt thật, không route/hook nào nhận team_match_teams.invite_code. Xây RPC để nuôi nút này là hạ tầng cho lời hứa gãy. Xóa nút + prop inviteCode + toast; header đã có 'Copy link'. Bỏ luôn RPC → ít code hơn cả plan cũ."
+    },
+    {
+      "id": "D2",
+      "topic": "Ship atomic 1 migration hay expand-then-contract?",
+      "myRound1Position": "Atomic 1 PR: migration REVOKE/GRANT + client narrow cùng PR, áp cùng lúc.",
+      "move": "REFINE",
+      "evidence": "docs/proposals/rls-anon-select-hardening/00-intake.md:24 — migration áp qua Management API tức thì; risk-auditor risk#3 — web select('*') degrade ÊM khi revoke invite_code (không 42501); src/hooks/useTeamMatchTeams.ts:615 — reader named-column duy nhất là dead code.",
+      "note": "Nhận thứ tự deploy expand-then-contract (deploy web narrow+xóa nút → chờ Cloudflare xanh → mới áp REVOKE invite_code): bảo hiểm free, đúng reflex cho mọi REVOKE. NHƯNG thu hẹp mức độ: với scope chỉ invite_code, Sự cố 1 của pre-mortem (bảng đấu live trắng 4 phút) KHÔNG xảy ra — old bundle dùng select('*') degrade êm (đúng risk#3 của chính risk-auditor), reader named-column duy nhất là dead code. Cửa sổ web-CŨ×schema-MỚI chỉ làm nút copy hiện undefined 3-5 phút — mà nút đó ta đang xóa. Ordering là vệ sinh, không phải chống màn trắng. Giữ 1 PR ở tầng code."
+    },
+    {
+      "id": "D3",
+      "topic": "Verdict tier: RED hay YELLOW?",
+      "myRound1Position": "Dự kiến YELLOW — không chạm auth/payments/config.toml, native 0 file.",
+      "move": "CONCEDE",
+      "evidence": "scripts/agents/risk-tier.mjs:33 — { tier: 'RED', re: /^supabase\\/migrations\\// } phân loại MỌI file migration là RED tất định ('not reversible by a git revert'); classifier chỉ có GREEN/AMBER/RED — không tồn tại tier YELLOW.",
+      "note": "Đã mở risk-tier.mjs: plan này ship 1 migration → classifier chấm RED cứng, và 'YELLOW' còn không phải output hợp lệ. Round-1 tôi sai về cách pipeline phân loại. RED, Cuong ký duyệt. Không tranh xuống."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Mức độ Sự cố 1 (bảng đấu live trắng vì web-CŨ×schema-MỚI) bị overstate cho scope invite_code-only: pre-mortem giả định select('*') ném 42501, nhưng với revoke chỉ 1 cột invite_code thì PostgREST expand '*' thành tập cột được phép và degrade êm (trùng risk#3 của risk-auditor). Named-column reader duy nhất (useTeamByInviteCode) là dead code. Nên cửa sổ deploy chỉ gây lỗi mỹ phẩm (nút copy undefined), không phải màn trắng live.",
+      "with": "pre-mortem",
+      "myPosition": "Expand-then-contract vẫn đáng làm vì free, nhưng lý do KHÔNG phải 'chống bảng đấu trắng' — với scope invite_code-only không có màn trắng. Xếp Sự cố 1 xuống 'lỗi mỹ phẩm 3-5 phút' cho scope này, không phải sự cố xác suất-cao."
+    }
+  ]
+}
