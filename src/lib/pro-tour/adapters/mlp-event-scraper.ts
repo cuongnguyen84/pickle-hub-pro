@@ -34,12 +34,12 @@
  *   matches the pattern the PPA RSC adapter uses.
  */
 
+import type { ProTourAdapter, TournamentScrapeResult } from "../types";
+import { buildMlpScrapeResult } from "./mlp-inline-ticker";
 import type {
-  ProTourAdapter,
-  TournamentScrapeResult,
-  ScrapedMatch,
-  ScrapedPlayer,
-} from "../types";
+  ParsedMlpMatchup,
+  MlpMatchupGameLineup,
+} from "./mlp-inline-ticker";
 
 interface MlpScraperEnv {
   CLOUDFLARE_ACCOUNT_ID?: string;
@@ -72,27 +72,14 @@ export const mlpEventScraperAdapter: ProTourAdapter<MlpScraperEnv> = {
 
 /* ─── Public types ────────────────────────────────────────────────────── */
 
-export interface MlpMatchupGameLineup {
-  label: string; // "WD" | "MD" | "MXD1" | "MXD2" | "DB"
-  score_a: number;
-  score_b: number;
-  players_a: string[];
-  players_b: string[];
-  winner: "a" | "b" | null;
-}
-
-export interface MlpMatchupTeamMeta {
-  name: string;
-  logo: string | null;
-  matchup_wins: number;
-}
-
-export interface MlpMatchupNotes {
-  format: "mlp_team_matchup";
-  team_a: MlpMatchupTeamMeta;
-  team_b: MlpMatchupTeamMeta;
-  games: MlpMatchupGameLineup[];
-}
+// Shared matchup shapes + the inline-ticker parser + result assembly
+// live in ./mlp-inline-ticker (own module so tests can cover the new
+// path without pulling this legacy regex parser into coverage scope).
+export type {
+  MlpMatchupGameLineup,
+  MlpMatchupTeamMeta,
+  MlpMatchupNotes,
+} from "./mlp-inline-ticker";
 
 /* ─── Helpers for raw HTML field extraction ──────────────────────────── */
 
@@ -155,16 +142,6 @@ function extractTeamLogo(slice: string, side: "teamOne" | "teamTwo"): string | n
  * matches[] array + per-game lineups. Returns one ParsedMlpMatchup per
  * non-BYE matchup.
  */
-interface ParsedMlpMatchup {
-  team_a: { name: string; logo: string | null; abbr: string | null; matchup_wins: number };
-  team_b: { name: string; logo: string | null; abbr: string | null; matchup_wins: number };
-  winner: "a" | "b" | null;
-  planned_start: string | null;
-  venue: string | null;
-  games: MlpMatchupGameLineup[];
-  external_id: string;
-}
-
 const PLAYER_GROUP_TO_LABEL: Record<string, string> = {
   Womens: "WD",
   Mens: "MD",
@@ -383,115 +360,11 @@ export function parseMlpFromBracketsPools(
   mlpEventUrl: string,
   tournamentName: string,
 ): TournamentScrapeResult {
-  const matches: ScrapedMatch[] = [];
-  const teamMap = new Map<string, ScrapedPlayer>();
-  const playerMap = new Map<string, ScrapedPlayer>();
-  const seenExtIds = new Set<string>();
-
-  for (const html of poolHtmls) {
-    const matchups = extractMatchupsFromPool(html);
-    for (const m of matchups) {
-      if (seenExtIds.has(m.external_id)) continue;
-      seenExtIds.add(m.external_id);
-
-      // external_id is the slug-only form ("columbus-sliders"). The
-      // ingest function adds the `mlp-` prefix when composing the
-      // username, so we don't double-prefix here. This also matches the
-      // pre-existing team ghost profiles seeded manually before the
-      // adapter shipped (which used slug-only external_ids), avoiding a
-      // username UNIQUE conflict on first ingest after the manual seed.
-      const teamASlug = slugify(m.team_a.name);
-      const teamBSlug = slugify(m.team_b.name);
-
-      if (!teamMap.has(teamASlug)) {
-        teamMap.set(teamASlug, {
-          external_id: teamASlug,
-          external_url: `https://majorleaguepickleball.co/team/${slugify(m.team_a.name)}/`,
-          display_name: m.team_a.name,
-          avatar_url: m.team_a.logo,
-          country_code: "US",
-        });
-      }
-      if (!teamMap.has(teamBSlug)) {
-        teamMap.set(teamBSlug, {
-          external_id: teamBSlug,
-          external_url: `https://majorleaguepickleball.co/team/${slugify(m.team_b.name)}/`,
-          display_name: m.team_b.name,
-          avatar_url: m.team_b.logo,
-          country_code: "US",
-        });
-      }
-
-      // Build per-player ghost profiles for future use (per-player cards).
-      // Slug-only external_id (same convention as teams above).
-      for (const g of m.games) {
-        for (const p of [...g.players_a, ...g.players_b]) {
-          const slug = slugify(p);
-          if (!playerMap.has(slug)) {
-            playerMap.set(slug, {
-              external_id: slug,
-              external_url: `https://majorleaguepickleball.co/player/${slug}/`,
-              display_name: p,
-              avatar_url: null,
-              country_code: null,
-            });
-          }
-        }
-      }
-
-      const notesObj: MlpMatchupNotes = {
-        format: "mlp_team_matchup",
-        team_a: {
-          name: m.team_a.name,
-          logo: m.team_a.logo,
-          matchup_wins: m.team_a.matchup_wins,
-        },
-        team_b: {
-          name: m.team_b.name,
-          logo: m.team_b.logo,
-          matchup_wins: m.team_b.matchup_wins,
-        },
-        games: m.games,
-      };
-
-      matches.push({
-        external_match_id: `mlp-${m.external_id}`,
-        round_name: "GP",
-        team_one: { seed: null, player_external_ids: [teamASlug] },
-        team_two: { seed: null, player_external_ids: [teamBSlug] },
-        scores_team_one: m.games.map((g) => g.score_a),
-        scores_team_two: m.games.map((g) => g.score_b),
-        winner_team: m.winner === "a" ? "one" : m.winner === "b" ? "two" : null,
-        court: null,
-        played_at: m.planned_start,
-        source_url: mlpEventUrl,
-        notes: JSON.stringify(notesObj),
-        court_number: null,
-        tournament_event_override: "Group Play",
-      });
-    }
-  }
-
-  const players: ScrapedPlayer[] = [
-    ...Array.from(teamMap.values()),
-    ...Array.from(playerMap.values()),
-  ];
-
-  return {
-    source_provider: "mlp",
-    source_url: mlpEventUrl,
-    tournament_name: tournamentName || "MLP Event",
-    tournament_event: "Group Play",
-    matches,
-    players,
-  };
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  return buildMlpScrapeResult(
+    poolHtmls.flatMap((html) => extractMatchupsFromPool(html)),
+    mlpEventUrl,
+    tournamentName,
+  );
 }
 
 /* ─── Iframe URL extraction from raw MLP page HTML ───────────────────── */

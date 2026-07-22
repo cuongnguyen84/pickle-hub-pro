@@ -56,9 +56,12 @@ import {
   extractBracketsIframeUrl,
   extractPoolIds,
   bracketsPoolUrl,
-  extractTournamentName,
   MLP_EVENT_HOST_PATTERN,
 } from "@/lib/pro-tour/adapters/mlp-event-scraper";
+import {
+  parseMlpFromInlineTicker,
+  extractTournamentName,
+} from "@/lib/pro-tour/adapters/mlp-inline-ticker";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
 
 /** Combined URL acceptance regex — admin UI / /scrape gatekeeper.
@@ -339,14 +342,20 @@ async function scrapeMlpViaBrackets(
   }
   const mlpHtml = await mlpRes.text();
 
+  const tournamentName = extractTournamentName(mlpHtml);
+
+  // Post-2026-07 redesign: the event page inlines the full matchup
+  // payload (phpObj.initialTicker) — no iframe, no extra fetches.
+  // Try that first; older event pages fall through to the iframe crawl.
+  const inline = parseMlpFromInlineTicker(mlpHtml, mlpEventUrl, tournamentName);
+  if (inline) return inline;
+
   const overviewUrl = extractBracketsIframeUrl(mlpHtml);
   if (!overviewUrl) {
     throw new Error(
-      "MLP scrape: brackets iframe not found in event page HTML",
+      "MLP scrape: neither inline ticker payload nor brackets iframe found in event page HTML",
     );
   }
-
-  const tournamentName = extractTournamentName(mlpHtml);
 
   const overviewRes = await fetch(overviewUrl, { headers: { "User-Agent": ua } });
   if (!overviewRes.ok) {
