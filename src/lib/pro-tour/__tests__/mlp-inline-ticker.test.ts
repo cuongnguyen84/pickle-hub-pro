@@ -7,7 +7,7 @@ import {
   extractInlineTickerMatchups,
   extractTournamentName,
   type MlpMatchupNotes,
-} from "../adapters/mlp-event-scraper";
+} from "../adapters/mlp-inline-ticker";
 
 /**
  * Post-2026-07 MLP page redesign — the event page inlines the full

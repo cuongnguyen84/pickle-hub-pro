@@ -53,13 +53,15 @@ import {
 } from "@/lib/pro-tour/adapters/rsc-scraper";
 import {
   parseMlpFromBracketsPools,
-  parseMlpFromInlineTicker,
   extractBracketsIframeUrl,
   extractPoolIds,
   bracketsPoolUrl,
-  extractTournamentName,
   MLP_EVENT_HOST_PATTERN,
 } from "@/lib/pro-tour/adapters/mlp-event-scraper";
+import {
+  parseMlpFromInlineTicker,
+  extractTournamentName,
+} from "@/lib/pro-tour/adapters/mlp-inline-ticker";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
 
 /** Combined URL acceptance regex — admin UI / /scrape gatekeeper.
