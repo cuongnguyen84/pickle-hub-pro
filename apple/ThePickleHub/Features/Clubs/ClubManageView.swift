@@ -9,6 +9,7 @@ final class ClubManageModel {
     var events: [SocialEvent] = []
     var loaded = false
     var busyID: UUID?
+    var actionError: String?
     private let repo = ClubRepository()
     private let organizerRepo = SocialOrganizerRepository()
     let club: Club
@@ -24,13 +25,25 @@ final class ClubManageModel {
     }
     @MainActor func approve(_ m: ClubMember) async {
         busyID = m.profileID
-        try? await repo.approveMember(clubID: club.id, profileID: m.profileID)
-        await load(); busyID = nil
+        defer { busyID = nil }
+        do {
+            try await repo.approveMember(clubID: club.id, profileID: m.profileID)
+            actionError = nil
+            await load()
+        } catch {
+            actionError = UserFacingError.message(action: "Duyệt thành viên", error: error)
+        }
     }
     @MainActor func remove(_ m: ClubMember) async {
         busyID = m.profileID
-        try? await repo.removeMember(clubID: club.id, profileID: m.profileID)
-        await load(); busyID = nil
+        defer { busyID = nil }
+        do {
+            try await repo.removeMember(clubID: club.id, profileID: m.profileID)
+            actionError = nil
+            await load()
+        } catch {
+            actionError = UserFacingError.message(action: "Cập nhật thành viên", error: error)
+        }
     }
 }
 
@@ -102,6 +115,14 @@ struct ClubManageView: View {
         .refreshable { await model.load() }
         .sheet(isPresented: $showCreateEvent) {
             CreateSocialEventView(clubID: club.id) { Task { await model.load() } }
+        }
+        .alert("Không thể cập nhật thành viên", isPresented: Binding(
+            get: { model.actionError != nil },
+            set: { if !$0 { model.actionError = nil } }
+        )) {
+            Button("Đóng", role: .cancel) { model.actionError = nil }
+        } message: {
+            Text(model.actionError ?? "")
         }
     }
 
@@ -188,7 +209,7 @@ final class EditClubModel {
     var description: String
     var location: String
     var logoURL: String?
-    var newImage: Data?
+    var newImage: ProcessedImage?
     var saving = false
     var archiving = false
     var error: String?
@@ -210,9 +231,9 @@ final class EditClubModel {
     @MainActor func save(onDone: () -> Void) async {
         guard canSave else { return }
         saving = true; error = nil
-        var url = logoURL
-        if let newImage { url = await repo.uploadLogo(data: newImage) ?? logoURL }
         do {
+            var url = logoURL
+            if let newImage { url = try await repo.uploadLogo(image: newImage) }
             try await repo.updateClub(id: club.id, name: name.trimmingCharacters(in: .whitespaces),
                                       description: description.trimmingCharacters(in: .whitespaces),
                                       location: location.trimmingCharacters(in: .whitespaces), logoURL: url)
@@ -319,10 +340,18 @@ struct EditClubView: View {
                 Text("Chạm để đổi logo").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
             }
             .onChange(of: picked) { _, item in
-                Task {
-                    if let d = try? await item?.loadTransferable(type: Data.self) {
-                        model.newImage = d
-                        if let ui = UIImage(data: d) { preview = Image(uiImage: ui) }
+                Task { @MainActor in
+                    guard let item else { return }
+                    do {
+                        let image = try await ImagePipeline.load(item, policy: .clubLogo)
+                        model.newImage = image
+                        if let ui = UIImage(data: image.data) { preview = Image(uiImage: ui) }
+                        model.error = nil
+                    } catch {
+                        picked = nil
+                        preview = nil
+                        model.newImage = nil
+                        model.error = error.localizedDescription
                     }
                 }
             }

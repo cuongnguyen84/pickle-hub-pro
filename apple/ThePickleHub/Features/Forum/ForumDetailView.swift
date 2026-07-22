@@ -15,8 +15,9 @@ final class ForumDetailModel {
     // Composer
     var draft = ""
     var replyTo: ForumComment?
-    var imageData: [Data] = []
+    var images: [ProcessedImage] = []
     var sending = false
+    var error: String?
 
     private let repo = ForumRepository()
     init(postID: String) { self.postID = postID }
@@ -36,33 +37,43 @@ final class ForumDetailModel {
 
     @MainActor func toggleLikePost() async {
         guard let post else { return }
-        try? await repo.toggleLike(targetID: post.id, targetType: "post", isLiked: likedPost)
-        await load()
+        do {
+            try await repo.toggleLike(targetID: post.id, targetType: "post", isLiked: likedPost)
+            error = nil; await load()
+        } catch { self.error = UserFacingError.message(action: "Cập nhật lượt thích", error: error) }
     }
     @MainActor func toggleLikeComment(_ c: ForumComment) async {
-        try? await repo.toggleLike(targetID: c.id, targetType: "comment", isLiked: likedComments.contains(c.id))
-        await load()
+        do {
+            try await repo.toggleLike(targetID: c.id, targetType: "comment", isLiked: likedComments.contains(c.id))
+            error = nil; await load()
+        } catch { self.error = UserFacingError.message(action: "Cập nhật lượt thích", error: error) }
     }
     @MainActor func toggleBest(_ c: ForumComment) async {
-        try? await repo.toggleBestAnswer(commentID: c.id, postID: postID, isBestAnswer: c.isBestAnswer)
-        await load()
+        do {
+            try await repo.toggleBestAnswer(commentID: c.id, postID: postID, isBestAnswer: c.isBestAnswer)
+            error = nil; await load()
+        } catch { self.error = UserFacingError.message(action: "Chọn câu trả lời", error: error) }
     }
     @MainActor func deleteComment(_ c: ForumComment) async {
-        try? await repo.deleteComment(id: c.id); await load()
+        do {
+            try await repo.deleteComment(id: c.id)
+            error = nil; await load()
+        } catch { self.error = UserFacingError.message(action: "Xoá bình luận", error: error) }
     }
     @MainActor func deletePost() async -> Bool {
-        (try? await repo.deletePost(id: postID)) != nil
+        do { try await repo.deletePost(id: postID); error = nil; return true }
+        catch { self.error = UserFacingError.message(action: "Xoá bài viết", error: error); return false }
     }
     @MainActor func send() async {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !sending else { return }
         sending = true
-        let urls = imageData.isEmpty ? nil : await repo.uploadImages(imageData)
         do {
+            let urls = images.isEmpty ? nil : try await repo.uploadImages(images)
             try await repo.createComment(postID: postID, content: text, parentID: replyTo?.id, imageURLs: urls)
-            draft = ""; replyTo = nil; imageData = []
+            draft = ""; replyTo = nil; images = []; error = nil
             await load()
-        } catch {}
+        } catch { self.error = UserFacingError.message(action: "Gửi bình luận", error: error) }
         sending = false
     }
 }
@@ -96,6 +107,9 @@ struct ForumDetailView: View {
                         likeBar(post)
                         Rectangle().fill(TLColor.border).frame(height: 1)
                         commentsSection(post)
+                        if let error = model.error {
+                            Text(error).font(TLFont.sans(12)).foregroundStyle(TLColor.live)
+                        }
                     }
                 }
                 .padding(16)
@@ -239,14 +253,19 @@ struct ForumDetailView: View {
             }
             HStack(spacing: 10) {
                 PhotosPicker(selection: $picked, maxSelectionCount: 2, matching: .images) {
-                    Image(systemName: model.imageData.isEmpty ? "photo" : "photo.fill")
+                    Image(systemName: model.images.isEmpty ? "photo" : "photo.fill")
                         .font(.system(size: 16)).foregroundStyle(TLColor.accentText)
                 }
                 .onChange(of: picked) { _, items in
-                    Task {
-                        var datas: [Data] = []
-                        for it in items.prefix(2) { if let d = try? await it.loadTransferable(type: Data.self) { datas.append(d) } }
-                        model.imageData = datas
+                    Task { @MainActor in
+                        do {
+                            model.images = try await ImagePipeline.load(items, limit: 2, policy: .forum)
+                            model.error = nil
+                        } catch {
+                            picked = []
+                            model.images = []
+                            model.error = error.localizedDescription
+                        }
                     }
                 }
                 TextField(model.replyTo == nil ? "Viết bình luận…" : "Trả lời…", text: $model.draft, axis: .vertical)

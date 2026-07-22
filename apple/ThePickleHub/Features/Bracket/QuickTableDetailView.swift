@@ -19,6 +19,7 @@ final class QuickTableViewModel {
     var tab: Tab = .groups
     var selectedGroupID: UUID?
     var scoringMatch: QTMatch?
+    var scoreError: String?
 
     // Registration
     var currentUID: UUID?
@@ -174,10 +175,12 @@ final class QuickTableViewModel {
         }
         generatingPlayoff = true; playoffError = nil
         do {
-            try await repo.markPlayersQualified(
+            try await repo.createPlayoff(
+                tableID: d.table.id,
                 qualified: pendingQualified.map { ($0.player.id, $0.seed) },
-                wildcards: wildcards.map { $0.id })
-            try await repo.createPlayoff(tableID: d.table.id, firstRound: bracket)
+                wildcards: wildcards.enumerated().map { ($0.element.id, 100 + $0.offset) },
+                firstRound: bracket
+            )
             await load(shareID: shareID)
             tab = .playoff
         } catch { playoffError = error.localizedDescription }
@@ -223,9 +226,15 @@ final class QuickTableViewModel {
             let directs = result.seeded
                 .filter { $0.tier == .winner || $0.tier == .runnerUp }
                 .compactMap { s in s.playerID.map { (playerID: $0, seed: s.seed) } }
-            let wildcards = result.seeded.filter { $0.tier == .wildcard }.compactMap { $0.playerID }
-            try await repo.markPlayersQualified(qualified: directs, wildcards: wildcards)
-            try await repo.createPlayoff(tableID: d.table.id, firstRound: bracket)
+            let wildcards = result.seeded
+                .filter { $0.tier == .wildcard }
+                .compactMap { s in s.playerID.map { (playerID: $0, seed: s.seed) } }
+            try await repo.createPlayoff(
+                tableID: d.table.id,
+                qualified: directs,
+                wildcards: wildcards,
+                firstRound: bracket
+            )
             await load(shareID: shareID)
             tab = .playoff
         } catch let e as QTSeedingV2.SeedingError {
@@ -315,13 +324,15 @@ final class QuickTableViewModel {
         refBusy = false
     }
 
-    func submitScore(tableID: UUID, match: QTMatch, score1: Int, score2: Int, shareID: String) async {
+    func submitScore(match: QTMatch, score1: Int, score2: Int, shareID: String) async {
         do {
-            try await repo.score(tableID: tableID, match: match, score1: score1, score2: score2)
+            try await repo.score(match: match, score1: score1, score2: score2)
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            phase = .failed(error.localizedDescription)
+            scoreError = error.localizedDescription
+            scoringMatch = nil
+            await load(shareID: shareID)
         }
     }
 }
@@ -338,6 +349,13 @@ struct QuickTableDetailView: View {
     @ScaledMetric(relativeTo: .footnote) private var chevronSize: CGFloat = 11
 
     var body: some View {
+        managementPresentation
+    }
+
+    /// Keep the score surface separate from the management sheets. The split is
+    /// intentional: a single modifier chain here is large enough to exceed the
+    /// Swift type-checker's reasonable-time limit in debug builds.
+    private var scorePresentation: some View {
         ScrollView {
             content.padding(.bottom, 28)
         }
@@ -368,11 +386,23 @@ struct QuickTableDetailView: View {
         }
         .sheet(item: Binding(get: { model.scoringMatch }, set: { model.scoringMatch = $0 })) { match in
             if case .loaded(let detail) = model.phase {
-                ScoreSheet(detail: detail, match: match) { s1, s2 in
-                    Task { await model.submitScore(tableID: detail.table.id, match: match, score1: s1, score2: s2, shareID: shareID) }
+                ScoreSheet(detail: detail, match: match, onError: { model.scoreError = $0 }) { s1, s2 in
+                    Task { await model.submitScore(match: match, score1: s1, score2: s2, shareID: shareID) }
                 }
             }
         }
+        .alert("Không thể lưu điểm", isPresented: Binding(
+            get: { model.scoreError != nil },
+            set: { if !$0 { model.scoreError = nil } }
+        )) {
+            Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
+        } message: {
+            Text(model.scoreError ?? "Lỗi không xác định")
+        }
+    }
+
+    private var managementPresentation: some View {
+        scorePresentation
         .sheet(isPresented: Binding(get: { model.showWildcard }, set: { model.showWildcard = $0 })) {
             WildcardSelectionSheet(candidates: model.wildcardCandidates, need: model.wildcardNeed) { selected in
                 Task { await model.confirmWildcards(shareID: shareID, selectedIDs: selected) }
@@ -1067,6 +1097,7 @@ private struct QuickTableScheduleSheet: View {
 private struct ScoreSheet: View {
     let detail: QuickTableDetail
     let match: QTMatch
+    let onError: (String) -> Void
     let onSave: (Int, Int) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -1077,9 +1108,15 @@ private struct ScoreSheet: View {
     @State private var refSingles = false
     @State private var refereeing = false
 
-    init(detail: QuickTableDetail, match: QTMatch, onSave: @escaping (Int, Int) -> Void) {
+    init(
+        detail: QuickTableDetail,
+        match: QTMatch,
+        onError: @escaping (String) -> Void,
+        onSave: @escaping (Int, Int) -> Void
+    ) {
         self.detail = detail
         self.match = match
+        self.onError = onError
         self.onSave = onSave
         _s1 = State(initialValue: match.score1.map(String.init) ?? "")
         _s2 = State(initialValue: match.score2.map(String.init) ?? "")
@@ -1156,10 +1193,25 @@ private struct ScoreSheet: View {
                     mode: refMode,
                     isSingles: detail.table.isDoubles == true ? false : refSingles,
                     winTarget: refTarget,
-                    onLiveScore: { a, b in Task { try? await QuickTableRepository().updateLiveScore(matchID: match.id, score1: a, score2: b) } },
-                    onClaimLive: { Task { try? await QuickTableRepository().claimLive(matchID: match.id) } }) { a, b, note in
+                    onLiveScore: { a, b in
+                        Task {
+                            do { try await QuickTableRepository().updateLiveScore(matchID: match.id, score1: a, score2: b) }
+                            catch { onError(UserFacingError.message(action: "Cập nhật điểm trực tiếp", error: error)) }
+                        }
+                    },
+                    onClaimLive: {
+                        Task {
+                            do { try await QuickTableRepository().claimLive(matchID: match.id) }
+                            catch { onError(UserFacingError.message(action: "Nhận quyền chấm trận", error: error)) }
+                        }
+                    }) { a, b, note in
                     Haptics.light(); onSave(a, b)
-                    if let note { Task { try? await QuickTableRepository().updateRefereeNote(matchID: match.id, note: note) } }
+                    if let note {
+                        Task {
+                            do { try await QuickTableRepository().updateRefereeNote(matchID: match.id, note: note) }
+                            catch { onError(UserFacingError.message(action: "Lưu ghi chú trọng tài", error: error)) }
+                        }
+                    }
                 }
             }
         }

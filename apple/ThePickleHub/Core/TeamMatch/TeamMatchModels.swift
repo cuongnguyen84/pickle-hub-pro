@@ -282,6 +282,7 @@ struct TMGame: Decodable, Identifiable, Equatable {
     let displayName: String?
     let scoreA: Int?
     let scoreB: Int?
+    let scoreVersion: Int64
     let winnerTeamID: UUID?
     let lineupTeamA: [UUID]?
     let lineupTeamB: [UUID]?
@@ -315,6 +316,7 @@ struct TMGame: Decodable, Identifiable, Equatable {
         case displayName = "display_name"
         case scoreA = "score_a"
         case scoreB = "score_b"
+        case scoreVersion = "score_version"
         case winnerTeamID = "winner_team_id"
         case lineupTeamA = "lineup_team_a"
         case lineupTeamB = "lineup_team_b"

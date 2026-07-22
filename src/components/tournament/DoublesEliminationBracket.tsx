@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Crown, Trophy, Radio, Play, Pencil, Check, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Match, Team, useDoublesElimination } from '@/hooks/useDoublesElimination';
-import { supabase } from '@/integrations/supabase/client';
-import type { TablesUpdate } from '@/integrations/supabase/types';
+import {
+  Match,
+  Team,
+  scoreDoublesEliminationMatchAtomic,
+  useDoublesElimination,
+} from '@/hooks/useDoublesElimination';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/i18n';
-import { computeDoublesElimResult, bracketAdvanceTarget } from '@/lib/doublesElimResult';
+import { computeDoublesElimResult } from '@/lib/doublesElimResult';
 
 // ─── Shared TheLineLayout tokens ─────────────────────────────────────────
 // Match the W2.1 pattern from src/components/quicktable/RegistrationManager.tsx
@@ -888,149 +891,6 @@ function RoundColumn({
   );
 }
 
-// Helper to propagate loser to R2 match using match_index (0-based)
-// Now fetches R2 matches directly from database to ensure we have latest data
-async function propagateLoserToR2(
-  matchIndex: number, // 0-based index of R1 match
-  loserId: string,
-  allMatches: Match[],
-) {
-  // First try from allMatches (for optimistic update when data is fresh)
-  let r2Match = allMatches.find(m => {
-    if (m.round_number !== 2 || m.bracket_type !== 'loser') return false;
-    const sourceA = m.source_a as { type: string; match_index?: number } | null;
-    const sourceB = m.source_b as { type: string; match_index?: number } | null;
-    return sourceA?.match_index === matchIndex || sourceB?.match_index === matchIndex;
-  });
-
-  // If not found in allMatches, fetch from database
-  if (!r2Match) {
-    // Get tournament_id from any match in allMatches
-    const tournamentId = allMatches[0]?.tournament_id;
-    if (tournamentId) {
-      const { data: r2Matches } = await supabase
-        .from('doubles_elimination_matches')
-        .select('*')
-        .eq('tournament_id', tournamentId)
-        .eq('round_number', 2);
-
-      if (r2Matches) {
-        r2Match = r2Matches.find(m => {
-          const sourceA = m.source_a as { type: string; match_index?: number } | null;
-          const sourceB = m.source_b as { type: string; match_index?: number } | null;
-          return sourceA?.match_index === matchIndex || sourceB?.match_index === matchIndex;
-        }) as Match | undefined;
-      }
-    }
-  }
-
-  if (r2Match) {
-    const sourceA = r2Match.source_a as { type: string; match_index?: number } | null;
-    const updateField = sourceA?.match_index === matchIndex ? 'team_a_id' : 'team_b_id';
-
-    await supabase
-      .from('doubles_elimination_matches')
-      .update({ [updateField]: loserId } as TablesUpdate<'doubles_elimination_matches'>)
-      .eq('id', r2Match.id);
-  }
-}
-
-// Helper to propagate winner to next round match (R3 -> R4, R4 -> R5, etc.)
-// Returns the updated match info for optimistic UI update
-async function propagateWinnerToNextRound(
-  match: Match,
-  winnerId: string,
-  allMatches: Match[],
-  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void,
-) {
-  // For R3 matches, find corresponding R4 match slot
-  // R3 winners fill empty slots in R4 (teams with high point diff already have byes to R4)
-  if (match.round_number === 3) {
-    // DB-00 confirmed race: two referees completing two R3 matches at the
-    // same time both saw the same "first empty slot" in the stale allMatches
-    // prop and clobbered each other's winner. Read R4 fresh from the DB and
-    // claim a slot with a guarded UPDATE (`.is(field, null)`) — Postgres
-    // serializes the row update, so exactly one claimer wins a slot and the
-    // loser moves on to the next empty one.
-    const { data: r4Fresh } = await supabase
-      .from('doubles_elimination_matches')
-      .select('id, team_a_id, team_b_id, match_number')
-      .eq('tournament_id', match.tournament_id)
-      .eq('round_number', 4)
-      .order('match_number');
-    const r4Matches = r4Fresh ?? [];
-
-    // Re-propagation guard: a re-scored R3 match must not seat the same
-    // winner into a second R4 slot.
-    if (r4Matches.some(m => m.team_a_id === winnerId || m.team_b_id === winnerId)) {
-      return;
-    }
-
-    for (const r4Match of r4Matches) {
-      for (const field of ['team_a_id', 'team_b_id'] as const) {
-        if (r4Match[field]) continue;
-        const { data: claimed } = await supabase
-          .from('doubles_elimination_matches')
-          .update({ [field]: winnerId } as TablesUpdate<'doubles_elimination_matches'>)
-          .eq('id', r4Match.id)
-          .is(field, null)
-          .select('id')
-          .maybeSingle();
-        if (claimed) {
-          // Optimistic update for next round match
-          onMatchUpdated?.(r4Match.id, { [field]: winnerId });
-          return;
-        }
-        // Slot was taken by a concurrent propagation — try the next one.
-      }
-    }
-  }
-  // For R4+ rounds, follow the bracket position pattern
-  else if (match.round_number >= 4) {
-    const nextRoundMatches = allMatches
-      .filter(m => m.round_number === match.round_number + 1 && m.round_type !== 'third_place')
-      .sort((a, b) => a.match_number - b.match_number);
-
-    // Find the next match based on bracket position
-    const { nextMatchIndex, slot } = bracketAdvanceTarget(match.match_number);
-
-    const targetMatch = nextRoundMatches[nextMatchIndex];
-    if (targetMatch) {
-      const updateField = slot === 'a' ? 'team_a_id' : 'team_b_id';
-      await supabase
-        .from('doubles_elimination_matches')
-        .update({ [updateField]: winnerId } as TablesUpdate<'doubles_elimination_matches'>)
-        .eq('id', targetMatch.id);
-      // Optimistic update for next round match
-      onMatchUpdated?.(targetMatch.id, { [updateField]: winnerId });
-    }
-  }
-}
-
-// Helper to propagate semifinal loser to 3rd place match
-async function propagateLoserToThirdPlace(
-  match: Match,
-  loserId: string,
-  allMatches: Match[],
-  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void,
-) {
-  const thirdPlaceMatch = allMatches.find(m => m.round_type === 'third_place');
-  if (!thirdPlaceMatch) return;
-
-  // Determine slot based on match_number (match 1 loser -> team_a, match 2 loser -> team_b)
-  const slot = match.match_number === 1 ? 'team_a_id' : 'team_b_id';
-
-  // Check if slot is not already filled
-  if (!thirdPlaceMatch[slot]) {
-    await supabase
-      .from('doubles_elimination_matches')
-      .update({ [slot]: loserId } as TablesUpdate<'doubles_elimination_matches'>)
-      .eq('id', thirdPlaceMatch.id);
-    // Optimistic update
-    onMatchUpdated?.(thirdPlaceMatch.id, { [slot]: loserId });
-  }
-}
-
 interface BracketMatchCardProps {
   match: Match;
   allMatches: Match[];
@@ -1046,7 +906,6 @@ interface BracketMatchCardProps {
 
 const BracketMatchCard = ({
   match,
-  allMatches,
   teamA,
   teamB,
   formatTeamName,
@@ -1126,78 +985,38 @@ const BracketMatchCard = ({
       winner: gameWinner,
     };
 
-    // Calculate games won
-    const { gamesWonA, gamesWonB, complete: matchComplete, winnerId, loserId } =
+    const { gamesWonA, gamesWonB, complete: matchComplete, winnerId } =
       computeDoublesElimResult(updatedGames, match.best_of, match.team_a_id, match.team_b_id);
 
-    // Optimistic update
-    const matchUpdates: Partial<Match> = {
-      games: updatedGames as Match['games'],
-      games_won_a: gamesWonA,
-      games_won_b: gamesWonB,
-      winner_id: winnerId,
-      status: matchComplete ? 'completed' : 'live',
-    };
-    onMatchUpdated?.(match.id, matchUpdates);
-
     try {
-      await supabase
-        .from('doubles_elimination_matches')
-        .update({
-          games: updatedGames,
-          games_won_a: gamesWonA,
-          games_won_b: gamesWonB,
-          winner_id: winnerId,
-          status: matchComplete ? 'completed' : 'live',
-        })
-        .eq('id', match.id);
-
-      if (matchComplete) {
-        // For R1 winner matches, propagate loser to R2 loser bracket
-        if (loserId && match.round_type === 'winner_r1') {
-          const matchIndex = match.match_number - 1;
-          await propagateLoserToR2(matchIndex, loserId, allMatches);
-        }
-
-        // For R3+ matches, propagate winner to next round
-        if (winnerId && match.round_number >= 3) {
-          await propagateWinnerToNextRound(match, winnerId, allMatches, onMatchUpdated);
-        }
-
-        // For semifinal matches, propagate loser to 3rd place match
-        if (loserId && match.round_type === 'semifinal') {
-          await propagateLoserToThirdPlace(match, loserId, allMatches, onMatchUpdated);
-        }
-
-        // Mark loser as eliminated if not R1
-        if (loserId && match.round_type !== 'winner_r1') {
-          await supabase
-            .from('doubles_elimination_teams')
-            .update({
-              status: 'eliminated',
-              eliminated_at_round: match.round_number,
-            })
-            .eq('id', loserId);
-        }
-
-        // If this is the final match, mark tournament as completed
-        if (match.round_type === 'final') {
-          await supabase
-            .from('doubles_elimination_tournaments')
-            .update({ status: 'completed' })
-            .eq('id', match.tournament_id);
-        }
+      const result = await scoreDoublesEliminationMatchAtomic({
+        matchId: match.id,
+        scoreA: 0,
+        scoreB: 0,
+        games: updatedGames,
+        expectedVersion: match.score_version,
+      });
+      if (!result.success) {
+        throw new Error(result.error || 'UNKNOWN');
       }
 
+      onMatchUpdated?.(match.id, {
+        games: updatedGames as Match['games'],
+        games_won_a: gamesWonA,
+        games_won_b: gamesWonB,
+        winner_id: winnerId,
+        status: matchComplete ? 'completed' : 'live',
+        score_version: result.version ?? match.score_version + 1,
+      });
       toast({ title: matchComplete ? b.matchSaved : `${b.gameSaved} ${gameNum}` });
       setEditingGameIndex(null);
-
-      // Trigger reload to update data and auto-generate next round if needed
-      if (matchComplete) {
-        onScoreUpdated?.();
-      }
-    } catch (error) {
-      toast({ title: b.scoreSaveError, variant: 'destructive' });
+      onScoreUpdated?.();
+    } catch (error: unknown) {
+      toast({
+        title: b.scoreSaveError,
+        description: error instanceof Error ? error.message : undefined,
+        variant: 'destructive',
+      });
       onScoreUpdated?.();
     } finally {
       setSaving(false);
@@ -1222,75 +1041,41 @@ const BracketMatchCard = ({
     const scoreA = parseInt(editScoreA) || 0;
     const scoreB = parseInt(editScoreB) || 0;
 
-    // For BO1: higher score wins
-    const winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
-    const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
-    const isMatchComplete = scoreA !== scoreB;
-
-    // Optimistic update
-    const matchUpdates: Partial<Match> = {
-      score_a: scoreA,
-      score_b: scoreB,
-      winner_id: isMatchComplete ? winnerId : null,
-      status: isMatchComplete ? 'completed' : 'live',
-    };
-    onMatchUpdated?.(match.id, matchUpdates);
+    if (scoreA === scoreB) {
+      toast({ title: b.tieNotAllowed, variant: 'destructive' });
+      setSaving(false);
+      return;
+    }
+    const winnerId = scoreA > scoreB ? match.team_a_id : match.team_b_id;
 
     try {
-      await supabase
-        .from('doubles_elimination_matches')
-        .update({
-          score_a: scoreA,
-          score_b: scoreB,
-          winner_id: isMatchComplete ? winnerId : null,
-          status: isMatchComplete ? 'completed' : 'live',
-        })
-        .eq('id', match.id);
-
-      // For R1 winner matches, propagate loser to R2 loser bracket
-      if (isMatchComplete && loserId && match.round_type === 'winner_r1') {
-        const matchIndex = match.match_number - 1;
-        await propagateLoserToR2(matchIndex, loserId, allMatches);
+      const result = await scoreDoublesEliminationMatchAtomic({
+        matchId: match.id,
+        scoreA,
+        scoreB,
+        games: [],
+        expectedVersion: match.score_version,
+      });
+      if (!result.success) {
+        throw new Error(result.error || 'UNKNOWN');
       }
 
-      // For R3+ matches, propagate winner to next round
-      if (isMatchComplete && winnerId && match.round_number >= 3) {
-        await propagateWinnerToNextRound(match, winnerId, allMatches, onMatchUpdated);
-      }
-
-      // For semifinal matches, propagate loser to 3rd place match
-      if (isMatchComplete && loserId && match.round_type === 'semifinal') {
-        await propagateLoserToThirdPlace(match, loserId, allMatches, onMatchUpdated);
-      }
-
-      // Mark loser as eliminated if not R1
-      if (isMatchComplete && loserId && match.round_type !== 'winner_r1') {
-        await supabase
-          .from('doubles_elimination_teams')
-          .update({
-            status: 'eliminated',
-            eliminated_at_round: match.round_number,
-          })
-          .eq('id', loserId);
-      }
-
-      // If this is the final match, mark tournament as completed
-      if (isMatchComplete && match.round_type === 'final') {
-        await supabase
-          .from('doubles_elimination_tournaments')
-          .update({ status: 'completed' })
-          .eq('id', match.tournament_id);
-      }
-
-      toast({ title: isMatchComplete ? b.matchSaved : b.scoreSaved });
+      onMatchUpdated?.(match.id, {
+        score_a: scoreA,
+        score_b: scoreB,
+        winner_id: winnerId,
+        status: 'completed',
+        score_version: result.version ?? match.score_version + 1,
+      });
+      toast({ title: b.matchSaved });
       setIsEditing(false);
-
-      // Trigger reload to update data and auto-generate next round if needed
-      if (isMatchComplete) {
-        onScoreUpdated?.();
-      }
-    } catch (error) {
-      toast({ title: b.scoreSaveError, variant: 'destructive' });
+      onScoreUpdated?.();
+    } catch (error: unknown) {
+      toast({
+        title: b.scoreSaveError,
+        description: error instanceof Error ? error.message : undefined,
+        variant: 'destructive',
+      });
       onScoreUpdated?.();
     } finally {
       setSaving(false);

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useDoublesElimination } from "@/hooks/useDoublesElimination";
+import { scoreDoublesEliminationMatchAtomic } from "@/hooks/useDoublesElimination";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { submitDoublesEliminationMatch } from "@/lib/dupr/submitDoublesEliminationMatch";
@@ -23,7 +23,6 @@ import {
 
 import {
   computeDoublesElimResult,
-  bracketAdvanceTarget,
   type DoublesElimGame as GameScore,
 } from "@/lib/doublesElimResult";
 
@@ -43,6 +42,7 @@ interface MatchData {
   games_won_a: number;
   games_won_b: number;
   status: string;
+  score_version: number;
   dupr_submitted?: boolean;
   dupr_match_code?: string | null;
   dupr_submit_error?: string | null;
@@ -73,84 +73,12 @@ const surfaceCard: React.CSSProperties = {
   padding: 24,
 };
 
-// Helper to propagate winner to next round
-async function propagateWinnerToNextRound(
-  match: MatchData,
-  winnerId: string,
-  tournamentId: string,
-) {
-  if (match.round_number === 3) {
-    const { data: r4Matches } = await supabase
-      .from('doubles_elimination_matches')
-      .select('*')
-      .eq('tournament_id', tournamentId)
-      .eq('round_number', 4)
-      .order('match_number', { ascending: true });
-
-    if (r4Matches) {
-      for (const r4Match of r4Matches) {
-        if (!r4Match.team_a_id) {
-          await supabase
-            .from('doubles_elimination_matches')
-            .update({ team_a_id: winnerId })
-            .eq('id', r4Match.id);
-          return;
-        }
-        if (!r4Match.team_b_id) {
-          await supabase
-            .from('doubles_elimination_matches')
-            .update({ team_b_id: winnerId })
-            .eq('id', r4Match.id);
-          return;
-        }
-      }
-    }
-  } else if (match.round_number >= 4) {
-    const nextRound = match.round_number + 1;
-    const { data: nextRoundMatches } = await supabase
-      .from('doubles_elimination_matches')
-      .select('*')
-      .eq('tournament_id', tournamentId)
-      .eq('round_number', nextRound)
-      .neq('round_type', 'third_place')
-      .order('match_number', { ascending: true });
-
-    if (nextRoundMatches && nextRoundMatches.length > 0) {
-      const { nextMatchIndex, slot } = bracketAdvanceTarget(match.match_number);
-
-      const targetMatch = nextRoundMatches[nextMatchIndex];
-      if (targetMatch) {
-        // W1.3 — explicit branches instead of dynamic-key
-        // `update({ [updateField]: winnerId })`. The Supabase
-        // generated types reject `{ [string]: string }` because the
-        // column union is fully constrained at the type level; the
-        // dynamic-key form forced a `never` index signature error
-        // (Scoring.tsx:120 pre-fix). Behaviour is identical — slot 'a'
-        // writes team_a_id, slot 'b' writes team_b_id.
-        if (slot === 'a') {
-          await supabase
-            .from('doubles_elimination_matches')
-            .update({ team_a_id: winnerId })
-            .eq('id', targetMatch.id);
-        } else {
-          await supabase
-            .from('doubles_elimination_matches')
-            .update({ team_b_id: winnerId })
-            .eq('id', targetMatch.id);
-        }
-      }
-    }
-  }
-}
-
 export default function DoublesEliminationScoring() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const { language } = useI18n();
-  const { checkAndAssignR3, checkAndGeneratePlayoff } = useDoublesElimination();
-
   const [match, setMatch] = useState<MatchData | null>(null);
   const [teamA, setTeamA] = useState<TeamData | null>(null);
   const [teamB, setTeamB] = useState<TeamData | null>(null);
@@ -314,7 +242,7 @@ export default function DoublesEliminationScoring() {
     }
   }, [matchId, loadMatchData]);
 
-  const handleScoreChange = useCallback(async (team: 'a' | 'b', delta: number) => {
+  const handleScoreChange = useCallback((team: 'a' | 'b', delta: number) => {
     if (!match || !canEdit) return;
 
     const newScoreA = team === 'a' ? Math.max(0, localScoreA + delta) : localScoreA;
@@ -323,14 +251,6 @@ export default function DoublesEliminationScoring() {
     setLocalScoreA(newScoreA);
     setLocalScoreB(newScoreB);
 
-    await supabase
-      .from('doubles_elimination_matches')
-      .update({
-        score_a: newScoreA,
-        score_b: newScoreB,
-        status: 'live',
-      })
-      .eq('id', match.id);
   }, [match, canEdit, localScoreA, localScoreB]);
 
   const handleReset = async () => {
@@ -338,11 +258,6 @@ export default function DoublesEliminationScoring() {
 
     setLocalScoreA(0);
     setLocalScoreB(0);
-
-    await supabase
-      .from('doubles_elimination_matches')
-      .update({ score_a: 0, score_b: 0 })
-      .eq('id', match.id);
 
     setShowResetDialog(false);
     toast({ title: tx.resetSuccess });
@@ -362,14 +277,14 @@ export default function DoublesEliminationScoring() {
     setCurrentGameNumber(gameNum);
   };
 
-  const tryDuprSubmit = async () => {
+  const tryDuprSubmit = async (gamesOverride?: GameScore[]) => {
     if (!match || !teamA || !teamB || !tournament) return;
     const ratingSource = tournament.rating_source ?? 'self';
     if (ratingSource === 'self') return;
     if (match.dupr_submitted) return;
     const outcome = await submitDoublesEliminationMatch({
       matchId: match.id,
-      games: match.games || [],
+      games: gamesOverride ?? match.games ?? [],
       ratingSource,
       tournamentName: tournament.name,
       teamA: { id: teamA.id, player1_user_id: teamA.player1_user_id ?? null, player2_user_id: teamA.player2_user_id ?? null },
@@ -396,13 +311,16 @@ export default function DoublesEliminationScoring() {
     }
   };
 
-  const handleSaveGame = async (overrideA?: number, overrideB?: number) => {
-    if (!match || !canEdit) return;
+  const handleSaveGame = async (
+    overrideA?: number,
+    overrideB?: number,
+  ): Promise<boolean> => {
+    if (!match || !canEdit) return false;
     const sa = overrideA ?? localScoreA;
     const sb = overrideB ?? localScoreB;
     if (sa === sb) {
       toast({ title: tx.scoresMustDiffer, variant: "destructive" });
-      return;
+      return false;
     }
 
     const newGame: GameScore = {
@@ -414,111 +332,70 @@ export default function DoublesEliminationScoring() {
 
     const existingGames = [...(match.games || [])];
     const gameIndex = currentGameNumber - 1;
+    if (gameIndex > existingGames.length) {
+      toast({
+        title: language === 'vi' ? 'Hãy chấm các game theo thứ tự' : 'Score games in order',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    if (gameIndex < existingGames.length) existingGames[gameIndex] = newGame;
+    else existingGames.push(newGame);
 
-    if (gameIndex < existingGames.length) {
-      existingGames[gameIndex] = newGame;
-    } else {
-      while (existingGames.length < gameIndex) {
-        existingGames.push({ game: existingGames.length + 1, score_a: 0, score_b: 0, winner: 'a' });
-      }
-      existingGames.push(newGame);
+    const computed = computeDoublesElimResult(
+      existingGames,
+      match.best_of,
+      match.team_a_id,
+      match.team_b_id,
+    );
+    const mutation = await scoreDoublesEliminationMatchAtomic({
+      matchId: match.id,
+      scoreA: 0,
+      scoreB: 0,
+      games: existingGames,
+      expectedVersion: match.score_version,
+    });
+
+    if (!mutation.success) {
+      toast({
+        title: language === 'vi' ? 'Không lưu được kết quả' : 'Could not save result',
+        description: mutation.error,
+        variant: 'destructive',
+      });
+      if (mutation.error === 'VERSION_CONFLICT') await loadMatchData();
+      return false;
     }
 
-    const result = computeDoublesElimResult(existingGames, match.best_of, match.team_a_id, match.team_b_id);
-    const { gamesWonA: winsA, gamesWonB: winsB } = result;
+    const committedMatch: MatchData = {
+      ...match,
+      score_a: 0,
+      score_b: 0,
+      games: existingGames,
+      games_won_a: computed.gamesWonA,
+      games_won_b: computed.gamesWonB,
+      winner_id: computed.winnerId,
+      status: computed.complete ? 'completed' : 'live',
+      score_version: mutation.version ?? match.score_version + 1,
+    };
+    setMatch(committedMatch);
 
-    if (result.complete) {
-      const winnerId = result.winnerId;
-      const loserId = result.loserId;
-
-      await supabase
-        .from('doubles_elimination_matches')
-        .update({
-          games: existingGames as never,
-          games_won_a: winsA,
-          games_won_b: winsB,
-          winner_id: winnerId,
-          status: 'completed',
-          score_a: 0,
-          score_b: 0,
-        })
-        .eq('id', match.id);
-
-      if (loserId && match.round_type !== 'winner_r1') {
-        await supabase
-          .from('doubles_elimination_teams')
-          .update({
-            status: 'eliminated',
-            eliminated_at_round: match.round_number,
-          })
-          .eq('id', loserId);
-      }
-
-      if (winnerId && match.round_number >= 3 && tournament) {
-        await propagateWinnerToNextRound(match, winnerId, tournament.id);
-      }
-
-      if (match.round_type === 'final' && tournament) {
-        await supabase
-          .from('doubles_elimination_tournaments')
-          .update({ status: 'completed' })
-          .eq('id', tournament.id);
-      }
-
-      if (tournament) {
-        if (match.round_number === 2) {
-          await checkAndAssignR3(tournament.id);
-        }
-        if (match.round_number === 3) {
-          await checkAndGeneratePlayoff(tournament.id);
-        }
-      }
-
-      setMatch({
-        ...match,
-        games: existingGames,
-        games_won_a: winsA,
-        games_won_b: winsB,
-        winner_id: winnerId,
-        status: 'completed',
-      });
-
+    if (computed.complete) {
       toast({ title: tx.matchEnded });
-      await tryDuprSubmit();
+      await tryDuprSubmit(existingGames);
     } else {
-      await supabase
-        .from('doubles_elimination_matches')
-        .update({
-          games: existingGames as never,
-          games_won_a: winsA,
-          games_won_b: winsB,
-          status: 'live',
-          score_a: 0,
-          score_b: 0,
-        })
-        .eq('id', match.id);
-
-      setMatch({
-        ...match,
-        games: existingGames,
-        games_won_a: winsA,
-        games_won_b: winsB,
-      });
-
       const nextEmptyGame = existingGames.length + 1;
       if (nextEmptyGame <= match.best_of) {
         setCurrentGameNumber(nextEmptyGame);
         setLocalScoreA(0);
         setLocalScoreB(0);
       }
-
       toast({ title: tx.savedGameN(currentGameNumber) });
     }
-  };
 
+    return true;
+  };
   const handleEndGame = async () => {
-    await handleSaveGame();
-    setShowEndDialog(false);
+    if (await handleSaveGame()) setShowEndDialog(false);
   };
 
   const handleEndMatchDirectly = async () => {
@@ -531,53 +408,35 @@ export default function DoublesEliminationScoring() {
       return;
     }
 
-    const winnerId = localScoreA > localScoreB ? match.team_a_id : match.team_b_id;
-    const loserId = localScoreA > localScoreB ? match.team_b_id : match.team_a_id;
-
-    await supabase
-      .from('doubles_elimination_matches')
-      .update({
-        score_a: localScoreA,
-        score_b: localScoreB,
-        winner_id: winnerId,
-        status: 'completed',
-      })
-      .eq('id', match.id);
-
-    if (loserId && match.round_type !== 'winner_r1') {
-      await supabase
-        .from('doubles_elimination_teams')
-        .update({
-          status: 'eliminated',
-          eliminated_at_round: match.round_number,
-        })
-        .eq('id', loserId);
+    const mutation = await scoreDoublesEliminationMatchAtomic({
+      matchId: match.id,
+      scoreA: localScoreA,
+      scoreB: localScoreB,
+      games: [],
+      expectedVersion: match.score_version,
+    });
+    if (!mutation.success) {
+      toast({
+        title: language === 'vi' ? 'Không lưu được kết quả' : 'Could not save result',
+        description: mutation.error,
+        variant: 'destructive',
+      });
+      if (mutation.error === 'VERSION_CONFLICT') await loadMatchData();
+      return;
     }
 
-    if (winnerId && match.round_number >= 3 && tournament) {
-      await propagateWinnerToNextRound(match, winnerId, tournament.id);
-    }
-
-    if (match.round_type === 'final' && tournament) {
-      await supabase
-        .from('doubles_elimination_tournaments')
-        .update({ status: 'completed' })
-        .eq('id', tournament.id);
-    }
-
-    if (tournament) {
-      if (match.round_number === 2) {
-        await checkAndAssignR3(tournament.id);
-      }
-      if (match.round_number === 3) {
-        await checkAndGeneratePlayoff(tournament.id);
-      }
-    }
-
+    setMatch({
+      ...match,
+      score_a: localScoreA,
+      score_b: localScoreB,
+      winner_id: localScoreA > localScoreB ? match.team_a_id : match.team_b_id,
+      status: 'completed',
+      score_version: mutation.version ?? match.score_version + 1,
+    });
     toast({ title: tx.matchEnded });
     // DUPR Phase 2 (2026-05-29). Attempt submit BEFORE navigation so any
     // error toast is seen on the scoring page.
-    await tryDuprSubmit();
+    await tryDuprSubmit([]);
     navigate(`/tools/doubles-elimination/${tournament?.share_id}`);
     setShowEndDialog(false);
   };
@@ -594,7 +453,8 @@ export default function DoublesEliminationScoring() {
   } : null;
   const refFinish = async (a: number, b: number) => {
     setLocalScoreA(a); setLocalScoreB(b);
-    await handleSaveGame(a, b);
+    const saved = await handleSaveGame(a, b);
+    if (!saved) return;
     // Clear the live envelope with plain match-id authority — the screen's
     // ownership-gated onLiveState(null) may no longer match post-finish.
     if (match) {
@@ -602,11 +462,10 @@ export default function DoublesEliminationScoring() {
     }
     setRefereeing(false);
   };
-  // Codex round 3: every live write carries a server-side ownership
-  // predicate — a queued write from a taken-over referee must not commit.
   const refLiveScore = (a: number, b: number) => {
     if (!match || !user?.id) return;
-    void supabase.from('doubles_elimination_matches').update({ score_a: a, score_b: b }).eq('id', match.id).eq('live_referee_id', user.id).then((): void => undefined, (): void => undefined);
+    setLocalScoreA(a);
+    setLocalScoreB(b);
   };
   // S2: best-effort full-state persistence (referee_live_state jsonb).
   const refLiveState = (s: RefereeLiveState | null) => {
@@ -1383,4 +1242,3 @@ export default function DoublesEliminationScoring() {
     </TheLineLayout>
   );
 }
-

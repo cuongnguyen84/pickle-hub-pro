@@ -106,12 +106,7 @@ export function BracketSetupDialog({
   const navigate = useNavigate();
   const { language } = useI18n();
   const {
-    addPlayers,
-    createGroups,
-    assignPlayersToGroups,
-    createGroupMatches,
-    updateTableStatus,
-    getTableByShareId,
+    setupRosterAtomic,
   } = useQuickTable();
 
   const [saving, setSaving] = useState(false);
@@ -281,29 +276,12 @@ export function BracketSetupDialog({
         player2_name: p.player2_name || undefined,
       }));
 
-      const createdPlayers = await addPlayers(table.id, playerData);
-      if (createdPlayers.length === 0) throw new Error(txt.failedToAdd);
-
-      if (table.format === 'round_robin' && table.group_count) {
-        const groups = await createGroups(table.id, table.group_count);
-        if (groups.length === 0) throw new Error(txt.failedGroups);
-
-        await assignPlayersToGroups(createdPlayers, groups);
-
-        const refreshed = await getTableByShareId(shareId);
-        if (!refreshed) throw new Error(txt.failedRefresh);
-
-        for (const group of groups) {
-          const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
-          if (groupPlayers.length >= 2) {
-            await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id));
-          }
-        }
-
-        await updateTableStatus(table.id, 'group_stage');
-      } else {
-        await updateTableStatus(table.id, 'group_stage');
-      }
+      const created = await setupRosterAtomic(
+        table.id,
+        playerData,
+        table.group_count ?? 1,
+      );
+      if (!created) throw new Error(txt.failedToAdd);
 
       toast.success(txt.successAuto);
       onOpenChange(false);
@@ -329,41 +307,21 @@ export function BracketSetupDialog({
         player2_name: p.player2_name || undefined,
       }));
 
-      const createdPlayers = await addPlayers(table.id, playerData);
-      if (createdPlayers.length === 0) throw new Error(txt.failedToAdd);
-
-      const playerMap = new Map<string, typeof createdPlayers[0]>();
-      filledPlayers.forEach((inputPlayer, index) => {
-        playerMap.set(inputPlayer.id, createdPlayers[index]);
+      const assignments = filledPlayers.map((player) => {
+        for (let groupIndex = 0; groupIndex < table.group_count!; groupIndex++) {
+          if ((groupAssignments.get(groupIndex) || []).some(candidate => candidate.id === player.id)) {
+            return groupIndex;
+          }
+        }
+        return -1;
       });
-
-      const groups = await createGroups(table.id, table.group_count);
-      if (groups.length === 0) throw new Error(txt.failedGroups);
-
-      for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-        const group = groups[groupIndex];
-        const assignedInputPlayers = groupAssignments.get(groupIndex) || [];
-
-        const playersToAssign = assignedInputPlayers
-          .map(ip => playerMap.get(ip.id))
-          .filter(Boolean) as typeof createdPlayers;
-
-        if (playersToAssign.length > 0) {
-          await assignPlayersToGroups(playersToAssign, [group]);
-        }
-      }
-
-      const refreshed = await getTableByShareId(shareId);
-      if (!refreshed) throw new Error(txt.failedRefresh);
-
-      for (const group of groups) {
-        const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
-        if (groupPlayers.length >= 2) {
-          await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id));
-        }
-      }
-
-      await updateTableStatus(table.id, 'group_stage');
+      const created = await setupRosterAtomic(
+        table.id,
+        playerData,
+        table.group_count,
+        assignments,
+      );
+      if (!created) throw new Error(txt.failedGroups);
 
       toast.success(txt.successManual);
       onOpenChange(false);

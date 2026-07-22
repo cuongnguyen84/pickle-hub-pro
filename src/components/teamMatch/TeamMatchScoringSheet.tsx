@@ -11,7 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { RefereeScoringScreen, type RefereeLoaded } from '@/components/referee/RefereeScoringScreen';
 import type { RefereeLiveState } from '@/lib/refereeScoring';
 import { useAuth } from '@/hooks/useAuth';
-import { computeTeamMatchResult } from '@/lib/teamMatchResult';
 import { useI18n } from '@/i18n';
 import {
   AlertDialog,
@@ -92,10 +91,9 @@ export function TeamMatchScoringSheet({
   tournamentId,
   asPage = false,
   onBack,
-  totalScoreMode = false,
 }: TeamMatchScoringSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
-  const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
+  const { updateGameScores, isUpdatingScore } = useTeamMatchMatchManagement();
   const { language } = useI18n();
   const { user } = useAuth();
 
@@ -274,34 +272,15 @@ export function TeamMatchScoringSheet({
     const sb = overrideB ?? localScoreB;
 
     try {
-      // Update this game's score
-      await updateGameScore({
-        gameId: currentGame.id,
-        scoreA: sa,
-        scoreB: sb,
+      await updateGameScores({
         matchId: match.id,
-      });
-
-      // Calculate match totals from all games including current update
-      const { gamesWonA, gamesWonB, totalPointsA, totalPointsB, winnerId } =
-        computeTeamMatchResult(
-          games.map((game, index) => ({
-            a: index === selectedGameIndex ? sa : game.score_a,
-            b: index === selectedGameIndex ? sb : game.score_b,
-          })),
-          match.team_a_id,
-          match.team_b_id,
-          totalScoreMode,
-        );
-
-      await updateMatchResult({
-        matchId: match.id,
-        gamesWonA,
-        gamesWonB,
-        totalPointsA,
-        totalPointsB,
-        winnerId,
         tournamentId,
+        scores: [{
+          gameId: currentGame.id,
+          scoreA: sa,
+          scoreB: sb,
+          expectedVersion: currentGame.score_version,
+        }],
       });
 
       // Move to next game if not the last one and current game completed
@@ -792,9 +771,9 @@ export function TeamMatchScoringSheet({
                       className="tl-btn green"
                       style={{ flex: 1, justifyContent: 'center', padding: '10px 12px' }}
                       onClick={() => setShowSaveDialog(true)}
-                      disabled={isUpdatingScore || isUpdatingResult}
+                      disabled={isUpdatingScore}
                     >
-                      {(isUpdatingScore || isUpdatingResult) ? (
+                      {isUpdatingScore ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Check className="w-4 h-4" />

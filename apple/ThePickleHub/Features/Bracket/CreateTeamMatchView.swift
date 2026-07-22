@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Native Team Match (MLP) create wizard — faithful port of web TeamMatchSetup.tsx
 /// (4 steps: Basic info → Game templates → DreamBreaker → Format). Creates via
-/// create_team_match_with_quota + inserts game templates, then hands the new
+/// create_team_match_atomic commits metadata + game templates, then hands the new
 /// share_id back so the caller can push the native detail view.
 @Observable
 final class CreateTeamMatchModel {

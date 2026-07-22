@@ -41,8 +41,8 @@ final class AccountSettingsModel {
         guard let item else { return }
         uploadingAvatar = true; error = nil
         do {
-            guard let data = try await item.loadTransferable(type: Data.self) else { uploadingAvatar = false; return }
-            avatarURL = try await repo.uploadAvatar(data: data, fileExtension: "jpg")
+            let image = try await ImagePipeline.load(item, policy: .avatar)
+            avatarURL = try await repo.uploadAvatar(image: image)
             Haptics.success()
         } catch { self.error = error.localizedDescription }
         uploadingAvatar = false
@@ -132,7 +132,7 @@ struct AccountSettingsView: View {
                         .background(TLColor.accent, in: Capsule())
                 }
                 .disabled(model.uploadingAvatar)
-                Text("JPG hoặc PNG").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                Text("JPG hoặc PNG · tối đa 2 MB").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
             }
             Spacer()
         }

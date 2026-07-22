@@ -92,7 +92,7 @@ export function DoublesEliminationRegistrationSection({
   const vi = language === "vi";
   const location = useLocation();
   const { data: conn, isLoading: connLoading } = useDuprConnection();
-  const { registerTeam, cancelTeamRegistration, organizerAddTeam, organizerRemoveTeam, closeRegistration, generateBracket, loading } = useDoublesElimination();
+  const { registerTeam, cancelTeamRegistration, organizerAddTeam, organizerRemoveTeam, closeRegistration, loading } = useDoublesElimination();
 
   // Pick the row for the current user (either slot) so we can show cancel UI.
   const myTeam = useMemo(() => {
@@ -274,17 +274,8 @@ export function DoublesEliminationRegistrationSection({
               });
               return;
             }
-            // Frontend completes the workflow by generating R1 matches using
-            // the seeds that close_doubles_elimination_registration just wrote.
-            const br = await generateBracket(tournament.id, [], "manual");
-            if (!br.success) {
-              toast({
-                title: vi ? "Lỗi tạo bracket" : "Bracket error",
-                description: br.error,
-                variant: "destructive",
-              });
-              return;
-            }
+            // The RPC seeds teams, creates the preliminary bracket, and flips
+            // the tournament status in one database transaction.
             toast({ title: vi ? "Đã tạo bracket" : "Bracket ready" });
             await onBracketReady();
           }}

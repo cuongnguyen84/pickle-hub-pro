@@ -79,6 +79,7 @@ export interface FlexMatch {
   slot_b_team_id: string | null;
   score_a: number;
   score_b: number;
+  score_version: number;
   winner_side: 'a' | 'b' | null;
   counts_for_standings: boolean;
   display_order: number;
@@ -171,18 +172,17 @@ export function useFlexTournament() {
       const safeName = sanitizeString(input.name, MAX_NAME_LENGTH);
       if (!safeName) throw new Error('Tournament name is required');
 
-      // Limit players
-      const limitedPlayers = input.playerNames.slice(0, MAX_PLAYERS_CREATE);
+      const playerNames = input.playerNames
+        .slice(0, MAX_PLAYERS_CREATE)
+        .map(name => sanitizeString(name, MAX_NAME_LENGTH))
+        .filter(name => name.length > 0);
 
-      // W3.2 — call quota-enforced RPC instead of direct insert. Mirrors
-      // useQuickTable.createTable. Returns json {success, tournament?,
-      // error?, count?, quota?} — LIMIT_REACHED surfaces as a friendly
-      // toast; other errors fall through to the existing onError handler.
       const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'create_flex_tournament_with_quota',
+        'create_flex_tournament_atomic',
         {
-          _name: safeName,
-          _is_public: input.isPublic,
+          p_name: safeName,
+          p_is_public: input.isPublic,
+          p_player_names: playerNames,
         },
       );
 
@@ -212,49 +212,7 @@ export function useFlexTournament() {
         throw new Error(result.error || 'Unknown error');
       }
 
-      const tournament = result.tournament as FlexTournament;
-
-      // Add players
-      if (limitedPlayers.length > 0) {
-        const playersToInsert = limitedPlayers.map((name, index) => ({
-          tournament_id: tournament.id,
-          name: sanitizeString(name, MAX_NAME_LENGTH),
-          display_order: index,
-        })).filter(p => p.name.length > 0);
-
-        if (playersToInsert.length > 0) {
-          const { error: playersError } = await supabase
-            .from('flex_players')
-            .insert(playersToInsert);
-
-          if (playersError) throw playersError;
-        }
-      }
-
-      // Create preset forms: 1 Group, 1 Singles Match, 1 Doubles Match
-      const presetPromises = [
-        supabase.from('flex_groups').insert({
-          tournament_id: tournament.id,
-          name: 'Group A',
-          display_order: 0,
-        }),
-        supabase.from('flex_matches').insert({
-          tournament_id: tournament.id,
-          name: 'Singles Match 1',
-          match_type: 'singles',
-          display_order: 0,
-        }),
-        supabase.from('flex_matches').insert({
-          tournament_id: tournament.id,
-          name: 'Doubles Match 1',
-          match_type: 'doubles',
-          display_order: 1,
-        }),
-      ];
-
-      await Promise.all(presetPromises);
-
-      return tournament as FlexTournament;
+      return result.tournament as FlexTournament;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flex-tournaments'] });
@@ -331,6 +289,33 @@ export function useFlexTournament() {
     };
   }
 
+  async function createEntityAtomic<T>(input: {
+    tournamentId: string;
+    entityType: 'player' | 'team' | 'group' | 'match';
+    name: string;
+    displayOrder: number;
+    matchType?: 'singles' | 'doubles' | null;
+    groupId?: string | null;
+    parentMatchId?: string | null;
+  }): Promise<T | null> {
+    const { data, error } = await supabase.rpc('create_flex_entity_atomic', {
+      p_tournament_id: input.tournamentId,
+      p_entity_type: input.entityType,
+      p_name: input.name,
+      p_display_order: input.displayOrder,
+      p_match_type: input.matchType ?? null,
+      p_group_id: input.groupId ?? null,
+      p_parent_match_id: input.parentMatchId ?? null,
+    });
+    const result = (data ?? {}) as Record<string, unknown>;
+    if (error || result.success !== true || !result.entity) {
+      const code = typeof result.error === 'string' ? result.error : error?.message || 'UNKNOWN';
+      toast({ title: "Error", description: code, variant: "destructive" });
+      return null;
+    }
+    return result.entity as T;
+  }
+
   // Add player
   async function addPlayer(tournamentId: string, name: string, displayOrder: number): Promise<FlexPlayer | null> {
     const safeName = sanitizeString(name, MAX_NAME_LENGTH);
@@ -338,41 +323,27 @@ export function useFlexTournament() {
       toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
       return null;
     }
-    const { data, error } = await supabase
-      .from('flex_players')
-      .insert({ tournament_id: tournamentId, name: safeName, display_order: displayOrder })
-      .select()
-      .single();
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return null;
-    }
-    return data as FlexPlayer;
+    return createEntityAtomic<FlexPlayer>({
+      tournamentId,
+      entityType: 'player',
+      name: safeName,
+      displayOrder,
+    });
   }
 
   // Add team
-  async function addTeam(tournamentId: string, name: string, displayOrder: number, currentCount?: number): Promise<FlexTeam | null> {
-    if (currentCount !== undefined && currentCount >= 20) {
-      toast({ title: "Giới hạn", description: "Tối đa 20 đội cho mỗi giải đấu", variant: "destructive" });
-      return null;
-    }
+  async function addTeam(tournamentId: string, name: string, displayOrder: number): Promise<FlexTeam | null> {
     const safeName = sanitizeString(name, MAX_NAME_LENGTH);
     if (!safeName) {
       toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
       return null;
     }
-    const { data, error } = await supabase
-      .from('flex_teams')
-      .insert({ tournament_id: tournamentId, name: safeName, display_order: displayOrder })
-      .select()
-      .single();
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return null;
-    }
-    return data as FlexTeam;
+    return createEntityAtomic<FlexTeam>({
+      tournamentId,
+      entityType: 'team',
+      name: safeName,
+      displayOrder,
+    });
   }
 
   // Add player to team
@@ -405,27 +376,18 @@ export function useFlexTournament() {
   }
 
   // Add group
-  async function addGroup(tournamentId: string, name: string, displayOrder: number, currentCount?: number): Promise<FlexGroup | null> {
-    if (currentCount !== undefined && currentCount >= 20) {
-      toast({ title: "Giới hạn", description: "Tối đa 20 bảng đấu cho mỗi giải đấu", variant: "destructive" });
-      return null;
-    }
+  async function addGroup(tournamentId: string, name: string, displayOrder: number): Promise<FlexGroup | null> {
     const safeName = sanitizeString(name, MAX_NAME_LENGTH);
     if (!safeName) {
       toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
       return null;
     }
-    const { data, error } = await supabase
-      .from('flex_groups')
-      .insert({ tournament_id: tournamentId, name: safeName, display_order: displayOrder })
-      .select()
-      .single();
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return null;
-    }
-    return data as FlexGroup;
+    return createEntityAtomic<FlexGroup>({
+      tournamentId,
+      entityType: 'group',
+      name: safeName,
+      displayOrder,
+    });
   }
 
   // Add item to group (player or team)
@@ -490,54 +452,29 @@ export function useFlexTournament() {
     matchType: 'singles' | 'doubles',
     groupId: string | null,
     displayOrder: number,
-    parentMatchId?: string | null,
-    currentCount?: number
+    parentMatchId?: string | null
   ): Promise<FlexMatch | null> {
-    if (currentCount !== undefined && currentCount >= 100) {
-      toast({ title: "Giới hạn", description: "Tối đa 100 trận đấu cho mỗi giải đấu", variant: "destructive" });
-      return null;
-    }
     const safeName = sanitizeString(name, MAX_NAME_LENGTH);
     if (!safeName) {
       toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
       return null;
     }
-    const { data, error } = await supabase
-      .from('flex_matches')
-      .insert({
-        tournament_id: tournamentId,
-        name: safeName,
-        match_type: matchType,
-        group_id: groupId,
-        display_order: displayOrder,
-        parent_match_id: parentMatchId || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return null;
-    }
-    return data as FlexMatch;
+    return createEntityAtomic<FlexMatch>({
+      tournamentId,
+      entityType: 'match',
+      name: safeName,
+      displayOrder,
+      matchType,
+      groupId,
+      parentMatchId,
+    });
   }
 
   // Update parent match score based on child matches (count wins)
   async function updateParentMatchScore(parentMatchId: string, childMatches: FlexMatch[]): Promise<boolean> {
     const teamAWins = childMatches.filter(m => m.winner_side === 'a').length;
     const teamBWins = childMatches.filter(m => m.winner_side === 'b').length;
-    const winnerSide = teamAWins > teamBWins ? 'a' : teamBWins > teamAWins ? 'b' : null;
-    
-    const { error } = await supabase
-      .from('flex_matches')
-      .update({ score_a: teamAWins, score_b: teamBWins, winner_side: winnerSide })
-      .eq('id', parentMatchId);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return false;
-    }
-    return true;
+    return updateMatchScore(parentMatchId, teamAWins, teamBWins);
   }
 
   // Update match slots
@@ -563,15 +500,32 @@ export function useFlexTournament() {
     scoreA: number,
     scoreB: number
   ): Promise<boolean> {
-    const winnerSide = scoreA > scoreB ? 'a' : scoreB > scoreA ? 'b' : null;
-    
-    const { error } = await supabase
+    const { data: current, error: fetchError } = await supabase
       .from('flex_matches')
-      .update({ score_a: scoreA, score_b: scoreB, winner_side: winnerSide })
-      .eq('id', matchId);
+      .select('score_version')
+      .eq('id', matchId)
+      .single();
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (fetchError || !current) {
+      toast({ title: "Error", description: fetchError?.message || 'Match not found', variant: "destructive" });
+      return false;
+    }
+
+    const { data, error } = await supabase.rpc('score_flex_match_atomic', {
+      p_match_id: matchId,
+      p_score_a: scoreA,
+      p_score_b: scoreB,
+      p_expected_version: current.score_version,
+    });
+
+    const result = (data ?? {}) as Record<string, unknown>;
+
+    if (error || result.success !== true) {
+      const code = typeof result.error === 'string' ? result.error : error?.message || 'UNKNOWN';
+      const description = code === 'VERSION_CONFLICT'
+        ? 'Điểm vừa được cập nhật ở thiết bị khác. Hãy tải lại.'
+        : code;
+      toast({ title: "Error", description, variant: "destructive" });
       return false;
     }
     return true;
@@ -580,15 +534,21 @@ export function useFlexTournament() {
   // Update match counts_for_standings
   async function updateMatchCountsForStandings(
     matchId: string,
-    countsForStandings: boolean
+    countsForStandings: boolean,
+    groupId: string | null,
   ): Promise<boolean> {
-    const { error } = await supabase
-      .from('flex_matches')
-      .update({ counts_for_standings: countsForStandings })
-      .eq('id', matchId);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    const { data, error } = await supabase.rpc('update_flex_match_standings_atomic', {
+      p_match_id: matchId,
+      p_counts_for_standings: countsForStandings,
+      p_group_id: groupId,
+    });
+    const result = (data ?? {}) as Record<string, unknown>;
+    if (error || result.success !== true) {
+      toast({
+        title: "Error",
+        description: typeof result.error === 'string' ? result.error : error?.message || 'UNKNOWN',
+        variant: "destructive",
+      });
       return false;
     }
     return true;
@@ -597,15 +557,24 @@ export function useFlexTournament() {
   // Update match group_id
   async function updateMatchGroupId(
     matchId: string,
-    groupId: string | null
+    groupId: string | null,
+    countsForStandings: boolean,
   ): Promise<boolean> {
-    const { error } = await supabase
-      .from('flex_matches')
-      .update({ group_id: groupId })
-      .eq('id', matchId);
+    return updateMatchCountsForStandings(matchId, countsForStandings, groupId);
+  }
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+  async function updateGroupIncludeDoubles(groupId: string, includeDoubles: boolean): Promise<boolean> {
+    const { data, error } = await supabase.rpc('update_flex_group_standings_atomic', {
+      p_group_id: groupId,
+      p_include_doubles: includeDoubles,
+    });
+    const result = (data ?? {}) as Record<string, unknown>;
+    if (error || result.success !== true) {
+      toast({
+        title: "Error",
+        description: typeof result.error === 'string' ? result.error : error?.message || 'UNKNOWN',
+        variant: "destructive",
+      });
       return false;
     }
     return true;
@@ -727,6 +696,7 @@ export function useFlexTournament() {
     updateMatchScore,
     updateMatchCountsForStandings,
     updateMatchGroupId,
+    updateGroupIncludeDoubles,
     updateParentMatchScore,
     deleteEntity,
     updateEntityName,

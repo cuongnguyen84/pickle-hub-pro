@@ -22,7 +22,6 @@ import { useTeamMatchGroups, useTeamMatchGroupManagement } from '@/hooks/useTeam
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { vi as viLocale, enUS } from 'date-fns/locale';
 import { lazy, Suspense, useState, useCallback } from 'react';
@@ -113,7 +112,7 @@ export default function TeamMatchView() {
   const { data: teams } = useTeamMatchTeams(tournament?.id);
   const { data: matches } = useTeamMatchMatches(tournament?.id);
   const { data: groups } = useTeamMatchGroups(tournament?.id);
-  const { generateMatches, isGenerating, generatePlayoffMatches, isGeneratingPlayoff, generateSingleElimination, isGeneratingSE } = useTeamMatchMatchManagement();
+  const { generateMatches, isGenerating, startRound, generatePlayoffMatches, isGeneratingPlayoff, generateSingleElimination, isGeneratingSE } = useTeamMatchMatchManagement();
   const { createGroups, isCreatingGroups } = useTeamMatchGroupManagement();
   const {
     standings,
@@ -320,29 +319,9 @@ export default function TeamMatchView() {
   };
 
   const handleGenerateMatches = async () => {
-    if (!tournament || !teams) return;
+    if (!tournament) return;
     try {
-      const { data: templates, error: templatesError } = await supabase
-        .from('team_match_game_templates')
-        .select('*')
-        .eq('tournament_id', tournament.id)
-        .order('order_index');
-
-      if (templatesError) throw templatesError;
-
-      const gameTemplates = (templates || []).map(t => ({
-        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
-        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
-        display_name: t.display_name,
-        order_index: t.order_index,
-      }));
-
-      await generateMatches({
-        tournamentId: tournament.id,
-        teams,
-        gameTemplates,
-        hasDreambreaker: tournament.has_dreambreaker,
-      });
+      await generateMatches({ tournamentId: tournament.id });
       setShowGenerateDialog(false);
     } catch (error) {
       // Error handled in hook
@@ -360,20 +339,11 @@ export default function TeamMatchView() {
   };
 
   const handleStartRound = async (roundNumber: number) => {
-    if (!tournament || !matches) return;
-
-    const roundMatches = matches.filter(m => m.round_number === roundNumber);
+    if (!tournament) return;
 
     try {
-      for (const match of roundMatches) {
-        await supabase
-          .from('team_match_matches')
-          .update({ status: 'in_progress' })
-          .eq('id', match.id);
-      }
-
+      await startRound({ tournamentId: tournament.id, roundNumber });
       toast({ title: t.teamMatch.view.roundStarted + ' ' + roundNumber });
-      window.location.reload();
     } catch (error) {
       toast({ title: t.teamMatch.view.errorOccurred, variant: 'destructive' });
     }
@@ -384,59 +354,38 @@ export default function TeamMatchView() {
 
     try {
       const playoffSeeding = generatePlayoffSeeding(teamCount);
-      const qualifyingTeams = playoffSeeding.seeds.map((seed, index) => ({
-        teamId: seed.teamId,
-        seed: index + 1,
-      }));
-
-      const { data: templates, error: templatesError } = await supabase
-        .from('team_match_game_templates')
-        .select('*')
-        .eq('tournament_id', tournament.id)
-        .order('order_index');
-
-      if (templatesError) throw templatesError;
-
-      const gameTemplates = (templates || []).map(t => ({
-        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
-        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
-        display_name: t.display_name,
-        order_index: t.order_index,
-      }));
-
-      await generatePlayoffMatches({
-        tournamentId: tournament.id,
-        qualifyingTeams,
-        gameTemplates,
-        hasDreambreaker: tournament.has_dreambreaker,
-        pairings: playoffSeeding.pairings.map(p => ({
-          matchIndex: p.matchIndex,
-          bracketSide: p.bracketSide,
-          team1Id: p.team1.teamId,
-          team2Id: p.team2.teamId,
+      const orderedMainPairings = [
+        ...playoffSeeding.pairings.filter(pair => pair.bracketSide === 'left'),
+        ...playoffSeeding.pairings.filter(pair => pair.bracketSide === 'right'),
+      ];
+      const branches = [{
+        isRepechage: false,
+        firstRound: orderedMainPairings.map(pair => ({
+          teamAId: pair.team1.teamId,
+          teamBId: pair.team2.teamId,
         })),
-      });
+      }];
 
-      // Nhánh Tái sinh (hạng 3,4) — sinh cùng lúc, không chặn Playoff nếu thiếu đội.
+      // Main and repechage are committed together when both seed sets exist.
       if (tournament.has_repechage) {
         const rep = generateRepechageSeeding(teamCount);
         const repTeams = rep.seeds.filter(s => s.teamId);
         if (repTeams.length === teamCount && rep.pairings.length === teamCount / 2) {
-          await generatePlayoffMatches({
-            tournamentId: tournament.id,
-            qualifyingTeams: repTeams.map((s, i) => ({ teamId: s.teamId, seed: i + 1 })),
-            gameTemplates,
-            hasDreambreaker: tournament.has_dreambreaker,
+          const orderedRepechagePairings = [
+            ...rep.pairings.filter(pair => pair.bracketSide === 'left'),
+            ...rep.pairings.filter(pair => pair.bracketSide === 'right'),
+          ];
+          branches.push({
             isRepechage: true,
-            pairings: rep.pairings.map(p => ({
-              matchIndex: p.matchIndex,
-              bracketSide: p.bracketSide,
-              team1Id: p.team1.teamId,
-              team2Id: p.team2.teamId,
+            firstRound: orderedRepechagePairings.map(pair => ({
+              teamAId: pair.team1.teamId,
+              teamBId: pair.team2.teamId,
             })),
           });
         }
       }
+
+      await generatePlayoffMatches({ tournamentId: tournament.id, branches });
 
       setShowPlayoffDialog(false);
       setActiveTab('matches');
@@ -450,34 +399,16 @@ export default function TeamMatchView() {
   };
 
   const handleCreateGroups = async (
-    groupCount: number,
+    _groupCount: number,
     distribution: Array<Array<{ id: string; name: string }>>,
     randomizeGameOrder?: boolean,
   ) => {
     if (!tournament) return;
 
     try {
-      const { data: templates, error: templatesError } = await supabase
-        .from('team_match_game_templates')
-        .select('*')
-        .eq('tournament_id', tournament.id)
-        .order('order_index');
-
-      if (templatesError) throw templatesError;
-
-      const gameTemplates = (templates || []).map(t => ({
-        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
-        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
-        display_name: t.display_name,
-        order_index: t.order_index,
-      }));
-
       await createGroups({
         tournamentId: tournament.id,
-        groupCount,
         distribution,
-        gameTemplates,
-        hasDreambreaker: tournament.has_dreambreaker,
         randomizeGameOrder,
       });
 
@@ -495,27 +426,9 @@ export default function TeamMatchView() {
     if (!tournament || !teams) return;
 
     try {
-      const { data: templates, error: templatesError } = await supabase
-        .from('team_match_game_templates')
-        .select('*')
-        .eq('tournament_id', tournament.id)
-        .order('order_index');
-
-      if (templatesError) throw templatesError;
-
-      const gameTemplates = (templates || []).map(t => ({
-        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
-        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
-        display_name: t.display_name,
-        order_index: t.order_index,
-      }));
-
       await generateSingleElimination({
         tournamentId: tournament.id,
         teams,
-        gameTemplates,
-        hasDreambreaker: tournament.has_dreambreaker,
-        hasThirdPlaceMatch: tournament.has_third_place_match || false,
         pairingType,
         manualPairings,
       });

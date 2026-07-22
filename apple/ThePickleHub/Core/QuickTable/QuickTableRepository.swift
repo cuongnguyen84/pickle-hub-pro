@@ -142,7 +142,7 @@ struct QuickTableRepository {
             .execute().value
         async let matches: [QTMatch] = client
             .from("quick_table_matches")
-            .select("id, group_id, is_playoff, playoff_round, playoff_match_number, player1_id, player2_id, score1, score2, winner_id, status, court_name, court_id, start_at, display_order")
+            .select("id, group_id, is_playoff, playoff_round, playoff_match_number, player1_id, player2_id, score1, score2, winner_id, status, court_name, court_id, start_at, display_order, score_version")
             .eq("table_id", value: table.id)
             .execute().value
 
@@ -192,17 +192,7 @@ struct QuickTableRepository {
         let min_skill_level: Double?
         let max_skill_level: Double?
     }
-    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let player1_name: String?; let player2_name: String?; let team: String?; let seed: Int?; let display_order: Int }
     private struct CourtSettingsUpdate: Encodable { let courts: [String]; let start_time: String? }
-    private struct GroupInsert: Encodable { let table_id: String; let name: String; let display_order: Int }
-    private struct InsertedRow: Decodable { let id: UUID; let displayOrder: Int
-        enum CodingKeys: String, CodingKey { case id; case displayOrder = "display_order" } }
-    private struct GroupIDUpdate: Encodable { let group_id: String }
-    private struct MatchInsert: Encodable {
-        let table_id: String; let group_id: String; let is_playoff = false
-        let player1_id: String; let player2_id: String
-        let display_order: Int; let rr_round_number: Int; let rr_match_index: Int
-    }
 
     /// Step 1–3 of the wizard: creates the `quick_tables` row via the quota RPC
     /// (status stays `setup`). Roster is entered separately (web parity).
@@ -245,86 +235,70 @@ struct QuickTableRepository {
         let seed: Int?
     }
 
-    /// The setup step (auto, non-registration): add roster (name/team/seed) →
-    /// save court+time settings → create groups → snake-draft distribute →
-    /// circle-method matches → status=group_stage. Mirrors web handleAutoSubmit.
+    private struct AtomicRosterEntry: Encodable {
+        let name: String
+        let player1_name: String?
+        let player2_name: String?
+        let team: String?
+        let seed: Int?
+    }
+    private struct AtomicRosterParams: Encodable {
+        let p_table_id: String
+        let p_roster: [AtomicRosterEntry]
+        let p_group_assignments: [Int]
+        let p_courts: [Int]
+        let p_start_time: String?
+    }
+    private struct AtomicLifecycleResult: Decodable {
+        let success: Bool
+        let error: String?
+        let detail: String?
+    }
+
+    /// The setup plan is computed locally for UI parity, then the database
+    /// validates and commits roster, groups, all RR matches, court schedule and
+    /// lifecycle status in one transaction.
     func setupRoster(tableID: UUID, players: [RosterEntry], groupCount: Int,
                      courts: [String], startTime: String?) async throws {
-        let tid = tableID.uuidString.lowercased()
         let roster = players
             .map { RosterEntry(name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines),
                                player1Name: $0.player1Name?.nonEmpty, player2Name: $0.player2Name?.nonEmpty,
                                team: $0.team?.nonEmpty, seed: $0.seed) }
             .filter { !$0.name.isEmpty }
         let groups = max(1, groupCount)
-
-        let inserted: [InsertedRow] = try await client
-            .from("quick_table_players")
-            .insert(roster.enumerated().map { PlayerInsert(table_id: tid, name: $1.name,
-                                                           player1_name: $1.player1Name, player2_name: $1.player2Name,
-                                                           team: $1.team, seed: $1.seed, display_order: $0) })
-            .select("id, display_order")
-            .execute().value
-        let ordered = inserted.sorted { $0.displayOrder < $1.displayOrder }
-        // Pair inserted ids back to their roster entry (same display_order order).
-        let records = ordered.map { row -> (id: UUID, team: String?, seed: Int?) in
-            let r = roster[row.displayOrder]
-            return (id: row.id, team: r.team, seed: r.seed)
+        let identities = roster.enumerated().map { index, entry in
+            (id: UUID(), index: index, team: entry.team, seed: entry.seed)
         }
-
-        if !courts.isEmpty || startTime?.nonEmpty != nil {
-            try await client.from("quick_tables")
-                .update(CourtSettingsUpdate(courts: courts, start_time: startTime?.nonEmpty))
-                .eq("id", value: tableID).execute()
-        }
-
-        let groupRows: [InsertedRow] = try await client
-            .from("quick_table_groups")
-            .insert((0..<groups).map { GroupInsert(table_id: tid, name: groupLetter($0), display_order: $0) })
-            .select("id, display_order")
-            .execute().value
-        let orderedGroups = groupRows.sorted { $0.displayOrder < $1.displayOrder }
-
-        let buckets = Self.distribute(records, groupCount: orderedGroups.count)
-        for (g, ids) in buckets.enumerated() {
+        let buckets = Self.distribute(
+            identities.map { (id: $0.id, team: $0.team, seed: $0.seed) },
+            groupCount: groups
+        )
+        let indexByID = Dictionary(uniqueKeysWithValues: identities.map { ($0.id, $0.index) })
+        var assignments = Array(repeating: -1, count: roster.count)
+        for (groupIndex, ids) in buckets.enumerated() {
             for id in ids {
-                try await client.from("quick_table_players")
-                    .update(GroupIDUpdate(group_id: orderedGroups[g].id.uuidString.lowercased()))
-                    .eq("id", value: id).execute()
+                if let index = indexByID[id] { assignments[index] = groupIndex }
             }
         }
 
-        var schedInput: [SchedulableMatch] = []
-        for (gIdx, group) in orderedGroups.enumerated() {
-            let pairs = Self.circleMethod(buckets[gIdx])
-            guard !pairs.isEmpty else { continue }
-            let inserts = pairs.enumerated().map { i, pair in
-                MatchInsert(table_id: tid, group_id: group.id.uuidString.lowercased(),
-                            player1_id: pair.p1.uuidString.lowercased(), player2_id: pair.p2.uuidString.lowercased(),
-                            display_order: i, rr_round_number: pair.round, rr_match_index: pair.index)
-            }
-            // Capture ids (same order as `pairs` via display_order) so we can schedule below.
-            let rows: [InsertedRow] = try await client.from("quick_table_matches")
-                .insert(inserts).select("id, display_order").execute().value
-            let orderedRows = rows.sorted { $0.displayOrder < $1.displayOrder }
-            for (i, pair) in pairs.enumerated() where i < orderedRows.count {
-                schedInput.append(SchedulableMatch(matchID: orderedRows[i].id, player1: pair.p1, player2: pair.p2, groupIndex: gIdx))
-            }
+        let result: AtomicLifecycleResult = try await client
+            .rpc("setup_quick_table_roster_atomic", params: AtomicRosterParams(
+                p_table_id: tableID.uuidString.lowercased(),
+                p_roster: roster.map { AtomicRosterEntry(
+                    name: $0.name, player1_name: $0.player1Name,
+                    player2_name: $0.player2Name, team: $0.team, seed: $0.seed
+                ) },
+                p_group_assignments: assignments,
+                p_courts: courts.compactMap { Int($0.trimmingCharacters(in: .whitespaces)) },
+                p_start_time: startTime?.nonEmpty
+            ))
+            .execute().value
+        guard result.success else {
+            throw NSError(
+                domain: "quicktable", code: 2,
+                userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? "Không thể tạo bảng đấu."]
+            )
         }
-
-        // Auto-assign courts + times when the organizer supplied courts at setup.
-        let courtInts = courts.compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-        if !courtInts.isEmpty && !schedInput.isEmpty {
-            let scheduled = Self.scheduleMatches(schedInput, courts: courtInts,
-                                                 numGroups: orderedGroups.count, startTime: startTime?.nonEmpty)
-            for s in scheduled {
-                try await client.from("quick_table_matches")
-                    .update(ScheduleUpdate(court_id: s.court, start_at: s.startAt, display_order: s.displayOrder))
-                    .eq("id", value: s.matchID).execute()
-            }
-        }
-
-        try await client.from("quick_tables").update(TableStatusUpdate(status: "group_stage")).eq("id", value: tableID).execute()
     }
 
     /// Snake-draft distribution (seed-aware + team-spread). Port of web
@@ -390,10 +364,6 @@ struct QuickTableRepository {
         case "AUTH_REQUIRED": return "Cần đăng nhập để tạo giải."
         default: return code ?? "Không tạo được giải."
         }
-    }
-
-    private func groupLetter(_ i: Int) -> String {
-        String(UnicodeScalar(65 + UInt8(i % 26)))
     }
 
     /// Circle-method (Berger) round-robin pairings. Port of web round-robin.ts.
@@ -627,98 +597,64 @@ struct QuickTableRepository {
             .in("id", values: ids.map { $0.uuidString.lowercased() }).execute()
     }
 
-    // MARK: Playoff generation (port of useQuickTable createPlayoffMatches + markPlayersQualified)
+    // MARK: Playoff generation
 
-    private struct QualifyUpdate: Encodable {
-        let is_qualified = true
-        let is_wildcard: Bool
+    private struct AtomicQualifier: Encodable {
+        let player_id: String
         let playoff_seed: Int
+        let is_wildcard: Bool
     }
-    /// Mark qualified (seed 1..N) + wildcards (seed 100+i) — web markPlayersQualified.
-    func markPlayersQualified(qualified: [(playerID: UUID, seed: Int)], wildcards: [UUID]) async throws {
-        for q in qualified {
-            try await client.from("quick_table_players")
-                .update(QualifyUpdate(is_wildcard: false, playoff_seed: q.seed))
-                .eq("id", value: q.playerID).execute()
-        }
-        for (i, id) in wildcards.enumerated() {
-            try await client.from("quick_table_players")
-                .update(QualifyUpdate(is_wildcard: true, playoff_seed: 100 + i))
-                .eq("id", value: id).execute()
-        }
-    }
-
-    private struct PlayoffMatchInsert: Encodable {
-        let table_id: String
-        let playoff_round: Int
-        let playoff_match_number: Int
-        let bracket_position: String
+    private struct AtomicFirstRoundMatch: Encodable {
         let player1_id: String?
         let player2_id: String?
-        var winner_id: String? = nil
-        var status: String = "pending"
-        let display_order: Int
-        func encode(to e: Encoder) throws {
-            var c = e.container(keyedBy: K.self)
-            try c.encode(table_id, forKey: .table_id)
-            try c.encode(true, forKey: .is_playoff)
-            try c.encode(playoff_round, forKey: .playoff_round)
-            try c.encode(playoff_match_number, forKey: .playoff_match_number)
-            try c.encode(bracket_position, forKey: .bracket_position)
-            try c.encode(player1_id, forKey: .player1_id)   // null when nil
-            try c.encode(player2_id, forKey: .player2_id)
-            try c.encodeIfPresent(winner_id, forKey: .winner_id)  // omit when nil
-            try c.encode(status, forKey: .status)
-            try c.encode(display_order, forKey: .display_order)
-        }
-        enum K: String, CodingKey {
-            case table_id, is_playoff, playoff_round, playoff_match_number
-            case bracket_position, player1_id, player2_id, winner_id, status, display_order
-        }
+        let bracket_position: String
+        let match_number: Int
+    }
+    private struct AtomicPlayoffParams: Encodable {
+        let p_table_id: String
+        let p_qualifiers: [AtomicQualifier]
+        let p_first_round: [AtomicFirstRoundMatch]
     }
 
-    /// Pre-create ALL playoff rounds, then flip the table to 'playoff'.
-    /// BYE (first-round match với 1 slot nil) được resolve walkover bằng `QTSeedingV2.resolveBracketTree`:
-    /// winner tự đẩy lên vòng sau + match BYE đánh dấu completed, nên không kẹt chờ điểm.
-    /// Match thật ở vòng sau vẫn rỗng cho `advancePlayoff` (positional) lấp dần. Old path (không BYE)
-    /// cho kết quả y như cũ.
-    func createPlayoff(tableID: UUID, firstRound: [QTBracketMatch]) async throws {
-        let tID = tableID.uuidString.lowercased()
-        let n = firstRound.count
-        guard n >= 1 else { return }
-        let round0 = n <= 2 ? 2 : n <= 4 ? 1 : 0
-
-        let tree = QTSeedingV2.resolveBracketTree(
-            firstRound: firstRound.map { (p1: $0.player1, p2: $0.player2, matchNumber: $0.matchNumber) })
-
-        var inserts: [PlayoffMatchInsert] = []
-        var matchNumber = 0
-        for node in tree {
-            matchNumber += 1   // round-major theo thứ tự tree → 1..n vòng đầu, rồi n+1.. vòng sau (như cũ)
-            let pos = node.roundCount == 1 ? "final"
-                : (node.position < (node.roundCount + 1) / 2 ? "upper" : "lower")
-            inserts.append(PlayoffMatchInsert(
-                table_id: tID, playoff_round: round0 + node.roundIndex, playoff_match_number: matchNumber,
-                bracket_position: pos,
-                player1_id: node.p1?.uuidString.lowercased(), player2_id: node.p2?.uuidString.lowercased(),
-                winner_id: node.done ? node.winner?.uuidString.lowercased() : nil,
-                status: node.done ? "completed" : "pending",
-                display_order: node.roundIndex * 100 + node.position))
+    /// Marks qualifiers, validates the confirmed first round, pre-creates all
+    /// downstream rounds (including BYE propagation), and changes table status
+    /// in one database transaction.
+    func createPlayoff(
+        tableID: UUID,
+        qualified: [(playerID: UUID, seed: Int)],
+        wildcards: [(playerID: UUID, seed: Int)],
+        firstRound: [QTBracketMatch]
+    ) async throws {
+        let qualifiers = qualified.map {
+            AtomicQualifier(player_id: $0.playerID.uuidString.lowercased(),
+                            playoff_seed: $0.seed, is_wildcard: false)
+        } + wildcards.map {
+            AtomicQualifier(player_id: $0.playerID.uuidString.lowercased(),
+                            playoff_seed: $0.seed, is_wildcard: true)
         }
-        try await client.from("quick_table_matches").insert(inserts).execute()
-        try await client.from("quick_tables").update(TableStatusUpdate(status: "playoff")).eq("id", value: tableID).execute()
+        let result: AtomicLifecycleResult = try await client
+            .rpc("create_quick_table_playoff_atomic", params: AtomicPlayoffParams(
+                p_table_id: tableID.uuidString.lowercased(),
+                p_qualifiers: qualifiers,
+                p_first_round: firstRound.map {
+                    AtomicFirstRoundMatch(
+                        player1_id: $0.player1?.uuidString.lowercased(),
+                        player2_id: $0.player2?.uuidString.lowercased(),
+                        bracket_position: $0.position,
+                        match_number: $0.matchNumber
+                    )
+                }
+            ))
+            .execute().value
+        guard result.success else {
+            throw NSError(
+                domain: "quicktable", code: 3,
+                userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? "Không thể tạo playoff."]
+            )
+        }
     }
 
     // MARK: Score
-
-    private struct MatchScoreUpdate: Encodable {
-        let score1: Int
-        let score2: Int
-        let winner_id: String
-        let status = "completed"
-        // live_referee_id: completed matches don't show the LIVE badge (row gates on
-        // !isCompleted), so no need to clear it here.
-    }
 
     // MARK: Result rules (ARCH-04 pre-work)
 
@@ -763,98 +699,23 @@ struct QuickTableRepository {
         return stats
     }
 
-    /// Saves a match score, then recomputes group stats (group stage) or
-    /// advances the winner (playoff). Caller reloads afterward.
-    func score(tableID: UUID, match: QTMatch, score1: Int, score2: Int) async throws {
-        guard score1 != score2 else { return } // no ties in pickleball
-        let winnerID = (score1 > score2 ? match.player1ID : match.player2ID)
-        guard let winnerID else { return }
-
-        try await client
-            .from("quick_table_matches")
-            .update(MatchScoreUpdate(score1: score1, score2: score2, winner_id: winnerID.uuidString))
-            .eq("id", value: match.id)
-            .execute()
-
-        if match.isPlayoff, let round = match.playoffRound {
-            try await advancePlayoff(tableID: tableID, matchID: match.id, round: round, winnerID: winnerID)
-        } else if let groupID = match.groupID {
-            try await recomputeGroupStats(groupID: groupID)
-        }
+    private struct AtomicScoreParams: Encodable {
+        let p_match_id: String
+        let p_score1: Int
+        let p_score2: Int
+        let p_expected_version: Int64
     }
 
-    private struct PlayerStatsUpdate: Encodable {
-        let matches_played: Int
-        let matches_won: Int
-        let points_for: Int
-        let points_against: Int
-    }
-
-    /// Recompute every player's aggregate in a group from its completed matches.
-    /// `point_diff` is a generated column — not written.
-    private func recomputeGroupStats(groupID: UUID) async throws {
-        let matches: [QTMatch] = try await client
-            .from("quick_table_matches")
-            .select("id, group_id, is_playoff, playoff_round, playoff_match_number, player1_id, player2_id, score1, score2, winner_id, status, court_name, display_order")
-            .eq("group_id", value: groupID)
-            .eq("status", value: "completed")
+    /// Score, group-stat recompute, and playoff propagation commit together.
+    func score(match: QTMatch, score1: Int, score2: Int) async throws {
+        let result: AtomicTournamentMutationResult = try await client
+            .rpc("score_quick_table_match_atomic", params: AtomicScoreParams(
+                p_match_id: match.id.uuidString.lowercased(),
+                p_score1: score1,
+                p_score2: score2,
+                p_expected_version: match.scoreVersion
+            ))
             .execute().value
-        let players: [QTPlayer] = try await client
-            .from("quick_table_players")
-            .select("id, group_id, name, team, seed, matches_played, matches_won, points_for, points_against, point_diff, is_qualified, playoff_seed")
-            .eq("group_id", value: groupID)
-            .execute().value
-
-        let stats = Self.accumulateGroupStats(
-            matches: matches.map { (p1: $0.player1ID, p2: $0.player2ID, s1: $0.score1, s2: $0.score2) },
-            playerIDs: players.map(\.id))
-
-        for (playerID, s) in stats {
-            try await client
-                .from("quick_table_players")
-                .update(PlayerStatsUpdate(matches_played: s.played, matches_won: s.won,
-                                          points_for: s.pf, points_against: s.pa))
-                .eq("id", value: playerID)
-                .execute()
-        }
-    }
-
-    private struct Slot1Update: Encodable { let player1_id: String }
-    private struct Slot2Update: Encodable { let player2_id: String }
-    private struct TableStatusUpdate: Encodable { let status: String }
-
-    /// Push the winner into the next playoff round (pos/2 → next match,
-    /// pos%2 → slot). When the current round is the final, mark table completed.
-    private func advancePlayoff(tableID: UUID, matchID: UUID, round: Int, winnerID: UUID) async throws {
-        struct RoundMatch: Decodable { let id: UUID; let playoffMatchNumber: Int?
-            enum CodingKeys: String, CodingKey { case id; case playoffMatchNumber = "playoff_match_number" } }
-
-        let current: [RoundMatch] = try await client
-            .from("quick_table_matches")
-            .select("id, playoff_match_number")
-            .eq("table_id", value: tableID).eq("is_playoff", value: true).eq("playoff_round", value: round)
-            .order("playoff_match_number", ascending: true)
-            .execute().value
-        guard let position = current.firstIndex(where: { $0.id == matchID }) else { return }
-
-        let next: [RoundMatch] = try await client
-            .from("quick_table_matches")
-            .select("id, playoff_match_number")
-            .eq("table_id", value: tableID).eq("is_playoff", value: true).eq("playoff_round", value: round + 1)
-            .order("playoff_match_number", ascending: true)
-            .execute().value
-
-        let (nextIndex, slot1) = Self.advanceTarget(position: position)
-        if next.count > nextIndex {
-            let nextID = next[nextIndex].id
-            if slot1 {
-                try await client.from("quick_table_matches").update(Slot1Update(player1_id: winnerID.uuidString)).eq("id", value: nextID).execute()
-            } else {
-                try await client.from("quick_table_matches").update(Slot2Update(player2_id: winnerID.uuidString)).eq("id", value: nextID).execute()
-            }
-        } else if current.count == 1 {
-            // Final just finished.
-            try await client.from("quick_tables").update(TableStatusUpdate(status: "completed")).eq("id", value: tableID).execute()
-        }
+        try result.requireSuccess()
     }
 }

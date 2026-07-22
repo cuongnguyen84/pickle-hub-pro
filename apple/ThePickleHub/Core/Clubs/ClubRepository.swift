@@ -142,15 +142,13 @@ struct ClubRepository {
     }
 
     /// Upload a club logo to the `clubs-logos` bucket, return the public URL.
-    func uploadLogo(data: Data) async -> String? {
-        guard let uid = await currentUserID() else { return nil }
+    func uploadLogo(image: ProcessedImage) async throws -> String {
+        guard let uid = await currentUserID() else { throw ClubWriteError.message("Cần đăng nhập để tải logo.") }
         let rand = UUID().uuidString.prefix(6)
         let stamp = Int(Date().timeIntervalSince1970 * 1000)
-        let path = "\(uid.uuidString.lowercased())/\(stamp)-\(rand).jpg"
-        do {
-            _ = try await client.storage.from("clubs-logos")
-                .upload(path, data: data, options: FileOptions(cacheControl: "31536000", contentType: "image/jpeg", upsert: false))
-            return try? client.storage.from("clubs-logos").getPublicURL(path: path).absoluteString
-        } catch { return nil }
+        let path = "\(uid.uuidString.lowercased())/\(stamp)-\(rand).\(image.fileExtension)"
+        _ = try await client.storage.from("clubs-logos")
+            .upload(path, data: image.data, options: FileOptions(cacheControl: "31536000", contentType: image.contentType, upsert: false))
+        return try client.storage.from("clubs-logos").getPublicURL(path: path).absoluteString
     }
 }

@@ -47,16 +47,16 @@ struct NotificationRepository {
 
     private struct ReadUpdate: Encodable { let is_read = true }
 
-    func markRead(_ notification: AppNotification) async {
+    func markRead(_ notification: AppNotification) async throws {
         let table = notification.source == .legacy ? "notifications" : "social_notifications"
-        try? await client.from(table).update(ReadUpdate()).eq("id", value: notification.id).execute()
+        try await client.from(table).update(ReadUpdate()).eq("id", value: notification.id).execute()
     }
 
-    func markAllRead() async {
+    func markAllRead() async throws {
         guard let uid = await currentUserID() else { return }
-        try? await client.from("notifications").update(ReadUpdate())
+        try await client.from("notifications").update(ReadUpdate())
             .eq("user_id", value: uid).eq("is_read", value: false).execute()
-        try? await client.from("social_notifications").update(ReadUpdate())
+        try await client.from("social_notifications").update(ReadUpdate())
             .eq("user_id", value: uid).eq("is_read", value: false).execute()
     }
 }

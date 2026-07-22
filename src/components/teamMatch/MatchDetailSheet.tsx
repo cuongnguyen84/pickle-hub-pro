@@ -12,7 +12,6 @@ import { Loader2, Save, Trophy, Play } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { computeTeamMatchResult } from '@/lib/teamMatchResult';
 import { useI18n } from '@/i18n';
 
 interface MatchDetailSheetProps {
@@ -89,10 +88,9 @@ export function MatchDetailSheet({
   isOwner,
   tournamentId,
   onScoreMatch,
-  totalScoreMode = false,
 }: MatchDetailSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
-  const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
+  const { updateGameScores, isUpdatingScore } = useTeamMatchMatchManagement();
   const { language } = useI18n();
 
   const [scores, setScores] = useState<Record<string, { a: number; b: number }>>({});
@@ -175,37 +173,22 @@ export function MatchDetailSheet({
     if (!match) return;
 
     try {
-      // Update each game score
-      for (const game of games) {
+      const changedScores = games.flatMap((game) => {
         const score = scores[game.id];
         if (score && (score.a !== game.score_a || score.b !== game.score_b)) {
-          await updateGameScore({
+          return [{
             gameId: game.id,
             scoreA: score.a,
             scoreB: score.b,
-            matchId: match.id,
-          });
+            expectedVersion: game.score_version,
+          }];
         }
-      }
-
-      // Calculate match totals
-      const { gamesWonA, gamesWonB, totalPointsA, totalPointsB, winnerId } =
-        computeTeamMatchResult(
-          games.map((game) => scores[game.id] ?? { a: game.score_a, b: game.score_b }),
-          match.team_a_id,
-          match.team_b_id,
-          totalScoreMode,
-        );
-
-      await updateMatchResult({
-        matchId: match.id,
-        gamesWonA,
-        gamesWonB,
-        totalPointsA,
-        totalPointsB,
-        winnerId,
-        tournamentId,
+        return [];
       });
+
+      if (changedScores.length > 0) {
+        await updateGameScores({ matchId: match.id, tournamentId, scores: changedScores });
+      }
 
       setHasChanges(false);
     } catch (error) {
@@ -514,9 +497,9 @@ export function MatchDetailSheet({
               className="tl-btn green"
               style={{ width: '100%', justifyContent: 'center', padding: '10px 14px' }}
               onClick={handleSaveScores}
-              disabled={isUpdatingScore || isUpdatingResult}
+              disabled={isUpdatingScore}
             >
-              {(isUpdatingScore || isUpdatingResult) ? (
+              {isUpdatingScore ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Save className="h-4 w-4" />

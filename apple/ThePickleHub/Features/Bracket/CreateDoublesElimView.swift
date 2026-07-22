@@ -10,7 +10,7 @@ final class CreateDEModel {
 
     var step = 1
     var name = ""
-    var teamCount = 8
+    var teamCount = 40
     var courtsText = ""
     var startTime = ""
     var ratingSource = "self"      // self | either | dupr
@@ -35,11 +35,37 @@ final class CreateDEModel {
 
     func canProceed() -> Bool {
         switch step {
-        case 1: return name.trimmingCharacters(in: .whitespaces).count >= 3 && teamCount >= 2
+        case 1:
+            return name.trimmingCharacters(in: .whitespaces).count >= 3
+                && DoublesElimRepository.supportedCreationTeamCounts.contains(teamCount)
         case 2: return true
-        case 3: return teams.filter(validTeam).count >= 2
+        case 3: return teams.count == teamCount && teams.allSatisfy(validTeam)
         default: return false
         }
+    }
+
+    func advance() {
+        guard canProceed(), step < lastStep else { return }
+        if step == 2 && !isDupr { synchronizeTeamRows() }
+        step += 1
+    }
+
+    func addTeam() {
+        guard teams.count < DoublesElimRepository.supportedCreationTeamCounts.upperBound else { return }
+        teams.append(TeamRow())
+        teamCount = teams.count
+    }
+
+    func removeTeam(at index: Int) {
+        guard teams.indices.contains(index),
+              teams.count > DoublesElimRepository.supportedCreationTeamCounts.lowerBound else { return }
+        teams.remove(at: index)
+        teamCount = teams.count
+    }
+
+    private func synchronizeTeamRows() {
+        while teams.count < teamCount { teams.append(TeamRow()) }
+        if teams.count > teamCount { teams.removeLast(teams.count - teamCount) }
     }
 
     // ── UX-04 autosave snapshot (parity web draft:doubles:new) ───────────
@@ -70,7 +96,8 @@ final class CreateDEModel {
 
     func apply(_ d: Draft) {
         name = d.name
-        teamCount = max(2, d.teamCount)
+        teamCount = min(max(DoublesElimRepository.supportedCreationTeamCounts.lowerBound, d.teamCount),
+                        DoublesElimRepository.supportedCreationTeamCounts.upperBound)
         courtsText = d.courtsText
         startTime = d.startTime
         if ["self", "either", "dupr"].contains(d.ratingSource) { ratingSource = d.ratingSource }
@@ -82,13 +109,13 @@ final class CreateDEModel {
         hasThirdPlace = d.hasThirdPlace
         if !d.teams.isEmpty {
             teams = d.teams.map { TeamRow(name: $0.name, p1: $0.p1, p2: $0.p2, seed: $0.seed) }
-            while teams.count < 2 { teams.append(TeamRow()) }
         }
+        if !isDupr { synchronizeTeamRows() }
         step = min(max(1, d.step), lastStep)
     }
 
     func resetForm() {
-        step = 1; name = ""; teamCount = 8; courtsText = ""; startTime = ""
+        step = 1; name = ""; teamCount = 40; courtsText = ""; startTime = ""
         ratingSource = "self"; minDupr = ""; maxDupr = ""
         earlyFormat = "bo1"; semiSel = "inherit"; finalsSel = "inherit"
         hasThirdPlace = false; teams = [TeamRow(), TeamRow()]; error = nil
@@ -193,14 +220,15 @@ struct CreateDoublesElimView: View {
             }
             field("Số đội") {
                 VStack(alignment: .leading, spacing: 8) {
-                    Stepper(value: Binding(get: { model.teamCount }, set: { model.teamCount = $0 }), in: 2...128) {
+                    Stepper(value: Binding(get: { model.teamCount }, set: { model.teamCount = $0 }),
+                            in: DoublesElimRepository.supportedCreationTeamCounts) {
                         Text("\(model.teamCount) đội").font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
                     }
                     .padding(.horizontal, 12).padding(.vertical, 6)
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
                     .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
                     HStack(spacing: 6) {
-                        ForEach([8, 16, 32, 64], id: \.self) { n in
+                        ForEach([40, 48, 64, 128], id: \.self) { n in
                             Button { Haptics.light(); model.teamCount = n } label: {
                                 Text("\(n)").font(TLFont.mono(11, .medium))
                                     .foregroundStyle(model.teamCount == n ? TLColor.accentInk : TLColor.fg3)
@@ -258,13 +286,14 @@ struct CreateDoublesElimView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("DANH SÁCH ĐỘI (\(model.teams.count))").font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
             ForEach(model.teams.indices, id: \.self) { i in teamRow(i) }
-            Button { Haptics.light(); model.teams.append(.init()) } label: {
+            Button { Haptics.light(); model.addTeam() } label: {
                 HStack(spacing: 6) { Image(systemName: "plus"); Text("Thêm đội") }
                     .font(TLFont.mono(11, .semibold)).foregroundStyle(TLColor.accentText)
                     .frame(maxWidth: .infinity).padding(.vertical, 11)
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
                     .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: [4])))
             }.buttonStyle(.plain)
+                .disabled(model.teams.count >= DoublesElimRepository.supportedCreationTeamCounts.upperBound)
         }
     }
 
@@ -277,8 +306,8 @@ struct CreateDoublesElimView: View {
                     .font(TLFont.mono(12)).keyboardType(.numberPad).frame(width: 46)
                     .padding(.vertical, 9).padding(.horizontal, 8)
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 9))
-                if model.teams.count > 2 {
-                    Button { Haptics.light(); model.teams.remove(at: i) } label: {
+                if model.teams.count > DoublesElimRepository.supportedCreationTeamCounts.lowerBound {
+                    Button { Haptics.light(); model.removeTeam(at: i) } label: {
                         Image(systemName: "xmark.circle.fill").font(.system(size: 14)).foregroundStyle(TLColor.fg4)
                     }.buttonStyle(.plain)
                 }
@@ -306,7 +335,7 @@ struct CreateDoublesElimView: View {
                 }.buttonStyle(.plain)
             }
             if model.step < model.lastStep {
-                Button { Haptics.light(); model.step += 1 } label: {
+                Button { Haptics.light(); model.advance() } label: {
                     Text("Tiếp tục").font(TLFont.sans(14, .bold)).foregroundStyle(TLColor.accentInk)
                         .frame(maxWidth: .infinity).padding(.vertical, 13)
                         .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))

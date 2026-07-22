@@ -9,6 +9,7 @@ final class FlexViewModel {
     var isCreator = false
     var currentUserID: UUID?
     var scoringMatch: FlexMatch?
+    var scoreError: String?
 
     private let repo = FlexRepository()
     var data: FlexData? { if case .loaded(let d) = phase { return d } ; return nil }
@@ -31,13 +32,14 @@ final class FlexViewModel {
 
     @MainActor
     func submitScore(match: FlexMatch, scoreA: Int, scoreB: Int, shareID: String) async {
-        guard let data else { return }
         do {
-            try await repo.score(match: match, scoreA: scoreA, scoreB: scoreB, data: data)
+            try await repo.score(match: match, scoreA: scoreA, scoreB: scoreB)
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            phase = .failed(error.localizedDescription)
+            scoreError = error.localizedDescription
+            scoringMatch = nil
+            await load(shareID: shareID)
         }
     }
 }
@@ -99,6 +101,14 @@ struct FlexDetailView: View {
                     Task { await model.submitScore(match: match, scoreA: a, scoreB: b, shareID: shareID) }
                 }
             }
+        }
+        .alert("Không thể lưu điểm", isPresented: Binding(
+            get: { model.scoreError != nil },
+            set: { if !$0 { model.scoreError = nil } }
+        )) {
+            Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
+        } message: {
+            Text(model.scoreError ?? "Lỗi không xác định")
         }
     }
 

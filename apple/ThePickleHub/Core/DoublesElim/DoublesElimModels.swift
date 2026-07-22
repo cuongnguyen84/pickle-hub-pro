@@ -187,6 +187,7 @@ struct DEMatch: Decodable, Identifiable, Equatable {
     let status: String      // pending | live | completed
     let courtNumber: Int?
     let startTime: String?
+    let scoreVersion: Int64
 
     var isCompleted: Bool { status == "completed" }
     var isLive: Bool { status == "live" }
@@ -218,6 +219,7 @@ struct DEMatch: Decodable, Identifiable, Equatable {
         status = try c.decode(String.self, forKey: .status)
         courtNumber = try c.decodeIfPresent(Int.self, forKey: .courtNumber)
         startTime = try c.decodeIfPresent(String.self, forKey: .startTime)
+        scoreVersion = (try? c.decode(Int64.self, forKey: .scoreVersion)) ?? 0
     }
 
     enum CodingKeys: String, CodingKey {
@@ -241,6 +243,7 @@ struct DEMatch: Decodable, Identifiable, Equatable {
         case displayOrder = "display_order"
         case courtNumber = "court_number"
         case startTime = "start_time"
+        case scoreVersion = "score_version"
     }
 }
 
@@ -303,7 +306,11 @@ struct DEDetail: Equatable {
     var r1Completed: Bool { !r1Matches.isEmpty && r1Matches.allSatisfy { $0.isCompleted } }
     var r2Completed: Bool { !r2Matches.isEmpty && r2Matches.allSatisfy { $0.isCompleted } }
     var r3NeedsAssignment: Bool { !r3Matches.isEmpty && r3Matches.contains { $0.teamAID == nil || $0.teamBID == nil } }
-    var r3Completed: Bool { !r3Matches.isEmpty && r3Matches.allSatisfy { $0.isCompleted } }
+    /// Empty R3 is valid when the R1/R2 candidate pool is already a power of
+    /// two (for example 2 or 5 teams). In that case playoff can start directly.
+    var r3Completed: Bool {
+        r1Completed && r2Completed && r3Matches.allSatisfy { $0.isCompleted }
+    }
 
     /// Teams sorted by point diff (web "teams" tab uses seed order; standings use diff).
     var teamsBySeed: [DETeam] {

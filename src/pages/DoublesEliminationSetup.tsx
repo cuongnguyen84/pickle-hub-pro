@@ -166,7 +166,7 @@ export default function DoublesEliminationSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useI18n();
-  const { createTournament, addTeams, generateBracket, loading } = useDoublesElimination();
+  const { createTournamentAtomic, loading } = useDoublesElimination();
   const { toast } = useToast();
 
   const [step, setStep] = useState<Step>('info');
@@ -484,22 +484,22 @@ export default function DoublesEliminationSetup() {
       return;
     }
     const parsedCourts = parseCourtsInput(courts);
-    const result = await createTournament(
+    const result = await createTournamentAtomic({
       name,
       teamCount,
-      hasThirdPlace,
+      hasThirdPlaceMatch: hasThirdPlace,
       earlyRoundsFormat,
-      getEffectiveFinalsFormat(),
-      parsedCourts,
-      startTime || undefined,
-      getEffectiveSemifinalsFormat(),
-      {
-        ratingSource: 'dupr',
-        minDuprRating: !Number.isNaN(minNum) ? minNum : null,
-        maxDuprRating: !Number.isNaN(maxNum) ? maxNum : null,
-        initialStatus: 'registration_open',
-      },
-    );
+      semifinalsFormat: getEffectiveSemifinalsFormat(),
+      finalsFormat: getEffectiveFinalsFormat(),
+      courts: parsedCourts,
+      startTime: startTime || undefined,
+      ratingSource: 'dupr',
+      minDuprRating: !Number.isNaN(minNum) ? minNum : null,
+      maxDuprRating: !Number.isNaN(maxNum) ? maxNum : null,
+      openRegistration: true,
+      teams: [],
+      seedingStrategy: 'dupr',
+    });
     if (!result.success || !result.tournament) {
       if (result.error === 'LIMIT_REACHED') {
         toast({
@@ -568,27 +568,48 @@ export default function DoublesEliminationSetup() {
     }
 
     const parsedCourts = parseCourtsInput(courts);
+    const roster = filledTeams.map((tm) => {
+      const p1n = tm.player1.name.trim();
+      const p2n = tm.player2.name.trim();
+      const derivedName = tm.name.trim()
+        || (p1n && p2n ? `${p1n} / ${p2n}` : (p1n || p2n || tm.name));
+      return {
+        team_name: derivedName,
+        player1_name: p1n || (tm.name.trim() || derivedName),
+        player2_name: p2n || null,
+        seed: tm.seed.trim() ? parseInt(tm.seed, 10) : null,
+        player1_user_id: tm.player1.user_id,
+        player2_user_id: tm.player2.user_id,
+        dupr_avg_rating: tm.dupr_avg_rating ?? null,
+        dupr_seed_source: tm.dupr_seed_source ?? 'none' as const,
+      };
+    });
 
-    const result = await createTournament(
+    const anyDuprSeeded = filledTeams.some(t => t.dupr_avg_rating != null);
+    const anyManualSeed = filledTeams.some(t => t.seed.trim());
+    const seedingStrategy: 'manual' | 'random' | 'dupr' =
+      autoSeedSummary && anyDuprSeeded ? 'dupr'
+      : anyManualSeed ? 'manual'
+      : 'random';
+
+    const result = await createTournamentAtomic({
       name,
-      filledTeams.length,
-      hasThirdPlace,
+      teamCount: filledTeams.length,
+      hasThirdPlaceMatch: hasThirdPlace,
       earlyRoundsFormat,
-      getEffectiveFinalsFormat(),
-      parsedCourts,
-      startTime || undefined,
-      getEffectiveSemifinalsFormat(),
-      {
-        ratingSource,
-        minDuprRating: !Number.isNaN(minNum) ? minNum : null,
-        maxDuprRating: !Number.isNaN(maxNum) ? maxNum : null,
-      },
-    );
+      semifinalsFormat: getEffectiveSemifinalsFormat(),
+      finalsFormat: getEffectiveFinalsFormat(),
+      courts: parsedCourts,
+      startTime: startTime || undefined,
+      ratingSource,
+      minDuprRating: !Number.isNaN(minNum) ? minNum : null,
+      maxDuprRating: !Number.isNaN(maxNum) ? maxNum : null,
+      openRegistration: false,
+      teams: roster,
+      seedingStrategy,
+    });
 
     if (!result.success || !result.tournament) {
-      // W3.2 — quota-aware toast. LIMIT_REACHED comes from the
-      // create_doubles_elimination_with_quota RPC when the user has hit
-      // their profiles.tournament_create_quota cap.
       if (result.error === 'LIMIT_REACHED') {
         toast({
           title: t.quickTable.quota.limitReached,
@@ -598,52 +619,6 @@ export default function DoublesEliminationSetup() {
         return;
       }
       toast({ title: t.doublesElimination.setup.createError || "Error creating tournament", description: result.error, variant: "destructive" });
-      return;
-    }
-
-    const teamsResult = await addTeams(
-      result.tournament.id,
-      filledTeams.map((tm) => {
-        // Derive team_name: explicit > "P1 / P2" > "P1".
-        const p1n = tm.player1.name.trim();
-        const p2n = tm.player2.name.trim();
-        const derivedName =
-          tm.name.trim()
-          || (p1n && p2n ? `${p1n} / ${p2n}` : (p1n || p2n || tm.name));
-        const p1name = p1n || (tm.name.trim() || derivedName);
-        const p2name = p2n || undefined;
-        return {
-          team_name: derivedName,
-          player1_name: p1name,
-          player2_name: p2name,
-          seed: tm.seed && tm.seed.trim() ? parseInt(tm.seed) : undefined,
-          player1_user_id: tm.player1.user_id,
-          player2_user_id: tm.player2.user_id,
-          dupr_avg_rating: tm.dupr_avg_rating ?? null,
-          dupr_seed_source: tm.dupr_seed_source ?? 'none',
-        };
-      }),
-    );
-
-    if (!teamsResult.success) {
-      toast({ title: t.doublesElimination.setup.addTeamsError || "Error adding teams", description: teamsResult.error, variant: "destructive" });
-      return;
-    }
-
-    // DUPR Phase 1 (2026-05-29). Use 'dupr' seeding when organizer ran
-    // Auto-seed (autoSeedSummary set) AND at least one team has DUPR avg.
-    // Otherwise fall back to manual (seed column) when ANY team has a seed,
-    // else 'random' to preserve legacy.
-    const anyDuprSeeded = filledTeams.some(t => t.dupr_avg_rating != null);
-    const anyManualSeed = filledTeams.some(t => t.seed && t.seed.trim());
-    const strategy: 'manual' | 'random' | 'dupr' =
-      autoSeedSummary && anyDuprSeeded ? 'dupr'
-      : anyManualSeed ? 'manual'
-      : 'random';
-    const bracketResult = await generateBracket(result.tournament.id, parsedCourts, strategy);
-
-    if (!bracketResult.success) {
-      toast({ title: t.doublesElimination.setup.bracketError || "Error generating bracket", description: bracketResult.error, variant: "destructive" });
       return;
     }
 

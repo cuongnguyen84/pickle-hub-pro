@@ -141,13 +141,12 @@ final class TeamMatchViewModel {
         let target = d.tournament.playoffTeamCount ?? 4
         working = true; actionError = nil
         do {
+            let mainFirstRound: [(a: String, b: String)]
             // Seed THEO BẢNG khi: rr_playoff + có bảng + playoff = 2×số bảng (top-2 mỗi bảng) + số bảng chẵn.
             // → nhất bảng gặp nhì bảng khác, 2 đội cùng bảng ở hai nửa (chỉ gặp lại ở chung kết).
             if d.tournament.format == "rr_playoff", d.hasGroups, target == d.groups.count * 2,
                let pairs = groupPairedFirstRound(d) {
-                try await repo.generatePlayoffFromGroupPairs(
-                    tournamentID: d.tournament.id, firstRound: pairs,
-                    hasDreambreaker: d.tournament.hasDreambreaker ?? false)
+                mainFirstRound = pairs
             } else {
                 // Fallback: BXH tổng + seed-position chuẩn.
                 let seeded = Array(d.standings.map { $0.team.id.uuidString.lowercased() }.prefix(target))
@@ -155,36 +154,46 @@ final class TeamMatchViewModel {
                     actionError = "Số đội vào playoff phải là luỹ thừa của 2 và đủ đội đã xếp hạng."
                     working = false; return
                 }
-                try await repo.generatePlayoffFromSeeds(
-                    tournamentID: d.tournament.id, seededTeamIDs: seeded,
-                    hasDreambreaker: d.tournament.hasDreambreaker ?? false)
+                mainFirstRound = seededFirstRound(seeded)
             }
-            // Nhánh Tái sinh (hạng 3,4) — sinh cùng lúc, không chặn Playoff nếu thiếu đội.
+
+            var branches = [TeamMatchRepository.BracketBranchPlan(
+                isRepechage: false, firstRound: mainFirstRound)]
+            var repechageMissing = false
             if d.tournament.hasRepechage == true {
-                do { try await generateRepechage(d, target: target) }
-                catch { actionError = "Đã sinh Playoff, nhưng chưa sinh được nhánh Tái sinh (cần đủ hạng 3,4 mỗi bảng)." }
+                if let repechage = repechageFirstRound(d, target: target) {
+                    branches.append(TeamMatchRepository.BracketBranchPlan(
+                        isRepechage: true, firstRound: repechage))
+                } else {
+                    repechageMissing = true
+                }
             }
+            try await repo.generateBrackets(tournamentID: d.tournament.id, branches: branches)
             await load(shareID: shareID)
+            if repechageMissing {
+                actionError = "Đã sinh Playoff, nhưng chưa sinh được nhánh Tái sinh (cần đủ hạng 3,4 mỗi bảng)."
+            }
         } catch { actionError = error.localizedDescription }
         working = false
     }
 
-    /// Dựng nhánh Tái sinh: hạng 3,4 mỗi bảng, cùng cách xếp cặp như playoff (hạng 1,2).
-    private func generateRepechage(_ d: TMDetail, target: Int) async throws {
-        let db = d.tournament.hasDreambreaker ?? false
+    private func seededFirstRound(_ seeded: [String]) -> [(a: String, b: String)] {
+        let order = DEBracket.seedPositions(seeded.count)
+        return (0..<(seeded.count / 2)).map {
+            (a: seeded[order[2 * $0]], b: seeded[order[2 * $0 + 1]])
+        }
+    }
+
+    /// Plan nhánh Tái sinh: hạng 3,4 mỗi bảng, cùng cách xếp cặp như playoff.
+    private func repechageFirstRound(_ d: TMDetail, target: Int) -> [(a: String, b: String)]? {
         if d.tournament.format == "rr_playoff", d.hasGroups, target == d.groups.count * 2,
            let pairs = groupRepechageFirstRound(d) {
-            try await repo.generatePlayoffFromGroupPairs(
-                tournamentID: d.tournament.id, firstRound: pairs, hasDreambreaker: db, isRepechage: true)
-        } else {
-            // Fallback không bảng: hạng target..2×target-1 (ngay sau nhóm vào playoff).
-            let seeded = Array(d.standings.map { $0.team.id.uuidString.lowercased() }.dropFirst(target).prefix(target))
-            guard seeded.count == target, seeded.count & (seeded.count - 1) == 0 else {
-                throw TeamMatchRepository.GenerateError.tooFewTeams
-            }
-            try await repo.generatePlayoffFromSeeds(
-                tournamentID: d.tournament.id, seededTeamIDs: seeded, hasDreambreaker: db, isRepechage: true)
+            return pairs
         }
+        // Fallback không bảng: hạng target..2×target-1 (ngay sau nhóm vào playoff).
+        let seeded = Array(d.standings.map { $0.team.id.uuidString.lowercased() }.dropFirst(target).prefix(target))
+        guard seeded.count == target, seeded.count & (seeded.count - 1) == 0 else { return nil }
+        return seededFirstRound(seeded)
     }
 
     /// First-round Tái sinh theo bảng: hạng 3 gặp hạng 4 bảng khác (mirror groupPairedFirstRound).

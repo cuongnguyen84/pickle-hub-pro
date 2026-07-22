@@ -52,16 +52,17 @@ struct FlexRepository {
     private static let matchSelect = """
     id, group_id, name, match_type, slot_a1_player_id, slot_a2_player_id, \
     slot_b1_player_id, slot_b2_player_id, slot_a_team_id, slot_b_team_id, \
-    score_a, score_b, winner_side, counts_for_standings, display_order
+    score_a, score_b, winner_side, counts_for_standings, display_order, score_version
     """
 
     // MARK: Create (port of useFlexTournament createMutation)
 
-    private struct CreateParams: Encodable { let _name: String; let _is_public: Bool }
+    private struct CreateParams: Encodable {
+        let p_name: String
+        let p_is_public: Bool
+        let p_player_names: [String]
+    }
     private struct CreateResult: Decodable { let success: Bool; let error: String?; let tournament: FlexTournament? }
-    private struct PlayerInsert: Encodable { let tournament_id: String; let name: String; let display_order: Int }
-    private struct GroupInsert: Encodable { let tournament_id: String; let name: String; let display_order: Int }
-    private struct MatchInsert: Encodable { let tournament_id: String; let name: String; let match_type: String; let display_order: Int }
 
     enum CreateError: LocalizedError {
         case limitReached, message(String)
@@ -73,108 +74,48 @@ struct FlexRepository {
         }
     }
 
-    /// Create a Flex tournament via the quota-enforced RPC, then insert players +
-    /// the preset scaffolding (1 group, 1 singles + 1 doubles match) exactly as web
-    /// `createMutation` does. Roster/group editing still happens on web.
+    /// The RPC owns quota, players, and preset scaffolding in one transaction.
+    /// Roster/group editing still happens on web.
     func createFlex(name: String, playerNames: [String], isPublic: Bool) async throws -> FlexTournament {
         let safeName = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
+        let names = playerNames.prefix(200)
+            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100)) }
+            .filter { !$0.isEmpty }
         let result: CreateResult = try await client
-            .rpc("create_flex_tournament_with_quota", params: CreateParams(_name: safeName, _is_public: isPublic))
+            .rpc("create_flex_tournament_atomic", params: CreateParams(
+                p_name: safeName,
+                p_is_public: isPublic,
+                p_player_names: names
+            ))
             .execute().value
         guard result.success, let tournament = result.tournament else {
             if result.error == "LIMIT_REACHED" { throw CreateError.limitReached }
             throw CreateError.message(result.error ?? "Không tạo được giải")
         }
-        let tid = tournament.id.uuidString.lowercased()
-
-        let names = playerNames.prefix(200)
-            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100)) }
-            .filter { !$0.isEmpty }
-        if !names.isEmpty {
-            let rows = names.enumerated().map { PlayerInsert(tournament_id: tid, name: $0.element, display_order: $0.offset) }
-            try await client.from("flex_players").insert(rows).execute()
-        }
-        try await client.from("flex_groups")
-            .insert(GroupInsert(tournament_id: tid, name: "Group A", display_order: 0)).execute()
-        try await client.from("flex_matches").insert([
-            MatchInsert(tournament_id: tid, name: "Singles Match 1", match_type: "singles", display_order: 0),
-            MatchInsert(tournament_id: tid, name: "Doubles Match 1", match_type: "doubles", display_order: 1),
-        ]).execute()
         return tournament
     }
 
-    // MARK: Score (port of updateMatchScore + recomputeGroupStats)
+    // MARK: Score
 
-    private struct ScoreUpdate: Encodable {
-        let score_a: Int; let score_b: Int; let winner_side: String?
-        func encode(to e: Encoder) throws {
-            var c = e.container(keyedBy: K.self)
-            try c.encode(score_a, forKey: .score_a)
-            try c.encode(score_b, forKey: .score_b)
-            try c.encode(winner_side, forKey: .winner_side)   // explicit null on a tie
-        }
-        enum K: String, CodingKey { case score_a, score_b, winner_side }
+    private struct ScoreParams: Encodable {
+        let p_match_id: String
+        let p_score_a: Int
+        let p_score_b: Int
+        let p_expected_version: Int64
     }
 
-    /// Update a match score (winner_side derived) then recompute the group's
-    /// persisted stats so the web view stays consistent. `data` is the freshly
-    /// loaded snapshot used for the recompute (caller reloads after).
-    func score(match: FlexMatch, scoreA: Int, scoreB: Int, data: FlexData) async throws {
-        let winner: String? = scoreA > scoreB ? "a" : (scoreB > scoreA ? "b" : nil)
-        try await client.from("flex_matches")
-            .update(ScoreUpdate(score_a: scoreA, score_b: scoreB, winner_side: winner))
-            .eq("id", value: match.id).execute()
-
-        guard let groupID = match.groupID, let group = data.groups.first(where: { $0.id == groupID }) else { return }
-        // Build an updated snapshot reflecting this score so the recompute is correct.
-        let updated = Self.applying(scoreA: scoreA, scoreB: scoreB, winner: winner, to: match, in: data)
-        try await recomputeGroupStats(group: group, data: updated)
-    }
-
-    /// Returns a copy of `data` with the one match's score replaced.
-    private static func applying(scoreA: Int, scoreB: Int, winner: String?, to match: FlexMatch, in data: FlexData) -> FlexData {
-        let newMatches = data.matches.map { m -> FlexMatch in
-            guard m.id == match.id else { return m }
-            return FlexMatch(id: m.id, groupID: m.groupID, name: m.name, matchType: m.matchType,
-                             slotA1PlayerID: m.slotA1PlayerID, slotA2PlayerID: m.slotA2PlayerID,
-                             slotB1PlayerID: m.slotB1PlayerID, slotB2PlayerID: m.slotB2PlayerID,
-                             slotATeamID: m.slotATeamID, slotBTeamID: m.slotBTeamID,
-                             scoreA: scoreA, scoreB: scoreB, winnerSide: winner,
-                             countsForStandings: m.countsForStandings, displayOrder: m.displayOrder)
-        }
-        return FlexData(tournament: data.tournament, players: data.players, teams: data.teams,
-                        teamMembers: data.teamMembers, groups: data.groups, groupItems: data.groupItems,
-                        matches: newMatches)
-    }
-
-    private struct PlayerStatInsert: Encodable { let group_id: String; let player_id: String; let wins: Int; let losses: Int; let point_diff: Int }
-    private struct PairStatInsert: Encodable { let group_id: String; let player1_id: String; let player2_id: String; let wins: Int; let losses: Int; let point_diff: Int }
-
-    /// Port of recomputeGroupStats: clear + re-insert player/pair stats for the
-    /// group from its matches (web singles/doubles standings read these tables).
-    private func recomputeGroupStats(group: FlexGroup, data: FlexData) async throws {
-        let gid = group.id.uuidString.lowercased()
-        let singles = data.singlesStandings(group)
-        let pairs = data.pairStandings(group)
-
-        async let delP = client.from("flex_player_stats").delete().eq("group_id", value: group.id).execute()
-        async let delPair = client.from("flex_pair_stats").delete().eq("group_id", value: group.id).execute()
-        _ = try await (delP, delPair)
-
-        let playerRows = singles.filter { $0.wins != 0 || $0.losses != 0 || $0.pointDiff != 0 }
-            .map { PlayerStatInsert(group_id: gid, player_id: $0.id, wins: $0.wins, losses: $0.losses, point_diff: $0.pointDiff) }
-        if !playerRows.isEmpty {
-            try await client.from("flex_player_stats").insert(playerRows).execute()
-        }
-        let pairRows = pairs.compactMap { p -> PairStatInsert? in
-            let parts = p.id.split(separator: "|")
-            guard parts.count == 2 else { return nil }
-            return PairStatInsert(group_id: gid, player1_id: String(parts[0]), player2_id: String(parts[1]),
-                                  wins: p.wins, losses: p.losses, point_diff: p.pointDiff)
-        }
-        if !pairRows.isEmpty {
-            try await client.from("flex_pair_stats").insert(pairRows).execute()
-        }
+    /// One RPC owns the score update and the player/pair standings rebuild.
+    /// `scoreVersion` rejects a stale referee without overwriting newer data.
+    func score(match: FlexMatch, scoreA: Int, scoreB: Int) async throws {
+        let result: AtomicTournamentMutationResult = try await client
+            .rpc("score_flex_match_atomic", params: ScoreParams(
+                p_match_id: match.id.uuidString.lowercased(),
+                p_score_a: scoreA,
+                p_score_b: scoreB,
+                p_expected_version: match.scoreVersion
+            ))
+            .execute().value
+        try result.requireSuccess()
     }
 
     // MARK: Referees (table flex_tournament_referees)

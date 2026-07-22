@@ -169,22 +169,18 @@ struct ForumRepository {
         }
     }
 
-    // MARK: Image upload (bucket forum-images, path {uid}/{ts}-{rand}.jpg)
+    // MARK: Image upload (bucket forum-images, normalized by ImagePipeline)
 
-    func uploadImages(_ datas: [Data]) async -> [String] {
-        guard let uid = await currentUserID() else { return [] }
+    func uploadImages(_ images: [ProcessedImage]) async throws -> [String] {
+        guard let uid = await currentUserID() else { throw ForumError.notAuthed }
         var urls: [String] = []
-        for data in datas {
+        for image in images {
             let rand = UUID().uuidString.prefix(6)
             let stamp = Int(Date().timeIntervalSince1970 * 1000)
-            let path = "\(uid)/\(stamp)-\(rand).jpg"
-            do {
-                _ = try await client.storage.from("forum-images")
-                    .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: false))
-                if let url = try? client.storage.from("forum-images").getPublicURL(path: path).absoluteString {
-                    urls.append(url)
-                }
-            } catch { continue }
+            let path = "\(uid)/\(stamp)-\(rand).\(image.fileExtension)"
+            _ = try await client.storage.from("forum-images")
+                .upload(path, data: image.data, options: FileOptions(contentType: image.contentType, upsert: false))
+            urls.append(try client.storage.from("forum-images").getPublicURL(path: path).absoluteString)
         }
         return urls
     }

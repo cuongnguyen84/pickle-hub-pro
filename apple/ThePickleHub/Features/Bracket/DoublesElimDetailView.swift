@@ -27,6 +27,7 @@ final class DoublesElimViewModel {
     var currentUserID: UUID?
     var tab: Tab = .preliminary
     var scoringMatch: DEMatch?
+    var scoreError: String?
     var regBusy = false
     var regMessage: String?
 
@@ -56,18 +57,23 @@ final class DoublesElimViewModel {
         }
     }
 
-    /// Auto-assign R3 + auto-generate playoff (creator only). RLS still enforces.
+    /// Idempotent recovery for server-owned R3/playoff lifecycle. Normal score
+    /// submissions already run this inside their database transaction.
     @MainActor
     private func maintain(shareID: String) async {
         guard case .loaded(let d) = phase else { return }
-        var didWork = false
-        if d.r1Completed && d.r2Completed && d.r3NeedsAssignment {
-            didWork = ((try? await repo.checkAndAssignR3(tournamentID: d.tournament.id)) ?? false) || didWork
+        do {
+            var didWork = false
+            if d.r1Completed && d.r2Completed && d.r3NeedsAssignment {
+                didWork = try await repo.checkAndAssignR3(tournamentID: d.tournament.id) || didWork
+            }
+            if d.r3Completed && !d.hasPlayoff {
+                didWork = try await repo.checkAndGeneratePlayoff(tournamentID: d.tournament.id) || didWork
+            }
+            if didWork { await fetch(shareID: shareID) }
+        } catch {
+            scoreError = error.localizedDescription
         }
-        if d.r3Completed && !d.hasPlayoff {
-            didWork = ((try? await repo.checkAndGeneratePlayoff(tournamentID: d.tournament.id)) ?? false) || didWork
-        }
-        if didWork { await fetch(shareID: shareID) }
     }
 
     @MainActor
@@ -77,7 +83,9 @@ final class DoublesElimViewModel {
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            phase = .failed(error.localizedDescription)
+            scoreError = error.localizedDescription
+            scoringMatch = nil
+            await load(shareID: shareID)
         }
     }
 
@@ -204,10 +212,18 @@ struct DoublesElimDetailView: View {
         }
         .sheet(item: Binding(get: { model.scoringMatch }, set: { model.scoringMatch = $0 })) { match in
             if let detail = model.detail {
-                DEScoreSheet(detail: detail, match: match) { pairs in
+                DEScoreSheet(detail: detail, match: match, onError: { model.scoreError = $0 }) { pairs in
                     Task { await model.submitScore(match: match, gameScores: pairs, shareID: shareID) }
                 }
             }
+        }
+        .alert("Không thể lưu điểm", isPresented: Binding(
+            get: { model.scoreError != nil },
+            set: { if !$0 { model.scoreError = nil } }
+        )) {
+            Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
+        } message: {
+            Text(model.scoreError ?? "Lỗi không xác định")
         }
     }
 
@@ -597,6 +613,7 @@ struct DoublesElimDetailView: View {
 private struct DEScoreSheet: View {
     let detail: DEDetail
     let match: DEMatch
+    let onError: (String) -> Void
     let onSave: ([(Int, Int)]) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -616,9 +633,15 @@ private struct DEScoreSheet: View {
         return names.isEmpty ? nil : names
     }
 
-    init(detail: DEDetail, match: DEMatch, onSave: @escaping ([(Int, Int)]) -> Void) {
+    init(
+        detail: DEDetail,
+        match: DEMatch,
+        onError: @escaping (String) -> Void,
+        onSave: @escaping ([(Int, Int)]) -> Void
+    ) {
         self.detail = detail
         self.match = match
+        self.onError = onError
         self.onSave = onSave
         let count = max(1, match.bestOf)
         var initial = Array(repeating: (a: "", b: ""), count: count)
@@ -661,10 +684,16 @@ private struct DEScoreSheet: View {
                     playersB: teamPlayers(match.teamBID),
                     mode: refMode, isSingles: false, winTarget: refTarget,
                     onLiveScore: { a, b in
-                        Task { try? await DoublesElimRepository().updateLiveScore(matchID: match.id, scoreA: a, scoreB: b) }
+                        Task {
+                            do { try await DoublesElimRepository().updateLiveScore(matchID: match.id, scoreA: a, scoreB: b) }
+                            catch { onError(UserFacingError.message(action: "Cập nhật điểm trực tiếp", error: error)) }
+                        }
                     },
                     onClaimLive: {
-                        Task { try? await DoublesElimRepository().claimLive(matchID: match.id) }
+                        Task {
+                            do { try await DoublesElimRepository().claimLive(matchID: match.id) }
+                            catch { onError(UserFacingError.message(action: "Nhận quyền chấm trận", error: error)) }
+                        }
                     }) { a, b, _ in
                     rows[nextGameIdx] = (a: String(a), b: String(b))
                     Haptics.light(); onSave(pairs)

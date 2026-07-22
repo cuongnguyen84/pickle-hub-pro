@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { tStandalone } from '@/lib/i18n-standalone';
 import { sanitizeString } from '@/lib/validation';
 import { useQuickTableMutations } from './useQuickTableMutations';
+import type { Json } from '@/integrations/supabase/types';
 import {
   suggestGroupConfigs,
   generateRoundRobinMatches,
@@ -265,38 +266,6 @@ export function useQuickTable() {
     }
   }, []);
 
-  const assignPlayersToGroups = useCallback(async (
-    players: QuickTablePlayer[],
-    groups: QuickTableGroup[]
-  ): Promise<void> => {
-    const playerData = players.map(p => ({
-      id: p.id,
-      name: p.name,
-      team: p.team || undefined,
-      seed: p.seed || undefined,
-    }));
-
-    const distributed = distributePlayersToGroups(playerData, groups.length);
-
-    const updates = distributed.flatMap((groupPlayers, groupIndex) =>
-      groupPlayers.map(p => ({
-        id: p.id,
-        group_id: groups[groupIndex].id,
-      }))
-    );
-
-    // Parallelise instead of awaiting each update serially (was N round-trips
-    // in sequence — slow for large tables).
-    await Promise.all(
-      updates.map((update) =>
-        supabase
-          .from('quick_table_players')
-          .update({ group_id: update.group_id })
-          .eq('id', update.id),
-      ),
-    );
-  }, []);
-
   const isOwner = useCallback((table: QuickTable): boolean => {
     return !!user && table.creator_user_id === user.id;
   }, [user]);
@@ -413,133 +382,43 @@ export function useQuickTable() {
     return matches;
   }, []);
 
-  const createPlayoffMatches = useCallback(async (
+  const createPlayoffAtomic = useCallback(async (
     tableId: string,
-    bracketMatches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }>
-  ): Promise<QuickTableMatch[]> => {
-    const totalMatches = bracketMatches.length;
-    const round = totalMatches <= 2 ? 2 : totalMatches <= 4 ? 1 : 0;
-
-    const { error: deleteError } = await supabase
-      .from('quick_table_matches')
-      .delete()
-      .eq('table_id', tableId)
-      .eq('is_playoff', true)
-      .eq('playoff_round', round);
-
-    if (deleteError) throw deleteError;
-
-    const { data, error } = await supabase
-      .from('quick_table_matches')
-      .insert(
-        bracketMatches.map((m, i) => ({
-          table_id: tableId,
-          is_playoff: true,
-          playoff_round: round,
-          playoff_match_number: m.matchNumber,
-          bracket_position: m.bracketPosition,
-          player1_id: m.player1?.id || null,
-          player2_id: m.player2?.id || null,
-          display_order: i,
-        }))
-      )
-      .select();
-
-    if (error) throw error;
-    return (data || []) as unknown as QuickTableMatch[];
-  }, []);
-
-  const markPlayersQualified = useCallback(async (
     qualified: QuickTablePlayer[],
-    wildcards: QuickTablePlayer[]
+    wildcards: QuickTablePlayer[],
+    bracketMatches: Array<{
+      player1: QuickTablePlayer | null;
+      player2: QuickTablePlayer | null;
+      bracketPosition: string;
+      matchNumber: number;
+    }>,
   ): Promise<void> => {
-    // Parallelise the per-player writes (were two serial N-round-trip loops).
-    await Promise.all([
-      ...qualified.map((player) =>
-        supabase
-          .from('quick_table_players')
-          .update({ is_qualified: true, is_wildcard: false, playoff_seed: player.playoff_seed })
-          .eq('id', player.id),
-      ),
-      ...wildcards.map((player, i) =>
-        supabase
-          .from('quick_table_players')
-          .update({ is_qualified: true, is_wildcard: true, playoff_seed: 100 + i })
-          .eq('id', player.id),
-      ),
-    ]);
-  }, []);
-
-  const isPlayoffRoundComplete = useCallback((matches: QuickTableMatch[], round: number): boolean => {
-    const roundMatches = matches.filter(m => m.is_playoff && m.playoff_round === round);
-    return roundMatches.length > 0 && roundMatches.every(m => m.status === 'completed');
-  }, []);
-
-  const createNextPlayoffRound = useCallback(async (
-    tableId: string,
-    currentRound: number,
-    currentMatches: QuickTableMatch[]
-  ): Promise<QuickTableMatch[]> => {
-    const nextRound = currentRound + 1;
-
-    const completedMatches = currentMatches
-      .filter(m => m.is_playoff && m.playoff_round === currentRound && m.status === 'completed')
-      .sort((a, b) => (a.playoff_match_number || 0) - (b.playoff_match_number || 0));
-
-    if (completedMatches.length < 2) return [];
-
-    const nextMatchCount = Math.floor(completedMatches.length / 2);
-    const nextRoundMatches: Array<{
-      player1_id: string | null;
-      player2_id: string | null;
-      bracket_position: string;
-      match_number: number;
-    }> = [];
-
-    const maxMatchNumber = Math.max(...currentMatches.map(m => m.playoff_match_number || 0), 0);
-
-    for (let i = 0; i < completedMatches.length; i += 2) {
-      const match1 = completedMatches[i];
-      const match2 = completedMatches[i + 1];
-      if (!match2) break;
-
-      nextRoundMatches.push({
-        player1_id: match1.winner_id,
-        player2_id: match2.winner_id,
-        bracket_position: match1.bracket_position || 'upper',
-        match_number: maxMatchNumber + 1 + (i / 2),
-      });
+    const qualifiers = [
+      ...qualified.map((player, index) => ({
+        player_id: player.id,
+        playoff_seed: player.playoff_seed ?? player.seed ?? index + 1,
+        is_wildcard: false,
+      })),
+      ...wildcards.map((player, index) => ({
+        player_id: player.id,
+        playoff_seed: player.playoff_seed ?? 100 + index,
+        is_wildcard: true,
+      })),
+    ];
+    const { data, error } = await supabase.rpc('create_quick_table_playoff_atomic', {
+      p_table_id: tableId,
+      p_qualifiers: qualifiers as Json,
+      p_first_round: bracketMatches.map(match => ({
+        player1_id: match.player1?.id ?? null,
+        player2_id: match.player2?.id ?? null,
+        bracket_position: match.bracketPosition,
+        match_number: match.matchNumber,
+      })) as Json,
+    });
+    const result = (data ?? {}) as Record<string, unknown>;
+    if (error || result.success !== true) {
+      throw error ?? new Error(String(result.error ?? 'PLAYOFF_CREATE_FAILED'));
     }
-
-    if (nextRoundMatches.length === 0) return [];
-
-    const { error: deleteError } = await supabase
-      .from('quick_table_matches')
-      .delete()
-      .eq('table_id', tableId)
-      .eq('is_playoff', true)
-      .eq('playoff_round', nextRound);
-
-    if (deleteError) throw deleteError;
-
-    const { data, error } = await supabase
-      .from('quick_table_matches')
-      .insert(
-        nextRoundMatches.map((m, idx) => ({
-          table_id: tableId,
-          is_playoff: true,
-          playoff_round: nextRound,
-          playoff_match_number: m.match_number,
-          bracket_position: nextMatchCount === 1 ? 'final' : m.bracket_position,
-          player1_id: m.player1_id,
-          player2_id: m.player2_id,
-          display_order: 100 + idx,
-        }))
-      )
-      .select();
-
-    if (error) throw error;
-    return (data || []) as unknown as QuickTableMatch[];
   }, []);
 
   const isGroupStageComplete = useCallback((matches: QuickTableMatch[]): boolean => {
@@ -581,15 +460,11 @@ export function useQuickTable() {
     getUserTables,
     getUserQuickTableCount,
     getUserQuotaInfo,
-    assignPlayersToGroups,
     isOwner,
     suggestGroupConfigs,
     getQualifiedPlayers,
     generatePlayoffBracket,
-    createPlayoffMatches,
-    markPlayersQualified,
-    isPlayoffRoundComplete,
-    createNextPlayoffRound,
+    createPlayoffAtomic,
     isGroupStageComplete,
     getWildcardCount,
     // Spread mutations

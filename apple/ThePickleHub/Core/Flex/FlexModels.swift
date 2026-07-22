@@ -93,6 +93,7 @@ struct FlexMatch: Decodable, Identifiable, Equatable {
     let winnerSide: String?  // a | b | nil
     let countsForStandings: Bool
     let displayOrder: Int
+    var scoreVersion: Int64 = 0
 
     var isDoubles: Bool { matchType == "doubles" }
     var isTeamMatch: Bool { slotATeamID != nil || slotBTeamID != nil }
@@ -114,6 +115,7 @@ struct FlexMatch: Decodable, Identifiable, Equatable {
         case winnerSide = "winner_side"
         case countsForStandings = "counts_for_standings"
         case displayOrder = "display_order"
+        case scoreVersion = "score_version"
     }
 }
 

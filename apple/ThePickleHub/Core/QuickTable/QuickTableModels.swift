@@ -122,6 +122,7 @@ struct QTMatch: Decodable, Identifiable, Equatable {
     let courtID: Int?
     let startAt: String?      // giờ trận "HH:MM"
     let displayOrder: Int?
+    var scoreVersion: Int64 = 0
 
     var isCompleted: Bool { status == "completed" }
     var hasBothPlayers: Bool { player1ID != nil && player2ID != nil }
@@ -144,6 +145,7 @@ struct QTMatch: Decodable, Identifiable, Equatable {
         case courtID = "court_id"
         case startAt = "start_at"
         case displayOrder = "display_order"
+        case scoreVersion = "score_version"
     }
 }
 

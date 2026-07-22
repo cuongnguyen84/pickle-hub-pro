@@ -8,6 +8,7 @@ final class NotificationsViewModel {
     var items: [AppNotification] = []
     var unread: Int = 0
     var signedOut = false
+    var mutationError: String?
 
     private let repo = NotificationRepository()
 
@@ -28,14 +29,24 @@ final class NotificationsViewModel {
     @MainActor
     func markRead(_ n: AppNotification) async {
         guard !n.isRead else { return }
-        await repo.markRead(n)
-        items = items.map { $0.id == n.id ? AppNotification(id: $0.id, source: $0.source, type: $0.type, title: $0.title, body: $0.body, linkURL: $0.linkURL, isRead: true, createdAt: $0.createdAt) : $0 }
-        unread = items.filter { !$0.isRead }.count
+        do {
+            try await repo.markRead(n)
+            items = items.map { $0.id == n.id ? AppNotification(id: $0.id, source: $0.source, type: $0.type, title: $0.title, body: $0.body, linkURL: $0.linkURL, isRead: true, createdAt: $0.createdAt) : $0 }
+            unread = items.filter { !$0.isRead }.count
+            mutationError = nil
+        } catch {
+            mutationError = UserFacingError.message(action: "Đánh dấu thông báo", error: error)
+        }
     }
 
     @MainActor
     func markAll() async {
-        await repo.markAllRead()
+        do {
+            try await repo.markAllRead()
+            mutationError = nil
+        } catch {
+            mutationError = UserFacingError.message(action: "Đánh dấu tất cả thông báo", error: error)
+        }
         await load()
     }
 }
@@ -69,6 +80,14 @@ struct NotificationsView: View {
         .refreshable { await model.load() }
         .navigationDestination(item: $profileTarget) { PlayerProfileView(username: $0.username) }
         .sheet(item: $webURL) { SafariView(url: $0.url).ignoresSafeArea() }
+        .alert("Không thể cập nhật thông báo", isPresented: Binding(
+            get: { model.mutationError != nil },
+            set: { if !$0 { model.mutationError = nil } }
+        )) {
+            Button("Đóng", role: .cancel) { model.mutationError = nil }
+        } message: {
+            Text(model.mutationError ?? "")
+        }
     }
 
     @ViewBuilder

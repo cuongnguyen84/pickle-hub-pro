@@ -19,6 +19,7 @@ final class MatchConfirmModel {
     var names: [String: String] = [:]
     var myID = ""
     var actioningID: String?
+    var actionError: String?
 
     private let repo = MatchProposalRepository()
 
@@ -46,19 +47,31 @@ final class MatchConfirmModel {
     @MainActor
     func verify(_ row: MatchProposalRow) async {
         actioningID = row.id
-        try? await repo.verify(proposalID: row.id)
-        Haptics.success()
-        await load()
-        actioningID = nil
+        defer { actioningID = nil }
+        do {
+            try await repo.verify(proposalID: row.id)
+            actionError = nil
+            Haptics.success()
+            await load()
+        } catch {
+            actionError = UserFacingError.message(action: "Xác nhận trận đấu", error: error)
+            Haptics.error()
+        }
     }
 
     @MainActor
     func dispute(_ row: MatchProposalRow, reason: String) async {
         actioningID = row.id
-        try? await repo.dispute(proposalID: row.id, reason: reason)
-        Haptics.light()
-        await load()
-        actioningID = nil
+        defer { actioningID = nil }
+        do {
+            try await repo.dispute(proposalID: row.id, reason: reason)
+            actionError = nil
+            Haptics.light()
+            await load()
+        } catch {
+            actionError = UserFacingError.message(action: "Gửi tranh chấp", error: error)
+            Haptics.error()
+        }
     }
 }
 
@@ -108,6 +121,14 @@ struct MatchConfirmView: View {
             }
         } message: {
             Text("Đối thủ và BTC sẽ được thông báo để xem lại tỉ số.")
+        }
+        .alert("Không thể cập nhật trận đấu", isPresented: Binding(
+            get: { model.actionError != nil },
+            set: { if !$0 { model.actionError = nil } }
+        )) {
+            Button("Đóng", role: .cancel) { model.actionError = nil }
+        } message: {
+            Text(model.actionError ?? "")
         }
     }
 

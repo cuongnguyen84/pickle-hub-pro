@@ -208,7 +208,7 @@ struct ToolsView: View {
 
             VStack(spacing: 10) {
                 compactFormatRow(icon: "arrow.triangle.branch", title: "Loại trực tiếp",
-                                 meta: "Nhánh đơn / đôi · ≥16 đội", url: WebRoutes.toolsDoublesElimination,
+                                 meta: "Nhánh đơn / đôi · 40–128 đội", url: WebRoutes.toolsDoublesElimination,
                                  action: { Haptics.light(); showCreateDoubles = true })
                 compactFormatRow(icon: "slider.horizontal.3", title: "Giải linh hoạt",
                                  meta: "Tùy biến hoàn toàn", url: WebRoutes.toolsFlexTournament,

@@ -10,6 +10,7 @@ final class ClubDetailViewModel {
     var members: [ClubMember] = []
     var uid: UUID?
     var busy = false
+    var actionError: String?
 
     private let repo = ClubRepository()
 
@@ -39,18 +40,31 @@ final class ClubDetailViewModel {
     func join() async {
         guard case .loaded(let club) = phase else { return }
         busy = true
-        membership = ((try? await repo.requestJoin(clubID: club.id)) ?? membership)
-        Haptics.success(); busy = false
+        defer { busy = false }
+        do {
+            membership = try await repo.requestJoin(clubID: club.id)
+            actionError = nil
+            Haptics.success()
+        } catch {
+            actionError = UserFacingError.message(action: "Gửi yêu cầu tham gia CLB", error: error)
+            Haptics.error()
+        }
     }
 
     @MainActor
     func leave() async {
         guard case .loaded(let club) = phase, let uid else { return }
         busy = true
-        try? await repo.leave(clubID: club.id, profileID: uid)
-        membership = .none
-        members = await repo.members(clubID: club.id)
-        busy = false
+        defer { busy = false }
+        do {
+            try await repo.leave(clubID: club.id, profileID: uid)
+            membership = .none
+            members = await repo.members(clubID: club.id)
+            actionError = nil
+        } catch {
+            actionError = UserFacingError.message(action: "Rời CLB", error: error)
+            Haptics.error()
+        }
     }
 }
 
@@ -72,6 +86,14 @@ struct ClubDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { if case .loading = model.phase { await model.load(slug: slug) } }
         .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
+        .alert("Không thể cập nhật CLB", isPresented: Binding(
+            get: { model.actionError != nil },
+            set: { if !$0 { model.actionError = nil } }
+        )) {
+            Button("Đóng", role: .cancel) { model.actionError = nil }
+        } message: {
+            Text(model.actionError ?? "")
+        }
     }
 
     @ViewBuilder

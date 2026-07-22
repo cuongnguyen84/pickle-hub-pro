@@ -39,9 +39,7 @@ const QuickTableSetup = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
   const {
-    getTableByShareId, addPlayers, createGroups, assignPlayersToGroups,
-    createGroupMatches, updateTableStatus, updateTableCourtSettings,
-    reassignCourtsAndTimes, deleteTable,
+    getTableByShareId, setupRosterAtomic, deleteTable,
   } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
@@ -237,54 +235,16 @@ const QuickTableSetup = () => {
         seed: p.seed ? parseInt(p.seed) : undefined,
       }));
 
-      const createdPlayers = await addPlayers(table.id, playerData);
-      if (createdPlayers.length === 0) throw new Error('Failed to add players');
-
       const parsedCourts = parseCourtsInput(courts);
-      const hasCourtSettings = parsedCourts.length > 0;
-
-      if (hasCourtSettings || startTime) {
-        await updateTableCourtSettings(
-          table.id,
-          parsedCourts.map(String),
-          startTime || null,
-        );
-      }
-
-      if (table.format === 'round_robin' && table.group_count) {
-        const groups = await createGroups(table.id, table.group_count);
-        if (groups.length === 0) throw new Error('Failed to create groups');
-
-        await assignPlayersToGroups(createdPlayers, groups);
-
-        const refreshed = await getTableByShareId(shareId!);
-        if (!refreshed) throw new Error('Failed to refresh data');
-
-        for (let i = 0; i < groups.length; i++) {
-          const group = groups[i];
-          const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
-          if (groupPlayers.length >= 2) {
-            await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id), i);
-          }
-        }
-
-        if (hasCourtSettings) {
-          const refreshedAgain = await getTableByShareId(shareId!);
-          if (refreshedAgain) {
-            await reassignCourtsAndTimes(
-              table.id,
-              parsedCourts,
-              startTime || null,
-              groups,
-              refreshedAgain.matches,
-            );
-          }
-        }
-
-        await updateTableStatus(table.id, 'group_stage');
-      } else {
-        await updateTableStatus(table.id, 'group_stage');
-      }
+      const created = await setupRosterAtomic(
+        table.id,
+        playerData,
+        table.group_count ?? 1,
+        undefined,
+        parsedCourts,
+        startTime || null,
+      );
+      if (!created) throw new Error('Failed to set up table');
 
       draft.clear();
       completeJourney('organizer_tournament', 'organizer_tournament_created', {
@@ -319,41 +279,23 @@ const QuickTableSetup = () => {
         seed: p.seed ? parseInt(p.seed) : undefined,
       }));
 
-      const createdPlayers = await addPlayers(table.id, playerData);
-      if (createdPlayers.length === 0) throw new Error('Failed to add players');
-
-      const playerMap = new Map<string, typeof createdPlayers[0]>();
-      filledPlayers.forEach((inputPlayer, index) => {
-        playerMap.set(inputPlayer.id, createdPlayers[index]);
+      const assignments = filledPlayers.map((player) => {
+        for (let groupIndex = 0; groupIndex < table.group_count!; groupIndex++) {
+          if ((groupAssignments.get(groupIndex) || []).some(candidate => candidate.id === player.id)) {
+            return groupIndex;
+          }
+        }
+        return -1;
       });
-
-      const groups = await createGroups(table.id, table.group_count);
-      if (groups.length === 0) throw new Error('Failed to create groups');
-
-      for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-        const group = groups[groupIndex];
-        const assignedInputPlayers = groupAssignments.get(groupIndex) || [];
-
-        const playersToAssign = assignedInputPlayers
-          .map(ip => playerMap.get(ip.id))
-          .filter(Boolean) as typeof createdPlayers;
-
-        if (playersToAssign.length > 0) {
-          await assignPlayersToGroups(playersToAssign, [group]);
-        }
-      }
-
-      const refreshed = await getTableByShareId(shareId!);
-      if (!refreshed) throw new Error('Failed to refresh data');
-
-      for (const group of groups) {
-        const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
-        if (groupPlayers.length >= 2) {
-          await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id));
-        }
-      }
-
-      await updateTableStatus(table.id, 'group_stage');
+      const created = await setupRosterAtomic(
+        table.id,
+        playerData,
+        table.group_count,
+        assignments,
+        parseCourtsInput(courts),
+        startTime || null,
+      );
+      if (!created) throw new Error('Failed to set up table');
 
       draft.clear();
       completeJourney('organizer_tournament', 'organizer_tournament_created', {

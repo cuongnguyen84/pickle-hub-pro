@@ -1,15 +1,16 @@
 import SwiftUI
 
 /// Native MLP scoring — port of web TeamMatchScoringSheet. Enter each sub-game's
-/// score; on save we persist the game then recompute the match (games won, total
-/// points, winner, status) and advance the playoff bracket. Dreambreaker is just
-/// the last game and is scored like any other.
+/// score; one atomic save persists the game, recomputes the match and advances
+/// the playoff bracket. Dreambreaker is just the last game and is scored like
+/// any other.
 @Observable
 final class TMScoringModel {
     struct Row: Identifiable, Equatable {
         let game: TMGame
         var a: Int
         var b: Int
+        var scoreVersion: Int64
         var id: UUID { game.id }
         var hasScore: Bool { a > 0 || b > 0 }
         var decided: Bool { a != b }
@@ -30,7 +31,10 @@ final class TMScoringModel {
     init(detail: TMDetail, match: TMMatch) {
         self.detail = detail
         self.match = match
-        self.rows = detail.games(for: match.id).map { Row(game: $0, a: $0.scoreA ?? 0, b: $0.scoreB ?? 0) }
+        self.rows = detail.games(for: match.id).map {
+            Row(game: $0, a: $0.scoreA ?? 0, b: $0.scoreB ?? 0,
+                scoreVersion: $0.scoreVersion)
+        }
         // Open on the first game without a winner, else the last.
         self.selected = rows.firstIndex { !$0.decided } ?? max(0, rows.count - 1)
     }
@@ -83,18 +87,34 @@ final class TMScoringModel {
         saving = true; error = nil
         let row = rows[selected]
         do {
-            try await repo.saveGameScore(gameID: row.game.id, scoreA: row.a, scoreB: row.b)
-            try await repo.saveMatchResult(
-                match: match, scores: rows.map { (a: $0.a, b: $0.b) },
-                tournamentID: detail.tournament.id,
-                hasDreambreaker: detail.tournament.hasDreambreaker ?? false,
-                totalScoreMode: detail.tournament.isTotalScore)
+            try await repo.score(matchID: match.id, game: row.game,
+                                 scoreA: row.a, scoreB: row.b,
+                                 expectedVersion: row.scoreVersion)
+            rows[selected].scoreVersion += 1
             justSaved = true
             onSaved()
         } catch {
             self.error = error.localizedDescription
         }
         saving = false
+    }
+
+    @MainActor
+    func updateLiveScore(gameID: UUID, scoreA: Int, scoreB: Int) async {
+        do {
+            try await repo.updateGameLiveScore(gameID: gameID, scoreA: scoreA, scoreB: scoreB)
+        } catch {
+            self.error = UserFacingError.message(action: "Cập nhật điểm trực tiếp", error: error)
+        }
+    }
+
+    @MainActor
+    func claimLive(gameID: UUID) async {
+        do {
+            try await repo.claimGameLive(gameID: gameID)
+        } catch {
+            self.error = UserFacingError.message(action: "Nhận quyền chấm trận", error: error)
+        }
     }
 }
 
@@ -232,10 +252,10 @@ struct TeamMatchScoringSheet: View {
                         winTarget: model.winTarget(for: row.game),
                         winByTwo: !model.isTotalScore,
                         onLiveScore: { a, b in
-                            Task { try? await TeamMatchRepository().updateGameLiveScore(gameID: row.game.id, scoreA: a, scoreB: b) }
+                            Task { await model.updateLiveScore(gameID: row.game.id, scoreA: a, scoreB: b) }
                         },
                         onClaimLive: {
-                            Task { try? await TeamMatchRepository().claimGameLive(gameID: row.game.id) }
+                            Task { await model.claimLive(gameID: row.game.id) }
                         }) { a, b, _ in
                         model.bumpTo(teamA: a, teamB: b)
                         Task { await model.saveSelected(onSaved: onSaved) }

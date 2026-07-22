@@ -75,16 +75,16 @@ export interface CreateTournamentInput {
   // The frontend handles the fixed format logic
   require_min_games_per_player: boolean;
   has_third_place_match?: boolean;
-  has_repechage?: boolean;   // rr_playoff only — RPC không nhận, UPDATE sau create
+  has_repechage?: boolean;
   bracket_pairing_type?: 'random' | 'manual';
-  // Ràng buộc DUPR (RPC không nhận → UPDATE sau create).
+  // Ràng buộc DUPR.
   require_dupr?: boolean;
   dupr_max_male?: number;
   dupr_max_female?: number;
-  // Chấm theo tổng điểm (RPC không nhận 2 cột này → UPDATE sau create).
+  // Chấm theo tổng điểm.
   total_score_mode?: boolean;
   points_per_game?: number;
-  // Thể lệ + lệ phí + tài khoản nhận (cũng UPDATE sau create).
+  // Thể lệ + lệ phí + tài khoản nhận.
   rules_summary?: string;
   entry_fee_vnd?: number;
   entry_fee_team_vnd?: number;
@@ -200,25 +200,45 @@ export function useTeamMatch() {
 
       const shareId = generateShareId();
 
-      // W3.2 — call quota-enforced RPC. Mirrors useQuickTable/useFlex.
-      // RPC handles the tournament row insert + quota enforcement against
-      // profiles.tournament_create_quota (default 3). Game templates are
-      // still inserted client-side after the parent row exists.
+      // Tournament metadata and game templates are committed together. The
+      // share ID is the idempotency key for a lost/retried response.
       const { data: rpcData, error: rpcError } = await supabase.rpc(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        'create_team_match_with_quota' as any,
+        'create_team_match_atomic',
         {
-          _name: input.name,
-          _share_id: shareId,
-          _team_roster_size: input.team_roster_size,
-          _team_count: input.team_count,
-          _format: input.format,
-          _playoff_team_count: input.playoff_team_count || null,
-          _require_registration: input.require_registration,
-          _has_dreambreaker: input.has_dreambreaker,
-          _require_min_games_per_player: input.require_min_games_per_player,
-          _has_third_place_match: input.has_third_place_match || false,
-          _bracket_pairing_type: input.bracket_pairing_type || 'random',
+          p_config: {
+            name: input.name,
+            share_id: shareId,
+            team_roster_size: input.team_roster_size,
+            team_count: input.team_count,
+            format: input.format,
+            playoff_team_count: input.playoff_team_count ?? null,
+            require_registration: input.require_registration,
+            has_dreambreaker: input.has_dreambreaker,
+            require_min_games_per_player: input.require_min_games_per_player,
+            has_third_place_match: input.has_third_place_match ?? false,
+            has_repechage: input.has_repechage ?? false,
+            bracket_pairing_type: input.bracket_pairing_type ?? 'random',
+            require_dupr: input.require_dupr ?? false,
+            dupr_max_male: input.dupr_max_male ?? null,
+            dupr_max_female: input.dupr_max_female ?? null,
+            total_score_mode: input.total_score_mode ?? false,
+            points_per_game: input.points_per_game ?? null,
+            rules_summary: input.rules_summary?.trim() || null,
+            entry_fee_vnd: input.entry_fee_vnd ?? 0,
+            entry_fee_team_vnd: input.entry_fee_team_vnd ?? 0,
+            bank_code: input.bank_code ?? null,
+            bank_account_number: input.bank_account_number ?? null,
+            bank_account_name: input.bank_account_name ?? null,
+            event_date: input.event_date ?? null,
+            location: input.location?.trim() || null,
+            discount_tiers: input.discount_tiers ?? [],
+          },
+          p_templates: input.game_templates.map((template, index) => ({
+            order_index: index,
+            game_type: template.game_type,
+            display_name: template.display_name || null,
+            scoring_type: template.scoring_type,
+          })),
         },
       );
 
@@ -248,61 +268,7 @@ export function useTeamMatch() {
         throw new Error(result.error || 'Unknown error');
       }
 
-      const tournament = result.tournament as TeamMatchTournament;
-
-      // Create game templates
-      if (input.game_templates.length > 0) {
-        const templates = input.game_templates.map((t, index) => ({
-          tournament_id: tournament.id,
-          order_index: index,
-          game_type: t.game_type,
-          display_name: t.display_name || null,
-          scoring_type: t.scoring_type,
-        }));
-
-        const { error: templatesError } = await supabase
-          .from('team_match_game_templates')
-          .insert(templates);
-
-        if (templatesError) throw templatesError;
-      }
-
-      // Total-score + fee/rules/bank — RPC doesn't know these cols, UPDATE after
-      // create. Fee>0 stores the bank trio; free tournaments leave them null.
-      const rules = (input.rules_summary ?? '').trim();
-      const hasFee = (input.entry_fee_vnd ?? 0) > 0 || (input.entry_fee_team_vnd ?? 0) > 0;
-      const extra: Record<string, unknown> = {};
-      if (input.require_dupr) {
-        extra.require_dupr = true;
-        extra.dupr_max_male = input.dupr_max_male ?? 5.0;
-        extra.dupr_max_female = input.dupr_max_female ?? 4.5;
-      }
-      if (input.total_score_mode) {
-        extra.total_score_mode = true;
-        extra.points_per_game = input.points_per_game ?? 7;
-      }
-      if (input.has_repechage) extra.has_repechage = true;
-      if (rules) extra.rules_summary = rules;
-      if ((input.entry_fee_vnd ?? 0) > 0) extra.entry_fee_vnd = input.entry_fee_vnd;
-      if ((input.entry_fee_team_vnd ?? 0) > 0) extra.entry_fee_team_vnd = input.entry_fee_team_vnd;
-      if (hasFee) {
-        extra.bank_code = input.bank_code ?? null;
-        extra.bank_account_number = input.bank_account_number ?? null;
-        extra.bank_account_name = input.bank_account_name ?? null;
-        if (input.discount_tiers?.length) extra.discount_tiers = input.discount_tiers;
-      }
-      if (input.event_date) extra.event_date = input.event_date;
-      if (input.location?.trim()) extra.location = input.location.trim();
-      if (Object.keys(extra).length > 0) {
-        const { error: extraError } = await supabase
-          .from('team_match_tournaments')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .update(extra as any)
-          .eq('id', tournament.id);
-        if (extraError) throw extraError;
-      }
-
-      return tournament;
+      return result.tournament as TeamMatchTournament;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-match-tournaments'] });

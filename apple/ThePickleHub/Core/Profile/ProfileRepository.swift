@@ -125,14 +125,12 @@ struct ProfileRepository {
     /// Upload avatar image data to the `avatars` bucket (path `{uid}/{ts}.{ext}`,
     /// upsert), set `profiles.avatar_url`, return the public URL — mirrors
     /// `useUserProfile.uploadAvatar`.
-    func uploadAvatar(data: Data, fileExtension: String) async throws -> String {
+    func uploadAvatar(image: ProcessedImage) async throws -> String {
         let userID = try await client.auth.session.user.id
-        let ext = fileExtension.isEmpty ? "jpg" : fileExtension.lowercased()
         let stamp = Int(Date().timeIntervalSince1970 * 1000)
-        let path = "\(userID.uuidString.lowercased())/\(stamp).\(ext)"
-        let contentType = ext == "png" ? "image/png" : "image/jpeg"
+        let path = "\(userID.uuidString.lowercased())/\(stamp).\(image.fileExtension)"
         _ = try await client.storage.from("avatars")
-            .upload(path, data: data, options: FileOptions(cacheControl: "3600", contentType: contentType, upsert: true))
+            .upload(path, data: image.data, options: FileOptions(cacheControl: "3600", contentType: image.contentType, upsert: true))
         let url = try client.storage.from("avatars").getPublicURL(path: path).absoluteString
         try await client.from("profiles")
             .update(AvatarUpdate(avatar_url: url))

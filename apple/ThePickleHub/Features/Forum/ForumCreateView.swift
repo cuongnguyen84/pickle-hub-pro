@@ -9,7 +9,7 @@ final class ForumCreateModel {
     var tags: [String] = []
     var tagInput = ""
     var isQA = false
-    var imageData: [Data] = []
+    var images: [ProcessedImage] = []
     var submitting = false
     var error: String?
 
@@ -30,8 +30,8 @@ final class ForumCreateModel {
     @MainActor func submit(onDone: (String) -> Void) async {
         guard canSubmit else { return }
         submitting = true; error = nil
-        let urls = imageData.isEmpty ? nil : await repo.uploadImages(imageData)
         do {
+            let urls = images.isEmpty ? nil : try await repo.uploadImages(images)
             let id = try await repo.createPost(
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
                 content: content.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -157,16 +157,19 @@ struct ForumCreateView: View {
                         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, lineWidth: 1))
                 }
                 .onChange(of: picked) { _, items in
-                    Task {
-                        var datas: [Data] = []
-                        for it in items.prefix(4) {
-                            if let d = try? await it.loadTransferable(type: Data.self) { datas.append(d) }
+                    Task { @MainActor in
+                        do {
+                            model.images = try await ImagePipeline.load(items, limit: 4, policy: .forum)
+                            model.error = nil
+                        } catch {
+                            picked = []
+                            model.images = []
+                            model.error = error.localizedDescription
                         }
-                        model.imageData = datas
                     }
                 }
-                if !model.imageData.isEmpty {
-                    Text("\(model.imageData.count) ảnh đã chọn").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                if !model.images.isEmpty {
+                    Text("\(model.images.count) ảnh đã chọn · tối đa 4 MB/ảnh").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
                 }
             }
         }

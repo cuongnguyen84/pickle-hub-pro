@@ -11,7 +11,7 @@ export default function QuickTableRefereeScoring() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { language } = useI18n();
-  const { updateMatchScore, updatePlayerStats } = useQuickTableMutations();
+  const { updateMatchScore } = useQuickTableMutations();
   const vi = language === 'vi';
 
   const [loaded, setLoaded] = useState<RefereeLoaded | null>(null);
@@ -27,7 +27,7 @@ export default function QuickTableRefereeScoring() {
   const [foreignClaimSeen, setForeignClaimSeen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Quick-Table-only context used by onFinish (kept out of the generic shape).
-  const ctx = useRef<{ tableId: string; groupId: string | null; isPlayoff: boolean; shareId: string }>({ tableId: '', groupId: null, isPlayoff: false, shareId: '' });
+  const ctx = useRef<{ isPlayoff: boolean; shareId: string }>({ isPlayoff: false, shareId: '' });
 
   useEffect(() => {
     if (!matchId) return;
@@ -60,7 +60,7 @@ export default function QuickTableRefereeScoring() {
         const p2 = m.player2_id ? byId.get(m.player2_id) : undefined;
         const names = (p: PRow | undefined): [string, string] | null =>
           p?.player1_name && p?.player2_name ? [p.player1_name, p.player2_name] : null;
-        ctx.current = { tableId: m.table_id, groupId: m.group_id ?? null, isPlayoff: m.is_playoff === true, shareId: tb?.share_id ?? '' };
+        ctx.current = { isPlayoff: m.is_playoff === true, shareId: tb?.share_id ?? '' };
         setLoaded({
           matchId, isDoubles: tb?.is_doubles === true,
           teamAName: p1?.name ?? 'Đội A', teamBName: p2?.name ?? 'Đội B',
@@ -123,7 +123,7 @@ export default function QuickTableRefereeScoring() {
 
   const onFinish = useCallback(async (a: number, b: number, note: string | null, sets?: { setsWon: { a: number; b: number }; setScores: { s1: number; s2: number }[]; totalSets: number }) => {
     if (!matchId) return;
-    const { tableId, groupId, isPlayoff, shareId } = ctx.current;
+    const { isPlayoff, shareId } = ctx.current;
     // Multi-set manual games arrive with sets-won as (a, b) — the correct
     // winner input for updateMatchScore — plus the archived per-set scores.
     await updateMatchScore(matchId, a, b);
@@ -140,14 +140,12 @@ export default function QuickTableRefereeScoring() {
         } as never)
         .eq('id', matchId);
     } catch { /* best-effort */ }
-    if (!isPlayoff && groupId) {
-      try { await updatePlayerStats(tableId, groupId); } catch { /* best-effort */ }
-    }
+    // Group standings and playoff propagation are committed by the score RPC.
     if (note) {
       try { await supabase.from('quick_table_matches').update({ referee_note: note } as never).eq('id', matchId); } catch { /* best-effort */ }
     }
     navigate(`/tools/quick-tables/${shareId}?tab=${isPlayoff ? 'playoff' : 'groups'}`);
-  }, [matchId, navigate, updateMatchScore, updatePlayerStats]);
+  }, [matchId, navigate, updateMatchScore]);
 
   if (error) return <RefereeCentered>{error}</RefereeCentered>;
   if (!loaded) return <RefereeCentered>{vi ? 'Đang tải…' : 'Loading…'}</RefereeCentered>;

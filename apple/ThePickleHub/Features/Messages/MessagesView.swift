@@ -6,10 +6,16 @@ import SwiftUI
 final class MessagesInboxModel {
     var conversations: [DMConversation] = []
     var loaded = false
+    var error: String?
     private let repo = MessagesRepository()
 
     @MainActor func load() async {
-        conversations = await repo.myConversations()
+        do {
+            conversations = try await repo.myConversations()
+            error = nil
+        } catch {
+            if !loaded { self.error = UserFacingError.message(action: "Tải tin nhắn", error: error) }
+        }
         loaded = true
     }
 }
@@ -50,6 +56,15 @@ struct MessagesView: View {
             }
         }
         .refreshable { await model.load() }
+        .alert("Không tải được tin nhắn", isPresented: Binding(
+            get: { model.error != nil },
+            set: { if !$0 { model.error = nil } }
+        )) {
+            Button("Thử lại") { Task { await model.load() } }
+            Button("Đóng", role: .cancel) { model.error = nil }
+        } message: {
+            Text(model.error ?? "")
+        }
     }
 
     private func row(_ c: DMConversation) -> some View {
@@ -103,6 +118,7 @@ final class MessageThreadModel {
     var loaded = false
     var draft = ""
     var sending = false
+    var error: String?
     let conversationID: String
     private let repo = MessagesRepository()
 
@@ -110,9 +126,14 @@ final class MessageThreadModel {
 
     @MainActor func load() async {
         if myID.isEmpty { myID = await repo.currentUserID() ?? "" }
-        messages = await repo.messages(conversationID: conversationID)
+        do {
+            messages = try await repo.messages(conversationID: conversationID)
+            try await repo.markRead(conversationID: conversationID)
+            error = nil
+        } catch {
+            if !loaded { self.error = UserFacingError.message(action: "Tải cuộc trò chuyện", error: error) }
+        }
         loaded = true
-        await repo.markRead(conversationID: conversationID)
     }
 
     @MainActor func send() async {
@@ -122,8 +143,11 @@ final class MessageThreadModel {
         do {
             try await repo.sendMessage(conversationID: conversationID, body: String(text.prefix(1000)))
             draft = ""
+            error = nil
             await load()
-        } catch {}
+        } catch {
+            self.error = UserFacingError.message(action: "Gửi tin nhắn", error: error)
+        }
         sending = false
     }
 }
@@ -177,6 +201,14 @@ struct MessageThreadView: View {
                 if Task.isCancelled { break }
                 await model.load()
             }
+        }
+        .alert("Không thể hoàn tất", isPresented: Binding(
+            get: { model.error != nil },
+            set: { if !$0 { model.error = nil } }
+        )) {
+            Button("Đóng", role: .cancel) { model.error = nil }
+        } message: {
+            Text(model.error ?? "")
         }
     }
 

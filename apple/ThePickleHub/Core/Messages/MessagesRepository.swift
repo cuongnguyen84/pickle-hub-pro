@@ -11,17 +11,17 @@ struct MessagesRepository {
         try? await client.auth.session.user.id.uuidString.lowercased()
     }
 
-    func myConversations() async -> [DMConversation] {
-        (try? await client.rpc("my_conversations").execute().value) ?? []
+    func myConversations() async throws -> [DMConversation] {
+        try await client.rpc("my_conversations").execute().value
     }
 
-    func messages(conversationID: String) async -> [DMMessage] {
-        (try? await client.from("messages")
+    func messages(conversationID: String) async throws -> [DMMessage] {
+        try await client.from("messages")
             .select("id, conversation_id, sender_id, body, created_at")
             .eq("conversation_id", value: conversationID)
             .order("created_at", ascending: true)
             .limit(500)
-            .execute().value) ?? []
+            .execute().value
     }
 
     func sendMessage(conversationID: String, body: String) async throws {
@@ -29,7 +29,7 @@ struct MessagesRepository {
                              params: ["p_conv": conversationID, "p_body": body]).execute()
     }
 
-    func markRead(conversationID: String) async {
-        _ = try? await client.rpc("mark_conversation_read", params: ["p_conv": conversationID]).execute()
+    func markRead(conversationID: String) async throws {
+        _ = try await client.rpc("mark_conversation_read", params: ["p_conv": conversationID]).execute()
     }
 }

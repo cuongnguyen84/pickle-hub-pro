@@ -19,7 +19,7 @@ final class CreateClubModel {
     var slugTouched = false
     var description = ""
     var location = ""
-    var imageData: Data?
+    var image: ProcessedImage?
     var slugTaken = false
     var slugChecking = false
     var submitting = false
@@ -61,9 +61,9 @@ final class CreateClubModel {
     @MainActor func submit(onDone: (String) -> Void) async {
         guard canSubmit else { return }
         submitting = true; error = nil
-        var logoURL: String?
-        if let imageData { logoURL = await repo.uploadLogo(data: imageData) }
         do {
+            var logoURL: String?
+            if let image { logoURL = try await repo.uploadLogo(image: image) }
             _ = try await repo.createClub(slug: slug, name: name.trimmingCharacters(in: .whitespaces),
                                           description: description.trimmingCharacters(in: .whitespaces),
                                           location: location.trimmingCharacters(in: .whitespaces), logoURL: logoURL)
@@ -163,15 +163,23 @@ struct CreateClubView: View {
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: previewImage == nil ? [4] : [])))
                 }
                 if previewImage != nil {
-                    Button("Xoá") { picked = nil; previewImage = nil; model.imageData = nil }
+                    Button("Xoá") { picked = nil; previewImage = nil; model.image = nil }
                         .font(TLFont.sans(12, .semibold)).foregroundStyle(TLColor.live)
                 }
             }
             .onChange(of: picked) { _, item in
-                Task {
-                    if let d = try? await item?.loadTransferable(type: Data.self) {
-                        model.imageData = d
-                        if let ui = UIImage(data: d) { previewImage = Image(uiImage: ui) }
+                Task { @MainActor in
+                    guard let item else { return }
+                    do {
+                        let image = try await ImagePipeline.load(item, policy: .clubLogo)
+                        model.image = image
+                        if let ui = UIImage(data: image.data) { previewImage = Image(uiImage: ui) }
+                        model.error = nil
+                    } catch {
+                        picked = nil
+                        previewImage = nil
+                        model.image = nil
+                        model.error = error.localizedDescription
                     }
                 }
             }

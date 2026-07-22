@@ -52,10 +52,9 @@ const QuickTableView = () => {
   const { t, language } = useI18n();
   const confirm = useConfirm();
   const {
-    getTableByShareId, updateMatchScore, updatePlayerStats,
-    getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches,
-    markPlayersQualified, updateTableStatus, isGroupStageComplete, getWildcardCount,
-    isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
+    getTableByShareId, updateMatchScore,
+    getQualifiedPlayers, generatePlayoffBracket, createPlayoffAtomic,
+    isGroupStageComplete, getWildcardCount, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
     updateTableCourtSettings, reassignCourtsAndTimes, deleteTable,
     updateCourtName, pending,
@@ -150,36 +149,9 @@ const QuickTableView = () => {
         setActiveTab('registration');
       }
 
-      if (data.table.status === 'playoff') {
-        const playoffMatches = data.matches.filter(m => m.is_playoff);
-        if (playoffMatches.length > 0) {
-          const maxRound = Math.max(...playoffMatches.map(m => m.playoff_round || 0));
-          const roundMatches = playoffMatches.filter(m => m.playoff_round === maxRound);
-          const allCompleted = roundMatches.every(m => m.status === 'completed');
-
-          if (allCompleted && roundMatches.length > 1) {
-            const nextRoundExists = playoffMatches.some(m => m.playoff_round === maxRound + 1);
-            if (!nextRoundExists) {
-              const newMatches = await createNextPlayoffRound(data.table.id, maxRound, data.matches);
-              if (newMatches.length > 0) {
-                toast.success(t.quickTable.view.nextRoundCreated);
-                const refreshedData = await getTableByShareId(shareId);
-                if (refreshedData) {
-                  setMatches(refreshedData.matches);
-                }
-              }
-            }
-          } else if (allCompleted && roundMatches.length === 1 && maxRound > 0) {
-            // Chung kết chấm qua trang trọng tài chỉ lưu tỉ số — tự chốt giải khi load lại.
-            await updateTableStatus(data.table.id, 'completed');
-            setTable({ ...data.table, status: 'completed' });
-            toast.success(t.quickTable.view.tournamentCompleted);
-          }
-        }
-      }
     }
     setLoading(false);
-  }, [shareId, user, t, getTableByShareId, getUserTeam, getPendingCount, getUserRegistration, createNextPlayoffRound, updateTableStatus]);
+  }, [shareId, user, getTableByShareId, getUserTeam, getPendingCount, getUserRegistration]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -254,45 +226,11 @@ const QuickTableView = () => {
     }
   }, [showTeam, shareId]);
 
-  const handleScoreUpdate = async (matchId: string, score1: number, score2: number, isPlayoff: boolean = false) => {
+  const handleScoreUpdate = async (matchId: string, score1: number, score2: number, _isPlayoff: boolean = false) => {
     const match = matches.find(m => m.id === matchId);
     if (!match || !table) return;
 
     await updateMatchScore(matchId, score1, score2);
-
-    if (!isPlayoff && match.group_id) {
-      await updatePlayerStats(table.id, match.group_id);
-    }
-
-    if (isPlayoff && match.playoff_round !== null) {
-      const updatedData = await getTableByShareId(shareId!);
-      if (updatedData) {
-        const currentRound = match.playoff_round;
-        const updatedMatches = updatedData.matches;
-
-        if (isPlayoffRoundComplete(updatedMatches, currentRound)) {
-          const nextRoundExists = updatedMatches.some(m =>
-            m.is_playoff && m.playoff_round === currentRound + 1,
-          );
-
-          if (!nextRoundExists) {
-            const newMatches = await createNextPlayoffRound(table.id, currentRound, updatedMatches);
-            if (newMatches.length > 0) {
-              toast.success(t.quickTable.view.nextRoundCreated);
-            } else if (currentRound > 0) {
-              const finalMatch = updatedMatches.find(m =>
-                m.is_playoff && m.playoff_round === currentRound && m.status === 'completed',
-              );
-              const roundMatches = updatedMatches.filter(m => m.is_playoff && m.playoff_round === currentRound);
-              if (roundMatches.length === 1 && finalMatch) {
-                await updateTableStatus(table.id, 'completed');
-                toast.success(t.quickTable.view.tournamentCompleted);
-              }
-            }
-          }
-        }
-      }
-    }
 
     await loadData();
     toast.success(t.quickTable.view.scoreUpdated);
@@ -372,10 +310,8 @@ const QuickTableView = () => {
     if (!table || !table.group_count) return;
 
     try {
-      await markPlayersQualified(qualified, wildcards);
       const bracketMatches = generatePlayoffBracket(table.group_count, qualified, wildcards, groups);
-      await createPlayoffMatches(table.id, bracketMatches);
-      await updateTableStatus(table.id, 'playoff');
+      await createPlayoffAtomic(table.id, qualified, wildcards, bracketMatches);
 
       toast.success(t.quickTable.view.playoffCreated);
       await loadData();
@@ -427,8 +363,6 @@ const QuickTableView = () => {
         }
       }
 
-      await markPlayersQualified(qualifiedPlayers, wildcardPlayers);
-
       const bracketMatches = confirmedPairings.map(p => ({
         player1: p.player1.playerId !== BYE_PLAYER_ID
           ? (players.find(pl => pl.id === p.player1.playerId) || null)
@@ -440,8 +374,7 @@ const QuickTableView = () => {
         matchNumber: p.matchNumber,
       }));
 
-      await createPlayoffMatches(table.id, bracketMatches);
-      await updateTableStatus(table.id, 'playoff');
+      await createPlayoffAtomic(table.id, qualifiedPlayers, wildcardPlayers, bracketMatches);
 
       toast.success(t.quickTable.view.playoffCreated);
       await loadData();

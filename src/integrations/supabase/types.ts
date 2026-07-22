@@ -993,6 +993,7 @@ export type Database = {
           games: Json | null
           games_won_a: number | null
           games_won_b: number | null
+          generation_key: string | null
           id: string
           is_bye: boolean | null
           live_referee_id: string | null
@@ -1002,6 +1003,7 @@ export type Database = {
           round_type: string
           score_a: number | null
           score_b: number | null
+          score_version: number
           source_a: Json | null
           source_b: Json | null
           start_time: string | null
@@ -1027,6 +1029,7 @@ export type Database = {
           games?: Json | null
           games_won_a?: number | null
           games_won_b?: number | null
+          generation_key?: string | null
           id?: string
           is_bye?: boolean | null
           live_referee_id?: string | null
@@ -1036,6 +1039,7 @@ export type Database = {
           round_type: string
           score_a?: number | null
           score_b?: number | null
+          score_version?: number
           source_a?: Json | null
           source_b?: Json | null
           start_time?: string | null
@@ -1061,6 +1065,7 @@ export type Database = {
           games?: Json | null
           games_won_a?: number | null
           games_won_b?: number | null
+          generation_key?: string | null
           id?: string
           is_bye?: boolean | null
           live_referee_id?: string | null
@@ -1070,6 +1075,7 @@ export type Database = {
           round_type?: string
           score_a?: number | null
           score_b?: number | null
+          score_version?: number
           source_a?: Json | null
           source_b?: Json | null
           start_time?: string | null
@@ -2168,6 +2174,7 @@ export type Database = {
           parent_match_id: string | null
           score_a: number | null
           score_b: number | null
+          score_version: number
           slot_a_team_id: string | null
           slot_a1_player_id: string | null
           slot_a2_player_id: string | null
@@ -2189,6 +2196,7 @@ export type Database = {
           parent_match_id?: string | null
           score_a?: number | null
           score_b?: number | null
+          score_version?: number
           slot_a_team_id?: string | null
           slot_a1_player_id?: string | null
           slot_a2_player_id?: string | null
@@ -2210,6 +2218,7 @@ export type Database = {
           parent_match_id?: string | null
           score_a?: number | null
           score_b?: number | null
+          score_version?: number
           slot_a_team_id?: string | null
           slot_a1_player_id?: string | null
           slot_a2_player_id?: string | null
@@ -4823,6 +4832,7 @@ export type Database = {
           score_history: Json | null
           score1: number | null
           score2: number | null
+          score_version: number
           serving_side: number | null
           set_scores: Json | null
           sides_swapped: boolean | null
@@ -4860,6 +4870,7 @@ export type Database = {
           score_history?: Json | null
           score1?: number | null
           score2?: number | null
+          score_version?: number
           serving_side?: number | null
           set_scores?: Json | null
           sides_swapped?: boolean | null
@@ -4897,6 +4908,7 @@ export type Database = {
           score_history?: Json | null
           score1?: number | null
           score2?: number | null
+          score_version?: number
           serving_side?: number | null
           set_scores?: Json | null
           sides_swapped?: boolean | null
@@ -6124,6 +6136,7 @@ export type Database = {
           referee_live_state: Json | null
           score_a: number | null
           score_b: number | null
+          score_version: number
           scoring_type: Database["public"]["Enums"]["game_scoring_type"]
           status: string | null
           template_id: string | null
@@ -6148,6 +6161,7 @@ export type Database = {
           referee_live_state?: Json | null
           score_a?: number | null
           score_b?: number | null
+          score_version?: number
           scoring_type: Database["public"]["Enums"]["game_scoring_type"]
           status?: string | null
           template_id?: string | null
@@ -6172,6 +6186,7 @@ export type Database = {
           referee_live_state?: Json | null
           score_a?: number | null
           score_b?: number | null
+          score_version?: number
           scoring_type?: Database["public"]["Enums"]["game_scoring_type"]
           status?: string | null
           template_id?: string | null
@@ -7531,7 +7546,7 @@ export type Database = {
       }
       claim_team_payment: { Args: { p_team_id: string }; Returns: undefined }
       close_doubles_elimination_registration: {
-        Args: { p_tournament_id: string }
+        Args: { p_seeding_strategy?: string; p_tournament_id: string }
         Returns: Json
       }
       compute_player_win_streak: {
@@ -7602,8 +7617,44 @@ export type Database = {
         }
         Returns: Json
       }
+      create_doubles_elimination_atomic: {
+        Args: {
+          p_court_count: number
+          p_early_rounds_format: string
+          p_finals_format: string
+          p_has_third_place_match: boolean
+          p_max_dupr_rating: number | null
+          p_min_dupr_rating: number | null
+          p_name: string
+          p_open_registration: boolean
+          p_rating_source: string
+          p_seeding_strategy: string
+          p_semifinals_format: string
+          p_share_id: string
+          p_start_time: string | null
+          p_team_count: number
+          p_teams: Json
+        }
+        Returns: Json
+      }
       create_flex_tournament_with_quota: {
         Args: { _is_public?: boolean; _name: string }
+        Returns: Json
+      }
+      create_flex_tournament_atomic: {
+        Args: { p_is_public: boolean; p_name: string; p_player_names: Json }
+        Returns: Json
+      }
+      create_flex_entity_atomic: {
+        Args: {
+          p_display_order: number
+          p_entity_type: string
+          p_group_id: string | null
+          p_match_type: string | null
+          p_name: string
+          p_parent_match_id: string | null
+          p_tournament_id: string
+        }
         Returns: Json
       }
       create_pair_request: {
@@ -7621,6 +7672,14 @@ export type Database = {
           _registration_message?: string
           _requires_registration?: boolean
           _requires_skill_level?: boolean
+        }
+        Returns: Json
+      }
+      create_quick_table_playoff_atomic: {
+        Args: {
+          p_first_round: Json
+          p_qualifiers: Json
+          p_table_id: string
         }
         Returns: Json
       }
@@ -7645,6 +7704,10 @@ export type Database = {
           _team_count: number
           _team_roster_size: number
         }
+        Returns: Json
+      }
+      create_team_match_atomic: {
+        Args: { p_config: Json; p_templates: Json }
         Returns: Json
       }
       delete_match_comment: { Args: { p_comment_id: string }; Returns: Json }
@@ -8008,6 +8071,10 @@ export type Database = {
           display_name: string
           id: string
         }[]
+      }
+      ensure_team_match_games_atomic: {
+        Args: { p_match_id: string }
+        Returns: Json
       }
       get_registration_by_token: {
         Args: { p_magic_token: string }
@@ -8520,6 +8587,10 @@ export type Database = {
         Returns: Json
       }
       request_to_join_club: { Args: { p_club_id: string }; Returns: string }
+      advance_doubles_elimination_lifecycle: {
+        Args: { p_tournament_id: string }
+        Returns: Json
+      }
       resolve_match_dispute: {
         Args: {
           p_action: string
@@ -8531,6 +8602,80 @@ export type Database = {
       }
       respond_pair_request: {
         Args: { _accept: boolean; _request_id: string }
+        Returns: Json
+      }
+      score_doubles_elimination_match_atomic: {
+        Args: {
+          p_expected_version: number
+          p_games: Json
+          p_match_id: string
+          p_score_a: number
+          p_score_b: number
+        }
+        Returns: Json
+      }
+      score_flex_match_atomic: {
+        Args: {
+          p_expected_version: number
+          p_match_id: string
+          p_score_a: number
+          p_score_b: number
+        }
+        Returns: Json
+      }
+      score_quick_table_match_atomic: {
+        Args: {
+          p_expected_version: number
+          p_match_id: string
+          p_score1: number
+          p_score2: number
+        }
+        Returns: Json
+      }
+      score_team_match_games_atomic: {
+        Args: { p_match_id: string; p_scores: Json }
+        Returns: Json
+      }
+      generate_team_match_brackets_atomic: {
+        Args: { p_branches: Json; p_tournament_id: string }
+        Returns: Json
+      }
+      generate_team_match_round_robin_atomic: {
+        Args: {
+          p_groups?: Json
+          p_randomize_game_order?: boolean
+          p_tournament_id: string
+        }
+        Returns: Json
+      }
+      reset_team_match_lifecycle_atomic: {
+        Args: { p_scope: string; p_tournament_id: string }
+        Returns: Json
+      }
+      start_team_match_round_atomic: {
+        Args: { p_round_number: number; p_tournament_id: string }
+        Returns: Json
+      }
+      setup_quick_table_roster_atomic: {
+        Args: {
+          p_courts?: Json
+          p_group_assignments: Json
+          p_roster: Json
+          p_start_time?: string | null
+          p_table_id: string
+        }
+        Returns: Json
+      }
+      update_flex_group_standings_atomic: {
+        Args: { p_group_id: string; p_include_doubles: boolean }
+        Returns: Json
+      }
+      update_flex_match_standings_atomic: {
+        Args: {
+          p_counts_for_standings: boolean
+          p_group_id: string | null
+          p_match_id: string
+        }
         Returns: Json
       }
       search_players: {

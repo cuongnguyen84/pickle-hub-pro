@@ -2,9 +2,10 @@ import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tStandalone } from '@/lib/i18n-standalone';
-import type { QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickMatchStatus, QuickTableStatus } from './useQuickTable';
-import { generateRoundRobinMatches } from '@/lib/quick-table-utils';
-import { quickTableWinner, playoffAdvanceTarget, accumulateGroupStats } from '@/lib/quickTableResult';
+import type { QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickTableStatus } from './useQuickTable';
+import { distributePlayersToGroups, generateRoundRobinMatches } from '@/lib/quick-table-utils';
+import { accumulateGroupStats } from '@/lib/quickTableResult';
+import type { Json } from '@/integrations/supabase/types';
 
 // W1.2 — Helper to extract Postgres error code from a Supabase error.
 // We use this to surface specific user-facing messages for known RLS
@@ -30,9 +31,7 @@ function isPermissionDenied(error: unknown): boolean {
 // `pending` map below so consumers can disable the specific button
 // that's in flight without disabling unrelated UI.
 type MutationName =
-  | 'addPlayers'
-  | 'createGroups'
-  | 'createGroupMatches'
+  | 'setupRosterAtomic'
   | 'updateMatchScore'
   | 'updatePlayerStats'
   | 'updateTableStatus'
@@ -48,9 +47,7 @@ type MutationName =
 export type QuickTableMutationsPending = Record<MutationName, boolean>;
 
 const EMPTY_PENDING: QuickTableMutationsPending = {
-  addPlayers: false,
-  createGroups: false,
-  createGroupMatches: false,
+  setupRosterAtomic: false,
   updateMatchScore: false,
   updatePlayerStats: false,
   updateTableStatus: false,
@@ -75,117 +72,60 @@ export function useQuickTableMutations() {
     setPending((prev) => (prev[name] === value ? prev : { ...prev, [name]: value }));
   }, []);
 
-  const addPlayers = useCallback(async (
+  const setupRosterAtomic = useCallback(async (
     tableId: string,
     players: Array<{ name: string; player1_name?: string; player2_name?: string; team?: string; seed?: number }>,
-  ): Promise<QuickTablePlayer[]> => {
-    setPendingFor('addPlayers', true);
-    try {
-      const { data, error } = await supabase
-        .from('quick_table_players')
-        .insert(
-          players.map((p, i) => ({
-            table_id: tableId,
-            name: p.name,
-            player1_name: p.player1_name || null,
-            player2_name: p.player2_name || null,
-            team: p.team || null,
-            seed: p.seed || null,
-            display_order: i,
-          })) as never, // player1_name/player2_name chưa có trong generated types
-        )
-        .select();
-
-      if (error) throw error;
-      return (data || []) as unknown as QuickTablePlayer[];
-    } catch (error) {
-      console.error('[useQuickTableMutations] addPlayers:', error);
-      if (isPermissionDenied(error)) {
-        toast.error(tStandalone('toast.table.addPlayers.permissionDenied'));
-      } else {
-        toast.error(tStandalone('toast.table.addPlayers.error'));
-      }
-      return [];
-    } finally {
-      setPendingFor('addPlayers', false);
-    }
-  }, [setPendingFor]);
-
-  const createGroups = useCallback(async (
-    tableId: string,
     groupCount: number,
-  ): Promise<QuickTableGroup[]> => {
-    setPendingFor('createGroups', true);
+    groupAssignments?: number[],
+    courts: number[] = [],
+    startTime: string | null = null,
+  ): Promise<boolean> => {
+    setPendingFor('setupRosterAtomic', true);
     try {
-      const groupNames = Array.from({ length: groupCount }, (_, i) =>
-        String.fromCharCode(65 + i),
-      );
-
-      const { data, error } = await supabase
-        .from('quick_table_groups')
-        .insert(
-          groupNames.map((name, i) => ({
-            table_id: tableId,
-            name,
-            display_order: i,
-          })),
-        )
-        .select();
-
-      if (error) throw error;
-      return (data || []) as unknown as QuickTableGroup[];
-    } catch (error) {
-      console.error('[useQuickTableMutations] createGroups:', error);
-      if (isPermissionDenied(error)) {
-        toast.error(tStandalone('toast.table.createGroups.permissionDenied'));
-      } else {
-        toast.error(tStandalone('toast.table.createGroups.error'));
+      let assignments = groupAssignments;
+      if (!assignments) {
+        const indexed = players.map((player, index) => ({
+          id: String(index),
+          name: player.name,
+          team: player.team,
+          seed: player.seed,
+        }));
+        const distributed = distributePlayersToGroups(indexed, groupCount);
+        assignments = Array(players.length).fill(-1);
+        distributed.forEach((bucket, groupIndex) => {
+          bucket.forEach((player) => { assignments![Number(player.id)] = groupIndex; });
+        });
       }
-      return [];
-    } finally {
-      setPendingFor('createGroups', false);
-    }
-  }, [setPendingFor]);
+      if (assignments.length !== players.length || assignments.some(group => group < 0 || group >= groupCount)) {
+        throw new Error('INVALID_ASSIGNMENTS');
+      }
 
-  const createGroupMatches = useCallback(async (
-    tableId: string,
-    groupId: string,
-    playerIds: string[],
-    _groupIndex: number = 0,
-  ): Promise<QuickTableMatch[]> => {
-    setPendingFor('createGroupMatches', true);
-    try {
-      const { generateCircleMethodMatches } = await import('@/lib/round-robin');
-      const matchPairs = generateCircleMethodMatches(playerIds);
-
-      const { data, error } = await supabase
-        .from('quick_table_matches')
-        .insert(
-          matchPairs.map((pair, i) => ({
-            table_id: tableId,
-            group_id: groupId,
-            is_playoff: false,
-            player1_id: pair.player1,
-            player2_id: pair.player2,
-            display_order: i,
-            rr_round_number: pair.rrRoundNumber,
-            rr_match_index: pair.rrMatchIndex,
-          })),
-        )
-        .select();
-
-      if (error) throw error;
-      return (data || []) as unknown as QuickTableMatch[];
+      const { data, error } = await supabase.rpc('setup_quick_table_roster_atomic', {
+        p_table_id: tableId,
+        p_roster: players.map(player => ({
+          name: player.name,
+          player1_name: player.player1_name ?? null,
+          player2_name: player.player2_name ?? null,
+          team: player.team ?? null,
+          seed: player.seed ?? null,
+        })) as Json,
+        p_group_assignments: assignments as Json,
+        p_courts: courts as Json,
+        p_start_time: startTime,
+      });
+      const result = (data ?? {}) as Record<string, unknown>;
+      if (error || result.success !== true) throw error ?? new Error(String(result.error ?? 'SETUP_FAILED'));
+      return true;
     } catch (error) {
-      console.error('[useQuickTableMutations] createGroupMatches:', error);
+      console.error('[useQuickTableMutations] setupRosterAtomic:', error);
       if (isPermissionDenied(error)) {
         toast.error(tStandalone('toast.table.createGroupMatches.permissionDenied'));
       } else {
         toast.error(tStandalone('toast.table.createGroupMatches.error'));
       }
-      return [];
+      return false;
     } finally {
-      setPendingFor('createGroupMatches', false);
+      setPendingFor('setupRosterAtomic', false);
     }
   }, [setPendingFor]);
 
@@ -196,79 +136,37 @@ export function useQuickTableMutations() {
   ): Promise<void> => {
     setPendingFor('updateMatchScore', true);
     try {
-      const { data: match } = await supabase
+      const { data: match, error: fetchError } = await supabase
         .from('quick_table_matches')
-        .select('player1_id, player2_id, is_playoff, playoff_round, playoff_match_number, table_id, winner_id')
+        .select('score_version')
         .eq('id', matchId)
         .single();
 
-      if (!match) return;
-
-      const newWinner = quickTableWinner(score1, score2, match.player1_id, match.player2_id);
-
-      const { error: updateError } = await supabase
-        .from('quick_table_matches')
-        .update({
-          score1,
-          score2,
-          winner_id: newWinner,
-          status: 'completed' as QuickMatchStatus,
-          live_referee_id: null,
-        })
-        .eq('id', matchId);
-
-      if (updateError) {
-        console.error('[useQuickTableMutations] updateMatchScore:', updateError);
-        if (isPermissionDenied(updateError)) {
-          toast.error(tStandalone('toast.table.updateMatchScore.permissionDenied'));
-        }
+      if (fetchError || !match) {
+        console.error('[useQuickTableMutations] updateMatchScore fetch:', fetchError);
         return;
       }
 
-      if (match.is_playoff && match.playoff_round !== null) {
-        const currentRound = match.playoff_round;
-        const nextRound = currentRound + 1;
+      const { data, error } = await supabase.rpc('score_quick_table_match_atomic', {
+        p_match_id: matchId,
+        p_score1: score1,
+        p_score2: score2,
+        p_expected_version: match.score_version,
+      });
+      const result = (data ?? {}) as Record<string, unknown>;
 
-        const { data: currentRoundMatches } = await supabase
-          .from('quick_table_matches')
-          .select('id, playoff_match_number')
-          .eq('table_id', match.table_id)
-          .eq('is_playoff', true)
-          .eq('playoff_round', currentRound)
-          .order('playoff_match_number');
-
-        if (!currentRoundMatches) return;
-
-        const positionInRound = currentRoundMatches.findIndex(m => m.id === matchId);
-        const { nextMatchIndex, slot } = playoffAdvanceTarget(positionInRound);
-
-        const { data: nextRoundMatches } = await supabase
-          .from('quick_table_matches')
-          .select('id, playoff_match_number, player1_id, player2_id')
-          .eq('table_id', match.table_id)
-          .eq('is_playoff', true)
-          .eq('playoff_round', nextRound)
-          .order('playoff_match_number');
-
-        if (nextRoundMatches && nextRoundMatches.length > nextMatchIndex) {
-          const nextMatch = nextRoundMatches[nextMatchIndex];
-          const updateData = slot === 'player1'
-            ? { player1_id: newWinner }
-            : { player2_id: newWinner };
-
-          await supabase
-            .from('quick_table_matches')
-            .update(updateData)
-            .eq('id', nextMatch.id);
+      if (error || result.success !== true) {
+        console.error('[useQuickTableMutations] updateMatchScore:', error || result);
+        if (isPermissionDenied(error)) {
+          toast.error(tStandalone('toast.table.updateMatchScore.permissionDenied'));
+        } else if (result.error === 'VERSION_CONFLICT') {
+          toast.error('Điểm vừa được cập nhật ở thiết bị khác. Hãy tải lại.');
+        } else if (result.error === 'DOWNSTREAM_LOCKED') {
+          toast.error('Không thể sửa vì trận tiếp theo đã bắt đầu.');
         } else {
-          const isFinalMatch = currentRoundMatches.length === 1;
-          if (isFinalMatch && newWinner) {
-            await supabase
-              .from('quick_tables')
-              .update({ status: 'completed' as QuickTableStatus })
-              .eq('id', match.table_id);
-          }
+          toast.error(typeof result.error === 'string' ? result.error : 'Không thể lưu điểm.');
         }
+        return;
       }
     } finally {
       setPendingFor('updateMatchScore', false);
@@ -614,9 +512,7 @@ export function useQuickTableMutations() {
   }, [setPendingFor]);
 
   return {
-    addPlayers,
-    createGroups,
-    createGroupMatches,
+    setupRosterAtomic,
     updateMatchScore,
     updatePlayerStats,
     updateTableStatus,

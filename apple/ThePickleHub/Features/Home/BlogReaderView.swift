@@ -41,13 +41,15 @@ struct BlogReaderView: View {
 
     private func bodyHTML(_ detail: BlogPostDetail) -> String {
         var html = ""
-        if let cover = detail.coverImageURL?.nonEmpty {
-            html += "<img src=\"\(cover)\" alt=\"\">"
+        if let cover = detail.coverImageURL?.nonEmpty,
+           let url = WebRoutes.asset(cover),
+           url.scheme?.lowercased() == "https" {
+            html += "<img src=\"\(ArticleHTML.escapeText(url.absoluteString))\" alt=\"\">"
         }
         if let tag = detail.category?.nonEmpty {
-            html += "<p style=\"color:#bdee5c;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin:8px 0 0\">\(tag)</p>"
+            html += "<p style=\"color:#bdee5c;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin:8px 0 0\">\(ArticleHTML.escapeText(tag))</p>"
         }
-        html += "<h1>\(detail.title)</h1>"
+        html += "<h1>\(ArticleHTML.escapeText(detail.title))</h1>"
         html += detail.contentHtml
         return html
     }

@@ -10,7 +10,6 @@ import { GroupSelector } from './GroupSelector';
 import { MatchBlock } from './MatchBlock';
 import { DraggablePlayer } from './DraggablePlayer';
 import { useFlexTournament, type FlexTournamentData, type FlexMatch } from '@/hooks/useFlexTournament';
-import { useFlexStats } from '@/hooks/useFlexStats';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -38,12 +37,12 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     updateMatchScore,
     updateMatchCountsForStandings,
     updateMatchGroupId,
+    updateGroupIncludeDoubles,
     updateParentMatchScore,
     deleteEntity,
     updateEntityName,
     generateRoundRobinMatches,
   } = useFlexTournament();
-  const { recomputeAllGroupStats, updateGroupIncludeDoubles } = useFlexStats();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeName, setActiveName] = useState<string>('');
@@ -242,12 +241,12 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   };
 
   const handleAddTeam = useCallback(async (name: string) => {
-    await addTeam(data.tournament.id, name, getNextDisplayOrder(data.teams), data.teams.length);
+    await addTeam(data.tournament.id, name, getNextDisplayOrder(data.teams));
     onRefresh();
   }, [data.tournament.id, data.teams, addTeam, onRefresh]);
 
   const handleAddGroup = useCallback(async (name: string) => {
-    await addGroup(data.tournament.id, name, getNextDisplayOrder(data.groups), data.groups.length);
+    await addGroup(data.tournament.id, name, getNextDisplayOrder(data.groups));
     onRefresh();
   }, [data.tournament.id, data.groups, addGroup, onRefresh]);
 
@@ -273,7 +272,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     // If group is team-based, create 'singles' type (2 team slots)
     const matchType = groupType === 'team' ? 'singles' : 'doubles';
     
-    await addMatch(data.tournament.id, matchName, matchType, groupId, getNextDisplayOrder(data.matches), null, data.matches.length);
+    await addMatch(data.tournament.id, matchName, matchType, groupId, getNextDisplayOrder(data.matches), null);
     onRefresh();
   }, [data.tournament.id, data.matches, data.groups, activeTab, selectedGroupId, addMatch, onRefresh, getGroupItemType]);
 
@@ -309,12 +308,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
   const handleUpdateMatchScore = useCallback(async (matchId: string, scoreA: number, scoreB: number) => {
     await updateMatchScore(matchId, scoreA, scoreB);
-    
-    // Recompute ALL group stats since match players may be in any group
-    await recomputeAllGroupStats(data.tournament.id);
-    
     onRefresh();
-  }, [updateMatchScore, data.tournament.id, recomputeAllGroupStats, onRefresh]);
+  }, [updateMatchScore, onRefresh]);
 
   const handleClearSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => {
     const updates: Record<string, string | null> = {};
@@ -330,16 +325,18 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   }, [updateMatchSlots, onRefresh]);
 
   const handleToggleCountsForStandings = useCallback(async (matchId: string, counts: boolean) => {
-    await updateMatchCountsForStandings(matchId, counts);
-    await recomputeAllGroupStats(data.tournament.id);
+    const match = data.matches.find(m => m.id === matchId);
+    if (!match) return;
+    await updateMatchCountsForStandings(matchId, counts, match.group_id);
     onRefresh();
-  }, [updateMatchCountsForStandings, recomputeAllGroupStats, data.tournament.id, onRefresh]);
+  }, [updateMatchCountsForStandings, data.matches, onRefresh]);
 
   const handleUpdateMatchGroupId = useCallback(async (matchId: string, groupId: string | null) => {
-    await updateMatchGroupId(matchId, groupId);
-    await recomputeAllGroupStats(data.tournament.id);
+    const match = data.matches.find(m => m.id === matchId);
+    if (!match) return;
+    await updateMatchGroupId(matchId, groupId, match.counts_for_standings);
     onRefresh();
-  }, [updateMatchGroupId, recomputeAllGroupStats, data.tournament.id, onRefresh]);
+  }, [updateMatchGroupId, data.matches, onRefresh]);
 
   const handleToggleIncludeDoubles = useCallback(async (groupId: string, include: boolean) => {
     await updateGroupIncludeDoubles(groupId, include);
@@ -354,7 +351,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     const childCount = data.matches.filter(m => m.parent_match_id === parentMatchId).length;
     const matchName = `Trận ${childCount + 1}`;
     
-    await addMatch(data.tournament.id, matchName, 'doubles', parentMatch.group_id, childCount, parentMatchId, data.matches.length);
+    await addMatch(data.tournament.id, matchName, 'doubles', parentMatch.group_id, childCount, parentMatchId);
     onRefresh();
   }, [data.tournament.id, data.matches, addMatch, onRefresh]);
 
@@ -374,11 +371,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       await updateParentMatchScore(childMatch.parent_match_id, updatedSiblings);
     }
     
-    // Recompute ALL group stats since child matches can affect any player's standings
-    await recomputeAllGroupStats(data.tournament.id);
-    
     onRefresh();
-  }, [updateMatchScore, updateParentMatchScore, data.matches, data.tournament.id, recomputeAllGroupStats, onRefresh]);
+  }, [updateMatchScore, updateParentMatchScore, data.matches, onRefresh]);
 
   const handleClearChildMatchSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => {
     const updates: Record<string, string | null> = {};
