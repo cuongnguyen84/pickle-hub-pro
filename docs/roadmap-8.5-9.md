@@ -117,7 +117,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | BASE-04 | done | 1d | Inventory only the 5–8 screens on the two north-star journeys, with start point, completion point, and observed drop-off point per journey (trimmed from top-20 routes: measurement, not documentation) | BASE-01 |
 | BASE-05 | done | 1d | Decide mobile source of truth: SwiftUI replaces production Capacitor iOS; Android does not exist yet | — |
 | BASE-06 | done | 2d | Create the Edge Function auth/service-role registry and CI validator design | — |
-| BASE-07 | blocked | 3d | Run five player and five organizer baseline usability sessions | Recruiting participants |
+| BASE-07 | deferred | 3d | Run five player and five organizer baseline usability sessions — **DEFERRED 2026-07-22 by Cuong**: informal sessions ran fine earlier; skip the formal 5+5 baseline for now. Template ready at `docs/usability-baseline-2026-07.md` if UX-09 revives it | Recruiting participants |
 
 ### Phase 0 exit
 
