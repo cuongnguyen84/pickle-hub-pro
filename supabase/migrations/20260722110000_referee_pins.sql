@@ -68,6 +68,9 @@ REVOKE ALL ON TABLE public.referee_pin_attempts FROM PUBLIC, anon, authenticated
 CREATE INDEX referee_pin_attempts_user_time_idx
   ON public.referee_pin_attempts (user_id, created_at DESC);
 
+CREATE INDEX referee_pin_attempts_parent_time_idx
+  ON public.referee_pin_attempts (format, parent_id, created_at DESC);
+
 -- ─── Internal helpers (not client-callable) ─────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.referee_pin_is_creator(
@@ -220,15 +223,28 @@ BEGIN
     RAISE EXCEPTION 'AUTH_REQUIRED';
   END IF;
 
-  -- Global per-account budget: 10 failed attempts per 15 minutes, across all
-  -- tournaments — blocks both single-PIN brute force and spraying one guess
-  -- over many tournaments.
+  -- Two independent wrong-guess budgets over a 15-minute window:
+  --   * per account (10): stops one user brute-forcing.
+  --   * per tournament (20, across ALL users): caps the total guess rate on a
+  --     single tournament so throwaway accounts can't parallelise the grind —
+  --     ~1920 guesses/day against a ~10^6 space regardless of account count.
+  -- Correct PINs succeed and are never counted, so a legit referee is not
+  -- locked out by someone else spraying wrong guesses.
   SELECT count(*) INTO v_fails
   FROM referee_pin_attempts
   WHERE user_id = v_uid
     AND success = false
     AND created_at > now() - interval '15 minutes';
   IF v_fails >= 10 THEN
+    RETURN 'rate_limited';
+  END IF;
+
+  SELECT count(*) INTO v_fails
+  FROM referee_pin_attempts
+  WHERE format = p_format AND parent_id = p_parent_id
+    AND success = false
+    AND created_at > now() - interval '15 minutes';
+  IF v_fails >= 20 THEN
     RETURN 'rate_limited';
   END IF;
 

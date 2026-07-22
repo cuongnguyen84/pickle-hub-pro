@@ -1,6 +1,6 @@
 BEGIN;
 
-SELECT plan(10);
+SELECT plan(11);
 
 -- ── Structure ────────────────────────────────────────────────────────────
 
@@ -80,6 +80,15 @@ SELECT is(
    WHERE n.nspname = 'public' AND p.proname = 'redeem_referee_pin'),
   'p_format text, p_parent_id uuid, p_pin text',
   'redeem_referee_pin takes no user-id argument (enrolls auth.uid only)'
+);
+
+-- Both wrong-guess budgets are present (per-account + per-tournament), so a
+-- multi-account grind is capped at the tournament level.
+SELECT ok(
+  (SELECT position('per tournament' IN pg_get_functiondef(p.oid)) > 0
+   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'redeem_referee_pin'),
+  'redeem_referee_pin enforces a per-tournament wrong-guess budget'
 );
 
 SELECT * FROM finish();

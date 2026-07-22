@@ -45,9 +45,11 @@ export const RefereePinSettings = ({ format, parentId }: RefereePinSettingsProps
         setPin(row?.pin ?? null);
         setIsActive(!!row?.is_active);
       })
-      .catch(() => {
-        // Non-creators get an empty result, not an error; a real failure here
-        // just leaves the switch off — the organizer can retry by toggling.
+      .catch((err) => {
+        // Non-creators get an empty result (not an error), so the common case
+        // is silent. A real failure just leaves the switch off — the organizer
+        // can retry by toggling — but log it so it isn't invisible.
+        console.warn('[referee-pin] getRefereePin failed', err);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
