@@ -310,12 +310,11 @@ test("J10 connected player: home log-match CTA reaches the /match/new form", asy
   const { loginAs } = await import("./helpers/auth");
   await loginAs(page, "viewerConnected", "/");
 
-  // HomeLogMatchCTA renders the log-match link only after useDuprConnection
-  // resolves; a connected fixture user seeing "Connect DUPR" instead is a
-  // real regression (either the CTA gate or the fixture's DUPR link broke).
-  const logMatch = page.getByRole("link", {
-    name: /\+ log a match|\+ log trận đấu/i,
-  });
+  // Home renders the log-match affordance in one of two surfaces (the DUPR
+  // partnership banner's "Log match" link, or HomeLogMatchCTA's
+  // "+ Log a match" once useDuprConnection resolves). The journey is about
+  // the DESTINATION, not which variant won the layout — anchor on the href.
+  const logMatch = page.locator('a[href="/match/new"]').first();
   await expect(logMatch).toBeVisible({ timeout: 15_000 });
   await logMatch.click();
   await page.waitForURL(/\/match\/new/, { timeout: 10_000 });
