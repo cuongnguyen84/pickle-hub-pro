@@ -111,7 +111,7 @@ export function useQuickTableMutations() {
         })) as Json,
         p_group_assignments: assignments as Json,
         p_courts: courts as Json,
-        p_start_time: startTime,
+        p_start_time: startTime as string | undefined, // RPC DEFAULT NULL; Args type doesn't model that.
       });
       const result = (data ?? {}) as Record<string, unknown>;
       if (error || result.success !== true) throw error ?? new Error(String(result.error ?? 'SETUP_FAILED'));

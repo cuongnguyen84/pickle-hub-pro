@@ -456,3 +456,12 @@ JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info
 - **Hammer mint local khi verify lặp sẽ đập rate limit Supabase Auth** ("Request rate limit reached") — đó là throttle, không phải flake code; verify lặp phải giãn cách 45-60s. CI thật chỉ mint 4 lần/run nên không chạm.
 - **release-pilot 2 lần "ngủ" không có background child sống** (chờ notification không bao giờ tới) — sau khi giao việc dài (soak/poll), orchestrator phải kiểm `ps`/output file khi nhận notification "stopped", đừng tin câu "tôi sẽ được đánh thức". Soak bị mất thay bằng soak hồi cứu: query client_errors từ mốc deploy (0 lỗi/94 phút vẫn là bằng chứng mạnh hơn 30 phút watch).
 - **Review "Comment: ok" ≠ Approve** — cổng RED từ chối đúng; và GitHub còn bẫy thứ hai: bấm Approve mà quên "Submit review" thì API vẫn 0 APPROVED (pending review vô hình). Hướng dẫn Cuong đủ 2 bước.
+
+## referee-pin (/ship 2026-07-22)
+
+- **Component .tsx mới không test → tụt coverage global < 83% → cổng `quality` required ĐỎ** dù 1135 test pass. qa-verifier báo PASS nhưng KHÔNG enforce ngưỡng coverage như CI (`vite.config.ts` thresholds.statements=83) → chỉ lộ ở release-pilot. Bài học: thêm test cho MỌI file .tsx/.ts mới ngay trong /ship, đừng để tới release-pilot. Fix đúng = thêm test thật (không hạ ngưỡng/không sửa workflow).
+- **Component test mock cả module referee-helpers → module đó 1/58 stmt covered** (mock thay code thật). Muốn phủ helpers phải có test riêng import THẬT + fake supabase client (rpc/from chainable stub). Đó mới là đòn bẩy coverage lớn nhất (helpers +57 stmt).
+- **Project KHÔNG có @testing-library/jest-dom** — `toHaveTextContent`/`toBeInTheDocument`/`toBeDisabled` throw "Invalid Chai property". Dùng DOM thuần: `el.textContent).toContain()`, `el).toHaveProperty('disabled', true)`, `queryBy...).toBeNull()`.
+- **`dialog.tsx` đọc `t.common.close`** cho nút X (sr-only) → mock `useI18n` cho component có Dialog PHẢI kèm `common: { close }`, không thì "Cannot read properties of undefined (reading 'close')".
+- **RED rate-limit: per-user budget một mình KHÔNG đủ** — kẻ tạo nhiều acc throwaway (đăng ký free) grind được keyspace 6 số. Thêm budget per-(format,parent_id) toàn cục (correct PIN không bị đếm nên không khóa referee thật). qa-verifier bắt được cái này.
+- **Migration đã áp prod trước khi merge**: khi cần sửa hàm sau (thêm rate-limit thứ 2), CREATE OR REPLACE + CREATE INDEX IF NOT EXISTS qua Management API là idempotent, an toàn re-apply.

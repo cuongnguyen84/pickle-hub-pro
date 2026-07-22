@@ -214,10 +214,12 @@ export function useDoublesElimination() {
           p_semifinals_format: input.semifinalsFormat,
           p_finals_format: input.finalsFormat,
           p_court_count: input.courts?.length || 1,
-          p_start_time: input.startTime || null,
+          // RPC accepts NULL (checked via IS NOT NULL in the function body);
+          // the generated Args type just doesn't model arg nullability.
+          p_start_time: (input.startTime || null) as string,
           p_rating_source: input.ratingSource,
-          p_min_dupr_rating: input.minDuprRating ?? null,
-          p_max_dupr_rating: input.maxDuprRating ?? null,
+          p_min_dupr_rating: (input.minDuprRating ?? null) as number,
+          p_max_dupr_rating: (input.maxDuprRating ?? null) as number,
           p_open_registration: input.openRegistration,
           p_teams: input.teams as unknown as Json,
           p_seeding_strategy: input.seedingStrategy,

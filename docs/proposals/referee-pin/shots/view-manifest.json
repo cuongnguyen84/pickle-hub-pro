@@ -1,0 +1,22 @@
+[
+  {
+    "route": "/tools/quick-tables/04f3d362fb53",
+    "name": "view_quicktable",
+    "status": 200,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "hasJoinBtn": 1,
+    "redirectUrl": "https://feat-referee-pin.pickle-hub-pro.pages.dev/login?redirect=%2Ftools%2Fquick-tables%2F04f3d362fb53",
+    "afterClickShot": "view_quicktable_afterclick.png"
+  },
+  {
+    "route": "/tools/team-match/9ud09f8t",
+    "name": "view_teammatch",
+    "status": 200,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "hasJoinBtn": 1,
+    "redirectUrl": "https://feat-referee-pin.pickle-hub-pro.pages.dev/login?redirect=%2Ftools%2Fteam-match%2F9ud09f8t",
+    "afterClickShot": "view_teammatch_afterclick.png"
+  }
+]

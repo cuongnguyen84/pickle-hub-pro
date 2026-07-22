@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { FlexWorkspace } from '@/components/flex/FlexWorkspace';
 import { RefereeManagement } from '@/components/quicktable/RefereeManagement';
+import RefereePinSettings from '@/components/quicktable/RefereePinSettings';
+import RefereeJoinByPin from '@/components/quicktable/RefereeJoinByPin';
 import { Share2, Globe, Lock, Loader2, Settings, Trash2, Layers } from 'lucide-react';
 import {
   Sheet,
@@ -213,6 +215,14 @@ const FlexTournamentView = () => {
                 <span className="hidden sm:inline">{t.tools.flexTournament.share}</span>
               </button>
 
+              {!canManage && data.tournament.id && (
+                <RefereeJoinByPin
+                  format="flex_tournament"
+                  parentId={data.tournament.id}
+                  onJoined={loadData}
+                />
+              )}
+
               {canManage && (
                 <>
                   <Sheet>
@@ -265,6 +275,9 @@ const FlexTournamentView = () => {
                           onAddReferee={addRefereeByEmail}
                           onRemoveReferee={removeReferee}
                         />
+                        {data.tournament.id && (
+                          <RefereePinSettings format="flex_tournament" parentId={data.tournament.id} />
+                        )}
                       </div>
                     </SheetContent>
                   </Sheet>

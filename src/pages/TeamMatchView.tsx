@@ -50,6 +50,7 @@ const InviteTeamDialog = lazy(() => import('@/components/teamMatch/InviteTeamDia
 const SingleEliminationSetupDialog = lazy(() => import('@/components/teamMatch/SingleEliminationSetupDialog').then(m => ({ default: m.SingleEliminationSetupDialog })));
 const TeamMatchSettingsDialog = lazy(() => import('@/components/teamMatch/TeamMatchSettingsDialog').then(m => ({ default: m.TeamMatchSettingsDialog })));
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
+import RefereeJoinByPin from '@/components/quicktable/RefereeJoinByPin';
 import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
@@ -131,6 +132,7 @@ export default function TeamMatchView() {
     userRole,
     addRefereeByEmail,
     removeReferee,
+    refreshUserRole,
   } = useTeamMatchRefereeManagement(tournament?.id, tournament?.created_by);
 
   useTeamMatchRealtime(tournament?.id);
@@ -574,6 +576,13 @@ export default function TeamMatchView() {
                   <MessageCircle className="w-4 h-4" />
                   <span>{language === 'vi' ? 'Nhóm chat' : 'Chat group'}</span>
                 </a>
+              )}
+              {!canManage && !userRole.canEditScores && tournament?.id && (
+                <RefereeJoinByPin
+                  format="team_match"
+                  parentId={tournament.id}
+                  onJoined={refreshUserRole}
+                />
               )}
               {canManage && (
                 <>

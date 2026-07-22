@@ -195,6 +195,9 @@ Cả 7 cơ chế GPT-5.6 nêu đều được auditor xác minh trong repo (kh�
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
-- Khác kế hoạch:
-- Học được:
+- PR: #441 · Ngày build: 2026-07-22 · Trạng thái: **CI xanh (quality+pgtap PASS), chờ Cuong Approve RED + merge**
+- Migration `20260722110000_referee_pins.sql` ĐÃ áp prod (anon probe 42501 verify; per-user + per-tournament rate-limit live).
+- Phương án chốt (em tự chọn theo khuyến nghị panel): D1 = PIN đọc-lại-được (bảng khóa kín + reveal RPC creator-only); D3 = dialog-trên-view (không route /referee/join riêng — share URL trang giải sẵn có).
+- Khác kế hoạch: thêm **budget rate-limit thứ 2 theo (format,parent_id)** ngoài per-user (qa-verifier chỉ ra multi-account grind) — cap 20 lần sai/15p/giải, chặn spray bất kể số tài khoản.
+- Học được → lessons-learned.md: coverage gate (component .tsx mới không test → tụt global < 83%); component test mock cả module → không phủ chính module đó; project KHÔNG có jest-dom (dùng `.textContent`/`toHaveProperty`); dialog.tsx đọc `t.common.close` nên mock i18n phải có `common`.
+- CHƯA chứng minh: luồng redeem PIN thật (cần 2 user login + giải chạy + organizer bật PIN) + redirect trong FB/Zalo in-app browser — Cuong test tay.

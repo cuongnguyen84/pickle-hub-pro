@@ -1,0 +1,75 @@
+{
+  "base": "https://feat-referee-pin.pickle-hub-pro.pages.dev",
+  "viewport": "412x915",
+  "shots": [
+    {
+      "route": "/tools",
+      "file": "tools.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tools/quick-tables",
+      "file": "tools_quick-tables.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tools/team-match",
+      "file": "tools_team-match.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tools/team-match/new",
+      "file": "tools_team-match_new.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tools/doubles-elimination",
+      "file": "tools_doubles-elimination.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tools/doubles-elimination/new",
+      "file": "tools_doubles-elimination_new.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tools/flex-tournament",
+      "file": "tools_flex-tournament.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tools/flex-tournament/new",
+      "file": "tools_flex-tournament_new.png",
+      "status": 200,
+      "consoleErrors": [],
+      "pageErrors": []
+    }
+  ],
+  "foundViewLinks": [
+    "/tools/quick-tables/04f3d362fb53",
+    "/tools/quick-tables/d584fb858c35",
+    "/tools/quick-tables/888b1fd65c54",
+    "/tools/quick-tables/9571fa4f0217",
+    "/tools/team-match/9ud09f8t",
+    "/tools/quick-tables/af219444b039",
+    "/tools/quick-tables/342dc6ad573f",
+    "/tools/quick-tables/6c302631a04a",
+    "/tools/quick-tables/e0cad82157ad",
+    "/tools/quick-tables/89222b22240d",
+    "/tools/quick-tables/a40fdcefed00"
+  ]
+}
