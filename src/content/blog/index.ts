@@ -33,7 +33,7 @@ export async function getBlogPost(slug: string): Promise<BlogPost | undefined> {
     const mod = await loader();
     return mod.default;
   } catch (err) {
-    console.error(`[blog] Failed to load post "${slug}"`, err);
+    console.error("[blog] Failed to load post", slug, err);
     return undefined;
   }
 }

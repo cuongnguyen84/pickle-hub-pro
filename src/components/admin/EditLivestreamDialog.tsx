@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { safeHttpsUrl } from "@/lib/url-utils";
 
 interface Livestream {
   id: string;
@@ -75,6 +77,8 @@ export function EditLivestreamDialog({
     });
   };
 
+  const thumbnailPreviewUrl = safeHttpsUrl(DOMPurify.sanitize(thumbnailUrl));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -109,10 +113,10 @@ export function EditLivestreamDialog({
               onChange={(e) => setThumbnailUrl(e.target.value)}
               placeholder="https://..."
             />
-            {thumbnailUrl && (
+            {thumbnailPreviewUrl && (
               <div className="mt-2 rounded-lg overflow-hidden bg-muted w-32 h-20">
                 <img
-                  src={thumbnailUrl}
+                  src={thumbnailPreviewUrl}
                   alt="Preview"
                   className="w-full h-full object-cover"
                   onError={(e) => (e.currentTarget.style.display = 'none')}

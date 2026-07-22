@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { useNavigate, useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
@@ -22,7 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ChevronLeft, Plus, Trash2, Eye, Save, Upload } from "lucide-react";
-import { normalizeImageUrl } from "@/lib/url-utils";
+import { safeHttpsUrl } from "@/lib/url-utils";
 import { useOgImageUpload } from "@/hooks/useOgImageUpload";
 
 const CATEGORIES = [
@@ -71,6 +72,7 @@ export default function AdminViBlogEditor() {
   const [alternateEnSlug, setAlternateEnSlug] = useState("");
   const [status, setStatus] = useState("draft");
   const [autoSlug, setAutoSlug] = useState(true);
+  const coverPreviewUrl = safeHttpsUrl(DOMPurify.sanitize(coverImageUrl));
 
   useEffect(() => {
     if (existingPost) {
@@ -291,8 +293,8 @@ export default function AdminViBlogEditor() {
             {ogImageUpload.error && (
               <p className="text-xs text-destructive">{ogImageUpload.error}</p>
             )}
-            {coverImageUrl && (
-              <img src={normalizeImageUrl(coverImageUrl)} alt="Cover preview" className="h-32 object-cover rounded-lg border border-border" />
+            {coverPreviewUrl && (
+              <img src={coverPreviewUrl} alt="Cover preview" className="h-32 object-cover rounded-lg border border-border" />
             )}
           </div>
 
@@ -397,7 +399,7 @@ export default function AdminViBlogEditor() {
               Xuất bản
             </Button>
             {isEdit && slug && (
-              <a href={`/vi/blog/${slug}`} target="_blank" rel="noopener noreferrer">
+              <a href={`/vi/blog/${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline">
                   <Eye className="w-4 h-4 mr-2" /> Xem trước
                 </Button>

@@ -34,6 +34,22 @@ export function normalizeImageUrl(url: string | null | undefined): string {
 }
 
 /**
+ * Return a canonical HTTPS URL suitable for an image/link DOM attribute.
+ * Reject active schemes, credentials, relative paths and malformed input.
+ */
+export function safeHttpsUrl(url: string | null | undefined): string {
+  const normalized = normalizeImageUrl(url)?.trim();
+  if (!normalized) return "";
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password) return "";
+    return parsed.href;
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Normalize all image src URLs in an HTML string.
  * Converts Google Drive share links to direct image URLs.
  */
