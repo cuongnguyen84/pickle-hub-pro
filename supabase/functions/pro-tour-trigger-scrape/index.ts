@@ -336,7 +336,11 @@ async function markLogFailed(
   logId: string,
   errorMessage: string,
 ): Promise<void> {
-  await fetch(`${supabaseUrl}/rest/v1/pro_tour_ingestion_logs?id=eq.${logId}`, {
+  // status=eq.running guard: when the Worker already marked the row
+  // failed with a DETAILED error, don't clobber it with the generic
+  // "Worker HTTP 500" wrapper (this hid the real MLP failure cause
+  // in the admin Logs tab, 2026-07-18/19).
+  await fetch(`${supabaseUrl}/rest/v1/pro_tour_ingestion_logs?id=eq.${logId}&status=eq.running`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

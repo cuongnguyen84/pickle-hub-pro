@@ -383,13 +383,29 @@ export function parseMlpFromBracketsPools(
   mlpEventUrl: string,
   tournamentName: string,
 ): TournamentScrapeResult {
+  return buildMlpScrapeResult(
+    poolHtmls.flatMap((html) => extractMatchupsFromPool(html)),
+    mlpEventUrl,
+    tournamentName,
+  );
+}
+
+/**
+ * Assemble a TournamentScrapeResult from parsed matchups. Shared by the
+ * legacy brackets-pool path and the inline-ticker path so both produce
+ * identical ghost profiles / external_match_ids.
+ */
+function buildMlpScrapeResult(
+  matchups: ParsedMlpMatchup[],
+  mlpEventUrl: string,
+  tournamentName: string,
+): TournamentScrapeResult {
   const matches: ScrapedMatch[] = [];
   const teamMap = new Map<string, ScrapedPlayer>();
   const playerMap = new Map<string, ScrapedPlayer>();
   const seenExtIds = new Set<string>();
 
-  for (const html of poolHtmls) {
-    const matchups = extractMatchupsFromPool(html);
+  {
     for (const m of matchups) {
       if (seenExtIds.has(m.external_id)) continue;
       seenExtIds.add(m.external_id);
@@ -492,6 +508,191 @@ function slugify(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+/* ─── Inline-ticker parser (post-2026-07 MLP page redesign) ──────────── */
+
+/**
+ * Around 2026-07-17 majorleaguepickleball.co dropped the
+ * brackets.pickleballteamleagues.com iframe and started inlining the
+ * full matchup payload into the event page itself:
+ *
+ *   <script id="fauElementScripts-js-extra">
+ *     var phpObj = { ..., "initialTicker": { "eventUuid": "...",
+ *       "matchups": [ { teamOneTitle, teamOneScore, matches: [ {
+ *         matchAbbreviation: "WD", teamOnePlayerOneName, ... } ] } ] } }
+ *   </script>
+ *
+ * Unlike the old RSC chunks this is PLAIN JSON — no `\"key\"` escaping —
+ * so we brace-scan the object out of the HTML and JSON.parse it.
+ */
+
+/** Fields we read off one entry of initialTicker.matchups[].matches[]. */
+interface InlineTickerGame {
+  matchAbbreviation?: string | null;
+  formatTitle?: string | null;
+  playerGroupTitle?: string | null;
+  teamOnePlayerOneName?: string | null;
+  teamOnePlayerTwoName?: string | null;
+  teamTwoPlayerOneName?: string | null;
+  teamTwoPlayerTwoName?: string | null;
+  teamOneGameOneScore?: number | null;
+  teamTwoGameOneScore?: number | null;
+}
+
+/** Fields we read off one entry of initialTicker.matchups[]. */
+interface InlineTickerMatchup {
+  teamOneUuid?: string | null;
+  teamTwoUuid?: string | null;
+  teamOneTitle?: string | null;
+  teamTwoTitle?: string | null;
+  teamOneAbbreviation?: string | null;
+  teamTwoAbbreviation?: string | null;
+  teamOneLogo?: { url?: string | null } | null;
+  teamTwoLogo?: { url?: string | null } | null;
+  teamOneScore?: number | null;
+  teamTwoScore?: number | null;
+  plannedStartDate?: string | null;
+  venue?: string | null;
+  matches?: InlineTickerGame[] | null;
+}
+
+/**
+ * Return the balanced `{...}` JSON object starting at `start` (which
+ * must point at a `{`), respecting string literals and escapes.
+ */
+function extractJsonObjectAt(s: string, start: number): string | null {
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === "{") depth++;
+    else if (c === "}") {
+      depth--;
+      if (depth === 0) return s.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+/**
+ * Pull initialTicker.matchups[] out of the raw event-page HTML.
+ * Returns null when the page has no inline ticker (pre-redesign pages).
+ */
+export function extractInlineTickerMatchups(
+  mlpHtml: string,
+): InlineTickerMatchup[] | null {
+  const marker = mlpHtml.indexOf('"initialTicker"');
+  if (marker < 0) return null;
+  const brace = mlpHtml.indexOf("{", marker);
+  if (brace < 0) return null;
+  const raw = extractJsonObjectAt(mlpHtml, brace);
+  if (!raw) return null;
+  try {
+    const ticker = JSON.parse(raw) as { matchups?: unknown };
+    return Array.isArray(ticker.matchups)
+      ? (ticker.matchups as InlineTickerMatchup[])
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function nonBlank(p: string | null | undefined): p is string {
+  return Boolean(p && p.trim());
+}
+
+/** Map one inline-ticker matchup to the shared ParsedMlpMatchup shape.
+ *  Returns null for BYEs and fully-unplayed (future) matchups — same
+ *  skip rules as the legacy brackets-pool parser. */
+function inlineMatchupToParsed(
+  m: InlineTickerMatchup,
+): ParsedMlpMatchup | null {
+  if (!m.teamOneTitle || !m.teamTwoTitle || !m.teamOneUuid || !m.teamTwoUuid) {
+    return null;
+  }
+
+  const games: MlpMatchupGameLineup[] = [];
+  for (const g of m.matches ?? []) {
+    const players_a = [g.teamOnePlayerOneName, g.teamOnePlayerTwoName].filter(nonBlank);
+    const players_b = [g.teamTwoPlayerOneName, g.teamTwoPlayerTwoName].filter(nonBlank);
+    const score_a = g.teamOneGameOneScore ?? 0;
+    const score_b = g.teamTwoGameOneScore ?? 0;
+    if (score_a === 0 && score_b === 0 && players_a.length === 0 && players_b.length === 0) {
+      continue;
+    }
+    // The inline payload carries the slot label directly (WD/MD/MXD1/
+    // MXD2/DB); fall back to the legacy playerGroup heuristic if absent.
+    let label = g.matchAbbreviation?.trim() ?? "";
+    if (!label) {
+      if (g.formatTitle === "Singles") label = "DB";
+      else if (g.playerGroupTitle === "Womens") label = "WD";
+      else if (g.playerGroupTitle === "Mens") label = "MD";
+      else {
+        const mixedCount = games.filter((x) => x.label.startsWith("MXD")).length;
+        label = mixedCount === 0 ? "MXD1" : "MXD2";
+      }
+    }
+    games.push({
+      label,
+      score_a,
+      score_b,
+      players_a,
+      players_b,
+      winner: score_a > score_b ? "a" : score_b > score_a ? "b" : null,
+    });
+  }
+
+  const teamOneScore = m.teamOneScore ?? 0;
+  const teamTwoScore = m.teamTwoScore ?? 0;
+  if (games.length === 0 && teamOneScore === 0 && teamTwoScore === 0) {
+    return null;
+  }
+
+  return {
+    team_a: {
+      name: m.teamOneTitle,
+      logo: m.teamOneLogo?.url ?? null,
+      abbr: m.teamOneAbbreviation ?? null,
+      matchup_wins: teamOneScore,
+    },
+    team_b: {
+      name: m.teamTwoTitle,
+      logo: m.teamTwoLogo?.url ?? null,
+      abbr: m.teamTwoAbbreviation ?? null,
+      matchup_wins: teamTwoScore,
+    },
+    winner:
+      teamOneScore > teamTwoScore ? "a" : teamTwoScore > teamOneScore ? "b" : null,
+    planned_start: m.plannedStartDate ?? null,
+    venue: m.venue ?? null,
+    games,
+    external_id: `${m.teamOneUuid}-vs-${m.teamTwoUuid}`,
+  };
+}
+
+/**
+ * Parse an event page that inlines its matchup payload. Returns null
+ * when the page has no inline ticker at all (caller should fall back
+ * to the legacy brackets-iframe crawl).
+ */
+export function parseMlpFromInlineTicker(
+  mlpHtml: string,
+  mlpEventUrl: string,
+  tournamentName: string,
+): TournamentScrapeResult | null {
+  const raw = extractInlineTickerMatchups(mlpHtml);
+  if (!raw) return null;
+  const matchups = raw
+    .map(inlineMatchupToParsed)
+    .filter((m): m is ParsedMlpMatchup => m !== null);
+  return buildMlpScrapeResult(matchups, mlpEventUrl, tournamentName);
 }
 
 /* ─── Iframe URL extraction from raw MLP page HTML ───────────────────── */
