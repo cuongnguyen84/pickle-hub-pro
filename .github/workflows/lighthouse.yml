@@ -40,6 +40,10 @@ jobs:
         run: |
           BRANCH="${{ github.head_ref }}"
           SLUG=$(echo "$BRANCH" | tr '[:upper:]/' '[:lower:]-')
+          # Cloudflare truncates preview aliases to 28 chars (and trims trailing
+          # dashes) — without this, long branch names 404 and we silently fall
+          # back to testing production instead of the preview (2026-07-22).
+          SLUG=$(echo "$SLUG" | cut -c1-28 | sed 's/-*$//')
           PREVIEW="https://${SLUG}.pickle-hub-pro.pages.dev"
           # Wait for the preview to go green (max ~5 min).
           READY=""

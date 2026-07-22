@@ -34,14 +34,32 @@ export function slugifyDisplayName(input: string): string {
   return cleaned.slice(0, 24);
 }
 
+const BASE36_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
+
+/** Cryptographically strong base36 text for identifiers persisted in profiles. */
+function secureRandomBase36(len: number): string {
+  const output: string[] = [];
+  // 252 is the largest multiple of 36 below 256. Rejecting the tail avoids
+  // modulo bias while keeping the helper deterministic in length.
+  while (output.length < len) {
+    const bytes = new Uint8Array(Math.max(8, len - output.length));
+    globalThis.crypto.getRandomValues(bytes);
+    for (const byte of bytes) {
+      if (byte < 252) output.push(BASE36_ALPHABET[byte % 36]);
+      if (output.length === len) break;
+    }
+  }
+  return output.join("");
+}
+
 /** Random 4-char base36 suffix, e.g. "2k4f". */
 function randomSuffix(len = 4): string {
-  return Math.random().toString(36).slice(2, 2 + len);
+  return secureRandomBase36(len);
 }
 
 /** Fallback: fully random 8-char base36 username. */
 function randomUsername(): string {
-  return `pickler-${Math.random().toString(36).slice(2, 7)}`;
+  return `pickler-${secureRandomBase36(5)}`;
 }
 
 export interface GenerateUsernameOpts {
