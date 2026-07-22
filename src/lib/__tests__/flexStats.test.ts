@@ -38,6 +38,7 @@ const match = (over: Partial<FlexMatch>): FlexMatch => ({
   score_b: 0,
   winner_side: null,
   counts_for_standings: true,
+  score_version: 0,
   display_order: 0,
   created_at: "",
   updated_at: "",
