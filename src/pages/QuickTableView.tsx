@@ -587,6 +587,9 @@ const QuickTableView = () => {
                   {language === 'vi' ? 'Chia sẻ' : 'Share'}
                 </span>
               </button>
+              {!canManageTable && !canEditScores && table?.id && (
+                <RefereeJoinByPin format="quick_table" parentId={table.id} onJoined={refreshUserRole} />
+              )}
               {canDeleteTable && (
                 <button
                   type="button"
@@ -1143,12 +1146,6 @@ const QuickTableView = () => {
               onRemoveReferee={removeReferee}
             />
             {table?.id && <RefereePinSettings format="quick_table" parentId={table.id} />}
-          </section>
-        )}
-
-        {!canManageTable && !canEditScores && table?.id && (
-          <section style={{ marginBottom: 40, display: 'flex', justifyContent: 'center' }}>
-            <RefereeJoinByPin format="quick_table" parentId={table.id} onJoined={refreshUserRole} />
           </section>
         )}
 
