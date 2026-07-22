@@ -232,14 +232,14 @@ async function runScrape(
     // "success / 0 trận". Matches the previous MLP diagnostic but is now
     // adapter-agnostic since MLP path doesn't go through Browser
     // Rendering and the only failure modes left are network/parse.
-    if (parsed.matches.length === 0 && body.log_id) {
+    if (parsed.matches.length === 0) {
       const msg =
         `Scrape returned 0 matchups for ${body.tournament_url}. ` +
         `Most likely cause: source page structure changed or the underlying ` +
         `bracket API returned an empty payload. Re-run later or check the ` +
         `tournament URL in a browser.`;
-      await markLogFailed(env, body.log_id, msg, Date.now() - startMs).catch(
-        (e) => console.error(`[runScrape] empty-result markLogFailed: ${e}`),
+      await recordFailure(env, body, msg, Date.now() - startMs).catch(
+        (e) => console.error(`[runScrape] empty-result recordFailure: ${e}`),
       );
       return {
         ok: false,
@@ -250,15 +250,11 @@ async function runScrape(
     }
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    // When the trigger function pre-created a log row, update it directly
-    // so the admin Logs tab shows the failure. Without this, render
-    // failures left the row stuck on 'running' indefinitely because the
-    // ingest function is only called on the success path.
-    if (body.log_id) {
-      await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
-        (e) => console.error(`[runScrape] markLogFailed: ${e}`),
-      );
-    }
+    // Record the failure in the Logs tab — PATCH the pre-created row
+    // (manual path) or INSERT a fresh failed row (scheduled path).
+    await recordFailure(env, body, errMsg, Date.now() - startMs).catch(
+      (e) => console.error(`[runScrape] recordFailure: ${e}`),
+    );
     console.error(`[runScrape] failed: ${errMsg}`);
     // Generic error in the HTTP body (CodeQL stack-trace-exposure) — full
     // detail is in the log row above (admin Logs tab) + wrangler tail.
@@ -291,11 +287,9 @@ async function runScrape(
 
   if (!ingestRes.ok) {
     const errMsg = `Ingest failed: ${ingestRes.status} ${await ingestRes.text()}`;
-    if (body.log_id) {
-      await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
-        (e) => console.error(`[runScrape] markLogFailed: ${e}`),
-      );
-    }
+    await recordFailure(env, body, errMsg, Date.now() - startMs).catch(
+      (e) => console.error(`[runScrape] recordFailure: ${e}`),
+    );
     return {
       ok: false,
       matches_extracted: parsed.matches.length,
@@ -647,6 +641,62 @@ async function markLogFailed(
       `markLogFailed PATCH ${logId} failed: ${res.status} ${(await res.text()).slice(0, 300)}`,
     );
   }
+}
+
+/**
+ * INSERT a failed pro_tour_ingestion_logs row. Scheduled scrapes have no
+ * pre-created log row (no log_id), so before this existed a failed cron
+ * scrape left ZERO trace in the DB — the 2026-07-22 18:00Z cron no-op'd
+ * silently and was only visible via Cloudflare invocation analytics.
+ */
+async function insertFailedLog(
+  env: Env,
+  body: ScrapeRequestBody,
+  errorMessage: string,
+  durationMs: number,
+): Promise<void> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/pro_tour_ingestion_logs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({
+      source_provider: MLP_EVENT_HOST_PATTERN.test(body.tournament_url) ? "mlp" : "ppa_tour",
+      source_url: body.tournament_url,
+      triggered_by: body.triggered_by,
+      triggered_by_user_id: body.user_id ?? null,
+      watchlist_id: body.watchlist_id ?? null,
+      status: "failed",
+      error_message: errorMessage.slice(0, 4000),
+      duration_ms: durationMs,
+      completed_at: new Date().toISOString(),
+    }),
+  });
+  if (!res.ok) {
+    console.error(
+      `insertFailedLog failed: ${res.status} ${(await res.text()).slice(0, 300)}`,
+    );
+  }
+}
+
+/**
+ * Route a failure to the right log write: PATCH the pre-created row when
+ * the trigger function supplied log_id, INSERT a fresh failed row when
+ * not (scheduled cron path).
+ */
+async function recordFailure(
+  env: Env,
+  body: ScrapeRequestBody,
+  errorMessage: string,
+  durationMs: number,
+): Promise<void> {
+  if (body.log_id) {
+    return markLogFailed(env, body.log_id, errorMessage, durationMs);
+  }
+  return insertFailedLog(env, body, errorMessage, durationMs);
 }
 
 /* ─── Helpers ───────────────────────────────────────────────────────── */
