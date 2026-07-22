@@ -1,6 +1,6 @@
 # Referee PIN — trọng tài tự vào giải bằng mã PIN
 
-> Slug: `referee-pin` · Ngày: `2026-07-22` · Trạng thái: `draft`
+> Slug: `referee-pin` · Ngày: `2026-07-22` · Trạng thái: `shipped` (PR #441, squash `f73a7004`, 2026-07-22)
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6) ·
 > `risk-auditor` (+GPT-5.6) · `pre-mortem`. Model ngoài chính xác: xem `external/*.meta.json`.
 > Model thiếu key trong lần chạy này: `none` (lưu ý: `scripts/agents/ask-model.mjs` không có trong worktree lúc chạy — ui-ux-critic gọi OpenAI API trực tiếp, harness gắn cảnh báo data-out-to-external; raw đã lưu đủ ở `external/`)
