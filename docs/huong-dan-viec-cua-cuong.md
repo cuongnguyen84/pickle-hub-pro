@@ -4,7 +4,7 @@
 > Còn lại đúng 6 việc máy không tự làm được. Xếp theo thứ tự rẻ → đắt.
 > Mỗi mục ghi rõ: làm gì, ở đâu, bao lâu, xong thì tick gì.
 
-## 1. Set secret `PLAYWRIGHT_ORGANIZER_CLUB_SLUG` (~2 phút) → đóng QA-04
+## 1. ✅ XONG 2026-07-22 — Set secret `PLAYWRIGHT_ORGANIZER_CLUB_SLUG` (QA-04 done)
 
 Hai journey organizer (J5 autosave, J6 validation panel) tự skip tới khi CI
 biết một club mà tài khoản admin test (thecuong@gmail.com) quản lý.
@@ -27,7 +27,7 @@ biết một club mà tài khoản admin test (thecuong@gmail.com) quản lý.
 - Mở modal "Kết nối DUPR" trên iPhone thật (Safari, /dupr) — iframe SSO hiện.
 - Uptime alert: KHÔNG nhận gì = đúng (chỉ ping khi site sập 2 probe liên tiếp).
 
-## 3. OPS-02 — Restore drill database (~45 phút, cần quyền dashboard)
+## 3. ✅ XONG 2026-07-22 — OPS-02 Restore drill (4 phút, verify PASS, xem ops-runbook §6)
 
 Mục tiêu: chứng minh backup Supabase khôi phục ĐƯỢC, ghi lại thời gian thật.
 Máy không làm được vì restore điều khiển qua dashboard + cần quyết định của anh.
