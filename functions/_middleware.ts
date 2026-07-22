@@ -147,9 +147,14 @@ const SECURITY_HEADERS: Record<string, string> = {
     "connect-src 'self' https: wss:; " +
     // instagram.com added 2026-07-04: /feed renders IG reels via the official
     // /embed/ iframe endpoint (FeedEmbedCard).
-    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.instagram.com; " +
+    // dashboard.dupr.com + uat.dupr.gg added 2026-07-22: they were in
+    // public/_headers all along but missing here despite the "kept in sync"
+    // claim — bot-path CSP drift found during the QA-04 DUPR SSO
+    // investigation (PR #432). Parity is now locked by
+    // src/__tests__/csp-parity.test.ts.
+    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.instagram.com; " +
     "worker-src 'self' blob:; " +
-    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com; " +
+    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com; " +
     "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
 };
 
