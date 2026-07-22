@@ -21,6 +21,8 @@ import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
+import RefereePinSettings from '@/components/quicktable/RefereePinSettings';
+import RefereeJoinByPin from '@/components/quicktable/RefereeJoinByPin';
 import QuickTableMatchRow from '@/components/quicktable/QuickTableMatchRow';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import { DuprRequirementBanner } from '@/components/quicktable/DuprRequirementBanner';
@@ -1140,6 +1142,13 @@ const QuickTableView = () => {
               onAddReferee={addRefereeByEmail}
               onRemoveReferee={removeReferee}
             />
+            {table?.id && <RefereePinSettings format="quick_table" parentId={table.id} />}
+          </section>
+        )}
+
+        {!canManageTable && !canEditScores && table?.id && (
+          <section style={{ marginBottom: 40, display: 'flex', justifyContent: 'center' }}>
+            <RefereeJoinByPin format="quick_table" parentId={table.id} onJoined={refreshUserRole} />
           </section>
         )}
 

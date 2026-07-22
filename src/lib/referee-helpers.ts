@@ -181,6 +181,88 @@ export async function addRefereeByEmailHelper(
   }
 }
 
+// ─── Referee PIN (migration 20260722110000) ─────────────────────────────
+//
+// The PIN lives in `referee_pins`, a table with NO client grants — every
+// read/write goes through SECURITY DEFINER RPCs. See the migration header
+// and docs/proposals/referee-pin/proposal.md for the full design.
+
+/** Format discriminator shared by the referee-pin RPCs. */
+export type RefereePinFormat =
+  | 'quick_table'
+  | 'doubles_elimination'
+  | 'flex_tournament'
+  | 'team_match';
+
+/** Status strings returned by redeem_referee_pin. */
+export type RedeemRefereePinResult =
+  | 'ok'
+  | 'already_referee'
+  | 'invalid'
+  | 'expired'
+  | 'rate_limited';
+
+/**
+ * Normalize what a user typed/pasted into a candidate PIN: keep digits only
+ * ("123 456", "123-456" → "123456"), cap at 6.
+ */
+export function normalizePinInput(raw: string): string {
+  return raw.replace(/\D/g, '').slice(0, 6);
+}
+
+/** Creator-only reveal. Returns null when no PIN exists (or caller isn't creator). */
+export async function getRefereePin(
+  format: RefereePinFormat,
+  parentId: string
+): Promise<{ pin: string; is_active: boolean } | null> {
+  const { data, error } = await supabase.rpc('get_referee_pin', {
+    p_format: format,
+    p_parent_id: parentId,
+  });
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
+/** Enable or rotate: generates a fresh 6-digit PIN server-side and returns it. */
+export async function setRefereePin(
+  format: RefereePinFormat,
+  parentId: string
+): Promise<string> {
+  const { data, error } = await supabase.rpc('set_referee_pin', {
+    p_format: format,
+    p_parent_id: parentId,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+/** Disable the PIN (existing referees keep their access). */
+export async function clearRefereePin(
+  format: RefereePinFormat,
+  parentId: string
+): Promise<void> {
+  const { error } = await supabase.rpc('clear_referee_pin', {
+    p_format: format,
+    p_parent_id: parentId,
+  });
+  if (error) throw error;
+}
+
+/** Redeem a PIN as the signed-in user; server rate-limits and expiry-checks. */
+export async function redeemRefereePin(
+  format: RefereePinFormat,
+  parentId: string,
+  pin: string
+): Promise<RedeemRefereePinResult> {
+  const { data, error } = await supabase.rpc('redeem_referee_pin', {
+    p_format: format,
+    p_parent_id: parentId,
+    p_pin: pin,
+  });
+  if (error) throw error;
+  return data as RedeemRefereePinResult;
+}
+
 /**
  * Delete a referee row by id. Hook owns the toast strings.
  */

@@ -1565,6 +1565,38 @@ export interface Translations {
     removeBtn: string;
     description: string;
     loading: string;
+    pin: {
+      switchLabel: string;
+      hint: string;
+      expiryNote: string;
+      codeLabel: string;
+      show: string;
+      hide: string;
+      copy: string;
+      copied: string;
+      rotate: string;
+      rotateConfirmTitle: string;
+      rotateConfirmBody: string;
+      disableConfirmTitle: string;
+      disableConfirmBody: string;
+      disableConfirmCancel: string;
+      disableConfirmOk: string;
+      updateError: string;
+      enabling: string;
+      joinBtn: string;
+      joinTitle: string;
+      joinHelper: string;
+      joinSubmit: string;
+      joinChecking: string;
+      loginToJoin: string;
+      errInvalid: string;
+      errExpired: string;
+      errRateLimited: string;
+      errOffline: string;
+      errGeneric: string;
+      alreadyReferee: string;
+      success: string;
+    };
   };
   // TeamMatch sub-component strings
   teamMatchComponents: {
@@ -4466,6 +4498,38 @@ export const vi: Translations = {
     removeBtn: "Gỡ",
     description: "Trọng tài có thể nhập và sửa điểm tất cả các trận trong giải.",
     loading: "Đang tải...",
+    pin: {
+      switchLabel: "Cho phép vào bằng mã PIN",
+      hint: "Người đã đăng nhập có thể nhập mã này để chấm điểm. Họ không thể thay đổi cài đặt hay danh sách thi đấu.",
+      expiryNote: "Mã tự hết hiệu lực khi giải kết thúc.",
+      codeLabel: "Mã PIN trọng tài",
+      show: "Hiện mã PIN",
+      hide: "Ẩn mã PIN",
+      copy: "Sao chép mã",
+      copied: "Đã sao chép mã PIN.",
+      rotate: "Tạo mã mới",
+      rotateConfirmTitle: "Tạo mã PIN mới?",
+      rotateConfirmBody: "Mã hiện tại sẽ ngừng hoạt động ngay. Những trọng tài đã tham gia vẫn giữ quyền chấm điểm.",
+      disableConfirmTitle: "Tắt mã PIN?",
+      disableConfirmBody: "Người mới sẽ không thể tham gia bằng mã này. Những trọng tài đã tham gia vẫn giữ quyền.",
+      disableConfirmCancel: "Giữ mã PIN",
+      disableConfirmOk: "Tắt mã PIN",
+      updateError: "Không thể cập nhật mã PIN. Vui lòng thử lại.",
+      enabling: "Đang tạo mã PIN…",
+      joinBtn: "Nhập mã trọng tài",
+      joinTitle: "Vào chấm điểm",
+      joinHelper: "Nhập mã 6 số do ban tổ chức cung cấp.",
+      joinSubmit: "Bắt đầu chấm điểm",
+      joinChecking: "Đang kiểm tra…",
+      loginToJoin: "Đăng nhập để nhập mã",
+      errInvalid: "Mã PIN không đúng. Kiểm tra lại mã do ban tổ chức cung cấp.",
+      errExpired: "Giải đã kết thúc nên mã PIN không còn hiệu lực.",
+      errRateLimited: "Bạn nhập sai quá nhiều lần. Thử lại sau 15 phút.",
+      errOffline: "Không thể xác nhận mã khi đang ngoại tuyến. Kiểm tra kết nối mạng rồi thử lại.",
+      errGeneric: "Không thể xác nhận mã. Vui lòng thử lại.",
+      alreadyReferee: "Bạn đã là trọng tài của giải này.",
+      success: "Bạn đã được thêm làm trọng tài.",
+    },
   },
   teamMatchComponents: {
     statusPending: "Chờ duyệt",

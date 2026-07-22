@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { MessageCircle } from 'lucide-react';
 import { RefereeManagement } from '@/components/quicktable/RefereeManagement';
+import RefereePinSettings from '@/components/quicktable/RefereePinSettings';
 import { VN_BANKS } from '@/lib/payment/banks';
 import { useI18n } from '@/i18n';
 import type { TeamMatchTournament, UpdateTournamentDetailsInput } from '@/hooks/useTeamMatch';
@@ -305,6 +306,7 @@ export function TeamMatchSettingsDialog({
               onAddReferee={onAddReferee}
               onRemoveReferee={onRemoveReferee}
             />
+            {tournament?.id && <RefereePinSettings format="team_match" parentId={tournament.id} />}
           </div>
         </div>
       </DialogContent>

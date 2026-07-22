@@ -4830,9 +4830,9 @@ export type Database = {
           rr_match_index: number | null
           rr_round_number: number | null
           score_history: Json | null
+          score_version: number
           score1: number | null
           score2: number | null
-          score_version: number
           serving_side: number | null
           set_scores: Json | null
           sides_swapped: boolean | null
@@ -4868,9 +4868,9 @@ export type Database = {
           rr_match_index?: number | null
           rr_round_number?: number | null
           score_history?: Json | null
+          score_version?: number
           score1?: number | null
           score2?: number | null
-          score_version?: number
           serving_side?: number | null
           set_scores?: Json | null
           sides_swapped?: boolean | null
@@ -4906,9 +4906,9 @@ export type Database = {
           rr_match_index?: number | null
           rr_round_number?: number | null
           score_history?: Json | null
+          score_version?: number
           score1?: number | null
           score2?: number | null
-          score_version?: number
           serving_side?: number | null
           set_scores?: Json | null
           sides_swapped?: boolean | null
@@ -5471,6 +5471,66 @@ export type Database = {
           method?: string
           phone_e164?: string
           succeeded?: boolean
+        }
+        Relationships: []
+      }
+      referee_pin_attempts: {
+        Row: {
+          created_at: string
+          format: string
+          id: number
+          parent_id: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          format: string
+          id?: never
+          parent_id: string
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          format?: string
+          id?: never
+          parent_id?: string
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referee_pins: {
+        Row: {
+          created_at: string
+          created_by: string
+          format: string
+          id: string
+          is_active: boolean
+          parent_id: string
+          pin: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          format: string
+          id?: string
+          is_active?: boolean
+          parent_id: string
+          pin: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          format?: string
+          id?: string
+          is_active?: boolean
+          parent_id?: string
+          pin?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -7448,6 +7508,10 @@ export type Database = {
           username: string
         }[]
       }
+      advance_doubles_elimination_lifecycle: {
+        Args: { p_tournament_id: string }
+        Returns: Json
+      }
       approve_club_member: {
         Args: { p_club_id: string; p_profile_id: string }
         Returns: {
@@ -7545,6 +7609,10 @@ export type Database = {
         }[]
       }
       claim_team_payment: { Args: { p_team_id: string }; Returns: undefined }
+      clear_referee_pin: {
+        Args: { p_format: string; p_parent_id: string }
+        Returns: undefined
+      }
       close_doubles_elimination_registration: {
         Args: { p_seeding_strategy?: string; p_tournament_id: string }
         Returns: Json
@@ -7603,6 +7671,26 @@ export type Database = {
         }
         Returns: string
       }
+      create_doubles_elimination_atomic: {
+        Args: {
+          p_court_count: number
+          p_early_rounds_format: string
+          p_finals_format: string
+          p_has_third_place_match: boolean
+          p_max_dupr_rating: number
+          p_min_dupr_rating: number
+          p_name: string
+          p_open_registration: boolean
+          p_rating_source: string
+          p_seeding_strategy: string
+          p_semifinals_format: string
+          p_share_id: string
+          p_start_time: string
+          p_team_count: number
+          p_teams: Json
+        }
+        Returns: Json
+      }
       create_doubles_elimination_with_quota: {
         Args: {
           _court_count?: number
@@ -7617,48 +7705,32 @@ export type Database = {
         }
         Returns: Json
       }
-      create_doubles_elimination_atomic: {
+      create_flex_entity_atomic: {
         Args: {
-          p_court_count: number
-          p_early_rounds_format: string
-          p_finals_format: string
-          p_has_third_place_match: boolean
-          p_max_dupr_rating: number | null
-          p_min_dupr_rating: number | null
+          p_display_order: number
+          p_entity_type: string
+          p_group_id: string
+          p_match_type: string
           p_name: string
-          p_open_registration: boolean
-          p_rating_source: string
-          p_seeding_strategy: string
-          p_semifinals_format: string
-          p_share_id: string
-          p_start_time: string | null
-          p_team_count: number
-          p_teams: Json
+          p_parent_match_id: string
+          p_tournament_id: string
         }
-        Returns: Json
-      }
-      create_flex_tournament_with_quota: {
-        Args: { _is_public?: boolean; _name: string }
         Returns: Json
       }
       create_flex_tournament_atomic: {
         Args: { p_is_public: boolean; p_name: string; p_player_names: Json }
         Returns: Json
       }
-      create_flex_entity_atomic: {
-        Args: {
-          p_display_order: number
-          p_entity_type: string
-          p_group_id: string | null
-          p_match_type: string | null
-          p_name: string
-          p_parent_match_id: string | null
-          p_tournament_id: string
-        }
+      create_flex_tournament_with_quota: {
+        Args: { _is_public?: boolean; _name: string }
         Returns: Json
       }
       create_pair_request: {
         Args: { _table_id: string; _to_team_id: string }
+        Returns: Json
+      }
+      create_quick_table_playoff_atomic: {
+        Args: { p_first_round: Json; p_qualifiers: Json; p_table_id: string }
         Returns: Json
       }
       create_quick_table_with_quota: {
@@ -7675,20 +7747,16 @@ export type Database = {
         }
         Returns: Json
       }
-      create_quick_table_playoff_atomic: {
-        Args: {
-          p_first_round: Json
-          p_qualifiers: Json
-          p_table_id: string
-        }
-        Returns: Json
-      }
       create_social_event_with_payment: {
         Args: { p_event: Json; p_payment: Json }
         Returns: {
           event_id: string
           event_slug: string
         }[]
+      }
+      create_team_match_atomic: {
+        Args: { p_config: Json; p_templates: Json }
+        Returns: Json
       }
       create_team_match_with_quota: {
         Args: {
@@ -7706,10 +7774,6 @@ export type Database = {
         }
         Returns: Json
       }
-      create_team_match_atomic: {
-        Args: { p_config: Json; p_templates: Json }
-        Returns: Json
-      }
       delete_match_comment: { Args: { p_comment_id: string }; Returns: Json }
       delete_quick_table: { Args: { _table_id: string }; Returns: boolean }
       dispatch_club_admin_push: {
@@ -7722,6 +7786,10 @@ export type Database = {
           p_type: string
         }
         Returns: undefined
+      }
+      doubles_elimination_seed_positions: {
+        Args: { p_size: number }
+        Returns: number[]
       }
       dupr_doubles_with_fallback: {
         Args: { p_profile_id: string }
@@ -7782,6 +7850,10 @@ export type Database = {
         Args: { p_body: string; p_comment_id: string }
         Returns: Json
       }
+      ensure_team_match_games_atomic: {
+        Args: { p_match_id: string }
+        Returns: Json
+      }
       feed_dupr_band_crossings: {
         Args: { p_min_band?: number; p_window_start: string }
         Returns: {
@@ -7836,6 +7908,18 @@ export type Database = {
           registration_id: string
           zalo_user_id: string
         }[]
+      }
+      generate_team_match_brackets_atomic: {
+        Args: { p_branches: Json; p_tournament_id: string }
+        Returns: Json
+      }
+      generate_team_match_round_robin_atomic: {
+        Args: {
+          p_groups?: Json
+          p_randomize_game_order?: boolean
+          p_tournament_id: string
+        }
+        Returns: Json
       }
       get_active_invitation_count: {
         Args: { _team_id: string }
@@ -8072,9 +8156,12 @@ export type Database = {
           id: string
         }[]
       }
-      ensure_team_match_games_atomic: {
-        Args: { p_match_id: string }
-        Returns: Json
+      get_referee_pin: {
+        Args: { p_format: string; p_parent_id: string }
+        Returns: {
+          is_active: boolean
+          pin: string
+        }[]
       }
       get_registration_by_token: {
         Args: { p_magic_token: string }
@@ -8553,9 +8640,25 @@ export type Database = {
         Args: { p_retention_days?: number }
         Returns: number
       }
+      rebuild_flex_group_stats_locked: {
+        Args: { p_group_id: string }
+        Returns: undefined
+      }
       record_heartbeat: {
         Args: { p_page_path: string; p_session_id: string }
         Returns: undefined
+      }
+      redeem_referee_pin: {
+        Args: { p_format: string; p_parent_id: string; p_pin: string }
+        Returns: string
+      }
+      referee_pin_is_creator: {
+        Args: { p_format: string; p_parent_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      referee_pin_parent_completed: {
+        Args: { p_format: string; p_parent_id: string }
+        Returns: boolean
       }
       register_event_as_member: {
         Args: { p_event_id: string; p_slot_id?: string }
@@ -8587,8 +8690,8 @@ export type Database = {
         Returns: Json
       }
       request_to_join_club: { Args: { p_club_id: string }; Returns: string }
-      advance_doubles_elimination_lifecycle: {
-        Args: { p_tournament_id: string }
+      reset_team_match_lifecycle_atomic: {
+        Args: { p_scope: string; p_tournament_id: string }
         Returns: Json
       }
       resolve_match_dispute: {
@@ -8636,48 +8739,6 @@ export type Database = {
         Args: { p_match_id: string; p_scores: Json }
         Returns: Json
       }
-      generate_team_match_brackets_atomic: {
-        Args: { p_branches: Json; p_tournament_id: string }
-        Returns: Json
-      }
-      generate_team_match_round_robin_atomic: {
-        Args: {
-          p_groups?: Json
-          p_randomize_game_order?: boolean
-          p_tournament_id: string
-        }
-        Returns: Json
-      }
-      reset_team_match_lifecycle_atomic: {
-        Args: { p_scope: string; p_tournament_id: string }
-        Returns: Json
-      }
-      start_team_match_round_atomic: {
-        Args: { p_round_number: number; p_tournament_id: string }
-        Returns: Json
-      }
-      setup_quick_table_roster_atomic: {
-        Args: {
-          p_courts?: Json
-          p_group_assignments: Json
-          p_roster: Json
-          p_start_time?: string | null
-          p_table_id: string
-        }
-        Returns: Json
-      }
-      update_flex_group_standings_atomic: {
-        Args: { p_group_id: string; p_include_doubles: boolean }
-        Returns: Json
-      }
-      update_flex_match_standings_atomic: {
-        Args: {
-          p_counts_for_standings: boolean
-          p_group_id: string | null
-          p_match_id: string
-        }
-        Returns: Json
-      }
       search_players: {
         Args: { p_exclude_id?: string; p_limit?: number; p_query: string }
         Returns: {
@@ -8701,13 +8762,33 @@ export type Database = {
           profile_id: string
         }[]
       }
+      seed_team_match_games_locked:
+        | { Args: { p_match_id: string }; Returns: number }
+        | {
+            Args: { p_match_id: string; p_randomize: boolean }
+            Returns: number
+          }
       send_message: {
         Args: { p_body: string; p_conv: string }
+        Returns: string
+      }
+      set_referee_pin: {
+        Args: { p_format: string; p_parent_id: string }
         Returns: string
       }
       set_user_quota: {
         Args: { _new_quota: number; _user_id: string }
         Returns: boolean
+      }
+      setup_quick_table_roster_atomic: {
+        Args: {
+          p_courts?: Json
+          p_group_assignments: Json
+          p_roster: Json
+          p_start_time?: string
+          p_table_id: string
+        }
+        Returns: Json
       }
       social_event_guest_register: {
         Args: {
@@ -8746,6 +8827,10 @@ export type Database = {
         Args: { p_registration_id: string }
         Returns: string
       }
+      start_team_match_round_atomic: {
+        Args: { p_round_number: number; p_tournament_id: string }
+        Returns: Json
+      }
       surface_quick_table_results: {
         Args: { p_table_id: string }
         Returns: {
@@ -8754,6 +8839,18 @@ export type Database = {
         }[]
       }
       toggle_match_kudos: { Args: { p_match_id: string }; Returns: Json }
+      update_flex_group_standings_atomic: {
+        Args: { p_group_id: string; p_include_doubles: boolean }
+        Returns: Json
+      }
+      update_flex_match_standings_atomic: {
+        Args: {
+          p_counts_for_standings: boolean
+          p_group_id: string
+          p_match_id: string
+        }
+        Returns: Json
+      }
       update_profile_contact_from_magic: {
         Args: { p_email: string; p_magic_token: string }
         Returns: undefined

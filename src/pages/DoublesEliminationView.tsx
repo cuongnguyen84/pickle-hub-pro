@@ -10,6 +10,8 @@ import { useVisibilityRefresh } from "@/hooks/useVisibilityRefresh";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RefereeManagement } from "@/components/quicktable/RefereeManagement";
+import RefereePinSettings from "@/components/quicktable/RefereePinSettings";
+import RefereeJoinByPin from "@/components/quicktable/RefereeJoinByPin";
 import {
   Share2, Check, Trophy, Users,
   Calendar, Trash2, RefreshCw,
@@ -343,6 +345,13 @@ export default function DoublesEliminationView() {
                   {copied ? t.doublesElimination.view.copied : t.doublesElimination.view.share}
                 </span>
               </button>
+              {!canManage && !canEdit && tournament?.id && (
+                <RefereeJoinByPin
+                  format="doubles_elimination"
+                  parentId={tournament.id}
+                  onJoined={() => setCanEdit(true)}
+                />
+              )}
               {canManage && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -583,6 +592,11 @@ export default function DoublesEliminationView() {
                   onAddReferee={addRefereeByEmail}
                   onRemoveReferee={removeReferee}
                 />
+                {tournament?.id && (
+                  <div style={{ marginTop: 16 }}>
+                    <RefereePinSettings format="doubles_elimination" parentId={tournament.id} />
+                  </div>
+                )}
               </TabsContent>
             )}
           </Tabs>
