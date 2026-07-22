@@ -1,0 +1,43 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "move": "REFINE",
+      "evidence": "docs/slo.md:14 — cron-health (ops_cron_monitors/ops_cron_alert_state) da ton tai, du de nhan heartbeat cua dispatcher.",
+      "note": "HOLD tren truc chinh markdown-vs-Issue: file git-tracked ĐA la ban ghi ben, greppable, song qua context-wipe, khong can parse Issue-state qua GitHub API va khong tao store thu hai co the drift. /done hai chieu qua telegram_queue la be mat command moi phai bao tri — dong loop bang agent danh [x] cuoi phien. Nhung REFINE: adopt watchdog heartbeat cua ui-ux-critic — workflow milestone-due ghi heartbeat vao cron-health. Diem re-remind-toi-khi-done KHONG phai bat dong: Option B round-1 da chay daily va ping khi con [ ], khong fire-once."
+    },
+    {
+      "id": "D2",
+      "move": "REFINE",
+      "evidence": "docs/slo.md:6 — 'Windows are 30-day rolling unless noted'; docs/slo.md:27 — 'No independent uptime pinger'; supabase/functions/errors-telegram-alert/index.ts:39,61 — chung 1 TELEGRAM_CHAT_ID, sendTelegram khong retry.",
+      "note": "HOLD sequencing: uptime pinger van la slice dau (0.5hd, khong bi chan boi D5). Bac 'full state machine la v1': burn SLO-2/3 van bi chan boi funnel-events-queryable (slo.md:28) nen inc2 deferrable. REFINE inc2: khi lam burn PHAI 30-ngay rolling (risk-auditor dung) + dedup state-transition + recovery message BAT BUOC + volume-alert tho doc lap fingerprint (pre-mortem) + nguon server-side."
+    },
+    {
+      "id": "D3",
+      "move": "REFINE",
+      "evidence": "tests/auth.spec.ts:86-89 — da co escape-hatch test.skip(true,...); tests/helpers/supabase-admin.ts:29-34 — hasAuthEnv() fail-open; docs/slo.md:11 — SLO-2 = 'login/signup round-trip'.",
+      "note": "HOLD dieu-tra-truoc. REFINE nhanh env-only: bare fixme + backlog KHONG du — neu env-only, giu 1 monitored prod check (curl CSP frame-src dinh ky), khong fixme-roi-quen. Bac grep-gate tuyet doi cua risk-auditor: pha luon pattern hop phap test.skip(!hasAuthEnv()) (auth.spec.ts:21). Lam ro: test DUPR SSO canh CSP frame-src, KHONG phai detector SLO-2 round-trip."
+    },
+    {
+      "id": "D4",
+      "move": "REFINE",
+      "evidence": "tests/helpers/auth.ts:25-33 — TEST_USERS map role→email CO DINH; tests/helpers/supabase-admin.ts:64-95 — generateLink→verifyOtp moi lan goi, token single-use.",
+      "note": "HOLD storageState la fix goc: race = fixed-email × per-call mint song song. 'Link moi moi test' cua risk-auditor TAI LAP race tru khi email unique — ma viewerConnected phai la user DUPR that (YGONMK), khong spin fresh duoc. REFINE dung hoa: (1) setup project chay REAL generateLink→verifyOtp, detector song, fail-hard; (2) them 1 canonical test noi tiep tieu thu full fresh magic-link (email throwaway unique) lam bai exercise SLO-2 song."
+    },
+    {
+      "id": "D5",
+      "move": "REFINE",
+      "evidence": "src/pages/Tournaments.tsx:272 — trackEvent('reg_count_badge_impression') LIVE prod; src/lib/journeys.ts:8 + src/utils/ga.ts:32-42 — trackJourneyStep → window.gtag GA4.",
+      "note": "Concede diem hep cua ui-ux-critic: event DA ban vao GA4 tu bay gio va custom dimension khong hoi to — moi ngay chua dang ky la 1 ngay data khong doc duoc qua Data API. THEM 1 increment NGAY: dang ky custom definitions HOAC verify BigQuery export — thao tac GA4-UI, ~zero code, same-day voi milestone-mechanism. HOLD phan code: mo rong ga4_report.py la READING, defer den moc, khong mat du lieu."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "id": "D6",
+      "with": "risk-auditor",
+      "topic": "GA4 co duoc lam 1 nguon do SLO-2 burn khong",
+      "myPosition": "slo.md:11 dinh nghia nguon SLO-2 = 'GA4 funnel events (BASE-02) + client_errors auth-tagged rows' — blanket-ban GA4 mau thuan chinh SLO doc. GA4-segment-VN + min-count la 1 input HOP LE ben canh client_errors; cai bi cam la GA4-global-bot-polluted lam NGUON DUY NHAT."
+    }
+  ]
+}

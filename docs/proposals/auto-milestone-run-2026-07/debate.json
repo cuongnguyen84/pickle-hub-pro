@@ -1,0 +1,143 @@
+{
+  "slug": "auto-milestone-run-2026-07",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Cơ chế mốc: artifact + vòng đời — file markdown trong repo (tick [x]) hay GitHub Issue + /done qua Telegram; watchdog heartbeat",
+      "positions": {
+        "solution-architect": "docs/milestones.md là source of truth duy nhất + scripts/due-milestones.mjs đọc đầu phiên + cron Telegram ping 1 lần/ngày khi có mốc due (A+B, ~1.5 hd). Đánh dấu [x] khi xong. Không GitHub Issue, không state machine.",
+        "ui-ux-critic": "Telegram = bề mặt đánh thức, GitHub Issue = bản ghi bền, vòng đời open/done qua /done trong telegram_queue, nhắc mỗi ngày 08:00 ICT tới khi done, watchdog heartbeat vào cron-health. Đồng thuận GPT-5.6.",
+        "risk-auditor": "GH Actions schedule CHỈ mở issue (idempotent). GREEN chỉ khi reminder/issue; RED nếu autonomous executor tự chạy có quyền merge."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "docs/slo.md:14 — cron-health (ops_cron_monitors/ops_cron_alert_state) đã tồn tại, đủ nhận heartbeat của dispatcher",
+          "note": "Giữ md-file làm source of truth (git-tracked = bản ghi bền, không store thứ hai drift); adopt watchdog heartbeat của ui-ux-critic. Re-remind-tới-khi-done không phải bất đồng — Option B đã chạy daily ping khi còn [ ]."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "round1/solution-architect.md:21 (md [ ]/[x] = state) + round1/pre-mortem.md:104 (guard-liveness)",
+          "note": "Bỏ GitHub Issue + telegram_queue /done — YAGNI solo-op: md + daily ping khi còn [ ] chính là 'nhắc-tới-khi-done idempotent'. GIỮ watchdog heartbeat (architect Option B thiếu). /done-từ-điện-thoại = nice-to-have, để Cuong quyết."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "round1/solution-architect.md:28 — Option B cron đọc 'mốc due & chưa [x]' → re-ping tới khi tick",
+          "note": "Predicate tier không phải md-vs-issue mà là (1) idempotent re-ping, (2) không autonomous-executor-merge. A+B thỏa cả hai. Bỏ yêu cầu ngầm 'phải là Issue'. Giữ AMBER gói; điều kiện nâng RED #1 vô hiệu hóa."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "convergence": "HỘI TỤ qua 3 REFINE (không có CONCEDE nên theo luật ledger vẫn là OPEN): cả 3 phía đồng thiết kế md-file + due-check script + daily Telegram re-ping tới khi [x] + watchdog heartbeat vào cron-health. Còn lại cho Cuong: (a) gật thiết kế hội tụ, (b) có muốn thêm /done từ điện thoại (nice-to-have) không."
+    },
+    {
+      "id": "D2",
+      "topic": "OPS-04 v1: phạm vi + cửa sổ đo — uptime pinger tối thiểu hay SLO state machine; burn 30-ngày hay 24h",
+      "positions": {
+        "solution-architect": "inc1 = uptime pinger GH Action (0.5 hd, bịt gap SLO-1 duy nhất slo.md nêu). inc2 OPTIONAL = burn-rate từ SQL sẵn có. KHÔNG GA4, KHÔNG alert-UX mới.",
+        "ui-ux-critic": "State machine: chỉ alert healthy→breached (rolling 24h, eval giờ, 3 lần liên tiếp, min-sample), night-quiet, recovery bắt buộc, copy VI, sửa bug alert_count:193.",
+        "risk-auditor": "Burn PHẢI theo cửa sổ 30-ngày rolling (slo.md); ratio 10-phút/24h là đo sai. Dedup state-transition, nguồn server-side. Pre-mortem bổ sung: cần volume-alert thô độc lập fingerprint."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "docs/slo.md:6 (30-day rolling), docs/slo.md:27 (no uptime pinger), errors-telegram-alert/index.ts:39,61 (chung 1 chat, không retry)",
+          "note": "Giữ sequencing: pinger trước, burn deferred (bị chặn bởi funnel-events-queryable slo.md:28). Khi làm burn: 30-ngày rolling + state-transition dedup + recovery bắt buộc + volume-alert thô + nguồn server-side."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "docs/slo.md:6 + docs/slo.md:19-21",
+          "note": "Budget accounting = 30-ngày (vòng 1 tôi không cite). 24h/eval-giờ là tầng DETECTION — hai tầng cùng tồn tại (multi-window burn-rate SRE), không mâu thuẫn. Night-quiet/recovery/min-sample giữ nguyên."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "docs/slo.md:3 + docs/slo.md:20",
+          "note": "30-ngày ràng buộc BUDGET, không ràng buộc DETECTION — bất đồng ảo bị giết. 30-ngày chỉ áp cho alert budget-burn; detection 24h hợp lệ miễn (a) gắn nhãn phân biệt, (b) không ratio 10-phút thô, (c) nguồn server-side."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "convergence": "HỘI TỤ qua 3 REFINE: bất đồng cửa-sổ là ảo (30-ngày = budget accounting, 24h = detection; hai tầng). Thứ tự thi hành hội tụ: v1 = uptime pinger + sửa alert_count:193; burn-alert deferred tới khi funnel queryable, khi làm phải theo spec gộp (state-transition, recovery, volume-alert thô, night-quiet). Còn lại cho Cuong: gật scope v1 tối thiểu."
+    },
+    {
+      "id": "D3",
+      "topic": "QA-04: DUPR SSO hard-fail — test.fixme sau điều tra env-only (kèm monitor), hay cấm fixme hoàn toàn",
+      "positions": {
+        "solution-architect": "Điều tra trước (curl CSP + click tay). Env-only → test.fixme kèm lý do + backlog. Bug prod → PR riêng.",
+        "risk-auditor": "CẤM skip/fixme trên auth, /match/confirm, DUPR SSO trong mọi PR stabilize; grep-gate skip|fixme = fail.",
+        "ui-ux-critic": "Hard-fail phải triage product-or-stale, KHÔNG skip."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "tests/auth.spec.ts:86-89 (escape-hatch sẵn có), tests/helpers/supabase-admin.ts:29-34 (hasAuthEnv fail-open), docs/slo.md:11",
+          "note": "Bare fixme không đủ — env-only thì giữ 1 monitored prod check (curl CSP frame-src định kỳ). Bác grep-gate tuyệt đối (phá pattern hợp pháp test.skip(!hasAuthEnv())). DUPR SSO canh CSP, không phải detector SLO-2 round-trip."
+        },
+        "risk-auditor": {
+          "move": "REFINE",
+          "evidence": "tests/auth.spec.ts:86-88 + :95-99 (assertion phụ thuộc CSP/network env)",
+          "note": "Thu hẹp: (a) auth round-trip + /match/confirm — cấm tuyệt đối; (b) DUPR SSO — fixme CHỈ khi điều tra xác nhận env-only, kèm backlog + monitor riêng; (c) hasAuthEnv phải FAIL-HARD trên main. Bất đồng thật thu hẹp còn: fixme-có-điều-kiện vs không-fixme."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "tests/auth.spec.ts:88 + tests/helpers/supabase-admin.ts:28-34",
+          "note": "BÁC fixme-nếu-env-only, ngả về risk-auditor gốc: thêm fixme là dồn vào vết mòn silent guard-death (pre-mortem sự cố 1). Env-only → integration-test có monitor riêng HOẶC fail-hard-on-main, KHÔNG test.fixme."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "convergence": "Hội tụ 80%: điều tra trước khi đụng test; auth/match-confirm cấm skip/fixme tuyệt đối; hasAuthEnv fail-hard trên main; nếu env-only phải có monitor CSP riêng. CÒN FORK THẬT cho Cuong: dòng spec DUPR SSO khi xác nhận env-only — (X) test.fixme + monitor riêng [architect + risk-auditor] hay (Y) không fixme, chuyển hẳn thành integration-test/monitor + giữ spec fail-hard [ui-ux-critic]."
+    },
+    {
+      "id": "D4",
+      "topic": "QA-04: chiến lược session auth — storageState mint 1 lần/role, hay user+magic-link mới mỗi test",
+      "positions": {
+        "solution-architect": "Root cause = magiclink single-use bị vô hiệu chéo giữa worker song song cùng email cố định. Fix: setup project mint 1 lần/role → storageState.",
+        "risk-auditor": "User+link MỚI mỗi test, consume 1 lần, fail ngay. storageState nằm trong grep cảnh giác false-green — E2E mất detector magic-link/verifyOtp thật của SLO-2."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "tests/helpers/auth.ts:25-33 (email cố định/role, viewerConnected phải là user DUPR thật YGONMK), tests/helpers/supabase-admin.ts:64-95",
+          "note": "Per-test link mới TÁI LẬP race trừ khi email unique — mà user DUPR-connected không spin fresh được. Dung hòa: setup chạy REAL generateLink→verifyOtp (detector sống, fail-hard) + 1 canonical test nối tiếp tiêu thụ full fresh magic-link (email throwaway)."
+        },
+        "risk-auditor": {
+          "move": "CONCEDE",
+          "evidence": "tests/helpers/supabase-admin.ts:64-95 — mintSessionForEmail thực hiện generateLink(magiclink)+verifyOtp và throw cứng (:91-95); setup-project gọi 1 lần/role vẫn chạy verifyOtp mỗi CI-run, fail-hard nếu auth vỡ",
+          "note": "'Loses the detector' như tôi mô tả KHÔNG tồn tại — per-test mint mới chính là nguồn race. Vector false-green thật = auth.spec.ts:21-24 fail-open → phải fail-HARD trên main. Điều kiện nâng RED #2 vô hiệu hóa nếu setup fail-hard. Bổ sung must-verify mới: token-refresh từ session seeded qua wall-time > access-token TTL (supabase-admin.ts:85 autoRefreshToken:false) — nếu không, bản vá đẻ lớp flake mới."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "storageState setup-project THẮNG bằng bằng chứng: setup vẫn exercise verifyOtp thật mỗi run + fail-hard. Kèm 3 điều kiện gộp từ hai phía: (1) hasAuthEnv chuyển fail-HARD trên main (không fail-open); (2) thêm 1 canonical test nối tiếp tiêu thụ fresh magic-link full-flow; (3) must-verify token-refresh từ session seeded qua wall-time > TTL trước khi coi race đã dập."
+    },
+    {
+      "id": "D5",
+      "topic": "GA4 chuẩn bị cho mốc funnel (02/08) + badge (04/08): đăng ký custom dimensions ngay hay chờ ngày mốc",
+      "positions": {
+        "solution-architect": "KHÔNG mở rộng GA4 bây giờ — địa hạt mốc tương lai, cần ~1 tuần RUM.",
+        "ui-ux-critic": "BLOCKER làm NGAY: custom dimensions không hồi tố — chưa đăng ký thì 02/08-04/08 không có lịch sử, mốc mù. Mở rộng ga4_report.py trước ngày mốc."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "src/pages/Tournaments.tsx:272 (badge event LIVE prod), src/lib/journeys.ts:8 + src/utils/ga.ts:32-42 (journey → gtag GA4)",
+          "note": "Nhượng điểm hẹp: event đã bắn từ bây giờ + dimension không hồi tố → THÊM increment NGAY: đăng ký custom definitions / verify BigQuery export (GA4-UI, ~zero code, same-day). Giữ phần code: mở rộng ga4_report.py là READING, defer đến mốc — không mất dữ liệu."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "evidence": "scripts/seo/ga4_report.py:56 (không query event params) + src/pages/TeamMatchSetup.tsx:169 & src/lib/journeys.ts:28 (params đang fire)",
+          "note": "Architect nhầm hai cơ chế: tích lũy RUM (thời gian) ≠ đăng ký dimension (thời điểm config, không hồi tố). Đăng ký 21/07 → 02/08 có ~12 ngày data; đăng ký ngày mốc → 0 ngày → mù. Giữ Blocker."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "convergence": "HỘI TỤ thực chất (theo luật ledger vẫn OPEN vì không có move CONCEDE): cả hai phía giờ đồng ý ĐĂNG KÝ GA4 custom dimensions NGAY (thao tác GA4 UI, zero code) — architect đã tự thêm increment này. Chỉ khác nhãn: critic gọi Blocker, architect gọi increment same-day. Phần mở rộng ga4_report.py cả hai đồng ý defer tới trước ngày mốc. Cần Cuong: xác nhận ai đăng ký dimension (cần quyền GA4 admin — thao tác UI của Cuong, agent không có quyền)."
+    },
+    {
+      "id": "D6",
+      "topic": "GA4 có được làm MỘT nguồn đo SLO-2 burn không (phát sinh vòng 2, chưa đối chất — chỉ liên quan khi làm OPS-04 inc2 burn-alert, hiện deferred)",
+      "positions": {
+        "solution-architect": "slo.md:11 định nghĩa nguồn SLO-2 = 'GA4 funnel events (BASE-02) + client_errors auth-tagged rows' — blanket-ban GA4 mâu thuẫn chính SLO doc. GA4-segment-VN + min-count là input HỢP LỆ bên cạnh client_errors; cái bị cấm là GA4-global-bot-polluted làm nguồn DUY NHẤT.",
+        "risk-auditor": "Nguồn đo auth/registration = Supabase server-side, không phải GA4 (GA4 bot pollution → false-alert/false-silence; CLAUDE.md xác nhận pollution)."
+      },
+      "round2": {},
+      "status": "OPEN_FOR_CUONG"
+    }
+  ]
+}

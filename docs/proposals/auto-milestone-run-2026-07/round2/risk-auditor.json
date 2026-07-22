@@ -1,0 +1,37 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "move": "REFINE",
+      "evidence": "docs/proposals/auto-milestone-run-2026-07/round1/solution-architect.md:28 — Option B cron doc 'moc due & chua [x]' → Telegram 1 lan/ngay, re-ping toi khi tick [x]",
+      "note": "Predicate quyet dinh tier KHONG phai md-vs-issue ma la (1) idempotent re-ping toi khi done, (2) KHONG autonomous-executor-co-quyen-merge. Architect A+B thoa ca hai. Rui ro that duy nhat cua md-only: [x]-tick khong co audit doc lap — robustness-nicety, khong du HOLD. Bo yeu cau ngam 'phai la GitHub Issue'. VERDICT GOI: giu AMBER — dieu kien nang RED #1 da bi chinh thiet ke architect vo hieu hoa."
+    },
+    {
+      "id": "D2",
+      "move": "REFINE",
+      "evidence": "docs/slo.md:3 — 'Windows are 30-day rolling unless noted'; docs/slo.md:20 — 'Blowing an SLO for the window pauses feature work'",
+      "note": "30-ngay rang buoc BUDGET, khong rang buoc DETECTION — hai tang, khong mau thuan (multi-window burn-rate SRE). Windowing 24h/eval-gio cua ui-ux-critic la tang detection hop le. Refine: 30-ngay CHI ap cho alert budget-burn; detection 24h duoc phep — mien (a) hai tin hieu gan nhan ro, (b) khong cai nao ratio 10-phut tho, (c) nguon server-side. Bat dong ao da bi giet."
+    },
+    {
+      "id": "D3",
+      "move": "REFINE",
+      "evidence": "tests/auth.spec.ts:86-88 — escape-hatch 'test.skip(true, Connect button not present)' da ton tai; :95-99 — assertion phu thuoc CSP/network cua env",
+      "note": "Grep-fail blanket qua rong. Thu hep: (a) auth round-trip + /match/confirm — KHONG fixme/skip moi truong hop; (b) DUPR SSO iframe — fixme CHI khi dieu tra xac nhan env-only, kem backlog + monitor rieng; neu prod CSP thieu dupr. → bug prod, PR rieng; (c) test.skip(!hasAuthEnv()) phai FAIL-HARD tren main (pre-mortem Su co 1). Bat dong that thu hep: architect duoc fixme-sau-dieu-tra tren DUPR SSO, toi giu cam cung tren auth/confirm."
+    },
+    {
+      "id": "D4",
+      "move": "CONCEDE",
+      "evidence": "tests/helpers/supabase-admin.ts:64-95 — mintSessionForEmail thuc hien generateLink(magiclink) + verifyOtp va throw cung (:91-95) neu auth hong; day CHINH la auth round-trip. Setup-project goi 1 lan/role van chay verifyOtp moi CI-run va fail-hard neu auth vo",
+      "note": "'Per-test link moi' khong chay verifyOtp that hon — no chay N lan cung email song song, token single-use bi ghi de → CHINH la nguon race. storageState-qua-setup KHONG mat detector. Rui ro false-green THAT nam o auth.spec.ts:21-24 test.skip(!hasAuthEnv()) fail-OPEN → phai fail-HARD tren main. Dieu kien nang RED #2 vo hieu hoa NEU setup fail-hard; goi giu AMBER."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "id": "D7",
+      "with": "solution-architect",
+      "topic": "storageState TTL vs CI wall-time",
+      "myPosition": "storageState chap nhan (D4 CONCEDE), NHUNG inc1 phai kem buoc verify token-refresh tu session seeded qua wall-time > access-token TTL (supabase-admin.ts:85 autoRefreshToken:false tren minting-client); neu khong, day la lop flake moi do chinh ban va de ra. Must-verify, khong phai chan."
+    }
+  ]
+}

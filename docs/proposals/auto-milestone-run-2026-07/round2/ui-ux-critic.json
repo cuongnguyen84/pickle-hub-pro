@@ -1,0 +1,30 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "move": "REFINE",
+      "evidence": "docs/proposals/auto-milestone-run-2026-07/round1/solution-architect.md:21 (md [ ]/[x] = state) + round1/pre-mortem.md:104 (guard-liveness = gate class can co)",
+      "note": "Bo GitHub Issue + telegram_queue /done — YAGNI cho solo-op: docs/milestones.md voi [ ] chua-tick DA la ban ghi ben + git-history, va daily cron ping khi con [ ] chinh la 'nhac-toi-khi-done, idempotent tren due&not-done' — dung yeu cau cot loi cua toi. GIU watchdog heartbeat: architect Option B KHONG co liveness check, pre-mortem doc lap chi ra 'guard tu chet am tham' la dung failure mode meta-task nay sua. /done-tu-dien-thoai la nice-to-have, de Cuong quyet."
+    },
+    {
+      "id": "D2",
+      "move": "REFINE",
+      "evidence": "docs/slo.md:6 ('Windows are 30-day rolling unless noted') + docs/slo.md:19-21 (error-budget policy = window burn)",
+      "note": "slo.md:6 xac nhan budget ACCOUNTING la 30-ngay — toi khong cite dieu nay o vong 1. Nhung khong lat state machine: 24h/hourly/3-lien-tiep la tang DETECTION nhanh, tang khac voi accounting 30-ngay — cung ton tai theo multi-window burn-rate SRE. Thu hep: burn-budget doc tren 30-ngay; night-quiet/recovery/state-transition/min-sample giu nguyen la lop phat hien + chong fatigue. Hai tang, khong mau thuan."
+    },
+    {
+      "id": "D3",
+      "move": "REFINE",
+      "evidence": "tests/auth.spec.ts:88 (escape hatch test.skip ngay tren assertion cung :96-99) + tests/helpers/supabase-admin.ts:28-34 (hasAuthEnv fail-open)",
+      "note": "Sac hoa lap truong: BAC test.fixme-neu-env-only cua architect, nga ve risk-auditor. auth.spec.ts:88 da co escape hatch ngay canh assertion — them fixme la don vao dung vet mon pre-mortem su co 1 (silent guard-death). Neu env-only, cau tra loi la integration-test co monitor rieng HOAC fail-hard-on-main khi thieu env, KHONG phai test.fixme."
+    },
+    {
+      "id": "D5",
+      "move": "HOLD",
+      "evidence": "scripts/seo/ga4_report.py:56 (chi runReport metrics co ban, KHONG query event params/custom dimensions) + src/pages/TeamMatchSetup.tsx:169 & src/lib/journeys.ts:28 (params organizer_tournament DANG fire tu UX-05)",
+      "note": "Architect nham hai co che: tich luy RUM (phu thuoc THOI GIAN) khac voi dang ky custom-dimension (config KHONG hoi to, phu thuoc THOI DIEM DANG KY). Params da fire that nhung ga4_report.py:56 khong doc duoc, GA4 chi populate dimension TU ngay dang ky (khong co BigQuery export trong repo de bu). Dang ky hom nay 21/07 → 02/08 co ~12 ngay data; dang ky dung ngay moc → 0 ngay → mu. Giu Blocker."
+    }
+  ],
+  "newDisagreements": []
+}

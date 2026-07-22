@@ -133,3 +133,9 @@ Ship gói P3 (codex-review-de-integrity). Telemetry ẩn — cần mắt anh + �
 - [ ] **CTA anon DoublesElim:** tương tự, giải DE `registration_open`.
 - [ ] **NỢ NATIVE (/apple):** 2 CTA login trên (TeamMatch + DoublesElim) CHƯA làm bản native — cần port theo standing "fix cả web lẫn native". Ghi ở đây, chưa làm trong PR web.
 - [ ] Journey KHÔNG trộn: đăng ký 1 Social Event (OTP) và 1 QuickTable trong cùng phiên → 2 funnel riêng, không nuốt nhau (đã có unit test, nhưng xác nhận số GA4 thật khi có traffic).
+
+## 16. auto-milestone-run-2026-07 (#432, 2026-07-22) — Telegram + mốc
+
+- [ ] **Telegram milestone ping trên điện thoại thật:** sáng ~24/07 08:05 ICT sẽ có tin "⏰ MỐC ĐẾN HẠN · PERF-05" (mốc đầu tiên đến hạn). Xem dòng đầu có đọc được trên lock-screen không, xuống dòng có vỡ không. Tin nhắc lại MỖI NGÀY tới khi mốc được tick `[x]` trong docs/milestones.md — đó là thiết kế, không phải bug.
+- [ ] **Uptime alert:** không có gì để xem khi site khỏe (im lặng = đúng). Nếu nhận "🔴 P1 · www.thepicklehub.net KHÔNG phản hồi 200" → làm theo 3 dòng trong tin.
+- [ ] **DUPR connect modal trên iPhone thật:** mở /dupr bằng tài khoản chưa kết nối → bấm Kết nối với DUPR → iframe DUPR hiện và bấm được (điều tra #432 kết luận CSP ổn, nhưng chưa ai bấm tay trên thiết bị thật sau đợt này).

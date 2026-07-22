@@ -66,8 +66,8 @@ built); near-zero wall_view → close UX-07, the problem is upstream.
 
 | Task | Effort | Blocked on |
 |---|---|---|
-| **QA-04** stable E2E for 10 journeys | 5d | **UNBLOCKED 2026-07-21**: secrets set + wired into `playwright.yml` (PR #431). Remaining work is writing the ten journeys — run in a fresh session. |
-| **OPS-04** SLO dashboards + alerts | 4d | **UNBLOCKED 2026-07-21**: Cuong picked option A — extend the existing Telegram alert (`errors-telegram-alert` + CI Telegram secrets already in place). |
+| **QA-04** stable E2E for 10 journeys | 5d | **STABILIZE DONE 2026-07-22** (PR #432, `b3e8743d`): mint-race killed via auth-setup storageState (magic-link tokens single-use × parallel workers), fail-hard-on-CI when secrets missing, canonical fresh-link test, wait-on-state thay fixed sleeps, DUPR SSO test ACTIVE (root cause = preview chunk-reload, KHÔNG phải CSP). Còn lại: viết 10 journeys (inc4, deferred — chạy phiên riêng trên nền suite đã ổn định). |
+| **OPS-04** SLO dashboards + alerts | 4d | **INC1 DONE 2026-07-22** (PR #432): uptime-ping.yml 10 phút / + /feed (bịt gap SLO-1 slo.md) + watchdog daily cho milestone-due.yml + fix dead-ternary alert_count. Deferred: burn-alert (30-day budget + 24h detection, state-transition dedup, volume-alert thô, recovery, night-quiet — spec hội tụ D2 trong proposal auto-milestone-run-2026-07) — blocked on funnel events queryable. |
 | **PERF-05** validate CWV p75 with VN field data | 3d | Time — needs ~1 week of RUM post-PERF-04. Earliest ~2026-07-24. |
 | **CLOSE-03** final UX/a11y/perf/security/codebase audit | 3d | "All phases" — now nearly satisfiable; the a11y gate hole (below) is exactly the kind of thing it should catch. |
 | **CLOSE-04** publish scorecard | 1d | CLOSE-03. |
