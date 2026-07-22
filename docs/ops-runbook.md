@@ -252,12 +252,24 @@ preview while Cloudflare Pages is still settling — symptoms rotate (chunk
 Root fix is still open backlog; until then rerun-green + a clean manual
 prod check is the accepted evidence.
 
-## 6. Restore drill (OPS-02 — pending)
+## 6. Restore drill (OPS-02 — DONE 2026-07-22)
 
-PITR is enabled on the Supabase project. The drill (restore to a new
-project, point a preview build at it, verify critical reads) has NOT been
-performed yet — tracked as OPS-02, blocked on scheduling a window. Do not
-treat backups as verified until that drill is recorded here.
+Drill performed 2026-07-22 by Cuong + Claude:
+
+- **Method:** Dashboard → Database → Backups → "Restore to new project"
+  (BETA), latest scheduled backup (21 Jul 2026 15:45 UTC, PHYSICAL) →
+  new free-tier project `yjppptkhpvyruzlgavru`.
+- **Time:** started 18:45, restored project live 18:49 → **~4 minutes**
+  end-to-end for the full DB (no manual pg_dump needed).
+- **Verify (drill vs prod at drill time):** `profiles` 2415/2417 (2 rows
+  = signups after the backup point — expected), `social_events` 10/10,
+  `event_registrations` 101/101, public base tables 127/127. PASS.
+- **Caveats:** Storage objects are NOT included in DB backups (dashboard
+  warns; bucket files live separately). Daily backups run ~15:45 UTC.
+- Drill project deleted after verification.
+
+Rerun cadence: repeat the drill after any major schema era change or at
+least yearly; record each run here.
 
 ## 7. CI gates added 2026-07 (what blocks a PR and what is advisory)
 

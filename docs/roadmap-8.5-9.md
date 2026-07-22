@@ -140,7 +140,7 @@ Small, evidence-backed, independently shippable. Each follows the full hotfix lo
 | BE-03 | done | 3d | Pin one supabase-js version across functions — target @2.89.0 (already proven on mux-create-livestream). **Stage 1 done:** 34 floating @2 imports frozen to @2.89.0 (no-op vs deployed reality — floaters resolve latest at deploy). **Stage 2 (quiet window):** bump the 42×@2.39.0 imports in category batches with canary | BE-01 |
 | BE-02 | done | 3d | Fix admin push broadcast at the root (known bug #1): resolve recipients server-side with service_role, batch FCM sends via `Promise.allSettled` chunks, prune tokens FCM reports UNREGISTERED, add the missing confirm dialog (known bug #2) | SEC-04 |
 | OPS-01 | done | 2d | Document secret rotation, cron caller update, rollback, and incident procedures | SEC-04 |
-| OPS-02 | blocked | 2d | Run and record a database restore drill | Production/backup access |
+| OPS-02 | done | 2d | Run and record a database restore drill — **DONE 2026-07-22**: restore-to-new-project drill, ~4 min, 3-table + table-count verify PASS; recorded in `docs/ops-runbook.md` §6 | Production/backup access |
 | DB-00 | done | 2d | Verify (do not assume) the suspected race conditions before scheduling DB-01/DB-02: read `cancel-registration`/`reactivate-registration`/bracket advancement paths and attempt a two-concurrent-request reproduction against disposable Supabase. Output: confirmed/refuted per path, which sets DB-01/DB-02 scope | SEC-05 |
 
 ### Phase 1 exit
@@ -386,7 +386,7 @@ Record durable choices here or link an ADR.
 
 Last updated: 2026-07-21 after ARCH-03 (#422), UX-06/07 cluster (#423, +2 prod migrations), null-slot guard (#424), a11y contrast (#426). Full snapshot: `docs/roadmap-status-2026-07-21.md`. Counts: 66 done · 1 partial (UX-07) · 5 later · 4 blocked.
 
-Remaining open work: **OPS-04** (inc1 done #432 — burn-alert deferred) · **PERF-05** (milestone fires 24/07, predicate satisfied ~27/07; dated milestones now live in docs/milestones.md + Telegram dispatcher) · **UX-07** partial — continue-or-close on the ~02/08 funnel read (D5 unmeasured) · **CLOSE-03/04** (now nearly satisfiable) · blocked: BASE-07 (participants), UX-09 (participants), OPS-02 (backup access), A11Y-05 (devices).
+Remaining open work: **OPS-04** (inc1 done #432 — burn-alert deferred) · **PERF-05** (milestone fires 24/07, predicate satisfied ~27/07; dated milestones now live in docs/milestones.md + Telegram dispatcher) · **UX-07** partial — continue-or-close on the ~02/08 funnel read (D5 unmeasured) · **CLOSE-03/04** (now nearly satisfiable) · blocked: BASE-07 (participants), UX-09 (participants), A11Y-05 (devices).
 
 Debt not tracked as rows, arguably higher priority than some `later` rows — see `docs/roadmap-status-2026-07-21.md` §"Open risks": (1) **RED approval gate unenforceable** — pipeline writes to GitHub as Cuong; release-pilot now hands off instead of merging RED; real fix = separate bot identity + fine-grained PAT, needs Cuong; (2) **a11y page-wide contrast still disabled** in the axe suite — real debt behind the blanket rule, CLOSE-03 should quantify; (3) Lighthouse "green" is timing-dependent, not proof; (4) team-match payment may be dead not just unused (1/15 fee tournaments, 0 teams). Older loose ends still open: `.tl-btn` ratchet HARD after 2026-08-01, manual admin push verify, gen Supabase types (`--schema public`), SEC-06 ledger reconciliation, `docs/manual-test-backlog.md` items 8–14.
 
