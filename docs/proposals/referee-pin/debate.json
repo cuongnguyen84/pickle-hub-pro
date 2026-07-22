@@ -1,0 +1,91 @@
+{
+  "slug": "referee-pin",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "PIN lưu hash (organizer không xem lại được, chỉ đặt mới) hay phải xem lại/copy/share được tại sân (mask + reveal)?",
+      "positions": {
+        "solution-architect": "Option A: hash bằng crypt(), organizer không xem lại được PIN — chấp nhận được vì họ tự gõ; muốn xem lại thì rotate. Hash là chốt an ninh không nên bỏ ở trust boundary.",
+        "ui-ux-critic": "Organizer TẠI SÂN phải xem lại/copy/share PIN nhiều lần trong ngày giải (mask ••• ••• + nút Hiện/Sao chép/Chia sẻ, server sinh mã). Consensus Claude+GPT-5.6 mục (f). Hash-không-xem-lại giết use-case chính."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "supabase/migrations/20260722000000_team_match_invite_code_lockdown.sql:11-16,40-42 — repo's join-secret pattern stores the secret retrievably (invite_code plaintext) and protects it via column REVOKE + privileged read, precisely so it can still be shared.",
+          "note": "Keep the security boundary that kills pre-mortem Incident 2 (PIN in a table with NO anon/authenticated SELECT, read only via SECURITY DEFINER RPC) — but drop hash. Hashing a 6-digit space is security theater (10^6 offline-bruteforceable in ms) while it needlessly kills the organizer reveal/copy/share use-case. Store PIN retrievably; expose reveal via an organizer-only RPC. Boundary intact, court use-case restored."
+        },
+        "ui-ux-critic": {
+          "move": "HOLD",
+          "note": "Reveal-ability (lưu creator-readable) và chống brute-force (rate-limit ở redeem) là HAI TRỤC độc lập. Creator-only-readable PIN + rate-limited redeem phục vụ được luồng tại-sân MÀ không bỏ chốt brute-force — độ lộ với anon y hệt bản hash. Rủi ro dư duy nhất: RLS cấu-hình-sai làm lộ một PIN entropy thấp nhưng rotate-được. Đánh đổi UX-vs-security cuối thuộc Cuong."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "note_for_cuong": "Hai phía đã HỘI TỤ về: bảng riêng khóa kín (không anon/authenticated SELECT) + reveal qua RPC creator-only + rate-limit redeem. Điểm còn mở duy nhất: lưu PIN đọc-lại-được (theo pattern invite_code của repo, organizer xem/copy/share thoải mái — khuyến nghị của cả hai agent sau vòng 2) hay vẫn hash (an toàn hơn một bậc nếu RLS cấu hình sai, đổi lại organizer chỉ rotate chứ không xem lại). Cần Cuong chốt."
+    },
+    {
+      "id": "D2",
+      "topic": "Control PIN của Quick Table đặt ở đâu: trong wizard setup (theo intake) hay ở QuickTableView post-create?",
+      "positions": {
+        "solution-architect": "RefereePinSettings nhúng vào cả 4 trang setup, gồm QuickTableSetup.tsx — theo intake 'đưa vào màn hình setup giải'.",
+        "ui-ux-critic": "Quick Table wizard 2 bước CHƯA có server id → không sinh/lưu PIN thật được trong wizard. Đặt ở QuickTableView post-create nơi RefereeManagement đã render. Blocker #3."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "HOLD",
+          "note": "Blocker #3 dựa trên tiền đề sai: QuickTableSetup.tsx:63,71-72 — table row is pre-created upstream, table.id có thật suốt cả hai bước (setupRosterAtomic(table.id) L240/291). PIN control trong setup wizard khả thi đúng theo intake."
+        },
+        "ui-ux-critic": {
+          "move": "CONCEDE",
+          "evidence": "src/pages/QuickTableSetup.tsx:142 setTable(data.table) + :239 setupRosterAtomic(table.id,...) + :70 comment 'The table row is pre-created upstream'",
+          "note": "Sai tiền đề vòng 1: hàng bảng đã tạo upstream, table.id có thật khi màn setup render. Blocker #3 sụp. Điểm nhỏ còn lại (không phải blocker): QuickTableSetup redirect đi khi đã có roster (:149-151) — màn một-lần, nên quản lý/rotate PIN ngày thi đấu vẫn cần chỗ trên QuickTableView (RefereeManagement)."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "PIN control đặt được trong setup wizard cho cả 4 format (QuickTableSetup đã có table.id thật — critic concede với evidence). Bổ sung từ concede: thêm điểm quản lý/rotate PIN trên QuickTableView (cạnh RefereeManagement) vì setup là màn một-lần."
+    },
+    {
+      "id": "D3",
+      "topic": "Luồng trọng tài nhập PIN v1: dialog trên màn view tournament (không route mới, share-link để sau) hay route riêng /referee/join/:format/:id + deep-link/QR là luồng chính?",
+      "positions": {
+        "solution-architect": "RefereePinDialog gắn trên 4 màn view sẵn có; không route công khai mới (né SSR/sitemap); share-link ?refpin= cố ý loại khỏi v1, là inc 6 nếu Cuong muốn.",
+        "ui-ux-critic": "PIN 6 số không unique toàn cục + 4 bảng id riêng → thực tế sân là nhận link/QR qua Zalo/FB, route /referee/join/:format/:id + buildLoginRedirect là luồng CHÍNH ngay v1 (blocker #1/#2); dialog-trên-view bắt trọng tài tự mò tới đúng trang giải."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "src/pages/QuickTableSetup.tsx:145,255 navigate to the existing view route /tools/quick-tables/${shareId}; the 4 view routes already exist, already carry :format/:id.",
+          "note": "'PIN not globally unique' argues for carrying format+id in the shared link — which the EXISTING view URL already does; không cần route mới. REFINE: giữ dialog-on-view + no new route, nhưng ĐƯA share-deep-link-tới-view-URL vào v1 (trước là inc6) kèm buildLoginRedirect trên route đó — critic đúng là trọng tài đến qua link Zalo/FB, sai ở chỗ cần route mới."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "functions/_middleware.ts:82 (NOINDEX_PATTERNS đã có /^\\/join/) + :388-399 (noindex bot path không SSR/sitemap/hreflang) + :668 (render404)",
+          "note": "Lý do 'route mới phát sinh nghĩa vụ SSR/sitemap' bị file bác thẳng: route auth-gated tốn ~1 regex + 1 route App.tsx. NHƯNG dialog-trên-view + chia-sẻ URL view sẵn có cũng giao được → hạ route-là-luồng-chính từ Blocker xuống Nên-sửa. Bất-di-bất-dịch dù chọn surface nào: 'Trở thành trọng tài' khi chưa login PHẢI vòng qua buildLoginRedirect rồi quay lại đúng ý định — trong v1. Route-vs-dialog là quyết định UX của Cuong."
+        }
+      },
+      "status": "OPEN_FOR_CUONG",
+      "note_for_cuong": "Hai phía đã HỘI TỤ về: share-link mang format+id là luồng chính v1, buildLoginRedirect bắt buộc trong v1, chi phí SSR của route mới ~0 (cả hai bên đều đã kiểm chứng file). Điểm còn mở: (i) dùng URL view sẵn có + dialog tự mở (ít code hơn, trọng tài đáp xuống trang giải quen thuộc) hay (ii) route /referee/join/:format/:id chuyên dụng (màn hình gọn cho đúng một việc nhập PIN, dễ in QR). Thuần UX — cần Cuong chọn."
+    },
+    {
+      "id": "D4",
+      "topic": "Auto-expiry cho Doubles Elim + Flex: defer sang v2 hay bắt buộc có trong v1?",
+      "positions": {
+        "solution-architect": "Defer auto-expiry DE/Flex (v1 chỉ enforce QT/TM có status completed). Tác hại thực thấp: referee thừa chỉ sửa được điểm giải đã xong.",
+        "pre-mortem": "Đó chính là Sự cố 1: PIN chiếu công khai + không bao giờ hết hạn (không ai ghi status=completed cho DE/Flex) → 19 ngày sau kẻ thua sửa final_placement, DUPR sync rating sai — hỏng dữ liệu VĨNH VIỄN, không alert. V1 phải có predicate thật + WARNING log."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "CONCEDE",
+          "evidence": "src/components/tournament/DoublesEliminationBracket.tsx:1067 and src/pages/DoublesEliminationScoring.tsx:433 — both status:'completed' writes are on the MATCH object, not doubles_elimination_tournaments; no tournament-level completed setter exists. src/components/tools/MyRefereeTournaments.tsx:19-24 confirms DE/Flex tournaments sit perpetually in the 'ongoing' bucket.",
+          "note": "My 'harm low' was wrong. A redeem after the final rewrites final_placement (doublesElimResult.ts:46) and triggers DUPR resync of wrong ratings — permanent, unalerted corruption. v1 MUST key expiry on a real signal plus a WARNING log on redeem-after-decided-final. Not deferrable."
+        },
+        "pre-mortem": {
+          "move": "REFINE",
+          "evidence": "supabase/functions/auto-archive-tournaments/index.ts:44-66 — cron UPDATE status='completed' lên cả flex_tournaments (44-54) và doubles_elimination_tournaments (56-66) sau STALE_DAYS=14",
+          "note": "Chỉnh phạm vi Sự cố 1: (a) nhượng phần nói quá — expiry gate REDEMPTION, không thu hồi referee đã cấp; (b) còn đứng: user MỚI redeem PIN của giải đã kết thúc; (c) auto-archive đã dập status='completed' lên cả 2 format sau 14 ngày → redeem RPC chỉ cần check status='completed' cho CẢ 4 — một dòng, rẻ hơn query final_placement; (d) không tin được toggle tay: chính sự tồn tại của cron STALE_DAYS=14 chứng minh organizer không tự đóng giải. Cửa sổ dư 0-14 ngày sau chung kết → cần WARNING log redeem-sau-chung-kết hoặc check final_placement cho DE."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "Architect CONCEDE có evidence: defer auto-expiry DE/Flex là sai. V1 bắt buộc: redeem RPC check status='completed' cho CẢ 4 format (tín hiệu đã tồn tại — auto-archive cron dập completed lên DE/Flex sau 14 ngày, phát hiện của pre-mortem vòng 2), cộng guard cửa sổ 0-14 ngày: check final_placement=1 tồn tại cho Doubles Elim (doublesElimResult.ts:46) và WARNING log khi redeem sau chung kết."
+    }
+  ]
+}

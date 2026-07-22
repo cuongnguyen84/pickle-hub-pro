@@ -1,0 +1,20 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": {
+    "D1": {
+      "move": "HOLD",
+      "evidence": "docs/proposals/referee-pin/round1/solution-architect.md:24 — referee_pins is creator-only SELECT, not anon-exposed",
+      "note": "Không có file mới lật kết luận. Reveal-ability (lưu creator-readable) và chống brute-force (rate-limit ở redeem) là HAI TRỤC độc lập; architect gộp chúng vào A-vs-B để làm nó thành nhị phân. Creator-only-readable PIN + rate-limited redeem phục vụ được luồng tại-sân xem/sao-chép/chia-sẻ MÀ không bỏ chốt brute-force — vì referee_pins đã creator-only SELECT, độ lộ với anon y hệt bản hash. Rủi ro dư duy nhất là RLS cấu-hình-sai làm lộ một PIN entropy thấp và rotate-được. Đây là đánh đổi UX-vs-security, thuộc quyết định của Cuong, không giải bằng nhượng bộ. Blocker vòng 1, không dữ kiện mới → vẫn Blocker."
+    },
+    "D2": {
+      "move": "CONCEDE",
+      "evidence": "src/pages/QuickTableSetup.tsx:142 setTable(data.table) + :239 setupRosterAtomic(table.id,...) + :70 comment 'The table row is pre-created upstream'",
+      "note": "Sai tiền đề vòng 1: QuickTableSetup KHÔNG phải wizard-chưa-có-id — hàng bảng đã tạo upstream, table.id có thật khi màn setup render, nên set_referee_pin(format,parent_id=table.id) chạy được ngay tại đây. Blocker #3 như đã phát biểu sụp. Dư một điểm nhỏ (không phải blocker): QuickTableSetup redirect đi khi đã có roster (:149-151), nên nó là màn một-lần-không-quay-lại-được — quản lý/rotate PIN ngày thi đấu vẫn phải có chỗ trên QuickTableView (RefereeManagement). Đó là tinh chỉnh vị trí."
+    },
+    "D3": {
+      "move": "REFINE",
+      "evidence": "functions/_middleware.ts:82 (/^\\/join(?:\\/|$)/ đã nằm trong NOINDEX_PATTERNS) + :388-399 (noindex bot path trả renderNoindexShell, KHÔNG query Supabase/sitemap/hreflang) + :668 (render404 cho route chưa liệt kê)",
+      "note": "Lý do architect bác route mới ('phát sinh nghĩa vụ SSR/sitemap/hreflang') bị file bác thẳng: route auth-gated chỉ tốn ~1 dòng regex trong NOINDEX_PATTERNS + 1 route App.tsx, KHÔNG cần SSR handler/sitemap segment/hreflang. Route không thể bị loại vì chi phí. NHƯNG dialog-trên-view + chia-sẻ URL view sẵn có cũng là cơ chế giao được (trọng tài không phải 'mò' nếu organizer gửi link view), nên hạ route-là-luồng-chính từ Blocker xuống Nên-sửa. Bất-di-bất-dịch dù chọn surface nào: bấm 'Trở thành trọng tài' khi chưa đăng nhập PHẢI vòng qua login (buildLoginRedirect) rồi quay lại đúng ý định — giữ trong v1. Route-vs-dialog là quyết định UX của Cuong, không phải chuyện chi phí SSR."
+    }
+  }
+}

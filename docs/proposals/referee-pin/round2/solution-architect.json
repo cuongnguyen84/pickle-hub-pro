@@ -1,0 +1,25 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": {
+    "D1": {
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20260722000000_team_match_invite_code_lockdown.sql:11-16,40-42 — repo's join-secret pattern stores the secret retrievably (invite_code plaintext) and protects it via column REVOKE + privileged read, precisely so it can still be shared.",
+      "note": "Keep the security boundary that actually kills pre-mortem Incident 2 (PIN in a table with NO anon/authenticated SELECT, read only via SECURITY DEFINER RPC) — but drop hash. Hashing a 6-digit space is security theater (10^6 offline-bruteforceable in ms) while it needlessly kills the organizer reveal/copy/share use-case. Store PIN retrievably; expose reveal via an organizer-only RPC gated on is_quick_table_creator(). Boundary intact, court use-case restored."
+    },
+    "D2": {
+      "move": "HOLD",
+      "evidence": "src/pages/QuickTableSetup.tsx:63,71-72 ('The table row is pre-created upstream, so shareId scopes the draft') + getTableByShareId(shareId) in loadTable returning data.table.id, consumed at setupRosterAtomic(table.id,…) L240/291.",
+      "note": "The critic's blocker #3 is 'wizard CHƯA có server id' — that fact is false. QuickTableSetup operates on an already-persisted row with a real id/share_id throughout both steps, so PIN control in the setup wizard is feasible per intake. Putting it next to RefereeManagement in QuickTableView is a fair consistency nit, not a blocker — either location works because the id exists."
+    },
+    "D3": {
+      "move": "REFINE",
+      "evidence": "src/pages/QuickTableSetup.tsx:145,255 navigate to the existing view route /tools/quick-tables/${shareId}; the 4 view routes already exist, already carry :format/:id, and already have SSR handlers. Critic references RefereeManagement rendering at QuickTableView:1137, confirming the view page exists.",
+      "note": "The 'PIN not globally unique' fact argues for carrying format+id in the shared link — which the EXISTING view URL already does. It does NOT justify a new /referee/join public route. REFINE: keep dialog-on-view + no new route, but promote the share-deep-link-to-existing-view-URL into v1 (was inc6) with buildLoginRedirect on that route — the critic is right that referees arrive via Zalo/FB link, wrong that it needs a new route."
+    },
+    "D4": {
+      "move": "CONCEDE",
+      "evidence": "src/components/tournament/DoublesEliminationBracket.tsx:1067 and src/pages/DoublesEliminationScoring.tsx:433 — both status:'completed' writes are on the MATCH object, not doubles_elimination_tournaments; no tournament-level completed setter exists. src/components/tools/MyRefereeTournaments.tsx:19-24 confirms DE/Flex tournaments sit perpetually in the 'ongoing' bucket.",
+      "note": "My 'harm low' was wrong. Expiry keyed on tournament status='completed' never fires for DE/Flex, so a projected PIN lives forever; a redeem after the final rewrites final_placement (derived in doublesElimResult.ts:46) and triggers DUPR resync of wrong ratings — permanent, unalerted corruption. v1 MUST key expiry on a real signal (final_placement=1 already exists / organizer-set expires_at) plus a WARNING log on redeem-after-decided-final. Not deferrable."
+    }
+  }
+}

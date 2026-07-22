@@ -1,0 +1,10 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": {
+    "D4": {
+      "move": "REFINE",
+      "evidence": "supabase/functions/auto-archive-tournaments/index.ts:44-66 — cron UPDATE status='completed' lên cả flex_tournaments (44-54) và doubles_elimination_tournaments (56-66) sau STALE_DAYS=14; solution-architect.md:24 chỉ check status ở redeem RPC cho QuickTable/TeamMatch, DEFER DE/Flex",
+      "note": "Chỉnh phạm vi Sự cố 1, KHÔNG concede defer. (a) NHƯỢNG phần bị nói quá: is_active/expiry gate REDEMPTION, không thu hồi hàng referee đã cấp — nên 'referee cũ sửa điểm sau giải' không phải do PIN sống, harm đó nằm ngoài scope PIN. (b) PHẦN CÒN ĐỨNG: đường 'user MỚI redeem PIN của giải đã kết thúc' rồi sửa final_placement+DUPR. (c) Lý do defer của architect ('DE/Flex không có completed đồng nhất, phải query final_placement đắt') bị auto-archive-tournaments/index.ts:44-66 bác thẳng: status='completed' đã được cron dập lên cả 2 format, nên redeem RPC chỉ cần check status='completed' cho CẢ 4 — một dòng, KHÔNG cần query final_placement. (d) Có phụ thuộc organizer QUÊN tắt không? Có, trong cửa sổ 0-14 ngày trước khi cron dập completed; nhưng lý do KHÔNG được tin vào toggle tay chính là auto-archive tồn tại: cron STALE_DAYS=14 quét đúng 4 format này ra đời VÌ organizer bỏ giải ở trạng thái chưa-completed — họ không đóng giải thì càng không tắt PIN. Kết luận: defer redeem-time status guard là sai; nó là 1 dòng được auto-archive cho không. Sự cố 1 sống ở dạng đã chỉnh: trong 0-14 ngày sau chung kết, PIN DE/Flex vẫn redeem được nếu chỉ check status — cần thêm WARNING log redeem-sau-chung-kết hoặc check final_placement cho DE."
+    }
+  }
+}
