@@ -1,0 +1,71 @@
+# ============================================================================
+# Milestone dispatcher (proposal auto-milestone-run-2026-07, Track a Option B).
+#
+# Daily at 08:05 ICT: run scripts/due-milestones.mjs against docs/milestones.md.
+# While any milestone is due and un-ticked, ping Cuong on Telegram — EVERY day
+# until it is ticked [x]. Idempotent on "due & not done", not fire-once: the
+# fire-once soak reminders of July are exactly what this replaces.
+#
+# The milestone itself carries a PREDICATE (see docs/milestones.md header);
+# this workflow only surfaces dates — whoever acts must check the predicate.
+# Watched by the watchdog step in uptime-ping.yml (daily liveness check).
+# ============================================================================
+
+name: Milestone due
+
+on:
+  schedule:
+    - cron: "5 1 * * *" # 08:05 Asia/Ho_Chi_Minh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  due-check:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check due milestones
+        id: due
+        run: |
+          set +e
+          OUT=$(node scripts/due-milestones.mjs)
+          CODE=$?
+          set -e
+          echo "$OUT"
+          {
+            echo "list<<EOF"
+            echo "$OUT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ "$CODE" = "3" ]; then
+            echo "due=1" >> "$GITHUB_OUTPUT"
+          elif [ "$CODE" = "0" ]; then
+            echo "due=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::due-milestones.mjs exited $CODE (parse/read error)"
+            exit 1
+          fi
+
+      - name: Ping Telegram while due & not done
+        if: steps.due.outputs.due == '1'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DUE_LIST: ${{ steps.due.outputs.list }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping ping"; exit 0
+          fi
+          # First line = the whole story (lock-screen preview). Body lists the
+          # due lines verbatim from docs/milestones.md (IDs + predicates).
+          N=$(echo "$DUE_LIST" | grep -c '⏰' || true)
+          MSG="⏰ MỐC ĐẾN HẠN · ${N} mốc chưa xong%0A"
+          MSG="$MSG%0A$(echo "$DUE_LIST" | sed ':a;N;$!ba;s/\n/%0A/g')"
+          MSG="$MSG%0A%0AXong thì tick [x] trong docs/milestones.md (kèm bằng chứng) — nhắc lại mỗi ngày 08:05 tới khi tick."
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MSG}" >/dev/null || true

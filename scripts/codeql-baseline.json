@@ -1,0 +1,22 @@
+{
+  "_readme": [
+    "Baseline for the LOCAL CodeQL SARIF gate (scripts/codeql-gate.mjs, run by security.yml).",
+    "GitHub pulled code-scanning upload for free-plan private repos (2026-07-21), so Security-tab",
+    "dismissals no longer apply — this file replaces them. An entry means: a HUMAN reviewed the",
+    "finding and accepted it as a false positive. The gate still fails on ANY finding not listed",
+    "here. Match is ruleId + file (not line — lines drift). Remove entries when the code they",
+    "cover is rewritten; the gate warns about entries that no longer match anything."
+  ],
+  "accepted": [
+    {
+      "ruleId": "js/incomplete-multi-character-sanitization",
+      "file": "functions/_lib/utils.ts",
+      "reason": "False positive: sanitizer runs all replacements inside a do..while fixpoint loop (see comment at the loop, added in the CodeQL 28->0 sweep 2026-07-17); CodeQL's checker does not model fixpoint convergence. Dismissed on the Security tab while upload still worked; re-accepted by Cuong 2026-07-22 (PR #432)."
+    },
+    {
+      "ruleId": "js/incomplete-multi-character-sanitization",
+      "file": "workers/news-fetcher/src/index.ts",
+      "reason": "False positive: same fixpoint-loop pattern in stripHtml() (strip + entity-decode to convergence). Dismissed on the Security tab while upload still worked; re-accepted by Cuong 2026-07-22 (PR #432)."
+    }
+  ]
+}

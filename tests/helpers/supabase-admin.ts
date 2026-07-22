@@ -33,6 +33,26 @@ export function hasAuthEnv(): boolean {
   );
 }
 
+/**
+ * QA-04 fail-hard rule: on CI the auth env is wired as repo secrets (#431),
+ * so "env missing" is an infra failure — the suite must FAIL, not silently
+ * skip. Silent skip already burned us once: a secret rename would turn the
+ * whole auth suite into skipped-green and nobody would notice the guard was
+ * off (proposal auto-milestone-run-2026-07, pre-mortem incident 1).
+ * Local runs without secrets still skip. Emergency escape hatch (visible,
+ * greppable): PLAYWRIGHT_ALLOW_NO_AUTH=1.
+ */
+export function authEnvOrFailInCI(): boolean {
+  if (hasAuthEnv()) return true;
+  if (process.env.CI && process.env.PLAYWRIGHT_ALLOW_NO_AUTH !== "1") {
+    throw new Error(
+      "Auth env (SUPABASE_URL/SERVICE_ROLE/ANON) missing in CI — auth suite must not skip-to-green on CI. " +
+        "Check GitHub Actions secrets wiring in playwright.yml. Escape hatch: PLAYWRIGHT_ALLOW_NO_AUTH=1.",
+    );
+  }
+  return false;
+}
+
 function requireEnv(): { url: string; service: string; anon: string } {
   const url = process.env.SUPABASE_URL;
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -104,6 +124,34 @@ export async function mintSessionForEmail(
   const storageValue = JSON.stringify(session);
 
   return { session, storageKey, storageValue };
+}
+
+/**
+ * Refresh a minted session once via the anon client (setSession +
+ * refreshSession) and return the NEW session. Proves the seeded
+ * access/refresh pair can actually renew itself — the storageState cache
+ * (tests/auth.setup.ts) would otherwise hide a broken refresh path until a
+ * CI shard ran longer than the access-token TTL (D4 must-verify, proposal
+ * auto-milestone-run-2026-07). Refresh tokens rotate on use, so callers must
+ * persist the RETURNED session, not the input.
+ */
+export async function refreshMintedSession(session: Session): Promise<Session> {
+  const { url, anon } = requireEnv();
+  const client = createClient(url, anon, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: setData, error: setErr } = await client.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  });
+  if (setErr || !setData?.session) {
+    throw new Error(`setSession on minted session failed: ${setErr?.message ?? "no session"}`);
+  }
+  const { data: refData, error: refErr } = await client.auth.refreshSession();
+  if (refErr || !refData?.session) {
+    throw new Error(`refreshSession on minted session failed: ${refErr?.message ?? "no session"}`);
+  }
+  return refData.session;
 }
 
 /**

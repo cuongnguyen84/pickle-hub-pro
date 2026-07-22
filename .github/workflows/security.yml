@@ -58,7 +58,33 @@ jobs:
           languages: javascript-typescript
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
-      - name: Perform CodeQL analysis
+      # 2026-07-21 (plan A, approved by Cuong): GitHub pulled code-scanning
+      # SARIF upload for private repos on the free plan — the upload step
+      # started failing with "Code scanning is not enabled for this
+      # repository" and Settings no longer offers enabling it without the
+      # paid Code Security add-on. CodeQL still RUNS in full; we gate on the
+      # SARIF locally instead of uploading. Net effect: the gate got
+      # STRONGER — findings now fail this job directly (upload-only never
+      # did), they just no longer appear in the Security tab.
+      - name: Perform CodeQL analysis (no upload — GHAS not available)
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript-typescript"
+          upload: never
+          output: codeql-results
+
+      # Fails on any finding NOT in scripts/codeql-baseline.json — the same
+      # semantic the upload path had (new findings block, human-dismissed
+      # ones don't). Dismissals died with the upload entitlement; the
+      # baseline file, with written reasons, replaces them (Cuong-approved
+      # design, PR #432).
+      - name: Gate on CodeQL findings (local SARIF vs baseline)
+        run: node scripts/codeql-gate.mjs codeql-results
+
+      - name: Upload SARIF artifact (inspection without Security tab)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif
+          path: codeql-results/
+          retention-days: 30

@@ -93,18 +93,24 @@ for (const route of ROUTES) {
     // <body> rendered — catches white-screen-of-death.
     await expect(page.locator("body")).toBeVisible();
 
-    // Let React hydrate + DynamicMeta swap the title (~1.5s is enough
-    // for the SPA route to finalise).
-    await page.waitForTimeout(1500);
-
-    // Title regression — the original /dupr bug literally produced
-    // <title>undefined</title>. We just need to confirm the value isn't
-    // the string "undefined" (case-insensitive) and isn't empty.
-    const title = await page.title();
-    expect(title, `title for ${route}`).toBeTruthy();
-    expect(title.trim(), `title not empty`).not.toBe("");
-    expect(title, `title not literal "undefined"`).not.toMatch(/^undefined$/i);
-    expect(title, `title doesn't contain "undefined"`).not.toMatch(/undefined/i);
+    // QA-04: wait for the title to SETTLE to a valid value instead of
+    // sampling at a fixed 1.5s — /feed's DynamicMeta can swap later than
+    // that on slow CI runners, and the old sleep read the intermediate
+    // state. A title that never becomes valid within the window still
+    // fails, so the original /dupr <title>undefined</title> regression is
+    // still caught.
+    await expect
+      .poll(
+        async () => {
+          const t = (await page.title()).trim();
+          return t !== "" && !/undefined/i.test(t);
+        },
+        {
+          message: `title for ${route} should settle to non-empty without "undefined"`,
+          timeout: 15_000,
+        },
+      )
+      .toBe(true);
 
     expect(errors, `JS errors on ${route}:\n${errors.join("\n")}`).toEqual([]);
   });

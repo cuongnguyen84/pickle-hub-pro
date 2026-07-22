@@ -147,9 +147,9 @@ async function runAlert(): Promise<RunReport> {
     // Dedupe — alerted recently?
     const { data: dedup } = await supabase
       .from("error_alert_dedup")
-      .select("last_alerted_at")
+      .select("last_alerted_at, alert_count")
       .eq("fingerprint", fp)
-      .maybeSingle<{ last_alerted_at: string }>();
+      .maybeSingle<{ last_alerted_at: string; alert_count: number | null }>();
 
     if (dedup) {
       const since = Date.now() - new Date(dedup.last_alerted_at).getTime();
@@ -190,7 +190,9 @@ async function runAlert(): Promise<RunReport> {
           {
             fingerprint: fp,
             last_alerted_at: new Date().toISOString(),
-            alert_count: (dedup ? 1 : 1),  // start at 1; could be incremented from existing
+            // OPS-04: was `(dedup ? 1 : 1)` — a dead ternary that pinned every
+            // fingerprint at 1 and made recurrence invisible in the table.
+            alert_count: (dedup?.alert_count ?? 0) + 1,
           },
           { onConflict: "fingerprint" },
         );

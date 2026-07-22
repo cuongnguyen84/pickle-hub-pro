@@ -31,7 +31,31 @@ import AxeBuilder from "@axe-core/playwright";
  * Scoped rather than page-wide so a new surface can be held to AA without
  * first paying off every older violation on the same page.
  */
+/**
+ * QA-04: axe injects a script into the page; if a late client-side reload or
+ * URL rewrite is still in flight when the scan starts (chunk-retry reload,
+ * first-paint URL-state replace), the injected context is torn down mid-scan
+ * and Playwright throws "Execution context was destroyed". Every axe helper
+ * waits here first: document complete AND the URL unchanged across a 250ms
+ * poll window. A page that never settles fails loudly instead of flaking.
+ */
+async function waitForStableDocument(page: Page): Promise<void> {
+  await page.waitForLoadState("load");
+  let prev = page.url();
+  for (let i = 0; i < 12; i++) {
+    await page.waitForTimeout(250); // poll interval, not a blind sleep
+    const cur = page.url();
+    const ready = await page
+      .evaluate(() => document.readyState)
+      .catch(() => "navigating");
+    if (cur === prev && ready === "complete") return;
+    prev = cur;
+  }
+  throw new Error(`URL/document never settled before axe scan: ${page.url()}`);
+}
+
 async function expectNoContrastViolations(page: Page, selector: string, context: string) {
+  await waitForStableDocument(page);
   const results = await new AxeBuilder({ page })
     .include(selector)
     .withRules(["color-contrast"])
@@ -51,6 +75,7 @@ async function expectNoContrastViolations(page: Page, selector: string, context:
 }
 
 async function expectNoViolations(page: Page, context: string) {
+  await waitForStableDocument(page);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa"])
     .disableRules(["color-contrast"])
