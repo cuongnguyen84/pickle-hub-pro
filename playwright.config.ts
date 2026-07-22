@@ -97,6 +97,17 @@ export default defineConfig({
       dependencies: ["auth-setup"],
     },
 
+    {
+      // QA-04 inc4 — the ten critical journeys. Single-worker sequential
+      // like a11y: discovery walks live pages and caches at module scope,
+      // and the journeys share the auth-setup session cache.
+      name: "journeys",
+      fullyParallel: false,
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /journeys\.spec\.ts/,
+      dependencies: ["auth-setup"],
+    },
+
     // ── Phase 2E — edge function contract tests (request-only) ─────────────
     {
       name: "contract",
