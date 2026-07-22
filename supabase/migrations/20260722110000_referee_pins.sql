@@ -133,8 +133,10 @@ BEGIN
 
   LOOP
     -- 3 bytes of pgcrypto entropy → uniform enough over 10^6 for a code whose
-    -- real defence is the redeem rate-limit, not keyspace size.
-    v_bytes := gen_random_bytes(3);
+    -- real defence is the redeem rate-limit, not keyspace size. Schema-qualified
+    -- because the function pins search_path=public and pgcrypto lives in
+    -- `extensions` on Supabase.
+    v_bytes := extensions.gen_random_bytes(3);
     v_pin := lpad(
       (
         (
