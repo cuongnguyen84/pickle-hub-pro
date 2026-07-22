@@ -132,6 +132,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # QA-04 inc4: unlocks the J5/J6 organizer-wizard journeys (and the
+          # a11y O2 scan). Absent secret = those tests self-skip with reason.
+          PLAYWRIGHT_ORGANIZER_CLUB_SLUG: ${{ secrets.PLAYWRIGHT_ORGANIZER_CLUB_SLUG }}
         run: npm run e2e
 
       - name: Upload Playwright report on failure

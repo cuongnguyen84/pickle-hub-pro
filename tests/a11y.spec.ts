@@ -12,6 +12,7 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { discoverEventHref, discoverSlugHref } from "./helpers/discover";
 
 // color-contrast is disabled HERE, for whole-page scans only, because the
 // public pages carry older contrast debt that would drown out new failures.
@@ -96,62 +97,8 @@ async function expectNoViolations(page: Page, context: string) {
   ).toEqual([]);
 }
 
-/** First detail link on a listing page, or null when the listing is empty. */
-async function discoverSlugHref(
-  page: Page,
-  listRoute: string,
-  hrefPrefix: string,
-  timeout = 10_000,
-): Promise<string | null> {
-  await page.goto(listRoute, { waitUntil: "domcontentloaded" });
-  const link = page.locator(`a[href^="${hrefPrefix}"]`).first();
-  try {
-    await link.waitFor({ state: "attached", timeout });
-  } catch {
-    return null;
-  }
-  return link.getAttribute("href");
-}
-
-/**
- * Event detail URL: prefer the /social listing (upcoming events), fall back
- * to walking the first few club landings — past events keep their links, so
- * the P1 scan still runs when nothing upcoming exists (a real prod state).
- */
-let cachedEventHref: string | null | undefined;
-
-async function discoverEventHref(page: Page): Promise<string | null> {
-  // The a11y project is single-worker sequential (playwright.config.ts), so
-  // one walk serves both P1 and P2.
-  if (cachedEventHref !== undefined) return cachedEventHref;
-  cachedEventHref = await discoverEventHrefUncached(page);
-  return cachedEventHref;
-}
-
-async function discoverEventHrefUncached(page: Page): Promise<string | null> {
-  const direct = await discoverSlugHref(page, "/social", "/social/");
-  if (direct) return direct;
-  await page.goto("/clubs", { waitUntil: "domcontentloaded" });
-  await page
-    .locator('a[href^="/clb/"]')
-    .first()
-    .waitFor({ state: "attached", timeout: 10_000 })
-    .catch(() => undefined);
-  const clubs = [
-    ...new Set(
-      (await page
-        .locator('a[href^="/clb/"]')
-        .evaluateAll((els) => els.map((el) => el.getAttribute("href")))) as string[],
-    ),
-  ].slice(0, 6);
-  for (const club of clubs) {
-    // Short wait per club: most have no events; 4s after domcontentloaded
-    // is plenty for the events list to hydrate.
-    const href = await discoverSlugHref(page, club, "/social/", 4_000);
-    if (href) return href;
-  }
-  return null;
-}
+// Discovery helpers moved to helpers/discover.ts (QA-04 inc4 — shared with
+// the journeys project). Same single-worker caching contract as before.
 
 // ── P1 — event detail ────────────────────────────────────────────────────────
 

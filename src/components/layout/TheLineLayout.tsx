@@ -831,7 +831,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               </div>
             </>
           ) : (
-            <Link to="/login" className="tl-nav-btn">
+            <Link to={getLoginUrl(location.pathname + location.search)} className="tl-nav-btn">
               {language === "vi" ? "Đăng nhập" : "Sign in"}
             </Link>
           )}
@@ -956,7 +956,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                   </Link>
                 </>
               ) : (
-                <Link to="/login" onClick={() => setMenuOpen(false)}>
+                <Link to={getLoginUrl(location.pathname + location.search)} onClick={() => setMenuOpen(false)}>
                   <span>{language === "vi" ? "Đăng nhập" : "Sign in"}</span>
                   <span className="arr">→</span>
                 </Link>
