@@ -226,7 +226,7 @@ export function useDoublesElimination() {
 
       if (rpcError) throw rpcError;
 
-      const result = rpcData as {
+      const result = rpcData as unknown as {
         success: boolean;
         error?: string;
         tournament?: Tournament;

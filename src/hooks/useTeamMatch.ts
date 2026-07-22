@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -231,7 +232,7 @@ export function useTeamMatch() {
             bank_account_name: input.bank_account_name ?? null,
             event_date: input.event_date ?? null,
             location: input.location?.trim() || null,
-            discount_tiers: input.discount_tiers ?? [],
+            discount_tiers: (input.discount_tiers ?? []) as unknown as Json,
           },
           p_templates: input.game_templates.map((template, index) => ({
             order_index: index,
@@ -247,7 +248,7 @@ export function useTeamMatch() {
         throw rpcError;
       }
 
-      const result = rpcData as {
+      const result = rpcData as unknown as {
         success: boolean;
         error?: string;
         tournament?: TeamMatchTournament;
