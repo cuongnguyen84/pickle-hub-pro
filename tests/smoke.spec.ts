@@ -138,6 +138,16 @@ test("skip link is the first tab stop and moves focus to content", async ({ page
   // mounted; only then is Tab meaningful.
   const skipLink = page.locator('a[href="#main-content"]');
   await skipLink.waitFor({ state: "attached" });
+  // Flake fix 2026-07-22: on CI chromium the first Tab intermittently landed
+  // "inactive" — something (embedded player/iframe, late autofocus) already
+  // held focus when the test began, so Tab continued from THERE, not from
+  // the top. Reset focus to <body> first: the assertion stays "skip link is
+  // the first tab stop from the top of the document", which is what the
+  // skip-link contract actually promises.
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    window.focus();
+  });
   await page.keyboard.press("Tab");
 
   await expect(skipLink).toBeFocused();

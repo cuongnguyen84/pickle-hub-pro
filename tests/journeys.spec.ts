@@ -295,8 +295,12 @@ test("J9 feed: anonymous Trending surfaces news and the article renders", async 
   // Navigate by href instead of clicking: feed cards animate/shift while
   // media loads, so the card is rarely "stable" for Playwright's click —
   // the journey under test is feed-surfaces-news → article-renders, not
-  // pointer mechanics on a moving card.
-  await page.goto(href!, { waitUntil: "domcontentloaded" });
+  // pointer mechanics on a moving card. One retry: prod intermittently
+  // aborts the first navigation (net::ERR_ABORTED) when the feed still has
+  // requests in flight.
+  await page
+    .goto(href!, { waitUntil: "domcontentloaded" })
+    .catch(() => page.goto(href!, { waitUntil: "domcontentloaded" }));
   await expect(page.locator("h1").first()).toBeVisible({ timeout: 10_000 });
   expect(await page.title()).not.toMatch(/undefined/i);
 });
@@ -322,9 +326,13 @@ test("J10 connected player: home log-match CTA reaches the /match/new form", asy
   expect(page.url(), "RequireAuth must not bounce a connected user").not.toMatch(
     /\/login/,
   );
-  // The form shell is interactive: at least one input/button beyond nav.
-  await expect(page.locator("main input, main button, form").first()).toBeVisible({
-    timeout: 10_000,
-  });
+  // The form shell is interactive: at least one input/button in the routed
+  // content. The public shell has no <main> element — the landmark is the
+  // #main-content div (App.tsx).
+  await expect(
+    page
+      .locator("#main-content input, #main-content button, #main-content form")
+      .first(),
+  ).toBeVisible({ timeout: 15_000 });
   expect(await page.title()).not.toMatch(/undefined/i);
 });
