@@ -303,9 +303,10 @@ export function useFlexTournament() {
       p_entity_type: input.entityType,
       p_name: input.name,
       p_display_order: input.displayOrder,
-      p_match_type: input.matchType ?? null,
-      p_group_id: input.groupId ?? null,
-      p_parent_match_id: input.parentMatchId ?? null,
+      // RPC params default/accept NULL; generated Args type doesn't model that.
+      p_match_type: (input.matchType ?? null) as string,
+      p_group_id: (input.groupId ?? null) as string,
+      p_parent_match_id: (input.parentMatchId ?? null) as string,
     });
     const result = (data ?? {}) as Record<string, unknown>;
     if (error || result.success !== true || !result.entity) {
@@ -540,7 +541,7 @@ export function useFlexTournament() {
     const { data, error } = await supabase.rpc('update_flex_match_standings_atomic', {
       p_match_id: matchId,
       p_counts_for_standings: countsForStandings,
-      p_group_id: groupId,
+      p_group_id: groupId as string, // RPC accepts NULL; Args type doesn't model that.
     });
     const result = (data ?? {}) as Record<string, unknown>;
     if (error || result.success !== true) {
