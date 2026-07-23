@@ -95,6 +95,37 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Self-heal functions the GitHub integration deploys blob-less
+        # The Supabase GitHub integration re-deploys pro-tour-ingest on every
+        # main push and (since ~2026-07-18) registers metadata WITHOUT
+        # uploading the code blob → every call 404s with
+        # NOT_FOUND_FUNCTION_BLOB (broke the MLP scrape cron silently,
+        # 2026-07-22). Until the integration is fixed/disabled in the
+        # Supabase dashboard: probe each function and redeploy any that
+        # serve blob-404. Wait first — the integration deploy lands up to
+        # ~1 min after the push that triggered this workflow.
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -e
+          sleep 90
+          BROKEN=""
+          for fn in pro-tour-ingest; do
+            BODY=$(curl -sS "https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/$fn" || true)
+            if echo "$BODY" | grep -q "NOT_FOUND_FUNCTION_BLOB"; then
+              BROKEN="${BROKEN:+$BROKEN }$fn"
+            fi
+          done
+          if [ -z "$BROKEN" ]; then
+            echo "All probed functions serve a blob — nothing to heal"
+            exit 0
+          fi
+          for fn in $BROKEN; do
+            echo "::group::Re-deploying blob-less $fn"
+            supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --use-api
+            echo "::endgroup::"
+          done
+
       - name: Migration drift check (strict — SEC-06)
         # The ledger was fully reconciled 2026-07-16 (283 = 283, zero drift)
         # and every Management-API-applied migration is now ledgered in the
