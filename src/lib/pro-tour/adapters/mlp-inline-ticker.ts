@@ -188,6 +188,7 @@ interface InlineTickerGame {
   matchAbbreviation?: string | null;
   formatTitle?: string | null;
   playerGroupTitle?: string | null;
+  moduleSubTitle?: string | null;
   teamOnePlayerOneName?: string | null;
   teamOnePlayerTwoName?: string | null;
   teamTwoPlayerOneName?: string | null;
@@ -345,6 +346,30 @@ export function parseMlpFromInlineTicker(
 ): TournamentScrapeResult | null {
   const raw = extractInlineTickerMatchups(mlpHtml);
   if (!raw) return null;
+
+  // CROSS-EVENT GUARD (2026-07-23): the WP site injects the SAME global
+  // "current event" ticker into EVERY event page — the Orlando page
+  // carries San Diego's matchups verbatim while San Diego is the active
+  // event. Without this check, scraping a non-active event's page would
+  // ingest the ACTIVE event's matches under the wrong tournament.
+  // The per-game moduleSubTitle starts with the real event name
+  // ("MLP San Diego - 2026 Regular Season - ..."), so require it to
+  // mention the page's own tournament name before trusting the payload.
+  const subtitle = raw
+    .flatMap((m) => m.matches ?? [])
+    .map((g) => g.moduleSubTitle)
+    .find((s): s is string => Boolean(s && s.trim()));
+  if (subtitle && tournamentName) {
+    const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+    if (!norm(subtitle).includes(norm(tournamentName))) {
+      throw new Error(
+        `MLP inline ticker belongs to another event ("${subtitle}"), not ` +
+          `"${tournamentName}" — this event is likely not currently active. ` +
+          `Will succeed once the event's own matchups go live.`,
+      );
+    }
+  }
+
   const matchups = raw
     .map(inlineMatchupToParsed)
     .filter((m): m is ParsedMlpMatchup => m !== null);

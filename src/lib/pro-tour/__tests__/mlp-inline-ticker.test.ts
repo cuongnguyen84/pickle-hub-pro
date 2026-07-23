@@ -79,6 +79,15 @@ describe("parseMlpFromInlineTicker", () => {
     expect(wd.players_b).toEqual(["Alex Walker", "Milan Rane"]);
   });
 
+  it("throws when the ticker belongs to another event (global-ticker page)", () => {
+    // The WP site injects the ACTIVE event's ticker into every event page —
+    // an Orlando page carries San Diego matchups. moduleSubTitle names the
+    // real event, so a mismatched page title must be rejected.
+    expect(() =>
+      parseMlpFromInlineTicker(FIXTURE, EVENT_URL, "MLP Orlando"),
+    ).toThrow(/belongs to another event/);
+  });
+
   it("creates team + player ghost profiles", () => {
     const teamIds = result.players.map((p) => p.external_id);
     expect(teamIds).toContain("columbus-sliders");
