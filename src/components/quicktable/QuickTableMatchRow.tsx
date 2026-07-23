@@ -360,7 +360,7 @@ export default function QuickTableMatchRow({
                   type="button"
                   className="tl-btn"
                   style={{ padding: '6px 10px', fontSize: 11.5 }}
-                  onClick={isCompleted ? handleStartEdit : handleOpenScoring}
+                  onClick={handleStartEdit}
                 >
                   <Pencil className="w-3 h-3" />
                   <span className="hidden sm:inline">
