@@ -50,6 +50,28 @@ interface VenueDetailRow {
   cover_image_url: string | null;
 }
 
+// Guard-0: a venue with no location AND no facts is a pure UGC stub (created via
+// /san/them with just a name). 691×2 such near-empty pages dilute the /san
+// cluster ("mass low-value templated inventory"). Flag them so the detail page
+// carries <meta robots noindex> and the sitemap drops them. Deliberately
+// conservative — an address OR coordinates alone keeps a venue indexed; tighten
+// the bar when S2 enrichment (price/reviews/photos) lands.
+// ponytail: single source of truth — renderVenueDetail AND sitemap-venues.xml.ts
+// both import this so the two never drift on the definition of "thin".
+export function isThinVenue(v: {
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  num_courts: number | null;
+  phone: string | null;
+}): boolean {
+  const hasAddress = !!(v.address && v.address.trim());
+  const hasGeo = v.latitude != null && v.longitude != null;
+  const hasCourts = !!(v.num_courts && v.num_courts > 0);
+  const hasPhone = !!(v.phone && v.phone.trim());
+  return !hasAddress && !hasGeo && !hasCourts && !hasPhone;
+}
+
 function displayName(v: { name: string; name_vi: string | null }, lang: Lang): string {
   if (lang === "vi" && v.name_vi && v.name_vi.trim().length > 0) return v.name_vi;
   return v.name;
@@ -461,6 +483,9 @@ export async function renderVenueDetail(
         { hreflang: "x-default", href: enUrl },
       ],
       omitAutoHeader: true,
+      // Guard-0: near-empty UGC stubs carry noindex,follow so they don't dilute
+      // the /san cluster but still pass link equity. sitemap-venues drops them too.
+      ...(isThinVenue(v) ? { extraMeta: '<meta name="robots" content="noindex, follow"/>' } : {}),
     }),
   );
 }

@@ -147,6 +147,45 @@ check_route() {
   # ─── Cache hint header (visible in -I but cheap to skip; just log)
 }
 
+# ─── VI-blog hreflang alternates (Guard-0) ──────────────────────────────
+# The 5th blog sync leg lives in Supabase (vi_blog_posts.alternate_en_slug) and
+# CI can't check it statically. When S1 consolidation 301s an EN post that a VI
+# twin still points at, the twin's <link rel="alternate" hreflang="en"> targets
+# a redirecting URL → orphaned hreflang, Google drops the cluster. sitemap-blog
+# already emits every VI twin's EN-alternate href; assert each resolves 200 (not
+# 301/404) over HTTP — no DB client, no CI secret, checks what Google sees.
+check_vi_blog_alternates() {
+  echo ""
+  echo "═══ VI-blog EN alternates (must be 200, not 301/404)"
+  local sitemap
+  sitemap=$(curl -sL -A "$GOOGLEBOT_UA" -H "Cache-Control: no-cache" --max-time 20 "${BASE_URL}/sitemap-blog.xml")
+  if [[ -z "$sitemap" ]]; then
+    fail "sitemap-blog.xml empty (network or CF edge issue)"
+    return
+  fi
+  local en_urls
+  en_urls=$(echo "$sitemap" \
+    | grep -oE 'hreflang="en" href="[^"]+/blog/[^"]+"' \
+    | sed -E 's/.*href="([^"]+)".*/\1/' \
+    | sort -u)
+  if [[ -z "$en_urls" ]]; then
+    warn "no EN alternates found in sitemap-blog.xml (unexpected)"
+    return
+  fi
+  local total=0 bad=0
+  while IFS= read -r en; do
+    [[ -z "$en" ]] && continue
+    total=$((total + 1))
+    local code
+    code=$(curl -s -o /dev/null -w '%{http_code}' -A "$GOOGLEBOT_UA" -H "Cache-Control: no-cache" --max-time 15 "$en")
+    if [[ "$code" != "200" ]]; then
+      fail "orphaned hreflang: VI twin's EN alternate ${en} → ${code} (expected 200)"
+      bad=$((bad + 1))
+    fi
+  done <<< "$en_urls"
+  [[ $bad -eq 0 ]] && pass "all ${total} VI-blog EN alternates resolve 200"
+}
+
 # ─── Run ─────────────────────────────────────────────────────────────────
 echo "Verifying SEO surface on: ${BASE_URL}"
 echo "Routes: ${#ROUTES[@]}"
@@ -154,6 +193,8 @@ echo "Routes: ${#ROUTES[@]}"
 for route in "${ROUTES[@]}"; do
   check_route "$route"
 done
+
+check_vi_blog_alternates
 
 echo ""
 echo "════════════════════════════════════════"

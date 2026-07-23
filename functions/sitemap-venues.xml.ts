@@ -7,6 +7,7 @@
  */
 
 import { createSupabaseClient } from "./_lib/supabase";
+import { isThinVenue } from "./_lib/render/venues";
 import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
@@ -29,9 +30,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
+    // Guard-0: select the same content fields renderVenueDetail uses to judge
+    // "thin" so a near-empty UGC stub is dropped here too (its detail page is
+    // noindex). Keeping a noindex'd URL in the sitemap is a SEOnaut warning
+    // ("noindex in sitemap") and wastes crawl budget.
     const { data: venues, error } = await supabase
       .from("venues")
-      .select("slug, updated_at")
+      .select("slug, updated_at, address, latitude, longitude, num_courts, phone")
       .order("updated_at", { ascending: false })
       .limit(5000);
 
@@ -39,9 +44,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       console.error("sitemap-venues: query error:", error);
     }
 
+    type VenueSitemapRow = {
+      slug: string;
+      updated_at: string | null;
+      address: string | null;
+      latitude: number | null;
+      longitude: number | null;
+      num_courts: number | null;
+      phone: string | null;
+    };
     const entries = (venues || [])
-      .filter((v: { slug: string; updated_at: string | null }) => v.slug && URL_SAFE_SLUG_RE.test(v.slug))
-      .flatMap((v: { slug: string; updated_at: string | null }) => {
+      .filter(
+        (v: VenueSitemapRow) => v.slug && URL_SAFE_SLUG_RE.test(v.slug) && !isThinVenue(v),
+      )
+      .flatMap((v: VenueSitemapRow) => {
         const lastmod = toLastmod(v.updated_at, TODAY);
         const enLoc = `${siteUrl}/san/${v.slug}`;
         const viLoc = `${siteUrl}/vi/san/${v.slug}`;
