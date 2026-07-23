@@ -143,7 +143,11 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
-          retention-days: 7
+          # 2d (was 7d): these upload only on failure but the HTML report +
+          # retained traces are large; 15GB of artifacts blew the repo storage
+          # quota and blocked CI (2026-07-23). 2 days is enough to debug a fresh
+          # failure without accumulating a week of heavy reports.
+          retention-days: 2
 
       - name: Notify Telegram on failure
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
