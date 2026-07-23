@@ -1,0 +1,14 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "topic": "Test click chuông đặt ở project nào và có phải gate required không",
+      "myRound1Position": "Đưa 1 test click-and-assert chuông vào SMOKE REQUIRED",
+      "move": "REFINE",
+      "evidence": "src/components/social/notifications/UnifiedNotificationBell.tsx:89 (if (!user) return null;) + playwright.config.ts:47-50 (project desktop-chromium/smoke.spec KHÔNG có dependencies/storageState → logged-out) vs playwright.config.ts:104-109 (project journeys có dependencies:[\"auth-setup\"] → authed) + .github/workflows/playwright.yml:4 (chạy on pull_request, gọi npm run e2e = cả journeys)",
+      "note": "Tự mở file kiểm chứng: bell render null khi logged-out, còn smoke.spec chạy logged-out → không có chuông để click. risk-auditor ĐÚNG về placement, tôi bỏ chữ 'smoke.spec' — CONCEDE điểm đó. Nhưng đó chỉ lật WHERE, không lật WHAT: point load-bearing của tôi là 'phải có gate REQUIRED', và nó vẫn đứng. Fact bổ sung: workflow playwright.yml có chạy journeys trên PR NHƯNG memory dự án ghi 'auto-merge nổ trước smoke (smoke không required)' → thêm test vào journeys.spec KHÔNG tự động tạo ra một gate. Lập trường mới, cụ thể: (1) test = bell.click() → expect(panel).toBeVisible() trong tests/journeys.spec.ts, authed qua auth-setup storageState đã có; (2) chạy ở workflow playwright.yml hiện tại, không cần workflow mới; (3) việc còn thiếu là hạ tầng GitHub-side — Cuong/admin repo phải thêm job 'Playwright smoke' vào branch-protection required status checks để auto-merge không vượt trước nó. Không có bước (3) thì cả Sự cố 1 (no-op) lẫn Sự cố 2 (tái phát im lặng) vẫn lọt đúng như tôi mô tả."
+    }
+  ],
+  "newDisagreements": []
+}

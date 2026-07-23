@@ -1,0 +1,14 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Hướng fix chuông: A (bỏ div bọc, className vào Button, kèm visual parity) vs B (1 dòng CSS pointer-events:none trên pseudo của div bọc)",
+      "myRound1Position": "Khuyến nghị B — 1 dòng CSS, blast radius = đúng 1 surface hỏng, không đụng 2 mount AppHeader đang chạy tốt",
+      "move": "REFINE",
+      "evidence": "src/components/ui/button.tsx:8,16,33 (ghost = no-border + rounded-md 6px, size=icon = h-11 w-11 = 44px) đối chiếu the-line.css:2828-2844 (.tl-icon-btn = 36px, border 1px, rounded 8px)",
+      "note": "Lệch hình critic mô tả là THẬT và em đã tự verify (bell 44px ghost bo-6 không viền vs dark-toggle 36px viền-1 bo-8). Nhưng nó là nợ cosmetic PRE-EXISTING sống 2 tuần, zero complaint, KHÔNG phải P1 được báo — và B không tạo ra nó, nên B không bắt buộc kèm restyle pass; hai thứ tách rời được. Luận điểm 'div giả làm control': đúng là smell, nhưng B (pointer-events:none trên pseudo) không làm smell sâu hơn, còn A không hề free — risk-auditor.md risk #2 xác nhận A buộc cập nhật baseline visual.yml có chủ đích + đổi display-class trên 2 mount AppHeader đang tốt + soát lại axe. REFINE lập trường: B là fix cho bug click (P1) — ship tối nay, 1 dòng, giữ nguyên 44px hit-area; visual parity tách thành 1 PR cosmetic riêng ĐO ĐƯỢC: sau khi B đã trả click, PR-parity thuần hình (co bell về 36px tl-icon-btn khớp sibling) tự nó SỞ HỮU thay đổi baseline visual.yml và được QA 3 surface × mobile/desktop một cách bình tĩnh, KHÔNG khoá cứng vào hotfix. Reliability-outranks-scope: không gộp refactor chạm surface lành vào emergency click-fix. Cả hai đều AMBER + đều bắt buộc test journeys chống tái phát."
+    }
+  ],
+  "newDisagreements": []
+}
