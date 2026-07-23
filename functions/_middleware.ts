@@ -283,6 +283,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     "cac-giai-pickleball-pro-asia-2026": "professional-pickleball-tours-guide-2026",
     "the-thuc-mlp-giai-thich": "mlp-format-explained",
     "huong-dan-day-du-ppa-tour-asia-2026": "ppa-tour-asia-2026-complete-guide",
+    // Guard-0 parity fix: these two were in public/_redirects but NOT here, so
+    // bots (which bypass _redirects) hit /vi/blog/<slug> with no redirect and
+    // 404'd. Mirrored to close the drift the redirect-parity test now enforces.
+    "the-thuc-mlp": "mlp-format-explained",
+    "ppa-tour-asia-2026-complete-guide": "ppa-tour-asia-2026-complete-guide",
   };
   // ─── 1e2. Transactional EN blog slugs deduped INTO the /tools money page.
   //       These posts were pure "bracket generator" transactional intent
@@ -481,6 +486,39 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
   } catch (err) {
     console.error("Prerender error:", err);
+    // Guard-0: on a render error/timeout the bot falls through to next() — the
+    // empty SPA shell. That path was SILENT (console.error only), so a
+    // render-budget blowout could de-index pages for weeks unnoticed. Record it
+    // into client_errors so the existing errors-telegram-alert cron (10-min,
+    // spike ≥3 of the same fingerprint) surfaces it. Fire-and-forget via
+    // waitUntil — telemetry must NEVER block or break the bot fallback.
+    try {
+      const supabase = createSupabaseClient(env);
+      context.waitUntil(
+        supabase
+          .from("client_errors")
+          // type MUST be one of the CHECK-whitelisted values
+          // ('js_error','unhandled_rejection','csp_violation') — a prerender
+          // timeout is literally a caught Promise.race rejection, so
+          // 'unhandled_rejection' fits and needs no migration (keeps this GREEN).
+          .insert({
+            type: "unhandled_rejection",
+            // "prerender:" prefix so the Telegram alert is unambiguous and all
+            // timeouts share one fingerprint (message "prerender: prerender-
+            // timeout") to trip the spike threshold together.
+            message: `prerender: ${err instanceof Error ? err.message : String(err)}`,
+            stack: err instanceof Error ? err.stack ?? null : null,
+            url: url.pathname,
+            user_agent: request.headers.get("user-agent"),
+          })
+          .then(
+            () => {},
+            () => {},
+          ),
+      );
+    } catch {
+      // never let telemetry break the fallback
+    }
     return next();
   }
 };
