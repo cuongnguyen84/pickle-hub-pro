@@ -1,0 +1,20 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Hướng fix click-dead: A (className vào Button) vs B (1 dòng CSS pointer-events)",
+      "myRound1Position": "Khuyến nghị A vì sửa cả tương tác lẫn visual parity với nút dark-toggle.",
+      "move": "REFINE",
+      "evidence": "src/components/layout/AppHeader.tsx:141 ('hidden md:block') + :204 ('md:hidden') — 2 mount đang chạy tốt; src/components/ui/button.tsx:33 (icon = h-11 w-11 = 44px).",
+      "note": "Tự mở AppHeader.tsx xác nhận blast-radius là thật: A ép đổi hidden md:block→md:inline-flex trên surface đang lành (gotcha display-utility ship-broken-âm-thầm) để đổi lấy cosmetic. button.tsx:33 xác nhận B giữ nguyên 44px hit-area → luận điểm a11y của A về 0. Refine lập trường: ship B cho blocker click TỐI NAY (chạm đúng 1 surface hỏng, snapshot xanh, zero rủi ro axe). Visual parity của A vẫn đúng nhưng hạ về follow-up polish tách riêng — round 1 tôi đã xếp nó SHOULD/NIT chứ không phải blocker, nên gate hotfix vào nó là sai. Không CONCEDE toàn phần vì mối lo parity vẫn sống, chỉ đổi phạm vi từ 'phải là fix' sang 'A-later có chủ đích, QA 3 surface × 2 viewport khi làm'."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Fix đã thu về 1 dòng CSS nhưng KHÔNG chạm blocker #2 của tôi ở round 1: hook nuốt lỗi (useUnifiedNotifications.ts, res.data ?? []) → NotificationList.tsx:72 hiện 'Chưa có thông báo' khi fetch fail/offline. Court-side user 4G rớt gói sẽ thấy rỗng-giả.",
+      "with": "solution-architect, risk-auditor",
+      "myPosition": "Không có dữ kiện mới nào xuất hiện phủ nhận nó, nên nó vẫn là blocker-grade UX/trust bug và phải lên bàn Cuong — hoặc ride cùng, hoặc tách ticket riêng. Đừng để nó rơi âm thầm chỉ vì hướng fix click đã co lại thành CSS thuần. HOLD."
+    }
+  ]
+}

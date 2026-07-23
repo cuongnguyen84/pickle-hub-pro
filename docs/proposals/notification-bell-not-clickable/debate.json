@@ -1,0 +1,43 @@
+{
+  "slug": "notification-bell-not-clickable",
+  "note_orchestrator": "scripts/agents/debate-ledger.mjs KHÔNG tồn tại trong repo (đã kiểm tra cả origin/main) — luật vòng 2 được cưỡng chế THỦ CÔNG bởi orchestrator: mọi move đều có evidence file:line (không có CONCEDE trần nào bị loại). Fact-check orchestrator trước vòng 2: button.tsx:33 icon='h-11 w-11' (44px) — risk-auditor round1 risk#4 ghi 40px là SAI fact, auditor đã CONCEDE điểm này trong D1.",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Chọn hướng fix: A (bỏ div bọc, className vào Button trigger) vs B (1 dòng CSS div.tl-icon-btn::after{pointer-events:none})",
+      "positions": {
+        "solution-architect": "B. Blast radius = đúng 1 surface đang hỏng; A đụng 2 mount AppHeader đang chạy tốt + gotcha md:block→md:inline-flex; lợi thế 44px của A là ảo vì Button đã h-11.",
+        "ui-ux-critic": "A. (round 1, Claude + GPT-5.6) Visual parity với dark-toggle sibling; B là hotfix để lại lệch hình.",
+        "risk-auditor": "Nghiêng B. Không visual diff, không đụng 3 call site; cả hai AMBER."
+      },
+      "round2": {
+        "solution-architect": {"move": "REFINE", "evidence": "button.tsx:8,16,33 + the-line.css:2828-2844", "to": "B-now cho P1; visual parity = PR cosmetic riêng, tự sở hữu baseline visual.yml"},
+        "ui-ux-critic": {"move": "REFINE", "evidence": "AppHeader.tsx:141,204 + button.tsx:33", "to": "Ship B tối nay; parity hạ về follow-up polish (round 1 tự xếp SHOULD/NIT); luận điểm a11y của A về 0 vì B giữ 44px"},
+        "risk-auditor": {"move": "HOLD (lean B) + CONCEDE fact 40px→44px", "evidence": "button.tsx:33; the-line.css:2838; TheLineLayout.tsx:500,510,664,841,1010", "to": "B; không phản đối A nếu cưỡng chế 3 guard (xoá hẳn div bọc 2 nhánh, md:inline-flex 2 call site, update baseline có chủ đích)"}
+      },
+      "resolution": "RESOLVED → B (scoped CSS) cho hotfix, hội tụ bằng bằng chứng repo. A-later = polish tuỳ chọn cho Cuong quyết ưu tiên."
+    },
+    {
+      "id": "D2",
+      "topic": "Test chống tái phát đặt ở đâu: smoke required vs tests/journeys.spec.ts",
+      "positions": {
+        "pre-mortem": "Smoke REQUIRED — nếu không thì tái phát im lặng 3 tuần chỉ là vấn đề thời gian.",
+        "risk-auditor": "journeys (auth storageState) — smoke chạy logged-out, bell = null."
+      },
+      "round2": {
+        "pre-mortem": {"move": "REFINE (CONCEDE placement)", "evidence": "UnifiedNotificationBell.tsx:89; playwright.config.ts:47-50,104-109; .github/workflows/playwright.yml:4", "to": "Test vào journeys.spec.ts; nhưng GIỮ yêu cầu hạ tầng: phải thành required status check, không thì auto-merge vẫn vượt"},
+        "risk-auditor": {"move": "REFINE", "evidence": "playwright.yml:4-7 + package.json:14 (workflow smoke chạy npm run e2e = CẢ journeys trên mọi PR); gh api branches/main/protection → 403 'Upgrade to GitHub Pro'", "to": "journeys.spec.ts đã chạy mọi PR; required-check KHÔNG THỂ có trên repo private free plan — backstop thực tế = post-push main + Telegram alert (playwright.yml:160) + người thật revert"}
+      },
+      "resolution": "RESOLVED placement → tests/journeys.spec.ts (đã chạy trên mọi PR qua workflow playwright.yml). OPEN_FOR_CUONG phần gate: repo free plan không có branch-protection required checks (403) — Cuong chọn: chấp nhận backstop Telegram-alert+revert, hoặc nâng GitHub Pro, hoặc đổi kỷ luật auto-merge."
+    },
+    {
+      "id": "D3",
+      "topic": "(Mới ở vòng 2) Scope: có sửa luôn bug hook nuốt lỗi (useUnifiedNotifications ?? [] → 'Chưa có thông báo' giả khi fetch fail) trong hotfix này không?",
+      "positions": {
+        "ui-ux-critic": "HOLD — blocker-grade UX/trust bug, phải lên bàn Cuong: ride cùng hoặc tách ticket, không được rơi âm thầm.",
+        "risk-auditor": "Tách PR riêng — đổi queryFn throw làm đổi hành vi React Query trên surface realtime, cần test riêng; trộn vào hotfix làm khó cô lập nguyên nhân nếu smoke đỏ."
+      },
+      "resolution": "OPEN_FOR_CUONG (một phần): cả hai bên chấp nhận 'tách PR riêng' — bất đồng còn lại là mức ưu tiên. Khuyến nghị panel: tách PR, làm ngay sau hotfix. Cuong quyết có làm và khi nào."
+    }
+  ]
+}

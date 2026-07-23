@@ -1,0 +1,28 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Fix A (di chuyển tl-icon-btn vào Button, bỏ div bọc) vì visual parity, so với Fix B scoped-CSS 1 dòng vì blast radius thấp nhất",
+      "myRound1Position": "Nghiêng Fix B: 1 dòng CSS, zero visual diff, zero JSX, blast radius gần bằng 0; risk #4 lo Fix B để tap target 40px < 44px",
+      "move": "HOLD",
+      "evidence": "src/components/ui/button.tsx:33 — icon: \"h-11 w-11\" = 44px (không phải 40px như em ghi ở round-1 risk #4); src/styles/the-line.css:2838 — rule ::after theo class, scoped-B div.tl-icon-btn::after / .tl-icon-btn:not(button)::after chỉ triệt tiêu pseudo trên div, KHÔNG chạm 5 sibling button/a (TheLineLayout.tsx:500,510,664,841,1010)",
+      "note": "CONCEDE dữ kiện 44px: risk #4 của em SAI, đã kiểm button.tsx:33 — và điều đó chỉ làm Fix B AN TOÀN HƠN (button 44px là click target được giữ nguyên, không tụt xuống 40px). Nó không lật em sang A. Từ góc rủi ro thuần: scoped-B vẫn có blast radius nhỏ hơn hẳn (1 file, 0 JSX, 0 visual-baseline churn) VÀ miễn nhiễm với pre-mortem Sự cố 2 y như A (div-cha-mới có tl-icon-btn cũng bị scoped-B vô hiệu pseudo). Lợi thế DUY NHẤT của A là parity thẩm mỹ với nút dark-toggle — đó là polish, không phải reliability/SLO. Đây là bất đồng THẬT, không phải ảo: ui-ux-critic cân parity, em cân blast radius. Em không phản đối A trên nền rủi ro NẾU 3 điều kiện bắt buộc được cưỡng chế: (1) xoá HẲN div bọc cả 2 nhánh mobile+desktop (UnifiedNotificationBell.tsx:93,109) — nếu để className kẹt trên cả div lẫn Button thì fix = no-op (pre-mortem Sự cố 1); (2) đổi cả 2 call site AppHeader.tsx:141,204 md:block→md:inline-flex; (3) cập nhật visual baseline có chủ đích. Chọn A hay B là quyền UX/Cuong; cả hai đều AMBER và revert được."
+    },
+    {
+      "id": "D2",
+      "topic": "Test click chuông đặt ở đâu: pre-mortem đòi 'smoke REQUIRED chạy mọi PR đụng header/CSS'; em round-1 nói phải ở journeys vì smoke logged-out → bell null",
+      "myRound1Position": "Test phải nằm ở project journeys (có auth storageState) vì smoke.spec.ts chạy logged-out, bell = null khi !user nên không với tới được",
+      "move": "REFINE",
+      "evidence": ".github/workflows/playwright.yml:4-7 (trigger pull_request + push branches:[main]) + package.json:14 (\"e2e\": \"playwright test\" = TẤT CẢ project) + playwright.config.ts:104-108 (project journeys, dependencies:[\"auth-setup\"]) → job smoke chạy npm run e2e = bao gồm journeys logged-in trên MỌI PR tới main; gh api repos/:owner/:repo/branches/main/protection → HTTP 403 'Upgrade to GitHub Pro' → repo private free plan KHÔNG có required-status-checks; MEMORY note 'auto-merge nổ trước smoke (smoke không required)' khớp với 403 này",
+      "note": "Lập trường mới, hoà giải bằng bằng chứng: (a) sub-fact round-1 của em ĐÚNG — smoke.spec.ts chạy logged-out, không đặt test chuông vào đó được. (b) NHƯNG tiền đề của pre-mortem ('journeys không chạy mọi PR') SAI: workflow tên smoke chạy npm run e2e = toàn bộ project kể cả journeys, trên mọi PR + mọi push main → đặt test vào journeys.spec.ts ĐÃ thoả yêu cầu 'chạy mọi PR đụng header/CSS' của pre-mortem. (c) Điểm cả hai đều chưa thấy: repo NÀY không có gate 'required' nào cưỡng chế được — branch protection trả 403 (chỉ có ở Pro). Nên KHÔNG sentinel nào — smoke hay journeys — chặn được merge về mặt cơ học. Chốt khả thi nhất: đặt assertion page.getByLabel('Thông báo').click() → expect(panel).toBeVisible() vào journeys.spec.ts (đúng auth + đã chạy trong workflow smoke trên mọi PR); backstop cưỡng chế thực tế = lần chạy post-push trên main + Telegram alert 'Playwright smoke FAILED on main' (playwright.yml:160), người thật revert khi đỏ — KHÔNG phải block tự động (repo không có khả năng đó)."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "ui-ux-critic finding #2 nâng scope sang sửa hook nuốt lỗi (useUnifiedNotifications.ts ?? []) + thêm error/offline state cho NotificationList — trong một hotfix click. Từ góc rủi ro: đây là bug pre-existing riêng biệt, đổi queryFn để throw khi cả 2 res.error làm đổi hành vi React Query (isError) trên surface đọc realtime → cần test riêng, không nên trộn vào hotfix.",
+      "with": "ui-ux-critic",
+      "myPosition": "Hotfix chỉ nên sửa click (1 file scoped-B, hoặc Fix A với 3 guard) + 1 test regression. Sửa hook-nuốt-lỗi là AMBER riêng, tách PR — trộn vào làm khó cô lập nguyên nhân nếu smoke đỏ và làm chậm việc trả lại click cho ~2k user đang kẹt."
+    }
+  ]
+}
