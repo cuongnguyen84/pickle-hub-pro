@@ -98,7 +98,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "hcmc-open-2026-preview",
     publishedDate: "2026-07-10",
-    updatedDate: "2026-07-10",
+    updatedDate: "2026-07-23",
     author: "Cuong Nguyen",
     tags: ["hcmc open 2026", "ho chi minh city open pickleball", "mb ho chi minh city open", "ppa tour asia 500", "ppa asia ho chi minh", "pickleball tp hcm", "giai pickleball tphcm"],
     ctaPath: "/live",
