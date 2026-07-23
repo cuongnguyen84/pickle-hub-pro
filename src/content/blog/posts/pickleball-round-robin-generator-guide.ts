@@ -51,7 +51,7 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Rally vs side-out scoring rules for round robin events", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Free bracket generator (all formats, same tool)", path: "/blog/free-pickleball-bracket-generator" }
+            { text: "Free bracket generator (all formats, same tool)", path: "/tools" }
           ]
         },
         {
@@ -215,7 +215,7 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Luật rally vs side-out cho giải vòng tròn", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Công cụ tạo Bracket miễn phí (mọi thể thức)", path: "/blog/free-pickleball-bracket-generator" }
+            { text: "Công cụ tạo Bracket miễn phí (mọi thể thức)", path: "/tools" }
           ]
         },
         {

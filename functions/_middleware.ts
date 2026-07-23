@@ -284,12 +284,28 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     "the-thuc-mlp-giai-thich": "mlp-format-explained",
     "huong-dan-day-du-ppa-tour-asia-2026": "ppa-tour-asia-2026-complete-guide",
   };
+  // ─── 1e2. Transactional EN blog slugs deduped INTO the /tools money page.
+  //       These posts were pure "bracket generator" transactional intent
+  //       that cannibalized /tools in SERPs (GSC 28d: /tools hub + the blog
+  //       post both ranking for "pickleball bracket generator", splitting
+  //       clicks). 301 the EN blog URL — and its VI alias — straight to
+  //       /tools. A slug listed here MUST also be removed from metadata.ts /
+  //       sitemap / rss / indexnow / related-posts so it isn't both a 301
+  //       and a 200 in the sitemap (SEOnaut 'redirect in sitemap').
+  const BLOG_TO_TOOLS = new Set<string>(["free-pickleball-bracket-generator"]);
+
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
   if (viBlogMatch && VI_BLOG_REDIRECTS[viBlogMatch[1]]) {
-    return secureRedirect(
-      `https://${url.hostname}/blog/${VI_BLOG_REDIRECTS[viBlogMatch[1]]}`,
-      301,
-    );
+    // Resolve to the EN slug, then to /tools in ONE hop if it's a tools
+    // dedupe target — avoids a /vi/blog → /blog → /tools 301 chain.
+    const enSlug = VI_BLOG_REDIRECTS[viBlogMatch[1]];
+    const dest = BLOG_TO_TOOLS.has(enSlug) ? "tools" : `blog/${enSlug}`;
+    return secureRedirect(`https://${url.hostname}/${dest}`, 301);
+  }
+
+  const enBlogToTools = url.pathname.match(/^\/blog\/([^/?#]+)$/);
+  if (enBlogToTools && BLOG_TO_TOOLS.has(enBlogToTools[1])) {
+    return secureRedirect(`https://${url.hostname}/tools`, 301);
   }
 
   // ─── 1f. (batch 9 follow-up) /feed?tab=* redirect REMOVED.

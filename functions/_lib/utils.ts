@@ -335,7 +335,6 @@ export const ALL_BLOGS = [
   { slug: "pickleball-doubles-strategy-guide", title: "Doubles Strategy Guide" },
   { slug: "pickleball-live-streaming-guide", title: "Live Streaming Guide" },
   { slug: "best-pickleball-tournament-software-2026", title: "Best Tournament Software 2026" },
-  { slug: "free-pickleball-bracket-generator", title: "Free Bracket Generator" },
   { slug: "how-to-create-pickleball-bracket", title: "How to Create a Bracket" },
 ];
 

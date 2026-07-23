@@ -51,7 +51,7 @@ const post: BlogPost = {
           heading: "Step 3 — Generate the bracket",
           content: "Bracket generation is the single biggest time-sink for first-time organizers. These four guides cover every common format with free generators and printable templates:",
           internalLinks: [
-            { text: "Free Pickleball Bracket Generator — Brackets in 60 seconds, no signup", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Free Pickleball Bracket Generator — Brackets in 60 seconds, no signup", path: "/tools" },
             { text: "How to Create a Pickleball Bracket — Step-by-step for round robin, single & double elimination", path: "/blog/how-to-create-pickleball-bracket" },
             { text: "Pickleball Bracket Templates — Free downloadable templates for every format", path: "/blog/pickleball-bracket-templates" },
             { text: "Pickleball Round Robin Generator Guide — Run the perfect round robin event", path: "/blog/pickleball-round-robin-generator-guide" }
@@ -151,7 +151,7 @@ const post: BlogPost = {
           heading: "Bước 3 — Tạo bracket",
           content: "Tạo bracket là việc tốn thời gian nhất với người tổ chức lần đầu. Bốn hướng dẫn này phủ hết các thể thức phổ biến với generator và mẫu in được, miễn phí:",
           internalLinks: [
-            { text: "Tạo Bracket Pickleball miễn phí — Bracket trong 60 giây, không cần đăng ký", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Tạo Bracket Pickleball miễn phí — Bracket trong 60 giây, không cần đăng ký", path: "/tools" },
             { text: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước cho vòng tròn, loại đơn & loại kép", path: "/blog/how-to-create-pickleball-bracket" },
             { text: "Mẫu Bracket Pickleball — Mẫu miễn phí cho mọi thể thức giải đấu", path: "/blog/pickleball-bracket-templates" },
             { text: "Hướng dẫn tạo vòng tròn Pickleball — Chạy giải vòng tròn hoàn hảo", path: "/blog/pickleball-round-robin-generator-guide" }
