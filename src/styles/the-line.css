@@ -2838,6 +2838,12 @@
 [data-theme="the-line"] .tl-icon-btn::after {
   content: ''; position: absolute; inset: -4px;
 }
+/* Bell mount wraps its Radix trigger <button> in a <div class="tl-icon-btn">
+   (UnifiedNotificationBell via TheLineLayout). The ::after overlay hit-tests as
+   the div and sits ABOVE the button in paint order, eating every real click.
+   Real icon buttons are <button>/<a>, so the div selector spares them — they
+   keep the 44px hit-area. The inner Button is natively 44px (h-11 w-11). */
+[data-theme="the-line"] div.tl-icon-btn::after { pointer-events: none; }
 [data-theme="the-line"] .tl-icon-btn:hover {
   border-color: var(--tl-border-2); color: var(--tl-fg); background: var(--tl-surface);
 }

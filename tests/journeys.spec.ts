@@ -19,6 +19,7 @@
 //   J8  rankings: URL-backed scope state → player public profile
 //   J9  feed: Trending → news article
 //   J10 connected player: home log-match CTA → /match/new form
+//   J11 notifications: header bell REAL click opens the panel (hit-test)
 //
 // Single-worker sequential (playwright.config.ts): discovery walks live pages
 // and caches at module scope, exactly like the a11y project.
@@ -334,4 +335,32 @@ test("J10 connected player: home log-match CTA reaches the /match/new form", asy
       .first(),
   ).toBeVisible({ timeout: 15_000 });
   expect(await page.title()).not.toMatch(/undefined/i);
+});
+
+// ── J11 — notification bell opens on a REAL pointer click ────────────────────
+
+test("J11 notifications: header bell real click opens the panel", async ({
+  page,
+}) => {
+  test.skip(!hasMintEnv, "Auth env not set — local run without secrets");
+  const { loginAs } = await import("./helpers/auth");
+  await loginAs(page, "viewer", "/");
+
+  // Home uses TheLineLayout, where the bell's Radix trigger <button> sits in
+  // a <div class="tl-icon-btn"> whose ::after hit-area overlay silently ate
+  // every pointer click for two weeks (proposal
+  // notification-bell-not-clickable). Playwright's click dispatches through
+  // hit-testing at real coordinates, so any overlay swallowing the click
+  // turns this red — a JS button.click() would NOT catch that regression.
+  const bell = page.getByRole("button", { name: "Thông báo", exact: true });
+  await expect(bell).toBeVisible({ timeout: 15_000 });
+  await bell.click();
+  await expect(bell).toHaveAttribute("aria-expanded", "true", {
+    timeout: 5_000,
+  });
+  const panel = page.getByRole("dialog");
+  await expect(panel).toBeVisible({ timeout: 5_000 });
+  // Prove it is the notification panel, not some other dialog: it renders
+  // either the list heading, items, or the empty state.
+  await expect(panel).toContainText(/thông báo|notification/i);
 });
