@@ -64,7 +64,7 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Full guide: How to organize a pickleball tournament", path: "/blog/how-to-organize-pickleball-tournament" },
-            { text: "Free bracket generator for tournament scoring", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Free bracket generator for tournament scoring", path: "/tools" },
             { text: "Complete pickleball rules (2026 official)", path: "/blog/pickleball-rules-complete-guide" },
             { text: "Tournament Organizer Hub — every guide & tool in one place", path: "/blog/tournament-organizer-hub" }
           ]
@@ -136,7 +136,7 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Hướng dẫn đầy đủ: Cách tổ chức giải pickleball", path: "/blog/how-to-organize-pickleball-tournament" },
-            { text: "Tạo bracket miễn phí cho giải đấu", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Tạo bracket miễn phí cho giải đấu", path: "/tools" },
             { text: "Luật Pickleball đầy đủ (chuẩn 2026)", path: "/blog/pickleball-rules-complete-guide" },
             { text: "Hub Tổ chức giải Pickleball — mọi hướng dẫn & công cụ", path: "/blog/tournament-organizer-hub" }
           ]

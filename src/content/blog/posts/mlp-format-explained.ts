@@ -77,7 +77,7 @@ const post: BlogPost = {
           internalLinks: [
             { text: "Complete comparison: All pickleball tournament formats", path: "/blog/pickleball-tournament-formats-explained" },
             { text: "Doubles strategy that wins dreambreakers", path: "/blog/pickleball-doubles-strategy-guide" },
-            { text: "Free bracket generator for MLP-style events", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Free bracket generator for MLP-style events", path: "/tools" },
             { text: "See how MLP fits among all the pro tours — PPA, APP, PPA Tour Asia compared", path: "/blog/professional-pickleball-tours-guide-2026" }
           ]
         }
@@ -151,7 +151,7 @@ const post: BlogPost = {
           internalLinks: [
             { text: "So sánh đầy đủ: Các thể thức giải Pickleball", path: "/blog/pickleball-tournament-formats-explained" },
             { text: "Chiến thuật đôi chiến thắng dreambreaker", path: "/blog/pickleball-doubles-strategy-guide" },
-            { text: "Tạo bracket miễn phí cho sự kiện kiểu MLP", path: "/blog/free-pickleball-bracket-generator" }
+            { text: "Tạo bracket miễn phí cho sự kiện kiểu MLP", path: "/tools" }
           ]
         }
       ]

@@ -86,13 +86,6 @@ const EN_POSTS: RssItem[] = [
     lang: "en",
   },
   {
-    title: "Free Pickleball Bracket Generator — Create Tournament Brackets in 60 Seconds",
-    link: "/blog/free-pickleball-bracket-generator",
-    description: "Create free pickleball tournament brackets instantly. Round robin, single elimination, and double elimination bracket generator with real-time scoring. No signup required.",
-    pubDate: "2026-03-29",
-    lang: "en",
-  },
-  {
     title: "Pickleball Bracket Templates — Free Templates for Every Tournament Format",
     link: "/blog/pickleball-bracket-templates",
     description: "Free pickleball bracket templates for round robin, single elimination, and double elimination. Templates for 4, 8, 16, 32, and 64 players with real-time scoring.",

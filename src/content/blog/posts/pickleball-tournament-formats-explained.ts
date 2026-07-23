@@ -91,7 +91,7 @@ const post: BlogPost = {
             "Flex → Custom, any size, varies, depends on design, depends on design."
           ],
           internalLinks: [
-            { text: "Free Pickleball Bracket Generator (all formats)", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Free Pickleball Bracket Generator (all formats)", path: "/tools" },
             { text: "How to organize a pickleball tournament end-to-end", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Picked your format? Build the bracket step-by-step", path: "/blog/how-to-create-pickleball-bracket" },
             { text: "Tournament Organizer Hub — formats, brackets, scoring & livestream in one workflow", path: "/blog/tournament-organizer-hub" }
@@ -181,7 +181,7 @@ const post: BlogPost = {
             "Flex → Tùy chỉnh, mọi kích thước, tùy thiết kế."
           ],
           internalLinks: [
-            { text: "Tạo Bracket Pickleball miễn phí (mọi thể thức)", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Tạo Bracket Pickleball miễn phí (mọi thể thức)", path: "/tools" },
             { text: "Cách tổ chức giải pickleball từ A-Z", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Hub Tổ chức giải Pickleball — thể thức, bracket, chấm điểm & livestream", path: "/blog/tournament-organizer-hub" }
           ]
