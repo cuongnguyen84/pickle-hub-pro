@@ -5,7 +5,7 @@
 // separate bells previously mounted in AppHeader + TheLineLayout.
 // ============================================================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, type ComponentPropsWithoutRef } from "react";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnifiedUnreadCount } from "@/hooks/social";
@@ -31,12 +31,21 @@ const useIsMobile = () => {
   return mobile;
 };
 
-const Trigger = ({ unread, highlight }: { unread: number; highlight: boolean }) => (
+// forwardRef + prop spread so Radix `asChild` can target the Button
+// DIRECTLY. The old plain-span wrapper received aria-haspopup/aria-expanded
+// from Radix — invalid ARIA on a role-less span (axe critical
+// aria-allowed-attr, caught by the O2 wizard scan on every authed page).
+const Trigger = forwardRef<
+  HTMLButtonElement,
+  { unread: number; highlight: boolean } & ComponentPropsWithoutRef<typeof Button>
+>(({ unread, highlight, className, ...props }, ref) => (
   <Button
+    ref={ref}
     variant="ghost"
     size="icon"
-    className={cn("relative", highlight && "animate-bounce")}
+    className={cn("relative", highlight && "animate-bounce", className)}
     aria-label="Thông báo"
+    {...props}
   >
     <Bell className={cn("h-5 w-5", highlight && "text-social-primary")} />
     {unread > 0 && (
@@ -52,7 +61,8 @@ const Trigger = ({ unread, highlight }: { unread: number; highlight: boolean }) 
       </span>
     )}
   </Button>
-);
+));
+Trigger.displayName = "UnifiedNotificationBellTrigger";
 
 export const UnifiedNotificationBell = ({ className }: UnifiedNotificationBellProps) => {
   const { user } = useAuth();
@@ -83,7 +93,7 @@ export const UnifiedNotificationBell = ({ className }: UnifiedNotificationBellPr
       <div className={className}>
         <Drawer open={open} onOpenChange={setOpen}>
           <DrawerTrigger asChild>
-            <span><Trigger unread={unread} highlight={highlight} /></span>
+            <Trigger unread={unread} highlight={highlight} />
           </DrawerTrigger>
           <DrawerContent className="max-h-[80vh] px-2 pb-4">
             <div className="mx-auto w-full max-w-md">
@@ -99,7 +109,7 @@ export const UnifiedNotificationBell = ({ className }: UnifiedNotificationBellPr
     <div className={className}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <span><Trigger unread={unread} highlight={highlight} /></span>
+          <Trigger unread={unread} highlight={highlight} />
         </PopoverTrigger>
         <PopoverContent
           align="end"

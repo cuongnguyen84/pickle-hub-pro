@@ -195,9 +195,21 @@ for (const route of SCROLL_ROUTES) {
         );
       });
       if (!scroller) {
+        // The 2026-07-16 incident signature is TALL content with no way to
+        // scroll it (broken flex/height chain). A page whose content simply
+        // fits the viewport (e.g. /tournaments on a quiet week) has nothing
+        // to scroll and is healthy — don't fail on it (main went red on
+        // exactly this 2026-07-23).
+        const tallest = Math.max(
+          0,
+          ...[...document.querySelectorAll("*")].map((el) => el.scrollHeight),
+        );
+        if (tallest <= window.innerHeight + 50) {
+          return { ok: true, detail: "content fits viewport; nothing to scroll" };
+        }
         return {
           ok: false,
-          detail: `no scrollable container; body=${document.body.scrollHeight} root=${document.getElementById("root")?.scrollHeight ?? 0} viewport=${window.innerHeight}`,
+          detail: `no scrollable container; tallest=${tallest} body=${document.body.scrollHeight} root=${document.getElementById("root")?.scrollHeight ?? 0} viewport=${window.innerHeight}`,
         };
       }
       scroller.scrollTop = 200;
