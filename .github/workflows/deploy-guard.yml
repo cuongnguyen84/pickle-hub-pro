@@ -28,7 +28,7 @@ env:
 
 jobs:
   deploy-guard:
-    timeout-minutes: 15
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -111,37 +111,43 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           set -e
-          sleep 120
-          BROKEN=""
-          for dir in supabase/functions/*/; do
-            fn=$(basename "$dir")
-            [ "$fn" = "_shared" ] && continue
-            [ -f "supabase/functions/$fn/index.ts" ] || continue
-            BODY=$(curl -sS --max-time 10 "https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/$fn" || true)
-            if echo "$BODY" | grep -q "NOT_FOUND_FUNCTION_BLOB"; then
-              BROKEN="${BROKEN:+$BROKEN }$fn"
+          # Parallel sweep: prints the names of blob-less functions.
+          sweep() {
+            ls -d supabase/functions/*/ \
+              | sed 's#supabase/functions/##; s#/$##' \
+              | grep -v '^_shared$' \
+              | while read -r fn; do [ -f "supabase/functions/$fn/index.ts" ] && echo "$fn"; done \
+              | xargs -P 16 -I{} sh -c \
+                'curl -sS --max-time 10 "https://'"$SUPABASE_PROJECT_REF"'.supabase.co/functions/v1/{}" 2>/dev/null | grep -q NOT_FOUND_FUNCTION_BLOB && echo {}' \
+              || true
+          }
+          # The integration deploy's landing time is VARIABLE (observed 1 min
+          # to 5+ min after the push). A single-shot probe races it — the
+          # 2026-07-23 01:57Z run swept clean and the fleet died 1 min later.
+          # So: keep sweeping for ~10 min, heal every time damage appears.
+          HEALED=""
+          END=$(( $(date +%s) + 600 ))
+          while [ "$(date +%s)" -lt "$END" ]; do
+            BROKEN=$(sweep | tr '\n' ' ')
+            if [ -n "${BROKEN// /}" ]; then
+              echo "::warning::Blob-less functions detected: $BROKEN — redeploying ALL"
+              supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --use-api
+              HEALED="${HEALED:+$HEALED; }$BROKEN"
             fi
+            sleep 45
           done
-          if [ -z "$BROKEN" ]; then
-            echo "All functions serve a blob — nothing to heal"
-            exit 0
+          # Final sweep must be clean.
+          FINAL=$(sweep | tr '\n' ' ')
+          if [ -n "${FINAL// /}" ]; then
+            echo "::error::Functions still blob-less after heal window: $FINAL"
+            exit 1
           fi
-          echo "::warning::Blob-less functions detected: $BROKEN — redeploying ALL"
-          supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --use-api
-          # Verify the heal actually took.
-          sleep 10
-          for fn in $BROKEN; do
-            BODY=$(curl -sS --max-time 10 "https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/$fn" || true)
-            if echo "$BODY" | grep -q "NOT_FOUND_FUNCTION_BLOB"; then
-              echo "::error::$fn still blob-less after redeploy"; exit 1
-            fi
-          done
-          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
-            MSG="🩹 deploy-guard self-healed blob-less edge functions after Supabase integration deploy: ${BROKEN}"
+          echo "Fleet clean at end of heal window. Healed during window: ${HEALED:-<none>}"
+          if [ -n "$HEALED" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+            MSG="🩹 deploy-guard self-healed blob-less edge functions (Supabase integration deploy): ${HEALED}"
             curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
               -d "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" > /dev/null || true
           fi
-        continue-on-error: false
 
       - name: Migration drift check (strict — SEC-06)
         # The ledger was fully reconciled 2026-07-16 (283 = 283, zero drift)
