@@ -129,8 +129,17 @@ export function initPwa() {
   // new index.html shell. Without this, users with the pre-9425f6a SW saw
   // a stuck-reload loop on lazy routes because the OLD SW kept serving
   // OLD index.html that referenced no-longer-existent chunk hashes.
+  // FIRST-INSTALL EXCEPTION (2026-07-23): when no SW controlled the page at
+  // load time, this controllerchange is the very first install claiming the
+  // page via clientsClaim. The page came straight from the network, so its
+  // chunks already match the current deploy — reloading gains nothing and
+  // COSTS a phantom full reload seconds into every first-time visit (and
+  // made every fresh-profile Playwright test flaky: focus lost, "execution
+  // context destroyed", ERR_ABORTED — the chronic smoke reds of 2026-07-22).
+  const hadControllerAtLoad = Boolean(navigator.serviceWorker?.controller);
   let reloadingFromSW = false;
   navigator.serviceWorker?.addEventListener("controllerchange", () => {
+    if (!hadControllerAtLoad) return;
     if (reloadingFromSW) return;
     reloadingFromSW = true;
     window.location.reload();
