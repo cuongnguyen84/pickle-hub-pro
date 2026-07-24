@@ -219,6 +219,19 @@ describe('scheduleMatches — pair-aware (the d941747e7ab4 bug)', () => {
     }
   });
 
+  it('reconstructs round metadata for legacy rows without replacing match IDs', () => {
+    const all = naiveGroup(0, 0);
+    const originalIds = all.map(match => match.matchId).sort();
+    const sched = scheduleMatches(all, [1, 2], 1, null);
+
+    expect(sched.map(match => match.matchId).sort()).toEqual(originalIds);
+    expect(sched.every(match => match.rrRoundNumber !== null)).toBe(true);
+    expect(sched.every(match => match.rrMatchIndex !== null)).toBe(true);
+    expect(new Set(sched.map(match => match.rrRoundNumber))).toEqual(
+      new Set([1, 2, 3, 4, 5]),
+    );
+  });
+
   it('keeps regenerated 5/5/4/4 groups fair when each group view filters the global order', () => {
     const groupSizes = [5, 5, 4, 4];
     const all = groupSizes.flatMap((size, groupIndex) =>

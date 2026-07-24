@@ -1065,9 +1065,23 @@ export interface Translations {
       matchList: string;
       showTeam: string;
       courtTime: string;
+      rescheduleMatches: string;
+      reschedulePendingOnly: string;
+      scheduleRepaired: string;
       addPlayer: string;
       done: string;
       editGroups: string;
+      editPlayerName: string;
+      editPlayerNameTitle: string;
+      editPlayerNameDescription: string;
+      player1Name: string;
+      player2Name: string;
+      playerNameUpdated: string;
+      editTournamentName: string;
+      editTournamentNameTitle: string;
+      editTournamentNameDescription: string;
+      tournamentName: string;
+      tournamentNameUpdated: string;
       movePlayer: string;
       removePlayer: string;
       removeConfirm: string;
@@ -2895,6 +2909,12 @@ export interface Translations {
       regenerateGroupMatches: {
         permissionDenied: string;
       };
+      updatePlayer: {
+        permissionDenied: string;
+      };
+      updateTable: {
+        permissionDenied: string;
+      };
       updateCourtSettings: {
         permissionDenied: string;
       };
@@ -3993,9 +4013,23 @@ export const vi: Translations = {
       matchList: "Danh sách trận đấu",
       showTeam: "Hiện Team",
       courtTime: "Sân & Giờ",
+      rescheduleMatches: "Xếp lại lịch",
+      reschedulePendingOnly: "Chỉ có thể xếp lại khi chưa có trận vòng bảng nào thi đấu",
+      scheduleRepaired: "Đã xếp lại lịch thi đấu",
       addPlayer: "Thêm VĐV",
       done: "Xong",
       editGroups: "Sửa bảng",
+      editPlayerName: "Đổi tên VĐV",
+      editPlayerNameTitle: "Đổi tên VĐV",
+      editPlayerNameDescription: "Tên mới được cập nhật ở bảng xếp hạng, lịch đấu và màn hình trọng tài.",
+      player1Name: "Tên VĐV 1",
+      player2Name: "Tên VĐV 2",
+      playerNameUpdated: "Đã cập nhật tên VĐV",
+      editTournamentName: "Đổi tên giải",
+      editTournamentNameTitle: "Đổi tên giải",
+      editTournamentNameDescription: "Tên mới được hiển thị trên trang giải và các màn hình liên quan.",
+      tournamentName: "Tên giải",
+      tournamentNameUpdated: "Đã cập nhật tên giải",
       movePlayer: "Chuyển bảng",
       removePlayer: "Xóa VĐV",
       removeConfirm: "Xóa {name} khỏi bảng?",
@@ -5884,6 +5918,12 @@ export const vi: Translations = {
       },
       regenerateGroupMatches: {
         permissionDenied: "Bạn không có quyền tạo lại trận",
+      },
+      updatePlayer: {
+        permissionDenied: "Bạn không có quyền đổi tên VĐV",
+      },
+      updateTable: {
+        permissionDenied: "Bạn không có quyền đổi tên giải",
       },
       updateCourtSettings: {
         permissionDenied: "Bạn không có quyền cập nhật sân/giờ",

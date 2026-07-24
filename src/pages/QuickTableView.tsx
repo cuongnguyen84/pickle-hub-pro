@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { TheLineLayout } from '@/components/layout';
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Share2, Trophy, Check, ChevronRight, Swords, Settings, UserPlus, ArrowLeftRight,
-  UserMinus, ClipboardList, MapPin, Trash2, RefreshCw,
+  UserMinus, ClipboardList, MapPin, Trash2, RefreshCw, Pencil, ListRestart,
 } from 'lucide-react';
 import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
 import { toast } from 'sonner';
@@ -44,6 +44,7 @@ import {
   generateBracketPairings,
   resolveBracketConflicts,
 } from '@/lib/quick-table-seeding-v2';
+import { scheduleMatches } from '@/lib/round-robin';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -58,7 +59,8 @@ const QuickTableView = () => {
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffAtomic,
     isGroupStageComplete, getWildcardCount, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
-    updateTableCourtSettings, reassignCourtsAndTimes, deleteTable,
+    updatePlayerName, updateTableName, updateTableCourtSettings,
+    reassignCourtsAndTimes, deleteTable,
     updateCourtName, pending,
   } = useQuickTable();
   const { isAdmin } = useAdminAuth();
@@ -104,14 +106,20 @@ const QuickTableView = () => {
   const [isEditingGroups, setIsEditingGroups] = useState(false);
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditPlayerDialog, setShowEditPlayerDialog] = useState(false);
+  const [showEditTableNameDialog, setShowEditTableNameDialog] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<QuickTablePlayer | null>(null);
   const [targetGroupId, setTargetGroupId] = useState<string>('');
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerTeam, setNewPlayerTeam] = useState('');
   const [addToGroupId, setAddToGroupId] = useState<string>('');
+  const [editedPlayer1Name, setEditedPlayer1Name] = useState('');
+  const [editedPlayer2Name, setEditedPlayer2Name] = useState('');
+  const [editedTableName, setEditedTableName] = useState('');
 
   const [showEditCourtsDialog, setShowEditCourtsDialog] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const legacyScheduleRepairAttemptedRef = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!shareId) return;
@@ -258,6 +266,66 @@ const QuickTableView = () => {
     return name;
   }, [showTeam]);
 
+  const groupStageMatches = useMemo(
+    () => matches.filter(match => !match.is_playoff && match.group_id),
+    [matches],
+  );
+  const allGroupMatchesPending = groupStageMatches.length > 0
+    && groupStageMatches.every(match => match.status === 'pending');
+  const legacyScheduleNeedsRepair = allGroupMatchesPending
+    && groupStageMatches.some(match =>
+      match.rr_round_number === null
+      || match.rr_match_index === null
+      || match.court_id === null,
+    );
+
+  // Old tournaments can contain nested-loop match rows with no round metadata.
+  // Project the repaired schedule for every viewer immediately; the owner-only
+  // effect below persists exactly the same values when an organizer opens it.
+  const displayMatches = useMemo(() => {
+    if (!table || !legacyScheduleNeedsRepair || groups.length === 0) return matches;
+
+    const courts = (table.courts || [])
+      .map(court => parseInt(court, 10))
+      .filter(court => !isNaN(court));
+    if (courts.length === 0) return matches;
+
+    const scheduled = scheduleMatches(
+      groupStageMatches.map(match => ({
+        matchId: match.id,
+        player1: match.player1_id,
+        player2: match.player2_id,
+        groupIndex: groups.findIndex(group => group.id === match.group_id),
+      })),
+      courts,
+      groups.length,
+      table.start_time,
+      20,
+    );
+    const byMatchId = new Map(scheduled.map(item => [item.matchId, item]));
+
+    return matches
+      .map(match => {
+        const item = byMatchId.get(match.id);
+        if (!item) return match;
+        return {
+          ...match,
+          court_id: item.court,
+          start_at: item.startAt,
+          display_order: item.displayOrder,
+          rr_round_number: item.rrRoundNumber,
+          rr_match_index: item.rrMatchIndex,
+        };
+      })
+      .sort((a, b) => a.display_order - b.display_order);
+  }, [
+    table,
+    legacyScheduleNeedsRepair,
+    groups,
+    matches,
+    groupStageMatches,
+  ]);
+
   const getGroupStandings = (groupId: string) => {
     return players
       .filter(p => p.group_id === groupId)
@@ -386,13 +454,11 @@ const QuickTableView = () => {
     }
   };
 
-  const rescheduleAfterRosterChange = async (): Promise<boolean> => {
+  const repairGroupSchedule = useCallback(async (): Promise<boolean> => {
     if (!shareId) return false;
 
-    // Regeneration replaces match rows, so the component's current `matches`
-    // snapshot is stale. Fetch the completed roster change before rebuilding
-    // the tournament-wide court order; otherwise the new group is left with
-    // NULL courts/times while the untouched groups keep the old schedule.
+    // Always fetch first. Roster regeneration replaces match rows, and a
+    // realtime refresh may otherwise leave this component with stale IDs.
     const fresh = await getTableByShareId(shareId);
     if (!fresh) return false;
 
@@ -409,6 +475,46 @@ const QuickTableView = () => {
       fresh.groups,
       fresh.matches,
     );
+  }, [getTableByShareId, reassignCourtsAndTimes, shareId]);
+
+  useEffect(() => {
+    if (
+      !canManageTable
+      || !table?.id
+      || !legacyScheduleNeedsRepair
+      || legacyScheduleRepairAttemptedRef.current === table.id
+    ) {
+      return;
+    }
+
+    legacyScheduleRepairAttemptedRef.current = table.id;
+    void repairGroupSchedule().then(async success => {
+      if (success) {
+        toast.success(t.quickTable.view.scheduleRepaired);
+        await loadData();
+      } else {
+        toast.error(t.quickTable.view.errorOccurred);
+      }
+    });
+  }, [
+    canManageTable,
+    table?.id,
+    legacyScheduleNeedsRepair,
+    repairGroupSchedule,
+    loadData,
+    t.quickTable.view.scheduleRepaired,
+    t.quickTable.view.errorOccurred,
+  ]);
+
+  const handleRescheduleMatches = async () => {
+    if (!allGroupMatchesPending) return;
+    const success = await repairGroupSchedule();
+    if (success) {
+      toast.success(t.quickTable.view.scheduleRepaired);
+      await loadData();
+    } else {
+      toast.error(t.quickTable.view.errorOccurred);
+    }
   };
 
   const handleMovePlayer = async () => {
@@ -429,7 +535,7 @@ const QuickTableView = () => {
       );
       const scheduleUpdated = oldGroupRegenerated
         && targetGroupRegenerated
-        && await rescheduleAfterRosterChange();
+        && await repairGroupSchedule();
 
       if (scheduleUpdated) toast.success(t.quickTable.view.movedSuccess);
       else toast.error(t.quickTable.view.errorOccurred);
@@ -445,7 +551,7 @@ const QuickTableView = () => {
     if (newPlayer) {
       const groupPlayers = [...players.filter(p => p.group_id === addToGroupId), newPlayer];
       const regenerated = await regenerateGroupMatches(table.id, addToGroupId, groupPlayers.map(p => p.id));
-      const scheduleUpdated = regenerated && await rescheduleAfterRosterChange();
+      const scheduleUpdated = regenerated && await repairGroupSchedule();
       if (scheduleUpdated) toast.success(t.quickTable.view.addedSuccess);
       else toast.error(t.quickTable.view.errorOccurred);
       await loadData();
@@ -467,10 +573,61 @@ const QuickTableView = () => {
         player.group_id,
         remainingPlayers.map(p => p.id),
       );
-      const scheduleUpdated = regenerated && await rescheduleAfterRosterChange();
+      const scheduleUpdated = regenerated && await repairGroupSchedule();
       if (scheduleUpdated) toast.success(t.quickTable.view.removedSuccess);
       else toast.error(t.quickTable.view.errorOccurred);
       await loadData();
+    }
+  };
+
+  const openEditPlayerDialog = (player: QuickTablePlayer) => {
+    const [fallbackPlayer1, ...fallbackPlayer2] = player.name.split(' & ');
+    setSelectedPlayer(player);
+    setEditedPlayer1Name(player.player1_name || fallbackPlayer1 || player.name);
+    setEditedPlayer2Name(player.player2_name || fallbackPlayer2.join(' & '));
+    setShowEditPlayerDialog(true);
+  };
+
+  const handleUpdatePlayerName = async () => {
+    if (
+      !selectedPlayer
+      || !table
+      || !editedPlayer1Name.trim()
+      || (table.is_doubles && !editedPlayer2Name.trim())
+    ) {
+      return;
+    }
+
+    const success = await updatePlayerName(
+      selectedPlayer.id,
+      editedPlayer1Name,
+      table.is_doubles ? editedPlayer2Name : null,
+    );
+    if (success) {
+      toast.success(t.quickTable.view.playerNameUpdated);
+      setShowEditPlayerDialog(false);
+      setSelectedPlayer(null);
+      await loadData();
+    } else {
+      toast.error(t.quickTable.view.errorOccurred);
+    }
+  };
+
+  const openEditTableNameDialog = () => {
+    if (!table) return;
+    setEditedTableName(table.name);
+    setShowEditTableNameDialog(true);
+  };
+
+  const handleUpdateTableName = async () => {
+    if (!table || !editedTableName.trim()) return;
+    const success = await updateTableName(table.id, editedTableName);
+    if (success) {
+      toast.success(t.quickTable.view.tournamentNameUpdated);
+      setShowEditTableNameDialog(false);
+      await loadData();
+    } else {
+      toast.error(t.quickTable.view.errorOccurred);
     }
   };
 
@@ -586,9 +743,23 @@ const QuickTableView = () => {
               </>
             )}
           </div>
-          <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
-            <em className="tl-serif">{table.name}</em>
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
+              <em className="tl-serif">{table.name}</em>
+            </h1>
+            {canManageTable && (
+              <button
+                type="button"
+                className="tl-btn"
+                onClick={openEditTableNameDialog}
+                aria-label={t.quickTable.view.editTournamentName}
+                title={t.quickTable.view.editTournamentName}
+                style={{ padding: '7px 9px', flexShrink: 0 }}
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
+          </div>
           <div
             style={{
               display: 'flex',
@@ -834,6 +1005,26 @@ const QuickTableView = () => {
                     <button
                       type="button"
                       className="tl-btn"
+                      onClick={handleRescheduleMatches}
+                      disabled={!allGroupMatchesPending || pending.reassignCourtsAndTimes}
+                      title={
+                        allGroupMatchesPending
+                          ? t.quickTable.view.rescheduleMatches
+                          : t.quickTable.view.reschedulePendingOnly
+                      }
+                      style={{ fontSize: 12.5, padding: '7px 12px' }}
+                    >
+                      <ListRestart
+                        className={cn(
+                          'w-4 h-4',
+                          pending.reassignCourtsAndTimes && 'animate-spin',
+                        )}
+                      />
+                      {t.quickTable.view.rescheduleMatches}
+                    </button>
+                    <button
+                      type="button"
+                      className="tl-btn"
                       onClick={() => setShowEditCourtsDialog(true)}
                       style={{ fontSize: 12.5, padding: '7px 12px' }}
                     >
@@ -901,7 +1092,9 @@ const QuickTableView = () => {
                 const group = groups.find(g => g.id === activeGroupId) || groups[0];
                 if (!group) return null;
                 const standings = getGroupStandings(group.id);
-                const groupMatches = matches.filter(m => m.group_id === group.id && !m.is_playoff);
+                const groupMatches = displayMatches.filter(
+                  match => match.group_id === group.id && !match.is_playoff,
+                );
 
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -934,7 +1127,7 @@ const QuickTableView = () => {
                                   { key: 'm', label: t.quickTable.view.matches, width: 72, align: 'center' as const },
                                   { key: 'd', label: t.quickTable.view.pointDiff, width: 84, align: 'center' as const },
                                   ...(isEditingGroups
-                                    ? [{ key: 'a', label: t.quickTable.view.actions, width: 96, align: 'center' as const }]
+                                    ? [{ key: 'a', label: t.quickTable.view.actions, width: 132, align: 'center' as const }]
                                     : []),
                                 ]
                               ).map(col => (
@@ -1075,6 +1268,16 @@ const QuickTableView = () => {
                                   {isEditingGroups && (
                                     <td style={{ ...cellBase, textAlign: 'center' }}>
                                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                        <button
+                                          type="button"
+                                          className="tl-btn"
+                                          aria-label={t.quickTable.view.editPlayerName}
+                                          title={t.quickTable.view.editPlayerName}
+                                          onClick={() => openEditPlayerDialog(player)}
+                                          style={{ padding: '5px 8px' }}
+                                        >
+                                          <Pencil className="w-4 h-4" />
+                                        </button>
                                         <button
                                           type="button"
                                           className="tl-btn"
@@ -1369,6 +1572,102 @@ const QuickTableView = () => {
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>{t.quickTable.view.cancel}</Button>
               <Button onClick={handleAddPlayer} disabled={!newPlayerName.trim() || !addToGroupId}>{t.quickTable.view.add}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showEditPlayerDialog} onOpenChange={setShowEditPlayerDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t.quickTable.view.editPlayerNameTitle}</DialogTitle>
+              <DialogDescription>
+                {t.quickTable.view.editPlayerNameDescription}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="quick-table-player-1-name">
+                  {table.is_doubles
+                    ? t.quickTable.view.player1Name
+                    : t.quickTable.view.playerName}
+                </Label>
+                <Input
+                  id="quick-table-player-1-name"
+                  value={editedPlayer1Name}
+                  onChange={(event) => setEditedPlayer1Name(event.target.value)}
+                  maxLength={100}
+                  autoComplete="off"
+                />
+              </div>
+              {table.is_doubles && (
+                <div className="space-y-2">
+                  <Label htmlFor="quick-table-player-2-name">
+                    {t.quickTable.view.player2Name}
+                  </Label>
+                  <Input
+                    id="quick-table-player-2-name"
+                    value={editedPlayer2Name}
+                    onChange={(event) => setEditedPlayer2Name(event.target.value)}
+                    maxLength={100}
+                    autoComplete="off"
+                  />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowEditPlayerDialog(false)}
+              >
+                {t.quickTable.view.cancel}
+              </Button>
+              <Button
+                onClick={handleUpdatePlayerName}
+                disabled={
+                  pending.updatePlayerName
+                  || !editedPlayer1Name.trim()
+                  || (table.is_doubles && !editedPlayer2Name.trim())
+                }
+              >
+                {t.quickTable.view.save}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showEditTableNameDialog} onOpenChange={setShowEditTableNameDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t.quickTable.view.editTournamentNameTitle}</DialogTitle>
+              <DialogDescription>
+                {t.quickTable.view.editTournamentNameDescription}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 py-4">
+              <Label htmlFor="quick-table-tournament-name">
+                {t.quickTable.view.tournamentName}
+              </Label>
+              <Input
+                id="quick-table-tournament-name"
+                value={editedTableName}
+                onChange={(event) => setEditedTableName(event.target.value)}
+                maxLength={100}
+                autoComplete="off"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowEditTableNameDialog(false)}
+              >
+                {t.quickTable.view.cancel}
+              </Button>
+              <Button
+                onClick={handleUpdateTableName}
+                disabled={pending.updateTableName || !editedTableName.trim()}
+              >
+                {t.quickTable.view.save}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
