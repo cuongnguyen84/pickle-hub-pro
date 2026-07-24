@@ -215,7 +215,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "DUPR là hệ rating pickleball toàn cầu đang triển khai tại VN qua đối tác TA Pickleball",
-              path: "/vi/blog/vi-dupr-rating-system-explained",
+              path: "/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam",
             },
             {
               text: "Kế hoạch 30 ngày tăng DUPR cho thấy pathway nghiệp dư-tới-pro pickleball thực tế ra sao",
