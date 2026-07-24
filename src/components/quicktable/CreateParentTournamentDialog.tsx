@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -12,7 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useI18n } from '@/i18n';
-import { useParentTournament } from '@/hooks/useParentTournament';
+import {
+  useParentTournament,
+  type AttachableQuickTable,
+} from '@/hooks/useParentTournament';
+import ExistingEventPicker from './ExistingEventPicker';
 
 interface CreateParentTournamentDialogProps {
   open: boolean;
@@ -34,11 +38,32 @@ export default function CreateParentTournamentDialog({
 }: CreateParentTournamentDialogProps) {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { createParent, loading } = useParentTournament();
+  const {
+    createParent,
+    loading,
+    attaching,
+    getAttachableEvents,
+    attachEventsToParent,
+  } = useParentTournament();
   const [name, setName] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
+  const [events, setEvents] = useState<AttachableQuickTable[]>([]);
+  const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
+  const loadEvents = useCallback(async () => {
+    setLoadingEvents(true);
+    setEvents(await getAttachableEvents());
+    setLoadingEvents(false);
+  }, [getAttachableEvents]);
+
+  useEffect(() => {
+    if (!open) return;
+    setSelectedEventIds([]);
+    void loadEvents();
+  }, [open, loadEvents]);
 
   const handleSubmit = async () => {
     if (!name.trim()) return;
@@ -49,6 +74,9 @@ export default function CreateParentTournamentDialog({
       location: location.trim() || undefined,
     });
     if (parent) {
+      if (selectedEventIds.length > 0) {
+        await attachEventsToParent(parent.id, selectedEventIds);
+      }
       onOpenChange(false);
       navigate(`/tools/quick-tables/parent/${parent.share_id}`);
     }
@@ -56,7 +84,7 @@ export default function CreateParentTournamentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t.quickTable.parentTournament.createParent}</DialogTitle>
           <DialogDescription>{t.quickTable.parentTournament.multiDesc}</DialogDescription>
@@ -118,6 +146,23 @@ export default function CreateParentTournamentDialog({
               maxLength={500}
             />
           </div>
+
+          <div className="space-y-2 border-t border-border pt-4">
+            <div>
+              <Label style={fieldLabel}>
+                {t.quickTable.parentTournament.existingEventsOptional}
+              </Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t.quickTable.parentTournament.existingEventsOptionalDescription}
+              </p>
+            </div>
+            <ExistingEventPicker
+              events={events}
+              selectedIds={selectedEventIds}
+              onSelectionChange={setSelectedEventIds}
+              loading={loadingEvents}
+            />
+          </div>
         </div>
 
         <DialogFooter>
@@ -125,7 +170,7 @@ export default function CreateParentTournamentDialog({
             type="button"
             className="tl-btn"
             onClick={() => onOpenChange(false)}
-            disabled={loading}
+            disabled={loading || attaching}
           >
             {t.common.cancel}
           </button>
@@ -133,9 +178,11 @@ export default function CreateParentTournamentDialog({
             type="button"
             className="tl-btn green"
             onClick={handleSubmit}
-            disabled={!name.trim() || loading}
+            disabled={!name.trim() || loading || attaching}
           >
-            {loading ? t.common.loading : t.quickTable.parentTournament.createParent}
+            {loading || attaching
+              ? t.common.loading
+              : t.quickTable.parentTournament.createParent}
           </button>
         </DialogFooter>
       </DialogContent>

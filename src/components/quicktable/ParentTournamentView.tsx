@@ -7,9 +7,18 @@ import { useI18n } from '@/i18n';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useParentTournament, type ParentTournament } from '@/hooks/useParentTournament';
 import type { QuickTable } from '@/hooks/useQuickTable';
-import { Calendar, MapPin, Plus, Trophy, Trash2, Eye } from 'lucide-react';
+import {
+  Calendar,
+  Eye,
+  FolderPlus,
+  MapPin,
+  Plus,
+  Trash2,
+  Trophy,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { vi as viLocale } from 'date-fns/locale';
+import AttachExistingEventsDialog from './AttachExistingEventsDialog';
 
 interface ParentTournamentViewProps {
   shareId: string;
@@ -40,6 +49,7 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
   const [parent, setParent] = useState<ParentTournament | null>(null);
   const [subEvents, setSubEvents] = useState<QuickTable[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAttachEvents, setShowAttachEvents] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -204,6 +214,7 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
             <div
               style={{
                 display: 'flex',
+                flexWrap: 'wrap',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 gap: 12,
@@ -216,10 +227,24 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
                 {t.quickTable.parentTournament.subEvents}
               </h2>
               {canEdit && (
-                <button type="button" className="tl-btn green" onClick={handleAddSubEvent}>
-                  <Plus className="w-4 h-4" />
-                  {t.quickTable.parentTournament.addSubEvent}
-                </button>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    className="tl-btn"
+                    onClick={() => setShowAttachEvents(true)}
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                    {t.quickTable.parentTournament.addExistingEvents}
+                  </button>
+                  <button
+                    type="button"
+                    className="tl-btn green"
+                    onClick={handleAddSubEvent}
+                  >
+                    <Plus className="w-4 h-4" />
+                    {t.quickTable.parentTournament.createNewEvent}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -318,6 +343,15 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
             </div>
           )}
         </section>
+
+        {canEdit && (
+          <AttachExistingEventsDialog
+            open={showAttachEvents}
+            onOpenChange={setShowAttachEvents}
+            parentId={parent.id}
+            onAttached={loadData}
+          />
+        )}
       </div>
     </TheLineLayout>
   );
