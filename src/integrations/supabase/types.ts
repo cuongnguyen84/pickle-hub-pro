@@ -7512,6 +7512,10 @@ export type Database = {
         Args: { p_tournament_id: string }
         Returns: Json
       }
+      attach_quick_tables_to_parent: {
+        Args: { p_parent_id: string; p_table_ids: string[] }
+        Returns: number
+      }
       approve_club_member: {
         Args: { p_club_id: string; p_profile_id: string }
         Returns: {

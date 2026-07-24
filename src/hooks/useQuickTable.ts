@@ -53,6 +53,7 @@ export interface QuickTable {
   courts: string[] | null;
   start_time: string | null;
   is_doubles: boolean;
+  parent_tournament_id: string | null;
 }
 
 export interface QuickTableGroup {

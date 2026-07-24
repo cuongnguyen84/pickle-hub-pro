@@ -34,9 +34,21 @@ export interface ParentTournamentWithPreview extends ParentTournament {
   previewSubEvents: SubEventPreview[];
 }
 
+export interface AttachableQuickTable {
+  id: string;
+  name: string;
+  status: string;
+  share_id: string;
+  player_count: number;
+  format: string;
+  is_doubles: boolean;
+  created_at: string;
+}
+
 export function useParentTournament() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [attaching, setAttaching] = useState(false);
 
   const createParent = useCallback(async (data: {
     name: string;
@@ -180,6 +192,56 @@ export function useParentTournament() {
     }
   }, []);
 
+  const getAttachableEvents = useCallback(async (): Promise<AttachableQuickTable[]> => {
+    if (!user) return [];
+    try {
+      const { data, error } = await supabase
+        .from('quick_tables')
+        .select('id, name, status, share_id, player_count, format, is_doubles, created_at')
+        .eq('creator_user_id', user.id)
+        .is('parent_tournament_id', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as AttachableQuickTable[];
+    } catch (error) {
+      logMutationError(HOOK, 'getAttachableEvents', error);
+      return [];
+    }
+  }, [user]);
+
+  const attachEventsToParent = useCallback(async (
+    parentId: string,
+    tableIds: string[],
+  ): Promise<number> => {
+    const uniqueIds = [...new Set(tableIds)].filter(Boolean);
+    if (!user || uniqueIds.length === 0) return 0;
+
+    setAttaching(true);
+    try {
+      const { data, error } = await supabase.rpc('attach_quick_tables_to_parent', {
+        p_parent_id: parentId,
+        p_table_ids: uniqueIds,
+      });
+
+      if (error) throw error;
+      const attachedCount = Number(data || 0);
+      toast.success(
+        tStandalone('toast.parentTournament.attach.success')
+          .replace('{count}', String(attachedCount)),
+      );
+      return attachedCount;
+    } catch (error) {
+      handleMutationError(HOOK, 'attachEventsToParent', error, {
+        genericMsg: tStandalone('toast.parentTournament.attach.error'),
+        permissionDeniedMsg: tStandalone('toast.parentTournament.attach.permissionDenied'),
+      });
+      return 0;
+    } finally {
+      setAttaching(false);
+    }
+  }, [user]);
+
   const deleteParent = useCallback(async (parentId: string): Promise<boolean> => {
     try {
       const count = await getSubEventCount(parentId);
@@ -210,11 +272,14 @@ export function useParentTournament() {
 
   return {
     loading,
+    attaching,
     createParent,
     getUserParentTournaments,
     getUserParentTournamentsWithPreview,
     getParentByShareId,
     getSubEventCount,
+    getAttachableEvents,
+    attachEventsToParent,
     deleteParent,
     isOwner,
   };

@@ -1153,6 +1153,20 @@ export interface Translations {
       description: string;
       descriptionPlaceholder: string;
       addSubEvent: string;
+      createNewEvent: string;
+      addExistingEvents: string;
+      existingEventsTitle: string;
+      existingEventsDescription: string;
+      existingEventsOptional: string;
+      existingEventsOptionalDescription: string;
+      noAttachableEvents: string;
+      noAttachableEventsHint: string;
+      selectedEventCount: string;
+      selectAll: string;
+      clearSelection: string;
+      attachSelected: string;
+      doublesEvent: string;
+      singlesEvent: string;
       subEvents: string;
       noSubEvents: string;
       subEventCount: string;
@@ -2868,6 +2882,11 @@ export interface Translations {
         error: string;
         permissionDenied: string;
       };
+      attach: {
+        success: string;
+        error: string;
+        permissionDenied: string;
+      };
     };
     table: {
       createTable: {
@@ -4101,8 +4120,22 @@ export const vi: Translations = {
       description: "Mô tả",
       descriptionPlaceholder: "Giới thiệu về giải đấu...",
       addSubEvent: "+ Thêm nội dung",
+      createNewEvent: "Tạo nội dung mới",
+      addExistingEvents: "Thêm nội dung có sẵn",
+      existingEventsTitle: "Chọn nội dung đã tạo",
+      existingEventsDescription: "Chọn các nội dung Quick Table của bạn chưa thuộc giải tổng nào.",
+      existingEventsOptional: "Nội dung đã tạo (không bắt buộc)",
+      existingEventsOptionalDescription: "Có thể chọn ngay bây giờ hoặc thêm sau tại trang giải tổng.",
+      noAttachableEvents: "Không có nội dung có sẵn",
+      noAttachableEventsHint: "Các nội dung đã nằm trong một giải tổng khác sẽ không xuất hiện ở đây.",
+      selectedEventCount: "Đã chọn {count} nội dung",
+      selectAll: "Chọn tất cả",
+      clearSelection: "Bỏ chọn",
+      attachSelected: "Thêm {count} nội dung",
+      doublesEvent: "Đôi",
+      singlesEvent: "Đơn",
       subEvents: "Nội dung thi đấu",
-      noSubEvents: "Chưa có nội dung nào. Nhấn \"+ Thêm nội dung\" để bắt đầu.",
+      noSubEvents: "Chưa có nội dung nào. Tạo nội dung mới hoặc thêm nội dung đã có để bắt đầu.",
       subEventCount: "{count} nội dung",
       viewParent: "Xem giải tổng",
       deleteParentConfirm: "Bạn phải xoá tất cả nội dung con trước khi xoá giải tổng.",
@@ -5877,6 +5910,11 @@ export const vi: Translations = {
         success: "Đã xoá giải tổng",
         error: "Không thể xoá giải tổng",
         permissionDenied: "Bạn không có quyền xoá giải tổng này",
+      },
+      attach: {
+        success: "Đã thêm {count} nội dung vào giải tổng",
+        error: "Không thể thêm nội dung vào giải tổng",
+        permissionDenied: "Bạn chỉ có thể thêm nội dung và giải tổng do mình tạo",
       },
     },
     table: {

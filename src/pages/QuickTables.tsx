@@ -63,7 +63,11 @@ const QuickTables = () => {
   const [searchParams] = useSearchParams();
   const { createTable, getUserTables, getUserQuotaInfo, loading } = useQuickTable();
   const { tables: refereeTables } = useRefereeTables();
-  const { getUserParentTournamentsWithPreview, isOwner: isParentOwner } = useParentTournament();
+  const {
+    getUserParentTournamentsWithPreview,
+    attachEventsToParent,
+    isOwner: isParentOwner,
+  } = useParentTournament();
   const [quotaInfo, setQuotaInfo] = useState<{ current_count: number; quota: number }>({ current_count: 0, quota: 3 });
   const [showTypeSelection, setShowTypeSelection] = useState(false);
   const [showCreateParent, setShowCreateParent] = useState(false);
@@ -207,7 +211,7 @@ const QuickTables = () => {
         await supabase.from('quick_tables').update({ default_sets: defaultSets } as never).eq('id', table.id);
       }
       if (parentIdFromUrl) {
-        await supabase.from('quick_tables').update({ parent_tournament_id: parentIdFromUrl }).eq('id', table.id);
+        await attachEventsToParent(parentIdFromUrl, [table.id]);
       }
       if (requiresRegistration) {
         navigate(`/tools/quick-tables/${table.share_id}`);
