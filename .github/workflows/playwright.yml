@@ -137,7 +137,10 @@ jobs:
           # QA-04 inc4: unlocks the J5/J6 organizer-wizard journeys (and the
           # a11y O2 scan). Absent secret = those tests self-skip with reason.
           PLAYWRIGHT_ORGANIZER_CLUB_SLUG: ${{ secrets.PLAYWRIGHT_ORGANIZER_CLUB_SLUG }}
-        run: npm run e2e
+        # This workflow is the read-only smoke gate. The full `e2e` script
+        # also runs contract, DUPR, auth, visual, and journey suites that have
+        # their own workflows and external prerequisites.
+        run: npm run e2e:smoke
 
       - name: Upload Playwright report on failure
         if: failure()
