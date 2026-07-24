@@ -479,18 +479,6 @@ export function useQuickTableMutations() {
   ): Promise<boolean> => {
     setPendingFor('reassignCourtsAndTimes', true);
     try {
-      if (courts.length === 0) {
-        const groupMatchIds = matches.filter(m => !m.is_playoff && m.group_id).map(m => m.id);
-        if (groupMatchIds.length > 0) {
-          const { error } = await supabase
-            .from('quick_table_matches')
-            .update({ court_id: null, start_at: null })
-            .in('id', groupMatchIds);
-          if (error) throw error;
-        }
-        return true;
-      }
-
       const { scheduleMatches } = await import('@/lib/round-robin');
 
       // Feed the scheduler in (round, group) order so its output is stable; it
@@ -506,6 +494,7 @@ export function useQuickTableMutations() {
           return groupAIdx - groupBIdx;
         });
 
+      const hasCourtSettings = courts.length > 0;
       const scheduled = scheduleMatches(
         groupMatches.map(m => ({
           matchId: m.id,
@@ -513,9 +502,9 @@ export function useQuickTableMutations() {
           player2: m.player2_id,
           groupIndex: groups.findIndex(g => g.id === m.group_id),
         })),
-        courts,
+        hasCourtSettings ? courts : [0],
         groups.length,
-        startTime,
+        hasCourtSettings ? startTime : null,
         20,
       );
 
@@ -526,8 +515,8 @@ export function useQuickTableMutations() {
         supabase
           .from('quick_table_matches')
           .update({
-            court_id: s.court,
-            start_at: s.startAt,
+            court_id: hasCourtSettings ? s.court : null,
+            start_at: hasCourtSettings ? s.startAt : null,
             display_order: s.displayOrder,
             rr_round_number: s.rrRoundNumber,
             rr_match_index: s.rrMatchIndex,

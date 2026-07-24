@@ -288,7 +288,7 @@ const QuickTableView = () => {
     const courts = (table.courts || [])
       .map(court => parseInt(court, 10))
       .filter(court => !isNaN(court));
-    if (courts.length === 0) return matches;
+    const hasCourtSettings = courts.length > 0;
 
     const scheduled = scheduleMatches(
       groupStageMatches.map(match => ({
@@ -297,9 +297,9 @@ const QuickTableView = () => {
         player2: match.player2_id,
         groupIndex: groups.findIndex(group => group.id === match.group_id),
       })),
-      courts,
+      hasCourtSettings ? courts : [0],
       groups.length,
-      table.start_time,
+      hasCourtSettings ? table.start_time : null,
       20,
     );
     const byMatchId = new Map(scheduled.map(item => [item.matchId, item]));
@@ -310,8 +310,8 @@ const QuickTableView = () => {
         if (!item) return match;
         return {
           ...match,
-          court_id: item.court,
-          start_at: item.startAt,
+          court_id: hasCourtSettings ? item.court : null,
+          start_at: hasCourtSettings ? item.startAt : null,
           display_order: item.displayOrder,
           rr_round_number: item.rrRoundNumber,
           rr_match_index: item.rrMatchIndex,
@@ -465,8 +465,6 @@ const QuickTableView = () => {
     const freshCourts = (fresh.table.courts || [])
       .map(court => parseInt(court, 10))
       .filter(court => !isNaN(court));
-
-    if (freshCourts.length === 0) return true;
 
     return reassignCourtsAndTimes(
       fresh.table.id,
