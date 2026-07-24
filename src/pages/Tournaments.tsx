@@ -23,8 +23,11 @@ import { formatDate, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import ParentTournamentCard from "@/components/quicktable/ParentTournamentCard";
+import { useFeaturedParentTournaments } from "@/hooks/useFeaturedParentTournaments";
+import { Layers3, Sparkles, Trophy } from "lucide-react";
 
-type Tab = "watch" | "community";
+type Tab = "featured" | "watch" | "community";
 type Fmt = "quick-tables" | "doubles-elim" | "flex" | "team-match";
 type FmtStatus = "ongoing" | "ended";
 
@@ -161,7 +164,9 @@ const Tournaments = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const userTab: Tab | null =
-    tabParam === "watch" || tabParam === "community" ? tabParam : null;
+    tabParam === "featured" || tabParam === "watch" || tabParam === "community"
+      ? tabParam
+      : null;
   const fmtParam = searchParams.get("fmt");
   const fmtTab: Fmt = FORMATS.some((f) => f.fmt === fmtParam)
     ? (fmtParam as Fmt)
@@ -179,17 +184,16 @@ const Tournaments = () => {
   // Pro (Watch) data
   const { data: tournaments = [], isLoading: tournamentsLoading } = useTournaments();
   const { data: liveStreams = [] } = useLivestreams("live");
+  const {
+    data: featuredParents = [],
+    isLoading: featuredLoading,
+    isError: featuredError,
+  } = useFeaturedParentTournaments();
 
-  // Default to Community, not Watch.
-  //
-  // The old default was `hasWatchContent ? "watch" : "community"` — but
-  // `useTournaments()` selects every pro tournament ever, with no status
-  // filter, so `hasWatchContent` is always true in production and the
-  // "community" branch was dead code. A player handed a bracket link ("đăng ký
-  // đi anh") landed on a list of finished PPA broadcasts and had to discover a
-  // second tab on their own. Community brackets are the only thing on this
-  // page anyone can actually register for, so they lead.
-  const tab: Tab = userTab ?? "community";
+  // Featured multi-event tournaments lead the public discovery page. The
+  // previous Community default remains one click away and direct links keep
+  // their URL-controlled tab selection.
+  const tab: Tab = userTab ?? "featured";
 
   // Community data — all 4 formats, active + completed
   // "Ended" has its own tab now — limit 100 so the list is actually complete (86 QT completed as of 2026-07)
@@ -238,6 +242,10 @@ const Tournaments = () => {
     formatData["doubles-elim"].ongoing.length +
     formatData["flex"].ongoing.length +
     formatData["team-match"].ongoing.length;
+  const featuredEventCount = featuredParents.reduce(
+    (total, parent) => total + parent.subEventCount,
+    0,
+  );
 
   const sortedPro = useMemo(() => {
     return [...tournaments].sort((a, b) => {
@@ -397,6 +405,17 @@ const Tournaments = () => {
         <div className="tl-tabs">
           <button
             type="button"
+            aria-pressed={tab === "featured"}
+            className={`tl-tab featured ${tab === "featured" ? "active" : ""}`}
+            onClick={() => setUserTab("featured")}
+          >
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            {vi ? "Giải nổi bật" : "Featured Tournaments"}
+            <span className="count">{featuredParents.length}</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={tab === "watch"}
             className={`tl-tab ${tab === "watch" ? "active" : ""}`}
             onClick={() => setUserTab("watch")}
           >
@@ -404,6 +423,7 @@ const Tournaments = () => {
           </button>
           <button
             type="button"
+            aria-pressed={tab === "community"}
             className={`tl-tab ${tab === "community" ? "active" : ""}`}
             onClick={() => setUserTab("community")}
           >
@@ -413,7 +433,158 @@ const Tournaments = () => {
 
         {/* Tab panels */}
         <div style={{ paddingBottom: 80 }}>
-          {tab === "watch" ? (
+          {tab === "featured" ? (
+            <section
+              className="space-y-6 pt-2"
+              aria-labelledby="featured-tournaments-heading"
+            >
+              <div
+                className="relative isolate overflow-hidden rounded-[var(--tl-radius-lg)] border px-5 py-7 sm:px-8 sm:py-9"
+                style={{
+                  borderColor: "rgba(233, 182, 73, 0.38)",
+                  background:
+                    "radial-gradient(circle at 85% 15%, rgba(233, 182, 73, 0.18), transparent 34%), linear-gradient(135deg, var(--tl-bg-elev), var(--tl-bg))",
+                  boxShadow: "0 24px 70px rgba(0, 0, 0, 0.16)",
+                }}
+              >
+                <div
+                  className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full border"
+                  style={{ borderColor: "rgba(233, 182, 73, 0.22)" }}
+                  aria-hidden="true"
+                />
+                <div
+                  className="pointer-events-none absolute right-5 top-5 h-24 w-24 rounded-full border"
+                  style={{ borderColor: "rgba(233, 182, 73, 0.14)" }}
+                  aria-hidden="true"
+                />
+
+                <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                  <div className="max-w-3xl">
+                    <div
+                      className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]"
+                      style={{
+                        borderColor: "rgba(233, 182, 73, 0.35)",
+                        background: "rgba(233, 182, 73, 0.1)",
+                        color: "var(--tl-gold)",
+                      }}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                      {vi ? "Tuyển chọn bởi ThePickleHub" : "Curated by ThePickleHub"}
+                    </div>
+                    <h2
+                      id="featured-tournaments-heading"
+                      className="max-w-2xl text-3xl leading-[1.05] sm:text-5xl"
+                      style={{ color: "var(--tl-fg)", letterSpacing: "-0.035em" }}
+                    >
+                      {vi ? (
+                        <>
+                          Một giải tổng.{" "}
+                          <em className="tl-serif" style={{ color: "var(--tl-gold)" }}>
+                            Mọi nội dung.
+                          </em>
+                        </>
+                      ) : (
+                        <>
+                          One tournament.{" "}
+                          <em className="tl-serif" style={{ color: "var(--tl-gold)" }}>
+                            Every event.
+                          </em>
+                        </>
+                      )}
+                    </h2>
+                    <p
+                      className="mt-4 max-w-2xl text-sm leading-6 sm:text-base"
+                      style={{ color: "var(--tl-fg-2)" }}
+                    >
+                      {vi
+                        ? "Theo dõi trọn bộ nội dung thi đấu, lịch đấu và kết quả từ những giải pickleball nhiều hạng mục được ban biên tập lựa chọn."
+                        : "Follow every division, schedule, and result from selected multi-event pickleball tournaments in one place."}
+                    </p>
+
+                    <div className="mt-6 flex flex-wrap gap-5">
+                      <div className="flex items-center gap-2">
+                        <Trophy
+                          className="h-4 w-4"
+                          style={{ color: "var(--tl-gold)" }}
+                          aria-hidden="true"
+                        />
+                        <span className="font-mono text-xs" style={{ color: "var(--tl-fg-2)" }}>
+                          <strong style={{ color: "var(--tl-fg)" }}>{featuredParents.length}</strong>{" "}
+                          {vi ? "giải tổng" : "tournaments"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Layers3
+                          className="h-4 w-4"
+                          style={{ color: "var(--tl-gold)" }}
+                          aria-hidden="true"
+                        />
+                        <span className="font-mono text-xs" style={{ color: "var(--tl-fg-2)" }}>
+                          <strong style={{ color: "var(--tl-fg)" }}>{featuredEventCount}</strong>{" "}
+                          {vi ? "nội dung thi đấu" : "competition events"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/tools/quick-tables"
+                    className="tl-btn self-start lg:self-end"
+                    style={{
+                      borderColor: "rgba(233, 182, 73, 0.4)",
+                      color: "var(--tl-gold)",
+                    }}
+                  >
+                    {vi ? "Tạo giải tổng" : "Create multi-event tournament"} →
+                  </Link>
+                </div>
+              </div>
+
+              {featuredLoading ? (
+                <div
+                  className="grid gap-4 md:grid-cols-2"
+                  aria-busy="true"
+                  aria-label={vi ? "Đang tải giải nổi bật" : "Loading featured tournaments"}
+                >
+                  {[0, 1].map(item => (
+                    <div
+                      key={item}
+                      className="h-[310px] animate-pulse rounded-[var(--tl-radius-lg)] border"
+                      style={{
+                        borderColor: "var(--tl-border)",
+                        background: "var(--tl-surface)",
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : featuredError ? (
+                <div className="tl-empty" role="status">
+                  <h3>{vi ? "Không thể tải giải nổi bật." : "Featured tournaments are unavailable."}</h3>
+                  <p>{vi ? "Kéo xuống để tải lại hoặc quay lại sau." : "Pull to refresh or check back shortly."}</p>
+                </div>
+              ) : featuredParents.length === 0 ? (
+                <div className="tl-empty">
+                  <h3>{vi ? "Chưa có giải tổng nổi bật." : "No featured tournaments yet."}</h3>
+                  <p>
+                    {vi
+                      ? "Các giải nhiều nội dung được tuyển chọn sẽ xuất hiện tại đây."
+                      : "Selected multi-event tournaments will appear here."}
+                  </p>
+                </div>
+              ) : (
+                <div className={`grid gap-5 ${featuredParents.length > 1 ? "md:grid-cols-2" : ""}`}>
+                  {featuredParents.map(parent => (
+                    <ParentTournamentCard
+                      key={parent.id}
+                      parent={parent}
+                      isOwner={parent.creator_user_id === user?.id}
+                      variant="featured"
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          ) : tab === "watch" ? (
             tournamentsLoading ? (
               // Skeleton rows matching .tl-list-item geometry
               <div className="tl-list" aria-busy="true" aria-label={vi ? "Đang tải giải đấu" : "Loading tournaments"}>

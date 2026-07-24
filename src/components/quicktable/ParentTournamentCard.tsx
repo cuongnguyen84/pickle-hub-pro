@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Trophy, Calendar, MapPin, Plus } from "lucide-react";
+import { ArrowUpRight, Calendar, MapPin, Plus, Sparkles, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import type { ParentTournamentWithPreview } from "@/hooks/useParentTournament";
 import { useI18n } from "@/i18n";
@@ -70,13 +70,19 @@ const ParentTournamentCard = ({
 
   return (
     <div
+      className={isFeatured
+        ? "group transition duration-300 hover:-translate-y-1 motion-reduce:transform-none motion-reduce:transition-none"
+        : undefined}
       style={{
         position: "relative",
         overflow: "hidden",
         padding: 20,
         borderRadius: "var(--tl-radius-lg)",
-        background: "var(--tl-bg-elev)",
+        background: isFeatured
+          ? "radial-gradient(circle at 100% 0%, rgba(233, 182, 73, 0.13), transparent 36%), var(--tl-bg-elev)"
+          : "var(--tl-bg-elev)",
         border: `1px solid ${isFeatured ? "rgba(233, 182, 73, 0.35)" : "var(--tl-border)"}`,
+        boxShadow: isFeatured ? "0 18px 50px rgba(0, 0, 0, 0.12)" : undefined,
         display: "flex",
         flexDirection: "column",
         gap: 14,
@@ -113,8 +119,43 @@ const ParentTournamentCard = ({
         </div>
       )}
 
+      {isFeatured && (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            alignSelf: "flex-start",
+            gap: 6,
+            padding: "4px 9px",
+            borderRadius: 999,
+            background: "rgba(233, 182, 73, 0.1)",
+            border: "1px solid rgba(233, 182, 73, 0.25)",
+            color: "var(--tl-gold)",
+            fontFamily: "Geist Mono, ui-monospace, monospace",
+            fontSize: 9.5,
+            fontWeight: 600,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+          }}
+        >
+          <Sparkles className="h-3 w-3" aria-hidden="true" />
+          {isVi ? "Giải tổng nổi bật" : "Featured multi-event"}
+        </span>
+      )}
+
       {/* Header — clickable to parent page */}
-      <div style={{ cursor: "pointer" }} onClick={handleHeaderClick}>
+      <button
+        type="button"
+        onClick={handleHeaderClick}
+        className="w-full rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-gold)] focus-visible:ring-offset-2"
+        style={{
+          cursor: "pointer",
+          border: 0,
+          padding: 0,
+          background: "transparent",
+          color: "inherit",
+        }}
+      >
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <Trophy
@@ -194,7 +235,7 @@ const ParentTournamentCard = ({
             )}
           </div>
         )}
-      </div>
+      </button>
 
       {/* Divider */}
       <div
@@ -209,9 +250,11 @@ const ParentTournamentCard = ({
           {parent.previewSubEvents.map((se) => {
             const config = STATUS_CONFIG[se.status];
             return (
-              <div
+              <button
+                type="button"
                 key={se.id}
                 onClick={(e) => handleSubEventClick(e, se.share_id)}
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-green)]"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -220,6 +263,10 @@ const ParentTournamentCard = ({
                   borderRadius: 6,
                   cursor: "pointer",
                   transition: "background 0.15s",
+                  width: "100%",
+                  border: 0,
+                  background: "transparent",
+                  textAlign: "left",
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "var(--tl-bg)";
@@ -269,13 +316,15 @@ const ParentTournamentCard = ({
                     {isVi ? config.labelVi : config.labelEn}
                   </span>
                 )}
-              </div>
+              </button>
             );
           })}
 
           {remaining > 0 && (
-            <div
+            <button
+              type="button"
               onClick={handleHeaderClick}
+              className="w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-green)]"
               style={{
                 fontFamily: "Geist Mono, ui-monospace, monospace",
                 fontSize: 11,
@@ -286,6 +335,8 @@ const ParentTournamentCard = ({
                 letterSpacing: "0.04em",
                 textTransform: "uppercase",
                 transition: "color 0.15s",
+                border: 0,
+                background: "transparent",
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--tl-green)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--tl-fg-3)"; }}
@@ -293,7 +344,7 @@ const ParentTournamentCard = ({
               {pt.moreEvents
                 ? pt.moreEvents.replace("{count}", String(remaining))
                 : `+ ${remaining} more`}
-            </div>
+            </button>
           )}
         </div>
       ) : (
@@ -315,6 +366,21 @@ const ParentTournamentCard = ({
             </button>
           )}
         </div>
+      )}
+
+      {isFeatured && (
+        <button
+          type="button"
+          className="mt-auto inline-flex w-full items-center justify-between rounded-md border px-3 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-[rgba(233,182,73,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-gold)]"
+          style={{
+            borderColor: "rgba(233, 182, 73, 0.28)",
+            color: "var(--tl-gold)",
+          }}
+          onClick={handleHeaderClick}
+        >
+          {t.tournament.viewTournament}
+          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+        </button>
       )}
     </div>
   );
