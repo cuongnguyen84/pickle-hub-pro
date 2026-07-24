@@ -15,7 +15,9 @@ concurrency:
 
 jobs:
   smoke:
-    timeout-minutes: 10
+    # Installing Chromium + WebKit can exceed ten minutes on a cold runner;
+    # keep the smoke job from being cancelled before tests start.
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     env:
