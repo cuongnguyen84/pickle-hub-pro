@@ -78,6 +78,25 @@ describe('generateCircleMethodMatches', () => {
   it('<2 players → empty', () => {
     expect(generateCircleMethodMatches(['a'])).toEqual([]);
   });
+
+  it('keeps a replacement player out of 3+ consecutive rows when a group is regenerated', () => {
+    // Regression: correcting a name in the live UI is performed by replacing
+    // the roster row. The old regeneration path used nested loops, so the first
+    // player in a five-player group was scheduled four times in a row.
+    const replacementIds = ['replacement', 'b', 'c', 'd', 'e'];
+    const matches = generateCircleMethodMatches(replacementIds);
+
+    for (const playerId of replacementIds) {
+      let run = 0;
+      for (const match of matches) {
+        run = match.player1 === playerId || match.player2 === playerId ? run + 1 : 0;
+        expect(run).toBeLessThanOrEqual(2);
+      }
+    }
+
+    expect(matches.every(match => match.rrRoundNumber > 0)).toBe(true);
+    expect(matches.every(match => match.rrMatchIndex >= 0)).toBe(true);
+  });
 });
 
 describe('parseCourtsInput', () => {
@@ -196,6 +215,38 @@ describe('scheduleMatches — pair-aware (the d941747e7ab4 bug)', () => {
       for (const m of ordered) {
         run = (m.player1 === p || m.player2 === p) ? run + 1 : 0;
         expect(run).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+
+  it('keeps regenerated 5/5/4/4 groups fair when each group view filters the global order', () => {
+    const groupSizes = [5, 5, 4, 4];
+    const all = groupSizes.flatMap((size, groupIndex) =>
+      generateCircleMethodMatches(
+        Array.from({ length: size }, (_, playerIndex) => `g${groupIndex}p${playerIndex}`),
+      ).map((match, matchIndex) => ({
+        matchId: `g${groupIndex}m${matchIndex}`,
+        player1: match.player1,
+        player2: match.player2,
+        groupIndex,
+      })),
+    );
+    const sched = scheduleMatches(all, [1, 3, 5, 7, 2, 4, 6, 8], 4, null);
+    const byId = new Map(all.map(match => [match.matchId, match]));
+
+    for (let groupIndex = 0; groupIndex < groupSizes.length; groupIndex++) {
+      const groupRows = [...sched]
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map(item => byId.get(item.matchId)!)
+        .filter(match => match.groupIndex === groupIndex);
+
+      for (let playerIndex = 0; playerIndex < groupSizes[groupIndex]; playerIndex++) {
+        const playerId = `g${groupIndex}p${playerIndex}`;
+        let run = 0;
+        for (const match of groupRows) {
+          run = match.player1 === playerId || match.player2 === playerId ? run + 1 : 0;
+          expect(run).toBeLessThanOrEqual(2);
+        }
       }
     }
   });

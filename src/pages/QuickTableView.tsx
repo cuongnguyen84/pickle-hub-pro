@@ -386,6 +386,31 @@ const QuickTableView = () => {
     }
   };
 
+  const rescheduleAfterRosterChange = async (): Promise<boolean> => {
+    if (!shareId) return false;
+
+    // Regeneration replaces match rows, so the component's current `matches`
+    // snapshot is stale. Fetch the completed roster change before rebuilding
+    // the tournament-wide court order; otherwise the new group is left with
+    // NULL courts/times while the untouched groups keep the old schedule.
+    const fresh = await getTableByShareId(shareId);
+    if (!fresh) return false;
+
+    const freshCourts = (fresh.table.courts || [])
+      .map(court => parseInt(court, 10))
+      .filter(court => !isNaN(court));
+
+    if (freshCourts.length === 0) return true;
+
+    return reassignCourtsAndTimes(
+      fresh.table.id,
+      freshCourts,
+      fresh.table.start_time,
+      fresh.groups,
+      fresh.matches,
+    );
+  };
+
   const handleMovePlayer = async () => {
     if (!selectedPlayer || !targetGroupId || !table) return;
     const oldGroupId = selectedPlayer.group_id;
@@ -394,10 +419,20 @@ const QuickTableView = () => {
       const oldGroupPlayers = players.filter(p => p.group_id === oldGroupId && p.id !== selectedPlayer.id);
       const newGroupPlayers = [...players.filter(p => p.group_id === targetGroupId), selectedPlayer];
 
-      if (oldGroupId) await regenerateGroupMatches(table.id, oldGroupId, oldGroupPlayers.map(p => p.id));
-      await regenerateGroupMatches(table.id, targetGroupId, newGroupPlayers.map(p => p.id));
+      const oldGroupRegenerated = oldGroupId
+        ? await regenerateGroupMatches(table.id, oldGroupId, oldGroupPlayers.map(p => p.id))
+        : true;
+      const targetGroupRegenerated = await regenerateGroupMatches(
+        table.id,
+        targetGroupId,
+        newGroupPlayers.map(p => p.id),
+      );
+      const scheduleUpdated = oldGroupRegenerated
+        && targetGroupRegenerated
+        && await rescheduleAfterRosterChange();
 
-      toast.success(t.quickTable.view.movedSuccess);
+      if (scheduleUpdated) toast.success(t.quickTable.view.movedSuccess);
+      else toast.error(t.quickTable.view.errorOccurred);
       await loadData();
     }
     setShowMoveDialog(false);
@@ -409,8 +444,10 @@ const QuickTableView = () => {
     const newPlayer = await addPlayerToGroup(table.id, addToGroupId, { name: newPlayerName, team: newPlayerTeam });
     if (newPlayer) {
       const groupPlayers = [...players.filter(p => p.group_id === addToGroupId), newPlayer];
-      await regenerateGroupMatches(table.id, addToGroupId, groupPlayers.map(p => p.id));
-      toast.success(t.quickTable.view.addedSuccess);
+      const regenerated = await regenerateGroupMatches(table.id, addToGroupId, groupPlayers.map(p => p.id));
+      const scheduleUpdated = regenerated && await rescheduleAfterRosterChange();
+      if (scheduleUpdated) toast.success(t.quickTable.view.addedSuccess);
+      else toast.error(t.quickTable.view.errorOccurred);
       await loadData();
     }
     setShowAddDialog(false);
@@ -425,8 +462,14 @@ const QuickTableView = () => {
     const success = await removePlayerFromGroup(player.id);
     if (success) {
       const remainingPlayers = players.filter(p => p.group_id === player.group_id && p.id !== player.id);
-      await regenerateGroupMatches(table.id, player.group_id, remainingPlayers.map(p => p.id));
-      toast.success(t.quickTable.view.removedSuccess);
+      const regenerated = await regenerateGroupMatches(
+        table.id,
+        player.group_id,
+        remainingPlayers.map(p => p.id),
+      );
+      const scheduleUpdated = regenerated && await rescheduleAfterRosterChange();
+      if (scheduleUpdated) toast.success(t.quickTable.view.removedSuccess);
+      else toast.error(t.quickTable.view.errorOccurred);
       await loadData();
     }
   };

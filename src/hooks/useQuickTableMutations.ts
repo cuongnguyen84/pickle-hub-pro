@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tStandalone } from '@/lib/i18n-standalone';
 import type { QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickTableStatus } from './useQuickTable';
-import { distributePlayersToGroups, generateRoundRobinMatches } from '@/lib/quick-table-utils';
+import { distributePlayersToGroups } from '@/lib/quick-table-utils';
+import { generateCircleMethodMatches } from '@/lib/round-robin';
 import { accumulateGroupStats } from '@/lib/quickTableResult';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -331,13 +332,20 @@ export function useQuickTableMutations() {
   ): Promise<boolean> => {
     setPendingFor('regenerateGroupMatches', true);
     try {
-      await supabase
+      const { error: deleteError } = await supabase
         .from('quick_table_matches')
         .delete()
         .eq('group_id', groupId)
         .eq('is_playoff', false);
+      if (deleteError) throw deleteError;
 
-      const matchPairs = generateRoundRobinMatches(playerIds);
+      // Roster edits (including replacing a player to correct their name) must
+      // preserve the same Berger/circle ordering used during initial setup.
+      // The old nested-loop generator emitted p0-vs-everyone first, which made
+      // the first player in a five-player group appear in four straight matches
+      // and also discarded the round metadata needed by the court scheduler.
+      const matchPairs = generateCircleMethodMatches(playerIds);
+      if (matchPairs.length === 0) return true;
 
       const { error } = await supabase
         .from('quick_table_matches')
@@ -349,6 +357,8 @@ export function useQuickTableMutations() {
             player1_id: pair.player1,
             player2_id: pair.player2,
             display_order: i,
+            rr_round_number: pair.rrRoundNumber,
+            rr_match_index: pair.rrMatchIndex,
           })),
         );
 
@@ -405,10 +415,11 @@ export function useQuickTableMutations() {
       if (courts.length === 0) {
         const groupMatchIds = matches.filter(m => !m.is_playoff && m.group_id).map(m => m.id);
         if (groupMatchIds.length > 0) {
-          await supabase
+          const { error } = await supabase
             .from('quick_table_matches')
             .update({ court_id: null, start_at: null })
             .in('id', groupMatchIds);
+          if (error) throw error;
         }
         return true;
       }
@@ -444,10 +455,11 @@ export function useQuickTableMutations() {
       // Rewrite court, time AND display_order (play order) — so the match list
       // shows matches chronologically and no pair runs >2 rows in a row.
       for (const s of scheduled) {
-        await supabase
+        const { error } = await supabase
           .from('quick_table_matches')
           .update({ court_id: s.court, start_at: s.startAt, display_order: s.displayOrder })
           .eq('id', s.matchId);
+        if (error) throw error;
       }
 
       return true;
