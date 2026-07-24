@@ -1,25 +1,16 @@
 import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  buildCourtData,
+  type CourtData,
+  type DashboardMatch,
+  type DashboardPhase,
+} from "@/lib/dashboard-courts";
 
 export type DashboardType = "quick-table" | "team-match" | "doubles-elimination";
-
-export interface CourtMatch {
-  id: string;
-  teamA: string;
-  teamB: string;
-  scoreA: number | null;
-  scoreB: number | null;
-  status: string;
-  startTime: string | null;
-  displayOrder: number;
-}
-
-export interface CourtData {
-  courtNumber: number;
-  liveMatch: CourtMatch | null;
-  nextMatch: CourtMatch | null;
-}
+export type CourtMatch = DashboardMatch;
+export type { CourtData, DashboardMatch };
 
 export interface DashboardTournament {
   id: string;
@@ -97,7 +88,7 @@ const useTournamentInfo = (type: DashboardType, id: string) => {
       if (type === "quick-table") {
         const { data } = await supabase
           .from("quick_tables")
-          .select("id, name, share_id, status")
+          .select("id, name, share_id, status, courts")
           .eq("share_id", id)
           .single();
         return data;
@@ -136,53 +127,83 @@ export const useDashboardData = (type: DashboardType, id: string) => {
       if (type === "quick-table") {
         const { data } = await supabase
           .from("quick_table_matches")
-          .select("id, court_id, start_at, status, score1, score2, display_order, player1_id, player2_id, quick_table_players!quick_table_matches_player1_id_fkey(name), p2:quick_table_players!quick_table_matches_player2_id_fkey(name)")
+          .select("id, court_id, court_name, start_at, status, score1, score2, display_order, player1_id, player2_id, group_id, is_playoff, playoff_round, playoff_match_number, large_playoff_round, rr_round_number, rr_match_index, live_referee_id, group:quick_table_groups(name), quick_table_players!quick_table_matches_player1_id_fkey(name), p2:quick_table_players!quick_table_matches_player2_id_fkey(name)")
           .eq("table_id", tournamentId)
           .neq("status", "completed")
           .order("display_order");
-        return (data || []).map((m) => ({
-          id: m.id,
-          courtNumber: m.court_id || 0,
-          startTime: m.start_at,
-          status: m.status ?? "pending",
-          scoreA: m.score1,
-          scoreB: m.score2,
-          teamA: m.quick_table_players?.name || "TBD",
-          teamB: m.p2?.name || "TBD",
-          displayOrder: m.display_order,
-        }));
+        return (data || []).map((m): DashboardMatch => {
+          const status = m.status ?? "pending";
+          const isPlayoff = m.is_playoff === true;
+
+          return {
+            id: m.id,
+            courtNumber: m.court_id || 0,
+            courtName: m.court_name,
+            startTime: m.start_at,
+            status: m.live_referee_id && status !== "completed" ? "live" : status,
+            scoreA: m.score1,
+            scoreB: m.score2,
+            teamA: m.quick_table_players?.name || "TBD",
+            teamB: m.p2?.name || "TBD",
+            displayOrder: m.display_order,
+            groupName: (m.group as { name?: string } | null)?.name ?? null,
+            roundNumber: isPlayoff
+              ? (m.large_playoff_round ?? m.playoff_round)
+              : m.rr_round_number,
+            phase: isPlayoff ? "playoff" : "group",
+            matchNumber: isPlayoff
+              ? m.playoff_match_number
+              : (m.rr_match_index == null ? null : m.rr_match_index + 1),
+          };
+        });
       }
 
       if (type === "doubles-elimination") {
         const { data } = await supabase
           .from("doubles_elimination_matches")
-          .select("id, court_number, start_time, status, score_a, score_b, display_order, team_a:doubles_elimination_teams!doubles_elimination_matches_team_a_id_fkey(team_name), team_b:doubles_elimination_teams!doubles_elimination_matches_team_b_id_fkey(team_name)")
+          .select("id, court_number, start_time, status, score_a, score_b, display_order, match_number, round_number, round_type, bracket_type, live_referee_id, team_a:doubles_elimination_teams!doubles_elimination_matches_team_a_id_fkey(team_name), team_b:doubles_elimination_teams!doubles_elimination_matches_team_b_id_fkey(team_name)")
           .eq("tournament_id", tournamentId)
           .neq("status", "completed")
           .order("display_order");
-        return (data || []).map((m) => ({
-          id: m.id,
-          courtNumber: m.court_number || 0,
-          startTime: m.start_time,
-          status: m.status ?? "pending",
-          scoreA: m.score_a,
-          scoreB: m.score_b,
-          teamA: m.team_a?.team_name || "TBD",
-          teamB: m.team_b?.team_name || "TBD",
-          displayOrder: m.display_order,
-        }));
+        return (data || []).map((m): DashboardMatch => {
+          const phaseValue = `${m.round_type} ${m.bracket_type}`.toLowerCase();
+          let phase: DashboardPhase = "playoff";
+          if (phaseValue.includes("final")) phase = "final";
+          else if (phaseValue.includes("loser")) phase = "losers";
+          else if (phaseValue.includes("winner")) phase = "winners";
+
+          return {
+            id: m.id,
+            courtNumber: m.court_number || 0,
+            courtName: null,
+            startTime: m.start_time,
+            status: m.live_referee_id && m.status !== "completed"
+              ? "live"
+              : (m.status ?? "pending"),
+            scoreA: m.score_a,
+            scoreB: m.score_b,
+            teamA: m.team_a?.team_name || "TBD",
+            teamB: m.team_b?.team_name || "TBD",
+            displayOrder: m.display_order,
+            groupName: null,
+            roundNumber: m.round_number,
+            phase,
+            matchNumber: m.match_number,
+          };
+        });
       }
 
       // Team Match - no court info
       const { data } = await supabase
         .from("team_match_matches")
-        .select("id, status, games_won_a, games_won_b, total_points_a, total_points_b, display_order, team_a:team_match_teams!team_match_matches_team_a_id_fkey(team_name), team_b:team_match_teams!team_match_matches_team_b_id_fkey(team_name)")
+        .select("id, status, games_won_a, games_won_b, total_points_a, total_points_b, display_order, is_playoff, playoff_round, round_number, group:team_match_groups(name), team_a:team_match_teams!team_match_matches_team_a_id_fkey(team_name), team_b:team_match_teams!team_match_matches_team_b_id_fkey(team_name)")
         .eq("tournament_id", tournamentId)
         .in("status", ["in_progress", "pending", "lineup"])
         .order("display_order");
-      return (data || []).map((m) => ({
+      return (data || []).map((m): DashboardMatch => ({
         id: m.id,
         courtNumber: 0,
+        courtName: null,
         startTime: null as string | null,
         status: (m.status === "in_progress" ? "live" : m.status) ?? "pending",
         scoreA: m.games_won_a,
@@ -190,6 +211,10 @@ export const useDashboardData = (type: DashboardType, id: string) => {
         teamA: m.team_a?.team_name || "TBD",
         teamB: m.team_b?.team_name || "TBD",
         displayOrder: m.display_order || 0,
+        groupName: (m.group as { name?: string } | null)?.name ?? null,
+        roundNumber: m.is_playoff ? m.playoff_round : m.round_number,
+        phase: m.is_playoff ? "playoff" : "group",
+        matchNumber: null,
       }));
     },
     enabled: !!tournamentId,
@@ -244,46 +269,24 @@ export const useDashboardData = (type: DashboardType, id: string) => {
 
   // Group matches into courts
   const courts = useMemo((): CourtData[] => {
-    const matches = matchesQuery.data || [];
-
     if (type === "team-match") {
       // No court grouping for team match
       return [];
     }
 
-    // Group by court number
-    const courtMap = new Map<number, typeof matches>();
-    matches.forEach((m) => {
-      const court = m.courtNumber || 0;
-      if (!courtMap.has(court)) courtMap.set(court, []);
-      courtMap.get(court)!.push(m);
+    const info = tournamentInfo.data as {
+      court_count?: number | null;
+      courts?: string[] | null;
+    } | null | undefined;
+    const configuredCourts = (info?.courts ?? [])
+      .map((court) => Number.parseInt(court, 10))
+      .filter((court) => Number.isInteger(court) && court > 0);
+
+    return buildCourtData(matchesQuery.data || [], {
+      type,
+      configuredCourts,
+      courtCount: info?.court_count ?? undefined,
     });
-
-    // Get court count from tournament info
-    const courtCount = (tournamentInfo.data as { court_count?: number })?.court_count || courtMap.size || 1;
-
-    const result: CourtData[] = [];
-    for (let i = 1; i <= Math.max(courtCount, ...Array.from(courtMap.keys())); i++) {
-      const courtMatches = courtMap.get(i) || [];
-      const live = courtMatches.find(
-        (m) => m.status === "live" || m.status === "playing" || (m.status === "pending" && (m.scoreA || 0) > 0)
-      );
-      const next = courtMatches.find(
-        (m) => m.status === "pending" && m.id !== live?.id
-      );
-
-      result.push({
-        courtNumber: i,
-        liveMatch: live
-          ? { id: live.id, teamA: live.teamA, teamB: live.teamB, scoreA: live.scoreA, scoreB: live.scoreB, status: live.status ?? "pending", startTime: live.startTime, displayOrder: live.displayOrder }
-          : null,
-        nextMatch: next
-          ? { id: next.id, teamA: next.teamA, teamB: next.teamB, scoreA: null, scoreB: null, status: next.status ?? "pending", startTime: next.startTime, displayOrder: next.displayOrder }
-          : null,
-      });
-    }
-
-    return result;
   }, [matchesQuery.data, type, tournamentInfo.data]);
 
   // Team match live/next lists

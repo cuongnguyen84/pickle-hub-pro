@@ -12,6 +12,7 @@ import {
   Eye,
   FolderPlus,
   MapPin,
+  Monitor,
   Plus,
   Trash2,
   Trophy,
@@ -261,33 +262,35 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
             ) : (
               <div className="space-y-2">
                 {subEvents.map((sub) => (
-                  <Link
+                  <div
                     key={sub.id}
-                    to={
-                      sub.status === 'setup'
-                        ? `/tools/quick-tables/${sub.share_id}/setup`
-                        : `/tools/quick-tables/${sub.share_id}`
-                    }
                     style={{
-                      display: 'block',
-                      padding: '12px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '8px 10px 8px 14px',
                       borderRadius: 'var(--tl-radius)',
                       border: '1px solid var(--tl-border)',
                       background: 'var(--tl-bg)',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      transition: 'background 0.15s, border-color 0.15s',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-surface)';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border-2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg)';
-                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border)';
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                    <Link
+                      to={
+                        sub.status === 'setup'
+                          ? `/tools/quick-tables/${sub.share_id}/setup`
+                          : `/tools/quick-tables/${sub.share_id}`
+                      }
+                      className="min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-green)]"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        padding: '4px 0',
+                        color: 'inherit',
+                        textDecoration: 'none',
+                      }}
+                    >
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div
                           style={{
@@ -327,8 +330,18 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
                         </span>
                         <Eye className="w-4 h-4" style={{ color: 'var(--tl-fg-3)' }} />
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                    {(sub.status === 'group_stage' || sub.status === 'playoff') && (
+                      <Link
+                        to={`/tools/dashboard/quick-table/${sub.share_id}`}
+                        className="tl-btn green min-h-11 shrink-0"
+                        aria-label={`${t.dashboard.openDashboard}: ${sub.name}`}
+                      >
+                        <Monitor className="w-4 h-4" />
+                        <span className="hidden sm:inline">{t.dashboard.openDashboard}</span>
+                      </Link>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

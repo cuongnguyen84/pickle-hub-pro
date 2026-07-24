@@ -1706,6 +1706,22 @@ export interface Translations {
     upNext: string;
     completed: string;
     backToList: string;
+    backToEvent: string;
+    openDashboard: string;
+    group: string;
+    groupStage: string;
+    round: string;
+    playoff: string;
+    winnersBracket: string;
+    losersBracket: string;
+    final: string;
+    courtSchedule: string;
+    courtScheduleDescription: string;
+    scheduled: string;
+    noCourtMatches: string;
+    courtCount: string;
+    matchCount: string;
+    page: string;
   };
   forum: {
     title: string;
@@ -4673,6 +4689,22 @@ export const vi: Translations = {
     upNext: "Sắp thi đấu",
     completed: "Đã hoàn thành",
     backToList: "Quay lại",
+    backToEvent: "Quay lại nội dung thi đấu",
+    openDashboard: "Dashboard",
+    group: "Bảng",
+    groupStage: "Vòng bảng",
+    round: "Vòng",
+    playoff: "Playoff",
+    winnersBracket: "Nhánh thắng",
+    losersBracket: "Nhánh thua",
+    final: "Chung kết",
+    courtSchedule: "Danh sách trận theo sân",
+    courtScheduleDescription: "Theo dõi các trận đang và sắp đấu để trọng tài và ban tổ chức điều phối sân.",
+    scheduled: "Chờ đấu",
+    noCourtMatches: "Chưa có trận được xếp cho sân này",
+    courtCount: "{count} sân",
+    matchCount: "{count} trận",
+    page: "Trang",
   },
   forum: {
     title: "Diễn đàn",

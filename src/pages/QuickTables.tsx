@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Users, Trophy, Zap, Check, ArrowRight, LogIn, Calendar, Eye, Shield, ClipboardList, ChevronDown, Layers } from "lucide-react";
+import { Users, Trophy, Zap, Check, ArrowRight, LogIn, Calendar, Eye, Shield, ClipboardList, ChevronDown, Layers, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
@@ -962,6 +962,11 @@ const QuickTables = () => {
                             format={tbl.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}
                             statusLabel={getStatusLabel(tbl.status)}
                             statusClass={statusPillClass(tbl.status)}
+                            dashboardHref={
+                              tbl.status === "group_stage" || tbl.status === "playoff"
+                                ? `/tools/dashboard/quick-table/${tbl.share_id}`
+                                : undefined
+                            }
                           />
                         ))}
                         {!showAllTables && displayTables.length > 5 && (
@@ -1079,6 +1084,11 @@ const QuickTables = () => {
                             format={tbl.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}
                             statusLabel={getStatusLabel(tbl.status)}
                             statusClass={statusPillClass(tbl.status)}
+                            dashboardHref={
+                              tbl.status === "group_stage" || tbl.status === "playoff"
+                                ? `/tools/dashboard/quick-table/${tbl.share_id}`
+                                : undefined
+                            }
                             extraBadge={
                               <span
                                 style={{
@@ -1374,7 +1384,8 @@ function FormatOption({
 
 // Tournament row — single visual language for "my", "referee" lists
 function TournamentRow({
-  href, name, createdAt, playerCount, playersLabel, format, statusLabel, statusClass, extraBadge,
+  href, name, createdAt, playerCount, playersLabel, format, statusLabel, statusClass,
+  dashboardHref, extraBadge,
 }: {
   href: string;
   name: string;
@@ -1384,31 +1395,36 @@ function TournamentRow({
   format: string;
   statusLabel: string;
   statusClass: string;
+  dashboardHref?: string;
   extraBadge?: React.ReactNode;
 }) {
+  const { t } = useI18n();
+
   return (
-    <Link
-      to={href}
+    <div
       style={{
-        display: "block",
-        padding: "12px 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 10px 8px 14px",
         borderRadius: "var(--tl-radius)",
         border: "1px solid var(--tl-border)",
         background: "var(--tl-bg)",
-        textDecoration: "none",
-        color: "inherit",
-        transition: "background 0.15s, border-color 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "var(--tl-surface)";
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--tl-border-2)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "var(--tl-bg)";
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--tl-border)";
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+      <Link
+        to={href}
+        className="min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-green)]"
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          padding: "4px 0",
+          color: "inherit",
+          textDecoration: "none",
+        }}
+      >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -1452,8 +1468,18 @@ function TournamentRow({
           <span className={statusClass}>{statusLabel}</span>
           <Eye className="w-4 h-4" style={{ color: "var(--tl-fg-3)" }} />
         </div>
-      </div>
-    </Link>
+      </Link>
+      {dashboardHref && (
+        <Link
+          to={dashboardHref}
+          className="tl-btn green min-h-11 shrink-0"
+          aria-label={`${t.dashboard.openDashboard}: ${name}`}
+        >
+          <Monitor className="w-4 h-4" />
+          <span className="hidden sm:inline">{t.dashboard.openDashboard}</span>
+        </Link>
+      )}
+    </div>
   );
 }
 

@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Share2, Trophy, Check, ChevronRight, Swords, Settings, UserPlus, ArrowLeftRight,
-  UserMinus, ClipboardList, MapPin, Trash2, RefreshCw, Pencil, ListRestart,
+  UserMinus, ClipboardList, MapPin, Trash2, RefreshCw, Pencil, ListRestart, Monitor,
 } from 'lucide-react';
 import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
 import { toast } from 'sonner';
@@ -784,6 +784,16 @@ const QuickTableView = () => {
             </span>
 
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {(table.status === 'group_stage' || table.status === 'playoff') && (
+                <button
+                  type="button"
+                  className="tl-btn green"
+                  onClick={() => navigate(`/tools/dashboard/quick-table/${table.share_id}`)}
+                >
+                  <Monitor className="w-4 h-4" />
+                  {t.dashboard.openDashboard}
+                </button>
+              )}
               <button
                 type="button"
                 className="tl-btn"
