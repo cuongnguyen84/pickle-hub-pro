@@ -67,9 +67,12 @@ export default function QuickTableMatchRow({
   const playerNameStyle = (isWinner: boolean): React.CSSProperties => ({
     flex: 1,
     minWidth: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    // Match names are operational information: never hide a player behind an
+    // ellipsis. Let long singles/doubles names wrap on both desktop and mobile.
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+    wordBreak: 'break-word',
+    lineHeight: 1.35,
     fontSize: 14.5,
     fontWeight: isWinner ? 700 : 500,
     color: isWinner ? winnerColor : 'var(--tl-fg)',
@@ -263,7 +266,7 @@ export default function QuickTableMatchRow({
           </div>
         </div>
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
           <span style={{ ...playerNameStyle(match.winner_id === match.player1_id), textAlign: 'right' }}>
             {formatPlayerName(player1)}
           </span>
@@ -281,6 +284,7 @@ export default function QuickTableMatchRow({
                 minWidth: 56,
                 justifyContent: 'center',
                 flexShrink: 0,
+                alignSelf: 'center',
               }}
             >
               <span style={scoreCellStyle(match.winner_id === match.player1_id)}>

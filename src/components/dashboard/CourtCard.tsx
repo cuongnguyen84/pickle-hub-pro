@@ -50,14 +50,14 @@ export const CourtCard = ({ court, compact }: CourtCardProps) => {
                 </span>
               )}
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-sm truncate flex-1">{court.liveMatch.teamA}</span>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2">
+              <span className="min-w-0 whitespace-normal break-words text-sm font-semibold leading-5">{court.liveMatch.teamA}</span>
               <div className="flex items-center gap-1 text-lg font-bold tabular-nums">
                 <span>{court.liveMatch.scoreA ?? 0}</span>
                 <span className="text-muted-foreground text-xs">-</span>
                 <span>{court.liveMatch.scoreB ?? 0}</span>
               </div>
-              <span className="font-semibold text-sm truncate flex-1 text-right">{court.liveMatch.teamB}</span>
+              <span className="min-w-0 whitespace-normal break-words text-right text-sm font-semibold leading-5">{court.liveMatch.teamB}</span>
             </div>
           </div>
         )}
@@ -76,10 +76,10 @@ export const CourtCard = ({ court, compact }: CourtCardProps) => {
                 </span>
               )}
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm truncate flex-1">{court.nextMatch.teamA}</span>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2">
+              <span className="min-w-0 whitespace-normal break-words text-sm leading-5">{court.nextMatch.teamA}</span>
               <span className="text-xs text-muted-foreground">{t.dashboard.vs}</span>
-              <span className="text-sm truncate flex-1 text-right">{court.nextMatch.teamB}</span>
+              <span className="min-w-0 whitespace-normal break-words text-right text-sm leading-5">{court.nextMatch.teamB}</span>
             </div>
           </div>
         )}

@@ -103,14 +103,14 @@ export const CourtScheduleList = ({
                               )}
                               <MatchContext match={match} />
                             </div>
-                            <div className="mt-1.5 flex items-center gap-2 text-sm">
-                              <span className="min-w-0 flex-1 truncate font-medium">
+                            <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2 text-sm">
+                              <span className="min-w-0 whitespace-normal break-words font-medium leading-5">
                                 {match.teamA}
                               </span>
                               <span className="shrink-0 text-xs text-muted-foreground">
                                 {t.dashboard.vs}
                               </span>
-                              <span className="min-w-0 flex-1 truncate text-right font-medium">
+                              <span className="min-w-0 whitespace-normal break-words text-right font-medium leading-5">
                                 {match.teamB}
                               </span>
                             </div>
