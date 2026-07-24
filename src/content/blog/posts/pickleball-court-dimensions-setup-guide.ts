@@ -226,7 +226,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Setup sân là một quyết định; tổ chức giải đấu trên sân đó là quyết định khác — bài organizer pillar bao phủ format, bracket, và công cụ scheduling miễn phí",
-              path: "/vi/blog/to-chuc-giai-pickleball",
+              path: "/vi/blog/cach-to-chuc-giai-pickleball",
             },
           ],
         },
@@ -237,7 +237,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Nếu chuyển đổi sân cho giải đấu, organizer hub gộp format, bracket template, và công cụ tính điểm thành một checklist một trang",
-              path: "/vi/blog/tournament-organizer-hub",
+              path: "/vi/blog/huong-dan-to-chuc-giai",
             },
           ],
         },

@@ -135,7 +135,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Xem lại: PPA Tour Asia 2026 — tổng kết giữa mùa & kết quả tới nay",
-              path: "/vi/blog/ppa-tour-asia-2026-tong-ket-giua-mua",
+              path: "/vi/blog/ppa-tour-asia-2026-tong-ket-nua-mua",
             },
           ],
         },
@@ -175,7 +175,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "2026 thay đổi gì — và vì sao điểm ở châu Á giờ có giá trị toàn cầu",
-              path: "/vi/blog/ppa-tour-asia-2026-tong-ket-giua-mua",
+              path: "/vi/blog/ppa-tour-asia-2026-tong-ket-nua-mua",
             },
           ],
         },
@@ -186,7 +186,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Pickleball World Cup 2026 tại Đà Nẵng — sự kiện lớn khác trên sân nhà Việt Nam",
-              path: "/vi/blog/pickleball-world-cup-2026-da-nang",
+              path: "/vi/blog/world-cup-pickleball-2026-da-nang",
             },
           ],
         },

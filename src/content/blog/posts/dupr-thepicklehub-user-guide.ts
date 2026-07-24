@@ -180,11 +180,11 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Phần 1 của series DUPR giải thích DUPR là gì, ai vận hành, và vì sao người chơi VN cần biết",
-              path: "/vi/blog/dupr-la-gi-he-thong-rating-pickleball-toan-cau",
+              path: "/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam",
             },
             {
               text: "Công bố hợp tác DUPR Việt Nam giải thích TA Pickleball, DUPR và ThePickleHub bắt tay thế nào cho rollout này",
-              path: "/vi/blog/cong-bo-hop-tac-dupr-viet-nam-ta-pickleball",
+              path: "/vi/blog/dupr-doi-tac-ta-pickleball-thepicklehub-viet-nam",
             },
           ],
         },
@@ -210,7 +210,7 @@ const post: BlogPost = {
             },
             {
               text: "Câu chuyện ra mắt bảng xếp hạng giải thích pipeline webhook end-to-end",
-              path: "/vi/blog/bang-xep-hang-dupr-viet-nam-ra-mat",
+              path: "/vi/blog/bang-xep-hang-dupr-viet-nam",
             },
           ],
         },
@@ -243,7 +243,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Phần 2 series DUPR giải thích chi tiết math về match weight — vì sao thắng có thể mất điểm, thua có thể tăng điểm",
-              path: "/vi/blog/thuat-toan-dupr-vi-sao-thang-mat-diem",
+              path: "/vi/blog/thuat-toan-dupr-thang-mat-diem-thua-tang-diem",
             },
           ],
         },

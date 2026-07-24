@@ -138,7 +138,7 @@ const post: BlogPost = {
             "Upset lớn, LÊN mạnh. Bạn DUPR 4.5, đối thủ DUPR 5.0. DUPR dự đoán bạn thua 6–11. Thực tế: bạn thắng 11–3. Upset lớn → điểm tăng mạnh, có thể 0.05 đến 0.10 trong một trận."
           ],
           internalLinks: [
-            { text: "Tama Shimabukuro 15 tuổi vừa hạ số 1 và số 2 thế giới — chính kiểu upset này khiến điểm DUPR leo cực nhanh", path: "/blog/tama-shimabukuro-15-tuoi-vao-chung-ket-ppa-atlanta" }
+            { text: "Tama Shimabukuro 15 tuổi vừa hạ số 1 và số 2 thế giới — chính kiểu upset này khiến điểm DUPR leo cực nhanh", path: "/vi/blog/tama-shimabukuro-15-tuoi-vao-chung-ket-ppa-atlanta" }
           ]
         },
         {
@@ -176,7 +176,7 @@ const post: BlogPost = {
           heading: "Tóm lại Phần 2",
           content: "Thuật toán DUPR mới không đánh giá bạn thắng hay thua. Nó đánh giá bạn có đánh ĐÚNG TRÌNH không. Thắng dễ dàng đối thủ yếu hơn nhiều? Không ấn tượng. Thua sát nút đối thủ mạnh hơn nhiều? Rất ấn tượng. Đó là lý do Tama Shimabukuro — 15 tuổi — có thể leo rating cực nhanh khi thua sát Ben Johns hay Staksrud. Và đó cũng là lý do nhiều người chơi phong trào bị sốc khi thắng mà vẫn tụt điểm. DUPR không quan tâm bạn thắng. DUPR quan tâm bạn đánh thế nào so với kỳ vọng.",
           internalLinks: [
-            { text: "DUPR x TA Pickleball x ThePickleHub: thỏa thuận đưa DUPR vào giải Việt Nam", path: "/blog/dupr-doi-tac-ta-pickleball-thepicklehub-viet-nam" }
+            { text: "DUPR x TA Pickleball x ThePickleHub: thỏa thuận đưa DUPR vào giải Việt Nam", path: "/vi/blog/dupr-doi-tac-ta-pickleball-thepicklehub-viet-nam" }
           ]
         },
         {
