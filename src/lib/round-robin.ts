@@ -275,6 +275,8 @@ export interface ScheduledMatch {
   slot: number;
   startAt: string | null;
   displayOrder: number;
+  rrRoundNumber: number | null;
+  rrMatchIndex: number | null;
 }
 
 export function scheduleMatches(
@@ -300,20 +302,35 @@ export function scheduleMatches(
     if (m.player2) set.add(m.player2);
     playersByGroup.set(m.groupIndex, set);
   }
-  const roundOf = new Map<string, number>(); // matchId → round number
+  const roundRobinMeta = new Map<string, {
+    rrRoundNumber: number;
+    rrMatchIndex: number;
+  }>(); // matchId → reconstructed circle-method metadata
   for (const [gi, set] of playersByGroup) {
     const circ = generateCircleMethodMatches([...set].sort());
-    const byPair = new Map<string, number>();
-    for (const c of circ) byPair.set(pairKey(c.player1, c.player2), c.rrRoundNumber);
+    const byPair = new Map<string, {
+      rrRoundNumber: number;
+      rrMatchIndex: number;
+    }>();
+    for (const c of circ) {
+      byPair.set(pairKey(c.player1, c.player2), {
+        rrRoundNumber: c.rrRoundNumber,
+        rrMatchIndex: c.rrMatchIndex,
+      });
+    }
     for (const m of matches) {
       if (m.groupIndex !== gi || !m.player1 || !m.player2) continue;
-      roundOf.set(m.matchId, byPair.get(pairKey(m.player1, m.player2)) ?? 999);
+      const meta = byPair.get(pairKey(m.player1, m.player2));
+      if (meta) roundRobinMeta.set(m.matchId, meta);
     }
   }
   const roundOrdered = [...matches].sort(
     (a, b) =>
-      (roundOf.get(a.matchId) ?? 999) - (roundOf.get(b.matchId) ?? 999) ||
-      a.groupIndex - b.groupIndex,
+      (roundRobinMeta.get(a.matchId)?.rrRoundNumber ?? 999) -
+        (roundRobinMeta.get(b.matchId)?.rrRoundNumber ?? 999) ||
+      a.groupIndex - b.groupIndex ||
+      (roundRobinMeta.get(a.matchId)?.rrMatchIndex ?? 999) -
+        (roundRobinMeta.get(b.matchId)?.rrMatchIndex ?? 999),
   );
 
   // 1 group = 1 home court (priority); courts beyond #groups are shared spares.
@@ -401,12 +418,15 @@ export function scheduleMatches(
 
   return matches.map((m) => {
     const p = picked.get(m.matchId)!;
+    const meta = roundRobinMeta.get(m.matchId);
     return {
       matchId: m.matchId,
       court: p.court,
       slot: p.slot,
       startAt: slotToTime(p.slot),
       displayOrder: displayOrderByMatch.get(m.matchId)!,
+      rrRoundNumber: meta?.rrRoundNumber ?? null,
+      rrMatchIndex: meta?.rrMatchIndex ?? null,
     };
   });
 }

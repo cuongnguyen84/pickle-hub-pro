@@ -3,8 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tStandalone } from '@/lib/i18n-standalone';
 import type { QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickTableStatus } from './useQuickTable';
-import { distributePlayersToGroups, generateRoundRobinMatches } from '@/lib/quick-table-utils';
+import { distributePlayersToGroups } from '@/lib/quick-table-utils';
+import { generateCircleMethodMatches } from '@/lib/round-robin';
 import { accumulateGroupStats } from '@/lib/quickTableResult';
+import { sanitizeString } from '@/lib/validation';
 import type { Json } from '@/integrations/supabase/types';
 
 // W1.2 — Helper to extract Postgres error code from a Supabase error.
@@ -39,6 +41,8 @@ type MutationName =
   | 'addPlayerToGroup'
   | 'removePlayerFromGroup'
   | 'regenerateGroupMatches'
+  | 'updatePlayerName'
+  | 'updateTableName'
   | 'updateTableCourtSettings'
   | 'reassignCourtsAndTimes'
   | 'deleteTable'
@@ -55,6 +59,8 @@ const EMPTY_PENDING: QuickTableMutationsPending = {
   addPlayerToGroup: false,
   removePlayerFromGroup: false,
   regenerateGroupMatches: false,
+  updatePlayerName: false,
+  updateTableName: false,
   updateTableCourtSettings: false,
   reassignCourtsAndTimes: false,
   deleteTable: false,
@@ -331,13 +337,20 @@ export function useQuickTableMutations() {
   ): Promise<boolean> => {
     setPendingFor('regenerateGroupMatches', true);
     try {
-      await supabase
+      const { error: deleteError } = await supabase
         .from('quick_table_matches')
         .delete()
         .eq('group_id', groupId)
         .eq('is_playoff', false);
+      if (deleteError) throw deleteError;
 
-      const matchPairs = generateRoundRobinMatches(playerIds);
+      // Roster edits (including replacing a player to correct their name) must
+      // preserve the same Berger/circle ordering used during initial setup.
+      // The old nested-loop generator emitted p0-vs-everyone first, which made
+      // the first player in a five-player group appear in four straight matches
+      // and also discarded the round metadata needed by the court scheduler.
+      const matchPairs = generateCircleMethodMatches(playerIds);
+      if (matchPairs.length === 0) return true;
 
       const { error } = await supabase
         .from('quick_table_matches')
@@ -349,6 +362,8 @@ export function useQuickTableMutations() {
             player1_id: pair.player1,
             player2_id: pair.player2,
             display_order: i,
+            rr_round_number: pair.rrRoundNumber,
+            rr_match_index: pair.rrMatchIndex,
           })),
         );
 
@@ -393,6 +408,68 @@ export function useQuickTableMutations() {
     }
   }, [setPendingFor]);
 
+  const updatePlayerName = useCallback(async (
+    playerId: string,
+    player1Name: string,
+    player2Name: string | null,
+  ): Promise<boolean> => {
+    setPendingFor('updatePlayerName', true);
+    try {
+      const safePlayer1Name = sanitizeString(player1Name, 100);
+      const safePlayer2Name = player2Name ? sanitizeString(player2Name, 100) : null;
+      if (!safePlayer1Name || (player2Name !== null && !safePlayer2Name)) return false;
+
+      const { error } = await supabase
+        .from('quick_table_players')
+        .update({
+          name: safePlayer2Name
+            ? `${safePlayer1Name} & ${safePlayer2Name}`
+            : safePlayer1Name,
+          player1_name: safePlayer1Name,
+          player2_name: safePlayer2Name,
+        })
+        .eq('id', playerId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('[useQuickTableMutations] updatePlayerName:', error);
+      if (isPermissionDenied(error)) {
+        toast.error(tStandalone('toast.table.updatePlayer.permissionDenied'));
+      }
+      return false;
+    } finally {
+      setPendingFor('updatePlayerName', false);
+    }
+  }, [setPendingFor]);
+
+  const updateTableName = useCallback(async (
+    tableId: string,
+    name: string,
+  ): Promise<boolean> => {
+    setPendingFor('updateTableName', true);
+    try {
+      const safeName = sanitizeString(name, 100);
+      if (!safeName) return false;
+
+      const { error } = await supabase
+        .from('quick_tables')
+        .update({ name: safeName })
+        .eq('id', tableId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('[useQuickTableMutations] updateTableName:', error);
+      if (isPermissionDenied(error)) {
+        toast.error(tStandalone('toast.table.updateTable.permissionDenied'));
+      }
+      return false;
+    } finally {
+      setPendingFor('updateTableName', false);
+    }
+  }, [setPendingFor]);
+
   const reassignCourtsAndTimes = useCallback(async (
     tableId: string,
     courts: number[],
@@ -402,17 +479,6 @@ export function useQuickTableMutations() {
   ): Promise<boolean> => {
     setPendingFor('reassignCourtsAndTimes', true);
     try {
-      if (courts.length === 0) {
-        const groupMatchIds = matches.filter(m => !m.is_playoff && m.group_id).map(m => m.id);
-        if (groupMatchIds.length > 0) {
-          await supabase
-            .from('quick_table_matches')
-            .update({ court_id: null, start_at: null })
-            .in('id', groupMatchIds);
-        }
-        return true;
-      }
-
       const { scheduleMatches } = await import('@/lib/round-robin');
 
       // Feed the scheduler in (round, group) order so its output is stable; it
@@ -428,6 +494,7 @@ export function useQuickTableMutations() {
           return groupAIdx - groupBIdx;
         });
 
+      const hasCourtSettings = courts.length > 0;
       const scheduled = scheduleMatches(
         groupMatches.map(m => ({
           matchId: m.id,
@@ -435,20 +502,29 @@ export function useQuickTableMutations() {
           player2: m.player2_id,
           groupIndex: groups.findIndex(g => g.id === m.group_id),
         })),
-        courts,
+        hasCourtSettings ? courts : [0],
         groups.length,
-        startTime,
+        hasCourtSettings ? startTime : null,
         20,
       );
 
-      // Rewrite court, time AND display_order (play order) — so the match list
-      // shows matches chronologically and no pair runs >2 rows in a row.
-      for (const s of scheduled) {
-        await supabase
+      // Rewrite court, time, display order and reconstructed round metadata.
+      // Keeping the metadata repairs legacy schedules in place without deleting
+      // match rows (and therefore without losing scores or referee links).
+      const results = await Promise.all(scheduled.map(s =>
+        supabase
           .from('quick_table_matches')
-          .update({ court_id: s.court, start_at: s.startAt, display_order: s.displayOrder })
-          .eq('id', s.matchId);
-      }
+          .update({
+            court_id: hasCourtSettings ? s.court : null,
+            start_at: hasCourtSettings ? s.startAt : null,
+            display_order: s.displayOrder,
+            rr_round_number: s.rrRoundNumber,
+            rr_match_index: s.rrMatchIndex,
+          })
+          .eq('id', s.matchId),
+      ));
+      const failed = results.find(result => result.error);
+      if (failed?.error) throw failed.error;
 
       return true;
     } catch (error) {
@@ -520,6 +596,8 @@ export function useQuickTableMutations() {
     addPlayerToGroup,
     removePlayerFromGroup,
     regenerateGroupMatches,
+    updatePlayerName,
+    updateTableName,
     updateTableCourtSettings,
     reassignCourtsAndTimes,
     deleteTable,
