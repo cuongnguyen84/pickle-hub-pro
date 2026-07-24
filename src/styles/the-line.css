@@ -3565,12 +3565,15 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-hub-card.accent .tl-hub-arrow { color: var(--tl-green); }
 [data-theme="the-line"] .tl-hub-card:hover .tl-hub-arrow { gap: 14px; }
 
-/* ========== Tournaments tabs (Watch / Community) ========== */
+/* ========== Tournaments tabs (Featured / Watch / Community) ========== */
 [data-theme="the-line"] .tl-tabs {
   display: flex; gap: 2px; padding: 0;
   border-bottom: 1px solid var(--tl-border);
   margin-bottom: 32px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+[data-theme="the-line"] .tl-tabs::-webkit-scrollbar { display: none; }
 [data-theme="the-line"] .tl-tab {
   background: transparent; border: 0;
   padding: 16px 4px 14px; margin-right: 28px;
@@ -3578,6 +3581,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   font-size: 30px; letter-spacing: -0.015em;
   color: var(--tl-fg-3); cursor: pointer;
   position: relative; transition: color 0.15s;
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
 }
 [data-theme="the-line"] .tl-tab:hover { color: var(--tl-fg-2); }
 [data-theme="the-line"] .tl-tab.active { color: var(--tl-fg); }
@@ -3591,6 +3595,14 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   font-variant-numeric: tabular-nums;
 }
 [data-theme="the-line"] .tl-tab.active .count { color: var(--tl-green); }
+[data-theme="the-line"] .tl-tab.featured.active { color: var(--tl-gold); }
+[data-theme="the-line"] .tl-tab.featured.active::after { background: var(--tl-gold); }
+[data-theme="the-line"] .tl-tab.featured.active .count { color: var(--tl-gold); }
+@media (max-width: 640px) {
+  [data-theme="the-line"] .tl-tab {
+    padding-top: 13px; margin-right: 18px; font-size: 22px;
+  }
+}
 
 /* ========== Community sub-tabs (format / status) ========== */
 [data-theme="the-line"] .tl-subtabs {
