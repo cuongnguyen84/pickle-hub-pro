@@ -1,20 +1,12 @@
 import { useI18n } from "@/i18n";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-interface MatchItem {
-  id: string;
-  teamA: string;
-  teamB: string;
-  scoreA: number | null;
-  scoreB: number | null;
-  status: string;
-  displayOrder: number;
-}
+import type { DashboardMatch } from "@/hooks/useDashboardData";
+import { MatchContext } from "./MatchContext";
 
 interface TeamMatchDashboardProps {
-  liveMatches: MatchItem[];
-  nextMatches: MatchItem[];
+  liveMatches: DashboardMatch[];
+  nextMatches: DashboardMatch[];
   compact?: boolean;
 }
 
@@ -26,14 +18,15 @@ export const TeamMatchDashboard = ({ liveMatches, nextMatches, compact }: TeamMa
       {/* Live matches */}
       {liveMatches.length > 0 && (
         <div>
-          <h3 className={`font-semibold mb-3 flex items-center gap-2 ${compact ? "text-sm" : "text-base"}`}>
-            <Badge variant="destructive" className="animate-pulse text-xs">LIVE</Badge>
+          <h2 className={`font-semibold mb-3 flex items-center gap-2 ${compact ? "text-sm" : "text-base"}`}>
+            <Badge variant="destructive" className="animate-pulse motion-reduce:animate-none text-xs">LIVE</Badge>
             {t.dashboard.liveMatches}
-          </h3>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {liveMatches.map((m) => (
               <Card key={m.id} className="border-primary/30 shadow-md shadow-primary/5">
                 <CardContent className="p-4">
+                  <MatchContext match={m} className="mb-2 block" />
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-sm truncate flex-1">{m.teamA}</span>
                     <div className="flex items-center gap-1 text-lg font-bold tabular-nums shrink-0">
@@ -53,13 +46,14 @@ export const TeamMatchDashboard = ({ liveMatches, nextMatches, compact }: TeamMa
       {/* Next matches */}
       {nextMatches.length > 0 && (
         <div>
-          <h3 className={`font-semibold mb-3 ${compact ? "text-sm" : "text-base"}`}>
+          <h2 className={`font-semibold mb-3 ${compact ? "text-sm" : "text-base"}`}>
             {t.dashboard.upNext}
-          </h3>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {nextMatches.map((m) => (
               <Card key={m.id} className="bg-muted/30">
                 <CardContent className="p-4">
+                  <MatchContext match={m} className="mb-2 block" />
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm truncate flex-1">{m.teamA}</span>
                     <span className="text-xs text-muted-foreground">{t.dashboard.vs}</span>

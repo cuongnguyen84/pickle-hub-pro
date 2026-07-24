@@ -3,7 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { CourtCard, TeamMatchDashboard, TVModeView } from "@/components/dashboard";
+import {
+  CourtCard,
+  CourtScheduleList,
+  TeamMatchDashboard,
+  TVModeView,
+} from "@/components/dashboard";
 import { useDashboardData, type DashboardType } from "@/hooks/useDashboardData";
 import { useDashboardSound } from "@/hooks/useDashboardSound";
 import { ArrowLeft, Monitor, Volume2, VolumeX } from "lucide-react";
@@ -17,9 +22,21 @@ const TournamentDashboard = () => {
   const { soundEnabled, toggleSound } = useDashboardSound();
 
   const dashType = (type as DashboardType) || "quick-table";
-  const { tournamentInfo, courts, teamMatchData, isLoading } = useDashboardData(dashType, id || "");
+  const {
+    tournamentInfo,
+    matchesQuery,
+    courts,
+    teamMatchData,
+    isLoading,
+  } = useDashboardData(dashType, id || "");
 
   const tournamentName = (tournamentInfo.data as { name?: string } | null | undefined)?.name || "";
+  const matches = matchesQuery.data || [];
+  const backHref = dashType === "quick-table"
+    ? `/tools/quick-tables/${id || ""}`
+    : dashType === "doubles-elimination"
+      ? `/tools/doubles-elimination/${id || ""}`
+      : `/tools/team-match/${id || ""}`;
 
   // Fullscreen API
   const enterTvMode = useCallback(() => {
@@ -58,12 +75,21 @@ const TournamentDashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
           <div className="flex items-center gap-3 min-w-0">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/tools/dashboard")} aria-label="Back to dashboard">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(backHref)}
+              aria-label={t.dashboard.backToEvent}
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="min-w-0">
               <h1 className="text-xl md:text-2xl font-bold truncate">{tournamentName || <Skeleton className="h-7 w-48" />}</h1>
-              <p className="text-sm text-muted-foreground">{t.dashboard.title}</p>
+              <p className="text-sm text-muted-foreground">
+                {dashType === "team-match"
+                  ? t.dashboard.title
+                  : `${t.dashboard.courtCount.replace("{count}", String(courts.length))} · ${t.dashboard.matchCount.replace("{count}", String(matches.length))}`}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -89,16 +115,19 @@ const TournamentDashboard = () => {
 
         {/* Court-based view (Quick Table, Doubles Elimination) */}
         {!isLoading && dashType !== "team-match" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {courts.map((court) => (
-              <CourtCard key={court.courtNumber} court={court} />
-            ))}
-            {courts.length === 0 && (
-              <div className="col-span-full text-center py-12 text-muted-foreground">
-                {t.dashboard.noActiveTournaments}
-              </div>
-            )}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {courts.map((court) => (
+                <CourtCard key={court.courtNumber} court={court} />
+              ))}
+              {courts.length === 0 && (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  {t.dashboard.noActiveTournaments}
+                </div>
+              )}
+            </div>
+            <CourtScheduleList courts={courts} matches={matches} />
+          </>
         )}
 
         {/* Team Match view */}

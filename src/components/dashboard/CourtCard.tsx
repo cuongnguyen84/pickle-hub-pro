@@ -1,7 +1,8 @@
 import { useI18n } from "@/i18n";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { CourtData } from "@/hooks/useDashboardData";
+import { MatchContext } from "./MatchContext";
 
 interface CourtCardProps {
   court: CourtData;
@@ -18,11 +19,11 @@ export const CourtCard = ({ court, compact }: CourtCardProps) => {
     <Card className={`h-full transition-all duration-300 ${hasLive ? "border-primary/50 shadow-lg shadow-primary/10" : ""}`}>
       <CardHeader className={compact ? "pb-1 pt-3 px-3" : "pb-2"}>
         <div className="flex items-center justify-between">
-          <CardTitle className={compact ? "text-sm" : "text-base"}>
-            {t.dashboard.court} {court.courtNumber}
-          </CardTitle>
+          <h2 className={`font-semibold tracking-tight ${compact ? "text-sm" : "text-base"}`}>
+            {court.courtName || `${t.dashboard.court} ${court.courtNumber}`}
+          </h2>
           {hasLive ? (
-            <Badge variant="destructive" className="animate-pulse text-xs">
+            <Badge variant="destructive" className="animate-pulse motion-reduce:animate-none text-xs">
               LIVE
             </Badge>
           ) : hasNext ? (
@@ -38,7 +39,17 @@ export const CourtCard = ({ court, compact }: CourtCardProps) => {
         {/* Live match */}
         {court.liveMatch && (
           <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
-            <div className="text-xs text-primary font-medium mb-1">{t.dashboard.nowPlaying}</div>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="min-w-0">
+                <div className="text-xs text-primary font-medium">{t.dashboard.nowPlaying}</div>
+                <MatchContext match={court.liveMatch} className="mt-0.5 block truncate" />
+              </div>
+              {court.liveMatch.startTime && (
+                <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                  {court.liveMatch.startTime}
+                </span>
+              )}
+            </div>
             <div className="flex items-center justify-between gap-2">
               <span className="font-semibold text-sm truncate flex-1">{court.liveMatch.teamA}</span>
               <div className="flex items-center gap-1 text-lg font-bold tabular-nums">
@@ -54,10 +65,15 @@ export const CourtCard = ({ court, compact }: CourtCardProps) => {
         {/* Next match */}
         {court.nextMatch && (
           <div className="bg-muted/50 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground font-medium">{t.dashboard.nextMatch}</span>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="min-w-0">
+                <span className="text-xs text-muted-foreground font-medium">{t.dashboard.nextMatch}</span>
+                <MatchContext match={court.nextMatch} className="mt-0.5 block truncate" />
+              </div>
               {court.nextMatch.startTime && (
-                <span className="text-xs text-muted-foreground">{court.nextMatch.startTime}</span>
+                <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                  {court.nextMatch.startTime}
+                </span>
               )}
             </div>
             <div className="flex items-center justify-between gap-2">

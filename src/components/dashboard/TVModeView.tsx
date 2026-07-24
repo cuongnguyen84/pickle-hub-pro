@@ -3,19 +3,20 @@ import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, RotateCw } from "lucide-react";
-import type { CourtData } from "@/hooks/useDashboardData";
+import type { CourtData, DashboardMatch } from "@/hooks/useDashboardData";
+import { MatchContext } from "./MatchContext";
 
 interface TVSlide {
   type: "court" | "match";
   courtData?: CourtData;
-  matchData?: { teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; status: string };
+  matchData?: DashboardMatch;
 }
 
 interface TVModeViewProps {
   tournamentName: string;
   courts: CourtData[];
-  liveMatches?: Array<{ teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; status: string }>;
-  nextMatches?: Array<{ teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; status: string }>;
+  liveMatches?: DashboardMatch[];
+  nextMatches?: DashboardMatch[];
   onExit: () => void;
 }
 
@@ -82,8 +83,9 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
             size="sm"
             onClick={() => setAutoRotate((p) => !p)}
             className="text-white hover:bg-white/10"
+            aria-pressed={autoRotate}
           >
-            <RotateCw className={`w-4 h-4 mr-1 ${autoRotate ? "animate-spin" : ""}`} />
+            <RotateCw className={`w-4 h-4 mr-1 ${autoRotate ? "animate-spin motion-reduce:animate-none" : ""}`} />
             {t.dashboard.autoRotate}
           </Button>
           {totalPages > 1 && (
@@ -91,7 +93,13 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
               {currentPage + 1} / {totalPages}
             </span>
           )}
-          <Button variant="ghost" size="icon" onClick={onExit} className="text-white hover:bg-white/10">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onExit}
+            className="text-white hover:bg-white/10"
+            aria-label={t.dashboard.exitTvMode}
+          >
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -120,6 +128,8 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
               key={i}
               onClick={() => setCurrentPage(i)}
               className={`w-2.5 h-2.5 rounded-full transition ${i === currentPage ? "bg-white" : "bg-white/30"}`}
+              aria-label={`${t.dashboard.page} ${i + 1}`}
+              aria-current={i === currentPage ? "page" : undefined}
             />
           ))}
         </div>
@@ -135,16 +145,17 @@ function TVCard({ slide, t }: { slide: TVSlide; t: ReturnType<typeof useI18n>["t
       <div className="bg-white/5 rounded-2xl p-6 md:p-8 border border-white/10 flex flex-col">
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-2xl md:text-3xl font-bold">
-            {t.dashboard.court} {court.courtNumber}
+            {court.courtName || `${t.dashboard.court} ${court.courtNumber}`}
           </h2>
           {court.liveMatch && (
-            <Badge variant="destructive" className="animate-pulse text-sm px-3 py-1">LIVE</Badge>
+            <Badge variant="destructive" className="animate-pulse motion-reduce:animate-none text-sm px-3 py-1">LIVE</Badge>
           )}
         </div>
 
         {court.liveMatch ? (
           <div className="flex-1 flex flex-col justify-center">
             <div className="text-sm text-white/50 mb-3">{t.dashboard.nowPlaying}</div>
+            <MatchContext match={court.liveMatch} className="-mt-2 mb-3 block text-sm text-white/60" />
             <div className="flex items-center justify-between gap-3">
               <span className="text-2xl md:text-4xl font-bold flex-1 truncate">{court.liveMatch.teamA}</span>
               <div className="flex items-center gap-3 text-5xl md:text-7xl font-bold tabular-nums">
@@ -169,6 +180,7 @@ function TVCard({ slide, t }: { slide: TVSlide; t: ReturnType<typeof useI18n>["t
                 <span className="text-base font-medium text-yellow-300/80">{court.nextMatch.startTime}</span>
               )}
             </div>
+            <MatchContext match={court.nextMatch} className="mb-2 block text-sm text-yellow-100/60" />
             <div className="flex items-center justify-between gap-3">
               <span className="text-lg md:text-2xl font-bold truncate">{court.nextMatch.teamA}</span>
               <span className="text-white/30 text-sm">{t.dashboard.vs}</span>
@@ -186,10 +198,11 @@ function TVCard({ slide, t }: { slide: TVSlide; t: ReturnType<typeof useI18n>["t
     return (
       <div className="bg-white/5 rounded-2xl p-6 md:p-8 border border-white/10 flex flex-col justify-center">
         {isLive ? (
-          <Badge variant="destructive" className="animate-pulse text-sm px-3 py-1 w-fit mb-4">LIVE</Badge>
+          <Badge variant="destructive" className="animate-pulse motion-reduce:animate-none text-sm px-3 py-1 w-fit mb-4">LIVE</Badge>
         ) : (
           <span className="text-sm text-white/50 mb-4 block">{t.dashboard.upNext}</span>
         )}
+        <MatchContext match={match} className="-mt-2 mb-4 block text-sm text-white/60" />
         <div className="flex items-center justify-between gap-3">
           <span className="text-2xl md:text-4xl font-bold flex-1 truncate">{match.teamA}</span>
           <div className="flex items-center gap-3 text-5xl md:text-7xl font-bold tabular-nums">
