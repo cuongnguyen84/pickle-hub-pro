@@ -11,8 +11,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball Doubles Strategy — Winning Tips for Tournament Players",
-      metaTitle: "Pickleball Doubles Strategy & Tips | Tournament Winning Guide 2026",
-      metaDescription: "Master pickleball doubles strategy for tournaments. Partner communication, court positioning, stacking, and when to attack the kitchen. Improve your doubles game today.",
+      metaTitle: "Pickleball Doubles Strategy | Tournament Winning Guide",
+      metaDescription: "Pickleball doubles strategy for tournaments: partner communication, court positioning, stacking, and when to attack the kitchen line.",
       sections: [
         {
           heading: "Why Doubles Strategy Matters in Tournaments",
@@ -75,7 +75,7 @@ const post: BlogPost = {
     vi: {
       title: "Chiến thuật Pickleball đôi — Mẹo thắng cho người chơi giải đấu",
       metaTitle: "Chiến thuật Pickleball đôi | Mẹo thắng giải 2026",
-      metaDescription: "Nắm vững chiến thuật pickleball đôi cho giải đấu. Giao tiếp đồng đội, vị trí sân, stacking, và khi nào tấn công kitchen. Cải thiện game đôi ngay hôm nay.",
+      metaDescription: "Chiến thuật pickleball đôi cho giải đấu: giao tiếp đồng đội, vị trí sân, stacking và khi nào tấn công kitchen.",
       sections: [
         {
           heading: "Tại sao chiến thuật đôi quan trọng trong giải đấu",

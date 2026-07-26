@@ -29,7 +29,7 @@ const post: BlogPost = {
       title: "Best Pickleball Club Management Software in 2026 — Honest Comparison",
       metaTitle: "Best Pickleball Club Management Software 2026 | Compared",
       metaDescription:
-        "Compare the best pickleball club management software in 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark, Pickle Planner and more. Features, pricing, and a realistic low-cost stack for Vietnamese clubs.",
+        "Compare pickleball club management software in 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark and more: features, pricing, low-cost stack.",
       sections: [
         {
           heading: "What Pickleball Club Management Software Actually Needs to Do",
@@ -129,9 +129,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Phần Mềm Quản Lý CLB Pickleball Tốt Nhất 2026 — So Sánh Thẳng Thắn",
-      metaTitle: "Phần Mềm Quản Lý CLB Pickleball 2026 | So Sánh Chi Tiết",
+      metaTitle: "Phần mềm quản lý CLB Pickleball 2026",
       metaDescription:
-        "So sánh phần mềm quản lý CLB pickleball tốt nhất 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark, Pickle Planner. Tính năng, giá, và bộ công cụ miễn phí thực tế cho CLB Việt Nam.",
+        "So sánh phần mềm quản lý CLB pickleball 2026: CourtReserve, Playtomic, PlayByPoint, ClubSpark. Tính năng, giá và lựa chọn rẻ.",
       sections: [
         {
           heading: "Phần mềm quản lý CLB pickleball thực sự cần làm gì?",

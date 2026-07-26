@@ -180,7 +180,7 @@ const post: BlogPost = {
       title: "Cú Erne Trong Pickleball: Cách Thực Hiện, Luật & Cách Giăng Bẫy (2026)",
       metaTitle: "Cú Erne Pickleball 2026 | Cách Thực Hiện & Khi Nào",
       metaDescription:
-        "Cú erne pickleball là gì: vì sao hợp lệ, erne bật nhảy vs đứng sẵn, kỹ thuật từng bước, cách giăng bẫy, phòng thủ, lỗi phổ biến và bài tập.",
+        "Cú erne pickleball là gì: vì sao hợp lệ, erne bật nhảy vs đứng sẵn, kỹ thuật từng bước, lỗi phổ biến và bài tập.",
       sections: [
         {
           heading: "Cú erne là gì — và vì sao dân dink sợ nó",

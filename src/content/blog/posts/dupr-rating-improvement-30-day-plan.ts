@@ -30,7 +30,7 @@ const post: BlogPost = {
       title:
         "How to Improve Your DUPR Rating: A Realistic 30-Day Plan",
       metaTitle:
-        "Improve DUPR Rating in 30 Days | Realistic Training Plan 2026",
+        "Improve Your DUPR in 30 Days | Realistic Training Plan",
       metaDescription:
         "A 30-day plan to raise your DUPR rating: how DUPR's algorithm rewards consistent play, the 4 rules from Part 2, and a week-by-week training schedule.",
       sections: [
@@ -200,9 +200,9 @@ const post: BlogPost = {
       title:
         "Tăng điểm DUPR trong 30 ngày: kế hoạch thực tế (không hứa nhanh)",
       metaTitle:
-        "Tăng DUPR 30 ngày | Kế hoạch luyện tập thực tế 2026",
+        "Tăng điểm DUPR trong 30 ngày | Kế hoạch thật",
       metaDescription:
-        "Kế hoạch 30 ngày tăng điểm DUPR thực tế: hiểu thuật toán DUPR, 4 quy tắc từ Phần 2, lịch luyện tập theo tuần, 3 sai lầm cần tránh.",
+        "Kế hoạch 30 ngày tăng điểm DUPR: hiểu thuật toán, 4 quy tắc từ Phần 2, lịch tập theo tuần và 3 sai lầm cần tránh.",
       sections: [
         {
           heading: "Vì sao điểm DUPR của bạn đứng yên nhiều tuần",

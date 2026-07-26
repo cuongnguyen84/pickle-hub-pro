@@ -15,7 +15,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "How the DUPR Algorithm Works: Performance vs Expectation Explained (Part 2 of 3)",
-      metaTitle: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3",
+      metaTitle: "DUPR Algorithm Explained | Why You Lose Points After Wins",
       metaDescription: "DUPR's July 2025 algorithm: why winning can lose points and losing can gain them. Match weights, exclusion rules, reliability score. Part 2 of 3.",
       sections: [
         {
@@ -114,8 +114,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Thuật toán DUPR: Vì sao thắng vẫn mất điểm, thua vẫn tăng điểm? (Phần 2/3)",
-      metaTitle: "Thuật toán DUPR 2025 giải thích | Thắng mất điểm, thua tăng điểm — Phần 2/3",
-      metaDescription: "DUPR thay đổi thuật toán tháng 7/2025: thắng có thể vẫn mất điểm, thua có thể vẫn tăng điểm. Performance vs Expectation, trọng số trận, Reliability Score — Phần 2/3 series DUPR.",
+      metaTitle: "Thuật toán DUPR | Thắng vẫn mất điểm vì sao",
+      metaDescription: "DUPR đổi thuật toán 7/2025: thắng vẫn có thể mất điểm. Performance vs Expectation, trọng số trận và Reliability Score — Phần 2/3.",
       sections: [
         {
           heading: "Phần 2/3: Phần \"não\" của DUPR",

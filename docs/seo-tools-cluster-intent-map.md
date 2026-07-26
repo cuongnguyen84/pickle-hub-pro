@@ -89,7 +89,7 @@ title nor the bot-visible `<h1>` (`buildHtml` emits `<h1>{title}</h1>`).
   robin guide and the pillar, closing the cluster loop back from the money page.
 - Prerender cache key bumped `pr:v30 → pr:v31` (docs/prerender-cache-log.md).
 
-## ⚠️ Sprint 2 candidate, found while verifying Sprint 1: EN posts have no crawlable body
+## ✅ FIXED (#467) — EN posts had no crawlable body
 
 Measured on prod with `curl -A Googlebot` after the step-2 deploy:
 
@@ -112,14 +112,16 @@ chasing: the EN guides rank 50–60 and earn **zero** informational-query
 impressions, while the same content in Vietnamese ranks and earns some. It is
 not a cannibalization problem alone — Google cannot see the English bodies.
 
-Fix shape (not done, needs a decision): `BLOG_POST_META` is already generated
-from `src/content/blog/metadata.ts` at module load (SEO-02), so the same import
-boundary can pull `posts/<slug>.ts` and render `sections` + `faqItems` to HTML.
-The open question is Pages-Function bundle size with ~48 posts inlined vs a
-dynamic import per slug. Worth measuring before committing — but this is very
-likely a bigger lever than steps 2–5 combined.
+**Fixed in #467.** `scripts/gen-blog-barrel.mjs` generates `posts/all.ts` (the
+SPA's `import.meta.glob` is Vite-only, so the Pages Function needs its own
+list), and `functions/_lib/render/blog-body.ts` renders sections + FAQ +
+`FAQPage`/`HowTo` schema. The barrel exports **loaders**: `_middleware.ts` runs
+for every request, and static imports would construct all 46 posts at worker
+startup — esbuild's lazy `__esm()` wrappers mean a request pays only for the
+post it renders. Body per post 0.9 KB → 7.5–16.9 KB; bundle 220 KB → 585 KB
+gzipped against a 3 MB floor.
 
-## ⚠️ Second finding: two thirds of SERP titles ship truncated
+## ✅ FIXED (#467 follow-up) — two thirds of SERP titles shipped truncated
 
 `buildHtml` truncates titles at **60 UTF-8 bytes** and descriptions at 160
 (`functions/_lib/html.ts`), and the truncated string is what the SERP *and* the
@@ -135,12 +137,18 @@ Audit on 2026-07-26:
 | `src/content/blog/metadata.ts` (46 posts) | **63 of 92 titles**, **55 of 92 descriptions** |
 | Supabase `vi_blog_posts` (52 published) | **39 titles**, **50 descriptions** |
 
-For a site whose audience is ~95% Vietnamese, most Vietnamese SERP entries are
-currently ellipsised. Fixing all of it is a bilingual copy pass, not a code
-change, so this sprint only fixed the four strings it touched and added
-`src/content/blog/__tests__/seo-byte-budget.test.ts` — a **ratchet**: the count
-may fall, never rise, so new posts cannot add to the debt. Burn the baseline
-down as copy is rewritten. (The Supabase side has no equivalent guard yet.)
+All 118 metadata strings and all 50 Supabase rows were rewritten on 2026-07-26
+— keyword kept at the front, tail trimmed. Counts are now **0 over budget on
+both sides**, and both halves are guarded:
+
+- `src/content/blog/__tests__/seo-byte-budget.test.ts` is a hard gate (not a
+  ratchet), and also fails on post-file ↔ metadata.ts drift — which is how the
+  pass found 5 titles and ~30 descriptions where the SPA and the SSR path were
+  already serving *different* copy.
+- Migration `20260726120000_vi_blog_seo_byte_budget.sql` adds CHECK constraints
+  on `vi_blog_posts.meta_title` (≤60 B) and `meta_description` (≤160 B), so the
+  admin CMS and the Gemini translation path cannot reintroduce it. Verified by
+  attempting an over-length write: rejected with 23514.
 
 ## Success metric
 

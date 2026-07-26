@@ -11,7 +11,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball Scoring Rules Explained — Complete Guide for Beginners & Tournament Play",
-      metaTitle: "Pickleball Scoring Rules 2026 | Complete Beginner & Tournament Guide",
+      metaTitle: "Pickleball Scoring Rules 2026 | Beginner & Tournament",
       metaDescription: "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included.",
       sections: [
         {
@@ -83,8 +83,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Luật chấm điểm Pickleball — Hướng dẫn đầy đủ cho người mới và giải đấu",
-      metaTitle: "Luật chấm điểm Pickleball 2026 | Hướng dẫn cho người mới & giải đấu",
-      metaDescription: "Học luật chấm điểm pickleball cho đơn, đôi và giải đấu. Rally scoring vs side-out giải thích chi tiết. Công cụ chấm điểm số miễn phí.",
+      metaTitle: "Luật chấm điểm Pickleball | Người mới & giải",
+      metaDescription: "Luật chấm điểm pickleball cho đơn, đôi và giải đấu. Rally scoring vs side-out, kèm công cụ chấm điểm miễn phí.",
       sections: [
         {
           heading: "Chấm điểm Pickleball hoạt động như thế nào?",

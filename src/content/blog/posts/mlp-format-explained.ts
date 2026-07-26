@@ -11,8 +11,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "MLP Format Explained — Major League Pickleball Team Match Rules & How to Play",
-      metaTitle: "MLP Format Explained 2026 | Major League Pickleball Rules & Team Match Guide",
-      metaDescription: "Learn how the MLP format works in pickleball. Complete guide to Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
+      metaTitle: "MLP Format Explained 2026 | Major League Pickleball Rules",
+      metaDescription: "MLP format explained: Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
       sections: [
         {
           heading: "What Is MLP Format in Pickleball?",
@@ -85,8 +85,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Thể thức MLP giải thích — Luật thi đấu đồng đội Major League Pickleball",
-      metaTitle: "Thể thức MLP Pickleball 2026 | Luật đồng đội Major League Pickleball",
-      metaDescription: "Tìm hiểu thể thức MLP trong pickleball. Hướng dẫn đầy đủ về luật thi đấu đồng đội Major League Pickleball, dreambreaker, chiến thuật lineup.",
+      metaTitle: "Thể thức MLP Pickleball | Luật đồng đội",
+      metaDescription: "Thể thức MLP trong pickleball: luật thi đấu đồng đội Major League Pickleball, dreambreaker và chiến thuật xếp lineup.",
       sections: [
         {
           heading: "Thể thức MLP trong Pickleball là gì?",

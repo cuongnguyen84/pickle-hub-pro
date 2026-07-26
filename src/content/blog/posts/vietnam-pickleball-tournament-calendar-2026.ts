@@ -28,7 +28,7 @@ const post: BlogPost = {
       title: "Vietnam Pickleball Tournament Calendar 2026: Every Major Event",
       metaTitle: "Vietnam Pickleball Tournament Calendar 2026 | Dates & Venues",
       metaDescription:
-        "The complete 2026 pickleball tournament calendar for Vietnam — the Ho Chi Minh City Open (Aug 6–9), the Pickleball World Cup in Da Nang (Aug 30–Sep 6), the full PPA Tour Asia schedule, and domestic events. Dates, venues, prize money.",
+        "The complete 2026 pickleball tournament calendar for Vietnam: HCMC Open, the Da Nang World Cup, the PPA Tour Asia schedule and domestic events.",
       sections: [
         {
           heading: "Vietnam's 2026 pickleball calendar at a glance",
@@ -162,9 +162,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Lịch Giải Pickleball Việt Nam 2026: Toàn Bộ Sự Kiện Lớn",
-      metaTitle: "Lịch Giải Pickleball Việt Nam 2026 | Ngày & Địa Điểm",
+      metaTitle: "Lịch giải Pickleball Việt Nam 2026",
       metaDescription:
-        "Lịch giải pickleball Việt Nam 2026 đầy đủ — Ho Chi Minh City Open (6–9/8), Pickleball World Cup tại Đà Nẵng (30/8–6/9), lịch PPA Tour Asia đầy đủ và các giải trong nước. Ngày thi đấu, địa điểm, tiền thưởng.",
+        "Lịch giải pickleball Việt Nam 2026: HCMC Open, World Cup Đà Nẵng, lịch PPA Tour Asia và các giải trong nước.",
       sections: [
         {
           heading: "Lịch giải pickleball Việt Nam 2026 — nhìn nhanh",

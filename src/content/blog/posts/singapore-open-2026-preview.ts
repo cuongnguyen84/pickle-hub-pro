@@ -15,7 +15,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Leapmotor Singapore Open 2026: Preview of PPA Tour Asia's Singapore Debut",
-      metaTitle: "Singapore Open 2026 Pickleball: Schedule, Draw & How to Watch",
+      metaTitle: "Singapore Open 2026 Pickleball: Schedule & How to Watch",
       metaDescription: "Preview of the PPA Asia 500 Leapmotor Singapore Open (July 23-26): Vietnam's Truong Vinh Hien is the top seed, plus schedule, prizes and how to watch free.",
       sections: [
         {
@@ -146,8 +146,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
-      metaTitle: "Singapore Open 2026: Lịch, Bảng đấu & Cách xem từ Việt Nam",
-      metaDescription: "Preview PPA Asia 500 Leapmotor Singapore Open (23-26/7): Trương Vinh Hiển là hạt giống số 1 đơn nam, kèm lịch theo giờ VN và cách xem miễn phí.",
+      metaTitle: "Singapore Open 2026 | Lịch đấu & cách xem",
+      metaDescription: "PPA Asia 500 Leapmotor Singapore Open (23–26/7): Trương Vinh Hiển hạt giống số 1 đơn nam, lịch theo giờ VN và cách xem miễn phí.",
       sections: [
         {
           heading: "Tóm tắt nhanh",

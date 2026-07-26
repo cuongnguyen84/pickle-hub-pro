@@ -140,7 +140,7 @@ const post: BlogPost = {
       metaTitle:
         "Tennis sang Pickleball 2026 | 5 thói quen phải sửa",
       metaDescription:
-        "Người chơi tennis chuyển sang pickleball không thua vì kỹ thuật yếu — họ mang theo 5 thói quen phản tác dụng. Đây là cách sửa và lịch tập 7 ngày.",
+        "Người chơi tennis chuyển sang pickleball thua vì 5 thói quen phản tác dụng, không phải vì kỹ thuật. Cách sửa và lịch tập 7 ngày.",
       sections: [
         {
           heading: "Vì sao người chơi tennis lại thấy pickleball khó",

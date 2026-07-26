@@ -29,7 +29,7 @@ const post: BlogPost = {
       title: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold",
       metaTitle: "PPA Beijing Open 2026 Recap | Vietnam Wins Men's Doubles",
       metaDescription:
-        "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026, beating Miyoshi/Stirling 11-9, 11-7. Full results, the road to the final, Vinh Hien's singles bronze, and the Ly Hoang Nam withdrawal.",
+        "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026. Full results and the road to the final.",
       sections: [
         {
           heading: "Vietnam wins again: Hien & Quan take Beijing men's doubles gold",
@@ -124,9 +124,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "PPA Beijing Open 2026: Vinh Hiển & Minh Quân vô địch đôi nam",
-      metaTitle: "PPA Beijing Open 2026 | Vinh Hiển, Minh Quân vô địch đôi nam",
+      metaTitle: "PPA Beijing Open 2026 | Việt Nam vô địch đôi nam",
       metaDescription:
-        "Trương Vinh Hiển và Đỗ Minh Quân vô địch đôi nam PPA Asia 500 Beijing Open 2026, thắng Miyoshi/Stirling 11-9, 11-7. Kết quả đầy đủ, đường tới chung kết, HCĐ đơn nam của Vinh Hiển và vụ Lý Hoàng Nam rút lui.",
+        "Trương Vinh Hiển và Đỗ Minh Quân vô địch đôi nam PPA Asia 500 Beijing Open 2026. Kết quả đầy đủ và đường tới chung kết.",
       sections: [
         {
           heading: "Việt Nam lại vô địch: Vinh Hiển & Minh Quân giành HCV đôi nam Bắc Kinh",

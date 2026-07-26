@@ -16,7 +16,7 @@ const post: BlogPost = {
     en: {
       title: "Pickleball Tournament Budget: Full Cost Breakdown, Templates & Free Calculator (2026)",
       metaTitle: "Pickleball Tournament Budget 2026 | Costs + Free Template",
-      metaDescription: "How much does it cost to run a pickleball tournament? Full 2026 cost breakdown in USD and VND, 3 ready budget templates, a break-even entry fee formula, and a free spreadsheet.",
+      metaDescription: "What it costs to run a pickleball tournament in 2026: full breakdown in USD and VND, 3 budget templates, break-even fee formula and a free sheet.",
       sections: [
         {
           heading: "How Much Does a Pickleball Tournament Cost? The Short Answer",
@@ -96,8 +96,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Tổ Chức Giải Pickleball Tốn Bao Nhiêu? Dự Toán Chi Tiết + File Mẫu Miễn Phí (2026)",
-      metaTitle: "Dự Toán Ngân Sách Giải Pickleball 2026 | Chi Phí + File Mẫu",
-      metaDescription: "Tổ chức một giải pickleball tốn bao nhiêu tiền? Bảng chi phí 2026 chi tiết bằng VNĐ và USD, 3 mẫu ngân sách giải nhỏ/vừa/lớn, công thức tính lệ phí hòa vốn, kèm file Excel miễn phí.",
+      metaTitle: "Ngân sách giải Pickleball 2026 | Kèm file mẫu",
+      metaDescription: "Tổ chức giải pickleball tốn bao nhiêu? Bảng chi phí 2026, 3 mẫu ngân sách, công thức lệ phí hòa vốn, kèm file Excel.",
       sections: [
         {
           heading: "Tổ chức giải pickleball tốn bao nhiêu? Trả lời nhanh",

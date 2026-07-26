@@ -15,8 +15,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam — Complete Guide",
-      metaTitle: "Pickleball World Cup 2026 Da Nang | Dates, $500K Prize, Venues, How to Watch",
-      metaDescription: "Heineken Pickleball World Cup 2026 comes to Da Nang, Vietnam (Aug 30 – Sep 6). US$500,000 prize pool, ~80 nations, 39 courts. Dates, venues, format, Vietnam team.",
+      metaTitle: "Pickleball World Cup 2026 Da Nang | Dates & $500K Prize",
+      metaDescription: "Heineken Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). US$500,000 prize pool, ~80 nations, 39 courts. Dates, venues, format, Vietnam team.",
       sections: [
         {
           heading: "Pickleball World Cup 2026: First Time in Asia, Hosted by Da Nang",
@@ -169,8 +169,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Heineken Pickleball World Cup 2026 tại Đà Nẵng — Hướng dẫn đầy đủ",
-      metaTitle: "World Cup Pickleball 2026 Đà Nẵng | Lịch thi đấu, Tiền thưởng 500.000 USD, Cách xem",
-      metaDescription: "Đà Nẵng đăng cai Heineken Pickleball World Cup 2026 từ 30/8 – 6/9. Tổng thưởng 500.000 USD, gần 80 quốc gia, 39 sân. Lịch thi đấu, địa điểm, đội tuyển Việt Nam.",
+      metaTitle: "World Cup Pickleball 2026 Đà Nẵng | Lịch & thưởng",
+      metaDescription: "Đà Nẵng đăng cai Heineken Pickleball World Cup 2026 (30/8–6/9): thưởng 500.000 USD, 39 sân, lịch và đội tuyển Việt Nam.",
       sections: [
         {
           heading: "World Cup Pickleball 2026: Lần đầu tiên tại châu Á, Đà Nẵng đăng cai",

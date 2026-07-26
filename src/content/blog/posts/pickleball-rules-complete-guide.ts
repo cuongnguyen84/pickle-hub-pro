@@ -11,8 +11,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball Rules 2026: The Complete Guide (With Asia's Hardest Calls Explained)",
-      metaTitle: "Pickleball Rules 2026 | Complete Guide with Asia's Hardest Calls Explained",
-      metaDescription: "The complete 2026 Pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus: the 5 calls that start fights in Asian tournaments — and how to settle them.",
+      metaTitle: "Pickleball Rules 2026 | Complete Guide + Hardest Calls",
+      metaDescription: "The 2026 pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus 5 disputed calls in Asian tournaments.",
       sections: [
         {
           heading: "Why Another Pickleball Rules Guide?",
@@ -153,8 +153,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Luật Pickleball 2026 — Hướng dẫn đầy đủ (kèm 5 tình huống tranh cãi nhất ở châu Á)",
-      metaTitle: "Luật Pickleball 2026 | Hướng dẫn đầy đủ và 5 tình huống tranh cãi nhất ở châu Á",
-      metaDescription: "Luật Pickleball 2026 đầy đủ: giao bóng, luật hai lần nảy, kitchen/NVZ, tính điểm, lỗi. Kèm 5 tình huống gây tranh cãi nhất ở các giải châu Á và cách xử lý đúng luật.",
+      metaTitle: "Luật Pickleball 2026 | Hướng dẫn đầy đủ",
+      metaDescription: "Luật pickleball 2026: giao bóng, hai lần nảy, kitchen/NVZ, tính điểm, lỗi. Kèm 5 tình huống tranh cãi nhất ở giải châu Á.",
       sections: [
         {
           heading: "Vì sao cần thêm một hướng dẫn Luật Pickleball nữa?",

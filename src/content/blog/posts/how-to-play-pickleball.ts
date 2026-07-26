@@ -25,8 +25,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "How to Play Pickleball: 7-Day Beginner Plan (Tested with 200+ Players in Vietnam)",
-      metaTitle: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam",
-      metaDescription: "How to play pickleball as a beginner: gear to buy, correct grip, 6 core shots, and a 7-day practice plan that took 200+ Vietnamese players from zero to playing their first real match.",
+      metaTitle: "How to Play Pickleball | 7-Day Beginner Plan",
+      metaDescription: "How to play pickleball: beginner gear, grip, 6 core shots, and a 7-day practice plan tested with 200+ Vietnamese players. Start playing in week one.",
       sections: [
         {
           heading: "Why this guide is different",
@@ -141,8 +141,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Cách chơi Pickleball cho người mới: Lộ trình 7 ngày từ 0 đến đánh được",
-      metaTitle: "Cách chơi Pickleball cho người mới | Lộ trình 7 ngày từ 0",
-      metaDescription: "Hướng dẫn cách chơi Pickleball cho người mới từ A đến Z: dụng cụ cần mua, kỹ thuật cơ bản, lộ trình 7 ngày tập luyện, lỗi thường gặp. Bắt đầu chơi tự tin sau 1 tuần.",
+      metaTitle: "Cách chơi Pickleball | Lộ trình 7 ngày",
+      metaDescription: "Cách chơi pickleball cho người mới: dụng cụ, kỹ thuật cơ bản, lộ trình 7 ngày và lỗi thường gặp.",
       sections: [
         {
           heading: "Vì sao bài này khác?",

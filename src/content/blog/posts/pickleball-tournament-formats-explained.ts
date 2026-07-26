@@ -11,8 +11,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball Tournament Formats Explained — Which One Should You Use?",
-      metaTitle: "Pickleball Tournament Formats Explained | Round Robin, Elimination & More",
-      metaDescription: "Complete guide to pickleball tournament formats: round robin, single elimination, double elimination, MLP team match, and flex tournaments. Choose the right format for your event.",
+      metaTitle: "Pickleball Tournament Formats | Round Robin & More",
+      metaDescription: "Pickleball tournament formats explained: round robin, single + double elimination, MLP team match, flex. Choose the right format for your event.",
       sections: [
         {
           heading: "Why Format Choice Matters",
@@ -101,8 +101,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Các thể thức giải Pickleball giải thích — Nên dùng thể thức nào?",
-      metaTitle: "Thể thức giải Pickleball giải thích | Vòng tròn, Loại trực tiếp & Khác",
-      metaDescription: "Hướng dẫn đầy đủ về thể thức giải pickleball: vòng tròn, loại trực tiếp, loại kép, MLP team match, và flex tournament. Chọn đúng thể thức cho sự kiện của bạn.",
+      metaTitle: "Thể thức giải Pickleball | Vòng tròn, loại kép",
+      metaDescription: "Thể thức giải pickleball: vòng tròn, loại trực tiếp, loại kép, MLP team match và flex. Chọn đúng thể thức cho sự kiện.",
       sections: [
         {
           heading: "Tại sao chọn thể thức quan trọng",

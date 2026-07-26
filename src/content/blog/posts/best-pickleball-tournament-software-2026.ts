@@ -11,8 +11,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Best Pickleball Tournament Software in 2026 — Free Tools Compared",
-      metaTitle: "Best Pickleball Tournament Software 2026 | Free Bracket Tools Compared",
-      metaDescription: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required.",
+      metaTitle: "Best Pickleball Tournament Software 2026 | Free Tools",
+      metaDescription: "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup.",
       sections: [
         {
           heading: "Why You Need Pickleball-Specific Tournament Software",
@@ -59,8 +59,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 — So sánh công cụ miễn phí",
-      metaTitle: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 | So sánh công cụ tạo bracket miễn phí",
-      metaDescription: "So sánh phần mềm tổ chức giải pickleball tốt nhất 2026. Tạo bracket miễn phí, round robin, MLP team match cho ban tổ chức. Không cần đăng ký.",
+      metaTitle: "Phần mềm tổ chức giải Pickleball 2026 | So sánh",
+      metaDescription: "So sánh phần mềm tổ chức giải pickleball 2026. Tạo bracket miễn phí, round robin, MLP team match. Không cần đăng ký.",
       sections: [
         {
           heading: "Tại sao cần phần mềm chuyên dụng cho giải Pickleball?",

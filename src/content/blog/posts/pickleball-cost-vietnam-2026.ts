@@ -25,9 +25,9 @@ const post: BlogPost = {
   content: {
     en: {
       title: "How Much Does Pickleball Cost in Vietnam? The 2026 Price Guide",
-      metaTitle: "Pickleball Cost in Vietnam 2026 | Courts, Paddles & Tournaments",
+      metaTitle: "Pickleball Cost in Vietnam 2026 | Courts, Paddles, Fees",
       metaDescription:
-        "What pickleball really costs in Vietnam in 2026: court rental by city (70,000–400,000 VND/hour), paddles from 400,000 VND, coaching, tournament entry fees, and three realistic monthly budgets — plus how to play for less.",
+        "What pickleball costs in Vietnam in 2026: court rental by city, paddle prices, coaching, tournament fees and three realistic monthly budgets.",
       sections: [
         {
           heading: "The quick answer: cheaper than you think",
@@ -189,9 +189,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Chi phí chơi Pickleball ở Việt Nam 2026: sân, vợt, giải đấu hết bao nhiêu?",
-      metaTitle: "Chi Phí Chơi Pickleball 2026 | Giá Thuê Sân, Vợt & Phí Giải Đấu",
+      metaTitle: "Chi phí chơi Pickleball 2026 | Sân, vợt, giải",
       metaDescription:
-        "Chơi pickleball tốn bao nhiêu tiền? Giá thuê sân theo thành phố (70.000–400.000đ/giờ), vợt từ 400.000đ, học phí HLV, lệ phí giải đấu và 3 mức ngân sách hàng tháng thực tế — kèm 7 cách chơi tiết kiệm.",
+        "Chơi pickleball tốn bao nhiêu? Giá thuê sân theo thành phố, giá vợt, học phí HLV, lệ phí giải và 3 mức ngân sách hàng tháng.",
       sections: [
         {
           heading: "Trả lời nhanh: rẻ hơn bạn nghĩ",

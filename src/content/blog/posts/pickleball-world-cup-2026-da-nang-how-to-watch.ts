@@ -15,8 +15,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
-      metaTitle: "Pickleball World Cup 2026 Da Nang: How to Watch, Venues & Register",
-      metaDescription: "Practical guide to the Heineken Pickleball World Cup 2026 in Da Nang (Aug 30–Sep 6): day-by-day schedule, all 7 venues, how to register (entries close July 31), fees and how to watch.",
+      metaTitle: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
+      metaDescription: "Heineken Pickleball World Cup 2026, Da Nang (Aug 30–Sep 6): day-by-day schedule, all 7 venues, entry fees, deadlines and how to watch.",
       sections: [
         {
           heading: "The Short Version",
@@ -133,8 +133,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
-      metaTitle: "Cẩm nang World Cup Pickleball 2026 Đà Nẵng: Lịch, Địa điểm, Đăng ký",
-      metaDescription: "Cẩm nang thực tế Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9): lịch từng ngày, đủ 7 địa điểm, cách đăng ký thi đấu (hạn 31/7), phí và cách xem.",
+      metaTitle: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
+      metaDescription: "Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9): lịch từng ngày, 7 địa điểm, cách đăng ký, phí và cách xem trực tiếp.",
       sections: [
         {
           heading: "Tóm tắt nhanh",

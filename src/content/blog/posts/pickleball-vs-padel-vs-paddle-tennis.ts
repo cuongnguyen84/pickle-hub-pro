@@ -151,7 +151,7 @@ const post: BlogPost = {
         "Pickleball vs Padel vs Paddle Tennis: So Sánh Đầy Đủ 2026",
       metaTitle: "Pickleball vs Padel vs Paddle Tennis: So Sánh 2026",
       metaDescription:
-        "Pickleball, padel hay paddle tennis khác nhau thế nào? So sánh 2026 đầy đủ: sân, luật, dụng cụ, nơi phổ biến tại VN/Á — và môn nào nên thử trước.",
+        "Pickleball, padel hay paddle tennis khác nhau thế nào? So sánh sân, luật, dụng cụ và nên thử môn nào trước.",
       sections: [
         {
           heading: "Ba môn thể thao, một cụm rối rắm",
