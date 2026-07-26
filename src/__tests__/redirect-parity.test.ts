@@ -77,16 +77,16 @@ function parseRedirectsEnBlog(): Record<string, string> {
 }
 
 // Resolve what the middleware sends a given vi-slug to, mirroring the runtime
-// logic: VI_BLOG_MERGED[vi] -> /vi/blog/<vi-target> (checked first), else
+// logic: VI_BLOG_DIRECT[vi] -> that absolute path (checked first), else
 // VI_BLOG_REDIRECTS[vi] -> enSlug; /tools if enSlug ∈ BLOG_TO_TOOLS, else
 // /blog/<enSlug>.
 function middlewareDest(
   vi: string,
   dict: Record<string, string>,
   tools: Set<string>,
-  merged: Record<string, string>,
+  direct: Record<string, string>,
 ): string {
-  if (merged[vi] !== undefined) return `/vi/blog/${merged[vi]}`;
+  if (direct[vi] !== undefined) return direct[vi];
   const en = dict[vi];
   if (en === undefined) return "";
   return tools.has(en) ? "/tools" : `/blog/${en}`;
@@ -96,7 +96,7 @@ describe("redirect parity: /vi/blog/* between _redirects and _middleware.ts", ()
   const redirects = parseRedirectsViBlog();
   const dict = parseMiddlewareViBlog();
   const tools = parseBlogToTools();
-  const viMerged = parseDict("VI_BLOG_MERGED");
+  const viDirect = parseDict("VI_BLOG_DIRECT");
 
   it("parsed a non-trivial number of rules from both files", () => {
     expect(Object.keys(redirects).length).toBeGreaterThan(5);
@@ -106,7 +106,7 @@ describe("redirect parity: /vi/blog/* between _redirects and _middleware.ts", ()
   it("every _redirects /vi/blog rule is mirrored in the middleware (else bots 404)", () => {
     const missing: string[] = [];
     for (const [vi, target] of Object.entries(redirects)) {
-      const dest = middlewareDest(vi, dict, tools, viMerged);
+      const dest = middlewareDest(vi, dict, tools, viDirect);
       if (dest !== target) {
         missing.push(`${vi} → _redirects:${target} vs middleware:${dest || "(none)"}`);
       }
@@ -116,7 +116,7 @@ describe("redirect parity: /vi/blog/* between _redirects and _middleware.ts", ()
 
   it("every middleware VI-blog redirect has a matching _redirects rule (no bot-only redirect)", () => {
     const extra: string[] = [];
-    for (const vi of [...Object.keys(dict), ...Object.keys(viMerged)]) {
+    for (const vi of [...Object.keys(dict), ...Object.keys(viDirect)]) {
       if (!(vi in redirects)) extra.push(vi);
     }
     expect(extra, `middleware VI-blog redirects with no _redirects rule (users won't get them):\n${extra.join("\n")}`).toEqual([]);

@@ -3,16 +3,16 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-round-robin-generator-guide",
   publishedDate: "2025-10-10",
-  updatedDate: "2026-03-27",
+  updatedDate: "2026-07-26",
   author: "The PickleHub Team",
-  tags: ["round-robin", "generator", "tutorial"],
+  tags: ["round-robin", "guide", "tutorial"],
   ctaPath: "/tools/quick-tables",
-  ctaLabel: { en: "Generate Round Robin Now", vi: "Tạo vòng tròn ngay" },
+  ctaLabel: { en: "Open Quick Tables", vi: "Mở Bảng đấu nhanh" },
   content: {
     en: {
-      title: "Pickleball Round Robin Generator — How to Run the Perfect Round Robin Tournament",
-      metaTitle: "Pickleball Round Robin Generator | Free Tool & Complete Guide 2026",
-      metaDescription: "Free pickleball round robin generator with automatic scheduling, court rotation, and live scoring. Learn how to organize the perfect round robin tournament.",
+      title: "How to Run a Pickleball Round Robin — Schedule, Byes & Tiebreakers",
+      metaTitle: "How to Run a Pickleball Round Robin | Schedule & Rules 2026",
+      metaDescription: "How to run a pickleball round robin: match counts by group size, court scheduling, byes, snake seeding, and the tiebreaker order to announce before play.",
       sections: [
         {
           heading: "What Is a Pickleball Round Robin?",
@@ -26,7 +26,7 @@ const post: BlogPost = {
           ]
         },
         {
-          heading: "Why Use a Round Robin Generator?",
+          heading: "Why Round Robin Scheduling Falls Apart by Hand",
           content: "Creating a round robin schedule by hand is deceptively complex. A 6-player group requires 15 unique pairings scheduled so no player sits back-to-back, no court is double-booked, and rest intervals are balanced. For 8 players you're managing 28 matches. Scale to 16 players across multiple groups and you're coordinating 120 matches — spreadsheet-hostile territory where manual scheduling errors are nearly inevitable.",
           listItems: [
             "Court clashes — Two matches assigned to the same court at the same time. Easy to miss on a spreadsheet; impossible with a generator.",
@@ -34,14 +34,14 @@ const post: BlogPost = {
             "Unbalanced seeding — Placing all the strongest players in one group and weakest in another, producing a lopsided bracket. A generator distributes seeds across groups using snake seeding.",
             "Miscounting match totals — Underestimating how many matches your event has leads to underbooked court time and events that run 90 minutes over schedule.",
             "Standings calculation errors — Manual win-loss tracking is error-prone. Point differentials for tiebreakers are nearly impossible to track by hand across a large field.",
-            "The Pickleball Round Robin Generator at Quick Tables solves all of these automatically — enter player count, click generate, get a complete schedule with court assignments in under 10 seconds."
+            "All five failure modes are scheduling problems, not pickleball problems — which is why they are worth automating rather than double-checking by hand."
           ]
         },
         {
-          heading: "How The Pickle Hub's Round Robin Generator Works",
-          content: "Quick Tables is a free pickleball-specific round robin generator that handles everything from schedule creation to live standings. No account required to generate brackets. Here's the full workflow:",
+          heading: "How to Build the Schedule in Quick Tables",
+          content: "Quick Tables is the free pickleball scheduling tool on The Pickle Hub — it handles everything from schedule creation to live standings, with no account required. Here's the full workflow:",
           orderedList: [
-            "Open the Pickleball Round Robin Generator — Navigate to Quick Tables at thepicklehub.net/tools/quick-tables. The tool loads instantly in your browser — no download, no signup for basic use.",
+            "Open Quick Tables — Navigate to thepicklehub.net/tools/quick-tables. The tool loads instantly in your browser — no download, no signup for basic use.",
             "Set your player count — Enter the total number of players or teams. The tool supports 2 to 200+ participants in a single event, automatically splitting large fields into multiple groups.",
             "Choose singles or doubles format — Select whether matches are singles (1v1) or doubles (2v2). For rotating-partner doubles round robins, the tool handles partner assignment per round.",
             "Configure group size — Set how many players per group. Groups of 4-5 finish fastest; groups of 6-8 give players more matches. The generator optimizes group balance automatically.",
@@ -51,7 +51,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Rally vs side-out scoring rules for round robin events", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Free bracket generator (all formats, same tool)", path: "/tools" }
+            { text: "Free pickleball bracket generator — every format, no signup", path: "/tools" },
+            { text: "Quick Tables — round robin scheduling tool", path: "/tools/quick-tables" }
           ]
         },
         {
@@ -69,7 +70,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "How to organize a pickleball tournament (full workflow)", path: "/blog/how-to-organize-pickleball-tournament" },
-            { text: "All tournament formats compared side-by-side", path: "/blog/pickleball-tournament-formats-explained" }
+            { text: "All tournament formats compared side-by-side", path: "/blog/pickleball-tournament-formats-explained" },
+            { text: "The tournament organizer hub — every guide in order", path: "/blog/tournament-organizer-hub" }
           ]
         },
         {
@@ -153,8 +155,8 @@ const post: BlogPost = {
       ],
       howToSteps: [
         {
-          name: "Open the Round Robin Generator",
-          text: "Navigate to Quick Tables at thepicklehub.net/tools/quick-tables. The tool loads in your browser instantly — no account required for basic bracket generation."
+          name: "Open Quick Tables",
+          text: "Navigate to thepicklehub.net/tools/quick-tables. The tool loads in your browser instantly — no account required for basic bracket generation."
         },
         {
           name: "Enter your player list",
@@ -183,16 +185,16 @@ const post: BlogPost = {
       ]
     },
     vi: {
-      title: "Công cụ tạo vòng tròn Pickleball — Cách tổ chức giải vòng tròn hoàn hảo",
-      metaTitle: "Công cụ tạo vòng tròn Pickleball | Miễn phí & Hướng dẫn đầy đủ 2026",
-      metaDescription: "Công cụ tạo vòng tròn pickleball miễn phí với lịch tự động, xoay sân, và chấm điểm trực tiếp. Hướng dẫn tổ chức giải vòng tròn hoàn hảo.",
+      title: "Cách tổ chức giải vòng tròn Pickleball — Lịch, bye và tiebreaker",
+      metaTitle: "Cách tổ chức giải vòng tròn Pickleball | Lịch & Luật 2026",
+      metaDescription: "Cách tổ chức giải vòng tròn pickleball: số trận theo cỡ bảng, xếp lịch sân, xử lý bye, chia seed và thứ tự tiebreaker cần công bố trước giải.",
       sections: [
         {
           heading: "Giải vòng tròn Pickleball là gì?",
           content: "Vòng tròn (round robin) là thể thức giải đấu mà mọi người chơi hoặc đội đấu với tất cả đối thủ trong bảng. Khác với loại trực tiếp nơi bạn bị loại sau một trận thua, vòng tròn đảm bảo nhiều trận cho tất cả. Đây là thể thức phổ biến nhất cho pickleball phong trào và CLB — người chơi trả tiền để chơi, và họ muốn chơi càng nhiều trận càng tốt."
         },
         {
-          heading: "Tại sao cần công cụ tạo vòng tròn?",
+          heading: "Vì sao xếp lịch vòng tròn bằng tay hay vỡ",
           content: "Tạo lịch vòng tròn bằng tay phức tạp hơn bạn nghĩ. Với 6 người trong bảng, bạn cần 15 trận xếp trên sân hạn chế với thời gian nghỉ hợp lý. Công cụ tạo vòng tròn tự động hóa tức thì:",
           listItems: [
             "Lịch trận tự động — Mọi cặp đấu được tạo với thứ tự tối ưu giảm thời gian chờ sân.",
@@ -203,7 +205,7 @@ const post: BlogPost = {
           ]
         },
         {
-          heading: "Cách công cụ vòng tròn của The Pickle Hub hoạt động",
+          heading: "Cách dựng lịch bằng Bảng đấu nhanh (Quick Tables)",
           content: "Quick Tables là công cụ tạo vòng tròn chuyên cho pickleball. Đây là cách sử dụng:",
           orderedList: [
             "Mở Quick Tables — Vào trang công cụ. Không cần tài khoản hay tải xuống.",
@@ -215,7 +217,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Luật rally vs side-out cho giải vòng tròn", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Công cụ tạo Bracket miễn phí (mọi thể thức)", path: "/tools" }
+            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức", path: "/tools" },
+            { text: "Bảng đấu nhanh — công cụ xếp lịch vòng tròn", path: "/tools/quick-tables" }
           ]
         },
         {
@@ -230,7 +233,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Cách tổ chức giải pickleball (quy trình đầy đủ)", path: "/blog/how-to-organize-pickleball-tournament" },
-            { text: "So sánh tất cả thể thức giải đấu", path: "/blog/pickleball-tournament-formats-explained" }
+            { text: "So sánh tất cả thể thức giải đấu", path: "/blog/pickleball-tournament-formats-explained" },
+            { text: "Hub tổ chức giải — mọi hướng dẫn theo thứ tự", path: "/blog/tournament-organizer-hub" }
           ]
         },
         {

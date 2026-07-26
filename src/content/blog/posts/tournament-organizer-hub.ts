@@ -13,7 +13,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "tournament-organizer-hub",
   publishedDate: "2026-04-25",
-  updatedDate: "2026-04-25",
+  updatedDate: "2026-07-26",
   author: "The PickleHub Team",
   tags: ["organize", "tournament", "hub", "guide", "directory"],
   ctaPath: "/tools",
@@ -44,16 +44,19 @@ const post: BlogPost = {
           heading: "Step 2 — Plan venue, date, and budget",
           content: "Court count, time blocks, and budget set the upper bound on player count. The full organizer's checklist walks through venue scouting, weather backup, refreshments, and entry fee math:",
           internalLinks: [
-            { text: "How to Organize a Pickleball Tournament — Complete checklist for venue, schedule, and budget", path: "/blog/how-to-organize-pickleball-tournament" }
+            { text: "How to Organize a Pickleball Tournament — Complete checklist for venue, schedule, and budget", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "Pickleball Tournament Budget Calculator — Real cost breakdown + free template", path: "/blog/pickleball-tournament-budget-calculator-guide" },
+            { text: "Pickleball Court Dimensions & Setup — Line marking, spacing, and how many courts fit your venue", path: "/blog/pickleball-court-dimensions-setup-guide" },
+            { text: "Vietnam Pickleball Tournament Calendar 2026 — Avoid clashing with the big weekends", path: "/blog/vietnam-pickleball-tournament-calendar-2026" }
           ]
         },
         {
           heading: "Step 3 — Generate the bracket",
-          content: "Bracket generation is the single biggest time-sink for first-time organizers. These four guides cover every common format with free generators and printable templates:",
+          content: "Bracket generation is the single biggest time-sink for first-time organizers. Start at the tool, then use the two guides for sizing, seeding, and running each format:",
           internalLinks: [
             { text: "Free Pickleball Bracket Generator — Brackets in 60 seconds, no signup", path: "/tools" },
-            { text: "How to Create a Pickleball Bracket — Step-by-step for round robin, single & double elimination", path: "/blog/how-to-create-pickleball-bracket" },
-            { text: "Pickleball Round Robin Generator Guide — Run the perfect round robin event", path: "/blog/pickleball-round-robin-generator-guide" }
+            { text: "How to Create a Pickleball Bracket — Step-by-step, plus bracket sizes for 4–64 players", path: "/blog/how-to-create-pickleball-bracket" },
+            { text: "How to Run a Pickleball Round Robin — Schedule, byes, and tiebreakers", path: "/blog/pickleball-round-robin-generator-guide" }
           ]
         },
         {
@@ -143,16 +146,19 @@ const post: BlogPost = {
           heading: "Bước 2 — Lên kế hoạch địa điểm, ngày và ngân sách",
           content: "Số sân, khung giờ và ngân sách xác định giới hạn người chơi tối đa. Checklist tổ chức đầy đủ hướng dẫn khảo sát sân, dự phòng thời tiết, nước uống và tính phí đăng ký:",
           internalLinks: [
-            { text: "Cách tổ chức giải Pickleball — Checklist đầy đủ cho địa điểm, lịch và ngân sách", path: "/blog/how-to-organize-pickleball-tournament" }
+            { text: "Cách tổ chức giải Pickleball — Checklist đầy đủ cho địa điểm, lịch và ngân sách", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "Dự toán ngân sách giải Pickleball — Bóc tách chi phí thật + file mẫu miễn phí", path: "/blog/pickleball-tournament-budget-calculator-guide" },
+            { text: "Kích thước & cách vạch sân Pickleball — Khoảng cách và số sân vừa với địa điểm", path: "/blog/pickleball-court-dimensions-setup-guide" },
+            { text: "Lịch giải Pickleball Việt Nam 2026 — Tránh trùng cuối tuần giải lớn", path: "/blog/vietnam-pickleball-tournament-calendar-2026" }
           ]
         },
         {
           heading: "Bước 3 — Tạo bracket",
-          content: "Tạo bracket là việc tốn thời gian nhất với người tổ chức lần đầu. Bốn hướng dẫn này phủ hết các thể thức phổ biến với generator và mẫu in được, miễn phí:",
+          content: "Tạo bracket là việc tốn thời gian nhất với người tổ chức lần đầu. Bắt đầu từ công cụ, rồi dùng hai hướng dẫn để chọn cỡ bảng, chia seed và vận hành từng thể thức:",
           internalLinks: [
             { text: "Tạo Bracket Pickleball miễn phí — Bracket trong 60 giây, không cần đăng ký", path: "/tools" },
-            { text: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước cho vòng tròn, loại đơn & loại kép", path: "/blog/how-to-create-pickleball-bracket" },
-            { text: "Hướng dẫn tạo vòng tròn Pickleball — Chạy giải vòng tròn hoàn hảo", path: "/blog/pickleball-round-robin-generator-guide" }
+            { text: "Cách tạo Bracket giải Pickleball — Từng bước, kèm cỡ bảng cho 4–64 người", path: "/blog/how-to-create-pickleball-bracket" },
+            { text: "Cách tổ chức giải vòng tròn Pickleball — Lịch, bye và tiebreaker", path: "/blog/pickleball-round-robin-generator-guide" }
           ]
         },
         {
