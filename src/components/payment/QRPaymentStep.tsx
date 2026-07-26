@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 import { generateVietQRUrl } from "@/lib/payment/vietqr";
 import { findBankByCode } from "@/lib/payment/banks";
 
@@ -125,7 +125,7 @@ export function QRPaymentStep({
   async function handleClaim() {
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke<{
+      const { data, error } = await invokeWithBlobRetry<{
         ok?: true;
         player_claimed_paid?: boolean;
         player_claimed_at?: string | null;

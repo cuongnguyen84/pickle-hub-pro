@@ -11,6 +11,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 
 export interface SendOtpResponse {
   ok?: true;
@@ -56,7 +57,7 @@ export function sendOtp(params: {
   forceChannel?: "sms" | "zalo";
   turnstileToken: string | null;
 }) {
-  return supabase.functions.invoke<SendOtpResponse>("phone-otp-send", {
+  return invokeWithBlobRetry<SendOtpResponse>("phone-otp-send", {
     body: {
       phone: params.phone,
       event_id: params.eventId,
@@ -77,7 +78,7 @@ export function verifyOtp(params: {
   selfRatedLevel: number | null;
   slotId: string | undefined;
 }) {
-  return supabase.functions.invoke<VerifyOtpResponse>("phone-otp-verify", {
+  return invokeWithBlobRetry<VerifyOtpResponse>("phone-otp-verify", {
     body: {
       phone: params.phone,
       event_id: params.eventId,
@@ -96,7 +97,7 @@ export function createPaymentOrder(params: {
   registrationId: string;
   magicToken: string;
 }) {
-  return supabase.functions.invoke<PaymentOrderResponse>("create-payment-order", {
+  return invokeWithBlobRetry<PaymentOrderResponse>("create-payment-order", {
     body: {
       registration_id: params.registrationId,
       magic_token: params.magicToken,
