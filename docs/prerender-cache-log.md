@@ -1,5 +1,14 @@
 # Prerender cache-key version changelog (pr:vN) — moved verbatim from functions/_middleware.ts (SEO-04)
 
+
+## pr:v30 → pr:v31 — 2026-07-26 (SEO cluster Sprint 1, steps 2–4)
+
+Blog SSR meta changed (bracket-templates merged into
+`how-to-create-pickleball-bracket`, round robin guide re-angled) and the
+/tools hub changed title, description, body copy and JSON-LD (FAQPage node
+added). Bumping invalidates the stale HTML for every prerendered path in one
+go; per-path `?nocache=1` was used only for the spot checks.
+
 Cache key version bumped pr:v3 → pr:v4 on 2026-05-11 (second bump
 same day) to invalidate cached responses with the broken nested
 SportsEvent superEvent that produced two Rich Results errors —

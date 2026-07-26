@@ -80,13 +80,44 @@ export const ToolsHubSeoContent = () => (
         Read our in-depth guides to get the most out of your pickleball events:
       </p>
       <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+        <li><Link to="/blog/tournament-organizer-hub" className="text-primary hover:underline">Pickleball Tournament Organizer Hub</Link> — Every guide below, in the order you actually need them.</li>
+        <li><Link to="/blog/how-to-create-pickleball-bracket" className="text-primary hover:underline">How to Create a Pickleball Bracket</Link> — Step-by-step, plus bracket sizes for 4–64 players.</li>
+        <li><Link to="/blog/pickleball-round-robin-generator-guide" className="text-primary hover:underline">How to Run a Pickleball Round Robin</Link> — Schedule, byes, seeding and tiebreakers.</li>
         <li><Link to="/blog/best-pickleball-tournament-software-2026" className="text-primary hover:underline">Best Pickleball Tournament Software 2026</Link> — Compare free tools for organizing pickleball competitions.</li>
-        <li><Link to="/blog/how-to-create-pickleball-bracket" className="text-primary hover:underline">How to Create a Pickleball Bracket</Link> — Step-by-step guide for round robin and elimination brackets.</li>
-        <li><Link to="/blog/pickleball-round-robin-generator-guide" className="text-primary hover:underline">Pickleball Round Robin Generator Guide</Link> — Everything you need to run the perfect round robin tournament.</li>
-        <li><Link to="/tools" className="text-primary hover:underline">Free Pickleball Bracket Generator</Link> — Create tournament brackets in 60 seconds with no signup required.</li>
         <li><Link to="/blog/mlp-format-explained" className="text-primary hover:underline">MLP Format Explained</Link> — Complete guide to Major League Pickleball team match rules and dreambreaker.</li>
         <li><Link to="/blog/pickleball-live-streaming-guide" className="text-primary hover:underline">Pickleball Live Streaming Guide</Link> — How to watch and stream pickleball tournaments online for free.</li>
       </ul>
+    </div>
+
+    {/* Same five Q&As the SSR body and the FAQPage JSON-LD use
+        (functions/_lib/render/tools.ts TOOLS_FAQ_EN) — Google requires FAQ
+        markup to match answers visible on the page, so keep them in sync. */}
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        Pickleball Bracket Generator FAQ
+      </h2>
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Is the pickleball bracket generator free?</h3>
+          <p className="text-muted-foreground">Yes. Every format — round robin, single elimination, double elimination, MLP team match and flex — is free with no trial and no subscription. Viewing a bracket needs no account at all; an account is only required to create and manage your own tournament.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">How do I generate a round robin schedule?</h3>
+          <p className="text-muted-foreground">Open Quick Tables, enter the player or team count, pick your group size, and the tool pairs every player against every other in their group, assigns courts, and keeps standings with point differential as the tiebreaker. A 6-player group is 15 matches; the formula is n × (n − 1) ÷ 2.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Can it build a double elimination bracket?</h3>
+          <p className="text-muted-foreground">Yes. The double elimination tool builds winners and losers brackets for 4–32 teams, handles byes, and creates the grand-final reset match automatically when the losers-bracket team wins the first final.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">How many players or teams are supported?</h3>
+          <p className="text-muted-foreground">From 2 to 200+ participants. Large fields are split into balanced groups automatically, with snake seeding across groups when you enter skill ratings or DUPR scores.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Can players follow the bracket on their phones?</h3>
+          <p className="text-muted-foreground">Yes. Every tournament has one shareable link — players and spectators see the schedule, live scores and standings on any phone browser, with no app install. You can also print the bracket for the venue wall.</p>
+        </div>
+      </div>
     </div>
   </section>
 );

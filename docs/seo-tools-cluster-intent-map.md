@@ -33,7 +33,7 @@ posts that funnel to it.
 1. **[done — #449]** 301 `free-pickleball-bracket-generator` → `/tools`, audit-safe (no URL both 301 and 200 in any sitemap/SSR/feed).
 2. **[done — this PR]** Merge `how-to-create-pickleball-bracket` + `pickleball-bracket-templates` → one informational guide, no "generator" in title.
 3. **[done]** Re-angle `pickleball-round-robin-generator-guide` → informational, link `/tools/quick-tables`.
-4. Upgrade `/tools` content to push pos 8 → top 3.
+4. **[done]** Upgrade `/tools` content to push pos 8 → top 3.
 5. **[done]** Make `tournament-organizer-hub` a pillar linking to every how-to + `/tools`.
 
 ### Step 3/5 also closed two leaks the earlier steps missed
@@ -69,6 +69,25 @@ impr, `how-to-create` 15, `best-pickleball-tournament-software-2025` 7,
 Also surfaced: `pickleball-ballbrackets.net`-style competitor brand queries send
 133 impressions / 0 clicks to `/tools` — a possible "pickleballbrackets.net
 alternative" page, out of scope for Sprint 1.
+
+### What step 4 actually changed on `/tools`
+
+The page ranked ~11 for `pickleball bracket generator` while its SSR title said
+"Free Pickleball Tournament Tools" — the head term appeared in neither the SERP
+title nor the bot-visible `<h1>` (`buildHtml` emits `<h1>{title}</h1>`).
+
+- Title → `Free Pickleball Bracket Generator | ThePickleHub` (48 bytes), meta
+  description rewritten around the same term plus "round robin scheduler".
+- New "Round robin generator for club play" section — the second money cluster
+  (`round robin generator [free]`, 40 impressions to `/tools`) had no dedicated
+  copy on the page at all.
+- FAQ: 5 Q&As, rendered **both** in the bot body and in `ToolsSeoContent.tsx`
+  for humans, with a matching `FAQPage` node in the JSON-LD `@graph`. Google
+  requires FAQ markup to match visible answers, so all three read from one
+  constant (`TOOLS_FAQ_EN` / `TOOLS_FAQ_VI`).
+- Organizer-guide list now links the merged bracket guide, the re-angled round
+  robin guide and the pillar, closing the cluster loop back from the money page.
+- Prerender cache key bumped `pr:v30 → pr:v31` (docs/prerender-cache-log.md).
 
 ## Success metric
 
