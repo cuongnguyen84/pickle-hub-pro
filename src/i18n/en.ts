@@ -1823,6 +1823,10 @@ export const en: Translations = {
       nameLabel: "Display name",
       namePlaceholder: "John Doe",
       nameRequired: "Please enter your name",
+      emailLabel: "Email",
+      emailPlaceholder: "you@email.com",
+      emailHint: "The OTP code will be sent to this email.",
+      emailInvalid: "Invalid email address",
       levelLabel: "Self-rated level (optional)",
       levelOptional: "Not specified",
       sendOtp: "Send OTP",
@@ -1832,6 +1836,8 @@ export const en: Translations = {
         "Code sent via Zalo to {phone}. Open the Zalo app and check messages from the ThePickleHub OA. Expires in 5 minutes.",
       otpHintSms:
         "Code sent via SMS to {phone}. Expires in 5 minutes.",
+      otpHintEmail:
+        "Code sent to {email}. Check your inbox (and Spam). Expires in 5 minutes.",
       otpResend: "Resend code",
       otpResendIn: "Resend in {seconds}s",
       otpResendViaSms: "Didn't get Zalo? Resend via SMS →",

@@ -19,5 +19,9 @@ name = "edge-blob-watchdog"
 main = "src/index.ts"
 compatibility_date = "2026-07-01"
 
+# Every minute: blob-loss flickers back within seconds but knocks users mid-flow
+# (2026-07-26 hit OTP-verify + payment between steps), so 5-min detection was
+# too slow. Client-side retry (src/lib/edgeInvoke.ts) covers the sub-second
+# flicker; this narrows the longer-outage window to ~1 min.
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["* * * * *"]

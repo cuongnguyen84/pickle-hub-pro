@@ -37,6 +37,10 @@ import { sendZaloZns } from "../_shared/zalo-zns.ts";
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Deliberately loose — matches the client-side check. Real validation is
+// delivery: a malformed address just fails the Resend send + falls back.
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
 const OTP_TTL_MS = 5 * 60 * 1000;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const RATE_MAX_PER_WINDOW = 3;
@@ -57,9 +61,13 @@ interface SendBody {
   /** PR69 — Cloudflare Turnstile token (invisible CAPTCHA). Required
    *  in production to block bot scripts from burning Zalo ZBS credit. */
   turnstile_token?: unknown;
+  /** 2026-07-26 — email OTP delivery. When present + valid, the code is
+   *  emailed via Resend (primary channel; Zalo/SMS become fallback).
+   *  Added after the Zalo OA lost its ZNS entitlement. */
+  email?: unknown;
 }
 
-type Channel = "zalo" | "sms" | "dev";
+type Channel = "zalo" | "sms" | "dev" | "email";
 
 async function logSendAttempt(
   supabase: ReturnType<typeof createClient>,
@@ -142,6 +150,91 @@ function logEvent(payload: Record<string, unknown>): void {
   console.log(JSON.stringify({ function: "phone-otp-send", ...payload }));
 }
 
+// Alert Cuong on Telegram when OTP delivery fails on ALL channels — a
+// registration is silently lost otherwise. Reuses the TELEGRAM_* secrets
+// already set for errors-telegram-alert. Fire-and-forget: alerting must
+// never block or fail the user response.
+// ponytail: no dedup — OTP traffic is low and every failed send is a lost
+// signup worth knowing. Add per-fingerprint throttling if it ever spams.
+async function alertOtpDeliveryFailure(detail: string): Promise<void> {
+  const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
+  const tgChat = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
+  if (!tgToken || !tgChat) return;
+  try {
+    const text = `🔴 OTP không gửi được — đăng ký sự kiện đang HỎNG\n${detail}`;
+    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: tgChat, text }),
+    });
+  } catch {
+    // alerting must never block the user
+  }
+}
+
+/** Mask a phone to the last 3 digits for alert context (avoid PII in Telegram). */
+function maskPhone(p: string): string {
+  return p.length > 3 ? `***${p.slice(-3)}` : "***";
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Bilingual (VI/EN) OTP code email. Inline styles — email clients strip <style>. */
+function buildOtpEmailHtml(code: string, eventLabel: string): string {
+  const ev = escapeHtml(eventLabel);
+  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1a1a1a">
+  <h2 style="margin:0 0 8px;font-size:18px">Mã xác thực đăng ký sự kiện</h2>
+  <p style="margin:0 0 16px;color:#555;font-size:14px">Sự kiện: <strong>${ev}</strong></p>
+  <div style="font-size:32px;font-weight:700;letter-spacing:8px;background:#f4f6f0;border-radius:10px;padding:16px;text-align:center;margin:0 0 16px">${escapeHtml(
+    code,
+  )}</div>
+  <p style="margin:0 0 4px;color:#555;font-size:13px">Mã có hiệu lực trong 5 phút. Không chia sẻ mã này với bất kỳ ai.</p>
+  <hr style="border:none;border-top:1px solid #eee;margin:16px 0"/>
+  <p style="margin:0;color:#888;font-size:12px">Your event registration code is <strong>${escapeHtml(
+    code,
+  )}</strong> (valid 5 minutes). If you didn't request this, ignore this email.</p>
+  <p style="margin:12px 0 0;color:#aaa;font-size:12px">ThePickleHub</p>
+</div>`;
+}
+
+/** Send the OTP code via Resend. Never throws — returns a result the caller
+ *  logs + falls back on. Mirrors the inline pattern in the other email
+ *  edge functions (RESEND_API_KEY + no-reply@thepicklehub.net). */
+async function sendOtpEmail(
+  to: string,
+  code: string,
+  eventLabel: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const key = Deno.env.get("RESEND_API_KEY") ?? "";
+  if (!key) return { ok: false, error: "resend_key_missing" };
+  try {
+    const resp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        // Send from the VERIFIED Resend domain: send.thepicklehub.net. This is
+        // the domain Supabase Auth's custom SMTP (smtp.resend.com, sender
+        // noreply@send.thepicklehub.net) uses successfully. The apex and the
+        // `mail.` subdomain are NOT verified in Resend (both return 403).
+        from: "The Pickle Hub <no-reply@send.thepicklehub.net>",
+        to: [to],
+        subject: `Mã OTP đăng ký "${eventLabel}" — ThePickleHub`,
+        html: buildOtpEmailHtml(code, eventLabel),
+      }),
+    });
+    if (resp.ok) return { ok: true };
+    return { ok: false, error: `resend_${resp.status}:${(await resp.text()).slice(0, 120)}` };
+  } catch (e) {
+    return { ok: false, error: "network_error:" + String(e).slice(0, 80) };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -159,6 +252,11 @@ Deno.serve(async (req) => {
 
   const phoneInput = typeof body.phone === "string" ? body.phone : "";
   const eventIdInput = typeof body.event_id === "string" ? body.event_id : "";
+  const emailInput =
+    typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  if (emailInput && !EMAIL_RE.test(emailInput)) {
+    return err("invalid_email", 400, "invalid_email");
+  }
 
   const phone = normalizeVietnamPhone(phoneInput);
   if (!phone) return err("invalid_phone", 400, "invalid_phone");
@@ -397,6 +495,42 @@ Deno.serve(async (req) => {
     });
   }
 
+  // ─── Email channel (primary when an address is given) ───────────────────
+  // Added 2026-07-26: Zalo OA lost its ZNS entitlement and eSMS was never
+  // configured, so email (Resend, already set up) is the reliable channel.
+  // On failure we fall through to the legacy Zalo→eSMS chain.
+  let emailFailNote = "";
+  if (emailInput) {
+    const emailResult = await sendOtpEmail(emailInput, code, eventLabel);
+    if (emailResult.ok) {
+      logEvent({ step: "email_send_ok", phone, event_id: eventIdInput });
+      await logSendAttempt(supabase, {
+        phone,
+        event_id: eventIdInput,
+        channel: "email",
+        success: true,
+        ip_address: ip,
+      });
+      return jsonResponse({ ok: true, expires_at: expiresAt, channel: "email" });
+    }
+    logEvent({
+      step: "email_send_failed",
+      phone,
+      event_id: eventIdInput,
+      reason: emailResult.error,
+    });
+    await logSendAttempt(supabase, {
+      phone,
+      event_id: eventIdInput,
+      channel: "email",
+      success: false,
+      error_code: emailResult.error?.slice(0, 60),
+      ip_address: ip,
+    });
+    emailFailNote = `Email: ${emailResult.error}`;
+    // fall through to Zalo/SMS
+  }
+
   const forceChannelRaw = typeof body.force_channel === "string"
     ? body.force_channel.toLowerCase()
     : "";
@@ -424,6 +558,10 @@ Deno.serve(async (req) => {
 
   const zaloConfigured = templateId.length > 0 && zaloAccessToken.length > 0;
   const tryZalo = forceChannel !== "sms" && zaloConfigured;
+
+  // Carries the Zalo failure reason into the eSMS-fallback alert below so a
+  // single Telegram message shows why BOTH channels failed.
+  let zaloFailNote = tryZalo ? "" : "Zalo bỏ qua (không cấu hình / force=sms)";
 
   if (tryZalo) {
     const zaloResult = await sendZaloZns({
@@ -469,8 +607,15 @@ Deno.serve(async (req) => {
     ip_address: ip,
       });
 
+    zaloFailNote = `Zalo ${zaloResult.reason}${
+      zaloResult.code ? ` (code ${zaloResult.code})` : ""
+    }${zaloResult.message ? `: ${zaloResult.message}` : ""}`;
+
     if (forceChannel === "zalo") {
       // Explicit zalo-only request — don't silently fall back.
+      await alertOtpDeliveryFailure(
+        `Kênh: Zalo (bắt buộc)\nSĐT: ${maskPhone(phone)}\nSự kiện: ${eventLabel}\n${zaloFailNote}`,
+      );
       return err("zalo_send_failed", 502, "zalo_send_failed");
     }
     // Otherwise fall through to eSMS.
@@ -493,6 +638,13 @@ Deno.serve(async (req) => {
       error_code: smsResult.codeResult ?? smsResult.errorMessage,
     ip_address: ip,
       });
+    await alertOtpDeliveryFailure(
+      `Tất cả kênh fail.\nSĐT: ${maskPhone(phone)}\nSự kiện: ${eventLabel}\n${
+        emailFailNote ? emailFailNote + "\n" : ""
+      }${zaloFailNote}\nSMS: ${
+        smsResult.errorMessage ?? smsResult.codeResult ?? "lỗi không rõ"
+      }`,
+    );
     return err("sms_send_failed", 502, "sms_send_failed");
   }
 

@@ -1820,6 +1820,10 @@ export interface Translations {
       nameLabel: string;
       namePlaceholder: string;
       nameRequired: string;
+      emailLabel: string;
+      emailPlaceholder: string;
+      emailHint: string;
+      emailInvalid: string;
       levelLabel: string;
       levelOptional: string;
       sendOtp: string;
@@ -1827,6 +1831,7 @@ export interface Translations {
       otpHint: string;
       otpHintZalo: string;
       otpHintSms: string;
+      otpHintEmail: string;
       otpResend: string;
       otpResendIn: string;
       otpResendViaSms: string;
@@ -4803,6 +4808,10 @@ export const vi: Translations = {
       nameLabel: "Tên hiển thị",
       namePlaceholder: "Nguyễn Văn A",
       nameRequired: "Vui lòng nhập tên",
+      emailLabel: "Email",
+      emailPlaceholder: "ban@email.com",
+      emailHint: "Mã OTP sẽ được gửi tới email này.",
+      emailInvalid: "Email không hợp lệ",
       levelLabel: "Trình độ tự đánh giá (tuỳ chọn)",
       levelOptional: "Chưa rõ",
       sendOtp: "Gửi mã OTP",
@@ -4812,6 +4821,8 @@ export const vi: Translations = {
         "Đã gửi mã qua Zalo đến {phone}. Mở app Zalo, kiểm tra tin nhắn từ ThePickleHub OA. Mã hết hạn sau 5 phút.",
       otpHintSms:
         "Đã gửi mã qua SMS đến {phone}. Mã hết hạn sau 5 phút.",
+      otpHintEmail:
+        "Đã gửi mã tới email {email}. Kiểm tra hộp thư (cả mục Spam). Mã hết hạn sau 5 phút.",
       otpResend: "Gửi lại mã",
       otpResendIn: "Gửi lại sau {seconds}s",
       otpResendViaSms: "Không nhận được Zalo? Gửi lại qua SMS →",

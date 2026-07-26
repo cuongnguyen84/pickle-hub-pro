@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 import {
   addRegistrationDirect,
   type AddRegistrationDirectResult,
@@ -294,13 +295,12 @@ export function ProxyRegistrationModal({
       // parallel. Each call needs its own magic_token + order_id.
       const toMark = results.filter((r) => r.payment_order_id && r.magic_token);
       const calls = toMark.map((r) =>
-        supabase.functions
-          .invoke<{ ok?: true; code?: string }>("mark-payment-claimed", {
-            body: {
-              order_id: r.payment_order_id!,
-              magic_token: r.magic_token,
-            },
-          })
+        invokeWithBlobRetry<{ ok?: true; code?: string }>("mark-payment-claimed", {
+          body: {
+            order_id: r.payment_order_id!,
+            magic_token: r.magic_token,
+          },
+        })
           .then((resp) => {
             if (!resp.error && resp.data?.ok) okCount += 1;
             return resp;

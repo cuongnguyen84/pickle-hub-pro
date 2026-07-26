@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 import { toast } from "@/hooks/use-toast";
 import { useNoindex } from "@/hooks/useNoindex";
 import { formatEventDateRange } from "@/lib/social-events/format";
@@ -382,7 +383,7 @@ export default function PlayerRegistration() {
                                   if (!magic_token || !data.payment_order_id) return;
                                   setMarkingPaid(true);
                                   try {
-                                    const { error } = await supabase.functions.invoke(
+                                    const { error } = await invokeWithBlobRetry(
                                       "mark-payment-claimed",
                                       {
                                         body: {

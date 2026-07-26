@@ -11,12 +11,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 
 export interface SendOtpResponse {
   ok?: true;
   expires_at?: string;
   dev_mode_code?: string;
-  channel?: "zalo" | "sms" | "dev";
+  channel?: "zalo" | "sms" | "dev" | "email";
   error?: string;
   code?: string;
 }
@@ -52,13 +53,15 @@ export interface MemberRegistrationRow {
 export function sendOtp(params: {
   phone: string;
   eventId: string;
+  email?: string;
   forceChannel?: "sms" | "zalo";
   turnstileToken: string | null;
 }) {
-  return supabase.functions.invoke<SendOtpResponse>("phone-otp-send", {
+  return invokeWithBlobRetry<SendOtpResponse>("phone-otp-send", {
     body: {
       phone: params.phone,
       event_id: params.eventId,
+      ...(params.email ? { email: params.email } : {}),
       ...(params.forceChannel ? { force_channel: params.forceChannel } : {}),
       // PR69 — Cloudflare Turnstile token. Server rejects with
       // 'captcha_failed' when missing/invalid in production.
@@ -75,7 +78,7 @@ export function verifyOtp(params: {
   selfRatedLevel: number | null;
   slotId: string | undefined;
 }) {
-  return supabase.functions.invoke<VerifyOtpResponse>("phone-otp-verify", {
+  return invokeWithBlobRetry<VerifyOtpResponse>("phone-otp-verify", {
     body: {
       phone: params.phone,
       event_id: params.eventId,
@@ -94,7 +97,7 @@ export function createPaymentOrder(params: {
   registrationId: string;
   magicToken: string;
 }) {
-  return supabase.functions.invoke<PaymentOrderResponse>("create-payment-order", {
+  return invokeWithBlobRetry<PaymentOrderResponse>("create-payment-order", {
     body: {
       registration_id: params.registrationId,
       magic_token: params.magicToken,

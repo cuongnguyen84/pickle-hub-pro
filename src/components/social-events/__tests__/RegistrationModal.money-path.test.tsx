@@ -562,6 +562,9 @@ async function fillPhoneStep() {
   fireEvent.change(screen.getByLabelText("Tên hiển thị"), {
     target: { value: "Nguyễn Test" },
   });
+  fireEvent.change(screen.getByLabelText("Email"), {
+    target: { value: "test@email.com" },
+  });
   const send = screen.getByRole("button", { name: "Gửi mã OTP" }) as HTMLButtonElement;
   await waitFor(() => expect(send.disabled).toBe(false));
   return send;
@@ -580,6 +583,7 @@ describe("OTP path", () => {
       body: {
         phone: "+84912345678",
         event_id: EVENT_ID,
+        email: "test@email.com",
         turnstile_token: "tt-token-1",
       },
     });
