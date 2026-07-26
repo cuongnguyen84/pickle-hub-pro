@@ -53,7 +53,6 @@ const post: BlogPost = {
           internalLinks: [
             { text: "Free Pickleball Bracket Generator — Brackets in 60 seconds, no signup", path: "/tools" },
             { text: "How to Create a Pickleball Bracket — Step-by-step for round robin, single & double elimination", path: "/blog/how-to-create-pickleball-bracket" },
-            { text: "Pickleball Bracket Templates — Free downloadable templates for every format", path: "/blog/pickleball-bracket-templates" },
             { text: "Pickleball Round Robin Generator Guide — Run the perfect round robin event", path: "/blog/pickleball-round-robin-generator-guide" }
           ]
         },
@@ -153,7 +152,6 @@ const post: BlogPost = {
           internalLinks: [
             { text: "Tạo Bracket Pickleball miễn phí — Bracket trong 60 giây, không cần đăng ký", path: "/tools" },
             { text: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước cho vòng tròn, loại đơn & loại kép", path: "/blog/how-to-create-pickleball-bracket" },
-            { text: "Mẫu Bracket Pickleball — Mẫu miễn phí cho mọi thể thức giải đấu", path: "/blog/pickleball-bracket-templates" },
             { text: "Hướng dẫn tạo vòng tròn Pickleball — Chạy giải vòng tròn hoàn hảo", path: "/blog/pickleball-round-robin-generator-guide" }
           ]
         },

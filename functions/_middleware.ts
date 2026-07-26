@@ -304,7 +304,29 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       and a 200 in the sitemap (SEOnaut 'redirect in sitemap').
   const BLOG_TO_TOOLS = new Set<string>(["free-pickleball-bracket-generator"]);
 
+  // ─── 1e3. Blog posts merged INTO another post (same intent, thin page).
+  //       Sprint 1 step 2 of docs/seo-tools-cluster-intent-map.md. Same
+  //       audit-safety rule as 1e2: a slug here MUST be gone from
+  //       metadata.ts / sitemap / rss / indexnow / related-posts. EN maps
+  //       EN→EN, VI maps VI→VI so Vietnamese readers keep a VI page.
+  //       The 2025→2026 software rename was in _redirects only, so bots kept
+  //       404ing on the old URL (GSC still shows impressions for it) — the
+  //       parity test now covers the EN side too and caught it.
+  const BLOG_MERGED: Record<string, string> = {
+    "pickleball-bracket-templates": "how-to-create-pickleball-bracket",
+    "best-pickleball-tournament-software-2025": "best-pickleball-tournament-software-2026",
+  };
+  const VI_BLOG_MERGED: Record<string, string> = {
+    "mau-bracket-pickleball": "cach-tao-bracket-pickleball",
+  };
+
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
+  if (viBlogMatch && VI_BLOG_MERGED[viBlogMatch[1]]) {
+    return secureRedirect(
+      `https://${url.hostname}/vi/blog/${VI_BLOG_MERGED[viBlogMatch[1]]}`,
+      301,
+    );
+  }
   if (viBlogMatch && VI_BLOG_REDIRECTS[viBlogMatch[1]]) {
     // Resolve to the EN slug, then to /tools in ONE hop if it's a tools
     // dedupe target — avoids a /vi/blog → /blog → /tools 301 chain.
@@ -316,6 +338,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const enBlogToTools = url.pathname.match(/^\/blog\/([^/?#]+)$/);
   if (enBlogToTools && BLOG_TO_TOOLS.has(enBlogToTools[1])) {
     return secureRedirect(`https://${url.hostname}/tools`, 301);
+  }
+  if (enBlogToTools && BLOG_MERGED[enBlogToTools[1]]) {
+    return secureRedirect(
+      `https://${url.hostname}/blog/${BLOG_MERGED[enBlogToTools[1]]}`,
+      301,
+    );
   }
 
   // ─── 1f. (batch 9 follow-up) /feed?tab=* redirect REMOVED.
