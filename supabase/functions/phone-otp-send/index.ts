@@ -218,7 +218,10 @@ async function sendOtpEmail(
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: "The Pickle Hub <no-reply@thepicklehub.net>",
+        // Send from the VERIFIED Resend domain — the `mail.` subdomain, not
+        // the apex. send-auth-email uses this and delivers; functions using
+        // no-reply@thepicklehub.net (apex, unverified) fail silently.
+        from: "The Pickle Hub <no-reply@mail.thepicklehub.net>",
         to: [to],
         subject: `Mã OTP đăng ký "${eventLabel}" — ThePickleHub`,
         html: buildOtpEmailHtml(code, eventLabel),
