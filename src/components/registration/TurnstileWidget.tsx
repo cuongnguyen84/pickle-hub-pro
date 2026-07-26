@@ -107,11 +107,11 @@ export function TurnstileWidget({ onVerify, onError }: Props) {
           "error-callback": () => onErrorRef.current?.(),
           "expired-callback": () => onErrorRef.current?.(),
           theme: "auto",
-          // Stay invisible for the ~99% who pass silently; only surface the
-          // widget when Cloudflare actually needs an interactive challenge.
-          // Unlike a dashboard "Invisible" sitekey this never hard-blocks a
-          // flagged-but-legit user — they still get a challenge to solve.
-          appearance: "interaction-only",
+          // appearance stays default ("always"): the managed widget auto-passes
+          // silently for normal browsers but MUST stay visible for flagged
+          // sessions (incognito/VPN/bot-like) so the user can solve the
+          // interactive challenge. "interaction-only" hid the challenge and
+          // left incognito users stuck on the 20s timeout (2026-07-26).
         });
       })
       .catch(() => onErrorRef.current?.());
