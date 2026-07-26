@@ -142,6 +142,33 @@ function logEvent(payload: Record<string, unknown>): void {
   console.log(JSON.stringify({ function: "phone-otp-send", ...payload }));
 }
 
+// Alert Cuong on Telegram when OTP delivery fails on ALL channels — a
+// registration is silently lost otherwise. Reuses the TELEGRAM_* secrets
+// already set for errors-telegram-alert. Fire-and-forget: alerting must
+// never block or fail the user response.
+// ponytail: no dedup — OTP traffic is low and every failed send is a lost
+// signup worth knowing. Add per-fingerprint throttling if it ever spams.
+async function alertOtpDeliveryFailure(detail: string): Promise<void> {
+  const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
+  const tgChat = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
+  if (!tgToken || !tgChat) return;
+  try {
+    const text = `🔴 OTP không gửi được — đăng ký sự kiện đang HỎNG\n${detail}`;
+    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: tgChat, text }),
+    });
+  } catch {
+    // alerting must never block the user
+  }
+}
+
+/** Mask a phone to the last 3 digits for alert context (avoid PII in Telegram). */
+function maskPhone(p: string): string {
+  return p.length > 3 ? `***${p.slice(-3)}` : "***";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -425,6 +452,10 @@ Deno.serve(async (req) => {
   const zaloConfigured = templateId.length > 0 && zaloAccessToken.length > 0;
   const tryZalo = forceChannel !== "sms" && zaloConfigured;
 
+  // Carries the Zalo failure reason into the eSMS-fallback alert below so a
+  // single Telegram message shows why BOTH channels failed.
+  let zaloFailNote = tryZalo ? "" : "Zalo bỏ qua (không cấu hình / force=sms)";
+
   if (tryZalo) {
     const zaloResult = await sendZaloZns({
       phone_no_plus: phone.replace(/^\+/, ""),
@@ -469,8 +500,15 @@ Deno.serve(async (req) => {
     ip_address: ip,
       });
 
+    zaloFailNote = `Zalo ${zaloResult.reason}${
+      zaloResult.code ? ` (code ${zaloResult.code})` : ""
+    }${zaloResult.message ? `: ${zaloResult.message}` : ""}`;
+
     if (forceChannel === "zalo") {
       // Explicit zalo-only request — don't silently fall back.
+      await alertOtpDeliveryFailure(
+        `Kênh: Zalo (bắt buộc)\nSĐT: ${maskPhone(phone)}\nSự kiện: ${eventLabel}\n${zaloFailNote}`,
+      );
       return err("zalo_send_failed", 502, "zalo_send_failed");
     }
     // Otherwise fall through to eSMS.
@@ -493,6 +531,11 @@ Deno.serve(async (req) => {
       error_code: smsResult.codeResult ?? smsResult.errorMessage,
     ip_address: ip,
       });
+    await alertOtpDeliveryFailure(
+      `Cả 2 kênh fail.\nSĐT: ${maskPhone(phone)}\nSự kiện: ${eventLabel}\n${zaloFailNote}\nSMS: ${
+        smsResult.errorMessage ?? smsResult.codeResult ?? "lỗi không rõ"
+      }`,
+    );
     return err("sms_send_failed", 502, "sms_send_failed");
   }
 
