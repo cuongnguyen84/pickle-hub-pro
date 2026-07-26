@@ -1,6 +1,13 @@
 # Prerender cache-key version changelog (pr:vN) — moved verbatim from functions/_middleware.ts (SEO-04)
 
 
+## pr:v31 → pr:v32 — 2026-07-26 (EN blog posts finally have a body)
+
+renderBlogPost now emits the post's own sections + FAQ + HowTo schema instead of
+breadcrumb-and-related-links only, so every cached EN /blog/<slug> entry is
+stale by ~10 KB of missing content.
+
+
 ## pr:v30 → pr:v31 — 2026-07-26 (SEO cluster Sprint 1, steps 2–4)
 
 Blog SSR meta changed (bracket-templates merged into
