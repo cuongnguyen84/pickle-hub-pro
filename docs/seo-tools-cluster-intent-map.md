@@ -33,7 +33,7 @@ posts that funnel to it.
 1. **[done — #449]** 301 `free-pickleball-bracket-generator` → `/tools`, audit-safe (no URL both 301 and 200 in any sitemap/SSR/feed).
 2. **[done — this PR]** Merge `how-to-create-pickleball-bracket` + `pickleball-bracket-templates` → one informational guide, no "generator" in title.
 3. **[done]** Re-angle `pickleball-round-robin-generator-guide` → informational, link `/tools/quick-tables`.
-4. Upgrade `/tools` content to push pos 8 → top 3.
+4. **[done]** Upgrade `/tools` content to push pos 8 → top 3.
 5. **[done]** Make `tournament-organizer-hub` a pillar linking to every how-to + `/tools`.
 
 ### Step 3/5 also closed two leaks the earlier steps missed
@@ -69,6 +69,78 @@ impr, `how-to-create` 15, `best-pickleball-tournament-software-2025` 7,
 Also surfaced: `pickleball-ballbrackets.net`-style competitor brand queries send
 133 impressions / 0 clicks to `/tools` — a possible "pickleballbrackets.net
 alternative" page, out of scope for Sprint 1.
+
+### What step 4 actually changed on `/tools`
+
+The page ranked ~11 for `pickleball bracket generator` while its SSR title said
+"Free Pickleball Tournament Tools" — the head term appeared in neither the SERP
+title nor the bot-visible `<h1>` (`buildHtml` emits `<h1>{title}</h1>`).
+
+- Title → `Free Pickleball Bracket Generator | ThePickleHub` (48 bytes), meta
+  description rewritten around the same term plus "round robin scheduler".
+- New "Round robin generator for club play" section — the second money cluster
+  (`round robin generator [free]`, 40 impressions to `/tools`) had no dedicated
+  copy on the page at all.
+- FAQ: 5 Q&As, rendered **both** in the bot body and in `ToolsSeoContent.tsx`
+  for humans, with a matching `FAQPage` node in the JSON-LD `@graph`. Google
+  requires FAQ markup to match visible answers, so all three read from one
+  constant (`TOOLS_FAQ_EN` / `TOOLS_FAQ_VI`).
+- Organizer-guide list now links the merged bracket guide, the re-angled round
+  robin guide and the pillar, closing the cluster loop back from the money page.
+- Prerender cache key bumped `pr:v30 → pr:v31` (docs/prerender-cache-log.md).
+
+## ⚠️ Sprint 2 candidate, found while verifying Sprint 1: EN posts have no crawlable body
+
+Measured on prod with `curl -A Googlebot` after the step-2 deploy:
+
+| URL | total HTML | `<main>` body | FAQ schema |
+|-----|-----------|---------------|------------|
+| `/blog/how-to-create-pickleball-bracket` | 5.8 KB | **0.9 KB** | no |
+| `/blog/pickleball-round-robin-generator-guide` | 5.8 KB | **0.9 KB** | no |
+| `/blog/tournament-organizer-hub` | 5.9 KB | **0.9 KB** | no |
+| `/vi/blog/cach-tao-bracket-pickleball` | 14.7 KB | 8.4 KB | yes |
+| `/tools` | 6.9 KB | 2.1 KB | no (added in step 4) |
+
+`renderBlogPost` builds `bodyContent` as `breadcrumb + relatedBlogLinks` only
+(`functions/_lib/render/blog.ts:115`) — the post's own sections never reach the
+bot. `renderViBlogPost` (line 212) serves the full `content_html` from Supabase
+plus a `FAQPage` node, which is why the VI twins are 9× larger.
+
+So on the SSR path every English post is title + meta + 3 links. That is a
+plausible mechanical explanation for the symptom this whole cluster was
+chasing: the EN guides rank 50–60 and earn **zero** informational-query
+impressions, while the same content in Vietnamese ranks and earns some. It is
+not a cannibalization problem alone — Google cannot see the English bodies.
+
+Fix shape (not done, needs a decision): `BLOG_POST_META` is already generated
+from `src/content/blog/metadata.ts` at module load (SEO-02), so the same import
+boundary can pull `posts/<slug>.ts` and render `sections` + `faqItems` to HTML.
+The open question is Pages-Function bundle size with ~48 posts inlined vs a
+dynamic import per slug. Worth measuring before committing — but this is very
+likely a bigger lever than steps 2–5 combined.
+
+## ⚠️ Second finding: two thirds of SERP titles ship truncated
+
+`buildHtml` truncates titles at **60 UTF-8 bytes** and descriptions at 160
+(`functions/_lib/html.ts`), and the truncated string is what the SERP *and* the
+bot-visible `<h1>` show. Vietnamese diacritics cost 2-3 bytes each, so VI copy
+that looks short in characters ships mangled. This sprint shipped one live
+example before catching it: `Cách tổ chức giải vòng tròn Pickleball | Lịch &
+Luật 2026` is 70 bytes and prod served `…Pickleball | Lịch…`.
+
+Audit on 2026-07-26:
+
+| Source | Over budget |
+|--------|-------------|
+| `src/content/blog/metadata.ts` (46 posts) | **63 of 92 titles**, **55 of 92 descriptions** |
+| Supabase `vi_blog_posts` (52 published) | **39 titles**, **50 descriptions** |
+
+For a site whose audience is ~95% Vietnamese, most Vietnamese SERP entries are
+currently ellipsised. Fixing all of it is a bilingual copy pass, not a code
+change, so this sprint only fixed the four strings it touched and added
+`src/content/blog/__tests__/seo-byte-budget.test.ts` — a **ratchet**: the count
+may fall, never rise, so new posts cannot add to the debt. Burn the baseline
+down as copy is rewritten. (The Supabase side has no equivalent guard yet.)
 
 ## Success metric
 

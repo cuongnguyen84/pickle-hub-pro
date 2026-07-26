@@ -146,7 +146,7 @@ const post: BlogPost = {
     vi: {
       title: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước",
       metaTitle: "Cách tạo Bracket Pickleball | Kích thước & Mẫu 2026",
-      metaDescription: "Cách tạo bracket giải pickleball từng bước: vòng tròn, loại trực tiếp, loại kép, kèm kích thước bảng đấu sẵn cho 4 đến 64 người chơi.",
+      metaDescription: "Cách tạo bracket pickleball từng bước: vòng tròn, loại trực tiếp, loại kép, kèm cỡ bảng sẵn cho 4 đến 64 người chơi.",
       sections: [
         {
           heading: "Bracket Pickleball là gì?",

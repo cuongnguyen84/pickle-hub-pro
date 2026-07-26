@@ -9,6 +9,48 @@ import { renderNoindexShell } from "./static-pages";
 
 // ─── Tools hub ─────────────────────────────���──────────────
 
+// Shared FAQ copy for the /tools hub — used for BOTH the FAQPage JSON-LD and
+// the visible bot body below, so the markup never claims an answer the page
+// does not show. Human visitors get the same list from
+// src/components/seo/ToolsSeoContent.tsx.
+const TOOLS_FAQ_EN: [string, string][] = [
+  [
+    "Is the pickleball bracket generator free?",
+    "Yes. Every format — round robin, single elimination, double elimination, MLP team match and flex — is free with no trial and no subscription. Viewing a bracket needs no account at all; an account is only required to create and manage your own tournament.",
+  ],
+  [
+    "How do I generate a round robin schedule?",
+    "Open Quick Tables, enter the player or team count, pick your group size, and the tool pairs every player against every other in their group, assigns courts, and keeps standings with point differential as the tiebreaker. A 6-player group is 15 matches; the formula is n × (n − 1) ÷ 2.",
+  ],
+  [
+    "Can it build a double elimination bracket?",
+    "Yes. The double elimination tool builds winners and losers brackets for 4–32 teams, handles byes, and creates the grand-final reset match automatically when the losers-bracket team wins the first final.",
+  ],
+  [
+    "How many players or teams are supported?",
+    "From 2 to 200+ participants. Large fields are split into balanced groups automatically, with snake seeding across groups when you enter skill ratings or DUPR scores.",
+  ],
+  [
+    "Can players follow the bracket on their phones?",
+    "Yes. Every tournament has one shareable link — players and spectators see the schedule, live scores and standings on any phone browser, with no app install. You can also print the bracket for the venue wall.",
+  ],
+];
+
+const TOOLS_FAQ_VI: [string, string][] = [
+  [
+    "Chia cặp vòng tròn pickleball thế nào cho công bằng?",
+    "Nhập danh sách người chơi (4–32 người, đơn hoặc đôi), Bảng đấu nhanh tự chia cặp vòng tròn để ai cũng gặp nhau, tự tính bảng xếp hạng theo trận thắng và hiệu số điểm, rồi tự động vào vòng playoff.",
+  ],
+  [
+    "Có tạo được bảng đấu loại trực tiếp cho giải đôi không?",
+    "Có — định dạng Loại trực tiếp Đôi hỗ trợ 4–32 đội, nhánh thắng nhánh thua đầy đủ, thua một trận vẫn còn cơ hội đánh ngược lên chung kết.",
+  ],
+  [
+    "Dùng cho giải câu lạc bộ đông người được không?",
+    "Được — định dạng Linh hoạt cho phép tự định nghĩa vòng, bảng và luật hạt giống cho king of the court, ladder hay festival nhiều ngày.",
+  ],
+];
+
 export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "vi" = "en"): Response {
   const isVi = lang === "vi";
   const canonical = isVi ? `${siteUrl}/vi/tools` : `${siteUrl}/tools`;
@@ -28,10 +70,14 @@ export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "
     // auto-emitted <h1>.
     title: isVi
       ? "Tạo Bảng Đấu Pickleball Miễn Phí | ThePickleHub"
-      : "Free Pickleball Tournament Tools | ThePickleHub",
+      // EN title carries the exact head term. GSC 90d: "pickleball bracket
+      // generator" sent 54 impressions to this page at avg pos ~11 while the
+      // title said "Tournament Tools" — the phrase appeared nowhere in the
+      // SERP title or the bot-visible <h1> (buildHtml emits <h1>{title}</h1>).
+      : "Free Pickleball Bracket Generator | ThePickleHub",
     description: isVi
       ? "Tạo bảng đấu pickleball miễn phí: chia cặp vòng tròn, loại trực tiếp, đội MLP. Chấm điểm trực tiếp, không cần đăng ký."
-      : "Free pickleball tournament bracket generator, round robin scheduler, MLP team match manager, and doubles elimination tools. No signup required.",
+      : "Free pickleball bracket generator: round robin scheduler, single and double elimination brackets, MLP team match. Live scoring, no signup.",
     url: canonical,
     siteUrl,
     extraMeta: bilingualHreflang(`${siteUrl}/tools`, `${siteUrl}/vi/tools`),
@@ -75,6 +121,18 @@ export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "
               { "@type": "ListItem", position: 4, name: "Team Match (MLP Format)", url: `${siteUrl}/tools/team-match` },
             ],
         },
+        // FAQPage — every Q&A below is also rendered in bodyContent (and in
+        // ToolsSeoContent.tsx for human visitors), which Google requires:
+        // FAQ markup must match answers visible on the page.
+        {
+          "@type": "FAQPage",
+          "@id": `${canonical}#faq`,
+          mainEntity: (isVi ? TOOLS_FAQ_VI : TOOLS_FAQ_EN).map(([q, a]) => ({
+            "@type": "Question",
+            name: q,
+            acceptedAnswer: { "@type": "Answer", text: a },
+          })),
+        },
       ],
     },
     // Bot-visible body — mirrors hero + pillar copy from src/pages/Tools.tsx
@@ -103,9 +161,7 @@ export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "
 <p>Bracket Lab là công cụ tạo bảng đấu và quản lý giải pickleball miễn phí, dành cho câu lạc bộ, người tổ chức giải cuối tuần và các sự kiện chuyên nghiệp tại Việt Nam và châu Á. Chọn định dạng — vòng tròn tính điểm, loại trực tiếp đơn, loại trực tiếp đôi, đấu đồng đội MLP, hay giải linh hoạt tùy chỉnh — công cụ sẽ tự chia cặp, dựng bảng đấu, xếp lịch trận, xoay sân và theo dõi tỉ số trực tiếp. Chia sẻ một link duy nhất cho người chơi và khán giả; cần thì in bracket treo tường.</p>
 <p>Không cần đăng ký. Không cần tải về. Không có kiểu dùng thử 14 ngày rồi thành gói $99/tháng. Xây dựng và duy trì bởi <a href="${siteUrl}/vi">ThePickleHub</a>, nền tảng pickleball song ngữ Việt-Anh đưa tin PPA Tour Asia, MLP và các giải pro khu vực.</p>
 <h2>Câu hỏi thường gặp</h2>
-<p><strong>Chia cặp vòng tròn pickleball thế nào cho công bằng?</strong> Nhập danh sách người chơi (4–32 người, đơn hoặc đôi), Bảng đấu nhanh tự chia cặp vòng tròn để ai cũng gặp nhau, tự tính bảng xếp hạng theo trận thắng và hiệu số điểm, rồi tự động vào vòng playoff.</p>
-<p><strong>Có tạo được bảng đấu loại trực tiếp cho giải đôi không?</strong> Có — định dạng Loại trực tiếp Đôi hỗ trợ 4–32 đội, nhánh thắng nhánh thua đầy đủ, thua một trận vẫn còn cơ hội đánh ngược lên chung kết.</p>
-<p><strong>Dùng cho giải câu lạc bộ đông người được không?</strong> Được — định dạng Linh hoạt cho phép tự định nghĩa vòng, bảng và luật hạt giống cho king of the court, ladder hay festival nhiều ngày.</p>
+${TOOLS_FAQ_VI.map(([q, a]) => `<p><strong>${q}</strong> ${a}</p>`).join("\n")}
 <h2>Hướng dẫn cho ban tổ chức</h2>
 <ul>
   <li><a href="${siteUrl}/vi/blog/du-toan-ngan-sach-giai-pickleball">Tổ chức giải pickleball tốn bao nhiêu? Dự toán chi tiết + file mẫu miễn phí</a></li>
@@ -124,10 +180,17 @@ export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "
 <h2>What Bracket Lab actually does</h2>
 <p>Bracket Lab is a free pickleball tournament bracket generator built for clubs, weekend organizers, and pro events across Asia. Pick a format — round robin, single elimination, double elimination, MLP team match, or a fully custom flex tournament — and the tool builds the bracket, schedules matches, rotates courts, and tracks live scores. Share a single link with players and spectators; print a wall bracket if you need one.</p>
 <p>No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by <a href="${siteUrl}/blog/tournament-organizer-hub">ThePickleHub</a>, a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the regional pro circuit.</p>
+<h2>Round robin generator for club play</h2>
+<p>Most club events are round robin, so that is what Quick Tables is tuned for: enter 4 to 200 players, choose a group size, and it pairs everyone against everyone in their group, rotates courts so nobody plays back-to-back, seeds groups by skill rating, and keeps live standings with point differential as the tiebreaker. A 6-player group is 15 matches — the tool does the n × (n − 1) ÷ 2 math and the court-time estimate for you.</p>
+<h2>Frequently asked questions</h2>
+${TOOLS_FAQ_EN.map(([q, a]) => `<p><strong>${q}</strong> ${a}</p>`).join("\n")}
 <h2>Organizer guides</h2>
 <ul>
+  <li><a href="${siteUrl}/blog/how-to-create-pickleball-bracket">How to create a pickleball bracket — step by step, plus bracket sizes for 4–64 players</a></li>
+  <li><a href="${siteUrl}/blog/pickleball-round-robin-generator-guide">How to run a pickleball round robin — schedule, byes and tiebreakers</a></li>
   <li><a href="${siteUrl}/blog/pickleball-tournament-budget-calculator-guide">How much does a pickleball tournament cost? Full budget guide + free template</a></li>
   <li><a href="${siteUrl}/blog/vietnam-pickleball-tournament-calendar-2026">Vietnam Pickleball Tournament Calendar 2026</a></li>
+  <li><a href="${siteUrl}/blog/tournament-organizer-hub">The tournament organizer hub — every guide in the order you need it</a></li>
 </ul>`,
     lang,
   }));
