@@ -355,6 +355,18 @@ export function RegistrationModal({
     [email],
   );
 
+  // PR69 — Turnstile tokens are single-use and the server SPENDS the token at
+  // verify time (siteverify) regardless of whether the send later succeeds.
+  // So after any attempt that reached the server, the held token is dead;
+  // remount the widget to mint a fresh one, or a retry replays the spent
+  // token and Cloudflare rejects it with timeout-or-duplicate → captcha_failed
+  // ("Browser verification failed"). This bit real users retrying a failed send.
+  function refreshTurnstile() {
+    setTurnstileToken(null);
+    setTurnstileTimedOut(false);
+    setTurnstileKey((k) => k + 1);
+  }
+
   async function callSendOtp(opts?: { forceChannel?: "sms" | "zalo" }): Promise<boolean> {
     const norm = normalizeVietnamPhone(phoneInput);
     if (!norm || !isValidVietnamPhone(norm)) {
@@ -384,10 +396,13 @@ export function RegistrationModal({
           title: translateErrorCode(bodyCode, t),
           variant: "destructive",
         });
+        // The token was spent server-side — mint a fresh one for the retry.
+        refreshTurnstile();
         return false;
       }
       if (data?.code) {
         toast({ title: translateErrorCode(data.code, t), variant: "destructive" });
+        refreshTurnstile();
         return false;
       }
       setDevOtp(data?.dev_mode_code ?? null);
@@ -397,13 +412,12 @@ export function RegistrationModal({
         otp_channel: data?.channel ?? "unknown",
       });
       setResendIn(RESEND_COOLDOWN_SEC);
-      // PR69 — Turnstile tokens are single-use. Force a re-challenge
-      // so a subsequent "resend OTP" click gets a fresh token.
       setTurnstileToken(null);
       return true;
     } catch (e) {
       console.error("phone-otp-send failed", e);
       toast({ title: reg.networkError, variant: "destructive" });
+      refreshTurnstile();
       return false;
     } finally {
       setSubmitting(false);
