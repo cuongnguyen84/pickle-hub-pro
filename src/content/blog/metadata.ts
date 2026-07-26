@@ -578,7 +578,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaTitleEn: "How to Create a Pickleball Bracket | Sizes & Templates 2026",
     metaTitleVi: "Cách tạo Bracket Pickleball | Kích thước & Mẫu 2026",
     metaDescriptionEn: "How to create a pickleball bracket step by step: round robin, single and double elimination, plus ready-made bracket sizes for 4 to 64 players.",
-    metaDescriptionVi: "Cách tạo bracket giải pickleball từng bước: vòng tròn, loại trực tiếp, loại kép, kèm kích thước bảng đấu sẵn cho 4 đến 64 người chơi.",
+    metaDescriptionVi: "Cách tạo bracket pickleball từng bước: vòng tròn, loại trực tiếp, loại kép, kèm cỡ bảng sẵn cho 4 đến 64 người chơi.",
   },  {
     slug: "how-to-organize-pickleball-tournament",
     publishedDate: "2026-03-20",
@@ -671,7 +671,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaTitleEn: "How to Run a Pickleball Round Robin | Schedule & Rules 2026",
     metaTitleVi: "Tổ chức giải vòng tròn Pickleball | Lịch & Luật",
     metaDescriptionEn: "How to run a pickleball round robin: match counts by group size, court scheduling, byes, snake seeding, and the tiebreaker order to announce before play.",
-    metaDescriptionVi: "Cách tổ chức giải vòng tròn pickleball: số trận theo cỡ bảng, xếp lịch sân, xử lý bye, chia seed và thứ tự tiebreaker cần công bố trước giải.",
+    metaDescriptionVi: "Cách tổ chức vòng tròn pickleball: số trận theo cỡ bảng, xếp lịch sân, xử lý bye, chia seed và tiebreaker.",
   },  {
     slug: "pickleball-rules-complete-guide",
     publishedDate: "2026-04-19",

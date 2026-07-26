@@ -119,6 +119,29 @@ The open question is Pages-Function bundle size with ~48 posts inlined vs a
 dynamic import per slug. Worth measuring before committing — but this is very
 likely a bigger lever than steps 2–5 combined.
 
+## ⚠️ Second finding: two thirds of SERP titles ship truncated
+
+`buildHtml` truncates titles at **60 UTF-8 bytes** and descriptions at 160
+(`functions/_lib/html.ts`), and the truncated string is what the SERP *and* the
+bot-visible `<h1>` show. Vietnamese diacritics cost 2-3 bytes each, so VI copy
+that looks short in characters ships mangled. This sprint shipped one live
+example before catching it: `Cách tổ chức giải vòng tròn Pickleball | Lịch &
+Luật 2026` is 70 bytes and prod served `…Pickleball | Lịch…`.
+
+Audit on 2026-07-26:
+
+| Source | Over budget |
+|--------|-------------|
+| `src/content/blog/metadata.ts` (46 posts) | **63 of 92 titles**, **55 of 92 descriptions** |
+| Supabase `vi_blog_posts` (52 published) | **39 titles**, **50 descriptions** |
+
+For a site whose audience is ~95% Vietnamese, most Vietnamese SERP entries are
+currently ellipsised. Fixing all of it is a bilingual copy pass, not a code
+change, so this sprint only fixed the four strings it touched and added
+`src/content/blog/__tests__/seo-byte-budget.test.ts` — a **ratchet**: the count
+may fall, never rise, so new posts cannot add to the debt. Burn the baseline
+down as copy is rewritten. (The Supabase side has no equivalent guard yet.)
+
 ## Success metric
 
 Track GSC query "pickleball bracket generator": expect distinct ranking URLs
