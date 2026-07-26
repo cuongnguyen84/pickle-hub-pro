@@ -89,6 +89,36 @@ title nor the bot-visible `<h1>` (`buildHtml` emits `<h1>{title}</h1>`).
   robin guide and the pillar, closing the cluster loop back from the money page.
 - Prerender cache key bumped `pr:v30 → pr:v31` (docs/prerender-cache-log.md).
 
+## ⚠️ Sprint 2 candidate, found while verifying Sprint 1: EN posts have no crawlable body
+
+Measured on prod with `curl -A Googlebot` after the step-2 deploy:
+
+| URL | total HTML | `<main>` body | FAQ schema |
+|-----|-----------|---------------|------------|
+| `/blog/how-to-create-pickleball-bracket` | 5.8 KB | **0.9 KB** | no |
+| `/blog/pickleball-round-robin-generator-guide` | 5.8 KB | **0.9 KB** | no |
+| `/blog/tournament-organizer-hub` | 5.9 KB | **0.9 KB** | no |
+| `/vi/blog/cach-tao-bracket-pickleball` | 14.7 KB | 8.4 KB | yes |
+| `/tools` | 6.9 KB | 2.1 KB | no (added in step 4) |
+
+`renderBlogPost` builds `bodyContent` as `breadcrumb + relatedBlogLinks` only
+(`functions/_lib/render/blog.ts:115`) — the post's own sections never reach the
+bot. `renderViBlogPost` (line 212) serves the full `content_html` from Supabase
+plus a `FAQPage` node, which is why the VI twins are 9× larger.
+
+So on the SSR path every English post is title + meta + 3 links. That is a
+plausible mechanical explanation for the symptom this whole cluster was
+chasing: the EN guides rank 50–60 and earn **zero** informational-query
+impressions, while the same content in Vietnamese ranks and earns some. It is
+not a cannibalization problem alone — Google cannot see the English bodies.
+
+Fix shape (not done, needs a decision): `BLOG_POST_META` is already generated
+from `src/content/blog/metadata.ts` at module load (SEO-02), so the same import
+boundary can pull `posts/<slug>.ts` and render `sections` + `faqItems` to HTML.
+The open question is Pages-Function bundle size with ~48 posts inlined vs a
+dynamic import per slug. Worth measuring before committing — but this is very
+likely a bigger lever than steps 2–5 combined.
+
 ## Success metric
 
 Track GSC query "pickleball bracket generator": expect distinct ranking URLs
