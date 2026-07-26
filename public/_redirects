@@ -24,6 +24,13 @@
 # removed from metadata/sitemap/rss/indexnow so it's not 301 AND 200.
 /blog/free-pickleball-bracket-generator  /tools  301
 
+# SEO cluster Sprint 1 step 2: bracket-templates post merged INTO the
+# how-to guide (0 clicks / 5 impressions in 90d, same informational intent).
+# EN → EN, VI → VI so Vietnamese readers stay on the VI twin.
+# Mirrored in functions/_middleware.ts (BLOG_MERGED / VI_BLOG_MERGED).
+/blog/pickleball-bracket-templates     /blog/how-to-create-pickleball-bracket     301
+/vi/blog/mau-bracket-pickleball        /vi/blog/cach-tao-bracket-pickleball       301
+
 # 301 redirect VI broken slugs to EN counterparts (Ahrefs 404 fix 2026-04-29)
 # Future: replace với VI bài thực khi viết
 /vi/blog/luat-pickleball                            /blog/pickleball-rules-complete-guide              301

@@ -330,7 +330,6 @@ export const ALL_BLOGS = [
   { slug: "how-to-organize-pickleball-tournament", title: "Hướng dẫn tổ chức giải Pickleball" },
   { slug: "pickleball-round-robin-generator-guide", title: "Round Robin Generator Guide" },
   { slug: "pickleball-tournament-formats-explained", title: "Tournament Formats Explained" },
-  { slug: "pickleball-bracket-templates", title: "Bracket Templates 2026" },
   { slug: "pickleball-scoring-rules-guide", title: "Pickleball Scoring Rules" },
   { slug: "pickleball-doubles-strategy-guide", title: "Doubles Strategy Guide" },
   { slug: "pickleball-live-streaming-guide", title: "Live Streaming Guide" },

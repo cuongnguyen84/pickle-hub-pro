@@ -103,7 +103,6 @@ const BLOG_SLUGS = [
   "pickleball-tournament-formats-explained",
   "pickleball-live-streaming-guide",
   "mlp-format-explained",
-  "pickleball-bracket-templates",
   "pickleball-rules-complete-guide",
   "pickleball-world-cup-2026-da-nang",
   "tournament-organizer-hub",

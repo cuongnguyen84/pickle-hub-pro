@@ -53,10 +53,40 @@ function parseBlogToTools(): Set<string> {
   return new Set([...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]));
 }
 
+// ─── Parse a `const <NAME>: Record<string, string> = { ... }` dict literal ───
+function parseDict(name: string): Record<string, string> {
+  const block = middlewareSource.match(
+    new RegExp(`${name}:\\s*Record<string,\\s*string>\\s*=\\s*\\{([\\s\\S]*?)\\};`),
+  );
+  if (!block) throw new Error(`${name} dict not found in _middleware.ts`);
+  const out: Record<string, string> = {};
+  for (const m of block[1].matchAll(/"([^"]+)":\s*"([^"]+)"/g)) out[m[1]] = m[2];
+  return out;
+}
+
+// ─── Parse public/_redirects: every `/blog/<slug>  <target>  301` line ───
+function parseRedirectsEnBlog(): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const line of redirectsFile.split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const m = t.match(/^\/blog\/(\S+)\s+(\S+)\s+301\b/);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
+}
+
 // Resolve what the middleware sends a given vi-slug to, mirroring the runtime
-// logic: VI_BLOG_REDIRECTS[vi] -> enSlug; /tools if enSlug ∈ BLOG_TO_TOOLS,
-// else /blog/<enSlug>.
-function middlewareDest(vi: string, dict: Record<string, string>, tools: Set<string>): string {
+// logic: VI_BLOG_MERGED[vi] -> /vi/blog/<vi-target> (checked first), else
+// VI_BLOG_REDIRECTS[vi] -> enSlug; /tools if enSlug ∈ BLOG_TO_TOOLS, else
+// /blog/<enSlug>.
+function middlewareDest(
+  vi: string,
+  dict: Record<string, string>,
+  tools: Set<string>,
+  merged: Record<string, string>,
+): string {
+  if (merged[vi] !== undefined) return `/vi/blog/${merged[vi]}`;
   const en = dict[vi];
   if (en === undefined) return "";
   return tools.has(en) ? "/tools" : `/blog/${en}`;
@@ -66,6 +96,7 @@ describe("redirect parity: /vi/blog/* between _redirects and _middleware.ts", ()
   const redirects = parseRedirectsViBlog();
   const dict = parseMiddlewareViBlog();
   const tools = parseBlogToTools();
+  const viMerged = parseDict("VI_BLOG_MERGED");
 
   it("parsed a non-trivial number of rules from both files", () => {
     expect(Object.keys(redirects).length).toBeGreaterThan(5);
@@ -75,25 +106,59 @@ describe("redirect parity: /vi/blog/* between _redirects and _middleware.ts", ()
   it("every _redirects /vi/blog rule is mirrored in the middleware (else bots 404)", () => {
     const missing: string[] = [];
     for (const [vi, target] of Object.entries(redirects)) {
-      if (middlewareDest(vi, dict, tools) !== target) {
-        missing.push(`${vi} → _redirects:${target} vs middleware:${middlewareDest(vi, dict, tools) || "(none)"}`);
+      const dest = middlewareDest(vi, dict, tools, viMerged);
+      if (dest !== target) {
+        missing.push(`${vi} → _redirects:${target} vs middleware:${dest || "(none)"}`);
       }
     }
     expect(missing, `VI-blog rules in _redirects not matched by middleware:\n${missing.join("\n")}`).toEqual([]);
   });
 
-  it("every middleware VI_BLOG_REDIRECTS entry has a matching _redirects rule (no bot-only redirect)", () => {
+  it("every middleware VI-blog redirect has a matching _redirects rule (no bot-only redirect)", () => {
     const extra: string[] = [];
-    for (const vi of Object.keys(dict)) {
+    for (const vi of [...Object.keys(dict), ...Object.keys(viMerged)]) {
       if (!(vi in redirects)) extra.push(vi);
     }
     expect(extra, `middleware VI-blog redirects with no _redirects rule (users won't get them):\n${extra.join("\n")}`).toEqual([]);
   });
 
   it("no /vi/blog redirect chains to another redirect (single hop to a 200 target)", () => {
-    // Targets must be a terminal path, never another /vi/blog/* that itself redirects.
-    for (const target of Object.values(redirects)) {
-      expect(target.startsWith("/vi/blog/"), `chained redirect target ${target}`).toBe(false);
+    // A /vi/blog/* target is allowed only when it is a real VI page — i.e. it
+    // is not itself the source of another redirect (that would be a 301 chain).
+    for (const [source, target] of Object.entries(redirects)) {
+      const viTarget = target.match(/^\/vi\/blog\/(.+)$/)?.[1];
+      if (viTarget === undefined) continue;
+      expect(
+        viTarget in redirects,
+        `chained redirect: /vi/blog/${source} → ${target}, which itself redirects`,
+      ).toBe(false);
+    }
+  });
+});
+
+describe("redirect parity: merged /blog/* posts between _redirects and _middleware.ts", () => {
+  const redirects = parseRedirectsEnBlog();
+  const merged = parseDict("BLOG_MERGED");
+  const tools = parseBlogToTools();
+
+  it("every merged-post rule in _redirects is mirrored in the middleware", () => {
+    const missing: string[] = [];
+    for (const [en, target] of Object.entries(redirects)) {
+      // /tools dedupes are covered by BLOG_TO_TOOLS, not BLOG_MERGED.
+      const dest = tools.has(en) ? "/tools" : merged[en] ? `/blog/${merged[en]}` : "";
+      if (dest !== target) missing.push(`${en} → _redirects:${target} vs middleware:${dest || "(none)"}`);
+    }
+    expect(missing, `EN-blog rules in _redirects not matched by middleware:\n${missing.join("\n")}`).toEqual([]);
+  });
+
+  it("every BLOG_MERGED entry has a matching _redirects rule (no bot-only redirect)", () => {
+    const extra = Object.keys(merged).filter((en) => !(en in redirects));
+    expect(extra, `middleware BLOG_MERGED entries with no _redirects rule:\n${extra.join("\n")}`).toEqual([]);
+  });
+
+  it("no merged post redirects to another merged post (single hop)", () => {
+    for (const [source, target] of Object.entries(merged)) {
+      expect(target in merged, `chained merge: ${source} → ${target}, which itself redirects`).toBe(false);
     }
   });
 });

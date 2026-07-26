@@ -85,13 +85,6 @@ const EN_POSTS: RssItem[] = [
     pubDate: "2026-03-29",
     lang: "en",
   },
-  {
-    title: "Pickleball Bracket Templates — Free Templates for Every Tournament Format",
-    link: "/blog/pickleball-bracket-templates",
-    description: "Free pickleball bracket templates for round robin, single elimination, and double elimination. Templates for 4, 8, 16, 32, and 64 players with real-time scoring.",
-    pubDate: "2026-03-29",
-    lang: "en",
-  },
 ];
 
 function escapeXml(text: string): string {
