@@ -186,7 +186,7 @@ const post: BlogPost = {
     },
     vi: {
       title: "Cách tổ chức giải vòng tròn Pickleball — Lịch, bye và tiebreaker",
-      metaTitle: "Cách tổ chức giải vòng tròn Pickleball | Lịch & Luật 2026",
+      metaTitle: "Tổ chức giải vòng tròn Pickleball | Lịch & Luật",
       metaDescription: "Cách tổ chức giải vòng tròn pickleball: số trận theo cỡ bảng, xếp lịch sân, xử lý bye, chia seed và thứ tự tiebreaker cần công bố trước giải.",
       sections: [
         {

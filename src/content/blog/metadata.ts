@@ -669,7 +669,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleEn: "How to Run a Pickleball Round Robin — Schedule, Byes & Tiebreakers",
     titleVi: "Cách tổ chức giải vòng tròn Pickleball — Lịch, bye và tiebreaker",
     metaTitleEn: "How to Run a Pickleball Round Robin | Schedule & Rules 2026",
-    metaTitleVi: "Cách tổ chức giải vòng tròn Pickleball | Lịch & Luật 2026",
+    metaTitleVi: "Tổ chức giải vòng tròn Pickleball | Lịch & Luật",
     metaDescriptionEn: "How to run a pickleball round robin: match counts by group size, court scheduling, byes, snake seeding, and the tiebreaker order to announce before play.",
     metaDescriptionVi: "Cách tổ chức giải vòng tròn pickleball: số trận theo cỡ bảng, xếp lịch sân, xử lý bye, chia seed và thứ tự tiebreaker cần công bố trước giải.",
   },  {
