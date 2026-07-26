@@ -28,6 +28,12 @@ const CANARIES = [
   "mux-webhook",
 ];
 
+// Blob loss is per-edge-region (26/07 forensics: each incident burst confined to
+// one x_sb_edge_region while others served 200). Probe the regions our traffic
+// actually lands in: ap-northeast-1 = project home + pg_cron, ap-northeast-2 =
+// VN users, us-east-1 = GitHub runners / US traffic.
+const REGIONS = ["ap-northeast-1", "ap-northeast-2", "us-east-1"];
+
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(run(env));
@@ -44,17 +50,20 @@ export default {
 async function run(env: Env): Promise<string[]> {
   const broken: string[] = [];
   await Promise.all(
-    CANARIES.map(async (fn) => {
-      try {
-        const res = await fetch(`${PROJECT_URL}/functions/v1/${fn}`, {
-          signal: AbortSignal.timeout(10_000),
-        });
-        const body = await res.text();
-        if (body.includes("NOT_FOUND_FUNCTION_BLOB")) broken.push(fn);
-      } catch {
-        // Network blips are not blob loss — ignore; next tick retries.
-      }
-    }),
+    CANARIES.flatMap((fn) =>
+      REGIONS.map(async (region) => {
+        try {
+          const res = await fetch(`${PROJECT_URL}/functions/v1/${fn}`, {
+            headers: { "x-region": region },
+            signal: AbortSignal.timeout(10_000),
+          });
+          const body = await res.text();
+          if (body.includes("NOT_FOUND_FUNCTION_BLOB")) broken.push(`${fn}@${region}`);
+        } catch {
+          // Network blips are not blob loss — ignore; next tick retries.
+        }
+      }),
+    ),
   );
 
   if (broken.length === 0) return broken;
