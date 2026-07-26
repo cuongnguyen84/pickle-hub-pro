@@ -32,6 +32,7 @@ declare global {
           "error-callback"?: () => void;
           "expired-callback"?: () => void;
           theme?: "light" | "dark" | "auto";
+          appearance?: "always" | "execute" | "interaction-only";
         },
       ) => string;
       reset: (widgetId?: string) => void;
@@ -106,6 +107,11 @@ export function TurnstileWidget({ onVerify, onError }: Props) {
           "error-callback": () => onErrorRef.current?.(),
           "expired-callback": () => onErrorRef.current?.(),
           theme: "auto",
+          // Stay invisible for the ~99% who pass silently; only surface the
+          // widget when Cloudflare actually needs an interactive challenge.
+          // Unlike a dashboard "Invisible" sitekey this never hard-blocks a
+          // flagged-but-legit user — they still get a challenge to solve.
+          appearance: "interaction-only",
         });
       })
       .catch(() => onErrorRef.current?.());
