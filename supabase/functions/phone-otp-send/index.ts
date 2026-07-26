@@ -218,10 +218,11 @@ async function sendOtpEmail(
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        // Send from the VERIFIED Resend domain — the `mail.` subdomain, not
-        // the apex. send-auth-email uses this and delivers; functions using
-        // no-reply@thepicklehub.net (apex, unverified) fail silently.
-        from: "The Pickle Hub <no-reply@mail.thepicklehub.net>",
+        // Send from the VERIFIED Resend domain: send.thepicklehub.net. This is
+        // the domain Supabase Auth's custom SMTP (smtp.resend.com, sender
+        // noreply@send.thepicklehub.net) uses successfully. The apex and the
+        // `mail.` subdomain are NOT verified in Resend (both return 403).
+        from: "The Pickle Hub <no-reply@send.thepicklehub.net>",
         to: [to],
         subject: `Mã OTP đăng ký "${eventLabel}" — ThePickleHub`,
         html: buildOtpEmailHtml(code, eventLabel),
