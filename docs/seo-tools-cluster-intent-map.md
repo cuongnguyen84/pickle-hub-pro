@@ -1,5 +1,19 @@
 # SEO — "bracket generator" cluster intent map
 
+> **STATUS: CLOSED 2026-07-26.** All five Sprint 1 steps shipped, plus the two
+> systemic defects the verification pass uncovered (#462, #465, #466, #467,
+> #468). Nothing here is waiting on code. The only open item is the outcome
+> read, scheduled as `2026-08-23 SEO-CLUSTER-READ` in `docs/milestones.md` —
+> Google needs ~4 weeks to digest the 301s and the newly-crawlable EN bodies.
+>
+> Deliberately NOT done, with reasons (do not treat these as forgotten):
+>
+> | Idea | Why not |
+> |---|---|
+> | `pickleballbrackets.net alternative` page | Competitor brand queries send 133 impressions / 0 clicks to `/tools`. A comparison page is a content bet, not a cluster fix — decide after the 08-23 read shows whether `/tools` holds top 3 for its own terms first. |
+> | `sitemap-forum.xml` | The 2026-05-28 audit flagged `/forum/post/:id` as an orphan. Indexing user-generated threads is a product call (thin/duplicate risk), not an SEO gap this cluster created. |
+> | QuickTable capacity guard (bug 3 of the UX-06/07 panel) | Still deferred; only matters if a guest registration path opens. |
+
 Roadmap topical authority, Sprint 1. Goal: stop the `/tools` money page from
 being cannibalized by transactional blog posts targeting the same intent, then
 build informational supporting content that links UP to `/tools`.
