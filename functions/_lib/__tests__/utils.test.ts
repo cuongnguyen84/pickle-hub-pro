@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeImageUrl, sanitizeBlogHtml } from "../utils";
+import { buildTitle, normalizeImageUrl, sanitizeBlogHtml } from "../utils";
 
 describe("sanitizeBlogHtml", () => {
   it("leaves normal blog markup intact", () => {
@@ -49,5 +49,38 @@ describe("normalizeImageUrl", () => {
 
   it("returns non-Drive URLs unchanged", () => {
     expect(normalizeImageUrl("https://example.com/photo.jpg")).toBe("https://example.com/photo.jpg");
+  });
+});
+
+// ─── buildTitle byte budget ────────────────────────────────
+// buildHtml truncates the final <title> at 60 UTF-8 bytes. buildTitle used to
+// decide whether " | ThePickleHub" fits by counting CHARACTERS, so Vietnamese
+// titles got a suffix they had no room for and prod served an ellipsised
+// title (measured 2026-07-26 on /vi/blog/the-thuc-mlp-la-gi).
+describe("buildTitle byte budget", () => {
+  const bytes = (s: string) => new TextEncoder().encode(s).length;
+
+  it("appends the brand suffix when the total still fits 60 bytes", () => {
+    const t = buildTitle("How to Play Pickleball | 7-Day Beginner Plan");
+    expect(t.endsWith(" | ThePickleHub")).toBe(true);
+    expect(bytes(t)).toBeLessThanOrEqual(60);
+  });
+
+  it("skips the suffix for a Vietnamese title that fits in chars but not bytes", () => {
+    const raw = "Thể thức MLP Pickleball | Luật đồng đội"; // 39 chars, 51 bytes
+    expect(raw.length + " | ThePickleHub".length).toBeLessThanOrEqual(60); // would have passed the old check
+    const t = buildTitle(raw);
+    expect(t).toBe(raw);
+    expect(bytes(t)).toBeLessThanOrEqual(60);
+  });
+
+  it("never returns more than 60 bytes for a title that already fits", () => {
+    for (const raw of [
+      "MLP Format Explained 2026 | Major League Pickleball Rules",
+      "Luật Pickleball 2026 | Hướng dẫn đầy đủ",
+      "Cách tạo Bracket Pickleball | Kích thước & Mẫu 2026",
+    ]) {
+      expect(bytes(buildTitle(raw))).toBeLessThanOrEqual(60);
+    }
   });
 });

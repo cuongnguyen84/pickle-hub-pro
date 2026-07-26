@@ -18,19 +18,40 @@
 -- NULLs are allowed (the columns are nullable and the renderer has fallbacks).
 -- ============================================================================
 
--- The two retired posts (status='merged', both 301'd away) are the only rows
--- still over budget. They are not served anywhere, but a table-wide constraint
--- has to hold for them too — trim rather than exempt.
-update vi_blog_posts
-set meta_title = left(meta_title, 40),
-    meta_description = left(meta_description, 100)
-where status = 'merged'
-  and (octet_length(meta_title) > 60 or octet_length(meta_description) > 160);
+-- Trim any row that is still over budget BEFORE the constraint lands. On prod
+-- this is a no-op (all 52 published rows were rewritten by hand the same day);
+-- it exists so a fresh database built from migrations + seed data — which is
+-- what the pgTAP CI job does — does not fail on fixture rows.
+--
+-- Byte-safe trim: cut at the last character whose cumulative UTF-8 cost still
+-- fits, never mid-character (left(x, n) counts characters, so a Vietnamese
+-- string can still be over budget after it).
+create or replace function pg_temp.trim_to_bytes(txt text, max_bytes int)
+returns text language sql immutable as $$
+  select coalesce(string_agg(ch, '' order by idx), '')
+  from (
+    select ch, idx, sum(octet_length(ch)) over (order by idx) as running
+    from regexp_split_to_table(txt, '') with ordinality as t(ch, idx)
+  ) s
+  where running <= max_bytes;
+$$;
 
+update vi_blog_posts
+set meta_title = pg_temp.trim_to_bytes(meta_title, 60)
+where meta_title is not null and octet_length(meta_title) > 60;
+
+update vi_blog_posts
+set meta_description = pg_temp.trim_to_bytes(meta_description, 160)
+where meta_description is not null and octet_length(meta_description) > 160;
+
+alter table vi_blog_posts
+  drop constraint if exists vi_blog_posts_meta_title_seo_bytes;
 alter table vi_blog_posts
   add constraint vi_blog_posts_meta_title_seo_bytes
   check (meta_title is null or octet_length(meta_title) <= 60);
 
+alter table vi_blog_posts
+  drop constraint if exists vi_blog_posts_meta_description_seo_bytes;
 alter table vi_blog_posts
   add constraint vi_blog_posts_meta_description_seo_bytes
   check (meta_description is null or octet_length(meta_description) <= 160);
