@@ -316,14 +316,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     "pickleball-bracket-templates": "how-to-create-pickleball-bracket",
     "best-pickleball-tournament-software-2025": "best-pickleball-tournament-software-2026",
   };
-  const VI_BLOG_MERGED: Record<string, string> = {
-    "mau-bracket-pickleball": "cach-tao-bracket-pickleball",
+  //       VI_BLOG_DIRECT maps a VI slug straight to the absolute VI path it
+  //       was folded into — a VI twin (merged post) or /vi/tools (transactional
+  //       dupe of the money page, the VI half of the step-1 dedupe).
+  const VI_BLOG_DIRECT: Record<string, string> = {
+    "mau-bracket-pickleball": "/vi/blog/cach-tao-bracket-pickleball",
+    "cong-cu-tao-bracket-pickleball-mien-phi-2026": "/vi/tools",
   };
 
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
-  if (viBlogMatch && VI_BLOG_MERGED[viBlogMatch[1]]) {
+  if (viBlogMatch && VI_BLOG_DIRECT[viBlogMatch[1]]) {
     return secureRedirect(
-      `https://${url.hostname}/vi/blog/${VI_BLOG_MERGED[viBlogMatch[1]]}`,
+      `https://${url.hostname}${VI_BLOG_DIRECT[viBlogMatch[1]]}`,
       301,
     );
   }

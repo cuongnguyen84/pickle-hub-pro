@@ -31,6 +31,11 @@
 /blog/pickleball-bracket-templates     /blog/how-to-create-pickleball-bracket     301
 /vi/blog/mau-bracket-pickleball        /vi/blog/cach-tao-bracket-pickleball       301
 
+# Step 3 follow-up: the VI half of the step-1 dedupe. This VI post is a
+# transactional duplicate of /vi/tools (GSC 90d: 0 clicks / 5 impressions)
+# and had no EN twin, so step 1 missed it. Row moved to status='merged'.
+/vi/blog/cong-cu-tao-bracket-pickleball-mien-phi-2026  /vi/tools  301
+
 # 301 redirect VI broken slugs to EN counterparts (Ahrefs 404 fix 2026-04-29)
 # Future: replace với VI bài thực khi viết
 /vi/blog/luat-pickleball                            /blog/pickleball-rules-complete-guide              301

@@ -32,9 +32,22 @@ posts that funnel to it.
 
 1. **[done — #449]** 301 `free-pickleball-bracket-generator` → `/tools`, audit-safe (no URL both 301 and 200 in any sitemap/SSR/feed).
 2. **[done — this PR]** Merge `how-to-create-pickleball-bracket` + `pickleball-bracket-templates` → one informational guide, no "generator" in title.
-3. Re-angle `pickleball-round-robin-generator-guide` → informational, link `/tools/quick-tables`.
+3. **[done]** Re-angle `pickleball-round-robin-generator-guide` → informational, link `/tools/quick-tables`.
 4. Upgrade `/tools` content to push pos 8 → top 3.
-5. Make `tournament-organizer-hub` a pillar linking to every how-to + `/tools`.
+5. **[done]** Make `tournament-organizer-hub` a pillar linking to every how-to + `/tools`.
+
+### Step 3/5 also closed two leaks the earlier steps missed
+
+- **VI half of step 1.** `/vi/blog/cong-cu-tao-bracket-pickleball-mien-phi-2026`
+  is a transactional duplicate of `/vi/tools` with **no `alternate_en_slug`**, so
+  step 1 (which walked EN slugs and their VI aliases) never saw it. GSC 90d: 0
+  clicks / 5 impressions. Row → `status='merged'`, URL 301s to `/vi/tools`, and
+  the 5 VI posts linking to it now link to `/vi/tools` directly.
+- **11 dead VI internal links.** Published `vi_blog_posts` linked to VI slugs
+  that never existed (`/vi/blog/tournament-organizer-hub`,
+  `/vi/blog/luat-pickleball-day-du`, …) or that only 301. All rewritten to the
+  live VI target; the audit query
+  (`href="/vi/blog/x"` with no published row `x`) is now **0**.
 
 ## GSC re-read 2026-07-26 (last 90 days, before step 2)
 
