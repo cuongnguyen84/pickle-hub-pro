@@ -171,7 +171,7 @@ const post: BlogPost = {
       title: "Hướng Dẫn Dùng DUPR Trên ThePickleHub 2026 | Connect, Log Trận, Bảng Xếp Hạng",
       metaTitle: "Dùng DUPR Trên ThePickleHub 2026 | Connect + Log Trận",
       metaDescription:
-        "Kết nối DUPR với ThePickleHub trong 1-click, log trận đấu có đối thủ xác nhận, admin submit lên DUPR — và theo dõi rating trên bảng xếp hạng DUPR Việt Nam.",
+        "Kết nối DUPR với ThePickleHub trong 1 click, log trận có đối thủ xác nhận và theo dõi rating trên bảng xếp hạng.",
       sections: [
         {
           heading: "Vì sao DUPR trên ThePickleHub quan trọng",

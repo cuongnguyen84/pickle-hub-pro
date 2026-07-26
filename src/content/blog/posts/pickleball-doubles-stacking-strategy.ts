@@ -170,9 +170,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Chiến Thuật Stacking Pickleball: Hướng Dẫn Đánh Đôi Đầy Đủ (2026)",
-      metaTitle: "Chiến Thuật Stacking Pickleball 2026 | Stack Thế Nào & Khi Nào",
+      metaTitle: "Chiến thuật Stacking Pickleball | Khi nào dùng",
       metaDescription:
-        "Stacking pickleball là gì: cách stack khi giao và khi trả bóng, stack thuận-nghịch tay, tín hiệu tay, full stack vs half stack, lỗi phổ biến và bài tập.",
+        "Stacking pickleball là gì: cách stack khi giao và khi trả bóng, tín hiệu tay, full stack vs half stack, lỗi phổ biến và bài tập.",
       sections: [
         {
           heading: "Vì sao có stacking: giữ điểm mạnh ở giữa sân",

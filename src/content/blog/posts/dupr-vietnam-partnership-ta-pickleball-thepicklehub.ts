@@ -15,7 +15,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "DUPR x TA Pickleball x ThePickleHub: A Preliminary Partnership for Vietnamese Pickleball",
-      metaTitle: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step",
+      metaTitle: "DUPR Vietnam Partnership | TA Pickleball x ThePickleHub",
       metaDescription: "DUPR, TA Pickleball and ThePickleHub signed a preliminary deal to bring the global pickleball rating system to Vietnam — phase 1 of a 3-phase roadmap.",
       sections: [
         {
@@ -88,8 +88,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "DUPR x TA Pickleball x ThePickleHub: Thỏa thuận sơ bộ cho cộng đồng pickleball Việt Nam",
-      metaTitle: "DUPR Việt Nam: Thỏa thuận sơ bộ với TA Pickleball x ThePickleHub | Bước đầu tiên",
-      metaDescription: "DUPR, TA Pickleball và ThePickleHub vừa ký thỏa thuận sơ bộ đưa hệ thống xếp hạng pickleball toàn cầu vào Việt Nam. Bước đầu của lộ trình ba giai đoạn.",
+      metaTitle: "DUPR Việt Nam | Thỏa thuận với TA Pickleball",
+      metaDescription: "DUPR, TA Pickleball và ThePickleHub ký thỏa thuận sơ bộ đưa hệ thống xếp hạng toàn cầu vào Việt Nam.",
       sections: [
         {
           heading: "Chúng tôi đã bắt tay. Hành trình phía trước bắt đầu.",

@@ -157,7 +157,7 @@ const post: BlogPost = {
     },
     vi: {
       title: "Cú Thứ 3 Pickleball: Drop vs Drive — Đánh Cú Nào & Khi Nào (2026)",
-      metaTitle: "Cú Thứ 3 Pickleball: Drop vs Drive 2026 | Cú Nào & Khi Nào",
+      metaTitle: "Cú thứ 3 Pickleball | Drop hay Drive?",
       metaDescription:
         "Cú thứ 3 pickleball drop vs drive: mỗi cú làm gì, cơ học, khi nào drop, khi nào drive, combo drive-and-drop, lỗi phổ biến và bài tập.",
       sections: [

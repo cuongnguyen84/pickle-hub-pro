@@ -163,9 +163,9 @@ const post: BlogPost = {
     vi: {
       title:
         "Vợt Pickleball Tốt Nhất Cho Người Mới 2026: 7 Lựa Chọn (Hướng Dẫn Mua Tại VN)",
-      metaTitle: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026 (7 Lựa Chọn)",
+      metaTitle: "Vợt Pickleball cho người mới 2026 | 7 lựa chọn",
       metaDescription:
-        "Chọn vợt pickleball đầu tiên không bị \"cháy túi\". 7 mẫu vợt cho người mới 2026 — phân tích trọng lượng, mặt vợt, cán + lỗi cần tránh khi mua tại VN.",
+        "Chọn vợt pickleball đầu tiên không cháy túi: 7 mẫu cho người mới 2026, trọng lượng, mặt vợt và lỗi cần tránh.",
       sections: [
         {
           heading: "Vì sao cây vợt đầu tiên quan trọng hơn bạn nghĩ",

@@ -11,8 +11,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "How to Organize a Pickleball Tournament — The Complete Organizer's Checklist",
-      metaTitle: "How to Organize a Pickleball Tournament | Complete Checklist 2026",
-      metaDescription: "Step-by-step guide to organizing a pickleball tournament. Venue, format selection, registration, scheduling, scoring, and free tools. Everything you need to run a successful event.",
+      metaTitle: "How to Organize a Pickleball Tournament | Checklist",
+      metaDescription: "Step-by-step guide to organize a pickleball tournament: venue, format, registration, scheduling, scoring, and free tools to run the event.",
       sections: [
         {
           heading: "Planning Your Pickleball Tournament",
@@ -159,8 +159,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Cách tổ chức giải đấu Pickleball — Checklist đầy đủ cho ban tổ chức",
-      metaTitle: "Cách tổ chức giải Pickleball | Checklist đầy đủ 2026",
-      metaDescription: "Hướng dẫn từng bước tổ chức giải pickleball. Địa điểm, thể thức, đăng ký, lịch thi đấu, chấm điểm, và công cụ miễn phí. Mọi thứ bạn cần để chạy giải thành công.",
+      metaTitle: "Cách tổ chức giải Pickleball | Checklist",
+      metaDescription: "Hướng dẫn tổ chức giải pickleball: địa điểm, thể thức, đăng ký, lịch thi đấu, chấm điểm và công cụ miễn phí.",
       sections: [
         {
           heading: "Lên kế hoạch giải Pickleball",

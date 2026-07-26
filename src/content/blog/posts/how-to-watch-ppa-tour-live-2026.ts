@@ -12,8 +12,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "How to Watch PPA Tour Live in 2026 — Every Streaming Platform & Free Options",
-      metaTitle: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options",
-      metaDescription: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS Sports, ESPN, and Fox Sports. Free YouTube highlights and ThePickleHub's free tournament livestreams included.",
+      metaTitle: "How to Watch PPA Tour Live 2026 | Streams & Free Options",
+      metaDescription: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams.",
       sections: [
         {
           heading: "Watch Professional Pickleball Live in 2026",
@@ -153,8 +153,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Cách Xem PPA Tour Trực Tiếp Năm 2026 — Tất Cả Nền Tảng & Tùy Chọn Miễn Phí",
-      metaTitle: "Xem PPA Tour Trực Tiếp 2026 | Nền Tảng, Lịch Trình & Tùy Chọn Miễn Phí",
-      metaDescription: "Xem PPA Tour trực tiếp năm 2026 trên PBTV, Amazon Prime, CBS Sports, ESPN và Fox Sports. Bao gồm highlights YouTube miễn phí và livestream miễn phí từ ThePickleHub.",
+      metaTitle: "Xem PPA Tour trực tiếp 2026 | Nền tảng miễn phí",
+      metaDescription: "Xem PPA Tour trực tiếp 2026 trên PBTV, Amazon Prime, CBS Sports, ESPN, Fox Sports, kèm highlights YouTube và livestream miễn phí.",
       sections: [
         {
           heading: "Xem Pickleball Chuyên Nghiệp Trực Tiếp Năm 2026",

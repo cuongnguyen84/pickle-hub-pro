@@ -15,7 +15,7 @@ const post: BlogPost = {
     content: {
     en: {
       title: "Tama Shimabukuro: How a 15-Year-Old From Hawaii Took Down World #1 and #2 at PPA Atlanta",
-      metaTitle: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud",
+      metaTitle: "Tama Shimabukuro, 15, Reaches PPA Atlanta Final",
       metaDescription: "15-year-old Tama Shimabukuro beat world #1 Hunter Johnson and #2 Staksrud at PPA Atlanta Championships to reach the final. Self-taught Hawaii story.",
       sections: [
         {
@@ -89,8 +89,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Tama Shimabukuro: 15 tuổi, hạ số 1 và số 2 thế giới, vào chung kết PPA Atlanta",
-      metaTitle: "Tama Shimabukuro vào chung kết PPA Atlanta ở tuổi 15 | Hạ Hunter Johnson & Staksrud",
-      metaDescription: "Tama Shimabukuro 15 tuổi vừa hạ số 1 thế giới Hunter Johnson và số 2 Federico Staksrud tại PPA Veolia Atlanta Championships. Câu chuyện tự học từ Hawaii.",
+      metaTitle: "Tama Shimabukuro 15 tuổi vào chung kết PPA",
+      metaDescription: "Tama Shimabukuro 15 tuổi hạ số 1 Hunter Johnson và số 2 Federico Staksrud tại PPA Atlanta. Câu chuyện tự học từ Hawaii.",
       sections: [
         {
           heading: "15 tuổi. Hạ số 2 thế giới. Hạ số 1 thế giới. Vào chung kết PPA Atlanta.",

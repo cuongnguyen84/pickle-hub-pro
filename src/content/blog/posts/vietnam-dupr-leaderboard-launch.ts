@@ -29,9 +29,9 @@ const post: BlogPost = {
       title:
         "Vietnam DUPR Leaderboard Launches on ThePickleHub | Live Rankings, Bracket Seeding, Balanced Matchmaking",
       metaTitle:
-        "Vietnam DUPR Leaderboard | Live Pickleball Rankings on ThePickleHub",
+        "Vietnam DUPR Leaderboard | Live Pickleball Rankings",
       metaDescription:
-        "ThePickleHub now hosts a live Vietnam DUPR pickleball leaderboard updated by webhook. Plus DUPR-required tournaments, auto-seeded brackets, and balanced Mexicano pairings.",
+        "ThePickleHub hosts a live Vietnam DUPR pickleball leaderboard updated by webhook, plus DUPR-required tournaments and auto-seeded brackets.",
       sections: [
         {
           heading: "What's new",
@@ -135,9 +135,9 @@ const post: BlogPost = {
       title:
         "Bảng xếp hạng DUPR Việt Nam ra mắt trên ThePickleHub | Cập nhật real-time, seed bracket tự động, ghép cặp cân bằng",
       metaTitle:
-        "Bảng xếp hạng DUPR Việt Nam | Cập nhật real-time trên ThePickleHub",
+        "Bảng xếp hạng DUPR Việt Nam | Cập nhật live",
       metaDescription:
-        "ThePickleHub ra mắt bảng xếp hạng DUPR Việt Nam cập nhật real-time qua webhook. Kèm tính năng giải đấu yêu cầu DUPR, seed bracket tự động, ghép cặp Mexicano cân bằng.",
+        "Bảng xếp hạng DUPR Việt Nam cập nhật real-time qua webhook, kèm giải đấu yêu cầu DUPR, seed bracket tự động và ghép cặp Mexicano.",
       sections: [
         {
           heading: "Có gì mới",

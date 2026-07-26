@@ -12,7 +12,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play",
-      metaTitle: "PPA Tour Asia 2026 Schedule & Guide | All 10 Stops, Prize Money, How to Play",
+      metaTitle: "PPA Tour Asia 2026 | All 10 Stops, Prize Money & Play",
       metaDescription: "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops, $2.15M total prize money, dates, cities, and how amateurs can play alongside the pros.",
       sections: [
         {
@@ -119,8 +119,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "PPA Tour Asia 2026: Lịch thi đấu, Tiền thưởng & Cách tham gia",
-      metaTitle: "PPA Tour Asia 2026 | Lịch thi đấu đầy đủ, Tiền thưởng, Cách tham gia",
-      metaDescription: "Hướng dẫn đầy đủ PPA Tour Asia 2026 — 10 chặng đấu, tổng tiền thưởng $2.15 triệu, lịch trình, địa điểm và cách VĐV nghiệp dư tham gia thi đấu cùng các pro.",
+      metaTitle: "PPA Tour Asia 2026 | Lịch, thưởng, cách dự",
+      metaDescription: "PPA Tour Asia 2026: 10 chặng, tổng thưởng 2,15 triệu USD, lịch thi đấu, địa điểm và cách VĐV nghiệp dư tham gia.",
       sections: [
         {
           heading: "PPA Tour Asia 2026 — Giải Pickleball chuyên nghiệp lớn nhất ngoài Mỹ",

@@ -25,8 +25,8 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball Tournament Organizer Hub — Every Guide, Tool & Format in One Place",
-      metaTitle: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026",
-      metaDescription: "The complete hub for pickleball tournament organizers in 2026. Choose a format, build a bracket, manage scoring, livestream matches, and compare free software — all linked from one page.",
+      metaTitle: "Pickleball Tournament Organizer Hub | Formats & Tools",
+      metaDescription: "Pickleball tournament organizer hub 2026: choose a format, build brackets, manage scoring, livestream, and compare free software — all from one page.",
       sections: [
         {
           heading: "Why this hub exists",
@@ -127,8 +127,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Hub Tổ chức giải Pickleball — Mọi hướng dẫn, công cụ và thể thức trong một trang",
-      metaTitle: "Hub Tổ chức giải Pickleball | Thể thức, Bracket, Công cụ 2026",
-      metaDescription: "Hub đầy đủ cho ban tổ chức giải pickleball 2026. Chọn thể thức, tạo bracket, quản lý điểm, livestream và so sánh phần mềm miễn phí — tất cả liên kết trong một trang.",
+      metaTitle: "Hub tổ chức giải Pickleball | Thể thức, công cụ",
+      metaDescription: "Hub cho ban tổ chức giải pickleball 2026: chọn thể thức, tạo bracket, quản lý điểm, livestream và so sánh phần mềm miễn phí.",
       sections: [
         {
           heading: "Tại sao có hub này",

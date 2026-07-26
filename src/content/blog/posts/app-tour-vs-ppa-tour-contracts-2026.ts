@@ -15,7 +15,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "APP Tour vs PPA Tour: How Pickleball's Two Pro Contracts Actually Work in 2026",
-      metaTitle: "APP Tour vs PPA Tour 2026 | Contracts, Money & Exclusivity Compared",
+      metaTitle: "APP vs PPA Tour 2026 | Contracts, Money & Exclusivity",
       metaDescription: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained.",
       sections: [
         {
@@ -129,8 +129,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Hợp đồng APP Tour vs PPA Tour: Hai cách tổ chức pro pickleball năm 2026",
-      metaTitle: "APP Tour vs PPA Tour 2026 | Hợp đồng, tiền thưởng, độc quyền",
-      metaDescription: "So sánh APP Tour vs PPA Tour 2026: hợp đồng, tiền thưởng, điều khoản độc quyền, Global Pickleball Alliance, và hợp đồng APP của Quang Dương.",
+      metaTitle: "APP vs PPA Tour 2026 | Hợp đồng & tiền thưởng",
+      metaDescription: "So sánh APP Tour vs PPA Tour 2026: hợp đồng, tiền thưởng, điều khoản độc quyền và bản hợp đồng APP của Quang Dương.",
       sections: [
         {
           heading: "Hai tour, hai triết lý hoàn toàn khác nhau",

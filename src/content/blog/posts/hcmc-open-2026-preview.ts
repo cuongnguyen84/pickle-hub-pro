@@ -28,7 +28,7 @@ const post: BlogPost = {
       title: "HCMC Open 2026 Preview: The PPA Asia 500 Comes to Ho Chi Minh City",
       metaTitle: "HCMC Open 2026 Preview | PPA Asia 500 in Ho Chi Minh City",
       metaDescription:
-        "The MB Ho Chi Minh City Open lands Aug 6–9, 2026 at Global City Sports Park — a US$70,000, 500-point PPA Tour Asia stop. Dates, venue, full prize breakdown, amateur registration, and how to watch.",
+        "The MB Ho Chi Minh City Open, Aug 6–9 2026 at Global City Sports Park: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
       sections: [
         {
           heading: "Vietnam's second pro tour stop of 2026",
@@ -163,9 +163,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "HCMC Open 2026: Toàn cảnh giải PPA Asia 500 tại TP.HCM",
-      metaTitle: "HCMC Open 2026 | Giải PPA Asia 500 tại TP.HCM — Lịch & Giải thưởng",
+      metaTitle: "HCMC Open 2026 | Lịch & giải thưởng",
       metaDescription:
-        "MB Ho Chi Minh City Open diễn ra 6–9/8/2026 tại Global City Sports Park — chặng PPA Tour Asia 500, tổng thưởng 70.000 USD. Lịch thi đấu, địa điểm, chi tiết tiền thưởng, cách đăng ký nghiệp dư và cách xem trực tiếp.",
+        "MB Ho Chi Minh City Open 6–9/8/2026 tại Global City Sports Park — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
       sections: [
         {
           heading: "Chặng tour chuyên nghiệp thứ hai của Việt Nam trong 2026",

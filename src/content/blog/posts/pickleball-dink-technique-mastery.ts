@@ -148,9 +148,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Kỹ Thuật Dink Pickleball: Hướng Dẫn Cơ Bản Đến Nâng Cao 2026",
-      metaTitle: "Kỹ Thuật Dink Pickleball 2026 | Cơ Bản Đến Nâng Cao",
+      metaTitle: "Kỹ thuật Dink Pickleball | Cơ bản tới nâng cao",
       metaDescription:
-        "Làm chủ cú dink pickleball: cầm vợt, mặt vợt, điểm chạm, dink chéo sân vs thẳng, dink topspin, 5 lỗi phổ biến và 4 bài tập luyện.",
+        "Làm chủ cú dink pickleball: cầm vợt, mặt vợt, điểm chạm, dink chéo sân vs thẳng, dink topspin, 5 lỗi phổ biến và 4 bài tập.",
       sections: [
         {
           heading: "Dink là gì — và vì sao nó quyết định trận đấu",

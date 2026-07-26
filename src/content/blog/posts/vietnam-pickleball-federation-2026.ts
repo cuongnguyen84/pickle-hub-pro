@@ -28,7 +28,7 @@ const post: BlogPost = {
       title: "Is There a Vietnam Pickleball Federation? 2026 Status & Roadmap",
       metaTitle: "Vietnam Pickleball Federation 2026 | Status & Roadmap",
       metaDescription:
-        "No national pickleball federation exists in Vietnam yet (mid-2026) — only an organizing committee approved Sept 2025. The full status: roadmap, city-level federations, and what 2026 changes.",
+        "Vietnam still has no national pickleball federation in mid-2026 — only an organizing committee approved in Sept 2025. Status, roadmap and what changes.",
       sections: [
         {
           heading: "Short answer: not yet — but it's being built",
@@ -125,9 +125,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Việt Nam Đã Có Liên Đoàn Pickleball Chưa? Hiện Trạng & Lộ Trình 2026",
-      metaTitle: "Liên Đoàn Pickleball Việt Nam 2026 | Hiện Trạng & Lộ Trình",
+      metaTitle: "Liên đoàn Pickleball Việt Nam 2026",
       metaDescription:
-        "Đến giữa 2026, Việt Nam chưa có liên đoàn pickleball quốc gia — mới có Ban vận động (9/2025). Tổng hợp hiện trạng: lộ trình, các liên đoàn cấp tỉnh/thành đã ra đời, và cột mốc 2026.",
+        "Giữa 2026 Việt Nam chưa có liên đoàn pickleball quốc gia, mới có Ban vận động (9/2025). Hiện trạng và lộ trình.",
       sections: [
         {
           heading: "Trả lời ngắn gọn: Chưa — nhưng đang được xây",

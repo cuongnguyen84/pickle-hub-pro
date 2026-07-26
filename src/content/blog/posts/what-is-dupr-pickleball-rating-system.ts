@@ -15,7 +15,7 @@ const post: BlogPost = {
     content: {
     en: {
       title: "What Is DUPR? The Global Pickleball Rating System Explained (Part 1 of 3)",
-      metaTitle: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series",
+      metaTitle: "What Is DUPR? Pickleball Rating System Explained",
       metaDescription: "DUPR explained: the global pickleball rating used by PPA, MLP, USA Pickleball, World Cup. How it works, who runs it, why Vietnamese players need it.",
       sections: [
         {
@@ -102,8 +102,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu cho người chơi Việt Nam (Phần 1/3)",
-      metaTitle: "DUPR là gì? Xếp hạng pickleball toàn cầu | Series 3 phần — Phần 1",
-      metaDescription: "DUPR — hệ thống xếp hạng pickleball toàn cầu dùng bởi PPA Tour, MLP, USA Pickleball, Pickleball World Cup. Cách hoạt động, ai điều hành và vì sao người chơi VN cần nó.",
+      metaTitle: "DUPR là gì? | Hệ thống xếp hạng pickleball",
+      metaDescription: "DUPR là hệ thống xếp hạng pickleball toàn cầu dùng bởi PPA Tour, MLP, USA Pickleball. Cách hoạt động và vì sao người chơi VN cần.",
       sections: [
         {
           heading: "Phần 1/3: DUPR là gì — và tại sao bạn cần biết",

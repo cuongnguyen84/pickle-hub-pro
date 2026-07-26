@@ -29,7 +29,7 @@ const post: BlogPost = {
       title:
         "Pickleball Court Dimensions & Setup Guide 2026 | Sizes + Diagram",
       metaTitle:
-        "Pickleball Court Dimensions & Setup Guide 2026 | Sizes + Diagram",
+        "Pickleball Court Dimensions 2026 | Sizes + Setup Diagram",
       metaDescription:
         "Official pickleball court dimensions: 44×20 ft playing area, 7 ft kitchen, net height, total space needed. Plus how to mark a court and convert a tennis court.",
       sections: [
@@ -163,9 +163,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Kích Thước Sân Pickleball Tiêu Chuẩn 2026 | Sơ Đồ + Cách Vẽ Sân",
-      metaTitle: "Kích Thước Sân Pickleball Tiêu Chuẩn 2026 | Sơ Đồ + Cách Vẽ Sân",
+      metaTitle: "Kích thước sân Pickleball | Sơ đồ & cách vẽ",
       metaDescription:
-        "Kích thước sân pickleball chuẩn: sân đấu 13,41×6,1 m, khu bếp 2,13 m, chiều cao lưới, diện tích tổng cần thiết. Kèm cách kẻ sân và tận dụng sân tennis.",
+        "Kích thước sân pickleball chuẩn: sân 13,41×6,1 m, khu bếp 2,13 m, chiều cao lưới. Kèm cách kẻ sân và dùng sân tennis.",
       sections: [
         {
           heading: "Trả lời nhanh: 3 con số bạn cần biết",

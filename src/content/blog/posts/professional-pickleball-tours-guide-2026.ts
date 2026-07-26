@@ -40,7 +40,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Professional Pickleball Tours 2026: Complete Guide to PPA, MLP, PPA Tour Asia, and APP",
-      metaTitle: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP vs PPA Asia Compared",
+      metaTitle: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP Compared",
       metaDescription:
         "2026 guide to pro pickleball tours: PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, how to watch from Asia.",
       sections: [
@@ -222,9 +222,9 @@ const post: BlogPost = {
     },
     vi: {
       title: "Các giải Pickleball chuyên nghiệp 2026: Hướng dẫn đầy đủ về PPA, MLP, PPA Tour Asia và APP",
-      metaTitle: "Pro Pickleball 2026 | PPA, MLP, APP, PPA Tour Asia — So sánh đầy đủ",
+      metaTitle: "Pro Pickleball 2026 | PPA, MLP, APP so sánh",
       metaDescription:
-        "Hướng dẫn đầy đủ về 4 giải pickleball chuyên nghiệp 2026 — PPA Tour, MLP, PPA Tour Asia, APP — lịch thi đấu, tiền thưởng, format, top VĐV và cách xem từ Việt Nam.",
+        "4 giải pickleball chuyên nghiệp 2026 — PPA Tour, MLP, PPA Tour Asia, APP: lịch, tiền thưởng và cách xem từ Việt Nam.",
       sections: [
         {
           heading: "Bức tranh pickleball chuyên nghiệp 2026 — tổng quan",

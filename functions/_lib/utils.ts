@@ -43,8 +43,17 @@ export function escapeHtml(text: string): string {
  */
 export function buildTitle(rawTitle: string, suffix = " | ThePickleHub"): string {
   const maxTotal = 60;
-  if ((rawTitle + suffix).length <= maxTotal) return rawTitle + suffix;
-  if (rawTitle.length <= maxTotal) return rawTitle;
+  // Budget in BYTES, not characters: buildHtml's truncateForSeo cuts the final
+  // <title> at 60 UTF-8 bytes, and a Vietnamese character costs 2-3 of them.
+  // Counting characters here made this function append " | ThePickleHub" to a
+  // VI title that already had no room for it — e.g. "Thể thức MLP Pickleball |
+  // Luật đồng đội" is 39 chars (fits) but 51 bytes, so the branded version was
+  // 66 bytes and prod served "…Luật đồng đội |…". Measured 2026-07-26.
+  const byteLength = (s: string) => new TextEncoder().encode(s).length;
+  if (byteLength(rawTitle + suffix) <= maxTotal) return rawTitle + suffix;
+  // Raw title alone fits the byte budget: hand it back untouched and let
+  // truncateForSeo be the single place that ever ellipsises.
+  if (byteLength(rawTitle) <= maxTotal) return rawTitle;
   const budget = maxTotal - 1;
   const head = rawTitle.slice(0, budget);
   const lastSpace = head.lastIndexOf(" ");

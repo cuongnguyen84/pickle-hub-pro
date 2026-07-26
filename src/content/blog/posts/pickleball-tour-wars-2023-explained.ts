@@ -15,7 +15,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball Tour Wars 2023: The 10 Days That Reshaped Pro Pickleball Forever",
-      metaTitle: "Pickleball Tour Wars 2023 Explained | 10 Days That Changed Pro Pickleball",
+      metaTitle: "Pickleball Tour Wars 2023 | The 10 Days That Changed Pro",
       metaDescription: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today.",
       sections: [
         {
@@ -119,8 +119,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Tour Wars 2023: 10 ngày thay đổi pickleball chuyên nghiệp mãi mãi",
-      metaTitle: "Tour Wars 2023 | 10 ngày định hình pickleball pro hiện đại",
-      metaDescription: "Tour Wars 2023: PPA và MLP đua ký 150 VĐV trong 10 ngày, tạo Gold Contract mãi mãi, dẫn đến sáp nhập UPA — và ý nghĩa cho VĐV Việt Nam hôm nay.",
+      metaTitle: "Tour Wars 2023 | 10 ngày đổi cả pickleball pro",
+      metaDescription: "Tour Wars 2023: PPA và MLP đua ký 150 VĐV trong 10 ngày, tạo Gold Contract, dẫn tới sáp nhập UPA — và ý nghĩa với VĐV Việt Nam.",
       sections: [
         {
           heading: "Vì sao Tour Wars là gốc rễ của mọi câu chuyện pro pickleball hôm nay",

@@ -28,7 +28,7 @@ const post: BlogPost = {
       title: "Vietnamese Pickleball Players to Watch in 2026",
       metaTitle: "Vietnamese Pickleball Players to Watch in 2026",
       metaDescription:
-        "The Vietnamese pickleball players to watch in 2026 — Ly Hoang Nam, Truong Vinh Hien, Do Minh Quan and the rising stars chasing titles at the HCMC Open and Da Nang World Cup.",
+        "The Vietnamese pickleball players to watch in 2026 — Ly Hoang Nam, Truong Vinh Hien, Do Minh Quan and the rising stars chasing titles.",
       sections: [
         {
           heading: "Why 2026 is the year to watch Vietnamese pickleball",
@@ -138,7 +138,7 @@ const post: BlogPost = {
       title: "Các tay vợt Pickleball Việt Nam đáng chú ý năm 2026",
       metaTitle: "Tay Vợt Pickleball Việt Nam Đáng Chú Ý Năm 2026",
       metaDescription:
-        "Các tay vợt pickleball Việt Nam đáng chú ý 2026: Lý Hoàng Nam, Trương Vinh Hiển, Đỗ Minh Quân và dàn sao trẻ hướng tới HCMC Open và World Cup Đà Nẵng.",
+        "Tay vợt pickleball Việt Nam đáng chú ý 2026: Lý Hoàng Nam, Trương Vinh Hiển, Đỗ Minh Quân và dàn sao trẻ đang lên.",
       sections: [
         {
           heading: "Vì sao 2026 là năm để dõi theo pickleball Việt Nam",

@@ -11,7 +11,7 @@ const post: BlogPost = {
   content: {
     en: {
       title: "Pickleball Live Streaming — How to Watch & Stream Pickleball Online",
-      metaTitle: "Pickleball Live Streaming 2026 | How to Watch & Stream Online Free",
+      metaTitle: "Pickleball Live Streaming 2026 | Watch & Stream Free",
       metaDescription: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform.",
       sections: [
         {
@@ -66,8 +66,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Trực tiếp Pickleball — Cách xem và phát sóng trực tuyến",
-      metaTitle: "Xem trực tiếp Pickleball 2026 | Hướng dẫn phát sóng và xem miễn phí",
-      metaDescription: "Xem trực tiếp pickleball miễn phí. Hướng dẫn phát sóng giải đấu pickleball trực tuyến với nền tảng livestream miễn phí của The Pickle Hub.",
+      metaTitle: "Xem & phát trực tiếp Pickleball | Hướng dẫn",
+      metaDescription: "Xem trực tiếp pickleball miễn phí và hướng dẫn phát sóng giải đấu với nền tảng livestream miễn phí của ThePickleHub.",
       sections: [
         {
           heading: "Xem trực tiếp Pickleball ở đâu năm 2026?",

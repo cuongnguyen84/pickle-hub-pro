@@ -29,7 +29,7 @@ const post: BlogPost = {
       title: "PPA Tour Asia 2026: Mid-Season Recap & Results So Far",
       metaTitle: "PPA Tour Asia 2026 | Mid-Season Recap & Results",
       metaDescription:
-        "PPA Tour Asia 2026 recap: 3 of 10 stops done — Ly Hoang Nam's historic Hanoi title, Vietnam's Hien Truong winning in KL, Tama's Macao double, and the road to the $1.1M Hong Kong Slam.",
+        "PPA Tour Asia 2026 recap: Ly Hoang Nam's historic Hanoi title, Hien Truong winning in KL, Tama's Macao double and the road to the Hong Kong Slam.",
       sections: [
         {
           heading: "Half the calendar in, and Vietnam already has a champion",
@@ -153,7 +153,7 @@ const post: BlogPost = {
       title: "PPA Tour Asia 2026: Tổng Kết Nửa Mùa & Kết Quả 3 Chặng",
       metaTitle: "PPA Tour Asia 2026 | Tổng Kết Nửa Mùa & Kết Quả",
       metaDescription:
-        "Tổng kết PPA Tour Asia 2026: 3/10 chặng đã đá — Lý Hoàng Nam vô địch Hà Nội, Trương Vĩnh Hiển thắng ở Kuala Lumpur, Tama cú đúp ở Macao, và đường tới Hong Kong Slam $1.1 triệu.",
+        "Tổng kết PPA Tour Asia 2026: Lý Hoàng Nam vô địch Hà Nội, Trương Vinh Hiển thắng ở Kuala Lumpur, Tama cú đúp Macao.",
       sections: [
         {
           heading: "Đi được nửa lịch, Việt Nam đã có nhà vô địch",

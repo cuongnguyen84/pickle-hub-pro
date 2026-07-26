@@ -147,7 +147,7 @@ const post: BlogPost = {
       title: "MLP vs PPA 2026: Nên Xem Giải Pickleball Nào?",
       metaTitle: "MLP vs PPA 2026 | Nên Xem Giải Pickleball Nào",
       metaDescription:
-        "MLP và PPA đã sáp nhập dưới UPA từ 2024 nhưng giữ 2 thể thức riêng. Hướng dẫn 2026 chọn giải pickleball nên xem — kèm các chặng PPA Tour Asia tại Việt Nam.",
+        "MLP và PPA sáp nhập dưới UPA từ 2024 nhưng giữ 2 thể thức riêng. Chọn giải nào để xem 2026, kèm chặng PPA Asia ở Việt Nam.",
       sections: [
         {
           heading: "Trả lời ngắn gọn: cùng một nhà, hai 'chương trình' khác nhau",
