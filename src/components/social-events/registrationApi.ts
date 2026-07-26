@@ -16,7 +16,7 @@ export interface SendOtpResponse {
   ok?: true;
   expires_at?: string;
   dev_mode_code?: string;
-  channel?: "zalo" | "sms" | "dev";
+  channel?: "zalo" | "sms" | "dev" | "email";
   error?: string;
   code?: string;
 }
@@ -52,6 +52,7 @@ export interface MemberRegistrationRow {
 export function sendOtp(params: {
   phone: string;
   eventId: string;
+  email?: string;
   forceChannel?: "sms" | "zalo";
   turnstileToken: string | null;
 }) {
@@ -59,6 +60,7 @@ export function sendOtp(params: {
     body: {
       phone: params.phone,
       event_id: params.eventId,
+      ...(params.email ? { email: params.email } : {}),
       ...(params.forceChannel ? { force_channel: params.forceChannel } : {}),
       // PR69 — Cloudflare Turnstile token. Server rejects with
       // 'captcha_failed' when missing/invalid in production.

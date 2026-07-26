@@ -221,10 +221,12 @@ export function RegistrationModal({
   const [phoneInput, setPhoneInput] = useState(defaultPhone ?? "");
   const [normalizedPhone, setNormalizedPhone] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState(defaultDisplayName ?? "");
+  // 2026-07-26 — email is the OTP delivery channel (Resend). Required.
+  const [email, setEmail] = useState("");
   const [selfRatedLevel, setSelfRatedLevel] = useState<string>("");
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   // Inline validation errors shown next to the offending field (was toast-only).
-  const [fieldError, setFieldError] = useState<{ name?: string; slot?: string }>({});
+  const [fieldError, setFieldError] = useState<{ name?: string; slot?: string; email?: string }>({});
   const [otp, setOtp] = useState("");
 
   // Per-slot active registration counts. Used to grey out + disable a
@@ -248,7 +250,7 @@ export function RegistrationModal({
   // PR61 — channel the last OTP was delivered through ('zalo' | 'sms' |
   // 'dev'). Surfaces in the OTP-waiting hint + lets the user force the
   // SMS fallback when Zalo doesn't reach them.
-  const [otpChannel, setOtpChannel] = useState<"zalo" | "sms" | "dev" | null>(null);
+  const [otpChannel, setOtpChannel] = useState<"zalo" | "sms" | "dev" | "email" | null>(null);
   // PR69 — Cloudflare Turnstile token. Required by phone-otp-send in
   // production. Reset when the user goes back to the phone step or
   // changes their phone, so a stale token can't be replayed.
@@ -323,6 +325,7 @@ export function RegistrationModal({
       setTurnstileTimedOut(false);
       setTurnstileKey(0);
       setSelectedSlotId("");
+      setEmail("");
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -347,6 +350,11 @@ export function RegistrationModal({
     return norm != null;
   }, [phoneInput]);
 
+  const emailValid = useMemo(
+    () => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()),
+    [email],
+  );
+
   async function callSendOtp(opts?: { forceChannel?: "sms" | "zalo" }): Promise<boolean> {
     const norm = normalizeVietnamPhone(phoneInput);
     if (!norm || !isValidVietnamPhone(norm)) {
@@ -362,6 +370,7 @@ export function RegistrationModal({
       const { data, error } = await sendOtp({
         phone: norm,
         eventId,
+        email: email.trim() || undefined,
         forceChannel: opts?.forceChannel,
         turnstileToken,
       });
@@ -406,6 +415,10 @@ export function RegistrationModal({
     const trimmedName = displayName.trim();
     if (trimmedName.length < 1) {
       setFieldError({ name: reg.nameRequired });
+      return;
+    }
+    if (!emailValid) {
+      setFieldError({ email: reg.emailInvalid });
       return;
     }
     // When the organizer configured slots, the player MUST pick one.
@@ -815,6 +828,28 @@ export function RegistrationModal({
               )}
             </div>
             <div className="space-y-2">
+              <Label htmlFor="ev-email">{reg.emailLabel}</Label>
+              <Input
+                id="ev-email"
+                type="email"
+                inputMode="email"
+                placeholder={reg.emailPlaceholder}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldError.email) setFieldError((p) => ({ ...p, email: undefined }));
+                }}
+                maxLength={120}
+                autoComplete="email"
+                aria-invalid={Boolean(fieldError.email)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">{reg.emailHint}</p>
+              {fieldError.email && (
+                <p className="text-sm text-destructive">{fieldError.email}</p>
+              )}
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="ev-level">{reg.levelLabel}</Label>
               <select
                 id="ev-level"
@@ -968,6 +1003,7 @@ export function RegistrationModal({
                 submitting ||
                 !phoneValid ||
                 displayName.trim().length < 1 ||
+                !emailValid ||
                 (hasSlots && !selectedSlotId) ||
                 !turnstileToken
               }
@@ -989,11 +1025,13 @@ export function RegistrationModal({
             <div className="space-y-2">
               <Label>{reg.otpLabel}</Label>
               <p className="text-sm text-muted-foreground">
-                {otpChannel === "zalo"
-                  ? interp(reg.otpHintZalo, { phone: maskPhone(normalizedPhone) })
-                  : otpChannel === "sms"
-                    ? interp(reg.otpHintSms, { phone: maskPhone(normalizedPhone) })
-                    : interp(reg.otpHint, { phone: maskPhone(normalizedPhone) })}
+                {otpChannel === "email"
+                  ? interp(reg.otpHintEmail, { email: email.trim() })
+                  : otpChannel === "zalo"
+                    ? interp(reg.otpHintZalo, { phone: maskPhone(normalizedPhone) })
+                    : otpChannel === "sms"
+                      ? interp(reg.otpHintSms, { phone: maskPhone(normalizedPhone) })
+                      : interp(reg.otpHint, { phone: maskPhone(normalizedPhone) })}
               </p>
               <div className="flex justify-center pt-2">
                 <InputOTP
