@@ -6,6 +6,7 @@
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { BLOG_POST_META } from "./blog-meta";
+import { renderEnBlogBody, enBlogFaqJsonLd, enBlogHowToJsonLd } from "./blog-body";
 import {
   escapeHtml,
   escapeJsonLd,
@@ -97,11 +98,19 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     jsonLd.dateModified = meta.dateModified ?? meta.datePublished;
   }
 
-  // SEO-3.1 — wrap BlogPosting + BreadcrumbList in a single @graph
-  const blogGraph = {
-    "@context": "https://schema.org",
-    "@graph": [jsonLd, buildBreadcrumbJsonLd(crumbs)],
-  };
+  // SEO-3.1 — wrap BlogPosting + BreadcrumbList in a single @graph.
+  // 2026-07-26: FAQPage + HowTo join it when the post declares faqItems /
+  // howToSteps. Those answers are now rendered in the body below, which is
+  // what Google requires before the markup is eligible.
+  const graph: Record<string, unknown>[] = [jsonLd, buildBreadcrumbJsonLd(crumbs)];
+  const [body, faqNode, howToNode] = await Promise.all([
+    renderEnBlogBody(slug, siteUrl),
+    enBlogFaqJsonLd(slug),
+    enBlogHowToJsonLd(slug),
+  ]);
+  if (faqNode) graph.push(faqNode);
+  if (howToNode) graph.push(howToNode);
+  const blogGraph = { "@context": "https://schema.org", "@graph": graph };
 
   return htmlResponse(buildHtml({
     title,
@@ -112,7 +121,8 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     type: "article",
     extraMeta,
     jsonLd: blogGraph,
-    bodyContent: `${bc}${relatedBlogLinks(slug, siteUrl)}`,
+    // The post's own sections — see blog-body.ts for why this was missing.
+    bodyContent: `${bc}${body}${relatedBlogLinks(slug, siteUrl)}`,
   }));
 }
 

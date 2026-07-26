@@ -459,7 +459,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // docs/prerender-cache-log.md (SEO-04) — append there on every bump.
   // Current: v29 (2026-07-17 — SEO-02: BLOG_POST_META generated from
   // metadata.ts; 28 EN blog <title>s switch to metaTitleEn).
-  const cacheKey = `pr:v31:${url.pathname}`;
+  const cacheKey = `pr:v32:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
