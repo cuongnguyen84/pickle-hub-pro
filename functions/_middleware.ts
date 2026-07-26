@@ -139,7 +139,7 @@ const SECURITY_HEADERS: Record<string, string> = {
     // 2026-07-03: the AdSense consent/messaging loader was still CSP-blocked
     // (34 csp_violation reports / 7d in client_errors). Google requires it in
     // script-src + frame-src. Kept in sync with public/_headers.
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com https://challenges.cloudflare.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
@@ -152,9 +152,14 @@ const SECURITY_HEADERS: Record<string, string> = {
     // claim — bot-path CSP drift found during the QA-04 DUPR SSO
     // investigation (PR #432). Parity is now locked by
     // src/__tests__/csp-parity.test.ts.
-    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.instagram.com; " +
+    // challenges.cloudflare.com added 2026-07-26: Turnstile CAPTCHA on the
+    // social-event registration modal (phone-otp-send gate) was CSP-blocked so
+    // api.js never ran, window.turnstile stayed undefined, and the 20s watchdog
+    // showed "verification is taking too long". Allowed in the script + frame +
+    // child directives (run the loader, render the challenge iframe).
+    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.instagram.com https://challenges.cloudflare.com; " +
     "worker-src 'self' blob:; " +
-    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com; " +
+    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com https://challenges.cloudflare.com; " +
     "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
 };
 
