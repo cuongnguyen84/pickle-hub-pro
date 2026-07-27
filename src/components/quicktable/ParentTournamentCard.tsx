@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, Calendar, MapPin, Plus, Sparkles, Trophy } from "lucide-react";
+import { ArrowUpRight, Calendar, Crown, MapPin, Plus, Sparkles, Trophy } from "lucide-react";
+import { displayChampionName } from "@/lib/championDisplay";
 import { format } from "date-fns";
 import type { ParentTournamentWithPreview } from "@/hooks/useParentTournament";
 import { useI18n } from "@/i18n";
@@ -34,7 +35,7 @@ const STATUS_CONFIG: Record<
     fg: "var(--tl-gold)",
   },
   completed: {
-    labelVi: "Hoàn thành",
+    labelVi: "Đã kết thúc",
     labelEn: "Completed",
     bg: "var(--tl-green-glow)",
     fg: "var(--tl-green)",
@@ -249,17 +250,21 @@ const ParentTournamentCard = ({
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {parent.previewSubEvents.map((se) => {
             const config = STATUS_CONFIG[se.status];
+            // Champion thay thế pill trạng thái trên row sub-event; per sub-event,
+            // không tổng hợp cấp card cha (4 nội dung thi đấu = 4 nhà vô địch).
+            const champion = displayChampionName(se.champion_name);
             return (
               <button
                 type="button"
                 key={se.id}
                 onClick={(e) => handleSubEventClick(e, se.share_id)}
-                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-green)]"
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tl-gold)]"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                   padding: "6px 8px",
+                  minHeight: 44,
                   borderRadius: 6,
                   cursor: "pointer",
                   transition: "background 0.15s",
@@ -284,21 +289,52 @@ const ParentTournamentCard = ({
                 >
                   ◆
                 </span>
-                <span
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontSize: 13.5,
-                    fontWeight: 500,
-                    color: "var(--tl-fg)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {se.name}
+                <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span
+                    style={{
+                      fontSize: 13.5,
+                      fontWeight: 500,
+                      color: "var(--tl-fg)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {se.name}
+                  </span>
+                  {champion && (
+                    <span style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+                      <Crown size={12} aria-hidden="true" style={{ color: "var(--tl-fg-3)", flexShrink: 0, alignSelf: "center" }} />
+                      <span
+                        style={{
+                          fontFamily: "Geist Mono, ui-monospace, monospace",
+                          fontSize: 10,
+                          letterSpacing: "0.04em",
+                          textTransform: "uppercase",
+                          color: "var(--tl-fg-3)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isVi ? "Vô địch:" : "Champion:"}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 12.5,
+                          fontWeight: 500,
+                          color: "var(--tl-fg)",
+                          minWidth: 0,
+                          overflow: "hidden",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {champion}
+                      </span>
+                    </span>
+                  )}
                 </span>
-                {config && (
+                {config && !champion && (
                   <span
                     style={{
                       flexShrink: 0,

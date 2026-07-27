@@ -1,0 +1,85 @@
+{
+  "slug": "champion-on-event-card",
+  "ledger_note": "scripts/agents/debate-ledger.mjs KHÔNG tồn tại trong repo (memory idea-pipeline-missing-scripts) — orchestrator cưỡng chế luật THỦ CÔNG theo docs/agent-round2-rules.md. Kiểm tra: mọi CONCEDE đều có evidence file:line tự kiểm chứng (1 CONCEDE duy nhất: solution-architect D3); risk-auditor không CONCEDE trên RED, chỉ REFINE thu hẹp phạm vi (được phép); 0 nhượng bộ bị loại.",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Nguồn dữ liệu champion: denormalize 2 cột trên quick_tables (migration + patch RPC + backfill) hay derive read-only lúc runtime (không migration)",
+      "positions": {
+        "solution-architect": "Denormalize (Option A): ghi trong RPC server-side dùng chung web+native; derive nhân luật 3 bản TS/CF/Swift",
+        "risk-auditor": "KHÔNG denormalize; không down-migration; migration = RED",
+        "ui-ux-critic": "Cần cột denormalized — champion phải cùng query card list; không có thì cắt card list"
+      },
+      "round2": {
+        "solution-architect": {"move": "HOLD", "evidence": "QuickTableRepository.swift:L711 + useQuickTableMutations.ts:L156 cùng gọi 1 RPC; ops-runbook.md:L183; 20260722030000:L244-254"},
+        "risk-auditor": {"move": "REFINE", "note": "Rút luận điểm 'native cũ không ghi cột' (sai — ghi server-side). RED bám vào BƯỚC migration+backfill (Cuong merge), code hiển thị TS/Swift = AMBER. Điều kiện: ghi cột ở CẢ các đường set completed + backfill phải có guard count(*)=1."},
+        "ui-ux-critic": {"move": "REFINE", "note": "Giữ ràng buộc 'một nguồn duy nhất, cùng round-trip'; cơ chế (cột/view/RPC) nhường architect. Nếu không migration → chấp nhận cắt card list. Chỉ ra mâu thuẫn nội tại của risk-auditor vòng 1: giảm thiểu #5 của chính nó cũng đòi RPC/view = migration."}
+      },
+      "resolution": "CONVERGED có điều kiện: denormalize champion_player_id + champion_name, ghi server-side trong CẢ score RPC lẫn lifecycle RPC, backfill có guard, NULL → ẩn. Migration là gate RED — cần Cuong duyệt."
+    },
+    {
+      "id": "D2",
+      "topic": "Champion vào SSR bot description (share preview Zalo/FB) trong v1? Invalidate bằng gì?",
+      "positions": {
+        "solution-architect": "CÓ — increment 4, bump pr:v32→v33",
+        "risk-auditor": "KHÔNG trong carve-out; bump global = tự bắn chân; blob-loss",
+        "pre-mortem": "KHÔNG cho tới khi có invalidation — Zalo cache tên SAI vĩnh viễn",
+        "ui-ux-critic": "CÓ, bề mặt giá trị nhất, champion đầu description"
+      },
+      "round2": {
+        "solution-architect": {"move": "REFINE", "note": "Bỏ bump v33 (TTL 6h tự làm mới; ?nocache=1 khi gấp). Giữ champion trong description — quick_tables 0 row is_public=false nên không dính lỗ leak flex. Chấp nhận ADR 'OG = bản chụp tại thời điểm share'. Hạ ưu tiên xuống sau trang chi tiết."},
+        "risk-auditor": {"move": "REFINE", "note": "RÚT luận điểm blob-loss cho bề mặt share (Pages Function ≠ Supabase edge; function_edge_logs 7 ngày: og-* 0 lần gọi = code chết). Giữ: không bump v33. RED thu hẹp về flex/doubles-elim (lỗ is_public tại renderFlexTournament); SSR quick-tables = AMBER."},
+        "pre-mortem": {"move": "REFINE", "note": "Rút kịch bản auto-archive (chết dưới Option A). Đổi 'không ship' → 'ship kèm: hạ TTL KV /tools 6h→5 phút qua nhánh pathCacheTtl sẵn có + 1 dòng ADR OG-là-bản-chụp'. Đồng ý không bump v33."},
+        "ui-ux-critic": {"move": "REFINE (trong D3)", "note": "Tự hạ share preview xuống cuối/bỏ sau khi grep PRERENDER_CACHE.delete = 0."}
+      },
+      "resolution": "CONVERGED: SSR quick-tables description = AMBER, làm ở increment CUỐI. Điều kiện: KHÔNG bump v33; ?nocache=1 từng path; hạ TTL /tools 6h→5' (pre-mortem); ghi ADR 'OG = bản chụp tại thời điểm share'. Lỗ is_public flex/doubles-elim = defect riêng, RED, PR riêng."
+    },
+    {
+      "id": "D3",
+      "topic": "Bề mặt ship trước: card list web hay trang chi tiết + fix tab trống",
+      "positions": {
+        "solution-architect": "Card list trước; trang chi tiết không trong touch surface (banner bracket đã có)",
+        "ui-ux-critic": "Trang chi tiết + fix defect tab trống round_robin trước; card list ít traffic nhất"
+      },
+      "round2": {
+        "solution-architect": {"move": "CONCEDE", "evidence": "src/pages/QuickTableView.tsx:L156 (setActiveTab('playoff') vô điều kiện) + L905 (disabled={!hasPlayoff}) + L1380 ({hasPlayoff && ...}) — ~60/84 round_robin completed mở panel RỖNG. 'Banner bracket đã có' chỉ đúng cho 22 giải có playoff."},
+        "ui-ux-critic": {"move": "REFINE", "note": "Nâng fix tab trống lên #1 tuyệt đối (chạm ~60 giải, 1 dòng, độc lập D1). HẠ panel event-result trên tabs (22 giải có playoff đã tự thấy banner đầu tab). HẠ share preview xuống cuối. Blocker #7 nhượng cơ chế 2 dòng player1/player2 (dữ liệu không có) → thay bằng wrap 2 dòng -webkit-line-clamp:2, không parse."}
+      },
+      "resolution": "RESOLVED (CONCEDE có bằng chứng): thứ tự mới = fix tab trống trước tiên, rồi migration, native+detail, card list, SSR cuối."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "id": "D4",
+      "topic": "Có ÍT NHẤT 3 đường set quick_tables.status='completed' — Option A chỉ phủ 1: score RPC (20260722030000:252), lifecycle RPC create_quick_table_playoff_atomic (20260722070000:755-759), auto-archive-tournaments/index.ts:22-26. Lifecycle RPC rebuild bracket sau completed sẽ để champion NULL sai im lặng.",
+      "raisedBy": ["pre-mortem", "risk-auditor"],
+      "against": "solution-architect",
+      "status": "ADOPTED_AS_CONDITION",
+      "note": "Hai agent Claude độc lập cùng tìm ra, NHƯNG là dữ kiện file:line kiểm chứng được, không phải đồng thuận suông. Không ai phản đối. Điều kiện thiết kế: ghi cột ở CẢ score RPC + lifecycle RPC; auto-archive để NULL là ĐÚNG (ẩn dòng); kèm 1 query giám sát/pgTAP: count(completed AND champion NULL AND EXISTS final winner) = 0."
+    },
+    {
+      "id": "D5",
+      "topic": "Backfill là chỗ nguy hiểm thật: 2 bảng completed có >1 trận ở vòng playoff cao nhất → 'trận chung kết' mơ hồ; RPC có guard v_current_round_count=1, backfill phải tái dùng guard đó, bảng mơ hồ ghi NULL.",
+      "raisedBy": ["risk-auditor"],
+      "against": "solution-architect",
+      "status": "ADOPTED_AS_CONDITION",
+      "note": "Không ai phản đối. Điều kiện merge."
+    },
+    {
+      "id": "D6",
+      "topic": "Mật độ card list: sau lọc tên rác chỉ ~16-24/88 row có champion (<20-27%) — ẩn im lặng ở 74-80% row khiến dòng champion đọc như LỖI chứ không như tính năng.",
+      "raisedBy": ["ui-ux-critic"],
+      "against": "solution-architect",
+      "status": "OPEN_FOR_CUONG",
+      "note": "ui-ux: card list làm CUỐI (chờ tỉ lệ >50%) hoặc kèm phân biệt hiển thị 'giải vòng bảng nhiều bảng — về cấu trúc không có vô địch'. Architect chưa được đối chất lại (đúng luật 1 vòng). Cần Cuong quyết card list có vào v1 không."
+    },
+    {
+      "id": "D7",
+      "topic": "risk-auditor HOLD chống pre-mortem: cơ chế 'tie-break heap-order lật champion' không áp dụng khi champion = winner_id trận chung kết (không đi qua standings sort).",
+      "raisedBy": ["risk-auditor"],
+      "against": "pre-mortem",
+      "status": "MOOT",
+      "note": "Thiết kế chốt bỏ hẳn nhánh standings (architect newDisagreement với ui-ux, ui-ux không phản đối) → sự cố 1 của pre-mortem bất khả thi về cấu trúc. Cả hai đúng trong phạm vi giả định của mình."
+    }
+  ]
+}
