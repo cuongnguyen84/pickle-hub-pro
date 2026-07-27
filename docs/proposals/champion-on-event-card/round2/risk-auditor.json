@@ -1,0 +1,38 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Denormalize 2 cột champion ghi trong RPC score_quick_table_match_atomic, hay derive read-only runtime",
+      "myRound1Position": "KHÔNG denormalize, derive read-only, checklist 'git diff migrations phải rỗng — có file = RED'.",
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20260722030000_atomic_bracket_score_correction.sql:236-255 — block IF v_current_round_count = 1 AND NOT EXISTS(vòng sau) THEN UPDATE quick_tables SET status='completed' có thật, đúng vị trí architect nêu; src/hooks/useQuickTableMutations.ts:156 và apple/ThePickleHub/Core/QuickTable/QuickTableRepository.swift:712 đều gọi CÙNG RPC này → luận điểm 'binary native cũ không ghi cột' của em CHẾT, vì ghi ở server-side. src/lib/quickTableResult.ts:1-14 xác nhận thuế nhân bản mà architect nêu là thật ('Swift twin — Rule changes happen here and in the Swift twin').",
+      "note": "Em rút cơ chế 'native cũ ghi thiếu cột' — sai, đã tự mở 2 file kiểm chứng. Nhưng migration prod vẫn là RED theo ĐỊNH NGHĨA của chính repo (docs/ops-runbook.md §1b: 'A RED tier is one a git revert cannot undo — prod migrations'), nên em REFINE chứ không hạ: RED bám vào bước migration+backfill (Cuong merge), code hiển thị TS/Swift là AMBER. Ba dữ kiện mới bắt buộc phải vào thiết kế: (a) RPC KHÔNG phải path duy nhất set completed — create_quick_table_playoff_atomic (20260722070000_atomic_quick_table_lifecycle.sql:755-759) và auto-archive-tournaments/index.ts:22-26 cũng set, ghi ở 1 block IF sẽ để lại completed-với-champion-NULL; (b) cả 2 path RPC đều gated theo playoff nhưng prod có 64 bảng round_robin completed KHÔNG playoff → tồn tại path lịch sử ngoài RPC; (c) BACKFILL mới là chỗ nguy hiểm, không phải cột — 2 bảng completed có >1 trận ở vòng playoff cao nhất nên 'trận chung kết' mơ hồ, và RPC tự phòng bằng guard v_current_round_count = 1 mà backfill không có. Bằng chứng luật đang mơ hồ: architect đếm 22 row, em đếm 23 rồi 24 bằng 2 truy vấn đều hợp lý. Backfill PHẢI tái dùng guard count(*) = 1 và ghi NULL cho bảng mơ hồ (card ẩn dòng — đúng hành vi đã chốt)."
+    },
+    {
+      "id": "D2",
+      "topic": "Đưa champion vào SSR bot description (share preview) trong v1 và invalidate bằng gì",
+      "myRound1Position": "KHÔNG trong carve-out; bump pr:v32→v33 là tự bắn chân; og/SSR là bề mặt kém tin cậy nhất vì blob-loss SU-429781.",
+      "move": "REFINE",
+      "evidence": "functions/_middleware.ts:707-708 route bot của /tools/quick-tables/:id sang renderQuickTable; /tools/quick-tables/:id KHÔNG khớp mục nào trong NOINDEX_PATTERNS (functions/_middleware.ts:55-113) nên bot thật sự tới renderQuickTable và response ĐƯỢC cache dưới pr:v32 (dòng 462, TTL 6h). function_edge_logs 20-27/07: 0 lần gọi og-quick-table / og-tournament / og-flex-tournament / og-doubles-elimination (chỉ og-image-match 4 lần) → og-* là code chết trên đường share.",
+      "note": "Em RÚT luận điểm blob-loss #9 áp cho bề mặt share: Pages Function chạy trên edge Cloudflare, không phải Supabase, SU-429781 không chạm tới được. ui-ux-critic đúng về file. Nhưng quyết định thì em GIỮ, vì 2 lý do không bị lật: (1) bump v33 vẫn thừa và vẫn hại — nó flush TOÀN BỘ mọi route (blog, /san, news, rankings) để đổi ~88 trang noindex; tập path cần dọn là hữu hạn và liệt kê được (SELECT share_id FROM quick_tables WHERE status='completed'), nên ?nocache=1 từng path rẻ hơn hẳn; (2) pre-mortem đúng về Zalo và điều đó độc lập với việc server nào render. REFINE quan trọng cho RED của em: lỗ leak private nằm ở renderFlexTournament (functions/_lib/render/tournaments.ts:191, client service-role tại functions/_lib/supabase.ts:10-15, 18 giải is_public=false) — tức ĐÚNG file ui-ux bảo sửa, nhưng chỉ nhánh flex. quick_tables prod là 108/108 is_public=true nên scope chỉ-quick-tables KHÔNG kích hoạt lỗ đó → RED thu hẹp về flex/doubles-elim; SSR quick-tables là AMBER."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Backfill mới là bước RED thật, không phải ADD COLUMN: 2 bảng completed có >1 trận ở vòng playoff cao nhất nên không xác định được 'trận chung kết'; RPC tự phòng bằng guard v_current_round_count = 1 (20260722030000:240-246) còn backfill không có guard nào → 2/24 row bị ghi tên vô địch theo thứ tự tuỳ ý, và cột persisted thì không tự sửa lại. Backfill phải tái dùng đúng guard count(*) = 1, bảng mơ hồ ghi NULL.",
+      "with": "solution-architect",
+      "myPosition": "ADD COLUMN nullable rollback được bằng 1 dòng DROP COLUMN; dữ liệu backfill sai thì không. Guard count(*) = 1 là điều kiện merge, không phải gợi ý."
+    },
+    {
+      "topic": "'Ghi ngay trong block IF của RPC' là chưa đủ: có ÍT NHẤT 3 đường set status='completed' — score_quick_table_match_atomic (20260722030000:252), create_quick_table_playoff_atomic (20260722070000:755-759), và auto-archive-tournaments/index.ts:22-26. Cả 2 đường RPC đều gated theo playoff, trong khi prod có 64 bảng round_robin completed không có trận playoff nào.",
+      "with": "solution-architect",
+      "myPosition": "Hoặc ghi cột ở cả 3 đường, hoặc ghi rõ trong ADR rằng completed-ngoài-RPC ⇒ champion NULL ⇒ card ẩn dòng. Không được ngầm giả định RPC là đường duy nhất."
+    },
+    {
+      "topic": "Cơ chế 'tie-break heap-order lật champion mỗi lần sửa điểm' mà pre-mortem dựng sự cố P0 lên trên: em mở src/lib/quickTableResult.ts (86 dòng) — KHÔNG có lời gọi sort nào, file chỉ có quickTableWinner/playoffAdvanceTarget/accumulateGroupStats. Champion suy từ winner_id của trận chung kết không đi qua xếp hạng standings, nên không chạm tie-break.",
+      "with": "pre-mortem",
+      "myPosition": "HOLD. Được hư cấu hậu quả, không được hư cấu cơ chế — nêu file:line có sort không ổn định thì em nhận, còn không thì rủi ro này không vào proposal. Hai agent cùng phe 'đi tìm cái hỏng' gật đầu với nhau không tạo ra bằng chứng nào."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Denormalize champion vào cột vs derive read-only runtime — điều kiện UX 'champion phải về cùng query với row'",
+      "myRound1Position": "Blocker #4: champion trên card list phải nằm trong cùng query hiện có, nếu không thì cắt champion khỏi card list; cơ chế đề xuất là cột denormalized.",
+      "move": "REFINE",
+      "evidence": "src/hooks/useQuickTable.ts:283-287 — comparator xếp hạng chỉ 2 khóa (matches_won, point_diff), KHÔNG total order; src/lib/registrationCounts.ts:15-32 — pattern batch duy nhất trong repo dùng .in() KHÔNG có .order(); supabase/migrations/20260722030000_atomic_bracket_score_correction.sql:236-255 — RPC đã tự phát hiện trận chung kết và set status='completed', v_winner_id đang trong scope",
+      "note": "Ràng buộc UX của em GIỮ NGUYÊN và không phải của em để nhượng: champion phải được tính đúng MỘT lần, ở MỘT chỗ, và về cùng round-trip với row — nếu không thì hai bề mặt (card list vs trang chi tiết) sẽ trao cúp cho hai người khác nhau, đúng như pre-mortem sự cố 1. Em đã tự mở 2 file đó kiểm chứng: comparator không total order + batch fetch không .order() là có thật, nên 'derive read-only trên card list' là phương án TỆ NHẤT trong ba phương án, không phải phương án an toàn. Cái em REFINE là phần vượt thẩm quyền: 'cột denormalized' là lựa chọn kiến trúc, không phải yêu cầu UX — cột, view, hay RPC server-side đều thỏa em, miễn là một nguồn duy nhất. Trả lời thẳng câu hỏi của orchestrator: NẾU risk-auditor thắng và luật 'không migration' được áp tuyệt đối thì 'cắt champion khỏi card list' CHÍNH LÀ kết cục em chấp nhận — nó đã là nhánh thứ hai trong lập trường vòng 1 của em, và sau khi đọc pre-mortem em còn ưu tiên nhánh đó hơn. Lưu ý mâu thuẫn nội tại của risk-auditor cần Cuong xử: rủi ro #3 nói 'KHÔNG denormalize', nhưng cách giảm thiểu của chính rủi ro #5 là 'đưa vào cùng RPC/view' — view/RPC cũng là migration. Không có đường nào vừa có champion trên card list vừa không có migration."
+    },
+    {
+      "id": "D3",
+      "topic": "Bề mặt ưu tiên — trang chi tiết + fix tab trống + share preview, hay card list web trước",
+      "myRound1Position": "Ưu tiên #1 = panel event-result trang chi tiết + fix defect tab trống + share preview; card list là bề mặt ít traffic nhất, làm sau.",
+      "move": "REFINE",
+      "evidence": "src/pages/QuickTableView.tsx:156-157 ép setActiveTab('playoff') cho MỌI table completed, trong khi :341 hasPlayoff = playoffMatches.length > 0, :905 nút tab disabled khi !hasPlayoff, :1380 thân tab là {hasPlayoff && ...} → ~60/84 round_robin completed mở ra panel RỖNG; src/components/quicktable/BracketSetupDialog.tsx:275,306 — player1_name = p.player1_name || p.name.trim(), player2_name không có fallback; functions/_middleware.ts:191 DEFAULT_TTL_SECONDS=21600 + grep PRERENDER_CACHE.delete = 0 kết quả",
+      "note": "Em chỉnh thứ tự, không rút lui. BA điều chỉnh, mỗi cái có file kèm. (1) HẠ panel trang chi tiết: số liệu của architect cho thấy đúng 22 giải có champion, và với 22 giải đó QuickTableView.tsx:156 đã tự mở tab playoff → banner champion trong PlayoffBracket.tsx:115 đã là thứ đầu tiên nhìn thấy. Giá trị tăng thêm của việc đẩy panel lên trên tabs là nhỏ — đây là dữ kiện mới thật sự lật một phần lập trường vòng 1 của em. (2) NÂNG fix tab trống lên #1 tuyệt đối, trên cả feature: nó chạm ~60 giải (gấp 3 lần feature bao giờ chạm tới), sửa một dòng, và không phụ thuộc quyết định D1. Architect không có nó trong touch surface vì architect nhìn feature, không nhìn màn hình người dùng thật sự nhận được. (3) HẠ share preview từ nhóm ưu tiên cao xuống CUỐI hoặc bỏ: em đã tự grep, PRERENDER_CACHE.delete = 0 kết quả trong toàn repo và TTL 6h — cộng với Zalo không có công cụ re-scrape, champion sai bake vào link là vĩnh viễn. Vòng 1 em xếp nó cao vì em đo giá trị (deep-link là đường vào chính) mà chưa đo đường lùi. Về luật 2 dòng (Blocker #7): em NHƯỢNG phần cơ chế — BracketSetupDialog.tsx:275 ghi player1_name = cả chuỗi gộp khi BTC gõ một ô, còn player2_name không có fallback nên rỗng, luật 'dòng 1 player1_name / dòng 2 & player2_name' không build được. Nhưng vấn đề UX vẫn nguyên và đề xuất 'in name nguyên văn' của architect KHÔNG giải quyết: một dòng ellipsis trên 390px vẫn nuốt mất người thứ hai. Thay bằng luật rẻ hơn cả hai, không parse gì: in name nguyên văn nhưng cho WRAP 2 dòng (-webkit-line-clamp: 2), không white-space: nowrap. Đúng với mọi dấu phân cách (&, +, -, ','), không đọc player2_name, không tách chuỗi tiếng Việt."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Carve-out AMBER của risk-auditor cho phép 'derive read-only' ngay trên card list — đó là phương án tệ nhất về UX, không phải phương án an toàn",
+      "with": "risk-auditor",
+      "myPosition": "Carve-out ghi 'chỉ derive read-only, card + trang chi tiết + native' và coi đó là vùng ship được ngay. Nhưng derive runtime trên card list là chính xác cơ chế của pre-mortem sự cố 1: card list buộc phải fetch batch cho ~100 giải, pattern batch duy nhất trong repo (src/lib/registrationCounts.ts:15-32) không có .order(), còn comparator (src/hooks/useQuickTable.ts:283-287) không total order → card và trang chi tiết trao cúp cho hai người khác nhau, lật mỗi lần BTC sửa điểm, không exception, không log. Sản phẩm trao nhầm cúp công khai là thiệt hại nặng hơn một migration không có down-path. Xếp hạng đúng theo em: (1) champion tính một lần server-side rồi đọc, (2) không có champion trên card list, (3) derive runtime trên card list — và (3) phải bị loại khỏi carve-out AMBER, không phải nằm trong đó."
+    },
+    {
+      "topic": "Mật độ hiển thị — dưới ~20% số row, dòng champion đọc như lỗi chứ không đọc như tính năng",
+      "with": "solution-architect",
+      "myPosition": "Architect chọn card list web làm 'điểm dừng-và-nhìn' (increment 2) và xử lý tên rác bằng bộ lọc (>=2 ký tự, không toàn chữ số). Bộ lọc sai đòn bẩy. Sau lọc còn ~16/88 row có champion = dưới 1/5. Người dùng cuộn qua 5 giải đã kết thúc, thấy 1 giải có tên vô địch và 4 giải không, sẽ kết luận 'app hỏng/thiếu dữ liệu' chứ không kết luận '4 giải kia không có nhà vô địch' — vì card không nói được sự khác nhau đó, và ẩn dòng (đúng luật intake) làm nó câm. Trên bề mặt danh sách, ẩn im lặng chỉ hoạt động khi nó là ngoại lệ; ở đây nó là 80% và đó là chế độ chính. Đề xuất: card list là increment CUỐI, sau khi tỉ lệ có champion vượt ~50%, hoặc là đi kèm một phân biệt hiển thị giữa 'giải có playoff, đã có vô địch' và 'giải vòng bảng nhiều bảng, về cấu trúc không có vô địch' — thứ hai không phải dữ liệu thiếu, và card hiện chưa nói được điều đó."
+    }
+  ]
+}
