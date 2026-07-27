@@ -1,0 +1,35 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Có port T4 (perks + lặp tuần) và T5 (mời thành viên CLB) — hai task GHI vào prod DB — trong đêm autonomous không?",
+      "myRound1Position": "RED cho MỌI màn hình có ghi, gộp chung 'social event slots/perks/recurrence' + 'club invite member' vào một dòng vì ghi thật vào prod và không revert được từng dòng.",
+      "move": "REFINE",
+      "evidence": "apple/ThePickleHub/Core/Social/SocialOrganizerRepository.swift:313 (slots luôn rỗng, tách được), :323 createEvent đi qua RPC create_social_event_with_payment, :349-351 EventPatch CỐ Ý bỏ slots; supabase/migrations/20260511120000_social_events_foundation.sql:182-188 (draft vô hình với mọi user); supabase/migrations/20260522120000_club_members.sql:236-298 (invite_club_member SECURITY DEFINER + is_club_organizer + auth_required); supabase/migrations/20260527140000_club_admin_push_triggers.sql:174,194-196 (INSERT club_members bắn push THẬT)",
+      "note": "Round 1 em gộp slots+perks+recurrence thành một cục — đó là lỗi phân giải của em, và architect tách đúng: cơ chế overbooking (rủi ro #1 vòng 1) bám vào SLOTS, mà slots đã ghi nợ T10. Bỏ slots ra thì T4 không còn chạm event_registrations, tức không còn dính lỗ bypass DB-01. RED của em KHÔNG hạ, nó THU HẸP còn đúng hai điểm: (a) T4 nhánh EDIT — nếu thêm free_perks vào EventPatch mà form không nạp sẵn giá trị cũ; (b) T5 — nếu CLB test có co-manager. Chi tiết trong newDisagreements + partition dưới."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "T4 phân đôi: create-draft là GREEN THẬT, nhưng nhánh EDIT vẫn RED — và nó RED vì free_perks, không phải vì slots",
+      "with": "solution-architect",
+      "myPosition": "Nhánh CREATE em nhả: createEvent() đi qua RPC guarded create_social_event_with_payment (SocialOrganizerRepository.swift:323-330), và social_events_select_public (20260511120000:182-188) = '(status=published AND visibility=public) OR auth.uid()=created_by OR admin' → draft KHÔNG user nào SELECT được, xoá bằng DELETE row của chính mình. Không còn state không-revert-được. GREEN. Nhánh EDIT thì không: hôm nay SocialEventFormView.swift:136 truyền free_perks: nil khi tạo, và EventPatch KHÔNG có free_perks. T4 muốn có perks thì phải thêm free_perks vào EventPatch. Em đã đo bằng swift thật (struct { a: String; b: String? } → JSONEncoder cho ra {\"a\":\"x\"}, key b BỊ BỎ): Swift synthesized Encodable dùng encodeIfPresent nên nil AN TOÀN — nhưng MẢNG RỖNG [] thì KHÔNG nil, nó là key có mặt và PostgREST sẽ GHI ĐÈ. Form state khởi tạo rỗng + BTC bấm Save trên event thật = xoá trắng danh sách perks họ đã nhập trên web, im lặng, không revert được. Gate bắt buộc: SocialEventFormView phải seed form state từ event.freePerks (SocialModels.swift:20, repo đã select sẵn cột ở :393) VÀ phải có 1 XCTest chứng minh patch của event có perks không cho ra free_perks: []. Không có gate đó thì nhánh edit giữ RED."
+    },
+    {
+      "topic": "T5 RED thu về đúng MỘT tiền điều kiện kiểm được trong 10 giây, không phải cả task",
+      "with": "solution-architect",
+      "myPosition": "Em nhả phần authorization: invite_club_member (20260522120000:236-298) là RPC guarded đúng chuẩn điều kiện (b) vòng 1 của em — SECURITY DEFINER, auth_required 42501, is_club_organizer, chặn ghost profile, idempotent trên already-active; và club_members có DELETE policy cho organizer (:93) nên row xoá được = revert được. Nhưng architect bỏ sót một side effect NGOÀI DB: 20260527140000_club_admin_push_triggers.sql:194-196 gắn AFTER INSERT ON club_members → tg_notify_club_admins_on_member_insert → dispatch_club_admin_push (:174) gửi PUSH THẬT 'Thành viên mới — X vừa được thêm vào <CLB>' tới các admin/manager KHÁC của CLB. Push đã gửi lúc 3h sáng không rút lại được — đó đúng là định nghĩa RED. May là chính hàm đó tự thoát sớm khi không có người nhận (:154-156 array rỗng → RETURN NEW). Nên gate G5: CLB dùng để test phải có test-account là organizer DUY NHẤT — verify TRƯỚC khi chạy bằng `select (select created_by from clubs where id=$1), (select count(*) from club_managers where club_id=$1)` → created_by = tài khoản test VÀ count = 0. Gate xanh → T5 GREEN. Gate đỏ hoặc không chạy được gate → T5 giữ RED, hoãn."
+    },
+    {
+      "topic": "Cơ chế pre-mortem nêu (EventPatch xoá trắng slots của web) KHÔNG tồn tại trong code hôm nay — đúng họ hàng, sai trường",
+      "with": "pre-mortem",
+      "myPosition": "HOLD, bác cơ chế như đã phát biểu. SocialOrganizerRepository.swift:349-351 đã CÓ SẴN guard đó, kèm comment nói đúng lý do: 'KHÔNG có slots — web edit ghi lại slots nhưng native chưa có UI slots, bỏ key để không xoá nhóm đăng ký hiện có.' Tức đề xuất 'không thêm slots vào EventPatch' là mô tả hiện trạng, không phải một guard mới. Và giả định ngầm 'field native không biết → bị đóng gói thành null' cũng sai: em đã chạy swift thật, Optional nil bị encodeIfPresent BỎ HẲN key ({\"a\":\"x\"}), không thành null. Em không HOLD để cãi cho vui: lớp lỗi này CÓ THẬT, nhưng nó nằm ở free_perks: [] (mảng rỗng, key có mặt) trong chính T4, không nằm ở slots. Đặt cảnh báo sai chỗ thì đêm nay sẽ đi canh cái đã được canh rồi và để hở cái thật. assertionFailure trong catch cũng không giúp: ghi đè thành công không ném lỗi."
+    },
+    {
+      "topic": "Bằng chứng 'test bằng draft rồi xoá' chỉ chứng minh được nhánh CREATE, architect đang dùng nó để bảo lãnh cả nhánh EDIT",
+      "with": "solution-architect",
+      "myPosition": "Một event draft do agent tự tạo không có perks cũ để mất, nên save trên nó KHÔNG BAO GIỜ tái hiện được lỗi ghi đè. Muốn chứng minh nhánh edit an toàn phải: tạo draft → set free_perks = ['Nước','Khăn'] → thoát form → mở lại → Save mà KHÔNG chạm hàng chip → đọc lại row và khẳng định free_perks vẫn đủ 2 phần tử. Đó là bài test 3 phút và nó phải nằm trong báo cáo sáng mai kèm event id. Không có bước 'mở lại rồi save' thì đừng ai ghi là đã verify."
+    }
+  ]
+}
