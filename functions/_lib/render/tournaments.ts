@@ -17,6 +17,7 @@ import {
   buildBreadcrumbJsonLd,
 } from "../utils";
 import { buildListJsonLd } from "./shared";
+import { displayChampionName } from "../../../src/lib/championDisplay";
 import { render404 } from "./static-pages";
 
 // ─── Tournament ─────────────────────────────────��─────────
@@ -102,12 +103,17 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
 // ─── Tool instance pages (noindex) ────────────────────────
 
 export async function renderQuickTable(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {
-  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public").eq("share_id", shareId).single();
+  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public, champion_name").eq("share_id", shareId).single();
   // Client service-role bypass RLS — bảng private phải 404 y hệt không tồn tại.
   if (!qt || !qt.is_public) return render404(`/tools/quick-tables/${shareId}`, siteUrl);
 
   const title = buildTitle(qt.name, " | Bảng đấu Pickleball");
-  const desc = `Bảng đấu ${qt.name} – ${qt.player_count} VĐV, ${qt.format}. Xem kết quả trực tiếp trên ThePickleHub.`.slice(0, 160);
+  // Champion đứng ĐẦU description để sống sót khi Zalo cắt ngắn; không vào
+  // <title> (budget 60 byte, tên VN có dấu ăn hết). Không champion → chuỗi cũ.
+  const champion = displayChampionName(qt.champion_name);
+  const desc = (champion
+    ? `Vô địch: ${champion}. Bảng đấu ${qt.name} – ${qt.player_count} VĐV. Xem kết quả trên ThePickleHub.`
+    : `Bảng đấu ${qt.name} – ${qt.player_count} VĐV, ${qt.format}. Xem kết quả trực tiếp trên ThePickleHub.`).slice(0, 160);
   const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Quick Tables", href: `${siteUrl}/tools/quick-tables` }, { label: qt.name }]);
 
   return htmlResponse(buildHtml({ title, description: desc, url: `${siteUrl}/tools/quick-tables/${shareId}`, siteUrl, extraMeta: `<meta name="robots" content="noindex, follow"/>`, bodyContent: `${bc}${relatedToolLinks("quick-tables", siteUrl)}` }));

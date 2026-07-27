@@ -212,7 +212,7 @@ struct ToolsRepository {
         do {
             let rows: [QuickTableRow] = try await client
                 .from("quick_tables")
-                .select("id, share_id, name, is_doubles, player_count, status, requires_registration, start_time, created_at")
+                .select("id, share_id, name, is_doubles, player_count, status, requires_registration, start_time, created_at, champion_name")
                 .eq("creator_user_id", value: uid)
                 .order("created_at", ascending: false)
                 .limit(limit)
@@ -299,7 +299,8 @@ struct ToolsRepository {
             capacity: capacity,
             registered: registered,
             state: state,
-            createdAt: Self.parseDate(row.createdAt)
+            createdAt: Self.parseDate(row.createdAt),
+            championName: row.championName
         )
     }
 
