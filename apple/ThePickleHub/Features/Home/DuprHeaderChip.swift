@@ -4,7 +4,9 @@ import SwiftUI
 /// pills (design ref `ThePickleHub Home.dc.html`). Three states:
 ///   • loading  → skeleton pill
 ///   • rated    → `DUPR <score> ▲.04`, tap → rating/profile screen
-///   • unlinked → `DUPR · Kết nối`, tap → DUPR link flow (web)
+///   • unlinked → `DUPR · Chưa kết nối`, static label. NOT tappable: the web
+///     /dupr page requires a login the native user can't complete in SafariView
+///     (100% dead end). Becomes a link flow again when one exists natively.
 struct DuprHeaderChip: View {
     let state: State
     let onTap: () -> Void
@@ -21,7 +23,9 @@ struct DuprHeaderChip: View {
         switch state {
         case .loading:
             content(loading: true).redacted(reason: .placeholder)
-        default:
+        case .unlinked:
+            content(loading: false)
+        case .rated:
             Button(action: onTap) { content(loading: false) }
                 .buttonStyle(.plain)
         }
@@ -43,9 +47,9 @@ struct DuprHeaderChip: View {
                     deltaLabel(delta)
                 }
             case .unlinked:
-                Text("· Kết nối")
+                Text("· Chưa kết nối")
                     .font(TLFont.mono(11, .semibold))
-                    .foregroundStyle(TLColor.accentText)
+                    .foregroundStyle(TLColor.fg3)
             case .loading:
                 Text("0.00").font(TLFont.mono(16, .bold))
             }
@@ -74,7 +78,7 @@ struct DuprHeaderChip: View {
     private var accessibilityText: String {
         switch state {
         case .loading: return "Đang tải điểm DUPR"
-        case .unlinked: return "Kết nối DUPR"
+        case .unlinked: return "Chưa kết nối DUPR"
         case .rated(let r, let d):
             let base = "Điểm DUPR \(String(format: "%.2f", r))"
             guard let d else { return base }
