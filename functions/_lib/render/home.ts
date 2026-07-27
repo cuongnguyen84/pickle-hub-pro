@@ -60,10 +60,23 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
           },
+          // sameAs must only ever list profiles that resolve. A 404 here is a
+          // dirty signal on the exact entity these blocks exist to consolidate
+          // ("the pickle hub" ranks ~pos 8 on its own name).
+          //
+          // The App Store listing is verified live: apps.apple.com/app/id6759968026
+          // returns 200 as "ThePickleHub: Tournaments", developer NGUYEN THE CUONG.
+          //
+          // No Play Store entry on purpose. The 2026-07-24 SEO brief asked for
+          // play.google.com/store/apps/details?id=net.thepicklehub.app — that URL
+          // 404s on every locale and app-id variant tried (hl=vi&gl=VN, hl=en&gl=US,
+          // com.thepicklehub.app, net.thepicklehub). The Android app is not
+          // published. Add it here when it is.
           sameAs: [
             "https://www.facebook.com/ThePickleHub",
             "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
+            "https://apps.apple.com/app/id6759968026",
           ],
         },
         {
@@ -156,10 +169,23 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
           },
+          // sameAs must only ever list profiles that resolve. A 404 here is a
+          // dirty signal on the exact entity these blocks exist to consolidate
+          // ("the pickle hub" ranks ~pos 8 on its own name).
+          //
+          // The App Store listing is verified live: apps.apple.com/app/id6759968026
+          // returns 200 as "ThePickleHub: Tournaments", developer NGUYEN THE CUONG.
+          //
+          // No Play Store entry on purpose. The 2026-07-24 SEO brief asked for
+          // play.google.com/store/apps/details?id=net.thepicklehub.app — that URL
+          // 404s on every locale and app-id variant tried (hl=vi&gl=VN, hl=en&gl=US,
+          // com.thepicklehub.app, net.thepicklehub). The Android app is not
+          // published. Add it here when it is.
           sameAs: [
             "https://www.facebook.com/ThePickleHub",
             "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
+            "https://apps.apple.com/app/id6759968026",
           ],
         },
         {
