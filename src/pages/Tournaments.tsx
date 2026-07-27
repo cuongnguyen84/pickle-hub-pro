@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { trackEvent } from "@/utils/ga";
 import { REG_BADGE_MIN, regBadgeCount } from "@/lib/regBadge";
+import { displayChampionName } from "@/lib/championDisplay";
 import {
   useTournaments,
   useLivestreams,
@@ -58,6 +59,8 @@ interface CommunityBracket {
   /** Live approved-registration count (open-reg QuickTable + registration-open
    *  Team Match only). Undefined = no data / count query degraded. */
   registered_count?: number;
+  /** Denormalized playoff-final winner (QuickTable only for now). */
+  champion_name?: string | null;
 }
 
 interface FormatDef {
@@ -801,6 +804,10 @@ const Tournaments = () => {
                           ? "registration"
                           : t.status;
                       const status = STATUS_LABEL[statusKey] ?? { cls: "active" as const, en: t.status, vi: t.status };
+                      // Champion là KẾT QUẢ, không phải metadata: element riêng
+                      // (không nhét vào chuỗi ·), và thay thế pill trạng thái —
+                      // "Đã kết thúc" + tên vô địch là thừa một cái.
+                      const champion = displayChampionName(t.champion_name);
                       return (
                         <Link
                           key={t.id}
@@ -811,6 +818,12 @@ const Tournaments = () => {
                           <div className="tl-br-fmt" />
                           <div className="tl-br-body">
                             <h4 className="tl-br-name">{t.name}</h4>
+                            {champion && (
+                              <div className="tl-br-result">
+                                <span className="tl-br-result-label">{vi ? "Vô địch:" : "Champion:"}</span>
+                                <span className="tl-br-result-name">{champion}</span>
+                              </div>
+                            )}
                             <div className="tl-br-meta">
                               <span>{currentFormat.renderMeta(t, vi)}</span>
                               <span className="sep">·</span>
@@ -820,7 +833,9 @@ const Tournaments = () => {
                           <div className="tl-br-creator">
                             {t.creator_display_name ?? "—"}
                           </div>
-                          <span className={`tl-br-status ${status.cls}`}>{vi ? status.vi : status.en}</span>
+                          {!champion && (
+                            <span className={`tl-br-status ${status.cls}`}>{vi ? status.vi : status.en}</span>
+                          )}
                         </Link>
                       );
                     })}
