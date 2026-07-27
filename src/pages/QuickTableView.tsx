@@ -153,7 +153,12 @@ const QuickTableView = () => {
         setRegistrationCount(pendingCount);
       }
 
-      if (data.table.status === 'playoff' || data.table.status === 'completed') {
+      // Round-robin thuần không có playoff: ép sang tab playoff sẽ ra panel
+      // rỗng (nút tab disabled, thân tab render theo hasPlayoff) — giữ 'groups'.
+      if (
+        (data.table.status === 'playoff' || data.table.status === 'completed') &&
+        data.matches.some((m) => m.is_playoff)
+      ) {
         setActiveTab('playoff');
       } else if (data.table.requires_registration && data.table.status === 'setup') {
         setActiveTab('registration');

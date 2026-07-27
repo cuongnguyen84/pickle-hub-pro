@@ -48,11 +48,13 @@ Deno.serve(async (req) => {
 
     const { data: table, error } = await supabase
       .from("quick_tables")
-      .select("id, name, share_id, status, player_count, group_count, is_doubles, format, start_time")
+      .select("id, name, share_id, status, player_count, group_count, is_doubles, format, start_time, is_public")
       .eq("share_id", shareId)
       .single();
 
-    if (error || !table) {
+    // Bảng private: trả y hệt "không tồn tại" — service role bypass RLS nên
+    // phải tự gate ở đây, không được lộ tên qua bot UA.
+    if (error || !table || !table.is_public) {
       return serveHtml({
         title: "Giải đấu không tồn tại | ThePickleHub",
         description: "Giải đấu này không tồn tại hoặc đã bị xóa.",
