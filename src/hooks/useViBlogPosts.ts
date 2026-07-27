@@ -107,15 +107,27 @@ export function useViBlogPostBySlug(slug: string | undefined) {
     // ViBlogPost redirects to the canonical VI URL when the match came from
     // alternate_en_slug.
     //
-    // `or=` still yields at most one row: alternate_en_slug values are EN
-    // slugs, and 0 of 53 published VI slugs collide with an EN slug (verified
-    // 2026-07-27), so the two sides of the OR are disjoint. That keeps the
-    // pgrst.object+json Accept header valid.
-    queryFn: () =>
-      viBlogFetch<ViBlogPost>(
-        `?or=(slug.eq.${slug!},alternate_en_slug.eq.${slug!})&status=eq.published`,
-        { single: true },
-      ),
+    // `or=` yields at most one row: alternate_en_slug values are EN slugs, and
+    // 0 of 53 published VI slugs collide with an EN slug (verified 2026-07-27),
+    // so the two sides of the OR are disjoint.
+    //
+    // Returns an ARRAY, not `single: true`. With the pgrst.object+json Accept
+    // header PostgREST answers 406 PGRST116 "The result contains 0 rows" for a
+    // slug that does not exist (verified against prod), which viBlogFetch turns
+    // into a thrown Error. That made a missing article indistinguishable from a
+    // dead network — and once ViBlogPost started routing `error` to ErrorState,
+    // a nonexistent post rendered "Lỗi kết nối — Thử lại", telling the reader
+    // to retry a URL that can never work.
+    //
+    // Without the header the same query is a plain 200 `[]`, so absence is data
+    // and only a real transport failure throws. Each branch now says the true
+    // thing. Pinned by tests/human-path.spec.ts.
+    queryFn: async () => {
+      const rows = await viBlogFetch<ViBlogPost[]>(
+        `?or=(slug.eq.${slug!},alternate_en_slug.eq.${slug!})&status=eq.published&limit=1`,
+      );
+      return rows[0] ?? null;
+    },
     // Disabled for a malformed slug: react-query v5 reports isFetching false,
     // so ViBlogPost skips the skeleton and renders "không tìm thấy" — which is
     // the truthful answer for a slug that cannot exist.
