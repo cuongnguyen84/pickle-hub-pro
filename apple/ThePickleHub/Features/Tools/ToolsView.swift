@@ -513,19 +513,13 @@ private struct TournamentCard: View {
                         .font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg).lineLimit(1)
                     Text(tournament.metaLine)
                         .font(TLFont.mono(10.5)).foregroundStyle(TLColor.fg3)
-                    if let champion = tournament.displayChampion {
-                        (Text("VÔ ĐỊCH  ").font(TLFont.mono(9.5, .medium)).foregroundStyle(TLColor.fg3)
-                            + Text(champion).font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg))
-                            .lineLimit(2)
-                    }
                     if let creator = tournament.creatorName {
                         Text("bởi \(creator)")
                             .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4).lineLimit(1)
                     }
                 }
                 Spacer(minLength: 8)
-                // Champion thay pill trạng thái — "Đã kết thúc" + tên vô địch là thừa một cái.
-                if tournament.displayChampion == nil { statusBadge }
+                statusBadge
             }
 
             if tournament.hasProgress {

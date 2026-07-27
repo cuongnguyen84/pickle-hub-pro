@@ -30,12 +30,11 @@ export function toFeaturedParentTournament(
   return {
     ...parent,
     subEventCount: events.length,
-    previewSubEvents: events.slice(0, 3).map(({ id, name, status, share_id, champion_name }) => ({
+    previewSubEvents: events.slice(0, 3).map(({ id, name, status, share_id }) => ({
       id,
       name,
       status,
       share_id,
-      champion_name,
     })),
   };
 }
@@ -63,7 +62,6 @@ export function useFeaturedParentTournaments(limit = 6) {
             name,
             status,
             share_id,
-            champion_name,
             created_at
           )
         `)

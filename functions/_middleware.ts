@@ -195,13 +195,6 @@ function pathCacheTtl(pathname: string): number {
   if (stripped === "/social" || stripped === "/clubs" || stripped === "/san") {
     return HUB_LIST_TTL_SECONDS;
   }
-  // champion-on-event-card D2: tool pages now carry the champion in their
-  // description; a score correction after a share must stop serving the stale
-  // name within minutes. Zalo/FB keep their own copy forever regardless —
-  // OG is a snapshot at share time (accepted, see proposal ADR note).
-  if (stripped.startsWith("/tools/")) {
-    return HUB_LIST_TTL_SECONDS;
-  }
   return DEFAULT_TTL_SECONDS;
 }
 

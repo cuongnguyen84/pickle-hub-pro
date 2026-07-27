@@ -98,9 +98,6 @@ export type QuickTablePublic = {
    *  block the list). Used for the social-proof badge; approved-only on purpose
    *  (pending is self-serve + never auto-resolves → would inflate). */
   registered_count?: number;
-  /** Denormalized winner of the deciding playoff final (written by the scoring
-   *  RPCs, migration 20260727120000). NULL = no derivable champion — hide. */
-  champion_name?: string | null;
 };
 
 export function useOpenRegistrationTables(options?: { limit?: number }) {
@@ -215,7 +212,7 @@ export function useCompletedPublicQuickTables(options?: { limit?: number }) {
     queryFn: async () => {
       let query = supabase
         .from("quick_tables")
-        .select("id, name, share_id, status, format, player_count, requires_registration, is_doubles, created_at, creator_user_id, champion_name")
+        .select("id, name, share_id, status, format, player_count, requires_registration, is_doubles, created_at, creator_user_id")
         .eq("is_public", true)
         .eq("status", "completed")
         .order("updated_at", { ascending: false });

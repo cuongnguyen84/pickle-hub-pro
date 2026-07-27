@@ -99,7 +99,6 @@ struct QuickTableRow: Decodable, Equatable {
     let requiresRegistration: Bool?
     let startTime: String?
     let createdAt: String?
-    let championName: String?
 
     enum CodingKeys: String, CodingKey {
         case id, name, status
@@ -109,7 +108,6 @@ struct QuickTableRow: Decodable, Equatable {
         case requiresRegistration = "requires_registration"
         case startTime = "start_time"
         case createdAt = "created_at"
-        case championName = "champion_name"
     }
 }
 
@@ -127,21 +125,6 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     /// Creator's display name — only populated in the admin "Tất cả" scope so an
     /// admin can see who owns each tournament. nil for the user's own list.
     var creatorName: String? = nil
-    /// Denormalized playoff-final winner (QuickTable only). Twin of the web
-    /// column select — see migration 20260727120000.
-    var championName: String? = nil
-
-    /// Display-filtered champion — twin of src/lib/championDisplay.ts: BTC free-text
-    /// names include junk ("5", "test4", "VDV 3", "Player 4"); hide <2 chars,
-    /// all-digits, and single-keyword placeholders. Rule changes happen in BOTH files.
-    var displayChampion: String? {
-        guard let raw = championName?.trimmingCharacters(in: .whitespacesAndNewlines),
-              raw.count >= 2,
-              !raw.allSatisfy({ $0.isNumber }) else { return nil }
-        let placeholder = "^(test|demo|player|vdv|team|doi|đội|ng(ư|u)(ờ|o)i(\\s*ch(ơ|o)i)?)[\\s._-]*\\d*$"
-        if raw.range(of: placeholder, options: [.regularExpression, .caseInsensitive]) != nil { return nil }
-        return raw
-    }
 
     var displayName: String { name.nonEmpty ?? "Giải đấu" }
 

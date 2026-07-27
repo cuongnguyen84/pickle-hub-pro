@@ -5352,8 +5352,6 @@ export type Database = {
       quick_tables: {
         Row: {
           auto_approve_registrations: boolean | null
-          champion_name: string | null
-          champion_player_id: string | null
           courts: string[] | null
           created_at: string
           creator_user_id: string | null
@@ -5383,8 +5381,6 @@ export type Database = {
         }
         Insert: {
           auto_approve_registrations?: boolean | null
-          champion_name?: string | null
-          champion_player_id?: string | null
           courts?: string[] | null
           created_at?: string
           creator_user_id?: string | null
@@ -5414,8 +5410,6 @@ export type Database = {
         }
         Update: {
           auto_approve_registrations?: boolean | null
-          champion_name?: string | null
-          champion_player_id?: string | null
           courts?: string[] | null
           created_at?: string
           creator_user_id?: string | null
@@ -5444,13 +5438,6 @@ export type Database = {
           wildcard_count?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "quick_tables_champion_player_id_fkey"
-            columns: ["champion_player_id"]
-            isOneToOne: false
-            referencedRelation: "quick_table_players"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "quick_tables_parent_tournament_id_fkey"
             columns: ["parent_tournament_id"]
@@ -7525,6 +7512,10 @@ export type Database = {
         Args: { p_tournament_id: string }
         Returns: Json
       }
+      attach_quick_tables_to_parent: {
+        Args: { p_parent_id: string; p_table_ids: string[] }
+        Returns: number
+      }
       approve_club_member: {
         Args: { p_club_id: string; p_profile_id: string }
         Returns: {
@@ -7545,10 +7536,6 @@ export type Database = {
       assign_team_match_teams_to_groups: {
         Args: { _pairs: Json }
         Returns: undefined
-      }
-      attach_quick_tables_to_parent: {
-        Args: { p_parent_id: string; p_table_ids: string[] }
-        Returns: number
       }
       award_player_event_badges: {
         Args: { p_event_id: string; p_profile_id: string }

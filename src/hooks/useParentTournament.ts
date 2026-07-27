@@ -27,8 +27,6 @@ export interface SubEventPreview {
   name: string;
   status: string;
   share_id: string;
-  /** Denormalized playoff-final winner — NULL/undefined = hide the line. */
-  champion_name?: string | null;
 }
 
 export interface ParentTournamentWithPreview extends ParentTournament {
