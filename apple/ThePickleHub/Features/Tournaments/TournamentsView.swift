@@ -82,16 +82,48 @@ struct TournamentsView: View {
 
     // MARK: Community
 
+    /// nil = all formats. Web parity: `${title} · ${titleVi}` labels.
+    private static let formatOptions: [(value: BracketFormat?, label: String)] =
+        [(nil, "Tất cả thể thức")] +
+        [BracketFormat.quickTable, .doublesElim, .flex, .teamMatch]
+            .map { ($0, "\($0.titleEn) · \($0.labelVi)") }
+
     @ViewBuilder
     private var communityList: some View {
-        if model.community.isEmpty {
-            TLEmptyState(icon: "person.3", title: "Chưa có giải cộng đồng",
-                         subtitle: "Tạo bảng đấu miễn phí trong tab Công cụ.")
-        } else {
-            LazyVStack(spacing: 12) {
-                ForEach(model.community) { t in
-                    Button { navTarget = t } label: { CommunityCard(tournament: t) }
-                        .buttonStyle(.plain)
+        VStack(spacing: 12) {
+            TLSelect(
+                label: "Thể thức",
+                options: Self.formatOptions,
+                selection: Binding(get: { model.communityFormat },
+                                   set: { model.communityFormat = $0 })
+            )
+            TLSegmented(
+                options: [TournamentsViewModel.CommunityStatus.ongoing, .ended],
+                selection: Binding(
+                    get: { model.communityStatus },
+                    set: { status in
+                        model.communityStatus = status
+                        if status == .ended { Task { await model.loadEndedIfNeeded() } }
+                    }
+                ),
+                label: { $0 == .ongoing ? "Đang diễn ra" : "Đã kết thúc" }
+            )
+
+            if model.endedLoading {
+                TLLoadingView(rows: 3).padding(.top, 4)
+            } else if model.filteredCommunity.isEmpty {
+                TLEmptyState(
+                    icon: "person.3",
+                    title: model.communityStatus == .ongoing
+                        ? "Chưa có giải nào đang diễn ra"
+                        : "Chưa có giải nào đã kết thúc",
+                    subtitle: "Tạo bảng đấu miễn phí trong tab Công cụ.")
+            } else {
+                LazyVStack(spacing: 12) {
+                    ForEach(model.filteredCommunity) { t in
+                        Button { navTarget = t } label: { CommunityCard(tournament: t) }
+                            .buttonStyle(.plain)
+                    }
                 }
             }
         }

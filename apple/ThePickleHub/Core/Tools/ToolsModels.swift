@@ -78,6 +78,28 @@ enum BracketFormat: String, Equatable, Hashable {
     /// Whether a native detail screen exists; others open the web.
     var hasNativeView: Bool { true }
 
+    /// English product name — the formats are product nouns kept in English on
+    /// the web (`FORMATS[].title` in src/pages/Tournaments.tsx).
+    var titleEn: String {
+        switch self {
+        case .quickTable: return "Quick Tables"
+        case .doublesElim: return "Doubles Elimination"
+        case .teamMatch: return "Team Match"
+        case .flex: return "Flex"
+        }
+    }
+
+    /// VI display name — single source, twin of web `FORMATS[].titleVi`
+    /// (src/pages/Tournaments.tsx). "Loại kép", not "Loại trực tiếp".
+    var labelVi: String {
+        switch self {
+        case .quickTable: return "Chia bảng"
+        case .doublesElim: return "Loại kép"
+        case .teamMatch: return "Đồng đội"
+        case .flex: return "Tùy chỉnh"
+        }
+    }
+
     func webURL(shareID: String) -> URL {
         switch self {
         case .quickTable: return WebRoutes.quickTable(shareID: shareID)

@@ -18,17 +18,27 @@ struct CommunityRepository {
 
     /// All active public community tournaments, newest first.
     func activeCommunity(limit: Int = 20) async -> [MyTournament] {
-        async let q = quickTables(limit: limit)
-        async let t = teamMatches(limit: limit)
-        async let d = doublesElim(limit: limit)
-        async let f = flex(limit: limit)
+        await fetchAll(completed: false, limit: limit)
+    }
+
+    /// Completed public community tournaments — backs the "Đã kết thúc" filter.
+    /// Fetched lazily on first switch (most users never open it).
+    func completedCommunity(limit: Int = 20) async -> [MyTournament] {
+        await fetchAll(completed: true, limit: limit)
+    }
+
+    private func fetchAll(completed: Bool, limit: Int) async -> [MyTournament] {
+        async let q = quickTables(limit: limit, completed: completed)
+        async let t = teamMatches(limit: limit, completed: completed)
+        async let d = doublesElim(limit: limit, completed: completed)
+        async let f = flex(limit: limit, completed: completed)
         let all = await q + t + d + f
         return all.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
     }
 
     // MARK: Quick Tables (is_public, active statuses)
 
-    private func quickTables(limit: Int) async -> [MyTournament] {
+    private func quickTables(limit: Int, completed: Bool) async -> [MyTournament] {
         struct Row: Decodable {
             let id: UUID; let name: String?; let share_id: String; let status: String?
             let player_count: Int?; let requires_registration: Bool?; let is_doubles: Bool?; let created_at: String?
@@ -37,7 +47,7 @@ struct CommunityRepository {
             let rows: [Row] = try await client.from("quick_tables")
                 .select("id, name, share_id, status, player_count, requires_registration, is_doubles, created_at")
                 .eq("is_public", value: true)
-                .in("status", values: ["setup", "group_stage", "playoff"])
+                .in("status", values: completed ? ["completed"] : ["setup", "group_stage", "playoff"])
                 .order("created_at", ascending: false)
                 .limit(limit)
                 .execute().value
@@ -45,6 +55,7 @@ struct CommunityRepository {
                 let state: TournamentState = {
                     switch r.status {
                     case "group_stage", "playoff": return .ongoing
+                    case "completed": return .completed
                     case "setup": return (r.requires_registration == true) ? .open : .draft
                     default: return .draft
                     }
@@ -60,7 +71,7 @@ struct CommunityRepository {
 
     // MARK: Team Match (registration / ongoing)
 
-    private func teamMatches(limit: Int) async -> [MyTournament] {
+    private func teamMatches(limit: Int, completed: Bool) async -> [MyTournament] {
         struct Row: Decodable {
             let id: UUID; let name: String?; let share_id: String; let status: String?
             let team_count: Int?; let created_at: String?
@@ -68,15 +79,22 @@ struct CommunityRepository {
         do {
             let rows: [Row] = try await client.from("team_match_tournaments")
                 .select("id, name, share_id, status, team_count, created_at")
-                .in("status", values: ["registration", "ongoing"])
+                .in("status", values: completed ? ["completed"] : ["registration", "ongoing"])
                 .order("created_at", ascending: false)
                 .limit(limit)
                 .execute().value
             return rows.map { r in
-                MyTournament(
+                let state: TournamentState = {
+                    switch r.status {
+                    case "ongoing": return .ongoing
+                    case "completed": return .completed
+                    default: return .open
+                    }
+                }()
+                return MyTournament(
                     id: r.id, shareID: r.share_id, name: r.name ?? "Đấu đồng đội",
                     isDoubles: true, capacity: r.team_count ?? 0, registered: 0,
-                    state: r.status == "ongoing" ? .ongoing : .open,
+                    state: state,
                     createdAt: Self.date(r.created_at), format: .teamMatch
                 )
             }
@@ -85,7 +103,7 @@ struct CommunityRepository {
 
     // MARK: Doubles Elimination (setup / active / ongoing)
 
-    private func doublesElim(limit: Int) async -> [MyTournament] {
+    private func doublesElim(limit: Int, completed: Bool) async -> [MyTournament] {
         struct Row: Decodable {
             let id: UUID; let name: String?; let share_id: String; let status: String?
             let team_count: Int?; let created_at: String?
@@ -93,7 +111,7 @@ struct CommunityRepository {
         do {
             let rows: [Row] = try await client.from("doubles_elimination_tournaments")
                 .select("id, name, share_id, status, team_count, created_at")
-                .in("status", values: ["setup", "active", "ongoing"])
+                .in("status", values: completed ? ["completed"] : ["setup", "active", "ongoing"])
                 .order("created_at", ascending: false)
                 .limit(limit)
                 .execute().value
@@ -101,16 +119,25 @@ struct CommunityRepository {
                 MyTournament(
                     id: r.id, shareID: r.share_id, name: r.name ?? "Loại trực tiếp",
                     isDoubles: true, capacity: r.team_count ?? 0, registered: 0,
-                    state: r.status == "setup" ? .draft : .ongoing,
+                    state: Self.bracketState(r.status),
                     createdAt: Self.date(r.created_at), format: .doublesElim
                 )
             }
         } catch { return [] }
     }
 
+    /// setup → draft, completed → completed, everything else → ongoing.
+    private static func bracketState(_ status: String?) -> TournamentState {
+        switch status {
+        case "setup": return .draft
+        case "completed": return .completed
+        default: return .ongoing
+        }
+    }
+
     // MARK: Flex (is_public, setup / active / ongoing)
 
-    private func flex(limit: Int) async -> [MyTournament] {
+    private func flex(limit: Int, completed: Bool) async -> [MyTournament] {
         struct Row: Decodable {
             let id: UUID; let name: String?; let share_id: String; let status: String?; let created_at: String?
         }
@@ -118,7 +145,7 @@ struct CommunityRepository {
             let rows: [Row] = try await client.from("flex_tournaments")
                 .select("id, name, share_id, status, created_at")
                 .eq("is_public", value: true)
-                .in("status", values: ["setup", "active", "ongoing"])
+                .in("status", values: completed ? ["completed"] : ["setup", "active", "ongoing"])
                 .order("created_at", ascending: false)
                 .limit(limit)
                 .execute().value
@@ -126,7 +153,7 @@ struct CommunityRepository {
                 MyTournament(
                     id: r.id, shareID: r.share_id, name: r.name ?? "Giải linh hoạt",
                     isDoubles: true, capacity: 0, registered: 0,
-                    state: r.status == "setup" ? .draft : .ongoing,
+                    state: Self.bracketState(r.status),
                     createdAt: Self.date(r.created_at), format: .flex
                 )
             }
