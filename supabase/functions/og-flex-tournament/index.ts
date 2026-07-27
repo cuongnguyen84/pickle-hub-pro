@@ -48,7 +48,9 @@ Deno.serve(async (req) => {
       .eq("share_id", shareId)
       .single();
 
-    if (error || !tournament) {
+    // Giải private: trả y hệt "không tồn tại" — service role bypass RLS nên
+    // phải tự gate ở đây, không được lộ tên qua bot UA.
+    if (error || !tournament || !tournament.is_public) {
       return serveHtml({
         title: "Giải đấu không tồn tại | ThePickleHub",
         description: "Giải đấu này không tồn tại hoặc đã bị xóa.",

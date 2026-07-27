@@ -102,8 +102,9 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
 // ─── Tool instance pages (noindex) ────────────────────────
 
 export async function renderQuickTable(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {
-  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id").eq("share_id", shareId).single();
-  if (!qt) return render404(`/tools/quick-tables/${shareId}`, siteUrl);
+  const { data: qt } = await supabase.from("quick_tables").select("id, name, format, player_count, status, share_id, is_public").eq("share_id", shareId).single();
+  // Client service-role bypass RLS — bảng private phải 404 y hệt không tồn tại.
+  if (!qt || !qt.is_public) return render404(`/tools/quick-tables/${shareId}`, siteUrl);
 
   const title = buildTitle(qt.name, " | Bảng đấu Pickleball");
   const desc = `Bảng đấu ${qt.name} – ${qt.player_count} VĐV, ${qt.format}. Xem kết quả trực tiếp trên ThePickleHub.`.slice(0, 160);
@@ -189,8 +190,9 @@ export async function renderDoublesElimination(supabase: SupabaseClient, shareId
 }
 
 export async function renderFlexTournament(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {
-  const { data: ft } = await supabase.from("flex_tournaments").select("id, name, status, share_id").eq("share_id", shareId).single();
-  if (!ft) return render404(`/tools/flex-tournament/${shareId}`, siteUrl);
+  const { data: ft } = await supabase.from("flex_tournaments").select("id, name, status, share_id, is_public").eq("share_id", shareId).single();
+  // Client service-role bypass RLS — giải private phải 404 y hệt không tồn tại.
+  if (!ft || !ft.is_public) return render404(`/tools/flex-tournament/${shareId}`, siteUrl);
 
   const title = buildTitle(ft.name, " | Flex Tournament");
   const desc = `Giải đấu ${ft.name}. Tạo nhóm, xếp lịch thi đấu linh hoạt trên ThePickleHub.`.slice(0, 160);
