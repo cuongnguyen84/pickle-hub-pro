@@ -310,4 +310,33 @@ render ra vẫn thấy tên sai **6 lần** — nó nằm ở `meta_description`
 **Nợ:** `growth-tasks/` bị gitignore → file rollback `2026-07-27-vi-hcmc-open-rollback.sql`
 (4 `content_html` + meta + faq) chỉ tồn tại trên máy Cuong, không có bản sao.
 
-### PR 3 — bước 4 (glossary VI) · chưa bắt đầu
+### PR 3 — bước 4 (glossary VI) · **SHIPPED** (không có PR — chỉ Supabase)
+
+2026-07-27. Không đụng một dòng code nào: hạ tầng anchor đã ship ở bước 0 (verify live trên prod:
+`scrollIntoView` trong entry chunk, `scroll-margin-top: calc(env(safe-area-inset-top) + 73px)` trong CSS).
+
+**`/vi/blog/thuat-ngu-pickleball`** — 24 thuật ngữ, 4 nhóm (Sân và luật · Các cú đánh ·
+Chiến thuật đánh đôi · Thi đấu và trình độ), mỗi thuật ngữ một `<h3 id>` + mục lục đầu bài.
+`alternate_en_slug = NULL` → hreflang tự trỏ `vi` + `x-default`. **Cố ý:** khai sẵn một slug EN
+chưa tồn tại chính là Sự cố 3 mà `pre-mortem` mô tả (sitemap quảng cáo URL 404 do chính mình khai).
+Bản EN gắn vào ở bước 6, lúc đó mới set `alternate_en_slug`.
+
+**Phân vai chống cannibalization** (đồng thuận 3/3 + GPT-5.6): glossary định nghĩa `kitchen` trong
+4 câu rồi trỏ về `luat-pickleball-co-ban#kitchen`; bài luật giữ nguyên 3 quy tắc vàng + lỗi phổ biến
+và trỏ về glossary **đúng một lần** ở phần mở đầu. Không đoạn nào bị copy sang cả hai.
+Thêm `id="kitchen"` vào bài luật (zero code).
+
+**24 mục, không phải 9 như brief** — "A–Z" với 9 từ là lời hứa không giữ (`ui-ux-critic` #8).
+Sửa 4 định nghĩa seed sai/cứng, đáng kể nhất: **"Erne = cú né luật kitchen" SAI bản chất** —
+Erne hợp lệ hoàn toàn; câu gốc dạy sai người mới. Giữ nguyên từ tiếng Anh (kitchen, dink, volley,
+erne, ATP, stacking) vì người chơi Việt dùng đúng những từ đó; bỏ "vô-lê" gạch nối.
+
+**Verify prod:** 200 · `<title>` đúng · **24/24 anchor** · `#kitchen` có · hreflang vi + x-default ·
+FAQPage JSON-LD · 5 link về bài luật · có trong `sitemap-blog.xml`. Bài luật: `id="kitchen"` = 1,
+link tới glossary = 1 (không lặp). IndexNow 2 URL → HTTP 200.
+`meta_description` 144 byte (dưới ngưỡng 160), mở đầu bằng đúng cụm truy vấn "… là gì".
+
+**Chưa chứng minh:** chưa mở trên điện thoại thật để xem `#kitchen` cuộn đúng chỗ dưới thanh nav.
+Hạ tầng đã đo, nhưng chính trang này thì chưa.
+
+### Bước 6 / 7 — sau mốc 9/8, chưa bắt đầu
