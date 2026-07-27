@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "singapore-open-2026-recap",
+    publishedDate: "2026-07-27",
+    updatedDate: "2026-07-27",
+    author: "The PickleHub Team",
+    tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball vietnam", "ppa asia 500", "2026 recap"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    titleEn: "Singapore Open 2026 Recap: Truong Vinh Hien Takes Doubles Silver and Singles Bronze",
+    titleVi: "Singapore Open 2026: Trương Vinh Hiển giành á quân đôi nam và HCĐ đơn nam",
+    metaTitleEn: "Singapore Open 2026 Recap: Hien Silver & Singles Bronze",
+    metaTitleVi: "Singapore Open 2026: Hiển á quân đôi, HCĐ đơn",
+    metaDescriptionEn: "Recap of the PPA Asia 500 Singapore Open 2026: Truong Vinh Hien won doubles silver and singles bronze, keeping Vietnam's medal streak alive.",
+    metaDescriptionVi: "Trương Vinh Hiển giành á quân đôi nam và HCĐ đơn nam Singapore Open 2026, giữ mạch huy chương mọi chặng PPA Tour Asia. Kế: HCMC Open.",
+  },
+  {
     slug: "singapore-open-2026-preview",
     publishedDate: "2026-07-18",
     updatedDate: "2026-07-18",
