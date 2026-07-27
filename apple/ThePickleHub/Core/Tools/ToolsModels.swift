@@ -196,6 +196,19 @@ struct MyTournament: Identifiable, Equatable, Hashable {
 
     var isNearlyFull: Bool { fillFraction >= 0.8 && state != .full }
 
+    /// Below this many APPROVED registrations the badge hides — "1 người đã đăng
+    /// ký" reads as a dead event. Twin of web REG_BADGE_MIN (src/lib/regBadge.ts).
+    static let regBadgeMin = 4
+
+    /// Social-proof registration badge for community cards, or nil to hide.
+    /// Only registration-open rows (state == .open — QT setup+requires_registration,
+    /// Team Match 'registration') with ≥ regBadgeMin approved. Twin of
+    /// regBadgeCount + regBadge in src/lib/regBadge.ts / src/pages/Tournaments.tsx.
+    var regBadgeText: String? {
+        guard state == .open, registered >= Self.regBadgeMin else { return nil }
+        return isDoubles ? "\(registered) đội đã đăng ký" : "\(registered) người đã đăng ký"
+    }
+
     var dateText: String {
         guard let createdAt else { return "" }
         let f = DateFormatter()

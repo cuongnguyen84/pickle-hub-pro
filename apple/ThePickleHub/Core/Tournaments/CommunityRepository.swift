@@ -38,16 +38,25 @@ struct CommunityRepository {
 
     // MARK: Quick Tables (is_public, active statuses)
 
+    /// PostgREST embedded aggregate — `relation(count)` decodes as `[{"count": n}]`.
+    private struct CountRow: Decodable { let count: Int }
+
     private func quickTables(limit: Int, completed: Bool) async -> [MyTournament] {
         struct Row: Decodable {
             let id: UUID; let name: String?; let share_id: String; let status: String?
             let player_count: Int?; let requires_registration: Bool?; let is_doubles: Bool?; let created_at: String?
+            // Approved-only registration counts (badge #429) — one embedded count
+            // per registration table, singles vs doubles. Same query, no N+1.
+            let quick_table_registrations: [CountRow]?
+            let quick_table_teams: [CountRow]?
         }
         do {
             let rows: [Row] = try await client.from("quick_tables")
-                .select("id, name, share_id, status, player_count, requires_registration, is_doubles, created_at")
+                .select("id, name, share_id, status, player_count, requires_registration, is_doubles, created_at, quick_table_registrations(count), quick_table_teams(count)")
                 .eq("is_public", value: true)
                 .in("status", values: completed ? ["completed"] : ["setup", "group_stage", "playoff"])
+                .eq("quick_table_registrations.status", value: "approved")
+                .eq("quick_table_teams.team_status", value: "approved")
                 .order("created_at", ascending: false)
                 .limit(limit)
                 .execute().value
@@ -60,9 +69,11 @@ struct CommunityRepository {
                     default: return .draft
                     }
                 }()
+                let doubles = r.is_doubles ?? true
+                let approved = (doubles ? r.quick_table_teams : r.quick_table_registrations)?.first?.count ?? 0
                 return MyTournament(
                     id: r.id, shareID: r.share_id, name: r.name ?? "Bảng đấu nhanh",
-                    isDoubles: r.is_doubles ?? true, capacity: r.player_count ?? 0, registered: 0,
+                    isDoubles: doubles, capacity: r.player_count ?? 0, registered: approved,
                     state: state, createdAt: Self.date(r.created_at), format: .quickTable
                 )
             }
@@ -72,14 +83,19 @@ struct CommunityRepository {
     // MARK: Team Match (registration / ongoing)
 
     private func teamMatches(limit: Int, completed: Bool) async -> [MyTournament] {
+        struct TeamRef: Decodable { let tournament_id: UUID }
         struct Row: Decodable {
             let id: UUID; let name: String?; let share_id: String; let status: String?
             let team_count: Int?; let created_at: String?
+            // ponytail: narrow embed (not `(count)`) — anon RLS on team_match_teams
+            // only allows narrow column selects (#430), the count aggregate 42501s.
+            let team_match_teams: [TeamRef]?
         }
         do {
             let rows: [Row] = try await client.from("team_match_tournaments")
-                .select("id, name, share_id, status, team_count, created_at")
+                .select("id, name, share_id, status, team_count, created_at, team_match_teams(tournament_id)")
                 .in("status", values: completed ? ["completed"] : ["registration", "ongoing"])
+                .eq("team_match_teams.status", value: "approved")
                 .order("created_at", ascending: false)
                 .limit(limit)
                 .execute().value
@@ -93,7 +109,8 @@ struct CommunityRepository {
                 }()
                 return MyTournament(
                     id: r.id, shareID: r.share_id, name: r.name ?? "Đấu đồng đội",
-                    isDoubles: true, capacity: r.team_count ?? 0, registered: 0,
+                    isDoubles: true, capacity: r.team_count ?? 0,
+                    registered: r.team_match_teams?.count ?? 0,
                     state: state,
                     createdAt: Self.date(r.created_at), format: .teamMatch
                 )

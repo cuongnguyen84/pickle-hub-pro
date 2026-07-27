@@ -181,7 +181,7 @@ private struct CommunityCard: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
-                Text(tournament.metaLine).font(TLFont.mono(10.5)).foregroundStyle(TLColor.fg3)
+                metaText.font(TLFont.mono(10.5))
                 if !tournament.dateText.isEmpty {
                     Text("·").foregroundStyle(TLColor.fg4)
                     Text(tournament.dateText).font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
@@ -189,5 +189,19 @@ private struct CommunityCard: View {
             }
         }
         .feedCard()
+    }
+
+    /// Meta line with the social-proof registration badge (#429). The badge
+    /// REPLACES the capacity token on Quick Tables — never both numbers side by
+    /// side ("which number is which" trap, same rule as the web renderMeta).
+    private var metaText: Text {
+        guard let reg = tournament.regBadgeText else {
+            return Text(tournament.metaLine).foregroundStyle(TLColor.fg3)
+        }
+        let prefix = tournament.format == .quickTable
+            ? (tournament.isDoubles ? "Đôi" : "Đơn")
+            : tournament.metaLine
+        return Text("\(prefix) · ").foregroundStyle(TLColor.fg3)
+            + Text(reg).foregroundStyle(TLColor.accentText)
     }
 }
