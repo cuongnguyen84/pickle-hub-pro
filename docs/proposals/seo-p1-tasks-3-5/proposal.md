@@ -263,10 +263,11 @@ Bảng ledger đầy đủ: **`ledger.md`** *(`debate-ledger.mjs` không tồn t
 
 ## 9. Sau khi ship
 
-### PR 1 — bước 0 + 1 + 2 + fix C1 · **CHẶN, chưa merge**
+### PR 1 — bước 0 + 1 + 2 + fix C1 · **MERGED**
 
-- PR: [#473](https://github.com/cuongnguyen84/pickle-hub-pro/pull/473) · SHA `0832e5c` · Ngày 2026-07-27
-- **Chặn bởi:** toàn bộ GitHub Actions đỏ vì `"The job was not started because an Actions budget is preventing further use."` — **không liên quan code**. Run xanh cuối cùng của cả repo: `Uptime ping` `2026-07-26T14:02:17Z`; từ `14:30:16Z` mọi run chết trong 2 giây, 0 step. 100/100 run gần nhất đỏ, cả trên `main` lẫn nhánh khác. Cần anh nâng ngân sách/spending limit của Actions.
+- PR: [#473](https://github.com/cuongnguyen84/pickle-hub-pro/pull/473) · merge commit `a27765f5` · 2026-07-27T07:33Z
+- **Merge với check đỏ, Cuong duyệt tường minh sau khi nghe rủi ro.** Toàn bộ GitHub Actions đỏ vì `"The job was not started because an Actions budget is preventing further use."` — **không liên quan code**. Run xanh cuối cùng của cả repo: `Uptime ping` `2026-07-26T14:02:17Z`; từ `14:30:16Z` mọi run chết trong 2 giây, 0 step. 100/100 run gần nhất đỏ, cả trên `main` lẫn nhánh khác. Vẫn cần anh nâng ngân sách Actions — `uptime-ping` và `deploy-guard` đang chết theo.
+- Trước khi merge đã gộp `origin/main` (2 commit song song #472/#474, **0 file giao nhau**) và chạy lại local trên trạng thái đã gộp: **111 file / 1225 test pass**, INITIAL 266,3/280, total 1854,1/1970. Đây là lớp kiểm duy nhất thay cho CI.
 - **Đã tự verify trên preview** (`feat-seo-p1-tasks-3-5.pickle-hub-pro.pages.dev`, Googlebot UA) — 6/6 đúng thiết kế: 3 URL hỏng → 301 về đúng bài VI; slug VI thật → 200; slug rác → 404; bài EN → 200. Prod cùng lúc vẫn 404.
 - Gate local trước khi push: `tsc -b` 0 · eslint 0 · 110 file / 1220 test pass · bundle INITIAL 266,3/280, total 1854,3/1970.
 
