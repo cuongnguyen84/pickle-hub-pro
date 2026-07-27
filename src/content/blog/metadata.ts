@@ -114,7 +114,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "hcmc-open-2026-preview",
     publishedDate: "2026-07-10",
-    updatedDate: "2026-07-23",
+    updatedDate: "2026-07-27",
     author: "Cuong Nguyen",
     tags: ["hcmc open 2026", "ho chi minh city open pickleball", "mb ho chi minh city open", "ppa tour asia 500", "ppa asia ho chi minh", "pickleball tp hcm", "giai pickleball tphcm"],
     ctaPath: "/live",
@@ -124,8 +124,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "HCMC Open 2026: Toàn cảnh giải PPA Asia 500 tại TP.HCM",
     metaTitleEn: "HCMC Open 2026 Preview | PPA Asia 500 in Ho Chi Minh City",
     metaTitleVi: "HCMC Open 2026 | Lịch & giải thưởng",
-    metaDescriptionEn: "The MB Ho Chi Minh City Open, Aug 6–9 2026 at Global City Sports Park: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
-    metaDescriptionVi: "MB Ho Chi Minh City Open 6–9/8/2026 tại Global City Sports Park — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
+    metaDescriptionEn: "The MB Ho Chi Minh City Open, Aug 6–9 2026 at New Sports Club: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
+    metaDescriptionVi: "MB Ho Chi Minh City Open 6–9/8/2026 tại New Sports Club — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
   },
   {
     slug: "vietnam-pickleball-tournament-calendar-2026",

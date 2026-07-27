@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "hcmc-open-2026-preview",
   publishedDate: "2026-07-10",
-  updatedDate: "2026-07-23",
+  updatedDate: "2026-07-27",
   author: "Cuong Nguyen",
   tags: [
     "hcmc open 2026",
@@ -28,12 +28,12 @@ const post: BlogPost = {
       title: "HCMC Open 2026 Preview: The PPA Asia 500 Comes to Ho Chi Minh City",
       metaTitle: "HCMC Open 2026 Preview | PPA Asia 500 in Ho Chi Minh City",
       metaDescription:
-        "The MB Ho Chi Minh City Open, Aug 6–9 2026 at Global City Sports Park: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
+        "The MB Ho Chi Minh City Open, Aug 6–9 2026 at New Sports Club: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
       sections: [
         {
           heading: "Vietnam's second pro tour stop of 2026",
           content:
-            "Pro pickleball returns to Vietnam this August. The MB Ho Chi Minh City Open — a 500-level PPA Tour Asia stop with US$70,000 in prize money — runs August 6–9, 2026 at Global City Sports Park in Ho Chi Minh City. It is Vietnam's second tour stop of the season, following the MB Hanoi Cup in April, and the country's biggest professional pickleball event of the summer before the Pickleball World Cup arrives in Da Nang at the end of the month. Registration for the amateur draws is already open, and while the professional line-up has not been announced yet (as of July 23, just over two weeks out), the stakes are clear: from 2026, PPA Tour Asia points count toward the unified global PPA ranking, so the 500 points on offer in Ho Chi Minh City matter far beyond the region. This preview covers everything confirmed so far — dates, venue, prize money, registration and how to watch — and we will update it as soon as the player field is published.",
+            "Pro pickleball returns to Vietnam this August. The MB Ho Chi Minh City Open — a 500-level PPA Tour Asia stop with US$70,000 in prize money — runs August 6–9, 2026 at New Sports Club in Ho Chi Minh City. It is Vietnam's second tour stop of the season, following the MB Hanoi Cup in April, and the country's biggest professional pickleball event of the summer before the Pickleball World Cup arrives in Da Nang at the end of the month. Registration for the amateur draws is already open, and while the professional line-up has not been announced yet (as of July 27, ten days out), the stakes are clear: from 2026, PPA Tour Asia points count toward the unified global PPA ranking, so the 500 points on offer in Ho Chi Minh City matter far beyond the region. This preview covers everything confirmed so far — dates, venue, prize money, registration and how to watch — and we will update it as soon as the player field is published.",
           internalLinks: [
             {
               text: "See every major Vietnam tournament this year — the full 2026 calendar",
@@ -44,22 +44,29 @@ const post: BlogPost = {
         {
           heading: "HCMC Open 2026 at a glance",
           content:
-            "Everything confirmed by PPA Tour Asia as of July 23, 2026:",
+            "Everything confirmed by PPA Tour Asia as of July 27, 2026:",
           listItems: [
             "Dates: August 6–9, 2026 (Thursday–Sunday)",
-            "Venue: Global City Sports Park, City Park at The Global City, Ho Chi Minh City",
+            "Venue: New Sports Club, City Park at The Global City, Ho Chi Minh City",
             "Tier: PPA Asia 500 — the second-highest regular tier on the 2026 tour",
             "Prize money: US$70,000 total",
             "Ranking points: 500 PPA points to gold medalists — counted in the unified global PPA ranking",
             "Title sponsor: MB (Military Commercial Joint Stock Bank), with JOOLA as equipment partner and Facolos, Franklin and Paddletek as paddle partners",
             "Events: pro men's and women's singles, men's and women's doubles, and mixed doubles — plus full amateur draws by rating and age",
-            "Amateur registration: open now via pickleballbrackets.com",
+            "Spectator tickets: on sale via Ticketbox, the organizer's official seller — prices and day passes are listed there",
+            "Amateur competition entry (to play, not to watch): open now via pickleballbrackets.com",
+          ],
+          internalLinks: [
+            {
+              text: "Buy HCMC Open 2026 spectator tickets on Ticketbox",
+              path: "https://ticketbox.vn/ppa-asia-500-mb-hcmc-open-2026-26355",
+            },
           ],
         },
         {
-          heading: "The venue: Global City Sports Park",
+          heading: "The venue: New Sports Club at The Global City",
           content:
-            "The Global City is a 117-hectare new urban district in Thu Duc City on Ho Chi Minh City's eastern side, and its sports complex was built with international events in mind. The pickleball setup combines international-spec outdoor courts with seating for 300+ spectators and the climate-controlled TGC Arena — a meaningful detail for an event scheduled in the middle of southern Vietnam's rainy season. PPA Tour Asia used the same city for the MB Vietnam Open in 2025, but Global City Sports Park gives the 2026 edition a bigger, purpose-built stage. If you are traveling in for the event and want to get some games in yourself, Ho Chi Minh City has one of the densest pickleball court networks in Asia.",
+            "The Global City is a 117-hectare new urban district in Thu Duc City on Ho Chi Minh City's eastern side, and its sports complex was built with international events in mind. The pickleball setup combines international-spec outdoor courts with seating for 300+ spectators and the climate-controlled TGC Arena — a meaningful detail for an event scheduled in the middle of southern Vietnam's rainy season. PPA Tour Asia used the same city for the MB Vietnam Open in 2025, but New Sports Club gives the 2026 edition a bigger, purpose-built stage. If you are traveling in for the event and want to get some games in yourself, Ho Chi Minh City has one of the densest pickleball court networks in Asia.",
           internalLinks: [
             {
               text: "Find pickleball courts in Ho Chi Minh City and across Vietnam",
@@ -83,7 +90,7 @@ const post: BlogPost = {
         {
           heading: "Who will play? Line-up watch",
           content:
-            "With just over two weeks to go, PPA Tour Asia still has not published the professional player field (checked July 23, 2026) — line-ups are typically confirmed in the days before each stop, and we will add the full list here the moment it lands. What we can already say is who Vietnamese fans will be looking for. Ly Hoang Nam won the men's singles title at the MB Hanoi Cup in April in an all-Vietnamese final against Truong Vinh Hien. Vinh Hien has since become the breakout Vietnamese player of the season, winning in Kuala Lumpur and taking men's doubles gold with Do Minh Quan at the Beijing Open in June. This week he is Vietnam's man in form at the Leapmotor Singapore Open (July 23–26), where the published draw lists him as the top seed in men's singles — the clearest form guide before Ho Chi Minh City. A home stop in Ho Chi Minh City with 500 global ranking points on the line is exactly the stage this new generation of Vietnamese pros has been building toward, and the tour's traveling stars — including Japan's Tama Shimabukuro, who did the double in Macao — are expected across the Asia swing.",
+            "With ten days to go, PPA Tour Asia still has not published the professional player field (checked July 27, 2026) — line-ups are typically confirmed in the days before each stop, and we will add the full list here the moment it lands. What we can already say is who Vietnamese fans will be looking for. Ly Hoang Nam won the men's singles title at the MB Hanoi Cup in April in an all-Vietnamese final against Truong Vinh Hien. Vinh Hien has since become the breakout Vietnamese player of the season, winning in Kuala Lumpur and taking men's doubles gold with Do Minh Quan at the Beijing Open in June. He went into the Leapmotor Singapore Open (July 23–26) as the top seed in men's singles and came away with two more medals: silver in men's doubles alongside Japan's Kenta Miyoshi, and singles bronze after a semifinal loss to Adam Harvey. Ly Hoang Nam exited in the singles quarterfinals that week. Vietnam has now medalled at every stop of the 2026 PPA Tour Asia — the clearest form guide before Ho Chi Minh City. A home stop with 500 global ranking points on the line is exactly the stage this new generation of Vietnamese pros has been building toward, and the tour's traveling stars — including Japan's Tama Shimabukuro, who did the double in Macao — are expected across the Asia swing.",
           internalLinks: [
             {
               text: "PPA Tour Asia 2026 mid-season recap: Vietnam's champions so far",
@@ -120,7 +127,7 @@ const post: BlogPost = {
         {
           heading: "The bigger picture: Vietnam's huge August",
           content:
-            "The HCMC Open opens the most important month in Vietnamese pickleball history. Three weeks after the final in Ho Chi Minh City, the Heineken Pickleball World Cup comes to Da Nang (August 30 – September 6) — the first World Cup ever staged in Asia, expecting thousands of players from up to 80 countries. Before that, the Asia swing runs through the Leapmotor Singapore Open (July 23–26) — under way now — another $70,000 PPA Asia 500 stop that is sharpening the form guide for Ho Chi Minh City. For a country that hosted its first PPA Tour Asia event only in 2025, staging two tour stops and a World Cup in a single season is a remarkable statement about where the sport's center of gravity in Asia is moving. If you want to understand how the professional circuits fit together — PPA, MLP, the APP and PPA Tour Asia — our pillar guide covers the full landscape.",
+            "The HCMC Open opens the most important month in Vietnamese pickleball history. Three weeks after the final in Ho Chi Minh City, the Heineken Pickleball World Cup comes to Da Nang (August 30 – September 6) — the first World Cup ever staged in Asia, expecting thousands of players from up to 80 countries. Before that, the Asia swing came through the Leapmotor Singapore Open (July 23–26), another $70,000 PPA Asia 500 stop, where Truong Vinh Hien took doubles silver and singles bronze. For a country that hosted its first PPA Tour Asia event only in 2025, staging two tour stops and a World Cup in a single season is a remarkable statement about where the sport's center of gravity in Asia is moving. If you want to understand how the professional circuits fit together — PPA, MLP, the APP and PPA Tour Asia — our pillar guide covers the full landscape.",
           internalLinks: [
             {
               text: "Professional pickleball tours explained: the complete 2026 guide",
@@ -137,7 +144,12 @@ const post: BlogPost = {
         {
           question: "When and where is the HCMC Open 2026?",
           answer:
-            "The MB Ho Chi Minh City Open runs August 6–9, 2026 at Global City Sports Park (City Park at The Global City) in Thu Duc City, Ho Chi Minh City, Vietnam. It is a 500-level PPA Tour Asia stop.",
+            "The MB Ho Chi Minh City Open runs August 6–9, 2026 at New Sports Club (City Park at The Global City) in Thu Duc City, Ho Chi Minh City, Vietnam. It is a 500-level PPA Tour Asia stop.",
+        },
+        {
+          question: "How do I buy tickets to watch the HCMC Open 2026?",
+          answer:
+            "Spectator tickets are sold on Ticketbox, the official seller for organizers UPA Asia and New Sports JSC. Prices, ticket types and day passes are listed on the Ticketbox event page. Note that this is separate from pickleballbrackets.com, which is for entering the amateur competition, not for watching.",
         },
         {
           question: "How much prize money is at the HCMC Open 2026?",
@@ -152,7 +164,7 @@ const post: BlogPost = {
         {
           question: "Which pros are playing at the HCMC Open 2026?",
           answer:
-            "The professional line-up has not been announced yet (as of July 23, 2026). Line-ups are usually confirmed in the days before each stop — Vietnamese stars Ly Hoang Nam and Truong Vinh Hien are the local names to watch. We will update this article when the field is published.",
+            "The professional line-up has not been announced yet (as of July 27, 2026). Line-ups are usually confirmed in the days before each stop — Vietnamese stars Ly Hoang Nam and Truong Vinh Hien are the local names to watch. We will update this article when the field is published.",
         },
         {
           question: "How can I watch the HCMC Open 2026 live?",
@@ -165,12 +177,12 @@ const post: BlogPost = {
       title: "HCMC Open 2026: Toàn cảnh giải PPA Asia 500 tại TP.HCM",
       metaTitle: "HCMC Open 2026 | Lịch & giải thưởng",
       metaDescription:
-        "MB Ho Chi Minh City Open 6–9/8/2026 tại Global City Sports Park — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
+        "MB Ho Chi Minh City Open 6–9/8/2026 tại New Sports Club — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
       sections: [
         {
           heading: "Chặng tour chuyên nghiệp thứ hai của Việt Nam trong 2026",
           content:
-            "Pickleball chuyên nghiệp trở lại Việt Nam trong tháng 8 này. MB Ho Chi Minh City Open — chặng PPA Tour Asia cấp 500 với tổng thưởng 70.000 USD — diễn ra từ 6 đến 9/8/2026 tại Global City Sports Park, TP.HCM. Đây là chặng tour thứ hai của Việt Nam trong mùa giải, sau MB Hanoi Cup hồi tháng 4, và là sự kiện pickleball chuyên nghiệp lớn nhất mùa hè trước khi Pickleball World Cup đổ bộ Đà Nẵng cuối tháng. Cổng đăng ký cho các nhánh nghiệp dư đã mở, và dù danh sách VĐV chuyên nghiệp chưa được công bố (tính đến 23/7, chỉ còn hơn hai tuần), mức độ quan trọng thì đã rõ: từ 2026, điểm PPA Tour Asia được tính vào bảng xếp hạng PPA toàn cầu hợp nhất, nên 500 điểm tại TP.HCM có giá trị vượt xa phạm vi khu vực. Bài preview này tổng hợp mọi thông tin đã xác nhận — lịch, địa điểm, tiền thưởng, cách đăng ký và cách xem — và sẽ được cập nhật ngay khi line-up công bố.",
+            "Pickleball chuyên nghiệp trở lại Việt Nam trong tháng 8 này. MB Ho Chi Minh City Open — chặng PPA Tour Asia cấp 500 với tổng thưởng 70.000 USD — diễn ra từ 6 đến 9/8/2026 tại New Sports Club, TP.HCM. Đây là chặng tour thứ hai của Việt Nam trong mùa giải, sau MB Hanoi Cup hồi tháng 4, và là sự kiện pickleball chuyên nghiệp lớn nhất mùa hè trước khi Pickleball World Cup đổ bộ Đà Nẵng cuối tháng. Cổng đăng ký cho các nhánh nghiệp dư đã mở, và dù danh sách VĐV chuyên nghiệp chưa được công bố (tính đến 27/7, còn mười ngày), mức độ quan trọng thì đã rõ: từ 2026, điểm PPA Tour Asia được tính vào bảng xếp hạng PPA toàn cầu hợp nhất, nên 500 điểm tại TP.HCM có giá trị vượt xa phạm vi khu vực. Bài preview này tổng hợp mọi thông tin đã xác nhận — lịch, địa điểm, tiền thưởng, cách đăng ký và cách xem — và sẽ được cập nhật ngay khi line-up công bố.",
           internalLinks: [
             {
               text: "Xem toàn bộ giải đấu lớn tại Việt Nam năm nay — lịch giải 2026 đầy đủ",
@@ -184,19 +196,20 @@ const post: BlogPost = {
             "Toàn bộ thông tin PPA Tour Asia đã xác nhận, tính đến 23/7/2026:",
           listItems: [
             "Thời gian: 6–9/8/2026 (thứ Năm đến Chủ nhật)",
-            "Địa điểm: Global City Sports Park, City Park thuộc The Global City, TP.HCM",
+            "Địa điểm: New Sports Club, City Park thuộc The Global City, TP.HCM",
             "Cấp giải: PPA Asia 500 — cấp cao thứ hai trong hệ thống tour 2026",
             "Tổng thưởng: 70.000 USD",
             "Điểm xếp hạng: 500 điểm PPA cho nhà vô địch — tính vào bảng xếp hạng PPA toàn cầu",
             "Nhà tài trợ: MB (tài trợ chính), JOOLA (đối tác trang thiết bị), Facolos, Franklin và Paddletek (đối tác vợt)",
             "Nội dung: đơn nam/nữ, đôi nam/nữ và đôi hỗn hợp chuyên nghiệp — kèm đầy đủ nhánh nghiệp dư theo trình độ và độ tuổi",
-            "Đăng ký nghiệp dư: đang mở tại pickleballbrackets.com",
+            "Vé xem: bán trên Ticketbox — kênh bán vé chính thức của BTC; giá vé và vé theo ngày xem trực tiếp trên đó",
+            "Đăng ký thi đấu nghiệp dư (để chơi, không phải để xem): đang mở tại pickleballbrackets.com",
           ],
         },
         {
-          heading: "Địa điểm: Global City Sports Park",
+          heading: "Địa điểm: New Sports Club, The Global City",
           content:
-            "The Global City là khu đô thị mới rộng 117 ha tại TP. Thủ Đức, phía Đông TP.HCM, với khu liên hợp thể thao được xây để phục vụ các sự kiện quốc tế. Hệ thống sân pickleball tại đây kết hợp sân ngoài trời chuẩn quốc tế với khán đài hơn 300 chỗ và nhà thi đấu TGC Arena có điều hòa — chi tiết đáng chú ý cho một giải đấu diễn ra giữa mùa mưa miền Nam. PPA Tour Asia từng tổ chức MB Vietnam Open 2025 tại TP.HCM, nhưng Global City Sports Park cho phiên bản 2026 một sân khấu lớn hơn và chuyên dụng hơn. Nếu bạn đến TP.HCM xem giải và muốn tự cầm vợt ra sân, thành phố này có mạng lưới sân pickleball dày đặc bậc nhất châu Á.",
+            "The Global City là khu đô thị mới rộng 117 ha tại TP. Thủ Đức, phía Đông TP.HCM, với khu liên hợp thể thao được xây để phục vụ các sự kiện quốc tế. Hệ thống sân pickleball tại đây kết hợp sân ngoài trời chuẩn quốc tế với khán đài hơn 300 chỗ và nhà thi đấu TGC Arena có điều hòa — chi tiết đáng chú ý cho một giải đấu diễn ra giữa mùa mưa miền Nam. PPA Tour Asia từng tổ chức MB Vietnam Open 2025 tại TP.HCM, nhưng New Sports Club cho phiên bản 2026 một sân khấu lớn hơn và chuyên dụng hơn. Nếu bạn đến TP.HCM xem giải và muốn tự cầm vợt ra sân, thành phố này có mạng lưới sân pickleball dày đặc bậc nhất châu Á.",
           internalLinks: [
             {
               text: "Tìm sân pickleball tại TP.HCM",
@@ -257,7 +270,7 @@ const post: BlogPost = {
         {
           heading: "Bức tranh lớn: tháng 8 lịch sử của Việt Nam",
           content:
-            "HCMC Open mở màn cho tháng quan trọng nhất trong lịch sử pickleball Việt Nam. Ba tuần sau trận chung kết tại TP.HCM, Heineken Pickleball World Cup đến Đà Nẵng (30/8 – 6/9) — World Cup đầu tiên được tổ chức tại châu Á, dự kiến quy tụ hàng nghìn VĐV từ tối đa 80 quốc gia. Trước đó, chuỗi giải châu Á đi qua Leapmotor Singapore Open (23–26/7) — đang diễn ra ngay lúc này — một chặng PPA Asia 500 với 70.000 USD tiền thưởng, phép thử phong độ ngay trước TP.HCM. Với một quốc gia mới đón chặng PPA Tour Asia đầu tiên năm 2025, việc tổ chức hai chặng tour và một kỳ World Cup trong cùng một mùa giải là tuyên bố rõ ràng về việc trọng tâm của môn thể thao này tại châu Á đang dịch chuyển về đâu. Muốn hiểu các hệ thống giải chuyên nghiệp vận hành ra sao — PPA, MLP, APP và PPA Tour Asia — hãy đọc bài pillar của chúng tôi.",
+            "HCMC Open mở màn cho tháng quan trọng nhất trong lịch sử pickleball Việt Nam. Ba tuần sau trận chung kết tại TP.HCM, Heineken Pickleball World Cup đến Đà Nẵng (30/8 – 6/9) — World Cup đầu tiên được tổ chức tại châu Á, dự kiến quy tụ hàng nghìn VĐV từ tối đa 80 quốc gia. Trước đó, chuỗi giải châu Á đi qua Leapmotor Singapore Open (23–26/7), một chặng PPA Asia 500 với 70.000 USD tiền thưởng, phép thử phong độ ngay trước TP.HCM. Với một quốc gia mới đón chặng PPA Tour Asia đầu tiên năm 2025, việc tổ chức hai chặng tour và một kỳ World Cup trong cùng một mùa giải là tuyên bố rõ ràng về việc trọng tâm của môn thể thao này tại châu Á đang dịch chuyển về đâu. Muốn hiểu các hệ thống giải chuyên nghiệp vận hành ra sao — PPA, MLP, APP và PPA Tour Asia — hãy đọc bài pillar của chúng tôi.",
           internalLinks: [
             {
               text: "Các tour pickleball chuyên nghiệp: cẩm nang đầy đủ 2026",
@@ -274,7 +287,12 @@ const post: BlogPost = {
         {
           question: "HCMC Open 2026 diễn ra khi nào, ở đâu?",
           answer:
-            "MB Ho Chi Minh City Open diễn ra từ 6 đến 9/8/2026 tại Global City Sports Park (City Park, The Global City), TP. Thủ Đức, TP.HCM. Đây là chặng PPA Tour Asia cấp 500.",
+            "MB Ho Chi Minh City Open diễn ra từ 6 đến 9/8/2026 tại New Sports Club (City Park, The Global City), TP. Thủ Đức, TP.HCM. Đây là chặng PPA Tour Asia cấp 500.",
+        },
+        {
+          question: "Mua vé xem HCMC Open 2026 ở đâu?",
+          answer:
+            "Vé xem bán trên Ticketbox — kênh chính thức của BTC (UPA Asia và New Sports JSC). Giá vé, loại vé và vé theo ngày xem trực tiếp trên trang sự kiện Ticketbox. Lưu ý phân biệt với pickleballbrackets.com: đó là nơi đăng ký thi đấu nghiệp dư, không phải mua vé xem.",
         },
         {
           question: "Tổng tiền thưởng HCMC Open 2026 là bao nhiêu?",
