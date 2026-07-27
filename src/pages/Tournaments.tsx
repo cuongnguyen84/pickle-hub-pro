@@ -102,7 +102,11 @@ const FORMATS: FormatDef[] = [
     createLink: "/tools/quick-tables",
     renderMeta: (t, vi) => {
       const unit = t.is_doubles ? (vi ? "Đôi" : "Doubles") : (vi ? "Đơn" : "Singles");
-      const fmt = t.format ?? "Round robin";
+      const fmt = t.format === "round_robin"
+        ? (vi ? "Vòng tròn" : "Round robin")
+        : t.format === "large_playoff"
+          ? "Playoff"
+          : (t.format ?? "Round robin");
       const n = regBadgeCount(t, "quick-tables");
       if (n !== null) {
         return <>{unit} · {regBadge(n, !!t.is_doubles, vi)} · {fmt}</>;
@@ -833,7 +837,7 @@ const Tournaments = () => {
                           <div className="tl-br-creator">
                             {t.creator_display_name ?? "—"}
                           </div>
-                          {!champion && (
+                          {!champion && fmtStatus !== "ended" && (
                             <span className={`tl-br-status ${status.cls}`}>{vi ? status.vi : status.en}</span>
                           )}
                         </Link>
