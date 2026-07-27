@@ -281,5 +281,33 @@ Bảng ledger đầy đủ: **`ledger.md`** *(`debate-ledger.mjs` không tồn t
 - `qa-verifier` bắt được một lỗ hổng PostgREST `or=` filter-injection do chính bản nháp đầu của thay đổi này tạo ra: `encodeURIComponent` **không** escape `(` `)`. Repo đã có `escapePostgrestSearch.ts` cho lớp lỗi này. Sửa bằng shape-guard `^[a-z0-9-]+$` (đúng hơn cho khoá exact-match) + test riêng.
 - Actions hết ngân sách biểu hiện **giống hệt CI hỏng**: mọi job đỏ, 2 giây, không log. Lý do chỉ nằm ở `check-runs/<id>/annotations`, không nằm trong `gh run view --log-failed` (log không tồn tại).
 
-### PR 2 — bước 3 (🔴 RED) · chưa bắt đầu
+### PR 2 — bước 3 (🔴 RED) · **SHIPPED**
+
+- PR: [#475](https://github.com/cuongnguyen84/pickle-hub-pro/pull/475) · merge `a5069f52` · 2026-07-27
+- Cuong duyệt RED tường minh. 6/6 điều kiện hạ RED đã làm, theo đúng thứ tự.
+
+**Tên địa điểm — brief không mâu thuẫn, bài viết SAI.** Ticketbox là kênh của chính BTC
+(`UPA ASIA & NEW SPORTS JSC`) và khai `New Sports Club, City Park, The Global City`.
+`Global City Sports Park` không có nguồn nào. Đã sửa **12 chỗ** trong file EN + 4 chỗ
+`content_html` VI + `meta_description` + `excerpt` + `faq_items`.
+
+**Prose hết hạn** (viết 23/7 ở thì hiện tại, còn sống 27/7 trên bài đang pos 7,4):
+"as of July 23, just over two weeks out" → 27/7, mười ngày; Singapore Open không còn
+"under way now" — đã kết thúc 26/7, Vinh Hiển HCB đôi + HCĐ đơn, Lý Hoàng Nam dừng tứ kết.
+Sửa prose **trước**, bump `updatedDate` **sau**.
+
+**Vé:** bài chưa từng nhắc vé khán giả, trong khi có dòng "Đăng ký nghiệp dư: pickleballbrackets.com"
+dễ đọc nhầm thành "đăng ký để vào xem". Đã tách bạch + link Ticketbox + 1 FAQ mới (EN & VI).
+**Không có con số giá vé nào** — Ticketbox render giá client-side, curl không verify được.
+
+**Verify prod sau deploy:** `Global City Sports Park` = **0** trên cả 6 URL trong cụm.
+Link Ticketbox có `rel="nofollow noopener"`, hreflang en/vi/x-default đủ. IndexNow 7 URL → HTTP 200.
+
+**Sai sót bắt được trong lúc verify:** sửa `content_html` xong tưởng là xong, nhưng grep HTML
+render ra vẫn thấy tên sai **6 lần** — nó nằm ở `meta_description`, `excerpt` và `faq_items`
+(nguồn của thẻ meta + og + JSON-LD). Bài học: **grep output đã render, đừng grep cột vừa sửa.**
+
+**Nợ:** `growth-tasks/` bị gitignore → file rollback `2026-07-27-vi-hcmc-open-rollback.sql`
+(4 `content_html` + meta + faq) chỉ tồn tại trên máy Cuong, không có bản sao.
+
 ### PR 3 — bước 4 (glossary VI) · chưa bắt đầu
