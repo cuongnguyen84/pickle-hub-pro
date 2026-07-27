@@ -207,7 +207,7 @@ struct ToolsView: View {
             featuredCard.padding(.horizontal, 22).padding(.top, 15)
 
             VStack(spacing: 10) {
-                compactFormatRow(icon: "arrow.triangle.branch", title: "Loại trực tiếp",
+                compactFormatRow(icon: "arrow.triangle.branch", title: BracketFormat.doublesElim.labelVi,
                                  meta: "Nhánh đơn / đôi · 40–128 đội", url: WebRoutes.toolsDoublesElimination,
                                  action: { Haptics.light(); showCreateDoubles = true })
                 compactFormatRow(icon: "slider.horizontal.3", title: "Giải linh hoạt",

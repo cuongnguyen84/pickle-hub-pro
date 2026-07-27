@@ -170,7 +170,7 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     var metaLine: String {
         switch format {
         case .doublesElim:
-            return capacity > 0 ? "Loại kép · \(capacity) đội" : "Loại kép"
+            return capacity > 0 ? "\(format.labelVi) · \(capacity) đội" : format.labelVi
         case .teamMatch:
             return "Đồng đội · MLP"
         case .flex:

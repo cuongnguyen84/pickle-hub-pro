@@ -134,7 +134,7 @@ struct CommunityRepository {
                 .execute().value
             return rows.map { r in
                 MyTournament(
-                    id: r.id, shareID: r.share_id, name: r.name ?? "Loại trực tiếp",
+                    id: r.id, shareID: r.share_id, name: r.name ?? BracketFormat.doublesElim.labelVi,
                     isDoubles: true, capacity: r.team_count ?? 0, registered: 0,
                     state: Self.bracketState(r.status),
                     createdAt: Self.date(r.created_at), format: .doublesElim
