@@ -9,7 +9,14 @@ struct HomeVideosSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HomeSectionHeader(title: "Sân đấu.")
+            HomeSectionHeader(title: "Sân đấu.") {
+                NavigationLink {
+                    VideosListView()
+                } label: {
+                    HomeMoreLink(label: "Xem tất cả")
+                }
+                .buttonStyle(.plain)
+            }
 
             VStack(spacing: 12) {
                 ForEach(videos) { video in
