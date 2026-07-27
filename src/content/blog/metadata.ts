@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball vietnam", "ppa asia 500", "2026 recap"],
     ctaPath: "/live",
     ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/singapore-open-2026-recap-hero.webp", alt: "Singapore Open 2026 recap — a silver medal resting on a pickleball paddle on a teal-green championship court at Singapore Expo, arena spotlights behind" },
     titleEn: "Singapore Open 2026 Recap: Truong Vinh Hien Takes Doubles Silver and Singles Bronze",
     titleVi: "Singapore Open 2026: Trương Vinh Hiển giành á quân đôi nam và HCĐ đơn nam",
     metaTitleEn: "Singapore Open 2026 Recap: Hien Silver & Singles Bronze",

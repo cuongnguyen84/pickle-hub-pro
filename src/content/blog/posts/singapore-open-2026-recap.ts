@@ -8,6 +8,10 @@ const post: BlogPost = {
   tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball vietnam", "ppa asia 500", "2026 recap"],
   ctaPath: "/live",
   ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+  heroImage: {
+    src: "/images/blog/singapore-open-2026-recap-hero.webp",
+    alt: "Singapore Open 2026 recap — a silver medal resting on a pickleball paddle on a teal-green championship court at Singapore Expo, arena spotlights behind"
+  },
   content: {
     en: {
       title: "Singapore Open 2026 Recap: Truong Vinh Hien Takes Doubles Silver and Singles Bronze",
@@ -23,6 +27,7 @@ const post: BlogPost = {
         },
         {
           heading: "The Doubles Final: One Set From a Different Ending",
+          image: { src: "/images/blog/singapore-open-2026-doubles-silver.webp", alt: "Two doubles pickleball players in silhouette leaving a teal-green court after the Singapore Open 2026 men's doubles final, arena spotlights behind them", caption: "Hien and Miyoshi pushed the final to a deciding third game before settling for silver." },
           content: "Hien and Miyoshi went into Sunday's final as the No. 3 seeds against Len Yang and Collin Johns, and for a stretch it looked like they might pull off the upset. They dropped the opening game 4-11, then answered emphatically, taking the second 11-4 to force a decider. In the third, though, it was Yang and Johns who held their nerve at the business end, winning 11-5 to take the championship. Final line: 11-4, 4-11, 11-5 to Yang and Johns — a 2-1 win that left Hien and Miyoshi with the silver medal and 400 ranking points.",
           internalLinks: [
             { text: "How the professional pickleball tours fit together", path: "/blog/professional-pickleball-tours-guide-2026" }
@@ -56,6 +61,7 @@ const post: BlogPost = {
         },
         {
           heading: "What It Sets Up: the MB HCMC Open",
+          image: { src: "/images/blog/singapore-open-2026-court-aftermath.webp", alt: "An empty teal-green pickleball championship court under fading arena lights after the Singapore Open 2026 finals", caption: "Two weeks on, the same PPA Asia 500 tier lands in Ho Chi Minh City for the MB HCMC Open." },
           content: "The timing could hardly be better. Two weeks after Singapore, the tour crosses into Vietnam for the MB HCMC Open on August 6-9 — the same PPA Asia 500 tier, the same US$70,000 and 500 ranking points, but this time on home courts in Ho Chi Minh City. Hien walks in as arguably the region's form player of the season: a doubles title in Beijing, a singles title in Kuala Lumpur, and now two more medals in Singapore. A home crowd will finally get to see it in person.",
           internalLinks: [
             { text: "Preview: MB HCMC Open 2026, August 6-9", path: "/blog/hcmc-open-2026-preview" },
@@ -104,6 +110,7 @@ const post: BlogPost = {
         },
         {
           heading: "Chung kết đôi nam: chỉ cách một set là đổi cục diện",
+          image: { src: "/images/blog/singapore-open-2026-doubles-silver.webp", alt: "Hai tay vợt đôi nam in bóng lưng rời sân teal sau trận chung kết đôi nam Singapore Open 2026, ánh đèn nhà thi đấu phía sau", caption: "Hiển và Miyoshi kéo trận chung kết vào set 3 quyết định trước khi nhận HCB." },
           content: "Hiển và Miyoshi bước vào chung kết với tư cách hạt giống số 3, gặp Len Yang và Collin Johns, và có lúc tưởng như đã có thể tạo bất ngờ. Họ thua set đầu 4-11, rồi đáp trả đanh thép khi thắng 11-4 ở set 2 để kéo trận đấu vào set 3 quyết định. Nhưng ở set cuối, Yang và Johns mới là những người bản lĩnh hơn ở thời điểm then chốt, thắng 11-5 để giành chức vô địch. Tỷ số chung cuộc: 11-4, 4-11, 11-5 nghiêng về Yang và Johns — thắng 2-1, để Hiển và Miyoshi nhận HCB cùng 400 điểm xếp hạng.",
           internalLinks: [
             { text: "Toàn cảnh các giải pickleball chuyên nghiệp 2026", path: "/vi/blog/cac-giai-pickleball-chuyen-nghiep-2026-toan-canh" }
@@ -137,6 +144,7 @@ const post: BlogPost = {
         },
         {
           heading: "Bắc cầu tới MB HCMC Open",
+          image: { src: "/images/blog/singapore-open-2026-court-aftermath.webp", alt: "Sân pickleball teal trống dưới ánh đèn nhà thi đấu sau khi kết thúc chung kết Singapore Open 2026", caption: "Hai tuần sau, cùng hạng PPA Asia 500 đổ bộ TP.HCM với MB HCMC Open." },
           content: "Thời điểm khó mà đẹp hơn. Hai tuần sau Singapore, tour đổ bộ Việt Nam với MB HCMC Open ngày 6-9/8 — cùng hạng PPA Asia 500, cùng mức 70.000 USD và 500 điểm, nhưng lần này trên sân nhà TP.HCM. Hiển bước vào với phong độ có thể nói là tốt bậc nhất khu vực mùa này: HCV đôi nam ở Beijing, HCV đơn nam ở Kuala Lumpur, và giờ thêm 2 huy chương ở Singapore. Khán giả nhà cuối cùng cũng sắp được tận mắt chứng kiến.",
           internalLinks: [
             { text: "Preview MB HCMC Open 2026 (6-9/8)", path: "/vi/blog/hcmc-open-2026" },
