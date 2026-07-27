@@ -111,12 +111,21 @@ test("/vi: no internal link rendered by the SPA 404s", async ({ page, baseURL })
   const unique = [...new Set(hrefs)].filter((h) => !h.startsWith("//"));
   expect(unique.length).toBeGreaterThan(10);
 
+  // Confirm a 404 before reporting it. This suite runs against production, and
+  // a request landing mid-deploy can miss for a second or two while Cloudflare
+  // swaps the build — observed once while shipping this very test. A genuinely
+  // broken link 404s every time; a deploy-window blip does not. Without this,
+  // the gate cries wolf on every deploy, and a gate people learn to ignore is
+  // worse than no gate (see the smoke-flake history in lessons-learned).
   const broken: string[] = [];
   for (const href of unique) {
-    const res = await page.request.get(new URL(href, baseURL).toString(), {
-      maxRedirects: 5,
-    });
-    if (res.status() === 404) broken.push(`${href} → 404`);
+    const url = new URL(href, baseURL).toString();
+    let status = (await page.request.get(url, { maxRedirects: 5 })).status();
+    if (status === 404) {
+      await page.waitForTimeout(1_500);
+      status = (await page.request.get(url, { maxRedirects: 5 })).status();
+    }
+    if (status === 404) broken.push(`${href} → 404 (twice)`);
   }
   expect(broken, `links the Vietnamese homepage renders but the server cannot serve:\n${broken.join("\n")}`).toEqual([]);
 });
