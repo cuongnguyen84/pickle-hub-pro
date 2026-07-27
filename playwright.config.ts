@@ -73,6 +73,18 @@ export default defineConfig({
       dependencies: ["auth-setup"],
     },
     {
+      // Human-path link integrity. Every other gate here measures the bot
+      // renderer (functions/_lib/render/*); this one drives the SPA in a real
+      // browser so the links under test are the ones a person clicks. Added
+      // after all six /vi story cards shipped pointing at 404s while every
+      // curl -A Googlebot came back 200 (#473). Sequential: it walks live
+      // pages and navigates back and forth.
+      name: "human-path",
+      fullyParallel: false,
+      use: { ...devices["Pixel 7"] },
+      testMatch: /human-path\.spec\.ts/,
+    },
+    {
       name: "ssr-bot",
       // SSR/SEO tests are fetch-only (no browser), but Playwright
       // requires a "browser" — we still spawn Chromium per project.
