@@ -25,7 +25,7 @@ struct ChatRepository {
                 .limit(limit)
                 .execute().value
             return rows.reversed()
-        } catch { return [] }
+        } catch { assertionFailure("ChatRepository.recentMessages: \(error)"); return [] }
     }
 
     /// Messages strictly older than `before` (created_at), oldest→newest.
@@ -40,7 +40,7 @@ struct ChatRepository {
                 .limit(limit)
                 .execute().value
             return rows.reversed()
-        } catch { return [] }
+        } catch { assertionFailure("ChatRepository.olderMessages: \(error)"); return [] }
     }
 
     func settings(livestreamID: String) async -> ChatSettings {
@@ -52,7 +52,7 @@ struct ChatRepository {
                 .limit(1)
                 .execute().value
             return rows.first ?? .defaultFor(livestreamID)
-        } catch { return .defaultFor(livestreamID) }
+        } catch { assertionFailure("ChatRepository.settings: \(error)"); return .defaultFor(livestreamID) }
     }
 
     func myMute(livestreamID: String, userID: String) async -> ChatMute? {
@@ -66,7 +66,7 @@ struct ChatRepository {
                 .execute().value
             let row = rows.first
             return (row?.isActive == true) ? row : nil
-        } catch { return nil }
+        } catch { assertionFailure("ChatRepository.myMute: \(error)"); return nil }
     }
 
     func canModerate(livestreamID: String, userID: String) async -> Bool {
@@ -76,7 +76,7 @@ struct ChatRepository {
                 .rpc("can_moderate_chat", params: Params(_livestream_id: livestreamID, _user_id: userID))
                 .execute().value
             return ok
-        } catch { return false }
+        } catch { assertionFailure("ChatRepository.canModerate: \(error)"); return false }
     }
 
     func leaderboard(livestreamID: String, limit: Int = 10) async -> [ChatLeaderboardEntry] {
@@ -85,7 +85,7 @@ struct ChatRepository {
             return try await client
                 .rpc("get_chat_leaderboard", params: Params(_livestream_id: livestreamID, _limit: limit))
                 .execute().value
-        } catch { return [] }
+        } catch { assertionFailure("ChatRepository.leaderboard: \(error)"); return [] }
     }
 
     func profile(userID: String) async -> (displayName: String?, avatarURL: String?) {
@@ -98,7 +98,7 @@ struct ChatRepository {
                 .limit(1)
                 .execute().value
             return (rows.first?.display_name, rows.first?.avatar_url)
-        } catch { return (nil, nil) }
+        } catch { assertionFailure("ChatRepository.profile: \(error)"); return (nil, nil) }
     }
 
     // MARK: Writes

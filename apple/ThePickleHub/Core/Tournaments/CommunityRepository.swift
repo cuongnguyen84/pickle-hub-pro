@@ -77,7 +77,7 @@ struct CommunityRepository {
                     state: state, createdAt: Self.date(r.created_at), format: .quickTable
                 )
             }
-        } catch { return [] }
+        } catch { assertionFailure("CommunityRepository.quickTables: \(error)"); return [] }
     }
 
     // MARK: Team Match (registration / ongoing)
@@ -115,7 +115,7 @@ struct CommunityRepository {
                     createdAt: Self.date(r.created_at), format: .teamMatch
                 )
             }
-        } catch { return [] }
+        } catch { assertionFailure("CommunityRepository.teamMatches: \(error)"); return [] }
     }
 
     // MARK: Doubles Elimination (setup / active / ongoing)
@@ -140,7 +140,7 @@ struct CommunityRepository {
                     createdAt: Self.date(r.created_at), format: .doublesElim
                 )
             }
-        } catch { return [] }
+        } catch { assertionFailure("CommunityRepository.doublesElim: \(error)"); return [] }
     }
 
     /// setup → draft, completed → completed, everything else → ongoing.
@@ -174,6 +174,6 @@ struct CommunityRepository {
                     createdAt: Self.date(r.created_at), format: .flex
                 )
             }
-        } catch { return [] }
+        } catch { assertionFailure("CommunityRepository.flex: \(error)"); return [] }
     }
 }

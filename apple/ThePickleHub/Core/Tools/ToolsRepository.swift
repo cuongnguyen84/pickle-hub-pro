@@ -67,7 +67,7 @@ struct ToolsRepository {
                 .eq("user_id", value: uid)
                 .execute().value
             return rows.compactMap { $0.t }.map { Self.lightMap($0, format: format) }
-        } catch { return [] }
+        } catch { assertionFailure("ToolsRepository.refereed: \(error)"); return [] }
     }
 
     // MARK: Admin scope
@@ -87,7 +87,7 @@ struct ToolsRepository {
                 .limit(1)
                 .execute().value
             return !rows.isEmpty
-        } catch { return false }
+        } catch { assertionFailure("ToolsRepository.isCurrentUserAdmin: \(error)"); return false }
     }
 
     /// Admin-only: every tournament across all 4 formats, newest first. Lightweight
@@ -140,7 +140,7 @@ struct ToolsRepository {
                 .limit(limit)
                 .execute().value
             return rows.map { (Self.lightMap($0, format: format), owner($0)) }
-        } catch { return [] }
+        } catch { assertionFailure("ToolsRepository.allRows: \(error)"); return [] }
     }
 
     /// Batch-resolve display names for a set of owner ids (lower-cased keys).
@@ -162,7 +162,7 @@ struct ToolsRepository {
                 if let name = row.displayName?.nonEmpty { map[row.id.lowercased()] = name }
             }
             return map
-        } catch { return [:] }
+        } catch { assertionFailure("ToolsRepository.displayNames: \(error)"); return [:] }
     }
 
     /// Row shape covering all 4 tables in the admin scope — unselected columns
@@ -223,7 +223,7 @@ struct ToolsRepository {
                 for await item in group { result.append(item) }
                 return result
             }
-        } catch { return [] }
+        } catch { assertionFailure("ToolsRepository.quickTournaments: \(error)"); return [] }
     }
 
     private func doublesTournaments(uid: String, limit: Int) async -> [MyTournament] {
@@ -241,7 +241,7 @@ struct ToolsRepository {
                 for await item in group { result.append(item) }
                 return result
             }
-        } catch { return [] }
+        } catch { assertionFailure("ToolsRepository.doublesTournaments: \(error)"); return [] }
     }
 
     private func simpleTournaments(table: String, ownerColumn: String, uid: String, limit: Int, format: BracketFormat) async -> [MyTournament] {
@@ -254,7 +254,7 @@ struct ToolsRepository {
                 .limit(limit)
                 .execute().value
             return rows.map { Self.map($0, format: format) }
-        } catch { return [] }
+        } catch { assertionFailure("ToolsRepository.simpleTournaments: \(error)"); return [] }
     }
 
     /// Minimal row shared by Team Match + Flex (no capacity/registration surfaced).
