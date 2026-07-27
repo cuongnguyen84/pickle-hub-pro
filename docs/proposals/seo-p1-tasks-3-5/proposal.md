@@ -263,6 +263,22 @@ Bảng ledger đầy đủ: **`ledger.md`** *(`debate-ledger.mjs` không tồn t
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
-- Khác kế hoạch:
-- Học được:
+### PR 1 — bước 0 + 1 + 2 + fix C1 · **CHẶN, chưa merge**
+
+- PR: [#473](https://github.com/cuongnguyen84/pickle-hub-pro/pull/473) · SHA `0832e5c` · Ngày 2026-07-27
+- **Chặn bởi:** toàn bộ GitHub Actions đỏ vì `"The job was not started because an Actions budget is preventing further use."` — **không liên quan code**. Run xanh cuối cùng của cả repo: `Uptime ping` `2026-07-26T14:02:17Z`; từ `14:30:16Z` mọi run chết trong 2 giây, 0 step. 100/100 run gần nhất đỏ, cả trên `main` lẫn nhánh khác. Cần anh nâng ngân sách/spending limit của Actions.
+- **Đã tự verify trên preview** (`feat-seo-p1-tasks-3-5.pickle-hub-pro.pages.dev`, Googlebot UA) — 6/6 đúng thiết kế: 3 URL hỏng → 301 về đúng bài VI; slug VI thật → 200; slug rác → 404; bài EN → 200. Prod cùng lúc vẫn 404.
+- Gate local trước khi push: `tsc -b` 0 · eslint 0 · 110 file / 1220 test pass · bundle INITIAL 266,3/280, total 1854,3/1970.
+
+**Khác kế hoạch:**
+- Fix C1 gộp vào PR này (Cuong duyệt) thay vì để riêng.
+- Redirect đích là **bài VI**, không phải bài EN như `pre-mortem` đề xuất — verify được 0/53 slug VI trùng slug EN và cả 7 bài đều có bản VI, nên giữ người Việt ở nội dung tiếng Việt.
+- `C4/externalLinks` **không** làm (D2 vòng 2). Chỉ vá bẫy URL tuyệt đối ở `blog-body.ts`.
+- `rel` dùng `nofollow noopener`, **không** `sponsored` như panel đề xuất — `sponsored` khẳng định có trả tiền, helper không biết điều đó.
+
+**Học được:**
+- `qa-verifier` bắt được một lỗ hổng PostgREST `or=` filter-injection do chính bản nháp đầu của thay đổi này tạo ra: `encodeURIComponent` **không** escape `(` `)`. Repo đã có `escapePostgrestSearch.ts` cho lớp lỗi này. Sửa bằng shape-guard `^[a-z0-9-]+$` (đúng hơn cho khoá exact-match) + test riêng.
+- Actions hết ngân sách biểu hiện **giống hệt CI hỏng**: mọi job đỏ, 2 giây, không log. Lý do chỉ nằm ở `check-runs/<id>/annotations`, không nằm trong `gh run view --log-failed` (log không tồn tại).
+
+### PR 2 — bước 3 (🔴 RED) · chưa bắt đầu
+### PR 3 — bước 4 (glossary VI) · chưa bắt đầu
