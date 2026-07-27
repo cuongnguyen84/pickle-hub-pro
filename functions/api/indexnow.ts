@@ -11,6 +11,8 @@
  *   INDEXNOW_SECRET  — secret to protect this endpoint from unauthorized calls
  */
 
+import { EN_BLOG_SLUGS } from "../_lib/static-blog-slugs";
+
 interface Env {
   INDEXNOW_KEY: string;
   INDEXNOW_SECRET: string;
@@ -66,54 +68,19 @@ const STATIC_URLS = [
   `https://${HOST}/tools/dashboard`,
 ];
 
-// Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
-const BLOG_SLUGS = [
-  // 2026-07-11 sync: these four were missing vs metadata.ts (see file-header rule)
-  "pickleball-cost-vietnam-2026",
-  "hcmc-open-2026-preview",
-  "vietnam-pickleball-tournament-calendar-2026",
-  "ppa-beijing-open-2026-recap",
-  "pickleball-club-management-software-comparison",
-  "pickleball-tournament-budget-calculator-guide",
-  "ppa-tour-asia-2026-recap",
-  "mlp-vs-ppa-2026-which-tour-to-watch",
-  "vietnam-pickleball-federation-2026",
-  "pickleball-erne-shot-tutorial",
-  "pickleball-doubles-stacking-strategy",
-  "pickleball-third-shot-drop-vs-drive",
-  "pickleball-dink-technique-mastery",
-  "dupr-thepicklehub-user-guide",
-  "pickleball-court-dimensions-setup-guide",
-  "vietnam-dupr-leaderboard-launch",
-  "pickleball-vs-padel-vs-paddle-tennis",
-  "best-pickleball-paddles-beginners-2026",
-  "pickleball-for-tennis-players-2026",
-  "dupr-rating-improvement-30-day-plan",
-  "professional-pickleball-tours-guide-2026",
-  "tama-shimabukuro-ppa-atlanta-final-15-year-old",
-  "what-is-dupr-pickleball-rating-system",
-  "how-to-watch-ppa-tour-live-2026",
-  "ppa-tour-asia-2026-complete-guide",
-  "best-pickleball-tournament-software-2026",
-  "how-to-create-pickleball-bracket",
-  "pickleball-round-robin-generator-guide",
-  "pickleball-scoring-rules-guide",
-  "how-to-organize-pickleball-tournament",
-  "pickleball-doubles-strategy-guide",
-  "pickleball-tournament-formats-explained",
-  "pickleball-live-streaming-guide",
-  "mlp-format-explained",
-  "pickleball-rules-complete-guide",
-  "pickleball-world-cup-2026-da-nang",
-  "tournament-organizer-hub",
-  "how-to-play-pickleball",
-  // Added 2026-06-10: present in sitemap-static + BLOG_POST_META but were missing
-  // here, so they were never auto-pinged to Bing/Yandex via the GET-all path.
-  "dupr-algorithm-explained-performance-vs-expectation",
-  "dupr-vietnam-partnership-ta-pickleball-thepicklehub",
-  "pickleball-tour-wars-2023-explained",
-  "app-tour-vs-ppa-tour-contracts-2026",
-];
+// EN blog slugs come straight from the generated list, which derives from
+// src/content/blog/metadata.ts — the single blog source of truth.
+//
+// This used to be a hand-copied array with a "keep in sync with metadata.ts"
+// comment on top. It drifted three times: 2026-06-10 (4 slugs), 2026-07-11
+// (4 slugs), and again by 2026-07-27 (5 slugs — every post published since
+// mid-July). Each drift is silent in the worst way: GET /api/indexnow returns
+// `submitted: 42` and HTTP 200, so the ping looks successful while the newest
+// posts — the ones that actually need discovering — were never sent to Bing or
+// Yandex. Nothing failed, nothing logged, and no test covered the array.
+//
+// Importing the generated list removes the class of bug rather than patching
+// its third instance. Same import sitemap-static.xml.ts already uses.
 
 async function getViBlogSlugs(env: Env): Promise<string[]> {
   try {
@@ -138,7 +105,7 @@ function buildAllUrls(viSlugs: string[]): string[] {
   const urls = [...STATIC_URLS];
 
   // EN blog posts
-  for (const slug of BLOG_SLUGS) {
+  for (const slug of EN_BLOG_SLUGS) {
     urls.push(`https://${HOST}/blog/${slug}`);
   }
 
