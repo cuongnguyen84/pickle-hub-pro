@@ -1,0 +1,88 @@
+{
+  "slug": "seo-p1-tasks-3-5",
+  "round1_date": "2026-07-27",
+  "note": "scripts/agents/debate-ledger.mjs KHONG TON TAI — luat vong 2 cuong che thu cong boi orchestrator. Luat: chi doi lap truong khi trich duoc file/dong CHUA thay o vong 1.",
+  "agents_run": {
+    "idea-recon": "ok",
+    "solution-architect": "ok",
+    "ui-ux-critic": "ok (+GPT-5.6)",
+    "risk-auditor": "ok (+GPT-5.6, model gpt-5.6-sol)",
+    "pre-mortem": "ok"
+  },
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Tier cua Task 4 — RED hay khong",
+      "why_real": "Verdict tier la cua risk-auditor va orchestrator khong duoc ha. Nhung solution-architect ket luan nguoc han tu cung mot bo file.",
+      "positions": {
+        "risk-auditor": "RED. Ly do: noi dung thuong mai co han su dung (gia ve/dia diem/gio) + nua VI nam trong Supabase ma git revert khong cham + HTML sai con song trong KV them 6 gio (DEFAULT_TTL_SECONDS=21600, _middleware.ts:191) + IndexNow da ping thi khong rut lai duoc. Hai dong 'khong revert duoc' trong bang rollback la thu quyet dinh RED. Da tu REFINE san: chi Task 4.2 (companion) + 4.3 (bump updatedDate) la RED; Task 4.1 (internalLinks) la GREEN.",
+        "solution-architect": "Khong co buoc nao RED. Ly do: khong dung auth / payments / supabase/config.toml / migration. Option A4 la zero-code, chi UPDATE content_html + them internalLinks."
+      },
+      "crux": "RED co nghia la 'khong revert duoc bang git revert' (theo _TEMPLATE.md:51). Hang vi_blog_posts va IndexNow ping co roi vao dinh nghia do khong? Va neu bo companion (D4 da dong thuan) thi tier con lai la gi?"
+    },
+    {
+      "id": "D2",
+      "topic": "Sua the nao de link ngoai (Ticketbox) bam duoc tren ban EN",
+      "why_real": "Ba muc do can thiep khac nhau cho cung mot van de, chenh nhau 1 dong vs ~14 dong x 3 file. Co crux kiem chung duoc bang code.",
+      "positions": {
+        "ui-ux-critic": "MOT dong o blog-body.ts:51 — `const href = /^https?:\\/\\//.test(l.path) ? l.path : siteUrl + l.path`. Bang chung moi: react-router-dom@6.30.4 (dist/index.js:744-790) TU phat hien URL tuyet doi khac origin va render <a href> that, khong intercept. Nghia la renderer client DA chay duoc roi; chi con 1 dong SSR. Sua luon bit duoc bay hien tai (hom nay ai go URL tuyet doi vao internalLinks se am tham gui href gay cho Googlebot).",
+        "solution-architect": "Them field `externalLinks?: {text,url}[]` vao BlogSection (Option C4): types.ts +1 dong, BlogPost.tsx ~8 dong, blog-body.ts ~5 dong, 1 test. Ly do: link nam dung cho trong bai, bot thay duoc, dung lai cho World Cup + moi bai giai sau. Nhung KHUYEN NGHI hoan toi truoc 20/8, khong lam truoc 6/8.",
+        "risk-auditor": "EN 'can' field externalLinks + render o CA HAI renderer trong CUNG mot deploy. Hoac bo EN, chi lam VI."
+      },
+      "crux": "react-router-dom@6.30.4 co that su render <a href> cho URL tuyet doi khong? Neu CO thi phuong an 1 dong cua ui-ux-critic du, va C4 la over-engineering. Neu KHONG thi ui-ux-critic sai va phai lam field."
+    },
+    {
+      "id": "D3",
+      "topic": "Task 5 nua VI co that su la 'zero code' khong",
+      "why_real": "solution-architect dua ca ke hoach thuc thi len gia dinh nay (A5 = 'Files: KHONG co'). ui-ux-critic noi con 3 blocker code. Neu ui-ux-critic dung thi effort va thu tu ship deu sai.",
+      "positions": {
+        "solution-architect": "Zero code. Bang chung: 2/53 bai VI published DA co <h2 id=> song qua ca sanitizeBlogHtml lan prod (curl /vi/blog/hop-dong-ppa-tour-2026 ra <h2 id=\"ppa-tra-bao-nhieu\">). Anchor VI = 0 dong code.",
+        "ui-ux-critic": "id= ton tai KHONG co nghia la anchor HOAT DONG. Con 3 blocker: (1) ViBlogPost.tsx mount content bat dong bo — trinh duyet nhay fragment TRUOC khi react-query tra content_html, roi o dau bai; khong co cho nao trong repo re-scroll theo location.hash. (2) Khong co scroll-margin nao trong toan repo, .tl-nav la position:sticky top:0 (the-line.css:135-143) — heading nam DUOI thanh nav. (3) ViBlogPost.tsx:32-41 gop `error || !post` — loi mang hien thanh 'bai da bi xoa', khong co nut thu lai."
+      },
+      "crux": "Co ai da MO TRINH DUYET THAT va bam /vi/blog/hop-dong-ppa-tour-2026#quang-duong chua? solution-architect tu ghi trong muc 'dieu em khong chac': 'chua mo browser xac nhan anchor that su cuon toi noi'. Day la crux kiem chung duoc bang Chrome."
+    }
+  ],
+  "not_disagreements": [
+    {
+      "topic": "Bo bai companion ve rieng",
+      "status": "DONG THUAN 3/3 — ui-ux-critic (#6: 'dung tao companion, lap lai cannibalization Task 3'), solution-architect (A4 nhoi ve vao chinh bai preview), risk-auditor (companion la phan RED nhat). Khong can vong 2."
+    },
+    {
+      "topic": "Khong viet gia ve vao bai",
+      "status": "DONG THUAN — risk-auditor curl chung minh gia render client-side, khong co trong HTML server. ui-ux-critic + GPT-5.6 doc lap noi 'khong duoc bia, dan thang sang Ticketbox'."
+    },
+    {
+      "topic": "Phan vai glossary vs rules guide",
+      "status": "DONG THUAN 3/3 + GPT-5.6 — glossary thang truy van dinh nghia ('X la gi'), rules guide thang truy van luat. Cam copy nguyen doan. Link 2 chieu."
+    },
+    {
+      "topic": "9 thuat ngu la qua mong cho tieu de 'A-Z'",
+      "status": "DONG THUAN — solution-architect de xuat 24, ui-ux-critic de xuat ~20. Chenh lech so luong khong phai bat dong ve ban chat."
+    }
+  ],
+  "cross_vendor_agreement": {
+    "note": "Day la loai dong thuan DUY NHAT co trong so trong panel nay — Claude va GPT-5.6 la hai vendor khac nhau, doc lap toi cung ket luan.",
+    "items": [
+      "URL Ticketbox text tran la BLOCKER, khong phai 'chap nhan duoc cho 1 bai 10 ngay' (ui-ux-critic + GPT-5.6)",
+      "CTA ve phai nam GIUA bai, ngay sau muc 'at a glance', khong phai o day (ui-ux-critic + GPT-5.6)",
+      "Khong duoc bia thong tin ve — dan thang sang Ticketbox (ui-ux-critic + GPT-5.6)",
+      "Ban VI dung `prose` thay `.tl-longform` la mat mat cho 95% nguoi dung (ui-ux-critic + GPT-5.6, doc lap chi ra cung cho)",
+      "Bump updatedDate tren prose stale = site tu bao chung thong tin cu (risk-auditor + GPT-5.6)",
+      "Race hreflang EN<->VI + KV dong bang 6h (risk-auditor + GPT-5.6)",
+      "Rollback bat doi xung repo<->Supabase (risk-auditor + GPT-5.6)"
+    ]
+  },
+  "claude_only_echo_warning": "risk-auditor va pre-mortem cung phe 'di tim cai hong' nen chung gat dau voi nhau nhieu (rollback bat doi xung, KV 6h, vi_blog_posts ngoai pipeline, gate deu la curl -A Googlebot). Hai Claude cung nhiem vu dong y voi nhau CHI chung minh chung cung la Claude. KHONG gan trong so cross-vendor cho cac muc nay.",
+  "open_for_cuong_precheck": [
+    {
+      "id": "C1",
+      "topic": "BUG PROD DANG SONG — /vi/blog/<slug-EN> tra 404 cho ca 6 bai top-6 trang chu VI",
+      "note": "Khong phai bat dong. pre-mortem tim ra, orchestrator verify doc lap bang curl. Index.tsx:138 dung href tu slug EN. Doc lap hoan toan voi Task 4/5 nhung Task 4/5 se lam no trung dung 2 bai quan trong nhat."
+    },
+    {
+      "id": "C2",
+      "topic": "Cuong da chot 'EN + VI song song' cho glossary; solution-architect de xuat gate stop-and-look",
+      "note": "solution-architect: ship VI truoc, sau 3 tuan neu VI van 0 impression cho '... trong pickleball la gi' thi DUNG lam ban EN. Day la thach thuc mot quyet dinh Cuong da chot — len muc 0, khong phai vong 2."
+    }
+  ]
+}

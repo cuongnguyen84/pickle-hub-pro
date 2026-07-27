@@ -83,15 +83,43 @@ export function usePublishedViBlogPosts() {
   });
 }
 
+// Every slug in vi_blog_posts is machine-generated from this class (verified
+// 2026-07-27: 55/55 published rows match). Anything else came from a hand-typed
+// or crafted URL and cannot name a real post, so refuse it before it reaches
+// the query string rather than trying to neutralise it.
+//
+// This matters specifically because the lookup below uses PostgREST's `or=`
+// grammar, where `,` and `()` are syntax. encodeURIComponent() does NOT escape
+// parentheses — verified: encodeURIComponent("a)bad(x") === "a)bad(x" — so
+// interpolating a raw path segment would let a visitor reshape the filter.
+// escapePostgrestSearch() exists for the ilike-search call sites; for an
+// exact-match key a closed character class is the stricter, simpler guard.
+export const VI_SLUG_PATTERN = /^[a-z0-9-]+$/;
+
 export function useViBlogPostBySlug(slug: string | undefined) {
+  const isWellFormed = !!slug && VI_SLUG_PATTERN.test(slug);
   return useQuery({
     queryKey: ["vi-blog-post", slug],
+    // C1 (2026-07-27) — also match on alternate_en_slug so /vi/blog/<EN-slug>
+    // resolves to the Vietnamese translation instead of dead-ending. Index.tsx
+    // builds VI story hrefs from the EN metadata slug, so every homepage card
+    // on /vi hit this path and rendered "Bài viết này không tồn tại".
+    // ViBlogPost redirects to the canonical VI URL when the match came from
+    // alternate_en_slug.
+    //
+    // `or=` still yields at most one row: alternate_en_slug values are EN
+    // slugs, and 0 of 53 published VI slugs collide with an EN slug (verified
+    // 2026-07-27), so the two sides of the OR are disjoint. That keeps the
+    // pgrst.object+json Accept header valid.
     queryFn: () =>
       viBlogFetch<ViBlogPost>(
-        `?slug=eq.${encodeURIComponent(slug!)}&status=eq.published`,
+        `?or=(slug.eq.${slug!},alternate_en_slug.eq.${slug!})&status=eq.published`,
         { single: true },
       ),
-    enabled: !!slug,
+    // Disabled for a malformed slug: react-query v5 reports isFetching false,
+    // so ViBlogPost skips the skeleton and renders "không tìm thấy" — which is
+    // the truthful answer for a slug that cannot exist.
+    enabled: isWellFormed,
     staleTime: 5 * 60 * 1000,
   });
 }

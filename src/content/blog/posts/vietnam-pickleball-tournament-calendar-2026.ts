@@ -58,6 +58,10 @@ const post: BlogPost = {
             "The Ho Chi Minh City Open is a US$70,000, 500-level PPA Tour Asia stop scheduled for August 6–9, 2026 — Vietnam's second tour stop of the year after the Hanoi Cup. From 2026, PPA Tour Asia points feed the unified global PPA ranking, so the 500 points on offer here matter beyond the region. As at other Asia stops, local players can enter the amateur draws alongside the professionals, making it a rare chance to compete at the same venue as the sport's biggest names. The professional line-up is usually confirmed closer to the event; when it lands we will add it here. If you can't be courtside, the tour is streamed — here is how to follow it live.",
           internalLinks: [
             {
+              text: "Ho Chi Minh City Open 2026 — full preview, draws and what to expect",
+              path: "/blog/hcmc-open-2026-preview",
+            },
+            {
               text: "PPA Tour Asia 2026 — full schedule, prize money and how to play",
               path: "/blog/ppa-tour-asia-2026-complete-guide",
             },
