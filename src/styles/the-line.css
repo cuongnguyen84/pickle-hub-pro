@@ -2676,6 +2676,18 @@
   text-underline-offset: 3px; text-decoration-thickness: 1px;
 }
 [data-theme="the-line"] .tl-longform a:hover { text-decoration-color: var(--tl-green); }
+
+/* Anchor landing offset. .tl-nav above is position:sticky;top:0, so a heading
+ * scrolled to by a #fragment stops exactly underneath it — measured 2026-07-27
+ * on a real mobile Chromium at 390x844: heading top 0, nav bottom 61. The
+ * reader lands mid-paragraph with no idea which term they asked for.
+ * Follows the nav's own safe-area padding rather than hardcoding 61px, so it
+ * stays correct on notched devices. Applies to both article surfaces: EN posts
+ * render into .tl-longform, VI posts into .prose. */
+[data-theme="the-line"] .tl-longform :is(h2, h3)[id],
+[data-theme="the-line"] .prose :is(h2, h3)[id] {
+  scroll-margin-top: calc(env(safe-area-inset-top) + 61px + 12px);
+}
 [data-theme="the-line"] .tl-longform ul,
 [data-theme="the-line"] .tl-longform ol {
   margin: 0 0 22px; padding-left: 22px; color: var(--tl-fg-2);

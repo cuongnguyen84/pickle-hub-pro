@@ -162,7 +162,52 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
   ]);
   const post = postRes.data;
 
-  if (!post) return render404(`/vi/blog/${slug}`, siteUrl);
+  // C1 (2026-07-27) — /vi/blog/<EN-slug> was a hard 404 for bots and a soft
+  // 404 for humans. src/pages/Index.tsx built every VI story href from the EN
+  // metadata slug (`/vi/blog/${p.slug}`), so ALL SIX homepage cards on /vi
+  // pointed at dead URLs. Verified on prod: /vi/blog/hcmc-open-2026-preview
+  // → 404 while /vi/blog/hcmc-open-2026 → 200.
+  //
+  // Fixed here rather than at each link site because the broken hrefs are
+  // already indexed and already shared; a caller-side fix leaves every old
+  // link dead. This also removes the need to keep appending self-mapping
+  // entries to VI_BLOG_REDIRECTS in _middleware.ts by hand.
+  //
+  // Redirect target order matters: a Vietnamese reader who asked for a VI URL
+  // should land on the VI article, not the English one. Only fall back to the
+  // EN post when no translation exists.
+  //
+  // Safe to key on the EN slug: verified 2026-07-27 that 0 of 53 published
+  // vi_blog_posts slugs collide with any of the 47 EN slugs, so this branch
+  // can never shadow a real VI post. The extra query only runs on the miss
+  // path (a request that was going to 404 anyway).
+  if (!post) {
+    const { data: twin } = await supabase
+      .from("vi_blog_posts")
+      .select("slug")
+      .eq("alternate_en_slug", slug)
+      .eq("status", "published")
+      .limit(1)
+      .maybeSingle();
+
+    // Plain Response, not _middleware's secureRedirect(): that helper is
+    // module-private there, and the middleware already copies our headers and
+    // runs applySecurityHeaders() over them before returning (see the MISS
+    // branch). Non-200 is never written to the KV prerender cache.
+    if (twin?.slug) {
+      return new Response(null, {
+        status: 301,
+        headers: { Location: `${siteUrl}/vi/blog/${twin.slug}` },
+      });
+    }
+    if (BLOG_POST_META[slug]) {
+      return new Response(null, {
+        status: 301,
+        headers: { Location: `${siteUrl}/blog/${slug}` },
+      });
+    }
+    return render404(`/vi/blog/${slug}`, siteUrl);
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = post as any;

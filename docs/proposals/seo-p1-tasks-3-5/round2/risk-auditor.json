@@ -1,0 +1,20 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "REFINE",
+      "new_tier_task4": "RED",
+      "evidence": "growth-tasks/sql/ chỉ có 2 file (2026-05-05-vi-hop-dong-app-tour.sql, 2026-05-05-vi-tour-wars-2023.sql), cả hai là INSERT-only, KHÔNG có block khôi phục — quy ước hiện tại của repo không sinh ra snapshot. `grep -rn vi_blog_posts supabase/migrations/ | grep -i 'trigger|audit|history|revision|version'` → 0 kết quả: không có bảng lịch sử cho vi_blog_posts. `curl -A Googlebot https://www.thepicklehub.net/vi/blog/hcmc-open-2026` → 200, mà functions/_lib/render/blog.ts:46 lọc `.eq('status','published')` → hàng Task 4 sắp UPDATE là hàng ĐANG published và đang rank, không phải INSERT hàng mới. docs/proposals/ds-03-component-standardization/proposal.md:45 là tiền lệ đúng của nước đi này: 'RED cư trú DUY NHẤT ở bước submit App Store native; phần web = AMBER (revert được bằng git revert)'.",
+      "reasoning": "Em thu hẹp RED từ 'cả Task 4' xuống ĐÚNG MỘT bước: UPDATE `content_html` lên hàng vi_blog_posts đang published mà chưa snapshot bản cũ. (1) Hàng vi_blog_posts INSERT mới thì đúng là revert được bằng 1 câu `UPDATE ... SET status='draft'` — blog.ts:46,154,159 + sitemap-blog.xml.ts:32 đều lọc status nên một câu gỡ khỏi SSR, hreflang và sitemap cùng lúc → AMBER, em nhận. Nhưng Task 4 KHÔNG phải INSERT, nó là UPDATE đè lên bài đang rank, và bản content_html cũ không tồn tại ở git, không tồn tại ở migration, không có bảng history — mất là mất. (2) IndexNow: em RÚT nó khỏi lý do RED — indexnow.ts chỉ POST URL sang api.indexnow.org, không để lại state phía mình. Xếp nó ngang 'push đã gửi' ở vòng 1 là em sai loại. (3) Nếu 'cấm viết giá vé' vào spec như điều kiện bắt buộc thì kịch bản 'đọc sai giá' chết theo — em rút. Lệch tên địa điểm là defect đang sống sẵn trong prod, không do Task 4 sinh ra. (4) 4.2 companion chết theo đồng thuận 3/3 → phần RED lớn nhất biến mất; 4.1 GREEN, 4.3 bump updatedDate AMBER.",
+      "conditions_to_lower": [
+        "Trước MỌI câu UPDATE: chạy `SELECT slug, status, published_at, updated_at, content_html FROM vi_blog_posts WHERE slug IN (...)` và lưu output nguyên văn thành `growth-tasks/sql/2026-07-27-vi-hcmc-open-2026.sql`, có CẢ câu UPDATE mới LẪN câu `UPDATE ... SET content_html = $$<bản cũ>$$`. Có file này → bước UPDATE hạ xuống AMBER (~2 phút khôi phục).",
+        "Sửa prose stale TRƯỚC, bump updatedDate SAU — grep 'under way now|as of July 23|just over two weeks' phải = 0 trước khi commit.",
+        "Spec ghi cứng: không có con số giá vé nào trong bài (EN lẫn VI); chỉ 'vé bán trên Ticketbox' + link.",
+        "Chốt một tên địa điểm duy nhất theo nguồn BTC, áp đồng thời preview EN + content_html VI + metaDescription.",
+        "Thứ tự deploy: UPDATE VI trước → deploy EN sau → ?nocache=1 (đúng '1') cho cả 2 URL (DEFAULT_TTL_SECONDS=21600 giữ HTML sai thêm 6 giờ).",
+        "IndexNow: POST tường minh {urls:[...]}, KHÔNG dùng GET-all (BLOG_SLUGS đã trôi 4 slug)."
+      ]
+    }
+  ]
+}

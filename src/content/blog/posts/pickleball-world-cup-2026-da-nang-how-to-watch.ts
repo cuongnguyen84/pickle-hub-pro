@@ -80,6 +80,7 @@ const post: BlogPost = {
           content: "FPT Play is both a co-organizer of the tournament and its exclusive Vietnamese broadcaster, carrying the event on SmartTV, mobile, FPT Play Box and fptplay.vn — a subscription is required. FPT Play also holds exclusive Vietnamese rights to PPA Tour Asia 2026, so a single subscription covers most of the pro pickleball played in Vietnam this year. International broadcast arrangements have not been announced. For updates between now and August, the official Instagram (@pickleballworldcupofficial) and YouTube channel are the fastest sources, and ThePickleHub carries bilingual coverage and live match tracking.",
           internalLinks: [
             { text: "Live pickleball on ThePickleHub", path: "/live" },
+            { text: "Ho Chi Minh City Open, Aug 6–9 — the other PPA Tour Asia stop in Vietnam this year", path: "/blog/hcmc-open-2026-preview" },
             { text: "Every pickleball tournament in Vietnam in 2026", path: "/blog/vietnam-pickleball-tournament-calendar-2026" }
           ]
         },

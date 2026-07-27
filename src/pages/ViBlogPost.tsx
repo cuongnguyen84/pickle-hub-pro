@@ -1,5 +1,7 @@
-import { Link, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
+import { ErrorState } from "@/components/states/PageStates";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/components/seo";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { AdSlot } from "@/components/monetization/AdSlot";
@@ -13,9 +15,39 @@ import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 
 const ViBlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { data: post, isLoading, error } = useViBlogPostBySlug(slug);
+  const { data: post, isLoading, error, refetch } = useViBlogPostBySlug(slug);
   useTrackBlogView("vi", slug);
   const { data: viewCount } = useBlogPostViewCount("vi", slug);
+
+  // Deep links carrying a #fragment (glossary anchors, cross-links into a
+  // specific section) never scrolled: content_html only enters the DOM after
+  // react-query resolves, long after the browser gave up looking for the id.
+  // Measured on prod 2026-07-27 with a real mobile Chromium — cold deep link
+  // and F5 both left scrollTop at 0 with the target heading 3379px down.
+  //
+  // scrollIntoView(), NOT window.scrollTo(): the page does not scroll on the
+  // document. TheLineLayout scrolls inside div.tl-scroll, so
+  // document.scrollingElement.scrollHeight equals the viewport height and
+  // window.scrollY is permanently 0 — a window.scrollTo() fix runs clean and
+  // does nothing at all. scrollIntoView walks up to the real scroll ancestor.
+  //
+  // focus() as well as scroll: without it a keyboard or screen-reader user is
+  // moved visually but left at the top of the document (WCAG 2.4.3).
+  // preventScroll stops focus from fighting the scroll we just did.
+  useEffect(() => {
+    if (!post) return;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    // rAF so the effect runs after the sanitized HTML has been painted.
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.setAttribute("tabindex", "-1");
+      el.scrollIntoView();
+      (el as HTMLElement).focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [post]);
 
   if (isLoading) {
     return (
@@ -29,15 +61,38 @@ const ViBlogPost = () => {
     );
   }
 
-  if (error || !post) {
+  // A failed fetch is not a missing article. Merging the two told anyone on
+  // flaky 4G that the post had been deleted, and gave them no way to retry —
+  // on the pages we are actively driving traffic to.
+  if (error) {
+    return (
+      <TheLineLayout title="Lỗi kết nối">
+        <div className="tl-shell" style={{ paddingTop: 64, paddingBottom: 80 }}>
+          <ErrorState onRetry={() => void refetch()} />
+        </div>
+      </TheLineLayout>
+    );
+  }
+
+  if (!post) {
     return (
       <TheLineLayout title="Không tìm thấy bài viết">
         <div className="tl-shell" style={{ paddingTop: 64, paddingBottom: 80, textAlign: "center", color: "var(--tl-fg-3)" }}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem" }}>Không tìm thấy bài viết</h1>
-          <p>Bài viết này không tồn tại hoặc đã bị xóa.</p>
+          <p>Không tìm thấy bài viết này. Có thể link đã cũ.</p>
+          <p style={{ marginTop: "1.5rem" }}>
+            <Link to="/vi/blog" style={{ color: "var(--tl-accent, inherit)" }}>Xem tất cả bài viết →</Link>
+          </p>
         </div>
       </TheLineLayout>
     );
+  }
+
+  // Matched via alternate_en_slug (someone followed /vi/blog/<EN-slug>).
+  // Send them to the canonical VI URL so the address bar, the canonical tag
+  // and any share from this page all agree. See useViBlogPostBySlug.
+  if (post.slug !== slug) {
+    return <Navigate to={`/vi/blog/${post.slug}${window.location.hash}`} replace />;
   }
 
   const breadcrumbItems = [

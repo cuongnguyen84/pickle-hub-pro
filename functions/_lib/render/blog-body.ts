@@ -27,6 +27,27 @@ function renderListItem(item: string): string {
     : `<li>${escapeHtml(item)}</li>`;
 }
 
+// An absolute URL in `internalLinks` used to be concatenated onto siteUrl,
+// so `https://ticketbox.vn/...` shipped to Googlebot as
+// `https://www.thepicklehub.nethttps://ticketbox.vn/...` — a silently broken
+// href with no error and no test covering it. The client never had this bug:
+// react-router-dom 6.30.4 detects a cross-origin absolute `to` and renders a
+// plain <a href> (dist/index.js:744-795), so only the SSR side diverged.
+//
+// escapeHtml on BOTH branches — the value goes inside an attribute and real
+// ticketing URLs carry query strings.
+//
+// rel="nofollow noopener" on outbound only. Deliberately NOT "sponsored":
+// that claims paid placement, which is not true of every external link, and
+// this helper cannot tell them apart. A genuinely sponsored link belongs in a
+// VI post's hand-written content_html where the rel can be exact.
+export function renderSectionLink(siteUrl: string, l: { text: string; path: string }): string {
+  const isExternal = /^https?:\/\//i.test(l.path);
+  const href = escapeHtml(isExternal ? l.path : `${siteUrl}${l.path}`);
+  const rel = isExternal ? ` rel="nofollow noopener"` : "";
+  return `<li><a href="${href}"${rel}>${escapeHtml(l.text)}</a></li>`;
+}
+
 function renderSections(content: BlogPostContent, siteUrl: string): string {
   const out: string[] = [];
   for (const s of content.sections) {
@@ -47,9 +68,7 @@ function renderSections(content: BlogPostContent, siteUrl: string): string {
     }
     if (s.internalLinks?.length) {
       out.push(
-        `<ul>${s.internalLinks
-          .map((l) => `<li><a href="${siteUrl}${escapeHtml(l.path)}">${escapeHtml(l.text)}</a></li>`)
-          .join("")}</ul>`,
+        `<ul>${s.internalLinks.map(renderSectionLink.bind(null, siteUrl)).join("")}</ul>`,
       );
     }
   }
