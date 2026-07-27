@@ -1,0 +1,220 @@
+{
+  "slug": "web-native-parity-port",
+  "cross_vendor_agreement": [
+    {
+      "topic": "Lỗ .insert() thẳng vào event_registrations bypass toàn bộ guard sức chứa/slot/payment (guard sống trong RPC, không trong bảng) — đang sống trên prod hôm nay",
+      "parties": [
+        "risk-auditor (Claude)",
+        "GPT-5.6 (external, vendor khác)"
+      ],
+      "note": "Đồng thuận độc lập khác vendor = bằng chứng thật. Gate: grep 'from(\"event_registrations\")' apple/ không được có .insert("
+    }
+  ],
+  "resolved_external": [
+    {
+      "topic": "TV-mode two-scene (external display + phone remote)",
+      "note": "GPT-5.6 muốn build; ui-ux-critic HOLD vì cần phần cứng thật để test mà deadline là sáng mai. Giải quyết trong vòng 1, không cần vòng 2."
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Có port T4 (perks + lặp tuần) và T5 (mời thành viên CLB) — hai task GHI vào prod DB — trong đêm autonomous không?",
+      "positions": {
+        "solution-architect": "CÓ. T4/T5 mỗi cái ~1h, không migration, không RPC mới (free_perks đã có trong EventPayload, invite_club_member RPC đã tồn tại). Test bằng status=draft rồi xoá. Từ chối hai task 1 giờ rủi ro thấp là quá thận trọng.",
+        "risk-auditor": "RED cho MỌI màn hình có ghi (partition trong verdict): 'social event slots/perks/recurrence, club invite member — ghi thật vào prod, không revert được từng dòng'. RED = cần Cuong duyệt trước, mà Cuong ngủ.",
+        "pre-mortem": "Nguy hiểm cụ thể ở nhánh EventPatch: form edit native save() đóng gói field mà native không biết → xoá trắng cấu hình web (slots). Guard rẻ: không thêm slots vào EventPatch, tách updateSlots() riêng, assertionFailure trong catch repository."
+      }
+    },
+    {
+      "id": "D2",
+      "topic": "Web-hop (SafariView) là pattern đúng cần giữ, hay auth cliff cần vá ngay đêm nay (DUPR chip dẫn ngõ cụt cho user chưa đăng nhập)?",
+      "positions": {
+        "solution-architect": "Web-hop DUPR/recovery là pattern ĐÚNG, không phải gap — OAuth SSO thuộc về ASWebAuthenticationSession sau này, không đụng đêm nay.",
+        "ui-ux-critic": "BLOCKER: session native không vào SFSafariViewController → 3 call site là vách đá auth. DUPR chip khi !user render 2 dòng chữ không có nút đăng nhập (DuprConnect.tsx:72-86). Fix rẻ đêm nay: tắt tap chip DUPR; contract mọi port sau: LoginView native + pending intent."
+      }
+    },
+    {
+      "id": "D3",
+      "topic": "TV-mode dashboard (/tools/dashboard) — port như T6 tùy chọn hay loại hẳn vì sai ngôn ngữ thiết bị?",
+      "positions": {
+        "solution-architect": "T6 tùy chọn nếu xong trước 02:00 — read-only, rủi ro 0.",
+        "ui-ux-critic": "KHÔNG NÊN PORT vì UX: 6 item × xoay 10s là ngôn ngữ màn hình lớn treo tường, vô nghĩa trên màn 6 inch. Không phải vấn đề tốn công — port đẹp mấy cũng sai chỗ."
+      }
+    }
+  ],
+  "open_for_cuong": [
+    {
+      "id": "O1",
+      "topic": "Native VI-only: DEVELOPMENT_LANGUAGE=vi, 0 file localization / 199 file Swift. Chuỗi mới đêm nay viết VI-only theo thiết kế hiện tại — trái luật song ngữ trong CLAUDE.md. Cần Cuong phê chuẩn hoặc yêu cầu bilingual cho native.",
+      "raised_by": "solution-architect"
+    },
+    {
+      "id": "O2",
+      "topic": "Có mở phiên CÓ GIÁM SÁT (Cuong online) cho T4 perks+repeat (luồng TẠO) và T5 mời thành viên CLB không? Panel đã chốt sẵn gates: perks đi qua EventPayload không đụng EventPatch; slug -tuan{i+1}; T5 cần CLB test có organizer duy nhất (tránh push thật); test account KHÔNG phải admin.",
+      "raised_by": "orchestrator (từ kết quả D1 vòng 2)"
+    }
+  ],
+  "round2": {
+    "solution-architect": {
+      "agent": "solution-architect",
+      "rebuttals": [
+        {
+          "id": "D1",
+          "topic": "Có port T4 (perks + lặp tuần) và T5 (mời thành viên CLB) — hai task GHI vào prod DB — trong đêm autonomous không?",
+          "myRound1Position": "CÓ. Mỗi cái ~1h, không migration, không RPC mới, backend đã có đường ray sẵn — từ chối hai task 1 giờ rủi ro thấp là quá thận trọng.",
+          "move": "CONCEDE",
+          "evidence": "apple/ThePickleHub/Features/Social/Organizer/SocialEventFormView.swift:71-96 — prefill() gán 14 field từ `existing` (title, description, courtCount, ballType, visibility, prepayment…) nhưng KHÔNG đọc `e.freePerks`. Kết hợp với apple/ThePickleHub/Core/Social/SocialOrganizerRepository.swift:341-354, nơi EventPatch cố ý bỏ `slots` kèm comment cảnh báo: hợp đồng an toàn hiện tại là 'key vắng mặt = không ghi'. T4 của em bắt buộc phải THÊM `free_perks` vào EventPatch; nếu thêm mà không sửa prefill thì mọi lần BTC sửa một sự kiện cũ sẽ PATCH `free_perks = []` và xoá trắng quyền lợi đã cấu hình trên web.",
+          "note": "Pre-mortem tìm ra cơ chế này ở nhánh `slots` (thứ em đã hoãn), nên vòng 1 em tưởng nó không chạm phạm vi của mình — em tự mở file và thấy nó nằm ngay trong T4, lệch đúng một field. Cộng với risk-auditor #2 (tài khoản test là admin DUY NHẤT của prod, nên kết quả xanh sáng mai không chứng minh được gì cho organizer thường), em rút T4/T5 khỏi đêm không giám sát: đêm nay còn lại phần chỉ-đọc (đúng Option B em đã viết sẵn làm đường lùi ở vòng 1). Em vẫn giữ một điểm về PHẠM VI, không đòi land đêm nay: gộp 'slots/perks/recurrence' thành một khối RED là quá thô — `perks + repeat` trên luồng TẠO không đụng EventPatch và không đụng event_registrations, nên nó là hình dạng đúng cho phiên có Cuong ngồi cạnh, khác hẳn `slots` trên luồng SỬA."
+        },
+        {
+          "id": "D2",
+          "topic": "Web-hop (SafariView) là pattern đúng cần giữ, hay auth cliff cần vá ngay đêm nay?",
+          "myRound1Position": "Web-hop DUPR là pattern ĐÚNG, không phải gap — OAuth SSO thuộc về ASWebAuthenticationSession sau này, không đụng đêm nay.",
+          "move": "CONCEDE",
+          "evidence": "src/pages/DuprConnect.tsx:72-86 — nhánh `if (!user)` render đúng một `<h1>Cần đăng nhập</h1>` và một `<p>`, KHÔNG có `<Link>`, không có `<Button>`, không có đường ra nào. Và apple/ThePickleHub/Features/Shell/AppTabView.swift:104 — `if dupr == nil { openURL = IdentifiedURL(url: WebRoutes.dupr) }`. Vì session native nằm ở keychain chứ không nằm trong cookie jar của SFSafariViewController, `!user` gần như LUÔN đúng với người dùng native — nghĩa là chip trên top bar Home là ngõ cụt được bảo đảm, không phải trường hợp hiếm.",
+          "note": "Vòng 1 em trả lời một câu hỏi khác: 'trình duyệt có phải chỗ đúng cho OAuth SSO không' (vẫn đúng) — nó không hề bác được điều ui-ux-critic nói, là session không băng qua ranh giới nên trang đích chết. Em nhận sai ở chữ 'không phải gap'. Nhưng em GIỮ phần còn lại: đêm nay chỉ làm bản xoá — chip không bấm được khi `dupr == nil` (một điều kiện, không ghi gì, đúng phân vùng GREEN của risk-auditor). Em KHÔNG đồng ý dựng `ASWebAuthenticationSession` + contract pendingIntent trong đêm nay: đó là abstraction cắt ngang toàn app, dựng lúc 3h sáng không ai review thì chính nó thành rủi ro lớn hơn cái nó vá."
+        },
+        {
+          "id": "D3",
+          "topic": "TV-mode dashboard (/tools/dashboard) — port như T6 tùy chọn hay loại hẳn?",
+          "myRound1Position": "T6 tùy chọn nếu xong trước 02:00 — chỉ đọc, rủi ro 0.",
+          "move": "CONCEDE",
+          "evidence": "apple/ThePickleHub/Features/Bracket/QuickTableDetailView.swift:942-973 — `courtsTab` ĐÃ TỒN TẠI: nó lọc trận chưa đá, `Dictionary(grouping:)` theo `courtLabel`, render mỗi sân một `courtColumn` (icon sportscourt, số trận), mỗi trận một `courtMatchRow` có tên cả hai người + giờ + cờ `next: i == 0` làm đậm trận kế tiếp, bấm vào thì chấm điểm. Cùng file dòng 375 đã poll 15 giây ('web parity: refetchInterval 15s'). Đây CHÍNH LÀ bảng sân mà T6 định xây.",
+          "note": "Em bỏ T6, nhưng phải nói rõ là em bỏ vì lý do KHÁC lý do ui-ux-critic đưa ra: lập luận 'sai ngôn ngữ thiết bị' một mình không lật được em, vì T6 em đề xuất là danh sách sân dọc trên phone chứ không phải carousel 6 ô xoay 10 giây. Thứ lật được em là nó ĐÃ ĐƯỢC XÂY RỒI — xây thêm là dựng màn thứ hai cho dữ liệu đang hiện trên màn thứ nhất. Hệ quả kèm theo: dòng '/tools/dashboard → Confirmed missing' trong bảng gap của recon là SAI, và cả em lẫn ui-ux-critic đều đã tranh luận suốt vòng 1 về việc có nên xây một thứ đã có."
+        }
+      ],
+      "newDisagreements": [
+        {
+          "topic": "Bảng gap của recon ghi '/tools/dashboard — Confirmed missing' là sai dữ kiện: native đã có bảng sân live tại QuickTableDetailView.swift:942-973 (nhóm theo sân, poll 15s, làm đậm trận kế). Cả panel vòng 1 đã tranh cãi ưu tiên cho một tính năng đã tồn tại. Trước khi ai xếp hạng lại 11 gap, phải grep lại từng gap trong /apple thay vì tin bảng — đây là gap thứ hai bị dán nhãn sai sau khi em thấy `VideoSummary.playbackURL` là code chết chứ không phải thiếu tính năng.",
+          "with": "idea-recon (và ui-ux-critic, agent này kế thừa bảng gap mà không kiểm lại)",
+          "myPosition": "Bảng gap phải được coi là giả thuyết chưa kiểm chứng, không phải dữ kiện. Mỗi mục cần một lệnh grep kèm theo trong báo cáo trước khi được xếp ưu tiên."
+        },
+        {
+          "topic": "Cấm 'màn hình có ghi' theo cả một lớp là luật đúng cho ĐÊM NAY nhưng sai làm luật lâu dài. Cơ chế an toàn thật đã chạy sẵn: PostgREST PATCH chỉ ghi key CÓ MẶT trong payload, và SocialOrganizerRepository.swift:341-354 khai thác đúng điều đó — `ball_type` được prefill nhưng cố ý vắng khỏi EventPatch nên chưa bao giờ bị xoá, y hệt `slots`. Lỗ hổng không phải 'có ghi', mà là 'thêm một key vào EventPatch mà quên phủ nó trong prefill()'.",
+          "with": "risk-auditor + pre-mortem",
+          "myPosition": "Fix bền là một test Swift ~15 dòng trong apple/Tests/ khẳng định tập key của EventPatch là tập con của các field mà prefill() gán — bắt đúng lớp lỗi này một lần cho mọi field tương lai (free_perks, slots, ball_type). Rẻ hơn và cưỡng chế được, khác với việc cấm theo thư mục mà lessons-learned 2026-07-18/20 đã cho thấy sẽ bị học cách phớt lờ."
+        },
+        {
+          "topic": "Đêm nay còn hai việc chỉ-đọc, xoá-thuần, giá trị thật mà chưa phương án nào xếp lịch: (a) tên format lệch NGAY TRONG app native — ToolsView.swift:210 gọi 'Loại trực tiếp' còn ToolsModels.swift:134 gọi cùng thứ đó là 'Loại kép' (em đã tự mở cả hai file, đúng như ui-ux-critic mô tả); (b) chip DUPR không bấm được (D2). Cả hai không ghi một byte nào vào prod.",
+          "with": "risk-auditor (phân vùng GREEN của anh cho phép cả hai, nhưng không phương án nào đưa chúng vào lịch)",
+          "myPosition": "Ghép hai việc này vào lô chỉ-đọc T1/T2/T3. Khi phần ghi đã bị rút khỏi đêm, ngân sách còn thừa, và đây là hai sửa lỗi thật với rủi ro bằng 0 — đúng loại việc nên lấp vào chỗ trống đó."
+        }
+      ]
+    },
+    "ui-ux-critic": {
+      "agent": "ui-ux-critic",
+      "rebuttals": [
+        {
+          "id": "D2",
+          "topic": "Web-hop (SafariView) là pattern đúng cần giữ, hay auth cliff cần vá ngay đêm nay",
+          "myRound1Position": "BLOCKER: session native ở keychain không vào SFSafariViewController, nên chip DUPR đưa user ĐANG đăng nhập tới một trang nói 'Cần đăng nhập' không có nút đăng nhập; fix rẻ đêm nay = tắt tap chip.",
+          "move": "HOLD",
+          "evidence": "apple/ThePickleHub/Core/Networking/DeepLink.swift:6 — 'AASA hiện chỉ claim /dang-ky/* + /join/*'; src/pages/DuprConnect.tsx:72-86 — nhánh !user render đúng 2 dòng chữ, không có nút/link đăng nhập nào; apple/ThePickleHub/Core/Networking/WebRoutes.swift (SafariView) — SFSafariViewController không delegate, không callback.",
+          "note": "Lập luận của architect ('SafariView/ASWebAuthenticationSession LÀ pattern native đúng cho SSO, không phải gap') gộp hai thứ khác nhau về mặt cơ chế: ASWebAuthenticationSession có callbackURLScheme để trả kết quả về app, SFSafariViewController thì KHÔNG — mà AASA chỉ claim /dang-ky/* + /join/* và DuprConnect.tsx không hề redirect về thepicklehub://, nên vòng kết nối hôm nay không thể đóng: app vĩnh viễn không biết user đã connect hay chưa. Em không đòi build OAuth đêm nay (vòng 1 em cũng nói ASWebAuthenticationSession là fix đúng, để sau) — em đòi một dòng: chip chưa-kết-nối thành nhãn tĩnh thay vì cửa dẫn vào ngõ cụt. Không có file mới nào lật được điều đó. Tự đính chính một chỗ em nói quá ở vòng 1: 'loại /khoi-phuc-dang-ky khỏi universal-link interception' là thừa — DeepLink.swift:6 cho thấy AASA chưa claim route đó."
+        },
+        {
+          "id": "D3",
+          "topic": "TV-mode dashboard (/tools/dashboard) — port như T6 tùy chọn hay loại hẳn vì sai ngôn ngữ thiết bị",
+          "myRound1Position": "KHÔNG NÊN PORT vì UX: lưới 6 item tự xoay 10 giây là ngôn ngữ của màn hình lớn treo tường, vô nghĩa trên màn 6 inch.",
+          "move": "REFINE",
+          "evidence": "apple/ThePickleHub/App/ThePickleHubApp.swift:54-60 — OrientationLock.lockLandscape()/unlock() đã tồn tại sẵn cho màn trọng tài; apple/ThePickleHub/Core/QuickTable/QuickTableRepository.swift:123 — load(shareID:) đã select cột 'courts' cùng matches, không cần truy vấn mới.",
+          "note": "Hai dữ kiện trên em chưa thấy ở vòng 1 và chúng có thật — chúng hạ chi phí build. Nhưng chúng không đụng tới lập luận của em, vì T6 như architect đặc tả (checklist dòng 367: lưới sân + nút xoay ngang, KHÔNG âm báo, KHÔNG doubles-elim/team-match) đã không còn là cái em bác. Em bác đúng ba thứ, và giữ nguyên: (1) KHÔNG auto-rotate 10 giây trên phone — tự đổi trang là thứ biến nó thành bảng treo tường, trên máy cầm tay nó cướp mất thứ user đang đọc; (2) mặc định phải là list dọc trạng thái sân đọc được một tay, chế độ ngang là toggle tự nguyện chứ không phải màn mở ra đã ngang; (3) 'read-only nên rủi ro 0' đo sai trục — chi phí thật của T6 không phải rủi ro kỹ thuật mà là 2.5-3 giờ cộng với một phần sự chú ý của Cuong sáng mai, thứ khan hiếm hơn giờ code. Giữ T6 sau vạch dừng như architect đề xuất là đúng."
+        }
+      ],
+      "newDisagreements": [
+        {
+          "topic": "Thứ tự ưu tiên bỏ sót 2 defect S-size, rủi ro 0, nằm trên màn hình native được xem nhiều nhất — trong khi T6 (2.5-3h, ước lượng yếu nhất theo lời chính architect) thì có mặt. (a) Badge social-proof 'X người đã đăng ký'/'X đội đã đăng ký' ship trên web ở #429 (src/pages/Tournaments.tsx:78-84) KHÔNG có trên native CommunityCard (apple/ThePickleHub/Features/Tournaments/TournamentsView.swift:132-158 chỉ hiện metaLine + dateText). (b) Cùng một thể thức mang hai tên khác nhau trong chính app native: apple/ThePickleHub/Features/Tools/ToolsView.swift:210 gọi 'Loại trực tiếp', apple/ThePickleHub/Core/Tools/ToolsModels.swift:134 gọi 'Loại kép' (web gọi 'Doubles Elim · Loại kép') — người dùng VN không có tên tiếng Anh đi kèm để đoán ra đó là một thứ.",
+          "with": "solution-architect",
+          "myPosition": "Cả hai đều là sửa chữ/sửa một dòng meta, dưới 30 phút mỗi cái, không chạm repo layer, không ghi DB, verify được trên sim mà không cần đăng nhập. Chúng phải nằm TRONG lõi T1-T5 (gắn vào T3 vì cùng file TournamentsView.swift), không phải trong backlog. Nếu đêm nay chỉ đủ chỗ cho một trong hai — T6 hay hai defect này — thì bỏ T6."
+        }
+      ]
+    },
+    "risk-auditor": {
+      "agent": "risk-auditor",
+      "rebuttals": [
+        {
+          "id": "D1",
+          "topic": "Có port T4 (perks + lặp tuần) và T5 (mời thành viên CLB) — hai task GHI vào prod DB — trong đêm autonomous không?",
+          "myRound1Position": "RED cho MỌI màn hình có ghi, gộp chung 'social event slots/perks/recurrence' + 'club invite member' vào một dòng vì ghi thật vào prod và không revert được từng dòng.",
+          "move": "REFINE",
+          "evidence": "apple/ThePickleHub/Core/Social/SocialOrganizerRepository.swift:313 (slots luôn rỗng, tách được), :323 createEvent đi qua RPC create_social_event_with_payment, :349-351 EventPatch CỐ Ý bỏ slots; supabase/migrations/20260511120000_social_events_foundation.sql:182-188 (draft vô hình với mọi user); supabase/migrations/20260522120000_club_members.sql:236-298 (invite_club_member SECURITY DEFINER + is_club_organizer + auth_required); supabase/migrations/20260527140000_club_admin_push_triggers.sql:174,194-196 (INSERT club_members bắn push THẬT)",
+          "note": "Round 1 em gộp slots+perks+recurrence thành một cục — đó là lỗi phân giải của em, và architect tách đúng: cơ chế overbooking (rủi ro #1 vòng 1) bám vào SLOTS, mà slots đã ghi nợ T10. Bỏ slots ra thì T4 không còn chạm event_registrations, tức không còn dính lỗ bypass DB-01. RED của em KHÔNG hạ, nó THU HẸP còn đúng hai điểm: (a) T4 nhánh EDIT — nếu thêm free_perks vào EventPatch mà form không nạp sẵn giá trị cũ; (b) T5 — nếu CLB test có co-manager. Chi tiết trong newDisagreements + partition dưới."
+        }
+      ],
+      "newDisagreements": [
+        {
+          "topic": "T4 phân đôi: create-draft là GREEN THẬT, nhưng nhánh EDIT vẫn RED — và nó RED vì free_perks, không phải vì slots",
+          "with": "solution-architect",
+          "myPosition": "Nhánh CREATE em nhả: createEvent() đi qua RPC guarded create_social_event_with_payment (SocialOrganizerRepository.swift:323-330), và social_events_select_public (20260511120000:182-188) = '(status=published AND visibility=public) OR auth.uid()=created_by OR admin' → draft KHÔNG user nào SELECT được, xoá bằng DELETE row của chính mình. Không còn state không-revert-được. GREEN. Nhánh EDIT thì không: hôm nay SocialEventFormView.swift:136 truyền free_perks: nil khi tạo, và EventPatch KHÔNG có free_perks. T4 muốn có perks thì phải thêm free_perks vào EventPatch. Em đã đo bằng swift thật (struct { a: String; b: String? } → JSONEncoder cho ra {\"a\":\"x\"}, key b BỊ BỎ): Swift synthesized Encodable dùng encodeIfPresent nên nil AN TOÀN — nhưng MẢNG RỖNG [] thì KHÔNG nil, nó là key có mặt và PostgREST sẽ GHI ĐÈ. Form state khởi tạo rỗng + BTC bấm Save trên event thật = xoá trắng danh sách perks họ đã nhập trên web, im lặng, không revert được. Gate bắt buộc: SocialEventFormView phải seed form state từ event.freePerks (SocialModels.swift:20, repo đã select sẵn cột ở :393) VÀ phải có 1 XCTest chứng minh patch của event có perks không cho ra free_perks: []. Không có gate đó thì nhánh edit giữ RED."
+        },
+        {
+          "topic": "T5 RED thu về đúng MỘT tiền điều kiện kiểm được trong 10 giây, không phải cả task",
+          "with": "solution-architect",
+          "myPosition": "Em nhả phần authorization: invite_club_member (20260522120000:236-298) là RPC guarded đúng chuẩn điều kiện (b) vòng 1 của em — SECURITY DEFINER, auth_required 42501, is_club_organizer, chặn ghost profile, idempotent trên already-active; và club_members có DELETE policy cho organizer (:93) nên row xoá được = revert được. Nhưng architect bỏ sót một side effect NGOÀI DB: 20260527140000_club_admin_push_triggers.sql:194-196 gắn AFTER INSERT ON club_members → tg_notify_club_admins_on_member_insert → dispatch_club_admin_push (:174) gửi PUSH THẬT 'Thành viên mới — X vừa được thêm vào <CLB>' tới các admin/manager KHÁC của CLB. Push đã gửi lúc 3h sáng không rút lại được — đó đúng là định nghĩa RED. May là chính hàm đó tự thoát sớm khi không có người nhận (:154-156 array rỗng → RETURN NEW). Nên gate G5: CLB dùng để test phải có test-account là organizer DUY NHẤT — verify TRƯỚC khi chạy bằng `select (select created_by from clubs where id=$1), (select count(*) from club_managers where club_id=$1)` → created_by = tài khoản test VÀ count = 0. Gate xanh → T5 GREEN. Gate đỏ hoặc không chạy được gate → T5 giữ RED, hoãn."
+        },
+        {
+          "topic": "Cơ chế pre-mortem nêu (EventPatch xoá trắng slots của web) KHÔNG tồn tại trong code hôm nay — đúng họ hàng, sai trường",
+          "with": "pre-mortem",
+          "myPosition": "HOLD, bác cơ chế như đã phát biểu. SocialOrganizerRepository.swift:349-351 đã CÓ SẴN guard đó, kèm comment nói đúng lý do: 'KHÔNG có slots — web edit ghi lại slots nhưng native chưa có UI slots, bỏ key để không xoá nhóm đăng ký hiện có.' Tức đề xuất 'không thêm slots vào EventPatch' là mô tả hiện trạng, không phải một guard mới. Và giả định ngầm 'field native không biết → bị đóng gói thành null' cũng sai: em đã chạy swift thật, Optional nil bị encodeIfPresent BỎ HẲN key ({\"a\":\"x\"}), không thành null. Em không HOLD để cãi cho vui: lớp lỗi này CÓ THẬT, nhưng nó nằm ở free_perks: [] (mảng rỗng, key có mặt) trong chính T4, không nằm ở slots. Đặt cảnh báo sai chỗ thì đêm nay sẽ đi canh cái đã được canh rồi và để hở cái thật. assertionFailure trong catch cũng không giúp: ghi đè thành công không ném lỗi."
+        },
+        {
+          "topic": "Bằng chứng 'test bằng draft rồi xoá' chỉ chứng minh được nhánh CREATE, architect đang dùng nó để bảo lãnh cả nhánh EDIT",
+          "with": "solution-architect",
+          "myPosition": "Một event draft do agent tự tạo không có perks cũ để mất, nên save trên nó KHÔNG BAO GIỜ tái hiện được lỗi ghi đè. Muốn chứng minh nhánh edit an toàn phải: tạo draft → set free_perks = ['Nước','Khăn'] → thoát form → mở lại → Save mà KHÔNG chạm hàng chip → đọc lại row và khẳng định free_perks vẫn đủ 2 phần tử. Đó là bài test 3 phút và nó phải nằm trong báo cáo sáng mai kèm event id. Không có bước 'mở lại rồi save' thì đừng ai ghi là đã verify."
+        }
+      ]
+    },
+    "pre-mortem": {
+      "agent": "pre-mortem",
+      "rebuttals": [
+        {
+          "id": "D1",
+          "topic": "Với T4 thu hẹp còn perks + lặp tuần (slots ghi nợ T10), sự cố 1 của em còn đường xảy ra không?",
+          "myRound1Position": "Sự cố 1 là P0 tệ nhất của cả đêm: porter thêm slots vào EventPatch → nhánh A ghi sai hình dạng JSON làm chết mọi đăng ký web, nhánh B xoá trắng cột slots không hoàn nguyên được.",
+          "move": "REFINE",
+          "evidence": "round1/solution-architect.md:228 — T10 (slots) ghi nợ, không đụng EventPatch.slots; apple/ThePickleHub/Core/Social/SocialOrganizerRepository.swift:313 — `let slots: [String]` giữ nguyên, luôn []; apple/ThePickleHub/Core/Social/SocialModels.swift:75 + SocialRepository.swift:10 + SocialOrganizerRepository.swift:393 — free_perks CÓ trong model và trong CẢ HAI chuỗi select, khác hẳn slots",
+          "note": "Chia làm ba phần, em nhượng hai giữ một. (1) NHÁNH A CHẾT HẲN — em nhượng: không có struct NativeSlot nào được viết thì không có CodingKeys nào sai; free_perks là [String] phẳng, không có key nhiều từ để camelCase làm hỏng; và luồng validate duy nhất phát hiện được hình dạng slot (phone-otp-verify/index.ts:208-226) không đọc free_perks. (2) NHÁNH B SỐNG NHƯNG THÀNH VÔ HẠI — em giữ cơ chế, hạ mức độ: bất đối xứng prefill-vs-save trong SocialEventFormView.swift vẫn nguyên (prefill() dòng 71-97 hôm nay không đọc e.freePerks; porter phải thêm free_perks vào EventPatch dòng 339-354 thì màn SỬA mới lưu được perks; quên dòng hydrate = sửa sự kiện web → wipe perks). Nhưng xác suất thấp hơn slots rõ rệt vì dữ liệu đã nằm sẵn trên `e` trong đúng hàm porter đang sửa — 12 dòng `x = e.y ?? default` liên tiếp, thêm dòng thứ 13 là phản xạ; với slots thì `e.slots` KHÔNG tồn tại nên porter không bao giờ thử. Và mất mát là 4 cái chip [\"Nước\",\"Hoa quả\"] — gõ lại 20 giây, không có cổng sức chứa nào phụ thuộc vào nó, khác slots (mất slots = tắt cổng per-slot ở phone-otp-verify + mồ côi event_registrations.slot_id, không hoàn nguyên). (3) KẾT LUẬN THAY ĐỔI: sự cố 1 dưới phạm vi hẹp RỚT từ P0 xuống P2. Em không giữ xếp hạng cũ. Nhưng T4 không vì thế mà an toàn — phần nguy hiểm nằm ở nửa `lặp tuần` chứ không phải nửa `perks`, xem newDisagreements."
+        },
+        {
+          "id": "D1-guards",
+          "topic": "Guard nào trong 3 guard vòng 1 VẪN bắt buộc cho phạm vi hẹp",
+          "myRound1Position": "Ba guard: (1) assertionFailure trong mọi catch repository, (2) updateSlots() read-before-write từ chối ghi [] đè cấu hình đang có, (3) test khoá tập key JSON của slot.",
+          "move": "REFINE",
+          "evidence": "apple/ThePickleHub/Core/Tournaments/CommunityRepository.swift:58 — `catch { return [] }` sống trên prod hôm nay và T3 (lọc tab Cộng đồng) đọc thẳng qua nó; apple/ThePickleHub/Core/Social/SocialOrganizerRepository.swift:332-337 — slugTaken() dùng `(try? ...) ?? []`, lỗi mạng trả \"chưa ai lấy\"",
+          "note": "GUARD 1 GIỮ NGUYÊN, BẮT BUỘC — nó phục vụ sự cố 2 (decode câm), hoàn toàn không dính D1. CommunityRepository.swift:58 đang chạy trên prod và T3 xây thẳng trên nó; native gửi 0 dòng client_errors nên đây là tín hiệu DUY NHẤT tồn tại. Một dòng, chỉ nổ ở DEBUG. GUARD 2 và GUARD 3 KHÔNG CÒN BẮT BUỘC — em nhượng, chúng chỉ có nghĩa khi slots được port, mà T10 đã ghi nợ; đẩy cả hai sang điều kiện tiên quyết của T10. Thay vào đó, guard rẻ hơn cả hai cho T4: ĐỪNG THÊM free_perks VÀO EventPatch ĐÊM NAY. Cho perks đi qua EventPayload (luồng TẠO, dòng 308 đã có sẵn field, 0 thay đổi repository), màn SỬA để nguyên. Nhánh B chết hẳn với 0 dòng guard thay vì 12 dòng read-before-write — đúng nấc 1 của thang lười, thứ tốt nhất là thứ không cần viết. Nếu orchestrator vẫn muốn sửa-được-perks trong đêm thì guard tối thiểu là một dòng trong prefill(): `perks = e.freePerks ?? []`, và luật chung đáng ghi vào lessons-learned: mọi field thêm vào EventPatch phải có dòng đọc tương ứng trong prefill(), vì Encodable của Swift gửi mảng rỗng thành `[]` chứ không bỏ key (chỉ Optional nil mới bị bỏ qua encodeIfPresent)."
+        }
+      ],
+      "newDisagreements": [
+        {
+          "topic": "Nửa `lặp hàng tuần` của T4 mới là chỗ nguy hiểm, không phải nửa `perks` — bộ sinh slug native viết cho N=1 sẽ đụng UNIQUE ngay vòng lặp thứ 3 và để lại rác prod, rồi nhân bản rác mỗi lần bấm lại",
+          "with": "solution-architect",
+          "myPosition": "Architect xếp weekly repeat là S và mô tả 'thuần client: loop N lần, cộng +7 ngày, clamp 0-12. Không có RPC/migration nào cả' (solution-architect.md:127). Đúng về công sức, sai về rủi ro — chính vì thuần client nên nó thừa hưởng một bộ sinh slug chưa bao giờ chạy trong vòng lặp. apple/ThePickleHub/Features/Social/Organizer/SocialEventFormView.swift:118-122: `var slug = clubSlugify(title)` … `if await repo.slugTaken(slug) { slug = \"\\(slug)-\\(Int(Date().timeIntervalSince1970) % 100000)\" }` — bộ khử trùng MỘT LẦN, độ phân giải GIÂY. supabase/migrations/20260511120000_social_events_foundation.sql:85: `slug TEXT NOT NULL UNIQUE`. Chuỗi: vòng 1 chèn OK → vòng 2 base đã bị lấy nên thành `<base>-84213` OK → vòng 3 base vẫn bị lấy, cùng giây nên sinh LẠI `<base>-84213` → vi phạm UNIQUE → RPC ném → catch ở dòng 146-148 chỉ set errorText. Kết quả: 2 sự kiện đã nằm trên prod, 10 cái còn lại không, không có trạng thái nào ghi lại đã tới đâu. Cuong bấm Tạo lại → sang giây khác nên `-84219` khác → sinh BẢN SAO của tuần 2. Mỗi lần thử lại là một bản sao nữa. Web KHÔNG có lỗi này: src/pages/CreateSocialEvent.tsx:474 dùng hậu tố tất định `${finalSlug}-tuan${i+1}` và có `batchResumeIndex` (UX-05 O4, dòng 466-471) để tiếp tục từ tuần còn thiếu thay vì tạo lại cả lô. Bản port bỏ mất chính hai thứ đó. Làm nặng thêm: slugTaken() (SocialOrganizerRepository.swift:332-337) dùng `(try? ...) ?? []`, nên một lỗi mạng trả lời 'slug còn trống' và đẩy thẳng vào UNIQUE violation. Guard đúng giá 1 dòng, và là parity thuần: dùng đúng hậu tố của web — `let iterSlug = i == 0 ? base : \"\\(base)-tuan\\(i+1)\"` — tất định, khớp web, không đụng đồng hồ. Em KHÔNG phản đối giao T4; em phản đối giao nửa lặp-tuần mà không sao chép bộ sinh slug của web. Nếu phải cắt cho gọn thì cắt nửa lặp-tuần, giữ perks — ngược với thứ tự ưu tiên mà kích cỡ XS/S gợi ý."
+        },
+        {
+          "topic": "Giao thức test 'tạo bằng status=draft rồi xoá' của architect không che được T4, và với lặp-tuần thì nó tự tạo ra rác",
+          "with": "solution-architect",
+          "myPosition": "solution-architect.md:222 ghi T4 '⚠️ tạo dữ liệu prod — test bằng status=draft'. Hai lỗ. (1) Draft chỉ giấu khỏi mắt người, không giấu khỏi bảng: social_events.slug UNIQUE là toàn cục, nên mỗi lần test draft ĐỐT một slug vĩnh viễn trừ khi xoá sạch — và với lỗi vòng lặp ở trên thì đúng lúc thất bại giữa chừng là lúc agent ít có khả năng dọn nhất. (2) Nhánh xoá-trắng của perks (nếu vẫn thêm free_perks vào EventPatch) chỉ nổ trên luồng SỬA một sự kiện do WEB tạo và ĐÃ CÓ perks — mà giao thức test lại là tạo mới rồi xoá, tức đi đúng con đường không bao giờ chạm vào bug. Đây là cùng một lớp lỗi với bài học 2026-07-27 trong lessons-learned: cổng của repo này chỉ đo nhánh bot trong khi người dùng đi nhánh SPA. Ở đây agent chỉ đo nhánh TẠO trong khi thiệt hại nằm ở nhánh SỬA. Nếu giữ T4 nguyên phạm vi thì giao thức test phải nêu đích danh: sửa một sự kiện có sẵn do web tạo, lưu, rồi mở lại trên web và đếm chip perks."
+        }
+      ]
+    }
+  },
+  "ledger": {
+    "enforcedBy": "orchestrator thủ công — scripts/agents/debate-ledger.mjs không tồn tại (memory idea-pipeline-missing-scripts)",
+    "checks": {
+      "concedeWithoutEvidence": [],
+      "concedeOnRed": [],
+      "notes": "Mọi CONCEDE đều kèm file:line và agent tự mở file kiểm chứng. risk-auditor chỉ REFINE (thu hẹp RED), không hạ tier."
+    },
+    "resolution": {
+      "D1": "RESOLVED cho đêm nay: solution-architect CONCEDE — T4/T5 rút khỏi đêm autonomous. Phạm vi thu hẹp cho phiên có giám sát ghi trong proposal §7 (T4-create GREEN có gate perks-hydrate + slug tất định -tuan{i}; T4-edit RED; T5 GREEN có gate G5 organizer-duy-nhất).",
+      "D2": "RESOLVED: architect CONCEDE \"không phải gap\" là sai. Đêm nay: tắt tap chip DUPR khi dupr == nil (nhãn tĩnh). ASWebAuthenticationSession + pendingIntent = backlog, cả hai bên đồng ý KHÔNG dựng trong đêm.",
+      "D3": "RESOLVED: T6 bỏ hẳn — courtsTab đã tồn tại (QuickTableDetailView.swift:942-973, poll 15s). Dòng /tools/dashboard \"Confirmed missing\" trong recon là SAI dữ kiện."
+    },
+    "newConsensus": [
+      "2 defect S-size vào lõi đêm nay (ui-ux-critic đề xuất, architect đồng ý xếp lịch): (a) badge social-proof #429 thiếu trên native CommunityCard; (b) tên format lệch trong chính app native — ToolsView.swift:210 \"Loại trực tiếp\" vs ToolsModels.swift:134 \"Loại kép\".",
+      "Cơ chế nguy hiểm thật của T4 là free_perks: [] (mảng rỗng KHÔNG bị encodeIfPresent bỏ, PostgREST ghi đè) — risk-auditor đo bằng swift thật, pre-mortem độc lập tới cùng kết luận. Guard slots trong EventPatch ĐÃ tồn tại sẵn (SocialOrganizerRepository.swift:349-351).",
+      "Nửa lặp-tuần của T4 nguy hiểm hơn perks: bộ sinh slug native đụng UNIQUE ở vòng 3, mỗi retry đẻ bản sao — fix = hậu tố tất định -tuan{i+1} như web (CreateSocialEvent.tsx:474) + batchResumeIndex."
+    ]
+  }
+}

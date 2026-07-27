@@ -28,12 +28,12 @@ struct FormatFinderSheet: View {
         guard let size, let timeLimited else { return nil }
         switch size {
         case .large:
-            return ("Loại trực tiếp",
-                    "Nhiều đội + cần kết thúc nhanh → nhánh loại trực tiếp.",
+            return (BracketFormat.doublesElim.labelVi,
+                    "Nhiều đội + cần kết thúc nhanh → nhánh thắng nhánh thua.",
                     .doublesElim)
         case .medium where timeLimited:
-            return ("Loại trực tiếp",
-                    "Cỡ vừa và giới hạn thời gian → loại trực tiếp gọn hơn.",
+            return (BracketFormat.doublesElim.labelVi,
+                    "Cỡ vừa và giới hạn thời gian → loại kép gọn hơn.",
                     .doublesElim)
         default:
             return ("Bảng đấu nhanh",

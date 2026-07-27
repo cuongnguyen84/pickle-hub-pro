@@ -1,28 +1,45 @@
 import SwiftUI
 
-/// "Sân đấu." — highlight videos. Tapping opens the web player (native player
-/// is Phase 6).
+/// "Sân đấu." — highlight videos. Tapping plays natively in `VideoPlayerScreen`
+/// (Mux HLS or storage file); videos without a playable URL fall back to the
+/// web player.
 struct HomeVideosSection: View {
     let videos: [VideoSummary]
     let onOpenWeb: (URL) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HomeSectionHeader(title: "Sân đấu.")
+            HomeSectionHeader(title: "Sân đấu.") {
+                NavigationLink {
+                    VideosListView()
+                } label: {
+                    HomeMoreLink(label: "Xem tất cả")
+                }
+                .buttonStyle(.plain)
+            }
 
             VStack(spacing: 12) {
                 ForEach(videos) { video in
-                    Button { onOpenWeb(WebRoutes.video(id: video.id)) } label: {
-                        VideoHighlightCard(video: video)
+                    if let url = video.playbackURL {
+                        NavigationLink {
+                            VideoPlayerScreen(url: url, title: video.title, progressKey: video.id.uuidString)
+                        } label: {
+                            VideoHighlightCard(video: video)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button { onOpenWeb(WebRoutes.video(id: video.id)) } label: {
+                            VideoHighlightCard(video: video)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
     }
 }
 
-private struct VideoHighlightCard: View {
+struct VideoHighlightCard: View {
     let video: VideoSummary
 
     var body: some View {

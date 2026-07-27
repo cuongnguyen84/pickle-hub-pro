@@ -46,7 +46,6 @@ struct AppTabView: View {
     @State private var avatarURL: String?
     @State private var dupr: ProfileRepository.DuprChip?
     @State private var duprLoaded = false
-    @State private var openURL: IdentifiedURL?
 
     private var homeTab: some View {
         NavigationStack(path: $homePath) {
@@ -74,7 +73,6 @@ struct AppTabView: View {
                     dupr = await ProfileRepository().duprChip()
                     duprLoaded = true
                 }
-                .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
         }
     }
 
@@ -100,9 +98,10 @@ struct AppTabView: View {
 
             Spacer(minLength: 6)
 
+            // N6: only the rated chip is tappable (DuprHeaderChip renders
+            // unlinked as a static label) — the web /dupr hop was a dead end.
             DuprHeaderChip(state: duprState) {
-                if dupr == nil { openURL = IdentifiedURL(url: WebRoutes.dupr) }
-                else { homePath.append(HomeRoute.profile) }
+                homePath.append(HomeRoute.profile)
             }
             .layoutPriority(-1)          // yields width first if the row gets tight
 

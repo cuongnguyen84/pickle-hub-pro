@@ -78,6 +78,28 @@ enum BracketFormat: String, Equatable, Hashable {
     /// Whether a native detail screen exists; others open the web.
     var hasNativeView: Bool { true }
 
+    /// English product name — the formats are product nouns kept in English on
+    /// the web (`FORMATS[].title` in src/pages/Tournaments.tsx).
+    var titleEn: String {
+        switch self {
+        case .quickTable: return "Quick Tables"
+        case .doublesElim: return "Doubles Elimination"
+        case .teamMatch: return "Team Match"
+        case .flex: return "Flex"
+        }
+    }
+
+    /// VI display name — single source, twin of web `FORMATS[].titleVi`
+    /// (src/pages/Tournaments.tsx). "Loại kép", not "Loại trực tiếp".
+    var labelVi: String {
+        switch self {
+        case .quickTable: return "Chia bảng"
+        case .doublesElim: return "Loại kép"
+        case .teamMatch: return "Đồng đội"
+        case .flex: return "Tùy chỉnh"
+        }
+    }
+
     func webURL(shareID: String) -> URL {
         switch self {
         case .quickTable: return WebRoutes.quickTable(shareID: shareID)
@@ -148,7 +170,7 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     var metaLine: String {
         switch format {
         case .doublesElim:
-            return capacity > 0 ? "Loại kép · \(capacity) đội" : "Loại kép"
+            return capacity > 0 ? "\(format.labelVi) · \(capacity) đội" : format.labelVi
         case .teamMatch:
             return "Đồng đội · MLP"
         case .flex:
@@ -173,6 +195,19 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     }
 
     var isNearlyFull: Bool { fillFraction >= 0.8 && state != .full }
+
+    /// Below this many APPROVED registrations the badge hides — "1 người đã đăng
+    /// ký" reads as a dead event. Twin of web REG_BADGE_MIN (src/lib/regBadge.ts).
+    static let regBadgeMin = 4
+
+    /// Social-proof registration badge for community cards, or nil to hide.
+    /// Only registration-open rows (state == .open — QT setup+requires_registration,
+    /// Team Match 'registration') with ≥ regBadgeMin approved. Twin of
+    /// regBadgeCount + regBadge in src/lib/regBadge.ts / src/pages/Tournaments.tsx.
+    var regBadgeText: String? {
+        guard state == .open, registered >= Self.regBadgeMin else { return nil }
+        return isDoubles ? "\(registered) đội đã đăng ký" : "\(registered) người đã đăng ký"
+    }
 
     var dateText: String {
         guard let createdAt else { return "" }

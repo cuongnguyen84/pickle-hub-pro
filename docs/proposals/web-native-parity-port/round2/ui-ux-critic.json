@@ -1,0 +1,28 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "topic": "Web-hop (SafariView) là pattern đúng cần giữ, hay auth cliff cần vá ngay đêm nay",
+      "myRound1Position": "BLOCKER: session native ở keychain không vào SFSafariViewController, nên chip DUPR đưa user ĐANG đăng nhập tới một trang nói 'Cần đăng nhập' không có nút đăng nhập; fix rẻ đêm nay = tắt tap chip.",
+      "move": "HOLD",
+      "evidence": "apple/ThePickleHub/Core/Networking/DeepLink.swift:6 — 'AASA hiện chỉ claim /dang-ky/* + /join/*'; src/pages/DuprConnect.tsx:72-86 — nhánh !user render đúng 2 dòng chữ, không có nút/link đăng nhập nào; apple/ThePickleHub/Core/Networking/WebRoutes.swift (SafariView) — SFSafariViewController không delegate, không callback.",
+      "note": "Lập luận của architect ('SafariView/ASWebAuthenticationSession LÀ pattern native đúng cho SSO, không phải gap') gộp hai thứ khác nhau về mặt cơ chế: ASWebAuthenticationSession có callbackURLScheme để trả kết quả về app, SFSafariViewController thì KHÔNG — mà AASA chỉ claim /dang-ky/* + /join/* và DuprConnect.tsx không hề redirect về thepicklehub://, nên vòng kết nối hôm nay không thể đóng: app vĩnh viễn không biết user đã connect hay chưa. Em không đòi build OAuth đêm nay (vòng 1 em cũng nói ASWebAuthenticationSession là fix đúng, để sau) — em đòi một dòng: chip chưa-kết-nối thành nhãn tĩnh thay vì cửa dẫn vào ngõ cụt. Không có file mới nào lật được điều đó. Tự đính chính một chỗ em nói quá ở vòng 1: 'loại /khoi-phuc-dang-ky khỏi universal-link interception' là thừa — DeepLink.swift:6 cho thấy AASA chưa claim route đó."
+    },
+    {
+      "id": "D3",
+      "topic": "TV-mode dashboard (/tools/dashboard) — port như T6 tùy chọn hay loại hẳn vì sai ngôn ngữ thiết bị",
+      "myRound1Position": "KHÔNG NÊN PORT vì UX: lưới 6 item tự xoay 10 giây là ngôn ngữ của màn hình lớn treo tường, vô nghĩa trên màn 6 inch.",
+      "move": "REFINE",
+      "evidence": "apple/ThePickleHub/App/ThePickleHubApp.swift:54-60 — OrientationLock.lockLandscape()/unlock() đã tồn tại sẵn cho màn trọng tài; apple/ThePickleHub/Core/QuickTable/QuickTableRepository.swift:123 — load(shareID:) đã select cột 'courts' cùng matches, không cần truy vấn mới.",
+      "note": "Hai dữ kiện trên em chưa thấy ở vòng 1 và chúng có thật — chúng hạ chi phí build. Nhưng chúng không đụng tới lập luận của em, vì T6 như architect đặc tả (checklist dòng 367: lưới sân + nút xoay ngang, KHÔNG âm báo, KHÔNG doubles-elim/team-match) đã không còn là cái em bác. Em bác đúng ba thứ, và giữ nguyên: (1) KHÔNG auto-rotate 10 giây trên phone — tự đổi trang là thứ biến nó thành bảng treo tường, trên máy cầm tay nó cướp mất thứ user đang đọc; (2) mặc định phải là list dọc trạng thái sân đọc được một tay, chế độ ngang là toggle tự nguyện chứ không phải màn mở ra đã ngang; (3) 'read-only nên rủi ro 0' đo sai trục — chi phí thật của T6 không phải rủi ro kỹ thuật mà là 2.5-3 giờ cộng với một phần sự chú ý của Cuong sáng mai, thứ khan hiếm hơn giờ code. Giữ T6 sau vạch dừng như architect đề xuất là đúng."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Thứ tự ưu tiên bỏ sót 2 defect S-size, rủi ro 0, nằm trên màn hình native được xem nhiều nhất — trong khi T6 (2.5-3h, ước lượng yếu nhất theo lời chính architect) thì có mặt. (a) Badge social-proof 'X người đã đăng ký'/'X đội đã đăng ký' ship trên web ở #429 (src/pages/Tournaments.tsx:78-84) KHÔNG có trên native CommunityCard (apple/ThePickleHub/Features/Tournaments/TournamentsView.swift:132-158 chỉ hiện metaLine + dateText). (b) Cùng một thể thức mang hai tên khác nhau trong chính app native: apple/ThePickleHub/Features/Tools/ToolsView.swift:210 gọi 'Loại trực tiếp', apple/ThePickleHub/Core/Tools/ToolsModels.swift:134 gọi 'Loại kép' (web gọi 'Doubles Elim · Loại kép') — người dùng VN không có tên tiếng Anh đi kèm để đoán ra đó là một thứ.",
+      "with": "solution-architect",
+      "myPosition": "Cả hai đều là sửa chữ/sửa một dòng meta, dưới 30 phút mỗi cái, không chạm repo layer, không ghi DB, verify được trên sim mà không cần đăng nhập. Chúng phải nằm TRONG lõi T1-T5 (gắn vào T3 vì cùng file TournamentsView.swift), không phải trong backlog. Nếu đêm nay chỉ đủ chỗ cho một trong hai — T6 hay hai defect này — thì bỏ T6."
+    }
+  ]
+}

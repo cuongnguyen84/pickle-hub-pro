@@ -1,0 +1,46 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Có port T4 (perks + lặp tuần) và T5 (mời thành viên CLB) — hai task GHI vào prod DB — trong đêm autonomous không?",
+      "myRound1Position": "CÓ. Mỗi cái ~1h, không migration, không RPC mới, backend đã có đường ray sẵn — từ chối hai task 1 giờ rủi ro thấp là quá thận trọng.",
+      "move": "CONCEDE",
+      "evidence": "apple/ThePickleHub/Features/Social/Organizer/SocialEventFormView.swift:71-96 — prefill() gán 14 field từ `existing` (title, description, courtCount, ballType, visibility, prepayment…) nhưng KHÔNG đọc `e.freePerks`. Kết hợp với apple/ThePickleHub/Core/Social/SocialOrganizerRepository.swift:341-354, nơi EventPatch cố ý bỏ `slots` kèm comment cảnh báo: hợp đồng an toàn hiện tại là 'key vắng mặt = không ghi'. T4 của em bắt buộc phải THÊM `free_perks` vào EventPatch; nếu thêm mà không sửa prefill thì mọi lần BTC sửa một sự kiện cũ sẽ PATCH `free_perks = []` và xoá trắng quyền lợi đã cấu hình trên web.",
+      "note": "Pre-mortem tìm ra cơ chế này ở nhánh `slots` (thứ em đã hoãn), nên vòng 1 em tưởng nó không chạm phạm vi của mình — em tự mở file và thấy nó nằm ngay trong T4, lệch đúng một field. Cộng với risk-auditor #2 (tài khoản test là admin DUY NHẤT của prod, nên kết quả xanh sáng mai không chứng minh được gì cho organizer thường), em rút T4/T5 khỏi đêm không giám sát: đêm nay còn lại phần chỉ-đọc (đúng Option B em đã viết sẵn làm đường lùi ở vòng 1). Em vẫn giữ một điểm về PHẠM VI, không đòi land đêm nay: gộp 'slots/perks/recurrence' thành một khối RED là quá thô — `perks + repeat` trên luồng TẠO không đụng EventPatch và không đụng event_registrations, nên nó là hình dạng đúng cho phiên có Cuong ngồi cạnh, khác hẳn `slots` trên luồng SỬA."
+    },
+    {
+      "id": "D2",
+      "topic": "Web-hop (SafariView) là pattern đúng cần giữ, hay auth cliff cần vá ngay đêm nay?",
+      "myRound1Position": "Web-hop DUPR là pattern ĐÚNG, không phải gap — OAuth SSO thuộc về ASWebAuthenticationSession sau này, không đụng đêm nay.",
+      "move": "CONCEDE",
+      "evidence": "src/pages/DuprConnect.tsx:72-86 — nhánh `if (!user)` render đúng một `<h1>Cần đăng nhập</h1>` và một `<p>`, KHÔNG có `<Link>`, không có `<Button>`, không có đường ra nào. Và apple/ThePickleHub/Features/Shell/AppTabView.swift:104 — `if dupr == nil { openURL = IdentifiedURL(url: WebRoutes.dupr) }`. Vì session native nằm ở keychain chứ không nằm trong cookie jar của SFSafariViewController, `!user` gần như LUÔN đúng với người dùng native — nghĩa là chip trên top bar Home là ngõ cụt được bảo đảm, không phải trường hợp hiếm.",
+      "note": "Vòng 1 em trả lời một câu hỏi khác: 'trình duyệt có phải chỗ đúng cho OAuth SSO không' (vẫn đúng) — nó không hề bác được điều ui-ux-critic nói, là session không băng qua ranh giới nên trang đích chết. Em nhận sai ở chữ 'không phải gap'. Nhưng em GIỮ phần còn lại: đêm nay chỉ làm bản xoá — chip không bấm được khi `dupr == nil` (một điều kiện, không ghi gì, đúng phân vùng GREEN của risk-auditor). Em KHÔNG đồng ý dựng `ASWebAuthenticationSession` + contract pendingIntent trong đêm nay: đó là abstraction cắt ngang toàn app, dựng lúc 3h sáng không ai review thì chính nó thành rủi ro lớn hơn cái nó vá."
+    },
+    {
+      "id": "D3",
+      "topic": "TV-mode dashboard (/tools/dashboard) — port như T6 tùy chọn hay loại hẳn?",
+      "myRound1Position": "T6 tùy chọn nếu xong trước 02:00 — chỉ đọc, rủi ro 0.",
+      "move": "CONCEDE",
+      "evidence": "apple/ThePickleHub/Features/Bracket/QuickTableDetailView.swift:942-973 — `courtsTab` ĐÃ TỒN TẠI: nó lọc trận chưa đá, `Dictionary(grouping:)` theo `courtLabel`, render mỗi sân một `courtColumn` (icon sportscourt, số trận), mỗi trận một `courtMatchRow` có tên cả hai người + giờ + cờ `next: i == 0` làm đậm trận kế tiếp, bấm vào thì chấm điểm. Cùng file dòng 375 đã poll 15 giây ('web parity: refetchInterval 15s'). Đây CHÍNH LÀ bảng sân mà T6 định xây.",
+      "note": "Em bỏ T6, nhưng phải nói rõ là em bỏ vì lý do KHÁC lý do ui-ux-critic đưa ra: lập luận 'sai ngôn ngữ thiết bị' một mình không lật được em, vì T6 em đề xuất là danh sách sân dọc trên phone chứ không phải carousel 6 ô xoay 10 giây. Thứ lật được em là nó ĐÃ ĐƯỢC XÂY RỒI — xây thêm là dựng màn thứ hai cho dữ liệu đang hiện trên màn thứ nhất. Hệ quả kèm theo: dòng '/tools/dashboard → Confirmed missing' trong bảng gap của recon là SAI, và cả em lẫn ui-ux-critic đều đã tranh luận suốt vòng 1 về việc có nên xây một thứ đã có."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Bảng gap của recon ghi '/tools/dashboard — Confirmed missing' là sai dữ kiện: native đã có bảng sân live tại QuickTableDetailView.swift:942-973 (nhóm theo sân, poll 15s, làm đậm trận kế). Cả panel vòng 1 đã tranh cãi ưu tiên cho một tính năng đã tồn tại. Trước khi ai xếp hạng lại 11 gap, phải grep lại từng gap trong /apple thay vì tin bảng — đây là gap thứ hai bị dán nhãn sai sau khi em thấy `VideoSummary.playbackURL` là code chết chứ không phải thiếu tính năng.",
+      "with": "idea-recon (và ui-ux-critic, agent này kế thừa bảng gap mà không kiểm lại)",
+      "myPosition": "Bảng gap phải được coi là giả thuyết chưa kiểm chứng, không phải dữ kiện. Mỗi mục cần một lệnh grep kèm theo trong báo cáo trước khi được xếp ưu tiên."
+    },
+    {
+      "topic": "Cấm 'màn hình có ghi' theo cả một lớp là luật đúng cho ĐÊM NAY nhưng sai làm luật lâu dài. Cơ chế an toàn thật đã chạy sẵn: PostgREST PATCH chỉ ghi key CÓ MẶT trong payload, và SocialOrganizerRepository.swift:341-354 khai thác đúng điều đó — `ball_type` được prefill nhưng cố ý vắng khỏi EventPatch nên chưa bao giờ bị xoá, y hệt `slots`. Lỗ hổng không phải 'có ghi', mà là 'thêm một key vào EventPatch mà quên phủ nó trong prefill()'.",
+      "with": "risk-auditor + pre-mortem",
+      "myPosition": "Fix bền là một test Swift ~15 dòng trong apple/Tests/ khẳng định tập key của EventPatch là tập con của các field mà prefill() gán — bắt đúng lớp lỗi này một lần cho mọi field tương lai (free_perks, slots, ball_type). Rẻ hơn và cưỡng chế được, khác với việc cấm theo thư mục mà lessons-learned 2026-07-18/20 đã cho thấy sẽ bị học cách phớt lờ."
+    },
+    {
+      "topic": "Đêm nay còn hai việc chỉ-đọc, xoá-thuần, giá trị thật mà chưa phương án nào xếp lịch: (a) tên format lệch NGAY TRONG app native — ToolsView.swift:210 gọi 'Loại trực tiếp' còn ToolsModels.swift:134 gọi cùng thứ đó là 'Loại kép' (em đã tự mở cả hai file, đúng như ui-ux-critic mô tả); (b) chip DUPR không bấm được (D2). Cả hai không ghi một byte nào vào prod.",
+      "with": "risk-auditor (phân vùng GREEN của anh cho phép cả hai, nhưng không phương án nào đưa chúng vào lịch)",
+      "myPosition": "Ghép hai việc này vào lô chỉ-đọc T1/T2/T3. Khi phần ghi đã bị rút khỏi đêm, ngân sách còn thừa, và đây là hai sửa lỗi thật với rủi ro bằng 0 — đúng loại việc nên lấp vào chỗ trống đó."
+    }
+  ]
+}
