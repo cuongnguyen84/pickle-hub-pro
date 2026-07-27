@@ -248,6 +248,29 @@ work order.
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
-- Khác kế hoạch:
-- Học được:
+**SHIPPED** — PR [#480](https://github.com/cuongnguyen84/pickle-hub-pro/pull/480), merge `90685e0e`, 2026-07-27.
+Merge với check đỏ (ngân sách Actions cạn repo-wide từ 26/07). Local: tsc 0 · eslint 0 · 1235 test pass.
+
+**D1 — Cuong chốt: app Android chưa publish → bỏ Play Store.**
+Chỉ thêm `https://apps.apple.com/app/id6759968026` vào `sameAs` (EN + VI).
+URL Play Store mà brief yêu cầu trả **404 mọi locale và mọi biến thể app-id** — nhét vào `sameAs`
+là bôi bẩn đúng cái entity mà khối này sinh ra để làm sạch.
+
+**D2 — xoá luôn.** `index.html` mang smart banner `google-play-app` trỏ cùng app không tồn tại đó.
+Gỡ; banner Apple giữ nguyên.
+
+**CỐ Ý KHÔNG LÀM: `Organization.logo`.** Tiền đề của brief ("og-image 1200×630 không vuông") **SAI** —
+nó là JPEG **vuông 1024×1024**, đã thoả mọi yêu cầu của Google (≥112px, format hỗ trợ, crawlable,
+không bị robots chặn). Đổi nó là thay đổi tín hiệu entity trên một brand đang có thứ hạng, **không có
+lợi ích nào verify được**, và không tìm được nguồn nào khẳng định hay phủ nhận việc nó có làm Google
+đánh giá lại knowledge panel không. Rủi ro chưa định lượng đổi lấy lợi ích bằng 0 → không làm.
+
+**Guard mới:** `functions/_lib/__tests__/brand-sameas.test.ts` — 5 assertion, gồm việc chặn URL
+`play.google.com` quay lại trước khi app Android ship. Trước đó **không có test nào** phủ các trường này.
+
+**Khác kế hoạch:** Option A của proposal gồm cả logo; thực tế chỉ làm phần `sameAs`. Không bump
+`pr:v32` vì chỉ `/` và `/vi` đổi output → `?nocache=1` hai path.
+
+**Học được:** brief này sai 7/7 lần khi đối chiếu repo. Hai lần nguy hiểm nhất đều là *tiền đề đã cũ
+chứ không phải chỉ dẫn sai* — "og-image không vuông" và "chưa có pillar luật VI". Chỉ dẫn nghe hợp lý,
+lý do đằng sau thì đã hết hạn. Verify tiền đề trước khi làm theo chỉ dẫn.
