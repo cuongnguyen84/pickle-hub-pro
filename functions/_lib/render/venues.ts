@@ -491,6 +491,51 @@ export async function renderVenueDetail(
 }
 
 
+  // City hubs are where someone searching "sân pickleball đà nẵng" lands, and
+  // in 2026 two of these cities are hosting the biggest events of the year.
+  // Point that visitor at the tournament article for their own city.
+  //
+  // `until` is the day AFTER the event ends, and the entry stops rendering by
+  // itself past that date. A hardcoded event link outliving its event is the
+  // predictable failure here — nobody comes back to delete it, and the hub is
+  // left advertising something that already happened. Expiry is two lines;
+  // remembering is not.
+  // The VI article is a different slug, not a /vi prefix on the EN one — both
+  // are spelled out so the link lands in one hop instead of leaning on the
+  // /vi/blog/<EN-slug> redirect.
+const CITY_EVENT_LINK: Record<
+    string,
+    { until: string; viText: string; enText: string; viSlug: string; enSlug: string }
+  > = {
+    "da-nang": {
+      until: "2026-09-07",
+      viText: "Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8 – 6/9) — lịch, địa điểm và cách xem",
+      enText: "Heineken Pickleball World Cup 2026 in Da Nang (Aug 30 – Sep 6) — schedule, venues and how to watch",
+      viSlug: "cam-nang-xem-pickleball-world-cup-2026-da-nang",
+      enSlug: "pickleball-world-cup-2026-da-nang-how-to-watch",
+    },
+    "tp-hcm": {
+      until: "2026-08-10",
+      viText: "HCMC Open 2026 (6–9/8) — chặng PPA Tour Asia 500 tại TP.HCM: vé, lịch và cách xem",
+      enText: "HCMC Open 2026 (Aug 6–9) — the PPA Tour Asia 500 stop in Ho Chi Minh City: tickets, schedule and how to watch",
+      viSlug: "hcmc-open-2026",
+      enSlug: "hcmc-open-2026-preview",
+    },
+  };
+
+/** Time-boxed editorial link for a city hub. Empty once the event is over. */
+export function cityEventLink(
+  citySlug: string,
+  lang: Lang,
+  siteUrl: string,
+  today: string = new Date().toISOString().slice(0, 10),
+): string {
+  const ev = CITY_EVENT_LINK[citySlug];
+  if (!ev || today > ev.until) return "";
+  const href = lang === "vi" ? `${siteUrl}/vi/blog/${ev.viSlug}` : `${siteUrl}/blog/${ev.enSlug}`;
+  return `<p><a href="${href}">${escapeHtml(lang === "vi" ? ev.viText : ev.enText)}</a></p>`;
+}
+
 // ── /san/khu-vuc/:city — per-city hub ───────────────────────────────────────
 const VENUE_CITY_NAME: Record<string, string> = {
   "tp-hcm": "TP.HCM",
@@ -698,6 +743,9 @@ export async function renderVenuesCity(
   const otherCitiesHeading =
     lang === "vi" ? "Sân pickleball ở tỉnh thành khác" : "Pickleball courts in other cities";
 
+  const eventHtml = cityEventLink(citySlug, lang, siteUrl);
+
+
   const moreHeading = lang === "vi" ? "Khám phá thêm" : "Discover more";
   const moreLinks = [
     `<li><a href="${siteUrl}/san">${escapeHtml(allLabel)}</a></li>`,
@@ -710,6 +758,7 @@ export async function renderVenuesCity(
   const bodyContent =
     `${bc}<h1>${escapeHtml(h1)}</h1>` +
     introHtml +
+    eventHtml +
     (n > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`) +
     `<nav><h2>${escapeHtml(otherCitiesHeading)}</h2><ul>${otherCitiesHtml}</ul></nav>` +
     `<nav><h2>${escapeHtml(moreHeading)}</h2><ul>${moreLinks}</ul></nav>`;

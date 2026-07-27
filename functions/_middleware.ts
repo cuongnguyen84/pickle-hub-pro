@@ -274,8 +274,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       will take precedence).
   const VI_BLOG_REDIRECTS: Record<string, string> = {
     // Already in public/_redirects — mirrored here for bots.
-    "luat-pickleball": "pickleball-rules-complete-guide",
-    "luat-pickleball-2026": "pickleball-rules-complete-guide",
+    // NB: luat-pickleball + luat-pickleball-2026 moved to VI_BLOG_DIRECT on
+    // 2026-07-27 — a real VI rules pillar now exists, so they no longer send
+    // Vietnamese searchers to the English article.
     "luat-cham-diem-pickleball": "pickleball-scoring-rules-guide",
     "tao-bracket-pickleball-mien-phi": "free-pickleball-bracket-generator",
     "tao-vong-tron-pickleball": "pickleball-round-robin-generator-guide",
@@ -322,6 +323,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const VI_BLOG_DIRECT: Record<string, string> = {
     "mau-bracket-pickleball": "/vi/blog/cach-tao-bracket-pickleball",
     "cong-cu-tao-bracket-pickleball-mien-phi-2026": "/vi/tools",
+    // 2026-07-27 — these two used to resolve to the EN rules guide via
+    // VI_BLOG_REDIRECTS, on the assumption that no Vietnamese rules pillar
+    // existed. One does: /vi/blog/luat-pickleball-co-ban, 13k chars, published
+    // and ranking. Two slugs carrying "luật pickleball" intent were handing
+    // Vietnamese readers an English page.
+    "luat-pickleball": "/vi/blog/luat-pickleball-co-ban",
+    "luat-pickleball-2026": "/vi/blog/luat-pickleball-co-ban",
   };
 
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);

@@ -38,8 +38,14 @@
 
 # 301 redirect VI broken slugs to EN counterparts (Ahrefs 404 fix 2026-04-29)
 # Future: replace với VI bài thực khi viết
-/vi/blog/luat-pickleball                            /blog/pickleball-rules-complete-guide              301
-/vi/blog/luat-pickleball-2026                       /blog/pickleball-rules-complete-guide              301
+
+# 2026-07-27 — "khi viết" đã tới. luat-pickleball-co-ban là pillar luật VI thật
+# (13k ký tự, published, đang rank), nên hai slug này không còn lý do gì để đá
+# người tìm "luật pickleball" sang bản tiếng Anh. 95% người dùng là người Việt.
+# Đích là đường dẫn VI tuyệt đối → phải nằm ở VI_BLOG_DIRECT trong _middleware.ts,
+# không phải VI_BLOG_REDIRECTS (map đó chỉ resolve sang slug EN).
+/vi/blog/luat-pickleball                            /vi/blog/luat-pickleball-co-ban                    301
+/vi/blog/luat-pickleball-2026                       /vi/blog/luat-pickleball-co-ban                    301
 /vi/blog/luat-cham-diem-pickleball                  /blog/pickleball-scoring-rules-guide               301
 /vi/blog/tao-bracket-pickleball-mien-phi            /tools                                             301
 /vi/blog/tao-vong-tron-pickleball                   /blog/pickleball-round-robin-generator-guide       301
