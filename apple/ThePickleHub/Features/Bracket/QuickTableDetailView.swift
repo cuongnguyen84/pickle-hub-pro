@@ -611,7 +611,7 @@ final class QuickTableViewModel {
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            scoreError = UserFacingError.message(failure: "Không lưu được tỉ số.", error: error)
             Haptics.error()
         }
     }
@@ -1792,20 +1792,20 @@ private struct ScoreSheet: View {
                     onLiveScore: { a, b in
                         Task {
                             do { try await QuickTableRepository().updateLiveScore(matchID: match.id, score1: a, score2: b) }
-                            catch { onError(UserFacingError.message(action: "Cập nhật điểm trực tiếp", error: error)) }
+                            catch { onError(UserFacingError.message(failure: "Không cập nhật được điểm trực tiếp.", error: error)) }
                         }
                     },
                     onClaimLive: {
                         Task {
                             do { try await QuickTableRepository().claimLive(matchID: match.id) }
-                            catch { onError(UserFacingError.message(action: "Nhận quyền chấm trận", error: error)) }
+                            catch { onError(UserFacingError.message(failure: "Không nhận được quyền chấm trận.", error: error)) }
                         }
                     }) { a, b, note in
                     Haptics.light(); onSave(a, b)
                     if let note {
                         Task {
                             do { try await QuickTableRepository().updateRefereeNote(matchID: match.id, note: note) }
-                            catch { onError(UserFacingError.message(action: "Lưu ghi chú trọng tài", error: error)) }
+                            catch { onError(UserFacingError.message(failure: "Không lưu được ghi chú trọng tài.", error: error)) }
                         }
                     }
                 }

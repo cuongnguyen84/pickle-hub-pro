@@ -275,6 +275,7 @@ enum Matchmaking {
     }
 
     /// Text thuần để copy vào Zalo (port `scheduleToText`, tiếng Việt).
+    // Xuất lịch cho Zalo — GIỮ tiếng Việt cố định, ngôn ngữ người nhận ≠ ngôn ngữ UI (proposal native-bilingual inc.2)
     static func scheduleToText(_ schedule: MMSchedule) -> String {
         var lines: [String] = []
         for r in schedule.rounds {

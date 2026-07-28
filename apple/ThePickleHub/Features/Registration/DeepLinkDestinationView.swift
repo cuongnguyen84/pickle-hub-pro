@@ -345,7 +345,7 @@ private struct JoinInviteLoaderView: View {
             accepted = true
             Haptics.success()
         } catch {
-            errorMessage = UserFacingError.message(action: "Tham gia đội", error: error)
+            errorMessage = UserFacingError.message(failure: "Không tham gia được đội.", error: error)
             Haptics.error()
         }
     }

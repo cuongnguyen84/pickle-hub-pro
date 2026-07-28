@@ -10,6 +10,16 @@
           }
         }
       }
+    },
+    "XÓA" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DELETE"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

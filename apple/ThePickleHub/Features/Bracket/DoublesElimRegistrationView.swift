@@ -264,7 +264,7 @@ struct DoublesElimRegistrationView: View {
                 let name = teamName.trimmingCharacters(in: .whitespaces)
                 Task {
                     await model.register(partnerUserID: partnerID, teamName: name.isEmpty ? nil : name, shareID: shareID)
-                    if model.regMessage?.hasPrefix("Đăng ký thành công") == true { partner = nil; teamName = "" }
+                    if model.regSuccess { partner = nil; teamName = "" }
                 }
             } label: {
                 HStack(spacing: 6) {

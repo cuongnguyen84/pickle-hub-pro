@@ -1421,7 +1421,7 @@ private struct GroupSetupSheet: View {
         return out
     }
 
-    enum Mode: String, CaseIterable { case random = "Ngẫu nhiên", manual = "Thủ công" }
+    enum Mode: CaseIterable { case random, manual; var label: LocalizedStringKey { self == .random ? "Ngẫu nhiên" : "Thủ công" } }
     @State private var groupCount = 0
     @State private var mode: Mode = .random
     @State private var assign: [UUID: Int] = [:]   // teamID -> group index
@@ -1465,7 +1465,7 @@ private struct GroupSetupSheet: View {
                         }
                         labeled("Cách chia") {
                             Picker("", selection: $mode) {
-                                ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                                ForEach(Mode.allCases, id: \.self) { Text($0.label).tag($0) }
                             }.pickerStyle(.segmented)
                         }
                         if mode == .random {

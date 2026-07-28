@@ -84,9 +84,13 @@ struct DuprHeaderChip: View {
         case .loading: return "Đang tải điểm DUPR"
         case .unlinked: return "Chưa kết nối DUPR"
         case .rated(let r, let d):
-            let base = "Điểm DUPR \(String(format: "%.2f", r))"
-            guard let d else { return base }
-            return base + (d > 0 ? ", tăng \(String(format: "%.2f", d))" : ", giảm \(String(format: "%.2f", abs(d)))")
+            // Câu trọn một-key — không ghép mảnh (proposal native-bilingual inc.2).
+            let rating = String(format: "%.2f", r)
+            guard let d else { return String(localized: "Điểm DUPR \(rating)") }
+            let delta = String(format: "%.2f", abs(d))
+            return d > 0
+                ? String(localized: "Điểm DUPR \(rating), tăng \(delta)")
+                : String(localized: "Điểm DUPR \(rating), giảm \(delta)")
         }
     }
 }

@@ -40,29 +40,29 @@ final class ForumDetailModel {
         do {
             try await repo.toggleLike(targetID: post.id, targetType: "post", isLiked: likedPost)
             error = nil; await load()
-        } catch { self.error = UserFacingError.message(action: "Cập nhật lượt thích", error: error) }
+        } catch { self.error = UserFacingError.message(failure: "Không cập nhật được lượt thích.", error: error) }
     }
     @MainActor func toggleLikeComment(_ c: ForumComment) async {
         do {
             try await repo.toggleLike(targetID: c.id, targetType: "comment", isLiked: likedComments.contains(c.id))
             error = nil; await load()
-        } catch { self.error = UserFacingError.message(action: "Cập nhật lượt thích", error: error) }
+        } catch { self.error = UserFacingError.message(failure: "Không cập nhật được lượt thích.", error: error) }
     }
     @MainActor func toggleBest(_ c: ForumComment) async {
         do {
             try await repo.toggleBestAnswer(commentID: c.id, postID: postID, isBestAnswer: c.isBestAnswer)
             error = nil; await load()
-        } catch { self.error = UserFacingError.message(action: "Chọn câu trả lời", error: error) }
+        } catch { self.error = UserFacingError.message(failure: "Không chọn được câu trả lời.", error: error) }
     }
     @MainActor func deleteComment(_ c: ForumComment) async {
         do {
             try await repo.deleteComment(id: c.id)
             error = nil; await load()
-        } catch { self.error = UserFacingError.message(action: "Xóa bình luận", error: error) }
+        } catch { self.error = UserFacingError.message(failure: "Không xóa được bình luận.", error: error) }
     }
     @MainActor func deletePost() async -> Bool {
         do { try await repo.deletePost(id: postID); error = nil; return true }
-        catch { self.error = UserFacingError.message(action: "Xóa bài viết", error: error); return false }
+        catch { self.error = UserFacingError.message(failure: "Không xóa được bài viết.", error: error); return false }
     }
     @MainActor func send() async {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -73,7 +73,7 @@ final class ForumDetailModel {
             try await repo.createComment(postID: postID, content: text, parentID: replyTo?.id, imageURLs: urls)
             draft = ""; replyTo = nil; images = []; error = nil
             await load()
-        } catch { self.error = UserFacingError.message(action: "Gửi bình luận", error: error) }
+        } catch { self.error = UserFacingError.message(failure: "Không gửi được bình luận.", error: error) }
         sending = false
     }
 }

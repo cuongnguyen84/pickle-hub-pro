@@ -94,7 +94,7 @@ final class TMScoringModel {
             justSaved = true
             onSaved()
         } catch {
-            self.error = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            self.error = UserFacingError.message(failure: "Không lưu được tỉ số.", error: error)
         }
         saving = false
     }
@@ -104,7 +104,7 @@ final class TMScoringModel {
         do {
             try await repo.updateGameLiveScore(gameID: gameID, scoreA: scoreA, scoreB: scoreB)
         } catch {
-            self.error = UserFacingError.message(action: "Cập nhật điểm trực tiếp", error: error)
+            self.error = UserFacingError.message(failure: "Không cập nhật được điểm trực tiếp.", error: error)
         }
     }
 
@@ -113,7 +113,7 @@ final class TMScoringModel {
         do {
             try await repo.claimGameLive(gameID: gameID)
         } catch {
-            self.error = UserFacingError.message(action: "Nhận quyền chấm trận", error: error)
+            self.error = UserFacingError.message(failure: "Không nhận được quyền chấm trận.", error: error)
         }
     }
 }

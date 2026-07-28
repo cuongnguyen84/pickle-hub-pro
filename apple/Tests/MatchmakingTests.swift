@@ -86,6 +86,7 @@ struct MatchmakingTests {
         let ps = (0..<4).map { MMPlayer(id: "p\($0)", name: "N\($0)", level: nil) }
         let s = Matchmaking.generateRoundRobin(players: ps, rounds: 1, courtCount: 1, seed: 1)
         let text = Matchmaking.scheduleToText(s)
+        // scheduleToText giữ VI cố định — assert này hợp lệ
         #expect(text.contains("Vòng 1"))
         #expect(text.contains("Sân 1:"))
         #expect(text.contains("vs"))

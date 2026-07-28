@@ -21,7 +21,7 @@ private final class QuickTableGroupManagerModel {
 
     func move(_ player: QTPlayer, to group: QTGroup) async {
         guard let oldGroupID = player.groupID, oldGroupID != group.id else { return }
-        await mutate("Chuyển VĐV") {
+        await mutate("Không chuyển được VĐV.") {
             try await repo.movePlayer(playerID: player.id, to: group.id)
             let oldPlayers = detail.players.filter { $0.groupID == oldGroupID && $0.id != player.id }.map(\.id)
             let newPlayers = detail.players.filter { $0.groupID == group.id }.map(\.id) + [player.id]
@@ -39,7 +39,7 @@ private final class QuickTableGroupManagerModel {
         let second = name2.trimmingCharacters(in: .whitespacesAndNewlines)
         let doubles = detail.table.isDoubles == true
         let label = doubles ? "\(first) & \(second)" : first
-        await mutate("Thêm VĐV") {
+        await mutate("Không thêm được VĐV.") {
             try await repo.addPlayer(
                 tableID: detail.table.id,
                 groupID: group.id,
@@ -60,7 +60,7 @@ private final class QuickTableGroupManagerModel {
 
     func remove(_ player: QTPlayer) async {
         guard let groupID = player.groupID else { return }
-        await mutate("Xóa VĐV") {
+        await mutate("Không xóa được VĐV.") {
             try await repo.removePlayer(playerID: player.id)
             let remaining = detail.players.filter { $0.groupID == groupID && $0.id != player.id }.map(\.id)
             try await repo.regenerateGroupMatches(
@@ -76,7 +76,7 @@ private final class QuickTableGroupManagerModel {
         try await repo.deleteTable(tableID: detail.table.id)
     }
 
-    private func mutate(_ action: String, operation: () async throws -> Void) async {
+    private func mutate(_ failure: String.LocalizationValue, operation: () async throws -> Void) async {
         guard !busy else { return }
         busy = true
         errorMessage = nil
@@ -86,7 +86,7 @@ private final class QuickTableGroupManagerModel {
             try await reload()
             Haptics.success()
         } catch {
-            errorMessage = UserFacingError.message(action: action, error: error)
+            errorMessage = UserFacingError.message(failure: failure, error: error)
             Haptics.error()
         }
     }
@@ -217,7 +217,7 @@ struct QuickTableGroupManagerView: View {
                         dismiss()
                         onDeleted()
                     } catch {
-                        model.errorMessage = UserFacingError.message(action: "Xóa giải", error: error)
+                        model.errorMessage = UserFacingError.message(failure: "Không xóa được giải.", error: error)
                     }
                 }
             }

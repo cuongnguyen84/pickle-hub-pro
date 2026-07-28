@@ -55,7 +55,7 @@ final class MatchConfirmModel {
             Haptics.success()
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Xác nhận trận đấu", error: error)
+            actionError = UserFacingError.message(failure: "Không xác nhận được trận đấu.", error: error)
             Haptics.error()
         }
     }
@@ -70,7 +70,7 @@ final class MatchConfirmModel {
             Haptics.light()
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Gửi tranh chấp", error: error)
+            actionError = UserFacingError.message(failure: "Không gửi được tranh chấp.", error: error)
             Haptics.error()
         }
     }

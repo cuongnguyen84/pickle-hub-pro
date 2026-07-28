@@ -32,6 +32,7 @@ final class DoublesElimViewModel {
     var scoreSaving = false
     var regBusy = false
     var regMessage: String?
+    var regSuccess = false
 
     private let repo = DoublesElimRepository()
     private let refreshGate = TournamentRefreshGate()
@@ -124,7 +125,7 @@ final class DoublesElimViewModel {
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            scoreError = UserFacingError.message(failure: "Không lưu được tỉ số.", error: error)
             Haptics.error()
         }
     }
@@ -134,9 +135,10 @@ final class DoublesElimViewModel {
     @MainActor
     func register(partnerUserID: UUID, teamName: String?, shareID: String) async {
         guard let id = detail?.tournament.id else { return }
-        regBusy = true; regMessage = nil
+        regBusy = true; regMessage = nil; regSuccess = false
         switch await repo.registerTeam(tournamentID: id, partnerUserID: partnerUserID, teamName: teamName) {
         case .ok(let avg):
+            regSuccess = true
             regMessage = "Đăng ký thành công" + (avg.map { String(format: " · DUPR %.2f", $0) } ?? "")
             await fetch(shareID: shareID)
         case .failed(let m): regMessage = m
@@ -762,13 +764,13 @@ private struct DEScoreSheet: View {
                     onLiveScore: { a, b in
                         Task {
                             do { try await DoublesElimRepository().updateLiveScore(matchID: match.id, scoreA: a, scoreB: b) }
-                            catch { onError(UserFacingError.message(action: "Cập nhật điểm trực tiếp", error: error)) }
+                            catch { onError(UserFacingError.message(failure: "Không cập nhật được điểm trực tiếp.", error: error)) }
                         }
                     },
                     onClaimLive: {
                         Task {
                             do { try await DoublesElimRepository().claimLive(matchID: match.id) }
-                            catch { onError(UserFacingError.message(action: "Nhận quyền chấm trận", error: error)) }
+                            catch { onError(UserFacingError.message(failure: "Không nhận được quyền chấm trận.", error: error)) }
                         }
                     }) { a, b, _ in
                     rows[nextGameIdx] = (a: String(a), b: String(b))

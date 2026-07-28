@@ -74,6 +74,9 @@ struct AccountSettingsView: View {
     @State private var pickedItem: PhotosPickerItem?
     @State private var showDeleteConfirm = false
     @State private var deleteText = ""
+    /// Confirmation word compares against its own localized value so the
+    /// prompt and the guard can never diverge across languages.
+    private var deleteConfirmWord: String { String(localized: "XÓA") }
 
     var body: some View {
         ScrollView {
@@ -96,11 +99,11 @@ struct AccountSettingsView: View {
             Task { await model.upload(item); onChanged() }
         }
         .alert("Xóa tài khoản?", isPresented: $showDeleteConfirm) {
-            TextField("Nhập XÓA để xác nhận", text: $deleteText)
+            TextField("Nhập \(deleteConfirmWord) để xác nhận", text: $deleteText)
             Button("Hủy", role: .cancel) { deleteText = "" }
             Button("Xóa vĩnh viễn", role: .destructive) {
                 Task { await model.delete { await session.signOut() } }
-            }.disabled(deleteText.trimmingCharacters(in: .whitespaces).uppercased() != "XÓA")
+            }.disabled(deleteText.trimmingCharacters(in: .whitespaces).precomposedStringWithCanonicalMapping.uppercased() != deleteConfirmWord)
         } message: {
             Text("Toàn bộ hồ sơ, giải đấu và nội dung của bạn sẽ bị xóa. Không thể hoàn tác.")
         }

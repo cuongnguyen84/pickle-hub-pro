@@ -47,7 +47,7 @@ final class ClubDetailViewModel {
             actionError = nil
             Haptics.success()
         } catch {
-            actionError = UserFacingError.message(action: "Gửi yêu cầu tham gia CLB", error: error)
+            actionError = UserFacingError.message(failure: "Không gửi được yêu cầu tham gia CLB.", error: error)
             Haptics.error()
         }
     }
@@ -63,7 +63,7 @@ final class ClubDetailViewModel {
             members = await repo.members(clubID: club.id)
             actionError = nil
         } catch {
-            actionError = UserFacingError.message(action: "Rời CLB", error: error)
+            actionError = UserFacingError.message(failure: "Không rời được CLB.", error: error)
             Haptics.error()
         }
     }

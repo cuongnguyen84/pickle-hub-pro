@@ -22,7 +22,7 @@ final class FlexWorkspaceModel {
         do {
             data = try await repo.load(shareID: shareID)
         } catch {
-            errorMessage = UserFacingError.message(action: "Tải dữ liệu quản lý", error: error)
+            errorMessage = UserFacingError.message(failure: "Không tải được dữ liệu quản lý.", error: error)
         }
     }
 
@@ -36,7 +36,7 @@ final class FlexWorkspaceModel {
         case .group: order = data.groups.count
         case .match: order = data.matches.filter { $0.parentMatchID == parentID }.count
         }
-        await mutate("Tạo nội dung") {
+        await mutate("Không tạo được nội dung.") {
             try await repo.createEntity(
                 tournamentID: data.tournament.id,
                 kind: kind,
@@ -50,68 +50,68 @@ final class FlexWorkspaceModel {
     }
 
     func rename(kind: FlexRepository.EntityKind, id: UUID, name: String) async {
-        await mutate("Đổi tên") { try await repo.rename(kind: kind, id: id, name: name) }
+        await mutate("Không đổi được tên.") { try await repo.rename(kind: kind, id: id, name: name) }
     }
 
     func delete(kind: FlexRepository.EntityKind, id: UUID, parentID: UUID? = nil) async {
-        await mutate("Xóa nội dung") {
+        await mutate("Không xóa được nội dung.") {
             try await repo.deleteEntity(kind: kind, id: id)
             if let parentID { try await repo.syncParentScore(parentID: parentID) }
         }
     }
 
     func addPlayer(_ playerID: UUID, to teamID: UUID) async {
-        await mutate("Thêm thành viên") { try await repo.addPlayer(playerID, toTeam: teamID) }
+        await mutate("Không thêm được thành viên.") { try await repo.addPlayer(playerID, toTeam: teamID) }
     }
 
     func removeMember(_ memberID: UUID) async {
-        await mutate("Xóa thành viên") { try await repo.removeTeamMember(memberID) }
+        await mutate("Không xóa được thành viên.") { try await repo.removeTeamMember(memberID) }
     }
 
     func addPlayer(_ playerID: UUID, toGroup groupID: UUID) async {
         let order = data?.groupItems.filter { $0.groupID == groupID }.count ?? 0
-        await mutate("Thêm VĐV vào bảng") {
+        await mutate("Không thêm được VĐV vào bảng.") {
             try await repo.addPlayer(playerID, toGroup: groupID, displayOrder: order)
         }
     }
 
     func addTeam(_ teamID: UUID, toGroup groupID: UUID) async {
         let order = data?.groupItems.filter { $0.groupID == groupID }.count ?? 0
-        await mutate("Thêm đội vào bảng") {
+        await mutate("Không thêm được đội vào bảng.") {
             try await repo.addTeam(teamID, toGroup: groupID, displayOrder: order)
         }
     }
 
     func removeGroupItem(_ itemID: UUID) async {
-        await mutate("Xóa khỏi bảng") { try await repo.removeGroupItem(itemID) }
+        await mutate("Không xóa được khỏi bảng.") { try await repo.removeGroupItem(itemID) }
     }
 
     func setIncludeDoubles(_ include: Bool, groupID: UUID) async {
-        await mutate("Cập nhật bảng xếp hạng") {
+        await mutate("Không cập nhật được bảng xếp hạng.") {
             try await repo.setIncludeDoubles(groupID: groupID, include: include)
         }
     }
 
     func generateRoundRobin(group: FlexGroup) async {
         guard let data else { return }
-        await mutate("Tạo lịch vòng tròn") {
+        await mutate("Không tạo được lịch vòng tròn.") {
             try await repo.generateRoundRobin(tournamentID: data.tournament.id, group: group, data: data)
         }
     }
 
     func configure(_ match: FlexMatch, groupID: UUID?, counts: Bool) async {
-        await mutate("Cập nhật trận") {
+        await mutate("Không cập nhật được trận.") {
             try await repo.configureMatch(matchID: match.id, countsForStandings: counts, groupID: groupID)
         }
     }
 
     func setSlot(_ matchID: UUID, slot: FlexRepository.MatchSlot, itemID: UUID?) async {
-        await mutate("Xếp đội hình") { try await repo.setMatchSlot(matchID: matchID, slot: slot, itemID: itemID) }
+        await mutate("Không xếp được đội hình.") { try await repo.setMatchSlot(matchID: matchID, slot: slot, itemID: itemID) }
     }
 
     func setParticipantMode(_ matchID: UUID, teamMode: Bool) async {
         let firstTeamID = teamMode ? data?.teams.first?.id : nil
-        await mutate("Đổi loại đối tượng") {
+        await mutate("Không đổi được loại đối tượng.") {
             try await repo.setParticipantMode(
                 matchID: matchID,
                 teamMode: teamMode,
@@ -120,7 +120,7 @@ final class FlexWorkspaceModel {
         }
     }
 
-    private func mutate(_ action: String, operation: () async throws -> Void) async {
+    private func mutate(_ failure: String.LocalizationValue, operation: () async throws -> Void) async {
         guard !busy else { return }
         busy = true
         errorMessage = nil
@@ -130,7 +130,7 @@ final class FlexWorkspaceModel {
             data = try await repo.load(shareID: shareID)
             Haptics.success()
         } catch {
-            errorMessage = UserFacingError.message(action: action, error: error)
+            errorMessage = UserFacingError.message(failure: failure, error: error)
             Haptics.error()
         }
     }

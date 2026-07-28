@@ -31,7 +31,7 @@ final class ClubManageModel {
             actionError = nil
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Duyệt thành viên", error: error)
+            actionError = UserFacingError.message(failure: "Không duyệt được thành viên.", error: error)
         }
     }
     // T5 — mời thành viên: tra email/SĐT chính xác (RPC search_profile_for_manager,
@@ -48,7 +48,7 @@ final class ClubManageModel {
             inviteHit = try await repo.searchProfileForManager(query)
         } catch {
             inviteHit = nil
-            inviteError = UserFacingError.message(action: "Tìm tài khoản", error: error)
+            inviteError = UserFacingError.message(failure: "Không tìm được tài khoản.", error: error)
         }
     }
 
@@ -60,7 +60,7 @@ final class ClubManageModel {
             await load()
             return true
         } catch {
-            inviteError = UserFacingError.message(action: "Mời thành viên", error: error)
+            inviteError = UserFacingError.message(failure: "Không mời được thành viên.", error: error)
             return false
         }
     }
@@ -77,7 +77,7 @@ final class ClubManageModel {
             actionError = nil
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Cập nhật thành viên", error: error)
+            actionError = UserFacingError.message(failure: "Không cập nhật được thành viên.", error: error)
         }
     }
 }

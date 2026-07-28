@@ -77,7 +77,7 @@ final class FlexViewModel {
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            scoreError = UserFacingError.message(failure: "Không lưu được tỉ số.", error: error)
             Haptics.error()
         }
     }

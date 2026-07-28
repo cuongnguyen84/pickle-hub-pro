@@ -70,6 +70,7 @@ struct ClubEvent: Decodable, Identifiable, Equatable {
     let priceVnd: Int?
     let status: String?
 
+    // canonical — ghi xuống DB, KHÔNG localize (proposal native-bilingual inc.2)
     var title: String { titleVi.nonEmpty ?? titleEn?.nonEmpty ?? "Sự kiện" }
     var startDate: Date? { startAt.flatMap { SocialDate.parse($0) } }
 

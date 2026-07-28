@@ -35,7 +35,7 @@ final class NotificationsViewModel {
             unread = items.filter { !$0.isRead }.count
             mutationError = nil
         } catch {
-            mutationError = UserFacingError.message(action: "Đánh dấu thông báo", error: error)
+            mutationError = UserFacingError.message(failure: "Không đánh dấu được thông báo.", error: error)
         }
     }
 
@@ -45,7 +45,7 @@ final class NotificationsViewModel {
             try await repo.markAllRead()
             mutationError = nil
         } catch {
-            mutationError = UserFacingError.message(action: "Đánh dấu tất cả thông báo", error: error)
+            mutationError = UserFacingError.message(failure: "Không đánh dấu được tất cả thông báo.", error: error)
         }
         await load()
     }

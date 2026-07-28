@@ -47,6 +47,7 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     let requiresPrepayment: Bool?
     let prepaymentDeadlineHours: Int?
 
+    // canonical — ghi xuống DB, KHÔNG localize (proposal native-bilingual inc.2)
     var title: String { titleVi.nonEmpty ?? titleEn?.nonEmpty ?? "Sự kiện" }
 
     var startDate: Date? { startAt.flatMap(SocialDate.parse) }

@@ -330,6 +330,7 @@ struct DoublesElimRepository {
             let p1 = team.p1.trimmingCharacters(in: .whitespaces)
             let p2 = team.p2.trimmingCharacters(in: .whitespaces)
             let derived = team.teamName.trimmingCharacters(in: .whitespaces).nonEmpty
+                // canonical — ghi xuống DB, KHÔNG localize (proposal native-bilingual inc.2)
                 ?? (!p1.isEmpty && !p2.isEmpty ? "\(p1) / \(p2)" : (p1.nonEmpty ?? p2.nonEmpty ?? "Đội"))
             return DEAtomicCreateTeam(
                 team_name: derived,

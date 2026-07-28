@@ -391,7 +391,7 @@ private struct QuickTableApprovedSetupSheet: View {
             Haptics.success()
             onFinished()
         } catch {
-            errorMessage = UserFacingError.message(action: "Tạo bảng đấu", error: error)
+            errorMessage = UserFacingError.message(failure: "Không tạo được bảng đấu.", error: error)
             Haptics.error()
         }
     }
