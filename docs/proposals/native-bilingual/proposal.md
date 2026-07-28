@@ -1,6 +1,6 @@
 # Song ngữ VI+EN cho app native `/apple` (String Catalog)
 
-> Slug: `native-bilingual` · Ngày: `2026-07-28` · Trạng thái: `approved`
+> Slug: `native-bilingual` · Ngày: `2026-07-28` · Trạng thái: `shipped` (#494 + #495 merged 28/07, main `f8a9e39e`)
 > **Cuong duyệt 28/07 (qua /ship, AskUserQuestion):** Option C · D3 = Region-default + toggle trong Profile (Tiếng Việt/English/Theo máy) · D4 = chuẩn 'Hủy'/'Xóa' (kiểu bộ gõ), PR chuẩn hoá riêng chạm cả `src/i18n` + `apple/` trước PR song ngữ · chấp nhận ước lượng 8,5–10 nửa ngày.
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6) ·
 > `risk-auditor` (+GPT-5.6) · `pre-mortem`. Model ngoài: GPT-5.6 (ui-ux-critic qua codex CLI, risk-auditor qua OpenAI Responses API — codex CLI từ chối gpt-5.6 với tài khoản ChatGPT).
