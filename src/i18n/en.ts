@@ -1174,7 +1174,8 @@ export const en: Translations = {
       noSubEvents: "No events yet. Create a new event or add an existing one to get started.",
       subEventCount: "{count} events",
       viewParent: "View parent",
-      deleteParentConfirm: "You must delete all sub-events before deleting the parent tournament.",
+      deleteParentConfirm: "Delete this parent tournament? This cannot be undone.",
+      deleteParentConfirmWithEvents: "Delete this parent tournament? Its {count} events are NOT deleted — they stay as standalone brackets.",
       moreEvents: "+ {count} more events",
       noEventsYet: "No events yet",
       addFirstEvent: "+ Add event",
@@ -2963,7 +2964,6 @@ export const en: Translations = {
         permissionDenied: "You do not have permission to create a parent tournament",
       },
       delete: {
-        hasChildren: "You must delete all sub-events before deleting the parent tournament",
         success: "Parent tournament deleted",
         error: "Failed to delete parent tournament",
         permissionDenied: "You do not have permission to delete this parent tournament",

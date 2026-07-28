@@ -1,11 +1,19 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from "vitest";
-import { toFeaturedParentTournament } from "../useFeaturedParentTournaments";
+import { featuredCutoffDate, toFeaturedParentTournament } from "../useFeaturedParentTournaments";
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {},
 }));
+
+describe("featuredCutoffDate", () => {
+  it("keeps a tournament for 10 days after its event date, then drops it", () => {
+    const cutoff = featuredCutoffDate(new Date("2026-08-05T03:00:00Z"));
+    expect(cutoff).toBe("2026-07-26");
+    expect(featuredCutoffDate(new Date("2026-08-06T03:00:00Z"))).toBe("2026-07-27");
+  });
+});
 
 describe("toFeaturedParentTournament", () => {
   it("counts every public event and previews active events first", () => {

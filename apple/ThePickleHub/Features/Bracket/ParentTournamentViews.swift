@@ -133,7 +133,7 @@ struct ParentTournamentDetailView: View {
                 }
             }
         } message: {
-            Text("Thao tác này không thể hoàn tác. Chỉ giải tổng chưa có nội dung thi đấu mới có thể xóa.")
+            Text("Thao tác này không thể hoàn tác. Các nội dung thi đấu KHÔNG bị xóa — chúng sẽ tách ra thành giải riêng.")
         }
         .alert("Không thể hoàn tất", isPresented: Binding(
             get: { model.errorMessage != nil },
@@ -197,7 +197,7 @@ struct ParentTournamentDetailView: View {
                     }
                 }
 
-                if model.isOwner && detail.events.isEmpty {
+                if model.isOwner {
                     Button(role: .destructive) {
                         showDeleteConfirmation = true
                     } label: {

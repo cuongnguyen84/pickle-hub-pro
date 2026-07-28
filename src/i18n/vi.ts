@@ -1172,6 +1172,7 @@ export interface Translations {
       subEventCount: string;
       viewParent: string;
       deleteParentConfirm: string;
+      deleteParentConfirmWithEvents: string;
       moreEvents: string;
       noEventsYet: string;
       addFirstEvent: string;
@@ -2898,7 +2899,6 @@ export interface Translations {
         permissionDenied: string;
       };
       delete: {
-        hasChildren: string;
         success: string;
         error: string;
         permissionDenied: string;
@@ -4159,7 +4159,8 @@ export const vi: Translations = {
       noSubEvents: "Chưa có nội dung nào. Tạo nội dung mới hoặc thêm nội dung đã có để bắt đầu.",
       subEventCount: "{count} nội dung",
       viewParent: "Xem giải tổng",
-      deleteParentConfirm: "Bạn phải xóa tất cả nội dung con trước khi xóa giải tổng.",
+      deleteParentConfirm: "Xóa giải tổng này? Thao tác không thể hoàn tác.",
+      deleteParentConfirmWithEvents: "Xóa giải tổng này? {count} nội dung con KHÔNG bị xóa — chúng sẽ tách ra thành giải riêng.",
       moreEvents: "+ {count} nội dung khác",
       noEventsYet: "Chưa có nội dung nào",
       addFirstEvent: "+ Thêm nội dung",
@@ -5949,7 +5950,6 @@ export const vi: Translations = {
         permissionDenied: "Bạn không có quyền tạo giải tổng",
       },
       delete: {
-        hasChildren: "Bạn phải xóa tất cả nội dung con trước khi xóa giải tổng",
         success: "Đã xóa giải tổng",
         error: "Không thể xóa giải tổng",
         permissionDenied: "Bạn không có quyền xóa giải tổng này",
