@@ -138,6 +138,7 @@ export async function renderVenuesList(
     const { data, error } = await supabase
       .from("venues")
       .select("slug, name, name_vi, district, city, num_courts, is_indoor, is_verified")
+      .eq("country", "VN")
       .order("is_verified", { ascending: false })
       .order("num_courts", { ascending: false })
       .order("updated_at", { ascending: false })
@@ -538,6 +539,7 @@ export function cityEventLink(
 
 // ── /san/khu-vuc/:city — per-city hub ───────────────────────────────────────
 const VENUE_CITY_NAME: Record<string, string> = {
+  "singapore": "Singapore",
   "tp-hcm": "TP.HCM",
   "ha-noi": "Hà Nội",
   "da-nang": "Đà Nẵng",
@@ -627,6 +629,18 @@ const CITY_SLUG_BY_NAME: Record<string, string> = Object.fromEntries(
   Object.entries(VENUE_CITY_NAME).map(([sl, nm]) => [nm, sl]),
 );
 
+// City -> country for international hubs. The `venues.country` column has
+// always existed, so a non-VN city hub only needs a slug->country entry here.
+// Default VN keeps every existing hub's copy + schema byte-for-byte unchanged.
+// S1 pilot: Singapore (SEA is where a court directory has no entrenched
+// competitor, unlike the US Pickleheads/Places2Play wall).
+const CITY_COUNTRY: Record<string, { code: string; en: string; vi: string }> = {
+  singapore: { code: "SG", en: "Singapore", vi: "Singapore" },
+};
+function cityCountry(citySlug: string): { code: string; en: string; vi: string } {
+  return CITY_COUNTRY[citySlug] ?? { code: "VN", en: "Vietnam", vi: "Việt Nam" };
+}
+
 export async function renderVenuesCity(
   supabase: SupabaseClient,
   citySlug: string,
@@ -635,6 +649,7 @@ export async function renderVenuesCity(
 ): Promise<Response> {
   const cityName = VENUE_CITY_NAME[citySlug];
   if (!cityName) return render404(`/san/khu-vuc/${citySlug}`, siteUrl);
+  const cc = cityCountry(citySlug);
   const enUrl = `${siteUrl}/san/khu-vuc/${citySlug}`;
   const viUrl = `${siteUrl}/vi/san/khu-vuc/${citySlug}`;
   const canonical = lang === "vi" ? viUrl : enUrl;
@@ -663,7 +678,7 @@ export async function renderVenuesCity(
   const description =
     lang === "vi"
       ? `${n} sân pickleball tại ${cityName} — địa chỉ, số sân, bản đồ và chỉ đường. Cộng đồng cùng đóng góp trên ThePickleHub.`
-      : `${n} pickleball courts in ${cityName}, Vietnam — address, court count, map and directions on ThePickleHub.`;
+      : `${n} pickleball courts in ${cityName}, ${cc.en} — address, court count, map and directions on ThePickleHub.`;
 
   const itemsHtml = rows
     .map((v) => {
@@ -695,7 +710,7 @@ export async function renderVenuesCity(
               address: {
                 "@type": "PostalAddress",
                 addressLocality: v.city ?? cityName,
-                addressCountry: "VN",
+                addressCountry: cc.code,
               },
             },
           })),
@@ -725,7 +740,7 @@ export async function renderVenuesCity(
   const introHtml =
     lang === "vi"
       ? `<p>Khám phá ${n > 0 ? `${n} ` : ""}sân pickleball tại ${escapeHtml(cityName)}${totalCourtsVi} do cộng đồng ThePickleHub đóng góp — kèm địa chỉ, số sân, sân trong nhà/ngoài trời và chỉ đường. Danh sách được cập nhật liên tục khi có sân mới.</p>`
-      : `<p>Discover ${n > 0 ? `${n} ` : ""}community-contributed pickleball courts in ${escapeHtml(cityName)}, Vietnam${totalCourtsEn} — address, court count, indoor/outdoor and directions. The list grows as new courts are added.</p>`;
+      : `<p>Discover ${n > 0 ? `${n} ` : ""}community-contributed pickleball courts in ${escapeHtml(cityName)}, ${escapeHtml(cc.en)}${totalCourtsEn} — address, court count, indoor/outdoor and directions. The list grows as new courts are added.</p>`;
 
   const FEATURED_CITY_SLUGS = [
     "tp-hcm", "ha-noi", "da-nang", "hai-phong", "can-tho", "nha-trang",

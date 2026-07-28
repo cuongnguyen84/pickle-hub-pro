@@ -74,6 +74,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     // City hub pages (/san/khu-vuc/:city) — landing pages per city.
     const CITY_SLUGS: string[] = [
+      "singapore",
       "tp-hcm",
       "ha-noi",
       "da-nang",
