@@ -52,9 +52,17 @@ struct ClubRepository {
 
     func membership(clubID: UUID) async -> ClubMembership {
         struct Params: Encodable { let p_club_id: String }
-        let raw: String? = try? await client.rpc("my_club_membership_status",
-            params: Params(p_club_id: clubID.uuidString.lowercased())).execute().value
-        return raw.flatMap(ClubMembership.init) ?? .anonymous
+        do {
+            let raw: String = try await client.rpc("my_club_membership_status",
+                params: Params(p_club_id: clubID.uuidString.lowercased())).execute().value
+            return ClubMembership(rawValue: raw) ?? .anonymous
+        } catch {
+            // Fail-soft VỀ QUYỀN là chấp nhận được (viewer thường), nhưng phải
+            // nổ ở DEBUG — 28/07 lỗi session bị nuốt ở đây thành "anonymous"
+            // và mất cả buổi mới tìm ra (pre-mortem sự cố 2, đúng kịch bản).
+            assertionFailure("membership \(clubID): \(error)")
+            return .anonymous
+        }
     }
 
     /// Request to join → returns the new membership status string.

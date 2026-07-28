@@ -96,6 +96,7 @@ final class SessionStore {
     private let currentIdentity: () -> SessionUserIdentity?
     private let makeAuthEvents: () -> AsyncStream<SessionLifecycleEvent>
     private let clearExternalAuth: () -> Void
+    private let validateStoredSession: () async -> Error?
 
     @ObservationIgnored
     private var authListenerTask: Task<Void, Never>?
@@ -106,7 +107,8 @@ final class SessionStore {
         client: SupabaseClient = SupabaseManager.shared.client,
         currentIdentity: (() -> SessionUserIdentity?)? = nil,
         makeAuthEvents: (() -> AsyncStream<SessionLifecycleEvent>)? = nil,
-        clearExternalAuth: @escaping () -> Void = { GoogleAuthService.signOut() }
+        clearExternalAuth: @escaping () -> Void = { GoogleAuthService.signOut() },
+        validateStoredSession: (() async -> Error?)? = nil
     ) {
         self.client = client
         self.currentIdentity = currentIdentity ?? {
@@ -116,6 +118,11 @@ final class SessionStore {
             Self.liveAuthEvents(client: client)
         }
         self.clearExternalAuth = clearExternalAuth
+        // `auth.session` tự refresh khi cần; ném lỗi = session lưu trữ không
+        // còn dùng được (trừ lỗi mạng — caller tự phân biệt).
+        self.validateStoredSession = validateStoredSession ?? {
+            do { _ = try await client.auth.session; return nil } catch { return error }
+        }
     }
 
     deinit {
@@ -128,7 +135,18 @@ final class SessionStore {
     func bootstrap() async {
         startAuthListenerIfNeeded()
         guard state == .unknown else { return }
-        apply(.init(kind: .initialSession, identity: currentIdentity()))
+        var identity = currentIdentity()
+        // Zombie signed-in (bug 28/07): keychain còn session nhưng refresh
+        // token đã chết → UI như đang đăng nhập trong khi MỌI request đi nặc
+        // danh (chuông đòi login, giải biến mất, membership=anonymous). Boot
+        // phải validate session lưu trữ; chết thật (không phải lỗi mạng) thì
+        // xoá khỏi keychain và vào màn đăng nhập. Launch offline giữ nguyên
+        // session — URLError không bị coi là session chết.
+        if identity != nil, let error = await validateStoredSession(), !(error is URLError) {
+            identity = nil
+            try? await client.auth.signOut(scope: .local)
+        }
+        apply(.init(kind: .initialSession, identity: identity))
     }
 
     // MARK: - Email / password

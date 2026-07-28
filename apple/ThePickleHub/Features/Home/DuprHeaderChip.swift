@@ -47,13 +47,17 @@ struct DuprHeaderChip: View {
                     deltaLabel(delta)
                 }
             case .unlinked:
-                Text("· Chưa kết nối")
+                // Ngắn cố ý: header là ToolbarItem(.principal) — KHÔNG tự nén,
+                // nhãn dài làm tràn hàng và nút Tài khoản văng khỏi vùng bấm
+                // (bug 28/07). Trạng thái đầy đủ nằm ở accessibility label.
+                Text("—")
                     .font(TLFont.mono(11, .semibold))
                     .foregroundStyle(TLColor.fg3)
             case .loading:
                 Text("0.00").font(TLFont.mono(16, .bold))
             }
         }
+        .lineLimit(1)
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
         .padding(.horizontal, 14)

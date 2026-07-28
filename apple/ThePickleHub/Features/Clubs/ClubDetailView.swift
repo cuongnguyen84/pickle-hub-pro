@@ -77,6 +77,7 @@ struct ClubDetailView: View {
 
     @State private var model = ClubDetailViewModel()
     @State private var openWeb: IdentifiedURL?
+    @State private var showCreateEvent = false
 
     var body: some View {
         ScrollView {
@@ -87,6 +88,11 @@ struct ClubDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { if case .loading = model.phase { await model.load(slug: slug) } }
         .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
+        .sheet(isPresented: $showCreateEvent) {
+            if case .loaded(let club) = model.phase {
+                CreateSocialEventView(clubID: club.id) { Task { await model.load(slug: club.slug) } }
+            }
+        }
         .alert("Không thể cập nhật CLB", isPresented: Binding(
             get: { model.actionError != nil },
             set: { if !$0 { model.actionError = nil } }
@@ -166,7 +172,13 @@ struct ClubDetailView: View {
     @ViewBuilder
     private func membershipRow(_ club: Club) -> some View {
         HStack(spacing: 9) {
-            Button { Haptics.light(); openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "clb/\(club.slug)")) } label: {
+            Button {
+                Haptics.light()
+                switch model.membership {
+                case .manager, .creator: showCreateEvent = true
+                default: openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "clb/\(club.slug)"))
+                }
+            } label: {
                 Label("Mở buổi chơi", systemImage: "plus")
                     .font(TLFont.sans(14, .bold)).foregroundStyle(TLColor.accentInk)
                     .frame(maxWidth: .infinity).padding(.vertical, 12)
