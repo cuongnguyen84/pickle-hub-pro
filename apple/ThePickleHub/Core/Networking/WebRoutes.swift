@@ -20,12 +20,16 @@ enum WebRoutes {
     static func social(slug: String) -> URL { base.appending(path: "vi/social/\(slug)") }
     static let dupr = base.appending(path: "dupr")
 
-    // Bracket Lab (Tools) — created/scored on the web.
+    // Canonical public/share URLs for Bracket Lab. Creation and scoring are
+    // native; these URLs remain useful for sharing and the optional web viewer.
     static let toolsQuickTables = base.appending(path: "tools/quick-tables")
     static let toolsDoublesElimination = base.appending(path: "tools/doubles-elimination")
     static let toolsFlexTournament = base.appending(path: "tools/flex-tournament")
     static let toolsTeamMatch = base.appending(path: "tools/team-match")
     static func quickTable(shareID: String) -> URL { base.appending(path: "tools/quick-tables/\(shareID)") }
+    static func parentTournament(shareID: String) -> URL {
+        base.appending(path: "tools/quick-tables/parent/\(shareID)")
+    }
     static func toolsDoublesEliminationView(shareID: String) -> URL { base.appending(path: "tools/doubles-elimination/\(shareID)") }
     static func toolsTeamMatchView(shareID: String) -> URL { base.appending(path: "tools/team-match/\(shareID)") }
     static func toolsFlexView(shareID: String) -> URL { base.appending(path: "tools/flex-tournament/\(shareID)") }

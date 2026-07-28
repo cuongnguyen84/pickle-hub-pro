@@ -5,6 +5,7 @@ import Testing
 // N3 — client-side format filter on the Tournaments Community tab.
 // Twin of the web /tournaments format tabs (src/pages/Tournaments.tsx).
 
+@MainActor
 struct CommunityFilterTests {
     private func t(_ format: BracketFormat, name: String = "T") -> MyTournament {
         MyTournament(id: UUID(), shareID: "s", name: name, isDoubles: true,

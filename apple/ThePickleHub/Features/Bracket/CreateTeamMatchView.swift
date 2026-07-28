@@ -569,7 +569,7 @@ struct CreateTeamMatchView: View {
                 }
                 toggleRow("Có trận tranh hạng 3", "Trận giữa 2 đội thua bán kết",
                           Binding(get: { model.hasThirdPlaceMatch }, set: { model.hasThirdPlaceMatch = $0 }))
-                infoCard(gold: false, "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công (trên web).")
+                infoCard(gold: false, "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công ngay trong app.")
             }
         }
     }

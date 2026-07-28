@@ -5,7 +5,8 @@ import Foundation
 // Backend tables: flex_{tournaments,players,teams,team_members,groups,
 // group_items,matches}. Stats are computed CLIENT-SIDE from matches (web also
 // computes team stats live; native computes ALL standings live so they never go
-// stale). Create/manage (drag-drop workspace) stays on web.
+// stale). The native workspace exposes the same management operations as web;
+// mobile uses explicit pickers instead of drag/drop so every target is accessible.
 
 // MARK: Rows
 
@@ -16,6 +17,7 @@ struct FlexTournament: Decodable, Equatable {
     let isPublic: Bool
     let status: String
     let creatorUserID: UUID?
+    var createdAt: String? = nil
 
     var displayName: String { name.nonEmpty ?? "Giải linh hoạt" }
 
@@ -24,6 +26,7 @@ struct FlexTournament: Decodable, Equatable {
         case shareID = "share_id"
         case isPublic = "is_public"
         case creatorUserID = "creator_user_id"
+        case createdAt = "created_at"
     }
 }
 
@@ -80,6 +83,7 @@ struct FlexGroupItem: Decodable, Identifiable, Equatable {
 struct FlexMatch: Decodable, Identifiable, Equatable {
     let id: UUID
     let groupID: UUID?
+    var parentMatchID: UUID? = nil
     let name: String
     let matchType: String   // singles | doubles
     let slotA1PlayerID: UUID?
@@ -103,6 +107,7 @@ struct FlexMatch: Decodable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, name
         case groupID = "group_id"
+        case parentMatchID = "parent_match_id"
         case matchType = "match_type"
         case slotA1PlayerID = "slot_a1_player_id"
         case slotA2PlayerID = "slot_a2_player_id"
@@ -148,10 +153,15 @@ struct FlexData: Equatable {
     func teamName(_ id: UUID?) -> String? { id.flatMap { tid in teams.first { $0.id == tid }?.name } }
 
     var ungroupedMatches: [FlexMatch] {
-        matches.filter { $0.groupID == nil }.sorted { $0.displayOrder < $1.displayOrder }
+        matches.filter { $0.groupID == nil && $0.parentMatchID == nil }
+            .sorted { $0.displayOrder < $1.displayOrder }
     }
     func matches(in group: FlexGroup) -> [FlexMatch] {
-        matches.filter { $0.groupID == group.id }.sorted { $0.displayOrder < $1.displayOrder }
+        matches.filter { $0.groupID == group.id && $0.parentMatchID == nil }
+            .sorted { $0.displayOrder < $1.displayOrder }
+    }
+    func childMatches(of match: FlexMatch) -> [FlexMatch] {
+        matches.filter { $0.parentMatchID == match.id }.sorted { $0.displayOrder < $1.displayOrder }
     }
     func items(in group: FlexGroup) -> [FlexGroupItem] {
         groupItems.filter { $0.groupID == group.id }.sorted { $0.displayOrder < $1.displayOrder }

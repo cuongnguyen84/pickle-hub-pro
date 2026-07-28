@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class VenuesViewModel {
     enum Phase: Equatable { case loading, loaded, failed(String) }
 

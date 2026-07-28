@@ -33,4 +33,53 @@ struct DeepLinkTests {
     @Test func joinUniversalLink() {
         #expect(parse("https://www.thepicklehub.net/join/XYZ789") == .joinInvite(code: "XYZ789"))
     }
+
+    @Test func bracketLabUniversalLinksOpenNativeDetails() {
+        let matchID = UUID(uuidString: "10000000-0000-4000-8000-000000000001")!
+        #expect(parse("https://www.thepicklehub.net/tools/quick-tables/qt123") == .quickTable(shareID: "qt123"))
+        #expect(parse("https://www.thepicklehub.net/tools/quick-tables/qt123/setup") == .quickTable(shareID: "qt123"))
+        #expect(parse("https://www.thepicklehub.net/tools/quick-tables/parent/summer26") == .parentTournament(shareID: "summer26"))
+        #expect(parse("https://www.thepicklehub.net/tools/doubles-elimination/de123") == .doublesElimination(shareID: "de123"))
+        #expect(parse("https://www.thepicklehub.net/tools/team-match/tm123") == .teamMatch(shareID: "tm123"))
+        #expect(parse("https://www.thepicklehub.net/tools/flex-tournament/fx123") == .flexTournament(shareID: "fx123"))
+        #expect(parse("https://www.thepicklehub.net/tools") == .toolsHub)
+        #expect(parse("https://www.thepicklehub.net/tools/quick-tables") == .toolsHub)
+        #expect(parse("https://www.thepicklehub.net/tools/quick-tables/new") == .createQuickTable)
+        #expect(parse("https://www.thepicklehub.net/tools/doubles-elimination/new") == .createDoublesElimination)
+        #expect(parse("https://www.thepicklehub.net/tools/team-match/new") == .createTeamMatch)
+        #expect(parse("https://www.thepicklehub.net/tools/flex-tournament/new") == .createFlexTournament)
+        #expect(parse("https://www.thepicklehub.net/tools/dashboard") == .dashboardPicker)
+        #expect(parse("https://www.thepicklehub.net/tools/dashboard/quick-table/qt123") ==
+            .tournamentDashboard(type: "quick-table", id: "qt123"))
+        #expect(parse("https://www.thepicklehub.net/tools/quick-tables/referee/\(matchID.uuidString)") ==
+            .quickTableScore(matchID: matchID))
+        #expect(parse("https://www.thepicklehub.net/tools/team-match/match/\(matchID.uuidString)/score") ==
+            .teamMatchScore(matchID: matchID))
+        #expect(parse("https://www.thepicklehub.net/tools/doubles-elimination/match/\(matchID.uuidString)/score") ==
+            .doublesEliminationScore(matchID: matchID))
+        // AASA nhận toàn bộ /tools/*: route organizer chưa map cụ thể vẫn phải
+        // vào được hub native thay vì hiện sheet trống.
+        #expect(parse("https://www.thepicklehub.net/tools/a-future-route") == .toolsHub)
+    }
+
+    @Test func remotePushRoutesSupportedPayloads() {
+        let liveID = "10000000-0000-4000-8000-000000000001"
+        #expect(RemoteNotificationRoute.deepLink(from: [
+            "livestreamID": liveID,
+        ]) == .livestream(id: UUID(uuidString: liveID)!))
+        #expect(RemoteNotificationRoute.deepLink(from: [
+            "event_slug": "giao-luu-quan-7",
+        ]) == .socialEvent(slug: "giao-luu-quan-7"))
+        #expect(RemoteNotificationRoute.deepLink(from: [
+            "link_url": "/social/giao-luu-quan-7/danh-sach",
+        ]) == .socialEvent(slug: "giao-luu-quan-7"))
+    }
+
+    @Test func remotePushRejectsUnknownOrMalformedDestinations() {
+        #expect(RemoteNotificationRoute.deepLink(from: ["event_id": "not-a-route"]) == nil)
+        #expect(RemoteNotificationRoute.deepLink(from: ["link_url": "https://evil.com/social/x"]) == nil)
+        #expect(RemoteNotificationRoute.deepLink(from: [
+            "entity_type": "tournament", "related_id": "not-a-uuid",
+        ]) == nil)
+    }
 }

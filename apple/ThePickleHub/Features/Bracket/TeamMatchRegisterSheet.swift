@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Captain self-registration (registration-mode MLP). Creates a team owned by the
-/// captain with status 'pending' + its roster; BTC approves later. Port of the
-/// captain side of TeamRegistrationDialog (simplified — no master-team reuse).
+/// captain with auto-approved status + its roster. Port of the captain side of
+/// TeamRegistrationDialog, including reuse of the captain's most recent team.
 @Observable
 final class TMRegisterModel {
     struct PlayerRow: Identifiable {
@@ -20,6 +20,7 @@ final class TMRegisterModel {
     var teamName = ""
     var players: [PlayerRow]
     var myDupr: Double?        // captain's own DUPR (doubles ?? singles)
+    var duprConnected = false
     var duprLoaded = false
     var prevName: String?      // most-recent team name for "reuse" prefill
     private var prevPlayers: [(name: String, gender: String, isCaptain: Bool)] = []
@@ -39,8 +40,9 @@ final class TMRegisterModel {
 
     @MainActor func loadMyDupr() async {
         if requireDupr {
-            let p = try? await ProfileRepository().currentUserProfile()
-            myDupr = p?.duprDoubles ?? p?.duprSingles
+            let identity = await TournamentService.shared.currentUserDupr()
+            duprConnected = identity.connected
+            myDupr = identity.rating
         }
         duprLoaded = true
         if let prev = await repo.previousCaptainTeam() {
@@ -64,7 +66,7 @@ final class TMRegisterModel {
     var duprCap: Double? { requireDupr ? (captainGender == "female" ? duprMaxFemale : duprMaxMale) : nil }
     var duprEligible: Bool {
         guard requireDupr else { return true }
-        guard let d = myDupr else { return false }
+        guard duprConnected, let d = myDupr else { return false }
         return duprCap == nil || d <= duprCap!
     }
 
@@ -101,6 +103,7 @@ struct TeamMatchRegisterSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var model: TMRegisterModel
     @State private var confirmDiscard = false
+    @State private var showDuprConnect = false
 
     private var hasEdits: Bool {
         !model.teamName.isEmpty || model.players.contains { !$0.name.isEmpty }
@@ -129,6 +132,11 @@ struct TeamMatchRegisterSheet: View {
                     } else if model.duprLoaded {
                         Text("Giải yêu cầu DUPR \(capText). Bạn chưa kết nối DUPR.")
                             .font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.live)
+                        Button("Kết nối DUPR") {
+                            showDuprConnect = true
+                        }
+                        .font(TLFont.sans(12, .semibold))
+                        .frame(minHeight: 44)
                     } else {
                         Text("Đang kiểm tra DUPR…").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
                     }
@@ -225,6 +233,11 @@ struct TeamMatchRegisterSheet: View {
             }
         }
         .interactiveDismissDisabled(hasEdits)
+        .sheet(isPresented: $showDuprConnect, onDismiss: {
+            Task { await model.loadMyDupr() }
+        }) {
+            SafariView(url: WebRoutes.dupr).ignoresSafeArea()
+        }
     }
 
     private func playerRow(_ i: Int) -> some View {

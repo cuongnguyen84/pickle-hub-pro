@@ -1,6 +1,6 @@
 # Mốc tự động phiên sau — cơ chế mốc + thi hành QA-04/OPS-04 + 4 mốc hẹn ngày
 
-> Slug: `auto-milestone-run-2026-07` · Ngày: `2026-07-21` · Trạng thái: `shipped` (2026-07-22)
+> Slug: `auto-milestone-run-2026-07` · Ngày: `2026-07-21` · Trạng thái: `approved` (Cuong 2026-07-21)
 >
 > **Quyết định của Cuong (kênh chat, 2026-07-21):**
 > - D1/D2/D5: GẬT thiết kế hội tụ (md-file + daily re-ping + heartbeat · OPS-04 v1 = uptime pinger · /done để sau).
@@ -216,12 +216,6 @@ Milestone/pinger/.tl-btn: git revert, phút. `errors-telegram-alert`: cần rede
 
 ## 9. Sau khi ship
 
-- SHA: `b3e8743d` (squash #432, merged 2026-07-22 01:31 UTC bởi bot sau review APPROVED của cuongnguyen84 01:27) · PR: #432 · Follow-up: #433 (CSP drift middleware — RED, chờ approve)
-- Deploy: Cloudflare success · smoke /, /feed, Googlebot /tournaments 200 · edge function errors-telegram-alert live khớp source · milestone-due chạy thật: "không có mốc nào đến hạn" · uptime-ping chạy thật: 200/200, im lặng đúng
-- Soak: watch 30' bị đứt (release-pilot mất child) → thay bằng soak HỒI CỨU mạnh hơn: client_errors 01:32→03:06 UTC (94 phút) = 0 lỗi, 0 signature mới; baseline 24h trước = 1 signature AdSense CSP noise có sẵn.
+- SHA: · PR: · Ngày:
 - Khác kế hoạch:
-  1. Cổng SARIF cục bộ lần chạy đầu bắt 5 finding CŨ (dismissal Security tab chết theo entitlement GitHub) → Cuong chọn fork (b): scripts/codeql-baseline.json + codeql-gate.mjs (fail mọi finding NGOÀI baseline, warn stale entry).
-  2. DUPR SSO: điều tra kết luận KHÔNG cần fixme/monitor — hard-fail là preview chunk-reload; test giữ ACTIVE, quyết định D3(X) không phải dùng đến.
-  3. Điều tra lộ CSP drift bot-path (middleware thiếu 2 domain DUPR) → PR #433 riêng kèm test parity, đúng điều khoản "bug prod → PR riêng" của D3.
-  4. GitHub rút Code scanning khỏi private free plan → mục 0-② đổi từ "bật trong Settings" thành security.yml plan A (Cuong duyệt trong chat).
-- Học được (→ `.claude/memory/lessons-learned.md` entry 2026-07-22): mốc phải mang predicate lẫn ngày; guard-liveness là hạng gate chưa tồn tại (pass≠executed, im≠ổn, xanh≠ratchet-còn-sống); dismissal ngoài repo là guardrail mượn — chết theo nhà cung cấp; trace artifact rẻ hơn một quyết định skip sai.
+- Học được (→ `.claude/memory/lessons-learned.md`): mốc phải mang predicate lẫn ngày; guard-liveness là hạng gate chưa tồn tại (pass≠executed, im≠ổn, xanh≠ratchet-còn-sống)

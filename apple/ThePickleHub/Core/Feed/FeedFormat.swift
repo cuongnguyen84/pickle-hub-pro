@@ -68,19 +68,19 @@ enum FeedFormat {
 /// with variable fractional-second precision (often 6 digits) that
 /// `ISO8601DateFormatter` rejects unless the fraction is normalized.
 enum FeedDate {
-    private static let withFraction: ISO8601DateFormatter = {
+    private static func formatter(fractionalSeconds: Bool) -> ISO8601DateFormatter {
         let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        f.formatOptions = fractionalSeconds
+            ? [.withInternetDateTime, .withFractionalSeconds]
+            : [.withInternetDateTime]
         return f
-    }()
-
-    private static let noFraction: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
-        return f
-    }()
+    }
 
     static func parse(_ string: String) -> Date? {
+        // ISO8601DateFormatter is mutable and not Sendable. Creating these two
+        // short-lived instances avoids sharing formatter state across tasks.
+        let withFraction = formatter(fractionalSeconds: true)
+        let noFraction = formatter(fractionalSeconds: false)
         if let d = withFraction.date(from: string) { return d }
         if let d = noFraction.date(from: string) { return d }
         // Strip the fractional component ("…:ss.123456+00:00" → "…:ss+00:00")

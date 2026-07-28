@@ -11,6 +11,14 @@ struct QTTable: Decodable, Equatable {
     let creatorUserID: UUID?
     let topPerGroup: Int?
     let requiresRegistration: Bool?
+    var requiresSkillLevel: Bool? = nil
+    var ratingSource: String? = nil
+    var minSkillLevel: Double? = nil
+    var maxSkillLevel: Double? = nil
+    var autoApproveRegistrations: Bool? = nil
+    var registrationMessage: String? = nil
+    var groupCount: Int? = nil
+    var playerCount: Int? = nil
     let courts: [String]?     // tên/số sân (vd ["1","2","3"])
     let startTime: String?    // giờ bắt đầu giải "HH:MM"
 
@@ -34,6 +42,14 @@ struct QTTable: Decodable, Equatable {
         case creatorUserID = "creator_user_id"
         case topPerGroup = "top_per_group"
         case requiresRegistration = "requires_registration"
+        case requiresSkillLevel = "requires_skill_level"
+        case ratingSource = "rating_source"
+        case minSkillLevel = "min_skill_level"
+        case maxSkillLevel = "max_skill_level"
+        case autoApproveRegistrations = "auto_approve_registrations"
+        case registrationMessage = "registration_message"
+        case groupCount = "group_count"
+        case playerCount = "player_count"
         case courts
         case startTime = "start_time"
     }
@@ -47,8 +63,12 @@ struct QTRegistration: Decodable, Identifiable, Equatable {
     let team: String?
     let ratingSystem: String?     // DUPR | other | none
     let skillLevel: Double?
+    let skillDescription: String?
+    let skillSystemName: String?
     let profileLink: String?
     let status: String            // pending | approved | rejected
+    let btcOverrideSkill: Double?
+    let btcNotes: String?
     let createdAt: String?
 
     enum CodingKeys: String, CodingKey {
@@ -57,8 +77,124 @@ struct QTRegistration: Decodable, Identifiable, Equatable {
         case displayName = "display_name"
         case ratingSystem = "rating_system"
         case skillLevel = "skill_level"
+        case skillDescription = "skill_description"
+        case skillSystemName = "skill_system_name"
         case profileLink = "profile_link"
+        case btcOverrideSkill = "btc_override_skill"
+        case btcNotes = "btc_notes"
         case createdAt = "created_at"
+    }
+}
+
+/// A doubles registration pair. Player 1 creates the pair, shares an invite,
+/// player 2 accepts, then the organizer approves the complete pair.
+struct QTTeamRegistration: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let tableID: UUID
+    let player1UserID: UUID
+    let player1DisplayName: String
+    let player1Team: String?
+    let player1SkillLevel: Double?
+    let player1RatingSystem: String?
+    let player1ProfileLink: String?
+    let player2UserID: UUID?
+    let player2DisplayName: String?
+    let player2Team: String?
+    let player2SkillLevel: Double?
+    let player2RatingSystem: String?
+    let player2ProfileLink: String?
+    let teamStatus: String
+    let btcApproved: Bool?
+    let btcNotes: String?
+    let isLocked: Bool?
+    let createdAt: String?
+
+    var pairName: String {
+        [player1DisplayName, player2DisplayName].compactMap { $0?.nonEmpty }.joined(separator: " & ")
+    }
+    var isComplete: Bool { player2UserID != nil && player2DisplayName?.nonEmpty != nil }
+    var isApproved: Bool { btcApproved == true && teamStatus == "approved" }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tableID = "table_id"
+        case player1UserID = "player1_user_id"
+        case player1DisplayName = "player1_display_name"
+        case player1Team = "player1_team"
+        case player1SkillLevel = "player1_skill_level"
+        case player1RatingSystem = "player1_rating_system"
+        case player1ProfileLink = "player1_profile_link"
+        case player2UserID = "player2_user_id"
+        case player2DisplayName = "player2_display_name"
+        case player2Team = "player2_team"
+        case player2SkillLevel = "player2_skill_level"
+        case player2RatingSystem = "player2_rating_system"
+        case player2ProfileLink = "player2_profile_link"
+        case teamStatus = "team_status"
+        case btcApproved = "btc_approved"
+        case btcNotes = "btc_notes"
+        case isLocked = "is_locked"
+        case createdAt = "created_at"
+    }
+}
+
+struct QTPartnerInvitation: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let teamID: UUID
+    let tableID: UUID
+    let inviteCode: String
+    let invitedByUserID: UUID
+    let invitedUserID: UUID?
+    let status: String
+    let expiresAt: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, status
+        case teamID = "team_id"
+        case tableID = "table_id"
+        case inviteCode = "invite_code"
+        case invitedByUserID = "invited_by_user_id"
+        case invitedUserID = "invited_user_id"
+        case expiresAt = "expires_at"
+        case createdAt = "created_at"
+    }
+}
+
+struct QTPairTeamSummary: Decodable, Equatable {
+    let player1DisplayName: String
+    let player1Team: String?
+
+    enum CodingKeys: String, CodingKey {
+        case player1DisplayName = "player1_display_name"
+        case player1Team = "player1_team"
+    }
+}
+
+struct QTPairRequest: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let tableID: UUID
+    let fromTeamID: UUID
+    let toTeamID: UUID
+    let fromUserID: UUID
+    let toUserID: UUID
+    let status: String
+    let createdAt: String?
+    let respondedAt: String?
+    let fromTeam: QTPairTeamSummary?
+    let toTeam: QTPairTeamSummary?
+
+    enum CodingKeys: String, CodingKey {
+        case id, status
+        case tableID = "table_id"
+        case fromTeamID = "from_team_id"
+        case toTeamID = "to_team_id"
+        case fromUserID = "from_user_id"
+        case toUserID = "to_user_id"
+        case createdAt = "created_at"
+        case respondedAt = "responded_at"
+        case fromTeam = "from_team"
+        case toTeam = "to_team"
     }
 }
 

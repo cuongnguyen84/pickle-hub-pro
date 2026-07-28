@@ -5,10 +5,8 @@ import SwiftUI
 /// self-registration (pick partner) / my-registration banner, organizer manual
 /// add + close-registration button, and the registered-teams list.
 ///
-/// DUPR range + dedupe + capacity are all enforced by the RPC; native just
-/// localizes the error code. Native has no DUPR SSO connect step (web gates the
-/// self-register form behind it) — instead the RPC surfaces MISSING_DUPR if a
-/// player has no rating.
+/// DUPR range + dedupe + capacity are enforced by the RPC; native also gates the
+/// form on the same verified SSO connection used by production web.
 struct DoublesElimRegistrationView: View {
     let detail: DEDetail
     let model: DoublesElimViewModel
@@ -26,6 +24,9 @@ struct DoublesElimRegistrationView: View {
     @State private var orgPickerSlot = 1
     @State private var showOrgPicker = false
     @State private var teamToRemove: DETeam?
+    @State private var duprIdentity = TournamentService.DuprIdentity(connected: false, rating: nil)
+    @State private var duprLoaded = false
+    @State private var showDuprConnect = false
 
     private var isOrganizer: Bool { model.isCreator }
     private var myTeam: DETeam? { detail.myTeam(model.currentUserID) }
@@ -55,6 +56,12 @@ struct DoublesElimRegistrationView: View {
                 myRegistrationCard(team)
             } else if detail.isFull {
                 notice("Đã đủ đội. Đợi ban tổ chức bắt đầu giải.", warn: false)
+            } else if !duprLoaded {
+                ProgressView("Đang kiểm tra DUPR…")
+                    .tint(TLColor.accentText)
+                    .frame(maxWidth: .infinity, minHeight: 56)
+            } else if !duprIdentity.connected {
+                connectDuprCard
             } else {
                 registrationForm
             }
@@ -89,6 +96,15 @@ struct DoublesElimRegistrationView: View {
             }
         } message: {
             Text("Xoá đội “\(teamToRemove?.teamName ?? "")”? Không thể hoàn tác.")
+        }
+        .sheet(isPresented: $showDuprConnect, onDismiss: {
+            Task { await loadDupr() }
+        }) {
+            SafariView(url: WebRoutes.dupr).ignoresSafeArea()
+        }
+        .task {
+            if isSignedIn && !isOrganizer { await loadDupr() }
+            else { duprLoaded = true }
         }
     }
 
@@ -156,6 +172,35 @@ struct DoublesElimRegistrationView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(TLColor.accent.opacity(0.06), in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.accent.opacity(0.3), lineWidth: 1))
+    }
+
+    private var connectDuprCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Giải này yêu cầu liên kết DUPR", systemImage: "exclamationmark.triangle.fill")
+                .font(TLFont.sans(14, .semibold))
+                .foregroundStyle(TLColor.gold)
+            Text("Kết nối DUPR rồi quay lại; app sẽ kiểm tra lại điểm trước khi mở form đăng ký.")
+                .font(TLFont.sans(12.5))
+                .foregroundStyle(TLColor.fg3)
+            Button("Kết nối DUPR") {
+                showDuprConnect = true
+            }
+            .font(TLFont.sans(13, .semibold))
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .buttonStyle(.borderedProminent)
+            .tint(TLColor.accent)
+            .foregroundStyle(TLColor.accentInk)
+        }
+        .padding(14)
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.lg).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    @MainActor
+    private func loadDupr() async {
+        duprLoaded = false
+        duprIdentity = await TournamentService.shared.currentUserDupr()
+        duprLoaded = true
     }
 
     // MARK: My registration

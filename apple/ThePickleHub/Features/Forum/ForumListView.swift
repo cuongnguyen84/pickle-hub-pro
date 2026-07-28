@@ -3,6 +3,7 @@ import SwiftUI
 enum ForumRoute: Hashable { case detail(String); case newPost }
 
 @Observable
+@MainActor
 final class ForumListModel {
     var posts: [ForumPost] = []
     var categories: [ForumCategory] = []

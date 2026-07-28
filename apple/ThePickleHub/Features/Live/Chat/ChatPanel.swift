@@ -20,6 +20,18 @@ struct ChatPanel: View {
         VStack(spacing: 0) {
             header
             Divider().overlay(TLColor.border)
+            if let realtimeError = model.realtimeErrorText {
+                HStack(spacing: 8) {
+                    Image(systemName: "wifi.exclamationmark")
+                    Text(realtimeError).font(TLFont.sans(12)).lineLimit(2)
+                    Spacer(minLength: 4)
+                    Button("Kết nối lại") { model.reconnectRealtime() }
+                        .font(TLFont.sans(12, .semibold))
+                }
+                .foregroundStyle(.orange)
+                .padding(.horizontal, 16).padding(.vertical, 8)
+                .background(Color.orange.opacity(0.08))
+            }
             messageList
             inputBar
         }

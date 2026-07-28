@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class FindPlayersModel {
     var requests: [PlayRequest] = []
     var loaded = false

@@ -1,6 +1,6 @@
 import SwiftUI
 import UIKit
-import UserNotifications
+@preconcurrency import UserNotifications
 import GoogleSignIn
 
 /// Orientation lock — app is portrait by default; the referee scoring screen
@@ -8,7 +8,8 @@ import GoogleSignIn
 /// flips it + requests a geometry update (iOS 16+).
 /// Also the `UNUserNotificationCenter` delegate: shows local notifications in
 /// the foreground and routes a tap into the deep-link sheet (live reminders).
-final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+@MainActor
+final class AppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
     static var orientationLock: UIInterfaceOrientationMask = .portrait
 
     /// Set by `ThePickleHubApp` on appear. A tap that arrives before SwiftUI is
@@ -26,7 +27,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        RemotePushService.shared.start(application: application)
         return true
+    }
+
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        RemotePushService.shared.setAPNSToken(deviceToken)
     }
 
     func application(_ application: UIApplication,
@@ -40,17 +47,18 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         [.banner, .list, .sound]
     }
 
-    // Tap: userInfo["livestreamID"] (set by LiveReminderStore) → open the stream.
+    // Tap: route both local reminder and FCM data payloads.
     @MainActor
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse) async {
-        guard let raw = response.notification.request.content.userInfo["livestreamID"] as? String,
-              let id = UUID(uuidString: raw) else { return }
-        let link = DeepLink.livestream(id: id)
+        guard let link = RemoteNotificationRoute.deepLink(
+            from: response.notification.request.content.userInfo
+        ) else { return }
         if let route = Self.routeDeepLink { route(link) } else { Self.pendingDeepLink = link }
     }
 }
 
+@MainActor
 enum OrientationLock {
     // Pin to ONE orientation. `.landscape` (both left+right) leaves iOS to pick
     // from the accelerometer, which oscillates when the phone is held portrait
@@ -130,6 +138,14 @@ struct ThePickleHubApp: App {
                         deepLink = link
                     } else {
                         GIDSignIn.sharedInstance.handle(url)
+                    }
+                }
+                .onChange(of: session.state, initial: true) { _, state in
+                    switch state {
+                    case .signedIn(let identity):
+                        RemotePushService.shared.setAuthenticatedUserID(identity.id)
+                    case .unknown, .signedOut:
+                        RemotePushService.shared.setAuthenticatedUserID(nil)
                     }
                 }
                 .onAppear { AppDelegate.routeDeepLink = { deepLink = $0 } }

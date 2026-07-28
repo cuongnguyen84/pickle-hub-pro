@@ -39,6 +39,12 @@ jobs:
         run: |
           cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig
           xcodegen generate
+          mkdir -p ThePickleHub.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          cp Config/Package.resolved ThePickleHub.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+      - name: Run native release preflight
+        working-directory: apple
+        run: ./scripts/release_preflight.sh
 
       - name: Select an available iPhone simulator
         id: simulator
@@ -61,6 +67,20 @@ jobs:
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}" \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             -resultBundlePath "$RUNNER_TEMP/ThePickleHubTests.xcresult" \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Build unsigned Release with strict concurrency checks
+        working-directory: apple
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project ThePickleHub.xcodeproj \
+            -scheme ThePickleHub \
+            -configuration Release \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-Release" \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Upload test result on failure

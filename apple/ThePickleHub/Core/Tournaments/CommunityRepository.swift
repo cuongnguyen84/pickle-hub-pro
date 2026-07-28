@@ -8,12 +8,12 @@ import Supabase
 struct CommunityRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
-    private static let iso: ISO8601DateFormatter = {
+    private static func isoFormatter() -> ISO8601DateFormatter {
         let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]; return f
-    }()
+    }
     private static func date(_ s: String?) -> Date? {
         guard let s else { return nil }
-        return iso.date(from: s) ?? ISO8601DateFormatter().date(from: s)
+        return isoFormatter().date(from: s) ?? ISO8601DateFormatter().date(from: s)
     }
 
     /// All active public community tournaments, newest first.

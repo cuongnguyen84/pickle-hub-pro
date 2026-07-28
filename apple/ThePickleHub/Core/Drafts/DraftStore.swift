@@ -24,6 +24,7 @@ private struct DraftEnvelope<T: Codable>: Codable {
 /// background, guard chống "hồi sinh" draft vừa clear (publish → clear →
 /// onChange thừa không được ghi lại).
 @Observable
+@MainActor
 final class DraftStore<T: Codable & Equatable> {
     let key: String
     private(set) var lastSavedAt: Date?
@@ -51,7 +52,7 @@ final class DraftStore<T: Codable & Equatable> {
     func save(_ value: T) {
         guard resurrectionGuard(value) else { return }
         pending?.cancel()
-        pending = Task { @MainActor [weak self] in
+        pending = Task { [weak self] in
             try? await Task.sleep(for: draftDebounce)
             guard !Task.isCancelled else { return }
             self?.write(value)

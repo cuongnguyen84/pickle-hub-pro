@@ -6,6 +6,7 @@ import SwiftUI
 /// in with its lifecycle status. Create still lives in MatchLogView; admin approve
 /// queue stays on web.
 @Observable
+@MainActor
 final class MatchConfirmModel {
     enum Tab: String, CaseIterable, Identifiable { case pending, history
         var id: String { rawValue }

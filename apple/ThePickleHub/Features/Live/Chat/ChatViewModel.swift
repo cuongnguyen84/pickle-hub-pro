@@ -20,6 +20,7 @@ final class ChatViewModel {
     var leaderboard: [ChatLeaderboardEntry] = []
     var isLoading = true
     var hasOlder = false
+    var realtimeErrorText: String?
 
     private(set) var userID: String?
     private var displayName = "User"
@@ -55,6 +56,11 @@ final class ChatViewModel {
     // MARK: Load
 
     func load() async {
+        // SwiftUI can trigger task/reappear more than once. Tear down any
+        // previous subscription before rebuilding state so listeners never
+        // multiply for the same livestream.
+        stop()
+        realtimeErrorText = nil
         userID = await repo.currentUserID()
 
         async let recentTask = repo.recentMessages(livestreamID: livestreamID)
@@ -98,9 +104,10 @@ final class ChatViewModel {
     // MARK: Realtime
 
     private func startRealtime() {
+        guard channel == nil else { return }
         let ch = SupabaseManager.shared.client.channel("chat:\(livestreamID)")
         channel = ch
-        let filter = "livestream_id=eq.\(livestreamID)"
+        let filter = RealtimePostgresFilter.eq("livestream_id", value: livestreamID)
         let inserts = ch.postgresChange(InsertAction.self, schema: "public", table: "chat_messages", filter: filter)
         let deletes = ch.postgresChange(DeleteAction.self, schema: "public", table: "chat_messages", filter: filter)
         let settingsStream = ch.postgresChange(AnyAction.self, schema: "public", table: "chat_room_settings", filter: filter)
@@ -121,8 +128,24 @@ final class ChatViewModel {
             Task { [weak self] in
                 for await action in settingsStream { self?.handleSettings(action) }
             },
-            Task { await ch.subscribe() },
+            Task { [weak self] in
+                do {
+                    try await ch.subscribeWithError()
+                    self?.realtimeErrorText = nil
+                } catch is CancellationError {
+                    // Normal when the screen disappears or the stream changes.
+                } catch {
+                    self?.realtimeErrorText = "Mất kết nối bình luận trực tiếp."
+                }
+            },
         ]
+    }
+
+    func reconnectRealtime() {
+        stop()
+        realtimeErrorText = nil
+        startRealtime()
+        startLeaderboardPolling()
     }
 
     private func handleInsert(_ m: ChatMessage) {

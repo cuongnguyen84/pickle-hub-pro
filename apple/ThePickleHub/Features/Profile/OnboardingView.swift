@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class OnboardingModel {
     var displayName = ""
     var username = ""

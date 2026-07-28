@@ -487,3 +487,83 @@ JS-rendered sites — escalate to the Chrome MCP rather than concluding "no info
 - **Đừng để script soak chết âm thầm rồi đọc nhầm thành "sạch".** Bản soak tối thiểu chạy 4 poll rồi nổ `UND_ERR_CONNECT_TIMEOUT` (undici, timeout 10s) tới `api.supabase.com` ở phút ~21 — harness vẫn báo exit 0. Flake mạng không được phép đọc thành PASS **cũng không được đọc thành regression**: phải retry (4 lần, backoff) rồi mới bỏ cuộc và nói to.
 - **4 phiên song song merge vào `main` trong 25 phút (#479→#483) làm việc quy trách nhiệm gần như bất khả.** Lỗi lúc 08:48Z nằm sau 3 deploy khác nhau. Trước khi revert, đọc `git log --format='%h %cI'` để biết còn ai vừa deploy — nếu lỗi ở route mình không đụng, nghi can là người khác.
 - **Preview deploy dùng `x-prerender-cache` để phân biệt code-cũ với cache-cũ.** 3 poll đầu sau merge prod vẫn trả description cũ (`MISS` = không phải cache, mà là isolate chưa cập nhật) — chờ ~2 phút là hội tụ. Đúng như bài học 2026-07-27 trước đó: đừng revert ở phút đầu.
+- **Tier by BLAST-RADIUS, không chỉ reversibility**: gọi việc-0 SEO-guardrail = GREEN vì "git-revert được" là SAI. `risk-tier.mjs` chấm `functions/_middleware.ts` = RED ("prerender entrypoint — bug 404s Googlebot toàn site") và `functions/_lib/render/*.ts` = RED ("SSR truth table"). Đụng 2 file đó = RED bất kể revert được, vì blast-radius. release-pilot từ chối merge đúng. Bài học: chạy `node scripts/agents/risk-tier.mjs --base origin/main` (per-file diff mode) để lấy tier THẬT — `--files "a,b,c"` gộp comma thành 1 path (fileCount:1) nên ra tier sai (chỉ khớp rule đầu). RED cần Cuong duyệt tường minh (chat approval = đủ theo pattern orchestrator-merge).
+- **Guard-3 (VI-blog hreflang HTTP-check trong seo-verify.sh) bắt orphan THẬT ngay lần đầu**: PR #449 (301 free-pickleball-bracket-generator→/tools) để sót VI post THẬT trong DB `vi_blog_posts` slug `cong-cu-tao-bracket-pickleball-mien-phi-2026` (recon lúc #449 chỉ quét REPO, không quét DB → tưởng slug "không tồn tại"). alternate_en_slug của nó vẫn trỏ URL đã 301 = orphaned hreflang. BÀI HỌC: khi 301 một EN blog, LUÔN query `vi_blog_posts` tìm row có alternate_en_slug trỏ tới nó (leg thứ 5, ngoài repo, CI mù). Fix tối thiểu = set alternate_en_slug=NULL (reversible), số phận VI post để dành S1.
+
+## 2026-07-24 — Supabase Edge Function blob-loss (`NOT_FOUND_FUNCTION_BLOB`)
+
+**Trạng thái:** ticket Supabase Support đang mở và đã được support escalate tới Edge
+Functions team. Cuong đã gửi update incident 24/7; chờ support trả lời. Không đóng
+ticket chỉ vì redeploy làm function chạy lại — đây mới là mitigation, chưa có root
+cause/fix platform.
+
+**Project:** `ajvlcamxemgbxduhiqrl`.
+
+**Bản chất lỗi:** Supabase vẫn có metadata/version và Dashboard có thể hiện function
+ACTIVE, nhưng edge runtime không đọc được code blob. Endpoint trả:
+
+```json
+{"code":"NOT_FOUND_FUNCTION_BLOB","message":"Requested function was not found"}
+```
+
+Có hai failure mode đã quan sát:
+
+1. Blob mất kéo dài cho tới khi CLI redeploy.
+2. Blob 404 chập chờn rồi tự hồi phục mà không có deploy, gợi ý blob-store
+   read/replication inconsistency giữa worker/POP.
+
+**Điểm support đã xác nhận/cần diễn đạt đúng:**
+
+- `pro-tour-ingest` bị `supabase-branching` PATCH lúc 15:26:51 UTC 22/7 với
+  entrypoint `/app/...`, rồi trả blob 404. Timeline draft ghi manual deploy 15:33
+  là sai; CLI deploy thật lúc 15:40:21.
+- Log support còn cho thấy function trả 405/401 rồi HTTP 200 lúc 15:40:19, tức
+  đã tự vào được handler **2 giây trước** CLI deploy. Đây là bằng chứng cho
+  flickering/replica inconsistency, không thể kết luận CLI là thứ làm nó hồi phục.
+- Các request CLI từ IP Việt Nam lúc 05:16 UTC 23/7 là remediation của mình,
+  chạy sau khi `geo-check` blob-404 khoảng 05:13; không phải nguyên nhân của lỗi
+  trước đó. `bundleOnly=true` là các upload con của full-fleet CLI deploy.
+- Nói chính xác là “fleet-wide blob loss affecting 73/75 functions”, không khẳng
+  định mọi invocation của mọi function fail liên tục suốt 6 giờ. Khi support đưa
+  số success/failure aggregate, cần xin breakdown theo slug/version/POP.
+
+**Incident mới đã gửi support — 24/7:**
+
+- Khoảng 15:11 UTC, nút Scrape prod báo
+  `Failed to send a request to the Edge Function`.
+- Probe trực tiếp `pro-tour-trigger-scrape`: 12/12 GET và 6/6 OPTIONS đều
+  `404 NOT_FOUND_FUNCTION_BLOB`.
+- Request ID trước khi heal:
+  `019f94ae-7afc-730d-a6f5-92a3436add25`; edge region `ap-northeast-2`.
+- Cùng thời điểm `pro-tour-ingest` trả GET 405 đúng handler, nên lỗi chỉ nằm ở
+  blob của trigger function.
+- Tác động: manual Pro Tour Scrape chết ngay hop đầu
+  (`browser → pro-tour-trigger-scrape`), chưa auth/admin check, chưa tạo log
+  `running`, chưa gọi Cloudflare scraper, chưa ingest. Browser hiện generic fetch
+  error vì cả CORS preflight cũng nhận blob 404. Cron Cloudflare gọi thẳng
+  `pro-tour-ingest`, nên có thể vẫn chạy khi riêng trigger bị hỏng.
+
+**Khôi phục đã làm:**
+
+```bash
+npx supabase functions deploy pro-tour-trigger-scrape \
+  --project-ref ajvlcamxemgbxduhiqrl \
+  --use-api \
+  --output-format text \
+  --agent no
+```
+
+Deploy cùng source, không cần sửa code. Verify sau deploy lúc ~15:20 UTC:
+
+- 12/12 GET → 405 `{"error":"Method not allowed"}`.
+- 6/6 OPTIONS → 200.
+- unauthenticated POST → 401 `{"error":"Unauthorized"}`, chứng minh request vào
+  handler thật.
+- Cuong đã thử nút Scrape trên prod và xác nhận hoạt động.
+
+**Cảnh báo vận hành:** local CLI ban đầu hết auth nhưng đã login lại thành công,
+token CLI hiện được lưu trên máy. Workflow `Uptime ping` self-heal không dùng được:
+manual run `30104415254` ngày 24/7 fail trước khi có runner (`steps=[]`,
+`runner_id=0`) vì GitHub báo recent account payments failed hoặc spending limit
+cần tăng. Cho tới khi xử lý GitHub Billing & plans, đừng tin watchdog Actions sẽ
+redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.

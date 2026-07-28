@@ -228,6 +228,7 @@ final class SessionStore {
 
     func signOut() async {
         await run {
+            await RemotePushService.shared.prepareForSignOut()
             // Supabase clears its local session and emits `.signedOut` before
             // attempting the remote logout request. The defer keeps UI and the
             // Google SDK clean even if that request fails offline.

@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class LiveViewModel {
     enum Segment: String, CaseIterable, Identifiable {
         case live, replays, videos

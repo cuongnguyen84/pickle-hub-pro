@@ -66,9 +66,7 @@ enum ToolsFilter: String, CaseIterable, Identifiable {
     }
 }
 
-/// Which Bracket Lab format a managed tournament belongs to (drives routing +
-/// share URL). Quick Tables and Doubles Elimination have native detail views;
-/// the rest still open the web.
+/// Which Bracket Lab format a managed tournament belongs to.
 enum BracketFormat: String, Equatable, Hashable {
     case quickTable
     case doublesElim

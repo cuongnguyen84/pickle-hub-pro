@@ -1,0 +1,18 @@
+// Development configuration. The ignored Secrets.xcconfig contains only
+// client-shippable Supabase credentials and an optional public Turnstile key.
+#include "Secrets.xcconfig"
+
+APP_ENVIRONMENT = development
+APS_ENVIRONMENT = development
+PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app.dev
+MARKETING_VERSION = 1.1.0
+CURRENT_PROJECT_VERSION = 3
+
+// Device smoke may override this from the xcodebuild command line. Keep the
+// checked-in default OFF so a site key alone never sends a real OTP.
+NATIVE_EVENT_REGISTRATION_ENABLED = NO
+
+// Production push uses a Firebase iOS app bound to the live bundle. Keep the
+// isolated development bundle off until it has its own Firebase app record.
+REMOTE_PUSH_ENABLED = NO
+CAPACITOR_AUTH_RESET_APPROVED = NO
