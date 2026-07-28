@@ -95,14 +95,14 @@ struct AccountSettingsView: View {
         .onChange(of: pickedItem) { _, item in
             Task { await model.upload(item); onChanged() }
         }
-        .alert("Xoá tài khoản?", isPresented: $showDeleteConfirm) {
-            TextField("Nhập XOÁ để xác nhận", text: $deleteText)
-            Button("Huỷ", role: .cancel) { deleteText = "" }
-            Button("Xoá vĩnh viễn", role: .destructive) {
+        .alert("Xóa tài khoản?", isPresented: $showDeleteConfirm) {
+            TextField("Nhập XÓA để xác nhận", text: $deleteText)
+            Button("Hủy", role: .cancel) { deleteText = "" }
+            Button("Xóa vĩnh viễn", role: .destructive) {
                 Task { await model.delete { await session.signOut() } }
-            }.disabled(deleteText.trimmingCharacters(in: .whitespaces).uppercased() != "XOÁ")
+            }.disabled(deleteText.trimmingCharacters(in: .whitespaces).uppercased() != "XÓA")
         } message: {
-            Text("Toàn bộ hồ sơ, giải đấu và nội dung của bạn sẽ bị xoá. Không thể hoàn tác.")
+            Text("Toàn bộ hồ sơ, giải đấu và nội dung của bạn sẽ bị xóa. Không thể hoàn tác.")
         }
     }
 
@@ -203,7 +203,7 @@ struct AccountSettingsView: View {
             Button(role: .destructive) { Haptics.light(); showDeleteConfirm = true } label: {
                 HStack(spacing: 6) {
                     if model.deleting { ProgressView().tint(TLColor.live) }
-                    Text(model.deleting ? "Đang xoá..." : "Xoá tài khoản")
+                    Text(model.deleting ? "Đang xóa..." : "Xóa tài khoản")
                 }
                 .font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.live)
                 .frame(maxWidth: .infinity).padding(.vertical, 12)

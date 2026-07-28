@@ -11,7 +11,7 @@ enum UserFacingError {
             case .timedOut:
                 detail = "Kết nối đã hết thời gian chờ. Vui lòng thử lại."
             case .cancelled:
-                detail = "Yêu cầu đã bị huỷ."
+                detail = "Yêu cầu đã bị hủy."
             default:
                 detail = urlError.localizedDescription
             }

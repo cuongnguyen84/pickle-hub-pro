@@ -88,14 +88,14 @@ struct DoublesElimRegistrationView: View {
                 if orgPickerSlot == 1 { orgP1 = picked } else { orgP2 = picked }
             }
         }
-        .alert("Xoá đội?", isPresented: Binding(get: { teamToRemove != nil }, set: { if !$0 { teamToRemove = nil } })) {
+        .alert("Xóa đội?", isPresented: Binding(get: { teamToRemove != nil }, set: { if !$0 { teamToRemove = nil } })) {
             Button("Hủy", role: .cancel) { teamToRemove = nil }
-            Button("Xoá", role: .destructive) {
+            Button("Xóa", role: .destructive) {
                 if let team = teamToRemove { Task { await model.organizerRemove(team: team, shareID: shareID) } }
                 teamToRemove = nil
             }
         } message: {
-            Text("Xoá đội “\(teamToRemove?.teamName ?? "")”? Không thể hoàn tác.")
+            Text("Xóa đội “\(teamToRemove?.teamName ?? "")”? Không thể hoàn tác.")
         }
         .sheet(isPresented: $showDuprConnect, onDismiss: {
             Task { await loadDupr() }
@@ -221,7 +221,7 @@ struct DoublesElimRegistrationView: View {
             Button { Haptics.light(); Task { await model.cancelRegistration(shareID: shareID) } } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
-                    Text("Huỷ").font(TLFont.mono(11, .semibold))
+                    Text("Hủy").font(TLFont.mono(11, .semibold))
                 }
                 .foregroundStyle(TLColor.fg2).padding(.horizontal, 12).padding(.vertical, 8)
                 .background(TLColor.surface2, in: Capsule())

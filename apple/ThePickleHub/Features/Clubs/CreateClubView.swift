@@ -130,7 +130,7 @@ struct CreateClubView: View {
             .background(TLColor.bg)
             .navigationTitle("Tạo CLB")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Huỷ") { dismiss() }.foregroundStyle(TLColor.fg3) } }
+            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) } }
         }
     }
 
@@ -167,7 +167,7 @@ struct CreateClubView: View {
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: hasPreviewImage ? [] : [4])))
                 }
                 if hasPreviewImage {
-                    Button("Xoá") { picked = nil; previewImage = nil; model.image = nil }
+                    Button("Xóa") { picked = nil; previewImage = nil; model.image = nil }
                         .font(TLFont.sans(12, .semibold)).foregroundStyle(TLColor.live)
                 }
             }

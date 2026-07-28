@@ -142,7 +142,7 @@ struct FindPlayersView: View {
                         .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 11))
                     }.buttonStyle(.plain).disabled(!model.canPost || model.posting).opacity(model.canPost ? 1 : 0.5)
                     Button { model.showForm = false } label: {
-                        Text("Huỷ").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg2)
+                        Text("Hủy").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg2)
                             .frame(maxWidth: .infinity).padding(.vertical, 11)
                             .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
                     }.buttonStyle(.plain)

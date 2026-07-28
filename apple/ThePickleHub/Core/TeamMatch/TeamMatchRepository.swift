@@ -639,7 +639,7 @@ struct TeamMatchRepository {
         try result.requireSuccess()
     }
 
-    /// rr_playoff: xoá toàn bộ vòng bảng (trận + bảng) + đưa giải về 'registration' để chia lại sạch.
+    /// rr_playoff: xóa toàn bộ vòng bảng (trận + bảng) + đưa giải về 'registration' để chia lại sạch.
     func resetGroupStage(tournamentID: UUID) async throws {
         let result: AtomicTournamentMutationResult = try await client
             .rpc("reset_team_match_lifecycle_atomic", params: ResetLifecycleParams(

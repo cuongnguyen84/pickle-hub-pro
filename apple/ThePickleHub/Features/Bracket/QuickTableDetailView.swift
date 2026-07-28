@@ -738,7 +738,7 @@ struct QuickTableDetailView: View {
                     Task { await model.chooseBracket(shareID: shareID, advancePerGroup: opt.advancePerGroup) }
                 }
             }
-            Button("Huỷ", role: .cancel) {}
+            Button("Hủy", role: .cancel) {}
         }
         .sheet(isPresented: Binding(get: { model.showRegistrations }, set: { model.showRegistrations = $0 })) {
             QuickTableRegistrationsSheet(model: model) {
@@ -1649,7 +1649,7 @@ private struct QuickTableScheduleSheet: View {
                     }
                     .buttonStyle(.plain).disabled(busy)
 
-                    Text("Để trống ô sân rồi Xếp lịch để xoá phân sân/giờ.")
+                    Text("Để trống ô sân rồi Xếp lịch để xóa phân sân/giờ.")
                         .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
                 }
                 .padding(20)
@@ -1827,7 +1827,7 @@ private struct ScoreSheet: View {
     }
 }
 
-/// Quản lý trọng tài cho 1 bảng — thêm/xoá bằng email (parity với TeamMatchSettingsSheet).
+/// Quản lý trọng tài cho 1 bảng — thêm/xóa bằng email (parity với TeamMatchSettingsSheet).
 private struct QuickTableRefereesSheet: View {
     @Bindable var model: QuickTableViewModel
     @Environment(\.dismiss) private var dismiss

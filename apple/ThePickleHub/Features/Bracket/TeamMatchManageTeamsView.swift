@@ -128,7 +128,7 @@ struct TeamMatchManageTeamsView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var model: TMManageTeamsModel
-    // Xoá đội là thao tác phá huỷ, không hoàn tác được, và xoá luôn bằng chứng
+    // Xóa đội là thao tác phá hủy, không hoàn tác được, và xóa luôn bằng chứng
     // đã đóng tiền — web đã có AlertDialog cho đúng hành động này.
     @State private var confirmDeleteTeam: TMTeam?
 
@@ -164,11 +164,11 @@ struct TeamMatchManageTeamsView: View {
                     Button("Xong") { onChanged(); dismiss() }.foregroundStyle(TLColor.accentText)
                 }
             }
-            .confirmationDialog("Xoá đội \(confirmDeleteTeam?.teamName ?? "")?",
+            .confirmationDialog("Xóa đội \(confirmDeleteTeam?.teamName ?? "")?",
                                 isPresented: Binding(get: { confirmDeleteTeam != nil },
                                                      set: { if !$0 { confirmDeleteTeam = nil } }),
                                 titleVisibility: .visible) {
-                Button("Xoá đội", role: .destructive) {
+                Button("Xóa đội", role: .destructive) {
                     if let t = confirmDeleteTeam { Task { await model.deleteTeam(t.id) } }
                     confirmDeleteTeam = nil
                 }
@@ -183,9 +183,9 @@ struct TeamMatchManageTeamsView: View {
     private func deleteTeamMessage(_ team: TMTeam?) -> String {
         guard let team else { return "" }
         let n = model.members(team.id).count
-        var lines = ["Xoá vĩnh viễn đội này cùng \(n) thành viên. Không hoàn tác được."]
+        var lines = ["Xóa vĩnh viễn đội này cùng \(n) thành viên. Không hoàn tác được."]
         if team.payment == .claimed || team.payment == .confirmed {
-            lines.append("⚠️ Đội này đã báo/đã xác nhận đóng tiền. Xoá đội là xoá luôn bằng chứng đóng tiền — hệ thống KHÔNG hoàn tiền.")
+            lines.append("⚠️ Đội này đã báo/đã xác nhận đóng tiền. Xóa đội là xóa luôn bằng chứng đóng tiền — hệ thống KHÔNG hoàn tiền.")
         }
         return lines.joined(separator: "\n\n")
     }
@@ -249,7 +249,7 @@ struct TeamMatchManageTeamsView: View {
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Xoá đội \(team.teamName)")
+                .accessibilityLabel("Xóa đội \(team.teamName)")
             }
             if team.status == "pending" {
                 HStack(spacing: 8) {

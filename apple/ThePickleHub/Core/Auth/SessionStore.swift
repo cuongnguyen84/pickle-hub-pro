@@ -140,7 +140,7 @@ final class SessionStore {
         // token đã chết → UI như đang đăng nhập trong khi MỌI request đi nặc
         // danh (chuông đòi login, giải biến mất, membership=anonymous). Boot
         // phải validate session lưu trữ; chết thật (không phải lỗi mạng) thì
-        // xoá khỏi keychain và vào màn đăng nhập. Launch offline giữ nguyên
+        // xóa khỏi keychain và vào màn đăng nhập. Launch offline giữ nguyên
         // session — URLError không bị coi là session chết.
         if identity != nil, let error = await validateStoredSession(), !(error is URLError) {
             identity = nil

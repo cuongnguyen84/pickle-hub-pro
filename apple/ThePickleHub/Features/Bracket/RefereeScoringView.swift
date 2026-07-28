@@ -150,7 +150,7 @@ struct RefereeScoringView: View {
                     .buttonStyle(.plain)
                 }
 
-                Button("Huỷ") { dismiss() }.font(TLFont.mono(12, .semibold)).foregroundStyle(TLColor.fg4)
+                Button("Hủy") { dismiss() }.font(TLFont.mono(12, .semibold)).foregroundStyle(TLColor.fg4)
             }
             .padding(24)
         }

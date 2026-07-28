@@ -26,7 +26,7 @@ final class TLComponentsRenderTests: XCTestCase {
     func testTLButtonKindsRenderAtAX3() {
         assertRenders(TLButton(title: "Xác nhận đăng ký", kind: .green) {}, "TLButton.green")
         assertRenders(TLButton(title: "Xác nhận đăng ký", kind: .cream) {}, "TLButton.cream")
-        assertRenders(TLButton(title: "Huỷ", kind: .outline, isLoading: true) {}, "TLButton.outline+loading")
+        assertRenders(TLButton(title: "Hủy", kind: .outline, isLoading: true) {}, "TLButton.outline+loading")
     }
 
     func testTLPrimaryButtonStillDelegates() {
@@ -68,9 +68,9 @@ final class TLComponentsRenderTests: XCTestCase {
 
     func testTLDialogRendersAtAX3() {
         assertRenders(
-            TLDialog(title: "Xoá đăng ký?") {
+            TLDialog(title: "Xóa đăng ký?") {
                 Text("Hành động này không hoàn tác được.")
-                TLButton(title: "Xoá", kind: .cream) {}
+                TLButton(title: "Xóa", kind: .cream) {}
             },
             "TLDialog"
         )

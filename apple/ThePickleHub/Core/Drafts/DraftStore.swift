@@ -66,7 +66,7 @@ final class DraftStore<T: Codable & Equatable> {
         write(value)
     }
 
-    /// Xoá draft (sau khi tạo thành công, hoặc "Bắt đầu lại"). `current` =
+    /// Xóa draft (sau khi tạo thành công, hoặc "Bắt đầu lại"). `current` =
     /// snapshot NGAY SAU khi xử lý xong (đã reset/đã tạo) — save/flush với
     /// đúng giá trị đó sẽ bị bỏ qua, đổi giá trị mới thì lưu lại bình thường.
     func clear(current: T) {
@@ -122,7 +122,7 @@ struct DraftRestoredBanner: View {
                 .font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.accentText)
                 .buttonStyle(.plain)
                 .frame(minHeight: 44) // A11Y-02 touch target
-                .accessibilityLabel("Bắt đầu lại, xoá bản nháp")
+                .accessibilityLabel("Bắt đầu lại, xóa bản nháp")
                 TLIconButton(systemName: "xmark", label: "Đóng thông báo bản nháp") {
                     dismissed = true
                 }

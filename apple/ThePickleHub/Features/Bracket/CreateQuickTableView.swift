@@ -129,8 +129,8 @@ struct CreateQuickTableView: View {
         // Chưa tạo bảng → về bước 1 với các trường đã điền (đi lại wizard nhanh).
     }
 
-    /// "Bắt đầu lại": đã có bảng → chỉ xoá phần roster (bảng vẫn tồn tại DB,
-    /// khớp resetToInitial của web); chưa có bảng → xoá sạch form.
+    /// "Bắt đầu lại": đã có bảng → chỉ xóa phần roster (bảng vẫn tồn tại DB,
+    /// khớp resetToInitial của web); chưa có bảng → xóa sạch form.
     private func startOverFromDraft() {
         if createdTable != nil {
             roster = (0..<max(2, playerCount)).map { _ in PlayerField() }

@@ -149,7 +149,7 @@ final class DoublesElimViewModel {
         guard let id = detail?.tournament.id else { return }
         regBusy = true; regMessage = nil
         switch await repo.cancelTeamRegistration(tournamentID: id) {
-        case .ok: regMessage = "Đã huỷ đăng ký"; await fetch(shareID: shareID)
+        case .ok: regMessage = "Đã hủy đăng ký"; await fetch(shareID: shareID)
         case .failed(let m): regMessage = m
         }
         regBusy = false
@@ -173,7 +173,7 @@ final class DoublesElimViewModel {
         guard let id = detail?.tournament.id else { return }
         regBusy = true; regMessage = nil
         switch await repo.organizerRemoveTeam(tournamentID: id, teamID: team.id) {
-        case .ok: regMessage = "Đã xoá đội"; await fetch(shareID: shareID)
+        case .ok: regMessage = "Đã xóa đội"; await fetch(shareID: shareID)
         case .failed(let m): regMessage = m
         }
         regBusy = false

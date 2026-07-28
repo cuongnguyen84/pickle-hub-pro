@@ -6,7 +6,7 @@ import Testing
 // Gates T4 (proposal web-native-parity-port §9) — chặn đúng hai lớp lỗi mà
 // panel đo được bằng swift thật:
 //   1. Encodable BỎ key khi Optional nil nhưng GỬI `[]` khi mảng rỗng →
-//      EventPatch thiếu hydrate sẽ xoá trắng free_perks của event web tạo.
+//      EventPatch thiếu hydrate sẽ xóa trắng free_perks của event web tạo.
 //   2. Slug lặp-tuần sinh bằng timestamp → retry đẻ bản sao; phải tất định.
 // ============================================================================
 
@@ -86,7 +86,7 @@ struct SocialEventFormGateTests {
             "visibility", "price_vnd", "requires_prepayment",
             "prepayment_deadline_hours", "free_perks",
         ])
-        #expect(!keys.contains("slots"), "slots không bao giờ được vào EventPatch — xoá nhóm đăng ký của web")
+        #expect(!keys.contains("slots"), "slots không bao giờ được vào EventPatch — xóa nhóm đăng ký của web")
     }
 
     /// Gate T4c: slug lặp-tuần tất định, khớp web `${slug}-tuan${i+1}` —
