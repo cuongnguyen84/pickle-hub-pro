@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class FlexViewModel {
     enum Phase: Equatable { case loading, loaded(FlexData), failed(String) }
 
@@ -10,42 +11,80 @@ final class FlexViewModel {
     var currentUserID: UUID?
     var scoringMatch: FlexMatch?
     var scoreError: String?
+    var scoreSaving = false
 
     private let repo = FlexRepository()
+    private let refreshGate = TournamentRefreshGate()
+    private var realtime: TournamentRealtimeSubscription?
+    private var realtimeTournamentID: UUID?
     var data: FlexData? { if case .loaded(let d) = phase { return d } ; return nil }
 
-    @MainActor
+    func stop() async {
+        let subscription = realtime
+        realtime = nil
+        realtimeTournamentID = nil
+        await subscription?.stop()
+    }
+
     func load(shareID: String) async {
+        await refreshGate.perform { [weak self] in
+            await self?.loadOnce(shareID: shareID)
+        }
+    }
+
+    private func loadOnce(shareID: String) async {
         if case .loaded = phase {} else { phase = .loading }
         do {
             let data = try await repo.load(shareID: shareID)
-            let uid = await repo.currentUserID()
+            let uid = await TournamentService.shared.currentUserID()
             currentUserID = uid
-            isCreator = data.tournament.creatorUserID != nil && data.tournament.creatorUserID == uid
-            let referee = uid != nil ? await repo.isReferee(tournamentID: data.tournament.id, userID: uid!) : false
+            let owner = data.tournament.creatorUserID != nil && data.tournament.creatorUserID == uid
+            let admin = await TournamentService.shared.isCurrentUserAdmin()
+            isCreator = owner || admin
+            let referee = uid != nil && !isCreator
+                ? await repo.isReferee(tournamentID: data.tournament.id, userID: uid!)
+                : false
             editable = isCreator || referee
             phase = .loaded(data)
+            await ensureRealtime(data.tournament.id, shareID: shareID)
         } catch {
             phase = .failed(error.localizedDescription)
         }
     }
 
-    @MainActor
+    private func ensureRealtime(_ tournamentID: UUID, shareID: String) async {
+        guard realtimeTournamentID != tournamentID else { return }
+        let previous = realtime
+        realtime = nil
+        realtimeTournamentID = tournamentID
+        await previous?.stop()
+        realtime = TournamentService.shared.watchFlex(tournamentID: tournamentID) { [weak self] in
+            guard let self else { return }
+            await self.load(shareID: shareID)
+        }
+    }
+
     func submitScore(match: FlexMatch, scoreA: Int, scoreB: Int, shareID: String) async {
+        guard !scoreSaving else { return }
+        scoreSaving = true
+        scoreError = nil
+        defer { scoreSaving = false }
         do {
             try await repo.score(match: match, scoreA: scoreA, scoreB: scoreB)
+            if let parentID = match.parentMatchID {
+                try await repo.syncParentScore(parentID: parentID)
+            }
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = error.localizedDescription
-            scoringMatch = nil
-            await load(shareID: shareID)
+            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            Haptics.error()
         }
     }
 }
 
-/// Native Flex (custom-format) view — read groups + standings + matches and
-/// inline score entry. Create/manage (drag-drop workspace) stays on web.
+/// Native Flex (custom-format) view — groups, standings, scoring and the full
+/// creator workspace all stay inside the app.
 struct FlexDetailView: View {
     let shareID: String
     let fallbackName: String
@@ -53,6 +92,7 @@ struct FlexDetailView: View {
     @State private var model = FlexViewModel()
     @State private var openWeb = false
     @State private var showSettings = false
+    @State private var showWorkspace = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -66,25 +106,26 @@ struct FlexDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 14) {
                     if model.isCreator {
+                        Button { Haptics.light(); showWorkspace = true } label: {
+                            Image(systemName: "slider.horizontal.3").foregroundStyle(TLColor.accentText)
+                        }.accessibilityLabel("Quản lý nội dung giải")
                         Button { Haptics.light(); showSettings = true } label: {
                             Image(systemName: "gearshape").foregroundStyle(TLColor.accentText)
                         }.accessibilityLabel("Cài đặt giải")
                     }
+                    TournamentShareButton(url: WebRoutes.toolsFlexView(shareID: shareID))
                     Button { openWeb = true } label: {
                         Image(systemName: "safari").foregroundStyle(TLColor.accentText)
                     }.accessibilityLabel("Mở trên web")
                 }
             }
         }
-        .task { await model.load(shareID: shareID) }
-        .task(id: shareID) {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(15))
-                if Task.isCancelled { break }
-                if model.scoringMatch == nil && !showSettings { await model.load(shareID: shareID) }
-            }
-        }
-        .refreshable { await model.load(shareID: shareID) }
+        .tournamentDetailLifecycle(
+            id: shareID,
+            isPollingPaused: { model.scoringMatch != nil || showSettings || showWorkspace },
+            load: { await model.load(shareID: shareID) },
+            stop: { await model.stop() }
+        )
         .sheet(isPresented: $openWeb) {
             SafariView(url: WebRoutes.toolsFlexView(shareID: shareID)).ignoresSafeArea()
         }
@@ -95,9 +136,23 @@ struct FlexDetailView: View {
                                   onDeleted: { dismiss() })
             }
         }
+        .sheet(isPresented: $showWorkspace) {
+            if let data = model.data {
+                FlexWorkspaceView(shareID: shareID, initialData: data) {
+                    Task { await model.load(shareID: shareID) }
+                }
+                .presentationDetents([.large])
+                .interactiveDismissDisabled(model.data == nil)
+            }
+        }
         .sheet(item: Binding(get: { model.scoringMatch }, set: { model.scoringMatch = $0 })) { match in
             if let data = model.data {
-                FlexScoreSheet(data: data, match: match) { a, b in
+                FlexScoreSheet(
+                    data: data,
+                    match: match,
+                    saving: model.scoreSaving,
+                    errorMessage: model.scoreError
+                ) { a, b in
                     Task { await model.submitScore(match: match, scoreA: a, scoreB: b, shareID: shareID) }
                 }
             }
@@ -122,6 +177,12 @@ struct FlexDetailView: View {
         case .loaded(let data):
             VStack(alignment: .leading, spacing: 20) {
                 header(data)
+                if !model.isCreator && !model.editable {
+                    RefereeJoinByPinView(format: .flexTournament, parentID: data.tournament.id,
+                                         isSignedIn: model.currentUserID != nil) {
+                        await model.load(shareID: shareID)
+                    }
+                }
                 ForEach(data.groups) { group in
                     FlexGroupSection(data: data, group: group, editable: model.editable) { m in
                         Haptics.light(); model.scoringMatch = m
@@ -132,14 +193,16 @@ struct FlexDetailView: View {
                     sectionHeader(title: "Trận chưa xếp bảng", count: ungrouped.count)
                     VStack(spacing: 8) {
                         ForEach(ungrouped) { m in
-                            FlexMatchRow(data: data, match: m, editable: model.editable) {
-                                Haptics.light(); model.scoringMatch = m
+                            FlexMatchCluster(data: data, match: m, editable: model.editable) { scored in
+                                Haptics.light(); model.scoringMatch = scored
                             }
                         }
                     }
                 }
                 if data.groups.isEmpty && ungrouped.isEmpty {
-                    note("Chưa có bảng hay trận nào. Tạo nội dung trên web.")
+                    note(model.isCreator
+                         ? "Chưa có bảng hay trận nào. Nhấn biểu tượng điều chỉnh để tạo ngay trong app."
+                         : "Chưa có bảng hay trận nào.")
                 }
             }
             .padding(.horizontal, 16).padding(.top, 8)
@@ -220,7 +283,7 @@ private struct FlexGroupSection: View {
             if !groupMatches.isEmpty {
                 VStack(spacing: 8) {
                     ForEach(groupMatches) { m in
-                        FlexMatchRow(data: data, match: m, editable: editable) { onScore(m) }
+                        FlexMatchCluster(data: data, match: m, editable: editable, onScore: onScore)
                     }
                 }
             }
@@ -292,6 +355,32 @@ private struct FlexGroupSection: View {
 
 // MARK: Match row
 
+private struct FlexMatchCluster: View {
+    let data: FlexData
+    let match: FlexMatch
+    let editable: Bool
+    let onScore: (FlexMatch) -> Void
+
+    private var children: [FlexMatch] { data.childMatches(of: match) }
+
+    var body: some View {
+        VStack(spacing: 7) {
+            FlexMatchRow(data: data, match: match, editable: editable) { onScore(match) }
+            ForEach(children) { child in
+                HStack(alignment: .top, spacing: 7) {
+                    Image(systemName: "arrow.turn.down.right")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(TLColor.fg4)
+                        .frame(width: 16, height: 32)
+                    FlexMatchRow(data: data, match: child, editable: editable) { onScore(child) }
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Trận con \(child.name)")
+            }
+        }
+    }
+}
+
 private struct FlexMatchRow: View {
     let data: FlexData
     let match: FlexMatch
@@ -362,14 +451,26 @@ private struct FlexMatchRow: View {
 private struct FlexScoreSheet: View {
     let data: FlexData
     let match: FlexMatch
+    let saving: Bool
+    let errorMessage: String?
     let onSave: (Int, Int) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var a: String
     @State private var b: String
 
-    init(data: FlexData, match: FlexMatch, onSave: @escaping (Int, Int) -> Void) {
-        self.data = data; self.match = match; self.onSave = onSave
+    init(
+        data: FlexData,
+        match: FlexMatch,
+        saving: Bool,
+        errorMessage: String?,
+        onSave: @escaping (Int, Int) -> Void
+    ) {
+        self.data = data
+        self.match = match
+        self.saving = saving
+        self.errorMessage = errorMessage
+        self.onSave = onSave
         _a = State(initialValue: match.hasScore ? String(match.scoreA) : "")
         _b = State(initialValue: match.hasScore ? String(match.scoreB) : "")
     }
@@ -396,6 +497,9 @@ private struct FlexScoreSheet: View {
                         Text("–").font(TLFont.serif(20)).foregroundStyle(TLColor.fg4)
                         field(text: $b)
                     }
+                    if let errorMessage {
+                        TournamentScoreRetryMessage(message: errorMessage)
+                    }
                 }
                 .padding(20)
             }
@@ -405,8 +509,14 @@ private struct FlexScoreSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Lưu") { if valid, let ai = Int(a), let bi = Int(b) { Haptics.light(); onSave(ai, bi) } }
-                        .foregroundStyle(valid ? TLColor.accentText : TLColor.fg4).disabled(!valid)
+                    Button {
+                        if valid, let ai = Int(a), let bi = Int(b) { Haptics.light(); onSave(ai, bi) }
+                    } label: {
+                        if saving { ProgressView().tint(TLColor.accentText) }
+                        else { Text(errorMessage == nil ? "Lưu" : "Thử lại") }
+                    }
+                    .foregroundStyle(valid ? TLColor.accentText : TLColor.fg4)
+                    .disabled(!valid || saving)
                 }
             }
         }

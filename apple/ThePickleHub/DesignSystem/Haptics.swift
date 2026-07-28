@@ -1,6 +1,7 @@
 import UIKit
 
 /// Haptic helpers (prompt §8). Moved from ToolsView so every feature can use them.
+@MainActor
 enum Haptics {
     static func light() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()

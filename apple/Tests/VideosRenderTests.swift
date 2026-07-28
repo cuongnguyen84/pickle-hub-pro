@@ -6,6 +6,7 @@ import SwiftUI
 /// TLComponentsRenderTests): proves the card and the Home section build a real
 /// hierarchy and lay out to a sane size with both a natively playable video
 /// (Mux id → NavigationLink) and a web-fallback one (no playable URL → Button).
+@MainActor
 final class VideosRenderTests: XCTestCase {
 
     private func stubVideo(mux: String?, storage: String?, type: String) -> VideoSummary {

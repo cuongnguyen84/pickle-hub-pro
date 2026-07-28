@@ -1,7 +1,8 @@
 import SwiftUI
+import AuthenticationServices
 
-/// Sign-in entry. Native Google Sign-In (primary for this audience), email /
-/// password, and a phone-OTP path.
+/// Sign-in entry. Apple and Google use native SDKs, then exchange their OIDC
+/// token for the same Supabase session as email/password and phone OTP.
 struct LoginView: View {
     @Environment(SessionStore.self) private var session
 
@@ -13,6 +14,7 @@ struct LoginView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     header
+                    appleButton
                     googleButton
                     emailCard
                     phoneLink
@@ -29,10 +31,23 @@ struct LoginView: View {
             Text("ThePickleHub")
                 .font(.largeTitle.weight(.bold))
                 .foregroundStyle(TLColor.fg)
-            Text("Native iOS · Phase 1")
+            Text("Đăng nhập để tiếp tục")
                 .font(.subheadline)
                 .foregroundStyle(TLColor.accentText)
         }
+    }
+
+    private var appleButton: some View {
+        SignInWithAppleButton(.continue) { request in
+            session.prepareAppleSignIn(request)
+        } onCompletion: { result in
+            Task { await session.completeAppleSignIn(result) }
+        }
+        .signInWithAppleButtonStyle(.white)
+        .frame(maxWidth: .infinity, minHeight: 50)
+        .clipShape(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+        .disabled(session.isWorking)
+        .accessibilityLabel("Tiếp tục với Apple")
     }
 
     private var googleButton: some View {

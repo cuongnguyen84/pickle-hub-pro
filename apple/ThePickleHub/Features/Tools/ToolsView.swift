@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class ToolsViewModel {
     enum Phase: Equatable { case loading, loaded, failed(String) }
 
@@ -15,6 +16,8 @@ final class ToolsViewModel {
     var phase: Phase = .loading
     var mine: [MyTournament] = []
     var refereeing: [MyTournament] = []
+    var parentTournaments: [ParentTournament] = []
+    var publicFlex: [FlexTournament] = []
     var all: [MyTournament] = []
     var isAdmin = false
     var scope: Scope = .mine
@@ -46,9 +49,14 @@ final class ToolsViewModel {
         async let mineTask = repo.myTournaments()
         async let refTask = repo.myRefereeingTournaments()
         async let adminTask = repo.isCurrentUserAdmin()
+        async let parentTask: [ParentTournament] =
+            (try? await ParentTournamentRepository().mine()) ?? []
+        async let publicFlexTask = FlexRepository().publicTournaments()
         mine = await mineTask
         refereeing = await refTask
         isAdmin = await adminTask
+        parentTournaments = await parentTask
+        publicFlex = await publicFlexTask
         loaded = true
         phase = .loaded
     }
@@ -80,14 +88,16 @@ final class ToolsViewModel {
 /// natively; the finder launches the native flows too.
 struct ToolsView: View {
     @State private var model = ToolsViewModel()
-    @State private var openURL: IdentifiedURL?
     @State private var showFinder = false
     @State private var pendingFinderPick: FormatFinderSheet.Pick?
     @State private var showCreate = false
     @State private var showCreateTeamMatch = false
     @State private var showCreateDoubles = false
     @State private var showCreateFlex = false
+    @State private var showCreateParent = false
+    @State private var showDashboard = false
     @State private var navTarget: MyTournament?
+    @State private var parentTarget: ParentTournament?
     @State private var createdTarget: CreatedRef?
     @State private var createdTeamMatch: CreatedRef?
     @State private var createdDoubles: CreatedRef?
@@ -104,6 +114,8 @@ struct ToolsView: View {
                 VStack(alignment: .leading, spacing: 26) {
                     hero
                     formatSection
+                    parentTournamentSection
+                    publicFlexSection
                     refereeSection
                     recentSection
                 }
@@ -114,7 +126,6 @@ struct ToolsView: View {
             .navigationBarTitleDisplayMode(.large)
             .task { await model.load() }
             .refreshable { await model.reload() }
-            .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
             .sheet(isPresented: $showFinder, onDismiss: {
                 // Present the native create flow only after the finder has fully
                 // dismissed — presenting a second sheet mid-dismiss drops it.
@@ -131,10 +142,22 @@ struct ToolsView: View {
                 CreateQuickTableView(onCreated: { shareID, name in
                     Task { await model.reload() }
                     createdTarget = CreatedRef(id: shareID, name: name)
-                }, onOpenWeb: { url in
-                    Task { await model.reload() }
-                    openURL = IdentifiedURL(url: url)
                 })
+            }
+            .sheet(isPresented: $showCreateParent) {
+                CreateParentTournamentView { tournament in
+                    Task { await model.reload() }
+                    parentTarget = tournament
+                }
+            }
+            .navigationDestination(item: $parentTarget) { tournament in
+                ParentTournamentDetailView(
+                    shareID: tournament.shareID,
+                    fallbackName: tournament.name
+                )
+            }
+            .navigationDestination(isPresented: $showDashboard) {
+                TournamentDashboardPickerView()
             }
             .navigationDestination(item: $navTarget) { t in
                 switch t.format {
@@ -208,13 +231,13 @@ struct ToolsView: View {
 
             VStack(spacing: 10) {
                 compactFormatRow(icon: "arrow.triangle.branch", title: BracketFormat.doublesElim.labelVi,
-                                 meta: "Nhánh đơn / đôi · 40–128 đội", url: WebRoutes.toolsDoublesElimination,
+                                 meta: "Nhánh đơn / đôi · 40–128 đội",
                                  action: { Haptics.light(); showCreateDoubles = true })
                 compactFormatRow(icon: "slider.horizontal.3", title: "Giải linh hoạt",
-                                 meta: "Tùy biến hoàn toàn", url: WebRoutes.toolsFlexTournament,
+                                 meta: "Tùy biến hoàn toàn",
                                  action: { Haptics.light(); showCreateFlex = true })
                 compactFormatRow(icon: "person.3.fill", title: "Đấu đồng đội",
-                                 meta: "Thể thức MLP · đội 4–8", url: WebRoutes.toolsTeamMatch,
+                                 meta: "Thể thức MLP · đội 4–8",
                                  action: { Haptics.light(); showCreateTeamMatch = true })
             }
             .padding(.horizontal, 22).padding(.top, 11)
@@ -230,6 +253,37 @@ struct ToolsView: View {
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 22).padding(.top, 6)
+
+            Button {
+                Haptics.light()
+                showDashboard = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "display")
+                        .font(.system(size: 16, weight: .semibold))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Bảng sân trực tiếp")
+                            .font(TLFont.sans(14, .semibold))
+                        Text("Theo dõi LIVE · chế độ TV")
+                            .font(TLFont.mono(9.5))
+                            .foregroundStyle(TLColor.fg3)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundStyle(TLColor.accentText)
+                .frame(minHeight: 44)
+                .padding(.horizontal, 14)
+                .background(TLColor.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(TLColor.accent.opacity(0.24), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 22)
+            .padding(.top, 4)
         }
     }
 
@@ -280,9 +334,9 @@ struct ToolsView: View {
         .accessibilityLabel("Tạo Bảng đấu nhanh, thể thức phổ biến nhất")
     }
 
-    private func compactFormatRow(icon: String, title: String, meta: String, url: URL,
-                                  action: (() -> Void)? = nil) -> some View {
-        Button { if let action { action() } else { open(url) } } label: {
+    private func compactFormatRow(icon: String, title: String, meta: String,
+                                  action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack(spacing: 14) {
                 iconChip(icon)
                 VStack(alignment: .leading, spacing: 4) {
@@ -308,6 +362,130 @@ struct ToolsView: View {
             .background(TLColor.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(TLColor.accent.opacity(0.2), lineWidth: 1))
             .accessibilityHidden(true)
+    }
+
+    // MARK: Section — multi-event tournaments
+
+    private var parentTournamentSection: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 11) {
+                sectionHeader(num: "02", title: "Giải nhiều nội dung")
+                Button {
+                    Haptics.light()
+                    showCreateParent = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(TLColor.accentInk)
+                        .frame(width: 44, height: 44)
+                        .background(TLColor.accent, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Tạo giải nhiều nội dung")
+            }
+            .padding(.horizontal, 22)
+
+            if model.phase == .loading {
+                skeletonCards.padding(.horizontal, 22)
+            } else if model.parentTournaments.isEmpty {
+                Button {
+                    Haptics.light()
+                    showCreateParent = true
+                } label: {
+                    HStack(spacing: 13) {
+                        iconChip("square.stack.3d.up")
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Gom nhiều Quick Table vào một giải")
+                                .font(TLFont.sans(14, .semibold))
+                                .foregroundStyle(TLColor.fg)
+                            Text("Ví dụ: Đơn nam, Đơn nữ, Đôi nam nữ")
+                                .font(TLFont.mono(10))
+                                .foregroundStyle(TLColor.fg3)
+                        }
+                        Spacer()
+                        Text("Tạo")
+                            .font(TLFont.sans(12, .bold))
+                            .foregroundStyle(TLColor.accentText)
+                    }
+                    .padding(14)
+                    .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 14))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .strokeBorder(TLColor.border, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 22)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(model.parentTournaments) { tournament in
+                            Button {
+                                Haptics.light()
+                                parentTarget = tournament
+                            } label: {
+                                ParentTournamentCard(tournament: tournament)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 22)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var publicFlexSection: some View {
+        if model.phase == .loaded && !model.publicFlex.isEmpty {
+            VStack(alignment: .leading, spacing: 13) {
+                sectionHeader(num: "03", title: "Khám phá Flex công khai")
+                    .padding(.horizontal, 22)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(model.publicFlex, id: \.id) { tournament in
+                            Button {
+                                Haptics.light()
+                                createdFlex = CreatedRef(
+                                    id: tournament.shareID,
+                                    name: tournament.displayName
+                                )
+                            } label: {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Image(systemName: "globe.asia.australia.fill")
+                                            .foregroundStyle(TLColor.blue)
+                                        Spacer()
+                                        Text(tournament.status.uppercased())
+                                            .font(TLFont.mono(8, .bold))
+                                            .foregroundStyle(TLColor.fg3)
+                                    }
+                                    Text(tournament.displayName)
+                                        .font(TLFont.serif(19))
+                                        .italic()
+                                        .foregroundStyle(TLColor.fg)
+                                        .lineLimit(2)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    Text("XEM BẢNG ĐẤU")
+                                        .font(TLFont.mono(9, .bold))
+                                        .tracking(0.7)
+                                        .foregroundStyle(TLColor.blue)
+                                }
+                                .padding(15)
+                                .frame(width: 210, height: 132, alignment: .topLeading)
+                                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 15))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .strokeBorder(TLColor.blue.opacity(0.25), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 22)
+                }
+            }
+        }
     }
 
     // MARK: Section — tournaments I referee ("Giải tôi chấm")
@@ -481,19 +659,58 @@ struct ToolsView: View {
         }
     }
 
-    private func open(_ url: URL) {
-        Haptics.light()
-        openURL = IdentifiedURL(url: url)
-    }
-
-    /// Native formats push their detail view; the rest open the web.
+    /// Every Bracket Lab format now opens its native detail workspace.
     private func manage(_ t: MyTournament) {
         Haptics.light()
-        if t.format.hasNativeView {
-            navTarget = t
-        } else {
-            openURL = IdentifiedURL(url: t.format.webURL(shareID: t.shareID))
+        navTarget = t
+    }
+}
+
+private struct ParentTournamentCard: View {
+    let tournament: ParentTournament
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "trophy.fill")
+                    .foregroundStyle(TLColor.accentText)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(TLColor.fg4)
+            }
+            Text(tournament.name)
+                .font(TLFont.serif(20))
+                .italic()
+                .foregroundStyle(TLColor.fg)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 5) {
+                if let date = tournament.eventDate?.nonEmpty {
+                    Image(systemName: "calendar")
+                    Text(date)
+                } else {
+                    Text("NHIỀU NỘI DUNG")
+                }
+            }
+            .font(TLFont.mono(9, .semibold))
+            .tracking(0.7)
+            .foregroundStyle(TLColor.fg3)
         }
+        .padding(16)
+        .frame(width: 220, height: 142, alignment: .topLeading)
+        .background(
+            LinearGradient(
+                colors: [TLColor.accent.opacity(0.12), TLColor.surface],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(TLColor.border, lineWidth: 1)
+        )
     }
 }
 

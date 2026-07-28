@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Detail for one social event. Core info renders natively; registration (phone
-/// OTP / payment) opens the web event page in a Safari sheet.
+/// Detail for one social event. Registration stays on the proven web flow until
+/// a valid public Turnstile site key is configured, then eligible guest events
+/// use the native phone-OTP/payment flow.
 struct SocialDetailView: View {
     let event: SocialEvent
 
@@ -11,6 +12,8 @@ struct SocialDetailView: View {
     @State private var roster: [SocialRosterEntry] = []
     @State private var showAllRoster = false
     @State private var canManage = false
+    @State private var savedRegistrationToken: String?
+    @State private var remoteNativeRegistrationEnabled = false
     private let repo = SocialRepository()
     private let organizerRepo = SocialOrganizerRepository()
 
@@ -42,9 +45,21 @@ struct SocialDetailView: View {
             matches = await repo.matches(eventID: event.id)
             roster = await repo.roster(eventID: event.id)
             canManage = await organizerRepo.canManage(event: event)
+            savedRegistrationToken = try? RegistrationTokenStore.token(eventID: event.id)
         }
-        .sheet(isPresented: $showRegister) {
-            SafariView(url: WebRoutes.social(slug: event.slug)).ignoresSafeArea()
+        .task {
+            remoteNativeRegistrationEnabled = await repo.nativeRegistrationRemotelyEnabled()
+        }
+        .sheet(isPresented: $showRegister, onDismiss: {
+            savedRegistrationToken = try? RegistrationTokenStore.token(eventID: event.id)
+        }) {
+            if AppConfig.nativeEventRegistrationEnabled,
+               remoteNativeRegistrationEnabled,
+               event.allowGuests != false {
+                PhoneEventRegistrationView(event: event)
+            } else {
+                SafariView(url: WebRoutes.social(slug: event.slug)).ignoresSafeArea()
+            }
         }
     }
 
@@ -107,6 +122,19 @@ struct SocialDetailView: View {
 
     private var actions: some View {
         VStack(spacing: 10) {
+            if let savedRegistrationToken {
+                NavigationLink {
+                    PlayerRegistrationView(token: savedRegistrationToken)
+                } label: {
+                    Label("Quản lý đăng ký của tôi", systemImage: "person.crop.circle.badge.checkmark")
+                        .font(TLFont.sans(15, .semibold)).foregroundStyle(TLColor.accentText)
+                        .frame(maxWidth: .infinity).padding(.vertical, 13)
+                        .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous)
+                            .strokeBorder(TLColor.accentDim, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+
             Button { showRegister = true } label: {
                 Text("Đăng ký")
                     .font(TLFont.sans(15, .semibold)).foregroundStyle(TLColor.accentInk)

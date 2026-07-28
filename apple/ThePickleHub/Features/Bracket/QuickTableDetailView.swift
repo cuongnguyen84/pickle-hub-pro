@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class QuickTableViewModel {
     enum Phase: Equatable {
         case loading
@@ -14,16 +15,27 @@ final class QuickTableViewModel {
     }
 
     var phase: Phase = .loading
-    var editable = false      // can SCORE (creator hoặc referee) — khớp web canEditScores
-    var canManage = false     // can MANAGE: start playoff, duyệt đăng ký (chỉ creator) — khớp web canManageTable
+    var editable = false      // creator, admin hoặc referee
+    var canManage = false     // creator hoặc admin; referee chỉ chấm điểm
     var tab: Tab = .groups
     var selectedGroupID: UUID?
     var scoringMatch: QTMatch?
     var scoreError: String?
+    var scoreSaving = false
 
     // Registration
     var currentUID: UUID?
+    var duprIdentity = TournamentService.DuprIdentity(connected: false, rating: nil)
     var registrations: [QTRegistration] = []
+    var teams: [QTTeamRegistration] = []
+    var myTeam: QTTeamRegistration?
+    var teamInvitations: [QTPartnerInvitation] = []
+    var incomingPairRequests: [QTPairRequest] = []
+    var outgoingPairRequests: [QTPairRequest] = []
+    var showTeams = false
+    var showTeamRegister = false
+    var teamBusy = false
+    var teamError: String?
     var referees: [QTReferee] = []
     var showReferees = false
     var newRefEmail = ""
@@ -66,8 +78,18 @@ final class QuickTableViewModel {
     var scheduleError: String?
 
     private let repo = QuickTableRepository()
+    private let refreshGate = TournamentRefreshGate()
+    private var realtime: TournamentRealtimeSubscription?
+    private var realtimeTableID: UUID?
 
     var detail: QuickTableDetail? { if case .loaded(let d) = phase { return d } ; return nil }
+
+    func stop() async {
+        let subscription = realtime
+        realtime = nil
+        realtimeTableID = nil
+        await subscription?.stop()
+    }
 
     /// Organizer: save courts + start time on the table, then (re)schedule every
     /// group match onto a court + time slot. Empty courts clears the schedule.
@@ -93,14 +115,42 @@ final class QuickTableViewModel {
     }
 
     @MainActor
+    func saveCourtName(matchID: UUID, name: String, shareID: String) async {
+        scheduleBusy = true
+        scheduleError = nil
+        do {
+            try await repo.updateCourtName(
+                matchID: matchID,
+                name: name.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+            await load(shareID: shareID)
+        } catch {
+            scheduleError = error.localizedDescription
+        }
+        scheduleBusy = false
+    }
+
+    @MainActor
     func load(shareID: String) async {
+        await refreshGate.perform { [weak self] in
+            await self?.loadOnce(shareID: shareID)
+        }
+    }
+
+    @MainActor
+    func reloadDupr() async {
+        duprIdentity = await TournamentService.shared.currentUserDupr()
+    }
+
+    private func loadOnce(shareID: String) async {
         if case .loaded = phase {} else { phase = .loading }
         do {
             let detail = try await repo.load(shareID: shareID)
-            let uid = await repo.currentUserID()
+            let uid = await TournamentService.shared.currentUserID()
             let isOwner = detail.table.creatorUserID != nil && detail.table.creatorUserID == uid
-            canManage = isOwner   // quản lý = chỉ chủ bảng (web canManageTable); referee KHÔNG được
-            if isOwner {
+            let isAdmin = await TournamentService.shared.isCurrentUserAdmin()
+            canManage = isOwner || isAdmin
+            if canManage {
                 editable = true
             } else if let uid {
                 editable = await repo.isReferee(tableID: detail.table.id, userID: uid)
@@ -108,10 +158,33 @@ final class QuickTableViewModel {
                 editable = false
             }
             currentUID = uid
+            duprIdentity = await TournamentService.shared.currentUserDupr()
             if detail.table.requiresRegistration == true {
-                if let uid { myRegistration = await repo.userRegistration(tableID: detail.table.id, userID: uid) }
+                if detail.table.isDoubles == true {
+                    teams = canManage
+                        ? await repo.fetchTeams(tableID: detail.table.id)
+                        : await repo.fetchVisibleTeams(tableID: detail.table.id)
+                    if let uid {
+                        myTeam = await repo.userTeam(tableID: detail.table.id, userID: uid)
+                        if let team = myTeam {
+                            teamInvitations = await repo.invitations(teamID: team.id)
+                            incomingPairRequests = await repo.incomingPairRequests(
+                                tableID: detail.table.id,
+                                userID: uid
+                            )
+                            outgoingPairRequests = await repo.outgoingPairRequests(
+                                tableID: detail.table.id,
+                                userID: uid
+                            )
+                        }
+                    }
+                } else {
+                    if let uid { myRegistration = await repo.userRegistration(tableID: detail.table.id, userID: uid) }
+                    registrations = canManage
+                        ? await repo.fetchRegistrations(tableID: detail.table.id)
+                        : await repo.fetchApprovedRegistrations(tableID: detail.table.id)
+                }
                 if canManage {
-                    registrations = await repo.fetchRegistrations(tableID: detail.table.id)
                     referees = await repo.fetchReferees(tableID: detail.table.id)
                 }
             }
@@ -123,8 +196,21 @@ final class QuickTableViewModel {
                 // keep current tab; don't force-switch so the user can browse groups
             }
             phase = .loaded(detail)
+            await ensureRealtime(detail.table.id, shareID: shareID)
         } catch {
             phase = .failed(error.localizedDescription)
+        }
+    }
+
+    private func ensureRealtime(_ tableID: UUID, shareID: String) async {
+        guard realtimeTableID != tableID else { return }
+        let previous = realtime
+        realtime = nil
+        realtimeTableID = tableID
+        await previous?.stop()
+        realtime = TournamentService.shared.watchQuickTable(tableID: tableID) { [weak self] in
+            guard let self else { return }
+            await self.load(shareID: shareID)
         }
     }
 
@@ -249,7 +335,9 @@ final class QuickTableViewModel {
 
     @MainActor func reloadRegistrations() async {
         guard let d = detail else { return }
-        registrations = await repo.fetchRegistrations(tableID: d.table.id)
+        registrations = canManage
+            ? await repo.fetchRegistrations(tableID: d.table.id)
+            : await repo.fetchApprovedRegistrations(tableID: d.table.id)
         if let uid = currentUID { myRegistration = await repo.userRegistration(tableID: d.table.id, userID: uid) }
     }
 
@@ -267,20 +355,64 @@ final class QuickTableViewModel {
     }
     @MainActor func bulkApprovePending() async {
         let pending = registrations.filter { $0.status == "pending" }.map { $0.id }
-        guard !pending.isEmpty else { return }
+        await bulkApprove(ids: pending)
+    }
+
+    @MainActor func bulkApprove(ids: [UUID]) async {
+        guard !ids.isEmpty else { return }
         regBusy = true; regError = nil
-        do { try await repo.bulkApprove(ids: pending); await reloadRegistrations() }
+        do { try await repo.bulkApprove(ids: ids); await reloadRegistrations() }
         catch { regError = error.localizedDescription }
         regBusy = false
     }
 
-    @MainActor func submitSelfRegistration(displayName: String, team: String, ratingSystem: String,
-                                           skillLevel: Double?, profileLink: String) async {
+    @MainActor func updateRegistrationBTC(_ registration: QTRegistration,
+                                           overrideSkill: Double?, notes: String?) async {
+        regBusy = true
+        regError = nil
+        do {
+            try await repo.updateRegistrationBTC(
+                id: registration.id,
+                overrideSkill: overrideSkill,
+                notes: notes
+            )
+            await reloadRegistrations()
+        } catch {
+            regError = error.localizedDescription
+        }
+        regBusy = false
+    }
+
+    @MainActor func saveSelfRegistration(displayName: String, team: String, ratingSystem: String,
+                                         skillLevel: Double?, skillSystemName: String,
+                                         skillDescription: String, profileLink: String) async {
         guard let d = detail else { return }
         regBusy = true; regError = nil
+        if let registration = myRegistration, registration.status == "pending" {
+            do {
+                try await repo.updateRegistration(
+                    id: registration.id,
+                    displayName: displayName,
+                    team: team,
+                    ratingSystem: ratingSystem,
+                    skillLevel: skillLevel,
+                    skillSystemName: skillSystemName,
+                    skillDescription: skillDescription,
+                    profileLink: profileLink
+                )
+                showSelfRegister = false
+                await reloadRegistrations()
+            } catch {
+                regError = error.localizedDescription
+            }
+            regBusy = false
+            return
+        }
         let result = await repo.submitRegistration(
             tableID: d.table.id, displayName: displayName, team: team,
-            ratingSystem: ratingSystem, skillLevel: skillLevel, profileLink: profileLink)
+            ratingSystem: ratingSystem, skillLevel: skillLevel,
+            skillSystemName: skillSystemName, skillDescription: skillDescription,
+            profileLink: profileLink)
         switch result {
         case .ok: showSelfRegister = false; await reloadRegistrations()
         case .duplicate: regError = "Bạn đã đăng ký giải này rồi."
@@ -296,6 +428,151 @@ final class QuickTableViewModel {
         do { try await repo.cancelRegistration(id: reg.id); myRegistration = nil; await reloadRegistrations() }
         catch { regError = error.localizedDescription }
         regBusy = false
+    }
+
+    // MARK: Doubles registration actions
+
+    @MainActor func reloadTeams() async {
+        guard let d = detail else { return }
+        teams = canManage
+            ? await repo.fetchTeams(tableID: d.table.id)
+            : await repo.fetchVisibleTeams(tableID: d.table.id)
+        if let uid = currentUID {
+            myTeam = await repo.userTeam(tableID: d.table.id, userID: uid)
+            if let team = myTeam {
+                teamInvitations = await repo.invitations(teamID: team.id)
+                incomingPairRequests = await repo.incomingPairRequests(tableID: d.table.id, userID: uid)
+                outgoingPairRequests = await repo.outgoingPairRequests(tableID: d.table.id, userID: uid)
+            } else {
+                teamInvitations = []
+                incomingPairRequests = []
+                outgoingPairRequests = []
+            }
+        }
+    }
+
+    @MainActor
+    func createTeam(displayName: String, team: String, rating: String,
+                    skill: Double?, link: String) async {
+        guard let d = detail else { return }
+        teamBusy = true
+        teamError = nil
+        do {
+            try await repo.createTeam(
+                tableID: d.table.id, displayName: displayName, team: team,
+                ratingSystem: rating, skillLevel: skill, profileLink: link
+            )
+            showTeamRegister = false
+            await reloadTeams()
+        } catch { teamError = error.localizedDescription }
+        teamBusy = false
+    }
+
+    @MainActor
+    func createTeamInvitation() async {
+        guard let d = detail, let team = myTeam else { return }
+        teamBusy = true
+        teamError = nil
+        do {
+            _ = try await repo.createInvitation(teamID: team.id, tableID: d.table.id)
+            await reloadTeams()
+        } catch { teamError = error.localizedDescription }
+        teamBusy = false
+    }
+
+    @MainActor
+    func cancelTeamInvitation(_ invitation: QTPartnerInvitation) async {
+        teamBusy = true
+        teamError = nil
+        do {
+            try await repo.cancelInvitation(id: invitation.id)
+            await reloadTeams()
+        } catch { teamError = error.localizedDescription }
+        teamBusy = false
+    }
+
+    @MainActor
+    func removePartner() async {
+        guard let team = myTeam else { return }
+        teamBusy = true
+        teamError = nil
+        do {
+            try await repo.removePartner(teamID: team.id)
+            await reloadTeams()
+        } catch { teamError = error.localizedDescription }
+        teamBusy = false
+    }
+
+    @MainActor
+    func createPairRequest(to team: QTTeamRegistration) async {
+        guard let d = detail else { return }
+        teamBusy = true
+        teamError = nil
+        do {
+            try await repo.createPairRequest(tableID: d.table.id, toTeamID: team.id)
+            Haptics.success()
+            await reloadTeams()
+        } catch {
+            teamError = error.localizedDescription
+            Haptics.error()
+        }
+        teamBusy = false
+    }
+
+    @MainActor
+    func respondPairRequest(_ request: QTPairRequest, accept: Bool) async {
+        teamBusy = true
+        teamError = nil
+        do {
+            try await repo.respondPairRequest(id: request.id, accept: accept)
+            Haptics.success()
+            await reloadTeams()
+        } catch {
+            teamError = error.localizedDescription
+            Haptics.error()
+        }
+        teamBusy = false
+    }
+
+    @MainActor
+    func cancelPairRequest(_ request: QTPairRequest) async {
+        teamBusy = true
+        teamError = nil
+        do {
+            try await repo.cancelPairRequest(id: request.id)
+            await reloadTeams()
+        } catch {
+            teamError = error.localizedDescription
+            Haptics.error()
+        }
+        teamBusy = false
+    }
+
+    @MainActor
+    func manageTeam(_ team: QTTeamRegistration, action: String, notes: String? = nil) async {
+        teamBusy = true
+        teamError = nil
+        do {
+            try await repo.manageTeam(teamID: team.id, action: action, notes: notes)
+            await reloadTeams()
+        } catch { teamError = error.localizedDescription }
+        teamBusy = false
+    }
+
+    @MainActor
+    func manageTeams(ids: [UUID], action: String) async {
+        guard !ids.isEmpty else { return }
+        teamBusy = true
+        teamError = nil
+        do {
+            for id in ids {
+                try await repo.manageTeam(teamID: id, action: action)
+            }
+            await reloadTeams()
+        } catch {
+            teamError = error.localizedDescription
+        }
+        teamBusy = false
     }
 
     @MainActor
@@ -325,28 +602,41 @@ final class QuickTableViewModel {
     }
 
     func submitScore(match: QTMatch, score1: Int, score2: Int, shareID: String) async {
+        guard !scoreSaving else { return }
+        scoreSaving = true
+        scoreError = nil
+        defer { scoreSaving = false }
         do {
             try await repo.score(match: match, score1: score1, score2: score2)
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = error.localizedDescription
-            scoringMatch = nil
-            await load(shareID: shareID)
+            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            Haptics.error()
         }
     }
 }
 
-/// Native Quick Table view — group standings + matches, playoff bracket with
-/// champion, inline score entry (creator only). Mirrors web QuickTableView read
-/// surfaces; roster/registration management + playoff generation stay on web.
+/// Native Quick Table view — standings, scoring, registration, roster/group
+/// management and playoff generation all remain inside the app.
 struct QuickTableDetailView: View {
     let shareID: String
     let fallbackName: String
+    let initialScoringMatchID: UUID?
 
     @State private var model = QuickTableViewModel()
     @State private var openWeb = false
+    @State private var showGroupManager = false
+    @State private var courtNameMatch: QTMatch?
+    @State private var didOpenInitialScore = false
     @ScaledMetric(relativeTo: .footnote) private var chevronSize: CGFloat = 11
+    @Environment(\.dismiss) private var dismiss
+
+    init(shareID: String, fallbackName: String, initialScoringMatchID: UUID? = nil) {
+        self.shareID = shareID
+        self.fallbackName = fallbackName
+        self.initialScoringMatchID = initialScoringMatchID
+    }
 
     var body: some View {
         managementPresentation
@@ -363,30 +653,62 @@ struct QuickTableDetailView: View {
         .navigationTitle(fallbackName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                if model.canManage, let detail = model.detail,
+                   !detail.table.isPlayoffStage, !detail.groups.isEmpty {
+                    Button { showGroupManager = true } label: {
+                        Image(systemName: "person.3.sequence")
+                            .foregroundStyle(TLColor.accentText)
+                    }
+                    .accessibilityLabel("Quản lý vòng bảng")
+                }
+                TournamentShareButton(url: WebRoutes.quickTable(shareID: shareID))
                 Button { openWeb = true } label: {
                     Image(systemName: "safari").foregroundStyle(TLColor.accentText)
                 }
                 .accessibilityLabel("Mở trên web")
             }
         }
-        .task { await model.load(shareID: shareID) }
-        .task(id: shareID) {
-            // Live polling (web parity: refetchInterval 15s). Skip while the
-            // score sheet is open so the list can't shift under the user.
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(15))
-                if Task.isCancelled { break }
-                if model.scoringMatch == nil { await model.load(shareID: shareID) }
-            }
+        .tournamentDetailLifecycle(
+            id: shareID,
+            isPollingPaused: {
+                model.scoringMatch != nil || model.showRegistrations || model.showSchedule || showGroupManager
+            },
+            load: { await model.load(shareID: shareID) },
+            stop: { await model.stop() }
+        )
+        .onChange(of: model.detail, initial: true) { _, detail in
+            guard !didOpenInitialScore,
+                  let matchID = initialScoringMatchID,
+                  model.editable,
+                  let match = detail?.matches.first(where: { $0.id == matchID }),
+                  match.hasBothPlayers else { return }
+            didOpenInitialScore = true
+            model.scoringMatch = match
         }
-        .refreshable { await model.load(shareID: shareID) }
         .sheet(isPresented: $openWeb) {
             SafariView(url: WebRoutes.quickTable(shareID: shareID)).ignoresSafeArea()
         }
+        .sheet(isPresented: $showGroupManager) {
+            if let detail = model.detail {
+                QuickTableGroupManagerView(
+                    shareID: shareID,
+                    initialDetail: detail,
+                    onChanged: { Task { await model.load(shareID: shareID) } },
+                    onDeleted: { dismiss() }
+                )
+                .presentationDetents([.large])
+            }
+        }
         .sheet(item: Binding(get: { model.scoringMatch }, set: { model.scoringMatch = $0 })) { match in
             if case .loaded(let detail) = model.phase {
-                ScoreSheet(detail: detail, match: match, onError: { model.scoreError = $0 }) { s1, s2 in
+                ScoreSheet(
+                    detail: detail,
+                    match: match,
+                    saving: model.scoreSaving,
+                    errorMessage: model.scoreError,
+                    onError: { model.scoreError = $0 }
+                ) { s1, s2 in
                     Task { await model.submitScore(match: match, score1: s1, score2: s2, shareID: shareID) }
                 }
             }
@@ -419,7 +741,31 @@ struct QuickTableDetailView: View {
             Button("Huỷ", role: .cancel) {}
         }
         .sheet(isPresented: Binding(get: { model.showRegistrations }, set: { model.showRegistrations = $0 })) {
-            QuickTableRegistrationsSheet(model: model)
+            QuickTableRegistrationsSheet(model: model) {
+                Task { await model.load(shareID: shareID) }
+            }
+        }
+        .sheet(isPresented: Binding(get: { model.showTeams }, set: { model.showTeams = $0 })) {
+            QuickTableTeamManagerSheet(model: model) {
+                Task { await model.load(shareID: shareID) }
+            }
+        }
+        .sheet(isPresented: Binding(get: { model.showTeamRegister }, set: { model.showTeamRegister = $0 })) {
+            QuickTableSelfRegisterSheet(
+                isDoubles: true,
+                busy: model.teamBusy,
+                error: model.teamError,
+                table: model.detail?.table,
+                duprIdentity: model.duprIdentity,
+                onDuprRefresh: { Task { await model.reloadDupr() } }
+            ) { name, team, rating, skill, _, _, link in
+                Task {
+                    await model.createTeam(
+                        displayName: name, team: team, rating: rating,
+                        skill: skill, link: link
+                    )
+                }
+            }
         }
         .sheet(isPresented: Binding(get: { model.showReferees }, set: { model.showReferees = $0 })) {
             QuickTableRefereesSheet(model: model)
@@ -435,10 +781,40 @@ struct QuickTableDetailView: View {
                 }
             }
         }
+        .sheet(item: $courtNameMatch) { match in
+            QuickTableCourtNameSheet(
+                initialName: match.courtName ?? "",
+                fallbackCourt: match.courtID.map { "Sân \($0)" },
+                busy: model.scheduleBusy,
+                error: model.scheduleError
+            ) { name in
+                Task {
+                    await model.saveCourtName(matchID: match.id, name: name, shareID: shareID)
+                    if model.scheduleError == nil { courtNameMatch = nil }
+                }
+            }
+        }
         .sheet(isPresented: Binding(get: { model.showSelfRegister }, set: { model.showSelfRegister = $0 })) {
-            QuickTableSelfRegisterSheet(isDoubles: model.detail?.table.isDoubles ?? false, busy: model.regBusy, error: model.regError) {
-                name, team, rating, skill, link in
-                Task { await model.submitSelfRegistration(displayName: name, team: team, ratingSystem: rating, skillLevel: skill, profileLink: link) }
+            QuickTableSelfRegisterSheet(
+                isDoubles: model.detail?.table.isDoubles ?? false,
+                busy: model.regBusy,
+                error: model.regError,
+                initial: model.myRegistration?.status == "pending" ? model.myRegistration : nil,
+                table: model.detail?.table,
+                duprIdentity: model.duprIdentity,
+                onDuprRefresh: { Task { await model.reloadDupr() } }
+            ) { name, team, rating, skill, skillSystem, skillDescription, link in
+                Task {
+                    await model.saveSelfRegistration(
+                        displayName: name,
+                        team: team,
+                        ratingSystem: rating,
+                        skillLevel: skill,
+                        skillSystemName: skillSystem,
+                        skillDescription: skillDescription,
+                        profileLink: link
+                    )
+                }
             }
         }
     }
@@ -479,7 +855,9 @@ struct QuickTableDetailView: View {
 
     @ViewBuilder
     private func registrationSection(_ detail: QuickTableDetail) -> some View {
-        if model.canManage {
+        if detail.table.isDoubles == true {
+            doublesRegistrationSection(detail)
+        } else if model.canManage {
             let pending = model.registrations.filter { $0.status == "pending" }.count
             Button { Haptics.light(); model.showRegistrations = true } label: {
                 HStack(spacing: 10) {
@@ -514,6 +892,136 @@ struct QuickTableDetailView: View {
         } else {
             note("Đăng nhập để đăng ký tham gia.")
         }
+        if !model.canManage {
+            approvedParticipantsCard(
+                title: "VĐV đã được duyệt",
+                names: model.registrations
+                    .filter { $0.status == "approved" }
+                    .map { registration in
+                        if let team = registration.team?.nonEmpty {
+                            return "\(registration.displayName) · \(team)"
+                        }
+                        return registration.displayName
+                    }
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func doublesRegistrationSection(_ detail: QuickTableDetail) -> some View {
+        if model.canManage {
+            let pending = model.teams.filter {
+                !$0.isApproved && $0.teamStatus != "rejected" && $0.teamStatus != "removed"
+            }.count
+            Button { Haptics.light(); model.showTeams = true } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "person.2.badge.gearshape")
+                        .font(.system(size: 16)).foregroundStyle(TLColor.accentText)
+                    Text("Quản lý đội đăng ký")
+                        .font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg)
+                    Spacer()
+                    Text(pending > 0 ? "\(pending) chờ" : "\(model.teams.count)")
+                        .font(TLFont.mono(10, pending > 0 ? .bold : .medium))
+                        .foregroundStyle(pending > 0 ? TLColor.accentInk : TLColor.fg3)
+                        .padding(.horizontal, pending > 0 ? 8 : 0)
+                        .padding(.vertical, pending > 0 ? 3 : 0)
+                        .background(pending > 0 ? TLColor.accent : .clear, in: Capsule())
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: chevronSize, weight: .semibold))
+                        .foregroundStyle(TLColor.fg4)
+                }
+                .padding(14)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        } else if model.currentUID == nil {
+            note("Đăng nhập để tạo đội và mời đồng đội.")
+        } else if let team = model.myTeam {
+            QuickTableMyTeamCard(
+                table: detail.table,
+                team: team,
+                allTeams: model.teams,
+                invitations: model.teamInvitations,
+                incomingRequests: model.incomingPairRequests,
+                outgoingRequests: model.outgoingPairRequests,
+                currentUserID: model.currentUID,
+                busy: model.teamBusy,
+                error: model.teamError,
+                onCreatePairRequest: { candidate in
+                    Task { await model.createPairRequest(to: candidate) }
+                },
+                onRespondPairRequest: { request, accept in
+                    Task { await model.respondPairRequest(request, accept: accept) }
+                },
+                onCancelPairRequest: { request in
+                    Task { await model.cancelPairRequest(request) }
+                },
+                onCreateInvitation: { Task { await model.createTeamInvitation() } },
+                onCancelInvitation: { invitation in
+                    Task { await model.cancelTeamInvitation(invitation) }
+                },
+                onRemovePartner: { Task { await model.removePartner() } }
+            )
+        } else {
+            Button { Haptics.light(); model.showTeamRegister = true } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.2.badge.plus")
+                    Text("Tạo đội và đăng ký")
+                }
+                .font(TLFont.sans(14, .semibold))
+                .foregroundStyle(TLColor.accentInk)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+            }
+            .buttonStyle(.plain)
+        }
+        if !model.canManage {
+            approvedParticipantsCard(
+                title: "Đội đã được duyệt",
+                names: model.teams
+                    .filter(\.isApproved)
+                    .map(\.pairName)
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func approvedParticipantsCard(title: String, names: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label(title, systemImage: "checkmark.seal.fill")
+                    .font(TLFont.sans(13.5, .semibold))
+                    .foregroundStyle(TLColor.fg)
+                Spacer()
+                Text("\(names.count)")
+                    .font(TLFont.mono(11, .semibold))
+                    .foregroundStyle(TLColor.accentText)
+            }
+            if names.isEmpty {
+                Text("Chưa có \(title.lowercased()).")
+                    .font(TLFont.sans(12.5))
+                    .foregroundStyle(TLColor.fg3)
+            } else {
+                ForEach(Array(names.enumerated()), id: \.offset) { index, name in
+                    HStack(alignment: .firstTextBaseline, spacing: 9) {
+                        Text("\(index + 1)")
+                            .font(TLFont.mono(10, .semibold))
+                            .foregroundStyle(TLColor.fg4)
+                            .frame(width: 20, alignment: .trailing)
+                        Text(name)
+                            .font(TLFont.sans(13))
+                            .foregroundStyle(TLColor.fg2)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous)
+                .strokeBorder(TLColor.border, lineWidth: 1)
+        )
     }
 
     private func myRegistrationBanner(_ reg: QTRegistration) -> some View {
@@ -532,9 +1040,19 @@ struct QuickTableDetailView: View {
             }
             Spacer()
             if reg.status == "pending" {
-                Button { Haptics.light(); Task { await model.cancelMyRegistration() } } label: {
-                    Text("Hủy").font(TLFont.mono(10.5, .semibold)).foregroundStyle(TLColor.live)
-                }.buttonStyle(.plain)
+                HStack(spacing: 12) {
+                    Button {
+                        Haptics.light()
+                        model.showSelfRegister = true
+                    } label: {
+                        Text("Sửa").font(TLFont.mono(10.5, .semibold)).foregroundStyle(TLColor.accentText)
+                    }
+                    .buttonStyle(.plain)
+                    Button { Haptics.light(); Task { await model.cancelMyRegistration() } } label: {
+                        Text("Hủy").font(TLFont.mono(10.5, .semibold)).foregroundStyle(TLColor.live)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .padding(14)
@@ -554,6 +1072,12 @@ struct QuickTableDetailView: View {
                 header(detail.table)
                 if detail.table.requiresRegistration == true { registrationSection(detail) }
                 if model.canManage { refereeManageButton }
+                else if !model.editable {
+                    RefereeJoinByPinView(format: .quickTable, parentID: detail.table.id,
+                                         isSignedIn: model.currentUID != nil) {
+                        await model.load(shareID: shareID)
+                    }
+                }
                 if model.canManage && !detail.table.isPlayoffStage { scheduleManageButton(detail) }
                 if model.canManage && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
                     advanceBanner
@@ -974,9 +1498,7 @@ struct QuickTableDetailView: View {
 
     private func courtMatchRow(_ detail: QuickTableDetail, _ m: QTMatch, next: Bool) -> some View {
         let canScore = model.editable && m.hasBothPlayers
-        return Button {
-            if canScore { Haptics.light(); model.scoringMatch = m }
-        } label: {
+        return HStack(spacing: 10) {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(detail.name(for: m.player1ID)).font(TLFont.sans(13.5, next ? .semibold : .regular)).foregroundStyle(TLColor.fg).lineLimit(1)
@@ -995,15 +1517,32 @@ struct QuickTableDetailView: View {
                 } else {
                     Text("chờ").font(TLFont.mono(9)).foregroundStyle(TLColor.fg4)
                 }
-                if canScore {
-                    Image(systemName: "square.and.pencil").font(.system(size: 12)).foregroundStyle(TLColor.accentText)
-                }
             }
+            .frame(maxWidth: .infinity)
             .padding(.vertical, 9).padding(.horizontal, 12)
             .background(next ? TLColor.accent.opacity(0.06) : TLColor.bg, in: RoundedRectangle(cornerRadius: 10))
             .contentShape(Rectangle())
+            .onTapGesture {
+                if canScore {
+                    Haptics.light()
+                    model.scoringMatch = m
+                }
+            }
+            if model.editable {
+                Button {
+                    Haptics.light()
+                    model.scheduleError = nil
+                    courtNameMatch = m
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(TLColor.accentText)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Đổi tên sân cho trận này")
+            }
         }
-        .buttonStyle(.plain).disabled(!canScore)
     }
 
     // MARK: Helpers
@@ -1024,6 +1563,51 @@ struct QuickTableDetailView: View {
             Button("Thử lại") { Task { await model.load(shareID: shareID) } }.foregroundStyle(TLColor.accentText)
         }
         .frame(maxWidth: .infinity).padding(.horizontal, 32).padding(.top, 60)
+    }
+}
+
+private struct QuickTableCourtNameSheet: View {
+    let initialName: String
+    let fallbackCourt: String?
+    let busy: Bool
+    let error: String?
+    let onSave: (String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Tên hiển thị") {
+                    TextField(fallbackCourt ?? "VD: Sân trung tâm", text: $name)
+                    Text("Để trống để quay lại tên sân tự động.")
+                        .font(TLFont.sans(12))
+                        .foregroundStyle(TLColor.fg3)
+                }
+                if let error {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(TLColor.live)
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(TLColor.bg)
+            .navigationTitle("Đổi tên sân")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Hủy") { dismiss() }.disabled(busy)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(busy ? "Đang lưu…" : "Lưu") { onSave(name) }
+                        .disabled(busy)
+                }
+            }
+            .onAppear { name = initialName }
+        }
+        .presentationDetents([.medium])
     }
 }
 
@@ -1097,6 +1681,8 @@ private struct QuickTableScheduleSheet: View {
 private struct ScoreSheet: View {
     let detail: QuickTableDetail
     let match: QTMatch
+    let saving: Bool
+    let errorMessage: String?
     let onError: (String) -> Void
     let onSave: (Int, Int) -> Void
 
@@ -1111,11 +1697,15 @@ private struct ScoreSheet: View {
     init(
         detail: QuickTableDetail,
         match: QTMatch,
+        saving: Bool,
+        errorMessage: String?,
         onError: @escaping (String) -> Void,
         onSave: @escaping (Int, Int) -> Void
     ) {
         self.detail = detail
         self.match = match
+        self.saving = saving
+        self.errorMessage = errorMessage
         self.onError = onError
         self.onSave = onSave
         _s1 = State(initialValue: match.score1.map(String.init) ?? "")
@@ -1133,6 +1723,9 @@ private struct ScoreSheet: View {
                 Text("–").font(TLFont.serif(24)).foregroundStyle(TLColor.fg4)
                 row(name: detail.name(for: match.player2ID), text: $s2)
 
+                if let errorMessage {
+                    TournamentScoreRetryMessage(message: errorMessage)
+                }
                 refereeSection
                 Spacer()
             }
@@ -1146,11 +1739,14 @@ private struct ScoreSheet: View {
                     Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Lưu") {
+                    Button {
                         if let a = v1, let b = v2 { Haptics.light(); onSave(a, b) }
+                    } label: {
+                        if saving { ProgressView().tint(TLColor.accentText) }
+                        else { Text(errorMessage == nil ? "Lưu" : "Thử lại") }
                     }
                     .foregroundStyle(valid ? TLColor.accentText : TLColor.fg4)
-                    .disabled(!valid)
+                    .disabled(!valid || saving)
                 }
             }
         }
@@ -1273,6 +1869,9 @@ private struct QuickTableRefereesSheet: View {
                     }
                     Text("Trọng tài có thể chấm điểm mọi trận của bảng. Người dùng phải đã có tài khoản.")
                         .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                    if let tableID = model.detail?.table.id {
+                        RefereePinSettingsView(format: .quickTable, parentID: tableID)
+                    }
                     if let msg = model.refMessage {
                         Text(msg).font(TLFont.sans(12)).foregroundStyle(TLColor.fg2)
                     }

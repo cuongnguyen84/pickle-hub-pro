@@ -2,12 +2,10 @@ import SwiftUI
 
 /// Native Quick Table creation — a faithful port of the web 3-step wizard
 /// (Bước 1 Thông tin → Bước 2 Thể thức → Bước 3 Chia bảng) plus the roster
-/// setup step. Round-robin + no-registration is handled fully natively; other
-/// paths (registration mode, large_playoff) create the table then hand off to
-/// the web for the next step.
+/// setup step. Registration, large-playoff and manual group assignment all
+/// remain native; web is only an optional viewer from the detail screen.
 struct CreateQuickTableView: View {
     let onCreated: (_ shareID: String, _ name: String) -> Void
-    let onOpenWeb: (URL) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -53,7 +51,13 @@ struct CreateQuickTableView: View {
     @State private var restoreApplied = false
 
     struct QTDraft: Codable, Equatable {
-        struct Player: Codable, Equatable { var name: String; var name2: String; var team: String; var seed: String }
+        struct Player: Codable, Equatable {
+            var name: String
+            var name2: String
+            var team: String
+            var seed: String
+            var groupIndex: Int?
+        }
         var name: String
         var playerCountText: String
         var requiresRegistration: Bool
@@ -84,7 +88,10 @@ struct CreateQuickTableView: View {
               autoApprove: autoApprove, registrationMessage: registrationMessage,
               selectedFormat: selectedFormat, selectedGroupCount: selectedGroupCount,
               createdTableID: createdTable?.id, createdShareID: createdTable?.shareID,
-              roster: roster.map { .init(name: $0.name, name2: $0.name2, team: $0.team, seed: $0.seed) },
+              roster: roster.map {
+                  .init(name: $0.name, name2: $0.name2, team: $0.team,
+                        seed: $0.seed, groupIndex: $0.groupIndex)
+              },
               assignmentMode: assignmentMode, courts: courts, startTime: startTime)
     }
 
@@ -112,7 +119,10 @@ struct CreateQuickTableView: View {
                                    isDoubles: d.isDoubles, creatorUserID: nil, topPerGroup: nil,
                                    requiresRegistration: d.requiresRegistration,
                                    courts: nil, startTime: nil)
-            roster = d.roster.map { PlayerField(name: $0.name, name2: $0.name2, team: $0.team, seed: $0.seed) }
+            roster = d.roster.map {
+                PlayerField(name: $0.name, name2: $0.name2, team: $0.team,
+                            seed: $0.seed, groupIndex: $0.groupIndex ?? 0)
+            }
             while roster.count < 2 { roster.append(PlayerField()) }
             step = .roster
         }
@@ -138,10 +148,15 @@ struct CreateQuickTableView: View {
 
     private let repo = QuickTableRepository()
 
-    struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = ""; var name2 = ""; var team = ""; var seed = "" }
+    struct PlayerField: Identifiable, Equatable {
+        let id = UUID()
+        var name = ""
+        var name2 = ""
+        var team = ""
+        var seed = ""
+        var groupIndex = 0
+    }
 
-    /// Manual group assignment (round-robin, >1 group) is a heavy separate screen
-    /// on web — offered here but handed off to the web for the assignment step.
     private var manualAvailable: Bool {
         selectedFormat == "round_robin" && (selectedGroupCount ?? 1) > 1
     }
@@ -440,8 +455,20 @@ struct CreateQuickTableView: View {
 
             VStack(spacing: 8) {
                 ForEach(Array($roster.enumerated()), id: \.element.id) { index, $p in
-                    if isDoubles { doublesRosterRow(index: index, p: $p) }
-                    else { singlesRosterRow(index: index, p: $p) }
+                    VStack(spacing: 6) {
+                        if isDoubles { doublesRosterRow(index: index, p: $p) }
+                        else { singlesRosterRow(index: index, p: $p) }
+                        if assignmentMode == "manual" && manualAvailable {
+                            Picker("Bảng của \(displayName(for: p))", selection: $p.groupIndex) {
+                                ForEach(0..<(selectedGroupCount ?? 1), id: \.self) { group in
+                                    Text("Bảng \(groupLetter(group))").tag(group)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .trailing)
+                            .accessibilityLabel("Chọn bảng cho \(displayName(for: p))")
+                        }
+                    }
                 }
             }
 
@@ -477,8 +504,7 @@ struct CreateQuickTableView: View {
             tipsBox
 
             primaryButton(
-                working ? "Đang xử lý…"
-                    : (assignmentMode == "manual" && manualAvailable ? "Tiếp tục chia bảng" : "Tạo bảng đấu và chia bảng"),
+                working ? "Đang xử lý…" : "Tạo bảng đấu và chia bảng",
                 enabled: filledRoster.count >= 2 && !working
             ) {
                 Task { await finishSetup() }
@@ -596,6 +622,27 @@ struct CreateQuickTableView: View {
         }
     }
 
+    private var filledAssignments: [Int] {
+        roster.compactMap { p in
+            let first = p.name.trimmingCharacters(in: .whitespaces)
+            let second = p.name2.trimmingCharacters(in: .whitespaces)
+            guard !first.isEmpty, !isDoubles || !second.isEmpty else { return nil }
+            return p.groupIndex
+        }
+    }
+
+    private func displayName(for player: PlayerField) -> String {
+        let first = player.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let second = player.name2.trimmingCharacters(in: .whitespacesAndNewlines)
+        if isDoubles, !second.isEmpty { return "\(first) & \(second)" }
+        return first.nonEmpty ?? "VĐV"
+    }
+
+    private func groupLetter(_ index: Int) -> String {
+        guard let scalar = UnicodeScalar(65 + index) else { return "\(index + 1)" }
+        return String(Character(scalar))
+    }
+
     // MARK: Actions
 
     @MainActor
@@ -611,15 +658,14 @@ struct CreateQuickTableView: View {
             )
             let table = try await repo.createTable(opts)
             createdTable = table
-            // Non-registration round-robin → native roster setup. Else hand off to web.
-            if !requiresRegistration && selectedFormat == "round_robin" {
-                roster = (0..<max(2, playerCount)).map { _ in PlayerField() }
-                step = .roster
-            } else {
+            if requiresRegistration {
                 draft.clear(current: draftSnapshot)
                 Haptics.success()
                 dismiss()
-                onOpenWeb(WebRoutes.quickTable(shareID: table.shareID))
+                onCreated(table.shareID, name.trimmingCharacters(in: .whitespaces))
+            } else {
+                roster = (0..<max(2, playerCount)).map { _ in PlayerField() }
+                step = .roster
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -630,20 +676,14 @@ struct CreateQuickTableView: View {
     @MainActor
     private func finishSetup() async {
         guard let table = createdTable else { return }
-        // Manual group assignment is a separate web screen — hand off.
-        if assignmentMode == "manual" && manualAvailable {
-            draft.clear(current: draftSnapshot)
-            Haptics.success()
-            dismiss()
-            onOpenWeb(WebRoutes.base.appending(path: "tools/quick-tables/\(table.shareID)/setup"))
-            return
-        }
         working = true; errorMessage = nil
         do {
             let courtList = courts.split(whereSeparator: { $0 == "," || $0 == " " })
                 .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
             try await repo.setupRoster(tableID: table.id, players: filledRoster,
                                        groupCount: selectedGroupCount ?? 1,
+                                       assignments: assignmentMode == "manual" && manualAvailable
+                                           ? filledAssignments : nil,
                                        courts: courtList, startTime: startTime)
             draft.clear(current: draftSnapshot)
             Haptics.success()

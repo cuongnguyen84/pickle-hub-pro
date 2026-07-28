@@ -105,25 +105,10 @@ struct QuickTableRepository {
 
     // MARK: Load
 
-    /// Deep link `/join/:code` — lời mời ghép đôi cũ, giờ chỉ trỏ về giải
-    /// (khớp web JoinTeam.tsx: luồng ghép đôi làm trực tiếp trong trang giải).
-    func tableForInvite(code: String) async -> (shareID: String, name: String)? {
-        struct Invite: Decodable { let table_id: UUID }
-        struct Table: Decodable { let share_id: String; let name: String }
-        guard let invite: Invite = try? await client
-            .from("quick_table_partner_invitations").select("table_id")
-            .eq("invite_code", value: code).single().execute().value,
-        let table: Table = try? await client
-            .from("quick_tables").select("share_id, name")
-            .eq("id", value: invite.table_id).single().execute().value
-        else { return nil }
-        return (table.share_id, table.name)
-    }
-
     func load(shareID: String) async throws -> QuickTableDetail {
         let table: QTTable = try await client
             .from("quick_tables")
-            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration, courts, start_time")
+            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration, requires_skill_level, rating_source, min_skill_level, max_skill_level, auto_approve_registrations, registration_message, group_count, player_count, courts, start_time")
             .eq("share_id", value: shareID)
             .single()
             .execute()
@@ -148,6 +133,28 @@ struct QuickTableRepository {
 
         return QuickTableDetail(table: table, groups: try await groups,
                                 players: try await players, matches: try await matches)
+    }
+
+    func shareID(forMatchID matchID: UUID) async throws -> String {
+        struct MatchRow: Decodable {
+            let tableID: UUID
+            enum CodingKeys: String, CodingKey { case tableID = "table_id" }
+        }
+        struct TableRow: Decodable {
+            let shareID: String
+            enum CodingKeys: String, CodingKey { case shareID = "share_id" }
+        }
+        let match: MatchRow = try await client.from("quick_table_matches")
+            .select("table_id")
+            .eq("id", value: matchID)
+            .single()
+            .execute().value
+        let table: TableRow = try await client.from("quick_tables")
+            .select("share_id")
+            .eq("id", value: match.tableID)
+            .single()
+            .execute().value
+        return table.shareID
     }
 
     // MARK: Create (faithful port of the web 3-step wizard + setup)
@@ -259,6 +266,7 @@ struct QuickTableRepository {
     /// validates and commits roster, groups, all RR matches, court schedule and
     /// lifecycle status in one transaction.
     func setupRoster(tableID: UUID, players: [RosterEntry], groupCount: Int,
+                     assignments explicitAssignments: [Int]? = nil,
                      courts: [String], startTime: String?) async throws {
         let roster = players
             .map { RosterEntry(name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -266,19 +274,32 @@ struct QuickTableRepository {
                                team: $0.team?.nonEmpty, seed: $0.seed) }
             .filter { !$0.name.isEmpty }
         let groups = max(1, groupCount)
-        let identities = roster.enumerated().map { index, entry in
-            (id: UUID(), index: index, team: entry.team, seed: entry.seed)
-        }
-        let buckets = Self.distribute(
-            identities.map { (id: $0.id, team: $0.team, seed: $0.seed) },
-            groupCount: groups
-        )
-        let indexByID = Dictionary(uniqueKeysWithValues: identities.map { ($0.id, $0.index) })
-        var assignments = Array(repeating: -1, count: roster.count)
-        for (groupIndex, ids) in buckets.enumerated() {
-            for id in ids {
-                if let index = indexByID[id] { assignments[index] = groupIndex }
+        let assignments: [Int]
+        if let explicitAssignments {
+            guard explicitAssignments.count == roster.count,
+                  explicitAssignments.allSatisfy({ $0 >= 0 && $0 < groups }) else {
+                throw NSError(
+                    domain: "quicktable", code: 3,
+                    userInfo: [NSLocalizedDescriptionKey: "Mỗi VĐV phải được xếp vào một bảng hợp lệ."]
+                )
             }
+            assignments = explicitAssignments
+        } else {
+            let identities = roster.enumerated().map { index, entry in
+                (id: UUID(), index: index, team: entry.team, seed: entry.seed)
+            }
+            let buckets = Self.distribute(
+                identities.map { (id: $0.id, team: $0.team, seed: $0.seed) },
+                groupCount: groups
+            )
+            let indexByID = Dictionary(uniqueKeysWithValues: identities.map { ($0.id, $0.index) })
+            var generated = Array(repeating: -1, count: roster.count)
+            for (groupIndex, ids) in buckets.enumerated() {
+                for id in ids {
+                    if let index = indexByID[id] { generated[index] = groupIndex }
+                }
+            }
+            assignments = generated
         }
 
         let result: AtomicLifecycleResult = try await client
@@ -539,20 +560,145 @@ struct QuickTableRepository {
         }
     }
 
+    // MARK: Roster + group management
+
+    private struct PlayerGroupUpdate: Encodable { let group_id: UUID }
+
+    func movePlayer(playerID: UUID, to groupID: UUID) async throws {
+        try await client.from("quick_table_players")
+            .update(PlayerGroupUpdate(group_id: groupID))
+            .eq("id", value: playerID).execute()
+    }
+
+    private struct PlayerInsert: Encodable {
+        let table_id: UUID
+        let group_id: UUID
+        let name: String
+        let player1_name: String?
+        let player2_name: String?
+        let team: String?
+        let seed: Int?
+        let display_order: Int
+    }
+
+    func addPlayer(tableID: UUID, groupID: UUID, name: String,
+                   player1Name: String? = nil, player2Name: String? = nil,
+                   team: String?, seed: Int?) async throws {
+        let safeName = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
+        guard !safeName.isEmpty else {
+            throw NSError(domain: "quicktable", code: 4,
+                          userInfo: [NSLocalizedDescriptionKey: "Tên VĐV không được để trống."])
+        }
+        try await client.from("quick_table_players").insert(PlayerInsert(
+            table_id: tableID,
+            group_id: groupID,
+            name: safeName,
+            player1_name: player1Name?.nonEmpty,
+            player2_name: player2Name?.nonEmpty,
+            team: team?.nonEmpty,
+            seed: seed,
+            display_order: 999
+        )).execute()
+    }
+
+    func removePlayer(playerID: UUID) async throws {
+        try await client.from("quick_table_matches").delete()
+            .or("player1_id.eq.\(playerID.uuidString.lowercased()),player2_id.eq.\(playerID.uuidString.lowercased())")
+            .execute()
+        try await client.from("quick_table_players").delete().eq("id", value: playerID).execute()
+    }
+
+    private struct GroupMatchInsert: Encodable {
+        let table_id: UUID
+        let group_id: UUID
+        let is_playoff: Bool
+        let player1_id: UUID
+        let player2_id: UUID
+        let display_order: Int
+        let rr_round_number: Int
+        let rr_match_index: Int
+    }
+
+    func regenerateGroupMatches(tableID: UUID, groupID: UUID, playerIDs: [UUID]) async throws {
+        try await client.from("quick_table_matches").delete()
+            .eq("group_id", value: groupID).eq("is_playoff", value: false).execute()
+        let pairs = Self.circleMethod(playerIDs)
+        guard !pairs.isEmpty else { return }
+        try await client.from("quick_table_matches").insert(pairs.enumerated().map { index, pair in
+            GroupMatchInsert(
+                table_id: tableID,
+                group_id: groupID,
+                is_playoff: false,
+                player1_id: pair.p1,
+                player2_id: pair.p2,
+                display_order: index,
+                rr_round_number: pair.round + 1,
+                rr_match_index: pair.index
+            )
+        }).execute()
+    }
+
+    private struct CourtNameUpdate: Encodable {
+        let court_name: String?
+        enum CodingKeys: String, CodingKey { case court_name }
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            if let court_name {
+                try c.encode(court_name, forKey: .court_name)
+            } else {
+                try c.encodeNil(forKey: .court_name)
+            }
+        }
+    }
+
+    func updateCourtName(matchID: UUID, name: String?) async throws {
+        try await client.from("quick_table_matches")
+            .update(CourtNameUpdate(court_name: name?.nonEmpty))
+            .eq("id", value: matchID).execute()
+    }
+
+    func deleteTable(tableID: UUID) async throws {
+        try await client.rpc(
+            "delete_quick_table",
+            params: ["_table_id": tableID.uuidString.lowercased()]
+        ).execute()
+    }
+
     // MARK: Registration (port of useRegistration)
+
+    private static let registrationSelect = """
+    id, user_id, display_name, team, rating_system, skill_level, \
+    skill_description, skill_system_name, profile_link, status, \
+    btc_override_skill, btc_notes, created_at
+    """
+
+    private static let publicRegistrationSelect = """
+    id, user_id, display_name, team, rating_system, skill_level, \
+    skill_description, skill_system_name, profile_link, status, created_at
+    """
 
     /// All registrations for a table (BTC view), oldest first.
     func fetchRegistrations(tableID: UUID) async -> [QTRegistration] {
         (try? await client.from("quick_table_registrations")
-            .select("id, user_id, display_name, team, rating_system, skill_level, profile_link, status, created_at")
+            .select(Self.registrationSelect)
             .eq("table_id", value: tableID).order("created_at", ascending: true)
+            .execute().value) ?? []
+    }
+
+    /// Public participant list. Organizer-only notes and overrides are never fetched.
+    func fetchApprovedRegistrations(tableID: UUID) async -> [QTRegistration] {
+        (try? await client.from("quick_table_registrations")
+            .select(Self.publicRegistrationSelect)
+            .eq("table_id", value: tableID)
+            .eq("status", value: "approved")
+            .order("created_at", ascending: true)
             .execute().value) ?? []
     }
 
     /// The signed-in user's own registration, if any.
     func userRegistration(tableID: UUID, userID: UUID) async -> QTRegistration? {
         let rows: [QTRegistration]? = try? await client.from("quick_table_registrations")
-            .select("id, user_id, display_name, team, rating_system, skill_level, profile_link, status, created_at")
+            .select(Self.registrationSelect)
             .eq("table_id", value: tableID).eq("user_id", value: userID).limit(1)
             .execute().value
         return rows?.first
@@ -562,10 +708,17 @@ struct QuickTableRepository {
 
     private struct RegistrationInsert: Encodable {
         let table_id: String; let user_id: String; let display_name: String
-        let team: String?; let rating_system: String; let skill_level: Double?; let profile_link: String?
+        let team: String?
+        let rating_system: String
+        let skill_level: Double?
+        let skill_description: String?
+        let skill_system_name: String?
+        let profile_link: String?
     }
     func submitRegistration(tableID: UUID, displayName: String, team: String?,
-                            ratingSystem: String, skillLevel: Double?, profileLink: String?) async -> SubmitRegistrationResult {
+                            ratingSystem: String, skillLevel: Double?,
+                            skillSystemName: String?, skillDescription: String?,
+                            profileLink: String?) async -> SubmitRegistrationResult {
         guard let uid = await currentUserID() else { return .notAuthed }
         let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return .error("Tên không được để trống") }
@@ -573,7 +726,10 @@ struct QuickTableRepository {
             try await client.from("quick_table_registrations").insert(RegistrationInsert(
                 table_id: tableID.uuidString.lowercased(), user_id: uid.uuidString.lowercased(),
                 display_name: name, team: team?.nonEmpty, rating_system: ratingSystem,
-                skill_level: skillLevel, profile_link: profileLink?.nonEmpty)).execute()
+                skill_level: skillLevel,
+                skill_description: ratingSystem == "none" ? skillDescription?.nonEmpty : nil,
+                skill_system_name: ratingSystem == "other" ? skillSystemName?.nonEmpty : nil,
+                profile_link: profileLink?.nonEmpty)).execute()
             return .ok
         } catch {
             // Postgres unique_violation (already registered).
@@ -586,6 +742,63 @@ struct QuickTableRepository {
         try await client.from("quick_table_registrations").delete().eq("id", value: id).execute()
     }
 
+    private struct RegistrationUpdate: Encodable {
+        let display_name: String
+        let team: String?
+        let rating_system: String
+        let skill_level: Double?
+        let skill_description: String?
+        let skill_system_name: String?
+        let profile_link: String?
+
+        enum CodingKeys: String, CodingKey {
+            case display_name, team, rating_system, skill_level
+            case skill_description, skill_system_name, profile_link
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(display_name, forKey: .display_name)
+            try c.encode(rating_system, forKey: .rating_system)
+            if let team { try c.encode(team, forKey: .team) } else { try c.encodeNil(forKey: .team) }
+            if let skill_level { try c.encode(skill_level, forKey: .skill_level) }
+            else { try c.encodeNil(forKey: .skill_level) }
+            if let skill_description { try c.encode(skill_description, forKey: .skill_description) }
+            else { try c.encodeNil(forKey: .skill_description) }
+            if let skill_system_name { try c.encode(skill_system_name, forKey: .skill_system_name) }
+            else { try c.encodeNil(forKey: .skill_system_name) }
+            if let profile_link { try c.encode(profile_link, forKey: .profile_link) }
+            else { try c.encodeNil(forKey: .profile_link) }
+        }
+    }
+
+    func updateRegistration(id: UUID, displayName: String, team: String?,
+                            ratingSystem: String, skillLevel: Double?,
+                            skillSystemName: String?, skillDescription: String?,
+                            profileLink: String?) async throws {
+        let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else {
+            throw NSError(
+                domain: "quicktable",
+                code: 11,
+                userInfo: [NSLocalizedDescriptionKey: "Tên không được để trống."]
+            )
+        }
+        try await client.from("quick_table_registrations")
+            .update(RegistrationUpdate(
+                display_name: name,
+                team: team?.nonEmpty,
+                rating_system: ratingSystem,
+                skill_level: ratingSystem == "none" ? nil : skillLevel,
+                skill_description: ratingSystem == "none" ? skillDescription?.nonEmpty : nil,
+                skill_system_name: ratingSystem == "other" ? skillSystemName?.nonEmpty : nil,
+                profile_link: profileLink?.nonEmpty
+            ))
+            .eq("id", value: id)
+            .eq("status", value: "pending")
+            .execute()
+    }
+
     private struct RegStatusUpdate: Encodable { let status: String }
     func setRegistrationStatus(id: UUID, status: String) async throws {
         try await client.from("quick_table_registrations").update(RegStatusUpdate(status: status)).eq("id", value: id).execute()
@@ -595,6 +808,379 @@ struct QuickTableRepository {
         try await client.from("quick_table_registrations")
             .update(RegStatusUpdate(status: "approved"))
             .in("id", values: ids.map { $0.uuidString.lowercased() }).execute()
+    }
+
+    private struct BTCRegistrationUpdate: Encodable {
+        let btc_override_skill: Double?
+        let btc_notes: String?
+
+        enum CodingKeys: String, CodingKey { case btc_override_skill, btc_notes }
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            if let btc_override_skill {
+                try c.encode(btc_override_skill, forKey: .btc_override_skill)
+            } else {
+                try c.encodeNil(forKey: .btc_override_skill)
+            }
+            if let btc_notes {
+                try c.encode(btc_notes, forKey: .btc_notes)
+            } else {
+                try c.encodeNil(forKey: .btc_notes)
+            }
+        }
+    }
+
+    func updateRegistrationBTC(id: UUID, overrideSkill: Double?, notes: String?) async throws {
+        try await client.from("quick_table_registrations")
+            .update(BTCRegistrationUpdate(
+                btc_override_skill: overrideSkill,
+                btc_notes: notes?.nonEmpty
+            ))
+            .eq("id", value: id)
+            .execute()
+    }
+
+    // MARK: Doubles registration teams
+
+    private static let teamSelect = """
+    id, table_id, player1_user_id, player1_display_name, player1_team, \
+    player1_skill_level, player1_rating_system, player1_profile_link, \
+    player2_user_id, player2_display_name, player2_team, player2_skill_level, \
+    player2_rating_system, player2_profile_link, team_status, btc_approved, \
+    btc_notes, is_locked, created_at
+    """
+
+    private static let publicTeamSelect = """
+    id, table_id, player1_user_id, player1_display_name, player1_team, \
+    player1_skill_level, player1_rating_system, player1_profile_link, \
+    player2_user_id, player2_display_name, player2_team, player2_skill_level, \
+    player2_rating_system, player2_profile_link, team_status, btc_approved, \
+    is_locked, created_at
+    """
+
+    func fetchTeams(tableID: UUID) async -> [QTTeamRegistration] {
+        (try? await client.from("quick_table_teams")
+            .select(Self.teamSelect)
+            .eq("table_id", value: tableID)
+            .order("created_at", ascending: true)
+            .execute().value) ?? []
+    }
+
+    /// Public team list supports both the approved roster and in-page pairing.
+    /// Organizer-only notes are never fetched.
+    func fetchVisibleTeams(tableID: UUID) async -> [QTTeamRegistration] {
+        let rows: [QTTeamRegistration] = (try? await client.from("quick_table_teams")
+            .select(Self.publicTeamSelect)
+            .eq("table_id", value: tableID)
+            .neq("team_status", value: "removed")
+            .order("created_at", ascending: true)
+            .execute().value) ?? []
+        return rows.filter { $0.teamStatus != "rejected" }
+    }
+
+    func userTeam(tableID: UUID, userID: UUID) async -> QTTeamRegistration? {
+        let asPartner: [QTTeamRegistration]? = try? await client.from("quick_table_teams")
+            .select(Self.teamSelect)
+            .eq("table_id", value: tableID)
+            .eq("player2_user_id", value: userID)
+            .neq("team_status", value: "removed")
+            .neq("team_status", value: "rejected")
+            .limit(1).execute().value
+        if let team = asPartner?.first { return team }
+
+        let asLeader: [QTTeamRegistration]? = try? await client.from("quick_table_teams")
+            .select(Self.teamSelect)
+            .eq("table_id", value: tableID)
+            .eq("player1_user_id", value: userID)
+            .neq("team_status", value: "removed")
+            .neq("team_status", value: "rejected")
+            .limit(1).execute().value
+        return asLeader?.first
+    }
+
+    private struct TeamInsert: Encodable {
+        let table_id: UUID
+        let player1_user_id: UUID
+        let player1_display_name: String
+        let player1_team: String?
+        let player1_skill_level: Double?
+        let player1_rating_system: String
+        let player1_profile_link: String?
+    }
+
+    func createTeam(tableID: UUID, displayName: String, team: String?,
+                    ratingSystem: String, skillLevel: Double?,
+                    profileLink: String?) async throws {
+        guard let uid = await currentUserID() else {
+            throw NSError(domain: "quicktable", code: 5,
+                          userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập để đăng ký."])
+        }
+        let safeName = String(displayName.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
+        guard !safeName.isEmpty else {
+            throw NSError(domain: "quicktable", code: 6,
+                          userInfo: [NSLocalizedDescriptionKey: "Tên không được để trống."])
+        }
+        try await client.from("quick_table_teams").insert(TeamInsert(
+            table_id: tableID,
+            player1_user_id: uid,
+            player1_display_name: safeName,
+            player1_team: team?.nonEmpty,
+            player1_skill_level: skillLevel,
+            player1_rating_system: ratingSystem,
+            player1_profile_link: profileLink?.nonEmpty
+        )).execute()
+    }
+
+    func invitations(teamID: UUID) async -> [QTPartnerInvitation] {
+        (try? await client.from("quick_table_partner_invitations")
+            .select("id, team_id, table_id, invite_code, invited_by_user_id, invited_user_id, status, expires_at, created_at")
+            .eq("team_id", value: teamID)
+            .order("created_at", ascending: false)
+            .execute().value) ?? []
+    }
+
+    private struct InvitationInsert: Encodable {
+        let team_id: UUID
+        let table_id: UUID
+        let invited_by_user_id: UUID
+    }
+
+    func createInvitation(teamID: UUID, tableID: UUID) async throws -> QTPartnerInvitation {
+        guard let uid = await currentUserID() else {
+            throw NSError(domain: "quicktable", code: 7,
+                          userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập để mời đồng đội."])
+        }
+        struct CountParams: Encodable { let _team_id: UUID }
+        let count: Int = try await client.rpc(
+            "get_active_invitation_count", params: CountParams(_team_id: teamID)
+        ).execute().value
+        guard count < 3 else {
+            throw NSError(domain: "quicktable", code: 8,
+                          userInfo: [NSLocalizedDescriptionKey: "Mỗi đội chỉ có tối đa 3 lời mời đang hoạt động."])
+        }
+        return try await client.from("quick_table_partner_invitations")
+            .insert(InvitationInsert(team_id: teamID, table_id: tableID, invited_by_user_id: uid))
+            .select("id, team_id, table_id, invite_code, invited_by_user_id, invited_user_id, status, expires_at, created_at")
+            .single().execute().value
+    }
+
+    private struct InvitationStatusUpdate: Encodable { let status: String }
+
+    func cancelInvitation(id: UUID) async throws {
+        try await client.from("quick_table_partner_invitations")
+            .update(InvitationStatusUpdate(status: "cancelled"))
+            .eq("id", value: id).execute()
+    }
+
+    // MARK: In-page pairing (current production flow)
+
+    func incomingPairRequests(tableID: UUID, userID: UUID) async -> [QTPairRequest] {
+        (try? await client.from("quick_table_pair_requests")
+            .select("""
+            id, table_id, from_team_id, to_team_id, from_user_id, to_user_id, \
+            status, created_at, responded_at, \
+            from_team:quick_table_teams!quick_table_pair_requests_from_team_id_fkey(\
+            player1_display_name, player1_team)
+            """)
+            .eq("table_id", value: tableID)
+            .eq("to_user_id", value: userID)
+            .eq("status", value: "pending")
+            .order("created_at", ascending: true)
+            .execute().value) ?? []
+    }
+
+    func outgoingPairRequests(tableID: UUID, userID: UUID) async -> [QTPairRequest] {
+        (try? await client.from("quick_table_pair_requests")
+            .select("""
+            id, table_id, from_team_id, to_team_id, from_user_id, to_user_id, \
+            status, created_at, responded_at, \
+            to_team:quick_table_teams!quick_table_pair_requests_to_team_id_fkey(\
+            player1_display_name, player1_team)
+            """)
+            .eq("table_id", value: tableID)
+            .eq("from_user_id", value: userID)
+            .eq("status", value: "pending")
+            .order("created_at", ascending: true)
+            .execute().value) ?? []
+    }
+
+    private struct PairRequestCreateParams: Encodable {
+        let _table_id: UUID
+        let _to_team_id: UUID
+    }
+
+    private struct PairRequestRespondParams: Encodable {
+        let _request_id: UUID
+        let _accept: Bool
+    }
+
+    private struct PairRequestCancelParams: Encodable {
+        let _request_id: UUID
+    }
+
+    private struct PairActionResult: Decodable {
+        let success: Bool
+        let error: String?
+    }
+
+    func createPairRequest(tableID: UUID, toTeamID: UUID) async throws {
+        let result: PairActionResult = try await client.rpc(
+            "create_pair_request",
+            params: PairRequestCreateParams(_table_id: tableID, _to_team_id: toTeamID)
+        ).execute().value
+        try requirePairSuccess(result, fallback: "Không thể gửi yêu cầu ghép đôi.")
+    }
+
+    func respondPairRequest(id: UUID, accept: Bool) async throws {
+        let result: PairActionResult = try await client.rpc(
+            "respond_pair_request",
+            params: PairRequestRespondParams(_request_id: id, _accept: accept)
+        ).execute().value
+        try requirePairSuccess(result, fallback: "Không thể phản hồi yêu cầu ghép đôi.")
+    }
+
+    func cancelPairRequest(id: UUID) async throws {
+        let result: PairActionResult = try await client.rpc(
+            "cancel_pair_request",
+            params: PairRequestCancelParams(_request_id: id)
+        ).execute().value
+        try requirePairSuccess(result, fallback: "Không thể hủy yêu cầu ghép đôi.")
+    }
+
+    private func requirePairSuccess(_ result: PairActionResult, fallback: String) throws {
+        guard result.success else {
+            let messages: [String: String] = [
+                "AUTH_REQUIRED": "Cần đăng nhập để ghép đôi.",
+                "TABLE_NOT_FOUND": "Giải đấu không còn tồn tại.",
+                "NO_TEAM": "Bạn cần tạo đăng ký trước khi ghép đôi.",
+                "TEAM_REJECTED": "Đăng ký của bạn không còn hoạt động.",
+                "ALREADY_HAS_PARTNER": "Bạn đã có đồng đội.",
+                "TARGET_TEAM_NOT_FOUND": "Không tìm thấy VĐV này.",
+                "TARGET_TEAM_REJECTED": "Đăng ký của VĐV này không còn hoạt động.",
+                "TARGET_HAS_PARTNER": "VĐV này vừa ghép với người khác.",
+                "SAME_TEAM": "Không thể tự gửi yêu cầu cho chính mình.",
+                "REQUEST_ALREADY_SENT": "Bạn đã gửi yêu cầu cho VĐV này.",
+                "REQUEST_PENDING_FROM_TARGET": "VĐV này đang chờ bạn xác nhận.",
+                "REQUEST_NOT_FOUND": "Yêu cầu ghép đôi không còn tồn tại.",
+                "NOT_TARGET_USER": "Bạn không có quyền phản hồi yêu cầu này.",
+                "REQUEST_NOT_PENDING": "Yêu cầu này đã được xử lý.",
+                "FROM_TEAM_ALREADY_PAIRED": "VĐV gửi yêu cầu đã ghép với người khác.",
+                "TO_TEAM_ALREADY_PAIRED": "Bạn vừa được ghép vào đội khác.",
+                "TABLE_LOCKED": "Giải đã bắt đầu nên không thể đổi đội."
+            ]
+            throw NSError(
+                domain: "quicktable.pairing",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: messages[result.error ?? ""] ?? fallback]
+            )
+        }
+    }
+
+    struct InviteDetails {
+        let invitation: QTPartnerInvitation
+        let team: QTTeamRegistration
+        let tableName: String
+        let shareID: String
+    }
+
+    func invitationDetails(code: String) async throws -> InviteDetails {
+        let invitation: QTPartnerInvitation = try await client
+            .from("quick_table_partner_invitations")
+            .select("id, team_id, table_id, invite_code, invited_by_user_id, invited_user_id, status, expires_at, created_at")
+            .eq("invite_code", value: code).single().execute().value
+        let team: QTTeamRegistration = try await client.from("quick_table_teams")
+            .select(Self.teamSelect).eq("id", value: invitation.teamID).single().execute().value
+        struct Table: Decodable {
+            let name: String
+            let shareID: String
+            enum CodingKeys: String, CodingKey { case name; case shareID = "share_id" }
+        }
+        let table: Table = try await client.from("quick_tables")
+            .select("name, share_id").eq("id", value: invitation.tableID).single().execute().value
+        return InviteDetails(invitation: invitation, team: team, tableName: table.name, shareID: table.shareID)
+    }
+
+    private struct AcceptInviteParams: Encodable {
+        let _invitation_code: String
+        let _user_id: UUID
+        let _display_name: String
+        let _team: String?
+        let _skill_level: Double?
+        let _rating_system: String
+        let _profile_link: String?
+    }
+    private struct TeamActionResult: Decodable {
+        let success: Bool
+        let error: String?
+    }
+
+    func acceptInvitation(code: String, displayName: String, team: String?,
+                          ratingSystem: String, skillLevel: Double?,
+                          profileLink: String?) async throws {
+        guard let uid = await currentUserID() else {
+            throw NSError(domain: "quicktable", code: 9,
+                          userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập để nhận lời mời."])
+        }
+        let result: TeamActionResult = try await client.rpc(
+            "accept_partner_invitation",
+            params: AcceptInviteParams(
+                _invitation_code: code,
+                _user_id: uid,
+                _display_name: displayName,
+                _team: team?.nonEmpty,
+                _skill_level: skillLevel,
+                _rating_system: ratingSystem,
+                _profile_link: profileLink?.nonEmpty
+            )
+        ).execute().value
+        try requireTeamSuccess(result)
+    }
+
+    private struct RemovePartnerParams: Encodable {
+        let _team_id: UUID
+        let _user_id: UUID
+    }
+
+    func removePartner(teamID: UUID) async throws {
+        guard let uid = await currentUserID() else { return }
+        let result: TeamActionResult = try await client.rpc(
+            "remove_partner_from_team",
+            params: RemovePartnerParams(_team_id: teamID, _user_id: uid)
+        ).execute().value
+        try requireTeamSuccess(result)
+    }
+
+    private struct ManageTeamParams: Encodable {
+        let _team_id: UUID
+        let _action: String
+        let _notes: String?
+    }
+
+    func manageTeam(teamID: UUID, action: String, notes: String? = nil) async throws {
+        let result: TeamActionResult = try await client.rpc(
+            "btc_manage_team",
+            params: ManageTeamParams(_team_id: teamID, _action: action, _notes: notes?.nonEmpty)
+        ).execute().value
+        try requireTeamSuccess(result)
+    }
+
+    private func requireTeamSuccess(_ result: TeamActionResult) throws {
+        guard result.success else {
+            let messages: [String: String] = [
+                "INVITATION_NOT_FOUND": "Không tìm thấy lời mời.",
+                "INVITATION_ALREADY_USED": "Lời mời đã được sử dụng.",
+                "INVITATION_EXPIRED": "Lời mời đã hết hạn.",
+                "TEAM_ALREADY_COMPLETE": "Đội đã đủ hai người.",
+                "TABLE_LOCKED": "Giải đã bắt đầu nên không thể đổi đội.",
+                "CANNOT_JOIN_OWN_TEAM": "Bạn không thể tự tham gia đội của mình.",
+                "PERMISSION_DENIED": "Bạn không có quyền thực hiện thao tác này."
+            ]
+            throw NSError(
+                domain: "quicktable", code: 10,
+                userInfo: [NSLocalizedDescriptionKey: messages[result.error ?? ""] ?? result.error ?? "Không thể cập nhật đội."]
+            )
+        }
     }
 
     // MARK: Playoff generation

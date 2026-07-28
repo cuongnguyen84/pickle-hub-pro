@@ -1,0 +1,25 @@
+// App Store configuration. This intentionally replaces the existing Capacitor
+// app identity and follows its current 1.0.1 (2) build with native 1.1.0 (3).
+#include "Secrets.xcconfig"
+
+APP_ENVIRONMENT = production
+APS_ENVIRONMENT = production
+PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
+MARKETING_VERSION = 1.1.0
+CURRENT_PROJECT_VERSION = 3
+
+// Flip to YES in a reviewed release change only after every device-smoke item
+// in docs/RELEASE_AND_ACTIVATION.md passes. A valid site key is also required.
+NATIVE_EVENT_REGISTRATION_ENABLED = NO
+
+// Preserve Firebase Messaging parity with the production Capacitor app. Public
+// Firebase identifiers resolve from ignored Secrets.xcconfig.
+REMOTE_PUSH_ENABLED = YES
+
+// Product approved the one-time sign-in reset for the Capacitor → native
+// upgrade on 2026-07-22. The native SDK persists the new session in Keychain.
+CAPACITOR_AUTH_RESET_APPROVED = YES
+
+SWIFT_STRICT_CONCURRENCY = complete
+VALIDATE_PRODUCT = YES
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym

@@ -1,5 +1,24 @@
 import Foundation
 
+/// One registration option stored in `social_events.slots` JSONB.
+struct SocialEventSlot: Decodable, Identifiable, Equatable {
+    let id: String
+    let label: String
+    let kind: String
+    let capacity: Int
+    let courtCount: Int?
+    let skillLevel: String?
+    let minPlayMonths: Int?
+    let notes: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, label, kind, capacity, notes
+        case courtCount = "court_count"
+        case skillLevel = "skill_level"
+        case minPlayMonths = "min_play_months"
+    }
+}
+
 /// A row from `social_events` (public pickup-game / meetup events).
 struct SocialEvent: Decodable, Identifiable, Equatable {
     let id: UUID
@@ -19,6 +38,8 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     let ballType: String?
     let freePerks: [String]?
     let status: String?
+    let allowGuests: Bool?
+    let slots: [SocialEventSlot]?
     // Organizer-side (nullable để list công khai cũ không vỡ khi thiếu cột)
     let createdBy: UUID?
     let clubID: UUID?
@@ -73,6 +94,8 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
         case zaloGroupURL = "zalo_group_url"
         case ballType = "ball_type"
         case freePerks = "free_perks"
+        case allowGuests = "allow_guests"
+        case slots
         case createdBy = "created_by"
         case clubID = "club_id"
         case visibility
@@ -102,6 +125,26 @@ struct SocialFlowError: LocalizedError {
     let code: String
     var errorDescription: String? {
         switch code {
+        case "invalid_phone": "Số điện thoại không hợp lệ."
+        case "invalid_display_name": "Hãy nhập tên hiển thị hợp lệ."
+        case "captcha_failed": "Không thể xác minh thiết bị. Hãy tải lại và thử lại."
+        case "captcha_misconfigured": "Đăng ký native đang tạm bảo trì. Hãy đăng ký trên web."
+        case "too_many_otps": "Bạn đã yêu cầu quá nhiều mã. Hãy đợi 15 phút rồi thử lại."
+        case "too_many_otps_ip": "Thiết bị này đã gửi quá nhiều mã. Hãy đợi 15 phút rồi thử lại."
+        case "daily_budget_exceeded": "Hệ thống đang tạm dừng gửi tin tự động. Hãy liên hệ ban tổ chức."
+        case "invalid_otp", "otp_mismatch", "invalid_code_format": "Mã OTP không đúng."
+        case "otp_expired", "otp_not_found": "Mã OTP đã hết hạn. Hãy yêu cầu mã mới."
+        case "otp_too_many_attempts": "Sai mã quá nhiều lần. Hãy yêu cầu mã mới."
+        case "sms_send_failed", "zalo_send_failed": "Không gửi được mã OTP. Hãy thử lại hoặc liên hệ ban tổ chức."
+        case "already_registered": "Số điện thoại này đã đăng ký sự kiện."
+        case "guests_not_allowed": "Sự kiện này không nhận đăng ký khách."
+        case "event_not_found", "event_not_public", "event_not_published": "Sự kiện hiện không mở đăng ký công khai."
+        case "event_started_or_ended": "Sự kiện đã bắt đầu hoặc kết thúc."
+        case "slot_required": "Hãy chọn một khung đăng ký."
+        case "slot_not_found": "Khung đăng ký không còn tồn tại."
+        case "slot_full": "Khung đăng ký này đã đủ người."
+        case "payment_not_enabled": "Sự kiện chưa bật thanh toán online; bạn có thể thanh toán tại sân."
+        case "invalid_server_response": "Máy chủ trả về dữ liệu không hợp lệ. Hãy thử lại."
         case "already_cancelled": "Đăng ký đã huỷ trước đó."
         case "event_started": "Sự kiện đã bắt đầu — không thao tác được."
         case "event_cancelled": "Sự kiện đã bị huỷ."
@@ -188,29 +231,20 @@ enum SocialName {
 
 /// ISO-8601 parsing + Vietnamese display formatting for social events.
 enum SocialDate {
-    private static let iso: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
-    private static let isoPlain: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
-        return f
-    }()
-
     static func parse(_ string: String) -> Date? {
-        iso.date(from: string) ?? isoPlain.date(from: string)
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = withFraction.date(from: string) { return date }
+
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        return plain.date(from: string)
     }
 
-    private static let displayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "vi_VN")
-        f.dateFormat = "EEE, dd/MM · HH:mm"
-        return f
-    }()
-
     static func display(_ date: Date) -> String {
-        displayFormatter.string(from: date)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "vi_VN")
+        formatter.dateFormat = "EEE, dd/MM · HH:mm"
+        return formatter.string(from: date)
     }
 }

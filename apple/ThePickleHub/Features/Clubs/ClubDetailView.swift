@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class ClubDetailViewModel {
     enum Phase: Equatable { case loading, loaded(Club), failed(String) }
     var phase: Phase = .loading

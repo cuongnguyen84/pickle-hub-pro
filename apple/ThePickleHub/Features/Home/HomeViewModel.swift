@@ -5,6 +5,7 @@ import Observation
 /// soft (a missing section just renders empty) so one slow query never blanks
 /// the whole page.
 @Observable
+@MainActor
 final class HomeViewModel {
     private(set) var posts: [BlogPostSummary] = []
     private(set) var news: [FeedItem] = []      // .news items, with publishedAt

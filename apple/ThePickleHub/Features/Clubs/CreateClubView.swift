@@ -13,6 +13,7 @@ func clubSlugify(_ input: String) -> String {
 }
 
 @Observable
+@MainActor
 final class CreateClubModel {
     var name = ""
     var slug = ""
@@ -146,12 +147,15 @@ struct CreateClubView: View {
     }
 
     private var logoField: some View {
-        field("Logo") {
+        // PhotosPicker evaluates its label in a nonisolated closure.
+        let previewSnapshot = previewImage
+        let hasPreviewImage = previewSnapshot != nil
+        return field("Logo") {
             HStack(spacing: 12) {
                 PhotosPicker(selection: $picked, matching: .images) {
                     ZStack {
-                        if let previewImage {
-                            previewImage.resizable().scaledToFill()
+                        if let previewSnapshot {
+                            previewSnapshot.resizable().scaledToFill()
                         } else {
                             VStack(spacing: 3) {
                                 Image(systemName: "photo").font(.system(size: 16))
@@ -160,9 +164,9 @@ struct CreateClubView: View {
                         }
                     }
                     .frame(width: 72, height: 72).clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: previewImage == nil ? [4] : [])))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: hasPreviewImage ? [] : [4])))
                 }
-                if previewImage != nil {
+                if hasPreviewImage {
                     Button("Xoá") { picked = nil; previewImage = nil; model.image = nil }
                         .font(TLFont.sans(12, .semibold)).foregroundStyle(TLColor.live)
                 }

@@ -325,14 +325,22 @@ struct EditClubView: View {
     }
 
     private var logoField: some View {
-        field("Logo") {
+        // PhotosPicker's label is nonisolated. Snapshot the main-actor state
+        // before constructing it so the closure only captures immutable values.
+        let previewSnapshot = preview
+        let logoURL = model.logoURL
+        return field("Logo") {
             HStack(spacing: 12) {
                 PhotosPicker(selection: $picked, matching: .images) {
                     ZStack {
-                        if let preview { preview.resizable().scaledToFill() }
-                        else if let s = model.logoURL, let u = URL(string: s) {
-                            AsyncImage(url: u) { $0.resizable().scaledToFill() } placeholder: { logoPlaceholder }
-                        } else { logoPlaceholder }
+                        if let previewSnapshot { previewSnapshot.resizable().scaledToFill() }
+                        else if let logoURL, let u = URL(string: logoURL) {
+                            AsyncImage(url: u) { $0.resizable().scaledToFill() } placeholder: {
+                                Image(systemName: "photo").font(.system(size: 16)).foregroundStyle(TLColor.fg3)
+                            }
+                        } else {
+                            Image(systemName: "photo").font(.system(size: 16)).foregroundStyle(TLColor.fg3)
+                        }
                     }
                     .frame(width: 72, height: 72).clipShape(RoundedRectangle(cornerRadius: 10))
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, lineWidth: 1))
@@ -356,9 +364,6 @@ struct EditClubView: View {
                 }
             }
         }
-    }
-    private var logoPlaceholder: some View {
-        Image(systemName: "photo").font(.system(size: 16)).foregroundStyle(TLColor.fg3)
     }
 
     private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {

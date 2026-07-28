@@ -4,6 +4,7 @@ import Testing
 
 /// UX-04 draft autosave — envelope round-trip, version gate, guard chống
 /// hồi sinh draft đã clear, và ranh giới D3 (bank fields không vào snapshot).
+@MainActor
 struct DraftStoreTests {
     private struct Snap: Codable, Equatable { var name: String; var count: Int }
 

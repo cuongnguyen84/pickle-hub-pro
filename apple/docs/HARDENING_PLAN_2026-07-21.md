@@ -508,3 +508,19 @@ YYYY-MM-DD — Task N — completed|partial|blocked
   legal vẫn phải reconcile privacy answers/policy; Supabase PAT từng được đưa
   qua chat phải được rotate ngoài repo. Không deploy web hoặc phát hành iOS trong
   lần gate này.
+
+2026-07-22 — Swift 6 migration — completed locally
+- Chuyển app target từ Swift 5 strict-concurrency sang Swift 6 language mode.
+  Cô lập AppDelegate/orientation, haptics, DraftStore và 15 observable UI model
+  về MainActor; đánh dấu wrapper Supabase immutable là Sendable; bỏ các
+  ISO8601DateFormatter mutable dùng chung; snapshot state trước các PhotosPicker
+  Sendable/nonisolated label closure. Notification delegate dùng preconcurrency
+  conformance để tương thích đúng với protocol import của UserNotifications.
+- Test harness cũng được actor-isolate đúng chỗ cho DraftStore và
+  UIHostingController. Clean Release không còn warning concurrency trong source;
+  warning duy nhất là metadata extractor của Xcode báo app không link AppIntents,
+  không phải warning mã nguồn hay release blocker.
+- Verification: app target Swift 6 Release build pass; full suite pass 130 Swift
+  Testing + 7 XCTest = 137/137. Release preflight nay khóa `SWIFT_VERSION = 6.0`
+  để project không âm thầm quay lại Swift 5. Các activation flag vẫn OFF; không
+  deploy, upload, gửi notification hay thay đổi production trong migration này.

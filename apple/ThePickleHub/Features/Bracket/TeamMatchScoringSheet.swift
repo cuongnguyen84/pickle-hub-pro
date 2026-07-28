@@ -83,7 +83,7 @@ final class TMScoringModel {
 
     @MainActor
     func saveSelected(onSaved: () -> Void) async {
-        guard rows.indices.contains(selected) else { return }
+        guard rows.indices.contains(selected), !saving else { return }
         saving = true; error = nil
         let row = rows[selected]
         do {
@@ -94,7 +94,7 @@ final class TMScoringModel {
             justSaved = true
             onSaved()
         } catch {
-            self.error = error.localizedDescription
+            self.error = UserFacingError.message(action: "Lưu tỉ số", error: error)
         }
         saving = false
     }
@@ -268,7 +268,7 @@ struct TeamMatchScoringSheet: View {
                            lineup: model.lineupNames(row.game.lineupTeamB), teamA: false)
 
                 if let err = model.error {
-                    Text(err).font(TLFont.sans(12)).foregroundStyle(TLColor.live)
+                    TournamentScoreRetryMessage(message: err)
                 }
 
                 HStack(spacing: 10) {
@@ -290,7 +290,8 @@ struct TeamMatchScoringSheet: View {
                         HStack(spacing: 6) {
                             if model.saving { ProgressView().tint(TLColor.accentInk) }
                             else { Image(systemName: model.justSaved ? "checkmark" : "square.and.arrow.down").font(.system(size: 12, weight: .bold)) }
-                            Text(model.justSaved ? "Đã lưu" : "Lưu ván").font(TLFont.mono(11, .bold))
+                            Text(model.justSaved ? "Đã lưu" : (model.error == nil ? "Lưu ván" : "Thử lại"))
+                                .font(TLFont.mono(11, .bold))
                         }
                         .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
                         .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 11))

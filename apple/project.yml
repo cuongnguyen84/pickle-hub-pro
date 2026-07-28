@@ -8,11 +8,9 @@ options:
 
 settings:
   base:
-    SWIFT_VERSION: "5.0" # language mode 5 for SDK compatibility; flip to 6 in a later phase
+    SWIFT_VERSION: "6.0"
     SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     DEVELOPMENT_LANGUAGE: vi
-    MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "1"
 
 packages:
   Supabase:
@@ -20,7 +18,10 @@ packages:
     exactVersion: "2.48.0"
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
-    exactVersion: "7.1.0"
+    exactVersion: "9.2.0"
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    exactVersion: "12.9.0"
 
 targets:
   ThePickleHub:
@@ -30,29 +31,37 @@ targets:
     sources:
       - path: ThePickleHub
     configFiles:
-      Debug: Config/Secrets.xcconfig
-      Release: Config/Secrets.xcconfig
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
     entitlements:
       path: ThePickleHub/App/ThePickleHub.entitlements
       properties:
         com.apple.developer.associated-domains:
           - applinks:www.thepicklehub.net
           - applinks:thepicklehub.net
+        com.apple.developer.applesignin:
+          - Default
+        aps-environment: $(APS_ENVIRONMENT)
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: net.thepicklehub.app.dev
         PRODUCT_NAME: ThePickleHub
         DEVELOPMENT_TEAM: 5S49Q7AB7M
         INFOPLIST_FILE: ThePickleHub/App/Info.plist
         GENERATE_INFOPLIST_FILE: "NO"
-        TARGETED_DEVICE_FAMILY: "1"
+        # The shipping Capacitor app supports both iPhone and iPad. App Store
+        # updates may not remove a previously supported device family.
+        TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"
         SWIFT_EMIT_LOC_STRINGS: "YES"
+        # Keep first-party Swift warning-free without overriding package flags.
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: "YES"
     dependencies:
       - package: Supabase
         product: Supabase
       - package: GoogleSignIn
         product: GoogleSignIn
+      - package: Firebase
+        product: FirebaseMessaging
 
   ThePickleHubTests:
     type: bundle.unit-test
@@ -66,3 +75,4 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.thepicklehub.app.dev.tests
         GENERATE_INFOPLIST_FILE: "YES"
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: "YES"

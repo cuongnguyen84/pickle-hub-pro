@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BuildEnvironment</key>
+	<string>$(APP_ENVIRONMENT)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -35,10 +37,24 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CapacitorAuthResetApproved</key>
+	<string>$(CAPACITOR_AUTH_RESET_APPROVED)</string>
+	<key>FirebaseAPIKey</key>
+	<string>$(FIREBASE_API_KEY)</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>FirebaseGCMSenderID</key>
+	<string>$(FIREBASE_GCM_SENDER_ID)</string>
+	<key>FirebaseGoogleAppID</key>
+	<string>$(FIREBASE_GOOGLE_APP_ID)</string>
+	<key>FirebaseProjectID</key>
+	<string>$(FIREBASE_PROJECT_ID)</string>
 	<key>GIDClientID</key>
 	<string>574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>
 	<string>799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -46,10 +62,16 @@
 		<key>NSAllowsArbitraryLoadsForMedia</key>
 		<true/>
 	</dict>
+	<key>NativeEventRegistrationEnabled</key>
+	<string>$(NATIVE_EVENT_REGISTRATION_ENABLED)</string>
+	<key>RemotePushEnabled</key>
+	<string>$(REMOTE_PUSH_ENABLED)</string>
 	<key>SupabaseAnonKey</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SupabaseProjectRef</key>
 	<string>$(SUPABASE_PROJECT_REF)</string>
+	<key>TurnstileSiteKey</key>
+	<string>$(TURNSTILE_SITE_KEY)</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Geist-Regular.ttf</string>
@@ -67,6 +89,13 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>

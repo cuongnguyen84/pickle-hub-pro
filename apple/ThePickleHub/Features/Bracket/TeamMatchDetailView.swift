@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class TeamMatchViewModel {
     enum Phase: Equatable {
         case loading
@@ -32,7 +33,18 @@ final class TeamMatchViewModel {
     var currentUID: UUID?
 
     private let repo = TeamMatchRepository()
+    private let refreshGate = TournamentRefreshGate()
+    private var realtime: TournamentRealtimeSubscription?
+    private var realtimeTournamentID: UUID?
     var detail: TMDetail? { if case .loaded(let d) = phase { return d } ; return nil }
+
+    @MainActor
+    func stop() async {
+        let subscription = realtime
+        realtime = nil
+        realtimeTournamentID = nil
+        await subscription?.stop()
+    }
 
     /// Tabs — bỏ "Xếp hạng" cho thể thức đồng đội (không cần BXH; playoff vẫn dùng standings ngầm).
     func tabs(for detail: TMDetail) -> [Tab] {
@@ -41,11 +53,17 @@ final class TeamMatchViewModel {
 
     @MainActor
     func load(shareID: String) async {
+        await refreshGate.perform { [weak self] in
+            await self?.loadOnce(shareID: shareID)
+        }
+    }
+
+    private func loadOnce(shareID: String) async {
         if case .loaded = phase {} else { phase = .loading }
         do {
             let detail = try await repo.load(shareID: shareID)
             auth = await repo.scoreAuth(detail: detail)
-            currentUID = await repo.currentUserID()
+            currentUID = await TournamentService.shared.currentUserID()
             if detail.tournament.requireRegistration == true {
                 if !auth.isCreator { myTeam = await repo.userTeam(tournamentID: detail.tournament.id) }
                 membership = await repo.userMembership(tournamentID: detail.tournament.id)
@@ -55,8 +73,22 @@ final class TeamMatchViewModel {
                 dupr = (try? await repo.duprByUser(ids)) ?? [:]
             }
             phase = .loaded(detail)
+            await ensureRealtime(detail.tournament.id, shareID: shareID)
         } catch {
             phase = .failed(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func ensureRealtime(_ tournamentID: UUID, shareID: String) async {
+        guard realtimeTournamentID != tournamentID else { return }
+        let previous = realtime
+        realtime = nil
+        realtimeTournamentID = tournamentID
+        await previous?.stop()
+        realtime = TournamentService.shared.watchTeamMatch(tournamentID: tournamentID) { [weak self] in
+            guard let self else { return }
+            await self.load(shareID: shareID)
         }
     }
 
@@ -240,12 +272,12 @@ final class TeamMatchViewModel {
     }
 }
 
-/// Native Team Match (MLP) read view — team-vs-team matches with sub-game
-/// breakdown + lineups, and the team list. Scoring (lineup + sub-games +
-/// dreambreaker) still happens on web; a per-match button opens it.
+/// Native Team Match (MLP) workspace — overview, teams, standings, schedule,
+/// playoff/repechage, lineup selection and sub-game/DreamBreaker scoring.
 struct TeamMatchDetailView: View {
     let shareID: String
     let fallbackName: String
+    let initialScoringMatchID: UUID?
 
     @Environment(\.dismiss) private var dismiss
     @State private var model = TeamMatchViewModel()
@@ -261,6 +293,13 @@ struct TeamMatchDetailView: View {
     @State private var selectedGroupID: UUID?   // bảng đang xem (tab ngang)
     @State private var scoringMatch: TMMatch?
     @State private var lineupMatch: TMMatch?
+    @State private var didOpenInitialScore = false
+
+    init(shareID: String, fallbackName: String, initialScoringMatchID: UUID? = nil) {
+        self.shareID = shareID
+        self.fallbackName = fallbackName
+        self.initialScoringMatchID = initialScoringMatchID
+    }
 
     var body: some View {
         ScrollView {
@@ -271,32 +310,46 @@ struct TeamMatchDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                if let raw = model.detail?.tournament.chatGroupURL,
+                   let url = URL(string: raw), !raw.isEmpty {
+                    Link(destination: url) {
+                        Image(systemName: "message.fill").foregroundStyle(TLColor.accentText)
+                    }
+                    .accessibilityLabel("Mở nhóm chat")
+                }
                 if model.auth.isCreator {
                     Button { showSettings = true } label: {
                         Image(systemName: "gearshape").foregroundStyle(TLColor.accentText)
                     }
                     .accessibilityLabel("Cài đặt giải")
                 }
+                TournamentShareButton(url: WebRoutes.toolsTeamMatchView(shareID: shareID))
                 Button { openWeb = true } label: {
                     Image(systemName: "safari").foregroundStyle(TLColor.accentText)
                 }
                 .accessibilityLabel("Mở trên web")
             }
         }
-        .task { await model.load(shareID: shareID) }
         .onAppear {
             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { livePulse = true }
         }
-        .task(id: shareID) {
-            // Live polling (web parity: refetchInterval 15s). Skip while a
-            // scoring/lineup sheet is open to avoid the list shifting underneath.
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(15))
-                if Task.isCancelled { break }
-                if scoringMatch == nil && lineupMatch == nil { await model.load(shareID: shareID) }
-            }
+        .tournamentDetailLifecycle(
+            id: shareID,
+            isPollingPaused: { scoringMatch != nil || lineupMatch != nil },
+            load: { await model.load(shareID: shareID) },
+            stop: { await model.stop() }
+        )
+        .onChange(of: model.detail, initial: true) { _, detail in
+            guard !didOpenInitialScore,
+                  let matchID = initialScoringMatchID,
+                  model.auth.canScore,
+                  let detail,
+                  let match = detail.matches.first(where: { $0.id == matchID }),
+                  match.hasBothTeams,
+                  !detail.games(for: match.id).isEmpty else { return }
+            didOpenInitialScore = true
+            scoringMatch = match
         }
-        .refreshable { await model.load(shareID: shareID) }
         .sheet(isPresented: $openWeb) {
             SafariView(url: WebRoutes.toolsTeamMatchView(shareID: shareID)).ignoresSafeArea()
         }
@@ -577,6 +630,12 @@ struct TeamMatchDetailView: View {
         case .loaded(let detail):
             VStack(alignment: .leading, spacing: 18) {
                 header(detail.tournament)
+                if !model.auth.canScore {
+                    RefereeJoinByPinView(format: .teamMatch, parentID: detail.tournament.id,
+                                         isSignedIn: model.currentUID != nil) {
+                        await model.load(shareID: shareID)
+                    }
+                }
                 registrationSection(detail)
                 Picker("", selection: Binding(get: { model.tab }, set: { model.tab = $0 })) {
                     ForEach(model.tabs(for: detail)) { Text($0.label).tag($0) }
@@ -1000,9 +1059,8 @@ struct TeamMatchDetailView: View {
         }
     }
 
-    /// Creator-only generate / regenerate schedule. Round-robin & single-
-    /// elimination generate fully native; rr_playoff generates the group stage
-    /// (playoff seeding still happens on web).
+    /// Creator-only generate / regenerate schedule. Round-robin, single
+    /// elimination, group stage, playoff and repechage all generate natively.
     @ViewBuilder
     private func scheduleControls(_ detail: TMDetail, hasMatches: Bool) -> some View {
         let approved = detail.teams.filter { $0.status == "approved" }.count

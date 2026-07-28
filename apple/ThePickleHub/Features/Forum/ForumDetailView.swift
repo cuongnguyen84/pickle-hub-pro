@@ -243,7 +243,10 @@ struct ForumDetailView: View {
     // MARK: Composer
 
     private var composer: some View {
-        VStack(spacing: 8) {
+        // PhotosPicker's Sendable label should not reach into actor-isolated
+        // observable state; a Bool snapshot is sufficient for the icon.
+        let hasImages = !model.images.isEmpty
+        return VStack(spacing: 8) {
             if let r = model.replyTo {
                 HStack(spacing: 6) {
                     Text("Trả lời \(r.authorName ?? "")").font(TLFont.mono(10)).foregroundStyle(TLColor.fg3).lineLimit(1)
@@ -253,7 +256,7 @@ struct ForumDetailView: View {
             }
             HStack(spacing: 10) {
                 PhotosPicker(selection: $picked, maxSelectionCount: 2, matching: .images) {
-                    Image(systemName: model.images.isEmpty ? "photo" : "photo.fill")
+                    Image(systemName: hasImages ? "photo.fill" : "photo")
                         .font(.system(size: 16)).foregroundStyle(TLColor.accentText)
                 }
                 .onChange(of: picked) { _, items in

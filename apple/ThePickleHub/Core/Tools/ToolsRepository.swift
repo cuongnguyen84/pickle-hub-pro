@@ -1,19 +1,18 @@
 import Foundation
 import Supabase
 
-/// Reads the current user's Bracket Lab tournaments for the Tools hub. Brackets
-/// are created/scored on the web for now, so this is read-only + enrichment.
+/// Reads the current user's Bracket Lab tournaments for the native Tools hub.
 struct ToolsRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
-    private static let iso: ISO8601DateFormatter = {
+    private static func isoFormatter() -> ISO8601DateFormatter {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
-    }()
+    }
     private static func parseDate(_ s: String?) -> Date? {
         guard let s else { return nil }
-        return iso.date(from: s) ?? ISO8601DateFormatter().date(from: s)
+        return isoFormatter().date(from: s) ?? ISO8601DateFormatter().date(from: s)
     }
 
     /// All Bracket Lab tournaments the signed-in user owns, across the 4 formats,
@@ -25,9 +24,8 @@ struct ToolsRepository {
 
         async let quick = quickTournaments(uid: uid, limit: limit)
         async let doubles = doublesTournaments(uid: uid, limit: limit)
-        // Team Match owner column is `created_by` (NOT creator_user_id) — see web
-        // MyTournaments.tsx. Flex uses creator_user_id. Neither has a native view
-        // yet, so cards open the web on tap.
+        // Team Match owner column is `created_by` (NOT creator_user_id); Flex
+        // uses creator_user_id.
         async let team = simpleTournaments(table: "team_match_tournaments", ownerColumn: "created_by", uid: uid, limit: limit, format: .teamMatch)
         async let flex = simpleTournaments(table: "flex_tournaments", ownerColumn: "creator_user_id", uid: uid, limit: limit, format: .flex)
 
@@ -76,18 +74,7 @@ struct ToolsRepository {
     /// `useAdminAuth` check (user_roles WHERE user_id = uid AND role = 'admin').
     /// Non-throwing — any failure (signed out / RLS / network) reads as not-admin.
     func isCurrentUserAdmin() async -> Bool {
-        guard let uid = try? await client.auth.session.user.id.uuidString.lowercased() else { return false }
-        struct RoleRow: Decodable { let role: String }
-        do {
-            let rows: [RoleRow] = try await client
-                .from("user_roles")
-                .select("role")
-                .eq("user_id", value: uid)
-                .eq("role", value: "admin")
-                .limit(1)
-                .execute().value
-            return !rows.isEmpty
-        } catch { assertionFailure("ToolsRepository.isCurrentUserAdmin: \(error)"); return false }
+        await TournamentService.shared.isCurrentUserAdmin()
     }
 
     /// Admin-only: every tournament across all 4 formats, newest first. Lightweight

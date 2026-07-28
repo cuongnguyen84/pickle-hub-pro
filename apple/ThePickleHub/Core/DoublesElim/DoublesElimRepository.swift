@@ -97,6 +97,28 @@ struct DoublesElimRepository {
         return DEDetail(tournament: tournament, teams: try await teams, matches: try await matches)
     }
 
+    func shareID(forMatchID matchID: UUID) async throws -> String {
+        struct MatchRow: Decodable {
+            let tournamentID: UUID
+            enum CodingKeys: String, CodingKey { case tournamentID = "tournament_id" }
+        }
+        struct TournamentRow: Decodable {
+            let shareID: String
+            enum CodingKeys: String, CodingKey { case shareID = "share_id" }
+        }
+        let match: MatchRow = try await client.from("doubles_elimination_matches")
+            .select("tournament_id")
+            .eq("id", value: matchID)
+            .single()
+            .execute().value
+        let tournament: TournamentRow = try await client.from("doubles_elimination_tournaments")
+            .select("share_id")
+            .eq("id", value: match.tournamentID)
+            .single()
+            .execute().value
+        return tournament.shareID
+    }
+
     // MARK: Score
 
     /// ARCH-04 pre-work: the doubles-elimination match-result rule, shared by

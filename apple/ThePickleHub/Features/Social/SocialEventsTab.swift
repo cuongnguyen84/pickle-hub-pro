@@ -218,8 +218,8 @@ private struct SocialEventBigCard: View {
         guard let start = event.startDate else { return "" }
         let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "HH:mm"
         let startStr = f.string(from: start)
-        if let endStr = event.endAt.flatMap { SocialDate.parse($0) }.map({ f.string(from: $0) }) {
-            return "\(startStr) – \(endStr)"
+        if let endAt = event.endAt, let end = SocialDate.parse(endAt) {
+            return "\(startStr) – \(f.string(from: end))"
         }
         return startStr
     }

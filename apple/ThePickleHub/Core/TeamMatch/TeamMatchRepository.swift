@@ -35,7 +35,7 @@ struct TeamMatchRepository {
     func load(shareID: String) async throws -> TMDetail {
         let tournament: TMTournament = try await client
             .from("team_match_tournaments")
-            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, has_repechage, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name, event_date, location, discount_tiers")
+            .select("id, share_id, name, status, format, team_count, team_roster_size, has_dreambreaker, has_third_place_match, playoff_team_count, has_repechage, require_registration, created_by, total_score_mode, points_per_game, require_dupr, dupr_max_male, dupr_max_female, rules_summary, entry_fee_vnd, entry_fee_team_vnd, bank_code, bank_account_number, bank_account_name, event_date, location, discount_tiers, chat_group_url")
             .eq("share_id", value: shareID)
             .single()
             .execute().value
@@ -80,6 +80,28 @@ struct TeamMatchRepository {
                         matches: matchList, games: try await games, groups: try await groups)
     }
 
+    func shareID(forMatchID matchID: UUID) async throws -> String {
+        struct MatchRow: Decodable {
+            let tournamentID: UUID
+            enum CodingKeys: String, CodingKey { case tournamentID = "tournament_id" }
+        }
+        struct TournamentRow: Decodable {
+            let shareID: String
+            enum CodingKeys: String, CodingKey { case shareID = "share_id" }
+        }
+        let match: MatchRow = try await client.from("team_match_matches")
+            .select("tournament_id")
+            .eq("id", value: matchID)
+            .single()
+            .execute().value
+        let tournament: TournamentRow = try await client.from("team_match_tournaments")
+            .select("share_id")
+            .eq("id", value: match.tournamentID)
+            .single()
+            .execute().value
+        return tournament.shareID
+    }
+
     // MARK: Permissions
 
     /// Who can score / edit lineups. Mirrors useTeamMatchRefereeManagement
@@ -88,7 +110,8 @@ struct TeamMatchRepository {
         guard let uid = await currentUserID() else {
             return TMScoreAuth(canScore: false, isOwner: false, isCreator: false, captainTeamID: nil)
         }
-        let isCreator = detail.tournament.createdBy == uid
+        let isAdmin = await TournamentService.shared.isCurrentUserAdmin()
+        let isCreator = detail.tournament.createdBy == uid || isAdmin
         var isReferee = false
         if !isCreator {
             struct RefRow: Decodable { let id: UUID }
@@ -285,6 +308,76 @@ struct TeamMatchRepository {
     func rename(tournamentID: UUID, name: String) async throws {
         try await client.from("team_match_tournaments")
             .update(NameUpdate(name: name)).eq("id", value: tournamentID).execute()
+    }
+
+    struct DetailsUpdate {
+        let name: String
+        let eventDate: String?
+        let location: String?
+        let chatGroupURL: String?
+        let rulesSummary: String?
+        let entryFeeVnd: Int?
+        let entryFeeTeamVnd: Int?
+        let bankCode: String?
+        let bankAccountNumber: String?
+        let bankAccountName: String?
+        let requireDupr: Bool
+        let duprMaxMale: Double?
+        let duprMaxFemale: Double?
+    }
+
+    /// Soft metadata editable after creation. Every optional is encoded
+    /// explicitly, including null, so clearing a native field also clears web.
+    func updateDetails(tournamentID: UUID, details: DetailsUpdate) async throws {
+        struct Patch: Encodable {
+            let source: DetailsUpdate
+            enum CodingKeys: String, CodingKey {
+                case name
+                case eventDate = "event_date"
+                case location
+                case chatGroupURL = "chat_group_url"
+                case rulesSummary = "rules_summary"
+                case entryFeeVnd = "entry_fee_vnd"
+                case entryFeeTeamVnd = "entry_fee_team_vnd"
+                case bankCode = "bank_code"
+                case bankAccountNumber = "bank_account_number"
+                case bankAccountName = "bank_account_name"
+                case requireDupr = "require_dupr"
+                case duprMaxMale = "dupr_max_male"
+                case duprMaxFemale = "dupr_max_female"
+            }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(source.name, forKey: .name)
+                try c.encode(source.requireDupr, forKey: .requireDupr)
+                try Self.encode(source.eventDate, to: &c, key: .eventDate)
+                try Self.encode(source.location, to: &c, key: .location)
+                try Self.encode(source.chatGroupURL, to: &c, key: .chatGroupURL)
+                try Self.encode(source.rulesSummary, to: &c, key: .rulesSummary)
+                try Self.encode(source.entryFeeVnd, to: &c, key: .entryFeeVnd)
+                try Self.encode(source.entryFeeTeamVnd, to: &c, key: .entryFeeTeamVnd)
+                try Self.encode(source.bankCode, to: &c, key: .bankCode)
+                try Self.encode(source.bankAccountNumber, to: &c, key: .bankAccountNumber)
+                try Self.encode(source.bankAccountName, to: &c, key: .bankAccountName)
+                try Self.encode(source.duprMaxMale, to: &c, key: .duprMaxMale)
+                try Self.encode(source.duprMaxFemale, to: &c, key: .duprMaxFemale)
+            }
+            private static func encode<T: Encodable>(
+                _ value: T?,
+                to container: inout KeyedEncodingContainer<CodingKeys>,
+                key: CodingKeys
+            ) throws {
+                if let value {
+                    try container.encode(value, forKey: key)
+                } else {
+                    try container.encodeNil(forKey: key)
+                }
+            }
+        }
+        try await client.from("team_match_tournaments")
+            .update(Patch(source: details))
+            .eq("id", value: tournamentID)
+            .execute()
     }
 
     func deleteTournament(tournamentID: UUID) async throws {

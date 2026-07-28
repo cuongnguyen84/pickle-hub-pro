@@ -162,6 +162,7 @@ struct DoublesElimSettingsSheet: View {
             }
             Text("Trọng tài có thể chấm điểm mọi trận. Người dùng phải đã có tài khoản.")
                 .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+            RefereePinSettingsView(format: .doublesElimination, parentID: tournament.id)
         }
     }
 

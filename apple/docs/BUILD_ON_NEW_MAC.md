@@ -37,6 +37,15 @@ SUPABASE_PROJECT_REF = ajvlcamxemgbxduhiqrl
 SUPABASE_ANON_KEY = <giá trị VITE_SUPABASE_PUBLISHABLE_KEY trong .env>
 ```
 
+`TURNSTILE_SITE_KEY` là public nhưng để trống mặc định. Có key vẫn chưa đủ bật
+OTP native: build flag và remote kill switch cũng phải bật theo
+`RELEASE_AND_ACTIVATION.md`.
+
+Push production cần thêm bốn client identifiers public từ Firebase iOS app hiện
+tại (`GOOGLE_APP_ID`, `GCM_SENDER_ID`, `API_KEY`, `PROJECT_ID`) vào các biến
+`FIREBASE_*` trong file mẫu. Debug vẫn tắt push vì bundle `.dev` chưa có Firebase
+app riêng. Không đưa service-account JSON/server key vào máy client hoặc repo.
+
 ## 4. Generate project + mở Xcode
 
 ```sh
@@ -44,8 +53,8 @@ xcodegen generate
 open ThePickleHub.xcodeproj
 ```
 
-Lần đầu Xcode tự resolve Swift Packages (`supabase-swift`, `GoogleSignIn-iOS`) —
-đợi xong.
+Lần đầu Xcode tự resolve Swift Packages (`supabase-swift`, `GoogleSignIn-iOS`,
+`firebase-ios-sdk`) — đợi xong.
 
 ## 5. Build & chạy
 
@@ -72,6 +81,16 @@ Xcode → target **ThePickleHub** → **Signing & Capabilities** → đăng nh�
 chọn **Team** (Personal Team miễn phí cũng được) → cắm iPhone → Run. Bundle id dev là
 `net.thepicklehub.app.dev`, tách khỏi app live (`net.thepicklehub.app`) nên cài song
 song được.
+
+## Release / App Store
+
+Release dùng `net.thepicklehub.app`, version `1.1.0 (3)`, production environment
+và strict-concurrency diagnostics. Chạy `./scripts/release_preflight.sh` trước
+mọi archive. Quy trình device smoke, remote kill switch, Distribution signing và
+artifact validation nằm trong `docs/RELEASE_AND_ACTIVATION.md`.
+
+`--shipping` cố ý fail nếu push chưa bật/configure hoặc chưa duyệt việc user
+Capacitor phải đăng nhập lại một lần. Không bypass hai gate này.
 
 ## Ghi chú
 

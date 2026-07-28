@@ -9,6 +9,7 @@ import SwiftUI
 /// cutting off its confirm button at big type) is prevented structurally —
 /// TLSheet always wraps content in a ScrollView — and these tests pin that
 /// the wrapped hierarchy keeps rendering at AX3.
+@MainActor
 final class TLComponentsRenderTests: XCTestCase {
 
     private func assertRenders<V: View>(_ view: V, _ name: String) {

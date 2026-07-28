@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class DoublesElimViewModel {
     enum Phase: Equatable {
         case loading
@@ -28,15 +29,33 @@ final class DoublesElimViewModel {
     var tab: Tab = .preliminary
     var scoringMatch: DEMatch?
     var scoreError: String?
+    var scoreSaving = false
     var regBusy = false
     var regMessage: String?
 
     private let repo = DoublesElimRepository()
+    private let refreshGate = TournamentRefreshGate()
+    private var realtime: TournamentRealtimeSubscription?
+    private var realtimeTournamentID: UUID?
 
     var detail: DEDetail? { if case .loaded(let d) = phase { return d } ; return nil }
 
     @MainActor
+    func stop() async {
+        let subscription = realtime
+        realtime = nil
+        realtimeTournamentID = nil
+        await subscription?.stop()
+    }
+
+    @MainActor
     func load(shareID: String) async {
+        await refreshGate.perform { [weak self] in
+            await self?.loadAndMaintain(shareID: shareID)
+        }
+    }
+
+    private func loadAndMaintain(shareID: String) async {
         await fetch(shareID: shareID)
         if editable { await maintain(shareID: shareID) }
     }
@@ -46,14 +65,32 @@ final class DoublesElimViewModel {
         if case .loaded = phase {} else { phase = .loading }
         do {
             let detail = try await repo.load(shareID: shareID)
-            let uid = await repo.currentUserID()
+            let uid = await TournamentService.shared.currentUserID()
             currentUserID = uid
-            isCreator = detail.tournament.creatorUserID != nil && detail.tournament.creatorUserID == uid
-            let referee = uid != nil ? await repo.isReferee(tournamentID: detail.tournament.id, userID: uid!) : false
+            let owner = detail.tournament.creatorUserID != nil && detail.tournament.creatorUserID == uid
+            let admin = await TournamentService.shared.isCurrentUserAdmin()
+            isCreator = owner || admin
+            let referee = uid != nil && !isCreator
+                ? await repo.isReferee(tournamentID: detail.tournament.id, userID: uid!)
+                : false
             editable = isCreator || referee
             phase = .loaded(detail)
+            await ensureRealtime(detail.tournament.id, shareID: shareID)
         } catch {
             phase = .failed(error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private func ensureRealtime(_ tournamentID: UUID, shareID: String) async {
+        guard realtimeTournamentID != tournamentID else { return }
+        let previous = realtime
+        realtime = nil
+        realtimeTournamentID = tournamentID
+        await previous?.stop()
+        realtime = TournamentService.shared.watchDoublesElim(tournamentID: tournamentID) { [weak self] in
+            guard let self else { return }
+            await self.load(shareID: shareID)
         }
     }
 
@@ -78,14 +115,17 @@ final class DoublesElimViewModel {
 
     @MainActor
     func submitScore(match: DEMatch, gameScores: [(Int, Int)], shareID: String) async {
+        guard !scoreSaving else { return }
+        scoreSaving = true
+        scoreError = nil
+        defer { scoreSaving = false }
         do {
             try await repo.score(match: match, gameScores: gameScores)
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = error.localizedDescription
-            scoringMatch = nil
-            await load(shareID: shareID)
+            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            Haptics.error()
         }
     }
 
@@ -154,16 +194,23 @@ final class DoublesElimViewModel {
     }
 }
 
-/// Native Doubles Elimination view — preliminary (R1/R2/R3) + playoff round lists,
-/// teams, and inline score entry with full winner/loser advancement. Faithful
-/// port of the web bracket; bracket tree viz deferred (round-grouped lists).
+/// Native Doubles Elimination view — preliminary (R1/R2/R3), playoff bracket,
+/// teams, courts and inline score entry with full winner/loser advancement.
 struct DoublesElimDetailView: View {
     let shareID: String
     let fallbackName: String
+    let initialScoringMatchID: UUID?
 
     @State private var model = DoublesElimViewModel()
     @State private var openWeb = false
     @State private var showSettings = false
+    @State private var didOpenInitialScore = false
+
+    init(shareID: String, fallbackName: String, initialScoringMatchID: UUID? = nil) {
+        self.shareID = shareID
+        self.fallbackName = fallbackName
+        self.initialScoringMatchID = initialScoringMatchID
+    }
 
     var body: some View {
         ScrollView {
@@ -181,6 +228,9 @@ struct DoublesElimDetailView: View {
                         }
                         .accessibilityLabel("Cài đặt giải")
                     }
+                    TournamentShareButton(
+                        url: WebRoutes.toolsDoublesEliminationView(shareID: shareID)
+                    )
                     Button { openWeb = true } label: {
                         Image(systemName: "safari").foregroundStyle(TLColor.accentText)
                     }
@@ -188,17 +238,22 @@ struct DoublesElimDetailView: View {
                 }
             }
         }
-        .task { await model.load(shareID: shareID) }
-        .task(id: shareID) {
-            // Live polling (web parity: refetchInterval 15s). Skip while a sheet
-            // is open so the list can't shift under the user.
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(15))
-                if Task.isCancelled { break }
-                if model.scoringMatch == nil && !showSettings { await model.load(shareID: shareID) }
-            }
+        .tournamentDetailLifecycle(
+            id: shareID,
+            isPollingPaused: { model.scoringMatch != nil || showSettings },
+            load: { await model.load(shareID: shareID) },
+            stop: { await model.stop() }
+        )
+        .onChange(of: model.detail, initial: true) { _, detail in
+            guard !didOpenInitialScore,
+                  let matchID = initialScoringMatchID,
+                  model.editable,
+                  let match = detail?.matches.first(where: { $0.id == matchID }),
+                  match.hasBothTeams,
+                  !match.isBye else { return }
+            didOpenInitialScore = true
+            model.scoringMatch = match
         }
-        .refreshable { await model.load(shareID: shareID) }
         .sheet(isPresented: $openWeb) {
             SafariView(url: WebRoutes.toolsDoublesEliminationView(shareID: shareID)).ignoresSafeArea()
         }
@@ -212,7 +267,13 @@ struct DoublesElimDetailView: View {
         }
         .sheet(item: Binding(get: { model.scoringMatch }, set: { model.scoringMatch = $0 })) { match in
             if let detail = model.detail {
-                DEScoreSheet(detail: detail, match: match, onError: { model.scoreError = $0 }) { pairs in
+                DEScoreSheet(
+                    detail: detail,
+                    match: match,
+                    saving: model.scoreSaving,
+                    errorMessage: model.scoreError,
+                    onError: { model.scoreError = $0 }
+                ) { pairs in
                     Task { await model.submitScore(match: match, gameScores: pairs, shareID: shareID) }
                 }
             }
@@ -239,6 +300,12 @@ struct DoublesElimDetailView: View {
         case .loaded(let detail):
             VStack(alignment: .leading, spacing: 18) {
                 header(detail.tournament)
+                if !model.isCreator && !model.editable {
+                    RefereeJoinByPinView(format: .doublesElimination, parentID: detail.tournament.id,
+                                         isSignedIn: model.currentUserID != nil) {
+                        await model.load(shareID: shareID)
+                    }
+                }
                 if detail.isRegistrationOpen {
                     DoublesElimRegistrationView(detail: detail, model: model, shareID: shareID)
                 } else {
@@ -613,6 +680,8 @@ struct DoublesElimDetailView: View {
 private struct DEScoreSheet: View {
     let detail: DEDetail
     let match: DEMatch
+    let saving: Bool
+    let errorMessage: String?
     let onError: (String) -> Void
     let onSave: ([(Int, Int)]) -> Void
 
@@ -636,11 +705,15 @@ private struct DEScoreSheet: View {
     init(
         detail: DEDetail,
         match: DEMatch,
+        saving: Bool,
+        errorMessage: String?,
         onError: @escaping (String) -> Void,
         onSave: @escaping ([(Int, Int)]) -> Void
     ) {
         self.detail = detail
         self.match = match
+        self.saving = saving
+        self.errorMessage = errorMessage
         self.onError = onError
         self.onSave = onSave
         let count = max(1, match.bestOf)
@@ -670,6 +743,9 @@ private struct DEScoreSheet: View {
                     teamHeader
                     ForEach(rows.indices, id: \.self) { i in
                         gameRow(i)
+                    }
+                    if let errorMessage {
+                        TournamentScoreRetryMessage(message: errorMessage)
                     }
                     refereeSection
                 }
@@ -706,9 +782,14 @@ private struct DEScoreSheet: View {
                     Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Lưu") { if valid { Haptics.light(); onSave(pairs) } }
+                    Button {
+                        if valid { Haptics.light(); onSave(pairs) }
+                    } label: {
+                        if saving { ProgressView().tint(TLColor.accentText) }
+                        else { Text(errorMessage == nil ? "Lưu" : "Thử lại") }
+                    }
                         .foregroundStyle(valid ? TLColor.accentText : TLColor.fg4)
-                        .disabled(!valid)
+                        .disabled(!valid || saving)
                 }
             }
         }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 @Observable
+@MainActor
 final class SearchViewModel {
     var query = ""
     var results = SearchResults()

@@ -6,6 +6,7 @@ import Observation
 /// (public brackets across the 4 formats). Default tab mirrors the web:
 /// Community unless there's pro/live "watch" content.
 @Observable
+@MainActor
 final class TournamentsViewModel {
     enum Phase: Equatable { case loading, loaded, failed(String) }
     enum Tab: Hashable { case watch, community }

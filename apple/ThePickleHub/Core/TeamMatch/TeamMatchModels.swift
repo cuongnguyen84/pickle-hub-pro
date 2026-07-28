@@ -2,7 +2,7 @@ import Foundation
 
 // Native models for the Team Match (MLP) format. Read surfaces port of web
 // TeamMatchView.tsx + useTeamMatch.ts. Tables: team_match_{tournaments,teams,
-// matches,games,roster}. Scoring (lineup + sub-games) stays on web for now.
+// matches,games,roster}. The native feature also owns lineup and sub-game scoring.
 
 struct TMTournament: Decodable, Equatable {
     let id: UUID
@@ -34,6 +34,7 @@ struct TMTournament: Decodable, Equatable {
     let eventDate: String?
     let location: String?
     let discountTiers: [TMDiscountTier]?
+    let chatGroupURL: String?
 
     var displayName: String { name.nonEmpty ?? "Giải đồng đội" }
 
@@ -115,6 +116,7 @@ struct TMTournament: Decodable, Equatable {
         case eventDate = "event_date"
         case location
         case discountTiers = "discount_tiers"
+        case chatGroupURL = "chat_group_url"
     }
 }
 

@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import Supabase
+import AuthenticationServices
 
 /// Stable identity exposed to the UI. Keeping the user id in state prevents a
 /// refreshed or replaced session from being mistaken for the previous user.
@@ -98,6 +99,8 @@ final class SessionStore {
 
     @ObservationIgnored
     private var authListenerTask: Task<Void, Never>?
+    @ObservationIgnored
+    private var appleRawNonce: String?
 
     init(
         client: SupabaseClient = SupabaseManager.shared.client,
@@ -153,6 +156,55 @@ final class SessionStore {
         }
     }
 
+    // MARK: - Apple (native AuthenticationServices → Supabase OIDC)
+
+    func prepareAppleSignIn(_ request: ASAuthorizationAppleIDRequest) {
+        lastError = nil
+        isWorking = true
+        do {
+            appleRawNonce = try AppleAuthService.prepare(request)
+        } catch {
+            appleRawNonce = nil
+            isWorking = false
+            lastError = error.localizedDescription
+        }
+    }
+
+    func completeAppleSignIn(_ result: Result<ASAuthorization, Error>) async {
+        let rawNonce = appleRawNonce
+        appleRawNonce = nil
+
+        switch result {
+        case .failure(let error):
+            isWorking = false
+            if !AppleAuthService.isCancellation(error) {
+                lastError = error.localizedDescription
+            }
+        case .success(let authorization):
+            await run {
+                let credentials = try AppleAuthService.credentials(
+                    from: authorization,
+                    rawNonce: rawNonce
+                )
+                let session = try await self.client.auth.signInWithIdToken(
+                    credentials: .init(
+                        provider: .apple,
+                        idToken: credentials.idToken,
+                        nonce: credentials.rawNonce
+                    )
+                )
+                await self.persistAppleDisplayNameIfNeeded(
+                    credentials.displayName,
+                    session: session
+                )
+                self.apply(.init(
+                    kind: .signedIn,
+                    identity: SessionUserIdentity(session: session)
+                ))
+            }
+        }
+    }
+
     // MARK: - Phone OTP
 
     func sendPhoneOTP(phone: String) async -> Bool {
@@ -176,6 +228,7 @@ final class SessionStore {
 
     func signOut() async {
         await run {
+            await RemotePushService.shared.prepareForSignOut()
             // Supabase clears its local session and emits `.signedOut` before
             // attempting the remote logout request. The defer keeps UI and the
             // Google SDK clean even if that request fails offline.
@@ -210,6 +263,51 @@ final class SessionStore {
             isWorking = false
             if needsExternalCleanup { clearExternalAuth() }
         }
+    }
+
+    /// Apple only returns the person's name on the first authorization. Store
+    /// it opportunistically without overwriting a profile name the user already
+    /// chose. Name persistence is best-effort and must never block sign-in.
+    private func persistAppleDisplayNameIfNeeded(
+        _ displayName: String?,
+        session: Session
+    ) async {
+        guard let displayName else { return }
+        _ = try? await client.auth.update(
+            user: UserAttributes(data: [
+                "display_name": .string(displayName),
+                "full_name": .string(displayName)
+            ])
+        )
+
+        struct ProfileName: Decodable {
+            let displayName: String?
+            enum CodingKeys: String, CodingKey {
+                case displayName = "display_name"
+            }
+        }
+        struct ProfileNameUpdate: Encodable {
+            let display_name: String
+        }
+
+        let profile: ProfileName? = try? await client.from("profiles")
+            .select("display_name")
+            .eq("id", value: session.user.id)
+            .single()
+            .execute()
+            .value
+        let current = profile?.displayName?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let emailFallback = session.user.email?
+            .split(separator: "@", maxSplits: 1)
+            .first
+            .map(String.init)
+        guard current?.isEmpty != false || current == emailFallback else { return }
+
+        _ = try? await client.from("profiles")
+            .update(ProfileNameUpdate(display_name: displayName))
+            .eq("id", value: session.user.id)
+            .execute()
     }
 
     nonisolated private static func liveAuthEvents(

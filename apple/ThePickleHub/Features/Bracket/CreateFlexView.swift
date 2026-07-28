@@ -2,9 +2,8 @@ import SwiftUI
 
 /// Native Flex (custom-format) create flow — port of the web create dialog
 /// (`useFlexTournament.createMutation`): name + visibility + optional player list.
-/// Creates the tournament with a preset group + singles/doubles match; roster and
-/// group editing still happen on web. Hands back the new share_id so the caller can
-/// push the native detail view.
+/// Creates the tournament with a starter group and matches, then hands back the
+/// share_id so the caller can open the full native workspace.
 @Observable
 final class CreateFlexModel {
     var name = ""
@@ -106,7 +105,7 @@ struct CreateFlexView: View {
                             }
                         }
 
-                        Text("Sẽ tạo sẵn 1 bảng + 1 trận đơn + 1 trận đôi. Xếp bảng và thêm trận trên web.")
+                        Text("Sẽ tạo sẵn 1 bảng + 1 trận đơn + 1 trận đôi. Sau đó có thể xếp bảng, thêm người và thêm trận ngay trong app.")
                             .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
                             .fixedSize(horizontal: false, vertical: true)
 

@@ -5,6 +5,7 @@ import Observation
 /// pagination of the RPC stream, a one-time news overlay merged by score, and
 /// pull-to-refresh. Dedupes by item id so overlapping pages never double-render.
 @Observable
+@MainActor
 final class FeedViewModel {
     enum Phase: Equatable {
         case loading

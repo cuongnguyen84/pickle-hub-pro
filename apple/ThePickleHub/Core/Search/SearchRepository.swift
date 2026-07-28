@@ -39,9 +39,20 @@ struct SearchRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
     private static let limit = 12
 
-    /// Escape PostgREST ILIKE wildcards (`%` and `_`) in user input.
-    private static func escape(_ q: String) -> String {
-        q.replacingOccurrences(of: "%", with: "\\%").replacingOccurrences(of: "_", with: "\\_")
+    /// Builds one quoted PostgREST ILIKE value while preserving the user's
+    /// literal punctuation. PostgREST reserves commas, periods and parentheses
+    /// in raw `.or(...)` grammar, so the complete pattern must be quoted.
+    /// Backslashes/quotes are escaped for the quoted value; `%` and `_` are
+    /// escaped for PostgreSQL ILIKE. `*` is PostgREST's `%` alias and is used
+    /// only for the two wildcards added by this method.
+    static func quotedILikePattern(_ query: String) -> String {
+        let escaped = query
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_")
+            .replacingOccurrences(of: "*", with: "\\*")
+        return "\"%\(escaped)%\""
     }
 
     func search(_ rawQuery: String) async -> SearchResults {
@@ -69,7 +80,7 @@ struct SearchRepository {
                 case duprDoubles = "dupr_doubles"
             }
         }
-        let pattern = "%\(Self.escape(q))%"
+        let pattern = Self.quotedILikePattern(q)
         guard let rows: [Row] = try? await client
             .from("profiles")
             .select("id, username, display_name, avatar_url, dupr_singles, dupr_doubles")
@@ -84,7 +95,7 @@ struct SearchRepository {
     }
 
     private func searchTournaments(_ q: String) async -> [Tournament] {
-        let pattern = "%\(Self.escape(q))%"
+        let pattern = Self.quotedILikePattern(q)
         guard let rows: [Tournament] = try? await client
             .from("tournaments")
             .select("id, name, slug, start_date, end_date, status, description, organization:organizations(name, slug, logo_url)")
@@ -106,7 +117,7 @@ struct SearchRepository {
                 case durationSeconds = "duration_seconds"
             }
         }
-        let pattern = "%\(Self.escape(q))%"
+        let pattern = Self.quotedILikePattern(q)
         guard let rows: [Row] = try? await client
             .from("videos")
             .select("id, title, thumbnail_url, duration_seconds")

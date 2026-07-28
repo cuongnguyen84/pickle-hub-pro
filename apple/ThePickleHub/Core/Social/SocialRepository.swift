@@ -5,9 +5,174 @@ import Supabase
 /// `useSocialEvent`.
 struct SocialRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
+    static let nativeRegistrationSettingKey = "native_event_registration_enabled"
+
+    struct BooleanSettingRow: Decodable, Equatable {
+        let value: Bool
+    }
+
+    struct OTPResponse: Decodable, Equatable {
+        let ok: Bool?
+        let code: String?
+        let error: String?
+        let channel: String?
+        let registrationID: String?
+        let profileID: String?
+        let magicToken: String?
+        let registeredAt: String?
+        let expiresAt: String?
+        enum CodingKeys: String, CodingKey {
+            case ok, code, error, channel
+            case registrationID = "registration_id"
+            case profileID = "profile_id"
+            case magicToken = "magic_token"
+            case registeredAt = "registered_at"
+            case expiresAt = "expires_at"
+        }
+    }
+
+    struct SendOTPBody: Encodable, Equatable {
+        let phone: String
+        let eventID: String
+        let turnstileToken: String
+
+        enum CodingKeys: String, CodingKey {
+            case phone
+            case eventID = "event_id"
+            case turnstileToken = "turnstile_token"
+        }
+    }
+
+    struct VerifyOTPBody: Encodable, Equatable {
+        let phone: String
+        let eventID: String
+        let code: String
+        let displayName: String
+        let selfRatedLevel: Double?
+        let slotID: String?
+
+        enum CodingKeys: String, CodingKey {
+            case phone, code
+            case eventID = "event_id"
+            case displayName = "display_name"
+            case selfRatedLevel = "self_rated_level"
+            case slotID = "slot_id"
+        }
+    }
+
+    struct PaymentOrderResponse: Decodable, Equatable {
+        struct Bank: Decodable, Equatable {
+            let code: String
+            let accountNumber: String
+            let accountName: String
+
+            enum CodingKeys: String, CodingKey {
+                case code
+                case accountNumber = "account_number"
+                case accountName = "account_name"
+            }
+        }
+
+        let ok: Bool?
+        let code: String?
+        let orderID: String?
+        let referenceCode: String?
+        let amountVnd: Int?
+        let bank: Bank?
+
+        enum CodingKeys: String, CodingKey {
+            case ok, code, bank
+            case orderID = "order_id"
+            case referenceCode = "reference_code"
+            case amountVnd = "amount_vnd"
+        }
+    }
+
+    func sendRegistrationOTP(phone: String, eventID: UUID,
+                             turnstileToken: String) async throws -> OTPResponse {
+        let body = SendOTPBody(phone: phone, eventID: eventID.uuidString.lowercased(),
+                               turnstileToken: turnstileToken)
+        let response: OTPResponse = try await invoke("phone-otp-send", body: body)
+        try validate(response)
+        return response
+    }
+
+    func verifyRegistrationOTP(phone: String, eventID: UUID, code: String,
+                               displayName: String, level: Double? = nil,
+                               slotID: String? = nil) async throws -> OTPResponse {
+        let body = VerifyOTPBody(phone: phone, eventID: eventID.uuidString.lowercased(),
+                                 code: code, displayName: displayName,
+                                 selfRatedLevel: level, slotID: slotID)
+        let response: OTPResponse = try await invoke("phone-otp-verify", body: body)
+        try validate(response)
+        guard response.registrationID != nil, response.magicToken != nil else {
+            throw SocialFlowError(code: "invalid_server_response")
+        }
+        return response
+    }
+
+    func createPaymentOrder(registrationID: String, magicToken: String) async throws -> PaymentOrderResponse {
+        struct Body: Encodable { let registration_id: String; let magic_token: String }
+        let response: PaymentOrderResponse = try await invoke(
+            "create-payment-order",
+            body: Body(registration_id: registrationID, magic_token: magicToken))
+        if let code = response.code, code != "payment_not_enabled" {
+            throw SocialFlowError(code: code)
+        }
+        return response
+    }
+
+    func registrationSlotCounts(eventID: UUID) async throws -> [String: Int] {
+        struct Params: Encodable { let p_event_id: String }
+        struct Row: Decodable { let slot_id: String; let registered_count: Int }
+        let rows: [Row] = try await client.rpc(
+            "get_event_slot_counts",
+            params: Params(p_event_id: eventID.uuidString.lowercased())).execute().value
+        return rows.reduce(into: [:]) { $0[$1.slot_id] = $1.registered_count }
+    }
+
+    /// Production kill switch. A missing row, malformed JSON or network/RLS
+    /// failure all fail closed to the Safari registration flow.
+    func nativeRegistrationRemotelyEnabled() async -> Bool {
+        guard AppConfig.nativeEventRegistrationEnabled else { return false }
+        let rows: [BooleanSettingRow]? = try? await client
+            .from("system_settings")
+            .select("value")
+            .eq("key", value: Self.nativeRegistrationSettingKey)
+            .limit(1)
+            .execute()
+            .value
+        return rows?.first?.value == true
+    }
+
+    private func validate(_ response: OTPResponse) throws {
+        if let code = response.code { throw SocialFlowError(code: code) }
+        guard response.ok == true else { throw SocialFlowError(code: "invalid_server_response") }
+    }
+
+    /// Supabase throws before decoding non-2xx function responses. Preserve the
+    /// backend's stable `code` so the UI can show an actionable Vietnamese error.
+    static func functionErrorCode(_ error: Error) -> String? {
+        guard case let FunctionsError.httpError(_, data) = error else { return nil }
+        struct Payload: Decodable { let code: String?; let error: String? }
+        guard let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return nil }
+        return payload.code ?? payload.error
+    }
+
+    private func invoke<Response: Decodable, Body: Encodable>(
+        _ name: String, body: Body
+    ) async throws -> Response {
+        do {
+            return try await client.functions.invoke(
+                name, options: FunctionInvokeOptions(body: body))
+        } catch {
+            if let code = Self.functionErrorCode(error) { throw SocialFlowError(code: code) }
+            throw error
+        }
+    }
 
     private static let columns =
-        "id, slug, title_vi, title_en, description_vi, start_at, end_at, location_text, court_count, max_players, level_min, level_max, price_vnd, zalo_group_url, ball_type, free_perks, status, created_by, club_id, visibility, requires_prepayment, prepayment_deadline_hours"
+        "id, slug, title_vi, title_en, description_vi, start_at, end_at, location_text, court_count, max_players, level_min, level_max, price_vnd, zalo_group_url, ball_type, free_perks, status, allow_guests, slots, created_by, club_id, visibility, requires_prepayment, prepayment_deadline_hours"
 
     /// Published, public events that haven't ended yet, soonest first.
     func upcomingEvents(limit: Int = 30) async throws -> [SocialEvent] {
