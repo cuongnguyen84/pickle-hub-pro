@@ -209,9 +209,6 @@ struct MyTournament: Identifiable, Equatable, Hashable {
 
     var dateText: String {
         guard let createdAt else { return "" }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "vi_VN")
-        f.dateFormat = "dd.MM.yyyy"
-        return "Tạo \(f.string(from: createdAt))"
+        return String(localized: "Tạo \(createdAt.formatted(date: .numeric, time: .omitted))")
     }
 }

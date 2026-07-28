@@ -59,6 +59,7 @@ enum TournamentStatus: String {
 
 /// Formats the `DATE` strings into a compact Vietnamese range.
 enum TournamentDate {
+    // canonical — KHÔNG theo locale: fixed-format parser cho chuỗi DATE từ server
     private static let parser: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)

@@ -93,6 +93,7 @@ final class TMSettingsModel {
         busy = false
     }
 
+    // canonical — KHÔNG theo locale: fixed-format "yyyy-MM-dd" parse/serialize với server
     private static func parseDate(_ raw: String?) -> Date? {
         guard let raw else { return nil }
         let formatter = DateFormatter()

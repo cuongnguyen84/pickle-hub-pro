@@ -317,10 +317,9 @@ private struct ClubEventRow: View {
         let comps: (String, String, String) = {
             guard let d = event.startDate else { return ("", "—", "") }
             let cal = Calendar.current
-            let wd = DateFormatter(); wd.locale = Locale(identifier: "vi_VN"); wd.dateFormat = "EEE"
             let day = String(cal.component(.day, from: d))
             let mon = String(format: "%02d", cal.component(.month, from: d))
-            return (wd.string(from: d).uppercased(), day, mon)
+            return (d.formatted(.dateTime.weekday(.abbreviated)).uppercased(), day, mon)
         }()
         return VStack(spacing: 1) {
             Text(comps.0).font(TLFont.mono(9)).foregroundStyle(TLColor.fg3)
@@ -333,8 +332,7 @@ private struct ClubEventRow: View {
     private var metaLine: String {
         var parts: [String] = []
         if let d = event.startDate {
-            let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "HH:mm"
-            parts.append(f.string(from: d))
+            parts.append(d.formatted(date: .omitted, time: .shortened))
         }
         if let max = event.maxPlayers { parts.append("\(max) chỗ") }
         return parts.joined(separator: " · ")
@@ -364,8 +362,7 @@ struct ClubMatchCard: View {
     private var metaLabel: String {
         var parts: [String] = []
         if let d = match.playedDate {
-            let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "dd/MM HH:mm"
-            parts.append(f.string(from: d))
+            parts.append(d.formatted(.dateTime.day(.twoDigits).month(.twoDigits).hour().minute()))
         }
         parts.append(match.formatLabel)
         return parts.joined(separator: " · ")

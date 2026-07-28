@@ -268,11 +268,10 @@ enum ISODate {
         return f.date(from: iso)
     }
 
-    /// Vietnamese relative time ("2 giờ trước"), for feed/forum timestamps.
+    /// Locale-aware relative time ("2 giờ trước" / "2 hr. ago"), for feed/forum timestamps.
     static func relative(_ iso: String?) -> String {
         guard let d = parse(iso) else { return "" }
         let rf = RelativeDateTimeFormatter()
-        rf.locale = Locale(identifier: "vi_VN")
         rf.unitsStyle = .short
         return rf.localizedString(for: d, relativeTo: Date())
     }

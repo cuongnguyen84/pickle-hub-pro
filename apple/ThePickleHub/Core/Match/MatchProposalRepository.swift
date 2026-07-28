@@ -116,6 +116,7 @@ struct MatchProposalRepository {
     }
 
     /// `match_date` in the server's expected `YYYY-MM-DD` form, local calendar.
+    /// canonical — KHÔNG theo locale: fixed-format chuỗi gửi server
     private static func todayString() -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")

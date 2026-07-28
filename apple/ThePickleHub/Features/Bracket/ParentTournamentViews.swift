@@ -315,12 +315,13 @@ struct ParentTournamentDetailView: View {
 
     private func eventDateLabel(_ raw: String?) -> String? {
         guard let raw, !raw.isEmpty else { return nil }
+        // canonical — KHÔNG theo locale: fixed-format parser; hiển thị bên dưới theo locale app
         let parser = DateFormatter()
         parser.calendar = Calendar(identifier: .gregorian)
         parser.locale = Locale(identifier: "en_US_POSIX")
         parser.dateFormat = "yyyy-MM-dd"
         guard let date = parser.date(from: raw) else { return raw }
-        return date.formatted(.dateTime.day().month().year().locale(Locale(identifier: "vi_VN")))
+        return date.formatted(.dateTime.day().month().year())
     }
 }
 

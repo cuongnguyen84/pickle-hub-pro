@@ -243,9 +243,6 @@ enum SocialDate {
     }
 
     static func display(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "vi_VN")
-        formatter.dateFormat = "EEE, dd/MM · HH:mm"
-        return formatter.string(from: date)
+        "\(date.formatted(.dateTime.weekday(.abbreviated).day(.twoDigits).month(.twoDigits))) · \(date.formatted(date: .omitted, time: .shortened))"
     }
 }

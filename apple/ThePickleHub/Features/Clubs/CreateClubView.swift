@@ -4,6 +4,7 @@ import PhotosUI
 /// Slugify a name → url-safe slug (Vietnamese diacritics stripped), ≤50 chars.
 /// Mirror of web CreateClub.slugify.
 func clubSlugify(_ input: String) -> String {
+    // canonical — KHÔNG theo locale: sinh slug ASCII ổn định
     let base = input.folding(options: .diacriticInsensitive, locale: Locale(identifier: "en_US_POSIX"))
         .replacingOccurrences(of: "đ", with: "d").replacingOccurrences(of: "Đ", with: "d")
         .lowercased()

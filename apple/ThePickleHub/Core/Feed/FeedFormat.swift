@@ -94,18 +94,10 @@ enum FeedDate {
         return nil
     }
 
-    /// "vừa xong" / "x phút trước" / "x giờ trước" / "x ngày trước" / "d/M".
+    /// Locale-aware relative time — "vừa xong" / "2 giờ trước" / "2 hours ago".
     static func relative(_ date: Date?, now: Date = Date()) -> String {
         guard let date else { return "" }
-        let seconds = now.timeIntervalSince(date)
-        if seconds < 60 { return "vừa xong" }
-        let minutes = Int(seconds / 60)
-        if minutes < 60 { return "\(minutes) phút trước" }
-        let hours = minutes / 60
-        if hours < 24 { return "\(hours) giờ trước" }
-        let days = hours / 24
-        if days < 7 { return "\(days) ngày trước" }
-        let comps = Calendar.current.dateComponents([.day, .month], from: date)
-        return "\(comps.day ?? 0)/\(comps.month ?? 0)"
+        if now.timeIntervalSince(date) < 60 { return String(localized: "vừa xong") }
+        return date.formatted(.relative(presentation: .named))
     }
 }

@@ -366,7 +366,6 @@ struct CreateTeamMatchView: View {
             if model.hasEventDate {
                 DatePicker("", selection: Binding(get: { model.eventDate }, set: { model.eventDate = $0 }), displayedComponents: .date)
                     .datePickerStyle(.compact).labelsHidden().tint(TLColor.accent)
-                    .environment(\.locale, Locale(identifier: "vi_VN"))
                     .padding(.horizontal, 12).padding(.vertical, 8)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))

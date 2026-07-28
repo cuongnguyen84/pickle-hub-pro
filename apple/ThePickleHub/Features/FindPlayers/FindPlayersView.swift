@@ -246,7 +246,6 @@ struct FindPlayersView: View {
     }
     private func playAtLabel(_ iso: String?) -> String? {
         guard let d = ISODate.parse(iso) else { return nil }
-        let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "dd/MM · HH:mm"
-        return f.string(from: d)
+        return "\(d.formatted(.dateTime.day(.twoDigits).month(.twoDigits))) · \(d.formatted(date: .omitted, time: .shortened))"
     }
 }
