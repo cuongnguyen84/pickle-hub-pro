@@ -112,7 +112,7 @@ struct MatchConfirmView: View {
         .refreshable { await model.load() }
         .alert("Tranh chấp tỉ số", isPresented: Binding(get: { disputeRow != nil }, set: { if !$0 { disputeRow = nil } })) {
             TextField("Lý do (tùy chọn)", text: $disputeReason)
-            Button("Huỷ", role: .cancel) { disputeRow = nil; disputeReason = "" }
+            Button("Hủy", role: .cancel) { disputeRow = nil; disputeReason = "" }
             Button("Gửi tranh chấp", role: .destructive) {
                 if let row = disputeRow {
                     let reason = disputeReason

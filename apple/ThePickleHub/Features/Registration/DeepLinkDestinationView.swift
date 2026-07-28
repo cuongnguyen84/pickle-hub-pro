@@ -73,7 +73,7 @@ private struct QuickTableScoreLinkView: View {
                 TLEmptyState(
                     icon: "sportscourt",
                     title: "Không tìm thấy trận đấu",
-                    subtitle: "Trận đã bị xoá hoặc bạn không có quyền truy cập."
+                    subtitle: "Trận đã bị xóa hoặc bạn không có quyền truy cập."
                 )
             }
         }
@@ -117,7 +117,7 @@ private struct DoublesEliminationScoreLinkView: View {
         TLEmptyState(
             icon: "sportscourt",
             title: "Không tìm thấy trận đấu",
-            subtitle: "Trận đã bị xoá hoặc bạn không có quyền truy cập."
+            subtitle: "Trận đã bị xóa hoặc bạn không có quyền truy cập."
         )
     }
 }
@@ -153,7 +153,7 @@ private struct TeamMatchScoreLinkView: View {
         TLEmptyState(
             icon: "sportscourt",
             title: "Không tìm thấy trận đấu",
-            subtitle: "Trận đã bị xoá hoặc bạn không có quyền truy cập."
+            subtitle: "Trận đã bị xóa hoặc bạn không có quyền truy cập."
         )
     }
 }

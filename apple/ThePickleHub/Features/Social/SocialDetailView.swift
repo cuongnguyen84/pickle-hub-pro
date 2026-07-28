@@ -172,7 +172,7 @@ struct SocialDetailView: View {
                     SocialLiveView(event: event)
                 }
                 Rectangle().fill(TLColor.border).frame(height: 1)
-                organizerRow(icon: "slider.horizontal.3", title: "Sửa / huỷ sự kiện") {
+                organizerRow(icon: "slider.horizontal.3", title: "Sửa / hủy sự kiện") {
                     EditSocialEventView(event: event)
                 }
             }

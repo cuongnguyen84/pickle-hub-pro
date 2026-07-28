@@ -3,7 +3,7 @@ import SwiftUI
 // ============================================================================
 // PlayerRegistrationView — người chơi tự quản lý đăng ký qua magic token.
 // Port web /dang-ky/:magic_token (PR58/67/69): xem trạng thái, VietQR +
-// báo đã chuyển khoản (2 bước), huỷ (kèm điều kiện hoàn tiền), đăng ký lại.
+// báo đã chuyển khoản (2 bước), hủy (kèm điều kiện hoàn tiền), đăng ký lại.
 // Mở từ deep link (universal link / thepicklehub://dang-ky/<token>).
 // ============================================================================
 
@@ -112,14 +112,14 @@ struct PlayerRegistrationView: View {
             HStack(spacing: 8) {
                 Image(systemName: info.isCancelled ? "xmark.circle.fill" : "checkmark.circle.fill")
                     .foregroundStyle(info.isCancelled ? TLColor.live : TLColor.accentText)
-                Text(info.isCancelled ? "Đã huỷ đăng ký"
+                Text(info.isCancelled ? "Đã hủy đăng ký"
                      : info.status == "checked_in" ? "Đã check-in" : "Đăng ký thành công")
                     .font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg)
             }
             row("Người chơi", info.displayName)
             if let phone = info.phone?.nonEmpty { row("SĐT", phone) }
             if info.isCancelled, let reason = info.cancelledReason?.nonEmpty {
-                row("Lý do huỷ", reason)
+                row("Lý do hủy", reason)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -221,7 +221,7 @@ struct PlayerRegistrationView: View {
         }
     }
 
-    // MARK: Huỷ / đăng ký lại
+    // MARK: Hủy / đăng ký lại
 
     @ViewBuilder
     private func actions(_ info: PlayerRegistrationInfo) -> some View {
@@ -244,11 +244,11 @@ struct PlayerRegistrationView: View {
             } else {
                 VStack(spacing: 8) {
                     Text(info.refundEligible
-                         ? "Huỷ trước \(info.eventCancellationHours)h — đủ điều kiện hoàn phí (nếu đã trả)."
-                         : "Đã quá hạn huỷ \(info.eventCancellationHours)h — huỷ bây giờ sẽ không được hoàn phí.")
+                         ? "Hủy trước \(info.eventCancellationHours)h — đủ điều kiện hoàn phí (nếu đã trả)."
+                         : "Đã quá hạn hủy \(info.eventCancellationHours)h — hủy bây giờ sẽ không được hoàn phí.")
                         .font(TLFont.sans(12)).foregroundStyle(info.refundEligible ? TLColor.fg3 : .orange)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Button("Huỷ đăng ký", role: .destructive) { showCancelDialog = true }
+                    Button("Hủy đăng ký", role: .destructive) { showCancelDialog = true }
                         .font(TLFont.sans(14, .semibold))
                         .frame(maxWidth: .infinity).padding(.vertical, 12)
                         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.live.opacity(0.5), lineWidth: 1))
@@ -260,11 +260,11 @@ struct PlayerRegistrationView: View {
     private var cancelSheet: some View {
         NavigationStack {
             Form {
-                Section("Lý do huỷ (tuỳ chọn)") {
+                Section("Lý do hủy (tuỳ chọn)") {
                     TextField("Vd: bận việc đột xuất…", text: $cancelReason, axis: .vertical).lineLimit(2...4)
                 }
                 Section {
-                    Button("Xác nhận huỷ đăng ký", role: .destructive) {
+                    Button("Xác nhận hủy đăng ký", role: .destructive) {
                         Task {
                             await model.cancel(reason: cancelReason)
                             showCancelDialog = false
@@ -273,7 +273,7 @@ struct PlayerRegistrationView: View {
                     .disabled(model.busy)
                 }
             }
-            .navigationTitle("Huỷ đăng ký")
+            .navigationTitle("Hủy đăng ký")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Đóng") { showCancelDialog = false } }

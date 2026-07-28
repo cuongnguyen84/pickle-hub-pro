@@ -351,7 +351,7 @@ struct EditClubView: View {
         .navigationBarTitleDisplayMode(.inline)
         .alert("Lưu trữ CLB?", isPresented: $showArchive) {
             TextField("Gõ đúng tên CLB để xác nhận", text: $archiveTyped)
-            Button("Huỷ", role: .cancel) { archiveTyped = "" }
+            Button("Hủy", role: .cancel) { archiveTyped = "" }
             Button("Lưu trữ", role: .destructive) {
                 Task { await model.archive { dismiss() } }
             }.disabled(archiveTyped.trimmingCharacters(in: .whitespaces) != club.name)

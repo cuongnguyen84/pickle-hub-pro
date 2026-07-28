@@ -309,8 +309,8 @@ struct CreateTeamMatchView: View {
                 }
             }
             .confirmationDialog("Bỏ thay đổi?", isPresented: $confirmDiscard, titleVisibility: .visible) {
-                // ponytail: đóng sheet KHÔNG xoá draft — autosave giữ lại,
-                // mở lại sẽ có banner khôi phục + "Bắt đầu lại" để xoá hẳn.
+                // ponytail: đóng sheet KHÔNG xóa draft — autosave giữ lại,
+                // mở lại sẽ có banner khôi phục + "Bắt đầu lại" để xóa hẳn.
                 Button("Bỏ thay đổi", role: .destructive) { dismiss() }
                 Button("Tiếp tục nhập", role: .cancel) {}
             }

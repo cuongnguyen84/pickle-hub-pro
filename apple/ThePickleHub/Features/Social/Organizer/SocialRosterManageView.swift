@@ -3,7 +3,7 @@ import SwiftUI
 // ============================================================================
 // SocialRosterManageView — BTC quản lý danh sách đăng ký một sự kiện.
 // Port web /social/:slug/danh-sach: check-in, đánh dấu đã trả, vắng mặt,
-// xoá, ghi chú, thêm tay (edge fn add-registration-direct mode=manual).
+// xóa, ghi chú, thêm tay (edge fn add-registration-direct mode=manual).
 // ============================================================================
 
 @Observable
@@ -106,10 +106,10 @@ struct SocialRosterManageView: View {
                 Task { await model.saveNotes(r, notes: text) }
             }
         }
-        .confirmationDialog("Xoá \(confirmCancel?.displayName ?? "") khỏi danh sách?",
+        .confirmationDialog("Xóa \(confirmCancel?.displayName ?? "") khỏi danh sách?",
                             isPresented: Binding(get: { confirmCancel != nil }, set: { if !$0 { confirmCancel = nil } }),
                             titleVisibility: .visible) {
-            Button("Xoá đăng ký", role: .destructive) {
+            Button("Xóa đăng ký", role: .destructive) {
                 if let r = confirmCancel { Task { await model.cancel(r) } }
                 confirmCancel = nil
             }
@@ -189,7 +189,7 @@ struct SocialRosterManageView: View {
                             Label("Vắng mặt", systemImage: "person.fill.xmark")
                         }
                         Button(role: .destructive) { confirmCancel = r } label: {
-                            Label("Xoá đăng ký", systemImage: "trash")
+                            Label("Xóa đăng ký", systemImage: "trash")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle").font(.system(size: 18))
@@ -271,7 +271,7 @@ private struct RosterNotesSheet: View {
             .navigationTitle("Ghi chú")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Huỷ") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Hủy") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Lưu") { onSave(text); dismiss() }
                 }
@@ -338,7 +338,7 @@ private struct ManualAddRegistrationSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(shareLink == nil ? "Huỷ" : "Đóng") { dismiss() }
+                    Button(shareLink == nil ? "Hủy" : "Đóng") { dismiss() }
                 }
                 if shareLink == nil {
                     ToolbarItem(placement: .confirmationAction) {

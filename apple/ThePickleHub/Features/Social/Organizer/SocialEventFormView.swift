@@ -3,7 +3,7 @@ import SwiftUI
 // ============================================================================
 // Tạo + Sửa sự kiện giao lưu (BTC). Port web CreateSocialEvent (RPC atomic
 // create_social_event_with_payment) + EditSocialEvent (patch, KHÔNG đụng
-// slots) + huỷ (RPC cancel_social_event, gõ tên xác nhận).
+// slots) + hủy (RPC cancel_social_event, gõ tên xác nhận).
 // ponytail: chưa có SlotManager (nhóm đăng ký) — thêm khi Cuong cần; web vẫn đầy đủ.
 // ============================================================================
 
@@ -59,7 +59,7 @@ final class SocialEventFormModel {
 
     var isEdit: Bool { existing != nil }
     var priceVnd: Int { Int(priceText.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: "")) ?? 0 }
-    /// Web khoá form khi sự kiện đã bắt đầu hoặc đã huỷ.
+    /// Web khoá form khi sự kiện đã bắt đầu hoặc đã hủy.
     var locked: Bool {
         guard let e = existing else { return false }
         if e.status == "cancelled" { return true }
@@ -305,7 +305,7 @@ final class SocialEventFormModel {
             Haptics.success()
             return true
         } catch {
-            errorText = "Không huỷ được: \(error.localizedDescription)"
+            errorText = "Không hủy được: \(error.localizedDescription)"
             return false
         }
     }
@@ -351,7 +351,7 @@ private struct SocialEventFormFields: View {
                     }
                 ))
             }
-            // Perk tự nhập (ngoài preset) — hàng có nút xoá, không phải chuỗi phẩy
+            // Perk tự nhập (ngoài preset) — hàng có nút xóa, không phải chuỗi phẩy
             ForEach(model.freePerks.filter { !SocialEventFormModel.perkPresets.contains($0) }, id: \.self) { perk in
                 HStack {
                     Text(perk)
@@ -361,7 +361,7 @@ private struct SocialEventFormFields: View {
                     } label: {
                         Image(systemName: "xmark.circle.fill").foregroundStyle(TLColor.fg3)
                     }
-                    .accessibilityLabel("Xoá \(perk)")
+                    .accessibilityLabel("Xóa \(perk)")
                 }
             }
             HStack {
@@ -474,7 +474,7 @@ struct CreateSocialEventView: View {
             .navigationTitle("Mở buổi chơi")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Huỷ") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Hủy") { dismiss() } }
             }
             .onAppear {
                 guard !restoreApplied else { return }
@@ -492,7 +492,7 @@ struct CreateSocialEventView: View {
     }
 }
 
-// MARK: Sửa + huỷ
+// MARK: Sửa + hủy
 
 struct EditSocialEventView: View {
     @State private var model: SocialEventFormModel
@@ -509,7 +509,7 @@ struct EditSocialEventView: View {
             if model.locked {
                 Section {
                     Text(model.existing?.status == "cancelled"
-                         ? "Sự kiện đã huỷ — chỉ xem."
+                         ? "Sự kiện đã hủy — chỉ xem."
                          : "Sự kiện đã bắt đầu — chỉ xem.")
                         .font(TLFont.sans(13)).foregroundStyle(.orange)
                 }
@@ -538,7 +538,7 @@ struct EditSocialEventView: View {
                     .disabled(!model.valid || model.busy)
                 }
                 Section {
-                    Button("Huỷ sự kiện…", role: .destructive) { showCancelSheet = true }
+                    Button("Hủy sự kiện…", role: .destructive) { showCancelSheet = true }
                 }
             }
         }
@@ -551,7 +551,7 @@ struct EditSocialEventView: View {
     }
 }
 
-/// Huỷ sự kiện — gõ đúng tên để xác nhận (khớp web).
+/// Hủy sự kiện — gõ đúng tên để xác nhận (khớp web).
 private struct CancelEventSheet: View {
     let model: SocialEventFormModel
     let onCancelled: () -> Void
@@ -567,7 +567,7 @@ private struct CancelEventSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    Text("Huỷ sự kiện sẽ huỷ toàn bộ đăng ký và không hoàn tác được.")
+                    Text("Hủy sự kiện sẽ hủy toàn bộ đăng ký và không hoàn tác được.")
                         .font(TLFont.sans(13)).foregroundStyle(.red)
                 }
                 Section("Gõ đúng tên sự kiện để xác nhận") {
@@ -575,13 +575,13 @@ private struct CancelEventSheet: View {
                     TextField("Tên sự kiện", text: $typed)
                 }
                 Section("Lý do (tuỳ chọn, gửi tới người đăng ký)") {
-                    TextField("Lý do huỷ…", text: $reason, axis: .vertical).lineLimit(2...4)
+                    TextField("Lý do hủy…", text: $reason, axis: .vertical).lineLimit(2...4)
                 }
                 if let err = model.errorText {
                     Text(err).font(TLFont.sans(13)).foregroundStyle(.red)
                 }
                 Section {
-                    Button("Huỷ sự kiện", role: .destructive) {
+                    Button("Hủy sự kiện", role: .destructive) {
                         Task {
                             if await model.cancelEvent(reason: reason) { dismiss(); onCancelled() }
                         }
@@ -589,7 +589,7 @@ private struct CancelEventSheet: View {
                     .disabled(!match || model.busy)
                 }
             }
-            .navigationTitle("Huỷ sự kiện")
+            .navigationTitle("Hủy sự kiện")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Đóng") { dismiss() } }

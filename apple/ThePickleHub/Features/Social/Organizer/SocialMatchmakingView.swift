@@ -30,7 +30,7 @@ final class SocialMatchmakingModel {
         self.courts = event.courtCount ?? 2
     }
 
-    /// Đủ điều kiện xếp: chưa huỷ + không vắng mặt (khớp web eligible).
+    /// Đủ điều kiện xếp: chưa hủy + không vắng mặt (khớp web eligible).
     var eligible: [EventRegistration] {
         regs.filter { $0.status != "cancelled" && $0.status != "no_show" }
     }

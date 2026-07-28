@@ -58,11 +58,11 @@ final class ForumDetailModel {
         do {
             try await repo.deleteComment(id: c.id)
             error = nil; await load()
-        } catch { self.error = UserFacingError.message(action: "Xoá bình luận", error: error) }
+        } catch { self.error = UserFacingError.message(action: "Xóa bình luận", error: error) }
     }
     @MainActor func deletePost() async -> Bool {
         do { try await repo.deletePost(id: postID); error = nil; return true }
-        catch { self.error = UserFacingError.message(action: "Xoá bài viết", error: error); return false }
+        catch { self.error = UserFacingError.message(action: "Xóa bài viết", error: error); return false }
     }
     @MainActor func send() async {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -123,7 +123,7 @@ struct ForumDetailView: View {
             if model.isOwner {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button("Xoá bài", role: .destructive) {
+                        Button("Xóa bài", role: .destructive) {
                             Task { if await model.deletePost() { dismiss() } }
                         }
                     } label: { Image(systemName: "ellipsis").foregroundStyle(TLColor.accentText) }

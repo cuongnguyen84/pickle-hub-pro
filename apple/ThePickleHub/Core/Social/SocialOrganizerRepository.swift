@@ -137,7 +137,7 @@ struct SocialOrganizerRepository {
         registration_source, registered_by_profile_id, internal_notes
         """
 
-    /// Toàn bộ đăng ký chưa huỷ, cũ nhất trước (khớp web useEventRegistrations).
+    /// Toàn bộ đăng ký chưa hủy, cũ nhất trước (khớp web useEventRegistrations).
     func registrations(eventID: UUID) async throws -> [EventRegistration] {
         try await client.from("event_registrations").select(Self.regColumns)
             .eq("event_id", value: eventID).neq("status", value: "cancelled")
@@ -290,7 +290,7 @@ struct SocialOrganizerRepository {
                           uniquingKeysWith: { a, _ in a })
     }
 
-    // MARK: Tạo / sửa / huỷ sự kiện
+    // MARK: Tạo / sửa / hủy sự kiện
 
     struct EventPayload: Encodable {
         let club_id: String
@@ -352,7 +352,7 @@ struct SocialOrganizerRepository {
         let prepayment_deadline_hours: Int?
         let free_perks: [String]
         // KHÔNG có `slots` — web edit ghi lại slots nhưng native chưa có UI
-        // slots, bỏ key để không xoá nhóm đăng ký hiện có.
+        // slots, bỏ key để không xóa nhóm đăng ký hiện có.
         //
         // LUẬT (gate T4b, đo thật 28/07): Encodable bỏ key khi Optional nil
         // nhưng GỬI `[]` khi mảng rỗng → PostgREST ghi đè. Mọi field thêm vào
@@ -387,7 +387,7 @@ struct SocialOrganizerRepository {
             .eq("event_id", value: eventID).single().execute().value
     }
 
-    /// Huỷ sự kiện (RPC cascade sang registrations, khớp web).
+    /// Hủy sự kiện (RPC cascade sang registrations, khớp web).
     func cancelEvent(id: UUID, reason: String?) async throws {
         struct Params: Encodable { let p_event_id: String; let p_reason: String? }
         try await client.rpc("cancel_social_event", params: Params(

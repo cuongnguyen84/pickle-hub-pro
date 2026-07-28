@@ -84,7 +84,7 @@ struct VenueSubmitView: View {
             .background(TLColor.bg)
             .navigationTitle("Thêm sân")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Huỷ") { dismiss() }.foregroundStyle(TLColor.fg3) } }
+            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3) } }
         }
     }
 

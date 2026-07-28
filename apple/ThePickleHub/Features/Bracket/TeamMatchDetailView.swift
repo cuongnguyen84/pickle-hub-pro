@@ -262,7 +262,7 @@ final class TeamMatchViewModel {
         working = true; actionError = nil
         do {
             if d.tournament.format == "rr_playoff" {
-                try await repo.resetGroupStage(tournamentID: d.tournament.id)   // xoá cả bảng, về registration
+                try await repo.resetGroupStage(tournamentID: d.tournament.id)   // xóa cả bảng, về registration
             } else {
                 try await repo.deleteMatches(tournamentID: d.tournament.id)
             }
@@ -576,7 +576,7 @@ struct TeamMatchDetailView: View {
                        subtitle: m.status == "approved" ? "Đã được duyệt vào đội" : "Chờ đội trưởng duyệt",
                        color: m.status == "approved" ? TLColor.accentText : TLColor.gold)
             Button { Haptics.light(); Task { await model.rejectRoster(shareID: shareID, memberID: m.id) } } label: {
-                Text(m.status == "approved" ? "Rời đội" : "Huỷ yêu cầu")
+                Text(m.status == "approved" ? "Rời đội" : "Hủy yêu cầu")
                     .font(TLFont.mono(10.5, .semibold)).foregroundStyle(TLColor.live)
                     .padding(.horizontal, 12).padding(.vertical, 7)
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(TLColor.live.opacity(0.4), lineWidth: 1))
@@ -1509,7 +1509,7 @@ private struct GroupSetupSheet: View {
             .background(TLColor.bg)
             .navigationTitle("Chia bảng").navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Huỷ") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Hủy") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Xác nhận") { onConfirm(distribution, randomizeGameOrder) }
                         .fontWeight(.bold).disabled(!valid || working || !drawComplete)
