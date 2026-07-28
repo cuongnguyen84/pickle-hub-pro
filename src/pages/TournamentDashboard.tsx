@@ -113,7 +113,7 @@ const TournamentDashboard = () => {
           </div>
         )}
 
-        {/* Court-based view (Quick Table, Doubles Elimination) */}
+        {/* Court-based view (Quick Table, Double Elimination) */}
         {!isLoading && dashType !== "team-match" && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

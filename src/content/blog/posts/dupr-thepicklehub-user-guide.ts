@@ -253,9 +253,9 @@ const post: BlogPost = {
             "Tổ chức giải đấu trên ThePickleHub? Bạn có thể set điều kiện đăng ký theo DUPR. Cách hoạt động: Organizer set yêu cầu — BASIC_L1 (tất cả player connect DUPR), PREMIUM_L1 (DUPR+ premium member), hoặc threshold rating tối thiểu/tối đa. User click đăng ký: edge function dupr-event-eligibility check entitlement + rating. Chưa connect DUPR → message yêu cầu connect trước. Rating thấp hơn yêu cầu → block với message rõ (kèm hiển thị rating hiện tại vs ngưỡng giải). Đủ điều kiện → register tiếp. Bên dưới: component DuprEntitlementGate bao bọc nút Register, RPC dupr_user_has_entitlement check cache 24h, fallback gọi DUPR /subscription/active nếu cache expired. Tác động: Giải đấu rated chuẩn → trình độ player đồng đều → bracket không lệch → không cãi nhau anh ấy quá mạnh hay chị ấy quá yếu vì toán đã lọc trước.",
         },
         {
-          heading: "Sửa và xoá trận",
+          heading: "Sửa và xóa trận",
           content:
-            "Nhập sai tỉ số? Log nhầm đối thủ? DUPR lifecycle ops hỗ trợ cả hai. Update: Edge function dupr-match-submit action update — gửi payload mới (cùng internal_match_id) → DUPR đảo ngược tác động rating cũ + áp dụng tỉ số mới. Delete: Action delete — DUPR xoá trận khỏi rating ledger + recalc lại cho mọi player liên quan. Quyền sửa/xoá: Cùng rule với Submit — chỉ admin global + creator/manager CLB. Member không tự sửa/xoá được trận của mình (chống user fix tỉ số sau submit để gian lận). UX hiện tại: Update/delete đi qua /admin/dupr (Operator Dashboard) hoặc DB trực tiếp cho admin. UI public per-row đang được hoàn thiện.",
+            "Nhập sai tỉ số? Log nhầm đối thủ? DUPR lifecycle ops hỗ trợ cả hai. Update: Edge function dupr-match-submit action update — gửi payload mới (cùng internal_match_id) → DUPR đảo ngược tác động rating cũ + áp dụng tỉ số mới. Delete: Action delete — DUPR xóa trận khỏi rating ledger + recalc lại cho mọi player liên quan. Quyền sửa/xóa: Cùng rule với Submit — chỉ admin global + creator/manager CLB. Member không tự sửa/xóa được trận của mình (chống user fix tỉ số sau submit để gian lận). UX hiện tại: Update/delete đi qua /admin/dupr (Operator Dashboard) hoặc DB trực tiếp cho admin. UI public per-row đang được hoàn thiện.",
         },
         {
           heading: "Bảo mật và tuân thủ DUPR",

@@ -1412,7 +1412,7 @@ export interface Translations {
       confirm: string;
     };
   };
-  // Doubles Elimination
+  // Double Elimination
   doublesElimination: {
     title: string;
     description: string;
@@ -3204,7 +3204,7 @@ export const vi: Translations = {
       description: "Loại trực tiếp đơn giản",
     },
     doublesElimination: {
-      title: "Doubles Elimination",
+      title: "Double Elimination",
       description: "Loại kép với nhánh thắng/thua",
     },
     comingSoon: "Sắp ra mắt",
@@ -3613,7 +3613,7 @@ export const vi: Translations = {
       blockedCountriesDesc: "Danh sách mã quốc gia (ISO 3166-1 alpha-2), cách nhau bởi dấu phẩy",
       tournamentGate: "Truy cập chi tiết giải đấu",
       requireLoginTournament: "Yêu cầu đăng nhập để xem chi tiết giải",
-      requireLoginTournamentDesc: "Người xem phải đăng nhập để xem trang chi tiết giải đấu (Quick Table, Team Match, Doubles Elimination, Flex Tournament)",
+      requireLoginTournamentDesc: "Người xem phải đăng nhập để xem trang chi tiết giải đấu (Quick Table, Team Match, Double Elimination, Flex Tournament)",
     },
     viewers: {
       title: "Danh sách người xem",
@@ -4400,15 +4400,15 @@ export const vi: Translations = {
       confirm: "Xác nhận",
     },
   },
-  // Doubles Elimination translations
+  // Double Elimination translations
   doublesElimination: {
-    title: "Doubles Elimination",
+    title: "Double Elimination",
     description: "Thể thức loại trực tiếp có nhánh thua cho giải 32+ đội",
     createNew: "Tạo giải mới",
     loginRequired: "Đăng nhập để tạo giải đấu",
-    loginRequiredDesc: "Bạn cần đăng nhập để tạo và quản lý các giải đấu Doubles Elimination",
+    loginRequiredDesc: "Bạn cần đăng nhập để tạo và quản lý các giải đấu Double Elimination",
     noTournaments: "Chưa có giải đấu nào",
-    noTournamentsDesc: "Tạo giải đấu Doubles Elimination đầu tiên của bạn",
+    noTournamentsDesc: "Tạo giải đấu Double Elimination đầu tiên của bạn",
     viewBtn: "Xem",
     teams: "đội",
     earlyRounds: "Vòng ngoài",
@@ -4424,8 +4424,8 @@ export const vi: Translations = {
       bo5: "BO5",
     },
     about: {
-      title: "Về thể thức Doubles Elimination",
-      description: "Doubles Elimination là thể thức loại trực tiếp cải tiến, cho phép các đội có cơ hội thứ hai sau khi thua ở vòng đầu.",
+      title: "Về thể thức Double Elimination",
+      description: "Double Elimination là thể thức loại trực tiếp cải tiến, cho phép các đội có cơ hội thứ hai sau khi thua ở vòng đầu.",
       round1: "Tất cả đội thi đấu. Thua → xuống nhánh thua",
       round2: "Đội thua R1 đấu nhau. Thua lần 2 → loại",
       round3: "Hợp nhất nhánh thắng + thua, chuẩn hóa về 2^n đội",
@@ -4434,7 +4434,7 @@ export const vi: Translations = {
       suggestion: "Gợi ý: 32, 40, 48, 64, 80, 96, 128 đội.",
     },
     setup: {
-      title: "Tạo giải Doubles Elimination",
+      title: "Tạo giải Double Elimination",
       tournamentName: "Tên giải đấu",
       tournamentNamePlaceholder: "VD: Giải Pickleball Mùa Hè 2024",
       teamCount: "Số đội tham gia",
@@ -4557,7 +4557,7 @@ export const vi: Translations = {
       flexTournament: "Flex Tournament – Tự tạo giải đấu theo cách riêng, không giới hạn luật",
     },
     doublesElimination: {
-      title: "Doubles Elimination – Thua 2 Trận Mới Bị Loại",
+      title: "Double Elimination – Thua 2 Trận Mới Bị Loại",
       description: "Thể thức loại kép giúp tăng tính công bằng cho giải đấu. Thua 1 trận → xuống nhánh thua. Thua trận thứ 2 → bị loại. Nhánh thắng và nhánh thua gặp nhau trước chung kết.",
       whenToUseTitle: "Khi nào nên dùng Loại Kép?",
       whenToUseDesc: "Phù hợp cho giải đấu quy mô vừa đến lớn, các sự kiện cạnh tranh hoặc bán chuyên, khi các đội xứng đáng có cơ hội thứ hai để chứng minh năng lực.",

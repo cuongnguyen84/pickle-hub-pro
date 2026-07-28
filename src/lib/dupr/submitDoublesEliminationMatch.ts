@@ -117,7 +117,7 @@ export async function submitDoublesEliminationMatch(input: SubmitInput): Promise
     format: "DOUBLES" as const,
     match_type: "RALLY" as const,
     event: input.tournamentName,
-    bracket: "Doubles Elimination",
+    bracket: "Double Elimination",
     club_id: input.duprClubId ?? undefined,
     team_a: teamA,
     team_b: teamB,

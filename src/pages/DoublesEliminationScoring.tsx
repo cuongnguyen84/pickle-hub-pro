@@ -539,7 +539,7 @@ export default function DoublesEliminationScoring() {
   // ─── Loading + 404 states ────────────────────────────────────────────────
   if (loading) {
     return (
-      <TheLineLayout title="Doubles Elimination Scoring" noindex={true} active="lab">
+      <TheLineLayout title="Double Elimination Scoring" noindex={true} active="lab">
         <div className="tl-shell">
           <div
             style={{
@@ -563,7 +563,7 @@ export default function DoublesEliminationScoring() {
 
   if (!match || !teamA || !teamB) {
     return (
-      <TheLineLayout title="Doubles Elimination Scoring" noindex={true} active="lab">
+      <TheLineLayout title="Double Elimination Scoring" noindex={true} active="lab">
         <div className="tl-shell">
           <div className="tl-empty" style={{ marginTop: 56 }}>
             <h3>{tx.notFound}</h3>
@@ -589,7 +589,7 @@ export default function DoublesEliminationScoring() {
         <nav className="tl-breadcrumb">
           <Link to="/tools">{lang === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
           <span className="sep">/</span>
-          <Link to="/tools/doubles-elimination">Doubles Elimination</Link>
+          <Link to="/tools/doubles-elimination">Double Elimination</Link>
           {tournament && (
             <>
               <span className="sep">/</span>

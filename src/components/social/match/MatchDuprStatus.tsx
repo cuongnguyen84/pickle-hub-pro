@@ -171,7 +171,7 @@ export function MatchDuprStatus({
     return (
       <Badge variant="outline" className="gap-1.5">
         {language === "vi"
-          ? "Đã xoá khỏi DUPR"
+          ? "Đã xóa khỏi DUPR"
           : "Removed from DUPR"}
       </Badge>
     );

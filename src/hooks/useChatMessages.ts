@@ -189,7 +189,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
             // Dedupe theo client_message_id với MỌI bản đang hiển thị (optimistic
             // `pending-*` của chính mình, `broadcast-*`, hay bản cũ) — không chỉ
             // broadcast. Fix bug tin đúp ở màn người gửi khi INSERT realtime về
-            // SAU response HTTP (pending map đã bị xoá nên nhánh trên miss).
+            // SAU response HTTP (pending map đã bị xóa nên nhánh trên miss).
             setMessages(prev => {
               messageIdsRef.current.add(dbMessage.id);
               const hasCmid = prev.some(m => m.client_message_id === dbMessage.client_message_id);

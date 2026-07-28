@@ -258,7 +258,7 @@ const Tools = () => {
                 </div>
                 <span className="tl-format-badge">{isVi ? "Đỉnh cao" : "Best of"}</span>
               </div>
-              <h3 className="tl-format-title">{isVi ? "Loại trực tiếp Đôi" : "Doubles Elimination"}</h3>
+              <h3 className="tl-format-title">{isVi ? "Loại trực tiếp Đôi" : "Double Elimination"}</h3>
               <p className="tl-format-desc">
                 {isVi
                   ? "Thua một lần rơi xuống nhánh thua. Đánh ngược lên chung kết. Hoàn hảo cho thứ Bảy với 16 đội và áp lực thật."

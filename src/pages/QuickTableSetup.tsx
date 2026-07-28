@@ -437,7 +437,7 @@ const QuickTableSetup = () => {
 
   const handleDeleteTable = async () => {
     if (!table) return;
-    if (!(await confirm({ description: `Bạn có chắc chắn muốn xoá giải "${table.name}"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.`, destructive: true }))) {
+    if (!(await confirm({ description: `Bạn có chắc chắn muốn xóa giải "${table.name}"? Tất cả dữ liệu sẽ bị xóa vĩnh viễn.`, destructive: true }))) {
       return;
     }
     const success = await deleteTable(table.id);
@@ -513,7 +513,7 @@ const QuickTableSetup = () => {
                 }}
               >
                 <Trash2 className="w-3 h-3" />
-                {language === 'vi' ? 'Xoá giải' : 'Delete'}
+                {language === 'vi' ? 'Xóa giải' : 'Delete'}
               </button>
             )}
           </div>

@@ -534,7 +534,7 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
                 className="tl-btn"
                 disabled={submitting}
               >
-                {vi ? "Huỷ" : "Cancel"}
+                {vi ? "Hủy" : "Cancel"}
               </button>
               <button
                 type="button"

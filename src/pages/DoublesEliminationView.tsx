@@ -203,7 +203,7 @@ export default function DoublesEliminationView() {
   // ─── Loading + 404 states ────────────────────────────────────────────────
   if (loading) {
     return (
-      <TheLineLayout title="Doubles Elimination" noindex={true} active="lab">
+      <TheLineLayout title="Double Elimination" noindex={true} active="lab">
         <div className="tl-shell">
           <div
             style={{
@@ -227,7 +227,7 @@ export default function DoublesEliminationView() {
 
   if (!tournament) {
     return (
-      <TheLineLayout title="Doubles Elimination" noindex={true} active="lab">
+      <TheLineLayout title="Double Elimination" noindex={true} active="lab">
         <div className="tl-shell">
           <div className="tl-empty" style={{ marginTop: 56 }}>
             <h3>{t.doublesElimination.view.notFound}</h3>
@@ -258,7 +258,7 @@ export default function DoublesEliminationView() {
 
   return (
     <TheLineLayout
-      title={`${tournament.name} - Doubles Elimination`}
+      title={`${tournament.name} - Double Elimination`}
       description={`${tournament.name} - ${tournament.team_count} ${t.doublesElimination.teams}`}
       noindex={true}
       active="lab"
@@ -267,7 +267,7 @@ export default function DoublesEliminationView() {
         <nav className="tl-breadcrumb">
           <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
           <span className="sep">/</span>
-          <Link to="/tools/doubles-elimination">Doubles Elimination</Link>
+          <Link to="/tools/doubles-elimination">Double Elimination</Link>
           <span className="sep">/</span>
           <span className="current">{tournament.name}</span>
         </nav>

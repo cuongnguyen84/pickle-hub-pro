@@ -95,7 +95,7 @@ export function TeamJoinPanel({
     join: vi ? 'Tham gia đội' : 'Join team',
     pending: vi ? 'Yêu cầu của bạn đang chờ đội trưởng duyệt.' : 'Your request is awaiting the captain.',
     inTeam: vi ? 'Bạn đã ở trong đội này.' : "You're on this team.",
-    withdraw: vi ? 'Huỷ yêu cầu' : 'Withdraw request',
+    withdraw: vi ? 'Hủy yêu cầu' : 'Withdraw request',
     leaveTeam: vi ? 'Rời đội' : 'Leave team',
     onOtherTeam: (name: string) =>
       vi ? `Bạn đang ở đội "${name}" trong giải này.` : `You're already on "${name}" in this tournament.`,
@@ -108,13 +108,13 @@ export function TeamJoinPanel({
         ? `Giải yêu cầu DUPR${label ? ` ${label}` : ''}. Bạn vẫn có thể tham gia đội ngay bây giờ và kết nối DUPR sau.`
         : `This tournament requires DUPR${label ? ` ${label}` : ''}. You can still join the team now and connect DUPR later.`,
     connectDupr: vi ? 'Kết nối DUPR' : 'Connect DUPR',
-    withdrawConfirmTitle: vi ? 'Huỷ yêu cầu tham gia?' : 'Withdraw your request?',
+    withdrawConfirmTitle: vi ? 'Hủy yêu cầu tham gia?' : 'Withdraw your request?',
     withdrawConfirmDesc: vi
-      ? 'Yêu cầu của bạn sẽ bị xoá khỏi đội. Bạn có thể gửi lại yêu cầu nếu đội còn chỗ.'
+      ? 'Yêu cầu của bạn sẽ bị xóa khỏi đội. Bạn có thể gửi lại yêu cầu nếu đội còn chỗ.'
       : 'Your request will be removed from the team. You can request again if the team still has room.',
     leaveConfirmTitle: vi ? 'Rời khỏi đội?' : 'Leave this team?',
     leaveConfirmDesc: vi
-      ? 'Bạn sẽ bị xoá khỏi danh sách đội. Muốn quay lại, bạn phải gửi yêu cầu mới và chờ đội trưởng duyệt lại.'
+      ? 'Bạn sẽ bị xóa khỏi danh sách đội. Muốn quay lại, bạn phải gửi yêu cầu mới và chờ đội trưởng duyệt lại.'
       : 'You will be removed from the roster. To come back you must send a new request and wait for the captain to approve it again.',
   };
 
