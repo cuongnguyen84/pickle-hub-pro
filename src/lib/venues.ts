@@ -68,6 +68,19 @@ export function venueCountryLabel(code: string | null, language: Language): stri
   const labels: Record<string, { vi: string; en: string }> = {
     VN: { vi: "Việt Nam", en: "Vietnam" },
     SG: { vi: "Singapore", en: "Singapore" },
+    MY: { vi: "Malaysia", en: "Malaysia" },
+    TH: { vi: "Thái Lan", en: "Thailand" },
+    BN: { vi: "Brunei", en: "Brunei" },
+    PH: { vi: "Philippines", en: "Philippines" },
+    ID: { vi: "Indonesia", en: "Indonesia" },
+    JP: { vi: "Nhật Bản", en: "Japan" },
+    KR: { vi: "Hàn Quốc", en: "South Korea" },
+    TW: { vi: "Đài Loan", en: "Taiwan" },
+    HK: { vi: "Hồng Kông", en: "Hong Kong" },
+    CN: { vi: "Trung Quốc", en: "China" },
+    KH: { vi: "Campuchia", en: "Cambodia" },
+    LA: { vi: "Lào", en: "Laos" },
+    MM: { vi: "Myanmar", en: "Myanmar" },
   };
   return labels[cc]?.[language] ?? cc;
 }
