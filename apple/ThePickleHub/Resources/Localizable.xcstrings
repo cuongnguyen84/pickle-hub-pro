@@ -1,6 +1,4980 @@
 {
   "sourceLanguage" : "vi",
   "strings" : {
+    "" : {
+
+    },
+    "  ·  " : {
+
+    },
+    " — " : {
+
+    },
+    " · %lld chỗ" : {
+
+    },
+    " · tất cả có DUPR" : {
+
+    },
+    " · tối đa %lf" : {
+
+    },
+    " · tối thiểu %lf" : {
+
+    },
+    " · yêu cầu %lf–%lf" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : " · yêu cầu %1$lf–%2$lf"
+          }
+        }
+      }
+    },
+    " %@" : {
+
+    },
+    " Không tổng hợp. No AI slop." : {
+
+    },
+    "–" : {
+
+    },
+    "—" : {
+
+    },
+    "— TÒA SOẠN THEPICKLEHUB" : {
+
+    },
+    ":" : {
+
+    },
+    "·" : {
+
+    },
+    "· %@" : {
+
+    },
+    "· DUPR %@" : {
+
+    },
+    "· Hết bảng tin ·" : {
+
+    },
+    "· ước tính" : {
+
+    },
+    "“%@” sắp bắt đầu — vào xem ngay." : {
+
+    },
+    "“%@” và dữ liệu liên quan sẽ bị xóa. Thao tác này không thể hoàn tác." : {
+
+    },
+    "\"%@\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn." : {
+
+    },
+    "“Câu chuyện hay nhất xảy ra giữa hai pha bóng — và chúng tôi cũng có mặt ở đó.”" : {
+
+    },
+    "@" : {
+
+    },
+    "@%@" : {
+
+    },
+    "/" : {
+
+    },
+    "/ %@" : {
+
+    },
+    "/ 02 — Tinh thần của chúng tôi" : {
+
+    },
+    "/ CỘNG ĐỒNG" : {
+
+    },
+    "/ TUẦN NÀY" : {
+
+    },
+    "#" : {
+
+    },
+    "#%@" : {
+
+    },
+    "#%lld" : {
+
+    },
+    "% giảm" : {
+
+    },
+    "%@\nĐiểm vừa nhập vẫn được giữ. Kiểm tra mạng rồi bấm Thử lại." : {
+
+    },
+    "%@  VS  %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  VS  %2$@"
+          }
+        }
+      }
+    },
+    "%@ · " : {
+
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld đội" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld đội"
+          }
+        }
+      }
+    },
+    "%@ · %lld người" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld người"
+          }
+        }
+      }
+    },
+    "%@ · đối thủ sẽ xác nhận tỉ số" : {
+
+    },
+    "%@ (%@)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "%@ / %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ / %2$@"
+          }
+        }
+      }
+    },
+    "%@ & %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ & %2$@"
+          }
+        }
+      }
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@ %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$lld"
+          }
+        }
+      }
+    },
+    "%@ → %lld suất vào playoff" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ → %2$lld suất vào playoff"
+          }
+        }
+      }
+    },
+    "%@ đ" : {
+
+    },
+    "%@ mời bạn cùng thi đấu tại %@." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ mời bạn cùng thi đấu tại %2$@."
+          }
+        }
+      }
+    },
+    "%@ người chơi" : {
+
+    },
+    "%@ người mỗi bảng" : {
+
+    },
+    "%@ THẮNG" : {
+
+    },
+    "%@, %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%@%@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "%lld – %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld – %2$lld"
+          }
+        }
+      }
+    },
+    "%lld / %lld đã đăng ký" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld / %2$lld đã đăng ký"
+          }
+        }
+      }
+    },
+    "%lld / %lld đội" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld / %2$lld đội"
+          }
+        }
+      }
+    },
+    "%lld ảnh đã chọn · tối đa 4 MB/ảnh" : {
+
+    },
+    "%lld bảng" : {
+
+    },
+    "%lld chỗ" : {
+
+    },
+    "%lld chờ" : {
+
+    },
+    "%lld CHỖ CÒN LẠI" : {
+
+    },
+    "%lld chưa có DUPR" : {
+
+    },
+    "%lld đang đấu" : {
+
+    },
+    "%lld điểm" : {
+
+    },
+    "%lld đội" : {
+
+    },
+    "%lld đội — hợp lệ cho loại trực tiếp." : {
+
+    },
+    "%lld đội · %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld đội · %2$@"
+          }
+        }
+      }
+    },
+    "%lld đội · %lld trận" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld đội · %2$lld trận"
+          }
+        }
+      }
+    },
+    "%lld đội · chia ngẫu nhiên hoặc thủ công rồi đá vòng bảng" : {
+
+    },
+    "%lld đội chưa đạt ràng buộc" : {
+
+    },
+    "%lld đội đã đăng ký" : {
+
+    },
+    "%lld game%@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld game%2$@"
+          }
+        }
+      }
+    },
+    "%lld nam / %lld nữ (cần %lld/%lld)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld nam / %2$lld nữ (cần %3$lld/%4$lld)"
+          }
+        }
+      }
+    },
+    "%lld người" : {
+
+    },
+    "%lld người — " : {
+
+    },
+    "%lld người · tối đa 200" : {
+
+    },
+    "%lld người đã đăng ký" : {
+
+    },
+    "%lld nữ" : {
+
+    },
+    "%lld sân" : {
+
+    },
+    "%lld SÂN" : {
+
+    },
+    "%lld SỰ KIỆN SẮP TỚI" : {
+
+    },
+    "%lld trận" : {
+
+    },
+    "%lld tuổi" : {
+
+    },
+    "%lld VĐV" : {
+
+    },
+    "%lld VĐV · %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld VĐV · %2$@"
+          }
+        }
+      }
+    },
+    "%lld–%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld–%2$lld"
+          }
+        }
+      }
+    },
+    "%lld." : {
+
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "%lld/%lld người" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld người"
+          }
+        }
+      }
+    },
+    "%llds" : {
+
+    },
+    "• • • • • •" : {
+
+    },
+    "← Quay lại" : {
+
+    },
+    "+" : {
+
+    },
+    "+/-" : {
+
+    },
+    "+/–" : {
+
+    },
+    "+/−" : {
+
+    },
+    "+%lld" : {
+
+    },
+    "+%lld / -%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "+%1$lld / -%2$lld"
+          }
+        }
+      }
+    },
+    "+84…" : {
+
+    },
+    "×" : {
+
+    },
+    "−%lld%% · %@ đ" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "−%1$lld%% · %2$@ đ"
+          }
+        }
+      }
+    },
+    "▸ Còn %lld phút" : {
+
+    },
+    "◆ %@" : {
+
+    },
+    "◆ BTC THÊM ĐỘI" : {
+
+    },
+    "◆ CỘNG ĐỒNG" : {
+
+    },
+    "◆ ĐĂNG KÝ ĐỘI" : {
+
+    },
+    "◆ Đồng đội · %@ đội × %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "◆ Đồng đội · %1$@ đội × %2$@"
+          }
+        }
+      }
+    },
+    "◆ Format tự do · %lld VĐV · %lld trận" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "◆ Format tự do · %1$lld VĐV · %2$lld trận"
+          }
+        }
+      }
+    },
+    "◆ Loại kép · %lld đội" : {
+
+    },
+    "⚠️ Đội này đã báo/đã xác nhận đóng tiền. Xóa đội là xóa luôn bằng chứng đóng tiền — hệ thống KHÔNG hoàn tiền." : {
+
+    },
+    "🎾 HÔM NAY!" : {
+
+    },
+    "🏆 Giải đấu" : {
+
+    },
+    "📅 Sự kiện" : {
+
+    },
+    "🔴 Đang live" : {
+
+    },
+    "0" : {
+
+    },
+    "0 = miễn phí" : {
+
+    },
+    "0.00" : {
+
+    },
+    "1" : {
+
+    },
+    "2" : {
+
+    },
+    "3" : {
+
+    },
+    "3–32 ký tự, chữ thường/số/gạch ngang." : {
+
+    },
+    "5 phút" : {
+
+    },
+    "24 giờ" : {
+
+    },
+    "30 phút" : {
+
+    },
+    "090…" : {
+
+    },
+    "action.remove" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Xóa"
+          }
+        }
+      }
+    },
+    "AI" : {
+
+    },
+    "Ai có link đều xem được" : {
+
+    },
+    "Ai cũng được đánh nhiều trận → vòng tròn rồi playoff." : {
+
+    },
+    "AI ĐỠ BÓNG TRƯỚC?" : {
+
+    },
+    "AI GIAO BÓNG TRƯỚC?" : {
+
+    },
+    "Ẩn chi tiết" : {
+
+    },
+    "Ảnh (tối đa 4)" : {
+
+    },
+    "Ảnh chụp %@" : {
+
+    },
+    "Ảnh gốc quá lớn. Vui lòng chọn ảnh dưới 30 MB." : {
+
+    },
+    "Apple không trả về mã xác thực." : {
+
+    },
+    "Apple không trả về thông tin đăng nhập hợp lệ." : {
+
+    },
+    "Auto-fill nếu user đã DUPR, nếu chưa thì tự kê khai" : {
+
+    },
+    "avg" : {
+
+    },
+    "B" : {
+
+    },
+    "Bắc Mỹ" : {
+
+    },
+    "Bài viết" : {
+
+    },
+    "BÀI VIẾT" : {
+
+    },
+    "Bài viết mới" : {
+
+    },
+    "Bạn" : {
+
+    },
+    "Bạn cần đăng nhập để tạo giải tổng." : {
+
+    },
+    "Bạn cần đăng nhập để tạo giải." : {
+
+    },
+    "Bạn cần đăng nhập." : {
+
+    },
+    "Bạn cần tạo đăng ký trước khi ghép đôi." : {
+
+    },
+    "Bạn chưa tạo giải nào" : {
+
+    },
+    "Bạn đã có đồng đội." : {
+
+    },
+    "Bạn đã đăng ký giải này rồi." : {
+
+    },
+    "Bạn đã đạt giới hạn 3 CLB." : {
+
+    },
+    "Bạn đã đạt giới hạn số giải miễn phí." : {
+
+    },
+    "Bạn đã đạt giới hạn số giải. Hãy xóa bớt giải cũ." : {
+
+    },
+    "Bạn đã gửi yêu cầu cho VĐV này." : {
+
+    },
+    "Bạn đã ở trong một đội của giải này." : {
+
+    },
+    "Bạn đã yêu cầu quá nhiều mã. Hãy đợi 15 phút rồi thử lại." : {
+
+    },
+    "Bạn đang bị tắt tiếng" : {
+
+    },
+    "Bạn hoặc đồng đội đã đăng ký rồi" : {
+
+    },
+    "Bán kết" : {
+
+    },
+    "Bạn không có quyền chấm trận này." : {
+
+    },
+    "Bạn không có quyền chỉnh sửa giải này." : {
+
+    },
+    "Bạn không có quyền phản hồi yêu cầu này." : {
+
+    },
+    "Bạn không có quyền thực hiện thao tác này." : {
+
+    },
+    "Bạn không thể tự tham gia đội của mình." : {
+
+    },
+    "Bạn là BTC — quản lý danh sách đội đăng ký bên dưới." : {
+
+    },
+    "Bạn muốn chơi thế nào? (VD: cần 2 bạn trình 3.0 tối nay ở sân Tăng Bạt Hổ)" : {
+
+    },
+    "Bạn muốn thảo luận gì?" : {
+
+    },
+    "Bạn nhập sai quá nhiều lần. Thử lại sau 15 phút." : {
+
+    },
+    "Bạn ở đội: %@" : {
+
+    },
+    "Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo" : {
+
+    },
+    "BẢN TIN HÀNG NGÀY" : {
+
+    },
+    "BAN TỔ CHỨC" : {
+
+    },
+    "Ban tổ chức chưa công bố nội dung nào." : {
+
+    },
+    "Bạn vừa được ghép vào đội khác." : {
+
+    },
+    "Bảng" : {
+
+    },
+    "Bảng %@" : {
+
+    },
+    "Bảng %@ · %lld VĐV" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bảng %1$@ · %2$lld VĐV"
+          }
+        }
+      }
+    },
+    "Bảng %@ có ít hơn %lld người" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bảng %1$@ có ít hơn %2$lld người"
+          }
+        }
+      }
+    },
+    "Bảng chưa có VĐV hoặc đội." : {
+
+    },
+    "Bảng của %@" : {
+
+    },
+    "Bảng đấu nhanh" : {
+
+    },
+    "Bảng không thuộc giải này." : {
+
+    },
+    "Bảng sân chưa hoạt động" : {
+
+    },
+    "Bảng sân trực tiếp" : {
+
+    },
+    "BẢNG SÂN TRỰC TIẾP" : {
+
+    },
+    "Bảng sân xuất hiện khi Quick Table vào vòng bảng/playoff, Team Match đang thi đấu hoặc giải loại trực tiếp đã bắt đầu." : {
+
+    },
+    "Bảng tin" : {
+
+    },
+    "Bảng xếp hạng" : {
+
+    },
+    "BẢNG XẾP HẠNG" : {
+
+    },
+    "Bảng xếp hạng bình luận" : {
+
+    },
+    "Bảng xếp hạng cho mục này sẽ cập nhật sau." : {
+
+    },
+    "Bảng xếp hạng sẽ cập nhật khi có bình luận." : {
+
+    },
+    "Báo chí thật" : {
+
+    },
+    "Báo đã CK" : {
+
+    },
+    "Bật âm báo" : {
+
+    },
+    "Bắt buộc DUPR" : {
+
+    },
+    "Bắt buộc khai trình độ" : {
+
+    },
+    "Bắt buộc lineup dùng tất cả thành viên" : {
+
+    },
+    "Bắt buộc trả trước" : {
+
+    },
+    "Bật chat" : {
+
+    },
+    "Bắt đầu" : {
+
+    },
+    "BẮT ĐẦU" : {
+
+    },
+    "Bắt đầu chấm điểm" : {
+
+    },
+    "Bắt đầu giải" : {
+
+    },
+    "Bắt đầu giải đấu" : {
+
+    },
+    "Bắt đầu giải đôi" : {
+
+    },
+    "Bắt đầu lại" : {
+
+    },
+    "Bắt đầu lại, xóa bản nháp" : {
+
+    },
+    "Bắt đầu trận" : {
+
+    },
+    "Bắt đầu với Bảng đấu nhanh" : {
+
+    },
+    "Bật DreamBreaker" : {
+
+    },
+    "Bê tông" : {
+
+    },
+    "Bên A · VĐV 1" : {
+
+    },
+    "Bên A · VĐV 2" : {
+
+    },
+    "Bên B · VĐV 1" : {
+
+    },
+    "Bên B · VĐV 2" : {
+
+    },
+    "Best of 1" : {
+
+    },
+    "Best of 3" : {
+
+    },
+    "Best of 5" : {
+
+    },
+    "Bị từ chối" : {
+
+    },
+    "BỊ TỪ CHỐI" : {
+
+    },
+    "Bình luận" : {
+
+    },
+    "BÌNH LUẬN (%lld)" : {
+
+    },
+    "Bình luận nhiều nhất" : {
+
+    },
+    "Bỏ check-in" : {
+
+    },
+    "Bỏ chọn" : {
+
+    },
+    "Bỏ chọn hay nhất" : {
+
+    },
+    "Bỏ chọn tất cả" : {
+
+    },
+    "Bỏ qua" : {
+
+    },
+    "Bỏ thay đổi" : {
+
+    },
+    "Bỏ thay đổi?" : {
+
+    },
+    "BO1" : {
+
+    },
+    "BO3" : {
+
+    },
+    "BO5" : {
+
+    },
+    "Bốc lại" : {
+
+    },
+    "BỐC THĂM" : {
+
+    },
+    "Bốc thăm chia bảng" : {
+
+    },
+    "Bốc thăm hoàn tất" : {
+
+    },
+    "bởi %@" : {
+
+    },
+    "BRACKET LAB" : {
+
+    },
+    "BTC chưa bật VietQR; bạn có thể thanh toán tại sân." : {
+
+    },
+    "BTC đã xác nhận thanh toán" : {
+
+    },
+    "BTC thêm" : {
+
+    },
+    "Bước 1 / 3" : {
+
+    },
+    "Bước 1: Thông tin giải đấu" : {
+
+    },
+    "Bước 2 / 3" : {
+
+    },
+    "Bước 2: Chọn thể thức" : {
+
+    },
+    "Bước 3 / 3" : {
+
+    },
+    "Bước 3: Chia bảng" : {
+
+    },
+    "Buổi phát không tồn tại hoặc đã bị gỡ." : {
+
+    },
+    "BXH tuần" : {
+
+    },
+    "Cả hai (ưu tiên DUPR)" : {
+
+    },
+    "Các buổi chơi cộng đồng sẽ hiện ở đây." : {
+
+    },
+    "Các buổi phát sẽ xuất hiện ở đây khi bắt đầu." : {
+
+    },
+    "CÁC GAME TRONG TRẬN" : {
+
+    },
+    "Các giải PPA, APP, MLP sẽ xuất hiện khi có lịch." : {
+
+    },
+    "Các trận đã phát sẽ được lưu lại ở đây." : {
+
+    },
+    "Cách chia" : {
+
+    },
+    "Cài đặt chat" : {
+
+    },
+    "Cài đặt giải" : {
+
+    },
+    "Cài đặt nâng cao" : {
+
+    },
+    "Cài đặt tài khoản" : {
+
+    },
+    "Cần %lld wildcard" : {
+
+    },
+    "Cần %lld wildcard (không khuyến nghị)" : {
+
+    },
+    "Cần ≥ 2 bảng, có %lld" : {
+
+    },
+    "Cần ≥ 2 đội đã duyệt — thêm đội ở tab Đội." : {
+
+    },
+    "Cần ≥ 6 đội đã duyệt để chia bảng (mỗi bảng tối thiểu 3 đội)." : {
+
+    },
+    "Cần ≥ 6 đội đã duyệt để chia bảng." : {
+
+    },
+    "cân bằng %lld%%" : {
+
+    },
+    "Cần đăng nhập" : {
+
+    },
+    "Cần đăng nhập để đăng ký." : {
+
+    },
+    "Cần đăng nhập để ghép đôi." : {
+
+    },
+    "Cần đăng nhập để mời đồng đội." : {
+
+    },
+    "Cần đăng nhập để nhận lời mời." : {
+
+    },
+    "Cần đăng nhập để tải logo." : {
+
+    },
+    "Cần đăng nhập để tạo giải." : {
+
+    },
+    "Cần đăng nhập để tham gia đội." : {
+
+    },
+    "Cần ít nhất 2 đội (đã duyệt) để tạo lịch." : {
+
+    },
+    "Cần ít nhất 2 VĐV hoặc đội trong bảng." : {
+
+    },
+    "Cần ít nhất 3 đội đủ người đã duyệt" : {
+
+    },
+    "Cần ít nhất 4 người chơi." : {
+
+    },
+    "Cần ít nhất 6 VĐV đã duyệt" : {
+
+    },
+    "Cần ít nhất một ván có tỉ số." : {
+
+    },
+    "Cấu hình vừa thay đổi trên thiết bị khác. Hãy tải lại." : {
+
+    },
+    "CHẠM = +1" : {
+
+    },
+    "Chạm để đổi logo" : {
+
+    },
+    "Chấm điểm" : {
+
+    },
+    "Chấm điểm đấu đồng đội" : {
+
+    },
+    "Chấm điểm loại trực tiếp" : {
+
+    },
+    "Chấm điểm Quick Table" : {
+
+    },
+    "CHẤM TRỰC TIẾP" : {
+
+    },
+    "CHẤM TRỰC TIẾP (G%lld)" : {
+
+    },
+    "Chat đã bị tắt cho phòng này" : {
+
+    },
+    "Châu Á" : {
+
+    },
+    "Châu Âu" : {
+
+    },
+    "Chế độ chậm" : {
+
+    },
+    "Check-in" : {
+
+    },
+    "Chỉ bấm sau khi đã chuyển khoản thành công." : {
+
+    },
+    "Chỉ bạn quản lý" : {
+
+    },
+    "Chỉ CLB" : {
+
+    },
+    "Chỉ đường" : {
+
+    },
+    "Chỉ khả dụng với ≥32 người" : {
+
+    },
+    "Chi tiết từng ván" : {
+
+    },
+    "Chia bảng" : {
+
+    },
+    "Chia bảng (Round Robin)" : {
+
+    },
+    "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng." : {
+
+    },
+    "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Top của mỗi bảng sẽ vào vòng Playoff." : {
+
+    },
+    "Chia sẻ" : {
+
+    },
+    "Chia sẻ chi tiết…" : {
+
+    },
+    "Chia sẻ giải đấu" : {
+
+    },
+    "Chia sẻ link" : {
+
+    },
+    "Chia sẻ link đăng ký %@" : {
+
+    },
+    "Chia sẻ trang giải" : {
+
+    },
+    "Chia sẻ trang sự kiện để nhận đăng ký, hoặc thêm người chơi thủ công." : {
+
+    },
+    "Chỉnh sửa CLB" : {
+
+    },
+    "chờ" : {
+
+    },
+    "CHỜ" : {
+
+    },
+    "Chờ %@ xác nhận" : {
+
+    },
+    "CHỜ BẠN" : {
+
+    },
+    "CHỜ BTC DUYỆT" : {
+
+    },
+    "Chờ BTC xác nhận" : {
+
+    },
+    "Chờ đội trưởng duyệt" : {
+
+    },
+    "CHỜ ĐỒNG ĐỘI" : {
+
+    },
+    "Chờ duyệt" : {
+
+    },
+    "Chờ duyệt · %lld" : {
+
+    },
+    "Chờ phân vòng 3" : {
+
+    },
+    "Cho phép chọn câu trả lời hay nhất" : {
+
+    },
+    "Cho phép mọi người xem giải qua link." : {
+
+    },
+    "Cho phép người khác xem hồ sơ của bạn" : {
+
+    },
+    "Cho phép vào bằng mã PIN" : {
+
+    },
+    "Chờ V1 & V2 hoàn thành" : {
+
+    },
+    "Chờ xác nhận" : {
+
+    },
+    "CHỜ XÁC NHẬN" : {
+
+    },
+    "CHỜ XÁC THỰC" : {
+
+    },
+    "Chơi ổn định, hiểu luật" : {
+
+    },
+    "Chọn" : {
+
+    },
+    "Chọn %lld đội từ các hạng 3 để vào playoff." : {
+
+    },
+    "Chọn %lld VĐV" : {
+
+    },
+    "Chọn bảng cho %@" : {
+
+    },
+    "Chọn chủ đề" : {
+
+    },
+    "Chọn đối thủ" : {
+
+    },
+    "Chọn đồng đội" : {
+
+    },
+    "Chọn hay nhất" : {
+
+    },
+    "Chọn khung đăng ký" : {
+
+    },
+    "Chọn ngân hàng" : {
+
+    },
+    "CHỌN NGƯỜI CHƠI · %lld" : {
+
+    },
+    "Chọn người chơi rồi bấm Sinh lịch." : {
+
+    },
+    "Chọn nhiều đăng ký" : {
+
+    },
+    "Chọn phần quản lý" : {
+
+    },
+    "Chọn sân, giờ và trình độ" : {
+
+    },
+    "Chọn tất cả đội chờ" : {
+
+    },
+    "Chọn thể thức" : {
+
+    },
+    "Chọn thể thức, mời người chơi và công bố bảng đấu — tất cả trong một luồng." : {
+
+    },
+    "Chọn Wildcard" : {
+
+    },
+    "Chốt tỉ số (BTC)" : {
+
+    },
+    "Chủ đề" : {
+
+    },
+    "Chủ tài khoản" : {
+
+    },
+    "Chưa" : {
+
+    },
+    "Chưa chia bảng." : {
+
+    },
+    "Chưa chọn" : {
+
+    },
+    "Chưa có %@." : {
+
+    },
+    "Chưa có ai đăng ký." : {
+
+    },
+    "Chưa có bài viết nào" : {
+
+    },
+    "Chưa có bản phát lại" : {
+
+    },
+    "Chưa có bảng hay trận nào." : {
+
+    },
+    "Chưa có bảng hay trận nào. Nhấn biểu tượng điều chỉnh để tạo ngay trong app." : {
+
+    },
+    "Chưa có bảng. Nhấn + để thêm." : {
+
+    },
+    "Chưa có bình luận" : {
+
+    },
+    "Chưa có bình luận." : {
+
+    },
+    "Chưa có bracket." : {
+
+    },
+    "Chưa có buổi chơi sắp tới" : {
+
+    },
+    "Chưa có CLB nào" : {
+
+    },
+    "Chưa có cuộc trò chuyện" : {
+
+    },
+    "Chưa có đăng ký" : {
+
+    },
+    "Chưa có đăng ký." : {
+
+    },
+    "Chưa có đội — bấm “Quản lý đội” để thêm." : {
+
+    },
+    "Chưa có đội nào đăng ký." : {
+
+    },
+    "Chưa có đội." : {
+
+    },
+    "Chưa có đội. Nhấn + để thêm." : {
+
+    },
+    "Chưa có đồng đội" : {
+
+    },
+    "Chưa có dữ liệu" : {
+
+    },
+    "Chưa có dữ liệu xếp hạng." : {
+
+    },
+    "Chưa có giải chuyên nghiệp" : {
+
+    },
+    "Chưa có giải đang diễn ra" : {
+
+    },
+    "Chưa có giải nào đã kết thúc" : {
+
+    },
+    "Chưa có giải nào đang diễn ra" : {
+
+    },
+    "Chưa có kết quả vòng tròn." : {
+
+    },
+    "Chưa có lịch sân" : {
+
+    },
+    "Chưa có lịch thi đấu" : {
+
+    },
+    "Chưa có lịch thi đấu." : {
+
+    },
+    "Chưa có nội dung thi đấu" : {
+
+    },
+    "Chưa có sân nào ở %@" : {
+
+    },
+    "Chưa có sự kiện sắp tới" : {
+
+    },
+    "CHƯA CÓ SỰ KIỆN SẮP TỚI" : {
+
+    },
+    "Chưa có tài khoản — gửi link xác nhận" : {
+
+    },
+    "Chưa có thành viên." : {
+
+    },
+    "Chưa có thông báo nào." : {
+
+    },
+    "Chưa có thông tin thể lệ / lệ phí." : {
+
+    },
+    "Chưa có tin tìm kèo nào" : {
+
+    },
+    "Chưa có trận đang chờ" : {
+
+    },
+    "Chưa có trận nào." : {
+
+    },
+    "Chưa có trận trong bảng." : {
+
+    },
+    "Chưa có trận trực tiếp" : {
+
+    },
+    "Chưa có trận." : {
+
+    },
+    "Chưa có trận. Nhấn + để thêm." : {
+
+    },
+    "Chưa có trọng tài." : {
+
+    },
+    "Chưa có ván con." : {
+
+    },
+    "Chưa có VĐV. Nhấn + để thêm." : {
+
+    },
+    "Chưa có video" : {
+
+    },
+    "Chưa có video." : {
+
+    },
+    "Chưa đặt" : {
+
+    },
+    "Chưa đủ 75%% người chơi có DUPR (%lld%%) — đã ghép ngẫu nhiên." : {
+
+    },
+    "Chưa đủ đội" : {
+
+    },
+    "Chưa gán sân" : {
+
+    },
+    "Chưa kết nối DUPR" : {
+
+    },
+    "Chưa lưu bản nháp" : {
+
+    },
+    "Chưa nộp lệ phí" : {
+
+    },
+    "Chưa rõ số sân" : {
+
+    },
+    "Chưa sinh vòng Playoff — BTC bấm “Sinh vòng Playoff” ở tab Trận đấu khi vòng bảng xong." : {
+
+    },
+    "Chưa tải được hồ sơ của bạn." : {
+
+    },
+    "Chưa tạo nhánh playoff." : {
+
+    },
+    "Chưa trả" : {
+
+    },
+    "Chưa xếp hạng" : {
+
+    },
+    "Chung kết" : {
+
+    },
+    "Chuyển đến" : {
+
+    },
+    "Chuyển khoản lệ phí đội để được BTC xác nhận tham gia giải." : {
+
+    },
+    "CHUYÊN NGHIỆP" : {
+
+    },
+    "Chuyển sang “Đang diễn ra”; không thêm/xóa đội được nữa." : {
+
+    },
+    "CLB CỦA TÔI" : {
+
+    },
+    "CLB sẽ bị ẩn khỏi danh sách. Gõ \"%@\" để xác nhận." : {
+
+    },
+    "clb-sai-gon" : {
+
+    },
+    "Clip ngắn" : {
+
+    },
+    "Có" : {
+
+    },
+    "Có giới hạn thời gian không?" : {
+
+    },
+    "Có lỗi xảy ra (%@). Thử lại sau." : {
+
+    },
+    "có mặt tại sân." : {
+
+    },
+    "Có ngày tổ chức" : {
+
+    },
+    "Có thể hủy đăng ký bất cứ lúc nào." : {
+
+    },
+    "Có thông báo mới" : {
+
+    },
+    "Có trận tranh hạng 3" : {
+
+    },
+    "Cỡ vừa và giới hạn thời gian → loại kép gọn hơn." : {
+
+    },
+    "CÒN" : {
+
+    },
+    "CÒN %lld CHỖ" : {
+
+    },
+    "Còn %lld suất" : {
+
+    },
+    "Còn %lld/%lld chỗ" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Còn %1$lld/%2$lld chỗ"
+          }
+        }
+      }
+    },
+    "Công cụ" : {
+
+    },
+    "Cộng dồn điểm các game; bên nào tổng cao hơn thắng, thay vì thắng/thua từng game" : {
+
+    },
+    "Cộng đồng" : {
+
+    },
+    "Cộng đồng %lld" : {
+
+    },
+    "Công khai" : {
+
+    },
+    "CÔNG KHAI" : {
+
+    },
+    "Cột mốc" : {
+
+    },
+    "Của tôi" : {
+
+    },
+    "Đã báo chuyển khoản — chờ BTC xác nhận" : {
+
+    },
+    "Đã báo chuyển khoản — đang chờ BTC xác nhận." : {
+
+    },
+    "Đã báo CK" : {
+
+    },
+    "Đã check-in" : {
+
+    },
+    "Đã chuyển khoản" : {
+
+    },
+    "Đã có CLB dùng slug này." : {
+
+    },
+    "Đã có lịch được lưu — ghi đè? Tỉ số các trận cũ sẽ mất." : {
+
+    },
+    "Đã có người báo chuyển khoản — không đổi được giá." : {
+
+    },
+    "Đã đăng ký" : {
+
+    },
+    "ĐÃ ĐĂNG KÝ · %lld" : {
+
+    },
+    "Đã đăng ký %lld trên %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Đã đăng ký %1$lld trên %2$lld"
+          }
+        }
+      }
+    },
+    "Đã đăng ký. Xem hộp thư của bạn." : {
+
+    },
+    "ĐÃ ĐẶT" : {
+
+    },
+    "Đã đạt giới hạn: mỗi tài khoản tối đa 3 giải." : {
+
+    },
+    "Đã đạt giới hạn: mỗi tài khoản tối đa 3 giải. Liên hệ tapickleballvn@gmail.com để mở rộng." : {
+
+    },
+    "Đã đặt nhắc" : {
+
+    },
+    "Đã đầy" : {
+
+    },
+    "Đã đổi sân" : {
+
+    },
+    "Đã đủ đội. Ban tổ chức sẽ chốt và tạo bracket." : {
+
+    },
+    "Đã đủ đội. Đợi ban tổ chức bắt đầu giải." : {
+
+    },
+    "Đã dừng" : {
+
+    },
+    "Đã được duyệt" : {
+
+    },
+    "Đã được duyệt vào đội" : {
+
+    },
+    "Đã duyệt" : {
+
+    },
+    "ĐÃ DUYỆT" : {
+
+    },
+    "Đã duyệt · %lld" : {
+
+    },
+    "Đã ghi trận!" : {
+
+    },
+    "ĐÃ GỬI" : {
+
+    },
+    "ĐÃ GỬI DUPR" : {
+
+    },
+    "Đã hiểu" : {
+
+    },
+    "Đã hoàn thành" : {
+
+    },
+    "Đã hoàn tiền" : {
+
+    },
+    "ĐÃ HUỶ" : {
+
+    },
+    "Đã hủy đăng ký" : {
+
+    },
+    "Đã kết thúc" : {
+
+    },
+    "Đã khôi phục bản nháp trên thiết bị này" : {
+
+    },
+    "Đã khôi phục bản nháp trên thiết bị này." : {
+
+    },
+    "Đã loại" : {
+
+    },
+    "Đã lưu" : {
+
+    },
+    "Đã lưu lịch — mở Điều hành trực tiếp để chạy buổi chơi." : {
+
+    },
+    "Đã lưu tên" : {
+
+    },
+    "Đã lưu thay đổi" : {
+
+    },
+    "Đã lưu thay đổi." : {
+
+    },
+    "Đã lưu trên thiết bị lúc %@" : {
+
+    },
+    "Đã mời đội" : {
+
+    },
+    "Đã nộp lệ phí" : {
+
+    },
+    "Đã quá hạn hủy %lldh — hủy bây giờ sẽ không được hoàn phí." : {
+
+    },
+    "Đã sao chép mã PIN." : {
+
+    },
+    "Đã sinh Playoff, nhưng chưa sinh được nhánh Tái sinh (cần đủ hạng 3,4 mỗi bảng)." : {
+
+    },
+    "Đã tạo %lld/%lld sự kiện — lỗi ở tuần %lld: %@. Bấm lại để tiếp tục từ chỗ dở." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Đã tạo %1$lld/%2$lld sự kiện — lỗi ở tuần %3$lld: %4$@. Bấm lại để tiếp tục từ chỗ dở."
+          }
+        }
+      }
+    },
+    "ĐÃ TẮT" : {
+
+    },
+    "Đã tham gia ✓" : {
+
+    },
+    "Đã tham gia đội" : {
+
+    },
+    "Đã thêm — gửi link này cho người chơi" : {
+
+    },
+    "Đã thêm %@ vào CLB." : {
+
+    },
+    "Đã thêm đội" : {
+
+    },
+    "Đã thêm trọng tài %@" : {
+
+    },
+    "Đã trả" : {
+
+    },
+    "ĐÃ XÁC MINH" : {
+
+    },
+    "ĐÃ XÁC NHẬN" : {
+
+    },
+    "ĐÃ XÁC THỰC" : {
+
+    },
+    "Đã xóa đội" : {
+
+    },
+    "Đăng" : {
+
+    },
+    "Đăng bài" : {
+
+    },
+    "Đang bốc thăm… %lld/%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Đang bốc thăm… %1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "Đang cài đặt" : {
+
+    },
+    "Đang cập nhật…" : {
+
+    },
+    "Đang chờ duyệt" : {
+
+    },
+    "Đang chuẩn bị" : {
+
+    },
+    "Đang có %lld đăng ký — không giảm dưới số này." : {
+
+    },
+    "đang có trận trực tiếp" : {
+
+    },
+    "Đang đăng ký" : {
+
+    },
+    "Đang đăng…" : {
+
+    },
+    "Đang diễn ra" : {
+
+    },
+    "ĐANG DIỄN RA" : {
+
+    },
+    "đang giao: %@" : {
+
+    },
+    "Đang gửi…" : {
+
+    },
+    "Đang kiểm tra DUPR…" : {
+
+    },
+    "Đang kiểm tra…" : {
+
+    },
+    "Đăng ký" : {
+
+    },
+    "Đăng ký của bạn không còn hoạt động." : {
+
+    },
+    "Đăng ký của bạn: %@" : {
+
+    },
+    "Đăng ký của tôi" : {
+
+    },
+    "Đăng ký của VĐV này không còn hoạt động." : {
+
+    },
+    "Đăng ký đã đóng" : {
+
+    },
+    "Đăng ký đã hủy trước đó." : {
+
+    },
+    "Đăng ký đã thành công nhưng chưa tải được thông tin thanh toán. Hãy thử làm mới màn hình." : {
+
+    },
+    "Đăng ký đang hoạt động." : {
+
+    },
+    "ĐĂNG KÝ ĐANG MỞ" : {
+
+    },
+    "Đăng ký đội" : {
+
+    },
+    "Đăng ký đội của bạn (2 VĐV đã liên kết DUPR)." : {
+
+    },
+    "Đăng ký hộ" : {
+
+    },
+    "Đăng ký lại" : {
+
+    },
+    "Đăng ký native đang tạm bảo trì. Hãy đăng ký trên web." : {
+
+    },
+    "Đăng ký ngay" : {
+
+    },
+    "Đăng ký tham gia" : {
+
+    },
+    "Đăng ký thành công" : {
+
+    },
+    "Đăng ký trên web" : {
+
+    },
+    "Đăng ký xong đội được duyệt ngay." : {
+
+    },
+    "Đang lưu thay đổi" : {
+
+    },
+    "Đang lưu…" : {
+
+    },
+    "Đang mở" : {
+
+    },
+    "Đang mở đăng ký" : {
+
+    },
+    "Đang mở đăng ký · tối đa %lld đội" : {
+
+    },
+    "Đăng nhập" : {
+
+    },
+    "Đăng nhập bằng số điện thoại" : {
+
+    },
+    "Đăng nhập để đăng ký / tham gia đội." : {
+
+    },
+    "Đăng nhập để đăng ký đội." : {
+
+    },
+    "Đăng nhập để đăng ký tham gia." : {
+
+    },
+    "Đăng nhập để nhập mã trọng tài." : {
+
+    },
+    "Đăng nhập để tạo đội và mời đồng đội." : {
+
+    },
+    "Đăng nhập để tham gia bình luận" : {
+
+    },
+    "Đăng nhập để tiếp tục" : {
+
+    },
+    "Đăng nhập để xem thông báo của bạn." : {
+
+    },
+    "Đang phân vòng 3…" : {
+
+    },
+    "ĐANG PHÁT" : {
+
+    },
+    "Đang phát trực tiếp" : {
+
+    },
+    "Đang phát trực tiếp — bấm để xem" : {
+
+    },
+    "ĐANG QUAY…" : {
+
+    },
+    "Đăng sự kiện" : {
+
+    },
+    "Đang tải" : {
+
+    },
+    "Đang tải bảng tin…" : {
+
+    },
+    "Đang tải điểm DUPR" : {
+
+    },
+    "Đang tải…" : {
+
+    },
+    "Đang tạo..." : {
+
+    },
+    "Đang tạo…" : {
+
+    },
+    "Đang tham gia…" : {
+
+    },
+    "ĐANG THI ĐẤU" : {
+
+    },
+    "Đăng tìm kèo" : {
+
+    },
+    "Đăng tin đầu tiên!" : {
+
+    },
+    "Đang trực tiếp: %@" : {
+
+    },
+    "Đang xếp lịch..." : {
+
+    },
+    "Đang xóa..." : {
+
+    },
+    "Đang xử lý…" : {
+
+    },
+    "Đăng xuất" : {
+
+    },
+    "Dành cho người chơi" : {
+
+    },
+    "Đánh dấu %@ vắng mặt?" : {
+
+    },
+    "Đánh dấu chưa trả" : {
+
+    },
+    "Đánh dấu đã trả" : {
+
+    },
+    "Đánh dấu Hỏi–Đáp" : {
+
+    },
+    "Danh sách có %lld đội nhưng bước thiết lập khai báo %lld đội." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Danh sách có %1$lld đội nhưng bước thiết lập khai báo %2$lld đội."
+          }
+        }
+      }
+    },
+    "Danh sách đã duyệt sẽ trở thành roster chính thức. Anh có thể sửa tên, seed và bảng trước khi bắt đầu." : {
+
+    },
+    "Danh sách đăng ký" : {
+
+    },
+    "DANH SÁCH ĐỘI (%lld)" : {
+
+    },
+    "Danh sách ván không hợp lệ với thể thức của trận." : {
+
+    },
+    "Danh sách VĐV · %lld" : {
+
+    },
+    "Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng" : {
+
+    },
+    "Đặt lại" : {
+
+    },
+    "Đặt làm đội trưởng" : {
+
+    },
+    "Đặt nhắc tôi" : {
+
+    },
+    "Đặt username + trình độ" : {
+
+    },
+    "Đấu đồng đội" : {
+
+    },
+    "Đây là lịch đã lưu. Bấm Tạo lại để sinh lịch mới." : {
+
+    },
+    "DB" : {
+
+    },
+    "Để trống = không giới hạn. VD: 3.0 – 4.5 chỉ nhận VĐV trong khoảng này." : {
+
+    },
+    "Để trống để quay lại tên sân tự động." : {
+
+    },
+    "Để trống ô sân rồi Xếp lịch để xóa phân sân/giờ." : {
+
+    },
+    "ĐỀ XUẤT" : {
+
+    },
+    "Địa chỉ *" : {
+
+    },
+    "Địa điểm" : {
+
+    },
+    "Địa điểm (không bắt buộc)" : {
+
+    },
+    "ĐIỂM" : {
+
+    },
+    "Điểm BTC (để trống nếu không ghi đè)" : {
+
+    },
+    "Điểm DUPR %@" : {
+
+    },
+    "Điểm DUPR %@, giảm %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Điểm DUPR %1$@, giảm %2$@"
+          }
+        }
+      }
+    },
+    "Điểm DUPR %@, tăng %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Điểm DUPR %1$@, tăng %2$@"
+          }
+        }
+      }
+    },
+    "Điểm hiện tại: %@%@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Điểm hiện tại: %1$@%2$@"
+          }
+        }
+      }
+    },
+    "Điểm mỗi game con" : {
+
+    },
+    "Điểm trình độ" : {
+
+    },
+    "Điểm trình độ (tùy chọn)" : {
+
+    },
+    "Điểm vừa được cập nhật trên thiết bị khác. Hãy tải lại trước khi lưu." : {
+
+    },
+    "Diễn đàn" : {
+
+    },
+    "Điền sẵn tên đội + đội hình" : {
+
+    },
+    "Điện thoại" : {
+
+    },
+    "Điều chỉnh của BTC" : {
+
+    },
+    "Điều chỉnh đăng ký" : {
+
+    },
+    "Điều chỉnh đăng ký %@" : {
+
+    },
+    "Điều hành trực tiếp" : {
+
+    },
+    "Định dạng ảnh không hợp lệ hoặc ảnh đã bị hỏng." : {
+
+    },
+    "Đọc bài gốc" : {
+
+    },
+    "Đọc tất cả" : {
+
+    },
+    "Đọc toàn bộ tại %@" : {
+
+    },
+    "Đôi" : {
+
+    },
+    "ĐÔI" : {
+
+    },
+    "Đội" : {
+
+    },
+    "ĐỘI" : {
+
+    },
+    "Đội · %lld" : {
+
+    },
+    "Đôi · playoff" : {
+
+    },
+    "Đôi · vòng bảng" : {
+
+    },
+    "Đội / Cặp (tùy chọn)" : {
+
+    },
+    "Đội A" : {
+
+    },
+    "Đổi ảnh đại diện" : {
+
+    },
+    "Đội B" : {
+
+    },
+    "Đội chính thức tham gia" : {
+
+    },
+    "Đội chưa có thành viên." : {
+
+    },
+    "Đội chưa có VĐV trong danh sách." : {
+
+    },
+    "Đội chưa hoàn tất" : {
+
+    },
+    "Đội có thể được duyệt lại sau." : {
+
+    },
+    "Đội của bạn" : {
+
+    },
+    "ĐỘI CỦA BẠN" : {
+
+    },
+    "Đội của bạn: %@" : {
+
+    },
+    "ĐỘI ĐÃ ĐĂNG KÝ · %lld" : {
+
+    },
+    "Đội đã đủ %lld người." : {
+
+    },
+    "Đội đã đủ hai người." : {
+
+    },
+    "Đội đã được BTC xác nhận — chính thức tham gia." : {
+
+    },
+    "Đội đã được duyệt" : {
+
+    },
+    "ĐỔI GIAO" : {
+
+    },
+    "Đội hình" : {
+
+    },
+    "Đôi nam" : {
+
+    },
+    "Đôi Nam (MD)" : {
+
+    },
+    "Đôi nam nữ" : {
+
+    },
+    "ĐÔI NAM NỮ" : {
+
+    },
+    "Đôi Nam Nữ (MX)" : {
+
+    },
+    "Đôi nam nữ 1" : {
+
+    },
+    "Đôi nam nữ 2" : {
+
+    },
+    "ĐÔI NAM-NỮ" : {
+
+    },
+    "ĐỘI NÀO GIAO BÓNG TRƯỚC?" : {
+
+    },
+    "Đôi nữ" : {
+
+    },
+    "Đôi Nữ (WD)" : {
+
+    },
+    "ĐỔI SÂN" : {
+
+    },
+    "Đội sẽ bị loại khỏi danh sách đang hoạt động." : {
+
+    },
+    "Đổi tên" : {
+
+    },
+    "Đổi tên sân" : {
+
+    },
+    "Đổi tên sân cho trận này" : {
+
+    },
+    "Đối thủ" : {
+
+    },
+    "Đối thủ sẽ nhận thông báo để xác nhận tỉ số." : {
+
+    },
+    "Đối thủ và BTC sẽ được thông báo để xem lại tỉ số." : {
+
+    },
+    "Đội trưởng" : {
+
+    },
+    "Đội trưởng tạo đội và mời thành viên" : {
+
+    },
+    "Đối tượng thi đấu" : {
+
+    },
+    "Đơn" : {
+
+    },
+    "ĐƠN" : {
+
+    },
+    "Đơn · playoff" : {
+
+    },
+    "Đơn · vòng bảng" : {
+
+    },
+    "Đơn nam" : {
+
+    },
+    "Đơn Nam (MS)" : {
+
+    },
+    "Đơn nữ" : {
+
+    },
+    "Đơn Nữ (WS)" : {
+
+    },
+    "Đóng" : {
+
+    },
+    "Đóng đăng ký & tạo bracket" : {
+
+    },
+    "Đồng đội" : {
+
+    },
+    "Đồng đội · MLP" : {
+
+    },
+    "Đồng đội không hợp lệ" : {
+
+    },
+    "Đóng thông báo bản nháp" : {
+
+    },
+    "Đồng ý" : {
+
+    },
+    "Đủ điều kiện · DUPR %@" : {
+
+    },
+    "Đủ đôi" : {
+
+    },
+    "Dự kiến bao nhiêu người?" : {
+
+    },
+    "Dùng lại đội gần nhất: %@" : {
+
+    },
+    "Dưới 16" : {
+
+    },
+    "Đường dẫn (slug) *" : {
+
+    },
+    "Đường dẫn (slug) đã được dùng." : {
+
+    },
+    "DUPR" : {
+
+    },
+    "DUPR · chưa có tài khoản" : {
+
+    },
+    "DUPR / Facebook…" : {
+
+    },
+    "DUPR %@" : {
+
+    },
+    "DUPR đã xác minh" : {
+
+    },
+    "DUPR Nam ≤ %@ · Nữ ≤ %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "DUPR Nam ≤ %1$@ · Nữ ≤ %2$@"
+          }
+        }
+      }
+    },
+    "DUPR tối đa — Nam" : {
+
+    },
+    "DUPR tối đa — Nữ" : {
+
+    },
+    "DUPR trung bình ngoài khoảng cho phép" : {
+
+    },
+    "DUPR: %@" : {
+
+    },
+    "DUPR: tạo xong sẽ MỞ ĐĂNG KÝ; đội tự đăng ký rồi BTC chốt để sinh nhánh." : {
+
+    },
+    "Duyệt" : {
+
+    },
+    "DUYỆT" : {
+
+    },
+    "Duyệt %lld" : {
+
+    },
+    "Duyệt hàng loạt" : {
+
+    },
+    "Duyệt lại" : {
+
+    },
+    "Duyệt tất cả" : {
+
+    },
+    "Email" : {
+
+    },
+    "Email hoặc số điện thoại" : {
+
+    },
+    "Email trọng tài" : {
+
+    },
+    "email@cua-ban.com" : {
+
+    },
+    "email@vidu.com / 09xxxxxxxx" : {
+
+    },
+    "form.submit" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Gửi"
+          }
+        }
+      }
+    },
+    "forum.post" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bài viết"
+          }
+        }
+      }
+    },
+    "G%lld" : {
+
+    },
+    "GẦN BẠN" : {
+
+    },
+    "Ghép đôi" : {
+
+    },
+    "Ghi chú" : {
+
+    },
+    "Ghi chú nội bộ" : {
+
+    },
+    "Ghi chú nội bộ (chỉ BTC thấy)" : {
+
+    },
+    "Ghi chú trọng tài" : {
+
+    },
+    "GHI CHÚ TRỌNG TÀI" : {
+
+    },
+    "Ghi chú về %@…" : {
+
+    },
+    "Ghi chú…" : {
+
+    },
+    "Ghi đè lịch" : {
+
+    },
+    "Giá vé (VNĐ, 0 = miễn phí)" : {
+
+    },
+    "Giải chưa có game template." : {
+
+    },
+    "Giải đã bắt đầu nên không thể đổi đội." : {
+
+    },
+    "Giải đã có nhánh đấu; hãy tải lại" : {
+
+    },
+    "Giải đã đạt tối đa 20 bảng." : {
+
+    },
+    "Giải đã đạt tối đa 20 đội." : {
+
+    },
+    "Giải đã đạt tối đa 100 trận." : {
+
+    },
+    "Giải đã đạt tối đa 200 VĐV." : {
+
+    },
+    "Giải đã đủ đội" : {
+
+    },
+    "Giải đã kết thúc nên mã PIN không còn hiệu lực." : {
+
+    },
+    "Giải đã kết thúc, chưa bắt đầu hoặc bạn không có quyền xem." : {
+
+    },
+    "Giải đấu" : {
+
+    },
+    "GIẢI ĐẤU" : {
+
+    },
+    "Giải đấu không còn tồn tại." : {
+
+    },
+    "Giải đồng đội" : {
+
+    },
+    "Giải gần đây" : {
+
+    },
+    "Giải không ở trạng thái mở đăng ký" : {
+
+    },
+    "GIẢI LEAGUE" : {
+
+    },
+    "Giải linh hoạt" : {
+
+    },
+    "Giải này không dùng DUPR" : {
+
+    },
+    "Giải này yêu cầu liên kết DUPR" : {
+
+    },
+    "Giải nhiều nội dung" : {
+
+    },
+    "Giải tôi chấm" : {
+
+    },
+    "Giải tổng" : {
+
+    },
+    "GIẢI TỔNG · %lld NỘI DUNG" : {
+
+    },
+    "Giải yêu cầu DUPR %@ (theo giới tính đội trưởng)." : {
+
+    },
+    "Giải yêu cầu DUPR %@. Bạn chưa kết nối DUPR." : {
+
+    },
+    "Giải yêu cầu DUPR đã liên kết" : {
+
+    },
+    "Giải yêu cầu DUPR%@. Bạn vẫn có thể tham gia ngay và kết nối DUPR sau." : {
+
+    },
+    "Giảm điểm %@" : {
+
+    },
+    "GIẢM GIÁ SLOT ĐĂNG KÝ SỚM" : {
+
+    },
+    "Giao bóng" : {
+
+    },
+    "Giao diện" : {
+
+    },
+    "GIAO LƯU" : {
+
+    },
+    "GIAO: %@ (sân %@)  ·  ĐỠ: %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GIAO: %1$@ (sân %2$@)  ·  ĐỠ: %3$@"
+          }
+        }
+      }
+    },
+    "GIÂY" : {
+
+    },
+    "GIỜ" : {
+
+    },
+    "Giờ bắt đầu (tùy chọn)" : {
+
+    },
+    "Giờ bắt đầu, VD: 08:00" : {
+
+    },
+    "GIỜ MỞ CỬA" : {
+
+    },
+    "Giới hạn điểm DUPR" : {
+
+    },
+    "Giới hạn điểm DUPR tối đa khi đăng ký" : {
+
+    },
+    "GIỚI HẠN DUPR (TÙY CHỌN)" : {
+
+    },
+    "Giới hạn thời gian giữa hai tin của mỗi người." : {
+
+    },
+    "Giới thiệu ngắn về CLB…" : {
+
+    },
+    "Giới thiệu ngắn…" : {
+
+    },
+    "GIỚI TÍNH" : {
+
+    },
+    "Giữ mã PIN" : {
+
+    },
+    "GLOBAL STANDARD · 2018 → 2026" : {
+
+    },
+    "Gõ đúng tên CLB để xác nhận" : {
+
+    },
+    "Gõ đúng tên sự kiện để xác nhận" : {
+
+    },
+    "Gọi" : {
+
+    },
+    "GỢI Ý" : {
+
+    },
+    "Gợi ý thể thức" : {
+
+    },
+    "Gợi ý theo %lld đội tham gia — %lld đội mạnh nhất vào nhánh loại trực tiếp (%@)." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Gợi ý theo %1$lld đội tham gia — %2$lld đội mạnh nhất vào nhánh loại trực tiếp (%3$@)."
+          }
+        }
+      }
+    },
+    "Gom nhiều Quick Table vào một giải" : {
+
+    },
+    "Google không trả về idToken." : {
+
+    },
+    "Gửi" : {
+
+    },
+    "Gửi cho %@" : {
+
+    },
+    "Gửi lại" : {
+
+    },
+    "Gửi link xác nhận" : {
+
+    },
+    "Gửi mã OTP" : {
+
+    },
+    "Gửi trận" : {
+
+    },
+    "Gửi tranh chấp" : {
+
+    },
+    "Gửi yêu cầu ghép đôi?" : {
+
+    },
+    "Gửi yêu cầu, đội trưởng sẽ duyệt bạn vào đội **%@**." : {
+
+    },
+    "Hai đội thua bán kết đấu thêm 1 trận" : {
+
+    },
+    "Hai VĐV trùng nhau" : {
+
+    },
+    "Hạn trả: %lldh sau đăng ký" : {
+
+    },
+    "HẠNG 3,4" : {
+
+    },
+    "Hạng 3,4 mỗi bảng đá thêm nhánh phụ (như playoff cho hạng 1,2)" : {
+
+    },
+    "Hãy chọn một khung đăng ký." : {
+
+    },
+    "Hãy gán sân và giờ thi đấu cho các trận." : {
+
+    },
+    "Hãy là người đầu tiên bắt đầu!" : {
+
+    },
+    "Hãy là người đầu tiên cổ vũ trận đấu." : {
+
+    },
+    "Hãy nhập tên hiển thị hợp lệ." : {
+
+    },
+    "Hãy xóa các nội dung thi đấu trước khi xóa giải tổng." : {
+
+    },
+    "Hệ thống chia đều, tránh cùng team, rải seed" : {
+
+    },
+    "Hệ thống đang tạm dừng gửi tin tự động. Hãy liên hệ ban tổ chức." : {
+
+    },
+    "Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau" : {
+
+    },
+    "Hệ trình độ" : {
+
+    },
+    "Hẹn giờ" : {
+
+    },
+    "HẾT CHỖ" : {
+
+    },
+    "HẾT GIỜ" : {
+
+    },
+    "Hiện chưa có trận trực tiếp" : {
+
+    },
+    "Hiển thị" : {
+
+    },
+    "Hiển thị ở màn hình tổng quan giải" : {
+
+    },
+    "Hồ sơ" : {
+
+    },
+    "Hồ sơ công khai" : {
+
+    },
+    "Hồ sơ không công khai" : {
+
+    },
+    "Hoặc tham gia một đội đã có" : {
+
+    },
+    "HOÀN TÁC" : {
+
+    },
+    "Hoàn tất" : {
+
+    },
+    "Hoàn tất & mở đăng ký" : {
+
+    },
+    "Hoàn tất hồ sơ" : {
+
+    },
+    "Hoàn tất hồ sơ để bạn bè tìm thấy bạn và xếp cặp đúng trình." : {
+
+    },
+    "HỎI ĐÁP" : {
+
+    },
+    "Hỏi đáp, chia sẻ, bàn luận cùng cộng đồng." : {
+
+    },
+    "HÔM NAY" : {
+
+    },
+    "HÔM NAY · %@" : {
+
+    },
+    "https://…" : {
+
+    },
+    "https://zalo.me/... hoặc https://t.me/..." : {
+
+    },
+    "Hướng dẫn" : {
+
+    },
+    "Hủy" : {
+
+    },
+    "Hủy đăng ký" : {
+
+    },
+    "Hủy sự kiện" : {
+
+    },
+    "Hủy sự kiện sẽ hủy toàn bộ đăng ký và không hoàn tác được." : {
+
+    },
+    "Hủy sự kiện…" : {
+
+    },
+    "Hủy trước %lldh — đủ điều kiện hoàn phí (nếu đã trả)." : {
+
+    },
+    "Hủy yêu cầu" : {
+
+    },
+    "JPG hoặc PNG · tối đa 2 MB" : {
+
+    },
+    "Kết nối đã hết thời gian chờ. Vui lòng thử lại." : {
+
+    },
+    "Kết nối DUPR" : {
+
+    },
+    "Kết nối DUPR rồi quay lại; app sẽ kiểm tra lại điểm trước khi mở form đăng ký." : {
+
+    },
+    "Kết nối lại" : {
+
+    },
+    "Kết nối tài khoản DUPR rồi quay lại màn này để đăng ký." : {
+
+    },
+    "KẾT QUẢ" : {
+
+    },
+    "Kết thúc" : {
+
+    },
+    "KẾT THÚC" : {
+
+    },
+    "Khả dụng ✓" : {
+
+    },
+    "Khác" : {
+
+    },
+    "Khách" : {
+
+    },
+    "KHÁM PHÁ" : {
+
+    },
+    "Khám phá Flex công khai" : {
+
+    },
+    "Khoảng DUPR (tùy chọn)" : {
+
+    },
+    "Khoảng DUPR cho phép: %@" : {
+
+    },
+    "Khởi động lại ứng dụng để áp dụng ngôn ngữ mới." : {
+
+    },
+    "Không" : {
+
+    },
+    "Không cần wildcard, vào thẳng playoff" : {
+
+    },
+    "Không cập nhật được bảng xếp hạng." : {
+
+    },
+    "Không cập nhật được điểm trực tiếp." : {
+
+    },
+    "Không cập nhật được lượt thích." : {
+
+    },
+    "Không cập nhật được thành viên." : {
+
+    },
+    "Không cập nhật được trận." : {
+
+    },
+    "Không chắc chọn loại nào?" : {
+
+    },
+    "Không chọn được câu trả lời." : {
+
+    },
+    "Không chuyển được VĐV." : {
+
+    },
+    "Không có cấu hình bảng phù hợp cho %lld người. Thử số người khác." : {
+
+    },
+    "Không có giải nào khớp bộ lọc." : {
+
+    },
+    "Không có quyền" : {
+
+    },
+    "Không có trận nào đợi bạn xác nhận." : {
+
+    },
+    "Không còn trận nào trong hàng đợi." : {
+
+    },
+    "Không đánh dấu được tất cả thông báo." : {
+
+    },
+    "Không đánh dấu được thông báo." : {
+
+    },
+    "Không đọc được ảnh đã chọn." : {
+
+    },
+    "Không đổi được loại đối tượng." : {
+
+    },
+    "Không đổi được tên." : {
+
+    },
+    "Không đủ điều kiện · DUPR %@ > %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Không đủ điều kiện · DUPR %1$@ > %2$@"
+          }
+        }
+      }
+    },
+    "Không đủ người để sinh playoff." : {
+
+    },
+    "Không duyệt được thành viên." : {
+
+    },
+    "Không ghi được tỉ số" : {
+
+    },
+    "Không ghi được tỉ số: %@" : {
+
+    },
+    "Không gửi được bình luận." : {
+
+    },
+    "Không gửi được mã OTP. Hãy thử lại hoặc liên hệ ban tổ chức." : {
+
+    },
+    "Không gửi được tin nhắn." : {
+
+    },
+    "Không gửi được tranh chấp." : {
+
+    },
+    "Không gửi được xác nhận. Kiểm tra mạng rồi thử lại." : {
+
+    },
+    "Không gửi được yêu cầu tham gia CLB." : {
+
+    },
+    "Không hủy được: %@" : {
+
+    },
+    "Không kết nối được luồng" : {
+
+    },
+    "Không khả dụng với >48 người" : {
+
+    },
+    "Không lặp" : {
+
+    },
+    "Không lưu được ghi chú trọng tài." : {
+
+    },
+    "Không lưu được tỉ số." : {
+
+    },
+    "Không lưu được: %@" : {
+
+    },
+    "Không mời được đội" : {
+
+    },
+    "Không mời được thành viên." : {
+
+    },
+    "Không nhận được quyền chấm trận." : {
+
+    },
+    "KHÔNG NIÊM YẾT" : {
+
+    },
+    "Không phát được video này" : {
+
+    },
+    "Không rõ" : {
+
+    },
+    "Không rời được CLB." : {
+
+    },
+    "Không tải được" : {
+
+    },
+    "Không tải được bài viết" : {
+
+    },
+    "Không tải được bảng tin" : {
+
+    },
+    "Không tải được bảng xếp hạng" : {
+
+    },
+    "Không tải được buổi chơi" : {
+
+    },
+    "Không tải được CLB" : {
+
+    },
+    "Không tải được cuộc trò chuyện." : {
+
+    },
+    "Không tải được dữ liệu quản lý." : {
+
+    },
+    "Không tải được giải" : {
+
+    },
+    "Không tải được hồ sơ" : {
+
+    },
+    "Không tải được sân" : {
+
+    },
+    "Không tải được sự kiện" : {
+
+    },
+    "Không tải được thông báo" : {
+
+    },
+    "Không tải được tin nhắn" : {
+
+    },
+    "Không tải được tin nhắn." : {
+
+    },
+    "Không tải được tin tức" : {
+
+    },
+    "Không tải được video" : {
+
+    },
+    "Không tạo được bảng đấu." : {
+
+    },
+    "Không tạo được giải" : {
+
+    },
+    "Không tạo được giải." : {
+
+    },
+    "Không tạo được lịch vòng tròn." : {
+
+    },
+    "Không tạo được nội dung." : {
+
+    },
+    "Không tham gia được đội." : {
+
+    },
+    "Không thể cập nhật" : {
+
+    },
+    "Không thể cập nhật CLB" : {
+
+    },
+    "Không thể cập nhật đội." : {
+
+    },
+    "Không thể cập nhật giải." : {
+
+    },
+    "Không thể cập nhật mã PIN. Vui lòng thử lại." : {
+
+    },
+    "Không thể cập nhật thành viên" : {
+
+    },
+    "Không thể cập nhật thông báo" : {
+
+    },
+    "Không thể cập nhật trận đấu" : {
+
+    },
+    "Không thể đọc mã xác thực từ Apple." : {
+
+    },
+    "Không thể đưa trận đã hoàn tất về trạng thái đang đấu." : {
+
+    },
+    "Không thể giảm ảnh xuống dung lượng cho phép." : {
+
+    },
+    "Không thể gửi yêu cầu ghép đôi." : {
+
+    },
+    "Không thể hoàn tất" : {
+
+    },
+    "Không thể hủy yêu cầu ghép đôi." : {
+
+    },
+    "Không thể lưu đăng ký an toàn trên thiết bị." : {
+
+    },
+    "Không thể lưu điểm" : {
+
+    },
+    "Không thể lưu thay đổi (%@)." : {
+
+    },
+    "Không thể phản hồi yêu cầu ghép đôi." : {
+
+    },
+    "Không thể sửa kết quả vì trận phụ thuộc đã bắt đầu." : {
+
+    },
+    "Không thể tạo bảng đấu." : {
+
+    },
+    "Không thể tạo phiên đăng nhập Apple an toàn. Vui lòng thử lại." : {
+
+    },
+    "Không thể tạo playoff." : {
+
+    },
+    "Không thể thêm trọng tài" : {
+
+    },
+    "Không thể tự gửi yêu cầu cho chính mình." : {
+
+    },
+    "Không thể xác minh thiết bị. Hãy tải lại và thử lại." : {
+
+    },
+    "Không thể xác minh. Hãy tải lại CAPTCHA." : {
+
+    },
+    "Không thể xác nhận mã. Vui lòng thử lại." : {
+
+    },
+    "Không thể xử lý ảnh. Vui lòng thử ảnh khác." : {
+
+    },
+    "Không thêm được đăng ký" : {
+
+    },
+    "Không thêm được đội vào bảng." : {
+
+    },
+    "Không thêm được thành viên." : {
+
+    },
+    "Không thêm được VĐV vào bảng." : {
+
+    },
+    "Không thêm được VĐV." : {
+
+    },
+    "Không thêm được: %@" : {
+
+    },
+    "Không thuộc bảng" : {
+
+    },
+    "Không tìm được tài khoản." : {
+
+    },
+    "Không tìm thấy bài viết." : {
+
+    },
+    "Không tìm thấy đăng ký" : {
+
+    },
+    "Không tìm thấy đội" : {
+
+    },
+    "Không tìm thấy giải" : {
+
+    },
+    "Không tìm thấy giải tổng." : {
+
+    },
+    "Không tìm thấy kết quả cho “%@”." : {
+
+    },
+    "Không tìm thấy livestream" : {
+
+    },
+    "Không tìm thấy lời mời." : {
+
+    },
+    "Không tìm thấy màn hình để hiển thị Google Sign-In." : {
+
+    },
+    "Không tìm thấy người dùng với email này" : {
+
+    },
+    "Không tìm thấy sân" : {
+
+    },
+    "Không tìm thấy sự kiện" : {
+
+    },
+    "Không tìm thấy tài khoản với thông tin này." : {
+
+    },
+    "Không tìm thấy trận đấu" : {
+
+    },
+    "Không tìm thấy trận đấu." : {
+
+    },
+    "Không tìm thấy VĐV này." : {
+
+    },
+    "Không tính BXH" : {
+
+    },
+    "Không xác nhận được trận đấu." : {
+
+    },
+    "Không xếp được đội hình." : {
+
+    },
+    "Không xóa được bài viết." : {
+
+    },
+    "Không xóa được bình luận." : {
+
+    },
+    "Không xóa được giải." : {
+
+    },
+    "Không xóa được khỏi bảng." : {
+
+    },
+    "Không xóa được nội dung." : {
+
+    },
+    "Không xóa được thành viên." : {
+
+    },
+    "Không xóa được VĐV." : {
+
+    },
+    "Khu vực" : {
+
+    },
+    "Khu vực *" : {
+
+    },
+    "Khung đăng ký không còn tồn tại." : {
+
+    },
+    "Khung đăng ký này đã đủ người." : {
+
+    },
+    "KHUYẾN NGHỊ" : {
+
+    },
+    "Kích hoạt khi ≥75% người chơi có DUPR; thấp hơn tự về random." : {
+
+    },
+    "Kích thước ảnh vượt giới hạn an toàn." : {
+
+    },
+    "Kiểm tra kết nối mạng rồi thử lại." : {
+
+    },
+    "Kiểm tra SMS để lấy mã OTP" : {
+
+    },
+    "Kiểm tra Zalo để lấy mã OTP" : {
+
+    },
+    "Lặp lại hằng tuần" : {
+
+    },
+    "Lặp thêm %lld tuần" : {
+
+    },
+    "Lệ phí" : {
+
+    },
+    "Lệ phí & tài khoản nhận" : {
+
+    },
+    "Lệ phí mỗi đội (VND)" : {
+
+    },
+    "Lệ phí mỗi VĐV (VND)" : {
+
+    },
+    "LỆ PHÍ THAM GIA" : {
+
+    },
+    "LỊCH" : {
+
+    },
+    "Lịch giải, lịch sóng — 30 ngày kế tiếp, sắp xếp theo thứ tự có mặt." : {
+
+    },
+    "Lịch sẽ cập nhật khi giải mở đăng ký hoặc stream được lên lịch." : {
+
+    },
+    "Lịch sử" : {
+
+    },
+    "LỊCH THI ĐẤU" : {
+
+    },
+    "LIÊN KẾT DUPR · TRẬN TÍNH HỆ SỐ CAO" : {
+
+    },
+    "Linh hoạt" : {
+
+    },
+    "Link hồ sơ" : {
+
+    },
+    "Link hồ sơ (tùy chọn)" : {
+
+    },
+    "Link không hợp lệ hoặc đã hết hạn. Dùng trang khôi phục đăng ký trên web nếu bạn mất link." : {
+
+    },
+    "Link mời đã hết hạn hoặc không tồn tại." : {
+
+    },
+    "Link nhóm chat" : {
+
+    },
+    "Link nhóm Zalo (tuỳ chọn)" : {
+
+    },
+    "LIVE" : {
+
+    },
+    "Loại" : {
+
+    },
+    "Loại bóng (tuỳ chọn)" : {
+
+    },
+    "Loại đội" : {
+
+    },
+    "Loại kép" : {
+
+    },
+    "LOẠI R%@" : {
+
+    },
+    "Loại trận" : {
+
+    },
+    "Loại trực tiếp" : {
+
+    },
+    "Lọc theo khu vực (VD: Hà Nội)" : {
+
+    },
+    "Log trận" : {
+
+    },
+    "Logo" : {
+
+    },
+    "Lỗi không xác định" : {
+
+    },
+    "Lời mời đã được sử dụng, bị hủy hoặc hết hạn." : {
+
+    },
+    "Lời mời đã được sử dụng." : {
+
+    },
+    "Lời mời đã hết hạn." : {
+
+    },
+    "Lời mời ghép đôi" : {
+
+    },
+    "Lời mời không hợp lệ" : {
+
+    },
+    "Lượt %lld" : {
+
+    },
+    "Lượt %lld/%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lượt %1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "Lưu" : {
+
+    },
+    "Lưu nháp" : {
+
+    },
+    "Lưu thay đổi" : {
+
+    },
+    "Lưu trữ" : {
+
+    },
+    "Lưu trữ CLB" : {
+
+    },
+    "Lưu trữ CLB?" : {
+
+    },
+    "Lưu ván" : {
+
+    },
+    "Lưu vào sự kiện" : {
+
+    },
+    "Lý do (tuỳ chọn, gửi tới người đăng ký)" : {
+
+    },
+    "Lý do (tùy chọn)" : {
+
+    },
+    "Lý do / ghi chú (không bắt buộc)" : {
+
+    },
+    "Lý do hủy" : {
+
+    },
+    "Lý do hủy (tuỳ chọn)" : {
+
+    },
+    "Lý do hủy…" : {
+
+    },
+    "Mã hiện tại sẽ ngừng hoạt động ngay. Những trọng tài đã tham gia vẫn giữ quyền chấm điểm." : {
+
+    },
+    "Mã OTP" : {
+
+    },
+    "Mã OTP 6 số" : {
+
+    },
+    "Mã OTP đã hết hạn. Hãy yêu cầu mã mới." : {
+
+    },
+    "Mã OTP không đúng." : {
+
+    },
+    "Mã PIN không đúng. Kiểm tra lại mã do ban tổ chức cung cấp." : {
+
+    },
+    "Mã QR chuyển khoản %@ đồng tới %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mã QR chuyển khoản %1$@ đồng tới %2$@"
+          }
+        }
+      }
+    },
+    "MAI" : {
+
+    },
+    "Màn hình sẽ tự chuyển sang trực tiếp khi phát sóng." : {
+
+    },
+    "mất giao" : {
+
+    },
+    "Mất kết nối bình luận trực tiếp." : {
+
+    },
+    "Mật khẩu" : {
+
+    },
+    "Mặt sân" : {
+
+    },
+    "Max" : {
+
+    },
+    "Máy chủ trả về dữ liệu không hợp lệ. Hãy thử lại." : {
+
+    },
+    "Mẹo chia bảng tốt:" : {
+
+    },
+    "Miễn phí" : {
+
+    },
+    "Miễn phí — không cần tài khoản nhận. Bật lệ phí > 0 để tạo mã QR chuyển khoản cho VĐV." : {
+
+    },
+    "Min" : {
+
+    },
+    "Mở buổi chơi" : {
+
+    },
+    "Mở buổi chơi (sự kiện)" : {
+
+    },
+    "Mở buổi chơi để rủ mọi người nhé." : {
+
+    },
+    "Mở chế độ TV" : {
+
+    },
+    "Mở đăng ký" : {
+
+    },
+    "Mở giải: %@" : {
+
+    },
+    "Mở nhóm chat" : {
+
+    },
+    "Mở rộng" : {
+
+    },
+    "Mô tả" : {
+
+    },
+    "Mô tả (tuỳ chọn)" : {
+
+    },
+    "Mô tả trình độ (tùy chọn)" : {
+
+    },
+    "Mở trên web" : {
+
+    },
+    "Mời" : {
+
+    },
+    "Mời “%@”" : {
+
+    },
+    "Mời %@" : {
+
+    },
+    "Mới bắt đầu, đang học" : {
+
+    },
+    "Mỗi cặp thi đấu tới %lld điểm. Hết %lld cặp, bên nào tổng số điểm lớn hơn là thắng." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mỗi cặp thi đấu tới %1$lld điểm. Hết %2$lld cặp, bên nào tổng số điểm lớn hơn là thắng."
+          }
+        }
+      }
+    },
+    "Mỗi cặp trong “%@” sẽ được tạo một trận mới." : {
+
+    },
+    "Mỗi đội" : {
+
+    },
+    "Mỗi đội chỉ có tối đa 3 lời mời đang hoạt động." : {
+
+    },
+    "Mời đội qua email captain" : {
+
+    },
+    "Mỗi người tạo tối đa 3 CLB." : {
+
+    },
+    "Mới nhất" : {
+
+    },
+    "Mỗi tên một dòng" : {
+
+    },
+    "Mời thành viên" : {
+
+    },
+    "Mỗi trận có thứ tự các game (đôi nữ / đôi nam / đôi nam nữ) khác nhau." : {
+
+    },
+    "Mọi trình" : {
+
+    },
+    "Mỗi VĐV" : {
+
+    },
+    "Mỗi VĐV ít nhất 1 game" : {
+
+    },
+    "Mỗi VĐV phải được xếp vào một bảng hợp lệ." : {
+
+    },
+    "Một bảng chỉ được chứa VĐV hoặc đội, không trộn hai loại." : {
+
+    },
+    "Một giải, một app" : {
+
+    },
+    "Nam" : {
+
+    },
+    "Nam Mỹ" : {
+
+    },
+    "Nam tối đa" : {
+
+    },
+    "NÂNG CAO" : {
+
+    },
+    "Nếu %@ đồng ý, hai đăng ký sẽ được ghép thành một đội." : {
+
+    },
+    "newsletter.subscribe" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Đăng ký"
+          }
+        }
+      }
+    },
+    "Ngân hàng" : {
+
+    },
+    "Ngẫu nhiên" : {
+
+    },
+    "Ngày" : {
+
+    },
+    "NGÀY" : {
+
+    },
+    "NGÀY MAI · %@" : {
+
+    },
+    "Ngày tổ chức" : {
+
+    },
+    "Ngoài trời" : {
+
+    },
+    "Ngồi ngoài: %@" : {
+
+    },
+    "Ngôn ngữ" : {
+
+    },
+    "Người chơi" : {
+
+    },
+    "NGƯỜI CHƠI" : {
+
+    },
+    "Người chơi (tùy chọn)" : {
+
+    },
+    "Người chơi ẩn" : {
+
+    },
+    "Người chơi này chưa mở hồ sơ công khai." : {
+
+    },
+    "Người chơi nhập rating tự do (như cũ)" : {
+
+    },
+    "Người chơi phải kết nối DUPR — rating tự fill từ profile" : {
+
+    },
+    "Người chơi sau chưa có hồ sơ: %@." : {
+
+    },
+    "Người chơi, giải đấu, video…" : {
+
+    },
+    "Người đã đăng nhập có thể nhập mã này để chấm điểm. Họ không thể thay đổi cài đặt hay danh sách thi đấu." : {
+
+    },
+    "Người đã đăng nhập có thể nhập mã này để chấm điểm. Mã tự hết hiệu lực khi giải kết thúc." : {
+
+    },
+    "Người dùng" : {
+
+    },
+    "NGƯỜI MỚI" : {
+
+    },
+    "Người mới sẽ không thể tham gia bằng mã này. Những trọng tài đã tham gia vẫn giữ quyền." : {
+
+    },
+    "Người này đã là trọng tài" : {
+
+    },
+    "Nguồn rating" : {
+
+    },
+    "Nguồn: DUPR.com" : {
+
+    },
+    "NHÀ VÔ ĐỊCH" : {
+
+    },
+    "NHẮC TÔI" : {
+
+    },
+    "Nhận lời và tham gia đội" : {
+
+    },
+    "Nhắn tin nhận kèo" : {
+
+    },
+    "Nhánh đấu đã thay đổi. Hãy tải lại trước khi tiếp tục." : {
+
+    },
+    "Nhánh đơn / đôi · 40–128 đội" : {
+
+    },
+    "Nháp" : {
+
+    },
+    "NHÁP" : {
+
+    },
+    "Nhập" : {
+
+    },
+    "Nhập %@ để xác nhận" : {
+
+    },
+    "Nhập danh sách người chơi" : {
+
+    },
+    "Nhập đủ ngân hàng + số tài khoản để xem trước mã QR." : {
+
+    },
+    "Nhập đúng email hoặc số điện thoại người chơi đã đăng ký trên ThePickleHub." : {
+
+    },
+    "Nhập ghi chú cho đội" : {
+
+    },
+    "Nhập lại số điện thoại" : {
+
+    },
+    "Nhập mã 6 số do ban tổ chức cung cấp." : {
+
+    },
+    "Nhập mã trọng tài" : {
+
+    },
+    "Nhập rồi Enter" : {
+
+    },
+    "Nhập số sân (cách nhau dấu phẩy) và giờ bắt đầu. App tự xếp từng trận theo vòng — tránh trùng người và dồn sân đều." : {
+
+    },
+    "Nhập Team để tránh cùng team vào cùng bảng" : {
+
+    },
+    "Nhập tên hoặc @username để tìm" : {
+
+    },
+    "Nhập tên và hạt giống (tùy chọn)" : {
+
+    },
+    "Nhập thông tin cơ bản về giải đấu" : {
+
+    },
+    "Nhập tỉ số" : {
+
+    },
+    "Nhập tỉ số (BO%lld)" : {
+
+    },
+    "Nhập tin nhắn…" : {
+
+    },
+    "Nhập từ khoá để tìm người chơi, giải đấu, video." : {
+
+    },
+    "nhất bảng" : {
+
+    },
+    "Nhiều đội + cần kết thúc nhanh → nhánh thắng nhánh thua." : {
+
+    },
+    "NHIỀU NỘI DUNG" : {
+
+    },
+    "Nhóm Zalo" : {
+
+    },
+    "như mọi môn thể thao đã có cả thế kỷ trước." : {
+
+    },
+    "Như vòng ngoài" : {
+
+    },
+    "Nhựa đường" : {
+
+    },
+    "Nội dung" : {
+
+    },
+    "Nội dung CK:" : {
+
+    },
+    "Nội dung thi đấu" : {
+
+    },
+    "NỘI DUNG THI ĐẤU" : {
+
+    },
+    "Nộp lệ phí" : {
+
+    },
+    "Nữ" : {
+
+    },
+    "Nữ tối đa" : {
+
+    },
+    "ở một nơi." : {
+
+    },
+    "Official Partner" : {
+
+    },
+    "OFFICIAL PARTNERSHIP" : {
+
+    },
+    "OK" : {
+
+    },
+    "ON AIR" : {
+
+    },
+    "option.none" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Không"
+          }
+        }
+      }
+    },
+    "payment.waived" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miễn phí"
+          }
+        }
+      }
+    },
+    "phải" : {
+
+    },
+    "Phát lại" : {
+
+    },
+    "Phát lại nổi bật" : {
+
+    },
+    "Phí / đội" : {
+
+    },
+    "Phí / VĐV" : {
+
+    },
+    "Phí tham gia" : {
+
+    },
+    "Phiên đăng nhập Apple đã hết hạn. Vui lòng thử lại." : {
+
+    },
+    "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." : {
+
+    },
+    "PHỔ BIẾN NHẤT" : {
+
+    },
+    "PHONG ĐỘ" : {
+
+    },
+    "Phóng sự dài kỳ — phóng viên, HLV, và những người có mặt khi câu chuyện diễn ra." : {
+
+    },
+    "Phương thức" : {
+
+    },
+    "Phương thức chia bảng" : {
+
+    },
+    "PHÚT" : {
+
+    },
+    "Pickleball xứng đáng có sự chăm sóc " : {
+
+    },
+    "player.singular" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Người chơi"
+          }
+        }
+      }
+    },
+    "Playoff" : {
+
+    },
+    "PLAYOFF" : {
+
+    },
+    "Playoff đông người" : {
+
+    },
+    "PPA. APP. MLP. European Open. Vietnam National. Mọi bracket, mọi tỉ số, mọi sân — " : {
+
+    },
+    "Quận 1" : {
+
+    },
+    "Quản lý" : {
+
+    },
+    "Quản lý CLB" : {
+
+    },
+    "Quản lý đăng ký" : {
+
+    },
+    "Quản lý đăng ký của tôi" : {
+
+    },
+    "Quản lý đội" : {
+
+    },
+    "Quản lý đội & VĐV" : {
+
+    },
+    "Quản lý đội đăng ký" : {
+
+    },
+    "Quản lý đội hình" : {
+
+    },
+    "Quản lý giải" : {
+
+    },
+    "Quản lý nội dung giải" : {
+
+    },
+    "Quản lý vòng bảng" : {
+
+    },
+    "Quản trị" : {
+
+    },
+    "Quận/Huyện" : {
+
+    },
+    "Quay lại" : {
+
+    },
+    "Quay lại sau — video mới được đăng mỗi tuần." : {
+
+    },
+    "Quét mã để chuyển %@ đ" : {
+
+    },
+    "quickTable.seeding.automatic" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tự động"
+          }
+        }
+      }
+    },
+    "Quy mô" : {
+
+    },
+    "Quyền lợi miễn phí" : {
+
+    },
+    "Rally %lld" : {
+
+    },
+    "Reset" : {
+
+    },
+    "Rời đội" : {
+
+    },
+    "roster.stat.registered" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Đăng ký"
+          }
+        }
+      }
+    },
+    "S%lld" : {
+
+    },
+    "Sai mã quá nhiều lần. Hãy yêu cầu mã mới." : {
+
+    },
+    "Sân" : {
+
+    },
+    "Sân & giờ" : {
+
+    },
+    "Sân & giờ đấu" : {
+
+    },
+    "Sân %lld" : {
+
+    },
+    "SÂN %lld" : {
+
+    },
+    "Sân cứng" : {
+
+    },
+    "Sân đấu" : {
+
+    },
+    "Sân đấu (cách nhau dấu phẩy)" : {
+
+    },
+    "Sân đấu." : {
+
+    },
+    "SÂN GẦN BẠN" : {
+
+    },
+    "SÂN GẦN ĐÂY" : {
+
+    },
+    "Sàn gỗ" : {
+
+    },
+    "Sân khác đang live" : {
+
+    },
+    "Sân mới sẽ chờ quản trị viên duyệt trước khi xác minh." : {
+
+    },
+    "SẴN SÀNG GỬI" : {
+
+    },
+    "Sân trống" : {
+
+    },
+    "SÂN TRỐNG" : {
+
+    },
+    "Sân trong nhà" : {
+
+    },
+    "Sân, VD: 1, 2, 3" : {
+
+    },
+    "Sáng" : {
+
+    },
+    "Sao chép link" : {
+
+    },
+    "Sao chép số tài khoản" : {
+
+    },
+    "Sắp đầy — còn %lld suất" : {
+
+    },
+    "Sắp diễn ra" : {
+
+    },
+    "SẮP DIỄN RA" : {
+
+    },
+    "Sắp diễn ra." : {
+
+    },
+    "Sắp phát" : {
+
+    },
+    "SẮP PHÁT" : {
+
+    },
+    "Sắp phát sóng" : {
+
+    },
+    "SẮP PHÁT SÓNG" : {
+
+    },
+    "Sắp phát sóng: %@" : {
+
+    },
+    "Sắp phát trực tiếp" : {
+
+    },
+    "SẮP TỚI" : {
+
+    },
+    "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công ngay trong app." : {
+
+    },
+    "Sau vòng bảng, hạng 3 & 4 mỗi bảng vào nhánh Tái sinh — xếp cặp theo bảng giống playoff (hạng 3 bảng X gặp hạng 4 bảng Y)." : {
+
+    },
+    "scoring.mode.rally" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Trực tiếp"
+          }
+        }
+      }
+    },
+    "SĐT" : {
+
+    },
+    "SĐT (tuỳ chọn, +84…)" : {
+
+    },
+    "Sẽ mời xác nhận" : {
+
+    },
+    "Sẽ tạo %lld sự kiện — mỗi tuần một buổi, cùng giờ, cùng thông tin." : {
+
+    },
+    "Sẽ tạo sẵn 1 bảng + 1 trận đơn + 1 trận đôi. Sau đó có thể xếp bảng, thêm người và thêm trận ngay trong app." : {
+
+    },
+    "Seed" : {
+
+    },
+    "Seed (tùy chọn)" : {
+
+    },
+    "Sideout %lld" : {
+
+    },
+    "Sinh lịch" : {
+
+    },
+    "Sinh lịch thi đấu" : {
+
+    },
+    "Sinh vòng Playoff" : {
+
+    },
+    "Slot #%lld — giảm giá" : {
+
+    },
+    "Slot %lld–%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Slot %1$lld–%2$lld"
+          }
+        }
+      }
+    },
+    "Slot %lld–%lld: %@ đ (−%lld%%)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Slot %1$lld–%2$lld: %3$@ đ (−%4$lld%%)"
+          }
+        }
+      }
+    },
+    "Slot %lld+" : {
+
+    },
+    "Slot còn lại: %@ đ (giá gốc)" : {
+
+    },
+    "Slot đội" : {
+
+    },
+    "Slug 3–50 ký tự, chỉ a–z, 0–9, gạch ngang." : {
+
+    },
+    "Slug khả dụng ✓" : {
+
+    },
+    "Slug: %@" : {
+
+    },
+    "Số bảng" : {
+
+    },
+    "Số bảng (%lld) chưa hỗ trợ sinh playoff native." : {
+
+    },
+    "Số điện thoại (+84…)" : {
+
+    },
+    "Số điện thoại không hợp lệ." : {
+
+    },
+    "Số điện thoại này đã đăng ký sự kiện." : {
+
+    },
+    "Sơ đồ nhánh đấu không hợp lệ (%@)." : {
+
+    },
+    "Sơ đồ playoff" : {
+
+    },
+    "Số đội" : {
+
+    },
+    "Số đôi (dự kiến)" : {
+
+    },
+    "Số đội %lld không hợp lệ; giải mới hỗ trợ 40–128 đội." : {
+
+    },
+    "Số đội hiện tại không khớp sức chứa của giải" : {
+
+    },
+    "Số đội phải là 4, 8, 16 hoặc 32 cho loại trực tiếp (hiện %lld). Quay lại Bước 1 để sửa." : {
+
+    },
+    "Số đội phải là lũy thừa của 2 (4, 8, 16, 32…) cho loại trực tiếp." : {
+
+    },
+    "Số đội vào Playoff" : {
+
+    },
+    "Số đội vào playoff phải là luỹ thừa của 2 và đủ đội đã xếp hạng." : {
+
+    },
+    "Số đơn (dự kiến)" : {
+
+    },
+    "Số game chẵn (%lld). Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định." : {
+
+    },
+    "Số game lẻ (%lld). Không cần DreamBreaker vì đã có ván quyết định (ván cuối)." : {
+
+    },
+    "Sơ loại" : {
+
+    },
+    "Sơ loại cuối" : {
+
+    },
+    "Số người không chia hết cho 4 — sẽ có người ngồi ngoài luân phiên." : {
+
+    },
+    "Số người vào Playoff" : {
+
+    },
+    "Số nhà, đường" : {
+
+    },
+    "Số sân" : {
+
+    },
+    "Số sân (tùy chọn)" : {
+
+    },
+    "Số sân: %lld" : {
+
+    },
+    "Số slot" : {
+
+    },
+    "Số tài khoản" : {
+
+    },
+    "Số tiền" : {
+
+    },
+    "SỐ TIMEOUT MỖI ĐỘI" : {
+
+    },
+    "Số ván mặc định" : {
+
+    },
+    "Số VĐV mỗi đội" : {
+
+    },
+    "Số vòng: %lld" : {
+
+    },
+    "Social" : {
+
+    },
+    "Sơn Acrylic" : {
+
+    },
+    "Sự cố, hội ý, khiếu nại…" : {
+
+    },
+    "Sử dụng DUPR" : {
+
+    },
+    "Sự kiện" : {
+
+    },
+    "SỰ KIỆN" : {
+
+    },
+    "SỰ KIỆN (%lld)" : {
+
+    },
+    "Sự kiện chưa bật thanh toán online; bạn có thể thanh toán tại sân." : {
+
+    },
+    "Sự kiện đã bắt đầu — chỉ xem." : {
+
+    },
+    "Sự kiện đã bắt đầu — không thao tác được." : {
+
+    },
+    "Sự kiện đã bắt đầu hoặc kết thúc." : {
+
+    },
+    "SỰ KIỆN ĐÃ BỊ HUỶ" : {
+
+    },
+    "Sự kiện đã bị hủy." : {
+
+    },
+    "Sự kiện đã đủ người — không đăng ký lại được." : {
+
+    },
+    "Sự kiện đã hủy — chỉ xem." : {
+
+    },
+    "Sự kiện hiện không mở đăng ký công khai." : {
+
+    },
+    "Sự kiện không tồn tại hoặc đã bị gỡ." : {
+
+    },
+    "Sự kiện này không nhận đăng ký khách." : {
+
+    },
+    "SỰ KIỆN SẮP TỚI" : {
+
+    },
+    "Sửa" : {
+
+    },
+    "Sửa / hủy sự kiện" : {
+
+    },
+    "Sửa đăng ký" : {
+
+    },
+    "Sửa điểm" : {
+
+    },
+    "Sửa sự kiện" : {
+
+    },
+    "T" : {
+
+    },
+    "Tài khoản" : {
+
+    },
+    "TÀI KHOẢN NHẬN — TẠO MÃ QR" : {
+
+    },
+    "Tải lại CAPTCHA" : {
+
+    },
+    "Tải lên" : {
+
+    },
+    "Tải tin cũ hơn" : {
+
+    },
+    "Tăng điểm %@" : {
+
+    },
+    "Tạo" : {
+
+    },
+    "Tạo %@" : {
+
+    },
+    "Tạo 01.01.2026" : {
+
+    },
+    "Tạo bảng đấu" : {
+
+    },
+    "Tạo bảng đấu miễn phí trong tab Công cụ." : {
+
+    },
+    "Tạo Bảng đấu nhanh, thể thức phổ biến nhất" : {
+
+    },
+    "Tạo bảng đấu từ các đội đã duyệt" : {
+
+    },
+    "Tạo bảng đấu từ danh sách đã duyệt" : {
+
+    },
+    "Tạo bảng đấu và chia bảng" : {
+
+    },
+    "Tạo CLB" : {
+
+    },
+    "Tạo CLB để quy tụ cộng đồng của bạn." : {
+
+    },
+    "Tạo đội và đăng ký" : {
+
+    },
+    "Tạo giải đấu" : {
+
+    },
+    "Tạo giải đấu " : {
+
+    },
+    "Tạo giải đồng đội" : {
+
+    },
+    "Tạo giải linh hoạt" : {
+
+    },
+    "Tạo giải nhiều nội dung" : {
+
+    },
+    "Tạo giải tổng" : {
+
+    },
+    "Tạo lại" : {
+
+    },
+    "Tạo lịch" : {
+
+    },
+    "Tạo lịch vòng tròn" : {
+
+    },
+    "Tạo lịch vòng tròn?" : {
+
+    },
+    "Tạo link mời dự phòng" : {
+
+    },
+    "Tạo loại trực tiếp" : {
+
+    },
+    "Tạo mã mới" : {
+
+    },
+    "Tạo mã PIN mới?" : {
+
+    },
+    "Tạo nội dung" : {
+
+    },
+    "Tạo Quick Table đầu tiên; app sẽ tự gắn vào giải tổng này." : {
+
+    },
+    "TẬP LUYỆN" : {
+
+    },
+    "Tắt" : {
+
+    },
+    "Tắt âm báo" : {
+
+    },
+    "Tất cả" : {
+
+    },
+    "TẤT CẢ" : {
+
+    },
+    "Tất cả bảng, VĐV, trận đấu và kết quả sẽ bị xóa. Không thể hoàn tác." : {
+
+    },
+    "Tất cả các đội đấu với nhau" : {
+
+    },
+    "Tất cả thể thức" : {
+
+    },
+    "Tắt mã PIN" : {
+
+    },
+    "Tắt mã PIN?" : {
+
+    },
+    "Tắt tiếng người này" : {
+
+    },
+    "Team" : {
+
+    },
+    "Team (tùy chọn)" : {
+
+    },
+    "Team / CLB" : {
+
+    },
+    "teamMatch.tab.standings" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Xếp hạng"
+          }
+        }
+      }
+    },
+    "Tên" : {
+
+    },
+    "TÊN" : {
+
+    },
+    "Tên (bắt buộc)" : {
+
+    },
+    "Tên cần 3–100 ký tự." : {
+
+    },
+    "Tên chủ tài khoản" : {
+
+    },
+    "Tên CLB" : {
+
+    },
+    "Tên CLB *" : {
+
+    },
+    "Tên của bạn" : {
+
+    },
+    "TÊN CỦA BẠN" : {
+
+    },
+    "Tên đội" : {
+
+    },
+    "TÊN ĐỘI" : {
+
+    },
+    "Tên đội (auto từ 2 VĐV)" : {
+
+    },
+    "Tên đội (tuỳ chọn — auto từ 2 VĐV)" : {
+
+    },
+    "Tên đội (tuỳ chọn — auto từ tên 2 VĐV)" : {
+
+    },
+    "Tên đội của bạn" : {
+
+    },
+    "Tên đội mới" : {
+
+    },
+    "Tên giải" : {
+
+    },
+    "Tên giải / bảng đấu" : {
+
+    },
+    "Tên giải cần ít nhất 3 ký tự." : {
+
+    },
+    "Tên giải đấu" : {
+
+    },
+    "Tên giải tổng" : {
+
+    },
+    "Tên hệ trình độ (tùy chọn)" : {
+
+    },
+    "Tên hiển thị" : {
+
+    },
+    "TÊN HIỂN THỊ" : {
+
+    },
+    "Tên hiển thị *" : {
+
+    },
+    "Tên hoặc @username" : {
+
+    },
+    "Tên không được để trống" : {
+
+    },
+    "Tên không được để trống." : {
+
+    },
+    "Tên sân *" : {
+
+    },
+    "Tên sự kiện" : {
+
+    },
+    "Tên team" : {
+
+    },
+    "Tên VĐV" : {
+
+    },
+    "Tên VĐV *" : {
+
+    },
+    "Tên VĐV không được để trống." : {
+
+    },
+    "ten-cua-ban" : {
+
+    },
+    "Tham gia" : {
+
+    },
+    "Tham gia đội" : {
+
+    },
+    "Tham gia trước, kết nối DUPR sau" : {
+
+    },
+    "Thảm nhựa tổng hợp" : {
+
+    },
+    "Thắng" : {
+
+    },
+    "THẮNG" : {
+
+    },
+    "Thắng %lld · HS %@%lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thắng %1$lld · HS %2$@%3$lld"
+          }
+        }
+      }
+    },
+    "Thành phố" : {
+
+    },
+    "THANH TOÁN" : {
+
+    },
+    "Thanh toán ban đầu" : {
+
+    },
+    "Thành viên" : {
+
+    },
+    "THÀNH VIÊN" : {
+
+    },
+    "THÀNH VIÊN · %lld" : {
+
+    },
+    "THÀNH VIÊN (%lld)" : {
+
+    },
+    "THÀNH VIÊN (%lld/%lld)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "THÀNH VIÊN (%1$lld/%2$lld)"
+          }
+        }
+      }
+    },
+    "Thao tác này không thể hoàn tác. Chỉ giải tổng chưa có nội dung thi đấu mới có thể xóa." : {
+
+    },
+    "Thẻ (tối đa 5)" : {
+
+    },
+    "THỂ LỆ GIẢI" : {
+
+    },
+    "The PickleHub · %@" : {
+
+    },
+    "Thể thức" : {
+
+    },
+    "Thể thức dành cho giải đông người." : {
+
+    },
+    "Thể thức dành cho giải đông người. Lượt 1-2 ghi nhận thắng/thua và hiệu số, từ lượt 3 trở đi là single elimination." : {
+
+    },
+    "Thể thức MLP · đội 4–8" : {
+
+    },
+    "Thể thức thi đấu" : {
+
+    },
+    "Thể thức, check-in và lưu ý cho VĐV…" : {
+
+    },
+    "Thêm" : {
+
+    },
+    "Thêm %@" : {
+
+    },
+    "Thêm ảnh" : {
+
+    },
+    "Thêm bậc giảm giá" : {
+
+    },
+    "Thêm bảng" : {
+
+    },
+    "Thêm đội" : {
+
+    },
+    "Thêm đồng đội" : {
+
+    },
+    "Thêm game" : {
+
+    },
+    "Thêm người chơi" : {
+
+    },
+    "Thêm quyền lợi khác" : {
+
+    },
+    "Thêm sân" : {
+
+    },
+    "Thêm thành viên" : {
+
+    },
+    "Thêm thủ công VĐV" : {
+
+    },
+    "Thêm trận" : {
+
+    },
+    "Thêm trận cá nhân" : {
+
+    },
+    "Thêm ván" : {
+
+    },
+    "Thêm ván quyết định khi 2 đội hòa số game" : {
+
+    },
+    "Thêm vào bảng" : {
+
+    },
+    "Thêm vào bảng %@" : {
+
+    },
+    "Thêm vào danh sách" : {
+
+    },
+    "Thêm VĐV" : {
+
+    },
+    "Thêm, chuyển hoặc xóa VĐV sẽ sinh lại lịch của bảng liên quan và xóa điểm cũ trong các bảng đó." : {
+
+    },
+    "Theo chuẩn MLP: 4 VĐV thi đấu đơn, rally scoring. Đội trưởng chọn 4 VĐV bất kỳ (không phân biệt giới tính) khi lineup." : {
+
+    },
+    "Theo dõi" : {
+
+    },
+    "Theo dõi LIVE · chế độ TV" : {
+
+    },
+    "Theo máy" : {
+
+    },
+    "ThePickleHub" : {
+
+    },
+    "THEPICKLEHUB" : {
+
+    },
+    "Thi đấu giải phong trào" : {
+
+    },
+    "Thiết bị này đã gửi quá nhiều mã. Hãy đợi 15 phút rồi thử lại." : {
+
+    },
+    "Thiết lập hồ sơ" : {
+
+    },
+    "Thiếu CLB." : {
+
+    },
+    "Thiếu DUPR ở ít nhất 1 VĐV" : {
+
+    },
+    "Thiếu người" : {
+
+    },
+    "Thiếu VĐV" : {
+
+    },
+    "Thoát chế độ TV" : {
+
+    },
+    "Thôi" : {
+
+    },
+    "THỜI GIAN & ĐỊA ĐIỂM" : {
+
+    },
+    "Thông báo" : {
+
+    },
+    "Thông báo cho VĐV khi đăng ký" : {
+
+    },
+    "Thông báo theo dõi, lượt thích, bình luận và trận đấu sẽ hiện ở đây." : {
+
+    },
+    "Thông tin" : {
+
+    },
+    "Thông tin chính" : {
+
+    },
+    "Thông tin chung về giải, tối đa 500 ký tự" : {
+
+    },
+    "Thông tin giải" : {
+
+    },
+    "THÔNG TIN GIẢI" : {
+
+    },
+    "Thông tin người chơi" : {
+
+    },
+    "Thủ công" : {
+
+    },
     "Thử lại" : {
       "localizations" : {
         "en" : {
@@ -11,12 +4985,952 @@
         }
       }
     },
+    "Thử từ khoá khác hoặc thêm sân mới." : {
+
+    },
+    "Thứ tự ra sân ngẫu nhiên" : {
+
+    },
+    "Thua 1 trận là bị loại" : {
+
+    },
+    "Tỉ lệ" : {
+
+    },
+    "Tỉ số" : {
+
+    },
+    "Tỉ số hoà — chưa có đội thắng." : {
+
+    },
+    "TIỆN ÍCH" : {
+
+    },
+    "TIẾP THEO" : {
+
+    },
+    "TIẾP THEO · VÒNG %lld · SÂN %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "TIẾP THEO · VÒNG %1$lld · SÂN %2$lld"
+          }
+        }
+      }
+    },
+    "Tiếp tục" : {
+
+    },
+    "Tiếp tục chỉnh" : {
+
+    },
+    "Tiếp tục nhập" : {
+
+    },
+    "Tiếp tục với Apple" : {
+
+    },
+    "Tiếp tục với Google" : {
+
+    },
+    "Tiêu đề" : {
+
+    },
+    "Tìm" : {
+
+    },
+    "Tìm 2 VĐV đã có DUPR" : {
+
+    },
+    "Tìm bạn chơi" : {
+
+    },
+    "Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần — " : {
+
+    },
+    "Tìm CLB, khu vực…" : {
+
+    },
+    "Tìm kèo" : {
+
+    },
+    "Tìm kiếm" : {
+
+    },
+    "TÌM SÂN THEO KHU VỰC" : {
+
+    },
+    "Tìm tên đồng đội" : {
+
+    },
+    "Tìm theo tên" : {
+
+    },
+    "Tìm theo tên sân, quận…" : {
+
+    },
+    "Timeout thường, còn %lld" : {
+
+    },
+    "TIMEOUT Y TẾ" : {
+
+    },
+    "Timeout y tế, còn %lld" : {
+
+    },
+    "Tin mới." : {
+
+    },
+    "Tin nhắn" : {
+
+    },
+    "Tin nhắn của tôi" : {
+
+    },
+    "Tin pickleball, mỗi sáng." : {
+
+    },
+    "Tin tức" : {
+
+    },
+    "tính điểm trực tiếp" : {
+
+    },
+    "Tính theo tổng điểm" : {
+
+    },
+    "Tính trận đôi vào BXH cá nhân" : {
+
+    },
+    "Tính vào bảng xếp hạng" : {
+
+    },
+    "Tỉnh/TP *" : {
+
+    },
+    "Toàn bộ hồ sơ, giải đấu và nội dung của bạn sẽ bị xóa. Không thể hoàn tác." : {
+
+    },
+    "Tối" : {
+
+    },
+    "tới %lld" : {
+
+    },
+    "Tới %lld" : {
+
+    },
+    "Tối đa" : {
+
+    },
+    "Tôi đã chuyển khoản" : {
+
+    },
+    "Tối đa: %lld người" : {
+
+    },
+    "Tới mốc %lld điểm — hai đội đổi sân." : {
+
+    },
+    "Tối thiểu" : {
+
+    },
+    "Token đăng ký không hợp lệ." : {
+
+    },
+    "TÓM TẮT THỂ LỆ" : {
+
+    },
+    "Tóm tắt thể lệ giải" : {
+
+    },
+    "Tổng quan" : {
+
+    },
+    "top-2 mỗi bảng" : {
+
+    },
+    "TP.HCM" : {
+
+    },
+    "TR" : {
+
+    },
+    "Trả lời" : {
+
+    },
+    "Trả lời %@" : {
+
+    },
+    "TRẢ LỜI HAY NHẤT" : {
+
+    },
+    "Trả lời…" : {
+
+    },
+    "trái" : {
+
+    },
+    "Trận" : {
+
+    },
+    "Trận %lld" : {
+
+    },
+    "Trận cha không thuộc giải này." : {
+
+    },
+    "Trận chưa đủ người chơi để ghi điểm." : {
+
+    },
+    "Trận chưa xếp bảng" : {
+
+    },
+    "Trận con %@" : {
+
+    },
+    "Trận đã bị xóa hoặc bạn không có quyền truy cập." : {
+
+    },
+    "TRẬN ĐÃ GHI" : {
+
+    },
+    "TRẬN ĐANG DIỄN RA" : {
+
+    },
+    "Trận đấu" : {
+
+    },
+    "TRẬN ĐẤU" : {
+
+    },
+    "TRẬN ĐẤU GẦN ĐÂY" : {
+
+    },
+    "TRẬN ĐẤU TRONG BUỔI · %lld" : {
+
+    },
+    "Trận đấu, phỏng vấn, phân tích — viết bởi phóng viên có mặt tại sân. Mỗi sáng thứ Tư, vào hộp thư của bạn." : {
+
+    },
+    "Trận giữa 2 đội thua bán kết" : {
+
+    },
+    "TRẬN KẾ TIẾP" : {
+
+    },
+    "Trận này chưa có ván con." : {
+
+    },
+    "Trận tranh hạng 3" : {
+
+    },
+    "Trang chủ" : {
+
+    },
+    "Trạng thái" : {
+
+    },
+    "Tranh chấp" : {
+
+    },
+    "TRANH CHẤP" : {
+
+    },
+    "Tranh chấp tỉ số" : {
+
+    },
+    "Tranh hạng 3" : {
+
+    },
+    "TRANH HẠNG 3" : {
+
+    },
+    "Trẻ" : {
+
+    },
+    "Trên 32" : {
+
+    },
+    "TRÌNH" : {
+
+    },
+    "Trình %@" : {
+
+    },
+    "Trình độ" : {
+
+    },
+    "Trình độ cao / vận động viên" : {
+
+    },
+    "Trình độ tự đánh giá (vd 3.5)" : {
+
+    },
+    "Trò chuyện" : {
+
+    },
+    "TRỐNG" : {
+
+    },
+    "Trong nhà" : {
+
+    },
+    "Trọng tài" : {
+
+    },
+    "Trọng tài có thể chấm điểm mọi trận của bảng. Người dùng phải đã có tài khoản." : {
+
+    },
+    "Trọng tài có thể chấm điểm mọi trận. Người dùng phải đã có tài khoản." : {
+
+    },
+    "trong vài phút." : {
+
+    },
+    "Trực tiếp" : {
+
+    },
+    "TRUNG CẤP" : {
+
+    },
+    "TỰ CẬP NHẬT" : {
+
+    },
+    "Từ chối" : {
+
+    },
+    "TỪ CHỐI" : {
+
+    },
+    "Từ chối · %lld" : {
+
+    },
+    "Từ chối %lld" : {
+
+    },
+    "Từ chối đội" : {
+
+    },
+    "Tự chọn VĐV vào từng bảng" : {
+
+    },
+    "Tự chuyển" : {
+
+    },
+    "Tự đánh giá %.1f" : {
+
+    },
+    "Tự động" : {
+
+    },
+    "Tự động duyệt đăng ký" : {
+
+    },
+    "Tự kê khai" : {
+
+    },
+    "Tứ kết" : {
+
+    },
+    "Tự khai" : {
+
+    },
+    "Tự tạo" : {
+
+    },
+    "Tuần này." : {
+
+    },
+    "Tuần qua" : {
+
+    },
+    "Tường thuật trận đấu, chân dung vận động viên, phân tích — viết bởi phóng viên " : {
+
+    },
+    "Tùy biến hoàn toàn" : {
+
+    },
+    "Tùy chỉnh" : {
+
+    },
+    "Tùy chọn" : {
+
+    },
+    "Tùy chọn %@" : {
+
+    },
+    "Tùy chọn bảng %@" : {
+
+    },
+    "Tùy chọn đội %@" : {
+
+    },
+    "Tùy chọn trận %@" : {
+
+    },
+    "Tỷ số không hợp lệ. Hai bên phải có điểm khác nhau." : {
+
+    },
+    "Úc / ĐD" : {
+
+    },
+    "Username" : {
+
+    },
+    "Username đã có người dùng." : {
+
+    },
+    "ƯU ĐÃI" : {
+
+    },
+    "Ưu tiên cân bằng theo DUPR" : {
+
+    },
+    "và không có thứ gì họ không cần." : {
+
+    },
+    "Ván" : {
+
+    },
+    "Ván %lld" : {
+
+    },
+    "VÁN DREAMBREAKER (VÁN CUỐI)" : {
+
+    },
+    "Vắng mặt" : {
+
+    },
+    "Vào chấm điểm" : {
+
+    },
+    "Vào Tìm bạn chơi để bắt đầu." : {
+
+    },
+    "Vào Xếp cặp để sinh lịch và lưu vào sự kiện trước." : {
+
+    },
+    "VD: 1, 2, 3" : {
+
+    },
+    "VD: 1,2,3" : {
+
+    },
+    "VD: 3.5" : {
+
+    },
+    "VD: 4" : {
+
+    },
+    "VD: 08:00" : {
+
+    },
+    "VD: 10 đơn" : {
+
+    },
+    "VD: 10 slot đầu giảm 20%, 5 slot tiếp giảm 15%. Slot tính theo thứ tự đăng ký đội; QR tự áp dụng số tiền sau giảm." : {
+
+    },
+    "VD: 15 đôi" : {
+
+    },
+    "VD: 0123456789" : {
+
+    },
+    "Vd: bận việc đột xuất…" : {
+
+    },
+    "VD: BTC sẽ xác nhận trình độ…" : {
+
+    },
+    "VD: CLB Pickleball Sài Gòn" : {
+
+    },
+    "VD: Giải đôi mở rộng 2026" : {
+
+    },
+    "VD: Giải linh hoạt 2026" : {
+
+    },
+    "VD: Giải Pickleball Mùa Hè 2024" : {
+
+    },
+    "VD: MLP Mùa Xuân 2026" : {
+
+    },
+    "VD: NGUYEN VAN A" : {
+
+    },
+    "VD: Quận 1, TP.HCM" : {
+
+    },
+    "VD: Sân ABC, Q.7" : {
+
+    },
+    "VD: Sân Pickleball Tăng Bạt Hổ" : {
+
+    },
+    "VD: Sân trung tâm" : {
+
+    },
+    "VD: Thi đấu MLP, mỗi trận 4 game + DreamBreaker. Check-in trước 15 phút…" : {
+
+    },
+    "VD: Trung bình khá, chơi 2 năm" : {
+
+    },
+    "VD: UTPR, APP, điểm CLB" : {
+
+    },
+    "VĐV" : {
+
+    },
+    "VĐV · %lld" : {
+
+    },
+    "VĐV 1" : {
+
+    },
+    "VĐV 1 *" : {
+
+    },
+    "VĐV 2" : {
+
+    },
+    "VĐV 2 *" : {
+
+    },
+    "VĐV đã được duyệt" : {
+
+    },
+    "VĐV đang tìm đồng đội" : {
+
+    },
+    "VĐV được duyệt ngay khi đăng ký (không khuyến nghị)" : {
+
+    },
+    "VĐV gửi yêu cầu đã ghép với người khác." : {
+
+    },
+    "VĐV này chưa có tài khoản — không thể đăng ký." : {
+
+    },
+    "VĐV này chưa có tài khoản." : {
+
+    },
+    "VĐV này đang chờ bạn xác nhận." : {
+
+    },
+    "VĐV này vừa ghép với người khác." : {
+
+    },
+    "VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu" : {
+
+    },
+    "VĐV phải khai trình độ (DUPR hoặc tự mô tả)" : {
+
+    },
+    "VERIFIED" : {
+
+    },
+    "Ví dụ: Đơn nam, Đơn nữ, Đôi nam nữ" : {
+
+    },
+    "Video" : {
+
+    },
+    "VIDEO NGẮN" : {
+
+    },
+    "Video nổi bật sẽ xuất hiện ở đây." : {
+
+    },
+    "Video pickleball trên Instagram" : {
+
+    },
+    "Viết bình luận…" : {
+
+    },
+    "Việt Nam" : {
+
+    },
+    "VÔ ĐỊCH" : {
+
+    },
+    "VÔ ĐỊCH  " : {
+
+    },
+    "Vòng %lld" : {
+
+    },
+    "VÒNG %lld · SÂN %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "VÒNG %1$lld · SÂN %2$lld"
+          }
+        }
+      }
+    },
+    "Vòng 1" : {
+
+    },
+    "Vòng 1/16" : {
+
+    },
+    "Vòng 1/32" : {
+
+    },
+    "Vòng 2" : {
+
+    },
+    "Vòng 3" : {
+
+    },
+    "Vòng 16" : {
+
+    },
+    "Vòng bảng" : {
+
+    },
+    "Vòng bảng + Playoff" : {
+
+    },
+    "Vòng bảng đã hoàn tất!" : {
+
+    },
+    "Vòng bảng đã xong · lấy %lld đội đầu BXH" : {
+
+    },
+    "Vòng loại" : {
+
+    },
+    "Vòng ngoài (R1–R3)" : {
+
+    },
+    "Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại." : {
+
+    },
+    "Vòng Tái sinh" : {
+
+    },
+    "VÒNG TÁI SINH" : {
+
+    },
+    "Vòng tròn" : {
+
+    },
+    "Vòng tròn (Round Robin)" : {
+
+    },
+    "Vòng tròn → playoff · tự xếp lịch" : {
+
+    },
+    "Vòng tròn + Playoff" : {
+
+    },
+    "Vòng tròn theo bảng, sau đó playoff" : {
+
+    },
+    "vs" : {
+
+    },
+    "VS" : {
+
+    },
+    "Vừa phát sóng" : {
+
+    },
+    "vừa xong" : {
+
+    },
+    "Vui lòng chọn ngân hàng và nhập số tài khoản khi giải có lệ phí." : {
+
+    },
+    "Vui lòng nhập tên giải tổng." : {
+
+    },
+    "Vui lòng thử lại." : {
+
+    },
+    "VÙNG NGUY HIỂM" : {
+
+    },
+    "WC" : {
+
+    },
+    "Website / Facebook" : {
+
+    },
+    "Xác minh bảo mật" : {
+
+    },
+    "Xác nhận" : {
+
+    },
+    "Xác nhận (%lld/%lld)" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Xác nhận (%1$lld/%2$lld)"
+          }
+        }
+      }
+    },
+    "Xác nhận bạn ĐÃ chuyển khoản? BTC sẽ đối chiếu." : {
+
+    },
+    "Xác nhận đã chuyển khoản %@ đ?" : {
+
+    },
+    "Xác nhận đã nhận lệ phí" : {
+
+    },
+    "Xác nhận đăng ký" : {
+
+    },
+    "Xác nhận hủy đăng ký" : {
+
+    },
+    "Xác nhận mã" : {
+
+    },
+    "Xác nhận OTP" : {
+
+    },
+    "Xác nhận trận" : {
+
+    },
+    "Xáo trộn" : {
+
+    },
+    "Xé vé" : {
+
+    },
+    "XEM BẢNG ĐẤU" : {
+
+    },
+    "Xem các sân pickleball gần bạn" : {
+
+    },
+    "Xem chi tiết" : {
+
+    },
+    "XEM CLB →" : {
+
+    },
+    "Xem kết quả" : {
+
+    },
+    "Xem lại" : {
+
+    },
+    "XEM LẠI" : {
+
+    },
+    "Xem ngay" : {
+
+    },
+    "Xem QR" : {
+
+    },
+    "XEM SÂN ›" : {
+
+    },
+    "XEM SÂN →" : {
+
+    },
+    "Xem tất cả" : {
+
+    },
+    "Xem tất cả %lld người" : {
+
+    },
+    "Xem thêm %lld giải" : {
+
+    },
+    "Xem thêm bài viết" : {
+
+    },
+    "Xem thêm tin tức" : {
+
+    },
+    "Xem tiếp" : {
+
+    },
+    "Xem trên Instagram" : {
+
+    },
+    "Xem trên web" : {
+
+    },
+    "Xem từ đầu" : {
+
+    },
+    "Xếp cặp" : {
+
+    },
+    "Xếp cặp (Mexicano / Vòng tròn)" : {
+
+    },
+    "Xếp hạng" : {
+
+    },
+    "Xếp lịch" : {
+
+    },
+    "Xóa" : {
+
+    },
     "XÓA" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "DELETE"
+          }
+        }
+      }
+    },
+    "Xóa “%@” và sinh lại toàn bộ trận trong bảng này?" : {
+
+    },
+    "Xóa & tạo lại lịch" : {
+
+    },
+    "Xóa %@" : {
+
+    },
+    "Xóa %@ khỏi danh sách?" : {
+
+    },
+    "Xóa %@ khỏi đội" : {
+
+    },
+    "Xóa bài" : {
+
+    },
+    "Xóa bảng" : {
+
+    },
+    "Xóa bình luận" : {
+
+    },
+    "Xóa đăng ký" : {
+
+    },
+    "Xóa đội" : {
+
+    },
+    "Xóa đội “%@”? Không thể hoàn tác." : {
+
+    },
+    "Xóa đội %@" : {
+
+    },
+    "Xóa đội %@?" : {
+
+    },
+    "Xóa đội?" : {
+
+    },
+    "Xóa giải đấu" : {
+
+    },
+    "Xóa giải đấu?" : {
+
+    },
+    "Xóa giải tổng" : {
+
+    },
+    "Xóa giải tổng?" : {
+
+    },
+    "Xóa khỏi %@" : {
+
+    },
+    "Xóa nội dung?" : {
+
+    },
+    "Xóa partner" : {
+
+    },
+    "Xóa tài khoản" : {
+
+    },
+    "Xóa tài khoản?" : {
+
+    },
+    "Xóa toàn bộ giải" : {
+
+    },
+    "Xóa toàn bộ giải?" : {
+
+    },
+    "Xóa trận" : {
+
+    },
+    "Xóa trận con" : {
+
+    },
+    "Xóa VĐV" : {
+
+    },
+    "Xóa VĐV?" : {
+
+    },
+    "Xóa vĩnh viễn" : {
+
+    },
+    "Xóa vĩnh viễn đội này cùng %lld thành viên. Không hoàn tác được." : {
+
+    },
+    "Xong" : {
+
+    },
+    "XONG" : {
+
+    },
+    "Yêu cầu đã bị hủy." : {
+
+    },
+    "YÊU CẦU ĐÃ GỬI" : {
+
+    },
+    "YÊU CẦU ĐANG CHỜ BẠN" : {
+
+    },
+    "Yêu cầu đăng ký trước" : {
+
+    },
+    "Yêu cầu ghép đôi không còn tồn tại." : {
+
+    },
+    "Yêu cầu này đã được xử lý." : {
+
+    },
+    "Yêu cầu tham gia" : {
+
+    },
+    "Yêu cầu tham gia (%lld)" : {
+
+    },
+    "YÊU CẦU THAM GIA (%lld)" : {
+
+    },
+    "Yêu cầu VĐV đăng ký trước" : {
+
+    },
+    "Yêu cầu: %lld người · %lld nam %lld nữ%@. Bạn vẫn có thể chia bảng." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Yêu cầu: %1$lld người · %2$lld nam %3$lld nữ%4$@. Bạn vẫn có thể chia bảng."
           }
         }
       }

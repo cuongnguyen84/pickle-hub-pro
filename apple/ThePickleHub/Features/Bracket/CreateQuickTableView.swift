@@ -484,7 +484,7 @@ struct CreateQuickTableView: View {
                 labeled("Phương thức chia bảng") {
                     HStack(spacing: 10) {
                         // symbolic key: "Tự động" nghĩa Automatic (chia bảng), khác nghĩa System (ThemeStore)
-                        assignmentOption("auto", icon: "wand.and.stars", title: String(localized: "quickTable.seeding.automatic", defaultValue: "Tự động"), desc: "Hệ thống chia đều, tránh cùng team, rải seed")
+                        assignmentOption("auto", icon: "wand.and.stars", title: String(localized: "quickTable.seeding.automatic", defaultValue: "Tự động"), desc: String(localized: "Hệ thống chia đều, tránh cùng team, rải seed"))
                         assignmentOption("manual", icon: "hand.point.up.left", title: "Thủ công", desc: String(localized: "Tự chọn VĐV vào từng bảng"))
                     }
                 }

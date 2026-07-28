@@ -59,7 +59,8 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     }
 
     var priceLabel: String {
-        guard let price = priceVnd, price > 0 else { return "Miễn phí" }
+        // key literal "Miễn phí" = Free (nghĩa Waived đã tách payment.waived)
+        guard let price = priceVnd, price > 0 else { return String(localized: "Miễn phí") }
         return "\(SocialEvent.grouped(price))đ"
     }
 
