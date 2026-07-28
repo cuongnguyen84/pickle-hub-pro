@@ -237,3 +237,8 @@ Danh sách đăng ký
 Không tải được sự kiện
 Xé vé
 Không tải được sân
+# --- Câu lỗi B2 dùng lại giữa các bề mặt chấm điểm (inc.2, một nghĩa) ---
+Không lưu được tỉ số.
+Không cập nhật được điểm trực tiếp.
+Không nhận được quyền chấm trận.
+Không tạo được bảng đấu.

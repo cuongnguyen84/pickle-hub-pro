@@ -1,0 +1,23 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Chiến lược key: literal VI làm key vs symbolic key ngay từ pass đầu",
+      "myRound1Position": "Key = chuỗi VI gốc; tận dụng 755 key tự trích bằng SWIFT_EMIT_LOC_STRINGS mà không sửa call site nào.",
+      "move": "REFINE",
+      "evidence": "SocialHubView.swift:12 + DoublesElimDetailView.swift:18 + QuickTableDetailView.swift:621 — grep \"Sân\" toàn repo: ĐÚNG 3 call site code (site thứ 4 ở VenuesListView.swift:45 là comment), cả 3 đều nghĩa 'tab sân đấu' → EN 'Courts'. KHÔNG va chạm. Bốn site còn lại critic dẫn là CHUỖI KHÁC, không cùng key: \"Sân đấu.\", \"Sân %@\", \"Sân cứng\", \"%lld sân\". QuickTableDetailView.swift:622 critic dẫn là dòng '}'. | \"Thêm\": 7 site, đọc VenuesListView.swift:92-95 — Image(systemName:\"plus\") + Text(\"Thêm\") = Add. Cả 7 đều Add. | Quét toàn bộ: 1306 chuỗi distinct, 191 xuất hiện ≥2 file, 82 ≥3 file; top-25 theo độ trải đều đơn nghĩa. | Baseline export chạy lại: 755 trans-unit.",
+      "note": "GIỮ literal-VI làm key mặc định — hai ví dụ trụ cột của B1 sai khi mở file. Nhưng CHỈNH PHẠM VI theo cái critic nói đúng: va chạm có thật ở quy mô nhỏ → chèn vào increment 4 gate CI liệt kê literal VI xuất hiện ≥2 file (191 chuỗi, 2 giây) và Cuong duyệt danh sách TRƯỚC khi dịch; chuỗi thật sự lệch nghĩa mới nâng lên symbolic key. Chi phí re-key một chuỗi là 3-7 dòng cục bộ, KHÔNG phải 'chạm 151 file hai lần' — con số đó là chi phí của chính symbolic-from-pass-1 (sửa tay 1306 site, vứt 755 key miễn phí). Ghi chú ngược cho critic: ca 'Hủy'/'Huỷ' là lỗi CHÍNH TẢ (1 nghĩa 2 key) — symbolic key CHE lỗi này chứ không sửa; fix đúng là chuẩn hoá chính tả trước bootstrap."
+    },
+    {
+      "id": "D2",
+      "topic": "Đổi signature design system String → LocalizedStringKey hàng loạt có an toàn không",
+      "myRound1Position": "Đổi TLComponents/TLStateViews + helper private sang LocalizedStringKey cứu 150-250 chuỗi; tự nhận 'canh bạc chưa đo'.",
+      "move": "REFINE",
+      "evidence": "ĐO THẬT — áp patch lên repo, build, export, rồi git checkout -- apple/ (verify porcelain rỗng; patch lưu scratchpad/step3-experiment.patch, 26 file / 72+ 65-). (1) Cơ chế hỏng auditor mô tả KHÔNG TỒN TẠI đường im lặng: swiftc -typecheck String→LocalizedStringKey = error, EXIT=1. Chỉ hỏng nếu tự viết LocalizedStringKey(bien) — không chỗ nào trong repo làm thế. (2) Build wholemodule sau patch: ĐÚNG 3 lỗi chuyển kiểu toàn app — ArticleDetailView.swift:56, CreateTeamMatchView.swift:424, SocialEventsTab.swift:119 — cộng 10 lỗi cơ học 'no member uppercased' (fix .textCase(.uppercase), 1 dòng/chỗ, TRONG helper). (3) Site auditor dẫn tự chữa: readLabel → LocalizedStringKey thì \"Đọc toàn bộ tại \\($0)\" trích key \"Đọc toàn bộ tại %@\" — tên nguồn vào SLOT %@, không vào key. (4) TournamentsView.swift:53 + RankingsView.swift:77 hết lỗi khi tách API. (5) BUILD SUCCEEDED. (6) Đòn bẩy đo được: export sau patch = 911 vs baseline 755 → +156 key, 42 dòng signature / 22 file, ZERO call site sửa.",
+      "note": "GIỮ bước 3 (+156 key đã đo, hết canh bạc) nhưng CHẤP NHẬN kết luận auditor về hình dạng API: tách localized vs verbatim — đã làm và chạy: TLErrorState.message GIỮ String, TLEmptyState thêm subtitleVerbatim render Text(verbatim:) — 4 dòng. Bác bỏ mức độ rủi ro auditor/GPT mô tả ('hỏng im lặng đến runtime'): compiler chặn 100%, chi phí = 13 lỗi build đọc 1 phút — chế độ hỏng RẺ NHẤT. Hai lợi ích phụ đo được: (a) SocialEventsTab.swift:119 vướng compile chính vì dayLabel ghim vi_VN — kiểu mạnh biến B4 từ bug câm thành lỗi build; (b) dayLabel chỉ đổi kiểu không sửa formatter sẽ đẻ key rác \"%@ · %@\" (xác nhận trong export) → B4 phải sửa CÙNG bước 3. Số đếm lệch 814 vs 1766/976: khác đơn vị, không phải bất đồng — đếm lại 1767 occurrence (khớp auditor) / 1306 distinct; 814 là chuỗi chưa trích sau khi trừ trùng + 755 key."
+    }
+  ],
+  "newDisagreements": [],
+  "repoState": "apple/ trả về sạch (git status --porcelain apple/ rỗng) — patch thí nghiệm chỉ ở scratchpad, không commit."
+}

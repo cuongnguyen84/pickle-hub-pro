@@ -1,0 +1,55 @@
+{
+  "slug": "native-bilingual",
+  "note": "scripts/agents/debate-ledger.mjs + risk-tier.mjs KHÔNG tồn tại trong repo (khớp memory idea-pipeline-missing-scripts) — luật vòng 2 cưỡng chế thủ công bởi orchestrator. Kiểm tra ledger: cả 3 rebuttal đều REFINE kèm bằng chứng đo thật (không có CONCEDE trắng, không có HOLD không bằng chứng) → XANH.",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Chiến lược key: literal VI làm key vs symbolic key ngay từ pass đầu",
+      "positions": {
+        "solution-architect": "Key = chuỗi VI gốc ('đã ngã ngũ: key VI'). Tận dụng 755 key tự trích.",
+        "ui-ux-critic": "Blocker B1: symbolic key ngay từ pass đầu ('Sân' 6 nghĩa, 'Thêm' ×6; re-key sau = chạm 151 file hai lần). GPT-5.6 đồng ý về hình dạng fix.",
+        "risk-auditor-context": "#9: 'Hủy' vs 'Huỷ' = 2 key; 1105 distinct / 1766 dùng — mitigation: chuẩn hoá chính tả trước."
+      },
+      "round2": {
+        "solution-architect": "REFINE — giữ literal-VI mặc định (2 ví dụ trụ cột của B1 sai khi mở file: 'Sân' 3 site cùng nghĩa, 'Thêm' 7 site đều Add); thêm gate CI liệt kê literal ≥2 file (191 chuỗi) cho Cuong duyệt trước khi dịch; chuỗi lệch nghĩa thật mới symbolic (3-7 dòng/chuỗi).",
+        "ui-ux-critic": "REFINE — rút symbolic-100% (tự đếm: va chạm thật 13/1344 key = 0,8%; 'Sân'/'Thêm' vòng 1 sai); GIỮ 13 key phải symbolic từ đầu, trong đó 2 mức Blocker chức năng: 'Trực tiếp' (Live vs Rally trong picker chấm điểm trọng tài — DoublesElimDetailView.swift:734, QuickTableDetailView.swift:1165 vs LiveView/AppTabView/HomeLiveSection) và 'Miễn phí' (Free vs Waived — SocialRosterManageView.swift:325 vs SocialModels.swift:40). Chứng minh bằng schema .xcstrings: comment KHÔNG phân biệt được key (strings là JSON object keyed by key) → cơ chế duy nhất là key riêng. Đòi duplicate-gate ở increment 4 + 13 key symbolic trước increment 8."
+      },
+      "resolution": "RESOLVED — HAI BÊN HỘI TỤ: literal-VI làm key mặc định + duplicate-gate CI (fail khi chuỗi VI ở ≥2 file ngoài allowlist Cuong duyệt) + symbolic key cho ~13 chuỗi va chạm đã liệt kê file:line (tối thiểu 2 chuỗi Blocker 'Trực tiếp'/'Miễn phí' + 2 chuỗi tách verbatim 'Đội'/'Sự kiện'). Ghi chú tồn dư: architect và critic vẫn lệch về nghĩa của 'Sân' ở SocialHubView.swift:12 (Venues vs Courts) — rơi đúng vào danh sách allowlist mà gate bắt Cuong duyệt, không cần phân xử thêm."
+    },
+    {
+      "id": "D2",
+      "topic": "Đổi signature design system String → LocalizedStringKey hàng loạt (bước 3) có an toàn không",
+      "positions": {
+        "solution-architect": "Đổi signature hàng loạt cứu 150–250 call site; tự nhận 'canh bạc chưa đo'.",
+        "risk-auditor": "KHÔNG đổi hàng loạt — ArticleDetailView.swift:56 + TournamentsView.swift:53 truyền nội dung server/runtime; phải tách API localized vs verbatim. GPT-5.6 nêu trước, auditor xác minh (cross-vendor)."
+      },
+      "round2": {
+        "risk-auditor": "REFINE — không loại trừ nhau: chỉ 4 call site runtime toàn bước 3, compiler chặn cứng (typecheck thật). 'Tách API' thu còn 2 việc nhỏ. NHƯNG: 4/6 dòng architect trích là component CHẾT (TLButton/TLSelect/TLSheet/TLDialog 0 call site production); đòn bẩy đo được 143 arg không phải 150-250; 14/31 helper gọi .uppercased() trên param → 2 dòng/chỗ; CẢNH BÁO MỚI: gate đếm chuỗi VI trong source MÙ với 14 chỗ ghim Locale vi_VN (Foundation sinh chữ Việt runtime — 'THỨ BẢY', '2 giờ trước').",
+        "solution-architect": "REFINE — áp patch THẬT + build + export rồi revert sạch: BUILD SUCCEEDED, đúng 3 lỗi chuyển kiểu + 10 lỗi uppercased (cơ học), +156 trans-unit (755→911) với 42 dòng / 22 file / 0 call site sửa. Chấp nhận tách API (TLErrorState.message giữ String; TLEmptyState.subtitleVerbatim — 4 dòng). Bác mức độ rủi ro 'hỏng im lặng': compiler chặn 100%. Phát hiện thêm: B4 (formatter vi_VN) phải sửa CÙNG bước 3, nếu không đẻ key rác '%@ · %@' trong catalog."
+      },
+      "resolution": "RESOLVED — HAI BÊN HỘI TỤ bằng thực nghiệm độc lập cho cùng kết quả: bước 3 giữ, hình dạng = đổi signature các component/helper SỐNG (bỏ 4 component chết) + 2 chỗ API verbatim + .textCase(.uppercase) cho ~14 helper + B4 formatter sửa cùng lúc. Kỳ vọng đo: +143~156 trans-unit. Số đếm 814 vs 1766 đã đối soát: khác đơn vị (chuỗi-chưa-trích vs tổng occurrence), không phải mâu thuẫn."
+    },
+    {
+      "id": "D3",
+      "topic": "Control ngôn ngữ trong app + default theo gì (thách thức quyết định intake)",
+      "status": "OPEN_FOR_CUONG",
+      "positions": {
+        "intake-cuong": "Theo iOS Settings, không toggle trong app (quyết 28/07).",
+        "ui-ux-critic": "Blocker B3: entry thật là deep-link → mismatch ngôn ngữ ở first frame không tự phục hồi. Đề xuất: default theo REGION (VN → vi) + hàng Ngôn ngữ trong Profile (Tiếng Việt/English/Theo máy). Chi phí biên ~0 vì 14 formatter phải nhận appLocale dù thế nào.",
+        "gpt-5.6-via-critic": "Toggle nhưng default LUÔN vi — critic bác (phá nhánh EN).",
+        "risk-auditor-context": "Thực nghiệm xác nhận cách intake HOẠT ĐỘNG (Bundle.localizations [en,vi] → iOS hiện mục per-app). Vấn đề là UX, không phải kỹ thuật."
+      },
+      "resolution": "Không đưa vòng 2 — đối thủ là quyết định intake của Cuong. CHUYỂN CUONG QUYẾT."
+    },
+    {
+      "id": "D4",
+      "topic": "MỚI từ vòng 2 (ui-ux-critic vs risk-auditor): chuẩn hoá chính tả 'Hủy/Huỷ, Xóa/Xoá' — đích chuẩn ở đâu, PR nào được đụng src/",
+      "status": "OPEN_FOR_CUONG",
+      "positions": {
+        "risk-auditor": "Chuẩn hoá chính tả trong apple/ trước khi sinh catalog (#9); đồng thời đặt cổng cứng diff chỉ apple/+docs/.",
+        "ui-ux-critic": "Đo thật: src/i18n/vi.ts lệch y hệt ('Hủy' 14/'Huỷ' 12, 'hủy' 20/'huỷ' 29, 'Xóa' 19/'Xoá' 12) — không có biến thể canonical. Chuẩn hoá chỉ trong apple/ → native và web chốt 2 chuẩn khác nhau, vi phạm 'fix both web and native'; nhưng cổng cứng của auditor cấm đụng src/. Hai điều không cùng đúng. Đề xuất: Cuong chốt biến thể (quyết định thương hiệu: 'Huỷ/Xoá' theo Hoàng Phê vs 'Hủy/Xóa' theo bộ gõ), ghi glossary, tách PR chuẩn hoá riêng chạy trên CẢ src/ và apple/ TRƯỚC khi sinh catalog."
+      },
+      "resolution": "Phát sinh sau vòng 2, không mở vòng 3 (luật một vòng). CHUYỂN CUONG QUYẾT: chọn biến thể chính tả + cho phép PR chuẩn hoá riêng chạm src/ hay giới hạn apple/-only và chấp nhận lệch web."
+    }
+  ]
+}

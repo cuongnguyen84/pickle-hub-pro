@@ -1,0 +1,37 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Chiến lược key: literal VI vs symbolic key ngay từ pass đầu",
+      "myRound1Position": "Blocker B1 — phải symbolic key toàn bộ ngay pass đầu, vì literal VI gộp nghĩa ('Sân' 6 nghĩa, 'Thêm' ×6) và re-key sau = chạm 151 file hai lần.",
+      "verdict": "REFINE",
+      "position": "Chấp nhận literal VI làm key MẶC ĐỊNH — đòn bẩy 755 key tự trích của architect là thật và tôi không có phản chứng. Nhưng B1 KHÔNG chết, nó thu hẹp: 13 key va chạm (≈20 call site, đã liệt kê đủ file:line) phải dùng symbolic key ngay từ pass đầu qua LocalizedStringResource(\"<key>\", defaultValue:), và increment 4 của architect phải kèm một duplicate-gate — vì với literal key mọi va chạm này fail HOÀN TOÀN IM LẶNG: không lỗi compile, không test đỏ, người dịch chỉ thấy MỘT entry. Hai trong số đó giữ nguyên mức Blocker vì dịch sai là sai chức năng: 'Trực tiếp' (Live vs Rally, trong picker chấm điểm của trọng tài) và 'Miễn phí' (Free vs Waived, trạng thái lệ phí). Phần còn lại hạ xuống Nên sửa. Bảng copy vòng 1 của tôi có mục action.add/action.more là TÔI BỊA — rút lại.",
+      "evidence": [
+        "TỰ ĐẾM (script trên apple/**/*.swift, loại Tests/): 1816 occurrence, 1344 chuỗi distinct, 231 chuỗi dùng >=2 lần, 703 occurrence trong nhóm trùng. Va chạm THẬT = 13/1344 = 0,8%. Ước lượng symbolic-hoá 100% ~1500 call site của tôi quá tay ~100 lần.",
+        "TÔI SAI 1: SocialHubView.swift:12 + DoublesElimDetailView.swift:18 + QuickTableDetailView.swift:621 — chỉ 3 site literal 'Sân', 2 nghĩa (Venues vs Courts), không phải 6. Bốn cite còn lại vòng 1 là CHUỖI KHÁC → key khác, không va chạm.",
+        "TÔI SAI 2: VenuesListView.swift:93-95 — 'Thêm' cạnh Image(systemName: \"plus\") = Add; cả 7 site đều Add. Va chạm 'Thêm' KHÔNG TỒN TẠI.",
+        "VA CHẠM MỚI, BLOCKER 1: DoublesElimDetailView.swift:734 và QuickTableDetailView.swift:1165 — Text(\"Trực tiếp\").tag(ScoringMode.rally) cạnh Text(\"Giao bóng\").tag(ScoringMode.sideOut). EN đúng: 'Rally'/'Side-out'. Nhưng 4 site khác cùng chuỗi (LiveView.swift:10,17, AppTabView.swift:21, HomeLiveSection.swift:21) = 'Live'. Một key → trọng tài thấy cặp 'Live / Serve'.",
+        "VA CHẠM MỚI, BLOCKER 2: SocialRosterManageView.swift:325 — Text(\"Miễn phí\").tag(\"waived\") = BTC miễn lệ phí ('Waived'); SocialModels.swift:40 — guard price > 0 else return \"Miễn phí\" = sự kiện không thu phí ('Free'). Gộp key = báo sai trạng thái thanh toán.",
+        "VA CHẠM CÒN LẠI (Nên sửa): 'Đăng ký' HomeNewsletter.swift:49 (Subscribe) vs QuickTableRegistrationViews.swift:43 + SocialDetailView.swift:111 (Register) vs SocialRosterManageView.swift:129 (Registered); 'Xếp hạng' RankingsView.swift:23 (Rankings) vs TeamMatchDetailView.swift:18 (Standings); 'Tự động' ThemeStore.swift:12 (System) vs CreateQuickTableView.swift:459 (Automatic); 'Bài viết' BlogListView.swift:33 (Articles) vs ForumDetailView.swift:120 (Post); 'Gửi' ChatPanel.swift:141 (Send) vs TeamMatchRegisterSheet.swift:216 + QuickTableRegistrationViews.swift:149 (Submit); 'Không' FormatFinderSheet.swift:55 + ForumCreateView.swift:62 (No) vs QuickTableRegistrationViews.swift:125 (None); 'Người chơi' SearchView.swift:76 + SocialRosterManageView.swift:315 (Players) vs SearchRepository.swift:81 + MatchConfirmView.swift:32 (Player); 'Xoá' CreateClubView.swift:166 (Remove) vs DoublesElimRegistrationView.swift:86 role:.destructive (Delete).",
+        "TÁCH VERBATIM/LOCALIZED (2 key): DoublesElimRepository.swift:311 '?? \"Đội\"' ghi Supabase (trùng risk-auditor #4) vs DoublesElimDetailView.swift:19 + FlexDetailView.swift:238 tab 'Đội'; ClubModels.swift:73 + SocialModels.swift:29 '?? \"Sự kiện\"' fallback data vs SocialDetailView.swift:38 navigationTitle. Cùng chuỗi, một bên tuyệt đối không được vào catalog.",
+        "GIẾT CLAIM 'comment/context phân biệt được key': schema .xcstrings đọc từ file thật (Binance.app CaptureUX Localizable.xcstrings + catalog thực nghiệm của risk-auditor) — 'strings' là JSON OBJECT keyed by key, 'comment' là field CON trong entry. Key JSON duy nhất theo định nghĩa → KHÔNG thể hai entry cùng key. Cơ chế phân biệt hợp lệ duy nhất của Apple là key riêng (hoặc table riêng) — đúng symbolic key, cho 13 chỗ chứ không phải 1500.",
+        "GATE BẮT BUỘC (chi phí ~0, đã chạy thử): thêm bước quét trùng vào increment 4 (.github/workflows/apple-tests.yml) — nhóm literal VI theo chuỗi, fail nếu một chuỗi xuất hiện ở >=2 file mà chưa nằm trong allowlist. Không có gate thì 13 va chạm là lỗi CÂM: increment 8 giao nguyên catalog cho người dịch, người dịch thấy một entry 'Trực tiếp' và gõ 'Live'."
+      ],
+      "note": "Đổi ý vì SỐ TÔI TỰ ĐẾM, không vì lập luận chi phí của architect. Không hạ 'Trực tiếp' và 'Miễn phí' khỏi Blocker: cả hai làm sai NGHĨA chức năng."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Mitigation 'chuẩn hoá chính tả trước khi sinh catalog' (risk-auditor #9) chưa có ĐÍCH chuẩn — và cổng cứng của chính risk-auditor cấm sửa nó đúng chỗ",
+      "with": "risk-auditor",
+      "myPosition": "Đo thật: src/i18n/vi.ts cũng lệch y hệt — 'Hủy' 14 / 'Huỷ' 12, 'hủy' 20 / 'huỷ' 29, 'Xóa' 19 / 'Xoá' 12. Không có biến thể canonical để native quy về. Chuẩn hoá chỉ trong apple/ → native và web chốt hai chuẩn khác nhau — vi phạm 'fix both web and native'. Nhưng cổng cứng của risk-auditor (diff chỉ apple/+docs/) CẤM đụng src/i18n/vi.ts trong PR này. Hai điều không cùng đúng được. Đề xuất: Cuong chốt một biến thể ('Huỷ'/'Xoá' theo Hoàng Phê, hay 'Hủy'/'Xóa' theo mặc định bộ gõ — quyết định thương hiệu), ghi glossary vào docs, tách PR chuẩn hoá riêng chạy trên CẢ src/ và apple/ TRƯỚC khi sinh catalog."
+    },
+    {
+      "topic": "Va chạm key là lỗi câm — increment 8 (dịch hàng loạt rồi import) không an toàn nếu thiếu gate ở increment 4",
+      "with": "solution-architect",
+      "myPosition": "Chiến lược literal key đúng về chi phí, nhưng chuyển rủi ro từ 'compile lỗi' sang 'người dịch không biết'. 13 key đa nghĩa không tự lộ ở bất kỳ bước verify nào — kể cả bước 9 chụp 20 màn chính, vì 'Trực tiếp'/Rally nằm trong referee section, không phải màn chính. Điều kiện: increment 4 fail khi chuỗi VI dùng >=2 file ngoài allowlist; 13 key symbolic hoá TRƯỚC increment 8."
+    }
+  ],
+  "script": "Script đếm dùng lại được (hạt nhân gate increment 4): /private/tmp/claude-501/-Users-cm10-pickle-hub-pro/154afb65-1132-4b1a-a457-28fbfa985870/scratchpad/extract.py (đầu ra dups.json)"
+}
