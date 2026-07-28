@@ -49,7 +49,8 @@ function literalsIn(src) {
 
 function specifiersOf(s) {
   // %% là literal percent; còn lại: %@ %lld %d %.2f %1$@ ...
-  return (s.match(/%(?:\d+\$)?[#0\- +']*[\d.]*(?:hh|h|ll|l|q|z|t|j)?[@dDuUxXoOfeEgGcCsSpaAF]/g) ?? []);
+  // Flag class KHÔNG chứa dấu cách/quote: "75% of players" từng bị đọc nhầm thành %o (false positive)
+  return (s.match(/%(?:\d+\$)?[#0\-+]*[\d.]*(?:hh|h|ll|l|q|z|t|j)?[@dDuUxXoOfeEgGcCsSpaAF]/g) ?? []);
 }
 
 function loadCatalog() {
