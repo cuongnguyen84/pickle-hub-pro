@@ -89,7 +89,8 @@ struct SearchRepository {
             .limit(Self.limit).execute().value else { return [] }
         return rows.map {
             SearchPlayerHit(id: $0.id, username: $0.username?.nonEmpty,
-                            displayName: $0.displayName?.nonEmpty ?? ($0.username.map { "@\($0)" } ?? "Người chơi"),
+                            // symbolic key: "Người chơi" số ít (Player), khác nghĩa Players (section header)
+                            displayName: $0.displayName?.nonEmpty ?? ($0.username.map { "@\($0)" } ?? String(localized: "player.singular", defaultValue: "Người chơi")),
                             avatarURL: $0.avatarURL, duprDoubles: $0.duprDoubles, duprSingles: $0.duprSingles)
         }
     }

@@ -117,7 +117,8 @@ struct ForumDetailView: View {
             if model.post != nil && model.myID != nil { composer }
         }
         .background(TLColor.bg)
-        .navigationTitle("Bài viết")
+        // symbolic key: "Bài viết" nghĩa Post (forum), khác nghĩa Articles (BlogListView)
+        .navigationTitle(Text(LocalizedStringResource("forum.post", defaultValue: "Bài viết")))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if model.isOwner {

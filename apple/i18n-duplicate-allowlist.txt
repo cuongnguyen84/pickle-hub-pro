@@ -3,19 +3,37 @@
 # Nguồn: quét 28/07 (231 chuỗi) — round2/ui-ux-critic.json là căn cứ phân loại.
 # CUONG CHƯA DUYỆT từng dòng — duyệt dần, xoá dòng nào thấy đa nghĩa.
 #
-# --- ĐA NGHĨA ĐÃ XÁC NHẬN (13) — tạm cho qua gate, PHẢI tách symbolic key ở
-# --- increment 6-7 rồi XOÁ khỏi danh sách này. 2 Blocker: "Trực tiếp", "Miễn phí".
-Trực tiếp
-Miễn phí
-Đăng ký
-Xếp hạng
-Tự động
-Bài viết
-Gửi
-Không
-Người chơi
-Xóa
+# --- ĐA NGHĨA CÒN LẠI (chờ Cuong duyệt) ---
+# "Sân" chưa tách (panel còn tranh luận Venues vs Courts — SocialHubView tab vs nhãn sân đấu).
 Sân
+# --- ĐÃ TÁCH SYMBOLIC KEY (inc.6-7) — literal còn lại MỘT nghĩa; site nghĩa kia
+# --- dùng LocalizedStringResource/String(localized:) với key riêng, literal ở đó
+# --- chỉ là defaultValue nên vẫn bị gate đếm. Key symbolic: scoring.mode.rally,
+# --- payment.waived, newsletter.subscribe, roster.stat.registered,
+# --- teamMatch.tab.standings, quickTable.seeding.automatic, forum.post,
+# --- form.submit, option.none, player.singular, action.remove.
+# "Trực tiếp" = Live (LiveView/AppTabView/HomeLiveSection); Rally đã tách scoring.mode.rally.
+Trực tiếp
+# "Miễn phí" = Free (SocialModels priceLabel); Waived đã tách payment.waived.
+Miễn phí
+# "Đăng ký" = Register (nút/navigationTitle); Subscribe + Registered đã tách.
+Đăng ký
+# "Xếp hạng" = Rankings (RankingsView); Standings đã tách teamMatch.tab.standings.
+Xếp hạng
+# "Tự động" = System (ThemeStore); Automatic (3 site chia bảng) đã tách quickTable.seeding.automatic.
+Tự động
+# "Bài viết" = Articles (BlogListView); Post (forum) đã tách forum.post.
+Bài viết
+# "Gửi" = Send (ChatPanel); Submit đã tách form.submit.
+Gửi
+# "Không" = No (FormatFinder/ForumCreate/DeepLink); None đã tách option.none.
+Không
+# "Người chơi" = Players/danh từ chung (10 file); 2 fallback số ít đã tách player.singular.
+# Lưu ý inc.8: soát lại nghĩa từng site còn lại khi dịch EN.
+Người chơi
+# "Xóa" = Delete (destructive, 7 file); Remove (gỡ ảnh CreateClubView) đã tách action.remove.
+Xóa
+# "Đội"/"Sự kiện": site display dùng key literal; fallback ghi DB giữ verbatim + comment canonical (inc.2).
 Đội
 Sự kiện
 # --- MỘT NGHĨA (chờ Cuong duyệt) ---

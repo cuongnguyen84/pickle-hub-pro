@@ -30,7 +30,8 @@ final class MatchConfirmModel {
             || row.teamBPlayerIDs.map { $0.lowercased() }.contains(mine)
     }
 
-    func name(_ id: String) -> String { names[id.lowercased()] ?? "Người chơi" }
+    // symbolic key: "Người chơi" số ít (Player), khác nghĩa Players (section header)
+    func name(_ id: String) -> String { names[id.lowercased()] ?? String(localized: "player.singular", defaultValue: "Người chơi") }
 
     @MainActor
     func load() async {

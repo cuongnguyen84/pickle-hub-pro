@@ -126,7 +126,8 @@ struct SocialRosterManageView: View {
 
     private var statsRow: some View {
         HStack(spacing: 10) {
-            statBox("\(model.registered)", "Đăng ký")
+            // symbolic key: "Đăng ký" nghĩa Registered (đếm), khác nghĩa Register (nút)
+            statBox("\(model.registered)", String(localized: "roster.stat.registered", defaultValue: "Đăng ký"))
             if model.isPaidEvent { statBox("\(model.paid)", "Đã trả") }
             statBox("\(model.checkedIn)", "Check-in")
         }
@@ -322,7 +323,8 @@ private struct ManualAddRegistrationSheet: View {
                             Picker("Trạng thái", selection: $paymentStatus) {
                                 Text("Chưa trả").tag("unpaid")
                                 Text("Đã báo CK").tag("claimed_paid")
-                                Text("Miễn phí").tag("waived")
+                                // symbolic key: "Miễn phí" nghĩa Waived (BTC miễn), khác nghĩa Free (sự kiện 0đ)
+                                Text(LocalizedStringResource("payment.waived", defaultValue: "Miễn phí")).tag("waived")
                             }
                         }
                     }

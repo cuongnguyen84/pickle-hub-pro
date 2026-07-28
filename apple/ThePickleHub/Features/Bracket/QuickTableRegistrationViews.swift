@@ -304,7 +304,8 @@ private struct QuickTableApprovedSetupSheet: View {
                 }
                 Section("Phương thức chia bảng") {
                     Picker("Chia bảng", selection: $manual) {
-                        Text("Tự động").tag(false)
+                        // symbolic key: "Tự động" nghĩa Automatic (chia bảng), khác nghĩa System (ThemeStore)
+                        Text(LocalizedStringResource("quickTable.seeding.automatic", defaultValue: "Tự động")).tag(false)
                         Text("Thủ công").tag(true)
                     }
                     .pickerStyle(.segmented)
@@ -478,7 +479,8 @@ struct QuickTableSelfRegisterSheet: View {
                     }
                     field("Hệ trình độ") {
                         Picker("", selection: $rating) {
-                            Text("Không").tag("none"); Text("DUPR").tag("DUPR"); Text("Khác").tag("other")
+                            // symbolic key: "Không" nghĩa None (hệ trình độ), khác nghĩa No (FormatFinder/ForumCreate)
+                            Text(LocalizedStringResource("option.none", defaultValue: "Không")).tag("none"); Text("DUPR").tag("DUPR"); Text("Khác").tag("other")
                         }
                         .pickerStyle(.segmented)
                         .disabled(table?.ratingSource == "dupr" || verifiedDuprLocked)
@@ -523,7 +525,8 @@ struct QuickTableSelfRegisterSheet: View {
                         )
                     } label: {
                         if busy { ProgressView().tint(TLColor.accentText) }
-                        else { Text("Gửi").font(TLFont.sans(15, .semibold)) }
+                        // symbolic key: "Gửi" nghĩa Submit (form), khác nghĩa Send (ChatPanel)
+                        else { Text(LocalizedStringResource("form.submit", defaultValue: "Gửi")).font(TLFont.sans(15, .semibold)) }
                     }
                     .foregroundStyle(canSubmit ? TLColor.accentText : TLColor.fg4)
                     .disabled(!canSubmit || busy)

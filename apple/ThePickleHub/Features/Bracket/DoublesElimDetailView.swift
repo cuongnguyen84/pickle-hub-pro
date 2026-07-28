@@ -814,7 +814,8 @@ private struct DEScoreSheet: View {
         VStack(spacing: 12) {
             Rectangle().fill(TLColor.border).frame(height: 1).padding(.vertical, 2)
             Picker("", selection: $refMode) {
-                Text("Trực tiếp").tag(ScoringMode.rally)
+                // symbolic key: "Trực tiếp" nghĩa Rally ở đây, khác nghĩa Live (round2/ui-ux-critic B1)
+                Text(LocalizedStringResource("scoring.mode.rally", defaultValue: "Trực tiếp")).tag(ScoringMode.rally)
                 Text("Giao bóng").tag(ScoringMode.sideOut)
             }.pickerStyle(.segmented)
             Picker("", selection: $refTarget) {

@@ -46,7 +46,8 @@ struct HomeNewsletter: View {
                             if phase == .sending {
                                 ProgressView().tint(TLColor.accentInk)
                             } else {
-                                Text("Đăng ký").fontWeight(.semibold)
+                                // symbolic key: "Đăng ký" nghĩa Subscribe, khác nghĩa Register
+                                Text(LocalizedStringResource("newsletter.subscribe", defaultValue: "Đăng ký")).fontWeight(.semibold)
                             }
                         }
                         .padding(.horizontal, 16).padding(.vertical, 12)

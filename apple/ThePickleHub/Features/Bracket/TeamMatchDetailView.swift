@@ -16,7 +16,8 @@ final class TeamMatchViewModel {
             case .overview: return "Tổng quan"
             case .matches: return "Trận đấu"
             case .playoff: return "Playoff"
-            case .teams: return "Xếp hạng"
+            // symbolic key: "Xếp hạng" nghĩa Standings, khác nghĩa Rankings (RankingsView)
+            case .teams: return String(localized: "teamMatch.tab.standings", defaultValue: "Xếp hạng")
             }
         }
     }

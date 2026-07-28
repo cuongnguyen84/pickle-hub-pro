@@ -552,7 +552,8 @@ private struct QuickTableApprovedTeamsSetupSheet: View {
             Form {
                 Section("Chia bảng") {
                     Picker("Phương thức", selection: $manual) {
-                        Text("Tự động").tag(false)
+                        // symbolic key: "Tự động" nghĩa Automatic (chia bảng), khác nghĩa System (ThemeStore)
+                        Text(LocalizedStringResource("quickTable.seeding.automatic", defaultValue: "Tự động")).tag(false)
                         Text("Thủ công").tag(true)
                     }
                     .pickerStyle(.segmented)

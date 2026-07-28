@@ -168,7 +168,8 @@ struct CreateClubView: View {
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: hasPreviewImage ? [] : [4])))
                 }
                 if hasPreviewImage {
-                    Button("Xóa") { picked = nil; previewImage = nil; model.image = nil }
+                    // symbolic key: "Xóa" nghĩa Remove (gỡ ảnh), khác nghĩa Delete (destructive)
+                    Button { picked = nil; previewImage = nil; model.image = nil } label: { Text(LocalizedStringResource("action.remove", defaultValue: "Xóa")) }
                         .font(TLFont.sans(12, .semibold)).foregroundStyle(TLColor.live)
                 }
             }
