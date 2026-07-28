@@ -34,6 +34,41 @@ final class ClubManageModel {
             actionError = UserFacingError.message(action: "Duyệt thành viên", error: error)
         }
     }
+    // T5 — mời thành viên: tra email/SĐT chính xác (RPC search_profile_for_manager,
+    // parity web ClubMembers.tsx) rồi invite_club_member → vào ACTIVE ngay.
+    var inviteHit: ClubRepository.ManagerProfileHit?
+    var inviteSearched = false
+    var inviteBusy = false
+    var inviteError: String?
+
+    @MainActor func searchInvitee(_ query: String) async {
+        inviteBusy = true; inviteError = nil
+        defer { inviteBusy = false; inviteSearched = true }
+        do {
+            inviteHit = try await repo.searchProfileForManager(query)
+        } catch {
+            inviteHit = nil
+            inviteError = UserFacingError.message(action: "Tìm tài khoản", error: error)
+        }
+    }
+
+    @MainActor func invite(_ hit: ClubRepository.ManagerProfileHit) async -> Bool {
+        inviteBusy = true; inviteError = nil
+        defer { inviteBusy = false }
+        do {
+            try await repo.inviteMember(clubID: club.id, profileID: hit.profileID)
+            await load()
+            return true
+        } catch {
+            inviteError = UserFacingError.message(action: "Mời thành viên", error: error)
+            return false
+        }
+    }
+
+    func resetInvite() {
+        inviteHit = nil; inviteSearched = false; inviteError = nil
+    }
+
     @MainActor func remove(_ m: ClubMember) async {
         busyID = m.profileID
         defer { busyID = nil }
@@ -54,6 +89,7 @@ struct ClubManageView: View {
     let club: Club
     @State private var model: ClubManageModel
     @State private var showCreateEvent = false
+    @State private var showInvite = false
 
     init(club: Club) { self.club = club; _model = State(initialValue: ClubManageModel(club: club)) }
 
@@ -64,6 +100,18 @@ struct ClubManageView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "slider.horizontal.3").font(.system(size: 15)).foregroundStyle(TLColor.accentText).frame(width: 22)
                         Text("Chỉnh sửa CLB").font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg)
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(TLColor.fg3)
+                    }
+                    .padding(14)
+                    .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+                }.buttonStyle(.plain)
+
+                Button { showInvite = true } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.badge.plus").font(.system(size: 15)).foregroundStyle(TLColor.accentText).frame(width: 22)
+                        Text("Mời thành viên").font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg)
                         Spacer()
                         Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(TLColor.fg3)
                     }
@@ -115,6 +163,9 @@ struct ClubManageView: View {
         .refreshable { await model.load() }
         .sheet(isPresented: $showCreateEvent) {
             CreateSocialEventView(clubID: club.id) { Task { await model.load() } }
+        }
+        .sheet(isPresented: $showInvite) {
+            InviteMemberSheet(model: model)
         }
         .alert("Không thể cập nhật thành viên", isPresented: Binding(
             get: { model.actionError != nil },
@@ -378,5 +429,91 @@ struct EditClubView: View {
             .padding(.horizontal, 11).padding(.vertical, 10)
             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+}
+
+
+// MARK: Mời thành viên (T5)
+
+/// Tra email / số điện thoại chính xác → hiện đúng 1 tài khoản → "Mời" (vào
+/// ACTIVE ngay, RPC tự chặn non-organizer). Không search theo tên — parity web.
+struct InviteMemberSheet: View {
+    let model: ClubManageModel
+    @State private var query = ""
+    @State private var invitedName: String?
+    @Environment(\.dismiss) private var dismiss
+
+    private var canSearch: Bool {
+        query.trimmingCharacters(in: .whitespaces).count >= 4 && !model.inviteBusy
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack {
+                        TextField("email@vidu.com / 09xxxxxxxx", text: $query)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+                            .onSubmit { if canSearch { Task { await model.searchInvitee(query) } } }
+                        Button("Tìm") { Task { await model.searchInvitee(query) } }
+                            .disabled(!canSearch)
+                    }
+                } header: {
+                    Text("Email hoặc số điện thoại")
+                } footer: {
+                    Text("Nhập đúng email hoặc số điện thoại người chơi đã đăng ký trên ThePickleHub.")
+                }
+
+                if model.inviteBusy {
+                    Section { ProgressView().frame(maxWidth: .infinity) }
+                } else if let hit = model.inviteHit {
+                    Section("Tài khoản") {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(hit.label).font(TLFont.sans(15, .semibold)).foregroundStyle(TLColor.fg)
+                                if let sub = hit.email?.nonEmpty ?? hit.phone?.nonEmpty {
+                                    Text(sub).font(TLFont.sans(12)).foregroundStyle(TLColor.fg3)
+                                }
+                            }
+                            Spacer()
+                            Button("Mời") {
+                                Task {
+                                    if await model.invite(hit) {
+                                        invitedName = hit.label
+                                        Haptics.success()
+                                    }
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(model.inviteBusy || invitedName != nil)
+                        }
+                        .frame(minHeight: 44)
+                    }
+                } else if model.inviteSearched, model.inviteError == nil {
+                    Section {
+                        Text("Không tìm thấy tài khoản với thông tin này.")
+                            .font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
+                    }
+                }
+
+                if let name = invitedName {
+                    Section {
+                        Label("Đã thêm \(name) vào CLB.", systemImage: "checkmark.circle.fill")
+                            .font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.accentText)
+                    }
+                }
+                if let err = model.inviteError {
+                    Section { Text(err).font(TLFont.sans(13)).foregroundStyle(.red) }
+                }
+            }
+            .navigationTitle("Mời thành viên")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Đóng") { dismiss() } }
+            }
+            .onDisappear { model.resetInvite() }
+        }
     }
 }
