@@ -8,6 +8,7 @@ enum GoogleAuthService {
     struct Tokens {
         let idToken: String
         let accessToken: String
+        let rawNonce: String
     }
 
     enum GoogleAuthError: LocalizedError {
@@ -27,11 +28,19 @@ enum GoogleAuthService {
         guard let presenter = UIApplication.shared.topViewController else {
             throw GoogleAuthError.noPresenter
         }
-        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter)
+        // GoTrue chỉ so sánh sha256(nonce gửi lên) với nonce trong id_token
+        // (convention Apple). Google nhúng nonce NGUYÊN VĂN vào token → phải
+        // đưa Google bản SHA-256, đưa Supabase bản raw — y hệt Apple Sign-In.
+        // (Đo thật 28/07: token_nonce == giá trị truyền cho GIDSignIn.)
+        let rawNonce = try AppleSignInNonce.generate()
+        let result = try await GIDSignIn.sharedInstance.signIn(
+            withPresenting: presenter, hint: nil, additionalScopes: nil,
+            nonce: AppleSignInNonce.sha256(rawNonce)
+        )
         guard let idToken = result.user.idToken?.tokenString else {
             throw GoogleAuthError.missingIDToken
         }
-        return Tokens(idToken: idToken, accessToken: result.user.accessToken.tokenString)
+        return Tokens(idToken: idToken, accessToken: result.user.accessToken.tokenString, rawNonce: rawNonce)
     }
 
     static func signOut() {

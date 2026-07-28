@@ -167,7 +167,8 @@ final class SessionStore {
                 credentials: .init(
                     provider: .google,
                     idToken: tokens.idToken,
-                    accessToken: tokens.accessToken
+                    accessToken: tokens.accessToken,
+                    nonce: tokens.rawNonce
                 )
             )
             self.apply(.init(kind: .signedIn, identity: SessionUserIdentity(session: session)))
