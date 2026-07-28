@@ -27,10 +27,10 @@ struct QTTable: Decodable, Equatable {
 
     var statusLabel: String {
         switch status {
-        case "setup": return "Đang chuẩn bị"
+        case "setup": return String(localized: "Đang chuẩn bị")
         case "group_stage": return "Vòng bảng"
         case "playoff": return "Playoff"
-        case "completed": return "Đã kết thúc"
+        case "completed": return String(localized: "Đã kết thúc")
         default: return status ?? "—"
         }
     }
@@ -265,7 +265,7 @@ struct QTMatch: Decodable, Identifiable, Equatable {
 
     /// Nhãn sân hiển thị: tên tuỳ chỉnh nếu có, else "Sân {số}" từ court_id (web parity).
     var courtLabel: String? {
-        courtName?.nonEmpty ?? courtID.map { "Sân \($0)" }
+        courtName?.nonEmpty ?? courtID.map { String(localized: "Sân \($0)") }
     }
 
     enum CodingKeys: String, CodingKey {
@@ -316,9 +316,9 @@ struct GroupSuggestion: Identifiable, Equatable {
             let wildcard = max(0, ideal - directSpots)
             var recommended = false
             let reason: String
-            if wildcard == 0 { recommended = true; reason = "Không cần wildcard, vào thẳng playoff" }
-            else if wildcard <= 4 { reason = "Cần \(wildcard) wildcard" }
-            else { reason = "Cần \(wildcard) wildcard (không khuyến nghị)" }
+            if wildcard == 0 { recommended = true; reason = String(localized: "Không cần wildcard, vào thẳng playoff") }
+            else if wildcard <= 4 { reason = String(localized: "Cần \(wildcard) wildcard") }
+            else { reason = String(localized: "Cần \(wildcard) wildcard (không khuyến nghị)") }
             if (k == 4 || k == 8) && wildcard == 0 { recommended = true }
             out.append(GroupSuggestion(groupCount: k, playersPerGroup: ppg, isRecommended: recommended,
                                        reason: reason, wildcardNeeded: wildcard, totalPlayoffSpots: ideal))

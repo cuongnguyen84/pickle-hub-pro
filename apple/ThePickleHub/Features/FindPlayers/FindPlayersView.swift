@@ -115,7 +115,7 @@ struct FindPlayersView: View {
                     Text("TRÌNH").font(TLFont.mono(9.5, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
-                            chip("Mọi trình", selected: model.band == nil) { model.band = nil }
+                            chip(String(localized: "Mọi trình"), selected: model.band == nil) { model.band = nil }
                             ForEach(SkillBand.all) { b in
                                 chip(b.label, selected: model.band?.key == b.key) { model.band = b }
                             }

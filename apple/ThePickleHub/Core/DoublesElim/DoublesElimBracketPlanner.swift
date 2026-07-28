@@ -196,7 +196,7 @@ enum DEBracketPlanError: Error, Equatable, LocalizedError {
     case invalidRoundSource
 
     var errorDescription: String? {
-        "Sơ đồ nhánh đấu không hợp lệ (\(String(describing: self)))."
+        String(localized: "Sơ đồ nhánh đấu không hợp lệ (\(String(describing: self))).")
     }
 }
 

@@ -55,8 +55,8 @@ struct PlayerProfileView: View {
                 case .notPublic:
                     emptyState(
                         icon: "lock.fill",
-                        title: "Hồ sơ không công khai",
-                        message: "Người chơi này chưa mở hồ sơ công khai."
+                        title: String(localized: "Hồ sơ không công khai"),
+                        message: String(localized: "Người chơi này chưa mở hồ sơ công khai.")
                     )
 
                 case .failed(let message):
@@ -86,13 +86,13 @@ struct PlayerProfileView: View {
         TLCard {
             VStack(spacing: 14) {
                 HStack(spacing: 0) {
-                    statCell("Trận", "\(stats.totalMatches)")
+                    statCell(String(localized: "Trận"), "\(stats.totalMatches)")
                     divider
-                    statCell("Thắng", "\(stats.wins)")
+                    statCell(String(localized: "Thắng"), "\(stats.wins)")
                     divider
                     statCell("Thua", "\(stats.losses)")
                     divider
-                    statCell("Tỉ lệ", String(format: "%.0f%%", stats.winRate))
+                    statCell(String(localized: "Tỉ lệ"), String(format: "%.0f%%", stats.winRate))
                 }
                 if let form = stats.last5Form?.nonEmpty {
                     formRow(form)

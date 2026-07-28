@@ -21,7 +21,7 @@ struct VideosListView: View {
             switch self {
             case .all: return "Tất cả"
             case .long: return "Highlights"
-            case .short: return "Clip ngắn"
+            case .short: return String(localized: "Clip ngắn")
             }
         }
     }

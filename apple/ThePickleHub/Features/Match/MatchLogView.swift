@@ -47,7 +47,7 @@ final class MatchLogViewModel {
     /// Team B slots actually required for the current format.
     var opponentSlots: Int { format.slotsPerSide }
 
-    var selfName: String { selfProfile?.resolvedDisplayName ?? "Bạn" }
+    var selfName: String { selfProfile?.resolvedDisplayName ?? String(localized: "Bạn") }
 
     /// IDs already in play — fed to search so a person can't be picked twice.
     func excludeIDs() -> [String] {
@@ -76,10 +76,10 @@ final class MatchLogViewModel {
     @MainActor
     func performSubmit() async {
         guard let selfID = selfProfile?.id.uuidString.lowercased() else {
-            submit = .failed("Chưa tải được hồ sơ của bạn."); return
+            submit = .failed(String(localized: "Chưa tải được hồ sơ của bạn.")); return
         }
         let scored = validGames
-        guard !scored.isEmpty else { submit = .failed("Cần ít nhất một ván có tỉ số."); return }
+        guard !scored.isEmpty else { submit = .failed(String(localized: "Cần ít nhất một ván có tỉ số.")); return }
 
         var teamA = [PickedPlayer(userID: selfID, name: selfName)]
         if format == .doubles, let partner { teamA.append(partner) }
@@ -148,7 +148,7 @@ struct MatchLogView: View {
         .task { await model.loadSelf() }
         .sheet(item: $pickerSlot) { slot in
             OpponentPickerView(
-                title: slot == .partner ? "Chọn đồng đội" : "Chọn đối thủ",
+                title: slot == .partner ? "Chọn đồng đội" : String(localized: "Chọn đối thủ"),
                 excludeIDs: model.excludeIDs()
             ) { picked in
                 switch slot {
@@ -175,19 +175,19 @@ struct MatchLogView: View {
 
     private var opponentsStep: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sectionTitle("Thể thức")
+            sectionTitle(String(localized: "Thể thức"))
             formatToggle
 
             sectionTitle("Đội của bạn")
-            playerSlot(name: model.selfName, sub: "Bạn", filled: true) { }
+            playerSlot(name: model.selfName, sub: String(localized: "Bạn"), filled: true) { }
             if model.format == .doubles {
-                slotButton(model.partner, placeholder: "Thêm đồng đội") { pickerSlot = .partner }
+                slotButton(model.partner, placeholder: String(localized: "Thêm đồng đội")) { pickerSlot = .partner }
             }
 
-            sectionTitle("Đối thủ")
+            sectionTitle(String(localized: "Đối thủ"))
             ForEach(0..<model.opponentSlots, id: \.self) { index in
                 let picked = index < model.opponents.count ? model.opponents[index] : nil
-                slotButton(picked, placeholder: "Chọn đối thủ") { pickerSlot = .opponent(index) }
+                slotButton(picked, placeholder: String(localized: "Chọn đối thủ")) { pickerSlot = .opponent(index) }
             }
 
             primaryButton("Tiếp tục", enabled: model.canAdvanceFromOpponents) {
@@ -284,7 +284,7 @@ struct MatchLogView: View {
 
     private var reviewStep: some View {
         VStack(alignment: .leading, spacing: 20) {
-            sectionTitle("Xem lại")
+            sectionTitle(String(localized: "Xem lại"))
             TLCard {
                 VStack(alignment: .leading, spacing: 14) {
                     reviewTeamRow(names: teamANames, isWinner: teamAWins)
@@ -308,7 +308,7 @@ struct MatchLogView: View {
             HStack(spacing: 10) {
                 secondaryButton("Quay lại") { model.step = .scores }
                 primaryButton(
-                    model.submit == .submitting ? "Đang gửi…" : "Gửi trận",
+                    model.submit == .submitting ? "Đang gửi…" : String(localized: "Gửi trận"),
                     enabled: model.submit != .submitting
                 ) {
                     Task { await model.performSubmit() }

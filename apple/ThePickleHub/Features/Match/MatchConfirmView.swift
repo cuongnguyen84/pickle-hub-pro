@@ -10,7 +10,7 @@ import SwiftUI
 final class MatchConfirmModel {
     enum Tab: String, CaseIterable, Identifiable { case pending, history
         var id: String { rawValue }
-        var label: String { self == .pending ? "Chờ xác nhận" : "Lịch sử" }
+        var label: String { self == .pending ? String(localized: "Chờ xác nhận") : String(localized: "Lịch sử") }
     }
     enum Phase: Equatable { case loading, loaded, failed(String) }
 

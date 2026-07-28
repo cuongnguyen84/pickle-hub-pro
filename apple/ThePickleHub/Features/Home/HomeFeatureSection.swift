@@ -12,7 +12,7 @@ struct HomeFeatureSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                HomeSectionHeader(title: "Tuần này.", emphasis: "N°\(isoWeek)")
+                HomeSectionHeader(title: String(localized: "Tuần này."), emphasis: "N°\(isoWeek)")
                 Text("Phóng sự dài kỳ — phóng viên, HLV, và những người có mặt khi câu chuyện diễn ra.")
                     .font(TLFont.sans(14))
                     .foregroundStyle(TLColor.fg3)
@@ -26,7 +26,7 @@ struct HomeFeatureSection: View {
             NavigationLink {
                 BlogListView()
             } label: {
-                HomeSeeMore(label: "Xem thêm bài viết")
+                HomeSeeMore(label: String(localized: "Xem thêm bài viết"))
             }
             .buttonStyle(.plain)
         }

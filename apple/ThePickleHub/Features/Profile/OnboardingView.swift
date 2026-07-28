@@ -16,10 +16,10 @@ final class OnboardingModel {
     private var checkTask: Task<Void, Never>?
 
     static let skills: [(value: String, label: String, desc: String)] = [
-        ("beginner", "NGƯỜI MỚI", "Mới bắt đầu, đang học"),
-        ("intermediate", "TRUNG CẤP", "Chơi ổn định, hiểu luật"),
-        ("advanced", "NÂNG CAO", "Thi đấu giải phong trào"),
-        ("pro", "CHUYÊN NGHIỆP", "Trình độ cao / vận động viên"),
+        ("beginner", String(localized: "NGƯỜI MỚI"), String(localized: "Mới bắt đầu, đang học")),
+        ("intermediate", String(localized: "TRUNG CẤP"), String(localized: "Chơi ổn định, hiểu luật")),
+        ("advanced", String(localized: "NÂNG CAO"), String(localized: "Thi đấu giải phong trào")),
+        ("pro", String(localized: "CHUYÊN NGHIỆP"), String(localized: "Trình độ cao / vận động viên")),
     ]
 
     // ^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])?$  (3–32, web USERNAME_RE)

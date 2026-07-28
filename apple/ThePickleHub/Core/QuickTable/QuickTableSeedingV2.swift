@@ -97,12 +97,12 @@ enum QTSeedingV2 {
     static func generateSeeding(groups: [QTGroup], players: [QTPlayer], matches: [QTMatch],
                                 advancePerGroup A: Int) throws -> (seeded: [Seeded], plan: Plan) {
         let G = groups.count
-        guard G >= 2 else { throw SeedingError(message: "Cần ≥ 2 bảng, có \(G)") }
+        guard G >= 2 else { throw SeedingError(message: String(localized: "Cần ≥ 2 bảng, có \(G)")) }
 
         let plan = computeSeedingPlan(groupCount: G, advancePerGroup: A)
         let ranked = groups.map { rankInGroup(players, groupID: $0.id) }
         for (i, r) in ranked.enumerated() where r.count < A {
-            throw SeedingError(message: "Bảng \(groups[i].name) có ít hơn \(A) người")
+            throw SeedingError(message: String(localized: "Bảng \(groups[i].name) có ít hơn \(A) người"))
         }
 
         let groupMatches = matches.filter { !$0.isPlayoff }

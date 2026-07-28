@@ -95,7 +95,7 @@ struct HomeView: View {
                 NavigationLink {
                     BlogListView()
                 } label: {
-                    partnerButton("Hướng dẫn", systemImage: "arrow.right", filled: false)
+                    partnerButton(String(localized: "Hướng dẫn"), systemImage: "arrow.right", filled: false)
                 }
                 .buttonStyle(.plain)
             }
@@ -190,8 +190,8 @@ struct HomeView: View {
 
     private func statsRow(_ stats: HomeStats) -> some View {
         HStack(spacing: 24) {
-            statChip(value: stats.totalTournaments, label: "GIẢI ĐẤU")
-            statChip(value: stats.totalUsers, label: "NGƯỜI CHƠI")
+            statChip(value: stats.totalTournaments, label: String(localized: "GIẢI ĐẤU"))
+            statChip(value: stats.totalUsers, label: String(localized: "NGƯỜI CHƠI"))
             Spacer()
         }
     }
@@ -221,19 +221,19 @@ struct HomeView: View {
 
             VStack(alignment: .leading, spacing: 18) {
                 manifestoPoint(
-                    num: "01", title: "Báo chí thật",
-                    lead: "Tường thuật trận đấu, chân dung vận động viên, phân tích — viết bởi phóng viên ",
-                    accent: "có mặt tại sân.", tail: " Không tổng hợp. No AI slop."
+                    num: "01", title: String(localized: "Báo chí thật"),
+                    lead: String(localized: "Tường thuật trận đấu, chân dung vận động viên, phân tích — viết bởi phóng viên "),
+                    accent: String(localized: "có mặt tại sân."), tail: String(localized: " Không tổng hợp. No AI slop.")
                 )
                 manifestoPoint(
-                    num: "02", title: "Một giải, một app",
-                    lead: "PPA. APP. MLP. European Open. Vietnam National. Mọi bracket, mọi tỉ số, mọi sân — ",
-                    accent: "ở một nơi.", tail: ""
+                    num: "02", title: String(localized: "Một giải, một app"),
+                    lead: String(localized: "PPA. APP. MLP. European Open. Vietnam National. Mọi bracket, mọi tỉ số, mọi sân — "),
+                    accent: String(localized: "ở một nơi."), tail: ""
                 )
                 manifestoPoint(
-                    num: "03", title: "Dành cho người chơi",
-                    lead: "Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần — ",
-                    accent: "và không có thứ gì họ không cần.", tail: ""
+                    num: "03", title: String(localized: "Dành cho người chơi"),
+                    lead: String(localized: "Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần — "),
+                    accent: String(localized: "và không có thứ gì họ không cần."), tail: ""
                 )
             }
         }

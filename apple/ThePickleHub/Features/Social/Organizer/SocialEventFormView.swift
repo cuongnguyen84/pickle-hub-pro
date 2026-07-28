@@ -161,7 +161,7 @@ final class SocialEventFormModel {
     /// Tạo mới qua RPC atomic; `repeatWeeks` > 0 thì tạo thêm N bản sao +7
     /// ngày/tuần. Fail giữa lô → giữ form, lần bấm sau resume từ tuần thiếu.
     @MainActor func create(publish: Bool) async -> Bool {
-        guard let clubID else { errorText = "Thiếu CLB."; return false }
+        guard let clubID else { errorText = String(localized: "Thiếu CLB."); return false }
         busy = true; errorText = nil
         defer { busy = false }
 
@@ -186,7 +186,7 @@ final class SocialEventFormModel {
             } catch {
                 resumeSlugBase = base
                 batchResumeIndex = i
-                errorText = "Đã tạo \(i)/\(repeatCount + 1) sự kiện — lỗi ở tuần \(i + 1): \(error.localizedDescription). Bấm lại để tiếp tục từ chỗ dở."
+                errorText = String(localized: "Đã tạo \(i)/\(repeatCount + 1) sự kiện — lỗi ở tuần \(i + 1): \(error.localizedDescription). Bấm lại để tiếp tục từ chỗ dở.")
                 return false
             }
         }
@@ -225,7 +225,7 @@ final class SocialEventFormModel {
             Haptics.success()
             return true
         } catch {
-            errorText = "Không lưu được: \(error.localizedDescription)"
+            errorText = String(localized: "Không lưu được: \(error.localizedDescription)")
             return false
         }
     }
@@ -305,7 +305,7 @@ final class SocialEventFormModel {
             Haptics.success()
             return true
         } catch {
-            errorText = "Không hủy được: \(error.localizedDescription)"
+            errorText = String(localized: "Không hủy được: \(error.localizedDescription)")
             return false
         }
     }

@@ -14,7 +14,7 @@ struct FeedParticipant: Decodable, Identifiable, Equatable {
     var id: String { playerID }
 
     var resolvedName: String {
-        displayName?.nonEmpty ?? username?.nonEmpty ?? "Người chơi ẩn"
+        displayName?.nonEmpty ?? username?.nonEmpty ?? String(localized: "Người chơi ẩn")
     }
 
     enum CodingKeys: String, CodingKey {
@@ -271,10 +271,10 @@ struct FeedHighlight: Equatable {
 
     var badge: String {
         switch kind {
-        case "milestone":   return "Cột mốc"
-        case "leaderboard": return "BXH tuần"
+        case "milestone":   return String(localized: "Cột mốc")
+        case "leaderboard": return String(localized: "BXH tuần")
         case "protour":     return "Pro tour"
-        case "recap":       return "Tuần qua"
+        case "recap":       return String(localized: "Tuần qua")
         default:            return "Tin"
         }
     }

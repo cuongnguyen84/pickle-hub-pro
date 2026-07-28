@@ -63,7 +63,7 @@ struct ForumCreateView: View {
                         ForEach(categories) { c in Button(c.name) { model.categoryID = c.id } }
                     } label: {
                         HStack {
-                            Text(categories.first { $0.id == model.categoryID }?.name ?? "Chọn chủ đề")
+                            Text(categories.first { $0.id == model.categoryID }?.name ?? String(localized: "Chọn chủ đề"))
                                 .font(TLFont.sans(14)).foregroundStyle(model.categoryID == nil ? TLColor.fg3 : TLColor.fg)
                             Spacer()
                             Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(TLColor.fg3)

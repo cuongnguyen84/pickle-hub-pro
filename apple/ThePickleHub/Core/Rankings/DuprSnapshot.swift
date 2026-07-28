@@ -28,14 +28,14 @@ enum DuprScope: String, CaseIterable, Identifiable {
 
     var labelVi: String {
         switch self {
-        case .vietnam: return "Việt Nam"
-        case .open: return "Mở rộng"
-        case .junior: return "Trẻ"
-        case .asia: return "Châu Á"
-        case .northAmerica: return "Bắc Mỹ"
-        case .southAmerica: return "Nam Mỹ"
-        case .australiaOceania: return "Úc / ĐD"
-        case .europe: return "Châu Âu"
+        case .vietnam: return String(localized: "Việt Nam")
+        case .open: return String(localized: "Mở rộng")
+        case .junior: return String(localized: "Trẻ")
+        case .asia: return String(localized: "Châu Á")
+        case .northAmerica: return String(localized: "Bắc Mỹ")
+        case .southAmerica: return String(localized: "Nam Mỹ")
+        case .australiaOceania: return String(localized: "Úc / ĐD")
+        case .europe: return String(localized: "Châu Âu")
         }
     }
 }
@@ -54,10 +54,10 @@ enum DuprFormat: String, CaseIterable, Identifiable {
 
     var labelVi: String {
         switch self {
-        case .mensSingles: return "Đơn nam"
-        case .womensSingles: return "Đơn nữ"
-        case .mensDoubles: return "Đôi nam"
-        case .womensDoubles: return "Đôi nữ"
+        case .mensSingles: return String(localized: "Đơn nam")
+        case .womensSingles: return String(localized: "Đơn nữ")
+        case .mensDoubles: return String(localized: "Đôi nam")
+        case .womensDoubles: return String(localized: "Đôi nữ")
         case .singles: return "Đơn"
         case .doubles: return "Đôi"
         }

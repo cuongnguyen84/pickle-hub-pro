@@ -18,7 +18,7 @@ enum LiveTime {
 
     static func remainingMinutes(_ progress: WatchProgress) -> String {
         let m = Int((progress.remainingSeconds / 60).rounded())
-        return "▸ Còn \(max(1, m)) phút"
+        return String(localized: "▸ Còn \(max(1, m)) phút")
     }
 }
 
@@ -250,7 +250,7 @@ struct ScheduleRow: View {
 
     @ViewBuilder
     private var countdownBox: some View {
-        let box = stream.scheduledDate.map { LiveTime.countdownBox($0) } ?? (top: "LỊCH", bottom: "—", soon: false)
+        let box = stream.scheduledDate.map { LiveTime.countdownBox($0) } ?? (top: String(localized: "LỊCH"), bottom: "—", soon: false)
         VStack(spacing: 1) {
             Text(box.top).font(TLFont.mono(8.5)).foregroundStyle(TLColor.fg3)
             Text(box.bottom).font(TLFont.mono(12, .bold)).foregroundStyle(box.soon ? TLColor.accentText : TLColor.fg)

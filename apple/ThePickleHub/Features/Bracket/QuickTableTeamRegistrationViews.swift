@@ -88,11 +88,11 @@ struct QuickTableTeamManagerSheet: View {
         let completeCount = active.filter { $0.isComplete }.count
         return Section {
             HStack {
-                stat("\(active.count)", "Đã đăng ký")
+                stat("\(active.count)", String(localized: "Đã đăng ký"))
                 Spacer()
-                stat("\(completeCount)", "Đủ đôi")
+                stat("\(completeCount)", String(localized: "Đủ đôi"))
                 Spacer()
-                stat("\(approved.count)", "Đã duyệt")
+                stat("\(approved.count)", String(localized: "Đã duyệt"))
             }
             .padding(.vertical, 8)
         }
@@ -158,7 +158,7 @@ struct QuickTableTeamManagerSheet: View {
             }
             teamActions(team)
         } header: {
-            Text(team.pairName.nonEmpty ?? "Đội chưa hoàn tất")
+            Text(team.pairName.nonEmpty ?? String(localized: "Đội chưa hoàn tất"))
         }
     }
 
@@ -166,7 +166,7 @@ struct QuickTableTeamManagerSheet: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(team.player1DisplayName)
-                Text(team.player2DisplayName?.nonEmpty ?? "Chưa có đồng đội")
+                Text(team.player2DisplayName?.nonEmpty ?? String(localized: "Chưa có đồng đội"))
                     .foregroundStyle(team.isComplete ? Color.secondary : Color.orange)
             }
             Spacer()
@@ -229,11 +229,11 @@ struct QuickTableTeamManagerSheet: View {
 
     private func status(_ team: QTTeamRegistration) -> some View {
         let value: (String, Color) = {
-            if team.teamStatus == "removed" { return ("Đã loại", .secondary) }
+            if team.teamStatus == "removed" { return (String(localized: "Đã loại"), .secondary) }
             if team.teamStatus == "rejected" { return ("Từ chối", .red) }
-            if team.isApproved { return ("Đã duyệt", .green) }
-            if !team.isComplete { return ("Thiếu người", .orange) }
-            return ("Chờ duyệt", .yellow)
+            if team.isApproved { return (String(localized: "Đã duyệt"), .green) }
+            if !team.isComplete { return (String(localized: "Thiếu người"), .orange) }
+            return (String(localized: "Chờ duyệt"), .yellow)
         }()
         return Text(value.0).font(.caption.bold()).foregroundStyle(value.1)
     }
@@ -249,7 +249,7 @@ private struct QuickTableTeamActionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var notes = ""
 
-    private var title: String { action == "reject" ? "Từ chối đội" : "Loại đội" }
+    private var title: String { action == "reject" ? String(localized: "Từ chối đội") : String(localized: "Loại đội") }
 
     var body: some View {
         NavigationStack {
@@ -342,7 +342,7 @@ struct QuickTableMyTeamCard: View {
             Text(team.player1DisplayName).font(TLFont.sans(14, .semibold))
             HStack {
                 Image(systemName: "arrow.turn.down.right").foregroundStyle(TLColor.fg4)
-                Text(team.player2DisplayName?.nonEmpty ?? "Chưa có đồng đội")
+                Text(team.player2DisplayName?.nonEmpty ?? String(localized: "Chưa có đồng đội"))
                     .font(TLFont.sans(14))
                     .foregroundStyle(team.isComplete ? TLColor.fg2 : TLColor.fg3)
                 Spacer()
@@ -391,7 +391,7 @@ struct QuickTableMyTeamCard: View {
                     .foregroundStyle(TLColor.fg3)
                 ForEach(outgoingRequests) { request in
                     HStack {
-                        Text("Chờ \(request.toTeam?.player1DisplayName ?? "VĐV") xác nhận")
+                        Text("Chờ \(request.toTeam?.player1DisplayName ?? String(localized: "VĐV")) xác nhận")
                             .font(TLFont.sans(12.5))
                             .foregroundStyle(TLColor.fg2)
                         Spacer()
@@ -500,10 +500,10 @@ struct QuickTableMyTeamCard: View {
     }
 
     private var statusLabel: String {
-        if team.teamStatus == "rejected" { return "BỊ TỪ CHỐI" }
-        if team.isApproved { return "ĐÃ DUYỆT" }
-        if team.isComplete { return "CHỜ BTC DUYỆT" }
-        return "CHỜ ĐỒNG ĐỘI"
+        if team.teamStatus == "rejected" { return String(localized: "BỊ TỪ CHỐI") }
+        if team.isApproved { return String(localized: "ĐÃ DUYỆT") }
+        if team.isComplete { return String(localized: "CHỜ BTC DUYỆT") }
+        return String(localized: "CHỜ ĐỒNG ĐỘI")
     }
 
     private func inviteURL(_ invitation: QTPartnerInvitation) -> URL {

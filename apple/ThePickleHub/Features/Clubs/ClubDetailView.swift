@@ -152,9 +152,9 @@ struct ClubDetailView: View {
         HStack(spacing: 0) {
             stat("\(model.members.count)", "THÀNH VIÊN")
             divider
-            stat("\(model.upcoming.count)", "SỰ KIỆN")
+            stat("\(model.upcoming.count)", String(localized: "SỰ KIỆN"))
             divider
-            stat("\(model.matches.count)", "TRẬN ĐÃ GHI")
+            stat("\(model.matches.count)", String(localized: "TRẬN ĐÃ GHI"))
         }
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
@@ -334,7 +334,7 @@ private struct ClubEventRow: View {
         if let d = event.startDate {
             parts.append(d.formatted(date: .omitted, time: .shortened))
         }
-        if let max = event.maxPlayers { parts.append("\(max) chỗ") }
+        if let max = event.maxPlayers { parts.append(String(localized: "\(max) chỗ")) }
         return parts.joined(separator: " · ")
     }
 }
@@ -398,8 +398,8 @@ struct ClubMatchCard: View {
     @ViewBuilder
     private var duprBadge: some View {
         switch match.duprState {
-        case .submitted: badge("ĐÃ GỬI DUPR", color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
-        case .ready: badge("SẴN SÀNG GỬI", color: TLColor.gold, bg: TLColor.gold.opacity(0.1))
+        case .submitted: badge(String(localized: "ĐÃ GỬI DUPR"), color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
+        case .ready: badge(String(localized: "SẴN SÀNG GỬI"), color: TLColor.gold, bg: TLColor.gold.opacity(0.1))
         case .draft: badge("NHÁP", color: TLColor.fg3, bg: .clear)
         }
     }

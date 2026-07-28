@@ -14,7 +14,7 @@ final class DoublesElimViewModel {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .preliminary: return "Sơ loại"
+            case .preliminary: return String(localized: "Sơ loại")
             case .playoff: return "Playoff"
             case .courts: return "Sân"
             case .teams: return "Đội"
@@ -163,7 +163,7 @@ final class DoublesElimViewModel {
         regBusy = true; regMessage = nil
         let ok: Bool
         switch await repo.organizerAddTeam(tournamentID: id, player1: player1, player2: player2, teamName: teamName) {
-        case .ok(let avg): regMessage = "Đã thêm đội" + (avg.map { String(format: " · DUPR %.2f", $0) } ?? ""); await fetch(shareID: shareID); ok = true
+        case .ok(let avg): regMessage = String(localized: "Đã thêm đội") + (avg.map { String(format: " · DUPR %.2f", $0) } ?? ""); await fetch(shareID: shareID); ok = true
         case .failed(let m): regMessage = m; ok = false
         }
         regBusy = false
@@ -175,7 +175,7 @@ final class DoublesElimViewModel {
         guard let id = detail?.tournament.id else { return }
         regBusy = true; regMessage = nil
         switch await repo.organizerRemoveTeam(tournamentID: id, teamID: team.id) {
-        case .ok: regMessage = "Đã xóa đội"; await fetch(shareID: shareID)
+        case .ok: regMessage = String(localized: "Đã xóa đội"); await fetch(shareID: shareID)
         case .failed(let m): regMessage = m
         }
         regBusy = false
@@ -286,7 +286,7 @@ struct DoublesElimDetailView: View {
         )) {
             Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
         } message: {
-            Text(model.scoreError ?? "Lỗi không xác định")
+            Text(model.scoreError ?? String(localized: "Lỗi không xác định"))
         }
     }
 
@@ -362,20 +362,20 @@ struct DoublesElimDetailView: View {
     private func preliminary(_ detail: DEDetail) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             if !detail.r1Matches.isEmpty {
-                roundSection(title: "Vòng 1", subtitle: "Winner Bracket", detail: detail, matches: detail.r1Matches)
+                roundSection(title: String(localized: "Vòng 1"), subtitle: "Winner Bracket", detail: detail, matches: detail.r1Matches)
             }
             if !detail.r2Matches.isEmpty {
-                roundSection(title: "Vòng 2", subtitle: "Loser Bracket", detail: detail, matches: detail.r2Matches)
+                roundSection(title: String(localized: "Vòng 2"), subtitle: "Loser Bracket", detail: detail, matches: detail.r2Matches)
             }
             if !detail.r3Matches.isEmpty {
                 if detail.r3NeedsAssignment && !(detail.r1Completed && detail.r2Completed) {
-                    roundHeader(title: "Vòng 3", subtitle: "Sơ loại cuối")
+                    roundHeader(title: String(localized: "Vòng 3"), subtitle: String(localized: "Sơ loại cuối"))
                     note("Chờ V1 & V2 hoàn thành")
                 } else if detail.r3NeedsAssignment {
-                    roundHeader(title: "Vòng 3", subtitle: "Sơ loại cuối")
+                    roundHeader(title: String(localized: "Vòng 3"), subtitle: String(localized: "Sơ loại cuối"))
                     note(model.editable ? "Đang phân vòng 3…" : "Chờ phân vòng 3")
                 } else {
-                    roundSection(title: "Vòng 3", subtitle: "Sơ loại cuối", detail: detail, matches: detail.r3Matches)
+                    roundSection(title: String(localized: "Vòng 3"), subtitle: String(localized: "Sơ loại cuối"), detail: detail, matches: detail.r3Matches)
                 }
             }
             if detail.r1Matches.isEmpty && detail.r2Matches.isEmpty && detail.r3Matches.isEmpty {
@@ -395,10 +395,10 @@ struct DoublesElimDetailView: View {
             if !detail.hasPlayoff {
                 note("Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.")
             } else {
-                roundHeader(title: "Sơ đồ playoff", subtitle: "")
+                roundHeader(title: String(localized: "Sơ đồ playoff"), subtitle: "")
                 BracketTreeView(rounds: playoffBracketRounds(detail))
                 if let tp = detail.thirdPlaceMatch {
-                    roundHeader(title: "Tranh hạng 3", subtitle: "")
+                    roundHeader(title: String(localized: "Tranh hạng 3"), subtitle: "")
                     matchCard(detail, tp)
                 }
             }
@@ -437,7 +437,7 @@ struct DoublesElimDetailView: View {
         if upcoming.isEmpty {
             note("Không còn trận nào trong hàng đợi.")
         } else {
-            let grouped = Dictionary(grouping: upcoming) { $0.courtNumber.map { "Sân \($0)" } ?? "Chưa gán sân" }
+            let grouped = Dictionary(grouping: upcoming) { $0.courtNumber.map { String(localized: "Sân \($0)") } ?? String(localized: "Chưa gán sân") }
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(grouped.keys.sorted(), id: \.self) { court in
                     courtColumn(detail, court: court, matches: grouped[court] ?? [])
@@ -654,14 +654,14 @@ struct DoublesElimDetailView: View {
 
     private func roundLabel(_ type: String, _ count: Int) -> String {
         switch type {
-        case "quarterfinal": return "Tứ kết"
+        case "quarterfinal": return String(localized: "Tứ kết")
         case "semifinal": return "Bán kết"
         case "final": return "Chung kết"
         case "elimination":
             if count == 1 { return "Chung kết" }
             if count == 2 { return "Bán kết" }
-            if count <= 4 { return "Tứ kết" }
-            if count <= 8 { return "Vòng 16" }
+            if count <= 4 { return String(localized: "Tứ kết") }
+            if count <= 8 { return String(localized: "Vòng 16") }
             return "Vòng \(count * 2)"
         default: return "Playoff"
         }

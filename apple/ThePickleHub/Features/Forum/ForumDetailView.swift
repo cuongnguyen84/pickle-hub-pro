@@ -154,7 +154,7 @@ struct ForumDetailView: View {
             HStack(spacing: 8) {
                 authorAvatar(p.authorAvatar, name: p.authorName)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(p.authorName ?? "Người dùng").font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg)
+                    Text(p.authorName ?? String(localized: "Người dùng")).font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg)
                     Text(ISODate.relative(p.createdAt)).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
                 }
             }
@@ -203,7 +203,7 @@ struct ForumDetailView: View {
             }
             HStack(spacing: 8) {
                 authorAvatar(c.authorAvatar, name: c.authorName, size: 26)
-                Text(c.authorName ?? "Người dùng").font(TLFont.sans(12.5, .medium)).foregroundStyle(TLColor.fg)
+                Text(c.authorName ?? String(localized: "Người dùng")).font(TLFont.sans(12.5, .medium)).foregroundStyle(TLColor.fg)
                 Text(ISODate.relative(c.createdAt)).font(TLFont.mono(9)).foregroundStyle(TLColor.fg4)
                 Spacer()
             }

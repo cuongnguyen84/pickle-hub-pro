@@ -12,7 +12,7 @@ struct DMConversation: Decodable, Identifiable, Equatable {
     let unreadCount: Int
 
     var id: String { conversationID }
-    var title: String { otherName?.nonEmpty ?? otherUsername?.nonEmpty ?? "Trò chuyện" }
+    var title: String { otherName?.nonEmpty ?? otherUsername?.nonEmpty ?? String(localized: "Trò chuyện") }
 
     enum CodingKeys: String, CodingKey {
         case conversationID = "conversation_id"

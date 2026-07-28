@@ -46,7 +46,7 @@ enum MMFormat: String, CaseIterable {
     case mexicano
     case roundRobin = "round_robin"
 
-    var label: String { self == .mexicano ? "Mexicano" : "Vòng tròn" }
+    var label: String { self == .mexicano ? "Mexicano" : String(localized: "Vòng tròn") }
 }
 
 enum Matchmaking {

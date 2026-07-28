@@ -215,10 +215,10 @@ struct TeamMatchLineupSheet: View {
     }
 
     private func requirementText(_ g: TMGame, _ req: TMLineupRequirement) -> String {
-        if g.isDreambreaker == true { return "Chọn \(TMLineupRules.dreambreakerCount) VĐV" }
+        if g.isDreambreaker == true { return String(localized: "Chọn \(TMLineupRules.dreambreakerCount) VĐV") }
         var parts: [String] = []
         if req.male > 0 { parts.append("\(req.male) nam") }
-        if req.female > 0 { parts.append("\(req.female) nữ") }
+        if req.female > 0 { parts.append(String(localized: "\(req.female) nữ")) }
         return parts.joined(separator: " + ")
     }
 }

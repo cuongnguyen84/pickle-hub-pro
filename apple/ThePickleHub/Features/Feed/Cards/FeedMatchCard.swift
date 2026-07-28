@@ -120,10 +120,10 @@ struct FeedMatchCard: View {
 
     /// Vietnamese long labels for MLP game slots, mirroring web GAME_LABEL_LONG.
     private static let mlpGameLabels: [String: String] = [
-        "WD": "Đôi nữ",
-        "MD": "Đôi nam",
-        "MXD1": "Đôi nam nữ 1",
-        "MXD2": "Đôi nam nữ 2",
+        "WD": String(localized: "Đôi nữ"),
+        "MD": String(localized: "Đôi nam"),
+        "MXD1": String(localized: "Đôi nam nữ 1"),
+        "MXD2": String(localized: "Đôi nam nữ 2"),
         "DB": "Dreambreaker",
     ]
 

@@ -71,7 +71,7 @@ final class SocialMatchmakingModel {
 
     @MainActor func generate() async {
         errorText = nil
-        guard selected.count >= 4 else { errorText = "Cần ít nhất 4 người chơi."; return }
+        guard selected.count >= 4 else { errorText = String(localized: "Cần ít nhất 4 người chơi."); return }
         let chosen = eligible.filter { selected.contains($0.id) }
         let profileIDs = chosen.compactMap(\.profileID)
         let dupr = await repo.duprDoubles(profileIDs: profileIDs)
@@ -117,16 +117,16 @@ final class SocialMatchmakingModel {
             }
         }
         guard missing.isEmpty else {
-            errorText = "Người chơi sau chưa có hồ sơ: \(Set(missing).sorted().joined(separator: ", "))."
+            errorText = String(localized: "Người chơi sau chưa có hồ sơ: \(Set(missing).sorted().joined(separator: ", ")).")
             return
         }
         do {
             try await repo.saveSchedule(eventID: event.id, rows: rows)
             viewingSaved = true
-            infoText = "Đã lưu lịch — mở Điều hành trực tiếp để chạy buổi chơi."
+            infoText = String(localized: "Đã lưu lịch — mở Điều hành trực tiếp để chạy buổi chơi.")
             Haptics.success()
         } catch {
-            errorText = "Không lưu được: \(error.localizedDescription)"
+            errorText = String(localized: "Không lưu được: \(error.localizedDescription)")
         }
     }
 }

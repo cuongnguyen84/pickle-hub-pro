@@ -96,7 +96,7 @@ struct VenueSubmitView: View {
             }
         } label: {
             HStack {
-                Text(model.surface.flatMap { VenueSurface.label($0) } ?? "Chọn")
+                Text(model.surface.flatMap { VenueSurface.label($0) } ?? String(localized: "Chọn"))
                     .font(TLFont.sans(14)).foregroundStyle(model.surface == nil ? TLColor.fg3 : TLColor.fg)
                 Spacer()
                 Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(TLColor.fg3)

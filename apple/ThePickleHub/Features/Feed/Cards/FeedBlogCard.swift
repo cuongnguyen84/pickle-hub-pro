@@ -15,7 +15,7 @@ struct FeedBlogCard: View {
                     EyebrowText.label(category.uppercased())
                 }
                 EyebrowText.dot
-                EyebrowText.accent("BÀI VIẾT")
+                EyebrowText.accent(String(localized: "BÀI VIẾT"))
             }
 
             if let urlString = blog.coverImageURL, let url = WebRoutes.asset(urlString) {

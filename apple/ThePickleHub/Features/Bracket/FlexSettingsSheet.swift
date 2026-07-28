@@ -35,10 +35,10 @@ final class FlexSettingsModel {
         guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         busy = true; message = nil
         switch await repo.addReferee(tournamentID: tournamentID, email: email) {
-        case .ok(let name): message = "Đã thêm trọng tài \(name ?? email)"; newEmail = ""; await loadReferees()
-        case .notFound: message = "Không tìm thấy người dùng với email này"
-        case .alreadyExists: message = "Người này đã là trọng tài"
-        case .error: message = "Không thể thêm trọng tài"
+        case .ok(let name): message = String(localized: "Đã thêm trọng tài \(name ?? email)"); newEmail = ""; await loadReferees()
+        case .notFound: message = String(localized: "Không tìm thấy người dùng với email này")
+        case .alreadyExists: message = String(localized: "Người này đã là trọng tài")
+        case .error: message = String(localized: "Không thể thêm trọng tài")
         }
         busy = false
     }
@@ -95,7 +95,7 @@ struct FlexSettingsSheet: View {
                     Task { if await model.delete() { onDeleted(); dismiss() } }
                 }
             } message: {
-                Text("\"\(tournament.displayName)\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn.")
+                Text(String(localized: "\"\(tournament.displayName)\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn."))
             }
         }
     }

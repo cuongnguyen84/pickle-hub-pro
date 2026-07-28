@@ -71,9 +71,9 @@ struct TeamMatchPaymentSheet: View {
                     bankCard
 
                     if status == .confirmed {
-                        statusLine("Đội đã được BTC xác nhận — chính thức tham gia.", color: TLColor.accentText)
+                        statusLine(String(localized: "Đội đã được BTC xác nhận — chính thức tham gia."), color: TLColor.accentText)
                     } else if status == .claimed {
-                        statusLine("Đã báo chuyển khoản — đang chờ BTC xác nhận.", color: TLColor.live)
+                        statusLine(String(localized: "Đã báo chuyển khoản — đang chờ BTC xác nhận."), color: TLColor.live)
                     } else {
                         Button {
                             Haptics.light(); confirmClaim = true
@@ -114,7 +114,7 @@ struct TeamMatchPaymentSheet: View {
                             dismiss()
                         } else {
                             Haptics.error()
-                            claimError = "Không gửi được xác nhận. Kiểm tra mạng rồi thử lại."
+                            claimError = String(localized: "Không gửi được xác nhận. Kiểm tra mạng rồi thử lại.")
                         }
                     }
                 }
@@ -129,13 +129,13 @@ struct TeamMatchPaymentSheet: View {
             divider
             infoRow("Số tài khoản", tournament.bankAccountNumber ?? "—", mono: true, copyable: tournament.bankAccountNumber != nil)
             divider
-            infoRow("Chủ tài khoản", tournament.bankAccountName ?? "—")
+            infoRow(String(localized: "Chủ tài khoản"), tournament.bankAccountName ?? "—")
             divider
             if discountPercent > 0, let slotIndex {
-                infoRow("Slot #\(slotIndex + 1) — giảm giá", "−\(discountPercent)%")
+                infoRow(String(localized: "Slot #\(slotIndex + 1) — giảm giá"), "−\(discountPercent)%")
                 divider
             }
-            infoRow("Số tiền", "\(teamAmount.formatted()) đ", accent: true)
+            infoRow(String(localized: "Số tiền"), "\(teamAmount.formatted()) đ", accent: true)
         }
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))

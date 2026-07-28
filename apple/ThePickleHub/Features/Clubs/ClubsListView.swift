@@ -113,7 +113,7 @@ struct ClubsListView: View {
                     VStack(spacing: 13) { ForEach(model.myClubs) { ClubCardView(club: $0, mine: true) } }
                         .padding(.bottom, 22)
                 }
-                sectionHeader("KHÁM PHÁ", trailing: "GẦN BẠN")
+                sectionHeader("KHÁM PHÁ", trailing: String(localized: "GẦN BẠN"))
                 VStack(spacing: 13) { ForEach(model.discover) { ClubCardView(club: $0, mine: false) } }
             }
         }

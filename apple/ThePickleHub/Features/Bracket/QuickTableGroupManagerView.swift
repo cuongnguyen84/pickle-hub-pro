@@ -231,7 +231,7 @@ struct QuickTableGroupManagerView: View {
         )) {
             Button("Đã hiểu", role: .cancel) { model.errorMessage = nil }
         } message: {
-            Text(model.errorMessage ?? "Lỗi không xác định")
+            Text(model.errorMessage ?? String(localized: "Lỗi không xác định"))
         }
     }
 }

@@ -63,7 +63,7 @@ final class QuickTableViewModel {
         let byes: Int
         var id: Int { advancePerGroup }
         var buttonLabel: String {
-            var parts = ["\(bracketSize) người", advancePerGroup == 2 ? "top-2 mỗi bảng" : "nhất bảng"]
+            var parts = [String(localized: "\(bracketSize) người"), advancePerGroup == 2 ? String(localized: "top-2 mỗi bảng") : String(localized: "nhất bảng")]
             if wildcards > 0 { parts.append("+\(wildcards) wildcard") }
             if byes > 0 { parts.append("+\(byes) BYE") }
             return parts.joined(separator: " · ")
@@ -221,7 +221,7 @@ final class QuickTableViewModel {
         // Web/Android giữ nguyên; đây chỉ là app native /apple.
         if QTSeedingV2.enabled {
             let opts = bracketOptionsV2(d)
-            if opts.isEmpty { playoffError = "Không đủ người để sinh playoff."; return }
+            if opts.isEmpty { playoffError = String(localized: "Không đủ người để sinh playoff."); return }
             if opts.count == 1 {
                 await runPlayoffV2(shareID: shareID, advancePerGroup: opts[0].advancePerGroup)
             } else {
@@ -256,7 +256,7 @@ final class QuickTableViewModel {
         let bracket = QTPlayoff.bracket(groupCount: d.groups.count, qualified: pendingQualified,
                                         wildcards: wildcards, groups: d.groups)
         guard !bracket.isEmpty else {
-            playoffError = "Số bảng (\(d.groups.count)) chưa hỗ trợ sinh playoff native."
+            playoffError = String(localized: "Số bảng (\(d.groups.count)) chưa hỗ trợ sinh playoff native.")
             return
         }
         generatingPlayoff = true; playoffError = nil
@@ -415,8 +415,8 @@ final class QuickTableViewModel {
             profileLink: profileLink)
         switch result {
         case .ok: showSelfRegister = false; await reloadRegistrations()
-        case .duplicate: regError = "Bạn đã đăng ký giải này rồi."
-        case .notAuthed: regError = "Cần đăng nhập để đăng ký."
+        case .duplicate: regError = String(localized: "Bạn đã đăng ký giải này rồi.")
+        case .notAuthed: regError = String(localized: "Cần đăng nhập để đăng ký.")
         case .error(let m): regError = m
         }
         regBusy = false
@@ -586,10 +586,10 @@ final class QuickTableViewModel {
         guard !newRefEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         refBusy = true; refMessage = nil
         switch await repo.addReferee(tableID: id, email: newRefEmail) {
-        case .ok(let n): refMessage = "Đã thêm trọng tài \(n ?? newRefEmail)"; newRefEmail = ""; await loadReferees()
-        case .notFound: refMessage = "Không tìm thấy người dùng với email này"
-        case .alreadyExists: refMessage = "Người này đã là trọng tài"
-        case .error: refMessage = "Không thể thêm trọng tài"
+        case .ok(let n): refMessage = String(localized: "Đã thêm trọng tài \(n ?? newRefEmail)"); newRefEmail = ""; await loadReferees()
+        case .notFound: refMessage = String(localized: "Không tìm thấy người dùng với email này")
+        case .alreadyExists: refMessage = String(localized: "Người này đã là trọng tài")
+        case .error: refMessage = String(localized: "Không thể thêm trọng tài")
         }
         refBusy = false
     }
@@ -719,7 +719,7 @@ struct QuickTableDetailView: View {
         )) {
             Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
         } message: {
-            Text(model.scoreError ?? "Lỗi không xác định")
+            Text(model.scoreError ?? String(localized: "Lỗi không xác định"))
         }
     }
 
@@ -784,7 +784,7 @@ struct QuickTableDetailView: View {
         .sheet(item: $courtNameMatch) { match in
             QuickTableCourtNameSheet(
                 initialName: match.courtName ?? "",
-                fallbackCourt: match.courtID.map { "Sân \($0)" },
+                fallbackCourt: match.courtID.map { String(localized: "Sân \($0)") },
                 busy: model.scheduleBusy,
                 error: model.scheduleError
             ) { name in
@@ -894,7 +894,7 @@ struct QuickTableDetailView: View {
         }
         if !model.canManage {
             approvedParticipantsCard(
-                title: "VĐV đã được duyệt",
+                title: String(localized: "VĐV đã được duyệt"),
                 names: model.registrations
                     .filter { $0.status == "approved" }
                     .map { registration in
@@ -978,7 +978,7 @@ struct QuickTableDetailView: View {
         }
         if !model.canManage {
             approvedParticipantsCard(
-                title: "Đội đã được duyệt",
+                title: String(localized: "Đội đã được duyệt"),
                 names: model.teams
                     .filter(\.isApproved)
                     .map(\.pairName)
@@ -1027,8 +1027,8 @@ struct QuickTableDetailView: View {
     private func myRegistrationBanner(_ reg: QTRegistration) -> some View {
         let (label, color): (String, Color) = {
             switch reg.status {
-            case "approved": return ("Đã được duyệt", TLColor.accentText)
-            case "rejected": return ("Bị từ chối", TLColor.live)
+            case "approved": return (String(localized: "Đã được duyệt"), TLColor.accentText)
+            case "rejected": return (String(localized: "Bị từ chối"), TLColor.live)
             default: return ("Đang chờ duyệt", TLColor.gold)
             }
         }()
@@ -1454,9 +1454,9 @@ struct QuickTableDetailView: View {
         switch count {
         case 1: return "Chung kết"
         case 2: return "Bán kết"
-        case 3...4: return "Tứ kết"
-        case 5...8: return "Vòng 16"
-        default: return "Vòng loại"
+        case 3...4: return String(localized: "Tứ kết")
+        case 5...8: return String(localized: "Vòng 16")
+        default: return String(localized: "Vòng loại")
         }
     }
 
@@ -1470,7 +1470,7 @@ struct QuickTableDetailView: View {
         if upcoming.isEmpty {
             note("Không còn trận nào trong hàng đợi.")
         } else {
-            let grouped = Dictionary(grouping: upcoming) { $0.courtLabel ?? "Chưa gán sân" }
+            let grouped = Dictionary(grouping: upcoming) { $0.courtLabel ?? String(localized: "Chưa gán sân") }
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(grouped.keys.sorted(), id: \.self) { court in
                     courtColumn(detail, court: court, matches: grouped[court] ?? [])
@@ -1580,7 +1580,7 @@ private struct QuickTableCourtNameSheet: View {
         NavigationStack {
             Form {
                 Section("Tên hiển thị") {
-                    TextField(fallbackCourt ?? "VD: Sân trung tâm", text: $name)
+                    TextField(fallbackCourt ?? String(localized: "VD: Sân trung tâm"), text: $name)
                     Text("Để trống để quay lại tên sân tự động.")
                         .font(TLFont.sans(12))
                         .foregroundStyle(TLColor.fg3)

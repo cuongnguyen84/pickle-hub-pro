@@ -163,7 +163,7 @@ struct FlexDetailView: View {
         )) {
             Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
         } message: {
-            Text(model.scoreError ?? "Lỗi không xác định")
+            Text(model.scoreError ?? String(localized: "Lỗi không xác định"))
         }
     }
 
@@ -190,7 +190,7 @@ struct FlexDetailView: View {
                 }
                 let ungrouped = data.ungroupedMatches
                 if !ungrouped.isEmpty {
-                    sectionHeader(title: "Trận chưa xếp bảng", count: ungrouped.count)
+                    sectionHeader(title: String(localized: "Trận chưa xếp bảng"), count: ungrouped.count)
                     VStack(spacing: 8) {
                         ForEach(ungrouped) { m in
                             FlexMatchCluster(data: data, match: m, editable: model.editable) { scored in

@@ -81,8 +81,8 @@ struct DuprHeaderChip: View {
 
     private var accessibilityText: String {
         switch state {
-        case .loading: return "Đang tải điểm DUPR"
-        case .unlinked: return "Chưa kết nối DUPR"
+        case .loading: return String(localized: "Đang tải điểm DUPR")
+        case .unlinked: return String(localized: "Chưa kết nối DUPR")
         case .rated(let r, let d):
             // Câu trọn một-key — không ghép mảnh (proposal native-bilingual inc.2).
             let rating = String(format: "%.2f", r)

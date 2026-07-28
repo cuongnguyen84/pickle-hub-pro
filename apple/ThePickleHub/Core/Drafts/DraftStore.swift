@@ -149,11 +149,11 @@ struct DraftSaveStatusLine: View {
         Text(text)
             .font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
             .frame(maxWidth: .infinity, minHeight: 14, alignment: .leading)
-            .accessibilityLabel(savedAt == nil ? "Chưa lưu bản nháp" : text)
+            .accessibilityLabel(savedAt == nil ? String(localized: "Chưa lưu bản nháp") : text)
     }
 
     private var text: String {
         guard let savedAt else { return " " }
-        return "Đã lưu trên thiết bị lúc \(Self.hhmm.string(from: savedAt))"
+        return String(localized: "Đã lưu trên thiết bị lúc \(Self.hhmm.string(from: savedAt))")
     }
 }

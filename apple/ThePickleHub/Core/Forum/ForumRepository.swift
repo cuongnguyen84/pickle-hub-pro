@@ -53,7 +53,7 @@ struct ForumRepository {
         let catByID = Dictionary(cats.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         for i in posts.indices {
             let p = profiles[posts[i].userID]
-            posts[i].authorName = p?.display_name ?? "Người dùng"
+            posts[i].authorName = p?.display_name ?? String(localized: "Người dùng")
             posts[i].authorAvatar = p?.avatar_url
             if let cid = posts[i].categoryID, let c = catByID[cid] {
                 posts[i].categoryName = c.name; posts[i].categorySlug = c.slug
@@ -66,7 +66,7 @@ struct ForumRepository {
         guard var post: ForumPost = try? await client.from("forum_posts")
             .select("*").eq("id", value: id).single().execute().value else { return nil }
         let profiles = await profileMap([post.userID])
-        post.authorName = profiles[post.userID]?.display_name ?? "Người dùng"
+        post.authorName = profiles[post.userID]?.display_name ?? String(localized: "Người dùng")
         post.authorAvatar = profiles[post.userID]?.avatar_url
         if let cid = post.categoryID {
             struct Cat: Decodable { let name: String; let slug: String }
@@ -109,10 +109,10 @@ struct ForumRepository {
         let byID = Dictionary(comments.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         for i in comments.indices {
             let p = profiles[comments[i].userID]
-            comments[i].authorName = p?.display_name ?? "Người dùng"
+            comments[i].authorName = p?.display_name ?? String(localized: "Người dùng")
             comments[i].authorAvatar = p?.avatar_url
             if let pid = comments[i].parentID, let parent = byID[pid] {
-                comments[i].parentAuthorName = profiles[parent.userID]?.display_name ?? "Người dùng"
+                comments[i].parentAuthorName = profiles[parent.userID]?.display_name ?? String(localized: "Người dùng")
                 comments[i].parentContent = parent.content
             }
         }
@@ -187,6 +187,6 @@ struct ForumRepository {
 
     enum ForumError: LocalizedError {
         case notAuthed
-        var errorDescription: String? { "Cần đăng nhập" }
+        var errorDescription: String? { String(localized: "Cần đăng nhập") }
     }
 }

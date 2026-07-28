@@ -28,7 +28,7 @@ final class DESettingsModel {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed != tournament.name else { return }
         busy = true; message = nil
-        do { try await repo.rename(tournamentID: tournamentID, name: trimmed); message = "Đã lưu tên" }
+        do { try await repo.rename(tournamentID: tournamentID, name: trimmed); message = String(localized: "Đã lưu tên") }
         catch { message = error.localizedDescription }
         busy = false
     }
@@ -38,10 +38,10 @@ final class DESettingsModel {
         guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         busy = true; message = nil
         switch await repo.addReferee(tournamentID: tournamentID, email: email) {
-        case .ok(let name): message = "Đã thêm trọng tài \(name ?? email)"; newEmail = ""; await loadReferees()
-        case .notFound: message = "Không tìm thấy người dùng với email này"
-        case .alreadyExists: message = "Người này đã là trọng tài"
-        case .error: message = "Không thể thêm trọng tài"
+        case .ok(let name): message = String(localized: "Đã thêm trọng tài \(name ?? email)"); newEmail = ""; await loadReferees()
+        case .notFound: message = String(localized: "Không tìm thấy người dùng với email này")
+        case .alreadyExists: message = String(localized: "Người này đã là trọng tài")
+        case .error: message = String(localized: "Không thể thêm trọng tài")
         }
         busy = false
     }
@@ -98,7 +98,7 @@ struct DoublesElimSettingsSheet: View {
                     Task { if await model.delete() { onDeleted(); dismiss() } }
                 }
             } message: {
-                Text("\"\(tournament.displayName)\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn.")
+                Text(String(localized: "\"\(tournament.displayName)\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn."))
             }
         }
     }

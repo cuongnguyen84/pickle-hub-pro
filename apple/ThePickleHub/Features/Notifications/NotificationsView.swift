@@ -100,10 +100,10 @@ struct NotificationsView: View {
         case .loaded:
             if model.signedOut {
                 emptyState(icon: "person.crop.circle.badge.questionmark",
-                           title: "Cần đăng nhập", subtitle: "Đăng nhập để xem thông báo của bạn.")
+                           title: String(localized: "Cần đăng nhập"), subtitle: String(localized: "Đăng nhập để xem thông báo của bạn."))
             } else if model.items.isEmpty {
-                emptyState(icon: "bell.slash", title: "Chưa có thông báo nào.",
-                           subtitle: "Thông báo theo dõi, lượt thích, bình luận và trận đấu sẽ hiện ở đây.")
+                emptyState(icon: "bell.slash", title: String(localized: "Chưa có thông báo nào."),
+                           subtitle: String(localized: "Thông báo theo dõi, lượt thích, bình luận và trận đấu sẽ hiện ở đây."))
             } else {
                 LazyVStack(spacing: 0) {
                     ForEach(Array(model.items.enumerated()), id: \.element.id) { i, n in

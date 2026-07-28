@@ -204,7 +204,7 @@ struct SocialOrganizerRepository {
         )
         guard resp.success == true, let url = resp.recovery_url else {
             throw NSError(domain: "SocialOrganizer", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "Không thêm được đăng ký"])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Không thêm được đăng ký")])
         }
         return url
     }
@@ -275,7 +275,7 @@ struct SocialOrganizerRepository {
         )
         guard resp.ok == true else {
             throw NSError(domain: "SocialOrganizer", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "Không ghi được tỉ số"])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Không ghi được tỉ số")])
         }
     }
 

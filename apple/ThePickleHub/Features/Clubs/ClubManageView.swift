@@ -136,16 +136,16 @@ struct ClubManageView: View {
                     ProgressView().tint(TLColor.accentText).frame(maxWidth: .infinity).padding(.top, 20)
                 } else {
                     if !model.events.isEmpty {
-                        section("SỰ KIỆN (\(model.events.count))") {
+                        section(String(localized: "SỰ KIỆN (\(model.events.count))")) {
                             ForEach(model.events) { e in eventRow(e) }
                         }
                     }
                     if !model.pending.isEmpty {
-                        section("YÊU CẦU THAM GIA (\(model.pending.count))") {
+                        section(String(localized: "YÊU CẦU THAM GIA (\(model.pending.count))")) {
                             ForEach(model.pending) { m in memberRow(m, pending: true) }
                         }
                     }
-                    section("THÀNH VIÊN (\(model.active.count))") {
+                    section(String(localized: "THÀNH VIÊN (\(model.active.count))")) {
                         if model.active.isEmpty {
                             Text("Chưa có thành viên.").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
                         } else {
@@ -356,7 +356,7 @@ struct EditClubView: View {
                 Task { await model.archive { dismiss() } }
             }.disabled(archiveTyped.trimmingCharacters(in: .whitespaces) != club.name)
         } message: {
-            Text("CLB sẽ bị ẩn khỏi danh sách. Gõ \"\(club.name)\" để xác nhận.")
+            Text(String(localized: "CLB sẽ bị ẩn khỏi danh sách. Gõ \"\(club.name)\" để xác nhận."))
         }
     }
 

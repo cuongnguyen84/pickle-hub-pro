@@ -26,15 +26,15 @@ struct DeepLinkDestinationView: View {
             case .parentTournament(let shareID):
                 ParentTournamentDetailView(shareID: shareID)
             case .doublesElimination(let shareID):
-                DoublesElimDetailView(shareID: shareID, fallbackName: "Loại kép")
+                DoublesElimDetailView(shareID: shareID, fallbackName: String(localized: "Loại kép"))
             case .doublesEliminationScore(let matchID):
                 DoublesEliminationScoreLinkView(matchID: matchID)
             case .teamMatch(let shareID):
-                TeamMatchDetailView(shareID: shareID, fallbackName: "Đấu đồng đội")
+                TeamMatchDetailView(shareID: shareID, fallbackName: String(localized: "Đấu đồng đội"))
             case .teamMatchScore(let matchID):
                 TeamMatchScoreLinkView(matchID: matchID)
             case .flexTournament(let shareID):
-                FlexDetailView(shareID: shareID, fallbackName: "Giải linh hoạt")
+                FlexDetailView(shareID: shareID, fallbackName: String(localized: "Giải linh hoạt"))
             case .toolsHub:
                 ToolsView()
             case .createQuickTable:
@@ -64,7 +64,7 @@ private struct QuickTableScoreLinkView: View {
             if let shareID {
                 QuickTableDetailView(
                     shareID: shareID,
-                    fallbackName: "Chấm điểm Quick Table",
+                    fallbackName: String(localized: "Chấm điểm Quick Table"),
                     initialScoringMatchID: matchID
                 )
             } else if !loaded {
@@ -96,7 +96,7 @@ private struct DoublesEliminationScoreLinkView: View {
             if let shareID {
                 DoublesElimDetailView(
                     shareID: shareID,
-                    fallbackName: "Chấm điểm loại trực tiếp",
+                    fallbackName: String(localized: "Chấm điểm loại trực tiếp"),
                     initialScoringMatchID: matchID
                 )
             } else if !loaded {
@@ -132,7 +132,7 @@ private struct TeamMatchScoreLinkView: View {
             if let shareID {
                 TeamMatchDetailView(
                     shareID: shareID,
-                    fallbackName: "Chấm điểm đấu đồng đội",
+                    fallbackName: String(localized: "Chấm điểm đấu đồng đội"),
                     initialScoringMatchID: matchID
                 )
             } else if !loaded {

@@ -182,7 +182,7 @@ private struct SocialEventBigCard: View {
                 FlowLayout(spacing: 8, lineSpacing: 8) {
                     tag(event.priceLabel)
                     if let level = event.levelLabel { tag(level) }
-                    if let max = maxPlayers { tag("\(max) chỗ") }
+                    if let max = maxPlayers { tag(String(localized: "\(max) chỗ")) }
                 }
                 .padding(.top, 12)
 
@@ -224,13 +224,13 @@ private struct SocialEventBigCard: View {
     private var remainingBadge: (some View)? {
         if let rem = remaining {
             if rem <= 0 {
-                badgeView("HẾT CHỖ", color: TLColor.fg3, bg: TLColor.surface2)
+                badgeView(String(localized: "HẾT CHỖ"), color: TLColor.fg3, bg: TLColor.surface2)
             } else if rem <= 1 {
-                badgeView("CÒN \(rem) CHỖ", color: TLColor.live, bg: TLColor.live.opacity(0.12))
+                badgeView(String(localized: "CÒN \(rem) CHỖ"), color: TLColor.live, bg: TLColor.live.opacity(0.12))
             } else if rem <= 4 {
-                badgeView("\(rem) CHỖ CÒN LẠI", color: TLColor.gold, bg: TLColor.gold.opacity(0.12))
+                badgeView(String(localized: "\(rem) CHỖ CÒN LẠI"), color: TLColor.gold, bg: TLColor.gold.opacity(0.12))
             } else {
-                badgeView("\(rem) CHỖ CÒN LẠI", color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
+                badgeView(String(localized: "\(rem) CHỖ CÒN LẠI"), color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
             }
         }
     }

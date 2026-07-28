@@ -131,11 +131,11 @@ struct RefereeScoringView: View {
                 }
 
                 if rotationCapable, let server = setupServer, !tossing {
-                    playerPick(title: "AI GIAO BÓNG TRƯỚC?",
+                    playerPick(title: String(localized: "AI GIAO BÓNG TRƯỚC?"),
                                teamName: server == .a ? teamAName : teamBName,
                                names: server == .a ? playersA! : playersB!,
                                selected: setupServerIdx) { setupServerIdx = $0 }
-                    playerPick(title: "AI ĐỠ BÓNG TRƯỚC?",
+                    playerPick(title: String(localized: "AI ĐỠ BÓNG TRƯỚC?"),
                                teamName: server == .a ? teamBName : teamAName,
                                names: server == .a ? playersB! : playersA!,
                                selected: setupReceiverIdx) { setupReceiverIdx = $0 }
@@ -241,11 +241,11 @@ struct RefereeScoringView: View {
             } else {
                 sideOutScores(s)
                 HStack(spacing: 0) {
-                    actionZone(title: "ĐIỂM", sub: "cho \(s.serving == .a ? teamAName : teamBName)", green: true) {
+                    actionZone(title: String(localized: "ĐIỂM"), sub: "cho \(s.serving == .a ? teamAName : teamBName)", green: true) {
                         register(s, winner: s.serving)
                     }
                     Rectangle().fill(TLColor.border).frame(width: 1)
-                    actionZone(title: "ĐỔI GIAO", sub: "mất giao", green: false) {
+                    actionZone(title: String(localized: "ĐỔI GIAO"), sub: String(localized: "mất giao"), green: false) {
                         register(s, winner: s.serving.other)
                     }
                 }
@@ -298,13 +298,13 @@ struct RefereeScoringView: View {
                 .font(TLFont.mono(56, .bold)).monospacedDigit()
                 .foregroundStyle(TLColor.fg).minimumScaleFactor(0.5).lineLimit(1)
             if let server = s.servingPlayer, let recv = s.receivingPlayer, let right = s.servingSideRight {
-                Text("GIAO: \(server) (sân \(right ? "phải" : "trái"))  ·  ĐỠ: \(recv)")
+                Text("GIAO: \(server) (sân \(right ? String(localized: "phải") : String(localized: "trái")))  ·  ĐỠ: \(recv)")
                     .font(TLFont.mono(12, .bold)).foregroundStyle(TLColor.accentText)
                     .minimumScaleFactor(0.6).lineLimit(1)
             } else {
                 Text(mode == .sideOut
-                     ? "đang giao: \(s.serving == .a ? teamAName : teamBName)" + (isSingles ? "" : " · server \(s.serverNumber)")
-                     : "tính điểm trực tiếp")
+                     ? String(localized: "đang giao: \(s.serving == .a ? teamAName : teamBName)") + (isSingles ? "" : " · server \(s.serverNumber)")
+                     : String(localized: "tính điểm trực tiếp"))
                     .font(TLFont.mono(12, .medium)).foregroundStyle(TLColor.accentText)
             }
         }
@@ -342,8 +342,8 @@ struct RefereeScoringView: View {
     private func timeoutGroup(name: String, reg: Int, med: Int, side: ServeSide) -> some View {
         HStack(spacing: 6) {
             Text(name).font(TLFont.mono(10)).foregroundStyle(TLColor.fg4).lineLimit(1).frame(maxWidth: 90, alignment: .leading)
-            toButton(icon: "timer", count: reg, color: TLColor.fg2, label: "Timeout thường, còn \(reg)") { startTO(side, medical: false) }
-            toButton(icon: "cross.fill", count: med, color: TLColor.live, label: "Timeout y tế, còn \(med)") { startTO(side, medical: true) }
+            toButton(icon: "timer", count: reg, color: TLColor.fg2, label: String(localized: "Timeout thường, còn \(reg)")) { startTO(side, medical: false) }
+            toButton(icon: "cross.fill", count: med, color: TLColor.live, label: String(localized: "Timeout y tế, còn \(med)")) { startTO(side, medical: true) }
         }
     }
 
@@ -385,7 +385,7 @@ struct RefereeScoringView: View {
                 Image(systemName: t.medical ? "cross.fill" : "timer")
                     .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(t.medical ? TLColor.live : TLColor.accentText)
-                Text((t.medical ? "TIMEOUT Y TẾ" : "TIMEOUT") + " · \(team)")
+                Text((t.medical ? String(localized: "TIMEOUT Y TẾ") : "TIMEOUT") + " · \(team)")
                     .font(TLFont.mono(13, .bold)).tracking(0.5)
                     .foregroundStyle(t.medical ? TLColor.live : TLColor.accentText)
                 Text(mmss(t.left)).font(TLFont.mono(56, .bold)).monospacedDigit()

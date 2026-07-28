@@ -50,7 +50,7 @@ struct ParentTournamentRepository {
             throw NSError(
                 domain: "parent-tournament",
                 code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "Bạn cần đăng nhập để tạo giải tổng."]
+                userInfo: [NSLocalizedDescriptionKey: String(localized: "Bạn cần đăng nhập để tạo giải tổng.")]
             )
         }
         let safeName = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
@@ -58,7 +58,7 @@ struct ParentTournamentRepository {
             throw NSError(
                 domain: "parent-tournament",
                 code: 2,
-                userInfo: [NSLocalizedDescriptionKey: "Vui lòng nhập tên giải tổng."]
+                userInfo: [NSLocalizedDescriptionKey: String(localized: "Vui lòng nhập tên giải tổng.")]
             )
         }
         return try await client.from("parent_tournaments")
@@ -92,7 +92,7 @@ struct ParentTournamentRepository {
             throw NSError(
                 domain: "parent-tournament",
                 code: 3,
-                userInfo: [NSLocalizedDescriptionKey: "Hãy xóa các nội dung thi đấu trước khi xóa giải tổng."]
+                userInfo: [NSLocalizedDescriptionKey: String(localized: "Hãy xóa các nội dung thi đấu trước khi xóa giải tổng.")]
             )
         }
         try await client.from("parent_tournaments").delete().eq("id", value: id).execute()

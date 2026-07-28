@@ -70,7 +70,7 @@ struct TournamentScoreRetryMessage: View {
     let message: String
 
     var body: some View {
-        Text("\(message)\nĐiểm vừa nhập vẫn được giữ. Kiểm tra mạng rồi bấm Thử lại.")
+        Text(String(localized: "\(message)\nĐiểm vừa nhập vẫn được giữ. Kiểm tra mạng rồi bấm Thử lại."))
             .font(TLFont.sans(12))
             .foregroundStyle(TLColor.live)
             .frame(maxWidth: .infinity, alignment: .leading)

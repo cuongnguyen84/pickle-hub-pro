@@ -14,7 +14,7 @@ enum AppleSignInNonce {
         var errorDescription: String? {
             switch self {
             case .randomGenerationFailed:
-                return "Không thể tạo phiên đăng nhập Apple an toàn. Vui lòng thử lại."
+                return String(localized: "Không thể tạo phiên đăng nhập Apple an toàn. Vui lòng thử lại.")
             }
         }
     }
@@ -53,13 +53,13 @@ enum AppleAuthService {
         var errorDescription: String? {
             switch self {
             case .missingNonce:
-                return "Phiên đăng nhập Apple đã hết hạn. Vui lòng thử lại."
+                return String(localized: "Phiên đăng nhập Apple đã hết hạn. Vui lòng thử lại.")
             case .invalidCredential:
-                return "Apple không trả về thông tin đăng nhập hợp lệ."
+                return String(localized: "Apple không trả về thông tin đăng nhập hợp lệ.")
             case .missingIdentityToken:
-                return "Apple không trả về mã xác thực."
+                return String(localized: "Apple không trả về mã xác thực.")
             case .invalidIdentityToken:
-                return "Không thể đọc mã xác thực từ Apple."
+                return String(localized: "Không thể đọc mã xác thực từ Apple.")
             }
         }
     }

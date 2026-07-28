@@ -23,7 +23,7 @@ struct QuickTableRegistrationsSheet: View {
                         Text("Chưa có ai đăng ký.").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3).padding(.top, 8)
                     }
                     if !pending.isEmpty {
-                        sectionHeader("Chờ duyệt · \(pending.count)") {
+                        sectionHeader(String(localized: "Chờ duyệt · \(pending.count)")) {
                             Button {
                                 let ids = selectedPending.isEmpty ? pending.map(\.id) : Array(selectedPending)
                                 Haptics.success()
@@ -53,11 +53,11 @@ struct QuickTableRegistrationsSheet: View {
                         ForEach(pending) { r in pendingRow(r) }
                     }
                     if !approved.isEmpty {
-                        sectionHeader("Đã duyệt · \(approved.count)") { EmptyView() }
+                        sectionHeader(String(localized: "Đã duyệt · \(approved.count)")) { EmptyView() }
                         ForEach(approved) { r in plainRow(r, color: TLColor.accentText, editable: true) }
                     }
                     if !rejected.isEmpty {
-                        sectionHeader("Từ chối · \(rejected.count)") { EmptyView() }
+                        sectionHeader(String(localized: "Từ chối · \(rejected.count)")) { EmptyView() }
                         ForEach(rejected) { r in plainRow(r, color: TLColor.live, editable: true) }
                     }
                     if model.detail?.table.status == "setup" {
@@ -606,9 +606,9 @@ struct QuickTableSelfRegisterSheet: View {
 
     private var duprRangeText: String {
         switch (table?.minSkillLevel, table?.maxSkillLevel) {
-        case let (min?, max?): return " · yêu cầu \(min)–\(max)"
-        case let (min?, nil): return " · tối thiểu \(min)"
-        case let (nil, max?): return " · tối đa \(max)"
+        case let (min?, max?): return String(localized: " · yêu cầu \(min)–\(max)")
+        case let (min?, nil): return String(localized: " · tối thiểu \(min)")
+        case let (nil, max?): return String(localized: " · tối đa \(max)")
         default: return ""
         }
     }

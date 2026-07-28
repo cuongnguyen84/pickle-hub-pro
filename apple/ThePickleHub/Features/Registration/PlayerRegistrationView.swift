@@ -117,9 +117,9 @@ struct PlayerRegistrationView: View {
                     .font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg)
             }
             row("Người chơi", info.displayName)
-            if let phone = info.phone?.nonEmpty { row("SĐT", phone) }
+            if let phone = info.phone?.nonEmpty { row(String(localized: "SĐT"), phone) }
             if info.isCancelled, let reason = info.cancelledReason?.nonEmpty {
-                row("Lý do hủy", reason)
+                row(String(localized: "Lý do hủy"), reason)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

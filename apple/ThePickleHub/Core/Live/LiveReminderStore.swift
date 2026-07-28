@@ -33,8 +33,8 @@ final class LiveReminderStore {
         guard await ensureAuthorized() else { return false }
         let fireAt = max(Date().addingTimeInterval(2), startAt.addingTimeInterval(-leadTime))
         let content = UNMutableNotificationContent()
-        content.title = "Sắp phát trực tiếp"
-        content.body = "“\(title)” sắp bắt đầu — vào xem ngay."
+        content.title = String(localized: "Sắp phát trực tiếp")
+        content.body = String(localized: "“\(title)” sắp bắt đầu — vào xem ngay.")
         content.sound = .default
         // Tap routing: AppDelegate.didReceive reads this and opens the stream.
         content.userInfo = ["livestreamID": key]

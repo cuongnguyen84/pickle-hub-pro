@@ -264,7 +264,7 @@ struct CreateTeamMatchView: View {
     @State private var restoredDraft = false
     @State private var restoreApplied = false
 
-    private let steps = ["Thông tin", "Game", "DreamBreaker", "Thể thức", "Lệ phí"]
+    private let steps = ["Thông tin", "Game", "DreamBreaker", String(localized: "Thể thức"), String(localized: "Lệ phí")]
 
     private var hasEdits: Bool {
         !model.name.isEmpty || !model.location.isEmpty || model.step > 1
@@ -455,7 +455,7 @@ struct CreateTeamMatchView: View {
                     .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 11))
                     .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(TLColor.border, lineWidth: 1))
                 }
-                infoCard(gold: false, "Mỗi cặp thi đấu tới \(model.pointsPerGame) điểm. Hết \(model.templates.count) cặp, bên nào tổng số điểm lớn hơn là thắng.")
+                infoCard(gold: false, String(localized: "Mỗi cặp thi đấu tới \(model.pointsPerGame) điểm. Hết \(model.templates.count) cặp, bên nào tổng số điểm lớn hơn là thắng."))
             }
 
             ForEach(Array(model.templates.enumerated()), id: \.element.id) { idx, tpl in
@@ -522,7 +522,7 @@ struct CreateTeamMatchView: View {
     private var dreambreaker: some View {
         if model.isEvenGames {
             VStack(alignment: .leading, spacing: 14) {
-                infoCard(gold: true, "Số game chẵn (\(model.templates.count)). Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định.")
+                infoCard(gold: true, String(localized: "Số game chẵn (\(model.templates.count)). Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định."))
                 toggleRow("Bật DreamBreaker", "Thêm ván quyết định khi 2 đội hòa số game",
                           Binding(get: { model.hasDreambreaker }, set: { model.hasDreambreaker = $0 }))
                 if model.hasDreambreaker {
@@ -536,7 +536,7 @@ struct CreateTeamMatchView: View {
                 }
             }
         } else {
-            infoCard(gold: false, "Số game lẻ (\(model.templates.count)). Không cần DreamBreaker vì đã có ván quyết định (ván cuối).")
+            infoCard(gold: false, String(localized: "Số game lẻ (\(model.templates.count)). Không cần DreamBreaker vì đã có ván quyết định (ván cuối)."))
         }
     }
 
@@ -544,9 +544,9 @@ struct CreateTeamMatchView: View {
 
     private var formatStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            formatOption("round_robin", "Vòng tròn (Round Robin)", "Tất cả các đội đấu với nhau")
-            formatOption("single_elimination", "Loại trực tiếp", "Thua 1 trận là bị loại")
-            formatOption("rr_playoff", "Vòng bảng + Playoff", "Vòng tròn theo bảng, sau đó playoff")
+            formatOption("round_robin", String(localized: "Vòng tròn (Round Robin)"), String(localized: "Tất cả các đội đấu với nhau"))
+            formatOption("single_elimination", String(localized: "Loại trực tiếp"), String(localized: "Thua 1 trận là bị loại"))
+            formatOption("rr_playoff", String(localized: "Vòng bảng + Playoff"), String(localized: "Vòng tròn theo bảng, sau đó playoff"))
 
             if model.format == "rr_playoff" {
                 field("Số đội vào Playoff") {
@@ -557,18 +557,18 @@ struct CreateTeamMatchView: View {
                     }.pickerStyle(.segmented)
                 }
                 .onAppear { model.normalizePlayoffCount() }
-                infoCard(gold: false, "Gợi ý theo \(model.teamCount) đội tham gia — \(model.playoffTeamCount) đội mạnh nhất vào nhánh loại trực tiếp (\(roundName(model.playoffTeamCount))).")
+                infoCard(gold: false, String(localized: "Gợi ý theo \(model.teamCount) đội tham gia — \(model.playoffTeamCount) đội mạnh nhất vào nhánh loại trực tiếp (\(roundName(model.playoffTeamCount)))."))
                 repechageRow
             }
             if model.format == "single_elimination" {
                 if model.isValidSECount {
-                    infoCard(gold: false, "\(model.teamCount) đội — hợp lệ cho loại trực tiếp.")
+                    infoCard(gold: false, String(localized: "\(model.teamCount) đội — hợp lệ cho loại trực tiếp."))
                 } else {
-                    infoCard(gold: true, "Số đội phải là 4, 8, 16 hoặc 32 cho loại trực tiếp (hiện \(model.teamCount)). Quay lại Bước 1 để sửa.")
+                    infoCard(gold: true, String(localized: "Số đội phải là 4, 8, 16 hoặc 32 cho loại trực tiếp (hiện \(model.teamCount)). Quay lại Bước 1 để sửa."))
                 }
                 toggleRow("Có trận tranh hạng 3", "Trận giữa 2 đội thua bán kết",
                           Binding(get: { model.hasThirdPlaceMatch }, set: { model.hasThirdPlaceMatch = $0 }))
-                infoCard(gold: false, "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công ngay trong app.")
+                infoCard(gold: false, String(localized: "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công ngay trong app."))
             }
         }
     }
@@ -577,9 +577,9 @@ struct CreateTeamMatchView: View {
         switch n {
         case 2: return "Chung kết"
         case 4: return "Bán kết"
-        case 8: return "Tứ kết"
-        case 16: return "Vòng 1/16"
-        case 32: return "Vòng 1/32"
+        case 8: return String(localized: "Tứ kết")
+        case 16: return String(localized: "Vòng 1/16")
+        case 32: return String(localized: "Vòng 1/32")
         default: return "\(n) đội"
         }
     }
@@ -592,7 +592,7 @@ struct CreateTeamMatchView: View {
         toggleRow("Vòng Tái sinh", "Hạng 3,4 mỗi bảng đá thêm nhánh phụ (như playoff cho hạng 1,2)",
                   Binding(get: { model.hasRepechage }, set: { model.hasRepechage = $0 }))
         if model.hasRepechage {
-            infoCard(gold: false, "Sau vòng bảng, hạng 3 & 4 mỗi bảng vào nhánh Tái sinh — xếp cặp theo bảng giống playoff (hạng 3 bảng X gặp hạng 4 bảng Y).")
+            infoCard(gold: false, String(localized: "Sau vòng bảng, hạng 3 & 4 mỗi bảng vào nhánh Tái sinh — xếp cặp theo bảng giống playoff (hạng 3 bảng X gặp hạng 4 bảng Y)."))
         }
     }
 
@@ -693,7 +693,7 @@ struct CreateTeamMatchView: View {
 
                 qrPreview
             } else {
-                infoCard(gold: false, "Miễn phí — không cần tài khoản nhận. Bật lệ phí > 0 để tạo mã QR chuyển khoản cho VĐV.")
+                infoCard(gold: false, String(localized: "Miễn phí — không cần tài khoản nhận. Bật lệ phí > 0 để tạo mã QR chuyển khoản cho VĐV."))
             }
         }
     }
@@ -790,7 +790,7 @@ struct CreateTeamMatchView: View {
             .frame(maxWidth: .infinity)
             .padding(.top, 4)
         } else {
-            infoCard(gold: true, "Nhập đủ ngân hàng + số tài khoản để xem trước mã QR.")
+            infoCard(gold: true, String(localized: "Nhập đủ ngân hàng + số tài khoản để xem trước mã QR."))
         }
     }
 
@@ -872,11 +872,11 @@ struct CreateTeamMatchView: View {
 
     private func gameTypeLabel(_ gt: String) -> String {
         switch gt {
-        case "WD": return "Đôi Nữ (WD)"
-        case "MD": return "Đôi Nam (MD)"
-        case "MX": return "Đôi Nam Nữ (MX)"
-        case "WS": return "Đơn Nữ (WS)"
-        case "MS": return "Đơn Nam (MS)"
+        case "WD": return String(localized: "Đôi Nữ (WD)")
+        case "MD": return String(localized: "Đôi Nam (MD)")
+        case "MX": return String(localized: "Đôi Nam Nữ (MX)")
+        case "WS": return String(localized: "Đơn Nữ (WS)")
+        case "MS": return String(localized: "Đơn Nam (MS)")
         default: return gt
         }
     }

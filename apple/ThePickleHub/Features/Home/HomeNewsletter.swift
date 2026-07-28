@@ -72,7 +72,7 @@ struct HomeNewsletter: View {
         phase = .sending
         do {
             let message = try await repo.subscribe(email: email)
-            phase = .success(message.nonEmpty ?? "Đã đăng ký. Xem hộp thư của bạn.")
+            phase = .success(message.nonEmpty ?? String(localized: "Đã đăng ký. Xem hộp thư của bạn."))
         } catch {
             phase = .failure(error.localizedDescription)
         }

@@ -38,20 +38,20 @@ struct ParentTournamentEvent: Decodable, Identifiable, Equatable, Hashable {
     let createdAt: String?
     let parentTournamentID: UUID?
 
-    var displayName: String { name?.nonEmpty ?? "Nội dung thi đấu" }
+    var displayName: String { name?.nonEmpty ?? String(localized: "Nội dung thi đấu") }
     var statusLabel: String {
         switch status {
-        case "setup": "Đang chuẩn bị"
-        case "registration": "Đang đăng ký"
+        case "setup": String(localized: "Đang chuẩn bị")
+        case "registration": String(localized: "Đang đăng ký")
         case "group_stage": "Vòng bảng"
         case "playoff": "Playoff"
-        case "completed": "Đã kết thúc"
+        case "completed": String(localized: "Đã kết thúc")
         default: status ?? "—"
         }
     }
     var formatLabel: String {
-        if isDoubles == true { return format == "large_playoff" ? "Đôi · playoff" : "Đôi · vòng bảng" }
-        return format == "large_playoff" ? "Đơn · playoff" : "Đơn · vòng bảng"
+        if isDoubles == true { return format == "large_playoff" ? String(localized: "Đôi · playoff") : String(localized: "Đôi · vòng bảng") }
+        return format == "large_playoff" ? String(localized: "Đơn · playoff") : String(localized: "Đơn · vòng bảng")
     }
 
     enum CodingKeys: String, CodingKey {

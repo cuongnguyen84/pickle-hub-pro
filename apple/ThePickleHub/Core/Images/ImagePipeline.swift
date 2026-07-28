@@ -46,17 +46,17 @@ enum ImagePipelineError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .noData:
-            return "Không đọc được ảnh đã chọn."
+            return String(localized: "Không đọc được ảnh đã chọn.")
         case .inputTooLarge:
-            return "Ảnh gốc quá lớn. Vui lòng chọn ảnh dưới 30 MB."
+            return String(localized: "Ảnh gốc quá lớn. Vui lòng chọn ảnh dưới 30 MB.")
         case .invalidImage:
-            return "Định dạng ảnh không hợp lệ hoặc ảnh đã bị hỏng."
+            return String(localized: "Định dạng ảnh không hợp lệ hoặc ảnh đã bị hỏng.")
         case .dimensionsTooLarge:
-            return "Kích thước ảnh vượt giới hạn an toàn."
+            return String(localized: "Kích thước ảnh vượt giới hạn an toàn.")
         case .encodingFailed:
-            return "Không thể xử lý ảnh. Vui lòng thử ảnh khác."
+            return String(localized: "Không thể xử lý ảnh. Vui lòng thử ảnh khác.")
         case .outputTooLarge:
-            return "Không thể giảm ảnh xuống dung lượng cho phép."
+            return String(localized: "Không thể giảm ảnh xuống dung lượng cho phép.")
         }
     }
 }

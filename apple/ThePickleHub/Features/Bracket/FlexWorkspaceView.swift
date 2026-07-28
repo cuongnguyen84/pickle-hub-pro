@@ -152,11 +152,16 @@ struct FlexWorkspaceView: View {
     @Environment(\.dismiss) private var dismiss
 
     enum Tab: String, CaseIterable, Identifiable {
-        case players = "VĐV"
-        case teams = "Đội"
-        case groups = "Bảng"
-        case matches = "Trận"
+        case players, teams, groups, matches
         var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .players: String(localized: "VĐV")
+            case .teams: String(localized: "Đội")
+            case .groups: String(localized: "Bảng")
+            case .matches: String(localized: "Trận")
+            }
+        }
     }
 
     init(shareID: String, initialData: FlexData, onChanged: @escaping () -> Void) {
@@ -172,7 +177,7 @@ struct FlexWorkspaceView: View {
                 Form {
                     Section {
                         Picker("Nội dung", selection: $tab) {
-                            ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
+                            ForEach(Tab.allCases) { Text($0.label).tag($0) }
                         }
                         .pickerStyle(.segmented)
                         .accessibilityLabel("Chọn phần quản lý")
@@ -214,7 +219,7 @@ struct FlexWorkspaceView: View {
                     Button {
                         prompt = .create(defaultKind(for: tab))
                     } label: {
-                        Label("Thêm \(tab.rawValue)", systemImage: "plus")
+                        Label("Thêm \(tab.label)", systemImage: "plus")
                     }
                     .disabled(model.busy)
                 }
@@ -268,14 +273,14 @@ struct FlexWorkspaceView: View {
         )) {
             Button("Đã hiểu", role: .cancel) { model.errorMessage = nil }
         } message: {
-            Text(model.errorMessage ?? "Lỗi không xác định")
+            Text(model.errorMessage ?? String(localized: "Lỗi không xác định"))
         }
     }
 
     private func playersForm(_ data: FlexData) -> some View {
         Section("Danh sách VĐV · \(data.players.count)") {
             if data.players.isEmpty {
-                emptyRow("Chưa có VĐV. Nhấn + để thêm.")
+                emptyRow(String(localized: "Chưa có VĐV. Nhấn + để thêm."))
             }
             ForEach(data.players) { player in
                 entityRow(name: player.name,
@@ -288,12 +293,12 @@ struct FlexWorkspaceView: View {
     @ViewBuilder
     private func teamsForm(_ data: FlexData) -> some View {
         if data.teams.isEmpty {
-            Section { emptyRow("Chưa có đội. Nhấn + để thêm.") }
+            Section { emptyRow(String(localized: "Chưa có đội. Nhấn + để thêm.")) }
         }
         ForEach(data.teams) { team in
             let members = data.teamMembers.filter { $0.teamID == team.id }
             Section {
-                if members.isEmpty { emptyRow("Đội chưa có thành viên.") }
+                if members.isEmpty { emptyRow(String(localized: "Đội chưa có thành viên.")) }
                 ForEach(members) { member in
                     HStack {
                         Label(data.playerName(member.playerID) ?? "VĐV", systemImage: "person.fill")
@@ -305,7 +310,7 @@ struct FlexWorkspaceView: View {
                                 .frame(width: 44, height: 44)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Xóa \(data.playerName(member.playerID) ?? "VĐV") khỏi đội")
+                        .accessibilityLabel("Xóa \(data.playerName(member.playerID) ?? String(localized: "VĐV")) khỏi đội")
                     }
                 }
 
@@ -340,13 +345,13 @@ struct FlexWorkspaceView: View {
     @ViewBuilder
     private func groupsForm(_ data: FlexData) -> some View {
         if data.groups.isEmpty {
-            Section { emptyRow("Chưa có bảng. Nhấn + để thêm.") }
+            Section { emptyRow(String(localized: "Chưa có bảng. Nhấn + để thêm.")) }
         }
         ForEach(data.groups) { group in
             let items = data.items(in: group)
             let itemType = items.first?.itemType
             Section {
-                if items.isEmpty { emptyRow("Bảng chưa có VĐV hoặc đội.") }
+                if items.isEmpty { emptyRow(String(localized: "Bảng chưa có VĐV hoặc đội.")) }
                 ForEach(items) { item in
                     HStack {
                         Label(
@@ -424,7 +429,7 @@ struct FlexWorkspaceView: View {
         let topLevel = data.matches.filter { $0.parentMatchID == nil }
             .sorted { $0.displayOrder < $1.displayOrder }
         if topLevel.isEmpty {
-            Section { emptyRow("Chưa có trận. Nhấn + để thêm.") }
+            Section { emptyRow(String(localized: "Chưa có trận. Nhấn + để thêm.")) }
         }
         ForEach(topLevel) { match in
             FlexMatchEditorSection(
@@ -513,16 +518,16 @@ private struct FlexMatchEditorSection: View {
             .pickerStyle(.segmented)
 
             if match.isTeamMatch {
-                teamPicker("Đội A", value: match.slotATeamID) { onSlot(match, .aTeam, $0) }
-                teamPicker("Đội B", value: match.slotBTeamID) { onSlot(match, .bTeam, $0) }
+                teamPicker(String(localized: "Đội A"), value: match.slotATeamID) { onSlot(match, .aTeam, $0) }
+                teamPicker(String(localized: "Đội B"), value: match.slotBTeamID) { onSlot(match, .bTeam, $0) }
             } else {
-                playerPicker("Bên A · VĐV 1", value: match.slotA1PlayerID) { onSlot(match, .a1, $0) }
+                playerPicker(String(localized: "Bên A · VĐV 1"), value: match.slotA1PlayerID) { onSlot(match, .a1, $0) }
                 if match.isDoubles {
-                    playerPicker("Bên A · VĐV 2", value: match.slotA2PlayerID) { onSlot(match, .a2, $0) }
+                    playerPicker(String(localized: "Bên A · VĐV 2"), value: match.slotA2PlayerID) { onSlot(match, .a2, $0) }
                 }
-                playerPicker("Bên B · VĐV 1", value: match.slotB1PlayerID) { onSlot(match, .b1, $0) }
+                playerPicker(String(localized: "Bên B · VĐV 1"), value: match.slotB1PlayerID) { onSlot(match, .b1, $0) }
                 if match.isDoubles {
-                    playerPicker("Bên B · VĐV 2", value: match.slotB2PlayerID) { onSlot(match, .b2, $0) }
+                    playerPicker(String(localized: "Bên B · VĐV 2"), value: match.slotB2PlayerID) { onSlot(match, .b2, $0) }
                 }
             }
 
@@ -535,13 +540,13 @@ private struct FlexMatchEditorSection: View {
 
             ForEach(children) { child in
                 DisclosureGroup {
-                    playerPicker("Bên A · VĐV 1", value: child.slotA1PlayerID) { onSlot(child, .a1, $0) }
+                    playerPicker(String(localized: "Bên A · VĐV 1"), value: child.slotA1PlayerID) { onSlot(child, .a1, $0) }
                     if child.isDoubles {
-                        playerPicker("Bên A · VĐV 2", value: child.slotA2PlayerID) { onSlot(child, .a2, $0) }
+                        playerPicker(String(localized: "Bên A · VĐV 2"), value: child.slotA2PlayerID) { onSlot(child, .a2, $0) }
                     }
-                    playerPicker("Bên B · VĐV 1", value: child.slotB1PlayerID) { onSlot(child, .b1, $0) }
+                    playerPicker(String(localized: "Bên B · VĐV 1"), value: child.slotB1PlayerID) { onSlot(child, .b1, $0) }
                     if child.isDoubles {
-                        playerPicker("Bên B · VĐV 2", value: child.slotB2PlayerID) { onSlot(child, .b2, $0) }
+                        playerPicker(String(localized: "Bên B · VĐV 2"), value: child.slotB2PlayerID) { onSlot(child, .b2, $0) }
                     }
                     Button("Xóa trận con", role: .destructive) { onDeleteChild(child) }
                 } label: {
@@ -715,8 +720,8 @@ private struct FlexNamePrompt: View {
         switch item {
         case .create(.player): return "Thêm VĐV"
         case .create(.team): return "Thêm đội"
-        case .create(.group): return "Thêm bảng"
-        case .create(.match): return "Thêm trận"
+        case .create(.group): return String(localized: "Thêm bảng")
+        case .create(.match): return String(localized: "Thêm trận")
         case .createChild: return "Thêm trận cá nhân"
         case .rename: return "Đổi tên"
         }

@@ -53,7 +53,7 @@ struct RefereePinSettingsView: View {
                     iconButton(revealed ? "eye.slash" : "eye") { revealed.toggle() }
                     iconButton("doc.on.doc") {
                         UIPasteboard.general.string = pin
-                        message = "Đã sao chép mã PIN."
+                        message = String(localized: "Đã sao chép mã PIN.")
                     }
                     Button { Haptics.light(); confirmRotate = true } label: {
                         HStack(spacing: 5) {
@@ -120,7 +120,7 @@ struct RefereePinSettingsView: View {
         do {
             pin = try await service.set(format: format, parentID: parentID)
             isActive = true; revealed = true
-        } catch { message = "Không thể cập nhật mã PIN. Vui lòng thử lại." }
+        } catch { message = String(localized: "Không thể cập nhật mã PIN. Vui lòng thử lại.") }
         busy = false
     }
 
@@ -130,7 +130,7 @@ struct RefereePinSettingsView: View {
         do {
             try await service.clear(format: format, parentID: parentID)
             isActive = false; revealed = false
-        } catch { message = "Không thể cập nhật mã PIN. Vui lòng thử lại." }
+        } catch { message = String(localized: "Không thể cập nhật mã PIN. Vui lòng thử lại.") }
         busy = false
     }
 }
@@ -231,7 +231,7 @@ private struct RefereeJoinSheet: View {
 
     private func submit() async {
         guard !submitting, pin.count == 6 else { return }
-        guard isSignedIn else { error = "Đăng nhập để nhập mã trọng tài."; return }
+        guard isSignedIn else { error = String(localized: "Đăng nhập để nhập mã trọng tài."); return }
         submitting = true; error = nil
         do {
             switch try await service.redeem(format: format, parentID: parentID, pin: pin) {
@@ -239,14 +239,14 @@ private struct RefereeJoinSheet: View {
                 await onJoined()
                 dismiss()
             case .expired:
-                error = "Giải đã kết thúc nên mã PIN không còn hiệu lực."
+                error = String(localized: "Giải đã kết thúc nên mã PIN không còn hiệu lực.")
             case .rateLimited:
-                error = "Bạn nhập sai quá nhiều lần. Thử lại sau 15 phút."
+                error = String(localized: "Bạn nhập sai quá nhiều lần. Thử lại sau 15 phút.")
             case .invalid, .unknown:
-                error = "Mã PIN không đúng. Kiểm tra lại mã do ban tổ chức cung cấp."
+                error = String(localized: "Mã PIN không đúng. Kiểm tra lại mã do ban tổ chức cung cấp.")
             }
         } catch {
-            self.error = "Không thể xác nhận mã. Vui lòng thử lại."
+            self.error = String(localized: "Không thể xác nhận mã. Vui lòng thử lại.")
         }
         submitting = false
     }

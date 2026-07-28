@@ -39,9 +39,9 @@ enum TournamentStatus: String {
 
     var label: String {
         switch self {
-        case .upcoming: return "Sắp diễn ra"
-        case .ongoing:  return "Đang diễn ra"
-        case .ended:    return "Đã kết thúc"
+        case .upcoming: return String(localized: "Sắp diễn ra")
+        case .ongoing:  return String(localized: "Đang diễn ra")
+        case .ended:    return String(localized: "Đã kết thúc")
         }
     }
 

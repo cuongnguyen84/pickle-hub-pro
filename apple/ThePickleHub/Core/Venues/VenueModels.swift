@@ -28,11 +28,11 @@ struct VenueListItem: Decodable, Identifiable, Equatable {
     }
     var courtsLabel: String {
         let c = numCourts ?? 0
-        return c <= 0 ? "Chưa rõ số sân" : "\(c) sân"
+        return c <= 0 ? String(localized: "Chưa rõ số sân") : "\(c) sân"
     }
     var indoorLabel: String? {
         guard let isIndoor else { return nil }
-        return isIndoor ? "Trong nhà" : "Ngoài trời"
+        return isIndoor ? String(localized: "Trong nhà") : String(localized: "Ngoài trời")
     }
     var surfaceLabel: String? { VenueSurface.label(surfaceType) }
     var coverURL: URL? { coverImageURL?.nonEmpty.flatMap { WebRoutes.asset($0) } }
@@ -74,8 +74,8 @@ struct VenueDetail: Decodable, Identifiable, Equatable {
         if let vi = nameVi?.trimmingCharacters(in: .whitespaces), !vi.isEmpty { return vi }
         return name
     }
-    var courtsLabel: String { let c = numCourts ?? 0; return c <= 0 ? "Chưa rõ số sân" : "\(c) sân" }
-    var indoorLabel: String? { guard let isIndoor else { return nil }; return isIndoor ? "Trong nhà" : "Ngoài trời" }
+    var courtsLabel: String { let c = numCourts ?? 0; return c <= 0 ? String(localized: "Chưa rõ số sân") : "\(c) sân" }
+    var indoorLabel: String? { guard let isIndoor else { return nil }; return isIndoor ? String(localized: "Trong nhà") : String(localized: "Ngoài trời") }
     var surfaceLabel: String? { VenueSurface.label(surfaceType) }
     var coverURL: URL? { coverImageURL?.nonEmpty.flatMap { WebRoutes.asset($0) } }
 
@@ -128,8 +128,8 @@ struct VenueDetail: Decodable, Identifiable, Equatable {
 
 enum VenueSurface {
     private static let labels: [String: String] = [
-        "acrylic": "Sơn Acrylic", "hard": "Sân cứng", "asphalt": "Nhựa đường",
-        "concrete": "Bê tông", "wood": "Sàn gỗ", "synthetic": "Thảm nhựa tổng hợp", "other": "Khác",
+        "acrylic": String(localized: "Sơn Acrylic"), "hard": String(localized: "Sân cứng"), "asphalt": String(localized: "Nhựa đường"),
+        "concrete": String(localized: "Bê tông"), "wood": String(localized: "Sàn gỗ"), "synthetic": String(localized: "Thảm nhựa tổng hợp"), "other": "Khác",
     ]
     static func label(_ value: String?) -> String? {
         guard let value = value?.nonEmpty else { return nil }

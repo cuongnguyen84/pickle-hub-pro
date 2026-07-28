@@ -77,7 +77,7 @@ final class TMRegisterModel {
     }
 
     @MainActor func submit(onDone: () -> Void) async {
-        guard let uid = await repo.currentUserID() else { error = "Cần đăng nhập để đăng ký."; return }
+        guard let uid = await repo.currentUserID() else { error = String(localized: "Cần đăng nhập để đăng ký."); return }
         busy = true; error = nil
         do {
             let teamID = try await repo.addTeam(

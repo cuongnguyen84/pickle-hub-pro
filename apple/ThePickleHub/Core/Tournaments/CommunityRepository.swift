@@ -108,7 +108,7 @@ struct CommunityRepository {
                     }
                 }()
                 return MyTournament(
-                    id: r.id, shareID: r.share_id, name: r.name ?? "Đấu đồng đội",
+                    id: r.id, shareID: r.share_id, name: r.name ?? String(localized: "Đấu đồng đội"),
                     isDoubles: true, capacity: r.team_count ?? 0,
                     registered: r.team_match_teams?.count ?? 0,
                     state: state,
@@ -168,7 +168,7 @@ struct CommunityRepository {
                 .execute().value
             return rows.map { r in
                 MyTournament(
-                    id: r.id, shareID: r.share_id, name: r.name ?? "Giải linh hoạt",
+                    id: r.id, shareID: r.share_id, name: r.name ?? String(localized: "Giải linh hoạt"),
                     isDoubles: true, capacity: 0, registered: 0,
                     state: Self.bracketState(r.status),
                     createdAt: Self.date(r.created_at), format: .flex

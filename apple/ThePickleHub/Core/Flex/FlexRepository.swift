@@ -87,7 +87,7 @@ struct FlexRepository {
         case limitReached, message(String)
         var errorDescription: String? {
             switch self {
-            case .limitReached: return "Bạn đã đạt giới hạn số giải miễn phí."
+            case .limitReached: return String(localized: "Bạn đã đạt giới hạn số giải miễn phí.")
             case .message(let m): return m
             }
         }
@@ -108,7 +108,7 @@ struct FlexRepository {
             .execute().value
         guard result.success, let tournament = result.tournament else {
             if result.error == "LIMIT_REACHED" { throw CreateError.limitReached }
-            throw CreateError.message(result.error ?? "Không tạo được giải")
+            throw CreateError.message(result.error ?? String(localized: "Không tạo được giải"))
         }
         return tournament
     }
@@ -166,16 +166,16 @@ struct FlexRepository {
 
         private static func localize(_ code: String) -> String {
             switch code {
-            case "AUTH_REQUIRED": return "Bạn cần đăng nhập."
-            case "NOT_AUTHORIZED": return "Bạn không có quyền chỉnh sửa giải này."
-            case "INVALID_NAME": return "Tên không được để trống."
-            case "PLAYER_LIMIT": return "Giải đã đạt tối đa 200 VĐV."
-            case "TEAM_LIMIT": return "Giải đã đạt tối đa 20 đội."
-            case "GROUP_LIMIT": return "Giải đã đạt tối đa 20 bảng."
-            case "MATCH_LIMIT": return "Giải đã đạt tối đa 100 trận."
-            case "GROUP_MISMATCH": return "Bảng không thuộc giải này."
-            case "PARENT_MISMATCH": return "Trận cha không thuộc giải này."
-            case "CONFIG_CONFLICT": return "Cấu hình vừa thay đổi trên thiết bị khác. Hãy tải lại."
+            case "AUTH_REQUIRED": return String(localized: "Bạn cần đăng nhập.")
+            case "NOT_AUTHORIZED": return String(localized: "Bạn không có quyền chỉnh sửa giải này.")
+            case "INVALID_NAME": return String(localized: "Tên không được để trống.")
+            case "PLAYER_LIMIT": return String(localized: "Giải đã đạt tối đa 200 VĐV.")
+            case "TEAM_LIMIT": return String(localized: "Giải đã đạt tối đa 20 đội.")
+            case "GROUP_LIMIT": return String(localized: "Giải đã đạt tối đa 20 bảng.")
+            case "MATCH_LIMIT": return String(localized: "Giải đã đạt tối đa 100 trận.")
+            case "GROUP_MISMATCH": return String(localized: "Bảng không thuộc giải này.")
+            case "PARENT_MISMATCH": return String(localized: "Trận cha không thuộc giải này.")
+            case "CONFIG_CONFLICT": return String(localized: "Cấu hình vừa thay đổi trên thiết bị khác. Hãy tải lại.")
             default: return code
             }
         }
@@ -423,11 +423,11 @@ struct FlexRepository {
     func generateRoundRobin(tournamentID: UUID, group: FlexGroup, data: FlexData) async throws {
         let items = data.items(in: group)
         guard items.count >= 2 else {
-            throw WorkspaceError.message("Cần ít nhất 2 VĐV hoặc đội trong bảng.")
+            throw WorkspaceError.message(String(localized: "Cần ít nhất 2 VĐV hoặc đội trong bảng."))
         }
         let firstType = items[0].itemType
         guard items.allSatisfy({ $0.itemType == firstType }) else {
-            throw WorkspaceError.message("Một bảng chỉ được chứa VĐV hoặc đội, không trộn hai loại.")
+            throw WorkspaceError.message(String(localized: "Một bảng chỉ được chứa VĐV hoặc đội, không trộn hai loại."))
         }
         var rows: [RoundRobinMatchInsert] = []
         for i in items.indices {
@@ -468,7 +468,7 @@ struct FlexRepository {
 
     private func requireSuccess(_ result: WorkspaceResult) throws {
         guard result.success else {
-            throw WorkspaceError.message(result.detail ?? result.error ?? "Không thể cập nhật giải.")
+            throw WorkspaceError.message(result.detail ?? result.error ?? String(localized: "Không thể cập nhật giải."))
         }
     }
 

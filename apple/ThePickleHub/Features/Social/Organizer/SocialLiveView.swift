@@ -74,7 +74,7 @@ final class SocialLiveModel {
             Haptics.success()
             return true
         } catch {
-            errorText = "Không ghi được tỉ số: \(error.localizedDescription)"
+            errorText = String(localized: "Không ghi được tỉ số: \(error.localizedDescription)")
             return false
         }
     }
@@ -121,7 +121,7 @@ struct SocialLiveView: View {
 
     private var progressStrip: some View {
         HStack(spacing: 8) {
-            chip("\(model.inProgress.count) đang đấu", model.inProgress.isEmpty ? TLColor.fg3 : TLColor.live)
+            chip(String(localized: "\(model.inProgress.count) đang đấu"), model.inProgress.isEmpty ? TLColor.fg3 : TLColor.live)
             chip("\(model.scheduledCount) chờ", TLColor.fg3)
             chip("\(model.completedCount) xong", TLColor.accentText)
             Spacer()

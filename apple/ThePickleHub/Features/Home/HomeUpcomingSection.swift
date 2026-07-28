@@ -8,7 +8,7 @@ struct HomeUpcomingSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 6) {
-                HomeSectionHeader(title: "Sắp diễn ra.")
+                HomeSectionHeader(title: String(localized: "Sắp diễn ra."))
                 Text("Lịch giải, lịch sóng — 30 ngày kế tiếp, sắp xếp theo thứ tự có mặt.")
                     .font(TLFont.sans(14))
                     .foregroundStyle(TLColor.fg3)

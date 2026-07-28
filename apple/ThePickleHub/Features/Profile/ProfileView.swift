@@ -98,7 +98,7 @@ struct ProfileView: View {
     private var communitySection: some View {
         VStack(spacing: 10) {
             communityRow(icon: "text.bubble.fill", title: "Diễn đàn") { ForumListView() }
-            communityRow(icon: "figure.pickleball", title: "Tìm bạn chơi") { FindPlayersView() }
+            communityRow(icon: "figure.pickleball", title: String(localized: "Tìm bạn chơi")) { FindPlayersView() }
             communityRow(icon: "bubble.left.and.bubble.right.fill", title: "Tin nhắn") { MessagesView() }
         }
     }
