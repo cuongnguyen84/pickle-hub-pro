@@ -1,0 +1,16 @@
+{
+  "sourceLanguage" : "vi",
+  "strings" : {
+    "Thử lại" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
