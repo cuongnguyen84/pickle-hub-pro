@@ -82,9 +82,11 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
 
   const handleDeleteParent = async () => {
     if (!parent) return;
-    if (subEvents.length > 0) return;
     const confirmed = await confirm({
-      description: t.quickTable.parentTournament.deleteParentConfirm,
+      description: subEvents.length > 0
+        ? t.quickTable.parentTournament.deleteParentConfirmWithEvents
+            .replace('{count}', String(subEvents.length))
+        : t.quickTable.parentTournament.deleteParentConfirm,
       destructive: true,
     });
     if (!confirmed) return;
@@ -347,7 +349,7 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
             )}
           </div>
 
-          {canEdit && subEvents.length === 0 && (
+          {canEdit && (
             <div style={{ textAlign: 'center', marginTop: 24 }}>
               <Button variant="destructive" size="sm" onClick={handleDeleteParent} className="gap-1">
                 <Trash2 className="w-4 h-4" />

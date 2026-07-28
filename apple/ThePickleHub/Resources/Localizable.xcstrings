@@ -8966,16 +8966,6 @@
         }
       }
     },
-    "Hãy xóa các nội dung thi đấu trước khi xóa giải tổng.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Delete all sub-events before deleting the parent tournament."
-          }
-        }
-      }
-    },
     "Hệ thống chia đều, tránh cùng team, rải seed": {
       "localizations": {
         "en": {
@@ -15458,12 +15448,12 @@
         }
       }
     },
-    "Thao tác này không thể hoàn tác. Chỉ giải tổng chưa có nội dung thi đấu mới có thể xóa.": {
+    "Thao tác này không thể hoàn tác. Các nội dung thi đấu KHÔNG bị xóa — chúng sẽ tách ra thành giải riêng.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "needs_review",
-            "value": "This can't be undone. Only a parent tournament with no divisions can be deleted."
+            "value": "This can't be undone. The divisions are NOT deleted — they stay as standalone brackets."
           }
         }
       }

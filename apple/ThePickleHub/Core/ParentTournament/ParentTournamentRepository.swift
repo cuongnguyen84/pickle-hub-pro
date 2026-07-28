@@ -81,20 +81,8 @@ struct ParentTournamentRepository {
             .execute()
     }
 
+    /// Sub-events are detached, not deleted — the FK is ON DELETE SET NULL.
     func delete(id: UUID) async throws {
-        struct IDRow: Decodable { let id: UUID }
-        let children: [IDRow] = try await client.from("quick_tables")
-            .select("id")
-            .eq("parent_tournament_id", value: id)
-            .limit(1)
-            .execute().value
-        guard children.isEmpty else {
-            throw NSError(
-                domain: "parent-tournament",
-                code: 3,
-                userInfo: [NSLocalizedDescriptionKey: String(localized: "Hãy xóa các nội dung thi đấu trước khi xóa giải tổng.")]
-            )
-        }
         try await client.from("parent_tournaments").delete().eq("id", value: id).execute()
     }
 }

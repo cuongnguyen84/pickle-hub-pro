@@ -179,21 +179,6 @@ export function useParentTournament() {
     }
   }, [user]);
 
-  const getSubEventCount = useCallback(async (parentId: string): Promise<number> => {
-    try {
-      const { count, error } = await supabase
-        .from('quick_tables')
-        .select('id', { count: 'exact', head: true })
-        .eq('parent_tournament_id', parentId);
-
-      if (error) throw error;
-      return count || 0;
-    } catch (error) {
-      logMutationError(HOOK, 'getSubEventCount', error);
-      return 0;
-    }
-  }, []);
-
   const getAttachableEvents = useCallback(async (): Promise<AttachableQuickTable[]> => {
     if (!user) return [];
     try {
@@ -244,13 +229,9 @@ export function useParentTournament() {
     }
   }, [user]);
 
+  // Sub-events are detached, not deleted — the FK is ON DELETE SET NULL.
   const deleteParent = useCallback(async (parentId: string): Promise<boolean> => {
     try {
-      const count = await getSubEventCount(parentId);
-      if (count > 0) {
-        toast.error(tStandalone('toast.parentTournament.delete.hasChildren'));
-        return false;
-      }
       const { error } = await supabase
         .from('parent_tournaments')
         .delete()
@@ -266,7 +247,7 @@ export function useParentTournament() {
       });
       return false;
     }
-  }, [getSubEventCount]);
+  }, []);
 
   const isOwner = useCallback((parent: ParentTournament): boolean => {
     return !!user && parent.creator_user_id === user.id;
@@ -279,7 +260,6 @@ export function useParentTournament() {
     getUserParentTournaments,
     getUserParentTournamentsWithPreview,
     getParentByShareId,
-    getSubEventCount,
     getAttachableEvents,
     attachEventsToParent,
     deleteParent,

@@ -40,9 +40,19 @@ export function toFeaturedParentTournament(
   };
 }
 
+/** Featured tournaments drop off the discovery page 10 days after they run. */
+export const FEATURED_MAX_AGE_DAYS = 10;
+
+/** YYYY-MM-DD cutoff — event_date older than this is no longer featured. */
+export function featuredCutoffDate(now = new Date()): string {
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - FEATURED_MAX_AGE_DAYS);
+  return cutoff.toISOString().slice(0, 10);
+}
+
 export function useFeaturedParentTournaments(limit = 6) {
   return useQuery({
-    queryKey: ["featured-parent-tournaments", limit],
+    queryKey: ["featured-parent-tournaments", limit, featuredCutoffDate()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("parent_tournaments")
@@ -69,6 +79,8 @@ export function useFeaturedParentTournaments(limit = 6) {
         `)
         .eq("is_featured", true)
         .eq("quick_tables.is_public", true)
+        // ponytail: dateless tournaments never expire — admin untoggles those by hand.
+        .or(`event_date.is.null,event_date.gte.${featuredCutoffDate()}`)
         .order("event_date", { ascending: true, nullsFirst: false })
         .limit(limit);
 
