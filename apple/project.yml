@@ -38,6 +38,8 @@ targets:
         com.apple.developer.associated-domains:
           - applinks:www.thepicklehub.net
           - applinks:thepicklehub.net
+        com.apple.developer.applesignin:
+          - Default
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.thepicklehub.app.dev
