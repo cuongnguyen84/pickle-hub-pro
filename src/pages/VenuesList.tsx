@@ -22,7 +22,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { VenueCard } from "@/components/venues/VenueCard";
-import { type VenueListItem, VENUE_LIST_COLUMNS, VENUE_CITIES } from "@/lib/venues";
+import {
+  type VenueListItem,
+  VENUE_LIST_COLUMNS,
+  VENUE_CITIES,
+  venueCountryLabel,
+  sortCountryCodes,
+} from "@/lib/venues";
 
 const PAGE_SIZE = 60;
 
@@ -43,18 +49,41 @@ export default function VenuesList() {
   const [rawSearch, setRawSearch] = useState("");
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState<string | null>(null);
+  // Country tab. Directory is VN-first; the SEA pilot (Singapore) means the grid
+  // now spans countries — group them so VN and SG venues never intermix.
+  const [countryFilter, setCountryFilter] = useState<string>("VN");
 
   useEffect(() => {
     const handle = window.setTimeout(() => setSearch(rawSearch.trim()), 300);
     return () => window.clearTimeout(handle);
   }, [rawSearch]);
 
+  // Distinct countries present (single-column read, cached) → country tabs.
+  const { data: countryCodes } = useQuery<string[]>({
+    queryKey: ["venue-countries"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("venues").select("country");
+      if (error) {
+        console.error("VenuesList: countries fetch error", error);
+        return ["VN"];
+      }
+      const set = new Set<string>();
+      for (const r of (data as { country: string | null }[]) ?? []) {
+        set.add((r.country ?? "VN").toUpperCase());
+      }
+      return sortCountryCodes(set.size > 0 ? Array.from(set) : ["VN"]);
+    },
+    staleTime: 5 * 60_000,
+  });
+  const countries = countryCodes ?? ["VN"];
+
   const { data: rows, isLoading } = useQuery<VenueListItem[]>({
-    queryKey: ["venues-list", search],
+    queryKey: ["venues-list", search, countryFilter],
     queryFn: async () => {
       let q = supabase
         .from("venues")
         .select(VENUE_LIST_COLUMNS)
+        .eq("country", countryFilter)
         .order("is_verified", { ascending: false })
         .order("num_courts", { ascending: false })
         .order("updated_at", { ascending: false })
@@ -150,6 +179,30 @@ export default function VenuesList() {
             </Link>
           )}
         </div>
+
+        {/* Country tabs — keep VN and SEA-pilot (SG) venues in separate folders */}
+        {countries.length > 1 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {countries.map((code) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => {
+                  setCountryFilter(code);
+                  setCityFilter(null);
+                }}
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                  countryFilter === code
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border text-muted-foreground hover:border-primary/40"
+                }`}
+                aria-pressed={countryFilter === code}
+              >
+                {venueCountryLabel(code, language)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* City filter chips */}
         {cities.length > 1 && (
