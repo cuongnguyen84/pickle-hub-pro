@@ -176,7 +176,7 @@ const post: BlogPost = {
           ],
           internalLinks: [
             {
-              text: "Free tools for running your own tournament",
+              text: "Pickleball tournament bracket generator",
               path: "/tools",
             },
           ],
