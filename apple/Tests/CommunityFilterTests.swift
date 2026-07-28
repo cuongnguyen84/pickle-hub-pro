@@ -42,9 +42,11 @@ struct RegBadgeTests {
                      createdAt: nil, format: format)
     }
 
+    // Assert qua String(localized:) cùng key thay vì literal VI — test giữ đúng ý
+    // (chọn key "đội" vs "người" theo mode) và chạy được ở mọi -testLanguage.
     @Test func showsAtThresholdSplitByMode() {
-        #expect(t(state: .open, registered: 4, doubles: true).regBadgeText == "4 đội đã đăng ký")
-        #expect(t(state: .open, registered: 5, doubles: false).regBadgeText == "5 người đã đăng ký")
+        #expect(t(state: .open, registered: 4, doubles: true).regBadgeText == String(localized: "\(4) đội đã đăng ký"))
+        #expect(t(state: .open, registered: 5, doubles: false).regBadgeText == String(localized: "\(5) người đã đăng ký"))
     }
 
     @Test func hidesBelowThreshold() {
@@ -59,6 +61,6 @@ struct RegBadgeTests {
     }
 
     @Test func teamMatchUsesTeamWording() {
-        #expect(t(state: .open, registered: 6, format: .teamMatch).regBadgeText == "6 đội đã đăng ký")
+        #expect(t(state: .open, registered: 6, format: .teamMatch).regBadgeText == String(localized: "\(6) đội đã đăng ký"))
     }
 }

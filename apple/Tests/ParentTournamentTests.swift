@@ -47,7 +47,8 @@ struct ParentTournamentTests {
 
         let value = try JSONDecoder().decode(ParentTournamentEvent.self, from: Data(json.utf8))
         #expect(value.statusLabel == "Playoff")
-        #expect(value.formatLabel == "Đôi · playoff")
+        // Assert qua String(localized:) cùng key — chạy được ở mọi -testLanguage.
+        #expect(value.formatLabel == String(localized: "Đôi · playoff"))
         #expect(value.displayName == "Đôi nữ")
     }
 }

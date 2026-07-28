@@ -42,11 +42,13 @@ struct SocialRegistrationContractTests {
         #expect(SocialRepository.functionErrorCode(error) == "captcha_failed")
     }
 
+    // Assert qua String(localized:) cùng key thay vì literal VI — test giữ đúng ý
+    // (mã backend map vào đúng thông điệp) và chạy được ở mọi -testLanguage.
     @Test("Production OTP error codes stay actionable in native UI")
     func localizedErrors() {
-        #expect(SocialFlowError(code: "otp_mismatch").errorDescription == "Mã OTP không đúng.")
-        #expect(SocialFlowError(code: "otp_too_many_attempts").errorDescription?.contains("quá nhiều lần") == true)
-        #expect(SocialFlowError(code: "daily_budget_exceeded").errorDescription?.contains("liên hệ ban tổ chức") == true)
+        #expect(SocialFlowError(code: "otp_mismatch").errorDescription == String(localized: "Mã OTP không đúng."))
+        #expect(SocialFlowError(code: "otp_too_many_attempts").errorDescription == String(localized: "Sai mã quá nhiều lần. Hãy yêu cầu mã mới."))
+        #expect(SocialFlowError(code: "daily_budget_exceeded").errorDescription == String(localized: "Hệ thống đang tạm dừng gửi tin tự động. Hãy liên hệ ban tổ chức."))
     }
 
     @Test("Remote registration kill switch decodes only a JSON boolean")

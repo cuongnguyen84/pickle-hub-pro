@@ -43,7 +43,7 @@ struct ParentTournamentEvent: Decodable, Identifiable, Equatable, Hashable {
         switch status {
         case "setup": String(localized: "Đang chuẩn bị")
         case "registration": String(localized: "Đang đăng ký")
-        case "group_stage": "Vòng bảng"
+        case "group_stage": String(localized: "Vòng bảng")
         case "playoff": "Playoff"
         case "completed": String(localized: "Đã kết thúc")
         default: status ?? "—"
