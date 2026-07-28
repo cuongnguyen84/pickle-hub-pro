@@ -52,9 +52,17 @@ struct ClubRepository {
 
     func membership(clubID: UUID) async -> ClubMembership {
         struct Params: Encodable { let p_club_id: String }
-        let raw: String? = try? await client.rpc("my_club_membership_status",
-            params: Params(p_club_id: clubID.uuidString.lowercased())).execute().value
-        return raw.flatMap(ClubMembership.init) ?? .anonymous
+        do {
+            let raw: String = try await client.rpc("my_club_membership_status",
+                params: Params(p_club_id: clubID.uuidString.lowercased())).execute().value
+            return ClubMembership(rawValue: raw) ?? .anonymous
+        } catch {
+            // Fail-soft VỀ QUYỀN là chấp nhận được (viewer thường), nhưng phải
+            // nổ ở DEBUG — 28/07 lỗi session bị nuốt ở đây thành "anonymous"
+            // và mất cả buổi mới tìm ra (pre-mortem sự cố 2, đúng kịch bản).
+            assertionFailure("membership \(clubID): \(error)")
+            return .anonymous
+        }
     }
 
     /// Request to join → returns the new membership status string.
@@ -82,6 +90,45 @@ struct ClubRepository {
     }
     func removeMember(clubID: UUID, profileID: UUID) async throws {
         _ = try await client.rpc("remove_club_member",
+            params: MemberParams(p_club_id: clubID.uuidString.lowercased(),
+                                 p_profile_id: profileID.uuidString.lowercased())).execute()
+    }
+
+    /// Web parity (`searchProfileForManager`): exact email / E.164-phone lookup
+    /// via SECURITY DEFINER RPC — ≥4 chars in, at most 1 row out. Not a name
+    /// search on purpose: an organizer invites someone whose contact they hold.
+    struct ManagerProfileHit: Decodable, Identifiable, Equatable {
+        let profileID: UUID
+        let displayName: String?
+        let email: String?
+        let phone: String?
+        let avatarURL: String?
+
+        var id: UUID { profileID }
+        var label: String { displayName?.nonEmpty ?? email?.nonEmpty ?? phone ?? "Người chơi" }
+
+        enum CodingKeys: String, CodingKey {
+            case profileID = "profile_id"
+            case displayName = "display_name"
+            case email, phone
+            case avatarURL = "avatar_url"
+        }
+    }
+
+    func searchProfileForManager(_ query: String) async throws -> ManagerProfileHit? {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 4 else { return nil }
+        struct Params: Encodable { let p_query: String }
+        let rows: [ManagerProfileHit] = try await client
+            .rpc("search_profile_for_manager", params: Params(p_query: trimmed))
+            .execute().value
+        return rows.first
+    }
+
+    /// Organizer-initiated invite — the member lands ACTIVE immediately.
+    /// Authorization (is_club_organizer) is enforced inside the RPC.
+    func inviteMember(clubID: UUID, profileID: UUID) async throws {
+        _ = try await client.rpc("invite_club_member",
             params: MemberParams(p_club_id: clubID.uuidString.lowercased(),
                                  p_profile_id: profileID.uuidString.lowercased())).execute()
     }

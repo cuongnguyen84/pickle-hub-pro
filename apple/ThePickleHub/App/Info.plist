@@ -51,8 +51,6 @@
 	<string>$(FIREBASE_PROJECT_ID)</string>
 	<key>GIDClientID</key>
 	<string>574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli.apps.googleusercontent.com</string>
-	<key>GIDServerClientID</key>
-	<string>799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

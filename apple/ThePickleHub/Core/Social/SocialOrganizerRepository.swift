@@ -345,12 +345,20 @@ struct SocialOrganizerRepository {
         let court_count: Int
         let max_players: Int
         let zalo_group_url: String?
+        let ball_type: String?
         let visibility: String
         let price_vnd: Int
         let requires_prepayment: Bool
         let prepayment_deadline_hours: Int?
+        let free_perks: [String]
         // KHÔNG có `slots` — web edit ghi lại slots nhưng native chưa có UI
         // slots, bỏ key để không xoá nhóm đăng ký hiện có.
+        //
+        // LUẬT (gate T4b, đo thật 28/07): Encodable bỏ key khi Optional nil
+        // nhưng GỬI `[]` khi mảng rỗng → PostgREST ghi đè. Mọi field thêm vào
+        // struct này BẮT BUỘC có dòng gán tương ứng trong
+        // SocialEventFormModel.applyExisting(), và SocialEventFormGateTests
+        // khoá danh sách key để ai thêm key mới phải đi qua luật này.
     }
 
     func updateEvent(id: UUID, patch: EventPatch, payment: PaymentPayload?) async throws {
