@@ -89,7 +89,7 @@ struct HomeView: View {
                 NavigationLink {
                     MatchLogView()
                 } label: {
-                    partnerButton("Log trận", systemImage: "plus", filled: true)
+                    partnerButton(String(localized: "Log trận"), systemImage: "plus", filled: true)
                 }
                 .buttonStyle(.plain)
                 NavigationLink {
