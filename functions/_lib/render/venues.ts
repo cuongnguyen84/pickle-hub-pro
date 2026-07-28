@@ -650,6 +650,8 @@ export async function renderVenuesCity(
   const cityName = VENUE_CITY_NAME[citySlug];
   if (!cityName) return render404(`/san/khu-vuc/${citySlug}`, siteUrl);
   const cc = cityCountry(citySlug);
+  // City-states (Singapore) would read "Singapore, Singapore" — dedupe.
+  const localeEn = cityName === cc.en ? cityName : `${cityName}, ${cc.en}`;
   const enUrl = `${siteUrl}/san/khu-vuc/${citySlug}`;
   const viUrl = `${siteUrl}/vi/san/khu-vuc/${citySlug}`;
   const canonical = lang === "vi" ? viUrl : enUrl;
@@ -678,7 +680,7 @@ export async function renderVenuesCity(
   const description =
     lang === "vi"
       ? `${n} sân pickleball tại ${cityName} — địa chỉ, số sân, bản đồ và chỉ đường. Cộng đồng cùng đóng góp trên ThePickleHub.`
-      : `${n} pickleball courts in ${cityName}, ${cc.en} — address, court count, map and directions on ThePickleHub.`;
+      : `${n} pickleball courts in ${localeEn} — address, court count, map and directions on ThePickleHub.`;
 
   const itemsHtml = rows
     .map((v) => {
@@ -740,7 +742,7 @@ export async function renderVenuesCity(
   const introHtml =
     lang === "vi"
       ? `<p>Khám phá ${n > 0 ? `${n} ` : ""}sân pickleball tại ${escapeHtml(cityName)}${totalCourtsVi} do cộng đồng ThePickleHub đóng góp — kèm địa chỉ, số sân, sân trong nhà/ngoài trời và chỉ đường. Danh sách được cập nhật liên tục khi có sân mới.</p>`
-      : `<p>Discover ${n > 0 ? `${n} ` : ""}community-contributed pickleball courts in ${escapeHtml(cityName)}, ${escapeHtml(cc.en)}${totalCourtsEn} — address, court count, indoor/outdoor and directions. The list grows as new courts are added.</p>`;
+      : `<p>Discover ${n > 0 ? `${n} ` : ""}community-contributed pickleball courts in ${escapeHtml(localeEn)}${totalCourtsEn} — address, court count, indoor/outdoor and directions. The list grows as new courts are added.</p>`;
 
   const FEATURED_CITY_SLUGS = [
     "tp-hcm", "ha-noi", "da-nang", "hai-phong", "can-tho", "nha-trang",
