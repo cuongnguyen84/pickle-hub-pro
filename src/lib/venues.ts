@@ -47,6 +47,7 @@ export interface VenueListItem {
   address: string | null;
   district: string | null;
   city: string | null;
+  country: string | null;
   num_courts: number | null;
   surface_type: string | null;
   is_indoor: boolean | null;
@@ -55,10 +56,30 @@ export interface VenueListItem {
 }
 
 export const VENUE_LIST_COLUMNS =
-  "id, slug, name, name_vi, address, district, city, num_courts, surface_type, is_indoor, cover_image_url, is_verified";
+  "id, slug, name, name_vi, address, district, city, country, num_courts, surface_type, is_indoor, cover_image_url, is_verified";
 
 export const VENUE_DETAIL_COLUMNS =
   "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, hours_json, amenities, cover_image_url, is_verified, created_by, created_at, updated_at";
+
+/** Country display label for the /san country tabs. VN-first directory; the
+ *  SEA pilot adds SG. Unknown codes fall back to the raw code. */
+export function venueCountryLabel(code: string | null, language: Language): string {
+  const cc = (code ?? "VN").toUpperCase();
+  const labels: Record<string, { vi: string; en: string }> = {
+    VN: { vi: "Việt Nam", en: "Vietnam" },
+    SG: { vi: "Singapore", en: "Singapore" },
+  };
+  return labels[cc]?.[language] ?? cc;
+}
+
+/** Order country codes VN-first (95% of the audience), then alphabetical. */
+export function sortCountryCodes(codes: string[]): string[] {
+  return [...codes].sort((a, b) => {
+    if (a === "VN") return -1;
+    if (b === "VN") return 1;
+    return a.localeCompare(b);
+  });
+}
 
 /** Prefer the Vietnamese name for VI viewers, fall back to the base name. */
 export function venueDisplayName(
