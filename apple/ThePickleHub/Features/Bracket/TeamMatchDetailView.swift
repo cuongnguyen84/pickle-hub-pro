@@ -919,7 +919,7 @@ struct TeamMatchDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-                Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                Text(title).textCase(.uppercase).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
             }
             ForEach(matches) { m in matchCard(detail, m) }
         }
@@ -1369,7 +1369,7 @@ struct TeamMatchDetailView: View {
         .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
     }
 
-    private func note(_ text: String) -> some View {
+    private func note(_ text: LocalizedStringKey) -> some View {
         Text(text).font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
@@ -1597,7 +1597,7 @@ private struct GroupSetupSheet: View {
     @ViewBuilder
     private func labeled<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased()).font(TLFont.mono(10, .medium)).tracking(1).foregroundStyle(TLColor.fg3)
+            Text(title).textCase(.uppercase).font(TLFont.mono(10, .medium)).tracking(1).foregroundStyle(TLColor.fg3)
             content()
         }
     }

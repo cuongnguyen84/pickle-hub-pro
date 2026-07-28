@@ -270,7 +270,7 @@ struct ClubDetailView: View {
         }
     }
 
-    private func sectionHeader(_ title: String, trailing: String?) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey, trailing: String?) -> some View {
         HStack(spacing: 10) {
             Text(title).font(TLFont.mono(11, .semibold)).tracking(1.5).foregroundStyle(TLColor.fg2)
             Rectangle().fill(LinearGradient(colors: [TLColor.border, .clear], startPoint: .leading, endPoint: .trailing)).frame(height: 1)

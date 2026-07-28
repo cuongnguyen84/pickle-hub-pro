@@ -31,9 +31,10 @@ struct TLLoadingView: View {
 /// Centered empty state — icon, title, subtitle, optional CTA.
 struct TLEmptyState: View {
     let icon: String
-    let title: String
-    var subtitle: String? = nil
-    var actionTitle: String? = nil
+    let title: LocalizedStringKey
+    var subtitle: LocalizedStringKey? = nil
+    var subtitleVerbatim: String? = nil
+    var actionTitle: LocalizedStringKey? = nil
     var action: (() -> Void)? = nil
 
     @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 34
@@ -42,6 +43,12 @@ struct TLEmptyState: View {
         VStack(spacing: TLSpacing.md) {
             Image(systemName: icon).font(.system(size: iconSize)).foregroundStyle(TLColor.fg4)
             Text(title).font(TLType.titleSans(15)).foregroundStyle(TLColor.fg)
+            if let subtitleVerbatim {
+                Text(verbatim: subtitleVerbatim)
+                    .font(TLType.bodySans(12.5))
+                    .foregroundStyle(TLColor.fg3)
+                    .multilineTextAlignment(.center)
+            }
             if let subtitle {
                 Text(subtitle)
                     .font(TLType.bodySans(12.5))
@@ -63,7 +70,7 @@ struct TLEmptyState: View {
 
 /// Error state — shares the empty layout, adds a retry CTA.
 struct TLErrorState: View {
-    var title = "Không tải được"
+    var title: LocalizedStringKey = "Không tải được"
     let message: String
     var retry: (() -> Void)? = nil
 
@@ -71,7 +78,7 @@ struct TLErrorState: View {
         TLEmptyState(
             icon: "exclamationmark.triangle",
             title: title,
-            subtitle: message,
+            subtitleVerbatim: message,
             actionTitle: retry == nil ? nil : "Thử lại",
             action: retry
         )

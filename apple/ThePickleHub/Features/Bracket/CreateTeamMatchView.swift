@@ -420,7 +420,7 @@ struct CreateTeamMatchView: View {
         }
     }
 
-    private func ratingField(_ title: String, _ value: Binding<Double>) -> some View {
+    private func ratingField(_ title: LocalizedStringKey, _ value: Binding<Double>) -> some View {
         field(title) {
             Stepper(value: value, in: 2.0...8.0, step: 0.25) {
                 Text(String(format: "%.2f", value.wrappedValue)).font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
@@ -843,14 +843,14 @@ struct CreateTeamMatchView: View {
         .background(TLColor.bg)
     }
 
-    private func field<Content: View>(_ label: String, @ViewBuilder _ content: () -> Content) -> some View {
+    private func field<Content: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
             content()
         }
     }
 
-    private func toggleRow(_ title: String, _ desc: String, _ binding: Binding<Bool>) -> some View {
+    private func toggleRow(_ title: LocalizedStringKey, _ desc: LocalizedStringKey, _ binding: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)

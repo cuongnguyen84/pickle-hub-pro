@@ -164,13 +164,13 @@ struct CreateFlexView: View {
         .padding(16)
     }
 
-    private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
+    private func field<C: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
             content()
         }
     }
-    private func toggleRow(_ title: String, _ desc: String, _ binding: Binding<Bool>) -> some View {
+    private func toggleRow(_ title: LocalizedStringKey, _ desc: LocalizedStringKey, _ binding: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
@@ -183,7 +183,7 @@ struct CreateFlexView: View {
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.border, lineWidth: 1))
     }
-    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+    private func tf(_ binding: Binding<String>, _ placeholder: LocalizedStringKey) -> some View {
         TextField(placeholder, text: binding)
             .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
             .padding(.horizontal, 11).padding(.vertical, 10)

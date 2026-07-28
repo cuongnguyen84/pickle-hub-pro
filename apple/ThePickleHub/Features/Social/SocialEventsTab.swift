@@ -10,7 +10,7 @@ final class SocialEventsViewModel {
     private let repo = SocialRepository()
 
     /// Events grouped by day, in chronological order, with a VN section label.
-    var groups: [(label: String, events: [SocialEvent])] {
+    var groups: [(label: LocalizedStringKey, events: [SocialEvent])] {
         let cal = Calendar.current
         let withDates = events.compactMap { e -> (Date, SocialEvent)? in e.startDate.map { ($0, e) } }
         let grouped = Dictionary(grouping: withDates) { cal.startOfDay(for: $0.0) }
@@ -22,7 +22,7 @@ final class SocialEventsViewModel {
     private static let dayFmt: DateFormatter = {
         let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "dd.MM"; return f
     }()
-    private static func dayLabel(_ day: Date) -> String {
+    private static func dayLabel(_ day: Date) -> LocalizedStringKey {
         let cal = Calendar.current
         let date = dayFmt.string(from: day)
         if cal.isDateInToday(day) { return "HÔM NAY · \(date)" }
@@ -126,7 +126,7 @@ struct SocialEventsTab: View {
         }
     }
 
-    private func sectionHeader(_ label: String) -> some View {
+    private func sectionHeader(_ label: LocalizedStringKey) -> some View {
         HStack(spacing: 10) {
             Text(label).font(TLFont.mono(11, .semibold)).tracking(1.5).foregroundStyle(TLColor.fg2)
             Rectangle().fill(LinearGradient(colors: [TLColor.border, .clear], startPoint: .leading, endPoint: .trailing)).frame(height: 1)

@@ -697,7 +697,7 @@ struct CreateQuickTableView: View {
 
     // MARK: Reusable bits
 
-    private func labeled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+    private func labeled<Content: View>(_ label: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label).font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg2)
             content()

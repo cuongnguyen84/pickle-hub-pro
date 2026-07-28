@@ -356,7 +356,7 @@ struct DoublesElimRegistrationView: View {
 
     private func labeledSlot(_ label: String, picked: PickedPlayer?, onClear: @escaping () -> Void, onPick: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
             partnerSlot(picked: picked, onClear: onClear, onPick: onPick)
         }
     }

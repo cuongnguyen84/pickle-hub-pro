@@ -652,7 +652,7 @@ struct ToolsView: View {
     private func sectionHeader(num: String, title: String) -> some View {
         HStack(spacing: 11) {
             Text("/ \(num)").font(TLFont.mono(12, .bold)).foregroundStyle(TLColor.accentText)
-            Text(title.uppercased()).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
+            Text(title).textCase(.uppercase).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
             Rectangle()
                 .fill(LinearGradient(colors: [TLColor.accent.opacity(0.55), .clear], startPoint: .leading, endPoint: .trailing))
                 .frame(height: 1)

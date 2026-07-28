@@ -237,7 +237,7 @@ struct FindPlayersView: View {
                 .overlay(Capsule().strokeBorder(selected ? Color.clear : TLColor.border, lineWidth: 1))
         }.buttonStyle(.plain)
     }
-    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+    private func tf(_ binding: Binding<String>, _ placeholder: LocalizedStringKey) -> some View {
         TextField(placeholder, text: binding)
             .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
             .padding(.horizontal, 11).padding(.vertical, 10)

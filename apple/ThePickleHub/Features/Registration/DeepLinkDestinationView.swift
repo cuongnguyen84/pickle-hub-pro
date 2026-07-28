@@ -318,9 +318,9 @@ private struct JoinInviteLoaderView: View {
         }
     }
 
-    private func field(_ title: String, text: Binding<String>, placeholder: String) -> some View {
+    private func field(_ title: LocalizedStringKey, text: Binding<String>, placeholder: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title.uppercased()).font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3)
+            Text(title).textCase(.uppercase).font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3)
             TextField(placeholder, text: text)
                 .padding(.horizontal, 12).frame(minHeight: 44)
                 .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 10))

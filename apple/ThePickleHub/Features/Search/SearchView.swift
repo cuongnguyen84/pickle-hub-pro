@@ -96,7 +96,7 @@ struct SearchView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 14)
-                Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                Text(title).textCase(.uppercase).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
             }
             VStack(spacing: 8) { rows() }
         }

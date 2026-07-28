@@ -315,14 +315,14 @@ struct LiveView: View {
 
     // MARK: Shared section header
 
-    private func sectionHeader(_ title: String, livePulse: Bool = false, trailing: String? = nil) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey, livePulse: Bool = false, trailing: String? = nil) -> some View {
         HStack(spacing: 10) {
             if livePulse {
                 LivePulseDot(reduceMotion: reduceMotion)
             } else {
                 RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 14)
             }
-            Text(title.uppercased()).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
+            Text(title).textCase(.uppercase).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
             Rectangle().fill(LinearGradient(colors: [(livePulse ? TLColor.live : TLColor.accent).opacity(0.4), .clear],
                                             startPoint: .leading, endPoint: .trailing)).frame(height: 1)
             if let trailing { Text(trailing).font(TLFont.mono(10)).foregroundStyle(TLColor.fg3) }

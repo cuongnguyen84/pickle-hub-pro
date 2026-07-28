@@ -230,13 +230,13 @@ struct FlexDetailView: View {
     private func sectionHeader(title: String, count: Int) -> some View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-            Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+            Text(title).textCase(.uppercase).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
             Spacer()
             Text("\(count)").font(TLFont.mono(10)).foregroundStyle(TLColor.fg3).monospacedDigit()
         }
     }
 
-    private func note(_ text: String) -> some View {
+    private func note(_ text: LocalizedStringKey) -> some View {
         Text(text).font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
             .frame(maxWidth: .infinity, alignment: .leading).padding(14)
             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
