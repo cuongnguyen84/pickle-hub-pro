@@ -567,3 +567,11 @@ manual run `30104415254` ngày 24/7 fail trước khi có runner (`steps=[]`,
 `runner_id=0`) vì GitHub báo recent account payments failed hoặc spending limit
 cần tăng. Cho tới khi xử lý GitHub Billing & plans, đừng tin watchdog Actions sẽ
 redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
+
+## 2026-07-28 — native-bilingual (String Catalog VI+EN, PR #495)
+- **Native gate một-locale = bài "chỉ đo nhánh bot" lặp lại.** Trước song ngữ, bundle chỉ có vi nên `xcodebuild test` vô tình chạy vi; job `-testLanguage en -testRegion US` trong apple-tests.yml là human-path của native — lần chạy đầu bắt ngay 3 file test assert VI mà 2 vòng review tĩnh (recon đếm 2 file, auditor đếm 4) đều thiếu. Tổng thật: 7 file.
+- **Làm yếu assertion phải khai báo tường minh.** 4 file test đổi từ literal VI sang `String(localized:)` cùng key — giữ đúng ý test (chọn key nào) nhưng thành tautology về bản dịch; ghi rõ trong commit 0d13866e, đừng sửa lén cho xanh.
+- **Helper String cục bộ là lớp mù của mọi phép đếm tĩnh** (partnerButton("Log trận") — literal trùng key đã extract từ navigationTitle nên diff-baseline không thấy). Chỉ screenshot 2 locale trên sim bắt được. Luật: mọi PR chạm chuỗi native phải kèm 1 cặp screenshot vi/en màn liên quan.
+- **In-app language override: dùng per-app AppleLanguages, không dùng .environment(\.locale).** String(localized:) ngoài SwiftUI không theo environment — override kiểu environment cho app trộn ngôn ngữ. AppleLanguages seed sớm trong App.init + restart prompt = nhất quán mọi tầng.
+- **Regex format-specifier: flag class không được chứa dấu cách** — "75% of players" bị đọc thành %o, chặn oan 4 bản dịch (scripts/native-i18n-gates.mjs đã fix).
+- **Đòn bẩy đổi signature đo thật +457 key** (ước lượng vòng 2 +143~156) — LocalizedStringKey lan qua helper mở khóa nhiều call site hơn census AST-lite thấy; đo bằng export thật > mọi ước lượng.

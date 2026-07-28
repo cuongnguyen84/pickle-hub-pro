@@ -91,7 +91,7 @@ struct SocialDetailView: View {
                 }
                 if let max = event.maxPlayers {
                     let reg = registeredCount.map { "\($0)/\(max)" } ?? "\(max)"
-                    infoRow(icon: "person.2", text: "\(reg) người chơi")
+                    infoRow(icon: "person.2", text: String(localized: "\(reg) người chơi"))
                 }
                 if let ball = event.ballType?.nonEmpty {
                     infoRow(icon: "circle.dotted", text: ball)
@@ -164,7 +164,7 @@ struct SocialDetailView: View {
                     SocialRosterManageView(event: event)
                 }
                 Rectangle().fill(TLColor.border).frame(height: 1)
-                organizerRow(icon: "person.2.badge.gearshape", title: "Xếp cặp (Mexicano / Vòng tròn)") {
+                organizerRow(icon: "person.2.badge.gearshape", title: String(localized: "Xếp cặp (Mexicano / Vòng tròn)")) {
                     SocialMatchmakingView(event: event)
                 }
                 Rectangle().fill(TLColor.border).frame(height: 1)
@@ -172,7 +172,7 @@ struct SocialDetailView: View {
                     SocialLiveView(event: event)
                 }
                 Rectangle().fill(TLColor.border).frame(height: 1)
-                organizerRow(icon: "slider.horizontal.3", title: "Sửa / hủy sự kiện") {
+                organizerRow(icon: "slider.horizontal.3", title: String(localized: "Sửa / hủy sự kiện")) {
                     EditSocialEventView(event: event)
                 }
             }
@@ -230,7 +230,7 @@ struct SocialDetailView: View {
         }
     }
 
-    private func sectionHeader(_ title: String) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         HStack(spacing: 10) {
             Text(title).font(TLFont.mono(11, .semibold)).tracking(1.2).foregroundStyle(TLColor.fg2)
             Rectangle().fill(LinearGradient(colors: [TLColor.border, .clear], startPoint: .leading, endPoint: .trailing)).frame(height: 1)

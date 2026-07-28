@@ -9,14 +9,14 @@ final class LiveViewModel {
         var label: String {
             switch self {
             case .live: return "Trực tiếp"
-            case .replays: return "Phát lại"
+            case .replays: return String(localized: "Phát lại")
             case .videos: return "Video"
             }
         }
         var serifTitle: String {
             switch self {
             case .live: return "Trực tiếp"
-            case .replays: return "Phát lại"
+            case .replays: return String(localized: "Phát lại")
             case .videos: return "Video"
             }
         }
@@ -149,7 +149,7 @@ struct LiveView: View {
             selection: $segment,
             label: { $0.label },
             indicator: { $0 == .live && model.hasLive },
-            indicatorHint: "đang có trận trực tiếp"
+            indicatorHint: String(localized: "đang có trận trực tiếp")
         )
         .padding(.horizontal, 22)
     }
@@ -177,8 +177,8 @@ struct LiveView: View {
         let live = model.liveStreams
         let upcoming = model.upcoming
         if live.isEmpty && upcoming.isEmpty {
-            emptyState(icon: "dot.radiowaves.up.forward", title: "Hiện chưa có trận trực tiếp",
-                       subtitle: "Các buổi phát sẽ xuất hiện ở đây khi bắt đầu.")
+            emptyState(icon: "dot.radiowaves.up.forward", title: String(localized: "Hiện chưa có trận trực tiếp"),
+                       subtitle: String(localized: "Các buổi phát sẽ xuất hiện ở đây khi bắt đầu."))
             if !model.replays.isEmpty { featuredReplays }
         } else {
             VStack(alignment: .leading, spacing: 26) {
@@ -235,7 +235,7 @@ struct LiveView: View {
     @ViewBuilder
     private var replayContent: some View {
         if model.replays.isEmpty {
-            emptyState(icon: "play.slash", title: "Chưa có bản phát lại", subtitle: "Các trận đã phát sẽ được lưu lại ở đây.")
+            emptyState(icon: "play.slash", title: String(localized: "Chưa có bản phát lại"), subtitle: String(localized: "Các trận đã phát sẽ được lưu lại ở đây."))
         } else {
             VStack(alignment: .leading, spacing: 22) {
                 filterChips
@@ -304,7 +304,7 @@ struct LiveView: View {
     @ViewBuilder
     private var videoContent: some View {
         if model.videos.isEmpty {
-            emptyState(icon: "film", title: "Chưa có video", subtitle: "Video nổi bật sẽ xuất hiện ở đây.")
+            emptyState(icon: "film", title: String(localized: "Chưa có video"), subtitle: String(localized: "Video nổi bật sẽ xuất hiện ở đây."))
         } else {
             VStack(spacing: 14) {
                 ForEach(model.videos) { VideoRow(video: $0) }
@@ -315,14 +315,14 @@ struct LiveView: View {
 
     // MARK: Shared section header
 
-    private func sectionHeader(_ title: String, livePulse: Bool = false, trailing: String? = nil) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey, livePulse: Bool = false, trailing: String? = nil) -> some View {
         HStack(spacing: 10) {
             if livePulse {
                 LivePulseDot(reduceMotion: reduceMotion)
             } else {
                 RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 14)
             }
-            Text(title.uppercased()).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
+            Text(title).textCase(.uppercase).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
             Rectangle().fill(LinearGradient(colors: [(livePulse ? TLColor.live : TLColor.accent).opacity(0.4), .clear],
                                             startPoint: .leading, endPoint: .trailing)).frame(height: 1)
             if let trailing { Text(trailing).font(TLFont.mono(10)).foregroundStyle(TLColor.fg3) }

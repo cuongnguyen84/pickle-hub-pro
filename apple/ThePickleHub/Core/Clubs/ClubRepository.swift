@@ -139,8 +139,8 @@ struct ClubRepository {
         case capExceeded, slugTaken, message(String)
         var errorDescription: String? {
             switch self {
-            case .capExceeded: return "Bạn đã đạt giới hạn 3 CLB."
-            case .slugTaken: return "Đường dẫn (slug) đã được dùng."
+            case .capExceeded: return String(localized: "Bạn đã đạt giới hạn 3 CLB.")
+            case .slugTaken: return String(localized: "Đường dẫn (slug) đã được dùng.")
             case .message(let m): return m
             }
         }
@@ -190,7 +190,7 @@ struct ClubRepository {
 
     /// Upload a club logo to the `clubs-logos` bucket, return the public URL.
     func uploadLogo(image: ProcessedImage) async throws -> String {
-        guard let uid = await currentUserID() else { throw ClubWriteError.message("Cần đăng nhập để tải logo.") }
+        guard let uid = await currentUserID() else { throw ClubWriteError.message(String(localized: "Cần đăng nhập để tải logo.")) }
         let rand = UUID().uuidString.prefix(6)
         let stamp = Int(Date().timeIntervalSince1970 * 1000)
         let path = "\(uid.uuidString.lowercased())/\(stamp)-\(rand).\(image.fileExtension)"

@@ -47,6 +47,7 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     let requiresPrepayment: Bool?
     let prepaymentDeadlineHours: Int?
 
+    // canonical — ghi xuống DB, KHÔNG localize (proposal native-bilingual inc.2)
     var title: String { titleVi.nonEmpty ?? titleEn?.nonEmpty ?? "Sự kiện" }
 
     var startDate: Date? { startAt.flatMap(SocialDate.parse) }
@@ -58,7 +59,8 @@ struct SocialEvent: Decodable, Identifiable, Equatable {
     }
 
     var priceLabel: String {
-        guard let price = priceVnd, price > 0 else { return "Miễn phí" }
+        // key literal "Miễn phí" = Free (nghĩa Waived đã tách payment.waived)
+        guard let price = priceVnd, price > 0 else { return String(localized: "Miễn phí") }
         return "\(SocialEvent.grouped(price))đ"
     }
 
@@ -111,7 +113,7 @@ struct SocialRosterEntry: Decodable, Identifiable, Equatable {
     let selfRatedLevel: Double?
 
     var maskedName: String { SocialName.mask(displayName) }
-    var levelText: String? { selfRatedLevel.map { String(format: "Tự đánh giá %.1f", $0) } }
+    var levelText: String? { selfRatedLevel.map { String(format: String(localized: "Tự đánh giá %.1f"), $0) } }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -125,32 +127,32 @@ struct SocialFlowError: LocalizedError {
     let code: String
     var errorDescription: String? {
         switch code {
-        case "invalid_phone": "Số điện thoại không hợp lệ."
-        case "invalid_display_name": "Hãy nhập tên hiển thị hợp lệ."
-        case "captcha_failed": "Không thể xác minh thiết bị. Hãy tải lại và thử lại."
-        case "captcha_misconfigured": "Đăng ký native đang tạm bảo trì. Hãy đăng ký trên web."
-        case "too_many_otps": "Bạn đã yêu cầu quá nhiều mã. Hãy đợi 15 phút rồi thử lại."
-        case "too_many_otps_ip": "Thiết bị này đã gửi quá nhiều mã. Hãy đợi 15 phút rồi thử lại."
-        case "daily_budget_exceeded": "Hệ thống đang tạm dừng gửi tin tự động. Hãy liên hệ ban tổ chức."
-        case "invalid_otp", "otp_mismatch", "invalid_code_format": "Mã OTP không đúng."
-        case "otp_expired", "otp_not_found": "Mã OTP đã hết hạn. Hãy yêu cầu mã mới."
-        case "otp_too_many_attempts": "Sai mã quá nhiều lần. Hãy yêu cầu mã mới."
-        case "sms_send_failed", "zalo_send_failed": "Không gửi được mã OTP. Hãy thử lại hoặc liên hệ ban tổ chức."
-        case "already_registered": "Số điện thoại này đã đăng ký sự kiện."
-        case "guests_not_allowed": "Sự kiện này không nhận đăng ký khách."
-        case "event_not_found", "event_not_public", "event_not_published": "Sự kiện hiện không mở đăng ký công khai."
-        case "event_started_or_ended": "Sự kiện đã bắt đầu hoặc kết thúc."
-        case "slot_required": "Hãy chọn một khung đăng ký."
-        case "slot_not_found": "Khung đăng ký không còn tồn tại."
-        case "slot_full": "Khung đăng ký này đã đủ người."
-        case "payment_not_enabled": "Sự kiện chưa bật thanh toán online; bạn có thể thanh toán tại sân."
-        case "invalid_server_response": "Máy chủ trả về dữ liệu không hợp lệ. Hãy thử lại."
-        case "already_cancelled": "Đăng ký đã hủy trước đó."
-        case "event_started": "Sự kiện đã bắt đầu — không thao tác được."
-        case "event_cancelled": "Sự kiện đã bị hủy."
-        case "event_full": "Sự kiện đã đủ người — không đăng ký lại được."
-        case "not_cancelled": "Đăng ký đang hoạt động."
-        default: "Có lỗi xảy ra (\(code)). Thử lại sau."
+        case "invalid_phone": String(localized: "Số điện thoại không hợp lệ.")
+        case "invalid_display_name": String(localized: "Hãy nhập tên hiển thị hợp lệ.")
+        case "captcha_failed": String(localized: "Không thể xác minh thiết bị. Hãy tải lại và thử lại.")
+        case "captcha_misconfigured": String(localized: "Đăng ký native đang tạm bảo trì. Hãy đăng ký trên web.")
+        case "too_many_otps": String(localized: "Bạn đã yêu cầu quá nhiều mã. Hãy đợi 15 phút rồi thử lại.")
+        case "too_many_otps_ip": String(localized: "Thiết bị này đã gửi quá nhiều mã. Hãy đợi 15 phút rồi thử lại.")
+        case "daily_budget_exceeded": String(localized: "Hệ thống đang tạm dừng gửi tin tự động. Hãy liên hệ ban tổ chức.")
+        case "invalid_otp", "otp_mismatch", "invalid_code_format": String(localized: "Mã OTP không đúng.")
+        case "otp_expired", "otp_not_found": String(localized: "Mã OTP đã hết hạn. Hãy yêu cầu mã mới.")
+        case "otp_too_many_attempts": String(localized: "Sai mã quá nhiều lần. Hãy yêu cầu mã mới.")
+        case "sms_send_failed", "zalo_send_failed": String(localized: "Không gửi được mã OTP. Hãy thử lại hoặc liên hệ ban tổ chức.")
+        case "already_registered": String(localized: "Số điện thoại này đã đăng ký sự kiện.")
+        case "guests_not_allowed": String(localized: "Sự kiện này không nhận đăng ký khách.")
+        case "event_not_found", "event_not_public", "event_not_published": String(localized: "Sự kiện hiện không mở đăng ký công khai.")
+        case "event_started_or_ended": String(localized: "Sự kiện đã bắt đầu hoặc kết thúc.")
+        case "slot_required": String(localized: "Hãy chọn một khung đăng ký.")
+        case "slot_not_found": String(localized: "Khung đăng ký không còn tồn tại.")
+        case "slot_full": String(localized: "Khung đăng ký này đã đủ người.")
+        case "payment_not_enabled": String(localized: "Sự kiện chưa bật thanh toán online; bạn có thể thanh toán tại sân.")
+        case "invalid_server_response": String(localized: "Máy chủ trả về dữ liệu không hợp lệ. Hãy thử lại.")
+        case "already_cancelled": String(localized: "Đăng ký đã hủy trước đó.")
+        case "event_started": String(localized: "Sự kiện đã bắt đầu — không thao tác được.")
+        case "event_cancelled": String(localized: "Sự kiện đã bị hủy.")
+        case "event_full": String(localized: "Sự kiện đã đủ người — không đăng ký lại được.")
+        case "not_cancelled": String(localized: "Đăng ký đang hoạt động.")
+        default: String(localized: "Có lỗi xảy ra (\(code)). Thử lại sau.")
         }
     }
 }
@@ -221,7 +223,7 @@ struct PlayerRegistrationInfo: Decodable, Equatable {
 /// initials. "Nguyễn Văn An" → "Nguyễn V.".
 enum SocialName {
     static func mask(_ name: String?) -> String {
-        guard let trimmed = name?.trimmingCharacters(in: .whitespaces), !trimmed.isEmpty else { return "Khách" }
+        guard let trimmed = name?.trimmingCharacters(in: .whitespaces), !trimmed.isEmpty else { return String(localized: "Khách") }
         let parts = trimmed.split(separator: " ").map(String.init)
         guard parts.count > 1 else { return parts[0] }
         let initials = parts.dropFirst().compactMap { $0.first.map { String($0).uppercased() } }.joined()
@@ -242,9 +244,6 @@ enum SocialDate {
     }
 
     static func display(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "vi_VN")
-        formatter.dateFormat = "EEE, dd/MM · HH:mm"
-        return formatter.string(from: date)
+        "\(date.formatted(.dateTime.weekday(.abbreviated).day(.twoDigits).month(.twoDigits))) · \(date.formatted(date: .omitted, time: .shortened))"
     }
 }

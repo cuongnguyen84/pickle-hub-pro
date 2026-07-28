@@ -1,6 +1,7 @@
 import Foundation
 
 /// Render-only VietQR helper — mirrors web `src/lib/payment/vietqr.ts`.
+/// canonical — KHÔNG theo locale: URL params phải là số/chuỗi thô cho VietQR.io.
 /// VietQR.io serves a dynamic Napas QR PNG from a plain image URL (no API key):
 ///   https://img.vietqr.io/image/{BANK}-{ACCOUNT}-compact2.png?amount=&addInfo=&accountName=
 /// Caller drops the URL into an `AsyncImage`.

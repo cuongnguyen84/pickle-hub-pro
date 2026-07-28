@@ -19,8 +19,8 @@ struct HomeLiveSection: View {
 
     private var headTitle: String {
         if isLive { return "Trực tiếp" }
-        if !ordered.isEmpty { return "Sắp phát sóng" }
-        return "Vừa phát sóng"
+        if !ordered.isEmpty { return String(localized: "Sắp phát sóng") }
+        return String(localized: "Vừa phát sóng")
     }
 
     var body: some View {

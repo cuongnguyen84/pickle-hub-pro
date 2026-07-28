@@ -28,10 +28,10 @@ struct DETournament: Decodable, Equatable {
 
     var statusLabel: String {
         switch status {
-        case "setup": return "Đang cài đặt"
-        case "registration_open": return "Đang mở đăng ký"
-        case "ongoing": return "Đang diễn ra"
-        case "completed": return "Đã hoàn thành"
+        case "setup": return String(localized: "Đang cài đặt")
+        case "registration_open": return String(localized: "Đang mở đăng ký")
+        case "ongoing": return String(localized: "Đang diễn ra")
+        case "completed": return String(localized: "Đã hoàn thành")
         default: return status
         }
     }

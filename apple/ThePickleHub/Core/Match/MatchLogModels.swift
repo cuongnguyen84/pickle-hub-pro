@@ -115,12 +115,12 @@ struct MatchProposalRow: Decodable, Identifiable, Equatable {
 enum MatchProposalStatus {
     static func label(_ s: String) -> String {
         switch s {
-        case "pending_verify": return "CHỜ XÁC NHẬN"
-        case "verified": return "ĐÃ XÁC NHẬN"
-        case "approved": return "ĐÃ DUYỆT"
-        case "submitted": return "ĐÃ GỬI DUPR"
-        case "disputed": return "TRANH CHẤP"
-        case "rejected": return "BỊ TỪ CHỐI"
+        case "pending_verify": return String(localized: "CHỜ XÁC NHẬN")
+        case "verified": return String(localized: "ĐÃ XÁC NHẬN")
+        case "approved": return String(localized: "ĐÃ DUYỆT")
+        case "submitted": return String(localized: "ĐÃ GỬI DUPR")
+        case "disputed": return String(localized: "TRANH CHẤP")
+        case "rejected": return String(localized: "BỊ TỪ CHỐI")
         default: return s.uppercased()
         }
     }

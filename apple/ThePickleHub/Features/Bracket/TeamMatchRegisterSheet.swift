@@ -77,7 +77,7 @@ final class TMRegisterModel {
     }
 
     @MainActor func submit(onDone: () -> Void) async {
-        guard let uid = await repo.currentUserID() else { error = "Cần đăng nhập để đăng ký."; return }
+        guard let uid = await repo.currentUserID() else { error = String(localized: "Cần đăng nhập để đăng ký."); return }
         busy = true; error = nil
         do {
             let teamID = try await repo.addTeam(
@@ -221,7 +221,8 @@ struct TeamMatchRegisterSheet: View {
                         }
                     } label: {
                         if model.busy { ProgressView().tint(TLColor.accentText) }
-                        else { Text("Gửi").font(TLFont.sans(15, .semibold)) }
+                        // symbolic key: "Gửi" nghĩa Submit (form), khác nghĩa Send (ChatPanel)
+                        else { Text(LocalizedStringResource("form.submit", defaultValue: "Gửi")).font(TLFont.sans(15, .semibold)) }
                     }
                     .foregroundStyle(model.canSubmit ? TLColor.accentText : TLColor.fg4)
                     .disabled(!model.canSubmit || model.busy)

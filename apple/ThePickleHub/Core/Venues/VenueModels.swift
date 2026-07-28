@@ -28,11 +28,11 @@ struct VenueListItem: Decodable, Identifiable, Equatable {
     }
     var courtsLabel: String {
         let c = numCourts ?? 0
-        return c <= 0 ? "Chưa rõ số sân" : "\(c) sân"
+        return c <= 0 ? String(localized: "Chưa rõ số sân") : "\(c) sân"
     }
     var indoorLabel: String? {
         guard let isIndoor else { return nil }
-        return isIndoor ? "Trong nhà" : "Ngoài trời"
+        return isIndoor ? String(localized: "Trong nhà") : String(localized: "Ngoài trời")
     }
     var surfaceLabel: String? { VenueSurface.label(surfaceType) }
     var coverURL: URL? { coverImageURL?.nonEmpty.flatMap { WebRoutes.asset($0) } }
@@ -74,8 +74,8 @@ struct VenueDetail: Decodable, Identifiable, Equatable {
         if let vi = nameVi?.trimmingCharacters(in: .whitespaces), !vi.isEmpty { return vi }
         return name
     }
-    var courtsLabel: String { let c = numCourts ?? 0; return c <= 0 ? "Chưa rõ số sân" : "\(c) sân" }
-    var indoorLabel: String? { guard let isIndoor else { return nil }; return isIndoor ? "Trong nhà" : "Ngoài trời" }
+    var courtsLabel: String { let c = numCourts ?? 0; return c <= 0 ? String(localized: "Chưa rõ số sân") : "\(c) sân" }
+    var indoorLabel: String? { guard let isIndoor else { return nil }; return isIndoor ? String(localized: "Trong nhà") : String(localized: "Ngoài trời") }
     var surfaceLabel: String? { VenueSurface.label(surfaceType) }
     var coverURL: URL? { coverImageURL?.nonEmpty.flatMap { WebRoutes.asset($0) } }
 
@@ -101,14 +101,16 @@ struct VenueDetail: Decodable, Identifiable, Equatable {
     }
 
     /// Opening hours rows in week order, only days that have a value.
+    /// Data keys are canonical ("mon"…); display names follow the app locale.
     var hoursRows: [(day: String, value: String)] {
         let order = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-        let labels = ["mon": "Thứ 2", "tue": "Thứ 3", "wed": "Thứ 4", "thu": "Thứ 5",
-                      "fri": "Thứ 6", "sat": "Thứ 7", "sun": "Chủ nhật"]
+        // Calendar.weekdaySymbols is Sunday-first.
+        let symbolIndex = ["sun": 0, "mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6]
+        let symbols = Calendar.current.weekdaySymbols
         guard let hours = hoursJSON else { return [] }
         return order.compactMap { key in
             guard let v = hours[key]?.nonEmpty else { return nil }
-            return (labels[key] ?? key, v)
+            return (symbolIndex[key].map { symbols[$0] } ?? key, v)
         }
     }
 
@@ -126,8 +128,8 @@ struct VenueDetail: Decodable, Identifiable, Equatable {
 
 enum VenueSurface {
     private static let labels: [String: String] = [
-        "acrylic": "Sơn Acrylic", "hard": "Sân cứng", "asphalt": "Nhựa đường",
-        "concrete": "Bê tông", "wood": "Sàn gỗ", "synthetic": "Thảm nhựa tổng hợp", "other": "Khác",
+        "acrylic": String(localized: "Sơn Acrylic"), "hard": String(localized: "Sân cứng"), "asphalt": String(localized: "Nhựa đường"),
+        "concrete": String(localized: "Bê tông"), "wood": String(localized: "Sàn gỗ"), "synthetic": String(localized: "Thảm nhựa tổng hợp"), "other": "Khác",
     ]
     static func label(_ value: String?) -> String? {
         guard let value = value?.nonEmpty else { return nil }

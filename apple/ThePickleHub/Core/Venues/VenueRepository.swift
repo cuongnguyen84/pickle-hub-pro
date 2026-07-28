@@ -83,7 +83,7 @@ struct VenueRepository {
                      numCourts: Int?, surface: String?, isIndoor: Bool,
                      phone: String?, website: String?) async throws -> String {
         guard let uid = await currentUserID() else {
-            throw NSError(domain: "venue", code: 401, userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập"])
+            throw NSError(domain: "venue", code: 401, userInfo: [NSLocalizedDescriptionKey: String(localized: "Cần đăng nhập")])
         }
         let base = clubSlugify("\(name) \(city)")
         let slug = await resolveUniqueSlug(base)

@@ -36,7 +36,7 @@ struct TMTournament: Decodable, Equatable {
     let discountTiers: [TMDiscountTier]?
     let chatGroupURL: String?
 
-    var displayName: String { name.nonEmpty ?? "Giải đồng đội" }
+    var displayName: String { name.nonEmpty ?? String(localized: "Giải đồng đội") }
 
     /// % giảm cho slot đội thứ `index` (0-based, theo thứ tự đăng ký) — bậc cộng dồn.
     func discountPercent(forSlot index: Int) -> Int {
@@ -48,21 +48,22 @@ struct TMTournament: Decodable, Equatable {
         return 0
     }
 
-    /// 00:00 ngày tổ chức (giờ máy) — mốc cho đồng hồ đếm ngược.
+    /// 00:00 UTC ngày tổ chức — mốc cho đồng hồ đếm ngược.
     var eventStartDate: Date? {
         guard let eventDate, !eventDate.isEmpty else { return nil }
+        // canonical — KHÔNG theo locale: fixed-format "yyyy-MM-dd" parser
         let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
+        f.timeZone = TimeZone(identifier: "UTC")
         f.dateFormat = "yyyy-MM-dd"
         return f.date(from: eventDate)
     }
 
-    /// "2026-07-08" → "Thứ Tư, 8/7/2026". Nil nếu không có/không parse được.
+    /// "2026-07-08" → "Thứ Tư, 8/7/2026" (theo locale app). Nil nếu không có/không parse được.
     var eventDateLabel: String? {
         guard let d = eventStartDate else { return eventDate?.nonEmpty }
-        let outFmt = DateFormatter()
-        outFmt.locale = Locale(identifier: "vi_VN")
-        outFmt.dateFormat = "EEEE, d/M/yyyy"
-        return outFmt.string(from: d).capitalized
+        return d.formatted(.dateTime.weekday(.wide).day().month(.defaultDigits).year()).capitalized
     }
     var hasFee: Bool { (entryFeeVnd ?? 0) > 0 || (entryFeeTeamVnd ?? 0) > 0 }
     var hasBankInfo: Bool {
@@ -74,19 +75,19 @@ struct TMTournament: Decodable, Equatable {
 
     var statusLabel: String {
         switch status {
-        case "setup": return "Đang cài đặt"
-        case "registration": return "Đang đăng ký"
-        case "ongoing": return "Đang diễn ra"
-        case "completed": return "Đã hoàn thành"
+        case "setup": return String(localized: "Đang cài đặt")
+        case "registration": return String(localized: "Đang đăng ký")
+        case "ongoing": return String(localized: "Đang diễn ra")
+        case "completed": return String(localized: "Đã hoàn thành")
         default: return status
         }
     }
 
     var formatLabel: String {
         switch format {
-        case "round_robin": return "Vòng tròn"
-        case "single_elimination": return "Loại trực tiếp"
-        case "rr_playoff": return "Vòng tròn + Playoff"
+        case "round_robin": return String(localized: "Vòng tròn")
+        case "single_elimination": return String(localized: "Loại trực tiếp")
+        case "rr_playoff": return String(localized: "Vòng tròn + Playoff")
         default: return format
         }
     }
@@ -153,8 +154,8 @@ enum TMPaymentStatus: String {
     /// Nhãn hiển thị. `claimed` + `confirmed` cùng chữ "Đã nộp lệ phí" nhưng khác màu.
     var label: String {
         switch self {
-        case .unpaid: return "Chưa nộp lệ phí"
-        case .claimed, .confirmed: return "Đã nộp lệ phí"
+        case .unpaid: return String(localized: "Chưa nộp lệ phí")
+        case .claimed, .confirmed: return String(localized: "Đã nộp lệ phí")
         }
     }
 }
@@ -299,11 +300,11 @@ struct TMGame: Decodable, Identifiable, Equatable {
     var typeLabel: String {
         if isDreambreaker == true { return "Dreambreaker" }
         switch gameType {
-        case "WD": return "Đôi nữ"
-        case "MD": return "Đôi nam"
-        case "MX": return "Đôi nam nữ"
-        case "WS": return "Đơn nữ"
-        case "MS": return "Đơn nam"
+        case "WD": return String(localized: "Đôi nữ")
+        case "MD": return String(localized: "Đôi nam")
+        case "MX": return String(localized: "Đôi nam nữ")
+        case "WS": return String(localized: "Đơn nữ")
+        case "MS": return String(localized: "Đơn nam")
         default: return displayName ?? gameType
         }
     }
@@ -393,7 +394,7 @@ struct TMDetail: Equatable {
     var rrSections: [(title: String, matches: [TMMatch])] {
         let grouped = Dictionary(grouping: rrMatches) { $0.roundNumber ?? 0 }
         return grouped.keys.sorted().map { r in
-            ("Lượt \(r)", (grouped[r] ?? []).sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) })
+            (String(localized: "Lượt \(r)"), (grouped[r] ?? []).sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) })
         }
     }
 
@@ -475,7 +476,7 @@ struct TMDetail: Equatable {
         let rr = sorted.filter { !$0.isPlayoff }
         let rrRounds = Dictionary(grouping: rr) { $0.roundNumber ?? 0 }
         for r in rrRounds.keys.sorted() {
-            result.append(("Lượt \(r)", rrRounds[r]!.sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }))
+            result.append((String(localized: "Lượt \(r)"), rrRounds[r]!.sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }))
         }
         // Playoff grouped by playoff_round, labelled by match count (Tái sinh có tab riêng).
         let po = sorted.filter { $0.isPlayoff && !$0.isRepechage }
@@ -492,7 +493,7 @@ struct TMDetail: Equatable {
         switch count {
         case 1: return "Chung kết"
         case 2: return "Bán kết"
-        case 3...4: return "Tứ kết"
+        case 3...4: return String(localized: "Tứ kết")
         default: return "Playoff"
         }
     }

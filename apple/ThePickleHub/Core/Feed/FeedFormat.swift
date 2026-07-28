@@ -11,7 +11,7 @@ enum FeedFormat {
         switch format {
         case "singles": return "ĐƠN"
         case "doubles": return "ĐÔI"
-        case "mixed":   return "ĐÔI NAM-NỮ"
+        case "mixed":   return String(localized: "ĐÔI NAM-NỮ")
         default:        return format.uppercased()
         }
     }
@@ -19,11 +19,11 @@ enum FeedFormat {
     /// Match-type chip.
     static func matchType(_ type: String) -> String {
         switch type {
-        case "rec":        return "GIAO LƯU"
+        case "rec":        return String(localized: "GIAO LƯU")
         case "open_play":  return "OPEN PLAY"
-        case "tournament": return "GIẢI ĐẤU"
-        case "league":     return "GIẢI LEAGUE"
-        case "practice":   return "TẬP LUYỆN"
+        case "tournament": return String(localized: "GIẢI ĐẤU")
+        case "league":     return String(localized: "GIẢI LEAGUE")
+        case "practice":   return String(localized: "TẬP LUYỆN")
         default:           return type.uppercased()
         }
     }
@@ -36,15 +36,15 @@ enum FeedFormat {
 
     static func status(_ status: String) -> StatusBadge {
         switch status {
-        case "verified": return .init(label: "ĐÃ XÁC THỰC", isVerified: true, isDisputed: false)
-        case "pending":  return .init(label: "CHỜ XÁC THỰC", isVerified: false, isDisputed: false)
-        case "disputed": return .init(label: "TRANH CHẤP", isVerified: false, isDisputed: true)
+        case "verified": return .init(label: String(localized: "ĐÃ XÁC THỰC"), isVerified: true, isDisputed: false)
+        case "pending":  return .init(label: String(localized: "CHỜ XÁC THỰC"), isVerified: false, isDisputed: false)
+        case "disputed": return .init(label: String(localized: "TRANH CHẤP"), isVerified: false, isDisputed: true)
         default:         return .init(label: status.uppercased(), isVerified: false, isDisputed: false)
         }
     }
 
     /// "VIDEO NGẮN" / "VIDEO" eyebrow.
-    static func videoKind(isShort: Bool) -> String { isShort ? "VIDEO NGẮN" : "VIDEO" }
+    static func videoKind(isShort: Bool) -> String { isShort ? String(localized: "VIDEO NGẮN") : "VIDEO" }
 
     /// mm:ss / h:mm:ss duration.
     static func duration(_ seconds: Int?) -> String? {
@@ -94,18 +94,10 @@ enum FeedDate {
         return nil
     }
 
-    /// "vừa xong" / "x phút trước" / "x giờ trước" / "x ngày trước" / "d/M".
+    /// Locale-aware relative time — "vừa xong" / "2 giờ trước" / "2 hours ago".
     static func relative(_ date: Date?, now: Date = Date()) -> String {
         guard let date else { return "" }
-        let seconds = now.timeIntervalSince(date)
-        if seconds < 60 { return "vừa xong" }
-        let minutes = Int(seconds / 60)
-        if minutes < 60 { return "\(minutes) phút trước" }
-        let hours = minutes / 60
-        if hours < 24 { return "\(hours) giờ trước" }
-        let days = hours / 24
-        if days < 7 { return "\(days) ngày trước" }
-        let comps = Calendar.current.dateComponents([.day, .month], from: date)
-        return "\(comps.day ?? 0)/\(comps.month ?? 0)"
+        if now.timeIntervalSince(date) < 60 { return String(localized: "vừa xong") }
+        return date.formatted(.relative(presentation: .named))
     }
 }

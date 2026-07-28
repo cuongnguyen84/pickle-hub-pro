@@ -68,8 +68,8 @@ enum RegistrationTokenStore {
 
         var errorDescription: String? {
             switch self {
-            case .invalidToken: "Token đăng ký không hợp lệ."
-            case .status: "Không thể lưu đăng ký an toàn trên thiết bị."
+            case .invalidToken: String(localized: "Token đăng ký không hợp lệ.")
+            case .status: String(localized: "Không thể lưu đăng ký an toàn trên thiết bị.")
             }
         }
     }

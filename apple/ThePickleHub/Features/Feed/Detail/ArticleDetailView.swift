@@ -15,7 +15,7 @@ struct ArticleDetailView: View {
     let title: String
     let bodyText: String?
     let readURL: URL
-    let readLabel: String           // "Đọc bài đầy đủ" / "Đọc bài gốc"
+    let readLabel: LocalizedStringKey           // "Đọc bài đầy đủ" / "Đọc bài gốc"
 
     @State private var showWeb = false
 

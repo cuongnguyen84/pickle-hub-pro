@@ -14,7 +14,7 @@ final class MessagesInboxModel {
             conversations = try await repo.myConversations()
             error = nil
         } catch {
-            if !loaded { self.error = UserFacingError.message(action: "Tải tin nhắn", error: error) }
+            if !loaded { self.error = UserFacingError.message(failure: "Không tải được tin nhắn.", error: error) }
         }
         loaded = true
     }
@@ -131,7 +131,7 @@ final class MessageThreadModel {
             try await repo.markRead(conversationID: conversationID)
             error = nil
         } catch {
-            if !loaded { self.error = UserFacingError.message(action: "Tải cuộc trò chuyện", error: error) }
+            if !loaded { self.error = UserFacingError.message(failure: "Không tải được cuộc trò chuyện.", error: error) }
         }
         loaded = true
     }
@@ -146,7 +146,7 @@ final class MessageThreadModel {
             error = nil
             await load()
         } catch {
-            self.error = UserFacingError.message(action: "Gửi tin nhắn", error: error)
+            self.error = UserFacingError.message(failure: "Không gửi được tin nhắn.", error: error)
         }
         sending = false
     }
@@ -268,11 +268,10 @@ enum ISODate {
         return f.date(from: iso)
     }
 
-    /// Vietnamese relative time ("2 giờ trước"), for feed/forum timestamps.
+    /// Locale-aware relative time ("2 giờ trước" / "2 hr. ago"), for feed/forum timestamps.
     static func relative(_ iso: String?) -> String {
         guard let d = parse(iso) else { return "" }
         let rf = RelativeDateTimeFormatter()
-        rf.locale = Locale(identifier: "vi_VN")
         rf.unitsStyle = .short
         return rf.localizedString(for: d, relativeTo: Date())
     }

@@ -26,15 +26,15 @@ struct DeepLinkDestinationView: View {
             case .parentTournament(let shareID):
                 ParentTournamentDetailView(shareID: shareID)
             case .doublesElimination(let shareID):
-                DoublesElimDetailView(shareID: shareID, fallbackName: "Loại kép")
+                DoublesElimDetailView(shareID: shareID, fallbackName: String(localized: "Loại kép"))
             case .doublesEliminationScore(let matchID):
                 DoublesEliminationScoreLinkView(matchID: matchID)
             case .teamMatch(let shareID):
-                TeamMatchDetailView(shareID: shareID, fallbackName: "Đấu đồng đội")
+                TeamMatchDetailView(shareID: shareID, fallbackName: String(localized: "Đấu đồng đội"))
             case .teamMatchScore(let matchID):
                 TeamMatchScoreLinkView(matchID: matchID)
             case .flexTournament(let shareID):
-                FlexDetailView(shareID: shareID, fallbackName: "Giải linh hoạt")
+                FlexDetailView(shareID: shareID, fallbackName: String(localized: "Giải linh hoạt"))
             case .toolsHub:
                 ToolsView()
             case .createQuickTable:
@@ -64,7 +64,7 @@ private struct QuickTableScoreLinkView: View {
             if let shareID {
                 QuickTableDetailView(
                     shareID: shareID,
-                    fallbackName: "Chấm điểm Quick Table",
+                    fallbackName: String(localized: "Chấm điểm Quick Table"),
                     initialScoringMatchID: matchID
                 )
             } else if !loaded {
@@ -96,7 +96,7 @@ private struct DoublesEliminationScoreLinkView: View {
             if let shareID {
                 DoublesElimDetailView(
                     shareID: shareID,
-                    fallbackName: "Chấm điểm loại trực tiếp",
+                    fallbackName: String(localized: "Chấm điểm loại trực tiếp"),
                     initialScoringMatchID: matchID
                 )
             } else if !loaded {
@@ -132,7 +132,7 @@ private struct TeamMatchScoreLinkView: View {
             if let shareID {
                 TeamMatchDetailView(
                     shareID: shareID,
-                    fallbackName: "Chấm điểm đấu đồng đội",
+                    fallbackName: String(localized: "Chấm điểm đấu đồng đội"),
                     initialScoringMatchID: matchID
                 )
             } else if !loaded {
@@ -318,9 +318,9 @@ private struct JoinInviteLoaderView: View {
         }
     }
 
-    private func field(_ title: String, text: Binding<String>, placeholder: String) -> some View {
+    private func field(_ title: LocalizedStringKey, text: Binding<String>, placeholder: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title.uppercased()).font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3)
+            Text(title).textCase(.uppercase).font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3)
             TextField(placeholder, text: text)
                 .padding(.horizontal, 12).frame(minHeight: 44)
                 .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 10))
@@ -345,7 +345,7 @@ private struct JoinInviteLoaderView: View {
             accepted = true
             Haptics.success()
         } catch {
-            errorMessage = UserFacingError.message(action: "Tham gia đội", error: error)
+            errorMessage = UserFacingError.message(failure: "Không tham gia được đội.", error: error)
             Haptics.error()
         }
     }

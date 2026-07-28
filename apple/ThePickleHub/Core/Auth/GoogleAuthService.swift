@@ -17,8 +17,8 @@ enum GoogleAuthService {
 
         var errorDescription: String? {
             switch self {
-            case .noPresenter:   return "Không tìm thấy màn hình để hiển thị Google Sign-In."
-            case .missingIDToken: return "Google không trả về idToken."
+            case .noPresenter:   return String(localized: "Không tìm thấy màn hình để hiển thị Google Sign-In.")
+            case .missingIDToken: return String(localized: "Google không trả về idToken.")
             }
         }
     }

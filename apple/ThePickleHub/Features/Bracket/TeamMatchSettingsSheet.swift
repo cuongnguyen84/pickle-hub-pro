@@ -57,12 +57,12 @@ final class TMSettingsModel {
     @MainActor func saveDetails(onChanged: () -> Void) async {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 3 else {
-            message = "Tên giải cần ít nhất 3 ký tự."
+            message = String(localized: "Tên giải cần ít nhất 3 ký tự.")
             return
         }
         let hasFee = entryFeeVnd > 0 || entryFeeTeamVnd > 0
         if hasFee && (bankCode.isEmpty || bankAccountNumber.trimmingCharacters(in: .whitespaces).isEmpty) {
-            message = "Vui lòng chọn ngân hàng và nhập số tài khoản khi giải có lệ phí."
+            message = String(localized: "Vui lòng chọn ngân hàng và nhập số tài khoản khi giải có lệ phí.")
             return
         }
         busy = true; message = nil
@@ -85,7 +85,7 @@ final class TMSettingsModel {
                     duprMaxFemale: requireDupr ? duprMaxFemale : nil
                 )
             )
-            message = "Đã lưu thay đổi"
+            message = String(localized: "Đã lưu thay đổi")
             onChanged()
         } catch {
             message = error.localizedDescription
@@ -93,6 +93,7 @@ final class TMSettingsModel {
         busy = false
     }
 
+    // canonical — KHÔNG theo locale: fixed-format "yyyy-MM-dd" parse/serialize với server
     private static func parseDate(_ raw: String?) -> Date? {
         guard let raw else { return nil }
         let formatter = DateFormatter()
@@ -122,10 +123,10 @@ final class TMSettingsModel {
         guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         busy = true; message = nil
         switch await repo.addReferee(tournamentID: tournamentID, email: email) {
-        case .ok(let name): message = "Đã thêm trọng tài \(name ?? email)"; newEmail = ""; await loadReferees()
-        case .notFound: message = "Không tìm thấy người dùng với email này"
-        case .alreadyExists: message = "Người này đã là trọng tài"
-        case .error: message = "Không thể thêm trọng tài"
+        case .ok(let name): message = String(localized: "Đã thêm trọng tài \(name ?? email)"); newEmail = ""; await loadReferees()
+        case .notFound: message = String(localized: "Không tìm thấy người dùng với email này")
+        case .alreadyExists: message = String(localized: "Người này đã là trọng tài")
+        case .error: message = String(localized: "Không thể thêm trọng tài")
         }
         busy = false
     }
@@ -186,7 +187,7 @@ struct TeamMatchSettingsSheet: View {
                     Task { if await model.delete() { onDeleted(); dismiss() } }
                 }
             } message: {
-                Text("\"\(detail.tournament.name)\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn.")
+                Text(String(localized: "\"\(detail.tournament.name)\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn."))
             }
         }
     }
@@ -197,11 +198,11 @@ struct TeamMatchSettingsSheet: View {
 
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Thông tin giải")
+            sectionTitle(String(localized: "Thông tin giải"))
             settingsField("Tên giải", text: bind(\.name))
             settingsField(
-                "Link nhóm chat",
-                placeholder: "https://zalo.me/... hoặc https://t.me/...",
+                String(localized: "Link nhóm chat"),
+                placeholder: String(localized: "https://zalo.me/... hoặc https://t.me/..."),
                 text: bind(\.chatGroupURL),
                 keyboard: .URL
             )
@@ -234,10 +235,10 @@ struct TeamMatchSettingsSheet: View {
 
     private var feesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Lệ phí & tài khoản nhận")
+            sectionTitle(String(localized: "Lệ phí & tài khoản nhận"))
             HStack(spacing: 10) {
-                numberField("Phí / VĐV", value: bind(\.entryFeeVnd))
-                numberField("Phí / đội", value: bind(\.entryFeeTeamVnd))
+                numberField(String(localized: "Phí / VĐV"), value: bind(\.entryFeeVnd))
+                numberField(String(localized: "Phí / đội"), value: bind(\.entryFeeTeamVnd))
             }
             if model.entryFeeVnd > 0 || model.entryFeeTeamVnd > 0 {
                 Picker("Ngân hàng", selection: bind(\.bankCode)) {
@@ -267,8 +268,8 @@ struct TeamMatchSettingsSheet: View {
                 .tint(TLColor.accent)
             if model.requireDupr {
                 HStack(spacing: 10) {
-                    decimalField("Nam tối đa", value: bind(\.duprMaxMale))
-                    decimalField("Nữ tối đa", value: bind(\.duprMaxFemale))
+                    decimalField(String(localized: "Nam tối đa"), value: bind(\.duprMaxMale))
+                    decimalField(String(localized: "Nữ tối đa"), value: bind(\.duprMaxFemale))
                 }
             }
         }

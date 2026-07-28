@@ -111,7 +111,7 @@ private struct SocialEventCard: View {
             HStack(spacing: 8) {
                 chip(event.priceLabel)
                 if let level = event.levelLabel { chip(level) }
-                if let max = event.maxPlayers { chip("\(max) chỗ") }
+                if let max = event.maxPlayers { chip(String(localized: "\(max) chỗ")) }
             }
         }
         .feedCard()

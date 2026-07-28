@@ -280,7 +280,7 @@ struct QuickTableRepository {
                   explicitAssignments.allSatisfy({ $0 >= 0 && $0 < groups }) else {
                 throw NSError(
                     domain: "quicktable", code: 3,
-                    userInfo: [NSLocalizedDescriptionKey: "Mỗi VĐV phải được xếp vào một bảng hợp lệ."]
+                    userInfo: [NSLocalizedDescriptionKey: String(localized: "Mỗi VĐV phải được xếp vào một bảng hợp lệ.")]
                 )
             }
             assignments = explicitAssignments
@@ -317,7 +317,7 @@ struct QuickTableRepository {
         guard result.success else {
             throw NSError(
                 domain: "quicktable", code: 2,
-                userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? "Không thể tạo bảng đấu."]
+                userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? String(localized: "Không thể tạo bảng đấu.")]
             )
         }
     }
@@ -381,9 +381,9 @@ struct QuickTableRepository {
 
     private func errorMessage(_ code: String?) -> String {
         switch code {
-        case "LIMIT_REACHED": return "Bạn đã đạt giới hạn số giải. Hãy xóa bớt giải cũ."
-        case "AUTH_REQUIRED": return "Cần đăng nhập để tạo giải."
-        default: return code ?? "Không tạo được giải."
+        case "LIMIT_REACHED": return String(localized: "Bạn đã đạt giới hạn số giải. Hãy xóa bớt giải cũ.")
+        case "AUTH_REQUIRED": return String(localized: "Cần đăng nhập để tạo giải.")
+        default: return code ?? String(localized: "Không tạo được giải.")
         }
     }
 
@@ -587,7 +587,7 @@ struct QuickTableRepository {
         let safeName = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
         guard !safeName.isEmpty else {
             throw NSError(domain: "quicktable", code: 4,
-                          userInfo: [NSLocalizedDescriptionKey: "Tên VĐV không được để trống."])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Tên VĐV không được để trống.")])
         }
         try await client.from("quick_table_players").insert(PlayerInsert(
             table_id: tableID,
@@ -721,7 +721,7 @@ struct QuickTableRepository {
                             profileLink: String?) async -> SubmitRegistrationResult {
         guard let uid = await currentUserID() else { return .notAuthed }
         let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return .error("Tên không được để trống") }
+        guard !name.isEmpty else { return .error(String(localized: "Tên không được để trống")) }
         do {
             try await client.from("quick_table_registrations").insert(RegistrationInsert(
                 table_id: tableID.uuidString.lowercased(), user_id: uid.uuidString.lowercased(),
@@ -781,7 +781,7 @@ struct QuickTableRepository {
             throw NSError(
                 domain: "quicktable",
                 code: 11,
-                userInfo: [NSLocalizedDescriptionKey: "Tên không được để trống."]
+                userInfo: [NSLocalizedDescriptionKey: String(localized: "Tên không được để trống.")]
             )
         }
         try await client.from("quick_table_registrations")
@@ -914,12 +914,12 @@ struct QuickTableRepository {
                     profileLink: String?) async throws {
         guard let uid = await currentUserID() else {
             throw NSError(domain: "quicktable", code: 5,
-                          userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập để đăng ký."])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Cần đăng nhập để đăng ký.")])
         }
         let safeName = String(displayName.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
         guard !safeName.isEmpty else {
             throw NSError(domain: "quicktable", code: 6,
-                          userInfo: [NSLocalizedDescriptionKey: "Tên không được để trống."])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Tên không được để trống.")])
         }
         try await client.from("quick_table_teams").insert(TeamInsert(
             table_id: tableID,
@@ -949,7 +949,7 @@ struct QuickTableRepository {
     func createInvitation(teamID: UUID, tableID: UUID) async throws -> QTPartnerInvitation {
         guard let uid = await currentUserID() else {
             throw NSError(domain: "quicktable", code: 7,
-                          userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập để mời đồng đội."])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Cần đăng nhập để mời đồng đội.")])
         }
         struct CountParams: Encodable { let _team_id: UUID }
         let count: Int = try await client.rpc(
@@ -957,7 +957,7 @@ struct QuickTableRepository {
         ).execute().value
         guard count < 3 else {
             throw NSError(domain: "quicktable", code: 8,
-                          userInfo: [NSLocalizedDescriptionKey: "Mỗi đội chỉ có tối đa 3 lời mời đang hoạt động."])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Mỗi đội chỉ có tối đa 3 lời mời đang hoạt động.")])
         }
         return try await client.from("quick_table_partner_invitations")
             .insert(InvitationInsert(team_id: teamID, table_id: tableID, invited_by_user_id: uid))
@@ -1029,7 +1029,7 @@ struct QuickTableRepository {
             "create_pair_request",
             params: PairRequestCreateParams(_table_id: tableID, _to_team_id: toTeamID)
         ).execute().value
-        try requirePairSuccess(result, fallback: "Không thể gửi yêu cầu ghép đôi.")
+        try requirePairSuccess(result, fallback: String(localized: "Không thể gửi yêu cầu ghép đôi."))
     }
 
     func respondPairRequest(id: UUID, accept: Bool) async throws {
@@ -1037,7 +1037,7 @@ struct QuickTableRepository {
             "respond_pair_request",
             params: PairRequestRespondParams(_request_id: id, _accept: accept)
         ).execute().value
-        try requirePairSuccess(result, fallback: "Không thể phản hồi yêu cầu ghép đôi.")
+        try requirePairSuccess(result, fallback: String(localized: "Không thể phản hồi yêu cầu ghép đôi."))
     }
 
     func cancelPairRequest(id: UUID) async throws {
@@ -1045,29 +1045,29 @@ struct QuickTableRepository {
             "cancel_pair_request",
             params: PairRequestCancelParams(_request_id: id)
         ).execute().value
-        try requirePairSuccess(result, fallback: "Không thể hủy yêu cầu ghép đôi.")
+        try requirePairSuccess(result, fallback: String(localized: "Không thể hủy yêu cầu ghép đôi."))
     }
 
     private func requirePairSuccess(_ result: PairActionResult, fallback: String) throws {
         guard result.success else {
             let messages: [String: String] = [
-                "AUTH_REQUIRED": "Cần đăng nhập để ghép đôi.",
-                "TABLE_NOT_FOUND": "Giải đấu không còn tồn tại.",
-                "NO_TEAM": "Bạn cần tạo đăng ký trước khi ghép đôi.",
-                "TEAM_REJECTED": "Đăng ký của bạn không còn hoạt động.",
-                "ALREADY_HAS_PARTNER": "Bạn đã có đồng đội.",
-                "TARGET_TEAM_NOT_FOUND": "Không tìm thấy VĐV này.",
-                "TARGET_TEAM_REJECTED": "Đăng ký của VĐV này không còn hoạt động.",
-                "TARGET_HAS_PARTNER": "VĐV này vừa ghép với người khác.",
-                "SAME_TEAM": "Không thể tự gửi yêu cầu cho chính mình.",
-                "REQUEST_ALREADY_SENT": "Bạn đã gửi yêu cầu cho VĐV này.",
-                "REQUEST_PENDING_FROM_TARGET": "VĐV này đang chờ bạn xác nhận.",
-                "REQUEST_NOT_FOUND": "Yêu cầu ghép đôi không còn tồn tại.",
-                "NOT_TARGET_USER": "Bạn không có quyền phản hồi yêu cầu này.",
-                "REQUEST_NOT_PENDING": "Yêu cầu này đã được xử lý.",
-                "FROM_TEAM_ALREADY_PAIRED": "VĐV gửi yêu cầu đã ghép với người khác.",
-                "TO_TEAM_ALREADY_PAIRED": "Bạn vừa được ghép vào đội khác.",
-                "TABLE_LOCKED": "Giải đã bắt đầu nên không thể đổi đội."
+                "AUTH_REQUIRED": String(localized: "Cần đăng nhập để ghép đôi."),
+                "TABLE_NOT_FOUND": String(localized: "Giải đấu không còn tồn tại."),
+                "NO_TEAM": String(localized: "Bạn cần tạo đăng ký trước khi ghép đôi."),
+                "TEAM_REJECTED": String(localized: "Đăng ký của bạn không còn hoạt động."),
+                "ALREADY_HAS_PARTNER": String(localized: "Bạn đã có đồng đội."),
+                "TARGET_TEAM_NOT_FOUND": String(localized: "Không tìm thấy VĐV này."),
+                "TARGET_TEAM_REJECTED": String(localized: "Đăng ký của VĐV này không còn hoạt động."),
+                "TARGET_HAS_PARTNER": String(localized: "VĐV này vừa ghép với người khác."),
+                "SAME_TEAM": String(localized: "Không thể tự gửi yêu cầu cho chính mình."),
+                "REQUEST_ALREADY_SENT": String(localized: "Bạn đã gửi yêu cầu cho VĐV này."),
+                "REQUEST_PENDING_FROM_TARGET": String(localized: "VĐV này đang chờ bạn xác nhận."),
+                "REQUEST_NOT_FOUND": String(localized: "Yêu cầu ghép đôi không còn tồn tại."),
+                "NOT_TARGET_USER": String(localized: "Bạn không có quyền phản hồi yêu cầu này."),
+                "REQUEST_NOT_PENDING": String(localized: "Yêu cầu này đã được xử lý."),
+                "FROM_TEAM_ALREADY_PAIRED": String(localized: "VĐV gửi yêu cầu đã ghép với người khác."),
+                "TO_TEAM_ALREADY_PAIRED": String(localized: "Bạn vừa được ghép vào đội khác."),
+                "TABLE_LOCKED": String(localized: "Giải đã bắt đầu nên không thể đổi đội.")
             ]
             throw NSError(
                 domain: "quicktable.pairing",
@@ -1120,7 +1120,7 @@ struct QuickTableRepository {
                           profileLink: String?) async throws {
         guard let uid = await currentUserID() else {
             throw NSError(domain: "quicktable", code: 9,
-                          userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập để nhận lời mời."])
+                          userInfo: [NSLocalizedDescriptionKey: String(localized: "Cần đăng nhập để nhận lời mời.")])
         }
         let result: TeamActionResult = try await client.rpc(
             "accept_partner_invitation",
@@ -1168,17 +1168,17 @@ struct QuickTableRepository {
     private func requireTeamSuccess(_ result: TeamActionResult) throws {
         guard result.success else {
             let messages: [String: String] = [
-                "INVITATION_NOT_FOUND": "Không tìm thấy lời mời.",
-                "INVITATION_ALREADY_USED": "Lời mời đã được sử dụng.",
-                "INVITATION_EXPIRED": "Lời mời đã hết hạn.",
-                "TEAM_ALREADY_COMPLETE": "Đội đã đủ hai người.",
-                "TABLE_LOCKED": "Giải đã bắt đầu nên không thể đổi đội.",
-                "CANNOT_JOIN_OWN_TEAM": "Bạn không thể tự tham gia đội của mình.",
-                "PERMISSION_DENIED": "Bạn không có quyền thực hiện thao tác này."
+                "INVITATION_NOT_FOUND": String(localized: "Không tìm thấy lời mời."),
+                "INVITATION_ALREADY_USED": String(localized: "Lời mời đã được sử dụng."),
+                "INVITATION_EXPIRED": String(localized: "Lời mời đã hết hạn."),
+                "TEAM_ALREADY_COMPLETE": String(localized: "Đội đã đủ hai người."),
+                "TABLE_LOCKED": String(localized: "Giải đã bắt đầu nên không thể đổi đội."),
+                "CANNOT_JOIN_OWN_TEAM": String(localized: "Bạn không thể tự tham gia đội của mình."),
+                "PERMISSION_DENIED": String(localized: "Bạn không có quyền thực hiện thao tác này.")
             ]
             throw NSError(
                 domain: "quicktable", code: 10,
-                userInfo: [NSLocalizedDescriptionKey: messages[result.error ?? ""] ?? result.error ?? "Không thể cập nhật đội."]
+                userInfo: [NSLocalizedDescriptionKey: messages[result.error ?? ""] ?? result.error ?? String(localized: "Không thể cập nhật đội.")]
             )
         }
     }
@@ -1235,7 +1235,7 @@ struct QuickTableRepository {
         guard result.success else {
             throw NSError(
                 domain: "quicktable", code: 3,
-                userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? "Không thể tạo playoff."]
+                userInfo: [NSLocalizedDescriptionKey: result.detail ?? result.error ?? String(localized: "Không thể tạo playoff.")]
             )
         }
     }

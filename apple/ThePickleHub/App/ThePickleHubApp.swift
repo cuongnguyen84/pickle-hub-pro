@@ -88,7 +88,12 @@ struct ThePickleHubApp: App {
     @State private var deepLink: DeepLink?
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
-    init() { Self.configureBarAppearance() }
+    init() {
+        AppLanguage.bootstrap()
+        // pre-mortem #1: log ngôn ngữ resolve lúc khởi động để chẩn đoán nhanh
+        print("locale:", Bundle.main.preferredLocalizations, Locale.current.identifier)
+        Self.configureBarAppearance()
+    }
 
     /// Geist on the nav/tab chrome (the web uses Geist for chrome; serif is
     /// reserved for editorial content), over The Line dark surfaces.

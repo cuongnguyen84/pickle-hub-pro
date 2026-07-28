@@ -8,8 +8,8 @@ enum TournamentDashboardType: String, Decodable, CaseIterable, Hashable {
     var label: String {
         switch self {
         case .quickTable: "Quick Table"
-        case .teamMatch: "Đấu đồng đội"
-        case .doublesElimination: "Loại kép"
+        case .teamMatch: String(localized: "Đấu đồng đội")
+        case .doublesElimination: String(localized: "Loại kép")
         }
     }
 

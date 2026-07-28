@@ -126,8 +126,9 @@ struct SocialRosterManageView: View {
 
     private var statsRow: some View {
         HStack(spacing: 10) {
-            statBox("\(model.registered)", "Đăng ký")
-            if model.isPaidEvent { statBox("\(model.paid)", "Đã trả") }
+            // symbolic key: "Đăng ký" nghĩa Registered (đếm), khác nghĩa Register (nút)
+            statBox("\(model.registered)", String(localized: "roster.stat.registered", defaultValue: "Đăng ký"))
+            if model.isPaidEvent { statBox("\(model.paid)", String(localized: "Đã trả")) }
             statBox("\(model.checkedIn)", "Check-in")
         }
     }
@@ -150,9 +151,9 @@ struct SocialRosterManageView: View {
                     HStack(spacing: 6) {
                         Text(r.displayName).font(TLFont.sans(15, .semibold)).foregroundStyle(TLColor.fg)
                         if r.registrationSource == "manual" {
-                            sourceBadge("BTC thêm")
+                            sourceBadge(String(localized: "BTC thêm"))
                         } else if r.registrationSource == "proxy" {
-                            sourceBadge("Đăng ký hộ")
+                            sourceBadge(String(localized: "Đăng ký hộ"))
                         }
                     }
                     HStack(spacing: 8) {
@@ -224,7 +225,7 @@ struct SocialRosterManageView: View {
         let (text, color): (String, Color) = switch r.status {
         case "checked_in": ("Đã check-in", TLColor.accentText)
         case "no_show": ("Vắng mặt", .red)
-        default: ("Đã đăng ký", TLColor.fg3)
+        default: (String(localized: "Đã đăng ký"), TLColor.fg3)
         }
         return Text(text).font(TLFont.mono(10, .semibold)).tracking(0.5)
             .padding(.horizontal, 8).padding(.vertical, 3)
@@ -235,8 +236,8 @@ struct SocialRosterManageView: View {
     private func paymentChip(_ r: EventRegistration) -> some View {
         let claimed = model.orders[r.id]?.playerClaimedPaid == true
         let (text, color): (String, Color) = r.paymentStatus == "paid"
-            ? ("Đã trả", TLColor.accentText)
-            : claimed ? ("Báo đã CK", .orange) : ("Chưa trả", TLColor.fg3)
+            ? (String(localized: "Đã trả"), TLColor.accentText)
+            : claimed ? (String(localized: "Báo đã CK"), .orange) : ("Chưa trả", TLColor.fg3)
         return Text(text).font(TLFont.mono(10, .semibold)).tracking(0.5)
             .padding(.horizontal, 8).padding(.vertical, 3)
             .background(color.opacity(0.12), in: Capsule())
@@ -322,7 +323,8 @@ private struct ManualAddRegistrationSheet: View {
                             Picker("Trạng thái", selection: $paymentStatus) {
                                 Text("Chưa trả").tag("unpaid")
                                 Text("Đã báo CK").tag("claimed_paid")
-                                Text("Miễn phí").tag("waived")
+                                // symbolic key: "Miễn phí" nghĩa Waived (BTC miễn), khác nghĩa Free (sự kiện 0đ)
+                                Text(LocalizedStringResource("payment.waived", defaultValue: "Miễn phí")).tag("waived")
                             }
                         }
                     }
@@ -367,7 +369,7 @@ private struct ManualAddRegistrationSheet: View {
             Haptics.success()
             onAdded()
         } catch {
-            errorText = "Không thêm được: \(error.localizedDescription)"
+            errorText = String(localized: "Không thêm được: \(error.localizedDescription)")
         }
         busy = false
     }

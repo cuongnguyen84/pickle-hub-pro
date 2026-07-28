@@ -32,7 +32,7 @@ struct FeedEmbedCard: View {
                     )
                 }
 
-                Text(embed.caption?.nonEmpty ?? "Video pickleball trên Instagram")
+                Text(embed.caption?.nonEmpty ?? String(localized: "Video pickleball trên Instagram"))
                     .font(TLFont.serif(22))
                     .foregroundStyle(TLColor.fg)
                     .lineLimit(3)

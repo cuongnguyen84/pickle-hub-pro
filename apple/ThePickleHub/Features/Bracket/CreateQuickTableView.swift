@@ -220,10 +220,10 @@ struct CreateQuickTableView: View {
 
     private var stepCount: some View {
         VStack(alignment: .leading, spacing: 20) {
-            stepHeader("Bước 1 / 3", "Bước 1: Thông tin giải đấu", "Nhập thông tin cơ bản về giải đấu")
+            stepHeader(String(localized: "Bước 1 / 3"), String(localized: "Bước 1: Thông tin giải đấu"), String(localized: "Nhập thông tin cơ bản về giải đấu"))
 
             labeled("Tên giải / bảng đấu") {
-                inputField("VD: Giải Pickleball Mùa Hè 2024", text: $name)
+                inputField(String(localized: "VD: Giải Pickleball Mùa Hè 2024"), text: $name)
             }
             labeled("Thể thức thi đấu") {
                 Picker("", selection: $isDoubles) {
@@ -233,14 +233,14 @@ struct CreateQuickTableView: View {
                 .pickerStyle(.segmented)
             }
             labeled(isDoubles ? "Số đôi (dự kiến)" : "Số đơn (dự kiến)") {
-                inputField(isDoubles ? "VD: 15 đôi" : "VD: 10 đơn", text: $playerCountText, keyboard: .numberPad)
+                inputField(isDoubles ? String(localized: "VD: 15 đôi") : String(localized: "VD: 10 đơn"), text: $playerCountText, keyboard: .numberPad)
             }
 
             Rectangle().fill(TLColor.border).frame(height: 1)
 
             checkRow(isOn: $requiresRegistration, icon: "checklist",
-                     title: "Yêu cầu VĐV đăng ký trước",
-                     desc: "VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu")
+                     title: String(localized: "Yêu cầu VĐV đăng ký trước"),
+                     desc: String(localized: "VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu"))
 
             if requiresRegistration { registrationOptions }
 
@@ -262,16 +262,16 @@ struct CreateQuickTableView: View {
             }
 
             checkRow(isOn: $requiresSkillLevel, icon: nil,
-                     title: "Bắt buộc khai trình độ",
-                     desc: "VĐV phải khai trình độ (DUPR hoặc tự mô tả)")
+                     title: String(localized: "Bắt buộc khai trình độ"),
+                     desc: String(localized: "VĐV phải khai trình độ (DUPR hoặc tự mô tả)"))
 
             if requiresSkillLevel { ratingSourcePicker }
 
             DisclosureGroup(isExpanded: $showAdvanced) {
                 VStack(alignment: .leading, spacing: 14) {
                     checkRow(isOn: $autoApprove, icon: nil,
-                             title: "Tự động duyệt đăng ký",
-                             desc: "VĐV được duyệt ngay khi đăng ký (không khuyến nghị)")
+                             title: String(localized: "Tự động duyệt đăng ký"),
+                             desc: String(localized: "VĐV được duyệt ngay khi đăng ký (không khuyến nghị)"))
                     labeled("Thông báo cho VĐV khi đăng ký") {
                         TextField("VD: BTC sẽ xác nhận trình độ…", text: $registrationMessage, axis: .vertical)
                             .lineLimit(2...4)
@@ -296,16 +296,16 @@ struct CreateQuickTableView: View {
     private var ratingSourcePicker: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Nguồn rating").font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.fg)
-            radioRow("self", "Tự kê khai", "Người chơi nhập rating tự do (như cũ)")
-            radioRow("dupr", "Bắt buộc DUPR", "Người chơi phải kết nối DUPR — rating tự fill từ profile")
-            radioRow("either", "Cả hai (ưu tiên DUPR)", "Auto-fill nếu user đã DUPR, nếu chưa thì tự kê khai")
+            radioRow("self", String(localized: "Tự kê khai"), String(localized: "Người chơi nhập rating tự do (như cũ)"))
+            radioRow("dupr", String(localized: "Bắt buộc DUPR"), String(localized: "Người chơi phải kết nối DUPR — rating tự fill từ profile"))
+            radioRow("either", String(localized: "Cả hai (ưu tiên DUPR)"), String(localized: "Auto-fill nếu user đã DUPR, nếu chưa thì tự kê khai"))
             if ratingSource != "self" {
                 Rectangle().fill(TLColor.border).frame(height: 1)
                 Text("GIỚI HẠN DUPR (TÙY CHỌN)").font(TLFont.mono(9, .medium)).tracking(0.6).foregroundStyle(TLColor.fg3)
                 HStack(spacing: 8) {
-                    inputField("Tối thiểu", text: $minDupr, keyboard: .decimalPad)
+                    inputField(String(localized: "Tối thiểu"), text: $minDupr, keyboard: .decimalPad)
                     Text("–").foregroundStyle(TLColor.fg4)
-                    inputField("Tối đa", text: $maxDupr, keyboard: .decimalPad)
+                    inputField(String(localized: "Tối đa"), text: $maxDupr, keyboard: .decimalPad)
                 }
                 Text("Để trống = không giới hạn. VD: 3.0 – 4.5 chỉ nhận VĐV trong khoảng này.")
                     .font(TLFont.sans(11)).foregroundStyle(TLColor.fg4)
@@ -334,19 +334,19 @@ struct CreateQuickTableView: View {
 
     private var stepFormat: some View {
         VStack(alignment: .leading, spacing: 16) {
-            stepHeader("Bước 2 / 3", "Bước 2: Chọn thể thức",
-                       "\(playerCount) người — " + (suggestedFormat == "large_playoff"
-                        ? "Thể thức dành cho giải đông người."
-                        : "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng."))
+            stepHeader(String(localized: "Bước 2 / 3"), String(localized: "Bước 2: Chọn thể thức"),
+                       String(localized: "\(playerCount) người — ") + (suggestedFormat == "large_playoff"
+                        ? String(localized: "Thể thức dành cho giải đông người.")
+                        : String(localized: "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng.")))
 
             formatOption(value: "round_robin", icon: "trophy",
-                         title: "Chia bảng (Round Robin)",
-                         desc: "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Top của mỗi bảng sẽ vào vòng Playoff.",
-                         disabled: playerCount > 48, disabledMsg: "Không khả dụng với >48 người")
+                         title: String(localized: "Chia bảng (Round Robin)"),
+                         desc: String(localized: "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Top của mỗi bảng sẽ vào vòng Playoff."),
+                         disabled: playerCount > 48, disabledMsg: String(localized: "Không khả dụng với >48 người"))
             formatOption(value: "large_playoff", icon: "bolt",
-                         title: "Playoff đông người",
-                         desc: "Thể thức dành cho giải đông người. Lượt 1-2 ghi nhận thắng/thua và hiệu số, từ lượt 3 trở đi là single elimination.",
-                         disabled: playerCount < 32, disabledMsg: "Chỉ khả dụng với ≥32 người")
+                         title: String(localized: "Playoff đông người"),
+                         desc: String(localized: "Thể thức dành cho giải đông người. Lượt 1-2 ghi nhận thắng/thua và hiệu số, từ lượt 3 trở đi là single elimination."),
+                         disabled: playerCount < 32, disabledMsg: String(localized: "Chỉ khả dụng với ≥32 người"))
 
             backButton { step = .count }
         }
@@ -396,7 +396,7 @@ struct CreateQuickTableView: View {
 
     private var stepGroups: some View {
         VStack(alignment: .leading, spacing: 14) {
-            stepHeader("Bước 3 / 3", "Bước 3: Chia bảng", "\(playerCount) người")
+            stepHeader(String(localized: "Bước 3 / 3"), String(localized: "Bước 3: Chia bảng"), String(localized: "\(playerCount) người"))
 
             if suggestions.isEmpty {
                 Text("Không có cấu hình bảng phù hợp cho \(playerCount) người. Thử số người khác.")
@@ -445,7 +445,7 @@ struct CreateQuickTableView: View {
     private var stepRoster: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
-                stepHeader("VĐV", "Nhập danh sách người chơi", "Nhập tên và hạt giống (tùy chọn)")
+                stepHeader("VĐV", String(localized: "Nhập danh sách người chơi"), String(localized: "Nhập tên và hạt giống (tùy chọn)"))
                 Spacer()
                 Button { roster.shuffle() } label: {
                     Label("Xáo trộn", systemImage: "shuffle").font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.accentText)
@@ -483,8 +483,9 @@ struct CreateQuickTableView: View {
             if manualAvailable {
                 labeled("Phương thức chia bảng") {
                     HStack(spacing: 10) {
-                        assignmentOption("auto", icon: "wand.and.stars", title: "Tự động", desc: "Hệ thống chia đều, tránh cùng team, rải seed")
-                        assignmentOption("manual", icon: "hand.point.up.left", title: "Thủ công", desc: "Tự chọn VĐV vào từng bảng")
+                        // symbolic key: "Tự động" nghĩa Automatic (chia bảng), khác nghĩa System (ThemeStore)
+                        assignmentOption("auto", icon: "wand.and.stars", title: String(localized: "quickTable.seeding.automatic", defaultValue: "Tự động"), desc: String(localized: "Hệ thống chia đều, tránh cùng team, rải seed"))
+                        assignmentOption("manual", icon: "hand.point.up.left", title: "Thủ công", desc: String(localized: "Tự chọn VĐV vào từng bảng"))
                     }
                 }
             }
@@ -504,7 +505,7 @@ struct CreateQuickTableView: View {
             tipsBox
 
             primaryButton(
-                working ? "Đang xử lý…" : "Tạo bảng đấu và chia bảng",
+                working ? "Đang xử lý…" : String(localized: "Tạo bảng đấu và chia bảng"),
                 enabled: filledRoster.count >= 2 && !working
             ) {
                 Task { await finishSetup() }
@@ -539,7 +540,7 @@ struct CreateQuickTableView: View {
     private func singlesRosterRow(index: Int, p: Binding<PlayerField>) -> some View {
         HStack(spacing: 6) {
             Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 20)
-            rosterTextField("Tên VĐV *", p.name)
+            rosterTextField(String(localized: "Tên VĐV *"), p.name)
             TextField("Team", text: p.team)
                 .font(TLFont.sans(13)).foregroundStyle(TLColor.fg2).frame(width: 60)
                 .padding(.horizontal, 8).padding(.vertical, 9)
@@ -555,8 +556,8 @@ struct CreateQuickTableView: View {
         HStack(alignment: .top, spacing: 8) {
             Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 20).padding(.top, 9)
             VStack(spacing: 6) {
-                rosterTextField("VĐV 1 *", p.name)
-                rosterTextField("VĐV 2 *", p.name2)
+                rosterTextField(String(localized: "VĐV 1 *"), p.name)
+                rosterTextField(String(localized: "VĐV 2 *"), p.name2)
             }
             VStack(spacing: 6) {
                 seedField(p.seed)
@@ -589,10 +590,10 @@ struct CreateQuickTableView: View {
             Image(systemName: "person.2").font(.system(size: 13)).foregroundStyle(TLColor.accentText).padding(.top, 2)
             VStack(alignment: .leading, spacing: 5) {
                 Text("Mẹo chia bảng tốt:").font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg)
-                tip("Nhập Team để tránh cùng team vào cùng bảng")
-                tip("Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng")
-                if assignmentMode == "auto" { tip("Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau") }
-                else { tip("Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo") }
+                tip(String(localized: "Nhập Team để tránh cùng team vào cùng bảng"))
+                tip(String(localized: "Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng"))
+                if assignmentMode == "auto" { tip(String(localized: "Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau")) }
+                else { tip(String(localized: "Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo")) }
             }
         }
         .padding(14)
@@ -697,7 +698,7 @@ struct CreateQuickTableView: View {
 
     // MARK: Reusable bits
 
-    private func labeled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+    private func labeled<Content: View>(_ label: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label).font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg2)
             content()

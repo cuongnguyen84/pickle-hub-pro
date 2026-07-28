@@ -19,7 +19,7 @@ struct FlexTournament: Decodable, Equatable {
     let creatorUserID: UUID?
     var createdAt: String? = nil
 
-    var displayName: String { name.nonEmpty ?? "Giải linh hoạt" }
+    var displayName: String { name.nonEmpty ?? String(localized: "Giải linh hoạt") }
 
     enum CodingKeys: String, CodingKey {
         case id, name, status

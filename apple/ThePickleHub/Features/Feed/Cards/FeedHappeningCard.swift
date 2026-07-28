@@ -8,9 +8,9 @@ struct FeedHappeningCard: View {
 
     private var badge: String {
         switch happening.kind {
-        case .live:       return "🔴 Đang live"
-        case .tournament: return "🏆 Giải đấu"
-        case .event:      return "📅 Sự kiện"
+        case .live:       return String(localized: "🔴 Đang live")
+        case .tournament: return String(localized: "🏆 Giải đấu")
+        case .event:      return String(localized: "📅 Sự kiện")
         }
     }
 
@@ -21,8 +21,8 @@ struct FeedHappeningCard: View {
     private var cta: String {
         switch happening.kind {
         case .live:       return "Xem ngay"
-        case .tournament: return "Đăng ký ngay"
-        case .event:      return "Xem chi tiết"
+        case .tournament: return String(localized: "Đăng ký ngay")
+        case .event:      return String(localized: "Xem chi tiết")
         }
     }
 

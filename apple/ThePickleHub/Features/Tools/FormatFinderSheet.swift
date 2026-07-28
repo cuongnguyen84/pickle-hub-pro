@@ -14,9 +14,9 @@ struct FormatFinderSheet: View {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .small: return "Dưới 16"
+            case .small: return String(localized: "Dưới 16")
             case .medium: return "16–32"
-            case .large: return "Trên 32"
+            case .large: return String(localized: "Trên 32")
             }
         }
     }
@@ -29,15 +29,15 @@ struct FormatFinderSheet: View {
         switch size {
         case .large:
             return (BracketFormat.doublesElim.labelVi,
-                    "Nhiều đội + cần kết thúc nhanh → nhánh thắng nhánh thua.",
+                    String(localized: "Nhiều đội + cần kết thúc nhanh → nhánh thắng nhánh thua."),
                     .doublesElim)
         case .medium where timeLimited:
             return (BracketFormat.doublesElim.labelVi,
-                    "Cỡ vừa và giới hạn thời gian → loại kép gọn hơn.",
+                    String(localized: "Cỡ vừa và giới hạn thời gian → loại kép gọn hơn."),
                     .doublesElim)
         default:
             return ("Bảng đấu nhanh",
-                    "Ai cũng được đánh nhiều trận → vòng tròn rồi playoff.",
+                    String(localized: "Ai cũng được đánh nhiều trận → vòng tròn rồi playoff."),
                     .quickTable)
         }
     }
@@ -46,12 +46,12 @@ struct FormatFinderSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    question(title: "Dự kiến bao nhiêu người?") {
+                    question(title: String(localized: "Dự kiến bao nhiêu người?")) {
                         segmented(Size.allCases, selected: size, label: \.label) { size = $0; Haptics.light() }
                     }
-                    question(title: "Có giới hạn thời gian không?") {
+                    question(title: String(localized: "Có giới hạn thời gian không?")) {
                         HStack(spacing: 8) {
-                            choice("Có", selected: timeLimited == true) { timeLimited = true; Haptics.light() }
+                            choice(String(localized: "Có"), selected: timeLimited == true) { timeLimited = true; Haptics.light() }
                             choice("Không", selected: timeLimited == false) { timeLimited = false; Haptics.light() }
                         }
                     }

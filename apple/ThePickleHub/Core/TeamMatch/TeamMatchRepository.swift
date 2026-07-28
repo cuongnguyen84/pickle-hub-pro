@@ -168,8 +168,8 @@ struct TeamMatchRepository {
         case limitReached, authRequired, failed(String)
         var errorDescription: String? {
             switch self {
-            case .limitReached: return "Đã đạt giới hạn: mỗi tài khoản tối đa 3 giải. Liên hệ tapickleballvn@gmail.com để mở rộng."
-            case .authRequired: return "Bạn cần đăng nhập để tạo giải."
+            case .limitReached: return String(localized: "Đã đạt giới hạn: mỗi tài khoản tối đa 3 giải. Liên hệ tapickleballvn@gmail.com để mở rộng.")
+            case .authRequired: return String(localized: "Bạn cần đăng nhập để tạo giải.")
             case .failed(let m): return m
             }
         }
@@ -266,7 +266,7 @@ struct TeamMatchRepository {
             switch result.error {
             case "LIMIT_REACHED": throw CreateError.limitReached
             case "AUTH_REQUIRED": throw CreateError.authRequired
-            default: throw CreateError.failed(result.error ?? "Không tạo được giải")
+            default: throw CreateError.failed(result.error ?? String(localized: "Không tạo được giải"))
             }
         }
 
@@ -503,8 +503,8 @@ struct TeamMatchRepository {
                 options: FunctionInvokeOptions(body: Body(
                     captainEmail: email.trimmingCharacters(in: .whitespacesAndNewlines),
                     tournamentId: tournamentID.uuidString.lowercased(), tournamentName: tournamentName)))
-            if resp.success == true { return .ok(resp.message ?? "Đã mời đội") }
-            return .failed(resp.error ?? "Không mời được đội")
+            if resp.success == true { return .ok(resp.message ?? String(localized: "Đã mời đội")) }
+            return .failed(resp.error ?? String(localized: "Không mời được đội"))
         } catch { return .failed(error.localizedDescription) }
     }
 
@@ -534,8 +534,8 @@ struct TeamMatchRepository {
         case notAuthed, alreadyMember
         var errorDescription: String? {
             switch self {
-            case .notAuthed: return "Cần đăng nhập để tham gia đội."
-            case .alreadyMember: return "Bạn đã ở trong một đội của giải này."
+            case .notAuthed: return String(localized: "Cần đăng nhập để tham gia đội.")
+            case .alreadyMember: return String(localized: "Bạn đã ở trong một đội của giải này.")
             }
         }
     }
@@ -606,9 +606,9 @@ struct TeamMatchRepository {
         case tooFewTeams, notPowerOfTwo, noTemplates
         var errorDescription: String? {
             switch self {
-            case .tooFewTeams: return "Cần ít nhất 2 đội (đã duyệt) để tạo lịch."
-            case .notPowerOfTwo: return "Số đội phải là lũy thừa của 2 (4, 8, 16, 32…) cho loại trực tiếp."
-            case .noTemplates: return "Giải chưa có game template."
+            case .tooFewTeams: return String(localized: "Cần ít nhất 2 đội (đã duyệt) để tạo lịch.")
+            case .notPowerOfTwo: return String(localized: "Số đội phải là lũy thừa của 2 (4, 8, 16, 32…) cho loại trực tiếp.")
+            case .noTemplates: return String(localized: "Giải chưa có game template.")
             }
         }
     }

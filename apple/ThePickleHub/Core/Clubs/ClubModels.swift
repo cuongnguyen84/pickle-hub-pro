@@ -70,6 +70,7 @@ struct ClubEvent: Decodable, Identifiable, Equatable {
     let priceVnd: Int?
     let status: String?
 
+    // canonical — ghi xuống DB, KHÔNG localize (proposal native-bilingual inc.2)
     var title: String { titleVi.nonEmpty ?? titleEn?.nonEmpty ?? "Sự kiện" }
     var startDate: Date? { startAt.flatMap { SocialDate.parse($0) } }
 
@@ -103,7 +104,7 @@ struct ClubMatch: Decodable, Identifiable, Equatable {
         switch format {
         case "singles": return "ĐƠN"
         case "doubles": return "ĐÔI"
-        case "mixed": return "ĐÔI NAM NỮ"
+        case "mixed": return String(localized: "ĐÔI NAM NỮ")
         default: return format.uppercased()
         }
     }
@@ -148,7 +149,7 @@ struct ClubMember: Decodable, Identifiable, Equatable {
     let duprSingles: Double?
 
     var id: UUID { profileID }
-    var name: String { displayName?.nonEmpty ?? "Thành viên" }
+    var name: String { displayName?.nonEmpty ?? String(localized: "Thành viên") }
     var initials: String {
         let words = name.split(separator: " ").prefix(2)
         return words.compactMap { $0.first }.map { String($0).uppercased() }.joined().nonEmpty ?? "?"

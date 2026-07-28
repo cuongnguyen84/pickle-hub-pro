@@ -34,7 +34,7 @@ struct FindPlayersRepository {
 
     func postRequest(city: String?, district: String?, band: SkillBand?, playAt: Date?, note: String) async throws {
         guard let uid = await currentUserID() else {
-            throw NSError(domain: "findplayers", code: 401, userInfo: [NSLocalizedDescriptionKey: "Cần đăng nhập"])
+            throw NSError(domain: "findplayers", code: 401, userInfo: [NSLocalizedDescriptionKey: String(localized: "Cần đăng nhập")])
         }
         let iso = playAt.map { ISO8601DateFormatter().string(from: $0) }
         try await client.from("play_requests").insert(RequestInsert(

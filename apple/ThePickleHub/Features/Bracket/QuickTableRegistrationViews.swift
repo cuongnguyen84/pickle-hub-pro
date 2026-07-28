@@ -23,7 +23,7 @@ struct QuickTableRegistrationsSheet: View {
                         Text("Chưa có ai đăng ký.").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3).padding(.top, 8)
                     }
                     if !pending.isEmpty {
-                        sectionHeader("Chờ duyệt · \(pending.count)") {
+                        sectionHeader(String(localized: "Chờ duyệt · \(pending.count)")) {
                             Button {
                                 let ids = selectedPending.isEmpty ? pending.map(\.id) : Array(selectedPending)
                                 Haptics.success()
@@ -53,11 +53,11 @@ struct QuickTableRegistrationsSheet: View {
                         ForEach(pending) { r in pendingRow(r) }
                     }
                     if !approved.isEmpty {
-                        sectionHeader("Đã duyệt · \(approved.count)") { EmptyView() }
+                        sectionHeader(String(localized: "Đã duyệt · \(approved.count)")) { EmptyView() }
                         ForEach(approved) { r in plainRow(r, color: TLColor.accentText, editable: true) }
                     }
                     if !rejected.isEmpty {
-                        sectionHeader("Từ chối · \(rejected.count)") { EmptyView() }
+                        sectionHeader(String(localized: "Từ chối · \(rejected.count)")) { EmptyView() }
                         ForEach(rejected) { r in plainRow(r, color: TLColor.live, editable: true) }
                     }
                     if model.detail?.table.status == "setup" {
@@ -118,7 +118,7 @@ struct QuickTableRegistrationsSheet: View {
 
     private func sectionHeader<Trailing: View>(_ title: String, @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack {
-            Text(title.uppercased()).font(TLFont.mono(10.5, .semibold)).tracking(1).foregroundStyle(TLColor.fg3)
+            Text(title).textCase(.uppercase).font(TLFont.mono(10.5, .semibold)).tracking(1).foregroundStyle(TLColor.fg3)
             Spacer()
             trailing()
         }
@@ -304,7 +304,8 @@ private struct QuickTableApprovedSetupSheet: View {
                 }
                 Section("Phương thức chia bảng") {
                     Picker("Chia bảng", selection: $manual) {
-                        Text("Tự động").tag(false)
+                        // symbolic key: "Tự động" nghĩa Automatic (chia bảng), khác nghĩa System (ThemeStore)
+                        Text(LocalizedStringResource("quickTable.seeding.automatic", defaultValue: "Tự động")).tag(false)
                         Text("Thủ công").tag(true)
                     }
                     .pickerStyle(.segmented)
@@ -391,7 +392,7 @@ private struct QuickTableApprovedSetupSheet: View {
             Haptics.success()
             onFinished()
         } catch {
-            errorMessage = UserFacingError.message(action: "Tạo bảng đấu", error: error)
+            errorMessage = UserFacingError.message(failure: "Không tạo được bảng đấu.", error: error)
             Haptics.error()
         }
     }
@@ -478,7 +479,8 @@ struct QuickTableSelfRegisterSheet: View {
                     }
                     field("Hệ trình độ") {
                         Picker("", selection: $rating) {
-                            Text("Không").tag("none"); Text("DUPR").tag("DUPR"); Text("Khác").tag("other")
+                            // symbolic key: "Không" nghĩa None (hệ trình độ), khác nghĩa No (FormatFinder/ForumCreate)
+                            Text(LocalizedStringResource("option.none", defaultValue: "Không")).tag("none"); Text("DUPR").tag("DUPR"); Text("Khác").tag("other")
                         }
                         .pickerStyle(.segmented)
                         .disabled(table?.ratingSource == "dupr" || verifiedDuprLocked)
@@ -523,7 +525,8 @@ struct QuickTableSelfRegisterSheet: View {
                         )
                     } label: {
                         if busy { ProgressView().tint(TLColor.accentText) }
-                        else { Text("Gửi").font(TLFont.sans(15, .semibold)) }
+                        // symbolic key: "Gửi" nghĩa Submit (form), khác nghĩa Send (ChatPanel)
+                        else { Text(LocalizedStringResource("form.submit", defaultValue: "Gửi")).font(TLFont.sans(15, .semibold)) }
                     }
                     .foregroundStyle(canSubmit ? TLColor.accentText : TLColor.fg4)
                     .disabled(!canSubmit || busy)
@@ -603,21 +606,21 @@ struct QuickTableSelfRegisterSheet: View {
 
     private var duprRangeText: String {
         switch (table?.minSkillLevel, table?.maxSkillLevel) {
-        case let (min?, max?): return " · yêu cầu \(min)–\(max)"
-        case let (min?, nil): return " · tối thiểu \(min)"
-        case let (nil, max?): return " · tối đa \(max)"
+        case let (min?, max?): return String(localized: " · yêu cầu \(min)–\(max)")
+        case let (min?, nil): return String(localized: " · tối thiểu \(min)")
+        case let (nil, max?): return String(localized: " · tối đa \(max)")
         default: return ""
         }
     }
 
-    private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
+    private func field<C: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
             content()
         }
     }
 
-    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+    private func tf(_ binding: Binding<String>, _ placeholder: LocalizedStringKey) -> some View {
         TextField(placeholder, text: binding)
             .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
             .padding(.horizontal, 12).padding(.vertical, 11)

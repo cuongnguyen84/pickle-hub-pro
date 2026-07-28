@@ -57,7 +57,7 @@ final class RankingsViewModel {
             let players = DuprSnapshot.players(scope: scope, format: format)
             rows = players.map {
                 RankRow(id: "\(scope.rawValue)-\(format.rawValue)-\($0.rank)", rank: $0.rank, name: $0.name,
-                        subtitle: $0.age.map { "\($0) tuổi" }, rating: $0.rating,
+                        subtitle: $0.age.map { String(localized: "\($0) tuổi") }, rating: $0.rating,
                         avatarURL: nil, username: nil, isStale: false)
             }
             phase = .loaded

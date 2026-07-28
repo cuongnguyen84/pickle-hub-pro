@@ -1,0 +1,262 @@
+# Allowlist cho gate duplicates (scripts/native-i18n-gates.mjs).
+# Một dòng = một chuỗi VI được phép xuất hiện ở >=2 file với CÙNG một nghĩa/bản dịch.
+# Nguồn: quét 28/07 (231 chuỗi) — round2/ui-ux-critic.json là căn cứ phân loại.
+# CUONG CHƯA DUYỆT từng dòng — duyệt dần, xoá dòng nào thấy đa nghĩa.
+#
+# --- ĐA NGHĨA CÒN LẠI (chờ Cuong duyệt) ---
+# "Sân" chưa tách (panel còn tranh luận Venues vs Courts — SocialHubView tab vs nhãn sân đấu).
+Sân
+# --- ĐÃ TÁCH SYMBOLIC KEY (inc.6-7) — literal còn lại MỘT nghĩa; site nghĩa kia
+# --- dùng LocalizedStringResource/String(localized:) với key riêng, literal ở đó
+# --- chỉ là defaultValue nên vẫn bị gate đếm. Key symbolic: scoring.mode.rally,
+# --- payment.waived, newsletter.subscribe, roster.stat.registered,
+# --- teamMatch.tab.standings, quickTable.seeding.automatic, forum.post,
+# --- form.submit, option.none, player.singular, action.remove.
+# "Trực tiếp" = Live (LiveView/AppTabView/HomeLiveSection); Rally đã tách scoring.mode.rally.
+Trực tiếp
+# "Miễn phí" = Free (SocialModels priceLabel); Waived đã tách payment.waived.
+Miễn phí
+# "Đăng ký" = Register (nút/navigationTitle); Subscribe + Registered đã tách.
+Đăng ký
+# "Xếp hạng" = Rankings (RankingsView); Standings đã tách teamMatch.tab.standings.
+Xếp hạng
+# "Tự động" = System (ThemeStore); Automatic (3 site chia bảng) đã tách quickTable.seeding.automatic.
+Tự động
+# "Bài viết" = Articles (BlogListView); Post (forum) đã tách forum.post.
+Bài viết
+# "Gửi" = Send (ChatPanel); Submit đã tách form.submit.
+Gửi
+# "Không" = No (FormatFinder/ForumCreate/DeepLink); None đã tách option.none.
+Không
+# "Người chơi" = Players/danh từ chung (10 file); 2 fallback số ít đã tách player.singular.
+# Lưu ý inc.8: soát lại nghĩa từng site còn lại khi dịch EN.
+Người chơi
+# "Xóa" = Delete (destructive, 7 file); Remove (gỡ ảnh CreateClubView) đã tách action.remove.
+Xóa
+# "Đội"/"Sự kiện": site display dùng key literal; fallback ghi DB giữ verbatim + comment canonical (inc.2).
+Đội
+Sự kiện
+# --- MỘT NGHĨA (chờ Cuong duyệt) ---
+Hủy
+Thử lại
+Đóng
+Lưu
+Đơn
+Thêm
+Đôi
+VĐV
+ĐƠN
+ĐÔI
+Giải đấu
+Chung kết
+Lỗi không xác định
+Bán kết
+Chia sẻ
+Tất cả
+Cài đặt giải
+Đang lưu…
+Đang diễn ra
+Cần đăng nhập
+Giải linh hoạt
+Đã kết thúc
+Nữ
+Tứ kết
+Tiếp tục
+Mở trên web
+Đã hiểu
+Tên VĐV
+Tên của bạn
+Xác nhận
+Đấu đồng đội
+Chia bảng
+Bảng đấu nhanh
+Khác
+Tên giải đấu
+Tạo
+Thủ công
+Tên hiển thị
+Ngân hàng
+Số tài khoản
+Lưu tỉ số
+Chấm điểm
+Không tải được giải
+Không tìm thấy người dùng với email này
+Người này đã là trọng tài
+Không thể thêm trọng tài
+Trọng tài
+Chưa có trọng tài.
+Email trọng tài
+Thêm VĐV
+Đang tạo…
+Duyệt
+Loại kép
+Không tạo được giải
+Người dùng
+Vòng bảng
+Sân \($0)
+Cần đăng nhập để đăng ký.
+Đôi nam
+Đôi nữ
+Tạo bảng đấu
+Giờ bắt đầu (tùy chọn)
+Hệ trình độ
+Thêm đội
+VĐV 1
+VĐV 2
+Quay lại
+Đang tạo...
+Tạo giải đấu
+Công khai
+Xóa VĐV
+Thể thức
+Bỏ thay đổi?
+Bỏ thay đổi
+Ngày tổ chức
+Địa điểm
+Tên chủ tài khoản
+Chọn ngân hàng
+Đăng ký thành công
+Không thể lưu điểm
+TIẾP THEO
+Cập nhật điểm trực tiếp
+Nhận quyền chấm trận
+Nhập tỉ số
+CHẤM TRỰC TIẾP
+Kết nối DUPR
+Đã thêm trọng tài \(name ?? email)
+Xóa giải đấu?
+Trọng tài có thể chấm điểm mọi trận. Người dùng phải đã có tài khoản.
+Xóa giải đấu
+Bảng
+Mô tả
+Đang chờ duyệt
+Từ chối
+Đang kiểm tra…
+Đội hình
+Lưu thay đổi
+Mở buổi chơi
+\(max) chỗ
+Tìm kiếm
+Hồ sơ
+Bắt đầu
+Đang cài đặt
+Đã hoàn thành
+Bạn cần đăng nhập để tạo giải.
+GIẢI ĐẤU
+TRANH CHẤP
+Tên không được để trống.
+KẾT QUẢ
+ĐÃ DUYỆT
+ĐÃ GỬI DUPR
+BỊ TỪ CHỐI
+Đang chuẩn bị
+Đang đăng ký
+Đơn nam
+Đơn nữ
+Vòng tròn
+Vòng \(r.round)
+Loại trực tiếp
+Đã nộp lệ phí
+Đã đầy
+Sắp diễn ra
+Đăng nhập bằng số điện thoại
+Gửi mã OTP
+Số đội
+\(model.teamCount) đội
+Tự khai
+Thêm người chơi
+Phương thức chia bảng
+Đang xử lý…
+Thông tin
+Tiếp tục nhập
+VD: Sân ABC, Q.7
+Đã hủy đăng ký
+Không còn trận nào trong hàng đợi.
+Chưa gán sân
+\(matches.count) trận
+chờ
+Vòng 16
+Vòng \(count * 2)
+Giao bóng
+Tới \($0)
+Đang kiểm tra DUPR…
+Chọn đồng đội
+Đội của bạn
+\"\(tournament.displayName)\" và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn.
+Tên giải
+Hiển thị
+Tạo nội dung
+Trận
+Nội dung
+Đang tải…
+Không thể cập nhật
+Xóa đội
+Tên
+Không thể hoàn tất
+Có ngày tổ chức
+Quản lý vòng bảng
+Đăng ký tham gia
+Đã được duyệt
+Bị từ chối
+Sửa
+Sinh vòng Playoff
+NHÀ VÔ ĐỊCH
+Xóa vĩnh viễn
+Bỏ chọn tất cả
+Duyệt lại
+Sân & giờ
+Sân, VD: 1, 2, 3
+Giờ bắt đầu, VD: 08:00
+Tên hiển thị *
+Quản lý đội
+Đã đăng ký
+Đăng ký đội
+Nộp lệ phí
+Tham gia đội
+Mời
+CHỜ
+Đã lưu
+Trạng thái
+Bảng sân trực tiếp
+THÀNH VIÊN
+Không tải được CLB
+NHÁP
+Tên CLB *
+Khu vực *
+VÙNG NGUY HIỂM
+BÀI VIẾT
+Ván \(index + 1)
+Bảng tin
+Quận/Huyện
+Đăng bài
+Bài viết mới
+Xóa bình luận
+Không tìm thấy bài viết.
+HỎI ĐÁP
+Viết bình luận…
+Diễn đàn
+Không tải được bài viết
+SẮP PHÁT
+Log trận
+Chưa có dữ liệu
+SẮP DIỄN RA
+Đang gửi…
+Tin nhắn
+Thông báo
+Cài đặt tài khoản
+Thiết lập hồ sơ
+Không tải được hồ sơ
+Đã check-in
+Phí tham gia
+Công cụ
+Không lưu được: \(error.localizedDescription)
+Điều hành trực tiếp
+Danh sách đăng ký
+Không tải được sự kiện
+Xé vé
+Không tải được sân
+# --- Câu lỗi B2 dùng lại giữa các bề mặt chấm điểm (inc.2, một nghĩa) ---
+Không lưu được tỉ số.
+Không cập nhật được điểm trực tiếp.
+Không nhận được quyền chấm trận.
+Không tạo được bảng đấu.

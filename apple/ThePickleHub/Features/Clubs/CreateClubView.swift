@@ -4,6 +4,7 @@ import PhotosUI
 /// Slugify a name → url-safe slug (Vietnamese diacritics stripped), ≤50 chars.
 /// Mirror of web CreateClub.slugify.
 func clubSlugify(_ input: String) -> String {
+    // canonical — KHÔNG theo locale: sinh slug ASCII ổn định
     let base = input.folding(options: .diacriticInsensitive, locale: Locale(identifier: "en_US_POSIX"))
         .replacingOccurrences(of: "đ", with: "d").replacingOccurrences(of: "Đ", with: "d")
         .lowercased()
@@ -167,7 +168,8 @@ struct CreateClubView: View {
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: hasPreviewImage ? [] : [4])))
                 }
                 if hasPreviewImage {
-                    Button("Xóa") { picked = nil; previewImage = nil; model.image = nil }
+                    // symbolic key: "Xóa" nghĩa Remove (gỡ ảnh), khác nghĩa Delete (destructive)
+                    Button { picked = nil; previewImage = nil; model.image = nil } label: { Text(LocalizedStringResource("action.remove", defaultValue: "Xóa")) }
                         .font(TLFont.sans(12, .semibold)).foregroundStyle(TLColor.live)
                 }
             }
@@ -205,13 +207,13 @@ struct CreateClubView: View {
         .buttonStyle(.plain).disabled(!model.canSubmit).opacity(model.canSubmit ? 1 : 0.5)
     }
 
-    private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
+    private func field<C: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
             content()
         }
     }
-    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+    private func tf(_ binding: Binding<String>, _ placeholder: LocalizedStringKey) -> some View {
         TextField(placeholder, text: binding)
             .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
             .padding(.horizontal, 11).padding(.vertical, 10)

@@ -36,27 +36,27 @@ enum TournamentMutationError: Error, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .authenticationRequired:
-            return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+            return String(localized: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.")
         case .notAuthorized:
-            return "Bạn không có quyền chấm trận này."
+            return String(localized: "Bạn không có quyền chấm trận này.")
         case .versionConflict:
-            return "Điểm vừa được cập nhật trên thiết bị khác. Hãy tải lại trước khi lưu."
+            return String(localized: "Điểm vừa được cập nhật trên thiết bị khác. Hãy tải lại trước khi lưu.")
         case .downstreamLocked:
-            return "Không thể sửa kết quả vì trận phụ thuộc đã bắt đầu."
+            return String(localized: "Không thể sửa kết quả vì trận phụ thuộc đã bắt đầu.")
         case .bracketConflict:
-            return "Nhánh đấu đã thay đổi. Hãy tải lại trước khi tiếp tục."
+            return String(localized: "Nhánh đấu đã thay đổi. Hãy tải lại trước khi tiếp tục.")
         case .participantsMissing:
-            return "Trận chưa đủ người chơi để ghi điểm."
+            return String(localized: "Trận chưa đủ người chơi để ghi điểm.")
         case .invalidScore:
-            return "Tỷ số không hợp lệ. Hai bên phải có điểm khác nhau."
+            return String(localized: "Tỷ số không hợp lệ. Hai bên phải có điểm khác nhau.")
         case .invalidGames:
-            return "Danh sách ván không hợp lệ với thể thức của trận."
+            return String(localized: "Danh sách ván không hợp lệ với thể thức của trận.")
         case .cannotReopenCompleted:
-            return "Không thể đưa trận đã hoàn tất về trạng thái đang đấu."
+            return String(localized: "Không thể đưa trận đã hoàn tất về trạng thái đang đấu.")
         case .matchNotFound:
-            return "Không tìm thấy trận đấu."
+            return String(localized: "Không tìm thấy trận đấu.")
         case .server(let code):
-            return "Không thể lưu thay đổi (\(code))."
+            return String(localized: "Không thể lưu thay đổi (\(code)).")
         }
     }
 }

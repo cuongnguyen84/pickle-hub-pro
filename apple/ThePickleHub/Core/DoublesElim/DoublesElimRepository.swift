@@ -234,11 +234,11 @@ struct DoublesElimRepository {
         case limitReached, authRequired, invalidTeamCount(Int), teamCountMismatch(declared: Int, actual: Int), failed(String)
         var errorDescription: String? {
             switch self {
-            case .limitReached: return "Đã đạt giới hạn: mỗi tài khoản tối đa 3 giải."
-            case .authRequired: return "Bạn cần đăng nhập để tạo giải."
-            case .invalidTeamCount(let count): return "Số đội \(count) không hợp lệ; giải mới hỗ trợ 40–128 đội."
+            case .limitReached: return String(localized: "Đã đạt giới hạn: mỗi tài khoản tối đa 3 giải.")
+            case .authRequired: return String(localized: "Bạn cần đăng nhập để tạo giải.")
+            case .invalidTeamCount(let count): return String(localized: "Số đội \(count) không hợp lệ; giải mới hỗ trợ 40–128 đội.")
             case .teamCountMismatch(let declared, let actual):
-                return "Danh sách có \(actual) đội nhưng bước thiết lập khai báo \(declared) đội."
+                return String(localized: "Danh sách có \(actual) đội nhưng bước thiết lập khai báo \(declared) đội.")
             case .failed(let m): return m
             }
         }
@@ -330,6 +330,7 @@ struct DoublesElimRepository {
             let p1 = team.p1.trimmingCharacters(in: .whitespaces)
             let p2 = team.p2.trimmingCharacters(in: .whitespaces)
             let derived = team.teamName.trimmingCharacters(in: .whitespaces).nonEmpty
+                // canonical — ghi xuống DB, KHÔNG localize (proposal native-bilingual inc.2)
                 ?? (!p1.isEmpty && !p2.isEmpty ? "\(p1) / \(p2)" : (p1.nonEmpty ?? p2.nonEmpty ?? "Đội"))
             return DEAtomicCreateTeam(
                 team_name: derived,
@@ -364,7 +365,7 @@ struct DoublesElimRepository {
             switch result.error {
             case "LIMIT_REACHED": throw DECreateError.limitReached
             case "AUTH_REQUIRED": throw DECreateError.authRequired
-            default: throw DECreateError.failed(result.detail ?? result.error ?? "Không tạo được giải")
+            default: throw DECreateError.failed(result.detail ?? result.error ?? String(localized: "Không tạo được giải"))
             }
         }
         return shareID
@@ -491,25 +492,25 @@ struct DoublesElimRepository {
     /// Localized copy of the RPC error codes (port of localizeError, VN only).
     static func localizeRegError(_ code: String?) -> String {
         switch code {
-        case "AUTH_REQUIRED": return "Cần đăng nhập"
-        case "INVALID_PARTNER": return "Đồng đội không hợp lệ"
-        case "TOURNAMENT_NOT_FOUND": return "Không tìm thấy giải"
-        case "REGISTRATION_CLOSED": return "Đăng ký đã đóng"
-        case "NOT_DUPR_TOURNAMENT": return "Giải này không dùng DUPR"
-        case "TOURNAMENT_FULL": return "Giải đã đủ đội"
-        case "ALREADY_REGISTERED": return "Bạn hoặc đồng đội đã đăng ký rồi"
-        case "MISSING_DUPR": return "Thiếu DUPR ở ít nhất 1 VĐV"
-        case "OUT_OF_RANGE": return "DUPR trung bình ngoài khoảng cho phép"
-        case "NOT_OWNER": return "Không có quyền"
-        case "NOT_REGISTRATION_OPEN": return "Giải không ở trạng thái mở đăng ký"
-        case "NOT_FULL": return "Chưa đủ đội"
-        case "TEAM_COUNT_MISMATCH": return "Số đội hiện tại không khớp sức chứa của giải"
-        case "BRACKET_ALREADY_EXISTS": return "Giải đã có nhánh đấu; hãy tải lại"
-        case "INVALID_PLAYERS": return "Thiếu VĐV"
-        case "SAME_PLAYER": return "Hai VĐV trùng nhau"
-        case "TEAM_NOT_FOUND": return "Không tìm thấy đội"
+        case "AUTH_REQUIRED": return String(localized: "Cần đăng nhập")
+        case "INVALID_PARTNER": return String(localized: "Đồng đội không hợp lệ")
+        case "TOURNAMENT_NOT_FOUND": return String(localized: "Không tìm thấy giải")
+        case "REGISTRATION_CLOSED": return String(localized: "Đăng ký đã đóng")
+        case "NOT_DUPR_TOURNAMENT": return String(localized: "Giải này không dùng DUPR")
+        case "TOURNAMENT_FULL": return String(localized: "Giải đã đủ đội")
+        case "ALREADY_REGISTERED": return String(localized: "Bạn hoặc đồng đội đã đăng ký rồi")
+        case "MISSING_DUPR": return String(localized: "Thiếu DUPR ở ít nhất 1 VĐV")
+        case "OUT_OF_RANGE": return String(localized: "DUPR trung bình ngoài khoảng cho phép")
+        case "NOT_OWNER": return String(localized: "Không có quyền")
+        case "NOT_REGISTRATION_OPEN": return String(localized: "Giải không ở trạng thái mở đăng ký")
+        case "NOT_FULL": return String(localized: "Chưa đủ đội")
+        case "TEAM_COUNT_MISMATCH": return String(localized: "Số đội hiện tại không khớp sức chứa của giải")
+        case "BRACKET_ALREADY_EXISTS": return String(localized: "Giải đã có nhánh đấu; hãy tải lại")
+        case "INVALID_PLAYERS": return String(localized: "Thiếu VĐV")
+        case "SAME_PLAYER": return String(localized: "Hai VĐV trùng nhau")
+        case "TEAM_NOT_FOUND": return String(localized: "Không tìm thấy đội")
         case .some(let c): return c
-        case .none: return "Lỗi không xác định"
+        case .none: return String(localized: "Lỗi không xác định")
         }
     }
 

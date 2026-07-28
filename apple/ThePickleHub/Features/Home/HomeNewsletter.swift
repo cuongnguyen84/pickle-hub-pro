@@ -46,7 +46,8 @@ struct HomeNewsletter: View {
                             if phase == .sending {
                                 ProgressView().tint(TLColor.accentInk)
                             } else {
-                                Text("Đăng ký").fontWeight(.semibold)
+                                // symbolic key: "Đăng ký" nghĩa Subscribe, khác nghĩa Register
+                                Text(LocalizedStringResource("newsletter.subscribe", defaultValue: "Đăng ký")).fontWeight(.semibold)
                             }
                         }
                         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -71,7 +72,7 @@ struct HomeNewsletter: View {
         phase = .sending
         do {
             let message = try await repo.subscribe(email: email)
-            phase = .success(message.nonEmpty ?? "Đã đăng ký. Xem hộp thư của bạn.")
+            phase = .success(message.nonEmpty ?? String(localized: "Đã đăng ký. Xem hộp thư của bạn."))
         } catch {
             phase = .failure(error.localizedDescription)
         }

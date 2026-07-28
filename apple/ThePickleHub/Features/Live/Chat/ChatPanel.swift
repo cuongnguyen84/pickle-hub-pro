@@ -117,11 +117,11 @@ struct ChatPanel: View {
     private var inputBar: some View {
         Divider().overlay(TLColor.border)
         if !model.isSignedIn {
-            disabledBar("Đăng nhập để tham gia bình luận", icon: "person.crop.circle")
+            disabledBar(String(localized: "Đăng nhập để tham gia bình luận"), icon: "person.crop.circle")
         } else if !model.settings.isChatEnabled {
-            disabledBar("Chat đã bị tắt cho phòng này", icon: "nosign")
+            disabledBar(String(localized: "Chat đã bị tắt cho phòng này"), icon: "nosign")
         } else if model.isMuted {
-            disabledBar("Bạn đang bị tắt tiếng", icon: "speaker.slash")
+            disabledBar(String(localized: "Bạn đang bị tắt tiếng"), icon: "speaker.slash")
         } else {
             // TimelineView drives the 1s slow-mode countdown without a manual timer.
             TimelineView(.periodic(from: .now, by: 1)) { _ in

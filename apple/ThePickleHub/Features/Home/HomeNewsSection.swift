@@ -6,7 +6,7 @@ struct HomeNewsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HomeSectionHeader(title: "Tin mới.")
+            HomeSectionHeader(title: String(localized: "Tin mới."))
 
             VStack(spacing: 0) {
                 ForEach(items.prefix(3)) { item in
@@ -26,7 +26,7 @@ struct HomeNewsSection: View {
             NavigationLink {
                 NewsListView()
             } label: {
-                HomeSeeMore(label: "Xem thêm tin tức")
+                HomeSeeMore(label: String(localized: "Xem thêm tin tức"))
             }
             .buttonStyle(.plain)
         }

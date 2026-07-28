@@ -9,11 +9,11 @@ struct HomeVideosSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HomeSectionHeader(title: "Sân đấu.") {
+            HomeSectionHeader(title: String(localized: "Sân đấu.")) {
                 NavigationLink {
                     VideosListView()
                 } label: {
-                    HomeMoreLink(label: "Xem tất cả")
+                    HomeMoreLink(label: String(localized: "Xem tất cả"))
                 }
                 .buttonStyle(.plain)
             }

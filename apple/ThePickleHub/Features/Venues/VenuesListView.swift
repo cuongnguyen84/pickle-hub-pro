@@ -110,7 +110,7 @@ struct VenuesListView: View {
         if !model.cities.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    chip("TẤT CẢ", active: model.cityFilter == nil) { model.cityFilter = nil }
+                    chip(String(localized: "TẤT CẢ"), active: model.cityFilter == nil) { model.cityFilter = nil }
                     ForEach(model.cities, id: \.self) { city in
                         chip(city.uppercased(), active: model.cityFilter == city) {
                             model.cityFilter = (model.cityFilter == city ? nil : city)

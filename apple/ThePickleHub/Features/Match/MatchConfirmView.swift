@@ -10,7 +10,7 @@ import SwiftUI
 final class MatchConfirmModel {
     enum Tab: String, CaseIterable, Identifiable { case pending, history
         var id: String { rawValue }
-        var label: String { self == .pending ? "Chờ xác nhận" : "Lịch sử" }
+        var label: String { self == .pending ? String(localized: "Chờ xác nhận") : String(localized: "Lịch sử") }
     }
     enum Phase: Equatable { case loading, loaded, failed(String) }
 
@@ -30,7 +30,8 @@ final class MatchConfirmModel {
             || row.teamBPlayerIDs.map { $0.lowercased() }.contains(mine)
     }
 
-    func name(_ id: String) -> String { names[id.lowercased()] ?? "Người chơi" }
+    // symbolic key: "Người chơi" số ít (Player), khác nghĩa Players (section header)
+    func name(_ id: String) -> String { names[id.lowercased()] ?? String(localized: "player.singular", defaultValue: "Người chơi") }
 
     @MainActor
     func load() async {
@@ -55,7 +56,7 @@ final class MatchConfirmModel {
             Haptics.success()
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Xác nhận trận đấu", error: error)
+            actionError = UserFacingError.message(failure: "Không xác nhận được trận đấu.", error: error)
             Haptics.error()
         }
     }
@@ -70,7 +71,7 @@ final class MatchConfirmModel {
             Haptics.light()
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Gửi tranh chấp", error: error)
+            actionError = UserFacingError.message(failure: "Không gửi được tranh chấp.", error: error)
             Haptics.error()
         }
     }

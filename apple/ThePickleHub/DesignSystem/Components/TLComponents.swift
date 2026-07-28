@@ -27,7 +27,7 @@ enum TLButtonKind {
 }
 
 struct TLButton: View {
-    let title: String
+    let title: LocalizedStringKey
     var kind: TLButtonKind = .green
     var isLoading = false
     let action: () -> Void
@@ -81,7 +81,7 @@ struct TLButton: View {
 /// Primary CTA — green fill, dark text. Kept for existing call sites;
 /// delegates to the DS-03 canonical TLButton (.green).
 struct TLPrimaryButton: View {
-    let title: String
+    let title: LocalizedStringKey
     var isLoading = false
     let action: () -> Void
 
@@ -94,7 +94,7 @@ struct TLPrimaryButton: View {
 /// (compile-time enforcement of the panel's a11y constraint).
 struct TLIconButton: View {
     let systemName: String
-    let label: String
+    let label: LocalizedStringKey
     let action: () -> Void
 
     var body: some View {
@@ -198,7 +198,7 @@ struct TLDialog<Content: View>: View {
 
 /// Dark text field styled to the theme.
 struct TLTextField: View {
-    let placeholder: String
+    let placeholder: LocalizedStringKey
     @Binding var text: String
     var isSecure = false
     var keyboard: UIKeyboardType = .default

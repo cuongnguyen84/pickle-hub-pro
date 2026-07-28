@@ -39,9 +39,9 @@ enum TournamentStatus: String {
 
     var label: String {
         switch self {
-        case .upcoming: return "Sắp diễn ra"
-        case .ongoing:  return "Đang diễn ra"
-        case .ended:    return "Đã kết thúc"
+        case .upcoming: return String(localized: "Sắp diễn ra")
+        case .ongoing:  return String(localized: "Đang diễn ra")
+        case .ended:    return String(localized: "Đã kết thúc")
         }
     }
 
@@ -59,6 +59,7 @@ enum TournamentStatus: String {
 
 /// Formats the `DATE` strings into a compact Vietnamese range.
 enum TournamentDate {
+    // canonical — KHÔNG theo locale: fixed-format parser cho chuỗi DATE từ server
     private static let parser: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)

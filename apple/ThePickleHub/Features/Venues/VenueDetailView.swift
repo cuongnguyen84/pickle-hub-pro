@@ -127,7 +127,7 @@ struct VenueDetailView: View {
 
     private func hours(_ v: VenueDetail) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("GIỜ MỞ CỬA")
+            sectionTitle(String(localized: "GIỜ MỞ CỬA"))
             VStack(spacing: 0) {
                 ForEach(Array(v.hoursRows.enumerated()), id: \.offset) { i, row in
                     if i > 0 { Rectangle().fill(TLColor.border).frame(height: 1) }
@@ -146,7 +146,7 @@ struct VenueDetailView: View {
 
     private func amenitiesBlock(_ amenities: [String]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("TIỆN ÍCH")
+            sectionTitle(String(localized: "TIỆN ÍCH"))
             FlowLayout(spacing: 8, lineSpacing: 8) {
                 ForEach(amenities, id: \.self) { featureChip($0) }
             }
@@ -155,7 +155,7 @@ struct VenueDetailView: View {
 
     private var nearbyBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("SÂN GẦN ĐÂY")
+            sectionTitle(String(localized: "SÂN GẦN ĐÂY"))
             VStack(spacing: 13) {
                 ForEach(model.nearby) { VenueRowCardLink(venue: $0) }
             }

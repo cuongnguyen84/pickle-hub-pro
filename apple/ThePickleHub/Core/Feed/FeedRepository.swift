@@ -164,7 +164,7 @@ struct FeedRepository {
             let happening = FeedHappening(
                 kind: .live,
                 title: row.title,
-                meta: "Đang phát trực tiếp — bấm để xem",
+                meta: String(localized: "Đang phát trực tiếp — bấm để xem"),
                 url: WebRoutes.live(id: row.id)
             )
             items.append(FeedItem(id: row.id, happening: happening, publishedAt: date, now: now))
@@ -173,7 +173,7 @@ struct FeedRepository {
             let happening = FeedHappening(
                 kind: .tournament,
                 title: row.name.trimmingCharacters(in: .whitespaces),
-                meta: "Đang mở đăng ký · tối đa \(row.teamCount) đội",
+                meta: String(localized: "Đang mở đăng ký · tối đa \(row.teamCount) đội"),
                 url: WebRoutes.toolsDoublesEliminationView(shareID: row.shareID)
             )
             items.append(FeedItem(id: row.id, happening: happening, publishedAt: FeedDate.parse(row.updatedAt), now: now))
@@ -183,7 +183,7 @@ struct FeedRepository {
             let start = FeedDate.parse(row.startAt)
             var meta = start.map { $0.formatted(.dateTime.weekday(.abbreviated).day().month().hour().minute()) } ?? ""
             if let location = row.locationText?.nonEmpty { meta += " · \(location)" }
-            if let cap = row.maxPlayers { meta += " · \(cap) chỗ" }
+            if let cap = row.maxPlayers { meta += String(localized: " · \(cap) chỗ") }
             let happening = FeedHappening(
                 kind: .event,
                 title: title,

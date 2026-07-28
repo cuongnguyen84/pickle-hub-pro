@@ -9,7 +9,7 @@ final class SocialEventsViewModel {
     var counts: [UUID: Int] = [:]
     private let repo = SocialRepository()
 
-    /// Events grouped by day, in chronological order, with a VN section label.
+    /// Events grouped by day, in chronological order, with a localized section label.
     var groups: [(label: String, events: [SocialEvent])] {
         let cal = Calendar.current
         let withDates = events.compactMap { e -> (Date, SocialEvent)? in e.startDate.map { ($0, e) } }
@@ -19,16 +19,12 @@ final class SocialEventsViewModel {
         }
     }
 
-    private static let dayFmt: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "dd.MM"; return f
-    }()
     private static func dayLabel(_ day: Date) -> String {
         let cal = Calendar.current
-        let date = dayFmt.string(from: day)
-        if cal.isDateInToday(day) { return "HÔM NAY · \(date)" }
-        if cal.isDateInTomorrow(day) { return "NGÀY MAI · \(date)" }
-        let wd = DateFormatter(); wd.locale = Locale(identifier: "vi_VN"); wd.dateFormat = "EEEE"
-        return "\(wd.string(from: day).uppercased()) · \(date)"
+        let date = day.formatted(.dateTime.day(.twoDigits).month(.twoDigits))
+        if cal.isDateInToday(day) { return String(localized: "HÔM NAY · \(date)") }
+        if cal.isDateInTomorrow(day) { return String(localized: "NGÀY MAI · \(date)") }
+        return "\(day.formatted(.dateTime.weekday(.wide)).uppercased()) · \(date)"
     }
 
     @MainActor
@@ -116,7 +112,7 @@ struct SocialEventsTab: View {
         case .loaded:
             ForEach(Array(model.groups.enumerated()), id: \.offset) { _, group in
                 VStack(alignment: .leading, spacing: 12) {
-                    sectionHeader(group.label)
+                    sectionHeader(verbatim: group.label)
                     ForEach(group.events) { event in
                         SocialEventBigCard(event: event, registered: model.counts[event.id])
                     }
@@ -126,9 +122,10 @@ struct SocialEventsTab: View {
         }
     }
 
-    private func sectionHeader(_ label: String) -> some View {
+    /// Group labels are already-localized runtime strings (dayLabel) — verbatim path.
+    private func sectionHeader(verbatim label: String) -> some View {
         HStack(spacing: 10) {
-            Text(label).font(TLFont.mono(11, .semibold)).tracking(1.5).foregroundStyle(TLColor.fg2)
+            Text(verbatim: label).font(TLFont.mono(11, .semibold)).tracking(1.5).foregroundStyle(TLColor.fg2)
             Rectangle().fill(LinearGradient(colors: [TLColor.border, .clear], startPoint: .leading, endPoint: .trailing)).frame(height: 1)
         }
     }
@@ -185,7 +182,7 @@ private struct SocialEventBigCard: View {
                 FlowLayout(spacing: 8, lineSpacing: 8) {
                     tag(event.priceLabel)
                     if let level = event.levelLabel { tag(level) }
-                    if let max = maxPlayers { tag("\(max) chỗ") }
+                    if let max = maxPlayers { tag(String(localized: "\(max) chỗ")) }
                 }
                 .padding(.top, 12)
 
@@ -216,10 +213,9 @@ private struct SocialEventBigCard: View {
 
     private var timeRange: String {
         guard let start = event.startDate else { return "" }
-        let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "HH:mm"
-        let startStr = f.string(from: start)
+        let startStr = start.formatted(date: .omitted, time: .shortened)
         if let endAt = event.endAt, let end = SocialDate.parse(endAt) {
-            return "\(startStr) – \(f.string(from: end))"
+            return "\(startStr) – \(end.formatted(date: .omitted, time: .shortened))"
         }
         return startStr
     }
@@ -228,13 +224,13 @@ private struct SocialEventBigCard: View {
     private var remainingBadge: (some View)? {
         if let rem = remaining {
             if rem <= 0 {
-                badgeView("HẾT CHỖ", color: TLColor.fg3, bg: TLColor.surface2)
+                badgeView(String(localized: "HẾT CHỖ"), color: TLColor.fg3, bg: TLColor.surface2)
             } else if rem <= 1 {
-                badgeView("CÒN \(rem) CHỖ", color: TLColor.live, bg: TLColor.live.opacity(0.12))
+                badgeView(String(localized: "CÒN \(rem) CHỖ"), color: TLColor.live, bg: TLColor.live.opacity(0.12))
             } else if rem <= 4 {
-                badgeView("\(rem) CHỖ CÒN LẠI", color: TLColor.gold, bg: TLColor.gold.opacity(0.12))
+                badgeView(String(localized: "\(rem) CHỖ CÒN LẠI"), color: TLColor.gold, bg: TLColor.gold.opacity(0.12))
             } else {
-                badgeView("\(rem) CHỖ CÒN LẠI", color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
+                badgeView(String(localized: "\(rem) CHỖ CÒN LẠI"), color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
             }
         }
     }

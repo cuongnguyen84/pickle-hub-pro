@@ -16,10 +16,10 @@ final class OnboardingModel {
     private var checkTask: Task<Void, Never>?
 
     static let skills: [(value: String, label: String, desc: String)] = [
-        ("beginner", "NGƯỜI MỚI", "Mới bắt đầu, đang học"),
-        ("intermediate", "TRUNG CẤP", "Chơi ổn định, hiểu luật"),
-        ("advanced", "NÂNG CAO", "Thi đấu giải phong trào"),
-        ("pro", "CHUYÊN NGHIỆP", "Trình độ cao / vận động viên"),
+        ("beginner", String(localized: "NGƯỜI MỚI"), String(localized: "Mới bắt đầu, đang học")),
+        ("intermediate", String(localized: "TRUNG CẤP"), String(localized: "Chơi ổn định, hiểu luật")),
+        ("advanced", String(localized: "NÂNG CAO"), String(localized: "Thi đấu giải phong trào")),
+        ("pro", String(localized: "CHUYÊN NGHIỆP"), String(localized: "Trình độ cao / vận động viên")),
     ]
 
     // ^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])?$  (3–32, web USERNAME_RE)
@@ -177,13 +177,13 @@ struct OnboardingView: View {
         }.buttonStyle(.plain)
     }
 
-    private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
+    private func field<C: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
             content()
         }
     }
-    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+    private func tf(_ binding: Binding<String>, _ placeholder: LocalizedStringKey) -> some View {
         TextField(placeholder, text: binding)
             .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
             .padding(.horizontal, 11).padding(.vertical, 10)

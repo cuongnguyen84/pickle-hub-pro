@@ -13,10 +13,11 @@ final class TeamMatchViewModel {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .overview: return "Tổng quan"
-            case .matches: return "Trận đấu"
+            case .overview: return String(localized: "Tổng quan")
+            case .matches: return String(localized: "Trận đấu")
             case .playoff: return "Playoff"
-            case .teams: return "Xếp hạng"
+            // symbolic key: "Xếp hạng" nghĩa Standings, khác nghĩa Rankings (RankingsView)
+            case .teams: return String(localized: "teamMatch.tab.standings", defaultValue: "Xếp hạng")
             }
         }
     }
@@ -183,7 +184,7 @@ final class TeamMatchViewModel {
                 // Fallback: BXH tổng + seed-position chuẩn.
                 let seeded = Array(d.standings.map { $0.team.id.uuidString.lowercased() }.prefix(target))
                 guard seeded.count >= 2, seeded.count & (seeded.count - 1) == 0 else {
-                    actionError = "Số đội vào playoff phải là luỹ thừa của 2 và đủ đội đã xếp hạng."
+                    actionError = String(localized: "Số đội vào playoff phải là luỹ thừa của 2 và đủ đội đã xếp hạng.")
                     working = false; return
                 }
                 mainFirstRound = seededFirstRound(seeded)
@@ -203,7 +204,7 @@ final class TeamMatchViewModel {
             try await repo.generateBrackets(tournamentID: d.tournament.id, branches: branches)
             await load(shareID: shareID)
             if repechageMissing {
-                actionError = "Đã sinh Playoff, nhưng chưa sinh được nhánh Tái sinh (cần đủ hạng 3,4 mỗi bảng)."
+                actionError = String(localized: "Đã sinh Playoff, nhưng chưa sinh được nhánh Tái sinh (cần đủ hạng 3,4 mỗi bảng).")
             }
         } catch { actionError = error.localizedDescription }
         working = false
@@ -499,8 +500,8 @@ struct TeamMatchDetailView: View {
         let color: Color = team.status == "approved" ? TLColor.accentText : team.status == "rejected" ? TLColor.live : TLColor.gold
         let pending = detail.roster.filter { $0.teamID == team.id && $0.status == "pending" && $0.isCaptain != true }
         VStack(alignment: .leading, spacing: 10) {
-            statusCard(title: "Đội của bạn: \(team.teamName)",
-                       subtitle: team.status == "approved" ? "Đã được duyệt" : team.status == "rejected" ? "Bị từ chối" : "Đang chờ duyệt",
+            statusCard(title: String(localized: "Đội của bạn: \(team.teamName)"),
+                       subtitle: team.status == "approved" ? String(localized: "Đã được duyệt") : team.status == "rejected" ? String(localized: "Bị từ chối") : "Đang chờ duyệt",
                        color: color)
             Button { Haptics.light(); showTeamRoster = true } label: {
                 HStack(spacing: 6) { Image(systemName: "person.2.badge.gearshape"); Text("Quản lý đội hình") }
@@ -532,7 +533,7 @@ struct TeamMatchDetailView: View {
             }.buttonStyle(.plain)
         case .claimed:
             HStack(spacing: 8) {
-                paymentChip("Chờ BTC xác nhận", color: TLColor.gold)
+                paymentChip(String(localized: "Chờ BTC xác nhận"), color: TLColor.gold)
                 Spacer()
                 Button { Haptics.light(); showPayment = true } label: {
                     Text("Xem QR").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.accentText)
@@ -540,7 +541,7 @@ struct TeamMatchDetailView: View {
             }
         case .confirmed:
             HStack(spacing: 8) {
-                paymentChip("Đã nộp lệ phí", color: TLColor.accentText)
+                paymentChip(String(localized: "Đã nộp lệ phí"), color: TLColor.accentText)
                 Text("Đội chính thức tham gia").font(TLFont.mono(10)).foregroundStyle(TLColor.accentText)
                 Spacer()
             }
@@ -572,8 +573,8 @@ struct TeamMatchDetailView: View {
     @ViewBuilder
     private func membershipCard(_ detail: TMDetail, _ m: TMMembership) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            statusCard(title: "Bạn ở đội: \(m.teamName)",
-                       subtitle: m.status == "approved" ? "Đã được duyệt vào đội" : "Chờ đội trưởng duyệt",
+            statusCard(title: String(localized: "Bạn ở đội: \(m.teamName)"),
+                       subtitle: m.status == "approved" ? String(localized: "Đã được duyệt vào đội") : String(localized: "Chờ đội trưởng duyệt"),
                        color: m.status == "approved" ? TLColor.accentText : TLColor.gold)
             Button { Haptics.light(); Task { await model.rejectRoster(shareID: shareID, memberID: m.id) } } label: {
                 Text(m.status == "approved" ? "Rời đội" : "Hủy yêu cầu")
@@ -677,17 +678,17 @@ struct TeamMatchDetailView: View {
         VStack(alignment: .leading, spacing: 14) {
             // Thứ tự: Thể lệ → Thời gian & địa điểm + DUPR/slot → Lệ phí.
             if let rules = t.rulesSummary?.trimmingCharacters(in: .whitespacesAndNewlines), !rules.isEmpty {
-                overviewCard(title: "THỂ LỆ GIẢI", icon: "doc.text") {
+                overviewCard(title: String(localized: "THỂ LỆ GIẢI"), icon: "doc.text") {
                     Text(rules).font(TLFont.sans(14)).foregroundStyle(TLColor.fg2).lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             tournamentInfoCard(detail)
             if t.hasFee {
-                overviewCard(title: "LỆ PHÍ THAM GIA", icon: "creditcard") {
+                overviewCard(title: String(localized: "LỆ PHÍ THAM GIA"), icon: "creditcard") {
                     VStack(alignment: .leading, spacing: 8) {
-                        if let f = t.entryFeeVnd, f > 0 { feeRow("Mỗi VĐV", f) }
-                        if let f = t.entryFeeTeamVnd, f > 0 { feeRow("Mỗi đội", f) }
+                        if let f = t.entryFeeVnd, f > 0 { feeRow(String(localized: "Mỗi VĐV"), f) }
+                        if let f = t.entryFeeTeamVnd, f > 0 { feeRow(String(localized: "Mỗi đội"), f) }
                         discountTierRows(t)
                     }
                 }
@@ -707,17 +708,17 @@ struct TeamMatchDetailView: View {
         let full = total > 0 && filled >= total
         return VStack(alignment: .leading, spacing: 14) {
             whenWhereCard(t)
-            overviewCard(title: "THÔNG TIN GIẢI", icon: "info.circle") {
+            overviewCard(title: String(localized: "THÔNG TIN GIẢI"), icon: "info.circle") {
             VStack(alignment: .leading, spacing: 10) {
                 if t.requiresDupr {
                     infoLine(icon: "gauge.with.needle",
-                             text: "DUPR Nam ≤ \(String(format: "%.2f", t.duprMaxMale ?? 0)) · Nữ ≤ \(String(format: "%.2f", t.duprMaxFemale ?? 0))",
+                             text: String(localized: "DUPR Nam ≤ \(String(format: "%.2f", t.duprMaxMale ?? 0)) · Nữ ≤ \(String(format: "%.2f", t.duprMaxFemale ?? 0))"),
                              color: TLColor.gold)
                 }
                 if total > 0 {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            infoLine(icon: "person.3", text: "Slot đội")
+                            infoLine(icon: "person.3", text: String(localized: "Slot đội"))
                             Spacer()
                             Text("\(filled)/\(total)")
                                 .font(TLFont.mono(13, .bold))
@@ -742,7 +743,7 @@ struct TeamMatchDetailView: View {
     @ViewBuilder
     private func whenWhereCard(_ t: TMTournament) -> some View {
         if t.eventDateLabel != nil || (t.location?.trimmingCharacters(in: .whitespaces).isEmpty == false) {
-            overviewCard(title: "THỜI GIAN & ĐỊA ĐIỂM", icon: "calendar") {
+            overviewCard(title: String(localized: "THỜI GIAN & ĐỊA ĐIỂM"), icon: "calendar") {
                 VStack(alignment: .leading, spacing: 12) {
                     if let dateLabel = t.eventDateLabel {
                         Text(dateLabel).font(TLFont.serif(22)).italic().foregroundStyle(TLColor.fg)
@@ -777,10 +778,10 @@ struct TeamMatchDetailView: View {
     private func countdownChips(to target: Date, now: Date) -> some View {
         let diff = max(0, Int(target.timeIntervalSince(now)))
         let parts: [(Int, String)] = [
-            (diff / 86400, "NGÀY"),
-            (diff / 3600 % 24, "GIỜ"),
-            (diff / 60 % 60, "PHÚT"),
-            (diff % 60, "GIÂY"),
+            (diff / 86400, String(localized: "NGÀY")),
+            (diff / 3600 % 24, String(localized: "GIỜ")),
+            (diff / 60 % 60, String(localized: "PHÚT")),
+            (diff % 60, String(localized: "GIÂY")),
         ]
         HStack(spacing: 8) {
             ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
@@ -919,7 +920,7 @@ struct TeamMatchDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-                Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                Text(title).textCase(.uppercase).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
             }
             ForEach(matches) { m in matchCard(detail, m) }
         }
@@ -1033,7 +1034,7 @@ struct TeamMatchDetailView: View {
         switch count {
         case 1: return "Chung kết"
         case 2: return "Bán kết"
-        case 3...4: return "Tứ kết"
+        case 3...4: return String(localized: "Tứ kết")
         default: return "Vòng \(count * 2)"
         }
     }
@@ -1191,7 +1192,7 @@ struct TeamMatchDetailView: View {
                     }
                     .buttonStyle(.plain)
                     Button { Haptics.light(); scoringMatch = m } label: {
-                        actionFooterLabel(m.isCompleted ? "Sửa điểm" : "Chấm điểm", icon: "square.and.pencil")
+                        actionFooterLabel(m.isCompleted ? String(localized: "Sửa điểm") : "Chấm điểm", icon: "square.and.pencil")
                     }
                     .buttonStyle(.plain)
                 }
@@ -1266,7 +1267,7 @@ struct TeamMatchDetailView: View {
             HStack(spacing: 0) {
                 Text("#").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3).frame(width: 26, alignment: .leading)
                 Text("ĐỘI").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3).frame(maxWidth: .infinity, alignment: .leading)
-                 forEachStat(["Tr", "T", "B", "Ván", "+/-"])
+                 forEachStat(["Tr", "T", "B", String(localized: "Ván"), "+/-"])
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
             Rectangle().fill(TLColor.border).frame(height: 1)
@@ -1369,7 +1370,7 @@ struct TeamMatchDetailView: View {
         .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
     }
 
-    private func note(_ text: String) -> some View {
+    private func note(_ text: LocalizedStringKey) -> some View {
         Text(text).font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
@@ -1408,20 +1409,20 @@ private struct GroupSetupSheet: View {
         for team in teams {
             let members = roster.filter { $0.teamID == team.id }
             var issues: [String] = []
-            if members.count != rosterSize { issues.append("\(members.count)/\(rosterSize) người") }
+            if members.count != rosterSize { issues.append(String(localized: "\(members.count)/\(rosterSize) người")) }
             let males = members.filter { $0.isMale }.count
             let females = members.filter { $0.isFemale }.count
-            if males != half || females != half { issues.append("\(males) nam / \(females) nữ (cần \(half)/\(half))") }
+            if males != half || females != half { issues.append(String(localized: "\(males) nam / \(females) nữ (cần \(half)/\(half))")) }
             if requireDupr {
                 let noDupr = members.filter { m in m.userID.map { dupr[$0] == nil } ?? true }.count
-                if noDupr > 0 { issues.append("\(noDupr) chưa có DUPR") }
+                if noDupr > 0 { issues.append(String(localized: "\(noDupr) chưa có DUPR")) }
             }
             if !issues.isEmpty { out.append((team.teamName, issues)) }
         }
         return out
     }
 
-    enum Mode: String, CaseIterable { case random = "Ngẫu nhiên", manual = "Thủ công" }
+    enum Mode: CaseIterable { case random, manual; var label: LocalizedStringKey { self == .random ? "Ngẫu nhiên" : "Thủ công" } }
     @State private var groupCount = 0
     @State private var mode: Mode = .random
     @State private var assign: [UUID: Int] = [:]   // teamID -> group index
@@ -1458,14 +1459,14 @@ private struct GroupSetupSheet: View {
                             .font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
                     } else {
                         if !violations.isEmpty { constraintWarning }
-                        labeled("Số bảng") {
+                        labeled(String(localized: "Số bảng")) {
                             Picker("", selection: $groupCount) {
                                 ForEach(suggestions) { Text("\($0.groupCount) bảng").tag($0.groupCount) }
                             }.pickerStyle(.segmented)
                         }
-                        labeled("Cách chia") {
+                        labeled(String(localized: "Cách chia")) {
                             Picker("", selection: $mode) {
-                                ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                                ForEach(Mode.allCases, id: \.self) { Text($0.label).tag($0) }
                             }.pickerStyle(.segmented)
                         }
                         if mode == .random {
@@ -1539,7 +1540,7 @@ private struct GroupSetupSheet: View {
                  + Text(v.issues.joined(separator: " · ")).foregroundStyle(TLColor.gold))
                     .font(TLFont.sans(12.5))
             }
-            Text("Yêu cầu: \(rosterSize) người · \(half) nam \(half) nữ\(requireDupr ? " · tất cả có DUPR" : ""). Bạn vẫn có thể chia bảng.")
+            Text("Yêu cầu: \(rosterSize) người · \(half) nam \(half) nữ\(requireDupr ? String(localized: " · tất cả có DUPR") : ""). Bạn vẫn có thể chia bảng.")
                 .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
         }
         .padding(12)
@@ -1597,7 +1598,7 @@ private struct GroupSetupSheet: View {
     @ViewBuilder
     private func labeled<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased()).font(TLFont.mono(10, .medium)).tracking(1).foregroundStyle(TLColor.fg3)
+            Text(title).textCase(.uppercase).font(TLFont.mono(10, .medium)).tracking(1).foregroundStyle(TLColor.fg3)
             content()
         }
     }

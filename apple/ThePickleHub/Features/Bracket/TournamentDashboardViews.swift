@@ -279,7 +279,7 @@ struct TournamentDashboardView: View {
             TLEmptyState(icon: "sportscourt", title: "Chưa có trận đang chờ")
         } else {
             if !snapshot.liveTeamMatches.isEmpty {
-                dashboardHeading("TRẬN ĐANG DIỄN RA", live: true)
+                dashboardHeading(String(localized: "TRẬN ĐANG DIỄN RA"), live: true)
                 ForEach(snapshot.liveTeamMatches) { match in
                     DashboardMatchCard(match: match, isLive: true)
                 }

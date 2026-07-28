@@ -11,11 +11,11 @@ enum TournamentState: Equatable, Hashable {
 
     var label: String {
         switch self {
-        case .draft: return "Nháp"
-        case .open: return "Đang mở"
+        case .draft: return String(localized: "Nháp")
+        case .open: return String(localized: "Đang mở")
         case .full: return "Đã đầy"
-        case .ongoing: return "Đang diễn ra"
-        case .completed: return "Đã kết thúc"
+        case .ongoing: return String(localized: "Đang diễn ra")
+        case .completed: return String(localized: "Đã kết thúc")
         }
     }
 
@@ -30,11 +30,11 @@ enum TournamentState: Equatable, Hashable {
     /// Primary call-to-action label per state (status-driven actions).
     var primaryCTA: String {
         switch self {
-        case .draft: return "Hoàn tất & mở đăng ký"
+        case .draft: return String(localized: "Hoàn tất & mở đăng ký")
         case .open: return "Chia sẻ"
         case .full: return "Tạo bảng đấu"
-        case .ongoing: return "Quản lý"
-        case .completed: return "Xem kết quả"
+        case .ongoing: return String(localized: "Quản lý")
+        case .completed: return String(localized: "Xem kết quả")
         }
     }
 
@@ -58,10 +58,10 @@ enum ToolsFilter: String, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .all: return "Tất cả"
-        case .open: return "Đang mở"
-        case .upcoming: return "Sắp diễn ra"
-        case .completed: return "Đã kết thúc"
-        case .draft: return "Nháp"
+        case .open: return String(localized: "Đang mở")
+        case .upcoming: return String(localized: "Sắp diễn ra")
+        case .completed: return String(localized: "Đã kết thúc")
+        case .draft: return String(localized: "Nháp")
         }
     }
 }
@@ -92,9 +92,9 @@ enum BracketFormat: String, Equatable, Hashable {
     var labelVi: String {
         switch self {
         case .quickTable: return "Chia bảng"
-        case .doublesElim: return "Loại kép"
-        case .teamMatch: return "Đồng đội"
-        case .flex: return "Tùy chỉnh"
+        case .doublesElim: return String(localized: "Loại kép")
+        case .teamMatch: return String(localized: "Đồng đội")
+        case .flex: return String(localized: "Tùy chỉnh")
         }
     }
 
@@ -168,14 +168,14 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     var metaLine: String {
         switch format {
         case .doublesElim:
-            return capacity > 0 ? "\(format.labelVi) · \(capacity) đội" : format.labelVi
+            return capacity > 0 ? String(localized: "\(format.labelVi) · \(capacity) đội") : format.labelVi
         case .teamMatch:
-            return "Đồng đội · MLP"
+            return String(localized: "Đồng đội · MLP")
         case .flex:
-            return "Giải linh hoạt"
+            return String(localized: "Giải linh hoạt")
         case .quickTable:
             let mode = isDoubles ? "Đôi" : "Đơn"
-            return capacity > 0 ? "\(mode) · \(capacity) người" : mode
+            return capacity > 0 ? String(localized: "\(mode) · \(capacity) người") : mode
         }
     }
 
@@ -188,8 +188,8 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     var urgencyText: String? {
         guard hasProgress else { return nil }
         if state == .full { return "Đã đầy" }
-        if fillFraction >= 0.8 { return "Sắp đầy — còn \(slotsLeft) suất" }
-        return "Còn \(slotsLeft) suất"
+        if fillFraction >= 0.8 { return String(localized: "Sắp đầy — còn \(slotsLeft) suất") }
+        return String(localized: "Còn \(slotsLeft) suất")
     }
 
     var isNearlyFull: Bool { fillFraction >= 0.8 && state != .full }
@@ -204,14 +204,11 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     /// regBadgeCount + regBadge in src/lib/regBadge.ts / src/pages/Tournaments.tsx.
     var regBadgeText: String? {
         guard state == .open, registered >= Self.regBadgeMin else { return nil }
-        return isDoubles ? "\(registered) đội đã đăng ký" : "\(registered) người đã đăng ký"
+        return isDoubles ? String(localized: "\(registered) đội đã đăng ký") : String(localized: "\(registered) người đã đăng ký")
     }
 
     var dateText: String {
         guard let createdAt else { return "" }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "vi_VN")
-        f.dateFormat = "dd.MM.yyyy"
-        return "Tạo \(f.string(from: createdAt))"
+        return String(localized: "Tạo \(createdAt.formatted(date: .numeric, time: .omitted))")
     }
 }

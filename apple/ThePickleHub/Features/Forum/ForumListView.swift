@@ -131,7 +131,7 @@ struct ForumListView: View {
                 }
             }
             HStack(spacing: 10) {
-                Text(p.authorName ?? "Người dùng").font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
+                Text(p.authorName ?? String(localized: "Người dùng")).font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
                 Text(ISODate.relative(p.createdAt)).font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
                 Spacer()
                 Label("\(p.commentCount)", systemImage: "bubble.left").font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)

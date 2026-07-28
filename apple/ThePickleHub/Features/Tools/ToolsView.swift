@@ -10,7 +10,7 @@ final class ToolsViewModel {
     enum Scope: String, CaseIterable, Identifiable {
         case mine, all
         var id: String { rawValue }
-        var label: String { self == .mine ? "Của tôi" : "Tất cả" }
+        var label: String { self == .mine ? String(localized: "Của tôi") : "Tất cả" }
     }
 
     var phase: Phase = .loading
@@ -225,19 +225,19 @@ struct ToolsView: View {
 
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader(num: "01", title: "Chọn thể thức").padding(.horizontal, 22)
+            sectionHeader(num: "01", title: String(localized: "Chọn thể thức")).padding(.horizontal, 22)
 
             featuredCard.padding(.horizontal, 22).padding(.top, 15)
 
             VStack(spacing: 10) {
                 compactFormatRow(icon: "arrow.triangle.branch", title: BracketFormat.doublesElim.labelVi,
-                                 meta: "Nhánh đơn / đôi · 40–128 đội",
+                                 meta: String(localized: "Nhánh đơn / đôi · 40–128 đội"),
                                  action: { Haptics.light(); showCreateDoubles = true })
-                compactFormatRow(icon: "slider.horizontal.3", title: "Giải linh hoạt",
-                                 meta: "Tùy biến hoàn toàn",
+                compactFormatRow(icon: "slider.horizontal.3", title: String(localized: "Giải linh hoạt"),
+                                 meta: String(localized: "Tùy biến hoàn toàn"),
                                  action: { Haptics.light(); showCreateFlex = true })
-                compactFormatRow(icon: "person.3.fill", title: "Đấu đồng đội",
-                                 meta: "Thể thức MLP · đội 4–8",
+                compactFormatRow(icon: "person.3.fill", title: String(localized: "Đấu đồng đội"),
+                                 meta: String(localized: "Thể thức MLP · đội 4–8"),
                                  action: { Haptics.light(); showCreateTeamMatch = true })
             }
             .padding(.horizontal, 22).padding(.top, 11)
@@ -369,7 +369,7 @@ struct ToolsView: View {
     private var parentTournamentSection: some View {
         VStack(alignment: .leading, spacing: 13) {
             HStack(spacing: 11) {
-                sectionHeader(num: "02", title: "Giải nhiều nội dung")
+                sectionHeader(num: "02", title: String(localized: "Giải nhiều nội dung"))
                 Button {
                     Haptics.light()
                     showCreateParent = true
@@ -439,7 +439,7 @@ struct ToolsView: View {
     private var publicFlexSection: some View {
         if model.phase == .loaded && !model.publicFlex.isEmpty {
             VStack(alignment: .leading, spacing: 13) {
-                sectionHeader(num: "03", title: "Khám phá Flex công khai")
+                sectionHeader(num: "03", title: String(localized: "Khám phá Flex công khai"))
                     .padding(.horizontal, 22)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -494,7 +494,7 @@ struct ToolsView: View {
     private var refereeSection: some View {
         if model.phase == .loaded && !model.refereeing.isEmpty {
             VStack(alignment: .leading, spacing: 13) {
-                sectionHeader(num: "02", title: "Giải tôi chấm").padding(.horizontal, 22)
+                sectionHeader(num: "02", title: String(localized: "Giải tôi chấm")).padding(.horizontal, 22)
                 VStack(spacing: 12) {
                     ForEach(model.refereeing) { t in
                         TournamentCard(tournament: t) { manage(t) }
@@ -509,7 +509,7 @@ struct ToolsView: View {
 
     private var recentSection: some View {
         VStack(alignment: .leading, spacing: 13) {
-            sectionHeader(num: "03", title: "Giải gần đây").padding(.horizontal, 22)
+            sectionHeader(num: "03", title: String(localized: "Giải gần đây")).padding(.horizontal, 22)
 
             switch model.phase {
             case .loading:
@@ -652,7 +652,7 @@ struct ToolsView: View {
     private func sectionHeader(num: String, title: String) -> some View {
         HStack(spacing: 11) {
             Text("/ \(num)").font(TLFont.mono(12, .bold)).foregroundStyle(TLColor.accentText)
-            Text(title.uppercased()).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
+            Text(title).textCase(.uppercase).font(TLFont.mono(12, .medium)).tracking(2).foregroundStyle(TLColor.fg2)
             Rectangle()
                 .fill(LinearGradient(colors: [TLColor.accent.opacity(0.55), .clear], startPoint: .leading, endPoint: .trailing))
                 .frame(height: 1)

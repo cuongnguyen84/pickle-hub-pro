@@ -115,7 +115,7 @@ struct FindPlayersView: View {
                     Text("TRÌNH").font(TLFont.mono(9.5, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
-                            chip("Mọi trình", selected: model.band == nil) { model.band = nil }
+                            chip(String(localized: "Mọi trình"), selected: model.band == nil) { model.band = nil }
                             ForEach(SkillBand.all) { b in
                                 chip(b.label, selected: model.band?.key == b.key) { model.band = b }
                             }
@@ -237,7 +237,7 @@ struct FindPlayersView: View {
                 .overlay(Capsule().strokeBorder(selected ? Color.clear : TLColor.border, lineWidth: 1))
         }.buttonStyle(.plain)
     }
-    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+    private func tf(_ binding: Binding<String>, _ placeholder: LocalizedStringKey) -> some View {
         TextField(placeholder, text: binding)
             .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
             .padding(.horizontal, 11).padding(.vertical, 10)
@@ -246,7 +246,6 @@ struct FindPlayersView: View {
     }
     private func playAtLabel(_ iso: String?) -> String? {
         guard let d = ISODate.parse(iso) else { return nil }
-        let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "dd/MM · HH:mm"
-        return f.string(from: d)
+        return "\(d.formatted(.dateTime.day(.twoDigits).month(.twoDigits))) · \(d.formatted(date: .omitted, time: .shortened))"
     }
 }

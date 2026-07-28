@@ -31,7 +31,7 @@ final class ClubManageModel {
             actionError = nil
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Duyệt thành viên", error: error)
+            actionError = UserFacingError.message(failure: "Không duyệt được thành viên.", error: error)
         }
     }
     // T5 — mời thành viên: tra email/SĐT chính xác (RPC search_profile_for_manager,
@@ -48,7 +48,7 @@ final class ClubManageModel {
             inviteHit = try await repo.searchProfileForManager(query)
         } catch {
             inviteHit = nil
-            inviteError = UserFacingError.message(action: "Tìm tài khoản", error: error)
+            inviteError = UserFacingError.message(failure: "Không tìm được tài khoản.", error: error)
         }
     }
 
@@ -60,7 +60,7 @@ final class ClubManageModel {
             await load()
             return true
         } catch {
-            inviteError = UserFacingError.message(action: "Mời thành viên", error: error)
+            inviteError = UserFacingError.message(failure: "Không mời được thành viên.", error: error)
             return false
         }
     }
@@ -77,7 +77,7 @@ final class ClubManageModel {
             actionError = nil
             await load()
         } catch {
-            actionError = UserFacingError.message(action: "Cập nhật thành viên", error: error)
+            actionError = UserFacingError.message(failure: "Không cập nhật được thành viên.", error: error)
         }
     }
 }
@@ -136,16 +136,16 @@ struct ClubManageView: View {
                     ProgressView().tint(TLColor.accentText).frame(maxWidth: .infinity).padding(.top, 20)
                 } else {
                     if !model.events.isEmpty {
-                        section("SỰ KIỆN (\(model.events.count))") {
+                        section(String(localized: "SỰ KIỆN (\(model.events.count))")) {
                             ForEach(model.events) { e in eventRow(e) }
                         }
                     }
                     if !model.pending.isEmpty {
-                        section("YÊU CẦU THAM GIA (\(model.pending.count))") {
+                        section(String(localized: "YÊU CẦU THAM GIA (\(model.pending.count))")) {
                             ForEach(model.pending) { m in memberRow(m, pending: true) }
                         }
                     }
-                    section("THÀNH VIÊN (\(model.active.count))") {
+                    section(String(localized: "THÀNH VIÊN (\(model.active.count))")) {
                         if model.active.isEmpty {
                             Text("Chưa có thành viên.").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
                         } else {
@@ -356,7 +356,7 @@ struct EditClubView: View {
                 Task { await model.archive { dismiss() } }
             }.disabled(archiveTyped.trimmingCharacters(in: .whitespaces) != club.name)
         } message: {
-            Text("CLB sẽ bị ẩn khỏi danh sách. Gõ \"\(club.name)\" để xác nhận.")
+            Text(String(localized: "CLB sẽ bị ẩn khỏi danh sách. Gõ \"\(club.name)\" để xác nhận."))
         }
     }
 
@@ -417,13 +417,13 @@ struct EditClubView: View {
         }
     }
 
-    private func field<C: View>(_ label: String, @ViewBuilder _ content: () -> C) -> some View {
+    private func field<C: View>(_ label: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
             content()
         }
     }
-    private func tf(_ binding: Binding<String>, _ placeholder: String) -> some View {
+    private func tf(_ binding: Binding<String>, _ placeholder: LocalizedStringKey) -> some View {
         TextField(placeholder, text: binding)
             .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
             .padding(.horizontal, 11).padding(.vertical, 10)

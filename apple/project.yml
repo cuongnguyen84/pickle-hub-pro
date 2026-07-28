@@ -1,6 +1,9 @@
 name: ThePickleHub
 options:
   bundleIdPrefix: net.thepicklehub
+  # Song ngữ: developmentRegion của pbxproj phải là vi — DEVELOPMENT_LANGUAGE ở
+  # settings.base KHÔNG set được nó (bẫy đã ghi trong proposal native-bilingual).
+  developmentLanguage: vi
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true

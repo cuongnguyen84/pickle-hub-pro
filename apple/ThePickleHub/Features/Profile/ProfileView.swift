@@ -29,6 +29,8 @@ struct ProfileView: View {
     @Environment(SessionStore.self) private var session
     @Environment(ThemeStore.self) private var theme
     @State private var model = ProfileViewModel()
+    @State private var langChoice = AppLanguage.current
+    @State private var showLanguageRestartNote = false
 
     var body: some View {
         ScrollView {
@@ -45,6 +47,7 @@ struct ProfileView: View {
                     communitySection
                     accountSettingsLink(profile)
                     themePicker
+                    languagePicker
                     signOutButton
 
                 case .failed(let message):
@@ -59,6 +62,7 @@ struct ProfileView: View {
                         }
                     }
                     themePicker
+                    languagePicker
                     signOutButton
                 }
             }
@@ -94,7 +98,7 @@ struct ProfileView: View {
     private var communitySection: some View {
         VStack(spacing: 10) {
             communityRow(icon: "text.bubble.fill", title: "Diễn đàn") { ForumListView() }
-            communityRow(icon: "figure.pickleball", title: "Tìm bạn chơi") { FindPlayersView() }
+            communityRow(icon: "figure.pickleball", title: String(localized: "Tìm bạn chơi")) { FindPlayersView() }
             communityRow(icon: "bubble.left.and.bubble.right.fill", title: "Tin nhắn") { MessagesView() }
         }
     }
@@ -143,6 +147,35 @@ struct ProfileView: View {
             )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// D3: hàng "Ngôn ngữ" — đổi per-app AppleLanguages, hiệu lực sau khi mở lại app.
+    private var languagePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Ngôn ngữ")
+                .font(TLFont.mono(10, .semibold)).tracking(1).textCase(.uppercase)
+                .foregroundStyle(TLColor.fg3)
+            TLSegmented(
+                options: [AppLanguage.vi, .en, .system],
+                selection: Binding(get: { langChoice }, set: { choice in
+                    guard choice != langChoice else { return }
+                    langChoice = choice
+                    AppLanguage.apply(choice)
+                    showLanguageRestartNote = true
+                }),
+                label: { choice in
+                    switch choice {
+                    case .vi: "Tiếng Việt"   // tên ngôn ngữ giữ nguyên bản xứ — không dịch
+                    case .en: "English"      // tên ngôn ngữ giữ nguyên bản xứ — không dịch
+                    case .system: String(localized: "Theo máy")
+                    }
+                }
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .alert("Khởi động lại ứng dụng để áp dụng ngôn ngữ mới.", isPresented: $showLanguageRestartNote) {
+            Button("OK") {}
+        }
     }
 
     private var signOutButton: some View {

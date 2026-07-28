@@ -14,7 +14,7 @@ final class DoublesElimViewModel {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .preliminary: return "Sơ loại"
+            case .preliminary: return String(localized: "Sơ loại")
             case .playoff: return "Playoff"
             case .courts: return "Sân"
             case .teams: return "Đội"
@@ -32,6 +32,7 @@ final class DoublesElimViewModel {
     var scoreSaving = false
     var regBusy = false
     var regMessage: String?
+    var regSuccess = false
 
     private let repo = DoublesElimRepository()
     private let refreshGate = TournamentRefreshGate()
@@ -124,7 +125,7 @@ final class DoublesElimViewModel {
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            scoreError = UserFacingError.message(failure: "Không lưu được tỉ số.", error: error)
             Haptics.error()
         }
     }
@@ -134,9 +135,10 @@ final class DoublesElimViewModel {
     @MainActor
     func register(partnerUserID: UUID, teamName: String?, shareID: String) async {
         guard let id = detail?.tournament.id else { return }
-        regBusy = true; regMessage = nil
+        regBusy = true; regMessage = nil; regSuccess = false
         switch await repo.registerTeam(tournamentID: id, partnerUserID: partnerUserID, teamName: teamName) {
         case .ok(let avg):
+            regSuccess = true
             regMessage = "Đăng ký thành công" + (avg.map { String(format: " · DUPR %.2f", $0) } ?? "")
             await fetch(shareID: shareID)
         case .failed(let m): regMessage = m
@@ -161,7 +163,7 @@ final class DoublesElimViewModel {
         regBusy = true; regMessage = nil
         let ok: Bool
         switch await repo.organizerAddTeam(tournamentID: id, player1: player1, player2: player2, teamName: teamName) {
-        case .ok(let avg): regMessage = "Đã thêm đội" + (avg.map { String(format: " · DUPR %.2f", $0) } ?? ""); await fetch(shareID: shareID); ok = true
+        case .ok(let avg): regMessage = String(localized: "Đã thêm đội") + (avg.map { String(format: " · DUPR %.2f", $0) } ?? ""); await fetch(shareID: shareID); ok = true
         case .failed(let m): regMessage = m; ok = false
         }
         regBusy = false
@@ -173,7 +175,7 @@ final class DoublesElimViewModel {
         guard let id = detail?.tournament.id else { return }
         regBusy = true; regMessage = nil
         switch await repo.organizerRemoveTeam(tournamentID: id, teamID: team.id) {
-        case .ok: regMessage = "Đã xóa đội"; await fetch(shareID: shareID)
+        case .ok: regMessage = String(localized: "Đã xóa đội"); await fetch(shareID: shareID)
         case .failed(let m): regMessage = m
         }
         regBusy = false
@@ -284,7 +286,7 @@ struct DoublesElimDetailView: View {
         )) {
             Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
         } message: {
-            Text(model.scoreError ?? "Lỗi không xác định")
+            Text(model.scoreError ?? String(localized: "Lỗi không xác định"))
         }
     }
 
@@ -360,20 +362,20 @@ struct DoublesElimDetailView: View {
     private func preliminary(_ detail: DEDetail) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             if !detail.r1Matches.isEmpty {
-                roundSection(title: "Vòng 1", subtitle: "Winner Bracket", detail: detail, matches: detail.r1Matches)
+                roundSection(title: String(localized: "Vòng 1"), subtitle: "Winner Bracket", detail: detail, matches: detail.r1Matches)
             }
             if !detail.r2Matches.isEmpty {
-                roundSection(title: "Vòng 2", subtitle: "Loser Bracket", detail: detail, matches: detail.r2Matches)
+                roundSection(title: String(localized: "Vòng 2"), subtitle: "Loser Bracket", detail: detail, matches: detail.r2Matches)
             }
             if !detail.r3Matches.isEmpty {
                 if detail.r3NeedsAssignment && !(detail.r1Completed && detail.r2Completed) {
-                    roundHeader(title: "Vòng 3", subtitle: "Sơ loại cuối")
+                    roundHeader(title: String(localized: "Vòng 3"), subtitle: String(localized: "Sơ loại cuối"))
                     note("Chờ V1 & V2 hoàn thành")
                 } else if detail.r3NeedsAssignment {
-                    roundHeader(title: "Vòng 3", subtitle: "Sơ loại cuối")
+                    roundHeader(title: String(localized: "Vòng 3"), subtitle: String(localized: "Sơ loại cuối"))
                     note(model.editable ? "Đang phân vòng 3…" : "Chờ phân vòng 3")
                 } else {
-                    roundSection(title: "Vòng 3", subtitle: "Sơ loại cuối", detail: detail, matches: detail.r3Matches)
+                    roundSection(title: String(localized: "Vòng 3"), subtitle: String(localized: "Sơ loại cuối"), detail: detail, matches: detail.r3Matches)
                 }
             }
             if detail.r1Matches.isEmpty && detail.r2Matches.isEmpty && detail.r3Matches.isEmpty {
@@ -393,10 +395,10 @@ struct DoublesElimDetailView: View {
             if !detail.hasPlayoff {
                 note("Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.")
             } else {
-                roundHeader(title: "Sơ đồ playoff", subtitle: "")
+                roundHeader(title: String(localized: "Sơ đồ playoff"), subtitle: "")
                 BracketTreeView(rounds: playoffBracketRounds(detail))
                 if let tp = detail.thirdPlaceMatch {
-                    roundHeader(title: "Tranh hạng 3", subtitle: "")
+                    roundHeader(title: String(localized: "Tranh hạng 3"), subtitle: "")
                     matchCard(detail, tp)
                 }
             }
@@ -435,7 +437,7 @@ struct DoublesElimDetailView: View {
         if upcoming.isEmpty {
             note("Không còn trận nào trong hàng đợi.")
         } else {
-            let grouped = Dictionary(grouping: upcoming) { $0.courtNumber.map { "Sân \($0)" } ?? "Chưa gán sân" }
+            let grouped = Dictionary(grouping: upcoming) { $0.courtNumber.map { String(localized: "Sân \($0)") } ?? String(localized: "Chưa gán sân") }
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(grouped.keys.sorted(), id: \.self) { court in
                     courtColumn(detail, court: court, matches: grouped[court] ?? [])
@@ -560,7 +562,7 @@ struct DoublesElimDetailView: View {
     private func roundHeader(title: String, subtitle: String, progress: String? = nil) -> some View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-            Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+            Text(title).textCase(.uppercase).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
             if !subtitle.isEmpty {
                 Text(subtitle).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
             }
@@ -642,7 +644,7 @@ struct DoublesElimDetailView: View {
             .background((live ? TLColor.live.opacity(0.12) : TLColor.surface2), in: Capsule())
     }
 
-    private func note(_ text: String) -> some View {
+    private func note(_ text: LocalizedStringKey) -> some View {
         Text(text).font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
@@ -652,14 +654,14 @@ struct DoublesElimDetailView: View {
 
     private func roundLabel(_ type: String, _ count: Int) -> String {
         switch type {
-        case "quarterfinal": return "Tứ kết"
+        case "quarterfinal": return String(localized: "Tứ kết")
         case "semifinal": return "Bán kết"
         case "final": return "Chung kết"
         case "elimination":
             if count == 1 { return "Chung kết" }
             if count == 2 { return "Bán kết" }
-            if count <= 4 { return "Tứ kết" }
-            if count <= 8 { return "Vòng 16" }
+            if count <= 4 { return String(localized: "Tứ kết") }
+            if count <= 8 { return String(localized: "Vòng 16") }
             return "Vòng \(count * 2)"
         default: return "Playoff"
         }
@@ -762,13 +764,13 @@ private struct DEScoreSheet: View {
                     onLiveScore: { a, b in
                         Task {
                             do { try await DoublesElimRepository().updateLiveScore(matchID: match.id, scoreA: a, scoreB: b) }
-                            catch { onError(UserFacingError.message(action: "Cập nhật điểm trực tiếp", error: error)) }
+                            catch { onError(UserFacingError.message(failure: "Không cập nhật được điểm trực tiếp.", error: error)) }
                         }
                     },
                     onClaimLive: {
                         Task {
                             do { try await DoublesElimRepository().claimLive(matchID: match.id) }
-                            catch { onError(UserFacingError.message(action: "Nhận quyền chấm trận", error: error)) }
+                            catch { onError(UserFacingError.message(failure: "Không nhận được quyền chấm trận.", error: error)) }
                         }
                     }) { a, b, _ in
                     rows[nextGameIdx] = (a: String(a), b: String(b))
@@ -812,7 +814,8 @@ private struct DEScoreSheet: View {
         VStack(spacing: 12) {
             Rectangle().fill(TLColor.border).frame(height: 1).padding(.vertical, 2)
             Picker("", selection: $refMode) {
-                Text("Trực tiếp").tag(ScoringMode.rally)
+                // symbolic key: "Trực tiếp" nghĩa Rally ở đây, khác nghĩa Live (round2/ui-ux-critic B1)
+                Text(LocalizedStringResource("scoring.mode.rally", defaultValue: "Trực tiếp")).tag(ScoringMode.rally)
                 Text("Giao bóng").tag(ScoringMode.sideOut)
             }.pickerStyle(.segmented)
             Picker("", selection: $refTarget) {

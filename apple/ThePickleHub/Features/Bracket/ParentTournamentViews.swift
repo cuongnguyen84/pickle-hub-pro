@@ -69,7 +69,7 @@ private final class ParentTournamentDetailModel {
 /// Public/owner native page for a multi-event tournament.
 struct ParentTournamentDetailView: View {
     let shareID: String
-    var fallbackName = "Giải tổng"
+    var fallbackName = String(localized: "Giải tổng")
 
     @Environment(\.dismiss) private var dismiss
     @State private var model: ParentTournamentDetailModel
@@ -82,7 +82,7 @@ struct ParentTournamentDetailView: View {
         let name: String
     }
 
-    init(shareID: String, fallbackName: String = "Giải tổng") {
+    init(shareID: String, fallbackName: String = String(localized: "Giải tổng")) {
         self.shareID = shareID
         self.fallbackName = fallbackName
         _model = State(initialValue: ParentTournamentDetailModel(shareID: shareID))
@@ -99,7 +99,7 @@ struct ParentTournamentDetailView: View {
                 if let detail = model.detail {
                     content(detail)
                 } else {
-                    TLErrorState(message: "Không tìm thấy giải tổng.") {
+                    TLErrorState(message: String(localized: "Không tìm thấy giải tổng.")) {
                         Task { await model.load() }
                     }
                 }
@@ -315,12 +315,13 @@ struct ParentTournamentDetailView: View {
 
     private func eventDateLabel(_ raw: String?) -> String? {
         guard let raw, !raw.isEmpty else { return nil }
+        // canonical — KHÔNG theo locale: fixed-format parser; hiển thị bên dưới theo locale app
         let parser = DateFormatter()
         parser.calendar = Calendar(identifier: .gregorian)
         parser.locale = Locale(identifier: "en_US_POSIX")
         parser.dateFormat = "yyyy-MM-dd"
         guard let date = parser.date(from: raw) else { return raw }
-        return date.formatted(.dateTime.day().month().year().locale(Locale(identifier: "vi_VN")))
+        return date.formatted(.dateTime.day().month().year())
     }
 }
 

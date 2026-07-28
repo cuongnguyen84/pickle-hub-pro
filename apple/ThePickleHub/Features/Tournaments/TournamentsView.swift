@@ -37,8 +37,8 @@ struct TournamentsView: View {
             selection: Binding(get: { model.tab }, set: { model.userTab = $0 }),
             label: { tab in
                 switch tab {
-                case .watch: return "Theo dõi"
-                case .community: return model.communityCount > 0 ? "Cộng đồng \(model.communityCount)" : "Cộng đồng"
+                case .watch: return String(localized: "Theo dõi")
+                case .community: return model.communityCount > 0 ? String(localized: "Cộng đồng \(model.communityCount)") : String(localized: "Cộng đồng")
                 }
             }
         )
@@ -84,7 +84,7 @@ struct TournamentsView: View {
 
     /// nil = all formats. Web parity: `${title} · ${titleVi}` labels.
     private static let formatOptions: [(value: BracketFormat?, label: String)] =
-        [(nil, "Tất cả thể thức")] +
+        [(nil, String(localized: "Tất cả thể thức"))] +
         [BracketFormat.quickTable, .doublesElim, .flex, .teamMatch]
             .map { ($0, "\($0.titleEn) · \($0.labelVi)") }
 
@@ -92,7 +92,7 @@ struct TournamentsView: View {
     private var communityList: some View {
         VStack(spacing: 12) {
             TLSelect(
-                label: "Thể thức",
+                label: String(localized: "Thể thức"),
                 options: Self.formatOptions,
                 selection: Binding(get: { model.communityFormat },
                                    set: { model.communityFormat = $0 })
@@ -106,7 +106,7 @@ struct TournamentsView: View {
                         if status == .ended { Task { await model.loadEndedIfNeeded() } }
                     }
                 ),
-                label: { $0 == .ongoing ? "Đang diễn ra" : "Đã kết thúc" }
+                label: { $0 == .ongoing ? String(localized: "Đang diễn ra") : String(localized: "Đã kết thúc") }
             )
 
             if model.endedLoading {

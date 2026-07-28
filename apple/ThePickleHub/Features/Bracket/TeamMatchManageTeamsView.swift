@@ -183,9 +183,9 @@ struct TeamMatchManageTeamsView: View {
     private func deleteTeamMessage(_ team: TMTeam?) -> String {
         guard let team else { return "" }
         let n = model.members(team.id).count
-        var lines = ["Xóa vĩnh viễn đội này cùng \(n) thành viên. Không hoàn tác được."]
+        var lines = [String(localized: "Xóa vĩnh viễn đội này cùng \(n) thành viên. Không hoàn tác được.")]
         if team.payment == .claimed || team.payment == .confirmed {
-            lines.append("⚠️ Đội này đã báo/đã xác nhận đóng tiền. Xóa đội là xóa luôn bằng chứng đóng tiền — hệ thống KHÔNG hoàn tiền.")
+            lines.append(String(localized: "⚠️ Đội này đã báo/đã xác nhận đóng tiền. Xóa đội là xóa luôn bằng chứng đóng tiền — hệ thống KHÔNG hoàn tiền."))
         }
         return lines.joined(separator: "\n\n")
     }
@@ -224,8 +224,8 @@ struct TeamMatchManageTeamsView: View {
     private func statusBadge(_ status: String?) -> some View {
         let (label, color): (String, Color) = {
             switch status {
-            case "approved": return ("DUYỆT", TLColor.accentText)
-            case "rejected": return ("TỪ CHỐI", TLColor.live)
+            case "approved": return (String(localized: "DUYỆT"), TLColor.accentText)
+            case "rejected": return (String(localized: "TỪ CHỐI"), TLColor.live)
             case "pending": return ("CHỜ", TLColor.gold)
             default: return (status?.uppercased() ?? "—", TLColor.fg3)
             }

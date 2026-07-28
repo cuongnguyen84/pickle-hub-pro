@@ -70,7 +70,7 @@ struct PhoneEventRegistrationView: View {
                 Section("Xác minh bảo mật") {
                     TurnstileChallengeView(siteKey: siteKey,
                         onVerify: { turnstileToken = $0; message = nil },
-                        onError: { turnstileToken = nil; message = "Không thể xác minh. Hãy tải lại CAPTCHA." })
+                        onError: { turnstileToken = nil; message = String(localized: "Không thể xác minh. Hãy tải lại CAPTCHA.") })
                         .id(turnstileGeneration)
                         .frame(height: 74)
                     if turnstileToken == nil {
@@ -174,10 +174,10 @@ struct PhoneEventRegistrationView: View {
                         let payment = try await repo.createPaymentOrder(
                             registrationID: registrationID, magicToken: token)
                         if payment.code == "payment_not_enabled" {
-                            completionNotice = "BTC chưa bật VietQR; bạn có thể thanh toán tại sân."
+                            completionNotice = String(localized: "BTC chưa bật VietQR; bạn có thể thanh toán tại sân.")
                         }
                     } catch {
-                        completionNotice = "Đăng ký đã thành công nhưng chưa tải được thông tin thanh toán. Hãy thử làm mới màn hình."
+                        completionNotice = String(localized: "Đăng ký đã thành công nhưng chưa tải được thông tin thanh toán. Hãy thử làm mới màn hình.")
                     }
                 }
 
@@ -194,8 +194,8 @@ struct PhoneEventRegistrationView: View {
                 sent = true
                 turnstileToken = nil // Turnstile tokens are single-use.
                 message = result.channel == "zalo"
-                    ? "Kiểm tra Zalo để lấy mã OTP"
-                    : "Kiểm tra SMS để lấy mã OTP"
+                    ? String(localized: "Kiểm tra Zalo để lấy mã OTP")
+                    : String(localized: "Kiểm tra SMS để lấy mã OTP")
             }
         } catch {
             message = error.localizedDescription

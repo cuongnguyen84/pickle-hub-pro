@@ -92,7 +92,7 @@ struct AppTabView: View {
             }
             .accessibilityLabel("Giải đấu")
 
-            secondaryIcon("chart.bar.fill", label: "Bảng xếp hạng") {
+            secondaryIcon("chart.bar.fill", label: String(localized: "Bảng xếp hạng")) {
                 homePath.append(HomeRoute.rankings)
             }
 

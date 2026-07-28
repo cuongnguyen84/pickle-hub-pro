@@ -3,29 +3,22 @@ import SwiftUI
 // MARK: - Time helpers
 
 enum LiveTime {
-    private static let clockFmt: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "HH:mm"; return f
-    }()
-    private static let dayFmt: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "EEE dd.MM"; return f
-    }()
-
-    static func clock(_ date: Date) -> String { clockFmt.string(from: date) }
+    static func clock(_ date: Date) -> String { date.formatted(date: .omitted, time: .shortened) }
 
     /// Two-line countdown box for the schedule row.
     static func countdownBox(_ date: Date, now: Date = Date()) -> (top: String, bottom: String, soon: Bool) {
         let minutes = Int(date.timeIntervalSince(now) / 60)
         if minutes <= 60 && minutes >= 0 {
-            return ("CÒN", "\(max(0, minutes))'", true)
+            return (String(localized: "CÒN"), "\(max(0, minutes))'", true)
         }
-        if Calendar.current.isDateInToday(date) { return ("HÔM NAY", clock(date), false) }
-        if Calendar.current.isDateInTomorrow(date) { return ("MAI", clock(date), false) }
-        return (dayFmt.string(from: date).uppercased(), clock(date), false)
+        if Calendar.current.isDateInToday(date) { return (String(localized: "HÔM NAY"), clock(date), false) }
+        if Calendar.current.isDateInTomorrow(date) { return (String(localized: "MAI"), clock(date), false) }
+        return (date.formatted(.dateTime.weekday(.abbreviated).day(.twoDigits).month(.twoDigits)).uppercased(), clock(date), false)
     }
 
     static func remainingMinutes(_ progress: WatchProgress) -> String {
         let m = Int((progress.remainingSeconds / 60).rounded())
-        return "▸ Còn \(max(1, m)) phút"
+        return String(localized: "▸ Còn \(max(1, m)) phút")
     }
 }
 
@@ -257,7 +250,7 @@ struct ScheduleRow: View {
 
     @ViewBuilder
     private var countdownBox: some View {
-        let box = stream.scheduledDate.map { LiveTime.countdownBox($0) } ?? (top: "LỊCH", bottom: "—", soon: false)
+        let box = stream.scheduledDate.map { LiveTime.countdownBox($0) } ?? (top: String(localized: "LỊCH"), bottom: "—", soon: false)
         VStack(spacing: 1) {
             Text(box.top).font(TLFont.mono(8.5)).foregroundStyle(TLColor.fg3)
             Text(box.bottom).font(TLFont.mono(12, .bold)).foregroundStyle(box.soon ? TLColor.accentText : TLColor.fg)

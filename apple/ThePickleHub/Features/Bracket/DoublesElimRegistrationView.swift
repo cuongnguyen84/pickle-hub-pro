@@ -51,11 +51,11 @@ struct DoublesElimRegistrationView: View {
                 if !detail.isFull { organizerAddPanel }
                 if detail.isFull { closeButton }
             } else if !isSignedIn {
-                notice("Đăng nhập để đăng ký đội.", warn: false)
+                notice(String(localized: "Đăng nhập để đăng ký đội."), warn: false)
             } else if let team = myTeam {
                 myRegistrationCard(team)
             } else if detail.isFull {
-                notice("Đã đủ đội. Đợi ban tổ chức bắt đầu giải.", warn: false)
+                notice(String(localized: "Đã đủ đội. Đợi ban tổ chức bắt đầu giải."), warn: false)
             } else if !duprLoaded {
                 ProgressView("Đang kiểm tra DUPR…")
                     .tint(TLColor.accentText)
@@ -73,7 +73,7 @@ struct DoublesElimRegistrationView: View {
         .sheet(isPresented: $showPartnerPicker) {
             OpponentPickerView(title: "Chọn đồng đội", excludeIDs: excludeIDs) { picked in
                 guard picked.userID != nil else {
-                    model.regMessage = "VĐV này chưa có tài khoản — không thể đăng ký."
+                    model.regMessage = String(localized: "VĐV này chưa có tài khoản — không thể đăng ký.")
                     return
                 }
                 partner = picked
@@ -82,7 +82,7 @@ struct DoublesElimRegistrationView: View {
         .sheet(isPresented: $showOrgPicker) {
             OpponentPickerView(title: orgPickerSlot == 1 ? "VĐV 1" : "VĐV 2", excludeIDs: orgExcludeIDs) { picked in
                 guard picked.userID != nil else {
-                    model.regMessage = "VĐV này chưa có tài khoản."
+                    model.regMessage = String(localized: "VĐV này chưa có tài khoản.")
                     return
                 }
                 if orgPickerSlot == 1 { orgP1 = picked } else { orgP2 = picked }
@@ -264,7 +264,7 @@ struct DoublesElimRegistrationView: View {
                 let name = teamName.trimmingCharacters(in: .whitespaces)
                 Task {
                     await model.register(partnerUserID: partnerID, teamName: name.isEmpty ? nil : name, shareID: shareID)
-                    if model.regMessage?.hasPrefix("Đăng ký thành công") == true { partner = nil; teamName = "" }
+                    if model.regSuccess { partner = nil; teamName = "" }
                 }
             } label: {
                 HStack(spacing: 6) {
@@ -356,7 +356,7 @@ struct DoublesElimRegistrationView: View {
 
     private func labeledSlot(_ label: String, picked: PickedPlayer?, onClear: @escaping () -> Void, onPick: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label.uppercased()).font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
+            Text(label).textCase(.uppercase).font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.fg3)
             partnerSlot(picked: picked, onClear: onClear, onPick: onPick)
         }
     }

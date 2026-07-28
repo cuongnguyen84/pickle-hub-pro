@@ -47,7 +47,7 @@ final class ClubDetailViewModel {
             actionError = nil
             Haptics.success()
         } catch {
-            actionError = UserFacingError.message(action: "Gửi yêu cầu tham gia CLB", error: error)
+            actionError = UserFacingError.message(failure: "Không gửi được yêu cầu tham gia CLB.", error: error)
             Haptics.error()
         }
     }
@@ -63,7 +63,7 @@ final class ClubDetailViewModel {
             members = await repo.members(clubID: club.id)
             actionError = nil
         } catch {
-            actionError = UserFacingError.message(action: "Rời CLB", error: error)
+            actionError = UserFacingError.message(failure: "Không rời được CLB.", error: error)
             Haptics.error()
         }
     }
@@ -152,9 +152,9 @@ struct ClubDetailView: View {
         HStack(spacing: 0) {
             stat("\(model.members.count)", "THÀNH VIÊN")
             divider
-            stat("\(model.upcoming.count)", "SỰ KIỆN")
+            stat("\(model.upcoming.count)", String(localized: "SỰ KIỆN"))
             divider
-            stat("\(model.matches.count)", "TRẬN ĐÃ GHI")
+            stat("\(model.matches.count)", String(localized: "TRẬN ĐÃ GHI"))
         }
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
@@ -270,7 +270,7 @@ struct ClubDetailView: View {
         }
     }
 
-    private func sectionHeader(_ title: String, trailing: String?) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey, trailing: String?) -> some View {
         HStack(spacing: 10) {
             Text(title).font(TLFont.mono(11, .semibold)).tracking(1.5).foregroundStyle(TLColor.fg2)
             Rectangle().fill(LinearGradient(colors: [TLColor.border, .clear], startPoint: .leading, endPoint: .trailing)).frame(height: 1)
@@ -317,10 +317,9 @@ private struct ClubEventRow: View {
         let comps: (String, String, String) = {
             guard let d = event.startDate else { return ("", "—", "") }
             let cal = Calendar.current
-            let wd = DateFormatter(); wd.locale = Locale(identifier: "vi_VN"); wd.dateFormat = "EEE"
             let day = String(cal.component(.day, from: d))
             let mon = String(format: "%02d", cal.component(.month, from: d))
-            return (wd.string(from: d).uppercased(), day, mon)
+            return (d.formatted(.dateTime.weekday(.abbreviated)).uppercased(), day, mon)
         }()
         return VStack(spacing: 1) {
             Text(comps.0).font(TLFont.mono(9)).foregroundStyle(TLColor.fg3)
@@ -333,10 +332,9 @@ private struct ClubEventRow: View {
     private var metaLine: String {
         var parts: [String] = []
         if let d = event.startDate {
-            let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "HH:mm"
-            parts.append(f.string(from: d))
+            parts.append(d.formatted(date: .omitted, time: .shortened))
         }
-        if let max = event.maxPlayers { parts.append("\(max) chỗ") }
+        if let max = event.maxPlayers { parts.append(String(localized: "\(max) chỗ")) }
         return parts.joined(separator: " · ")
     }
 }
@@ -364,8 +362,7 @@ struct ClubMatchCard: View {
     private var metaLabel: String {
         var parts: [String] = []
         if let d = match.playedDate {
-            let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN"); f.dateFormat = "dd/MM HH:mm"
-            parts.append(f.string(from: d))
+            parts.append(d.formatted(.dateTime.day(.twoDigits).month(.twoDigits).hour().minute()))
         }
         parts.append(match.formatLabel)
         return parts.joined(separator: " · ")
@@ -401,8 +398,8 @@ struct ClubMatchCard: View {
     @ViewBuilder
     private var duprBadge: some View {
         switch match.duprState {
-        case .submitted: badge("ĐÃ GỬI DUPR", color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
-        case .ready: badge("SẴN SÀNG GỬI", color: TLColor.gold, bg: TLColor.gold.opacity(0.1))
+        case .submitted: badge(String(localized: "ĐÃ GỬI DUPR"), color: TLColor.accentText, bg: TLColor.accent.opacity(0.1))
+        case .ready: badge(String(localized: "SẴN SÀNG GỬI"), color: TLColor.gold, bg: TLColor.gold.opacity(0.1))
         case .draft: badge("NHÁP", color: TLColor.fg3, bg: .clear)
         }
     }

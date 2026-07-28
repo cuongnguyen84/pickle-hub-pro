@@ -135,7 +135,7 @@ final class ChatViewModel {
                 } catch is CancellationError {
                     // Normal when the screen disappears or the stream changes.
                 } catch {
-                    self?.realtimeErrorText = "Mất kết nối bình luận trực tiếp."
+                    self?.realtimeErrorText = String(localized: "Mất kết nối bình luận trực tiếp.")
                 }
             },
         ]

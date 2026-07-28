@@ -9,9 +9,10 @@ enum ThemeMode: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .system: return "Tự động"
-        case .light:  return "Sáng"
-        case .dark:   return "Tối"
+        // key literal "Tự động" = System (nghĩa Automatic đã tách quickTable.seeding.automatic)
+        case .system: return String(localized: "Tự động")
+        case .light:  return String(localized: "Sáng")
+        case .dark:   return String(localized: "Tối")
         }
     }
 

@@ -77,7 +77,7 @@ final class FlexViewModel {
             scoringMatch = nil
             await load(shareID: shareID)
         } catch {
-            scoreError = UserFacingError.message(action: "Lưu tỉ số", error: error)
+            scoreError = UserFacingError.message(failure: "Không lưu được tỉ số.", error: error)
             Haptics.error()
         }
     }
@@ -163,7 +163,7 @@ struct FlexDetailView: View {
         )) {
             Button("Đã hiểu", role: .cancel) { model.scoreError = nil }
         } message: {
-            Text(model.scoreError ?? "Lỗi không xác định")
+            Text(model.scoreError ?? String(localized: "Lỗi không xác định"))
         }
     }
 
@@ -190,7 +190,7 @@ struct FlexDetailView: View {
                 }
                 let ungrouped = data.ungroupedMatches
                 if !ungrouped.isEmpty {
-                    sectionHeader(title: "Trận chưa xếp bảng", count: ungrouped.count)
+                    sectionHeader(title: String(localized: "Trận chưa xếp bảng"), count: ungrouped.count)
                     VStack(spacing: 8) {
                         ForEach(ungrouped) { m in
                             FlexMatchCluster(data: data, match: m, editable: model.editable) { scored in
@@ -230,13 +230,13 @@ struct FlexDetailView: View {
     private func sectionHeader(title: String, count: Int) -> some View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-            Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+            Text(title).textCase(.uppercase).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
             Spacer()
             Text("\(count)").font(TLFont.mono(10)).foregroundStyle(TLColor.fg3).monospacedDigit()
         }
     }
 
-    private func note(_ text: String) -> some View {
+    private func note(_ text: LocalizedStringKey) -> some View {
         Text(text).font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
             .frame(maxWidth: .infinity, alignment: .leading).padding(14)
             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
