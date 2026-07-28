@@ -183,6 +183,8 @@ Bảng 10 rủi ro đầy đủ trong `round1/risk-auditor.md`. Đỉnh bảng:
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
-- Khác kế hoạch:
-- Học được (→ lessons-learned): native gate một-locale = bài "chỉ đo nhánh bot" lặp lại; khai báo tường minh khi làm yếu assertion; "soak" native = test tay, gọi đúng tên.
+- **28/07 tối — CODE XONG TOÀN BỘ inc.1-9, PR #495 (draft) chờ 2 nút tay của Cuong.** Nhánh `feat/native-bilingual` = 10 commit (665b5145…913e158a), stack trên #494.
+- Đã verify: 154/154 cả hai locale (vi mặc định + `-testLanguage en`), 3 gates xanh, catalog 1818 entry đủ EN (needs_review, 51 plural), sim smoke 2 locale bằng build có ký — EN sạch (1 leak "Log trận" bắt được và fix), VI nguyên vẹn.
+- Khác kế hoạch: đòn bẩy bước 3 đo thật +457 (ước +143~156); job CI locale-EN bắt thêm 3 file test assert VI mà cả recon (2) lẫn auditor (4) đều đếm thiếu — tổng thật 7 file; D3 dùng cơ chế per-app AppleLanguages (không phải .environment(\.locale) như critic phác — String(localized:) ngoài SwiftUI không theo environment); deep-link /tournaments mở Safari là hành vi có sẵn (route list không trong universal-link map).
+- Chờ Cuong: (1) Approve/merge #494 rồi #495 (thứ tự bắt buộc); (2) nạp Actions budget; (3) checklist tay §8; (4) duyệt dần 1818 bản dịch + allowlist 231 chuỗi; (5) xoá remote branch t4-t5.
+- Học được (→ lessons-learned): native gate một-locale = bài "chỉ đo nhánh bot" lặp lại — job `-testLanguage en` là human-path của native; khai báo tường minh khi làm yếu assertion (4 file test đổi sang String(localized:) cùng key, ghi trong commit); "soak" native = test tay, gọi đúng tên; helper String cục bộ là lớp mù của mọi phép đếm tĩnh — chỉ screenshot 2 locale bắt được.
