@@ -70,6 +70,41 @@ async function run(env: Env): Promise<string[]> {
 
   if (broken.length === 0) return broken;
 
+  // Dispatch cooldown (29/07): the 1-minute cron used to dispatch on EVERY
+  // tick while a region stayed broken — 100 runs in 6.3h ≈ 12k billed
+  // Actions-min/month. A heal takes ~2 min and the eviction recurs ~30 min
+  // after each heal, so anything dispatched within the cooldown is a
+  // duplicate of a heal already in flight. GH runs API is the state store —
+  // no KV binding needed. Canary dead-window cost: ≤ cooldown, in practice
+  // ~1-2 min because eviction cadence (~30') exceeds the cooldown.
+  const COOLDOWN_MS = 15 * 60_000;
+  try {
+    const lastRes = await fetch(
+      `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/runs?per_page=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${env.GH_DISPATCH_PAT}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "edge-blob-watchdog",
+        },
+      },
+    );
+    if (lastRes.ok) {
+      const data = (await lastRes.json()) as {
+        workflow_runs?: Array<{ created_at?: string }>;
+      };
+      const createdAt = data.workflow_runs?.[0]?.created_at;
+      if (createdAt && Date.now() - Date.parse(createdAt) < COOLDOWN_MS) {
+        console.error(
+          `[watchdog] blob-less: ${broken.join(", ")} — heal dispatched <15min ago, cooldown`,
+        );
+        return broken;
+      }
+    }
+  } catch {
+    // Cooldown check failing must not block the heal itself.
+  }
+
   console.error(`[watchdog] blob-less canaries: ${broken.join(", ")} — dispatching heal`);
   const res = await fetch(
     `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
