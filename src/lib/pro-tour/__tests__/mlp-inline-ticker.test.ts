@@ -65,7 +65,9 @@ describe("parseMlpFromInlineTicker", () => {
     expect(notes.team_a.matchup_wins).toBe(4);
     expect(notes.team_b.matchup_wins).toBe(0);
     expect(m.winner_team).toBe("one");
-    expect(m.external_match_id).toMatch(/^mlp-[a-f0-9-]+-vs-[a-f0-9-]+$/);
+    // Single matchup uuid — NOT the legacy `<teamA>-vs-<teamB>` pair form,
+    // which collides when the same teams meet again in a later event.
+    expect(m.external_match_id).toMatch(/^mlp-[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/);
   });
 
   it("extracts the 4 played games with labels and lineups, skipping the unplayed DB slot", () => {

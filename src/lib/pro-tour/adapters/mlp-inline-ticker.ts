@@ -199,6 +199,7 @@ interface InlineTickerGame {
 
 /** Fields we read off one entry of initialTicker.matchups[]. */
 interface InlineTickerMatchup {
+  uuid?: string | null;
   teamOneUuid?: string | null;
   teamTwoUuid?: string | null;
   teamOneTitle?: string | null;
@@ -330,7 +331,12 @@ function inlineMatchupToParsed(
     planned_start: m.plannedStartDate ?? null,
     venue: m.venue ?? null,
     games,
-    external_id: `${m.teamOneUuid}-vs-${m.teamTwoUuid}`,
+    // Prefer the per-matchup uuid: team-pair ids collide when the same two
+    // teams meet again in a later event (playoffs/finals rematch) — ingest
+    // dedups on (source_provider, external_match_id) and would UPDATE the
+    // old match instead of inserting the new one. Fallback keeps
+    // pre-2026-07 payloads without `uuid` parseable.
+    external_id: m.uuid ?? `${m.teamOneUuid}-vs-${m.teamTwoUuid}`,
   };
 }
 
@@ -364,8 +370,9 @@ export function parseMlpFromInlineTicker(
     if (!norm(subtitle).includes(norm(tournamentName))) {
       throw new Error(
         `MLP inline ticker belongs to another event ("${subtitle}"), not ` +
-          `"${tournamentName}" — this event is likely not currently active. ` +
-          `Will succeed once the event's own matchups go live.`,
+          `"${tournamentName}" — this event is not currently active. ` +
+          `Upcoming event: will succeed once its matchups go live. ` +
+          `Finished event: mark its watchlist row completed to stop retries.`,
       );
     }
   }
