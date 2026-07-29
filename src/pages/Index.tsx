@@ -442,12 +442,12 @@ const Index = () => {
         );
       })()}
 
-      {/* ── Stable priority feed — Editorial → Live → News ──
-          Editorial renders synchronously and anchors the first viewport.
-          Realtime live/news results are inserted below it, so async query
+      {/* ── Priority feed — Live (on air) → Editorial → News ──
+          When a stream is actually live, LiveSection leads the cluster;
+          otherwise Editorial renders synchronously and anchors the first
+          viewport (Editorial → Live → News), so on quiet days async query
           completion cannot push the LCP candidate around or create a large
-          layout shift. The live block still renders only when useful data
-          exists, and the ticker above surfaces live status immediately. */}
+          layout shift. useLiveStatusRealtime re-orders without a reload. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -526,8 +526,7 @@ const Index = () => {
           </section>
         ) : null;
 
-        const cluster: Array<{ key: string; node: ReactNode }> = [
-          editorialNode ? { key: "editorial", node: editorialNode } : null,
+        const liveNode =
           hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
             ? {
                 key: "live",
@@ -540,7 +539,15 @@ const Index = () => {
                   />
                 ),
               }
-            : null,
+            : null;
+
+        // Live leads ONLY while a stream is actually on air — scheduled and
+        // recently-ended streams stay below editorial so the stable-order CLS
+        // win (48a94353) holds on quiet broadcast days.
+        const cluster: Array<{ key: string; node: ReactNode }> = [
+          hasLiveData ? liveNode : null,
+          editorialNode ? { key: "editorial", node: editorialNode } : null,
+          hasLiveData ? null : liveNode,
           {
             key: "news",
             node: (
