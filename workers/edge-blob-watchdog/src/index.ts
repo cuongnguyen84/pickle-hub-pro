@@ -76,8 +76,11 @@ async function run(env: Env): Promise<string[]> {
   // after each heal, so anything dispatched within the cooldown is a
   // duplicate of a heal already in flight. GH runs API is the state store —
   // no KV binding needed. Canary dead-window cost: ≤ cooldown, in practice
-  // ~1-2 min because eviction cadence (~30') exceeds the cooldown.
-  const COOLDOWN_MS = 15 * 60_000;
+  // ~1-2 min because eviction cadence (~30') matches the cooldown.
+  // 30' (raised from 15', Cuong 29/07): halves worst-case storm cost again
+  // (max 48 heal runs/day). Don't raise to 60' — eviction recurs ~30' after
+  // each heal, so 60' would leave auth/OTP dead ~30 min every cycle.
+  const COOLDOWN_MS = 30 * 60_000;
   try {
     const lastRes = await fetch(
       `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/runs?per_page=1`,
@@ -96,7 +99,7 @@ async function run(env: Env): Promise<string[]> {
       const createdAt = data.workflow_runs?.[0]?.created_at;
       if (createdAt && Date.now() - Date.parse(createdAt) < COOLDOWN_MS) {
         console.error(
-          `[watchdog] blob-less: ${broken.join(", ")} — heal dispatched <15min ago, cooldown`,
+          `[watchdog] blob-less: ${broken.join(", ")} — heal dispatched <30min ago, cooldown`,
         );
         return broken;
       }
