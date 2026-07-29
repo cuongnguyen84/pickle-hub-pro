@@ -31,8 +31,10 @@ const CANARIES = [
 // Blob loss is per-edge-region (26/07 forensics: each incident burst confined to
 // one x_sb_edge_region while others served 200). Probe the regions our traffic
 // actually lands in: ap-northeast-1 = project home + pg_cron, ap-northeast-2 =
-// VN users, us-east-1 = GitHub runners / US traffic.
-const REGIONS = ["ap-northeast-1", "ap-northeast-2", "us-east-1"];
+// VN users, us-east-1 = GitHub runners / US traffic, ap-southeast-1 = VN users
+// via Singapore (lost all 75 fns for ~7h on 29/07 unseen by the 3-region list),
+// us-east-2 = repeat offender in the 24-26/07 forensics.
+const REGIONS = ["ap-northeast-1", "ap-northeast-2", "us-east-1", "ap-southeast-1", "us-east-2"];
 
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
