@@ -364,8 +364,9 @@ export function parseMlpFromInlineTicker(
     if (!norm(subtitle).includes(norm(tournamentName))) {
       throw new Error(
         `MLP inline ticker belongs to another event ("${subtitle}"), not ` +
-          `"${tournamentName}" — this event is likely not currently active. ` +
-          `Will succeed once the event's own matchups go live.`,
+          `"${tournamentName}" — this event is not currently active. ` +
+          `Upcoming event: will succeed once its matchups go live. ` +
+          `Finished event: mark its watchlist row completed to stop retries.`,
       );
     }
   }
