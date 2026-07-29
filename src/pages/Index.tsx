@@ -442,8 +442,8 @@ const Index = () => {
         );
       })()}
 
-      {/* ── Priority feed — Live (on air) → Editorial → News ──
-          When a stream is actually live, LiveSection leads the cluster;
+      {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
+          When a stream is live or scheduled, LiveSection leads the cluster;
           otherwise Editorial renders synchronously and anchors the first
           viewport (Editorial → Live → News), so on quiet days async query
           completion cannot push the LCP candidate around or create a large
@@ -541,13 +541,16 @@ const Index = () => {
               }
             : null;
 
-        // Live leads ONLY while a stream is actually on air — scheduled and
-        // recently-ended streams stay below editorial so the stable-order CLS
-        // win (48a94353) holds on quiet broadcast days.
+        // Live leads whenever a stream is on air OR scheduled (restores
+        // #251/#284 behavior dropped by 48a94353). Replay-only days keep
+        // editorial first, so the stable-order CLS win still holds on
+        // fully quiet broadcast days. The one-time shift when the async
+        // live query resolves is an accepted trade-off (owner call, PR #501).
+        const liveLeads = hasLiveData || scheduledStreams.length > 0;
         const cluster: Array<{ key: string; node: ReactNode }> = [
-          hasLiveData ? liveNode : null,
+          liveLeads ? liveNode : null,
           editorialNode ? { key: "editorial", node: editorialNode } : null,
-          hasLiveData ? null : liveNode,
+          liveLeads ? null : liveNode,
           {
             key: "news",
             node: (
