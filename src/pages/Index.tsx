@@ -442,12 +442,12 @@ const Index = () => {
         );
       })()}
 
-      {/* ── Stable priority feed — Editorial → Live → News ──
-          Editorial renders synchronously and anchors the first viewport.
-          Realtime live/news results are inserted below it, so async query
+      {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
+          When a stream is live or scheduled, LiveSection leads the cluster;
+          otherwise Editorial renders synchronously and anchors the first
+          viewport (Editorial → Live → News), so on quiet days async query
           completion cannot push the LCP candidate around or create a large
-          layout shift. The live block still renders only when useful data
-          exists, and the ticker above surfaces live status immediately. */}
+          layout shift. useLiveStatusRealtime re-orders without a reload. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -526,8 +526,7 @@ const Index = () => {
           </section>
         ) : null;
 
-        const cluster: Array<{ key: string; node: ReactNode }> = [
-          editorialNode ? { key: "editorial", node: editorialNode } : null,
+        const liveNode =
           hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
             ? {
                 key: "live",
@@ -540,7 +539,18 @@ const Index = () => {
                   />
                 ),
               }
-            : null,
+            : null;
+
+        // Live leads whenever a stream is on air OR scheduled (restores
+        // #251/#284 behavior dropped by 48a94353). Replay-only days keep
+        // editorial first, so the stable-order CLS win still holds on
+        // fully quiet broadcast days. The one-time shift when the async
+        // live query resolves is an accepted trade-off (owner call, PR #501).
+        const liveLeads = hasLiveData || scheduledStreams.length > 0;
+        const cluster: Array<{ key: string; node: ReactNode }> = [
+          liveLeads ? liveNode : null,
+          editorialNode ? { key: "editorial", node: editorialNode } : null,
+          liveLeads ? null : liveNode,
           {
             key: "news",
             node: (
