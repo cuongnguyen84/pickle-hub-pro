@@ -8,6 +8,13 @@
 -- This is the same function body as before with exactly two additions:
 -- free_perks (text[]) and ball_type (text) read from p_event.
 
+-- REPLAY FIX (2026-07-30): the pre-existing function (20260521120000) has
+-- p_payment DEFAULT NULL; CREATE OR REPLACE cannot remove a parameter default,
+-- so a fresh-DB replay died with 42P13 (prod was applied via manual
+-- DROP+CREATE, which is why prod never hit this). DROP first, then restore
+-- the original REVOKE/GRANT set at the bottom - DROP wipes the ACL.
+DROP FUNCTION IF EXISTS public.create_social_event_with_payment(JSONB, JSONB);
+
 CREATE OR REPLACE FUNCTION public.create_social_event_with_payment(p_event jsonb, p_payment jsonb)
  RETURNS TABLE(event_id uuid, event_slug text)
  LANGUAGE plpgsql
@@ -90,3 +97,8 @@ BEGIN
   RETURN QUERY SELECT v_event_id, v_event_slug;
 END;
 $function$;
+
+REVOKE ALL ON FUNCTION public.create_social_event_with_payment(JSONB, JSONB) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.create_social_event_with_payment(JSONB, JSONB) FROM anon;
+GRANT  EXECUTE ON FUNCTION public.create_social_event_with_payment(JSONB, JSONB) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.create_social_event_with_payment(JSONB, JSONB) TO service_role;
