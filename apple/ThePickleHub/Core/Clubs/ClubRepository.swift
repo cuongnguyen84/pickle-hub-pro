@@ -157,6 +157,30 @@ struct ClubRepository {
     private struct CreateClubParams: Encodable {
         let p_slug: String; let p_name: String; let p_description: String?
         let p_location_text: String; let p_logo_url: String?
+
+        private enum CodingKeys: String, CodingKey {
+            case p_slug, p_name, p_description, p_location_text, p_logo_url
+        }
+
+        /// PostgREST resolves an RPC overload from the complete JSON key set.
+        /// Synthesized Encodable omits nil optionals, making a no-description
+        /// or no-logo request look like a different (non-existent) function.
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(p_slug, forKey: .p_slug)
+            try container.encode(p_name, forKey: .p_name)
+            if let p_description {
+                try container.encode(p_description, forKey: .p_description)
+            } else {
+                try container.encodeNil(forKey: .p_description)
+            }
+            try container.encode(p_location_text, forKey: .p_location_text)
+            if let p_logo_url {
+                try container.encode(p_logo_url, forKey: .p_logo_url)
+            } else {
+                try container.encodeNil(forKey: .p_logo_url)
+            }
+        }
     }
     /// Atomic cap-check + insert (web `create_club_with_cap_check`). Returns new id.
     func createClub(slug: String, name: String, description: String?, location: String, logoURL: String?) async throws -> UUID {

@@ -1,0 +1,1 @@
+function e(t,r){return t.trim().slice(0,r)}function i(t){if(!t||!t.trim())return!0;const r=t.trim();try{const n=new URL(r);return n.protocol==="http:"||n.protocol==="https:"}catch{return!1}}function o(t){if(!t||!t.trim())return null;const r=t.trim();return i(r)?r:null}export{o as a,e as s};

@@ -139,7 +139,9 @@ struct ThePickleHubApp: App {
                 .preferredColorScheme(theme.mode.colorScheme)
                 .tint(TLColor.accent)
                 .onOpenURL { url in
-                    if let link = DeepLink.parse(url) {
+                    if SessionStore.isAuthCallbackURL(url) {
+                        Task { await session.handleAuthCallback(url) }
+                    } else if let link = DeepLink.parse(url) {
                         deepLink = link
                     } else {
                         GIDSignIn.sharedInstance.handle(url)

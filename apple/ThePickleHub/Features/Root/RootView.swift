@@ -10,9 +10,7 @@ struct RootView: View {
             switch session.state {
             case .unknown:
                 ProgressView().tint(TLColor.accentText)
-            case .signedOut:
-                LoginView()
-            case .signedIn:
+            case .signedOut, .signedIn:
                 AppTabView()
             }
         }

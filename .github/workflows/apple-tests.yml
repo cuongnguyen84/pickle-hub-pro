@@ -28,10 +28,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Install XcodeGen
+      - name: Install native build tools
         run: |
-          brew install xcodegen
+          brew install xcodegen ripgrep
           xcodegen --version
+          rg --version
           xcodebuild -version
 
       - name: Generate Xcode project

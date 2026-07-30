@@ -154,11 +154,11 @@ pass "Release identity is $bundle_id $marketing_version ($build_number)"
 pass "Release target uses Swift $swift_version language mode"
 pass "Release target preserves iPhone and iPad device families"
 
-[[ "$debug_bundle_id" == "net.thepicklehub.app.dev" ]] || fail "Debug bundle must remain isolated from the live app"
+[[ "$debug_bundle_id" == "$bundle_id" ]] || fail "Debug bundle must match Release for Sign in with Apple audience parity"
 [[ "$debug_environment" == "development" ]] || fail "Debug APP_ENVIRONMENT must be development"
 [[ "$debug_aps_environment" == "development" ]] || fail "Debug APS_ENVIRONMENT must be development"
 [[ "$debug_version" == "$marketing_version" && "$debug_build" == "$build_number" ]] || fail "Debug and Release version/build values have drifted"
-pass "Debug identity remains isolated at $debug_bundle_id"
+pass "Debug identity matches Release for Sign in with Apple at $debug_bundle_id"
 
 activation_normalized="$(printf '%s' "$activation_flag" | tr '[:upper:]' '[:lower:]')"
 if [[ "$activation_normalized" =~ ^(yes|true|1)$ ]]; then

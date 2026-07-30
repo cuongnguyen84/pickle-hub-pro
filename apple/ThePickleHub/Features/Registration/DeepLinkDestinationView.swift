@@ -38,13 +38,21 @@ struct DeepLinkDestinationView: View {
             case .toolsHub:
                 ToolsView()
             case .createQuickTable:
-                CreateQuickTableView { _, _ in }
+                AuthenticationRequiredView {
+                    CreateQuickTableView { _, _ in }
+                }
             case .createDoublesElimination:
-                CreateDoublesElimView { _, _ in }
+                AuthenticationRequiredView {
+                    CreateDoublesElimView { _, _ in }
+                }
             case .createTeamMatch:
-                CreateTeamMatchView { _, _ in }
+                AuthenticationRequiredView {
+                    CreateTeamMatchView { _, _ in }
+                }
             case .createFlexTournament:
-                CreateFlexView { _, _ in }
+                AuthenticationRequiredView {
+                    CreateFlexView { _, _ in }
+                }
             case .dashboardPicker:
                 TournamentDashboardPickerView()
             case .tournamentDashboard(let type, let id):

@@ -9,6 +9,7 @@ struct ChatPanel: View {
     @State private var draft = ""
     @State private var showLeaderboard = false
     @State private var showSettings = false
+    @State private var showLogin = false
     @FocusState private var inputFocused: Bool
 
     init(livestreamID: String) {
@@ -43,6 +44,11 @@ struct ChatPanel: View {
         }
         .sheet(isPresented: $showSettings) {
             ChatSettingsSheet(model: model)
+        }
+        .sheet(isPresented: $showLogin) {
+            AuthenticationRequiredView {
+                Color.clear.onAppear { showLogin = false }
+            }
         }
     }
 
@@ -117,7 +123,13 @@ struct ChatPanel: View {
     private var inputBar: some View {
         Divider().overlay(TLColor.border)
         if !model.isSignedIn {
-            disabledBar(String(localized: "Đăng nhập để tham gia bình luận"), icon: "person.crop.circle")
+            Button {
+                Haptics.light()
+                showLogin = true
+            } label: {
+                disabledBar(String(localized: "Đăng nhập để tham gia bình luận"), icon: "person.crop.circle")
+            }
+            .buttonStyle(.plain)
         } else if !model.settings.isChatEnabled {
             disabledBar(String(localized: "Chat đã bị tắt cho phòng này"), icon: "nosign")
         } else if model.isMuted {

@@ -1,0 +1,1 @@
+import{r as t}from"./vendor-ui-BOGudCw4.js";function n(){t.useEffect(()=>{const e=document.createElement("meta");return e.name="robots",e.content="noindex, nofollow",e.setAttribute("data-noindex-hook","1"),document.head.appendChild(e),()=>{e.remove()}},[])}export{n as u};

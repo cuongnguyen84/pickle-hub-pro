@@ -1,0 +1,1 @@
+import{u as o}from"./vendor-query-1SNwKHA2.js";import{t as s}from"./index-Cy_AlGop.js";const u=()=>o({queryKey:["forum-categories"],queryFn:async()=>{const{data:e,error:r}=await s.from("forum_categories").select("*").order("display_order");if(r)throw r;return e},staleTime:5*60*1e3});export{u};

@@ -8,9 +8,11 @@ struct SocialRegistrationContractTests {
     @Test("Send OTP carries the production Turnstile field")
     func sendBody() throws {
         let body = SocialRepository.SendOTPBody(
-            phone: "+84901234567", eventID: "event-id", turnstileToken: "challenge-token")
+            phone: "+84901234567", email: "player@example.com",
+            eventID: "event-id", turnstileToken: "challenge-token")
         let json = try object(body)
         #expect(json["phone"] as? String == "+84901234567")
+        #expect(json["email"] as? String == "player@example.com")
         #expect(json["event_id"] as? String == "event-id")
         #expect(json["turnstile_token"] as? String == "challenge-token")
     }
@@ -40,6 +42,14 @@ struct SocialRegistrationContractTests {
         let error = FunctionsError.httpError(
             code: 403, data: Data(#"{"error":"captcha_failed","code":"captcha_failed"}"#.utf8))
         #expect(SocialRepository.functionErrorCode(error) == "captcha_failed")
+    }
+
+    @Test("Supabase blob-loss code remains detectable for native retry")
+    func blobLossCode() {
+        let error = FunctionsError.httpError(
+            code: 404,
+            data: Data(#"{"code":"NOT_FOUND_FUNCTION_BLOB","message":"Requested function was not found"}"#.utf8))
+        #expect(SocialRepository.functionErrorCode(error) == "NOT_FOUND_FUNCTION_BLOB")
     }
 
     // Assert qua String(localized:) cùng key thay vì literal VI — test giữ đúng ý

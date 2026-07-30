@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// Native guest registration. This screen is only presented when a Turnstile
-/// site key exists; otherwise SocialDetailView keeps the proven web flow.
+/// Native guest registration using phone OTP, Turnstile and VietQR payment.
 struct PhoneEventRegistrationView: View {
     let event: SocialEvent
     @Environment(\.dismiss) private var dismiss
     @State private var phone = ""
+    @State private var email = ""
     @State private var name = ""
     @State private var code = ""
     @State private var selectedSlotID: String?
@@ -59,6 +59,8 @@ struct PhoneEventRegistrationView: View {
             Section(sent ? "Xác nhận OTP" : "Thông tin người chơi") {
                 TLTextField(placeholder: "Tên hiển thị", text: $name, keyboard: .default)
                     .disabled(sent)
+                TLTextField(placeholder: "Email nhận mã OTP", text: $email, keyboard: .emailAddress)
+                    .disabled(sent)
                 TLTextField(placeholder: "Số điện thoại (+84…)", text: $phone, keyboard: .phonePad)
                     .disabled(sent)
                 if sent {
@@ -81,6 +83,15 @@ struct PhoneEventRegistrationView: View {
                         .font(TLFont.sans(13, .medium))
                     }
                 }
+            } else if !sent {
+                Section("Xác minh bảo mật") {
+                    Label(
+                        "Thiếu cấu hình Turnstile cho đăng ký native.",
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(TLFont.sans(13))
+                    .foregroundStyle(TLColor.live)
+                }
             }
 
             if let message {
@@ -94,7 +105,7 @@ struct PhoneEventRegistrationView: View {
                 .disabled(!canSubmit)
 
                 if sent {
-                    Button("Nhập lại số điện thoại") {
+                    Button("Lấy lại OTP") {
                         sent = false
                         code = ""
                         turnstileToken = nil
@@ -104,9 +115,6 @@ struct PhoneEventRegistrationView: View {
                     .disabled(busy)
                 }
 
-                Link(destination: WebRoutes.social(slug: event.slug)) {
-                    Label("Đăng ký trên web", systemImage: "safari")
-                }
             }
         }
     }
@@ -141,9 +149,14 @@ struct PhoneEventRegistrationView: View {
         guard !busy else { return false }
         if sent { return code.filter(\.isNumber).count == 6 }
         let hasRequiredSlot = slots.isEmpty || selectedSlotID != nil
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let emailValid = cleanEmail.range(
+            of: #"^[^@\s]+@[^@\s]+\.[^@\s]+$"#,
+            options: .regularExpression
+        ) != nil
         return !phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
             !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            hasRequiredSlot && turnstileToken != nil
+            emailValid && hasRequiredSlot && turnstileToken != nil
     }
 
     @ToolbarContentBuilder
@@ -189,13 +202,19 @@ struct PhoneEventRegistrationView: View {
                 }
                 let result = try await repo.sendRegistrationOTP(
                     phone: phone.trimmingCharacters(in: .whitespacesAndNewlines),
+                    email: email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
                     eventID: event.id,
                     turnstileToken: token)
                 sent = true
                 turnstileToken = nil // Turnstile tokens are single-use.
-                message = result.channel == "zalo"
-                    ? String(localized: "Kiểm tra Zalo để lấy mã OTP")
-                    : String(localized: "Kiểm tra SMS để lấy mã OTP")
+                switch result.channel {
+                case "email":
+                    message = String(localized: "Kiểm tra email để lấy mã OTP")
+                case "zalo":
+                    message = String(localized: "Kiểm tra Zalo để lấy mã OTP")
+                default:
+                    message = String(localized: "Kiểm tra SMS để lấy mã OTP")
+                }
             }
         } catch {
             message = error.localizedDescription

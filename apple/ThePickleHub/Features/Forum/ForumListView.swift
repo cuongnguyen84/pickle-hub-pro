@@ -62,7 +62,10 @@ struct ForumListView: View {
         .navigationDestination(for: ForumRoute.self) { route in
             switch route {
             case .detail(let id): ForumDetailView(postID: id)
-            case .newPost: ForumCreateView(categories: model.categories) { Task { await model.load() } }
+            case .newPost:
+                AuthenticationRequiredView {
+                    ForumCreateView(categories: model.categories) { Task { await model.load() } }
+                }
             }
         }
         .task { await model.load() }

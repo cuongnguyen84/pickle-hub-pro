@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Design Explorations · ThePickleHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@500;700&family=DM+Mono&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300&family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@400;600&family=Yeseva+One&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0d0c;
+    --fg: #ebe7dd;
+    --fg-dim: #8a8579;
+    --line: #24231f;
+    --accent: #c5a572;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "JetBrains Mono", monospace;
+    background: var(--bg); color: var(--fg);
+    font-size: 14px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence baseFrequency='0.9'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.6; mix-blend-mode: overlay;
+  }
+  a { color: inherit; text-decoration: none; }
+  .display { font-family: "Fraunces", serif; font-weight: 300; letter-spacing: -0.02em; }
+
+  /* ============ HEADER ============ */
+  header {
+    max-width: 1200px; margin: 0 auto;
+    padding: 32px 40px 20px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  @media (max-width: 720px) { header { padding: 24px 20px 16px; flex-wrap: wrap; gap: 12px; } }
+  header .l { color: var(--fg-dim); }
+  header .r { color: var(--accent); font-weight: 700; }
+
+  /* ============ INTRO ============ */
+  .intro {
+    max-width: 1200px; margin: 0 auto;
+    padding: 80px 40px 48px;
+  }
+  @media (max-width: 720px) { .intro { padding: 48px 20px 32px; } }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 20px;
+  }
+  h1 {
+    font-family: "Fraunces", serif; font-weight: 300;
+    font-size: clamp(48px, 7vw, 104px);
+    line-height: 0.95; letter-spacing: -0.025em;
+    margin: 0 0 28px; max-width: 14ch;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 300; }
+  .lead {
+    font-family: "Fraunces", serif; font-weight: 300;
+    font-size: clamp(18px, 2vw, 22px); line-height: 1.45;
+    max-width: 60ch; color: var(--fg); margin: 0 0 32px;
+  }
+  .lead em { color: var(--accent); font-style: italic; }
+  .meta { color: var(--fg-dim); font-size: 12px; letter-spacing: 0.12em; }
+
+  /* ============ CARDS ============ */
+  .cards {
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 40px 80px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 760px) { .cards { grid-template-columns: 1fr; padding: 0 20px 64px; } }
+
+  .card {
+    border: 1px solid var(--line);
+    background: #111110;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+
+  .card-preview {
+    aspect-ratio: 4 / 5;
+    position: relative; overflow: hidden;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* D1 preview — editorial cream */
+  .preview.p1 {
+    background: #f3ecdc; color: #161310;
+    font-family: "Fraunces", serif;
+    padding: 24px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+  }
+  .preview.p1::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.5; mix-blend-mode: multiply; pointer-events: none;
+  }
+  .preview.p1 .mast {
+    font-weight: 800; font-size: 24px; line-height: 0.9; letter-spacing: -0.02em; text-align: center;
+    border-bottom: 3px double #161310; padding-bottom: 10px;
+  }
+  .preview.p1 .mast em { font-style: italic; font-weight: 300; }
+  .preview.p1 .kck { font-family: "Fraunces", serif; font-style: italic; font-size: 10px; color: #a8341e; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 700; margin-bottom: 8px; }
+  .preview.p1 .hl { font-weight: 800; font-size: 28px; line-height: 0.98; letter-spacing: -0.02em; }
+  .preview.p1 .hl em { font-weight: 300; color: #5a4f47; font-style: italic; }
+  .preview.p1 .dc { font-size: 10px; font-family: "JetBrains Mono"; letter-spacing: 0.18em; text-transform: uppercase; color: #5a4f47; border-top: 1px solid #161310; padding-top: 8px; margin-top: 8px; }
+
+  /* D2 preview — terminal neon */
+  .preview.p2 {
+    background: #0a0e07; color: #e4efd3;
+    font-family: "JetBrains Mono", monospace;
+    padding: 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+  }
+  .preview.p2::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,0,0,0.15) 3px, transparent 4px);
+    pointer-events: none;
+  }
+  .preview.p2 .top-bar {
+    font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #b9ff2f; border-bottom: 2px solid #b9ff2f; padding-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+  .preview.p2 .flame { color: #ff4b1f; }
+  .preview.p2 .headline {
+    font-family: "Archivo Black", system-ui, sans-serif; font-weight: 900;
+    font-size: 42px; line-height: 0.88; text-transform: uppercase; letter-spacing: -0.03em;
+    text-align: center; padding: 20px 0;
+  }
+  .preview.p2 .headline .g { color: #b9ff2f; text-shadow: 0 0 12px rgba(185,255,47,0.6); }
+  .preview.p2 .score-block { border: 2px solid #b9ff2f; padding: 12px; font-family: "JetBrains Mono"; }
+  .preview.p2 .sb-hd { background: #b9ff2f; color: #000; margin: -12px -12px 12px; padding: 6px 10px; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; display: flex; justify-content: space-between; }
+  .preview.p2 .sb-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #1e2818; font-size: 11px; }
+  .preview.p2 .sb-row:last-child { border-bottom: none; }
+  .preview.p2 .sb-row .n { text-transform: uppercase; font-weight: 700; }
+  .preview.p2 .sb-row.l .n { color: #ffcf3c; }
+  .preview.p2 .sb-row .s { font-family: "Archivo Black", system-ui; font-size: 18px; color: #b9ff2f; }
+  .preview.p2 .sb-row.l .s { color: #ffcf3c; }
+
+  /* D3 preview — tropical clubhouse */
+  .preview.p3 {
+    background: #faf2e3; color: #241811;
+    padding: 24px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+    font-family: "Manrope", system-ui, sans-serif;
+  }
+  .preview.p3::before {
+    content: ''; position: absolute;
+    top: -40px; right: -60px; width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #e9c784, #ed6a46 60%, transparent 80%);
+    opacity: 0.55;
+  }
+  .preview.p3 .nav-p { position: relative; font-family: "Yeseva One", serif; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .preview.p3 .nav-p .dot { width: 18px; height: 18px; border-radius: 50%; background: #ed6a46; position: relative; }
+  .preview.p3 .nav-p .dot::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px dashed #faf2e3; }
+  .preview.p3 .nav-p span { color: #ed6a46; }
+  .preview.p3 .hl-p {
+    font-family: "Yeseva One", serif; font-size: 30px; line-height: 0.96; letter-spacing: -0.02em;
+    position: relative; z-index: 1;
+  }
+  .preview.p3 .hl-p em { font-style: italic; color: #1f5c3c; }
+  .preview.p3 .hl-p .scr { font-family: "Caveat", cursive; color: #ed6a46; font-style: normal; font-size: 0.78em; display: block; transform: rotate(-3deg); margin: 4px 0; }
+  .preview.p3 .card-p {
+    background: #1f5c3c; color: #faf2e3; border-radius: 16px;
+    padding: 14px; transform: rotate(-2deg);
+    font-family: "Manrope";
+    box-shadow: 0 10px 20px -8px rgba(36,24,17,0.25);
+  }
+  .preview.p3 .card-p .lv { font-family: "DM Mono", monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #ed6a46; }
+  .preview.p3 .card-p .score-p { font-family: "Yeseva One", serif; font-size: 32px; line-height: 1; margin: 8px 0; }
+  .preview.p3 .card-p .score-p span { color: #e9c784; }
+  .preview.p3 .card-p .pl { font-size: 11px; opacity: 0.9; }
+
+  /* D4 preview — The Line */
+  .preview.p4 {
+    background: #08090a; color: #f5f3ee;
+    font-family: "Geist", system-ui, sans-serif;
+    padding: 24px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    position: relative;
+  }
+  .preview.p4 .top-p {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "Geist Mono"; font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #86837d;
+    padding-bottom: 10px; border-bottom: 1px solid #22252a;
+  }
+  .preview.p4 .top-p .bb { color: #f5f3ee; font-weight: 500; }
+  .preview.p4 .top-p .live { color: #ff4136; display: inline-flex; align-items: center; gap: 4px; }
+  .preview.p4 .top-p .live::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #ff4136; animation: pulse-4 1.5s ease-in-out infinite; }
+  @keyframes pulse-4 { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .preview.p4 .hl-p {
+    font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400;
+    font-size: 30px; line-height: 0.95; letter-spacing: -0.025em;
+    margin: 10px 0 12px;
+  }
+  .preview.p4 .hl-p .dim { color: #86837d; }
+  .preview.p4 .hl-p .sans { font-family: "Geist"; font-style: normal; font-weight: 500; font-size: 0.8em; letter-spacing: -0.03em; }
+  .preview.p4 .sb-p {
+    background: #131416; border: 1px solid #22252a; border-radius: 8px; padding: 12px;
+    font-family: "Geist Mono"; font-size: 11px;
+  }
+  .preview.p4 .sb-p .r {
+    display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center;
+    padding: 4px 0;
+  }
+  .preview.p4 .sb-p .r .seed { color: #54514c; font-size: 9px; }
+  .preview.p4 .sb-p .r .n { font-family: "Geist"; font-size: 12px; font-weight: 500; color: #c7c3bb; letter-spacing: -0.005em; }
+  .preview.p4 .sb-p .r.l .n { color: #f5f3ee; font-weight: 600; }
+  .preview.p4 .sb-p .r .sc { font-weight: 500; color: #86837d; }
+  .preview.p4 .sb-p .r.l .sc { color: #00b96b; font-weight: 600; }
+  .preview.p4 .sb-p .hd-p {
+    display: flex; justify-content: space-between; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #86837d; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #22252a;
+  }
+  .preview.p4 .sb-p .hd-p .ll { color: #ff4136; }
+
+  /* Recommendation badge */
+  .card.recommended { position: relative; border-color: var(--accent); }
+  .card.recommended::after {
+    content: '✦ Recommended for global';
+    position: absolute; top: 14px; right: 14px;
+    font-family: "Geist Mono", "JetBrains Mono", monospace; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 9px; background: var(--accent); color: var(--bg);
+    border-radius: 4px; z-index: 2;
+  }
+
+  /* Card meta */
+  .card-meta {
+    padding: 20px;
+  }
+  .card-num {
+    font-family: "Fraunces", serif; font-style: italic; font-weight: 300;
+    font-size: 13px; color: var(--accent); letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-family: "Fraunces", serif; font-weight: 300;
+    font-size: 32px; line-height: 1; letter-spacing: -0.02em;
+    margin: 0 0 10px;
+  }
+  .card-title em { font-style: italic; color: var(--accent); }
+  .card-desc {
+    font-size: 13px; color: var(--fg-dim); line-height: 1.6;
+    margin: 0 0 20px;
+    font-family: "JetBrains Mono";
+  }
+  .card-specs {
+    display: grid; grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 16px 0;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    margin-bottom: 20px;
+  }
+  .card-specs dt { color: var(--fg-dim); }
+  .card-specs dd { margin: 0; color: var(--fg); letter-spacing: 0.1em; }
+
+  .card-open {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700;
+    transition: padding 0.2s;
+  }
+  .card:hover .card-open { padding-left: 4px; }
+  .card-open .arr { display: inline-block; transition: transform 0.2s; }
+  .card:hover .arr { transform: translateX(6px); }
+
+  /* ============ FOOTER ============ */
+  footer {
+    max-width: 1200px; margin: 0 auto;
+    padding: 40px 40px 60px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-dim); flex-wrap: wrap; gap: 12px;
+  }
+  @media (max-width: 720px) { footer { padding: 32px 20px 48px; } }
+  footer .next {
+    color: var(--accent); font-weight: 700;
+  }
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .fu { animation: fade-up 0.9s cubic-bezier(0.22, 0.68, 0.25, 1) both; }
+  .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.18s; } .d3 { animation-delay: 0.32s; } .d4 { animation-delay: 0.46s; } .d5 { animation-delay: 0.6s; } .d6 { animation-delay: 0.74s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="l fu d1">ThePickleHub · Design Explorations · 21.04.2026</div>
+  <div class="r fu d1">3 directions · awaiting review</div>
+</header>
+
+<section class="intro">
+  <div class="eyebrow fu d2">◆ Thư mục thám hiểm thiết kế · v2</div>
+  <h1 class="fu d2">Bốn hướng, <em>một chọn lựa.</em></h1>
+  <p class="lead fu d3">
+    Ba hướng đầu (I–III) được thiết kế khi audience vẫn 95% Việt Nam — <em>editorial</em>, <em>scoreboard</em>, <em>clubhouse</em>.
+    Khi mục tiêu chuyển sang <em>global, tiếng Anh chính thức</em>, các hướng đó bộc lộ giới hạn: quá vùng miền, quá theme-ý, hoặc quá trend.
+    <strong style="color: var(--accent);">Direction IV — "The Line"</strong> được build riêng cho chuẩn expert review hiện tại 2026: editorial × technical × restraint.
+  </p>
+  <div class="meta fu d3">Cuộn xuống · Click mở full preview · D4 được recommend cho global</div>
+</section>
+
+<section class="cards">
+
+  <a class="card recommended fu d3" href="./04-the-line.html">
+    <div class="card-preview">
+      <div class="preview p4">
+        <div class="top-p">
+          <span><span class="bb">Pickle</span> Hub</span>
+          <span class="live">Live · Court 1</span>
+        </div>
+        <div>
+          <div class="hl-p">The match <span class="dim">that reset</span> <span class="sans dim">women's singles.</span></div>
+          <div class="sb-p">
+            <div class="hd-p"><span class="ll">● LIVE</span><span>SET 3 · 19:42</span></div>
+            <div class="r l"><span class="seed">#1</span><span class="n">A.L. Waters <span style="font-family:'Geist Mono';font-size:9px;color:#86837d;">USA</span></span><span class="sc">11 · 9 · 11</span></div>
+            <div class="r"><span class="seed">#2</span><span class="n">C. Parenteau <span style="font-family:'Geist Mono';font-size:9px;color:#86837d;">CAN</span></span><span class="sc">9 · 11 · 9</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-num" style="color: var(--accent);">— Direction IV · Recommended</div>
+      <h2 class="card-title">The <em>Line</em></h2>
+      <p class="card-desc">Global-grade sport platform. Editorial × technical × restraint. Dark-first, single green accent, serif italic for narrative + geometric sans for data + mono for tabular. Cảm giác The Athletic × Linear × Apple Sports × Bloomberg Terminal. Built for expert UI/UX review.</p>
+      <dl class="card-specs">
+        <dt>Fonts</dt><dd>Instrument Serif · Geist · Geist Mono</dd>
+        <dt>Palette</dt><dd>Near-black · Off-white · Green · Red (live)</dd>
+        <dt>Mood</dt><dd>Precision · Editorial · Global</dd>
+        <dt>Best for</dt><dd>Toàn bộ platform · Web + Native app</dd>
+      </dl>
+      <div class="card-open">Mở full preview <span class="arr">→</span></div>
+    </div>
+  </a>
+
+  <a class="card fu d4" href="./01-gazette.html">
+    <div class="card-preview">
+      <div class="preview p1">
+        <div class="mast">The Pickleball <em>Gazette</em></div>
+        <div>
+          <div class="kck">§ Phóng sự · Chung kết Sài Gòn</div>
+          <div class="hl">Cô gái 19 tuổi <em>lật đổ</em> ngôi vương miền Nam.</div>
+        </div>
+        <div class="dc">Sài Gòn · 21.04.2026 · Vol. IV · Số 21</div>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-num">— Direction I</div>
+      <h2 class="card-title">The <em>Gazette</em></h2>
+      <p class="card-desc">Editorial sports journalism. Cream paper + ink + red stamp accent. Multi-column layout, drop caps, italic serif bylines. Cảm giác Bloomberg Businessweek × The Players' Tribune.</p>
+      <dl class="card-specs">
+        <dt>Fonts</dt><dd>Fraunces · Cardo · JetBrains Mono</dd>
+        <dt>Palette</dt><dd>Cream · Ink · Red · Green</dd>
+        <dt>Mood</dt><dd>Thoughtful · Slow · Writerly</dd>
+        <dt>Best for</dt><dd>Blog · Longform · Match reports</dd>
+      </dl>
+      <div class="card-open">Mở full preview <span class="arr">→</span></div>
+    </div>
+  </a>
+
+  <a class="card fu d5" href="./02-terminal.html">
+    <div class="card-preview">
+      <div class="preview p2">
+        <div class="top-bar"><span>● CH.07 · LIVE</span><span class="flame">2,841 XEM</span></div>
+        <div class="headline">11 <span class="g">–</span> 09</div>
+        <div class="score-block">
+          <div class="sb-hd"><span>● COURT 03 · SET 3</span><span>LIVE</span></div>
+          <div class="sb-row l"><span class="n">HÀ PHƯƠNG</span><span class="s">11</span></div>
+          <div class="sb-row"><span class="n">THẢO VY</span><span class="s">09</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-num">— Direction II</div>
+      <h2 class="card-title">Court <em>Terminal</em></h2>
+      <p class="card-desc">Stadium scoreboard brutalism. CRT phosphor green trên nền đen + safety orange cho live. Archivo Black + JetBrains Mono, tabular scores, pixel corners. Cảm giác F1 timing × arcade ticker.</p>
+      <dl class="card-specs">
+        <dt>Fonts</dt><dd>Archivo Black · IBM Plex Cond · JetBrains Mono</dd>
+        <dt>Palette</dt><dd>Ink · Neon green · Flame · Gold</dd>
+        <dt>Mood</dt><dd>Urgent · Precise · Electric</dd>
+        <dt>Best for</dt><dd>Livestream · Scoreboard · Bracket</dd>
+      </dl>
+      <div class="card-open">Mở full preview <span class="arr">→</span></div>
+    </div>
+  </a>
+
+  <a class="card fu d6" href="./03-clubhouse.html">
+    <div class="card-preview">
+      <div class="preview p3">
+        <div class="nav-p"><span class="dot"></span>The<span>Pickle</span>Hub</div>
+        <div class="hl-p">Việt Nam, <em>được chăm chút</em> <span class="scr">như câu lạc bộ</span></div>
+        <div class="card-p">
+          <div class="lv">● LIVE · Set 3</div>
+          <div class="score-p">11 – <span>09</span></div>
+          <div class="pl">Hà Phương vs Thảo Vy</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-num">— Direction III</div>
+      <h2 class="card-title">Clubhouse <em>Saigon</em></h2>
+      <p class="card-desc">Tropical members' club. Coral + court green + gold + cream warm. Yeseva One display + Manrope body + Caveat script cho ghi chú tay. Soft curves, tilts nhẹ, pickle ball 3D. Cảm giác Aimé Leon Dore × resort boutique.</p>
+      <dl class="card-specs">
+        <dt>Fonts</dt><dd>Yeseva One · Manrope · Caveat · DM Mono</dd>
+        <dt>Palette</dt><dd>Cream · Coral · Court · Gold</dd>
+        <dt>Mood</dt><dd>Warm · Social · Vietnamese</dd>
+        <dt>Best for</dt><dd>Home · Community · Booking</dd>
+      </dl>
+      <div class="card-open">Mở full preview <span class="arr">→</span></div>
+    </div>
+  </a>
+
+</section>
+
+<footer>
+  <div>Preview locally: npm run dev · then /design-explorations/</div>
+  <div class="next">Next → chọn 1 hướng (gợi ý D4), mình redesign React + Tailwind production với full mobile-native handling.</div>
+</footer>
+
+</body>
+</html>

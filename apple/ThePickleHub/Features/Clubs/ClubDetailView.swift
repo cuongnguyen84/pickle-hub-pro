@@ -78,6 +78,7 @@ struct ClubDetailView: View {
     @State private var model = ClubDetailViewModel()
     @State private var openWeb: IdentifiedURL?
     @State private var showCreateEvent = false
+    @State private var showJoinLogin = false
 
     var body: some View {
         ScrollView {
@@ -90,7 +91,19 @@ struct ClubDetailView: View {
         .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
         .sheet(isPresented: $showCreateEvent) {
             if case .loaded(let club) = model.phase {
-                CreateSocialEventView(clubID: club.id) { Task { await model.load(slug: club.slug) } }
+                AuthenticationRequiredView {
+                    CreateSocialEventView(clubID: club.id) { Task { await model.load(slug: club.slug) } }
+                }
+            }
+        }
+        .sheet(isPresented: $showJoinLogin) {
+            AuthenticationRequiredView {
+                ProgressView()
+                    .tint(TLColor.accentText)
+                    .task {
+                        await model.join()
+                        showJoinLogin = false
+                    }
             }
         }
         .alert("Không thể cập nhật CLB", isPresented: Binding(
@@ -214,20 +227,19 @@ struct ClubDetailView: View {
                 .background(TLColor.gold.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.gold.opacity(0.3), lineWidth: 1))
         case .none, .anonymous:
-            Button { Haptics.light(); Task { await joinOrLogin(club) } } label: {
+            Button {
+                Haptics.light()
+                if model.uid == nil {
+                    showJoinLogin = true
+                } else {
+                    Task { await model.join() }
+                }
+            } label: {
                 Text("Tham gia").font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.accentText)
                     .padding(.horizontal, 16).padding(.vertical, 12)
                     .background(TLColor.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(TLColor.accent.opacity(0.3), lineWidth: 1))
             }.buttonStyle(.plain).disabled(model.busy)
-        }
-    }
-
-    private func joinOrLogin(_ club: Club) async {
-        if model.uid == nil {
-            openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "login"))
-        } else {
-            await model.join()
         }
     }
 

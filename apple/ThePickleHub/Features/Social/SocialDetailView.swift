@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// Detail for one social event. Registration stays on the proven web flow until
-/// a valid public Turnstile site key is configured, then eligible guest events
-/// use the native phone-OTP/payment flow.
+/// Detail for one social event. Registration is handled entirely by the native
+/// phone-OTP/payment flow.
 struct SocialDetailView: View {
     let event: SocialEvent
 
@@ -13,7 +12,6 @@ struct SocialDetailView: View {
     @State private var showAllRoster = false
     @State private var canManage = false
     @State private var savedRegistrationToken: String?
-    @State private var remoteNativeRegistrationEnabled = false
     private let repo = SocialRepository()
     private let organizerRepo = SocialOrganizerRepository()
 
@@ -47,19 +45,10 @@ struct SocialDetailView: View {
             canManage = await organizerRepo.canManage(event: event)
             savedRegistrationToken = try? RegistrationTokenStore.token(eventID: event.id)
         }
-        .task {
-            remoteNativeRegistrationEnabled = await repo.nativeRegistrationRemotelyEnabled()
-        }
         .sheet(isPresented: $showRegister, onDismiss: {
             savedRegistrationToken = try? RegistrationTokenStore.token(eventID: event.id)
         }) {
-            if AppConfig.nativeEventRegistrationEnabled,
-               remoteNativeRegistrationEnabled,
-               event.allowGuests != false {
-                PhoneEventRegistrationView(event: event)
-            } else {
-                SafariView(url: WebRoutes.social(slug: event.slug)).ignoresSafeArea()
-            }
+            PhoneEventRegistrationView(event: event)
         }
     }
 

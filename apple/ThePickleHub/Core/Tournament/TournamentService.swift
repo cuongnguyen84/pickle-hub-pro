@@ -1,5 +1,5 @@
 import Foundation
-import Supabase
+@preconcurrency import Supabase
 
 /// Shared tournament-side helpers used by the native Bracket Lab screens.
 /// Phase-0 roadmap item: keep current-user lookup and realtime invalidation

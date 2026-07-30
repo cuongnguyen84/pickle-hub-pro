@@ -33,11 +33,12 @@ struct SocialRepository {
 
     struct SendOTPBody: Encodable, Equatable {
         let phone: String
+        let email: String
         let eventID: String
         let turnstileToken: String
 
         enum CodingKeys: String, CodingKey {
-            case phone
+            case phone, email
             case eventID = "event_id"
             case turnstileToken = "turnstile_token"
         }
@@ -88,9 +89,10 @@ struct SocialRepository {
         }
     }
 
-    func sendRegistrationOTP(phone: String, eventID: UUID,
+    func sendRegistrationOTP(phone: String, email: String, eventID: UUID,
                              turnstileToken: String) async throws -> OTPResponse {
-        let body = SendOTPBody(phone: phone, eventID: eventID.uuidString.lowercased(),
+        let body = SendOTPBody(phone: phone, email: email,
+                               eventID: eventID.uuidString.lowercased(),
                                turnstileToken: turnstileToken)
         let response: OTPResponse = try await invoke("phone-otp-send", body: body)
         try validate(response)
@@ -162,13 +164,26 @@ struct SocialRepository {
     private func invoke<Response: Decodable, Body: Encodable>(
         _ name: String, body: Body
     ) async throws -> Response {
-        do {
-            return try await client.functions.invoke(
-                name, options: FunctionInvokeOptions(body: body))
-        } catch {
-            if let code = Self.functionErrorCode(error) { throw SocialFlowError(code: code) }
-            throw error
+        // Supabase occasionally loses an active edge function's code blob and
+        // returns a short-lived 404 NOT_FOUND_FUNCTION_BLOB. Web production
+        // retries only that infrastructure fault; keep native at parity.
+        for attempt in 0...3 {
+            do {
+                return try await client.functions.invoke(
+                    name, options: FunctionInvokeOptions(body: body))
+            } catch {
+                let code = Self.functionErrorCode(error)
+                if code == "NOT_FOUND_FUNCTION_BLOB", attempt < 3 {
+                    try await Task.sleep(for: .milliseconds(800 * (attempt + 1)))
+                    continue
+                }
+                if let code { throw SocialFlowError(code: code) }
+                throw error
+            }
         }
+        // The loop either returns or throws. This keeps the generic return
+        // contract exhaustive if its attempt range is changed later.
+        throw SocialFlowError(code: "invalid_server_response")
     }
 
     private static let columns =
@@ -256,11 +271,12 @@ struct SocialRepository {
     /// Edge fn `mark-payment-claimed` — người chơi báo đã chuyển khoản.
     func markPaymentClaimed(orderID: UUID, token: String) async throws {
         struct Body: Encodable { let order_id: String; let magic_token: String }
-        struct Resp: Decodable { let ok: Bool? }
-        let _: Resp = try await client.functions.invoke(
+        struct Resp: Decodable { let ok: Bool?; let code: String? }
+        let resp: Resp = try await invoke(
             "mark-payment-claimed",
-            options: FunctionInvokeOptions(body: Body(
-                order_id: orderID.uuidString.lowercased(), magic_token: token)))
+            body: Body(order_id: orderID.uuidString.lowercased(), magic_token: token))
+        if let code = resp.code { throw SocialFlowError(code: code) }
+        guard resp.ok == true else { throw SocialFlowError(code: "invalid_server_response") }
     }
 
     /// Registration counts for several events at once (parallel head-counts).

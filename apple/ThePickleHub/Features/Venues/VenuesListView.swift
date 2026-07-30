@@ -48,7 +48,6 @@ final class VenuesViewModel {
 /// browse-by-city. Data parity with web `/san`.
 struct VenuesListView: View {
     @State private var model = VenuesViewModel()
-    @State private var openWeb: IdentifiedURL?
     @State private var showSubmit = false
 
     var body: some View {
@@ -63,8 +62,11 @@ struct VenuesListView: View {
         .background(TLColor.bg)
         .task { if case .loading = model.phase { await model.load() } }
         .refreshable { await model.load() }
-        .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
-        .sheet(isPresented: $showSubmit) { VenueSubmitView { Task { await model.load() } } }
+        .sheet(isPresented: $showSubmit) {
+            AuthenticationRequiredView {
+                VenueSubmitView { Task { await model.load() } }
+            }
+        }
     }
 
     // MARK: Search + add
@@ -83,13 +85,7 @@ struct VenuesListView: View {
 
             Button {
                 Haptics.light()
-                Task {
-                    if await model.currentUserID() == nil {
-                        openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "login"))
-                    } else {
-                        showSubmit = true
-                    }
-                }
+                showSubmit = true
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: "plus").font(.system(size: 13, weight: .bold))

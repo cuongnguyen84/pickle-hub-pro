@@ -37,6 +37,7 @@ Xóa
 Đội
 Sự kiện
 # --- MỘT NGHĨA (chờ Cuong duyệt) ---
+Tạo CLB
 Hủy
 Thử lại
 Đóng
