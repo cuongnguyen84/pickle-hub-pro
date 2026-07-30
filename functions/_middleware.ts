@@ -114,6 +114,45 @@ const NOINDEX_PATTERNS: RegExp[] = [
 
 const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
 
+// ─── GSC "Not found (404)" cleanup 2026-07-30 — 410 Gone for permanently
+//     removed URLs. Bots bypass public/_redirects, so a soft 404 here never
+//     clears the coverage report; 410 is a definitive removal signal Google
+//     drops from the crawl queue faster. Bot-path only — humans keep the SPA
+//     in-app 404. Exact deleted entities + one buggy auto-generated slug
+//     family (old MLP-Dallas scraper emitted a double "mlp-mlp-" prefix).
+const GONE_EXACT = new Set<string>([
+  // Test fixtures crawled while public, since removed
+  "/nguoi-choi/dinhmai-test", "/nguoi-choi/dohung-test",
+  "/nguoi-choi/lecam-test", "/nguoi-choi/lyhoangnam-test",
+  "/nguoi-choi/nguyenvana-test", "/nguoi-choi/phamquang-test",
+  "/nguoi-choi/tranthib-test", "/nguoi-choi/vothanh-test",
+  "/clb/clb-test", "/clb/test-3", "/clb/test-5",
+  "/tran-dau/nguyenvana-test-vs-lyhoangnam-test-20260504-37e3d1",
+  "/tran-dau/nguyenvana-test-vs-tranthib-test-20260504-ad583f",
+  "/tran-dau/lyhoangnam-test-vs-phamquang-test-20260507-4371a9",
+  // Deleted social events / meetups
+  "/social/xe-ve", "/social/xe-ve-cung-coach", "/vi/social/xe-ve-cung-coach",
+  "/su-kien/social-thu-2", "/su-kien/social-toi-thu-3",
+  "/su-kien/sinh-hoat-dinh-ky-thu-2",
+  // Ended / deleted livestreams (last two Google truncated at the dash)
+  "/live/612bd532-0751-4623-915b-2a13babc9a4e",
+  "/live/81ff3365-0ccf-4ce3-bf19-e7d7829735c3",
+  "/live/80b73967-", "/live/b083fc1f-",
+  // Transactional app actions — never indexable content pages
+  "/match/new", "/match/confirm",
+  // Google-truncated blog URLs (no such slug; full posts live elsewhere)
+  "/vi/blog/hop-", "/vi/blog/thuat-",
+]);
+const GONE_PATTERNS: RegExp[] = [
+  // Old MLP-Dallas scraper double-"mlp-mlp-" slug bug (matches 001–025);
+  // those pages were removed and the current scraper uses single-mlp slugs,
+  // so this family is permanently gone.
+  /^\/tran-dau\/mlp-mlp-dallas-2026-\d{3}$/,
+];
+function isGoneUrl(pathname: string): boolean {
+  return GONE_EXACT.has(pathname) || GONE_PATTERNS.some((re) => re.test(pathname));
+}
+
 function shouldNoindex(pathname: string): boolean {
   return NOINDEX_PATTERNS.some((re) => re.test(pathname));
 }
@@ -267,6 +306,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return secureRedirect(`https://${url.hostname}/nguoi-choi/${uMatch[1]}${url.search}`, 301);
   }
 
+  // ─── 1b-dupr. Retired /dupr landing → live VI DUPR explainer (301).
+  //       GSC "Not found (404)" 2026-07-30. Branded "dupr" intent, so recover
+  //       to the pillar post rather than 410 it.
+  if (url.pathname === "/dupr") {
+    return secureRedirect(
+      `https://${url.hostname}/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam`,
+      301,
+    );
+  }
+
   // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
   //       to the EN canonical. renderOrgDetail() and
   //       renderTournamentDetail() always emit url:/org/<slug> and
@@ -371,6 +420,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // Vietnamese readers an English page.
     "luat-pickleball": "/vi/blog/luat-pickleball-co-ban",
     "luat-pickleball-2026": "/vi/blog/luat-pickleball-co-ban",
+    // GSC "Not found (404)" 2026-07-30 — renamed VI posts, 301 to live VI twin.
+    "bang-xep-hang-dupr-viet-nam-ra-mat": "/vi/blog/bang-xep-hang-dupr-viet-nam",
+    "dupr-la-gi-he-thong-rating-pickleball-toan-cau": "/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam",
+    "thuat-toan-dupr-vi-sao-thang-mat-diem": "/vi/blog/thuat-toan-dupr-thang-mat-diem-thua-tang-diem",
+    "to-chuc-giai-pickleball": "/vi/blog/cach-to-chuc-giai-pickleball",
+    "luat-pickleball-day-du": "/vi/blog/luat-pickleball-co-ban",
   };
 
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
@@ -487,6 +542,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // ─── 4. Bot path: KV cache + SSR render ───────────────
   const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
+
+  // ─── 4-gone. GSC "Not found (404)" cleanup — permanently removed URLs get a
+  //     410 Gone (definitive) instead of the soft 404 the fallback would emit,
+  //     so Google drops them from the crawl queue + the coverage report. Bot
+  //     path only; humans already fell through to the SPA above.
+  if (isGoneUrl(url.pathname)) {
+    const goneLang = detectLang(pathname);
+    const shell = renderNoindexShell(siteUrl, pathname, goneLang);
+    const goneHeaders = new Headers(shell.headers);
+    goneHeaders.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+    goneHeaders.set("X-Prerender-Cache", "BYPASS");
+    applySecurityHeaders(goneHeaders);
+    return new Response(shell.body, { status: 410, headers: goneHeaders });
+  }
 
   // PR72 — Bot path noindex shortcut. Skip cache + skip routeAndRender;
   // return a minimal HTML shell with meta robots noindex + X-Robots-Tag

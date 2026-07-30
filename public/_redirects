@@ -62,5 +62,15 @@
 /vi/blog/huong-dan-day-du-ppa-tour-asia-2026        /blog/ppa-tour-asia-2026-complete-guide            301
 /vi/blog/the-thuc-mlp                               /blog/mlp-format-explained                         301
 
+# GSC "Not found (404)" cleanup 2026-07-30 — renamed VI posts → live VI twin.
+# Mirrored in functions/_middleware.ts VI_BLOG_DIRECT (redirect-parity test).
+/vi/blog/bang-xep-hang-dupr-viet-nam-ra-mat              /vi/blog/bang-xep-hang-dupr-viet-nam                      301
+/vi/blog/dupr-la-gi-he-thong-rating-pickleball-toan-cau  /vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam     301
+/vi/blog/thuat-toan-dupr-vi-sao-thang-mat-diem           /vi/blog/thuat-toan-dupr-thang-mat-diem-thua-tang-diem    301
+/vi/blog/to-chuc-giai-pickleball                         /vi/blog/cach-to-chuc-giai-pickleball                     301
+/vi/blog/luat-pickleball-day-du                          /vi/blog/luat-pickleball-co-ban                           301
+# Retired /dupr landing → live VI DUPR explainer (mirrored in _middleware.ts)
+/dupr                                                    /vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam     301
+
 # SPA fallback
 /* /index.html 200
