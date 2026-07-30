@@ -173,7 +173,11 @@ Optional:
 - `admin` — full access, including push notifications and news moderation (1 row, thecuong@gmail.com)
 
 Function `mux-create-livestream` checks for role IN ('creator', 'admin').
-Function `send-push-notification` requires authenticated user but no specific role check (UI gates by admin role).
+Function `send-push-notification` verifies the JWT internally and requires the admin role (service-role bearer bypasses for internal cron/webhook calls).
+
+### Admin 2FA (TOTP, since 2026-07-30)
+
+The admin role requires an **aal2 session** (TOTP via Supabase MFA) once the user has a verified factor — self-activating, enforced in `is_admin()`/`has_role()` (migrations `20260730090000` + `20260730100000` sweep) and in admin-privileged edge functions via `_shared/admin-aal.ts`. UI gate: `AdminMFAGate` (wraps `AdminLayout` + `RequireAuth requiredRole="admin"`). Lost authenticator → delete the row in `auth.mfa_factors` to unlock.
 
 ## Supabase Edge Functions (50 active)
 

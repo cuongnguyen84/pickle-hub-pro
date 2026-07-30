@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { AdminMFAGate } from "@/components/admin/AdminMFAGate";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -212,6 +213,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const isMoreActive = moreNavItems.some((item) => isNavActive(item.path));
 
   return (
+    <AdminMFAGate>
     <div className="h-[100dvh] min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border flex items-center gap-4 px-4"
@@ -407,5 +409,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </main>
       </div>
     </div>
+    </AdminMFAGate>
   );
 }

@@ -37,6 +37,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
 import { partnerFetch } from "../_shared/dupr-client.ts";
 
 interface Body {
@@ -113,7 +114,8 @@ Deno.serve(async (req) => {
     .eq("user_id", user.id)
     .eq("role", "admin")
     .maybeSingle();
-  const isAdmin = !!adminRole;
+  // ADMIN-MFA: aal1 (đã enroll 2FA) không được xem email như admin
+  const isAdmin = !!adminRole && adminSessionAalOk(user, bearerToken(req));
 
   let body: Body;
   try {

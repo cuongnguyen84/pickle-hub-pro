@@ -40,6 +40,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
 
 interface TriggerRequest {
   tournament_url: string;
@@ -111,6 +112,11 @@ Deno.serve(async (req) => {
   }
   if (!roleRow || roleRow.role !== "admin") {
     return jsonResponse({ error: "Forbidden — admin role required" }, 403);
+  }
+
+  // ADMIN-MFA: đã enroll 2FA thì phiên phải là aal2 (xem _shared/admin-aal.ts)
+  if (!adminSessionAalOk(user, bearerToken(req))) {
+    return jsonResponse({ error: "Forbidden — MFA (aal2) required" }, 403);
   }
 
   let payload: TriggerRequest;

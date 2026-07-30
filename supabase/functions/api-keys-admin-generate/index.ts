@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
+import { adminSessionAalOk } from "../_shared/admin-aal.ts";
 
 // Generate a random API key with prefix
 const generateApiKey = (): string => {
@@ -78,6 +79,14 @@ Deno.serve(async (req) => {
     if (roleError || roleData?.role !== "admin") {
       return new Response(
         JSON.stringify({ error: "Forbidden - Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ADMIN-MFA: đã enroll 2FA thì phiên phải là aal2 (xem _shared/admin-aal.ts)
+    if (!adminSessionAalOk(userData.user, token)) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden - MFA (aal2) required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

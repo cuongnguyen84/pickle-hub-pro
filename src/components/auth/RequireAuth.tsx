@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
+import { AdminMFAGate } from "@/components/admin/AdminMFAGate";
 import { LoadingState } from "@/components/states/PageStates";
 
 interface RequireAuthProps {
@@ -36,6 +37,12 @@ const RequireAuth = ({ children, requiredRole }: RequireAuthProps) => {
   }
   if (requiredRole === "creator" && !isCreator && !isAdmin) {
     return <Navigate to="/" replace />;
+  }
+
+  // ADMIN-MFA: các route admin không đi qua AdminLayout (/admin/dupr,
+  // /admin/errors) vẫn phải qua gate 2FA.
+  if (requiredRole === "admin") {
+    return <AdminMFAGate>{children}</AdminMFAGate>;
   }
 
   return <>{children}</>;
