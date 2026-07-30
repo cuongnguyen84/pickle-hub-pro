@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, Save, Loader2, Copy, Radio, Eye, EyeOff, Zap, AlertCircle } from "lucide-react";
 import type { Enums } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 
 export default function CreatorLivestreamForm() {
   const { id } = useParams();
@@ -102,7 +103,7 @@ export default function CreatorLivestreamForm() {
         throw new Error("Not authenticated");
       }
 
-      const response = await supabase.functions.invoke("mux-create-livestream", {
+      const response = await invokeWithBlobRetry("mux-create-livestream", {
         body: { title: formData.title, playback_policy: "public" },
       });
 
