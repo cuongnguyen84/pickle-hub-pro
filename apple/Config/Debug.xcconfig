@@ -8,7 +8,7 @@ APS_ENVIRONMENT = development
 // audience. Supabase production is configured for the shipping App ID, so
 // device builds used for production QA must share that identity.
 PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
-MARKETING_VERSION = 1.1.0
+MARKETING_VERSION = 2.0.0
 CURRENT_PROJECT_VERSION = 4
 
 // Native registration mirrors production: Turnstile protects the email OTP
