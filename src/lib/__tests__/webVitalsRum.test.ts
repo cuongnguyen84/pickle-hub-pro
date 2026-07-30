@@ -27,7 +27,7 @@ vi.mock("@/utils/ga", () => ({
   trackEvent: rumMocks.trackEvent,
 }));
 
-vi.mock("web-vitals", () => ({
+vi.mock("web-vitals/attribution", () => ({
   onCLS: rumMocks.onCLS,
   onFCP: rumMocks.onFCP,
   onINP: rumMocks.onINP,
@@ -110,6 +110,57 @@ describe("RUM dimensions", () => {
       market_segment: "vn",
       sample_rate: 1,
     });
+  });
+
+  it("attaches CLS shift attribution when provided", () => {
+    const event = buildWebVitalEvent(
+      {
+        delta: 0.2,
+        id: "v5-cls-attr",
+        name: "CLS",
+        navigationType: "navigate",
+        rating: "poor",
+        value: 0.2,
+      },
+      {
+        appSurface: "web",
+        deviceClass: "mobile",
+        locale: "vi",
+        route: "/feed",
+      },
+      "vn",
+      { largestShiftTarget: "main#app>div.feed>article", loadState: "dom-interactive" },
+    );
+
+    expect(event).toMatchObject({
+      metric_name: "CLS",
+      cls_shift_target: "main#app>div.feed>article",
+      cls_load_state: "dom-interactive",
+    });
+  });
+
+  it("omits shift attribution for non-CLS metrics", () => {
+    const event = buildWebVitalEvent(
+      {
+        delta: 10,
+        id: "v5-lcp-attr",
+        name: "LCP",
+        navigationType: "navigate",
+        rating: "good",
+        value: 1200,
+      },
+      {
+        appSurface: "web",
+        deviceClass: "desktop",
+        locale: "en",
+        route: "/",
+      },
+      "international",
+      { largestShiftTarget: "img.hero", loadState: "complete" },
+    );
+
+    expect(event).not.toHaveProperty("cls_shift_target");
+    expect(event).not.toHaveProperty("cls_load_state");
   });
 
   it("initializes all observers and reports a cached market segment", async () => {
