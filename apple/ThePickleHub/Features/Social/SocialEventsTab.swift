@@ -44,7 +44,7 @@ final class SocialEventsViewModel {
 struct SocialEventsTab: View {
     let goToCourts: () -> Void
     @State private var model = SocialEventsViewModel()
-    @State private var openWeb: IdentifiedURL?
+    @State private var showCreate = false
 
     var body: some View {
         ScrollView {
@@ -58,7 +58,13 @@ struct SocialEventsTab: View {
         .background(TLColor.bg)
         .task { if case .loading = model.phase { await model.load() } }
         .refreshable { await model.load() }
-        .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
+        .sheet(isPresented: $showCreate) {
+            AuthenticationRequiredView {
+                SocialEventClubPicker {
+                    Task { await model.load() }
+                }
+            }
+        }
     }
 
     private var courtsStrip: some View {
@@ -78,7 +84,10 @@ struct SocialEventsTab: View {
     }
 
     private var createCTA: some View {
-        Button { Haptics.light(); openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "social")) } label: {
+        Button {
+            Haptics.light()
+            showCreate = true
+        } label: {
             HStack {
                 HStack(spacing: 12) {
                     Image(systemName: "plus").font(.system(size: 20, weight: .bold)).foregroundStyle(TLColor.accentInk)
@@ -147,6 +156,118 @@ struct SocialEventsTab: View {
             Button("Thử lại") { Task { await model.load() } }.foregroundStyle(TLColor.accentText)
         }
         .frame(maxWidth: .infinity).padding(.horizontal, 32).padding(.top, 50)
+    }
+}
+
+/// The organizer RPC requires every social event to belong to a club. The
+/// Social-level CTA therefore resolves the signed-in user's clubs before
+/// opening the same native form used from a club detail screen.
+private struct SocialEventClubPicker: View {
+    let onCreated: () -> Void
+    @State private var clubs: [ClubListItem] = []
+    @State private var selected: ClubListItem?
+    @State private var loading = true
+    @State private var error: String?
+    @State private var showCreateClub = false
+
+    var body: some View {
+        Group {
+            if let selected {
+                CreateSocialEventView(clubID: selected.id, onCreated: onCreated)
+            } else {
+                NavigationStack {
+                    Group {
+                        if loading {
+                            ProgressView().tint(TLColor.accentText)
+                        } else if let error {
+                            TLEmptyState(
+                                icon: "wifi.exclamationmark",
+                                title: "Không tải được CLB",
+                                subtitle: LocalizedStringKey(error)
+                            )
+                        } else if clubs.isEmpty {
+                            VStack(spacing: 18) {
+                                TLEmptyState(
+                                    icon: "person.3",
+                                    title: "Bạn chưa có CLB",
+                                    subtitle: "Hãy tạo CLB trước khi mở buổi chơi."
+                                )
+                                Button {
+                                    Haptics.light()
+                                    showCreateClub = true
+                                } label: {
+                                    Label("Tạo CLB", systemImage: "plus")
+                                        .font(TLFont.sans(15, .bold))
+                                        .foregroundStyle(TLColor.accentInk)
+                                        .frame(minWidth: 150)
+                                        .padding(.vertical, 12)
+                                        .background(TLColor.accent, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        } else {
+                            List(clubs) { club in
+                                Button {
+                                    Haptics.light()
+                                    selected = club
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        ClubLogo(url: club.logoURLResolved, initials: club.initials, size: 42)
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text(club.name)
+                                                .font(TLFont.sans(15, .semibold))
+                                                .foregroundStyle(TLColor.fg)
+                                            if let location = club.locationText?.nonEmpty {
+                                                Text(location)
+                                                    .font(TLFont.sans(12))
+                                                    .foregroundStyle(TLColor.fg3)
+                                            }
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundStyle(TLColor.fg4)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .listRowBackground(TLColor.surface)
+                            }
+                            .scrollContentBackground(.hidden)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(TLColor.bg)
+                    .navigationTitle("Chọn CLB tổ chức")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .sheet(isPresented: $showCreateClub) {
+                        CreateClubView {
+                            Task { await reloadClubs() }
+                        }
+                    }
+                }
+            }
+        }
+        .task { await loadClubs() }
+    }
+
+    @MainActor
+    private func loadClubs() async {
+        guard loading else { return }
+        let repo = ClubRepository()
+        guard let userID = await repo.currentUserID() else { return }
+        do {
+            clubs = try await repo.list(limit: 100).filter { $0.createdBy == userID }
+        } catch {
+            self.error = error.localizedDescription
+        }
+        loading = false
+    }
+
+    @MainActor
+    private func reloadClubs() async {
+        loading = true
+        error = nil
+        clubs = []
+        await loadClubs()
     }
 }
 

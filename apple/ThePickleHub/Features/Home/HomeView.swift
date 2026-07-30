@@ -18,7 +18,15 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 34) {
                     VStack(alignment: .leading, spacing: 18) {
                         partnerCard
-                        liveBar
+                        if !model.live.isEmpty {
+                            liveBar
+                        }
+                    }
+
+                    // Mirrors web Index.tsx: live/upcoming streams lead the feed;
+                    // replay-only days keep editorial first.
+                    if !model.live.isEmpty || !model.scheduled.isEmpty {
+                        livestreamSection
                     }
 
                     if let hero = model.posts.first {
@@ -27,12 +35,8 @@ struct HomeView: View {
                     if model.posts.count > 1 {
                         HomeFeatureSection(posts: Array(model.posts.dropFirst()))
                     }
-                    if !model.live.isEmpty || !model.scheduled.isEmpty || !model.recentEnded.isEmpty {
-                        HomeLiveSection(
-                            liveStreams: model.live,
-                            scheduledStreams: model.scheduled,
-                            endedStreams: model.recentEnded
-                        )
+                    if model.live.isEmpty && model.scheduled.isEmpty && !model.recentEnded.isEmpty {
+                        livestreamSection
                     }
                     if !model.news.isEmpty {
                         HomeNewsSection(items: model.news)
@@ -61,6 +65,14 @@ struct HomeView: View {
         .task { await model.load() }
         .refreshable { await model.load() }
         .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
+    }
+
+    private var livestreamSection: some View {
+        HomeLiveSection(
+            liveStreams: model.live,
+            scheduledStreams: model.scheduled,
+            endedStreams: model.recentEnded
+        )
     }
 
     // MARK: Partnership

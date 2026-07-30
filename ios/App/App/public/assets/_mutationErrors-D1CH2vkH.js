@@ -1,0 +1,1 @@
+import{Y as t}from"./vendor-ui-BOGudCw4.js";function c(n){if(n&&typeof n=="object"&&"code"in n){const o=n.code;if(typeof o=="string")return o}return null}function f(n){return c(n)==="42501"}function u(n,o,e){console.error(`[${n}] ${o}:`,e)}function a(n,o,e,s={}){u(n,o,e);const{genericMsg:i,permissionDeniedMsg:r}=s;f(e)&&r?t.error(r):i&&t.error(i)}export{a as h,u as l};

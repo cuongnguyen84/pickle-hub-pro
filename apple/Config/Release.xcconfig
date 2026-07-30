@@ -5,12 +5,12 @@
 APP_ENVIRONMENT = production
 APS_ENVIRONMENT = production
 PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
-MARKETING_VERSION = 1.1.0
-CURRENT_PROJECT_VERSION = 3
+MARKETING_VERSION = 2.0.0
+CURRENT_PROJECT_VERSION = 4
 
-// Flip to YES in a reviewed release change only after every device-smoke item
-// in docs/RELEASE_AND_ACTIVATION.md passes. A valid site key is also required.
-NATIVE_EVENT_REGISTRATION_ENABLED = NO
+// Native guest registration is active. A valid public Turnstile key remains
+// required because the production OTP endpoint rejects unverified requests.
+NATIVE_EVENT_REGISTRATION_ENABLED = YES
 
 // Preserve Firebase Messaging parity with the production Capacitor app. Public
 // Firebase identifiers resolve from ignored Secrets.xcconfig.

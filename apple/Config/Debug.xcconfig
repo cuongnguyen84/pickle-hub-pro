@@ -4,13 +4,16 @@
 
 APP_ENVIRONMENT = development
 APS_ENVIRONMENT = development
-PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app.dev
+// Native Sign in with Apple issues the bundle identifier as the ID-token
+// audience. Supabase production is configured for the shipping App ID, so
+// device builds used for production QA must share that identity.
+PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
 MARKETING_VERSION = 1.1.0
-CURRENT_PROJECT_VERSION = 3
+CURRENT_PROJECT_VERSION = 4
 
-// Device smoke may override this from the xcodebuild command line. Keep the
-// checked-in default OFF so a site key alone never sends a real OTP.
-NATIVE_EVENT_REGISTRATION_ENABLED = NO
+// Native registration mirrors production: Turnstile protects the email OTP
+// endpoint before any delivery attempt.
+NATIVE_EVENT_REGISTRATION_ENABLED = YES
 
 // Production push uses a Firebase iOS app bound to the live bundle. Keep the
 // isolated development bundle off until it has its own Firebase app record.

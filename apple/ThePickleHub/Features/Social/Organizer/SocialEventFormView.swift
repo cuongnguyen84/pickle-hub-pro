@@ -316,6 +316,22 @@ final class SocialEventFormModel {
 private struct SocialEventFormFields: View {
     @Bindable var model: SocialEventFormModel
 
+    private var vietQRPreviewURL: URL? {
+        let account = model.bankAccountNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        let accountName = model.bankAccountName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard model.priceVnd > 0,
+              !model.bankCode.isEmpty,
+              account.range(of: #"^[0-9]{6,20}$"#, options: .regularExpression) != nil,
+              accountName.count >= 3 else { return nil }
+        return VietQR.imageURL(
+            bankCode: model.bankCode,
+            accountNumber: account,
+            accountName: accountName,
+            amountVnd: model.priceVnd,
+            memo: "PHUB-DEMO00"
+        )
+    }
+
     var body: some View {
         Section("Thông tin") {
             TextField("Tên sự kiện", text: $model.title)
@@ -390,6 +406,35 @@ private struct SocialEventFormFields: View {
                 }
                 TextField("Số tài khoản", text: $model.bankAccountNumber).keyboardType(.numberPad)
                 TextField("Tên chủ tài khoản", text: $model.bankAccountName).autocapitalization(.allCharacters)
+                if let qrURL = vietQRPreviewURL {
+                    VStack(spacing: 10) {
+                        Text("XEM TRƯỚC VIETQR")
+                            .font(TLFont.mono(10, .semibold))
+                            .tracking(0.8)
+                            .foregroundStyle(TLColor.fg3)
+                        AsyncImage(url: qrURL) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView().tint(TLColor.accentText)
+                            case .success(let image):
+                                image.resizable().scaledToFit()
+                            case .failure:
+                                Label("Không tải được mã QR", systemImage: "wifi.exclamationmark")
+                                    .font(TLFont.sans(12))
+                                    .foregroundStyle(TLColor.live)
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        .frame(width: 220, height: 220)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                        Text("Mã mẫu để kiểm tra thông tin nhận tiền")
+                            .font(TLFont.sans(11))
+                            .foregroundStyle(TLColor.fg3)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
                 Toggle("Bắt buộc trả trước", isOn: $model.requiresPrepayment)
                 if model.requiresPrepayment {
                     Stepper("Hạn trả: \(model.deadlineHours)h sau đăng ký", value: $model.deadlineHours, in: 1...168)

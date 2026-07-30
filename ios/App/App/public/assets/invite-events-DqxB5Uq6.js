@@ -1,0 +1,1 @@
+import{A as t}from"./index-Cy_AlGop.js";function e(n){t("invite_sent",{...n})}function a(n){t("invite_opened",{...n})}function c(n){t("signup_from_invite",{...n})}function o(n){t("match_confirmed",{...n})}export{a,c as b,o as c,e as t};

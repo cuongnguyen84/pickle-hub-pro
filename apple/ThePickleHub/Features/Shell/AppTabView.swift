@@ -55,9 +55,9 @@ struct AppTabView: View {
                     switch route {
                     case .tournaments: TournamentsView()
                     case .rankings: RankingsView()
-                    case .notifications: NotificationsView()
+                    case .notifications: AuthenticationRequiredView { NotificationsView() }
                     case .search: SearchView()
-                    case .profile: ProfileView()
+                    case .profile: AuthenticationRequiredView { ProfileView() }
                     }
                 }
                 // Single full-width principal bar. Using one toolbar zone (not
@@ -120,7 +120,7 @@ struct AppTabView: View {
             }
             .accessibilityValue(unreadCount > 0 ? "Có thông báo mới" : "")
 
-            NavigationLink { ProfileView() } label: { toolbarAvatar }
+            NavigationLink { AuthenticationRequiredView { ProfileView() } } label: { toolbarAvatar }
                 .accessibilityLabel("Hồ sơ")
         }
         .frame(maxWidth: .infinity)

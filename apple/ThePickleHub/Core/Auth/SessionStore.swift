@@ -151,10 +151,57 @@ final class SessionStore {
 
     // MARK: - Email / password
 
-    func signIn(email: String, password: String) async {
+    @discardableResult
+    func signIn(email: String, password: String) async -> Bool {
+        var succeeded = false
         await run {
             let session = try await self.client.auth.signIn(email: email, password: password)
             self.apply(.init(kind: .signedIn, identity: SessionUserIdentity(session: session)))
+            succeeded = true
+        }
+        return succeeded
+    }
+
+    /// Creates the same email/password account as web production. Supabase
+    /// sends its configured confirmation email and redirects the user through
+    /// the canonical web callback, whose universal link returns to this app.
+    func signUp(email: String, password: String) async -> Bool {
+        var succeeded = false
+        await run {
+            let response = try await self.client.auth.signUp(
+                email: email,
+                password: password,
+                redirectTo: URL(string: "https://www.thepicklehub.net/auth/callback")
+            )
+            succeeded = true
+            if case .session(let session) = response {
+                self.apply(.init(
+                    kind: .signedIn,
+                    identity: SessionUserIdentity(session: session)
+                ))
+            }
+        }
+        return succeeded
+    }
+
+    static func isAuthCallbackURL(_ url: URL) -> Bool {
+        if url.scheme == "thepicklehub" {
+            return url.host == "auth" && url.path == "/callback"
+        }
+        return (url.host == "www.thepicklehub.net" || url.host == "thepicklehub.net") &&
+            url.path == "/auth/callback"
+    }
+
+    /// Completes email confirmation/password recovery PKCE callbacks delivered
+    /// through the app's universal link.
+    func handleAuthCallback(_ url: URL) async {
+        guard Self.isAuthCallbackURL(url) else { return }
+        await run {
+            let session = try await self.client.auth.session(from: url)
+            self.apply(.init(
+                kind: .signedIn,
+                identity: SessionUserIdentity(session: session)
+            ))
         }
     }
 

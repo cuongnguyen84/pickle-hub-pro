@@ -44,7 +44,6 @@ final class ClubsViewModel {
 /// Sub-tab "CLB" — clubs discovery. Search + "CLB của tôi" vs "Khám phá".
 struct ClubsListView: View {
     @State private var model = ClubsViewModel()
-    @State private var openWeb: IdentifiedURL?
     @State private var showCreate = false
 
     var body: some View {
@@ -58,9 +57,10 @@ struct ClubsListView: View {
         .background(TLColor.bg)
         .task { if case .loading = model.phase { await model.load() } }
         .refreshable { await model.load() }
-        .sheet(item: $openWeb) { SafariView(url: $0.url).ignoresSafeArea() }
         .sheet(isPresented: $showCreate) {
-            CreateClubView { Task { await model.load() } }
+            AuthenticationRequiredView {
+                CreateClubView { Task { await model.load() } }
+            }
         }
     }
 
@@ -77,13 +77,7 @@ struct ClubsListView: View {
 
             Button {
                 Haptics.light()
-                Task {
-                    if await model.currentUserID() == nil {
-                        openWeb = IdentifiedURL(url: WebRoutes.base.appending(path: "login"))
-                    } else {
-                        showCreate = true
-                    }
-                }
+                showCreate = true
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: "plus").font(.system(size: 13, weight: .bold))

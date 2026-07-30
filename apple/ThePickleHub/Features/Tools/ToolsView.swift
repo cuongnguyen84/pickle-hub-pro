@@ -139,15 +139,19 @@ struct ToolsView: View {
                 FormatFinderSheet { pick in pendingFinderPick = pick }
             }
             .sheet(isPresented: $showCreate) {
-                CreateQuickTableView(onCreated: { shareID, name in
-                    Task { await model.reload() }
-                    createdTarget = CreatedRef(id: shareID, name: name)
-                })
+                AuthenticationRequiredView {
+                    CreateQuickTableView(onCreated: { shareID, name in
+                        Task { await model.reload() }
+                        createdTarget = CreatedRef(id: shareID, name: name)
+                    })
+                }
             }
             .sheet(isPresented: $showCreateParent) {
-                CreateParentTournamentView { tournament in
-                    Task { await model.reload() }
-                    parentTarget = tournament
+                AuthenticationRequiredView {
+                    CreateParentTournamentView { tournament in
+                        Task { await model.reload() }
+                        parentTarget = tournament
+                    }
                 }
             }
             .navigationDestination(item: $parentTarget) { tournament in
@@ -172,9 +176,11 @@ struct ToolsView: View {
                 }
             }
             .sheet(isPresented: $showCreateTeamMatch) {
-                CreateTeamMatchView { shareID, name in
-                    Task { await model.reload() }
-                    createdTeamMatch = CreatedRef(id: shareID, name: name)
+                AuthenticationRequiredView {
+                    CreateTeamMatchView { shareID, name in
+                        Task { await model.reload() }
+                        createdTeamMatch = CreatedRef(id: shareID, name: name)
+                    }
                 }
             }
             .navigationDestination(item: $createdTarget) { ref in
@@ -184,18 +190,22 @@ struct ToolsView: View {
                 TeamMatchDetailView(shareID: ref.id, fallbackName: ref.name)
             }
             .sheet(isPresented: $showCreateDoubles) {
-                CreateDoublesElimView { shareID, name in
-                    Task { await model.reload() }
-                    createdDoubles = CreatedRef(id: shareID, name: name)
+                AuthenticationRequiredView {
+                    CreateDoublesElimView { shareID, name in
+                        Task { await model.reload() }
+                        createdDoubles = CreatedRef(id: shareID, name: name)
+                    }
                 }
             }
             .navigationDestination(item: $createdDoubles) { ref in
                 DoublesElimDetailView(shareID: ref.id, fallbackName: ref.name)
             }
             .sheet(isPresented: $showCreateFlex) {
-                CreateFlexView { shareID, name in
-                    Task { await model.reload() }
-                    createdFlex = CreatedRef(id: shareID, name: name)
+                AuthenticationRequiredView {
+                    CreateFlexView { shareID, name in
+                        Task { await model.reload() }
+                        createdFlex = CreatedRef(id: shareID, name: name)
+                    }
                 }
             }
             .navigationDestination(item: $createdFlex) { ref in

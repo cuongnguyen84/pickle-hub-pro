@@ -1,0 +1,1 @@
+import{j as r}from"./vendor-ui-BOGudCw4.js";import{E as n}from"./eye-DwYOZRJU.js";function i(e){return e>=1e3?`${(e/1e3).toFixed(1)}k`:String(e)}function a({count:e,className:t}){return e==null?null:r.jsxs("span",{className:`inline-flex items-center gap-1 text-muted-foreground ${t??""}`,children:[r.jsx(n,{className:"w-3.5 h-3.5"}),r.jsx("span",{children:i(e)})]})}export{a as V};

@@ -324,6 +324,23 @@ struct SocialOrganizerRepository {
         struct Params: Encodable {
             let p_event: EventPayload
             let p_payment: PaymentPayload?
+
+            private enum CodingKeys: String, CodingKey {
+                case p_event, p_payment
+            }
+
+            /// The production RPC always has two JSONB arguments. For a free
+            /// event payment is nil, but the key must still be sent as JSON
+            /// null or PostgREST tries to resolve a one-argument overload.
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(p_event, forKey: .p_event)
+                if let p_payment {
+                    try container.encode(p_payment, forKey: .p_payment)
+                } else {
+                    try container.encodeNil(forKey: .p_payment)
+                }
+            }
         }
         try await client.rpc("create_social_event_with_payment",
                              params: Params(p_event: event, p_payment: payment)).execute()
