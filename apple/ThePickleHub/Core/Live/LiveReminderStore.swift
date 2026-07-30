@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 /// Local "Nhắc tôi" reminders for upcoming livestreams. Schedules a local
 /// notification ~10 min before start (or at start if sooner) and tracks which
