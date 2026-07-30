@@ -192,8 +192,11 @@ export function FeedNewsCard({
                 display: "block",
               }}
               onError={(e) => {
-                (e.currentTarget.parentElement as HTMLElement).style.display =
-                  "none";
+                // Keep the reserved 4:3 box (it already carries a surface
+                // background) and drop only the broken <img>. Hiding the parent
+                // collapsed the reserved space and shifted every card below —
+                // external news thumbnails 404 often (CLS).
+                e.currentTarget.style.display = "none";
               }}
             />
           </div>

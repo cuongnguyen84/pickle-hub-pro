@@ -83,7 +83,7 @@ const getSessionShuffleSeed = (): number => {
 };
 const Feed = () => {
   const { language } = useI18n();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   // UX-08 — jitter seed for tie-breaking in the score sort, stable per tab
   // session. This used to be per-mount random, which re-seeded on every
   // navigation TO /feed, so backing out of a post reordered the feed under
@@ -317,8 +317,15 @@ const Feed = () => {
           </p>
         </header>
 
-        {/* Anonymous nudge */}
-        {!isAuthenticated && <FeedSignInNudge language={language} />}
+        {/* Anonymous nudge — gated on resolved auth so it never mounts then
+            unmounts as the session restores. Signed-in users used to see the
+            nudge on first paint and watch it vanish once getSession() resolved,
+            shifting the whole feed down then up (CLS). Anonymous auth resolves
+            near-instantly (no token to refresh), so the nudge still shows
+            immediately for them. */}
+        {!authLoading && !isAuthenticated && (
+          <FeedSignInNudge language={language} />
+        )}
 
         {/* Tabs */}
         <FeedTabs
@@ -333,18 +340,24 @@ const Feed = () => {
         {/* Stream */}
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           {isLoadingFirstPage ? (
-            // Skeleton rows echoing FeedMatchCard geometry (eyebrow +
-            // two team rows) so the page doesn't jump when data lands.
+            // Skeleton rows mirror the trending feed's dominant card shape —
+            // eyebrow + title + a 4:3 media block + meta — so the column
+            // reserves roughly the height the image cards (news/blog/video)
+            // occupy. The old text-only skeleton was ~3x shorter than the real
+            // media cards, so the page jumped down hard when the first page
+            // landed (CLS). The 4:3 block renders at column width on mobile,
+            // matching FeedNewsCard/FeedBlogCard/FeedVideoCard.
             <div aria-busy="true" aria-label={language === "vi" ? "Đang tải bảng tin" : "Loading feed"}>
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
                   className="animate-pulse"
-                  style={{ padding: "32px 0", borderBottom: "1px solid var(--tl-border)" }}
+                  style={{ padding: "24px 0", borderBottom: "1px solid var(--tl-border)" }}
                 >
-                  <div style={{ height: 10, width: 180, borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 20 }} />
-                  <div style={{ height: 24, width: "62%", borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 12 }} />
-                  <div style={{ height: 24, width: "45%", borderRadius: 4, background: "var(--tl-surface-2)" }} />
+                  <div style={{ height: 10, width: 160, borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 14 }} />
+                  <div style={{ height: 22, width: "70%", borderRadius: 4, background: "var(--tl-surface-2)", marginBottom: 16 }} />
+                  <div style={{ width: "100%", aspectRatio: "4 / 3", borderRadius: 8, background: "var(--tl-surface-2)", marginBottom: 14 }} />
+                  <div style={{ height: 12, width: "40%", borderRadius: 4, background: "var(--tl-surface-2)" }} />
                 </div>
               ))}
             </div>
