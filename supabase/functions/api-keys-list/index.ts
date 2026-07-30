@@ -58,6 +58,24 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ADMIN-MFA: đã enroll 2FA thì phiên phải là aal2 mới được dùng quyền admin
+    // (đồng bộ với is_admin() ở DB — migration 20260730090000)
+    if ((userData.user.factors ?? []).some((f) => f.status === "verified")) {
+      let aal: string | null = null;
+      try {
+        const b64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        aal = JSON.parse(atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4))).aal ?? null;
+      } catch {
+        // token hỏng -> coi như aal1, chặn
+      }
+      if (aal !== "aal2") {
+        return new Response(
+          JSON.stringify({ error: "Forbidden - MFA (aal2) required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // User is admin, fetch API keys with service role
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
