@@ -71,6 +71,7 @@ const post: BlogPost = {
           internalLinks: [
             { text: "How to organize a pickleball tournament (full workflow)", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "All tournament formats compared side-by-side", path: "/blog/pickleball-tournament-formats-explained" },
+            { text: "Tournament budget: full cost breakdown, templates & free calculator", path: "/blog/pickleball-tournament-budget-calculator-guide" },
             { text: "The tournament organizer hub — every guide in order", path: "/blog/tournament-organizer-hub" }
           ]
         },
