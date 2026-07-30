@@ -1,7 +1,7 @@
 import FirebaseCore
 @preconcurrency import FirebaseMessaging
 import Foundation
-import Supabase
+@preconcurrency import Supabase
 import UIKit
 import UserNotifications
 
