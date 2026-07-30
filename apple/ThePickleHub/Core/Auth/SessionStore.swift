@@ -1,6 +1,6 @@
 import Foundation
 import Observation
-import Supabase
+@preconcurrency import Supabase
 import AuthenticationServices
 
 /// Stable identity exposed to the UI. Keeping the user id in state prevents a
