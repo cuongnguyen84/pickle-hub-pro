@@ -36,6 +36,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -154,7 +155,8 @@ Deno.serve(async (req) => {
         .eq("user_id", user.id)
         .eq("role", "admin")
         .maybeSingle();
-      isAdmin = Boolean(roleRow);
+      // ADMIN-MFA: admin override chỉ có hiệu lực ở phiên aal2 khi đã enroll 2FA
+      isAdmin = Boolean(roleRow) && adminSessionAalOk(user, bearerToken(req));
     }
 
     if (!isOrganizer && !isAdmin) {

@@ -54,6 +54,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
 import { partnerFetch, getDuprEnv } from "../_shared/dupr-client.ts";
 import { userFetch } from "../_shared/dupr-user-client.ts";
 import { decryptUserToken } from "../_shared/dupr-token-keyring.ts";
@@ -201,9 +202,11 @@ Deno.serve(async (req) => {
     .from("user_roles")
     .select("role")
     .eq("user_id", user.id);
+  // ADMIN-MFA: quyền admin chỉ có hiệu lực ở phiên aal2 một khi đã enroll 2FA;
+  // aal1 rơi về nhánh organizer/participant như user thường.
   const isGlobalAdmin = (roles ?? []).some(
     (r: { role: string }) => r.role === "admin",
-  );
+  ) && adminSessionAalOk(user, bearerToken(req));
 
   let isClubOrganizer = false;
 

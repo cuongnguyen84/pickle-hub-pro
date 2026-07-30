@@ -14,6 +14,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
 
 interface Body {
   organization_id?: string;
@@ -61,7 +62,8 @@ Deno.serve(async (req) => {
     .eq("role", "admin")
     .maybeSingle<{ role: string }>();
 
-  let canAdmin = !!adminRow;
+  // ADMIN-MFA: admin toàn cục chỉ có hiệu lực ở phiên aal2 khi đã enroll 2FA
+  let canAdmin = !!adminRow && adminSessionAalOk(user, bearerToken(req));
   if (!canAdmin) {
     const { data: profileRow } = await supabase
       .from("profiles")

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
+import { adminSessionAalOk } from "../_shared/admin-aal.ts";
 
 interface RevokeRequest {
   id?: string;
@@ -61,22 +62,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ADMIN-MFA: đã enroll 2FA thì phiên phải là aal2 mới được dùng quyền admin
-    // (đồng bộ với is_admin() ở DB — migration 20260730090000)
-    if ((userData.user.factors ?? []).some((f) => f.status === "verified")) {
-      let aal: string | null = null;
-      try {
-        const b64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        aal = JSON.parse(atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4))).aal ?? null;
-      } catch {
-        // token hỏng -> coi như aal1, chặn
-      }
-      if (aal !== "aal2") {
-        return new Response(
-          JSON.stringify({ error: "Forbidden - MFA (aal2) required" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    // ADMIN-MFA: đã enroll 2FA thì phiên phải là aal2 (xem _shared/admin-aal.ts)
+    if (!adminSessionAalOk(userData.user, token)) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden - MFA (aal2) required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const body: RevokeRequest = await req.json();
