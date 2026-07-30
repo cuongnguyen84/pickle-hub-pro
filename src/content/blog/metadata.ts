@@ -178,7 +178,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-tournament-budget-calculator-guide",
     publishedDate: "2026-06-13",
-    updatedDate: "2026-06-13",
+    updatedDate: "2026-07-30",
     author: "Cuong Nguyen",
     tags: ["pickleball tournament budget", "pickleball tournament cost", "how much does a pickleball tournament cost", "tournament budget template", "pickleball entry fee", "tournament organizer", "pickleball vietnam"],
     ctaPath: "/tools",
@@ -676,7 +676,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   },  {
     slug: "pickleball-round-robin-generator-guide",
     publishedDate: "2025-10-10",
-    updatedDate: "2026-07-26",
+    updatedDate: "2026-07-30",
     author: "The PickleHub Team",
     tags: ["round-robin", "guide", "tutorial"],
     ctaPath: "/tools/quick-tables",

@@ -190,6 +190,40 @@ function secureRedirect(location: string, status: 301 | 302 = 301): Response {
 const HUB_LIST_TTL_SECONDS = 300; // 5 minutes
 const DEFAULT_TTL_SECONDS = 21600; // 6 hours
 
+// SEO-05 (2026-07-30) — prerender canonical integrity guard.
+// A cross-route poisoning incident was observed where unrelated bot routes
+// briefly served ONE venue page's full SEO surface (title/canonical/og/
+// hreflang all pointing at /vi/san/the-cage-dempsey-singapore). The source was
+// localized (via HTTP header fingerprint) to the legacy standalone
+// prerender-worker (separate infra — see docs/prerender-worker-poisoning-
+// runbook.md), NOT this middleware. This guard is Pages-side defense-in-depth
+// so the Pages KV can never itself cache a mis-rendered page.
+//
+// Rule: the canonical's entity segment (first path segment, /vi stripped) must
+// equal the request's. Exception-proof for the VI->EN canonical routes
+// (/vi/tournament, /vi/org, /vi/tran-dau, /vi/live) — they keep the SAME first
+// segment across the language flip — while a /news route returning a /san
+// canonical (the poisoning signature) is correctly rejected.
+const PRERENDER_CANON_RE = /<link[^>]+rel="canonical"[^>]*href="([^"]+)"/i;
+
+function prerenderEntitySegment(pathname: string): string {
+  const noLang = pathname.replace(/^\/vi(?=\/|$)/, "");
+  return noLang.split("/").filter(Boolean)[0] ?? "";
+}
+
+function canonicalConsistent(
+  html: string,
+  pathname: string,
+): { ok: boolean; canon: string | null } {
+  const m = html.match(PRERENDER_CANON_RE);
+  if (!m) return { ok: true, canon: null };
+  const canonPath = m[1].replace(/^https?:\/\/[^/]+/, "") || "/";
+  return {
+    ok: prerenderEntitySegment(canonPath) === prerenderEntitySegment(pathname),
+    canon: canonPath,
+  };
+}
+
 function pathCacheTtl(pathname: string): number {
   const stripped = pathname.replace(/^\/vi(?=\/|$)/, "") || "/";
   if (stripped === "/social" || stripped === "/clubs" || stripped === "/san") {
@@ -511,6 +545,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     if (env.PRERENDER_CACHE && response.status === 200) {
       const html = await response.clone().text();
+      // SEO-05 integrity guard (see canonicalConsistent above).
+      const canon = canonicalConsistent(html, url.pathname);
       // 6h TTL (was 1h). Bumped 2026-05-02 after Ahrefs Site Audit
       // flagged 10 URLs at >1s loading — most were cold-cache hits where
       // a fresh prerender (Cloudflare cold start + Tokyo Supabase round
@@ -522,10 +558,37 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // PR73 Phase 2B — pathCacheTtl returns 5 minutes for /social +
       // /clubs (hub list pages) so newly-published events/clubs reach
       // the bot view within minutes, not hours.
-      const ttl = pathCacheTtl(url.pathname);
-      context.waitUntil(
-        env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: ttl }),
-      );
+      if (!canon.ok) {
+        // Canonical belongs to a different entity than the requested path
+        // — poisoned render. Do NOT cache it; record for the existing
+        // errors-telegram-alert cron (reuses the #452 client_errors path,
+        // no migration). 'prerender-canon:' prefix = distinct fingerprint.
+        try {
+          const supabase = createSupabaseClient(env);
+          context.waitUntil(
+            supabase
+              .from("client_errors")
+              .insert({
+                type: "unhandled_rejection",
+                message: `prerender-canon: ${url.pathname} -> ${canon.canon}`,
+                stack: null,
+                url: url.pathname,
+                user_agent: request.headers.get("user-agent"),
+              })
+              .then(
+                () => {},
+                () => {},
+              ),
+          );
+        } catch {
+          // telemetry must never break serving
+        }
+      } else {
+        const ttl = pathCacheTtl(url.pathname);
+        context.waitUntil(
+          env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: ttl }),
+        );
+      }
     }
 
     const headers = new Headers(response.headers);

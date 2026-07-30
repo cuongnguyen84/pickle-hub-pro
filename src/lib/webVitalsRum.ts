@@ -17,6 +17,17 @@ interface RumPageContext {
   route: string;
 }
 
+/**
+ * Structural shape of the CLS attribution payload from `web-vitals/attribution`.
+ * Declared locally so this module never hard-depends on the attribution build's
+ * exported types (keeps typecheck stable across web-vitals upgrades / tree-shaking).
+ * Hình dạng attribution CLS — khai báo cục bộ để không phụ thuộc type export.
+ */
+interface ClsAttribution {
+  largestShiftTarget?: string;
+  loadState?: string;
+}
+
 const MARKET_CACHE_KEY = "rum_market_segment_v1";
 
 // Route literals are safe, low-cardinality dimensions. Every other path
@@ -136,9 +147,10 @@ export function buildWebVitalEvent(
   metric: RumMetric,
   context: RumPageContext,
   marketSegment: MarketSegment,
+  attribution?: ClsAttribution,
 ): Record<string, unknown> {
   const isCls = metric.name === "CLS";
-  return {
+  const event: Record<string, unknown> = {
     value: Math.round(isCls ? metric.value * 1000 : metric.value),
     metric_value: isCls
       ? Number(metric.value.toFixed(4))
@@ -159,6 +171,21 @@ export function buildWebVitalEvent(
     sample_rate: 1,
     non_interaction: true,
   };
+
+  // CLS-only: web-vitals/attribution names the element behind the largest
+  // layout shift + the load phase it fired in. This is the field signal needed
+  // to FIX CLS instead of guessing (PERF-05B follow-up). Chỉ gắn cho CLS.
+  if (isCls && attribution) {
+    if (attribution.largestShiftTarget) {
+      // GA4 event-param values cap at 100 chars.
+      event.cls_shift_target = attribution.largestShiftTarget.slice(0, 100);
+    }
+    if (attribution.loadState) {
+      event.cls_load_state = attribution.loadState;
+    }
+  }
+
+  return event;
 }
 
 export function getLocale(pathname: string): "vi" | "en" {
@@ -238,13 +265,20 @@ export function initWebVitalsRum(): void {
   const marketSegment = resolveMarketSegment();
 
   const startObservers = () => {
-    void import("web-vitals")
+    void import("web-vitals/attribution")
       .then(({ onCLS, onFCP, onINP, onLCP, onTTFB }) => {
         const report = (metric: Metric) => {
+          // The attribution build attaches `.attribution` to every metric; we
+          // forward only the CLS shift source (+ load phase) to keep GA4 params
+          // lean and cardinality bounded.
+          const clsAttribution =
+            metric.name === "CLS"
+              ? (metric as { attribution?: ClsAttribution }).attribution
+              : undefined;
           void marketSegment.then((segment) => {
             trackEvent(
               "web_vital",
-              buildWebVitalEvent(metric, pageContext, segment),
+              buildWebVitalEvent(metric, pageContext, segment, clsAttribution),
             );
           });
         };

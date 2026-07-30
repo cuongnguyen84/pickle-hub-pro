@@ -9,6 +9,7 @@ import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { blogMetadata } from "@/content/blog";
+import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { blogHeroSrcSet } from "@/lib/image-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
@@ -88,6 +89,9 @@ const Index = () => {
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
+  // VI homepage stories come from Supabase vi_blog_posts (mirrors /vi/blog) so
+  // VI-only posts without an EN manifest entry still surface on the homepage.
+  const { data: viPosts = [] } = usePublishedViBlogPosts();
 
   const homeNewsQuery = useNewsItems({
     limit: HOME_NEWS_LIMIT + 6,
@@ -123,21 +127,37 @@ const Index = () => {
   };
 
   const stories: Story[] = useMemo(() => {
+    // VI: source from Supabase vi_blog_posts (same as /vi/blog) so VI-only posts
+    // without an EN manifest entry still surface here. EN keeps the synchronous
+    // bilingual manifest for immediate LCP.
+    if (language === "vi") {
+      return viPosts.slice(0, 6).map((p) => ({
+        slug: p.slug,
+        title: p.title,
+        summary: p.excerpt ?? "",
+        tag: p.category ?? p.tags?.[0] ?? null,
+        image: p.cover_image_url,
+        imageAlt: p.title,
+        author: "The PickleHub",
+        date: p.published_at,
+        href: `/vi/blog/${p.slug}`,
+      }));
+    }
     return [...blogMetadata]
       .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
       .slice(0, 6)
       .map((p) => ({
         slug: p.slug,
-        title: language === "vi" ? p.titleVi : p.titleEn,
-        summary: language === "vi" ? p.metaDescriptionVi : p.metaDescriptionEn,
+        title: p.titleEn,
+        summary: p.metaDescriptionEn,
         tag: p.tags[0] ?? null,
         image: p.heroImage?.src ?? null,
-        imageAlt: p.heroImage?.alt ?? (language === "vi" ? p.titleVi : p.titleEn),
+        imageAlt: p.heroImage?.alt ?? p.titleEn,
         author: p.author,
         date: p.publishedDate,
-        href: language === "vi" ? `/vi/blog/${p.slug}` : `/blog/${p.slug}`,
+        href: `/blog/${p.slug}`,
       }));
-  }, [language]);
+  }, [language, viPosts]);
 
   // Ticker — 3-mode priority resolver:
   //   live (active or scheduled within 24h) → pro-tour matches (last 3d)

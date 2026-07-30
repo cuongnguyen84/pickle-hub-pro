@@ -67,6 +67,7 @@ const post: BlogPost = {
             { text: "How to Organize a Pickleball Tournament", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Pickleball Tournament Formats Explained", path: "/blog/pickleball-tournament-formats-explained" },
             { text: "Best Pickleball Tournament Software 2026", path: "/blog/best-pickleball-tournament-software-2026" },
+            { text: "How to run a pickleball round robin — schedule, byes & tiebreakers", path: "/blog/pickleball-round-robin-generator-guide" },
             { text: "Free round robin generator & bracket maker", path: "/tools" }
           ]
         }
