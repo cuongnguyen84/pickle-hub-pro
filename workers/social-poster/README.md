@@ -125,6 +125,9 @@ wrangler secret put FB_PAGE_ACCESS_TOKEN
 wrangler secret put FB_SECONDARY_PAGE_ACCESS_TOKEN
 # paste Page Access Token dài hạn của TA Pickleball
 
+wrangler secret put SOCIAL_POSTER_ADMIN_SECRET
+# dedicated secret for manual dry-runs and one-item smoke tests
+
 wrangler secret put GEMINI_API_KEY
 # paste từ aistudio
 ```

@@ -46,6 +46,7 @@ export interface Env {
   // secrets
   SUPABASE_SERVICE_ROLE_KEY: string;
   SOCIAL_POSTER_SECRET: string;
+  SOCIAL_POSTER_ADMIN_SECRET?: string;
   FB_PAGE_ID: string;
   FB_PAGE_ACCESS_TOKEN: string;
   FB_SECONDARY_PAGE_ACCESS_TOKEN?: string;
@@ -132,7 +133,12 @@ export default {
 
     // Auth — all POST endpoints share the same secret.
     const provided = req.headers.get('X-Auth-Secret') ?? '';
-    if (provided !== env.SOCIAL_POSTER_SECRET || !env.SOCIAL_POSTER_SECRET) {
+    const cronAuth = !!env.SOCIAL_POSTER_SECRET && provided === env.SOCIAL_POSTER_SECRET;
+    const adminAuth = !!env.SOCIAL_POSTER_ADMIN_SECRET &&
+      provided === env.SOCIAL_POSTER_ADMIN_SECRET;
+    const serviceAuth = !!env.SUPABASE_SERVICE_ROLE_KEY &&
+      provided === env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!cronAuth && !adminAuth && !serviceAuth) {
       return json({ error: 'Unauthorized' }, 401);
     }
 
@@ -784,7 +790,7 @@ async function retryLinkComment(
  */
 async function generateCaption(env: Env, item: NewsItem): Promise<string> {
   const link = buildNewsLink(env, item);
-  const url = `${env.SUPABASE_URL.replace(/\/$/, '')}/functions/v1/social-caption`;
+  const url = `${env.SUPABASE_URL.replace(/\/$/, '')}/functions/v1/news-social-caption`;
 
   const res = await fetch(url, {
     method: 'POST',

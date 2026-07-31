@@ -20,6 +20,7 @@
 #   [secrets] (wrangler secret put)
 #     SUPABASE_SERVICE_ROLE_KEY     Reads news_items, upserts fb_post_log.
 #     SOCIAL_POSTER_SECRET          Dedicated secret for cron + /run.
+#     SOCIAL_POSTER_ADMIN_SECRET    Dedicated secret for manual admin runs.
 #     FB_PAGE_ID                    Numeric Page ID, e.g. 100000123456789.
 #     FB_PAGE_ACCESS_TOKEN          Long-lived (never-expire) Page token.
 #     FB_SECONDARY_PAGE_ACCESS_TOKEN Long-lived token for TA Pickleball.
