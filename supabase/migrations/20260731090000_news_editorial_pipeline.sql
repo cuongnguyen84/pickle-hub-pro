@@ -109,9 +109,9 @@ WHERE o.id = pair.origin_id;
 -- required so an anonymous PostgREST caller cannot recover source URLs.
 UPDATE public.news_items
 SET source_url = NULL,
-    image_url = '/og-image.png'
+    image_url = NULL
 WHERE source_url IS NOT NULL
-   OR image_url IS DISTINCT FROM '/og-image.png';
+   OR image_url IS NOT NULL;
 DROP INDEX IF EXISTS public.uniq_news_items_source_url_lang;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_news_items_origin_language
@@ -214,7 +214,7 @@ BEGIN
     v_status,
     'en',
     v_en_slug,
-    '/og-image.png',
+    NULL,
     NULLIF(p_en->>'category', ''),
     coalesce((p_en->>'importance')::integer, 3),
     false,
@@ -240,7 +240,7 @@ BEGIN
     v_status,
     'vi',
     v_vi_slug,
-    '/og-image.png',
+    NULL,
     NULLIF(p_vi->>'category', ''),
     coalesce((p_vi->>'importance')::integer, 3),
     true,

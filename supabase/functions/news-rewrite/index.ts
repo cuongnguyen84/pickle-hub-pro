@@ -174,7 +174,8 @@ Rules:
 - Do not include URLs, calls to visit the source, citations, HTML, Markdown,
   emojis, or a byline.
 - Attribute uncertain claims in prose to "${origin.source_name}".
-- Vietnamese must read like natural Vietnamese sports journalism.
+- Vietnamese must read like natural Vietnamese sports journalism and use full
+  Vietnamese diacritics in the title, summary, headings, and paragraphs.
 - Keep player, brand, tournament, PPA, MLP, APP, and DUPR names accurate.
 - summary must be 120–300 characters and must not repeat the title.
 - Use 2–4 sections. A heading is optional; paragraphs must be plain text.
@@ -294,6 +295,16 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
     const allText = `${value.title} ${value.summary} ${paragraphs.join(" ")}`;
     if (/https?:\/\/|www\./i.test(allText)) {
       throw new Error(`${language} draft contains a URL`);
+    }
+    if (language === "vi") {
+      const vietnameseWords = allText
+        .split(/\s+/)
+        .filter((word) => /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i.test(word))
+        .length;
+      const totalWords = allText.split(/\s+/).filter(Boolean).length;
+      if (vietnameseWords / totalWords < 0.1) {
+        throw new Error("vi draft is missing Vietnamese diacritics");
+      }
     }
   }
 }

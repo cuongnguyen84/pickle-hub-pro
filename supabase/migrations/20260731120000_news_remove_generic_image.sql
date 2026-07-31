@@ -1,6 +1,11 @@
--- Prevent a legacy or stale ingester from reintroducing outbound source URLs
--- into the anonymously readable news_items table. The editorial publisher
--- always writes NULL; source URLs belong only in the protected news_origins.
+-- Rewritten articles must not all display the site-wide OG card as if it were
+-- an article photograph. Until an original per-article image pipeline exists,
+-- render the text article without a hero image.
+UPDATE public.news_items
+SET image_url = NULL
+WHERE origin_id IS NOT NULL
+  AND image_url = '/og-image.png';
+
 CREATE OR REPLACE FUNCTION public.normalize_editorial_news_public_fields()
 RETURNS trigger
 LANGUAGE plpgsql
