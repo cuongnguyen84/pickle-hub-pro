@@ -13,7 +13,6 @@ export type NewsItemDetail = {
   summary: string;
   source: string | null;
   source_id: string | null;
-  source_url: string;
   image_url: string | null;
   language: "en" | "vi";
   slug: string;
@@ -22,6 +21,9 @@ export type NewsItemDetail = {
   published_at: string;
   ai_translated: boolean;
   parent_news_id: string | null;
+  content_html: string | null;
+  content_kind: "full" | "brief";
+  updated_at: string;
 };
 
 export function useNewsItemBySlug(slug: string | undefined, language: "en" | "vi") {
@@ -32,7 +34,7 @@ export function useNewsItemBySlug(slug: string | undefined, language: "en" | "vi
       const { data, error } = await supabase
         .from("news_items")
         .select(
-          "id, title, summary, source, source_id, source_url, image_url, language, slug, category, importance, published_at, ai_translated, parent_news_id"
+          "id, title, summary, source, source_id, image_url, language, slug, category, importance, published_at, ai_translated, parent_news_id, content_html, content_kind, updated_at"
         )
         .eq("language", language)
         .eq("slug", slug!)

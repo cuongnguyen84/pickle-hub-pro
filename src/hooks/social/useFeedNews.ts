@@ -48,7 +48,6 @@ interface NewsRow {
   title: string;
   summary: string;
   source: string | null;
-  source_url: string;
   image_url: string | null;
   language: "en" | "vi";
   slug: string | null;
@@ -68,7 +67,7 @@ export function useFeedNews(language: "en" | "vi") {
       const { data, error } = await supabase
         .from("news_items")
         .select(
-          "id, title, summary, source, source_url, image_url, language, slug, published_at, ai_translated"
+          "id, title, summary, source, image_url, language, slug, published_at, ai_translated"
         )
         .eq("status", "published")
         .eq("language", language)

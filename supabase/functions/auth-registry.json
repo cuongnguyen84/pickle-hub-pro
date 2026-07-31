@@ -542,6 +542,21 @@
       ],
       "status": "classified"
     },
+    "news-rewrite": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": true
+      },
+      "flows": [
+        "public.read.none.none",
+        "admin.write.user_jwt.role_check",
+        "cron.write.cron_secret.shared_secret",
+        "internal_service.write.service_role_bearer.shared_secret"
+      ],
+      "status": "classified",
+      "notes": "Public GET is health-only; POST requires admin+AAL, service-role bearer, or cron secret."
+    },
     "news-translate": {
       "verify_jwt": false,
       "service_role": {

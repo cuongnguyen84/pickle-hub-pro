@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RefreshCw, Eye, EyeOff, AlertCircle, CheckCircle2, Languages } from "lucide-react";
+import { RefreshCw, Eye, EyeOff, AlertCircle, CheckCircle2, Languages, ExternalLink, Play } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -64,6 +64,18 @@ type NewsItemAdmin = {
   ai_translation_status: string | null;
 };
 
+type NewsOriginAdmin = {
+  id: string;
+  source_name: string;
+  source_url: string;
+  raw_title: string;
+  content_kind: "full" | "brief";
+  pipeline_status: "pending" | "extracting" | "rewriting" | "published" | "failed";
+  attempts: number;
+  last_error: string | null;
+  created_at: string;
+};
+
 function useSources() {
   return useQuery({
     queryKey: ["admin-news-sources"],
@@ -78,21 +90,36 @@ function useSources() {
   });
 }
 
-function useTranslationStats() {
+function usePipelineStats() {
   return useQuery({
-    queryKey: ["admin-news-translate-stats"],
+    queryKey: ["admin-news-pipeline-stats"],
     queryFn: async () => {
-      const statuses = ["pending", "translating", "done", "failed"] as const;
+      const statuses = ["pending", "extracting", "rewriting", "published", "failed"] as const;
       const counts: Record<string, number> = {};
       for (const s of statuses) {
         const { count } = await supabase
-          .from("news_items")
+          .from("news_origins")
           .select("id", { count: "exact", head: true })
-          .eq("language", "en")
-          .eq("ai_translation_status", s);
+          .eq("pipeline_status", s);
         counts[s] = count ?? 0;
       }
       return counts;
+    },
+    refetchInterval: 15_000,
+  });
+}
+
+function useRecentOrigins() {
+  return useQuery({
+    queryKey: ["admin-news-origins"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("news_origins")
+        .select("id, source_name, source_url, raw_title, content_kind, pipeline_status, attempts, last_error, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data as NewsOriginAdmin[];
     },
     refetchInterval: 15_000,
   });
@@ -124,7 +151,8 @@ export default function AdminNews() {
   const [languageFilter, setLanguageFilter] = useState("all");
 
   const { data: sources, isLoading: sourcesLoading } = useSources();
-  const { data: translateStats } = useTranslationStats();
+  const { data: pipelineStats } = usePipelineStats();
+  const { data: origins } = useRecentOrigins();
   const { data: items, isLoading: itemsLoading } = useRecentNews(
     statusFilter,
     languageFilter
@@ -168,24 +196,46 @@ export default function AdminNews() {
   const requeueFailed = useMutation({
     mutationFn: async () => {
       const { error, count } = await supabase
-        .from("news_items")
+        .from("news_origins")
         .update(
           {
-            ai_translation_status: "pending",
-            ai_translation_error: null,
+            pipeline_status: "pending",
+            last_error: null,
           },
           { count: "exact" },
         )
-        .eq("ai_translation_status", "failed");
+        .eq("pipeline_status", "failed");
       if (error) throw error;
       return count ?? 0;
     },
     onSuccess: (n) => {
-      qc.invalidateQueries({ queryKey: ["admin-news-translate-stats"] });
-      toast.success(`Đã re-queue ${n} bài để dịch lại`);
+      qc.invalidateQueries({ queryKey: ["admin-news-pipeline-stats"] });
+      qc.invalidateQueries({ queryKey: ["admin-news-origins"] });
+      toast.success(`Đã re-queue ${n} bài để viết lại`);
     },
     onError: (e: Error) => {
       toast.error("Không re-queue được", { description: e.message });
+    },
+  });
+
+  const runRewrite = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("news-rewrite", {
+        body: {},
+      });
+      if (error) throw error;
+      return data as { picked?: number; published?: number; failed?: number };
+    },
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ["admin-news-pipeline-stats"] });
+      qc.invalidateQueries({ queryKey: ["admin-news-origins"] });
+      qc.invalidateQueries({ queryKey: ["admin-news-recent"] });
+      toast.success(
+        `Đã xử lý ${result.picked ?? 0} job · publish ${result.published ?? 0}`,
+      );
+    },
+    onError: (e: Error) => {
+      toast.error("Không chạy được news rewrite", { description: e.message });
     },
   });
 
@@ -232,7 +282,7 @@ export default function AdminNews() {
                   const ok =
                     s.last_success_at &&
                     Date.now() - new Date(s.last_success_at).getTime() <
-                      6 * 3600 * 1000;
+                      3 * 3600 * 1000;
                   return (
                     <div
                       key={s.id}
@@ -300,36 +350,75 @@ export default function AdminNews() {
           </CardContent>
         </Card>
 
-        {/* === Translation queue === */}
+        {/* === Editorial rewrite queue === */}
         <Card>
           <CardContent className="pt-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Languages className="w-4 h-4" /> AI translation (Gemini)
+              <Languages className="w-4 h-4" /> Editorial rewrite EN + VI
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-              {(["pending", "translating", "done", "failed"] as const).map(
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-4">
+              {(["pending", "extracting", "rewriting", "published", "failed"] as const).map(
                 (k) => (
                   <div key={k} className="border rounded p-3">
                     <div className="text-xs text-muted-foreground uppercase">
                       {k}
                     </div>
                     <div className="text-2xl font-semibold">
-                      {translateStats?.[k] ?? "—"}
+                      {pipelineStats?.[k] ?? "—"}
                     </div>
                   </div>
                 )
               )}
             </div>
-            <Button
-              size="sm"
-              onClick={() => requeueFailed.mutate()}
-              disabled={
-                requeueFailed.isPending || (translateStats?.failed ?? 0) === 0
-              }
-            >
-              <RefreshCw className="w-3 h-3 mr-2" />
-              Re-queue {translateStats?.failed ?? 0} failed
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => runRewrite.mutate()}
+                disabled={runRewrite.isPending}
+              >
+                <Play className="w-3 h-3 mr-2" />
+                Run now
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => requeueFailed.mutate()}
+                disabled={
+                  requeueFailed.isPending || (pipelineStats?.failed ?? 0) === 0
+                }
+              >
+                <RefreshCw className="w-3 h-3 mr-2" />
+                Re-queue {pipelineStats?.failed ?? 0} failed
+              </Button>
+            </div>
+
+            <div className="space-y-2 mt-5">
+              {origins?.map((origin) => (
+                <div key={origin.id} className="flex items-center gap-3 border rounded p-3">
+                  <Badge variant={origin.pipeline_status === "failed" ? "destructive" : "outline"}>
+                    {origin.pipeline_status}
+                  </Badge>
+                  <Badge variant="secondary">{origin.content_kind}</Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate font-medium">{origin.raw_title}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {origin.source_name} · lần thử {origin.attempts}
+                      {origin.last_error ? ` · ${origin.last_error}` : ""}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" asChild>
+                    <a
+                      href={origin.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Mở nguồn của "${origin.raw_title}"`}
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </Button>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

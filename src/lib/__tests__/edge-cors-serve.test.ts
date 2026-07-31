@@ -218,7 +218,7 @@ describe("Edge Function CORS and server entrypoints", () => {
       [...functionSources.values()].filter((source) =>
         source.includes('_shared/cors.ts"'),
       ),
-    ).toHaveLength(73);
+    ).toHaveLength(74);
     expect(combined).not.toMatch(/const corsHeaders\s*=/i);
     expect(combined).not.toMatch(
       /import\s*\{[^}]*corsHeaders[^}]*\}\s*from\s*["']\.\.\/_shared\/auth\.ts["']/s,
@@ -232,7 +232,7 @@ describe("Edge Function CORS and server entrypoints", () => {
   });
 
   it("uses Deno.serve for every function entrypoint", () => {
-    expect(functionSources).toHaveLength(75);
+    expect(functionSources).toHaveLength(76);
     for (const [functionName, source] of functionSources) {
       expect(source, functionName).toContain("Deno.serve(");
       expect(source, functionName).not.toMatch(

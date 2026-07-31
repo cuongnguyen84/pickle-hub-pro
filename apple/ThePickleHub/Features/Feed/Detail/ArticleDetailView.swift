@@ -71,11 +71,9 @@ struct NewsDetailView: View {
     let publishedAt: Date?
 
     var body: some View {
-        // The article body IS rendered natively (summary). The CTA links out to
-        // the ORIGINAL source for the full read (copyright/fair-use), mirroring
-        // the web "Đọc toàn bộ bài viết tại {source}" button. Falls back to the
-        // app's own news page if no external source_url.
-        let external = news.sourceURL?.nonEmpty.flatMap { URL(string: $0) }
+        // Full editorial content lives on ThePickleHub's canonical news page.
+        // Source attribution remains plain text in the eyebrow; the private
+        // origin URL is never requested by the native client.
         ArticleDetailView(
             imageURL: news.imageURL,
             eyebrow: .init(
@@ -86,8 +84,8 @@ struct NewsDetailView: View {
             ),
             title: news.title,
             bodyText: news.summary,
-            readURL: external ?? WebRoutes.news(slug: news.slug, language: news.language),
-            readLabel: news.source?.nonEmpty.map { "Đọc toàn bộ tại \($0)" } ?? "Đọc bài gốc"
+            readURL: WebRoutes.news(slug: news.slug, language: news.language),
+            readLabel: "Đọc bài viết"
         )
     }
 }

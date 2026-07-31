@@ -65,8 +65,8 @@ Phase 5 (monitoring) will surface this in the admin UI.
 - **Image self-hosting.** We store the source's CDN URL in `image_url`
   as-is. If any source starts blocking referer / hotlinking, Phase 4
   will copy to Supabase Storage.
-- **Vietnamese translations.** Worker writes EN rows only. A separate
-  `news-translate` edge function (Phase 3) listens on inserts and
-  produces VI rows via Claude Haiku.
+- **Editorial rewrites.** The worker stores source material in the protected
+  `news_origins` queue. The `news-rewrite` edge function independently writes
+  the public EN and VI editions.
 - **Long-form content body.** Only the summary (≤ 300 chars) is stored.
   Article bodies stay on the source; we link out with attribution.

@@ -3658,6 +3658,88 @@ export type Database = {
           },
         ]
       }
+      news_origins: {
+        Row: {
+          attempts: number
+          auto_publish: boolean
+          content_kind: string
+          created_at: string
+          en_news_id: string | null
+          id: string
+          last_error: string | null
+          pipeline_status: string
+          published_at: string
+          raw_body: string | null
+          raw_summary: string
+          raw_title: string
+          source_id: string | null
+          source_name: string
+          source_url: string
+          updated_at: string
+          vi_news_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          auto_publish?: boolean
+          content_kind?: string
+          created_at?: string
+          en_news_id?: string | null
+          id?: string
+          last_error?: string | null
+          pipeline_status?: string
+          published_at: string
+          raw_body?: string | null
+          raw_summary?: string
+          raw_title?: string
+          source_id?: string | null
+          source_name: string
+          source_url: string
+          updated_at?: string
+          vi_news_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          auto_publish?: boolean
+          content_kind?: string
+          created_at?: string
+          en_news_id?: string | null
+          id?: string
+          last_error?: string | null
+          pipeline_status?: string
+          published_at?: string
+          raw_body?: string | null
+          raw_summary?: string
+          raw_title?: string
+          source_id?: string | null
+          source_name?: string
+          source_url?: string
+          updated_at?: string
+          vi_news_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_origins_en_news_id_fkey"
+            columns: ["en_news_id"]
+            isOneToOne: false
+            referencedRelation: "news_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_origins_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_origins_vi_news_id_fkey"
+            columns: ["vi_news_id"]
+            isOneToOne: false
+            referencedRelation: "news_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_items: {
         Row: {
           ai_translated: boolean
@@ -3666,18 +3748,20 @@ export type Database = {
           ai_translation_status: string | null
           category: string | null
           content_html: string | null
+          content_kind: string
           created_at: string
           id: string
           image_url: string | null
           importance: number
           language: string
+          origin_id: string | null
           parent_news_id: string | null
           published_at: string
           show_on_home: boolean
           slug: string | null
           source: string
           source_id: string | null
-          source_url: string
+          source_url: string | null
           status: Database["public"]["Enums"]["news_status"]
           summary: string
           title: string
@@ -3690,18 +3774,20 @@ export type Database = {
           ai_translation_status?: string | null
           category?: string | null
           content_html?: string | null
+          content_kind?: string
           created_at?: string
           id?: string
           image_url?: string | null
           importance?: number
           language?: string
+          origin_id?: string | null
           parent_news_id?: string | null
           published_at: string
           show_on_home?: boolean
           slug?: string | null
           source: string
           source_id?: string | null
-          source_url: string
+          source_url?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           summary: string
           title: string
@@ -3714,24 +3800,33 @@ export type Database = {
           ai_translation_status?: string | null
           category?: string | null
           content_html?: string | null
+          content_kind?: string
           created_at?: string
           id?: string
           image_url?: string | null
           importance?: number
           language?: string
+          origin_id?: string | null
           parent_news_id?: string | null
           published_at?: string
           show_on_home?: boolean
           slug?: string | null
           source?: string
           source_id?: string | null
-          source_url?: string
+          source_url?: string | null
           status?: Database["public"]["Enums"]["news_status"]
           summary?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "news_items_origin_id_fkey"
+            columns: ["origin_id"]
+            isOneToOne: false
+            referencedRelation: "news_origins"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "news_items_parent_news_id_fkey"
             columns: ["parent_news_id"]
@@ -7624,6 +7719,32 @@ export type Database = {
           summary: string
           title: string
         }[]
+      }
+      claim_pending_news_origins: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          attempts: number
+          auto_publish: boolean
+          content_kind: string
+          created_at: string
+          en_news_id: string | null
+          id: string
+          last_error: string | null
+          pipeline_status: string
+          published_at: string
+          raw_body: string | null
+          raw_summary: string
+          raw_title: string
+          source_id: string | null
+          source_name: string
+          source_url: string
+          updated_at: string
+          vi_news_id: string | null
+        }[]
+      }
+      publish_rewritten_news: {
+        Args: { p_en: Json; p_origin_id: string; p_vi: Json }
+        Returns: Json
       }
       claim_team_payment: { Args: { p_team_id: string }; Returns: undefined }
       clear_referee_pin: {

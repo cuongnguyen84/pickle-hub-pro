@@ -6,7 +6,6 @@ export type NewsItem = {
   title: string;
   summary: string;
   source: string;
-  source_url: string;
   published_at: string;
   created_at: string;
   // Phase 1 + 4 additions — surfaced in the list so the card can link to
@@ -25,7 +24,7 @@ export function useNewsItems(options?: { limit?: number; language?: "en" | "vi" 
       let query = supabase
         .from("news_items")
         .select(
-          "id, title, summary, source, source_url, published_at, created_at, slug, image_url, language, ai_translated"
+          "id, title, summary, source, published_at, created_at, slug, image_url, language, ai_translated"
         )
         .eq("status", "published")
         .order("published_at", { ascending: false });

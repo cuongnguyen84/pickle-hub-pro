@@ -38,9 +38,9 @@ describe("Edge Function auth registry", () => {
     const snapshot = loadRepositorySnapshot(projectRoot);
     const findings = validateRegistrySnapshot(snapshot);
 
-    expect(snapshot.sourceFunctions).toHaveLength(75);
-    expect(snapshot.configFunctions).toHaveLength(75);
-    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(75);
+    expect(snapshot.sourceFunctions).toHaveLength(76);
+    expect(snapshot.configFunctions).toHaveLength(76);
+    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(76);
     expect(snapshot.registry.enforcement).toBe("strict");
     expect(findings).toEqual([]);
   });

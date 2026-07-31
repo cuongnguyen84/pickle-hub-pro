@@ -194,7 +194,9 @@ struct FeedNews: Equatable {
     let summary: String
     let imageURL: String?
     let source: String?
-    let sourceURL: String?   // external original article (copyright "read full at source")
+    // Kept optional for backward-compatible decoding of cached rows. New API
+    // queries intentionally omit the internal origin URL.
+    let sourceURL: String?
     let language: String     // "vi" | "en"
     let aiTranslated: Bool
 }
