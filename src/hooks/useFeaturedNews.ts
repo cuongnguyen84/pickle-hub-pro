@@ -8,7 +8,7 @@ export function useFeaturedNews(limit: number = 3) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("news_items")
-        .select("id, title, summary, source, source_url, published_at, created_at")
+        .select("id, title, summary, source, published_at, created_at, slug, image_url, language, ai_translated")
         .eq("status", "published")
         .eq("show_on_home", true)
         .order("published_at", { ascending: false })

@@ -2,7 +2,7 @@
 // news-fetcher — Cloudflare Worker
 // ----------------------------------------------------------------------------
 // Pulls pickleball news from the active news_sources rows, parses RSS/Atom,
-// and writes deduped rows into news_items via PostgREST (service_role).
+// and writes deduped source material into the protected news_origins queue.
 //
 // Phase 2 of the news aggregator feature. See:
 //   - supabase/migrations/20260519000000_news_aggregator_phase_1.sql
@@ -12,17 +12,12 @@
 //   - Per-source try/catch — one broken feed never kills the whole run.
 //   - Only ingest items published in the last 30 days — avoids backfilling
 //     ancient archives on first run from a new source.
-//   - UPSERT semantics: (source_url, language) UNIQUE → ON CONFLICT DO NOTHING
+//   - UPSERT semantics: source_url UNIQUE → ON CONFLICT DO NOTHING
 //     gives us idempotent re-runs without needing a separate news-check call.
-//   - Image: store the source's OG image URL verbatim. Self-hosting can be
-//     added in Phase 4 if any source starts blocking referer / hotlinking.
-//   - Status: rows land as 'published' when news_sources.auto_publish=true
-//     AND trust_tier=1 (all 5 current sources). Lower-trust sources go to
-//     'draft' for admin review. Today every active source is tier 1, so
-//     this branch is mostly forward-compatible.
-//
-// Bilingual handling: this worker writes EN rows only. The news-translate
-// edge function (Phase 3) listens on inserts and produces VI rows.
+//   - Source images are intentionally not copied or hotlinked.
+//   - Article pages are fetched for factual input. If extraction is too thin,
+//     the RSS title/summary is queued as a short brief instead.
+//   - The news-rewrite edge function produces the public EN/VI pair.
 // ============================================================================
 
 import { XMLParser } from "fast-xml-parser";
@@ -64,14 +59,27 @@ interface SourceRunResult {
   inserted: number;
   skipped_dup: number;
   skipped_old: number;
+  failed: number;
   error: string | null;
   duration_ms: number;
 }
 
-const MAX_ITEMS_PER_FEED = 20;
+class IngestError extends Error {
+  constructor(public readonly failed: number) {
+    super(`${failed} news origin insert(s) failed`);
+  }
+}
+
+// Four active sources × 8 article fetches + feed/DB/health calls stays below
+// the Workers free-plan subrequest ceiling on a scheduled invocation.
+const MAX_ITEMS_PER_FEED = 8;
 const MAX_AGE_DAYS = 30;
 const TITLE_LIMIT = 120;
 const SUMMARY_LIMIT = 300;
+const MAX_ARTICLE_BYTES = 1_500_000;
+// A 500–800 word rewrite needs enough factual substrate. Anything thinner is
+// deliberately treated as a 150–250 word brief to avoid padding/invention.
+const MIN_FULL_BODY_CHARS = 2_500;
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -99,7 +107,7 @@ export default {
         return json({ error: "Unauthorized" }, 401);
       }
       const results = await runAllSources(env);
-      return json({ ok: true, results });
+      return json({ ok: results.every((result) => result.ok), results });
     }
 
     return json({ error: "Not found" }, 404);
@@ -131,6 +139,7 @@ async function runAllSources(env: Env): Promise<SourceRunResult[]> {
         inserted: counts.inserted,
         skipped_dup: counts.dup,
         skipped_old: counts.old,
+        failed: counts.failed,
         error: null,
         duration_ms: Date.now() - started,
       };
@@ -145,6 +154,7 @@ async function runAllSources(env: Env): Promise<SourceRunResult[]> {
         inserted: 0,
         skipped_dup: 0,
         skipped_old: 0,
+        failed: err instanceof IngestError ? err.failed : 0,
         error: message,
         duration_ms: Date.now() - started,
       });
@@ -179,7 +189,7 @@ async function fetchActiveSources(env: Env): Promise<NewsSource[]> {
 
 async function markSourceSuccess(env: Env, sourceId: string): Promise<void> {
   const url = `${env.SUPABASE_URL}/rest/v1/news_sources?id=eq.${sourceId}`;
-  await fetch(url, {
+  const res = await fetch(url, {
     method: "PATCH",
     headers: pgHeaders(env, { Prefer: "return=minimal" }),
     body: JSON.stringify({
@@ -188,6 +198,9 @@ async function markSourceSuccess(env: Env, sourceId: string): Promise<void> {
       last_error: null,
     }),
   });
+  if (!res.ok) {
+    throw new Error(`markSourceSuccess ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  }
 }
 
 async function markSourceError(
@@ -196,7 +209,7 @@ async function markSourceError(
   message: string
 ): Promise<void> {
   const url = `${env.SUPABASE_URL}/rest/v1/news_sources?id=eq.${sourceId}`;
-  await fetch(url, {
+  const res = await fetch(url, {
     method: "PATCH",
     headers: pgHeaders(env, { Prefer: "return=minimal" }),
     body: JSON.stringify({
@@ -204,12 +217,20 @@ async function markSourceError(
       last_error: message.slice(0, 500),
     }),
   });
+  if (!res.ok) {
+    console.error(
+      `[${sourceId}] could not persist source error (${res.status}): ${
+        (await res.text()).slice(0, 200)
+      }`
+    );
+  }
 }
 
 interface IngestCounts {
   inserted: number;
   dup: number;
   old: number;
+  failed: number;
 }
 
 async function ingestItems(
@@ -221,6 +242,8 @@ async function ingestItems(
   let inserted = 0;
   let dup = 0;
   let old = 0;
+  let failed = 0;
+  const originRows: Array<Record<string, unknown>> = [];
 
   for (const item of items) {
     const publishedMs = Date.parse(item.published_at);
@@ -228,60 +251,68 @@ async function ingestItems(
       old += 1;
       continue;
     }
+    if (!item.title.trim() || !isSafePublicFeedUrl(item.link)) {
+      failed += 1;
+      console.warn(`[${source.id}] invalid feed item skipped: ${item.link}`);
+      continue;
+    }
 
-    const status =
-      source.auto_publish && source.trust_tier === 1 ? "published" : "draft";
+    let rawBody: string | null = null;
+    try {
+      rawBody = await fetchArticleBody(item.link);
+    } catch (error) {
+      console.warn(
+        `[${source.id}] full article unavailable for ${item.link}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
 
-    const row = {
-      title: truncate(item.title, TITLE_LIMIT),
-      summary: truncate(item.summary || item.title, SUMMARY_LIMIT),
-      source: source.name, // legacy text column, kept during transition
+    originRows.push({
       source_id: source.id,
       source_url: item.link,
+      source_image_url:
+        item.image_url && isSafePublicFeedUrl(item.image_url)
+          ? item.image_url
+          : null,
+      source_name: source.name,
+      raw_title: truncate(item.title, TITLE_LIMIT),
+      raw_summary: truncate(item.summary || item.title, SUMMARY_LIMIT),
+      raw_body: rawBody,
+      content_kind: rawBody ? "full" : "brief",
+      auto_publish: source.auto_publish,
+      pipeline_status: "pending",
       published_at: new Date(publishedMs).toISOString(),
-      status,
-      language: source.language,
-      slug: slugify(item.title, item.link),
-      image_url: item.image_url,
-      category: null,
-      importance: 3,
-      ai_translated: false,
-    };
+    });
+  }
 
-    // ON CONFLICT (source_url, language) DO NOTHING — uniq index from
-    // Phase 1 migration. We MUST pass on_conflict=source_url,language on the
-    // URL: PostgREST's default conflict target is the primary key, so without
-    // this query string `resolution=ignore-duplicates` would either fall
-    // through to a 409 on the source-url uniq index or — worse — insert
-    // duplicates if that index were ever dropped. With on_conflict set,
-    // resolution=ignore-duplicates silently skips and returns [].
-    const url =
-      `${env.SUPABASE_URL}/rest/v1/news_items` +
-      `?on_conflict=source_url,language`;
+  if (originRows.length > 0) {
+    const url = `${env.SUPABASE_URL}/rest/v1/news_origins?on_conflict=source_url`;
     const res = await fetch(url, {
       method: "POST",
       headers: pgHeaders(env, {
         Prefer: "return=representation,resolution=ignore-duplicates",
       }),
-      body: JSON.stringify(row),
+      body: JSON.stringify(originRows),
     });
 
     if (res.status === 201) {
       const body = (await res.json()) as unknown[];
-      if (Array.isArray(body) && body.length === 0) {
-        dup += 1; // unique conflict, skipped
-      } else {
-        inserted += 1;
-      }
+      inserted = Array.isArray(body) ? body.length : 0;
+      dup = originRows.length - inserted;
     } else {
+      failed += originRows.length;
       const errBody = await res.text();
       console.warn(
-        `[${source.id}] insert failed (${res.status}) for ${item.link}: ${errBody.slice(0, 200)}`
+        `[${source.id}] bulk origin insert failed (${res.status}): ${errBody.slice(0, 200)}`
       );
     }
   }
 
-  return { inserted, dup, old };
+  if (failed > 0) {
+    throw new IngestError(failed);
+  }
+  return { inserted, dup, old, failed };
 }
 
 // ---------------------------------------------------------------------------
@@ -291,7 +322,7 @@ async function ingestItems(
 // Reject non-https or private/loopback hosts before fetching a DB-supplied URL.
 // Sources are admin-curated (service_role read), so this is defense-in-depth
 // against an SSRF should a source row ever be tampered with.
-function isSafePublicFeedUrl(raw: string): boolean {
+export function isSafePublicFeedUrl(raw: string): boolean {
   let u: URL;
   try {
     u = new URL(raw);
@@ -428,6 +459,64 @@ function parseAtom(parsed: any): ParsedItem[] {
 }
 
 // ---------------------------------------------------------------------------
+// Article extraction
+// ---------------------------------------------------------------------------
+
+async function fetchArticleBody(rawUrl: string): Promise<string | null> {
+  if (!isSafePublicFeedUrl(rawUrl)) {
+    throw new Error("unsafe article URL");
+  }
+
+  const res = await fetch(rawUrl, {
+    headers: {
+      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
+      Accept: "text/html,application/xhtml+xml",
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!res.ok) throw new Error(`article HTTP ${res.status}`);
+  if (!isSafePublicFeedUrl(res.url)) {
+    throw new Error("article redirected to an unsafe URL");
+  }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("text/html")) {
+    throw new Error(`unsupported article content-type ${contentType}`);
+  }
+  const declaredLength = Number(res.headers.get("content-length") ?? "0");
+  if (declaredLength > MAX_ARTICLE_BYTES) {
+    throw new Error(`article exceeds ${MAX_ARTICLE_BYTES} bytes`);
+  }
+
+  const bytes = await res.arrayBuffer();
+  if (bytes.byteLength > MAX_ARTICLE_BYTES) {
+    throw new Error(`article exceeds ${MAX_ARTICLE_BYTES} bytes`);
+  }
+
+  const html = new TextDecoder().decode(bytes);
+  const body = extractArticleText(html);
+  return body.length >= MIN_FULL_BODY_CHARS ? body : null;
+}
+
+export function extractArticleText(html: string): string {
+  const withoutNoise = html
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(script|style|svg|nav|footer|header|aside|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ");
+  const articleMatch =
+    withoutNoise.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i) ??
+    withoutNoise.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i);
+  const scope = articleMatch?.[1] ?? withoutNoise;
+  const paragraphs = Array.from(
+    scope.matchAll(/<(?:p|h2|h3)\b[^>]*>([\s\S]*?)<\/(?:p|h2|h3)\s*>/gi),
+    (match) => stripHtml(match[1]),
+  ).filter((text) => text.length >= 30);
+
+  // Deduplicate repeated newsletter/nav paragraphs while keeping source order.
+  return Array.from(new Set(paragraphs)).join("\n\n").slice(0, 30_000);
+}
+
+// ---------------------------------------------------------------------------
 // Utilities
 // ---------------------------------------------------------------------------
 
@@ -471,36 +560,6 @@ function truncate(text: string, limit: number): string {
   // Try to cut at a word boundary.
   const cut = clean.slice(0, limit).lastIndexOf(" ");
   return (cut > limit * 0.8 ? clean.slice(0, cut) : clean.slice(0, limit)).trim() + "…";
-}
-
-function slugify(title: string, link: string): string {
-  // Base from title (handles unicode → ASCII as best we can with simple regex).
-  let base = title
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "") // strip diacritics
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
-
-  if (!base) base = "news";
-
-  // Short hash of source URL for collision safety (different articles can
-  // share a base slug after the unicode strip).
-  const hash = shortHash(link);
-  return `${base}-${hash}`;
-}
-
-function shortHash(input: string): string {
-  // FNV-1a 32-bit, then base36. Deterministic, no crypto API needed.
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(36).slice(0, 6);
 }
 
 function json(body: unknown, status = 200): Response {

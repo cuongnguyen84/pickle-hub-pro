@@ -1,18 +1,20 @@
-import { ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useI18n } from "@/i18n";
+import { Link } from "react-router-dom";
 
 interface NewsCardProps {
   title: string;
   summary: string;
   source: string;
-  sourceUrl: string;
+  slug: string;
+  language: "en" | "vi";
   publishedAt: string;
 }
 
-export function NewsCard({ title, summary, source, sourceUrl, publishedAt }: NewsCardProps) {
+export function NewsCard({ title, summary, source, slug, language: itemLanguage, publishedAt }: NewsCardProps) {
   const { language } = useI18n();
+  const href = itemLanguage === "vi" ? `/vi/news/${slug}` : `/news/${slug}`;
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -21,12 +23,7 @@ export function NewsCard({ title, summary, source, sourceUrl, publishedAt }: New
 
   return (
     <article className="group glass-card p-4">
-      <a 
-        href={sourceUrl} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="block"
-      >
+      <Link to={href} className="block">
         <h3 className="font-semibold text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors">
           {title}
         </h3>
@@ -34,13 +31,10 @@ export function NewsCard({ title, summary, source, sourceUrl, publishedAt }: New
           {summary}
         </p>
         <div className="flex items-center justify-between text-xs text-foreground-muted">
-          <span className="flex items-center gap-1">
-            {source}
-            <ExternalLink className="w-3 h-3 opacity-50" />
-          </span>
+          <span>{source}</span>
           <time dateTime={publishedAt}>{formatDate(publishedAt)}</time>
         </div>
-      </a>
+      </Link>
     </article>
   );
 }

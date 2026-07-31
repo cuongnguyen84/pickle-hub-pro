@@ -72,6 +72,7 @@ interface NewsPayload {
   summary: string;
   source: string;
   source_url: string;
+  image_url?: string;
   published_at: string;
   status?: "draft" | "scheduled" | "published";
 }
@@ -152,6 +153,14 @@ Deno.serve(async (req) => {
         errors.push("source_url must be a valid URL");
       }
     }
+    if (body.image_url) {
+      try {
+        const imageUrl = new URL(body.image_url);
+        if (imageUrl.protocol !== "https:") errors.push("image_url must use https");
+      } catch {
+        errors.push("image_url must be a valid URL");
+      }
+    }
 
     // Validate published_at format
     if (body.published_at) {
@@ -176,18 +185,21 @@ Deno.serve(async (req) => {
 
     // Sanitize data
     const sanitizedData = {
-      title: body.title.trim().slice(0, 120),
-      summary: body.summary.trim().slice(0, 300),
-      source: body.source.trim(),
+      raw_title: body.title.trim().slice(0, 120),
+      raw_summary: body.summary.trim().slice(0, 300),
+      source_name: body.source.trim(),
       source_url: body.source_url.trim(),
+      source_image_url: body.image_url?.trim() || null,
       published_at: new Date(body.published_at).toISOString(),
-      status: body.status || "draft",
+      content_kind: "brief",
+      pipeline_status: "pending",
+      auto_publish: body.status !== "draft",
     };
 
-    console.log("[news-ingest] Inserting news item:", sanitizedData.title);
+    console.log("[news-ingest] Queueing news origin:", sanitizedData.raw_title);
 
     const { data, error } = await supabase
-      .from("news_items")
+      .from("news_origins")
       .insert(sanitizedData)
       .select()
       .single();
@@ -195,12 +207,12 @@ Deno.serve(async (req) => {
     if (error) {
       console.error("[news-ingest] Insert error:", error);
       return new Response(
-        JSON.stringify({ error: "Failed to insert news item", details: error.message }),
+        JSON.stringify({ error: "Failed to queue news origin", details: error.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("[news-ingest] Successfully inserted news item:", (data as { id: string }).id);
+    console.log("[news-ingest] Successfully queued news origin:", (data as { id: string }).id);
 
     return new Response(
       JSON.stringify({ success: true, data }),

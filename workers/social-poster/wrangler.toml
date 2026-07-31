@@ -7,7 +7,7 @@
 # Triggers:
 #   - POST /        → Supabase DB webhook payload (auto)
 #   - POST /run     → manual trigger (admin); body { news_item_id?, dry_run? }
-#                     Requires header X-Auth-Secret: $SCRAPER_AUTH_SECRET.
+#                     Requires header X-Auth-Secret: $SOCIAL_POSTER_SECRET.
 #
 # Bindings + env required:
 #   [vars]
@@ -19,9 +19,11 @@
 #
 #   [secrets] (wrangler secret put)
 #     SUPABASE_SERVICE_ROLE_KEY     Reads news_items, upserts fb_post_log.
-#     SCRAPER_AUTH_SECRET           Shared secret for DB webhook + /run.
+#     SOCIAL_POSTER_SECRET          Dedicated secret for cron + /run.
+#     SOCIAL_POSTER_ADMIN_SECRET    Dedicated secret for manual admin runs.
 #     FB_PAGE_ID                    Numeric Page ID, e.g. 100000123456789.
 #     FB_PAGE_ACCESS_TOKEN          Long-lived (never-expire) Page token.
+#     FB_SECONDARY_PAGE_ACCESS_TOKEN Long-lived token for TA Pickleball.
 #     GEMINI_API_KEY                Google AI Studio key (caption generation).
 #
 # Why a Worker and not a Supabase Edge Function?
@@ -41,6 +43,8 @@ SITE_URL = "https://www.thepicklehub.net"
 FB_GRAPH_VERSION = "v20.0"
 FB_POST_MIN_GAP_MINUTES = "15"
 GEMINI_MODEL = "gemini-flash-lite-latest"
+FB_SECONDARY_PAGE_ID = "376956272170210"
+FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"
 
 [observability]
 enabled = true

@@ -41,7 +41,7 @@ struct FeedRepository {
         let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-30 * 24 * 60 * 60))
         let rows: [FeedNewsRow] = try await client
             .from("news_items")
-            .select("id, title, summary, source, source_url, image_url, language, slug, published_at, ai_translated")
+            .select("id, title, summary, source, image_url, language, slug, published_at, ai_translated")
             .eq("status", value: "published")
             .eq("language", value: language)
             .gte("published_at", value: windowStart)

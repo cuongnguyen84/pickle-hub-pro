@@ -139,23 +139,16 @@ const News = ({ language: languageProp }: NewsProps = {}) => {
           ) : (
             <div className="tl-news-list">
               {items.map((item) => {
-                // Phase 4: card now links to our own /news/:slug page (gives
-                // us pageviews, SEO surface, and a place to put the "Read at
-                // source" CTA). Falls back to source_url if the item somehow
-                // has no slug yet (legacy rows pre-Phase-1).
+                // Editorial news always stays on ThePickleHub. Legacy rows
+                // without a slug are rendered as non-clickable cards rather
+                // than leaking the internal source URL.
                 const internalPath = item.slug
                   ? language === "vi"
                     ? `/vi/news/${item.slug}`
                     : `/news/${item.slug}`
                   : null;
-                const linkProps = internalPath
-                  ? { to: internalPath as string }
-                  : ({
-                      href: item.source_url,
-                      target: "_blank",
-                      rel: "noopener noreferrer",
-                    } as const);
-                const LinkTag = internalPath ? (Link as React.ElementType) : "a";
+                const linkProps = internalPath ? { to: internalPath as string } : {};
+                const LinkTag = internalPath ? (Link as React.ElementType) : "article";
                 return (
                   <LinkTag
                     key={item.id}
@@ -172,11 +165,11 @@ const News = ({ language: languageProp }: NewsProps = {}) => {
                         <span>
                           {internalPath
                             ? language === "vi"
-                              ? "Đọc tóm tắt →"
-                              : "Read summary →"
+                              ? "Đọc tin →"
+                              : "Read article →"
                             : language === "vi"
-                              ? `Đọc tại ${item.source} →`
-                              : `Read at ${item.source} →`}
+                              ? "Bản tin lưu trữ"
+                              : "Archived brief"}
                         </span>
                       </div>
                     </div>

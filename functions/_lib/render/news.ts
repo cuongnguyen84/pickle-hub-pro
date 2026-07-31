@@ -13,6 +13,7 @@ import {
   breadcrumb,
   bilingualHreflang,
   DEFAULT_OG_IMAGE,
+  sanitizeBlogHtml,
 } from "../utils";
 import { buildListJsonLd } from "./shared";
 import { render404 } from "./static-pages";
@@ -71,7 +72,7 @@ async function renderNewsArticleByLang(
 
   const { data: row } = await supabase
     .from("news_items")
-    .select("id, title, summary, source, source_url, image_url, language, slug, published_at, parent_news_id, ai_translated")
+    .select("id, title, summary, source, image_url, language, slug, published_at, updated_at, parent_news_id, ai_translated, content_html")
     .eq("language", language)
     .eq("slug", slug)
     .eq("status", "published")
@@ -139,9 +140,9 @@ async function renderNewsArticleByLang(
     description: r.summary,
     url,
     datePublished: r.published_at,
-    dateModified: r.published_at,
+    dateModified: r.updated_at,
     image: image || DEFAULT_OG_IMAGE,
-    author: { "@type": "Organization", name: r.source || "ThePickleHub", url: siteUrl },
+    author: { "@type": "Organization", name: "ThePickleHub Editorial", url: siteUrl },
     publisher: {
       "@type": "Organization",
       name: "ThePickleHub",
@@ -152,12 +153,12 @@ async function renderNewsArticleByLang(
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
   };
 
-  const readAtLabel = language === "vi"
-    ? `Đọc nguyên văn tại ${r.source || "nguồn"}`
-    : `Read the full article at ${r.source || "the source"}`;
-  const sourceLink = r.source_url
-    ? `<p><a href="${escapeHtml(r.source_url)}" rel="noopener nofollow">${escapeHtml(readAtLabel)} →</a></p>`
-    : "";
+  const sourceLabel = language === "vi" ? "Nguồn" : "Source";
+  const sourceAttribution =
+    `<p><strong>${sourceLabel}:</strong> ${escapeHtml(r.source || "Wire")}</p>`;
+  const articleBody = r.content_html
+    ? sanitizeBlogHtml(r.content_html)
+    : `<p>${escapeHtml(r.summary)}</p>`;
 
   // SEO audit 2026-05-28 (batch 8) — Related news strip.
   // News articles ship with only a title + 1-2 sentence summary (auto-
@@ -201,7 +202,7 @@ async function renderNewsArticleByLang(
     extraMeta,
     jsonLd,
     lang: language,
-    bodyContent: `${bc}<article><h1>${escapeHtml(r.title)}</h1><p>${escapeHtml(r.summary)}</p>${sourceLink}</article>${relatedSection}`,
+    bodyContent: `${bc}<article><h1>${escapeHtml(r.title)}</h1>${sourceAttribution}${articleBody}</article>${relatedSection}`,
   }));
 }
 

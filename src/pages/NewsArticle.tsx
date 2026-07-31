@@ -15,15 +15,15 @@ import {
   useNewsItemSibling,
 } from "@/hooks/useNewsItemBySlug";
 import { formatRelative } from "@/lib/format-datetime";
+import DOMPurify from "isomorphic-dompurify";
 
 /**
  * /news/:slug + /vi/news/:slug — News article detail page.
  *
- * News items are *aggregated headlines* (snippet + link out) — we do not
- * republish full article bodies for copyright reasons. The page renders:
- *   - Hero image (from the source's OG tag, stored verbatim in image_url)
- *   - Title + summary (≤ 300 chars per Phase 1 schema)
- *   - Big "Read full article at {source}" CTA → out to source_url
+ * News items are independently rewritten ThePickleHub articles. The page renders:
+ *   - ThePickleHub-owned default/category image
+ *   - Full sanitized editorial body (or summary for legacy briefs)
+ *   - Plain-text source attribution without an external link
  *   - hreflang link to the EN↔VI sibling (parent_news_id pivot)
  *   - Schema.org NewsArticle JSON-LD
  *
@@ -101,12 +101,6 @@ const NewsArticle = ({ language }: Props) => {
     { name: article.title, url: canonicalUrl },
   ];
 
-  const sourceLabel = article.source ?? "the source";
-  const cta =
-    language === "vi"
-      ? `Đọc toàn bộ bài viết tại ${sourceLabel}`
-      : `Read the full article at ${sourceLabel}`;
-
   return (
     <TheLineLayout
       title={article.title}
@@ -122,8 +116,8 @@ const NewsArticle = ({ language }: Props) => {
       <ArticleSchema
         headline={article.title}
         datePublished={article.published_at}
-        dateModified={article.published_at}
-        author={article.source ?? "ThePickleHub"}
+        dateModified={article.updated_at}
+        author="ThePickleHub Editorial"
         description={article.summary}
         url={canonicalUrl}
         inLanguage={language === "vi" ? "vi-VN" : "en-US"}
@@ -180,13 +174,13 @@ const NewsArticle = ({ language }: Props) => {
         <article>
           <header className="tl-article-head">
             <div className="kicker">
-              ◆ {article.source ?? "Wire"}
+              ◆ {language === "vi" ? "Nguồn" : "Source"}: {article.source ?? "Wire"}
               {article.category && <span> · {article.category}</span>}
             </div>
             <h1>{article.title}</h1>
             <div className="tl-article-meta">
               <span>{formatRelative(article.published_at)}</span>
-              {article.ai_translated && (
+              {!article.content_html && (
                 <span
                   style={{
                     fontFamily: "'Geist Mono', monospace",
@@ -197,11 +191,11 @@ const NewsArticle = ({ language }: Props) => {
                   }}
                   title={
                     language === "vi"
-                      ? "Bản tiếng Việt được AI dịch lại có biên tập"
-                      : "AI-translated Vietnamese edition"
+                      ? "Bản tin ngắn được biên tập từ dữ kiện nguồn"
+                      : "Short brief edited from source facts"
                   }
                 >
-                  ◆ {language === "vi" ? "AI dịch" : "AI translated"}
+                  ◆ {language === "vi" ? "Tin ngắn" : "Brief"}
                 </span>
               )}
               {siblingSlug && (
@@ -258,51 +252,24 @@ const NewsArticle = ({ language }: Props) => {
           )}
 
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
-          <div
-            className="tl-longform"
-            style={{ fontSize: 18, lineHeight: 1.6, marginBottom: 32 }}
-          >
-            <p>{article.summary}</p>
-          </div>
-
-          {/* Out-link CTA — KEY for fair use / copyright safety. We're an
-              aggregator, not a republisher. Make it big and obvious. */}
-          <a
-            href={article.source_url}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "16px 24px",
-              border: "1px solid var(--tl-fg)",
-              background: "var(--tl-fg)",
-              color: "var(--tl-bg)",
-              textDecoration: "none",
-              fontFamily: "'Geist Mono', monospace",
-              fontSize: 12,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              borderRadius: 4,
-            }}
-          >
-            {cta} →
-          </a>
-
-          {article.ai_translated && (
-            <p
-              style={{
-                marginTop: 32,
-                fontSize: 13,
-                color: "var(--tl-fg-3)",
-                fontStyle: "italic",
+          {article.content_html ? (
+            <div
+              className="tl-longform"
+              style={{ fontSize: 18, lineHeight: 1.7, marginBottom: 32 }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(article.content_html, {
+                  ALLOWED_TAGS: ["h2", "p"],
+                  ALLOWED_ATTR: [],
+                }),
               }}
+            />
+          ) : (
+            <div
+              className="tl-longform"
+              style={{ fontSize: 18, lineHeight: 1.6, marginBottom: 32 }}
             >
-              {language === "vi"
-                ? "Tóm tắt tiếng Việt được AI dịch lại có biên tập từ bản gốc tiếng Anh. Để đọc nguyên văn, nhấn nút phía trên."
-                : "Vietnamese summary was AI-translated and edited from the original English. Read the full article at the source above."}
-            </p>
+              <p>{article.summary}</p>
+            </div>
           )}
         </article>
       </div>
