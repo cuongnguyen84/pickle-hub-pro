@@ -116,14 +116,13 @@ export default {
     const url = new URL(req.url);
 
     if (req.method === 'GET' && url.pathname === '/health') {
+      const pages = configuredPages(env);
       return json({
         ok: true,
         name: 'social-poster',
-        pages: configuredPages(env).map((page) => ({
-          key: page.key,
-          id: page.id,
-          start_at: page.startAt,
-        })),
+        pages: url.searchParams.get('deep') === '1'
+          ? await verifyFacebookPages(env, pages)
+          : pages.map((page) => ({ key: page.key, id: page.id, start_at: page.startAt })),
       });
     }
 
@@ -171,6 +170,43 @@ async function handleWebhook(env: Env, payload: SupabaseWebhookPayload): Promise
 
   const record = payload.record as unknown as NewsItem;
   return json(await processNewsItem(env, configuredPages(env)[0], record, false));
+}
+
+async function verifyFacebookPages(env: Env, pages: FacebookPage[]) {
+  return await Promise.all(pages.map(async (page) => {
+    const url = new URL(
+      `https://graph.facebook.com/${env.FB_GRAPH_VERSION}/${page.id}`,
+    );
+    url.searchParams.set('fields', 'id,name');
+    url.searchParams.set('access_token', page.accessToken);
+    try {
+      const res = await fetch(url.toString());
+      const data = (await res.json().catch(() => ({}))) as {
+        id?: string;
+        name?: string;
+        error?: { code?: number; type?: string };
+      };
+      return {
+        key: page.key,
+        id: page.id,
+        start_at: page.startAt,
+        token_valid: res.ok && data.id === page.id,
+        resolved_name: data.name ?? null,
+        error_code: data.error?.code ?? null,
+        error_type: data.error?.type ?? null,
+      };
+    } catch {
+      return {
+        key: page.key,
+        id: page.id,
+        start_at: page.startAt,
+        token_valid: false,
+        resolved_name: null,
+        error_code: null,
+        error_type: 'network_error',
+      };
+    }
+  }));
 }
 
 export function configuredPages(env: Env): FacebookPage[] {
