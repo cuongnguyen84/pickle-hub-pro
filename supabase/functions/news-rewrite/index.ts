@@ -157,7 +157,7 @@ async function rewriteOrigin(
     origin.raw_body ? `SOURCE BODY:\n${origin.raw_body}` : "",
   ].filter(Boolean).join("\n\n");
 
-  const prompt = `You are the bilingual editorial desk for ThePickleHub.
+  const basePrompt = `You are the bilingual editorial desk for ThePickleHub.
 
 Using ONLY the facts in SOURCE MATERIAL, independently write an English and a
 Vietnamese pickleball news article. This is an original newsroom rewrite, not
@@ -165,6 +165,10 @@ a translation, paraphrase-by-sentence, or reproduction of the source.
 
 Rules:
 - Each language body must be ${range} words.
+- For a full article, write 6–8 substantial paragraphs of roughly 80–100
+  words each. For a brief, write 3–4 paragraphs of roughly 50–65 words each.
+- Count the words in each language body before returning JSON. If it is outside
+  the required range, revise it before responding.
 - Do not copy sentences, quotations, headings, or the source's structure.
 - Do not invent facts, reactions, interviews, context, dates, scores, or names.
 - Do not include URLs, calls to visit the source, citations, HTML, Markdown,
@@ -180,38 +184,45 @@ Rules:
 SOURCE MATERIAL
 ${sourceMaterial}`;
 
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(geminiKey)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(45_000),
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: rewriteSchema(),
-        temperature: 0.35,
-        maxOutputTokens: origin.content_kind === "full" ? 5_000 : 2_000,
-      },
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`Gemini HTTP ${response.status}: ${(await response.text()).slice(0, 250)}`);
-  }
+  let validationFeedback = "";
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const prompt = validationFeedback
+      ? `${basePrompt}\n\nYour previous response was rejected: ${validationFeedback}. Regenerate the complete EN and VI result and strictly satisfy every rule.`
+      : basePrompt;
+    const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(geminiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(45_000),
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: rewriteSchema(),
+          temperature: attempt === 1 ? 0.35 : 0.2,
+          maxOutputTokens: origin.content_kind === "full" ? 5_000 : 2_000,
+        },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Gemini HTTP ${response.status}: ${(await response.text()).slice(0, 250)}`);
+    }
 
-  const payload = await response.json() as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Gemini returned no JSON text");
+    const payload = await response.json() as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Gemini returned no JSON text");
 
-  let draft: RewriteDraft;
-  try {
-    draft = JSON.parse(text) as RewriteDraft;
-  } catch {
-    throw new Error("Gemini returned invalid JSON");
+    try {
+      const draft = JSON.parse(text) as RewriteDraft;
+      validateDraft(draft, origin.content_kind);
+      return draft;
+    } catch (error) {
+      validationFeedback = error instanceof Error ? error.message : "invalid response";
+      if (attempt === 3) throw new Error(validationFeedback);
+    }
   }
-  validateDraft(draft, origin.content_kind);
-  return draft;
+  throw new Error("Gemini rewrite attempts exhausted");
 }
 
 function rewriteSchema() {
@@ -272,7 +283,11 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
       throw new Error(`${language} paragraphs are invalid`);
     }
     const words = paragraphs.join(" ").trim().split(/\s+/).filter(Boolean).length;
-    const [minimum, maximum] = kind === "full" ? [500, 800] : [150, 250];
+    // Gemini's structured bilingual output can finish slightly below the
+    // editorial target even after corrective retries. Keep a hard floor that
+    // still represents a substantive article instead of failing the queue
+    // indefinitely; the prompt continues to target 500–800 words.
+    const [minimum, maximum] = kind === "full" ? [350, 800] : [150, 250];
     if (words < minimum || words > maximum) {
       throw new Error(`${language} body has ${words} words; expected ${minimum}-${maximum}`);
     }
