@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS public.news_origins (
                          ON UPDATE CASCADE ON DELETE SET NULL,
   source_name        text NOT NULL,
   source_url         text NOT NULL UNIQUE,
+  source_image_url   text,
   raw_title          text NOT NULL DEFAULT '',
   raw_summary        text NOT NULL DEFAULT '',
   raw_body           text,

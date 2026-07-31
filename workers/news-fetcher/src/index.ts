@@ -271,6 +271,10 @@ async function ingestItems(
     originRows.push({
       source_id: source.id,
       source_url: item.link,
+      source_image_url:
+        item.image_url && isSafePublicFeedUrl(item.image_url)
+          ? item.image_url
+          : null,
       source_name: source.name,
       raw_title: truncate(item.title, TITLE_LIMIT),
       raw_summary: truncate(item.summary || item.title, SUMMARY_LIMIT),

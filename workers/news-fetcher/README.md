@@ -62,11 +62,12 @@ Phase 5 (monitoring) will surface this in the admin UI.
 
 ## What this worker does NOT do
 
-- **Image self-hosting.** We store the source's CDN URL in `image_url`
+- **Image self-hosting.** We store the source's CDN URL in the protected
+  origin and publish it as the article's `image_url`
   as-is. If any source starts blocking referer / hotlinking, Phase 4
   will copy to Supabase Storage.
 - **Editorial rewrites.** The worker stores source material in the protected
   `news_origins` queue. The `news-rewrite` edge function independently writes
   the public EN and VI editions.
-- **Long-form content body.** Only the summary (≤ 300 chars) is stored.
-  Article bodies stay on the source; we link out with attribution.
+- **Source-copy publishing.** Extracted article bodies remain protected source
+  material; only the independently rewritten editions are public.

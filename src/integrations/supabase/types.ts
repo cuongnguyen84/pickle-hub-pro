@@ -3673,6 +3673,7 @@ export type Database = {
           raw_summary: string
           raw_title: string
           source_id: string | null
+          source_image_url: string | null
           source_name: string
           source_url: string
           updated_at: string
@@ -3692,6 +3693,7 @@ export type Database = {
           raw_summary?: string
           raw_title?: string
           source_id?: string | null
+          source_image_url?: string | null
           source_name: string
           source_url: string
           updated_at?: string
@@ -3711,6 +3713,7 @@ export type Database = {
           raw_summary?: string
           raw_title?: string
           source_id?: string | null
+          source_image_url?: string | null
           source_name?: string
           source_url?: string
           updated_at?: string

@@ -72,6 +72,7 @@ interface NewsPayload {
   summary: string;
   source: string;
   source_url: string;
+  image_url?: string;
   published_at: string;
   status?: "draft" | "scheduled" | "published";
 }
@@ -152,6 +153,14 @@ Deno.serve(async (req) => {
         errors.push("source_url must be a valid URL");
       }
     }
+    if (body.image_url) {
+      try {
+        const imageUrl = new URL(body.image_url);
+        if (imageUrl.protocol !== "https:") errors.push("image_url must use https");
+      } catch {
+        errors.push("image_url must be a valid URL");
+      }
+    }
 
     // Validate published_at format
     if (body.published_at) {
@@ -180,6 +189,7 @@ Deno.serve(async (req) => {
       raw_summary: body.summary.trim().slice(0, 300),
       source_name: body.source.trim(),
       source_url: body.source_url.trim(),
+      source_image_url: body.image_url?.trim() || null,
       published_at: new Date(body.published_at).toISOString(),
       content_kind: "brief",
       pipeline_status: "pending",

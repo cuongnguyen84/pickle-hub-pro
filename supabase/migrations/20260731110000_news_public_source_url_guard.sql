@@ -12,7 +12,9 @@ BEGIN
       USING ERRCODE = '23514';
   END IF;
   IF NEW.origin_id IS NOT NULL THEN
-    NEW.image_url := NULL;
+    SELECT o.source_image_url INTO NEW.image_url
+    FROM public.news_origins o
+    WHERE o.id = NEW.origin_id;
   END IF;
   RETURN NEW;
 END;

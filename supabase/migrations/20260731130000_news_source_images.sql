@@ -1,10 +1,8 @@
--- Rewritten articles must not all display the site-wide OG card as if it were
--- an article photograph. Until an original per-article image pipeline exists,
--- render the text article without a hero image.
-UPDATE public.news_items
-SET image_url = NULL
-WHERE origin_id IS NOT NULL
-  AND image_url = '/og-image.png';
+-- Keep the source article's representative image with the protected origin.
+-- Public articles may display that image while the source article URL remains
+-- internal-only; the visible source name provides attribution.
+ALTER TABLE public.news_origins
+  ADD COLUMN IF NOT EXISTS source_image_url text;
 
 CREATE OR REPLACE FUNCTION public.normalize_editorial_news_public_fields()
 RETURNS trigger
