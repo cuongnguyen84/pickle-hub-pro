@@ -53,6 +53,21 @@ struct FeedRepository {
         return rows.compactMap { FeedItem(news: $0, now: now) }
     }
 
+    /// Complete rewritten article for the native reader. The query remains on
+    /// the public editorial fields and never requests the protected origin URL.
+    func newsDetail(slug: String, language: String) async throws -> NewsArticleDetail? {
+        let rows: [NewsArticleDetail] = try await client
+            .from("news_items")
+            .select("title, summary, content_html, image_url, source, language, category, published_at, ai_translated")
+            .eq("slug", value: slug)
+            .eq("language", value: language)
+            .eq("status", value: "published")
+            .limit(1)
+            .execute()
+            .value
+        return rows.first
+    }
+
     /// Admin-curated + auto-ingested Instagram reels (feed_embeds), scored
     /// client-side and merged like news. Mirrors `useFeedEmbeds.ts`.
     func embeds() async throws -> [FeedItem] {

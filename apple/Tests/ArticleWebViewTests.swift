@@ -39,4 +39,28 @@ struct ArticleWebViewTests {
     func metadataEscaping() {
         #expect(ArticleHTML.escapeText("A < B & \"C\"") == "A &lt; B &amp; &quot;C&quot;")
     }
+
+    @Test("Native news document includes the full body without an origin link")
+    func nativeNewsDocument() {
+        let detail = NewsArticleDetail(
+            title: "A < B",
+            summary: "Tóm tắt & mở bài",
+            contentHtml: "<h2>Nội dung</h2><p>Toàn bộ bài viết.</p>",
+            imageURL: "https://images.example.com/cover.jpg",
+            source: "The Kitchen",
+            language: "vi",
+            category: "tour",
+            publishedAt: nil,
+            aiTranslated: true
+        )
+
+        let html = NewsArticleHTML.body(detail)
+        #expect(html.contains("A &lt; B"))
+        #expect(html.contains("Tóm tắt &amp; mở bài"))
+        #expect(html.contains("<h2>Nội dung</h2><p>Toàn bộ bài viết.</p>"))
+        #expect(html.contains("THE KITCHEN"))
+        #expect(html.contains(">AI</b>"))
+        #expect(!html.contains("source_url"))
+        #expect(!html.contains("Đọc toàn bộ"))
+    }
 }

@@ -225,6 +225,28 @@ struct FeedNewsRow: Decodable {
     }
 }
 
+/// Full published news body for the in-app editorial reader. Origin URLs are
+/// intentionally absent: native attribution displays the source name only.
+struct NewsArticleDetail: Decodable, Equatable {
+    let title: String
+    let summary: String?
+    let contentHtml: String
+    let imageURL: String?
+    let source: String?
+    let language: String
+    let category: String?
+    let publishedAt: String?
+    let aiTranslated: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case title, summary, source, language, category
+        case contentHtml = "content_html"
+        case imageURL = "image_url"
+        case publishedAt = "published_at"
+        case aiTranslated = "ai_translated"
+    }
+}
+
 /// Admin-curated Instagram reel (feed_embeds). The card opens the reel on
 /// instagram.com / in the IG app — nothing re-hosted (copyright/ToS safe).
 struct FeedEmbed: Equatable {

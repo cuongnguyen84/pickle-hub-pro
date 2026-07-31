@@ -151,6 +151,18 @@ enum ArticleDocument {
           hr { border: none; border-top: 1px solid #22252a; margin: 22px 0; }
           table { width: 100%; border-collapse: collapse; }
           td, th { border: 1px solid #22252a; padding: 6px 8px; }
+          .news-article .hero { width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+                                border-radius: 14px; margin: 4px 0 18px; }
+          .news-article .eyebrow { margin: 0 0 18px; color: #8c897f;
+                                   font: 600 12px/1.4 ui-monospace, SFMono-Regular, monospace;
+                                   letter-spacing: .08em; }
+          .news-article .eyebrow span { color: #bdee5c; }
+          .news-article .eyebrow b { color: #eab64b; }
+          .news-article .headline { margin: 0 0 18px; color: #f5f3ee;
+                                    font: italic 42px/1.12 Georgia, 'Times New Roman', serif;
+                                    letter-spacing: -.015em; }
+          .news-article .dek { margin: 0 0 24px; color: #c7c3bb; font-size: 18px; line-height: 1.58; }
+          .news-article .article-body { border-top: 1px solid #22252a; padding-top: 22px; }
         </style></head>
         <body>\(body)</body></html>
         """
