@@ -1920,7 +1920,13 @@ export type Database = {
           fb_permalink: string | null
           fb_post_id: string | null
           id: string
+          link_comment_error: string | null
+          link_comment_attempt_count: number
+          link_comment_id: string | null
+          link_comment_status: string | null
           news_item_id: string
+          page_id: string
+          page_key: string
           posted_at: string | null
           raw_response: Json | null
           status: string
@@ -1934,7 +1940,13 @@ export type Database = {
           fb_permalink?: string | null
           fb_post_id?: string | null
           id?: string
+          link_comment_error?: string | null
+          link_comment_attempt_count?: number
+          link_comment_id?: string | null
+          link_comment_status?: string | null
           news_item_id: string
+          page_id: string
+          page_key: string
           posted_at?: string | null
           raw_response?: Json | null
           status?: string
@@ -1948,7 +1960,13 @@ export type Database = {
           fb_permalink?: string | null
           fb_post_id?: string | null
           id?: string
+          link_comment_error?: string | null
+          link_comment_attempt_count?: number
+          link_comment_id?: string | null
+          link_comment_status?: string | null
           news_item_id?: string
+          page_id?: string
+          page_key?: string
           posted_at?: string | null
           raw_response?: Json | null
           status?: string

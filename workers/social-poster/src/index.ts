@@ -41,11 +41,14 @@ export interface Env {
   FB_GRAPH_VERSION: string;
   FB_POST_MIN_GAP_MINUTES: string;
   GEMINI_MODEL: string;
+  FB_SECONDARY_PAGE_ID?: string;
+  FB_SECONDARY_START_AT?: string;
   // secrets
   SUPABASE_SERVICE_ROLE_KEY: string;
   SOCIAL_POSTER_SECRET: string;
   FB_PAGE_ID: string;
   FB_PAGE_ACCESS_TOKEN: string;
+  FB_SECONDARY_PAGE_ACCESS_TOKEN?: string;
   GEMINI_API_KEY: string;
 }
 
@@ -69,10 +72,22 @@ interface NewsItem {
 interface FbPostLogRow {
   id: string;
   news_item_id: string;
+  page_id: string;
+  page_key: string;
   status: 'pending' | 'posted' | 'failed' | 'skipped';
   attempt_count: number;
   posted_at: string | null;
   updated_at: string | null;
+  fb_post_id: string | null;
+  link_comment_status: 'pending' | 'posted' | 'failed' | 'skipped' | null;
+  link_comment_attempt_count: number;
+}
+
+interface FacebookPage {
+  key: string;
+  id: string;
+  accessToken: string;
+  startAt: string | null;
 }
 
 // A 'pending' row older than this is considered orphaned (the Worker that
@@ -101,7 +116,15 @@ export default {
     const url = new URL(req.url);
 
     if (req.method === 'GET' && url.pathname === '/health') {
-      return json({ ok: true, name: 'social-poster' });
+      return json({
+        ok: true,
+        name: 'social-poster',
+        pages: configuredPages(env).map((page) => ({
+          key: page.key,
+          id: page.id,
+          start_at: page.startAt,
+        })),
+      });
     }
 
     if (req.method !== 'POST') {
@@ -147,7 +170,25 @@ async function handleWebhook(env: Env, payload: SupabaseWebhookPayload): Promise
   }
 
   const record = payload.record as unknown as NewsItem;
-  return await processNewsItem(env, record, false);
+  return json(await processNewsItem(env, configuredPages(env)[0], record, false));
+}
+
+export function configuredPages(env: Env): FacebookPage[] {
+  const pages: FacebookPage[] = [{
+    key: 'thepicklehub',
+    id: env.FB_PAGE_ID,
+    accessToken: env.FB_PAGE_ACCESS_TOKEN,
+    startAt: null,
+  }];
+  if (env.FB_SECONDARY_PAGE_ID && env.FB_SECONDARY_PAGE_ACCESS_TOKEN) {
+    pages.push({
+      key: 'ta-pickleball',
+      id: env.FB_SECONDARY_PAGE_ID,
+      accessToken: env.FB_SECONDARY_PAGE_ACCESS_TOKEN,
+      startAt: env.FB_SECONDARY_START_AT ?? null,
+    });
+  }
+  return pages;
 }
 
 // ---------------------------------------------------------------------------
@@ -156,27 +197,45 @@ async function handleWebhook(env: Env, payload: SupabaseWebhookPayload): Promise
 
 async function handleRun(env: Env, body: RunBody): Promise<Response> {
   const dryRun = body.dry_run === true;
+  const pages = configuredPages(env);
+  const results: unknown[] = [];
 
-  let item: NewsItem;
-  if (body.news_item_id) {
-    item = await fetchNewsItemById(env, body.news_item_id);
-  } else {
-    // Pick the most recent eligible item that has not yet been posted.
-    item = await pickNextNewsItem(env);
+  for (const page of pages) {
+    if (!dryRun && !body.news_item_id) {
+      const retried = await retryLinkComment(env, page);
+      if (retried) {
+        results.push(retried);
+        continue;
+      }
+    }
+
+    const item = body.news_item_id
+      ? await fetchNewsItemById(env, body.news_item_id)
+      : await pickNextNewsItem(env, page);
+    if (!item) {
+      results.push({ page_key: page.key, skipped: true, reason: 'no_eligible_item' });
+      continue;
+    }
+    results.push(await processNewsItem(env, page, item, dryRun));
   }
 
-  return await processNewsItem(env, item, dryRun);
+  return json({ ok: true, results });
 }
 
 // ---------------------------------------------------------------------------
 // Core pipeline
 // ---------------------------------------------------------------------------
 
-async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promise<Response> {
+async function processNewsItem(
+  env: Env,
+  page: FacebookPage,
+  item: NewsItem,
+  dryRun: boolean,
+): Promise<Record<string, unknown>> {
   // 1. Eligibility
   const reason = checkEligible(item);
   if (reason) {
-    return json({ skipped: true, news_item_id: item?.id ?? null, reason });
+    return { page_key: page.key, skipped: true, news_item_id: item?.id ?? null, reason };
   }
 
   // 2. Dry-run path: preview caption without claiming the log row.
@@ -185,42 +244,44 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
   if (dryRun) {
     const caption = await generateCaption(env, item);
     const link = buildNewsLink(env, item);
-    const fbPayload = buildFbPayload(item, caption, link);
-    return json({
+    const fbPayload = buildFbPayload(item, caption);
+    return {
       dry_run: true,
+      page_key: page.key,
+      page_id: page.id,
       news_item_id: item.id,
       slug: item.slug,
       link,
       caption,
       fb_payload: fbPayload,
-    });
+      first_comment: link,
+    };
   }
 
   // 3. Rate limit — best-effort pre-check before the claim. Cheap, and avoids
   // burning the per-row claim slot when we already know we'll defer.
-  const gapOk = await checkRateLimit(env);
+  const gapOk = await checkRateLimit(env, page.id);
   if (!gapOk) {
-    return json(
-      {
+    return {
         deferred: true,
+        page_key: page.key,
         news_item_id: item.id,
         reason: 'rate_limited',
         min_gap_minutes: Number(env.FB_POST_MIN_GAP_MINUTES),
-      },
-      202,
-    );
+    };
   }
 
   // 4. Atomic claim on fb_post_log — only one concurrent invocation may
   // proceed past this line for any given news_item_id. Prevents Supabase
   // duplicate webhooks from producing duplicate FB posts.
-  const claim = await claimFbPostLog(env, item.id);
+  const claim = await claimFbPostLog(env, page, item.id);
   if (!claim.claimed) {
-    return json({
+    return {
+      page_key: page.key,
       skipped: true,
       news_item_id: item.id,
       reason: claim.conflict === 'posted' ? 'already_posted' : 'in_progress',
-    });
+    };
   }
 
   const attemptCount = claim.row?.attempt_count ?? 1;
@@ -238,20 +299,22 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
 
     // 6. Build Graph API payload
     const link = buildNewsLink(env, item);
-    const fbPayload = buildFbPayload(item, caption, link);
+    const fbPayload = buildFbPayload(item, caption);
 
     // 7. Post to FB
-    const fbResult = await postToFacebook(env, fbPayload);
+    const fbResult = await postToFacebook(env, page, fbPayload);
     const postedId = fbResult?.post_id ?? fbResult?.id ?? null;
     if (!postedId) {
       throw new Error(`Graph API returned no post id: ${JSON.stringify(fbResult)}`);
     }
 
-    const permalink = `https://www.facebook.com/${env.FB_PAGE_ID}/posts/${
+    const permalink = `https://www.facebook.com/${page.id}/posts/${
       postedId.split('_')[1] ?? postedId
     }`;
     await upsertFbPostLog(env, {
       news_item_id: item.id,
+      page_id: page.id,
+      page_key: page.key,
       caption,
       status: 'posted',
       attempt_count: attemptCount,
@@ -259,8 +322,20 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
       fb_permalink: permalink,
       raw_response: fbResult,
       posted_at: new Date().toISOString(),
+      error_message: null,
+      link_comment_status: 'pending',
     });
-    return json({ posted: true, news_item_id: item.id, fb_post_id: postedId, permalink });
+
+    const comment = await publishLinkComment(env, page, postedId, link);
+    await updateLinkComment(env, page.id, item.id, comment, 1);
+    return {
+      posted: true,
+      page_key: page.key,
+      news_item_id: item.id,
+      fb_post_id: postedId,
+      permalink,
+      link_comment: comment.status,
+    };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     // Finalize to 'failed' so the row is no longer pending. The catchup cron
@@ -268,6 +343,8 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
     // pending recovery covers the case where this update itself fails.
     await upsertFbPostLog(env, {
       news_item_id: item.id,
+      page_id: page.id,
+      page_key: page.key,
       caption,
       status: 'failed',
       attempt_count: attemptCount,
@@ -276,7 +353,7 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
     // Generic error in the HTTP body (CodeQL stack-trace-exposure) — full
     // detail is in the fb_post_log row above + wrangler tail.
     console.error('social-poster post failed:', errMsg);
-    return json({ posted: false, news_item_id: item.id, error: 'post_failed' }, 500);
+    return { posted: false, page_key: page.key, news_item_id: item.id, error: 'post_failed' };
   }
 }
 
@@ -298,13 +375,14 @@ function checkEligible(item: NewsItem | null | undefined): string | null {
 // Rate limit
 // ---------------------------------------------------------------------------
 
-async function checkRateLimit(env: Env): Promise<boolean> {
+async function checkRateLimit(env: Env, pageId: string): Promise<boolean> {
   const gapMinutes = Math.max(0, Number(env.FB_POST_MIN_GAP_MINUTES) || 0);
   if (gapMinutes === 0) return true;
 
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
   url.searchParams.set('select', 'posted_at');
   url.searchParams.set('status', 'eq.posted');
+  url.searchParams.set('page_id', `eq.${pageId}`);
   url.searchParams.set('order', 'posted_at.desc');
   url.searchParams.set('limit', '1');
 
@@ -348,7 +426,7 @@ async function fetchNewsItemById(env: Env, id: string): Promise<NewsItem> {
   return rows[0];
 }
 
-async function pickNextNewsItem(env: Env): Promise<NewsItem> {
+async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem | null> {
   // Eligible VI rows that DON'T already have a terminal fb_post_log row.
   // 'posted' = done, 'skipped' = intentionally not posting (e.g. backlog the
   // admin chose to drop). PostgREST has no anti-join, so we fetch the
@@ -356,6 +434,7 @@ async function pickNextNewsItem(env: Env): Promise<NewsItem> {
   const doneUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
   doneUrl.searchParams.set('select', 'news_item_id');
   doneUrl.searchParams.set('status', 'in.(posted,skipped)');
+  doneUrl.searchParams.set('page_id', `eq.${page.id}`);
   const postedRes = await fetch(doneUrl.toString(), { headers: supabaseRestHeaders(env) });
   if (!postedRes.ok) {
     throw new Error(`pickNext done query failed: ${postedRes.status} ${await postedRes.text()}`);
@@ -368,6 +447,7 @@ async function pickNextNewsItem(env: Env): Promise<NewsItem> {
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
+  if (page.startAt) url.searchParams.set('published_at', `gte.${page.startAt}`);
   url.searchParams.set('order', 'importance.desc,published_at.desc');
   url.searchParams.set('limit', '50');
   const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
@@ -376,17 +456,18 @@ async function pickNextNewsItem(env: Env): Promise<NewsItem> {
   }
   const rows = (await res.json()) as NewsItem[];
   const next = rows.find((r) => !postedIds.includes(r.id));
-  if (!next) throw new Error('No eligible news_item to post');
-  return next;
+  return next ?? null;
 }
 
 async function fetchFbPostLogByNewsItem(
   env: Env,
+  pageId: string,
   newsItemId: string,
 ): Promise<FbPostLogRow | null> {
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
-  url.searchParams.set('select', 'id,news_item_id,status,attempt_count,posted_at,updated_at');
+  url.searchParams.set('select', 'id,news_item_id,page_id,page_key,status,attempt_count,posted_at,updated_at,fb_post_id,link_comment_status,link_comment_attempt_count');
   url.searchParams.set('news_item_id', `eq.${newsItemId}`);
+  url.searchParams.set('page_id', `eq.${pageId}`);
   url.searchParams.set('limit', '1');
   const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
   if (!res.ok) return null;
@@ -396,14 +477,20 @@ async function fetchFbPostLogByNewsItem(
 
 interface FbPostLogUpsert {
   news_item_id: string;
+  page_id: string;
+  page_key: string;
   caption?: string;
   status: 'pending' | 'posted' | 'failed' | 'skipped';
   attempt_count: number;
   fb_post_id?: string;
   fb_permalink?: string;
-  error_message?: string;
+  error_message?: string | null;
   raw_response?: unknown;
   posted_at?: string;
+  link_comment_id?: string | null;
+  link_comment_status?: 'pending' | 'posted' | 'failed' | 'skipped';
+  link_comment_error?: string | null;
+  link_comment_attempt_count?: number;
 }
 
 interface ClaimResult {
@@ -431,10 +518,14 @@ interface ClaimResult {
  * PostgREST `Prefer: resolution=ignore-duplicates` so the INSERT is a true
  * atomic claim (no merge / upsert race).
  */
-async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult> {
+async function claimFbPostLog(
+  env: Env,
+  page: FacebookPage,
+  newsItemId: string,
+): Promise<ClaimResult> {
   // Step 1 — try to atomically insert a fresh pending row.
   const insertUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
-  insertUrl.searchParams.set('on_conflict', 'news_item_id');
+  insertUrl.searchParams.set('on_conflict', 'news_item_id,page_id');
   const insertRes = await fetch(insertUrl.toString(), {
     method: 'POST',
     headers: {
@@ -443,6 +534,8 @@ async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult
     },
     body: JSON.stringify({
       news_item_id: newsItemId,
+      page_id: page.id,
+      page_key: page.key,
       status: 'pending',
       attempt_count: 1,
     }),
@@ -458,7 +551,7 @@ async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult
   }
 
   // Step 2 — insert was a no-op due to conflict. Inspect the existing row.
-  const existing = await fetchFbPostLogByNewsItem(env, newsItemId);
+  const existing = await fetchFbPostLogByNewsItem(env, page.id, newsItemId);
   if (!existing) {
     // Should be unreachable: conflict was reported but row vanished. Treat as
     // pending to avoid double-posting.
@@ -526,7 +619,7 @@ async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult
 
 async function upsertFbPostLog(env: Env, row: FbPostLogUpsert): Promise<void> {
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
-  url.searchParams.set('on_conflict', 'news_item_id');
+  url.searchParams.set('on_conflict', 'news_item_id,page_id');
   const res = await fetch(url.toString(), {
     method: 'POST',
     headers: {
@@ -538,6 +631,103 @@ async function upsertFbPostLog(env: Env, row: FbPostLogUpsert): Promise<void> {
   if (!res.ok) {
     console.error('upsertFbPostLog failed', res.status, await res.text());
   }
+}
+
+interface LinkCommentResult {
+  status: 'posted' | 'failed';
+  id?: string;
+  error?: string;
+}
+
+async function publishLinkComment(
+  env: Env,
+  page: FacebookPage,
+  postId: string,
+  link: string,
+): Promise<LinkCommentResult> {
+  const url = `https://graph.facebook.com/${env.FB_GRAPH_VERSION}/${postId}/comments`;
+  const form = new URLSearchParams({
+    message: link,
+    access_token: page.accessToken,
+  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+    });
+    const data = (await res.json().catch(() => ({}))) as { id?: string; error?: unknown };
+    if (!res.ok || data.error || !data.id) {
+      return {
+        status: 'failed',
+        error: `Graph comment ${res.status}: ${JSON.stringify(data.error ?? data)}`.slice(0, 500),
+      };
+    }
+    return { status: 'posted', id: data.id };
+  } catch (error) {
+    return {
+      status: 'failed',
+      error: (error instanceof Error ? error.message : String(error)).slice(0, 500),
+    };
+  }
+}
+
+async function updateLinkComment(
+  env: Env,
+  pageId: string,
+  newsItemId: string,
+  result: LinkCommentResult,
+  attemptCount: number,
+): Promise<void> {
+  const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
+  url.searchParams.set('page_id', `eq.${pageId}`);
+  url.searchParams.set('news_item_id', `eq.${newsItemId}`);
+  const res = await fetch(url.toString(), {
+    method: 'PATCH',
+    headers: { ...supabaseRestHeaders(env), Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      link_comment_status: result.status,
+      link_comment_id: result.id ?? null,
+      link_comment_error: result.error ?? null,
+      link_comment_attempt_count: attemptCount,
+    }),
+  });
+  if (!res.ok) console.error('updateLinkComment failed', res.status, await res.text());
+}
+
+async function retryLinkComment(
+  env: Env,
+  page: FacebookPage,
+): Promise<Record<string, unknown> | null> {
+  const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
+  url.searchParams.set('select', 'id,news_item_id,page_id,page_key,status,attempt_count,posted_at,updated_at,fb_post_id,link_comment_status,link_comment_attempt_count');
+  url.searchParams.set('page_id', `eq.${page.id}`);
+  url.searchParams.set('status', 'eq.posted');
+  url.searchParams.set('link_comment_status', 'in.(pending,failed)');
+  url.searchParams.set('link_comment_attempt_count', 'lt.3');
+  url.searchParams.set('fb_post_id', 'not.is.null');
+  url.searchParams.set('order', 'updated_at.asc');
+  url.searchParams.set('limit', '1');
+  const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
+  if (!res.ok) throw new Error(`comment retry query failed: ${res.status} ${await res.text()}`);
+  const log = ((await res.json()) as FbPostLogRow[])[0];
+  if (!log?.fb_post_id) return null;
+
+  const item = await fetchNewsItemById(env, log.news_item_id);
+  const result = await publishLinkComment(env, page, log.fb_post_id, buildNewsLink(env, item));
+  await updateLinkComment(
+    env,
+    page.id,
+    item.id,
+    result,
+    (log.link_comment_attempt_count ?? 0) + 1,
+  );
+  return {
+    page_key: page.key,
+    news_item_id: item.id,
+    post_already_existed: true,
+    link_comment: result.status,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -586,11 +776,17 @@ async function generateCaption(env: Env, item: NewsItem): Promise<string> {
   return sanitizeCaption(data.caption);
 }
 
-function sanitizeCaption(text: string): string {
+export function sanitizeCaption(text: string): string {
   // Strip code fences if Gemini wrapped in ```
   let out = text.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();
   // Strip leading "BÀI ĐĂNG FACEBOOK:" style headers if present.
   out = out.replace(/^📝?\s*BÀI ĐĂNG FACEBOOK.*$/im, '').trim();
+  // The canonical URL is published as the first Page comment, never in the
+  // main caption—even if a stale prompt or model response includes it.
+  out = out
+    .replace(/^.*https?:\/\/\S+.*$/gim, '🔗 Link bài viết ở bình luận đầu tiên.')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim();
   // Collapse 3+ newlines.
   out = out.replace(/\n{3,}/g, '\n\n');
   return out;
@@ -609,10 +805,9 @@ interface FbPayload {
   body: Record<string, string>;
 }
 
-function buildFbPayload(item: NewsItem, caption: string, link: string): FbPayload {
+export function buildFbPayload(item: NewsItem, caption: string): FbPayload {
   if (item.image_url && isContentImage(item.image_url)) {
     // Photo post — cover image embedded, caption goes in `caption`.
-    // Note: link is included in caption text (already appended by Gemini prompt).
     return {
       endpoint: 'photos',
       body: {
@@ -622,13 +817,11 @@ function buildFbPayload(item: NewsItem, caption: string, link: string): FbPayloa
       },
     };
   }
-  // Link/text post. FB will auto-fetch og:image from the linked URL,
-  // which is what we want when the news_items.image_url is suspect or missing.
+  // Text-only post. The canonical article link is added as the first comment.
   return {
     endpoint: 'feed',
     body: {
       message: caption,
-      link,
     },
   };
 }
@@ -703,11 +896,12 @@ function isContentImage(rawUrl: string): boolean {
 
 async function postToFacebook(
   env: Env,
+  page: FacebookPage,
   payload: FbPayload,
 ): Promise<{ id?: string; post_id?: string; error?: unknown }> {
-  const url = `https://graph.facebook.com/${env.FB_GRAPH_VERSION}/${env.FB_PAGE_ID}/${payload.endpoint}`;
+  const url = `https://graph.facebook.com/${env.FB_GRAPH_VERSION}/${page.id}/${payload.endpoint}`;
   const form = new URLSearchParams(payload.body);
-  form.set('access_token', env.FB_PAGE_ACCESS_TOKEN);
+  form.set('access_token', page.accessToken);
 
   const res = await fetch(url, {
     method: 'POST',

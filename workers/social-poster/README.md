@@ -1,6 +1,6 @@
 # social-poster
 
-Cloudflare Worker tự động đăng news_items (tiếng Việt) lên Facebook Page
+Cloudflare Worker tự động đăng news_items (tiếng Việt) lên các Facebook Page
 **ThePickleHub** thông qua Graph API. Driven by Supabase DB Webhook → realtime,
 không cần cron.
 
@@ -43,7 +43,8 @@ supabase db push --project-ref ajvlcamxemgbxduhiqrl
 ```
 
 The migration creates:
-- `fb_post_log` table (UNIQUE on `news_item_id`)
+- `fb_post_log` table with UNIQUE (`news_item_id`, `page_id`) and tracks the
+  first link comment independently, so comment retries never duplicate posts.
 - RLS: service_role full, admin read-only
 - Triggers for `updated_at`
 
@@ -120,6 +121,9 @@ wrangler secret put FB_PAGE_ID
 
 wrangler secret put FB_PAGE_ACCESS_TOKEN
 # paste Page Access Token từ bước 1.4
+
+wrangler secret put FB_SECONDARY_PAGE_ACCESS_TOKEN
+# paste Page Access Token dài hạn của TA Pickleball
 
 wrangler secret put GEMINI_API_KEY
 # paste từ aistudio

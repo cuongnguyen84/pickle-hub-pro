@@ -74,12 +74,10 @@ NGUYÊN TẮC:
 - Cấu trúc: Hook 1-2 câu → Thân bài 1-2 đoạn → CTA → 3-5 hashtag cuối.
 - Tổng độ dài 150-300 từ. Tối đa 2-3 emoji. Không lạm dụng hashtag.
 - KHÔNG bịa số liệu. Chỉ dùng thông tin trong tin gốc.
-- Kết bài luôn mời người đọc bấm link để đọc đầy đủ.
+- Kết bài mời người đọc xem đường dẫn ở bình luận đầu tiên.
+- KHÔNG chèn URL vào caption; hệ thống sẽ tự đăng link ở bình luận đầu tiên.
 
 ĐỊNH DẠNG OUTPUT: Chỉ trả về nội dung bài đăng (không tiêu đề meta, không markdown, không tag "BÀI ĐĂNG FACEBOOK"). Kết thúc bằng 3-5 hashtag.
-
-LINK PHẢI CHÈN NGUYÊN VĂN VÀO CUỐI THÂN BÀI (trước hashtag):
-${item.link}
 
 --- TIN GỐC ---
 Tiêu đề: ${item.title}
