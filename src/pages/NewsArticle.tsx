@@ -180,7 +180,7 @@ const NewsArticle = ({ language }: Props) => {
             <h1>{article.title}</h1>
             <div className="tl-article-meta">
               <span>{formatRelative(article.published_at)}</span>
-              {article.content_kind === "brief" && (
+              {!article.content_html && (
                 <span
                   style={{
                     fontFamily: "'Geist Mono', monospace",

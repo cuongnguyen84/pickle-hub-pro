@@ -72,7 +72,7 @@ async function renderNewsArticleByLang(
 
   const { data: row } = await supabase
     .from("news_items")
-    .select("id, title, summary, source, image_url, language, slug, published_at, updated_at, parent_news_id, ai_translated, content_html, content_kind")
+    .select("id, title, summary, source, image_url, language, slug, published_at, updated_at, parent_news_id, ai_translated, content_html")
     .eq("language", language)
     .eq("slug", slug)
     .eq("status", "published")

@@ -22,7 +22,6 @@ export type NewsItemDetail = {
   ai_translated: boolean;
   parent_news_id: string | null;
   content_html: string | null;
-  content_kind: "full" | "brief";
   updated_at: string;
 };
 
@@ -34,7 +33,7 @@ export function useNewsItemBySlug(slug: string | undefined, language: "en" | "vi
       const { data, error } = await supabase
         .from("news_items")
         .select(
-          "id, title, summary, source, source_id, image_url, language, slug, category, importance, published_at, ai_translated, parent_news_id, content_html, content_kind, updated_at"
+          "id, title, summary, source, source_id, image_url, language, slug, category, importance, published_at, ai_translated, parent_news_id, content_html, updated_at"
         )
         .eq("language", language)
         .eq("slug", slug!)
