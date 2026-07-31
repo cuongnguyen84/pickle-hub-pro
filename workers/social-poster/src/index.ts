@@ -914,7 +914,6 @@ function isContentImage(rawUrl: string): boolean {
     'promo',
     'coupon',
     'banner',
-    'ads/',
     '/ad-',
     'sponsor',
     'storefront',
@@ -925,6 +924,10 @@ function isContentImage(rawUrl: string): boolean {
   if (blockedKeywords.some((k) => path.includes(k))) {
     return false;
   }
+  // Match an actual `ads` path segment. A loose `ads/` substring also
+  // matches WordPress' ubiquitous `/uploads/` directory and incorrectly
+  // turns valid news photos into text-only Facebook posts.
+  if (/(?:^|\/)ads(?:\/|$)/.test(path)) return false;
 
   // Reject obviously tiny assets (often icons, tracking pixels).
   if (/[?&](?:w|width)=([0-9]+)/.test(parsed.search)) {
