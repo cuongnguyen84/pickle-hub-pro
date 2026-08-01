@@ -205,7 +205,7 @@ function useRecentProMatches() {
              player:profiles(display_name, username)
            )`,
         )
-        .eq("source_provider", "ppa_tour")
+        .in("source_provider", ["ppa_tour", "mlp", "app_tour"])
         .eq("is_public", true)
         .eq("verification_status", "verified")
         .gte("played_at", cutoff)
