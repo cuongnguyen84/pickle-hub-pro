@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  composeTickerItems,
   countSetWins,
   formatProMatchTicker,
   formatRoundLabel,
@@ -172,6 +173,23 @@ describe("resolveTickerMode", () => {
   });
 });
 
+describe("composeTickerItems", () => {
+  const item = (id: string) => ({ id, lead: id, body: id, href: `/${id}` });
+
+  it("orders live, fresh results, then upcoming and caps mixed results at five", () => {
+    const items = composeTickerItems({
+      mode: "live",
+      liveItems: [item("live")],
+      matchItems: Array.from({ length: 8 }, (_, index) => item(`result-${index}`)),
+      upcomingItems: [item("upcoming")],
+      blogItems: [item("blog")],
+    });
+    expect(items.map(({ id }) => id)).toEqual([
+      "live", "result-0", "result-1", "result-2", "result-3", "result-4", "upcoming",
+    ]);
+  });
+});
+
 describe("formatProMatchTicker", () => {
   const benTardioVsStaksrudDaescu = {
     match_id: "75d916ac-7c0c-478e-9c69-cbccde99a431",
@@ -303,5 +321,23 @@ describe("formatProMatchTicker", () => {
       "en",
     );
     expect(item.lead).toBe("2026 PPA Finals");
+  });
+
+  it("uses MLP team names and matchup wins instead of rotating player lineups", () => {
+    const item = formatProMatchTicker(
+      {
+        ...benTardioVsStaksrudDaescu,
+        tournament_name: "Away MLP Orlando",
+        winning_team: "b",
+        notes: JSON.stringify({
+          format: "mlp_team_matchup",
+          team_a: { name: "Orlando Squeeze", matchup_wins: 2 },
+          team_b: { name: "Miami Pickleball Club", matchup_wins: 3 },
+          games: [],
+        }),
+      },
+      "vi",
+    );
+    expect(item.body).toBe("Miami Pickleball Club 3:2 Orlando Squeeze");
   });
 });

@@ -1,8 +1,8 @@
 /**
  * Pure helpers for the 3-mode global ticker.
  *
- * Mode resolution is priority-based — the resolver picks the highest
- * mode that has data; lower modes only render as a fallback. Extracted
+ * Mode resolution is priority-based — the resolver picks the highest visual
+ * mode that has data. Live mode may also carry fresh match results. Extracted
  * here so the decision tree + the per-item formatting are unit-testable
  * without rendering Index.tsx.
  *
@@ -132,6 +132,22 @@ export function resolveTickerMode(input: ResolveInput): TickerMode {
   return "empty";
 }
 
+/** Keep live styling while mixing on-air streams, fresh results, then upcoming streams. */
+export function composeTickerItems(input: {
+  mode: TickerMode;
+  liveItems: TickerItem[];
+  matchItems: TickerItem[];
+  upcomingItems: TickerItem[];
+  blogItems: TickerItem[];
+}): TickerItem[] {
+  if (input.mode === "live") {
+    return [...input.liveItems, ...input.matchItems.slice(0, 5), ...input.upcomingItems];
+  }
+  if (input.mode === "matches") return input.matchItems;
+  if (input.mode === "blog") return input.blogItems;
+  return [];
+}
+
 /* ─── Pro-tour match → ticker item formatter ────────────────────────── */
 
 export interface ProMatchTickerInput {
@@ -142,6 +158,7 @@ export interface ProMatchTickerInput {
   team_a_score: number[];
   team_b_score: number[];
   winning_team: "a" | "b" | null;
+  notes?: string | null;
   /** team_a_lastnames / team_b_lastnames already extracted from
    *  participants. The hook layer does the participant join + slugify
    *  → keep this formatter pure (no DB shapes). */
@@ -157,13 +174,18 @@ export function formatProMatchTicker(
   const roundLabel = formatRoundLabel(m.round_name, language);
   const lead = [tournamentShort, roundLabel].filter(Boolean).join(" - ");
 
-  const wins = countSetWins(m.team_a_score, m.team_b_score);
+  const mlp = parseMlpTickerNotes(m.notes);
+  const wins = mlp
+    ? { a: mlp.team_a.matchup_wins, b: mlp.team_b.matchup_wins }
+    : countSetWins(m.team_a_score, m.team_b_score);
   const teamA = m.team_a_lastnames.length > 0
     ? m.team_a_lastnames.join("/")
     : language === "vi" ? "Đội A" : "Team A";
   const teamB = m.team_b_lastnames.length > 0
     ? m.team_b_lastnames.join("/")
     : language === "vi" ? "Đội B" : "Team B";
+  const teamALabel = mlp?.team_a.name || teamA;
+  const teamBLabel = mlp?.team_b.name || teamB;
 
   // Score reads team_a:team_b as recorded — winner side comes first
   // visually because pickleball broadcasts always lead with the winner
@@ -179,8 +201,8 @@ export function formatProMatchTicker(
   // forcing "B 0:0 A" silently mislabels the row. Now: only B-wins
   // trigger the swap; null/missing keeps A first.
   const swapForBWinner = m.winning_team === "b";
-  const leftLabel = swapForBWinner ? teamB : teamA;
-  const rightLabel = swapForBWinner ? teamA : teamB;
+  const leftLabel = swapForBWinner ? teamBLabel : teamALabel;
+  const rightLabel = swapForBWinner ? teamALabel : teamBLabel;
   const leftWins = swapForBWinner ? wins.b : wins.a;
   const rightWins = swapForBWinner ? wins.a : wins.b;
 
@@ -192,4 +214,27 @@ export function formatProMatchTicker(
     body,
     href: `/tran-dau/${m.slug}`,
   };
+}
+
+interface MlpTickerNotes {
+  format: "mlp_team_matchup";
+  team_a: { name: string; matchup_wins: number };
+  team_b: { name: string; matchup_wins: number };
+}
+
+function parseMlpTickerNotes(raw: string | null | undefined): MlpTickerNotes | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<MlpTickerNotes>;
+    if (
+      parsed.format !== "mlp_team_matchup"
+      || !parsed.team_a?.name
+      || !parsed.team_b?.name
+      || !Number.isFinite(parsed.team_a.matchup_wins)
+      || !Number.isFinite(parsed.team_b.matchup_wins)
+    ) return null;
+    return parsed as MlpTickerNotes;
+  } catch {
+    return null;
+  }
 }
