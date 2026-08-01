@@ -13,7 +13,9 @@ struct HomeTicker: View {
     @State private var stripSize: CGSize = .zero
 
     private static let gap: CGFloat = 24      // spacing between the two copies
-    private static let speed: Double = 42     // points per second
+    private static let speed: Double = 60     // points per second
+
+    private var isLiveMode: Bool { items.contains { $0.kind == .live || $0.kind == .upcoming } }
 
     private var travel: CGFloat { stripSize.width + Self.gap }
 
@@ -22,6 +24,8 @@ struct HomeTicker: View {
         HStack(spacing: Self.gap) {
             ForEach(items) { item in
                 HStack(spacing: 6) {
+                    Text(item.lead)
+                        .foregroundStyle(item.kind == .result ? TLColor.gold : TLColor.live)
                     Text(item.body)
                         .foregroundStyle(TLColor.fg)          // bright, readable
                     if let trail = item.trail {
@@ -39,10 +43,10 @@ struct HomeTicker: View {
     var body: some View {
         HStack(spacing: 12) {
             HStack(spacing: 5) {
-                Circle().fill(TLColor.gold).frame(width: 5, height: 5)
-                Text("KẾT QUẢ")
+                Circle().fill(isLiveMode ? TLColor.live : TLColor.gold).frame(width: 5, height: 5)
+                Text(isLiveMode ? "TRỰC TIẾP" : "KẾT QUẢ")
                     .font(TLFont.mono(10, .semibold)).tracking(0.6)
-                    .foregroundStyle(TLColor.gold)
+                    .foregroundStyle(isLiveMode ? TLColor.live : TLColor.gold)
             }
             .fixedSize()
 

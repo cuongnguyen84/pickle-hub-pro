@@ -42,7 +42,19 @@ final class HomeViewModel {
         live = streams.filter(\.isLive)
         scheduled = streams.filter(\.isScheduled)
         recentEnded = await endedTask ?? []
-        tickers = Array((await feedTask ?? []).compactMap(TickerItem.from).prefix(8))
+        let results = Array((await feedTask ?? []).compactMap(TickerItem.from))
+        let upcomingStreams = scheduled.filter { stream in
+            guard let date = stream.scheduledDate else { return false }
+            return date >= Date().addingTimeInterval(-5 * 60)
+                && date <= Date().addingTimeInterval(24 * 60 * 60)
+        }
+        if !live.isEmpty || !upcomingStreams.isEmpty {
+            tickers = Array(live.prefix(5).map { TickerItem.from($0, kind: .live) })
+                + Array(results.prefix(5))
+                + Array(upcomingStreams.prefix(3).map { TickerItem.from($0, kind: .upcoming) })
+        } else {
+            tickers = Array(results.prefix(8))
+        }
         loaded = true
     }
 
