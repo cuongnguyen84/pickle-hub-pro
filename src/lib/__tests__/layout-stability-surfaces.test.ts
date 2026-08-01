@@ -6,17 +6,19 @@ const root = resolve(import.meta.dirname, "../../..");
 const source = (path: string) => readFileSync(resolve(root, path), "utf8");
 
 describe("layout-stable public content surfaces", () => {
-  it("keeps homepage async feeds in deterministic order with reserved placeholders", () => {
+  it("keeps live/upcoming first while retaining reserved feed placeholders", () => {
     const home = source("src/pages/Index.tsx");
     const news = source("src/components/home/HomeNewsFeed.tsx");
     const live = source("src/components/home/LiveSection.tsx");
 
-    expect(home.indexOf('key: "editorial"')).toBeLessThan(home.indexOf("liveNode,"));
-    expect(home.indexOf("liveNode,")).toBeLessThan(home.indexOf('key: "news"'));
+    expect(home).toContain("const liveLeads = hasLiveData || scheduledStreams.length > 0");
+    expect(home).toContain("liveLeads ? liveNode : null");
+    expect(home).toContain("priority={liveLeads}");
     expect(home).toContain("viPostsLoading");
     expect(home).toContain("isLoading={homeNewsQuery.isLoading}");
     expect(news).toContain("tl-news-item--skeleton");
     expect(live).toContain("{ width: 768, height: 432 }");
+    expect(live).toContain('loading={priority ? "eager" : "lazy"}');
   });
 
   it("venue and blog loading states reserve media geometry", () => {

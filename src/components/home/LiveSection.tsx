@@ -14,6 +14,8 @@ interface LiveSectionProps {
   /** Luồng vừa kết thúc (Index đã lọc ≤7 ngày) — hiện dạng replay rows. */
   endedStreams?: Livestream[];
   language: "en" | "vi";
+  /** True when live/upcoming makes this the first feed section. */
+  priority?: boolean;
 }
 
 /**
@@ -63,7 +65,7 @@ const rowTime = (iso: string | null | undefined): string => {
 
 const MAX_ROWS = 5;
 
-export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language }: LiveSectionProps) {
+export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language, priority = false }: LiveSectionProps) {
   const [inlinePlaybackRequested, setInlinePlaybackRequested] = useState(false);
   const isLive = liveStreams.length > 0;
   // Live courts first, then the schedule soonest-first — one merged lineup
@@ -136,8 +138,8 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                       alt=""
                       width={768}
                       height={432}
-                      loading="lazy"
-                      fetchPriority="low"
+                      loading={priority ? "eager" : "lazy"}
+                      fetchPriority={priority ? "high" : "low"}
                       decoding="async"
                     />
                   ) : (
@@ -171,8 +173,8 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                   alt=""
                   width={768}
                   height={432}
-                  loading="lazy"
-                  fetchPriority="low"
+                  loading={priority ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : "low"}
                   decoding="async"
                 />
               ) : (

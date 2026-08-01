@@ -462,10 +462,10 @@ const Index = () => {
         );
       })()}
 
-      {/* ── Stable priority feed — Editorial → Live → News ──
-          These slots keep a deterministic order across the loading and
-          resolved states. This prevents late Supabase responses from moving
-          an already-painted section above another one. */}
+      {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
+          Product priority wins while a broadcast is live or scheduled.
+          Replay-only days keep editorial first. Reserved editorial/news
+          skeletons still stabilize the async content inside each slot. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -565,6 +565,7 @@ const Index = () => {
           </section>
         ) : null;
 
+        const liveLeads = hasLiveData || scheduledStreams.length > 0;
         const liveNode =
           hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
             ? {
@@ -575,16 +576,18 @@ const Index = () => {
                     scheduledStreams={scheduledStreams}
                     endedStreams={recentEnded}
                     language={language}
+                    priority={liveLeads}
                   />
                 ),
               }
             : null;
 
-        // Never reorder these async slots after first paint. An active live
-        // section still appears prominently, directly after editorial.
+        // Restore #501 behavior: active and upcoming broadcasts always lead.
+        // Only replay-only content follows the weekly editorial section.
         const cluster: Array<{ key: string; node: ReactNode }> = [
+          liveLeads ? liveNode : null,
           editorialNode ? { key: "editorial", node: editorialNode } : null,
-          liveNode,
+          liveLeads ? null : liveNode,
           {
             key: "news",
             node: (
