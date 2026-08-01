@@ -244,6 +244,7 @@ export function FeedMlpMatchCard({
       {/* GAME DETAILS toggle button */}
       <button
         type="button"
+        data-feed-local-action="true"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

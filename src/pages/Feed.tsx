@@ -420,7 +420,16 @@ const Feed = () => {
                 : timelineItems.map((item, i) => (
                     <div
                       key={`${item.type}:${item.cursor_id}`}
-                      onClickCapture={() => viewed.markViewed(item.cursor_id)}
+                      onClickCapture={(event) => {
+                        const target = event.target;
+                        if (
+                          target instanceof Element &&
+                          target.closest("[data-feed-local-action]")
+                        ) {
+                          return;
+                        }
+                        viewed.markViewed(item.cursor_id);
+                      }}
                     >
                       <TimelineRow
                         item={item}
