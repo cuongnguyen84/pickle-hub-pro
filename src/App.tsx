@@ -22,8 +22,6 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useUnifiedNotificationsRealtime } from "@/hooks/social";
 import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
-// Eagerly load the Index page for fast initial render
-import Index from "./pages/Index";
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
@@ -44,6 +42,9 @@ const lazyRetry = <T extends React.ComponentType<any>>(factory: () => Promise<{ 
         }),
     ),
   );
+
+const loadIndexPage = () => import("./pages/Index");
+const Index = lazyRetry(loadIndexPage);
 
 const Live = lazyRetry(() => import("./pages/Live"));
 const Videos = lazyRetry(() => import("./pages/Videos"));
@@ -99,8 +100,10 @@ const FlexTournamentView = lazyRetry(() => import("./pages/FlexTournamentView"))
 
 // Blog pages
 const Blog = lazyRetry(() => import("./pages/Blog"));
-const BlogPost = lazyRetry(() => import("./pages/BlogPost"));
-const ViBlogPost = lazyRetry(() => import("./pages/ViBlogPost"));
+const loadBlogPostPage = () => import("./pages/BlogPost");
+const loadViBlogPostPage = () => import("./pages/ViBlogPost");
+const BlogPost = lazyRetry(loadBlogPostPage);
+const ViBlogPost = lazyRetry(loadViBlogPostPage);
 
 // Forum pages
 const Forum = lazyRetry(() => import("./pages/Forum"));
@@ -134,9 +137,21 @@ const ClubsList = lazyRetry(() => import("./pages/ClubsList"));
 const CreateClub = lazyRetry(() => import("./pages/CreateClub"));
 // Court finder ("Tìm sân") — venue directory
 const VenuesList = lazyRetry(() => import("./pages/VenuesList"));
-const VenueDetail = lazyRetry(() => import("./pages/VenueDetail"));
+const loadVenueDetailPage = () => import("./pages/VenueDetail");
+const VenueDetail = lazyRetry(loadVenueDetailPage);
 const VenueSubmit = lazyRetry(() => import("./pages/VenueSubmit"));
 const VenuesCity = lazyRetry(() => import("./pages/VenuesCity"));
+
+// Start the active public page chunk while the rest of App is still being
+// evaluated. This preserves code splitting without adding a render-time
+// request waterfall on cold deep links.
+if (typeof window !== "undefined") {
+  const criticalPath = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (criticalPath === "/" || criticalPath === "/vi") void loadIndexPage();
+  else if (/^\/vi\/blog\/[^/]+$/.test(criticalPath)) void loadViBlogPostPage();
+  else if (/^\/blog\/[^/]+$/.test(criticalPath)) void loadBlogPostPage();
+  else if (/^(?:\/vi)?\/san\/[^/]+$/.test(criticalPath)) void loadVenueDetailPage();
+}
 // Find players ("Tìm bạn chơi") + in-app messaging
 const FindPlayers = lazyRetry(() => import("./pages/FindPlayers"));
 const Messages = lazyRetry(() => import("./pages/Messages"));
