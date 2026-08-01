@@ -160,8 +160,8 @@ const Index = () => {
   }, [language, viPosts]);
 
   // Ticker — 3-mode priority resolver:
-  //   live (active or scheduled within 24h) → pro-tour matches (last 3d)
-  //   → blog posts (always-on fallback)
+  //   live (active or scheduled within 24h, mixed with fresh results)
+  //   → pro-tour matches (last 3d) → blog posts (always-on fallback)
   // Replaces the previous live > scheduled > replay cascade so the bar
   // surfaces fresh content even on quiet broadcast days. Hook returns
   // { mode, items } so the JSX below can colour the head label by mode

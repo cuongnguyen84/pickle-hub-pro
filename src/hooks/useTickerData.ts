@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { LivestreamWithLogo } from "@/hooks/useLivestreamData";
 import { blogMetadata } from "@/content/blog/metadata";
 import {
+  composeTickerItems,
   formatProMatchTicker,
   lastNameFromDisplayName,
   resolveTickerMode,
@@ -16,8 +17,9 @@ import {
 /**
  * Composed data source for the global header ticker (Index.tsx).
  *
- * Three priority modes (resolved by `resolveTickerMode`):
- *   1. LIVE     — live now OR scheduled within the next 24h
+ * Three visual modes (resolved by `resolveTickerMode`):
+ *   1. LIVE     — live now OR scheduled within the next 24h; fresh verified
+ *                 results are mixed between live and upcoming items
  *   2. MATCHES  — pro-tour matches played within the last 3 days
  *   3. BLOG     — recent published posts (always-on fallback)
  *
@@ -53,8 +55,13 @@ export function useTickerData(language: Language, sources: TickerSources): UseTi
   );
 
   const liveItems = useMemo(
-    () => buildLivestreamItems(sources.live, upcomingStreams, language),
-    [sources.live, upcomingStreams, language],
+    () => buildLivestreamItems(sources.live, "live", language),
+    [sources.live, language],
+  );
+
+  const upcomingItems = useMemo(
+    () => buildLivestreamItems(upcomingStreams, "upcoming", language),
+    [upcomingStreams, language],
   );
 
   const matchItems = useMemo(
@@ -74,14 +81,16 @@ export function useTickerData(language: Language, sources: TickerSources): UseTi
     blogCount: blogItems.length,
   });
 
-  const items =
-    mode === "live"
-      ? liveItems
-      : mode === "matches"
-        ? matchItems
-        : mode === "blog"
-          ? blogItems
-          : [
+  const composedItems = composeTickerItems({
+    mode,
+    liveItems,
+    matchItems,
+    upcomingItems,
+    blogItems,
+  });
+  const items = composedItems.length > 0
+    ? composedItems
+    : [
               {
                 id: "empty",
                 lead: "",
@@ -91,7 +100,7 @@ export function useTickerData(language: Language, sources: TickerSources): UseTi
                     : "No headlines right now — check back soon",
                 href: "/feed",
               },
-            ];
+      ];
 
   return {
     mode,
@@ -136,34 +145,22 @@ function filterUpcomingWithin24h(
 }
 
 function buildLivestreamItems(
-  live: LivestreamWithLogo[],
-  upcoming: LivestreamWithLogo[],
+  streams: LivestreamWithLogo[],
+  kind: "live" | "upcoming",
   language: Language,
 ): TickerItem[] {
-  const items: TickerItem[] = [];
   const tLive = language === "vi" ? "TRỰC TIẾP" : "LIVE";
   const tUpcoming = language === "vi" ? "SẮP TỚI" : "UPCOMING";
   const tFallback = language === "vi" ? "Trận trực tiếp" : "Live match";
 
-  for (const s of live.slice(0, 5)) {
-    items.push({
-      id: `live-${s.id}`,
-      lead: tLive,
+  const limit = kind === "live" ? 5 : 3;
+  return streams.slice(0, limit).map((s) => ({
+      id: `${kind}-${s.id}`,
+      lead: kind === "live" ? tLive : tUpcoming,
       body: s.title ?? tFallback,
       trail: s.organization?.name ?? undefined,
       href: `/live/${s.id}`,
-    });
-  }
-  for (const s of upcoming.slice(0, 3)) {
-    items.push({
-      id: `upcoming-${s.id}`,
-      lead: tUpcoming,
-      body: s.title ?? tFallback,
-      trail: s.organization?.name ?? undefined,
-      href: `/live/${s.id}`,
-    });
-  }
-  return items;
+    }));
 }
 
 /* ─── Pro-tour matches (Mode 2) ──────────────────────────────────────── */
@@ -180,33 +177,37 @@ interface RawMatchRow {
   id: string;
   slug: string;
   played_at: string;
+  verified_at: string | null;
+  updated_at: string | null;
   tournament_name: string | null;
   round_name: string | null;
   team_a_score: number[] | null;
   team_b_score: number[] | null;
   winning_team: string | null;
+  notes: string | null;
   match_participants: ParticipantRow[] | null;
 }
 
 function useRecentProMatches() {
   return useQuery({
     queryKey: ["ticker", "pro-tour-matches"],
-    staleTime: 60_000, // 1 min — cron writes new rows every 6h, ticker
-    // doesn't need second-by-second freshness
+    staleTime: 60_000,
+    refetchInterval: 60_000,
     queryFn: async (): Promise<ProMatchTickerInput[]> => {
       const cutoff = new Date(Date.now() - MATCH_WINDOW_DAYS * 86400_000).toISOString();
       const { data, error } = await supabase
         .from("matches")
         .select(
-          `id, slug, played_at, tournament_name, round_name,
-           team_a_score, team_b_score, winning_team,
+          `id, slug, played_at, verified_at, updated_at, tournament_name, round_name,
+           team_a_score, team_b_score, winning_team, notes,
            match_participants:match_participants(
              team, position,
              player:profiles(display_name, username)
            )`,
         )
-        .eq("source_provider", "ppa_tour")
+        .in("source_provider", ["ppa_tour", "mlp", "app_tour"])
         .eq("is_public", true)
+        .eq("verification_status", "verified")
         .gte("played_at", cutoff)
         // Only show matches with a determined winner. Unresolved rows
         // (winning_team IS NULL — partial ingest, in-progress match)
@@ -216,6 +217,8 @@ function useRecentProMatches() {
         // surface in-progress matches, lift this filter and have the
         // formatter render a "vs" separator instead of a score.
         .in("winning_team", ["a", "b"])
+        .order("verified_at", { ascending: false, nullsFirst: false })
+        .order("updated_at", { ascending: false, nullsFirst: false })
         .order("played_at", { ascending: false })
         .limit(MATCH_LIMIT);
       if (error) throw error;
@@ -251,6 +254,7 @@ function toProMatchInput(row: RawMatchRow): ProMatchTickerInput {
       row.winning_team === "a" || row.winning_team === "b"
         ? row.winning_team
         : null,
+    notes: row.notes,
     team_a_lastnames: aLast,
     team_b_lastnames: bLast,
   };

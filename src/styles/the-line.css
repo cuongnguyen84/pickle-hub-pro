@@ -277,7 +277,7 @@
 [data-theme="the-line"] .tl-ticker-track {
   display: inline-flex; gap: 40px; white-space: nowrap;
   padding-left: 24px;
-  animation: tl-ticker 80s linear infinite;
+  animation: tl-ticker 55s linear infinite;
   font-family: "Geist Mono"; font-size: 12px; color: var(--tl-fg-2);
   line-height: 34px;
 }
