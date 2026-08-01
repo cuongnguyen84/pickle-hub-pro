@@ -79,7 +79,10 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
   const [main, ...restAll] = streams;
   const rest = restAll.slice(0, MAX_ROWS);
   const overflow = restAll.length - rest.length;
-  const mainThumb = main ? streamThumb(main, { width: 1280, height: 720 }) : undefined;
+  // The hero renders at ~374px on mobile and at most ~768px in the feed.
+  // Asking Google Drive for 1280x720 transferred a 1.3MB image even while the
+  // section was below the fold; the 768px derivative remains sharp at 2x DPR.
+  const mainThumb = main ? streamThumb(main, { width: 768, height: 432 }) : undefined;
   const mainIsLive = main?.status === "live";
   const fallbackTitle = isLive
     ? (language === "vi" ? "Trận đang trực tiếp" : "Live match")
@@ -131,8 +134,8 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                     <img
                       src={mainThumb}
                       alt=""
-                      width={1280}
-                      height={720}
+                      width={768}
+                      height={432}
                       loading="lazy"
                       fetchPriority="low"
                       decoding="async"
@@ -166,8 +169,8 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
                 <img
                   src={mainThumb}
                   alt=""
-                  width={1280}
-                  height={720}
+                  width={768}
+                  height={432}
                   loading="lazy"
                   fetchPriority="low"
                   decoding="async"
