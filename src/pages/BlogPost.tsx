@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import {
+  blogMetadata,
   getBlogPost,
   getRelatedPosts,
   type BlogPost as BlogPostType,
@@ -67,11 +68,35 @@ const BlogPost = () => {
       return undefined;
     }
     setPost(null);
+
+    // The article body is route-split, but its lightweight metadata is
+    // already in the entry bundle. Start the hero request in parallel with
+    // the post chunk instead of waiting for that chunk to resolve and React
+    // to commit the final <img>. Responsive preload attributes keep mobile
+    // from downloading the 1600px original.
+    const hero = blogMetadata.find((item) => item.slug === slug)?.heroImage;
+    const responsiveHero = blogHeroSrcSet(hero?.src);
+    let heroPreload: HTMLLinkElement | undefined;
+    if (hero) {
+      heroPreload = document.createElement("link");
+      heroPreload.rel = "preload";
+      heroPreload.as = "image";
+      heroPreload.href = responsiveHero?.small ?? hero.src;
+      if (responsiveHero) {
+        heroPreload.imageSrcset = responsiveHero.srcSet;
+        heroPreload.imageSizes = "(max-width: 900px) 100vw, 832px";
+      }
+      heroPreload.fetchPriority = "high";
+      heroPreload.dataset.blogHeroPreload = slug;
+      document.head.appendChild(heroPreload);
+    }
+
     getBlogPost(slug).then((p) => {
       if (!cancelled) setPost(p);
     });
     return () => {
       cancelled = true;
+      heroPreload?.remove();
     };
   }, [slug]);
 
@@ -242,6 +267,9 @@ const BlogPost = () => {
                 srcSet={blogHeroSrcSet(post.heroImage.src)?.srcSet}
                 sizes="(max-width: 900px) 100vw, 832px"
                 alt={post.heroImage.alt}
+                width={1600}
+                height={900}
+                loading="eager"
                 fetchPriority="high"
                 decoding="async"
                 onError={() => setHeroImgFailed(true)}

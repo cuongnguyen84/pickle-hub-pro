@@ -30,7 +30,6 @@ import { VenueCard } from "@/components/venues/VenueCard";
 import { cmsHeroImageSources } from "@/lib/image-utils";
 import {
   type Venue,
-  VENUE_DETAIL_COLUMNS,
   venueDisplayName,
   venueFullAddress,
   venueDirectionsUrl,
@@ -42,6 +41,7 @@ import {
   VENUE_LIST_COLUMNS,
   type VenueListItem,
 } from "@/lib/venues";
+import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
 
 const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 const DAY_LABELS: Record<string, { vi: string; en: string }> = {
@@ -59,20 +59,8 @@ export default function VenueDetail() {
   const { language } = useI18n();
 
   const { data: venue, isLoading } = useQuery<Venue | null>({
-    queryKey: ["venue", slug],
-    queryFn: async () => {
-      if (!slug) return null;
-      const { data, error } = await supabase
-        .from("venues")
-        .select(VENUE_DETAIL_COLUMNS)
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error) {
-        console.error("VenueDetail: fetch error", error);
-        return null;
-      }
-      return (data as Venue | null) ?? null;
-    },
+    queryKey: venueDetailQueryKey(slug),
+    queryFn: () => fetchVenueDetail(slug),
     staleTime: 60_000,
   });
 

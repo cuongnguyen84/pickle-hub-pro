@@ -228,7 +228,12 @@ const queryClient = new QueryClient({
 
 // Start fetching home page data immediately (before React renders)
 import { prefetchHomeData } from "@/lib/prefetch";
-prefetchHomeData(queryClient);
+import { shouldPrefetchHomeData } from "@/lib/prefetch-policy";
+// Do not make venue/article LCP compete with three homepage API requests and a
+// high-priority livestream thumbnail. Those requests used to run on every URL.
+if (typeof window !== "undefined" && shouldPrefetchHomeData(window.location.pathname)) {
+  prefetchHomeData(queryClient);
+}
 
 // Route-transition fallback = shared LoadingState (DS-04). It calls useI18n(),
 // which is safe: the Suspense boundary using it renders inside I18nProvider
