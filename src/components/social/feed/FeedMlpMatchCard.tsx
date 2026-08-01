@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import {
@@ -84,42 +84,6 @@ export function FeedMlpMatchCard({
 }: FeedMlpMatchCardProps) {
   const notes = parseNotes(match.notes ?? null);
   const [expanded, setExpanded] = useState(false);
-  // Track the scoreboard area so we can scroll it back into view when the
-  // user expands the games panel — without this the layout shift from
-  // mounting the 5-row games table pushes the card off the top of the
-  // viewport and the user loses context.
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!expanded || !rootRef.current) return undefined;
-    // Wait for the games-table layout to commit, then check whether the
-    // card top got pushed above the fold. The first useEffect tick runs
-    // BEFORE the new DOM nodes are painted, so getBoundingClientRect()
-    // there returns the pre-expand position — which is always at/below
-    // the original click point and never trips the rect.top < 0 guard.
-    // Use a double rAF so we measure after paint, then issue the scroll.
-    const node = rootRef.current;
-    let cancelled = false;
-    requestAnimationFrame(() => {
-      if (cancelled) return;
-      requestAnimationFrame(() => {
-        if (cancelled || !node.isConnected) return;
-        const rect = node.getBoundingClientRect();
-        // Card top is above the fold OR the bottom is below — scroll the
-        // top into view so the user sees the matchup header + the games
-        // table below it.
-        if (rect.top < 0 || rect.top > window.innerHeight - 120) {
-          node.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-            inline: "nearest",
-          });
-        }
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [expanded]);
 
   if (!notes) {
     // Codex P1 fix: callers (Feed.tsx) guard `match.notes` truthiness before
@@ -151,7 +115,6 @@ export function FeedMlpMatchCard({
 
   return (
     <div
-      ref={rootRef}
       role="article"
       aria-label={ariaLabel}
       // Codex P2 fix: previous commit changed root from <Link> to <div> to
