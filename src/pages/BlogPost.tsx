@@ -90,7 +90,7 @@ const BlogPost = () => {
           <Skeleton className="h-12 w-full mb-3" />
           <Skeleton className="h-12 w-3/4 mb-6" />
           <Skeleton className="h-4 w-1/2 mb-10" />
-          <Skeleton className="h-72 w-full mb-10 rounded-xl" />
+          <Skeleton className="aspect-video w-full mb-10 rounded-xl" />
           <div className="space-y-4">
             <Skeleton className="h-6 w-1/2" />
             <Skeleton className="h-4 w-full" />

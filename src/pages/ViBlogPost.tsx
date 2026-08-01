@@ -12,6 +12,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
+import { cmsHeroImageSources } from "@/lib/image-utils";
 
 const ViBlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -52,10 +53,18 @@ const ViBlogPost = () => {
   if (isLoading) {
     return (
       <TheLineLayout title="Đang tải...">
-        <div className="tl-shell" style={{ paddingTop: 32, paddingBottom: 80 }}>
-          <Skeleton className="h-8 w-3/4 mb-4" />
+        <div className="tl-shell" style={{ maxWidth: 880, paddingTop: 24, paddingBottom: 80 }} aria-busy="true">
+          <Skeleton className="h-4 w-2/3 mb-8" />
+          <Skeleton className="h-4 w-24 mb-4" />
+          <Skeleton className="h-12 w-full mb-3" />
+          <Skeleton className="h-12 w-3/4 mb-6" />
           <Skeleton className="h-4 w-1/2 mb-8" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="aspect-[3/2] w-full rounded-xl mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-5/6" />
+            <Skeleton className="h-5 w-full" />
+          </div>
         </div>
       </TheLineLayout>
     );
@@ -102,6 +111,7 @@ const ViBlogPost = () => {
   ];
 
   const faqItems = Array.isArray(post.faq_items) ? post.faq_items : [];
+  const coverImage = cmsHeroImageSources(post.cover_image_url);
 
   return (
     <TheLineLayout
@@ -162,12 +172,19 @@ const ViBlogPost = () => {
             </div>
           </header>
 
-          {post.cover_image_url && (
+          {coverImage && (
             <img
-              src={normalizeImageUrl(post.cover_image_url)}
+              src={coverImage.src}
+              srcSet={coverImage.srcSet}
+              sizes="(max-width: 912px) calc(100vw - 32px), 832px"
               alt={post.title}
-              className="w-full h-auto rounded-xl mb-8 border border-border"
-              style={{ marginTop: "2rem" }}
+              width={1536}
+              height={1024}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="w-full rounded-xl mb-8 border border-border"
+              style={{ marginTop: "2rem", aspectRatio: "3 / 2", objectFit: "cover" }}
             />
           )}
 

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   optimizeImageUrl,
   blogHeroSrcSet,
+  cmsHeroImageSources,
   homepageThumbnailUrl,
 } from "../image-utils";
 
@@ -60,6 +61,33 @@ describe("blogHeroSrcSet", () => {
     expect(blogHeroSrcSet("https://cdn.example.com/hero.webp")).toBeUndefined();
     expect(blogHeroSrcSet("/images/blog/x-hero-768.webp")).toBeUndefined();
     expect(blogHeroSrcSet(null)).toBeUndefined();
+  });
+});
+
+describe("cmsHeroImageSources", () => {
+  it("creates responsive Supabase transforms for CMS covers", () => {
+    const out = cmsHeroImageSources(
+      "https://example.supabase.co/storage/v1/object/public/blog/cover.jpg",
+    )!;
+    expect(out.src).toContain("/render/image/public/");
+    expect(out.src).toContain("width=768");
+    expect(out.srcSet).toContain("width=480");
+    expect(out.srcSet).toContain("1200w");
+  });
+
+  it("normalizes and resizes Google Drive covers", () => {
+    const out = cmsHeroImageSources("https://drive.google.com/file/d/abc_123/view")!;
+    expect(out.src).toBe("https://lh3.googleusercontent.com/d/abc_123=w768");
+    expect(out.srcSet).toContain("=w480 480w");
+  });
+
+  it("reuses committed local variants and leaves unknown hosts unchanged", () => {
+    expect(cmsHeroImageSources("/images/blog/example-hero.webp")?.src).toBe(
+      "/images/blog/example-hero-768.webp",
+    );
+    expect(cmsHeroImageSources("https://cdn.example.com/cover.jpg")).toEqual({
+      src: "https://cdn.example.com/cover.jpg",
+    });
   });
 });
 
