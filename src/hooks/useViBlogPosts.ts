@@ -42,9 +42,16 @@ async function viBlogFetch<T>(
     headers?: Record<string, string>;
     body?: unknown;
     single?: boolean;
+    publicRequest?: boolean;
   } = {},
 ): Promise<T> {
-  const session = (await supabase.auth.getSession()).data.session;
+  // Published blog reads are public under RLS. Do not wait for Supabase Auth
+  // to restore localStorage before starting a cold article request: that adds
+  // an avoidable dependency ahead of the hero image/LCP. Admin mutations and
+  // private reads retain the session-aware path.
+  const session = options.publicRequest
+    ? null
+    : (await supabase.auth.getSession()).data.session;
   const authHeader = session?.access_token
     ? `Bearer ${session.access_token}`
     : `Bearer ${SUPABASE_KEY}`;
@@ -96,6 +103,43 @@ export function usePublishedViBlogPosts() {
 // exact-match key a closed character class is the stricter, simpler guard.
 export const VI_SLUG_PATTERN = /^[a-z0-9-]+$/;
 
+// A cold /vi/blog/:slug navigation causes App.tsx to request the route chunk
+// before React mounts. ViBlogPost calls the preloader at module evaluation,
+// so this one-shot promise starts the public CMS request while the remaining
+// application modules are still evaluating. React Query consumes exactly the
+// same promise on first render; subsequent refetches remain real network
+// requests and keep React Query's normal freshness semantics.
+const viBlogPreloads = new Map<string, Promise<ViBlogPost | null>>();
+
+function requestPublishedViBlogPost(slug: string): Promise<ViBlogPost | null> {
+  return viBlogFetch<ViBlogPost[]>(
+    `?or=(slug.eq.${slug},alternate_en_slug.eq.${slug})&status=eq.published&limit=1`,
+    { publicRequest: true },
+  ).then((rows) => rows[0] ?? null);
+}
+
+export function preloadViBlogPostBySlug(slug: string | undefined): void {
+  if (!slug || !VI_SLUG_PATTERN.test(slug) || viBlogPreloads.has(slug)) return;
+  const request = requestPublishedViBlogPost(slug);
+  viBlogPreloads.set(slug, request);
+  // Register a rejection handler immediately: module-level preloading is
+  // intentionally fire-and-forget, so a transient offline error must not
+  // become an unhandled rejection before React Query mounts. Removing the
+  // failed seed lets the hook perform its normal retry request.
+  void request.catch(() => {
+    if (viBlogPreloads.get(slug) === request) viBlogPreloads.delete(slug);
+  });
+}
+
+export function fetchPublishedViBlogPostBySlug(slug: string): Promise<ViBlogPost | null> {
+  const preload = viBlogPreloads.get(slug);
+  if (preload) {
+    viBlogPreloads.delete(slug);
+    return preload;
+  }
+  return requestPublishedViBlogPost(slug);
+}
+
 export function useViBlogPostBySlug(slug: string | undefined) {
   const isWellFormed = !!slug && VI_SLUG_PATTERN.test(slug);
   return useQuery({
@@ -122,12 +166,7 @@ export function useViBlogPostBySlug(slug: string | undefined) {
     // Without the header the same query is a plain 200 `[]`, so absence is data
     // and only a real transport failure throws. Each branch now says the true
     // thing. Pinned by tests/human-path.spec.ts.
-    queryFn: async () => {
-      const rows = await viBlogFetch<ViBlogPost[]>(
-        `?or=(slug.eq.${slug!},alternate_en_slug.eq.${slug!})&status=eq.published&limit=1`,
-      );
-      return rows[0] ?? null;
-    },
+    queryFn: () => fetchPublishedViBlogPostBySlug(slug!),
     // Disabled for a malformed slug: react-query v5 reports isFetching false,
     // so ViBlogPost skips the skeleton and renders "không tìm thấy" — which is
     // the truthful answer for a slug that cannot exist.

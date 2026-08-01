@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
+import { preloadViBlogPostBySlug, useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
 import { ErrorState } from "@/components/states/PageStates";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/components/seo";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -13,6 +13,14 @@ import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { cmsHeroImageSources } from "@/lib/image-utils";
+
+// App.tsx starts this route chunk during cold deep-link bootstrap. Begin the
+// public CMS read as soon as the module evaluates so React Query can consume
+// it on mount instead of creating a later request waterfall.
+if (typeof window !== "undefined") {
+  const match = window.location.pathname.match(/^\/vi\/blog\/([a-z0-9-]+)\/?$/);
+  preloadViBlogPostBySlug(match?.[1]);
+}
 
 const ViBlogPost = () => {
   const { slug } = useParams<{ slug: string }>();

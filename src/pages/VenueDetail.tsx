@@ -41,7 +41,7 @@ import {
   VENUE_LIST_COLUMNS,
   type VenueListItem,
 } from "@/lib/venues";
-import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
+import { fetchVenueDetail, readVenueInitialData, venueDetailQueryKey } from "@/lib/venue-detail-query";
 
 const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 const DAY_LABELS: Record<string, { vi: string; en: string }> = {
@@ -61,6 +61,8 @@ export default function VenueDetail() {
   const { data: venue, isLoading } = useQuery<Venue | null>({
     queryKey: venueDetailQueryKey(slug),
     queryFn: () => fetchVenueDetail(slug),
+    initialData: () => readVenueInitialData(slug),
+    initialDataUpdatedAt: Date.now(),
     staleTime: 60_000,
   });
 
