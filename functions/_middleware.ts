@@ -9,7 +9,6 @@
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
 import { createSupabaseClient } from "./_lib/supabase";
-import { fetchVenueHydrationData, injectVenuePayload } from "./_lib/venue-hydration";
 import {
   renderHome, renderHomeVi,
   renderLive, renderVideo,
@@ -536,51 +535,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         statusText: response.statusText,
         headers,
       });
-    }
-    // A cold venue deep-link otherwise paints a skeleton, loads the SPA, then
-    // starts a second Tokyo Supabase round trip before its LCP can render.
-    // Embed the public venue row in this route's SPA shell so React Query can
-    // paint on first render. This response is explicitly uncacheable: the
-    // generic Pages index shell must never retain one slug's payload.
-    const humanVenueMatch = stripLangPrefix(pathname).match(/^\/san\/([^/]+)$/);
-    if (humanVenueMatch && humanVenueMatch[1] !== "them") {
-      let slug = humanVenueMatch[1];
-      try { slug = decodeURIComponent(slug); } catch { /* keep encoded path */ }
-      const venuePromise = fetchVenueHydrationData(createSupabaseClient(env), slug).catch((error) => {
-        console.error("Venue hydration query error:", error);
-        return null;
-      });
-      // Never hold the HTML shell behind a slow data origin. Fast Supabase
-      // responses remove the client waterfall; slow/error responses retain
-      // the existing SPA fallback with a bounded TTFB cost.
-      const budgetedVenue = Promise.race([
-        venuePromise,
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
-      ]);
-      const [response, venue] = await Promise.all([
-        next(),
-        budgetedVenue,
-      ]);
-      if (!venue || !(response.headers.get("content-type") || "").includes("text/html")) {
-        return response;
-      }
-      try {
-        const html = injectVenuePayload(await response.clone().text(), slug, venue);
-        const headers = new Headers(response.headers);
-        headers.set("Cache-Control", "private, no-store");
-        headers.delete("Content-Length");
-        headers.delete("Content-Encoding");
-        headers.delete("ETag");
-        headers.delete("Last-Modified");
-        return new Response(html, {
-          status: response.status,
-          statusText: response.statusText,
-          headers,
-        });
-      } catch (error) {
-        console.error("Venue hydration error:", error);
-        return response;
-      }
     }
     // Normal user, public route → serve SPA
     return next();
