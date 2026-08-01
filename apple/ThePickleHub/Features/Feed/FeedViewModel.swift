@@ -101,7 +101,8 @@ final class FeedViewModel {
             let l = effectiveScore(lhs)
             let r = effectiveScore(rhs)
             if l != r { return l > r }
-            return (lhs.publishedAt ?? .distantPast) > (rhs.publishedAt ?? .distantPast)
+            return (lhs.rankedAt ?? lhs.publishedAt ?? .distantPast)
+                > (rhs.rankedAt ?? rhs.publishedAt ?? .distantPast)
         }
         items = merged
     }
