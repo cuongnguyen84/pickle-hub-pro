@@ -197,6 +197,7 @@ async function triggerScrapeViaEdge(args: {
 /* ─── Tab 1: Manual trigger ────────────────────────────────────────────── */
 
 function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
+  const queryClient = useQueryClient();
   const [url, setUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<TriggerResponse | null>(null);
@@ -219,6 +220,16 @@ function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
       setResult(json);
       if (json.ok) {
         const queued = (json as { queued?: boolean }).queued === true;
+        if (queued) {
+          setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: ["feed", "timeline"] });
+          }, 30_000);
+          setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: ["feed", "timeline"] });
+          }, 90_000);
+        } else {
+          await queryClient.invalidateQueries({ queryKey: ["feed", "timeline"] });
+        }
         toast.success(queued
             ? language === "vi" ? "Đã đưa vào queue" : "Scrape queued"
             : language === "vi" ? "Bắt đầu scrape" : "Scrape started", { description: queued
@@ -489,11 +500,16 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
           setTimeout(() => {
             void queryClient.invalidateQueries({ queryKey: ["pro-tour-logs"] });
             void queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] });
+            void queryClient.invalidateQueries({ queryKey: ["feed", "timeline"] });
           }, 30_000);
+          setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: ["feed", "timeline"] });
+          }, 90_000);
         } else {
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] }),
             queryClient.invalidateQueries({ queryKey: ["pro-tour-logs"] }),
+            queryClient.invalidateQueries({ queryKey: ["feed", "timeline"] }),
           ]);
         }
       } else {

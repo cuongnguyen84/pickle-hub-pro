@@ -8149,6 +8149,7 @@ export type Database = {
           notes: string
           participants: Json
           published_at: string
+          ranked_at: string
           round_name: string
           score: number
           slug: string
