@@ -14,9 +14,9 @@
 //   4. pro_tour_ingestion_logs row tracking matches_imported,
 //      players_created, players_matched, duration_ms
 //
-// Idempotent: re-ingesting the same TournamentScrapeResult is a no-op for
-// matches that already exist + zero-create for players that already exist.
-// players_matched counts the latter.
+// Idempotent: re-ingesting the same TournamentScrapeResult refreshes resolved
+// match details without creating duplicate rows; players that already exist
+// are reused and counted by players_matched.
 //
 // Auth: service_role key required (the Worker is the only legitimate
 // caller; admin UI hits the Worker, not this directly). verify_jwt is
@@ -314,7 +314,10 @@ async function reconcileMatches(
   //     because the dedupe-by-external_id SKIPPED them. Same pattern
   //     also hit MLP Group Play — 17 stuck pending rows were resolved
   //     by the same patch.
-  //   - already-resolved match → leave alone.
+  //   - already-resolved MLP match → refresh scores + notes. MLP fixtures are
+  //     inserted before play, so their original notes contain 0-0 team scores
+  //     and incomplete game details. Skipping them forever produced a verified
+  //     badge beside a stale 0-0 scoreboard on the Feed.
   const externalIds = scrape.matches.map((m) => m.external_match_id);
   const { data: existing, error } = await supabase
     .from("matches")
@@ -333,26 +336,34 @@ async function reconcileMatches(
   let imported = 0;
   for (const match of scrape.matches) {
     const prior = existingMap.get(match.external_match_id);
-    if (prior && prior.winning_team !== null) {
-      // Already resolved — don't clobber.
-      continue;
-    }
-
     const newWinner =
       match.winner_team === "one" ? "a" : match.winner_team === "two" ? "b" : null;
 
-    if (prior && prior.winning_team === null && newWinner !== null) {
-      // Pending row in DB, bracket now has a winner — UPDATE.
+    const transitionedToResolved = prior?.winning_team == null && newWinner !== null;
+    const hasRefreshableDetails = match.notes != null;
+
+    if (prior && newWinner !== null && (transitionedToResolved || hasRefreshableDetails)) {
+      // Update a newly resolved row, or refresh adapter-supplied details on an
+      // already resolved row. Keep verified_at stable for refreshes so a cron
+      // re-scrape does not repeatedly republish an old result at the top of
+      // the Feed.
+      const updateRow = {
+        team_a_score: match.scores_team_one,
+        team_b_score: match.scores_team_two,
+        winning_team: newWinner,
+        verification_status: "verified",
+        played_at: match.played_at ?? new Date().toISOString(),
+        source_url: match.source_url,
+        tournament_name: scrape.tournament_name,
+        tournament_event: match.tournament_event_override ?? scrape.tournament_event,
+        round_name: match.round_name,
+        court_number: match.court_number ?? match.court,
+        ...(hasRefreshableDetails ? { notes: match.notes } : {}),
+        ...(transitionedToResolved ? { verified_at: new Date().toISOString() } : {}),
+      };
       const { error: upErr } = await supabase
         .from("matches")
-        .update({
-          team_a_score: match.scores_team_one,
-          team_b_score: match.scores_team_two,
-          winning_team: newWinner,
-          verification_status: "verified",
-          verified_at: new Date().toISOString(),
-          played_at: match.played_at ?? new Date().toISOString(),
-        })
+        .update(updateRow)
         .eq("id", prior.id);
       if (upErr) throw new Error(`Match update ${match.external_match_id}: ${upErr.message}`);
       imported += 1;
@@ -368,7 +379,8 @@ async function reconcileMatches(
       );
       if (inserted) imported += 1;
     }
-    // else: prior exists but no winner in either DB or scrape → leave pending.
+    // Else: prior exists but the scrape still has no winner, or it is a
+    // resolved provider without richer notes to refresh → leave it unchanged.
   }
   return imported;
 }

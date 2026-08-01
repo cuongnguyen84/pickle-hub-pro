@@ -34,10 +34,14 @@ struct FeedMatchCard: View {
                     .lineLimit(2)
             }
 
-            VStack(spacing: 10) {
-                teamRow(players: teams.teamA, scores: match.teamAScore, isWinner: winnerIsA)
-                Rectangle().fill(TLColor.border).frame(height: 1)
-                teamRow(players: teams.teamB, scores: match.teamBScore, isWinner: !winnerIsA)
+            if let mlp = match.mlpNotes {
+                mlpScoreboard(mlp)
+            } else {
+                VStack(spacing: 10) {
+                    teamRow(players: teams.teamA, scores: match.teamAScore, isWinner: winnerIsA)
+                    Rectangle().fill(TLColor.border).frame(height: 1)
+                    teamRow(players: teams.teamB, scores: match.teamBScore, isWinner: !winnerIsA)
+                }
             }
 
             if let mlp = match.mlpNotes {
@@ -117,6 +121,48 @@ struct FeedMatchCard: View {
     }
 
     // MARK: MLP per-game breakdown (different lineup each game)
+
+    private func mlpScoreboard(_ mlp: MlpMatchupNotes) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            mlpTeam(mlp.teamA, isWinner: winnerIsA, isTrailing: false)
+            Text("VS")
+                .font(TLFont.mono(10, .medium))
+                .foregroundStyle(TLColor.fg4)
+            mlpTeam(mlp.teamB, isWinner: !winnerIsA, isTrailing: true)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func mlpTeam(
+        _ team: MlpMatchupNotes.Team,
+        isWinner: Bool,
+        isTrailing: Bool
+    ) -> some View {
+        let alignment: HorizontalAlignment = isTrailing ? .trailing : .leading
+
+        return VStack(alignment: alignment, spacing: 5) {
+            if let logo = team.logo.flatMap(URL.init(string:)) {
+                AsyncImage(url: logo) { image in
+                    image.resizable().scaledToFit()
+                } placeholder: {
+                    Color.clear
+                }
+                .frame(width: 42, height: 42)
+            }
+            Text(team.name)
+                .font(TLFont.serif(20))
+                .foregroundStyle(isWinner ? TLColor.fg : TLColor.fg2)
+                .lineLimit(2)
+                .multilineTextAlignment(isTrailing ? .trailing : .leading)
+            Text("\(team.matchupWins)")
+                .font(TLFont.serif(44))
+                .italic()
+                .monospacedDigit()
+                .foregroundStyle(isWinner ? TLColor.accentText : TLColor.fg3)
+        }
+        .frame(maxWidth: .infinity, alignment: isTrailing ? .trailing : .leading)
+        .opacity(isWinner ? 1 : 0.62)
+    }
 
     /// Vietnamese long labels for MLP game slots, mirroring web GAME_LABEL_LONG.
     private static let mlpGameLabels: [String: String] = [

@@ -1,0 +1,6 @@
+-- The Orlando/Miami fixture was first ingested before Orlando submitted its
+-- lineup. Refresh the card notes from the now-complete MLP inline ticker.
+UPDATE public.matches
+SET notes = $notes${"format":"mlp_team_matchup","team_a":{"name":"Orlando Squeeze","logo":"https://images.pickleball.com/systemLogos/1743480272198/orlando_squeeze_transparent.png","matchup_wins":2},"team_b":{"name":"Miami Pickleball Club","logo":"https://images.pickleball.com/systemLogos/1743479919480/miami_transparent.png","matchup_wins":3},"games":[{"label":"WD","score_a":11,"score_b":5,"players_a":["Alex Walker","Lacy Schneemann"],"players_b":["Estee Widdershoven","Isabella Dunlap"],"winner":"a"},{"label":"MD","score_a":6,"score_b":11,"players_a":["Gregory Dow","Jack Sock"],"players_b":["Anderson Scarpa","Anouar Braham"],"winner":"b"},{"label":"MXD1","score_a":11,"score_b":3,"players_a":["Lacy Schneemann","Jack Sock"],"players_b":["Isabella Dunlap","James Delgado"],"winner":"a"},{"label":"MXD2","score_a":0,"score_b":11,"players_a":["Alex Walker","Yates Johnson"],"players_b":["Estee Widdershoven","Anouar Braham"],"winner":"b"},{"label":"DB","score_a":13,"score_b":21,"players_a":["Jack Sock"],"players_b":["Anouar Braham"],"winner":"b"}]}$notes$
+WHERE source_provider = 'mlp'
+  AND external_match_id = 'mlp-20059cc7-cd05-4ef1-89bf-89e947193716';

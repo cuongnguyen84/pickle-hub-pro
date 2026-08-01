@@ -36,6 +36,7 @@ struct FeedRow: Decodable {
     let itemType: String
     let itemID: UUID
     let publishedAt: String
+    let rankedAt: String?
     let score: Double
 
     // match
@@ -67,6 +68,7 @@ struct FeedRow: Decodable {
         case itemType = "item_type"
         case itemID = "item_id"
         case publishedAt = "published_at"
+        case rankedAt = "ranked_at"
         case score
         case slug
         case format
@@ -308,6 +310,7 @@ struct FeedCursor: Equatable {
 struct FeedItem: Identifiable, Equatable {
     let id: UUID
     let publishedAt: Date?
+    let rankedAt: Date?
     let score: Double
     let kind: Kind
 
@@ -325,6 +328,7 @@ struct FeedItem: Identifiable, Equatable {
 
     init?(row: FeedRow) {
         let date = FeedDate.parse(row.publishedAt)
+        let rankedDate = row.rankedAt.flatMap(FeedDate.parse) ?? date
         switch row.itemType {
         case "match":
             let match = FeedMatch(
@@ -345,7 +349,7 @@ struct FeedItem: Identifiable, Equatable {
                 roundName: row.roundName,
                 notes: row.notes
             )
-            self.init(id: row.itemID, publishedAt: date, score: row.score, kind: .match(match))
+            self.init(id: row.itemID, publishedAt: date, rankedAt: rankedDate, score: row.score, kind: .match(match))
 
         case "blog":
             guard let title = row.title?.nonEmpty, let slug = row.slug?.nonEmpty else { return nil }
@@ -356,7 +360,7 @@ struct FeedItem: Identifiable, Equatable {
                 coverImageURL: row.coverImageURL,
                 category: row.category
             )
-            self.init(id: row.itemID, publishedAt: date, score: row.score, kind: .blog(blog))
+            self.init(id: row.itemID, publishedAt: date, rankedAt: rankedDate, score: row.score, kind: .blog(blog))
 
         case "video":
             guard let title = row.title?.nonEmpty else { return nil }
@@ -368,7 +372,7 @@ struct FeedItem: Identifiable, Equatable {
                 durationSeconds: row.durationSeconds,
                 isShort: row.category == "short"
             )
-            self.init(id: row.itemID, publishedAt: date, score: row.score, kind: .video(video))
+            self.init(id: row.itemID, publishedAt: date, rankedAt: rankedDate, score: row.score, kind: .video(video))
 
         default:
             return nil
@@ -393,7 +397,7 @@ struct FeedItem: Identifiable, Equatable {
             language: row.language,
             aiTranslated: row.aiTranslated
         )
-        self.init(id: row.id, publishedAt: date, score: score, kind: .news(news))
+        self.init(id: row.id, publishedAt: date, rankedAt: date, score: score, kind: .news(news))
     }
 
     /// IG reel overlay, score `recency_decay + 1.3` (mirrors `useFeedEmbeds.ts`).
@@ -407,7 +411,7 @@ struct FeedItem: Identifiable, Equatable {
             authorName: row.authorName,
             thumbnailURL: row.thumbnailURL.flatMap(URL.init(string:))
         )
-        self.init(id: row.id, publishedAt: date, score: exp(-ageHours / 48.0) + 1.3, kind: .embed(embed))
+        self.init(id: row.id, publishedAt: date, rankedAt: date, score: exp(-ageHours / 48.0) + 1.3, kind: .embed(embed))
     }
 
     /// System highlight, score `recency_decay + 1.35` (mirrors `useFeedHighlights.ts`).
@@ -420,7 +424,7 @@ struct FeedItem: Identifiable, Equatable {
             body: row.bodyVi,
             url: row.href.flatMap { URL(string: $0, relativeTo: WebRoutes.base) }
         )
-        self.init(id: row.id, publishedAt: date, score: exp(-ageHours / 48.0) + 1.35, kind: .highlight(highlight))
+        self.init(id: row.id, publishedAt: date, rankedAt: date, score: exp(-ageHours / 48.0) + 1.35, kind: .highlight(highlight))
     }
 
     /// Happening (live/tournament/event). Live gets bonus 10 ≈ pinned to the
@@ -428,12 +432,13 @@ struct FeedItem: Identifiable, Equatable {
     init(id: UUID, happening: FeedHappening, publishedAt: Date?, now: Date) {
         let bonus: Double = happening.kind == .live ? 10 : 1.5
         let ageHours = max(0, now.timeIntervalSince(publishedAt ?? now) / 3600)
-        self.init(id: id, publishedAt: publishedAt, score: exp(-ageHours / 48.0) + bonus, kind: .happening(happening))
+        self.init(id: id, publishedAt: publishedAt, rankedAt: publishedAt, score: exp(-ageHours / 48.0) + bonus, kind: .happening(happening))
     }
 
-    private init(id: UUID, publishedAt: Date?, score: Double, kind: Kind) {
+    private init(id: UUID, publishedAt: Date?, rankedAt: Date?, score: Double, kind: Kind) {
         self.id = id
         self.publishedAt = publishedAt
+        self.rankedAt = rankedAt
         self.score = score
         self.kind = kind
     }

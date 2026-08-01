@@ -32,6 +32,7 @@ export type FeedTimelineItem =
       type: "match";
       cursor_id: string;
       published_at: string;
+      ranked_at: string;
       score: number;
     } & FeedMatch)
   | {
@@ -44,6 +45,7 @@ export type FeedTimelineItem =
       cover_image_url: string | null;
       category: string | null;
       published_at: string;
+      ranked_at: string;
       score: number;
       lang: "vi" | "en";
     }
@@ -57,6 +59,7 @@ export type FeedTimelineItem =
       duration_seconds: number | null;
       video_type: "short" | "long";
       published_at: string;
+      ranked_at: string;
       score: number;
     };
 
@@ -69,6 +72,7 @@ interface RpcRow {
   item_type: string;
   item_id: string;
   published_at: string;
+  ranked_at: string;
   score: number;
   // match-specific
   slug: string | null;
@@ -192,6 +196,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       type: "match",
       cursor_id: row.item_id,
       published_at: row.published_at,
+      ranked_at: row.ranked_at,
       score: row.score,
       match_id: row.item_id,
       slug: row.slug ?? "",
@@ -228,6 +233,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       cover_image_url: row.cover_image_url,
       category: row.category,
       published_at: row.published_at,
+      ranked_at: row.ranked_at,
       score: row.score,
       lang: "vi",
     };
@@ -248,6 +254,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       duration_seconds: row.duration_seconds,
       video_type: videoType,
       published_at: row.published_at,
+      ranked_at: row.ranked_at,
       score: row.score,
     };
   }
@@ -286,6 +293,7 @@ function buildEnBlogItems(): FeedTimelineItem[] {
         cover_image_url: post.heroImage?.src ?? null,
         category: null,
         published_at: publishedAt,
+        ranked_at: publishedAt,
         score,
         lang: "en",
       };

@@ -166,7 +166,7 @@ const Feed = () => {
     const effectiveScore = (item: StreamItem): number => {
       const ageHours = Math.max(
         0,
-        (now - Date.parse(item.published_at)) / 3_600_000,
+        (now - Date.parse("ranked_at" in item ? item.ranked_at : item.published_at)) / 3_600_000,
       );
       let mult = 1;
       if (ageHours > 12 && ageHours <= 24) mult *= 0.85;
@@ -420,7 +420,16 @@ const Feed = () => {
                 : timelineItems.map((item, i) => (
                     <div
                       key={`${item.type}:${item.cursor_id}`}
-                      onClickCapture={() => viewed.markViewed(item.cursor_id)}
+                      onClickCapture={(event) => {
+                        const target = event.target;
+                        if (
+                          target instanceof Element &&
+                          target.closest("[data-feed-local-action]")
+                        ) {
+                          return;
+                        }
+                        viewed.markViewed(item.cursor_id);
+                      }}
                     >
                       <TimelineRow
                         item={item}
