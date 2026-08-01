@@ -13,7 +13,7 @@ import {
   loadTranslations,
   type Language,
 } from "./loader";
-import { supabase } from "@/integrations/supabase/client";
+import { detectCountryFromEdge } from "./geo";
 
 interface I18nContextType {
   language: Language;
@@ -26,6 +26,7 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 const STORAGE_KEY = "pickleball-hub-language"; // i18n storage key
 const GEO_LANG_KEY = "geo_detected_language"; // cache geo-detected language
+const GEO_COUNTRY_KEY = "geo_detected_country";
 
 /**
  * html[lang] follows URL structure, not user preference.
@@ -72,9 +73,7 @@ const I18nBootstrap = ({
   failed: boolean;
   onRetry: () => void;
 }) => {
-  const label = language === "vi"
-    ? "Đang tải ngôn ngữ…"
-    : "Loading language…";
+  const label = language === "vi" ? "Đang tải ngôn ngữ…" : "Loading language…";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -151,15 +150,18 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     const detectByGeo = async () => {
       try {
         const cached = sessionStorage.getItem("geo_block_result");
+        const cachedCountry = sessionStorage.getItem(GEO_COUNTRY_KEY);
         let country: string | null = null;
 
         if (cached) {
-          country = JSON.parse(cached).country;
+          const parsed = JSON.parse(cached) as { country?: unknown };
+          country = typeof parsed.country === "string" ? parsed.country : null;
+        } else if (cachedCountry) {
+          country = cachedCountry;
         } else {
-          const { data } = await supabase.functions.invoke("geo-check");
-          country = data?.country ?? null;
-          if (data) {
-            sessionStorage.setItem("geo_block_result", JSON.stringify(data));
+          country = await detectCountryFromEdge();
+          if (country) {
+            sessionStorage.setItem(GEO_COUNTRY_KEY, country);
           }
         }
 
@@ -185,17 +187,23 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     detectByGeo();
   }, [activateLanguage]);
 
-  const setLanguage = useCallback((lang: Language) => {
-    localStorage.setItem(STORAGE_KEY, lang);
-    document.documentElement.lang = getHtmlLangFromPath();
-    activateLanguage(lang);
-  }, [activateLanguage]);
+  const setLanguage = useCallback(
+    (lang: Language) => {
+      localStorage.setItem(STORAGE_KEY, lang);
+      document.documentElement.lang = getHtmlLangFromPath();
+      activateLanguage(lang);
+    },
+    [activateLanguage],
+  );
 
   // Set language from URL without persisting to localStorage
-  const setLanguageFromUrl = useCallback((lang: Language) => {
-    document.documentElement.lang = getHtmlLangFromPath();
-    activateLanguage(lang);
-  }, [activateLanguage]);
+  const setLanguageFromUrl = useCallback(
+    (lang: Language) => {
+      document.documentElement.lang = getHtmlLangFromPath();
+      activateLanguage(lang);
+    },
+    [activateLanguage],
+  );
 
   useEffect(() => {
     document.documentElement.lang = getHtmlLangFromPath();
