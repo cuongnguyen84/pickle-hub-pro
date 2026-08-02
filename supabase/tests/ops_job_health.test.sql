@@ -1,11 +1,13 @@
 BEGIN;
 
-SELECT plan(18);
+SELECT plan(23);
 
 SELECT has_table('public', 'ops_job_registry', 'job registry exists');
 SELECT has_table('public', 'ops_job_runs', 'job run ledger exists');
 SELECT has_table('public', 'ops_job_digest_deliveries', 'digest delivery ledger exists');
 SELECT has_table('public', 'ops_job_retry_requests', 'retry audit ledger exists');
+SELECT has_table('public', 'ops_edge_function_registry', 'edge function registry exists');
+SELECT has_table('public', 'ops_edge_function_state', 'edge runtime state exists');
 
 SELECT is(
   (SELECT count(*) FROM public.ops_job_registry WHERE enabled),
@@ -30,6 +32,11 @@ SELECT has_function(
   'public', 'ops_record_job_run',
   ARRAY['text','text','text','timestamp with time zone','timestamp with time zone','text','text','jsonb','text','text','text'],
   'service job-run recorder exists'
+);
+SELECT has_function('public', 'ops_admin_edge_function_health', ARRAY[]::text[], 'admin edge health RPC exists');
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.ops_admin_edge_function_health()', 'EXECUTE'),
+  'anonymous callers cannot read edge health'
 );
 SELECT ok(
   NOT has_function_privilege(
@@ -82,6 +89,11 @@ SELECT ok(
     WHERE monitor_key='ops-job-digest' AND enabled
   ),
   'morning digest monitors itself'
+);
+
+SELECT ok(
+  EXISTS (SELECT 1 FROM cron.job WHERE jobname='ops-edge-health-every-5m' AND schedule='*/5 * * * *' AND active),
+  'edge runtime probe runs every five minutes'
 );
 
 SELECT * FROM finish();

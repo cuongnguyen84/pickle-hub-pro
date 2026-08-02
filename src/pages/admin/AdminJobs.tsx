@@ -53,6 +53,24 @@ interface JobSnapshot {
   } | null;
 }
 
+interface EdgeFunctionHealth {
+  function_slug: string;
+  display_name: string;
+  job_key: string | null;
+  state: "available" | "missing_blob" | "http_error" | "timeout" | "pending";
+  http_status: number | null;
+  response_ms: number | null;
+  reason: string | null;
+  consecutive_failures: number;
+  checked_at: string | null;
+}
+
+interface EdgeHealthSnapshot {
+  generated_at: string;
+  counts: { available: number; failed: number; pending: number };
+  functions: EdgeFunctionHealth[];
+}
+
 const stateMeta: Record<HealthState, { label: string; className: string }> = {
   healthy: { label: "Healthy", className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600" },
   warning: { label: "Warning", className: "border-amber-500/30 bg-amber-500/10 text-amber-600" },
@@ -89,10 +107,23 @@ function useJobHealth() {
   });
 }
 
+function useEdgeHealth() {
+  return useQuery({
+    queryKey: ["admin-edge-function-health"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ops_admin_edge_function_health");
+      if (error) throw error;
+      return data as unknown as EdgeHealthSnapshot;
+    },
+    refetchInterval: 60_000,
+  });
+}
+
 export default function AdminJobs() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data, isLoading, error, refetch, isFetching } = useJobHealth();
+  const edgeHealth = useEdgeHealth();
   const [stateFilter, setStateFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const retry = useMutation({
@@ -114,6 +145,17 @@ export default function AdminJobs() {
       window.setTimeout(() => void queryClient.invalidateQueries({ queryKey: ["admin-job-health"] }), 2500);
     },
     onError: (retryError: Error) => toast({ title: "Không retry được", description: retryError.message, variant: "destructive" }),
+  });
+  const probeEdges = useMutation({
+    mutationFn: async () => {
+      const { error: probeError } = await supabase.rpc("ops_admin_probe_edge_functions");
+      if (probeError) throw probeError;
+    },
+    onSuccess: () => {
+      toast({ title: "Đã bắt đầu probe", description: "Kết quả runtime sẽ cập nhật trong vài giây." });
+      window.setTimeout(() => void queryClient.invalidateQueries({ queryKey: ["admin-edge-function-health"] }), 4000);
+    },
+    onError: (probeError: Error) => toast({ title: "Không probe được", description: probeError.message, variant: "destructive" }),
   });
 
   const categories = useMemo(() => [...new Set((data?.jobs ?? []).map((job) => job.category))], [data]);
@@ -163,6 +205,31 @@ export default function AdminJobs() {
               <CardContent className="flex flex-col gap-2 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <span>Digest gần nhất: <strong>{data?.latest_digest ? `${data.latest_digest.report_date} · ${data.latest_digest.status}` : "chưa gửi"}</strong></span>
                 <span className="text-foreground-muted">Snapshot: {formatTime(data?.generated_at ?? null)}</span>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div><CardTitle className="text-lg">Edge Function Runtime</CardTitle><p className="mt-1 text-sm text-foreground-muted">Probe mỗi 5 phút; phát hiện missing blob, HTTP error và timeout.</p></div>
+                <Button variant="outline" size="sm" onClick={() => probeEdges.mutate()} disabled={probeEdges.isPending}>
+                  {probeEdges.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />} Probe lại
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                {edgeHealth.error ? <p className="p-5 text-sm text-red-600">Không tải được Edge Health: {edgeHealth.error.message}</p> : (
+                  <div className="overflow-x-auto"><Table>
+                    <TableHeader><TableRow><TableHead>Function</TableHead><TableHead>Runtime</TableHead><TableHead>HTTP</TableHead><TableHead>Latency</TableHead><TableHead>Lần probe</TableHead><TableHead>Chi tiết</TableHead></TableRow></TableHeader>
+                    <TableBody>{(edgeHealth.data?.functions ?? []).map((fn) => {
+                      const available = fn.state === "available";
+                      return <TableRow key={fn.function_slug}>
+                        <TableCell><div className="font-medium">{fn.display_name}</div><code className="text-xs text-foreground-muted">{fn.function_slug}</code></TableCell>
+                        <TableCell><Badge variant="outline" className={available ? stateMeta.healthy.className : fn.state === "pending" ? stateMeta.pending.className : stateMeta.failed.className}>{available ? "Available" : fn.state}</Badge></TableCell>
+                        <TableCell>{fn.http_status ?? "—"}</TableCell><TableCell>{fn.response_ms === null ? "—" : `${fn.response_ms}ms`}</TableCell>
+                        <TableCell className="whitespace-nowrap">{formatTime(fn.checked_at)}</TableCell><TableCell className="max-w-80 text-sm">{fn.reason || "Chưa probe"}</TableCell>
+                      </TableRow>;
+                    })}</TableBody>
+                  </Table></div>
+                )}
               </CardContent>
             </Card>
 

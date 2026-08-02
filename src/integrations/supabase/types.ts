@@ -8800,6 +8800,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      ops_admin_edge_function_health: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      ops_admin_probe_edge_functions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       ops_request_job_retry: {
         Args: {
           p_job_key: string

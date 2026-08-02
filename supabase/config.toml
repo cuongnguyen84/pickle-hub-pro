@@ -400,6 +400,9 @@ verify_jwt = false
 [functions.ops-job-control]
 verify_jwt = false
 
+[functions.ops-edge-health]
+verify_jwt = false
+
 # Cron-only Zalo OA credential rotation. The gateway JWT verifier is disabled
 # for the project-wide ES256 workaround; the handler requires x-cron-secret.
 [functions.zalo-token-refresh]
