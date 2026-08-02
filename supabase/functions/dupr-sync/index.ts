@@ -21,6 +21,8 @@
 //      preserved for that revival.
 //
 // Cron: daily 03:00 UTC+7 (= 20:00 UTC previous day) via Supabase Dashboard.
+// Deployment revision 2026-08-02: republished after intermittent
+// NOT_FOUND_FUNCTION_BLOB responses from the Edge gateway.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";

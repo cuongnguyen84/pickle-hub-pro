@@ -40,6 +40,25 @@ function jobsText(jobs: Job[]): string {
   return lines.join("\n").slice(0, 4000);
 }
 
+async function retryOutcome(supabase: ReturnType<typeof createClient>, jobKey: string): Promise<string> {
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+  await supabase.rpc("ops_refresh_cron_health_snapshot");
+  const { data } = await supabase.from("ops_cron_dispatches")
+    .select("http_status_code,timed_out,transport_error,response_content")
+    .eq("monitor_key", jobKey).order("dispatched_at", { ascending: false }).limit(1).maybeSingle();
+  if (!data || data.http_status_code === null) return `⏳ ${jobKey} đã được dispatch, downstream chưa trả kết quả.`;
+  if (data.timed_out || data.transport_error || data.http_status_code < 200 || data.http_status_code >= 300) {
+    return `❌ Retry ${jobKey} vẫn lỗi: ${data.transport_error || `HTTP ${data.http_status_code}`}\n${String(data.response_content || "").slice(0, 500)}`;
+  }
+  try {
+    const payload = JSON.parse(data.response_content || "{}") as { error?: unknown; ok?: boolean; failed?: number };
+    if (payload.error || payload.ok === false || (payload.failed ?? 0) > 0) {
+      return `⚠️ Retry ${jobKey} trả HTTP ${data.http_status_code} nhưng có lỗi nghiệp vụ:\n${String(data.response_content).slice(0, 500)}`;
+    }
+  } catch { /* A successful non-JSON response is still a valid downstream result. */ }
+  return `✅ ${jobKey} đã chạy lại thành công (HTTP ${data.http_status_code}).`;
+}
+
 async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId?: number): Promise<Record<string, unknown>> {
   let query = supabase.from("telegram_commands")
     .select("id,chat_id,text,from_id,from_username")
@@ -58,11 +77,12 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       .eq("id", row.id).eq("status", "pending").select("id").maybeSingle();
     if (!claimed.data) continue;
     try {
+      const [command, rawKey] = String(row.text).trim().split(/\s+/, 2);
+      const key = rawKey?.trim();
+      if (!command.toLowerCase().startsWith("/retry")) await supabase.rpc("ops_refresh_cron_health_snapshot");
       const { data: snapshot, error: snapshotError } = await supabase.rpc("ops_job_health_snapshot");
       if (snapshotError) throw snapshotError;
       const jobs = ((snapshot as { jobs?: Job[] })?.jobs ?? []);
-      const [command, rawKey] = String(row.text).trim().split(/\s+/, 2);
-      const key = rawKey?.trim();
       let reply: string;
       if (command.toLowerCase().startsWith("/jobs")) {
         reply = jobsText(jobs);
@@ -81,7 +101,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
           });
           if (retryError) throw retryError;
           const result = retry as { ok?: boolean; code?: string };
-          reply = result.ok ? `✅ Đã gửi retry cho ${key}. Dùng /diagnose ${key} để kiểm tra.`
+          reply = result.ok ? await retryOutcome(supabase, key)
             : `⛔ Không retry ${key}: ${result.code || "unknown"}`;
         }
       }
