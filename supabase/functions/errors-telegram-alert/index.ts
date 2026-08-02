@@ -100,6 +100,12 @@ interface CronHealthReport {
   alerts_suppressed: number;
   states: Record<string, string>;
   errors: string[];
+  auto_retries: number;
+}
+
+function isTransientCronFailure(health: CronHealthResult): boolean {
+  if (["healthy", "pending", "partial_success"].includes(health.state)) return false;
+  return /(timeout|timed out|http (?:429|5\d\d)|connection|network|missing.*response|dispatch)/i.test(health.reason);
 }
 
 async function runAlert(): Promise<RunReport> {
@@ -273,6 +279,7 @@ async function runCronHealth(): Promise<CronHealthReport> {
     alerts_suppressed: 0,
     states: {},
     errors: [],
+    auto_retries: 0,
   };
 
   const { data: snapshots, error: snapshotError } = await supabase
@@ -366,6 +373,17 @@ async function runCronHealth(): Promise<CronHealthReport> {
 
     if (upsertError) {
       report.errors.push(`${health.monitorKey}: ${upsertError.message}`);
+    }
+
+    if (isIncident && isTransientCronFailure(health)) {
+      const { data: retryResult, error: retryError } = await supabase.rpc("ops_request_job_retry", {
+        p_job_key: health.monitorKey,
+        p_source: "auto",
+        p_requested_by: "errors-telegram-alert",
+        p_reason: health.reason.slice(0, 1000),
+      });
+      if (retryError) report.errors.push(`${health.monitorKey}: auto_retry: ${retryError.message}`);
+      else if ((retryResult as { ok?: boolean } | null)?.ok) report.auto_retries++;
     }
   }
 

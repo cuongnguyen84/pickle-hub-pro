@@ -8800,6 +8800,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      ops_request_job_retry: {
+        Args: {
+          p_job_key: string
+          p_source: string
+          p_requested_by?: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       prune_client_errors: {
         Args: { p_retention_days?: number }
         Returns: number

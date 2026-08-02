@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Activity, AlertTriangle, CheckCircle2, Clock3, ExternalLink, RefreshCw, XCircle } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Activity, AlertTriangle, CheckCircle2, Clock3, ExternalLink, Loader2, Play, RefreshCw, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type HealthState = "healthy" | "warning" | "failed" | "pending";
 
@@ -89,9 +90,31 @@ function useJobHealth() {
 }
 
 export default function AdminJobs() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data, isLoading, error, refetch, isFetching } = useJobHealth();
   const [stateFilter, setStateFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const retry = useMutation({
+    mutationFn: async (jobKey: string) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const { data, error } = await supabase.rpc("ops_request_job_retry", {
+        p_job_key: jobKey,
+        p_source: "admin",
+        p_requested_by: auth.user?.email ?? auth.user?.id ?? "admin",
+        p_reason: "Admin Job Health retry",
+      });
+      if (error) throw error;
+      const result = data as unknown as { ok: boolean; code?: string };
+      if (!result.ok) throw new Error(result.code === "cooldown" ? "Job vừa được retry, vui lòng đợi 10 phút." : result.code || "Không thể retry job");
+      return jobKey;
+    },
+    onSuccess: (jobKey) => {
+      toast({ title: "Đã gửi retry", description: `${jobKey} đang được chạy lại.` });
+      window.setTimeout(() => void queryClient.invalidateQueries({ queryKey: ["admin-job-health"] }), 2500);
+    },
+    onError: (retryError: Error) => toast({ title: "Không retry được", description: retryError.message, variant: "destructive" }),
+  });
 
   const categories = useMemo(() => [...new Set((data?.jobs ?? []).map((job) => job.category))], [data]);
   const jobs = useMemo(() => (data?.jobs ?? []).filter((job) =>
@@ -168,7 +191,12 @@ export default function AdminJobs() {
                           <TableCell className="whitespace-nowrap text-sm">{job.schedule_label}</TableCell>
                           <TableCell className="whitespace-nowrap text-sm">{formatTime(job.last_activity_at)}</TableCell>
                           <TableCell className="min-w-72"><p className="text-sm">{job.error_message || job.summary || "Chưa có dữ liệu run"}</p><p className="mt-1 text-xs text-foreground-muted">{formatMetrics(job.metrics)}</p></TableCell>
-                          <TableCell>{job.details_path && <Button asChild size="sm" variant="ghost"><Link to={job.details_path}><ExternalLink className="h-4 w-4" /></Link></Button>}</TableCell>
+                          <TableCell><div className="flex items-center gap-1">
+                            {job.executor === "pg_net" && <Button size="sm" variant="ghost" title="Chạy lại job" onClick={() => retry.mutate(job.job_key)} disabled={retry.isPending}>
+                              {retry.isPending && retry.variables === job.job_key ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                            </Button>}
+                            {job.details_path && <Button asChild size="sm" variant="ghost"><Link to={job.details_path}><ExternalLink className="h-4 w-4" /></Link></Button>}
+                          </div></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

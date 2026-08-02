@@ -1,10 +1,11 @@
 BEGIN;
 
-SELECT plan(14);
+SELECT plan(18);
 
 SELECT has_table('public', 'ops_job_registry', 'job registry exists');
 SELECT has_table('public', 'ops_job_runs', 'job run ledger exists');
 SELECT has_table('public', 'ops_job_digest_deliveries', 'digest delivery ledger exists');
+SELECT has_table('public', 'ops_job_retry_requests', 'retry audit ledger exists');
 
 SELECT is(
   (SELECT count(*) FROM public.ops_job_registry WHERE enabled),
@@ -48,6 +49,18 @@ SELECT ok(
 );
 
 SELECT has_function('public', 'ops_admin_job_health', ARRAY[]::text[], 'admin snapshot RPC exists');
+SELECT has_function(
+  'public', 'ops_request_job_retry', ARRAY['text','text','text','text'],
+  'controlled retry RPC exists'
+);
+SELECT ok(
+  NOT has_function_privilege('anon', 'public.ops_request_job_retry(text,text,text,text)', 'EXECUTE'),
+  'anonymous callers cannot retry jobs'
+);
+SELECT ok(
+  has_function_privilege('service_role', 'public.ops_request_job_retry(text,text,text,text)', 'EXECUTE'),
+  'service role can process Telegram and automatic retries'
+);
 SELECT ok(
   NOT has_function_privilege('anon', 'public.ops_admin_job_health()', 'EXECUTE'),
   'anonymous callers cannot open the admin snapshot'
