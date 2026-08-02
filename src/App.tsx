@@ -202,6 +202,7 @@ const ProTourAdmin = lazyRetry(() => import("./pages/admin/ProTourAdmin"));
 const AdminViBlog = lazyRetry(() => import("./pages/admin/AdminViBlog"));
 const AdminViBlogEditor = lazyRetry(() => import("./pages/admin/AdminViBlogEditor"));
 const AdminAnalytics = lazyRetry(() => import("./pages/admin/AdminAnalytics"));
+const AdminJobs = lazyRetry(() => import("./pages/admin/AdminJobs"));
 
 // Lazy load creator pages
 const CreatorOverview = lazyRetry(() => import("./pages/creator/CreatorOverview"));
@@ -752,6 +753,7 @@ const App = () => (
                     <Route path="/admin/vi-blog/new" element={<AdminViBlogEditor />} />
                     <Route path="/admin/vi-blog/:id/edit" element={<AdminViBlogEditor />} />
                     <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                    <Route path="/admin/jobs" element={<AdminJobs />} />
                     {/* Creator routes */}
                     <Route path="/creator" element={<CreatorOverview />} />
                     <Route path="/creator/analytics" element={<CreatorAnalytics />} />

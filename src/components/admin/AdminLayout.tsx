@@ -27,6 +27,7 @@ import {
   Newspaper,
   Instagram,
   Gavel,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,6 +51,7 @@ const navItems = [
   { path: "/admin/users", icon: Users, labelKey: "users" as const },
   { path: "/admin/tournaments", icon: Trophy, labelKey: "tournaments" as const },
   { path: "/admin/pro-tour", icon: Zap, labelKey: "proTour" as const },
+  { path: "/admin/jobs", icon: Activity, labelKey: "jobHealth" as const },
   { path: "/admin/moderation", icon: Shield, labelKey: "moderation" as const },
   { path: "/admin/disputes", icon: Gavel, labelKey: "disputes" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
@@ -183,6 +185,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       // term used in Vietnamese pickleball coverage). Refactor to the
       // i18n bundle when a localized variant becomes necessary.
       proTour: "Pro Tour",
+      jobHealth: "Job Health",
       moderation: t.admin.moderation.title,
       disputes: "Tranh chấp",
       reports: "Báo cáo",

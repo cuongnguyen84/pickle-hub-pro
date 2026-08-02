@@ -122,6 +122,8 @@ interface ScrapeRequestBody {
 
 interface ScrapeResult {
   ok: boolean;
+  skipped?: boolean;
+  error_code?: string;
   log_id?: string;
   matches_extracted: number;
   players_extracted: number;
@@ -170,17 +172,24 @@ export default {
     // Pull due rows from the watchlist via Supabase REST. We use the
     // service role key here — the Worker is the only consumer of these
     // endpoints and never exposes the key.
+    ctx.waitUntil(runScheduledBatch(env));
+  },
+};
+
+async function runScheduledBatch(env: Env): Promise<void> {
+  const startedAt = new Date();
+  const externalRunId = `scheduled:${startedAt.toISOString()}:${crypto.randomUUID()}`;
+  try {
     const due = await fetchDueWatchlistRows(env);
-    for (const row of due) {
-      ctx.waitUntil(
-        runScrape(
+    const results = await Promise.all(due.map(async (row) => {
+      const result = await runScrape(
           {
             tournament_url: row.tournament_url,
             triggered_by: "scheduled",
             watchlist_id: row.id,
           },
           env,
-        ).then((result) => {
+        );
           // Codex P2 fix on PR #29: only stamp last_scraped_at +
           // advance next_scrape_at when the scrape actually succeeded.
           // Original version updated unconditionally so a failed scrape
@@ -190,19 +199,80 @@ export default {
           // piling up. Now: failed scrapes leave next_scrape_at as-is
           // so the next cron tick (every 6h) picks the row up again.
           if (result.ok) {
-            return updateWatchlistAfterScrape(env, row.id, row.scrape_frequency);
+            await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency);
+            return result;
           }
           console.error(
             `[scheduled] scrape failed for ${row.tournament_url}; ` +
               "next_scrape_at NOT advanced. Will retry next cron tick. " +
               `error: ${result.error ?? "unknown"}`,
           );
-          return undefined;
-        }),
-      );
-    }
+          return result;
+    }));
+
+    const succeeded = results.filter((result) => result.ok && !result.skipped).length;
+    const skipped = results.filter((result) => result.skipped).length;
+    const failed = results.filter((result) => !result.ok).length;
+    const matches = results.reduce((sum, result) => sum + result.matches_extracted, 0);
+    const status = failed === 0 ? (skipped === due.length && due.length > 0 ? "skipped" : "success")
+      : failed < due.length ? "warning" : "failed";
+    await recordProTourJobRun(env, {
+      externalRunId, status, startedAt,
+      summary: due.length === 0
+        ? "No Pro Tour watchlist rows were due"
+        : `${succeeded} succeeded, ${skipped} skipped, ${failed} failed`,
+      metrics: { due: due.length, succeeded, skipped_inactive: skipped, failed, matches_imported: matches },
+      errorMessage: results.filter((result) => !result.ok).map((result) => result.error ?? "unknown").join("; ") || null,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await recordProTourJobRun(env, {
+      externalRunId, status: "failed", startedAt,
+      summary: "Pro Tour scheduled batch failed before completion",
+      metrics: {}, errorMessage: message,
+    });
+    throw error;
+  }
+}
+
+async function recordProTourJobRun(
+  env: Env,
+  input: {
+    externalRunId: string;
+    status: "success" | "warning" | "failed" | "skipped";
+    startedAt: Date;
+    summary: string;
+    metrics: Record<string, number>;
+    errorMessage: string | null;
   },
-};
+): Promise<void> {
+  try {
+    const response = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/ops_record_job_run`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({
+        p_job_key: "pro-tour-scraper",
+        p_external_run_id: input.externalRunId,
+        p_status: input.status,
+        p_started_at: input.startedAt.toISOString(),
+        p_completed_at: new Date().toISOString(),
+        p_trigger_kind: "scheduled",
+        p_summary: input.summary,
+        p_metrics: input.metrics,
+        p_error_code: input.status === "failed" ? "pro_tour_batch_failed" : null,
+        p_error_message: input.errorMessage,
+        p_details_url: "https://www.thepicklehub.net/admin/pro-tour",
+      }),
+    });
+    if (!response.ok) console.error(`[job-health] record failed: ${response.status} ${(await response.text()).slice(0, 300)}`);
+  } catch (error) {
+    console.error(`[job-health] record threw: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 /* ─── Core run ──────────────────────────────────────────────────────── */
 
@@ -250,6 +320,16 @@ async function runScrape(
     }
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.includes("this event is not currently active")) {
+      return {
+        ok: true,
+        skipped: true,
+        error_code: "event_not_active",
+        matches_extracted: 0,
+        players_extracted: 0,
+        error: errMsg,
+      };
+    }
     // Record the failure in the Logs tab — PATCH the pre-created row
     // (manual path) or INSERT a fresh failed row (scheduled path).
     await recordFailure(env, body, errMsg, Date.now() - startMs).catch(
