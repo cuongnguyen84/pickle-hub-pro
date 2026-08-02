@@ -106,7 +106,7 @@ export default {
       if (!auth || auth !== env.SCRAPER_AUTH_SECRET) {
         return json({ error: "Unauthorized" }, 401);
       }
-      const results = await runAllSources(env);
+      const results = await runTracked(env, "manual");
       return json({ ok: results.every((result) => result.ok), results });
     }
 
@@ -114,10 +114,93 @@ export default {
   },
 
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
-    const results = await runAllSources(env);
+    const results = await runTracked(env, "scheduled");
     console.log("[news-fetcher cron]", JSON.stringify(results));
   },
 };
+
+async function runTracked(
+  env: Env,
+  triggerKind: "scheduled" | "manual",
+): Promise<SourceRunResult[]> {
+  const startedAt = new Date();
+  const externalRunId = `${triggerKind}:${startedAt.toISOString()}:${crypto.randomUUID()}`;
+  try {
+    const results = await runAllSources(env);
+    const failedSources = results.filter((result) => !result.ok).length;
+    const metrics = {
+      sources_total: results.length,
+      sources_succeeded: results.length - failedSources,
+      sources_failed: failedSources,
+      fetched: results.reduce((sum, result) => sum + result.fetched, 0),
+      inserted: results.reduce((sum, result) => sum + result.inserted, 0),
+      skipped_dup: results.reduce((sum, result) => sum + result.skipped_dup, 0),
+      skipped_old: results.reduce((sum, result) => sum + result.skipped_old, 0),
+      items_failed: results.reduce((sum, result) => sum + result.failed, 0),
+    };
+    const status = failedSources === 0 ? "success" : failedSources < results.length ? "warning" : "failed";
+    await recordJobRun(env, {
+      externalRunId,
+      triggerKind,
+      status,
+      startedAt,
+      summary: metrics.inserted === 0
+        ? `Fetched ${metrics.sources_succeeded}/${metrics.sources_total} sources; no new articles`
+        : `Inserted ${metrics.inserted} new article origin(s) from ${metrics.sources_succeeded}/${metrics.sources_total} sources`,
+      metrics,
+      errorMessage: results.filter((result) => result.error).map((result) => `${result.source_id}: ${result.error}`).join("; ") || null,
+    });
+    return results;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await recordJobRun(env, {
+      externalRunId,
+      triggerKind,
+      status: "failed",
+      startedAt,
+      summary: "News fetcher failed before source processing completed",
+      metrics: {},
+      errorMessage: message,
+    });
+    throw error;
+  }
+}
+
+async function recordJobRun(
+  env: Env,
+  input: {
+    externalRunId: string;
+    triggerKind: "scheduled" | "manual";
+    status: "success" | "warning" | "failed";
+    startedAt: Date;
+    summary: string;
+    metrics: Record<string, number>;
+    errorMessage: string | null;
+  },
+): Promise<void> {
+  try {
+    const response = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/ops_record_job_run`, {
+      method: "POST",
+      headers: pgHeaders(env),
+      body: JSON.stringify({
+        p_job_key: "news-fetcher",
+        p_external_run_id: input.externalRunId,
+        p_status: input.status,
+        p_started_at: input.startedAt.toISOString(),
+        p_completed_at: new Date().toISOString(),
+        p_trigger_kind: input.triggerKind,
+        p_summary: input.summary,
+        p_metrics: input.metrics,
+        p_error_code: input.status === "failed" ? "news_fetch_failed" : null,
+        p_error_message: input.errorMessage,
+        p_details_url: "https://www.thepicklehub.net/admin/news",
+      }),
+    });
+    if (!response.ok) console.error(`[job-health] record failed: ${response.status} ${(await response.text()).slice(0, 300)}`);
+  } catch (error) {
+    console.error(`[job-health] record threw: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Main run loop

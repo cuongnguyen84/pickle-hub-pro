@@ -532,6 +532,10 @@
     "element": "<AdminAnalytics />"
   },
   {
+    "path": "/admin/jobs",
+    "element": "<AdminJobs />"
+  },
+  {
     "path": "/creator",
     "element": "<CreatorOverview />"
   },
