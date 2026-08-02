@@ -231,6 +231,7 @@ async function installWebhook(): Promise<Record<string, unknown>> {
   await fetch(`https://api.telegram.org/bot${tgToken}/setChatMenuButton`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: allowedChat, menu_button: { type: "commands" } }),
   });
+  await sendTelegram(allowedChat, "✅ Menu Job Operations đã sẵn sàng. Anh có thể dùng các nút bên dưới; trong /jobs sẽ có nút Chẩn đoán và Fix cho job đang lỗi.", mainKeyboard);
   return { ok: true, webhook_installed: true };
 }
 
