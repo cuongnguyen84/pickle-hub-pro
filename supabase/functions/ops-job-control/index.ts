@@ -15,14 +15,32 @@ type Job = {
 const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const allowedChat = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
 
-async function sendTelegram(chatId: string, text: string): Promise<void> {
+async function sendTelegram(chatId: string, text: string, replyMarkup?: Record<string, unknown>): Promise<void> {
   if (!tgToken || chatId !== allowedChat) throw new Error("telegram_chat_not_allowed");
   const response = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true, reply_markup: replyMarkup }),
   });
   if (!response.ok) throw new Error(`telegram_http_${response.status}`);
+}
+
+const mainKeyboard = {
+  keyboard: [
+    [{ text: "/jobs" }, { text: "/functions" }],
+    [{ text: "/probe" }, { text: "/help" }],
+  ],
+  resize_keyboard: true,
+  is_persistent: true,
+};
+
+function jobActionButtons(jobs: Job[]): Record<string, unknown> | undefined {
+  const unhealthy = jobs.filter((job) => ["warning", "failed"].includes(job.health_state)).slice(0, 4);
+  if (!unhealthy.length) return undefined;
+  return { inline_keyboard: unhealthy.map((job) => [
+    { text: `🔎 ${job.job_key}`, callback_data: `diagnose|${job.job_key}` },
+    { text: `🛠 Fix`, callback_data: `fix|${job.job_key}` },
+  ]) };
 }
 
 function jobsText(jobs: Job[]): string {
@@ -102,7 +120,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
   let query = supabase.from("telegram_commands")
     .select("id,chat_id,text,from_id,from_username")
     .eq("status", "pending")
-    .or("text.ilike./jobs%,text.ilike./retry%,text.ilike./diagnose%,text.ilike./functions%,text.ilike./probe%,text.ilike./fix%")
+    .or("text.ilike./start%,text.ilike./help%,text.ilike./jobs%,text.ilike./retry%,text.ilike./diagnose%,text.ilike./functions%,text.ilike./probe%,text.ilike./fix%")
     .order("created_at", { ascending: true }).limit(10);
   if (onlyId) query = query.eq("id", onlyId);
   const { data: rows, error } = await query;
@@ -123,14 +141,20 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       if (snapshotError) throw snapshotError;
       const jobs = ((snapshot as { jobs?: Job[] })?.jobs ?? []);
       let reply: string;
+      let replyMarkup: Record<string, unknown> | undefined;
       if (command.toLowerCase().startsWith("/jobs")) {
         const functions = await edgeStates(supabase);
         const failedEdges = functions.filter((fn) => fn.state !== "available").length;
         reply = `${jobsText(jobs)}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
+        replyMarkup = jobActionButtons(jobs);
       } else if (command.toLowerCase().startsWith("/functions")) {
         reply = functionsText(await edgeStates(supabase));
+        replyMarkup = { inline_keyboard: [[{ text: "🔄 Probe lại", callback_data: "probe" }]] };
       } else if (command.toLowerCase().startsWith("/probe")) {
         reply = `🔄 Probe hoàn tất\n${functionsText(await runEdgeProbe(supabase))}`;
+      } else if (command.toLowerCase().startsWith("/start") || command.toLowerCase().startsWith("/help")) {
+        reply = ["🤖 TPH Job Operations", "", "Dùng các nút bên dưới để xem trạng thái.", "Trong /jobs, job lỗi sẽ có nút Chẩn đoán và Fix.", "", "Lệnh nâng cao:", "/diagnose <job>", "/retry <job>", "/fix <job>"].join("\n");
+        replyMarkup = mainKeyboard;
       } else if (!key) {
         reply = `Thiếu job key. Ví dụ: ${command.toLowerCase().startsWith("/fix") ? "/fix news-rewrite" : command.toLowerCase().startsWith("/retry") ? "/retry dupr-sync-daily" : "/diagnose dupr-sync-daily"}`;
       } else {
@@ -161,7 +185,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
             : `⛔ Không retry ${key}: ${result.code || "unknown"}`;
         }
       }
-      await sendTelegram(chatId, reply);
+      await sendTelegram(chatId, reply, replyMarkup);
       await supabase.from("telegram_commands").update({ status: "done", processed_at: new Date().toISOString(), result: reply.slice(0, 2000) }).eq("id", row.id);
       processed++;
     } catch (commandError) {
@@ -186,12 +210,27 @@ async function installWebhook(): Promise<Record<string, unknown>> {
     body: JSON.stringify({
       url: "https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/ops-job-control",
       secret_token: await telegramWebhookSecret(),
-      allowed_updates: ["message"],
+      allowed_updates: ["message", "callback_query"],
       drop_pending_updates: false,
     }),
   });
   const result = await response.json() as Record<string, unknown>;
   if (!response.ok || result.ok !== true) throw new Error(`set_webhook_failed: ${JSON.stringify(result).slice(0, 500)}`);
+  const commandsResponse = await fetch(`https://api.telegram.org/bot${tgToken}/setMyCommands`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ commands: [
+      { command: "jobs", description: "Trạng thái các job" },
+      { command: "functions", description: "Trạng thái Edge Functions" },
+      { command: "probe", description: "Probe runtime ngay" },
+      { command: "diagnose", description: "Chẩn đoán một job" },
+      { command: "retry", description: "Chạy lại một job" },
+      { command: "fix", description: "Chẩn đoán và sửa an toàn" },
+      { command: "help", description: "Hiện bàn phím chức năng" },
+    ] }),
+  });
+  if (!commandsResponse.ok) throw new Error(`set_commands_failed_${commandsResponse.status}`);
+  await fetch(`https://api.telegram.org/bot${tgToken}/setChatMenuButton`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: allowedChat, menu_button: { type: "commands" } }),
+  });
   return { ok: true, webhook_installed: true };
 }
 
@@ -199,11 +238,24 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   const update = await req.json() as {
     update_id?: number;
     message?: { message_id?: number; date?: number; text?: string; chat?: { id?: number }; from?: { id?: number; username?: string } };
+    callback_query?: { id?: string; data?: string; from?: { id?: number; username?: string }; message?: { date?: number; chat?: { id?: number } } };
   };
-  const message = update.message;
+  const callback = update.callback_query;
+  const callbackParts = callback?.data?.split("|", 2);
+  const callbackText = callbackParts?.[0] === "diagnose" ? `/diagnose ${callbackParts[1]}`
+    : callbackParts?.[0] === "fix" ? `/fix ${callbackParts[1]}`
+    : callback?.data === "probe" ? "/probe" : undefined;
+  const message = update.message ?? (callbackText ? {
+    date: callback?.message?.date, text: callbackText, chat: callback?.message?.chat, from: callback?.from,
+  } : undefined);
   if (!update.update_id || !message?.text || message.chat?.id === undefined) return { ok: true, ignored: true };
   const chatId = String(message.chat.id);
   if (chatId !== allowedChat) return { ok: true, ignored: true };
+  if (callback?.id) {
+    await fetch(`https://api.telegram.org/bot${tgToken}/answerCallbackQuery`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "Đang xử lý…" }),
+    });
+  }
 
   const { data: inserted, error } = await supabase.from("telegram_commands").upsert({
     update_id: update.update_id,
@@ -217,7 +269,7 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   if (error) throw error;
   if (!inserted) return { ok: true, duplicate: true };
 
-  if (/^\/(jobs|retry|diagnose|functions|probe|fix)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
+  if (/^\/(start|help|jobs|retry|diagnose|functions|probe|fix)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
     return await processTelegram(supabase, inserted.id);
   }
   await sendTelegram(chatId, `📥 Đã nhận lệnh: "${message.text.slice(0, 500)}"\nĐã vào hàng đợi — agent sẽ xử lý ở lần chạy tới.`);
