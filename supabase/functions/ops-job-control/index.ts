@@ -40,6 +40,37 @@ function jobsText(jobs: Job[]): string {
   return lines.join("\n").slice(0, 4000);
 }
 
+type EdgeState = { function_slug: string; display_name: string; job_key: string | null; state: string; http_status: number | null; response_ms: number | null; reason: string | null };
+
+async function edgeStates(supabase: ReturnType<typeof createClient>): Promise<EdgeState[]> {
+  const { data, error } = await supabase.from("ops_edge_function_registry")
+    .select("function_slug,display_name,job_key,ops_edge_function_state(state,http_status,response_ms,reason)")
+    .eq("enabled", true).order("function_slug");
+  if (error) throw error;
+  return (data ?? []).map((row: Record<string, unknown>) => {
+    const nested = (Array.isArray(row.ops_edge_function_state) ? row.ops_edge_function_state[0] : row.ops_edge_function_state) as Record<string, unknown> | null;
+    return { function_slug: String(row.function_slug), display_name: String(row.display_name), job_key: row.job_key ? String(row.job_key) : null,
+      state: String(nested?.state ?? "pending"), http_status: typeof nested?.http_status === "number" ? nested.http_status : null,
+      response_ms: typeof nested?.response_ms === "number" ? nested.response_ms : null, reason: nested?.reason ? String(nested.reason) : null };
+  });
+}
+
+function functionsText(functions: EdgeState[]): string {
+  const available = functions.filter((fn) => fn.state === "available").length;
+  const lines = [`⚙️ Edge Functions: ✅ ${available}/${functions.length} available`];
+  for (const fn of functions.filter((item) => item.state !== "available")) lines.push(`❌ ${fn.function_slug}: ${fn.state} · ${fn.reason || "Không có chi tiết"}`);
+  lines.push("https://www.thepicklehub.net/admin/jobs");
+  return lines.join("\n").slice(0, 4000);
+}
+
+async function runEdgeProbe(supabase: ReturnType<typeof createClient>): Promise<EdgeState[]> {
+  const response = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/ops-edge-health`, {
+    method: "POST", headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("CRON_SECRET") ?? "" }, body: "{}",
+  });
+  if (!response.ok) throw new Error(`edge_probe_http_${response.status}`);
+  return await edgeStates(supabase);
+}
+
 async function retryOutcome(supabase: ReturnType<typeof createClient>, jobKey: string): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 3000));
   await supabase.rpc("ops_refresh_cron_health_snapshot");
@@ -63,7 +94,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
   let query = supabase.from("telegram_commands")
     .select("id,chat_id,text,from_id,from_username")
     .eq("status", "pending")
-    .or("text.ilike./jobs%,text.ilike./retry%,text.ilike./diagnose%")
+    .or("text.ilike./jobs%,text.ilike./retry%,text.ilike./diagnose%,text.ilike./functions%,text.ilike./probe%,text.ilike./fix%")
     .order("created_at", { ascending: true }).limit(10);
   if (onlyId) query = query.eq("id", onlyId);
   const { data: rows, error } = await query;
@@ -85,19 +116,36 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       const jobs = ((snapshot as { jobs?: Job[] })?.jobs ?? []);
       let reply: string;
       if (command.toLowerCase().startsWith("/jobs")) {
-        reply = jobsText(jobs);
+        const functions = await edgeStates(supabase);
+        const failedEdges = functions.filter((fn) => fn.state !== "available").length;
+        reply = `${jobsText(jobs)}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
+      } else if (command.toLowerCase().startsWith("/functions")) {
+        reply = functionsText(await edgeStates(supabase));
+      } else if (command.toLowerCase().startsWith("/probe")) {
+        reply = `🔄 Probe hoàn tất\n${functionsText(await runEdgeProbe(supabase))}`;
       } else if (!key) {
-        reply = `Thiếu job key. Ví dụ: ${command.toLowerCase().startsWith("/retry") ? "/retry dupr-sync-daily" : "/diagnose dupr-sync-daily"}`;
+        reply = `Thiếu job key. Ví dụ: ${command.toLowerCase().startsWith("/fix") ? "/fix news-rewrite" : command.toLowerCase().startsWith("/retry") ? "/retry dupr-sync-daily" : "/diagnose dupr-sync-daily"}`;
       } else {
         const job = jobs.find((item) => item.job_key === key);
         if (!job) reply = `Không tìm thấy job: ${key}`;
         else if (command.toLowerCase().startsWith("/diagnose")) {
           reply = [`🔎 ${job.display_name}`, `State: ${job.health_state}`, `Schedule: ${job.schedule_label}`, `Last: ${job.last_activity_at ?? "never"}`, `Reason: ${job.error_message || job.summary || "Không có chi tiết"}`].join("\n");
         } else {
+          if (command.toLowerCase().startsWith("/fix")) {
+            const functions = await runEdgeProbe(supabase);
+            const dependency = functions.find((fn) => fn.job_key === key);
+            if (dependency && dependency.state !== "available") {
+              reply = `🛠 Đã chẩn đoán ${key}: Edge Function ${dependency.function_slug} đang ${dependency.state}. Cần redeploy từ source đã phê duyệt; không retry mù. Cảnh báo đã được ghi nhận.`;
+              await sendTelegram(chatId, reply);
+              await supabase.from("telegram_commands").update({ status: "done", processed_at: new Date().toISOString(), result: reply }).eq("id", row.id);
+              processed++;
+              continue;
+            }
+          }
           const { data: retry, error: retryError } = await supabase.rpc("ops_request_job_retry", {
             p_job_key: key, p_source: "telegram",
             p_requested_by: row.from_username || String(row.from_id || row.chat_id),
-            p_reason: "Telegram command",
+            p_reason: command.toLowerCase().startsWith("/fix") ? "Telegram diagnose-and-fix" : "Telegram command",
           });
           if (retryError) throw retryError;
           const result = retry as { ok?: boolean; code?: string };
@@ -161,7 +209,7 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   if (error) throw error;
   if (!inserted) return { ok: true, duplicate: true };
 
-  if (/^\/(jobs|retry|diagnose)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
+  if (/^\/(jobs|retry|diagnose|functions|probe|fix)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
     return await processTelegram(supabase, inserted.id);
   }
   await sendTelegram(chatId, `📥 Đã nhận lệnh: "${message.text.slice(0, 500)}"\nĐã vào hàng đợi — agent sẽ xử lý ở lần chạy tới.`);
