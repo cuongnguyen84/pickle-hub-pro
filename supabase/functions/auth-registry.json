@@ -344,6 +344,17 @@
       ],
       "status": "classified"
     },
+    "ops-job-digest": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified"
+    },
     "feed-embeds-sync": {
       "verify_jwt": false,
       "service_role": {

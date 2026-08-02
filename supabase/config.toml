@@ -393,6 +393,10 @@ verify_jwt = false
 [functions.errors-telegram-alert]
 verify_jwt = false
 
+# Admin job-health morning digest. Cron-only; handler verifies x-cron-secret.
+[functions.ops-job-digest]
+verify_jwt = false
+
 # Cron-only Zalo OA credential rotation. The gateway JWT verifier is disabled
 # for the project-wide ES256 workaround; the handler requires x-cron-secret.
 [functions.zalo-token-refresh]

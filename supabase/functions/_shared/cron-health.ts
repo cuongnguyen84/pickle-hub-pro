@@ -108,8 +108,18 @@ function muxHasPartialFailure(content: string | null): boolean {
 function successfulResponseContainsError(content: string | null): boolean {
   if (!content) return false;
   try {
-    const parsed = JSON.parse(content) as { error?: unknown };
-    return Boolean(parsed.error);
+    const parsed = JSON.parse(content) as unknown;
+    const containsError = (value: unknown, depth = 0): boolean => {
+      if (depth > 5 || value === null || value === undefined) return false;
+      if (typeof value === "string") return /^error(?::|$)/i.test(value.trim());
+      if (Array.isArray(value)) return value.some((item) => containsError(item, depth + 1));
+      if (typeof value !== "object") return false;
+      const record = value as Record<string, unknown>;
+      if (record.ok === false || Boolean(record.error)) return true;
+      if (typeof record.failed === "number" && record.failed > 0) return true;
+      return Object.values(record).some((item) => containsError(item, depth + 1));
+    };
+    return containsError(parsed);
   } catch {
     return false;
   }

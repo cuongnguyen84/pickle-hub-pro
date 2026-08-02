@@ -8796,6 +8796,10 @@ export type Database = {
         Args: { p_team_id: string; p_tournament_id: string }
         Returns: Json
       }
+      ops_admin_job_health: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       prune_client_errors: {
         Args: { p_retention_days?: number }
         Returns: number
