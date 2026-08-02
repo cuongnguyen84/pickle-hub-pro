@@ -40,12 +40,14 @@ function jobsText(jobs: Job[]): string {
   return lines.join("\n").slice(0, 4000);
 }
 
-async function processTelegram(supabase: ReturnType<typeof createClient>): Promise<Record<string, unknown>> {
-  const { data: rows, error } = await supabase.from("telegram_commands")
+async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId?: number): Promise<Record<string, unknown>> {
+  let query = supabase.from("telegram_commands")
     .select("id,chat_id,text,from_id,from_username")
     .eq("status", "pending")
     .or("text.ilike./jobs%,text.ilike./retry%,text.ilike./diagnose%")
     .order("created_at", { ascending: true }).limit(10);
+  if (onlyId) query = query.eq("id", onlyId);
+  const { data: rows, error } = await query;
   if (error) throw error;
 
   let processed = 0;
@@ -94,13 +96,71 @@ async function processTelegram(supabase: ReturnType<typeof createClient>): Promi
   return { ok: true, processed };
 }
 
+async function telegramWebhookSecret(): Promise<string> {
+  const bytes = new TextEncoder().encode(Deno.env.get("CRON_SECRET") ?? "");
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function installWebhook(): Promise<Record<string, unknown>> {
+  if (!tgToken) throw new Error("telegram_secrets_missing");
+  const response = await fetch(`https://api.telegram.org/bot${tgToken}/setWebhook`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url: "https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/ops-job-control",
+      secret_token: await telegramWebhookSecret(),
+      allowed_updates: ["message"],
+      drop_pending_updates: false,
+    }),
+  });
+  const result = await response.json() as Record<string, unknown>;
+  if (!response.ok || result.ok !== true) throw new Error(`set_webhook_failed: ${JSON.stringify(result).slice(0, 500)}`);
+  return { ok: true, webhook_installed: true };
+}
+
+async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof createClient>): Promise<Record<string, unknown>> {
+  const update = await req.json() as {
+    update_id?: number;
+    message?: { message_id?: number; date?: number; text?: string; chat?: { id?: number }; from?: { id?: number; username?: string } };
+  };
+  const message = update.message;
+  if (!update.update_id || !message?.text || message.chat?.id === undefined) return { ok: true, ignored: true };
+  const chatId = String(message.chat.id);
+  if (chatId !== allowedChat) return { ok: true, ignored: true };
+
+  const { data: inserted, error } = await supabase.from("telegram_commands").upsert({
+    update_id: update.update_id,
+    chat_id: message.chat.id,
+    from_id: message.from?.id ?? null,
+    from_username: message.from?.username ?? null,
+    message_date: message.date ? new Date(message.date * 1000).toISOString() : new Date().toISOString(),
+    text: message.text,
+    status: "pending",
+  }, { onConflict: "update_id", ignoreDuplicates: true }).select("id").maybeSingle();
+  if (error) throw error;
+  if (!inserted) return { ok: true, duplicate: true };
+
+  if (/^\/(jobs|retry|diagnose)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
+    return await processTelegram(supabase, inserted.id);
+  }
+  await sendTelegram(chatId, `📥 Đã nhận lệnh: "${message.text.slice(0, 500)}"\nĐã vào hàng đợi — agent sẽ xử lý ở lần chạy tới.`);
+  return { ok: true, queued: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
   if (req.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405 });
-  const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
-  if (authError) return authError;
   const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
   try {
+    const telegramSignature = req.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
+    if (telegramSignature && telegramSignature === await telegramWebhookSecret()) {
+      return Response.json(await handleTelegramWebhook(req, supabase));
+    }
+    const authError = requireCronRequest(req, Deno.env.get("CRON_SECRET") ?? "");
+    if (authError) return authError;
+    const body = await req.json().catch(() => ({})) as { action?: string };
+    if (body.action === "install_webhook") return Response.json(await installWebhook());
     return Response.json(await processTelegram(supabase));
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
