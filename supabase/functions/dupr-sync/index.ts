@@ -34,6 +34,7 @@ import { requireCronRequest } from "../_shared/cron-auth.ts";
 const BACKFILL_WINDOW_DAYS = 90;
 const HISTORY_BUFFER_DAYS = 60; // extra lookback for "before" rating queries
 const UPDATE_BATCH_SIZE = 50;
+const DEPLOYMENT_REVISION = "2026-08-02-function-blob-repair";
 
 interface MatchParticipantRow {
   id: string;
@@ -49,6 +50,7 @@ interface HistoryRow {
 }
 
 Deno.serve(async (req) => {
+  console.log(`[dupr-sync] revision=${DEPLOYMENT_REVISION}`);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -106,6 +108,7 @@ Deno.serve(async (req) => {
   if (profilesTotal === 0) {
     await closeRun(supabase, syncRunId, startedAtMs, 0, 0, []);
     return jsonResponse({
+      deployment_revision: DEPLOYMENT_REVISION,
       sync_run_id: syncRunId,
       profiles_total: 0,
       matches_backfilled: 0,
@@ -136,6 +139,7 @@ Deno.serve(async (req) => {
   );
 
   return jsonResponse({
+    deployment_revision: DEPLOYMENT_REVISION,
     sync_run_id: syncRunId,
     profiles_total: profilesTotal,
     matches_backfilled: matchesBackfilled,
