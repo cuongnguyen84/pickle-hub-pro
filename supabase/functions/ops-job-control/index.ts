@@ -10,6 +10,7 @@ type Job = {
   error_message: string | null;
   executor: string;
   schedule_label: string;
+  metrics: Record<string, unknown>;
 };
 
 const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
@@ -56,8 +57,22 @@ function jobsText(jobs: Job[]): string {
   for (const job of jobs.filter((item) => ["warning", "failed"].includes(item.health_state))) {
     lines.push(`${job.health_state === "failed" ? "❌" : "⚠️"} ${job.job_key}: ${job.error_message || job.summary || "Không có chi tiết"}`);
   }
+  const social = jobs.find((job) => job.job_key === "social-poster");
+  if (social) lines.push(`📣 Facebook: ThePickleHub ${Number(social.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(social.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(social.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`);
+  const proTour = jobs.find((job) => job.job_key === "pro-tour-scraper");
+  if (proTour) lines.push(`🏓 Pro Tour: ${Number(proTour.metrics?.matches_imported ?? 0)} trận · ${Number(proTour.metrics?.events_processed ?? proTour.metrics?.due ?? 0)} event`);
   lines.push("https://www.thepicklehub.net/admin/jobs");
   return lines.join("\n").slice(0, 4000);
+}
+
+function businessDetail(job: Job): string | null {
+  if (job.job_key === "social-poster") {
+    return `Facebook hôm nay: ThePickleHub ${Number(job.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(job.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(job.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`;
+  }
+  if (job.job_key === "pro-tour-scraper") {
+    return `Pro Tour ingest: ${Number(job.metrics?.matches_imported ?? 0)} trận · ${Number(job.metrics?.events_processed ?? job.metrics?.due ?? 0)} event · ${Number(job.metrics?.events_failed ?? job.metrics?.failed ?? 0)} lỗi`;
+  }
+  return null;
 }
 
 type EdgeState = { function_slug: string; display_name: string; job_key: string | null; state: string; http_status: number | null; response_ms: number | null; reason: string | null };
@@ -186,7 +201,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
         const job = jobs.find((item) => item.job_key === key);
         if (!job) reply = `Không tìm thấy job: ${key}`;
         else if (command.toLowerCase().startsWith("/diagnose")) {
-          reply = [`🔎 ${job.display_name}`, `State: ${job.health_state}`, `Schedule: ${job.schedule_label}`, `Last: ${job.last_activity_at ?? "never"}`, `Reason: ${job.error_message || job.summary || "Không có chi tiết"}`].join("\n");
+          reply = [`🔎 ${job.display_name}`, `State: ${job.health_state}`, `Schedule: ${job.schedule_label}`, `Last: ${job.last_activity_at ?? "never"}`, `Reason: ${job.error_message || job.summary || "Không có chi tiết"}`, businessDetail(job)].filter(Boolean).join("\n");
         } else {
           if (command.toLowerCase().startsWith("/fix")) {
             const functions = await runEdgeProbe(supabase);

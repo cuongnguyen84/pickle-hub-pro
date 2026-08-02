@@ -41,7 +41,8 @@ export function formatJobHealthDigest(
 
   const news = snapshot.jobs.find((job) => job.job_key === "news-fetcher");
   const proTour = snapshot.jobs.find((job) => job.job_key === "pro-tour-scraper");
-  if (news || proTour) lines.push("", "*Kết quả chính:*");
+  const social = snapshot.jobs.find((job) => job.job_key === "social-poster");
+  if (news || proTour || social) lines.push("", "*Kết quả chính:*");
   if (news) {
     const inserted = metric(news.metrics ?? {}, ["inserted", "items_inserted"]);
     const sources = metric(news.metrics ?? {}, ["sources_succeeded", "sources_total"]);
@@ -49,8 +50,15 @@ export function formatJobHealthDigest(
   }
   if (proTour) {
     const matches = metric(proTour.metrics ?? {}, ["matches_imported", "matches_extracted"]);
-    const skipped = metric(proTour.metrics ?? {}, ["skipped", "skipped_inactive"]);
-    lines.push(`• Pro Tour: ${matches} trận · ${skipped} event bỏ qua hợp lệ`);
+    const events = metric(proTour.metrics ?? {}, ["events_processed", "due"]);
+    const failed = metric(proTour.metrics ?? {}, ["events_failed", "failed"]);
+    lines.push(`• Pro Tour: ${matches} trận · ${events} event${failed ? ` · ${failed} lỗi` : ""}`);
+  }
+  if (social) {
+    const tph = metric(social.metrics ?? {}, ["thepicklehub_posts_today"]);
+    const ta = metric(social.metrics ?? {}, ["ta_pickleball_posts_today"]);
+    const noEligible = metric(social.metrics ?? {}, ["pages_no_eligible"]);
+    lines.push(`• Facebook: ThePickleHub ${tph} bài · TA Pickleball ${ta} bài${noEligible ? " · không có bài đủ điều kiện" : ""}`);
   }
 
   const unhealthy = snapshot.jobs.filter((job) =>

@@ -21,8 +21,17 @@ function snapshot(): JobHealthDigestSnapshot {
         health_state: "warning",
         last_activity_at: "2026-08-02T00:00:00Z",
         summary: "One source changed [layout]",
-        metrics: { matches_imported: 34, skipped_inactive: 3 },
+        metrics: { matches_imported: 34, events_processed: 4, events_failed: 1 },
         error_message: "Parser failed (source changed)",
+      },
+      {
+        job_key: "social-poster",
+        display_name: "Facebook social poster",
+        health_state: "healthy",
+        last_activity_at: "2026-08-02T02:10:00Z",
+        summary: "Không có bài đủ điều kiện",
+        metrics: { thepicklehub_posts_today: 0, ta_pickleball_posts_today: 0, pages_no_eligible: 2 },
+        error_message: null,
       },
     ],
   };
@@ -33,7 +42,8 @@ describe("formatJobHealthDigest", () => {
     const text = formatJobHealthDigest(snapshot(), "2026-08-02");
     expect(text).toContain("8 healthy");
     expect(text).toContain("News: 0 bài mới · 4 nguồn OK");
-    expect(text).toContain("Pro Tour: 34 trận · 3 event bỏ qua hợp lệ");
+    expect(text).toContain("Pro Tour: 34 trận · 4 event · 1 lỗi");
+    expect(text).toContain("Facebook: ThePickleHub 0 bài · TA Pickleball 0 bài · không có bài đủ điều kiện");
   });
 
   it("lists only warning/failed details and escapes Telegram MarkdownV2", () => {
