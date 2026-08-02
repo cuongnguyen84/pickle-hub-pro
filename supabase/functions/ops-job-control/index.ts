@@ -14,6 +14,8 @@ type Job = {
 
 const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const allowedChat = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
+const githubToken = Deno.env.get("GITHUB_OPS_TOKEN") ?? "";
+const githubRepository = Deno.env.get("GITHUB_OPS_REPOSITORY") ?? "cuongnguyen84/pickle-hub-pro";
 
 async function sendTelegram(chatId: string, text: string, replyMarkup?: Record<string, unknown>): Promise<void> {
   if (!tgToken || chatId !== allowedChat) throw new Error("telegram_chat_not_allowed");
@@ -89,31 +91,54 @@ async function runEdgeProbe(supabase: ReturnType<typeof createClient>): Promise<
   return await edgeStates(supabase);
 }
 
-async function retryOutcome(supabase: ReturnType<typeof createClient>, jobKey: string): Promise<string> {
+async function finishRetry(supabase: ReturnType<typeof createClient>, requestId: string, success: boolean, status: number | null, response: string): Promise<void> {
+  const { error } = await supabase.rpc("ops_finish_job_retry", {
+    p_request_id: requestId, p_success: success, p_http_status: status, p_response: response,
+  });
+  if (error) throw error;
+}
+
+async function retryOutcome(supabase: ReturnType<typeof createClient>, jobKey: string, requestId: string, dispatchRequestId: number): Promise<string> {
   let data: { http_status_code: number | null; timed_out: boolean | null; transport_error: string | null; response_content: string | null } | null = null;
   for (let attempt = 0; attempt < 5; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await supabase.rpc("ops_refresh_cron_health_snapshot");
     const latest = await supabase.from("ops_cron_dispatches")
       .select("http_status_code,timed_out,transport_error,response_content")
-      .eq("monitor_key", jobKey).order("dispatched_at", { ascending: false }).limit(1).maybeSingle();
+      .eq("request_id", dispatchRequestId).maybeSingle();
     data = latest.data;
     if (data?.http_status_code !== null || data?.timed_out || data?.transport_error) break;
   }
-  if (!data || data.http_status_code === null) return `⏳ ${jobKey} đã được dispatch, downstream chưa trả kết quả.`;
+  if (!data || data.http_status_code === null) return `⏳ ${jobKey} đã được dispatch (#${dispatchRequestId}), downstream chưa trả kết quả. Hệ thống vẫn theo dõi đúng lần chạy này.`;
   await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/errors-telegram-alert`, {
     method: "POST", headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("CRON_SECRET") ?? "" }, body: "{}",
   }).catch(() => undefined);
   if (data.timed_out || data.transport_error || data.http_status_code < 200 || data.http_status_code >= 300) {
-    return `❌ Retry ${jobKey} vẫn lỗi: ${data.transport_error || `HTTP ${data.http_status_code}`}\n${String(data.response_content || "").slice(0, 500)}`;
+    const detail = `${data.transport_error || `HTTP ${data.http_status_code}`}\n${String(data.response_content || "").slice(0, 500)}`;
+    await finishRetry(supabase, requestId, false, data.http_status_code, detail);
+    return `❌ Retry ${jobKey} vẫn lỗi: ${detail}`;
   }
   try {
     const payload = JSON.parse(data.response_content || "{}") as { error?: unknown; ok?: boolean; failed?: number };
     if (payload.error || payload.ok === false || (payload.failed ?? 0) > 0) {
+      const detail = `HTTP ${data.http_status_code} có lỗi nghiệp vụ: ${String(data.response_content).slice(0, 1000)}`;
+      await finishRetry(supabase, requestId, false, data.http_status_code, detail);
       return `⚠️ Retry ${jobKey} trả HTTP ${data.http_status_code} nhưng có lỗi nghiệp vụ:\n${String(data.response_content).slice(0, 500)}`;
     }
   } catch { /* A successful non-JSON response is still a valid downstream result. */ }
-  return `✅ ${jobKey} đã chạy lại thành công (HTTP ${data.http_status_code}).`;
+  await finishRetry(supabase, requestId, true, data.http_status_code, String(data.response_content || ""));
+  return `✅ ${jobKey} đã chạy lại thành công (HTTP ${data.http_status_code}, dispatch #${dispatchRequestId}).`;
+}
+
+async function requestEdgeRepair(functionSlug: string, requestedBy: string): Promise<string> {
+  if (!githubToken) throw new Error("github_ops_token_missing");
+  const response = await fetch(`https://api.github.com/repos/${githubRepository}/actions/workflows/edge-function-repair.yml/dispatches`, {
+    method: "POST",
+    headers: { "Accept": "application/vnd.github+json", "Authorization": `Bearer ${githubToken}`, "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
+    body: JSON.stringify({ ref: "main", inputs: { function_slug: functionSlug, requested_by: requestedBy.slice(0, 100) } }),
+  });
+  if (!response.ok) throw new Error(`github_repair_dispatch_${response.status}: ${(await response.text()).slice(0, 300)}`);
+  return `🛠 Đã khởi động recovery workflow cho ${functionSlug}. GitHub sẽ redeploy, probe lại runtime và báo kết quả qua Telegram.`;
 }
 
 async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId?: number): Promise<Record<string, unknown>> {
@@ -167,7 +192,9 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
             const functions = await runEdgeProbe(supabase);
             const dependency = functions.find((fn) => fn.job_key === key);
             if (dependency && dependency.state !== "available") {
-              reply = `🛠 Đã chẩn đoán ${key}: Edge Function ${dependency.function_slug} đang ${dependency.state}. Cần redeploy từ source đã phê duyệt; không retry mù. Cảnh báo đã được ghi nhận.`;
+              reply = dependency.state === "missing_blob"
+                ? await requestEdgeRepair(dependency.function_slug, row.from_username || String(row.from_id || row.chat_id))
+                : `🛠 Đã chẩn đoán ${key}: ${dependency.function_slug} đang ${dependency.state}. Chưa tự redeploy vì đây có thể là lỗi code/downstream; hãy xem /diagnose và log trước.`;
               await sendTelegram(chatId, reply);
               await supabase.from("telegram_commands").update({ status: "done", processed_at: new Date().toISOString(), result: reply }).eq("id", row.id);
               processed++;
@@ -180,8 +207,10 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
             p_reason: command.toLowerCase().startsWith("/fix") ? "Telegram diagnose-and-fix" : "Telegram command",
           });
           if (retryError) throw retryError;
-          const result = retry as { ok?: boolean; code?: string };
-          reply = result.ok ? await retryOutcome(supabase, key)
+          const result = retry as { ok?: boolean; code?: string; request_id?: string; dispatch_request_id?: number };
+          reply = result.ok && result.request_id && result.dispatch_request_id
+            ? await retryOutcome(supabase, key, result.request_id, result.dispatch_request_id)
+            : result.ok ? `❌ Retry ${key} đã dispatch nhưng không lấy được mã đối chiếu; không thể xác minh an toàn.`
             : `⛔ Không retry ${key}: ${result.code || "unknown"}`;
         }
       }

@@ -1,11 +1,13 @@
 BEGIN;
 
-SELECT plan(23);
+SELECT plan(27);
 
 SELECT has_table('public', 'ops_job_registry', 'job registry exists');
 SELECT has_table('public', 'ops_job_runs', 'job run ledger exists');
 SELECT has_table('public', 'ops_job_digest_deliveries', 'digest delivery ledger exists');
 SELECT has_table('public', 'ops_job_retry_requests', 'retry audit ledger exists');
+SELECT has_column('public', 'ops_job_retry_requests', 'dispatch_request_id', 'retry records exact pg_net dispatch');
+SELECT has_column('public', 'ops_job_retry_requests', 'verified_at', 'retry records verification time');
 SELECT has_table('public', 'ops_edge_function_registry', 'edge function registry exists');
 SELECT has_table('public', 'ops_edge_function_state', 'edge runtime state exists');
 
@@ -59,6 +61,14 @@ SELECT has_function('public', 'ops_admin_job_health', ARRAY[]::text[], 'admin sn
 SELECT has_function(
   'public', 'ops_request_job_retry', ARRAY['text','text','text','text'],
   'controlled retry RPC exists'
+);
+SELECT has_function(
+  'public', 'ops_finish_job_retry', ARRAY['uuid','boolean','integer','text'],
+  'retry verification RPC exists'
+);
+SELECT ok(
+  NOT has_function_privilege('authenticated', 'public.ops_finish_job_retry(uuid,boolean,integer,text)', 'EXECUTE'),
+  'authenticated callers cannot forge retry verification'
 );
 SELECT ok(
   NOT has_function_privilege('anon', 'public.ops_request_job_retry(text,text,text,text)', 'EXECUTE'),

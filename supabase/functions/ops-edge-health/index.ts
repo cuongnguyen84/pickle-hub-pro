@@ -57,20 +57,21 @@ Deno.serve(async (req) => {
     const failures = result.state === "available" ? 0 : (previous?.consecutive_failures ?? 0) + 1;
     const changed = previous?.state !== result.state;
     const now = new Date().toISOString();
-    const shouldAlertFailure = result.state === "missing_blob" || failures >= 2;
+    const crossedFailureThreshold = failures === 2;
     let alerted = false;
     if (changed && result.state === "available" && previous && previous.state !== "available") {
       alerted = await sendTelegram(`✅ Edge Function recovered\n${fn.display_name} (${fn.function_slug})\nHTTP ${result.status} · ${result.ms}ms\nhttps://www.thepicklehub.net/admin/jobs`);
-    } else if (changed && result.state !== "available" && shouldAlertFailure) {
+    } else if (result.state !== "available" && ((result.state === "missing_blob" && changed) || crossedFailureThreshold)) {
       alerted = await sendTelegram(`🚨 Edge Function unavailable\n${fn.display_name} (${fn.function_slug})\nState: ${result.state}\nReason: ${result.reason}\nhttps://www.thepicklehub.net/admin/jobs`);
     }
-    await supabase.from("ops_edge_function_state").upsert({
+    const { error: upsertError } = await supabase.from("ops_edge_function_state").upsert({
       function_slug: fn.function_slug, state: result.state, http_status: result.status,
       response_ms: result.ms, reason: result.reason, consecutive_failures: failures,
       checked_at: now, changed_at: changed ? now : previous?.changed_at ?? now,
       last_alerted_at: alerted ? now : undefined,
       recovered_at: result.state === "available" && previous?.state !== "available" ? now : undefined,
     }, { onConflict: "function_slug" });
+    if (upsertError) throw upsertError;
     results.push({ function_slug: fn.function_slug, ...result, consecutive_failures: failures });
   }
   return Response.json({ ok: true, checked: results.length, results });
