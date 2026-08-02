@@ -72,12 +72,20 @@ async function runEdgeProbe(supabase: ReturnType<typeof createClient>): Promise<
 }
 
 async function retryOutcome(supabase: ReturnType<typeof createClient>, jobKey: string): Promise<string> {
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-  await supabase.rpc("ops_refresh_cron_health_snapshot");
-  const { data } = await supabase.from("ops_cron_dispatches")
-    .select("http_status_code,timed_out,transport_error,response_content")
-    .eq("monitor_key", jobKey).order("dispatched_at", { ascending: false }).limit(1).maybeSingle();
+  let data: { http_status_code: number | null; timed_out: boolean | null; transport_error: string | null; response_content: string | null } | null = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await supabase.rpc("ops_refresh_cron_health_snapshot");
+    const latest = await supabase.from("ops_cron_dispatches")
+      .select("http_status_code,timed_out,transport_error,response_content")
+      .eq("monitor_key", jobKey).order("dispatched_at", { ascending: false }).limit(1).maybeSingle();
+    data = latest.data;
+    if (data?.http_status_code !== null || data?.timed_out || data?.transport_error) break;
+  }
   if (!data || data.http_status_code === null) return `⏳ ${jobKey} đã được dispatch, downstream chưa trả kết quả.`;
+  await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/errors-telegram-alert`, {
+    method: "POST", headers: { "Content-Type": "application/json", "x-cron-secret": Deno.env.get("CRON_SECRET") ?? "" }, body: "{}",
+  }).catch(() => undefined);
   if (data.timed_out || data.transport_error || data.http_status_code < 200 || data.http_status_code >= 300) {
     return `❌ Retry ${jobKey} vẫn lỗi: ${data.transport_error || `HTTP ${data.http_status_code}`}\n${String(data.response_content || "").slice(0, 500)}`;
   }
