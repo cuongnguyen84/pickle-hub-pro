@@ -13,6 +13,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 **Impact:** 146 Apple users có thể đang không login được. Cần test gấp.
 
 **Steps:**
+
 1. Login https://developer.apple.com → Certificates, IDs & Profiles → Keys
 2. Click **+** tạo key mới
 3. Name: `ThePickleHub Sign In with Apple - prod`
@@ -30,6 +31,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 11. Test login Apple trên web + mobile app
 
 **Verification:**
+
 - Login Apple trên www.thepicklehub.net → expect success
 - Test trên iOS Capacitor app → verify Universal Links flow
 - Check Supabase logs: Authentication → Logs → tìm Apple provider events
@@ -41,6 +43,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 **Status:** Webhook endpoint trên dashboard.mux.com có thể đang trỏ về Supabase project cũ `nijiwypubmkvmjuafmgp`.
 
 **Steps:**
+
 1. Login https://dashboard.mux.com → chọn Environment **Production**
 2. Settings → Webhooks
 3. Click vào webhook hiện tại
@@ -54,6 +57,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
    - Verify `mux-webhook` function vẫn verify signature đúng (test bằng Mux "Send test event")
 
 **Verification:**
+
 - Tạo livestream mới trên Creator Studio
 - Monitor Supabase logs: Edge Functions → mux-webhook → Logs
 - Verify events (video.live_stream.active, video.asset.ready) đến với signature valid
@@ -62,11 +66,42 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 
 ## 🟡 Priority 2 — Trong 2 tuần (sau khi stable)
 
+### SEO follow-up sau PR #515 (ghi nhận 02/08/2026)
+
+Không xử lý ngay. Dùng export GSC ngày 01/08/2026 làm baseline và thực hiện theo
+thứ tự sau:
+
+- [ ] **Index coverage:** phân loại 138 URL `Discovered – currently not indexed`
+      và 42 URL `Crawled – currently not indexed`; loại thin/duplicate URL khỏi
+      sitemap hoặc cải thiện nội dung + internal link cho URL cần index.
+- [ ] **404 hygiene:** rà 61 URL 404 và 1 soft 404. Redirect 301 URL cũ còn giá
+      trị; giữ 404/410 cho URL rác nhưng xóa khỏi sitemap và internal link.
+- [ ] **Robots/canonical/noindex:** xác nhận 12 URL bị robots.txt chặn, 16 URL
+      redirect, 5 alternate canonical và 3 noindex đều là chủ ý.
+- [ ] **CTR quick wins:** tối ưu title/meta cho query vị trí 5–10, ưu tiên
+      `bsb pickleball club`, `dk pickleball`, `picklezone - pickleball vinh heritage
+nghệ an`, `rally pickleball`, `msc mystery sport complex`. Baseline toàn site:
+      CTR 1,8%, vị trí 9,1; mục tiêu CTR 2,5–3% mà không làm giảm vị trí.
+- [ ] **Giảm phụ thuộc một bài:** mở rộng cluster PPA/MLP, giải Việt Nam, sân/CLB
+      theo địa phương và internal link từ `/vi/blog/singapore-open-2026` sang các
+      trang liên quan.
+- [ ] **CWV field-data:** đọc lại CrUX/GSC sau tối thiểu 28 ngày kể từ deploy
+      PR #515; không kết luận từ Lighthouse lab. Theo dõi riêng mobile LCP, INP, CLS;
+      đồng thời thử giảm mobile FCP từ 2,3s xuống ≤1,8s nếu field-data xác nhận cần.
+- [ ] **Xác minh sau xử lý:** gửi lại sitemap, chạy Googlebot SEO verification,
+      PageSpeed cho homepage + blog + venue + livestream, rồi so sánh clicks,
+      impressions, CTR và vị trí theo tuần.
+
+**Done khi:** không còn soft 404/internal link tới 404; mọi exclusion có quyết
+định ghi nhận; nhóm query quick-win có ≥28 ngày dữ liệu hậu thay đổi; CWV có đủ
+field-data để đưa verdict.
+
 ### 3. Firebase Service Account Key Cleanup
 
 **Status:** Sau migration, Cuong đã tạo key Firebase mới cho project Supabase mới. Key cũ (dùng trên Lovable) vẫn còn active trong Firebase Console.
 
 **Steps:**
+
 1. Đợi production stable ít nhất 2 tuần (từ 14/04/2026 → sau 28/04/2026)
 2. Login https://console.firebase.google.com → chọn project ThePickleHub
 3. Project settings → Service Accounts → Manage service account permissions
@@ -81,6 +116,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 **Status:** Tương tự Firebase, key cũ vẫn active trên Resend dashboard.
 
 **Steps:**
+
 1. Đợi 2 tuần stable
 2. Login https://resend.com/api-keys
 3. Tìm key cũ (tên khác `thepicklehub-prod-ajvlcamx`)
@@ -94,6 +130,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 **Status:** Supabase có platform issue — Auth sign JWT với ES256, gateway verify HS256. Workaround: set `verify_jwt=false` cho 4 functions.
 
 **Action:**
+
 - Monitor https://github.com/supabase/supabase/issues
 - Search "ES256 HS256 edge function JWT"
 - Subscribe thread nếu có
@@ -111,17 +148,17 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 **Fix options:**
 
 **Option A — Frontend query profiles (simpler):**
+
 ```tsx
 // In src/pages/admin/AdminPushNotification.tsx, "all" branch
-const { data: allProfiles } = await supabase
-  .from('profiles')
-  .select('id');
-targetUserIds = allProfiles.map(p => p.id);
+const { data: allProfiles } = await supabase.from("profiles").select("id");
+targetUserIds = allProfiles.map((p) => p.id);
 // Then pass user_ids to function, function queries push_tokens with service_role
 ```
 
 **Option B — Backend fan-out (more scalable):**
 Modify `send-push-notification` function:
+
 - Accept `target: "all"` option
 - Use service_role internally to query all push_tokens
 - Loop and send
@@ -129,8 +166,12 @@ Modify `send-push-notification` function:
 **Recommendation:** Option B — cleaner separation, admin doesn't need to know UUIDs.
 
 **Add confirm dialog** trước khi broadcast:
+
 ```tsx
-if (target === "all" && !confirm(`Gửi thông báo tới tất cả ${estimatedCount} users?`)) {
+if (
+  target === "all" &&
+  !confirm(`Gửi thông báo tới tất cả ${estimatedCount} users?`)
+) {
   return;
 }
 ```
@@ -142,14 +183,15 @@ if (target === "all" && !confirm(`Gửi thông báo tới tất cả ${estimated
 **Status:** Columns `livestreams.red5_server_url` và `livestreams.red5_stream_name` vẫn trong schema, nullable, zero data.
 
 **Steps:**
+
 1. Verify 0 rows có data:
    ```sql
-   SELECT COUNT(*) FROM livestreams 
+   SELECT COUNT(*) FROM livestreams
    WHERE red5_server_url IS NOT NULL OR red5_stream_name IS NOT NULL;
    ```
 2. Nếu 0 → tạo migration:
    ```sql
-   ALTER TABLE public.livestreams 
+   ALTER TABLE public.livestreams
      DROP COLUMN red5_server_url,
      DROP COLUMN red5_stream_name;
    ```
@@ -167,6 +209,7 @@ if (target === "all" && !confirm(`Gửi thông báo tới tất cả ${estimated
 **Status:** `VITE_SUPABASE_PROJECT_ID` trong `.env` nhưng zero references trong `src/`.
 
 **Steps:**
+
 1. Verify một lần nữa:
    ```bash
    grep -rn "VITE_SUPABASE_PROJECT_ID" src/ --include="*.ts" --include="*.tsx"
@@ -181,6 +224,7 @@ if (target === "all" && !confirm(`Gửi thông báo tới tất cả ${estimated
 **Status:** Repo không có file template env → dev khác clone không biết vars cần set.
 
 **Content:**
+
 ```bash
 # Supabase
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
@@ -197,6 +241,7 @@ VITE_SITE_URL=https://www.thepicklehub.net
 **Status:** Lovable project vẫn active trên lovable.dev dashboard (dù không dùng nữa).
 
 **Steps:**
+
 1. Login Lovable dashboard
 2. Navigate to pickle-hub-pro project
 3. Settings → Archive project
@@ -209,6 +254,7 @@ VITE_SITE_URL=https://www.thepicklehub.net
 **Status:** Project cũ vẫn active trên Supabase dashboard, vẫn có data + functions từ Lovable era.
 
 **Steps:**
+
 1. Đợi production mới stable 2-3 tuần
 2. Verify không có traffic nào vẫn trỏ về project cũ:
    - Check Supabase logs → 0 requests trong 7 ngày
@@ -223,6 +269,7 @@ VITE_SITE_URL=https://www.thepicklehub.net
 **Status:** `mux-sync-assets` function trả `total:0` — không có assets trên project mới. VOD recordings cũ từ Lovable era vẫn ở Mux nhưng metadata chưa sync.
 
 **Decision needed:**
+
 - Có muốn recover VOD recordings cũ không?
 - Nếu có → build data migration script sync từ Mux API → `videos` table
 
