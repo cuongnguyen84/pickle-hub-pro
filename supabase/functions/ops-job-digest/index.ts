@@ -5,6 +5,10 @@ import {
   type JobHealthDigestSnapshot as HealthSnapshot,
 } from "../_shared/job-health-digest.ts";
 
+// Keep a deployment revision in the entrypoint because the Supabase API
+// deployer has previously reused a stale bundle when only a shared import changed.
+const deploymentRevision = "20260802-job-business-metrics-v2";
+
 function reportDateIct(now = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Ho_Chi_Minh",
@@ -64,7 +68,7 @@ Deno.serve(async (req) => {
   const snapshot = data as HealthSnapshot;
   const reportDate = reportDateIct();
   const text = formatJobHealthDigest(snapshot, reportDate);
-  if (mode === "preview") return Response.json({ ok: true, mode, report_date: reportDate, text, snapshot });
+  if (mode === "preview") return Response.json({ ok: true, mode, report_date: reportDate, deployment_revision: deploymentRevision, text, snapshot });
 
   const { data: claimed, error: claimError } = await supabase.rpc("ops_claim_daily_digest", {
     p_report_date: reportDate,
