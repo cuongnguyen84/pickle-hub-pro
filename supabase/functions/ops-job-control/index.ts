@@ -60,7 +60,7 @@ function jobsText(jobs: Job[]): string {
   const social = jobs.find((job) => job.job_key === "social-poster");
   if (social) lines.push(`📣 Facebook: ThePickleHub ${Number(social.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(social.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(social.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`);
   const proTour = jobs.find((job) => job.job_key === "pro-tour-scraper");
-  if (proTour) lines.push(`🏓 Pro Tour: ${Number(proTour.metrics?.matches_imported ?? 0)} trận · ${Number(proTour.metrics?.events_processed ?? proTour.metrics?.due ?? 0)} event`);
+  if (proTour) lines.push(`🏓 Pro Tour: lượt gần nhất ${Number(proTour.metrics?.matches_imported ?? 0)} trận · hôm nay ${Number(proTour.metrics?.matches_today ?? 0)} trận · ${Number(proTour.metrics?.events_processed ?? proTour.metrics?.due ?? 0)} event`);
   lines.push("https://www.thepicklehub.net/admin/jobs");
   return lines.join("\n").slice(0, 4000);
 }
@@ -70,7 +70,7 @@ function businessDetail(job: Job): string | null {
     return `Facebook hôm nay: ThePickleHub ${Number(job.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(job.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(job.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`;
   }
   if (job.job_key === "pro-tour-scraper") {
-    return `Pro Tour ingest: ${Number(job.metrics?.matches_imported ?? 0)} trận · ${Number(job.metrics?.events_processed ?? job.metrics?.due ?? 0)} event · ${Number(job.metrics?.events_failed ?? job.metrics?.failed ?? 0)} lỗi`;
+    return `Pro Tour ingest: lượt gần nhất ${Number(job.metrics?.matches_imported ?? 0)} trận · hôm nay ${Number(job.metrics?.matches_today ?? 0)} trận · ${Number(job.metrics?.events_processed ?? job.metrics?.due ?? 0)} event · ${Number(job.metrics?.events_failed ?? job.metrics?.failed ?? 0)} lỗi`;
   }
   return null;
 }

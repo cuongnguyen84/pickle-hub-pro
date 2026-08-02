@@ -50,9 +50,10 @@ export function formatJobHealthDigest(
   }
   if (proTour) {
     const matches = metric(proTour.metrics ?? {}, ["matches_imported", "matches_extracted"]);
+    const matchesToday = metric(proTour.metrics ?? {}, ["matches_today"]);
     const events = metric(proTour.metrics ?? {}, ["events_processed", "due"]);
     const failed = metric(proTour.metrics ?? {}, ["events_failed", "failed"]);
-    lines.push(`• Pro Tour: ${matches} trận · ${events} event${failed ? ` · ${failed} lỗi` : ""}`);
+    lines.push(`• Pro Tour: lượt gần nhất ${matches} trận · hôm nay ${matchesToday} trận · ${events} event${failed ? ` · ${failed} lỗi` : ""}`);
   }
   if (social) {
     const tph = metric(social.metrics ?? {}, ["thepicklehub_posts_today"]);

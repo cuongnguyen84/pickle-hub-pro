@@ -21,7 +21,7 @@ function snapshot(): JobHealthDigestSnapshot {
         health_state: "warning",
         last_activity_at: "2026-08-02T00:00:00Z",
         summary: "One source changed [layout]",
-        metrics: { matches_imported: 34, events_processed: 4, events_failed: 1 },
+        metrics: { matches_imported: 4, matches_today: 34, events_processed: 4, events_failed: 1 },
         error_message: "Parser failed (source changed)",
       },
       {
@@ -42,7 +42,7 @@ describe("formatJobHealthDigest", () => {
     const text = formatJobHealthDigest(snapshot(), "2026-08-02");
     expect(text).toContain("8 healthy");
     expect(text).toContain("News: 0 bài mới · 4 nguồn OK");
-    expect(text).toContain("Pro Tour: 34 trận · 4 event · 1 lỗi");
+    expect(text).toContain("Pro Tour: lượt gần nhất 4 trận · hôm nay 34 trận · 4 event · 1 lỗi");
     expect(text).toContain("Facebook: ThePickleHub 0 bài · TA Pickleball 0 bài · không có bài đủ điều kiện");
   });
 
