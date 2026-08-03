@@ -114,3 +114,26 @@
 **Done khi:** 3 bug mục 1 đã ship + verify; mọi exclusion coverage có disposition ghi trong file
 này; không còn internal link tới 404; nhóm CTR có ≥28 ngày dữ liệu sạch sau links-fix; CWV có
 field-data đủ để verdict; cohort bracket không bị đụng trước 23/08.
+
+---
+
+## Disposition log
+
+### 03/08/2026 — lần chạy `--inspect 60` đầu tiên (mẫu: 60 URL sitemap không có impression, thứ tự alphabet → thiên về /blog /clb /live EN; /san và /vi/* chưa được lấy mẫu — lần sau chạy `--inspect 120` hoặc lọc riêng)
+
+Kết quả: **39 INDEXED · 9 DISCOVERED · 7 CRAWLED_NOT_INDEXED · 3 UNKNOWN_TO_GOOGLE**
+(raw: `docs/proposals/seo-followup-checklist-v2/inspect-2026-08-03.json`, cache sqlite giữ 7 ngày)
+
+| Nhóm | URL | Disposition |
+|---|---|---|
+| CRAWLED_NOT_INDEXED (3 blog) | `dupr-vietnam-partnership-ta-pickleball-thepicklehub`, `how-to-watch-ppa-tour-live-2026`, `pickleball-vs-padel-vs-paddle-tennis` | **Cần internal link** — bài thật có nội dung, Google đọc rồi chê; thêm `internalLinks` từ các bài INDEXED cùng cụm (ppa-tour-asia-guide, dupr-*, how-to-play) khi có đợt sửa blog tiếp |
+| CRAWLED_NOT_INDEXED (4 /live) | 4 UUID livestream đã kết thúc | **Đúng ý đồ, không làm gì** — trang score mỏng của stream cũ; không đáng đầu tư. KHÔNG noindex thủ công (luật 4/6) |
+| DISCOVERED (5 blog) | `mlp-vs-ppa-2026`, `erne-shot-tutorial`, `ppa-tour-asia-2026-recap`, `vietnam-pickleball-federation-2026`, `players-to-watch-2026` | **Chờ + internal link** — bài mới hơn, Google biết nhưng chưa crawl; internal link từ bài INDEXED sẽ đẩy nhanh; re-inspect sau 2 tuần (cache tự hết) |
+| DISCOVERED (2 clb + 2 live) | `kim-lien`, `tpp`, 2 UUID | **Không làm gì** — chờ crawl tự nhiên |
+| UNKNOWN_TO_GOOGLE (1 blog) | `pickleball-world-cup-2026-da-nang-how-to-watch` | **Kiểm tra** — nằm trong sitemap nhưng Google chưa từng thấy; nghi bài mới/slug đổi. Nếu là bài đang muốn index: GSC Request Indexing tay 1 lần |
+| UNKNOWN_TO_GOOGLE (2 /live) | 2 UUID | **Không làm gì** |
+
+Kết luận lần 1: mẫu này KHÔNG có ca nào cần noindex/410 — đúng dự đoán panel (tỉ lệ
+not-indexed ~35% của nhóm no-impression, và toàn bộ đều "chờ/internal link", không có
+"thin cần loại"). Nhóm 138 Discovered của GSC nhiều khả năng phần lớn là stub venue
+noindex chủ ý + bài mới — sẽ thấy rõ khi chạy mẫu /san và /vi/*.

@@ -220,6 +220,12 @@ export async function renderMatch(
       .select("slug, tournament_name, tournament_event, played_at")
       .eq("is_public", true)
       .neq("slug", slug)
+      // Mirror sitemap-matches.xml.ts exclusions: qt-* (QuickTable share IDs)
+      // and *-test (seed data) are deliberately hidden from the sitemap, so
+      // linking to them here handed Googlebot the exact URLs the sitemap
+      // hides — every match page leaked internal links to excluded pages.
+      .not("slug", "like", "qt-%")
+      .not("slug", "like", "%-test%")
       .order("played_at", { ascending: false })
       .limit(6),
     supabase.from("news_items")
