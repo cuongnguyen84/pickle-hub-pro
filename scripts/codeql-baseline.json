@@ -22,11 +22,6 @@
       "ruleId": "js/incomplete-url-substring-sanitization",
       "file": "functions/_lib/__tests__/brand-sameas.test.ts",
       "reason": "False positive: the flagged line is a TEST ASSERTION checking that a Play Store URL is ABSENT from rendered sameAs output (substring match on expected test data) — it is not a sanitization/authorization path and no untrusted input flows through it. Entered main via PR #480 (2026-07-27); security.yml was disabled 28/07-03/08 so it surfaced when the workflow was re-enabled. Reviewed and accepted by Cuong 2026-08-03 (PR #530)."
-    },
-    {
-      "ruleId": "js/stack-trace-exposure",
-      "file": "workers/pro-tour-scraper/src/index.ts",
-      "reason": "Accepted: the scrape endpoint is internal-only behind HMAC signature verification (verifySignature) — the only caller is our own pro-tour-trigger-scrape edge function; error detail in the response is what lands in scrape_logs/ops for debugging, and the same text is already persisted server-side. Not a public surface. Reviewed by Cuong 2026-08-03 (CLOSE-03 PR)."
     }
   ]
 }
