@@ -46,20 +46,20 @@
 
 ### 1. [repo] Sửa 3 bug đang sống (TRƯỚC mọi việc SEO khác) — cần PR riêng, Cuong duyệt
 
-- [ ] **Internal link prefix theo lang** *(links-first — Q2 đã quyết 03/08)*: `venues.ts` hardcode
+- [x] **Internal link prefix theo lang** *(SHIPPED PR #533, `86e39a98`, 03/08 — 8 vị trí kể cả 2 chỗ qa-verifier bắt thêm; verify prod: 6/6 mẫu 0 anchor EN trên trang VI)*: `venues.ts` hardcode
       `/san/` ở L174 (index), L445 (khối "Sân khác tại city"), L693 (city hub) → 844 trang
       `/vi/san/*` nhận **0 internal link**, ~9.000 link từ trang VI bơm authority sang cụm EN.
       Sửa prefix theo `lang`. Verify: `curl -A "Googlebot" https://www.thepicklehub.net/vi/san/bsb-pickleball-club-tp-hcm | grep -c 'href="[^"]*/vi/san/'` > 0.
-- [ ] **Title/description venue cắt byte**: xoá tiền-kiểm `.length <= 60` ở `venues.ts:306-309`
+- [x] **Title/description venue cắt byte** *(SHIPPED PR #533 — CUT_TITLE_EXEMPT đã gỡ; verify prod: Tăng Bạt Hổ 57B cụt → 52B sạch)*: xoá tiền-kiểm `.length <= 60` ở `venues.ts:306-309`
       (luôn gọi `buildTitle`); `seo-helpers.ts:169` đổi `source.length` sang đếm byte
       (`TextEncoder`). Bug #468 tái phát qua caller đi vòng — 5/10 sân mẫu đang ship title
       `"… – Hà Nội |…"`. Cùng PR: gỡ miễn trừ `CUT_TITLE_EXEMPT` trong `tests/seo.spec.ts`.
       Verify: `curl -A "Googlebot" /vi/san/san-pickleball-flc-sam-son | grep -o '<title>[^<]*'` —
       không tận cùng bằng `|…`.
-- [ ] **Related-matches leak**: `match-page.ts:221-224` thêm filter loại `qt-*`/`*-test` —
+- [x] **Related-matches leak** *(SHIPPED PR #533 — verify prod: 0/7 related link qt-*/-test)*: `match-page.ts:221-224` thêm filter loại `qt-*`/`*-test` —
       đang phát internal link tới đúng URL mà `sitemap-matches.xml.ts:57-59` cố giấu.
-- [ ] Sau khi cả 3 merge: KHÔNG bump cache (luật 3) — TTL 6h tự cuốn; warm mẫu 10 URL
-      `/vi/san/*` bằng `?nocache=1`.
+- [x] Sau khi cả 3 merge: không bump cache; warm 6 URL mẫu first/middle/last EN+VI bằng
+      `?nocache=1` 03/08 — cut=0, hreflang=3, VI 0 anchor EN. Soak 30' sạch (0 sig mới).
 
 ### 2. [terminal] Index coverage — chạy classifier, KHÔNG đoán
 
