@@ -14,6 +14,10 @@ export interface JobHealthDigestSnapshot {
   generated_at: string;
   counts: Record<JobHealthState, number>;
   jobs: JobHealthDigestRow[];
+  facebook_posts?: {
+    thepicklehub: number | null;
+    ta_pickleball: number | null;
+  };
 }
 
 function escapeMarkdown(value: string): string {
@@ -51,6 +55,13 @@ export function formatJobHealthDigest(
     const matches = metric(proTour.metrics ?? {}, ["matches_imported", "matches_extracted"]);
     const skipped = metric(proTour.metrics ?? {}, ["skipped", "skipped_inactive"]);
     lines.push(`• Pro Tour: ${matches} trận · ${skipped} event bỏ qua hợp lệ`);
+  }
+  if (snapshot.facebook_posts) {
+    const primary = snapshot.facebook_posts.thepicklehub;
+    const secondary = snapshot.facebook_posts.ta_pickleball;
+    lines.push(
+      `• Facebook hôm nay: ThePickleHub ${primary ?? "—"} bài · TAPickleball ${secondary ?? "—"} bài`,
+    );
   }
 
   const unhealthy = snapshot.jobs.filter((job) =>

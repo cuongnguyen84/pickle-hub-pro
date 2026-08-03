@@ -25,6 +25,7 @@ function snapshot(): JobHealthDigestSnapshot {
         error_message: "Parser failed (source changed)",
       },
     ],
+    facebook_posts: { thepicklehub: 3, ta_pickleball: 2 },
   };
 }
 
@@ -34,6 +35,7 @@ describe("formatJobHealthDigest", () => {
     expect(text).toContain("8 healthy");
     expect(text).toContain("News: 0 bài mới · 4 nguồn OK");
     expect(text).toContain("Pro Tour: 34 trận · 3 event bỏ qua hợp lệ");
+    expect(text).toContain("Facebook hôm nay: ThePickleHub 3 bài · TAPickleball 2 bài");
   });
 
   it("lists only warning/failed details and escapes Telegram MarkdownV2", () => {

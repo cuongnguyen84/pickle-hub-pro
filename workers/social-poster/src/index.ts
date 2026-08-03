@@ -94,6 +94,9 @@ interface FacebookPage {
 // A 'pending' row older than this is considered orphaned (the Worker that
 // claimed it crashed/timed out before finalizing) and may be re-claimed.
 const STALE_PENDING_MS = 10 * 60 * 1000;
+const FACEBOOK_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const FACEBOOK_START_HOUR = 7;
+const FACEBOOK_END_HOUR = 20;
 
 interface SupabaseWebhookPayload {
   type: 'INSERT' | 'UPDATE' | 'DELETE';
@@ -300,6 +303,20 @@ async function processNewsItem(
     };
   }
 
+  // Real Facebook publishing is restricted to daytime in Vietnam. Items
+  // crawled/translated overnight remain eligible and unclaimed, so the
+  // catch-up cron drains them gradually after 07:00 instead of dropping or
+  // bursting them during the night.
+  if (!isFacebookPostingWindow()) {
+    return {
+      deferred: true,
+      page_key: page.key,
+      news_item_id: item.id,
+      reason: 'outside_posting_window',
+      posting_window: '07:00-20:00 Asia/Ho_Chi_Minh',
+    };
+  }
+
   // 3. Rate limit — best-effort pre-check before the claim. Cheap, and avoids
   // burning the per-row claim slot when we already know we'll defer.
   const gapOk = await checkRateLimit(env, page.id);
@@ -397,6 +414,16 @@ async function processNewsItem(
     console.error('social-poster post failed:', errMsg);
     return { posted: false, page_key: page.key, news_item_id: item.id, error: 'post_failed' };
   }
+}
+
+export function isFacebookPostingWindow(now = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: FACEBOOK_TIME_ZONE,
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? -1);
+  return hour >= FACEBOOK_START_HOUR && hour < FACEBOOK_END_HOUR;
 }
 
 // ---------------------------------------------------------------------------
