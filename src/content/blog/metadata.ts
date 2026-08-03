@@ -10,6 +10,22 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "mlp-orlando-super-sunday-2026-best-game",
+    publishedDate: "2026-08-03",
+    updatedDate: "2026-08-03",
+    author: "The PickleHub Team",
+    tags: ["mlp orlando 2026", "super sunday", "anna leigh waters", "noe khlif", "hayden patriquin", "anna bright", "quang duong", "mixed doubles", "major league pickleball", "2026 recap"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow pickleball live on ThePickleHub", vi: "Theo dõi pickleball trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/mlp-orlando-super-sunday-2026-hero.webp", alt: "MLP Orlando 2026 Super Sunday scorecard — New Jersey 5s 15, St. Louis Shock 13, with Hayden Patriquin celebrating at the net and Anna Leigh Waters nearby" },
+    titleEn: "MLP Orlando Super Sunday 2026: One of the Best Games in MLP History (Waters & Khlif Rally Past Patriquin & Bright, 15-13)",
+    titleVi: "Trận hay nhất lịch sử MLP? Waters ngược dòng 15-13 ở Super Sunday Orlando",
+    metaTitleEn: "MLP Orlando 2026: One of MLP's Best Games Ever, 15-13",
+    metaTitleVi: "MLP Orlando 2026: Trận hay nhất lịch sử MLP | 15-13",
+    metaDescriptionEn: "Anna Leigh Waters & Noe Khlif rallied from 0-6 to beat Hayden Patriquin & Anna Bright 15-13 at MLP Orlando Super Sunday — called one of the best games in MLP history.",
+    metaDescriptionVi: "Anna Leigh Waters & Noe Khlif ngược dòng từ 0-6 để hạ Patriquin & Anna Bright 15-13 ở MLP Orlando Super Sunday — được gọi là game hay nhất lịch sử MLP.",
+  },
+  {
     slug: "singapore-open-2026-recap",
     publishedDate: "2026-07-27",
     updatedDate: "2026-07-27",
