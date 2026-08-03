@@ -57,6 +57,30 @@ function baseSha() {
   }
 }
 
+// Renamed files reach us under their NEW path (diff-filter includes R), but
+// `git show <base>:<newpath>` fails → before=0 → false RATCHET increase.
+// Map new path → old path once via --find-renames so Rule 4 diffs against
+// the file's true base content.
+let renameMap = null;
+function basePathOf(base, f) {
+  if (!renameMap) {
+    renameMap = new Map();
+    try {
+      const out = execSync(
+        `git diff --find-renames --name-status --diff-filter=R ${base} HEAD`,
+        { stdio: ["ignore", "pipe", "ignore"] },
+      ).toString();
+      for (const line of out.split("\n")) {
+        const parts = line.split("\t"); // "R100\told/path\tnew/path"
+        if (parts.length === 3) renameMap.set(parts[2], parts[1]);
+      }
+    } catch {
+      /* no rename info — fall through to same-path lookup */
+    }
+  }
+  return renameMap.get(f) ?? f;
+}
+
 function targetFiles() {
   if (process.argv.length > 2) return process.argv.slice(2);
   const base = baseSha();
@@ -150,12 +174,12 @@ for (const f of files) {
       let before = 0;
       if (base) {
         try {
-          const baseSrc = execSync(`git show ${base}:${f}`, {
+          const baseSrc = execSync(`git show ${base}:${basePathOf(base, f)}`, {
             stdio: ["ignore", "pipe", "ignore"],
           }).toString();
           before = (baseSrc.match(RATCHET_RE) || []).length;
         } catch {
-          before = 0; // new file — every occurrence is an increase
+          before = 0; // truly new file — every occurrence is an increase
         }
       }
       if (now > before) {
