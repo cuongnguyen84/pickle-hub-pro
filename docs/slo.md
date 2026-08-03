@@ -22,9 +22,28 @@ burn is diagnosed (roadmap working agreement: reliability outranks scope).
 Incidents get a line in `docs/ops-runbook.md` §5 if they add a new failure
 class.
 
+## Client-error budget (OPS-04 inc3, 2026-08-03)
+
+Proxy budget for SLO 1/2 burn, alerted by `errors-telegram-alert` (10-min
+cron) on top of the per-fingerprint spike alert:
+
+- **Budget:** 3000 `client_errors` rows / 30 days (~100/day; baseline
+  measured 2026-08-03 ≈ 58/day). Detection window is 24h — two separate
+  windows by design (budget ≠ detection).
+- **P1 volume** (fingerprint-independent): ≥25 errors/60min → immediate
+  Telegram, even at night. Catches multi-fingerprint outages the spike
+  alert structurally misses.
+- **P2 burn:** 24h count ≥2× daily budget → Telegram; suppressed during
+  quiet hours 22:00–07:00 ICT (re-fires after 07:00 if still burning).
+- State-transition dedup + required recovery message; state in
+  `ops_slo_burn_state`. Thresholds are calibration knobs in
+  `_shared/burn-alert.ts` (`DEFAULT_BURN_CONFIG`).
+
 ## Known gaps (owned by OPS-04)
 
-- No independent uptime pinger (SLO 1 currently deploy-time only).
-- SLO 2/3 need the BASE-02 funnel events to be queryable.
-- No dashboard: numbers are pulled ad hoc from GA4 + SQL; OPS-04 wires
-  Telegram alerts to budget burn, reusing the errors-telegram-alert path.
+- ~~No independent uptime pinger~~ → uptime-ping workflow (#432).
+- SLO 2/3 funnel events queryable since 2026-08-03 (GA4 property
+  522556358, custom dims live) — per-SLO burn wiring for auth/registration
+  still manual; extend `burn-alert.ts` when a real incident shows the need.
+- ~~No dashboard~~ → `/admin/jobs` (#525) + Telegram morning digest;
+  budget-burn alerts live (inc3).

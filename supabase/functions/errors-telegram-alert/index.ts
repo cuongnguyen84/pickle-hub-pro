@@ -30,6 +30,12 @@ import {
   type PgNetCronSnapshot,
 } from "../_shared/cron-health.ts";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import {
+  DEFAULT_BURN_CONFIG,
+  burnMessageLines,
+  evalBurn,
+  type BurnState,
+} from "../_shared/burn-alert.ts";
 
 const SPIKE_THRESHOLD = 3;        // ≥ N occurrences of same fingerprint
 const SPIKE_WINDOW_MIN = 10;      // ...within last 10 minutes
@@ -227,6 +233,96 @@ async function runAlert(): Promise<RunReport> {
     alerts_sent: sent,
     alerts_suppressed: suppressed,
   };
+}
+
+interface BurnReport {
+  count_60m: number;
+  count_24h: number;
+  burn_rate: number;
+  alerts_sent: number;
+  held_quiet: number;
+  states: Record<string, string>;
+  errors: string[];
+}
+
+// OPS-04 inc3 — fingerprint-independent volume (P1) + 24h-vs-30d-budget burn
+// (P2) with state-transition dedup and required recovery messages. Pure
+// decision logic lives in _shared/burn-alert.ts (unit-tested); this wrapper
+// only counts rows, loads/persists state, and formats Telegram output.
+async function runBurnAlert(): Promise<BurnReport> {
+  const report: BurnReport = {
+    count_60m: 0, count_24h: 0, burn_rate: 0,
+    alerts_sent: 0, held_quiet: 0, states: {}, errors: [],
+  };
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  );
+  const now = new Date();
+
+  const countSince = async (minutes: number): Promise<number | null> => {
+    const { count, error } = await supabase
+      .from("client_errors")
+      .select("id", { count: "exact", head: true })
+      .gte("recorded_at", new Date(now.getTime() - minutes * 60_000).toISOString());
+    if (error) {
+      report.errors.push(`count(${minutes}m): ${error.message}`);
+      return null;
+    }
+    return count ?? 0;
+  };
+
+  const [c60, c24] = await Promise.all([countSince(60), countSince(24 * 60)]);
+  if (c60 === null || c24 === null) return report; // fail loud in report, not silently ok
+  report.count_60m = c60;
+  report.count_24h = c24;
+
+  const { data: stateRows, error: stateError } = await supabase
+    .from("ops_slo_burn_state")
+    .select("slo_key, state");
+  if (stateError) {
+    report.errors.push(`state load: ${stateError.message}`);
+    return report;
+  }
+  const prev = {
+    volume: ((stateRows ?? []).find((r) => r.slo_key === "client_errors_volume")?.state ?? "ok") as BurnState,
+    budget: ((stateRows ?? []).find((r) => r.slo_key === "client_errors_budget")?.state ?? "ok") as BurnState,
+  };
+
+  const decisions = evalBurn(c60, c24, prev, now, DEFAULT_BURN_CONFIG);
+  for (const d of decisions) {
+    report.states[d.sloKey] = d.newState;
+    report.burn_rate = Number(d.burnRate.toFixed(2));
+    if (d.heldByQuietHours) report.held_quiet++;
+
+    if (d.alert) {
+      const lines = burnMessageLines(d, DEFAULT_BURN_CONFIG).map((l) => escapeMarkdown(l));
+      lines.push("", `[Open admin dashboard](${escapeMarkdown("https://www.thepicklehub.net/admin/errors")})`);
+      const ok = await sendTelegram(lines.join("\n"));
+      if (!ok) {
+        report.errors.push(`${d.sloKey}: telegram send failed`);
+        continue; // don't persist a transition the operator never saw
+      }
+      report.alerts_sent++;
+    }
+
+    // Persist only real transitions (quiet-held P2 keeps prev state so the
+    // first daytime run re-evaluates and fires).
+    if (d.newState !== d.prevState || d.alert) {
+      const { error: upsertError } = await supabase.from("ops_slo_burn_state").upsert({
+        slo_key: d.sloKey,
+        state: d.newState,
+        since: d.newState !== d.prevState ? now.toISOString() : undefined,
+        last_alerted_at: d.alert ? now.toISOString() : undefined,
+        last_value: d.value,
+        last_burn_rate: d.burnRate,
+        updated_at: now.toISOString(),
+      }, { onConflict: "slo_key" });
+      if (upsertError) report.errors.push(`${d.sloKey}: upsert: ${upsertError.message}`);
+    }
+  }
+
+  return report;
 }
 
 async function runJobFailureAlerts(): Promise<JobFailureReport> {
@@ -473,7 +569,8 @@ Deno.serve(async (req) => {
   const clientErrors = await runAlert();
   const jobFailures = await runJobFailureAlerts();
   const cronHealth = await runCronHealth();
-  return new Response(JSON.stringify({ client_errors: clientErrors, job_failures: jobFailures, cron_health: cronHealth }), {
+  const burn = await runBurnAlert();
+  return new Response(JSON.stringify({ client_errors: clientErrors, job_failures: jobFailures, cron_health: cronHealth, burn }), {
     headers: { "Content-Type": "application/json" },
   });
 });
