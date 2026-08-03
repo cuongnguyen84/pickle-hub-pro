@@ -50,7 +50,7 @@ Thêm vào `.env` (hoặc export trong shell scheduled task):
 ```sh
 GOOGLE_SA_JSON=.claude/secrets.local.gsc-ga4-sa.json
 GSC_SITE=sc-domain:thepicklehub.net
-GA4_PROPERTY_ID=123456789      # thay bằng property id thật
+GA4_PROPERTY_ID=522556358      # property thật (xác nhận 03/08 qua GA4 UI)
 ```
 
 ## 5. Cài deps + test
