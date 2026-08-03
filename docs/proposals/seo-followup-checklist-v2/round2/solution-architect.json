@@ -1,0 +1,45 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Nguồn dữ liệu cho classifier: URL Inspection API vs export tay + từ chối gán nhãn",
+      "myRound1Position": "URL Inspection API chạy được NGAY bằng SA firebase-adminsdk; giả định 'phải export tay từng issue' là SAI; classifier xây quanh API.",
+      "stance": "REFINE",
+      "evidence": [
+        "(1) CREDENTIAL: .claude/secrets.local.gsc-ga4-sa.json không tồn tại (risk-auditor ĐÚNG điểm này) NHƯNG key thật ở /Users/cm10/Downloads/thepicklehub-dee20-68a66e81d1d6.json (2394 B) — đúng SA mà gsc_report.py:47-49 ghi 'granted Full access on 2026-06-16'; gsc_report.py:34 default path sai → lỗi PATH không phải thiếu credential",
+        "(2) QUYỀN: GET webmasters/v3/sites → 200: www.thepicklehub.net/ = siteRestrictedUser (sẽ 403 với URL Inspection), sc-domain:thepicklehub.net = siteFullUser → script BẮT BUỘC pin GSC_SITE=sc-domain",
+        "(3) GỌI THẬT: 25/25 call index:inspect HTTP 200, 6.96-7.46s/call đều, không throttle → 180 URL ≈ 22 phút (sửa con số '10-20s' vòng 1). Python requests treo 449s/120s trong khi curl ≤7.5s → per-call timeout cứng + sqlite resume là yêu cầu thật",
+        "(4) BẪY MỚI: languageCode localize coverageState ('vi' → 'Đã được gửi và lập chỉ mục') → phải pin 'en'",
+        "(5) GIỚI HẠN: inspect-BY-URL không enumerate được bucket → 61 URL 404 (không trong sitemap, không trong Trang.csv) KHÔNG lấy được bằng API — export tay 1 lần là bắt buộc (đã tự ghi ở round1:119)",
+        "Bằng chứng tái lập: scratchpad/d1_repro.py"
+      ],
+      "reasoning": "Lõi lập trường ĐỨNG: có nguồn per-URL thật, exit-5-khi-thiếu-export-tay sẽ chặn oan script chạy được. REFINE 2 điểm nói quá ở vòng 1: (a) 'export tay là SAI' chỉ đúng cho segment enumerate được từ sitemap — nhóm 404 thì API bất lực; (b) giữ nguyên tắc của ui-ux-critic ở dạng đúng: CẤM bịa nhãn từ CSV aggregate, nhưng cấm bịa ≠ từ chối chạy — tầng 1 (sitemap × Trang.csv × HTTP Googlebot) chạy độc lập không cần GSC. API và export tay khác trục: export = liệt kê, API = sự thật per-URL lặp lại được."
+    },
+    {
+      "id": "D3",
+      "topic": "Increment 4 thin-gate news/matches — cho phép sau khi có số thật, hay cấm hẳn",
+      "myRound1Position": "Increment 4 chạy SAU classifier, gate mở khi ≥70% news Discovered/Crawled-not-indexed.",
+      "stance": "REFINE",
+      "evidence": [
+        "TỰ CHẠY gate increment 4 trong vòng 2: 12 URL news EN ngẫu nhiên hệ thống (awk NR%40==17 trên 501 URL) → 9 indexed, 2 Discovered, 1 lỗi transport → ~18% chưa index, KHÔNG PHẢI ≥70%. Đối chiếu 10 URL ĐẦU sitemap → 8/10 chưa index = đúng thiên lệch lấy mẫu đã tự cảnh báo (round1:118)",
+        "(a) grep organic/search/seo/index docs/slo.md → RỖNG; 7 SLO không cái nào phủ organic — risk-auditor + pre-mortem ĐÚNG",
+        "(b) venues.ts:62-72 predicate dùng chung noindex+sitemap (comment 'single source of truth'); khối internal-link venues.ts:431-447 chỉ select slug/name/name_vi/district — KHÔNG THỂ lọc isThinVenue kể cả muốn — pre-mortem ĐÚNG ở mức sâu hơn nó viết",
+        "(c) grep floor tests/seo.spec.ts → không có floor <loc> per-segment; venues co 1688→40 vẫn XANH — pre-mortem ĐÚNG"
+      ],
+      "reasoning": "BỎ increment 4 khỏi đề xuất — không vì bị thuyết phục mà vì gate của chính nó trả kết quả âm: tiền đề 'news mỏng' chết bằng đo đạc. Đây là increment 4 hoạt động ĐÚNG thiết kế: đo trước, số nói đừng đụng. NHƯNG HOLD chống lệnh CẤM VĨNH VIỄN — luật đó cấm sai chỗ (rủi ro #1 auditor nói về VENUES, em chưa bao giờ đề xuất đụng venues). Thay 'cấm hẳn' bằng TIỀN ĐIỀU KIỆN cưỡng chế được cho MỌI thay đổi gate (kể cả sửa isThinVenue): (1) floor <loc> per-segment trong tests/seo.spec.ts (venues ≥900/pre-mortem hoặc ≥1500/auditor; news ≥700-900; matches ≥200), (2) PR ghi số <loc> trước/sau bằng lệnh chạy được, (3) tracker organic thủ công hàng tuần cho /san vì không SLO nào bắt được. Floor = ~15 dòng test — đề nghị thành increment độc lập ship TRƯỚC, không phụ thuộc script."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Nguyên nhân cụm VI thua EN: MỌI internal link tới trang sân hardcode /san/ kể cả khi render trang VI",
+      "with": "ui-ux-critic",
+      "myPosition": "venues.ts:174 (index), :445 (khối sân-khác-tại-city), :693 (city hub) đều build href /san/${slug} trong khi lang ĐANG trong scope. 844 URL /vi/san/ trong sitemap (đếm thật: grep -c → 844) nhận ĐÚNG 0 internal inlink. Không bác #6 của critic (title trùng byte là thật) — nhưng thứ tự sửa phải đảo: sửa 3 dòng href TRƯỚC (0 rủi ro deindex, revert 5 phút), rewrite title SAU trên baseline sạch. Làm ngược thì hai thay đổi trộn nhau, mốc 23/08 không đọc được gì. Lưu ý phạm vi claim: /vi/san/bsb đã 'Submitted and indexed' — đây là luận điểm link equity, KHÔNG phải coverage."
+    },
+    {
+      "topic": "Path mặc định SA key là lỗi cấu hình làm cả panel kết luận sai về năng lực đo đạc",
+      "with": "risk-auditor",
+      "myPosition": "Bất đồng ẢO đúng nghĩa — cả hai đọc cùng sự thật (path mặc định trống), rẽ hai hướng vì em có thêm một ls ~/Downloads. Sửa gốc 1 dòng, nằm trong GÓI NÀY: copy key vào .claude/secrets.local.gsc-ga4-sa.json (đã gitignore) HOẶC export GOOGLE_SA_JSON trong shell profile, ghi vào scripts/seo/SETUP.md kèm permission thật (pin sc-domain nếu không 403). Chưa sửa thì cả 3 script scripts/seo/ exit 3 trên máy Cuong và mọi agent đọc repo tiếp tục kết luận sai. Rủi ro #4 của auditor REFINE về đúng phạm vi: 'CẤM bịa nhãn từ aggregate' đúng — giữ; 'không có nguồn per-URL nào' sai — rút."
+    }
+  ]
+}

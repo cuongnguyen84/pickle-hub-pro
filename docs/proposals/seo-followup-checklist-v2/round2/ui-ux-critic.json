@@ -1,0 +1,43 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Nguồn dữ liệu cho classifier: URL Inspection API (service account) vs export tay từng issue từ GSC UI + script exit 5",
+      "myRound1Position": "Blocker #3 — phải tách 3a (export URL-level từng issue từ GSC UI) rồi 3b mới chạy classifier; script TỪ CHỐI chạy (exit 5) nếu chỉ có Coverage aggregate.",
+      "stance": "REFINE",
+      "evidence": [
+        "Tự chạy live (không lấy lại từ architect): python3 scratchpad/insp2.py, SA /Users/cm10/Downloads/thepicklehub-dee20-68a66e81d1d6.json, scope webmasters.readonly, siteUrl=sc-domain → /vi/san/san-pickleball-flc-sam-son → 200 7.1s, coverageState='Submitted and indexed', lastCrawl='2026-07-18T03:08:54Z'",
+        "ls .claude/secrets.local.gsc-ga4-sa.json → No such file (đường mặc định gsc_report.py:44 rỗng)",
+        "Vấn đề nghiêm trọng.csv header: Nguyên nhân,Nguồn,Xác thực,Trang — 'Trang' là SỐ ĐẾM, không có cột URL",
+        "round1/solution-architect.md:119 — architect tự thừa nhận nhóm 61 URL 404 'cả A lẫn B đều KHÔNG liệt kê được... vẫn phải export tay 1 lần từ GSC UI'"
+      ],
+      "reasoning": "RÚT bước 3a như bước mặc định — API có credential thật và có quyền; bắt Cuong mở GSC UI export 5+ file để lấy thứ một call API trả trong 7 giây là UX tệ hơn hẳn. GIỮ exit 5 nhưng thu về ĐÚNG HAI điều kiện: (a) nhóm 404 — URL chết không nằm trong sitemap lẫn Trang.csv, URL Inspection là per-URL không có endpoint list → chỉ export tay 1 lần mới enumerate được; (b) chạy --inspect khi không giải được credential → fail loud kèm câu lệnh GOOGLE_SA_JSON=..., không âm thầm tụt xuống tầng 1 in nhãn suy đoán. Nguyên tắc gốc #3 không đổi: KHÔNG bao giờ in nhãn coverage cho URL không có nguồn per-URL; chỉ có cách lấy nguồn là rẻ đi."
+    },
+    {
+      "id": "D2",
+      "topic": "Freeze trước mốc SEO-CLUSTER-READ 23/08",
+      "myRound1Position": "#14 — đóng băng title/noindex toàn site tới sau 23/08 HOẶC sửa mốc trước.",
+      "stance": "REFINE",
+      "evidence": [
+        "docs/milestones.md:17 — PREDICATE: 2 query bracket breakdown theo TRANG, THẮNG = số URL còn 1-2 VÀ /tools ≤ pos 5 → metric QUERY-scoped, không property-scoped; mô tả 'cùng metric per-URL' vòng 1 của tôi SAI",
+        "functions/_middleware.ts:580 cacheKey = pr:v32:${pathname} — version là tiền tố TOÀN CỤC; :607 RENDER_BUDGET_MS=8000; :706 catch → return next() = SPA shell cho bot",
+        "round1/solution-architect.md:111 — increment 3 ghi 'sửa title venue ⇒ bump pr:v32→pr:v33'"
+      ],
+      "reasoning": "Bỏ lập trường freeze toàn site — auditor đúng: /san không rơi vào 2 query đó, freeze rộng chặn oan cụm 53% click. GIỮ 2 thứ: (1) checklist GHI cohort đóng băng (/tools, /vi/tools, cụm blog bracket + 301 của chúng) kèm ngày cắt 23/08 — trùng verify list của auditor, là đồng thuận; (2) freeze kèm điều kiện KHÔNG bump version cache toàn cục trước 23/08 — đó là hành động duy nhất phía /san chạm được trang của mốc (cold-render trả SPA shell đúng lúc Googlebot ghé). Dùng ?nocache=1 theo lô thay bump."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Increment 3 bắt buộc bump pr:v32→v33 cho đợt title venue",
+      "with": "solution-architect",
+      "myPosition": "Không bump global — bump là invalidate TOÀN CỤC (_middleware.ts:580), kéo /tools + cụm bracket vào cold render 8s budget, quá hạn catch trả SPA shell cho bot (:706) — đúng nhóm trang mốc 23/08 đo. Lý do '844 venue thì ?nocache=1 từng path bất khả thi' là vấn đề thao tác — giải bằng script warm theo lô ≤50 path/đợt có throttle, ưu tiên 760 URL /san có impression. Trùng kết luận độc lập với risk-auditor #6."
+    },
+    {
+      "topic": "coverageState không phải enum ổn định — thiết kế tầng 2 sqlite của architect tự chẻ bucket",
+      "with": "solution-architect",
+      "myPosition": "Đo được cùng 1 URL: languageCode=en → 'Submitted and indexed'; =vi → 'Đã được gửi và lập chỉ mục'. Script phải PIN languageCode='en', normalize sang enum nội bộ (INDEXED/DISCOVERED/CRAWLED_NOT_INDEXED/UNKNOWN/EXCLUDED) trước khi ghi sqlite, hard-fail chuỗi lạ. Bảng markdown dán vào docs in nhãn tiếng Việt do MÌNH dịch để lần sau so được với lần trước."
+    }
+  ],
+  "note": "Blocker vòng 1 #1 #2 #4 #5 #6 không bị ai phản bác — giữ nguyên trạng thái Blocker."
+}

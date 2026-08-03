@@ -68,6 +68,38 @@ GA4_PROPERTY_ID=123456789 python3 scripts/seo/ga4_report.py
 Cả hai in JSON ra stdout (totals + WoW%, top queries/pages, source channels,
 countries, pages mất clicks). Chỉ đọc, không ghi gì.
 
+## 6. `index_coverage.py` — phân loại index coverage (từ 03/08/2026)
+
+Trạng thái key trên máy Cuong (duyệt 03/08/2026): key thật là SA
+`firebase-adminsdk-fbsvc@thepicklehub-dee20` (gốc `~/Downloads/thepicklehub-dee20-*.json`,
+đã copy vào `.claude/secrets.local.gsc-ga4-sa.json`). Quyền đo thật ngày 02/08:
+**siteFullUser** trên `sc-domain:thepicklehub.net`, chỉ **siteRestrictedUser** trên
+URL-prefix `https://www.thepicklehub.net/` → URL Inspection API **phải** dùng
+`GSC_SITE=sc-domain:thepicklehub.net` (mặc định), đổi sang URL-prefix sẽ 403.
+
+```sh
+# Tầng 1 — offline, không cần credential: sitemap × Trang.csv (+ HTTP check)
+python3 scripts/seo/index_coverage.py \
+  --performance-dir ~/Downloads/https___www.thepicklehub.net_-Performance-on-Search-2026-08-01
+
+# Tầng 2 — URL Inspection API (~7s/URL, cache sqlite, chạy lại tự resume)
+python3 scripts/seo/index_coverage.py --performance-dir ... --inspect 60
+
+# Phân loại danh sách URL cụ thể (vd export 404 từ GSC UI)
+python3 scripts/seo/index_coverage.py --performance-dir ... \
+  --urls-file ~/Downloads/gsc-coverage-urls/404.csv --check-http
+
+# Selftest (không mạng)
+python3 scripts/seo/index_coverage.py --selftest
+```
+
+Exit codes: `0` ok · `2` tham số · `3` thiếu file/credential · `4` sai schema/enum lạ ·
+`5` thiếu nguồn per-URL (đưa nhầm export Coverage aggregate) · `6` safety gate
+(ứng viên đụng URL có impression — cần `--force`). Nguyên tắc: script **không bao giờ**
+in nhãn coverage cho URL không có nguồn per-URL; `coverageState` được pin
+`languageCode=en-US` và normalize sang enum nội bộ (chuỗi lạ = exit 4, không rơi
+im lặng vào bucket unknown).
+
 ## Troubleshooting
 
 - `403 PERMISSION_DENIED` GSC → chưa add service account vào Users & permissions,

@@ -136,6 +136,30 @@ describe("redirect parity: /vi/blog/* between _redirects and _middleware.ts", ()
   });
 });
 
+describe("_redirects rule ordering", () => {
+  // Cloudflare Pages evaluates _redirects top-down, first match wins. The SPA
+  // fallback `/* /index.html 200` matches EVERYTHING, so any rule appended
+  // after it is dead code — no parse error, no warning, it just never fires.
+  // The parity tests above read the file as a set and cannot catch this.
+  it("SPA fallback is the LAST non-comment rule — anything after it is dead", () => {
+    const rules = redirectsFile
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#"));
+    expect(
+      rules[rules.length - 1],
+      "rules after `/* /index.html 200` never fire (first match wins) — move them above the SPA fallback",
+    ).toMatch(/^\/\*\s+\/index\.html\s+200$/);
+  });
+
+  it("the SPA fallback appears exactly once", () => {
+    const count = redirectsFile
+      .split("\n")
+      .filter((l) => /^\/\*\s+\/index\.html\s+200$/.test(l.trim())).length;
+    expect(count).toBe(1);
+  });
+});
+
 describe("redirect parity: merged /blog/* posts between _redirects and _middleware.ts", () => {
   const redirects = parseRedirectsEnBlog();
   const merged = parseDict("BLOG_MERGED");
