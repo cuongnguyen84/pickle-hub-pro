@@ -733,7 +733,7 @@ export async function renderVenuesCity(
   const courtsLabel = lang === "vi" ? "Tìm sân" : "Courts";
   const bc = breadcrumb([
     { label: homeLabel, href: homeHref },
-    { label: courtsLabel, href: `${siteUrl}/san` },
+    { label: courtsLabel, href: sanBase },
     { label: cityName },
   ]);
   const h1 = lang === "vi" ? `Sân Pickleball ${cityName}` : `Pickleball courts in ${cityName}`;
@@ -774,7 +774,7 @@ export async function renderVenuesCity(
 
   const moreHeading = lang === "vi" ? "Khám phá thêm" : "Discover more";
   const moreLinks = [
-    `<li><a href="${siteUrl}/san">${escapeHtml(allLabel)}</a></li>`,
+    `<li><a href="${sanBase}">${escapeHtml(allLabel)}</a></li>`,
     `<li><a href="${siteUrl}/clubs">${lang === "vi" ? "Câu lạc bộ" : "Clubs"}</a></li>`,
     `<li><a href="${siteUrl}/social">${lang === "vi" ? "Sự kiện cộng đồng" : "Community events"}</a></li>`,
     `<li><a href="${lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`}">${lang === "vi" ? "Blog & mẹo chơi" : "Blog & tips"}</a></li>`,
