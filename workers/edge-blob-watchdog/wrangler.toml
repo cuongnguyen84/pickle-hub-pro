@@ -6,7 +6,7 @@
 # times 22-23/07 even with the GitHub integration AND Branching disabled.
 # GitHub's schedule cron is throttled to ~hourly, so the in-repo backstop
 # (uptime-ping.yml) reacts too slowly. This worker probes a canary set
-# every 5 minutes and, on any blob-404, fires workflow_dispatch on
+# every minute and, on any blob-404, fires workflow_dispatch on
 # uptime-ping.yml whose "Heal blob-less functions" step redeploys the
 # fleet and alerts Telegram.
 #
