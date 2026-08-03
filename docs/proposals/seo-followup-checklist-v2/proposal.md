@@ -1,6 +1,6 @@
 # Cải thiện checklist "SEO follow-up sau PR #515" + tooling phân loại GSC
 
-> Slug: `seo-followup-checklist-v2` · Ngày: `2026-08-02` · Trạng thái: `draft`
+> Slug: `seo-followup-checklist-v2` · Ngày: `2026-08-02` · Trạng thái: `shipped` (gói docs+tooling)
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6) ·
 > `risk-auditor` (+GPT-5.6) · `pre-mortem`. Model ngoài: `gpt-5.6-sol` (xem `external/`).
 > Model thiếu key trong lần chạy này: `none`
@@ -250,7 +250,12 @@ Không có. (CONCEDE duy nhất — auditor D1 — kèm bằng chứng tự ch�
 ---
 
 ## 9. Sau khi ship
-- SHA: · PR: · Ngày:
+- SHA: `3c2dac23` · PR: #530 · Ngày: 2026-08-03 (Cuong tự squash-merge; quality.yml waived — coverage 75.04% là nợ main từ 30/07)
 - Khác kế hoạch:
-- Học được: recon phải curl prod, không chỉ grep repo · gate khoá hàm không khoá caller ·
-  route-list của mọi gate SEO đã lỗi thời so với traffic (83% impression không có test nào)
+  - Q1: SA key được duyệt + copy vào `.claude/secrets.local.gsc-ga4-sa.json` → cả 3 script scripts/seo/ cũ hết chết. Q2: links-first.
+  - `index_coverage.py` chuyển toàn bộ network sang `curl` subprocess (python urllib/requests treo hàng phút trên máy này).
+  - Header Trang.csv thật là `Trang hàng đầu` — schema guard exit 4 bắt được ngay lần chạy đầu.
+  - security.yml được BẬT LẠI giữa chừng theo lệnh Cuong → lộ CodeQL finding có sẵn từ main (false positive, baseline với reason Cuong duyệt) + phát hiện CodeQL không quét Python.
+  - Guard title-cụt tạm exempt venues (bug cắt byte đang sống) — gỡ cùng PR fix checklist mục 1.
+- Học được (đã append `.claude/memory/lessons-learned.md` 03/08): python-HTTP-treo→curl; GSC chuỗi bản địa hoá; gate khoá hàm không khoá caller; gate lấy mẫu hàng khoẻ nhất; soak so giờ liền kề.
+- Post-deploy: / 200 · /feed 200 · Googlebot blog route 200 + title/og/hreflang ✅ · seo-verify 40/0 · soak 30' CLEAN (0 signature mới).
