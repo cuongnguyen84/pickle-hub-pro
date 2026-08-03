@@ -331,12 +331,11 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   // chopped mid-brand. Legit truncation ends mid-word ("word…"), never in a
   // dangling separator.
   const CUT_TITLE_TAIL = /[|–-]\s*…$/;
-  // ponytail: sitemap-venues.xml is exempt until the venues.ts:306-309
-  // char-vs-byte fix ships (checklist docs/seo-followup-2026-08.md item 1) —
-  // ~half of live venue titles are cut TODAY, so asserting now is a
-  // nondeterministic red on a known bug. Remove this exemption in the same
-  // PR as that fix.
-  const CUT_TITLE_EXEMPT = new Set<string>(["sitemap-venues.xml"]);
+  // No exemptions: the venues char-vs-byte pre-check that shipped cut titles
+  // was removed (same PR as this line). Prerender cache holds old titles for
+  // up to 6h after that deploy — if this assert reds on a venue URL right
+  // after a deploy, warm that path once with ?nocache=1 before diagnosing.
+  const CUT_TITLE_EXEMPT = new Set<string>([]);
 
   for (const child of childUrls) {
     const childXml = await (await ctx.get(onBaseOrigin(child))).text();

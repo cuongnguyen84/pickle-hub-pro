@@ -166,8 +166,20 @@ export function pickMetaDescription(
   const trimmed = (rawDesc ?? "").trim();
   const source =
     trimmed.length >= PICK_META_MIN_LENGTH ? trimmed : fallback;
-  if (source.length <= maxLength) return source;
-  return source.slice(0, maxLength - 3).trim() + "...";
+  // Budget in BYTES: buildHtml's truncateForSeo cuts the final meta description
+  // at 160 UTF-8 bytes, and Vietnamese diacritics cost 2-3 bytes each. Counting
+  // chars here passed 160-char/200+-byte strings through, and the downstream
+  // byte cut then sliced off exactly the local-intent tail (city keyword) on
+  // every Vietnamese venue page — same unit bug as buildTitle #468.
+  const byteLength = (s: string) => new TextEncoder().encode(s).length;
+  if (byteLength(source) <= maxLength) return source;
+  const budget = maxLength - 3;
+  let out = "";
+  for (const ch of source) {
+    if (byteLength(out + ch) > budget) break;
+    out += ch;
+  }
+  return out.trim() + "...";
 }
 
 /* ─── Feed (CollectionPage / ItemList) ────────────────────────────────── */

@@ -132,6 +132,11 @@ export async function renderVenuesList(
   const enUrl = `${siteUrl}/san`;
   const viUrl = `${siteUrl}/vi/san`;
   const canonical = lang === "vi" ? viUrl : enUrl;
+  // Internal links must stay inside the reader's language cluster. Hardcoding
+  // /san/ meant every VI page (844 URLs in sitemap-venues) linked back to the
+  // EN cluster and received ZERO internal inlinks of its own — Googlebot
+  // entering /vi/san/* had no path to any other VI page (panel 02/08).
+  const sanBase = lang === "vi" ? viUrl : enUrl;
 
   let rows: VenueListRow[] = [];
   try {
@@ -171,7 +176,7 @@ export async function renderVenuesList(
       const nm = displayName(v, lang);
       const loc = locationLine(v);
       const locText = loc ? ` — ${escapeHtml(loc)}` : "";
-      return `<li><a href="${siteUrl}/san/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${locText}</li>`;
+      return `<li><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${locText}</li>`;
     })
     .join("");
 
@@ -217,7 +222,7 @@ export async function renderVenuesList(
 
   const cityHeading = lang === "vi" ? "Sân pickleball theo tỉnh/thành" : "Pickleball courts by city";
   const cityLinks = Object.entries(VENUE_CITY_NAME)
-    .map(([sl, nm]) => `<li><a href="${siteUrl}/san/khu-vuc/${sl}">${escapeHtml(nm)}</a></li>`)
+    .map(([sl, nm]) => `<li><a href="${sanBase}/khu-vuc/${sl}">${escapeHtml(nm)}</a></li>`)
     .join("");
 
   const breadcrumbHtml =
@@ -279,6 +284,7 @@ export async function renderVenueDetail(
   const enUrl = `${siteUrl}/san/${v.slug}`;
   const viUrl = `${siteUrl}/vi/san/${v.slug}`;
   const url = lang === "vi" ? viUrl : enUrl;
+  const sanBase = lang === "vi" ? `${siteUrl}/vi/san` : `${siteUrl}/san`;
   const name = displayName(v, lang);
   const addr = fullAddress(v);
 
@@ -304,10 +310,12 @@ export async function renderVenueDetail(
       : `${name} Pickleball Court`;
   const cityTail = cityName && !cityInName ? ` – ${cityName}` : "";
   const brand = " | ThePickleHub";
-  const title =
-    (kwName + cityTail + brand).length <= 60
-      ? kwName + cityTail + brand
-      : buildTitle(kwName, brand);
+  // buildTitle budgets in BYTES (60) and is the only place allowed to decide
+  // whether the brand suffix fits. The old `.length <= 60` pre-check here
+  // counted CHARS and shipped titles like "…Nguyễn Chánh – Hà Nội |…" — a
+  // 53-char/61-byte title passed the char gate, then truncateForSeo cut it
+  // mid-brand (bug #468 recurring through a caller that bypassed the fix).
+  const title = buildTitle(kwName + cityTail, brand);
 
   // CTR: lead the description with the concrete, search-intent facts (name,
   // city, court count, indoor/outdoor) then a clear next step. Address is
@@ -369,10 +377,10 @@ export async function renderVenueDetail(
   const citySlug = v.city ? CITY_SLUG_BY_NAME[v.city] : undefined;
   const bcCrumbs: { label: string; href?: string }[] = [
     { label: homeLabel, href: homeHref },
-    { label: courtsLabel, href: `${siteUrl}/san` },
+    { label: courtsLabel, href: sanBase },
   ];
   if (citySlug && v.city) {
-    bcCrumbs.push({ label: v.city, href: `${siteUrl}/san/khu-vuc/${citySlug}` });
+    bcCrumbs.push({ label: v.city, href: `${sanBase}/khu-vuc/${citySlug}` });
   }
   bcCrumbs.push({ label: name });
   const bc = breadcrumb(bcCrumbs);
@@ -442,7 +450,7 @@ export async function renderVenueDetail(
       if (nearby.length > 0) {
         const heading = lang === "vi" ? `Sân pickleball khác tại ${v.city}` : `Other pickleball courts in ${v.city}`;
         const items = nearby
-          .map((n) => `<li><a href="${siteUrl}/san/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>${n.district ? ` — ${escapeHtml(n.district)}` : ""}</li>`)
+          .map((n) => `<li><a href="${sanBase}/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>${n.district ? ` — ${escapeHtml(n.district)}` : ""}</li>`)
           .join("");
         parts.push(`<h2>${escapeHtml(heading)}</h2><ul>${items}</ul>`);
       }
@@ -451,7 +459,7 @@ export async function renderVenueDetail(
     }
     if (citySlug) {
       const allLabel = lang === "vi" ? `Xem tất cả sân pickleball tại ${v.city}` : `See all pickleball courts in ${v.city}`;
-      parts.push(`<p><a href="${siteUrl}/san/khu-vuc/${citySlug}">${escapeHtml(allLabel)} →</a></p>`);
+      parts.push(`<p><a href="${sanBase}/khu-vuc/${citySlug}">${escapeHtml(allLabel)} →</a></p>`);
     }
   }
 
@@ -655,6 +663,7 @@ export async function renderVenuesCity(
   const enUrl = `${siteUrl}/san/khu-vuc/${citySlug}`;
   const viUrl = `${siteUrl}/vi/san/khu-vuc/${citySlug}`;
   const canonical = lang === "vi" ? viUrl : enUrl;
+  const sanBase = lang === "vi" ? `${siteUrl}/vi/san` : `${siteUrl}/san`;
 
   let rows: VenueListRow[] = [];
   try {
@@ -690,7 +699,7 @@ export async function renderVenuesCity(
         v.num_courts && v.num_courts > 0 ? (lang === "vi" ? `${v.num_courts} sân` : `${v.num_courts} courts`) : "",
         v.is_indoor == null ? "" : lang === "vi" ? (v.is_indoor ? "trong nhà" : "ngoài trời") : v.is_indoor ? "indoor" : "outdoor",
       ].filter(Boolean);
-      return `<li><a href="${siteUrl}/san/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${facts.length ? ` — ${escapeHtml(facts.join(" · "))}` : ""}</li>`;
+      return `<li><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${facts.length ? ` — ${escapeHtml(facts.join(" · "))}` : ""}</li>`;
     })
     .join("");
 
