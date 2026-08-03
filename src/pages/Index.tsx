@@ -565,29 +565,29 @@ const Index = () => {
           </section>
         ) : null;
 
-        const liveLeads = hasLiveData || scheduledStreams.length > 0;
-        const liveNode =
-          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
-            ? {
-                key: "live",
-                node: (
-                  <LiveSection
-                    liveStreams={liveStreams}
-                    scheduledStreams={scheduledStreams}
-                    endedStreams={recentEnded}
-                    language={language}
-                    priority={liveLeads}
-                  />
-                ),
-              }
-            : null;
+        // Live leads whenever a stream is on air, scheduled, OR ended within
+        // 7 days (restores the 4f8c53b1 replay-window behavior dropped by
+        // 48a94353/#501 — owner call: replays hold the top slot for a week).
+        const liveLeads =
+          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0;
+        const liveNode = liveLeads
+          ? {
+              key: "live",
+              node: (
+                <LiveSection
+                  liveStreams={liveStreams}
+                  scheduledStreams={scheduledStreams}
+                  endedStreams={recentEnded}
+                  language={language}
+                  priority
+                />
+              ),
+            }
+          : null;
 
-        // Restore #501 behavior: active and upcoming broadcasts always lead.
-        // Only replay-only content follows the weekly editorial section.
         const cluster: Array<{ key: string; node: ReactNode }> = [
-          liveLeads ? liveNode : null,
+          liveNode,
           editorialNode ? { key: "editorial", node: editorialNode } : null,
-          liveLeads ? null : liveNode,
           {
             key: "news",
             node: (

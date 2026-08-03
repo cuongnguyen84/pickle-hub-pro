@@ -23,9 +23,9 @@ struct HomeView: View {
                         }
                     }
 
-                    // Mirrors web Index.tsx: live/upcoming streams lead the feed;
-                    // replay-only days keep editorial first.
-                    if !model.live.isEmpty || !model.scheduled.isEmpty {
+                    // Mirrors web Index.tsx: live/upcoming/replay-≤7d streams
+                    // lead the feed; fully quiet days keep editorial first.
+                    if !model.live.isEmpty || !model.scheduled.isEmpty || !model.recentEnded.isEmpty {
                         livestreamSection
                     }
 
@@ -34,9 +34,6 @@ struct HomeView: View {
                     }
                     if model.posts.count > 1 {
                         HomeFeatureSection(posts: Array(model.posts.dropFirst()))
-                    }
-                    if model.live.isEmpty && model.scheduled.isEmpty && !model.recentEnded.isEmpty {
-                        livestreamSection
                     }
                     if !model.news.isEmpty {
                         HomeNewsSection(items: model.news)
