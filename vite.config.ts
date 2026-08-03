@@ -357,6 +357,7 @@ export default defineConfig(({ mode }) => ({
       "src/**/*.test.{ts,tsx}",
       "functions/_lib/__tests__/**/*.test.ts",
       "supabase/functions/_shared/__tests__/**/*.test.ts",
+      "workers/social-poster/src/*.test.ts",
       "scripts/*.test.mjs",
     ],
     exclude: ["node_modules/**", "dist/**", "tests/**"],
