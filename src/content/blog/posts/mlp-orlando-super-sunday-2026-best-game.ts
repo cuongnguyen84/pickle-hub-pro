@@ -30,7 +30,7 @@ const post: BlogPost = {
     en: {
       title: "MLP Orlando Super Sunday 2026: One of the Best Games in MLP History (Waters & Khlif Rally Past Patriquin & Bright, 15-13)",
       metaTitle: "MLP Orlando 2026: One of MLP's Best Games Ever, 15-13",
-      metaDescription: "Anna Leigh Waters & Noe Khlif rallied from 0-6 to beat Hayden Patriquin & Anna Bright 15-13 at MLP Orlando Super Sunday — called one of the best games in MLP history.",
+      metaDescription: "Anna Leigh Waters & Noe Khlif rallied from 0-6 to beat Patriquin & Bright 15-13 at MLP Orlando — called one of the best games in MLP history.",
       sections: [
         {
           heading: "Remember QD's best game in PPA history?",
@@ -108,7 +108,7 @@ const post: BlogPost = {
     vi: {
       title: "Trận hay nhất lịch sử MLP? Waters ngược dòng 15-13 ở Super Sunday Orlando",
       metaTitle: "MLP Orlando 2026: Trận hay nhất lịch sử MLP | 15-13",
-      metaDescription: "Anna Leigh Waters & Noe Khlif ngược dòng từ 0-6 để hạ Patriquin & Anna Bright 15-13 ở MLP Orlando Super Sunday — được gọi là game hay nhất lịch sử MLP.",
+      metaDescription: "Waters & Khlif ngược dòng từ 0-6 hạ Patriquin & Bright 15-13 ở MLP Orlando — được gọi là game hay nhất lịch sử MLP.",
       sections: [
         {
           heading: "Ae nhớ trận hay nhất lịch sử PPA của QD không?",

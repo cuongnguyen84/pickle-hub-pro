@@ -852,8 +852,12 @@ export function sanitizeCaption(text: string): string {
   out = out.replace(/^📝?\s*BÀI ĐĂNG FACEBOOK.*$/im, '').trim();
   // The canonical URL is published as the first Page comment, never in the
   // main caption—even if a stale prompt or model response includes it.
+  // Line scan instead of /^.*https?:\/\/\S+.*$/gim — that anchored .* regex is
+  // polynomial on adversarial "http://http://…" input (CodeQL js/polynomial-redos).
   out = out
-    .replace(/^.*https?:\/\/\S+.*$/gim, '🔗 Link bài viết ở bình luận đầu tiên.')
+    .split('\n')
+    .map((line) => (/https?:\/\//i.test(line) ? '🔗 Link bài viết ở bình luận đầu tiên.' : line))
+    .join('\n')
     .replace(/[ \t]+\n/g, '\n')
     .trim();
   // Collapse 3+ newlines.

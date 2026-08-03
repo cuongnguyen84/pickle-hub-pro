@@ -2839,7 +2839,7 @@
   --secondary:           42 22% 91%;
   --secondary-foreground: 220 10% 3%;
   --muted:               42 22% 91%;
-  --muted-foreground:    42 6% 41%;
+  --muted-foreground:    42 6% 39%;  /* a11y CLOSE-03 2026-08-03: was 41% = #6f6b62, 4.41:1 on bg-muted #edeae3 (needs 4.5) — 39% = #69665d, 4.78:1. 9 axe nodes on /clubs + /san monogram tiles */
   --accent:              42 22% 91%;
   --accent-foreground:   220 10% 3%;
   --destructive:         4 70% 50%;

@@ -16,7 +16,7 @@ The registry gives every deployed Edge Function one version-controlled caller-au
 
 BASE-06 created the inventory, schema, and validator. SEC-04 closed every recorded finding, changed `enforcement` to strict, added a blocking Quality gate, and added a scheduled production-parity guard.
 
-## Verified baseline (2026-07-15)
+## Verified baseline (2026-07-15; re-verified 2026-08-03 CLOSE-03: 80/80/80, validator 0 errors — the 76 numbers below are the historical snapshot)
 
 | Surface | Count | Result |
 |---|---:|---|
