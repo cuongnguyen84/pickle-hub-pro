@@ -1,0 +1,76 @@
+{
+  "slug": "seo-followup-checklist-v2",
+  "ledgerNote": "debate-ledger.mjs + risk-tier.mjs KHÔNG tồn tại trong repo (memory: idea-pipeline-missing-scripts) — luật vòng 2 cưỡng chế thủ công bởi orchestrator. Kiểm tra: mọi CONCEDE/REFINE đều kèm bằng chứng tái lập được (file:line hoặc lệnh+output) → không có nhượng bộ bị loại.",
+  "securityFlag": "Harness gắn SECURITY WARNING cho risk-auditor (và các agent khác cũng làm tương tự): dùng SA key ~/Downloads/thepicklehub-dee20-68a66e81d1d6.json mint OAuth token gọi GSC API read-only. Đưa lên mục 0 proposal cho Cuong duyệt.",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Nguồn dữ liệu classifier: URL Inspection API vs export tay GSC UI + từ chối gán nhãn",
+      "positions": {
+        "solution-architect": "API chạy được ngay (test sống vòng 1)",
+        "risk-auditor": "Không có credential trên máy; script cấm in nhãn không nguồn per-URL; export tay hoặc cấp SA trước",
+        "ui-ux-critic": "Export tay từng issue (3a) rồi mới classifier (3b); exit 5 nếu chỉ có aggregate"
+      },
+      "round2": {
+        "solution-architect": { "stance": "REFINE", "evidenceOk": true, "summary": "Tái lập đầy đủ: key ở ~/Downloads (path mặc định gsc_report.py:34 sai), 25/25 call 200 @ ~7.2s, pin sc-domain (www chỉ siteRestrictedUser → 403), pin languageCode=en. REFINE: nhóm 61 URL 404 API không enumerate được → export tay 1 lần bắt buộc; tầng 1 offline phải chạy độc lập" },
+        "risk-auditor": { "stance": "CONCEDE", "evidenceOk": true, "summary": "Tự ký JWT gọi API → 200 cả 2 property. Tiền đề 'không có credential' sai — là lỗi path. Giữ mảnh: 404 vẫn cần export tay; cảnh báo coverageState localized" },
+        "ui-ux-critic": { "stance": "REFINE", "evidenceOk": true, "summary": "Tự chạy API 200/7.1s → rút export tay như mặc định; giữ exit 5 cho đúng 2 case: nhóm 404 + thiếu credential (fail loud, không tụt tầng im lặng)" }
+      },
+      "resolution": "RESOLVED — classifier 2 tầng: tầng 1 offline (sitemap × Trang.csv × HTTP Googlebot, chạy độc lập), tầng 2 URL Inspection API (pin GSC_SITE=sc-domain:thepicklehub.net + languageCode=en, normalize enum nội bộ, sqlite cache + per-call timeout + resume). Export tay CHỈ cho nhóm 61 URL 404 (1 lần). Sửa path credential = việc 1 dòng trong gói. KHÔNG bao giờ in nhãn coverage không có nguồn per-URL."
+    },
+    {
+      "id": "D2",
+      "topic": "Freeze trước mốc SEO-CLUSTER-READ 23/08: hẹp hay toàn site",
+      "positions": {
+        "risk-auditor": "Freeze có phạm vi (/tools + bracket); /san không nhiễu",
+        "ui-ux-critic": "Đóng băng title/noindex toàn site tới sau 23/08 hoặc sửa mốc trước"
+      },
+      "round2": {
+        "risk-auditor": { "stance": "HOLD", "evidenceOk": true, "summary": "Truy vấn Search Analytics thật: cohort mốc = đúng 6 URL, không có /san. PHÁT HIỆN MỚI: 1 URL cohort trên host non-www → riêng mục 301 hygiene CÓ nhiễm, freeze theo danh sách 6 URL + /vi/" },
+        "ui-ux-critic": { "stance": "REFINE", "evidenceOk": true, "summary": "Đọc lại PREDICATE — metric query-scoped, mô tả vòng 1 của mình sai → bỏ freeze toàn site. Giữ: ghi cohort đóng băng vào checklist + CẤM bump cache version toàn cục trước 23/08 (đường duy nhất /san chạm được trang mốc)" }
+      },
+      "resolution": "RESOLVED — freeze theo DANH SÁCH: /tools, /tools/doubles-elimination, /blog/free-pickleball-bracket-generator, /blog/how-to-create-pickleball-bracket, /blog/pickleball-round-robin-generator-guide, /blog/best-pickleball-tournament-software-2025 + bản /vi/, đặc biệt mục 301/canonical-host. Title + noindex ngoài cohort KHÔNG freeze. CẤM bump pr:v32 toàn cục trước 23/08."
+    },
+    {
+      "id": "D3",
+      "topic": "Vòng thin-gate/noindex thứ hai (increment 4 news/matches): cho phép hay cấm",
+      "positions": {
+        "solution-architect": "Increment 4 sau khi có số thật, gate ≥70% not-indexed",
+        "risk-auditor": "Cấm hẳn mọi vòng noindex thứ hai",
+        "pre-mortem": "Sự cố 1: siết = deindex 56% click, metric thưởng phá hoại; đòi floor CI trước"
+      },
+      "round2": {
+        "solution-architect": { "stance": "REFINE", "evidenceOk": true, "summary": "TỰ CHẠY gate: 12 URL news ngẫu nhiên → 18% chưa index (không phải ≥70%) → tiền đề chết, BỎ increment 4. HOLD chống cấm vĩnh viễn; thay bằng tiền điều kiện: floor CI + số trước/sau trong PR + tracker organic /san" },
+        "risk-auditor": { "stance": "REFINE", "evidenceOk": true, "summary": "Đo tách segment: news+matches = 5,4% click (venues 56,2%) → 'cấm hẳn' chỉ áp cho VENUES (giữ RED tuyệt đối). News/matches cho phép có điều kiện: miễn trừ per-URL mọi URL impression>0, tiêu chí = hình dạng dữ liệu (không click/impr), floor venues ≥1500 (900 quá lỏng — cho mất 47% mà CI xanh)" },
+        "pre-mortem": { "stance": "REFINE", "evidenceOk": true, "summary": "3/4 mắt xích venues áp NGUYÊN XI cho news/matches, 1 tệ hơn (tiêu chí = metric → vòng lặp kín); quy mô nhỏ hơn 18 lần. 6 điều kiện tối thiểu, nổi bật: CẤM share predicate với sitemap (chỉ noindex, giữ URL trong sitemap), CẤM cột do cron ghi (match-expire flip pending→expired = cron deploy thay đổi SEO không qua CI), nguồn số phải phân biệt zero/unknown (Trang.csv cắt cứng 1000 dòng)" }
+      },
+      "resolution": "RESOLVED — increment 4 BỎ (tự dữ liệu của architect giết nó). VENUES: cấm tuyệt đối vòng noindex thứ hai, isThinVenue chỉ được đổi khi sửa định nghĩa dữ liệu + SELECT count trước/sau. Mọi thay đổi gate tương lai (mọi segment) cần đủ tiền điều kiện hợp nhất từ 3 agent: floor <loc> CI (venues ≥1500, news ≥700, matches ≥200 — lấy số CHẶT hơn của auditor), sweep lấy thêm loc cuối + ngẫu nhiên, cấm share predicate với sitemap, cohort log + allowlist per-URL impression>0, cấm cột cron-ghi làm input predicate, nguồn số ≥300 URL thật phân biệt zero/unknown."
+    }
+  ],
+  "newDisagreementsRound2": [
+    {
+      "id": "ND1",
+      "topic": "Nguyên nhân VI thua EN: internal link hardcode /san/ (844 trang VI 0 inlink) vs title trùng byte",
+      "parties": "risk-auditor + solution-architect (hội tụ độc lập, cùng file:line) vs ui-ux-critic (#6, chưa được đối chất — không có vòng 3)",
+      "status": "OPEN_FOR_CUONG (nhẹ) — khuyến nghị orchestrator: hai fix KHÔNG loại trừ nhau; thứ tự: (1) sửa prefix href theo lang (3-6 dòng, 0 rủi ro deindex) → (2) phân hoá title VI/EN theo #6 của critic → (3) đo. Critic chưa phản hồi thứ tự này."
+    },
+    {
+      "id": "ND2",
+      "topic": "coverageState là chuỗi localized, không phải enum",
+      "parties": "risk-auditor + ui-ux-critic + solution-architect — CẢ BA tự đo độc lập, cùng kết quả",
+      "status": "CONSENSUS — pin languageCode=en, normalize enum nội bộ, hard-fail chuỗi lạ. Đưa thẳng vào spec script."
+    },
+    {
+      "id": "ND3",
+      "topic": "3 phát hiện phụ của pre-mortem về matches/news (cron-ghi cột, divergence sitemap-vs-render match, precondition ≥70% sai)",
+      "parties": "pre-mortem vs solution-architect",
+      "status": "MOOT một phần (increment 4 đã bỏ); còn sống: fix divergence match-page.ts:221-224 (thêm filter qt-*/-test) = việc rẻ độc lập, đưa vào checklist."
+    },
+    {
+      "id": "ND4",
+      "topic": "Path SA key sai làm 3 script scripts/seo/ chết trên máy Cuong",
+      "parties": "solution-architect vs risk-auditor",
+      "status": "RESOLVED — bất đồng ảo; fix 1 dòng trong gói (copy key vào .claude/secrets.local.gsc-ga4-sa.json hoặc GOOGLE_SA_JSON, cập nhật SETUP.md). CẦN CUONG DUYỆT việc dùng/copy credential."
+    }
+  ]
+}
