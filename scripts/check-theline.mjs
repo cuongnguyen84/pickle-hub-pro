@@ -13,7 +13,7 @@
 //              class instead. `hsl(var(--x))` is fine (token-based).
 //   [advisory] A new routed page (src/pages/<name>.tsx) should render inside
 //              TheLineLayout so it inherits nav/footer/theme.
-//   [advisory] DS-03 ratchet: a changed file must not INCREASE its `.tl-btn`
+//   [hard] DS-03 ratchet: a changed file must not INCREASE its `.tl-btn`
 //              (legacy CSS-class button) count vs the base revision — new
 //              buttons are <Button variant="outline|default|tl-primary">.
 //              Changed-files-only by design (a full-tree count flaps on
@@ -163,7 +163,8 @@ for (const f of files) {
     }
   }
 
-  // Rule 4 — DS-03 ratchet (advisory during trial; see header). Count
+  // Rule 4 — DS-03 ratchet (HARD since 2026-08-03, milestone THELINE-HARD:
+  // dry-run clean on 5 merged + 14 open PRs, rename false-positive fixed). Count
   // `.tl-btn` inside string literals (className strings — comments and prose
   // don't match) and compare against the same file at base.
   if (f.endsWith(".tsx")) {
@@ -183,7 +184,7 @@ for (const f of files) {
         }
       }
       if (now > before) {
-        advisory.push(
+        hard.push(
           `${f}  RATCHET: .tl-btn count ${before} → ${now} — new buttons must be <Button variant="outline|default|tl-primary"> (docs/design-tokens.md)`,
         );
       }
