@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          APPROVED="dupr-sync errors-telegram-alert mux-sync-assets news-rewrite ops-edge-health ops-job-control ops-job-digest ops-news-worker zalo-token-refresh"
+          APPROVED="dupr-sync errors-telegram-alert mux-sync-assets news-rewrite ops-edge-health ops-job-control ops-job-digest ops-news-worker pro-tour-trigger-scrape zalo-token-refresh"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             case " $APPROVED " in *" $REQUESTED_SLUG "*) TARGETS="$REQUESTED_SLUG" ;; *) echo "Unapproved function: $REQUESTED_SLUG"; exit 2 ;; esac
           else

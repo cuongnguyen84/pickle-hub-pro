@@ -94,6 +94,22 @@ interface RunReport {
   alerts_suppressed: number;
 }
 
+interface JobFailureReport {
+  scanned: number;
+  alerts_sent: number;
+  alerts_suppressed: number;
+}
+
+interface FailedJobRun {
+  id: string;
+  job_key: string;
+  status: "warning" | "failed";
+  summary: string | null;
+  error_message: string | null;
+  details_url: string | null;
+  started_at: string;
+}
+
 interface CronHealthReport {
   checked: number;
   alerts_sent: number;
@@ -211,6 +227,65 @@ async function runAlert(): Promise<RunReport> {
     alerts_sent: sent,
     alerts_suppressed: suppressed,
   };
+}
+
+async function runJobFailureAlerts(): Promise<JobFailureReport> {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  );
+  const since = new Date(Date.now() - 15 * 60_000).toISOString();
+  const { data, error } = await supabase
+    .from("ops_job_runs")
+    .select("id, job_key, status, summary, error_message, details_url, started_at")
+    .eq("trigger_kind", "scheduled")
+    .in("status", ["warning", "failed"])
+    .gte("started_at", since)
+    .order("started_at", { ascending: true });
+
+  if (error) {
+    console.error("ops_job_runs failure query failed", error.message);
+    return { scanned: 0, alerts_sent: 0, alerts_suppressed: 0 };
+  }
+
+  let sent = 0;
+  let suppressed = 0;
+  for (const run of (data ?? []) as FailedJobRun[]) {
+    const dedupeKey = `scheduled-job-failure:${run.id}`;
+    const { data: existing } = await supabase
+      .from("error_alert_dedup")
+      .select("fingerprint")
+      .eq("fingerprint", dedupeKey)
+      .maybeSingle();
+    if (existing) {
+      suppressed++;
+      continue;
+    }
+
+    const reason = (run.error_message ?? run.summary ?? "unknown failure").slice(0, 700);
+    const lines = [
+      "🚨 *ThePickleHub scheduled job failed*",
+      "",
+      `*Job:* \`${escapeMarkdown(run.job_key)}\``,
+      `*State:* \`${escapeMarkdown(run.status)}\``,
+      `*Reason:* ${escapeMarkdown(reason)}`,
+      `*Started:* ${escapeMarkdown(new Date(run.started_at).toISOString())}`,
+    ];
+    if (run.details_url) {
+      lines.push("", `[Open details](${escapeMarkdown(run.details_url)})`);
+    }
+
+    if (await sendTelegram(lines.join("\n"))) {
+      sent++;
+      await supabase.from("error_alert_dedup").upsert({
+        fingerprint: dedupeKey,
+        last_alerted_at: new Date().toISOString(),
+        alert_count: 1,
+      }, { onConflict: "fingerprint" });
+    }
+  }
+
+  return { scanned: data?.length ?? 0, alerts_sent: sent, alerts_suppressed: suppressed };
 }
 
 function formatCronHealthMessage(
@@ -396,8 +471,9 @@ Deno.serve(async (req) => {
   if (authError) return authError;
 
   const clientErrors = await runAlert();
+  const jobFailures = await runJobFailureAlerts();
   const cronHealth = await runCronHealth();
-  return new Response(JSON.stringify({ client_errors: clientErrors, cron_health: cronHealth }), {
+  return new Response(JSON.stringify({ client_errors: clientErrors, job_failures: jobFailures, cron_health: cronHealth }), {
     headers: { "Content-Type": "application/json" },
   });
 });

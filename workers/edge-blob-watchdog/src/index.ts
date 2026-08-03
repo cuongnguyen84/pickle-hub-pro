@@ -17,12 +17,14 @@ const PROJECT_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co";
 const REPO = "cuongnguyen84/pickle-hub-pro";
 const WORKFLOW = "uptime-ping.yml";
 const TARGETED_REPAIR_WORKFLOW = "edge-function-repair.yml";
+const TARGETED_REPAIRS = new Set(["ops-job-control", "pro-tour-trigger-scrape"]);
 
 const CANARIES = [
   // Telegram's webhook points here. If this blob disappears, operational
   // commands such as /jobs never reach the queue, so keep it in the
   // independent Cloudflare watchdog rather than relying on Supabase itself.
   "ops-job-control",
+  "pro-tour-trigger-scrape",
   "geo-check",
   "send-auth-email",
   "phone-otp-send",
@@ -81,24 +83,25 @@ async function run(env: Env): Promise<string[]> {
   // the targeted workflow, which handles Supabase's 409 "deployment already
   // exists" failure by deleting and recreating only this approved function.
   // The older fleet workflow cannot recover reliably from that 409.
-  if (brokenFunctions.has("ops-job-control")) {
+  for (const functionSlug of brokenFunctions) {
+    if (!TARGETED_REPAIRS.has(functionSlug)) continue;
     const repairInFlight = await hasRecentRun(env, TARGETED_REPAIR_WORKFLOW, 5 * 60_000);
     if (repairInFlight) {
-      console.error("[watchdog] ops-job-control blob-less — targeted repair ran <5min ago");
+      console.error(`[watchdog] ${functionSlug} blob-less — targeted repair ran <5min ago`);
     } else {
       await dispatchRepair(env, TARGETED_REPAIR_WORKFLOW, {
         ref: "main",
         inputs: {
-          function_slug: "ops-job-control",
+          function_slug: functionSlug,
           requested_by: "edge-blob-watchdog",
         },
       });
     }
   }
 
-  // ops-job-control is handled above. Preserve the existing fleet repair for
-  // the remaining user-facing canaries.
-  const fleetBroken = broken.filter((entry) => !entry.startsWith("ops-job-control@"));
+  // Targeted functions are handled above. Preserve the existing fleet repair
+  // for the remaining user-facing canaries.
+  const fleetBroken = broken.filter((entry) => !TARGETED_REPAIRS.has(entry.split("@", 1)[0]));
   if (fleetBroken.length === 0) return broken;
 
   // Dispatch cooldown (29/07): the 1-minute cron used to dispatch on EVERY
