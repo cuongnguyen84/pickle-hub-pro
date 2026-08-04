@@ -427,7 +427,9 @@ async function fetchLatestScheduledDuprWorkflow(): Promise<GitHubWorkflowRun | n
   if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
 
   const response = await fetch(
-    "https://api.github.com/repos/cuongnguyen84/pickle-hub-pro/actions/workflows/dupr-refresh.yml/runs?per_page=1&event=schedule",
+    // Không lọc event=schedule: run kích tay qua nút Fix/workflow_dispatch cũng là
+    // một lần refresh dữ liệu thật, phải được tính để trạng thái job tự xanh lại.
+    "https://api.github.com/repos/cuongnguyen84/pickle-hub-pro/actions/workflows/dupr-refresh.yml/runs?per_page=1",
     { headers },
   );
 
