@@ -158,6 +158,30 @@ async function requestEdgeRepair(functionSlug: string, requestedBy: string): Pro
   return `🛠 Đã khởi động recovery workflow cho ${functionSlug}. GitHub sẽ redeploy, probe lại runtime và báo kết quả qua Telegram.`;
 }
 
+// Job chạy bằng GitHub Actions không retry được qua pg_net — kích workflow_dispatch
+// trên chính workflow của job (tra từ ops_cron_monitors.external_identifier).
+async function requestWorkflowRun(supabase: ReturnType<typeof createClient>, job: Job): Promise<string> {
+  if (!githubToken) throw new Error("github_ops_token_missing");
+  const { data } = await supabase.from("ops_cron_monitors")
+    .select("external_identifier").eq("monitor_key", job.job_key).maybeSingle();
+  const workflowFile = (data as { external_identifier?: string | null } | null)?.external_identifier;
+  if (!workflowFile) {
+    return `⛔ ${job.display_name} chạy bằng GitHub Actions nhưng chưa khai báo workflow trong ops_cron_monitors.external_identifier nên bot không kích lại được.`;
+  }
+  const response = await fetch(`https://api.github.com/repos/${githubRepository}/actions/workflows/${workflowFile}/dispatches`, {
+    method: "POST",
+    headers: { "Accept": "application/vnd.github+json", "Authorization": `Bearer ${githubToken}`, "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
+    body: JSON.stringify({ ref: "main" }),
+  });
+  if (!response.ok) {
+    if (response.status === 403 || response.status === 422) {
+      return `⛔ Không kích được ${workflowFile} (HTTP ${response.status}) — workflow có thể đang bị disable trên GitHub. Bật lại: https://github.com/${githubRepository}/actions/workflows/${workflowFile}`;
+    }
+    throw new Error(`github_workflow_dispatch_${response.status}: ${(await response.text()).slice(0, 300)}`);
+  }
+  return `🛠 Đã kích workflow ${workflowFile} chạy lại cho ${job.display_name}. Theo dõi: https://github.com/${githubRepository}/actions — trạng thái job sẽ tự xanh sau khi run thành công.`;
+}
+
 async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId?: number): Promise<Record<string, unknown>> {
   let query = supabase.from("telegram_commands")
     .select("id,chat_id,text,from_id,from_username")
@@ -218,6 +242,13 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
               processed++;
               continue;
             }
+          }
+          if (job.executor === "github_actions") {
+            reply = await requestWorkflowRun(supabase, job);
+            await sendTelegram(chatId, reply);
+            await supabase.from("telegram_commands").update({ status: "done", processed_at: new Date().toISOString(), result: reply }).eq("id", row.id);
+            processed++;
+            continue;
           }
           const { data: retry, error: retryError } = await supabase.rpc("ops_request_job_retry", {
             p_job_key: key, p_source: "telegram",
