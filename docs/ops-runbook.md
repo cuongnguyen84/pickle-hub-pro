@@ -322,3 +322,47 @@ projects self-skip without env. Notable projects in `playwright.config.ts`:
 tl-primary">` (see `docs/design-tokens.md`). Advisory during trial;
 **promote to HARD after 2026-08-01** if no false positives (roadmap loose
 end — flip the rule in the script header).
+
+## 8. Agent pipeline scripts (`scripts/agents/`, added 2026-08-04)
+
+The `/idea` and `/ship` agents call these by path. **Until 2026-08-04 the
+directory did not exist**, so every invocation failed silently and the agent
+improvised — which is how "soak 30m 🟢" got reported for runs that never
+measured anything. If you add a script reference to a file in
+`.claude/agents/`, add the script in the same PR.
+
+### 8.1 `risk-tier.mjs` — can `git revert` undo this?
+
+```sh
+node scripts/agents/risk-tier.mjs --base origin/main --json
+node scripts/agents/risk-tier.mjs --files "a.ts,b.sql" --exit-code   # 2=RED 1=AMBER 0=GREEN
+```
+
+🔴 RED = revert does **not** undo it: `supabase/migrations/` (SQL already ran),
+`apple/` (App Store), `workers/*/src` (deploys via wrangler, not main),
+`supabase/config.toml` (`verify_jwt` 401s every user).
+🟡 AMBER = revert works but something else must be redeployed or invalidated:
+edge functions, SSR render + sitemap, build/dependency surface, CI, content/i18n.
+Unknown paths are **AMBER, never GREEN** — an unreasoned surface is not a safe
+one. The verdict is a floor: risk-auditor may raise a tier, never lower it.
+
+### 8.2 `soak-watch.mjs` — did this deploy introduce a new error?
+
+```sh
+# BEFORE merge — you cannot detect a new signature without knowing the old ones
+node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-<slug>.json
+# AFTER deploy
+node scripts/agents/soak-watch.mjs --watch --baseline-file /tmp/soak-<slug>.json \
+  --minutes 30 --interval 3 --json
+```
+
+Watches `client_errors` for a **signature** (message + first stack line, same
+fingerprint as `errors-telegram-alert`) absent from the 24h baseline. Not
+volume — volume tracks traffic and means nothing. Exit **1** = new signature →
+revert now; it bails on the first hit rather than waiting out the window.
+Exit **2** = bad input (it refuses to run rather than report on nothing).
+
+Two things it does not prove, both of which have been mistaken for proof:
+a clean soak means nothing threw that never threw before — **not** that anyone
+used the feature; and it only sees browser errors, so an edge-function 500 that
+never reaches a browser is invisible.
