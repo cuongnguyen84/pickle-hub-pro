@@ -17,14 +17,11 @@
  *
  * Pipeline per news_item:
  *   1. Validate eligibility (language='vi', ai_translated=true, status='published').
- *   2. Quiet hours — outside FB_POST_WINDOW_VN (VN local, default 7-21) defer;
- *      the 15-min catchup cron posts the backlog next morning. Manual /run
- *      with an explicit news_item_id bypasses the window.
+ *   2. Check fb_post_log — if already posted, skip; if failed, retry (UPDATE row).
  *   3. Rate limit — if last 'posted' row < FB_POST_MIN_GAP_MINUTES ago, defer (202).
- *   4. Check fb_post_log — if already posted, skip; if failed, retry (UPDATE row).
- *   5. Gemini generates VN caption per the pickleball-social-content skill spec.
- *   6. POST Graph API /{page-id}/feed (text + link). With image_url, use /photos.
- *   7. Upsert fb_post_log with status='posted' or 'failed'.
+ *   4. Gemini generates VN caption per the pickleball-social-content skill spec.
+ *   5. POST Graph API /{page-id}/feed (text + link). With image_url, use /photos.
+ *   6. Upsert fb_post_log with status='posted' or 'failed'.
  *
  * Idempotency:
  *   fb_post_log.news_item_id is UNIQUE. UPSERT ON CONFLICT DO UPDATE on retries.
@@ -43,7 +40,6 @@ export interface Env {
   SITE_URL: string;
   FB_GRAPH_VERSION: string;
   FB_POST_MIN_GAP_MINUTES: string;
-  FB_POST_WINDOW_VN?: string;
   GEMINI_MODEL: string;
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
@@ -98,6 +94,9 @@ interface FacebookPage {
 // A 'pending' row older than this is considered orphaned (the Worker that
 // claimed it crashed/timed out before finalizing) and may be re-claimed.
 const STALE_PENDING_MS = 10 * 60 * 1000;
+const FACEBOOK_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const FACEBOOK_START_HOUR = 7;
+const FACEBOOK_END_HOUR = 20;
 
 interface SupabaseWebhookPayload {
   type: 'INSERT' | 'UPDATE' | 'DELETE';
@@ -262,8 +261,7 @@ async function handleRun(env: Env, body: RunBody): Promise<Response> {
       results.push({ page_key: page.key, skipped: true, reason: 'no_eligible_item' });
       continue;
     }
-    // Explicit news_item_id = deliberate admin action → bypass quiet hours.
-    results.push(await processNewsItem(env, page, item, dryRun, !!body.news_item_id));
+    results.push(await processNewsItem(env, page, item, dryRun));
   }
 
   return json({ ok: true, results });
@@ -278,7 +276,6 @@ async function processNewsItem(
   page: FacebookPage,
   item: NewsItem,
   dryRun: boolean,
-  force = false,
 ): Promise<Record<string, unknown>> {
   // 1. Eligibility
   const reason = checkEligible(item);
@@ -306,21 +303,21 @@ async function processNewsItem(
     };
   }
 
-  // 3. Quiet hours — DB webhook fires whenever news-rewrite creates a VI row,
-  // which for US-sourced news is usually the middle of the VN night. Defer
-  // instead of posting; the catchup cron (07:00-19:45 VN window) drains the
-  // backlog next morning. No row is claimed, so nothing needs cleanup.
-  if (!force && !isWithinPostWindow(env)) {
+  // Real Facebook publishing is restricted to daytime in Vietnam. Items
+  // crawled/translated overnight remain eligible and unclaimed, so the
+  // catch-up cron drains them gradually after 07:00 instead of dropping or
+  // bursting them during the night.
+  if (!isFacebookPostingWindow()) {
     return {
       deferred: true,
       page_key: page.key,
       news_item_id: item.id,
-      reason: 'quiet_hours',
-      window_vn: env.FB_POST_WINDOW_VN ?? DEFAULT_POST_WINDOW_VN,
+      reason: 'outside_posting_window',
+      posting_window: '07:00-20:00 Asia/Ho_Chi_Minh',
     };
   }
 
-  // 4. Rate limit — best-effort pre-check before the claim. Cheap, and avoids
+  // 3. Rate limit — best-effort pre-check before the claim. Cheap, and avoids
   // burning the per-row claim slot when we already know we'll defer.
   const gapOk = await checkRateLimit(env, page.id);
   if (!gapOk) {
@@ -333,7 +330,7 @@ async function processNewsItem(
     };
   }
 
-  // 5. Atomic claim on fb_post_log — only one concurrent invocation may
+  // 4. Atomic claim on fb_post_log — only one concurrent invocation may
   // proceed past this line for any given news_item_id. Prevents Supabase
   // duplicate webhooks from producing duplicate FB posts.
   const claim = await claimFbPostLog(env, page, item.id);
@@ -348,7 +345,7 @@ async function processNewsItem(
 
   const attemptCount = claim.row?.attempt_count ?? 1;
 
-  // 6-8. Caption + post. CRITICAL: everything from here on must be wrapped so
+  // 5-7. Caption + post. CRITICAL: everything from here on must be wrapped so
   // a thrown error (e.g. Gemini/social-caption failure) ALWAYS finalizes the
   // claimed row to 'failed'. Otherwise the row stays 'pending' forever and
   // blocks the catchup queue (pickNextNewsItem keeps re-picking it, claim
@@ -356,14 +353,14 @@ async function processNewsItem(
   // 2026-05-28 outage where posting stopped for ~2 days.
   let caption = '';
   try {
-    // 6. Generate caption via social-caption Edge Function (Gemini proxy)
+    // 5. Generate caption via social-caption Edge Function (Gemini proxy)
     caption = await generateCaption(env, item);
 
-    // 7. Build Graph API payload
+    // 6. Build Graph API payload
     const link = buildNewsLink(env, item);
     const fbPayload = buildFbPayload(item, caption);
 
-    // 8. Post to FB
+    // 7. Post to FB
     const fbResult = await postToFacebook(env, page, fbPayload);
     const postedId = fbResult?.post_id ?? fbResult?.id ?? null;
     if (!postedId) {
@@ -419,6 +416,16 @@ async function processNewsItem(
   }
 }
 
+export function isFacebookPostingWindow(now = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: FACEBOOK_TIME_ZONE,
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? -1);
+  return hour >= FACEBOOK_START_HOUR && hour < FACEBOOK_END_HOUR;
+}
+
 // ---------------------------------------------------------------------------
 // Eligibility
 // ---------------------------------------------------------------------------
@@ -431,28 +438,6 @@ function checkEligible(item: NewsItem | null | undefined): string | null {
   if (!item.title || item.title.trim().length === 0) return 'no_title';
   if (!item.slug || item.slug.trim().length === 0) return 'no_slug';
   return null;
-}
-
-// ---------------------------------------------------------------------------
-// Quiet hours
-// ---------------------------------------------------------------------------
-
-// Posting window in VN local hours (UTC+7, no DST), format "start-end".
-// US pickleball sources publish during the VN night; without this guard the
-// DB webhook posted to both Pages at 01:45-06:30 VN on 2026-08-03.
-const DEFAULT_POST_WINDOW_VN = '7-21';
-
-export function isWithinPostWindow(env: Env, nowMs = Date.now()): boolean {
-  const spec = env.FB_POST_WINDOW_VN ?? DEFAULT_POST_WINDOW_VN;
-  const m = spec.match(/^(\d{1,2})-(\d{1,2})$/);
-  // Malformed spec fails open (post) — same policy as checkRateLimit.
-  if (!m) return true;
-  const start = Number(m[1]);
-  const end = Number(m[2]);
-  const vnHour = new Date(nowMs + 7 * 3_600_000).getUTCHours();
-  return start <= end
-    ? vnHour >= start && vnHour < end
-    : vnHour >= start || vnHour < end;
 }
 
 // ---------------------------------------------------------------------------
@@ -867,9 +852,13 @@ export function sanitizeCaption(text: string): string {
   out = out.replace(/^📝?\s*BÀI ĐĂNG FACEBOOK.*$/im, '').trim();
   // The canonical URL is published as the first Page comment, never in the
   // main caption—even if a stale prompt or model response includes it.
+  // Line scan instead of /^.*https?:\/\/\S+.*$/gim and /[ \t]+\n/g — both
+  // anchored/repetition regexes are polynomial on adversarial input (CodeQL
+  // js/polynomial-redos); per-line test + trimEnd() are linear.
   out = out
-    .replace(/^.*https?:\/\/\S+.*$/gim, '🔗 Link bài viết ở bình luận đầu tiên.')
-    .replace(/[ \t]+\n/g, '\n')
+    .split('\n')
+    .map((line) => (/https?:\/\//i.test(line) ? '🔗 Link bài viết ở bình luận đầu tiên.' : line.trimEnd()))
+    .join('\n')
     .trim();
   // Collapse 3+ newlines.
   out = out.replace(/\n{3,}/g, '\n\n');

@@ -582,9 +582,24 @@ async function fetchArticleBody(rawUrl: string): Promise<string | null> {
   return body.length >= MIN_FULL_BODY_CHARS ? body : null;
 }
 
+// Linear-time comment stripper (CodeQL js/polynomial-redos: the old
+// /<!--[\s\S]*?-->/ regex is quadratic on pathological "<!--<!--<!--" input,
+// and this runs on HTML fetched from external sources).
+function stripHtmlComments(html: string): string {
+  let out = "";
+  let i = 0;
+  for (;;) {
+    const start = html.indexOf("<!--", i);
+    if (start === -1) return out + html.slice(i);
+    out += html.slice(i, start) + " ";
+    const end = html.indexOf("-->", start + 4);
+    if (end === -1) return out; // unterminated comment swallows the rest, same as the regex did
+    i = end + 3;
+  }
+}
+
 export function extractArticleText(html: string): string {
-  const withoutNoise = html
-    .replace(/<!--[\s\S]*?-->/g, " ")
+  const withoutNoise = stripHtmlComments(html)
     .replace(/<(script|style|svg|nav|footer|header|aside|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ");
   const articleMatch =
     withoutNoise.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i) ??

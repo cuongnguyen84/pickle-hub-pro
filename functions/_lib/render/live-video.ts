@@ -24,7 +24,7 @@ import { render404 } from "./static-pages";
 export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: string): Promise<Response> {
   const { data: ls } = await supabase
     .from("public_livestreams")
-    .select("id, title, description, thumbnail_url, status, scheduled_start_at, started_at, ended_at, created_at, organization_id, tournament_id, mux_playback_id")
+    .select("id, title, description, thumbnail_url, status, scheduled_start_at, started_at, ended_at, created_at, organization_id, tournament_id, mux_playback_id, mux_asset_playback_id")
     .eq("id", id)
     .single();
 
@@ -47,7 +47,11 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
 
   const pageUrl = `${siteUrl}/live/${id}`;
   const embedUrl = `${siteUrl}/embed/live/${id}`;
-  const videoUrl = ls.mux_playback_id ? `https://stream.mux.com/${ls.mux_playback_id}.m3u8` : null;
+  // Ended streams play the recorded asset, not the (now-dead) live playback
+  // id — mirror WatchLive.tsx so VideoObject.contentUrl points at a URL
+  // that actually serves video.
+  const playbackId = isEnded && ls.mux_asset_playback_id ? ls.mux_asset_playback_id : ls.mux_playback_id;
+  const videoUrl = playbackId ? `https://stream.mux.com/${playbackId}.m3u8` : null;
 
   // ISO 8601 duration
   let durationIso = "";

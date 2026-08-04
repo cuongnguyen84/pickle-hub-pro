@@ -387,7 +387,9 @@ function StatusBadge({
   const variantStyle: React.CSSProperties =
     variant === "verified"
       ? {
-          color: "var(--tl-green)",
+          // a11y CLOSE-03: --tl-green on the glow bg is 3.84:1 in light mode
+          // (10px text needs 4.5) — green-dim is 5.44:1 light / still AA dark.
+          color: "var(--tl-green-dim)",
           borderColor: "var(--tl-green-dim)",
           background: "var(--tl-green-glow)",
         }

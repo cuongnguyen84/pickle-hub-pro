@@ -179,7 +179,7 @@ Function `send-push-notification` verifies the JWT internally and requires the a
 
 The admin role requires an **aal2 session** (TOTP via Supabase MFA) once the user has a verified factor — self-activating, enforced in `is_admin()`/`has_role()` (migrations `20260730090000` + `20260730100000` sweep) and in admin-privileged edge functions via `_shared/admin-aal.ts`. UI gate: `AdminMFAGate` (wraps `AdminLayout` + `RequireAuth requiredRole="admin"`). Lost authenticator → delete the row in `auth.mfa_factors` to unlock.
 
-## Supabase Edge Functions (50 active)
+## Supabase Edge Functions (80 active — count enforced by `npm run auth:registry`)
 
 Browse: `supabase/functions/`. Categories:
 
@@ -200,7 +200,7 @@ _(none currently — Red5 residual columns were dropped by migration `2026071617
 - **Code output:** Always write complete files for copy-paste. No snippets, no partial diffs. Especially for Cloudflare Worker, Supabase edge functions, config files.
 - **Vietnamese comments OK** in code where Cuong is the sole maintainer.
 - **Bilingual content:** All user-facing text should have Vietnamese and English translations.
-- **Follow existing patterns:** Match the code style of surrounding files. Many pages have `.legacy.tsx` siblings used for 14-day rollback windows — do not edit legacy files unless rolling back.
+- **Follow existing patterns:** Match the code style of surrounding files. `.legacy.tsx` rollback siblings: all retired as of 2026-08-03 (CLOSE-03 audit — 0 files remain); if one reappears it is a 14-day rollback window — do not edit it unless rolling back.
 
 ## Response Style
 

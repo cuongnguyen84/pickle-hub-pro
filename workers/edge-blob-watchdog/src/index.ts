@@ -1,7 +1,7 @@
 /**
  * edge-blob-watchdog — see wrangler.toml header for the incident context.
  *
- * Every 5 minutes: GET a canary set of Supabase edge functions. Any body
+ * Every minute: GET a canary set of Supabase edge functions. Any body
  * containing NOT_FOUND_FUNCTION_BLOB → dispatch uptime-ping.yml on main,
  * whose blob-sweep step redeploys the whole fleet and pings Telegram 🩹.
  *
@@ -16,8 +16,15 @@ interface Env {
 const PROJECT_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co";
 const REPO = "cuongnguyen84/pickle-hub-pro";
 const WORKFLOW = "uptime-ping.yml";
+const TARGETED_REPAIR_WORKFLOW = "edge-function-repair.yml";
+const TARGETED_REPAIRS = new Set(["ops-job-control", "pro-tour-trigger-scrape"]);
 
 const CANARIES = [
+  // Telegram's webhook points here. If this blob disappears, operational
+  // commands such as /jobs never reach the queue, so keep it in the
+  // independent Cloudflare watchdog rather than relying on Supabase itself.
+  "ops-job-control",
+  "pro-tour-trigger-scrape",
   "geo-check",
   "send-auth-email",
   "phone-otp-send",
@@ -70,6 +77,33 @@ async function run(env: Env): Promise<string[]> {
 
   if (broken.length === 0) return broken;
 
+  const brokenFunctions = new Set(broken.map((entry) => entry.split("@", 1)[0]));
+
+  // The Telegram command receiver is itself hosted on Supabase. Repair it via
+  // the targeted workflow, which handles Supabase's 409 "deployment already
+  // exists" failure by deleting and recreating only this approved function.
+  // The older fleet workflow cannot recover reliably from that 409.
+  for (const functionSlug of brokenFunctions) {
+    if (!TARGETED_REPAIRS.has(functionSlug)) continue;
+    const repairInFlight = await hasRecentRun(env, TARGETED_REPAIR_WORKFLOW, 5 * 60_000);
+    if (repairInFlight) {
+      console.error(`[watchdog] ${functionSlug} blob-less — targeted repair ran <5min ago`);
+    } else {
+      await dispatchRepair(env, TARGETED_REPAIR_WORKFLOW, {
+        ref: "main",
+        inputs: {
+          function_slug: functionSlug,
+          requested_by: "edge-blob-watchdog",
+        },
+      });
+    }
+  }
+
+  // Targeted functions are handled above. Preserve the existing fleet repair
+  // for the remaining user-facing canaries.
+  const fleetBroken = broken.filter((entry) => !TARGETED_REPAIRS.has(entry.split("@", 1)[0]));
+  if (fleetBroken.length === 0) return broken;
+
   // Dispatch cooldown (29/07): the 1-minute cron used to dispatch on EVERY
   // tick while a region stayed broken — 100 runs in 6.3h ≈ 12k billed
   // Actions-min/month. A heal takes ~2 min and the eviction recurs ~30 min
@@ -99,7 +133,7 @@ async function run(env: Env): Promise<string[]> {
       const createdAt = data.workflow_runs?.[0]?.created_at;
       if (createdAt && Date.now() - Date.parse(createdAt) < COOLDOWN_MS) {
         console.error(
-          `[watchdog] blob-less: ${broken.join(", ")} — heal dispatched <30min ago, cooldown`,
+          `[watchdog] blob-less: ${fleetBroken.join(", ")} — heal dispatched <30min ago, cooldown`,
         );
         return broken;
       }
@@ -108,9 +142,18 @@ async function run(env: Env): Promise<string[]> {
     // Cooldown check failing must not block the heal itself.
   }
 
-  console.error(`[watchdog] blob-less canaries: ${broken.join(", ")} — dispatching heal`);
+  console.error(`[watchdog] blob-less canaries: ${fleetBroken.join(", ")} — dispatching heal`);
+  await dispatchRepair(env, WORKFLOW, { ref: "main" });
+  return broken;
+}
+
+async function dispatchRepair(
+  env: Env,
+  workflow: string,
+  payload: Record<string, unknown>,
+): Promise<void> {
   const res = await fetch(
-    `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+    `https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`,
     {
       method: "POST",
       headers: {
@@ -118,11 +161,32 @@ async function run(env: Env): Promise<string[]> {
         Accept: "application/vnd.github+json",
         "User-Agent": "edge-blob-watchdog",
       },
-      body: JSON.stringify({ ref: "main" }),
+      body: JSON.stringify(payload),
     },
   );
   if (!res.ok) {
-    console.error(`[watchdog] dispatch failed: ${res.status} ${await res.text()}`);
+    console.error(`[watchdog] ${workflow} dispatch failed: ${res.status} ${await res.text()}`);
   }
-  return broken;
+}
+
+async function hasRecentRun(env: Env, workflow: string, maxAgeMs: number): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/runs?per_page=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${env.GH_DISPATCH_PAT}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "edge-blob-watchdog",
+        },
+      },
+    );
+    if (!res.ok) return false;
+    const data = (await res.json()) as { workflow_runs?: Array<{ created_at?: string }> };
+    const createdAt = data.workflow_runs?.[0]?.created_at;
+    return Boolean(createdAt && Date.now() - Date.parse(createdAt) < maxAgeMs);
+  } catch {
+    // A failed cooldown check must not suppress recovery.
+    return false;
+  }
 }

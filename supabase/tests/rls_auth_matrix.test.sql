@@ -7,7 +7,7 @@
 
 BEGIN;
 
-SELECT plan(21);
+SELECT plan(23);
 
 -- ─── Blanket matrix ─────────────────────────────────────────────────────────
 
@@ -133,6 +133,17 @@ SELECT throws_ok(
   'authenticated non-admin cannot INSERT into api_keys'
 );
 
+-- event_registrations writes are RPC-only since 20260804090000: a direct
+-- INSERT forging payment_status='paid' (skipping the DB-01 capacity lock and
+-- prepayment) must die on the missing grant before any constraint runs.
+SELECT throws_ok(
+  $$INSERT INTO public.event_registrations (event_id, profile_id, display_name, payment_status)
+    VALUES (gen_random_uuid(), '0a030001-0000-4000-8000-000000000001'::uuid, 'QA03 Forged Paid', 'paid')$$,
+  '42501',
+  NULL,
+  'authenticated user cannot INSERT a paid event_registrations row directly'
+);
+
 RESET ROLE;
 
 -- Allow control: promote user A to admin and the same read must now succeed
@@ -207,6 +218,19 @@ SELECT is(
   ),
   0,
   'the only write policy on user_roles is the admin-gated one'
+);
+
+-- event_registrations INSERT policies were dropped by 20260804090000 (writes
+-- go through SECURITY DEFINER RPCs / service_role). A new INSERT policy here
+-- re-opens the forge-paid bypass and must be reviewed.
+SELECT is(
+  (
+    SELECT COUNT(*)::int FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'event_registrations'
+      AND cmd = 'INSERT'
+  ),
+  0,
+  'no INSERT policies exist on event_registrations'
 );
 
 SELECT * FROM finish();

@@ -11,9 +11,11 @@ describe("layout-stable public content surfaces", () => {
     const news = source("src/components/home/HomeNewsFeed.tsx");
     const live = source("src/components/home/LiveSection.tsx");
 
-    expect(home).toContain("const liveLeads = hasLiveData || scheduledStreams.length > 0");
-    expect(home).toContain("liveLeads ? liveNode : null");
-    expect(home).toContain("priority={liveLeads}");
+    expect(home).toContain(
+      "hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0",
+    );
+    expect(home).toContain("const liveNode = liveLeads");
+    expect(home).toContain("priority");
     expect(home).toContain("viPostsLoading");
     expect(home).toContain("isLoading={homeNewsQuery.isLoading}");
     expect(news).toContain("tl-news-item--skeleton");

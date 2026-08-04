@@ -62,6 +62,23 @@ function jobsText(jobs: Job[]): string {
 
 type EdgeState = { function_slug: string; display_name: string; job_key: string | null; state: string; http_status: number | null; response_ms: number | null; reason: string | null };
 
+type FacebookCounts = { thepicklehub: number | null; taPickleball: number | null };
+
+async function facebookCountsToday(supabase: ReturnType<typeof createClient>): Promise<FacebookCounts> {
+  const date = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date());
+  const start = new Date(`${date}T00:00:00+07:00`);
+  const { data, error } = await supabase.from("fb_post_log").select("page_key")
+    .eq("status", "posted").gte("posted_at", start.toISOString())
+    .lt("posted_at", new Date(start.getTime() + 86_400_000).toISOString());
+  if (error) return { thepicklehub: null, taPickleball: null };
+  return {
+    thepicklehub: (data ?? []).filter((row) => row.page_key === "thepicklehub").length,
+    taPickleball: (data ?? []).filter((row) => row.page_key === "ta-pickleball").length,
+  };
+}
+
 async function edgeStates(supabase: ReturnType<typeof createClient>): Promise<EdgeState[]> {
   const { data, error } = await supabase.from("ops_edge_function_registry")
     .select("function_slug,display_name,job_key,ops_edge_function_state(state,http_status,response_ms,reason)")
@@ -169,8 +186,9 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       let replyMarkup: Record<string, unknown> | undefined;
       if (command.toLowerCase().startsWith("/jobs")) {
         const functions = await edgeStates(supabase);
+        const facebook = await facebookCountsToday(supabase);
         const failedEdges = functions.filter((fn) => fn.state !== "available").length;
-        reply = `${jobsText(jobs)}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
+        reply = `${jobsText(jobs)}\n📣 Facebook hôm nay: ThePickleHub ${facebook.thepicklehub ?? "—"} bài · TAPickleball ${facebook.taPickleball ?? "—"} bài\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
         replyMarkup = jobActionButtons(jobs);
       } else if (command.toLowerCase().startsWith("/functions")) {
         reply = functionsText(await edgeStates(supabase));

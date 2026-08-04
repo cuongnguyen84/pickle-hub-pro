@@ -71,6 +71,48 @@ const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"
 
 const HOME_NEWS_LIMIT = 4;
 
+/* Featured story image with graceful degradation. The card src defaults to
+   the -768 responsive variant and mobile srcSet picks the 768w candidate; if
+   that 404s (e.g. a hero committed without its -768 sibling, as happened
+   2026-08-03) onError falls back to the full-size image, then to a branded
+   placeholder. A null/empty cover renders the placeholder directly instead of
+   a bare dark gradient. Mirrors Blog.tsx's per-image onError guard. */
+const StoryImage = ({
+  story,
+  index,
+}: {
+  story: { image: string | null; imageAlt: string };
+  index: number;
+}) => {
+  const image = normalizeImageUrl(story.image);
+  // 0 = responsive (-768 + srcSet) | 1 = full image only | 2 = placeholder
+  const [stage, setStage] = useState(0);
+  if (!image || stage >= 2) {
+    return <div className="tl-blog-card-img-placeholder" aria-hidden="true" />;
+  }
+  const responsive = stage === 0 ? blogHeroSrcSet(image) : undefined;
+  return (
+    <img
+      src={responsive?.small ?? image}
+      srcSet={responsive?.srcSet}
+      sizes={
+        responsive
+          ? index === 0
+            ? "(min-width: 1100px) 800px, (min-width: 640px) 50vw, calc(100vw - 32px)"
+            : "(min-width: 1100px) 390px, (min-width: 640px) 50vw, calc(100vw - 32px)"
+          : undefined
+      }
+      alt={story.imageAlt}
+      width={1600}
+      height={900}
+      loading={index === 0 ? "eager" : "lazy"}
+      fetchPriority={index === 0 ? "high" : "auto"}
+      decoding="async"
+      onError={() => setStage((s) => s + 1)}
+    />
+  );
+};
+
 const Index = () => {
   const { language } = useI18n();
   const liveQuery = useLivestreams("live");
@@ -492,29 +534,10 @@ const Index = () => {
               {/* Only the 2 most recent on the home feed — the rest live
                   behind the "see all stories" button below. */}
               <div className="tl-stories-grid">
-                {stories.slice(0, 2).map((story, index) => {
-                  const image = normalizeImageUrl(story.image);
-                  const responsive = blogHeroSrcSet(image);
-                  return (
+                {stories.slice(0, 2).map((story, index) => (
                     <Link key={story.slug} to={story.href} className="tl-story">
                       <div className="tl-story-img">
-                        {image ? (
-                          <img
-                            src={responsive?.small ?? image}
-                            srcSet={responsive?.srcSet}
-                            sizes={
-                              index === 0
-                                ? "(min-width: 1100px) 800px, (min-width: 640px) 50vw, calc(100vw - 32px)"
-                                : "(min-width: 1100px) 390px, (min-width: 640px) 50vw, calc(100vw - 32px)"
-                            }
-                            alt={story.imageAlt}
-                            width={1600}
-                            height={900}
-                            loading={index === 0 ? "eager" : "lazy"}
-                            fetchPriority={index === 0 ? "high" : "auto"}
-                            decoding="async"
-                          />
-                        ) : null}
+                        <StoryImage story={story} index={index} />
                         {story.tag && <span className="tl-story-tag">{story.tag}</span>}
                       </div>
                       <div className="tl-story-body">
@@ -531,8 +554,7 @@ const Index = () => {
                         </div>
                       </div>
                     </Link>
-                  );
-                })}
+                ))}
               </div>
 
               <div style={{ textAlign: "center", marginTop: 32 }}>
@@ -565,29 +587,29 @@ const Index = () => {
           </section>
         ) : null;
 
-        const liveLeads = hasLiveData || scheduledStreams.length > 0;
-        const liveNode =
-          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
-            ? {
-                key: "live",
-                node: (
-                  <LiveSection
-                    liveStreams={liveStreams}
-                    scheduledStreams={scheduledStreams}
-                    endedStreams={recentEnded}
-                    language={language}
-                    priority={liveLeads}
-                  />
-                ),
-              }
-            : null;
+        // Live leads whenever a stream is on air, scheduled, OR ended within
+        // 7 days (restores the 4f8c53b1 replay-window behavior dropped by
+        // 48a94353/#501 — owner call: replays hold the top slot for a week).
+        const liveLeads =
+          hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0;
+        const liveNode = liveLeads
+          ? {
+              key: "live",
+              node: (
+                <LiveSection
+                  liveStreams={liveStreams}
+                  scheduledStreams={scheduledStreams}
+                  endedStreams={recentEnded}
+                  language={language}
+                  priority
+                />
+              ),
+            }
+          : null;
 
-        // Restore #501 behavior: active and upcoming broadcasts always lead.
-        // Only replay-only content follows the weekly editorial section.
         const cluster: Array<{ key: string; node: ReactNode }> = [
-          liveLeads ? liveNode : null,
+          liveNode,
           editorialNode ? { key: "editorial", node: editorialNode } : null,
-          liveLeads ? null : liveNode,
           {
             key: "news",
             node: (
