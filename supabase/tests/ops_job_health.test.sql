@@ -1,6 +1,6 @@
 BEGIN;
 
-SELECT plan(27);
+SELECT plan(29);
 
 SELECT has_table('public', 'ops_job_registry', 'job registry exists');
 SELECT has_table('public', 'ops_job_runs', 'job run ledger exists');
@@ -13,8 +13,15 @@ SELECT has_table('public', 'ops_edge_function_state', 'edge runtime state exists
 
 SELECT is(
   (SELECT count(*) FROM public.ops_job_registry WHERE enabled),
-  10::bigint,
-  'exactly ten business jobs are enabled'
+  13::bigint,
+  'exactly thirteen business jobs are enabled'
+);
+
+SELECT has_column('public', 'ops_edge_function_registry', 'probe_url', 'registry supports external URL probes');
+SELECT is(
+  (SELECT count(*) FROM public.ops_edge_function_registry WHERE enabled AND probe_url IS NOT NULL),
+  2::bigint,
+  'sitemap and prerender Pages surfaces are URL-probed'
 );
 
 SELECT ok(

@@ -15,6 +15,7 @@
 #     SITE_URL                      Frontend canonical (https://www.thepicklehub.net)
 #     FB_GRAPH_VERSION              Graph API version (e.g. v20.0)
 #     FB_POST_MIN_GAP_MINUTES       Min gap between posts (default 5)
+#     FB_POST_WINDOW_VN             Posting window, VN local hours (default 7-21)
 #     GEMINI_MODEL                  Gemini model name (e.g. gemini-2.0-flash)
 #
 #   [secrets] (wrangler secret put)
@@ -42,6 +43,11 @@ SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
 SITE_URL = "https://www.thepicklehub.net"
 FB_GRAPH_VERSION = "v20.0"
 FB_POST_MIN_GAP_MINUTES = "15"
+# Quiet hours: no auto-posts outside 07:00-21:00 VN. The webhook fires when
+# news-rewrite creates VI rows (US news = VN night); deferred items are
+# drained by the catchup cron next morning. Manual /run with news_item_id
+# bypasses this window.
+FB_POST_WINDOW_VN = "7-21"
 GEMINI_MODEL = "gemini-flash-lite-latest"
 FB_SECONDARY_PAGE_ID = "376956272170210"
 FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"
