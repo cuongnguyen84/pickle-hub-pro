@@ -232,9 +232,13 @@ describe("Edge Function CORS and server entrypoints", () => {
   });
 
   it("uses Deno.serve for every function entrypoint", () => {
-    expect(functionSources).toHaveLength(76);
+    expect(functionSources).toHaveLength(80);
     for (const [functionName, source] of functionSources) {
-      expect(source, functionName).toContain("Deno.serve(");
+      const alias = source.match(/import\s+["']\.\.\/([^/]+)\/index\.ts["']/)?.[1];
+      const effectiveSource = alias ? functionSources.get(alias) : source;
+      expect(effectiveSource, `${functionName}${alias ? ` -> ${alias}` : ""}`).toContain(
+        "Deno.serve(",
+      );
       expect(source, functionName).not.toMatch(
         /deno\.land\/std@[^"']+\/http\/server\.ts/,
       );

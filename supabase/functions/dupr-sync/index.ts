@@ -21,6 +21,8 @@
 //      preserved for that revival.
 //
 // Cron: daily 03:00 UTC+7 (= 20:00 UTC previous day) via Supabase Dashboard.
+// Deployment revision 2026-08-02: republished after intermittent
+// NOT_FOUND_FUNCTION_BLOB responses from the Edge gateway.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
@@ -32,6 +34,7 @@ import { requireCronRequest } from "../_shared/cron-auth.ts";
 const BACKFILL_WINDOW_DAYS = 90;
 const HISTORY_BUFFER_DAYS = 60; // extra lookback for "before" rating queries
 const UPDATE_BATCH_SIZE = 50;
+const DEPLOYMENT_REVISION = "2026-08-02-function-blob-repair";
 
 interface MatchParticipantRow {
   id: string;
@@ -47,6 +50,7 @@ interface HistoryRow {
 }
 
 Deno.serve(async (req) => {
+  console.log(`[dupr-sync] revision=${DEPLOYMENT_REVISION}`);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -104,6 +108,7 @@ Deno.serve(async (req) => {
   if (profilesTotal === 0) {
     await closeRun(supabase, syncRunId, startedAtMs, 0, 0, []);
     return jsonResponse({
+      deployment_revision: DEPLOYMENT_REVISION,
       sync_run_id: syncRunId,
       profiles_total: 0,
       matches_backfilled: 0,
@@ -134,6 +139,7 @@ Deno.serve(async (req) => {
   );
 
   return jsonResponse({
+    deployment_revision: DEPLOYMENT_REVISION,
     sync_run_id: syncRunId,
     profiles_total: profilesTotal,
     matches_backfilled: matchesBackfilled,

@@ -1,5 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { buildTitle, normalizeImageUrl, sanitizeBlogHtml } from "../utils";
+import { BOT_UA, buildTitle, normalizeImageUrl, sanitizeBlogHtml } from "../utils";
+
+describe("BOT_UA prerender routing", () => {
+  it("keeps PageSpeed and local Lighthouse audits on the human SPA path", () => {
+    const lighthouseUas = [
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+        "(KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Chrome-Lighthouse",
+      "Chrome-Lighthouse",
+    ];
+
+    for (const ua of lighthouseUas) {
+      expect(BOT_UA.test(ua)).toBe(false);
+    }
+  });
+
+  it("continues to prerender Googlebot and Bingbot", () => {
+    const searchCrawlerUas = [
+      "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; " +
+        "bingbot/2.0; +http://www.bing.com/bingbot.htm) Chrome/116 Safari/537.36",
+    ];
+
+    for (const ua of searchCrawlerUas) {
+      expect(BOT_UA.test(ua)).toBe(true);
+    }
+  });
+});
 
 describe("sanitizeBlogHtml", () => {
   it("leaves normal blog markup intact", () => {

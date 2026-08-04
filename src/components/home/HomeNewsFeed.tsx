@@ -6,6 +6,7 @@ interface HomeNewsFeedProps {
   language: "en" | "vi";
   limit?: number;
   news: NewsItem[];
+  isLoading?: boolean;
 }
 
 /**
@@ -35,9 +36,9 @@ const relativeTime = (iso: string, language: "en" | "vi"): string => {
   });
 };
 
-export function HomeNewsFeed({ language, limit = 4, news }: HomeNewsFeedProps) {
+export function HomeNewsFeed({ language, limit = 4, news, isLoading = false }: HomeNewsFeedProps) {
   const items = news.filter((item) => item.slug).slice(0, limit);
-  if (items.length === 0) return null;
+  if (items.length === 0 && !isLoading) return null;
 
   const allHref = language === "vi" ? "/vi/news" : "/news";
   const detailHref = (slug: string) =>
@@ -63,8 +64,19 @@ export function HomeNewsFeed({ language, limit = 4, news }: HomeNewsFeedProps) {
           </Link>
         </div>
 
-        <div className="tl-news-list">
-          {items.map((item) => {
+        <div className="tl-news-list" aria-busy={isLoading || undefined}>
+          {isLoading
+            ? Array.from({ length: limit }, (_, index) => (
+                <div className="tl-news-item tl-news-item--skeleton" key={index} aria-hidden="true">
+                  <div className="tl-news-body">
+                    <span className="tl-feed-skeleton tl-feed-skeleton--eyebrow" />
+                    <span className="tl-feed-skeleton tl-feed-skeleton--title" />
+                    <span className="tl-feed-skeleton tl-feed-skeleton--meta" />
+                  </div>
+                  <div className="tl-news-thumb tl-feed-skeleton" />
+                </div>
+              ))
+            : items.map((item) => {
             const thumbnail = homepageThumbnailUrl(item.image_url, {
               width: 168,
               height: 168,
@@ -99,7 +111,7 @@ export function HomeNewsFeed({ language, limit = 4, news }: HomeNewsFeedProps) {
                 </div>
               </Link>
             );
-          })}
+              })}
         </div>
       </div>
     </section>

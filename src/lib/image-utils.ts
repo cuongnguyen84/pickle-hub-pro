@@ -75,6 +75,47 @@ export function blogHeroSrcSet(
 }
 
 /**
+ * Build responsive candidates for a CMS-managed hero image. Vietnamese blog
+ * covers commonly live in Supabase Storage or Google Drive, so serving the
+ * original 1500px+ asset to a 390px phone needlessly delays LCP. Unknown
+ * origins are left alone because appending resize parameters without a known
+ * CDN contract can break the image.
+ */
+export function cmsHeroImageSources(
+  source: string | null | undefined,
+): { src: string; srcSet?: string } | undefined {
+  if (!source) return undefined;
+
+  const normalized = normalizeImageUrl(source);
+  const local = blogHeroSrcSet(normalized);
+  if (local) return { src: local.small, srcSet: local.srcSet };
+
+  const widths = [480, 768, 1200];
+  const transformed = widths.map((width) => optimizeImageUrl(normalized, { width, quality: 78 }));
+  if (transformed.every((url) => url && url !== normalized)) {
+    return {
+      src: transformed[1]!,
+      srcSet: transformed.map((url, index) => `${url} ${widths[index]}w`).join(", "),
+    };
+  }
+
+  try {
+    const url = new URL(normalized);
+    if (url.hostname === "googleusercontent.com" || url.hostname.endsWith(".googleusercontent.com")) {
+      const base = url.toString().replace(/=w\d+(?:-h\d+)?(?:-[a-z]+)?$/i, "");
+      return {
+        src: `${base}=w768`,
+        srcSet: widths.map((width) => `${base}=w${width} ${width}w`).join(", "),
+      };
+    }
+  } catch {
+    // A relative non-blog path has no known resizing contract.
+  }
+
+  return { src: normalized };
+}
+
+/**
  * Return a bounded thumbnail URL that is safe to use on high-traffic listing
  * surfaces. Remote publishers frequently expose multi-megabyte originals for
  * images that render at 84–224px; loading those originals on the homepage was

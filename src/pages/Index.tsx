@@ -91,7 +91,7 @@ const Index = () => {
   const { data: homeStats } = useHomepageStats();
   // VI homepage stories come from Supabase vi_blog_posts (mirrors /vi/blog) so
   // VI-only posts without an EN manifest entry still surface on the homepage.
-  const { data: viPosts = [] } = usePublishedViBlogPosts();
+  const { data: viPosts = [], isLoading: viPostsLoading } = usePublishedViBlogPosts();
 
   const homeNewsQuery = useNewsItems({
     limit: HOME_NEWS_LIMIT + 6,
@@ -415,7 +415,7 @@ const Index = () => {
                   width={2400}
                   height={600}
                   loading="eager"
-                  fetchPriority="high"
+                  fetchPriority="auto"
                   className="block h-auto w-full"
                 />
               </picture>
@@ -463,11 +463,9 @@ const Index = () => {
       })()}
 
       {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
-          When a stream is live or scheduled, LiveSection leads the cluster;
-          otherwise Editorial renders synchronously and anchors the first
-          viewport (Editorial → Live → News), so on quiet days async query
-          completion cannot push the LCP candidate around or create a large
-          layout shift. useLiveStatusRealtime re-orders without a reload. */}
+          Product priority wins while a broadcast is live or scheduled.
+          Replay-only days keep editorial first. Reserved editorial/news
+          skeletons still stabilize the async content inside each slot. */}
       {(() => {
         const editorialNode = stories.length > 0 ? (
           <section className="tl-section">
@@ -544,8 +542,30 @@ const Index = () => {
               </div>
             </div>
           </section>
+        ) : language === "vi" && viPostsLoading ? (
+          <section className="tl-section tl-editorial-skeleton" aria-busy="true" aria-label="Đang tải bài viết">
+            <div className="tl-shell">
+              <div className="tl-sec-head" aria-hidden="true">
+                <span className="tl-feed-skeleton tl-feed-skeleton--heading" />
+                <span className="tl-feed-skeleton tl-feed-skeleton--summary" />
+              </div>
+              <div className="tl-stories-grid" aria-hidden="true">
+                {Array.from({ length: 2 }, (_, index) => (
+                  <div className="tl-story" key={index}>
+                    <div className="tl-story-img tl-feed-skeleton" />
+                    <div className="tl-story-body">
+                      <span className="tl-feed-skeleton tl-feed-skeleton--title" />
+                      <span className="tl-feed-skeleton tl-feed-skeleton--summary" />
+                      <span className="tl-feed-skeleton tl-feed-skeleton--meta" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         ) : null;
 
+        const liveLeads = hasLiveData || scheduledStreams.length > 0;
         const liveNode =
           hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0
             ? {
@@ -556,17 +576,14 @@ const Index = () => {
                     scheduledStreams={scheduledStreams}
                     endedStreams={recentEnded}
                     language={language}
+                    priority={liveLeads}
                   />
                 ),
               }
             : null;
 
-        // Live leads whenever a stream is on air OR scheduled (restores
-        // #251/#284 behavior dropped by 48a94353). Replay-only days keep
-        // editorial first, so the stable-order CLS win still holds on
-        // fully quiet broadcast days. The one-time shift when the async
-        // live query resolves is an accepted trade-off (owner call, PR #501).
-        const liveLeads = hasLiveData || scheduledStreams.length > 0;
+        // Restore #501 behavior: active and upcoming broadcasts always lead.
+        // Only replay-only content follows the weekly editorial section.
         const cluster: Array<{ key: string; node: ReactNode }> = [
           liveLeads ? liveNode : null,
           editorialNode ? { key: "editorial", node: editorialNode } : null,
@@ -578,6 +595,7 @@ const Index = () => {
                 language={language}
                 limit={HOME_NEWS_LIMIT}
                 news={homeNewsQuery.data ?? []}
+                isLoading={homeNewsQuery.isLoading}
               />
             ),
           },

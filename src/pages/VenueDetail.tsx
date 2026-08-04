@@ -13,7 +13,6 @@ import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Loader2,
   MapPin,
   Navigation,
   Phone,
@@ -22,14 +21,15 @@ import {
   BadgeCheck,
   Plus,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { VenueCard } from "@/components/venues/VenueCard";
+import { cmsHeroImageSources } from "@/lib/image-utils";
 import {
   type Venue,
-  VENUE_DETAIL_COLUMNS,
   venueDisplayName,
   venueFullAddress,
   venueDirectionsUrl,
@@ -41,6 +41,7 @@ import {
   VENUE_LIST_COLUMNS,
   type VenueListItem,
 } from "@/lib/venues";
+import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
 
 const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 const DAY_LABELS: Record<string, { vi: string; en: string }> = {
@@ -58,24 +59,12 @@ export default function VenueDetail() {
   const { language } = useI18n();
 
   const { data: venue, isLoading } = useQuery<Venue | null>({
-    queryKey: ["venue", slug],
-    queryFn: async () => {
-      if (!slug) return null;
-      const { data, error } = await supabase
-        .from("venues")
-        .select(VENUE_DETAIL_COLUMNS)
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error) {
-        console.error("VenueDetail: fetch error", error);
-        return null;
-      }
-      return (data as Venue | null) ?? null;
-    },
+    queryKey: venueDetailQueryKey(slug),
+    queryFn: () => fetchVenueDetail(slug),
     staleTime: 60_000,
   });
 
-  const { data: nearby } = useQuery<VenueListItem[]>({
+  const { data: nearby, isLoading: nearbyLoading } = useQuery<VenueListItem[]>({
     queryKey: ["venue-nearby", venue?.city ?? null, slug],
     queryFn: async () => {
       if (!venue?.city || !slug) return [];
@@ -104,8 +93,22 @@ export default function VenueDetail() {
   if (isLoading) {
     return (
       <TheLineLayout title="…" active="venues">
-        <div className="tl-shell" style={{ padding: "60px 16px" }}>
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="tl-shell" style={{ paddingBottom: 80, maxWidth: 880, margin: "0 auto" }} aria-busy="true">
+          <Skeleton className="mb-3 h-4 w-56" />
+          <Skeleton className="mb-5 aspect-video w-full rounded-lg" />
+          <Skeleton className="mb-3 h-12 w-3/4" />
+          <Skeleton className="mb-6 h-4 w-2/3" />
+          <div className="mb-6 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <div className="mb-6 flex gap-2">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-7 w-24" />
+          </div>
+          <Skeleton className="mb-6 h-11 w-72 max-w-full" />
+          <Skeleton className="h-80 w-full rounded-lg" />
         </div>
       </TheLineLayout>
     );
@@ -136,6 +139,7 @@ export default function VenueDetail() {
   }
 
   const name = venueDisplayName(venue, language);
+  const coverImage = cmsHeroImageSources(venue.cover_image_url);
   const fullAddress = venueFullAddress(venue);
   const osmUrl = venueOsmEmbedUrl(venue);
   const directionsUrl = venueDirectionsUrl(venue);
@@ -198,12 +202,18 @@ export default function VenueDetail() {
           <span>{name}</span>
         </p>
 
-        {venue.cover_image_url && (
+        {coverImage && (
           <img
-            src={venue.cover_image_url}
+            src={coverImage.src}
+            srcSet={coverImage.srcSet}
+            sizes="(max-width: 912px) calc(100vw - 32px), 832px"
             alt={name}
-            className="mb-5 h-56 w-full rounded-lg border border-border object-cover"
-            loading="lazy"
+            width={1600}
+            height={900}
+            className="mb-5 aspect-video w-full rounded-lg border border-border object-cover"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
         )}
 
@@ -316,7 +326,23 @@ export default function VenueDetail() {
         )}
 
         {/* Other courts in the same city — internal links */}
-        {nearby && nearby.length > 0 && (
+        {venue.city && nearbyLoading && (
+          <section className="mt-10 border-t border-border pt-6" aria-busy="true" aria-label={language === "vi" ? "Đang tải sân gần đây" : "Loading nearby courts"}>
+            <Skeleton className="mb-3 h-4 w-64" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div className="overflow-hidden rounded-lg border border-border" key={index}>
+                  <Skeleton className="aspect-[4/3] w-full rounded-none" />
+                  <div className="space-y-2 p-4">
+                    <Skeleton className="h-5 w-4/5" />
+                    <Skeleton className="h-4 w-3/5" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {!nearbyLoading && nearby && nearby.length > 0 && (
           <section className="mt-10 border-t border-border pt-6">
             <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
               {language === "vi" ? `Sân pickleball khác tại ${venue.city}` : `Other pickleball courts in ${venue.city}`}

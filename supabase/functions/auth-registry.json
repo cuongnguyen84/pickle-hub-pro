@@ -355,6 +355,28 @@
       ],
       "status": "classified"
     },
+    "ops-job-control": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified"
+    },
+    "ops-edge-health": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified"
+    },
     "feed-embeds-sync": {
       "verify_jwt": false,
       "service_role": {
@@ -850,6 +872,18 @@
         "internal_service.write.shared_secret.shared_secret"
       ],
       "status": "classified"
+    },
+    "news-social-caption": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": false,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "internal_service.write.shared_secret.shared_secret"
+      ],
+      "status": "classified",
+      "notes": "Deployment alias of social-caption; both slugs use the same authenticated handler."
     },
     "submit-match-score": {
       "verify_jwt": false,
