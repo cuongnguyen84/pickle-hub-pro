@@ -182,6 +182,15 @@ const Live = () => {
           </p>
         </header>
 
+        {/* Counts come from the same `= []` defaults the body no longer trusts:
+            rendering "Live 0 · Replays 0" directly above a network error is the
+            same fabricated zero, just in smaller type. Filtering nothing is
+            pointless during an outage, so the whole row goes.
+            Unmounted rather than `hidden`: `.tl-filters` sets display:flex from
+            the author stylesheet, which beats the UA `[hidden]` rule — the row
+            would have stayed on screen while disappearing from the a11y tree
+            (and from the test that checks it). */}
+        {!isError && (
         <div className="tl-filters">
           {([
             { key: "all", labelEn: "All", labelVi: "Tất cả" },
@@ -200,6 +209,7 @@ const Live = () => {
             </button>
           ))}
         </div>
+        )}
 
         <div style={{ paddingBottom: 80 }}>
           {isLoading ? (

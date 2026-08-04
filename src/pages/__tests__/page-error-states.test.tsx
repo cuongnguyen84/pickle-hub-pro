@@ -96,6 +96,19 @@ describe("query failure surfaces", () => {
     expect(screen.queryByText(/Không có trận trong mục này/)).toBeNull();
   });
 
+  it("Live hides the filter counts on error rather than showing fabricated zeros", async () => {
+    await renderPage(() => import("../Live"));
+    // "Trực tiếp 0 · Replay 0" above a connection error is the same lie the
+    // body no longer tells.
+    //
+    // CAUTION: this assertion passes for `hidden={isError}` too, because
+    // role queries honour the hidden attribute — while `.tl-filters` keeps
+    // display:flex from the author stylesheet and the row stays on screen.
+    // jsdom does not evaluate that stylesheet, so no unit test here can tell
+    // the two apart. The row must stay UNMOUNTED, not hidden.
+    expect(screen.queryByRole("button", { name: /Tất cả/ })).toBeNull();
+  });
+
   it("Live retry refetches every one of the three queries", async () => {
     await renderPage(() => import("../Live"));
     fireEvent.click(screen.getByRole("button", { name: /Thử lại/ }));
