@@ -113,7 +113,7 @@ export default {
     return json({ error: "Not found" }, 404);
   },
 
-  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+  async scheduled(_event: unknown, env: Env): Promise<void> {
     const results = await runTracked(env, "scheduled");
     console.log("[news-fetcher cron]", JSON.stringify(results));
   },
