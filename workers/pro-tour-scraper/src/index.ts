@@ -327,7 +327,10 @@ async function runScrape(
         error_code: "event_not_active",
         matches_extracted: 0,
         players_extracted: 0,
-        error: errMsg,
+        // Static message — do not echo the caught exception to the HTTP body
+        // (CodeQL js/stack-trace-exposure). Full detail is logged server-side
+        // via recordFailure + console.error, same as the generic catch path.
+        error: "event not currently active — skipped",
       };
     }
     // Record the failure in the Logs tab — PATCH the pre-created row
