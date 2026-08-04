@@ -67,6 +67,23 @@ vi.mock("@/hooks/useNewsItems", () => ({
   useNewsItems: () => failed(refetchNews),
 }));
 
+// Stub the child barrels. These assertions are about the pages' error branch,
+// and the real barrels drag in the whole bracket + content-card cluster
+// (DoublesEliminationBracket alone is ~280 statements) — code this test never
+// exercises but which would land in the coverage denominator and pull the
+// global number down for adding a test. Loading less is also faster.
+vi.mock("@/components/tournament", () => ({
+  TournamentHero: () => null,
+  ContentSection: () => null,
+  CourtTabs: () => null,
+}));
+
+vi.mock("@/components/content", () => ({
+  ContentCard: () => null,
+  LiveCard: () => null,
+  EmptyState: () => null,
+}));
+
 vi.mock("@/hooks/usePullToRefresh", () => ({
   usePullToRefresh: () => ({ pullDistance: 0, isRefreshing: false, isPulling: false }),
 }));
