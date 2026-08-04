@@ -4,6 +4,7 @@ import { useI18n } from "@/i18n";
 import { useLivestreams } from "@/hooks/useSupabaseData";
 import type { Livestream } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { ErrorState } from "@/components/states/PageStates";
 import { formatTime, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -97,9 +98,24 @@ const Live = () => {
   const { language } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
 
-  const { data: live = [], isLoading: liveLoading } = useLivestreams("live");
-  const { data: scheduled = [], isLoading: schedLoading } = useLivestreams("scheduled");
-  const { data: ended = [], isLoading: endedLoading } = useLivestreams("ended");
+  const liveQuery = useLivestreams("live");
+  const schedQuery = useLivestreams("scheduled");
+  const endedQuery = useLivestreams("ended");
+
+  const { data: live = [], isLoading: liveLoading } = liveQuery;
+  const { data: scheduled = [], isLoading: schedLoading } = schedQuery;
+  const { data: ended = [], isLoading: endedLoading } = endedQuery;
+
+  // Any of the three failing means the counts and the list are wrong, not
+  // empty. Without this the `= []` defaults render "no matches in this view"
+  // during an outage — telling the viewer nothing is on when the truth is we
+  // could not ask (DS-04; the PGRST002 outages made this concrete).
+  const isError = liveQuery.isError || schedQuery.isError || endedQuery.isError;
+  const refetchAll = () => {
+    void liveQuery.refetch();
+    void schedQuery.refetch();
+    void endedQuery.refetch();
+  };
 
   const queryClient = useQueryClient();
   const ptrState = usePullToRefresh(async () => {
@@ -192,6 +208,8 @@ const Live = () => {
                 {language === "vi" ? "Đang tải…" : "Loading live courts…"}
               </p>
             </div>
+          ) : isError ? (
+            <ErrorState onRetry={refetchAll} />
           ) : items.length === 0 ? (
             <div className="tl-empty">
               <h3>{language === "vi" ? "Không có trận trong mục này." : "No matches in this view."}</h3>

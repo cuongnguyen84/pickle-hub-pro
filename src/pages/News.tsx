@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useNewsItems } from "@/hooks/useNewsItems";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { ErrorState } from "@/components/states/PageStates";
 import { formatRelative } from "@/lib/format-datetime";
 
 interface NewsProps {
@@ -37,7 +38,7 @@ const News = ({ language: languageProp }: NewsProps = {}) => {
   // Phase 4: list is language-scoped. /news returns EN rows, /vi/news
   // returns AI-translated VI rows (with parent_news_id back to EN). This
   // mirrors how /blog vs /vi/blog separate the two tracks.
-  const { data: news = [], isLoading } = useNewsItems({
+  const { data: news = [], isLoading, isError, refetch } = useNewsItems({
     limit: 60,
     language,
   });
@@ -127,6 +128,11 @@ const News = ({ language: languageProp }: NewsProps = {}) => {
                 {language === "vi" ? "Đang tải tin…" : "Loading news…"}
               </p>
             </div>
+          ) : isError ? (
+            // A failed fetch used to fall through to "No news in this view",
+            // which reads as an editorial fact ("nothing published today")
+            // rather than a connection problem the reader can retry.
+            <ErrorState onRetry={() => refetch()} />
           ) : items.length === 0 ? (
             <div className="tl-empty">
               <h3>{language === "vi" ? "Không có tin trong mục này." : "No news in this view."}</h3>
