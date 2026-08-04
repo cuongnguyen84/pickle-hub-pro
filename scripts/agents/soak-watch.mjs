@@ -99,10 +99,25 @@ async function query(sql) {
   return res.json();
 }
 
-const errorsSince = (iso) =>
+/**
+ * Normalise an instant to a canonical ISO string before it reaches SQL.
+ * The watch path takes this value out of a JSON file supplied by the caller,
+ * so it is untrusted input interpolated into a statement that runs on prod
+ * under a Management API PAT. Round-tripping through Date makes a quote
+ * impossible to smuggle through, and rejects garbage loudly instead of
+ * querying a nonsense window.
+ */
+export function isoOrThrow(value, label) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) throw new Error(`${label} is not a valid timestamp: ${value}`);
+  return d.toISOString();
+}
+
+const errorsSince = (instant) =>
   query(
     `SELECT message, stack, url, recorded_at FROM public.client_errors ` +
-      `WHERE recorded_at > '${iso}' ORDER BY recorded_at DESC LIMIT 2000;`,
+      `WHERE recorded_at > '${isoOrThrow(instant, "since")}' ` +
+      `ORDER BY recorded_at DESC LIMIT 2000;`,
   );
 
 async function captureBaseline(out) {
@@ -133,7 +148,24 @@ async function captureBaseline(out) {
 }
 
 async function watch({ baselineFile, minutes, interval, json }) {
+  // A mistyped --minutes (Number("abc") === NaN) or --minutes 0 would make the
+  // loop condition false on the first evaluation: zero polls, no API call, and
+  // a cheerful "soak clean" exit 0. That is precisely the false green this
+  // script exists to prevent, so refuse to run rather than report on nothing.
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    console.error(`✖ --minutes must be a positive number (got ${minutes})`);
+    return 2;
+  }
+  if (!Number.isFinite(interval) || interval <= 0) {
+    console.error(`✖ --interval must be a positive number (got ${interval})`);
+    return 2;
+  }
+
   const baseline = JSON.parse(readFileSync(baselineFile, "utf8"));
+  if (!Array.isArray(baseline.signatures) || !baseline.captured_at) {
+    console.error(`✖ ${baselineFile} is not a baseline file (need captured_at + signatures)`);
+    return 2;
+  }
   const known = new Set(baseline.signatures);
   // Only errors recorded after the baseline was taken can be caused by this
   // deploy. Anything older is pre-existing by definition.

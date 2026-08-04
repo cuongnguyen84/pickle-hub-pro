@@ -3,7 +3,20 @@
 // The network layer is deliberately untested — it is a fetch wrapper; these
 // are the parts that can be wrong while looking right.
 import { describe, it, expect } from "vitest";
-import { fingerprint, newSignatures } from "./soak-watch.mjs";
+import { fingerprint, newSignatures, isoOrThrow } from "./soak-watch.mjs";
+
+describe("isoOrThrow", () => {
+  // captured_at comes from a caller-supplied JSON file and is interpolated
+  // into SQL that runs on prod — a quote must not be able to survive.
+  it("canonicalises a valid timestamp", () => {
+    expect(isoOrThrow("2026-08-04T05:00:00Z", "since")).toBe("2026-08-04T05:00:00.000Z");
+  });
+
+  it("rejects garbage instead of querying a nonsense window", () => {
+    expect(() => isoOrThrow("'; DROP TABLE client_errors;--", "since")).toThrow(/valid timestamp/);
+    expect(() => isoOrThrow("", "since")).toThrow(/valid timestamp/);
+  });
+});
 
 describe("fingerprint", () => {
   it("groups the same error across occurrences", () => {
