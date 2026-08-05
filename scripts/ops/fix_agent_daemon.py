@@ -26,6 +26,13 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import quote
+
+
+def ts(dt: datetime) -> str:
+    """Timestamp an toàn cho query string PostgREST — '+00:00' chứa dấu '+'
+    (thành dấu cách trên URL) nên dùng hậu tố Z."""
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 SECRETS_FILE = os.environ.get("SECRETS_FILE", "/Users/cm10/Downloads/secrets.local.md")
 SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
@@ -107,10 +114,13 @@ def fmt_ict(dt: datetime | None = None) -> str:
 def sweep_orphans(secrets: dict) -> None:
     """Row processing quá 15' = agent chết giữa chừng (máy restart/kill).
     Đóng rõ ràng + báo — im lặng vĩnh viễn tệ hơn mọi ⛔."""
-    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat()
+    cutoff = ts(datetime.now(timezone.utc) - timedelta(minutes=15))
     status, rows = rest(secrets, "GET",
                         f"telegram_commands?text=like./agentfix*&status=eq.processing&created_at=lt.{cutoff}&select=id,text")
-    for row in rows or []:
+    if status != 200 or not isinstance(rows, list):
+        log(f"sweep_orphans query failed HTTP {status}: {str(rows)[:200]}")
+        return
+    for row in rows:
         job_key = row["text"].replace("/agentfix", "").strip()
         rest(secrets, "PATCH", f"telegram_commands?id=eq.{row['id']}&status=eq.processing",
              {"status": "error", "result": "agent_interrupted",
@@ -125,11 +135,13 @@ def sweep_orphans(secrets: dict) -> None:
 
 
 def under_caps(secrets: dict) -> bool:
-    day_ago = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
-    hour_ago = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
-    _, day_rows = rest(secrets, "GET",
-                       f"telegram_commands?text=like./agentfix*&status=in.(done,error)&processed_at=gte.{day_ago}&select=id,processed_at")
-    day_rows = day_rows or []
+    day_ago = ts(datetime.now(timezone.utc) - timedelta(days=1))
+    hour_ago = ts(datetime.now(timezone.utc) - timedelta(hours=1))
+    status, day_rows = rest(secrets, "GET",
+                            f"telegram_commands?text=like./agentfix*&status=in.(done,error)&processed_at=gte.{day_ago}&select=id,processed_at")
+    if status != 200 or not isinstance(day_rows, list):
+        log(f"under_caps query failed HTTP {status}: {str(day_rows)[:200]} — coi như đạt trần, không chạy")
+        return False
     hour_count = sum(1 for row in day_rows if (row.get("processed_at") or "") >= hour_ago)
     if len(day_rows) >= CAP_PER_DAY or hour_count >= CAP_PER_HOUR:
         log(f"cap reached: {len(day_rows)}/day, {hour_count}/hour — skip")
@@ -140,7 +152,7 @@ def under_caps(secrets: dict) -> bool:
 def claim_next(secrets: dict):
     status, rows = rest(secrets, "GET",
                         "telegram_commands?text=like./agentfix*&status=eq.pending&order=created_at.asc&limit=1&select=id,text,created_at")
-    if not rows:
+    if status != 200 or not isinstance(rows, list) or not rows:
         return None
     row = rows[0]
     job_key = row["text"].replace("/agentfix", "").strip()
@@ -152,10 +164,10 @@ def claim_next(secrets: dict):
         log(f"FX-{row['id']}: job_key không có trong registry: {job_key!r}")
         return None
     # Cooldown 30' theo job_key.
-    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=COOLDOWN_MIN)).isoformat()
+    cutoff = ts(datetime.now(timezone.utc) - timedelta(minutes=COOLDOWN_MIN))
     _, recent = rest(secrets, "GET",
-                     f"telegram_commands?text=eq./agentfix {job_key}&status=eq.done&processed_at=gte.{cutoff}&select=id")
-    if recent:
+                     f"telegram_commands?text=eq.{quote(f'/agentfix {job_key}')}&status=eq.done&processed_at=gte.{cutoff}&select=id")
+    if isinstance(recent, list) and recent:
         rest(secrets, "PATCH", f"telegram_commands?id=eq.{row['id']}&status=eq.pending",
              {"status": "skipped", "result": f"cooldown_{COOLDOWN_MIN}m"})
         send_telegram(secrets, f"⏳ {job_key} vừa được agent xử lý dưới {COOLDOWN_MIN} phút trước — xem kết quả FX-{recent[0]['id']} ở trên. Không chạy lại.")
