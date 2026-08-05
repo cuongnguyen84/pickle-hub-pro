@@ -14,6 +14,8 @@ Hình dạng đã chốt qua panel /idea telegram-fix-agent (05/08):
 Chạy tay để thử: python3 scripts/ops/fix_agent_daemon.py --once [--dry-run]
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re
