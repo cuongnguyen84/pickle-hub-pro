@@ -213,7 +213,7 @@ async function runAllSources(env: Env): Promise<SourceRunResult[]> {
   for (const source of sources) {
     const started = Date.now();
     try {
-      const items = await fetchAndParse(source);
+      const items = await fetchAndParse(source, env);
       const counts = await ingestItems(env, source, items);
       const result: SourceRunResult = {
         source_id: source.id,
@@ -262,9 +262,12 @@ function pgHeaders(env: Env, extra: Record<string, string> = {}): HeadersInit {
 }
 
 async function fetchActiveSources(env: Env): Promise<NewsSource[]> {
+  // html_scrape chỉ lấy các nguồn ĐÃ có config trong HTML_SCRAPE_CONFIGS —
+  // nguồn html_scrape khác (APP Pickleball) vẫn nằm im như trước.
+  const scrapeIds = Object.keys(HTML_SCRAPE_CONFIGS).join(",");
   const url =
     `${env.SUPABASE_URL}/rest/v1/news_sources` +
-    `?active=eq.true&feed_type=in.(rss,atom)&select=*`;
+    `?active=eq.true&or=(feed_type.in.(rss,atom),id.in.(${scrapeIds}))&select=*`;
   const res = await fetch(url, { headers: pgHeaders(env) });
   if (!res.ok) throw new Error(`fetchActiveSources ${res.status}`);
   return (await res.json()) as NewsSource[];
@@ -433,7 +436,115 @@ export function isSafePublicFeedUrl(raw: string): boolean {
   return true;
 }
 
-async function fetchAndParse(source: NewsSource): Promise<ParsedItem[]> {
+// ---------------------------------------------------------------------------
+// html_scrape — cho site đã bỏ RSS nhưng listing vẫn là HTML server-render.
+// ponytail: config cứng theo source id; nguồn html_scrape thứ 2 thì nâng thành cột DB.
+// ---------------------------------------------------------------------------
+
+interface HtmlScrapeConfig {
+  origin: string;
+  // Slug bài nằm ở root ("/122-shot-rally.../"); loại trang mục bằng prefix.
+  excludePrefixes: string[];
+  titleSuffix: string; // cắt " | PPA Tour" khỏi og:title
+}
+
+const HTML_SCRAPE_CONFIGS: Record<string, HtmlScrapeConfig> = {
+  "ppa-tour": {
+    origin: "https://www.ppatour.com",
+    excludePrefixes: [
+      "/about", "/athletes", "/events", "/watch", "/play",
+      "/rankings", "/leaderboards", "/news", "/blog", "/_next",
+    ],
+    titleSuffix: " | PPA Tour",
+  },
+};
+
+// Mỗi run chỉ fetch meta tối đa N bài MỚI — giữ ngân sách subrequest của
+// Workers; backlog tự rút cạn qua các run 2h kế tiếp.
+const SCRAPE_MAX_NEW_PER_RUN = 4;
+
+function metaContent(html: string, property: string): string | null {
+  const match = html.match(
+    new RegExp(`<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']*)["']`, "i"),
+  ) ?? html.match(
+    new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${property}["']`, "i"),
+  );
+  return match ? match[1].trim() : null;
+}
+
+function decodeEntities(value: string): string {
+  return value
+    .replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+}
+
+async function scrapeHtmlListing(env: Env, source: NewsSource): Promise<ParsedItem[]> {
+  const config = HTML_SCRAPE_CONFIGS[source.id];
+  if (!config) throw new Error(`html_scrape source ${source.id} chưa có cấu hình scrape`);
+  if (!source.feed_url) throw new Error("source has no feed_url");
+
+  const listingRes = await fetch(source.feed_url, {
+    headers: { "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)" },
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!listingRes.ok) throw new Error(`listing HTTP ${listingRes.status}`);
+  const listingHtml = await listingRes.text();
+
+  // Slug root một cấp, dạng bài viết (dài, có gạch ngang), giữ thứ tự listing.
+  const links: string[] = [];
+  for (const match of listingHtml.matchAll(/href="(\/[a-z0-9][a-z0-9-]{11,}\/)"/g)) {
+    const path = match[1];
+    if (config.excludePrefixes.some((prefix) => path.startsWith(prefix + "/") || path === prefix + "/")) continue;
+    if (!path.includes("-")) continue;
+    const url = config.origin + path;
+    if (!links.includes(url)) links.push(url);
+  }
+  if (links.length === 0) throw new Error("listing không có link bài nào — cấu trúc site có thể đã đổi");
+
+  // Dedupe TRƯỚC khi fetch meta: chỉ tốn subrequest cho bài thật sự mới.
+  const inList = links.map((url) => `"${url}"`).join(",");
+  const dupRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/news_origins?source_url=in.(${encodeURIComponent(inList)})&select=source_url`,
+    { headers: pgHeaders(env) },
+  );
+  const known = new Set<string>(
+    dupRes.ok ? ((await dupRes.json()) as { source_url: string }[]).map((row) => row.source_url) : [],
+  );
+
+  const fresh = links.filter((url) => !known.has(url)).slice(0, SCRAPE_MAX_NEW_PER_RUN);
+  const items: ParsedItem[] = [];
+  for (const url of fresh) {
+    try {
+      const articleRes = await fetch(url, {
+        headers: { "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)" },
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!articleRes.ok) continue;
+      const html = await articleRes.text();
+      const rawTitle = metaContent(html, "og:title");
+      const published = metaContent(html, "article:published_time");
+      if (!rawTitle || !published) continue;
+      const title = decodeEntities(rawTitle.endsWith(config.titleSuffix)
+        ? rawTitle.slice(0, -config.titleSuffix.length)
+        : rawTitle);
+      // published_time của site không mang timezone — coi là UTC.
+      const publishedIso = /Z$|[+-]\d\d:?\d\d$/.test(published) ? published : `${published}Z`;
+      items.push({
+        title: title.slice(0, TITLE_LIMIT),
+        link: url,
+        summary: decodeEntities(metaContent(html, "og:description") ?? "").slice(0, SUMMARY_LIMIT),
+        image_url: metaContent(html, "og:image"),
+        published_at: new Date(publishedIso).toISOString(),
+      });
+    } catch (error) {
+      console.warn(`[${source.id}] scrape article failed ${url}: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+  return items;
+}
+
+async function fetchAndParse(source: NewsSource, env: Env): Promise<ParsedItem[]> {
+  if (source.feed_type === "html_scrape") return scrapeHtmlListing(env, source);
   if (!source.feed_url) throw new Error("source has no feed_url");
   if (!isSafePublicFeedUrl(source.feed_url)) {
     throw new Error(`unsafe feed_url rejected: ${source.feed_url}`);
