@@ -331,7 +331,17 @@ async function ingestItems(
   let failed = 0;
   const originRows: Array<Record<string, unknown>> = [];
 
+  // Lọc age/validity trước, rồi dedupe CẢ BATCH bằng MỘT query trước khi fetch
+  // body — trước đây body được fetch lại cho mọi bài mỗi run (8 fetch/nguồn/2h),
+  // 4 nguồn đã sát trần 50 subrequest của Workers free; steady state giờ chỉ
+  // tốn body fetch cho bài thật sự mới.
+  const fresh: ParsedItem[] = [];
   for (const item of items) {
+    // Feed pickleball.com trả <link> không có scheme ("pickleball.com/news/…")
+    // — chuẩn hoá trước khi validate, không thì bị loại sạch.
+    if (item.link && !/^https?:\/\//i.test(item.link)) {
+      item.link = `https://${item.link}`;
+    }
     const publishedMs = Date.parse(item.published_at);
     if (!Number.isFinite(publishedMs) || publishedMs < ageCutoff) {
       old += 1;
@@ -342,6 +352,28 @@ async function ingestItems(
       console.warn(`[${source.id}] invalid feed item skipped: ${item.link}`);
       continue;
     }
+    fresh.push(item);
+  }
+
+  let known = new Set<string>();
+  if (fresh.length > 0) {
+    const inList = fresh.map((item) => `"${item.link}"`).join(",");
+    const dupRes = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/news_origins?source_url=in.(${encodeURIComponent(inList)})&select=source_url`,
+      { headers: pgHeaders(env) },
+    );
+    if (dupRes.ok) {
+      known = new Set(((await dupRes.json()) as { source_url: string }[]).map((row) => row.source_url));
+    }
+    // Query dedupe lỗi → known rỗng, chạy tiếp như cũ; ON CONFLICT ở INSERT vẫn đỡ.
+  }
+
+  for (const item of fresh) {
+    if (known.has(item.link)) {
+      dup += 1;
+      continue;
+    }
+    const publishedMs = Date.parse(item.published_at);
 
     let rawBody: string | null = null;
     try {
