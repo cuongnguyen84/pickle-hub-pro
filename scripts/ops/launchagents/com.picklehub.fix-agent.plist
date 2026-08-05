@@ -16,7 +16,7 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>SECRETS_FILE</key>
-    <string>/Users/cm10/Downloads/secrets.local.md</string>
+    <string>/Users/cm10/Library/Application Support/PickleHub/fix-agent-secrets.md</string>
   </dict>
   <key>StandardOutPath</key>
   <string>/Users/cm10/Library/Logs/PickleHub/fix-agent-launchd.log</string>

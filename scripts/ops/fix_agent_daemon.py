@@ -34,7 +34,11 @@ def ts(dt: datetime) -> str:
     (thành dấu cách trên URL) nên dùng hậu tố Z."""
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-SECRETS_FILE = os.environ.get("SECRETS_FILE", "/Users/cm10/Downloads/secrets.local.md")
+# Mặc định trỏ Application Support: launchd KHÔNG có quyền TCC đọc ~/Downloads.
+SECRETS_FILE = os.environ.get(
+    "SECRETS_FILE",
+    "/Users/cm10/Library/Application Support/PickleHub/fix-agent-secrets.md",
+)
 SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
 REPO_DIR = Path(os.environ.get("PICKLEHUB_REPO", "/Users/cm10/pickle-hub-pro"))
 RUNBOOK = REPO_DIR / "docs/ops/fix-agent-runbook.md"
