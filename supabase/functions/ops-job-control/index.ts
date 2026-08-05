@@ -16,6 +16,11 @@ const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const allowedChat = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
 const githubToken = Deno.env.get("GITHUB_OPS_TOKEN") ?? "";
 const githubRepository = Deno.env.get("GITHUB_OPS_REPOSITORY") ?? "cuongnguyen84/pickle-hub-pro";
+// Webhook secret độc lập (không dẫn xuất từ CRON_SECRET dùng chung) + khoá theo
+// đúng Telegram user của Cuong — chat_id một mình không xác thực NGƯỜI bấm.
+const tgWebhookSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET") ?? "";
+const adminFromId = Deno.env.get("TELEGRAM_ADMIN_ID") ?? "";
+const NEWS_FETCHER_URL = Deno.env.get("NEWS_FETCHER_URL") ?? "https://news-fetcher.thecuong.workers.dev";
 
 async function sendTelegram(chatId: string, text: string, replyMarkup?: Record<string, unknown>): Promise<void> {
   if (!tgToken || chatId !== allowedChat) throw new Error("telegram_chat_not_allowed");
@@ -41,7 +46,7 @@ function jobActionButtons(jobs: Job[]): Record<string, unknown> | undefined {
   if (!unhealthy.length) return undefined;
   return { inline_keyboard: unhealthy.map((job) => [
     { text: `🔎 ${job.job_key}`, callback_data: `diagnose|${job.job_key}` },
-    { text: `🛠 Fix`, callback_data: `fix|${job.job_key}` },
+    { text: `🛠 Xử lý`, callback_data: `fix|${job.job_key}` },
   ]) };
 }
 
@@ -158,6 +163,72 @@ async function requestEdgeRepair(functionSlug: string, requestedBy: string): Pro
   return `🛠 Đã khởi động recovery workflow cho ${functionSlug}. GitHub sẽ redeploy, probe lại runtime và báo kết quả qua Telegram.`;
 }
 
+const VI_STATE: Record<string, string> = {
+  healthy: "Khoẻ", warning: "Cảnh báo", failed: "Lỗi", pending: "Chờ chu kỳ đầu", stale: "Quá hạn chạy",
+};
+
+const RETRY_CODE_VI: Record<string, string> = {
+  retry_not_supported: "Job này không có cơ chế chạy lại trực tiếp qua lịch pg_cron.",
+  cooldown: "Vừa chạy lại trong 10 phút gần đây — đây KHÔNG phải lỗi, chờ hết cooldown rồi thử lại nếu cần.",
+  cron_job_unavailable: "Không tìm thấy lịch chạy của job trong pg_cron — có thể job đã bị gỡ lịch.",
+  dispatch_failed: "Không gửi được lệnh chạy tới hệ thống đích (pg_net lỗi).",
+};
+
+function fmtICT(iso: string | null): string {
+  if (!iso) return "chưa từng chạy";
+  return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit",
+  }).format(new Date(iso));
+}
+
+// Q1 (duyệt 05/08): nguồn tin tắt-có-dấu-vết phải hiện việc-cần-làm ở /jobs + digest,
+// không bao giờ tắt câm (pre-mortem: "tắt thứ đang kêu" = mất nguồn 5 tuần không ai biết).
+async function newsSourcesLine(supabase: ReturnType<typeof createClient>): Promise<string | null> {
+  const { data, error } = await supabase.from("news_sources").select("id,active,last_error");
+  if (error || !data?.length) return null;
+  const rows = data as { id: string; active: boolean; last_error: string | null }[];
+  const active = rows.filter((row) => row.active).length;
+  const needsWork = rows.filter((row) => !row.active && row.last_error).map((row) => row.id);
+  let line = `📰 Nguồn tin: ${active}/${rows.length} active`;
+  if (needsWork.length) line += ` · cần xử lý: ${needsWork.join(", ")}`;
+  return line;
+}
+
+type WorkerSourceResult = { source_id: string; ok: boolean; inserted: number; error: string | null };
+
+// Chạy lại news-fetcher bằng cách gọi thẳng worker /run (đồng bộ, trả kết quả thật
+// từng nguồn) — worker tự ghi ops_job_runs qua runTracked nên verdict là số liệu thật.
+async function rerunNewsFetcher(supabase: ReturnType<typeof createClient>): Promise<string> {
+  const secret = Deno.env.get("SCRAPER_AUTH_SECRET") ?? "";
+  if (!secret) return "❌ KHÔNG XỬ LÝ ĐƯỢC · news-fetcher\nThiếu SCRAPER_AUTH_SECRET trong env của bot.";
+  let response: Response;
+  try {
+    response = await fetch(`${NEWS_FETCHER_URL}/run`, {
+      method: "POST", headers: { "x-auth-secret": secret }, signal: AbortSignal.timeout(120_000),
+    });
+  } catch (error) {
+    return `❌ CHƯA SỬA ĐƯỢC · news-fetcher\nGọi worker thất bại: ${error instanceof Error ? error.message : String(error)}\nCần anh làm: kiểm tra worker trên Cloudflare dashboard.`;
+  }
+  if (response.status === 401) {
+    return "❌ CHƯA SỬA ĐƯỢC · news-fetcher\nWorker trả 401: SCRAPER_AUTH_SECRET lệch giữa Supabase và Cloudflare (bài học 03/08 — không còn auto-sync).\nCần anh làm: sync secret tay theo vault rồi bấm lại.";
+  }
+  const payload = await response.json().catch(() => null) as { ok?: boolean; results?: WorkerSourceResult[] } | null;
+  const results = payload?.results ?? [];
+  const failing = results.filter((row) => !row.ok);
+  const inserted = results.reduce((sum, row) => sum + (row.inserted ?? 0), 0);
+  await supabase.rpc("ops_refresh_cron_health_snapshot");
+  if (!failing.length) {
+    return `✅ ĐÃ SỬA · news-fetcher\nChạy lại xong: ${results.length}/${results.length} nguồn OK, ${inserted} bài mới.\nCần anh làm: không có.`;
+  }
+  const lines = failing.map((row) => `• ${row.source_id}: ${(row.error ?? "lỗi không rõ").slice(0, 150)}`);
+  return [
+    `🛠 CHƯA SỬA · CẦN ANH XỬ LÝ · news-fetcher`,
+    `Chạy lại xong: ${results.length - failing.length}/${results.length} nguồn OK, ${inserted} bài mới. Nguồn vẫn lỗi:`,
+    ...lines,
+    `Lỗi nguồn là lỗi DATA (URL chết/đổi) — chạy lại không sửa được. Cần đổi URL hoặc tắt nguồn có ghi chú.`,
+  ].join("\n");
+}
+
 // Job chạy bằng GitHub Actions không retry được qua pg_net — kích workflow_dispatch
 // trên chính workflow của job (tra từ ops_cron_monitors.external_identifier).
 async function requestWorkflowRun(supabase: ReturnType<typeof createClient>, job: Job): Promise<string> {
@@ -180,6 +251,57 @@ async function requestWorkflowRun(supabase: ReturnType<typeof createClient>, job
     throw new Error(`github_workflow_dispatch_${response.status}: ${(await response.text()).slice(0, 300)}`);
   }
   return `🛠 Đã kích workflow ${workflowFile} chạy lại cho ${job.display_name}. Theo dõi: https://github.com/${githubRepository}/actions — trạng thái job sẽ tự xanh sau khi run thành công.`;
+}
+
+// Giai đoạn 2: lỗi không có nhánh cứng nào xử được → xếp một dòng /agentfix cho
+// daemon local (fix_agent_daemon.py) rút. /agentfix không khớp allowlist drain của
+// chính function này nên bot không bao giờ tự rút lại nó.
+async function enqueueAgentFix(supabase: ReturnType<typeof createClient>, job: Job): Promise<string> {
+  const { data: existing } = await supabase.from("telegram_commands")
+    .select("id,created_at").ilike("text", `/agentfix ${job.job_key}`)
+    .in("status", ["pending", "processing"])
+    .gte("created_at", new Date(Date.now() - 30 * 60_000).toISOString())
+    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (existing?.id) {
+    return `⏳ ${job.job_key} đang được agent xử lý (FX-${existing.id}). Không cần bấm lại.`;
+  }
+  const { data: inserted, error } = await supabase.from("telegram_commands").insert({
+    update_id: -Date.now(),
+    chat_id: Number(allowedChat),
+    from_id: adminFromId ? Number(adminFromId) : null,
+    from_username: "ops-job-control",
+    message_date: new Date().toISOString(),
+    text: `/agentfix ${job.job_key}`,
+    status: "pending",
+  }).select("id").maybeSingle();
+  if (error || !inserted?.id) {
+    return `❌ KHÔNG XỬ LÝ ĐƯỢC · ${job.job_key}\nKhông xếp được việc cho agent: ${error?.message ?? "insert failed"}.\nDùng /diagnose ${job.job_key} để xem chi tiết.`;
+  }
+  return [
+    `⏳ ĐÃ NHẬN · ${job.job_key}`,
+    `Không có nhánh sửa tự động cho lỗi này — agent trên máy Mac sẽ điều tra, dự kiến 5-10 phút.`,
+    `Anh không cần bấm lại.`,
+    `Mã: FX-${inserted.id} · ${fmtICT(new Date().toISOString())}`,
+  ].join("\n");
+}
+
+// Chạy trong vòng drain 1 phút: /agentfix pending quá 3' → cảnh báo máy có thể ngủ;
+// quá 30' → hết hạn, đóng lại rõ ràng (im lặng vĩnh viễn tệ hơn ⛔ ngày xưa).
+async function agentFixWatchdog(supabase: ReturnType<typeof createClient>): Promise<void> {
+  const { data } = await supabase.from("telegram_commands")
+    .select("id,text,created_at,result").ilike("text", "/agentfix %").eq("status", "pending");
+  for (const row of (data ?? []) as { id: number; text: string; created_at: string; result: string | null }[]) {
+    const ageMs = Date.now() - new Date(row.created_at).getTime();
+    const jobKey = row.text.replace("/agentfix ", "").trim();
+    if (ageMs > 30 * 60_000) {
+      const msg = `❌ KHÔNG XỬ LÝ ĐƯỢC · ${jobKey}\nAgent ngoại tuyến 30 phút. Yêu cầu FX-${row.id} đã hết hạn, chưa có thay đổi nào được thực hiện.\nAnh kiểm tra máy Mac (daemon fix-agent) rồi bấm lại nếu cần.`;
+      await sendTelegram(allowedChat, msg);
+      await supabase.from("telegram_commands").update({ status: "error", processed_at: new Date().toISOString(), result: "agent_offline_expired" }).eq("id", row.id).eq("status", "pending");
+    } else if (ageMs > 3 * 60_000 && row.result !== "warned_no_consumer") {
+      await sendTelegram(allowedChat, `⚠️ CHƯA BẮT ĐẦU ĐƯỢC · ${jobKey}\nAgent trên máy Mac chưa nhận việc sau 3 phút — có thể máy đang ngủ hoặc daemon tắt.\nChưa có thay đổi nào. Yêu cầu FX-${row.id} vẫn trong hàng đợi (hết hạn sau 30 phút).`);
+      await supabase.from("telegram_commands").update({ result: "warned_no_consumer" }).eq("id", row.id).eq("status", "pending");
+    }
+  }
 }
 
 async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId?: number): Promise<Record<string, unknown>> {
@@ -211,8 +333,9 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       if (command.toLowerCase().startsWith("/jobs")) {
         const functions = await edgeStates(supabase);
         const facebook = await facebookCountsToday(supabase);
+        const sources = await newsSourcesLine(supabase);
         const failedEdges = functions.filter((fn) => fn.state !== "available").length;
-        reply = `${jobsText(jobs)}\n📣 Facebook hôm nay: ThePickleHub ${facebook.thepicklehub ?? "—"} bài · TAPickleball ${facebook.taPickleball ?? "—"} bài\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
+        reply = `${jobsText(jobs)}\n📣 Facebook hôm nay: ThePickleHub ${facebook.thepicklehub ?? "—"} bài · TAPickleball ${facebook.taPickleball ?? "—"} bài${sources ? `\n${sources}` : ""}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
         replyMarkup = jobActionButtons(jobs);
       } else if (command.toLowerCase().startsWith("/functions")) {
         reply = functionsText(await edgeStates(supabase));
@@ -228,7 +351,14 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
         const job = jobs.find((item) => item.job_key === key);
         if (!job) reply = `Không tìm thấy job: ${key}`;
         else if (command.toLowerCase().startsWith("/diagnose")) {
-          reply = [`🔎 ${job.display_name}`, `State: ${job.health_state}`, `Schedule: ${job.schedule_label}`, `Last: ${job.last_activity_at ?? "never"}`, `Reason: ${job.error_message || job.summary || "Không có chi tiết"}`].join("\n");
+          reply = [
+            `🔎 ${job.display_name}`,
+            `Job: ${job.job_key}`,
+            `Trạng thái: ${VI_STATE[job.health_state] ?? job.health_state}`,
+            `Lịch: ${job.schedule_label}`,
+            `Lần gần nhất: ${fmtICT(job.last_activity_at)} (giờ VN)`,
+            `Lý do: ${job.error_message || job.summary || "Không có chi tiết"}`,
+          ].join("\n");
         } else {
           if (command.toLowerCase().startsWith("/fix")) {
             const functions = await runEdgeProbe(supabase);
@@ -250,6 +380,15 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
             processed++;
             continue;
           }
+          if (job.executor === "cloudflare_worker") {
+            reply = job.job_key === "news-fetcher"
+              ? await rerunNewsFetcher(supabase)
+              : await enqueueAgentFix(supabase, job);
+            await sendTelegram(chatId, reply);
+            await supabase.from("telegram_commands").update({ status: "done", processed_at: new Date().toISOString(), result: reply.slice(0, 2000) }).eq("id", row.id);
+            processed++;
+            continue;
+          }
           const { data: retry, error: retryError } = await supabase.rpc("ops_request_job_retry", {
             p_job_key: key, p_source: "telegram",
             p_requested_by: row.from_username || String(row.from_id || row.chat_id),
@@ -260,7 +399,8 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
           reply = result.ok && result.request_id && result.dispatch_request_id
             ? await retryOutcome(supabase, key, result.request_id, result.dispatch_request_id)
             : result.ok ? `❌ Retry ${key} đã dispatch nhưng không lấy được mã đối chiếu; không thể xác minh an toàn.`
-            : `⛔ Không retry ${key}: ${result.code || "unknown"}`;
+            : result.code === "retry_not_supported" ? await enqueueAgentFix(supabase, job)
+            : `⛔ CHƯA CHẠY LẠI ĐƯỢC · ${key}\n${RETRY_CODE_VI[result.code ?? ""] ?? `Mã lỗi: ${result.code || "unknown"}`}`;
         }
       }
       await sendTelegram(chatId, reply, replyMarkup);
@@ -275,6 +415,9 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
 }
 
 async function telegramWebhookSecret(): Promise<string> {
+  // Secret độc lập nếu đã set; fallback SHA256(CRON_SECRET) chỉ để không gãy webhook
+  // trong lúc chuyển tiếp — set TELEGRAM_WEBHOOK_SECRET + gọi install_webhook để cắt hẳn.
+  if (tgWebhookSecret) return tgWebhookSecret;
   const bytes = new TextEncoder().encode(Deno.env.get("CRON_SECRET") ?? "");
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
@@ -330,6 +473,9 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   if (!update.update_id || !message?.text || message.chat?.id === undefined) return { ok: true, ignored: true };
   const chatId = String(message.chat.id);
   if (chatId !== allowedChat) return { ok: true, ignored: true };
+  // chat_id xác thực CHAT, không xác thực NGƯỜI — khoá thêm theo Telegram user id
+  // của Cuong (TELEGRAM_ADMIN_ID). Không set env này thì giữ hành vi cũ.
+  if (adminFromId && String(message.from?.id ?? "") !== adminFromId) return { ok: true, ignored: true };
   if (callback?.id) {
     await fetch(`https://api.telegram.org/bot${tgToken}/answerCallbackQuery`, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "Đang xử lý…" }),
@@ -351,8 +497,11 @@ async function handleTelegramWebhook(req: Request, supabase: ReturnType<typeof c
   if (/^\/(start|help|jobs|retry|diagnose|functions|probe|fix)(?:@\w+)?(?:\s|$)/i.test(message.text.trim())) {
     return await processTelegram(supabase, inserted.id);
   }
-  await sendTelegram(chatId, `📥 Đã nhận lệnh: "${message.text.slice(0, 500)}"\nĐã vào hàng đợi — agent sẽ xử lý ở lần chạy tới.`);
-  return { ok: true, queued: true };
+  // Text tự do không có consumer nào — nói thật thay vì hứa suông, và đóng row
+  // ngay để không tồn kho pending vô hạn (risk-auditor #7).
+  await supabase.from("telegram_commands").update({ status: "skipped", processed_at: new Date().toISOString(), result: "free_text_unsupported" }).eq("id", inserted.id);
+  await sendTelegram(chatId, `Chưa hiểu lệnh này. Gửi /help để xem các lệnh có sẵn, hoặc /jobs để thao tác bằng nút.`);
+  return { ok: true, skipped: true };
 }
 
 Deno.serve(async (req) => {
@@ -368,6 +517,7 @@ Deno.serve(async (req) => {
     if (authError) return authError;
     const body = await req.json().catch(() => ({})) as { action?: string };
     if (body.action === "install_webhook") return Response.json(await installWebhook());
+    await agentFixWatchdog(supabase);
     return Response.json(await processTelegram(supabase));
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });

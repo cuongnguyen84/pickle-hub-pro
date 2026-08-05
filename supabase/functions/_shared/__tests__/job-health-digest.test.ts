@@ -26,6 +26,7 @@ function snapshot(): JobHealthDigestSnapshot {
       },
     ],
     facebook_posts: { thepicklehub: 3, ta_pickleball: 2 },
+    news_sources: { active: 4, total: 5, needs_attention: ["ppa-tour"] },
   };
 }
 
@@ -36,6 +37,7 @@ describe("formatJobHealthDigest", () => {
     expect(text).toContain("News: 0 bài mới · 4 nguồn OK");
     expect(text).toContain("Pro Tour: 34 trận · 3 event bỏ qua hợp lệ");
     expect(text).toContain("Facebook hôm nay: ThePickleHub 3 bài · TAPickleball 2 bài");
+    expect(text).toContain("Nguồn tin: 4/5 active · cần xử lý: ppa\\-tour");
   });
 
   it("lists only warning/failed details and escapes Telegram MarkdownV2", () => {

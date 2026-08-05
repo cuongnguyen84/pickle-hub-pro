@@ -64,7 +64,18 @@ function escapeMarkdown(s: string): string {
   return s.replace(/([_*[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
 }
 
-async function sendTelegram(text: string): Promise<boolean> {
+// Nút hành động ngay trên tin cảnh báo — điểm vào chính của Cuong là notification,
+// không phải /jobs; thiếu nút thì mọi cảnh báo là ngõ cụt (ui-ux blocker #1).
+function jobFixButtons(jobKey: string): Record<string, unknown> {
+  return {
+    inline_keyboard: [[
+      { text: "🛠 Xử lý", callback_data: `fix|${jobKey}` },
+      { text: "🔎 Chẩn đoán", callback_data: `diagnose|${jobKey}` },
+    ]],
+  };
+}
+
+async function sendTelegram(text: string, replyMarkup?: Record<string, unknown>): Promise<boolean> {
   if (!TG_TOKEN || !TG_CHAT) {
     console.warn("Telegram secrets missing — skipping send");
     return false;
@@ -79,6 +90,7 @@ async function sendTelegram(text: string): Promise<boolean> {
         text,
         parse_mode: "MarkdownV2",
         disable_web_page_preview: true,
+        reply_markup: replyMarkup,
       }),
     });
     if (!res.ok) {
@@ -371,7 +383,7 @@ async function runJobFailureAlerts(): Promise<JobFailureReport> {
       lines.push("", `[Open details](${escapeMarkdown(run.details_url)})`);
     }
 
-    if (await sendTelegram(lines.join("\n"))) {
+    if (await sendTelegram(lines.join("\n"), jobFixButtons(run.job_key))) {
       sent++;
       await supabase.from("error_alert_dedup").upsert({
         fingerprint: dedupeKey,
@@ -467,6 +479,16 @@ async function runCronHealth(): Promise<CronHealthReport> {
   const now = new Date();
   const healthResults: CronHealthResult[] = [];
 
+  // Map monitor_key → job_key để tin incident mang được nút 🛠 Xử lý (callback
+  // của bot nhận job_key, không nhận monitor_key).
+  const monitorToJob = new Map<string, string>();
+  const { data: registryRows } = await supabase.from("ops_job_registry")
+    .select("job_key,existing_monitor_key").eq("enabled", true);
+  for (const row of (registryRows ?? []) as { job_key: string; existing_monitor_key: string | null }[]) {
+    monitorToJob.set(row.job_key, row.job_key);
+    if (row.existing_monitor_key) monitorToJob.set(row.existing_monitor_key, row.job_key);
+  }
+
   for (const raw of snapshots ?? []) {
     const config = raw as CronMonitorConfig & {
       source: "pg_net" | "github_actions";
@@ -512,7 +534,11 @@ async function runCronHealth(): Promise<CronHealthReport> {
     const notification = shouldSendCronAlert(health, stored, now);
     let sent = false;
     if (notification) {
-      sent = await sendTelegram(formatCronHealthMessage(health, notification));
+      const jobKey = monitorToJob.get(health.monitorKey);
+      sent = await sendTelegram(
+        formatCronHealthMessage(health, notification),
+        notification === "incident" && jobKey ? jobFixButtons(jobKey) : undefined,
+      );
       if (sent) report.alerts_sent++;
     } else if (health.state !== "healthy" && health.state !== "pending") {
       report.alerts_suppressed++;

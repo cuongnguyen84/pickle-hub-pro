@@ -1,0 +1,34 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "disagreement_id": "D1",
+      "stance": "REFINE",
+      "evidence": "secrets.local.md:15-102 (6 credential plaintext cùng UID daemon); settings.local.json:20 (PAT sbp_ inline); types.ts:6858-6871 (telegram_commands KHÔNG có cột action có kiểu); ops-job-control:43-44 (callback_data 64 byte); :230,324 (/diagnose sẵn có); redeploy-edge-functions.sh:32-33 (guard đã live — blocker vòng 1 ĐÓNG)",
+      "reasoning": "Giữ RED, thu hẹp phạm vi: 'bỏ hẳn' quá rộng ở Inc 1 (Cuong tự gõ claude -p = hiện trạng, không phải bề mặt mới). RED áp đúng vào: (a) LLM chạy không người trực trên máy còn secrets plaintext, (b) mọi đường 'duyệt' thực thi chuỗi do agent viết. Chấp nhận MỘT hình dạng hạ xuống điều-tra-only: agent env SẠCH 0 token, cwd scratch, không tool mạng; output {opcode,args} thuộc danh sách đóng; daemon (cầm key) thực thi opcode qua code cũ — tập opcode CHÍNH LÀ Option C, agent chỉ chọn giùm. Mọi biến thể agent cầm key/chạy lệnh tự sinh: vẫn RED."
+    },
+    {
+      "disagreement_id": "D2",
+      "stance": "HOLD",
+      "evidence": "20260715130000:62,65 (GRANT SELECT-only ops_cron_monitors); news-fetcher:267 + 20260519000000:112 (kill switch active có thật); ops-job-control:21,342 (gate chỉ chat_id, from_id không bao giờ kiểm)",
+      "reasoning": "Không dữ kiện mới nào lật D2. Deny-list của pre-mortem là điều kiện CẦN nhưng không phải ranh giới — chỉ là chữ trong prompt nếu tiến trình cầm SERVICE_ROLE_KEY (UPDATE bị cấm phát được bằng curl PostgREST). Ranh giới phải hình credential (agent 0 key), không hình luật lệ. Monitor: SELECT-only nên 'sửa monitor' không có đường hợp lệ — cấm tuyệt đối, monitor sai thì PR sửa evaluator. Nút Duyệt không đổi được gì: leo thang quyết định bởi credential trong tiến trình, không phải ai bấm."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "'👍 Duyệt đích danh' là an toàn giả nếu payload free-text do agent viết",
+      "with": "ui-ux-critic",
+      "myPosition": "Không có cột action có kiểu + callback_data 64 byte → Cuong duyệt cái NHÃN, daemon chạy cái PAYLOAD. Muốn nút có giá trị phòng thủ: action enum đóng + một nhánh code mỗi opcode — và khi đó nút Duyệt chính là Option C."
+    },
+    {
+      "topic": "'worktree cấm push + git diff --exit-code' không phải ranh giới phòng thủ",
+      "with": "solution-architect",
+      "myPosition": "Side effect thật (deploy, wrangler, gh, PATCH, tin đã gửi) không để lại diff. Chốt tương xứng: agent 0 secret trong env + 0 tool mạng; daemon mới cầm key và chỉ chạy opcode đã đăng ký."
+    },
+    {
+      "topic": "Điều kiện mở Inc 3 phải là cấu trúc, không phải 'sống ổn 1 tuần'",
+      "with": "solution-architect",
+      "myPosition": "1 tuần đo availability, không đo cái hỏng đắt nhất (dập cảnh báo — phát hiện 3-8 tuần). Điều kiện: action enum đóng + 0 credential trong agent + dòng sản lượng 📰 Nguồn tin x/y trong jobsText(). Đủ 3 → AMBER; thiếu 1 → RED bất kể chạy êm bao lâu."
+    }
+  ]
+}
