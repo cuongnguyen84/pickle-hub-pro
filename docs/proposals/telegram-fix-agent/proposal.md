@@ -1,6 +1,6 @@
 # Nút 🛠 Fix gọi agent xử lý và trả lời cụ thể
 
-> Slug: `telegram-fix-agent` · Ngày: `2026-08-05` · Trạng thái: `draft`
+> Slug: `telegram-fix-agent` · Ngày: `2026-08-05` · Trạng thái: `shipped` (2 giai đoạn, Cuong duyệt tường minh 05/08)
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6) ·
 > `risk-auditor` (+GPT-5.6) · `pre-mortem`. Model thiếu key trong lần chạy này: `none`
 > (Codex CLI hết quota → cả 2 agent external gọi thẳng OpenAI Responses API).
@@ -93,3 +93,13 @@ Bất đồng mới phát sinh vòng 2 (đã gộp vào spec §4/§5): nhãn duy
 1. Root cause dupr tái phát = hourly redeploy từ working tree stale → guard + tree về main + redeploy sạch 80/80 (18:03).
 2. Migration `20260805110000` (đã áp prod): match-expire/auto-cancel ghi `ops_cron_dispatches` đúng pattern.
 3. ppa-tour: verify 404 thật mọi biến thể URL — CHƯA tắt nguồn (chờ Q1).
+
+
+---
+
+## 9. Ship log (05/08)
+
+- PR #549 squash-merge → main `940d399e` (CI 7/7 xanh, QA PASS, release-pilot từ chối merge RED đúng luật → Cuong ra lệnh merge trực tiếp trên kênh user).
+- Migration ppa-tour + secrets TELEGRAM_WEBHOOK_SECRET/TELEGRAM_ADMIN_ID đã áp/set TRƯỚC merge; 3 function deploy từ main@940d399e (lần deploy đầu bị dính tree cũ do pull fail câm — bắt được và redeploy đúng trong vài phút, xem lessons-learned 05/08); install_webhook trả webhook_installed:true (secret độc lập + kiểm from.id đã LIVE).
+- Q2: allow-rule chứa PAT đã gỡ, Read thu hẹp, deny Downloads/.ssh/.aws thêm vào settings.local.json. Rotate PAT sbp_ vẫn chờ Cuong (dashboard).
+- Còn tay Cuong: load launchd daemon (classifier chặn), bấm thử nút 🛠 Xử lý trên alert thật, rotate PAT.

@@ -586,3 +586,60 @@ redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
 - **Pseudo-element hit-area nuốt click**: `.tl-icon-btn::after {position:absolute; inset:-4px}` (PR #300, mở hit-area 44px) hit-test NHƯ element gốc + đè trên con trong paint order. Khi class nằm trên `<div>` bọc (UnifiedNotificationBell truyền className vào div, KHÔNG vào Button) → pseudo của div nuốt mọi pointer click, button bên trong không bao giờ nhận. Chuông chết click 2 TUẦN, không ai bắt. Keyboard vẫn sống. Fix scoped 1 dòng: `div.tl-icon-btn::after {pointer-events:none}` (chỉ div, 5 nút `<button>` thật giữ 44px). Bẫy chẩn đoán: `button.click()` JS LUÔN mở panel (bỏ qua hit-test) — chỉ click chuột thật / Playwright click mới lộ. Test regression PHẢI là e2e click thật (J11), jsdom vô dụng.
 - **Coupling chí mạng: GitHub Actions artifact-storage-quota giết luôn self-heal blob-loss**. Khi quota artifact hết → job Visual/Security đỏ ở bước UPLOAD (gate thực chất vẫn success) VÀ các workflow self-heal blob (deploy-guard poll + uptime-ping) KHÔNG chạy được → Supabase blob-loss flap không được tự vá. Trong phiên này blob-loss chết 68/76 fn 2 lần (lúc ship + giữa soak), phải `supabase functions deploy --use-api` vá tay cả 2 lần (heal ~2', idempotent, 0/76 sau đó). Bài học: khi thấy blob-loss KHÔNG tự lành sau 10-15', nghi ngay Actions quota — self-heal đang chết. Fix gốc = Cuong tắt integration "Deploy to production" + giải phóng Actions storage.
 - **/idea thiếu script**: `scripts/agents/debate-ledger.mjs` + `risk-tier.mjs` không tồn tại trong repo — cưỡng chế luật vòng 2 thủ công (mọi CONCEDE/REFINE kèm file:line), ghi chú trung thực vào proposal.
+
+## 2026-08-04 — audit fact-check + đóng lỗ RLS + dựng soak-watch/risk-tier (PR #538, #539)
+
+- **Bảng audit "khắt khe" vẫn phải fact-check từng số.** 23 claim → 12 đúng, 4 đúng-hướng-sai-số
+  (i18n thật 1686 ternary chứ không phải 1017; xcstrings 1764 needs_review chứ không phải 851 —
+  TỆ HƠN báo cáo), 3 sai/stale (types.ts KHÔNG thiếu bảng; coverage đã 85.92% từ CLOSE-03 nên đề
+  xuất "re-base ngưỡng" là thuốc sai bệnh). Mẫu lỗi: chỗ sai đều là **trạng thái cũ** — audit viết
+  một phần từ ghi chú thay vì đo tươi. Luật: điểm số của audit vô nghĩa, danh sách việc mới có giá.
+- **Grep repo KHÔNG đủ để quyết định REVOKE một grant.** Trước khi revoke phải hỏi DB:
+  RPC nào ghi bảng, `prosecdef` DEFINER hay INVOKER, và **INVOKER thì EXECUTE cấp cho role nào**.
+  `social_event_guest_register` là INVOKER + có INSERT — nếu authenticated có EXECUTE thì REVOKE đã
+  giết luồng guest OTP. Thoát vì EXECUTE chỉ cấp service_role. Chi tiết: [[event-registrations-insert-hole-closed]].
+- **Drop policy phải drop CẢ CỤM, không chỉ cái thủng.** Policy còn lại mà không có grant hiện ra
+  như "thiếu grant" dưới sweep `pg_policies × has_table_privilege` → lần sweep sau tự cấp lại grant,
+  mở lại đúng lỗ vừa vá.
+- **`scripts/agents/` chưa từng tồn tại** dù release-pilot.md + risk-auditor.md gọi 4 script trong đó
+  từ lúc viết. Mọi "soak 30p 🟢" trước 04/08 là lệnh KHÔNG THỂ chạy. Bài học rộng hơn: **agent doc mô tả
+  một lệnh không có thật thì agent sẽ ứng biến im lặng thay vì báo lỗi** — định kỳ kiểm mọi đường dẫn
+  script trong .claude/agents/*.md có thật hay không.
+- **Công cụ chống-xanh-giả tự tạo xanh giả.** qa-verifier bắt: `--minutes 0` hoặc gõ nhầm
+  `--minutes abc` (`Number("abc")=NaN`) làm `while (Date.now() < deadline)` false ngay → 0 lần poll,
+  0 lần gọi API, vẫn in "🟢 soak clean" exit 0. Luật cho MỌI gate mới: test trường hợp **gate không chạy**,
+  không chỉ trường hợp gate pass/fail. Alarm chưa từng thấy kêu = alarm chưa tồn tại — phải ép nó kêu
+  (baseline rỗng → exit 1 với 14 signature) trước khi tin.
+- **ESLint không phủ `.mjs`** (`eslint.config.js` chỉ match `**/*.{ts,tsx}`) — `npx eslint file.mjs`
+  exit 0 vì KHÔNG MATCH CONFIG, không phải vì sạch. Đúng cho mọi script trong scripts/.
+- **`fast-xml-parser` là dep của worker con** (`workers/news-fetcher/package.json`), root `npm install`
+  không kéo về → `tsc -b` + 1 suite vitest đỏ local trong khi CI xanh. Worktree còn cần symlink riêng
+  `workers/news-fetcher/node_modules`. Đỏ local ≠ đỏ thật; kiểm CI trước khi đi sửa.
+
+## 2026-08-04 (b) — DS-04 error states cho Live/News/TournamentDetail (PR #540)
+
+- **Thêm test có thể LÀM TỤT coverage.** Test import 3 page lớn → lần đầu kéo cả cây con vào
+  MẪU SỐ v8 (DoublesEliminationBracket ~280 stmt @6%, useDoublesElimination 111 @0.9%) →
+  1334 test pass nhưng statements 85.92%→72.22%, gate 83% đỏ. Local chạy `vitest run` KHÔNG thấy.
+  **Luật: test nào import component lớn phải chạy `--coverage` trước khi push.** Cách sửa đúng là
+  stub barrel con mà test không dùng (`@/components/tournament`, `@/components/content`) → 84.32%;
+  KHÔNG hạ ngưỡng, KHÔNG blanket exclude.
+- **`hidden={...}` là xanh giả kiểu CSS.** `.tl-filters` có `display:flex` từ author stylesheet, đè
+  `[hidden]` của UA → phần tử VẪN HIỆN trên màn hình nhưng BIẾN MẤT khỏi cây a11y, nên
+  `queryByRole(...)` trả null và test PASS. jsdom không đọc stylesheet nên không unit test nào phân
+  biệt được. **Muốn ẩn thì unmount, đừng dùng `hidden`** — ghi lý do vào cả component lẫn test.
+- **`.single()` là bẫy của convention DS-04**: PGRST116 khi 0 dòng làm "slug không tồn tại" và
+  "mạng chết" tới trang dưới cùng một `isError` → chỉ hiện được 1 thông báo cho 2 chuyện ngược nhau
+  (not-found bảo người ta bỏ cuộc, network error bảo thử lại). Dùng `.maybeSingle()`. Đã ghi vào
+  docs/state-patterns.md.
+- **Luôn thử gỡ bản vá xem test có đỏ không.** Làm với cả 4 test ở PR này — đỏ cả 4. Test state mà
+  pass ở cả hai chiều là đồ trang trí. Cùng họ với bài học soak-watch: alarm chưa thấy kêu = chưa có.
+- **Checkout chính có thể đứng sau main hàng chục commit** (04/08: nhánh phiên khác, sau main 32
+  commit) → mọi phép đếm/audit chạy ở đó đo nhầm cây. Audit/fact-check phải ghi rõ **commit SHA**
+  mình đứng, và đo trên worktree tạo từ `origin/main` khi kết luận về "repo hiện tại".
+
+## 2026-08-05 — `git pull` in "Updating X..Y" rồi vẫn FAIL, và deploy từ tree cũ (dính 2 lần trong 1 ngày)
+- `git pull --ff-only` khi tree bẩn: in dòng `Updating <old>..<new>` TRƯỚC rồi mới abort vì "local changes would be overwritten" — `tail -1` nuốt mất lỗi, ref KHÔNG nhích. Hậu quả thật 05/08: deploy 3 edge function từ tree cũ ngay sau khi merge PR #549 (phát hiện nhờ `git log -1` in ra SHA cũ; đã redeploy đúng trong vài phút).
+- LUẬT: mọi lệnh deploy-from-tree phải assert cùng câu lệnh: `[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && <deploy>` — đúng guard đã thêm vào redeploy-edge-functions.sh, áp cả cho deploy tay.
+- `git checkout <branch> -- <file>` GHI ĐÈ patch chưa commit trong working tree (mất patch ops-job-control 1 lần, phải gõ lại).
+- Commit với path tường minh vẫn cuốn theo file ĐANG STAGED từ trước (stash pop tự stage) — `git restore --staged .` trước khi commit có chủ đích.
