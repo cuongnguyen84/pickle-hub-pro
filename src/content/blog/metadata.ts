@@ -10,6 +10,22 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "world-pickleball-rankings-wpr-explained",
+    publishedDate: "2026-08-05",
+    updatedDate: "2026-08-05",
+    author: "Cuong Nguyen",
+    tags: ["world pickleball rankings", "wpr", "ppa tour rankings", "ppa finals qualification", "pickleball world ranking", "ben johns ranking", "pickleball vietnam"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow PPA Tour live on ThePickleHub", vi: "Theo dõi PPA Tour trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/world-pickleball-rankings-wpr-hero.webp", alt: "World Pickleball Rankings (WPR) infographic — the PPA Tour men's top 10 for the week of Aug 3–9, 2026 led by Ben Johns, with the doubles 50% / mixed 35% / singles 15% weighting." },
+    titleEn: "World Pickleball Rankings (WPR): PPA's New Global System Explained",
+    titleVi: "World Pickleball Rankings (WPR): hệ thống xếp hạng toàn cầu mới của PPA",
+    metaTitleEn: "World Pickleball Rankings (WPR) Explained | PPA",
+    metaTitleVi: "World Pickleball Rankings (WPR) là gì | PPA",
+    metaDescriptionEn: "PPA's new World Pickleball Rankings (WPR): doubles 50%, mixed 35%, singles 15%, 14 best results over 52 weeks. How it works and what it means for Vietnam.",
+    metaDescriptionVi: "WPR mới của PPA: đôi 50%, đôi nam nữ 35%, đơn 15%, 14 kết quả tốt nhất trong 52 tuần. Cách tính và ý nghĩa với VĐV Việt Nam.",
+  },
+  {
     slug: "hong-kong-slam-2026-preview",
     publishedDate: "2026-08-05",
     updatedDate: "2026-08-05",
