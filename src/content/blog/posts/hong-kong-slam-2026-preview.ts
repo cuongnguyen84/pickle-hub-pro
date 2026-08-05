@@ -19,6 +19,10 @@ const post: BlogPost = {
     en: "Watch live tournaments on ThePickleHub",
     vi: "Xem giải trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/hong-kong-slam-2026-preview-hero.webp",
+    alt: "Hong Kong Slam 2026 hero — PPA Asia 1500 pickleball finale banner with the Hong Kong skyline and a dragon motif, silhouetted players in action, October 19–25 at Kai Tak Arena.",
+  },
   content: {
     en: {
       title: "Hong Kong Slam 2026: Asia's First PPA Slam and US$1.1M Season Finale",

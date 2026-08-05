@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["hong kong slam 2026", "ppa tour asia 1500", "hang seng bank hong kong slam", "ppa asia hong kong", "kai tak arena pickleball", "pickleball hong kong", "asia first pickleball slam"],
     ctaPath: "/live",
     ctaLabel: { en: "Watch live tournaments on ThePickleHub", vi: "Xem giải trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/hong-kong-slam-2026-preview-hero.webp", alt: "Hong Kong Slam 2026 hero — PPA Asia 1500 pickleball finale banner with the Hong Kong skyline and a dragon motif, silhouetted players in action, October 19–25 at Kai Tak Arena." },
     titleEn: "Hong Kong Slam 2026: Asia's First PPA Slam and US$1.1M Season Finale",
     titleVi: "Hong Kong Slam 2026: Slam đầu tiên châu Á, chung kết 1,1 triệu USD",
     metaTitleEn: "Hong Kong Slam 2026 | Asia's First PPA Slam, $1.1M",
