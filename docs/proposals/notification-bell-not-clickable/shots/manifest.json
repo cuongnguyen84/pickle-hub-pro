@@ -1,0 +1,120 @@
+{
+  "base": "https://feat-notification-bell-not-c.pickle-hub-pro.pages.dev",
+  "captured": "2026-07-23T07:57:03.108Z",
+  "shots": [
+    {
+      "route": "/",
+      "viewport": "mobile",
+      "file": "mobile_.png",
+      "status": 200,
+      "header": {
+        "theme": "the-line",
+        "btnCount": 2,
+        "iconBtns": [
+          {
+            "tag": "BUTTON",
+            "label": "Switch to dark mode"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Open menu"
+          }
+        ],
+        "bell": true
+      },
+      "consoleMsgs": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tournaments",
+      "viewport": "mobile",
+      "file": "mobile_tournaments.png",
+      "status": 200,
+      "header": {
+        "theme": "the-line",
+        "btnCount": 2,
+        "iconBtns": [
+          {
+            "tag": "BUTTON",
+            "label": "Switch to dark mode"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Open menu"
+          }
+        ],
+        "bell": true
+      },
+      "consoleMsgs": [
+        {
+          "type": "warning",
+          "text": "[GA4] gtag not available, event not sent: reg_count_badge_impression"
+        },
+        {
+          "type": "warning",
+          "text": "[GA4] gtag not available, event not sent: reg_count_badge_impression"
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "route": "/",
+      "viewport": "desktop",
+      "file": "desktop_.png",
+      "status": 200,
+      "header": {
+        "theme": "the-line",
+        "btnCount": 2,
+        "iconBtns": [
+          {
+            "tag": "BUTTON",
+            "label": "Switch to dark mode"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Open menu"
+          }
+        ],
+        "bell": true
+      },
+      "consoleMsgs": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/tournaments",
+      "viewport": "desktop",
+      "file": "desktop_tournaments.png",
+      "status": 200,
+      "header": {
+        "theme": "the-line",
+        "btnCount": 2,
+        "iconBtns": [
+          {
+            "tag": "BUTTON",
+            "label": "Switch to dark mode"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Open menu"
+          }
+        ],
+        "bell": true
+      },
+      "consoleMsgs": [
+        {
+          "type": "warning",
+          "text": "[GA4] gtag not available, event not sent: reg_count_badge_impression"
+        },
+        {
+          "type": "warning",
+          "text": "[GA4] gtag not available, event not sent: reg_count_badge_impression"
+        },
+        {
+          "type": "warning",
+          "text": "[GA4] gtag not available, event not sent: reg_count_badge_impression"
+        }
+      ],
+      "pageErrors": []
+    }
+  ]
+}
