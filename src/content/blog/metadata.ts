@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "hong-kong-slam-2026-preview",
+    publishedDate: "2026-08-05",
+    updatedDate: "2026-08-05",
+    author: "Cuong Nguyen",
+    tags: ["hong kong slam 2026", "ppa tour asia 1500", "hang seng bank hong kong slam", "ppa asia hong kong", "kai tak arena pickleball", "pickleball hong kong", "asia first pickleball slam"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Watch live tournaments on ThePickleHub", vi: "Xem giải trực tiếp trên ThePickleHub" },
+    titleEn: "Hong Kong Slam 2026: Asia's First PPA Slam and US$1.1M Season Finale",
+    titleVi: "Hong Kong Slam 2026: Slam đầu tiên châu Á, chung kết 1,1 triệu USD",
+    metaTitleEn: "Hong Kong Slam 2026 | Asia's First PPA Slam, $1.1M",
+    metaTitleVi: "Hong Kong Slam 2026 | Slam đầu tiên châu Á",
+    metaDescriptionEn: "The Hang Seng Bank Hong Kong Slam, Oct 19–25 2026 at Kai Tak Arena: a US$1.1M PPA Tour Asia 1500 finale — Asia's first Slam. Dates, prize and registration.",
+    metaDescriptionVi: "Hang Seng Bank Hong Kong Slam 19–25/10/2026 tại Kai Tak Arena: chung kết PPA Tour Asia 1500, thưởng 1,1 triệu USD, Slam đầu tiên châu Á.",
+  },
+  {
     slug: "mlp-orlando-super-sunday-2026-best-game",
     publishedDate: "2026-08-03",
     updatedDate: "2026-08-03",
