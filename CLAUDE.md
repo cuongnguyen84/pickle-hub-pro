@@ -55,17 +55,18 @@ npx cap open android # Open Android Studio
 
 ### New blog post checklist (EN + VI bilingual)
 
-Every new blog post requires **3 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
+Every new blog post requires **4 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
 
 1. `src/content/blog/posts/<slug>.ts` — full BlogPost with content.en AND content.vi
 2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array. **Single SEO source of truth** (SEO-02): `BLOG_POST_META` (SSR `<title>` = `metaTitleEn`) and `EN_BLOG_SLUGS` (sitemap) are GENERATED from it — never hand-edit `functions/_lib/render/blog-meta.ts` or `functions/_lib/static-blog-slugs.ts`.
 3. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
+4. `node scripts/gen-blog-barrel.mjs` — regenerates `src/content/blog/posts/all.ts`. That barrel is the ONLY loader the SSR bot path can use (Pages Functions cannot use `import.meta.glob`); skip it and Googlebot gets the shell with no article body. Missed on 2026-08-05 (`hong-kong-slam-2026-preview` served 71 words instead of 1518) — caught by `src/content/blog/__tests__/blog-barrel.test.ts`, fixed in #546.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).
 - Bing: IndexNow POST via `functions/api/indexnow.ts` (or direct `https://api.indexnow.org/indexnow?url=<URL>&key=<KEY>`). Requires `<KEY>.txt` at root.
 
-Verify via `curl -A "Googlebot"` returning 200 with correct title + og:image + hreflang en/vi/x-default tags before declaring done.
+Verify via `curl -A "Googlebot"` returning 200 with correct title + og:image + hreflang en/vi/x-default tags before declaring done. Append `?nocache=1` — without it the prerender KV serves the pre-deploy HTML and the check passes on stale content. Assert the body is actually present (word count), not just the tags: the 2026-08-05 miss had perfect tags and an empty article.
 
 ## Critical Architecture Notes
 
