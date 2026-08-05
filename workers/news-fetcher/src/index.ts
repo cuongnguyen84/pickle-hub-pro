@@ -473,9 +473,12 @@ function metaContent(html: string, property: string): string | null {
 }
 
 function decodeEntities(value: string): string {
+  // &amp; decode CUỐI CÙNG — decode trước sẽ mở đường double-unescape
+  // (&amp;lt; → &lt; → <), CodeQL js/double-escaping.
   return value
     .replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"')
-    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
 }
 
 async function scrapeHtmlListing(env: Env, source: NewsSource): Promise<ParsedItem[]> {
