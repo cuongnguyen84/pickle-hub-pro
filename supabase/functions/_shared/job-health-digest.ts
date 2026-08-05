@@ -18,6 +18,11 @@ export interface JobHealthDigestSnapshot {
     thepicklehub: number | null;
     ta_pickleball: number | null;
   };
+  news_sources?: {
+    active: number;
+    total: number;
+    needs_attention: string[];
+  };
 }
 
 function escapeMarkdown(value: string): string {
@@ -62,6 +67,17 @@ export function formatJobHealthDigest(
     lines.push(
       `• Facebook hôm nay: ThePickleHub ${primary ?? "—"} bài · TAPickleball ${secondary ?? "—"} bài`,
     );
+  }
+  if (snapshot.news_sources) {
+    // Nguồn tin tắt-có-ghi-chú phải hiện việc-cần-làm mỗi sáng cho tới khi được
+    // xử lý — tắt câm là cách mất nguồn tin 5 tuần không ai biết.
+    let sourcesLine = `• Nguồn tin: ${snapshot.news_sources.active}/${snapshot.news_sources.total} active`;
+    if (snapshot.news_sources.needs_attention.length > 0) {
+      sourcesLine += ` · cần xử lý: ${
+        snapshot.news_sources.needs_attention.map((name) => escapeMarkdown(name)).join(", ")
+      }`;
+    }
+    lines.push(sourcesLine);
   }
 
   const unhealthy = snapshot.jobs.filter((job) =>

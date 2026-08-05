@@ -1,0 +1,23 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "disagreement_id": "D2",
+      "stance": "REFINE",
+      "evidence": "ops-job-control/index.ts:331-332 (cổng duy nhất = chatId, from_id ghi :342 nhưng không bao giờ kiểm); 20260802131500:107+:147 (ops_record_job_run SECURITY DEFINER nhận status='success', GRANT EXECUTE service_role — ghi xanh giả không cần Management API); 20260715130000:65 (SELECT-only → nhượng nửa UPDATE-monitor cho risk-auditor); news_sources KHÔNG phải bảng monitor → luật 'cấm ghi bảng monitor' không phủ kill switch active=false; redeploy-edge-functions.sh:32 guard mới + :73-83 một-probe→delete đều do launchd kích, không người trong vòng lặp",
+      "reasoning": "Giữ deny-list, chỉnh 3 điểm: (1) nhượng nửa UPDATE monitor — cấm PAT là đủ; (2) 'cấm INSERT ops_job_runs' phải viết lại thành 'cấm gọi ops_record_job_run với status != running/failed' — cấm ở tầng SQL là cấm hụt vì đường ghi thật là RPC đã GRANT sẵn; (3) duyệt-từng-thao-tác KHÔNG giết được cả 3 postmortem: sự cố 1+2 tác nhân là launchd (độ phủ nút Duyệt = 0%), sự cố 3 chỉ bị chặn khi nhãn nút gọi đúng hậu quả mà nhãn do chính agent bị kiểm soạn; nút Duyệt hôm nay xác thực CHAT không xác thực NGƯỜI (from_id không kiểm). Duyệt-đích-danh = lớp BỔ SUNG cho thao tác đảo ngược được, không THAY THẾ deny-list cho thao tác dập-cảnh-báo."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "'RPC SECURITY DEFINER hẹp' không tự động an toàn — ops_record_job_run ĐÃ là đường xanh-giả",
+      "with": "risk-auditor",
+      "myPosition": "Độ an toàn đo bằng NHỮNG GÌ RPC GHI ĐƯỢC, không bằng hình dạng GRANT. Nếu agent giữ service_role key: REVOKE EXECUTE ops_record_job_run khỏi vai agent hoặc dùng key riêng."
+    },
+    {
+      "topic": "Nhãn nút Duyệt do agent tự sinh = bên bị kiểm viết bản cáo trạng của mình",
+      "with": "ui-ux-critic",
+      "myPosition": "Nhãn duyệt phải sinh từ bảng ánh xạ CỐ ĐỊNH theo loại thao tác (người viết trước, trong repo), không từ văn bản agent. Tối thiểu: kiểm from.id (10 dòng, làm dù bỏ hướng agent) — không thì 'CẦN ANH DUYỆT' hứa một bảo đảm code không có."
+    }
+  ]
+}

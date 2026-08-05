@@ -81,6 +81,17 @@ Deno.serve(async (req) => {
       thepicklehub: (facebookRows ?? []).filter((row) => row.page_key === "thepicklehub").length,
       ta_pickleball: (facebookRows ?? []).filter((row) => row.page_key === "ta-pickleball").length,
     };
+  const { data: sourceRows, error: sourcesError } = await supabase
+    .from("news_sources")
+    .select("id,active,last_error");
+  if (!sourcesError && (sourceRows ?? []).length > 0) {
+    const rows = sourceRows as { id: string; active: boolean; last_error: string | null }[];
+    snapshot.news_sources = {
+      active: rows.filter((row) => row.active).length,
+      total: rows.length,
+      needs_attention: rows.filter((row) => !row.active && row.last_error).map((row) => row.id),
+    };
+  }
   const text = formatJobHealthDigest(snapshot, reportDate);
   if (mode === "preview") return Response.json({ ok: true, mode, report_date: reportDate, text, snapshot });
 

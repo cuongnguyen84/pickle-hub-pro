@@ -1,0 +1,34 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "disagreement_id": "D1",
+      "stance": "CONCEDE",
+      "evidence": ".claude/settings.local.json:11 (`Read(//Users/cm10/**)`) + :20 (PAT sbp_ inline trong allow rule, không có block deny); .github/workflows/edge-function-repair.yml:1-60 (dispatch+APPROVED+concurrency+timeout+checkout sạch đã có sẵn)",
+      "reasoning": "Hai dữ kiện chưa mở ở vòng 1 lật cả hai trụ: (1) 'permission model là hàng rào' sai — daemon đọc được secrets + đã pre-approve lệnh mang PAT superuser; 3 chốt của tôi đều ở tầng prompt, không chạm tầng credential; (2) nhánh cứng không phải 2.5 half-days — hình dạng đã có sẵn, thêm cloudflare_worker ~0.5 half-day. RÚT daemon + nút-gọi-agent (Inc 2/3). GIỮ Inc 1 (runbook + claude -p Cuong tự gõ tay — không tạo bề mặt mới so với phiên Claude Code hiện tại; cả 5 cơ chế rủi ro cần quyền tự trị mới kích được)."
+    },
+    {
+      "disagreement_id": "D2",
+      "stance": "CONCEDE",
+      "evidence": "supabase/migrations/20260715130000_ops_cron_health.sql:65 — GRANT SELECT (không UPDATE) ops_cron_monitors cho service_role; 67-69 chỉ cấp INSERT/UPDATE cho ops_cron_dispatches + ops_cron_alert_state",
+      "reasoning": "'Sửa data monitor sai' trong allowlist vòng 1 KHÔNG implement được bằng service_role — bắt buộc leo Management API PAT superuser, tức vô tình kê quyền nhỏ thành DROP TABLE. Chốt theo risk-auditor + pre-mortem: agent chỉ ĐỌC và soạn đề xuất; không ghi bảng monitor/ops, không Management API, không active=false, không INSERT ops_job_runs, không functions delete; cần ghi hẹp thì RPC SECURITY DEFINER một cột."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Nhánh cứng không được báo ✅ cho lớp lỗi data (ppa-tour)",
+      "with": "risk-auditor",
+      "myPosition": "Ship nhánh cứng trước, nhưng spec phải: cấm verdict ✅ khi run mới fail cùng mã lỗi; trả câu chỉ việc ('Nguồn PPA 404 từ <ngày>, cần đổi URL — việc của anh'); thêm dòng sản lượng `📰 Nguồn tin: 4/5 active` vào jobsText() theo khuôn facebookCountsToday. Thiếu 2 thứ đó = đổi ⛔ lấy ❌ lịch sự hơn, lớp 'chạy được nhưng sai' vẫn vô chủ."
+    },
+    {
+      "topic": "PAT superuser trong settings.local.json là P0 độc lập",
+      "with": "risk-auditor",
+      "myPosition": "Nó phơi HÔM NAY cho mọi phiên Claude Code, không phụ thuộc đề xuất. Hotfix riêng, làm trước, làm dù đề xuất bị bỏ: rotate PAT sbp_, gỡ allow :20, thu hẹp Read(//Users/cm10/**), thêm deny cho secrets + Management API."
+    },
+    {
+      "topic": "Xác nhận claim-CAS #6 của risk-auditor",
+      "with": "risk-auditor",
+      "myPosition": "telegram_queue.py:113 PATCH không predicate status=eq.pending — đúng, fix 1 dòng; và from_id chỉ dùng làm nhãn, không nơi nào kiểm — 10 dòng. Làm luôn trong PR nhánh cứng."
+    }
+  ]
+}

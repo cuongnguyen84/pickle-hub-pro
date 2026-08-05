@@ -29,10 +29,13 @@ Ví dụ:
 
 1. Gửi `/jobs`.
 2. Bấm **Chẩn đoán** ở job lỗi để đọc nguyên nhân.
-3. Bấm **Fix**:
-   - Nếu Edge Function `missing_blob`, bot kích hoạt GitHub recovery workflow. Workflow redeploy đúng function trong allowlist, probe lại và báo kết quả qua Telegram.
-   - Nếu Edge Function vẫn có runtime, bot retry job và chờ kết quả của **đúng lần dispatch đó**.
-   - Nếu là `http_error` hoặc `timeout`, hệ thống không redeploy mù vì có thể là lỗi code hoặc dịch vụ downstream; bot giữ nguyên bằng chứng để điều tra.
+3. Bấm **🛠 Xử lý** (có ngay trên tin cảnh báo, không cần gõ /jobs):
+   - Edge Function `missing_blob` → bot kích GitHub recovery workflow, probe lại, báo kết quả.
+   - Job pg_net → retry và chờ kết quả của **đúng lần dispatch đó**.
+   - Job GitHub Actions (dupr-rankings-refresh) → bot kích workflow_dispatch chạy lại.
+   - Job worker `news-fetcher` → bot gọi thẳng worker `/run` và báo kết quả THẬT từng nguồn; nguồn lỗi data (URL chết) được nói rõ là việc của người, retry không sửa được.
+   - `http_error`/`timeout` → không redeploy mù (có thể lỗi code/downstream), giữ bằng chứng.
+   - Lỗi không có nhánh nào ở trên → bot xếp việc cho **fix-agent trên máy Mac** (điều-tra-only): agent đọc bundle chẩn đoán, trả nguyên nhân + đề xuất trong ~5-10 phút; nếu máy ngủ, bot báo sau 3 phút và hết hạn sau 30 phút.
 4. Chờ tin `✅`, `⚠️`, hoặc `❌`. Nếu thấy `⏳`, downstream chưa trả lời trong cửa sổ chờ; request vẫn được lưu để theo dõi, không được coi là thành công.
 5. Gửi lại `/diagnose <job-key>` hoặc mở `/admin/jobs` để xác nhận trạng thái cuối.
 
@@ -72,4 +75,9 @@ Ví dụ:
 
 ## Giới hạn cố ý
 
-Bot không tự sửa lỗi logic ứng dụng, thay đổi dữ liệu, merge PR hoặc deploy code chưa được phê duyệt. Với lỗi HTTP/downstream, `/fix` chỉ retry khi dependency runtime sẵn sàng và trả kết quả thật; nếu vẫn lỗi, cần kỹ sư sửa source rồi merge/deploy.
+Bot không tự sửa lỗi logic ứng dụng, merge PR hoặc deploy code chưa được phê duyệt. Với lỗi HTTP/downstream, `/fix` chỉ retry khi dependency runtime sẵn sàng và trả kết quả thật; nếu vẫn lỗi, cần kỹ sư sửa source rồi merge/deploy.
+
+Fix-agent (từ 08/2026) cũng bị giới hạn cùng tinh thần, cưỡng chế bằng cấu trúc chứ không bằng lời dặn:
+- Tiến trình agent (`claude -p`) chạy **0 credential, 0 tool, 0 mạng** — chỉ suy luận trên bundle JSON do daemon dựng.
+- Daemon (`scripts/ops/fix_agent_daemon.py`) là bên duy nhất cầm key, và thao tác duy nhất nó thực thi theo đề xuất của agent là **chèn một lệnh `/retry` hoặc `/fix`** cho chính bot này chạy qua các nhánh ở trên. Không deploy, không UPDATE monitor, không tắt nguồn tin, không ghi `ops_job_runs`.
+- Cooldown 30'/job, trần 6 lượt/giờ và 30 lượt/ngày; mọi chuỗi lỗi từ DB được coi là dữ liệu bên thứ ba, không phải chỉ thị.
