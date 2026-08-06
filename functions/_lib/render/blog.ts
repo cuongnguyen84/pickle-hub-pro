@@ -84,7 +84,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     description: meta.description,
     image: blogImage,
     url: enUrl,
-    author: { "@type": "Organization", name: "ThePickleHub", url: siteUrl },
+    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
     publisher: {
       "@type": "Organization",
       name: "ThePickleHub",
@@ -120,6 +120,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     image: blogImage,
     type: "article",
     extraMeta,
+    omitAutoHeader: true,
     jsonLd: blogGraph,
     // The post's own sections — see blog-body.ts for why this was missing.
     bodyContent: `${bc}${body}${relatedBlogLinks(slug, siteUrl)}`,
@@ -229,7 +230,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     image: absImage(p.cover_image_url, siteUrl),
     datePublished: p.published_at,
     dateModified: p.updated_at,
-    author: { "@type": "Organization", name: "ThePickleHub", url: siteUrl },
+    author: { "@type": "Person", name: "Cuong Nguyen", url: siteUrl },
     publisher: { "@type": "Organization", name: "ThePickleHub", logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE } },
     inLanguage: "vi-VN",
   };

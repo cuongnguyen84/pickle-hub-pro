@@ -333,6 +333,29 @@ const BlogPost = () => {
                     ))}
                   </ol>
                 )}
+                {section.table && section.table.headers.length > 0 && (
+                  <table>
+                    {section.table.caption && (
+                      <caption>{section.table.caption}</caption>
+                    )}
+                    <thead>
+                      <tr>
+                        {section.table.headers.map((h, i) => (
+                          <th key={i}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.table.rows.map((row, ri) => (
+                        <tr key={ri}>
+                          {row.map((cell, ci) => (
+                            <td key={ci}>{cell}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
                 {section.internalLinks && section.internalLinks.length > 0 && (
                   <p>
                     See also:{" "}

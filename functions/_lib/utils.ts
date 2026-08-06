@@ -359,7 +359,7 @@ export const ALL_TOOLS = [
 
 export function relatedBlogLinks(currentSlug: string, siteUrl: string): string {
   const related = ALL_BLOGS.filter((b) => b.slug !== currentSlug).slice(0, 3);
-  return `<section><h2>Bài viết liên quan</h2><ul>${related
+  return `<section><h2>Related posts</h2><ul>${related
     .map((p) => `<li><a href="${siteUrl}/blog/${p.slug}">${escapeHtml(p.title)}</a></li>`)
     .join("")}</ul></section>`;
 }

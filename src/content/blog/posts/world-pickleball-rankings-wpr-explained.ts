@@ -39,6 +39,10 @@ const post: BlogPost = {
               text: "New to the pro tours? Read our complete 2026 guide first",
               path: "/blog/professional-pickleball-tours-guide-2026",
             },
+            {
+              text: "Official source: Carvana PPA Tour announcement — World Pickleball Rankings",
+              path: "https://www.ppatour.com/world-pickleball-rankings-be-the-best/",
+            },
           ],
         },
         {
@@ -52,6 +56,15 @@ const post: BlogPost = {
             "Counts your 14 best results across the last 52 weeks",
             "Points scale with the size and tier of each event",
           ],
+          table: {
+            caption: "WPR discipline weighting",
+            headers: ["Discipline", "Weight"],
+            rows: [
+              ["Gender doubles (men's / women's)", "50%"],
+              ["Mixed doubles", "35%"],
+              ["Singles", "15%"],
+            ],
+          },
         },
         {
           heading: "Every PPA event on earth feeds one number",
@@ -99,6 +112,16 @@ const post: BlogPost = {
               path: "/blog/what-is-dupr-pickleball-rating-system",
             },
           ],
+          table: {
+            caption: "WPR vs DUPR at a glance",
+            headers: ["", "WPR", "DUPR"],
+            rows: [
+              ["What it is", "Competitive ranking (PPA Tour)", "Skill rating"],
+              ["Based on", "Results & points at PPA events", "All match results (win/loss)"],
+              ["Who has one", "PPA tour players", "Anyone (2.0-8.0 scale)"],
+              ["Answers", "Where you rank in the world", "How well you play"],
+            ],
+          },
         },
         {
           heading: "The bigger picture — and \"BE THE BEST.\"",
