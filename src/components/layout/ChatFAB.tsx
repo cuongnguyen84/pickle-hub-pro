@@ -39,6 +39,8 @@ const HIDDEN_PREFIXES = [
   "/tools/team-match/match/", // team-match referee scoring (matchId)/score
   "/live/", // trang xem live — FAB đè lên nút gửi chat (trang danh sách /live vẫn hiện)
   "/vi/live/",
+  "/rankings", // bảng xếp hạng — FAB che cột điểm 2-3 dòng cuối viewport (covers /rankings/ppa-tour)
+  "/vi/rankings",
 ];
 
 const DESKTOP_BREAKPOINT = "(min-width: 768px)";

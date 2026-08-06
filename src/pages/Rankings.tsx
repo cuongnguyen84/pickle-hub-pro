@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { RankingsTabs } from "@/components/rankings/RankingsTabs";
 import {
   DUPR_RANKINGS,
   DUPR_SCOPES,
@@ -111,29 +112,36 @@ const Rankings = () => {
           <div className="kicker">
             ◆ DUPR · {language === "vi" ? "Cập nhật" : "Updated"} {lastUpdatedLabel}
           </div>
+          {/* No hard <br/> — height budget (ui-ux KPI): let it wrap naturally. */}
           <h1>
             {language === "vi" ? (
               <>
-                Ai đang <em className="tl-serif">đứng top.</em> <br />
-                <span className="dim">Toàn cầu,</span> <span className="sans">tính theo DUPR.</span>
+                Ai đang <em className="tl-serif">đứng top,</em> <span className="dim">tính theo</span>{" "}
+                <span className="sans">DUPR.</span>
               </>
             ) : (
               <>
-                Where <em className="tl-serif">everyone</em> <br />
-                <span className="dim">actually</span> <span className="sans">stands.</span>
+                Where <em className="tl-serif">everyone</em> <span className="dim">actually</span>{" "}
+                <span className="sans">stands.</span>
               </>
             )}
           </h1>
           <p>
             {language === "vi"
-              ? "DUPR (Dynamic Universal Pickleball Rating) là chuẩn rating toàn cầu — cập nhật theo kết quả các giải đấu sanctioned. Snapshot này lấy từ trang chính thức DUPR."
-              : "DUPR (Dynamic Universal Pickleball Rating) is the global rating standard — updated from sanctioned tournament results. This snapshot is sourced from DUPR's public pages."}
+              ? "DUPR là chuẩn rating pickleball toàn cầu, cập nhật theo kết quả giải đấu."
+              : "DUPR is the global pickleball rating standard, updated from tournament results."}
           </p>
         </header>
 
+        <RankingsTabs active="dupr" language={language} />
+
         {/* Scope tabs — national + global + continents */}
         <div className="tl-rank-scopes">
-          <div className="tl-rank-scope-row">
+          <div
+            className="tl-rank-scope-row"
+            role="group"
+            aria-label={language === "vi" ? "Quốc gia" : "National"}
+          >
             <span className="tl-rank-scope-label">
               {language === "vi" ? "QUỐC GIA" : "NATIONAL"}
             </span>
@@ -142,13 +150,18 @@ const Rankings = () => {
                 key={s.key}
                 type="button"
                 className={`tl-rank-scope ${scope === s.key ? "active" : ""}`}
+                aria-pressed={scope === s.key}
                 onClick={() => setScope(s.key)}
               >
                 {language === "vi" ? s.labelVi : s.labelEn}
               </button>
             ))}
           </div>
-          <div className="tl-rank-scope-row">
+          <div
+            className="tl-rank-scope-row"
+            role="group"
+            aria-label={language === "vi" ? "Toàn cầu" : "Global"}
+          >
             <span className="tl-rank-scope-label">
               {language === "vi" ? "TOÀN CẦU" : "GLOBAL"}
             </span>
@@ -157,13 +170,18 @@ const Rankings = () => {
                 key={s.key}
                 type="button"
                 className={`tl-rank-scope ${scope === s.key ? "active" : ""}`}
+                aria-pressed={scope === s.key}
                 onClick={() => setScope(s.key)}
               >
                 {language === "vi" ? s.labelVi : s.labelEn}
               </button>
             ))}
           </div>
-          <div className="tl-rank-scope-row">
+          <div
+            className="tl-rank-scope-row"
+            role="group"
+            aria-label={language === "vi" ? "Châu lục" : "Continent"}
+          >
             <span className="tl-rank-scope-label">
               {language === "vi" ? "CHÂU LỤC" : "CONTINENT"}
             </span>
@@ -172,28 +190,17 @@ const Rankings = () => {
                 key={s.key}
                 type="button"
                 className={`tl-rank-scope ${scope === s.key ? "active" : ""}`}
+                aria-pressed={scope === s.key}
                 onClick={() => setScope(s.key)}
               >
                 {language === "vi" ? s.labelVi : s.labelEn}
               </button>
             ))}
           </div>
-          {/* PPA Tour is a separate route (own WPR metric + SSR landing), not a
-              scope — /rankings keeps its DUPR Việt Nam default + title. */}
-          <div className="tl-rank-scope-row">
-            <span className="tl-rank-scope-label">PRO</span>
-            <Link
-              className="tl-rank-scope"
-              to={language === "vi" ? "/vi/rankings/ppa-tour" : "/rankings/ppa-tour"}
-              style={{ textDecoration: "none" }}
-            >
-              PPA Tour ↗
-            </Link>
-          </div>
         </div>
 
-        {/* Format sub-tabs */}
-        <div className="tl-filters" style={{ marginTop: 8 }}>
+        {/* Format sub-tabs — tight to the panel below (height budget) */}
+        <div className="tl-filters" style={{ margin: "0 0 8px" }}>
           {availableFormats.map((fKey) => {
             const f = DUPR_FORMATS.find((meta) => meta.key === fKey)!;
             const count = isVietnamScope

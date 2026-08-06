@@ -3116,7 +3116,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 24px 0 12px;
+  margin: 12px 0 8px;
 }
 [data-theme="the-line"] .tl-rank-scope-row {
   display: flex;
@@ -3156,8 +3156,87 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   border-color: var(--tl-fg);
 }
 @media (max-width: 640px) {
-  [data-theme="the-line"] .tl-rank-scope-label { margin-right: 0; flex-basis: 100%; }
-  [data-theme="the-line"] .tl-rank-scope { font-size: 12px; padding: 5px 10px; }
+  /* Single horizontal rail (proposal rankings-dupr-wpr-tabs §4a subtraction c):
+     labels stay inline, chips scroll — reclaims ~150px vs 3 stacked rows. */
+  [data-theme="the-line"] .tl-rank-scopes {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    gap: 8px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  [data-theme="the-line"] .tl-rank-scope-row { flex-wrap: nowrap; flex: 0 0 auto; }
+  [data-theme="the-line"] .tl-rank-scope-label { margin-right: 0; flex: 0 0 auto; }
+  [data-theme="the-line"] .tl-rank-scope {
+    font-size: 12px;
+    padding: 5px 12px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    /* 44px touch target (design tokens) — visual pill stays compact */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  [data-theme="the-line"] .tl-filter { min-height: 44px; }
+}
+[data-theme="the-line"] .tl-rank-scope:focus-visible,
+[data-theme="the-line"] .tl-filter:focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 2px;
+}
+
+/* ========== Ranking-type tabs (DUPR | WPR) ========== */
+[data-theme="the-line"] .tl-rank-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  overflow: hidden;
+  margin: 12px 0 4px;
+}
+[data-theme="the-line"] .tl-rank-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+  text-decoration: none;
+  color: var(--tl-fg-2);
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+[data-theme="the-line"] .tl-rank-tab + .tl-rank-tab { border-left: 1px solid var(--tl-border); }
+[data-theme="the-line"] .tl-rank-tab:hover { color: var(--tl-fg); }
+[data-theme="the-line"] .tl-rank-tab.active {
+  background: var(--tl-fg);
+  color: var(--tl-bg);
+}
+[data-theme="the-line"] .tl-rank-tab:focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: -2px;
+}
+[data-theme="the-line"] .tl-rank-tab-title {
+  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+[data-theme="the-line"] .tl-rank-tab-caption {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tl-fg-3);
+}
+/* Caption on the inverted active tab — reuse the measured color-mix formula
+   (see .tl-filter .count contrast note): 6.1:1 both themes. */
+[data-theme="the-line"] .tl-rank-tab.active .tl-rank-tab-caption {
+  color: color-mix(in oklab, var(--tl-bg) 60%, var(--tl-fg));
 }
 
 /* ========== Rankings table ========== */
@@ -3885,7 +3964,17 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   flex: 1; background: transparent; border: 0; color: var(--tl-fg);
   font: inherit; font-size: 16px; letter-spacing: -0.01em;
 }
+/* Ring lives on the container — a bare outline:0 on the input was a WCAG
+   2.4.7 fail (ui-ux blocker #5, proposal rankings-dupr-wpr-tabs). */
 [data-theme="the-line"] .tl-search-input input:focus { outline: 0; }
+[data-theme="the-line"] .tl-search-input:focus-within {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 2px;
+}
+[data-theme="the-line"] .tl-search-input input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
 [data-theme="the-line"] .tl-search-input input::placeholder { color: var(--tl-fg-4); }
 [data-theme="the-line"] .tl-search-input kbd {
   font-family: "Geist Mono"; font-size: 11px; padding: 3px 6px;
