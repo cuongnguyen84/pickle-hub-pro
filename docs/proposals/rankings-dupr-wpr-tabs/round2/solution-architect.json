@@ -1,0 +1,56 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "HOLD",
+      "evidence": [
+        "ppatour.com/rankings (curl hôm nay, 270.049 B) — HTML có type=\"search\" + placeholder 'Search any ranked player by name…': ĐÍCH ĐẾN CỦA HANDOFF ĐÃ CÓ SẴN ô tìm theo tên trên trọn 2.075 VĐV kèm rank+points. Đây là câu 'chưa kiểm' R1 — nay đã kiểm, trả lời có lợi cho A.",
+        "Tự đo /api/rankings/: index [name,slug] = 29,2 KB gz; projection [rank,name,points,cc] = 26,5 KB gz → (e) ĐẮT HƠN (a′) 2,7 KB trong khi cho ÍT hơn (không rank/points).",
+        "profileUrl: 1.901 pickleball.com + 174 /athletes/ (hasLocalProfile đúng 174) — xác nhận risk.",
+        "ppatour.com/search/?q=hien%20truong → 200 nhưng 'No results' — cửa deep-link /search?q= là BẪY với đúng tên Việt cần nhất; handoff bắt buộc trỏ /rankings/, KHÔNG /search."
+      ],
+      "reasoning": "(e) mua đúng một thứ: tiết kiệm user một lần gõ lại tên. Giá: 29,2 KB bản sao định danh trọn bảng trong repo, bề mặt pháp lý thứ hai (pickleball.com 91,6% link, ToS chưa đọc lúc đó), snapshot trôi không monitor, và đốt khung 'trích dẫn biên tập' — thứ duy nhất giữ cả trang sống nếu thư không bao giờ tới. (e) thoả nghĩa đen 'tìm được tên', KHÔNG thoả 'giống trang gốc' (nguồn hiện rank+points tại chỗ). A + handoff vào đúng /rankings/ cho user CÙNG kết cục cuối với 0 KB, 0 bề mặt mới. Bất đối xứng quyết định: A→(e) là thay 1 hàm; (e)→A không rút lại được. Chọn cái revert được trước.",
+      "revised_position": "Giữ A + 3 chỉnh: (1) handoff trỏ https://www.ppatour.com/rankings/ kèm copy 'trang gốc có ô tìm theo tên trên toàn bộ 2.075 VĐV' — cấm /search/?q=; (2) GA4 đếm cả no_result LẪN click-out; (3) nếu Cuong đè 'phủ 2.075 ngay' thì ưu tiên (a′) chứ KHÔNG (e) — cùng bậc rủi ro pháp lý ('mirror không rút được bằng cách chọn cột'), rẻ hơn 2,7 KB, cho user thứ họ vào để xem.",
+      "sub_points": [
+        {
+          "id": "D1.a",
+          "verdict": "CONCEDE",
+          "evidence": ["useSearch.ts:24 — 300ms hard-code trong hook, không tham số", "useSearch.ts:29-34 — includes thuần, KHÔNG normalize NFD, không chỗ cắm hàm so khớp", "pre-mortem.md:54 — guard fold NFD + test 'Trương' là P0"],
+          "reasoning": "useSearch KHÔNG dùng được cho ca này (không fold dấu — guard P0). Phải tự viết hàm lọc → 300ms không còn 'miễn phí đi kèm', chỉ là độ trễ tặng thêm cho ≤92 dòng in-memory.",
+          "revised_position": "Lọc tức thì; hàm thuần filterWpr(query, rows) tách riêng test được; fold NFD theo slug.ts:19; giữ guard IME (composition) + aria-live trễ ~400ms cho THÔNG BÁO, không trễ KẾT QUẢ. Không dùng useSearch/useDebounce cho route này."
+        },
+        {
+          "id": "D1.b",
+          "verdict": "CONCEDE",
+          "evidence": ["check-bundle-size.mjs:52,64 — chỉ đếm .js: JSON public không bao giờ được gate đếm dù user tải thật = gate mù", "vite.config.ts:122-135 — globPatterns không có data/*.json", "vite.config.ts:183-192 — runtimeCaching lazy-chunks chỉ khớp destination script → JSON public offline chết, bản nhúng route chunk vẫn còn"],
+          "reasoning": "Vòng 1 tự gọi kẽ hở gate là 'kẽ hở thước đo, không phải giấy phép' rồi vẫn chọn đúng kẽ hở đó. Public asset mua 'xanh CI' bằng 'mù CI' + mất offline.",
+          "revised_position": "Nếu bước 5 được mở khoá: dữ liệu nằm trong lazy route chunk PpaRankings (dynamic import, không đụng INITIAL), tính vào CODE/Total thật (~1927 KB, còn ~43 KB); KHÔNG public asset. Kèm cảnh báo headroom <5% + đo chunk <150 KB gz."
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "verdict": "REFINE",
+      "evidence": [
+        "Tự đo /api/rankings/: đúng 39 dòng countryCode='vn'; đuôi rank 329/330/343 chỉ 25 điểm (Bich Hua, Phan Quynh, Thilehang Tra)",
+        "ppa-rankings.ts:96,105-108 — khối highlight đã có cấu trúc rank+points, mở rộng là kéo dài cấu trúc đang có",
+        "risk-auditor.md:23 — photography trong câu liệt kê tài sản → tuyệt đối không chép headshot"
+      ],
+      "reasoning": "Giữ 'vẫn là biên tập' nhưng thu hẹp: cái làm nó biên tập KHÔNG phải con số 2% — mà là CÓ MỘT QUY TẮC CHỌN phát biểu được bằng một câu và in ngay trên trang ('mọi VĐV mang cờ Việt Nam trên bảng WPR, tính đến <ngày>'). Trả lời cho 'bao nhiêu % là hết editorial': không có ngưỡng %, có ngưỡng NGỮ NGHĨA — chọn theo quy tắc biên tập nêu được = trích dẫn; chọn 'tất cả' = chính cái bảng, dù cắt cột nào.",
+      "revised_position": "Giữ 42 dòng + 4 ràng buộc cứng: (1) chép tay một lần, không script/cron; (2) không chép headshot dưới mọi hình thức; (3) in quy tắc chọn + PPA_WPR_FETCHED_AT ngay cạnh khối, VI/EN, giữ credit; (4) mốc refresh trong docs/milestones.md. KHÔNG tự gán tier — thẩm quyền risk-auditor; chỉ khẳng định cùng LOẠI hành vi với 50 dòng đã GREEN, khác độ dài không khác bản chất."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Fix font optional→swap: phạm vi thiếu + không đi chung PR rankings",
+      "with": "ui-ux-critic",
+      "myPosition": "Bug THẬT (tự mở index.html xác nhận) nhưng fix ui-ux khoanh còn SÓT: :58 geist-mono-vietnamese và :62 inter-vietnamese cũng 'optional' — cùng lớp lỗi. Và đây là thay đổi TOÀN SITE trên đường LCP — nhét vào PR rankings là scope laundering đúng nghĩa risk #6. Đề xuất: PR riêng 1 file sửa cả 4 dòng vietnamese + preload, đo LCP/CLS trước-sau."
+    },
+    {
+      "topic": "Nếu Cuong đè 'phủ 2.075 ngay': (e) hay (a′)?",
+      "with": "risk-auditor",
+      "myPosition": "Không tranh RED. Nhưng nếu Cuong chấp nhận rủi ro có ý thức thì (e) là lựa chọn tệ trong hai: 29,2 > 26,5 KB — trả nhiều hơn cho ít hơn — và đẩy 91,6% kết quả sang bề mặt pháp lý chưa định giá. (e) là chỗ tệ nhất để đứng: đủ gần lằn ranh để mất khung biên tập, chưa đủ giá trị để bù."
+    }
+  ]
+}

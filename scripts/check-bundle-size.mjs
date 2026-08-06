@@ -177,6 +177,14 @@ function main() {
         breaches.push(`initial-load chunk ${f} matches no precache globPattern in vite.config.ts`);
   }
 
+  // Headroom early-warning (proposal rankings-dupr-wpr-tabs, pre-mortem #3):
+  // a PR that lands green with <5% headroom left silently books the red gate
+  // for whichever unrelated PR comes next. Advisory only — never blocks.
+  const headroom = BUDGETS.total * 1024 - totals.total;
+  if (headroom > 0 && headroom < BUDGETS.total * 1024 * 0.05) {
+    console.warn(`⚠ Total headroom low: ${kb(headroom)} KB left of ${BUDGETS.total} KB backstop (<5%) — the next PR pays for this one`);
+  }
+
   if (breaches.length) {
     for (const b of breaches) console.error(`${STRICT ? "✖" : "⚠"} ${b}`);
     if (STRICT) process.exit(1);

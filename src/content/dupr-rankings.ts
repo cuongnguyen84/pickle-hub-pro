@@ -4331,7 +4331,7 @@ export const DUPR_SCOPES: { key: DuprScope; labelEn: string; labelVi: string; gr
   { key: "asia",              labelEn: "Asia",                labelVi: "Châu Á",          group: "continent" },
   { key: "north-america",     labelEn: "North America",       labelVi: "Bắc Mỹ",          group: "continent" },
   { key: "south-america",     labelEn: "South America",       labelVi: "Nam Mỹ",          group: "continent" },
-  { key: "australia-oceania", labelEn: "Australia / Oceania", labelVi: "Úc / Châu Đại Dương", group: "continent" },
+  { key: "australia-oceania", labelEn: "Australia / Oceania", labelVi: "Châu Đại Dương", group: "continent" },
   { key: "europe",            labelEn: "Europe",              labelVi: "Châu Âu",         group: "continent" },
 ];
 

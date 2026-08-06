@@ -1,0 +1,68 @@
+{
+  "slug": "rankings-dupr-wpr-tabs",
+  "ledger_note": "debate-ledger.mjs vẫn không tồn tại — orchestrator cưỡng chế thủ công theo docs/agent-round2-rules.md.",
+  "consensus_no_debate": [
+    "Thanh tab [DUPR|WPR]: GREEN, không ai chặn. Spec hội tụ: <nav> 2 <Link> + aria-current=page (KHÔNG role=tablist) — architect + ui-ux + GPT-5.6 độc lập cùng kết luận; đặt dưới header trên bộ lọc; xoá cụm PRO pill cũ; kèm 3 phép trừ chiều cao của ui-ux.",
+    "3 guard của pre-mortem không ai phản đối: search soi UNION cả 2 board + khối VN + fold dấu NFD + 1 test 'Trương'→Hien Truong; hai empty state khác chữ; cảnh báo headroom <5% trong check-bundle-size.",
+    "Merge PR #552 trước, branch mới từ main (architect + risk cùng kết luận độc lập — scope laundering).",
+    "Không đưa query string vào tầng render (cache poisoning guard).",
+    "Fix font Geist vietnamese font-display:optional→swap (ui-ux #6) — lỗi toàn site, 8 KB."
+  ],
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Thoả yêu cầu 'tìm được cả ~2.075 VĐV' bằng kiến trúc gì, ngay bây giờ hay sau?",
+      "positions": {
+        "solution-architect": "KHÔNG phủ 2.075 bây giờ. Option A: mở rộng khối VN 4→42 (39 VĐV cờ vn từ nguồn), search trung thực trong 92 dòng (25+25+42) + no-match handoff ra ppatour.com + đếm GA4 no-match; 2 tuần sau có số thật mới quyết. Lý do: mọi bản sao full-roster là cùng hành động RED vòng trước, chỉ khác hình dạng file; 42 dòng đúng chỗ đáng giá hơn 2.075 dòng sai chỗ.",
+        "risk-auditor": "Nếu Cuong muốn phủ 2.075 NGAY (anh đã chọn ở intake): đường (e) — index [name,slug] 28,5 KB, KHÔNG đăng rank/points, mỗi kết quả link về trang gốc — là phơi nhiễm thấp nhất còn thoả yêu cầu, tier AMBER (đổi bản chất từ tái-xuất-bản sang chỉ-mục-dẫn-đường). Điều kiện cứng: đọc ToS pickleball.com trước (1.901/2.075 profileUrl trỏ sang đó — bề mặt pháp lý thứ hai chưa ai đọc).",
+        "ui-ux-critic": "Chưa đánh giá (e). Lập trường R1: search phải nói thật phạm vi TRƯỚC khi gõ + helper thường trực + quét cả 2 bảng; đồng thuận với GPT-5.6 'không nhét full 2.075 vào bundle client'. Câu hỏi mở cho vòng 2: UX của (e) — kết quả tìm thấy tên nhưng KHÔNG có điểm, chỉ có link đi ra ngoài — có tốt hơn hay tệ hơn no-match handoff của A?"
+      },
+      "sub_points": [
+        "Debounce 300ms (architect, tái dùng useSearch) vs lọc tức thì (ui-ux + GPT đồng thuận cross-vendor cho 50-92 dòng in-memory) — chi tiết spec, kỳ vọng architect concede.",
+        "(e) nếu làm: nằm trong bundle JS (28,5 KB ăn headroom 69,4) hay public asset fetch-on-focus (0 KB budget nhưng offline mất + gate mù — risk #3/#4)?"
+      ]
+    },
+    {
+      "id": "D2",
+      "topic": "Mở rộng khối VN 4→42 dòng: còn là 'trích dẫn biên tập' an toàn không, tier gì?",
+      "positions": {
+        "solution-architect": "42/2075 = 2% bảng, vẫn là trích dẫn biên tập có credit — khung disclaimer hiện tại phủ nguyên; giá trị lớn nhất cho 95% khán giả Việt; chi phí pháp lý gần bằng 0.",
+        "risk-auditor": "(chưa tier — R1 của risk đánh giá trước khi thấy đề xuất 42 dòng của architect; tier GREEN của đường (d) dựa trên 50 dòng. Cần verdict bổ sung: 92 dòng tổng có đổi tier không, và tiêu chí 'bao nhiêu % là hết editorial' là gì.)"
+      }
+    }
+  ],
+  "round2_resolutions": {
+    "D1": "RESOLVED — (e) CHẾT: risk-auditor tự fetch ToS pickleball.com (external/pickleball-com-tos-2026-08-06.txt), L42 cấm cung cấp 'any portion of data... to any competitor or other provider of pickleball-related services', L41 cấm automated extraction kể cả screen scraping; ppatour.com là affiliated site cùng nhóm pháp nhân → NÂNG (e) AMBER→RED (nhượng bộ đi lên). Architect HOLD được chứng thực + dữ kiện mới: ppatour.com/rankings CÓ ô search full 2.075 tại chỗ (handoff của A dẫn đúng nơi user cần; CẤM /search/?q= — verify trả 'No results' cho tên Việt). ui-ux hybrid tầng-2 tự moot vì điều kiện cứng của chính nó (ToS pickleball.com) trả về negative — fallback của hybrid CHÍNH LÀ A. KẾT LUẬN HỘI TỤ: Option A; không kiến trúc nào phủ 2.075 hợp lệ trước khi có thư; mở khoá = văn bản từ legal@ppatour.com.",
+    "D1.a": "RESOLVED — architect CONCEDE: lọc tức thì (useSearch không tái dùng được vì không fold NFD — guard P0; đã phải tự viết thì 300ms chỉ là độ trễ tặng thêm). Hàm thuần filterWpr + fold NFD + guard IME + aria-live trễ 400ms cho thông báo.",
+    "D1.b": "RESOLVED — architect CONCEDE: nếu tương lai mở khoá, dữ liệu vào lazy route chunk (tính vào budget thật, giữ offline), KHÔNG public asset (gate mù + offline chết — verify check-bundle-size.mjs:52 + vite.config.ts:183-192).",
+    "D2": "RESOLVED — risk verdict 🟡 AMBER cho khối VN 42 dòng, kèm 5 điều kiện ship (không headshot; credit + không xoá proprietary notice; FETCHED_AT ngay cạnh khối; hằng số VIẾT TAY cấm commit script filter; không cron) — thiếu (1) hoặc (4) nâng RED. Bộ tiêu chí 5 phép thử T1-T5 chốt cho tương lai. Architect REFINE tương thích (quy tắc chọn in trên trang + 4 ràng buộc). ui-ux bổ sung UI: render 8 dòng + <details> 'Xem tất cả 42' (SSR vẫn phát đủ 42 tên cho bot) — không ai phản đối, nhận vào spec."
+  },
+  "new_disagreements_round2": [
+    {
+      "id": "N1",
+      "topic": "Font fix optional→swap: phạm vi + PR riêng",
+      "positions": {
+        "solution-architect": "PR riêng, sửa cả 4 dòng vietnamese (thêm geist-mono + inter mà ui-ux sót) + preload; nhét vào PR rankings là scope laundering.",
+        "ui-ux-critic": "(chưa phản hồi — R1 gắn nó vào blocker PR #552)"
+      },
+      "resolution": "SYNTHESIS: nhận đề xuất architect — PR riêng, phạm vi đầy đủ 4 dòng. Không mâu thuẫn thực chất về bug, chỉ về đóng gói."
+    },
+    {
+      "id": "N2",
+      "topic": "Nếu Cuong đè 'phủ 2.075 ngay' (cả hai đường đều RED): (a′) hay (e)?",
+      "positions": {
+        "solution-architect": "(a′) projection — rẻ hơn 2,7 KB, có rank+points, không mở bề mặt pickleball.com.",
+        "risk-auditor": "R1 xếp (e) phơi nhiễm thấp hơn — nhưng lập luận đó đã chết cùng ToS pickleball.com ở R2."
+      },
+      "resolution": "OPEN_FOR_CUONG chỉ khi anh override RED — panel khuyến nghị KHÔNG override; nếu override, (a′) là poison-pick hợp lý hơn theo dữ kiện sau R2."
+    },
+    {
+      "id": "N3",
+      "topic": "news-fetcher cron 2h là automated extraction đang chạy (L41) — excludePrefixes cố ý né /rankings + /athletes nên KHÔNG phải tiền lệ cho rankings, nhưng email gửi legal@ cần biết chú thích này",
+      "positions": {
+        "risk-auditor": "nêu"
+      },
+      "resolution": "NOTED — chuyển vào mục 'Cuong cần biết' của proposal."
+    }
+  ]
+}
