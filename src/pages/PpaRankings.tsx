@@ -44,6 +44,20 @@ const PpaRankings = () => {
     [vi],
   );
 
+  // Localized country names from the ISO code ("Hoa Kỳ" thay vì "United States"
+  // trên bản VI) — falls back to the source's English name if ICU misses one.
+  const regionNames = useMemo(
+    () => new Intl.DisplayNames([vi ? "vi" : "en"], { type: "region" }),
+    [vi],
+  );
+  const countryName = (code: string, fallback: string) => {
+    try {
+      return regionNames.of(code.toUpperCase()) ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const fetchedLabel = useMemo(() => {
     const d = new Date(PPA_WPR_FETCHED_AT);
     return d.toLocaleDateString(vi ? "vi-VN" : "en-GB", {
@@ -100,6 +114,9 @@ const PpaRankings = () => {
               type="button"
               className={`tl-filter ${board === key ? "active" : ""}`}
               aria-pressed={board === key}
+              // 44px touch target (proposal §5) — page-scoped until the global
+              // .tl-filter pill height is revisited.
+              style={{ minHeight: 44 }}
               onClick={() => setBoard(key)}
             >
               {boardLabel(key, vi)}
@@ -146,7 +163,7 @@ const PpaRankings = () => {
                       </div>
                     </td>
                     <td className="hide-mobile" style={{ color: "var(--tl-fg-3)", fontFamily: "Geist Mono", fontSize: 12 }}>
-                      {p.country}
+                      {countryName(p.countryCode, p.country)}
                     </td>
                     <td className="tl-rank-score">{numberFmt.format(p.points)}</td>
                   </tr>
@@ -235,8 +252,8 @@ const PpaRankings = () => {
             <>
               WPR points are published by PPA Tour at{" "}
               <a href={PPA_WPR_SOURCE_URL} target="_blank" rel="nofollow noopener noreferrer" style={{ color: "var(--tl-green)" }}>ppatour.com/rankings</a>.
-              ThePickleHub excerpts the top 25 per board for reference (data pulled {fetchedLabel}) with
-              Vietnamese number formatting. ThePickleHub is not an official PPA Tour channel or partner.
+              ThePickleHub excerpts the top 25 per board for reference (data pulled {fetchedLabel}).
+              ThePickleHub is not an official PPA Tour channel or partner.
               See the full 2,000+ player board on the source site. Curious how the points work?{" "}
               <Link to="/blog/world-pickleball-rankings-wpr-explained" style={{ color: "var(--tl-green)" }}>
                 Read the WPR explainer
