@@ -163,7 +163,6 @@ const TournamentDetail = () => {
                         key={stream.id}
                         id={stream.id!}
                         title={stream.title ?? ""}
-                        viewerCount={0}
                         organizationName={stream.organization?.name ?? ""}
                         status="live"
                         thumbnail={stream.thumbnail_url ?? undefined}

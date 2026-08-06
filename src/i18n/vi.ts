@@ -421,6 +421,7 @@ export interface Translations {
     scheduledFor: string;
     replay: string;
     watchingTooltip: string;
+    watchingAria: string;
     totalViewsTooltip: string;
     hubTitle: string;
     hubDescription: string;
@@ -3407,7 +3408,8 @@ export const vi: Translations = {
     noLivestreams: "Không có livestream nào",
     scheduledFor: "Bắt đầu lúc",
     replay: "Xem lại",
-    watchingTooltip: "Số người đang xem trực tiếp ngay bây giờ",
+    watchingTooltip: "Số người đang xem lúc này",
+    watchingAria: "{count} người đang xem trực tiếp",
     totalViewsTooltip: "Tổng số lượt xem từ khi bắt đầu phát",
     previewRemaining: "Xem thử miễn phí · Còn {seconds} giây",
     previewEndingSoon: "Còn {seconds} giây · Đăng ký để xem tiếp",

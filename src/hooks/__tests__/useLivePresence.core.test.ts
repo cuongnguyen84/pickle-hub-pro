@@ -77,7 +77,7 @@ describe("useLivePresence core paths", () => {
     unmount();
   });
 
-  it("counts viewers from presence sync, excluding admin_watcher_* keys", async () => {
+  it("counts viewers from presence sync, excluding admin_watcher_* keys and gated viewers", async () => {
     const id = freshId();
     const { result, unmount } = renderHook(() => useLivePresence(id, true));
     const channel = channels[0];
@@ -85,8 +85,9 @@ describe("useLivePresence core paths", () => {
       channel.fire("SUBSCRIBED");
     });
     channel.presenceState.mockReturnValue({
-      viewer_a: [{}],
-      viewer_b: [{}],
+      viewer_a: [{}],                    // legacy client, no gated field → counted
+      viewer_b: [{ gated: false }],      // watching → counted
+      viewer_c: [{ gated: true }],       // stuck at login gate → NOT counted
       admin_watcher_x: [{}],
     });
     await act(async () => {

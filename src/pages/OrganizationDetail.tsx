@@ -233,7 +233,6 @@ const OrganizationDetail = () => {
                       key={stream.id}
                       id={stream.id!}
                       title={stream.title ?? ""}
-                      viewerCount={0}
                       organizationName={organization.name}
                       organizationLogo={organization.display_logo ?? organization.logo_url ?? undefined}
                       isVerifiedCreator
