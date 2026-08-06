@@ -200,11 +200,7 @@ export default function AdminNews() {
         .update(
           {
             pipeline_status: "pending",
-            attempts: 0,
             last_error: null,
-            failure_kind: null,
-            retryable: false,
-            next_retry_at: null,
           },
           { count: "exact" },
         )
