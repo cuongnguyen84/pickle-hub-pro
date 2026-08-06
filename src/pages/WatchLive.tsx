@@ -6,7 +6,7 @@ import { useLivePresence } from "@/hooks/useLivePresence";
 import { LikeButton } from "@/components/content/LikeButton";
 import { ReportDialog } from "@/components/report";
 import { CommentSection } from "@/components/content/CommentSection";
-import { LiveCard } from "@/components/content";
+import { LiveCard, MIN_PUBLIC_VIEWERS } from "@/components/content";
 import { MuxPlayer } from "@/components/video";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -401,20 +401,20 @@ const WatchLive = () => {
                   {isLive ? (
                     // LIVE: Show both concurrent viewers and total views
                     <>
-                      {/* Concurrent viewers (real-time) */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1 cursor-help">
-                            <Users className="w-4 h-4 text-live" />
-                            <span className="text-live font-medium">
-                              {isConnected ? concurrentViewers.toLocaleString() : "—"} {t.live.watching}
-                            </span>
+                      {/* Concurrent viewers (real-time). Ẩn khi chưa kết nối
+                          hoặc dưới sàn — không bao giờ in "—" (đọc như hỏng)
+                          hay "0/1/2 đang xem". */}
+                      {isConnected && concurrentViewers >= MIN_PUBLIC_VIEWERS && (
+                        <span
+                          className="flex items-center gap-1"
+                          aria-label={t.live.watchingAria.replace("{count}", concurrentViewers.toLocaleString())}
+                        >
+                          <Users className="w-4 h-4 text-live" aria-hidden="true" />
+                          <span className="text-live font-medium">
+                            {concurrentViewers.toLocaleString()} {t.live.watching}
                           </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t.live.watchingTooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                        </span>
+                      )}
                       {/* Total views */}
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -561,7 +561,6 @@ const WatchLive = () => {
                       key={stream.id}
                       id={stream.id ?? ""}
                       title={stream.title ?? "Livestream"}
-                      viewerCount={0}
                       organizationName={stream.organization?.name ?? ""}
                       organizationSlug={stream.organization?.slug}
                       status={stream.status as "live" | "scheduled" | "ended"}

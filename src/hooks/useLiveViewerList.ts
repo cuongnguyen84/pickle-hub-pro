@@ -29,13 +29,18 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
   const [viewers, setViewers] = useState<ViewerProfile[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  // Cache profile theo userId cho cả vòng đời panel — presence:sync bắn dồn dập
+  // (mỗi join/leave một lần), không có cache thì mỗi sync là 1 SELECT profiles
+  // + 1 RPC email với IN-list toàn bộ viewer, đúng giờ DB đang căng nhất.
+  const profileCacheRef = useRef(
+    new Map<string, { display_name: string | null; email: string | null; avatar_url: string | null }>(),
+  );
 
   const enrichViewers = useCallback(async (rawViewers: ViewerInfo[]) => {
+    const cache = profileCacheRef.current;
     const userIds = rawViewers
       .map((v) => v.userId)
-      .filter((id): id is string => !!id);
-
-    const profileMap: Record<string, { display_name: string | null; email: string | null; avatar_url: string | null }> = {};
+      .filter((id): id is string => !!id && !cache.has(id));
 
     if (userIds.length > 0) {
       // display_name + avatar_url from profiles. KHÔNG select `email` ở đây:
@@ -49,7 +54,7 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
 
       if (profiles) {
         for (const p of profiles) {
-          profileMap[p.id] = { display_name: p.display_name, email: null, avatar_url: p.avatar_url };
+          cache.set(p.id, { display_name: p.display_name, email: null, avatar_url: p.avatar_url });
         }
       }
 
@@ -57,14 +62,15 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
       const { data: emails } = await supabase.rpc("admin_get_profile_emails", { p_ids: userIds });
       if (emails) {
         for (const e of emails) {
-          if (profileMap[e.id]) profileMap[e.id].email = e.email;
-          else profileMap[e.id] = { display_name: e.display_name, email: e.email, avatar_url: null };
+          const cached = cache.get(e.id);
+          if (cached) cached.email = e.email;
+          else cache.set(e.id, { display_name: e.display_name, email: e.email, avatar_url: null });
         }
       }
     }
 
     return rawViewers.map((v): ViewerProfile => {
-      const profile = v.userId ? profileMap[v.userId] : null;
+      const profile = v.userId ? cache.get(v.userId) ?? null : null;
       return {
         viewerId: v.viewerId,
         userId: v.userId,
@@ -89,6 +95,8 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
     const channelName = `livestream_presence:${livestreamId}`;
     const adminKey = `admin_watcher_${uniqueChannelSuffix()}`;
     let cancelled = false;
+    let syncTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastEnrichAt = 0;
 
     (async () => {
       // realtime-js dedupe theo topic; removeChannel là async — phải đợi gỡ hẳn
@@ -119,26 +127,36 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
     channelRef.current = channel;
 
     channel
-      .on("presence", { event: "sync" }, async () => {
-        const state = channel.presenceState();
-        const rawViewers: ViewerInfo[] = [];
+      .on("presence", { event: "sync" }, () => {
+        // Throttle 2s: sync bắn theo TỪNG join/leave, mỗi lần xử lý là 2 query
+        // DB. Gom về tối đa 1 lần mỗi 2s; lần chạy đọc presenceState() MỚI NHẤT
+        // tại thời điểm chạy nên không mất sự kiện, chỉ gộp.
+        if (syncTimer) return;
+        const delay = Math.max(0, 2000 - (Date.now() - lastEnrichAt));
+        syncTimer = setTimeout(async () => {
+          syncTimer = null;
+          lastEnrichAt = Date.now();
+          if (cancelled) return;
+          const state = channel.presenceState();
+          const rawViewers: ViewerInfo[] = [];
 
-        for (const [key, presences] of Object.entries(state)) {
-          // Skip admin watcher entries
-          if (key.startsWith("admin_watcher_")) continue;
-          const presence = (presences as Array<{ user_id?: string | null; joined_at?: string; gated?: boolean }>)[0];
-          rawViewers.push({
-            viewerId: key,
-            userId: presence?.user_id ?? null,
-            joinedAt: presence?.joined_at ?? new Date().toISOString(),
-            // Optional-chain on purpose: tabs running the pre-gated client
-            // send no `gated` field — treat legacy as watching, never filter.
-            gated: presence?.gated === true,
-          });
-        }
+          for (const [key, presences] of Object.entries(state)) {
+            // Skip admin watcher entries
+            if (key.startsWith("admin_watcher_")) continue;
+            const presence = (presences as Array<{ user_id?: string | null; joined_at?: string; gated?: boolean }>)[0];
+            rawViewers.push({
+              viewerId: key,
+              userId: presence?.user_id ?? null,
+              joinedAt: presence?.joined_at ?? new Date().toISOString(),
+              // Optional-chain on purpose: tabs running the pre-gated client
+              // send no `gated` field — treat legacy as watching, never filter.
+              gated: presence?.gated === true,
+            });
+          }
 
-        const enriched = await enrichViewers(rawViewers);
-        setViewers(enriched);
+          const enriched = await enrichViewers(rawViewers);
+          if (!cancelled) setViewers(enriched);
+        }, delay);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -155,6 +173,10 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
 
     return () => {
       cancelled = true;
+      if (syncTimer) {
+        clearTimeout(syncTimer);
+        syncTimer = null;
+      }
       if (channelRef.current) {
         channelRef.current.untrack().catch(() => {});
         supabase.removeChannel(channelRef.current);

@@ -1,0 +1,85 @@
+{
+  "slug": "live-viewer-count-comparison",
+  "ledger_enforcement": "MANUAL — scripts/agents/debate-ledger.mjs KHÔNG tồn tại trong repo (xác nhận độc lập bởi orchestrator + risk-auditor + ui-ux-critic trong phiên này; scripts/agents/ chỉ có risk-tier.mjs, soak-watch.mjs + tests). Orchestrator tự kiểm: mọi CONCEDE có evidence file:line tự mở kiểm chứng (PASS), không RED bị tranh xuống (PASS), không CONCEDE kiểu 'agent kia nói có lý' (PASS).",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "LiveBroadcastHero.tsx + LiveCardWithPresence.tsx có đang mount trên prod không — 'hero tự track mọi khách trang chủ' là bug sống hay dead code?",
+      "positions": {
+        "solution-architect": "Dead code, 0 importer — Presence hiện cộng 0 connection.",
+        "ui-ux-critic": "Hero là bề mặt sống, Blocker #2.",
+        "risk-auditor": "A2 rủi ro CAO đang sống."
+      },
+      "round2": {
+        "solution-architect": { "move": "HOLD", "evidence": "src/pages/Index.tsx:7 import LiveSection (không phải hero); grep LiveBroadcastHero toàn src/+functions/ = chỉ dòng export LiveBroadcastHero.tsx:146 + 1 comment CSS; git log -S → #251 (d4a7d12b) là commit gỡ hero khỏi trang chủ; LiveSection.tsx 0 hit presence/viewer." },
+        "ui-ux-critic": { "move": "CONCEDE", "evidence": "src/pages/Index.tsx:599 render <LiveSection>; LiveBroadcastHero.tsx:146 là occurrence duy nhất trong src/; 0 lazy/dynamic import; barrel content/index.ts:3 có LiveCardWithPresence nhưng 0/6 caller lấy. Blocker #2 chết; #1 (viewerCount={0} × 3 call-site + LiveCard.tsx:107) và #3 (tooltip a11y) tự mở lại xác nhận CÒN SỐNG." },
+        "risk-auditor": { "move": "CONCEDE", "evidence": "Tự grep: LiveBroadcastHero xuất hiện đúng 1 lần (dòng export :146), 0 importer tĩnh/động; Index.tsx:5-24 không có hero; 6 file import barrel chỉ lấy EmptyState/ContentCard/LiveCard. A2 hạ 'CAO đang sống' → mìn đã cài chưa nổ (cùng loại A5); A1 dịu (+0 connection vì WatchLive đã có socket chat). KHÔNG đụng RED kịch bản (b) — RED đứng trên B1 migration." }
+      },
+      "resolution": "RESOLVED_BY_EVIDENCE — bất đồng ẢO, giết đúng luật: cả hai phía phản đối tự mở file và CONCEDE. Sự thật: hero + LiveCardWithPresence là dead code từ #251; consumer Presence sống duy nhất = WatchLive.tsx:75; con số hiện tại KHÔNG bị thổi bởi khách trang chủ."
+    },
+    {
+      "id": "D2",
+      "topic": "Nếu thêm snapshot phục vụ list + native: ai ghi con số xuống DB — client leader election hay server-side?",
+      "positions": {
+        "solution-architect": "Client leader election, RPC 60s, ON CONFLICT DO NOTHING.",
+        "ui-ux-critic": "Server-side ghi cột livestreams.viewer_count ~30s."
+      },
+      "round2": {
+        "solution-architect": { "move": "CONCEDE", "evidence": "supabase/migrations/20260804090000_close_event_registrations_insert_bypass.sql:1-30 — repo vừa đóng đúng lớp lỗ 'client gọi được + client tự khai giá trị'; RPC leader-election có y hệt hình dạng đó. Chuyển writer sang server-side observer (tiền tố admin_watcher_ được useLivePresence.ts:41-43 lọc sẵn = tự loại khỏi số đếm miễn phí). GIỮ: nhịp 60s (sàn cron 1 phút), hình dạng snapshot 1 dòng/phút, viewer không bao giờ ghi DB. Giá: +1 edge function + 1 cron vào roster SLO 5, effort 1→2 half-day, vẫn RED, vẫn nằm SAU STOP & LOOK." },
+        "ui-ux-critic": { "move": "CONCEDE", "evidence": "types.ts:2866-2887 — livestreams KHÔNG có cột viewer_count nên đề xuất của mình cũng cần migration RED, không rẻ hơn; sàn lập lịch toàn repo là 1 phút (wrangler.toml:27, 20260802143000:111) nên '~30s' không lập lịch được. Nhường cơ chế ghi; giữ 2 yêu cầu UX ở newDisagreements." }
+      },
+      "resolution": "RESOLVED_CONVERGED — hội tụ chéo bằng bằng chứng: nếu làm snapshot thì writer là SERVER-SIDE OBSERVER (join presence với key admin_watcher_*, đếm bằng chính bộ lọc countViewers, ghi 1 row/phút), KHÔNG phải client. Kèm điều kiện của risk-auditor: DO UPDATE GREATEST thay vì DO NOTHING, GRANT block + verify, test leader/forge, áp migration ngoài 22h-24h VN."
+    },
+    {
+      "id": "D3",
+      "topic": "Lợi thế 'phát hiện rời đi tức thì' của Presence — có thật trên mobile VN (95% user) không?",
+      "positions": {
+        "solution-architect": "'Tức thì vs 60-85s' là luận điểm đầu bảng chống Cách B.",
+        "ui-ux-critic": "Phần lớn lý thuyết trên mobile; khác biệt thực tế gần bằng 0."
+      },
+      "round2": {
+        "solution-architect": { "move": "REFINE", "evidence": "useLivePresence.ts:186-188 — untrack() chỉ chạy trong release() (React unmount): 'tức thì' chỉ phủ điều hướng SPA sạch; khoá màn hình/app-switch rơi về timeout server ~25-50s. Hạ luận điểm xuống hàng hai; luận điểm đầu bảng mới: đường đếm Cách A không chạm Postgres → sống sót sự cố kiểu PGRST002 02/08, mọi bộ đếm DB sẽ hiện 0." },
+        "ui-ux-critic": { "move": "HOLD", "evidence": "useLivePresence.ts:186-188 + grep 0 handler pagehide/visibilitychange trên đường presence — tiêu đề công bằng cho mobile là '60-85s (B) vs 25-50s (A)', không phải 'vs tức thì'. Vẫn là lợi thế của A nhưng không đáng đầu bảng." }
+      },
+      "resolution": "RESOLVED_BY_REFINE — hai bên hội tụ về cùng khung số: A nhanh hơn B ở bước 'ai rời đi' nhưng trên mobile chỉ là 25-50s vs 60-85s; 'tức thì' chỉ đúng cho điều hướng SPA/desktop. Luận điểm chính của phe giữ-A đổi thành: Cách A miễn nhiễm outage PostgREST (đã kiểm chứng qua sự cố 02/08), Cách B thì hiện 0 đúng lúc sập."
+    }
+  ],
+  "new_disagreements_round2": [
+    {
+      "id": "N1",
+      "from": "ui-ux-critic ↔ solution-architect",
+      "topic": "Ngưỡng ẩn n<3 + optimistic +1 là quy tắc RENDER; snapshot phải lưu số THÔ",
+      "status": "AGREED — cả hai cùng yêu cầu; thành ràng buộc thiết kế (kèm 1 test giá trị ghi DB không bị kẹp)."
+    },
+    {
+      "id": "N2",
+      "from": "solution-architect + ui-ux-critic (độc lập cùng kết luận)",
+      "topic": "Thứ tự thi hành: gói GREEN (bỏ 3 chỗ viewerCount={0} + ngưỡng 3 ở LiveCard.tsx:107 + sửa tooltip a11y) ship TRƯỚC, độc lập mọi quyết định A/B; snapshot RED chỉ mở sau STOP & LOOK đo V thật",
+      "status": "AGREED."
+    },
+    {
+      "id": "N3",
+      "from": "risk-auditor → solution-architect",
+      "topic": "Option B snapshot: 3 cơ chế hỏng phải đóng trước khi áp migration — (1) count nguồn client = forge 1 curl; (2) ON CONFLICT DO NOTHING = first-write-wins khoá số sai vĩnh viễn → phải DO UPDATE GREATEST; (3) leader bầu theo key nhỏ nhất trúng admin_watcher_* ('a'<'v') hoặc tab nền throttle → snapshot câm cả buổi",
+      "status": "PARTIALLY_RESOLVED — (1) và (3) tự giải quyết khi D2 chuyển writer sang server-side observer; (2) GREATEST + bộ điều kiện verify (GRANT check, test leader, probe forge, áp ngoài 22h-24h) giữ nguyên làm điều kiện bắt buộc của Option B."
+    },
+    {
+      "id": "N4",
+      "from": "ui-ux-critic → solution-architect",
+      "topic": "Snapshot không ai ghi khi phòng rỗng → query đọc phải có rào độ tươi (loại row >2 phút, trả 'không dữ liệu' → ẩn badge), nếu không card list hiện '12 đang xem' vĩnh viễn sau khi phòng rỗng",
+      "status": "CONDITION — điều kiện chấp nhận của ui-ux-critic cho Option B, không ai phản đối."
+    },
+    {
+      "id": "N5",
+      "from": "ui-ux-critic → solution-architect",
+      "topic": "Native chỉ ĐỌC snapshot → người xem native vô hình vĩnh viễn trong con số. Architect coi là ưu điểm (native khỏi cần Realtime), ui-ux coi là khiếm khuyết cấu trúc phải được quyết định có ý thức",
+      "status": "OPEN_FOR_CUONG — chỉ liên quan NẾU sau này làm snapshot + native: chấp nhận ngữ nghĩa 'số người xem trên web' (rẻ, 0.5 half-day) hay trả 2-3 half-day cho native join presence để được đếm."
+    },
+    {
+      "id": "N6",
+      "from": "solution-architect → risk-auditor",
+      "topic": "AMBER của Cách A nên tựa vào A1 (quota Realtime chưa đo) + A3 (enrichViewers query mỗi sync), còn A2/A5 ghi là 'mìn cài sẵn'",
+      "status": "AGREED_IMPLICITLY — risk-auditor đã tự hạ A2 xuống loại A5 trong CONCEDE D1."
+    }
+  ]
+}
