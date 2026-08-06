@@ -112,16 +112,17 @@ const Rankings = () => {
           <div className="kicker">
             ◆ DUPR · {language === "vi" ? "Cập nhật" : "Updated"} {lastUpdatedLabel}
           </div>
+          {/* No hard <br/> — height budget (ui-ux KPI): let it wrap naturally. */}
           <h1>
             {language === "vi" ? (
               <>
-                Ai đang <em className="tl-serif">đứng top.</em> <br />
-                <span className="dim">Toàn cầu,</span> <span className="sans">tính theo DUPR.</span>
+                Ai đang <em className="tl-serif">đứng top,</em> <span className="dim">tính theo</span>{" "}
+                <span className="sans">DUPR.</span>
               </>
             ) : (
               <>
-                Where <em className="tl-serif">everyone</em> <br />
-                <span className="dim">actually</span> <span className="sans">stands.</span>
+                Where <em className="tl-serif">everyone</em> <span className="dim">actually</span>{" "}
+                <span className="sans">stands.</span>
               </>
             )}
           </h1>
@@ -198,8 +199,8 @@ const Rankings = () => {
           </div>
         </div>
 
-        {/* Format sub-tabs */}
-        <div className="tl-filters" style={{ marginTop: 8 }}>
+        {/* Format sub-tabs — tight to the panel below (height budget) */}
+        <div className="tl-filters" style={{ margin: "0 0 8px" }}>
           {availableFormats.map((fKey) => {
             const f = DUPR_FORMATS.find((meta) => meta.key === fKey)!;
             const count = isVietnamScope

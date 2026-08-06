@@ -175,16 +175,17 @@ const PpaRankings = () => {
           <div className="kicker">
             ◆ PPA TOUR · WPR · {vi ? "Số liệu lấy ngày" : "Data pulled"} {fetchedLabel}
           </div>
+          {/* No hard <br/> — height budget (ui-ux KPI): let it wrap naturally. */}
           <h1>
             {vi ? (
               <>
-                Ai đang <em className="tl-serif">đứng đầu</em> <br />
-                <span className="dim">thế giới</span> <span className="sans">nhà nghề.</span>
+                Ai đang <em className="tl-serif">đứng đầu</em> <span className="dim">thế giới</span>{" "}
+                <span className="sans">nhà nghề.</span>
               </>
             ) : (
               <>
-                Who <em className="tl-serif">leads</em> <br />
-                <span className="dim">the pro</span> <span className="sans">tour.</span>
+                Who <em className="tl-serif">leads</em> <span className="dim">the pro</span>{" "}
+                <span className="sans">tour.</span>
               </>
             )}
           </h1>
@@ -198,7 +199,7 @@ const PpaRankings = () => {
         <RankingsTabs active="wpr" language={language} />
 
         {/* ── Search ─────────────────────────────────────────────────────── */}
-        <div style={{ position: "sticky", top: 59, zIndex: 5, background: "var(--tl-bg)", scrollMarginTop: 72, paddingTop: 8 }}>
+        <div style={{ position: "sticky", top: 59, zIndex: 5, background: "var(--tl-bg)", scrollMarginTop: 72, paddingTop: 8, paddingBottom: 6, borderBottom: "1px solid var(--tl-border)" }}>
           <label
             htmlFor="wpr-search"
             style={{ display: "block", fontFamily: "Geist Mono", fontSize: 11, fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--tl-fg-3)", margin: "12px 0 0" }}
@@ -235,7 +236,7 @@ const PpaRankings = () => {
                     setQuery("");
                     inputRef.current?.focus();
                   }}
-                  style={{ background: "transparent", border: 0, color: "var(--tl-fg-3)", cursor: "pointer", fontSize: 16, padding: 12, margin: -12 }}
+                  style={{ background: "transparent", border: 0, color: "var(--tl-fg-2)", cursor: "pointer", fontSize: 16, minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", margin: "-12px -8px" }}
                 >
                   ✕
                 </button>

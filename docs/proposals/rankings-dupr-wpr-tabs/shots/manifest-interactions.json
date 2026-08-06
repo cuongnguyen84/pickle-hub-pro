@@ -1,0 +1,236 @@
+{
+  "measure": {
+    "vi/rankings": {
+      "firstRowY": {
+        "y": 765,
+        "h": 50,
+        "pos": "01",
+        "name": "Chồng Thanh Hoà"
+      },
+      "rowsVisible": 0,
+      "rowsPartial": 0,
+      "scopeRows": [
+        {
+          "y": 460,
+          "h": 44,
+          "scrollW": 152,
+          "clientW": 152,
+          "label": "QUỐC GIA"
+        },
+        {
+          "y": 460,
+          "h": 44,
+          "scrollW": 202,
+          "clientW": 202,
+          "label": "TOÀN CẦU"
+        },
+        {
+          "y": 460,
+          "h": 44,
+          "scrollW": 501,
+          "clientW": 501,
+          "label": "CHÂU LỤC"
+        }
+      ],
+      "bottomNavTop": 779,
+      "headerH": 239
+    },
+    "rankings(EN)": {
+      "firstRowY": {
+        "y": 765,
+        "h": 50,
+        "pos": "01",
+        "name": "Chồng Thanh Hoà"
+      },
+      "rowsVisible": 0,
+      "rowsPartial": 0,
+      "scopeRows": [
+        {
+          "y": 460,
+          "h": 44,
+          "scrollW": 152,
+          "clientW": 152,
+          "label": "QUỐC GIA"
+        },
+        {
+          "y": 460,
+          "h": 44,
+          "scrollW": 202,
+          "clientW": 202,
+          "label": "TOÀN CẦU"
+        },
+        {
+          "y": 460,
+          "h": 44,
+          "scrollW": 501,
+          "clientW": 501,
+          "label": "CHÂU LỤC"
+        }
+      ],
+      "bottomNavTop": 779,
+      "headerH": 239
+    },
+    "vi/rankings/ppa-tour": {
+      "firstRowY": {
+        "y": 823,
+        "h": 50,
+        "pos": "01",
+        "name": "Ben Johns"
+      },
+      "rowsVisible": 0,
+      "rowsPartial": 0,
+      "scopeRows": [],
+      "bottomNavTop": 779,
+      "headerH": 204
+    }
+  },
+  "console": {
+    "A": [],
+    "B": [],
+    "C": [],
+    "D": []
+  },
+  "interactions": {
+    "vi tab->WPR": {
+      "url": "/vi/rankings/ppa-tour",
+      "active": [
+        {
+          "t": "DUPR",
+          "active": false
+        },
+        {
+          "t": "WPR",
+          "active": true
+        }
+      ],
+      "lang": "vi"
+    },
+    "vi tab->DUPR": {
+      "url": "/vi/rankings",
+      "lang": "vi",
+      "h1": "Ai đang đứng top. Toàn cầu, tính theo DUPR."
+    },
+    "en tab->WPR": {
+      "url": "/vi/rankings/ppa-tour",
+      "lang": "vi",
+      "tabs": [
+        "DUPRRATING CÁ NHÂN",
+        "WPRNHÀ NGHỀ PPA TOUR"
+      ],
+      "h1": "Ai đang đứng đầu thế giới nhà nghề."
+    },
+    "en tab->DUPR": {
+      "url": "/vi/rankings",
+      "lang": "vi"
+    },
+    "search:truong": {
+      "panelHead": null,
+      "count": [
+        "3 kết quả cho \"truong\""
+      ],
+      "rows": [
+        "21Jonathan TruongNam2.758,1",
+        "14Alix TruongNữ4.116,3",
+        "38Hien Truong🇻🇳Nam1.653,8"
+      ],
+      "helper": null,
+      "empty": null,
+      "clearBtn": {
+        "al": "Xoá tìm kiếm",
+        "r": {
+          "w": 36,
+          "h": 48
+        }
+      },
+      "links": [
+        {
+          "t": "tra trên trang gốc ↗",
+          "href": "https://www.ppatour.com/rankings/"
+        },
+        {
+          "t": "ppatour.com/rankings ↗",
+          "href": "https://www.ppatour.com/rankings/"
+        }
+      ]
+    },
+    "search:trương": {
+      "panelHead": null,
+      "count": [
+        "3 kết quả cho \"trương\""
+      ],
+      "rows": [
+        "21Jonathan TruongNam2.758,1",
+        "14Alix TruongNữ4.116,3",
+        "38Hien Truong🇻🇳Nam1.653,8"
+      ],
+      "helper": null,
+      "empty": null,
+      "clearBtn": {
+        "al": "Xoá tìm kiếm",
+        "r": {
+          "w": 36,
+          "h": 48
+        }
+      },
+      "links": [
+        {
+          "t": "tra trên trang gốc ↗",
+          "href": "https://www.ppatour.com/rankings/"
+        },
+        {
+          "t": "ppatour.com/rankings ↗",
+          "href": "https://www.ppatour.com/rankings/"
+        }
+      ]
+    },
+    "search:zzz": {
+      "panelHead": null,
+      "count": [
+        "0 kết quả cho \"zzz\""
+      ],
+      "rows": [],
+      "helper": null,
+      "empty": "Kết quả tìm kiếmNguồn: PPA Tour · WPR◌Không có \"zzz\" trong phần trích dẫnTay vợt này có thể đang có mặt trên bảng WPR đầy đủ (hơn 2.000 người) — ThePickleHub chỉ đăng top 25 mỗi bảng và các VĐV Việt. Trang gốc có ô tìm theo tên trên toàn bộ bảng: Xem trên PPA Tour ↗",
+      "clearBtn": {
+        "al": "Xoá tìm kiếm",
+        "r": {
+          "w": 36,
+          "h": 48
+        }
+      },
+      "links": [
+        {
+          "t": "tra trên trang gốc ↗",
+          "href": "https://www.ppatour.com/rankings/"
+        },
+        {
+          "t": "Xem trên PPA Tour ↗",
+          "href": "https://www.ppatour.com/rankings/"
+        },
+        {
+          "t": "ppatour.com/rankings ↗",
+          "href": "https://www.ppatour.com/rankings/"
+        }
+      ]
+    },
+    "clear": {
+      "action": "clicked",
+      "value": ""
+    },
+    "vnBlock": {
+      "summary": "→ Xem tất cả 42 VĐV Việt / gốc Việt",
+      "detailsRowsHidden": 34,
+      "open": false
+    },
+    "vnBlockOpen": {
+      "rowsInDetails": 34
+    },
+    "sticky": {
+      "scrollY": 0,
+      "inputTop": 119,
+      "inputVisible": true,
+      "headerBottom": -2376,
+      "pos": "static"
+    }
+  }
+}

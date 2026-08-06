@@ -3116,7 +3116,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 24px 0 12px;
+  margin: 12px 0 8px;
 }
 [data-theme="the-line"] .tl-rank-scope-row {
   display: flex;
@@ -3188,15 +3188,15 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 }
 
 /* ========== Ranking-type tabs (DUPR | WPR) ========== */
-[data-theme="the-line"] .tl-tabs {
+[data-theme="the-line"] .tl-rank-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--tl-border);
   border-radius: var(--tl-radius-lg);
   overflow: hidden;
-  margin: 20px 0 4px;
+  margin: 12px 0 4px;
 }
-[data-theme="the-line"] .tl-tab {
+[data-theme="the-line"] .tl-rank-tab {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3209,23 +3209,23 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   background: transparent;
   transition: background 0.15s, color 0.15s;
 }
-[data-theme="the-line"] .tl-tab + .tl-tab { border-left: 1px solid var(--tl-border); }
-[data-theme="the-line"] .tl-tab:hover { color: var(--tl-fg); }
-[data-theme="the-line"] .tl-tab.active {
+[data-theme="the-line"] .tl-rank-tab + .tl-rank-tab { border-left: 1px solid var(--tl-border); }
+[data-theme="the-line"] .tl-rank-tab:hover { color: var(--tl-fg); }
+[data-theme="the-line"] .tl-rank-tab.active {
   background: var(--tl-fg);
   color: var(--tl-bg);
 }
-[data-theme="the-line"] .tl-tab:focus-visible {
+[data-theme="the-line"] .tl-rank-tab:focus-visible {
   outline: 2px solid var(--tl-green);
   outline-offset: -2px;
 }
-[data-theme="the-line"] .tl-tab-title {
+[data-theme="the-line"] .tl-rank-tab-title {
   font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
-[data-theme="the-line"] .tl-tab-caption {
+[data-theme="the-line"] .tl-rank-tab-caption {
   font-family: "Geist Mono", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
@@ -3235,7 +3235,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 }
 /* Caption on the inverted active tab — reuse the measured color-mix formula
    (see .tl-filter .count contrast note): 6.1:1 both themes. */
-[data-theme="the-line"] .tl-tab.active .tl-tab-caption {
+[data-theme="the-line"] .tl-rank-tab.active .tl-rank-tab-caption {
   color: color-mix(in oklab, var(--tl-bg) 60%, var(--tl-fg));
 }
 
@@ -3970,6 +3970,10 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-search-input:focus-within {
   outline: 2px solid var(--tl-green);
   outline-offset: 2px;
+}
+[data-theme="the-line"] .tl-search-input input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 [data-theme="the-line"] .tl-search-input input::placeholder { color: var(--tl-fg-4); }
 [data-theme="the-line"] .tl-search-input kbd {

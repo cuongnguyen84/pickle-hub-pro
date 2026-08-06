@@ -32,16 +32,19 @@ export function RankingsTabs({ active, language }: RankingsTabsProps) {
   ];
 
   return (
-    <nav className="tl-tabs" aria-label={vi ? "Loại bảng xếp hạng" : "Ranking type"}>
+    // Class names are rankings-scoped on purpose: bare .tl-tabs/.tl-tab already
+    // belong to the Tournaments/QuickTables tab bar (the-line.css ~:3682) and
+    // colliding with them restyled those pages (ui-ux verify B3).
+    <nav className="tl-rank-tabs" aria-label={vi ? "Loại bảng xếp hạng" : "Ranking type"}>
       {tabs.map((t) => (
         <Link
           key={t.key}
           to={t.to}
-          className={`tl-tab ${active === t.key ? "active" : ""}`}
+          className={`tl-rank-tab ${active === t.key ? "active" : ""}`}
           aria-current={active === t.key ? "page" : undefined}
         >
-          <span className="tl-tab-title">{t.title}</span>
-          <span className="tl-tab-caption">{t.caption}</span>
+          <span className="tl-rank-tab-title">{t.title}</span>
+          <span className="tl-rank-tab-caption">{t.caption}</span>
         </Link>
       ))}
     </nav>
