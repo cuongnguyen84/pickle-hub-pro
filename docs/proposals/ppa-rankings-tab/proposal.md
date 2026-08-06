@@ -1,6 +1,6 @@
 # PPA Tour rankings trên /rankings
 
-> Slug: `ppa-rankings-tab` · Ngày: `2026-08-06` · Trạng thái: `approved`
+> Slug: `ppa-rankings-tab` · Ngày: `2026-08-06` · Trạng thái: `shipped`
 >
 > **✅ Cuong quyết 2026-08-06:** O1 = giữ `/rankings` mặc định Việt Nam (hiểu rõ lý do title/SEO). **O2 = (c) ROUTE RIÊNG `/rankings/ppa-tour` + `/vi/rankings/ppa-tour`** — bản editorial nhập tay (top-25/board + credit + nofollow + disclaimer), KHÔNG scraper cho tới khi có thư cho phép. O3 = ĐÃ gửi email `legal@ppatour.com`; có thư đồng ý → lưu `external/` → mở lại pipeline tự động (Option A). Trên `/rankings` thêm pill "PPA Tour" trong scope row điều hướng sang route mới (giữ cảm giác tab, không đổi default) + sửa link SSR.
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6-terra) ·
@@ -214,6 +214,7 @@ Sự đồng thuận có nghĩa duy nhất trong panel này: **GPT-5.6 (vendor k
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
+- SHA: `ab6a0374` · PR: #552 · Ngày: 2026-08-06
+- Khác kế hoạch: chọn O2c (route riêng) thay khuyến nghị O2a (blog) — quyết định của Cuong; danh sách gốc Việt 4 người thay vì 6 trong proposal (bỏ Hong Kit Wong/Chao Yi Wang — không phải gốc Việt).
 - Khác kế hoạch:
 - Học được (→ memory): CLAUDE.md drift `pr:v32`→thực tế `v33`; `tests/seo.spec.ts` comment stale về hreflang /rankings; đề xuất hệ thống từ pre-mortem: gate SEO nào cũng chạy service_role — cần 1 curl anon trong checklist post-deploy; rà soát pháp lý `pro-tour-scraper` hiện có.

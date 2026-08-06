@@ -1,6 +1,6 @@
 # Tab DUPR | WPR trên /rankings + search theo tên VĐV
 
-> Slug: `rankings-dupr-wpr-tabs` · Ngày: `2026-08-06` · Trạng thái: `approved`
+> Slug: `rankings-dupr-wpr-tabs` · Ngày: `2026-08-06` · Trạng thái: `shipped`
 > **✅ Cuong quyết 2026-08-06:** "cứ làm theo hướng panel khuyến nghị" — O1 = Option A (không override RED, không full-search cho tới khi có thư PPA). PR #552 vẫn chờ anh review UI → build STACK trên branch `feat/ppa-rankings-tab` (đường dự phòng increment 0 của architect), base PR = branch đó; #552 merge xong thì retarget về main.
 > Sinh bởi `/idea`. Panel: `solution-architect` · `ui-ux-critic` (+GPT-5.6-terra) · `risk-auditor` (+GPT-5.6) · `pre-mortem`.
 > Model thiếu key: `none`. `debate-ledger.mjs` vẫn không tồn tại — cưỡng chế thủ công (ghi trong `debate.json`).
@@ -122,5 +122,6 @@ Nhượng bộ bị loại: **không có** — cả 2 CONCEDE của architect v�
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Khác kế hoạch:
+- SHA: `69703a17` (#553) + `1d215033` (#554 font) · Ngày: 2026-08-06
+- Khác kế hoạch: ui-ux verify vòng 1 FAIL 4 blocker (class `.tl-tabs` đụng Tournaments → đổi `.tl-rank-tabs`; nút ✕ đôi; KPI) → sửa `f734bc61`, vòng 2 PASS. KPI chiều cao đạt 2 dòng trong màn đầu (mục tiêu 4-5 cần header redesign — chưa quyết). Suýt ship ride-along AdminNews.tsx+types.ts (git add -u nuốt file dirty phiên khác, gọi 3 cột chưa có trên prod) — release-pilot bắt được, đã gỡ `20d45714`. CI không tự chạy sau retarget base (workflow chỉ trigger base=main) — cần empty commit.
 - Học được: mọi "unknown worth asking" trong recon không đóng bằng test/guard = sự cố đã lên lịch; human-path.spec chỉ crawl từ home — route mới cần entry riêng; không có chỗ đăng ký giám sát cho Pages Function /api/*.
