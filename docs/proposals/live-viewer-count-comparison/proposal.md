@@ -1,6 +1,6 @@
 # So sánh 2 cách tính số người xem live (Presence vs "3 bước: ô nóng — đếm người — ai rời đi")
 
-> Slug: `live-viewer-count-comparison` · Ngày: `2026-08-06` · Trạng thái: `approved` (Q1 — Cuong chạy /ship 2026-08-06; phạm vi = Option A′ GREEN, KHÔNG gồm snapshot RED)
+> Slug: `live-viewer-count-comparison` · Ngày: `2026-08-06` · Trạng thái: `shipped` (Option A′ — PR #555 → main `4353d6fc`, 2026-08-06. Option B′ snapshot + Q2 native vẫn HOÃN sau STOP & LOOK, RED chưa duyệt)
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (⚠️ GPT-5.6 FAIL — Codex hết hạn mức tới 08/08 12:00, prompt đã lưu để chạy lại) · `risk-auditor` (+GPT-5.6 `gpt-5.6-sol` qua OpenAI API trực tiếp — thành công) · `pre-mortem`.
 > ⚠️ `scripts/agents/debate-ledger.mjs` KHÔNG tồn tại — luật vòng 2 cưỡng chế THỦ CÔNG bởi orchestrator (chi tiết trong `debate.json` khoá `ledger_enforcement`). Cùng lý do, bảng mục 7 là bảng tay, không phải output script.
 >
@@ -143,5 +143,8 @@ Thuốc rẻ nếu có ngày làm Cách B: shadow mode 2 tuần log lệch Prese
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
+- SHA: `4353d6fc` · PR: #555 · Ngày: 2026-08-06
+- Verify thực tế: CI PR 6/6 xanh (quality/visual/smoke/codeql/npm-audit/Pages); post-deploy smoke `/` `/feed` Googlebot-`/live` = 200×3; console prod `/` + `/live` sạch; soak 30' **giảm cấp** (uptime poll 3 route ×10 tick, sạch — soak-watch.mjs chuẩn KHÔNG chạy được vì agent không đọc được SUPABASE_ACCESS_TOKEN).
+- Khác kế hoạch: (a) release-pilot dừng đúng luật vì bot PAT bị classifier chặn → Cuong tự tạo PR + merge bằng lệnh `!`; (b) tier thật là AMBER (risk-tier xếp i18n en/vi.ts vào content), không phải GREEN như orchestrator ước lượng ban đầu; (c) thêm test `LiveCard.test.tsx` pin ngưỡng render (ui-ux-verifier chỉ ra ngưỡng 3 là quy tắc render duy nhất không có lưới); (d) deploy-guard đỏ trên merge commit = drift kinh niên 04/08, không do PR này (0 migration).
 - Học được: (1) recon đếm consumer bằng grep tên file mà không truy barrel → sai 3-thành-1, vòng 2 phải sửa; (2) `debate-ledger.mjs` vẫn thiếu — lần /idea thứ 2 liên tiếp phải cưỡng chế tay; (3) `useChatMessages.ts:128` đặt suffix vào topic chat — pattern từng gây sự cố 2026-07-08, đáng một /idea riêng (architect ghi nhận, chưa khẳng định là bug).
+- CHƯA chứng minh (chờ Cuong nhìn tận mắt khi có stream live thật): card không còn "0 đang xem"; <3 viewer → badge ẨN (đúng thiết kế); panel admin ≤1 query/2s; và đọc dashboard Supabase Billing→Realtime (trần Cách A).

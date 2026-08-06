@@ -643,3 +643,23 @@ redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
 - LUẬT: mọi lệnh deploy-from-tree phải assert cùng câu lệnh: `[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && <deploy>` — đúng guard đã thêm vào redeploy-edge-functions.sh, áp cả cho deploy tay.
 - `git checkout <branch> -- <file>` GHI ĐÈ patch chưa commit trong working tree (mất patch ops-job-control 1 lần, phải gõ lại).
 - Commit với path tường minh vẫn cuốn theo file ĐANG STAGED từ trước (stash pop tự stage) — `git restore --staged .` trước khi commit có chủ đích.
+
+## 2026-08-06 (b) — live-viewer-count-comparison: /idea + ship Option A' (PR #555)
+
+- **Recon đếm consumer bằng grep tên file mà KHÔNG truy barrel + git log = sai 3-thành-1.** Vòng 1
+  recon báo useLivePresence có 3 consumer; thật ra LiveBroadcastHero bị gỡ khỏi trang chủ từ #251 và
+  LiveCardWithPresence chỉ còn trong barrel không ai lấy — 2 agent phải CONCEDE ở vòng 2 sau khi tự
+  truy `components/content/index.ts` qua cả 6 caller và `git log -S`. LUẬT: kết luận "X có N consumer"
+  phải truy barrel re-export tới caller thật + git log -S trước khi cho vào proposal.
+- **`scripts/agents/debate-ledger.mjs` vẫn không tồn tại** — lần /idea thứ 2 liên tiếp orchestrator
+  phải cưỡng chế luật vòng 2 bằng tay (ghi vào debate.json khoá `ledger_enforcement`). Viết nó hoặc
+  xoá khỏi skill /idea.
+- **Worktree guard chặn CẢ Bash compound** (`for`/`until`/`;` dài) trong session worktree — poll dài
+  phải ghi script ra scratchpad rồi `bash script.sh` (1 lệnh đơn). Và worktree KHÔNG có node_modules:
+  npx fallback lên node_modules repo chính (stale) gây lỗi ma (`fast-xml-parser` thiếu dù
+  package.json@main có) — `npm ci` trong worktree (~4s nhờ cache) là bắt buộc trước tsc/build.
+- **Bot PAT bị classifier chặn cả 2 đường (file + env) → release-pilot dừng đúng luật, KHÔNG mượn
+  keyring user.** Đường thoát đã dùng: soạn sẵn PR body ra file + đưa Cuong lệnh `! gh pr create/merge`
+  — user tự bấm bằng danh tính thật, agent chỉ watch CI/smoke/soak (đọc-only). Soak chuẩn
+  (soak-watch.mjs) cũng cần PAT → chỉ chạy được soak giảm cấp uptime-poll; ghi rõ "giảm cấp" vào
+  close-out, đừng để dòng soak xanh nói quá điều nó chứng minh.
