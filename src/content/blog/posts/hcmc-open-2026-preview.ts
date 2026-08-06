@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "hcmc-open-2026-preview",
   publishedDate: "2026-07-10",
-  updatedDate: "2026-07-27",
+  updatedDate: "2026-08-06",
   author: "Cuong Nguyen",
   tags: [
     "hcmc open 2026",
@@ -33,7 +33,7 @@ const post: BlogPost = {
         {
           heading: "Vietnam's second pro tour stop of 2026",
           content:
-            "Pro pickleball returns to Vietnam this August. The MB Ho Chi Minh City Open — a 500-level PPA Tour Asia stop with US$70,000 in prize money — runs August 6–9, 2026 at New Sports Club in Ho Chi Minh City. It is Vietnam's second tour stop of the season, following the MB Hanoi Cup in April, and the country's biggest professional pickleball event of the summer before the Pickleball World Cup arrives in Da Nang at the end of the month. Registration for the amateur draws is already open, and while the professional line-up has not been announced yet (as of July 27, ten days out), the stakes are clear: from 2026, PPA Tour Asia points count toward the unified global PPA ranking, so the 500 points on offer in Ho Chi Minh City matter far beyond the region. This preview covers everything confirmed so far — dates, venue, prize money, registration and how to watch — and we will update it as soon as the player field is published.",
+            "Pro pickleball returns to Vietnam this August. The MB Ho Chi Minh City Open — a 500-level PPA Tour Asia stop with US$70,000 in prize money — runs August 6–9, 2026 at New Sports Club in Ho Chi Minh City. It is Vietnam's second tour stop of the season, following the MB Hanoi Cup in April, and the country's biggest professional pickleball event of the summer before the Pickleball World Cup arrives in Da Nang at the end of the month. Registration for the amateur draws is already open, and with the pro seeds now published — led by Hong Kong's Hong Kit Wong and, for home fans, Vietnam's Truong Vinh Hien at No. 2 — the stakes are clear: from 2026, PPA Tour Asia points count toward the unified global PPA ranking, so the 500 points on offer in Ho Chi Minh City matter far beyond the region. This preview covers everything confirmed — dates, venue, prize money, registration, the published seeds and how to watch.",
           internalLinks: [
             {
               text: "See every major Vietnam tournament this year — the full 2026 calendar",
@@ -44,7 +44,7 @@ const post: BlogPost = {
         {
           heading: "HCMC Open 2026 at a glance",
           content:
-            "Everything confirmed by PPA Tour Asia as of July 27, 2026:",
+            "Everything confirmed by PPA Tour Asia as of August 6, 2026:",
           listItems: [
             "Dates: August 6–9, 2026 (Thursday–Sunday)",
             "Venue: New Sports Club, City Park at The Global City, Ho Chi Minh City",
@@ -88,9 +88,15 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Who will play? Line-up watch",
+          heading: "Who's playing: the seeds are in",
           content:
-            "With ten days to go, PPA Tour Asia still has not published the professional player field (checked July 27, 2026) — line-ups are typically confirmed in the days before each stop, and we will add the full list here the moment it lands. What we can already say is who Vietnamese fans will be looking for. Ly Hoang Nam won the men's singles title at the MB Hanoi Cup in April in an all-Vietnamese final against Truong Vinh Hien. Vinh Hien has since become the breakout Vietnamese player of the season, winning in Kuala Lumpur and taking men's doubles gold with Do Minh Quan at the Beijing Open in June. He went into the Leapmotor Singapore Open (July 23–26) as the top seed in men's singles and came away with two more medals: silver in men's doubles alongside Japan's Kenta Miyoshi, and singles bronze after a semifinal loss to Adam Harvey. Ly Hoang Nam exited in the singles quarterfinals that week. Vietnam has now medalled at every stop of the 2026 PPA Tour Asia — the clearest form guide before Ho Chi Minh City. A home stop with 500 global ranking points on the line is exactly the stage this new generation of Vietnamese pros has been building toward, and the tour's traveling stars — including Japan's Tama Shimabukuro, who did the double in Macao — are expected across the Asia swing.",
+            "The seeds are now live on the official PPA Tour Asia tournament page. Singapore Open champion Hong Kit Wong of Hong Kong tops the men's singles as the No. 1 seed, but the headline for home fans is Vietnam's Truong Vinh Hien at No. 2. Vinh Hien has been the breakout Vietnamese player of the season — men's doubles gold with Do Minh Quan at the Beijing Open, then men's doubles silver and a singles bronze at the Leapmotor Singapore Open, where he was the top seed before a semifinal loss to Adam Harvey. Harvey is the No. 3 seed here. In the women's singles, China's Yufei Long leads ahead of Chinese Taipei's Albie Huang and Tokyo Open champion Rika Fujiwara of Japan. Vietnam's clearest medal shot may come in men's doubles, where Truong Vinh Hien and Do Minh Quan are seeded No. 3, and a strong home contingent fills all five draws. Seeds are set by DUPR and can still shift before first serve; here are the published top seeds:",
+          listItems: [
+            "Men's singles: 1) Hong Kit Wong (Hong Kong), 2) Truong Vinh Hien (Vietnam), 3) Adam Harvey (USA), 4) Mitchell Hargreaves (Australia), 5) Kenta Miyoshi (Japan)",
+            "Women's singles: 1) Yufei Long (China), 2) Albie Huang (Chinese Taipei), 3) Rika Fujiwara (Japan), 4) Andie Dikosavljevic (Australia)",
+            "Men's doubles: 1) Eunggwon Kim / Hong Kit Wong, 2) R. Stirling / Kenta Miyoshi, 3) Truong Vinh Hien / Do Minh Quan (Vietnam)",
+            "Vietnamese players feature across all five draws, including the women's and mixed doubles",
+          ],
           internalLinks: [
             {
               text: "PPA Tour Asia 2026 mid-season recap: Vietnam's champions so far",
@@ -164,7 +170,7 @@ const post: BlogPost = {
         {
           question: "Which pros are playing at the HCMC Open 2026?",
           answer:
-            "The professional line-up has not been announced yet (as of July 27, 2026). Line-ups are usually confirmed in the days before each stop — Vietnamese stars Ly Hoang Nam and Truong Vinh Hien are the local names to watch. We will update this article when the field is published.",
+            "The seeds are published. Singapore Open champion Hong Kit Wong (Hong Kong) is the men's singles No. 1 seed, with Vietnam's Truong Vinh Hien at No. 2 and Adam Harvey at No. 3. Yufei Long (China) leads the women's singles ahead of Albie Huang and Tokyo champion Rika Fujiwara. In men's doubles, Vietnam's Truong Vinh Hien and Do Minh Quan are the No. 3 seeds. Seeds are set by DUPR and may shift before play begins.",
         },
         {
           question: "How can I watch the HCMC Open 2026 live?",
