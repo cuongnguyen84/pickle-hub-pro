@@ -27,7 +27,7 @@ import {
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
-  renderLivestreamList, renderRankings, renderPrivacy, renderTerms,
+  renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms,
   renderNotificationsShell,
   renderNoindexShell,
   render404,
@@ -577,7 +577,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // docs/prerender-cache-log.md (SEO-04) — append there on every bump.
   // Current: v29 (2026-07-17 — SEO-02: BLOG_POST_META generated from
   // metadata.ts; 28 EN blog <title>s switch to metaTitleEn).
-  const cacheKey = `pr:v33:${url.pathname}`;
+  // v33→v34 (2026-08-06): /rankings SSR body changed (self-referential
+  // ?scope=open link replaced with a real anchor to /rankings/ppa-tour).
+  const cacheKey = `pr:v34:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -896,6 +898,10 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // ItemList JSON-LD. Static global/continental scopes remain in the
   // SPA only (low SEO priority).
   if (path === "/rankings") return await renderRankings(supabase, siteUrl, rawPath, lang);
+  // PPA Tour WPR — separate pathname on purpose: /rankings keeps its DUPR
+  // Việt Nam title/default; query-string scopes never reach this renderer
+  // (routeAndRender is pathname-only), so a "tab" could never be a landing.
+  if (path === "/rankings/ppa-tour") return renderPpaRankings(siteUrl, rawPath, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);

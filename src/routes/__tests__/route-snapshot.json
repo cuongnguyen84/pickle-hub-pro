@@ -774,5 +774,13 @@
   {
     "path": "/vi/*",
     "element": "<ViLanguageWrapper><NotFound /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/rankings/ppa-tour",
+    "element": "<PpaRankings />"
+  },
+  {
+    "path": "/vi/rankings/ppa-tour",
+    "element": "<ViLanguageWrapper><PpaRankings /></ViLanguageWrapper>"
   }
 ]

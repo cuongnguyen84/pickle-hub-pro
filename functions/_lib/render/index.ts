@@ -24,6 +24,7 @@ export { renderOrgDetail } from "./org";
 export { renderTools, renderToolPage, renderToolNewPage } from "./tools";
 export { renderBlogPost, renderBlog, renderViBlogPost, renderViBlogIndex } from "./blog";
 export { renderRankings } from "./rankings";
+export { renderPpaRankings } from "./ppa-rankings";
 export { renderProfile } from "./profile";
 export { renderMatch } from "./match-page";
 export { renderFeed } from "./feed";

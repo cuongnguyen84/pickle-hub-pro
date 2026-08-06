@@ -95,7 +95,7 @@ describe("App.tsx route table characterization", () => {
   it("MIRRORED parser sees every entry (guards against format drift)", () => {
     const braceCount = (source.match(/^\s*\{ path: "/gm) ?? []).length;
     expect(mirrored.length).toBe(braceCount);
-    expect(mirrored.length).toBe(60);
+    expect(mirrored.length).toBe(61);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {
