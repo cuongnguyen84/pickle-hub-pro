@@ -178,6 +178,18 @@ const Rankings = () => {
               </button>
             ))}
           </div>
+          {/* PPA Tour is a separate route (own WPR metric + SSR landing), not a
+              scope — /rankings keeps its DUPR Việt Nam default + title. */}
+          <div className="tl-rank-scope-row">
+            <span className="tl-rank-scope-label">PRO</span>
+            <Link
+              className="tl-rank-scope"
+              to={language === "vi" ? "/vi/rankings/ppa-tour" : "/rankings/ppa-tour"}
+              style={{ textDecoration: "none" }}
+            >
+              PPA Tour ↗
+            </Link>
+          </div>
         </div>
 
         {/* Format sub-tabs */}
@@ -416,7 +428,7 @@ function VietnamRankingsTable({
             <thead>
               <tr>
                 <th>#</th>
-                <th>{language === "vi" ? "Vận động viên" : "Player"}</th>
+                <th>{language === "vi" ? "Người chơi" : "Player"}</th>
                 <th className="hide-mobile">{language === "vi" ? "Thành phố" : "City"}</th>
                 <th>DUPR</th>
               </tr>

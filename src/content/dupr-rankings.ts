@@ -4326,7 +4326,7 @@ export type DuprScopeGroup = "global" | "continent" | "national";
 export const DUPR_SCOPES: { key: DuprScope; labelEn: string; labelVi: string; group: DuprScopeGroup }[] = [
   // National scope first — most prominent for the ~95% Vietnamese userbase.
   { key: "vietnam",           labelEn: "Vietnam",             labelVi: "Việt Nam",        group: "national" },
-  { key: "open",              labelEn: "Open",                labelVi: "Mở rộng",         group: "global" },
+  { key: "open",              labelEn: "Open",                labelVi: "Hạng mở",         group: "global" },
   { key: "junior",            labelEn: "Junior",              labelVi: "Trẻ",             group: "global" },
   { key: "asia",              labelEn: "Asia",                labelVi: "Châu Á",          group: "continent" },
   { key: "north-america",     labelEn: "North America",       labelVi: "Bắc Mỹ",          group: "continent" },

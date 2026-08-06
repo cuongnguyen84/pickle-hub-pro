@@ -171,6 +171,7 @@ const EmbedLive = lazyRetry(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazyRetry(() => import("./pages/embed/EmbedVideo"));
 
 const Rankings = lazyRetry(() => import("./pages/Rankings"));
+const PpaRankings = lazyRetry(() => import("./pages/PpaRankings"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -549,6 +550,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/news", element: <News />, viElement: <News language="vi" /> },
   { path: "/news/:slug", element: <NewsArticle language="en" />, viElement: <NewsArticle language="vi" /> },
   { path: "/rankings", element: <Rankings /> },
+  { path: "/rankings/ppa-tour", element: <PpaRankings /> },
   { path: "/feed", element: <Feed /> },
   { path: "/blog", element: <Blog /> },
   { path: "/blog/:slug", element: <BlogPost />, viElement: <ViBlogPost /> },

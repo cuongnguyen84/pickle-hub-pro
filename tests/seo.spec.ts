@@ -134,9 +134,14 @@ const SSR_ROUTES = [
   {
     path: "/rankings",
     expectedTitlePart: /(ranking|xếp hạng)/i,
-    // Rankings page is currently EN-only; no /vi/rankings twin shipped
-    // yet. Flip to true once the VI variant + hreflang tags exist.
-    expectsHreflang: false,
+    // renderRankings emits the en/vi/x-default triplet (rankings.ts:103) —
+    // comment previously said "no /vi twin" long after the twin shipped.
+    expectsHreflang: true,
+  },
+  {
+    path: "/rankings/ppa-tour",
+    expectedTitlePart: /(ppa tour|wpr)/i,
+    expectsHreflang: true,
   },
   {
     path: "/news",

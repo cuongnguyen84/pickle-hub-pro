@@ -80,6 +80,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // ranking content surfaced by dupr_leaderboard_vietnam RPC.
     { loc: "/rankings", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/rankings", "/vi/rankings") },
     { loc: "/vi/rankings", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/rankings", "/vi/rankings") },
+    { loc: "/rankings/ppa-tour", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/rankings/ppa-tour", "/vi/rankings/ppa-tour") },
+    { loc: "/vi/rankings/ppa-tour", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/rankings/ppa-tour", "/vi/rankings/ppa-tour") },
     // SEO-1.1 — bracket / tournament tool public landing pages. Each has
     // a dedicated SSR handler (renderToolNewPage) but were never added
     // to the sitemap.

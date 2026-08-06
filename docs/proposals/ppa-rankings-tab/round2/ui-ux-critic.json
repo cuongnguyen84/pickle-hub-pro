@@ -1,0 +1,43 @@
+{
+  "agent": "ui-ux-critic",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "HOLD",
+      "reasoning": "SSR superset của architect giải được đúng một nửa bot, không chạm được nửa người dùng. Prerender bị gate bằng UA: functions/_middleware.ts:518-519 (isBot = BOT_UA.test(ua)) và :528 (if (!isBot) → trả thẳng SPA shell). Khối Vietnam top-25 mà architect đề nghị giữ chỉ tồn tại cho Googlebot; 100% người thật vào /rankings paramless nhận React app với scope mặc định, và src/pages/Rankings.tsx:207 là ternary isVietnamScope — SPA render đúng MỘT bảng, không có siêu tập. Superset không trả lời blocker của em vì blocker của em là blocker về NGƯỜI, không phải về crawler. Về 'giữ phễu bằng cách render CTA ở scope PPA': không được — copy hiện tại (Rankings.tsx:495-499) là câu chỉ định 'Kết nối DUPR để có tên trong bảng này'; đặt dưới bảng WPR là câu sai sự thật, viết lại chung chung thì hết là phễu. Sức thuyết phục đến từ 12 cái tên cùng trình độ ngay trên nó. Tự đính chính vòng 1: 'phễu duy nhất' → sai, còn 2 cửa /dupr ở trang chủ (Index.tsx:441, HomeLogMatchCTA.tsx:237); thu hẹp thành 'phễu NGỮ CẢNH duy nhất và duy nhất trên đường deep-link'. Blocker vẫn đứng.",
+      "evidence": [
+        "functions/_middleware.ts:518-519 — isBot = BOT_UA.test(ua); toàn bộ nhánh prerender nằm sau cổng này",
+        "functions/_middleware.ts:528 — if (!isBot) trả SPA shell, người dùng không bao giờ nhận HTML superset",
+        "src/pages/Rankings.tsx:207 — ternary isVietnamScope: SPA chỉ render một bảng",
+        "src/pages/Rankings.tsx:495-499 — CTA nằm TRONG VietnamRankingsTable, copy 'để có tên trong bảng này'",
+        "src/pages/Index.tsx:441 + src/components/home/HomeLogMatchCTA.tsx:237 — hai cửa /dupr còn lại, đều ở trang chủ (tự đính chính)"
+      ],
+      "revised_position": "Giữ nguyên: Rankings.tsx:44 fallback = 'vietnam'. Blocker đứng, hẹp lại phần phễu: Rankings CTA là phễu ngữ cảnh duy nhất, duy nhất trên đường deep-link. Nếu Cuong vẫn muốn đổi default, phải trả lời trước: bảng VN đi từ 12 lên 200 người bằng đường nào?"
+    },
+    {
+      "id": "D2",
+      "verdict": "HOLD",
+      "reasoning": "Ghi nhận phần architect thắng: giữ khối Vietnam trong SSR CÓ cứu 25 anchor /nguoi-choi/ (rankings.ts:76) + ItemList (:83-95) — đồng ý cơ chế, lấy vào phương án của mình. Nhưng superset chỉ cứu crawlability, không cứu relevance: buildHtml nhận đúng MỘT title (rankings.ts:106), một canonical (:108), một H1 (:114). Trang title trung tính + H1 PPA + khối VN phụ lục không phục vụ được cụm nào. Thứ hai, bằng chứng SỐNG: rankings.ts:118 hôm nay đã phát link '/rankings?scope=open' — với bot rơi vào đúng cacheKey pathname-only, trả lại chính HTML vừa đọc: internal link tự trỏ đang chạy trên prod. Superset nhân nó lên. Thứ ba, chi phí bị định giá sai: route riêng = MỘT dòng dispatch cạnh _middleware.ts:898 (so khớp tuyệt đối) + cặp entry sitemap + một hàm render mới, KHÔNG chạm renderRankings hiện có; superset = viết lại title/description/h1/body/JSON-LD của đúng trang SSR sinh toàn bộ link /nguoi-choi/ + bump KV. Đường rẻ và revert được là tách route. Cuối cùng superset để lại phân kỳ vĩnh viễn bot ↔ người mà Rankings.tsx:207 không cho SPA đuổi kịp — đúng lớp lỗi human-path.spec.ts được dựng để bắt và nó không có /rankings.",
+      "evidence": [
+        "functions/_middleware.ts:898 — if (path === \"/rankings\") so khớp tuyệt đối; thêm route = 1 dòng",
+        "functions/_middleware.ts:580 — cacheKey pathname-only (v33)",
+        "functions/_lib/render/rankings.ts:118 — link SSR '/rankings?scope=open' là link tự trỏ với bot: bằng chứng sống query-param không làm landing được",
+        "functions/_lib/render/rankings.ts:106,108,114 — một title, một canonical, một H1 cho mọi nội dung trên pathname",
+        "functions/sitemap-static.xml.ts:81-82 — thêm cặp entry là 2 dòng"
+      ],
+      "revised_position": "Route riêng /rankings/ppa-tour + /vi/rankings/ppa-tour, renderPpaRankings riêng, cặp sitemap + hreflang riêng. Lấy từ architect một thứ: thay superset bằng việc sửa rankings.ts:118 từ link ?scope=open tự trỏ thành anchor thật sang /rankings/ppa-tour — route mới được crawl từ trang priority 0.9, renderRankings giữ nguyên title/H1/khối VN, không phải bump KV vì đổi nghĩa trang."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Trung tính hoá title/h1 của /rankings",
+      "with": "solution-architect",
+      "myPosition": "Phản đối. Một title trung tính không phục vụ được cụm nào — bỏ cụm 'DUPR Việt Nam' mà không mua được cụm 'PPA Tour rankings' (cụm sau thuộc route riêng có title riêng). Với route tách, title hiện tại giữ nguyên, không cần baseline GSC làm điều kiện chặn."
+    },
+    {
+      "topic": "Phân kỳ nội dung bot ↔ người do SSR superset",
+      "with": "solution-architect",
+      "myPosition": "Phản đối ship khối nội dung chỉ Googlebot đọc được mà SPA về cấu tạo không render nổi (Rankings.tsx:207). Nếu vẫn chọn superset, điều kiện merge = test khẳng định body SSR chứa cả hai khối + một human-path test cho /rankings."
+    }
+  ]
+}

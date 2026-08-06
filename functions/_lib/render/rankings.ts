@@ -115,7 +115,7 @@ export async function renderRankings(
         <p>${escapeHtml(subhead)}</p>
       </header>
       ${listItems}
-      <p><a href="${siteUrl}${lang === "vi" ? "/vi/rankings" : "/rankings"}?scope=open">${lang === "vi" ? "Xem thêm: bảng xếp hạng toàn cầu & châu lục" : "See more: global & continental rankings"}</a></p>
+      <p><a href="${siteUrl}${lang === "vi" ? "/vi/rankings/ppa-tour" : "/rankings/ppa-tour"}">${lang === "vi" ? "Xem thêm: bảng xếp hạng PPA Tour (WPR) thế giới" : "See more: PPA Tour world rankings (WPR)"}</a></p>
       ${itemListJsonLd}
     `,
   }));
