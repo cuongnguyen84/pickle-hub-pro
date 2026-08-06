@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   ping:
-    timeout-minutes: 10
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7 # function list for the blob sweep below
@@ -68,57 +68,6 @@ jobs:
             -d "chat_id=${TELEGRAM_CHAT_ID}" \
             -d "text=${MSG}" \
             -d "parse_mode=Markdown" >/dev/null || true
-
-      - name: Blob sweep — edge functions alive? (backstop for deploy-guard)
-        id: blobs
-        run: |
-          BROKEN=$(ls -d supabase/functions/*/ \
-            | sed 's#supabase/functions/##; s#/$##' \
-            | grep -v '^_shared$' \
-            | while read -r fn; do [ -f "supabase/functions/$fn/index.ts" ] && echo "$fn"; done \
-            | xargs -P 16 -I{} sh -c \
-              'curl -sS --max-time 10 "https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/{}" 2>/dev/null | grep -q NOT_FOUND_FUNCTION_BLOB && echo {}' \
-            | tr '\n' ' ' || true)
-          echo "broken=${BROKEN% }" >> "$GITHUB_OUTPUT"
-          [ -n "${BROKEN// /}" ] && echo "BLOB-LESS:$BROKEN" || echo "fleet ok"
-
-      - name: Install Supabase CLI
-        if: steps.blobs.outputs.broken != ''
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Heal blob-less functions
-        if: steps.blobs.outputs.broken != ''
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-          echo "::warning::Blob-less: ${{ steps.blobs.outputs.broken }} — redeploying ALL"
-          supabase functions deploy --project-ref ajvlcamxemgbxduhiqrl --use-api
-          # 🩹 throttle (29/07): while the Supabase eviction bug (SU-429781)
-          # recurs ~every 30', a message per heal is ~48 Telegram pings/day —
-          # alert-storm → mute → blind channel. Heals still run every time;
-          # the message fires at most once per 6h. Proxy for "a heal happened
-          # recently": any earlier successful workflow_dispatch run of this
-          # workflow in the window (dispatches only come from the watchdog).
-          RECENT=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/uptime-ping.yml/runs?event=workflow_dispatch&status=success&per_page=5" \
-            -q "[.workflow_runs[] | select(.id != ${GITHUB_RUN_ID}) | .created_at][0]" 2>/dev/null || echo "")
-          if [ -n "$RECENT" ]; then
-            AGE_S=$(( $(date +%s) - $(date -d "$RECENT" +%s) ))
-            if [ "$AGE_S" -lt 21600 ]; then
-              echo "healed silently — last 🩹 candidate ${AGE_S}s ago (<6h), skipping Telegram"
-              exit 0
-            fi
-          fi
-          if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
-            MSG="🩹 uptime-ping self-healed blob-less edge functions (nhắn tối đa 1 lần/6h; heal vẫn chạy mỗi lần hỏng): ${{ steps.blobs.outputs.broken }}"
-            curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-              -d "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" > /dev/null || true
-          fi
 
       - name: Watchdog — milestone-due.yml alive?
         env:
