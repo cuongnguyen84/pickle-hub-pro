@@ -3,7 +3,7 @@ import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffe
 import { TapToPlayOverlay } from "./TapToPlayOverlay";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface MuxPlayerHandle {
@@ -35,6 +35,8 @@ const MAX_RETRIES = 3;
 const STALL_TIMEOUT_MS = 10000; // 10 seconds
 const HEALTH_CHECK_INTERVAL_MS = 5000; // 5 seconds
 const RETRY_DELAYS = [2000, 4000, 8000]; // Exponential backoff
+type NativeHlsQuality = "auto" | "1080p" | "720p" | "540p" | "360p" | "270p";
+const NATIVE_HLS_QUALITIES: NativeHlsQuality[] = ["auto", "1080p", "720p", "540p", "360p", "270p"];
 
 export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   playbackId,
@@ -62,6 +64,11 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   const [, setIsReady] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [nativeHlsQuality, setNativeHlsQuality] = useState<NativeHlsQuality>("auto");
+  const pinnedNativeResolution = nativeHlsQuality === "auto" ? undefined : nativeHlsQuality;
+  const nativeHlsSourceParams = pinnedNativeResolution
+    ? { min_resolution: pinnedNativeResolution, max_resolution: pinnedNativeResolution }
+    : {};
 
   // Refs for health monitoring
   const lastCurrentTimeRef = useRef<number>(0);
@@ -383,6 +390,28 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         </div>
       )}
 
+      {/* iPhone browsers must use Apple's native HLS engine, which does not
+          expose Mux's built-in rendition menu. Pin both manifest bounds from
+          this native <select>; Auto removes the bounds and restores ABR. */}
+      {requiresNativeHls && !showOverlay && !isReconnecting && (
+        <label className="absolute right-3 top-3 z-30 flex h-9 items-center gap-1.5 rounded-lg bg-black/75 px-2.5 text-xs font-semibold text-white backdrop-blur-sm">
+          <Settings className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Chất lượng video</span>
+          <select
+            aria-label="Chất lượng video"
+            value={nativeHlsQuality}
+            onChange={(event) => setNativeHlsQuality(event.target.value as NativeHlsQuality)}
+            className="max-w-[5.5rem] appearance-none bg-transparent pr-1 text-white outline-none"
+          >
+            {NATIVE_HLS_QUALITIES.map((quality) => (
+              <option key={quality} value={quality} className="text-black">
+                {quality === "auto" ? "Auto" : quality}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       {/* Mux Player - always rendered but behind overlay until played */}
       <MuxPlayerReact
         ref={playerRef}
@@ -396,6 +425,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         playsInline={true}
         streamType={streamType}
         preferPlayback={requiresNativeHls ? undefined : "mse"}
+        extraSourceParams={requiresNativeHls ? nativeHlsSourceParams : undefined}
         // A live match contains small, fast-moving detail. Do not let the
         // default player-size heuristic hold Auto to a lower rendition just
         // because chat makes the video column narrower on desktop.
