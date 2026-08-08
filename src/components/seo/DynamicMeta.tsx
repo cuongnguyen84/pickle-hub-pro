@@ -29,7 +29,10 @@ export const DynamicMeta = ({
   const currentUrl = rawUrl.endsWith("/") && rawUrl.length > 1
     ? rawUrl.replace(/\/+$/, "")
     : rawUrl;
-  const fullTitle = `${title} | ThePickleHub`;
+  // The OAuth reviewer compares the homepage's presented application name
+  // literally with the consent-screen name. Avoid producing
+  // "ThePickleHub | ThePickleHub" on the root route.
+  const fullTitle = title === "ThePickleHub" ? title : `${title} | ThePickleHub`;
 
   useEffect(() => {
     // Update document title
@@ -99,7 +102,7 @@ export const DynamicMeta = ({
 
     // Cleanup: Reset to default on unmount
     return () => {
-      document.title = "ThePickleHub – Pickleball Asia: Live, Brackets & News";
+      document.title = "ThePickleHub";
     };
   }, [fullTitle, description, image, type, currentUrl, noindex, creator, publishedTime, language]);
 
