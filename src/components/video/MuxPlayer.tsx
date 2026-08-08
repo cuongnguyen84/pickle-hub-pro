@@ -51,9 +51,11 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   const { toast } = useToast();
   // Safari on macOS/iPadOS otherwise uses native HLS, where browsers do not
   // expose the rendition ladder and Mux cannot render its quality selector.
-  // Keep native HLS on iPhone (MediaSource is unavailable there), but force
-  // MSE everywhere it is supported so Auto/1080p/720p/... remain selectable.
-  const supportsMediaSource = typeof window !== "undefined" && "MediaSource" in window;
+  // Do not feature-detect window.MediaSource here: Safari may expose its
+  // managed MSE implementation differently. Mux handles the engine details;
+  // only iPhone/iPod must stay on Apple's native HLS because MSE is unavailable.
+  const requiresNativeHls = typeof navigator !== "undefined"
+    && /iPhone|iPod/i.test(navigator.userAgent);
   const playerRef = useRef<ComponentRef<typeof MuxPlayerReact> | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -393,7 +395,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         muted={false}
         playsInline={true}
         streamType={streamType}
-        playbackEngine={supportsMediaSource ? "mse" : undefined}
+        playbackEngine={requiresNativeHls ? undefined : "mse"}
         // A live match contains small, fast-moving detail. Do not let the
         // default player-size heuristic hold Auto to a lower rendition just
         // because chat makes the video column narrower on desktop.
