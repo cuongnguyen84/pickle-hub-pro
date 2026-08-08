@@ -99,6 +99,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     bodyContent: `
       <h1>Everything a pickleball player needs, in one place.</h1>
       <p>ThePickleHub is a pickleball platform for players to follow news and livestreams, find players and courts, and create or join tournaments and community events.</p>
+      <p>Google Sign-In uses only your name, email address, and profile photo to create, secure, and personalize your account. Read our <a href="${siteUrl}/privacy">Privacy Policy</a>.</p>
       <p>Our editorial team is headquartered in Ho Chi Minh City and reports from PPA, APP, MLP, European Open, and Asia Pacific Series venues worldwide.</p>
       <ul>
         <li><a href="${siteUrl}/live">Live courts</a> — Watch matches streaming right now</li>

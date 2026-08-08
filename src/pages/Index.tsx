@@ -721,6 +721,10 @@ const Index = () => {
                       theo dõi tin tức và livestream, tìm bạn chơi và sân, đồng thời tạo hoặc tham
                       gia giải đấu và sự kiện cộng đồng.
                     </p>
+                    <p className="data-note">
+                      Khi đăng nhập bằng Google, chúng tôi chỉ dùng tên, email và ảnh đại diện để
+                      tạo, bảo vệ và cá nhân hóa tài khoản của bạn. <Link to="/privacy">Cách chúng tôi bảo vệ dữ liệu →</Link>
+                    </p>
                   </div>
                 </div>
               </>
@@ -756,6 +760,10 @@ const Index = () => {
                       ThePickleHub is a pickleball platform for players to follow news and
                       livestreams, find players and courts, and create or join tournaments and
                       community events.
+                    </p>
+                    <p className="data-note">
+                      Google Sign-In uses only your name, email address, and profile photo to create,
+                      secure, and personalize your account. <Link to="/privacy">How we protect your data →</Link>
                     </p>
                   </div>
                 </div>

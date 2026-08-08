@@ -113,3 +113,6 @@ page whose HTML a single-pass strip under-sanitized.
 2026-08-08 — v34->v35: invalidate cached bot-facing homepage HTML after
 adding the complete ThePickleHub purpose statement for Google OAuth branding
 verification. Without the bump, Googlebot can continue seeing v34 for 6 hours.
+2026-08-08 — v35->v36: invalidate the homepage and Privacy Policy after adding
+the explicit Google Sign-In data-purpose disclosure and a complete bot-readable
+privacy document for OAuth verification crawlers.
