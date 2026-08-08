@@ -119,3 +119,6 @@ privacy document for OAuth verification crawlers.
 2026-08-08 — v36->v37: make the exact OAuth app name `ThePickleHub` a prominent
 homepage heading beside its purpose, normalize visible spaced brand variants,
 and purge cached bot HTML from the rejected verification attempt.
+2026-08-08 — v37->v38: normalize the homepage document, social, and crawler
+titles to the exact OAuth app name `ThePickleHub`; purge cached homepage HTML
+that still included the former positioning tagline in the application name.

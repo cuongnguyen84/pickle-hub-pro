@@ -585,7 +585,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // homepage and serve the complete Privacy Policy to verification crawlers.
   // v36→v37 (2026-08-08): expose the exact OAuth app name and purpose together
   // above the fold; purge bot HTML that retained the old homepage heading.
-  const cacheKey = `pr:v37:${url.pathname}`;
+  // v37→v38 (2026-08-08): normalize the homepage title to the exact OAuth
+  // application name and invalidate the previously rendered homepage HTML.
+  const cacheKey = `pr:v38:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
