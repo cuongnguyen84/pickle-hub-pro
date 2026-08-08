@@ -504,6 +504,40 @@ const Index = () => {
         );
       })()}
 
+      {/* Hallmark · editorial publication note.
+          A plain-language statement of purpose for first-time visitors and
+          OAuth brand review, followed by a compact index into the product. */}
+      <section className="tl-purpose" aria-labelledby="tl-purpose-title">
+        <div className="tl-shell tl-purpose-grid">
+          <div className="tl-purpose-label tl-mono">
+            {language === "vi" ? "ThePickleHub là gì?" : "What is ThePickleHub?"}
+          </div>
+          <div className="tl-purpose-copy">
+            <h2 id="tl-purpose-title">
+              {language === "vi"
+                ? "Mọi thứ người chơi pickleball cần, trong một điểm đến."
+                : "Everything a pickleball player needs, in one place."}
+            </h2>
+            <p>
+              {language === "vi"
+                ? "ThePickleHub là nền tảng pickleball dành cho người chơi trên toàn thế giới theo dõi tin tức và livestream, tìm bạn chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng."
+                : "ThePickleHub is a pickleball platform for players to follow news and livestreams, find players and courts, and create or join tournaments and community events."}
+            </p>
+            <nav
+              className="tl-purpose-index tl-mono"
+              aria-label={language === "vi" ? "Khám phá ThePickleHub" : "Explore ThePickleHub"}
+            >
+              <Link to="/news">{language === "vi" ? "Tin tức" : "News"}</Link>
+              <Link to="/live">Livestreams</Link>
+              <Link to="/tim-ban-choi">{language === "vi" ? "Người chơi" : "Players"}</Link>
+              <Link to="/san">{language === "vi" ? "Sân" : "Courts"}</Link>
+              <Link to="/tournaments">{language === "vi" ? "Giải đấu" : "Tournaments"}</Link>
+              <Link to="/social">{language === "vi" ? "Cộng đồng" : "Community"}</Link>
+            </nav>
+          </div>
+        </div>
+      </section>
+
       {/* ── Priority feed — Live (on air / upcoming) → Editorial → News ──
           Product priority wins while a broadcast is live or scheduled.
           Replay-only days keep editorial first. Reserved editorial/news

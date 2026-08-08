@@ -1198,6 +1198,97 @@
 [data-theme="the-line"] .tl-empty-card-cta:hover { opacity: 0.85; }
 
 /* ========== Sections ========== */
+/* Hallmark · genre: editorial · component: publication note · theme: existing The Line
+ * Pre-emit critique: P5 H5 E5 S5 R5 V4 · contrast: pass · mobile: pass
+ */
+[data-theme="the-line"] .tl-purpose {
+  border-block: 1px solid var(--tl-border);
+  margin-block-start: 56px;
+}
+[data-theme="the-line"] .tl-purpose-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
+  column-gap: clamp(32px, 7vw, 112px);
+  padding-block: clamp(32px, 5vw, 64px);
+}
+[data-theme="the-line"] .tl-purpose-label {
+  color: var(--tl-green);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+[data-theme="the-line"] .tl-purpose-copy {
+  min-width: 0;
+}
+[data-theme="the-line"] .tl-purpose-copy h2 {
+  color: var(--tl-fg);
+  font-family: "Instrument Serif", "Times New Roman", serif;
+  font-size: clamp(32px, 4.2vw, 58px);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  margin: 0;
+  max-width: 20ch;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+[data-theme="the-line"] .tl-purpose-copy p {
+  color: var(--tl-fg-2);
+  font-size: clamp(16px, 1.6vw, 20px);
+  line-height: 1.6;
+  margin: 24px 0 0;
+  max-width: 70ch;
+}
+[data-theme="the-line"] .tl-purpose-index {
+  align-items: center;
+  border-block-start: 1px solid var(--tl-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-block-start: 28px;
+  padding-block-start: 16px;
+}
+[data-theme="the-line"] .tl-purpose-index a {
+  color: var(--tl-fg-3);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding-block: 8px;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+[data-theme="the-line"] .tl-purpose-index a:not(:last-child)::after {
+  color: var(--tl-fg-4);
+  content: "·";
+  margin-inline: 12px;
+}
+[data-theme="the-line"] .tl-purpose-index a:hover {
+  color: var(--tl-green);
+}
+[data-theme="the-line"] .tl-purpose-index a:focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 3px;
+}
+[data-theme="the-line"] .tl-purpose-index a:active {
+  color: var(--tl-fg);
+}
+@media (max-width: 48rem) {
+  [data-theme="the-line"] .tl-purpose {
+    margin-block-start: 40px;
+  }
+  [data-theme="the-line"] .tl-purpose-grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 16px;
+  }
+  [data-theme="the-line"] .tl-purpose-copy p {
+    margin-block-start: 20px;
+  }
+}
+
 [data-theme="the-line"] .tl-section {
   padding: 56px 0;
   border-bottom: 1px solid var(--tl-border);
