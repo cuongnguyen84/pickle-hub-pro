@@ -110,3 +110,6 @@ updatedDate; pickleball-rules-complete-guide gains its hero og:image.
 fixpoint and normalizeImageUrl uses a hostname check (CodeQL #45/46/47,
 #22). Output identical for well-formed content; bump purges any cached
 page whose HTML a single-pass strip under-sanitized.
+2026-08-08 — v34->v35: invalidate cached bot-facing homepage HTML after
+adding the complete ThePickleHub purpose statement for Google OAuth branding
+verification. Without the bump, Googlebot can continue seeing v34 for 6 hours.
