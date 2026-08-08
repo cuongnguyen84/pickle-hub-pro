@@ -395,7 +395,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         muted={false}
         playsInline={true}
         streamType={streamType}
-        playbackEngine={requiresNativeHls ? undefined : "mse"}
+        preferPlayback={requiresNativeHls ? undefined : "mse"}
         // A live match contains small, fast-moving detail. Do not let the
         // default player-size heuristic hold Auto to a lower rendition just
         // because chat makes the video column narrower on desktop.
