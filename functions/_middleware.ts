@@ -579,7 +579,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // metadata.ts; 28 EN blog <title>s switch to metaTitleEn).
   // v33→v34 (2026-08-06): /rankings SSR body changed (self-referential
   // ?scope=open link replaced with a real anchor to /rankings/ppa-tour).
-  const cacheKey = `pr:v34:${url.pathname}`;
+  // v34→v35 (2026-08-08): homepage purpose copy changed for Google OAuth
+  // branding verification; invalidate the cached bot-facing homepage.
+  const cacheKey = `pr:v35:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
