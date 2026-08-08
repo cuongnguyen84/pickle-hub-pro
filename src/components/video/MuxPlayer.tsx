@@ -64,6 +64,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   const [, setIsReady] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [nativeHlsQuality, setNativeHlsQuality] = useState<NativeHlsQuality>("auto");
   const pinnedNativeResolution = nativeHlsQuality === "auto" ? undefined : nativeHlsQuality;
   const nativeHlsSourceParams = pinnedNativeResolution
@@ -75,6 +76,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   const stallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const healthCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
   const isPlayingRef = useRef(false);
   const gatedRef = useRef(gated);
 
@@ -132,8 +134,11 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   }, []);
 
   // Auto-reconnect logic
-  const attemptReconnect = useCallback(async () => {
-    if (retryCount >= MAX_RETRIES) {
+  const attemptReconnect = useCallback(() => {
+    if (retryTimeoutRef.current) return;
+
+    const currentRetry = retryCountRef.current;
+    if (currentRetry >= MAX_RETRIES) {
       console.log("[MuxPlayer] Max retries reached, showing error state");
       setIsReconnecting(false);
       setHasError(true);
@@ -145,12 +150,13 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
       return;
     }
 
-    const delay = RETRY_DELAYS[retryCount] || 8000;
-    console.log(`[MuxPlayer] Attempting reconnect (${retryCount + 1}/${MAX_RETRIES}) in ${delay}ms`);
+    const delay = RETRY_DELAYS[currentRetry] || 8000;
+    console.log(`[MuxPlayer] Attempting reconnect (${currentRetry + 1}/${MAX_RETRIES}) in ${delay}ms`);
     
     setIsReconnecting(true);
 
     retryTimeoutRef.current = setTimeout(async () => {
+      retryTimeoutRef.current = null;
       try {
         if (playerRef.current) {
           console.log("[MuxPlayer] Reloading player...");
@@ -163,20 +169,22 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
             await playerRef.current.play();
             console.log("[MuxPlayer] Reconnect successful");
             setIsReconnecting(false);
+            retryCountRef.current = 0;
             setRetryCount(0);
           }
         }
       } catch (err) {
         console.error("[MuxPlayer] Reconnect failed:", err);
-        setRetryCount(prev => prev + 1);
+        retryCountRef.current += 1;
+        setRetryCount(retryCountRef.current);
         attemptReconnect();
       }
     }, delay);
-  }, [retryCount, toast, t]);
+  }, [toast, t]);
 
   // Health check for live streams
   useEffect(() => {
-    if (!isLive || !isPlayingRef.current) return undefined;
+    if (!isLive || !isPlaying) return undefined;
 
     healthCheckIntervalRef.current = setInterval(() => {
       if (!playerRef.current || !isPlayingRef.current) return;
@@ -210,7 +218,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         healthCheckIntervalRef.current = null;
       }
     };
-  }, [isLive, attemptReconnect]);
+  }, [isLive, isPlaying, attemptReconnect]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -244,6 +252,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
       setShowOverlay(false);
       setHasError(false);
       isPlayingRef.current = true;
+      setIsPlaying(true);
     } catch (error) {
       console.error("[MuxPlayer] Play error:", error);
       toast({
@@ -259,6 +268,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
     console.log("[MuxPlayer] Manual retry triggered");
     setHasError(false);
     setIsReconnecting(false);
+    retryCountRef.current = 0;
     setRetryCount(0);
     setShowOverlay(true);
     clearAllTimeouts();
@@ -279,20 +289,28 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
     setShowOverlay(false);
     setHasError(false);
     setIsReconnecting(false);
+    retryCountRef.current = 0;
     setRetryCount(0);
     isPlayingRef.current = true;
+    setIsPlaying(true);
     onPlayStateChange?.(true);
   }, [onPlayStateChange, exitNativeSurfaces]);
 
   const handlePause = useCallback(() => {
     console.log("[MuxPlayer] Pause event");
     isPlayingRef.current = false;
+    setIsPlaying(false);
     onPlayStateChange?.(false);
     // Clear stall detection when paused
     if (stallTimeoutRef.current) {
       clearTimeout(stallTimeoutRef.current);
       stallTimeoutRef.current = null;
     }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    setIsReconnecting(false);
   }, [onPlayStateChange]);
 
   const handleError = useCallback((event: unknown) => {
@@ -335,7 +353,12 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
       clearTimeout(stallTimeoutRef.current);
       stallTimeoutRef.current = null;
     }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
     setIsReconnecting(false);
+    retryCountRef.current = 0;
     setRetryCount(0);
   }, []);
 
@@ -426,13 +449,6 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         streamType={streamType}
         preferPlayback={requiresNativeHls ? undefined : "mse"}
         extraSourceParams={requiresNativeHls ? nativeHlsSourceParams : undefined}
-        // A live match contains small, fast-moving detail. Do not let the
-        // default player-size heuristic hold Auto to a lower rendition just
-        // because chat makes the video column narrower on desktop.
-        capRenditionToPlayerSize={isLive ? false : undefined}
-        // Start from the best source rendition; Mux ABR can still step down
-        // immediately when measured bandwidth cannot sustain it.
-        renditionOrder={isLive ? "desc" : undefined}
         className="w-full h-full"
         primaryColor="#22c55e"
         accentColor="#16a34a"
