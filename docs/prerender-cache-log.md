@@ -116,3 +116,6 @@ verification. Without the bump, Googlebot can continue seeing v34 for 6 hours.
 2026-08-08 — v35->v36: invalidate the homepage and Privacy Policy after adding
 the explicit Google Sign-In data-purpose disclosure and a complete bot-readable
 privacy document for OAuth verification crawlers.
+2026-08-08 — v36->v37: make the exact OAuth app name `ThePickleHub` a prominent
+homepage heading beside its purpose, normalize visible spaced brand variants,
+and purge cached bot HTML from the rejected verification attempt.

@@ -180,7 +180,7 @@ const Index = () => {
         tag: p.category ?? p.tags?.[0] ?? null,
         image: p.cover_image_url,
         imageAlt: p.title,
-        author: "The PickleHub",
+        author: "ThePickleHub",
         date: p.published_at,
         href: `/vi/blog/${p.slug}`,
       }));
@@ -421,6 +421,19 @@ const Index = () => {
           </div>
         );
       })()}
+
+      {/* Compact identity block for people and OAuth reviewers. Keep the app
+          name and purpose together above the first promotional surface. */}
+      <section className="tl-home-identity" aria-labelledby="home-app-name">
+        <div className="tl-shell tl-home-identity-inner">
+          <h1 id="home-app-name">ThePickleHub</h1>
+          <p>
+            {language === "vi"
+              ? "Nền tảng dành cho người chơi pickleball trên toàn thế giới để theo dõi tin tức và livestream, tìm người chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng."
+              : "A platform for pickleball players worldwide to follow news and livestreams, find players and courts, and create or join tournaments and community events."}
+          </p>
+        </div>
+      </section>
 
       {/* ── DUPR × ThePickleHub partnership strip ──
           A horizontal certificate-style band that sits between the news
