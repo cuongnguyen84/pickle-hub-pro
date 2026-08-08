@@ -6,7 +6,7 @@ import { useLivePresence } from "@/hooks/useLivePresence";
 import { LikeButton } from "@/components/content/LikeButton";
 import { ReportDialog } from "@/components/report";
 import { CommentSection } from "@/components/content/CommentSection";
-import { LiveCard, MIN_PUBLIC_VIEWERS } from "@/components/content";
+import { LiveCard } from "@/components/content";
 import { MuxPlayer } from "@/components/video";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -414,10 +414,10 @@ const WatchLive = () => {
                   {isLive ? (
                     // LIVE: Show both concurrent viewers and total views
                     <>
-                      {/* Concurrent viewers (real-time). Ẩn khi chưa kết nối
-                          hoặc dưới sàn — không bao giờ in "—" (đọc như hỏng)
-                          hay "0/1/2 đang xem". */}
-                      {isConnected && concurrentViewers >= MIN_PUBLIC_VIEWERS && (
+                      {/* On the watch page, show the real-time audience even
+                          when it is small. The list-card social-proof floor is
+                          intentionally not applied here. */}
+                      {isConnected && concurrentViewers > 0 && (
                         <span
                           className="flex items-center gap-1"
                           aria-label={t.live.watchingAria.replace("{count}", concurrentViewers.toLocaleString())}

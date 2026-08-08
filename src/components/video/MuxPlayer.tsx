@@ -49,6 +49,11 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
 }, ref) => {
   const { t } = useI18n();
   const { toast } = useToast();
+  // Safari on macOS/iPadOS otherwise uses native HLS, where browsers do not
+  // expose the rendition ladder and Mux cannot render its quality selector.
+  // Keep native HLS on iPhone (MediaSource is unavailable there), but force
+  // MSE everywhere it is supported so Auto/1080p/720p/... remain selectable.
+  const supportsMediaSource = typeof window !== "undefined" && "MediaSource" in window;
   const playerRef = useRef<ComponentRef<typeof MuxPlayerReact> | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -388,6 +393,14 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         muted={false}
         playsInline={true}
         streamType={streamType}
+        playbackEngine={supportsMediaSource ? "mse" : undefined}
+        // A live match contains small, fast-moving detail. Do not let the
+        // default player-size heuristic hold Auto to a lower rendition just
+        // because chat makes the video column narrower on desktop.
+        capRenditionToPlayerSize={isLive ? false : undefined}
+        // Start from the best source rendition; Mux ABR can still step down
+        // immediately when measured bandwidth cannot sustain it.
+        renditionOrder={isLive ? "desc" : undefined}
         className="w-full h-full"
         primaryColor="#22c55e"
         accentColor="#16a34a"
