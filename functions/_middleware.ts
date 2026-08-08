@@ -581,7 +581,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // ?scope=open link replaced with a real anchor to /rankings/ppa-tour).
   // v34→v35 (2026-08-08): homepage purpose copy changed for Google OAuth
   // branding verification; invalidate the cached bot-facing homepage.
-  const cacheKey = `pr:v35:${url.pathname}`;
+  // v35→v36 (2026-08-08): add explicit Google user-data disclosure to the
+  // homepage and serve the complete Privacy Policy to verification crawlers.
+  const cacheKey = `pr:v36:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

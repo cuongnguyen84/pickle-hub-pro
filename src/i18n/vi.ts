@@ -47,6 +47,17 @@ export interface Translations {
         improve: string;
       };
     };
+    googleData: {
+      title: string;
+      description: string;
+      items: {
+        access: string;
+        use: string;
+        storage: string;
+        sharing: string;
+        advertising: string;
+      };
+    };
     sharing: {
       title: string;
       description: string;
@@ -61,6 +72,7 @@ export interface Translations {
         storage: string;
         measures: string;
         access: string;
+        retention: string;
       };
     };
     rights: {
@@ -3010,10 +3022,10 @@ export const vi: Translations = {
     loadMore: "Xem thêm",
   },
   privacy: {
-    title: "Chính sách bảo mật – The Pickle Hub",
+    title: "Chính sách bảo mật – ThePickleHub",
     intro: {
       title: "Giới thiệu",
-      description: "The Pickle Hub là nền tảng video, livestream và công cụ tổ chức giải đấu Pickleball.",
+      description: "ThePickleHub là nền tảng pickleball dành cho người chơi theo dõi tin tức và livestream, tìm người chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng.",
       commitment: "Chúng tôi tôn trọng quyền riêng tư của người dùng và cam kết bảo vệ dữ liệu cá nhân.",
     },
     dataCollection: {
@@ -3035,9 +3047,20 @@ export const vi: Translations = {
         improve: "Cải thiện trải nghiệm người dùng",
       },
     },
+    googleData: {
+      title: "Dữ liệu từ Google Sign-In",
+      description: "Khi bạn chọn đăng nhập bằng Google, ThePickleHub chỉ yêu cầu dữ liệu cơ bản cần thiết để tạo và bảo vệ tài khoản của bạn.",
+      items: {
+        access: "Dữ liệu truy cập: tên, địa chỉ email và ảnh đại diện từ tài khoản Google của bạn.",
+        use: "Mục đích sử dụng: xác thực danh tính, tạo tài khoản ThePickleHub và cá nhân hóa hồ sơ của bạn.",
+        storage: "Lưu trữ: dữ liệu tài khoản được lưu trên hạ tầng đám mây bảo mật trong thời gian tài khoản hoạt động hoặc khi pháp luật yêu cầu.",
+        sharing: "Chia sẻ: dữ liệu chỉ được xử lý bởi Google, nhà cung cấp xác thực và hạ tầng dịch vụ cần thiết để vận hành đăng nhập; chúng tôi không bán dữ liệu Google của bạn.",
+        advertising: "Quảng cáo: dữ liệu Google Sign-In không được dùng cho quảng cáo cá nhân hóa, nhắm mục tiêu quảng cáo hoặc đánh giá tín dụng.",
+      },
+    },
     sharing: {
       title: "Chia sẻ dữ liệu",
-      description: "Chúng tôi không bán hoặc chia sẻ dữ liệu cá nhân cho bên thứ ba. Chỉ chia sẻ với:",
+      description: "Chúng tôi không bán dữ liệu cá nhân. Dữ liệu chỉ được chia sẻ khi cần để cung cấp dịch vụ hoặc tuân thủ pháp luật:",
       items: {
         oauth: "Nhà cung cấp xác thực (Google) để đăng nhập",
         legal: "Cơ quan pháp luật khi có yêu cầu hợp lệ",
@@ -3049,6 +3072,7 @@ export const vi: Translations = {
         storage: "Dữ liệu được lưu trữ an toàn trên hạ tầng đám mây",
         measures: "Áp dụng các biện pháp bảo mật tiêu chuẩn ngành",
         access: "Giới hạn quyền truy cập dữ liệu cho nhân viên cần thiết",
+        retention: "Dữ liệu được giữ trong thời gian tài khoản hoạt động và được xóa theo yêu cầu, trừ khi pháp luật yêu cầu lưu giữ lâu hơn",
       },
     },
     rights: {
@@ -3065,15 +3089,15 @@ export const vi: Translations = {
       description: "Nếu bạn có câu hỏi về chính sách bảo mật, vui lòng liên hệ:",
     },
     effective: {
-      text: "Chính sách này có hiệu lực từ ngày {date}.",
+      text: "Chính sách này được cập nhật và có hiệu lực từ ngày {date}.",
       update: "Chính sách có thể được cập nhật khi nền tảng phát triển thêm tính năng mới.",
     },
   },
   terms: {
-    title: "Điều khoản Sử dụng – The Pickle Hub",
+    title: "Điều khoản Sử dụng – ThePickleHub",
     intro: {
       title: "Giới thiệu",
-      description: "Chào mừng bạn đến với The Pickle Hub. Bằng việc sử dụng dịch vụ của chúng tôi, bạn đồng ý tuân thủ các điều khoản sau đây.",
+      description: "Chào mừng bạn đến với ThePickleHub. Bằng việc sử dụng dịch vụ của chúng tôi, bạn đồng ý tuân thủ các điều khoản sau đây.",
       acceptance: "Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng không sử dụng dịch vụ.",
     },
     account: {
