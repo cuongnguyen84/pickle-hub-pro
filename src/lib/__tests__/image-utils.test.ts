@@ -124,6 +124,24 @@ describe("homepageThumbnailUrl", () => {
     ).toBe("https://i.ytimg.com/vi/video123/hqdefault.jpg");
   });
 
+  it("preserves the full image when contain mode is requested", () => {
+    const mux = homepageThumbnailUrl(
+      "https://image.mux.com/abc/thumbnail.jpg",
+      { width: 768, height: 432, fit: "contain" },
+    )!;
+    expect(new URL(mux).searchParams.get("width")).toBe("768");
+    expect(new URL(mux).searchParams.has("height")).toBe(false);
+    expect(new URL(mux).searchParams.has("fit_mode")).toBe(false);
+
+    expect(
+      homepageThumbnailUrl("https://drive.google.com/file/d/abc_123/view", {
+        width: 768,
+        height: 432,
+        fit: "contain",
+      }),
+    ).toBe("https://lh3.googleusercontent.com/d/abc_123=w768");
+  });
+
   it("rejects unbounded third-party originals and keeps controlled local assets", () => {
     expect(
       homepageThumbnailUrl("https://storage.ghost.io/content/images/huge.png", {
