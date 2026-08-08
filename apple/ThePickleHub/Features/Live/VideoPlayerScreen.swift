@@ -43,6 +43,7 @@ struct VideoPlayerScreen: View {
     @State private var playbackQuality: PlaybackQuality = .auto
 
     private var isHLS: Bool { url.pathExtension.lowercased() == "m3u8" }
+    private var isLiveStream: Bool { livestreamID != nil && progressKey == nil }
     private var isMuxHLS: Bool {
         isHLS && url.host?.lowercased().hasSuffix("mux.com") == true
     }
@@ -120,6 +121,10 @@ struct VideoPlayerScreen: View {
         guard player == nil else { player?.play(); return }
         let item = makePlayerItem(for: playbackQuality)
         let avPlayer = AVPlayer(playerItem: item)
+        // Prefer a short startup wait over repeatedly freezing on brief CDN or
+        // cellular jitter. The item below keeps four 2-second Mux segments
+        // buffered for live playback; AVPlayer still adapts normally in Auto.
+        avPlayer.automaticallyWaitsToMinimizeStalling = true
         player = avPlayer
 
         // Resume VOD at the saved position.
@@ -160,6 +165,9 @@ struct VideoPlayerScreen: View {
         let item = AVPlayerItem(url: playbackURL(for: quality))
         item.preferredMaximumResolution = quality.resolution
         item.preferredPeakBitRate = 0
+        if isLiveStream {
+            item.preferredForwardBufferDuration = 8
+        }
         return item
     }
 
