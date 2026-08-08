@@ -717,8 +717,9 @@ const Index = () => {
                   <div className="item">
                     <h3>03 / Dành cho người chơi</h3>
                     <p>
-                      Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần —{" "}
-                      <em>và không có thứ gì họ không cần.</em>
+                      ThePickleHub là nền tảng pickleball dành cho người chơi trên toàn thế giới
+                      theo dõi tin tức và livestream, tìm bạn chơi và sân, đồng thời tạo hoặc tham
+                      gia giải đấu và sự kiện cộng đồng.
                     </p>
                   </div>
                 </div>
@@ -752,8 +753,9 @@ const Index = () => {
                   <div className="item">
                     <h3>03 / Built for players</h3>
                     <p>
-                      Find a partner, book a court, track your DUPR. Everything a player needs —{" "}
-                      <em>and nothing they don't.</em>
+                      ThePickleHub is a pickleball platform for players to follow news and
+                      livestreams, find players and courts, and create or join tournaments and
+                      community events.
                     </p>
                   </div>
                 </div>
