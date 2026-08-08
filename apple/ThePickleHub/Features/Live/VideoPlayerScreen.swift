@@ -19,6 +19,7 @@ struct VideoPlayerScreen: View {
 
         var id: Int { rawValue }
         var label: String { self == .auto ? "Tự động" : "\(rawValue)p" }
+        var muxResolution: String? { self == .auto ? nil : "\(rawValue)p" }
         var resolution: CGSize {
             switch self {
             case .auto: return .zero
@@ -42,6 +43,9 @@ struct VideoPlayerScreen: View {
     @State private var playbackQuality: PlaybackQuality = .auto
 
     private var isHLS: Bool { url.pathExtension.lowercased() == "m3u8" }
+    private var isMuxHLS: Bool {
+        isHLS && url.host?.lowercased().hasSuffix("mux.com") == true
+    }
 
     var body: some View {
         Group {
@@ -114,8 +118,7 @@ struct VideoPlayerScreen: View {
     private func start() {
         configureAudioSession()
         guard player == nil else { player?.play(); return }
-        let item = AVPlayerItem(url: url)
-        item.preferredMaximumResolution = playbackQuality.resolution
+        let item = makePlayerItem(for: playbackQuality)
         let avPlayer = AVPlayer(playerItem: item)
         player = avPlayer
 
@@ -138,11 +141,41 @@ struct VideoPlayerScreen: View {
     }
 
     private func applyPlaybackQuality() {
-        guard let item = player?.currentItem else { return }
-        item.preferredMaximumResolution = playbackQuality.resolution
-        // Zero lets AVPlayer choose the bitrate freely within the selected
-        // resolution ceiling instead of retaining a stale bandwidth cap.
+        guard let player else { return }
+
+        // AVPlayer's preferredMaximumResolution is advisory and may keep the
+        // current rendition. Mux manifest constraints make a manual selection
+        // deterministic by returning only the requested rendition.
+        let position = player.currentTime()
+        let shouldResume = player.timeControlStatus != .paused
+        player.replaceCurrentItem(with: makePlayerItem(for: playbackQuality))
+
+        if progressKey != nil, position.isValid, position.seconds.isFinite {
+            player.seek(to: position, toleranceBefore: .zero, toleranceAfter: .zero)
+        }
+        if shouldResume { player.play() }
+    }
+
+    private func makePlayerItem(for quality: PlaybackQuality) -> AVPlayerItem {
+        let item = AVPlayerItem(url: playbackURL(for: quality))
+        item.preferredMaximumResolution = quality.resolution
         item.preferredPeakBitRate = 0
+        return item
+    }
+
+    private func playbackURL(for quality: PlaybackQuality) -> URL {
+        guard isMuxHLS, var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return url
+        }
+
+        var queryItems = components.queryItems ?? []
+        queryItems.removeAll { $0.name == "min_resolution" || $0.name == "max_resolution" }
+        if let resolution = quality.muxResolution {
+            queryItems.append(URLQueryItem(name: "min_resolution", value: resolution))
+            queryItems.append(URLQueryItem(name: "max_resolution", value: resolution))
+        }
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+        return components.url ?? url
     }
 
     private func stop() {
