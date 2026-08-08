@@ -583,7 +583,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // branding verification; invalidate the cached bot-facing homepage.
   // v35→v36 (2026-08-08): add explicit Google user-data disclosure to the
   // homepage and serve the complete Privacy Policy to verification crawlers.
-  const cacheKey = `pr:v36:${url.pathname}`;
+  // v36→v37 (2026-08-08): expose the exact OAuth app name and purpose together
+  // above the fold; purge bot HTML that retained the old homepage heading.
+  const cacheKey = `pr:v37:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

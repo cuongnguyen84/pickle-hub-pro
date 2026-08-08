@@ -3,7 +3,7 @@ import type { Translations } from "./vi";
 
 export const en: Translations = {
   common: {
-    appName: "The PickleHub",
+    appName: "ThePickleHub",
     loading: "Loading...",
     error: "An error occurred",
     retry: "Retry",
@@ -113,7 +113,7 @@ export const en: Translations = {
     },
     acceptableUse: {
       title: "Acceptable Use",
-      description: "When using The Pickle Hub, you agree to:",
+      description: "When using ThePickleHub, you agree to:",
       items: {
         noIllegal: "Not engage in illegal activities",
         noHarassment: "Not harass, threaten, or insult others",
@@ -133,11 +133,11 @@ export const en: Translations = {
     },
     intellectualProperty: {
       title: "Intellectual Property",
-      description: "The Pickle Hub brand, logo, and content are protected by intellectual property laws. You may not copy or use them without permission.",
+      description: "ThePickleHub brand, logo, and content are protected by intellectual property laws. You may not copy or use them without permission.",
     },
     liability: {
       title: "Limitation of Liability",
-      description: "The Pickle Hub provides services with the following limitations:",
+      description: "ThePickleHub provides services with the following limitations:",
       items: {
         asIs: "Services are provided \"as is\"",
         noWarranty: "We do not guarantee uninterrupted or error-free service",
@@ -372,7 +372,7 @@ export const en: Translations = {
   },
   home: {
     hero: {
-      title: "The Pickle Hub",
+      title: "ThePickleHub",
       subtitle: "Professional Pickleball Media Platform",
       description: "Live streaming and on-demand videos from top tournaments",
       cta: "Explore Tournaments",

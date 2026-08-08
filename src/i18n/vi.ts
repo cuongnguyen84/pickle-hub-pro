@@ -3001,7 +3001,7 @@ export interface Translations {
 // Vietnamese translations
 export const vi: Translations = {
   common: {
-    appName: "The PickleHub",
+    appName: "ThePickleHub",
     loading: "Đang tải...",
     error: "Có lỗi xảy ra",
     retry: "Thử lại",
@@ -3111,7 +3111,7 @@ export const vi: Translations = {
     },
     acceptableUse: {
       title: "Sử dụng Hợp lệ",
-      description: "Khi sử dụng The Pickle Hub, bạn cam kết:",
+      description: "Khi sử dụng ThePickleHub, bạn cam kết:",
       items: {
         noIllegal: "Không thực hiện hành vi bất hợp pháp",
         noHarassment: "Không quấy rối, đe dọa hoặc xúc phạm người khác",
@@ -3131,11 +3131,11 @@ export const vi: Translations = {
     },
     intellectualProperty: {
       title: "Sở hữu Trí tuệ",
-      description: "Thương hiệu, logo và nội dung của The Pickle Hub được bảo vệ bởi luật sở hữu trí tuệ. Bạn không được sao chép hoặc sử dụng mà không có sự cho phép.",
+      description: "Thương hiệu, logo và nội dung của ThePickleHub được bảo vệ bởi luật sở hữu trí tuệ. Bạn không được sao chép hoặc sử dụng mà không có sự cho phép.",
     },
     liability: {
       title: "Giới hạn Trách nhiệm",
-      description: "The Pickle Hub cung cấp dịch vụ với các giới hạn sau:",
+      description: "ThePickleHub cung cấp dịch vụ với các giới hạn sau:",
       items: {
         asIs: "Dịch vụ được cung cấp \"nguyên trạng\"",
         noWarranty: "Không đảm bảo dịch vụ hoạt động liên tục hoặc không có lỗi",
@@ -3370,7 +3370,7 @@ export const vi: Translations = {
   },
   home: {
     hero: {
-      title: "The Pickle Hub",
+      title: "ThePickleHub",
       subtitle: "Nền tảng media chuyên nghiệp về Pickleball",
       description: "Livestream trực tiếp và video theo yêu cầu từ các giải đấu hàng đầu",
       cta: "Khám phá giải đấu",
