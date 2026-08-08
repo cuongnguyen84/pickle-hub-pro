@@ -206,6 +206,37 @@ const WatchLive = () => {
         }))
     : [];
 
+  const scheduledPoster = livestream.thumbnail_url ? (
+    <div className="relative w-full h-full bg-muted">
+      <img
+        src={livestream.thumbnail_url}
+        alt={streamTitle}
+        className="w-full h-full object-cover"
+      />
+      <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-4 pb-4 pt-16 sm:px-6 sm:pb-5">
+        <Radio className="h-6 w-6 shrink-0 text-white" aria-hidden="true" />
+        <p className="text-sm font-medium text-white sm:text-base">
+          {t.live.scheduled} - {livestream.scheduled_start_at && format(
+            new Date(livestream.scheduled_start_at),
+            "dd MMM yyyy, HH:mm",
+            { locale: dateLocale }
+          )}
+        </p>
+      </div>
+    </div>
+  ) : (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
+      <Radio className="w-12 h-12 text-foreground-muted" />
+      <p className="text-foreground-secondary text-center px-4">
+        {t.live.scheduled} - {livestream.scheduled_start_at && format(
+          new Date(livestream.scheduled_start_at),
+          "dd MMM yyyy, HH:mm",
+          { locale: dateLocale }
+        )}
+      </p>
+    </div>
+  );
+
   return (
     <TheLineLayout title={livestream.title ?? t.live.live} description={seoDescription} active="live">
       {/* Dynamic SEO tags - auto-generated from livestream data */}
@@ -258,16 +289,7 @@ const WatchLive = () => {
                 onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
               />
             ) : isScheduled ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
-                <Radio className="w-12 h-12 text-foreground-muted" />
-                <p className="text-foreground-secondary text-center px-4">
-                  {t.live.scheduled} - {livestream.scheduled_start_at && format(
-                    new Date(livestream.scheduled_start_at),
-                    "dd MMM yyyy, HH:mm",
-                    { locale: dateLocale }
-                  )}
-                </p>
-              </div>
+              scheduledPoster
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
                 {livestream.thumbnail_url ? (
@@ -307,16 +329,7 @@ const WatchLive = () => {
                   onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
                 />
               ) : isScheduled ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
-                  <Radio className="w-12 h-12 text-foreground-muted" />
-                  <p className="text-foreground-secondary text-center px-4">
-                    {t.live.scheduled} - {livestream.scheduled_start_at && format(
-                      new Date(livestream.scheduled_start_at),
-                      "dd MMM yyyy, HH:mm",
-                      { locale: dateLocale }
-                    )}
-                  </p>
-                </div>
+                scheduledPoster
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
                   {livestream.thumbnail_url ? (
