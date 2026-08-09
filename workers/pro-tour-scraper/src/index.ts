@@ -321,6 +321,15 @@ async function runScrape(
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     if (errMsg.includes("this event is not currently active")) {
+      // Manual path pre-creates a 'running' log row — finalize it or the
+      // admin Logs tab shows "running / 0 matches" forever. Scheduled path
+      // (no log_id) intentionally leaves no row: upcoming watchlist events
+      // skip on every cron tick and would spam failed rows.
+      if (body.log_id) {
+        await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
+          (e) => console.error(`[runScrape] skip markLogFailed: ${e}`),
+        );
+      }
       return {
         ok: true,
         skipped: true,
