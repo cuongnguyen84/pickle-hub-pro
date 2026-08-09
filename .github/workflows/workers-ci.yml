@@ -1,0 +1,53 @@
+name: Workers CI
+
+# Audit 2026-08-09: workers had zero CI (no typecheck, tests never ran).
+# Unit tests now run in the root vitest gate (quality.yml); this job adds
+# per-worker typecheck. Path-filtered so it costs ~2 min only on the rare
+# PR that touches workers/** — near-zero monthly Actions budget.
+#
+# Deploys stay manual (`wrangler deploy` per worker dir) on purpose: each
+# worker carries secrets + deploy-time guards (see memory: news-fetcher
+# redeploy guard #450), and auto-deploy from CI caused the 2026-08-05
+# hourly-redeploy drift incident pattern we never want back.
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["workers/**"]
+  push:
+    branches: [main]
+    paths: ["workers/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: workers-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Root node_modules provides typescript + @cloudflare/workers-types +
+      # vitest — workers resolve them via parent-dir lookup, no per-worker
+      # install needed (2 of 3 workers have no lockfile).
+      - name: Install npm deps
+        run: npm ci
+
+      - name: Typecheck every worker
+        run: |
+          for W in workers/*/tsconfig.json; do
+            DIR=$(dirname "$W")
+            echo "== $DIR"
+            npx tsc --noEmit -p "$DIR"
+          done
+
+      - name: Run worker unit tests
+        run: npx vitest run workers

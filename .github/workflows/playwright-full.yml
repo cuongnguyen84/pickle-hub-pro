@@ -1,0 +1,83 @@
+name: Playwright full (auth + journeys + contract)
+
+# Audit 2026-08-09: the auth (7), journeys (10) and contract (3) suites were
+# written but never wired into CI — playwright.yml only runs e2e:smoke.
+#
+# Budget math (Actions minutes are a scarce resource here — two depletion
+# incidents in 07/2026): one run ≈ npm ci 2' + chromium install 3' + suites
+# ~10' ≈ 15 min. Weekly schedule = ~65 min/month. Deliberately NOT on
+# pull_request/push — that would be ~15 min × every PR sync. Escalate to a
+# path-filtered PR trigger only if a weekly cadence proves too slow to catch
+# regressions.
+#
+# Read-only-ish against production: auth-setup mints test sessions via the
+# service-role helper (same secrets the smoke workflow already uses).
+
+on:
+  schedule:
+    # Monday 21:00 UTC = Tuesday 04:00 VN — quietest traffic window.
+    - cron: "0 21 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: playwright-full-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    env:
+      PLAYWRIGHT_BASE_URL: https://www.thepicklehub.net
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          # 22, exactly — same supabase-js/WebSocket constraint as playwright.yml.
+          node-version: 22
+          cache: npm
+
+      - name: Install npm deps
+        run: npm ci
+
+      # auth/journeys/contract all run on Desktop Chrome only.
+      - name: Install Playwright browser (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run auth + journeys + contract suites
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PLAYWRIGHT_ORGANIZER_CLUB_SLUG: ${{ secrets.PLAYWRIGHT_ORGANIZER_CLUB_SLUG }}
+        run: npx playwright test --project=auth --project=journeys --project=contract
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-full-report
+          path: playwright-report/
+          retention-days: 2
+
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping alert"
+            exit 0
+          fi
+          MSG="🚨 *Playwright FULL suite FAILED (weekly)*%0A"
+          MSG="$MSG%0A*Commit:* \`${GITHUB_SHA:0:7}\`"
+          MSG="$MSG%0A*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MSG}" \
+            -d "parse_mode=Markdown" \
+            -d "disable_web_page_preview=true" > /dev/null
