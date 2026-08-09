@@ -92,6 +92,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/privacy", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/privacy", "/vi/privacy") },
     { loc: "/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
     { loc: "/vi/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
+    { loc: "/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
+    { loc: "/vi/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
     { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
   ];
 

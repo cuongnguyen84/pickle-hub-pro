@@ -27,7 +27,7 @@ import {
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
-  renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms,
+  renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms, renderAdvertise,
   renderNotificationsShell,
   renderNoindexShell,
   render404,
@@ -312,6 +312,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (url.pathname === "/dupr") {
     return secureRedirect(
       `https://${url.hostname}/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam`,
+      301,
+    );
+  }
+
+  // GSC 2026-08-09: an old, truncated livestream URL is still being crawled.
+  // Its surviving recording has the same unique prefix, so preserve the old
+  // URL's equity with a single permanent hop instead of returning a soft 404.
+  if (url.pathname === "/live/10779a7c") {
+    return secureRedirect(
+      `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565`,
       301,
     );
   }
@@ -914,6 +924,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
   if (path === "/terms") return renderTerms(siteUrl, rawPath, lang);
+  if (path === "/advertise") return renderAdvertise(siteUrl, rawPath, lang);
 
   // 404 fallback — unmatched routes get a proper 404 + noindex, not a
   // generic 200 shell that would waste crawl budget and create soft-404s.
