@@ -143,11 +143,29 @@ export function isMarketSegment(value: unknown): value is MarketSegment {
   return value === "vn" || value === "international" || value === "unknown";
 }
 
+// CLS-attribution INC0: auth_state per-event (viewer can log in mid-session
+// to chat). Boot module — no supabase import; token presence in storage is
+// enough for an analytics segment. Dim already registered in GA4.
+export function getAuthState(): "authenticated" | "anonymous" {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
+        return "authenticated";
+      }
+    }
+  } catch {
+    // Storage can be unavailable in strict privacy modes.
+  }
+  return "anonymous";
+}
+
 export function buildWebVitalEvent(
   metric: RumMetric,
   context: RumPageContext,
   marketSegment: MarketSegment,
   attribution?: ClsAttribution,
+  authState: "authenticated" | "anonymous" = getAuthState(),
 ): Record<string, unknown> {
   const isCls = metric.name === "CLS";
   const event: Record<string, unknown> = {
@@ -167,6 +185,7 @@ export function buildWebVitalEvent(
     app_surface: context.appSurface,
     device_class: context.deviceClass,
     market_segment: marketSegment,
+    auth_state: authState,
     navigation_scope: "document",
     sample_rate: 1,
     non_interaction: true,
