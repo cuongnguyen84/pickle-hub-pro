@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useNoindex } from "@/hooks/useNoindex";
+import { safeInternalPath } from "@/lib/auth/safeRedirect";
 
 /**
  * Auth Callback Page
@@ -104,8 +105,7 @@ const AuthCallback = () => {
             return;
           }
 
-          const redirectTo = searchParams.get("redirect") || "/";
-          navigate(redirectTo, { replace: true });
+          navigate(safeInternalPath(searchParams.get("redirect")), { replace: true });
         } else {
           navigate("/login", { replace: true });
         }

@@ -356,6 +356,9 @@ export default defineConfig(({ mode }) => ({
     include: [
       "src/**/*.test.{ts,tsx}",
       "functions/_lib/__tests__/**/*.test.ts",
+      // Workers are pure node-compatible modules; coverage-excluded below,
+      // so this only adds their fixture tests to the existing gate.
+      "workers/*/src/**/*.test.ts",
       "supabase/functions/_shared/__tests__/**/*.test.ts",
       "scripts/**/*.test.mjs",
     ],

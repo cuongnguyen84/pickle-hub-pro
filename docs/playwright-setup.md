@@ -26,7 +26,7 @@ URL: https://github.com/cuongnguyen84/pickle-hub-pro/settings/secrets/actions �
 
 | Name | Value |
 |---|---|
-| `TELEGRAM_BOT_TOKEN` | `8647605878:AAFnwsf7XBXV9cgzIQFy6r5ZBtXmZXxiLL4` |
+| `TELEGRAM_BOT_TOKEN` | xem `~/Downloads/secrets.local.md` (KHÔNG commit token vào git — token cũ bị lộ trong repo đã rotate 09/08/2026) |
 | `TELEGRAM_CHAT_ID` | `233837066` |
 
 (Cùng giá trị đã set vào Supabase secrets cho error tracker.)

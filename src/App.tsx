@@ -260,6 +260,7 @@ const PageLoader = () => <LoadingState fullScreen />;
 // Chunk-error detection lives in @/lib/chunkError — shared with pwa.ts so
 // the browser-specific message list can never drift between the two again.
 import { isChunkErrorMessage } from "@/lib/chunkError";
+import { reportCaughtError } from "@/lib/errorReporter";
 
 // Error boundary for lazy-loaded chunks (handles stale cache after deploy)
 class ChunkErrorBoundary extends Component<
@@ -281,7 +282,12 @@ class ChunkErrorBoundary extends Component<
   }
   async componentDidCatch(error: Error) {
     console.error("[ChunkErrorBoundary] Caught error:", error.message, error.stack);
-    if (!isChunkErrorMessage(error.message)) return;
+    if (!isChunkErrorMessage(error.message)) {
+      // Boundary-caught render errors never reach window.onerror in prod —
+      // without this the crash is contained in UI but invisible to ops.
+      reportCaughtError(error, "render");
+      return;
+    }
 
     // Eagerly clear caches + unregister SW BEFORE reload. Existing users
     // with a pre-9425f6a SW have OLD index.html precached referencing
