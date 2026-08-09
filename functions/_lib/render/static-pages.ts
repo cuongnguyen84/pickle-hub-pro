@@ -60,6 +60,30 @@ export function renderTerms(siteUrl: string, rawPath: string, lang: Lang): Respo
   }));
 }
 
+export function renderAdvertise(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const enUrl = `${siteUrl}/advertise`;
+  const viUrl = `${siteUrl}/vi/advertise`;
+  const isVi = lang === "vi";
+
+  return htmlResponse(buildHtml({
+    title: isVi ? "Quảng cáo cùng ThePickleHub" : "Advertise with ThePickleHub",
+    description: isVi
+      ? "Tiếp cận cộng đồng pickleball song ngữ tại Việt Nam và châu Á qua tài trợ, nội dung thương hiệu và các gói quảng cáo phù hợp."
+      : "Reach an engaged bilingual pickleball audience across Vietnam and Asia through sponsorships, branded content, and tailored advertising packages.",
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    lang,
+    alternates: [
+      { hreflang: "en", href: enUrl },
+      { hreflang: "vi", href: viUrl },
+      { hreflang: "x-default", href: enUrl },
+    ],
+    bodyContent: isVi
+      ? "<h2>Hợp tác cùng chúng tôi</h2><p>Đưa thương hiệu của bạn đến với người chơi, nhà tổ chức và người hâm mộ pickleball tại Việt Nam và châu Á.</p><p>Liên hệ: <a href=\"mailto:thecuong@gmail.com\">thecuong@gmail.com</a></p>"
+      : "<h2>Partner with us</h2><p>Put your brand in front of pickleball players, organizers, and fans across Vietnam and Asia.</p><p>Contact: <a href=\"mailto:thecuong@gmail.com\">thecuong@gmail.com</a></p>",
+  }));
+}
+
 // ─── Notifications page shell (Sprint 5 PR-C bot view) ────────────────────
 //
 // /notifications, /thong-bao, /vi/notifications, /vi/thong-bao all render
@@ -130,7 +154,7 @@ export function render404(path: string, siteUrl: string): Response {
   const description = isVi
     ? "Trang bạn tìm không tồn tại. Quay lại trang chủ ThePickleHub để khám phá giải đấu, livestream và cộng đồng pickleball Việt Nam."
     : "The page you're looking for doesn't exist. Return to ThePickleHub for pickleball tournaments, livestreams, and Vietnam's pickleball community.";
-  const homeHref = isVi ? `${siteUrl}/vi/` : `${siteUrl}/`;
+  const homeHref = isVi ? `${siteUrl}/vi` : `${siteUrl}/`;
   const homeLabel = isVi ? "Quay lại trang chủ" : "Return to home";
   // No canonical or og:url — emitting a canonical on a 404 sends a
   // contradictory signal (canonical = "this URL is authoritative" vs.

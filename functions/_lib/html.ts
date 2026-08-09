@@ -43,7 +43,7 @@ function getHeaderHtml(lang: Lang, siteUrl: string): string {
   const prefix = lang === "vi" ? "/vi" : "";
   if (lang === "vi") {
     return `<header><nav>
-<a href="${siteUrl}${prefix}/">Trang chủ</a>
+<a href="${siteUrl}${prefix}">Trang chủ</a>
 <a href="${siteUrl}${prefix}/blog">Blog</a>
 <a href="${siteUrl}${prefix}/tools">Công cụ</a>
 <a href="${siteUrl}${prefix}/tournaments">Giải đấu</a>
@@ -71,6 +71,7 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
     return `<footer>
 <p>&copy; 2026 ThePickleHub - Cộng đồng Pickleball Việt Nam</p>
 <nav>
+<a href="${siteUrl}${prefix}/advertise">Quảng cáo</a>
 <a href="${siteUrl}${prefix}/privacy">Chính sách bảo mật</a>
 <a href="${siteUrl}${prefix}/terms">Điều khoản sử dụng</a>
 </nav>
@@ -79,6 +80,7 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
   return `<footer>
 <p>&copy; 2026 ThePickleHub - Pickleball Tournaments, Livestream &amp; Community</p>
 <nav>
+<a href="${siteUrl}/advertise">Advertise</a>
 <a href="${siteUrl}/privacy">Privacy Policy</a>
 <a href="${siteUrl}/terms">Terms of Service</a>
 </nav>
