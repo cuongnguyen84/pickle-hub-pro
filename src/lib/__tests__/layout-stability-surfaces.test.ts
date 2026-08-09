@@ -19,7 +19,7 @@ describe("layout-stable public content surfaces", () => {
     expect(home).toContain("viPostsLoading");
     expect(home).toContain("isLoading={homeNewsQuery.isLoading}");
     expect(news).toContain("tl-news-item--skeleton");
-    expect(live).toContain("{ width: 768, height: 432 }");
+    expect(live).toContain('{ width: 768, height: 432, fit: "contain" }');
     expect(live).toContain('loading={priority ? "eager" : "lazy"}');
   });
 
