@@ -590,8 +590,12 @@ const Index = () => {
                 <span className="tl-feed-skeleton tl-feed-skeleton--heading" />
                 <span className="tl-feed-skeleton tl-feed-skeleton--summary" />
               </div>
+              {/* 3 placeholders — ui-ux-verifier 09/08 measured the 2-story
+                  skeleton 324px short of the resolved section on mobile,
+                  which made THIS skeleton the home page's largest remaining
+                  layout shift for VI users. */}
               <div className="tl-stories-grid" aria-hidden="true">
-                {Array.from({ length: 2 }, (_, index) => (
+                {Array.from({ length: 3 }, (_, index) => (
                   <div className="tl-story" key={index}>
                     <div className="tl-story-img tl-feed-skeleton" />
                     <div className="tl-story-body">

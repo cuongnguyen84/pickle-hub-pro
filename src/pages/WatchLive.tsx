@@ -128,8 +128,14 @@ const WatchLive = () => {
             <div className="lg:col-span-2 space-y-6">
               <Skeleton className="hidden lg:block aspect-video rounded-xl" />
               <Skeleton className="lg:hidden h-10 w-full" />
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
+              {/* Mirror the resolved info column: multi-line title, organizer
+                  row, stats row, like/share row — the text block below the
+                  player is ~290px the old skeleton left unreserved. */}
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-10 w-full" />
             </div>
           </div>
         </div>
