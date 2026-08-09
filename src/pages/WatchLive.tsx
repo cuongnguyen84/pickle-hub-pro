@@ -404,11 +404,13 @@ const WatchLive = () => {
                 </Badge>
               </div>
 
-              {/* CLS INC1: organizer on its own row; stats row is nowrap with
-                  the stable date FIRST and the async counters (viewCount
-                  refetches every 30s, viewer chip mounts after Presence
-                  connects) LAST — growth at the end of a nowrap row moves
-                  nothing, so no rewrap-shift during the session. */}
+              {/* CLS INC1: organizer on its own row; stats row is nowrap,
+                  ordered stable→volatile: date (fixed), viewCount (refetch
+                  30s, width moves only on digit rollover), viewer chip
+                  (every Presence sync — most volatile, so last: its growth
+                  moves nothing). Residual accepted: a viewCount digit
+                  rollover still nudges the chip a few px — rare, and far
+                  below the old full-row rewrap. */}
               {livestream.organization && (
                 <div className="text-sm">
                   <Link
