@@ -198,7 +198,11 @@ async function runScheduledBatch(env: Env): Promise<void> {
           // until an admin noticed pro_tour_ingestion_logs failures
           // piling up. Now: failed scrapes leave next_scrape_at as-is
           // so the next cron tick (every 6h) picks the row up again.
-          if (result.ok) {
+          // Same rule for skipped (event-not-active) results: skipped has
+          // ok=true but imported nothing — advancing would delay an
+          // upcoming event's first real scrape by +24h/+7d after it goes
+          // live instead of catching it on the next 6h tick.
+          if (result.ok && !result.skipped) {
             await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency);
             return result;
           }
