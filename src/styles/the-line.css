@@ -72,6 +72,10 @@
   /* DS-02: legacy aliases fg-1/bg-1/bg-2 deleted — canonical names only.
      hairline stays: it is a canonical token (thinnest separator). */
   --tl-hairline:   var(--tl-border);
+  /* Audit 2026-08-09: these two were referenced by components but never
+     defined (silent visual fallback). Alias to the canonical tokens. */
+  --tl-border-strong: var(--tl-border-2);
+  --tl-amber:      var(--tl-gold);
 
   /* Accent — single (optic-lime, the pickleball ball colour) */
   --tl-green:      #b5e853;
