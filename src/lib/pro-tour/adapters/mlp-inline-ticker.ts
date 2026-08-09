@@ -366,7 +366,12 @@ export function parseMlpFromInlineTicker(
     .map((g) => g.moduleSubTitle)
     .find((s): s is string => Boolean(s && s.trim()));
   if (subtitle && tournamentName) {
-    const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+    // Strip punctuation too: the h1 says "MLP Playoffs - Dallas presented
+    // by eisneramper" while the ticker subtitle says "MLP Playoffs Dallas
+    // Presented By EisnerAmper - ..." — the stray hyphen made this guard
+    // false-positive on the ACTIVE event (2026-08-08, Dallas playoffs).
+    const norm = (s: string) =>
+      s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     if (!norm(subtitle).includes(norm(tournamentName))) {
       throw new Error(
         `MLP inline ticker belongs to another event ("${subtitle}"), not ` +
