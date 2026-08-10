@@ -10,6 +10,22 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "hcmc-open-2026-recap",
+    publishedDate: "2026-08-10",
+    updatedDate: "2026-08-10",
+    author: "The PickleHub Team",
+    tags: ["hcmc open 2026", "ho chi minh city open", "ppa tour asia", "ppa asia 500", "truong vinh hien", "do minh quan", "ly hoang nam", "pickleball vietnam", "2026 recap"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/hcmc-open-2026-preview-hero.webp", alt: "Ho Chi Minh City Open 2026 recap — PPA Tour Asia 500 tournament banner for the event on home courts in Ho Chi Minh City" },
+    titleEn: "Ho Chi Minh City Open 2026 Recap: Minh Quan & Vinh Hien Win an All-Vietnamese Doubles Final",
+    titleVi: "Ho Chi Minh City Open 2026: Minh Quân & Vinh Hiển vô địch trong trận chung kết toàn Việt",
+    metaTitleEn: "HCMC Open 2026 Recap: Quan & Hien Win Doubles Gold",
+    metaTitleVi: "HCMC Open 2026: Minh Quân & Vinh Hiển vô địch đôi nam",
+    metaDescriptionEn: "Recap of the PPA Asia 500 MB Ho Chi Minh City Open 2026: Do Minh Quan and Truong Vinh Hien beat Ly Hoang Nam and Collin Johns 2-1 in an all-Vietnamese final.",
+    metaDescriptionVi: "Kết quả PPA Asia 500 HCMC Open 2026: Đỗ Minh Quân và Trương Vinh Hiển thắng Lý Hoàng Nam - Collin Johns 2-1 (13-11, 6-11, 11-4) trong chung kết toàn Việt.",
+  },
+  {
     slug: "world-pickleball-rankings-wpr-explained",
     publishedDate: "2026-08-05",
     updatedDate: "2026-08-05",
