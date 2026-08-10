@@ -200,7 +200,7 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 ## 3. Buyer discovery tasks
 
-### [ ] B01 — Shop home `/shop`
+### [x] B01 — Shop home `/shop`
 
 **Depends on:** F03, F04, F05, F08
 
@@ -212,7 +212,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** no oversized marketing hero; useful category/product entry appears above the fold.
 
-### [ ] B02 — Shop search `/shop/search`
+**Đã dựng:** `/proto/shop/home`. Không có hero quảng cáo to: mở trang là ô tìm kiếm + 6 danh mục, ở 320px thẻ sản phẩm đầu đã ló lên. Không có mục “bán chạy”/“xu hướng” (không có dữ liệu bán). 6 biến thể: lần đầu / quay lại (có nhắc giỏ) / trống / đang tải / mất mạng / lỗi nặng.
+
+### [x] B02 — Shop search `/shop/search`
 
 **Depends on:** F04, F05
 
@@ -224,7 +226,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** Back restores query, filters and scroll position.
 
-### [ ] B03 — Category catalogue `/shop/category/:slug`
+**Đã dựng:** `/proto/shop/search`. Từ khoá + bộ lọc + sắp xếp đều nằm trong URL (`useSearchParams`, push), nên **Back khôi phục đúng truy vấn, bộ lọc và vị trí cuộn** — không tự chế lại cơ chế cuộn. 6 biến thể: có kết quả / 0 kết quả / gợi ý chính tả / tải thêm / lỗi mạng / đã gỡ bộ lọc.
+
+### [x] B03 — Category catalogue `/shop/category/:slug`
 
 **Depends on:** B02
 
@@ -236,7 +240,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** every key displayed product attribute has a corresponding useful facet or documented reason not to.
 
-### [ ] B04 — Product detail `/shop/product/:slug`
+**Đã dựng:** `/proto/shop/category/:slug`. 10 nhóm lọc cho vợt. Bảng đối chiếu **thuộc tính hiển thị ↔ bộ lọc** ở `?variant=coverage`: 10 thuộc tính có bộ lọc, 3 cố ý chưa có (giá, thương hiệu, tỉnh gửi) kèm lý do viết sẵn.
+
+### [x] B04 — Product detail `/shop/product/:slug`
 
 **Depends on:** F04, F06, B03
 
@@ -248,7 +254,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** seller, selected variant, total product price context, delivery origin and return summary are clear before Add to cart.
 
-### [ ] B05 — Variant selector sheet
+**Đã dựng:** `/proto/shop/product/:slug`. Trước nút “Thêm vào giỏ” đã có đủ 5 thứ: người bán + huy hiệu xác minh, phiên bản đang chọn + mã hàng, tạm tính (ghi rõ chưa gồm phí ship), nơi gửi hàng, chính sách đổi trả. Phần đánh giá nói thẳng **chưa có đánh giá nào**, không bịa 4.8★. 7 biến thể gồm cả sản phẩm chưa đăng bán và shop tạm ngưng.
+
+### [x] B05 — Variant selector sheet
 
 **Depends on:** F06, B04
 
@@ -260,7 +268,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** selecting a variant never changes seller; unrelated low-price options cannot be represented as variants.
 
-### [ ] B06 — Store detail `/shop/store/:slug`
+**Đã dựng:** `/proto/shop/variant-sheet`. 7 trạng thái. Người bán được ghim trong đầu bảng chọn nên **đổi phiên bản không thể đổi người bán**. Tổ hợp hết hàng bị vô hiệu hoá + gạch ngang (tự suy từ tồn kho, không hardcode).
+
+### [x] B06 — Store detail `/shop/store/:slug`
 
 **Depends on:** F04, B02
 
@@ -272,7 +282,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** no private seller documents/contact data leak into the public screen.
 
-### [ ] B07 — Wishlist/saved products
+**Đã dựng:** `/proto/shop/store/:slug`. Màn hình render từ **danh sách trắng `PUBLIC_FIELDS`** — trường mới thêm vào hồ sơ shop sẽ vô hình ở đây tới khi ai đó cố ý thêm vào danh sách. Không có số điện thoại, địa chỉ riêng, giấy tờ. 4 biến thể: shop lâu năm / shop mới 0 sản phẩm / tạm ngưng / lỗi tải.
+
+### [x] B07 — Wishlist/saved products
 
 **Depends on:** F04
 
@@ -281,6 +293,8 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 **Required variants:** empty, normal, price changed, product removed and seller suspended.
 
 **Screenshots:** 375 and 1440 px.
+
+**Đã dựng:** `/proto/shop/wishlist`. Mỗi dòng tự khai điều đã đổi kể từ lúc lưu: giá đổi (kèm giá lúc lưu), shop tạm ngưng, sản phẩm bị gỡ. Có Hoàn tác sau khi bỏ lưu. 5 biến thể.
 
 ---
 

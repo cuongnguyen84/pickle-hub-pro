@@ -996,3 +996,40 @@
   .tl-shop [data-desktop-only] { display: block; }
   .tl-shop [data-mobile-only]  { display: none; }
 }
+
+/* ── B04 — Product detail ──────────────────────────────────────────────── */
+.tl-shop-pdp {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .tl-shop-pdp { grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr); gap: 40px; align-items: start; }
+  .tl-shop-pdp-media { position: sticky; top: 64px; }
+}
+.tl-shop-gallery { display: flex; flex-direction: column; gap: 10px; }
+.tl-shop-gallery-thumbs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.tl-shop-gallery-thumb {
+  width: 64px; flex: none; padding: 0; border: 1px solid var(--tl-border);
+  border-radius: 8px; overflow: hidden; background: transparent; cursor: pointer;
+}
+.tl-shop-gallery-thumb[aria-current="true"] { border-color: var(--tl-green); }
+.tl-shop-gallery-thumb .tl-shop-media { border: 0; border-radius: 0; }
+
+.tl-shop-specs { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tl-shop-specs th, .tl-shop-specs td { padding: 9px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--tl-border); }
+.tl-shop-specs th { color: var(--tl-fg-3); font-weight: 500; width: 44%; }
+
+.tl-shop-storecard {
+  display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;
+  border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg); padding: 14px;
+}
+
+/* Grid/flex children default to min-width:auto, which refuses to shrink below
+   their min-content and pushes the page wider than the viewport. Seen at 375px
+   on the product detail grid. */
+.tl-shop-pdp,
+.tl-shop-pdp > *,
+.tl-shop-results,
+.tl-shop-results > * { min-width: 0; }
+.tl-shop-page { overflow-wrap: break-word; }
