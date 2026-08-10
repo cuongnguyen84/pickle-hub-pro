@@ -265,6 +265,93 @@ export const SCREENS: ProtoScreen[] = [
       s("error", "/seller?scenario=error", [375]),
     ],
   },
+
+  // ── S2 — seller operations ──────────────────────────────────────────────
+  {
+    id: "S05",
+    title: "Sản phẩm của shop /seller/products",
+    batch: "S2",
+    route: "seller/products",
+    Component: lazy(() => import("./screens/S05Products")),
+    shots: [
+      s("mixed", "/seller/products", [375, 1440]),
+      s("empty", "/seller/products?scenario=empty", [375]),
+      s("error", "/seller/products?scenario=error", [375]),
+    ],
+  },
+  {
+    id: "S06",
+    title: "Thêm sản phẩm /seller/products/new",
+    batch: "S2",
+    route: "seller/products/new",
+    Component: lazy(() => import("./screens/S06ProductNew")),
+    shots: [
+      s("paddle", "/seller/products/new", [375, 1440]),
+      s("shoes-variants", "/seller/products/new?variant=shoes", [375, 1440]),
+      s("used", "/seller/products/new?variant=used", [375]),
+      s("category-change", "/seller/products/new?variant=category-change", [375]),
+      s("media-error", "/seller/products/new?variant=media-error", [375]),
+      s("invalid-attrs", "/seller/products/new?variant=invalid-attrs", [375]),
+      s("duplicate-sku", "/seller/products/new?variant=duplicate-sku", [375]),
+      s("bulk-edit", "/seller/products/new?variant=bulk", [1440]),
+      s("preview-errors", "/seller/products/new?variant=preview-errors", [375]),
+      s("submitted", "/seller/products/new?variant=submitted", [375]),
+    ],
+  },
+  {
+    id: "S07",
+    title: "Sửa sản phẩm /seller/products/:id/edit",
+    batch: "S2",
+    route: "seller/products/:id/edit",
+    Component: lazy(() => import("./screens/S07ProductEdit")),
+    shots: [
+      s("active", "/seller/products/p-2/edit", [375, 1440]),
+      s("pending", "/seller/products/p-7/edit?variant=pending", [375]),
+      s("requested-changes", "/seller/products/p-8/edit?variant=requested", [375, 1440]),
+      s("conflict", "/seller/products/p-2/edit?variant=conflict", [375, 1440]),
+      s("open-orders", "/seller/products/p-2/edit?variant=open-orders", [375]),
+    ],
+  },
+  {
+    id: "S08",
+    title: "Đơn hàng shop /seller/orders",
+    batch: "S2",
+    route: "seller/orders",
+    Component: lazy(() => import("./screens/S08Orders")),
+    shots: [
+      s("queue", "/seller/orders", [375, 1440]),
+      s("empty", "/seller/orders?scenario=empty", [375]),
+      s("error", "/seller/orders?scenario=error", [375]),
+    ],
+  },
+  {
+    id: "S09",
+    title: "Chi tiết đơn /seller/orders/:id",
+    batch: "S2",
+    route: "seller/orders/:id",
+    Component: lazy(() => import("./screens/S09OrderDetail")),
+    shots: [
+      s("new-order", "/seller/orders/PH-2608-0039?variant=new", [375, 1440]),
+      s("awaiting-payment", "/seller/orders/PH-2608-0041?variant=awaiting", [375]),
+      s("shipped", "/seller/orders/PH-2608-0031?variant=shipped", [375]),
+      s("return-request", "/seller/orders/PH-2607-0022?variant=ret", [375, 1440]),
+      s("dispute", "/seller/orders/PH-2607-0025?variant=dispute", [375]),
+      s("cancelled", "/seller/orders/PH-2607-0009?variant=cancel", [375]),
+    ],
+  },
+  {
+    id: "S10",
+    title: "Cài đặt shop /seller/settings",
+    batch: "S2",
+    route: "seller/settings",
+    Component: lazy(() => import("./screens/S10Settings")),
+    shots: [
+      s("normal", "/seller/settings", [375, 1440]),
+      s("reverify", "/seller/settings?variant=reverify", [375]),
+      s("bank-reauth", "/seller/settings?variant=bank-reauth", [375]),
+      s("no-permission", "/seller/settings?variant=no-permission", [375]),
+    ],
+  },
 ];
 
 export const screensByBatch =(): Record<Batch, ProtoScreen[]> => {
