@@ -1,5 +1,5 @@
 /**
- * DUPR rankings snapshot — parsed from www.dupr.com on 2026-07-20.
+ * DUPR rankings snapshot — parsed from www.dupr.com on 2026-08-10.
  *
  * Source pages:
  *   - https://www.dupr.com/rankings (Open + Junior)
@@ -4326,12 +4326,12 @@ export type DuprScopeGroup = "global" | "continent" | "national";
 export const DUPR_SCOPES: { key: DuprScope; labelEn: string; labelVi: string; group: DuprScopeGroup }[] = [
   // National scope first — most prominent for the ~95% Vietnamese userbase.
   { key: "vietnam",           labelEn: "Vietnam",             labelVi: "Việt Nam",        group: "national" },
-  { key: "open",              labelEn: "Open",                labelVi: "Hạng mở",         group: "global" },
+  { key: "open",              labelEn: "Open",                labelVi: "Mở rộng",         group: "global" },
   { key: "junior",            labelEn: "Junior",              labelVi: "Trẻ",             group: "global" },
   { key: "asia",              labelEn: "Asia",                labelVi: "Châu Á",          group: "continent" },
   { key: "north-america",     labelEn: "North America",       labelVi: "Bắc Mỹ",          group: "continent" },
   { key: "south-america",     labelEn: "South America",       labelVi: "Nam Mỹ",          group: "continent" },
-  { key: "australia-oceania", labelEn: "Australia / Oceania", labelVi: "Châu Đại Dương", group: "continent" },
+  { key: "australia-oceania", labelEn: "Australia / Oceania", labelVi: "Úc / Châu Đại Dương", group: "continent" },
   { key: "europe",            labelEn: "Europe",              labelVi: "Châu Âu",         group: "continent" },
 ];
 
@@ -4357,4 +4357,4 @@ export function defaultFormatForScope(scope: DuprScope): DuprFormat {
   return scope === "vietnam" ? "doubles" : "mens-doubles";
 }
 
-export const DUPR_LAST_UPDATED = "2026-07-20";
+export const DUPR_LAST_UPDATED = "2026-08-10";
