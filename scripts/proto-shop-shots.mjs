@@ -76,7 +76,7 @@ const run = async () => {
         // captures one viewport and a documentElement overflow check reads 0.
         // Measure and grow the viewport against .tl-shop instead.
         const box = await page.evaluate(() => {
-          const el = document.querySelector(".tl-shop");
+          const el = document.querySelector(".tl-shop-scroll");
           if (!el) return null;
           return {
             scrollW: el.scrollWidth,
