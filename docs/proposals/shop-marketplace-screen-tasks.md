@@ -300,7 +300,7 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 ## 4. Buyer transaction and support tasks
 
-### [ ] B08 — Cart `/shop/cart`
+### [x] B08 — Cart `/shop/cart`
 
 **Depends on:** F06, B05
 
@@ -312,7 +312,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** user understands that each shop is checked out and delivered separately.
 
-### [ ] B09 — Checkout `/shop/checkout/:shopId`
+**Đã dựng:** `/proto/shop/cart`. **Không có nút “đặt tất cả”** ở bất kỳ đâu — chỉ nút đặt riêng từng shop, kèm một dòng giải thích vì sao (mỗi shop tự gửi, phí riêng, đổi trả riêng). Có Hoàn tác khi bỏ sản phẩm. 5 biến thể gồm shop tạm ngưng (chỉ khoá nhóm đó, nhóm khác vẫn đặt được).
+
+### [x] B09 — Checkout `/shop/checkout/:shopId`
 
 **Depends on:** B08, F07
 
@@ -324,7 +326,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** no hidden mandatory charge; double-tap cannot create a second visual submission; VietQR is never represented as automatically verified.
 
-### [ ] B10 — Order success
+**Đã dựng:** `/proto/shop/checkout/:shopId`. Tổng liệt kê từng dòng + nút lặp lại đúng số tiền (“Đặt đơn · 2.485.000₫”), có câu “không có phí nào khác”. Bấm lần đầu là nút **khoá + đổi thành “Đang gửi…”**, không tự mở lại. VietQR nói rõ **đối soát bằng tay**, không tự động. 8 biến thể.
+
+### [x] B10 — Order success
 
 **Depends on:** B09
 
@@ -334,7 +338,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** status, seller, next step and tracking entry are understandable without celebratory decoration.
 
-### [ ] B11 — Buyer orders list
+**Đã dựng:** `/proto/shop/order-success`. Không confetti, không dấu tích to. Mở đầu bằng **việc người mua phải làm tiếp**: COD thì chờ shop xác nhận, VietQR thì chuyển khoản đúng nội dung + cảnh báo tự huỷ sau 48 giờ. 3 biến thể.
+
+### [x] B11 — Buyer orders list
 
 **Depends on:** F06
 
@@ -344,7 +350,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 375 and 1440 px.
 
-### [ ] B12 — Order detail `/shop/order/:orderCode`
+**Đã dựng:** `/proto/shop/orders`. Nhãn mỗi dòng nói **người mua cần làm gì**, không nói tên trạng thái kỹ thuật (“Người bán đang chuẩn bị hàng — chưa cần làm gì”). 4 tab, tìm theo mã đơn/tên shop, tải thêm. 3 biến thể + lỗi.
+
+### [x] B12 — Order detail `/shop/order/:orderCode`
 
 **Depends on:** B11
 
@@ -354,7 +362,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 375 and 1440 px for processing and dispute states.
 
-### [ ] B13 — Return request
+**Đã dựng:** `/proto/shop/order/:code`. Dòng đầu tiên trả lời **ai làm tiếp và hạn bao giờ** — nằm trên cả dòng thời gian. 8 biến thể trạng thái, mỗi trạng thái có tập hành động riêng.
+
+### [x] B13 — Return request
 
 **Depends on:** B12, F07
 
@@ -364,7 +374,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 375 and 1024 px.
 
-### [ ] B14 — Dispute detail
+**Đã dựng:** `/proto/shop/return`. Trạng thái **không đủ điều kiện** là trọng tâm: nói vì sao, chỉ chỗ chính sách đã hiển thị trước khi đặt, và vẫn mở đường khiếu nại nếu hàng không đúng mô tả. Có nhắc “chưa gửi hàng đi vội”. 4 biến thể.
+
+### [x] B14 — Dispute detail
 
 **Depends on:** B13
 
@@ -374,7 +386,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 375 and 1440 px.
 
-### [ ] B15 — Verified review composer
+**Đã dựng:** `/proto/shop/dispute/:id`. Dòng thời gian có ghi tên người viết, bằng chứng đính kèm xem được, và mỗi giai đoạn mở đều ghi **nếu không ai trả lời thì sao**. 5 giai đoạn gồm 2 kết quả đã xử lý.
+
+### [x] B15 — Verified review composer
 
 **Depends on:** B12, F07
 
@@ -385,6 +399,8 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 **Screenshots:** 375 and 1024 px.
 
 **Acceptance:** prototype visibly communicates verified purchase; no incentive for positive reviews.
+
+**Đã dựng:** `/proto/shop/review`. Ghim đúng đơn + phiên bản + dòng “Mua thật”. Câu hỏi trung tính (**“Sản phẩm có đúng như mô tả không?”**, không phải “bạn có hài lòng không”). Ghi rõ **không tặng điểm, không tặng voucher** cho đánh giá. 1–2 sao bắt buộc giải thích. 5 biến thể.
 
 ---
 
