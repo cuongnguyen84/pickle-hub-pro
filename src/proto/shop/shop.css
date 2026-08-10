@@ -1033,3 +1033,8 @@
 .tl-shop-results,
 .tl-shop-results > * { min-width: 0; }
 .tl-shop-page { overflow-wrap: break-word; }
+
+/* A pill holding a sentence (e.g. a verified-purchase receipt line) must be
+   allowed to wrap — nowrap on long copy pushes the whole page sideways at
+   375px. Short status chips keep nowrap. */
+.tl-shop-pill--wrap { white-space: normal; text-align: left; line-height: 1.45; }
