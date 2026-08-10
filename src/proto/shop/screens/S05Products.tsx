@@ -80,7 +80,7 @@ export default function S05Products() {
     return (
       <>
         {/* Desktop table */}
-        <div className="tl-shop-tablewrap" data-desktop-only>
+        <div className="tl-shop-tablewrap" tabIndex={0} data-desktop-only>
           <table className="tl-shop-table">
             <caption className="tl-shop-sr">Sản phẩm của shop</caption>
             <thead>

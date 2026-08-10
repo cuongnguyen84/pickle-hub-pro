@@ -59,33 +59,47 @@ const PADDLE_COVERAGE: { attr: string; facet: string | null; reason?: string }[]
   },
 ];
 
+/** Counts derived from the fixture catalogue — never typed in. */
+const countIn = (cat: CategorySlug, pred: (p: (typeof PRODUCTS)[number]) => boolean) =>
+  buyableProducts().filter((p) => p.category === cat && pred(p)).length;
+
 const CATEGORY_FACETS: Partial<Record<CategorySlug, Facet[]>> = {
   vot: PADDLE_FACETS,
   giay: [
     {
       key: "size",
       label: "Size",
-      options: [
-        { value: "38", label: "38", count: 2 },
-        { value: "39", label: "39", count: 3 },
-        { value: "40", label: "40", count: 3 },
-        { value: "41", label: "41", count: 2 },
-      ],
+      options: ["38", "39", "40", "41"].map((sz) => ({
+        value: sz,
+        label: sz,
+        count: countIn("giay", (p) => p.variants.some((v) => v.values.includes(sz))),
+      })),
     },
     {
       key: "mau",
       label: "Màu",
-      options: [
-        { value: "trang", label: "Trắng", count: 3 },
-        { value: "den", label: "Đen", count: 3 },
-      ],
+      options: ["Trắng", "Đen"].map((c) => ({
+        value: c.toLowerCase(),
+        label: c,
+        count: countIn("giay", (p) => p.variants.some((v) => v.values.includes(c))),
+      })),
     },
     {
       key: "be-mat",
       label: "Bề mặt sân",
       options: [
-        { value: "ngoai-troi", label: "Sân cứng ngoài trời", count: 4 },
-        { value: "trong-nha", label: "Sân trong nhà", count: 1 },
+        {
+          value: "ngoai-troi",
+          label: "Sân cứng ngoài trời",
+          count: countIn("giay", (p) =>
+            p.attributes.some((a) => /ngoài trời/i.test(a.value)),
+          ),
+        },
+        {
+          value: "trong-nha",
+          label: "Sân trong nhà",
+          count: countIn("giay", (p) => p.attributes.some((a) => /trong nhà/i.test(a.value))),
+        },
       ],
     },
   ],
@@ -96,8 +110,12 @@ const DEFAULT_FACETS: Facet[] = [
     key: "tinh-trang",
     label: "Tình trạng",
     options: [
-      { value: "moi", label: "Mới", count: 4 },
-      { value: "cu", label: "Đã qua sử dụng", count: 1 },
+      { value: "moi", label: "Mới", count: buyableProducts().filter((p) => p.condition === "moi").length },
+      {
+        value: "cu",
+        label: "Đã qua sử dụng",
+        count: buyableProducts().filter((p) => p.condition === "da-qua-su-dung").length,
+      },
     ],
   },
 ];
@@ -145,7 +163,7 @@ export default function B03Category() {
           <p className="tl-shop-sub">
             Ghi chú thiết kế, không phải nội dung người mua thấy.
           </p>
-          <div className="tl-shop-tablewrap">
+          <div className="tl-shop-tablewrap" tabIndex={0}>
             <table className="tl-shop-table">
               <thead>
                 <tr>
@@ -235,11 +253,14 @@ export default function B03Category() {
                 Bỏ bớt bộ lọc, hoặc xem danh mục khác ở trên.
               </EmptyState>
             ) : (
+              <>
+              <h2 className="tl-shop-sr">Sản phẩm trong danh mục</h2>
               <div className="tl-shop-grid">
                 {results.map((p) => (
                   <ProductCard key={p.id} product={p} onToggleSave={() => {}} />
                 ))}
               </div>
+              </>
             )}
           </div>
         </div>

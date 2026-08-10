@@ -101,7 +101,7 @@ export default function A02Queue() {
           ) : rows.length === 0 ? (
             <EmptyState title="Không có hồ sơ nào ở trạng thái này" />
           ) : (
-            <div className="tl-shop-tablewrap">
+            <div className="tl-shop-tablewrap" tabIndex={0}>
               <table className="tl-shop-table">
                 <caption className="tl-shop-sr">Hồ sơ đăng ký bán hàng</caption>
                 <thead>
