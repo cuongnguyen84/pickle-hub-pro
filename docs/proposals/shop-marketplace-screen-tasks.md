@@ -448,7 +448,7 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 ## 6. Seller operation tasks
 
-### [ ] S05 — Seller products `/seller/products`
+### [x] S05 — Seller products `/seller/products`
 
 **Depends on:** F04, F07, S04
 
@@ -458,7 +458,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 375 and 1440 px with mixed statuses.
 
-### [ ] S06 — Create product `/seller/products/new`
+**Đã dựng:** `/proto/shop/seller/products`. Máy tính = bảng, điện thoại = thẻ (bảng 6 cột ở 375px buộc cuộn ngang trong màn quản trị, dễ bấm nhầm sản phẩm). Đủ 6 trạng thái với bộ đếm trên từng chip lọc.
+
+### [x] S06 — Create product `/seller/products/new`
 
 **Depends on:** F07, S05
 
@@ -472,7 +474,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** first-time seller can create a valid simple product without confronting advanced variant controls until needed.
 
-### [ ] S07 — Edit product `/seller/products/:id/edit`
+**Đã dựng:** `/proto/shop/seller/products/new`, 8 phần. **Phiên bản TẮT mặc định** — người bán lần đầu chỉ thấy 1 ô giá + 1 ô tồn kho; bật “có nhiều phiên bản” mới hiện bảng ma trận. 10 ảnh phủ: 3 loại hàng mẫu, cảnh báo đổi danh mục, lỗi ảnh >8MB, thông số sai kiểu, trùng SKU, sửa hàng loạt, lỗi khi xem trước, đã gửi duyệt.
+
+### [x] S07 — Edit product `/seller/products/:id/edit`
 
 **Depends on:** S06
 
@@ -484,7 +488,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** no newer server edit is silently overwritten; destructive impact is explained.
 
-### [ ] S08 — Seller orders `/seller/orders`
+**Đã dựng:** `/proto/shop/seller/products/:id/edit`. Xung đột phiên bản hiện **cả hai bản cạnh nhau** với đúng trường khác nhau, nút chính là “Xem bản mới trước”, ghi đè là nút phụ màu đỏ. Ngừng bán liệt kê 4 hệ quả cụ thể gồm số đơn chưa xong đang gắn với sản phẩm.
+
+### [x] S08 — Seller orders `/seller/orders`
 
 **Depends on:** F06, S04
 
@@ -494,7 +500,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 375 and 1440 px.
 
-### [ ] S09 — Seller order detail `/seller/orders/:id`
+**Đã dựng:** `/proto/shop/seller/orders`. Sắp theo **hạn phải trả lời**, quá hạn lên đầu và viền đỏ — sắp theo ngày sẽ chôn mất đơn sắp tự huỷ. 4 tab có bộ đếm.
+
+### [x] S09 — Seller order detail `/seller/orders/:id`
 
 **Depends on:** S08
 
@@ -506,7 +514,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** UI never implies that a client-side click alone completes a financial or shipment state transition.
 
-### [ ] S10 — Seller settings `/seller/settings`
+**Đã dựng:** `/proto/shop/seller/orders/:id`. Mọi nút là *yêu cầu* hoặc *ghi nhận* (“Ghi nhận đã gửi”, “Đề nghị huỷ đơn”), không nút nào ngụ ý một cú bấm hoàn tất chuyển trạng thái tiền/hàng. VietQR ghi “chờ quản trị viên đối soát” cho tới khi có người xác nhận. 6 biến thể trạng thái.
+
+### [x] S10 — Seller settings `/seller/settings`
 
 **Depends on:** F07, S03
 
@@ -515,6 +525,8 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 **Required variants:** normal, reverification required, bank-change reauthentication and insufficient staff permission.
 
 **Screenshots:** 375 and 1440 px.
+
+**Đã dựng:** `/proto/shop/seller/settings`. 9 nhóm. Tài khoản ngân hàng bị che + bắt nhập lại mật khẩu khi đổi, và có ghi chú thiết kế rằng **pilot không thu tài khoản ngân hàng**. Đóng shop liệt kê rõ: **không** tự huỷ đơn đang xử lý. Có biến thể thiếu quyền.
 
 ---
 
