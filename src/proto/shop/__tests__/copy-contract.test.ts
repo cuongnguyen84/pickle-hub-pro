@@ -22,6 +22,28 @@ const walk = (dir: string): string[] =>
 
 const FILES = walk(ROOT).filter((f) => !f.endsWith("copy.ts"));
 
+/**
+ * True when the JSX fragment contains a letter or digit that sits OUTSIDE both
+ * a `<tag>` and a `{expression}`.
+ *
+ * Written as an explicit scanner rather than `.replace(/<[^>]*>/g, "")`, which
+ * CodeQL correctly flags as `js/incomplete-multi-character-sanitization`: that
+ * regex is the classic broken-HTML-sanitiser shape, and even in a test the
+ * pattern is worth not teaching the codebase.
+ */
+const hasBareText = (jsx: string): boolean => {
+  let inTag = false;
+  let braces = 0;
+  for (const ch of jsx) {
+    if (ch === "<") inTag = true;
+    else if (ch === ">") inTag = false;
+    else if (!inTag && ch === "{") braces += 1;
+    else if (!inTag && ch === "}") braces = Math.max(0, braces - 1);
+    else if (!inTag && braces === 0 && /[\p{L}\d]/u.test(ch)) return true;
+  }
+  return false;
+};
+
 describe("shop prototype copy contract", () => {
   it("has files to check", () => {
     expect(FILES.length).toBeGreaterThan(5);
@@ -49,14 +71,7 @@ describe("shop prototype copy contract", () => {
         // `{children}` and `{label}`-style slots ARE the text — the caller
         // supplies it. Only a button with literally nothing readable counts.
         const hasSlot = /\{\s*(children|label|title|text)\b/.test(inner);
-        const hasText =
-          hasSlot ||
-          /[\p{L}\d]/u.test(
-            inner
-              .replace(/<[^>]*>/g, "")
-              .replace(/\{[\s\S]*?\}/g, "")
-              .trim(),
-          );
+        const hasText = hasSlot || hasBareText(inner);
         const named = /aria-label|aria-labelledby/.test(open) || /aria-label/.test(inner);
         if (hasIcon && !hasText && !named) {
           offenders.push(`${f.slice(ROOT.length + 1)}: ${open.replace(/\s+/g, " ").slice(0, 90)}`);
