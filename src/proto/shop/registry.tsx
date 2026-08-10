@@ -100,9 +100,110 @@ export const SCREENS: ProtoScreen[] = [
     Component: lazy(() => import("./screens/F08Contract")),
     shots: [s("contract", "/contract", [375, 1024])],
   },
+
+  // ── B1 — buyer discovery ────────────────────────────────────────────────
+  {
+    id: "B01",
+    title: "Trang chủ Shop /shop",
+    batch: "B1",
+    route: "home",
+    Component: lazy(() => import("./screens/B01Home")),
+    shots: [
+      s("first-visit", "/home", [375, 768, 1440]),
+      s("returning", "/home?variant=returning", [375]),
+      s("empty", "/home?scenario=empty", [375, 1440]),
+      s("loading", "/home?scenario=slow", [375]),
+      s("offline", "/home?scenario=unavailable", [375]),
+      s("error", "/home?scenario=error", [375]),
+    ],
+  },
+  {
+    id: "B02",
+    title: "Tìm kiếm /shop/search",
+    batch: "B1",
+    route: "search",
+    Component: lazy(() => import("./screens/B02Search")),
+    shots: [
+      s("results", "/search?q=v%E1%BB%A3t", [320, 375, 1440]),
+      s("zero", "/search?q=xxxx", [375]),
+      s("suggestion", "/search?q=pickelball", [375]),
+      s("network-fail", "/search?scenario=error", [375]),
+      s("filtered", "/search?do-day=16&chat-lieu=carbon", [1440]),
+    ],
+  },
+  {
+    id: "B03",
+    title: "Danh mục /shop/category/:slug",
+    batch: "B1",
+    route: "category/:slug",
+    Component: lazy(() => import("./screens/B03Category")),
+    shots: [
+      s("paddles", "/category/vot", [375, 1440]),
+      s("filtered3", "/category/vot?do-day=16&chat-lieu=carbon&loi-choi=control", [375, 1440]),
+      s("coverage", "/category/vot?variant=coverage", [1440]),
+      s("shoes", "/category/giay", [375]),
+    ],
+  },
+  {
+    id: "B04",
+    title: "Chi tiết sản phẩm /shop/product/:slug",
+    batch: "B1",
+    route: "product/:slug",
+    Component: lazy(() => import("./screens/B04Product")),
+    shots: [
+      s("simple", "/product/vot-carbon-16mm-control", [320, 375, 768, 1440]),
+      s("multi-variant", "/product/giay-pickleball-court-pro", [375, 1440]),
+      s("used", "/product/vot-da-qua-su-dung-6-thang", [375]),
+      s("sold-out", "/product/giay-pickleball-court-pro?scenario=unavailable", [375]),
+      s("shop-suspended", "/product/vot-da-qua-su-dung-6-thang?scenario=suspended", [375]),
+      s("unpublished", "/product/vot-nhap-khau-cho-duyet", [375]),
+      s("loading", "/product/vot-carbon-16mm-control?scenario=slow", [375]),
+    ],
+  },
+  {
+    id: "B05",
+    title: "Bảng chọn phiên bản",
+    batch: "B1",
+    route: "variant-sheet",
+    Component: lazy(() => import("./screens/B05VariantSheet")),
+    shots: [
+      s("none", "/variant-sheet?variant=none", [375]),
+      s("partial", "/variant-sheet?variant=partial", [375]),
+      s("valid", "/variant-sheet?variant=valid", [375]),
+      s("soldout", "/variant-sheet?variant=soldout", [375]),
+      s("price-change", "/variant-sheet?variant=price", [375]),
+      s("failed", "/variant-sheet?variant=failed", [375]),
+      s("inline-desktop", "/variant-sheet?variant=valid", [1440]),
+    ],
+  },
+  {
+    id: "B06",
+    title: "Trang shop /shop/store/:slug",
+    batch: "B1",
+    route: "store/:slug",
+    Component: lazy(() => import("./screens/B06Store")),
+    shots: [
+      s("established", "/store/pickle-gear-sai-gon", [375, 1440]),
+      s("new-shop", "/store/shop-moi-duyet?scenario=empty", [375]),
+      s("suspended", "/store/vot-cu-da-nang?scenario=suspended", [375]),
+    ],
+  },
+  {
+    id: "B07",
+    title: "Sản phẩm đã lưu",
+    batch: "B1",
+    route: "wishlist",
+    Component: lazy(() => import("./screens/B07Wishlist")),
+    shots: [
+      s("normal", "/wishlist", [375, 1440]),
+      s("empty", "/wishlist?scenario=empty", [375]),
+      s("price-changed", "/wishlist?scenario=unavailable", [375]),
+      s("seller-suspended", "/wishlist?scenario=suspended", [375]),
+    ],
+  },
 ];
 
-export const screensByBatch = (): Record<Batch, ProtoScreen[]> => {
+export const screensByBatch =(): Record<Batch, ProtoScreen[]> => {
   const out = { F: [], B1: [], B2: [], S1: [], S2: [], A: [], Q: [] } as Record<Batch, ProtoScreen[]>;
   for (const sc of SCREENS) out[sc.batch].push(sc);
   return out;
