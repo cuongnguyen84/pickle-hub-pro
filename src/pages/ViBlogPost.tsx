@@ -192,7 +192,7 @@ const ViBlogPost = () => {
               fetchPriority="high"
               decoding="async"
               className="w-full rounded-xl mb-8 border border-border"
-              style={{ marginTop: "2rem", aspectRatio: "1200 / 630", objectFit: "cover" }}
+              style={{ marginTop: "2rem", display: "block", height: "auto" }}
             />
           )}
 

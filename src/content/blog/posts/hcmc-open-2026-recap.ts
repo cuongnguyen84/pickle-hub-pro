@@ -9,8 +9,8 @@ const post: BlogPost = {
   ctaPath: "/live",
   ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
   heroImage: {
-    src: "/images/blog/hcmc-open-2026-preview-hero.webp",
-    alt: "Ho Chi Minh City Open 2026 recap — PPA Tour Asia 500 tournament banner for the event on home courts in Ho Chi Minh City"
+    src: "/images/blog/hcmc-open-2026-recap-hero.webp",
+    alt: "Do Minh Quan and Truong Vinh Hien of Vietnam holding trophies and the national flag as men's doubles champions of the Ho Chi Minh City Open 2026 (PPA Tour Asia 500)"
   },
   content: {
     en: {

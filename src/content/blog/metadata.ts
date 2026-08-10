@@ -17,7 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["hcmc open 2026", "ho chi minh city open", "ppa tour asia", "ppa asia 500", "truong vinh hien", "do minh quan", "ly hoang nam", "pickleball vietnam", "2026 recap"],
     ctaPath: "/live",
     ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
-    heroImage: { src: "/images/blog/hcmc-open-2026-preview-hero.webp", alt: "Ho Chi Minh City Open 2026 recap — PPA Tour Asia 500 tournament banner for the event on home courts in Ho Chi Minh City" },
+    heroImage: { src: "/images/blog/hcmc-open-2026-recap-hero.webp", alt: "Do Minh Quan and Truong Vinh Hien of Vietnam holding trophies and the national flag as men's doubles champions of the Ho Chi Minh City Open 2026 (PPA Tour Asia 500)" },
     titleEn: "Ho Chi Minh City Open 2026 Recap: Minh Quan & Vinh Hien Win an All-Vietnamese Doubles Final",
     titleVi: "Ho Chi Minh City Open 2026: Minh Quân & Vinh Hiển vô địch trong trận chung kết toàn Việt",
     metaTitleEn: "HCMC Open 2026 Recap: Quan & Hien Win Doubles Gold",
