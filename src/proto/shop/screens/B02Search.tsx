@@ -107,6 +107,8 @@ export default function B02Search() {
 
     return (
       <>
+        {/* Heading level must not jump H1 → H3 (the card titles are h3). */}
+        <h2 className="tl-shop-sr">Kết quả tìm kiếm</h2>
         <div className="tl-shop-grid">
           {results.map((p) => (
             <ProductCard key={p.id} product={p} onToggleSave={() => {}} />

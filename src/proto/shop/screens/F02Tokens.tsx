@@ -68,6 +68,8 @@ const COMMERCE_TOKENS = [
   { name: "--shop-warning", alias: "--tl-gold", note: "Cần người dùng để ý" },
   { name: "--shop-danger", alias: "--tl-live", note: "Huỷ / hoàn tiền / mất dữ liệu" },
   { name: "--shop-used", alias: "--tl-accent-team", note: "Hàng đã qua sử dụng" },
+  { name: "--shop-on-accent", alias: "ink", note: "Chữ trên nền nhấn" },
+  { name: "--shop-on-gold", alias: "ink", note: "Chữ trên nền vàng" },
 ];
 
 /** Pairs that carry meaning and therefore must pass WCAG AA (4.5:1 for text). */
@@ -83,8 +85,8 @@ const CONTRAST_PAIRS: { fg: string; bg: string; label: string; min: number }[] =
   { fg: "var(--shop-warning)", bg: "var(--tl-surface)", label: "Cảnh báo / thẻ", min: 4.5 },
   { fg: "var(--shop-danger)", bg: "var(--tl-surface)", label: "Nguy hiểm / thẻ", min: 4.5 },
   { fg: "var(--shop-used)", bg: "var(--tl-surface)", label: "Hàng cũ / thẻ", min: 4.5 },
-  { fg: "#101803", bg: "var(--tl-green)", label: "Chữ trên nút chính", min: 4.5 },
-  { fg: "#17140a", bg: "var(--tl-gold)", label: "Chữ trên thanh bản mẫu", min: 4.5 },
+  { fg: "var(--shop-on-accent)", bg: "var(--tl-green)", label: "Chữ trên nút chính", min: 4.5 },
+  { fg: "var(--shop-on-gold)", bg: "var(--tl-gold)", label: "Chữ trên thanh bản mẫu", min: 4.5 },
 ];
 
 export default function F02Tokens() {
@@ -162,7 +164,7 @@ export default function F02Tokens() {
             <div className="tl-spec-swatch" style={{ background: `var(${t.name})` }} />
             <div className="tl-spec-meta">
               <code>{t.name}</code>
-              <code style={{ color: "var(--tl-fg-4)" }}>= {t.alias}</code>
+              <code style={{ color: "var(--tl-fg-3)" }}>= {t.alias}</code>
               {t.note}
             </div>
           </div>
@@ -188,7 +190,7 @@ export default function F02Tokens() {
           )}
         </div>
       </div>
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto" }} tabIndex={0}>
         <table style={{ width: "100%", minWidth: 420, borderCollapse: "collapse", fontSize: 13.5 }}>
           <caption className="tl-shop-sr">
             Tỉ lệ tương phản của từng cặp màu chữ trên nền

@@ -32,7 +32,7 @@ export default function F08Contract() {
       </p>
 
       <MatrixSection id="f08-glossary" title="Từ điển thuật ngữ">
-        <div className="tl-shop-tablewrap">
+        <div className="tl-shop-tablewrap" tabIndex={0}>
           <table className="tl-shop-table">
             <thead>
               <tr>
@@ -85,7 +85,7 @@ export default function F08Contract() {
       </MatrixSection>
 
       <MatrixSection id="f08-icons" title="Tên đọc được của nút chỉ có biểu tượng">
-        <div className="tl-shop-tablewrap">
+        <div className="tl-shop-tablewrap" tabIndex={0}>
           <table className="tl-shop-table">
             <thead>
               <tr>

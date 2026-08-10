@@ -18,6 +18,7 @@ import {
   RotateCw,
   Eye,
   EyeOff,
+  Lock,
 } from "lucide-react";
 import type { ProductStatus, ProtoProduct } from "../fixtures";
 import { vnd } from "../fixtures";
@@ -146,7 +147,14 @@ export const DocumentUploader = ({
         {purpose}
       </p>
       {state === "uploading" && (
-        <div className="tl-shop-progress" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+        <div
+          className="tl-shop-progress"
+          role="progressbar"
+          aria-label={`Tiến độ tải ${label}`}
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
           <i style={{ width: `${progress}%` }} />
         </div>
       )}
@@ -208,7 +216,7 @@ export const VariantMatrix = ({
     )}
 
     {/* Desktop */}
-    <div className="tl-shop-tablewrap" data-desktop-only>
+    <div className="tl-shop-tablewrap" tabIndex={0} data-desktop-only>
       <table className="tl-shop-table">
         <caption className="tl-shop-sr">Bảng phiên bản: giá, mã hàng và tồn kho</caption>
         <thead>
@@ -404,7 +412,8 @@ export const ModerationDecisionForm = ({
             placeholder="Người nộp sẽ đọc nguyên văn đoạn này."
           />
           <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
-            👁 Người nộp <strong>đọc được</strong> đoạn này.
+            <Eye size={11} aria-hidden="true" style={{ verticalAlign: -1 }} /> Người nộp{" "}
+            <strong>đọc được</strong> đoạn này.
           </p>
         </div>
         {noteMissing && (
@@ -425,7 +434,8 @@ export const ModerationDecisionForm = ({
             placeholder="Chỉ quản trị viên đọc được."
           />
           <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
-            🔒 <strong>Không</strong> gửi cho người nộp. Lưu vào nhật ký quản trị.
+            <Lock size={11} aria-hidden="true" style={{ verticalAlign: -1 }} /> <strong>Không</strong>{" "}
+            gửi cho người nộp. Lưu vào nhật ký quản trị.
           </p>
         </div>
       </label>

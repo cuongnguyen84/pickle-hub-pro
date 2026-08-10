@@ -50,7 +50,8 @@ export const BuyerShell = ({
           <ChevronLeft size={20} aria-hidden="true" />
         </Link>
       ) : null}
-      <h1 className="tl-shop-header-title">{title}</h1>
+      {/* Not an <h1>: the page below owns the single document heading. */}
+      <p className="tl-shop-header-title">{title}</p>
       <span className="tl-proto-spacer" />
       {searchSlot ?? (
         <Link to="/proto/shop/search" className="tl-shop-iconbtn" aria-label="Tìm sản phẩm">
@@ -117,11 +118,12 @@ export const SellerShell = ({ active, title, badges = {}, actions, children }: S
 
     <div className="tl-seller-main">
       <header className="tl-shop-header">
-        <h1 className="tl-shop-header-title">{title}</h1>
+        {/* Not an <h1>: the page below owns the single document heading. */}
+      <p className="tl-shop-header-title">{title}</p>
         <span className="tl-proto-spacer" />
         {actions}
       </header>
-      {children}
+      <main>{children}</main>
       <nav className="tl-seller-tabs" aria-label="Điều hướng Kênh người bán">
         {SELLER_NAV.map(({ key, short, to, Icon }) => (
           <Link key={key} to={to} className="tl-seller-tab" aria-current={key === active ? "page" : undefined}>
@@ -159,7 +161,7 @@ export const AdminShopFrame = ({ crumb, children }: { crumb: string; children: R
         <li>Tổ chức</li>
         <li>Users</li>
         <li>Giải đấu</li>
-        <li style={{ color: "var(--tl-fg-4)" }}>… 12 mục khác</li>
+        <li style={{ color: "var(--tl-fg-3)" }}>… 12 mục khác</li>
         <li className="is-new">Shop</li>
         <li className="is-new is-child">Hồ sơ đăng ký</li>
         <li className="is-new is-child">Sản phẩm</li>

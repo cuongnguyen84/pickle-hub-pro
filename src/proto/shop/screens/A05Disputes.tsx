@@ -11,7 +11,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Scale, AlertTriangle, Clock, Lock } from "lucide-react";
+import { Scale, AlertTriangle, Clock, Lock, Eye } from "lucide-react";
 import { readVariant } from "../scenario";
 import { AdminShopFrame } from "../components/Shells";
 import { EvidenceViewer } from "../components/Forms";
@@ -207,7 +207,7 @@ export default function A05Disputes() {
                 <Scale size={16} aria-hidden="true" />
                 <strong>Bấm xác nhận sẽ tạo ra những hệ quả sau:</strong>
               </p>
-              <div className="tl-shop-tablewrap" style={{ background: "var(--tl-bg-elev)" }}>
+              <div className="tl-shop-tablewrap" tabIndex={0} style={{ background: "var(--tl-bg-elev)" }}>
                 <table className="tl-shop-table">
                   <tbody>
                     {effects(outcome).map(([k, v]) => (
@@ -235,7 +235,8 @@ export default function A05Disputes() {
                 placeholder="Cả người mua và người bán đọc nguyên văn đoạn này."
               />
               <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
-                👁 <strong>Cả hai bên</strong> đọc được.
+                <Eye size={11} aria-hidden="true" style={{ verticalAlign: -1 }} />{" "}
+                <strong>Cả hai bên</strong> đọc được.
               </p>
             </div>
             {outcome && visible.trim().length < 10 && (

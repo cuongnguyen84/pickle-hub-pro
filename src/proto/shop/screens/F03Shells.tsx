@@ -23,7 +23,7 @@ export default function F03Shells() {
       <SellerShell active="orders" title="Đơn hàng" badges={{ orders: 3, products: 1 }}>
         <div className="tl-shop-page">
           <p className="tl-shop-eyebrow">F03 · Kênh người bán</p>
-          <h2 className="tl-shop-h1">Khung Kênh người bán</h2>
+          <h1 className="tl-shop-h1">Khung Kênh người bán</h1>
           <Note>
             <strong>Máy tính:</strong> cột trái cố định 236px, mục đang mở có vạch xanh bên
             trái (không chỉ đổi màu chữ). <strong>Điện thoại:</strong> 4 tab dưới đáy, mỗi
@@ -73,7 +73,7 @@ export default function F03Shells() {
     <BuyerShell title="Shop" cartCount={3}>
       <main className="tl-shop-page">
         <p className="tl-shop-eyebrow">F03 · Người mua</p>
-        <h2 className="tl-shop-h1">Khung trang mua hàng</h2>
+        <h1 className="tl-shop-h1">Khung trang mua hàng</h1>
         <Note>
           Thanh đầu trang dính theo cuộn, có ô tìm kiếm và giỏ hàng. Số trên giỏ hàng được
           đọc thành lời cho trình đọc màn hình (&ldquo;Giỏ hàng, 3 sản phẩm&rdquo;), không

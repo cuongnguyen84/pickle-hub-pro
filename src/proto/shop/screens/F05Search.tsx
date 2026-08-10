@@ -18,86 +18,109 @@ import {
   type Facet,
 } from "../components/SearchFilters";
 import { MatrixSection, Cell, Cells } from "../components/Matrix";
+import { buyableProducts, shopById, type ProtoProduct } from "../fixtures";
+
+/**
+ * Facet counts are COMPUTED from the fixture catalogue, never typed in.
+ * A hand-written "Carbon (11)" beside a six-product catalogue is an invented
+ * metric — the reviewer would be judging a number the system cannot produce.
+ * Small counts here are the honest shape of a pilot catalogue.
+ */
+const attr = (p: ProtoProduct, label: string) =>
+  p.attributes.find((a) => a.label === label)?.value ?? "";
+
+const countPaddles = (pred: (p: ProtoProduct) => boolean) =>
+  buyableProducts().filter((p) => p.category === "vot" && pred(p)).length;
+
+const opt = (value: string, label: string, pred: (p: ProtoProduct) => boolean) => ({
+  value,
+  label,
+  count: countPaddles(pred),
+});
+
+const ozOf = (p: ProtoProduct) => parseFloat(attr(p, "Trọng lượng")) || 0;
 
 export const PADDLE_FACETS: Facet[] = [
   {
     key: "trong-luong",
     label: "Trọng lượng",
     options: [
-      { value: "duoi-7-8", label: "Dưới 7.8 oz", count: 3 },
-      { value: "7-8-8-2", label: "7.8 – 8.2 oz", count: 9 },
-      { value: "tren-8-2", label: "Trên 8.2 oz", count: 4 },
+      opt("duoi-7-8", "Dưới 7.8 oz", (p) => ozOf(p) > 0 && ozOf(p) < 7.8),
+      opt("7-8-8-2", "7.8 – 8.2 oz", (p) => ozOf(p) >= 7.8 && ozOf(p) <= 8.2),
+      opt("tren-8-2", "Trên 8.2 oz", (p) => ozOf(p) > 8.2),
     ],
   },
   {
     key: "do-day",
     label: "Độ dày mặt vợt",
-    options: [
-      { value: "13", label: "13 mm", count: 5 },
-      { value: "14", label: "14 mm", count: 6 },
-      { value: "16", label: "16 mm", count: 8 },
-    ],
+    options: ["13", "14", "16"].map((mm) =>
+      opt(mm, `${mm} mm`, (p) => attr(p, "Độ dày mặt vợt").startsWith(mm)),
+    ),
   },
   {
     key: "chat-lieu",
     label: "Chất liệu mặt",
     options: [
-      { value: "carbon", label: "Carbon", count: 11 },
-      { value: "fiberglass", label: "Fiberglass", count: 4 },
-      { value: "hybrid", label: "Kết hợp", count: 2 },
+      opt("carbon", "Carbon", (p) => /carbon/i.test(attr(p, "Chất liệu mặt"))),
+      opt("fiberglass", "Fiberglass", (p) => /fiberglass/i.test(attr(p, "Chất liệu mặt"))),
+      opt("hybrid", "Kết hợp", (p) => /kết hợp/i.test(attr(p, "Chất liệu mặt"))),
     ],
   },
   {
     key: "loi",
     label: "Lõi",
     options: [
-      { value: "polymer", label: "Polymer tổ ong", count: 14 },
-      { value: "nomex", label: "Nomex", count: 1 },
+      opt("polymer", "Polymer tổ ong", (p) => /polymer/i.test(attr(p, "Lõi"))),
+      opt("nomex", "Nomex", (p) => /nomex/i.test(attr(p, "Lõi"))),
     ],
   },
   {
     key: "dang-vot",
     label: "Dáng vợt",
     options: [
-      { value: "tieu-chuan", label: "Tiêu chuẩn", count: 9 },
-      { value: "thon-dai", label: "Thon dài", count: 6 },
+      opt("tieu-chuan", "Tiêu chuẩn", (p) => attr(p, "Dáng vợt") === "Tiêu chuẩn"),
+      opt("thon-dai", "Thon dài", (p) => attr(p, "Dáng vợt") === "Thon dài"),
     ],
   },
   {
     key: "chu-vi-can",
     label: "Chu vi cán",
-    options: [
-      { value: "10-5", label: "10.5 cm", count: 4 },
-      { value: "10-8", label: "10.8 cm", count: 8 },
-      { value: "11-2", label: "11.2 cm", count: 3 },
-    ],
+    options: ["10.5", "10.8", "11.2"].map((cm) =>
+      opt(cm.replace(".", "-"), `${cm} cm`, (p) => attr(p, "Chu vi cán").startsWith(cm)),
+    ),
   },
   {
     key: "loi-choi",
     label: "Lối chơi",
     options: [
-      { value: "control", label: "Kiểm soát", count: 7 },
-      { value: "tan-cong", label: "Tấn công", count: 6 },
-      { value: "all-court", label: "Toàn diện", count: 4 },
+      opt("control", "Kiểm soát", (p) => /control|dink/i.test(attr(p, "Lối chơi phù hợp"))),
+      opt("tan-cong", "Tấn công", (p) => /tấn công/i.test(attr(p, "Lối chơi phù hợp"))),
+      opt("all-court", "Toàn diện", (p) => /all-court/i.test(attr(p, "Lối chơi phù hợp"))),
     ],
   },
   {
     key: "tinh-trang",
     label: "Tình trạng",
     options: [
-      { value: "moi", label: "Mới", count: 12 },
-      { value: "cu", label: "Đã qua sử dụng", count: 5 },
+      opt("moi", "Mới", (p) => p.condition === "moi"),
+      opt("cu", "Đã qua sử dụng", (p) => p.condition === "da-qua-su-dung"),
     ],
   },
   {
     key: "nguoi-ban",
     label: "Người bán",
-    options: [{ value: "da-xac-minh", label: "Đã xác minh danh tính", count: 13 }],
+    options: [
+      opt("da-xac-minh", "Đã xác minh danh tính", (p) => !!shopById(p.shopId).verifiedMethod),
+    ],
   },
   {
     key: "ton-kho",
     label: "Tình trạng bán",
-    options: [{ value: "con-hang", label: "Chỉ hiện còn hàng", count: 15 }],
+    options: [
+      opt("con-hang", "Chỉ hiện còn hàng", (p) =>
+        p.variants.some((v) => v.stock === null || v.stock > 0),
+      ),
+    ],
   },
 ];
 
@@ -119,8 +142,10 @@ export default function F05Search() {
       <p className="tl-shop-eyebrow">F05</p>
       <h1 className="tl-shop-h1">Thành phần tìm kiếm &amp; lọc</h1>
       <p className="tl-shop-sub">
-        Số kết quả nằm trong vùng thông báo động, nên trình đọc màn hình cũng biết bộ lọc
-        vừa đổi kết quả — không chỉ người nhìn thấy.
+Số kết quả nằm trong vùng thông báo động, nên trình đọc màn hình cũng biết bộ lọc vừa
+        đổi kết quả — không chỉ người nhìn thấy. <strong>Số bên cạnh mỗi lựa chọn được tính
+        từ dữ liệu mẫu</strong>, không phải số gõ tay: với kho hàng nhỏ thì nó nhỏ, và đó là
+        sự thật.
       </p>
 
       <MatrixSection id="f05-field" title="ShopSearchField">
@@ -137,7 +162,7 @@ export default function F05Search() {
       <MatrixSection
         id="f05-chips"
         title="AppliedFilterChips + Sort + số kết quả"
-        note="Mỗi chip có nút xoá riêng 28px và nhãn đọc được (“Bỏ lọc 16 mm”), không phải chỉ một dấu X trần."
+        note="Mỗi chip có nút xoá riêng 44×44px và nhãn đọc được (“Bỏ lọc 16 mm”), không phải chỉ một dấu X trần."
       >
         <div className="tl-shop-toolbar">
           <SortControl value={sort} onChange={setSort} />

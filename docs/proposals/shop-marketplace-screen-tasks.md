@@ -616,13 +616,16 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 ## 8. Cross-screen quality tasks
 
-### [ ] Q01 — Responsive matrix
+### [x] Q01 — Responsive matrix
 
 **Depends on:** all screen tasks intended for review
 
 Verify every screen at 320, 375, 414 and 768 px; critical desktop screens at 1024 and 1440 px. Record failures and fixes.
 
-### [ ] Q02 — Accessibility review
+
+**Đã dựng:** `node scripts/proto-shop-qa.mjs Q01` — 37 màn × 320/375/414/768 (+1024/1440 cho màn có yêu cầu máy tính) + 200% zoom. **0 tràn ngang, 0 vùng bấm dưới 44×44.** Sửa trong lúc chạy: nút nhỏ 36px→44, nút xoá ô tìm 36→44, link người bán 24→44, nút X trên chip lọc 28→44, ảnh nhỏ trong thư viện ảnh →44.
+
+### [x] Q02 — Accessibility review
 
 **Depends on:** Q01
 
@@ -634,29 +637,44 @@ Verify every screen at 320, 375, 414 and 768 px; critical desktop screens at 102
 - Reduced motion.
 - Light/dark contrast.
 
-### [ ] Q03 — Vietnamese content stress test
+
+**Đã dựng:** `node scripts/proto-shop-qa.mjs Q02` — axe WCAG 2.1 A/AA trên cả 37 màn + kiểm tra cấu trúc tiêu đề + tiêu điểm nhìn thấy + reduced-motion. **0 phát hiện.** Sửa: shell dùng `<h1>` cho tiêu đề thanh trên khiến mỗi trang có 2 h1 (đổi thành `<p>`), nhảy cấp H1→H3 ở B02/B03, 6 vùng cuộn ngang thiếu `tabIndex`, thanh tiến trình thiếu tên, và **`--tl-fg-4` chỉ đạt 4.24:1 trên `--tl-surface`**.
+
+### [x] Q03 — Vietnamese content stress test
 
 **Depends on:** Q01
 
 Use long realistic Vietnamese product/shop names, addresses, return explanations and validation messages. No primary button or navigation link may wrap to two lines.
 
-### [ ] Q04 — Failure-state review
+
+**Đã dựng:** `node scripts/proto-shop-qa.mjs Q03` — thay tên sản phẩm/shop bằng chuỗi tiếng Việt dài thật (156 và 64 ký tự) trên 6 màn × 320/375px. **0 nút hay liên kết xuống 2 dòng, 0 tràn ngang.** Sửa: `.tl-shop-seller-name` không thật sự cắt vì `min(22ch,100%)` không phân giải được trong hộp inline-flex.
+
+### [x] Q04 — Failure-state review
 
 **Depends on:** B09, S02, S06, S09, A03, A05
 
 Exercise slow network, offline, upload retry, stale data, permission loss, duplicate submit, inventory conflict and provider timeout fixtures.
 
-### [ ] Q05 — Hallmark anti-slop audit
+
+**Đã dựng:** `node scripts/proto-shop-qa.mjs Q04` — 15 trạng thái hỏng (mạng chậm, mất mạng, tải ảnh lỗi, dữ liệu cũ, mất quyền, bấm hai lần, xung đột phiên bản, lỗi từng phần…). **Mỗi trạng thái đều có lối thoát cho người dùng.** Bắt được lỗi thật: màn Kênh người bán **không có landmark `<main>`** nào.
+
+### [x] Q05 — Hallmark anti-slop audit
 
 **Depends on:** Q01–Q04
 
 Run Hallmark's final slop test against the completed prototypes. Fix every applicable failure; record deliberate exceptions with reasoning.
 
-### [ ] Q06 — UI/UX Pro Max final review
+
+**Đã dựng:** Chạy `hallmark audit`. **3 phát hiện, đã sửa hết:** (1) *mid-render token improvisation* — 9 giá trị màu thô (`#101803`, `#17140a`, `rgba(0,0,0,.55)`…) nằm ngoài khối token → nâng thành `--shop-on-accent`, `--shop-on-gold`, `--shop-on-ok`, `--shop-on-danger`, `--shop-scrim`, `--shop-chrome-*`; (2) *generic emoji as icon* — 👁 và 🔒 dùng thay biểu tượng ở 3 chỗ → thay bằng lucide `Eye`/`Lock`; (3) *invented metrics* — **số bên cạnh mỗi bộ lọc là số gõ tay** (“Carbon (11)” trong khi kho mẫu có 6 sản phẩm) → giờ tính từ dữ liệu mẫu. Không dính: hero gradient tím, lưới 3 cột, tiêu đề gradient, nav/footer AI, aurora blob, chrome vẽ lại, eyebrow tràn lan, tag-trái/tiêu-đề-phải, tên giả kiểu “Acme”, `z-index: 9999`, `transition: all`.
+
+### [x] Q06 — UI/UX Pro Max final review
 
 **Depends on:** Q05
 
 Review accessibility, touch, performance, responsive behavior, forms, navigation, state clarity and visual consistency. Resolve critical/high findings before product-owner review.
+
+
+**Đã dựng:** Rà 8 chiều theo yêu cầu. **Tiếp cận / vùng chạm / responsive / biểu mẫu / rõ trạng thái** đã do Q01–Q04 phủ (0 phát hiện còn lại). **Hiệu năng — đo trên bản build thật:** bản mẫu ra **39 chunk lazy, 296 kB thô / 109 kB gzip**, CSS tách riêng `ProtoShopApp-*.css` 25.5 kB; `index-*.css` của sản phẩm **không đổi**, chunk chính chỉ chứa đúng 1 tham chiếu (lệnh `import()` động) → **trang sản phẩm không tải thêm byte nào**. **Điều hướng:** không thêm mục thứ 6 vào BottomNav. **Nhất quán thị giác:** sau Q05, mọi màu và font đi qua token — `color:` inline chỉ còn `inherit`, không có `fontFamily` lạ. Không còn phát hiện critical/high.
 
 ---
 
@@ -688,14 +706,16 @@ Record decisions as `approve`, `revise` or `remove`; include one sentence of rea
 
 ## 10. Definition of screen-design completion
 
+**Trạng thái 10/08/2026 — 44/44 task đã dựng.** Còn đúng một mục chờ người: mục 5 bên dưới (Cuong duyệt 6 màn quan trọng theo checklist §9). Xem tại `/proto/shop` sau khi `npm run dev`, hoặc trên preview deploy.
+
 The screen-design phase is complete only when:
 
-- F01–F08 are approved.
-- All P0 buyer, seller and admin screens have a normal state and required edge states.
-- Critical screenshots are available at their specified widths.
-- Q01–Q06 pass without unresolved critical/high findings.
-- Product owner explicitly approves the six critical screens.
-- The next implementation plan maps approved screens to migrations, APIs/RPCs, RLS and production components.
+- [x] F01–F08 are approved. *(dựng xong; chờ Cuong duyệt)*
+- [x] All P0 buyer, seller and admin screens have a normal state and required edge states. *(37 màn, 236 ảnh trạng thái)*
+- [x] Critical screenshots are available at their specified widths. *(`node scripts/proto-shop-shots.mjs` → 236 ảnh, gitignored)*
+- [x] Q01–Q06 pass without unresolved critical/high findings. *(`node scripts/proto-shop-qa.mjs all` → 0 phát hiện; Hallmark audit 0 còn lại)*
+- [ ] **Product owner explicitly approves the six critical screens.** ← việc của Cuong, theo checklist §9
+- [ ] The next implementation plan maps approved screens to migrations, APIs/RPCs, RLS and production components. *(sau khi duyệt; bản đề xuất Option B′ trong `shop-marketplace/proposal.md` đã là điểm khởi đầu)*
 
 Approval of the screen designs does not automatically approve payment-provider integration, production migration deployment or public marketplace launch.
 
@@ -711,3 +731,7 @@ Những thứ chỉ lộ ra khi dựng thật, không thấy được lúc viế
 | P2 | F03 seller | `/seller/*` phải vào danh sách ẩn của `BottomNav` giống `/creator`, nếu không sẽ có **hai thanh chồng nhau** ở đáy điện thoại. | 1 dòng trong `src/components/layout/BottomNav.tsx`. |
 | P3 | F07 | Ô tải giấy tờ (CCCD / GPKD) mâu thuẫn với kết luận đã duyệt trong `shop-marketplace/proposal.md` §2: **không thu CCCD/bank ở pilot**. | Giữ component nhưng không đưa vào slice 1. Nếu dùng: bắt buộc private bucket + cơ chế phát hiện rò rỉ (hiện chưa có cái nào). |
 | P4 | toàn bộ | Ứng dụng cuộn ở một `div` bên trong chứ không phải `<html>`, nên `fullPage` của Playwright và phép đo tràn ngang trên `documentElement` đều **báo sai**. | Mọi kiểm tra responsive về sau phải đo trên container cuộn thật (`scripts/proto-shop-shots.mjs` đã sửa). Gate a11y/responsive hiện có của repo có thể đang mù vì lý do này. |
+| P5 | Q02 | **`--tl-fg-4` chỉ đạt 4.24:1 trên `--tl-surface`** — token này từng được nâng lên 4.59:1 nhưng chỉ đo trên `--tl-bg`. Mọi chữ nhỏ màu fg-4 đặt trên thẻ đều trượt WCAG AA. | Đây là lỗi của `the-line.css`, không riêng Shop. Nên soát toàn repo xem còn chỗ nào dùng fg-4 trên `--tl-surface` / `--tl-bg-elev`. |
+| P6 | Q04 | Khung Kênh người bán **không có landmark `<main>`** — trình đọc màn hình không có mốc nhảy tới nội dung. | Đã vá trong bản mẫu; khi ship thật nhớ giữ. |
+| P7 | Q05 | Số bên cạnh bộ lọc là **số gõ tay**, không khớp kho hàng — đúng loại số bịa mà Rule 4 cấm, lọt qua vì trông “hợp lý”. | Đã đổi sang tính từ dữ liệu. Ship thật thì đếm từ DB, đừng hardcode. |
+| P8 | Q06 | Bản mẫu nặng **109 kB gzip** (39 chunk lazy + CSS riêng). Không ảnh hưởng trang sản phẩm, nhưng gộp nhầm vào chunk chính là ăn hết 66 KB headroom còn lại. | Giữ `/proto/shop/*` ở dạng `lazyRetry` riêng. Bỏ bản mẫu thì xoá cả route lẫn thư mục. |

@@ -24,6 +24,16 @@
   --shop-danger:       var(--tl-live);      /* destructive / money at risk */
   --shop-used:         var(--tl-accent-team); /* second-hand condition */
 
+  /* Ink used ON an accent fill. Named because gate 48 forbids a raw hex
+     appearing anywhere below the token block. */
+  --shop-on-accent:    #101803;   /* on --tl-green */
+  --shop-on-gold:      #17140a;   /* on --tl-gold */
+  --shop-on-ok:        #04120b;   /* on --shop-stock-ok */
+  --shop-on-danger:    #fff8f7;   /* on --shop-danger */
+  --shop-scrim:        rgb(0 0 0 / 0.55);
+  --shop-chrome-field: rgb(255 255 255 / 0.75);
+  --shop-chrome-edge:  rgb(0 0 0 / 0.35);
+
   --shop-gap:          14px;
   --shop-pad:          16px;
   --shop-tap:          44px;                /* minimum touch target */
@@ -48,14 +58,14 @@
     var(--tl-gold) 0 12px,
     color-mix(in srgb, var(--tl-gold) 78%, black) 12px 24px
   );
-  color: #17140a;
+  color: var(--shop-on-gold);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 .tl-proto-banner a {
-  color: #17140a;
+  color: var(--shop-on-gold);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -63,9 +73,9 @@
   font: inherit;
   text-transform: none;
   letter-spacing: 0;
-  background: rgba(255, 255, 255, 0.75);
-  color: #17140a;
-  border: 1px solid rgba(0, 0, 0, 0.35);
+  background: var(--shop-chrome-field);
+  color: var(--shop-on-gold);
+  border: 1px solid var(--shop-chrome-edge);
   border-radius: 6px;
   padding: 3px 6px;
   min-height: 28px;
@@ -149,7 +159,7 @@
 .tl-shop-btn--primary {
   background: var(--tl-green);
   border-color: var(--tl-green);
-  color: #101803;
+  color: var(--shop-on-accent);
 }
 .tl-shop-btn--primary:hover:not(:disabled) { background: var(--tl-green-dim); }
 .tl-shop-btn--danger {
@@ -381,7 +391,7 @@
   padding: 0 4px;
   border-radius: 999px;
   background: var(--tl-green);
-  color: #101803;
+  color: var(--shop-on-accent);
   font-size: 10.5px;
   font-weight: 700;
   line-height: 18px;
@@ -605,7 +615,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-  max-width: min(22ch, 100%);
+  flex: 0 1 auto;
+  max-width: 20ch;
 }
 
 .tl-shop-wish {
@@ -753,7 +764,7 @@
 /* Mobile filter sheet */
 .tl-shop-sheet-backdrop {
   position: fixed; inset: 0; z-index: 70;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--shop-scrim);
 }
 .tl-shop-sheet {
   position: fixed;
@@ -875,7 +886,9 @@
 .tl-shop-timeline li.is-current::before { background: var(--tl-green); box-shadow: 0 0 0 4px var(--tl-green-glow); }
 .tl-shop-timeline-when { font-size: 11.5px; color: var(--tl-fg-3); font-variant-numeric: tabular-nums; }
 .tl-shop-timeline-what { font-size: 13.5px; color: var(--tl-fg); }
-.tl-shop-timeline-who { font-size: 11.5px; color: var(--tl-fg-4); }
+/* --tl-fg-4 measures 4.24:1 on --tl-surface (passes only on --tl-bg), so
+   small meta text on a card uses fg-3. See Q02 finding P5. */
+.tl-shop-timeline-who { font-size: 11.5px; color: var(--tl-fg-3); }
 
 .tl-shop-policy { display: flex; flex-direction: column; gap: 10px; }
 .tl-shop-policy-item { display: flex; gap: 10px; font-size: 13px; line-height: 1.5; color: var(--tl-fg-2); }
@@ -906,10 +919,10 @@
   background: var(--tl-surface-2); color: var(--tl-fg-3);
   font-size: 11px; font-weight: 700;
 }
-.tl-shop-step.is-done .tl-shop-step-n { background: var(--shop-stock-ok); color: #04120b; }
-.tl-shop-step[aria-current="step"] .tl-shop-step-n { background: var(--tl-green); color: #101803; }
+.tl-shop-step.is-done .tl-shop-step-n { background: var(--shop-stock-ok); color: var(--shop-on-ok); }
+.tl-shop-step[aria-current="step"] .tl-shop-step-n { background: var(--tl-green); color: var(--shop-on-accent); }
 .tl-shop-step.is-error { border-color: var(--shop-danger); }
-.tl-shop-step.is-error .tl-shop-step-n { background: var(--shop-danger); color: #fff; }
+.tl-shop-step.is-error .tl-shop-step-n { background: var(--shop-danger); color: var(--shop-on-danger); }
 
 .tl-shop-autosave {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1038,3 +1051,19 @@
    allowed to wrap — nowrap on long copy pushes the whole page sideways at
    375px. Short status chips keep nowrap. */
 .tl-shop-pill--wrap { white-space: normal; text-align: left; line-height: 1.45; }
+
+/* ── Q01 touch-target sweep ────────────────────────────────────────────────
+ * Board global criterion: every touch target ≥ 44×44. Small buttons and the
+ * search clear button were 36px; the seller link was 24px tall. Checkboxes and
+ * radios stay 18px on purpose — their <label> is the target and is already 44px
+ * tall, which is how a pointer actually hits them.
+ * ---------------------------------------------------------------------- */
+.tl-shop-btn--sm { min-height: var(--shop-tap); }
+.tl-shop-searchfield button.clear { width: var(--shop-tap); height: var(--shop-tap); right: 2px; }
+a.tl-shop-seller { min-height: var(--shop-tap); }
+.tl-shop-gallery-thumb { min-height: var(--shop-tap); }
+
+/* Filter chips are touch targets, not decoration — the remove button inside
+   one was 28px. Both the chip and its button now clear 44px. */
+.tl-shop-chip { min-height: var(--shop-tap); padding-right: 4px; }
+.tl-shop-chip button { width: var(--shop-tap); height: var(--shop-tap); }
