@@ -390,7 +390,7 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 ## 5. Seller onboarding tasks
 
-### [ ] S01 — Sell landing `/shop/sell`
+### [x] S01 — Sell landing `/shop/sell`
 
 **Depends on:** F03, F08
 
@@ -402,7 +402,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** requirements are clear before the user starts; no invented review SLA.
 
-### [ ] S02 — Application stepper `/seller/application`
+**Đã dựng:** `/proto/shop/sell`. Điều kiện + giấy tờ + 6 bước + nghĩa vụ đọc được **trước** khi bấm bắt đầu. **Không bịa SLA duyệt**: nói thẳng “người xem, chưa cam kết thời gian vì lượng hồ sơ còn ít và chưa đo được”. Phí: “hiện chưa thu, có thu sẽ báo trước” — không nói “miễn phí trọn đời”. 5 biến thể theo trạng thái người xem.
+
+### [x] S02 — Application stepper `/seller/application`
 
 **Depends on:** F07, F08, S01
 
@@ -414,7 +416,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** browser Back/exit does not lose a saved draft; sensitive-field purpose is explained.
 
-### [ ] S03 — Application status
+**Đã dựng:** `/proto/shop/seller/application`. Số bước nằm trong URL (`?step=`) nên **Back đi lùi từng bước, không văng khỏi form** — đây là cách mất hồ sơ điền dở phổ biến nhất. Bản nháp ghi vào `localStorage` mỗi lần gõ, chỉ báo “đã lưu” kèm giờ. Mỗi ô nhạy cảm có dòng khoá 🔒 nói ai xem được và dùng làm gì. 10 ảnh phủ 7 trạng thái/bước.
+
+### [x] S03 — Application status
 
 **Depends on:** S02
 
@@ -424,7 +428,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** every non-approved state includes the correct recovery or next step.
 
-### [ ] S04 — Seller dashboard `/seller`
+**Đã dựng:** `/proto/shop/seller/status`. 7 trạng thái, mỗi trạng thái **bắt buộc có bước tiếp theo** (kiểu `StatusView.next` không cho phép thiếu). Người nộp chỉ thấy `applicantNote`; `internalNote` nằm cùng bản ghi và không được tham chiếu ở màn này.
+
+### [x] S04 — Seller dashboard `/seller`
 
 **Depends on:** F03, F04, S03
 
@@ -435,6 +441,8 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 **Screenshots:** 375 and 1440 px.
 
 **Acceptance:** no vanity chart; every metric opens the operational list it summarizes.
+
+**Đã dựng:** `/proto/shop/seller`. Hàng đợi việc cần xử lý nằm **trên cùng** (chỗ duy nhất ngốn tiền nếu bỏ qua), hạn quá giờ đổi viền đỏ. **Không có biểu đồ doanh thu** — mỗi con số là một `<Link>` mở đúng danh sách nó tóm tắt. 4 biến thể gồm shop mới (checklist 3 việc).
 
 ---
 

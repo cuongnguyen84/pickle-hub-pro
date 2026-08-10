@@ -201,6 +201,70 @@ export const SCREENS: ProtoScreen[] = [
       s("seller-suspended", "/wishlist?scenario=suspended", [375]),
     ],
   },
+
+  // ── S1 — seller onboarding ──────────────────────────────────────────────
+  {
+    id: "S01",
+    title: "Trang giới thiệu bán hàng /shop/sell",
+    batch: "S1",
+    route: "sell",
+    Component: lazy(() => import("./screens/S01SellLanding")),
+    shots: [
+      s("anonymous", "/sell", [375, 1440]),
+      s("eligible", "/sell?variant=eligible", [375]),
+      s("draft", "/sell?variant=draft", [375]),
+      s("under-review", "/sell?variant=review", [375]),
+      s("approved", "/sell?variant=approved", [375]),
+    ],
+  },
+  {
+    id: "S02",
+    title: "Hồ sơ đăng ký /seller/application",
+    batch: "S1",
+    route: "seller/application",
+    Component: lazy(() => import("./screens/S02Application")),
+    shots: [
+      s("step1", "/seller/application?step=0&variant=pristine", [375]),
+      s("step2", "/seller/application?step=1&variant=partial", [375, 1024]),
+      s("step3", "/seller/application?step=2&variant=partial", [375]),
+      s("step4", "/seller/application?step=3&variant=partial", [375]),
+      s("step5-docs", "/seller/application?step=4&variant=saved", [375, 1024]),
+      s("step6-review", "/seller/application?step=5&variant=saved", [375, 1024]),
+      s("saving", "/seller/application?step=1&variant=saving", [375]),
+      s("save-failed", "/seller/application?step=1&variant=failed", [375]),
+      s("validation-error", "/seller/application?step=1&variant=invalid", [375]),
+      s("restored-draft", "/seller/application?step=0&variant=restored", [375]),
+    ],
+  },
+  {
+    id: "S03",
+    title: "Trạng thái hồ sơ",
+    batch: "S1",
+    route: "seller/status",
+    Component: lazy(() => import("./screens/S03Status")),
+    shots: [
+      s("draft", "/seller/status?variant=draft", [375]),
+      s("submitted", "/seller/status?variant=submitted", [375]),
+      s("under-review", "/seller/status?variant=under_review", [375]),
+      s("needs-changes", "/seller/status?variant=needs_changes", [375, 1024]),
+      s("approved", "/seller/status?variant=approved", [375, 1024]),
+      s("rejected", "/seller/status?variant=rejected", [375, 1024]),
+      s("withdrawn", "/seller/status?variant=withdrawn", [375]),
+    ],
+  },
+  {
+    id: "S04",
+    title: "Bảng điều khiển người bán /seller",
+    batch: "S1",
+    route: "seller",
+    Component: lazy(() => import("./screens/S04Dashboard")),
+    shots: [
+      s("active", "/seller", [375, 1440]),
+      s("new-shop", "/seller?scenario=empty", [375, 1440]),
+      s("loading", "/seller?scenario=slow", [375]),
+      s("error", "/seller?scenario=error", [375]),
+    ],
+  },
 ];
 
 export const screensByBatch =(): Record<Batch, ProtoScreen[]> => {
