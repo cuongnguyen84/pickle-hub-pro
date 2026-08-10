@@ -548,7 +548,7 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 ## 7. Administrator tasks
 
-### [ ] A01 — Shop admin overview `/admin/shop`
+### [x] A01 — Shop admin overview `/admin/shop`
 
 **Depends on:** F03, F07, S04, B14
 
@@ -558,7 +558,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 768 and 1440 px.
 
-### [ ] A02 — Application queue `/admin/shop/applications`
+**Đã dựng:** `/proto/shop/admin`. 4 hàng đợi, mỗi ô có **số việc chờ + ngày của việc cũ nhất** (nửa thứ hai mới cho biết đang trễ hay không). Lỗi từng phần là trạng thái riêng: 3 hàng đợi vẫn đúng, ô hỏng nói thẳng “đừng coi là không có khiếu nại nào”. 4 biến thể.
+
+### [x] A02 — Application queue `/admin/shop/applications`
 
 **Depends on:** A01, S02
 
@@ -568,7 +570,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 768 and 1440 px.
 
-### [ ] A03 — Application review `/admin/shop/applications/:id`
+**Đã dựng:** `/proto/shop/admin/applications`. Bộ lọc nằm trong URL (đánh dấu trang / gửi link được). Cột dấu hiệu **chỉ liệt kê thứ suy ra từ hồ sơ** (thiếu bước, thiếu giấy tờ, tên GPKD khác tên shop) — cố ý **không có điểm rủi ro tự chấm**.
+
+### [x] A03 — Application review `/admin/shop/applications/:id`
 
 **Depends on:** A02, S03
 
@@ -580,7 +584,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Acceptance:** internal notes cannot be confused with applicant-visible feedback; decision consequences are explicit.
 
-### [ ] A04 — Product moderation `/admin/shop/products`
+**Đã dựng:** `/proto/shop/admin/applications/:id`. Ghi chú nội bộ và ghi chú gửi người nộp khác nhau về màu/viền/biểu tượng/nhãn, do component F07 cưỡng chế chứ không do trang tự nhớ. Có **diff lần nộp lại** (chỉ hiện trường thật sự đổi), nhật ký mở giấy tờ, và 3 quyết định đều có bảng hệ quả + trạng thái đang gửi/lỗi.
+
+### [x] A04 — Product moderation `/admin/shop/products`
 
 **Depends on:** S06, S07, A01
 
@@ -590,7 +596,9 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 
 **Screenshots:** 768 and 1440 px.
 
-### [ ] A05 — Dispute resolution `/admin/shop/disputes`
+**Đã dựng:** `/proto/shop/admin/products`. **Bản xem của người mua nằm ngay cột trái**, không phải link phải nhớ bấm — nhiều tin xấu nhìn bảng dữ liệu thì ổn, nhìn trang sản phẩm thì lộ ngay. Gỡ sản phẩm có đơn đang chạy liệt kê đích danh mã đơn và nói rõ **không tự huỷ đơn**. 5 tình huống.
+
+### [x] A05 — Dispute resolution `/admin/shop/disputes`
 
 **Depends on:** B14, S09, A01
 
@@ -601,6 +609,8 @@ B2 waits until product/variant semantics from S2 are stable. Admin tasks wait un
 **Screenshots:** 768 and 1440 px.
 
 **Acceptance:** outcome preview lists refund, return, inventory and notification effects before final action.
+
+**Đã dựng:** `/proto/shop/admin/disputes`. Khối dữ kiện trung lập lấy thẳng từ đơn (không dùng lời bên nào) đứng trước phần trình bày. Chọn kết quả là hiện **bảng hệ quả tính từ đơn thật**: hoàn bao nhiêu, có phải trả hàng không, tồn kho thế nào, ai nhận thông báo, ghi nhật ký gì. 5 tình huống.
 
 ---
 

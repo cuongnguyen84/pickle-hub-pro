@@ -467,6 +467,76 @@ export const SCREENS: ProtoScreen[] = [
       s("submitted", "/review?variant=submitted", [375]),
     ],
   },
+
+  // ── A — administration ──────────────────────────────────────────────────
+  {
+    id: "A01",
+    title: "Tổng quan quản trị /admin/shop",
+    batch: "A",
+    route: "admin",
+    Component: lazy(() => import("./screens/A01Overview")),
+    shots: [
+      s("normal", "/admin", [768, 1440]),
+      s("urgent-backlog", "/admin?scenario=unavailable", [768, 1440]),
+      s("healthy-empty", "/admin?scenario=empty", [1440]),
+      s("partial-failure", "/admin?scenario=error", [1440]),
+    ],
+  },
+  {
+    id: "A02",
+    title: "Hàng đợi hồ sơ /admin/shop/applications",
+    batch: "A",
+    route: "admin/applications",
+    Component: lazy(() => import("./screens/A02Queue")),
+    shots: [
+      s("all", "/admin/applications", [768, 1440]),
+      s("filtered", "/admin/applications?status=needs_changes", [1440]),
+      s("no-results", "/admin/applications?status=approved", [1440]),
+      s("error", "/admin/applications?scenario=error", [1440]),
+    ],
+  },
+  {
+    id: "A03",
+    title: "Xét hồ sơ /admin/shop/applications/:id",
+    batch: "A",
+    route: "admin/applications/:id",
+    Component: lazy(() => import("./screens/A03Review")),
+    shots: [
+      s("under-review", "/admin/applications/app-2", [768, 1440]),
+      s("resubmission", "/admin/applications/app-3", [768, 1440]),
+      s("evidence-mobile", "/admin/applications/app-2", [375]),
+      s("submitting", "/admin/applications/app-2?variant=busy", [1440]),
+      s("failure", "/admin/applications/app-2?variant=error", [1440]),
+    ],
+  },
+  {
+    id: "A04",
+    title: "Kiểm duyệt sản phẩm /admin/shop/products",
+    batch: "A",
+    route: "admin/products",
+    Component: lazy(() => import("./screens/A04Moderation")),
+    shots: [
+      s("first-product", "/admin/products?variant=first", [768, 1440]),
+      s("reported", "/admin/products?variant=reported", [768, 1440]),
+      s("counterfeit", "/admin/products?variant=counterfeit", [1440]),
+      s("requested-changes", "/admin/products?variant=requested", [1440]),
+      s("remove-open-orders", "/admin/products?variant=remove-open-orders", [768, 1440]),
+    ],
+  },
+  {
+    id: "A05",
+    title: "Xử lý khiếu nại /admin/shop/disputes",
+    batch: "A",
+    route: "admin/disputes",
+    Component: lazy(() => import("./screens/A05Disputes")),
+    shots: [
+      s("not-as-described", "/admin/disputes?variant=dis-1", [768, 1440]),
+      s("missing-item", "/admin/disputes?variant=dis-2", [768, 1440]),
+      s("seller-no-response", "/admin/disputes?variant=dis-3", [1440]),
+      s("damaged", "/admin/disputes?variant=dis-4", [1440]),
+      s("wrong-variant", "/admin/disputes?variant=dis-5", [1440]),
+    ],
+  },
 ];
 
 export const screensByBatch =(): Record<Batch, ProtoScreen[]> => {
