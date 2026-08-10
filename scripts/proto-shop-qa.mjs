@@ -7,8 +7,8 @@
 //
 // Q01 responsive matrix   — every screen at 320/375/414/768 (+1024/1440 for the
 //                           screens whose shots ask for a desktop width):
-//                           no page-level horizontal scroll, no touch target
-//                           under 44×44, no page-level scrollbar at 200% zoom.
+//                           the page actually scrolls, no horizontal scroll, no
+//                           touch target under 44×44, no overflow at 200% zoom.
 // Q02 accessibility       — axe (WCAG 2.1 A/AA), heading order, focus visibility,
 //                           accessible names, reduced-motion honoured.
 // Q03 Vietnamese stress   — swap in long realistic Vietnamese strings and assert
@@ -49,8 +49,33 @@ const storageState = {
  *  inner container, so documentElement always reads 0 and hides real bugs. */
 const overflowOf = (page) =>
   page.evaluate(() => {
-    const el = document.querySelector(".tl-shop");
+    const el = document.querySelector(".tl-shop-scroll");
     return el ? el.scrollWidth - el.clientWidth : 0;
+  });
+
+/**
+ * The check that was missing. Every screenshot looked perfect while no page
+ * could actually scroll, because the harness grew the viewport to the content
+ * height before capturing — which hides the bug completely.
+ *
+ * html/body/#root are `overflow: hidden; height: 100%`, so a page that forgets
+ * its own scroll container renders fine and then traps the user at the top.
+ * Assert it by scrolling for real and reading the offset back.
+ */
+const scrollWorks = (page) =>
+  page.evaluate(() => {
+    const el = document.querySelector(".tl-shop-scroll");
+    if (!el) return { ok: false, why: "không tìm thấy .tl-shop-scroll" };
+    const room = el.scrollHeight - el.clientHeight;
+    if (room <= 1) return { ok: true, why: "nội dung ngắn hơn màn hình" };
+    // Ask for more room than exists on purpose; a working scroller clamps to
+    // its maximum, a broken one stays at 0.
+    el.scrollTop = room + 500;
+    const moved = el.scrollTop;
+    el.scrollTop = 0;
+    return moved >= room - 1
+      ? { ok: true, why: "" }
+      : { ok: false, why: `còn ${room}px để cuộn nhưng scrollTop kẹt ở ${moved}` };
   });
 
 const smallTargets = (page) =>
@@ -138,6 +163,9 @@ const main = async () => {
 
         const small = await smallTargets(page);
         for (const s of small) note("Q01", `${sc.id} @${width}px vùng bấm < 44px: ${s}`);
+
+        const scroll = await scrollWorks(page);
+        if (!scroll.ok) note("Q01", `${sc.id} @${width}px KHÔNG CUỘN ĐƯỢC — ${scroll.why}`);
       }
 
       // 200% zoom == half the CSS viewport width. 375/2 ≈ 188 is below any

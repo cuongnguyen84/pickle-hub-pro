@@ -99,23 +99,30 @@ export default function ProtoShopApp() {
     }));
   }, []);
 
+  // html / body / #root are all `overflow: hidden; height: 100%` (src/index.css),
+  // so the document never scrolls — every page has to own its scroll container.
+  // Same split as .tl-root / .tl-scroll in the-line.css: the outer box is fixed
+  // to the viewport, the inner one scrolls. The banner sits OUTSIDE the scroller
+  // so it stays put without needing `position: sticky`.
   return (
-    <div className="tl-shop" style={{ minHeight: "100dvh", background: "var(--tl-bg)", color: "var(--tl-fg)" }}>
+    <div className="tl-shop">
       <DynamicMeta
         title="Shop — bản mẫu màn hình"
         description="Bản mẫu giao diện Shop. Dữ liệu giả lập, không phải trang thật."
         noindex
       />
       <ProtoBanner />
-      <Suspense fallback={<ProtoFallback />}>
-        <Routes>
-          <Route index element={<ProtoIndex />} />
-          {SCREENS.map((sc) => (
-            <Route key={sc.id} path={sc.route} element={<sc.Component />} />
-          ))}
-          <Route path="*" element={<Navigate to="/proto/shop" replace />} />
-        </Routes>
-      </Suspense>
+      <div className="tl-shop-scroll">
+        <Suspense fallback={<ProtoFallback />}>
+          <Routes>
+            <Route index element={<ProtoIndex />} />
+            {SCREENS.map((sc) => (
+              <Route key={sc.id} path={sc.route} element={<sc.Component />} />
+            ))}
+            <Route path="*" element={<Navigate to="/proto/shop" replace />} />
+          </Routes>
+        </Suspense>
+      </div>
     </div>
   );
 }
