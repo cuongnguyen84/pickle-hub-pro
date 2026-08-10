@@ -80,6 +80,8 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // Already-disallowed-by-robots-txt routes — defense-in-depth
   /^\/admin(?:\/|$)/,
   /^\/creator(?:\/|$)/,
+  // Design prototypes (/proto/shop/*). Never production, never indexable.
+  /^\/proto(?:\/|$)/,
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,

@@ -16,6 +16,8 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /creator
 Disallow: /creator/
+Disallow: /proto
+Disallow: /proto/
 Disallow: /auth/
 Disallow: /login
 Disallow: /vi/login
