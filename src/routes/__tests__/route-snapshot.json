@@ -576,6 +576,10 @@
     "element": "<CreatorTournaments />"
   },
   {
+    "path": "/proto/shop/*",
+    "element": "<ProtoShopApp />"
+  },
+  {
     "path": "/privacy",
     "element": "<Privacy />"
   },

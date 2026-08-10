@@ -68,6 +68,9 @@ const Notifications = lazyRetry(() => import("./pages/Notifications"));
 const Search = lazyRetry(() => import("./pages/Search"));
 const OrganizationDetail = lazyRetry(() => import("./pages/OrganizationDetail"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
+// Shop screen prototype (docs/proposals/shop-marketplace-screen-tasks.md).
+// Isolated + noindex; see src/proto/shop/ProtoShopApp.tsx for the three guards.
+const ProtoShopApp = lazyRetry(() => import("./proto/shop/ProtoShopApp"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -767,6 +770,9 @@ const App = () => (
                     <Route path="/creator/livestreams/:id/edit" element={<CreatorLivestreamForm />} />
                     <Route path="/creator/settings" element={<CreatorSettings />} />
                     <Route path="/creator/tournaments" element={<CreatorTournaments />} />
+                    {/* Shop screen prototype — noindex, not linked from anywhere in the
+                        product. Own lazy chunk so production pages never load it. */}
+                    <Route path="/proto/shop/*" element={<ProtoShopApp />} />
                     {/* Public pages */}
 
                     {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}
