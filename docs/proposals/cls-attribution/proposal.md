@@ -1,7 +1,10 @@
 # CLS attribution — truy và fix thủ phạm layout shift mobile VN
 
-> Slug: `cls-attribution` · Ngày: `2026-08-09` · Trạng thái: `approved`
+> Slug: `cls-attribution` · Ngày: `2026-08-09` · Trạng thái: `shipped`
 > **Quyết định của Cuong 09/08 ("theo em đi"):** D3 = DEFER (ticket chất-lượng-chữ-Việt riêng) · D4 = SHIP CHỈ-WEB (guard getPlatform()==="web", native giữ ngưỡng 80)
+> **SHIPPED 11/08:** PR #570 → main `f0e1e184` (squash). Lab CLS đo 11/08 cùng harness cùng thời điểm: home 2nd-nav 1.0222→0.5281 (−48%), /live 0.4512→0.1623 (−64%); entry 0.315 chung cả prod lẫn nhánh = ngoài scope, để kỳ đọc CLS-ATTR-READ 17/08.
+> **Khác kế hoạch:** (a) INC1 dùng thứ tự stable→volatile trong hàng nowrap thay vì slot ẩn bọc cả cụm — cùng bảo đảm zero-shift, residual vài px khi viewCount đổi số chữ số (ghi trong comment code); (b) INC3 skeleton hình dạng cố định head+16/9 — sẽ hụt khi có hero live thật (ui-ux-verifier ghi chú), nhận làm trần, xét ở kỳ đọc; (c) thêm 2 fix residual từ số đo preview: editorial VI skeleton 2→3 story, /live loading tree thêm info-column rows; (d) detour: PR #571 hotfix blog barrel + byte budget vì main đỏ sẵn chặn CI (bài học: bài blog push thẳng main không qua checklist 4 bước).
+> **Nợ còn lại (Cuong, ghi ở §8):** đăng ký 4 GA4 dims ngày ship (KHÔNG hồi tố), test bàn phím iOS thật (INC4), xem 1 buổi phát thật trên điện thoại; entry 0.315 + hero-state skeleton = input kỳ đọc 17/08.
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+external) ·
 > `risk-auditor` (+external) · `pre-mortem`.
 > Model thiếu key trong lần chạy này: **GPT-5.6 bị account từ chối (400) — cả 2 agent chạy codex CLI model mặc định, đã ghi rõ trong external/**
