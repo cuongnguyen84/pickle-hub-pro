@@ -192,6 +192,9 @@ export interface ProductVariantRow {
   /** Retired by the seller. Distinct from `archived`, which mirrors the
    *  PRODUCT's status and is rewritten every time that status moves. */
   retired_at: string | null;
+  /** Photo that shows THIS variant, or NULL to fall back to the product's main
+   *  image. Composite FK, so it can only name a photo of its own product. */
+  media_id: string | null;
   position: number;
   archived: boolean;
   created_at: string;
@@ -203,10 +206,47 @@ export interface ProductMediaRow {
   product_id: string;
   shop_id: string;
   draft_path: string;
+  /** The client-processed WebP the worker copies. Never public itself. */
+  rendition_source_path: string | null;
   public_path: string | null;
   state: "draft" | "approved";
   alt_text: string | null;
+  /** Display metadata only — sanitised, and never part of an object key. */
+  original_filename: string | null;
+  content_type: string | null;
+  byte_size: number | null;
+  width: number | null;
+  height: number | null;
+  /** Set by product_media_finalize once both objects were checked against
+   *  storage.objects. Unverified media cannot be submitted or published. */
+  verified_at: string | null;
+  version: number;
+  /** Position 0 IS the main image. There is no is_primary column. */
   position: number;
+}
+
+export type ShopMediaPurpose = "logo" | "cover";
+
+/** Shop logo and cover. Same lifecycle and same buckets as product media,
+ *  under `<shop_id>/profile/<purpose>/v<n>/`. */
+export interface ShopProfileMediaRow {
+  id: string;
+  shop_id: string;
+  purpose: ShopMediaPurpose;
+  draft_path: string;
+  rendition_source_path: string;
+  public_path: string | null;
+  content_type: string | null;
+  byte_size: number | null;
+  width: number | null;
+  height: number | null;
+  original_filename: string | null;
+  /** Cover framing, 0..1. A number, so the original is never cropped away. */
+  focal_y: number;
+  version: number;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /** A product as the seller list renders it: the row plus the two child sets it
@@ -228,6 +268,7 @@ export const SHOP_P2A_TABLES = [
   "shop_media_cleanup_jobs",
   "shop_contact_channels",
   "inventory_movements",
+  "shop_profile_media",
 ] as const;
 
 export const SHOP_P2A_RPCS = [
@@ -243,6 +284,13 @@ export const SHOP_P2A_RPCS = [
   "shop_contact_delete",
   "shop_contact_decide",
   "shop_contact_normalize",
+  /* ── step 6 (migration 20260811220000) ── */
+  "product_media_reorder",
+  "product_variant_set_media",
+  "shop_profile_media_upload_init",
+  "shop_profile_media_finalize",
+  "shop_profile_media_set_focal",
+  "shop_profile_media_delete",
   /* ── step 5 (migration 20260811210000) ── */
   "product_variants_reconcile",
   "product_variant_adjust_stock",

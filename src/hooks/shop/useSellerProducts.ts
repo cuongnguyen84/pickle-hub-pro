@@ -21,6 +21,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { escapeLike, shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
 import type {
+  ProductMediaRow,
   ProductRow,
   ProductStatus,
   ProductVariantRow,
@@ -144,6 +145,7 @@ export const useProductStatusCounts = (shopId: string | null) =>
 
 export interface SellerProductDetail extends ProductRow {
   variants: ProductVariantRow[];
+  media: ProductMediaRow[];
   mediaCount: number;
 }
 
@@ -153,9 +155,9 @@ export const useSellerProduct = (productId: string | null) =>
     enabled: !!productId,
     queryFn: async (): Promise<SellerProductDetail | null> => {
       const { data, error } = await shopFrom<
-        ProductRow & { product_variants: ProductVariantRow[]; product_media: { id: string }[] }
+        ProductRow & { product_variants: ProductVariantRow[]; product_media: ProductMediaRow[] }
       >("products")
-        .select(`${PRODUCT_COLUMNS},product_variants(*),product_media(id)`)
+        .select(`${PRODUCT_COLUMNS},product_variants(*),product_media(*)`)
         .eq("id", productId!)
         .limit(1);
       if (error) throw error;
@@ -171,6 +173,7 @@ export const useSellerProduct = (productId: string | null) =>
         variants: (product_variants ?? [])
           .filter((v) => v.retired_at === null)
           .sort((a, b) => a.position - b.position),
+        media: (product_media ?? []).slice().sort((a, b) => a.position - b.position),
         mediaCount: (product_media ?? []).length,
       };
     },
