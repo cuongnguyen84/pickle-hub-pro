@@ -260,6 +260,35 @@ ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
   );
 }
 
+// SEO wiring (2026-08-11, docs/seo-topical-authority-plan.md §6) — deep-link
+// venue + city-hub pages to the evergreen local guides most relevant to a
+// court-finder's intent (cost, court size, rules, how-to), instead of only the
+// blog index. Raises topical relevance from the /san cluster (the traffic
+// engine) into the editorial cluster. Slugs are verified live 200 on both
+// tracks (EN from BLOG_POST_META, VI from vi_blog_posts) — keep them in sync if
+// a guide is renamed/301'd, or the link becomes a redirect hop.
+const VENUE_GUIDE_SLUGS: Record<Lang, { slug: string; label: string }[]> = {
+  vi: [
+    { slug: "chi-phi-choi-pickleball-viet-nam-2026", label: "Chi phí chơi pickleball ở Việt Nam" },
+    { slug: "kich-thuoc-san-pickleball-tieu-chuan", label: "Kích thước sân pickleball tiêu chuẩn" },
+    { slug: "luat-pickleball-co-ban", label: "Luật pickleball cơ bản" },
+    { slug: "cach-choi-pickleball-cho-nguoi-moi", label: "Cách chơi pickleball cho người mới" },
+  ],
+  en: [
+    { slug: "pickleball-cost-vietnam-2026", label: "How much pickleball costs in Vietnam" },
+    { slug: "pickleball-court-dimensions-setup-guide", label: "Pickleball court dimensions & setup" },
+    { slug: "pickleball-rules-complete-guide", label: "Complete pickleball rules" },
+    { slug: "how-to-play-pickleball", label: "How to play pickleball" },
+  ],
+};
+
+function venueGuideLinksHtml(siteUrl: string, lang: Lang): string {
+  const base = lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`;
+  return VENUE_GUIDE_SLUGS[lang]
+    .map((g) => `<li><a href="${base}/${escapeHtml(g.slug)}">${escapeHtml(g.label)}</a></li>`)
+    .join("");
+}
+
 // ── /san/:slug — detail ─────────────────────────────────────────────────────
 export async function renderVenueDetail(
   supabase: SupabaseClient,
@@ -469,8 +498,11 @@ export async function renderVenueDetail(
   const blogHref = lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`;
   const newsHref = lang === "vi" ? `${siteUrl}/vi/news` : `${siteUrl}/news`;
   const tipsHeading = lang === "vi" ? "Mẹo chơi & tin tức" : "Tips & news";
+  // Deep-link the four evergreen local guides first (topical relevance venue →
+  // editorial), then the blog/news indexes for discovery.
   parts.push(
     `<nav><h2>${escapeHtml(tipsHeading)}</h2><ul>` +
+      venueGuideLinksHtml(siteUrl, lang) +
       `<li><a href="${blogHref}">${escapeHtml(lang === "vi" ? "Blog & hướng dẫn pickleball" : "Pickleball blog & guides")}</a></li>` +
       `<li><a href="${newsHref}">${escapeHtml(lang === "vi" ? "Tin tức pickleball mới nhất" : "Latest pickleball news")}</a></li>` +
       `</ul></nav>`,
@@ -771,6 +803,11 @@ export async function renderVenuesCity(
 
   const eventHtml = cityEventLink(citySlug, lang, siteUrl);
 
+  // Evergreen counterpart to the time-boxed cityEventLink: deep-link the local
+  // guides a "sân pickleball <city>" searcher also wants (cost, court size,
+  // rules, how-to). Permanent editorial wiring that survives past any event.
+  const guidesHeading = lang === "vi" ? "Hướng dẫn chơi pickleball" : "Pickleball guides";
+  const guidesHtml = `<nav><h2>${escapeHtml(guidesHeading)}</h2><ul>${venueGuideLinksHtml(siteUrl, lang)}</ul></nav>`;
 
   const moreHeading = lang === "vi" ? "Khám phá thêm" : "Discover more";
   const moreLinks = [
@@ -786,6 +823,7 @@ export async function renderVenuesCity(
     introHtml +
     eventHtml +
     (n > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`) +
+    guidesHtml +
     `<nav><h2>${escapeHtml(otherCitiesHeading)}</h2><ul>${otherCitiesHtml}</ul></nav>` +
     `<nav><h2>${escapeHtml(moreHeading)}</h2><ul>${moreLinks}</ul></nav>`;
 
