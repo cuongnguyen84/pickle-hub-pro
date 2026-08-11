@@ -61,7 +61,20 @@ import {
   type DraftErrors,
 } from "@/lib/shop/productState";
 import { useReconcileVariants } from "@/hooks/shop/useProductVariants";
+import {
+  useProductPreview,
+  useSubmitPreflight,
+  useSubmitProduct,
+  useWithdrawSubmission,
+} from "@/hooks/shop/useProductSubmit";
+import {
+  firstProblem,
+  focusTargetFor,
+  groupProblems,
+  problemMessage,
+} from "@/lib/shop/submitProblems";
 import type { VariantRow } from "@/lib/shop/variantMatrix";
+import type { SubmitProblem } from "@/lib/shop/submitProblems";
 import type { ProductRow } from "@/integrations/supabase/shop-schema";
 
 // Its own chunk: a seller editing a simple product never downloads the matrix.
@@ -70,6 +83,8 @@ const VariantEditor = lazy(() => import("@/components/shop/VariantEditor"));
 const ProductMediaSection = lazy(() =>
   import("@/components/shop/MediaEditor").then((m) => ({ default: m.ProductMediaSection })),
 );
+// Its own chunk, fetched when the seller asks to see the product as a buyer.
+const ProductPreview = lazy(() => import("@/components/shop/ProductPreview"));
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -148,6 +163,14 @@ export default function SellerProductForm() {
   const updateSlug = useUpdateProductSlug(productId);
   const archive = useArchiveProduct();
   const reconcile = useReconcileVariants(productId);
+  const preflight = useSubmitPreflight(productId, !isNew);
+  const submit = useSubmitProduct(productId);
+  const withdraw = useWithdrawSubmission(productId);
+  const [showPreview, setShowPreview] = useState(false);
+  const preview = useProductPreview(productId, showPreview);
+  const [submitState, setSubmitState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const submitTokenRef = useRef<string>(newToken());
 
   const [draft, setDraft] = useState<ProductDraft | null>(null);
   const [errors, setErrors] = useState<DraftErrors>({});
@@ -712,6 +735,119 @@ export default function SellerProductForm() {
         />
       )}
 
+      {/* ── 7. Preview and submit ────────────────────────────────────────── */}
+      {!isNew && (
+        <section aria-labelledby="sec-submit">
+          <h2 id="sec-submit" className="tl-shop-h2">
+            Xem trước &amp; gửi duyệt
+          </h2>
+
+          {status === "pending_review" ? (
+            <div className="tl-shop-notice tl-shop-notice--warn" role="status">
+              <div>
+                <strong>Đã gửi duyệt. Đang chờ quản trị viên xem.</strong>
+                <p style={{ margin: "6px 0 0", lineHeight: 1.55 }}>
+                  Anh/chị không cần làm gì thêm cho tới khi có phản hồi. Nếu muốn sửa tiếp, rút lại
+                  rồi sửa — sản phẩm sẽ quay về nháp.
+                </p>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                  <Link to="/seller/products" className="tl-shop-btn tl-shop-btn--sm">
+                    Về danh sách sản phẩm
+                  </Link>
+                  {isManager && !shopBlocked && (
+                    <button
+                      type="button"
+                      className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--ghost"
+                      disabled={withdraw.isPending}
+                      onClick={() => void withdraw.mutateAsync().catch(() => {})}
+                    >
+                      Rút lại để sửa tiếp
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <SubmitPanel
+              problems={preflight.data ?? []}
+              loading={preflight.isLoading}
+              canSubmit={isManager && !shopBlocked && canEditContent(status)}
+              state={submitState}
+              error={submitError}
+              onGoTo={(problem) => {
+                const target = focusTargetFor(problem);
+                if (target.lazySection === "media" || target.lazySection === "variants") {
+                  // The control lives in a lazily-mounted area. Focusing before
+                  // it mounts is a no-op that reads as a broken link, so the
+                  // scroll waits a frame for the chunk to render.
+                  setShowPreview(false);
+                }
+                window.requestAnimationFrame(() => {
+                  const el = document.getElementById(target.elementId) as HTMLElement | null;
+                  if (!el) return;
+                  el.scrollIntoView({ block: "center", behavior: "smooth" });
+                  // A section heading is not focusable, so focus() on it is a
+                  // no-op that reads as a broken link. tabindex -1 makes it a
+                  // programmatic focus target without adding a tab stop.
+                  if (!el.hasAttribute("tabindex") && !el.matches("input,select,textarea,button,a")) {
+                    el.setAttribute("tabindex", "-1");
+                  }
+                  el.focus();
+                });
+              }}
+              onSubmit={async () => {
+                if (!row) return;
+                setSubmitState("sending");
+                setSubmitError(null);
+                try {
+                  const result = await submit.mutateAsync({
+                    expectedVersion: row.version,
+                    clientToken: submitTokenRef.current,
+                  });
+                  if (result.ok) {
+                    setSubmitState("sent");
+                  } else {
+                    // Not an error: the server handed back the whole list.
+                    setSubmitState("idle");
+                    await preflight.refetch();
+                  }
+                } catch (e) {
+                  setSubmitState("error");
+                  setSubmitError(shopErrorMessage(e));
+                  if (isConflict(e)) await product.refetch();
+                }
+              }}
+            />
+          )}
+
+          <div style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              className="tl-shop-btn"
+              aria-expanded={showPreview}
+              onClick={() => setShowPreview((open) => !open)}
+            >
+              {showPreview ? "Đóng bản xem trước" : "Xem trước như người mua"}
+            </button>
+          </div>
+
+          {showPreview && (
+            <Suspense fallback={<p className="tl-shop-hint">Đang mở bản xem trước…</p>}>
+              {preview.data ? (
+                <div style={{ marginTop: 14 }}>
+                  <ProductPreview
+                    projection={preview.data}
+                    editHref={`/seller/products/${row!.id}/edit`}
+                  />
+                </div>
+              ) : (
+                <p className="tl-shop-hint">Đang tải bản xem trước…</p>
+              )}
+            </Suspense>
+          )}
+        </section>
+      )}
+
       <p style={{ marginTop: 22 }}>
         <Link to="/seller/products" className="tl-shop-btn tl-shop-btn--ghost">
           Về danh sách sản phẩm
@@ -1115,5 +1251,121 @@ function ArchiveSection({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * The checklist and the submit button.
+ *
+ * The list is the SERVER's preflight, not a client re-derivation: the screen
+ * cannot offer a submit the server is about to refuse, and cannot refuse one
+ * the server would have taken. Each line links to the thing to fix.
+ */
+function SubmitPanel({
+  problems,
+  loading,
+  canSubmit,
+  state,
+  error,
+  onGoTo,
+  onSubmit,
+}: {
+  problems: SubmitProblem[];
+  loading: boolean;
+  canSubmit: boolean;
+  state: "idle" | "sending" | "sent" | "error";
+  error: string | null;
+  onGoTo: (problem: SubmitProblem) => void;
+  onSubmit: () => void | Promise<void>;
+}) {
+  if (state === "sent") {
+    return (
+      <div className="tl-shop-notice tl-shop-notice--info" role="status">
+        <Check size={16} aria-hidden="true" />
+        <div>
+          <strong>Đã gửi duyệt.</strong>
+          <p style={{ margin: "6px 0 0", lineHeight: 1.55 }}>
+            Quản trị viên sẽ xem và phản hồi. Anh/chị không cần sửa gì thêm cho tới lúc đó — nếu
+            cần sửa, phản hồi sẽ ghi rõ chỗ nào.
+          </p>
+          <div style={{ marginTop: 10 }}>
+            <Link to="/seller/products" className="tl-shop-btn tl-shop-btn--sm">
+              Về danh sách sản phẩm
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) return <p className="tl-shop-hint">Đang kiểm tra…</p>;
+
+  const groups = groupProblems(problems);
+  const ready = problems.length === 0;
+
+  return (
+    <>
+      {ready ? (
+        <p className="tl-shop-hint">
+          Sản phẩm đã đủ điều kiện gửi duyệt. Sau khi gửi, anh/chị sẽ không sửa được cho tới khi
+          có phản hồi.
+        </p>
+      ) : (
+        <div className="tl-shop-notice tl-shop-notice--warn" role="status">
+          <AlertTriangle size={16} aria-hidden="true" />
+          <div style={{ width: "100%" }}>
+            <strong>Còn {problems.length} chỗ chưa xong trước khi gửi duyệt:</strong>
+            {groups.map((group) => (
+              <div key={group.section} style={{ marginTop: 8 }}>
+                <p className="tl-shop-eyebrow" style={{ display: "block" }}>
+                  {group.label}
+                </p>
+                <ul style={{ margin: "4px 0 0", paddingLeft: 18, lineHeight: 1.7 }}>
+                  {group.problems.map((problem, index) => (
+                    <li key={`${problem.code}-${index}`}>
+                      {problemMessage(problem)}{" "}
+                      <button
+                        type="button"
+                        className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--ghost"
+                        onClick={() => onGoTo(problem)}
+                      >
+                        Đi tới chỗ cần sửa
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {canSubmit && (
+        <button
+          type="button"
+          className="tl-shop-btn tl-shop-btn--primary"
+          // Disabled in flight so a double tap cannot send it twice. The client
+          // token makes that harmless anyway; this makes it impossible.
+          disabled={!ready || state === "sending"}
+          onClick={() => {
+            const first = firstProblem(problems);
+            if (first) onGoTo(first);
+            else void onSubmit();
+          }}
+        >
+          {state === "sending" ? "Đang gửi…" : "Gửi duyệt"}
+        </button>
+      )}
+
+      {state === "error" && error && (
+        <div className="tl-shop-notice tl-shop-notice--danger" role="alert" style={{ marginTop: 10 }}>
+          <AlertTriangle size={16} aria-hidden="true" />
+          <span>{error}</span>
+          <button type="button" className="tl-shop-btn tl-shop-btn--sm" onClick={() => void onSubmit()}>
+            Thử lại
+          </button>
+        </div>
+      )}
+    </>
   );
 }
