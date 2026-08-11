@@ -2539,7 +2539,7 @@
 @media (max-width: 900px) { [data-theme="the-line"] .tl-blog-hero { grid-template-columns: 1fr; gap: 28px; padding-bottom: 32px; margin-bottom: 36px; } }
 
 [data-theme="the-line"] .tl-blog-hero-visual {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   background: linear-gradient(160deg, #1a2820 0%, #0f1a14 50%, #080a08 100%);
   border: 1px solid var(--tl-border);
   border-radius: var(--tl-radius-lg);

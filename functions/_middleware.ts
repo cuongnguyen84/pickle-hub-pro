@@ -597,7 +597,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // above the fold; purge bot HTML that retained the old homepage heading.
   // v37→v38 (2026-08-08): normalize the homepage title to the exact OAuth
   // application name and invalidate the previously rendered homepage HTML.
-  const cacheKey = `pr:v38:${url.pathname}`;
+  // v38→v39 (2026-08-11): Singapore Open preview updated to post-event state
+  // (recap callout + new meta description, EN + VI) and PPA Tour Asia VI guide
+  // refreshed with 7-stop results section; purge stale bot HTML for both.
+  const cacheKey = `pr:v39:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
