@@ -11,3 +11,4 @@
 | Tuần (end) | Clicks | Impr | Pos | WoW clicks | Ghi chú |
 |---|---|---|---|---|---|
 | 2026-07-31 | 93 | 7543 | 7.8 | +4.5% | Baseline TRƯỚC PR #533 (chạy tay 03/08) |
+| 2026-08-08 | 126 | 8056 | 7.8 | +41.6% | W33 (chạy 11/08, trễ 1d): hồi mạnh sau lull t7 — HCMC Open 6–9/8 + PR #574 deep-links (11/8, chưa ảnh hưởng window này) |
