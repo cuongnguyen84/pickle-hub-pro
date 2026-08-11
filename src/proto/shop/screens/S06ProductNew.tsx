@@ -72,7 +72,9 @@ export default function S06ProductNew() {
   const fixture: Fixture = preset === "shoes" ? "shoes" : preset === "used" ? "used" : "paddle";
   const state = (["shoes", "used"].includes(preset) ? "normal" : preset) as State;
 
-  const [hasVariants, setHasVariants] = useState(fixture === "shoes");
+  const [hasVariants, setHasVariants] = useState(
+    fixture === "shoes" || state === "bulk" || state === "duplicate-sku",
+  );
   const [autosave] = useState<AutosaveState>(state === "autosave" ? "saving" : "saved");
   const [cat, setCat] = useState(fixture === "shoes" ? "giay" : "vot");
   const [condition, setCondition] = useState<"moi" | "da-qua-su-dung">(
