@@ -17,6 +17,7 @@ import { readVariant } from "../scenario";
 import { AdminShopFrame, DefList } from "../components/Shells";
 import { EvidenceViewer, ModerationDecisionForm, type Decision } from "../components/Forms";
 import { APPLICATION_QUEUE, APPLICATIONS, dmyhm } from "../fixtures";
+import { REQUEST_TARGETS } from "../application-fields";
 
 const TYPE_LABEL: Record<string, string> = {
   "ca-nhan": "Cá nhân",
@@ -192,6 +193,7 @@ export default function A03Review() {
               Quyết định
             </h2>
             <ModerationDecisionForm
+              targets={REQUEST_TARGETS}
               busy={phase === "busy" ? (decision ?? "approve") : null}
               error={
                 phase === "error"

@@ -11,7 +11,7 @@
 // ============================================================================
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams, useLocation, Link } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate, Link } from "react-router-dom";
 import { AlertTriangle, Lock } from "lucide-react";
 import { readVariant } from "../scenario";
 import { BuyerShell } from "../components/Shells";
@@ -22,10 +22,48 @@ import {
   type AutosaveState,
 } from "../components/Forms";
 import { APPLICATION_STEPS } from "./F07Forms";
+import { targetByField } from "../application-fields";
 
 const DRAFT_KEY = "proto-shop-application-draft";
 
 type Fields = Record<string, string>;
+
+/**
+ * Validation lives next to the field it guards, not in the stepper.
+ *
+ * The stepper only ever SUMMARISES — a red step tells you where to look, the
+ * message under the input tells you what to do. A form that only reddens its
+ * progress bar makes the user hunt.
+ */
+interface Rule {
+  step: number;
+  id: string;
+  message: string;
+  ok: (f: Fields) => boolean;
+}
+
+const RULES: Rule[] = [
+  { step: 0, id: "f-type", message: "Chọn một loại người bán để đi tiếp.", ok: (f) => !!f.type },
+  { step: 1, id: "f-name", message: "Chưa điền họ tên.", ok: (f) => (f.name ?? "").trim().length > 1 },
+  {
+    step: 1,
+    id: "f-phone",
+    message: "Số điện thoại phải có 10 chữ số, bắt đầu bằng 0.",
+    ok: (f) => /^0\d{9}$/.test((f.phone ?? "").replace(/\s/g, "")),
+  },
+  { step: 2, id: "f-shop", message: "Tên shop cần ít nhất 3 ký tự.", ok: (f) => (f.shop ?? "").trim().length >= 3 },
+  { step: 3, id: "f-city", message: "Chưa chọn tỉnh/thành gửi hàng.", ok: (f) => (f.city ?? "").trim().length > 1 },
+];
+
+const failing = (f: Fields): Rule[] => RULES.filter((r) => !r.ok(f));
+
+/** Move focus AND scroll — a focused input below the fold is not a fix. */
+const focusField = (id: string) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ block: "center", behavior: "auto" });
+  (el as HTMLElement).focus({ preventScroll: true });
+};
 
 const SELLER_TYPES = [
   { value: "ca-nhan", label: "Cá nhân", d: "Bán vài món, không có giấy phép kinh doanh." },
@@ -101,6 +139,7 @@ export default function S02Application() {
   const location = useLocation();
   const variant = readVariant(location.search); // pristine|partial|saving|saved|failed|invalid|restored
   const [sp, setSp] = useSearchParams();
+  const navigate = useNavigate();
   const step = Math.min(Math.max(Number(sp.get("step") ?? 0), 0), 5);
 
   const [fields, setFields] = useState<Fields>(() => {
@@ -123,7 +162,40 @@ export default function S02Application() {
   const timer = useRef<number | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
-  const showErrors = variant === "invalid";
+  // Errors appear once the user has tried to move on — not while they type.
+  const [attempted, setAttempted] = useState<number[]>(variant === "invalid" ? [1] : []);
+  const broken = failing(fields);
+  const errorFor = (id: string) => {
+    const r = broken.find((x) => x.id === id);
+    return r && attempted.includes(r.step) ? r.message : undefined;
+  };
+  const erroredSteps = [...new Set(broken.map((r) => r.step))].filter((n) => attempted.includes(n));
+
+  /** Returns true when the step is clean; otherwise focuses its first bad field. */
+  const passStep = (n: number) => {
+    const bad = broken.filter((r) => r.step === n);
+    if (bad.length === 0) return true;
+    setAttempted((a) => (a.includes(n) ? a : [...a, n]));
+    window.setTimeout(() => focusField(bad[0].id), 0);
+    return false;
+  };
+
+  const gotoStep = (n: number) => {
+    const p = new URLSearchParams(sp);
+    p.set("step", String(n));
+    setSp(p);
+  };
+
+  const submit = () => {
+    if (broken.length === 0) return true;
+    // Mark every step so the stepper summarises the whole form, then jump to
+    // the first offending field wherever it lives.
+    setAttempted([...new Set(broken.map((r) => r.step))]);
+    const first = broken[0];
+    if (first.step !== step) gotoStep(first.step);
+    window.setTimeout(() => focusField(first.id), 60);
+    return false;
+  };
 
   const set = useCallback(
     (k: string, v: string) => {
@@ -149,15 +221,21 @@ export default function S02Application() {
 
   // Focus the new step's heading so keyboard and screen-reader users are not
   // dropped back at the top of the document on every "Tiếp".
+  //
+  // Unless the moderator sent a deep link — then focus the exact field they
+  // asked about, which is the whole point of the link.
+  const focusTarget = sp.get("focus");
   useEffect(() => {
-    headingRef.current?.focus();
-  }, [step]);
+    if (!focusTarget) {
+      headingRef.current?.focus();
+      return undefined;
+    }
+    const id = window.setTimeout(() => focusField(focusTarget), 60);
+    return () => window.clearTimeout(id);
+  }, [step, focusTarget]);
 
-  const goto = (n: number) => {
-    const p = new URLSearchParams(sp);
-    p.set("step", String(n));
-    setSp(p); // push, not replace → browser Back walks the steps
-  };
+  // push, not replace → browser Back walks the steps
+  const goto = gotoStep;
 
   const completed = variant === "pristine" ? 0 : variant === "partial" ? 2 : 3;
 
@@ -167,6 +245,7 @@ export default function S02Application() {
       <legend className="tl-shop-label" style={{ padding: 0, marginBottom: 10 }}>
         Anh/chị bán với tư cách nào?
       </legend>
+      <span id="f-type" tabIndex={-1} style={{ outline: "none" }} />
       {SELLER_TYPES.map((t) => (
         <label key={t.value} className="tl-shop-check" style={{ alignItems: "flex-start", padding: "8px 0" }}>
           <input
@@ -182,6 +261,12 @@ export default function S02Application() {
           </span>
         </label>
       ))}
+      {errorFor("f-type") && (
+        <p className="tl-shop-error">
+          <AlertTriangle size={13} aria-hidden="true" />
+          {errorFor("f-type")}
+        </p>
+      )}
     </fieldset>,
 
     // 2 — identity
@@ -193,7 +278,7 @@ export default function S02Application() {
         onChange={(v) => set("name", v)}
         sensitive="Chỉ quản trị viên xem được."
         hint="Dùng để đối chiếu với giấy phép kinh doanh, không hiện trên trang shop."
-        error={showErrors && !fields.name ? "Chưa điền họ tên." : undefined}
+        error={errorFor("f-name")}
       />
       <Field
         id="f-phone"
@@ -203,11 +288,7 @@ export default function S02Application() {
         onChange={(v) => set("phone", v)}
         sensitive="Không hiện công khai."
         hint="Chúng tôi gọi để xác nhận hồ sơ. Người mua chỉ thấy số này sau khi đặt hàng của anh/chị."
-        error={
-          showErrors && !/^0\d{9}$/.test(fields.phone ?? "")
-            ? "Số điện thoại phải có 10 chữ số, bắt đầu bằng 0."
-            : undefined
-        }
+        error={errorFor("f-phone")}
       />
     </div>,
 
@@ -219,7 +300,7 @@ export default function S02Application() {
         value={fields.shop ?? ""}
         onChange={(v) => set("shop", v)}
         hint="Hiện công khai trên mọi sản phẩm của anh/chị. Đổi được sau."
-        error={showErrors && (fields.shop ?? "").length < 3 ? "Tên shop cần ít nhất 3 ký tự." : undefined}
+        error={errorFor("f-shop")}
       />
       <Field
         id="f-desc"
@@ -247,6 +328,7 @@ export default function S02Application() {
         value={fields.city ?? ""}
         onChange={(v) => set("city", v)}
         hint="Đây là phần người mua nhìn thấy: “Gửi từ …”."
+        error={errorFor("f-city")}
       />
     </div>,
 
@@ -316,7 +398,7 @@ export default function S02Application() {
           steps={APPLICATION_STEPS}
           current={step}
           completed={completed}
-          errored={showErrors ? [step] : []}
+          errored={erroredSteps}
           onJump={goto}
         />
 
@@ -330,6 +412,15 @@ export default function S02Application() {
             }}
           />
         </div>
+
+        {focusTarget && targetByField(focusTarget) && (
+          <div className="tl-shop-notice tl-shop-notice--warn" role="status">
+            <div>
+              Quản trị viên yêu cầu sửa ô <strong>{targetByField(focusTarget)!.label}</strong> —
+              đã đưa anh/chị tới đúng chỗ. Sửa xong bấm Tiếp cho tới bước cuối rồi gửi lại.
+            </div>
+          </div>
+        )}
 
         {variant === "restored" && (
           <div className="tl-shop-notice tl-shop-notice--info" role="status">
@@ -356,13 +447,25 @@ export default function S02Application() {
             Quay lại
           </button>
           {step < 5 ? (
-            <button type="button" className="tl-shop-btn tl-shop-btn--primary" onClick={() => goto(step + 1)}>
+            <button
+              type="button"
+              className="tl-shop-btn tl-shop-btn--primary"
+              onClick={() => {
+                if (passStep(step)) goto(step + 1);
+              }}
+            >
               Tiếp
             </button>
           ) : (
-            <Link to="/proto/shop/seller/status?variant=submitted" className="tl-shop-btn tl-shop-btn--primary">
+            <button
+              type="button"
+              className="tl-shop-btn tl-shop-btn--primary"
+              onClick={() => {
+                if (submit()) navigate("/proto/shop/seller/status?variant=submitted");
+              }}
+            >
               Gửi hồ sơ
-            </Link>
+            </button>
           )}
           <span className="tl-proto-spacer" />
           <Link to="/proto/shop/sell" className="tl-shop-btn tl-shop-btn--ghost">

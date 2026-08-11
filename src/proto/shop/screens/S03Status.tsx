@@ -12,6 +12,7 @@ import { Clock, Check, AlertTriangle, X, RotateCcw, FileText } from "lucide-reac
 import { readVariant } from "../scenario";
 import { BuyerShell } from "../components/Shells";
 import { APPLICATIONS, dmyhm, type ApplicationStatus } from "../fixtures";
+import { REQUEST_TARGETS, applicationDeepLink } from "../application-fields";
 
 interface StatusView {
   title: string;
@@ -22,6 +23,18 @@ interface StatusView {
   next: { label: string; to: string; primary?: boolean };
   secondary?: { label: string; to: string };
 }
+
+/** What the moderator ticked on this fixture application. */
+const REQUESTED = REQUEST_TARGETS.filter((t) => ["f-doc", "f-phone"].includes(t.field));
+
+const APPLICATION_STEP_LABEL = [
+  "Loại người bán",
+  "Danh tính",
+  "Thông tin shop",
+  "Địa chỉ",
+  "Giấy tờ",
+  "Xem lại & gửi",
+];
 
 const VIEWS: Record<ApplicationStatus, StatusView> = {
   draft: {
@@ -51,7 +64,7 @@ const VIEWS: Record<ApplicationStatus, StatusView> = {
     tone: "--warn",
     Icon: AlertTriangle,
     body: "", // filled from the applicant-visible note
-    next: { label: "Sửa và gửi lại", to: "/proto/shop/seller/application?step=4", primary: true },
+    next: { label: "Sửa và gửi lại", to: applicationDeepLink(REQUEST_TARGETS[7]), primary: true },
   },
   approved: {
     title: "Hồ sơ đã được duyệt",
@@ -104,6 +117,35 @@ export default function S03Status() {
           <div className="tl-shop-external" style={{ marginBottom: 16 }}>
             <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6 }}>{app.applicantNote}</p>
           </div>
+        )}
+
+        {/* What the moderator actually ticked. Each row links straight to the
+            field so the applicant never hunts through six steps. */}
+        {status === "needs_changes" && (
+          <section aria-labelledby="s03-todo">
+            <h2 className="tl-shop-h2" id="s03-todo">
+              Cần sửa {REQUESTED.length} chỗ
+            </h2>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+              {REQUESTED.map((t) => (
+                <li
+                  key={t.field}
+                  className="tl-shop-card"
+                  style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}
+                >
+                  <div style={{ flex: 1, minWidth: 150 }}>
+                    <div style={{ fontWeight: 650, fontSize: 14 }}>{t.label}</div>
+                    <p className="tl-shop-hint" style={{ marginTop: 3 }}>
+                      Bước {t.step + 1} · {APPLICATION_STEP_LABEL[t.step]}
+                    </p>
+                  </div>
+                  <Link to={applicationDeepLink(t)} className="tl-shop-btn tl-shop-btn--sm">
+                    Đi tới ô này
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {app.documents.length > 0 && (
