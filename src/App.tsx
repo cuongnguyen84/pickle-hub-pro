@@ -70,7 +70,18 @@ const OrganizationDetail = lazyRetry(() => import("./pages/OrganizationDetail"))
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
 // Shop screen prototype (docs/proposals/shop-marketplace-screen-tasks.md).
 // Isolated + noindex; see src/proto/shop/ProtoShopApp.tsx for the three guards.
-const ProtoShopApp = lazyRetry(() => import("./proto/shop/ProtoShopApp"));
+//
+// D4 (2026-08-11): the prototype stays in the repo but must not reach the
+// production artifact — 37 screens plus fixtures were costing ~106 KB gz of a
+// budget that is already over. `VITE_PROTO_SHOP=1` (npm run dev:proto /
+// build:proto) turns it back on. The constant is a literal after Vite's define
+// pass, so the ternary folds and the dynamic import is dropped at build time;
+// vite.config.ts additionally resolves the module to an empty stub when the
+// flag is off, so this does not depend on tree-shaking to be correct.
+const PROTO_SHOP_ENABLED = import.meta.env.VITE_PROTO_SHOP === "1";
+const ProtoShopApp = PROTO_SHOP_ENABLED
+  ? lazyRetry(() => import("./proto/shop/ProtoShopApp"))
+  : null;
 // Shop marketplace — Phase 1 (closed pilot). Server-side gate is
 // shop_pilot_has_access(); these routes only decide whether a door renders.
 const SellLanding = lazyRetry(() => import("./pages/shop/SellLanding"));
@@ -779,8 +790,10 @@ const App = () => (
                     <Route path="/creator/settings" element={<CreatorSettings />} />
                     <Route path="/creator/tournaments" element={<CreatorTournaments />} />
                     {/* Shop screen prototype — noindex, not linked from anywhere in the
-                        product. Own lazy chunk so production pages never load it. */}
-                    <Route path="/proto/shop/*" element={<ProtoShopApp />} />
+                        product, and absent from the production build entirely (D4).
+                        In production this whole expression is `false`, so the path
+                        falls through to NotFound. */}
+                    {ProtoShopApp && <Route path="/proto/shop/*" element={<ProtoShopApp />} />}
                     {/* Shop marketplace — Phase 1. Seller + admin surfaces are
                         auth-gated here and re-authorised server-side by RLS. */}
                     <Route path="/shop/sell" element={<SellLanding />} />

@@ -177,6 +177,33 @@ function main() {
         breaches.push(`initial-load chunk ${f} matches no precache globPattern in vite.config.ts`);
   }
 
+  // Prototype must not reach the production artifact (D4, 2026-08-11). The
+  // shop prototype is 37 screens plus fixtures and scenarios; it stays in the
+  // repo behind VITE_PROTO_SHOP=1 and is stubbed out of the default build.
+  // Grepping the emitted JS is the only check that cannot be fooled by a route
+  // that was merely hidden at runtime. Skipped when the flag built it in on
+  // purpose (npm run build:proto).
+  if (process.env.VITE_PROTO_SHOP !== "1") {
+    // String literals, because minification mangles identifiers but not these.
+    // NOT "/proto/shop" — BottomNav and ChatFAB legitimately carry that prefix
+    // in their hide-lists, and a marker that matches production code turns the
+    // guard into noise.
+    const marks = [
+      { re: /tl-proto-banner/, what: "prototype shell" },
+      { re: /Bản mẫu — dữ liệu giả lập/, what: "prototype banner copy" },
+      { re: /Shop bị tạm ngưng/, what: "prototype scenario switch" },
+      { re: /pickle-gear-sai-gon/, what: "prototype fixtures" },
+    ];
+    for (const r of rows) {
+      const src = readFileSync(join(DIST, r.file), "utf8");
+      for (const m of marks)
+        if (m.re.test(src))
+          breaches.push(
+            `${m.what} in production artifact: ${r.file} (${kb(r.gz)} KB gz) — build with VITE_PROTO_SHOP=1 only for the preview`,
+          );
+    }
+  }
+
   // Headroom early-warning (proposal rankings-dupr-wpr-tabs, pre-mortem #3):
   // a PR that lands green with <5% headroom left silently books the red gate
   // for whichever unrelated PR comes next. Advisory only — never blocks.

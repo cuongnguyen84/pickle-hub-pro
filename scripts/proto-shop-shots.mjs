@@ -2,7 +2,7 @@
 // ============================================================================
 // Shop prototype — screenshot harness (board Rule 10)
 // ----------------------------------------------------------------------------
-//   npm run dev                    # terminal 1, port 8080
+//   npm run dev:proto   # prototype is behind VITE_PROTO_SHOP=1 (D4)
 //   node scripts/proto-shop-shots.mjs
 //
 // Captures every screen × every scenario × every board-specified width, and

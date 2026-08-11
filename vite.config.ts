@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -20,7 +20,14 @@ import { visualizer } from "rollup-plugin-visualizer";
 const BUILD_ID = Date.now().toString(36);
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+// Read through loadEnv, not process.env, so the plugin below and the
+// `import.meta.env.VITE_PROTO_SHOP` constant in App.tsx always agree — a .env
+// file that enabled one but not the other would ship a route pointing at a
+// stubbed module.
+const protoShop = loadEnv(mode, process.cwd(), "VITE_").VITE_PROTO_SHOP === "1";
+
+return ({
   server: {
     host: "::",
     port: 8080,
@@ -38,6 +45,22 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // Shop prototype separation (D4, 2026-08-11). The prototype keeps living in
+    // the repo — source, tests, and a runnable preview — but it must not reach
+    // the production artifact. App.tsx already drops the route behind a folded
+    // constant; this makes it independent of tree-shaking by resolving the one
+    // production entry point into src/proto/ to an empty module. If the flag is
+    // off, nothing under src/proto/shop/** can be reached from the graph, so no
+    // screen, scenario or fixture chunk is emitted.
+    !protoShop && {
+      name: "strip-proto-shop",
+      resolveId(id: string) {
+        return /proto\/shop\/ProtoShopApp$/.test(id) ? "\0proto-shop-disabled" : null;
+      },
+      load(id: string) {
+        return id === "\0proto-shop-disabled" ? "export default null;\n" : null;
+      },
+    },
     // /build-id.txt — freshness beacon for staleShell.ts. Root-level txt is
     // outside every precache glob (whitelist) and navigateFallback denylists
     // txt, so a fetch always reaches the CDN and a missing file 404s instead
@@ -384,4 +407,5 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}));
+});
+});

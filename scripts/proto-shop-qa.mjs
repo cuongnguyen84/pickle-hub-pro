@@ -2,7 +2,9 @@
 // ============================================================================
 // Shop prototype — cross-screen quality gate (board tasks Q01–Q04)
 // ----------------------------------------------------------------------------
-//   npm run dev                    # terminal 1, port 8080
+//   npm run dev:proto              # terminal 1, port 8080 — the plain
+//                                  # `npm run dev` no longer serves /proto/shop
+//                                  # (D4: prototype is behind VITE_PROTO_SHOP=1)
 //   node scripts/proto-shop-qa.mjs [Q01|Q02|Q03|Q04|all]
 //
 // Q01 responsive matrix   — every screen at 320/375/414/768 (+1024/1440 for the
