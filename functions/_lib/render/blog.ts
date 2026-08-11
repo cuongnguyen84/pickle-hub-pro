@@ -128,7 +128,34 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
 }
 
 export function renderBlog(siteUrl: string): Response {
-  const blogLinks = Object.entries(BLOG_POST_META).map(([slug, m]) => `<li><a href="${siteUrl}/blog/${slug}">${escapeHtml(m.title)}</a></li>`).join("");
+  // BLOG_POST_META is insertion-ordered newest-first (metadata.ts prepends new
+  // entries at the top; blog-meta.ts is generated from it), so Object.entries
+  // already yields the same DESC order the visible list renders in.
+  const entries = Object.entries(BLOG_POST_META);
+  const blogLinks = entries.map(([slug, m]) => `<li><a href="${siteUrl}/blog/${slug}">${escapeHtml(m.title)}</a></li>`).join("");
+
+  // SEO audit 2026-08-11 — the EN blog index emitted zero JSON-LD. Add an
+  // ItemList of the posts + a BreadcrumbList so the index carries entity
+  // context (matches the ItemList convention used by social-list / venues).
+  const crumbs = [{ label: "Home", href: siteUrl }, { label: "Blog" }];
+  const blogIndexJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ItemList",
+        name: "Pickleball Blog – Tips & Guides",
+        itemListOrder: "https://schema.org/ItemListOrderDescending",
+        numberOfItems: entries.length,
+        itemListElement: entries.map(([slug, m], i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          url: `${siteUrl}/blog/${slug}`,
+          name: m.title,
+        })),
+      },
+      buildBreadcrumbJsonLd(crumbs),
+    ],
+  };
 
   return htmlResponse(buildHtml({
     title: "Pickleball Blog – Tips & Guides | ThePickleHub",
@@ -137,6 +164,7 @@ export function renderBlog(siteUrl: string): Response {
     siteUrl,
     // SEO-1.2 — emit hreflang to /vi/blog (Vietnamese index)
     extraMeta: bilingualHreflang(`${siteUrl}/blog`, `${siteUrl}/vi/blog`),
+    jsonLd: blogIndexJsonLd,
     bodyContent: `<h2>Blog Posts</h2><ul>${blogLinks}</ul>`,
   }));
 }
@@ -271,7 +299,32 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
 
 export async function renderViBlogIndex(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
   const { data: posts } = await supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(20);
-  const items = (posts || []).map((p) => `<li><a href="${siteUrl}/vi/blog/${p.slug}">${escapeHtml(p.title)}</a><p>${escapeHtml(p.excerpt || "")}</p></li>`).join("");
+  const rows = (posts || []) as { slug: string; title: string; excerpt: string | null }[];
+  const items = rows.map((p) => `<li><a href="${siteUrl}/vi/blog/${p.slug}">${escapeHtml(p.title)}</a><p>${escapeHtml(p.excerpt || "")}</p></li>`).join("");
+
+  // SEO audit 2026-08-11 — mirror the EN /blog fix: emit an ItemList of the
+  // VI posts + BreadcrumbList so /vi/blog carries entity context.
+  const viCrumbs = [{ label: "Trang chủ", href: `${siteUrl}/vi` }, { label: "Blog" }];
+  const viBlogIndexJsonLd = rows.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "ItemList",
+            name: "Blog Pickleball Việt Nam",
+            itemListOrder: "https://schema.org/ItemListOrderDescending",
+            numberOfItems: rows.length,
+            itemListElement: rows.map((p, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              url: `${siteUrl}/vi/blog/${p.slug}`,
+              name: p.title,
+            })),
+          },
+          buildBreadcrumbJsonLd(viCrumbs),
+        ],
+      }
+    : undefined;
 
   return htmlResponse(buildHtml({
     title: "Blog Pickleball Việt Nam | ThePickleHub",
@@ -283,6 +336,7 @@ export async function renderViBlogIndex(supabase: SupabaseClient, siteUrl: strin
     // Without this the VI index emitted zero hreflang while /blog already
     // pointed here, so Google dropped the one-way signal.
     extraMeta: bilingualHreflang(`${siteUrl}/blog`, `${siteUrl}/vi/blog`),
+    jsonLd: viBlogIndexJsonLd,
     bodyContent: items ? `<ul>${items}</ul>` : "",
   }));
 }

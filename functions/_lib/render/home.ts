@@ -35,6 +35,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     url: siteUrl,
     siteUrl,
     lang: "en",
+    // SEO audit 2026-08-11 — buildHtml auto-generates an <h1> from `title`,
+    // and bodyContent already carries its own <h1>ThePickleHub</h1>, so the
+    // page shipped two H1s. Omit the auto header and keep the body H1 as the
+    // single H1 (same pattern as venues.ts / social-event.ts).
+    omitAutoHeader: true,
     // PR73 Phase 2D (audit I-12) — canonical (set via `url: siteUrl` above)
     // has no trailing slash, but the hreflang en + x-default previously
     // pointed at `${siteUrl}/` (with slash). Mismatched canonical and
@@ -152,6 +157,10 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
     url: `${siteUrl}/vi`,
     siteUrl,
     lang: "vi",
+    // SEO audit 2026-08-11 — see renderHome: drop the auto <h1> (title) so the
+    // body <h1> is the single H1. The VI page was doubly wrong here — the auto
+    // H1 was the full 58-char title AND the body had its own H1.
+    omitAutoHeader: true,
     // PR73 Phase 2D (audit I-12) — see renderHome above. Same trailing-
     // slash mismatch (canonical without slash vs hreflang en/x-default
     // with slash). Aligned to the no-trailing-slash convention.

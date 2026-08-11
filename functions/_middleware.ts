@@ -600,7 +600,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v38→v39 (2026-08-11): Singapore Open preview updated to post-event state
   // (recap callout + new meta description, EN + VI) and PPA Tour Asia VI guide
   // refreshed with 7-stop results section; purge stale bot HTML for both.
-  const cacheKey = `pr:v39:${url.pathname}`;
+  // v39→v40 (2026-08-11): SEO audit — EN + VI /blog indexes now emit
+  // ItemList + BreadcrumbList JSON-LD, and both homepages drop the duplicate
+  // auto <h1> (single body H1). Purge stale bot HTML for /, /vi, /blog, /vi/blog.
+  const cacheKey = `pr:v40:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
