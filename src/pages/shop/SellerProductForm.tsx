@@ -25,9 +25,13 @@
 //   * Photos are step 6. There is no upload control here, real or fake, and
 //     the review requirement (at least one photo) is stated rather than hidden
 //     behind a disabled button.
+//
+// Step 5 added the variant matrix, in its own lazily-loaded chunk. Once a
+// product has option groups the matrix owns price and stock, and the simple
+// fields disappear — two places to edit the same number is two numbers.
 // ============================================================================
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, Check, GitCompare, ImageOff } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -56,7 +60,12 @@ import {
   vnd,
   type DraftErrors,
 } from "@/lib/shop/productState";
+import { useReconcileVariants } from "@/hooks/shop/useProductVariants";
+import type { VariantRow } from "@/lib/shop/variantMatrix";
 import type { ProductRow } from "@/integrations/supabase/shop-schema";
+
+// Its own chunk: a seller editing a simple product never downloads the matrix.
+const VariantEditor = lazy(() => import("@/components/shop/VariantEditor"));
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -66,7 +75,7 @@ const EMPTY_DRAFT: ProductDraft = {
   category_slug: "",
   condition: "new",
   price_vnd: "",
-  stock: "",
+  stock_on_hand: "",
 };
 
 /** Local draft envelope. `basedOnVersion` is what makes recovery honest: a
@@ -134,6 +143,7 @@ export default function SellerProductForm() {
   const update = useUpdateProduct(productId);
   const updateSlug = useUpdateProductSlug(productId);
   const archive = useArchiveProduct();
+  const reconcile = useReconcileVariants(productId);
 
   const [draft, setDraft] = useState<ProductDraft | null>(null);
   const [errors, setErrors] = useState<DraftErrors>({});
@@ -159,9 +169,28 @@ export default function SellerProductForm() {
       category_slug: row.category_slug ?? "",
       condition: row.condition,
       price_vnd: variant ? String(variant.price_vnd) : "",
-      stock: variant && variant.stock !== null ? String(variant.stock) : "",
+      stock_on_hand: variant && variant.stock_on_hand !== null ? String(variant.stock_on_hand) : "",
     };
   }, [row]);
+
+  /** True once the product carries option groups: the matrix owns price and
+   *  stock from then on, and the simple fields would be a second, disagreeing
+   *  place to edit the same numbers. */
+  const multiVariant = (row?.option_groups?.length ?? 0) > 0;
+
+  /** Server variants in the shape the editor works in. Retired rows are gone
+   *  from this list — they keep their history but are not on the shelf. */
+  const variantRows = useMemo<VariantRow[]>(
+    () =>
+      (row?.variants ?? []).map((v) => ({
+        id: v.id,
+        optionValues: v.option_values ?? {},
+        priceVnd: String(v.price_vnd),
+        stockOnHand: v.stock_on_hand === null ? "" : String(v.stock_on_hand),
+        sku: v.sku ?? "",
+      })),
+    [row],
+  );
 
   // ── Seed, and offer recovery rather than taking it ────────────────────────
   useEffect(() => {
@@ -267,7 +296,7 @@ export default function SellerProductForm() {
           category_slug: draft.category_slug,
           condition: draft.condition,
         },
-        variant: { price_vnd: draft.price_vnd.trim(), stock: draft.stock.trim() },
+        variant: { price_vnd: draft.price_vnd.trim(), stock_on_hand: draft.stock_on_hand.trim() },
       });
       if (key) clearStored(key);
       setSaveState("saved");
@@ -524,58 +553,92 @@ export default function SellerProductForm() {
       </section>
 
       {/* ── 3. Price and stock ───────────────────────────────────────────── */}
-      <section aria-labelledby="sec-price">
-        <h2 id="sec-price" className="tl-shop-h2">
-          Giá &amp; tồn kho
-        </h2>
-        <p className="tl-shop-hint" style={{ marginTop: -4 }}>
-          Sản phẩm này đang là bản đơn — một giá, một mức tồn kho. Nhiều phiên bản (màu, size…) mở
-          ở bản cập nhật tới.
-        </p>
+      {/* A new product is single-variant until it exists: the matrix is a
+          server reconcile against a real product id, and inventing a local one
+          would mean replaying it after create. Saving the draft redirects
+          straight here, so the switch is one click away and nothing is lost. */}
+      {isNew || multiVariant ? (
+        <section aria-labelledby="sec-price">
+          <h2 id="sec-price" className="tl-shop-h2">
+            Giá &amp; tồn kho
+          </h2>
+          {isNew ? (
+            <p className="tl-shop-hint" style={{ marginTop: -4 }}>
+              Một giá, một mức tồn kho. Lưu nháp xong là bật được nhiều phiên bản (màu, size…).
+            </p>
+          ) : (
+            <p className="tl-shop-hint" style={{ marginTop: -4 }}>
+              Sản phẩm này có nhiều phiên bản — sửa giá và tồn kho ở bảng bên dưới.
+            </p>
+          )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
-          <Field
-            id="p-price"
-            label="Giá (₫)"
-            error={errors.price_vnd}
-            hint={
-              draft?.price_vnd && /^[0-9]+$/.test(draft.price_vnd)
-                ? `Hiển thị: ${vnd(Number(draft.price_vnd))}`
-                : "Chỉ nhập số, không dấu chấm."
-            }
-          >
-            <input
-              id="p-price"
-              className="tl-shop-input"
-              inputMode="numeric"
-              disabled={!editable}
-              value={draft?.price_vnd ?? ""}
-              aria-invalid={!!errors.price_vnd}
-              ref={(el) => (fieldRefs.current.price_vnd = el)}
-              onChange={(e) => setField("price_vnd", e.target.value)}
-            />
-          </Field>
+          {!multiVariant && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+              <Field
+                id="p-price"
+                label="Giá (₫)"
+                error={errors.price_vnd}
+                hint={
+                  draft?.price_vnd && /^[0-9]+$/.test(draft.price_vnd)
+                    ? `Hiển thị: ${vnd(Number(draft.price_vnd))}`
+                    : "Chỉ nhập số, không dấu chấm."
+                }
+              >
+                <input
+                  id="p-price"
+                  className="tl-shop-input"
+                  inputMode="numeric"
+                  disabled={!editable}
+                  value={draft?.price_vnd ?? ""}
+                  aria-invalid={!!errors.price_vnd}
+                  ref={(el) => (fieldRefs.current.price_vnd = el)}
+                  onChange={(e) => setField("price_vnd", e.target.value)}
+                />
+              </Field>
 
-          <Field
-            id="p-stock"
-            label="Tồn kho"
-            error={errors.stock}
-            hint="Bỏ trống nếu không đếm. Để 0 nghĩa là hết hàng."
-          >
-            <input
-              id="p-stock"
-              className="tl-shop-input"
-              inputMode="numeric"
-              placeholder="để trống nếu không đếm"
-              disabled={!editable}
-              value={draft?.stock ?? ""}
-              aria-invalid={!!errors.stock}
-              ref={(el) => (fieldRefs.current.stock = el)}
-              onChange={(e) => setField("stock", e.target.value)}
-            />
-          </Field>
-        </div>
-      </section>
+              <Field
+                id="p-stock"
+                label="Hàng đang có"
+                error={errors.stock_on_hand}
+                hint="Bỏ trống nếu không đếm. Để 0 nghĩa là hết hàng."
+              >
+                <input
+                  id="p-stock"
+                  className="tl-shop-input"
+                  inputMode="numeric"
+                  placeholder="để trống nếu không đếm"
+                  disabled={!editable}
+                  value={draft?.stock_on_hand ?? ""}
+                  aria-invalid={!!errors.stock_on_hand}
+                  ref={(el) => (fieldRefs.current.stock_on_hand = el)}
+                  onChange={(e) => setField("stock_on_hand", e.target.value)}
+                />
+              </Field>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {/* The matrix editor arrives in its own chunk, only for a saved product.
+          A seller with a simple product never downloads it. */}
+      {!isNew && row && (
+        <Suspense fallback={<p className="tl-shop-hint">Đang mở bảng phiên bản…</p>}>
+          <VariantEditor
+            disabled={!editable}
+            initialGroups={row.option_groups ?? []}
+            initialRows={variantRows}
+            onSave={async ({ groups, rows, keepVariantId }) => {
+              await reconcile.mutateAsync({
+                expectedVersion: row.version,
+                groups,
+                rows,
+                clientToken: newToken(),
+                keepVariantId,
+              });
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* ── 4. Photos: named, not faked ──────────────────────────────────── */}
       <section aria-labelledby="sec-media">
@@ -791,7 +854,7 @@ function ConflictNotice({
     category_slug: "Ngành hàng",
     condition: "Tình trạng",
     price_vnd: "Giá",
-    stock: "Tồn kho",
+    stock_on_hand: "Hàng đang có",
   };
   const short = (value: string) => (value.length > 60 ? `${value.slice(0, 60)}…` : value || "(trống)");
 
