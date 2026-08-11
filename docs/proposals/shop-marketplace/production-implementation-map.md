@@ -11,6 +11,10 @@
 > `data layer complete` · `security verified locally` · `preview ready for
 > Product Owner` · `production deployment pending approval`. Nothing here is
 > called "production ready".
+>
+> **Read §11 first.** The Product Owner signed D1–D4 on 2026-08-11; those
+> decisions override anything below them and anything in `proposal.md` that
+> disagrees.
 
 ---
 
@@ -42,8 +46,8 @@
 |---|---|---|---|
 | 0 | this doc | Implementation map | — |
 | **1** | **P1** | Pilot access gate · seller application (draft → submit → resubmit) · admin queue + review + structured change requests · application status · audit · notifications · production Seller/Admin shells | 0 |
-| 2 | P2a | Shop profile, categories, products, variants/SKU, media upload | 1 |
-| 2 | P2b | Moderation queue, approve/reject/request-change, public discovery | P2a |
+| 2 | P2a | Shop profile, categories, products, variants/SKU, basic inventory, media upload, seller catalog, submit-for-review — **plus** the moderation state machine, guarded transitions, RLS + pgTAP P2b will use (no admin UI, no public catalog — §11 D3) | 1 |
+| 2 | P2b | Admin moderation UI (approve / reject / request changes), public discovery + PDP incl. the "Liên hệ shop" CTA (§11 D2) | P2a |
 | 3 | P3a | Wishlist, cart, one-shop checkout, idempotent order creation, inventory | P2 |
 | 3 | P3b | Order lists/details, cancellation, deadlines, returns, disputes, reviews | P3a |
 | 4 | — | Payment provider / public launch — **blocked on explicit approval** | P3 |
@@ -75,8 +79,9 @@ New tables:
 
 Deferred to Phase 2+ (named here so nobody re-invents them): `shop_addresses`,
 `shop_policies`, `product_categories`, `products`, `product_variants`,
-`product_media`, `inventory_movements`, `carts`, `orders`, `payments`,
-`returns`, `disputes`, `reviews`. **`shop_bank_accounts` and
+`product_media` (private original + approved public rendition — §11 D1),
+`shop_contact_channels` (§11 D2), `inventory_movements`, `carts`, `orders`,
+`payments`, `returns`, `disputes`, `reviews`. **`shop_bank_accounts` and
 `shop_application_documents` are NOT created in Phase 1** — creating a table
 for data we decided not to collect is how it starts getting collected.
 
@@ -246,3 +251,97 @@ seeded manually — no self-serve join.
 
 Items 1 and 2 do **not** block building Phase 1; item 3 is a hard stop by
 instruction.
+
+---
+
+## 11. Product Owner decisions — D1–D4 (2026-08-11)
+
+Signed directly by the Product Owner after Phase 1 landed on the branch. These
+override anything earlier in this file, in `proposal.md`, or in
+`shop-marketplace-plan.md` that contradicts them. Round 2 of `/idea` was
+**deliberately skipped** — the four disagreements were resolved by decision, not
+by another panel.
+
+### D1 — Product media: private draft + public approved rendition (hybrid)
+
+Not "all public", not "all private".
+
+| Object | Bucket / access |
+|---|---|
+| Originals, `draft`, `pending`, `rejected` media | **private** |
+| Approved rendition of an **approved + publishable** product | **public**, served from a separate path |
+| Seller documents, moderation attachments | **private, always** — never a public rendition |
+
+Rules that follow, and that the P2a tests must prove:
+
+- The public PDP / CDN reads the **approved rendition path only**. It never
+  reads the draft bucket, and it never uses a short-lived signed URL for
+  published imagery (cache + SEO both degrade).
+- `unpublish` / `reject` / `suspend` must make the public rendition
+  **unreachable**, not merely unlinked.
+- A seller cannot promote an object to public by editing a path or by writing a
+  client-controlled `status`. Publication is a server-side transition.
+- Storage/RLS tests required: guessed path, cross-shop access, unpublished
+  media, and a seller attempting to write into the public prefix.
+
+Precedent to copy: `clubs-logos` (folder-scoped `auth.uid()`, random path,
+`upsert:false`). Precedent **not** to copy: `og-images` (`cacheControl:
+31536000` — the Smart-CDN finding from round 1).
+
+### D2 — PDP has a "Liên hệ shop" CTA (Phase 2, discovery/lead-gen)
+
+Yes to the CTA — but only through **public contact channels the seller
+declared and an admin approved**.
+
+- Zalo / Messenger / a business phone are allowed **if** the seller opted that
+  channel in. Account email and account phone are never exposed by default.
+- Every channel row carries an `active`/`approved` state and can be disabled by
+  an admin.
+- Links are validated and sanitised; opening one tells the user they are
+  leaving ThePickleHub.
+- **No PII in the outbound URL** — not the buyer's name, phone, nor the product
+  they were looking at.
+- No fake internal chat. Messaging is not built, so it is not implied.
+- Phase 2 is therefore discovery + lead generation. Cart and checkout stay in
+  Phase 3.
+
+### D3 — Scope: this file is the source of truth
+
+P2a and P2b split exactly as §1 already says. Any earlier prompt or note that
+folded moderation UI into P2a is wrong.
+
+- **P2a** — shop profile, categories, products, variants/SKU, basic inventory,
+  media upload, seller catalog, submit-for-review.
+- **P2b** — Admin moderation UI, approve/reject/request-changes screens, public
+  discovery + PDP.
+
+P2a **still builds** the moderation state machine, the guarded server-side
+transition primitives, RLS and pgTAP that P2b will consume. It does **not**
+build the admin moderation screens or the public catalog.
+
+### D4 — Prototype stays in the repo, leaves the production artifact
+
+The prototype source, its tests, and the ability to run it are **kept**. What
+changes is what ships:
+
+- A build-time flag separates them. Production build = flag off.
+- Prototype routes and imports must be removed at **compile time**. A runtime
+  `if` that merely hides the route is not acceptable — the chunks would still
+  ship.
+- Prototype preview keeps its three noindex layers and keeps running Q01–Q04.
+- The production artifact contains no prototype screen / scenario / fixture
+  chunk.
+
+The total-gz backstop stays at **1970 KB**. It is not raised for Phase 2a.
+If P2a pushes past it: produce a bundle attribution, hunt accidental eager
+imports, lazy-load by route, reuse existing primitives instead of adding a
+dependency, and look for something to split or drop. If it is still red, stop
+and report the exact delta for a separate approval. Do not edit the budget.
+
+### Verification standard (applies from now on)
+
+`supabase start` alone is **not** evidence of a clean database — it does not
+replay every migration. Security verification means: `supabase db reset` →
+confirm all migrations applied → run the full pgTAP suite → record the
+assertion count. Only then may a report say "security verified locally", and
+the report must state how the database was built.
