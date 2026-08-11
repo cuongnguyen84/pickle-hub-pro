@@ -12,6 +12,7 @@
 
 import AxeBuilder from "@axe-core/playwright";
 import { createClient } from "@supabase/supabase-js";
+import { execFileSync } from "node:child_process";
 
 export const API = process.env.SUPABASE_LOCAL_URL ?? "http://127.0.0.1:54321";
 export const ANON =
@@ -27,6 +28,27 @@ export const STORAGE_KEY = `sb-${new URL(API).hostname.split(".")[0]}-auth-token
 export const WIDTHS = [320, 375, 414, 768, 1440];
 
 export const adminClient = () => createClient(API, SERVICE, { auth: { persistSession: false } });
+
+/**
+ * Give a local user the admin role.
+ *
+ * Not through the service key: service_role deliberately has no INSERT grant on
+ * user_roles, so `admin.from("user_roles").insert(...)` fails silently and the
+ * "admin" it produces is a normal user. Straight to psql on the local
+ * container, which is the only honest way to say "this is a test fixture".
+ */
+export function grantAdminLocally(userId) {
+  execFileSync(
+    "docker",
+    [
+      "exec",
+      process.env.SUPABASE_LOCAL_DB_CONTAINER ?? "supabase_db_ajvlcamxemgbxduhiqrl",
+      "psql", "-U", "postgres", "-q", "-c",
+      `INSERT INTO public.user_roles (user_id, role) VALUES ('${userId}', 'admin') ON CONFLICT DO NOTHING;`,
+    ],
+    { stdio: "pipe" },
+  );
+}
 
 const MEDIA_BUCKETS = ["shop-product-media-draft", "shop-product-media"];
 

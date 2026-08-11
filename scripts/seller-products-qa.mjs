@@ -36,6 +36,7 @@ import {
   STORAGE_KEY,
   adminClient,
   anonClient,
+  grantAdminLocally,
   remainingShopObjects,
   removeShopObjects,
   axeFindings,
@@ -135,12 +136,27 @@ async function seed() {
   });
   if (matrixError) throw matrixError;
 
+  // A real admin USER, not the service key: product_decide asks is_admin(),
+  // which reads the JWT, and a service_role client has no user identity to
+  // read. Worth finding here rather than in production.
+  const adminEmail = `qa-admin-${run}@thepicklehub.test`;
+  const { data: adminUser, error: adminError } = await admin.auth.admin.createUser({
+    email: adminEmail, password, email_confirm: true,
+  });
+  if (adminError) throw adminError;
+  grantAdminLocally(adminUser.user.id);
+  const adminAs = anonClient();
+  await adminAs.auth.signInWithPassword({ email: adminEmail, password });
+
   return {
     userId,
+    adminUserId: adminUser.user.id,
+    adminClient: adminAs,
     shopId: shop.id,
     session: session.session,
     productId: ids[0],
     matrixProductId: ids[1],
+    emptyProductId: ids[2],
   };
 }
 
@@ -199,7 +215,10 @@ const main = async () => {
   // A vacuous fixture makes every media assertion below vacuous too.
   for (const problem of assertFixturesAreWhatTheyClaim()) note(`FIXTURE ${problem}`);
 
-  let seeded = { userId: null, shopId: null, productId: null, matrixProductId: null };
+  let seeded = {
+    userId: null, adminUserId: null, shopId: null,
+    productId: null, matrixProductId: null, emptyProductId: null,
+  };
   const browser = await chromium.launch();
 
   try {
@@ -293,6 +312,134 @@ const main = async () => {
       for (const f of await axeFindings(page)) note(`MEDIA ${f}`);
     }
 
+    // ── Preview, checklist, submit, resubmit ─────────────────────────────
+    // The whole last mile, driven through the real screen against the real
+    // RPCs: what is missing, whether "đi tới chỗ cần sửa" actually lands on the
+    // control, whether a double click writes two audit events, and whether a
+    // reload still says pending.
+    if (mediaOk) {
+      await page.goto(`${APP}/seller/products/${seeded.productId}/edit`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(1500);
+
+      // Assert the checklist on the product that has NO photo — the media one
+      // is already complete, and a checklist test on a complete product proves
+      // only that nothing was rendered.
+      await page.goto(`${APP}/seller/products/${seeded.emptyProductId}/edit`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(1500);
+      const checklist = (await page.locator('[role="status"], [role="alert"]').allTextContents()).join(" | ");
+      if (!/chưa xong trước khi gửi duyệt/i.test(checklist)) {
+        note("SUBMIT không thấy danh sách việc còn thiếu trước khi gửi duyệt");
+      }
+      if (!/ảnh/i.test(checklist)) note("SUBMIT checklist không nêu thiếu ảnh");
+
+      const goTo = page.getByRole("button", { name: "Đi tới chỗ cần sửa" }).first();
+      if ((await goTo.count()) === 0) {
+        note("SUBMIT thiếu nút đi tới chỗ cần sửa");
+      } else {
+        await goTo.click();
+        await page.waitForTimeout(600);
+        const focused = await page.evaluate(() => document.activeElement?.id ?? "");
+        if (!focused) note("SUBMIT bấm đi tới chỗ cần sửa nhưng không có gì được focus");
+      }
+
+      // Back to the complete product for the submit half.
+      await page.goto(`${APP}/seller/products/${seeded.productId}/edit`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(2000);
+
+      const submitButton = page.getByRole("button", { name: "Gửi duyệt" });
+      if ((await submitButton.count()) === 0) {
+        note("SUBMIT sản phẩm đã đủ điều kiện nhưng không thấy nút Gửi duyệt");
+      } else {
+        // Double click: the token must make the second one a no-op.
+        await submitButton.click();
+        await submitButton.click({ force: true }).catch(() => {});
+        await page.waitForTimeout(3000);
+
+        const done = (await page.locator('[role="status"]').allTextContents()).join(" | ");
+        if (!/Đã gửi duyệt/i.test(done)) note(`SUBMIT không thấy xác nhận đã gửi duyệt: ${done.slice(0, 120)}`);
+        if (/🎉|Chúc mừng/i.test(done)) note("SUBMIT dùng ăn mừng thay vì nói việc tiếp theo");
+
+        const admin3 = adminClient();
+        const { data: events } = await admin3
+          .from("product_submission_events")
+          .select("event,from_status,to_status")
+          .eq("product_id", seeded.productId);
+        if ((events ?? []).length !== 1) {
+          note(`SUBMIT mong đúng 1 sự kiện lịch sử, thấy ${(events ?? []).length}`);
+        } else if (events[0].event !== "submitted") {
+          note(`SUBMIT sự kiện đầu tiên phải là "submitted", thấy "${events[0].event}"`);
+        }
+
+        const { data: prodRow } = await admin3
+          .from("products").select("status").eq("id", seeded.productId).single();
+        if (prodRow?.status !== "pending_review") {
+          note(`SUBMIT trạng thái sau khi gửi phải là pending_review, thấy ${prodRow?.status}`);
+        }
+
+        // Reload: the state comes from the server, not from what the tab
+        // remembers about the click.
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForTimeout(2000);
+        const pending = (await page.locator("body").textContent()) ?? "";
+        if (!/Đang chờ quản trị viên xem/i.test(pending)) {
+          note("SUBMIT tải lại xong không còn thấy trạng thái chờ duyệt");
+        }
+        if ((await page.locator("#p-title").count()) > 0) {
+          const disabled = await page.locator("#p-title").isDisabled();
+          if (!disabled) note("SUBMIT đang chờ duyệt mà ô tên sản phẩm vẫn sửa được");
+        }
+
+        // needs_changes, set by a trusted helper the way a moderator would.
+        await seeded.adminClient.rpc("product_decide", {
+          _product_id: seeded.productId,
+          _decision: "request_changes",
+          _applicant_note: "Ảnh chưa rõ, chụp lại giúp em.",
+          _internal_note: null,
+          _requested_fields: ["media"],
+        }).then(({ error }) => {
+          if (error) note(`SUBMIT không đặt được needs_changes bằng service role: ${error.message}`);
+        });
+
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForTimeout(2000);
+        const changes = (await page.locator("body").textContent()) ?? "";
+        if (!/Ảnh chưa rõ/i.test(changes)) note("RESUBMIT không thấy lý do quản trị viên yêu cầu sửa");
+
+        const resubmit = page.getByRole("button", { name: "Gửi duyệt" });
+        if ((await resubmit.count()) === 0) {
+          note("RESUBMIT không thấy nút gửi lại sau khi được yêu cầu sửa");
+        } else {
+          await resubmit.click();
+          await page.waitForTimeout(3000);
+          const { data: after } = await admin3
+            .from("product_submission_events").select("event").eq("product_id", seeded.productId);
+          const kinds = (after ?? []).map((e) => e.event);
+          if (!kinds.includes("resubmitted")) {
+            note(`RESUBMIT lịch sử phải có "resubmitted", thấy ${kinds.join(",") || "rỗng"}`);
+          }
+        }
+
+        // The preview, once, at the end: it is the same projection the buyer
+        // surface will read.
+        const previewButton = page.getByRole("button", { name: "Xem trước như người mua" });
+        if ((await previewButton.count()) === 0) note("PREVIEW không thấy nút xem trước");
+        else {
+          await previewButton.click();
+          await page.waitForTimeout(2500);
+          const previewText = (await page.locator("body").textContent()) ?? "";
+          if (!/người mua chưa nhìn thấy/i.test(previewText)) {
+            note("PREVIEW thiếu banner nói rõ đây là bản xem trước");
+          }
+          const buy = page.getByRole("button", { name: /chưa mua được/i });
+          if ((await buy.count()) === 0) note("PREVIEW nút mua không bị thay bằng nhãn xem trước");
+          else if (!(await buy.isDisabled())) note("PREVIEW nút mua vẫn bấm được");
+
+          for (const f of await sweepWidths(page, "PREVIEW")) note(f);
+          for (const f of await axeFindings(page)) note(`PREVIEW ${f}`);
+        }
+      }
+    }
+
     await auditRoute(page, "/seller/products/new", "Thêm sản phẩm");
     await auditRoute(page, `/seller/products/${seeded.productId}/edit`, PRODUCTS[0].title);
 
@@ -342,6 +489,7 @@ const main = async () => {
   } finally {
     await browser.close();
     await cleanup(seeded.userId, seeded.shopId);
+    if (seeded.adminUserId) await admin.auth.admin.deleteUser(seeded.adminUserId);
   }
 
   if (findings.length) {

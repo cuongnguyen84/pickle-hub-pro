@@ -155,6 +155,9 @@ describe.skipIf(!up)("shop media — storage boundary", () => {
 
     const { data: prod, error: prodError } = await admin.from("products").insert({
       shop_id: shopA, slug: `int-prod-${run}`, title: `Int Prod ${run}`, category_slug: "vot",
+      // Step 7's preflight requires a listing to say something. A fixture
+      // without one is a product no seller could have submitted.
+      description: "Vợt dùng cho kiểm thử tích hợp.",
     }).select().single();
     if (prodError) throw prodError;
     productA = prod.id;
@@ -298,7 +301,13 @@ describe.skipIf(!up)("shop media — storage boundary", () => {
     expect(finalizeError).toBeNull();
 
     await admin.from("product_variants").insert({ product_id: productA, shop_id: shopA, price_vnd: 500000 });
-    await ownerA.client.rpc("product_submit_for_review", { _product_id: productA });
+    // Checked, not fired and forgotten: this used to swallow its error, and
+    // when step 7 added a rule the fixture did not meet, the product silently
+    // stayed a draft and three tests failed two steps later on `product_decide`.
+    const { error: submitError } = await ownerA.client.rpc("product_submit_for_review", {
+      _product_id: productA,
+    });
+    expect(submitError).toBeNull();
     const { error: decideError } = await adminUser.client.rpc("product_decide", {
       _product_id: productA, _decision: "approve",
     });
