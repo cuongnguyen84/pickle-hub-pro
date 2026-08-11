@@ -342,22 +342,30 @@ export const ModerationDecisionForm = ({
   onSubmit,
   busy,
   error,
+  targets = [],
 }: {
   onSubmit?: (d: Decision) => void;
   busy?: Decision | null;
   error?: string;
+  /** Steps/fields the moderator can point the applicant at. */
+  targets?: { step: number; field: string; label: string }[];
 }) => {
   const [decision, setDecision] = useState<Decision | "">("");
   const [applicantNote, setApplicantNote] = useState("");
   const [internalNote, setInternalNote] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
 
   const needsNote = decision === "request-changes" || decision === "reject";
   const noteMissing = needsNote && applicantNote.trim().length < 10;
 
+  const noTarget = decision === "request-changes" && targets.length > 0 && picked.length === 0;
+
   const consequence: Record<Decision, string> = {
     "request-changes":
-      "Người nộp nhận thông báo kèm đúng phần ghi chú bên dưới. Hồ sơ quay lại trạng thái “Cần sửa”, họ nộp lại được.",
+      picked.length > 0
+        ? `Người nộp nhận thông báo kèm ghi chú bên dưới và ${picked.length} đường dẫn đi thẳng tới đúng ô cần sửa. Hồ sơ quay lại trạng thái “Cần sửa”.`
+        : "Người nộp nhận thông báo kèm đúng phần ghi chú bên dưới. Hồ sơ quay lại trạng thái “Cần sửa”, họ nộp lại được.",
     approve:
       "Shop được tạo ở trạng thái chờ kích hoạt. Người bán chưa đăng bán được cho tới khi họ đăng nhập và đồng ý quy chế.",
     reject:
@@ -369,7 +377,7 @@ export const ModerationDecisionForm = ({
       className="tl-shop-decision"
       onSubmit={(e) => {
         e.preventDefault();
-        if (decision && !noteMissing && confirm) onSubmit?.(decision);
+        if (decision && !noteMissing && !noTarget && confirm) onSubmit?.(decision);
       }}
     >
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
@@ -399,6 +407,42 @@ export const ModerationDecisionForm = ({
             <strong>Sau khi bấm:</strong> {consequence[decision]}
           </div>
         </div>
+      )}
+
+      {decision === "request-changes" && targets.length > 0 && (
+        <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
+          <legend className="tl-shop-label" style={{ padding: 0 }}>
+            Cần sửa những ô nào? (bắt buộc)
+          </legend>
+          <p className="tl-shop-hint" style={{ marginTop: 0, marginBottom: 8 }}>
+            Mỗi ô đã tick sẽ thành một đường dẫn đưa người nộp tới đúng chỗ đó. Ghi chú bên
+            dưới giải thích cách sửa.
+          </p>
+          <div style={{ display: "grid", gap: 2 }}>
+            {targets.map((t) => (
+              <label key={t.field} className="tl-shop-check">
+                <input
+                  type="checkbox"
+                  checked={picked.includes(t.field)}
+                  onChange={() =>
+                    setPicked((ps) =>
+                      ps.includes(t.field) ? ps.filter((x) => x !== t.field) : [...ps, t.field],
+                    )
+                  }
+                />
+                {t.label}
+                <span className="count">bước {t.step + 1}</span>
+              </label>
+            ))}
+          </div>
+          {noTarget && (
+            <p className="tl-shop-error">
+              <AlertTriangle size={13} aria-hidden="true" />
+              Tick ít nhất một ô. &ldquo;Sửa lại hồ sơ&rdquo; chung chung khiến người nộp phải
+              đọc lại cả 6 bước để đoán chỗ sai.
+            </p>
+          )}
+        </fieldset>
       )}
 
       <label className="tl-shop-field">
@@ -457,7 +501,7 @@ export const ModerationDecisionForm = ({
         <button
           type="submit"
           className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
-          disabled={!decision || noteMissing || !confirm || !!busy}
+          disabled={!decision || noteMissing || noTarget || !confirm || !!busy}
         >
           {busy ? (
             <>
