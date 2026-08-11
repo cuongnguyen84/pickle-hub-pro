@@ -239,6 +239,26 @@ describe.skipIf(!up)("shop media — storage boundary", () => {
     expect(error).not.toBeNull();
   });
 
+  it("a support member cannot READ a draft original, even knowing the path", async () => {
+    // The original still carries whatever EXIF the phone wrote — the GPS of
+    // the seller's house, routinely. Support has no task that needs it.
+    const { data, error } = await support.client.storage.from(DRAFT).download(paths.draft_path);
+    expect(data).toBeNull();
+    expect(error).not.toBeNull();
+  });
+
+  it("the owner can read their own draft original", async () => {
+    const { data, error } = await ownerA.client.storage.from(DRAFT).download(paths.draft_path);
+    expect(error).toBeNull();
+    expect(data).not.toBeNull();
+  });
+
+  it("an admin can read a draft original for moderation", async () => {
+    const { data, error } = await adminUser.client.storage.from(DRAFT).download(paths.draft_path);
+    expect(error).toBeNull();
+    expect(data).not.toBeNull();
+  });
+
   it("the bucket refuses a MIME type outside the allowlist", async () => {
     const { error } = await ownerA.client.storage
       .from(DRAFT)
