@@ -66,6 +66,10 @@ import type { ProductRow } from "@/integrations/supabase/shop-schema";
 
 // Its own chunk: a seller editing a simple product never downloads the matrix.
 const VariantEditor = lazy(() => import("@/components/shop/VariantEditor"));
+// Same chunk as the shop logo/cover editor: one upload machine, two surfaces.
+const ProductMediaSection = lazy(() =>
+  import("@/components/shop/MediaEditor").then((m) => ({ default: m.ProductMediaSection })),
+);
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -640,25 +644,36 @@ export default function SellerProductForm() {
         </Suspense>
       )}
 
-      {/* ── 4. Photos: named, not faked ──────────────────────────────────── */}
-      <section aria-labelledby="sec-media">
-        <h2 id="sec-media" className="tl-shop-h2">
-          Ảnh sản phẩm
-        </h2>
-        <div className="tl-shop-notice tl-shop-notice--info" role="status">
-          <ImageOff size={16} aria-hidden="true" />
-          <div>
-            <strong>Chưa tải ảnh lên được ở bản này.</strong> Màn hình tải ảnh mở ở bản cập nhật
-            tới. Sản phẩm cần ít nhất một ảnh mới gửi duyệt được, nên anh/chị lưu nháp trước, thêm
-            ảnh sau.
-            {!isNew && row!.mediaCount > 0 && (
-              <p className="tl-shop-hint" style={{ marginTop: 8 }}>
-                Sản phẩm này đang có {row!.mediaCount} ảnh.
-              </p>
-            )}
+      {/* ── 4. Photos ────────────────────────────────────────────────────── */}
+      {isNew ? (
+        <section aria-labelledby="sec-media">
+          <h2 id="sec-media" className="tl-shop-h2">
+            Ảnh sản phẩm
+          </h2>
+          <div className="tl-shop-notice tl-shop-notice--info" role="status">
+            <ImageOff size={16} aria-hidden="true" />
+            <div>
+              <strong>Lưu nháp trước rồi thêm ảnh.</strong> Ảnh gắn với một sản phẩm đã tồn tại,
+              nên bấm &ldquo;Lưu nháp&rdquo; xong là màn hình ảnh mở ra ngay ở bước tiếp theo.
+              Sản phẩm cần ít nhất một ảnh mới gửi duyệt được.
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : (
+        <Suspense fallback={<p className="tl-shop-hint">Đang mở phần ảnh…</p>}>
+          <ProductMediaSection
+            productId={row!.id}
+            productVersion={row!.version}
+            media={row!.media}
+            variants={row!.variants}
+            optionLabel={(variant) =>
+              Object.values(variant.option_values ?? {}).join(" · ") || "Sản phẩm"
+            }
+            disabled={!editable}
+            onChanged={() => void product.refetch()}
+          />
+        </Suspense>
+      )}
 
       {editable && (
         <SaveBar

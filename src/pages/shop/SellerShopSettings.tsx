@@ -18,7 +18,7 @@
 // in migration 20260811180000.
 // ============================================================================
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { DefList, ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
@@ -42,6 +42,12 @@ import {
   validateChannel,
 } from "@/lib/shop/contactChannels";
 import type { ShopContactType, ShopRow } from "@/integrations/supabase/shop-schema";
+
+// Shares its chunk with the product photo editor — one upload machine, two
+// surfaces — and is fetched only when the seller opens this section.
+const ShopProfileMediaSection = lazy(() =>
+  import("@/components/shop/MediaEditor").then((m) => ({ default: m.ShopProfileMediaSection })),
+);
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -88,6 +94,7 @@ export default function SellerShopSettings() {
   const deleteContact = useDeleteContact(shopId);
 
   const [draft, setDraft] = useState<ProfilePatch | null>(null);
+  const [mediaOpen, setMediaOpen] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<Partial<Record<keyof ProfilePatch, string>>>({});
@@ -322,6 +329,24 @@ export default function SellerShopSettings() {
           }}
         />
       )}
+
+      {/* ── Logo & cover ─────────────────────────────────────────────────── */}
+      {/* Behind a disclosure, so the uploader chunk is fetched when the seller
+          asks for it rather than on every visit to Cài đặt. */}
+      <details onToggle={(e) => setMediaOpen((e.target as HTMLDetailsElement).open)}>
+        <summary className="tl-shop-btn" style={{ cursor: "pointer", marginBottom: 12 }}>
+          Logo &amp; ảnh bìa
+        </summary>
+        {mediaOpen && (
+          <Suspense fallback={<p className="tl-shop-hint">Đang mở phần ảnh…</p>}>
+            <ShopProfileMediaSection
+              shopId={row.id}
+              disabled={!canEdit}
+              onChanged={() => {}}
+            />
+          </Suspense>
+        )}
+      </details>
 
       {/* ── Slug ─────────────────────────────────────────────────────────── */}
       <SlugSection
