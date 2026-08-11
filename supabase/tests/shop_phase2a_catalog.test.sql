@@ -406,9 +406,19 @@ SELECT is(
 );
 
 -- The composite FK, from a role RLS does not stop.
+--
+-- Against a product with no variants yet, so the FK is the only thing that can
+-- refuse. Step 5 added uniq_product_variants_default, which is a nearer wall:
+-- probing a product that already has a default variant raises 23505 and proves
+-- that index instead — true, but not the claim this assertion is making.
+INSERT INTO public.products (id, shop_id, slug, title, category_slug)
+VALUES ('5b0000ff-0000-4000-8000-0000000000ff'::uuid,
+        '5a000001-0000-4000-8000-000000000001'::uuid,
+        'san-pham-chua-co-phien-ban', 'Sản phẩm chưa có phiên bản', 'vot');
+
 SELECT throws_ok(
   $$ INSERT INTO public.product_variants (product_id, shop_id, price_vnd)
-     VALUES ('5b000001-0000-4000-8000-000000000001'::uuid,
+     VALUES ('5b0000ff-0000-4000-8000-0000000000ff'::uuid,
              '5a000002-0000-4000-8000-000000000002'::uuid, 100000) $$,
   '23503', NULL,
   'composite FK stops a variant borrowing another shop_id'

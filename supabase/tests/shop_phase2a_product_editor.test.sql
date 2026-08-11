@@ -94,7 +94,7 @@ SET LOCAL request.jwt.claims TO '{"sub":"50050001-0000-4000-8000-000000000001","
 
 SELECT is(
   (public.product_create('7b000001-0000-4000-8000-000000000001'::uuid, 'tok-owner-0001',
-     '{"title":"Vợt pickleball carbon T700 16mm","category_slug":"vot","price_vnd":2450000,"stock":4}'::jsonb)).title,
+     '{"title":"Vợt pickleball carbon T700 16mm","category_slug":"vot","price_vnd":2450000,"stock_on_hand":4}'::jsonb)).title,
   'Vợt pickleball carbon T700 16mm',
   'chủ shop tạo được sản phẩm'
 );
@@ -189,7 +189,7 @@ SELECT is(
 
 -- Stock is a third answer, not a zero.
 SELECT ok(
-  (SELECT stock IS NULL FROM public.product_variants v JOIN public.products p ON p.id=v.product_id
+  (SELECT stock_on_hand IS NULL FROM public.product_variants v JOIN public.products p ON p.id=v.product_id
    WHERE p.client_token='tok-owner-0002'),
   'bỏ trống tồn kho lưu NULL — "không đếm" khác "hết hàng"'
 );
@@ -205,7 +205,7 @@ SELECT is(
      (SELECT id FROM public.products WHERE client_token='tok-owner-0001'),
      (SELECT version FROM public.products WHERE client_token='tok-owner-0001'),
      '{"description":"Mặt carbon T700, lõi tổ ong 16mm."}'::jsonb,
-     '{"price_vnd":2390000,"stock":6}'::jsonb)).description,
+     '{"price_vnd":2390000,"stock_on_hand":6}'::jsonb)).description,
   'Mặt carbon T700, lõi tổ ong 16mm.',
   'chủ shop sửa được bản nháp'
 );
@@ -363,15 +363,20 @@ SELECT throws_ok(
        '{"title":"Hàng cắm nhờ","price_vnd":100000}'::jsonb) $$,
   '42501', NULL, 'người bán shop khác KHÔNG tạo được sản phẩm trong shop này');
 
--- Cross-shop FK injection: the rival writes a variant that passes RLS — the
--- shop_id is genuinely theirs — but names another shop's product. Nothing here
--- is checking membership any more; the composite FK (product_id, shop_id) is
--- the only thing left, and it is what refuses.
+-- Cross-shop injection: the rival writes a variant that passes RLS — the
+-- shop_id is genuinely theirs — but names another shop's product.
+--
+-- Since step 5 this is refused by uniq_product_variants_default rather than by
+-- the composite FK: the victim's product already has a default variant, and
+-- that partial unique index is the nearer wall. Both walls are real, and the
+-- FK itself is proved from a role RLS does not stop in
+-- shop_phase2a_catalog.test.sql ("composite FK stops a variant borrowing
+-- another shop_id"). What matters here is that the rival's write does not land.
 SELECT throws_ok(
   format($$ INSERT INTO public.product_variants (product_id, shop_id, price_vnd)
             VALUES (%L::uuid, '7b000002-0000-4000-8000-000000000002'::uuid, 1) $$,
     (SELECT v FROM t_ids WHERE k='p1')),
-  '23503', NULL, 'không gắn được phiên bản của shop mình vào sản phẩm shop khác');
+  '23505', NULL, 'không gắn được phiên bản của shop mình vào sản phẩm shop khác');
 
 -- Not on the pilot list, even as a manager.
 SET LOCAL request.jwt.claims TO '{"sub":"50050006-0000-4000-8000-000000000006","role":"authenticated","aal":"aal1"}';
