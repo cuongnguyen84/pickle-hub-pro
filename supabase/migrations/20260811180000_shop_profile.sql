@@ -388,7 +388,7 @@ BEGIN
   -- is told, rather than quietly winning.
   IF _row.version <> _expected_version THEN
     RAISE EXCEPTION 'hồ sơ đã được cập nhật ở nơi khác (phiên bản % ≠ %)', _row.version, _expected_version
-      USING ERRCODE = 'serialization_failure';
+      USING ERRCODE = 'PT409';
   END IF;
 
   UPDATE public.shops

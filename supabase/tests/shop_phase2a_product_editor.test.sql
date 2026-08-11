@@ -235,7 +235,7 @@ SELECT is(
 SELECT throws_ok(
   format($$ SELECT public.product_update(%L::uuid, 1, '{"title":"Bản cũ ghi đè"}'::jsonb, NULL) $$,
     (SELECT id FROM public.products WHERE client_token='tok-owner-0001')),
-  '40001', NULL, 'phiên bản cũ bị từ chối chứ không ghi đè bản mới');
+  'PT409', NULL, 'phiên bản cũ bị từ chối chứ không ghi đè bản mới');
 SELECT is(
   (SELECT title FROM public.products WHERE client_token='tok-owner-0001'),
   'Vợt carbon T700 bản 2026',

@@ -183,7 +183,7 @@ SELECT is(
 SELECT throws_ok(
   format($$ SELECT public.product_media_reorder(%L::uuid, 1, ARRAY[%L]::uuid[]) $$,
     (SELECT v FROM t_med WHERE k='p1'), (SELECT v FROM t_med WHERE k='m1')),
-  '40001', NULL, 'phiên bản cũ bị từ chối — hai tab không ghi đè thứ tự của nhau');
+  'PT409', NULL, 'phiên bản cũ bị từ chối — hai tab không ghi đè thứ tự của nhau');
 SELECT throws_ok(
   format($$ SELECT public.product_media_reorder(%L::uuid,
       (SELECT version FROM public.products WHERE id = %L::uuid), ARRAY[%L]::uuid[]) $$,

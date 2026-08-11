@@ -722,7 +722,7 @@ BEGIN
 
   IF _row.version <> _expected_version THEN
     RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác (phiên bản % ≠ %)', _row.version, _expected_version
-      USING ERRCODE = 'serialization_failure';
+      USING ERRCODE = 'PT409';
   END IF;
 
   IF _patch ? 'title' THEN
@@ -744,7 +744,7 @@ BEGIN
   RETURNING * INTO _row;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác' USING ERRCODE = 'serialization_failure';
+    RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác' USING ERRCODE = 'PT409';
   END IF;
 
   IF _variant IS NULL THEN
@@ -860,7 +860,7 @@ BEGIN
 
   IF _product.version <> _expected_version THEN
     RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác (phiên bản % ≠ %)',
-      _product.version, _expected_version USING ERRCODE = 'serialization_failure';
+      _product.version, _expected_version USING ERRCODE = 'PT409';
   END IF;
 
   IF NOT public.product_option_groups_valid(_option_groups) THEN
@@ -896,7 +896,7 @@ BEGIN
       variants_token = NULLIF(btrim(coalesce(_client_token, '')), '')
   WHERE id = _product_id AND version = _expected_version;
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác' USING ERRCODE = 'serialization_failure';
+    RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác' USING ERRCODE = 'PT409';
   END IF;
   PERFORM set_config('shop.privileged_write', 'off', true);
 

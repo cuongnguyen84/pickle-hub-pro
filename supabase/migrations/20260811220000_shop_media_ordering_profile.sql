@@ -83,7 +83,7 @@ BEGIN
   END IF;
   IF _prod.version <> _expected_version THEN
     RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác (phiên bản % ≠ %)',
-      _prod.version, _expected_version USING ERRCODE = 'serialization_failure';
+      _prod.version, _expected_version USING ERRCODE = 'PT409';
   END IF;
 
   -- The submitted list must be exactly this product's media, no more and no

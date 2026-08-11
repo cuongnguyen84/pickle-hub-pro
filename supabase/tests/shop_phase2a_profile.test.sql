@@ -168,7 +168,7 @@ SELECT is(
 -- The stale tab.
 SELECT throws_ok(
   $$ SELECT public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid, 1, '{"name":"Ghi đè"}'::jsonb) $$,
-  '40001', NULL,
+  'PT409', NULL,
   'phiên bản cũ bị từ chối thay vì ghi đè im lặng'
 );
 SELECT is(

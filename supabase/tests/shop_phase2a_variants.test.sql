@@ -486,7 +486,7 @@ SELECT throws_ok(
       '[{"name":"Màu sắc","values":["Trắng"]}]'::jsonb,
       '[{"option_values":{"Màu sắc":"Trắng"},"price_vnd":1,"stock_on_hand":0}]'::jsonb) $$,
     (SELECT v FROM t_var WHERE k='p1')),
-  '40001', NULL, 'phiên bản cũ bị từ chối, không ghi đè ma trận mới hơn');
+  'PT409', NULL, 'phiên bản cũ bị từ chối, không ghi đè ma trận mới hơn');
 SELECT is(
   (SELECT count(*)::int FROM public.product_variants
    WHERE product_id=(SELECT v FROM t_var WHERE k='p1') AND retired_at IS NULL),

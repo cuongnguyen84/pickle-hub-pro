@@ -14,6 +14,23 @@
 --      Without it, two tabs on the same product silently overwrite each other
 --      and the seller finds out when a price they never typed goes live.
 --
+-- ── Why version conflicts raise PT409, not 40001 ────────────────────────────
+-- Every "your expected version is stale" below uses SQLSTATE PT409, which
+-- PostgREST maps to HTTP 409.
+--
+-- It used to be `serialization_failure` (40001), which reads correctly and is
+-- wrong in practice: 40001 means "a transient serialisation failure, retry
+-- me", and PostgREST does exactly that — it retries. A stale version is not
+-- transient, so the retry fails identically, forever. The request never
+-- returned. pgTAP passed the whole time because it calls the function in SQL,
+-- where no retry layer exists; the browser just waited.
+--
+-- Found by the step 6 storage integration test, which is the first thing on
+-- this branch to send a conflict through PostgREST. Every conflict path in
+-- steps 3, 4, 5 and 6 was affected — which means the conflict UI those steps
+-- shipped had never actually been reachable.
+--
+--
 --   2. products.client_token — create idempotency. Without it, a double tap on
 --      a slow connection makes two products, and the seller now owns a
 --      duplicate they must find and archive. The token is the client's, minted
@@ -354,7 +371,7 @@ BEGIN
   -- stale tab is told; it does not quietly win.
   IF _row.version <> _expected_version THEN
     RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác (phiên bản % ≠ %)', _row.version, _expected_version
-      USING ERRCODE = 'serialization_failure';
+      USING ERRCODE = 'PT409';
   END IF;
 
   IF _patch ? 'title' THEN
@@ -381,7 +398,7 @@ BEGIN
     -- Lost the race between the SELECT ... FOR UPDATE and here. Cannot happen
     -- with the lock held, and is still checked, because "cannot happen" is how
     -- a silent overwrite gets shipped.
-    RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác' USING ERRCODE = 'serialization_failure';
+    RAISE EXCEPTION 'sản phẩm đã được cập nhật ở nơi khác' USING ERRCODE = 'PT409';
   END IF;
 
   IF _variant IS NULL THEN

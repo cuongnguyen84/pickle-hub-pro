@@ -18,6 +18,10 @@ export function shopErrorMessage(error: unknown): string {
   const raw = e?.message ?? "";
   if (VIETNAMESE.test(raw)) return raw;
   switch (e?.code) {
+    // PT409 is what the RPCs raise for a stale expected version; PostgREST maps
+    // it to HTTP 409. 40001 is kept only because Postgres itself can still
+    // raise a genuine serialisation failure under load.
+    case "PT409":
     case "40001":
       return "Bản ghi vừa được cập nhật ở nơi khác. Tải lại để xem bản mới nhất.";
     case "23505":
@@ -41,5 +45,9 @@ export function shopErrorMessage(error: unknown): string {
  *  a Vietnamese message, which the mapper passes through untouched. */
 export const isConflict = (error: unknown) => {
   const e = error as { code?: string; message?: string } | null;
-  return e?.code === "40001" || /phiên bản|cập nhật ở nơi khác/i.test(e?.message ?? "");
+  return (
+    e?.code === "PT409" ||
+    e?.code === "40001" ||
+    /phiên bản|cập nhật ở nơi khác/i.test(e?.message ?? "")
+  );
 };
