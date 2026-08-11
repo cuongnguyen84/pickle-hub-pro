@@ -45,12 +45,59 @@ const storageState = {
   ],
 };
 
-/** Page-level horizontal scroll is measured on .tl-shop — the app scrolls an
- *  inner container, so documentElement always reads 0 and hides real bugs. */
+/**
+ * Horizontal overflow, measured honestly.
+ *
+ * Two traps this had to survive:
+ *   1. the app scrolls an inner container, so documentElement always reads 0;
+ *   2. the scroller itself is `overflow-x: hidden`, which CLIPS the overflow —
+ *      scrollWidth then equals clientWidth and the check reports a clean 0
+ *      while content is visibly cut off. That blinded the gate once already.
+ *
+ * So: walk the elements and compare right edges against the scroller's box,
+ * skipping anything inside a deliberately-scrollable ancestor (filter rails,
+ * table wrappers, category strips).
+ */
 const overflowOf = (page) =>
   page.evaluate(() => {
-    const el = document.querySelector(".tl-shop-scroll");
-    return el ? el.scrollWidth - el.clientWidth : 0;
+    const root = document.querySelector(".tl-shop-scroll");
+    if (!root) return 0;
+    const limit = root.getBoundingClientRect().right;
+    let worst = 0;
+    for (const el of root.querySelectorAll("*")) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      if (r.right <= limit + 1) continue;
+      let scrollable = false;
+      for (let q = el.parentElement; q && q !== root; q = q.parentElement) {
+        const ox = getComputedStyle(q).overflowX;
+        if (ox === "auto" || ox === "scroll") { scrollable = true; break; }
+      }
+      if (scrollable) continue;
+      worst = Math.max(worst, Math.round(r.right - limit));
+    }
+    return worst;
+  });
+
+/** Names the offenders so a finding is actionable, not just a number. */
+const overflowDetail = (page) =>
+  page.evaluate(() => {
+    const root = document.querySelector(".tl-shop-scroll");
+    if (!root) return [];
+    const limit = root.getBoundingClientRect().right;
+    const out = [];
+    for (const el of root.querySelectorAll("*")) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.right <= limit + 1) continue;
+      let scrollable = false;
+      for (let q = el.parentElement; q && q !== root; q = q.parentElement) {
+        const ox = getComputedStyle(q).overflowX;
+        if (ox === "auto" || ox === "scroll") { scrollable = true; break; }
+      }
+      if (scrollable) continue;
+      out.push(`${el.tagName}.${String(el.className).split(" ")[0] || "-"} +${Math.round(r.right - limit)}px`);
+    }
+    return [...new Set(out)].slice(0, 4);
   });
 
 /**
@@ -181,7 +228,10 @@ const main = async () => {
         await page.waitForTimeout(120);
 
         const ov = await overflowOf(page);
-        if (ov > 1) note("Q01", `${sc.id} @${width}px tràn ngang ${ov}px`);
+        if (ov > 1) {
+          const who = (await overflowDetail(page)).join(", ");
+          note("Q01", `${sc.id} @${width}px tràn ngang ${ov}px — ${who}`);
+        }
 
         const small = await smallTargets(page);
         for (const s of small) note("Q01", `${sc.id} @${width}px vùng bấm < 44px: ${s}`);

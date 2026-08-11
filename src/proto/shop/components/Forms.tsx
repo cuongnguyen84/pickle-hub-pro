@@ -451,19 +451,28 @@ export const ModerationDecisionForm = ({
         </div>
       )}
 
-      <button
-        type="submit"
-        className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
-        disabled={!decision || noteMissing || !confirm || !!busy}
-      >
-        {busy ? (
-          <>
-            <Loader2 size={15} className="animate-spin" aria-hidden="true" /> Đang gửi…
-          </>
-        ) : (
-          "Gửi quyết định"
+      {/* Sticky inside the form so the moderator does not have to scroll back
+          past the evidence to act. One submit, not a duplicated bottom bar. */}
+      <div className="tl-shop-decision-actions">
+        <button
+          type="submit"
+          className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
+          disabled={!decision || noteMissing || !confirm || !!busy}
+        >
+          {busy ? (
+            <>
+              <Loader2 size={15} className="animate-spin" aria-hidden="true" /> Đang gửi…
+            </>
+          ) : (
+            "Gửi quyết định"
+          )}
+        </button>
+        {!decision && (
+          <p className="tl-shop-hint" style={{ textAlign: "center", marginBottom: 0 }}>
+            Chọn một quyết định ở trên để bật nút này.
+          </p>
         )}
-      </button>
+      </div>
     </form>
   );
 };

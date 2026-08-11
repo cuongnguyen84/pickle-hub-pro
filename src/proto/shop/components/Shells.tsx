@@ -19,6 +19,7 @@ import {
   Package,
   ClipboardList,
   Settings,
+  Menu,
 } from "lucide-react";
 
 // ─── Buyer ──────────────────────────────────────────────────────────────────
@@ -150,25 +151,45 @@ export const SellerShell = ({ active, title, badges = {}, actions, children }: S
  * carries 18 items, so Shop enters as ONE item with children rather than four
  * top-level rows.
  */
+const AdminNav = () => (
+  <ul>
+    <li>Tổng quan</li>
+    <li>Tổ chức</li>
+    <li>Users</li>
+    <li>Giải đấu</li>
+    <li style={{ color: "var(--tl-fg-3)" }}>… 12 mục khác</li>
+    <li className="is-new">Shop</li>
+    <li className="is-new is-child">Hồ sơ đăng ký</li>
+    <li className="is-new is-child">Sản phẩm</li>
+    <li className="is-new is-child">Khiếu nại</li>
+    <li>Nhật ký</li>
+  </ul>
+);
+
 export const AdminShopFrame = ({ crumb, children }: { crumb: string; children: ReactNode }) => (
   <div className="tl-admin-frame">
-    <div className="tl-admin-side">
+    {/* Desktop: the sidebar stands beside the content. Phone: it collapses to
+        one disclosure row — a 10-item nav list stacked above the work pushes
+        the actual task off the first two screens. */}
+    <div className="tl-admin-side" data-desktop-only>
       <p className="tl-shop-eyebrow" style={{ padding: "0 10px 8px" }}>
         AdminLayout
       </p>
-      <ul>
-        <li>Tổng quan</li>
-        <li>Tổ chức</li>
-        <li>Users</li>
-        <li>Giải đấu</li>
-        <li style={{ color: "var(--tl-fg-3)" }}>… 12 mục khác</li>
-        <li className="is-new">Shop</li>
-        <li className="is-new is-child">Hồ sơ đăng ký</li>
-        <li className="is-new is-child">Sản phẩm</li>
-        <li className="is-new is-child">Khiếu nại</li>
-        <li>Nhật ký</li>
-      </ul>
+      <AdminNav />
     </div>
+
+    <details className="tl-admin-drawer" data-mobile-only>
+      <summary>
+        <Menu size={15} aria-hidden="true" />
+        Điều hướng quản trị
+        <span className="tl-proto-spacer" />
+        <span className="tl-shop-eyebrow">Shop</span>
+      </summary>
+      <div className="tl-admin-side">
+        <AdminNav />
+      </div>
+    </details>
+
     <div className="tl-admin-body">
       <p className="tl-shop-eyebrow" style={{ marginBottom: 8 }}>
         Admin · {crumb}
@@ -176,4 +197,20 @@ export const AdminShopFrame = ({ crumb, children }: { crumb: string; children: R
       {children}
     </div>
   </div>
+);
+
+/**
+ * Label/value pairs that stay readable on a phone. The two-column row with
+ * `justify-content: space-between` squeezes a long Vietnamese value into a
+ * sliver at 375px; below 560px the value moves under its label instead.
+ */
+export const DefList = ({ rows }: { rows: [string, ReactNode][] }) => (
+  <dl className="tl-shop-deflist">
+    {rows.map(([k, v]) => (
+      <div key={k}>
+        <dt>{k}</dt>
+        <dd>{v}</dd>
+      </div>
+    ))}
+  </dl>
 );
