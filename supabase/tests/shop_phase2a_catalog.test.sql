@@ -252,10 +252,10 @@ SELECT throws_ok(
 
 -- ─── SKU rules ─────────────────────────────────────────────────────────────
 
-INSERT INTO public.products (id, shop_id, slug, title, category_slug)
+INSERT INTO public.products (id, shop_id, slug, title, description, category_slug)
 VALUES ('5b000002-0000-4000-8000-000000000002'::uuid,
         '5a000001-0000-4000-8000-000000000001'::uuid,
-        'vot-a-hai', 'Vợt A Hai', 'vot');
+        'vot-a-hai', 'Vợt A Hai', 'Mô tả cho vợt A hai.', 'vot');
 
 -- Same shop, same SKU (different case + padding) → refused.
 SELECT throws_ok(
