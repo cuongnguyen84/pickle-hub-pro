@@ -78,6 +78,28 @@ const scrollWorks = (page) =>
       : { ok: false, why: `còn ${room}px để cuộn nhưng scrollTop kẹt ở ${moved}` };
   });
 
+/**
+ * App chrome that must not appear over the prototype.
+ *
+ * ChatFAB sat on top of the primary button of every sticky commerce bar at
+ * 375px ("Thêm vào giỏ", "Đặt đơn", "Gửi quyết định"). BottomNav is correct on
+ * buyer screens — the shop lives under the app's 5-slot nav — but wrong on
+ * Seller Center and Shop Admin, which carry their own bottom tabs; both
+ * visible means two stacked bars.
+ */
+const chromeCheck = (page) =>
+  page.evaluate(() => {
+    const path = location.pathname;
+    const fab = document.querySelector('a[href*="m.me/"], a[href*="zalo.me/"]');
+    const nav = document.querySelector('nav[aria-label="Primary mobile navigation"]');
+    const sellerOrAdmin = /\/proto\/shop\/(seller|admin)/.test(path);
+    const out = [];
+    if (fab) out.push("ChatFAB hiện trên trang Shop");
+    if (sellerOrAdmin && nav) out.push("BottomNav hiện trên Kênh người bán / Quản trị");
+    if (!sellerOrAdmin && !nav) out.push("BottomNav biến mất khỏi trang mua hàng");
+    return out;
+  });
+
 const smallTargets = (page) =>
   page.evaluate(() => {
     const bad = [];
@@ -166,6 +188,10 @@ const main = async () => {
 
         const scroll = await scrollWorks(page);
         if (!scroll.ok) note("Q01", `${sc.id} @${width}px KHÔNG CUỘN ĐƯỢC — ${scroll.why}`);
+
+        if (width <= 768) {
+          for (const c of await chromeCheck(page)) note("Q01", `${sc.id} @${width}px ${c}`);
+        }
       }
 
       // 200% zoom == half the CSS viewport width. 375/2 ≈ 188 is below any
