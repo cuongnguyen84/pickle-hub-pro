@@ -7,7 +7,7 @@
 
 BEGIN;
 
-SELECT plan(24);
+SELECT plan(29);
 
 -- ─── Fixture: pilot member A, pilot member B, outsider C, admin D ───────────
 
@@ -214,16 +214,23 @@ SELECT is(
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 
+-- anon holds a SELECT grant on shops (public catalogue reads land here later)
+-- but the policy only exposes state='active', so a pending_activation shop is
+-- invisible rather than forbidden.
 SELECT is(
   (SELECT count(*)::int FROM public.shops),
   0,
   'anon CANNOT see a pending_activation shop'
 );
 
-SELECT is(
-  (SELECT count(*)::int FROM public.shop_applications),
-  0,
-  'anon CANNOT read applications at all'
+-- shop_applications has NO grant for anon at all, so this is a hard 42501
+-- rather than an empty result. Stronger than "returns no rows" — assert the
+-- stronger thing.
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.shop_applications $$,
+  '42501',
+  NULL,
+  'anon CANNOT read applications at all (no grant, not merely no rows)'
 );
 
 SELECT * FROM finish();

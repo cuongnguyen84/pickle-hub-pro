@@ -641,13 +641,20 @@ BEGIN
     _applicant_note
   );
 
+  -- Explicit casts are load-bearing: public.log_audit_event has TWO overloads
+  -- (…text,jsonb,text) and (…text,jsonb,jsonb,jsonb) from migrations
+  -- 20260301120755 and 20260302020338. Passing untyped literals makes the call
+  -- ambiguous — 42725 "function is not unique" — which broke EVERY approve,
+  -- reject and request-changes at runtime. Static checks cannot see this; only
+  -- running the pgTAP suite against a real database did.
   PERFORM public.log_audit_event(
-    'shop_application_' || replace(_decision, '-', '_'),
-    'admin',
-    'shop_application',
+    ('shop_application_' || replace(_decision, '-', '_'))::text,
+    'admin'::text,
+    'shop_application'::text,
     _row.id::text,
-    CASE WHEN _decision = 'reject' THEN 'warning' ELSE 'info' END,
-    jsonb_build_object('shop_id', _shop_id, 'requested_fields', _requested_fields)
+    (CASE WHEN _decision = 'reject' THEN 'warning' ELSE 'info' END)::text,
+    jsonb_build_object('shop_id', _shop_id, 'requested_fields', _requested_fields),
+    'user'::text
   );
 
   RETURN _shop_id;
