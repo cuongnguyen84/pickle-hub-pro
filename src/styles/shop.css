@@ -40,11 +40,18 @@
   --shop-used:         var(--tl-accent-team); /* second-hand condition */
 
   /* Ink used ON an accent fill. Named because gate 48 forbids a raw hex
-     appearing anywhere below the token block. */
+     appearing anywhere below the token block.
+     Dark mode only: the accents are neon here, so the ink is near-black. Light
+     mode flips every one of them (block at the bottom of this file) — on paper
+     the same accents are deep, and black-on-deep-green measured 3.84:1. */
   --shop-on-accent:    #101803;   /* on --tl-green */
   --shop-on-gold:      #17140a;   /* on --tl-gold */
   --shop-on-ok:        #04120b;   /* on --shop-stock-ok */
-  --shop-on-danger:    #fff8f7;   /* on --shop-danger */
+  --shop-on-danger:    #fff8f7;   /* on --shop-danger-fill */
+  /* A red FILL carrying white text cannot be --tl-live: white on the dark-mode
+     live red is 3.30:1. This is the darker red reserved for filled states;
+     --shop-danger stays the text/border red. Same value in both modes. */
+  --shop-danger-fill:  #c62a20;
   --shop-scrim:        rgb(0 0 0 / 0.55);
   --shop-chrome-field: rgb(255 255 255 / 0.75);
   --shop-chrome-edge:  rgb(0 0 0 / 0.35);
@@ -951,7 +958,7 @@
 .tl-shop-step.is-done .tl-shop-step-n { background: var(--shop-stock-ok); color: var(--shop-on-ok); }
 .tl-shop-step[aria-current="step"] .tl-shop-step-n { background: var(--tl-green); color: var(--shop-on-accent); }
 .tl-shop-step.is-error { border-color: var(--shop-danger); }
-.tl-shop-step.is-error .tl-shop-step-n { background: var(--shop-danger); color: var(--shop-on-danger); }
+.tl-shop-step.is-error .tl-shop-step-n { background: var(--shop-danger-fill); color: var(--shop-on-danger); }
 
 .tl-shop-autosave {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1151,4 +1158,16 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--tl-border);
   border-radius: 0 0 var(--tl-radius-lg) var(--tl-radius-lg);
+}
+
+/* ── Light-mode ink flip ───────────────────────────────────────────────────
+ * On paper, --tl-green / --tl-gold / --tl-accent-qt are DEEP, not neon, so the
+ * near-black ink from the token block composites at 3.4–3.8:1 on its own fill.
+ * Nothing else about the shop palette changes between modes; these three do.
+ * Asserted in src/styles/__tests__/contrast.test.ts (INK_ON_FILL).
+ * -------------------------------------------------------------------- */
+[data-theme="the-line"][data-mode="light"] .tl-shop {
+  --shop-on-accent:  #f7fbee;   /* on --tl-green   #516c1b — 5.69:1 */
+  --shop-on-gold:    #fdfaf2;   /* on --tl-gold    #825e0f — 5.66:1 */
+  --shop-on-ok:      #f2fbf6;   /* on --tl-accent-qt #007342 — 5.64:1 */
 }

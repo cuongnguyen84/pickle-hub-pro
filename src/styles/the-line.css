@@ -62,8 +62,13 @@
   --tl-border-2:   #2e3238;
   --tl-fg:         #f5f3ee;
   --tl-fg-2:       #c7c3bb;
-  --tl-fg-3:       #86837d;
-  --tl-fg-4:       #7c7973;  /* a11y 2026-07-08: was #54514c (2.52:1 on --tl-bg, Lighthouse fail); 4.59:1 now */
+  /* a11y 2026-08-11: both greys were tuned against --tl-bg only, so they fell
+     under AA the moment they landed on an elevated card (--tl-surface-2):
+     fg-3 4.17:1, fg-4 3.65:1. Retuned against the WORST surface they may sit
+     on, keeping a visible step between them — 5.36:1 and 4.60:1.
+     Gate: src/styles/__tests__/contrast.test.ts */
+  --tl-fg-3:       #93908a;
+  --tl-fg-4:       #8a8780;
   /* Two-tone display "dim" — one step brighter than fg-3 so the faded serif
      half of split headlines stays legible (~6:1 on dark) without losing the
      de-emphasis. Scoped to .dim headline spans, NOT the global meta grey. */
@@ -2814,18 +2819,28 @@
   --tl-border-2:   #c7c2b3;
   --tl-fg:         #08090a;
   --tl-fg-2:       #3a3933;
-  --tl-fg-3:       #6d6a62;
-  --tl-fg-4:       #787366;  /* a11y 2026-07-08: was #a5a299 (2.42:1 on light bg); 4.55:1 now — mirrors native fg4 light */
-  --tl-dim:        #5a5750;  /* two-tone display "dim" on paper — ~6.4:1 */
-  --tl-green:      #5e7d1f;  /* deep lime — bright lime is illegible on paper */
-  --tl-green-dim:  #4a6418;
-  --tl-green-glow: rgba(94, 125, 31, 0.14);
-  --tl-live:       #d83428;
-  --tl-gold:       #8a6410; /* a11y: 5.2:1 on light --tl-bg (was #a37613 ≈3.9:1) */
-  --tl-gold-glow:  rgba(138, 100, 16, 0.12);
-  --tl-blue:       #1d63c4; /* a11y: darkened blue readable on paper bg */
-  --tl-blue-glow:  rgba(29, 99, 196, 0.12);
-  --tl-accent-elim: #8a6410; /* amber retuned for paper bg (matches --tl-gold) */
+  /* a11y 2026-08-11: every colour below is now measured against the DARKEST
+     light surface (--tl-surface-2 #e6e2d5), not just the page background.
+     Tuning against --tl-bg alone is what let a card-mounted badge ship at
+     4.14:1. Gate: src/styles/__tests__/contrast.test.ts */
+  --tl-fg-3:       #605d56;  /* was #6d6a62 — 4.17:1 on a card */
+  --tl-fg-4:       #686459;  /* was #787366 — 3.94:1 on a card */
+  --tl-dim:        #5a5750;  /* two-tone display "dim" on paper — 5.56:1 */
+  --tl-green:      #516c1b;  /* was #5e7d1f (3.98:1 on a card). Also the focus ring. */
+  --tl-green-dim:  #415816;
+  --tl-green-glow: rgba(81, 108, 27, 0.14);
+  --tl-live:       #bc2d23;  /* was #d83428 — 3.65:1 on a card */
+  --tl-gold:       #825e0f;  /* was #8a6410 — 4.14:1 on a card */
+  --tl-gold-glow:  rgba(130, 94, 15, 0.12);
+  --tl-blue:       #1c61c0;  /* was #1d63c4 — 4.46:1 on a card */
+  --tl-blue-glow:  rgba(28, 97, 192, 0.12);
+  --tl-accent-elim: #825e0f; /* amber retuned for paper bg (matches --tl-gold) */
+  /* These three had NO light-mode value at all, so paper inherited the
+     dark-mode neon: 1.99:1 for qt and team. That is the whole stock-ok /
+     used-badge defect — the token layer, not the screens. */
+  --tl-accent-qt:   #007342;
+  --tl-accent-team: #9f4c30;
+  --tl-accent-flex: #1c61c0; /* mirrors --tl-blue */
 
   /* Production HSL token swap — light D4 */
   --background:          42 42% 98%;
@@ -3933,9 +3948,10 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-br-meta .sep { color: var(--tl-fg-4); margin: 0 5px; }
 /* Social-proof registration count — green + 600 to stand out from the muted
    mono meta line. Uses --tl-green-DIM (not --tl-green): the brighter lime sits at
-   ~4.6:1 in light mode (#5e7d1f on cream) — a borderline pass, exactly the blind
-   spot that shipped #426. -dim resolves to a darker green in both modes (~6:1
-   light, ~11:1 dark), comfortably clear of WCAG AA either way. */
+   right on the AA line in light mode — a borderline pass, exactly the blind
+   spot that shipped #426. -dim resolves to a darker green in both modes,
+   comfortably clear of WCAG AA either way. (Both were re-tuned 2026-08-11;
+   the ratios are now asserted in src/styles/__tests__/contrast.test.ts.) */
 [data-theme="the-line"] .tl-br-reg { color: var(--tl-green-dim); font-weight: 600; }
 [data-theme="the-line"] .tl-br-creator {
   font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-3);
