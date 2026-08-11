@@ -99,7 +99,7 @@ Trạng thái Phase 1: **`security verified locally and reproducible from tracke
 | 2 | **Contrast light mode FAIL** — stock-ok 1.99:1, used 1.99:1, danger 3.65, warn 4.14, verified 4.46, `--tl-fg-4` 3.96 | đo trên `the-line.css` + `shop.css` | ✅ **XONG** `aed296ab` — sửa ở tầng token, gate `src/styles/__tests__/contrast.test.ts` 64/64 |
 | 3 | **Trigger guard âm thầm ghim thay vì RAISE** — nếu UI duyệt dùng `.update()` và phiên admin rớt aal1, admin bấm "Duyệt" nhận **HTTP 200 + 0 dòng đổi** kèm toast thành công | `:203-220`, `:346-366`; test dùng `lives_ok` ở `:69-72`, fixture hardcode aal2 ở `:177` | **CÒN MỞ** |
 | 4 | **Không gate nào chạy trên đường bot Pages Functions.** `_middleware.ts:719-917` là bảng route thủ công; ship route public mà quên renderer = Googlebot nhận 404 trong khi SPA hoàn hảo | pre-mortem sự cố 2 | **CÒN MỞ** — chạm vào ở P2b (public discovery), không phải 2a |
-| 5 | **EXIF GPS.** Upload raw `File` → toạ độ nhà riêng người bán lên internet vĩnh viễn (cache 1 năm + SW 30 ngày + `upsert:false`). ~5 dòng canvas re-encode chặn được, và giải quyết luôn HEIC + 8MB | `useClubLogoUpload.ts:60-66`, `vite.config.ts:218-222` | **CÒN MỞ** — bắt buộc trong 2a.3 |
+| 5 | **EXIF GPS.** Upload raw `File` → toạ độ nhà riêng người bán lên internet vĩnh viễn (cache 1 năm + SW 30 ngày + `upsert:false`). ~5 dòng canvas re-encode chặn được, và giải quyết luôn HEIC + 8MB | `useClubLogoUpload.ts:60-66`, `vite.config.ts:218-222` | **ĐÃ ĐÓNG cho đường Shop** (bước 6) — canvas re-encode sang WebP, chứng minh trên byte thật trong QA. `useClubLogoUpload.ts` (đường CLB, ngoài Shop) **VẪN CÒN MỞ** |
 
 ---
 
@@ -114,6 +114,12 @@ Trạng thái Phase 1: **`security verified locally and reproducible from tracke
 7. **Preview + submit-for-review** — preview phải dùng **đúng component PDP qua đúng phép chiếu công khai**.
 
 Mỗi mục một commit riêng hoặc một vertical slice nhỏ.
+
+> **Trạng thái 11/08/2026 — cả 7 bước đã xong.**
+> `P2a implementation complete, verified locally, pending Product Owner
+> acceptance and deployment approval.` Chi tiết, bằng chứng test, phạm vi hoãn
+> sang P2b và điều kiện trước khi deploy: [completion.md](./completion.md).
+> **Chưa deploy, chưa merge, chưa áp migration lên remote.**
 
 **Không làm trong 2a:** Admin moderation UI · public discovery/PDP · P2b · giỏ · checkout · thanh toán · Phase 3.
 

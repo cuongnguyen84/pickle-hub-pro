@@ -338,6 +338,24 @@ imports, lazy-load by route, reuse existing primitives instead of adding a
 dependency, and look for something to split or drop. If it is still red, stop
 and report the exact delta for a separate approval. Do not edit the budget.
 
+### P2a status (11 August 2026)
+
+`P2a implementation complete, verified locally, pending Product Owner
+acceptance and deployment approval.`
+
+All seven increments are built on `feat/shop-production-phase-2a`. Twelve
+migrations, 1018 pgTAP assertions, 33 storage-integration assertions against a
+real local stack, 1740 unit tests, bundle 1965.2 KB gz against an unraised
+1970 KB backstop. Full evidence, the deferred P2b list and the deployment
+prerequisites are in
+[`shop-catalog-phase-2a/completion.md`](../shop-catalog-phase-2a/completion.md).
+
+Nothing has been deployed, merged, pushed, or applied to a remote database.
+Three prerequisites gate any deployment decision: the media cleanup worker and
+its cron are **not deployed** (without them, revoked objects stay addressable),
+`shop_pilot_members` is empty, and there is no admin moderation UI until P2b —
+so a pilot moderator would work through SQL.
+
 ### Verification standard (applies from now on)
 
 `supabase start` alone is **not** evidence of a clean database — it does not
