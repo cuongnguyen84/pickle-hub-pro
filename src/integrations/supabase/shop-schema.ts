@@ -15,6 +15,7 @@
 // ============================================================================
 
 import type { ApplicationStatus } from "@/lib/shop/applicationState";
+import type { OptionGroup } from "@/lib/shop/variantMatrix";
 
 export type ShopState =
   | "pending_activation"
@@ -161,6 +162,9 @@ export interface ProductRow {
   version: number;
   /** The client's create idempotency key. Read-only after insert. */
   client_token: string | null;
+  /** [{"name":"Màu sắc","values":["Trắng","Đen"]}] in DISPLAY order. Empty for
+   *  a product with no options. Written only by the reconcile RPC. */
+  option_groups: OptionGroup[];
   created_at: string;
   updated_at: string;
 }
@@ -176,8 +180,18 @@ export interface ProductVariantRow {
   /** VND is an integer currency. Never a float, never a formatted string. */
   price_vnd: number;
   compare_at_price_vnd: number | null;
-  /** NULL means "not counted", which is not the same as 0 = sold out. */
-  stock: number | null;
+  /** Units ON HAND. NULL = the seller does not count this one, which is not
+   *  the same as 0 = sold out. Not "available": Phase 3 adds stock_reserved
+   *  and computes available = on_hand - reserved. */
+  stock_on_hand: number | null;
+  /** {"Màu sắc":"Trắng"} — an object, so a value is addressed by its group and
+   *  never by a position. NULL on the single default variant. */
+  option_values: Record<string, string> | null;
+  /** Canonical, order-independent combination identity, derived by Postgres. */
+  option_key: string | null;
+  /** Retired by the seller. Distinct from `archived`, which mirrors the
+   *  PRODUCT's status and is rewritten every time that status moves. */
+  retired_at: string | null;
   position: number;
   archived: boolean;
   created_at: string;
@@ -198,7 +212,10 @@ export interface ProductMediaRow {
 /** A product as the seller list renders it: the row plus the two child sets it
  *  summarises. PostgREST returns embedded resources under the table name. */
 export interface SellerProductRow extends ProductRow {
-  product_variants: Pick<ProductVariantRow, "id" | "price_vnd" | "stock" | "position" | "sku">[];
+  product_variants: Pick<
+    ProductVariantRow,
+    "id" | "price_vnd" | "stock_on_hand" | "position" | "sku" | "retired_at"
+  >[];
   product_media: Pick<ProductMediaRow, "id" | "position">[];
 }
 
@@ -210,6 +227,7 @@ export const SHOP_P2A_TABLES = [
   "product_media",
   "shop_media_cleanup_jobs",
   "shop_contact_channels",
+  "inventory_movements",
 ] as const;
 
 export const SHOP_P2A_RPCS = [
@@ -225,6 +243,11 @@ export const SHOP_P2A_RPCS = [
   "shop_contact_delete",
   "shop_contact_decide",
   "shop_contact_normalize",
+  /* ── step 5 (migration 20260811210000) ── */
+  "product_variants_reconcile",
+  "product_variant_adjust_stock",
+  "product_option_groups_valid",
+  "product_option_key",
   /* ── step 4 (migration 20260811200000) ── */
   "product_create",
   "product_update",

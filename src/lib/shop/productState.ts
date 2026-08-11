@@ -131,11 +131,11 @@ export function priceSummary(variants: { price_vnd: number }[]): string {
  * where some variants count and some do not says so rather than adding a
  * number that is missing part of itself.
  */
-export function stockSummary(variants: { stock: number | null }[]): string {
+export function stockSummary(variants: { stock_on_hand: number | null }[]): string {
   if (variants.length === 0) return "—";
-  const counted = variants.filter((v) => v.stock !== null);
+  const counted = variants.filter((v) => v.stock_on_hand !== null);
   if (counted.length === 0) return "Không đếm";
-  const total = counted.reduce((n, v) => n + (v.stock ?? 0), 0);
+  const total = counted.reduce((n, v) => n + (v.stock_on_hand ?? 0), 0);
   if (counted.length < variants.length) return `${total} (một số phiên bản không đếm)`;
   return total === 0 ? "Hết hàng" : String(total);
 }
@@ -143,7 +143,10 @@ export function stockSummary(variants: { stock: number | null }[]): string {
 /** Everything a list row needs, derived once so the card and the table row
  *  cannot disagree about the same product. */
 export function summarise(row: SellerProductRow) {
-  const variants = row.product_variants ?? [];
+  // Retired variants keep their SKU and their ledger but are off the shelf, so
+  // they must not appear in a price range or a stock total — a shop that
+  // retired its expensive size would otherwise still advertise that price.
+  const variants = (row.product_variants ?? []).filter((v) => v.retired_at == null);
   const mediaCount = (row.product_media ?? []).length;
   return {
     price: priceSummary(variants),
@@ -173,7 +176,7 @@ export interface DraftErrors {
   category_slug?: string;
   description?: string;
   price_vnd?: string;
-  stock?: string;
+  stock_on_hand?: string;
 }
 
 export function validateDraft(draft: {
@@ -181,7 +184,7 @@ export function validateDraft(draft: {
   description: string;
   category_slug: string;
   price_vnd: string;
-  stock: string;
+  stock_on_hand: string;
 }): DraftErrors {
   const errors: DraftErrors = {};
 
@@ -203,11 +206,11 @@ export function validateDraft(draft: {
     errors.price_vnd = "Giá vượt mức cho phép";
   }
 
-  const stock = draft.stock.trim();
+  const stock = draft.stock_on_hand.trim();
   if (stock && !/^[0-9]+$/.test(stock)) {
-    errors.stock = "Tồn kho phải là số nguyên không âm, để trống nếu không đếm";
+    errors.stock_on_hand = "Tồn kho phải là số nguyên không âm, để trống nếu không đếm";
   } else if (stock && Number(stock) > 1_000_000) {
-    errors.stock = "Tồn kho vượt mức cho phép";
+    errors.stock_on_hand = "Tồn kho vượt mức cho phép";
   }
 
   return errors;
@@ -220,5 +223,5 @@ export const DRAFT_FIELD_ORDER: (keyof DraftErrors)[] = [
   "title",
   "description",
   "price_vnd",
-  "stock",
+  "stock_on_hand",
 ];

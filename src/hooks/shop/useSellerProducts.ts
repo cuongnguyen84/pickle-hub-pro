@@ -77,10 +77,10 @@ export const productKeys = {
 const PRODUCT_COLUMNS =
   "id,shop_id,slug,title,description,category_slug,condition,status,is_published," +
   "in_stock,availability_updated_at,submitted_at,decided_at,applicant_note," +
-  "requested_fields,version,client_token,created_at,updated_at";
+  "requested_fields,version,client_token,option_groups,created_at,updated_at";
 
 const LIST_COLUMNS =
-  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock,position,sku),product_media(id,position)`;
+  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position)`;
 
 export interface ProductListResult {
   rows: SellerProductRow[];
@@ -164,7 +164,13 @@ export const useSellerProduct = (productId: string | null) =>
       const { product_variants, product_media, ...rest } = row;
       return {
         ...rest,
-        variants: [...(product_variants ?? [])].sort((a, b) => a.position - b.position),
+        // Retired variants keep their SKU and their ledger, and are NOT on the
+        // shelf. Handing them to the matrix editor would show the seller a row
+        // they retired and re-save it on the next matrix write — which is how
+        // the QA sweep found seven cards for a six-combination product.
+        variants: (product_variants ?? [])
+          .filter((v) => v.retired_at === null)
+          .sort((a, b) => a.position - b.position),
         mediaCount: (product_media ?? []).length,
       };
     },
@@ -180,7 +186,7 @@ export interface ProductDraft {
   /** Kept as the seller typed it. Parsed and validated in Postgres, which is
    *  the only place that may decide what a price is. */
   price_vnd: string;
-  stock: string;
+  stock_on_hand: string;
 }
 
 /**
@@ -205,7 +211,7 @@ export const useCreateProduct = (shopId: string | null) => {
           category_slug: input.draft.category_slug,
           condition: input.draft.condition,
           price_vnd: input.draft.price_vnd,
-          stock: input.draft.stock,
+          stock_on_hand: input.draft.stock_on_hand,
         },
       }),
     onSuccess: (row) => {
@@ -228,7 +234,7 @@ export const useUpdateProduct = (productId: string | null) => {
     mutationFn: async (input: {
       expectedVersion: number;
       patch: Partial<Pick<ProductDraft, "title" | "description" | "category_slug" | "condition">>;
-      variant?: { price_vnd?: string; stock?: string; sku?: string };
+      variant?: { price_vnd?: string; stock_on_hand?: string; sku?: string };
     }) =>
       await shopRpc<ProductRow>("product_update", {
         _product_id: productId,

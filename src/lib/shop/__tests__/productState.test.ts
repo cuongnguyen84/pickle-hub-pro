@@ -115,19 +115,19 @@ describe("price comes off the variants", () => {
 
 describe("stock keeps its three answers apart", () => {
   it("NULL is not counted, and is not zero", () => {
-    expect(stockSummary([{ stock: null }])).toBe("Không đếm");
+    expect(stockSummary([{ stock_on_hand: null }])).toBe("Không đếm");
   });
 
   it("zero is sold out", () => {
-    expect(stockSummary([{ stock: 0 }])).toBe("Hết hàng");
+    expect(stockSummary([{ stock_on_hand: 0 }])).toBe("Hết hàng");
   });
 
   it("adds up what is counted", () => {
-    expect(stockSummary([{ stock: 3 }, { stock: 4 }])).toBe("7");
+    expect(stockSummary([{ stock_on_hand: 3 }, { stock_on_hand: 4 }])).toBe("7");
   });
 
   it("says the total is partial when only some variants are counted", () => {
-    expect(stockSummary([{ stock: 3 }, { stock: null }])).toBe("3 (một số phiên bản không đếm)");
+    expect(stockSummary([{ stock_on_hand: 3 }, { stock_on_hand: null }])).toBe("3 (một số phiên bản không đếm)");
   });
 });
 
@@ -153,7 +153,7 @@ describe("summarise — the card and the table row cannot disagree", () => {
     id: "p1",
     status: "draft",
     applicant_note: null,
-    product_variants: [{ id: "v1", price_vnd: 990000, stock: null, position: 0, sku: null }],
+    product_variants: [{ id: "v1", price_vnd: 990000, stock_on_hand: null, position: 0, sku: null }],
     product_media: [],
   } as unknown as SellerProductRow;
 
@@ -180,7 +180,7 @@ describe("draft validation — no stricter than the SQL", () => {
     description: "",
     category_slug: "vot",
     price_vnd: "2450000",
-    stock: "",
+    stock_on_hand: "",
   };
 
   it("accepts a minimal valid product", () => {
@@ -198,13 +198,13 @@ describe("draft validation — no stricter than the SQL", () => {
   });
 
   it("treats empty stock as valid — 'not counted' is an answer", () => {
-    expect(validateDraft({ ...ok, stock: "" }).stock).toBeUndefined();
-    expect(validateDraft({ ...ok, stock: "0" }).stock).toBeUndefined();
+    expect(validateDraft({ ...ok, stock_on_hand: "" }).stock_on_hand).toBeUndefined();
+    expect(validateDraft({ ...ok, stock_on_hand: "0" }).stock_on_hand).toBeUndefined();
   });
 
   it("refuses a negative or fractional stock", () => {
-    expect(validateDraft({ ...ok, stock: "-1" }).stock).toBeTruthy();
-    expect(validateDraft({ ...ok, stock: "1.5" }).stock).toBeTruthy();
+    expect(validateDraft({ ...ok, stock_on_hand: "-1" }).stock_on_hand).toBeTruthy();
+    expect(validateDraft({ ...ok, stock_on_hand: "1.5" }).stock_on_hand).toBeTruthy();
   });
 
   it("asks for the category now instead of at submit time", () => {
