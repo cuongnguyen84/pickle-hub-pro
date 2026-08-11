@@ -92,7 +92,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "singapore-open-2026-preview",
     publishedDate: "2026-07-18",
-    updatedDate: "2026-07-18",
+    updatedDate: "2026-08-11",
     author: "The PickleHub Team",
     tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball singapore", "ppa asia 500", "2026"],
     ctaPath: "/live",
@@ -105,8 +105,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
     metaTitleEn: "Singapore Open 2026 Pickleball: Schedule & How to Watch",
     metaTitleVi: "Singapore Open 2026 | Lịch đấu & cách xem",
-    metaDescriptionEn: "Preview of the PPA Asia 500 Leapmotor Singapore Open (July 23-26): Vietnam's Truong Vinh Hien is the top seed, plus schedule, prizes and how to watch free.",
-    metaDescriptionVi: "PPA Asia 500 Leapmotor Singapore Open (23–26/7): Trương Vinh Hiển hạt giống số 1 đơn nam, lịch theo giờ VN và cách xem miễn phí.",
+    metaDescriptionEn: "The Singapore Open 2026 is over: Truong Vinh Hien took doubles silver and singles bronze. Original preview, plus the full recap and what's next in Asia.",
+    metaDescriptionVi: "Singapore Open 2026 đã kết thúc: Trương Vinh Hiển á quân đôi nam, HCĐ đơn nam. Xem bài preview gốc và link tổng kết đầy đủ.",
   },
   {
     slug: "pickleball-world-cup-2026-da-nang-how-to-watch",

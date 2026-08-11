@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "singapore-open-2026-preview",
   publishedDate: "2026-07-18",
-  updatedDate: "2026-07-18",
+  updatedDate: "2026-08-11",
   author: "The PickleHub Team",
   tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball singapore", "ppa asia 500", "2026"],
   ctaPath: "/live",
@@ -16,8 +16,17 @@ const post: BlogPost = {
     en: {
       title: "Leapmotor Singapore Open 2026: Preview of PPA Tour Asia's Singapore Debut",
       metaTitle: "Singapore Open 2026 Pickleball: Schedule & How to Watch",
-      metaDescription: "Preview of the PPA Asia 500 Leapmotor Singapore Open (July 23-26): Vietnam's Truong Vinh Hien is the top seed, plus schedule, prizes and how to watch free.",
+      metaDescription: "The Singapore Open 2026 is over: Truong Vinh Hien took doubles silver and singles bronze. Original preview, plus the full recap and what's next in Asia.",
       sections: [
+        {
+          heading: "Update: The Tournament Is Over — Here's What Happened",
+          content: "This preview was written before the Singapore Open. The tournament wrapped up on July 26, and it went well for Vietnam: top seed Truong Vinh Hien took silver in men's doubles with Kenta Miyoshi (losing the final 11-4, 4-11, 11-5 to Len Yang and Collin Johns) and bronze in men's singles — keeping Vietnam's streak of a medal at every 2026 PPA Tour Asia stop alive. Full results, scores and analysis are in our recap. Next up in Asia: the first-ever Pickleball World Cup in Da Nang (Aug 30 – Sep 6) and the US$1.1M Hong Kong Slam season finale (Oct 19–25).",
+          internalLinks: [
+            { text: "Read the full Singapore Open 2026 recap", path: "/blog/singapore-open-2026-recap" },
+            { text: "Pickleball World Cup 2026 Da Nang: how to watch", path: "/blog/pickleball-world-cup-2026-da-nang-how-to-watch" },
+            { text: "Hong Kong Slam 2026: Asia's first PPA Slam", path: "/blog/hong-kong-slam-2026-preview" }
+          ]
+        },
         {
           heading: "The Short Version",
           content: "The PPA Asia 500 Leapmotor Singapore Open runs July 23–26, 2026 at The Sports Arina @ Singapore Expo (Hall 10) — the sixth stop on the 2026 PPA Tour Asia calendar and the tour's first ever event in Singapore. Pro players compete for more than US$70,000 and 500 PPA ranking points; the amateur categories carry a further US$9,000. For Vietnamese fans there is a specific reason to pay attention: according to the draw published on the tournament's official site, Truong Vinh Hien is the No. 1 seed in men's singles. Every match streams free on the PPA Tour Asia YouTube channel, and play starts at 9:00 Singapore time — 8:00 in Vietnam.",
@@ -147,8 +156,17 @@ const post: BlogPost = {
     vi: {
       title: "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
       metaTitle: "Singapore Open 2026 | Lịch đấu & cách xem",
-      metaDescription: "PPA Asia 500 Leapmotor Singapore Open (23–26/7): Trương Vinh Hiển hạt giống số 1 đơn nam, lịch theo giờ VN và cách xem miễn phí.",
+      metaDescription: "Singapore Open 2026 đã kết thúc: Trương Vinh Hiển á quân đôi nam, HCĐ đơn nam. Xem bài preview gốc và link tổng kết đầy đủ.",
       sections: [
+        {
+          heading: "Cập nhật: Giải đã kết thúc — kết quả ra sao?",
+          content: "Bài preview này được viết trước khi giải diễn ra. Singapore Open 2026 đã khép lại ngày 26/7 với tin vui cho Việt Nam: hạt giống số 1 Trương Vinh Hiển giành á quân đôi nam cùng Kenta Miyoshi (thua chung kết 11-4, 4-11, 11-5 trước Len Yang và Collin Johns) và HCĐ đơn nam — nối dài mạch có huy chương ở mọi chặng PPA Tour Asia 2026 của Việt Nam. Kết quả chi tiết, tỷ số và phân tích đầy đủ trong bài tổng kết. Sắp tới tại châu Á: Pickleball World Cup đầu tiên tại Đà Nẵng (30/8–6/9) và Hong Kong Slam — chung kết mùa giải 1,1 triệu USD (19–25/10).",
+          internalLinks: [
+            { text: "Đọc bài tổng kết Singapore Open 2026", path: "/vi/blog/singapore-open-2026-ket-qua" },
+            { text: "Cẩm nang xem Pickleball World Cup 2026 Đà Nẵng", path: "/vi/blog/cam-nang-xem-pickleball-world-cup-2026-da-nang" },
+            { text: "Hong Kong Slam 2026: Slam đầu tiên của châu Á", path: "/vi/blog/hong-kong-slam-2026" }
+          ]
+        },
         {
           heading: "Tóm tắt nhanh",
           content: "Giải PPA Asia 500 Leapmotor Singapore Open diễn ra từ 23 đến 26/7/2026 tại The Sports Arina @ Singapore Expo (Hall 10) — chặng thứ 6 của PPA Tour Asia mùa 2026 và là lần đầu tiên tour này đến Singapore. Các tay vợt chuyên nghiệp tranh hơn 70.000 USD cùng 500 điểm xếp hạng PPA; nhóm nghiệp dư tranh thêm 9.000 USD. Với người hâm mộ Việt Nam, có một lý do rất cụ thể để theo dõi: theo bảng đấu công bố trên trang chủ của giải, Trương Vinh Hiển là hạt giống số 1 nội dung đơn nam. Toàn bộ trận đấu phát miễn phí trên kênh YouTube của PPA Tour Asia, và giờ thi đấu bắt đầu lúc 9:00 giờ Singapore — tức 8:00 giờ Việt Nam.",
