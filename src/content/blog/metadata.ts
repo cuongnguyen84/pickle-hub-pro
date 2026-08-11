@@ -21,9 +21,9 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleEn: "Ho Chi Minh City Open 2026 Recap: Minh Quan & Vinh Hien Win an All-Vietnamese Doubles Final",
     titleVi: "Ho Chi Minh City Open 2026: Minh Quân & Vinh Hiển vô địch trong trận chung kết toàn Việt",
     metaTitleEn: "HCMC Open 2026 Recap: Quan & Hien Win Doubles Gold",
-    metaTitleVi: "HCMC Open 2026: Minh Quân & Vinh Hiển vô địch đôi nam",
+    metaTitleVi: "HCMC Open 2026: Quân & Hiển vô địch đôi nam",
     metaDescriptionEn: "Recap of the PPA Asia 500 MB Ho Chi Minh City Open 2026: Do Minh Quan and Truong Vinh Hien beat Ly Hoang Nam and Collin Johns 2-1 in an all-Vietnamese final.",
-    metaDescriptionVi: "Kết quả PPA Asia 500 HCMC Open 2026: Đỗ Minh Quân và Trương Vinh Hiển thắng Lý Hoàng Nam - Collin Johns 2-1 (13-11, 6-11, 11-4) trong chung kết toàn Việt.",
+    metaDescriptionVi: "Kết quả PPA Asia 500 HCMC Open 2026: Đỗ Minh Quân và Trương Vinh Hiển thắng Lý Hoàng Nam - Collin Johns 2-1 trong chung kết toàn Việt.",
   },
   {
     slug: "world-pickleball-rankings-wpr-explained",

@@ -105,8 +105,8 @@ const post: BlogPost = {
     },
     vi: {
       title: "Ho Chi Minh City Open 2026: Minh Quân & Vinh Hiển vô địch trong trận chung kết toàn Việt",
-      metaTitle: "HCMC Open 2026: Minh Quân & Vinh Hiển vô địch đôi nam",
-      metaDescription: "Kết quả PPA Asia 500 HCMC Open 2026: Đỗ Minh Quân và Trương Vinh Hiển thắng Lý Hoàng Nam - Collin Johns 2-1 (13-11, 6-11, 11-4) trong chung kết toàn Việt.",
+      metaTitle: "HCMC Open 2026: Quân & Hiển vô địch đôi nam",
+      metaDescription: "Kết quả PPA Asia 500 HCMC Open 2026: Đỗ Minh Quân và Trương Vinh Hiển thắng Lý Hoàng Nam - Collin Johns 2-1 trong chung kết toàn Việt.",
       sections: [
         {
           heading: "Kết quả tóm gọn",
