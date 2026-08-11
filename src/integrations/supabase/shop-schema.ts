@@ -82,7 +82,76 @@ export interface ShopRow {
   verified_at: string | null;
   created_at: string;
   updated_at: string;
+  /* ── step 3 (migration 20260811180000) ── */
+  primary_category_slug: string | null;
+  region: string | null;
+  shipping_note: string | null;
+  return_note: string | null;
+  /** Optimistic-concurrency token. Bumped by trigger; never sent as an edit. */
+  version: number;
 }
+
+export type ShopContactType = "zalo" | "messenger" | "phone";
+
+export type ShopContactState =
+  | "draft"
+  | "pending_review"
+  | "approved"
+  | "rejected"
+  | "disabled";
+
+/** D2: a declared public contact channel. Public only when is_public AND
+ *  state=approved AND the shop is active — all three, checked in Postgres. */
+export interface ShopContactChannelRow {
+  id: string;
+  shop_id: string;
+  type: ShopContactType;
+  /** What the seller typed. Shown back to them, never used as the link. */
+  value_raw: string;
+  /** Server-derived. The only value any public surface may use. */
+  value_normalized: string;
+  display_label: string | null;
+  is_public: boolean;
+  state: ShopContactState;
+  review_note: string | null;
+  approved_at: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductCategoryRow {
+  slug: string;
+  name_vi: string;
+  name_en: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+/** Objects added by the P2a migrations, checked by the same parity test. */
+export const SHOP_P2A_TABLES = [
+  "product_categories",
+  "products",
+  "product_variants",
+  "product_media",
+  "shop_media_cleanup_jobs",
+  "shop_contact_channels",
+] as const;
+
+export const SHOP_P2A_RPCS = [
+  "product_submit_for_review",
+  "product_decide",
+  "product_set_published",
+  "product_media_upload_init",
+  "product_media_finalize",
+  "product_publish_prepare",
+  "shop_profile_update",
+  "shop_slug_update",
+  "shop_contact_upsert",
+  "shop_contact_delete",
+  "shop_contact_decide",
+  "shop_contact_normalize",
+] as const;
 
 /** Table + RPC names, exported so the parity test can compare them to the SQL. */
 export const SHOP_TABLES = [

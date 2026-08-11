@@ -596,6 +596,10 @@
     "element": "<RequireAuth><SellerApplicationStatus /></RequireAuth>"
   },
   {
+    "path": "/seller/settings",
+    "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
+  },
+  {
     "path": "/admin/shop/applications",
     "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
   },

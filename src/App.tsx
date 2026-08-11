@@ -87,6 +87,7 @@ const ProtoShopApp = PROTO_SHOP_ENABLED
 const SellLanding = lazyRetry(() => import("./pages/shop/SellLanding"));
 const SellerApplication = lazyRetry(() => import("./pages/shop/SellerApplication"));
 const SellerApplicationStatus = lazyRetry(() => import("./pages/shop/SellerApplicationStatus"));
+const SellerShopSettings = lazyRetry(() => import("./pages/shop/SellerShopSettings"));
 const SellerHome = lazyRetry(() => import("./pages/shop/SellerHome"));
 const AdminShopApplications = lazyRetry(() => import("./pages/admin/shop/AdminShopApplications"));
 const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/AdminShopApplicationReview"));
@@ -800,6 +801,7 @@ const App = () => (
                     <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
                     <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
                     <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
+                    <Route path="/seller/settings" element={<RequireAuth><SellerShopSettings /></RequireAuth>} />
                     <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />
                     <Route path="/admin/shop/applications/:id" element={<RequireAuth requiredRole="admin"><AdminShopApplicationReview /></RequireAuth>} />
                     {/* Public pages */}
