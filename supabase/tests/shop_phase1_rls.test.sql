@@ -7,7 +7,20 @@
 
 BEGIN;
 
-SELECT plan(29);
+SELECT plan(35);
+
+-- ─── Slug correctness ───────────────────────────────────────────────────────
+-- Not a permission test, and that is the point: all the other assertions here
+-- check WHO may do what, none checked whether what they produce is right. The
+-- first version of unaccent_immutable corrupted every Vietnamese slug and this
+-- suite stayed green, because the fixture below is ASCII.
+
+SELECT is(public.shop_slug_from_name('Đồ Pickleball Sài Gòn'), 'do-pickleball-sai-gon', 'slug: Đồ/ò/ơ');
+SELECT is(public.shop_slug_from_name('Thể thao Hùng Cường'),   'the-thao-hung-cuong',   'slug: ể/ù/ườ');
+SELECT is(public.shop_slug_from_name('Vợt Đỉnh Cao 16mm'),     'vot-dinh-cao-16mm',     'slug: ợ/Đ/ỉ + chữ số');
+SELECT is(public.shop_slug_from_name('CỬA HÀNG THỂ THAO'),     'cua-hang-the-thao',     'slug: hoa toàn phần');
+SELECT is(public.shop_slug_from_name('Shop  --  Nháp!!'),      'shop-nhap',             'slug: gộp ký tự lạ, cắt gạch thừa');
+SELECT is(public.shop_slug_from_name('!!!'),                   'shop',                  'slug: rỗng thì rơi về "shop"');
 
 -- ─── Fixture: pilot member A, pilot member B, outsider C, admin D ───────────
 

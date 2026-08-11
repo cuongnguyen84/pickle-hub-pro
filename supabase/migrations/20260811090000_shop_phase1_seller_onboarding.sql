@@ -521,20 +521,56 @@ BEGIN
   RETURN left(_base, 60);
 END $$;
 
--- Minimal transliteration so a Vietnamese shop name yields a clean slug
--- without depending on the unaccent extension being installed.
+-- Vietnamese → ASCII for slugs.
+--
+-- The first version used one translate() call with a hand-typed 134-char
+-- `from` string and a 140-char `to` string. translate() maps BY POSITION, so a
+-- single surplus character shifted everything after it: "Đồ Pickleball Sài Gòn"
+-- became "uo-pickleball-sai-gin". Every shop and product URL in a 95%-Vietnamese
+-- product would have been wrong, permanently — and the pgTAP suite stayed green
+-- because its fixture name is ASCII ("Shop Cua A").
+--
+-- Rewritten as one regexp_replace per target letter. There is no positional
+-- coupling left to get wrong: a typo inside a character class can only fail to
+-- match its own letter, never corrupt a different one.
 CREATE OR REPLACE FUNCTION public.unaccent_immutable(_s TEXT)
 RETURNS TEXT
 LANGUAGE sql
 IMMUTABLE
 SET search_path = public
 AS $$
-  SELECT translate(
-    _s,
-    'àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ',
-    'aaaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooooouuuuuuuuuuuyyyyydAAAAAAAAAAAAAAAAAAEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYYD'
-  )
+  SELECT regexp_replace(
+           regexp_replace(
+             regexp_replace(
+               regexp_replace(
+                 regexp_replace(
+                   regexp_replace(
+                     regexp_replace(_s, '[àáảãạăằắẳẵặâầấẩẫậÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ]', 'a', 'g'),
+                     '[èéẻẽẹêềếểễệÈÉẺẼẸÊỀẾỂỄỆ]', 'e', 'g'),
+                   '[ìíỉĩịÌÍỈĨỊ]', 'i', 'g'),
+                 '[òóỏõọôồốổỗộơờớởỡợÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ]', 'o', 'g'),
+               '[ùúủũụưừứửữựÙÚỦŨỤƯỪỨỬỮỰ]', 'u', 'g'),
+             '[ỳýỷỹỵỲÝỶỸỴ]', 'y', 'g'),
+           '[đĐ]', 'd', 'g')
 $$;
+
+CREATE OR REPLACE FUNCTION public.shop_slug_from_name(_name TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+STABLE
+SET search_path = public
+AS $$
+DECLARE
+  _base TEXT;
+BEGIN
+  -- lower() AFTER stripping diacritics: the uppercase forms are handled inside
+  -- unaccent_immutable, so this is only for plain ASCII.
+  _base := lower(public.unaccent_immutable(_name));
+  _base := regexp_replace(_base, '[^a-z0-9]+', '-', 'g');
+  _base := trim(both '-' from _base);
+  IF _base = '' THEN _base := 'shop'; END IF;
+  RETURN left(_base, 60);
+END $$;
 
 CREATE OR REPLACE FUNCTION public.shop_application_decide(
   _application_id    UUID,
