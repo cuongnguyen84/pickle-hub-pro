@@ -11,7 +11,7 @@
 
 BEGIN;
 
-SELECT plan(64);
+SELECT plan(70);
 
 -- ─── Slug correctness (D-defect class, not a permission) ────────────────────
 
@@ -51,6 +51,15 @@ INSERT INTO public.shops (id, slug, name, state, owner_user_id) VALUES
   ('5a000001-0000-4000-8000-000000000001'::uuid, 'shop-a-catalog', 'Shop A Catalog', 'active', '50020001-0000-4000-8000-000000000001'::uuid),
   ('5a000002-0000-4000-8000-000000000002'::uuid, 'shop-b-catalog', 'Shop B Catalog', 'active', '50020002-0000-4000-8000-000000000002'::uuid),
   ('5a000003-0000-4000-8000-000000000003'::uuid, 'shop-z-pending', 'Shop Z Pending', 'pending_activation', '50020002-0000-4000-8000-000000000002'::uuid);
+
+-- The closed pilot is a server-side gate on media upload, so the fixture has
+-- to pass it. E (support) is deliberately on the allowlist too: being in the
+-- pilot must not be mistaken for being allowed to write.
+INSERT INTO public.shop_pilot_members (user_id) VALUES
+  ('50020001-0000-4000-8000-000000000001'::uuid),
+  ('50020002-0000-4000-8000-000000000002'::uuid),
+  ('50020005-0000-4000-8000-000000000005'::uuid)
+ON CONFLICT DO NOTHING;
 
 INSERT INTO public.shop_members (shop_id, user_id, role) VALUES
   ('5a000001-0000-4000-8000-000000000001'::uuid, '50020001-0000-4000-8000-000000000001'::uuid, 'owner'),
@@ -154,14 +163,21 @@ SELECT throws_ok(
   'submit refused: no photo'
 );
 
-INSERT INTO public.product_media (id, product_id, shop_id, draft_path)
-VALUES ('5d000001-0000-4000-8000-000000000001'::uuid,
-        '5b000001-0000-4000-8000-000000000001'::uuid,
-        '5a000001-0000-4000-8000-000000000001'::uuid,
-        '5a000001-0000-4000-8000-000000000001/5b000001-0000-4000-8000-000000000001/x.jpg');
+-- Media now arrives through the P2a.2 lifecycle: the server picks the paths,
+-- the objects are verified against storage.objects, and only then does the row
+-- count as a photo. The storage rows are inserted as the table owner below,
+-- standing in for the Storage API — the real API path is covered by
+-- scripts/shop-media-integration.test.mjs.
+SELECT ok(
+  (public.product_media_upload_init(
+     '5b000001-0000-4000-8000-000000000001'::uuid, 'image/jpeg', 3000000, 'ảnh của tôi.jpg', 'tok-1'
+   ) ->> 'media_id') IS NOT NULL,
+  'upload_init hands back a server-chosen path'
+);
 
 SELECT is(
-  (SELECT state::text || '/' || coalesce(public_path,'∅') FROM public.product_media WHERE id='5d000001-0000-4000-8000-000000000001'::uuid),
+  (SELECT state::text || '/' || coalesce(public_path,'∅') FROM public.product_media
+   WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
   'draft/∅',
   'uploaded media starts private with no rendition'
 );
@@ -169,11 +185,32 @@ SELECT is(
 -- A seller cannot hand themselves a public rendition.
 UPDATE public.product_media
 SET state='approved', public_path='5a000001-0000-4000-8000-000000000001/forged.webp'
-WHERE id='5d000001-0000-4000-8000-000000000001'::uuid;
+WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid;
 SELECT is(
-  (SELECT state::text || '/' || coalesce(public_path,'∅') FROM public.product_media WHERE id='5d000001-0000-4000-8000-000000000001'::uuid),
+  (SELECT state::text || '/' || coalesce(public_path,'∅') FROM public.product_media
+   WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
   'draft/∅',
   'seller CANNOT forge state=approved + public_path'
+);
+
+-- Stand in for the Storage API having accepted both objects.
+SET LOCAL role postgres;
+INSERT INTO storage.objects (bucket_id, name, metadata)
+SELECT 'shop-product-media-draft', m.draft_path,
+       jsonb_build_object('size', 3000000, 'mimetype', 'image/jpeg')
+FROM public.product_media m WHERE m.product_id='5b000001-0000-4000-8000-000000000001'::uuid;
+INSERT INTO storage.objects (bucket_id, name, metadata)
+SELECT 'shop-product-media-draft', m.rendition_source_path,
+       jsonb_build_object('size', 240000, 'mimetype', 'image/webp')
+FROM public.product_media m WHERE m.product_id='5b000001-0000-4000-8000-000000000001'::uuid;
+SET LOCAL role authenticated;
+
+SELECT ok(
+  (public.product_media_finalize(
+     (SELECT id FROM public.product_media WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
+     1200, 900
+   ) ->> 'verified')::boolean,
+  'finalize verifies the objects against storage.objects, not against the client'
 );
 
 -- Media path must stay inside the seller's own shop folder.
@@ -208,7 +245,7 @@ SELECT throws_ok(
 
 -- Nor publish before approval.
 SELECT throws_ok(
-  $$ SELECT public.product_set_published('5b000001-0000-4000-8000-000000000001'::uuid, true) $$,
+  $$ SELECT public.product_publish_prepare('5b000001-0000-4000-8000-000000000001'::uuid) $$,
   '22023', NULL,
   'CANNOT publish a product that is not approved'
 );
@@ -390,18 +427,49 @@ SELECT is(
 
 SET LOCAL request.jwt.claims TO '{"sub":"50020001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 
-SELECT ok(
-  public.product_set_published('5b000001-0000-4000-8000-000000000001'::uuid, true),
-  'owner publishes an approved product'
+-- Publishing is copy-then-flip. SQL cannot copy bytes, so the RPC refuses to
+-- pretend it can — the worker does the copy and commits the pointer.
+SELECT throws_ok(
+  $$ SELECT public.product_set_published('5b000001-0000-4000-8000-000000000001'::uuid, true) $$,
+  '0A000', NULL,
+  'product_set_published refuses to publish rather than flip a pointer at bytes that do not exist'
 );
+
+CREATE TEMP TABLE _plan1 AS
+  SELECT public.product_publish_prepare('5b000001-0000-4000-8000-000000000001'::uuid) AS p;
+
+SELECT ok(
+  (SELECT jsonb_array_length(p -> 'copies') FROM _plan1) = 1,
+  'prepare returns one copy instruction per verified photo'
+);
+SELECT ok(
+  (SELECT (p -> 'copies' -> 0 ->> 'target') LIKE '%-v1.webp' FROM _plan1),
+  'the rendition key is immutable and versioned, so a replace cannot reuse a URL'
+);
+
+-- Stand in for the worker having copied the bytes, then commit as it would.
+SET LOCAL role postgres;
+INSERT INTO storage.objects (bucket_id, name, metadata)
+SELECT 'shop-product-media', c ->> 'target',
+       jsonb_build_object('size', 240000, 'mimetype', 'image/webp')
+FROM _plan1, jsonb_array_elements(p -> 'copies') c;
+
 SELECT is(
-  (SELECT state::text FROM public.product_media WHERE id='5d000001-0000-4000-8000-000000000001'::uuid),
+  public.product_publish_commit('5b000001-0000-4000-8000-000000000001'::uuid,
+                                (SELECT p -> 'copies' FROM _plan1)),
+  1,
+  'the worker commits the pointer only after the copy landed'
+);
+SET LOCAL role authenticated;
+
+SELECT is(
+  (SELECT state::text FROM public.product_media WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
   'approved',
   'publishing promotes the media row to approved'
 );
 SELECT ok(
   (SELECT public_path LIKE '5a000001-0000-4000-8000-000000000001/%'
-   FROM public.product_media WHERE id='5d000001-0000-4000-8000-000000000001'::uuid),
+   FROM public.product_media WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
   'the rendition path is scoped to the shop folder'
 );
 
@@ -429,10 +497,20 @@ SELECT ok(
   'owner unpublishes'
 );
 SELECT is(
-  (SELECT state::text || '/' || coalesce(public_path,'∅') FROM public.product_media WHERE id='5d000001-0000-4000-8000-000000000001'::uuid),
+  (SELECT state::text || '/' || coalesce(public_path,'∅') FROM public.product_media
+   WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
   'draft/∅',
   'unpublish takes the rendition away, it does not merely unlink it'
 );
+-- …and the object itself is promised to a durable job in the same transaction.
+SET LOCAL role postgres;
+SELECT is(
+  (SELECT count(*)::int FROM public.shop_media_cleanup_jobs
+   WHERE reason='unpublish' AND bucket_id='shop-product-media' AND state='pending'),
+  1,
+  'unpublish enqueues the object deletion, it does not leave the file behind'
+);
+SET LOCAL role authenticated;
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
@@ -451,10 +529,21 @@ SELECT is(
 
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50020001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
-SELECT ok(
-  public.product_set_published('5b000001-0000-4000-8000-000000000001'::uuid, true),
+CREATE TEMP TABLE _plan2 AS
+  SELECT public.product_publish_prepare('5b000001-0000-4000-8000-000000000001'::uuid) AS p;
+SET LOCAL role postgres;
+INSERT INTO storage.objects (bucket_id, name, metadata)
+SELECT 'shop-product-media', c ->> 'target',
+       jsonb_build_object('size', 240000, 'mimetype', 'image/webp')
+FROM _plan2, jsonb_array_elements(p -> 'copies') c
+ON CONFLICT DO NOTHING;
+SELECT is(
+  public.product_publish_commit('5b000001-0000-4000-8000-000000000001'::uuid,
+                                (SELECT p -> 'copies' FROM _plan2)),
+  1,
   'republish for the suspension check'
 );
+SET LOCAL role authenticated;
 
 SET LOCAL request.jwt.claims TO '{"sub":"50020004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 UPDATE public.shops SET state='suspended' WHERE id='5a000001-0000-4000-8000-000000000001'::uuid;
