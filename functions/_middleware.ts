@@ -603,7 +603,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v39→v40 (2026-08-11): SEO audit — EN + VI /blog indexes now emit
   // ItemList + BreadcrumbList JSON-LD, and both homepages drop the duplicate
   // auto <h1> (single body H1). Purge stale bot HTML for /, /vi, /blog, /vi/blog.
-  const cacheKey = `pr:v40:${url.pathname}`;
+  // v40→v41 (2026-08-11): venue wiring — venue detail + per-city hub deep-link
+  // the 4 evergreen local guides (cost/court-size/rules/how-to) instead of only
+  // the blog index. Purge stale bot HTML for /san/* + /san/khu-vuc/*.
+  const cacheKey = `pr:v41:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
