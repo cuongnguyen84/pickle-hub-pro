@@ -510,12 +510,18 @@
 .tl-admin-frame {
   display: grid;
   grid-template-columns: 200px 1fr;
+  /* Grid items default to min-width:auto, so the table inside .tl-admin-body
+     forced the column wider than the viewport. The frame's own
+     `overflow: hidden` then CLIPPED it — content was cut off with no
+     scrollbar and no signal. Both the old and the new overflow check missed
+     it for that reason until the detector started comparing right edges. */
   border: 1px solid var(--tl-border);
   border-radius: var(--tl-radius-lg);
   overflow: hidden;
   min-height: 320px;
 }
-@media (max-width: 720px) { .tl-admin-frame { grid-template-columns: 1fr; } }
+@media (max-width: 767px) { .tl-admin-frame { grid-template-columns: 1fr; } }
+.tl-admin-frame > * { min-width: 0; }
 .tl-admin-side {
   background: var(--tl-bg-elev);
   border-right: 1px solid var(--tl-border);
@@ -1090,3 +1096,59 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
    one was 28px. Both the chip and its button now clear 44px. */
 .tl-shop-chip { min-height: var(--shop-tap); padding-right: 4px; }
 .tl-shop-chip button { width: var(--shop-tap); height: var(--shop-tap); }
+
+/* ── A03 mobile (P0) ───────────────────────────────────────────────────────
+ * Three problems at 375px: a 10-item fake sidebar stacked above the work, a
+ * two-column definition row that squeezed long Vietnamese values into a
+ * sliver, and a decision button that sat below three screens of evidence.
+ * ---------------------------------------------------------------------- */
+
+/* Sidebar → one disclosure row on a phone. */
+.tl-admin-drawer {
+  border-bottom: 1px solid var(--tl-border);
+  background: var(--tl-bg-elev);
+}
+.tl-admin-drawer > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--shop-tap);
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tl-fg-2);
+  cursor: pointer;
+}
+.tl-admin-drawer > summary::-webkit-details-marker { display: none; }
+.tl-admin-drawer[open] > summary { border-bottom: 1px solid var(--tl-border); }
+.tl-admin-drawer .tl-admin-side { border-right: 0; }
+
+/* Label/value pairs that stack under their label on a phone. */
+.tl-shop-deflist { margin: 0; display: grid; gap: 10px; font-size: 13.5px; }
+.tl-shop-deflist > div { display: grid; gap: 2px; }
+.tl-shop-deflist dt { color: var(--tl-fg-3); }
+.tl-shop-deflist dd { margin: 0; overflow-wrap: anywhere; }
+@media (min-width: 560px) {
+  .tl-shop-deflist > div {
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    gap: 16px;
+    align-items: baseline;
+  }
+  .tl-shop-deflist dd { text-align: right; }
+}
+
+/* The decision button follows the moderator down the form instead of sitting
+   below three screens of evidence. Sticky inside the form, not a second bar —
+   duplicating the submit is how a moderator double-decides. */
+.tl-shop-decision-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 14px -14px -14px;
+  padding: 12px 14px calc(12px + var(--shop-safe-b));
+  background: color-mix(in srgb, var(--tl-bg-elev) 94%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--tl-border);
+  border-radius: 0 0 var(--tl-radius-lg) var(--tl-radius-lg);
+}

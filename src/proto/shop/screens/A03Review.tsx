@@ -14,9 +14,25 @@ import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Lock, Eye, History } from "lucide-react";
 import { readVariant } from "../scenario";
-import { AdminShopFrame } from "../components/Shells";
+import { AdminShopFrame, DefList } from "../components/Shells";
 import { EvidenceViewer, ModerationDecisionForm, type Decision } from "../components/Forms";
 import { APPLICATION_QUEUE, APPLICATIONS, dmyhm } from "../fixtures";
+
+const TYPE_LABEL: Record<string, string> = {
+  "ca-nhan": "Cá nhân",
+  "ho-kinh-doanh": "Hộ kinh doanh",
+  "cong-ty": "Công ty",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  draft: "Nháp",
+  submitted: "Đã gửi",
+  under_review: "Đang xem",
+  needs_changes: "Chờ sửa",
+  approved: "Đã duyệt",
+  rejected: "Từ chối",
+  withdrawn: "Đã rút",
+};
 
 type Phase = "idle" | "busy" | "error" | "done";
 
@@ -60,19 +76,19 @@ export default function A03Review() {
               Người nộp
             </h2>
             <div className="tl-shop-card">
-              <dl style={{ display: "grid", gap: 8, margin: 0, fontSize: 13.5 }}>
-                {[
+              <DefList
+                rows={[
                   ["Tên shop", app.shopName],
-                  ["Loại", app.sellerType],
+                  ["Loại người bán", TYPE_LABEL[app.sellerType]],
                   ["Bước hoàn tất", `${app.completedSteps}/6`],
-                  ["Trạng thái", app.status],
-                ].map(([k, v]) => (
-                  <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                    <dt style={{ color: "var(--tl-fg-3)" }}>{k}</dt>
-                    <dd style={{ margin: 0, textAlign: "right" }}>{v}</dd>
-                  </div>
-                ))}
-              </dl>
+                  ["Trạng thái", STATUS_LABEL[app.status]],
+                  ["Gửi lúc", app.submittedAt ? dmyhm(app.submittedAt) : "—"],
+                  [
+                    "Giấy tờ",
+                    `${app.documents.filter((d) => d.state === "uploaded").length}/${app.documents.length} đã nhận`,
+                  ],
+                ]}
+              />
             </div>
           </section>
 
