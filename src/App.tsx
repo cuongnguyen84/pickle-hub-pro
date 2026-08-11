@@ -89,6 +89,9 @@ const SellerApplication = lazyRetry(() => import("./pages/shop/SellerApplication
 const SellerApplicationStatus = lazyRetry(() => import("./pages/shop/SellerApplicationStatus"));
 const SellerShopSettings = lazyRetry(() => import("./pages/shop/SellerShopSettings"));
 const SellerHome = lazyRetry(() => import("./pages/shop/SellerHome"));
+// One component behind two routes: create and edit differ in three places and
+// agree everywhere else, so they share a chunk as well as a file.
+const SellerProductForm = lazyRetry(() => import("./pages/shop/SellerProductForm"));
 const AdminShopApplications = lazyRetry(() => import("./pages/admin/shop/AdminShopApplications"));
 const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/AdminShopApplicationReview"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
@@ -802,6 +805,8 @@ const App = () => (
                     <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
                     <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
                     <Route path="/seller/settings" element={<RequireAuth><SellerShopSettings /></RequireAuth>} />
+                    <Route path="/seller/products/new" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
+                    <Route path="/seller/products/:id/edit" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
                     <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />
                     <Route path="/admin/shop/applications/:id" element={<RequireAuth requiredRole="admin"><AdminShopApplicationReview /></RequireAuth>} />
                     {/* Public pages */}

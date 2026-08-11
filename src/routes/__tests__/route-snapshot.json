@@ -600,6 +600,14 @@
     "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
   },
   {
+    "path": "/seller/products/new",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/:id/edit",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
     "path": "/admin/shop/applications",
     "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
   },

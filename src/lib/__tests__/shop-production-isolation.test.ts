@@ -69,6 +69,10 @@ describe("shop production isolation", () => {
       "/seller",
       "/seller/application",
       "/seller/application/status",
+      "/seller/settings",
+      "/seller/products",
+      "/seller/products/new",
+      "/seller/products/:id/edit",
       "/admin/shop/applications",
     ]) {
       const line = app.split("\n").find((l) => l.includes(`path="${path}"`));
