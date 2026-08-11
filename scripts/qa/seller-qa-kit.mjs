@@ -27,6 +27,58 @@ export const STORAGE_KEY = `sb-${new URL(API).hostname.split(".")[0]}-auth-token
 export const WIDTHS = [320, 375, 414, 768, 1440];
 
 export const adminClient = () => createClient(API, SERVICE, { auth: { persistSession: false } });
+
+const MEDIA_BUCKETS = ["shop-product-media-draft", "shop-product-media"];
+
+/**
+ * Delete every object a shop owns, in both buckets.
+ *
+ * Deleting the shop row cascades the media ROWS. It does not delete BYTES —
+ * only the worker does that, and the worker is not running in a QA run. So a
+ * teardown that only removes rows leaves the objects behind, which is exactly
+ * what happened: ten of them, after the run reported success.
+ *
+ * Recursive because the paths are `<shop>/<product>/<media>/original` for
+ * product media and `<shop>/profile/<purpose>/<id>/v<n>/original` for logo and
+ * cover, and Storage `list` is one level at a time.
+ */
+export async function removeShopObjects(admin, shopId) {
+  const removed = [];
+  for (const bucket of MEDIA_BUCKETS) {
+    const walk = async (prefix) => {
+      const { data } = await admin.storage.from(bucket).list(prefix, { limit: 100 });
+      for (const entry of data ?? []) {
+        const path = `${prefix}/${entry.name}`;
+        // A folder has no id in the Storage listing; a real object does.
+        if (entry.id === null) await walk(path);
+        else {
+          await admin.storage.from(bucket).remove([path]);
+          removed.push(`${bucket}/${path}`);
+        }
+      }
+    };
+    await walk(shopId);
+  }
+  return removed;
+}
+
+/** What is still there afterwards. The teardown asserts on this rather than
+ *  trusting the deletes it just issued. */
+export async function remainingShopObjects(admin, shopId) {
+  const left = [];
+  for (const bucket of MEDIA_BUCKETS) {
+    const walk = async (prefix) => {
+      const { data } = await admin.storage.from(bucket).list(prefix, { limit: 100 });
+      for (const entry of data ?? []) {
+        const path = `${prefix}/${entry.name}`;
+        if (entry.id === null) await walk(path);
+        else left.push(`${bucket}/${path}`);
+      }
+    };
+    await walk(shopId);
+  }
+  return left;
+}
 export const anonClient = () => createClient(API, ANON, { auth: { persistSession: false } });
 
 /** A signed-in browser context, with the app's own language/theme keys set. */

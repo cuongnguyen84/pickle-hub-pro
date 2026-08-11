@@ -23,11 +23,19 @@
 import { chromium } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import {
+  assertFixturesAreWhatTheyClaim,
+  isWebp,
+  jpegWithGps,
+  webpHasMetadata,
+} from "./qa/media-fixtures.mjs";
+import {
   ANON,
   API,
   STORAGE_KEY,
   adminClient,
   anonClient,
+  remainingShopObjects,
+  removeShopObjects,
   axeFindings,
   keyboardFindings,
   signedInContext,
@@ -91,14 +99,22 @@ async function seed() {
 
 async function cleanup(userId, shopId) {
   // Checked, not fired and forgotten. A teardown that reports success while
-  // leaving its shop behind is how six of them accumulated during step 5.
+  // leaving its shop behind is how six of them accumulated during step 5 — and
+  // objects behind, which is how ten files accumulated during step 6.
+  await removeShopObjects(admin, shopId);
   const { error: shopError } = await admin.from("shops").delete().eq("id", shopId);
   if (shopError) note(`TEARDOWN không xoá được shop ${shopId}: ${shopError.message}`);
+  await admin.from("shop_media_cleanup_jobs").delete().eq("shop_id", shopId);
   const { error: userError } = await admin.auth.admin.deleteUser(userId);
   if (userError) note(`TEARDOWN không xoá được tài khoản ${userId}: ${userError.message}`);
+  const left = await remainingShopObjects(admin, shopId);
+  if (left.length) note(`TEARDOWN còn ${left.length} tệp trong storage: ${left.slice(0, 3).join(", ")}`);
 }
 
 const main = async () => {
+  // A vacuous fixture makes every media assertion below vacuous too.
+  for (const problem of assertFixturesAreWhatTheyClaim()) note(`FIXTURE ${problem}`);
+
   const { userId, shopId, session } = await seed();
   const browser = await chromium.launch();
 
@@ -119,6 +135,43 @@ const main = async () => {
 
     for (const f of await structureFindings(page)) note(f);
     for (const f of await sweepWidths(page)) note(f);
+
+    // ── Logo & cover: the disclosure, then the real pipeline ────────────
+    // The uploader is behind a <details> so its chunk is only fetched when the
+    // seller asks for it. Opening it is therefore part of the test, not setup.
+    await page.getByText("Logo & ảnh bìa", { exact: false }).first().click();
+    await page.waitForTimeout(1500);
+
+    if ((await page.locator("#pick-logo").count()) === 0) {
+      note("LOGO mở phần Logo & ảnh bìa nhưng không thấy ô chọn tệp");
+    } else {
+      await page.setInputFiles("#pick-logo", {
+        name: "logo-shop.jpg",
+        mimeType: "image/jpeg",
+        buffer: jpegWithGps(),
+      });
+      await page.waitForTimeout(5000);
+
+      const { data: rows } = await admin
+        .from("shop_profile_media")
+        .select("id,purpose,rendition_source_path,verified_at,public_path")
+        .eq("shop_id", shopId);
+
+      const logo = (rows ?? []).find((r) => r.purpose === "logo");
+      if (!logo) note("LOGO không có bản ghi logo nào sau khi tải lên");
+      else {
+        if (!logo.verified_at) note("LOGO chưa được xác minh — finalize không chạy");
+        if (logo.public_path) note("LOGO đã có public_path dù worker chưa chạy — client ghi được bucket công khai?");
+        const { data: blob } = await admin.storage
+          .from("shop-product-media-draft")
+          .download(logo.rendition_source_path);
+        const bytes = Buffer.from(await blob.arrayBuffer());
+        if (!isWebp(bytes)) note("LOGO ảnh đã xử lý không phải WebP");
+        if (webpHasMetadata(bytes)) note("LOGO ảnh đã xử lý VẪN còn EXIF/XMP");
+      }
+
+      for (const f of await sweepWidths(page, "LOGO")) note(f);
+    }
 
     await page.setViewportSize({ width: 375, height: 900 });
     await page.waitForTimeout(250);

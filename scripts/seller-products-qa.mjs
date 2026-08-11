@@ -22,11 +22,22 @@
 import { chromium } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import {
+  heicNamedJpg,
+  isWebp,
+  jpegWithGps,
+  notAnImage,
+  oversizedJpeg,
+  webpHasMetadata,
+  assertFixturesAreWhatTheyClaim,
+} from "./qa/media-fixtures.mjs";
+import {
   ANON,
   API,
   STORAGE_KEY,
   adminClient,
   anonClient,
+  remainingShopObjects,
+  removeShopObjects,
   axeFindings,
   keyboardFindings,
   signedInContext,
@@ -142,8 +153,13 @@ async function cleanup(userId, shopId) {
   // its shop behind and the teardown reported success. Six of them accumulated
   // before an unrelated pgTAP noticed.
   if (shopId) {
+    // Objects FIRST: deleting the shop cascades the media rows, and after that
+    // nothing knows the object paths any more. Only the worker deletes bytes in
+    // production, and the worker is not running here.
+    await removeShopObjects(admin, shopId);
     const { error } = await admin.from("shops").delete().eq("id", shopId);
     if (error) note(`TEARDOWN không xoá được shop ${shopId}: ${error.message}`);
+    await admin.from("shop_media_cleanup_jobs").delete().eq("shop_id", shopId);
   }
   if (userId) {
     const { error } = await admin.auth.admin.deleteUser(userId);
@@ -152,6 +168,8 @@ async function cleanup(userId, shopId) {
   if (shopId) {
     const { data } = await admin.from("shops").select("id").eq("id", shopId);
     if ((data ?? []).length > 0) note(`TEARDOWN shop ${shopId} vẫn còn sau khi dọn`);
+    const left = await remainingShopObjects(admin, shopId);
+    if (left.length) note(`TEARDOWN còn ${left.length} tệp trong storage: ${left.slice(0, 3).join(", ")}`);
   }
 }
 
@@ -178,6 +196,9 @@ async function auditRoute(page, path, expectHeading) {
 }
 
 const main = async () => {
+  // A vacuous fixture makes every media assertion below vacuous too.
+  for (const problem of assertFixturesAreWhatTheyClaim()) note(`FIXTURE ${problem}`);
+
   let seeded = { userId: null, shopId: null, productId: null, matrixProductId: null };
   const browser = await chromium.launch();
 
@@ -209,6 +230,67 @@ const main = async () => {
       }
       await page.fill("#prod-q", "");
       await page.waitForTimeout(700);
+    }
+
+    // ── Media: the real pipeline, in a real browser ──────────────────────
+    // Everything here goes through the actual screen: a canvas re-encode, two
+    // Storage uploads with the seller's own JWT, and finalize. The assertions
+    // are on the bytes that ended up in the bucket, not on what the UI said.
+    const mediaOk = await auditRoute(
+      page,
+      `/seller/products/${seeded.productId}/edit`,
+      PRODUCTS[0].title,
+    );
+    if (mediaOk) {
+      await page.setViewportSize({ width: 375, height: 900 });
+      await page.waitForTimeout(500);
+
+      // One good photo, WITH GPS in it, plus three that must each fail on
+      // their own terms — in one batch, because "one bad file does not take
+      // the good ones with it" is the property under test.
+      await page.setInputFiles("#pick-product-media", [
+        { name: "anh-san.jpg", mimeType: "image/jpeg", buffer: jpegWithGps() },
+        { name: "iphone.jpg", mimeType: "image/jpeg", buffer: heicNamedJpg() },
+        { name: "khong-phai-anh.png", mimeType: "image/png", buffer: notAnImage() },
+        { name: "qua-nang.jpg", mimeType: "image/jpeg", buffer: oversizedJpeg() },
+      ]);
+      await page.waitForTimeout(6000);
+
+      const cardText = (await page.locator(".tl-shop-card").allTextContents()).join(" | ");
+      if (!/HEIC/i.test(cardText)) note("MEDIA ảnh HEIC đội lốt .jpg không được báo đúng lý do");
+      if (!/không phải ảnh/i.test(cardText)) note("MEDIA tệp không phải ảnh không được báo đúng lý do");
+      if (!/vượt quá/i.test(cardText)) note("MEDIA ảnh quá nặng không được báo đúng lý do");
+
+      // The good one must have survived its three failing neighbours.
+      const admin2 = adminClient();
+      const { data: rows } = await admin2
+        .from("product_media")
+        .select("id,rendition_source_path,verified_at,position")
+        .eq("product_id", seeded.productId)
+        .order("position");
+      if (!rows || rows.length !== 1) {
+        note(`MEDIA mong đúng 1 ảnh lưu được, thấy ${rows?.length ?? 0}`);
+      } else if (!rows[0].verified_at) {
+        note("MEDIA ảnh tốt chưa được xác minh — finalize không chạy");
+      } else {
+        // The bytes, as stored. This is the EXIF/GPS claim, checked.
+        const { data: blob } = await admin2.storage
+          .from("shop-product-media-draft")
+          .download(rows[0].rendition_source_path);
+        const bytes = Buffer.from(await blob.arrayBuffer());
+        if (!isWebp(bytes)) note("MEDIA ảnh đã xử lý không phải WebP");
+        if (webpHasMetadata(bytes)) note("MEDIA ảnh đã xử lý VẪN còn EXIF/XMP — dữ liệu vị trí bị gửi lên");
+        if (bytes.length > 1024 * 1024) note(`MEDIA ảnh đã xử lý ${bytes.length} byte, vượt trần 1 MB`);
+      }
+
+      // The photo survives a reload, because it lives on the server now.
+      await page.reload({ waitUntil: "networkidle" });
+      await page.waitForTimeout(1500);
+      const thumbs = await page.locator('img[alt*="anh-san"], img[alt*="Ảnh"]').count();
+      if (thumbs === 0) note("MEDIA ảnh đã tải lên không còn sau khi tải lại trang");
+
+      for (const f of await sweepWidths(page, "MEDIA")) note(f);
+      for (const f of await axeFindings(page)) note(`MEDIA ${f}`);
     }
 
     await auditRoute(page, "/seller/products/new", "Thêm sản phẩm");
