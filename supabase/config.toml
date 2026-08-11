@@ -421,3 +421,6 @@ verify_jwt = false
 verify_jwt = false
 # Internal shared-secret mailer. A missing INTERNAL_NOTIFY_SECRET returns 503;
 # configuration failure never disables caller authentication.
+
+[functions.shop-media-lifecycle]
+verify_jwt = false

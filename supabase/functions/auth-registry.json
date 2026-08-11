@@ -919,6 +919,19 @@
         "cron.write.cron_secret.shared_secret"
       ],
       "status": "classified"
+    },
+    "shop-media-lifecycle": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "user.write.user_jwt.resource_scope",
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified",
+      "notes": "publish authorizes by handing the caller's JWT to product_publish_prepare (pilot + manager checked in Postgres); cleanup and reconcile are cron-only behind requireCronRequest. Sole holder of the service role over the product-media buckets."
     }
   }
 }
