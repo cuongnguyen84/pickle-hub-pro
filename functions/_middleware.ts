@@ -606,7 +606,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v40→v41 (2026-08-11): venue wiring — venue detail + per-city hub deep-link
   // the 4 evergreen local guides (cost/court-size/rules/how-to) instead of only
   // the blog index. Purge stale bot HTML for /san/* + /san/khu-vuc/*.
-  const cacheKey = `pr:v41:${url.pathname}`;
+  // v41→v42 (2026-08-11): venue detail renders a Google rating badge (link-out,
+  // attribution) once google_rating is populated by the Places enrich script.
+  // Purge /san/* so the badge appears after the backfill runs.
+  const cacheKey = `pr:v42:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

@@ -7009,6 +7009,10 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           district: string | null
+          google_place_id: string | null
+          google_rating: number | null
+          google_review_count: number | null
+          google_synced_at: string | null
           hours_json: Json | null
           id: string
           is_indoor: boolean | null
@@ -7033,6 +7037,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           district?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          google_synced_at?: string | null
           hours_json?: Json | null
           id?: string
           is_indoor?: boolean | null
@@ -7057,6 +7065,10 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           district?: string | null
+          google_place_id?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          google_synced_at?: string | null
           hours_json?: Json | null
           id?: string
           is_indoor?: boolean | null

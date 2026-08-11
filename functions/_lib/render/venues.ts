@@ -48,6 +48,9 @@ interface VenueDetailRow {
   amenities: string[] | null;
   hours_json: unknown;
   cover_image_url: string | null;
+  google_place_id: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
 }
 
 // Guard-0: a venue with no location AND no facts is a pure UGC stub (created via
@@ -296,13 +299,26 @@ export async function renderVenueDetail(
   siteUrl: string,
   lang: Lang = "vi",
 ): Promise<Response> {
-  const { data, error } = await supabase
+  const BASE_COLS =
+    "slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url";
+  const GOOGLE_COLS = ", google_place_id, google_rating, google_review_count";
+  let { data, error } = await supabase
     .from("venues")
-    .select(
-      "slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url",
-    )
+    .select(BASE_COLS + GOOGLE_COLS)
     .eq("slug", slug)
     .maybeSingle();
+
+  // Deploy-safe: if this code ships before the Places migration is applied, the
+  // Google columns don't exist yet and the select errors. Retry without them so
+  // venue pages never 404 on ordering — the rating badge just stays hidden until
+  // the migration + backfill land (badge guard is `google_rating != null`).
+  if (error) {
+    ({ data, error } = await supabase
+      .from("venues")
+      .select(BASE_COLS)
+      .eq("slug", slug)
+      .maybeSingle());
+  }
 
   if (error) {
     console.error("renderVenueDetail: lookup error", { slug, error });
@@ -464,6 +480,20 @@ export async function renderVenueDetail(
       ? `${name} là sân pickleball${typeWord ? ` ${typeWord}` : ""}${addr ? ` tại ${addr}` : ""}${courtsWord ? ` với ${courtsWord}` : ""}${v.surface_type ? `, mặt sân ${v.surface_type}` : ""}. Xem địa chỉ, bản đồ, chỉ đường và các sân pickleball khác${v.city ? ` tại ${v.city}` : ""} bên dưới.`
       : `${name} is a pickleball court${addr ? ` at ${addr}` : ""}${courtsWord ? ` with ${courtsWord}` : ""}${typeWord ? ` (${typeWord})` : ""}${v.surface_type ? `, ${v.surface_type} surface` : ""}. See the address, map, directions and other pickleball courts${v.city ? ` in ${v.city}` : ""} below.`;
   parts.splice(2, 0, `<p>${escapeHtml(intro)}</p>`);
+
+  // (B) Google rating badge — TOS-safe: link OUT to the Google listing with
+  // attribution ("trên Google" / "on Google"), never republishing review text or
+  // photos. Rating/review_count are refreshed <=25 days by the enrich script.
+  if (v.google_rating != null && v.google_place_id) {
+    const rating = v.google_rating.toFixed(1);
+    const count = v.google_review_count ?? 0;
+    const gUrl = `https://www.google.com/maps/place/?q=place_id:${escapeHtml(v.google_place_id)}`;
+    const badgeText =
+      lang === "vi"
+        ? `★ ${rating} · ${count} đánh giá trên Google`
+        : `★ ${rating} · ${count} reviews on Google`;
+    parts.splice(3, 0, `<p><a href="${gUrl}" rel="nofollow noopener">${escapeHtml(badgeText)}</a></p>`);
+  }
 
   if (v.city) {
     try {
