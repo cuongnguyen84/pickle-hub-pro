@@ -90,8 +90,12 @@ async function seed() {
 }
 
 async function cleanup(userId, shopId) {
-  await admin.from("shops").delete().eq("id", shopId);
-  await admin.auth.admin.deleteUser(userId);
+  // Checked, not fired and forgotten. A teardown that reports success while
+  // leaving its shop behind is how six of them accumulated during step 5.
+  const { error: shopError } = await admin.from("shops").delete().eq("id", shopId);
+  if (shopError) note(`TEARDOWN không xoá được shop ${shopId}: ${shopError.message}`);
+  const { error: userError } = await admin.auth.admin.deleteUser(userId);
+  if (userError) note(`TEARDOWN không xoá được tài khoản ${userId}: ${userError.message}`);
 }
 
 const main = async () => {
