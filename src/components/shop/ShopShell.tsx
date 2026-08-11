@@ -78,7 +78,7 @@ const SELLER_NAV: {
   ready: boolean;
 }[] = [
   { key: "dashboard", label: "Tổng quan", short: "Tổng quan", to: "/seller", Icon: LayoutDashboard, ready: true },
-  { key: "products", label: "Sản phẩm", short: "Sản phẩm", to: "/seller/products", Icon: Package, ready: false },
+  { key: "products", label: "Sản phẩm", short: "Sản phẩm", to: "/seller/products", Icon: Package, ready: true },
   { key: "orders", label: "Đơn hàng", short: "Đơn", to: "/seller/orders", Icon: ClipboardList, ready: false },
   { key: "settings", label: "Cài đặt", short: "Cài đặt", to: "/seller/settings", Icon: Settings, ready: true },
 ];

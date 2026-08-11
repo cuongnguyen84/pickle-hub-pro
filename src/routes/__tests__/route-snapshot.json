@@ -600,6 +600,10 @@
     "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
   },
   {
+    "path": "/seller/products",
+    "element": "<RequireAuth><SellerProducts /></RequireAuth>"
+  },
+  {
     "path": "/seller/products/new",
     "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
   },
