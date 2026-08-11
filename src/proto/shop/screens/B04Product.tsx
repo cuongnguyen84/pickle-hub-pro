@@ -10,7 +10,7 @@
 // instead of showing a fabricated 4.8★ (board Rule 4).
 // ============================================================================
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { readScenario } from "../scenario";
 import { BuyerShell } from "../components/Shells";
@@ -30,6 +30,7 @@ import {
   QuantityControl,
   StickyCommerceBar,
   PolicySummary,
+  mediaIndexFor,
 } from "../components/Commerce";
 import { LoadingLines, ErrorState, EmptyState, OfflineState } from "../components/States";
 import { productBySlug, shopById, buyableProducts, vnd, PRODUCTS } from "../fixtures";
@@ -43,8 +44,19 @@ export default function B04Product() {
   const shop = shopById(product.shopId);
   const sel = useVariantSelection(product);
   const [qty, setQty] = useState(1);
-  const [media, setMedia] = useState(0);
   const [saved, setSaved] = useState(false);
+
+  // Picking an option moves the gallery with it. A manual thumbnail choice
+  // wins until the selection changes again — otherwise tapping a thumb and
+  // then a swatch leaves the buyer looking at the wrong colour.
+  const [manualMedia, setManualMedia] = useState<number | null>(null);
+  const selKey = sel.selected.join("|");
+  const lastKey = useRef(selKey);
+  if (lastKey.current !== selKey) {
+    lastKey.current = selKey;
+    if (manualMedia !== null) setManualMedia(null);
+  }
+  const media = manualMedia ?? mediaIndexFor(product, sel.selected);
 
   const suspended = scenario === "suspended" || shop.state !== "active";
   const soldOut =
@@ -53,12 +65,83 @@ export default function B04Product() {
   const unpublished = product.status !== "active";
 
   // ── Whole-page states ────────────────────────────────────────────────────
+  // Skeleton mirrors the real block sizes — gallery 1:1, thumb strip, two-line
+  // title, large price, seller card, two option rows, full-width CTA — so the
+  // page does not jump when the data lands. A generic stack of grey bars is
+  // worse than no skeleton: it promises a layout that never arrives.
   if (scenario === "slow")
     return (
       <BuyerShell title="Đang tải" backTo="/proto/shop/home">
-        <main className="tl-shop-page">
-          <div className="tl-shop-sk" style={{ aspectRatio: "1 / 1", marginBottom: 16 }} />
-          <LoadingLines rows={4} />
+        <main className="tl-shop-page" aria-busy="true">
+          <p className="tl-shop-sr" role="status">
+            Đang tải sản phẩm
+          </p>
+          <div className="tl-shop-pdp">
+            <div className="tl-shop-pdp-media">
+              <div className="tl-shop-gallery">
+                <div className="tl-shop-sk" style={{ aspectRatio: "1 / 1", borderRadius: "var(--tl-radius)" }} />
+                <div className="tl-shop-gallery-thumbs" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="tl-shop-sk"
+                      style={{ width: 64, height: 64, flex: "none", borderRadius: 8 }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              {/* Heights measured against the real block at 375px: title 47,
+                  condition/stock row 26, price 47, seller card 114, options
+                  176, quantity+subtotal 162, delivery 41, CTA 44, policy 58. */}
+              <div style={{ height: 47, marginBottom: 10 }}>
+                <div className="tl-shop-sk" style={{ height: 20, width: "96%", marginBottom: 7 }} />
+                <div className="tl-shop-sk" style={{ height: 20, width: "62%" }} />
+              </div>
+              <div style={{ height: 26, marginBottom: 14 }}>
+                <div className="tl-shop-sk" style={{ height: 22, width: 104, borderRadius: 999 }} />
+              </div>
+              <div style={{ height: 47 }}>
+                <div className="tl-shop-sk" style={{ height: 30, width: 168 }} />
+              </div>
+              <div className="tl-shop-sk" style={{ height: 114, borderRadius: "var(--tl-radius)", margin: "16px 0" }} />
+              <div style={{ height: 176, marginBottom: 18 }}>
+                {[0, 1].map((i) => (
+                  <div key={i} style={{ marginBottom: 14 }}>
+                    <div className="tl-shop-sk" style={{ height: 13, width: 92, marginBottom: 8 }} />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {[0, 1, 2].map((j) => (
+                        <div
+                          key={j}
+                          className="tl-shop-sk"
+                          style={{ height: 44, width: 72, borderRadius: "var(--tl-radius)" }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ height: 162, marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 16 }}>
+                  <div className="tl-shop-sk" style={{ height: 66, width: 140, borderRadius: "var(--tl-radius)" }} />
+                  <div className="tl-shop-sk" style={{ height: 66, width: 150, borderRadius: "var(--tl-radius)" }} />
+                </div>
+                <div className="tl-shop-sk" style={{ height: 13, width: "72%", marginTop: 12 }} />
+              </div>
+              <div style={{ height: 41, marginBottom: 16 }}>
+                <div className="tl-shop-sk" style={{ height: 13, width: "58%", marginBottom: 6 }} />
+                <div className="tl-shop-sk" style={{ height: 13, width: "46%" }} />
+              </div>
+              <div className="tl-shop-sk" style={{ height: 44, borderRadius: "var(--tl-radius)", marginBottom: 10 }} />
+              {/* collapsed policy disclosure */}
+              <div className="tl-shop-sk" style={{ height: 58, borderRadius: "var(--tl-radius)" }} />
+            </div>
+          </div>
+
+          <div className="tl-shop-sk" style={{ height: 17, width: 120, margin: "28px 0 12px" }} />
+          <LoadingLines rows={3} />
         </main>
       </BuyerShell>
     );
@@ -117,6 +200,9 @@ export default function B04Product() {
                   tone={product.media[media]?.tone ?? "a"}
                   label={product.media[media]?.label ?? "Chưa có ảnh"}
                 />
+                <span className="tl-shop-sr" role="status" aria-live="polite">
+                  Đang xem ảnh: {product.media[media]?.label ?? "chưa có ảnh"}
+                </span>
                 <WishlistButton
                   saved={saved}
                   onToggle={() => setSaved((s) => !s)}
@@ -133,7 +219,7 @@ export default function B04Product() {
                       className="tl-shop-gallery-thumb"
                       aria-current={i === media}
                       aria-label={`Xem ảnh: ${m.label}`}
-                      onClick={() => setMedia(i)}
+                      onClick={() => setManualMedia(i)}
                     >
                       <ProductMedia tone={m.tone} label="" />
                     </button>

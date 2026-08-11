@@ -49,6 +49,26 @@ export const useVariantSelection = (product: ProtoProduct, initial?: string[]) =
   return { ...state, pick, reset: () => setSelected(product.optionNames.map(() => null)) };
 };
 
+/**
+ * Which gallery image a selection points at.
+ *
+ * Keyed on the PARTIAL selection, not the resolved variant: a buyer who picks
+ * "Đen" before picking a size expects the photo to change straight away, and
+ * waiting for a complete variant means the gallery still shows the white shoe
+ * while the swatch says black. Falls back to the first image.
+ */
+export const mediaIndexFor = (
+  product: ProtoProduct,
+  selected: (string | null)[],
+): number => {
+  if (product.optionNames.length === 0) return product.variants[0]?.mediaIndex ?? 0;
+  if (selected.every((v) => v === null)) return product.variants[0]?.mediaIndex ?? 0;
+  const match = product.variants.find((v) =>
+    selected.every((sel, i) => sel === null || v.values[i] === sel),
+  );
+  return match?.mediaIndex ?? product.variants[0]?.mediaIndex ?? 0;
+};
+
 /** Values for `index` that cannot combine with what is already chosen. */
 const unavailableValues = (
   product: ProtoProduct,
