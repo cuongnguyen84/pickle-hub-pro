@@ -1,10 +1,10 @@
-import { useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
+import { useEffect, useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Diamond, CircleDot, Target, Check } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
-import { LiveSection } from "@/components/home/LiveSection";
+import { LiveSection, LiveSectionSkeleton } from "@/components/home/LiveSection";
 import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
@@ -128,6 +128,27 @@ const Index = () => {
   const recentEnded = endedStreams
     .filter((s) => s.ended_at && Date.now() - new Date(s.ended_at).getTime() < 7 * 86_400_000)
     .slice(0, 4);
+  // CLS INC3: remember whether live led the page last navigation so the
+  // hero slot is reserved from first paint (skeleton) instead of inserting
+  // itself above the news feed when the queries resolve. First-ever visit
+  // of a session still shifts once; repeat navigations go to zero.
+  const liveQueriesLoading =
+    liveQuery.isLoading || scheduledQuery.isLoading || endedQuery.isLoading;
+  const [expectLiveLead] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem("tph.home-live-lead") === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    if (liveQueriesLoading) return;
+    const leads =
+      liveStreams.length > 0 || scheduledStreams.length > 0 || recentEnded.length > 0;
+    try {
+      sessionStorage.setItem("tph.home-live-lead", leads ? "1" : "0");
+    } catch { /* ignore */ }
+  }, [liveQueriesLoading, liveStreams.length, scheduledStreams.length, recentEnded.length]);
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
@@ -569,8 +590,12 @@ const Index = () => {
                 <span className="tl-feed-skeleton tl-feed-skeleton--heading" />
                 <span className="tl-feed-skeleton tl-feed-skeleton--summary" />
               </div>
+              {/* 3 placeholders — ui-ux-verifier 09/08 measured the 2-story
+                  skeleton 324px short of the resolved section on mobile,
+                  which made THIS skeleton the home page's largest remaining
+                  layout shift for VI users. */}
               <div className="tl-stories-grid" aria-hidden="true">
-                {Array.from({ length: 2 }, (_, index) => (
+                {Array.from({ length: 3 }, (_, index) => (
                   <div className="tl-story" key={index}>
                     <div className="tl-story-img tl-feed-skeleton" />
                     <div className="tl-story-body">
@@ -590,20 +615,24 @@ const Index = () => {
         // 48a94353/#501 — owner call: replays hold the top slot for a week).
         const liveLeads =
           hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0;
-        const liveNode = liveLeads
-          ? {
-              key: "live",
-              node: (
-                <LiveSection
-                  liveStreams={liveStreams}
-                  scheduledStreams={scheduledStreams}
-                  endedStreams={recentEnded}
-                  language={language}
-                  priority
-                />
-              ),
-            }
-          : null;
+        const liveNode = liveQueriesLoading
+          ? expectLiveLead
+            ? { key: "live", node: <LiveSectionSkeleton /> }
+            : null
+          : liveLeads
+            ? {
+                key: "live",
+                node: (
+                  <LiveSection
+                    liveStreams={liveStreams}
+                    scheduledStreams={scheduledStreams}
+                    endedStreams={recentEnded}
+                    language={language}
+                    priority
+                  />
+                ),
+              }
+            : null;
 
         const cluster: Array<{ key: string; node: ReactNode }> = [
           liveNode,
