@@ -7,18 +7,66 @@
 import { describe, expect, it } from "vitest";
 import { publicityLabel, validateChannel } from "../contactChannels";
 
-describe("validateChannel — phone", () => {
+describe("validateChannel — business phone", () => {
   it.each([
     ["0901234567", "+84901234567"],
     ["0901 234 567", "+84901234567"],
+    ["0901.234.567", "+84901234567"],
+    ["0901-234-567", "+84901234567"],
     ["+84901234567", "+84901234567"],
+    ["+84 901 234 567", "+84901234567"],
     ["84901234567", "+84901234567"],
-  ])("%s → %s", (input, expected) => {
+    ["0084901234567", "+84901234567"],
+    // A real Vinaphone number whose national form starts with the digits 84.
+    // Stripping those as a country code leaves 7 digits and a wrong rejection.
+    ["0847123456", "+84847123456"],
+  ])("mobile %s → %s", (input, expected) => {
     expect(validateChannel("phone", input)).toEqual({ ok: true, normalized: expected });
   });
 
-  it.each(["012345", "0201234567", "abc", ""])("refuses %s", (input) => {
+  it.each([
+    // Two-digit area codes: 24 Hà Nội, 28 TP.HCM — 8-digit subscriber number.
+    ["02438251234", "+842438251234"],
+    ["024 3825 1234", "+842438251234"],
+    ["(024) 3825-1234", "+842438251234"],
+    ["+84 24 3825 1234", "+842438251234"],
+    ["02838221234", "+842838221234"],
+    // Three-digit area codes: 225 Hải Phòng, 236 Đà Nẵng — 7-digit subscriber.
+    ["0225 3823 456", "+842253823456"],
+    ["0236 3888 999", "+842363888999"],
+  ])("landline %s → %s — D2 asks for a BUSINESS phone", (input, expected) => {
+    expect(validateChannel("phone", input)).toEqual({ ok: true, normalized: expected });
+  });
+
+  it.each([
+    ["091234567", "one digit short"],
+    ["09123456789", "one digit long"],
+    ["0243825123", "landline one digit short"],
+    ["024382512345", "landline one digit long"],
+    ["0212345678", "area code that is not a real one"],
+    ["113", "short code"],
+    ["abc", "no digits at all"],
+    ["", "nothing"],
+  ])("refuses %s (%s)", (input) => {
     expect(validateChannel("phone", input).ok).toBe(false);
+  });
+
+  it("names the 1900/1800 service lines instead of leaving them to digit count", () => {
+    for (const input of ["19001234", "1800 1080", "01900 1234"]) {
+      const result = validateChannel("phone", input);
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("1900/1800");
+    }
+  });
+
+  it("tells a business phone and a Zalo number apart in the error copy", () => {
+    // The whole point of the split: the same landline is valid as a shop phone
+    // and impossible as a Zalo account, and the seller must be told which.
+    expect(validateChannel("phone", "02438251234").ok).toBe(true);
+    const zalo = validateChannel("zalo", "02438251234");
+    expect(zalo.ok).toBe(false);
+    expect(zalo.error).toContain("Zalo");
+    expect(zalo.error).not.toContain("số bàn (028");
   });
 });
 
@@ -41,6 +89,12 @@ describe("validateChannel — zalo", () => {
 
   it("refuses a zalo.me link with an unusable handle", () => {
     expect(validateChannel("zalo", "https://zalo.me/a").ok).toBe(false);
+  });
+
+  it("refuses a landline in its own words — a fixed line cannot hold a Zalo account", () => {
+    const result = validateChannel("zalo", "024 3825 1234");
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("số bàn không đăng ký được Zalo");
   });
 });
 

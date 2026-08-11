@@ -92,6 +92,7 @@ const P2A_SQL = [
   "20260811160000_shop_service_role_grants.sql",
   "20260811170000_shop_draft_media_least_privilege.sql",
   "20260811180000_shop_profile.sql",
+  "20260811190000_shop_contact_business_phone.sql",
 ]
   .map((f) => readFileSync(resolve(__dirname, "../../../supabase/migrations", f), "utf8"))
   .join("\n");

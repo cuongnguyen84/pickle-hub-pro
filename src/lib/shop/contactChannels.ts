@@ -17,7 +17,19 @@ import type { ShopContactType } from "@/integrations/supabase/shop-schema";
 /** Schemes that must never reach an href, whatever the seller pasted. */
 const DANGEROUS_SCHEME = /^\s*(javascript|data|vbscript|file|about|blob)\s*:/i;
 
-const VN_MOBILE = /^(?:\+?84|0)([35789]\d{8})$/;
+/**
+ * The Vietnamese numbering plan, national significant number (what follows +84
+ * with no trunk 0). Mirrors vn_phone_is_nsn() in migration 20260811190000.
+ *
+ *   mobile    [35789] + 8 digits   =  9 digits
+ *   landline  2       + 9 digits   = 10 digits — every area code starts with 2,
+ *                                    two-digit (24 Hà Nội) or three (225 Hải Phòng)
+ */
+const VN_MOBILE_NSN = /^[35789]\d{8}$/;
+const VN_LANDLINE_NSN = /^2\d{9}$/;
+
+/** 1900/1800 service lines: named rather than left to fail on digit count. */
+const VN_SERVICE_LINE = /^0?1[89]00/;
 
 export interface ChannelValidation {
   ok: boolean;
@@ -29,11 +41,46 @@ export interface ChannelValidation {
 
 const invalid = (error: string): ChannelValidation => ({ ok: false, error });
 
-function normalizePhone(raw: string): ChannelValidation {
-  const digits = raw.replace(/[^0-9+]/g, "");
-  const m = VN_MOBILE.exec(digits);
-  if (!m) return invalid("Số điện thoại không hợp lệ — nhập dạng 09xxxxxxxx");
-  return { ok: true, normalized: `+84${m[1]}` };
+const isNsn = (nsn: string, mobileOnly: boolean) =>
+  VN_MOBILE_NSN.test(nsn) || (!mobileOnly && VN_LANDLINE_NSN.test(nsn));
+
+/**
+ * A business phone is a mobile OR a landline (D2). Zalo is mobile-only, because
+ * a landline cannot hold a Zalo account — so the two callers pass different
+ * `mobileOnly` and get different messages, rather than the phone field
+ * inheriting Zalo's rule and telling a shop its own shop line is invalid.
+ */
+function normalizePhone(raw: string, mobileOnly: boolean): ChannelValidation {
+  let digits = raw.replace(/[^0-9]/g, "");
+  if (digits.startsWith("00")) digits = digits.slice(2);
+
+  if (VN_SERVICE_LINE.test(digits)) {
+    return invalid("Đầu số 1900/1800 chưa hỗ trợ — dùng số di động hoặc số bàn của shop");
+  }
+
+  // Country code, then trunk 0, then the bare national number — accepting only
+  // a reading that is valid. 0847123456 is a real mobile whose national form
+  // starts with the digits 84, so order alone would misread it.
+  const readings = [
+    digits.startsWith("84") ? digits.slice(2) : null,
+    digits.startsWith("0") ? digits.slice(1) : null,
+    digits,
+  ];
+  const nsn = readings.find((r): r is string => r !== null && isNsn(r, false));
+
+  if (!nsn) {
+    return invalid(
+      mobileOnly
+        ? "Số Zalo không hợp lệ — Zalo dùng số di động, ví dụ 0901234567"
+        : "Số điện thoại không hợp lệ — nhập số di động (0901234567) hoặc số bàn (02838221234)",
+    );
+  }
+  if (mobileOnly && !VN_MOBILE_NSN.test(nsn)) {
+    return invalid(
+      "Số Zalo không hợp lệ — số bàn không đăng ký được Zalo, nhập số di động hoặc liên kết zalo.me/…",
+    );
+  }
+  return { ok: true, normalized: `+84${nsn}` };
 }
 
 function handleFrom(raw: string, hosts: RegExp): string {
@@ -46,7 +93,7 @@ export function validateChannel(type: ShopContactType, rawInput: string): Channe
   if (!raw) return invalid("Chưa nhập thông tin liên hệ");
   if (DANGEROUS_SCHEME.test(raw)) return invalid("Liên kết không hợp lệ");
 
-  if (type === "phone") return normalizePhone(raw);
+  if (type === "phone") return normalizePhone(raw, false);
 
   if (type === "zalo") {
     if (/^(https?:\/\/)?(www\.)?zalo\.me\//i.test(raw)) {
@@ -54,10 +101,12 @@ export function validateChannel(type: ShopContactType, rawInput: string): Channe
       if (!/^[A-Za-z0-9._-]{3,60}$/.test(handle)) return invalid("Liên kết Zalo không hợp lệ");
       return { ok: true, normalized: `https://zalo.me/${handle}` };
     }
-    // Zalo is reachable by phone number too — the commonest case for a pilot
-    // seller who has never made a zalo.me link.
-    const phone = normalizePhone(raw);
-    if (!phone.ok) return invalid("Nhập số Zalo (09xxxxxxxx) hoặc liên kết zalo.me/…");
+    // Zalo is reachable by the mobile number the account is registered to —
+    // the commonest case for a pilot seller who has never made a zalo.me link.
+    // The message stays Zalo's own; borrowing the phone one is what made a
+    // landline look like a typo.
+    const phone = normalizePhone(raw, true);
+    if (!phone.ok) return invalid(phone.error!);
     return { ok: true, normalized: `https://zalo.me/${phone.normalized!.replace(/^\+/, "")}` };
   }
 
@@ -79,7 +128,10 @@ export const CHANNEL_LABEL: Record<ShopContactType, string> = {
 export const CHANNEL_PLACEHOLDER: Record<ShopContactType, string> = {
   zalo: "0901234567 hoặc zalo.me/tênshop",
   messenger: "m.me/tênshop",
-  phone: "0901234567",
+  // Says out loud that the shop's landline is welcome. The old placeholder
+  // showed only a mobile, so a shop with a fixed line assumed it was not
+  // accepted — and until this change it was not.
+  phone: "0901234567 hoặc 02838221234",
 };
 
 /**

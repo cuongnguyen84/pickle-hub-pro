@@ -8,7 +8,7 @@
 
 BEGIN;
 
-SELECT plan(57);
+SELECT plan(77);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -78,17 +78,55 @@ SELECT is(
 
 -- ─── Normalization: what a channel is allowed to be ─────────────────────────
 
+-- Mobile.
 SELECT is(public.shop_contact_normalize('phone', '0901 234 567'), '+84901234567', 'phone: khoảng trắng + số 0 đầu');
+SELECT is(public.shop_contact_normalize('phone', '0901.234.567'), '+84901234567', 'phone: dấu chấm');
+SELECT is(public.shop_contact_normalize('phone', '0901-234-567'), '+84901234567', 'phone: dấu gạch');
 SELECT is(public.shop_contact_normalize('phone', '+84901234567'), '+84901234567', 'phone: đã E.164 thì giữ nguyên');
 SELECT is(public.shop_contact_normalize('phone', '84901234567'),  '+84901234567', 'phone: thiếu dấu +');
+SELECT is(public.shop_contact_normalize('phone', '0084901234567'), '+84901234567', 'phone: tiền tố quốc tế 00');
+-- A real Vinaphone number whose national form starts with the digits 84.
+-- Reading those as a country code leaves 7 digits and rejects a valid number.
+SELECT is(public.shop_contact_normalize('phone', '0847123456'), '+84847123456',
+  'phone: 084xxxxxxx không bị đọc nhầm thành mã quốc gia');
+
+-- Landline. D2 asks for a BUSINESS phone, and a shop line is a business phone.
+-- Every Vietnamese area code starts with 2 and the national number is always
+-- 10 digits, two-digit area code (24 Hà Nội) or three (225 Hải Phòng) alike.
+SELECT is(public.shop_contact_normalize('phone', '024 3825 1234'), '+842438251234', 'phone: số bàn Hà Nội');
+SELECT is(public.shop_contact_normalize('phone', '(024) 3825-1234'), '+842438251234', 'phone: số bàn có ngoặc và gạch');
+SELECT is(public.shop_contact_normalize('phone', '02838221234'),   '+842838221234', 'phone: số bàn TP.HCM');
+SELECT is(public.shop_contact_normalize('phone', '+84 24 3825 1234'), '+842438251234', 'phone: số bàn dạng +84');
+SELECT is(public.shop_contact_normalize('phone', '0225 3823 456'), '+842253823456', 'phone: mã vùng 3 chữ số');
+
 SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '012345') $$, '22023', NULL,
   'phone: số quá ngắn bị từ chối');
+SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '09123456789') $$, '22023', NULL,
+  'phone: di động thừa chữ số bị từ chối');
+SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '0243825123') $$, '22023', NULL,
+  'phone: số bàn thiếu chữ số bị từ chối');
+SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '024382512345') $$, '22023', NULL,
+  'phone: số bàn thừa chữ số bị từ chối');
 SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '0201234567') $$, '22023', NULL,
-  'phone: đầu số không phải di động bị từ chối');
+  'phone: mã vùng không có thật bị từ chối');
+SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '113') $$, '22023', NULL,
+  'phone: số dịch vụ ngắn bị từ chối');
+-- Named rather than left to fail on digit count, so the seller is told why.
+SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '19001234') $$,
+  '22023', 'đầu số 1900/1800 chưa hỗ trợ — dùng số di động hoặc số bàn của shop',
+  'phone: 1900 bị từ chối bằng đúng lý do của nó');
+SELECT throws_ok($$ SELECT public.shop_contact_normalize('phone', '1800 1080') $$,
+  '22023', 'đầu số 1900/1800 chưa hỗ trợ — dùng số di động hoặc số bàn của shop',
+  'phone: 1800 bị từ chối bằng đúng lý do của nó');
 
 SELECT is(public.shop_contact_normalize('zalo', 'https://zalo.me/shopcuatoi'), 'https://zalo.me/shopcuatoi', 'zalo: link giữ handle');
 SELECT is(public.shop_contact_normalize('zalo', 'zalo.me/shopcuatoi?utm=x'),   'https://zalo.me/shopcuatoi', 'zalo: cắt query');
 SELECT is(public.shop_contact_normalize('zalo', '0901234567'),                 'https://zalo.me/84901234567', 'zalo: số điện thoại thành link');
+-- The reason the two rules had to separate: this exact value is a valid shop
+-- phone and an impossible Zalo account, and the seller must be told which.
+SELECT throws_ok($$ SELECT public.shop_contact_normalize('zalo', '024 3825 1234') $$,
+  '22023', 'số Zalo không hợp lệ — số bàn không đăng ký được Zalo, nhập số di động hoặc liên kết zalo.me/…',
+  'zalo: số bàn bị từ chối bằng lời của Zalo, không mượn lời của phone');
 
 SELECT is(public.shop_contact_normalize('messenger', 'https://m.me/shop.pickle'), 'https://m.me/shop.pickle', 'messenger: m.me');
 SELECT is(public.shop_contact_normalize('messenger', 'facebook.com/shop.pickle'), 'https://m.me/shop.pickle', 'messenger: facebook.com → m.me');
@@ -289,6 +327,38 @@ SELECT is(
   (SELECT count(*)::int FROM public.shop_contact_channels),
   0,
   'khách không còn thấy kênh vừa bị đưa lại hàng chờ'
+);
+
+-- Same rule for the business phone, with a value class that did not exist
+-- before this migration: an approved mobile edited into the shop's landline is
+-- still a different number, and the badge cannot follow it across.
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50040001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+SELECT is(
+  (public.shop_contact_upsert('7a000001-0000-4000-8000-000000000001'::uuid, 'phone', '0912345678', 'Hotline', true, NULL)).value_normalized,
+  '+84912345678',
+  'phone: kênh mới lưu bản chuẩn hoá'
+);
+
+SET LOCAL request.jwt.claims TO '{"sub":"50040005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
+SELECT is(
+  public.shop_contact_decide(
+    (SELECT id FROM public.shop_contact_channels WHERE type='phone' LIMIT 1), 'approve')::text,
+  'approved',
+  'phone: quản trị viên duyệt được số di động'
+);
+
+SET LOCAL request.jwt.claims TO '{"sub":"50040001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+SELECT is(
+  (public.shop_contact_upsert('7a000001-0000-4000-8000-000000000001'::uuid, 'phone', '028 3822 1234', 'Hotline', true,
+     (SELECT id FROM public.shop_contact_channels WHERE type='phone' LIMIT 1))).state::text,
+  'pending_review',
+  'phone: đổi từ di động sang số bàn thì quay lại hàng chờ duyệt'
+);
+SELECT is(
+  (SELECT value_normalized FROM public.shop_contact_channels WHERE type='phone' LIMIT 1),
+  '+842838221234',
+  'phone: và số bàn được lưu ở dạng E.164'
 );
 
 -- ─── Manager yes, support no, outsider no ──────────────────────────────────
