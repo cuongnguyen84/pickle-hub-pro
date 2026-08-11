@@ -128,6 +128,80 @@ export interface ProductCategoryRow {
   is_active: boolean;
 }
 
+export type ProductStatus =
+  | "draft"
+  | "pending_review"
+  | "needs_changes"
+  | "approved"
+  | "rejected"
+  | "archived";
+
+export type ProductCondition = "new" | "used";
+
+export interface ProductRow {
+  id: string;
+  shop_id: string;
+  /** Globally unique. Moves only through product_slug_update. */
+  slug: string;
+  title: string;
+  description: string | null;
+  category_slug: string | null;
+  condition: ProductCondition;
+  status: ProductStatus;
+  is_published: boolean;
+  in_stock: boolean;
+  availability_updated_at: string | null;
+  submitted_at: string | null;
+  decided_at: string | null;
+  /** What the moderator told the seller. `internal_note` is admin-only and is
+   *  never selected by a seller-facing query. */
+  applicant_note: string | null;
+  requested_fields: string[];
+  /** Optimistic-concurrency token. Bumped by trigger; never sent as an edit. */
+  version: number;
+  /** The client's create idempotency key. Read-only after insert. */
+  client_token: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Price and stock live here, always — including for a product with no options,
+ *  which still has exactly one of these. */
+export interface ProductVariantRow {
+  id: string;
+  product_id: string;
+  shop_id: string;
+  name: string | null;
+  sku: string | null;
+  /** VND is an integer currency. Never a float, never a formatted string. */
+  price_vnd: number;
+  compare_at_price_vnd: number | null;
+  /** NULL means "not counted", which is not the same as 0 = sold out. */
+  stock: number | null;
+  position: number;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductMediaRow {
+  id: string;
+  product_id: string;
+  shop_id: string;
+  draft_path: string;
+  public_path: string | null;
+  state: "draft" | "approved";
+  alt_text: string | null;
+  position: number;
+}
+
+/** A product as the seller list renders it: the row plus the two child sets it
+ *  summarises. PostgREST returns embedded resources under the table name. */
+export interface SellerProductRow extends ProductRow {
+  product_variants: Pick<ProductVariantRow, "id" | "price_vnd" | "stock" | "position" | "sku">[];
+  product_media: Pick<ProductMediaRow, "id" | "position">[];
+}
+
 /** Objects added by the P2a migrations, checked by the same parity test. */
 export const SHOP_P2A_TABLES = [
   "product_categories",
@@ -151,6 +225,12 @@ export const SHOP_P2A_RPCS = [
   "shop_contact_delete",
   "shop_contact_decide",
   "shop_contact_normalize",
+  /* ── step 4 (migration 20260811200000) ── */
+  "product_create",
+  "product_update",
+  "product_slug_update",
+  "product_unarchive",
+  "product_status_counts",
 ] as const;
 
 /** Table + RPC names, exported so the parity test can compare them to the SQL. */

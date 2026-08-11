@@ -37,26 +37,10 @@ const KEY = {
   categories: ["shop", "categories"] as const,
 };
 
-/** Postgres error → something the seller can act on. */
-export function shopErrorMessage(error: unknown): string {
-  const e = error as { code?: string; message?: string } | null;
-  const raw = e?.message ?? "";
-  // The RPCs already raise Vietnamese for everything a seller can cause, so
-  // pass those through rather than replacing them with something vaguer.
-  if (/[àáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềể]/i.test(raw)) return raw;
-  switch (e?.code) {
-    case "40001":
-      return "Hồ sơ vừa được cập nhật ở nơi khác. Tải lại để xem bản mới nhất.";
-    case "23505":
-      return "Giá trị này đã có nơi khác dùng.";
-    case "42501":
-      return "Bạn không có quyền thực hiện thay đổi này.";
-    default:
-      // Never surface a raw Postgres string: it is noise to a seller and a
-      // schema disclosure to everyone else.
-      return "Không lưu được. Thử lại giúp em.";
-  }
-}
+// Moved to lib/shop/errors.ts when the product editor needed the same mapping.
+// Re-exported so step 3's call sites keep importing it from where they always
+// have — two copies of an error table is how one of them stops being true.
+export { shopErrorMessage } from "@/lib/shop/errors";
 
 export const useMyShopMembership = () => {
   const { user } = useAuth();
