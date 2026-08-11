@@ -259,6 +259,66 @@ export interface SellerProductRow extends ProductRow {
   product_media: Pick<ProductMediaRow, "id" | "position">[];
 }
 
+/**
+ * The canonical projection: what a product looks like to somebody looking at
+ * it. Produced by product_public_projection(), which the seller preview reads
+ * today and the public PDP reads in P2b — the only difference is the flag.
+ *
+ * Fields the projection deliberately does NOT carry: internal_note,
+ * client_token, variants_token, draft paths, cleanup jobs, the inventory
+ * ledger, and any signed URL.
+ */
+export interface ProductProjection {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  condition: ProductCondition;
+  category: { slug: string; name: string } | null;
+  shop: {
+    slug: string;
+    name: string;
+    region: string | null;
+    /** A check somebody did, stated as such — never a quality claim. */
+    verified: boolean;
+    shipping_note: string | null;
+    return_note: string | null;
+  };
+  option_groups: OptionGroup[];
+  variants: {
+    id: string;
+    option_values: Record<string, string> | null;
+    option_key: string | null;
+    sku: string | null;
+    price_vnd: number;
+    /** Derived by the server, so both surfaces agree what "còn hàng" means. */
+    availability: "in_stock" | "out_of_stock" | "unknown";
+    /** Seller-only; null for the public reader. */
+    stock_on_hand: number | null;
+    media_id: string | null;
+  }[];
+  media: {
+    id: string;
+    alt_text: string | null;
+    position: number;
+    /** The processed rendition. Never the original, never a signed URL. */
+    path: string | null;
+    public_path: string | null;
+    width: number | null;
+    height: number | null;
+  }[];
+  primary_media_id: string | null;
+  in_stock: boolean;
+  availability_updated_at: string | null;
+  /** Seller-only fields — null for the public reader. */
+  status: ProductStatus | null;
+  is_published: boolean;
+  shop_state: ShopState | null;
+  applicant_note: string | null;
+  version: number | null;
+  is_preview: boolean;
+}
+
 /** Objects added by the P2a migrations, checked by the same parity test. */
 export const SHOP_P2A_TABLES = [
   "product_categories",
@@ -269,6 +329,7 @@ export const SHOP_P2A_TABLES = [
   "shop_contact_channels",
   "inventory_movements",
   "shop_profile_media",
+  "product_submission_events",
 ] as const;
 
 export const SHOP_P2A_RPCS = [
@@ -284,6 +345,11 @@ export const SHOP_P2A_RPCS = [
   "shop_contact_delete",
   "shop_contact_decide",
   "shop_contact_normalize",
+  /* ── step 7 (migration 20260811230000) ── */
+  "product_public_projection",
+  "product_submit_preflight",
+  "product_submit",
+  "product_edit_sections",
   /* ── step 6 (migration 20260811220000) ── */
   "product_media_reorder",
   "product_variant_set_media",
