@@ -127,12 +127,18 @@ export function cmsHeroImageSources(
  */
 export function homepageThumbnailUrl(
   source: string | null | undefined,
-  options: { width: number; height: number; quality?: number },
+  options: { width: number; height: number; quality?: number; fit?: "cover" | "contain" },
 ): string | undefined {
   if (!source) return undefined;
 
   const normalized = normalizeImageUrl(source);
-  const transformed = optimizeImageUrl(normalized, options);
+  // Hero artwork often contains copy or subjects close to the edge. In
+  // `contain` mode, request a width-bounded derivative without asking the CDN
+  // to crop it to the destination ratio; CSS then letterboxes it if needed.
+  const transformOptions = options.fit === "contain"
+    ? { width: options.width, quality: options.quality }
+    : options;
+  const transformed = optimizeImageUrl(normalized, transformOptions);
   if (transformed && transformed !== normalized) return transformed;
 
   // Committed/local assets already have a controlled byte budget.
@@ -145,6 +151,7 @@ export function homepageThumbnailUrl(
     // Google Drive direct images use the Google Photos CDN transform suffix.
     if (host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")) {
       const base = url.toString().replace(/=w\d+(?:-h\d+)?(?:-[a-z]+)?$/i, "");
+      if (options.fit === "contain") return `${base}=w${options.width}`;
       return `${base}=w${options.width}-h${options.height}-c`;
     }
 
