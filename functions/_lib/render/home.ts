@@ -97,7 +97,9 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
       ],
     },
     bodyContent: `
-      <p>ThePickleHub — editorial coverage of professional pickleball, headquartered in Ho Chi Minh City and reporting from PPA, APP, MLP, European Open, and Asia Pacific Series venues worldwide.</p>
+      <h1>Everything a pickleball player needs, in one place.</h1>
+      <p>ThePickleHub is a pickleball platform for players to follow news and livestreams, find players and courts, and create or join tournaments and community events.</p>
+      <p>Our editorial team is headquartered in Ho Chi Minh City and reports from PPA, APP, MLP, European Open, and Asia Pacific Series venues worldwide.</p>
       <ul>
         <li><a href="${siteUrl}/live">Live courts</a> — Watch matches streaming right now</li>
         <li><a href="${siteUrl}/tournaments">Tournaments</a> — Schedules, brackets, results across PPA Asia and beyond</li>
@@ -206,7 +208,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
       ],
     },
     bodyContent: `
-      <p>ThePickleHub — đưa tin pickleball chuyên nghiệp toàn cầu, trụ sở tại TP.HCM, tường thuật từ PPA, APP, MLP, European Open và Asia Pacific Series.</p>
+      <h1>Mọi thứ người chơi pickleball cần, trong một điểm đến.</h1>
+      <p>ThePickleHub là nền tảng pickleball dành cho người chơi trên toàn thế giới theo dõi tin tức và livestream, tìm bạn chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng.</p>
+      <p>Đội ngũ biên tập đặt tại TP.HCM và tường thuật từ PPA, APP, MLP, European Open cùng Asia Pacific Series trên toàn thế giới.</p>
       <ul>
         <li><a href="${siteUrl}/vi/live">Sân trực tiếp</a> — Xem trận đấu đang diễn ra</li>
         <li><a href="${siteUrl}/vi/tournaments">Giải đấu</a> — Lịch, bracket, kết quả</li>

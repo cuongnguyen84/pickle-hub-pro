@@ -1,0 +1,230 @@
+-- Shop marketplace Phase 1 — RLS + RPC authorization matrix.
+--
+-- Every case here is a NEGATIVE one except where noted: the point is proving
+-- what an actor cannot do, because "the client never calls that" is not a
+-- security control. Convention follows rls_auth_matrix.test.sql (this pgTAP
+-- build lacks the *_policy helpers, so assert against catalogs + behaviour).
+
+BEGIN;
+
+SELECT plan(24);
+
+-- ─── Fixture: pilot member A, pilot member B, outsider C, admin D ───────────
+
+INSERT INTO auth.users (
+  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+) VALUES
+  ('50010001-0000-4000-8000-000000000001'::uuid, '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'shop-a@thepicklehub.test', '', NOW(),
+   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Shop A"}'::jsonb, NOW(), NOW()),
+  ('50010002-0000-4000-8000-000000000002'::uuid, '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'shop-b@thepicklehub.test', '', NOW(),
+   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Shop B"}'::jsonb, NOW(), NOW()),
+  ('50010003-0000-4000-8000-000000000003'::uuid, '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'shop-c@thepicklehub.test', '', NOW(),
+   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Outsider C"}'::jsonb, NOW(), NOW()),
+  ('50010004-0000-4000-8000-000000000004'::uuid, '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'shop-admin@thepicklehub.test', '', NOW(),
+   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Shop Admin"}'::jsonb, NOW(), NOW());
+
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('50010004-0000-4000-8000-000000000004'::uuid, 'admin')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.shop_pilot_members (user_id) VALUES
+  ('50010001-0000-4000-8000-000000000001'::uuid),
+  ('50010002-0000-4000-8000-000000000002'::uuid);
+
+-- ─── Blanket: RLS actually on ──────────────────────────────────────────────
+
+SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='shop_applications'), 'RLS enabled on shop_applications');
+SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='shop_application_events'), 'RLS enabled on shop_application_events');
+SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='shops'), 'RLS enabled on shops');
+SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='shop_members'), 'RLS enabled on shop_members');
+SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='shop_pilot_members'), 'RLS enabled on shop_pilot_members');
+
+-- A grant without a policy is a locked door with no wall; a policy without a
+-- grant is a 42501 that reads like a bug. Assert both exist.
+SELECT ok(
+  (SELECT has_table_privilege('authenticated', 'public.shop_applications', 'SELECT')),
+  'authenticated has SELECT grant on shop_applications'
+);
+
+-- ─── A creates a draft ─────────────────────────────────────────────────────
+
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50010001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+INSERT INTO public.shop_applications (applicant_user_id, seller_type, full_name, phone, shop_name, city)
+VALUES ('50010001-0000-4000-8000-000000000001'::uuid, 'ca-nhan', 'Nguyen Van A', '0901234567', 'Shop Cua A', 'TP. Ho Chi Minh');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.shop_applications),
+  1,
+  'A sees exactly their own application'
+);
+
+-- 1. An applicant cannot promote their own application.
+SELECT lives_ok(
+  $$ UPDATE public.shop_applications SET status = 'approved' WHERE applicant_user_id = auth.uid() $$,
+  'status write is silently neutralised rather than erroring'
+);
+SELECT is(
+  (SELECT status::text FROM public.shop_applications WHERE applicant_user_id = auth.uid()),
+  'draft',
+  'applicant CANNOT set status=approved (trigger pins it)'
+);
+
+-- 2. An applicant cannot write moderator fields.
+UPDATE public.shop_applications SET internal_note = 'tôi tự ghi' WHERE applicant_user_id = auth.uid();
+SELECT is(
+  (SELECT internal_note FROM public.shop_applications WHERE applicant_user_id = auth.uid()),
+  NULL,
+  'applicant CANNOT write internal_note'
+);
+
+-- 3. The applicant-facing view does not expose internal_note at all.
+SELECT is(
+  (SELECT count(*)::int FROM information_schema.columns
+   WHERE table_schema='public' AND table_name='my_shop_application' AND column_name='internal_note'),
+  0,
+  'my_shop_application view has no internal_note column'
+);
+
+-- 4. An applicant cannot forge an event row.
+SELECT throws_ok(
+  $$ INSERT INTO public.shop_application_events (application_id, actor_kind, event)
+     SELECT id, 'admin', 'approved' FROM public.shop_applications LIMIT 1 $$,
+  '42501',
+  NULL,
+  'applicant CANNOT insert into the append-only event log'
+);
+
+-- 5. An applicant cannot create a shop directly.
+SELECT throws_ok(
+  $$ INSERT INTO public.shops (slug, name, owner_user_id) VALUES ('tu-tao', 'Tu Tao', auth.uid()) $$,
+  '42501',
+  NULL,
+  'applicant CANNOT insert a shop (no INSERT policy)'
+);
+
+-- 6. An applicant cannot make themselves a member of anything.
+SELECT throws_ok(
+  $$ INSERT INTO public.shop_members (shop_id, user_id, role)
+     VALUES (gen_random_uuid(), auth.uid(), 'owner') $$,
+  '42501',
+  NULL,
+  'applicant CANNOT insert shop_members'
+);
+
+-- 7. A non-admin cannot decide an application.
+SELECT throws_ok(
+  $$ SELECT public.shop_application_decide(
+       (SELECT id FROM public.shop_applications LIMIT 1), 'approve') $$,
+  '42501',
+  NULL,
+  'non-admin CANNOT call shop_application_decide'
+);
+
+-- ─── B cannot see or touch A's application ─────────────────────────────────
+
+SET LOCAL request.jwt.claims TO '{"sub":"50010002-0000-4000-8000-000000000002","role":"authenticated","aal":"aal1"}';
+
+SELECT is(
+  (SELECT count(*)::int FROM public.shop_applications),
+  0,
+  'B CANNOT read A''s application'
+);
+
+UPDATE public.shop_applications SET shop_name = 'bi chiem' WHERE true;
+SET LOCAL request.jwt.claims TO '{"sub":"50010001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+SELECT is(
+  (SELECT shop_name FROM public.shop_applications WHERE applicant_user_id = auth.uid()),
+  'Shop Cua A',
+  'B CANNOT update A''s application'
+);
+
+-- ─── Outsider C is not on the pilot allowlist ──────────────────────────────
+
+SET LOCAL request.jwt.claims TO '{"sub":"50010003-0000-4000-8000-000000000003","role":"authenticated","aal":"aal1"}';
+
+SELECT ok(NOT public.shop_pilot_has_access(), 'outsider has no pilot access');
+
+SELECT throws_ok(
+  $$ INSERT INTO public.shop_applications (applicant_user_id, shop_name)
+     VALUES (auth.uid(), 'Ngoai pilot') $$,
+  '42501',
+  NULL,
+  'non-pilot user CANNOT create an application'
+);
+
+-- ─── Submit is server-validated and idempotent ─────────────────────────────
+
+SET LOCAL request.jwt.claims TO '{"sub":"50010001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT is(public.shop_application_submit()::text, 'submitted', 'A can submit a complete application');
+SELECT is(public.shop_application_submit()::text, 'submitted', 'submitting twice is idempotent, not a second row');
+SELECT is(
+  (SELECT count(*)::int FROM public.shop_application_events WHERE event = 'submitted'),
+  1,
+  'double submit logs exactly one event'
+);
+
+-- ─── Admin decides ─────────────────────────────────────────────────────────
+-- aal2 because is_admin() requires it (migration 20260730090000).
+
+SET LOCAL request.jwt.claims TO '{"sub":"50010004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
+
+SELECT throws_ok(
+  $$ SELECT public.shop_application_decide(
+       (SELECT id FROM public.shop_applications LIMIT 1), 'request-changes', 'Anh chup lai giay to giup em nhe') $$,
+  '23514',
+  NULL,
+  'request-changes without a target field is refused'
+);
+
+SELECT lives_ok(
+  $$ SELECT public.shop_application_decide(
+       (SELECT id FROM public.shop_applications LIMIT 1),
+       'approve', 'Da duyet', 'gap truc tiep 11/08') $$,
+  'admin can approve'
+);
+
+SELECT is(
+  (SELECT count(*)::int FROM public.shops WHERE owner_user_id = '50010001-0000-4000-8000-000000000001'::uuid),
+  1,
+  'approval creates exactly one shop'
+);
+
+-- Deciding again must not mint a second shop — this is the concurrency case.
+SELECT lives_ok(
+  $$ SELECT public.shop_application_decide(
+       (SELECT id FROM public.shop_applications LIMIT 1), 'approve', 'Da duyet lai') $$,
+  'replaying approve is idempotent'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.shops WHERE owner_user_id = '50010001-0000-4000-8000-000000000001'::uuid),
+  1,
+  'replaying approve does NOT create a second shop'
+);
+
+-- ─── A new shop is pending_activation, therefore invisible to the public ───
+
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+
+SELECT is(
+  (SELECT count(*)::int FROM public.shops),
+  0,
+  'anon CANNOT see a pending_activation shop'
+);
+
+SELECT is(
+  (SELECT count(*)::int FROM public.shop_applications),
+  0,
+  'anon CANNOT read applications at all'
+);
+
+SELECT * FROM finish();
+ROLLBACK;

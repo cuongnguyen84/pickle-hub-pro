@@ -82,6 +82,9 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/creator(?:\/|$)/,
   // Design prototypes (/proto/shop/*). Never production, never indexable.
   /^\/proto(?:\/|$)/,
+  // Seller Center — application data, phone numbers, addresses.
+  /^\/(?:vi\/)?seller(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/sell(?:\/|$)/,
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,

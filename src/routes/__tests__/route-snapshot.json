@@ -580,6 +580,30 @@
     "element": "<ProtoShopApp />"
   },
   {
+    "path": "/shop/sell",
+    "element": "<SellLanding />"
+  },
+  {
+    "path": "/seller",
+    "element": "<RequireAuth><SellerHome /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application",
+    "element": "<RequireAuth><SellerApplication /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application/status",
+    "element": "<RequireAuth><SellerApplicationStatus /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplicationReview /></RequireAuth>"
+  },
+  {
     "path": "/privacy",
     "element": "<Privacy />"
   },

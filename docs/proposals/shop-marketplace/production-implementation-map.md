@@ -1,0 +1,248 @@
+# Shop marketplace — production implementation map
+
+> Phase 0 deliverable. Written 2026-08-11 after reading CLAUDE.md,
+> `docs/architecture-boundaries.md`, `shop-marketplace-plan.md`,
+> `shop-marketplace-screen-tasks.md` (incl. §11 findings P1–P13),
+> `shop-marketplace-product-owner-test-cases.md`, the approved
+> `shop-marketplace/proposal.md`, all of `src/proto/shop/**`, and the repo's
+> existing migrations / RLS helpers / edge functions / hooks / tests.
+>
+> **Status vocabulary** (per the production brief): `UI parity complete` ·
+> `data layer complete` · `security verified locally` · `preview ready for
+> Product Owner` · `production deployment pending approval`. Nothing here is
+> called "production ready".
+
+---
+
+## 0. Source-of-truth reconciliation
+
+| Question | Prototype says | Plan says | Resolution |
+|---|---|---|---|
+| Seller role | `shop_members` with marketplace roles | same (§6 "do not add `seller` to `app_role`") | **Agree.** No change to `app_role`. |
+| KYC / bank at pilot | F07 + S10 render the fields, both **labelled out of scope** | §6 flow includes bank + documents | **Proposal §2 wins** (safer): pilot collects neither. Fields ship disabled behind a phase flag. |
+| Checkout scope | one shop per checkout (B08 has no global checkout button) | §8 same | Agree. |
+| VietQR | "chờ quản trị viên đối soát", never auto-verified | §10 staged | Agree; Phase 3. |
+| Application steps | 6 steps, bank step omitted at pilot | 7-step flow incl. payout | Prototype's 6 steps + a **skipped** payout step. |
+| Review SLA | "chưa cam kết thời gian" | not specified | Prototype wins — no invented SLA. |
+
+**Open, needs Product Owner** (listed again in §10):
+
+1. **Q2 from the approved proposal is still open** — the "Quy chế người bán v1"
+   document does not exist in the repo. Phase 1 ships the acceptance checkbox
+   **disabled with an explanatory note** rather than recording consent to a
+   document that does not exist.
+2. Pilot allowlist seeding: who are the first sellers, and by which identifier
+   (email vs user id)?
+
+---
+
+## 1. Phase / PR breakdown
+
+| Phase | PR | Scope | Depends on |
+|---|---|---|---|
+| 0 | this doc | Implementation map | — |
+| **1** | **P1** | Pilot access gate · seller application (draft → submit → resubmit) · admin queue + review + structured change requests · application status · audit · notifications · production Seller/Admin shells | 0 |
+| 2 | P2a | Shop profile, categories, products, variants/SKU, media upload | 1 |
+| 2 | P2b | Moderation queue, approve/reject/request-change, public discovery | P2a |
+| 3 | P3a | Wishlist, cart, one-shop checkout, idempotent order creation, inventory | P2 |
+| 3 | P3b | Order lists/details, cancellation, deadlines, returns, disputes, reviews | P3a |
+| 4 | — | Payment provider / public launch — **blocked on explicit approval** | P3 |
+
+Phase 1 deliberately contains **no** product, cart, checkout or payment code.
+
+---
+
+## 2. Data model — Phase 1 only
+
+New enums (`public`):
+
+```
+shop_application_status : draft | submitted | under_review | needs_changes
+                          | approved | rejected | withdrawn
+shop_state              : pending_activation | active | restricted | suspended | closed
+shop_member_role        : owner | manager | fulfillment | support
+```
+
+New tables:
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `shop_pilot_members` | Closed-pilot allowlist | admin-managed; `user_id` PK |
+| `shop_applications` | One row per application | `status`, `applicant_user_id`, structured payload columns, `internal_note`, `applicant_note`, `requested_fields text[]` |
+| `shop_application_events` | Append-only history | who did what, when; never updated |
+| `shops` | The shop record | `state`, `slug` unique, `owner_user_id`, `verified_method`, `verified_at` |
+| `shop_members` | Staff | `(shop_id, user_id)` PK, `role` |
+
+Deferred to Phase 2+ (named here so nobody re-invents them): `shop_addresses`,
+`shop_policies`, `product_categories`, `products`, `product_variants`,
+`product_media`, `inventory_movements`, `carts`, `orders`, `payments`,
+`returns`, `disputes`, `reviews`. **`shop_bank_accounts` and
+`shop_application_documents` are NOT created in Phase 1** — creating a table
+for data we decided not to collect is how it starts getting collected.
+
+### Invariants enforced in Postgres, not in the client
+
+- VND amounts: `integer`, never float (Phase 3).
+- Timestamps: `timestamptz`, UTC.
+- `shops.slug` unique, generated server-side from the name + a collision suffix.
+- One **non-terminal** application per user: partial unique index on
+  `applicant_user_id WHERE status IN ('draft','submitted','under_review','needs_changes')`.
+- Application status transitions only through `shop_application_submit` /
+  `shop_application_withdraw` / `shop_application_decide` — a guarded `UPDATE`
+  with the expected current status in the `WHERE` clause, so two concurrent
+  moderators cannot both approve (DB-00/DB-01 lesson from
+  `architecture-boundaries.md` §edge rule 4).
+- Approving creates the shop **and** the owner `shop_members` row in the same
+  transaction; the RPC is idempotent on re-approval.
+
+---
+
+## 3. API surface — Phase 1
+
+All state transitions are `SECURITY DEFINER` RPCs. No client writes to
+`shop_applications.status`, `shops.state`, or any `shop_members` row.
+
+| Routine | Actor | Guarantees |
+|---|---|---|
+| `shop_pilot_has_access()` | any | `STABLE`; admin OR allowlisted |
+| `shop_application_upsert_draft(payload jsonb)` | applicant | own draft only; refuses when status ≠ draft/needs_changes |
+| `shop_application_submit()` | applicant | validates server-side, `draft|needs_changes → submitted`, guarded UPDATE |
+| `shop_application_withdraw()` | applicant | non-terminal → `withdrawn` |
+| `shop_application_decide(id, decision, applicant_note, internal_note, requested_fields)` | admin | requires `is_admin()` (⇒ AAL2); guarded on expected status; approval creates shop + owner member + audit row, all in one transaction |
+| `shop_application_queue(status)` | admin | list view without exposing other applicants' rows to non-admins |
+
+No edge function is needed in Phase 1: there is no third party to talk to and
+no secret to hold. Edge functions arrive in Phase 3 (payment reconciliation).
+
+---
+
+## 4. RLS matrix — Phase 1
+
+Deny by default; every table gets explicit policies **and** a `GRANT` block
+(the repo's most-repeated defect class — see the missing-grants sweeps).
+
+| Table | anon | authenticated (self) | authenticated (other) | shop member | admin |
+|---|---|---|---|---|---|
+| `shop_pilot_members` | — | read own row | — | — | full |
+| `shop_applications` | — | read+update **own draft** | — | — | read all, decide via RPC |
+| `shop_application_events` | — | read own application's events | — | — | read all; insert only via RPC |
+| `shops` | read **active** public columns | — | — | read own shop | full |
+| `shop_members` | — | read rows for own shops | — | read own shop's rows | full |
+
+Negative tests that must exist before Phase 1 is "security verified locally":
+
+1. user B cannot select user A's application
+2. user B cannot update user A's application
+3. applicant cannot set `status='approved'` directly
+4. applicant cannot write `internal_note`
+5. non-admin cannot call `shop_application_decide`
+6. anon cannot read any application row
+7. anon cannot read a `pending_activation` / `suspended` shop
+8. applicant cannot insert into `shop_members`
+9. applicant cannot insert into `shop_application_events`
+10. two concurrent `decide` calls produce one shop, not two
+
+---
+
+## 5. Route + component map — Phase 1
+
+| Prototype screen | Production route | Component | Hook | Backing |
+|---|---|---|---|---|
+| S01 `/proto/shop/sell` | `/shop/sell` | `pages/shop/SellLanding.tsx` | `useShopPilotAccess` | `shop_pilot_has_access()` |
+| S02 `/proto/shop/seller/application` | `/seller/application` | `pages/shop/SellerApplication.tsx` | `useSellerApplication` | draft RPC + `useAutosaveDraft` |
+| S03 `/proto/shop/seller/status` | `/seller/application/status` | `pages/shop/SellerApplicationStatus.tsx` | `useSellerApplication` | select own row |
+| A02 `/proto/shop/admin/applications` | `/admin/shop/applications` | `pages/admin/shop/AdminShopApplications.tsx` | `useShopApplicationQueue` | `shop_application_queue()` |
+| A03 `/proto/shop/admin/applications/:id` | `/admin/shop/applications/:id` | `pages/admin/shop/AdminShopApplicationReview.tsx` | `useShopApplication` | select + `shop_application_decide()` |
+| F03 seller shell | — | `components/shop/SellerShell.tsx` | — | — |
+| S04 dashboard | `/seller` | `pages/shop/SellerHome.tsx` (Phase 1: shop state + next step only) | `useMyShop` | `shops` + `shop_members` |
+
+Route conventions honoured: lazy-loaded via `lazyRetry`, `/vi` mirror through
+the `MIRRORED` array (never a hand-written pair), `route-snapshot.json`
+updated, `/seller` + `/admin/shop` already in the ChatFAB and BottomNav hide
+lists (shipped with the prototype PR), `NOINDEX_PATTERNS` + both robots files
+extended for `/seller`.
+
+**Shared with the prototype, moved not copied**: the visual layer
+(`shop.css`, shells, primitives) is promoted out of `src/proto/shop/` into
+`src/components/shop/` in Phase 1 and the prototype imports it back, so there
+is exactly one implementation while the prototype stays alive for parity
+review. Fixtures stay in `src/proto/shop/fixtures.ts` and are **never**
+imported by production code — enforced by a test.
+
+---
+
+## 6. Migration strategy
+
+- Timestamped file per the repo convention: `supabase/migrations/<UTC>_shop_phase1_*.sql`.
+- Idempotent (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `ON CONFLICT DO NOTHING`)
+  so a replay is safe.
+- **Not applied to production.** Validation happens locally / on preview only.
+- Generated types: the remote schema will not contain these tables until the
+  migration is applied, so `npx supabase gen types` cannot produce them yet.
+  Phase 1 therefore ships a hand-written `src/integrations/supabase/shop-schema.ts`
+  carrying exactly the Phase 1 row/RPC shapes, with a header stating it is
+  replaced by the generated file once the migration lands. A test asserts the
+  hand-written table list matches the migration.
+- Rollback: every Phase 1 object is additive. Reverse script is
+  `DROP FUNCTION/TABLE/TYPE` in dependency order, shipped in the PR body.
+  No existing table is altered, so `git revert` on the app code is sufficient
+  to disable the feature even before the DB is reversed.
+
+---
+
+## 7. Observability
+
+- `audit_logs` rows for: application submitted, decided, document/PII viewed
+  (Phase 2), shop created, shop state changed. Uses the existing
+  `log_audit_event` helper and the existing `event_category` CHECK — the
+  migration widens that CHECK rather than inventing a new table.
+- Journey instrumentation via `src/lib/journeys.ts`: `seller_onboarding`
+  (start / step / submit / decided).
+- No PII in logs, analytics, push payloads or URLs — asserted by a test that
+  greps the notification payload builders.
+
+---
+
+## 8. Test strategy per phase
+
+| Layer | Phase 1 tests |
+|---|---|
+| Pure logic | application state machine (`lib/shop/applicationState.ts`) — legal/illegal transitions |
+| Validation | server-side field rules shared with the client form |
+| RLS | `supabase/tests/shop_phase1_rls.test.sql` — the 10 negative cases in §4 |
+| RPC | guarded-transition + idempotency assertions in the same pgTAP file |
+| Component | queue/review/status render + permission states |
+| Responsive/a11y | the existing `scripts/proto-shop-qa.mjs` gains a production mode pointed at the real routes |
+| E2E | happy path (apply → submit → admin requests changes → deep link → resubmit → approve) |
+
+**The fixture gate does not certify production.** `proto-shop-qa.mjs all` keeps
+running against `/proto/shop` for prototype regression; production gets its own
+run against the real routes with a seeded pilot user.
+
+---
+
+## 9. Feature flag / pilot access
+
+Two layers, because a client flag alone is not access control:
+
+1. **Server**: `shop_pilot_has_access()` gates every RLS policy and RPC.
+   Not on the allowlist ⇒ the data does not exist for you.
+2. **Client**: `useShopPilotAccess()` decides whether Shop entry points render
+   at all, so a non-pilot user never sees a door they cannot open.
+
+Admins always pass. The allowlist is managed from `/admin/shop` (Phase 1) and
+seeded manually — no self-serve join.
+
+---
+
+## 10. Still needs Product Owner
+
+| # | Decision | Blocks |
+|---|---|---|
+| 1 | "Quy chế người bán v1" text — does not exist in the repo | The consent checkbox in S02 step 6. Phase 1 ships it disabled with a note. |
+| 2 | Pilot allowlist: which accounts, keyed how | Seeding the pilot; the mechanism ships regardless |
+| 3 | Applying the Phase 1 migration to production | Everything downstream of preview |
+| 4 | Whether `/seller` should be noindex-only or also robots-disallowed for `/vi/seller` | SEO surface; Phase 1 assumes both |
+
+Items 1 and 2 do **not** block building Phase 1; item 3 is a hard stop by
+instruction.

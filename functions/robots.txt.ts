@@ -18,6 +18,10 @@ Disallow: /creator
 Disallow: /creator/
 Disallow: /proto
 Disallow: /proto/
+Disallow: /seller
+Disallow: /seller/
+Disallow: /vi/seller
+Disallow: /shop/sell
 Disallow: /auth/
 Disallow: /login
 Disallow: /vi/login

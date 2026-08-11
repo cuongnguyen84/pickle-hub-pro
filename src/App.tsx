@@ -71,6 +71,14 @@ const NotFound = lazyRetry(() => import("./pages/NotFound"));
 // Shop screen prototype (docs/proposals/shop-marketplace-screen-tasks.md).
 // Isolated + noindex; see src/proto/shop/ProtoShopApp.tsx for the three guards.
 const ProtoShopApp = lazyRetry(() => import("./proto/shop/ProtoShopApp"));
+// Shop marketplace — Phase 1 (closed pilot). Server-side gate is
+// shop_pilot_has_access(); these routes only decide whether a door renders.
+const SellLanding = lazyRetry(() => import("./pages/shop/SellLanding"));
+const SellerApplication = lazyRetry(() => import("./pages/shop/SellerApplication"));
+const SellerApplicationStatus = lazyRetry(() => import("./pages/shop/SellerApplicationStatus"));
+const SellerHome = lazyRetry(() => import("./pages/shop/SellerHome"));
+const AdminShopApplications = lazyRetry(() => import("./pages/admin/shop/AdminShopApplications"));
+const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/AdminShopApplicationReview"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -773,6 +781,14 @@ const App = () => (
                     {/* Shop screen prototype — noindex, not linked from anywhere in the
                         product. Own lazy chunk so production pages never load it. */}
                     <Route path="/proto/shop/*" element={<ProtoShopApp />} />
+                    {/* Shop marketplace — Phase 1. Seller + admin surfaces are
+                        auth-gated here and re-authorised server-side by RLS. */}
+                    <Route path="/shop/sell" element={<SellLanding />} />
+                    <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
+                    <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
+                    <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
+                    <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />
+                    <Route path="/admin/shop/applications/:id" element={<RequireAuth requiredRole="admin"><AdminShopApplicationReview /></RequireAuth>} />
                     {/* Public pages */}
 
                     {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}

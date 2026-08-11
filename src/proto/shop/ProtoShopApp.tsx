@@ -18,7 +18,7 @@ import { SCREENS } from "./registry";
 import ProtoIndex from "./ProtoIndex";
 import { SCENARIOS, SCENARIO_LABEL_VI, readScenario, type Scenario } from "./scenario";
 import "@/styles/the-line.css";
-import "./shop.css";
+import "@/styles/shop.css";
 
 /** Sticky, unmissable "this is not production" chrome + the scenario switch. */
 const ProtoBanner = () => {
