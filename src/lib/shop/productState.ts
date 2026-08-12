@@ -225,3 +225,59 @@ export const DRAFT_FIELD_ORDER: (keyof DraftErrors)[] = [
   "price_vnd",
   "stock_on_hand",
 ];
+
+// ─── The product_update payload ─────────────────────────────────────────────
+
+export interface UpdatePayload {
+  patch: {
+    title: string;
+    description: string;
+    category_slug: string;
+    condition: "new" | "used";
+  };
+  /** Absent means "do not touch the default variant". The RPC turns it into
+   *  `_variant: null`, which is the contract for leaving the matrix alone. */
+  variant?: { price_vnd: string; stock_on_hand: string };
+}
+
+/**
+ * What the main form sends when the seller saves.
+ *
+ * The variant half is the whole point. product_update REFUSES a `_variant`
+ * payload for a product that has an option matrix — correctly, because the
+ * matrix is the only place those numbers may be edited — so a form that always
+ * sent it made every save of a multi-variant product fail with "sản phẩm này có
+ * nhiều phiên bản". The seller could not change the NAME of a product that had
+ * colours, and the error pointed them at a table they had not touched.
+ *
+ * The hidden single-product price and stock fields still hold whatever they
+ * were seeded with, which is what makes this dangerous rather than merely
+ * broken: if the RPC had accepted the payload it would have collapsed a
+ * six-row matrix onto one price.
+ *
+ * A pure function so the shape can be asserted without a browser, a network or
+ * a database — the layer where this bug lived.
+ */
+export function buildUpdatePayload(
+  draft: {
+    title: string;
+    description: string;
+    category_slug: string;
+    condition: "new" | "used";
+    price_vnd: string;
+    stock_on_hand: string;
+  },
+  multiVariant: boolean,
+): UpdatePayload {
+  const patch = {
+    title: draft.title.trim(),
+    description: draft.description,
+    category_slug: draft.category_slug,
+    condition: draft.condition,
+  };
+  if (multiVariant) return { patch };
+  return {
+    patch,
+    variant: { price_vnd: draft.price_vnd.trim(), stock_on_hand: draft.stock_on_hand.trim() },
+  };
+}

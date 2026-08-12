@@ -55,6 +55,7 @@ import {
   canArchive,
   canEditContent,
   canEditSlug,
+  buildUpdatePayload,
   canUnarchive,
   validateDraft,
   vnd,
@@ -314,25 +315,31 @@ export default function SellerProductForm() {
         return;
       }
 
-      if (!row) return;
+      if (!row) {
+        // Reachable: the product query can settle to null between the click and
+        // here. Returning while the state still said "saving" left the button
+        // disabled and the label on "Đang lưu…" with nothing in flight.
+        setSaveState("error");
+        setSaveError("Không tìm thấy sản phẩm. Tải lại trang giúp em.");
+        return;
+      }
+
+      // The variant half is deliberate: product_update refuses a _variant
+      // payload for a product that has a matrix, so a form that always sent it
+      // could not save the NAME of a product that had colours.
       await update.mutateAsync({
         expectedVersion: row.version,
-        patch: {
-          title: draft.title.trim(),
-          description: draft.description,
-          category_slug: draft.category_slug,
-          condition: draft.condition,
-        },
-        variant: { price_vnd: draft.price_vnd.trim(), stock_on_hand: draft.stock_on_hand.trim() },
+        ...buildUpdatePayload(draft, multiVariant),
       });
       if (key) clearStored(key);
       setSaveState("saved");
+      void preflight.refetch();
     } catch (error) {
       setSaveState("error");
       setSaveError(shopErrorMessage(error));
       if (isConflict(error) && draft) setConflict(draft);
     }
-  }, [draft, shopId, isNew, create, key, navigate, row, update]);
+  }, [draft, shopId, isNew, create, key, navigate, row, update, multiVariant, preflight]);
 
   if (membership.isLoading || profile.isLoading || (productId && product.isLoading)) {
     return <LoadingState fullScreen />;
@@ -662,6 +669,8 @@ export default function SellerProductForm() {
                 clientToken: newToken(),
                 keepVariantId,
               });
+              // Prices and SKUs are checklist items too.
+              void preflight.refetch();
             }}
           />
         </Suspense>
@@ -693,7 +702,14 @@ export default function SellerProductForm() {
               Object.values(variant.option_values ?? {}).join(" · ") || "Sản phẩm"
             }
             disabled={!editable}
-            onChanged={() => void product.refetch()}
+            onChanged={() => {
+              // The checklist is derived from the server preflight, and
+              // uploading a photo answers one of its items — so it has to be
+              // re-asked, or the seller adds the photo it demanded and it
+              // still says the photo is missing.
+              void product.refetch();
+              void preflight.refetch();
+            }}
           />
         </Suspense>
       )}
@@ -701,7 +717,10 @@ export default function SellerProductForm() {
       {editable && (
         <SaveBar
           state={saveState}
-          error={saveError}
+          // A conflict has its own panel, with the two choices that actually
+          // resolve it. A generic Retry beside it would send the same stale
+          // version again and fail identically.
+          error={conflict ? null : saveError}
           dirty={isNew ? dirtyNew : dirty}
           label={isNew ? "Lưu nháp" : "Lưu thay đổi"}
           onSave={() => void save()}

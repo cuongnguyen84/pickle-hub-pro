@@ -384,7 +384,13 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: color-mix(in srgb, var(--tl-bg) 88%, transparent);
+  /* Opaque, not 88%. The blur is decoration; it was also being asked to keep
+     the title legible over whatever scrolled underneath, which it cannot
+     promise — axe reported the title's contrast as UNDETERMINABLE the moment a
+     product photo passed beneath it in the preview. A sticky header a seller
+     reads on every screen must not have a contrast that depends on the page
+     content behind it. */
+  background: var(--tl-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--tl-border);
 }
