@@ -10,7 +10,7 @@
 // actually failed stops looking — the P2a lesson, on a buyer surface now.
 // ============================================================================
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, SlidersHorizontal } from "lucide-react";
 import type { PublicCategory, ProductCard as Card } from "@/hooks/shop/usePublicShop";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
@@ -111,13 +111,20 @@ export function FilterSheet({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const draftRef = useRef<Filters>(value);
+  // State, not a ref. The draft was a ref passed as the `value` of controlled
+  // inputs, so a tap mutated it, re-rendered nothing, and React put the radio
+  // straight back to unchecked — the filter committed correctly on Áp dụng and
+  // looked broken for every second before that. A ref is only safe as a draft
+  // when nothing renders from it.
+  const [draft, setDraft] = useState<Filters>(value);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // The draft is reset on OPENING, not on every `value` change, so a
+    // cancelled sheet does not reappear with the choice that was abandoned.
     if (open && !el.open) {
-      draftRef.current = value;
+      setDraft(value);
       el.showModal();
     }
     if (!open && el.open) el.close();
@@ -134,18 +141,14 @@ export function FilterSheet({
       <form method="dialog" onSubmit={(e) => e.preventDefault()}>
         <div className="tl-sheet-inner">
           <h2 className="tl-shop-h2" style={{ marginTop: 0 }}>Bộ lọc</h2>
-          <FilterFields
-            value={draftRef.current}
-            onChange={(f) => { draftRef.current = f; }}
-            idPrefix="sheet"
-          />
+          <FilterFields value={draft} onChange={setDraft} idPrefix="sheet" />
         </div>
         <div className="tl-sheet-actions">
           <button type="button" className="tl-shop-btn" onClick={onClose}>Huỷ</button>
           <button
             type="button"
             className="tl-shop-btn tl-shop-btn--primary"
-            onClick={() => onApply(draftRef.current)}
+            onClick={() => onApply(draft)}
           >
             Áp dụng
           </button>
