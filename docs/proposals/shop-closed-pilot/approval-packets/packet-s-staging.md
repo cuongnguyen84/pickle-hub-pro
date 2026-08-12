@@ -27,43 +27,69 @@ liệu đã có drift kinh niên nghĩa là thêm biến vào một hệ đã c�
 
 ---
 
-## 2. Product Owner phải cung cấp — agent không tạo được
+## 2. Project — đã tạo, còn thiếu đúng một thứ
+
+Product Owner đã tạo project. Thông tin đã biết:
 
 | # | Thứ | Giá trị |
 |---|---|---|
-| 1 | **Project ref staging** | ⬜ `<STAGING_REF>` — mọi lệnh trong Packet B/C dùng placeholder này |
-| 2 | Chủ sở hữu project / organization | ⬜ |
-| 3 | Region | ⬜ (đề xuất `ap-northeast-1` — **giống production**, để độ trễ và hành vi Storage không phải biến số thứ hai) |
-| 4 | Gói / hạn mức | ⬜ (xem §3) |
-| 5 | Xác nhận staging **không** dùng chung Storage, Auth hay cron với production | ⬜ |
+| 1 | Organization | **ThePickleHub** |
+| 2 | Project name | **ThePickleHub Staging** |
+| 3 | Region | **AWS ap-northeast-1** — **giống production**, nên độ trễ và hành vi Storage không phải biến số thứ hai |
+| 4 | Plan | **Pro** |
+| 5 | Trạng thái dữ liệu | **sạch** — không clone production, không copy người dùng production |
+| 6 | **Project ref** | 🔴 **`<STAGING_PROJECT_REF>` — CHƯA CÓ GIÁ TRỊ THẬT** |
 
-Không lệnh nào trong Packet B/C được chạy với `<STAGING_REF>` chưa giải.
+🔴 **Giá trị `project ref` chưa được cung cấp.** Chuỗi được đưa trong yêu cầu là
+`<STAGING_PROJECT_REF>` — một placeholder, không phải một ref. Agent **không đoán
+và không suy ra** một project ref: gõ nhầm 20 ký tự chữ-số là gõ vào một project
+của người khác.
+
+Nó là **một dòng** cần điền, ở Supabase Dashboard → Project Settings → General →
+Reference ID (hoặc trong URL: `https://supabase.com/dashboard/project/<ref>`).
+
+```
+Project ref staging: ______________________________
+```
+
+Cho tới khi ô đó có giá trị, **không lệnh nào trong Packet B/C chạy được** — mọi
+lệnh đều dùng `$REF` và một `$REF` chưa giải là một lệnh không có mục tiêu.
+
+### Gói Pro gỡ được hai lo ngại
+
+Bản trước của packet này cảnh báo hai điều về Free tier. Gói **Pro** giải quyết
+cả hai:
+
+| Lo ngại | Trên Pro |
+|---|---|
+| Project tự tạm dừng sau ~7 ngày không hoạt động | **Không tạm dừng.** Cron chạy liên tục suốt pilot |
+| `pg_cron` / `pg_net` có bật được không | Có. Vẫn phải **xác nhận bằng mắt** ở checklist mục 7 trước khi Packet C có ý nghĩa |
+
+Đổi lại, Pro **có chi phí theo tháng**. Nếu pilot kéo dài, đó là một khoản thật
+— và xoá project khi pilot xong là cách dừng chi phí đó.
 
 ---
 
-## 3. Gói, hạn mức, và một thứ Free tier KHÔNG có
+## 3. Hạn mức và năng lực — trên gói Pro
 
-| Thứ | Cần cho pilot | Free tier |
+| Thứ | Cần cho pilot | Trên Pro |
 |---|---|---|
 | Postgres + RLS | ✅ | có |
-| Storage (2 bucket, ảnh nhỏ) | ✅ | có, 1 GB — thừa sức |
+| Storage (2 bucket, vài chục ảnh nhỏ) | ✅ | thừa sức |
 | Edge Functions | ✅ 1 function | có |
-| `pg_cron` + `pg_net` | ✅ **bắt buộc** | ⚠️ **phải xác nhận** — worker dọn ảnh vô nghĩa nếu không lên lịch được |
-| `supabase_vault` | ✅ cho `cron_secret` | ⚠️ như trên |
+| `pg_cron` + `pg_net` | ✅ **bắt buộc** | có — **vẫn phải xác nhận bằng mắt** (checklist mục 7) |
+| `supabase_vault` | ✅ cho `cron_secret` | có |
 | Auth + MFA/TOTP | ✅ cho `is_admin()` | có |
-| Sao lưu / PITR | ❌ không cần | Free không có sao lưu theo lịch |
-| Tạm dừng khi không dùng | ⚠️ **rủi ro** | Free tier **tạm dừng project sau ~7 ngày không hoạt động** |
+| Không tự tạm dừng | ✅ **bắt buộc** cho cron | ✅ Pro không tạm dừng |
+| Sao lưu / PITR | ❌ không cần — xem §9 | có, không dùng |
 
-🔴 **Hai điều phải kiểm trước khi chọn Free:**
+Quy mô pilot: 3–5 người bán, vài chục sản phẩm, vài chục ảnh. Không có ràng buộc
+nào về dung lượng hay compute.
 
-1. **`pg_cron` và `pg_net` có bật được không.** Nếu không, Packet C mất phần
-   quan trọng nhất — chứng minh worker chạy theo lịch thật — và preview chỉ còn
-   drain tay, tức là đúng thứ môi trường local đã làm được.
-2. **Tự tạm dừng.** Một project ngủ giữa pilot làm cron ngừng chạy và ảnh đã gỡ
-   ở lại. Nếu chọn Free, phải có người chạm vào project mỗi vài ngày, hoặc chấp
-   nhận rằng preview không chứng minh được tính bền của cron.
-
-Không có ràng buộc nào khác về quy mô: pilot có 3–5 người bán và vài chục ảnh.
+🔴 **Một điều vẫn phải kiểm trước khi Packet C có nghĩa:** `pg_cron` và `pg_net`
+đã bật trên project chưa. Gói Pro cho phép, nhưng cho phép không phải là đã bật.
+Nếu chưa, Packet C mất phần quan trọng nhất — chứng minh worker chạy theo **lịch
+thật** — và preview chỉ còn drain tay, tức là đúng thứ máy cục bộ đã làm được.
 
 ---
 
@@ -109,9 +135,9 @@ biến môi trường của môi trường Preview:
 
 | Biến | Preview (staging) | Production |
 |---|---|---|
-| `VITE_SUPABASE_URL` | `https://<STAGING_REF>.supabase.co` | production |
+| `VITE_SUPABASE_URL` | `https://<STAGING_PROJECT_REF>.supabase.co` | production |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key staging | production |
-| `VITE_SUPABASE_PROJECT_ID` | `<STAGING_REF>` | production |
+| `VITE_SUPABASE_PROJECT_ID` | `<STAGING_PROJECT_REF>` | production |
 | `SHOP_PUBLIC_INDEXING` | **không đặt** | **không đặt** |
 
 ⚠️ **Đây là thay đổi có sức công phá nhất trong toàn bộ gói.** Đặt
@@ -194,7 +220,7 @@ Kiểm tra thứ hai, độc lập và không dựa vào trí nhớ:
 ```sh
 # Project ref phải xuất hiện TRONG chính lệnh, không qua biến chưa giải.
 curl -s -H "Authorization: Bearer $PAT" \
-  "https://api.supabase.com/v1/projects/<STAGING_REF>" | jq '{name, region, created_at}'
+  "https://api.supabase.com/v1/projects/<STAGING_PROJECT_REF>" | jq '{name, region, created_at}'
 # name KHÔNG được là "thepicklehub-prod"
 ```
 

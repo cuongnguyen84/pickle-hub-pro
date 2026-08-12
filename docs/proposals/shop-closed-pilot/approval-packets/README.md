@@ -28,19 +28,29 @@ cưỡng chế chấp thuận quy chế, nhưng **văn bản chưa tồn tại**
 thật nào onboard được cho tới khi nó có (blocker B4).
 
 ```
- 1. Cưỡng chế seller-rules ở cục bộ                    ✅ XONG — CP12
- 2. Product Owner cung cấp/duyệt "Quy chế người bán v1" ⬜ B4 — chặn từ bước 10
- 3. Packet S — tạo staging
- 4. Packet B — migration lên STAGING
- 5. Packet C — function + cron trên STAGING
- 6. Packet A — preview Cloudflare trỏ STAGING
- 7. Smoke đầy đủ trên staging
- 8. Product Owner nghiệm thu preview
- 9. Packet B + C lên PRODUCTION
-10. Web production, indexing vẫn TẮT
-11. Packet D — Wave 0, tài khoản test nội bộ
-12. Wave 1 — một người bán thật
+ 1. Cưỡng chế seller-rules ở cục bộ                     ✅ XONG — CP12
+ 2. Product Owner DUYỆT TOÀN VĂN "Quy chế người bán v1" ⬜ APPROVE / REVISE / REJECT
+ 3. Product Owner chốt effective_at (và approved_by)    ⬜
+ 4. Tính và đóng băng content hash trên bản ĐÃ DUYỆT    ⬜  ← chỉ sau bước 2 và 3
+ 5. Packet S — cấu hình staging (project đã tạo)
+ 6. Packet B-1 — 18 migration lên STAGING
+ 7. Packet C-1 — function + cron trên STAGING
+ 8. Packet A — preview Cloudflare trỏ STAGING
+ 9. Smoke remote đầy đủ trên staging
+10. Product Owner nghiệm thu preview
+11. Packet B-2 + C-2 lên PRODUCTION
+12. Web production, indexing vẫn TẮT
+13. Packet D — Wave 0, tài khoản test nội bộ
+14. Wave 1 — một người bán thật
 ```
+
+**Bước 2-4 là một chuỗi, không đảo được.** Tính hash trên bản DRAFT rồi coi đó
+là bản hiệu lực là đúng thứ quy trình này tồn tại để ngăn: hash phải được tính
+trên **chính nội dung đã được duyệt**, sau khi duyệt, không phải trước.
+
+Bước 2-4 **chặn bước 13-14** (người bán thật), **không chặn bước 5-10**: hạ tầng
+dựng và smoke được bằng một văn bản test-only trên staging, trong lúc chờ văn
+bản thật.
 
 **Ba chỗ dễ đảo nhầm, và vì sao không được:**
 
@@ -84,8 +94,8 @@ merge RED**; thao tác do người giữ kênh trực tiếp thực hiện.
 |---|---|---|---|
 | **B1′** | URL preview có trong **Redirect URLs của STAGING** | Cuong, dashboard staging | Packet A |
 | **B2** | `SHOP_PUBLIC_INDEXING` **không tồn tại** ở cả Production lẫn Preview | Cuong, dashboard | Packet A, D |
-| **B3′** | Project ref staging, region, gói — và **`pg_cron`/`pg_net` có bật được không** | Product Owner | Packet S |
-| **B4** | **"Quy chế người bán v1" chưa tồn tại.** Máy chủ nay từ chối submit khi chưa có bản nào hiệu lực (`seller_rules_not_published`) | Cuong / pháp lý | Bước 12 — người bán thật |
+| **B3″** | 🔴 **Project ref staging** — project **đã được tạo** (ThePickleHub Staging, Pro, ap-northeast-1, sạch) nhưng **ref chưa được cung cấp**; chuỗi nhận được là placeholder `<STAGING_PROJECT_REF>` | Product Owner, một dòng | **Packet B và C** |
+| **B4′** | **"Quy chế người bán v1" — bản dự thảo đầy đủ đã có** ([`../seller-rules-v1.md`](../seller-rules-v1.md)), chờ Product Owner **APPROVE / REVISE / REJECT** + `effective_at` + `approved_by`. Máy chủ vẫn từ chối submit (`seller_rules_not_published`) cho tới khi ban hành | Cuong / pháp lý | Bước 13-14 — người bán thật |
 | **B6′** | Điều kiện #4 của quyết định thông báo: **tên người kiểm hàng đợi hằng ngày** | Product Owner | Packet D |
 | **B7** | 9 đầu vào của Packet D | Product Owner | Packet D |
 
@@ -94,5 +104,14 @@ B5 — "submit không cưỡng chế chấp thuận" — **đã đóng** bằng 
 
 ## Checklist dashboard cho Product Owner
 
-Bảy mục, không lệnh CLI nào đọc được:
-[`../dashboard-checklist.md`](../dashboard-checklist.md).
+21 mục (13 Supabase staging + 8 Cloudflare), không lệnh CLI chỉ-đọc nào đọc được:
+[`../dashboard-checklist.md`](../dashboard-checklist.md). Mục **S-0** ở đó là chỗ
+điền project ref còn thiếu.
+
+## Rà soát Quy chế v1
+
+Bản dự thảo: [`../seller-rules-v1.md`](../seller-rules-v1.md) — 20 mục, trạng
+thái `DRAFT — PENDING PRODUCT OWNER APPROVAL`.
+
+Bản rà soát theo từng mục, kèm bảy câu hỏi cần quyết và ba khoảng cách giữa văn
+bản và hệ thống: [`../seller-rules-v1-review.md`](../seller-rules-v1-review.md).

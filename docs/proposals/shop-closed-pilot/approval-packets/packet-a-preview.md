@@ -16,7 +16,7 @@
 | Cloudflare project | **`pickle-hub-pro`** (account `7888e97076d4eadd9a8fa409d11dc281`) |
 | Nhánh production | `main` — **không đụng** |
 | Nhánh preview | **`feat-shop-closed-pilot`** |
-| Supabase | **`<STAGING_REF>`** — Packet S. **KHÔNG phải production** |
+| Supabase | **`<STAGING_PROJECT_REF>`** — Packet S. **KHÔNG phải production** |
 | Nền tảng | nhánh `feat/shop-closed-pilot` |
 
 ---
@@ -53,7 +53,7 @@ là `cuongnguyen84` và chỉ dành cho tay Cuong (`ops-runbook.md` §1b).
 | P2 | **C-1 đã chạy** — function sống trên **staging**, cron nổ, `net._http_response` = 200 | ⬜ |
 | P3 | 🔴 **B1′** — URL preview nằm trong **Redirect URLs của STAGING** | ⬜ |
 | P4 | 🔴 **B2** — `SHOP_PUBLIC_INDEXING` **không tồn tại** ở **cả** Production lẫn Preview | ⬜ |
-| P5 | `VITE_SUPABASE_*` của môi trường **Preview** trỏ `<STAGING_REF>` | ⬜ |
+| P5 | `VITE_SUPABASE_*` của môi trường **Preview** trỏ `<STAGING_PROJECT_REF>` | ⬜ |
 | P6 | `soak-watch.mjs --baseline` đã chụp **TRƯỚC** khi push | ⬜ |
 
 **P1 là ràng buộc cứng.** Preview có route Shop mà cơ sở dữ liệu không có bảng
@@ -88,9 +88,9 @@ node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-shop-pilot.json
 |---|---|---|
 | Pages | `SHOP_PUBLIC_INDEXING` | **không đặt** (P4) |
 | Pages | `CANONICAL_HOST` | giữ nguyên |
-| Build (Preview) | `VITE_SUPABASE_URL` | `https://<STAGING_REF>.supabase.co` |
+| Build (Preview) | `VITE_SUPABASE_URL` | `https://<STAGING_PROJECT_REF>.supabase.co` |
 | Build (Preview) | `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key **staging** |
-| Build (Preview) | `VITE_SUPABASE_PROJECT_ID` | `<STAGING_REF>` |
+| Build (Preview) | `VITE_SUPABASE_PROJECT_ID` | `<STAGING_PROJECT_REF>` |
 | Build | `VITE_PROTO_SHOP` | **không đặt** — prototype bị loại ở compile time (D4) |
 | Supabase Edge | `CRON_SECRET`, `SUPABASE_*` | không đụng |
 
@@ -117,7 +117,7 @@ BASE=https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev
 
 # 1. Ma trận noindex, TRƯỚC khi ai khác nhận URL
 node scripts/shop-closed-pilot-smoke.mjs --target "$BASE" \
-  --supabase-url https://<STAGING_REF>.supabase.co \
+  --supabase-url https://<STAGING_PROJECT_REF>.supabase.co \
   --anon-key "<anon key STAGING>"
 
 # 2. Nhánh production không đổi
@@ -161,7 +161,7 @@ Packet A — đẩy feat/shop-closed-pilot lên GitHub; Cloudflare tự dựng p
   [ ] P2  C-1 đã chạy trên STAGING, cron nổ, net._http_response = 200
   [ ] P3  B1′ — URL preview có trong Redirect URLs của STAGING
   [ ] P4  B2 — SHOP_PUBLIC_INDEXING KHÔNG tồn tại ở cả Production lẫn Preview
-  [ ] P5  VITE_SUPABASE_* (Preview) trỏ <STAGING_REF>  — và đã báo các phiên khác
+  [ ] P5  VITE_SUPABASE_* (Preview) trỏ <STAGING_PROJECT_REF>  — và đã báo các phiên khác
   [ ] P6  soak-watch baseline đã chụp
 
 [ ] DUYỆT — ký: ____________  ngày: __________

@@ -1,122 +1,132 @@
-# Checklist dashboard — bảy mục cho Product Owner
+# Checklist dashboard — Product Owner tự kiểm
 
-> Bảy thứ **không lệnh CLI chỉ-đọc nào đọc được**, hoặc đọc được nhưng chỉ cùng
-> lúc với các giá trị bí mật trong cùng payload. Chúng phải được nhìn bằng mắt.
+> Những thứ **không lệnh CLI chỉ-đọc nào đọc được**, hoặc đọc được nhưng chỉ
+> cùng lúc với giá trị bí mật trong cùng payload. Chúng phải được nhìn bằng mắt.
 >
-> Mất khoảng **5 phút**. Mục 4 và 5 là hai mục đứng giữa "pilot kín" và "Google
-> thấy sáu sản phẩm".
+> **~10 phút.** Hai mục 🔴 quan trọng nhất là **S-2** (redirect URL) và **C-4**
+> (cờ lập chỉ mục) — mục thứ hai đứng giữa "pilot kín" và "Google thấy sáu sản
+> phẩm".
 
-**Không chụp màn hình có chứa secret.** Nếu cần ghi lại, chép **tên** biến và
-kết quả có/không — không chép giá trị. Một khoá dán vào chat là một khoá đã lộ,
-kể cả trong chat riêng.
+## Quy tắc chụp màn hình
+
+**Không chụp bất kỳ màn hình nào có giá trị secret.** Ở các mục yêu cầu ảnh, chụp
+phần **tên** và **trạng thái**, che hoặc cắt bỏ cột giá trị. Một khoá dán vào chat
+là một khoá đã lộ, kể cả trong chat riêng.
+
+Ở mục ghi "chỉ tên", chỉ cần ghi **có / không có** — không chép giá trị vào bất
+cứ đâu.
 
 ---
 
-## 1. Cloudflare — nhánh production
+# Phần S — Supabase STAGING
 
-**Pages → `pickle-hub-pro` → Settings → Builds & deployments**
+Dashboard: `https://supabase.com/dashboard/project/<STAGING_PROJECT_REF>`
 
-- [ ] Production branch là **`main`**, không phải gì khác.
+| # | Mục | Tìm ở đâu | Kỳ vọng | PASS/FAIL | Ảnh |
+|---|---|---|---|---|---|
+| **S-0** | 🔴 **Project ref** | Project Settings → General → Reference ID | Chép chuỗi ref vào ô ở cuối. **Đây là thứ duy nhất còn thiếu để Packet B/C chạy được** | ☐ | ☐ |
+| **S-1** | Tên, tổ chức, region, gói | Project Settings → General | `ThePickleHub Staging` · org `ThePickleHub` · `ap-northeast-1` · **Pro** | ☐ | ☐ |
+| **S-2** | 🔴 **Auth Site URL + Redirect URLs** | Authentication → URL Configuration | Site URL = URL preview. Redirect URLs **có** `https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev/**`. **Không** có URL production | ☐ | ☐ |
+| **S-3** | MFA / TOTP | Authentication → Providers (Multi-Factor) | TOTP **đã bật** | ☐ | ☐ |
+| **S-4** | Tài khoản admin staging | Authentication → Users | Đúng **1** tài khoản admin, đã enrol TOTP, email khác production | ☐ | ☐ (che email nếu là email thật) |
+| **S-5** | 🔴 **Không có người dùng production** | Authentication → Users | Tổng số user **dưới 20** và toàn bộ là tài khoản test. Nếu thấy hàng nghìn → **DỪNG**, đó không phải staging | ☐ | ☐ |
+| **S-6** | Allowed origins / CORS | Project Settings → API | Chỉ URL preview (và `localhost` khi cần). **Không** có `www.thepicklehub.net` | ☐ | ☐ |
+| **S-7** | Secret — **chỉ tên** | Edge Functions → Secrets | Có `CRON_SECRET`. `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` do Supabase tự đặt. **Giá trị `CRON_SECRET` phải KHÁC production** | ☐ | ☐ (che cột giá trị) |
+| **S-8** | Edge Function | Edge Functions | **Trước Packet C:** trống. **Sau Packet C:** đúng `shop-media-lifecycle`, trạng thái ACTIVE | ☐ | ☐ |
+| **S-9** | Extension lên lịch | Database → Extensions | `pg_cron` **đã bật** · `pg_net` **đã bật** · vault khả dụng | ☐ | ☐ |
+| **S-10** | Cron job | Database → Cron (hoặc `cron.job`) | **Trước Packet B#4:** không có job Shop. **Sau:** đúng 2 job `shop-media-cleanup-every-5m` và `shop-media-reconcile-hourly`, `active = true` | ☐ | ☐ |
+| **S-11** | Storage bucket | Storage | **Sau Packet B:** `shop-product-media-draft` (**Private**) và `shop-product-media` (**Public**). Bucket draft **phải** là Private | ☐ | ☐ |
+| **S-12** | Migration ledger | Database → Migrations | **Trước Packet B:** rỗng. **Sau:** 351 dòng, dòng cuối `20260814090000` | ☐ | ☐ |
+| **S-13** | Quy chế người bán | Table Editor → `legal_documents` | **Trước khi Product Owner duyệt v1:** bảng **rỗng**. Không có dòng nào có `approved_at` | ☐ | ☐ |
 
-Vì sao: nếu nhánh production bị đổi, `git push` một nhánh tính năng sẽ deploy
-thẳng lên `thepicklehub.net` thay vì dựng preview.
+**Vì sao S-5 quan trọng hơn vẻ ngoài:** nếu ai đó vô tình mở nhầm tab production,
+mọi mục còn lại vẫn "PASS" trong khi đang nhìn cơ sở dữ liệu thật. Số người dùng
+là dấu hiệu rẻ nhất và rõ nhất để phân biệt hai project.
 
-## 2. Cloudflare — hành vi preview
+**Vì sao S-2 quan trọng:** không có redirect URL, đăng nhập trên preview bật đi
+nơi khác và **toàn bộ smoke seller/admin trở nên vô nghĩa** — người kiểm thử
+đăng nhập thành công vào một site không có Shop rồi kết luận là hỏng. Agent
+không đọc được mục này: endpoint cấu hình auth trả `smtp_pass` và các
+`external_*_secret` trong cùng payload.
 
-**Cùng trang**
+**Vì sao S-3 quan trọng:** `is_admin()` chỉ đòi aal2 khi người dùng **có** một
+factor đã verify. Một staging không có TOTP cho mọi phiên đi qua, và smoke sẽ
+báo "cổng AAL2 hoạt động" trên một cổng đang mở.
 
-- [ ] Preview deployments: **All branches** (hoặc ít nhất có `feat/shop-closed-pilot`).
+---
 
-Vì sao: Packet A xin phép đúng một thao tác — đẩy nhánh. Nếu preview bị tắt,
-không có gì được dựng và packet không làm gì cả.
+# Phần C — Cloudflare Pages
 
-## 3. Cloudflare — biến môi trường web trỏ vào đâu
+Dashboard: Pages → `pickle-hub-pro`
 
-**Pages → `pickle-hub-pro` → Settings → Environment variables → Preview**
+| # | Mục | Tìm ở đâu | Kỳ vọng | PASS/FAIL | Ảnh |
+|---|---|---|---|---|---|
+| **C-1** | Project và nhánh production | Settings → Builds & deployments | Project `pickle-hub-pro` · production branch **`main`** | ☐ | ☐ |
+| **C-2** | Hành vi preview | Cùng trang | Preview deployments bật cho **All branches** (hoặc ít nhất `feat/shop-closed-pilot`) | ☐ | ☐ |
+| **C-3** | Biến môi trường **Preview** | Settings → Environment variables → **Preview** | `VITE_SUPABASE_URL` = `https://<STAGING_PROJECT_REF>.supabase.co` · `VITE_SUPABASE_PROJECT_ID` = ref staging · `VITE_SUPABASE_PUBLISHABLE_KEY` = anon key **staging** | ☐ | ☐ (che giá trị key) |
+| **C-4** | 🔴 **Cờ lập chỉ mục — CẢ HAI tab** | Cùng trang, xem **Production** và **Preview** | `SHOP_PUBLIC_INDEXING` **KHÔNG tồn tại** ở cả hai | ☐ | ☐ |
+| **C-5** | Biến **Production** không đổi | Settings → Environment variables → **Production** | `VITE_SUPABASE_*` vẫn trỏ `ajvlcamxemgbxduhiqrl` | ☐ | ☐ (che giá trị key) |
+| **C-6** | URL preview | Deployments (sau Packet A) | `https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev` trả 200 | ☐ | ☐ |
+| **C-7** | Điểm rollback | Deployments → bản production mới nhất | Ghi lại **deployment ID** production hiện tại **trước** khi đẩy nhánh | ☐ | ☐ |
+| **C-8** | Legacy `prerender-worker` | Workers & Pages → Workers | **Không đụng vào.** Vẫn ACTIVE, không đổi route, không đổi phiên bản | ☐ | ☐ |
 
-Ghi lại (chỉ **tên** và trỏ tới đâu, không chép giá trị):
+**Vì sao C-4 quan trọng hơn vẻ ngoài:** một sản phẩm đã bị Google lập chỉ mục là
+**cửa một chiều**. Revert gỡ route, **không** gỡ URL khỏi chỉ mục. Sự vắng mặt
+của biến là mặc định an toàn — chỉ chuỗi **chính xác** `"1"` mới mở, nhưng cách
+chắc chắn nhất là không có biến nào cả.
 
-- [ ] `VITE_SUPABASE_URL` (Preview) = `https://<STAGING_REF>.supabase.co`
-- [ ] `VITE_SUPABASE_PUBLISHABLE_KEY` (Preview) = anon key **của staging**
-- [ ] `VITE_SUPABASE_PROJECT_ID` (Preview) = `<STAGING_REF>`
-- [ ] Production giữ nguyên trỏ `ajvlcamxemgbxduhiqrl`
-
-⚠️ Đây là thay đổi có sức công phá nhất trong gói: biến Preview áp cho **mọi
+**Vì sao C-3 đáng cân nhắc trước khi làm:** biến môi trường Preview áp cho **mọi
 nhánh**, nên preview của các nhánh SEO/homepage đang chạy song song cũng sẽ trỏ
-staging. Xem [`approval-packets/packet-s-staging.md` §6](./approval-packets/packet-s-staging.md)
-— có hai lựa chọn và một khuyến nghị.
-
-## 4. 🔴 Cloudflare — cờ lập chỉ mục, **cả hai môi trường**
-
-**Cùng trang, xem cả tab Production lẫn tab Preview**
-
-- [ ] `SHOP_PUBLIC_INDEXING` **KHÔNG tồn tại** ở **Production**
-- [ ] `SHOP_PUBLIC_INDEXING` **KHÔNG tồn tại** ở **Preview**
-
-Sự vắng mặt là mặc định an toàn. Chỉ chuỗi **chính xác** `"1"` mới mở lập chỉ
-mục; `"true"`, `"yes"`, `"0"`, `""` đều đóng — nhưng cách chắc chắn nhất là
-không có biến nào cả.
-
-Vì sao mục này quan trọng hơn vẻ ngoài: một sản phẩm đã bị Google lập chỉ mục là
-**cửa một chiều**. Revert gỡ route, không gỡ URL khỏi chỉ mục.
-
-## 5. 🔴 Supabase STAGING — Redirect URLs
-
-**Dashboard staging → Authentication → URL Configuration**
-
-- [ ] **Site URL** = URL preview
-- [ ] **Redirect URLs** có `https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev/**`
-
-Vì sao: không có nó, đăng nhập trên preview bật ngược đi nơi khác và **toàn bộ
-smoke seller/admin trở nên vô nghĩa** — người kiểm thử đăng nhập thành công vào
-một site không có Shop rồi kết luận là hỏng.
-
-Agent **không đọc được** mục này: endpoint cấu hình auth trả `smtp_pass` và các
-`external_*_secret` trong cùng payload, nên đọc nó là đọc secret.
-
-## 6. Supabase STAGING — TOTP và tài khoản admin
-
-**Dashboard staging → Authentication → Providers / Multi-Factor**
-
-- [ ] MFA (TOTP) **đã bật**
-- [ ] Có **một** tài khoản admin staging, đã enrol TOTP
-- [ ] UUID của nó **khác** admin production
-
-Vì sao: `is_admin()` chỉ đòi aal2 khi người dùng **có** factor đã verify. Một
-staging không có TOTP sẽ cho mọi phiên đi qua, và smoke sẽ báo "cổng AAL2 hoạt
-động" trên một cổng đang mở.
-
-## 7. Supabase STAGING — extension lên lịch
-
-**Dashboard staging → Database → Extensions**
-
-- [ ] `pg_cron` bật được
-- [ ] `pg_net` bật được
-- [ ] `supabase_vault` khả dụng
-
-Vì sao: nếu không, Packet C mất phần quan trọng nhất — chứng minh worker chạy
-theo **lịch thật** — và preview chỉ còn drain tay, tức là đúng thứ môi trường
-cục bộ đã làm được. Biết điều này **trước** khi chọn gói thì rẻ hơn nhiều so
-với sau.
+staging và không còn thấy dữ liệu thật. Hai lựa chọn và một khuyến nghị:
+[`approval-packets/packet-s-staging.md` §6](./approval-packets/packet-s-staging.md).
+Ai đang chạy nhánh khác cần được báo.
 
 ---
 
 ## Ghi kết quả
 
 ```
-Ngày kiểm: __________   Người kiểm: __________
+Ngày kiểm: __________        Người kiểm: __________________
 
-1. Production branch = main                      [ ] ok  [ ] KHÔNG
-2. Preview build cho mọi nhánh                   [ ] ok  [ ] KHÔNG
-3. VITE_SUPABASE_* (Preview) trỏ staging         [ ] ok  [ ] KHÔNG
-4. SHOP_PUBLIC_INDEXING vắng ở Production        [ ] ok  [ ] KHÔNG
-   SHOP_PUBLIC_INDEXING vắng ở Preview           [ ] ok  [ ] KHÔNG
-5. Redirect URL preview có ở STAGING             [ ] ok  [ ] KHÔNG
-6. TOTP bật + 1 admin staging đã enrol           [ ] ok  [ ] KHÔNG
-7. pg_cron / pg_net / vault khả dụng             [ ] ok  [ ] KHÔNG
+🔴 Project ref staging (S-0): ______________________________________
+
+Supabase staging
+  S-1  tên/org/region/gói          [ ] PASS  [ ] FAIL
+  S-2  Site URL + Redirect URLs    [ ] PASS  [ ] FAIL   🔴
+  S-3  TOTP đã bật                 [ ] PASS  [ ] FAIL
+  S-4  1 admin staging có TOTP     [ ] PASS  [ ] FAIL
+  S-5  KHÔNG có user production    [ ] PASS  [ ] FAIL   🔴
+  S-6  allowed origins             [ ] PASS  [ ] FAIL
+  S-7  secret (chỉ tên)            [ ] PASS  [ ] FAIL
+  S-8  edge function               [ ] PASS  [ ] FAIL  [ ] chưa tới bước
+  S-9  pg_cron / pg_net / vault    [ ] PASS  [ ] FAIL
+  S-10 cron job                    [ ] PASS  [ ] FAIL  [ ] chưa tới bước
+  S-11 bucket (draft = Private)    [ ] PASS  [ ] FAIL  [ ] chưa tới bước
+  S-12 migration ledger            [ ] PASS  [ ] FAIL  [ ] chưa tới bước
+  S-13 legal_documents rỗng        [ ] PASS  [ ] FAIL
+
+Cloudflare
+  C-1  project + nhánh production  [ ] PASS  [ ] FAIL
+  C-2  preview cho mọi nhánh       [ ] PASS  [ ] FAIL
+  C-3  biến Preview trỏ staging    [ ] PASS  [ ] FAIL   (đã báo phiên khác? [ ])
+  C-4  SHOP_PUBLIC_INDEXING vắng   [ ] PASS  [ ] FAIL   🔴  (Production ☐ / Preview ☐)
+  C-5  biến Production không đổi   [ ] PASS  [ ] FAIL
+  C-6  URL preview 200             [ ] PASS  [ ] FAIL  [ ] chưa tới bước
+  C-7  deployment ID rollback      ______________________________
+  C-8  prerender-worker không đổi  [ ] PASS  [ ] FAIL
 
 Ghi chú: ______________________________________________________________
 ```
 
-Bất kỳ ô **KHÔNG** nào ở mục 4, 5 hoặc 7 đều **chặn Packet A**. Mục 1-3 và 6
-chặn việc smoke có ý nghĩa gì hay không.
+## Ô nào FAIL thì chặn gì
+
+| FAIL ở | Chặn |
+|---|---|
+| **S-0** | **Packet B và C** — không có mục tiêu để chạy |
+| **S-2**, **S-9** | **Packet A** |
+| **S-5** | **Mọi thứ.** Đó không phải staging — dừng và xác minh lại |
+| **C-4** | **Packet A và D** |
+| S-3, S-4 | Smoke chạy được nhưng **không chứng minh** được cổng AAL2 |
+| C-3 | Preview sẽ trỏ nhầm cơ sở dữ liệu |
+| C-1, C-2 | Packet A không dựng được preview |
+| C-8 | Dừng — traffic production đang đi qua worker đó |
