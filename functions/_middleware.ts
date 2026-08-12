@@ -606,7 +606,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v40→v41 (2026-08-11): venue wiring — venue detail + per-city hub deep-link
   // the 4 evergreen local guides (cost/court-size/rules/how-to) instead of only
   // the blog index. Purge stale bot HTML for /san/* + /san/khu-vuc/*.
-  const cacheKey = `pr:v41:${url.pathname}`;
+  // v41→v42 (2026-08-12): rankings page deep-links the DUPR/WPR explainer guides
+  // (§6 wiring). Purge /rankings + /vi/rankings. (If PR #575 lands first at v42,
+  // rebase this to v43 — versions must stay monotonic.)
+  const cacheKey = `pr:v42:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
