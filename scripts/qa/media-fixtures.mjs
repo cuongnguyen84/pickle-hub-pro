@@ -57,6 +57,105 @@ export function jpegWithGps() {
   return Buffer.concat([base.subarray(0, 2), app1, base.subarray(2)]);
 }
 
+/**
+ * Splice a full metadata payload into a REAL JPEG: EXIF with an Orientation
+ * tag and a GPS IFD, plus a separate APP1 XMP packet.
+ *
+ * `jpegWithGps()` above is enough to prove "the rendition has no EXIF" on a
+ * 1×1 image. It cannot prove the rendition is the right way up, because a 1×1
+ * image has no orientation to lose, and it says nothing about XMP — which
+ * carries location too and is a separate chunk in both containers.
+ *
+ * So this takes a base JPEG that has actual pixels (built by a browser canvas
+ * at run time, so no binary fixture enters the repository) and gives it
+ * everything a phone photo would arrive with.
+ *
+ * @param base       a real JPEG, SOI first
+ * @param orientation EXIF Orientation. 6 = rotate 90° CW on display, which is
+ *                    what a phone writes when you hold it upright.
+ */
+export function jpegWithExifGpsXmp(base, orientation = 6) {
+  if (!(base[0] === 0xff && base[1] === 0xd8)) {
+    throw new Error("base is not a JPEG — no SOI");
+  }
+
+  // ── APP1 #1: Exif ────────────────────────────────────────────────────────
+  // Big-endian TIFF. IFD0 holds two entries (Orientation, GPSInfo pointer)
+  // and the GPS IFD follows it.
+  const IFD0_AT = 8;
+  const IFD0_SIZE = 2 + 12 * 2 + 4;          // count + 2 entries + next-IFD
+  const GPS_AT = IFD0_AT + IFD0_SIZE;        // 38
+
+  const tiff = Buffer.concat([
+    Buffer.from([0x4d, 0x4d, 0x00, 0x2a, 0x00, 0x00, 0x00, IFD0_AT]),
+    // IFD0: 2 entries
+    Buffer.from([0x00, 0x02]),
+    // 0x0112 Orientation · SHORT · count 1 · value in the high half-word
+    Buffer.from([0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, orientation, 0x00, 0x00]),
+    // 0x8825 GPSInfo · LONG · count 1 · offset of the GPS IFD
+    Buffer.from([0x88, 0x25, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, GPS_AT]),
+    Buffer.from([0x00, 0x00, 0x00, 0x00]),   // no next IFD
+    // GPS IFD: one entry, GPSLatitudeRef = "N"
+    Buffer.from([0x00, 0x01]),
+    Buffer.from([0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x4e, 0x00, 0x00, 0x00]),
+    Buffer.from([0x00, 0x00, 0x00, 0x00]),
+  ]);
+
+  const exifPayload = Buffer.concat([Buffer.from("Exif\0\0", "latin1"), tiff]);
+  const exifLen = exifPayload.length + 2;
+  const exifApp1 = Buffer.concat([
+    Buffer.from([0xff, 0xe1, (exifLen >> 8) & 0xff, exifLen & 0xff]),
+    exifPayload,
+  ]);
+
+  // ── APP1 #2: XMP ─────────────────────────────────────────────────────────
+  const xmpPacket =
+    `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>` +
+    `<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF ` +
+    `xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">` +
+    `<rdf:Description exif:GPSLatitude="21,1.5N" exif:GPSLongitude="105,50.7E" ` +
+    `xmlns:exif="http://ns.adobe.com/exif/1.0/"/></rdf:RDF></x:xmpmeta><?xpacket end="w"?>`;
+  const xmpPayload = Buffer.concat([
+    Buffer.from("http://ns.adobe.com/xap/1.0/\0", "latin1"),
+    Buffer.from(xmpPacket, "latin1"),
+  ]);
+  const xmpLen = xmpPayload.length + 2;
+  const xmpApp1 = Buffer.concat([
+    Buffer.from([0xff, 0xe1, (xmpLen >> 8) & 0xff, xmpLen & 0xff]),
+    xmpPayload,
+  ]);
+
+  return Buffer.concat([base.subarray(0, 2), exifApp1, xmpApp1, base.subarray(2)]);
+}
+
+/** Does this buffer carry an XMP packet, by either of its two signatures? */
+export const hasXmp = (buffer) => {
+  const text = buffer.toString("latin1");
+  return text.includes("http://ns.adobe.com/xap/1.0/") || text.includes("<x:xmpmeta");
+};
+
+/** Does this buffer carry an Exif header or a GPS IFD tag? */
+export const hasExif = (buffer) => buffer.toString("latin1").includes("Exif\0\0");
+
+/** The GPS values our fixture writes, looked for verbatim in the output. */
+export const hasFixtureGps = (buffer) => {
+  const text = buffer.toString("latin1");
+  return text.includes("GPSLatitude") || text.includes("21,1.5N") || text.includes("105,50.7E");
+};
+
+/**
+ * The fixture, checked against itself before anything is concluded from it.
+ * "The rendition has no XMP" proves nothing if the input never had any.
+ */
+export function assertPhotoFixtureIsReal(buffer) {
+  const problems = [];
+  if (!(buffer[0] === 0xff && buffer[1] === 0xd8)) problems.push("không phải JPEG (thiếu SOI)");
+  if (!hasExif(buffer)) problems.push("KHÔNG chứa EXIF — phép thử xoá EXIF thành vô nghĩa");
+  if (!hasXmp(buffer)) problems.push("KHÔNG chứa XMP — phép thử xoá XMP thành vô nghĩa");
+  if (!hasFixtureGps(buffer)) problems.push("KHÔNG chứa toạ độ GPS");
+  return problems;
+}
+
 /** A file whose name and declared type say JPEG and whose bytes say HEIC. */
 export function heicNamedJpg() {
   const body = Buffer.alloc(64);
