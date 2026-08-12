@@ -26,6 +26,7 @@ import {
   useDecideApplication,
   useShopApplication,
 } from "@/hooks/shop/useShopApplicationQueue";
+import { SellerRulesReceiptPanel } from "@/components/shop/SellerRulesReceiptPanel";
 import { decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
 import "@/styles/shop.css";
 
@@ -125,6 +126,8 @@ export default function AdminShopApplicationReview() {
               chỉ hiện ở màn quản trị này, không đi vào thông báo, log hay URL.
             </p>
           </section>
+
+          <SellerRulesReceiptPanel applicationId={row.id} />
 
           {row.internal_note && (
             <section aria-labelledby="a03-notes">
