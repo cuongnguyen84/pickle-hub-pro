@@ -1,20 +1,44 @@
 # CP9 — Quyết định về thông báo
 
-> **Trạng thái: ĐỀ XUẤT — chờ Product Owner. Đây là câu hỏi #5 trong
-> [`pilot-contract.md` §6](./pilot-contract.md).**
+> ## ✅ ĐÃ QUYẾT — Product Owner, 2026-08-12
+>
+> **Closed pilot chấp nhận chưa có thông báo tự động**, kèm runbook liên lạc
+> tay ở §5 và sáu điều kiện ở §1.1.
+>
+> Đây là **giới hạn đã chấp nhận cho pilot**, **không** phải giải pháp chung cho
+> production.
 >
 > Nền: [`docs/proposals/shop-catalog-phase-2b/notification-contract.md`](../shop-catalog-phase-2b/notification-contract.md)
 > — hợp đồng dữ liệu đã viết sẵn từ P2b.1, cố ý chưa nối vào đâu.
 
 ---
 
-## 1. Quyết định đề xuất
+## 1. Quyết định
 
 **Closed pilot chạy KHÔNG có thông báo tự động.** Người bán biết kết quả kiểm
 duyệt khi họ mở `/seller/products` hoặc `/seller/application/status`; ngoài ra
 người kiểm duyệt nhắn tay sau mỗi quyết định.
 
 Đây là **giới hạn đã biết và chấp nhận**, không phải nợ kỹ thuật bị bỏ quên.
+
+### 1.1 Sáu điều kiện đi kèm quyết định
+
+Quyết định chỉ có hiệu lực khi cả sáu điều dưới đây đúng. Mất một điều là mất
+quyết định, không phải một bất tiện.
+
+| # | Điều kiện | Trạng thái hôm nay |
+|---|---|---|
+| 1 | Người bán **xem được trạng thái** trong dashboard của mình | ✅ `/seller/application/status`, `/seller/products`, `/seller/settings` — bảng ở §4 |
+| 2 | Admin có **hàng đợi rõ ràng** | ✅ `/admin/shop/applications`, `/admin/shop/products`, `/admin/shop/contacts` |
+| 3 | Có **runbook liên lạc tay** | ✅ §5 |
+| 4 | Có **người chịu trách nhiệm kiểm hàng đợi hằng ngày** | ⬜ Packet D §2 câu hỏi #6 — tên người, chưa điền |
+| 5 | UI **không được nói "đã gửi thông báo"** | ✅ §6, và không có bề mặt nào nói vậy |
+| 6 | Giới hạn được ghi vào **pilot contract** | ✅ [`pilot-contract.md` §2 và §8](./pilot-contract.md) |
+
+Điều 4 là điều duy nhất còn trống, và nó là **tên một con người**, không phải
+một hệ thống. Với hạ tầng ở điều 1-3 nhưng không ai mở hàng đợi ra xem, pilot
+chạy mà người bán không nhận được câu trả lời nào — đúng thứ quyết định này
+đánh cược là sẽ không xảy ra.
 
 ---
 
@@ -165,13 +189,18 @@ gói closed pilot.
 
 ```
 Quyết định: closed pilot chạy KHÔNG có thông báo tự động, kèm runbook liên lạc
-            tay ở §5.
+            tay ở §5 và sáu điều kiện ở §1.1.
 
-[ ] CHẤP NHẬN — ký: ____________  ngày: __________
+[x] CHẤP NHẬN — Product Owner, 2026-08-12
 [ ] KHÔNG CHẤP NHẬN — mở scope riêng theo §7, và pilot chờ
 
-Ghi chú: ______________________________________________________________
+Còn trống: điều kiện #4 — tên người kiểm hàng đợi hằng ngày (Packet D §2 #6).
 ```
 
-Cho tới khi ô này được đánh dấu, `notification-decision` là **chưa quyết**, và
-Packet D không đầy đủ.
+**Hệ quả đã áp dụng:** không xây hạ tầng thông báo nào trong gói closed pilot.
+`product_moderation_events` và `shop_contact_moderation_events` vẫn ghi đủ dữ
+liệu một dispatcher cần, trong cùng transaction quyết định — nên khi Product
+Owner muốn tự động hoá, việc còn lại là chọn kênh gửi, không phải làm lại mô
+hình dữ liệu.
+
+**Điều còn thiếu để Packet D đầy đủ:** tên người ở điều kiện #4.
