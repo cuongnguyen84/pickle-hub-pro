@@ -7,7 +7,7 @@
 
 BEGIN;
 
-SELECT plan(35);
+SELECT plan(38);
 
 -- ─── Slug correctness ───────────────────────────────────────────────────────
 -- Not a permission test, and that is the point: all the other assertions here
@@ -175,6 +175,32 @@ SELECT throws_ok(
 -- ─── Submit is server-validated and idempotent ─────────────────────────────
 
 SET LOCAL request.jwt.claims TO '{"sub":"50010001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+-- Since migration 20260814090000 a complete application is not a submittable
+-- one: the server also requires an accepted seller-rules version. Proven here
+-- as well as in shop_seller_rules_acceptance.test.sql, because this file is
+-- where a reader comes to learn what "A can submit" means.
+SELECT throws_ok(
+  'SELECT public.shop_application_submit()', 'P0002', NULL,
+  'complete but no seller rules published — the submit refuses');
+
+RESET role;
+INSERT INTO public.legal_documents (document_key, version, title, body, effective_at)
+VALUES ('seller-rules', 'v1', 'Quy chế người bán (TEST)',
+        repeat('Điều khoản thử nghiệm dùng cho pgTAP. Đây không phải văn bản pháp lý. ', 6),
+        now() - interval '1 day');
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50010001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT throws_ok(
+  'SELECT public.shop_application_submit()', '23514', NULL,
+  'published but unsigned — still refused');
+
+SELECT lives_ok(
+  $$SELECT public.legal_accept('seller-rules','v1',
+      (SELECT content_hash FROM public.legal_documents
+        WHERE document_key='seller-rules' AND version='v1'))$$,
+  'A accepts the effective seller rules');
 
 SELECT is(public.shop_application_submit()::text, 'submitted', 'A can submit a complete application');
 SELECT is(public.shop_application_submit()::text, 'submitted', 'submitting twice is idempotent, not a second row');

@@ -13,6 +13,8 @@ import {
   SHOP_P2B_RPCS,
   SHOP_P2B_TABLES,
   SHOP_RPCS,
+  SHOP_RULES_RPCS,
+  SHOP_RULES_TABLES,
   SHOP_TABLES,
   SHOP_VIEWS,
 } from "@/integrations/supabase/shop-schema";
@@ -301,5 +303,90 @@ describe("the public read model takes no privilege flag", () => {
     // Without the id, two products published in the same batch share a
     // timestamp and one of them is silently skipped between pages.
     expect(PUB_SQL).toContain("(v.created_at, v.id) < (_cursor_at, _cursor_id)");
+  });
+});
+
+// ── Seller rules (CP12) ─────────────────────────────────────────────────────
+// The gate this migration adds is the only thing standing between a real
+// seller and an approval with no record of consent, so the assertions here are
+// about the gate being in the right PLACE, not merely present somewhere.
+
+const RULES_SQL = readFileSync(
+  resolve(__dirname, "../../../supabase/migrations/20260814090000_shop_seller_rules_acceptance.sql"),
+  "utf8",
+);
+
+describe("seller-rules acceptance parity with migration 20260814090000", () => {
+  it.each(SHOP_RULES_TABLES)("the migration creates table %s", (table) => {
+    expect(RULES_SQL).toContain(`CREATE TABLE IF NOT EXISTS public.${table}`);
+  });
+
+  it.each(SHOP_RULES_RPCS)("the migration creates function %s", (fn) => {
+    expect(RULES_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  });
+
+  it("both tables enable RLS and carry a GRANT", () => {
+    for (const table of SHOP_RULES_TABLES) {
+      expect(RULES_SQL, table).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
+      expect(RULES_SQL, table).toMatch(new RegExp(`GRANT[^;]*ON public\\.${table}\\s+TO`, "s"));
+    }
+  });
+
+  it("gives nobody an INSERT policy on legal_acceptances", () => {
+    // The signature is written by legal_accept() or not at all. A policy here
+    // would let a seller sign for themselves with a plain INSERT — precisely
+    // the checkbox-as-authority failure this migration exists to end.
+    const policies = [...RULES_SQL.matchAll(/CREATE POLICY "([^"]+)" ON public\.legal_acceptances\s+FOR (\w+)/g)];
+    expect(policies.length).toBeGreaterThan(0);
+    for (const [, name, verb] of policies) {
+      expect(verb, `policy ${name}`).toBe("SELECT");
+    }
+  });
+
+  it("computes content_hash rather than accepting one", () => {
+    expect(RULES_SQL).toMatch(/content_hash TEXT GENERATED ALWAYS AS/);
+  });
+
+  it("drops the zero-argument submit instead of leaving it beside the new one", () => {
+    // Two overloads make a no-argument call ambiguous (42725) — the failure
+    // that once broke every approve, reject and request-changes here.
+    expect(RULES_SQL).toContain("DROP FUNCTION IF EXISTS public.shop_application_submit();");
+  });
+
+  it("puts the acceptance check INSIDE shop_application_submit", () => {
+    // Not in a wrapper, not in the client, not in a trigger on some other
+    // table: in the function a caller who skips the UI would call.
+    const at = RULES_SQL.indexOf("CREATE OR REPLACE FUNCTION public.shop_application_submit(");
+    expect(at).toBeGreaterThan(-1);
+    const body = RULES_SQL.slice(at);
+    expect(body).toContain("seller_rules_not_published");
+    expect(body).toContain("seller_rules_not_accepted");
+    expect(body).toContain("legal_current_document('seller-rules')");
+    expect(body).toMatch(/a\.content_hash\s*=\s*_doc\.content_hash/);
+  });
+
+  it("takes user, time and hash from the server, never from the caller", () => {
+    const at = RULES_SQL.indexOf("CREATE OR REPLACE FUNCTION public.legal_accept(");
+    const body = RULES_SQL.slice(at, RULES_SQL.indexOf("REVOKE ALL ON FUNCTION public.legal_current_document"));
+    expect(body).toContain("(auth.uid(), _doc.document_key, _doc.version, _doc.content_hash, _app, _client_token)");
+    expect(body).not.toMatch(/_accepted_at|_user_id\s+UUID/);
+  });
+
+  it("seeds no legal text — a placeholder is worse than an empty table", () => {
+    // An empty table blocks the submit. A placeholder lets a real seller sign
+    // something nobody approved.
+    expect(RULES_SQL).not.toMatch(/INSERT INTO public\.legal_documents/);
+  });
+
+  it("does not collect an IP address or a device fingerprint", () => {
+    // New personal data needs a privacy decision that has not been made. The
+    // schema has nowhere to put it, so nobody can start by accident.
+    //
+    // Comments are stripped first. The migration's own note explaining that it
+    // collects no fingerprint contains the word "fingerprint", and the first
+    // version of this assertion failed on that note — a grep test that reads
+    // prose is testing the prose.
+    const code = RULES_SQL.replace(/--[^\n]*/g, "");
+    expect(code).not.toMatch(/\bip\s+(inet|text)\b|user_agent|fingerprint/i);
   });
 });

@@ -426,3 +426,60 @@ export const SHOP_P2B_RPCS = [
   "shop_contact_moderation_queue",
   "product_slug_update",
 ] as const;
+
+/* ── Seller rules — versioned document + acceptance (migration 20260814090000) ─
+ * Product Owner decision 2026-08-12 #5. The submit RPC now refuses until the
+ * server has seen an acceptance of the effective version, so these names are
+ * registered here for the same reason as the others: the parity test fails if
+ * one of them has no migration behind it.
+ */
+
+/** The version currently on offer. `body` is the text a seller must be shown
+ *  before the checkbox may be enabled — not a summary of it. */
+export interface SellerRulesDocument {
+  document_key: string;
+  version: string;
+  title: string;
+  body: string;
+  content_hash: string;
+  effective_at: string;
+}
+
+/** What `legal_accept` hands back. The hash is the SERVER's copy: it is what a
+ *  moderator later checks the signature against. */
+export interface SellerRulesReceipt {
+  ok: true;
+  replayed: boolean;
+  document_key: string;
+  version: string;
+  content_hash: string;
+  accepted_at: string;
+}
+
+/** `shop_application_rules_receipt` — answers "did they accept the version in
+ *  force", not "have they ever accepted anything". `accepted: false` with
+ *  `reason: "stale_version"` is the case worth rendering carefully: they did
+ *  sign, just not this. */
+export type SellerRulesReceiptView =
+  | {
+      accepted: true;
+      title: string;
+      version: string;
+      content_hash: string;
+      accepted_at: string;
+    }
+  | {
+      accepted: false;
+      reason: "no_effective_version" | "never_accepted" | "stale_version";
+      current_version?: string;
+      accepted_version?: string | null;
+      accepted_at?: string | null;
+    };
+
+export const SHOP_RULES_TABLES = ["legal_documents", "legal_acceptances"] as const;
+
+export const SHOP_RULES_RPCS = [
+  "legal_current_document",
+  "legal_accept",
+  "shop_application_rules_receipt",
+] as const;
