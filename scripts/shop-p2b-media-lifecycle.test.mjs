@@ -1,0 +1,336 @@
+/**
+ * P2b.7.6 — the media lifecycle, walked end to end.
+ *
+ * shop-media-integration.test.mjs proves each step in isolation: the copy, the
+ * commit, the revoke, the worker's claim→delete→complete. What none of them
+ * walks is the LOOP, and the loop is where the interesting failure lives:
+ *
+ *     unpublish  → the live key is queued for deletion
+ *     republish  → the same key comes back into use, before the worker ran
+ *     worker     → drains the queue
+ *     buyer      → 404 on a product that published successfully minutes ago
+ *
+ * product_publish_commit deletes the pending job for a key it is re-taking,
+ * which is what stops that. This file is the proof that it does, from the
+ * outside, on real bytes — and the red proof is one line: comment out that
+ * DELETE and the fifth test 404s.
+ *
+ *   supabase start && supabase db reset
+ *   npx vitest run scripts/shop-p2b-media-lifecycle.test.mjs
+ *
+ * SKIPPED with a loud warning when no local stack is listening, so `npm test`
+ * stays green in CI for the one reason that is not a defect.
+ */
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
+
+const URL_BASE = process.env.SUPABASE_LOCAL_URL ?? "http://127.0.0.1:54321";
+const ANON =
+  process.env.SUPABASE_LOCAL_ANON_KEY ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+const SERVICE =
+  process.env.SUPABASE_LOCAL_SERVICE_KEY ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
+
+const DRAFT = "shop-product-media-draft";
+const PUBLIC_BUCKET = "shop-product-media";
+
+const up = await (async () => {
+  try {
+    const res = await fetch(`${URL_BASE}/rest/v1/`, {
+      headers: { apikey: ANON }, signal: AbortSignal.timeout(1500),
+    });
+    return res.status < 500;
+  } catch { return false; }
+})();
+if (!up) {
+  console.warn(`\n⚠ P2b.7.6 media lifecycle SKIPPED — no Supabase at ${URL_BASE}.\n`);
+}
+
+/** A structurally valid WebP of a stated size. */
+function webpBytes(width = 1200, height = 900) {
+  const bits = ((width - 1) & 0x3fff) | (((height - 1) & 0x3fff) << 14);
+  const body = [0x2f, bits & 0xff, (bits >> 8) & 0xff, (bits >> 16) & 0xff, (bits >> 24) & 0xff];
+  const chunk = [
+    ...[..."VP8L"].map((c) => c.charCodeAt(0)),
+    body.length, 0, 0, 0, ...body, ...(body.length % 2 ? [0] : []),
+  ];
+  const riffSize = 4 + chunk.length;
+  return new Uint8Array([
+    ...[..."RIFF"].map((c) => c.charCodeAt(0)),
+    riffSize & 0xff, (riffSize >> 8) & 0xff, (riffSize >> 16) & 0xff, (riffSize >> 24) & 0xff,
+    ...[..."WEBP"].map((c) => c.charCodeAt(0)), ...chunk,
+  ]);
+}
+
+const svc = () => createClient(URL_BASE, SERVICE, { auth: { persistSession: false } });
+
+/** Stand in for the worker: claim, delete the bytes, complete. */
+async function drainCleanupQueue(admin) {
+  const { data: claimed, error } = await admin.rpc("shop_media_cleanup_claim", { _limit: 50 });
+  if (error) throw error;
+  for (const job of claimed) {
+    await admin.storage.from(job.bucket_id).remove([job.object_path]);
+    await admin.rpc("shop_media_cleanup_complete", { _job_id: job.id, _ok: true });
+  }
+  return claimed;
+}
+
+const publicHead = (path) =>
+  fetch(`${URL_BASE}/storage/v1/object/public/${PUBLIC_BUCKET}/${path}`).then((r) => r.status);
+
+describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
+  const run = randomUUID().slice(0, 8);
+  let owner;
+  let adminUser;
+  let shopId;
+  let productId;
+  let mediaId;
+  let firstKey;
+
+  beforeAll(async () => {
+    const admin = svc();
+    const mk = async (email) => {
+      const password = `Pw-${randomUUID()}`;
+      const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+      if (error) throw error;
+      const client = createClient(URL_BASE, ANON, { auth: { persistSession: false } });
+      await client.auth.signInWithPassword({ email, password });
+      return { id: data.user.id, client };
+    };
+    owner = await mk(`p2b7-media-${run}@thepicklehub.test`);
+    adminUser = await mk(`p2b7-media-admin-${run}@thepicklehub.test`);
+
+    // Straight into the container: service_role deliberately has no INSERT on
+    // user_roles, and giving it one to make a test convenient would let a
+    // leaked service key promote itself.
+    const { execFileSync } = await import("node:child_process");
+    execFileSync("docker", [
+      "exec", process.env.SUPABASE_LOCAL_DB_CONTAINER ?? "supabase_db_ajvlcamxemgbxduhiqrl",
+      "psql", "-U", "postgres", "-q", "-c",
+      `INSERT INTO public.user_roles (user_id, role) VALUES ('${adminUser.id}', 'admin') ON CONFLICT DO NOTHING;`,
+    ], { stdio: "pipe" });
+
+    await admin.from("shop_pilot_members").insert({ user_id: owner.id });
+    const { data: shop, error: se } = await admin.from("shops").insert({
+      slug: `p2b7-media-${run}`, name: `Shop Media ${run}`, state: "active", owner_user_id: owner.id,
+    }).select().single();
+    if (se) throw se;
+    shopId = shop.id;
+    await admin.from("shop_members").insert({ shop_id: shopId, user_id: owner.id, role: "owner" });
+
+    const { data: created, error: ce } = await owner.client.rpc("product_create", {
+      _shop_id: shopId, _client_token: `p2b7m-${run}`,
+      _payload: {
+        title: `Vợt Vòng Đời Ảnh ${run}`,
+        description: "Vợt carbon dùng cho phép thử vòng đời ảnh, mô tả đủ dài để qua preflight.",
+        category_slug: "vot", condition: "new", price_vnd: "1500000", stock_on_hand: "3",
+      },
+    });
+    if (ce) throw ce;
+    productId = created.id;
+
+    const { data: init, error: me } = await owner.client.rpc("product_media_upload_init", {
+      _product_id: productId, _content_type: "image/jpeg", _byte_size: 4000,
+      _original_filename: "anh.jpg", _client_token: `p2b7m-media-${run}`,
+    });
+    if (me) throw me;
+    mediaId = init.media_id;
+    for (const [path, bytes] of [[init.draft_path, webpBytes(64, 48)], [init.rendition_path, webpBytes()]]) {
+      const { error } = await owner.client.storage.from(DRAFT)
+        .upload(path, new Blob([bytes], { type: "image/webp" }), { contentType: "image/webp", upsert: true });
+      if (error) throw error;
+    }
+    const { error: fe } = await owner.client.rpc("product_media_finalize", {
+      _media_id: mediaId, _width: 1200, _height: 900,
+    });
+    if (fe) throw fe;
+
+    const { data: v } = await admin.from("products").select("version").eq("id", productId).single();
+    const { error: sbe } = await owner.client.rpc("product_submit", {
+      _product_id: productId, _expected_version: v.version, _client_token: `p2b7m-sub-${run}`,
+    });
+    if (sbe) throw sbe;
+    const { error: de } = await adminUser.client.rpc("product_decide", {
+      _product_id: productId, _decision: "approve", _client_token: `p2b7m-ap-${run}`,
+    });
+    if (de) throw de;
+  }, 60_000);
+
+  afterAll(async () => {
+    if (!up || !shopId) return;
+    const admin = svc();
+    for (const bucket of [DRAFT, PUBLIC_BUCKET]) {
+      const walk = async (prefix) => {
+        const { data } = await admin.storage.from(bucket).list(prefix, { limit: 100 });
+        for (const e of data ?? []) {
+          const p = `${prefix}/${e.name}`;
+          if (e.id === null) await walk(p);
+          else await admin.storage.from(bucket).remove([p]);
+        }
+      };
+      await walk(shopId);
+    }
+    await admin.from("shop_media_cleanup_jobs").delete().eq("shop_id", shopId);
+    await admin.from("products").delete().eq("shop_id", shopId);
+    await admin.from("shops").delete().eq("id", shopId);
+    for (const u of [owner, adminUser]) if (u) await admin.auth.admin.deleteUser(u.id);
+
+    // Counted, not assumed. Two green runs on this branch deleted nothing.
+    const { count } = await admin.from("products")
+      .select("id", { count: "exact", head: true }).eq("shop_id", shopId);
+    expect(count ?? 0).toBe(0);
+  }, 60_000);
+
+  const publish = async () => {
+    const admin = svc();
+    const { data: plan, error } = await owner.client.rpc("product_publish_prepare", { _product_id: productId });
+    expect(error).toBeNull();
+    for (const copy of plan.copies) {
+      const { data: blob } = await admin.storage.from(DRAFT).download(copy.source);
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const { error: upErr } = await admin.storage.from(PUBLIC_BUCKET).upload(copy.target, bytes, {
+        contentType: "image/webp", upsert: true,
+      });
+      expect(upErr).toBeNull();
+    }
+    const { error: ce } = await admin.rpc("product_publish_commit", {
+      _product_id: productId, _copied: plan.copies,
+    });
+    expect(ce).toBeNull();
+    return plan.copies[0].target;
+  };
+
+  it("publishes bytes that a stranger can fetch", async () => {
+    firstKey = await publish();
+    expect(await publicHead(firstKey)).toBe(200);
+  });
+
+  it("hands a buyer the public key and nothing else", async () => {
+    const pub = createClient(URL_BASE, ANON, { auth: { persistSession: false } });
+    const { data: prod } = await svc().from("products").select("slug").eq("id", productId).single();
+    const { data: dto, error } = await pub.rpc("shop_public_product", { _slug: prod.slug });
+    expect(error).toBeNull();
+    expect(dto.found).toBe(true);
+
+    const json = JSON.stringify(dto);
+
+    // Absent entirely. The draft original still carries whatever EXIF the
+    // phone wrote and the rendition source is the seller's working copy;
+    // neither key has any business in a buyer's payload, nor does a signed URL.
+    for (const forbidden of ["rendition_source_path", "draft_path", "/original", "token=", "/object/sign/", "internal_note"]) {
+      expect(json, forbidden).not.toContain(forbidden);
+    }
+
+    // Present but NULL. `product_public_projection` keeps one shape and nulls
+    // the seller-only fields when `_as_seller` is false, and the public
+    // wrapper hardcodes false. Asserting the key is missing would be wrong
+    // (it is not) and asserting nothing would miss the failure that matters:
+    // a future wrapper passing `true` and filling every one of these in.
+    for (const key of ["stock_on_hand", "path", "status", "version", "shop_state", "applicant_note"]) {
+      const values = [...json.matchAll(new RegExp(`"${key}"\\s*:\\s*([^,}\\]]+)`, "g"))].map((m) => m[1].trim());
+      expect(values.length, `${key} is not in the DTO at all — the shape changed`).toBeGreaterThan(0);
+      expect(values.every((v) => v === "null"), `${key} = ${values.join(", ")}`).toBe(true);
+    }
+
+    expect(json).toContain(firstKey);
+  });
+
+  it("unpublish takes it off the shelf now and queues the object", async () => {
+    const admin = svc();
+    await owner.client.rpc("product_set_published", { _product_id: productId, _published: false });
+
+    const { data: media } = await admin.from("product_media").select("public_path").eq("id", mediaId).single();
+    expect(media.public_path).toBeNull();
+
+    const { data: jobs } = await admin.from("shop_media_cleanup_jobs")
+      .select("id,state,reason").eq("object_path", firstKey);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].state).toBe("pending");
+
+    // The bytes are still there. Pretending otherwise is the failure this
+    // whole checkpoint exists to avoid: the queue is asynchronous.
+    expect(await publicHead(firstKey)).toBe(200);
+  });
+
+  it("republishing before the worker ran does NOT lose the live image", async () => {
+    // The interesting one. The key is `<media>-v<version>` and the version has
+    // not changed, so republish re-takes the SAME key that is sitting in the
+    // deletion queue. product_publish_commit deletes that job; without it the
+    // worker would delete a rendition that is live again, and the PDP would
+    // 404 minutes after a successful publish.
+    const admin = svc();
+    const { error } = await adminUser.client.rpc("product_decide", {
+      _product_id: productId, _decision: "approve", _client_token: `p2b7m-ap2-${run}`,
+    });
+    // Already approved and the token is new: approve is refused by state, so
+    // the product is republished from the approval it still holds.
+    void error;
+
+    const secondKey = await publish();
+    expect(secondKey, "the key is versioned, and the version did not change")
+      .toBe(firstKey);
+
+    const { data: leftover } = await admin.from("shop_media_cleanup_jobs")
+      .select("id,state").eq("object_path", firstKey).neq("state", "done");
+    expect(leftover ?? [], "a pending deletion for a key that is live again").toHaveLength(0);
+
+    await drainCleanupQueue(admin);
+    expect(await publicHead(firstKey), "the worker deleted a live rendition").toBe(200);
+
+    const pub = createClient(URL_BASE, ANON, { auth: { persistSession: false } });
+    const { data: prod } = await admin.from("products").select("slug").eq("id", productId).single();
+    const { data: dto } = await pub.rpc("shop_public_product", { _slug: prod.slug });
+    expect(dto.found, "the product is public again").toBe(true);
+  });
+
+  it("draining an empty queue is a no-op, and a replayed job is not deleted twice", async () => {
+    const admin = svc();
+    const first = await drainCleanupQueue(admin);
+    const second = await drainCleanupQueue(admin);
+    expect(second).toHaveLength(0);
+    void first;
+
+    // Completing a job that is already done must not resurrect it.
+    const { data: job } = await admin.from("shop_media_cleanup_jobs")
+      .insert({ bucket_id: PUBLIC_BUCKET, object_path: `${shopId}/replay-${run}.webp`, shop_id: shopId, reason: "orphan" })
+      .select().single();
+    await admin.rpc("shop_media_cleanup_complete", { _job_id: job.id, _ok: true });
+    const { data: again } = await admin.rpc("shop_media_cleanup_complete", { _job_id: job.id, _ok: true });
+    expect(again).toBe("done");
+    const { data: row } = await admin.from("shop_media_cleanup_jobs")
+      .select("state,attempts").eq("id", job.id).single();
+    expect(row.state).toBe("done");
+  });
+
+  it("suspending the product revokes the rendition and the worker removes it", async () => {
+    const admin = svc();
+    const { data: before } = await admin.from("product_media").select("public_path").eq("id", mediaId).single();
+    expect(before.public_path).toBe(firstKey);
+
+    const { error } = await adminUser.client.rpc("product_decide", {
+      _product_id: productId, _decision: "suspend",
+      _applicant_note: "Tạm gỡ để kiểm tra vòng đời ảnh.",
+      _client_token: `p2b7m-sus-${run}`,
+    });
+    expect(error).toBeNull();
+
+    const { data: after } = await admin.from("product_media").select("public_path").eq("id", mediaId).single();
+    expect(after.public_path, "the projection lets go immediately").toBeNull();
+
+    await drainCleanupQueue(admin);
+    const status = await publicHead(firstKey);
+    // Local Storage answers a missing public object with 400, the platform
+    // with 404. Asserting one would make this a lie on the other.
+    expect([400, 404]).toContain(status);
+  });
+
+  it("a user JWT still cannot write into the public bucket, ever", async () => {
+    const { error } = await owner.client.storage.from(PUBLIC_BUCKET)
+      .upload(`${shopId}/${productId}/self-published.webp`, new Blob([webpBytes()], { type: "image/webp" }), {
+        contentType: "image/webp",
+      });
+    expect(error).not.toBeNull();
+  });
+});
