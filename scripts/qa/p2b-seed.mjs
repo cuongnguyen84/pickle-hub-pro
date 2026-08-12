@@ -550,9 +550,27 @@ export async function seedP2bAcceptance(reg, run) {
 export async function teardownP2bAcceptance(reg) {
   const admin = adminClient();
   const remaining = {};
+  const errors = [];
+
+  // Nothing here swallows an error, and nothing coalesces a failed read to
+  // zero. The first version of this function did both — every delete was
+  // fire-and-forget and every count ended in `?? 0` — and it printed a perfect
+  // all-zero teardown over three shops and ten products it had not removed.
+  // Caught by running pgTAP against the same database afterwards, which is now
+  // part of the gate. Third time this branch has met a teardown that lied;
+  // this time the lie was in the reporting, not in the deleting.
+  const check = (label, { error } = {}) => {
+    if (error) errors.push(`${label}: ${error.message}`);
+  };
+
+  if (!reg.shopIds.length && !reg.userIds.length) {
+    // An empty registry deletes nothing and counts nothing, which reads as a
+    // flawless teardown. Say so instead.
+    errors.push("registry is empty — nothing was tracked, so nothing was verified");
+  }
 
   for (const { bucket, path } of reg.objects) {
-    await admin.storage.from(bucket).remove([path]).catch(() => {});
+    check(`remove ${bucket}/${path}`, await admin.storage.from(bucket).remove([path]));
   }
   // Anything the run created that the registry never saw — a rendition minted
   // by a republish inside a journey, for instance.
@@ -571,25 +589,38 @@ export async function teardownP2bAcceptance(reg) {
   }
 
   if (reg.shopIds.length) {
-    await admin.from("shop_media_cleanup_jobs").delete().in("shop_id", reg.shopIds);
-    await admin.from("products").delete().in("shop_id", reg.shopIds);
-    await admin.from("shops").delete().in("id", reg.shopIds);
+    check("delete cleanup_jobs", await admin.from("shop_media_cleanup_jobs").delete().in("shop_id", reg.shopIds));
+    check("delete products", await admin.from("products").delete().in("shop_id", reg.shopIds));
+    check("delete shops", await admin.from("shops").delete().in("id", reg.shopIds));
   }
   if (reg.userIds.length) {
-    await admin.from("shop_applications").delete().in("user_id", reg.userIds);
-    await admin.from("shop_pilot_members").delete().in("user_id", reg.userIds);
-    for (const id of reg.userIds) await admin.auth.admin.deleteUser(id).catch(() => {});
+    // `applicant_user_id`, not `user_id`. The unchecked version of this delete
+    // had been failing on every run since the fixture was written, and the
+    // `?? 0` count agreed that nothing was left.
+    check("delete applications", await admin.from("shop_applications").delete().in("applicant_user_id", reg.userIds));
+    check("delete pilot members", await admin.from("shop_pilot_members").delete().in("user_id", reg.userIds));
+    for (const id of reg.userIds) check(`delete user ${id}`, await admin.auth.admin.deleteUser(id));
   }
   if (reg.categorySlugs.length) {
-    await admin.from("product_categories").delete().in("slug", reg.categorySlugs);
+    check("delete categories", await admin.from("product_categories").delete().in("slug", reg.categorySlugs));
   }
 
   // ── What is still there ──────────────────────────────────────────────────
+  // A read that failed is NOT a zero. `?? 0` here is what turned a broken
+  // teardown into a passing one.
   const count = async (table, col, values) => {
     if (!values.length) return 0;
-    const { count: n } = await admin
+    const { count: n, error } = await admin
       .from(table).select("*", { count: "exact", head: true }).in(col, values);
-    return n ?? 0;
+    if (error) {
+      errors.push(`count ${table}: ${error.message}`);
+      return -1;
+    }
+    if (n === null || n === undefined) {
+      errors.push(`count ${table}: no count returned`);
+      return -1;
+    }
+    return n;
   };
 
   remaining.shops = await count("shops", "id", reg.shopIds);
@@ -604,7 +635,7 @@ export async function teardownP2bAcceptance(reg) {
   remaining.shopSlugHistory = await count("shop_slug_history", "shop_id", reg.shopIds);
   remaining.contacts = await count("shop_contact_channels", "shop_id", reg.shopIds);
   remaining.cleanupJobs = await count("shop_media_cleanup_jobs", "shop_id", reg.shopIds);
-  remaining.applications = await count("shop_applications", "user_id", reg.userIds);
+  remaining.applications = await count("shop_applications", "applicant_user_id", reg.userIds);
   remaining.pilotMembers = await count("shop_pilot_members", "user_id", reg.userIds);
   remaining.categories = await count("product_categories", "slug", reg.categorySlugs);
 
@@ -612,7 +643,11 @@ export async function teardownP2bAcceptance(reg) {
   // silently failed is exactly the case this exists to catch.
   let usersLeft = 0;
   for (const id of reg.userIds) {
-    const { data } = await admin.auth.admin.getUserById(id);
+    const { data, error } = await admin.auth.admin.getUserById(id);
+    // A 404 is the answer we want; any other error means we do not know.
+    if (error && !/not.?found|404/i.test(error.message)) {
+      errors.push(`getUserById ${id}: ${error.message}`);
+    }
     if (data?.user) usersLeft += 1;
   }
   remaining.users = usersLeft;
@@ -622,7 +657,8 @@ export async function teardownP2bAcceptance(reg) {
   for (const shopId of reg.shopIds) {
     for (const bucket of [DRAFT_BUCKET, PUBLIC_BUCKET]) {
       const walk = async (prefix) => {
-        const { data } = await admin.storage.from(bucket).list(prefix, { limit: 100 });
+        const { data, error } = await admin.storage.from(bucket).list(prefix, { limit: 100 });
+        if (error) errors.push(`list ${bucket}/${prefix}: ${error.message}`);
         for (const entry of data ?? []) {
           if (entry.id === null) await walk(`${prefix}/${entry.name}`);
           else objectsLeft += 1;
@@ -633,5 +669,18 @@ export async function teardownP2bAcceptance(reg) {
   }
   remaining.objects = objectsLeft;
 
+  // The last word: ask the database whether ANY row of this run's shape is
+  // still there, without going through the registry at all. A registry that
+  // lost an id makes every count above vacuous, and that is precisely the
+  // failure this teardown shipped once.
+  const { data: strays, error: strayErr } = await admin
+    .from("shops").select("id,slug").like("slug", "p2b7-%");
+  if (strayErr) errors.push(`stray sweep: ${strayErr.message}`);
+  else if ((strays ?? []).length) {
+    errors.push(`${strays.length} p2b7-* shop(s) still in the database: ${strays.map((s) => s.slug).join(", ")}`);
+  }
+
+  remaining.errors = errors.length;
+  if (errors.length) remaining.errorDetail = errors.slice(0, 6);
   return remaining;
 }
