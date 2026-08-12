@@ -36,6 +36,7 @@ import {
   structureFindings,
   zoomAndFontFindings,
 } from "./qa/seller-qa-kit.mjs";
+import { elevateToAal2 } from "./qa/totp.mjs";
 
 const APP = process.env.ADMIN_QA_BASE_URL ?? "http://localhost:8080";
 const SHOT_DIR = process.env.ADMIN_SHOT_DIR ?? mkdtempSync(join(tmpdir(), "tph-p2b-admin-"));
@@ -72,8 +73,23 @@ const PRE_EXISTING = [
 // the marker below is a HARD failure and not an allowlist entry.
 const MUST_NOT_APPEAR = [
   { re: /mfa_totp_enroll_not_enabled/, why: "AdminMFAGate blocked — the console never rendered" },
-  { re: /thiếu <main>/, why: "no <main>: AdminLayout renders one, so the page under test is not the console" },
+  { re: /Lỗi xác thực/, why: "the MFA error screen, not the console" },
+  { re: /thiếu <main>/, why: "no <main>: AdminLayout renders one, so this is not the console" },
 ];
+
+// The heading each route must actually show, plus a marker proving the screen
+// reached its own content rather than a shell. A gate that only checks for a
+// heading passes on a page that rendered its title and then failed.
+const EXPECT = {
+  // The Phase 1 route, carried as a CONTROL. Anything this gate reports on
+  // BOTH a P2b.2 route and this one comes from the admin shell, not from this
+  // checkpoint — so the comparison replaces a hand-written allowlist that
+  // would rot the first time somebody fixed one of them.
+  control:  { h1: /.+/,                      marker: /Hàng đợi hồ sơ|Không có hồ sơ nào/ },
+  queue:    { h1: /Hàng đợi duyệt sản phẩm/, marker: /Chờ duyệt|Không có sản phẩm nào/ },
+  review:   { h1: /.+/,                      marker: /Người mua sẽ thấy gì/ },
+  contacts: { h1: /Kênh liên hệ của shop/,   marker: /Chờ duyệt|Không có kênh nào/ },
+};
 
 const findings = [];
 const skipped = [];
@@ -86,11 +102,17 @@ const note = (where, msg) => {
 
 // Belt and braces: assert the console's own heading is on the page, so a gate
 // that silently measured a blank or error screen fails instead of passing.
-const assertRendered = async (page, label) => {
+const assertRendered = async (page, label, route) => {
   const h1 = (await page.locator("h1").first().textContent().catch(() => "")) ?? "";
-  if (!/Hàng đợi duyệt|Kênh liên hệ|^(?!\s*$)/.test(h1) || h1.includes("Lỗi")) {
-    note(label, `page heading is "${h1.trim() || "(none)"}" — not the moderation console`);
+  const expect = EXPECT[route];
+  if (!h1.trim() || !expect.h1.test(h1)) {
+    note(label, `heading is "${h1.trim() || "(none)"}" — not ${route}'s own`);
   }
+  const body = await page.locator("body").innerText().catch(() => "");
+  if (!expect.marker.test(body)) {
+    note(label, `no ${route} content marker — layout shell or error state, not the screen`);
+  }
+  if (!(await page.locator("main").count())) note(label, "no <main> landmark");
 };
 
 async function seed() {
@@ -157,10 +179,16 @@ async function seed() {
   });
   if (cce) throw cce;
 
+  // A REAL aal2 session: enrol a TOTP factor through the Auth API, compute a
+  // code the way an authenticator app would, verify, and assert the JWT itself
+  // says aal2. Nothing is mocked and AdminMFAGate is untouched — it is the
+  // thing under test.
   const adminAs = anonClient();
-  const { data: session } = await adminAs.auth.signInWithPassword({ email: adminEmail, password });
+  await adminAs.auth.signInWithPassword({ email: adminEmail, password });
+  const { session, aal } = await elevateToAal2(adminAs, { friendlyName: `qa-${run}` });
+  console.log(`admin session AAL: ${aal}`);
 
-  return { sellerId, adminUserId: adminUser.user.id, shopId: shop.id, productId, session: session.session };
+  return { sellerId, adminUserId: adminUser.user.id, shopId: shop.id, productId, session };
 }
 
 async function checkRoute(context, path, label, width) {
@@ -180,7 +208,7 @@ async function checkRoute(context, path, label, width) {
 
   const measured = await page.evaluate(() => window.innerWidth);
   if (measured !== width) note(`${label}@${width}`, `innerWidth is ${measured}, not ${width}`);
-  await assertRendered(page, `${label}@${width}`);
+  await assertRendered(page, `${label}@${width}`, label);
 
   // overflowOf returns the WORST right-edge overshoot in px, not a list.
   const overflow = await overflowOf(page);
@@ -223,6 +251,7 @@ try {
   console.log(`seeded product ${seeded.productId}`);
 
   const ROUTES = [
+    ["/admin/shop/applications", "control"],
     ["/admin/shop/products", "queue"],
     [`/admin/shop/products/${seeded.productId}`, "review"],
     ["/admin/shop/contacts", "contacts"],
@@ -270,6 +299,16 @@ try {
   }
   await browser.close();
 }
+
+// Anything the Phase 1 control route reports too is shell, not P2b.2. Compare
+// on the message alone, with the route label stripped.
+const msgOf = (line) => line.replace(/^[a-z]+@?\d*: /, "");
+const controlMsgs = new Set(findings.filter((f) => f.startsWith("control")).map(msgOf));
+const shell = findings.filter((f) => !f.startsWith("control") && controlMsgs.has(msgOf(f)));
+const mine = findings.filter((f) => !f.startsWith("control") && !controlMsgs.has(msgOf(f)));
+findings.length = 0;
+findings.push(...mine);
+skipped.push(...shell.map((s) => `${s}  (also on /admin/shop/applications — admin shell)`));
 
 console.log(`\nscreenshots: ${SHOT_DIR}`);
 if (skipped.length) {

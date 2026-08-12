@@ -231,3 +231,70 @@ One genuine pre-existing defect surfaced and is allowlisted with proof: the
 shared `ErrorState` retry button renders **74×41** against DS-03's 44px rule,
 reproduced identically on `/admin/shop/applications` from Phase 1. It belongs
 with `PageStates.tsx`, not inside a moderation checkpoint.
+
+### P2b.2 browser acceptance — PASS with real AAL2 · `9a61bb9e` `adacf041` `<this commit>`
+
+**P2b.2 implementation and local browser acceptance PASS with real AAL2.**
+
+The blocker is closed by making the local stack match production, not by
+routing around the gate. `supabase/config.toml` gains `[auth.mfa.totp]` (keys
+read out of `supabase init` on CLI 2.111.0, not guessed), and
+`scripts/qa/totp.mjs` implements RFC 6238 in node:crypto so the harness enrols
+a real factor, reads the secret in memory, computes a code, verifies, and
+**asserts the JWT's own `aal` claim** rather than trusting a 200.
+
+Nothing is mocked, nothing is bypassed, `AdminMFAGate` is untouched, no secret
+is committed, and the secret differs every run.
+
+```
+before enrol : aal1 -> next aal1
+after verify : aal2
+queue RPC    : OK   (product_moderation_queue — requires is_admin())
+```
+
+#### The gate now proves it is looking at the right screen
+
+Per route: the route's own `<h1>`, a **content marker** that only exists once
+the screen reached its own body (`Người mua sẽ thấy gì` for review, the filter
+tabs or the official empty state for the queues), a `<main>` landmark, and hard
+failures on the MFA error screen. A heading alone was not enough — a page can
+render its title and then fail.
+
+`/admin/shop/applications` is carried as a **control route**. Anything reported
+on both a P2b.2 route and the Phase 1 one is admin shell, not this checkpoint,
+so the comparison replaces a hand-written allowlist that would have rotted the
+first time somebody fixed one of them.
+
+| Widths | 320 · 375 · 390 · 414 · 768 · 1440, `window.innerWidth` asserted at each |
+|---|---|
+| Result | **PASS** — 0 findings attributable to P2b.2 |
+| Shell findings | 6 types, each also present on `/admin/shop/applications` |
+
+Screenshots (outside the repo): 375 queue · 375 review · 375 contacts · 375
+control. The 375 review shot shows real seeded data — title, canonical buyer
+preview, and the "đã duyệt vs đang hiển thị" split.
+
+#### What the gate found that was mine
+
+The review screen's back link (`← Về hàng đợi`) was a bare inline anchor,
+**93×17**. It is the only way out of a review and a moderator hits it on a
+phone. Now a 44px inline-flex target.
+
+#### 44px floor, and why it was 41
+
+`h-11` is 2.75rem — 44px only while the root font-size is 16px. A physical
+touch target cannot be expressed in rem and then assumed. Fixed in px at the
+component layer in `ErrorState` (every buyer/seller/admin page that fails a
+query) and `AdminMFAGate`'s retry. Regression test asserts the declared floor,
+because jsdom reports 0×0 and a computed-box test there would pass on a
+zero-height button; the real box is measured in the browser gate.
+
+| Gate | Result |
+|---|---|
+| `supabase db reset` + MFA config | 348/348 |
+| pgTAP | Files=32, **1174**, PASS |
+| unit | **1814** passed |
+| `tsc -b` / eslint | clean / 0 errors |
+| build · `BUNDLE_STRICT=1` · prototype guard · `build:proto` | all pass |
+| Total gz | 1921.1 → **1921.3** (+0.2 for the two touch-target fixes) |
+| INITIAL | 226.3 KB |

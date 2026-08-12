@@ -141,7 +141,14 @@ export default function AdminShopProductReview() {
       <div className="tl-shop">
         <h1 className="tl-shop-h1">{preview.title ?? "Sản phẩm"}</h1>
         <p className="tl-shop-sub">
-          <Link to="/admin/shop/products">← Về hàng đợi</Link>
+          {/* A bare inline link is 17px tall. This is the only way back from a
+              review, and a moderator hits it on a phone. */}
+          <Link
+            to="/admin/shop/products"
+            style={{ display: "inline-flex", alignItems: "center", minHeight: 44, minWidth: 44 }}
+          >
+            ← Về hàng đợi
+          </Link>
         </p>
 
         <AdminShopFrame crumb="Duyệt sản phẩm">
