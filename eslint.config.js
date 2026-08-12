@@ -9,7 +9,7 @@ export default tseslint.config(
   // ESLint does NOT read .gitignore, so without this the linter walks
   // `.claude/worktrees/*` copies and double/triple-counts every finding
   // (e.g. 30 real exhaustive-deps warnings reported as 92).
-  { ignores: ["dist", ".claude/**", "**/*.timestamp-*.mjs", "android/**", "ios/**"] },
+  { ignores: ["dist", ".claude/**", "**/*.timestamp-*.mjs", "android/**", "ios/**", "ds-bundle/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
