@@ -1,11 +1,14 @@
 # Phase 2a — completion status
 
-**Status: P2a implementation complete, verified locally, pending Product Owner
-acceptance and deployment approval.**
+**Status: P2a Product Owner acceptance PASS locally.**
 
-Not production ready, and not deployed. Nothing on this branch has been applied
-to a remote database, merged, or pushed. The prerequisites for a deployment
-decision are listed at the end.
+Steps 1–11 PASS. Step 12 PASS after a real Playwright viewport run at 375px.
+The multi-variant save bug found during acceptance is fixed and
+regression-locked (`0dd7bfd0`).
+
+Not production ready. Not deployed. Not remote verified. Nothing on this branch
+has been applied to a remote database, merged, or pushed, and the three
+deployment blockers in §9 are all still open.
 
 Branch `feat/shop-production-phase-2a`, worktree `.claude/worktrees/shop-p2a`.
 
@@ -25,6 +28,7 @@ Branch `feat/shop-production-phase-2a`, worktree `.claude/worktrees/shop-p2a`.
 | — | **P0** version conflicts returned 409 instead of hanging forever | `e41df739` |
 | 6 | Media upload, ordering, variant media, shop logo/cover | `ed1940f6` `7136381b` `9e0c3800` `36a98b87` `17d251d3` |
 | 7 | Canonical projection, preview, preflight, submit/resubmit | `01d01c6e` `8ea8c56e` `18f3b3bf` `3e3a0f85` |
+| — | **Acceptance fix** multi-variant save, save-state audit, mobile gate | `0dd7bfd0` |
 
 ## 2. Migrations
 
@@ -90,7 +94,7 @@ standard in `production-implementation-map.md`.
 | `supabase db reset` | 345/345 migrations, ledger parity 345/345 |
 | pgTAP | Files=29, **Tests=1018**, PASS |
 | Storage integration (real local stack, real JWTs) | 33 assertions, PASS |
-| Unit / component | **1740 passed**, 10 skipped, 144 files |
+| Unit / component | **1761 passed**, 10 skipped, 146 files |
 | `tsc -b` | clean |
 | `eslint` | 0 errors (23 pre-existing warnings) |
 | `BUNDLE_STRICT=1` | exit 0 |
@@ -98,6 +102,7 @@ standard in `production-implementation-map.md`.
 | `build:proto` | passes |
 | Q01–Q04 prototype gate | clean, 37 screens |
 | Seller route QA (320/375/414/768/1440 + axe + zoom) | clean |
+| Mobile viewport gate (real Playwright contexts, 6 sizes) | clean, every `innerWidth` matched |
 | Teardown | 0 shops, 0 products, 0 events, 0 media rows, 0 cleanup jobs, 0 storage objects |
 
 Shop-specific pgTAP files: `shop_phase1_rls` (35) · `shop_phase2a_catalog` (70)
@@ -115,12 +120,77 @@ Backstop **1970 KB gz — not raised** (D4).
 | step 4 | 1946.7 | +13.9 |
 | step 5 | 1952.8 | +6.1 |
 | step 6 | 1960.8 | +8.0 |
-| step 7 | **1965.2** | +4.4 |
+| step 7 | 1965.2 | +4.4 |
+| acceptance fix | **1965.1** | −0.1 |
 
 Headroom **4.8 KB**. Every heavy surface is a separate lazy chunk fetched at its
 interaction boundary: `VariantEditor` 4.1 KB, `MediaEditor` 6.6 KB,
 `ProductPreview` 2.4 KB. None of them is reachable from the product list or the
 initial path.
+
+## 6b. Product Owner acceptance run
+
+| Step | Result |
+|---|---|
+| 1–11 (desktop walkthrough) | PASS |
+| 12 (mobile) | **PASS** — real Playwright context viewports, `window.innerWidth` measured and asserted at every size |
+
+`scripts/seller-mobile-gate.mjs`. The viewport is set on the browser CONTEXT;
+nothing calls `window.resizeTo`, and no desktop window is resized. iPhone device
+descriptors are used where one exists, so touch and device pixel ratio are real.
+The measured width is printed for each size and is itself an assertion — a gate
+that reports "375px clean" from a 1280px window is worse than no gate.
+
+```
+✓ 320x800  edit+matrix: 320px
+✓ 375x812  edit+matrix: 375px      (iPhone X descriptor)
+✓ 375      media:       375px
+✓ 375      preview:     375px
+✓ 375      pending:     375px
+✓ 390x844  edit+matrix: 390px      (iPhone 12)
+✓ 414x896  edit+matrix: 414px      (iPhone 11)
+✓ 768x1024 edit+matrix: 768px
+✓ 1440x900 edit+matrix: 1440px
+```
+
+At 375 it checks: viewport meta has no `user-scalable=no` and no
+`maximum-scale`, every input/select/textarea computes ≥16px,
+`scrollWidth <= clientWidth` on the app's own scroller, no ancestor clipping,
+the variant matrix renders as four cards and not a table, no ChatFAB, no global
+BottomNav, the sticky action bar covers nothing, console errors, and axe.
+
+Screenshots (written outside the repository, `SELLER_SHOT_DIR`, default
+`/tmp/thepicklehub-p2a-shots/`):
+
+- `375-product-edit-matrix.png`
+- `375-media-editor.png`
+- `375-preview.png`
+- `375-pending-review.png`
+
+A real iPhone remains a pre-launch smoke test; it is not a gate on web
+responsive acceptance.
+
+### The bug acceptance found
+
+A seller could not change the name of a product that had colours.
+`product_update` refuses a `_variant` payload for a product with an option
+matrix, and the form sent one anyway from the hidden single-product fields, so
+every save of a multi-variant product failed. Fixed in `0dd7bfd0`, with the
+payload extracted to a pure function and locked by 21 assertions (13 on the
+function, 8 through the component). Proven red first at the RPC: `22023` and the
+title unchanged, versus SUCCESS with the matrix untouched.
+
+Four more, found while auditing every save branch:
+
+1. `if (!row) return` sat after the state was already "saving" — that branch
+   left the button disabled on "Đang lưu…" with nothing in flight.
+2. A stale version rendered the conflict panel *and* a generic Retry that would
+   resend the same stale version.
+3. The checklist did not re-ask the server after an upload, so a seller added
+   the photo it demanded and it still said the photo was missing.
+4. `.tl-shop-header` was 88% opaque and leaned on `backdrop-filter` for
+   legibility; axe reported the title's contrast as undeterminable once a photo
+   scrolled beneath it. It is opaque now.
 
 ## 7. Defects found by tests, not by review
 

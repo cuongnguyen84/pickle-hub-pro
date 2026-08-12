@@ -115,11 +115,13 @@ Trạng thái Phase 1: **`security verified locally and reproducible from tracke
 
 Mỗi mục một commit riêng hoặc một vertical slice nhỏ.
 
-> **Trạng thái 11/08/2026 — cả 7 bước đã xong.**
-> `P2a implementation complete, verified locally, pending Product Owner
-> acceptance and deployment approval.` Chi tiết, bằng chứng test, phạm vi hoãn
-> sang P2b và điều kiện trước khi deploy: [completion.md](./completion.md).
-> **Chưa deploy, chưa merge, chưa áp migration lên remote.**
+> **Trạng thái 12/08/2026 — cả 7 bước xong, Product Owner đã nghiệm thu cục bộ.**
+> `P2a Product Owner acceptance PASS locally.` Bước 1–11 PASS; bước 12 PASS sau
+> khi chạy viewport Playwright thật ở 375px. Lỗi lưu sản phẩm nhiều phiên bản
+> phát hiện lúc nghiệm thu đã sửa và khoá bằng regression (`0dd7bfd0`).
+> Chi tiết, bằng chứng test, phạm vi hoãn sang P2b và 3 điều kiện trước khi
+> deploy: [completion.md](./completion.md).
+> **Vẫn chưa production ready, chưa deploy, chưa verify trên remote.**
 
 **Không làm trong 2a:** Admin moderation UI · public discovery/PDP · P2b · giỏ · checkout · thanh toán · Phase 3.
 

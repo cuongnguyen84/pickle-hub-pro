@@ -338,10 +338,16 @@ imports, lazy-load by route, reuse existing primitives instead of adding a
 dependency, and look for something to split or drop. If it is still red, stop
 and report the exact delta for a separate approval. Do not edit the budget.
 
-### P2a status (11 August 2026)
+### P2a status (12 August 2026)
 
-`P2a implementation complete, verified locally, pending Product Owner
-acceptance and deployment approval.`
+`P2a Product Owner acceptance PASS locally.`
+
+Steps 1–11 PASS; step 12 PASS after a real Playwright viewport run at 375px
+(`scripts/seller-mobile-gate.mjs`, every measured `window.innerWidth` asserted).
+The multi-variant save bug acceptance uncovered is fixed and regression-locked
+in `0dd7bfd0`.
+
+Still **not** production ready, **not** deployed, **not** remote verified.
 
 All seven increments are built on `feat/shop-production-phase-2a`. Twelve
 migrations, 1018 pgTAP assertions, 33 storage-integration assertions against a
