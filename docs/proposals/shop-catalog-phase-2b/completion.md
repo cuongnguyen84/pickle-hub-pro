@@ -658,3 +658,72 @@ Teardown now verified: **0 products, 0 shops**.
 | headroom | 34.7 KB (P2b.6 allocation 5) |
 
 Screenshots outside the repo: 375 pdp/store, 320 pdp/store, plus the P2b.4 set.
+
+---
+
+## P2b.6 — SEO, robots and the launch gate · `<this commit>`
+
+Q4 says the closed-pilot Shop is **not indexed**, so the deliverable is the
+switch and the proof that it is server-side — not an SSR renderer for pages
+nobody is allowed to crawl yet. Bundle **1935.3 → 1934.9 KB** (−0.4; this is
+Pages Functions code, which never enters the client bundle).
+
+### The switch is at the edge
+
+`functions/_middleware.ts` already turns `NOINDEX_PATTERNS` into an
+`X-Robots-Tag: noindex, nofollow, noarchive` header before the response is
+built. The five buyer paths (and their `/vi` mirrors) join it behind
+`SHOP_PUBLIC_INDEXING`, which opens **only** on the exact string `"1"` —
+`"true"`, `"yes"` and `""` are all asserted to leave it closed, because that is
+the kind of flag someone sets to the wrong word.
+
+Seller and Admin are matched by their own patterns, which `shouldNoindex`
+checks **before** it looks at the flag — asserted by calling it with the flag
+ON and expecting `/seller`, `/shop/sell` and `/admin/shop/products` still
+noindex.
+
+`robots.txt` gains the same Disallow set for the pilot, in both languages,
+outside the block that the flag controls for the seller paths.
+
+Opening the gate at launch is one environment variable. No redeploy of the
+SPA, no code change.
+
+### Sitemap and IndexNow
+
+Asserted **absent**: the sitemap index references no shop segment, no sitemap
+function emits a `/shop/product|store|category|search` URL, and nothing calls
+IndexNow for one.
+
+### Red-before-green
+
+| Reverted | Result |
+|---|---|
+| the pilot rule inside `shouldNoindex` | 1 red — every buyer path indexable |
+| a `sitemap-shop.xml` added to the index | 1 red |
+
+The first attempt at that first proof came back **green**, and that is the
+finding worth keeping: the test asserted the middleware source *contained* the
+pilot check, so replacing the check with `return false` changed nothing it
+looked at. Same shape as the P2b.5 note about `activeMediaId`. `shouldNoindex`
+is now exported and **called** with an env, and the grep-style assertions are
+reduced to the one thing a call cannot show — that the answer is read from
+`env` at request time.
+
+| Gate | Result |
+|---|---|
+| pgTAP | Files=33, **1241**, PASS |
+| unit | **1882** passed |
+| buyer browser QA | PASS, 5 routes × 6 widths |
+| teardown | 0 products |
+| `tsc -b` / eslint | clean / 0 errors |
+| build · `BUNDLE_STRICT=1` | exit 0 |
+| Total gz | **1934.9** · INITIAL 226.6 · headroom **35.1 KB** |
+
+### Deliberately not built
+
+A `renderShopProduct` SSR path, `Product`/`Offer` JSON-LD and
+`sitemap-shop.xml`. All of them are launch-gate work: they exist to be crawled,
+and nothing is being crawled. Building them now would mean shipping untested
+crawler output, and the metadata a human sees is already correct through
+`DynamicMeta`. The launch checklist in §0.2 of the proposal is where they
+belong, and they are named there.
