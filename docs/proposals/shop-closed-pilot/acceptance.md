@@ -28,8 +28,10 @@ Cơ sở dữ liệu dựng lại từ số không trước khi đo bất cứ t
 | Build production | `npm run build` | **exit 0** |
 | Ngân sách bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | **exit 0** |
 | Build prototype | `npm run build:proto` | **exit 0** |
-| Q01–Q04 prototype | `PROTO_BASE_URL=… node scripts/proto-shop-qa.mjs all` | §1.2 |
-| Nghiệm thu P2b | `node scripts/shop-p2b-acceptance-qa.mjs` | §1.2 |
+| Q01–Q04 prototype | `PROTO_BASE_URL=… node scripts/proto-shop-qa.mjs all` | **37 màn hình, 0 phát hiện**, exit 0 |
+| Nghiệm thu P2b | `SHOP_QA_BASE_URL=… node scripts/shop-p2b-acceptance-qa.mjs` | **PASS** — 20 route × 6 chiều rộng, 6 hành trình, exit 0 |
+| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | **17/17 bộ đếm = 0** (sau khi vá — §1.3) |
+| pgTAP **chạy lại sau QA** | `npx supabase test db --local supabase/tests` | **1 241 PASS** lần thứ hai, trên chính cơ sở dữ liệu QA vừa dùng |
 
 ### Số bundle
 
@@ -64,8 +66,26 @@ cố định `--strictPort` và `PROTO_BASE_URL` tường minh.
 
 ### 1.2 Cổng trình duyệt
 
-Xem `docs/proposals/shop-closed-pilot/gate-results.md` cho kết quả từng lượt
-chạy Q01–Q04 và nghiệm thu P2b trên nền tảng này.
+Chi tiết từng hành trình, và hai lần đỏ vì môi trường chứ không phải hồi quy:
+[`gate-results.md`](./gate-results.md).
+
+### 1.3 🔴 Teardown nói dối lần thứ năm — lần này ở tầng Storage
+
+Bộ nghiệm thu P2b in `"objects": 0`. Đếm độc lập trên **chính cơ sở dữ liệu vừa
+QA** tìm thấy **6 object nằm lại trong bucket RIÊNG TƯ `shop-product-media-draft`**.
+
+Thủ phạm không phải teardown của bộ nghiệm thu — mà là
+`scripts/shop-media-integration.test.mjs`, rò rỉ **đúng 2 object mỗi lần chạy**.
+`afterAll` của nó đi xuống hai tầng thư mục, nhưng đường dẫn do máy chủ chọn là
+`<shop>/<product>/<media>/original` — **ba** tầng. `remove()` được gọi lên các
+**tiền tố**, và xoá một key không tồn tại là thành công hợp lệ trong Storage,
+nên nó không báo lỗi.
+
+Đã vá: `afterAll` giờ đi xuống tận đáy, phân biệt object với tiền tố bằng
+`entry.id`. Đỏ-trước-xanh-sau: +2/lần → **+0/lần**, hai lần liên tiếp; và
+`storage_objects` giữ nguyên **0 → 0** qua một lượt `npx vitest run` đầy đủ.
+
+Vì sao nó quan trọng hơn vẻ ngoài, và toàn bộ dấu vết: [`gate-results.md` §3](./gate-results.md).
 
 ---
 

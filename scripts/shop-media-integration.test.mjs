@@ -179,13 +179,23 @@ describe.skipIf(!up)("shop media — storage boundary", () => {
     const admin = svc();
     // Objects first: the media rows cascade, and an orphan object would make
     // the next run's reconcile assertions ambiguous.
-    for (const bucket of [DRAFT, PUBLIC_BUCKET]) {
-      const { data } = await admin.storage.from(bucket).list(shopA, { limit: 100 });
-      for (const entry of data ?? []) {
-        const { data: inner } = await admin.storage.from(bucket).list(`${shopA}/${entry.name}`, { limit: 100 });
-        await admin.storage.from(bucket).remove((inner ?? []).map((f) => `${shopA}/${entry.name}/${f.name}`));
-      }
-    }
+    //
+    // This walks to the BOTTOM rather than to a fixed depth. The earlier
+    // version descended exactly two levels and called remove() on whatever it
+    // found there — but the server-chosen path is
+    // `<shop>/<product>/<media>/original`, three levels down, so those entries
+    // were prefixes rather than objects and remove() was a no-op on them.
+    // Every run left two objects in the PRIVATE draft bucket while the report
+    // said zero. Found by counting storage.objects on the database the run had
+    // just used, which is the only thing that could have found it.
+    const purge = async (bucket, prefix) => {
+      const { data } = await admin.storage.from(bucket).list(prefix, { limit: 1000 });
+      // Supabase marks a real object with an id; a prefix comes back with null.
+      const files = (data ?? []).filter((e) => e.id).map((e) => `${prefix}/${e.name}`);
+      if (files.length) await admin.storage.from(bucket).remove(files);
+      for (const dir of (data ?? []).filter((e) => !e.id)) await purge(bucket, `${prefix}/${dir.name}`);
+    };
+    for (const bucket of [DRAFT, PUBLIC_BUCKET]) await purge(bucket, shopA);
     await admin.from("shop_media_cleanup_jobs").delete().eq("shop_id", shopA);
     await admin.from("products").delete().eq("id", productA);
     await admin.from("shops").delete().in("id", [shopA, shopB]);
