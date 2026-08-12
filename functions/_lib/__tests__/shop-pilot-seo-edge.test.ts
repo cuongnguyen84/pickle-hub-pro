@@ -130,6 +130,79 @@ describe("the pilot Shop answers noindex at the edge, to a crawler", () => {
   });
 });
 
+// ── Supplemental B2 — the whole matrix, read off real responses ────────────
+// Nine route classes × six flag values, every cell asserted on the header of a
+// Response returned by `onRequest`. The interesting cells are the ones a
+// summary hides: a flag set to the wrong word, and a route that is nobody's
+// business but gets caught by a sloppy `/shop` prefix rule.
+//
+// The expected header value is `noindex, nofollow, noarchive`. The stricter
+// `noarchive` is deliberate and is asserted exactly, but each case also
+// asserts the `noindex, nofollow` prefix the acceptance brief named, so a
+// future decision to drop `noarchive` does not silently drop the other two.
+const ROUTE_CLASSES = [
+  { name: "shop home", path: "/shop", kind: "buyer" },
+  { name: "shop home (vi)", path: "/vi/shop", kind: "buyer" },
+  { name: "search", path: "/shop/search?q=vot", kind: "buyer" },
+  { name: "category", path: "/shop/category/vot", kind: "buyer" },
+  { name: "PDP", path: "/shop/product/vot-joola-2026", kind: "buyer" },
+  { name: "store", path: "/shop/store/pickle-gear", kind: "buyer" },
+  { name: "seller", path: "/seller/products", kind: "private" },
+  { name: "admin", path: "/admin/shop/products", kind: "private" },
+  // A route that has nothing to do with the Shop and is not in
+  // NOINDEX_PATTERNS. It is here to catch the opposite failure: a pilot rule
+  // written loosely enough to noindex half the site.
+  { name: "control (not Shop)", path: "/tournaments", kind: "control" },
+] as const;
+
+const FLAGS = [
+  { label: "unset", env: {} },
+  { label: '""', env: { SHOP_PUBLIC_INDEXING: "" } },
+  { label: '"true"', env: { SHOP_PUBLIC_INDEXING: "true" } },
+  { label: '"yes"', env: { SHOP_PUBLIC_INDEXING: "yes" } },
+  { label: '"0"', env: { SHOP_PUBLIC_INDEXING: "0" } },
+  { label: '"1"', env: { SHOP_PUBLIC_INDEXING: "1" } },
+] as const;
+
+/** The only value that opens anything, and only for the buyer catalogue. */
+const isOpen = (flagLabel: string) => flagLabel === '"1"';
+
+describe("B2 — X-Robots-Tag, every route class × every flag value", () => {
+  for (const flag of FLAGS) {
+    for (const route of ROUTE_CLASSES) {
+      const expectNoindex =
+        route.kind === "private" ? true
+        : route.kind === "control" ? false
+        : !isOpen(flag.label);
+
+      it(`${route.name} with flag ${flag.label} → ${expectNoindex ? "noindex" : "indexable"}`, async () => {
+        const { response } = await edge(route.path, { env: { ...flag.env } });
+        const header = response.headers.get("X-Robots-Tag");
+        if (expectNoindex) {
+          expect(header, `${route.path} @ ${flag.label}`).toBe("noindex, nofollow, noarchive");
+          expect(header!.startsWith("noindex, nofollow")).toBe(true);
+        } else {
+          expect(header, `${route.path} @ ${flag.label}`).toBeNull();
+        }
+        // The page is still served either way — noindex is a directive, not a
+        // block, and a gate that could not tell the two apart would pass on a
+        // 500.
+        expect(response.status).toBe(200);
+      });
+    }
+  }
+
+  it("the control route is never touched by the Shop rule", async () => {
+    for (const flag of FLAGS) {
+      const { response } = await edge("/tournaments", { env: { ...flag.env } });
+      expect(response.headers.get("X-Robots-Tag"), flag.label).toBeNull();
+    }
+    // And its /vi twin, which is where a `/vi`-blind pattern would show up.
+    const { response } = await edge("/vi/tournaments");
+    expect(response.headers.get("X-Robots-Tag")).toBeNull();
+  });
+});
+
 describe("robots.txt during the pilot", () => {
   it("disallows the buyer catalogue and cannot be opened by the flag alone", async () => {
     // Not a source grep: the Pages Function is called and its body read.
