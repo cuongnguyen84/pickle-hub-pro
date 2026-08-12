@@ -72,15 +72,27 @@ Must never put in a payload:
 The safe payload is: shop id, product id, product title, decision, and the
 seller-visible note.
 
-## Contact-channel decisions
+## Contact-channel decisions (Q6 — settled)
 
-`shop_contact_decide` writes to `audit_logs` with the channel **type** and id —
-never the number or the URL. It does not currently write a
-`product_moderation_events` row, because that table is keyed by product and a
-contact channel belongs to a shop. If contact notifications are wanted, the
-options are a sibling `shop_moderation_events` table or a nullable
-`product_id`; that is a schema decision, not something to improvise inside
-P2b.1.
+Signed 2026-08-12: a **sibling table**, not a nullable `product_id`.
+`shop_contact_moderation_events` carries `shop_id`, `contact_channel_id`,
+`action`, `from_state`/`to_state`, `channel_type`, actor, client token,
+seller-visible reason, internal note, and its own UNIQUE `notify_key`
+(`contact:<channel_id>:<action>:<token>`).
+
+The dispatcher rules above apply unchanged, plus one specific to this subject:
+
+> The channel **type** travels. The **value** never does.
+
+A history row is read in lists, exported, and eventually handed to a
+dispatcher. None of that needs the seller's phone number in order to say "the
+phone channel was approved" — and a pgTAP assertion checks that no note, no
+history row and no notify_key contains the number.
+
+`action='resubmitted'` is written by a trigger when a seller edits an approved
+value (P2a already sends it back to `pending_review`). A dispatcher should
+treat it as informational, not as something to notify the seller about — they
+are the one who did it.
 
 ## What is needed before this can ship
 

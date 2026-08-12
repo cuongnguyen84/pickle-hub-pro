@@ -28,7 +28,7 @@ requirement, and it is checked inside the function, not in the route guard.
 | `needs_changes` | seller resubmits | `pending_review` | P2a `product_submit` | unchanged | no | — | `resubmitted` (P2a table) |
 | `approved` + published | `unpublish` | `approved` | seller-visible note | `is_published=false` | no | renditions revoked | `unpublish` |
 | `approved` | `suspend` | `suspended` | seller-visible note | `is_published=false` (forced by CHECK) | no | renditions revoked | `suspend` |
-| `suspended` | — | — | — | — | — | — | **see blocker** |
+| `suspended` | **`reopen`** | **`needs_changes`** | seller-visible note **and** ≥1 validated target | seller may edit again | no | revoke re-asserted; **never re-published** | `reopen` |
 | any | seller `archive` | `archived` | P2a `product_archive` | seller's own withdrawal | no | revoked | P2a |
 
 Everything not in this table raises `22023` naming the current state, so the
@@ -79,21 +79,57 @@ photo the moment the seller reorders them.
 are `{section:"shipping", field:"return_note"}`. Those controls live inside
 sections the editor can already open, so no new anchors were invented.
 
-## Blocker — there is no `restore`
+## Q5 — the road back from `suspended` (signed 2026-08-12)
 
-Coming back from `suspended` has more than one defensible destination:
+`suspended → approved` is **forbidden**. The only road back is
 
-- straight to `approved` — the takedown was a mistake, and the product returns
-  to sale without anyone looking at it again;
-- to `needs_changes` — the seller must fix the problem and resubmit.
+```
+suspended → needs_changes → pending_review → approved
+```
 
-They differ in whether a suspended product can reappear unreviewed. The brief is
-explicit that a transition whose consequence is undecided is reported, not
-invented, so it is reported.
+Four steps, not one button. A product an admin pulled cannot return to the
+storefront without a seller changing something and an admin approving it again.
 
-Until the Product Owner decides, a suspended product stays suspended.
-`allowed_decisions` returns `[]` for it, so no screen can offer a button the
-server would refuse. Nothing is lost — the row, its variants, its media and its
-whole history are intact, and the recovery path can be added later with no
-backfill. `shop-schema-parity.test.ts` fails if `'restore'` appears in the
-migrations, so adding it is a decision somebody has to make on purpose.
+The transition is called **`reopen`**, deliberately not `restore`: it restores
+the seller's ability to **edit**, not the product's ability to **sell**. It
+carries the same requirements as `request_changes` — a seller-visible reason
+and at least one validated structured target — because telling a seller "you
+may edit again" without saying what to change asks them to guess what got them
+suspended.
+
+`reopen` re-asserts the media revocation (idempotent; covers a worker that had
+not drained the queue) and **never re-publishes**. The bytes come back only
+after a fresh approve followed by the worker's commit.
+
+`allowed_decisions` returns `["reopen"]` for a suspended product, so a screen
+cannot offer anything the server would refuse. Guarded by
+`shop-schema-parity.test.ts`, which fails if a CASE arm ever maps `reopen` to
+`approved`, and if the word `restore` appears at all.
+
+## Contact channels — their own history (Q6)
+
+`shop_contact_moderation_events`, keyed by `contact_channel_id` and `shop_id`.
+Not a nullable `product_id` on the product table: a contact channel belongs to
+a shop, and inventing a schema is worse than choosing one.
+
+Actions: `approve` · `reject` · `disable` · `resubmitted` (written by a trigger
+when a seller edits an approved value, so the history reads as a conversation
+instead of a list of verdicts with unexplained gaps).
+
+The channel **type** travels through the history. The value never does — a
+history row is read in lists, exported, and eventually handed to a dispatcher,
+and none of that needs the seller's phone number to say "the phone channel was
+approved".
+
+## Both histories are append-only WITHOUT making their subject undeletable
+
+The P2a inventory-ledger lesson, which arrived on schedule: a blanket `DELETE`
+refusal blocks the `ON DELETE CASCADE`, so a channel that was ever moderated
+could never be removed — taking account deletion and the QA teardown with it.
+The P2a profile suite caught it within minutes of the table existing.
+
+Postgres removes the parent before the children, so inside the trigger **a
+missing parent is the cascade**. History still cannot be edited or selectively
+pruned; it goes only when its whole subject goes. The same fix was applied to
+`product_moderation_events`, where the trap was latent only because sellers
+have no DELETE policy on products.

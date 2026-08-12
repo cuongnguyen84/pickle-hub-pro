@@ -417,10 +417,13 @@ SELECT ok(
    WHERE product_id = (SELECT v FROM t_mod WHERE k='p1')) > 0,
   'và byte công khai được xếp hàng thu hồi — không chỉ gỡ liên kết (D1)');
 
+-- Q5 (signed 2026-08-12) answered what P2b.1 left open. The exit exists now,
+-- but it goes to the seller's editor: `reopen` → needs_changes. There is still
+-- no path from suspended back to approved. See shop_p2b_q5_q6.test.sql.
 SELECT is(
   (public.product_moderation_detail((SELECT v FROM t_mod WHERE k='p1'))) -> 'allowed_decisions',
-  '[]'::jsonb,
-  'sản phẩm đã gỡ không còn việc gì làm tiếp — KHÔNG có "khôi phục" cho tới khi hệ quả được quyết định');
+  '["reopen"]'::jsonb,
+  'sản phẩm đã gỡ chỉ mở lại được để SỬA — không có đường quay thẳng về kệ');
 
 -- ─── Queue ──────────────────────────────────────────────────────────────────
 

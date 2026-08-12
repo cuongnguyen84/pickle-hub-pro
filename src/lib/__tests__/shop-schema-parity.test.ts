@@ -152,9 +152,18 @@ describe("shop schema parity with the P2a migrations", () => {
 const P2B_SQL = [
   "20260812090000_shop_p2b_status_suspended.sql",
   "20260812091000_shop_p2b_moderation_backend.sql",
+  "20260812120000_shop_p2b_q5_q6_closure.sql",
 ]
   .map((f) => readFileSync(resolve(__dirname, "../../../supabase/migrations", f), "utf8"))
   .join("\n");
+
+// Q5/Q6 replace two P2b.1 functions wholesale, so assertions about their FINAL
+// shape read the closure migration alone — searching the concatenation would
+// happily match the superseded copy.
+const Q5_SQL = readFileSync(
+  resolve(__dirname, "../../../supabase/migrations/20260812120000_shop_p2b_q5_q6_closure.sql"),
+  "utf8",
+);
 
 describe("shop schema parity with the P2b migrations", () => {
   it.each(SHOP_P2B_TABLES)("a P2b migration creates table %s", (table) => {
@@ -221,9 +230,31 @@ describe("shop schema parity with the P2b migrations", () => {
     expect(body).toContain("WHEN _decision = 'approve' THEN is_published");
   });
 
-  it("no `restore` transition exists while its consequence is undecided", () => {
-    // Suspend is a one-way door on purpose (see the enum migration). If a
-    // restore path is added, this test is where the decision gets recorded.
-    expect(P2B_SQL).not.toMatch(/'restore'/);
+  it("suspended never goes straight back to approved (Q5)", () => {
+    // The only exit is `reopen`, and it lands on needs_changes so the seller
+    // has to fix something and an admin has to approve it again. A CASE arm
+    // mapping 'reopen' to 'approved' is the mistake this catches.
+    expect(Q5_SQL).toContain("WHEN 'reopen'          THEN 'needs_changes'");
+    expect(Q5_SQL).not.toMatch(/WHEN 'reopen'\s+THEN 'approved'/);
+    expect(Q5_SQL).toContain("WHEN 'suspended'      THEN '[\"reopen\"]'::jsonb");
+    // And nothing calls itself `restore` — the word invites exactly the
+    // behaviour Q5 forbids.
+    expect(Q5_SQL).not.toMatch(/'restore'/);
+  });
+
+  it("reopen demands a reason and a target, like request_changes", () => {
+    expect(Q5_SQL).toContain("IF _decision IN ('request_changes', 'reopen') THEN");
+    expect(Q5_SQL).toContain("PERFORM public.product_moderation_targets_check");
+  });
+
+  it("contact history is its own table, not a nullable product_id (Q6)", () => {
+    expect(Q5_SQL).toContain("CREATE TABLE IF NOT EXISTS public.shop_contact_moderation_events");
+    const at = Q5_SQL.indexOf("CREATE TABLE IF NOT EXISTS public.shop_contact_moderation_events");
+    const body = Q5_SQL.slice(at, Q5_SQL.indexOf(");", at));
+    expect(body).toContain("contact_channel_id");
+    expect(body, "a contact event is about a shop, not a product").not.toContain("product_id");
+    // The channel TYPE travels through history; the value never does.
+    expect(body).toContain("channel_type");
+    expect(body).not.toContain("value_normalized");
   });
 });

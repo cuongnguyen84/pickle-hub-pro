@@ -397,6 +397,8 @@ export const SHOP_RPCS = [
 export const SHOP_P2B_TABLES = [
   "product_moderation_events",
   "product_slug_history",
+  /* Q6 (migration 20260812120000) */
+  "shop_contact_moderation_events",
 ] as const;
 
 export const SHOP_P2B_RPCS = [
