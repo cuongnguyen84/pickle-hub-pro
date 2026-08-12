@@ -3,22 +3,56 @@
 > **TRẠNG THÁI: CHƯA DUYỆT. Không lệnh nào đã chạy.**
 > Tier: 🟡 AMBER — xoá function được, hàng đợi không mất dữ liệu.
 > Nền: [`../media-worker-deployment.md`](../media-worker-deployment.md)
+>
+> **Cập nhật 2026-08-12:** Product Owner quyết định #1 — packet này chạy **HAI
+> LẦN**: C-1 lên **staging**, C-2 lên production sau khi nghiệm thu preview.
+> **Hai lần KHÔNG giống nhau** — xem §2.
 
 ---
 
 ## 1. Mục tiêu
 
+| Lần | Project ref | Khi nào |
+|---|---|---|
+| **C-1** | **`<STAGING_REF>`** | Giữa file #3 và #4 của B-1 |
+| **C-2** | **`ajvlcamxemgbxduhiqrl`** | Giữa file #3 và #4 của B-2 |
+
 | Thứ | Giá trị |
 |---|---|
-| Project ref | **`ajvlcamxemgbxduhiqrl`** |
 | Function | **`shop-media-lifecycle`** |
 | Source | `supabase/functions/shop-media-lifecycle/` (`index.ts` 219 dòng + `webp.ts` 68 dòng) |
 | `verify_jwt` | `false` — đã khai ở `supabase/config.toml:425` |
-| Trạng thái hôm nay | **chưa deploy** (80 function ACTIVE, không có nó) |
+| Trạng thái production hôm nay | **chưa deploy** (80 function ACTIVE, không có nó) |
 
 ---
 
-## 2. Secret — **không tạo, không sửa gì**
+## 2. Secret — staging và production KHÁC NHAU ở đây
+
+Đây là chỗ hai lần chạy tách ra, và trộn chúng là cách làm hỏng cron của cả hệ
+thống.
+
+### C-1 — staging: **PHẢI tạo secret**
+
+Staging là một project mới; chưa có gì trong đó.
+
+| Tên | Việc |
+|---|---|
+| `CRON_SECRET` | **tạo, giá trị MỚI** — sinh ngẫu nhiên |
+| `cron_secret` (vault) | **tạo, CÙNG giá trị** với dòng trên |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY` | Supabase tự đặt |
+
+```sh
+# Giá trị mới, không in ra, không sao chép từ production.
+CRON=$(openssl rand -hex 32)
+npx supabase secrets set CRON_SECRET="$CRON" --project-ref <STAGING_REF>
+# rồi nạp CÙNG giá trị vào vault của staging:
+#   SELECT vault.create_secret('<giá trị>', 'cron_secret');
+```
+
+🔴 **Không sao chép `CRON_SECRET` của production sang staging.** Một secret dùng
+chung nghĩa là một máy chủ staging bị lộ gọi được cron của production.
+
+### C-2 — production: **KHÔNG tạo, KHÔNG sửa gì**
 
 | Tên | Có sẵn? | Việc |
 |---|---|---|
@@ -26,14 +60,15 @@
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY` | ✅ | không |
 | `cron_secret` trong vault | ✅ | không |
 
-🔴 **Packet này KHÔNG chứa bước `supabase secrets set`, và đó là có chủ đích.**
+🔴 **C-2 KHÔNG chứa bước `supabase secrets set`, và đó là có chủ đích.**
 
-Secret của Supabase Edge Functions là **cấp project**. `CRON_SECRET` đã tồn tại
-và **5 caller cron khác đang dùng nó**. Chạy `secrets set` trong lúc deploy Shop
-có nguy cơ rotate nó, và theo `ops-runbook.md` §2.1 rotate đòi cập nhật vault
-trong cùng một nhịp — nếu không, **mọi cron trên hệ thống 401**.
+Secret của Supabase Edge Functions là **cấp project**. Trên production
+`CRON_SECRET` đã tồn tại và **5 caller cron khác đang dùng nó**. Chạy
+`secrets set` ở đó có nguy cơ rotate nó, và theo `ops-runbook.md` §2.1 rotate
+đòi cập nhật vault trong cùng một nhịp — nếu không, **mọi cron trên hệ thống
+401**.
 
-`shop-media-lifecycle` đọc được `CRON_SECRET` ngay khi deploy, không cần làm gì.
+`shop-media-lifecycle` đọc được `CRON_SECRET` production ngay khi deploy.
 
 ---
 
@@ -58,23 +93,26 @@ Packet B, file 1-3      bảng, hàng đợi, view sức khoẻ
 Packet C, bước 1-3      deploy function, xác nhận, kiểm cổng 401
 Packet B, file 4        tạo hai cron job
 Packet C, bước 4-6      kiểm 200, kiểm cron nổ, (tuỳ chọn) thêm monitor
-Packet B, file 5-17     phần còn lại
+Packet B, file 5-18     phần còn lại
 ```
 
 ---
 
 ## 5. Lệnh chính xác
 
+> `REF` là `<STAGING_REF>` ở C-1 và `ajvlcamxemgbxduhiqrl` ở C-2. Gõ tường
+> minh mỗi lần; đừng để một biến từ phiên trước quyết định hộ.
+
 ### Bước 1 — deploy
 
 ```sh
-npx supabase functions deploy shop-media-lifecycle --project-ref ajvlcamxemgbxduhiqrl
+npx supabase functions deploy shop-media-lifecycle --project-ref $REF
 ```
 
 ### Bước 2 — xác nhận nó thật sự tồn tại
 
 ```sh
-npx supabase functions list --project-ref ajvlcamxemgbxduhiqrl | grep shop-media-lifecycle
+npx supabase functions list --project-ref $REF | grep shop-media-lifecycle
 ```
 
 **Code trong repo ≠ đã deploy.** Đây không phải nghi thức: đó là lớp lỗi đã bị
@@ -84,13 +122,13 @@ bắt nhiều lần trong repo này.
 
 ```sh
 curl -s -o /dev/null -w 'secret sai → %{http_code}\n' \
-  -X POST "https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/shop-media-lifecycle" \
+  -X POST "https://$REF.supabase.co/functions/v1/shop-media-lifecycle" \
   -H "Content-Type: application/json" -H "x-cron-secret: definitely-wrong" \
   -d '{"action":"cleanup"}'
 # kỳ vọng: 401
 
 curl -s -o /dev/null -w 'GET → %{http_code}\n' \
-  "https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/shop-media-lifecycle"
+  "https://$REF.supabase.co/functions/v1/shop-media-lifecycle"
 # kỳ vọng: 405
 ```
 
@@ -101,7 +139,7 @@ quan trọng: một hàm cho qua tất cả cũng trả 200 ở bước 4.
 
 ```sh
 CRON=<đọc từ vault hoặc dashboard — KHÔNG in ra>
-curl -s -X POST "https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/shop-media-lifecycle" \
+curl -s -X POST "https://$REF.supabase.co/functions/v1/shop-media-lifecycle" \
   -H "Content-Type: application/json" -H "x-cron-secret: $CRON" \
   -d '{"action":"cleanup"}'
 # kỳ vọng: {"ok":true,"claimed":0,"deleted":0,"failed":0}
@@ -169,7 +207,7 @@ SELECT cron.unschedule('shop-media-reconcile-hourly');
 ```
 
 ```sh
-npx supabase functions delete shop-media-lifecycle --project-ref ajvlcamxemgbxduhiqrl
+npx supabase functions delete shop-media-lifecycle --project-ref $REF
 ```
 
 Hàng đợi `shop_media_cleanup_jobs` nằm im. **Không mất dữ liệu.** Ảnh đã thu hồi
@@ -178,17 +216,22 @@ rollback này, và nó là lý do rollback function gần như không bao giờ 
 
 ### Không rotate secret trong rollback
 
-`CRON_SECRET` dùng chung với 5 caller. Rollback Shop **không** đụng tới nó.
+Trên production `CRON_SECRET` dùng chung với 5 caller; rollback Shop **không**
+đụng tới nó. Trên staging nó chỉ phục vụ Shop, nên rollback ở đó cũng không cần
+rotate — xoá cả project là cách dọn dứt điểm.
 
 ---
 
 ## 8. Ô ký
 
 ```
-Packet C — deploy shop-media-lifecycle lên ajvlcamxemgbxduhiqrl và xác nhận cron.
+Packet C — deploy shop-media-lifecycle và xác nhận cron.
+
+Lần này là:  [ ] C-1 staging (<STAGING_REF>)   [ ] C-2 production (ajvlcamxemgbxduhiqrl)
 
 Tôi hiểu rằng:
-  - không secret nào được tạo hay đổi;
+  - C-1 TẠO một CRON_SECRET mới cho staging; C-2 KHÔNG đụng secret nào;
+  - không sao chép CRON_SECRET giữa hai môi trường;
   - hai cron job do migration của Packet B tạo, không phải packet này;
   - packet này chạy GIỮA file #3 và #4 của Packet B;
   - rollback = unschedule rồi delete; hàng đợi giữ nguyên dữ liệu.

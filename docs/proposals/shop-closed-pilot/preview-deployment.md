@@ -26,28 +26,36 @@ deployment** như điểm rollback.
 
 ---
 
-## 2. Preview trỏ vào Supabase nào — quyết định chưa có
+## 2. Preview trỏ vào Supabase nào — ✅ ĐÃ QUYẾT
 
-🔴 **Đây là câu hỏi chặn sớm nhất trong toàn bộ gói.**
+> **Product Owner, 2026-08-12, quyết định #1: preview dùng Supabase staging
+> riêng. KHÔNG trỏ vào Supabase production.**
 
-**Không có project Supabase preview/staging.** Chỉ có một project:
-`ajvlcamxemgbxduhiqrl` (production). Ba lựa chọn và đánh giá đầy đủ ở
-[`environment-audit.md` §5](./environment-audit.md#5-quyết-định-phải-chốt-preview-trỏ-vào-đâu).
+Khuyến nghị trước đó của agent — preview web + Supabase production — **đã bị từ
+chối**, và lý do từ chối đứng vững hơn khuyến nghị:
 
-**Khuyến nghị: preview web + Supabase production**, với ba điều kiện cứng — cả
-ba đã có sẵn trong thiết kế, không phải thứ phải thêm:
+- 18 migration Shop chưa cần sống trên production trước khi pilot được duyệt;
+- test tạo/xoá được người bán, ảnh, cron, allowlist mà không chạm dữ liệu thật;
+- chạy được migration, worker và cron **đầy đủ**, không phải drain tay;
+- rollback đơn giản hơn — xoá một project là một thao tác;
+- **giảm rủi ro từ drift migration có sẵn** — điểm agent đánh giá thấp nhất:
+  áp 18 migration vào một cơ sở dữ liệu đã có 29 file lệch ledger và **một file
+  thật sự chưa áp** là thêm biến vào một hệ đã có ẩn số.
 
-1. `shop_pilot_members` **rỗng** ⇒ không ai tạo được gì, kể cả khi đoán đúng URL.
-2. `SHOP_PUBLIC_INDEXING` **không đặt** ⇒ mọi route Shop `noindex, nofollow, noarchive`.
-3. `main` **không có route Shop** ⇒ web production hiện tại không đổi một pixel.
+Hệ quả cho tài liệu này: mọi chỗ dưới đây nói "dùng chung cơ sở dữ liệu với
+production" **không còn đúng cho preview**. Phần §7 (dọn dẹp) nhẹ đi hẳn —
+staging xoá sạch được — nhưng vẫn giữ nguyên vì nó đúng nguyên vẹn cho
+**production pilot** ở bước 9-12 của thứ tự mới.
 
-Hệ quả bắt buộc phải chấp nhận nếu chọn phương án này: **17 migration Shop sống
-trên cơ sở dữ liệu production trước khi có ai duyệt pilot.** Chúng là thêm mới
-thuần và không đụng bảng nào đang chạy — nhưng đó là điều Product Owner phải nói
-"được", không phải điều agent suy ra từ việc nó an toàn.
+Yêu cầu về project staging, kể cả hai thứ phải kiểm **trước khi chọn gói**
+(`pg_cron`/`pg_net` có bật được không, và việc Free tier tự tạm dừng sau ~7 ngày
+không hoạt động — một project ngủ giữa pilot làm cron ngừng chạy và ảnh đã gỡ ở
+lại):
+[`approval-packets/packet-s-staging.md`](./approval-packets/packet-s-staging.md).
 
-⇒ **Packet B (migration) phải được duyệt TRƯỚC Packet A (preview),** dù thứ tự
-đọc là A trước B.
+⇒ Thứ tự mới: **S → B(staging) → C(staging) → A → smoke → nghiệm thu →
+B/C(production) → D**. Đầy đủ ở
+[`approval-packets/README.md`](./approval-packets/README.md).
 
 ---
 

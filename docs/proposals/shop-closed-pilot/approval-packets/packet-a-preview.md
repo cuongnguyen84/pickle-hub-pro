@@ -1,7 +1,10 @@
 # Packet A — Hạ tầng preview
 
 > **TRẠNG THÁI: CHƯA DUYỆT. Không lệnh nào đã chạy.**
-> Tier: 🟡 AMBER — revert được, nhưng hai blocker phải gỡ trước.
+> Tier: 🟡 AMBER — revert được, nhưng bốn điều kiện phải gỡ trước.
+>
+> **Cập nhật 2026-08-12:** preview trỏ **Supabase staging**, không phải
+> production (quyết định Product Owner #1).
 > Nền: [`../preview-deployment.md`](../preview-deployment.md)
 
 ---
@@ -13,8 +16,8 @@
 | Cloudflare project | **`pickle-hub-pro`** (account `7888e97076d4eadd9a8fa409d11dc281`) |
 | Nhánh production | `main` — **không đụng** |
 | Nhánh preview | **`feat-shop-closed-pilot`** |
-| Supabase | `ajvlcamxemgbxduhiqrl` — **không có project staging** |
-| Nền tảng | `f172a441` + 4 commit tài liệu closed-pilot |
+| Supabase | **`<STAGING_REF>`** — Packet S. **KHÔNG phải production** |
+| Nền tảng | nhánh `feat/shop-closed-pilot` |
 
 ---
 
@@ -45,25 +48,33 @@ là `cuongnguyen84` và chỉ dành cho tay Cuong (`ops-runbook.md` §1b).
 
 | # | Điều kiện | Trạng thái |
 |---|---|---|
-| P1 | **Packet B đã duyệt và đã áp** (ít nhất file 1-3, lý tưởng cả 17) | ⬜ |
-| P2 | **Packet C đã duyệt và đã chạy** — function sống | ⬜ |
-| P3 | 🔴 **B1** — URL preview nằm trong Supabase → Auth → **Redirect URLs** | ⬜ |
+| P0 | **Packet S đã duyệt** — project staging tồn tại, `pg_cron`/`pg_net`/vault khả dụng | ⬜ |
+| P1 | **B-1 đã chạy** — 18 migration trên **staging** | ⬜ |
+| P2 | **C-1 đã chạy** — function sống trên **staging**, cron nổ, `net._http_response` = 200 | ⬜ |
+| P3 | 🔴 **B1′** — URL preview nằm trong **Redirect URLs của STAGING** | ⬜ |
 | P4 | 🔴 **B2** — `SHOP_PUBLIC_INDEXING` **không tồn tại** ở **cả** Production lẫn Preview | ⬜ |
-| P5 | `soak-watch.mjs --baseline` đã chụp **TRƯỚC** khi push | ⬜ |
+| P5 | `VITE_SUPABASE_*` của môi trường **Preview** trỏ `<STAGING_REF>` | ⬜ |
+| P6 | `soak-watch.mjs --baseline` đã chụp **TRƯỚC** khi push | ⬜ |
 
 **P1 là ràng buộc cứng.** Preview có route Shop mà cơ sở dữ liệu không có bảng
 Shop là một preview lỗi ở mọi màn hình — và tệ hơn, nó trông giống một lỗi mã
 nguồn.
 
-**P3:** không có nó, đăng nhập trên preview bật ngược về production và người
-kiểm thử sẽ đăng nhập thành công vào một site **không có Shop** rồi tưởng là
-hỏng. Không kiểm được ở chế độ chỉ đọc (endpoint `config/auth` trả secret trong
-cùng payload) — Cuong xác nhận bằng mắt.
+**P3:** không có nó, đăng nhập trên preview bật đi nơi khác và người kiểm thử
+sẽ đăng nhập thành công vào một site **không có Shop** rồi tưởng là hỏng. Không
+kiểm được ở chế độ chỉ đọc (endpoint `config/auth` trả secret trong cùng
+payload) — Cuong xác nhận bằng mắt.
+
+**P5 là thay đổi có sức công phá nhất trong gói.** Biến môi trường Preview của
+Cloudflare áp cho **mọi nhánh**, nên preview của các nhánh SEO/homepage đang
+chạy song song cũng sẽ trỏ staging và không còn thấy dữ liệu thật. Hai lựa chọn
+và một khuyến nghị: [`packet-s-staging.md` §6](./packet-s-staging.md). Ai đang
+chạy nhánh khác cần được báo.
 
 **P4:** không có lệnh CLI nào đọc biến môi trường Pages. Kiểm tra 30 giây trong
 dashboard, và nó là thứ đứng giữa "pilot kín" và "Google thấy sáu sản phẩm".
 
-**P5:** không có baseline thì không phát hiện được chữ ký lỗi nào là *mới*.
+**P6:** không có baseline thì không phát hiện được chữ ký lỗi nào là *mới*.
 
 ```sh
 node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-shop-pilot.json
@@ -71,13 +82,15 @@ node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-shop-pilot.json
 
 ---
 
-## 4. Biến môi trường — **không tạo cái nào**
+## 4. Biến môi trường — ba biến Preview ĐỔI mục tiêu
 
 | Nơi | Tên | Preview |
 |---|---|---|
 | Pages | `SHOP_PUBLIC_INDEXING` | **không đặt** (P4) |
 | Pages | `CANONICAL_HOST` | giữ nguyên |
-| Build | `VITE_SUPABASE_*` | như production |
+| Build (Preview) | `VITE_SUPABASE_URL` | `https://<STAGING_REF>.supabase.co` |
+| Build (Preview) | `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key **staging** |
+| Build (Preview) | `VITE_SUPABASE_PROJECT_ID` | `<STAGING_REF>` |
 | Build | `VITE_PROTO_SHOP` | **không đặt** — prototype bị loại ở compile time (D4) |
 | Supabase Edge | `CRON_SECRET`, `SUPABASE_*` | không đụng |
 
@@ -90,7 +103,8 @@ node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-shop-pilot.json
 | Nhánh remote | không có | `feat/shop-closed-pilot` |
 | Preview deployment | 6 nhánh khác | +1 |
 | **Production web** | không đổi | **không đổi** |
-| **Cơ sở dữ liệu** | không đổi | **không đổi** |
+| **Cơ sở dữ liệu production** | không đổi | **không đổi** |
+| Preview của các nhánh khác | trỏ production | **trỏ staging** — xem P5 |
 | Route Shop tới được | không ở đâu | preview URL |
 | Route Shop được lập chỉ mục | không | **vẫn không** |
 
@@ -103,8 +117,8 @@ BASE=https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev
 
 # 1. Ma trận noindex, TRƯỚC khi ai khác nhận URL
 node scripts/shop-closed-pilot-smoke.mjs --target "$BASE" \
-  --supabase-url https://ajvlcamxemgbxduhiqrl.supabase.co \
-  --anon-key "$VITE_SUPABASE_PUBLISHABLE_KEY"
+  --supabase-url https://<STAGING_REF>.supabase.co \
+  --anon-key "<anon key STAGING>"
 
 # 2. Nhánh production không đổi
 curl -sI https://www.thepicklehub.net/shop | head -1     # kỳ vọng: KHÔNG có route Shop
@@ -142,11 +156,13 @@ trong luồng này, nhưng nó là thứ ta sẽ muốn có nếu ai đó nhầm
 Packet A — đẩy feat/shop-closed-pilot lên GitHub; Cloudflare tự dựng preview.
 
 Điều kiện tiên quyết đã xác nhận:
-  [ ] P1  Packet B đã áp (file 1-3 tối thiểu)
-  [ ] P2  Packet C đã chạy, function sống
-  [ ] P3  B1 — URL preview có trong Supabase Redirect URLs
+  [ ] P0  Packet S đã duyệt, staging tồn tại, pg_cron/pg_net/vault khả dụng
+  [ ] P1  B-1 đã áp 18 migration lên STAGING
+  [ ] P2  C-1 đã chạy trên STAGING, cron nổ, net._http_response = 200
+  [ ] P3  B1′ — URL preview có trong Redirect URLs của STAGING
   [ ] P4  B2 — SHOP_PUBLIC_INDEXING KHÔNG tồn tại ở cả Production lẫn Preview
-  [ ] P5  soak-watch baseline đã chụp
+  [ ] P5  VITE_SUPABASE_* (Preview) trỏ <STAGING_REF>  — và đã báo các phiên khác
+  [ ] P6  soak-watch baseline đã chụp
 
 [ ] DUYỆT — ký: ____________  ngày: __________
 [ ] TỪ CHỐI — lý do: _______________________________________________

@@ -24,8 +24,8 @@ người thật gặp một sản phẩm chưa sẵn sàng.
 |---|---|---|
 | 1 | **UUID người bán pilot** (3–5) | ⬜ ⬜ ⬜ ⬜ ⬜ |
 | 2 | **UUID admin trực kiểm duyệt** (đã có TOTP) | ⬜ |
-| 3 | **Phiên bản quy chế** người bán chấp thuận | ⬜ (§4) |
-| 4 | **Quyết định thông báo** — chấp nhận không có tự động? | ⬜ ([`../notification-decision.md`](../notification-decision.md)) |
+| 3 | **"Quy chế người bán v1"** — nội dung, và `effective_at` | ⬜ (§4) — **chặn cứng**: máy chủ nay từ chối submit khi chưa có bản nào hiệu lực |
+| 4 | **Quyết định thông báo** | ✅ **ĐÃ KÝ** — chấp nhận chưa có tự động ([`../notification-decision.md`](../notification-decision.md)). Còn trống: **tên người kiểm hàng đợi hằng ngày**, điều kiện #4 |
 | 5 | **Thời gian pilot** — bắt đầu → kết thúc | ⬜ → ⬜ |
 | 6 | **Người trực kiểm duyệt** + SLA | ⬜ |
 | 7 | **Người trực sự cố** ngoài giờ | ⬜ |
@@ -52,25 +52,47 @@ nhất** — điều đó chấp nhận được với 3–5 người bán, như
 
 ## 4. 🔴 Điều kiện chặn — quy chế người bán
 
-**"Quy chế người bán v1" chưa tồn tại**, và — quan trọng hơn — **việc gửi hồ sơ
-không cưỡng chế chấp thuận nó**:
+**B5 đã đóng.** Migration `20260814090000` (CP12) làm đúng thứ Product Owner yêu
+cầu: `shop_application_submit()` nay **từ chối** trừ khi máy chủ thấy một chấp
+thuận của phiên bản đang hiệu lực, khớp cả version lẫn content hash. Ô đồng ý
+phía client không còn là thẩm quyền; một script POST thẳng vào RPC cũng bị chặn
+y hệt. 58 assertion pgTAP + 11 assertion qua HTTP, red-proven bằng cách xoá
+chính đoạn kiểm đó khỏi submit production.
 
-- `shop_applications` không có cột nào cho `rules_version`/`accepted_at`;
-- `shop_application_submit()` xác thực 5 trường và **không** kiểm chấp thuận;
-- ô đồng ý trong UI bị `disabled`, kèm dòng giải thích trung thực.
+**B4 vẫn mở, và giờ nó là một cánh cửa đóng chứ không phải một lời nhắc.**
+"Quy chế người bán v1" chưa tồn tại, nên `legal_current_document('seller-rules')`
+không trả gì và **mọi lần gửi hồ sơ đều thất bại với `seller_rules_not_published`**
+— kể cả của Cuong.
 
-⇒ **Ô đồng ý bị khoá, nhưng việc gửi hồ sơ thì không.** Một người bán được duyệt
-hôm nay sẽ không để lại bằng chứng chấp thuận điều khoản nào.
-
-**Ba đường đi, Product Owner chọn một:**
+Đó là hành vi đúng, và nó thay đổi hình dạng của Packet D:
 
 | Đường | Điều kiện | Hệ quả |
 |---|---|---|
-| **D-a** | Chưa có quy chế | Chỉ chèn UUID **tài khoản test**, chạy smoke, **không mời người bán thật** |
-| **D-b** | Có văn bản, chưa có cột bằng chứng | Mời người bán thật, chấp thuận lưu **ngoài hệ thống** (Zalo/email, lưu tay). Product Owner phải nói rõ chấp nhận điều này |
-| **D-c** | Có văn bản + migration bằng chứng | Đường đi đầy đủ. Thiết kế ở [`../seller-rules-v1-outline.md` §4](../seller-rules-v1-outline.md) — **chỉ đề xuất, chưa viết migration** |
+| **D-a** | Chưa có quy chế | Chỉ chèn UUID **tài khoản test**. Smoke chạy được, nhưng **bước "gửi hồ sơ" sẽ đỏ** cho tới khi có một văn bản — kể cả văn bản test. Không mời người bán thật |
+| **D-b** | ~~Văn bản có, bằng chứng lưu ngoài hệ thống~~ | **Không còn tồn tại.** Máy chủ nay đòi bằng chứng trong cơ sở dữ liệu; không có đường vòng để chấp nhận |
+| **D-c** | Có văn bản v1 thật, đã `INSERT` vào `legal_documents` với `effective_at` | **Đường duy nhất** cho người bán thật |
 
-Đường đã chọn: ⬜ D-a  ⬜ D-b  ⬜ D-c
+Đường đã chọn: ⬜ D-a (chỉ test)  ⬜ D-c (người bán thật)
+
+### Ban hành v1 — khi Product Owner đã có nội dung
+
+```sql
+SELECT 1;
+INSERT INTO public.legal_documents (document_key, version, title, body, effective_at)
+VALUES ('seller-rules', 'v1', 'Quy chế người bán', $doc$<TOÀN VĂN>$doc$, '<thời điểm hiệu lực>');
+
+-- Kiểm: đúng một bản hiệu lực, và hash do máy chủ tính
+SELECT version, content_hash, effective_at FROM public.legal_current_document('seller-rules');
+```
+
+Ba điều về câu lệnh trên:
+
+- **`content_hash` không có trong INSERT.** Nó là cột GENERATED; không ai viết
+  được nó, kể cả người gõ câu này.
+- **Không sửa được sau khi có người ký.** Đổi nội dung nghĩa là `v2` và một hash
+  mới, và mọi người bán phải ký lại — đó là thiết kế, không phải bất tiện.
+- **`effective_at` trong tương lai là hợp lệ** và không ai ký được trước thời
+  điểm đó. Dùng nó nếu muốn báo trước.
 
 ---
 
@@ -198,14 +220,17 @@ Packet D — kích hoạt closed pilot trên ajvlcamxemgbxduhiqrl.
   [ ] Nghiệm thu preview PASS — 24/24, dữ liệu test đã dọn VÀ ĐÃ ĐẾM LẠI
   [ ] SHOP_PUBLIC_INDEXING không tồn tại ở cả hai môi trường (xác nhận bằng mắt)
   [ ] Sitemap không nhắc tới Shop
-  [ ] Đã chọn đường quy chế: __ D-a  __ D-b  __ D-c
+  [ ] Đã chọn đường quy chế: __ D-a (chỉ test)  __ D-c (người bán thật)
 
 Chín đầu vào ở §2 đã điền:            [ ] có
+Quy chế v1 đã INSERT và hiệu lực:     [ ] có   (bắt buộc cho D-c)
+Tên người kiểm hàng đợi hằng ngày:    ______________  (điều kiện #4 của quyết định thông báo)
 Ngưỡng tiêu chí dừng ở §7 đã điền:    [ ] có
 Quyết định thông báo đã ký:           [ ] có   ([ ] chấp nhận  [ ] không chấp nhận)
 
 Tôi hiểu rằng:
-  - việc gửi hồ sơ KHÔNG cưỡng chế chấp thuận quy chế (§4);
+  - việc gửi hồ sơ NAY CƯỠNG CHẾ chấp thuận quy chế ở phía máy chủ (§4), nên
+    KHÔNG ai gửi được hồ sơ cho tới khi "Quy chế người bán v1" được ban hành;
   - pilot không có thông báo tự động; liên lạc là thủ công theo runbook;
   - đóng cổng pilot đóng băng người bán, KHÔNG gỡ nội dung công khai xuống;
   - chỉ có một admin, và mất authenticator là mất quyền kiểm duyệt.
