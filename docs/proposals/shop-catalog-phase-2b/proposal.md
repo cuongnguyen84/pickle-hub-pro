@@ -15,15 +15,16 @@
 
 Two of these block writing code; the rest can be answered while P2b is built.
 
-| # | Decision | Blocks | Default if unanswered |
+| # | Decision | Blocks | Status |
 |---|---|---|---|
-| **Q1** | Should the pilot allowlist gate **reads**, not just seller actions? Today a `support` member and a shop member who is not on the allowlist can both read their own shop's drafts, because `products_select_member` grants it. §3.2 has the evidence. | Nothing in P2b — but it changes the RLS both the admin queue and the public read model sit on, so it is cheaper to answer now than after P2b.2. | Keep P2a behaviour. Membership gates reads; the allowlist gates actions. |
-| **Q2** | **Slug redirects.** `product_slug_update` and `shop_slug_update` change a URL with no forwarding. Once the PDP is public and indexed, every slug change is a 404 for buyers and a dropped ranking. §9 offers three options. | **P2b.6.** A public PDP without an answer here ships a known link-rot bug. | Option A (slug history table + 301) — the only one that does not lose the link. |
-| Q3 | Category taxonomy ownership: `product_categories` is seeded from the prototype's list. Public category pages make that list an SEO surface — who owns adding/renaming, and does renaming change the slug? | P2b.4 category pages; not the build, only the content. | Slugs frozen once public; names editable. |
-| Q4 | Is `/shop` allowed to be indexed while the catalogue is nearly empty? An indexed marketplace with three products invites a thin-content assessment. | P2b.6 sitemap + robots. | Ship the routes indexable but keep `/shop` out of the sitemap until N products are approved; N is Q4's real content. |
+| **Q1** | Should the pilot allowlist gate **reads**, not just seller actions? Today a `support` member and a shop member who is not on the allowlist can both read their own shop's drafts, because `products_select_member` grants it. §3.2 has the evidence. | Nothing in P2b — but it changes the RLS both the admin queue and the public read model sit on. | ✅ **SIGNED 2026-08-12 — keep P2a behaviour.** Membership gates reads; the allowlist gates actions. No RLS change. The invariant is locked by 25 pgTAP assertions. |
+| **Q2** | **Slug redirects.** `product_slug_update` and `shop_slug_update` change a URL with no forwarding. Once the PDP is public and indexed, every slug change is a 404 for buyers and a dropped ranking. §9 offers three options. | **P2b.6.** | ✅ **SIGNED 2026-08-12 — Option A**, slug history table + 301. |
+| Q3 | Category taxonomy ownership: `product_categories` is seeded from the prototype's list. Public category pages make that list an SEO surface — who owns adding/renaming, and does renaming change the slug? | P2b.4 category pages; not the build, only the content. | Open. Default assumed: slugs frozen once public, names editable. |
+| Q4 | Is `/shop` allowed to be indexed while the catalogue is nearly empty? An indexed marketplace with three products invites a thin-content assessment. | P2b.6 sitemap + robots. | Open. Default assumed: routes indexable, `/shop` withheld from the sitemap until the Product Owner names a minimum approved-product count. |
 
-**Q1 and Q2 are the only two that change what gets built.** Everything else in
-this proposal proceeds under the stated default.
+Q1 and Q2 were the two that changed what gets built; both are signed. Q3 and Q4
+affect content and launch timing, not the build, and proceed under the stated
+defaults until answered.
 
 ### Documents named in the brief that do not exist
 
@@ -211,7 +212,7 @@ the projection to have to filter.
 Proven red first by replacing the in-function authorization with `NULL` on the
 local database: exactly 5 assertions went red, then restored to green.
 
-### 3.2 What is open — Q1
+### 3.2 Q1 — signed: keep P2a behaviour
 
 The brief asked for proof that a `support` member and a non-pilot member are
 **denied** `_as_seller=true`. They are not denied, and the test records that as
@@ -229,9 +230,11 @@ permissive as the table**, not more — passing `true` buys nothing that
 PostgREST would not already serve from `/rest/v1/products`. Tightening only the
 function would be theatre.
 
-If Q1 comes back "reads should be gated too", the change is
-`products_select_member` first and the projection second, and it lands before
-P2b.2 because the admin queue reads the same policy.
+**Signed 2026-08-12: keep P2a behaviour.** Membership gates reads, the allowlist
+gates actions. No RLS change, no projection change. What would have made this a
+finding — the flag granting something RLS does not — is disproven and locked by
+the parity assertion, so the decision rests on evidence rather than on nobody
+having looked.
 
 ### 3.3 What P2b adds regardless — the separate public API
 
@@ -417,7 +420,7 @@ a suspended product does not sit in KV looking alive.
 
 ---
 
-## 9. Slug redirects — Q2
+## 9. Slug redirects — Q2 (signed: Option A)
 
 `product_slug_update` / `shop_slug_update` change the URL and nothing forwards.
 While the catalogue is private this is invisible. The moment the PDP is indexed
@@ -430,8 +433,20 @@ because the old slug is gone from the database.
 | B. Freeze slugs once published | ~zero | sellers cannot fix a typo in a public URL |
 | C. Do nothing, document it | zero | every rename is a silent 404 |
 
-A is recommended and assumed. If the Product Owner picks B or C, P2b.6 records
-it as a **known limitation before public launch**, not as an oversight.
+**Signed 2026-08-12: Option A.** P2b.1 adds the history row inside the existing
+guarded slug-update transaction (so a rename can never half-happen), and P2b.6
+resolves it in the renderer:
+
+```
+slug is current     -> 200
+slug was replaced   -> 301 to the current slug
+slug never existed  -> 404
+product deleted     -> 410
+```
+
+The history row is written by the same RPC that changes the slug, not by a
+trigger and not by the client — a rename that forgets its forwarding address is
+the whole failure this option exists to prevent.
 
 ---
 
