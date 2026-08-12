@@ -362,6 +362,40 @@ its cron are **not deployed** (without them, revoked objects stay addressable),
 `shop_pilot_members` is empty, and there is no admin moderation UI until P2b —
 so a pilot moderator would work through SQL.
 
+### P2b status (12 August 2026)
+
+`P2b implementation complete and verified locally, pending Product Owner manual
+acceptance and deployment approval.`
+
+Seven checkpoints on `feat/shop-production-phase-2b` (worktree
+`.claude/worktrees/shop-p2b`), base P2a `afdb9a0a`: performance, moderation
+backend, admin moderation UI, public read model, discovery/search/category,
+PDP + shop page + contact CTA, pilot noindex, and P2b.7 acceptance.
+
+Five migrations on top of P2a's twelve (350 in the ledger after a clean
+`db reset`), 1241 pgTAP assertions, 1959 unit tests, and one unified browser
+acceptance run — `node scripts/shop-p2b-acceptance-qa.mjs` — covering 20 routes
+at 320/375/390/414/768/1440, the `/vi` twins, six end-to-end journeys, a
+leakage scan of the DOM **and** every REST payload, and a teardown verified by
+counting rows and Storage objects rather than by having issued the deletes.
+Bundle 1935.0 KB gz against an unraised 1970 KB backstop, INITIAL 226.6 KB.
+
+P2b.7 found and fixed four defects in code that already had passing tests — a
+mobile filter sheet that never showed the buyer's selection, two 15–17px
+navigation links, and an admin route no gate had ever opened — plus a teardown
+of its own that reported zero over three shops it had not deleted. Full
+evidence, every red-before-green proof and the deliberate non-fixes are in
+[`shop-catalog-phase-2b/completion.md`](../shop-catalog-phase-2b/completion.md).
+
+Still **not** production ready, **not** deployed, **not** remote verified, and
+**not** indexed. The three gates and everything still open in each are in
+[`shop-catalog-phase-2b/deployment-readiness.md`](../shop-catalog-phase-2b/deployment-readiness.md);
+the manual pack the Product Owner runs is
+[`shop-catalog-phase-2b/product-owner-test-cases.md`](../shop-catalog-phase-2b/product-owner-test-cases.md).
+The two P2a blockers are untouched: the media cleanup worker and its cron are
+**not deployed**, and `shop_pilot_members` is empty on the remote project. The
+third — no admin moderation UI — is what P2b.2 built.
+
 ## 12. Product Owner decisions — Q1–Q4 (2026-08-12)
 
 Signed during P2b planning. These override anything earlier that disagrees, on

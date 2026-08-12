@@ -727,3 +727,239 @@ and nothing is being crawled. Building them now would mean shipping untested
 crawler output, and the metadata a human sees is already correct through
 `DynamicMeta`. The launch checklist in §0.2 of the proposal is where they
 belong, and they are named there.
+---
+
+## P2b.7 — acceptance, audit and the wiring between the pieces · `<this commit>`
+
+Not a feature checkpoint. P2b.3–P2b.6 each proved their own half; this one asks
+whether the halves are connected, and it found four places where they were not.
+
+The rule the branch earned three times over is now the gate's own rule:
+
+> A test that protects a FUNCTION does not protect the place production calls it.
+
+Every red proof below breaks a real call site — the middleware, the route
+table, the rendered page, the publish transaction — and the reverted-function
+proofs that would have passed are recorded where they happened.
+
+### One seed, one browser, one teardown
+
+`scripts/shop-p2b-acceptance-qa.mjs` replaces four separate gates with one run
+over `scripts/qa/p2b-seed.mjs`: **20 routes × 6 widths** (320/375/390/414/768/1440),
+the `/vi` twins, six end-to-end journeys, a leakage scan of both the DOM and
+every REST payload the page received, and a teardown that counts.
+
+The seed refuses to return until it has re-read the database and found what it
+claims to have made — five publishable products, a public rendition, an
+approved contact, a non-empty `shop_public_search`, a non-empty category count.
+Ids are recorded **as they are created**, so a seed that throws halfway is
+still fully cleanable.
+
+`SHOP_QA_CHAOS=1` throws deliberately between the seed and the QA. The run
+exits 1 and the teardown still reports zero across all seventeen counts — which
+is the only way to know the `finally` is real.
+
+### The teardown reported zero over three shops and ten products
+
+The fourth teardown on this branch to lie, and the first one that lied in its
+**reporting** rather than in its deleting. A PASSing run printed all zeros;
+pgTAP against the same database immediately afterwards failed 73 assertions on
+rows that run had left behind — `vot-shop-doi-chung-<run>` turning up in a
+sort-order test that had nothing to do with it.
+
+Two causes, both mine, both the same shape:
+
+- Every delete was fire-and-forget. `shop_applications` was being deleted by
+  `user_id` — a column that does not exist; it is `applicant_user_id` — and had
+  been failing silently on every run since the fixture was written.
+- Every count ended in `?? 0`, so a read that **errored** reported clean. That
+  is what turns a broken teardown into a green one.
+
+Now every delete and every count is checked, a failed count returns `-1` rather
+than `0`, an **empty registry is itself a finding** (an empty registry deletes
+nothing, counts nothing, and reads as flawless), and a registry-**independent**
+sweep asks the database directly whether any `p2b7-*` shop survives — so a
+registry that lost an id can no longer make every count above it vacuous.
+
+| Reverted | Result |
+|---|---|
+| the `delete shops` line in the teardown | 6 errors · 4 shops · 4 members · 1 slug-history row · 4 contacts · 5 users, plus the stray sweep naming all three shops by slug |
+
+Under the old code that same break printed all zeros and PASS.
+
+**pgTAP now runs against the database the acceptance run just used**, and that
+is part of the gate. It is the only check that does not trust the teardown's
+own arithmetic, and it is what caught this.
+
+### Two controls, because one shell is not two shells
+
+P2b.4 recorded that `/clubs` was the wrong control: it has no back button, and
+the back button was the header overflow, so the Shop was blamed for a site-wide
+bug. The same mistake was waiting one level up. `/tools` says nothing about
+`AdminLayout`, whose sidebar links are 38px tall, so every admin route reported
+seven small targets belonging to a console that shipped long before the Shop.
+
+The gate now carries `/tools` for TheLineLayout and `/admin/users` for
+AdminLayout. **40 shell finding types** cancel that way. What survived was ours.
+
+### The flake that was a race, not a defect
+
+One run, once, reported three 14px links on a single route. Text laid out in
+the fallback face is a different height from the same text in the real one, so
+a footer link measured at 13px on the control and 14px on the route produces
+two different finding strings and the control cancels neither. `document.fonts.ready`
+before any geometry. Recorded because "it only happened once" is the reasoning
+that leaves a flaky gate in place until somebody stops believing it.
+
+### What the sweep found
+
+Four defects, all of them in code that already had passing tests.
+
+**1. The mobile filter sheet ignored every tap.** `FilterSheet` held its draft
+in a `useRef` and passed `draftRef.current` as the `value` of controlled
+inputs. A tap mutated the ref, re-rendered nothing, and React put the radio
+straight back to unchecked. The filter committed correctly on Áp dụng, so the
+unit tests (which cover the query arguments) and the browser gate (which read
+the URL afterwards) both passed. Nobody had checked the second in between, and
+in that second the control looks broken.
+
+Confirmed in a real browser — `checked after click: false` — and fixed by
+making the draft state. Five assertions, all red on the old component, one of
+them covering the half that already worked and one covering the regression the
+fix could have introduced (a cancelled draft reappearing on the next opening).
+
+**2. A 15px nav link in the admin console.** `.tl-admin-side li` carried the
+padding and the anchor inside it did not, so the Shop sub-nav rendered
+`a 83×15`, `58×15`, `71×15`. Precisely the P2b.4 breadcrumb defect — the box a
+thumb and `getBoundingClientRect()` both see — one component over. The padding
+moved to the link.
+
+**3. `← Về hàng đợi` was 77×17 on the application review screen.**
+`AdminShopProductReview` had fixed this with an inline style in P2b.2;
+`AdminShopApplicationReview`, a Phase 1 screen no P2b gate had ever opened,
+never got it. The rule is now `.tl-shop-back` and both screens use it, so the
+third review screen cannot repeat it.
+
+**4. The route inventory found a route nobody was testing.**
+`route-inventory.test.mjs` parses the actual route tables in `src/App.tsx` —
+both `<Route>` and `MIRRORED` — and failed on its first run naming
+`/admin/shop/applications/:id`. It is now in the sweep, which is how (3) was
+found.
+
+### The seed lied, and the journeys caught it
+
+The fifth sighting of the privileged-write trap, in a new disguise. The seed
+suspended a shop with `UPDATE public.shops SET state='suspended'` through
+`psql`, having set `shop.privileged_write`. That flag governs `products` and
+`product_media`. `shops_guard_privileged_columns` pins `state` on any write
+where **`is_admin()`** is false, and `psql` as the `postgres` role has no JWT
+and is therefore not an admin. The update was a silent no-op, and the
+"suspended" shop went on serving its catalogue.
+
+It was found by the slug journey, which asserts that a suspended shop and one
+that never existed answer identically — not by anything that looked at the
+seed. The suspension now goes through the admin's own client and the state is
+read back afterwards.
+
+A second fixture lie, same run: **a new contact channel starts in `draft`, not
+`pending_review`**, and there is no seller-side submit — the moderator picks it
+up from the Nháp tab. A queue fixture that inserts one sees an empty screen and
+concludes the seed failed. The fixture now approves a channel and then edits
+it, which is the only road into that queue. Recorded in the Product Owner pack
+as a product question: should a seller have a "gửi duyệt" button?
+
+### Six journeys, driven through the real RPCs
+
+| | What it pins |
+|---|---|
+| J1 application | non-pilot refused on screen **and** at the RPC · request-changes reaches the applicant with the field · the internal note does not · approve is idempotent (one shop on replay, not two) |
+| J2 moderation | pending is not public · approve alone does **not** publish · the publication commit is what does · suspend clears the PDP, search, category and the shop page at once · reopen returns it to the seller **off sale** (Q5) |
+| J3 contacts | only the approved channel is public · a pending number and a rejected URL are on no payload · editing a live value pulls it back to review and off the shelf · history is complete · the internal note is not in the seller's copy · no analytics payload carries a destination |
+| J4 slugs | retired product and shop slugs forward · canonical follows · suspended and never-existed are **byte-identical** answers · one hop, same origin |
+| J5 discovery | diacritic-insensitive both ways · the typing race lands on the last keystroke · back restores the query **and its results** · the cursor neither repeats nor skips · filters commit on Áp dụng and show the choice |
+| J6 tenancy | a rival cannot read a non-public product or its variants · a seller cannot moderate · support cannot add a public contact · an **aal1** admin cannot decide |
+
+### noindex, read off the response
+
+`functions/_lib/__tests__/shop-pilot-seo-edge.test.ts` calls `onRequest` — the
+export Cloudflare Pages calls — and reads `X-Robots-Tag` and the body off the
+Response, on both branches. 41 assertions.
+
+| Reverted | Result |
+|---|---|
+| `const isNoindex = false && shouldNoindex(pathname, env)` | **34 red** here · **0 red** in `shop-pilot-seo.test.ts` |
+| `/shop` dropped from `SHOP_PUBLIC_PATTERNS` | 5 red |
+
+The second line of that first row is the finding. The existing file calls
+`shouldNoindex` and proves the rule; it cannot notice that the middleware
+stopped using it.
+
+### Media, walked as a loop
+
+`scripts/shop-p2b-media-lifecycle.test.mjs`, on real bytes. The existing
+integration test proves each step; this one walks the cycle where the
+interesting failure lives — unpublish queues the live key, the seller
+republishes before the worker ran, the worker drains, and the buyer gets a 404
+on a product that published successfully minutes ago. The key is
+`<media>-v<version>` and the version does not change, so republish re-takes
+exactly the key sitting in the deletion queue.
+
+| Reverted | Result |
+|---|---|
+| the `DELETE FROM shop_media_cleanup_jobs` in `product_publish_commit` | red — "a pending deletion for a key that is live again" |
+
+Restored with `supabase db reset`; ledger back to 350/350.
+
+Both this file and the sweep now separate a leaked **value** from a nulled
+**key**. `product_public_projection` keeps one shape and nulls the seller-only
+fields when `_as_seller` is false, so a buyer DTO contains
+`"stock_on_hand": null`. Forbidding the string called that a leak. The
+assertion is that each seller-only key is **present and null** — strictly
+stronger, because it goes red if a wrapper ever passes `true`.
+
+### Deliberately not fixed
+
+The retired-slug redirect **drops the `/vi` prefix**:
+`/vi/shop/product/<old>` lands on `/shop/product/<new>`. Every internal link in
+the product hardcodes the EN path (`VenuesList.tsx`, `ClubsList.tsx`, the Shop
+pages), so this is a site-wide navigation convention, not a Shop defect.
+Changing it is an SEO/navigation decision, not a bug fix inside an acceptance
+checkpoint. Recorded in `deployment-readiness.md` under the indexing gate,
+where it has to be settled before anything is crawlable.
+
+### Gates
+
+| Gate | Result |
+|---|---|
+| `supabase db reset` | 350/350 |
+| pgTAP | Files=33, **1241**, PASS — **and again on the database an acceptance run had just used** |
+| unit | **1959** passed, 10 skipped |
+| `tsc -b` / eslint | clean / **0 errors**, 29 warnings (all pre-existing `react-refresh` in `src/proto`) |
+| acceptance QA | **PASS** — 20 routes × 6 widths, /vi twins, 6 journeys, 40 shell types filtered |
+| teardown | 0 across 17 counts, and 0 again after a deliberate mid-run throw |
+| storage integration | PASS |
+| media lifecycle | 7 PASS |
+| SEO edge | 41 PASS |
+| build · `BUNDLE_STRICT=1` · `build:proto` | exit 0 |
+| Total gz | 1934.9 → **1935.0** (+0.1, CSS) · INITIAL **226.6** · headroom **35.0 KB** |
+
+Backstop **1970 KB, not raised**.
+
+### Deliverables
+
+- `docs/proposals/shop-catalog-phase-2b/product-owner-test-cases.md` — 16
+  groups, 🔴/🟠/⚪, exact commands, and `scripts/shop-p2b-fixture.mjs up|down`
+  so a person can hold the dataset open. It does not ask the Product Owner to
+  re-run 1.959 unit tests by hand.
+- `docs/proposals/shop-catalog-phase-2b/deployment-readiness.md` — three
+  separated gates (remote preview / production pilot / indexing), each item
+  with its command, file, secret, owner, rollback and required evidence. No
+  checkbox that needs remote access or the Product Owner's authority is ticked.
+
+### Status
+
+`P2b implementation complete and verified locally, pending Product Owner manual
+acceptance and deployment approval.`
+
+Not production ready. Not deployed. Not remote verified. Not merged, not
+pushed, not applied to a remote database. Indexing not enabled.
