@@ -96,7 +96,8 @@ describe("App.tsx route table characterization", () => {
     const braceCount = (source.match(/^\s*\{ path: "/gm) ?? []).length;
     expect(mirrored.length).toBe(braceCount);
     // 61 -> 64: P2b.4 adds /shop, /shop/search and /shop/category/:slug.
-    expect(mirrored.length).toBe(64);
+    // 64 -> 66: P2b.5 adds the PDP and the public shop page.
+    expect(mirrored.length).toBe(66);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {

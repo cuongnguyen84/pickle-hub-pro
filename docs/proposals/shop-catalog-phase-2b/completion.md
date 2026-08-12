@@ -571,3 +571,90 @@ unreachable. Both earned their place, for different failures.
 | INITIAL | 226.5 KB |
 
 Screenshots outside the repo: 375 home/search/category/control, 1440 search.
+
+---
+
+## P2b.5 — PDP, public shop page, contact CTA · `<this commit>`
+
+Two lazy bilingual routes plus a migration. Bundle **1929.5 → 1935.3 KB**
+(+5.8; allocation 18 KB).
+
+| Route | Screen | chunk gz |
+|---|---|---:|
+| `/shop/product/:slug` + `/vi/…` | B04 + B05 PDP | 7.5 KB |
+| `/shop/store/:slug` + `/vi/…` | B06 shop page | 5.0 KB |
+
+### Shop slug history
+
+Q2 gave products a forwarding address; shops were left out, and the moment
+`/shop/store/:slug` is a real page that is the same bug. `shop_slug_history`,
+written **inside the guarded transaction** that renames — not a trigger, not
+the client.
+
+One thing deliberately unlike the product version: a retired slug resolves only
+while the shop is **active**. A suspended shop answering on its old URL would
+confirm it exists, which is exactly what `shop_public_shop` refuses to do on
+the current one. Suspended, closed and never-existed all return the same
+answer, asserted byte-for-byte.
+
+### Variant selection
+
+Pure, in `src/lib/shop/variantSelection.ts`, 15 assertions. The rules B04/B05
+were accepted on: colour changes the photo immediately (before a size is
+picked), size updates SKU/price/availability, changing colour **keeps** the
+size when that combination exists and **releases** it when it does not, and
+the seller never changes.
+
+"Does not exist" and "sold out" stay separate states with separate words, and
+`unknown` stock counts as available — the seller did not give a number, and
+greying the option out would invent a fact.
+
+### Contact CTA (D2)
+
+10 assertions on `contactCta.ts`. The destination is the server-normalised
+value; nothing is built from seller text. `tel:` only from E.164; `zalo.me` and
+`m.me` only, over https only; **query and fragment are stripped** because that
+is where a buyer's identity would end up. Lookalike hosts
+(`zalo.me.evil.example`) refused. Analytics records channel **type** and public
+ids — a payload assertion proves the number and the URL are not in it.
+
+With no approved channel the page says so. No disabled button.
+
+### Red-before-green
+
+| Reverted | Result |
+|---|---|
+| `activeMediaId` ignores the variant | 2 red — including "colour changes the photo before the size is picked" |
+| contact scheme allowlist opened | 1 red — `javascript:`, `data:`, `file:`, `blob:`, `http:` all pass |
+| retired slug resolves for a suspended shop | 2 red — the redirect becomes an oracle for suspended shops |
+
+Recorded honestly: breaking the PDP's **use** of `activeMediaId` left the unit
+tests green, because they cover the function and not the wiring. The red proof
+was done at the function. The page-level guard is the browser gate.
+
+### Two teardown bugs the gate found in itself
+
+1. A seed that **threw halfway** left its shop and six products behind —
+   `seeded` was only assigned on success, so the `finally` had nothing to
+   clean. Leftovers then broke a pgTAP file that counts publishable products
+   globally, and the failures pointed at search and sort rather than at the
+   real cause. Ids are now recorded **as they are created**.
+2. The assignment itself was missing after the first fix, so teardown silently
+   did nothing while the gate reported PASS. Caught by checking the row counts
+   after a green run rather than trusting the green.
+
+Teardown now verified: **0 products, 0 shops**.
+
+| Gate | Result |
+|---|---|
+| `supabase db reset` | 350/350 |
+| pgTAP | Files=33, **1241**, PASS |
+| unit | **1862** passed |
+| buyer browser QA | **PASS**, 5 routes × 6 widths, 35 shell types filtered vs `/tools` |
+| `tsc -b` / eslint | clean / 0 errors |
+| build · `BUNDLE_STRICT=1` · `build:proto` | pass |
+| Total gz | 1929.5 → **1935.3** (+5.8) |
+| INITIAL | 226.6 KB |
+| headroom | 34.7 KB (P2b.6 allocation 5) |
+
+Screenshots outside the repo: 375 pdp/store, 320 pdp/store, plus the P2b.4 set.

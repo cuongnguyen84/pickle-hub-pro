@@ -117,6 +117,8 @@ export const usePublicProduct = (slug: string | null) =>
 
 export interface PublicShopResult {
   found: boolean;
+  /** Set when the slug was retired and the shop is still live (P2b.5). */
+  redirect_to?: string | null;
   shop?: {
     slug: string; name: string; intro: string | null; region: string | null;
     verified: boolean; verified_at: string | null;

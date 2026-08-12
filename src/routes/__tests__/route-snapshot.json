@@ -24,6 +24,22 @@
     "element": "<ShopCategory />"
   },
   {
+    "path": "/shop/product/:slug",
+    "element": "<ProductDetail />"
+  },
+  {
+    "path": "/vi/shop/product/:slug",
+    "element": "<ViLanguageWrapper><ProductDetail /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/store/:slug",
+    "element": "<ShopStore />"
+  },
+  {
+    "path": "/vi/shop/store/:slug",
+    "element": "<ViLanguageWrapper><ShopStore /></ViLanguageWrapper>"
+  },
+  {
     "path": "/vi/shop/category/:slug",
     "element": "<ViLanguageWrapper><ShopCategory /></ViLanguageWrapper>"
   },

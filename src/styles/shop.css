@@ -1293,3 +1293,40 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 }
 .tl-shop-crumbs .tl-crumb-sep { color: var(--tl-fg-4); }
 .tl-shop-crumbs .tl-crumb-current { padding-inline: 6px; }
+
+/* ── PDP (P2b.5) ──────────────────────────────────────────────────────────
+ * Media and info stack on a phone and sit side by side from 900px. The image
+ * carries width/height so its box is reserved before the bytes land. */
+.tl-pdp { display: grid; gap: 20px; }
+@media (min-width: 900px) { .tl-pdp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
+
+.tl-pdp-media img { display: block; width: 100%; height: auto; border-radius: 12px; background: var(--tl-surface-2); }
+.tl-pdp-thumbs { display: flex; gap: 8px; padding: 10px 0 0; margin: 0; list-style: none; overflow-x: auto; }
+.tl-pdp-thumb {
+  display: block; padding: 0; border: 2px solid transparent; border-radius: 8px;
+  background: none; cursor: pointer; min-width: var(--shop-tap); min-height: var(--shop-tap);
+}
+.tl-pdp-thumb[aria-current="true"] { border-color: var(--tl-green); }
+.tl-pdp-thumb img { display: block; width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
+
+.tl-pdp-info { display: grid; gap: 12px; }
+.tl-pdp-price { margin: 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-pdp-meta { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
+.tl-pdp-desc { margin: 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+
+.tl-pdp-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.tl-pdp-opt {
+  min-height: var(--shop-tap); min-width: var(--shop-tap); padding: 0 14px;
+  border: 1px solid var(--tl-line); border-radius: 999px;
+  background: var(--tl-surface); color: var(--tl-fg); font: inherit; cursor: pointer;
+}
+.tl-pdp-opt[aria-pressed="true"] { border-color: var(--tl-green); color: var(--tl-green); }
+/* Disabled means "this combination does not exist" or "sold out" — dimmed AND
+ * struck through, so it does not read as merely unselected. */
+.tl-pdp-opt:disabled { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; }
+.tl-pdp-opt:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
+
+.tl-pdp-seller { border: 1px solid var(--tl-line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
+.tl-pdp-shopname { margin: 0; display: flex; align-items: center; gap: 4px; font-weight: 600; }
+.tl-pdp-note { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
+.tl-pdp-cta { display: grid; gap: 8px; }

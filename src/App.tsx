@@ -105,6 +105,8 @@ const AdminShopContacts = lazyRetry(() => import("./pages/admin/shop/AdminShopCo
 const ShopHome = lazyRetry(() => import("./pages/shop/ShopHome"));
 const ShopSearch = lazyRetry(() => import("./pages/shop/ShopSearch"));
 const ShopCategory = lazyRetry(() => import("./pages/shop/ShopCategory"));
+const ProductDetail = lazyRetry(() => import("./pages/shop/ProductDetail"));
+const ShopStore = lazyRetry(() => import("./pages/shop/ShopStore"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -565,6 +567,8 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/shop", element: <ShopHome /> },
   { path: "/shop/search", element: <ShopSearch /> },
   { path: "/shop/category/:slug", element: <ShopCategory /> },
+  { path: "/shop/product/:slug", element: <ProductDetail /> },
+  { path: "/shop/store/:slug", element: <ShopStore /> },
   { path: "/live", element: <Live /> },
   { path: "/live/:id", element: <WatchLive /> },
   { path: "/videos", element: <Videos /> },

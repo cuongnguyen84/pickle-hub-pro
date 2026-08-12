@@ -13,7 +13,7 @@
 
 BEGIN;
 
-SELECT plan(55);
+SELECT plan(65);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -396,6 +396,65 @@ SET LOCAL request.jwt.claims TO '{"sub":"60000002-0000-4000-8000-000000000002","
 SELECT is(
   (public.shop_public_product('vot-ban-nhap')) ->> 'found',
   'false', 'người bán shop khác cũng không mượn được cửa công khai để đọc bản nháp');
+
+-- ─── Shop slug history (P2b.5) ──────────────────────────────────────────────
+-- Products got this in Q2. A shop rename breaks just as many shared links.
+
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"60000001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT is(
+  public.shop_slug_update('61000001-0000-4000-8000-000000000001'::uuid, 'pub-shop-a-moi'),
+  'pub-shop-a-moi', 'chủ shop đổi đường dẫn');
+
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+
+SELECT is(
+  (public.shop_public_shop('pub-shop-a')) ->> 'redirect_to',
+  'pub-shop-a-moi', 'đường dẫn cũ chuyển hướng sang đường dẫn mới');
+SELECT is(
+  ((public.shop_public_shop('pub-shop-a-moi')) -> 'shop') ->> 'name',
+  'Shop Công Khai', 'đường dẫn mới trả nội dung');
+SELECT is(
+  (public.shop_public_shop('shop-chua-tung-co')) ->> 'redirect_to',
+  NULL, 'đường dẫn chưa từng tồn tại thì không chuyển hướng đi đâu cả');
+
+-- The suspended shop must not become discoverable through its history either.
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"60000002-0000-4000-8000-000000000002","role":"authenticated","aal":"aal1"}';
+-- The rename itself is allowed: hiding a suspended shop is the READER's job,
+-- not the slug function's. What matters is that the retired slug gains no
+-- visibility from it.
+SELECT lives_ok(
+  $$ SELECT public.shop_slug_update('61000002-0000-4000-8000-000000000002'::uuid, 'ten-moi-cua-shop-bi-go') $$,
+  'shop bị gỡ vẫn đổi được đường dẫn — chặn hiển thị là việc của phía đọc');
+
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+SELECT is(
+  (public.shop_public_shop('pub-shop-b')) ->> 'redirect_to',
+  NULL,
+  'đường dẫn cũ của shop BỊ GỠ không chuyển hướng — nếu có thì nó vừa xác nhận shop đó có thật');
+SELECT is(
+  public.shop_public_shop('pub-shop-b'),
+  public.shop_public_shop('shop-chua-tung-co'),
+  'và trả lời giống hệt một shop chưa từng tồn tại');
+
+-- Reclaiming a slug the shop used before must stop it redirecting to itself.
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"60000001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+SELECT is(
+  public.shop_slug_update('61000001-0000-4000-8000-000000000001'::uuid, 'pub-shop-a'),
+  'pub-shop-a', 'đổi ngược về đường dẫn cũ');
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+SELECT is(
+  (public.shop_public_shop('pub-shop-a')) ->> 'redirect_to',
+  NULL, 'không còn là chuyển hướng trỏ về chính nó — vòng lặp bị chặn ngay tại dữ liệu');
+SELECT is(
+  ((public.shop_public_shop('pub-shop-a')) -> 'shop') ->> 'slug',
+  'pub-shop-a', 'và nó lại là đường dẫn đang dùng');
 
 SELECT * FROM finish();
 ROLLBACK;
