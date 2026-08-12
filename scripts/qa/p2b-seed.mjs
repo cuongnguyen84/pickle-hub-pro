@@ -117,6 +117,11 @@ export async function seedSellerRules(admin, reg, applicantClient, run) {
       title: `[TEST-ONLY] Quy chế người bán — QA ${run}`,
       body: TEST_RULES_BODY,
       effective_at: new Date(Date.now() - 60_000).toISOString(),
+      // An unapproved row is a draft, and legal_current_document() will not
+      // serve it — so a fixture that omits these two silently blocks its own
+      // submit. Named QA rather than a person, because it is not an approval.
+      approved_by: "QA fixture (test-only)",
+      approved_at: new Date(Date.now() - 120_000).toISOString(),
     })
     .select("version, content_hash")
     .single();

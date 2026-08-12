@@ -126,6 +126,8 @@ describe.skipIf(!up)("seller rules — over HTTP, as a client", () => {
         title: `[TEST-ONLY] Quy chế kiểm thử ${RUN}`,
         body: BODY,
         effective_at: new Date(Date.now() - 60_000).toISOString(),
+        approved_by: "integration test (test-only)",
+        approved_at: new Date(Date.now() - 120_000).toISOString(),
       })
       .select("content_hash")
       .single();
