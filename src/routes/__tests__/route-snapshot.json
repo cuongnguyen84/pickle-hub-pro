@@ -4,6 +4,30 @@
     "element": "<Index />"
   },
   {
+    "path": "/shop",
+    "element": "<ShopHome />"
+  },
+  {
+    "path": "/vi/shop",
+    "element": "<ViLanguageWrapper><ShopHome /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/search",
+    "element": "<ShopSearch />"
+  },
+  {
+    "path": "/vi/shop/search",
+    "element": "<ViLanguageWrapper><ShopSearch /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/category/:slug",
+    "element": "<ShopCategory />"
+  },
+  {
+    "path": "/vi/shop/category/:slug",
+    "element": "<ViLanguageWrapper><ShopCategory /></ViLanguageWrapper>"
+  },
+  {
     "path": "/live",
     "element": "<Live />"
   },

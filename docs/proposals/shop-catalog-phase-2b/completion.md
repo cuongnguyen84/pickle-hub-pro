@@ -406,3 +406,80 @@ unaccent_immutable" the moment the column existed. Granted to `anon` and
 | build · `BUNDLE_STRICT=1` | exit 0 |
 | Total gz | 1921.3 → **1921.4** (+0.1, allocation 4 KB) |
 | INITIAL | 226.3 KB |
+
+---
+
+## P2b.4 — Discovery, search, category · `<this commit>` — **BROWSER QA NOT GREEN**
+
+Implementation complete and unit-verified; **browser acceptance is red** and
+this checkpoint is therefore NOT signed off. Details at the bottom.
+
+Three lazy bilingual routes, one `MIRRORED` entry each (ARCH-05), all
+`noindex` (Q4):
+
+| Route | Screen | chunk gz |
+|---|---|---:|
+| `/shop` + `/vi/shop` | B01 home | 2.3 KB |
+| `/shop/search` + `/vi/…` | B02 search | 3.5 KB |
+| `/shop/category/:slug` + `/vi/…` | B03 category | 3.4 KB |
+| shared | `CatalogResults` | 8.5 KB |
+
+Discovery, category and search are **one query** with different arguments
+(`shop_public_search`), so a product cannot be visible on one screen and
+missing from another.
+
+### Decisions worth keeping
+
+- **The typing race is handled by the cache key, not an abort controller.**
+  react-query keys on the full argument list, so a slow response for "vo" is
+  written into the entry for "vo" and can never overwrite "vot". The debounce
+  on top is about not asking the server four times, not about correctness.
+- **Filters commit on Áp dụng, not on tap.** The mobile sheet is a real
+  `<dialog>` — Escape, focus trap and scroll lock come from the platform.
+- **Error is not empty.** A shopper told "không có sản phẩm nào" when the
+  request failed stops looking; the grid says "lỗi tải dữ liệu, không phải sàn
+  đang trống" and offers a retry.
+- **`unknown` availability is its own answer** — the seller did not count, so
+  neither "còn hàng" nor "hết hàng" is true. 12 assertions pin this, the price
+  range collapse, and the refusal to render `0₫` for a product with no price.
+- **`publicMediaUrl` throws** on anything that is not a bucket key, so a future
+  change that starts handing a signed URL to a buyer fails in CI rather than in
+  a browser.
+- No cart, no save, no dead buttons — asserted against the DOM in the gate.
+
+### Gates
+
+| Gate | Result |
+|---|---|
+| pgTAP | Files=33, 1231, PASS (unchanged) |
+| unit | **1837** passed (was 1825) |
+| `tsc -b` / eslint | clean / 0 errors |
+| build · `BUNDLE_STRICT=1` | exit 0 |
+| Total gz | 1921.4 → **1929.2** (+7.8; allocation 16 KB) |
+| INITIAL | 226.4 KB |
+
+### 🔴 Browser QA is RED — four open findings
+
+`scripts/buyer-shop-qa.mjs` runs the three routes anonymously at
+320/375/390/414/768/1440, asserting `window.innerWidth`, each route's own `<h1>`
+**and** a body content marker, `<main>`, axe, keyboard, overflow, touch targets,
+and that no draft path, signed URL, `stock_on_hand` or cart/save affordance
+reaches the DOM. `/clubs` is carried as a **control route**, so anything
+reported on both is site shell rather than this checkpoint — 33 shell finding
+types are filtered that way.
+
+What remains is mine and is **not fixed**:
+
+1. **43px past the scroller at 320** on all three routes.
+2. **1px past the scroller at 375** on all three routes.
+3. **`button 27×36` at 768** — under the 44px floor, not present on `/clubs`.
+4. **Breadcrumb link 26×44** on category — height fixed, width still short.
+
+An attempt to fix (4) with `min-width: 44px` **made (1) worse**, which is
+recorded in the CSS comment: a 44px minimum on an inline breadcrumb pushed the
+320px layout past its scroller, and trading a small target for a broken layout
+is not a fix. That change was reverted.
+
+These are layout bugs in new code, they are reproducible at named widths, and
+they are the reason this checkpoint is not signed off. **P2b.5 and P2b.6 have
+not been started.**

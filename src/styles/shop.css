@@ -1177,3 +1177,101 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   --shop-on-gold:    #fdfaf2;   /* on --tl-gold    #825e0f — 5.66:1 */
   --shop-on-ok:      #f2fbf6;   /* on --tl-accent-qt #007342 — 5.64:1 */
 }
+
+/* ── Buyer catalogue (P2b.4) ──────────────────────────────────────────────
+ * The card is one link with no nested controls. The media box declares its
+ * aspect ratio so the grid reserves space before any photo lands — the CLS
+ * lesson from the homepage work, applied before it becomes a problem.
+ * ------------------------------------------------------------------------ */
+.tl-pgrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 768px) { .tl-pgrid { gap: 18px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+
+.tl-pcard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--tl-line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--tl-surface);
+  color: inherit;
+  text-decoration: none;
+  min-height: var(--shop-tap);
+}
+.tl-pcard:hover { border-color: var(--tl-fg-4); }
+.tl-pcard:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
+
+.tl-pcard-media { position: relative; width: 100%; background: var(--tl-surface-2); }
+.tl-pcard-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tl-pcard-noimg { width: 100%; height: 100%; background: var(--tl-surface-2); }
+
+.tl-pcard-flag {
+  position: absolute; left: 8px; top: 8px;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600;
+  background: var(--tl-bg); color: var(--tl-fg-2);
+  border: 1px solid var(--tl-line);
+}
+
+.tl-pcard-body { padding: 10px 11px 12px; display: grid; gap: 4px; }
+.tl-pcard-title {
+  margin: 0; font-size: 13.5px; line-height: 1.4; font-weight: 500;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tl-pcard-price { margin: 0; font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-pcard-noprice { font-weight: 500; color: var(--tl-fg-3); }
+.tl-pcard-meta { margin: 0; font-size: 12px; color: var(--tl-fg-3); }
+.tl-pcard-out { color: var(--tl-fg-3); }
+.tl-pcard-shop { margin: 0; font-size: 12px; color: var(--tl-fg-3); display: flex; align-items: center; gap: 3px; }
+.tl-pcard-verified { color: var(--tl-green); flex: none; }
+
+.tl-pcard--skeleton { pointer-events: none; }
+.tl-pcard-sk-line { display: block; height: 11px; border-radius: 4px; background: var(--tl-surface-2); }
+
+/* Filters: a rail on desktop, a sheet on a phone. */
+.tl-shop-layout { display: block; }
+@media (min-width: 900px) {
+  .tl-shop-layout { display: grid; grid-template-columns: 210px 1fr; gap: 24px; align-items: start; }
+}
+.tl-filter-rail { display: none; }
+@media (min-width: 900px) { .tl-filter-rail { display: block; position: sticky; top: 16px; } }
+.tl-filter-open { display: inline-flex; }
+@media (min-width: 900px) { .tl-filter-open { display: none; } }
+
+.tl-filter-group { margin: 0 0 18px; border: 0; padding: 0; }
+.tl-filter-group legend { font-size: 12px; font-weight: 600; color: var(--tl-fg-3); padding: 0 0 6px; }
+
+/* The sheet is a real dialog: Escape closes it, focus stays inside, and the
+ * page behind does not scroll. Apply/Huỷ are explicit because a filter that
+ * commits on every tap makes a phone user re-run four queries by accident. */
+.tl-sheet::backdrop { background: rgb(0 0 0 / 55%); }
+.tl-sheet {
+  border: 0; padding: 0; margin: auto auto 0; width: 100%; max-width: 100%;
+  background: var(--tl-surface); color: var(--tl-fg);
+  border-radius: 14px 14px 0 0;
+  max-height: 85dvh;
+}
+.tl-sheet-inner { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); overflow-y: auto; max-height: 70dvh; }
+.tl-sheet-actions {
+  position: sticky; bottom: 0; display: flex; gap: 10px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--tl-surface); border-top: 1px solid var(--tl-line);
+}
+.tl-sheet-actions > * { flex: 1; }
+
+/* P2b.4 QA findings.
+ *  · the breadcrumb link was 26x17, which is not a thumb target. Height only:
+ *    a 44px MIN-WIDTH on an inline breadcrumb pushed the 320px layout 43px
+ *    past its scroller, which is a worse bug than the one it fixed.
+ *  · the search row needs the input to be allowed to shrink, or it refuses to
+ *    go below its intrinsic width on a narrow phone. */
+.tl-shop-searchfield { gap: 8px; }
+.tl-shop-searchfield input { min-width: 0; flex: 1 1 auto; }
+.tl-shop-searchfield > .tl-shop-btn { flex: 0 0 auto; min-height: var(--shop-tap); padding: 0 14px; }
+.tl-crumb { display: inline-flex; align-items: center; min-height: var(--shop-tap); }

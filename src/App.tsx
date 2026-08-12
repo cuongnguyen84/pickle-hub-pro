@@ -100,6 +100,11 @@ const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/Ad
 const AdminShopProducts = lazyRetry(() => import("./pages/admin/shop/AdminShopProducts"));
 const AdminShopProductReview = lazyRetry(() => import("./pages/admin/shop/AdminShopProductReview"));
 const AdminShopContacts = lazyRetry(() => import("./pages/admin/shop/AdminShopContacts"));
+// P2b.4 — buyer catalogue. Separate chunks from the seller and admin
+// surfaces: a shopper must never download the moderation console.
+const ShopHome = lazyRetry(() => import("./pages/shop/ShopHome"));
+const ShopSearch = lazyRetry(() => import("./pages/shop/ShopSearch"));
+const ShopCategory = lazyRetry(() => import("./pages/shop/ShopCategory"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -550,8 +555,16 @@ interface MirroredRoute {
   viSkipWrapper?: boolean;
 }
 
+// Buyer catalogue (P2b.4) enters as three MIRRORED entries, never a
+// hand-written /vi pair (ARCH-05). Not indexed during the pilot (Q4); the
+// robots answer is served by the Pages Function, not written after hydration.
+// Comments cannot go INSIDE this array — route-snapshot.test.ts parses it line
+// by line and throws on anything that is not an entry.
 const MIRRORED: MirroredRoute[] = [
   { path: "/", element: <Index /> },
+  { path: "/shop", element: <ShopHome /> },
+  { path: "/shop/search", element: <ShopSearch /> },
+  { path: "/shop/category/:slug", element: <ShopCategory /> },
   { path: "/live", element: <Live /> },
   { path: "/live/:id", element: <WatchLive /> },
   { path: "/videos", element: <Videos /> },
