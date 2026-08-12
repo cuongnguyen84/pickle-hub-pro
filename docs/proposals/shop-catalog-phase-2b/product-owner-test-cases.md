@@ -4,7 +4,7 @@
 > **Phạm vi:** chạy **local**. Chưa deploy, chưa merge, chưa push, chưa bật index.
 > **Mục đích:** xác nhận sản phẩm đúng ý — không phải chạy lại test tự động.
 
-1.959 unit test, 1.241 pgTAP và toàn bộ browser QA đã chạy và xanh. Tài liệu này
+2.014 unit test, 1.241 pgTAP và toàn bộ browser QA đã chạy và xanh. Tài liệu này
 **không** yêu cầu chạy lại chúng. Nó chỉ hỏi những câu mà máy không trả lời được:
 câu chữ có đúng không, luồng có hợp lý không, và cái nút kia có bấm được bằng ngón
 tay cái không.

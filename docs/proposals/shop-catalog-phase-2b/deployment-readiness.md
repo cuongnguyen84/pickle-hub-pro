@@ -1,6 +1,6 @@
 # Shop Phase 2b — deployment readiness
 
-> **Trạng thái:** P2b implementation complete and verified locally.
+> **Trạng thái:** `P2b Product Owner acceptance PASS locally.`
 > **Chưa** deploy, **chưa** merge, **chưa** push, **chưa** áp migration lên
 > remote, **chưa** bật lập chỉ mục.
 >
@@ -225,12 +225,8 @@ thị cho người mua.
 - [ ] 🔒 IndexNow cho URL Shop.
 - [ ] 🔒 Canonical và redirect: đường dẫn cũ phải trả **301 thật ở edge**, không
       chỉ `<Navigate>` phía client như hiện nay.
-- [ ] 🔒 **Đã biết, chưa sửa:** chuyển hướng đường dẫn cũ **mất tiền tố `/vi`** —
-      `/vi/shop/product/<slug-cũ>` nhảy về `/shop/product/<slug-mới>`. Toàn bộ
-      link nội bộ trong sản phẩm này đều viết cứng đường dẫn EN (xem
-      `VenuesList.tsx`, `ClubsList.tsx`…), nên đây là quy ước toàn site chứ không
-      phải lỗi riêng của Shop. Sửa nó là một quyết định điều hướng/SEO, không
-      phải một bug fix của P2b — cần quyết trước mốc C.
+- [ ] 🔒 **LOCALE REDIRECT — quyết định đang chờ Product Owner.** Xem mục riêng
+      bên dưới. **Không chặn pilot**, nhưng **phải chốt trước khi bật index**.
 - [ ] 🔒 Xoá cache: bump `pr:v`, và `?nocache=1` cho từng path sau khi deploy.
 - [ ] 🔒 Chất lượng tìm kiếm: `shop_public_search` hiện dùng `search_doc`
       tsvector + unaccent. Đủ cho 40 sản phẩm; đo lại trước khi mở.
@@ -248,6 +244,59 @@ thị cho người mua.
 
 ---
 
+---
+
+# Quyết định đang chờ — chuyển hướng có giữ ngôn ngữ không?
+
+**Trạng thái: CHƯA SỬA, cố ý.** Không sửa trong đợt supplemental này.
+
+## Hiện trạng
+
+`/vi/shop/store/<slug-cũ>` chuyển hướng sang **`/shop/store/<slug-mới>`** —
+mất tiền tố `/vi`. Sản phẩm cũng vậy. Nguồn: `ProductDetail.tsx` và
+`ShopStore.tsx` dựng đích bằng chuỗi EN cứng.
+
+Đây **không phải lỗi riêng của Shop**: mọi link nội bộ trong sản phẩm đều viết
+cứng đường dẫn EN (`VenuesList.tsx`, `ClubsList.tsx`, …). Shop đang theo đúng
+quy ước sẵn có. Đổi nó là một quyết định điều hướng/SEO toàn site.
+
+## Vì sao không chặn pilot
+
+Trong pilot mọi route Shop đều `noindex, nofollow, noarchive` ở edge — đã kiểm
+bằng 96 assertion gọi thẳng `onRequest`. Không có bản EN hay VI nào được lập
+chỉ mục, nên **không có canonical/hreflang nào lệch được**. Ảnh hưởng hiện tại
+chỉ là: người dùng VI theo một link cũ sẽ rơi vào route EN.
+
+## Vì sao phải chốt trước khi bật index
+
+Khi Shop mở cho crawler, một chuyển hướng đổi ngôn ngữ sẽ:
+
+- gộp tín hiệu VI vào URL EN;
+- làm hreflang tự mâu thuẫn (VI trỏ sang trang mà chính nó redirect đi);
+- đẩy người đọc Việt sang trang tiếng Anh — với ~95% người dùng là người Việt,
+  đây là thiệt hại thật chứ không phải chi tiết kỹ thuật.
+
+## Khuyến nghị (chờ Cuong duyệt)
+
+Giữ nguyên ngôn ngữ khi chuyển hướng:
+
+| Vào | Ra |
+|---|---|
+| `/vi/shop/product/<cũ>` | `/vi/shop/product/<mới>` |
+| `/shop/product/<cũ>` | `/shop/product/<mới>` |
+| `/vi/shop/store/<cũ>` | `/vi/shop/store/<mới>` |
+| `/shop/store/<cũ>` | `/shop/store/<mới>` |
+
+- canonical theo đúng chính sách locale đang dùng cho phần còn lại của site;
+- **không** ép người dùng VI sang EN;
+- làm ở **giai đoạn triển khai sau**, trong task deployment-readiness — không
+  cần mở lại toàn bộ nghiệm thu P2b.
+
+Kèm theo, khi làm: chuyển hướng ở edge phải là **301 thật**, không chỉ
+`<Navigate>` phía client như hiện nay (mục ở mốc C bên trên).
+
+---
+
 ## Những gì P2b.7 **đã** chứng minh (local)
 
 Để danh sách trên không bị đọc nhầm thành "chưa có gì hoạt động":
@@ -255,8 +304,11 @@ thị cho người mua.
 | Việc | Bằng chứng |
 |---|---|
 | Ledger migration | 350/350 sau `db reset` sạch |
-| Quy tắc trong Postgres | 1.241 pgTAP PASS |
-| Logic ứng dụng | 1.959 unit test PASS (10 skipped) |
+| Quy tắc trong Postgres | 1.241 pgTAP PASS (chạy lại sau khi QA chạy xong) |
+| Logic ứng dụng | 2.014 unit test PASS (10 skipped) |
+| Ảnh đổi theo phiên bản | `shop-p2b-variant-media-qa.mjs` — so trên khoá object công khai, đỏ khi phá PDP |
+| Xoá EXIF/GPS/XMP | `shop-p2b-exif-pipeline-qa.mjs` — byte thật, qua worker thật, đỏ khi bỏ inspector |
+| noindex ở edge | 96 assertion, 9 loại route × 6 giá trị cờ, đọc từ Response thật |
 | Toàn bộ 20 route × 6 chiều rộng | `node scripts/shop-p2b-acceptance-qa.mjs` PASS |
 | 6 hành trình đầu-cuối | cùng lệnh trên |
 | noindex ở edge | 41 test gọi thẳng `onRequest`, đỏ khi phá call site |
@@ -265,7 +317,7 @@ thị cho người mua.
 
 **Câu trạng thái được phép dùng hôm nay:**
 
-> `P2b implementation complete and verified locally, pending Product Owner manual acceptance and deployment approval.`
+> `P2b Product Owner acceptance PASS locally.`
 
 **Cấm dùng:** *production ready*, *deployed*, *remote verified*,
 *public launch approved*.

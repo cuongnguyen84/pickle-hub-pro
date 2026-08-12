@@ -963,3 +963,146 @@ acceptance and deployment approval.`
 
 Not production ready. Not deployed. Not remote verified. Not merged, not
 pushed, not applied to a remote database. Indexing not enabled.
+
+---
+
+## P2b.7b — supplemental acceptance · `<this commit>`
+
+The Product Owner accepted the run **conditionally** and named the three
+claims that were still being inferred rather than observed. Each one is now
+asserted where production makes it, and each one is red-proven by breaking
+that same place.
+
+No production code changed in this run. Three new gates, one fixture module
+extended, one deferred decision written down.
+
+### A — the photo follows the variant
+
+`node scripts/shop-p2b-variant-media-qa.mjs`
+
+Asserted on the `src` of the main `<img>` as a **public object key** and on
+which thumbnail carries `aria-current` — never on alt text, never on the word
+printed in the option button, because a broken mapping gets both of those
+right. The fixture's mapping is re-read from `product_variants` **and** from
+`shop_public_product` before the browser opens.
+
+| Reverted | Result |
+|---|---|
+| `shownMediaId = product.primary_media_id` in `ProductDetail.tsx` | **3 red** (steps 3, 4, 7, naming both object keys) · **0 red** in `variantSelection.test.ts` |
+
+That is the gap P2b.5 recorded against itself — "the red proof was done at the
+function; the page-level guard is the browser gate" — and the browser gate it
+referred to had never asserted the swap.
+
+**Two corrections to the brief, found by running it.**
+
+1. *"Choose Đen before choosing a size"* is **not a reachable state**.
+   `initialSelection` opens the PDP on the first buyable combination, so a
+   size is always already chosen; and `optionState` disables any option that
+   has no combination with the rest of the current selection, so the one click
+   that would make `pickOption` release a group is never clickable. The
+   release branch is correct as a function and unreachable from this screen.
+   The test now **pins that guard** — with Size 40 chosen, Đen must be
+   disabled — instead of testing a state the product does not produce, and
+   asserts the swap on the reachable one-click path.
+
+2. A 2×2 matrix cannot hold all four required states at once: making Trắng/40
+   sold out blocks the release path, making it available leaves nowhere to put
+   the sold-out state. Size 41 exists for that and nothing else.
+
+Also pinned: clicking a thumbnail selects the variant that photo belongs to,
+so price and SKU cannot drift away from the picture on screen.
+
+### B1 — EXIF, GPS and XMP on real bytes
+
+`node scripts/shop-p2b-exif-pipeline-qa.mjs`
+
+A JPEG with real pixels, EXIF, Orientation 6, a GPS IFD and an XMP packet,
+built at run time so no binary fixture enters the repository. Then: the
+seller's own `#pick-product-media` → the client canvas pipeline → two Storage
+uploads with the seller's JWT → `product_media_finalize` → **the real
+`shop-media-lifecycle?action=publish`**, served by the local stack, holding the
+service role, running `inspectWebp` → an anonymous GET → byte inspection.
+
+The seller's **original is checked too and must still be dirty**. Without that,
+"the rendition is clean" could just mean the fixture never had anything to
+strip.
+
+Orientation is asserted where it is observable: **400×200 in, 200×400 stored**.
+
+| Reverted | Result |
+|---|---|
+| worker downloads `/original` instead of `/rendition.webp`, `if (!verdict.ok)` neutered | **6 red**, from "the served object is not a WebP (first bytes `ffd8ffe1`)" to "the public object IS the untouched original" |
+
+**⚠ The local edge runtime caches its isolate.** The first run after editing
+`supabase/functions/**` still executes the previous code. This lied in both
+directions inside one hour: the red proof above "passed" before it had
+applied, and then kept failing after the file was restored.
+`docker restart supabase_edge_runtime_<ref>` after any edit, and only then
+believe the result. Nothing in the script reads the worker's own reply, so a
+stale isolate cannot produce a false PASS on unmodified code — but it can
+certainly waste an afternoon.
+
+### B2 — the robots matrix, off real responses
+
+`npx vitest run functions/_lib/__tests__/shop-pilot-seo-edge.test.ts` — 96
+assertions, of which 54 are the full cross-product: nine route classes × six
+flag values, every cell read off a Response returned by `onRequest`.
+
+Including a **control route** — `/tournaments` and its `/vi` twin — which must
+be untouched by the Shop rule at every flag value. That is the opposite
+failure to the one everything else checks, and the one a loose `/shop` prefix
+would cause.
+
+| | unset | `""` | `"true"` | `"yes"` | `"0"` | `"1"` |
+|---|---|---|---|---|---|---|
+| buyer (6 paths, EN + /vi) | noindex | noindex | noindex | noindex | noindex | **indexable** |
+| seller, admin | noindex | noindex | noindex | noindex | noindex | **noindex** |
+| control (`/tournaments`) | — | — | — | — | — | — |
+
+Header asserted exactly (`noindex, nofollow, noarchive`) and separately by its
+`noindex, nofollow` prefix, so dropping `noarchive` later cannot quietly drop
+the other two.
+
+| Reverted | Result |
+|---|---|
+| `const isNoindex = false` in `_middleware.ts` | **76 red** here · exactly **1 red** in `shop-pilot-seo.test.ts`, and only because its source-grep assertion saw the substring change |
+
+### Deferred by decision, not by omission
+
+The retired-slug redirect **drops the `/vi` prefix**. Not fixed here, on
+purpose. It does not block the pilot — every Shop route is `noindex` at the
+edge, proven by the 96 assertions above, so no canonical or hreflang signal
+can diverge while nothing is indexed. It **must** be settled before indexing.
+The recommendation (keep the locale on both sides of the redirect, EN→EN and
+VI→VI) and the reasoning are in `deployment-readiness.md`; the fix belongs to
+the deployment task, not to a reopened acceptance.
+
+### Gates
+
+| Gate | Result |
+|---|---|
+| `supabase db reset` | 350/350 |
+| pgTAP | Files=33, **1241**, PASS — and again after the browser runs |
+| unit | **2014** passed, 10 skipped |
+| supplemental A | PASS |
+| supplemental B1 | PASS |
+| supplemental B2 | 96 PASS |
+| `tsc -b` / eslint | clean / 0 errors, 29 pre-existing warnings |
+| build · `BUNDLE_STRICT=1` | exit 0 |
+| teardown | 0 across 17 counts on every script |
+| Total gz | **1935.4–1935.6** · INITIAL **226.8** · headroom ~**34.5 KB** |
+
+Backstop **1970 KB, not raised**. The bundle figure moved by ~0.6 KB across
+consecutive clean builds of an unchanged `src/`, so 1935.0 from the previous
+checkpoint and 1935.6 here are the same measurement inside build noise — worth
+knowing before anyone reads a 0.4 KB "regression" into a table.
+
+### Status
+
+`P2b Product Owner acceptance PASS locally.`
+
+All three supplemental verifications are green and none of them rests on a
+unit test standing in for a call site. Still **not** production ready, **not**
+deployed, **not** remote verified, **not** merged or pushed, and indexing is
+**not** enabled.

@@ -364,8 +364,16 @@ so a pilot moderator would work through SQL.
 
 ### P2b status (12 August 2026)
 
-`P2b implementation complete and verified locally, pending Product Owner manual
-acceptance and deployment approval.`
+`P2b Product Owner acceptance PASS locally.`
+
+Accepted conditionally after the Product Owner's own run, then closed by three
+supplemental verifications (P2b.7b) that replaced the last inferences with
+observations at the call site: the variant→photo swap asserted on public object
+keys in a real browser, EXIF/GPS/XMP followed on real bytes through the actual
+`shop-media-lifecycle` edge function to an anonymous GET, and the X-Robots-Tag
+matrix — nine route classes × six flag values plus a non-Shop control — read
+off Responses returned by `onRequest`. Each is red-proven by breaking the place
+production calls it.
 
 Seven checkpoints on `feat/shop-production-phase-2b` (worktree
 `.claude/worktrees/shop-p2b`), base P2a `afdb9a0a`: performance, moderation
@@ -373,12 +381,12 @@ backend, admin moderation UI, public read model, discovery/search/category,
 PDP + shop page + contact CTA, pilot noindex, and P2b.7 acceptance.
 
 Five migrations on top of P2a's twelve (350 in the ledger after a clean
-`db reset`), 1241 pgTAP assertions, 1959 unit tests, and one unified browser
+`db reset`), 1241 pgTAP assertions, 2014 unit tests, and one unified browser
 acceptance run — `node scripts/shop-p2b-acceptance-qa.mjs` — covering 20 routes
 at 320/375/390/414/768/1440, the `/vi` twins, six end-to-end journeys, a
 leakage scan of the DOM **and** every REST payload, and a teardown verified by
 counting rows and Storage objects rather than by having issued the deletes.
-Bundle 1935.0 KB gz against an unraised 1970 KB backstop, INITIAL 226.6 KB.
+Bundle ~1935.5 KB gz against an unraised 1970 KB backstop, INITIAL 226.8 KB.
 
 P2b.7 found and fixed four defects in code that already had passing tests — a
 mobile filter sheet that never showed the buyer's selection, two 15–17px
