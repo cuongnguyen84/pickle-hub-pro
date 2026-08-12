@@ -171,8 +171,9 @@ duy nhất chứng minh cấu hình Cloudflare khớp mã nguồn.
 
 ## 7. Tài khoản test và dọn dẹp — không tuỳ chọn
 
-Vì preview dùng **chung** cơ sở dữ liệu với production, mọi thứ smoke tạo ra là
-**dữ liệu thật**.
+Trên **staging** dữ liệu smoke là dữ liệu staging: dọn được, và xoá cả project là
+cách dứt điểm. Mục này vẫn giữ nguyên vì nó đúng **nguyên vẹn** cho production
+pilot ở bước 9-12, nơi mọi thứ smoke tạo ra là dữ liệu thật.
 
 ### Trước smoke
 

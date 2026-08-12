@@ -11,8 +11,14 @@
 
 ## 1. Cổng kiểm tra cục bộ — ĐÃ CHẠY
 
-Nhánh `feat/shop-closed-pilot`, cây làm việc sạch, nền tảng `f172a441`.
+Nhánh `feat/shop-closed-pilot`, cây làm việc sạch.
 Cơ sở dữ liệu dựng lại từ số không trước khi đo bất cứ thứ gì.
+
+> ⚠️ **Bảng dưới đây là lượt chạy TRƯỚC CP12.** Con số sau khi thêm cưỡng chế
+> chấp thuận quy chế — ledger 351, pgTAP **1 302**, unit **2 048**, bundle
+> **1 936,8 KB** (+1,5 KB, backstop không nâng) — nằm ở
+> [`gate-results.md` §1](./gate-results.md), kèm bảng delta. Giữ bảng cũ ở đây
+> để so sánh được, không phải vì nó là con số hiện hành.
 
 | Cổng | Lệnh | Kết quả |
 |---|---|---|
@@ -129,9 +135,11 @@ lặp sai, và red-proof của nó là một dòng — bỏ `DELETE` trong
 node scripts/shop-closed-pilot-smoke.mjs --list
 node scripts/shop-closed-pilot-smoke.mjs \
   --target https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev \
-  --supabase-url https://ajvlcamxemgbxduhiqrl.supabase.co \
-  --anon-key "$VITE_SUPABASE_PUBLISHABLE_KEY"
+  --supabase-url https://<STAGING_REF>.supabase.co \
+  --anon-key "<anon key STAGING>"
 ```
+
+> Mục tiêu là **staging**, không phải production — quyết định Product Owner #1.
 
 ### Nó từ chối chạy khi nào
 
@@ -214,8 +222,10 @@ dành cho quản trị. Nếu nó đọc được bằng anon key, đó là **FA
 
 ## 5. Kiểm 24 — dọn dẹp, và vì sao nó phải đếm
 
-Trên preview dùng chung cơ sở dữ liệu với production, mọi thứ smoke tạo ra là
-dữ liệu thật.
+Trên **staging** (quyết định Product Owner #1) dữ liệu smoke tạo ra là dữ liệu
+thật của staging — dọn được, và xoá cả project là cách dứt điểm. Trên **production
+pilot** ở bước 9-12 thì không: ở đó mọi thứ smoke tạo ra là dữ liệu production.
+Câu đếm dưới đây đúng cho cả hai, và bắt buộc ở lần thứ hai.
 
 ```sql
 SELECT 1;

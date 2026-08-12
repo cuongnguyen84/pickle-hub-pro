@@ -1,44 +1,51 @@
 # Kết quả cổng kiểm tra — nền tảng closed pilot
 
-> Nhánh `feat/shop-closed-pilot`, nền `f172a441`, cây làm việc sạch.
+> Nhánh `feat/shop-closed-pilot`, cây làm việc sạch.
 > Cơ sở dữ liệu dựng lại từ số không trước khi đo bất cứ thứ gì.
 >
 > **Đây là kết quả cục bộ.** Không có gì được deploy, và không con số nào ở đây
 > nói về remote.
+>
+> Cập nhật **sau CP12** (cưỡng chế chấp thuận quy chế người bán).
 
 ---
 
 ## 1. Bảng kết quả
 
-| Cổng | Lệnh | Kết quả |
-|---|---|---|
-| Reset cơ sở dữ liệu | `npx supabase db reset --local` | exit 0 |
-| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | **350 / 350 file** |
-| Schema Shop | `information_schema` | 11 bảng `shop*` + 7 `product*`, **2** bucket |
-| pgTAP | `npx supabase test db --local supabase/tests` | **1 241 PASS** · 33 file · 0 `not ok` · exit 0 |
-| Unit | `npx vitest run` | **2 014 PASS** · 10 skipped · 156 file · exit 0 |
-| Storage + vòng đời ảnh | 3 file integration trên stack thật | **40 PASS** · exit 0 · **không skip** |
-| noindex ở edge | 2 file `shop-pilot-seo*` | **116 PASS** · exit 0 |
-| Typecheck | `npx tsc -b` | exit 0 |
-| Lint | `npx eslint .` | exit 0 — 0 lỗi, 29 cảnh báo có sẵn |
-| Build | `npm run build` | exit 0 |
-| Bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | exit 0 |
-| Build prototype | `npm run build:proto` | exit 0 |
-| Q01–Q04 | `PROTO_BASE_URL=… node scripts/proto-shop-qa.mjs all` | **37 màn hình, 0 phát hiện** · exit 0 |
-| Nghiệm thu P2b | `SHOP_QA_BASE_URL=… node scripts/shop-p2b-acceptance-qa.mjs` | **PASS** · exit 0 |
-| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | **17/17 bộ đếm = 0** (sau khi vá — §3) |
+| Cổng | Lệnh | Trước CP12 | **Sau CP12** |
+|---|---|---|---|
+| Reset cơ sở dữ liệu | `npx supabase db reset --local` | exit 0 | **exit 0** |
+| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 350 / 350 | **351 / 351** |
+| pgTAP | `npx supabase test db --local supabase/tests` | 1 241 · 33 file | **1 302 PASS · 34 file · exit 0** |
+| Unit | `npx vitest run` | 2 014 · 156 file | **2 048 PASS · 10 skipped · 158 file · exit 0** |
+| Storage + vòng đời ảnh | file integration trên stack thật | 40 PASS | **nằm trong lượt unit ở trên, không skip** |
+| noindex ở edge | 2 file `shop-pilot-seo*` | 116 PASS | **116 PASS** (không đổi) |
+| Typecheck | `npx tsc -b` | exit 0 | **exit 0** |
+| Lint | `npx eslint .` | exit 0 · 29 cảnh báo | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
+| Build | `npm run build` | exit 0 | **exit 0** |
+| Bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | exit 0 | **exit 0** |
+| Build prototype | `npm run build:proto` | exit 0 | **exit 0** |
+| Q01–Q04 | `PROTO_BASE_URL=… node scripts/proto-shop-qa.mjs all` | 37 màn hình, 0 phát hiện | **37 màn hình, 0 phát hiện** |
+| Nghiệm thu P2b | `SHOP_QA_BASE_URL=… node scripts/shop-p2b-acceptance-qa.mjs` | PASS | **PASS** — 20 route × 6 chiều rộng, 6 hành trình |
+| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 17/17 = 0 | **19/19 bộ đếm = 0** (thêm `rulesDocuments`, `rulesAcceptances`) |
 
-### Bundle
+### Bundle — delta CP12
 
 ```
-INITIAL (first-paint) gz   226,6 KB  / 280 KB   — 6 request đường tới hạn
-CODE gz                   1551,4 KB  / 1800 KB
-CONTENT (blog) gz          383,9 KB  / 51 chunk, trần 20 KB mỗi chunk
-Tổng gz JS                1935,3 KB  / backstop 1970 KB   ← KHÔNG nâng
+                    trước CP12     sau CP12      thay đổi
+INITIAL gz           226,6 KB      226,6 KB      0,0 KB      / 280 KB
+CODE gz             1551,4 KB     1552,8 KB     +1,4 KB      / 1800 KB
+CONTENT (blog) gz    383,9 KB      383,9 KB      0,0 KB
+Tổng gz JS          1935,3 KB     1936,8 KB     +1,5 KB      / backstop 1970 KB
 ```
 
-Còn 34,7 KB, dưới 5%, và cổng nói thẳng rằng PR kế tiếp phải trả lại. So với
-1935,5 KB của P2b: chênh 0,2 KB là nhiễu build, không phải hồi quy.
+**Backstop KHÔNG nâng.** Còn **33,2 KB**, dưới 5% — cổng nói thẳng rằng PR kế
+tiếp phải trả lại phần này.
+
+**+1,5 KB** là toàn bộ chi phí của CP12: một hook và một component đọc, hiển thị
+và ghi nhận chấp thuận. `INITIAL` **không đổi một byte** — màn hình đó nằm trong
+chunk `/seller/application`, không nằm trên đường tới paint đầu tiên, đúng như
+mong đợi.
 
 ### Nghiệm thu P2b — 20 route × 6 chiều rộng + 6 hành trình
 
@@ -148,9 +155,10 @@ Trên máy cục bộ, tám object rác là tiếng ồn. Nhưng:
 
 1. **Bucket đó là RIÊNG TƯ.** Rò rỉ ở đây là rò rỉ đúng loại dữ liệu mà D1 dựng
    ra để bảo vệ.
-2. **Preview dùng chung cơ sở dữ liệu với production** ([`preview-deployment.md` §2](./preview-deployment.md)).
-   File test này nhắm vào bất kỳ môi trường nào nó được trỏ tới — chạy nó trên
-   preview sẽ để lại object riêng tư trong bucket thật.
+2. **File test nhắm vào bất kỳ môi trường nào nó được trỏ tới.** Chạy nó ngoài
+   máy cục bộ sẽ để lại object riêng tư trong một bucket thật. (Quyết định
+   staging của Product Owner làm hậu quả nhẹ đi — nhưng "nhẹ đi" không phải
+   "không còn".)
 3. **Nó là lần thứ năm một teardown ở repo này báo cáo sạch trong khi không
    sạch.** Bốn lần trước ở tầng cơ sở dữ liệu; lần này ở tầng Storage, chỗ mà
    bản sao lưu cơ sở dữ liệu không với tới.
@@ -166,7 +174,52 @@ Trên máy cục bộ, tám object rác là tiếng ồn. Nhưng:
 | Bẫy | Đã làm gì |
 |---|---|
 | **Edge runtime cục bộ cache isolate** | `docker restart supabase_edge_runtime_ajvlcamxemgbxduhiqrl` sau `db reset` |
+| **Test chạy song song trên MỘT cơ sở dữ liệu** | Xem §5 — một assertion về trạng thái toàn cục là một assertion về test của người khác |
 | **pgTAP đếm sản phẩm publishable toàn cục** | pgTAP chạy trên cơ sở dữ liệu sạch, trước mọi fixture; chạy lại sau khi fixture đã hạ |
 | **`npm run dev` thường = xanh giả cho proto** | dùng `VITE_PROTO_SHOP=1` + probe `/proto/shop` → 200 trước khi chạy QA |
 | **`BUNDLE_STRICT` không phải cổng thật** | chạy `scripts/check-bundle-size.mjs` trực tiếp, cả hai chế độ |
 | **`build:proto` ghi đè `dist/`** | cổng bundle chạy trên bản build production, **trước** `build:proto` |
+
+---
+
+## 5. Ba defect CP12 bắt được, và cái thứ ba là về chính bộ test
+
+### 5.1 Thiếu grant `service_role` trên `legal_documents`
+
+Lượt chạy đầu của bộ HTTP integration trả `42501` kèm gợi ý nêu đúng câu `GRANT`
+còn thiếu. `service_role` đi vòng qua RLS nhưng **không** đi vòng qua tầng grant.
+
+Repo này đã chạy **hai đợt quét** cho đúng lớp lỗi đó. Cả pgTAP lẫn typechecker
+đều không thấy nó — chỉ thứ nói chuyện với PostgREST theo cách một client nói
+mới thấy được.
+
+### 5.2 Trigger append-only làm không xoá được hồ sơ
+
+`legal_acceptances.application_id` là `ON DELETE SET NULL`, nên xoá một hồ sơ
+khiến Postgres UPDATE dòng chữ ký để gỡ con trỏ — và trigger từ chối. **Mọi**
+`DELETE FROM shop_applications` sẽ hỏng: teardown QA, dọn dẹp của admin, và
+đường xoá tài khoản.
+
+Chỉ lượt chạy trình duyệt gặp được, và lý do đáng ghi: **pgTAP khẳng định bên
+trong một transaction nó rollback**, nên nó không bao giờ xoá một hồ sơ nào và
+không bao giờ chạm vào cạnh này. Lượt chạy trình duyệt hạ một fixture thật.
+
+Nó **báo cáo** được là nhờ teardown đã được dạy thôi nói dối hai commit trước
+đó — phiên bản cũ sẽ nuốt lỗi và in một hàng số 0.
+
+### 5.3 Một assertion về trạng thái toàn cục, trên một cơ sở dữ liệu dùng chung
+
+`shop-p2b-media-lifecycle.test.mjs` khẳng định hàng đợi dọn ảnh **rỗng toàn cục**
+sau hai lần drain. Nhưng `shop_media_cleanup_claim` là toàn cục — đúng như vậy,
+nó **là** worker — và các bộ integration dùng chung một cơ sở dữ liệu cục bộ,
+chạy song song, và tự xếp job của mình vào đó.
+
+Nó xanh cho tới ngày một bộ test mới tham gia và đổi nhịp. Nó không hồi quy gì
+cả: **nó đang khẳng định một sự thật về test của người khác.**
+
+Giờ nó chỉ lọc những job có đường dẫn bắt đầu bằng shop id của chính nó. Hai
+lượt `npx vitest run` liên tiếp đều xanh, và `storage.objects` giữ 0 qua cả hai.
+
+> Quy tắc rút ra: **trên một tài nguyên dùng chung, chỉ khẳng định thứ mình sở
+> hữu.** "Hàng đợi rỗng" và "hàng đợi không còn gì của tôi" nghe giống nhau và
+> chỉ một câu là kiểm được.

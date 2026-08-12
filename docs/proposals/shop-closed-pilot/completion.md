@@ -2,8 +2,8 @@
 
 > **Câu trạng thái được phép dùng:**
 >
-> `Closed-pilot deployment package prepared and verified locally, pending
-> Product Owner approval for remote actions.`
+> `Closed-pilot package locally ready, blocked on approved Seller Rules v1,
+> staging project approval, and remote-action approval.`
 >
 > **CẤM dùng:** *pilot deployed* · *production ready* · *remote verified* ·
 > *preview live* · *seller onboarded*.
@@ -14,195 +14,227 @@
 
 | Thứ | Giá trị |
 |---|---|
-| Canonical P2b acceptance HEAD | **`f172a441fb182dc562af4c0d20d13a73fa0b0326`** |
-| Nhánh mới | **`feat/shop-closed-pilot`** |
+| Canonical P2b acceptance | `f172a441` |
+| Nhánh | **`feat/shop-closed-pilot`** |
 | Worktree | `/Users/cm10/pickle-hub-pro/.claude/worktrees/shop-closed-pilot` |
 | Trạng thái push | **CHƯA push** — nhánh chỉ tồn tại cục bộ |
-| Trước `main` | 82 commit (Shop) + 5 commit closed-pilot |
-| Sau `main` | 12 commit (SEO/homepage/livestream, không chạm Shop) |
+| Commit trên `f172a441` | **11** |
 
-`f172a441` là commit cuối, **không** phải `7b52cc37` — ba supplemental commit
-P2b.7b nằm sau nó và đều có trong nền tảng.
+```
+95f067a7 docs(shop-pilot): Packet S, a staging-first order, and a checklist for the dashboard
+648c2cf4 docs(shop-pilot): record the notification decision as signed
+cb8dd567 fix(shop): the append-only trigger made applications undeletable
+49472978 test(shop): prove the rules gate over HTTP, and fix two things it exposed
+0a773a3a feat(shop): show the seller the rules, then let them agree to them
+dd43a579 feat(shop): the server, not a checkbox, decides that a seller agreed
+544f5ddb docs(shop-pilot): completion and handoff
+c3228f23 fix(shop): the media integration teardown walked two levels, not three
+3a5da404 docs(shop-pilot): CP4-CP10 deployment packages, operations and smoke suite
+30967af7 docs(shop-pilot): CP2 pilot contract + CP3 seller-rules outline and versioning
+57d9566a docs(shop-pilot): CP0 release inventory + CP1 read-only environment audit
+```
 
 ---
 
-## 2. Đã tạo ra gì
+## 2. CP12 — blocker B5 đã đóng
 
-| File | Nội dung |
+Chi tiết đầy đủ: [`seller-rules-enforcement.md`](./seller-rules-enforcement.md).
+
+### Schema
+
+| Bảng | Vai trò |
 |---|---|
-| `release-inventory.md` | Kiểm kê: commit, 17 migration, function, cron, bucket, RLS, 95 RPC, route, env, cờ, giám sát, phụ thuộc rollback + vệ sinh Git |
-| `environment-audit.md` | Audit chỉ đọc Supabase + Cloudflare, 4 blocker, ma trận môi trường |
-| `pilot-contract.md` | Phạm vi, 4 ranh giới an toàn, 10 đầu vào cần Product Owner, tiêu chí dừng |
-| `seller-rules-v1-outline.md` | Khung `DRAFT — NOT LEGAL APPROVAL` + thiết kế versioning/bằng chứng chấp thuận |
-| `media-worker-deployment.md` | Gói worker + cron, bảo mật, log, cảnh báo, rollback, rotate |
-| `migration-deployment.md` | 17 file, khoá/rủi ro, preflight, đối chiếu remote, phân loại rollback |
-| `pilot-allowlist.md` | SQL vận hành có kiểm toán, kiểm khô, thiết kế RPC/UI cho sau này |
-| `preview-deployment.md` | Ma trận môi trường, redirect/CORS, ma trận noindex, dọn dẹp |
-| `operations.md` | 1 truy vấn bảng điều khiển, 14 cảnh báo, kill switch và giới hạn của nó |
-| `notification-decision.md` | Đề xuất "không có thông báo tự động" + runbook liên lạc tay + ô ký |
-| `acceptance.md` | 24 kiểm, 6 tự động / 18 thủ công |
-| `gate-results.md` | Kết quả cổng cục bộ, và defect chúng bắt được |
-| `approval-packets/` | README + Packet A/B/C/D |
-| `scripts/shop-closed-pilot-smoke.mjs` | Bộ smoke cho môi trường đã deploy, có allowlist mục tiêu |
+| `legal_documents` | `(document_key, version)`, `title`, `body`, **`content_hash` GENERATED**, `effective_at`, `retired_at`. Bất biến bằng trigger; chỉ `retired_at` đi được từ `NULL` sang một giá trị, một lần |
+| `legal_acceptances` | `(user_id, document_key, version)` UNIQUE, `content_hash` **sao chép từ máy chủ**, `application_id` (bằng chứng, `ON DELETE SET NULL`), `accepted_at`, `client_token`. **Không** IP, **không** device fingerprint |
 
-Một thay đổi mã nguồn duy nhất:
-`scripts/shop-media-integration.test.mjs` — vá teardown rò rỉ (§5).
+### RPC
 
----
-
-## 3. Phát hiện remote (chỉ đọc)
-
-**Shop là tờ giấy trắng trên `ajvlcamxemgbxduhiqrl`.**
-
-| Thứ | Remote |
+| Hàm | Ghi chú |
 |---|---|
-| Bảng / bucket / cron job Shop | **0 / 0 / 0** |
-| `shop-media-lifecycle` | **chưa deploy** (80 function ACTIVE) |
-| Va chạm tên | **0** |
-| `is_admin()` (có AAL2), `has_role()`, `audit_logs` | ✅ có |
-| `log_audit_event()` | ✅ **đúng 1 overload**, khớp chữ ký Shop gọi |
-| `pg_cron`, `pg_net`, `vault` + `cron_secret` | ✅ có |
-| `CRON_SECRET` (edge secret) | ✅ **đã có** — không cần tạo |
-| `unaccent` / `pg_trgm` | ❌ không cài — và **không cần** |
-| Admin | 1 vai admin, 1 TOTP factor đã verify |
+| `legal_current_document(key)` | bản đang hiệu lực: đã tới hạn, chưa thu hồi, mới nhất |
+| `legal_accept(key, version, hash, token)` | idempotent; nhận version+hash **chỉ để từ chối lệch**; lưu bản sao của máy chủ |
+| `shop_application_submit(_expected_rules_version)` | **chữ ký MỚI** — hàm 0 tham số đã bị DROP |
+| `shop_application_rules_receipt(app_id)` | "có chấp thuận bản đang hiệu lực không", không phải "ký gì gần nhất" |
 
-### Drift ledger — chính xác, không nói chung chung
+### Bằng chứng cưỡng chế
 
-Local 350 file · remote ledger 325 dòng · **29 file vắng mặt** (17 Shop + 12
-không thuộc Shop) · **4 version remote không có file local**.
+Cổng nằm **trong** `shop_application_submit()`. Bốn cách từ chối:
+`seller_rules_not_published` · `seller_rules_version_changed` ·
+`seller_rules_not_accepted` · lệch hash.
 
-Probe object thật cho cả 12 file không thuộc Shop:
+**Red-before-green ở đúng call site production:** xoá đoạn kiểm khỏi
+`shop_application_submit()` trên cơ sở dữ liệu đang chạy → **6 assertion đỏ**,
+gồm cả cái về gọi thẳng RPC không qua UI.
 
-- **11/12 đã áp**, chỉ thiếu dòng ledger.
-- 🔴 **1/12 THẬT SỰ CHƯA ÁP** — `20260805150000_news_source_ppa_tour_pause`.
-  Nguồn tin `ppa-tour` vẫn `active=true` trên production dù feed đã 404 từ 05/08.
+| Tầng | Số |
+|---|---|
+| pgTAP `shop_seller_rules_acceptance.test.sql` | **58** |
+| pgTAP `shop_phase1_rls.test.sql` | +3 |
+| HTTP integration (JWT thật, qua PostgREST) | **11** |
+| Component (bốn trạng thái, đua phiên bản, refresh) | **10** |
+| Parity (cổng đúng chỗ, không seed văn bản, không thu IP) | +11 |
 
-Đây đúng là lý do lệnh **"cấm chèn ledger mù"** tồn tại. Ngoài phạm vi Shop,
-ghi lại, **không sửa**.
+### Hành vi UI
 
----
+Bốn trạng thái nói bằng lời: **Đang tải** (chưa có checkbox nào tồn tại) ·
+**Đã ghi nhận** (đọc từ máy chủ, nên refresh cho ra sự thật) · **Chưa ghi nhận
+được** (bỏ tích + mời thử lại, không bao giờ nói "đã ký") · **Chưa ban hành**
+(phân biệt với "không tải được").
 
-## 4. Ba đính chính cho `deployment-readiness.md`
-
-Cả ba tìm ra bằng cách đọc chính vật thể, không đọc ghi chú về nó.
-
-| Mục | Ghi chú cũ nói | Thực tế |
-|---|---|---|
-| A1 | Migration `RAISE EXCEPTION` nếu vault trống ⇒ phải nạp secret **trước** | Exception nằm **trong thân cron job**, kích hoạt lúc **chạy**. Ràng buộc thứ tự đó là ảo. (Ràng buộc thật: deploy function **trước** migration tạo cron) |
-| A2 | "Đặt secret `CRON_SECRET` cho function" | Secret là **cấp project** và **đã tồn tại**; 5 caller cron khác đang dùng. Chạy `secrets set` có nguy cơ rotate nhầm và làm **mọi** cron 401. **Packet C bỏ hẳn bước này** |
-| A8 | Bucket public "chỉ webp", 1 MB | Bucket cho phép jpeg/png/webp, 8 MB. **Worker** mới là chỗ cưỡng chế webp + 1 MB + 2048px. Không ai giữ JWT ghi được vào bucket đó, nên kết quả giống nhau — nhưng tiêu chí nghiệm thu phải nhắm vào worker |
+Toàn văn hiển thị tại chỗ. Đua phiên bản rút lại chấp thuận **trước** khi người
+ta bấm nút. Nút gửi khoá cho tới khi máy chủ xác nhận — khoá, không giấu, và
+không tin.
 
 ---
 
-## 5. Defect mà cổng kiểm tra bắt được
+## 3. Ba defect các cổng bắt được trong CP12
 
-**Teardown nói dối lần thứ năm, lần này ở tầng Storage.**
+1. **Thiếu grant `service_role` trên `legal_documents`.** Bộ HTTP integration
+   trả `42501` ngay lần chạy đầu. `service_role` đi vòng qua RLS nhưng **không**
+   qua tầng grant — lớp lỗi repo này đã quét hai lần, và pgTAP lẫn typechecker
+   đều mù với nó.
+2. **Trigger append-only làm không xoá được hồ sơ.** `ON DELETE SET NULL` là một
+   UPDATE, và trigger từ chối nó — mọi `DELETE FROM shop_applications` sẽ hỏng.
+   Chỉ lượt chạy trình duyệt gặp được: **pgTAP khẳng định trong một transaction
+   nó rollback**, nên không bao giờ xoá một hồ sơ nào.
+3. **Một assertion về trạng thái toàn cục trên cơ sở dữ liệu dùng chung.**
+   `shop-p2b-media-lifecycle.test.mjs` khẳng định hàng đợi rỗng **toàn cục**;
+   các bộ integration chạy song song và tự xếp job vào đó. Nó đang khẳng định
+   một sự thật về test của người khác.
 
-Bộ nghiệm thu P2b in `"objects": 0`. Đếm độc lập trên chính cơ sở dữ liệu vừa QA
-tìm thấy **6 object trong bucket RIÊNG TƯ `shop-product-media-draft`**.
-
-Thủ phạm: `scripts/shop-media-integration.test.mjs` rò rỉ **2 object mỗi lần
-chạy**. `afterAll` đi xuống hai tầng thư mục, nhưng đường dẫn máy chủ chọn là
-`<shop>/<product>/<media>/original` — **ba** tầng. `remove()` gọi lên tiền tố, và
-xoá key không tồn tại là **thành công hợp lệ** trong Storage, nên không gì báo lỗi.
-
-Vá: đi xuống tận đáy, phân biệt object với tiền tố bằng `entry.id`.
-Đỏ-trước-xanh-sau: **+2/lần → +0/lần**, hai lần liên tiếp; `storage_objects`
-giữ **0 → 0** qua một lượt `vitest run` đầy đủ.
-
-Vì sao không phải tiếng ồn: bucket đó **riêng tư**; preview **dùng chung** cơ sở
-dữ liệu với production nên file này nhắm vào môi trường nào cũng để lại object ở
-đó; và đây là **lần thứ năm** một teardown ở repo này báo sạch trong khi không
-sạch — bốn lần trước ở tầng cơ sở dữ liệu, lần này ở tầng Storage, chỗ bản sao
-lưu cơ sở dữ liệu không với tới.
+> Quy tắc rút ra từ #3: **trên một tài nguyên dùng chung, chỉ khẳng định thứ
+> mình sở hữu.** "Hàng đợi rỗng" và "hàng đợi không còn gì của tôi" nghe giống
+> nhau và chỉ một câu là kiểm được.
 
 ---
 
-## 6. Cổng kiểm tra cục bộ — tất cả XANH
+## 4. Cổng kiểm tra — tất cả XANH
 
-Cơ sở dữ liệu dựng lại từ số không trước khi đo.
+Cơ sở dữ liệu dựng lại từ số không. Delta đầy đủ:
+[`gate-results.md`](./gate-results.md).
 
 | Cổng | Kết quả |
 |---|---|
 | `supabase db reset --local` | exit 0 |
-| Ledger parity | **350 / 350** |
-| pgTAP | **1 241 PASS** — chạy **hai lần**: một lần sạch, một lần sau QA |
-| Unit | **2 014 PASS**, 10 skipped |
-| Storage + vòng đời ảnh (stack thật) | **40 PASS**, không skip |
+| Ledger parity | **351 / 351** |
+| pgTAP | **1 302 PASS** · 34 file · exit 0 |
+| Unit (gồm storage + vòng đời ảnh trên stack thật) | **2 048 PASS** · 10 skipped · 158 file |
 | noindex ở edge | **116 PASS** |
-| `tsc -b` · `eslint` · `build` | exit 0 · 0 lỗi · exit 0 |
-| Bundle `BUNDLE_STRICT=1` | exit 0 — **1 935,3 KB gz / 1 970 backstop** (không nâng), INITIAL **226,6 / 280** |
+| `tsc -b` · `eslint` · `build` | exit 0 · **0 lỗi** · exit 0 |
+| `BUNDLE_STRICT=1` | exit 0 |
 | `build:proto` | exit 0 |
-| Q01–Q04 | **37 màn hình, 0 phát hiện** |
-| Nghiệm thu P2b | **PASS** — 20 route × 6 chiều rộng, 6 hành trình |
-| Dọn dữ liệu | **17/17 bộ đếm = 0**, đếm độc lập |
-| Chỉ mục TẮT · sitemap không có Shop · không ghi remote | ✅ ✅ ✅ |
+| Q01–Q04 prototype | 37 màn hình, 0 phát hiện |
+| Nghiệm thu P2b (20 route × 6 chiều rộng, 6 hành trình) | **PASS** |
+| Dọn dữ liệu, đếm độc lập | **19/19 bộ đếm = 0** |
 
-Dấu vết đầy đủ và hai lần đỏ vì môi trường: [`gate-results.md`](./gate-results.md).
+### Bundle delta
+
+```
+                 trước CP12    sau CP12     thay đổi
+INITIAL gz        226,6 KB     226,6 KB      0,0 KB   / 280 KB
+Tổng gz JS       1935,3 KB    1936,8 KB     +1,5 KB   / backstop 1970 KB
+```
+
+**Backstop KHÔNG nâng.** Còn 33,2 KB. `INITIAL` không đổi một byte — màn hình
+chấp thuận nằm trong chunk `/seller/application`, không trên đường tới paint đầu
+tiên.
 
 ---
 
-## 7. Blocker chưa gỡ
+## 5. Quyết định Product Owner đã áp dụng
+
+| # | Quyết định | Đã làm gì |
+|---|---|---|
+| 1 | Preview dùng **Supabase staging riêng** | **Packet S** mới; A/B/C đổi mục tiêu; B và C chạy **hai lần** với secret khác nhau |
+| 2 | Pilot chấp nhận **chưa có thông báo tự động** | [`notification-decision.md`](./notification-decision.md) ghi **ĐÃ KÝ**, kèm 6 điều kiện; **không** xây hạ tầng thông báo |
+| 3 | Indexing **TẮT/unset ở mọi môi trường** | Packet A §4, Packet D §3, checklist mục 4 |
+| 4 | Drift `20260805150000_news_source_ppa_tour_pause` **ngoài phạm vi** | Packet B §4 — không sửa, không chèn ledger |
+| 5 | **Submit phải được máy chủ xác minh chấp thuận** | ✅ CP12 |
+
+---
+
+## 6. Thứ tự thi hành mới
+
+```
+ 1. Cưỡng chế seller-rules ở cục bộ                     ✅ XONG
+ 2. Product Owner cung cấp/duyệt "Quy chế người bán v1"  ⬜ B4
+ 3. Packet S — tạo staging
+ 4. Packet B-1 — 18 migration lên STAGING
+ 5. Packet C-1 — function + cron trên STAGING
+ 6. Packet A — preview Cloudflare trỏ STAGING
+ 7. Smoke đầy đủ trên staging
+ 8. Product Owner nghiệm thu preview
+ 9. Packet B-2 + C-2 lên PRODUCTION
+10. Web production, indexing vẫn TẮT
+11. Packet D — Wave 0, tài khoản test
+12. Wave 1 — một người bán thật
+```
+
+Bước 2 chặn bước 12, **không** chặn bước 3: hạ tầng dựng được trong lúc chờ văn
+bản; chỉ việc mời người bán thật là không.
+
+---
+
+## 7. Blocker còn lại
 
 | # | Blocker | Ai gỡ | Chặn |
 |---|---|---|---|
-| **B1** | URL preview có trong Supabase Auth → Redirect URLs? Không đọc được ở chế độ chỉ đọc (endpoint trả secret cùng payload) | Cuong, dashboard | Packet A |
-| **B2** | `SHOP_PUBLIC_INDEXING` không tồn tại ở **cả** Production lẫn Preview? Không có lệnh CLI đọc được | Cuong, dashboard | Packet A, D |
-| **B3** | Preview trỏ vào Supabase nào — **không có project staging** | Product Owner | **Packet A và B** |
-| **B4** | "Quy chế người bán v1" chưa tồn tại | Cuong / pháp lý | Người bán thật |
-| **B5** | 🔴 **Việc gửi hồ sơ KHÔNG cưỡng chế chấp thuận quy chế.** Ô đồng ý bị khoá, `shop_application_submit()` xác thực 5 trường và không kiểm chấp thuận, `shop_applications` không có cột bằng chứng | Product Owner | Người bán thật |
-| **B6** | Quyết định thông báo chưa ký | Product Owner | Packet D |
-| **B7** | 9 đầu vào của Packet D chưa điền (UUID, thời gian, người trực, ngưỡng dừng) | Product Owner | Packet D |
+| **B4** | 🔴 **"Quy chế người bán v1" chưa tồn tại.** Máy chủ nay từ chối **mọi** lần gửi hồ sơ với `seller_rules_not_published` — kể cả của Cuong. Đây là hành vi đúng | Cuong / pháp lý | Bước 12 |
+| **B1′** | URL preview trong **Redirect URLs của STAGING** | Cuong, dashboard | Packet A |
+| **B2** | `SHOP_PUBLIC_INDEXING` **không tồn tại** ở cả Production lẫn Preview | Cuong, dashboard | Packet A, D |
+| **B3′** | Project ref staging, region, gói — và **`pg_cron`/`pg_net` có bật được không** | Product Owner | Packet S |
+| **B6′** | Tên người **kiểm hàng đợi hằng ngày** (điều kiện #4 của quyết định thông báo) | Product Owner | Packet D |
+| **B7** | 9 đầu vào của Packet D | Product Owner | Packet D |
 
-**B5 đáng đọc lại.** Câu "submit bị khoá cho tới khi có quy chế" là **sai**. Một
-người bán được duyệt hôm nay sẽ không để lại bằng chứng chấp thuận nào. Không ai
-từng viết rằng nó chặn — **niềm tin rằng nó chặn mới là thứ nguy hiểm**.
+**B5 đã đóng** và không còn trong danh sách.
+
+### Đầu vào B4 chính xác cần gì
+
+Ba thứ, không hơn:
+
+1. **Toàn văn** "Quy chế người bán v1" — khung để điền:
+   [`seller-rules-v1-outline.md`](./seller-rules-v1-outline.md).
+2. **`effective_at`** — thời điểm hiệu lực. Tương lai là hợp lệ; không ai ký
+   được trước thời điểm đó.
+3. **Xác nhận đây là văn bản được duyệt**, không phải bản nháp.
+
+Ban hành là ba dòng SQL ở
+[`approval-packets/packet-d-pilot-activation.md` §4](./approval-packets/packet-d-pilot-activation.md).
+`content_hash` **không** nằm trong câu `INSERT` — nó là cột GENERATED, không ai
+viết được, kể cả người gõ câu đó.
 
 ---
 
-## 8. Bốn packet — không cái nào được duyệt
+## 8. Năm packet — không cái nào được duyệt
 
-| Packet | Nội dung | Tier |
-|---|---|---|
-| [A](./approval-packets/packet-a-preview.md) | Đẩy nhánh; Cloudflare tự dựng preview | 🟡 AMBER |
-| [B](./approval-packets/packet-b-migrations.md) | 17 migration lên `ajvlcamxemgbxduhiqrl` | 🔴 **RED** |
-| [C](./approval-packets/packet-c-worker-cron.md) | Deploy `shop-media-lifecycle`, xác nhận cron | 🟡 AMBER |
-| [D](./approval-packets/packet-d-pilot-activation.md) | Chèn UUID người bán, mở pilot | 🔴 **RED** |
+| Packet | Nội dung | Mục tiêu | Tier |
+|---|---|---|---|
+| [S](./approval-packets/packet-s-staging.md) | Tạo/xác nhận project staging | mới | 🟡 |
+| [B](./approval-packets/packet-b-migrations.md) | 18 migration | staging **rồi** production | 🔴 |
+| [C](./approval-packets/packet-c-worker-cron.md) | Worker + cron | staging **rồi** production | 🟡 |
+| [A](./approval-packets/packet-a-preview.md) | Đẩy nhánh → preview trỏ staging | Cloudflare | 🟡 |
+| [D](./approval-packets/packet-d-pilot-activation.md) | Allowlist, mở pilot | production | 🔴 |
 
-**Thứ tự đọc A → B → C → D. Thứ tự thi hành B → C → A → D**, vì preview web trỏ
-vào Supabase production và một preview có route Shop trên cơ sở dữ liệu không có
-bảng Shop là một preview lỗi ở mọi màn hình. Web **sau** backend, luôn luôn.
-
-Trong B, function phải deploy trước migration #4 — nên C chèn vào giữa B.
+Checklist dashboard 7 mục cho Product Owner:
+[`dashboard-checklist.md`](./dashboard-checklist.md).
 
 ---
 
 ## 9. Khuyến nghị: duyệt cái gì trước
 
-**Packet B**, nhưng câu hỏi thật sự đứng trước nó là **B3**: *preview trỏ vào
-Supabase nào?*
+**Packet S**, và trong đó câu hỏi đứng trước mọi câu khác là **`pg_cron` và
+`pg_net` có bật được trên gói định chọn không**.
 
-Không có project staging. Ba lựa chọn ở [`environment-audit.md` §5](./environment-audit.md);
-khuyến nghị là **preview web + Supabase production**, vì đó là cách duy nhất
-kiểm được cron và worker thật, và ba lớp bảo vệ đã có sẵn chứ không phải thêm
-vào:
+Nếu không: Packet C mất phần quan trọng nhất — chứng minh worker chạy theo **lịch
+thật** — và preview chỉ còn drain tay, tức là đúng thứ máy cục bộ đã làm được.
+Biết điều đó **trước** khi chọn gói thì rẻ hơn nhiều so với sau.
 
-1. `shop_pilot_members` rỗng ⇒ không ai tạo được gì;
-2. `SHOP_PUBLIC_INDEXING` không đặt ⇒ mọi route Shop noindex ở edge;
-3. `main` không có route Shop ⇒ web production không đổi một pixel.
-
-Đổi lại, phải chấp nhận rằng schema Shop sống trên cơ sở dữ liệu production
-trước khi ai duyệt pilot. Nó là thêm mới thuần, thao tác đắt nhất dưới một giây
-— nhưng đó là điều Product Owner **nói "được"**, không phải điều suy ra từ việc
-nó an toàn.
-
-Trả lời B3 xong thì B → C → A → D chạy theo thứ tự.
+Song song, **B4** đi được ngay và không phụ thuộc gì: viết văn bản không cần chờ
+hạ tầng.
 
 ---
 
 ## 10. Không thao tác remote nào đã thực hiện
-
-Đối chiếu với danh sách cấm:
 
 | Cấm | Trạng thái |
 |---|---|
@@ -211,14 +243,15 @@ Trả lời B3 xong thì B → C → A → D chạy theo thứ tự.
 | Deploy Edge Function | ❌ không |
 | Tạo/đổi secret remote | ❌ không |
 | Tạo cron remote | ❌ không |
-| Seed allowlist remote | ❌ không — bảng vẫn chưa tồn tại |
-| Sửa vai trò/admin remote | ❌ không |
-| Deploy Cloudflare (preview/production) | ❌ không |
+| Seed allowlist remote | ❌ không |
+| Tạo project staging | ❌ không — thao tác của Product Owner |
+| Deploy Cloudflare | ❌ không |
 | Merge / push | ❌ không — nhánh chỉ ở cục bộ |
 | Gửi email/push thật | ❌ không |
 | Bật lập chỉ mục · IndexNow · sitemap Shop | ❌ không |
+| Sửa drift `news_source_ppa_tour_pause` | ❌ không — ngoài phạm vi theo quyết định #4 |
 | Tạo dữ liệu người bán thật | ❌ không |
-| Bắt đầu Phase 3 | ❌ không |
 
-Mọi truy vấn Postgres đi qua một script từ chối bất cứ câu lệnh nào không bắt
-đầu bằng `SELECT`/`WITH`. Không giá trị secret nào được đọc hay in — chỉ tên.
+Mọi truy vấn Postgres remote trong đợt audit đi qua một script từ chối bất cứ
+câu lệnh nào không bắt đầu bằng `SELECT`/`WITH`. Không giá trị secret nào được
+đọc hay in — chỉ tên.
