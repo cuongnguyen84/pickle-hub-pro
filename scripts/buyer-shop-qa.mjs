@@ -16,6 +16,7 @@
 // ============================================================================
 
 import { chromium } from "playwright";
+import { execFileSync } from "node:child_process";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -41,11 +42,12 @@ const note = (where, msg) => findings.push(`${where}: ${msg}`);
 // Each route's own heading plus a marker that only exists once its body
 // rendered. Both, because either alone has already let a false PASS through.
 const EXPECT = {
-  // An existing public page as a CONTROL. Everything here uses TheLineLayout,
-  // so anything this gate reports on BOTH a P2b.4 route and the control comes
-  // from the shared site shell, not from this checkpoint. The comparison
-  // replaces a hand-written allowlist — which is the mechanism that let the
-  // admin gate report a false PASS.
+  // The CONTROL is /tools, not /clubs. Both use TheLineLayout, but only
+  // /tools renders a BACK BUTTON — and the back button is what makes the
+  // header too wide for a 320px phone. Controlling against /clubs said the
+  // overflow was ours; controlling against /tools shows it on a route that
+  // shipped long before the Shop. Pick a control that exercises the same
+  // shell configuration, or it is not a control.
   control:  { h1: /.+/,                 marker: /.+/ },
   home:     { h1: /Chợ đồ pickleball/,  marker: /Ngành hàng|Mới đăng/ },
   search:   { h1: /Tìm sản phẩm/,       marker: /sản phẩm|Không tìm thấy/ },
@@ -96,9 +98,41 @@ async function seed() {
       state: "approved", verified_at: new Date().toISOString(), position: 0,
     })),
   );
-  const { error: ue } = await admin
-    .from("products").update({ status: "approved", is_published: true }).in("id", ids);
-  if (ue) throw ue;
+  // `products` pins status and is_published against ANY client write — that
+  // is the P2a privileged-column guard, and PostgREST is a client. An
+  // `.update({status:'approved'})` here is silently neutralised, which is
+  // exactly how this gate spent its first run measuring an EMPTY catalogue and
+  // passing: every category read 0 and no ProductCard was ever rendered.
+  //
+  // So the promotion runs as SQL with the privileged flag set, the way the
+  // moderator's RPC and the media worker's commit do in production.
+  const sql = `
+    SELECT set_config('shop.privileged_write', 'on', true);
+    UPDATE public.products SET status='approved', is_published=true
+    WHERE shop_id='${shop.id}';
+    -- product_media pins state and public_path the same way, so the worker's
+    -- commit has to be replayed here too. Without it every product is
+    -- approved AND published AND invisible, because shop_product_is_publishable
+    -- also requires bytes in the public bucket.
+    UPDATE public.product_media
+    SET state='approved',
+        public_path = shop_id::text || '/' || product_id::text || '/p-v1.webp'
+    WHERE shop_id='${shop.id}';
+    SELECT set_config('shop.privileged_write', 'off', true);
+  `;
+  execFileSync("docker", [
+    "exec", "supabase_db_ajvlcamxemgbxduhiqrl",
+    "psql", "-U", "postgres", "-d", "postgres", "-q", "-c", sql,
+  ], { stdio: "pipe" });
+
+  const { count: live } = await admin
+    .from("products").select("id", { count: "exact", head: true })
+    .eq("shop_id", shop.id).eq("status", "approved").eq("is_published", true);
+  if (!live) throw new Error("seed produced no publishable products — the gate would measure an empty catalogue");
+  const { count: withBytes } = await admin
+    .from("product_media").select("id", { count: "exact", head: true })
+    .eq("shop_id", shop.id).not("public_path", "is", null);
+  if (!withBytes) throw new Error("seed produced no public renditions — products would be invisible");
 
   return { userId: u.user.id, shopId: shop.id };
 }
@@ -127,6 +161,21 @@ async function checkRoute(ctx, path, label, width) {
 
   const overflow = await overflowOf(page);
   if (overflow > 0) note(`${label}@${width}`, `${overflow}px past the scroller's right edge`);
+  // The left edge too: a control pulled off-canvas is unreachable, and
+  // overflowOf only looks right.
+  const offLeft = await page.evaluate(() => {
+    let worst = 0;
+    for (const el of document.querySelectorAll("a[href], button, input, select, textarea")) {
+      const s = getComputedStyle(el);
+      if (s.display === "none" || s.visibility === "hidden") continue;
+      if (String(el.className || "").includes("sr-only")) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0) continue;
+      worst = Math.max(worst, Math.round(-r.left));
+    }
+    return worst;
+  });
+  if (offLeft > 0) note(`${label}@${width}`, `a control starts ${offLeft}px off the left edge`);
   for (const f of await smallTargets(page)) note(`${label}@${width}`, f);
   for (const f of await zoomAndFontFindings(page, width)) note(`${label}@${width}`, f);
   if (width === 1440) {
@@ -147,6 +196,14 @@ async function checkRoute(ctx, path, label, width) {
     if (html.includes(bad)) note(label, `DOM offers "${bad}" — P2b has no such behaviour`);
   }
 
+  // A populated catalogue, asserted. Empty states are a legitimate SCREEN, but
+  // a gate that only ever sees them has not tested a product card, a price, an
+  // availability label or a lazy image — which is what this gate exists for.
+  if (label !== "control") {
+    const cards = await page.locator("a.tl-pcard").count();
+    if (cards === 0) note(`${label}@${width}`, "0 product cards — the gate is measuring an empty catalogue");
+  }
+
   if (consoleErrors.length) note(label, `console: ${consoleErrors.slice(0, 3).join(" | ")}`);
   console.log(`  ✓ ${String(width).padEnd(5)} ${label.padEnd(10)} innerWidth ${measured}`);
   return page;
@@ -157,7 +214,7 @@ let seeded = null;
 try {
   seeded = await seed();
   const ROUTES = [
-    ["/clubs", "control"],
+    ["/tools", "control"],
     ["/shop", "home"],
     ["/shop/search?q=vot", "search"],
     ["/shop/category/vot", "category"],
@@ -181,6 +238,36 @@ try {
     }
     await ctx.close();
   }
+
+  // A 44px box is only worth having if a thumb landing on its EDGE actually
+  // follows the link. Clicking the centre would pass even with a 26px anchor,
+  // which is the state this replaced.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 320, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${APP}/shop/category/vot`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(500);
+    const crumb = page.locator("nav[aria-label='Đường dẫn'] a.tl-crumb").first();
+    const box = await crumb.boundingBox();
+    if (!box) note("breadcrumb@320", "no breadcrumb link found");
+    else {
+      if (box.width < 44 || box.height < 44) {
+        note("breadcrumb@320", `hit box is ${Math.round(box.width)}x${Math.round(box.height)}, not 44x44`);
+      }
+      // 3px inside the left edge and 3px above the bottom — a corner, not the
+      // middle of the word.
+      await page.mouse.click(box.x + 3, box.y + box.height - 3);
+      await page.waitForTimeout(700);
+      const url = page.url();
+      if (!/\/shop$/.test(new URL(url).pathname)) {
+        note("breadcrumb@320", `edge click went to ${new URL(url).pathname}, not /shop`);
+      } else {
+        console.log("  ✓ 320   breadcrumb edge click → /shop");
+      }
+    }
+    await page.close();
+    await ctx.close();
+  }
 } catch (e) {
   note("harness", (e.stack ?? String(e)).split("\n").slice(0, 3).join(" | "));
 } finally {
@@ -196,6 +283,7 @@ try {
 }
 
 // Anything the control route reports too is site shell, not P2b.4.
+// /tools carries the same header, footer and ChatFAB, and a back button.
 const msgOf = (l) => l.replace(/^[a-z]+@?\d*: /, "");
 const controlMsgs = new Set(findings.filter((f) => f.startsWith("control")).map(msgOf));
 const shell = findings.filter((f) => !f.startsWith("control") && controlMsgs.has(msgOf(f)));
@@ -203,7 +291,7 @@ const mine = findings.filter((f) => !f.startsWith("control") && !controlMsgs.has
 
 console.log(`\nscreenshots: ${SHOT_DIR}`);
 if (shell.length) {
-  console.log(`\n${new Set(shell.map(msgOf)).size} shell finding type(s), each also on /clubs.`);
+  console.log(`\n${new Set(shell.map(msgOf)).size} shell finding type(s), each also on /tools.`);
 }
 findings.length = 0;
 findings.push(...mine);

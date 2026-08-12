@@ -149,6 +149,25 @@
 @supports not (backdrop-filter: blur(14px)) {
   [data-theme="the-line"] .tl-nav { background: var(--tl-bg); }
 }
+
+/* The header does not fit a 320px phone when a back button is present.
+ *
+ * Measured, not guessed: back 36 + brand 22 + auth pills 120 + nav-right 80
+ * = 258 of content, plus 4x16 gap and 2x20 padding = 362 in a 320 box. The
+ * page then scrolls sideways by 43px at 320 and 1px at 375 — reproduced on
+ * /tools, which shipped long before the Shop, so this is not new.
+ *
+ * Only the gutters and the gap give way. Nothing is hidden and no control
+ * shrinks below its touch target: 258 + 3*8 + 2*12 = 306, which fits with
+ * room to spare, and 375 has never been close after that.
+ */
+@media (max-width: 380px) {
+  [data-theme="the-line"] .tl-nav {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    gap: 8px;
+  }
+}
 [data-theme="the-line"] .tl-brand {
   display: flex; align-items: center; gap: 10px;
   font-size: 16px; font-weight: 500; letter-spacing: -0.015em; color: var(--tl-fg);

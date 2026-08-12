@@ -483,3 +483,91 @@ is not a fix. That change was reverted.
 These are layout bugs in new code, they are reproducible at named widths, and
 they are the reason this checkpoint is not signed off. **P2b.5 and P2b.6 have
 not been started.**
+
+### P2b.4 browser acceptance — PASS · `<this commit>`
+
+**P2b.4 implementation and local browser acceptance PASS.**
+
+Four findings were open. Diagnosing them by geometry rather than by trying CSS
+changed what three of them were.
+
+#### A diagnostic that names the culprit
+
+`scripts/qa/overflow-diagnostic.mjs` returns the offending elements with their
+path, rect and the computed properties that usually explain them, instead of
+one number for the document. Deliberately not `scrollWidth`: that cannot name
+anything and misses an element clipped by an ancestor.
+
+It immediately identified `nav.tl-nav > div.tl-nav-right` — the **site
+header** — not Shop code. Arithmetic at 320px: back 36 + brand 22 + auth pills
+120 + nav-right 80 = 258 content, plus 4×16 gap and 2×20 padding = **362 in a
+320 box**.
+
+#### The control was wrong, which is why it read as ours
+
+The gate controlled against `/clubs`, which has **no back button** — and the
+back button is what makes the header too wide. Against `/tools`, which shipped
+long before the Shop, the overflow reproduces **identically (337 vs 320)**.
+
+Fixed at the header for every page, not patched into three Shop routes: gutters
+20 → 12px and gap 16 → 8px below 380px. Nothing hidden, no control shrunk.
+`/tools` and `/shop` both go from 337 to 320.
+
+The gate's control is now `/tools`. A control that does not exercise the same
+shell configuration is not a control.
+
+#### What was actually ours
+
+Only the **breadcrumb**, 26×44. Fixed with real padding on the anchor
+(26 + 2×9 = 44) — the box a thumb and `getBoundingClientRect()` both see, not a
+pseudo-element.
+
+The first attempt added a compensating `margin-inline-start: -9px` to keep the
+text flush. That put the anchor at **x = −9**: a fifth of the touch target off
+the left edge of a 320px screen, and an **edge click landed outside the
+window**. Caught by the new click test. The margin was dropped; a 9px indent is
+a much smaller price than an unreachable target. The gate now also checks the
+**left** edge, which `overflowOf` never did.
+
+`button 27×36` at 768 turned out to be shell too — present on `/tools`.
+
+#### The gate had been passing on an empty catalogue
+
+The 375px screenshot showed every category count at **0** and no product card
+at all: `.update({status:'approved'})` through PostgREST is silently
+neutralised by the P2a privileged-column guard, and `product_media` pins
+`state`/`public_path` the same way. The seed had never produced a publishable
+product, so no card, price, availability label or lazy image was ever
+rendered — the same false green this branch has now met three times in three
+disguises.
+
+The promotion runs as privileged SQL (the moderator's RPC and the worker's
+commit, replayed), the seed **asserts** it produced publishable rows, and every
+route now asserts **≥1 product card**. Verified in the screenshot: 6 products,
+real prices, "Mới · Còn hàng", verified-shop badge, honest sparse-catalogue
+copy.
+
+#### Red-before-green
+
+| Reverted | Result |
+|---|---|
+| header gutter fix | diagnostic red at **+43px**, naming `nav.tl-nav > div.tl-nav-right`, on control **and** shop |
+| breadcrumb padding | 7 findings red (`a 26×21`) |
+| seed promotion | 18 findings red ("0 product cards") |
+
+Worth recording: with the breadcrumb reverted the **click test still passed**,
+because it clicks the edge of whatever box exists. The size assertion catches a
+shrunken target; the click test catches a correctly-sized target that is
+unreachable. Both earned their place, for different failures.
+
+| Gate | Result |
+|---|---|
+| buyer browser QA | **PASS** at 320/375/390/414/768/1440, 35 shell types filtered against `/tools` |
+| breadcrumb edge click @320 | PASS |
+| unit | 1837 |
+| `tsc -b` / eslint | clean / 0 errors |
+| build · `BUNDLE_STRICT=1` · `build:proto` | pass |
+| Total gz | 1929.2 → **1929.5** (+0.3 for the CSS) |
+| INITIAL | 226.5 KB |
+
+Screenshots outside the repo: 375 home/search/category/control, 1440 search.

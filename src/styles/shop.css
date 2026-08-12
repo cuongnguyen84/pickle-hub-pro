@@ -1274,4 +1274,22 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-shop-searchfield { gap: 8px; }
 .tl-shop-searchfield input { min-width: 0; flex: 1 1 auto; }
 .tl-shop-searchfield > .tl-shop-btn { flex: 0 0 auto; min-height: var(--shop-tap); padding: 0 14px; }
-.tl-crumb { display: inline-flex; align-items: center; min-height: var(--shop-tap); }
+/* A breadcrumb link is short text — "Chợ" is 26px wide — and a 44px touch
+ * target has to be the anchor's REAL box, not a pseudo-element: the gate
+ * measures getBoundingClientRect() on the anchor, and so does a thumb.
+ *
+ * Padding does it honestly (26 + 2*9 = 44). There is NO compensating negative
+ * margin: pulling the first crumb back by 9px to keep the text flush put the
+ * anchor's box at x = -9, i.e. a fifth of the touch target off the left edge
+ * of a 320px screen, and an edge click landed outside the window. A 9px indent
+ * is a much smaller price than a target a thumb cannot reach. */
+.tl-shop-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.tl-crumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--shop-tap);
+  padding-inline: 9px;
+}
+.tl-shop-crumbs .tl-crumb-sep { color: var(--tl-fg-4); }
+.tl-shop-crumbs .tl-crumb-current { padding-inline: 6px; }

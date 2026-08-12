@@ -81,10 +81,10 @@ export default function ShopCategory() {
     <TheLineLayout title={category?.name ?? "Ngành hàng"}>
       <DynamicMeta title={category ? category.name : "Ngành hàng"} noindex />
       <main className="tl-shop">
-        <nav aria-label="Đường dẫn" className="tl-shop-sub">
+        <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
           <Link to="/shop" className="tl-crumb">Chợ</Link>
-          <span aria-hidden="true"> / </span>
-          <span aria-current="page">{category?.name ?? "…"}</span>
+          <span aria-hidden="true" className="tl-crumb-sep">/</span>
+          <span aria-current="page" className="tl-crumb-current">{category?.name ?? "…"}</span>
         </nav>
 
         <h1 className="tl-shop-h1">{category?.name ?? "Ngành hàng"}</h1>
