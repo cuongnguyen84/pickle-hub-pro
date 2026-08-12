@@ -620,6 +620,18 @@
     "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplicationReview /></RequireAuth>"
   },
   {
+    "path": "/admin/shop/products",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProducts /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProductReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/contacts",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopContacts /></RequireAuth>"
+  },
+  {
     "path": "/privacy",
     "element": "<Privacy />"
   },

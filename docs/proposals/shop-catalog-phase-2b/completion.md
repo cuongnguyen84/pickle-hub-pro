@@ -160,3 +160,74 @@ sellers have no DELETE policy on products.
 
 Deferred: notification dispatch still has no infrastructure; the contract in
 `notification-contract.md` now covers contact events too.
+
+---
+
+## P2b.2 — Admin moderation UI · `<this commit>`
+
+Three lazy routes, all behind `RequireAuth requiredRole="admin"` inside
+`AdminMFAGate`, all `noindex`, none reachable from a buyer surface:
+
+| Route | Screen | chunk gz |
+|---|---|---:|
+| `/admin/shop/products` | queue | 5.7 KB |
+| `/admin/shop/products/:id` | review + decision rail | 11.4 KB |
+| `/admin/shop/contacts` | contact moderation | 6.7 KB |
+
+Everything reads the P2b.1 RPCs — no table selects — so the queue counts are
+the server's, the review payload is an allowlist built in Postgres, and
+`allowed_decisions` decides which buttons exist rather than the screen
+guessing.
+
+The buyer preview is the first thing on the review page, not a link. It is the
+canonical projection, so a moderator cannot approve one thing and publish
+another. "Đã duyệt" and "đang hiển thị" are shown as two separate facts,
+because they are.
+
+Pure logic in `src/lib/shop/moderationDecision.ts` (21 assertions): which
+decisions need a note, which need targets, target identity as the whole tuple
+rather than the section, and the consequence copy — including an assertion that
+suspend/reopen keep saying the product does not go back on sale by itself, and
+that approve does not claim instant visibility.
+
+| Gate | Result |
+|---|---|
+| unit | **1809** passed (was 1788) |
+| `tsc -b` | clean |
+| eslint | 0 errors |
+| pgTAP | unchanged, 1174 |
+| build + `BUNDLE_STRICT=1` | exit 0 |
+| Total gz | 1909.3 → **1921.1** (+11.8; allocation 12) |
+| INITIAL | 226.0 → 226.3 |
+
+### 🔴 Browser QA is BLOCKED, and the first version of this gate lied
+
+`scripts/admin-moderation-qa.mjs` drives the three routes at
+320/375/390/414/768/1440 with a real admin JWT, asserting `window.innerWidth`
+at every size, plus axe, keyboard, overflow, touch targets, and a check that no
+storage path or signed URL reaches the DOM.
+
+It cannot pass yet. The local stack has no `[auth.mfa]` block in
+`supabase/config.toml`, so TOTP enrolment returns 422 and `AdminMFAGate`
+renders **"Lỗi xác thực 2 yếu tố"** instead of the console — on every route, at
+every width.
+
+The first version of this file listed that 422 as "known pre-existing" and
+**reported PASS**. It was measuring an error screen: no overflow, no small
+targets, no console errors, because there was nothing on the page. That is
+exactly the false green the P2a acceptance run exists to prevent, and it was
+caught only by opening the 375px screenshot.
+
+The gate now treats the MFA 422 and the missing `<main>` as HARD failures with
+a stated reason, and additionally asserts the console's own `<h1>` is on the
+page. It exits red, which is the correct answer today.
+
+**Next action before P2b.3 QA can mean anything:** add `[auth.mfa.totp]`
+(`enroll_enabled`/`verify_enabled`) to `supabase/config.toml`, restart the local
+stack, and give the QA admin a verified factor plus a generated TOTP code so the
+session reaches aal2.
+
+One genuine pre-existing defect surfaced and is allowlisted with proof: the
+shared `ErrorState` retry button renders **74×41** against DS-03's 44px rule,
+reproduced identically on `/admin/shop/applications` from Phase 1. It belongs
+with `PageStates.tsx`, not inside a moderation checkpoint.

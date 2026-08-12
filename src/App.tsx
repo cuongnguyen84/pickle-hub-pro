@@ -95,6 +95,11 @@ const SellerProducts = lazyRetry(() => import("./pages/shop/SellerProducts"));
 const SellerProductForm = lazyRetry(() => import("./pages/shop/SellerProductForm"));
 const AdminShopApplications = lazyRetry(() => import("./pages/admin/shop/AdminShopApplications"));
 const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/AdminShopApplicationReview"));
+// P2b.2 — moderation console. Separate lazy chunks from the buyer surfaces, so
+// a shopper never downloads the thing that can suspend their seller.
+const AdminShopProducts = lazyRetry(() => import("./pages/admin/shop/AdminShopProducts"));
+const AdminShopProductReview = lazyRetry(() => import("./pages/admin/shop/AdminShopProductReview"));
+const AdminShopContacts = lazyRetry(() => import("./pages/admin/shop/AdminShopContacts"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -811,6 +816,9 @@ const App = () => (
                     <Route path="/seller/products/:id/edit" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
                     <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />
                     <Route path="/admin/shop/applications/:id" element={<RequireAuth requiredRole="admin"><AdminShopApplicationReview /></RequireAuth>} />
+                    <Route path="/admin/shop/products" element={<RequireAuth requiredRole="admin"><AdminShopProducts /></RequireAuth>} />
+                    <Route path="/admin/shop/products/:id" element={<RequireAuth requiredRole="admin"><AdminShopProductReview /></RequireAuth>} />
+                    <Route path="/admin/shop/contacts" element={<RequireAuth requiredRole="admin"><AdminShopContacts /></RequireAuth>} />
                     {/* Public pages */}
 
                     {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}
