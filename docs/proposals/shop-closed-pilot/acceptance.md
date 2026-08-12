@@ -135,7 +135,7 @@ lặp sai, và red-proof của nó là một dòng — bỏ `DELETE` trong
 node scripts/shop-closed-pilot-smoke.mjs --list
 node scripts/shop-closed-pilot-smoke.mjs \
   --target https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev \
-  --supabase-url https://<STAGING_REF>.supabase.co \
+  --supabase-url https://<STAGING_PROJECT_REF>.supabase.co \
   --anon-key "<anon key STAGING>"
 ```
 

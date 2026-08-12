@@ -33,15 +33,30 @@ Không ai từng viết rằng nó chặn. **Niềm tin rằng nó chặn mới 
 | Cột | Ghi chú |
 |---|---|
 | `document_key` + `version` | khoá chính; `seller-rules` là key đầu tiên |
+| `scope` | `closed-pilot` \| `public`. Quy chế pilot **không phải** quy chế public launch, và cột này là thứ ngăn việc tái sử dụng im lặng |
 | `title`, `body` | toàn văn, lưu **một lần** |
 | `content_hash` | **GENERATED** `sha256(body)` — không ai ghi được |
-| `effective_at` | có thể ở tương lai |
+| `approved_by`, `approved_at` | cả hai `NULL` = **BẢN NHÁP** |
+| `effective_at` | có thể ở tương lai; **không được sớm hơn** `approved_at` |
 | `retired_at` | đặt một lần, không gỡ lại |
 
-**Bất biến bằng trigger:** `document_key`, `version`, `title`, `body`,
-`effective_at`, `created_at` không đổi được sau khi ghi; chỉ `retired_at` đi
-được từ `NULL` sang một giá trị, một lần. Xoá một phiên bản đã có người ký bị
-từ chối.
+### Ba trạng thái, không phải hai
+
+| Trạng thái | `approved_at` | Hệ thống làm gì |
+|---|---|---|
+| **Nháp** | `NULL` | `legal_current_document()` **không trả về**; policy đọc **không cho đọc**; không ký được. Nội dung **vẫn sửa được** |
+| **Đã duyệt, chưa tới hạn** | có | Chưa phục vụ; `effective_at` ở tương lai |
+| **Đang hiệu lực** | có | Bản duy nhất được phục vụ và ký được |
+
+**Bất biến — nhưng đóng băng ở lúc PHÊ DUYỆT, không phải lúc ghi.** Trước khi
+duyệt, `scope`/`title`/`body`/`effective_at` còn sửa được và `content_hash` đi
+theo. Sau khi duyệt, cả bốn đóng băng; `approved_by`/`approved_at` là cửa một
+chiều; `retired_at` cũng vậy. Xoá một phiên bản đã có người ký bị từ chối.
+
+> Đóng băng ở lúc ghi nghe chặt hơn và thực ra là một cái bẫy: một bản nháp
+> được đặt với `effective_at` trong quá khứ sẽ **không bao giờ duyệt được**, vì
+> duyệt khi đó vi phạm quy tắc không-ghi-lùi-ngày và không có cách nào dời ngày.
+> Bắt được bởi chính test cố duyệt một bản nháp.
 
 Vì sao `content_hash` là GENERATED chứ không phải một cột người ta ghi: nó
 **không thể mâu thuẫn** với văn bản nó tuyên bố băm. Sửa nội dung tại chỗ sẽ đổi
@@ -95,8 +110,8 @@ cần một quyết định về quyền riêng tư chưa ai đưa ra. Schema **
 | Người gọi chưa ký bản đang hiệu lực | `seller_rules_not_accepted` (23514) |
 | Chữ ký khớp version nhưng **lệch hash** | như trên |
 
-Và `legal_accept()` từ chối khi: chưa có bản hiệu lực · phiên bản đã thu hồi ·
-phiên bản chưa tới hạn · hash không khớp · chưa đăng nhập.
+Và `legal_accept()` từ chối khi: chưa có bản hiệu lực · **bản chưa được duyệt** ·
+phiên bản đã thu hồi · phiên bản chưa tới hạn · hash không khớp · chưa đăng nhập.
 
 ### Ký lại hay không
 
@@ -156,7 +171,7 @@ tin: RPC từ chối bất kể. Nó ở đó để không ai được mời b�
 
 | Tầng | Số | Ghi chú |
 |---|---|---|
-| pgTAP — `shop_seller_rules_acceptance.test.sql` | **58** | mọi cách ký sai, ký lại, bất biến, biên lai, AAL2 |
+| pgTAP — `shop_seller_rules_acceptance.test.sql` | **68** | mọi cách ký sai, ký lại, bất biến, biên lai, AAL2, **bản nháp, ghi lùi ngày, duyệt một nửa** |
 | pgTAP — `shop_phase1_rls.test.sql` | +3 | "A gửi được hồ sơ" nay có nghĩa gì |
 | HTTP integration — `shop-seller-rules-integration.test.mjs` | **11** | JWT thật, qua PostgREST |
 | Component — `SellerRulesAcceptance.test.tsx` | **10** | bốn trạng thái, đua phiên bản, khôi phục sau refresh |

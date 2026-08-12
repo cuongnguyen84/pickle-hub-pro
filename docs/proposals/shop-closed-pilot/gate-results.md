@@ -12,40 +12,43 @@
 
 ## 1. Bảng kết quả
 
-| Cổng | Lệnh | Trước CP12 | **Sau CP12** |
-|---|---|---|---|
-| Reset cơ sở dữ liệu | `npx supabase db reset --local` | exit 0 | **exit 0** |
-| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 350 / 350 | **351 / 351** |
-| pgTAP | `npx supabase test db --local supabase/tests` | 1 241 · 33 file | **1 302 PASS · 34 file · exit 0** |
-| Unit | `npx vitest run` | 2 014 · 156 file | **2 048 PASS · 10 skipped · 158 file · exit 0** |
-| Storage + vòng đời ảnh | file integration trên stack thật | 40 PASS | **nằm trong lượt unit ở trên, không skip** |
-| noindex ở edge | 2 file `shop-pilot-seo*` | 116 PASS | **116 PASS** (không đổi) |
-| Typecheck | `npx tsc -b` | exit 0 | **exit 0** |
-| Lint | `npx eslint .` | exit 0 · 29 cảnh báo | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
-| Build | `npm run build` | exit 0 | **exit 0** |
-| Bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | exit 0 | **exit 0** |
-| Build prototype | `npm run build:proto` | exit 0 | **exit 0** |
-| Q01–Q04 | `PROTO_BASE_URL=… node scripts/proto-shop-qa.mjs all` | 37 màn hình, 0 phát hiện | **37 màn hình, 0 phát hiện** |
-| Nghiệm thu P2b | `SHOP_QA_BASE_URL=… node scripts/shop-p2b-acceptance-qa.mjs` | PASS | **PASS** — 20 route × 6 chiều rộng, 6 hành trình |
-| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 17/17 = 0 | **19/19 bộ đếm = 0** (thêm `rulesDocuments`, `rulesAcceptances`) |
+| Cổng | Lệnh | Trước CP12 | Sau CP12 | **Sau CP13** |
+|---|---|---|---|---|
+| Reset cơ sở dữ liệu | `npx supabase db reset --local` | exit 0 | exit 0 | **exit 0** |
+| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 350 / 350 | 351 / 351 | **351 / 351** |
+| pgTAP | `npx supabase test db --local supabase/tests` | 1 241 · 33 file | 1 302 · 34 file | **1 312 PASS · 34 file · exit 0** |
+| Unit | `npx vitest run` | 2 014 · 156 file | 2 048 · 158 file | **2 051 PASS · 10 skipped · 158 file · exit 0** |
+| Storage + vòng đời ảnh | file integration trên stack thật | 40 PASS | trong lượt unit | **trong lượt unit, không skip** |
+| noindex ở edge | 2 file `shop-pilot-seo*` | 116 PASS | 116 PASS | **116 PASS** (không đổi) |
+| Typecheck | `npx tsc -b` | exit 0 | exit 0 | **exit 0** |
+| Lint | `npx eslint .` | exit 0 · 29 cảnh báo | exit 0 | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
+| Build | `npm run build` | exit 0 | exit 0 | **exit 0** |
+| Bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | exit 0 | exit 0 | **exit 0** |
+| Build prototype | `npm run build:proto` | exit 0 | exit 0 | **exit 0** |
+| Q01–Q04 | `PROTO_BASE_URL=… node scripts/proto-shop-qa.mjs all` | 37 màn hình, 0 phát hiện | 37, 0 | **37 màn hình, 0 phát hiện** |
+| Nghiệm thu P2b | `SHOP_QA_BASE_URL=… node scripts/shop-p2b-acceptance-qa.mjs` | PASS | PASS | **PASS** — 20 route × 6 chiều rộng, 6 hành trình |
+| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 17/17 = 0 | 19/19 = 0 | **19/19 bộ đếm = 0** |
 
-### Bundle — delta CP12
+### Bundle — delta CP12 và CP13
 
 ```
-                    trước CP12     sau CP12      thay đổi
-INITIAL gz           226,6 KB      226,6 KB      0,0 KB      / 280 KB
-CODE gz             1551,4 KB     1552,8 KB     +1,4 KB      / 1800 KB
-CONTENT (blog) gz    383,9 KB      383,9 KB      0,0 KB
-Tổng gz JS          1935,3 KB     1936,8 KB     +1,5 KB      / backstop 1970 KB
+                  trước CP12    sau CP12    sau CP13    tổng thay đổi
+INITIAL gz         226,6 KB     226,6 KB    226,6 KB      0,0 KB   / 280 KB
+CODE gz           1551,4 KB    1552,8 KB   1553,9 KB     +2,5 KB   / 1800 KB
+CONTENT (blog)     383,9 KB     383,9 KB    383,9 KB      0,0 KB
+Tổng gz JS        1935,3 KB    1936,8 KB   1937,8 KB     +2,5 KB   / backstop 1970 KB
 ```
 
-**Backstop KHÔNG nâng.** Còn **33,2 KB**, dưới 5% — cổng nói thẳng rằng PR kế
+**Backstop KHÔNG nâng.** Còn **32,2 KB**, dưới 5% — cổng nói thẳng rằng PR kế
 tiếp phải trả lại phần này.
 
-**+1,5 KB** là toàn bộ chi phí của CP12: một hook và một component đọc, hiển thị
-và ghi nhận chấp thuận. `INITIAL` **không đổi một byte** — màn hình đó nằm trong
-chunk `/seller/application`, không nằm trên đường tới paint đầu tiên, đúng như
-mong đợi.
+Chi phí chia đôi rõ ràng: **+1,5 KB** cho màn hình chấp thuận của người bán
+(CP12), **+1,0 KB** cho panel biên lai của người kiểm duyệt (CP13). **Không
+thêm dependency nào.**
+
+`INITIAL` **không đổi một byte** qua cả hai đợt — cả hai màn hình đều nằm trong
+chunk route của chúng (`/seller/application`, `/admin/shop/applications/:id`),
+không nằm trên đường tới paint đầu tiên.
 
 ### Nghiệm thu P2b — 20 route × 6 chiều rộng + 6 hành trình
 
