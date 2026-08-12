@@ -10,7 +10,7 @@
 
 BEGIN;
 
-SELECT plan(53);
+SELECT plan(58);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 -- A: pilot applicant, the one who signs.  B: pilot applicant, never signs.
@@ -309,6 +309,33 @@ RESET role;
 SELECT throws_ok(
   $$UPDATE public.legal_acceptances SET accepted_at = now() - interval '1 year'$$,
   '42501', NULL, 'a signature cannot be back-dated, by anyone');
+
+SELECT throws_ok(
+  $$UPDATE public.legal_acceptances SET version = 'v1'$$,
+  '42501', NULL, 'nor moved to a different version');
+
+SELECT throws_ok(
+  $$UPDATE public.legal_acceptances
+      SET application_id = 'a0000002-0000-4000-8000-000000000002'::uuid$$,
+  '42501', NULL, 'nor re-pointed at somebody else''s application');
+
+-- The one permitted UPDATE, and only because the FK does it: deleting an
+-- application detaches the evidence pointer. Blocking this made every
+-- `DELETE FROM shop_applications` fail — found by the browser acceptance run,
+-- which is the only thing here that tears a real fixture down.
+SELECT lives_ok(
+  $$DELETE FROM public.shop_applications WHERE id='a0000001-0000-4000-8000-000000000001'::uuid$$,
+  'deleting an application detaches the signature instead of being refused');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.legal_acceptances
+    WHERE user_id='5e100001-0000-4000-8000-000000000001'::uuid),
+  2, 'and the signatures themselves survive it — they belong to the person, not the form');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.legal_acceptances
+    WHERE user_id='5e100001-0000-4000-8000-000000000001'::uuid AND application_id IS NOT NULL),
+  0, 'with the pointer nulled, not dangling');
 
 SELECT throws_ok(
   $$UPDATE public.legal_documents SET body = body || ' thêm một câu' WHERE version='v1'$$,

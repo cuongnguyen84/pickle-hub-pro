@@ -166,11 +166,32 @@ CREATE TRIGGER legal_documents_immutable_trg
 -- Acceptances are never edited. DELETE is left to the FK cascade from
 -- auth.users so that account deletion (and the QA teardown) still works — a
 -- signature that outlives the person is not evidence, it is a retention bug.
+--
+-- One UPDATE is allowed, and only one: application_id going from a value to
+-- NULL. That is the FK's own ON DELETE SET NULL firing when the application a
+-- signature was made during is deleted, and blocking it made every
+-- `DELETE FROM shop_applications` fail — which the browser acceptance run
+-- found the first time it tore its fixture down. The signature itself is
+-- untouched; what is being detached is a pointer to something that no longer
+-- exists. Every other column is still frozen, and application_id can never
+-- come back or point somewhere new.
 CREATE OR REPLACE FUNCTION public.legal_acceptances_append_only()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
+  IF NEW.application_id IS NULL
+     AND OLD.application_id IS NOT NULL
+     AND NEW.id            IS NOT DISTINCT FROM OLD.id
+     AND NEW.user_id       IS NOT DISTINCT FROM OLD.user_id
+     AND NEW.document_key  IS NOT DISTINCT FROM OLD.document_key
+     AND NEW.version       IS NOT DISTINCT FROM OLD.version
+     AND NEW.content_hash  IS NOT DISTINCT FROM OLD.content_hash
+     AND NEW.accepted_at   IS NOT DISTINCT FROM OLD.accepted_at
+     AND NEW.client_token  IS NOT DISTINCT FROM OLD.client_token THEN
+    RETURN NEW;
+  END IF;
+
   RAISE EXCEPTION 'bằng chứng chấp thuận chỉ được ghi thêm'
     USING ERRCODE = 'insufficient_privilege';
 END $$;
