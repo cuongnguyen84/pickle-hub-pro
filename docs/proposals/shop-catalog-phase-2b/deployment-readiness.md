@@ -168,8 +168,11 @@ thị cho người mua.
       Đây là **giới hạn đã biết và chấp nhận cho pilot** với 3–5 người bán mà
       Cuong liên lạc trực tiếp. Xem `notification-contract.md`.
       **Không dựng hạ tầng thông báo mới trong P2b.7.**
-- [ ] 🔒 Quy trình thay thế cho pilot: Cuong nhắn trực tiếp cho người bán sau mỗi
-      quyết định. Ghi vào runbook.
+- [x] 🔒 Quy trình thay thế cho pilot: Cuong nhắn trực tiếp cho người bán sau mỗi
+      quyết định. **Đã ghi runbook** —
+      `docs/proposals/shop-closed-pilot/notification-decision.md` §5, và quyết
+      định đã được Product Owner ký (12/08) kèm sáu điều kiện. Còn trống đúng
+      một điều kiện: **tên người kiểm hàng đợi hằng ngày**.
 
 ## A10. Rollback / forward-fix
 
@@ -199,8 +202,14 @@ thị cho người mua.
       xử lý thế nào, giữ bao lâu.
 - [ ] 🔒 **Nhân lực kiểm duyệt**: hiện chỉ có một admin. SLA duyệt là bao lâu?
       48 giờ? Nếu Cuong đi vắng một tuần thì sao?
-- [ ] 🔒 **Quy chế người bán v1** — văn bản này **chưa tồn tại**. Không thể mời
-      người bán thật vào mà không có điều khoản họ đồng ý.
+- [~] 🔒 **Quy chế người bán v1** — bản **dự thảo đầy đủ** đã có ở
+      `docs/proposals/shop-closed-pilot/seller-rules-v1.md`, trạng thái
+      `DRAFT — PENDING PRODUCT OWNER APPROVAL`. Còn cần: Product Owner duyệt
+      toàn văn, chốt `effective_at` và `approved_by`, rồi ban hành.
+      **Từ migration `20260814090000` việc này được máy chủ cưỡng chế**:
+      `shop_application_submit()` từ chối với `seller_rules_not_published` khi
+      chưa có bản nào đã duyệt và đang hiệu lực — kể cả với Cuong. Xem
+      `docs/proposals/shop-closed-pilot/seller-rules-enforcement.md`.
 - [ ] 🔒 **Chính sách kênh liên hệ**: điều gì được duyệt, điều gì không. Hiện
       quy tắc nằm trong code (`shop_contact_value_is_safe`) chứ không nằm trong
       một văn bản người kiểm duyệt đọc được.

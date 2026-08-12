@@ -69,7 +69,20 @@ Kill switch dựa trên điều đó và nói rõ giới hạn ở `operations.m
 
 ---
 
-## 5. 🔴 Phát hiện chặn: chấp thuận quy chế **không** được cưỡng chế
+## 5. ✅ ĐÃ ĐÓNG — chấp thuận quy chế nay được cưỡng chế ở máy chủ
+
+> **Cập nhật:** migration `20260814090000` (CP12) đóng phát hiện dưới đây.
+> `shop_application_submit()` nay từ chối trừ khi máy chủ thấy một chấp thuận
+> của phiên bản **đã duyệt và đang hiệu lực**, khớp cả version lẫn content hash.
+> Chi tiết: [`seller-rules-enforcement.md`](./seller-rules-enforcement.md).
+>
+> **Hệ quả hiện tại:** chưa có bản quy chế nào được ban hành, nên **mọi** lần gửi
+> hồ sơ thất bại với `seller_rules_not_published` — kể cả của Cuong. Đó là hành
+> vi đúng, và nó thay "một khoảng trống" bằng "một cánh cửa đóng".
+>
+> Bản dự thảo đầy đủ chờ duyệt: [`seller-rules-v1.md`](./seller-rules-v1.md).
+
+### Phát hiện gốc, giữ lại để đọc được vì sao nó nguy hiểm
 
 Kiểm tại chỗ, không suy đoán:
 
@@ -92,9 +105,9 @@ người bán thật vào thì mới là sự cố.
 
 | Trạng thái quy chế | Được phép làm gì |
 |---|---|
-| Chưa có văn bản | Dựng hạ tầng, chạy smoke bằng tài khoản test. **Không mời người bán thật.** |
-| Có văn bản, chưa có cột bằng chứng | Mời người bán thật **chỉ khi** Product Owner chấp nhận rằng chấp thuận được lưu ngoài hệ thống (ví dụ: Zalo/email, lưu tay) và ghi rõ điều đó |
-| Có văn bản + migration bằng chứng | Đường đi đầy đủ. Thiết kế cột nằm ở `seller-rules-v1-outline.md` §3 — **chỉ đề xuất, không áp** |
+| Chưa ban hành văn bản | Dựng hạ tầng, chạy smoke bằng tài khoản test và một văn bản test-only. **Không mời người bán thật.** ← **đang ở đây** |
+| ~~Có văn bản, bằng chứng lưu ngoài hệ thống~~ | **Không còn tồn tại.** Máy chủ nay đòi bằng chứng trong cơ sở dữ liệu; không có đường vòng |
+| Đã ban hành v1 vào `legal_documents` với `approved_at` + `effective_at` | Đường duy nhất cho người bán thật |
 
 ---
 
@@ -106,9 +119,9 @@ Không mục nào dưới đây agent có căn cứ để chọn thay.
 |---|---|---|---|
 | 1 | **UUID của từng người bán pilot** | Danh tính người thật | Packet D |
 | 2 | **UUID admin pilot đã có AAL2** | Remote có đúng 1 admin + 1 TOTP factor; xác nhận đó là tài khoản sẽ trực kiểm duyệt | Packet D |
-| 3 | **Preview trỏ vào Supabase nào** | Không có project staging. Ba lựa chọn ở `environment-audit.md` §5; khuyến nghị A | **Packet A và B — chặn sớm nhất** |
-| 4 | **Nội dung "Quy chế người bán v1"** | Văn bản pháp lý. Agent dựng khung, không viết nội dung | Mời người bán thật (§5) |
-| 5 | **Chấp nhận pilot chạy không có thông báo tự động?** | Đánh đổi sản phẩm | `notification-decision.md`; nếu không chấp nhận thì phải mở scope riêng |
+| 3 | ✅ **Preview trỏ vào Supabase nào** | **ĐÃ QUYẾT** — staging riêng. Project đã tạo; còn thiếu **project ref** | Packet S, B, C |
+| 4 | 🔴 **"Quy chế người bán v1"** | Bản dự thảo đầy đủ đã có ([`seller-rules-v1.md`](./seller-rules-v1.md)); cần **APPROVE/REVISE/REJECT** + `effective_at` + `approved_by` | Mời người bán thật (§5) |
+| 5 | ✅ **Chấp nhận pilot chạy không có thông báo tự động?** | **ĐÃ KÝ** — [`notification-decision.md`](./notification-decision.md). Còn trống: tên người kiểm hàng đợi hằng ngày | Packet D |
 | 6 | **Thời gian pilot** — bắt đầu, kết thúc | Không có mặc định đúng | Packet D, tiêu chí dừng |
 | 7 | **Ai trực kiểm duyệt, SLA bao lâu** | Hiện chỉ có một admin. Nếu người đó đi vắng một tuần thì hàng đợi đứng | Packet D |
 | 8 | **Ai trực sự cố** ngoài giờ | Như trên | Packet D |
