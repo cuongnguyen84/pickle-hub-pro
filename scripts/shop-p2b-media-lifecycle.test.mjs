@@ -287,10 +287,18 @@ describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
 
   it("draining an empty queue is a no-op, and a replayed job is not deleted twice", async () => {
     const admin = svc();
-    const first = await drainCleanupQueue(admin);
+    await drainCleanupQueue(admin);
     const second = await drainCleanupQueue(admin);
-    expect(second).toHaveLength(0);
-    void first;
+
+    // Scoped to THIS run's shop, and that is the whole point of the change.
+    // shop_media_cleanup_claim is global — correctly, it is the worker — but
+    // this file shares one local database with the other integration suites,
+    // which run concurrently and enqueue jobs of their own. Asserting the
+    // queue is globally empty was asserting a fact about somebody else's test,
+    // and it went red the day a new suite joined the run. Path convention is
+    // `<shop_id>/…`, so ownership is readable off the job itself.
+    const mine = second.filter((j) => j.object_path.startsWith(`${shopId}/`));
+    expect(mine, "a second drain must find nothing of ours left").toHaveLength(0);
 
     // Completing a job that is already done must not resurrect it.
     const { data: job } = await admin.from("shop_media_cleanup_jobs")

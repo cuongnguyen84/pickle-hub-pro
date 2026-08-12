@@ -76,7 +76,63 @@ export const newRegistry = () => ({
   productIds: [],
   objects: [],       // { bucket, path }
   categorySlugs: [], // taxonomy this run owns and must remove
+  rulesVersions: [], // seller-rules document versions this run published
 });
+
+/**
+ * The seller-rules document the QA signs.
+ *
+ * TEST-ONLY, and it says so in its own title so that a copy turning up on a
+ * real environment reports itself. Migration 20260814090000 deliberately seeds
+ * no document at all: placeholder legal text that real sellers could be asked
+ * to sign is worse than an empty table, because an empty table blocks the
+ * submit and a placeholder does not.
+ *
+ * The body is long enough to satisfy legal_documents_body_len (200 chars) and
+ * says nothing that could be mistaken for terms.
+ */
+const TEST_RULES_BODY = [
+  "[TEST-ONLY] Văn bản này chỉ dùng cho kiểm thử tự động của ThePickleHub.",
+  "Nó KHÔNG phải quy chế người bán, KHÔNG có hiệu lực pháp lý, và không được",
+  "hiển thị cho bất kỳ người bán thật nào. Nội dung thật do Product Owner và",
+  "bộ phận pháp lý cung cấp; cho tới lúc đó, việc gửi hồ sơ bị chặn ở phía máy",
+  "chủ bằng lỗi seller_rules_not_published.",
+].join(" ");
+
+/**
+ * Publish a test-only seller-rules version and have the applicant accept it.
+ *
+ * Since migration 20260814090000 an application cannot be submitted until the
+ * SERVER has seen an acceptance of the effective version. The seed therefore
+ * has to do what a real seller does — which is the point: a fixture that could
+ * skip the gate would be testing a system nobody uses.
+ */
+export async function seedSellerRules(admin, reg, applicantClient, run) {
+  const version = `test-${run}`;
+  const { data: doc, error: docErr } = await admin
+    .from("legal_documents")
+    .insert({
+      document_key: "seller-rules",
+      version,
+      title: `[TEST-ONLY] Quy chế người bán — QA ${run}`,
+      body: TEST_RULES_BODY,
+      effective_at: new Date(Date.now() - 60_000).toISOString(),
+    })
+    .select("version, content_hash")
+    .single();
+  if (docErr) fail(`legal_documents insert: ${docErr.message}`);
+  reg.rulesVersions.push(doc.version);
+
+  const { error: acceptErr } = await applicantClient.rpc("legal_accept", {
+    _document_key: "seller-rules",
+    _version: doc.version,
+    _content_hash: doc.content_hash,
+    _client_token: `rules-${run}`,
+  });
+  if (acceptErr) fail(`legal_accept: ${acceptErr.message}`);
+
+  return doc;
+}
 
 const fail = (msg) => {
   throw new Error(`P2b.7 seed: ${msg}`);
@@ -335,7 +391,13 @@ export async function seedP2bAcceptance(reg, run) {
     .select("id")
     .single();
   if (appInsErr) fail(`shop_applications insert: ${appInsErr.message}`);
-  const { error: appSubErr } = await applicant.client.rpc("shop_application_submit");
+
+  // Sign before submitting, because the server will not let us do otherwise.
+  const rulesDoc = await seedSellerRules(admin, reg, applicant.client, run);
+
+  const { error: appSubErr } = await applicant.client.rpc("shop_application_submit", {
+    _expected_rules_version: rulesDoc.version,
+  });
   if (appSubErr) fail(`shop_application_submit: ${appSubErr.message}`);
 
   const ctx = { seller, shopId: shopA.id, adminClient: adminAal2.client, run };
@@ -604,6 +666,15 @@ export async function teardownP2bAcceptance(reg) {
   if (reg.categorySlugs.length) {
     check("delete categories", await admin.from("product_categories").delete().in("slug", reg.categorySlugs));
   }
+  if (reg.rulesVersions.length) {
+    // AFTER the users, and that order is load-bearing: legal_documents_immutable
+    // refuses to delete a version somebody signed, and the signatures only go
+    // away when their user does. Deleting these first fails, silently if the
+    // error is not checked — which it is, three lines up.
+    check("delete rules documents", await admin
+      .from("legal_documents").delete()
+      .eq("document_key", "seller-rules").in("version", reg.rulesVersions));
+  }
 
   // ── What is still there ──────────────────────────────────────────────────
   // A read that failed is NOT a zero. `?? 0` here is what turned a broken
@@ -638,6 +709,8 @@ export async function teardownP2bAcceptance(reg) {
   remaining.applications = await count("shop_applications", "applicant_user_id", reg.userIds);
   remaining.pilotMembers = await count("shop_pilot_members", "user_id", reg.userIds);
   remaining.categories = await count("product_categories", "slug", reg.categorySlugs);
+  remaining.rulesDocuments = await count("legal_documents", "version", reg.rulesVersions);
+  remaining.rulesAcceptances = await count("legal_acceptances", "user_id", reg.userIds);
 
   // Auth users: the admin API, asked one id at a time, because a deletion that
   // silently failed is exactly the case this exists to catch.
