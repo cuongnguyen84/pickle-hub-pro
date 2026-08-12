@@ -19,6 +19,10 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertTriangle, Check, Loader2, Lock } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, ShopHeader } from "@/components/shop/ShopShell";
+import {
+  SellerRulesAcceptance,
+  type SellerRulesState,
+} from "@/components/shop/SellerRulesAcceptance";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import {
@@ -138,6 +142,10 @@ export default function SellerApplication() {
   const [fields, setFields] = useState<ApplicationDraft>({});
   const [attempted, setAttempted] = useState<number[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Whether the SERVER has recorded acceptance of the seller-rules version in
+  // force. Not authorization — shop_application_submit() re-checks it — but the
+  // difference between offering a button that works and one that refuses.
+  const [rules, setRules] = useState<SellerRulesState>({ ready: false, version: null });
   const headingRef = useRef<HTMLHeadingElement>(null);
   const hydrated = useRef(false);
 
@@ -220,9 +228,18 @@ export default function SellerApplication() {
       window.setTimeout(() => focusField(first.field), 80);
       return;
     }
+    if (!rules.ready) {
+      setSubmitError(
+        "Anh/chị cần đọc và đồng ý Quy chế người bán ở bước cuối trước khi gửi hồ sơ.",
+      );
+      gotoStep(STEPS.length - 1);
+      return;
+    }
     try {
       await saveDraft.mutateAsync({ ...fields, id: remote.data?.id });
-      await submit.mutateAsync();
+      // The version travels with the submit so the server can refuse a form
+      // that was open across a version change.
+      await submit.mutateAsync(rules.version);
       local.clear();
       navigate("/seller/application/status");
     } catch (err) {
@@ -416,17 +433,10 @@ export default function SellerApplication() {
                 ))}
               </dl>
             </div>
-            <div className="tl-shop-notice tl-shop-notice--warn">
-              <div>
-                <strong>Chưa có văn bản “Quy chế người bán”.</strong> Ô đồng ý điều khoản tạm
-                khoá cho tới khi văn bản được duyệt — ghi nhận chấp thuận một văn bản không tồn
-                tại thì chữ ký đó vô nghĩa.
-              </div>
-            </div>
-            <label className="tl-shop-check" style={{ alignItems: "flex-start", opacity: 0.5 }}>
-              <input type="checkbox" disabled style={{ marginTop: 3 }} />
-              <span>Tôi đã đọc và đồng ý Quy chế người bán.</span>
-            </label>
+            <SellerRulesAcceptance
+              applicationId={remote.data?.id ?? null}
+              onChange={setRules}
+            />
           </>
         );
     }
@@ -545,7 +555,9 @@ export default function SellerApplication() {
             <button
               type="button"
               className="tl-shop-btn tl-shop-btn--primary"
-              disabled={submit.isPending}
+              // Locked until the server has the signature. The submit RPC
+              // refuses anyway; this is so nobody is invited to press it.
+              disabled={submit.isPending || !rules.ready}
               onClick={() => void onSubmit()}
             >
               {submit.isPending ? (

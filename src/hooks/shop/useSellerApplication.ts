@@ -135,12 +135,21 @@ export const useSaveApplicationDraft = () => {
   });
 };
 
+/**
+ * Submit, telling the server which seller-rules version the form displayed.
+ *
+ * The version is not authorization — the server checks the acceptance itself —
+ * it is how a form left open across a version change gets refused instead of
+ * quietly submitting under text the applicant never read.
+ */
 export const useSubmitApplication = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      return await shopRpc<string>("shop_application_submit");
+    mutationFn: async (rulesVersion?: string | null) => {
+      return await shopRpc<string>("shop_application_submit", {
+        _expected_rules_version: rulesVersion ?? null,
+      });
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: KEY.application(user?.id ?? null) });
@@ -178,6 +187,15 @@ export const applicationErrorMessage = (err: unknown): string => {
     invalid_phone: "Số điện thoại phải có 10 chữ số, bắt đầu bằng 0.",
     missing_shop_name: "Tên shop cần ít nhất 3 ký tự.",
     missing_city: "Chưa điền tỉnh/thành gửi hàng.",
+    // Migration 20260814090000. These three can only be reached by a client
+    // that skipped the acceptance step — the UI disables the button — so the
+    // wording tells the seller what to do rather than what went wrong.
+    seller_rules_not_published:
+      "Quy chế người bán chưa được ban hành, nên chưa gửi hồ sơ được. ThePickleHub sẽ báo khi có.",
+    seller_rules_not_accepted:
+      "Anh/chị cần đọc và đồng ý Quy chế người bán ở bước cuối trước khi gửi.",
+    seller_rules_version_changed:
+      "Quy chế vừa có bản mới. Đọc lại và đồng ý bản mới rồi gửi lại giúp em.",
   };
   for (const [code, text] of Object.entries(table)) {
     if (message.includes(code)) return text;
