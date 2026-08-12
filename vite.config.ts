@@ -318,6 +318,24 @@ return ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // hls.js LIGHT build — 53 KB gz of the total budget (P2b.0).
+      // Nothing in src/ imports hls.js directly any more; the only importer is
+      // @mux/playback-core, which pulls the full build by specifier. Aliasing
+      // here catches that import too, so there is exactly one copy and it is
+      // the small one.
+      //
+      // Light drops subtitles/CEA-708, alternate audio, EME/DRM, CMCD and
+      // interstitials. This product uses none of them: there is no caption UI
+      // and no Mux transcription configured, match video is single-track, and
+      // mux-create-livestream's `playback_policy: "signed"` is a JWT on the
+      // URL — not Widevine/FairPlay (there is no drm_configuration anywhere).
+      //
+      // The failure mode if that ever changes is SILENT — the light build keeps
+      // the accessors and just reports no tracks. src/components/video/
+      // __tests__/hls-light-build.test.ts fails the moment captions or DRM are
+      // configured, so the trade has to be re-decided rather than discovered
+      // by a viewer.
+      "hls.js": path.resolve(__dirname, "./node_modules/hls.js/dist/hls.light.mjs"),
     },
   },
   build: {
