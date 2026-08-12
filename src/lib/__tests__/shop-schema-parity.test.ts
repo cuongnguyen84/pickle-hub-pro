@@ -9,6 +9,8 @@ import { describe, expect, it } from "vitest";
 import {
   SHOP_P2A_RPCS,
   SHOP_P2A_TABLES,
+  SHOP_P2B_RPCS,
+  SHOP_P2B_TABLES,
   SHOP_RPCS,
   SHOP_TABLES,
   SHOP_VIEWS,
@@ -140,5 +142,88 @@ describe("shop schema parity with the P2a migrations", () => {
     const body = P2A_SQL.slice(at, P2A_SQL.indexOf(";", at));
     expect(body).toContain("is_shop_manager");
     expect(body).not.toContain("is_shop_member");
+  });
+});
+
+// ── P2b ─────────────────────────────────────────────────────────────────────
+// The moderation backend. Same net, plus the invariants that decide whether
+// P2b.2 can be trusted to render a decision button at all.
+
+const P2B_SQL = [
+  "20260812090000_shop_p2b_status_suspended.sql",
+  "20260812091000_shop_p2b_moderation_backend.sql",
+]
+  .map((f) => readFileSync(resolve(__dirname, "../../../supabase/migrations", f), "utf8"))
+  .join("\n");
+
+describe("shop schema parity with the P2b migrations", () => {
+  it.each(SHOP_P2B_TABLES)("a P2b migration creates table %s", (table) => {
+    expect(P2B_SQL).toContain(`CREATE TABLE IF NOT EXISTS public.${table}`);
+  });
+
+  it.each(SHOP_P2B_RPCS)("a P2b migration creates function %s", (fn) => {
+    expect(P2B_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  });
+
+  it("every P2b table enables RLS and has a GRANT", () => {
+    for (const table of SHOP_P2B_TABLES) {
+      expect(P2B_SQL, table).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
+      expect(P2B_SQL, table).toMatch(new RegExp(`GRANT[^;]*ON public\\.${table}\\s+TO`, "s"));
+    }
+  });
+
+  it("every moderation RPC is SECURITY DEFINER with a pinned search_path", () => {
+    for (const fn of [
+      "product_decide",
+      "product_approve_preflight",
+      "product_moderation_queue",
+      "product_moderation_detail",
+      "product_moderation_history",
+      "shop_contact_decide",
+    ]) {
+      const at = P2B_SQL.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+      const head = P2B_SQL.slice(at, at + 900);
+      expect(head, `${fn} must be SECURITY DEFINER`).toContain("SECURITY DEFINER");
+      expect(head, `${fn} must pin search_path`).toContain("SET search_path = public");
+    }
+  });
+
+  it("every admin-only routine checks is_admin INSIDE the function", () => {
+    // Not in the route guard, and not in a policy — a SECURITY DEFINER
+    // function bypasses RLS, so the policy would never be consulted.
+    for (const fn of [
+      "product_decide",
+      "product_approve_preflight",
+      "product_moderation_queue",
+      "product_moderation_detail",
+      "shop_contact_decide",
+      "shop_contact_moderation_queue",
+    ]) {
+      const at = P2B_SQL.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+      const body = P2B_SQL.slice(at, P2B_SQL.indexOf("END $$;", at));
+      expect(body, `${fn} must gate on is_admin()`).toContain("IF NOT public.is_admin() THEN");
+    }
+  });
+
+  it("the moderation history is append-only in BOTH ways", () => {
+    // A trigger alone passed once in P2a while a missing GRANT answered first,
+    // so the assertion could not tell which one was doing the work.
+    expect(P2B_SQL).toMatch(/CREATE TRIGGER product_moderation_events_append_only_trg/);
+    expect(P2B_SQL).toMatch(/REVOKE ALL\s+ON public\.product_moderation_events FROM anon, authenticated/);
+    expect(P2B_SQL).toMatch(/GRANT\s+SELECT ON public\.product_moderation_events TO authenticated/);
+  });
+
+  it("approve does not publish", () => {
+    // The bytes are copied by the worker. Setting is_published at approve time
+    // aims a public URL at an object that does not exist yet.
+    const at = P2B_SQL.indexOf("CREATE OR REPLACE FUNCTION public.product_decide(");
+    const body = P2B_SQL.slice(at, P2B_SQL.indexOf("END $$;", at));
+    expect(body).toContain("WHEN _decision = 'approve' THEN is_published");
+  });
+
+  it("no `restore` transition exists while its consequence is undecided", () => {
+    // Suspend is a one-way door on purpose (see the enum migration). If a
+    // restore path is added, this test is where the decision gets recorded.
+    expect(P2B_SQL).not.toMatch(/'restore'/);
   });
 });

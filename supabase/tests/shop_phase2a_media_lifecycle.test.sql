@@ -253,7 +253,7 @@ SELECT is(
 
 SET LOCAL request.jwt.claims TO '{"sub":"50030005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 SELECT is(
-  public.product_decide('6b000001-0000-4000-8000-000000000001'::uuid, 'approve')::text,
+  (public.product_decide('6b000001-0000-4000-8000-000000000001'::uuid, 'approve')) ->> 'status',
   'approved', 'admin approves');
 
 SET LOCAL request.jwt.claims TO '{"sub":"50030001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';

@@ -294,7 +294,9 @@ SELECT throws_ok(
   'từ chối mà không có lý do cho người bán là không hợp lệ'
 );
 SELECT is(
-  public.shop_contact_decide((SELECT id FROM public.shop_contact_channels LIMIT 1), 'approve')::text,
+  -- P2b.1 contract: a JSONB envelope, and the notes moved behind
+  -- _expected_version so a decision can be pinned to the version reviewed.
+  (public.shop_contact_decide((SELECT id FROM public.shop_contact_channels LIMIT 1), 'approve')) ->> 'state',
   'approved',
   'admin duyệt kênh'
 );
@@ -342,8 +344,8 @@ SELECT is(
 
 SET LOCAL request.jwt.claims TO '{"sub":"50040005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 SELECT is(
-  public.shop_contact_decide(
-    (SELECT id FROM public.shop_contact_channels WHERE type='phone' LIMIT 1), 'approve')::text,
+  (public.shop_contact_decide(
+    (SELECT id FROM public.shop_contact_channels WHERE type='phone' LIMIT 1), 'approve')) ->> 'state',
   'approved',
   'phone: quản trị viên duyệt được số di động'
 );

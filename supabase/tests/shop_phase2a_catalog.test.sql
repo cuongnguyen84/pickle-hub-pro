@@ -380,15 +380,18 @@ SELECT throws_ok(
   'reject without a seller-visible note is refused'
 );
 
+-- P2b.1 changed the contract: product_decide returns a JSONB result envelope
+-- so approve can hand back a preflight problem list instead of raising, and
+-- the notes/targets/token arguments moved behind _expected_version.
 SELECT is(
-  public.product_decide('5b000001-0000-4000-8000-000000000001'::uuid, 'approve')::text,
+  (public.product_decide('5b000001-0000-4000-8000-000000000001'::uuid, 'approve')) ->> 'status',
   'approved',
   'admin approves'
 );
 
 -- The guarded transition: a second moderator deciding the same row loses.
 SELECT throws_ok(
-  $$ SELECT public.product_decide('5b000001-0000-4000-8000-000000000001'::uuid, 'reject', 'muộn') $$,
+  $$ SELECT public.product_decide('5b000001-0000-4000-8000-000000000001'::uuid, 'reject', NULL, 'muộn') $$,
   '22023', NULL,
   'a second decision on an already-decided product is refused'
 );

@@ -388,3 +388,26 @@ export const SHOP_RPCS = [
   "shop_application_withdraw",
   "shop_application_decide",
 ] as const;
+
+/* ── P2b step 1 — moderation backend (migrations 202608120900/091000) ────────
+ * Registered here for the same reason as the P2a lists: the parity test reads
+ * them back out and fails if a name here has no migration behind it, so the
+ * admin screens in P2b.2 cannot call an RPC that does not exist.
+ */
+export const SHOP_P2B_TABLES = [
+  "product_moderation_events",
+  "product_slug_history",
+] as const;
+
+export const SHOP_P2B_RPCS = [
+  "product_moderation_targets_check",
+  "product_approve_preflight",
+  "product_decide",
+  "product_moderation_history",
+  "product_moderation_queue",
+  "product_moderation_detail",
+  "shop_contact_value_is_safe",
+  "shop_contact_decide",
+  "shop_contact_moderation_queue",
+  "product_slug_update",
+] as const;

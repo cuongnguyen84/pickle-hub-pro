@@ -302,8 +302,9 @@ SELECT lives_ok(
 
 SET LOCAL request.jwt.claims TO '{"sub":"50080005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 SELECT is(
-  public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'request_changes',
-    'Ảnh mờ quá, chụp lại giúp em.', 'nội bộ: ảnh kém', ARRAY['media'])::text,
+  (public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'request_changes', NULL,
+    'Ảnh mờ quá, chụp lại giúp em.', 'nội bộ: ảnh kém',
+    '[{"section":"media"}]'::jsonb)) ->> 'status',
   'needs_changes', 'quản trị viên yêu cầu sửa');
 
 SET LOCAL request.jwt.claims TO '{"sub":"50080001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
@@ -392,7 +393,7 @@ SELECT is(
 
 SET LOCAL request.jwt.claims TO '{"sub":"50080005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 SELECT is(
-  public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'approve')::text,
+  (public.product_decide((SELECT v FROM t_sub WHERE k='p1'), 'approve')) ->> 'status',
   'approved', 'quản trị viên duyệt');
 
 -- Publishing for real needs the worker to copy bytes, which SQL cannot do and
