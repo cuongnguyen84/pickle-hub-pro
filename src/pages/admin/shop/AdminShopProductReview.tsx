@@ -142,13 +142,10 @@ export default function AdminShopProductReview() {
         <h1 className="tl-shop-h1">{preview.title ?? "Sản phẩm"}</h1>
         <p className="tl-shop-sub">
           {/* A bare inline link is 17px tall. This is the only way back from a
-              review, and a moderator hits it on a phone. */}
-          <Link
-            to="/admin/shop/products"
-            style={{ display: "inline-flex", alignItems: "center", minHeight: 44, minWidth: 44 }}
-          >
-            ← Về hàng đợi
-          </Link>
+              review, and a moderator hits it on a phone. The rule moved to
+              `.tl-shop-back` when the P2b.7 sweep found the application review
+              screen had never received the same treatment. */}
+          <Link to="/admin/shop/products" className="tl-shop-back">← Về hàng đợi</Link>
         </p>
 
         <AdminShopFrame crumb="Duyệt sản phẩm">

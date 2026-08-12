@@ -169,7 +169,9 @@ const AdminShopNav = ({ pathname }: { pathname: string }) => (
           </Link>
         </li>
       ) : (
-        <li key={item.to} style={{ color: "var(--tl-fg-4)" }}>
+        // `is-soon` carries the padding the LINK carries on the other rows —
+        // there is no anchor here to carry it.
+        <li key={item.to} className="is-soon" style={{ color: "var(--tl-fg-4)" }}>
           {item.label} · sắp có
         </li>
       ),

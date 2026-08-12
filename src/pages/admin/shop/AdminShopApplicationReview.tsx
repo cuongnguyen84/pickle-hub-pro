@@ -93,7 +93,7 @@ export default function AdminShopApplicationReview() {
       <div className="tl-shop">
         <h1 className="tl-shop-h1">Xét hồ sơ: {row.shop_name ?? "(chưa đặt tên)"}</h1>
         <p className="tl-shop-sub">
-          <Link to="/admin/shop/applications">Về hàng đợi</Link>
+          <Link to="/admin/shop/applications" className="tl-shop-back">← Về hàng đợi</Link>
         </p>
 
         <AdminShopFrame crumb={`Hồ sơ · ${row.shop_name ?? ""}`}>
