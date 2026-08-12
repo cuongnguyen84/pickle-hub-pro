@@ -19,21 +19,109 @@ Two of these block writing code; the rest can be answered while P2b is built.
 |---|---|---|---|
 | **Q1** | Should the pilot allowlist gate **reads**, not just seller actions? Today a `support` member and a shop member who is not on the allowlist can both read their own shop's drafts, because `products_select_member` grants it. §3.2 has the evidence. | Nothing in P2b — but it changes the RLS both the admin queue and the public read model sit on. | ✅ **SIGNED 2026-08-12 — keep P2a behaviour.** Membership gates reads; the allowlist gates actions. No RLS change. The invariant is locked by 25 pgTAP assertions. |
 | **Q2** | **Slug redirects.** `product_slug_update` and `shop_slug_update` change a URL with no forwarding. Once the PDP is public and indexed, every slug change is a 404 for buyers and a dropped ranking. §9 offers three options. | **P2b.6.** | ✅ **SIGNED 2026-08-12 — Option A**, slug history table + 301. |
-| Q3 | Category taxonomy ownership: `product_categories` is seeded from the prototype's list. Public category pages make that list an SEO surface — who owns adding/renaming, and does renaming change the slug? | P2b.4 category pages; not the build, only the content. | Open. Default assumed: slugs frozen once public, names editable. |
-| Q4 | Is `/shop` allowed to be indexed while the catalogue is nearly empty? An indexed marketplace with three products invites a thin-content assessment. | P2b.6 sitemap + robots. | Open. Default assumed: routes indexable, `/shop` withheld from the sitemap until the Product Owner names a minimum approved-product count. |
+| **Q3** | Category taxonomy ownership. | P2b.4 category pages + P2b.1 approve preflight. | ✅ **SIGNED 2026-08-12 — the platform owns it.** §0.1 below. |
+| **Q4** | Index `/shop` while the catalogue is nearly empty? | P2b.6 sitemap + robots. | ✅ **SIGNED 2026-08-12 — no. Closed pilot is `noindex, nofollow`.** §0.2 below. |
 
-Q1 and Q2 were the two that changed what gets built; both are signed. Q3 and Q4
-affect content and launch timing, not the build, and proceed under the stated
-defaults until answered.
+All four are signed.
 
-### Documents named in the brief that do not exist
+### 0.1 Q3 — taxonomy belongs to the platform
 
-`docs/proposals/shop-marketplace-plan.md` and
-`docs/proposals/shop-marketplace-product-owner-test-cases.md` are **not in the
-repository**. `production-implementation-map.md` cites both in its header, so
-they existed at some point outside git or were never committed. Nothing in this
-proposal depends on them; where the map summarises them, the map is used. This
-is recorded rather than worked around silently.
+Sellers **choose** from the taxonomy; they never author it.
+
+| Seller | Admin |
+|---|---|
+| picks an **active** category only | manages the taxonomy by versioned seed/migration, or a controlled Admin UI |
+| cannot create a production category | every change audited |
+| cannot edit slug / name / hierarchy | no hard delete of a category in use |
+| cannot pick a disabled category | slug change needs the same redirect/alias strategy as Q2 |
+| cannot submit a category id outside the allowlist | reorder never changes identity |
+| may suggest one via support later — **not P2b** | disabling a category does **not** archive the seller's products |
+
+A category is publicly visible only when it is active **and** has at least one
+publishable product, or is editorially enabled.
+
+Consequences taken into P2b.1 and later:
+
+- `product_submit` and **approve preflight** both reject a category that is not
+  active. A category disabled between submit and approve must not sneak through
+  the queue — that is a real window, so the check lives at decision time, not
+  only at submit time.
+- The moderation review DTO carries the category and its active state, and
+  `category` is already a valid structured request-changes target.
+- Public filters and counts are derived from the taxonomy **server-side**. No
+  facet is ever built from seller free text.
+- No taxonomy editor is built in P2b: seed + migration with review, per the
+  "don't build what the proposal didn't ask for" rule. If admins need to disable
+  a category during the pilot, that is one guarded UPDATE, not a screen.
+
+### 0.2 Q4 — the closed pilot is not indexed
+
+The Shop routes run, QA exercises them and pilot users use them, but:
+
+- `/shop` and every public Shop route serve `noindex, nofollow`;
+- Shop is **absent from the sitemap index**;
+- **no IndexNow** submissions;
+- no empty SEO landing pages;
+- no invented products, categories or counts to make a page look populated;
+- **canonical stays correct anyway**, so flipping the switch later needs no
+  rewrite.
+
+The flag is **server/build controlled** — decided in the Pages Function and in
+the build, never by client JavaScript. A `<meta>` tag written after hydration is
+not a robots directive to a crawler that never runs the script.
+
+Admin and Seller routes stay `noindex` unconditionally and keep their
+`Disallow` entries in both robots files; nothing in Q4 relaxes that.
+
+**Proposed launch gate** — measurable, and the thresholds are the Product
+Owner's to set, not mine:
+
+| Signal | Why it gates indexing |
+|---|---|
+| active shops | one shop is a catalogue, not a marketplace |
+| approved + published products | the thin-content risk |
+| categories with real inventory | an empty category page is a thin page that also loses trust |
+| share of products complete on photo / price / stock / contact | a PDP with no contact CTA cannot convert |
+| zero thin or empty category pages | the crawler sees them before a buyer does |
+| moderation SLA actually being met | indexing invites submissions nobody is answering |
+| public PDP / shop / search QA green | |
+| media cleanup worker + cron running, revocation verified | an unpublish that leaves bytes addressable is worse once indexed |
+| sitemap + prerender verified with a body word count | the 2026-08-05 miss had perfect tags and an empty article |
+
+### Documents named in the brief — resolved 2026-08-12
+
+`docs/proposals/shop-marketplace-plan.md` (1877 lines) and
+`docs/proposals/shop-marketplace-product-owner-test-cases.md` (952 lines) were
+missing from this branch on the first pass. They were **not moved and not
+deleted**: both were sitting **untracked in the shared checkout's working tree**
+and had never been added to git — `git log --all --diff-filter=A` finds no
+commit that ever introduced either path, while their sibling
+`shop-marketplace-screen-tasks.md` has been tracked all along.
+
+So the implementation map's header cited two documents that existed only on one
+machine. Any clone, any CI run, any future worktree would have read a map whose
+own sources were unavailable — which is exactly how this branch first saw them.
+
+Both are now committed to this branch after a secrets scan (no JWTs, keys,
+tokens or credentials). The references resolve; nothing in the repository points
+at a file that is not in it.
+
+What they changed in this proposal, having now been read:
+
+- §14 "RPC/edge function boundaries" requires authorization, idempotency,
+  locking and failure behaviour to be **defined per routine** — adopted as the
+  shape of §6.1's table.
+- §15 "Suspended/unpublished products return the approved repository behavior,
+  not stale cacheable product data" — this is the cache-invalidation
+  requirement in §8, and it is a requirement rather than a nicety.
+- §15 "`AggregateRating` only when backed by real eligible reviews" — already
+  the position in §8, now sourced.
+- §16 notification rules: no sensitive detail in push/email, deep link to an
+  authorized route, retry-safe and deduplicated, and **notification failure
+  never rolls back the underlying transition**. That last clause is why the
+  contract in P2b.1 is an outbox and not an inline call.
+- §30 A04 lists **restore** among the moderation actions. P2b.1 does not build
+  it — see the state table's blocker note.
 
 ### `/idea` tooling, again
 
@@ -409,10 +497,19 @@ existing `renderTournament` / `renderVenueDetail` shape, wired in
   empty or invented rating is a manual-action risk and a lie.
 - Unavailable product: `410` for a deleted slug with no successor, `404` for one
   that never existed, `301` for a renamed one (§9).
-- `sitemap-shop.xml` added to the index, listing **approved + published in an
-  active shop only**. Drafts and pending products can never enter it — the
-  sitemap query is the same predicate as the public read.
-- IndexNow on approve/unpublish, following the existing convention.
+- **Q4: none of this is indexed during the closed pilot.** Every public Shop
+  route serves `noindex, nofollow`, Shop is absent from the sitemap index, and
+  no IndexNow call is made. Metadata, canonical and JSON-LD are still built
+  correctly so that opening indexing later is a flag flip, not a rewrite.
+- `sitemap-shop.xml` is written and tested but **not referenced from the
+  sitemap index** until the launch gate passes. Its query is the same predicate
+  as the public read, so drafts and pending products can never enter it even
+  after it is switched on.
+- IndexNow on approve/unpublish is wired **behind the same flag**.
+
+The flag is read in the Pages Function and at build time. It is never a
+client-side `<meta>` write — a crawler that does not execute the bundle would
+index the page anyway, which is the exact failure Q4 exists to prevent.
 
 Cache invalidation must follow approve, price change, unpublish, suspend and
 slug change. The `?nocache=1` path exists; P2b.6 wires the transitions to it so

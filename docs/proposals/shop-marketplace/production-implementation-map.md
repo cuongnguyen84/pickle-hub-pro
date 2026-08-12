@@ -362,6 +362,74 @@ its cron are **not deployed** (without them, revoked objects stay addressable),
 `shop_pilot_members` is empty, and there is no admin moderation UI until P2b —
 so a pilot moderator would work through SQL.
 
+## 12. Product Owner decisions — Q1–Q4 (2026-08-12)
+
+Signed during P2b planning. These override anything earlier that disagrees, on
+the same footing as D1–D4. Full reasoning and consequences:
+[`shop-catalog-phase-2b/proposal.md`](../shop-catalog-phase-2b/proposal.md) §0.
+
+### Q1 — the pilot allowlist gates ACTIONS, not reads
+
+Keep the P2a rule. Being a `shop_members` row is what grants reads of that
+shop's own data; `shop_pilot_has_access()` gates create / update / submit.
+
+A `support` member and a member absent from `shop_pilot_members` can therefore
+both read their own shop's drafts. That is not a hole in
+`product_public_projection`: `products_select_member` grants the identical read,
+so `_as_seller=true` buys nothing PostgREST would not already serve. Locked by
+25 assertions in `supabase/tests/shop_p2b_projection_authz.test.sql`, which
+state the rule as an equivalence rather than a list of roles:
+
+> `projection(id, true)` succeeds **iff** the caller can already `SELECT` that
+> product row under RLS.
+
+### Q2 — slug changes get a history row and a 301
+
+`product_slug_update` / `shop_slug_update` write a history row **inside the same
+guarded transaction** that changes the slug. Not a trigger, not the client: a
+rename that forgets its forwarding address is the failure this exists to stop.
+
+Renderer behaviour: current → 200 · replaced → 301 to current · never
+existed → 404 · deleted → 410.
+
+### Q3 — the taxonomy belongs to the platform
+
+Sellers pick from it; they never author it. No seller-created categories, no
+editing slug/name/hierarchy, no disabled category, no category id outside the
+allowlist. Admin manages it by versioned seed/migration or a controlled UI, with
+audit; no hard delete while in use; slug changes use the Q2 strategy; reorder
+never changes identity; disabling a category does not archive anybody's
+products. A category is public only when active with at least one publishable
+product, or editorially enabled.
+
+P2b consequence: **approve preflight re-checks that the category is active**,
+because a category can be disabled between submit and approve. Public filters
+and counts come from the taxonomy server-side, never from seller text. No
+taxonomy editor is built in P2b.
+
+### Q4 — the closed pilot is NOT indexed
+
+Shop routes run for QA and pilot use, but `/shop` and every public Shop route
+serve `noindex, nofollow`, Shop stays out of the sitemap index, and no IndexNow
+call is made. No empty SEO landing pages and no invented products, categories or
+counts to make a page look populated. Canonical stays correct so opening
+indexing is a flag flip.
+
+The flag is **server/build controlled**, never client JavaScript. Admin and
+Seller routes remain unconditionally noindex.
+
+Moving to indexed requires a separate Product Owner launch gate. The measurable
+signals are listed in the P2b proposal §0.2; the thresholds are the Product
+Owner's to set.
+
+### Saved products / wishlist — confirmed out of P2b
+
+Stays in **P3a** with cart and orders, as §1 already says. Not built, not
+stubbed, no schema, no non-functional Save button, and public cards and the PDP
+show no save CTA while there is no behaviour behind it.
+
+---
+
 ### Verification standard (applies from now on)
 
 `supabase start` alone is **not** evidence of a clean database — it does not
