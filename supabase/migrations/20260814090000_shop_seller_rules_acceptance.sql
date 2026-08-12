@@ -41,6 +41,11 @@
 CREATE TABLE IF NOT EXISTS public.legal_documents (
   document_key TEXT NOT NULL,
   version      TEXT NOT NULL,
+  -- Which programme this version governs. The closed pilot's rules are not the
+  -- public launch's rules, and a scope column is what stops v1 being reused by
+  -- default the day Shop opens — the reuse would be silent, which is the
+  -- problem with it.
+  scope        TEXT NOT NULL DEFAULT 'closed-pilot',
   title        TEXT NOT NULL,
   -- The full text, stored once. An acceptance row references it rather than
   -- copying it: duplicating an immutable document into every signature buys
@@ -59,13 +64,29 @@ CREATE TABLE IF NOT EXISTS public.legal_documents (
     encode(extensions.digest(body, 'sha256'), 'hex')
   ) STORED,
   effective_at TIMESTAMPTZ NOT NULL,
+  -- Who signed the text off, and when. Both NULL means DRAFT: the row exists,
+  -- and legal_current_document() will not serve it, so nobody can accept it and
+  -- no application can be submitted against it. Staging a draft is therefore
+  -- safe; promoting it is a deliberate, separate act.
+  approved_by  TEXT,
+  approved_at  TIMESTAMPTZ,
   -- Set when a version is superseded or withdrawn. Never un-set.
   retired_at   TIMESTAMPTZ,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (document_key, version),
   CONSTRAINT legal_documents_key_len   CHECK (char_length(document_key) BETWEEN 3 AND 64),
   CONSTRAINT legal_documents_version_fmt CHECK (version ~ '^[a-z0-9][a-z0-9._-]{0,31}$'),
+  CONSTRAINT legal_documents_scope_check CHECK (scope IN ('closed-pilot', 'public')),
   CONSTRAINT legal_documents_body_len   CHECK (char_length(body) >= 200),
+  -- An approval is a name AND a time, or neither. Half of one is not evidence.
+  CONSTRAINT legal_documents_approval_pair CHECK (
+    (approved_by IS NULL AND approved_at IS NULL)
+    OR (approved_by IS NOT NULL AND approved_at IS NOT NULL)
+  ),
+  -- No backdating. A version cannot take effect before somebody approved it,
+  -- which is the whole reason both timestamps exist rather than one.
+  CONSTRAINT legal_documents_no_backdate
+    CHECK (approved_at IS NULL OR effective_at >= approved_at),
   CONSTRAINT legal_documents_retire_after_effective
     CHECK (retired_at IS NULL OR retired_at > effective_at)
 );
@@ -140,13 +161,36 @@ BEGIN
     RETURN OLD;
   END IF;
 
+  -- Identity never moves, approved or not.
   IF NEW.document_key IS DISTINCT FROM OLD.document_key
-     OR NEW.version    IS DISTINCT FROM OLD.version
-     OR NEW.title      IS DISTINCT FROM OLD.title
-     OR NEW.body       IS DISTINCT FROM OLD.body
-     OR NEW.effective_at IS DISTINCT FROM OLD.effective_at
-     OR NEW.created_at   IS DISTINCT FROM OLD.created_at THEN
-    RAISE EXCEPTION 'một phiên bản văn bản là bất biến — đổi nội dung thì tạo phiên bản mới'
+     OR NEW.version  IS DISTINCT FROM OLD.version
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'không đổi được khoá hay phiên bản của một văn bản'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- Content freezes AT APPROVAL, not at insert. Before that the row is a
+  -- draft: the Product Owner is still editing the text, and content_hash —
+  -- being generated — follows it. Freezing at insert sounded stricter and was
+  -- in fact a trap: a draft staged with a past effective_at could never be
+  -- approved, because approval would then breach the no-backdate rule with no
+  -- way to move the date. Found by the test that tries to approve a draft.
+  IF OLD.approved_at IS NOT NULL
+     AND (NEW.scope IS DISTINCT FROM OLD.scope
+          OR NEW.title IS DISTINCT FROM OLD.title
+          OR NEW.body  IS DISTINCT FROM OLD.body
+          OR NEW.effective_at IS DISTINCT FROM OLD.effective_at) THEN
+    RAISE EXCEPTION 'một phiên bản đã phê duyệt là bất biến — đổi nội dung thì tạo phiên bản mới'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- Approval is a one-way door: NULL → a value, once. Re-approving under a
+  -- different name, or withdrawing an approval people have already relied on,
+  -- would make the receipts describe something that no longer happened.
+  IF OLD.approved_at IS NOT NULL
+     AND (NEW.approved_at IS DISTINCT FROM OLD.approved_at
+          OR NEW.approved_by IS DISTINCT FROM OLD.approved_by) THEN
+    RAISE EXCEPTION 'đã phê duyệt thì không sửa được người duyệt hay thời điểm duyệt'
       USING ERRCODE = 'insufficient_privilege';
   END IF;
 
@@ -207,13 +251,18 @@ ALTER TABLE public.legal_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.legal_acceptances ENABLE ROW LEVEL SECURITY;
 
 -- A document a person is asked to agree to must be readable before they agree.
--- Only the effective one: a retired version and a future one are not offers.
+-- Only the one on offer: a draft, a retired version and a future one are not
+-- offers, and a draft in particular must not be readable — the Product Owner
+-- stages text here before approving it, and half-approved wording leaking to a
+-- seller is worse than no wording at all.
 DROP POLICY IF EXISTS "legal_documents_select_effective" ON public.legal_documents;
 CREATE POLICY "legal_documents_select_effective" ON public.legal_documents
   FOR SELECT
   USING (
     public.is_admin()
-    OR (effective_at <= now() AND (retired_at IS NULL OR retired_at > now()))
+    OR (approved_at IS NOT NULL
+        AND effective_at <= now()
+        AND (retired_at IS NULL OR retired_at > now()))
   );
 
 -- Writes are admin-only, and even an admin cannot edit a version (§3).
@@ -252,19 +301,26 @@ CREATE OR REPLACE FUNCTION public.legal_current_document(_document_key TEXT)
 RETURNS TABLE (
   document_key TEXT,
   version      TEXT,
+  scope        TEXT,
   title        TEXT,
   body         TEXT,
   content_hash TEXT,
-  effective_at TIMESTAMPTZ
+  effective_at TIMESTAMPTZ,
+  approved_by  TEXT,
+  approved_at  TIMESTAMPTZ
 )
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT d.document_key, d.version, d.title, d.body, d.content_hash, d.effective_at
+  SELECT d.document_key, d.version, d.scope, d.title, d.body, d.content_hash,
+         d.effective_at, d.approved_by, d.approved_at
   FROM public.legal_documents d
   WHERE d.document_key = _document_key
+    -- APPROVED is a precondition, not a label. An unapproved row is a draft,
+    -- and a draft is never on offer no matter what its effective_at says.
+    AND d.approved_at IS NOT NULL
     AND d.effective_at <= now()
     AND (d.retired_at IS NULL OR d.retired_at > now())
   ORDER BY d.effective_at DESC, d.version DESC
@@ -272,7 +328,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.legal_current_document(TEXT) IS
-  'The one version currently on offer: effective, not retired, most recent. Returns no row when nothing is published — which is what blocks submission.';
+  'The one version currently on offer: approved, effective, not retired, most recent. Returns no row when nothing is published — which is what blocks submission.';
 
 -- ─── 6. Signing ─────────────────────────────────────────────────────────────
 

@@ -439,10 +439,17 @@ export const SHOP_P2B_RPCS = [
 export interface SellerRulesDocument {
   document_key: string;
   version: string;
+  /** Which programme this version governs. The pilot's rules are not the public
+   *  launch's rules, and the column is what stops v1 being reused by default. */
+  scope: "closed-pilot" | "public";
   title: string;
   body: string;
   content_hash: string;
   effective_at: string;
+  /** Both null means DRAFT — and a draft is never served, so the UI will not
+   *  see one through legal_current_document(). */
+  approved_by: string | null;
+  approved_at: string | null;
 }
 
 /** What `legal_accept` hands back. The hash is the SERVER's copy: it is what a

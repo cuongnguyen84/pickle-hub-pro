@@ -347,6 +347,35 @@ describe("seller-rules acceptance parity with migration 20260814090000", () => {
     expect(RULES_SQL).toMatch(/content_hash TEXT GENERATED ALWAYS AS/);
   });
 
+  it("will not serve a document nobody approved", () => {
+    // An unapproved row is a draft. Staging text before approval has to be
+    // safe, which means the draft must be unreadable AND unsignable — and the
+    // only thing separating it from a live document is this one predicate.
+    const at = RULES_SQL.indexOf("CREATE OR REPLACE FUNCTION public.legal_current_document(");
+    const body = RULES_SQL.slice(at, RULES_SQL.indexOf("COMMENT ON FUNCTION public.legal_current_document"));
+    expect(body).toContain("d.approved_at IS NOT NULL");
+    // …and the read policy has to agree, or a draft leaks through PostgREST
+    // while the RPC refuses it.
+    const policy = RULES_SQL.slice(
+      RULES_SQL.indexOf('CREATE POLICY "legal_documents_select_effective"'),
+      RULES_SQL.indexOf('DROP POLICY IF EXISTS "legal_documents_admin_write"'),
+    );
+    expect(policy).toContain("approved_at IS NOT NULL");
+  });
+
+  it("refuses to let a version take effect before it was approved", () => {
+    expect(RULES_SQL).toMatch(/legal_documents_no_backdate[\s\S]{0,120}effective_at >= approved_at/);
+    // Half an approval is not an approval.
+    expect(RULES_SQL).toContain("legal_documents_approval_pair");
+  });
+
+  it("scopes a version to the programme it governs", () => {
+    // The pilot's rules are not the public launch's rules. Without a scope the
+    // reuse on launch day would be silent, which is the problem with it.
+    expect(RULES_SQL).toMatch(/scope\s+TEXT NOT NULL DEFAULT 'closed-pilot'/);
+    expect(RULES_SQL).toContain("legal_documents_scope_check");
+  });
+
   it("drops the zero-argument submit instead of leaving it beside the new one", () => {
     // Two overloads make a no-argument call ambiguous (42725) — the failure
     // that once broke every approve, reject and request-changes here.

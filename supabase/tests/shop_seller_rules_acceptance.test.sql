@@ -10,7 +10,7 @@
 
 BEGIN;
 
-SELECT plan(58);
+SELECT plan(68);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 -- A: pilot applicant, the one who signs.  B: pilot applicant, never signs.
@@ -90,28 +90,51 @@ SELECT throws_ok(
 -- ─── Publish v1 ─────────────────────────────────────────────────────────────
 
 RESET role;
+-- A DRAFT first: the row exists but nobody approved it. It must be invisible
+-- and unusable, which is what makes staging text before approval safe.
 INSERT INTO public.legal_documents (document_key, version, title, body, effective_at)
+VALUES ('seller-rules', 'draft0', 'Quy chế người bán (NHÁP)',
+        repeat('Bản nháp chưa ai duyệt. Không được coi là đang hiệu lực. ', 8),
+        now() - interval '2 days');
+
+INSERT INTO public.legal_documents (document_key, version, title, body, effective_at, approved_by, approved_at)
 VALUES ('seller-rules', 'v1', 'Quy chế người bán (TEST)',
         repeat('Điều khoản thử nghiệm dùng cho pgTAP. Đây không phải văn bản pháp lý. ', 6),
-        now() - interval '1 day');
+        now() - interval '1 day', 'pgTAP', now() - interval '1 day');
 
 -- A future version and a retired one, so "effective" is tested against
 -- neighbours rather than against an empty table.
-INSERT INTO public.legal_documents (document_key, version, title, body, effective_at)
+INSERT INTO public.legal_documents (document_key, version, title, body, effective_at, approved_by, approved_at)
 VALUES ('seller-rules', 'v9', 'Quy chế người bán (TƯƠNG LAI)',
         repeat('Bản chưa tới hạn hiệu lực, không ai được ký. ', 8),
-        now() + interval '30 days');
-INSERT INTO public.legal_documents (document_key, version, title, body, effective_at, retired_at)
+        now() + interval '30 days', 'pgTAP', now());
+INSERT INTO public.legal_documents (document_key, version, title, body, effective_at, approved_by, approved_at, retired_at)
 VALUES ('seller-rules', 'v0', 'Quy chế người bán (ĐÃ THU HỒI)',
         repeat('Bản cũ đã thu hồi, không còn là một lời mời ký. ', 8),
-        now() - interval '10 days', now() - interval '2 days');
+        now() - interval '10 days', 'pgTAP', now() - interval '10 days', now() - interval '2 days');
 
 INSERT INTO t_rules
 SELECT 'v1_hash', content_hash FROM public.legal_documents
 WHERE document_key='seller-rules' AND version='v1';
 
 SELECT is((SELECT version FROM public.legal_current_document('seller-rules')), 'v1',
-  'the effective version is v1 — not the future one, not the retired one');
+  'the effective version is v1 — not the draft, not the future one, not the retired one');
+
+SELECT is((SELECT scope FROM public.legal_current_document('seller-rules')), 'closed-pilot',
+  'and it is scoped to the closed pilot, not to a public launch');
+
+-- The draft is the case a "seed it and see" workflow gets wrong. Its
+-- effective_at is two days in the past; the ONLY thing keeping it off the
+-- table is that nobody approved it.
+SELECT throws_ok(
+  $$SELECT public.legal_accept('seller-rules','draft0',
+      (SELECT content_hash FROM public.legal_documents WHERE version='draft0'))$$,
+  'PT409', NULL, 'an UNAPPROVED draft cannot be signed even though its effective_at has passed');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.legal_documents
+    WHERE document_key='seller-rules' AND approved_at IS NULL), 1,
+  'the draft is still sitting there — refused, not deleted');
 
 SELECT is(
   (SELECT content_hash FROM public.legal_documents WHERE document_key='seller-rules' AND version='v1'),
@@ -232,10 +255,10 @@ SELECT is((SELECT count(*)::int FROM public.legal_acceptances
 -- ─── A new effective version re-closes the door ─────────────────────────────
 
 RESET role;
-INSERT INTO public.legal_documents (document_key, version, title, body, effective_at)
+INSERT INTO public.legal_documents (document_key, version, title, body, effective_at, approved_by, approved_at)
 VALUES ('seller-rules', 'v2', 'Quy chế người bán v2 (TEST)',
         repeat('Bản hai, nội dung khác hẳn bản một, dùng cho pgTAP. ', 8),
-        now() - interval '1 hour');
+        now() - interval '1 hour', 'pgTAP', now() - interval '2 hours');
 
 SELECT set_config('shop.privileged_write', 'on', true);
 UPDATE public.shop_applications SET status='needs_changes'
@@ -357,6 +380,55 @@ SELECT lives_ok(
 SELECT throws_ok(
   $$UPDATE public.legal_documents SET retired_at = NULL WHERE version='v1'$$,
   '42501', NULL, 'but un-retiring is not');
+
+-- Approval is a one-way door too.
+SELECT throws_ok(
+  $$UPDATE public.legal_documents SET approved_by = 'ai đó khác' WHERE version='v1'$$,
+  '42501', NULL, 'an approval cannot be reassigned to someone else');
+
+SELECT throws_ok(
+  $$UPDATE public.legal_documents SET approved_at = NULL, approved_by = NULL WHERE version='v1'$$,
+  '42501', NULL, 'nor withdrawn once people have relied on it');
+
+-- A draft's text is still editable, and content_hash follows it.
+SELECT lives_ok(
+  $$UPDATE public.legal_documents
+      SET body = body || ' Một câu sửa lúc còn là bản nháp.'
+    WHERE version='draft0'$$,
+  'a DRAFT is still editable — that is what a draft is');
+
+-- Approving it needs its effective_at moved to at-or-after the approval, which
+-- is only possible BECAUSE content freezes at approval rather than at insert.
+-- Freezing at insert would have made a draft with a past effective_at
+-- impossible to approve, ever.
+SELECT lives_ok(
+  $$UPDATE public.legal_documents
+      SET effective_at = now() + interval '1 hour',
+          approved_by = 'pgTAP', approved_at = now()
+    WHERE version='draft0'$$,
+  'a DRAFT can be approved, with its effective date moved forward in the same step');
+
+SELECT throws_ok(
+  $$UPDATE public.legal_documents SET body = body || ' sửa sau khi duyệt'
+      WHERE version='draft0'$$,
+  '42501', NULL, 'and the moment it is approved, its text freezes');
+
+-- No backdating: a version cannot take effect before somebody approved it.
+SELECT throws_ok(
+  $$INSERT INTO public.legal_documents
+      (document_key, version, title, body, effective_at, approved_by, approved_at)
+    VALUES ('seller-rules','back1','Ghi lùi ngày',
+      repeat('Bản này cố ý có effective_at trước approved_at để bị từ chối. ', 8),
+      now() - interval '5 days', 'pgTAP', now())$$,
+  '23514', NULL, 'a version cannot take effect before it was approved');
+
+SELECT throws_ok(
+  $$INSERT INTO public.legal_documents
+      (document_key, version, title, body, effective_at, approved_at)
+    VALUES ('seller-rules','half1','Duyệt một nửa',
+      repeat('Có thời điểm duyệt nhưng không có người duyệt — không phải bằng chứng. ', 8),
+      now(), now())$$,
+  '23514', NULL, 'half an approval is not an approval');
 
 SELECT lives_ok(
   $$DELETE FROM public.legal_documents WHERE version='v9'$$,

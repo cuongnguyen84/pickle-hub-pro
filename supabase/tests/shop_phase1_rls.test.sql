@@ -185,10 +185,13 @@ SELECT throws_ok(
   'complete but no seller rules published — the submit refuses');
 
 RESET role;
-INSERT INTO public.legal_documents (document_key, version, title, body, effective_at)
+-- approved_by/approved_at are not decoration: legal_current_document() refuses
+-- to serve an unapproved row, so a fixture without them is a draft and the
+-- submit stays shut.
+INSERT INTO public.legal_documents (document_key, version, title, body, effective_at, approved_by, approved_at)
 VALUES ('seller-rules', 'v1', 'Quy chế người bán (TEST)',
         repeat('Điều khoản thử nghiệm dùng cho pgTAP. Đây không phải văn bản pháp lý. ', 6),
-        now() - interval '1 day');
+        now() - interval '1 day', 'pgTAP', now() - interval '1 day');
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50010001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 
