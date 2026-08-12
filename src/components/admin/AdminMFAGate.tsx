@@ -116,7 +116,10 @@ export function AdminMFAGate({ children }: { children: ReactNode }) {
           <>
             <h1 className="text-2xl font-semibold mb-2">Lỗi xác thực 2 yếu tố</h1>
             <p className="text-foreground-muted mb-6 break-words">{state.message}</p>
-            <Button onClick={init} variant="outline">
+            {/* Same 44px floor as ErrorState: `h-11` is 2.75rem, which is only
+                44px while the root font-size is 16px, and this button measured
+                41. It is the sole control on a dead-end screen. */}
+            <Button onClick={init} variant="outline" className="min-h-[44px] min-w-[44px] px-4">
               Thử lại
             </Button>
           </>
