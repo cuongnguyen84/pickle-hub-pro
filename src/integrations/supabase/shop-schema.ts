@@ -401,6 +401,19 @@ export const SHOP_P2B_TABLES = [
   "shop_contact_moderation_events",
 ] as const;
 
+export const SHOP_P2B_PUBLIC_RPCS = [
+  /* P2b.3 — the public read model (migration 20260813090000). Not one of
+   * these takes a privilege flag; that is asserted in pgTAP, and listed here
+   * so a new public RPC has to be added deliberately. */
+  "shop_product_is_publishable",
+  "shop_public_search",
+  "shop_public_product",
+  "shop_public_contacts",
+  "shop_public_contacts_for_product",
+  "shop_public_shop",
+  "shop_public_categories",
+] as const;
+
 export const SHOP_P2B_RPCS = [
   "product_moderation_targets_check",
   "product_approve_preflight",

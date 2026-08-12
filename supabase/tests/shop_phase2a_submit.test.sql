@@ -10,7 +10,7 @@
 
 BEGIN;
 
-SELECT plan(84);
+SELECT plan(86);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -432,10 +432,27 @@ SELECT is(
 -- The two readers agree on everything that is not authorisation.
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50080001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+-- MEDIA is the one place the two readers deliberately differ, since P2b.3.
+--
+-- This assertion used to demand an identical list, and that is precisely what
+-- made the leak invisible: `path` is rendition_source_path, an object in the
+-- DRAFT bucket, and the public reader was receiving it for every photo. The
+-- P2a checks searched for `draft_path` and `/original` and found neither,
+-- because this is a third column with neither name in it.
+--
+-- The rule now: a buyer sees only bytes that exist in the PUBLIC bucket, and
+-- never a private path. Here the worker has not committed anything, so the
+-- buyer sees no photos at all while the seller previews their own.
+SELECT ok(
+  jsonb_array_length((public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), true)) -> 'media') > 0,
+  'người bán xem trước được ảnh của mình');
 SELECT is(
-  (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), true)) -> 'media',
-  (SELECT (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), false)) -> 'media'),
-  'ảnh: người bán xem trước và khách thấy CÙNG một danh sách');
+  (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), false)) -> 'media',
+  '[]'::jsonb,
+  'khách KHÔNG thấy ảnh nào khi worker chưa đưa byte lên kho công khai');
+SELECT ok(
+  (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), false))::text NOT LIKE '%rendition.webp%',
+  'và KHÔNG nhận được đường dẫn bản dựng trong kho nháp — đây là chỗ rò rỉ P2b.3 bịt lại');
 SELECT is(
   (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), true)) -> 'option_groups',
   (SELECT (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), false)) -> 'option_groups'),
@@ -445,9 +462,9 @@ SELECT is(
   ((SELECT (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), false)) -> 'variants' -> 0) ->> 'price_vnd'),
   'giá: giống hệt — xem trước không thể hiện một con số khác với con số người mua thấy');
 SELECT is(
-  (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), true)) ->> 'primary_media_id',
-  ((SELECT (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), false)) ->> 'primary_media_id')),
-  'ảnh chính: giống hệt');
+  (public.product_public_projection((SELECT v FROM t_sub WHERE k='p1'), false)) ->> 'primary_media_id',
+  NULL,
+  'ảnh chính công khai theo cùng luật: chưa có byte công khai thì không có ảnh chính');
 
 SELECT * FROM finish();
 ROLLBACK;

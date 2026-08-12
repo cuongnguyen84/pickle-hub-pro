@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   SHOP_P2A_RPCS,
   SHOP_P2A_TABLES,
+  SHOP_P2B_PUBLIC_RPCS,
   SHOP_P2B_RPCS,
   SHOP_P2B_TABLES,
   SHOP_RPCS,
@@ -153,6 +154,7 @@ const P2B_SQL = [
   "20260812090000_shop_p2b_status_suspended.sql",
   "20260812091000_shop_p2b_moderation_backend.sql",
   "20260812120000_shop_p2b_q5_q6_closure.sql",
+  "20260813090000_shop_p2b_public_read.sql",
 ]
   .map((f) => readFileSync(resolve(__dirname, "../../../supabase/migrations", f), "utf8"))
   .join("\n");
@@ -256,5 +258,48 @@ describe("shop schema parity with the P2b migrations", () => {
     // The channel TYPE travels through history; the value never does.
     expect(body).toContain("channel_type");
     expect(body).not.toContain("value_normalized");
+  });
+});
+
+// ── P2b.3 — the public read model ───────────────────────────────────────────
+
+const PUB_SQL = readFileSync(
+  resolve(__dirname, "../../../supabase/migrations/20260813090000_shop_p2b_public_read.sql"),
+  "utf8",
+);
+
+describe("the public read model takes no privilege flag", () => {
+  it.each(SHOP_P2B_PUBLIC_RPCS)("a P2b.3 migration creates %s", (fn) => {
+    expect(PUB_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  });
+
+  it("no shop_public_* function accepts _as_seller", () => {
+    // The escalation class is removed at the edge rather than defended at the
+    // centre. pgTAP asserts the same thing against the live catalog; this is
+    // the cheap guard that fails in CI before a migration is ever applied.
+    for (const [, sig] of PUB_SQL.matchAll(
+      /CREATE OR REPLACE FUNCTION public\.(shop_public_\w+)\(([\s\S]*?)\)\s*RETURNS/g,
+    )) {
+      expect(sig).not.toMatch(/_as_seller/);
+    }
+  });
+
+  it("the seller-only fields are seller-only by construction", () => {
+    // stock_on_hand was already. `path` is rendition_source_path — an object
+    // in the DRAFT bucket that the public reader used to receive for every
+    // photo, which the P2a checks missed because they searched for
+    // `draft_path` and `/original`.
+    expect(PUB_SQL).toMatch(/'stock_on_hand',\s*CASE WHEN _as_seller/);
+    expect(PUB_SQL).toMatch(/'path',\s*CASE WHEN _as_seller/);
+  });
+
+  it("a buyer only ever sees media with committed public bytes", () => {
+    expect(PUB_SQL).toContain("AND (_as_seller OR m.public_path IS NOT NULL)");
+  });
+
+  it("the cursor keeps its tie-breaker", () => {
+    // Without the id, two products published in the same batch share a
+    // timestamp and one of them is silently skipped between pages.
+    expect(PUB_SQL).toContain("(v.created_at, v.id) < (_cursor_at, _cursor_id)");
   });
 });

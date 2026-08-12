@@ -298,3 +298,111 @@ zero-height button; the real box is measured in the browser gate.
 | build · `BUNDLE_STRICT=1` · prototype guard · `build:proto` | all pass |
 | Total gz | 1921.1 → **1921.3** (+0.2 for the two touch-target fixes) |
 | INITIAL | 226.3 KB |
+
+---
+
+## P2b.3 — Public read/search architecture · `<this commit>`
+
+One migration, one pgTAP file (55), four public wrappers, one shared
+predicate, one generated search column and four partial indexes. Bundle
+**1921.3 → 1921.4 KB** (+0.1; allocation was 4 KB) — this checkpoint is
+backend only.
+
+### The leak it found
+
+`product_public_projection` returned `media[].path = rendition_source_path` to
+**both** readers. That column is the client-processed WebP in the **draft
+bucket** — the object `product_publish_prepare` copies *from*. Every public
+read was handed a private storage path for every photo.
+
+P2a's assertions missed it because they searched for `draft_path` and
+`/original`; this is a third column with neither name in it. And the assertion
+that would have caught it was doing the opposite — it demanded the seller
+preview and the public reader return an **identical** media list, which is
+precisely what made the leak invisible. Fixed the way `stock_on_hand` already
+was: seller-only by construction.
+
+### Publishable, defined once
+
+`shop_product_is_publishable()` — approved · published · shop active ·
+**category active** · **at least one committed public rendition** · **at least
+one live variant**. The last three are new. Without the rendition check a
+product whose worker job has not run appears in a list with a broken image;
+that case is now a fixture (`vot-chua-co-byte`) rather than a hope.
+
+### No public function takes a privilege flag
+
+`shop_public_product(slug)` · `shop_public_shop(slug)` ·
+`shop_public_search(...)` · `shop_public_categories()` ·
+`shop_public_contacts(...)`. Asserted twice: against the live catalog in pgTAP,
+and against the migration text in `shop-schema-parity.test.ts`.
+
+A draft slug and a slug nobody ever used return **byte-identical** answers, so
+the response is not an oracle for which private slugs are real. A retired slug
+belonging to a draft does **not** redirect, for the same reason.
+
+### Search
+
+`to_tsvector('simple', unaccent_immutable(...))` as a **generated** column plus
+a partial GIN index — the repo's own two conventions, combined, with no new
+extension. `simple` because there is no Vietnamese stemmer and an English one
+would mangle Vietnamese; unaccent so "vot" finds "vợt", which is how people
+type on a phone. `websearch_to_tsquery` so an unbalanced quote is a shrug, not
+a 500 (asserted).
+
+### The performance bug EXPLAIN caught
+
+The first implementation computed price range, availability and cover image for
+**every matching row** and then counted them, because `total` was a count over
+the same CTE the page came from — the N+1 this design exists to avoid, moved
+into the count where it was harder to see.
+
+Rewritten to narrow first (ids and sort key, every filter an EXISTS the indexes
+can serve), count that, then pay for per-row fields on the ≤25 rows returned.
+
+| Query (10,000 products · 25 shops · 4 categories · 1,000 retired slugs) | Before | After |
+|---|---:|---:|
+| discovery, first page | 122,819 buf · 57.9 ms | **3,004 buf · 7.6 ms** |
+| discovery, deep cursor (row 2,000) | 122,124 · 49.3 ms | **2,402 · 6.5 ms** |
+| category page | 32,127 · 14.1 ms | 2,397 · 4.7 ms |
+| text search, unaccented | 31,675 · 13.5 ms | 7,954 · 7.4 ms |
+| text + category + in-stock | 11,582 · 5.2 ms | 7,031 · 4.3 ms |
+| shop catalog | 8,477 · 3.7 ms | 4,356 · 3.0 ms |
+| PDP by current slug | — | 390 buf · 1.25 ms |
+| PDP by retired slug (301) | — | 56 buf · 0.38 ms |
+| taxonomy counts | — | 3,603 · 4.7 ms |
+
+Teardown: 0 products, 0 shops.
+
+### Red-before-green
+
+| Guard removed | Result |
+|---|---|
+| the "public bytes exist" + "live variant" filters | 1 assertion red |
+| the cursor's `id` tie-breaker | **3 red — one product silently SKIPPED** |
+
+The second attempt is the interesting one. The first run of that proof came
+back **green**, because the fixture's products all had distinct `created_at`
+and a cursor comparing on the timestamp alone still partitioned them. Two rows
+sharing a timestamp — a seller publishing a batch, a worker committing several
+in one transaction — is what makes the difference visible, so the fixture now
+has them and a cursor walk asserts all four rows come back exactly once.
+
+### One more thing the gate caught
+
+`search_doc` is generated, so `unaccent_immutable()` now runs on every write to
+`products`. Phase 1 granted it to `authenticated` only, and the storage
+integration suite went red with "permission denied for function
+unaccent_immutable" the moment the column existed. Granted to `anon` and
+`service_role`; it is pure text manipulation with no data access.
+
+| Gate | Result |
+|---|---|
+| `supabase db reset` | 349/349 |
+| pgTAP | Files=33, **1231**, PASS |
+| storage integration | 17, PASS |
+| unit | **1825** passed |
+| `tsc -b` / eslint | clean / 0 errors |
+| build · `BUNDLE_STRICT=1` | exit 0 |
+| Total gz | 1921.3 → **1921.4** (+0.1, allocation 4 KB) |
+| INITIAL | 226.3 KB |
