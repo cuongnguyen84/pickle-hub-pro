@@ -1,4 +1,55 @@
-# Quy chế người bán v1 — Closed Pilot
+-- ============================================================================
+-- Quy chế người bán v1 — the approved text, published (CP15)
+-- ----------------------------------------------------------------------------
+-- Product Owner decision 2026-08-13: the full text of
+-- docs/proposals/shop-closed-pilot/seller-rules-v1.md is APPROVED, scoped to
+-- the closed pilot, effective 2026-08-14T00:00:00+07:00.
+--
+-- Migration 20260814090000 shipped the machinery and deliberately no content,
+-- so every environment refuses shop_application_submit() with
+-- `seller_rules_not_published`. This migration is the one act that opens that
+-- door, and it is a migration rather than a seed script for one reason: the
+-- text a seller signs has to reach staging and production by the same
+-- reviewed, replayable path as the schema. A seed script run by hand is a
+-- second way for two environments to end up holding different documents under
+-- the same version number.
+--
+-- Three things are worth reading before changing anything here:
+--
+--   1. The body below is the file, byte for byte — not a summary, not a
+--      re-flowed copy. shop-seller-rules-v1-parity.test.ts fails if a single
+--      character drifts in either direction, which is what makes "the approved
+--      document" and "the document in the database" one fact instead of two.
+--
+--   2. content_hash is NOT written here. It is a GENERATED column, and the
+--      verification block below reads back what Postgres computed and refuses
+--      the migration unless it is the sha256 of the approved file. An
+--      environment therefore cannot serve text that differs from the approval
+--      record: it either matches or the migration fails.
+--
+--   3. ON CONFLICT DO NOTHING, then verify anyway. Re-running is a no-op; an
+--      environment already holding a DIFFERENT seller-rules/v1 is a loud
+--      failure rather than a silent disagreement — which is the whole reason
+--      the check runs after the insert rather than instead of it.
+--
+-- effective_at is in the future at the time of writing, deliberately: until
+-- 2026-08-14T00:00+07 legal_current_document() returns no row, the submit
+-- stays shut, and the QA fixtures (which publish `[TEST-ONLY]` versions with a
+-- later effective_at) keep winning the most-recent-effective ordering.
+--
+-- Rollback: this version is approved and may already be signed, so it is not
+-- deleted — §3 of 20260814090000 forbids removing a version anybody accepted.
+-- To stop offering it, set retired_at (a one-way door) and publish a successor.
+-- ============================================================================
+
+INSERT INTO public.legal_documents (
+  document_key, version, scope, title, body, effective_at, approved_by, approved_at
+) VALUES (
+  'seller-rules',
+  'v1',
+  'closed-pilot',
+  'Quy chế người bán v1 — Closed Pilot',
+  $seller_rules_v1$# Quy chế người bán v1 — Closed Pilot
 
 | | |
 |---|---|
@@ -662,3 +713,47 @@ ghi được ban hành vào hệ thống theo đúng quy trình trong gói phê 
 
 Trên một môi trường chưa ban hành bản ghi, hệ thống ở đó vẫn từ chối mọi hồ sơ
 đăng ký người bán với lỗi `seller_rules_not_published` — và đó là hành vi đúng.
+$seller_rules_v1$,
+  '2026-08-14 00:00:00+07'::timestamptz,
+  'Cuong Nguyen — Product Owner, ThePickleHub',
+  '2026-08-13 07:30:00+07'::timestamptz
+)
+ON CONFLICT (document_key, version) DO NOTHING;
+
+-- ─── Verify what is actually stored ─────────────────────────────────────────
+-- Every field the approval decision named, checked against the row Postgres
+-- ended up with. A migration that publishes a legal document without reading
+-- it back is trusting its own INSERT statement, and the failure that would
+-- slip past — an environment already holding a different v1 — is exactly the
+-- one that matters.
+
+DO $verify$
+DECLARE
+  _row public.legal_documents%ROWTYPE;
+  -- sha256 over the exact bytes of the approved file,
+  -- docs/proposals/shop-closed-pilot/seller-rules-v1.md. Recomputed from that
+  -- file by the parity test, so this constant cannot quietly come to describe
+  -- a document that no longer exists.
+  _expected_hash CONSTANT TEXT :=
+    'fb62bd471d7b6b27c53d9eeded57dd636aa2f1f1f03db9a4a20abd49d7c70c98';
+BEGIN
+  SELECT * INTO _row FROM public.legal_documents
+  WHERE document_key = 'seller-rules' AND version = 'v1';
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'seller-rules v1 was not published';
+  END IF;
+
+  IF _row.content_hash IS DISTINCT FROM _expected_hash THEN
+    RAISE EXCEPTION 'seller-rules v1 hash mismatch: stored %, approved %',
+      _row.content_hash, _expected_hash;
+  END IF;
+
+  IF _row.scope         IS DISTINCT FROM 'closed-pilot'
+     OR _row.approved_by  IS DISTINCT FROM 'Cuong Nguyen — Product Owner, ThePickleHub'
+     OR _row.approved_at  IS DISTINCT FROM '2026-08-13 07:30:00+07'::timestamptz
+     OR _row.effective_at IS DISTINCT FROM '2026-08-14 00:00:00+07'::timestamptz THEN
+    RAISE EXCEPTION 'seller-rules v1 does not match the approval decision (scope %, by %, approved %, effective %)',
+      _row.scope, _row.approved_by, _row.approved_at, _row.effective_at;
+  END IF;
+END $verify$;

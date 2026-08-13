@@ -49,6 +49,13 @@ INSERT INTO public.shop_pilot_members (user_id) VALUES
   ('50010001-0000-4000-8000-000000000001'::uuid),
   ('50010002-0000-4000-8000-000000000002'::uuid);
 
+-- Migration 20260814100000 publishes the real seller rules with an effective
+-- date. The submit assertions further down are about consent, not about the
+-- calendar, so this file starts from "nothing is published" and publishes its
+-- own test document — otherwise every one of them would change meaning the
+-- moment the real document takes effect. Rolled back with the transaction.
+DELETE FROM public.legal_documents WHERE document_key = 'seller-rules';
+
 -- ─── Blanket: RLS actually on ──────────────────────────────────────────────
 
 SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='shop_applications'), 'RLS enabled on shop_applications');

@@ -46,6 +46,18 @@ INSERT INTO public.shop_pilot_members (user_id) VALUES
 CREATE TEMP TABLE t_rules (k TEXT PRIMARY KEY, v TEXT);
 GRANT SELECT, INSERT ON t_rules TO authenticated, anon;
 
+-- Migration 20260814100000 publishes the REAL "Quy chế người bán v1". This
+-- file builds its own miniature world — a draft, a current version, a future
+-- one, a retired one — and every assertion below is about which of them the
+-- server offers. Leaving the real document in place would put a fifth,
+-- unrelated row in that world, collide on the primary key at `v1`, and make
+-- the answers depend on today's date rather than on the rule being tested.
+--
+-- So the fixture removes it, inside a transaction that rolls back. Deleting is
+-- allowed precisely because nothing has been signed yet — which is the
+-- immutability trigger of §3 agreeing that this is a fixture and not tampering.
+DELETE FROM public.legal_documents WHERE document_key = 'seller-rules';
+
 -- ─── Shape ──────────────────────────────────────────────────────────────────
 
 SELECT has_table('public', 'legal_documents',   'a versioned document has a home');

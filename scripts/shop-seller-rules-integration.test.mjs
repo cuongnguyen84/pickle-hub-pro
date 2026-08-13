@@ -109,12 +109,18 @@ describe.skipIf(!up)("seller rules — over HTTP, as a client", () => {
     await admin.from("legal_documents").delete().eq("document_key", DOC_KEY).eq("version", VERSION);
   }, 60_000);
 
-  it("refuses the submit while no version is published", async () => {
+  it("refuses the submit from someone who has signed nothing", async () => {
+    // Deliberately NOT asserting `seller_rules_not_published`. Since migration
+    // 20260814100000 the real "Quy chế người bán v1" is published with an
+    // effective date, so which of the two refusals comes back depends on the
+    // clock — and an assertion about a shared database's global state is how
+    // this suite has been fooled before. What must hold at every hour is that
+    // a complete application with no signature does not move.
     const { error } = await signer.client.rpc("shop_application_submit", {
       _expected_rules_version: null,
     });
-    expect(error, "a complete application with no rules must NOT submit").toBeTruthy();
-    expect(error.message).toMatch(/seller_rules_not_published/);
+    expect(error, "a complete application with no signature must NOT submit").toBeTruthy();
+    expect(error.message).toMatch(/seller_rules_not_published|seller_rules_not_accepted/);
   });
 
   it("publishes a version whose hash the server computes", async () => {
