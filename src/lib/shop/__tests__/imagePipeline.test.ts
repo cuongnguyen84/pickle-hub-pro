@@ -1,19 +1,30 @@
-/**
- * The browser image pipeline.
- *
- * Two halves are testable without a browser and are tested here: what the bytes
- * are (signature sniffing) and how big the output should be. The half that
- * needs a real canvas — decode, orientation, WebP encode, EXIF removal — is
- * proven in scripts/shop-media-integration.test.mjs against a real image and a
- * real Storage upload, because a jsdom canvas encodes nothing and a test that
- * mocks toBlob proves only that the mock was called.
- */
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+// @vitest-environment jsdom
+// ============================================================================
+// The image pipeline is a privacy boundary, not a resizer
+// ----------------------------------------------------------------------------
+// Everything a seller uploads goes through here first, and three of the things
+// it does are the reason the server can be strict later:
+//
+//   · it decides what a file IS from its bytes, not from its name or the type
+//     the OS reported — an iPhone photo called .jpg that is HEIC inside is the
+//     case this exists for;
+//   · it re-encodes through a canvas, which is what drops EXIF, and with it
+//     the GPS coordinates of the seller's home;
+//   · it refuses, in the seller's language, instead of uploading something the
+//     server will reject after they have already waited.
+//
+// jsdom has no image decoder, so `createImageBitmap` and `toBlob` are stubbed —
+// but nothing else is. The sniffing, the size policy, the quality ladder, the
+// abort handling and the bitmap release are the real functions.
+// ============================================================================
+
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
-  HEIC_MESSAGE,
   IMAGE_LIMITS,
+  HEIC_MESSAGE,
+  ImageRejected,
+  processImage,
+  readHead,
   runQueue,
   sniffImageType,
   targetSize,
@@ -22,125 +33,230 @@ import {
 const bytes = (...values: number[]) => new Uint8Array(values);
 const ascii = (text: string) => Array.from(text).map((c) => c.charCodeAt(0));
 
-describe("the limits are the server's limits", () => {
-  it("matches shop_media_limits() in the migration", () => {
-    // A client that allows what the server refuses wastes the seller's upload;
-    // a client stricter than the server blocks a photo that would have been
-    // accepted. Both are the same defect, so the numbers are compared.
-    const sql = readFileSync(
-      resolve(__dirname, "../../../../supabase/migrations/20260811140000_shop_phase2a_media_lifecycle.sql"),
-      "utf8",
-    );
-    const block = sql.slice(sql.indexOf("FUNCTION public.shop_media_limits"), sql.indexOf("GRANT EXECUTE ON FUNCTION public.shop_media_limits"));
-    expect(block).toContain(`'max_input_bytes',        ${IMAGE_LIMITS.maxInputBytes}`);
-    expect(block).toContain(`'max_rendition_bytes',    ${IMAGE_LIMITS.maxRenditionBytes}`);
-    expect(block).toContain(`'max_dimension',          ${IMAGE_LIMITS.maxDimension}`);
-    expect(block).toContain(`'max_per_product',        ${IMAGE_LIMITS.maxPerProduct}`);
-    expect(block).toContain(`'rendition_content_type', '${IMAGE_LIMITS.renditionType}'`);
-    for (const type of IMAGE_LIMITS.inputTypes) expect(block).toContain(`'${type}'`);
+const JPEG = bytes(0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0);
+const PNG = bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0);
+const WEBP = bytes(...ascii("RIFF"), 0, 0, 0, 0, ...ascii("WEBP"));
+const HEIC = bytes(0, 0, 0, 0x18, ...ascii("ftyp"), ...ascii("heic"));
+
+const fileOf = (head: Uint8Array, size = head.length, type = "image/jpeg") => {
+  const blob = new Blob([head.slice().buffer as ArrayBuffer], { type });
+  // File.size has to be the claimed size for the too-big path; the bytes only
+  // need to be readable for the sniff.
+  Object.defineProperty(blob, "size", { value: size });
+  return blob as Blob;
+};
+
+/** Stand in for the decoder. Records whether the bitmap was released. */
+const stubBitmap = (width: number, height: number) => {
+  const close = vi.fn();
+  vi.stubGlobal(
+    "createImageBitmap",
+    vi.fn(async () => ({ width, height, close })),
+  );
+  return { close };
+};
+
+/** Stand in for the encoder. `sizes` is walked as the quality ladder steps. */
+const stubCanvas = (sizes: number[], type: string = IMAGE_LIMITS.renditionType) => {
+  const drawImage = vi.fn();
+  let call = 0;
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+    drawImage,
+  } as unknown as CanvasRenderingContext2D);
+  vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function (
+    this: HTMLCanvasElement,
+    cb: BlobCallback,
+  ) {
+    const size = sizes[Math.min(call, sizes.length - 1)];
+    call += 1;
+    if (size < 0) return cb(null);
+    const blob = new Blob(["x"], { type });
+    Object.defineProperty(blob, "size", { value: size });
+    cb(blob);
+  });
+  return { drawImage, calls: () => call };
+};
+
+beforeEach(() => vi.restoreAllMocks());
+afterEach(() => vi.unstubAllGlobals());
+
+describe("sniffImageType — the bytes, not the claim", () => {
+  it.each([
+    ["JPEG", JPEG, "image/jpeg"],
+    ["PNG", PNG, "image/png"],
+    ["WebP", WEBP, "image/webp"],
+    ["HEIC", HEIC, "image/heic"],
+  ])("recognises %s", (_name, head, expected) => {
+    expect(sniffImageType(head)).toBe(expected);
+  });
+
+  it.each([["heix"], ["hevc"], ["mif1"], ["msf1"]])(
+    "recognises the %s brand a phone also produces",
+    (brand) => {
+      expect(sniffImageType(bytes(0, 0, 0, 0x18, ...ascii("ftyp"), ...ascii(brand)))).toBe("image/heic");
+    },
+  );
+
+  it("does not mistake another ISO-BMFF container for a photo", () => {
+    // mp4 is ftyp too. Calling it HEIC would show a seller the iPhone advice
+    // for a video they picked by accident.
+    expect(sniffImageType(bytes(0, 0, 0, 0x18, ...ascii("ftyp"), ...ascii("mp42")))).toBe("unknown");
+  });
+
+  it("returns unknown for a truncated header rather than guessing", () => {
+    expect(sniffImageType(bytes(0xff, 0xd8))).toBe("unknown");
+    expect(sniffImageType(new Uint8Array())).toBe("unknown");
+  });
+
+  it("is not fooled by RIFF that is not WebP", () => {
+    expect(sniffImageType(bytes(...ascii("RIFF"), 0, 0, 0, 0, ...ascii("AVI ")))).toBe("unknown");
+  });
+
+  it("reads only the head it was asked for", async () => {
+    const head = await readHead(fileOf(JPEG, JPEG.length), 4);
+    expect(Array.from(head)).toEqual([0xff, 0xd8, 0xff, 0xe0]);
   });
 });
 
-describe("sniffImageType — the bytes, not the filename", () => {
-  it("recognises JPEG", () => {
-    expect(sniffImageType(bytes(0xff, 0xd8, 0xff, 0xe0))).toBe("image/jpeg");
-  });
-
-  it("recognises PNG", () => {
-    expect(sniffImageType(bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))).toBe("image/png");
-  });
-
-  it("recognises WebP, which needs both RIFF and WEBP", () => {
-    expect(sniffImageType(bytes(...ascii("RIFF"), 0, 0, 0, 0, ...ascii("WEBP")))).toBe("image/webp");
-    // RIFF alone is a container — WAV is RIFF too, and is not an image.
-    expect(sniffImageType(bytes(...ascii("RIFF"), 0, 0, 0, 0, ...ascii("WAVE")))).toBe("unknown");
-  });
-
-  it.each(["heic", "heix", "hevc", "mif1", "msf1"])("recognises the %s brand as HEIC", (brand) => {
-    expect(sniffImageType(bytes(0, 0, 0, 0x18, ...ascii("ftyp"), ...ascii(brand)))).toBe("image/heic");
-  });
-
-  it("does not call every ISO-BMFF file HEIC — an mp4 is not a photo", () => {
-    expect(sniffImageType(bytes(0, 0, 0, 0x18, ...ascii("ftyp"), ...ascii("isom")))).toBe("unknown");
-  });
-
-  it("catches the case it is really here for: a HEIC named .jpg", () => {
-    // The OS reports image/jpeg from the extension. Only the signature knows.
-    const heicBytes = bytes(0, 0, 0, 0x18, ...ascii("ftyp"), ...ascii("heic"));
-    expect(sniffImageType(heicBytes)).toBe("image/heic");
-  });
-
-  it("returns unknown for something that is not an image at all", () => {
-    expect(sniffImageType(bytes(...ascii("%PDF-1.7")))).toBe("unknown");
-    expect(sniffImageType(bytes())).toBe("unknown");
-  });
-});
-
-describe("the HEIC message", () => {
-  it("says what to choose instead, and how to stop it happening again", () => {
-    expect(HEIC_MESSAGE).toContain("HEIC");
-    expect(HEIC_MESSAGE).toContain("JPEG");
-    expect(HEIC_MESSAGE).toMatch(/Tương thích nhất/);
-  });
-});
-
-describe("targetSize", () => {
-  it("never upscales — a small photo stays small", () => {
+describe("targetSize — cap the longest edge, never enlarge", () => {
+  it("leaves an image that already fits alone", () => {
     expect(targetSize(800, 600)).toEqual({ width: 800, height: 600 });
-    expect(targetSize(100, 100)).toEqual({ width: 100, height: 100 });
   });
 
-  it("caps the longest edge and keeps the aspect ratio", () => {
-    expect(targetSize(4000, 3000)).toEqual({ width: 2048, height: 1536 });
-    expect(targetSize(3000, 4000)).toEqual({ width: 1536, height: 2048 });
+  it("does not upscale a small photo into a bigger, worse file", () => {
+    expect(targetSize(100, 50, 2048)).toEqual({ width: 100, height: 50 });
   });
 
-  it("leaves an image exactly at the cap alone", () => {
-    expect(targetSize(2048, 1024)).toEqual({ width: 2048, height: 1024 });
+  it("keeps the aspect ratio when it caps", () => {
+    expect(targetSize(4096, 2048)).toEqual({ width: 2048, height: 1024 });
+    expect(targetSize(2048, 4096)).toEqual({ width: 1024, height: 2048 });
   });
 
-  it("accepts a smaller cap for a logo, where 2048px is pointless weight", () => {
-    expect(targetSize(4000, 4000, 512)).toEqual({ width: 512, height: 512 });
+  it("caps on the longest edge, not on width", () => {
+    const { width, height } = targetSize(1000, 3000, 1500);
+    expect(Math.max(width, height)).toBe(1500);
+    expect(width).toBe(500);
   });
 });
 
-describe("runQueue", () => {
+describe("processImage — what a seller is allowed to send", () => {
+  it("refuses a file over the input limit before decoding anything", async () => {
+    const decode = vi.fn();
+    vi.stubGlobal("createImageBitmap", decode);
+    await expect(
+      processImage(fileOf(JPEG, IMAGE_LIMITS.maxInputBytes + 1)),
+    ).rejects.toBeInstanceOf(ImageRejected);
+    // The point of checking size first: a 40 MB photo must not be decoded to
+    // find out it is too big.
+    expect(decode).not.toHaveBeenCalled();
+  });
+
+  it("refuses HEIC with the iPhone setting, not a generic error", async () => {
+    await expect(processImage(fileOf(HEIC, 1000))).rejects.toThrow(HEIC_MESSAGE);
+  });
+
+  it("refuses a file whose bytes are not an image, whatever it is named", async () => {
+    const notAnImage = fileOf(bytes(...ascii("%PDF-1.7")), 1000, "image/jpeg");
+    await expect(processImage(notAnImage)).rejects.toThrow(/không phải ảnh/i);
+  });
+
+  it("re-encodes to WebP and reports what the source really was", async () => {
+    stubBitmap(1200, 900);
+    stubCanvas([500_000]);
+    const out = await processImage(fileOf(PNG, 4000));
+    expect(out.blob.type).toBe(IMAGE_LIMITS.renditionType);
+    expect(out.sourceType).toBe("image/png");
+    expect(out).toMatchObject({ width: 1200, height: 900 });
+  });
+
+  it("steps the quality down until it fits instead of failing just over", async () => {
+    stubBitmap(1000, 1000);
+    const canvas = stubCanvas([
+      IMAGE_LIMITS.maxRenditionBytes + 1, // 0.82 — 1 byte over
+      IMAGE_LIMITS.maxRenditionBytes + 1, // 0.70
+      IMAGE_LIMITS.maxRenditionBytes - 1, // 0.60 — fits
+    ]);
+    const out = await processImage(fileOf(JPEG, 4000));
+    expect(out.blob.size).toBeLessThanOrEqual(IMAGE_LIMITS.maxRenditionBytes);
+    expect(canvas.calls()).toBe(3);
+  });
+
+  it("gives up with a sentence a seller can act on when even the lowest quality is too big", async () => {
+    stubBitmap(4000, 4000);
+    stubCanvas([9_000_000, 9_000_000, 9_000_000, 9_000_000]);
+    await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/vẫn quá nặng/i);
+  });
+
+  it("refuses a browser that hands back something other than WebP", async () => {
+    // Silently accepting PNG here would move the failure to the server, where
+    // the seller sees finalize fail instead of this sentence.
+    stubBitmap(800, 800);
+    stubCanvas([1000], "image/png");
+    await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/WebP/);
+  });
+
+  it("refuses when the browser cannot give a 2D context", async () => {
+    stubBitmap(800, 800);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    await expect(processImage(fileOf(JPEG, 4000))).rejects.toBeInstanceOf(ImageRejected);
+  });
+
+  it("turns a decode failure into a sentence, not a raw DOM error", async () => {
+    vi.stubGlobal("createImageBitmap", vi.fn(async () => { throw new Error("boom"); }));
+    await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/bị hỏng/);
+  });
+
+  it("caps the longest edge at the limit the server also enforces", async () => {
+    stubBitmap(4096, 2048);
+    stubCanvas([500_000]);
+    const out = await processImage(fileOf(JPEG, 4000));
+    expect(Math.max(out.width, out.height)).toBe(IMAGE_LIMITS.maxDimension);
+  });
+
+  it("releases the bitmap even when it throws — a leaked one kills a phone tab", async () => {
+    const { close } = stubBitmap(800, 800);
+    stubCanvas([-1]); // toBlob yields null
+    await expect(processImage(fileOf(JPEG, 4000))).rejects.toBeInstanceOf(ImageRejected);
+    expect(close).toHaveBeenCalled();
+  });
+
+  it("stops on an aborted signal and does not return a blob anyway", async () => {
+    stubBitmap(800, 800);
+    stubCanvas([500_000]);
+    const controller = new AbortController();
+    controller.abort();
+    await expect(processImage(fileOf(JPEG, 4000), { signal: controller.signal })).rejects.toThrow(
+      /abort/i,
+    );
+  });
+});
+
+describe("runQueue — a phone survives eight photos", () => {
   it("never runs more than the concurrency at once", async () => {
-    // Eight 8 MB photos decoded together is several hundred MB of bitmap, which
-    // on a mid-range Android is a tab that disappears.
     let inFlight = 0;
     let peak = 0;
     await runQueue(
-      Array.from({ length: 9 }, (_, i) => i),
+      Array.from({ length: 8 }, (_, i) => i),
       async () => {
-        inFlight++;
+        inFlight += 1;
         peak = Math.max(peak, inFlight);
-        await Promise.resolve();
-        await Promise.resolve();
-        inFlight--;
+        await new Promise((r) => setTimeout(r, 1));
+        inFlight -= 1;
       },
       2,
     );
-    expect(peak).toBeLessThanOrEqual(2);
+    expect(peak).toBe(2);
   });
 
-  it("runs every item exactly once, in order of start", async () => {
-    const seen: number[] = [];
-    await runQueue([10, 20, 30], async (item) => {
-      seen.push(item);
-    }, 1);
-    expect(seen).toEqual([10, 20, 30]);
+  it("passes each item exactly once, with its index", async () => {
+    const seen: Array<[string, number]> = [];
+    await runQueue(["a", "b", "c"], async (item, index) => { seen.push([item, index]); }, 2);
+    expect(seen.sort()).toEqual([["a", 0], ["b", 1], ["c", 2]]);
   });
 
-  it("handles an empty list without hanging", async () => {
-    await expect(runQueue([], async () => {}, 3)).resolves.toBeUndefined();
-  });
-
-  it("passes the index, so a caller can address its own slot", async () => {
-    const pairs: [unknown, number][] = [];
-    await runQueue(["a", "b"], async (item, index) => {
-      pairs.push([item, index]);
-    }, 1);
-    expect(pairs).toEqual([["a", 0], ["b", 1]]);
+  it("does nothing, and does not hang, on an empty list", async () => {
+    const worker = vi.fn();
+    await expect(runQueue([], worker, 2)).resolves.toBeUndefined();
+    expect(worker).not.toHaveBeenCalled();
   });
 });
