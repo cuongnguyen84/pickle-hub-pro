@@ -1117,3 +1117,123 @@ trên CI cùng lượt push này.
 Không sửa provider, threshold, exclusion hay reporter. Mẫu số tăng đúng 2 và cả
 hai là statement của bản vá — mọi statement còn lại đến từ việc phủ file **đã
 có trong mẫu số**, đúng như CP23 đã đo.
+
+---
+
+## 22. B-1 + C-1 trên STAGING — đã chạy, và hai thứ bắt được trước khi ghi
+
+**Đích:** `utokwfcljxjkpkaqgheo` — `ThePickleHub Staging`, ap-northeast-1,
+ACTIVE_HEALTHY. In ra và đọc **trước mọi mutation**. Production
+`ajvlcamxemgbxduhiqrl` **không bị chạm**.
+
+### 🔴 Preflight bắt được lỗi thật — artifact staging gọi về production
+
+Trước khi ghi một dòng nào, kiểm tra #1 ("artifact và network chứa staging ref,
+không chứa production ref") **ĐỎ**. Bundle JS thì sạch — nó đọc
+`VITE_SUPABASE_URL` — nhưng **bốn thứ nằm ngoài đồ thị JS** ghi cứng ref
+production, và không đường env nào trong `src/` với tới:
+
+| Chỗ | Hậu quả trên staging |
+|---|---|
+| `index.html` `preconnect` + `dns-prefetch` | mỗi lượt tải trang mở **DNS + TLS tới production** |
+| `public/_headers` CSP `report-uri` | báo cáo vi phạm CSP **POST sang production**, ghi dòng gốc-staging vào dữ liệu production |
+| `vite.config.ts` — 2 `urlPattern` của service worker | ghim theo host production nên trên môi trường khác **khớp KHÔNG GÌ CẢ** |
+
+Cái thứ ba đáng nói nhất: một trong hai luật đó là **luật an toàn** — Supabase
+`/rest/` không bao giờ được cache, vì phản hồi là theo-người-dùng và cache khoá
+theo URL có thể trả dữ liệu của tài khoản A cho tài khoản B trên máy dùng
+chung. Trên staging luật đó **im lặng không áp dụng**. REST vẫn không bị cache,
+nhưng chỉ vì **không luật nào khác khớp** — được bảo vệ do tình cờ, không do
+thiết kế.
+
+Vá ở `e08f39d6`: cả bốn suy ra từ `SUPABASE_ORIGIN`, fallback là host production
+**có chủ đích** để một bản build thiếu env cho ra artifact **y hệt trước đây**
+chứ không phải nửa vời. Chứng minh production không đổi bằng build trước/sau với
+env production: `_headers` giống hệt, `registerRoute` của SW giống hệt,
+`index.html` chỉ khác build token. Guard 5 assertion + red-proof 3 đột biến.
+
+Kèm theo, sửa `src/lib/pwa/__tests__/cache.test.ts`: nó định vị luật bằng chuỗi
+literal, nên khi pattern đổi, **một test đỏ (đúng) và một test thành RỖNG NGHĨA**
+— mọi assertion của nó là `not.toContain`, nên một lát cắt không khớp gì sẽ
+**qua hết**. Giờ cả hai khẳng định tìm thấy vị trí trước đã.
+
+### B-1 — 357 file, một file một lần
+
+`project_url` vào vault **trước file đầu tiên** (CP18) → `ops_project_url()` trả
+staging. Runner từ chối chạy nếu `auth.users > 50` hoặc ref trả về khác ref yêu
+cầu; ledger **chỉ ghi cho file thật sự áp**; dừng ở lỗi đầu tiên.
+
+356 file áp trong một lượt, **0 lỗi**, giữ lại `20260811150000_shop_media_cleanup_cron.sql`.
+
+| Kiểm | Kết quả |
+|---|---|
+| `shop_pilot_members` · `products` · `shop_media_cleanup_jobs` · `shop_slug_history` · `legal_documents` · `legal_acceptances` | đều tồn tại |
+| `shop_application_submit` overload | **đúng 1** (bẫy 42725 tránh được) |
+| Quy chế v1 | `content_hash` khớp `fb62bd47…c70c98`, `octet_length(body)` = **33 568**, hash tự nhất quán |
+| Đang phục vụ? | **0 dòng** — `effective_at` là 14/08 00:00+07, đúng như thiết kế |
+| apps · categories · public_products · pilot | 0 · **6** · 0 · 0 |
+| bucket | `shop-product-media` public, `shop-product-media-draft` **private** |
+| Ledger | **357** |
+
+> ⚠️ Ledger đích là **357**, không phải 353 như packet viết. Đã sửa packet ở
+> `38e87c90` — đó là **tiêu chí nghiệm thu**, ngưỡng sai làm một lượt áp đúng
+> trông như thiếu file.
+
+### 🔴 Thứ hai bắt được: 2 cron gọi Worker dùng chung của production
+
+Sau khi áp, staging có 18 cron job. **0 job trỏ production Supabase** — CP18
+hoạt động đúng như thiết kế. Nhưng hai job gọi **Cloudflare Worker dùng chung**,
+không phải hạ tầng theo môi trường:
+
+| Job | Đích | Nhịp |
+|---|---|---|
+| `secret-sync-heal-30min` | `secret-sync.thecuong.workers.dev/heal` | mỗi 30 phút |
+| `social-poster-catchup-15min` | `social-poster.thecuong.workers.dev/run` | mỗi 15 phút |
+
+Cả hai đang **vô hại vì thiếu secret trong vault** → RAISE trước khi gửi. Nhưng
+đó đúng là cảnh báo của CP18: *một secret thiếu là lớp bảo vệ duy nhất* — và
+C-1 sắp cố ý tạo secret trên chính project này. Đã **tắt cả hai** trên staging
+(`active := false`, không unschedule, để dòng còn nhìn thấy và bật lại được).
+
+🔴 **Phát hiện nền, đáng báo cho production:** `secret-sync-heal-30min` là job đã
+được **gỡ khỏi production ngày 03/08** sau sự cố ghi đè `SCRAPER_AUTH_SECRET`.
+Việc gỡ làm bằng SQL tay, **không bằng migration** — nên bất kỳ môi trường nào
+dựng lại từ migration đều **hồi sinh nó**. Staging vừa chứng minh điều đó.
+
+### C-1 — function + secret + cron, đúng thứ tự
+
+1. `CRON_SECRET` **giá trị MỚI** (`openssl rand -hex 32`), đặt cho Edge Functions
+   **và** nạp cùng giá trị vào vault `cron_secret`. Không sao chép từ production;
+   giá trị không bao giờ được in ra. Production **không chạy `secrets set`** —
+   ở đó 5 cron caller dùng chung secret đó.
+2. Deploy `shop-media-lifecycle` → phản hồi trả `project_ref: utokwfcljxjkpkaqgheo`.
+3. Smoke cổng: `reconcile`/`cleanup` **không secret → 401**, secret sai → **401**.
+4. **Canary B13** — điều kiện của mục #8, chạy TRƯỚC khi tạo cron.
+
+**Canary B13 — PASSED.** Trồng một logo **đang sống** và một orphan **thật**,
+làm cũ cả hai quá 24h, chạy `shop_media_reconcile()` thật:
+
+```
+live logo   queued = 0   ✅
+real orphan queued = 1   ✅
+```
+
+Khẳng định **cả hai chiều** là chỗ quan trọng: chỉ khẳng định "logo sống sót" sẽ
+xanh y hệt nếu vòng quét **không làm gì cả**. Teardown bằng **rollback có chủ
+đích** (`storage.objects` từ chối DELETE trực tiếp, và teardown viết tay ở dự án
+này đã nói dối 6 lần) — rồi kiểm độc lập: 0 shop, 0 profile media, 0 job, 0
+storage object.
+
+5. Chỉ sau đó mới áp `20260811150000_shop_media_cleanup_cron.sql` — **file cuối
+   cùng**, đúng mục #7.
+
+### Trạng thái staging sau B-1 + C-1
+
+| | |
+|---|---|
+| Ledger | **357 / 357** |
+| Cron | 20 tổng, **18 active** (2 job Worker dùng chung đã tắt) |
+| Cron trỏ production | **0** |
+| `shop-media-cleanup-every-5m` · `shop-media-reconcile-hourly` | active, dùng `ops_project_url()` + tự ký bằng `cron_secret` |
+| Vault | `project_url`, `cron_secret` — đúng hai cái |
+| Edge Functions | `shop-media-lifecycle`, cổng cron 401 |
