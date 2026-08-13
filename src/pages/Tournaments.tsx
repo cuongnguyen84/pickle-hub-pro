@@ -587,14 +587,7 @@ const Tournaments = () => {
                   <p>{vi ? "Kéo xuống để tải lại hoặc quay lại sau." : "Pull to refresh or check back shortly."}</p>
                 </div>
               ) : featuredParents.length === 0 ? (
-                <div className="tl-empty">
-                  <h3>{vi ? "Chưa có giải tổng nổi bật." : "No featured tournaments yet."}</h3>
-                  <p>
-                    {vi
-                      ? "Các giải nhiều nội dung được tuyển chọn sẽ xuất hiện tại đây."
-                      : "Selected multi-event tournaments will appear here."}
-                  </p>
-                </div>
+                null
               ) : (
                 <div className={`grid gap-5 ${featuredParents.length > 1 ? "md:grid-cols-2" : ""}`}>
                   {featuredParents.map(parent => (
