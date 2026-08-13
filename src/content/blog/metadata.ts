@@ -10,6 +10,22 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "hcmc-open-2026-recap",
+    publishedDate: "2026-08-10",
+    updatedDate: "2026-08-10",
+    author: "The PickleHub Team",
+    tags: ["hcmc open 2026", "ho chi minh city open", "ppa tour asia", "ppa asia 500", "truong vinh hien", "do minh quan", "ly hoang nam", "pickleball vietnam", "2026 recap"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow the scores live on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/hcmc-open-2026-recap-hero.webp", alt: "Do Minh Quan and Truong Vinh Hien of Vietnam holding trophies and the national flag as men's doubles champions of the Ho Chi Minh City Open 2026 (PPA Tour Asia 500)" },
+    titleEn: "Ho Chi Minh City Open 2026 Recap: Minh Quan & Vinh Hien Win an All-Vietnamese Doubles Final",
+    titleVi: "Ho Chi Minh City Open 2026: Minh Quân & Vinh Hiển vô địch trong trận chung kết toàn Việt",
+    metaTitleEn: "HCMC Open 2026 Recap: Quan & Hien Win Doubles Gold",
+    metaTitleVi: "HCMC Open 2026: Quân & Hiển vô địch đôi nam",
+    metaDescriptionEn: "Recap of the PPA Asia 500 MB Ho Chi Minh City Open 2026: Do Minh Quan and Truong Vinh Hien beat Ly Hoang Nam and Collin Johns 2-1 in an all-Vietnamese final.",
+    metaDescriptionVi: "Kết quả PPA Asia 500 HCMC Open 2026: Đỗ Minh Quân và Trương Vinh Hiển thắng Lý Hoàng Nam - Collin Johns 2-1 trong chung kết toàn Việt.",
+  },
+  {
     slug: "world-pickleball-rankings-wpr-explained",
     publishedDate: "2026-08-05",
     updatedDate: "2026-08-05",
@@ -76,7 +92,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "singapore-open-2026-preview",
     publishedDate: "2026-07-18",
-    updatedDate: "2026-07-18",
+    updatedDate: "2026-08-11",
     author: "The PickleHub Team",
     tags: ["singapore open 2026", "ppa tour asia", "leapmotor singapore open", "truong vinh hien", "pickleball singapore", "ppa asia 500", "2026"],
     ctaPath: "/live",
@@ -89,8 +105,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Leapmotor Singapore Open 2026: Trương Vinh Hiển là hạt giống số 1 đơn nam",
     metaTitleEn: "Singapore Open 2026 Pickleball: Schedule & How to Watch",
     metaTitleVi: "Singapore Open 2026 | Lịch đấu & cách xem",
-    metaDescriptionEn: "Preview of the PPA Asia 500 Leapmotor Singapore Open (July 23-26): Vietnam's Truong Vinh Hien is the top seed, plus schedule, prizes and how to watch free.",
-    metaDescriptionVi: "PPA Asia 500 Leapmotor Singapore Open (23–26/7): Trương Vinh Hiển hạt giống số 1 đơn nam, lịch theo giờ VN và cách xem miễn phí.",
+    metaDescriptionEn: "The Singapore Open 2026 is over: Truong Vinh Hien took doubles silver and singles bronze. Original preview, plus the full recap and what's next in Asia.",
+    metaDescriptionVi: "Singapore Open 2026 đã kết thúc: Trương Vinh Hiển á quân đôi nam, HCĐ đơn nam. Xem bài preview gốc và link tổng kết đầy đủ.",
   },
   {
     slug: "pickleball-world-cup-2026-da-nang-how-to-watch",

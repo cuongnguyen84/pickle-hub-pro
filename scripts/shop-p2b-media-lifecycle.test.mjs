@@ -429,7 +429,24 @@ describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
     expect(queued, "nor its rendition source").not.toContain(init.rendition_path);
 
     // The part a seller would notice.
-    await drainCleanupQueue(admin);
+    //
+    // Drained through OUR jobs only, not through drainCleanupQueue(). That
+    // helper calls shop_media_cleanup_claim, which is global — correctly, it is
+    // the worker — and this file is not the only suite running the worker
+    // against this database. Claiming globally here stole jobs from
+    // shop-media-integration.test.mjs and deleted an object it was still
+    // asserting on: two failures that only appear in a full run, never in
+    // isolation. Same lesson as the queue-is-empty assertion in CP12: on a
+    // shared resource, touch only what you own.
+    const { data: mine } = await admin
+      .from("shop_media_cleanup_jobs")
+      .select("id, bucket_id, object_path")
+      .like("object_path", `${shopId}/%`)
+      .neq("state", "done");
+    for (const job of mine ?? []) {
+      await admin.storage.from(job.bucket_id).remove([job.object_path]);
+      await admin.rpc("shop_media_cleanup_complete", { _job_id: job.id, _ok: true });
+    }
     expect(await publicHead(logoPublicKey), "the logo is still being served").toBe(200);
     const { data: stillThere, error: dlErr } = await admin.storage.from(DRAFT).download(init.draft_path);
     expect(dlErr).toBeNull();

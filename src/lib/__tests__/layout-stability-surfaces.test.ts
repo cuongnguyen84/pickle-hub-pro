@@ -14,13 +14,28 @@ describe("layout-stable public content surfaces", () => {
     expect(home).toContain(
       "hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0",
     );
-    expect(home).toContain("const liveNode = liveLeads");
+    expect(home).toContain("const liveNode = liveQueriesLoading");
     expect(home).toContain("priority");
     expect(home).toContain("viPostsLoading");
     expect(home).toContain("isLoading={homeNewsQuery.isLoading}");
     expect(news).toContain("tl-news-item--skeleton");
     expect(live).toContain('{ width: 768, height: 432, fit: "contain" }');
     expect(live).toContain('loading={priority ? "eager" : "lazy"}');
+  });
+
+  it("live watch page, DUPR banner and home hero reserve geometry (cls-attribution)", () => {
+    const watch = source("src/pages/WatchLive.tsx");
+    const banner = source("src/components/dupr/ConnectDuprBanner.tsx");
+    const home = source("src/pages/Index.tsx");
+
+    // INC1: stats row must not rewrap; loading tree mirrors resolved container.
+    expect(watch).toContain("whitespace-nowrap overflow-x-auto");
+    expect(watch.match(/container-wide section-spacing/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(watch).toContain('<Skeleton className="hidden lg:block aspect-video rounded-xl" />');
+    // INC2: banner renders invisible (slot reserved), never late-inserts.
+    expect(banner).toContain('visibility: reserving ? "hidden" : undefined');
+    // INC3: home reserves the live hero slot while queries resolve.
+    expect(home).toContain("LiveSectionSkeleton");
   });
 
   it("venue and blog loading states reserve media geometry", () => {

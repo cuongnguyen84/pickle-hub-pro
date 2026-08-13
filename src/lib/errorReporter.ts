@@ -99,6 +99,19 @@ function isIgnored(message: string): boolean {
   return IGNORE_MESSAGES.some((m) => message.includes(m));
 }
 
+// React render errors caught by an error boundary never reach
+// window.onerror in production — the boundary must report explicitly.
+// Same dedupe/ignore pipeline as the global listeners.
+export function reportCaughtError(error: Error, context: string): void {
+  const message = error.message ?? "unknown_error";
+  if (isIgnored(message)) return;
+  send("js_error", {
+    message: truncate(`[${context}] ${message}`, 1000)!,
+    stack: truncate(error.stack, 4000),
+    url: typeof window !== "undefined" ? window.location.href : undefined,
+  });
+}
+
 export function initErrorReporter(): void {
   if (typeof window === "undefined") return;
 

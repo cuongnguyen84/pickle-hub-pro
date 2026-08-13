@@ -515,10 +515,10 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             </Link>
           );
         })()}
-        <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="The PickleHub home">
+        <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="ThePickleHub home">
           <span className="tl-brand-mark" aria-hidden="true" />
           <span className="tl-brand-text">
-            The <em>Pickle</em>Hub
+            The<em>Pickle</em>Hub
           </span>
         </Link>
 
@@ -1060,7 +1060,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                   : <>Reporters. <em>Rackets.</em> Real coverage.</>}
               </div>
               <h3>
-                The <em style={{ fontFamily: "inherit" }}>Pickle</em>Hub
+                The<em style={{ fontFamily: "inherit" }}>Pickle</em>Hub
               </h3>
               <p>
                 {language === "vi"
@@ -1093,7 +1093,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             </div>
           </div>
           <div className="tl-foot-bottom">
-            <span>© 2026 The PickleHub · Ho Chi Minh City</span>
+            <span>© 2026 ThePickleHub · Ho Chi Minh City</span>
             <div
               className="tl-social"
               role="group"

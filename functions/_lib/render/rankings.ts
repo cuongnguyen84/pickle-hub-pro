@@ -102,6 +102,28 @@ export async function renderRankings(
   // triplet points en→/rankings, vi→/vi/rankings, x-default→/rankings.
   const rankingsHreflang = `<link rel="alternate" hreflang="en" href="${siteUrl}/rankings"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi/rankings"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/rankings"/>`;
 
+  // SEO wiring (2026-08-12, docs/seo-topical-authority-plan.md §6) — connect the
+  // rankings page (E-E-A-T pillar) to the DUPR/WPR explainer guides a ranking
+  // reader also wants. Deep-links, not the blog index. All slugs verified live
+  // 200 on both tracks (EN from BLOG_POST_META, VI from vi_blog_posts).
+  const duprGuides =
+    lang === "vi"
+      ? [
+          { s: "dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam", t: "DUPR là gì? Hướng dẫn cho người chơi Việt Nam" },
+          { s: "bang-xep-hang-pickleball-the-gioi-wpr", t: "Bảng xếp hạng pickleball thế giới (WPR) là gì" },
+          { s: "huong-dan-dung-dupr-tren-thepicklehub", t: "Hướng dẫn dùng DUPR trên ThePickleHub" },
+        ]
+      : [
+          { s: "what-is-dupr-pickleball-rating-system", t: "What is DUPR — the pickleball rating system" },
+          { s: "world-pickleball-rankings-wpr-explained", t: "World Pickleball Rankings (WPR) explained" },
+          { s: "dupr-algorithm-explained-performance-vs-expectation", t: "How the DUPR algorithm works" },
+        ];
+  const guidesBlogBase = lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`;
+  const guidesHeading = lang === "vi" ? "Hiểu về DUPR & xếp hạng" : "Understand DUPR & rankings";
+  const guidesNav = `<nav><h2>${escapeHtml(guidesHeading)}</h2><ul>${duprGuides
+    .map((g) => `<li><a href="${guidesBlogBase}/${g.s}">${escapeHtml(g.t)}</a></li>`)
+    .join("")}</ul></nav>`;
+
   return htmlResponse(buildHtml({
     title: titleVn,
     description: descriptionVn,
@@ -116,6 +138,7 @@ export async function renderRankings(
       </header>
       ${listItems}
       <p><a href="${siteUrl}${lang === "vi" ? "/vi/rankings/ppa-tour" : "/rankings/ppa-tour"}">${lang === "vi" ? "Xem thêm: bảng xếp hạng PPA Tour (WPR) thế giới" : "See more: PPA Tour world rankings (WPR)"}</a></p>
+      ${guidesNav}
       ${itemListJsonLd}
     `,
   }));

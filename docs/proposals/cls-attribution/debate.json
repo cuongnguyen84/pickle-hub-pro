@@ -1,0 +1,57 @@
+{
+  "slug": "cls-attribution",
+  "note": "debate-ledger.mjs không tồn tại trong repo — orchestrator cưỡng chế luật thủ công theo docs/agent-round2-rules.md. Kiểm từng stance: mọi CONCEDE/REFINE/HOLD đều kèm bằng chứng file:line hoặc số liệu tự tính — 0 nhượng bộ bị loại.",
+  "external_model_note": "GPT-5.6 bị account từ chối (400) ở cả 2 agent — chạy codex CLI model mặc định, ghi rõ trong round1/*.md + external/*.md",
+  "consensus_meaningful": [
+    "reportAllChanges KHÔNG bao giờ lên prod (pre-mortem + risk-auditor + external pass đồng ý; cơ chế chứng minh từ webVitalsRum.ts:285 + ga.ts:32-38: mỗi shift = 1 event rating good đầu phiên → %good phồng 32→~89% giả)",
+    "Không repro Playwright trỏ stream live thật — useLivePresence track() chạy khi mount làm bẩn viewer count thật (architect + auditor độc lập)",
+    "/login ngoài scope (86% good) — critic tự rút ở vòng 2",
+    "Bundle +0 KB, không đụng SSR/prerender, không bump pr:v34"
+  ],
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Hình dạng fix hàng metadata WatchLive",
+      "positions": {
+        "solution-architect": "vòng 1: reserve span tối thiểu, metadata row là nghi phạm phụ",
+        "ui-ux-critic": "vòng 1: blocker — tách organizer, grid nowrap, tabular-nums, slot visibility:hidden"
+      },
+      "round2": {
+        "solution-architect": { "stance": "CONCEDE", "evidence": "src/pages/WatchLive.tsx:43 + src/hooks/useInteractionData.ts:60-77 — viewCount là query riêng default 0 có refetchInterval 30_000, sibling cùng hàng flex-wrap; min-w trên chip viewer không chặn được rewrap; cơ chế tích luỹ 30s/lần khớp giả thuyết session-accrual", "amendments": "tabular-nums đã global (the-line.css:106); slot ẩn phải bọc cả cụm viewCount" },
+        "ui-ux-critic": { "stance": "REFINE", "evidence": "min-w-[10ch]≈75px < chuỗi thật '1.234 đang xem'+icon≈120px → vẫn nở ~45px; WatchLive.tsx:43 viewCount là async value thứ 2 cùng hàng", "refined": "nhượng thứ tự ưu tiên (banner/keyboard vẫn quan trọng), giữ hình dạng restructure, delta effort ≈0.1 nửa ngày, gộp PR với INC2" }
+      },
+      "resolution": "RESOLVED — restructure hàng metadata theo toa critic (kèm 2 amendment của architect) trở thành increment chính trên WatchLive"
+    },
+    {
+      "id": "D2",
+      "topic": "Predicate thành công",
+      "positions": {
+        "solution-architect": "vòng 1: %good toàn cục VN+mobile ≥75% tại T+7",
+        "risk-auditor": "vòng 1 (R5): toán học không đạt được — đòi per-route /live n≥100"
+      },
+      "round2": {
+        "solution-architect": { "stance": "CONCEDE", "evidence": "tự cộng lại 00-data-ga4-raw.txt: fix hoàn hảo stream d7750a98 → 337/457=73,74% vẫn trượt; tuần vắng buổi phát 125/197=63,5% — predicate bị traffic mix quyết định, không bị fix quyết định", "amendments": "ghi rõ mẫu số /live/* là proxy (route đóng băng lúc boot — R4 của chính auditor)" },
+        "risk-auditor": { "stance": "REFINE", "evidence": "banner ở TheLineLayout.tsx:1052 nằm trên mọi route → ≥75% toàn cục LÀ đạt được, rút chữ 'không thể đạt'; nhưng verdict lật 15,3 điểm (81,3% vs 66,0%) chỉ theo lịch livestream → toàn cục vẫn không dùng làm gate; bác luôn công thức lai /live≥75% (đòi chuyển 87% non-good = bẫy hoàn-hảo-hoặc-thua)", "refined": "G0 n_LIVE<100 → +7 ngày (trần T+21, lưu ý 23,6 event/ngày có stream lớn vs 4,6 không có); G1 %good_LIVE ≥50% n≥100 (nền 8,8%); G2 %good_NONLIVE ≥80% n≥100 (nền 63,5%); G3 toàn cục chỉ báo cáo kèm n + số buổi phát, không gate; INC0 bắt buộc: param auth_state vào buildWebVitalEvent cùng PR đăng ký dims" }
+      },
+      "resolution": "RESOLVED — predicate 3-gate G0-G3 của auditor + amendment proxy-note của architect"
+    },
+    {
+      "id": "D3",
+      "topic": "Font Inter Vietnamese swap/optional mismatch có thuộc scope pass này không",
+      "positions": {
+        "ui-ux-critic": "vòng 2 REFINE: giữ trong scope, thu gọn còn 0 byte/0 request (fallback metric-match + đồng bộ optional/swap giữa inter-latin và inter-vietnamese, index.html:62-63); bác lập luận family của architect: body font là Inter (index.css:164 + tailwind.config.ts:27), không phải Geist; bỏ lý do /login",
+        "solution-architect": "vòng 2 HOLD: nếu font swap reflow mọi trang thì trang nhiều chữ phải bẩn nhất — data ngược lại (/onboarding 6good/0poor, blog 6/3, /san 4/2, 226/246 poor dồn /live); metric-match size-adjust là đổi metric chữ toàn site không field evidence, rơi đúng cửa sổ đo — cùng lớp lỗi R8; mismatch optional/swap là defect thật nhưng thuộc ticket chất-lượng-chữ-Việt riêng"
+      },
+      "resolution": "OPEN_FOR_CUONG"
+    },
+    {
+      "id": "D4",
+      "topic": "INC2 — useKeyboardHeight ngưỡng 80→150 (nghi phạm address-bar iOS)",
+      "positions": {
+        "solution-architect": "vòng 1: INC2 trong scope, kèm caveat ngưỡng 150 chưa hiệu chỉnh + cần Cuong test app iOS thật",
+        "risk-auditor": "vòng 2 (mới, sau khi architect đã trả lời — không mở vòng 3): defer — rủi ro hồi quy bàn phím native đi qua app-store review trong khi app_surface cho thấy native đóng góp 0 event CLS poor; web sửa được, native trả giá"
+      },
+      "resolution": "OPEN_FOR_CUONG"
+    }
+  ]
+}

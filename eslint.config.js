@@ -13,6 +13,7 @@ export default tseslint.config(
   // code the CLI drops into the working tree. It is not ours and it is not
   // committed, but eslint does not read .gitignore, so anyone who starts the
   // local stack before running the lint gate got 189 errors from it.
+  // ds-bundle/** came from main (#576) for the same reason.
   {
     ignores: [
       "dist",
@@ -21,6 +22,7 @@ export default tseslint.config(
       "android/**",
       "ios/**",
       "supabase/.temp/**",
+      "ds-bundle/**",
     ],
   },
   {

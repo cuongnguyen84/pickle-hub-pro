@@ -66,6 +66,19 @@ const Privacy = () => {
               </ul>
             </section>
 
+            {/* Google OAuth disclosure */}
+            <section>
+              <h2 className="text-lg font-semibold text-foreground mb-3">{p.googleData.title}</h2>
+              <p className="mb-2">{p.googleData.description}</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>{p.googleData.items.access}</li>
+                <li>{p.googleData.items.use}</li>
+                <li>{p.googleData.items.storage}</li>
+                <li>{p.googleData.items.sharing}</li>
+                <li>{p.googleData.items.advertising}</li>
+              </ul>
+            </section>
+
             {/* Data Sharing */}
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-3">{p.sharing.title}</h2>
@@ -97,6 +110,7 @@ const Privacy = () => {
                 <li>{p.security.items.storage}</li>
                 <li>{p.security.items.measures}</li>
                 <li>{p.security.items.access}</li>
+                <li>{p.security.items.retention}</li>
               </ul>
             </section>
 

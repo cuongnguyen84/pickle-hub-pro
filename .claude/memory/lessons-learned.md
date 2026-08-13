@@ -663,3 +663,59 @@ redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
   — user tự bấm bằng danh tính thật, agent chỉ watch CI/smoke/soak (đọc-only). Soak chuẩn
   (soak-watch.mjs) cũng cần PAT → chỉ chạy được soak giảm cấp uptime-poll; ghi rõ "giảm cấp" vào
   close-out, đừng để dòng soak xanh nói quá điều nó chứng minh.
+
+---
+
+## Venue directory data-source policy (Cường approved 2026-07-28)
+
+**Rule:** Build the `/san` venue directory ONLY from legit sources:
+- **OSM** (Overpass, license ODbL — reusable with attribution) — primary bulk source.
+- **Community submissions** (`/san/them`) — how the 691 VN venues were built; owned data, no ToS risk. The real moat.
+- Public association/listicle pages — selective, factual, with care.
+
+**NEVER scrape / reproduce for the directory:**
+- **Google Maps / Places API** — ToS forbids storing/caching place data to build a permanent directory. Risk: Google penalty/deindex of the whole site (would nuke the organic SEO we're building).
+- **Pickleheads / PlayPickleball** (and similar) — direct competitors; their compiled venue DB is their core asset. Scraping = ToS breach + database-rights/legal risk (cease-and-desist).
+
+**Court count / other fields:** fill ONLY when a public source states it. Never fabricate.
+
+**Context:** OSM coverage of pickleball in Asia is very uneven (2026-07 scan: MY 24, PH 30, TH 8 workable; KR 0, ID 1, TW 2, JP rate-limited = near-empty). Comprehensive data for the empty countries lives in Pickleheads/Google → off-limits. Grow those via community submissions, not scraping.
+
+---
+
+## Cowork: read/edit code from a FRESH github clone, NEVER the stale mount (reinforced 2026-07-30, Cuong)
+
+**Occurrence:** Misdiagnosed "2 newest VI posts missing from homepage" as a prerender-cache issue by reading `src/pages/Index.tsx` from the mounted repo, which sat on commit `b3569523` (a side branch whose homepage sources stories from Supabase `vi_blog_posts`). Deployed `main` actually builds homepage "Tuần này" stories from `blogMetadata` (static bilingual manifest) — a different code path that structurally cannot show VI-only posts. The stale read produced a wrong root-cause and cost a round.
+
+**Rule:** Before reasoning about DEPLOYED behavior or editing any source file, fetch it fresh from `origin/main` (GitHub API `contents?ref=main`, or `git clone --depth 1`). The mount `/Users/cm10/pickle-hub-pro` is frequently on a stale/side branch (git HEAD may be far from `main`). Do edits in the fresh clone and push from there. Verify `git rev-parse HEAD` of the clone matches `main` before trusting any file.
+
+**Also:** homepage VI stories (deployed main) = `blogMetadata` manifest only (EN+VI titles). VI-only Supabase posts appear on `/vi/blog` (Bảng tin) but NOT the homepage unless the homepage is changed to read `usePublishedViBlogPosts()` (branch `fix-home-vi-stories-supabase`, PR 2026-07-30).
+
+---
+
+## US growth: task tracker + báo cáo sau MỖI task (Cường yêu cầu 2026-08-07)
+
+**Rule:**
+- Mọi task phát triển US ghi ở **`growth-tasks/US-GROWTH-TASKS.md`** (tracker sống: STATUS + OWNER + ngày + "Nhật ký task"). Đây là nguồn sự thật cho tiến độ US; đừng để task trôi trong session.
+- **Báo cáo sau MỖI task US hoàn thành** — thêm 1 dòng "Nhật ký task" (kết quả + link commit/verify) + notify Cường ngắn gọn. **KHÔNG gộp im lặng** nhiều task rồi mới báo.
+- Owner: **em** (Claude) = on-page/đo GSC/content; **anh** (Cường) = backlink outreach + duyệt keyword. Đo GSC US **hàng tuần** khi Cường mở browser → ghi `US-CLICKS-GROWTH-PLAN`.
+- Chiến lược: `US-GROWTH-SPRINT-2026-08-07.md` (sprint 30 lồng 90 ngày). Đòn bẩy #1 = backlink trỏ `/tools` (cụm generator đã tự leo pos ~15 không cần link).
+
+**Cập nhật 2026-08-07 (Cường chốt):**
+- Báo cáo per-task = **CHAT** là đủ (không tạo file report riêng mỗi task). Mục "Nhật ký task" trong `US-GROWTH-TASKS.md` vẫn cập nhật làm bản lưu bền.
+- **Backlink**: Cường tự làm toàn bộ + **chủ động cung cấp thông tin** (đã gửi link nào, ở đâu) khi agent cần đo/theo dõi. Agent không tự đọc được hoạt động outreach → không đoán, chờ Cường đưa dữ liệu.
+
+## VI blog posts: meta_title ≤60 bytes, meta_description ≤160 BYTES (not chars) — Vietnamese is multi-byte
+
+**Occurrence (1 — HCMC recap VI insert, 2026-08-10):** First `vi_blog_posts` INSERT for `hcmc-open-2026-ket-qua` failed `23514` check constraint `vi_blog_posts_meta_description_seo_bytes`. meta_description was 154 chars but **176 bytes** (Vietnamese diacritics + `Đ`/`ế`/`ị`… are 2–3 UTF-8 bytes each). meta_title similarly capped.
+
+**Constraints (live on `public.vi_blog_posts`):**
+- `vi_blog_posts_meta_title_seo_bytes` → `octet_length(meta_title) <= 60`
+- `vi_blog_posts_meta_description_seo_bytes` → `octet_length(meta_description) <= 160`
+- `title` (the H1) has **no** byte cap — only meta_title/meta_description do.
+
+**Rule:** When composing a VI post, size meta_title/meta_description in **bytes**, not characters. Rule of thumb: a VN string with typical diacritics runs ~1.15–1.25 bytes/char, so keep meta_title ≲ 48–50 chars and meta_description ≲ 128–135 chars, then verify:
+```python
+len(s.encode('utf-8'))  # meta_title ≤60, meta_description ≤160
+```
+Trim set-score parentheticals / drop the leading "Kết quả PPA Asia 500 …" prefix first — those buy the most bytes. The INSERT uses `WHERE NOT EXISTS` on slug, so a failed attempt leaves **no partial row** — just fix the two fields and re-run (idempotent).

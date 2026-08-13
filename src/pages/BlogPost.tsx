@@ -255,7 +255,6 @@ const BlogPost = () => {
           {post.heroImage && !heroImgFailed && (
             <figure
               style={{
-                aspectRatio: "16 / 9",
                 borderRadius: "var(--tl-radius-lg)",
                 overflow: "hidden",
                 margin: "0 0 48px",
@@ -267,16 +266,15 @@ const BlogPost = () => {
                 srcSet={blogHeroSrcSet(post.heroImage.src)?.srcSet}
                 sizes="(max-width: 900px) 100vw, 832px"
                 alt={post.heroImage.alt}
-                width={1600}
-                height={900}
+                width={1200}
+                height={630}
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
                 onError={() => setHeroImgFailed(true)}
                 style={{
                   width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
+                  height: "auto",
                   display: "block",
                 }}
               />

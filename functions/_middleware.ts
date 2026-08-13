@@ -27,7 +27,7 @@ import {
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
-  renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms,
+  renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms, renderAdvertise,
   renderNotificationsShell,
   renderNoindexShell,
   render404,
@@ -355,6 +355,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
+  // GSC 2026-08-09: an old, truncated livestream URL is still being crawled.
+  // Its surviving recording has the same unique prefix, so preserve the old
+  // URL's equity with a single permanent hop instead of returning a soft 404.
+  if (url.pathname === "/live/10779a7c") {
+    return secureRedirect(
+      `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565`,
+      301,
+    );
+  }
+
   // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
   //       to the EN canonical. renderOrgDetail() and
   //       renderTournamentDetail() always emit url:/org/<slug> and
@@ -618,7 +628,27 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // metadata.ts; 28 EN blog <title>s switch to metaTitleEn).
   // v33→v34 (2026-08-06): /rankings SSR body changed (self-referential
   // ?scope=open link replaced with a real anchor to /rankings/ppa-tour).
-  const cacheKey = `pr:v34:${url.pathname}`;
+  // v34→v35 (2026-08-08): homepage purpose copy changed for Google OAuth
+  // branding verification; invalidate the cached bot-facing homepage.
+  // v35→v36 (2026-08-08): add explicit Google user-data disclosure to the
+  // homepage and serve the complete Privacy Policy to verification crawlers.
+  // v36→v37 (2026-08-08): expose the exact OAuth app name and purpose together
+  // above the fold; purge bot HTML that retained the old homepage heading.
+  // v37→v38 (2026-08-08): normalize the homepage title to the exact OAuth
+  // application name and invalidate the previously rendered homepage HTML.
+  // v38→v39 (2026-08-11): Singapore Open preview updated to post-event state
+  // (recap callout + new meta description, EN + VI) and PPA Tour Asia VI guide
+  // refreshed with 7-stop results section; purge stale bot HTML for both.
+  // v39→v40 (2026-08-11): SEO audit — EN + VI /blog indexes now emit
+  // ItemList + BreadcrumbList JSON-LD, and both homepages drop the duplicate
+  // auto <h1> (single body H1). Purge stale bot HTML for /, /vi, /blog, /vi/blog.
+  // v40→v41 (2026-08-11): venue wiring — venue detail + per-city hub deep-link
+  // the 4 evergreen local guides (cost/court-size/rules/how-to) instead of only
+  // the blog index. Purge stale bot HTML for /san/* + /san/khu-vuc/*.
+  // v41→v42 (2026-08-12): rankings page deep-links the DUPR/WPR explainer guides
+  // (§6 wiring). Purge /rankings + /vi/rankings. (If PR #575 lands first at v42,
+  // rebase this to v43 — versions must stay monotonic.)
+  const cacheKey = `pr:v42:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -945,6 +975,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
   if (path === "/terms") return renderTerms(siteUrl, rawPath, lang);
+  if (path === "/advertise") return renderAdvertise(siteUrl, rawPath, lang);
 
   // 404 fallback — unmatched routes get a proper 404 + noindex, not a
   // generic 200 shell that would waste crawl budget and create soft-404s.

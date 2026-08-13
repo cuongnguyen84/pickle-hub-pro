@@ -1,0 +1,63 @@
+
+== cls_shift_target × rating (VN mobile)
+ERROR Did you mean customEvent:app_surface? Field customEvent:cls_shift_target is not a valid dimension. For a list of valid dimensions and metrics, see https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema 
+
+== cls_shift_target × route (VN mobile)
+ERROR Did you mean customEvent:app_surface? Field customEvent:cls_shift_target is not a valid dimension. For a list of valid dimensions and metrics, see https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema 
+
+== cls_load_state × rating (VN mobile)
+ERROR Did you mean customEvent:auth_state? Field customEvent:cls_load_state is not a valid dimension. For a list of valid dimensions and metrics, see https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema 
+
+== route × rating (VN mobile)
+ERROR Did you mean customEvent:fmt? Field customEvent:route is not a valid dimension. For a list of valid dimensions and metrics, see https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema 
+
+== pagePath × rating (VN mobile)
+/live/d7750a98-2d19-440e-8197-51662492891f | poor = 179
+/login | good = 90
+/ | poor = 37
+/live/3e211e67-2caa-47c1-b002-f180546980f9 | poor = 22
+/live/d7750a98-2d19-440e-8197-51662492891f | good = 20
+/live/8ca98c2a-cb45-4772-ac4e-30d4f83dbd9b | poor = 17
+/ | good = 15
+/login | poor = 15
+/live/d7750a98-2d19-440e-8197-51662492891f | needs-improvement = 10
+/onboarding | good = 6
+/ | needs-improvement = 3
+/live | good = 3
+/live | poor = 3
+/live/d41a4662-2fe6-4b69-997b-dfe3bb08c121 | poor = 3
+/org/tapickleball | poor = 3
+/auth/callback | poor = 2
+/live/10779a7c-46f4-4501-a65e-e852eb2fb565 | poor = 2
+/login | needs-improvement = 2
+/onboarding | needs-improvement = 2
+/vi | poor = 2
+/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong | good = 2
+/videos | good = 2
+/feed | poor = 1
+/live/d41a4662-2fe6-4b69-997b-dfe3bb08c121 | needs-improvement = 1
+/san/san-pickleball-win-win-chau-doc | poor = 1
+/social | good = 1
+/vi/blog/cac-the-thuc-giai-pickleball | good = 1
+/vi/blog/cam-nang-xem-pickleball-world-cup-2026-da-nang | poor = 1
+/vi/blog/hcmc-open-2026 | good = 1
+/vi/blog/lich-giai-pickleball-viet-nam-2026 | good = 1
+/vi/blog/mlp-orlando-super-sunday-2026-tran-hay-nhat | poor = 1
+/vi/news/11six24-ra-mat-vot-moi-ultre-power-2-co-hoi-nhan-1-trong-20-phan-qua-hap-dan-1cd8cb | good = 1
+/vi/news/xep-hang-suc-manh-mlp-2026-new-jersey-va-st-louis-la-nhung-ung-vien-vo-dich-sang-o7is3u | good = 1
+/vi/rankings | good = 1
+/vi/san/clb-pickleball-passion-ha-nam-phu-ly | good = 1
+/vi/san/hnmu-pickleball-ha-noi | poor = 1
+/vi/san/san-pickleball-gamuda-ha-noi | good = 1
+/vi/san/san-pickleball-h2-thai-nguyen | poor = 1
+/vi/san/san-pickleball-xuan-truong-nam-dinh | good = 1
+
+== BỔ SUNG 09/08 (orchestrator, sau đề nghị của solution-architect) ==
+auth_state × rating (CLS VN mobile): TOÀN BỘ "(not set)" (284 poor / 144 good / 15 ni)
+→ dim auth_state ĐÃ đăng ký nhưng event web_vital KHÔNG gửi param auth_state
+→ giả thuyết ConnectDuprBanner (chỉ render khi logged-in) KHÔNG verify được từ field data hiện có
+→ muốn segment được về sau: thêm param auth_state vào buildWebVitalEvent (src/lib/webVitalsRum.ts) — 1 dòng, dim đã có sẵn
+
+== BỔ SUNG 2 (09/08, sau risk-auditor R4) ==
+app_surface × rating (CLS VN mobile): web 291 poor / 148 good / 18 ni — 100% "web"
+→ toàn bộ CLS poor đến từ mobile BROWSER, native WebView (capacitor_ios/android) = 0 event trong cut này

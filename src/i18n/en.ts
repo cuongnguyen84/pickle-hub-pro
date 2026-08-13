@@ -3,7 +3,7 @@ import type { Translations } from "./vi";
 
 export const en: Translations = {
   common: {
-    appName: "The PickleHub",
+    appName: "ThePickleHub",
     loading: "Loading...",
     error: "An error occurred",
     retry: "Retry",
@@ -24,10 +24,10 @@ export const en: Translations = {
     loadMore: "Load more",
   },
   privacy: {
-    title: "Privacy Policy – The Pickle Hub",
+    title: "Privacy Policy – ThePickleHub",
     intro: {
       title: "Introduction",
-      description: "The Pickle Hub is a video, livestream and Pickleball tournament organization platform.",
+      description: "ThePickleHub is a pickleball platform where players follow news and livestreams, find players and courts, and create or join tournaments and community events.",
       commitment: "We respect our users' privacy and are committed to protecting personal data.",
     },
     dataCollection: {
@@ -49,9 +49,20 @@ export const en: Translations = {
         improve: "Improve user experience",
       },
     },
+    googleData: {
+      title: "Google Sign-In Data",
+      description: "When you choose Google Sign-In, ThePickleHub requests only the basic information needed to create and secure your account.",
+      items: {
+        access: "Data accessed: your name, email address, and profile photo from your Google Account.",
+        use: "How we use it: to authenticate you, create your ThePickleHub account, and personalize your profile.",
+        storage: "Storage: account data is stored on secure cloud infrastructure while your account remains active or as required by law.",
+        sharing: "Sharing: the data is processed only by Google, our authentication provider, and service infrastructure needed to operate sign-in; we do not sell your Google user data.",
+        advertising: "Advertising: Google Sign-In data is not used for personalized advertising, ad targeting, or credit-worthiness decisions.",
+      },
+    },
     sharing: {
       title: "Data Sharing",
-      description: "We do not sell or share personal data with third parties. We only share with:",
+      description: "We do not sell personal data. We disclose it only when needed to provide the service or comply with law:",
       items: {
         oauth: "Authentication providers (Google) for sign-in",
         legal: "Legal authorities when required by law",
@@ -63,6 +74,7 @@ export const en: Translations = {
         storage: "Data is stored securely on cloud infrastructure",
         measures: "Industry-standard security measures are applied",
         access: "Data access is limited to essential personnel only",
+        retention: "Data is retained while your account is active and deleted on request unless a longer period is required by law",
       },
     },
     rights: {
@@ -98,15 +110,15 @@ export const en: Translations = {
         "Your seller application and your acceptance evidence are deleted with your account. Moderation history is retained for dispute resolution but is no longer tied to a deleted account. If you own a shop, the shop must be dealt with before the account can be deleted.",
     },
     effective: {
-      text: "This policy is effective as of {date}.",
+      text: "This policy was updated and is effective as of {date}.",
       update: "This policy may be updated as the platform develops new features.",
     },
   },
   terms: {
-    title: "Terms of Service – The Pickle Hub",
+    title: "Terms of Service – ThePickleHub",
     intro: {
       title: "Introduction",
-      description: "Welcome to The Pickle Hub. By using our services, you agree to comply with the following terms.",
+      description: "Welcome to ThePickleHub. By using our services, you agree to comply with the following terms.",
       acceptance: "If you do not agree with any of these terms, please do not use our services.",
     },
     account: {
@@ -120,7 +132,7 @@ export const en: Translations = {
     },
     acceptableUse: {
       title: "Acceptable Use",
-      description: "When using The Pickle Hub, you agree to:",
+      description: "When using ThePickleHub, you agree to:",
       items: {
         noIllegal: "Not engage in illegal activities",
         noHarassment: "Not harass, threaten, or insult others",
@@ -140,11 +152,11 @@ export const en: Translations = {
     },
     intellectualProperty: {
       title: "Intellectual Property",
-      description: "The Pickle Hub brand, logo, and content are protected by intellectual property laws. You may not copy or use them without permission.",
+      description: "ThePickleHub brand, logo, and content are protected by intellectual property laws. You may not copy or use them without permission.",
     },
     liability: {
       title: "Limitation of Liability",
-      description: "The Pickle Hub provides services with the following limitations:",
+      description: "ThePickleHub provides services with the following limitations:",
       items: {
         asIs: "Services are provided \"as is\"",
         noWarranty: "We do not guarantee uninterrupted or error-free service",
@@ -391,7 +403,7 @@ export const en: Translations = {
   },
   home: {
     hero: {
-      title: "The Pickle Hub",
+      title: "ThePickleHub",
       subtitle: "Professional Pickleball Media Platform",
       description: "Live streaming and on-demand videos from top tournaments",
       cta: "Explore Tournaments",

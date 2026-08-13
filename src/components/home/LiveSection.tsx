@@ -65,6 +65,28 @@ const rowTime = (iso: string | null | undefined): string => {
 
 const MAX_ROWS = 5;
 
+// CLS INC3 (proposal cls-attribution): Index renders this while the live
+// queries resolve and the previous navigation said live leads the page —
+// the hero section inserting itself after data arrived was the home page's
+// main layout shift. Same section/head/media classes as the real render,
+// so geometry (incl. the 16/9 media box) is reserved, not approximated.
+export function LiveSectionSkeleton() {
+  return (
+    <section className="tl-section tl-live-sec" aria-hidden="true">
+      <div className="tl-shell">
+        <div className="tl-live-head">
+          <h2 className="tl-live-title">&nbsp;</h2>
+        </div>
+        <div className="tl-live-main">
+          <div className="tl-live-main-media">
+            <span className="tl-live-thumb-ph" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language, priority = false }: LiveSectionProps) {
   const [inlinePlaybackRequested, setInlinePlaybackRequested] = useState(false);
   const isLive = liveStreams.length > 0;

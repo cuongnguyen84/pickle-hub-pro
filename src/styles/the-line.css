@@ -77,6 +77,10 @@
   /* DS-02: legacy aliases fg-1/bg-1/bg-2 deleted — canonical names only.
      hairline stays: it is a canonical token (thinnest separator). */
   --tl-hairline:   var(--tl-border);
+  /* Audit 2026-08-09: these two were referenced by components but never
+     defined (silent visual fallback). Alias to the canonical tokens. */
+  --tl-border-strong: var(--tl-border-2);
+  --tl-amber:      var(--tl-gold);
 
   /* Accent — single (optic-lime, the pickleball ball colour) */
   --tl-green:      #b5e853;
@@ -1901,6 +1905,14 @@
 [data-theme="the-line"] .tl-manifesto .item p em {
   font-family: "Instrument Serif"; font-style: italic; color: var(--tl-green); font-size: 1.05em;
 }
+[data-theme="the-line"] .tl-manifesto .item .data-note {
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tl-border);
+  color: var(--tl-fg-3); font-size: 12px; line-height: 1.55;
+}
+[data-theme="the-line"] .tl-manifesto .item .data-note a {
+  color: var(--tl-green); text-decoration: none;
+}
+[data-theme="the-line"] .tl-manifesto .item .data-note a:hover { text-decoration: underline; }
 
 /* ========== Footer ========== */
 [data-theme="the-line"] .tl-footer {
@@ -1997,6 +2009,9 @@
   width: 100%; height: 100%; object-fit: cover; display: block;
   transition: transform 0.5s ease;
 }
+[data-theme="the-line"] .tl-live-main-thumb img {
+  object-fit: contain;
+}
 [data-theme="the-line"] .tl-live-main:hover .tl-live-main-thumb img { transform: scale(1.03); }
 [data-theme="the-line"] .tl-live-thumb-ph {
   position: absolute; inset: 0;
@@ -2067,7 +2082,7 @@
   color: inherit;
 }
 [data-theme="the-line"] .tl-live-inline-start > img {
-  display: block; width: 100%; height: 100%; object-fit: cover;
+  display: block; width: 100%; height: 100%; object-fit: contain;
 }
 [data-theme="the-line"] .tl-live-start-icon {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -2548,7 +2563,7 @@
 @media (max-width: 900px) { [data-theme="the-line"] .tl-blog-hero { grid-template-columns: 1fr; gap: 28px; padding-bottom: 32px; margin-bottom: 36px; } }
 
 [data-theme="the-line"] .tl-blog-hero-visual {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   background: linear-gradient(160deg, #1a2820 0%, #0f1a14 50%, #080a08 100%);
   border: 1px solid var(--tl-border);
   border-radius: var(--tl-radius-lg);
