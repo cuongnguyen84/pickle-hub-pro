@@ -154,9 +154,9 @@ if (process.env.CP27_SKIP_SUSPEND) {
     SELECT count(*)::int AS n FROM public.shop_media_cleanup_jobs
     WHERE shop_id = '${state.shopId}' OR object_path LIKE '${state.shopId}/%';`));
 
-  record(17, "suspension removes the product from every public surface at once",
-    sus.status === 200 && !pubAfterSuspend.found && !searchAfter.includes(state.productSlug) ? "PASS" : "FAIL",
-    `suspend HTTP ${sus.status} · PDP=${pubAfterSuspend.found} · in search=${searchAfter.includes(state.productSlug)} · cleanup jobs for this shop=${queued.n}`);
+  record(17, "suspension removes the product from every public surface at once, and queues the byte cleanup",
+    sus.status === 200 && !pubAfterSuspend.found && !searchAfter.includes(state.productSlug) && queued.n > 0 ? "PASS" : "FAIL",
+    `suspend HTTP ${sus.status} · PDP=${pubAfterSuspend.found} · in search=${searchAfter.includes(state.productSlug)} · cleanup jobs enqueued for this shop=${queued.n}`);
 
   // Reopen exists: migration 20260812120000 (Q5) implements the decision the
   // roadmap records in §7.J — the only exit from 'suspended' is needs_changes,
@@ -247,11 +247,44 @@ if (process.env.CP27_SKIP_SUSPEND) {
   const searchFinal = await fetch(`${SB}/rest/v1/rpc/shop_public_search`, {
     method: "POST", headers: { apikey: ANON, "Content-Type": "application/json" },
     body: JSON.stringify({ _q: "CP27" }),
-  }).then((r) => r.text());
+  }).then(async (r) => ({ status: r.status, text: await r.text() }));
+  const shopFinal = await fetch(`${SB}/rest/v1/rpc/shop_public_shop`, {
+    method: "POST", headers: { apikey: ANON, "Content-Type": "application/json" },
+    body: JSON.stringify({ _slug: state.shopSlug }),
+  }).then(async (r) => ({ status: r.status, text: await r.text() }));
+  // shop_public_shop answers with a product_count, not a product list.
+  let shopCount = 0;
+  try { shopCount = JSON.parse(shopFinal.text)?.shop?.product_count ?? 0; } catch { /* not json */ }
 
-  record("17e", "the worker republishes it, closing the §7.J cycle on every public surface",
-    rePub.ok && pubFinal.found && searchFinal.includes(state.productSlug) ? "PASS" : "FAIL",
-    `republish HTTP ${rePub.status} ${rePubBody.slice(0, 100)} · PDP=${pubFinal.found} · in search=${searchFinal.includes(state.productSlug)}`);
+  // The republish/cleanup race: suspension queued these very keys for deletion,
+  // and the five-minute cron may have CLAIMED a job before product_publish_commit
+  // swept the queue (the sweep covers pending and in_progress rows, but cannot
+  // un-claim a worker already holding the payload in memory). So: prove the
+  // queue holds nothing for this product's public keys, then fetch the actual
+  // bytes twice, with a pause longer than any worker invocation in between —
+  // a projection row cannot vouch for an object the worker deleted after it.
+  const pendingJobs = one(await sql(`
+    SELECT count(*)::int AS n FROM public.shop_media_cleanup_jobs
+    WHERE bucket_id = 'shop-product-media' AND state <> 'done'
+      AND object_path IN (SELECT public_path FROM public.product_media
+                          WHERE product_id='${state.productId}' AND public_path IS NOT NULL);`));
+  let media = [];
+  try { media = JSON.parse(pubFinal.text)?.media ?? []; } catch { /* not json */ }
+  const keys = media.map((m) => m.public_path).filter(Boolean);
+  const bytesAlive = async () => {
+    const rs = await Promise.all(keys.map((k) => fetch(`${SB}/storage/v1/object/public/shop-product-media/${k}`)));
+    return rs.every((r) => r.ok);
+  };
+  const aliveNow = keys.length > 0 && await bytesAlive();
+  await new Promise((r) => setTimeout(r, 10_000));
+  const aliveStill = keys.length > 0 && await bytesAlive();
+
+  record("17e", "the worker republishes it — public on PDP, search and shop page, and the bytes outlive the cleanup queue",
+    rePub.ok && pubFinal.found
+      && searchFinal.status === 200 && searchFinal.text.includes(state.productSlug)
+      && shopFinal.status === 200 && shopCount >= 1
+      && pendingJobs.n === 0 && aliveNow && aliveStill ? "PASS" : "FAIL",
+    `republish HTTP ${rePub.status} ${rePubBody.slice(0, 80)} · PDP=${pubFinal.found} · search ${searchFinal.status} has slug=${searchFinal.text.includes(state.productSlug)} · shop page ${shopFinal.status} product_count=${shopCount} · cleanup jobs on public keys=${pendingJobs.n} · ${keys.length} rendition(s) alive now=${aliveNow}, after 10s=${aliveStill}`);
 }
 
 writeFileSync(STATE, JSON.stringify(state, null, 2));
