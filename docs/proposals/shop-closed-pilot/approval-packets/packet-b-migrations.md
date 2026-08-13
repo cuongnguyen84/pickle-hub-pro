@@ -220,8 +220,8 @@ catalog rỗng, dữ liệu riêng tư không đọc được.
 
 | Thứ | Trước | Sau |
 |---|---|---|
-| Ledger (B-2, production) | 325 | **346** |
-| Ledger (B-1, staging) | 0 | **358** — staging nhận toàn bộ, không chỉ phần Shop |
+| Ledger (B-2, production) | 325 | **347** |
+| Ledger (B-1, staging) | 0 | **359** — staging nhận toàn bộ, không chỉ phần Shop |
 
 > ⚠️ **Sửa 13/08: 353 → 357.** Con số cũ đúng vào lúc viết packet; từ đó nhánh
 > merge `main` thêm **4 migration không thuộc Shop**. Đếm lại trước khi tin:
@@ -229,11 +229,13 @@ catalog rỗng, dữ liệu riêng tư không đọc được.
 > đi giữa lúc viết và lúc chạy, và nó là **tiêu chí nghiệm thu** của B-1 — một
 > ngưỡng sai làm lượt áp đúng trông như thiếu file.
 >
-> ⚠️ **Sửa lần hai, 13/08 tối: 357 → 358.** CP25 thêm
+> ⚠️ **Sửa lần hai, 13/08 tối: 357 → 359.** CP25 thêm **hai** file:
 > `20260814120000_ops_remove_secret_sync_heal_cron.sql` (loại vĩnh viễn cron
-> `secret-sync-heal-30min`). Staging **đã đạt 358** sau khi áp; B-2 nhận thêm
-> đúng một file so với con số cũ, và ở production file đó là **no-op an toàn**
-> vì job đã bị xoá tay ngày 03/08.
+> `secret-sync-heal-30min` — ở production là **no-op an toàn** vì job đã bị xoá
+> tay ngày 03/08) và `20260814130000_shop_media_health_revoke_anon.sql` (thu hồi
+> quyền đọc của `anon` trên hàng đợi dọn ảnh và view sức khoẻ của nó — ở
+> production **có tác dụng thật**, vì default privileges của nền tảng cấp quyền
+> đó cho mọi bảng mới). Staging **đã đạt 359**.
 | Bảng `public` | — | **+20** (18 Shop + `legal_documents` + `legal_acceptances`) |
 | Enum | — | +10 |
 | View | — | +3 |

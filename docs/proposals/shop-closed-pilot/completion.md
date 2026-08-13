@@ -1392,3 +1392,152 @@ lý do tầng một tồn tại riêng.
 pgTAP **38 file / 1371 test** PASS (37/1357 → +1 file, +14) ·
 `migration-project-url.test.ts` **363** PASS (nó khẳng định từng file migration,
 kể cả file mới) · `db reset` áp trọn 358 file, `cron.job` 20 → 19.
+
+---
+
+## 24. CP26 — diễn tập rollback, bộ smoke tự động, và một defect bộ smoke bắt được
+
+### Diễn tập rollback Packet C — chạy thật trên staging
+
+Packet C §7 khẳng định rollback **không mất dữ liệu**: hàng đợi nằm im, ảnh đã
+thu hồi chỉ đơn giản là chưa bị xoá cho tới khi worker quay lại. Một lượt diễn
+tập trên hàng đợi rỗng không phân biệt được lời khẳng định đó với "hàng đợi bị
+mất", nên trước khi bắt đầu: trồng một orphan thật và để **reconcile thật** xếp
+nó vào hàng.
+
+| Bước | Kết quả đo được |
+|---|---|
+| Trước | 2 cron Shop active · function version 1 · hàng đợi **1 pending** |
+| `cron.unschedule` ×2 (cron **trước**, đúng thứ tự §7) | cron Shop **0**, tổng 19 → 17 |
+| `functions delete shop-media-lifecycle` | list rỗng · POST tới endpoint → **404** |
+| Trong lúc rollback | hàng đợi **vẫn 2 dòng, 1 pending** · storage **vẫn 3 object** · 0 HTTP mới |
+| `functions deploy` | ACTIVE trở lại, **`ezbr_sha256` y hệt** bản vừa xoá — khôi phục đúng từng byte |
+| Cổng cron sau khi deploy lại | thiếu secret → **401**, secret sai → **401** |
+| Chạy lại file cron migration | 2 cron Shop active trở lại (nhánh `alter_job` idempotent) |
+| Sau khôi phục, lượt cleanup 18:35 | **200** → job đang đỗ chuyển `done` → object orphan **bị xoá thật** |
+
+⇒ Lời khẳng định của §7 đúng: rollback **hoãn** công việc chứ không **mất**.
+
+### Bộ smoke đã deploy — 6/6 tự động PASS
+
+Project Pages thứ hai của quyết định S-b **đã tồn tại và đã build**:
+`thepicklehub-shop-staging.pages.dev`, `/shop` → 200 với
+`x-robots-tag: noindex, nofollow, noarchive`. Bundle của nó chứa ref staging
+**2 lần** và ref production **0 lần** — S-b đúng như thiết kế, và bản vá
+`e08f39d6` (host suy ra từ `SUPABASE_ORIGIN`) là thứ làm cho điều đó đúng cả
+ngoài đồ thị JS.
+
+Allowlist của `shop-closed-pilot-smoke.mjs` chỉ khớp `*.pickle-hub-pro.pages.dev`
+nên **không** khớp project mới — đã thêm một mục riêng, có tên rõ ràng, chứ
+không nới mẫu.
+
+```
+✓  1 PASS  17 route noindex, control sạch, 11 dòng Disallow, sitemap sạch
+✓  2 PASS  discovery ẩn danh dựng trang thật: /shop:26w /shop/search:26w /vi/shop:26w
+✓ 16 PASS  route người mua 200 và có thân bài
+✓  3 PASS  shop_pilot_has_access() → false với anon
+✓ 19 PASS  health view TỪ CHỐI anon (401)   ← sau bản vá dưới đây
+✓ 22 PASS  public_products đọc được
+✓ 21 PASS  quét 5 phản hồi ẩn danh, 0 đường dẫn riêng tư / token / trường nội bộ
+```
+
+### 🔴 Defect bộ smoke bắt được — `shop_media_cleanup_health` đọc được bằng anon
+
+Lượt chạy đầu **FAIL kiểm 19**: view trả **200** kèm một dòng bộ đếm.
+
+Không có gì rò rỉ, và lý do **không phải** lý do kiểm 19 giả định. View là
+`security_invoker = true`, policy SELECT duy nhất trên bảng hàng đợi là
+admin-only ⇒ anon gộp trên **0 dòng** và nhận về toàn số 0 — đúng câu trả lời mà
+một hàng đợi rỗng đưa ra. Lúc đo, hàng đợi **có 1 job pending**.
+
+Nghĩa là lớp bảo vệ nằm **thấp hơn một tầng** so với chỗ kiểm 19 nhìn, và view
+trả 200 ở cả hai chiều: ngày nào đó ai thêm một policy đọc rộng lên bảng hàng
+đợi, số liệu vận hành thật thành công khai mà **không có gì RAISE**. Cùng
+database, `profiles` đã bị REVOKE khỏi `anon` và trả 42501 — view này chỉ đơn
+giản là bị bỏ sót.
+
+🔴 **Vì sao GRANT ban đầu không có tác dụng gì:** default privileges của nền tảng
+Supabase cấp cho `anon` và `authenticated` **toàn quyền DML trên mọi bảng mới
+trong `public`**. `GRANT SELECT … TO authenticated` của migration gốc do đó
+không thêm và không giữ lại gì. **Ở đây grant không phải danh sách trắng — nó là
+thứ phải lấy đi.**
+
+Vá: `20260814130000_shop_media_health_revoke_anon.sql` — REVOKE trên **cả** view
+lẫn bảng hàng đợi, kèm khối `DO` khẳng định `anon` mất quyền và `authenticated`
+**không** mất.
+
+### 🔴🔴 Red-proof lần đầu XANH — local và staging bất đồng về grant
+
+Bản test đầu tiên **xanh với toàn bộ REVOKE bị xoá**. Nguyên nhân, đo cùng giờ:
+
+| `has_table_privilege('anon', …)` | local | staging |
+|---|---|---|
+| `shop_media_cleanup_health` | **f** | **t** |
+| `shop_media_cleanup_jobs` | **f** | **t** |
+| `shops` | t | t |
+
+Default privileges của nền tảng **đang có hiệu lực trên project hosted** lúc
+migration chạy, còn ở local thì **không**. Một assertion chỉ *đọc* quyền ở local
+là assertion **đã đúng sẵn trước khi vá** — đúng kiểu "xanh giả" mà dự án này đã
+bị bắt nhiều lần.
+
+Sửa: test **tự dựng trạng thái hỏng** — `GRANT SELECT … TO anon` trong chính
+transaction của nó để tái hiện staging, rồi **replay câu lệnh đã ship** đọc ra từ
+ledger (không chép vào test). Red-proof sau khi viết lại: xoá REVOKE → **1 đỏ**;
+thu hồi view mà quên bảng → **2 đỏ**.
+
+> **Bài học chung với CP17:** khẳng định "mình đang chạy đúng CÂY MÃ" là chưa đủ
+> — còn phải khẳng định **môi trường đo có cùng điều kiện ban đầu**. Local không
+> tái hiện được default privileges của nền tảng, nên mọi assertion về grant chạy
+> ở local là vô nghĩa **trừ khi test tự tạo ra điều kiện đó**.
+
+### ⚠️ Phát hiện thứ hai, mức thấp — `shops.owner_user_id` đọc được bằng anon
+
+`/rest/v1/shops?select=*` với anon key trả về **mọi cột** của shop `active`, gồm
+`owner_user_id`. Policy `shops_select_public_active` (role `public`) là **cố ý**
+— đó là mặt tiền công khai. Câu hỏi chỉ là danh sách cột.
+
+Đã kiểm mức độ trước khi kết luận: `profiles` **bị REVOKE khỏi anon** (42501),
+nên `owner_user_id` là một UUID **không nối được** sang một con người bằng đường
+ẩn danh nào. ⇒ **Không phải defect an ninh, không dừng nghiệm thu.**
+
+Khuyến nghị (chưa làm, cố ý): thu hẹp bằng column grant, theo đúng tiền lệ
+"RLS invite_code lockdown" của repo. Nó **không phải bản vá tiện tay**: `select=*`
+sẽ thành 42501, nên phải quét toàn bộ call site client trước. Đưa vào backlog
+hậu-pilot.
+
+### Responsive + axe — 24/24 sạch, và phạm vi thật của con số đó
+
+Trên chính deployment staging, 4 route người mua ẩn danh × 6 bề rộng
+(320/375/390/414/768/1440): axe `wcag2a`+`wcag2aa` mức serious/critical = **0**,
+tràn ngang (`scrollWidth - clientWidth`) = **0px**, cả 24 tổ hợp.
+
+🔴 **Đây là trang RỖNG.** Staging có 0 sản phẩm và 0 shop, nên con số trên phủ
+vỏ trang, header, chuyển ngữ, bộ lọc và phần "chưa có gì". **Không** phủ lưới sản
+phẩm, PDP, và mọi màn người bán/quản trị — chúng chờ đúng cái fixture mà 18 kiểm
+thủ công đang chờ.
+
+### Teardown — đếm lại, không đọc output của script
+
+Fixture CP1 và fixture diễn tập được dọn bằng **chính bộ máy sản phẩm**: xoá
+dòng tham chiếu → hai object thành orphan thật → reconcile xếp hàng → cron
+cleanup xoá byte. `storage.objects` từ chối DELETE trực tiếp, nên đây không phải
+lối tắt mà là con đường duy nhất đúng.
+
+| | |
+|---|---|
+| shops · applications · pilot_rows · products | **0 · 0 · 0 · 0** |
+| shop_profile_media · product_media · cleanup_jobs | **0 · 0 · 0** |
+| `storage.objects` bucket `shop%` | **0** |
+| `auth.users` | **1** — `system+pro-tour@thepicklehub.net`, có sẵn từ migration |
+
+### Trạng thái staging khi kết thúc CP26
+
+| | |
+|---|---|
+| Ledger | **359** |
+| Cron | 19 tổng, **2 active** (cả hai là Shop) |
+| `secret-sync-heal-30min` | không tồn tại |
+| 404 từ cron ngoài Shop | đứng yên ở **36** từ 18:19 |
+| Edge Function | `shop-media-lifecycle` ACTIVE, cổng cron 401 |
+| Dữ liệu test | **0** ở mọi bảng và cả hai bucket |
