@@ -276,15 +276,37 @@ if (process.env.CP27_SKIP_SUSPEND) {
     return rs.every((r) => r.ok);
   };
   const aliveNow = keys.length > 0 && await bytesAlive();
-  await new Promise((r) => setTimeout(r, 10_000));
-  const aliveStill = keys.length > 0 && await bytesAlive();
 
-  record("17e", "the worker republishes it — public on PDP, search and shop page, and the bytes outlive the cleanup queue",
+  // An arbitrary pause cannot bound a claimed batch (up to 25 sequential
+  // deletes). What can: the NEXT completed run of the cleanup cron. A run that
+  // starts after the publish sweep finds no job for these keys, and a worker
+  // still holding a pre-sweep payload across a whole 5-minute cycle would be
+  // sitting in `stuck`/`failed` — so wait for one fresh succeeded run with an
+  // idle queue, then ask for the bytes again and for a clean health row.
+  const runsBefore = one(await sql(`
+    SELECT count(*)::int AS n FROM cron.job_run_details r
+    JOIN cron.job j USING (jobid)
+    WHERE j.jobname = 'shop-media-cleanup-every-5m' AND r.status = 'succeeded';`));
+  let cycled = false;
+  for (let i = 0; i < 16 && !cycled; i++) {
+    await new Promise((r) => setTimeout(r, 30_000));
+    const now = one(await sql(`
+      SELECT (SELECT count(*)::int FROM cron.job_run_details r JOIN cron.job j USING (jobid)
+              WHERE j.jobname = 'shop-media-cleanup-every-5m' AND r.status = 'succeeded') AS runs,
+             (SELECT count(*)::int FROM public.shop_media_cleanup_jobs
+              WHERE bucket_id = 'shop-product-media' AND state = 'in_progress') AS in_flight;`));
+    cycled = now.runs > runsBefore.n && now.in_flight === 0;
+  }
+  const aliveStill = keys.length > 0 && await bytesAlive();
+  const health = one(await sql(`SELECT stuck, failed FROM public.shop_media_cleanup_health;`));
+
+  record("17e", "the worker republishes it — public on PDP, search and shop page, and the bytes outlive a full cleanup cycle",
     rePub.ok && pubFinal.found
       && searchFinal.status === 200 && searchFinal.text.includes(state.productSlug)
       && shopFinal.status === 200 && shopCount >= 1
-      && pendingJobs.n === 0 && aliveNow && aliveStill ? "PASS" : "FAIL",
-    `republish HTTP ${rePub.status} ${rePubBody.slice(0, 80)} · PDP=${pubFinal.found} · search ${searchFinal.status} has slug=${searchFinal.text.includes(state.productSlug)} · shop page ${shopFinal.status} product_count=${shopCount} · cleanup jobs on public keys=${pendingJobs.n} · ${keys.length} rendition(s) alive now=${aliveNow}, after 10s=${aliveStill}`);
+      && pendingJobs.n === 0 && aliveNow && cycled && aliveStill
+      && health.stuck === 0 && health.failed === 0 ? "PASS" : "FAIL",
+    `republish HTTP ${rePub.status} ${rePubBody.slice(0, 80)} · PDP=${pubFinal.found} · search ${searchFinal.status} has slug=${searchFinal.text.includes(state.productSlug)} · shop page ${shopFinal.status} product_count=${shopCount} · cleanup jobs on public keys=${pendingJobs.n} · ${keys.length} rendition(s) alive now=${aliveNow} · fresh cleanup cycle observed=${cycled} · alive after cycle=${aliveStill} · health stuck=${health.stuck} failed=${health.failed}`);
 }
 
 writeFileSync(STATE, JSON.stringify(state, null, 2));
