@@ -436,6 +436,8 @@ export function useTeamMatchTeamManagement() {
     },
     onSuccess: ({ tournamentId }) => {
       queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-user-team', tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-membership', tournamentId] });
       toast({
         title: 'Đã xóa',
         description: 'Đã xóa đội',
