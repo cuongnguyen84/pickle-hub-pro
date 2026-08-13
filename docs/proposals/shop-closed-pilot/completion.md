@@ -735,3 +735,84 @@ gói Pro               API không trả trường plan  ← B10; xác minh bằn
    preview của các nhánh khác chỉ hỏng trong thời gian ngắn nhất).
 7. Fixture + 24 case nghiệm thu + responsive/axe 6 chiều rộng.
 8. Rollback drill → merge #578 → production → Wave 0.
+
+---
+
+## 18. CP20 — PR #578 mở, CI 7/8, và một cổng cần quyết định
+
+### CI sau khi merge `main` và sửa
+
+| Check | Trạng thái |
+|---|---|
+| Cloudflare Pages | ✅ pass |
+| pgtap | ✅ pass |
+| smoke | ✅ pass |
+| visual | ✅ pass |
+| npm-audit | ✅ pass |
+| codeql | ✅ pass (đã sửa, không baseline) |
+| typecheck | ✅ pass (đã sửa) |
+| **quality** | 🔴 **fail** — **coverage**, không phải test |
+
+### Hai cái đã sửa
+
+**typecheck** — `workers/edge-blob-watchdog/` chỉ có `tsconfig.json`, không có
+`src/`. File nguồn **không được track** trong repo; nó chỉ tồn tại như bản
+untracked trong working tree của một phiên trước, nên `tsc -b` cục bộ xanh còn
+CI sạch thì TS18003. Đã xoá config mồ côi.
+
+**codeql** — 3 finding ở `shop-closed-pilot-smoke.mjs`, đều từ việc dùng regex
+bóc `<script>`/`<style>` để đếm từ. CodeQL đúng về cơ chế (`</script >` lọt
+qua), dù đoạn này không bảo vệ gì cả — nó chỉ phân biệt trang đã render với vỏ
+SPA rỗng. **Sửa thật, không baseline**: giờ nó duyệt tag một lượt và bỏ nội
+dung script/style. Parser thay cho filter — finding biến mất vì pattern không
+còn, chứ không vì một file JSON bảo bỏ qua.
+
+### 🔴 Cổng còn đỏ: coverage, và nó cần một quyết định
+
+```
+160 test file pass · 5 skipped (integration cần stack sống)
+Statements 78,54%  /  ngưỡng 83%
+```
+
+Không phải prototype: loại `src/proto/**` chỉ nâng lên **79,82%** — vẫn thiếu
+**3,2 điểm**.
+
+Nguyên nhân thật: phần lớn mã Shop được kiểm bằng **pgTAP, HTTP integration và
+lượt nghiệm thu trình duyệt 20 route** — không có cái nào được bộ đếm câu lệnh
+nhìn thấy. Ngưỡng 83% được hiệu chỉnh cho `src/` ở thời điểm chưa có một feature
+lớn kiểm theo kiểu đó.
+
+Ba lựa chọn, và **không lựa chọn nào agent được tự quyết**:
+
+| | Việc | Đánh giá |
+|---|---|---|
+| **A** | Viết unit test cho UI Shop tới khi đạt 83% | Đúng đắn nhất, nhưng là khối lượng lớn và mở |
+| **B** | Loại `src/proto/**` khỏi coverage | Có tiền lệ (`functions/**`, `workers/**`, `scripts/**` đã loại với cùng lý do) nhưng **chỉ được 1,3 điểm** — không đủ |
+| **C** | Điều chỉnh phạm vi/ngưỡng cho `src/pages/shop/**` + `src/components/shop/**` như đã làm với `functions/**` | Cần Product Owner ký, vì ranh giới giữa "khoanh đúng phạm vi" và "làm yếu cổng" là một quyết định, không phải một commit |
+
+> Chỉ thị hiện tại nói rõ: **"Không bỏ qua hoặc làm yếu security/QA gate."** Nên
+> agent dừng ở đây thay vì tự hạ ngưỡng hay tự mở rộng danh sách loại trừ.
+
+### Hệ quả
+
+Phase 4 (merge) yêu cầu CI xanh → **chưa merge**. Do đó Phase 5 (production) và
+Phase 6 (Wave 0) **chưa bắt đầu**. Staging cũng chưa được cấu hình: xem CP19 về
+lý do không khởi động chuỗi 354 migration khi chưa chắc chạy hết trong một lượt.
+
+### Merge `main` đã lấy về những gì
+
+Ba xung đột, giải theo ý nghĩa từng bên: `eslint.config.js` giữ **cả hai** ignore
+· `home.ts` giữ H1 của nhánh này **và** câu Google Sign-In của main (nó tồn tại
+cho khâu xác minh OAuth) · `Privacy.tsx` giữ **14/08/2026**.
+
+Cổng CP18 tự chứng minh giá trị ngay lần chạy đầu sau merge: main mang về
+`20260805110000_ops_record_dispatches…` với **2 host production ghi cứng** nữa.
+Đúng trường hợp nó được viết ra để bắt.
+
+Merge cũng làm lộ một **race trong bộ test** đã tiềm ẩn: hai suite cùng chạy
+worker trên một cơ sở dữ liệu, và `shop_media_cleanup_claim` là **toàn cục** —
+đúng như thiết kế, nó *là* worker. Case B13 thêm ở CP17 drain toàn cục, cướp job
+của `shop-media-integration` và xoá object mà suite kia còn đang khẳng định. Chỉ
+đỏ khi chạy full, không bao giờ đỏ khi chạy riêng. Đã vá bằng cách chỉ drain job
+thuộc shop của chính mình — **cùng bài học với CP12**. Hai lượt full liên tiếp
+xanh.
