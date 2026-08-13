@@ -816,3 +816,83 @@ của `shop-media-integration` và xoá object mà suite kia còn đang khẳng 
 đỏ khi chạy full, không bao giờ đỏ khi chạy riêng. Đã vá bằng cách chỉ drain job
 thuộc shop của chính mình — **cùng bài học với CP12**. Hai lượt full liên tiếp
 xanh.
+
+---
+
+## 19. CP21–CP22 — đóng khoảng trống coverage bằng test thật
+
+Product Owner chọn **phương án A**: viết test có ý nghĩa, không đổi mẫu số.
+Không hạ ngưỡng, không thêm exclusion, không đụng cấu hình coverage.
+
+### Tiến độ đo được
+
+| Mốc | Statements | Δ |
+|---|---|---|
+| Bắt đầu CP21 | 78,54% (4293/5466) | — |
+| + imagePipeline, draft recovery | 78,92% | +0,38 |
+| + upload state machine | 79,73% | +0,81 |
+| + date helpers | **80,45%** (4646/5775) | +0,72 |
+| **Còn thiếu tới 83,5%** | | **171 statement** |
+
+Bốn metric hiện tại: statements **80,45%** · branches **66,91%** · functions
+**72,01%** · lines **82,04%**.
+
+### Đã khoá được những bất biến nào
+
+**`imagePipeline`** (31 test) — đây là **ranh giới riêng tư**, không phải bộ
+resize: quyết định file *là gì* theo byte chứ không theo tên, re-encode qua
+canvas (chính là thứ xoá EXIF, và cùng với đó là **toạ độ GPS nhà người bán**),
+và từ chối bằng tiếng Việt thay vì để máy chủ từ chối sau khi người bán đã chờ.
+Phủ 4 brand HEIC · mp4 cũng `ftyp` nhưng không phải ảnh · header cụt · **chặn
+dung lượng trước khi decode** · thang chất lượng · trình duyệt trả PNG khi xin
+WebP · giải phóng bitmap trên nhánh throw · abort.
+
+**Draft recovery** (7 test, component + localStorage thật) — bản nháp cục bộ
+**không bao giờ được âm thầm thắng** bản máy chủ; entry hỏng hoặc private mode
+không được làm chết trình sửa.
+
+**Upload state machine** (16 test, hook thật) — các assertion **phủ định** mới
+là thứ quan trọng: original lên được nhưng rendition hỏng → **không** complete ·
+finalize reject → **không** complete · lỗi một file không kéo file khác · token
+giữ nguyên qua retry (server dedupe) · huỷ → `cancelled`, không finalize ·
+`clearComplete` **giữ lại** file lỗi · nhãn pha **không có phần trăm** (số do
+timer đẻ ra là lời nói dối lần đầu nó đứng ở 90%).
+
+**Date helpers** (17 test) — placeholder thay cho `Invalid Date`; **không bao
+giờ** mô tả tương lai bằng thì quá khứ; biên phút/giờ/ngày rơi đúng một bên.
+
+### 🔴 Một bug thật, do test tìm ra — `46e1fe0d`
+
+`useMediaUpload`: huỷ **giữa hai pha** để lại dòng đứng nguyên. `processImage`
+nhận signal nên huỷ *trong* lúc xử lý sẽ ném AbortError và vào catch; nhưng huỷ
+rơi vào khoảng sau khi một pha xong và trước khi pha sau bắt đầu chỉ chạm phải
+`if (aborted()) return` — bốn chỗ — và thoát mà **không đổi phase**.
+
+Người bán gặp: bấm Huỷ đúng nửa giây xấu → dòng đứng mãi ở "Đang xử lý ảnh",
+`busy` vẫn true nên **thanh Lưu bị khoá**, retry lẫn "dọn xong" đều không với
+tới được vì nó không ở trạng thái nào cả. Chỉ còn cách tải lại trang.
+
+Đã sửa trong commit riêng; test tìm ra nó mock một `processImage` **bỏ qua
+signal** — đúng hình dạng của khoảng trống giữa hai pha khi nhìn từ ngoài.
+
+### Red-proof — phá sản phẩm, không phá test
+
+| Phá gì | Kết quả |
+|---|---|
+| Gỡ dòng từ chối HEIC | 1 đỏ |
+| Gỡ chặn dung lượng đầu vào | 1 đỏ |
+| Cho bản nháp cục bộ thắng mà không so với máy chủ | 1 đỏ |
+| Huỷ giữa hai pha (bug thật) | 1 đỏ, rồi xanh sau khi sửa |
+
+### Còn lại — 171 statement, theo đúng thứ tự giá trị
+
+| File | Thiếu | Nhóm bất biến |
+|---|---|---|
+| `SellerProductForm.tsx` | 117 | slug · archive · submit preflight · deep-link `requested_fields` · khoá input khi pending_review |
+| `VariantEditor.tsx` | 77 | ma trận · `option_key` không phụ thuộc thứ tự cột · cảnh báo đích danh tổ hợp sẽ mất · bulk + undo · **payload multi-variant không mang giá/tồn form chính** |
+| `MediaEditor.tsx` | 68 | wiring của component quanh hook đã phủ |
+| `useSellerProducts.ts` | 36 | cache key đủ filter/sort/cursor · phản hồi cũ không đè mới |
+| `CatalogResults.tsx` | 17 | 4 trạng thái · **DTO người mua không chứa draft_path/stock_on_hand/internal_note** |
+
+Ba nhóm đầu là dư đủ cho 171. Không nhóm nào là "gọi hàm cho chạy dòng" — mỗi
+nhóm khoá một bất biến nghiệp vụ hoặc một ranh giới riêng tư.
