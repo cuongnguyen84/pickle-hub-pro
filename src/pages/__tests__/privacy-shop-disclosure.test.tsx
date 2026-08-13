@@ -22,7 +22,7 @@
 // ============================================================================
 
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { vi as viTranslations } from "@/i18n/vi";
 import { en as enTranslations } from "@/i18n/en";
