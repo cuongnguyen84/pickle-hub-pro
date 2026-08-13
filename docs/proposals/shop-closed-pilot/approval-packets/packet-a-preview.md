@@ -23,19 +23,37 @@
 
 ## 2. Packet này thật ra xin phép cái gì
 
-**Một thao tác: `git push`.**
+> 🔄 **VIẾT LẠI 2026-08-13 sau quyết định S-b.** Bản trước nói packet này chỉ
+> xin `git push`. **Không còn đúng.** S-b đòi một **project Cloudflare Pages thứ
+> hai**, và việc tạo nó là thao tác chính của packet này.
 
-Cloudflare Pages nối trực tiếp với GitHub và build **mọi** nhánh không phải
-`main` thành một preview. Không có lệnh `wrangler pages deploy` nào. Không có gì
-khác để duyệt.
+**Nhánh đã push rồi** (`ef32845e`, PR #578) — nên `git push` không còn là thứ
+phải xin. Thứ phải xin bây giờ là **tạo một project Pages riêng cho nhánh Shop**.
 
-```sh
-git push -u origin feat/shop-closed-pilot
-```
+| | Trước (S-a, đã bị từ chối) | Sau (S-b, đã chọn) |
+|---|---|---|
+| Thao tác | `git push`, Cloudflare tự dựng preview | **Tạo project Pages thứ hai** + trỏ env vào staging |
+| Project | `pickle-hub-pro` | `pickle-hub-pro-shop` (tên đề xuất) |
+| URL | `feat-shop-closed-pilot.pickle-hub-pro.pages.dev` | `https://<project-mới>.pages.dev` |
+| Preview nhánh khác | **trỏ staging** ← chi phí bị từ chối | **giữ nguyên production** |
+| Dọn dẹp sau pilot | không có | 🔴 **phải xoá project thứ hai** |
 
-Preview xuất hiện ở:
-- `https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev` (theo nhánh)
-- `https://<hash>.pickle-hub-pro.pages.dev` (theo deployment — ghi lại làm điểm rollback)
+Cấu hình project mới:
+
+| Thứ | Giá trị |
+|---|---|
+| Repo | `cuongnguyen84/pickle-hub-pro` |
+| Production branch của project này | **`feat/shop-closed-pilot`** |
+| Build command | `npm run build` |
+| Output | `dist` |
+| `VITE_SUPABASE_URL` | `https://utokwfcljxjkpkaqgheo.supabase.co` |
+| `VITE_SUPABASE_PROJECT_ID` | `utokwfcljxjkpkaqgheo` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key **staging** |
+| `SHOP_PUBLIC_INDEXING` | **không đặt** |
+
+🔴 **Project `pickle-hub-pro` không được đụng tới.** Toàn bộ giá trị của S-b nằm
+ở chỗ đó: nếu một biến Preview nào bị thêm vào project cũ thì S-b thành S-a mà
+không ai nhận ra, vì nhánh Shop vẫn chạy đúng — chỉ nhánh của người khác hỏng.
 
 ⚠️ **Push với danh tính nào:** mọi thao tác `gh`/push của agent phải chạy với
 `GH_TOKEN` lấy từ `GITHUB_BOT_PAT` và **phải xác minh `gh api user -q .login`
@@ -51,9 +69,10 @@ là `cuongnguyen84` và chỉ dành cho tay Cuong (`ops-runbook.md` §1b).
 | P0 | **Packet S đã duyệt** — project staging tồn tại, `pg_cron`/`pg_net`/vault khả dụng | ⬜ |
 | P1 | **B-1 đã chạy** — 18 migration trên **staging** | ⬜ |
 | P2 | **C-1 đã chạy** — function sống trên **staging**, cron nổ, `net._http_response` = 200 | ⬜ |
-| P3 | 🔴 **B1′** — URL preview nằm trong **Redirect URLs của STAGING** | ⬜ |
-| P4 | 🔴 **B2** — `SHOP_PUBLIC_INDEXING` **không tồn tại** ở **cả** Production lẫn Preview | ⬜ |
-| P5 | `VITE_SUPABASE_*` của môi trường **Preview** trỏ `utokwfcljxjkpkaqgheo` | ⬜ |
+| P3 | 🔴 **B1′** — URL của **project Pages MỚI** nằm trong Redirect URLs của **STAGING** | ⬜ |
+| P4 | 🔴 **B2** — `SHOP_PUBLIC_INDEXING` **không tồn tại** ở Production, **và** ở project mới | ⬜ |
+| P5 | **Project Pages thứ hai đã tạo**, env trỏ `utokwfcljxjkpkaqgheo` (S-b) | ⬜ |
+| P5b | 🔴 Project `pickle-hub-pro` **không có** biến `VITE_SUPABASE_*` ở môi trường Preview | ⬜ |
 | P6 | `soak-watch.mjs --baseline` đã chụp **TRƯỚC** khi push | ⬜ |
 
 **P1 là ràng buộc cứng.** Preview có route Shop mà cơ sở dữ liệu không có bảng
@@ -65,11 +84,16 @@ sẽ đăng nhập thành công vào một site **không có Shop** rồi tưở
 kiểm được ở chế độ chỉ đọc (endpoint `config/auth` trả secret trong cùng
 payload) — Cuong xác nhận bằng mắt.
 
-**P5 là thay đổi có sức công phá nhất trong gói.** Biến môi trường Preview của
-Cloudflare áp cho **mọi nhánh**, nên preview của các nhánh SEO/homepage đang
-chạy song song cũng sẽ trỏ staging và không còn thấy dữ liệu thật. Hai lựa chọn
-và một khuyến nghị: [`packet-s-staging.md` §6](./packet-s-staging.md). Ai đang
-chạy nhánh khác cần được báo.
+**P5/P5b — S-b đã gỡ ngòi nổ, và P5b là thứ giữ nó gỡ.** Bản trước cảnh báo
+rằng biến Preview của Cloudflare áp cho **mọi nhánh**, nên preview SEO/homepage
+cũng sẽ trỏ staging. Quyết định S-b ([`packet-s-staging.md` §6](./packet-s-staging.md))
+tránh hẳn điều đó bằng một project riêng.
+
+Nhưng nó chỉ đúng **chừng nào không ai đặt biến vào project cũ**. Đó là P5b, và
+nó phải kiểm bằng mắt: một biến `VITE_SUPABASE_*` lọt vào môi trường Preview của
+`pickle-hub-pro` sẽ khôi phục **toàn bộ** thiệt hại của S-a **trong im lặng** —
+nhánh Shop vẫn chạy đúng trên project riêng của nó, nên không có tín hiệu nào từ
+phía này. Người phát hiện sẽ là một phiên khác, và họ sẽ tưởng nhánh họ hỏng.
 
 **P4:** không có lệnh CLI nào đọc biến môi trường Pages. Kiểm tra 30 giây trong
 dashboard, và nó là thứ đứng giữa "pilot kín" và "Google thấy sáu sản phẩm".
@@ -82,16 +106,17 @@ node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-shop-pilot.json
 
 ---
 
-## 4. Biến môi trường — ba biến Preview ĐỔI mục tiêu
+## 4. Biến môi trường — đặt ở PROJECT MỚI, không phải ở `pickle-hub-pro`
 
-| Nơi | Tên | Preview |
+| Nơi | Tên | Giá trị |
 |---|---|---|
-| Pages | `SHOP_PUBLIC_INDEXING` | **không đặt** (P4) |
-| Pages | `CANONICAL_HOST` | giữ nguyên |
-| Build (Preview) | `VITE_SUPABASE_URL` | `https://utokwfcljxjkpkaqgheo.supabase.co` |
-| Build (Preview) | `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key **staging** |
-| Build (Preview) | `VITE_SUPABASE_PROJECT_ID` | `utokwfcljxjkpkaqgheo` |
-| Build | `VITE_PROTO_SHOP` | **không đặt** — prototype bị loại ở compile time (D4) |
+| **Project mới** | `VITE_SUPABASE_URL` | `https://utokwfcljxjkpkaqgheo.supabase.co` |
+| **Project mới** | `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key **staging** |
+| **Project mới** | `VITE_SUPABASE_PROJECT_ID` | `utokwfcljxjkpkaqgheo` |
+| **Project mới** | `SHOP_PUBLIC_INDEXING` | **không đặt** (P4) |
+| **Project mới** | `VITE_PROTO_SHOP` | **không đặt** — prototype bị loại ở compile time (D4) |
+| **Project mới** | `CANONICAL_HOST` | giữ mặc định |
+| 🔴 `pickle-hub-pro` | **mọi biến** | **KHÔNG ĐỔI GÌ** (P5b) |
 | Supabase Edge | `CRON_SECRET`, `SUPABASE_*` | không đụng |
 
 ---
@@ -100,12 +125,12 @@ node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-shop-pilot.json
 
 | Thứ | Trước | Sau |
 |---|---|---|
-| Nhánh remote | không có | `feat/shop-closed-pilot` |
-| Preview deployment | 6 nhánh khác | +1 |
+| Nhánh remote | không có | ✅ đã push — `feat/shop-closed-pilot` @ `ef32845e` |
+| Project Cloudflare Pages | 1 | **2** — thêm project riêng cho nhánh Shop |
 | **Production web** | không đổi | **không đổi** |
 | **Cơ sở dữ liệu production** | không đổi | **không đổi** |
-| Preview của các nhánh khác | trỏ production | **trỏ staging** — xem P5 |
-| Route Shop tới được | không ở đâu | preview URL |
+| Preview của các nhánh khác | trỏ production | ✅ **vẫn trỏ production** — S-b giữ nguyên |
+| Route Shop tới được | không ở đâu | URL của project mới |
 | Route Shop được lập chỉ mục | không | **vẫn không** |
 
 ---
@@ -113,7 +138,8 @@ node scripts/agents/soak-watch.mjs --baseline --out /tmp/soak-shop-pilot.json
 ## 6. Kiểm ngay sau khi preview build xong
 
 ```sh
-BASE=https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev
+# S-b: URL của PROJECT PAGES THỨ HAI, không phải *.pickle-hub-pro.pages.dev
+BASE=https://<project-mới>.pages.dev
 
 # 1. Ma trận noindex, TRƯỚC khi ai khác nhận URL
 node scripts/shop-closed-pilot-smoke.mjs --target "$BASE" \
@@ -135,7 +161,8 @@ Sau đó là 18 kiểm thủ công ở [`../acceptance.md` §4](../acceptance.md
 
 | Tình huống | Làm | Thời gian |
 |---|---|---|
-| Preview sai | `git push origin --delete feat/shop-closed-pilot` — preview biến mất | phút |
+| Preview sai | Dashboard → **project thứ hai** → Delete project. Nhánh và PR #578 giữ nguyên | phút |
+| Muốn gỡ hẳn S-b | Xoá project thứ hai; `pickle-hub-pro` chưa từng bị đụng nên không có gì phải hoàn nguyên | phút |
 | Web production bị chạm (không nên xảy ra) | Dashboard → Pages → Deployments → deployment id đã ghi → Rollback | phút |
 | Cần dừng gấp bất cứ thứ gì liên quan Shop | `DELETE FROM shop_pilot_members` | giây |
 

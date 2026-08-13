@@ -119,8 +119,8 @@ thật** — và preview chỉ còn drain tay, tức là đúng thứ máy cục
 
 | Thứ | Giá trị staging |
 |---|---|
-| **Site URL** | ⬜ URL preview Cloudflare |
-| **Redirect URLs** | ⬜ `https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev/**` |
+| **Site URL** | ⬜ URL của **project Pages thứ hai** (S-b) — `https://<project-mới>.pages.dev` |
+| **Redirect URLs** | ⬜ `https://<project-mới>.pages.dev/**` — 🔴 **KHÔNG** phải `feat-shop-closed-pilot.pickle-hub-pro.pages.dev`; S-b đổi URL, và một redirect list trỏ vào URL cũ làm đăng nhập staging hỏng câm |
 | Redirect URL production | **KHÔNG thêm** — staging không được nhận đăng nhập từ site thật |
 | Email provider | ⬜ mặc định Supabase là đủ; **không** nối Resend |
 | MFA/TOTP | ✅ **phải bật** — `is_admin()` đòi aal2, và một staging không có TOTP sẽ chứng minh nhầm rằng cổng AAL2 hoạt động |
@@ -174,11 +174,40 @@ Hai lựa chọn, Product Owner chọn:
 | **S-a** | Đặt biến Preview ở cấp project | Đơn giản; **mọi** preview nhánh khác cũng trỏ staging |
 | **S-b** | Chỉ nhánh này trỏ staging | Cloudflare Pages **không** hỗ trợ biến theo nhánh. Cần một project Pages thứ hai chỉ cho nhánh Shop |
 
-Khuyến nghị: **S-a**, và nói cho những phiên đang chạy nhánh khác biết. Một
-preview trỏ staging là bất tiện; một project Pages thứ hai là một hệ thống thứ
-hai phải bảo trì.
+Khuyến nghị của agent là **S-a**, và nó **đã bị từ chối**.
 
-Đã chọn: ⬜ S-a  ⬜ S-b
+### ✅ ĐÃ CHỌN: **S-b** — Product Owner, 2026-08-13
+
+Đã chọn: ⬜ S-a  ☑️ **S-b**
+
+Lý do từ chối S-a đứng vững hơn khuyến nghị: đánh đổi của S-a không rơi vào
+nhánh này mà rơi vào **những phiên đang chạy nhánh khác**. Một preview SEO trỏ
+vào staging trắng không phải "bất tiện" — nó là một preview **nói dối**, vì mọi
+màn hình đều rỗng và trông y hệt một lỗi mã nguồn. Chi phí đó không nhìn thấy
+được từ trong nhánh Shop, và người trả là người không có mặt trong quyết định.
+
+**Hình dạng S-b:**
+
+| Thứ | Giá trị |
+|---|---|
+| Project Pages mới | `pickle-hub-pro-shop` (tên đề xuất) |
+| Production branch của nó | `feat/shop-closed-pilot` |
+| Env vars | trỏ **staging** `utokwfcljxjkpkaqgheo` |
+| `SHOP_PUBLIC_INDEXING` | **không đặt** |
+| URL | **khác hẳn** `*.pickle-hub-pro.pages.dev` |
+| Project `pickle-hub-pro` | **không đụng tới** — preview mọi nhánh khác giữ nguyên production |
+
+🔴 **Nợ phải trả khi pilot xong: XOÁ project Pages thứ hai.** Một project Pages
+sống sót sau pilot là một bản build của một nhánh cũ, trỏ vào một Supabase có
+thể đã bị xoá, vẫn phục vụ trên một URL công khai. Ghi vào
+[`../operations.md`](../operations.md) như một mục dọn dẹp bắt buộc, không phải
+một việc "nếu nhớ".
+
+⚠️ Hai thứ S-b **không** giải quyết, phải nhớ khi cấu hình:
+- Redirect URLs của **staging** phải chứa URL của project Pages **mới**, không
+  phải `feat-shop-closed-pilot.pickle-hub-pro.pages.dev` như §4 đang ghi.
+- `robots`/indexing: URL mới là một tên miền công khai thứ hai. Indexing vẫn
+  TẮT (quyết định #3), nhưng giờ phải TẮT ở **hai** chỗ.
 
 ---
 
@@ -274,14 +303,16 @@ không tạo lại được ở đây" — và câu trả lời đúng gần nh�
 Packet S — tạo/xác nhận một dự án Supabase staging riêng cho closed pilot.
 
 Đầu vào đã điền:
-  [ ] project ref staging  ______________________
-  [ ] region               ______________________
-  [ ] gói/hạn mức          ______________________
+  [x] project ref staging  utokwfcljxjkpkaqgheo      (xác minh 13/08: "ThePickleHub Staging")
+  [x] region               ap-northeast-1            (giống production)
+  [ ] gói/hạn mức          ______________________    (Pro — API trả plan:null, chỉ kiểm được ở dashboard)
   [ ] pg_cron + pg_net XÁC NHẬN bật được          (§3 — không có thì Packet C mất ý nghĩa)
   [ ] vault khả dụng
   [ ] MFA/TOTP bật, 1 admin staging đã enrol
   [ ] CRON_SECRET staging là GIÁ TRỊ MỚI, không sao chép từ production
-  [ ] chọn cách trỏ biến web:  __ S-a (cả project)   __ S-b (Pages project thứ hai)
+  [x] chọn cách trỏ biến web:  __ S-a (cả project)   [X] S-b (Pages project thứ hai)   ← 13/08
+  [ ] project Pages thứ hai đã tạo, URL: ______________________
+  [ ] Redirect URLs staging trỏ URL project MỚI (không phải *.pickle-hub-pro.pages.dev)
   [ ] không sao chép dữ liệu production
 
 [ ] DUYỆT — ký: ____________  ngày: __________

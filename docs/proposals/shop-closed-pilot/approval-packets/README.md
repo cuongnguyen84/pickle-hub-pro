@@ -83,6 +83,7 @@ merge RED**; thao tác do người giữ kênh trực tiếp thực hiện.
 | # | Quyết định | Ở đâu |
 |---|---|---|
 | 1 | Preview dùng **Supabase staging riêng**, không trỏ production | Packet S, A |
+| 6 | **S-b** — preview Shop chạy trên **project Cloudflare Pages THỨ HAI**; `pickle-hub-pro` không đụng, nên preview mọi nhánh khác giữ nguyên production. Khuyến nghị S-a của agent **bị từ chối** (13/08) | Packet S §6, A §2 |
 | 2 | Pilot chấp nhận **chưa có thông báo tự động** + runbook tay | [`../notification-decision.md`](../notification-decision.md) — **ĐÃ KÝ** |
 | 3 | Shop indexing **TẮT/unset ở mọi môi trường** | Packet A §4, D §3 |
 | 4 | Drift `20260805150000_news_source_ppa_tour_pause` **ngoài phạm vi** — không sửa, không chèn ledger | Packet B §4 |
@@ -92,8 +93,10 @@ merge RED**; thao tác do người giữ kênh trực tiếp thực hiện.
 
 | # | Blocker | Ai gỡ | Chặn |
 |---|---|---|---|
-| **B1′** | URL preview có trong **Redirect URLs của STAGING** | Cuong, dashboard staging | Packet A |
-| **B2** | `SHOP_PUBLIC_INDEXING` **không tồn tại** ở cả Production lẫn Preview | Cuong, dashboard | Packet A, D |
+| **B1″** | URL của **project Pages THỨ HAI** (S-b) có trong Redirect URLs của **STAGING** — không phải URL `*.pickle-hub-pro.pages.dev` | Cuong, dashboard staging | Packet A |
+| **B2** | `SHOP_PUBLIC_INDEXING` **không tồn tại** ở Production **và** ở project Pages mới | Cuong, dashboard | Packet A, D |
+| **B10** | 🔴 **Project Pages thứ hai chưa tạo** (S-b). Nợ kèm theo: **phải xoá** khi pilot xong | Cuong, dashboard Cloudflare | Packet A |
+| **B11** | 🔴 **Agent không có credential ghi remote** — `SUPABASE_ACCESS_TOKEN`/DB password/`CLOUDFLARE_API_TOKEN` đều không set trong phiên; CLI chỉ còn quyền đọc. Đã chọn: **export `SUPABASE_ACCESS_TOKEN`** (Management API, không chạm Cloudflare) | Cuong | **Packet B-1** |
 | ~~B3″~~ | ✅ **ĐÃ GỠ** — project ref staging = **`utokwfcljxjkpkaqgheo`**, đã điền vào toàn bộ tài liệu và xác minh bằng probe chỉ đọc (project trắng: 0 user, 0 bảng, 0 va chạm) | — | — |
 | **B4″** | 🔴 **Quy chế v1: vòng 1 = REVISE, đã sửa 7 điểm, chờ DUYỆT LẦN CUỐI.** Cần `APPROVE` + `effective_at` + xác nhận `approved_by`. Máy chủ vẫn từ chối submit (`seller_rules_not_published`) cho tới khi ban hành | Cuong / pháp lý | Bước 13-14 — người bán thật |
 | **B9** | 🔴 **`pg_cron` và `pg_net` CHƯA CÀI trên staging** (khả dụng, chưa bật). Bật là thao tác **ghi** | Cuong, dashboard S-9 | **Packet C** |

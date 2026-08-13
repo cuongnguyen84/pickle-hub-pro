@@ -292,3 +292,26 @@ DELETE FROM auth.mfa_factors WHERE user_id = '<ADMIN_UUID>'::uuid;
 **Ghi đường thoát này ở nơi Cuong đọc được khi đang bị khoá ngoài** — nghĩa là
 không phải chỉ ở đây. Một runbook chỉ tồn tại sau cánh cửa bị khoá thì không
 phải runbook.
+
+---
+
+## 9. Nợ dọn dẹp — thứ phải xoá khi pilot kết thúc
+
+Pilot tạo ra ba thứ **sống lâu hơn nó** nếu không ai xoá. Không cái nào tự hết
+hạn, và cả ba đều im lặng khi bị bỏ quên.
+
+| # | Thứ | Vì sao phải xoá | Xoá thế nào |
+|---|---|---|---|
+| 1 | **Project Cloudflare Pages thứ hai** (S-b, 13/08) | Nó build một **nhánh**, không phải `main`. Sau pilot, nhánh đó đóng băng hoặc bị xoá, và project vẫn phục vụ bản build cuối trên một **URL công khai** — trỏ vào một Supabase staging có thể đã bị xoá. Kết quả là một site trắng mang thương hiệu ThePickleHub mà không ai theo dõi | Dashboard → Pages → project → Delete |
+| 2 | **Project Supabase staging** `utokwfcljxjkpkaqgheo` | Gói **Pro có chi phí theo tháng**. Nó không tạm dừng — đó chính là lý do chọn Pro — nên nó sẽ chạy và tính tiền vô thời hạn | Dashboard → Settings → Delete project |
+| 3 | **Redirect URLs của staging** | Chỉ còn ý nghĩa nếu #2 sống. Nếu giữ staging cho lần pilot sau, phải xoá URL của #1 khi #1 bị xoá — một redirect trỏ tên miền đã thả là một tên miền người khác đăng ký lại được | Dashboard staging → Auth → URL Configuration |
+
+🔴 **Thứ tự: xoá #1 TRƯỚC #2.** Ngược lại thì có một cửa sổ mà project Pages còn
+sống và trỏ vào một Supabase đã chết — mọi màn hình lỗi, và nếu ai đó gửi URL đi
+trong khoảng đó thì thứ họ thấy là một sản phẩm hỏng.
+
+⚠️ **Đây là nợ của quyết định S-b, và nó được nhận từ đầu.** S-b đổi "preview
+của các nhánh khác bị hỏng ngay bây giờ" lấy "một project phải nhớ xoá về sau".
+Đó là đổi đúng — thiệt hại của S-a rơi vào người không có mặt trong quyết định,
+còn nợ này rơi vào người ra quyết định. Nhưng nợ chỉ đúng nếu **thật sự trả**,
+nên nó nằm ở đây chứ không nằm trong trí nhớ ai.
