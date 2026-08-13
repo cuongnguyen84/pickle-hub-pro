@@ -896,3 +896,84 @@ signal** — đúng hình dạng của khoảng trống giữa hai pha khi nhìn
 
 Ba nhóm đầu là dư đủ cho 171. Không nhóm nào là "gọi hàm cho chạy dòng" — mỗi
 nhóm khoá một bất biến nghiệp vụ hoặc một ranh giới riêng tư.
+
+---
+
+## 20. CP23 — mẫu số coverage, và vì sao nó tăng
+
+### 🔴 Câu trả lời cho +309: **coverage chỉ đếm file mà test có nạp**
+
+Cấu hình dùng provider **v8**, và chú thích trong `vite.config.ts` nói đúng
+điều đó: *"Coverage of test-imported files"*. Hệ quả không hiển nhiên:
+
+> **Viết test cho một file chưa từng được test sẽ CỘNG file đó vào mẫu số.**
+
+Đo trực tiếp thay vì suy đoán — chạy hai lượt trên **cùng một cây**, khác nhau
+đúng bốn file test của CP21/CP22:
+
+```
+có 4 file test mới :  4508 / 5603  = 80,45%
+bỏ 4 file test mới :  4263 / 5395  = 79,01%
+                     ─────────────
+mẫu số tăng thêm   :        +208
+```
+
+Ba file production **chỉ xuất hiện trong báo cáo khi test mới chạy**:
+
+| File | Statement cộng vào mẫu số |
+|---|---|
+| `src/hooks/shop/useMediaUpload.ts` | +96 |
+| `src/lib/shop/imagePipeline.ts` | +71 |
+| `src/hooks/shop/useProductMedia.ts` | +41 |
+
+Phần còn lại của +309 đến từ **merge `main`** (mã production mới của #576/#577)
+và từ test draft-recovery nạp lazily `MediaEditor`/`VariantEditor`.
+
+**Không có test helper hay file generated nào lọt vào scope.** Không phải lỗi
+cấu hình, nên **không sửa cấu hình** — đây là mã production hợp lệ, và trước
+đây nó vô hình chứ không phải đã được phủ.
+
+### Hệ quả cho chiến lược, và nó đảo ngược trực giác
+
+Phủ một file **đang vô hình** ở mức thấp hơn trung bình hiện tại (80–81%) sẽ
+**kéo tỷ lệ xuống**, dù viết test tốt. Muốn nâng tỷ lệ thì phải phủ file **đã
+nằm trong mẫu số**.
+
+Bằng chứng ngay trong lượt này: nhóm A nhắm `SellerProductForm` — file đã có
+trong báo cáo — và kết quả là **mẫu số đứng yên ở 5603**, tử số +42.
+
+| Mốc | covered / total | % | Mẫu số |
+|---|---|---|---|
+| Đầu CP23 | 4508 / 5603 | 80,45% | — |
+| + nhóm A (`SellerProductForm.lifecycle`) | **4550 / 5603** | **81,20%** | **không đổi** |
+
+Bốn metric: statements **81,20%** · branches **67,63%** · functions **73,28%** ·
+lines **82,92%**. **Còn 129 statement** tới 83,5%.
+
+> Đính chính CP22: con số tuyệt đối "4646/5775" ghi ở mục 19 là lấy nhầm từ một
+> lượt đo khác; tỷ lệ 80,45% thì đúng. Số đúng của thời điểm đó là **4508/5603**.
+
+### Nhóm A đã khoá gì
+
+`SellerProductForm.lifecycle` — 16 test qua component thật:
+**đường dẫn** (đổi tên không đổi URL · RPC riêng · cảnh báo khác nhau tuỳ đã
+bán hay chưa · lỗi không làm mất draft · **sản phẩm đã duyệt không sửa được URL
+ở màn hình này**) · **ngừng bán** (hỏi trước · huỷ không gọi gì · archive đúng
+sản phẩm · **lỗi không giả vờ thành công** · mở lại chỉ hiện ở trạng thái hợp
+lệ) · **cổng gửi duyệt** (checklist là câu trả lời của **máy chủ**, render theo
+`code` chứ không theo `message` tự chế · mỗi dòng có lối đi tới chỗ cần sửa ·
+không gửi khi còn vướng · **submit lỗi không đổi badge sang chờ duyệt**) ·
+**khoá khi chờ duyệt**.
+
+Một test viết ra với kỳ vọng sai và được sửa theo sự thật: bản đã duyệt **không
+sửa được đường dẫn**, nên đoạn cảnh báo mạnh hơn là nhánh **không ai tới được**
+— pin sự thật thay vì pin một nhánh chết.
+
+Red-proof, hai đột biến độc lập: bỏ xác nhận ngừng bán → **4 đỏ**; bỏ khoá kiểm
+duyệt → **1 đỏ**. Hoàn nguyên → 16 xanh.
+
+### Còn lại 129 statement
+
+`VariantEditor` (77) · `MediaEditor` (68) · `useSellerProducts` (36) ·
+`CatalogResults` (17) — tất cả **đã nằm trong mẫu số**, nên mỗi statement phủ
+được là một statement nâng tỷ lệ. Riêng `VariantEditor` + `MediaEditor` đã dư.
