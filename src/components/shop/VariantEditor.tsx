@@ -94,8 +94,21 @@ export default function VariantEditor({
   const applyGroups = useCallback(
     (next: OptionGroup[]) => {
       setGroups(next);
-      setRows((current) => reconcileRows(next, current, current[0]));
       setPendingGroups(null);
+      // Rebuild only from a structure that is actually valid. A group that is
+      // named but has no values yet, or that holds a duplicate, is a state the
+      // seller passes THROUGH on the way to a good one — not a decision. The
+      // matrix is the only copy of its SKUs and stock counts, and rebuilding
+      // on a half-typed group drops every row it cannot place, silently and
+      // for good: correcting the typo afterwards brings the combinations back
+      // empty, because the data they held is no longer in `current`.
+      if (validateGroups(next)) return;
+      setRows((current) =>
+        // The price is seeded so a new size is a number to confirm rather than
+        // retype. The stock is NOT: 3 pairs of 39 are not also 3 pairs of 41,
+        // and this number is saved as a stock correction.
+        reconcileRows(next, current, { priceVnd: current[0]?.priceVnd ?? "", stockOnHand: "" }),
+      );
     },
     [],
   );
