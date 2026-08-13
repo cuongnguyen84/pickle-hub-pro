@@ -570,3 +570,95 @@ ngẫu hứng giữa chừng. Mỗi dòng là một lần ghi vào một hệ th
 **Không có trong danh sách này, và cố ý:** bật `SHOP_PUBLIC_INDEXING`, gửi
 IndexNow, thêm Shop vào sitemap, sửa drift `news_source_ppa_tour_pause`, xoay
 `CRON_SECRET` của production.
+
+---
+
+## 16. CP18 — một cơ sở dữ liệu chỉ được gọi đúng project của nó
+
+Phát hiện ở pre-flight Packet S, **trước** khi chạm remote lần nào.
+
+### Vấn đề
+
+**36 call site** trong **20 migration** ghi cứng host production:
+
+```sql
+url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/…'
+```
+
+Đúng khi repo có **một** môi trường. Sai ngay khi có hai: staging áp đúng những
+migration đó sẽ tạo cron **trên staging** gọi Edge Function **của production**,
+mang theo secret **của staging**, mỗi 5 phút.
+
+### Vì sao nó chưa từng nổ — và lý do không phải cái ai cũng đoán
+
+Trên máy cục bộ ngay lúc này: **20 cron job đang active**, tất cả trỏ
+production. `net._http_response` = **0**, `cron.job_run_details` = **25 lần
+failed**. Mọi job dừng đúng một dòng trước khi gửi request, tại
+`cron_secret is not configured`.
+
+> **Một secret bị thiếu là thứ duy nhất đang ngăn repo này gọi xuyên môi
+> trường.** Và staging là môi trường đầu tiên ta **cố ý tạo** secret đó.
+
+Nói cách khác: lớp bảo vệ đang giữ trận địa chính là lớp Packet S sắp gỡ bỏ.
+
+### Hợp đồng mới
+
+`public.ops_project_url()` — đọc vault key **`project_url`**, kiểm hình dạng,
+**RAISE** khi thiếu hoặc sai định dạng.
+
+| Nguyên tắc | Vì sao |
+|---|---|
+| **Không fallback** | Một default trỏ production chính là cách staging cấu hình sai lặng lẽ trở thành client thứ hai của production. Exception = job chết ồn ào và **không xoá gì** |
+| **Host và secret là hai key riêng** | Chúng trả lời hai câu hỏi khác nhau — *ở đâu* và *có được phép không*. Deploy đúng một nửa phải **fail**, không được chạy nửa vời |
+| **Giải ở RUN time** | Đổi hướng một môi trường là một lệnh ghi vault, không phải re-schedule → không tồn tại cửa sổ có job mang host sai |
+| **Không tự nhận dạng được** | `cluster_name` = `"main"` trên **mọi** project Supabase (đã kiểm trên staging thật, không đoán). Nên chặng cuối là **assertion lúc triển khai**, do packet chịu trách nhiệm |
+
+### Lịch sử migration — vì sao sửa tại chỗ là an toàn
+
+19/20 file đã áp trên production và **sẽ không chạy lại**. Ledger
+`supabase_migrations.schema_migrations` có đúng ba cột — `version`,
+`statements`, `name` — **không có checksum**, và được chọn theo `version`. Nên
+một file đã sửa không thể gây re-apply hay mismatch. Production giữ nguyên job
+và host hiện có, chỉ đổi khi có ai đó **chủ ý** áp migration lên nó.
+
+`db reset` sạch tái lập toàn bộ; helper được đặt tên
+`20260519010050_…` để sort **ngay trước** caller đầu tiên
+(`20260519010100`).
+
+### Phạm vi còn lại, có kiểm chứng
+
+Hai job vẫn ghi host: `secret-sync-heal-30min` và `social-poster-catchup-15min`,
+trỏ **Cloudflare Worker** chứ không phải project Supabase. Cả hai đọc vault
+secret **trước** khi gửi request và RAISE khi thiếu — nên staging không được cấp
+hai secret đó thì không thể chạm tới chúng. Ghi ra kèm cơ chế ngăn, không để
+thành bất ngờ.
+
+**Ngoài migration** (không chạy trên staging, chỉ liệt kê): 4 `wrangler.toml`
+của worker production · `supabase/functions/ops-job-control/index.ts` ·
+`src/lib/errorReporter.ts` fallback · docs/scripts (tên container docker cục bộ
+có chứa ref).
+
+### Đỏ trước, xanh sau
+
+| Phá gì | Kết quả |
+|---|---|
+| Trả literal production về **một** call site | **2 đỏ** |
+| Cho helper một fallback production | **1 đỏ** — chính file helper vi phạm luật nó tạo ra |
+| Hoàn nguyên | **359 xanh** (một assertion cho **mỗi** file migration) |
+
+Cổng: `src/lib/__tests__/migration-project-url.test.ts` +
+`supabase/tests/ops_project_url.test.sql` (9 assertion trên DB thật: fail-closed
+khi thiếu, từ chối `http://`, cắt dấu `/` cuối, `search_path` cố định, và
+`authenticated` **không** có EXECUTE).
+
+Sau CP18, cục bộ: **0** job mang host literal · **14/20** job dùng helper · 6
+job còn lại không gọi Edge Function (2 trong đó gọi Worker, xem trên) ·
+`net._http_response` vẫn **0**.
+
+### 🔴 Ràng buộc thứ tự vẫn nguyên giá trị
+
+Migration **#4** (`20260811150000`) tạo `shop-media-reconcile-hourly`
+(`17 * * * *`) — **16 file trước** bản vá B13 (#20). CP18 không đụng tới điều
+đó. Thứ tự an toàn: `#1–3 → deploy function → #5–20 → canary B13 → #4 cuối
+cùng`. Không file nào trong #5–20 phụ thuộc cron, nên dời #4 xuống cuối là đủ
+và không cần sửa thêm code.

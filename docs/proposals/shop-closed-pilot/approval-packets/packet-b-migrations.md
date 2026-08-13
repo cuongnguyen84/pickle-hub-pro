@@ -102,7 +102,18 @@ chạy xong **không lỗi**. Nếu nó lỗi, môi trường đó đang giữ m
 > nên `shop_application_submit()` vẫn từ chối bằng `seller_rules_not_published`
 > cho tới nửa đêm 14/08. Đó là hành vi đúng, không phải một lần áp hỏng.
 
-**Thứ tự thi hành:** file 1-3 → **Packet C** (deploy function) → file 4-20.
+**Thứ tự thi hành (CP18 sửa lại):** file 1-3 → **Packet C** (deploy function) →
+file **5-20** → canary B13 → **file 4 CUỐI CÙNG**.
+
+🔴 **#4 tạo cron, và nó đứng 16 file trước bản vá B13 (#20).** Chạy nguyên chuỗi
+theo số thứ tự sẽ có một cửa sổ mà `shop-media-reconcile-hourly` (`17 * * * *`)
+tồn tại trong khi vòng quét vẫn là bản cũ. Không file nào trong #5-20 phụ thuộc
+vào cron, nên dời #4 xuống cuối là đủ — không cần sửa code, và ràng buộc trở
+thành **không thể vi phạm** thay vì phải canh giờ.
+
+🔴 **Trước file đầu tiên: đặt `project_url` trong vault** của môi trường đích
+(CP18). Không có nó, mọi job gọi Edge Function sẽ RAISE thay vì gọi nhầm
+production — đúng thiết kế, nhưng nghĩa là cron không chạy cho tới khi đặt.
 
 🔴 **#20 phải được áp TRƯỚC khi bất kỳ môi trường nào bật cron dọn ảnh.** Nó là
 bản vá B13: trước nó, vòng quét orphan coi logo/ảnh bìa đang sống là rác. Bật
