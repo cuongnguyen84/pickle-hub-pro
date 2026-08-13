@@ -2,6 +2,7 @@
 import { defineConfig, loadEnv } from "vite";
 import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
+import fs from "fs";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -25,7 +26,32 @@ export default defineConfig(({ mode }) => {
 // `import.meta.env.VITE_PROTO_SHOP` constant in App.tsx always agree — a .env
 // file that enabled one but not the other would ship a route pointing at a
 // stubbed module.
-const protoShop = loadEnv(mode, process.cwd(), "VITE_").VITE_PROTO_SHOP === "1";
+const viteEnv = loadEnv(mode, process.cwd(), "VITE_");
+const protoShop = viteEnv.VITE_PROTO_SHOP === "1";
+
+// The Supabase this build talks to — and therefore the ONLY host the artifact
+// may name.
+// ----------------------------------------------------------------------------
+// The client reads VITE_SUPABASE_URL, but four things outside the JS graph used
+// to hardcode the production ref, so a staging build still reached production:
+//   * <link preconnect> + <link dns-prefetch> in index.html — a DNS lookup and
+//     a TLS handshake to production on every page load;
+//   * the CSP report-uri in public/_headers — violation reports POSTed to the
+//     production log-client-event, writing staging rows into production data;
+//   * two service-worker urlPattern regexes — pinned to the production host, so
+//     on any other environment they silently match NOTHING. The /rest/ one is a
+//     safety rule ("NEVER cache, responses are per-user"), and a safety rule
+//     that quietly stops applying is worse than one that was never written.
+// Found 2026-08-13 by the staging preflight, before the first write.
+//
+// The fallback is the production host on purpose: when the variable is absent
+// the artifact is byte-identical to what it was before this existed, so a build
+// with no env cannot silently produce a half-configured page.
+const SUPABASE_ORIGIN = (
+  viteEnv.VITE_SUPABASE_URL || "https://ajvlcamxemgbxduhiqrl.supabase.co"
+).replace(/\/+$/, "");
+
+const reEscape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 return ({
   server: {
@@ -59,6 +85,38 @@ return ({
       },
       load(id: string) {
         return id === "\0proto-shop-disabled" ? "export default null;\n" : null;
+      },
+    },
+    // Point the two <link> hints and the CSP report-uri at THIS build's
+    // Supabase. Both live outside the JS graph, so no amount of env plumbing in
+    // src/ reaches them — see SUPABASE_ORIGIN above.
+    {
+      name: "supabase-origin-in-static-assets",
+      apply: "build" as const,
+      // `order: "pre"` is load-bearing, not tidiness. Vite's own HTML pass
+      // decodeURI()s every href, and "%SU" is an invalid percent-escape, so a
+      // marker left in place until the default order fails the build with
+      // "URI malformed".
+      transformIndexHtml: {
+        order: "pre" as const,
+        handler(html: string) {
+          return html.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN);
+        },
+      },
+      // public/_headers is copied verbatim, so it is rewritten after the copy.
+      // A miss here is silent — the header still parses, it just names the
+      // wrong host — so an absent marker is an error, not a no-op.
+      closeBundle() {
+        const headers = path.resolve(__dirname, "dist/_headers");
+        if (!fs.existsSync(headers)) return;
+        const before = fs.readFileSync(headers, "utf8");
+        if (!before.includes("%SUPABASE_ORIGIN%")) {
+          throw new Error(
+            "public/_headers no longer contains %SUPABASE_ORIGIN% — the CSP " +
+              "report-uri would ship pointing at a hardcoded environment.",
+          );
+        }
+        fs.writeFileSync(headers, before.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN));
       },
     },
     // /build-id.txt — freshness beacon for staleShell.ts. Root-level txt is
@@ -233,12 +291,12 @@ return ({
           // legacy "supabase-rest" cache from the old NetworkFirst rule is
           // purged client-side (src/lib/pwa/cache.ts) on boot + sign-out.
           {
-            urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/rest\//,
+            urlPattern: new RegExp(`^${reEscape(SUPABASE_ORIGIN)}/rest/`),
             handler: "NetworkOnly",
           },
           // Supabase storage images — CacheFirst, long-lived
           {
-            urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/storage\//,
+            urlPattern: new RegExp(`^${reEscape(SUPABASE_ORIGIN)}/storage/`),
             handler: "CacheFirst",
             options: {
               cacheName: "supabase-storage",
