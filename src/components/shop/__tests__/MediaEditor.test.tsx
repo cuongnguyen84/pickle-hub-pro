@@ -1,0 +1,447 @@
+/** @vitest-environment jsdom */
+/**
+ * The media sections, from the buttons a seller presses to the RPC arguments.
+ *
+ * `useMediaUpload.test.tsx` already owns the upload state machine. Only the
+ * upload hook is doubled here, so this file tests the part that has no test:
+ * the component's wiring, and every place it could send the right RPC with the
+ * wrong subject.
+ *
+ *   · reorder sends the WHOLE list in its new order plus the product version.
+ *     A partial list leaves photos at stale positions; a missing version lets
+ *     two tabs each decide the order.
+ *   · delete sends the id of the photo whose button was pressed. Off by one
+ *     here deletes a different photo and there is no undo.
+ *   · variant assignment names both the variant and the media.
+ *   · logo and cover are the same component with a different `purpose`, and
+ *     the purpose only exists inside the upload target — a swap would upload a
+ *     cover into the logo slot with nothing on screen to show it.
+ *   · a failed file keeps its Thử lại pointed at its own token, and a failure
+ *     never renders as a finished photo.
+ *   · every icon-only control has an accessible name that says which photo it
+ *     acts on, because "Xoá" four times over is not a choice.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
+
+import type { UploadItem, UploadTarget } from "@/hooks/shop/useMediaUpload";
+import type { ProductMediaRow, ProductVariantRow } from "@/integrations/supabase/shop-schema";
+
+// ─── Doubles ────────────────────────────────────────────────────────────────
+
+const shopRpc = vi.fn();
+const createSignedUrls = vi.fn();
+
+vi.mock("@/integrations/supabase/shop-client", () => ({
+  shopRpc: (fn: string, args?: Record<string, unknown>) => shopRpc(fn, args),
+  shopFrom: () => ({ select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) }),
+  escapeLike: (s: string) => s,
+}));
+
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { storage: { from: () => ({ createSignedUrls }) } },
+}));
+
+/** The upload hook, replaced by a handle the test drives. The real target
+ *  builders are kept — they are the only place `purpose` is decided. */
+const uploadHandle = {
+  items: [] as UploadItem[],
+  add: vi.fn(),
+  retry: vi.fn(),
+  remove: vi.fn(),
+  clearComplete: vi.fn(),
+};
+const targets: UploadTarget[] = [];
+
+vi.mock("@/hooks/shop/useMediaUpload", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/shop/useMediaUpload")>();
+  return {
+    ...actual,
+    useMediaUpload: (target: UploadTarget) => {
+      if (!targets.includes(target)) targets.push(target);
+      return uploadHandle;
+    },
+  };
+});
+
+const { ProductMediaSection, ShopProfileMediaSection } = await import("../MediaEditor");
+
+// ─── Fixtures ───────────────────────────────────────────────────────────────
+
+const photo = (id: string, position: number, over: Partial<ProductMediaRow> = {}) =>
+  ({
+    id,
+    product_id: "prod-1",
+    position,
+    draft_path: `draft/${id}.jpg`,
+    rendition_source_path: null,
+    public_path: null,
+    verified_at: "2026-08-10T00:00:00Z",
+    alt_text: null,
+    original_filename: `${id}.jpg`,
+    ...over,
+  }) as unknown as ProductMediaRow;
+
+const variant = (id: string, label: string, mediaId: string | null = null) =>
+  ({ id, media_id: mediaId, option_values: { Màu: label } }) as unknown as ProductVariantRow;
+
+const item = (over: Partial<UploadItem> = {}): UploadItem => ({
+  token: "t1",
+  file: new File(["x"], "a.jpg", { type: "image/jpeg" }),
+  name: "a.jpg",
+  phase: "queued",
+  ...over,
+});
+
+const onChanged = vi.fn();
+
+const renderProduct = (over: Partial<Parameters<typeof ProductMediaSection>[0]> = {}) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return rtlRender(
+    <QueryClientProvider client={client}>
+      <ProductMediaSection
+        productId="prod-1"
+        productVersion={7}
+        media={[photo("m1", 0), photo("m2", 1), photo("m3", 2)]}
+        variants={[variant("v1", "Trắng"), variant("v2", "Đen")]}
+        optionLabel={(v) => String((v as unknown as { option_values: Record<string, string> }).option_values.Màu)}
+        disabled={false}
+        onChanged={onChanged}
+        {...over}
+      />
+    </QueryClientProvider>,
+  );
+};
+
+const renderProfile = (disabled = false) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return rtlRender(
+    <QueryClientProvider client={client}>
+      <ShopProfileMediaSection shopId="shop-1" disabled={disabled} onChanged={onChanged} />
+    </QueryClientProvider>,
+  );
+};
+
+const rpcCall = (fn: string) => shopRpc.mock.calls.find((c) => c[0] === fn);
+
+beforeEach(() => {
+  shopRpc.mockReset().mockResolvedValue([]);
+  createSignedUrls.mockReset().mockResolvedValue({ data: [] });
+  uploadHandle.items = [];
+  uploadHandle.add.mockReset();
+  uploadHandle.retry.mockReset();
+  uploadHandle.remove.mockReset();
+  uploadHandle.clearComplete.mockReset();
+  targets.length = 0;
+  onChanged.mockReset();
+});
+afterEach(cleanup);
+
+// ─── Reorder ────────────────────────────────────────────────────────────────
+
+describe("reordering photos", () => {
+  it("sends the whole list in its new order, with the product version", async () => {
+    renderProduct();
+
+    fireEvent.click(screen.getByLabelText("Chuyển ảnh 3 lên trước"));
+
+    await waitFor(() => expect(rpcCall("product_media_reorder")).toBeTruthy());
+    // Not just the moved pair: a partial list leaves the others at stale
+    // positions. And the version travels, so a second tab's order is refused.
+    expect(rpcCall("product_media_reorder")![1]).toEqual({
+      _product_id: "prod-1",
+      _expected_version: 7,
+      _media_ids: ["m1", "m3", "m2"],
+    });
+  });
+
+  it("promotes a photo to the front when Ảnh chính is pressed", async () => {
+    renderProduct();
+
+    fireEvent.click(screen.getByLabelText("Đặt ảnh 3 làm ảnh chính"));
+
+    await waitFor(() => expect(rpcCall("product_media_reorder")).toBeTruthy());
+    expect(rpcCall("product_media_reorder")![1]._media_ids).toEqual(["m3", "m1", "m2"]);
+  });
+
+  it("sends nothing at the ends of the list", () => {
+    renderProduct();
+
+    expect((screen.getByLabelText("Chuyển ảnh 1 lên trước") as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Chuyển ảnh 3 xuống sau") as HTMLButtonElement).disabled).toBe(true);
+    // Nothing to promote when it is already the cover.
+    expect(screen.queryByLabelText("Đặt ảnh 1 làm ảnh chính")).toBeNull();
+    expect(shopRpc).not.toHaveBeenCalled();
+  });
+
+  it("orders by position, not by the order the rows arrived in", async () => {
+    renderProduct({ media: [photo("m3", 2), photo("m1", 0), photo("m2", 1)] });
+
+    fireEvent.click(screen.getByLabelText("Chuyển ảnh 2 lên trước"));
+
+    await waitFor(() => expect(rpcCall("product_media_reorder")).toBeTruthy());
+    expect(rpcCall("product_media_reorder")![1]._media_ids).toEqual(["m2", "m1", "m3"]);
+  });
+
+  it("shows a refusal instead of a silently unchanged order", async () => {
+    shopRpc.mockRejectedValue({ code: "PT409" });
+    renderProduct();
+
+    fireEvent.click(screen.getByLabelText("Chuyển ảnh 2 lên trước"));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Bản ghi vừa được cập nhật ở nơi khác"),
+    );
+  });
+});
+
+// ─── Delete ─────────────────────────────────────────────────────────────────
+
+describe("deleting a photo", () => {
+  it("deletes the one whose button was pressed", async () => {
+    renderProduct();
+
+    fireEvent.click(screen.getByLabelText("Xoá ảnh 2"));
+
+    await waitFor(() => expect(rpcCall("product_media_delete")).toBeTruthy());
+    expect(rpcCall("product_media_delete")![1]).toEqual({ _media_id: "m2" });
+  });
+
+  it("names every photo in its controls, so four buttons are four choices", () => {
+    renderProduct();
+    for (const n of [1, 2, 3]) expect(screen.getByLabelText(`Xoá ảnh ${n}`)).toBeTruthy();
+    expect(screen.getAllByLabelText(/^Chuyển ảnh/)).toHaveLength(6);
+  });
+
+  it("says why when the server refuses", async () => {
+    shopRpc.mockRejectedValue({ code: "42501" });
+    renderProduct();
+
+    fireEvent.click(screen.getByLabelText("Xoá ảnh 1"));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("không có quyền"),
+    );
+  });
+});
+
+// ─── Variant assignment ─────────────────────────────────────────────────────
+
+describe("assigning a photo to a variant", () => {
+  it("names both the variant and the photo", async () => {
+    renderProduct();
+
+    fireEvent.change(screen.getByLabelText("Đen"), { target: { value: "m3" } });
+
+    await waitFor(() => expect(rpcCall("product_variant_set_media")).toBeTruthy());
+    expect(rpcCall("product_variant_set_media")![1]).toEqual({ _variant_id: "v2", _media_id: "m3" });
+  });
+
+  it("clears the assignment with null rather than an empty string", async () => {
+    renderProduct({ variants: [variant("v1", "Trắng", "m1"), variant("v2", "Đen", "m2")] });
+
+    fireEvent.change(screen.getByLabelText("Trắng"), { target: { value: "" } });
+
+    await waitFor(() => expect(rpcCall("product_variant_set_media")).toBeTruthy());
+    expect(rpcCall("product_variant_set_media")![1]).toEqual({ _variant_id: "v1", _media_id: null });
+  });
+
+  it("is not offered for a product with one variant or no photos", () => {
+    const { unmount } = renderProduct({ variants: [variant("v1", "Trắng")] });
+    expect(screen.queryByText("Ảnh cho từng phiên bản")).toBeNull();
+    unmount();
+
+    renderProduct({ media: [] });
+    expect(screen.queryByText("Ảnh cho từng phiên bản")).toBeNull();
+    expect(screen.getByText("Chưa có ảnh nào.")).toBeTruthy();
+  });
+});
+
+// ─── In-flight files ────────────────────────────────────────────────────────
+
+describe("files on their way up", () => {
+  it("hands the picked files to the upload pipeline", () => {
+    renderProduct({ media: [] });
+    const input = document.getElementById("pick-product-media") as HTMLInputElement;
+    const files = [new File(["a"], "a.jpg", { type: "image/jpeg" }), new File(["b"], "b.png", { type: "image/png" })];
+
+    fireEvent.change(input, { target: { files } });
+
+    expect(uploadHandle.add).toHaveBeenCalledTimes(1);
+    expect(uploadHandle.add.mock.calls[0][0].map((f: File) => f.name)).toEqual(["a.jpg", "b.png"]);
+    // Reset, so picking the same file again still fires a change event.
+    expect(input.value).toBe("");
+  });
+
+  it("shows each file its own phase, and does not let a failure hide a success", () => {
+    uploadHandle.items = [
+      item({ token: "t1", name: "a.jpg", phase: "uploading_original" }),
+      item({ token: "t2", name: "b.jpg", phase: "failed", error: "Ảnh quá nặng" }),
+      item({ token: "t3", name: "c.jpg", phase: "complete" }),
+    ];
+    renderProduct();
+
+    expect(screen.getByText(/Đang tải ảnh gốc/)).toBeTruthy();
+    expect(screen.getByText("Ảnh quá nặng")).toBeTruthy();
+    expect(screen.getByText(/Xong/)).toBeTruthy();
+    // Only the failed one offers a retry.
+    expect(screen.getAllByRole("button", { name: "Thử lại" })).toHaveLength(1);
+  });
+
+  it("retries the file that failed, by its own token", () => {
+    uploadHandle.items = [
+      item({ token: "good", name: "a.jpg", phase: "complete" }),
+      item({ token: "bad", name: "b.jpg", phase: "failed", error: "Hỏng" }),
+    ];
+    renderProduct();
+
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+
+    // The token IS the server's dedupe key. A new one on retry uploads twice.
+    expect(uploadHandle.retry).toHaveBeenCalledWith("bad");
+  });
+
+  it("offers Huỷ while a file is busy and Bỏ once it is not", () => {
+    uploadHandle.items = [
+      item({ token: "busy", name: "a.jpg", phase: "processing" }),
+      item({ token: "done", name: "b.jpg", phase: "cancelled" }),
+    ];
+    renderProduct();
+
+    fireEvent.click(screen.getByRole("button", { name: /Huỷ/ }));
+    expect(uploadHandle.remove).toHaveBeenCalledWith("busy");
+
+    fireEvent.click(screen.getByRole("button", { name: /Bỏ/ }));
+    expect(uploadHandle.remove).toHaveBeenCalledWith("done");
+  });
+
+  it("never renders an unfinished file as a photo of the product", () => {
+    uploadHandle.items = [item({ phase: "finalizing" })];
+    renderProduct({ media: [] });
+
+    expect(screen.getByText(/Đang xác minh/)).toBeTruthy();
+    // The product still has no photos: only the server's rows count.
+    expect(screen.getByText("Chưa có ảnh nào.")).toBeTruthy();
+    expect(screen.queryByLabelText(/^Xoá ảnh/)).toBeNull();
+  });
+
+  it("clears finished cards once the server rows arrive, and only then", () => {
+    uploadHandle.items = [item({ phase: "failed", error: "Hỏng" })];
+    const { unmount } = renderProduct();
+    expect(uploadHandle.clearComplete).not.toHaveBeenCalled();
+    unmount();
+
+    uploadHandle.items = [item({ phase: "complete" })];
+    renderProduct();
+    expect(uploadHandle.clearComplete).toHaveBeenCalled();
+  });
+
+  it("stops offering the picker once the product is full", () => {
+    renderProduct({ media: Array.from({ length: 8 }, (_, i) => photo(`m${i}`, i)) });
+
+    expect((document.getElementById("pick-product-media") as HTMLInputElement).disabled).toBe(true);
+    expect(screen.getByText(/Đã đủ 8 ảnh/)).toBeTruthy();
+  });
+});
+
+// ─── Logo and cover ─────────────────────────────────────────────────────────
+
+describe("the shop logo and cover are one component with two purposes", () => {
+  it("gives each slot an upload target carrying its own purpose", async () => {
+    renderProfile();
+
+    // The purpose is not on screen anywhere — it exists only inside the target,
+    // so a swapped argument would upload a cover into the logo slot invisibly.
+    for (const t of targets) {
+      await t.init({ contentType: "image/jpeg", byteSize: 1000, filename: "x.jpg", token: "tok" });
+    }
+    const byPurpose = new Map(
+      shopRpc.mock.calls
+        .filter((c) => c[0] === "shop_profile_media_upload_init")
+        .map((c) => [c[1]._purpose as string, c[1] as Record<string, unknown>]),
+    );
+    expect([...byPurpose.keys()].sort()).toEqual(["cover", "logo"]);
+    expect(byPurpose.get("logo")!._shop_id).toBe("shop-1");
+    // A logo rendered at 96px does not need 2048px of source; a cover does.
+    const caps = new Set(targets.map((t) => t.cap));
+    expect(caps.has(512)).toBe(true);
+    expect(caps.size).toBe(2);
+  });
+
+  it("uses separate file inputs so a logo pick cannot land on the cover", () => {
+    renderProfile();
+    const logo = document.getElementById("pick-logo") as HTMLInputElement;
+    const cover = document.getElementById("pick-cover") as HTMLInputElement;
+
+    expect(logo).toBeTruthy();
+    expect(cover).toBeTruthy();
+    // One file each: a logo is not a gallery.
+    expect(logo.multiple).toBe(false);
+    expect(cover.multiple).toBe(false);
+  });
+
+  it("says nothing is there rather than showing an empty frame", () => {
+    renderProfile();
+    expect(screen.getByText(/Chưa có logo/)).toBeTruthy();
+    expect(screen.getByText(/Chưa có ảnh bìa/)).toBeTruthy();
+  });
+
+  it("offers no upload, delete or framing while the shop is locked", () => {
+    renderProfile(true);
+    expect(document.getElementById("pick-logo")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Xoá/ })).toBeNull();
+    expect(screen.queryByLabelText(/Vị trí khung ảnh/)).toBeNull();
+  });
+});
+
+// ─── Locked product ─────────────────────────────────────────────────────────
+
+describe("while the product is waiting for review", () => {
+  it("shows the photos but offers no way to change them", () => {
+    renderProduct({ disabled: true });
+
+    expect(document.getElementById("pick-product-media")).toBeNull();
+    expect(screen.queryByLabelText(/^Xoá ảnh/)).toBeNull();
+    expect(screen.queryByLabelText(/^Chuyển ảnh/)).toBeNull();
+    expect((screen.getByLabelText("Đen") as HTMLSelectElement).disabled).toBe(true);
+    // Read-only, not hidden: the seller can still see what is under review.
+    expect(screen.getByText("Ảnh 2")).toBeTruthy();
+  });
+});
+
+// ─── Previews ───────────────────────────────────────────────────────────────
+
+describe("previews of unpublished photos", () => {
+  it("signs the draft paths and never puts a signed URL anywhere it persists", async () => {
+    createSignedUrls.mockResolvedValue({
+      data: [{ path: "draft/m1.jpg", signedUrl: "https://signed.example/m1?token=abc" }],
+    });
+    renderProduct({ media: [photo("m1", 0)] });
+
+    await waitFor(() => expect(createSignedUrls).toHaveBeenCalled());
+    expect(createSignedUrls.mock.calls[0][0]).toEqual(["draft/m1.jpg"]);
+    // Five minutes, not a day.
+    expect(createSignedUrls.mock.calls[0][1]).toBe(300);
+
+    await waitFor(() =>
+      expect((screen.getByRole("img") as HTMLImageElement).src).toContain("signed.example"),
+    );
+    fireEvent.click(screen.getByLabelText("Xoá ảnh 1"));
+    await waitFor(() => expect(rpcCall("product_media_delete")).toBeTruthy());
+    // Nothing signed reaches an RPC argument.
+    expect(JSON.stringify(shopRpc.mock.calls)).not.toContain("signed.example");
+  });
+
+  it("prefers the rendition over the original when there is one", async () => {
+    renderProduct({ media: [photo("m1", 0, { rendition_source_path: "draft/m1-1600.webp" })] });
+
+    await waitFor(() => expect(createSignedUrls).toHaveBeenCalled());
+    expect(createSignedUrls.mock.calls[0][0]).toEqual(["draft/m1-1600.webp"]);
+  });
+
+  it("marks a photo the worker has not checked yet", () => {
+    renderProduct({ media: [photo("m1", 0, { verified_at: null })] });
+    expect(screen.getByText("Chưa xác minh")).toBeTruthy();
+  });
+});
