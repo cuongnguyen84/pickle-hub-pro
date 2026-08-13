@@ -6,40 +6,48 @@
 > **Đây là kết quả cục bộ.** Không có gì được deploy, và không con số nào ở đây
 > nói về remote.
 >
-> Cập nhật **sau CP12** (cưỡng chế chấp thuận quy chế người bán).
+> Cập nhật **sau CP15** (ban hành Quy chế người bán v1 đã duyệt).
 
 ---
 
 ## 1. Bảng kết quả
 
-| Cổng | Lệnh | Trước CP12 | Sau CP12 | **Sau CP13** |
+| Cổng | Lệnh | Sau CP12 | Sau CP13 | **Sau CP15** |
 |---|---|---|---|---|
 | Reset cơ sở dữ liệu | `npx supabase db reset --local` | exit 0 | exit 0 | **exit 0** |
-| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 350 / 350 | 351 / 351 | **351 / 351** |
-| pgTAP | `npx supabase test db --local supabase/tests` | 1 241 · 33 file | 1 302 · 34 file | **1 312 PASS · 34 file · exit 0** |
-| Unit | `npx vitest run` | 2 014 · 156 file | 2 048 · 158 file | **2 051 PASS · 10 skipped · 158 file · exit 0** |
-| Storage + vòng đời ảnh | file integration trên stack thật | 40 PASS | trong lượt unit | **trong lượt unit, không skip** |
+| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 351 / 351 | 351 / 351 | **352 / 352** |
+| pgTAP | `npx supabase test db --local supabase/tests` | 1 302 · 34 file | 1 312 · 34 file | **1 331 PASS · 35 file · exit 0** |
+| Unit | `npx vitest run` | 2 048 · 158 file | 2 051 · 158 file | **2 061 PASS · 10 skipped · 159 file · exit 0** |
+| HTTP integration quy chế | `npx vitest run scripts/shop-seller-rules-integration.test.mjs` | 11 PASS | 11 PASS | **11 PASS · 0 skip** — chạy thật trên stack cục bộ |
+| Storage + vòng đời ảnh | file integration trên stack thật | trong lượt unit | trong lượt unit | **trong lượt unit, không skip** |
 | noindex ở edge | 2 file `shop-pilot-seo*` | 116 PASS | 116 PASS | **116 PASS** (không đổi) |
 | Typecheck | `npx tsc -b` | exit 0 | exit 0 | **exit 0** |
-| Lint | `npx eslint .` | exit 0 · 29 cảnh báo | exit 0 | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
+| Lint | `npx eslint .` | exit 0 | exit 0 · 29 cảnh báo | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
 | Build | `npm run build` | exit 0 | exit 0 | **exit 0** |
 | Bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | exit 0 | exit 0 | **exit 0** |
-| Build prototype | `npm run build:proto` | exit 0 | exit 0 | **exit 0** |
-| Q01–Q04 | `PROTO_BASE_URL=… node scripts/proto-shop-qa.mjs all` | 37 màn hình, 0 phát hiện | 37, 0 | **37 màn hình, 0 phát hiện** |
-| Nghiệm thu P2b | `SHOP_QA_BASE_URL=… node scripts/shop-p2b-acceptance-qa.mjs` | PASS | PASS | **PASS** — 20 route × 6 chiều rộng, 6 hành trình |
-| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 17/17 = 0 | 19/19 = 0 | **19/19 bộ đếm = 0** |
+| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 19/19 = 0 | 19/19 = 0 | **8/8 bộ đếm Shop = 0** (xem §6) |
 
-### Bundle — delta CP12 và CP13
+Ba cổng **không chạy lại** ở CP15 vì không có mã client nào đổi: `build:proto`,
+Q01–Q04 và nghiệm thu P2b. Nói ra thay vì chép lại số cũ vào cột mới — một con
+số chép lại trông hệt một con số vừa đo.
+
+### Bundle — delta CP12, CP13 và CP15
 
 ```
-                  trước CP12    sau CP12    sau CP13    tổng thay đổi
-INITIAL gz         226,6 KB     226,6 KB    226,6 KB      0,0 KB   / 280 KB
-CODE gz           1551,4 KB    1552,8 KB   1553,9 KB     +2,5 KB   / 1800 KB
-CONTENT (blog)     383,9 KB     383,9 KB    383,9 KB      0,0 KB
-Tổng gz JS        1935,3 KB    1936,8 KB   1937,8 KB     +2,5 KB   / backstop 1970 KB
+                  trước CP12    sau CP12    sau CP13    sau CP15   tổng thay đổi
+INITIAL gz         226,6 KB     226,6 KB    226,6 KB    226,6 KB     0,0 KB  / 280 KB
+CODE gz           1551,4 KB    1552,8 KB   1553,9 KB   1554,3 KB    +2,9 KB  / 1800 KB
+CONTENT (blog)     383,9 KB     383,9 KB    383,9 KB    383,9 KB     0,0 KB
+Tổng gz JS        1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB    +2,9 KB  / backstop 1970 KB
 ```
 
-**Backstop KHÔNG nâng.** Còn **32,2 KB**, dưới 5% — cổng nói thẳng rằng PR kế
+**CP15 không đổi một dòng mã client.** +0,4 KB là nhiễu build đã biết của repo
+này (±0,6 KB giữa hai lần build cùng một cây) chứ không phải chi phí của
+checkpoint — quy chế sống trong cơ sở dữ liệu, không nằm trong bundle. Ghi ra
+đúng con số đo được thay vì làm tròn về 0, vì làm tròn là cách một khoản tăng
+thật lọt qua lần sau.
+
+**Backstop KHÔNG nâng.** Còn **31,8 KB**, dưới 5% — cổng nói thẳng rằng PR kế
 tiếp phải trả lại phần này.
 
 Chi phí chia đôi rõ ràng: **+1,5 KB** cho màn hình chấp thuận của người bán
@@ -226,3 +234,68 @@ lượt `npx vitest run` liên tiếp đều xanh, và `storage.objects` giữ 0
 > Quy tắc rút ra: **trên một tài nguyên dùng chung, chỉ khẳng định thứ mình sở
 > hữu.** "Hàng đợi rỗng" và "hàng đợi không còn gì của tôi" nghe giống nhau và
 > chỉ một câu là kiểm được.
+
+---
+
+## 6. CP15 — đỏ trước, xanh sau, tại đúng call site production
+
+Hai đường mà một bản quy chế sai có thể đi vào một môi trường thật, và cả hai
+đều đã bị làm cho ĐỎ trước khi được tuyên là xanh.
+
+### 6.1 Môi trường đang giữ một `seller-rules/v1` KHÁC
+
+Đây là thất bại im lặng mà `ON CONFLICT DO NOTHING` một mình sẽ tạo ra: chèn
+không làm gì, migration báo thành công, và staging phục vụ một văn bản khác
+production.
+
+Phá đúng call site — chính file migration sẽ chạy trên staging và production —
+bằng cách cho cơ sở dữ liệu giữ sẵn một v1 với nội dung khác, rồi chạy file đó:
+
+```
+BEGIN
+DELETE 1
+INSERT 0 1
+INSERT 0 0        ← ON CONFLICT nuốt lệnh chèn, đúng như dự đoán
+psql:redproof.sql:768: ERROR:  seller-rules v1 hash mismatch:
+  stored   68b71374fdb42a05b30d1210e71b1e2da094dd2abe24edc51dcc2f155c7d8755,
+  approved fb62bd471d7b6b27c53d9eeded57dd636aa2f1f1f03db9a4a20abd49d7c70c98
+CONTEXT:  PL/pgSQL function inline_code_block line 19 at RAISE
+```
+
+`INSERT 0 0` là bằng chứng bản thân nó: không có khối `DO`, migration đã kết
+thúc ngay tại đó và báo xanh. Sau `ROLLBACK`, dòng thật vẫn nguyên hash
+`fb62bd47…`.
+
+### 6.2 Văn bản đã duyệt bị sửa sau khi migration được viết
+
+Thêm **một dấu cách** vào cuối một dòng tiêu đề trong `seller-rules-v1.md`:
+
+```
+× publishes the approved file byte for byte
+× carries the sha256 of that file, recomputed here rather than trusted
+Tests  2 failed | 8 passed (10)
+```
+
+Hoàn nguyên file → 10/10 xanh, hash trở lại `fb62bd47…c70c98`.
+
+Hai assertion đỏ cùng lúc là có chủ ý: một cái bắt nội dung lệch, một cái bắt
+hằng số hash mô tả một văn bản không còn tồn tại. Nếu chỉ giữ assertion hash,
+một lần sinh lại migration từ file đã sửa sẽ **tự làm mình xanh trở lại** — và
+đó chính là thứ cần đỏ.
+
+### 6.3 Dọn dữ liệu — đếm độc lập trên chính cơ sở dữ liệu vừa chạy test
+
+Đếm sau khi mọi cổng đã chạy, trên cùng cơ sở dữ liệu, bằng một truy vấn không
+dùng lại mã của teardown:
+
+```
+legal_documents (khác v1) = 0    legal_acceptances = 0
+shop_applications        = 0    shop_application_events = 0
+shops                    = 0    shop_pilot_members = 0
+products                 = 0    tài khoản *.thepicklehub.test = 0
+```
+
+Dòng đầu tiên là dòng đáng đọc: bộ đếm **loại trừ** `seller-rules/v1`, vì nó
+không phải rác của test mà là dữ liệu do migration sở hữu. Một bộ đếm "0 tổng"
+ở đây sẽ đỏ mãi mãi kể từ CP15, và ai đó sẽ sửa nó bằng cách nới lỏng chứ không
+bằng cách hiểu.

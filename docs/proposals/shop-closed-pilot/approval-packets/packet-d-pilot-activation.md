@@ -59,40 +59,60 @@ phía client không còn là thẩm quyền; một script POST thẳng vào RPC 
 y hệt. 58 assertion pgTAP + 11 assertion qua HTTP, red-proven bằng cách xoá
 chính đoạn kiểm đó khỏi submit production.
 
-**B4 vẫn mở, và giờ nó là một cánh cửa đóng chứ không phải một lời nhắc.**
-"Quy chế người bán v1" chưa tồn tại, nên `legal_current_document('seller-rules')`
-không trả gì và **mọi lần gửi hồ sơ đều thất bại với `seller_rules_not_published`**
-— kể cả của Cuong.
+**B4 đã đóng ở CP15** (13/08): Quy chế v1 được duyệt và được ban hành bằng
+migration. Nhưng cánh cửa vẫn phụ thuộc **hai** điều kiện, và trộn chúng là
+cách người ta tin mình đã mở:
 
-Đó là hành vi đúng, và nó thay đổi hình dạng của Packet D:
+1. **Packet B #19 đã chạy trên môi trường đó.** Chưa chạy ⇒
+   `legal_current_document('seller-rules')` không trả gì ⇒ mọi lần gửi hồ sơ
+   thất bại với `seller_rules_not_published`, kể cả của Cuong.
+2. **Đã qua `2026-08-14T00:00:00+07:00`.** Trước thời điểm đó, migration đã
+   chạy vẫn không mở cửa — đó là `effective_at` làm việc, không phải lỗi.
+
+Ba đường của Packet D, viết lại theo thực tế đó:
 
 | Đường | Điều kiện | Hệ quả |
 |---|---|---|
-| **D-a** | Chưa có quy chế | Chỉ chèn UUID **tài khoản test**. Smoke chạy được, nhưng **bước "gửi hồ sơ" sẽ đỏ** cho tới khi có một văn bản — kể cả văn bản test. Không mời người bán thật |
+| **D-a** | Packet B #19 **chưa** chạy, hoặc chưa tới 14/08 | Chỉ chèn UUID **tài khoản test**. Smoke chạy được, nhưng **bước "gửi hồ sơ" sẽ đỏ**. Không mời người bán thật |
 | **D-b** | ~~Văn bản có, bằng chứng lưu ngoài hệ thống~~ | **Không còn tồn tại.** Máy chủ nay đòi bằng chứng trong cơ sở dữ liệu; không có đường vòng để chấp nhận |
-| **D-c** | Có văn bản v1 thật, đã `INSERT` vào `legal_documents` với `effective_at` | **Đường duy nhất** cho người bán thật |
+| **D-c** | #19 đã chạy **và** đã qua 14/08 ⇒ `legal_current_document` trả `v1` | **Đường duy nhất** cho người bán thật |
 
 Đường đã chọn: ⬜ D-a (chỉ test)  ⬜ D-c (người bán thật)
 
-### Ban hành v1 — khi Product Owner đã có nội dung
+### Ban hành v1 — ĐÃ CHUYỂN SANG PACKET B
+
+> ⚠️ **Không gõ `INSERT INTO legal_documents` bằng tay ở đây nữa.**
+>
+> Từ CP15 (13/08), Quy chế v1 được ban hành bằng **migration
+> `20260814100000_shop_seller_rules_v1_publish.sql` — Packet B #19**, cùng
+> đường với schema. Một câu `INSERT` gõ tay là con đường thứ hai, và hai con
+> đường là cách hai môi trường cùng mang `v1` mà nội dung khác nhau.
+>
+> Nếu ai đã gõ tay trước, migration sẽ **ĐỎ** chứ không im lặng ghi đè — khối
+> `DO` cuối file so hash với `fb62bd47…c70c98`. Cách xử lý khi đó **không phải**
+> `UPDATE` (trigger bất biến sẽ từ chối, và đúng như vậy): điều tra xem môi
+> trường đó đang giữ văn bản gì và ai đưa vào.
+
+Kiểm sau khi Packet B #19 đã chạy — đây mới là việc của packet này:
 
 ```sql
 SELECT 1;
-INSERT INTO public.legal_documents (document_key, version, title, body, effective_at)
-VALUES ('seller-rules', 'v1', 'Quy chế người bán', $doc$<TOÀN VĂN>$doc$, '<thời điểm hiệu lực>');
+SELECT version, content_hash, effective_at, approved_by
+FROM public.legal_documents WHERE document_key = 'seller-rules';
+-- kỳ vọng: v1 · fb62bd47…c70c98 · 2026-08-14 00:00:00+07 · Cuong Nguyen — Product Owner, ThePickleHub
 
--- Kiểm: đúng một bản hiệu lực, và hash do máy chủ tính
-SELECT version, content_hash, effective_at FROM public.legal_current_document('seller-rules');
+SELECT version FROM public.legal_current_document('seller-rules');
+-- 0 dòng TRƯỚC nửa đêm 14/08, 'v1' sau đó. Cả hai đều đúng.
 ```
 
-Ba điều về câu lệnh trên:
+Ba điều vẫn giữ nguyên giá trị:
 
-- **`content_hash` không có trong INSERT.** Nó là cột GENERATED; không ai viết
-  được nó, kể cả người gõ câu này.
+- **`content_hash` không do ai viết.** Nó là cột GENERATED — kể cả migration
+  cũng không đặt được nó.
 - **Không sửa được sau khi có người ký.** Đổi nội dung nghĩa là `v2` và một hash
   mới, và mọi người bán phải ký lại — đó là thiết kế, không phải bất tiện.
 - **`effective_at` trong tương lai là hợp lệ** và không ai ký được trước thời
-  điểm đó. Dùng nó nếu muốn báo trước.
+  điểm đó. v1 dùng đúng điều này: nửa đêm 14/08.
 
 ---
 

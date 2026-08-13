@@ -1,7 +1,35 @@
 # Rà soát Quy chế người bán v1 — theo từng mục
 
-> Đi kèm [`seller-rules-v1.md`](./seller-rules-v1.md), trạng thái
-> `DRAFT — PENDING PRODUCT OWNER APPROVAL`.
+> Đi kèm [`seller-rules-v1.md`](./seller-rules-v1.md), trạng thái **`APPROVED`**.
+>
+> ---
+>
+> ## Vòng 2 — Product Owner: **APPROVE** (2026-08-13)
+>
+> Toàn văn tại `0f036e1e` được duyệt. Bản ghi ban hành:
+>
+> | Trường | Giá trị đã ghi |
+> |---|---|
+> | `document_key` | `seller-rules` |
+> | `version` | `v1` |
+> | `scope` | `closed-pilot` |
+> | `approved_by` | `Cuong Nguyen — Product Owner, ThePickleHub` |
+> | `approved_at` | `2026-08-13T07:30:00+07:00` |
+> | `effective_at` | `2026-08-14T00:00:00+07:00` |
+> | `content_hash` | `fb62bd471d7b6b27c53d9eeded57dd636aa2f1f1f03db9a4a20abd49d7c70c98` |
+> | Ban hành bởi | migration `20260814100000_shop_seller_rules_v1_publish.sql` |
+>
+> **Mã băm không nằm trong văn bản** (§20 của quy chế nói tại sao: một văn bản
+> không thể chứa mã băm của chính nó). Nó là `sha256` trên **đúng 33 568 byte**
+> của `seller-rules-v1.md`, do Postgres tự sinh — cột `content_hash` là
+> `GENERATED`, không ai ghi tay được, kể cả migration.
+>
+> **Đây chưa phải là đã ban hành ở đâu cả ngoài máy cục bộ.** Migration nằm
+> trong Packet B (#19) và chờ duyệt như 18 file còn lại.
+>
+> Ba đề xuất đi kèm còn chờ quyết định riêng, ở cuối tài liệu này.
+>
+> ---
 >
 > Mục đích: nói rõ **câu nào mô tả code đang chạy**, **câu nào là một quyết định
 > sản phẩm**, và **câu nào cần luật sư** — để Product Owner đọc bản dự thảo mà
@@ -239,29 +267,29 @@ Ghi ra để không ai coi là thiếu sót:
 Agent **không** tick ô nào ở đây.
 
 ```
-Vòng 1: REVISE (13/08). Bảy sửa đổi đã thực hiện — xem đầu tài liệu.
+Vòng 1: REVISE (13/08) — bảy sửa đổi, xem đầu tài liệu.
+Vòng 2: APPROVE (13/08) — bản ghi ban hành ở đầu tài liệu.
 
-Đọc lại seller-rules-v1.md sau khi sửa:
+CÒN CHỜ QUYẾT ĐỊNH RIÊNG — không cái nào đã được làm:
 
-  [ ] APPROVE — duyệt bản này
-  [ ] REVISE  — còn cần sửa, ghi rõ mục và câu:
-      ____________________________________________________________
-  [ ] REJECT  — lý do: ________________________________________
+  1. Bổ sung dữ liệu Shop vào Chính sách bảo mật
+     Diff sẵn sàng: privacy-shop-disclosure.patch (áp sạch, tsc + test xanh)
+     [ ] duyệt và áp    [ ] sửa nội dung trước    [ ] để sau
+     🔴 BLOCKER trước khi mời người bán thật: quy chế §14 tự đặt mình dưới
+        Chính sách bảo mật, mà chính sách đó chưa nhắc tên dữ liệu Shop nào.
 
-Nếu APPROVE, ba thứ đi kèm:
-  approved_by  = Cuong Nguyen — Product Owner, ThePickleHub   [ ] đúng chuỗi
-  effective_at = agent sẽ báo ISO 8601 (+07:00) tính từ NGÀY APPROVE THẬT,
-                 và chờ xác nhận trước khi tạo bản ghi          [ ] hiểu
-  content hash = chỉ tính SAU khi APPROVE, trên nội dung cuối   [ ] hiểu
+  2. Ngày hiệu lực hiển thị trên trang Chính sách bảo mật
+     Hiện là 28/12/2024. Patch đổi sang 14/08/2026.
+     [ ] đồng ý đổi     [ ] giữ nguyên 28/12/2024
 
-Một đề xuất không chặn pilot:
-  [ ] Bổ sung dữ liệu Shop vào Privacy.tsx trước khi mời người bán thật
-      (§Đối chiếu Privacy) — [ ] đồng ý  [ ] để sau  [ ] không cần
+  3. shops.owner_user_id là ON DELETE RESTRICT
+     Người bán đã có shop KHÔNG xoá được tài khoản — delete-account sẽ hỏng
+     ở tầng khoá ngoại. Chưa sửa gì.
+     [ ] cần đường xử lý shop khi chủ shop rời đi
+     [ ] chấp nhận, và nói rõ trong quy chế rằng phải làm qua email
 
 Ký: ______________________   Ngày: ______________
 ```
 
-**Chỉ khi ô APPROVE được đánh dấu** mới được: điền `approved_by`/`approved_at`,
-chốt `effective_at`, tính mã băm trên **nội dung cuối**, và chuẩn bị bản ghi ban
-hành. Tính hash trên bản DRAFT rồi coi đó là bản hiệu lực là đúng thứ quy trình
-này tồn tại để ngăn.
+Ba mục trên **không chặn** Packet B, và Packet B **không mở** pilot. Mục 1 chặn
+đúng một thứ: lời mời gửi tới một người bán thật đầu tiên.

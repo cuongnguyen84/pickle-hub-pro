@@ -251,7 +251,7 @@ curl -s -H "Authorization: Bearer $PAT" \
 ## 9. Sao lưu
 
 Staging **không cần sao lưu**. Nó không giữ gì không tạo lại được, và toàn bộ
-schema nằm trong 18 file migration đã tracked.
+schema nằm trong 19 file migration đã tracked.
 
 Nếu ai đó thấy mình muốn sao lưu staging, câu hỏi thật là "vì sao có dữ liệu
 không tạo lại được ở đây" — và câu trả lời đúng gần như luôn là §7.

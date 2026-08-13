@@ -45,7 +45,7 @@ Dashboard: `https://supabase.com/dashboard/project/utokwfcljxjkpkaqgheo`
 | **S-9** | 🔴 **Extension lên lịch** | Database → Extensions | `pg_cron` và `pg_net` **khả dụng nhưng CHƯA CÀI** (probe 13/08). Cần **bật cả hai** trước Packet C — bật là một thao tác **ghi**, ngoài phạm vi kiểm chỉ đọc | ☐ **cần bật** | ☐ |
 | **S-10** | Cron job | Database → Cron (hoặc `cron.job`) | **Trước Packet B#4:** không có job Shop. **Sau:** đúng 2 job `shop-media-cleanup-every-5m` và `shop-media-reconcile-hourly`, `active = true` | ☐ | ☐ |
 | **S-11** | Storage bucket | Storage | Hiện **0 bucket** ✅. **Sau Packet B:** `shop-product-media-draft` (**Private**) và `shop-product-media` (**Public**) | ☐ sau Packet B | ☐ |
-| **S-12** | Migration ledger | Database → Migrations | Hiện **chưa có bảng ledger**, 0 bảng trong `public` ✅. **Sau Packet B:** 351 dòng, dòng cuối `20260814090000` | ☐ sau Packet B | ☐ |
+| **S-12** | Migration ledger | Database → Migrations | Hiện **chưa có bảng ledger**, 0 bảng trong `public` ✅. **Sau Packet B:** 352 dòng, dòng cuối `20260814100000` | ☐ sau Packet B | ☐ |
 | **S-13** | Quy chế người bán | Table Editor → `legal_documents` | **Trước khi Product Owner duyệt v1:** bảng **rỗng**, không dòng nào có `approved_at` | ☐ sau Packet B | ☐ |
 | **S-14** | Va chạm tên object Shop | — | **0** bảng và **0** function tên `shop*`/`product*`/`legal*` | ✅ **đã xác minh (0)** | — |
 

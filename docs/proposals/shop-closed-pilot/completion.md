@@ -2,8 +2,9 @@
 
 > **Câu trạng thái được phép dùng:**
 >
-> `Closed-pilot package locally ready, pending Product Owner approval of Seller
-> Rules v1 and approval to execute Packet S/B on staging.`
+> `Seller Rules v1 approved and published locally; closed-pilot package pending
+> Product Owner approval of the Privacy update and approval to execute Packet
+> S/B on staging.`
 >
 > **CẤM dùng:** *pilot deployed* · *production ready* · *remote verified* ·
 > *preview live* · *seller onboarded*.
@@ -18,9 +19,13 @@
 | Nhánh | **`feat/shop-closed-pilot`** |
 | Worktree | `/Users/cm10/pickle-hub-pro/.claude/worktrees/shop-closed-pilot` |
 | Trạng thái push | **CHƯA push** — nhánh chỉ tồn tại cục bộ |
-| Commit trên `f172a441` | **18** |
+| Commit trên `f172a441` | **23** |
 
 ```
+4a142ec3 docs(shop-pilot): the Privacy disclosure Shop owes, as a patch nobody applied
+68b1bd2c feat(shop): the approved Seller Rules v1, published by migration
+0f036e1e docs(shop-pilot): revise Seller Rules v1, and fill in the real staging ref
+3abad4a5 docs(shop-pilot): CP13 record, gate delta, and the handoff
 8fdf41f9 docs(shop-pilot): Packet S against the real staging project, and a 21-item dashboard checklist
 d716ae19 docs(shop-pilot): carry the notification limitation into the contract and the readiness list
 d98afb6e docs(shop-pilot): the full Seller Rules v1 draft, and a review artifact for it
@@ -43,7 +48,78 @@ c3228f23 fix(shop): the media integration teardown walked two levels, not three
 
 ---
 
-## 2. CP13 — bản dự thảo quy chế, và mô hình bản-nháp
+## 2. CP15 — Quy chế v1 được duyệt, và được ban hành
+
+Product Owner **APPROVE** toàn văn ngày 13/08. Bản ghi:
+
+| Trường | Giá trị |
+|---|---|
+| `document_key` / `version` / `scope` | `seller-rules` / `v1` / `closed-pilot` |
+| `approved_by` | `Cuong Nguyen — Product Owner, ThePickleHub` |
+| `approved_at` | `2026-08-13T07:30:00+07:00` |
+| `effective_at` | `2026-08-14T00:00:00+07:00` |
+| `content_hash` | `fb62bd471d7b6b27c53d9eeded57dd636aa2f1f1f03db9a4a20abd49d7c70c98` |
+| Kích thước văn bản | **33 568 byte** (26 147 ký tự) |
+| Ban hành bởi | `20260814100000_shop_seller_rules_v1_publish.sql` — Packet B **#19** |
+
+### Vì sao là migration chứ không phải script seed
+
+Văn bản mà người bán ký phải tới staging và production bằng **cùng con đường đã
+được rà soát** như schema. Một script seed chạy tay là con đường thứ hai để hai
+môi trường cùng mang số hiệu `v1` mà nội dung khác nhau — và không ai phát hiện
+ra, vì cả hai đều "đã seed".
+
+### Ba thứ khiến bản ghi không thể lệch với văn bản đã duyệt
+
+1. **Thân văn bản trong migration là file, đúng từng byte.**
+   `shop-seller-rules-v1-parity.test.ts` so sánh nguyên văn, không chuẩn hoá,
+   không `toContain`. Lệch một dấu cách là đỏ.
+2. **`content_hash` không có trong câu `INSERT`.** Nó là cột `GENERATED`;
+   Postgres tính, và khối `DO` cuối migration **đọc lại** rồi RAISE nếu nó khác
+   `fb62bd47…`. Không môi trường nào phục vụ được văn bản khác hồ sơ phê duyệt:
+   hoặc khớp, hoặc migration đỏ.
+3. **Hằng số hash được test tính lại từ file**, không phải tin. Nếu ai sửa văn
+   bản, hằng số thành mô tả một văn bản không còn tồn tại — và đó là điều test
+   bắt.
+
+Cả hai đường đều đã bị làm cho **ĐỎ trước khi tuyên xanh** —
+[`gate-results.md` §6](./gate-results.md).
+
+### Mã băm không nằm trong văn bản
+
+Một văn bản không thể chứa mã băm của chính nó: viết mã băm vào là đổi nội
+dung, và mã băm vừa viết lập tức sai. §20 của quy chế nói thẳng điều đó thay vì
+để một ô trống trông như thiếu sót. Một assertion cấm văn bản chứa chuỗi hash
+của chính nó.
+
+### Cửa chưa mở ngay, và đó là đúng
+
+`effective_at` là **nửa đêm 14/08**, nên tới lúc đó `legal_current_document()`
+vẫn trả 0 dòng và `shop_application_submit()` vẫn từ chối bằng
+`seller_rules_not_published`. Áp Packet B trước thời điểm đó **không** mở pilot
+sớm.
+
+### Ba bộ test phải sửa vì trước đây chúng khẳng định trạng thái toàn cục
+
+| File | Trước | Sau |
+|---|---|---|
+| `shop_seller_rules_acceptance.test.sql` | dựng thế giới riêng nhưng dùng lại đúng khoá `seller-rules/v1` | xoá mọi `seller-rules` trong transaction rồi mới dựng — không đụng khoá, không phụ thuộc ngày |
+| `shop_phase1_rls.test.sql` | khẳng định "chưa ban hành gì" trên cơ sở dữ liệu dùng chung | như trên |
+| `shop-seller-rules-integration.test.mjs` | khẳng định lỗi **phải** là `seller_rules_not_published` | khẳng định **hồ sơ không nhúc nhích** — đúng ở mọi giờ, cả trước lẫn sau nửa đêm 14/08 |
+
+Cả ba là **cùng một lỗi** và nó đã được ghi lại từ CP12: *trên một tài nguyên
+dùng chung, chỉ khẳng định thứ mình sở hữu*. Lần này thứ dùng chung là **đồng
+hồ**.
+
+Bộ mới `shop_seller_rules_v1_published.test.sql` (19 assertion) làm việc ngược
+lại: nó **không** dựng fixture nào, và đọc đúng dòng migration để lại.
+
+---
+
+## 3. CP13 — bản dự thảo quy chế, và mô hình bản-nháp
+
+> Ghi lại nguyên trạng lúc CP13. Văn bản này **đã được duyệt** ở CP15 (§2);
+> phần dưới mô tả nó khi còn là bản nháp.
 
 **Quy chế người bán v1** giờ có một **bản dự thảo đầy đủ 20 mục**:
 [`seller-rules-v1.md`](./seller-rules-v1.md), trạng thái
@@ -81,7 +157,7 @@ cố duyệt một bản nháp bắt được. Đóng băng chuyển sang **lúc
 
 ---
 
-## 3. CP12 — blocker B5 đã đóng
+## 4. CP12 — blocker B5 đã đóng
 
 Chi tiết đầy đủ: [`seller-rules-enforcement.md`](./seller-rules-enforcement.md).
 
@@ -132,7 +208,7 @@ không tin.
 
 ---
 
-## 4. Ba defect các cổng bắt được trong CP12
+## 5. Ba defect các cổng bắt được trong CP12
 
 1. **Thiếu grant `service_role` trên `legal_documents`.** Bộ HTTP integration
    trả `42501` ngay lần chạy đầu. `service_role` đi vòng qua RLS nhưng **không**
@@ -153,40 +229,42 @@ không tin.
 
 ---
 
-## 5. Cổng kiểm tra — tất cả XANH
+## 6. Cổng kiểm tra — tất cả XANH
 
 Cơ sở dữ liệu dựng lại từ số không. Delta đầy đủ:
 [`gate-results.md`](./gate-results.md).
 
-| Cổng | Kết quả |
+| Cổng | Kết quả sau CP15 |
 |---|---|
 | `supabase db reset --local` | exit 0 |
-| Ledger parity | **351 / 351** |
-| pgTAP | **1 312 PASS** · 34 file · exit 0 |
-| Unit (gồm storage + vòng đời ảnh trên stack thật) | **2 051 PASS** · 10 skipped · 158 file |
+| Ledger parity | **352 / 352** |
+| pgTAP | **1 331 PASS** · 35 file · exit 0 |
+| Unit (gồm storage + vòng đời ảnh trên stack thật) | **2 061 PASS** · 10 skipped · 159 file |
+| HTTP integration quy chế, stack thật | **11 PASS · 0 skip** |
 | noindex ở edge | **116 PASS** |
 | `tsc -b` · `eslint` · `build` | exit 0 · **0 lỗi** · exit 0 |
 | `BUNDLE_STRICT=1` | exit 0 |
-| `build:proto` | exit 0 |
-| Q01–Q04 prototype | 37 màn hình, 0 phát hiện |
-| Nghiệm thu P2b (20 route × 6 chiều rộng, 6 hành trình) | **PASS** |
-| Dọn dữ liệu, đếm độc lập | **19/19 bộ đếm = 0** |
+| Dọn dữ liệu, đếm độc lập | **8/8 bộ đếm Shop = 0** |
+
+`build:proto`, Q01–Q04 và nghiệm thu P2b **không chạy lại** ở CP15 — không có
+mã client nào đổi. Kết quả CP13 của chúng vẫn là kết quả mới nhất, và chép nó
+sang một cột "sau CP15" sẽ làm nó trông như vừa được đo.
 
 ### Bundle delta
 
 ```
-              trước CP12    sau CP12    sau CP13    tổng
-INITIAL gz     226,6 KB     226,6 KB    226,6 KB    0,0 KB   / 280 KB
-Tổng gz JS    1935,3 KB    1936,8 KB   1937,8 KB   +2,5 KB   / backstop 1970 KB
+              trước CP12    sau CP12    sau CP13    sau CP15    tổng
+INITIAL gz     226,6 KB     226,6 KB    226,6 KB    226,6 KB    0,0 KB   / 280 KB
+Tổng gz JS    1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB   +2,9 KB   / backstop 1970 KB
 ```
 
-**Backstop KHÔNG nâng.** Còn 32,2 KB. Không thêm dependency nào. `INITIAL` không
-đổi một byte qua cả hai đợt — cả hai màn hình nằm trong chunk route của chúng,
-không trên đường tới paint đầu tiên.
+**Backstop KHÔNG nâng.** Còn 31,8 KB. Không thêm dependency nào. CP15 không đổi
+mã client; +0,4 KB nằm trong nhiễu build ±0,6 KB đã biết của repo này — ghi
+đúng số đo được thay vì làm tròn về 0.
 
 ---
 
-## 6. Quyết định Product Owner đã áp dụng
+## 7. Quyết định Product Owner đã áp dụng
 
 | # | Quyết định | Đã làm gì |
 |---|---|---|
@@ -198,35 +276,38 @@ không trên đường tới paint đầu tiên.
 
 ---
 
-## 7. Thứ tự thi hành mới
+## 8. Thứ tự thi hành mới
 
 ```
  1. Cưỡng chế seller-rules ở cục bộ                     ✅ XONG
- 2. Product Owner DUYỆT TOÀN VĂN v1                     ⬜ APPROVE/REVISE/REJECT
- 3. Chốt effective_at + approved_by                     ⬜
- 4. Tính và đóng băng content hash trên bản ĐÃ DUYỆT    ⬜
- 5. Packet S — cấu hình staging (project đã tạo)
- 6. Packet B-1 — 18 migration lên STAGING
- 7. Packet C-1 — function + cron trên STAGING
- 8. Packet A — preview Cloudflare trỏ STAGING
- 9. Smoke đầy đủ trên staging
- 8. Product Owner nghiệm thu preview
- 9. Packet B-2 + C-2 lên PRODUCTION
-10. Web production, indexing vẫn TẮT
-11. Packet D — Wave 0, tài khoản test
-12. Wave 1 — một người bán thật
+ 2. Product Owner DUYỆT TOÀN VĂN v1                     ✅ APPROVE 13/08
+ 3. Chốt effective_at + approved_by                     ✅ 14/08 00:00+07 · Cuong Nguyen
+ 4. Đóng băng content hash trên bản ĐÃ DUYỆT            ✅ fb62bd47…c70c98, migration #19
+ 5. Product Owner duyệt bản sửa Privacy                 ⬜ CHẶN bước 13
+ 6. Packet S — cấu hình staging (project đã tạo)        ⬜
+ 7. Packet B-1 — 19 migration lên STAGING               ⬜
+ 8. Packet C-1 — function + cron trên STAGING           ⬜
+ 9. Packet A — preview Cloudflare trỏ STAGING           ⬜
+10. Smoke đầy đủ trên staging                           ⬜
+11. Product Owner nghiệm thu preview                    ⬜
+12. Packet B-2 + C-2 lên PRODUCTION                     ⬜
+13. Web production, indexing vẫn TẮT                    ⬜
+14. Packet D — Wave 0, tài khoản test                   ⬜
+15. Wave 1 — một người bán thật                         ⬜
 ```
 
-Bước 2 chặn bước 12, **không** chặn bước 3: hạ tầng dựng được trong lúc chờ văn
-bản; chỉ việc mời người bán thật là không.
+Bước 5 chặn bước 15, **không** chặn bước 6: hạ tầng dựng được trong lúc chờ
+quyết định về Chính sách bảo mật; chỉ việc mời người bán thật là không.
 
 ---
 
-## 8. Blocker còn lại
+## 9. Blocker còn lại
 
 | # | Blocker | Ai gỡ | Chặn |
 |---|---|---|---|
-| **B4″** | 🔴 **Quy chế v1 — vòng 1 REVISE, đã sửa 7 điểm, chờ DUYỆT LẦN CUỐI.** Cần: `APPROVE`/`REVISE`/`REJECT` toàn văn, `effective_at`, `approved_by`, và bốn câu hỏi chặn ở [`seller-rules-v1-review.md`](./seller-rules-v1-review.md). Máy chủ vẫn từ chối mọi lần gửi hồ sơ với `seller_rules_not_published` — kể cả của Cuong | Cuong / pháp lý | Bước 13-14 |
+| ~~B4″~~ | ✅ **ĐÃ GỠ 13/08 (CP15).** Quy chế v1 được duyệt toàn văn, `approved_at` `2026-08-13T07:30:00+07:00`, `effective_at` `2026-08-14T00:00:00+07:00`, hash `fb62bd47…c70c98`, ban hành bằng migration Packet B **#19**. Cửa vẫn đóng trên mọi môi trường **chưa chạy #19** — đúng thiết kế | — | — |
+| **B11** | 🔴 **Chính sách bảo mật chưa liệt kê dữ liệu Shop.** Quy chế §14 tự đặt mình **dưới** Chính sách bảo mật, nên mời người bán thật khi chính sách chưa nhắc tên hồ sơ đăng ký, kênh liên hệ công khai và bằng chứng chấp thuận là đặt hai văn bản của chính mình vào thế mâu thuẫn. Diff sẵn sàng, **chưa áp**: [`privacy-shop-disclosure.md`](./privacy-shop-disclosure.md) | Product Owner | Bước 15 — mời người bán thật |
+| **B12** | ⚠️ **`shops.owner_user_id` là `ON DELETE RESTRICT`** — người bán đã có shop **không xoá được tài khoản**; `delete-account` sẽ hỏng ở tầng khoá ngoại. Chưa sửa gì, cần một quyết định riêng | Product Owner | Bước 15 |
 | ~~B3″~~ | ✅ **ĐÃ GỠ.** Ref staging = **`utokwfcljxjkpkaqgheo`**, đã điền vào toàn bộ tài liệu. Probe chỉ đọc xác nhận project trắng: 0 `auth.users`, 0 bảng `public`, 0 bucket, 0 Edge Function, 0 secret, **0 va chạm tên object Shop** | — | — |
 | **B9** | 🔴 **`pg_cron` / `pg_net` chưa cài trên staging** — khả dụng nhưng chưa bật. Bật là thao tác **ghi**, ngoài phạm vi kiểm chỉ đọc | Cuong, dashboard | **Packet C** |
 | **B10** | ⚠️ Gói **Pro** chưa xác minh được bằng API (`plan: null`) — chỉ dashboard đọc được | Cuong, S-1b | — |
@@ -238,34 +319,29 @@ bản; chỉ việc mời người bán thật là không.
 
 **B5 đã đóng** và không còn trong danh sách.
 
-### Đầu vào B4′ chính xác cần gì
+### Đầu vào B11 chính xác cần gì
 
-1. **Đọc** [`seller-rules-v1.md`](./seller-rules-v1.md) và trả lời
-   **APPROVE / REVISE / REJECT**.
-2. **`effective_at`** — thời điểm hiệu lực. Tương lai là hợp lệ và không ai ký
-   được trước thời điểm đó; **không được sớm hơn `approved_at`** (ràng buộc CHECK).
-3. **`approved_by`** — chuỗi hiển thị trong bản ghi. Dự kiến
-   `Cuong Nguyen — Product Owner`; cần xác nhận đúng chữ.
-4. **Kênh hỗ trợ (mục 19)** — dùng chung ba kênh hiện có
-   (`tapickleballvn@gmail.com`, Zalo, Messenger) hay lập kênh riêng cho pilot.
+1. **Đọc** [`privacy-shop-disclosure.md`](./privacy-shop-disclosure.md) — bốn
+   nhóm dữ liệu, mục đích, ai đọc được, và vòng đời **ở mức khoá ngoại thật sự
+   hỗ trợ**, không hứa quá.
+2. **Duyệt hoặc sửa nội dung mục Shop** (VI là bản gốc, EN là bản dịch).
+3. **Quyết định ngày hiệu lực hiển thị**: giữ `28/12/2024` hay đổi sang
+   `14/08/2026` như patch đề xuất.
+4. **Quyết định riêng cho B12** (`ON DELETE RESTRICT`) trước khi mời người bán
+   thật.
 
-Ba câu hỏi 🟠 nữa (mục 13, danh sách ngành hàng mục 3, đối chiếu mục 14 với
-`Privacy.tsx`) nên trả lời nhưng không chặn.
-
-**Chuỗi ban hành, đúng thứ tự:** duyệt → chốt `effective_at`/`approved_by` →
-**rồi mới** tính hash trên nội dung đã duyệt → `INSERT`. `content_hash` **không**
-nằm trong câu `INSERT` — nó là cột GENERATED, không ai viết được, kể cả người gõ
-câu đó. Ba dòng SQL ở
-[`approval-packets/packet-d-pilot-activation.md` §4](./approval-packets/packet-d-pilot-activation.md).
+Patch được sinh bằng cách **áp thật rồi hoàn nguyên**, đã kiểm `git apply
+--check`, `tsc -b` và `vitest run src/i18n`. Áp khi duyệt:
+`git apply docs/proposals/shop-closed-pilot/privacy-shop-disclosure.patch`.
 
 ---
 
-## 9. Năm packet — không cái nào được duyệt
+## 10. Năm packet — không cái nào được duyệt
 
 | Packet | Nội dung | Mục tiêu | Tier |
 |---|---|---|---|
 | [S](./approval-packets/packet-s-staging.md) | Tạo/xác nhận project staging | mới | 🟡 |
-| [B](./approval-packets/packet-b-migrations.md) | 18 migration | staging **rồi** production | 🔴 |
+| [B](./approval-packets/packet-b-migrations.md) | 19 migration (**#19 = Quy chế v1**) | staging **rồi** production | 🔴 |
 | [C](./approval-packets/packet-c-worker-cron.md) | Worker + cron | staging **rồi** production | 🟡 |
 | [A](./approval-packets/packet-a-preview.md) | Đẩy nhánh → preview trỏ staging | Cloudflare | 🟡 |
 | [D](./approval-packets/packet-d-pilot-activation.md) | Allowlist, mở pilot | production | 🔴 |
@@ -275,17 +351,18 @@ Checklist dashboard 7 mục cho Product Owner:
 
 ---
 
-## 10. Khuyến nghị: duyệt cái gì trước
+## 11. Khuyến nghị: duyệt cái gì trước
 
 Hai việc **song song**, không phụ thuộc nhau:
 
-**1. Đọc và trả lời Quy chế v1** ([`seller-rules-v1.md`](./seller-rules-v1.md) +
-[bản rà soát](./seller-rules-v1-review.md)). Không cần chờ hạ tầng, và nó là thứ
-duy nhất chặn việc mời người bán thật.
+**1. Đọc và trả lời bản sửa Chính sách bảo mật**
+([`privacy-shop-disclosure.md`](./privacy-shop-disclosure.md)). Không cần chờ hạ
+tầng, và giờ nó là thứ **duy nhất** chặn việc mời người bán thật — Quy chế v1 đã
+duyệt xong.
 
-**2. Cung cấp project ref staging** — một dòng, ô **S-0** trong
-[`dashboard-checklist.md`](./dashboard-checklist.md). Không có nó, Packet B và C
-không có mục tiêu để chạy.
+**2. Cấp quyền chạy Packet S/B trên staging.** Ref đã có
+(`utokwfcljxjkpkaqgheo`); còn thiếu chữ ký để bắt đầu ghi, và
+`pg_cron`/`pg_net` chưa bật (ô **S-9**).
 
 Trong lúc điền checklist, mục **S-9** (`pg_cron`/`pg_net` đã bật chưa) đáng kiểm
 sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh worker chạy theo
@@ -294,7 +371,7 @@ sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh w
 
 ---
 
-## 11. Không thao tác remote nào đã thực hiện
+## 12. Không thao tác remote nào đã thực hiện
 
 | Cấm | Trạng thái |
 |---|---|
@@ -307,7 +384,8 @@ sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh w
 | Tạo/cấu hình project staging | ❌ không — Product Owner đã tự tạo; agent không link, không ghi, không đọc |
 | `supabase link` tới staging | ❌ không |
 | Đọc remote staging | ❌ **không một lần nào** — project ref chưa có, và không có ref thì không có gì để đọc |
-| Ban hành Quy chế v1 vào `legal_documents` | ❌ không — chờ APPROVE |
+| Ban hành Quy chế v1 vào `legal_documents` **trên remote** | ❌ không — migration đã viết và chạy **chỉ trên cơ sở dữ liệu cục bộ**; nó là Packet B #19 và chờ duyệt như 18 file kia |
+| Áp bản sửa `Privacy.tsx` | ❌ không — chỉ là một patch trong `docs/`, cây làm việc không đổi ba file đó |
 | Deploy Cloudflare | ❌ không |
 | Merge / push | ❌ không — nhánh chỉ ở cục bộ |
 | Gửi email/push thật | ❌ không |
@@ -318,3 +396,48 @@ sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh w
 Mọi truy vấn Postgres remote trong đợt audit đi qua một script từ chối bất cứ
 câu lệnh nào không bắt đầu bằng `SELECT`/`WITH`. Không giá trị secret nào được
 đọc hay in — chỉ tên.
+
+---
+
+## 13. Thao tác remote **dự kiến**, đúng thứ tự — chưa cái nào chạy
+
+Danh sách này tồn tại để một thao tác remote không bao giờ được quyết định
+ngẫu hứng giữa chừng. Mỗi dòng là một lần ghi vào một hệ thống thật.
+
+**Trước dòng 1: chưa có gì được duyệt.** Packet S, B, C, A, D đều còn trống ô ký.
+
+### Giai đoạn 1 — staging (`utokwfcljxjkpkaqgheo`)
+
+| # | Thao tác | Packet | Ghi |
+|---|---|---|---|
+| 1 | Chứng minh mục tiêu: `GET /v1/projects/<ref>` → tên **không phải** `thepicklehub-prod` | S §8 | chỉ đọc |
+| 2 | Bật **`pg_cron`** và **`pg_net`** (dashboard) | S / B9 | ghi |
+| 3 | Bật **MFA/TOTP**, tạo **1 tài khoản admin staging** (UUID khác production), enrol TOTP | S §4 | ghi |
+| 4 | Đặt **Site URL** + **Redirect URLs** của staging = URL preview Cloudflare | S §4 | ghi |
+| 5 | Sinh **`CRON_SECRET` MỚI** cho staging + ghi cùng giá trị vào vault `cron_secret` | S §5 · C-1 | ghi · **không sao chép của production** |
+| 6 | Áp migration **#1 → #3** | B-1 | ghi |
+| 7 | Deploy Edge Function dọn ảnh lên staging | C-1 | ghi |
+| 8 | Áp migration **#4 → #19** (#19 = Quy chế v1) | B-1 | ghi |
+| 9 | Ghi ledger cho **19** file Shop đã áp — và **chỉ** những file đó | B-1 §4 | ghi |
+| 10 | Kiểm sau #19: đúng 1 dòng `seller-rules/v1`, hash `fb62bd47…c70c98` | B-1 §5 | chỉ đọc |
+| 11 | Đặt biến Cloudflare Preview `VITE_SUPABASE_*` → staging | A | ghi |
+| 12 | **Push nhánh** `feat/shop-closed-pilot` → build preview | A | ghi · **lần đầu tiên nhánh rời máy** |
+| 13 | Smoke đầy đủ trên preview + staging | A | đọc |
+| 14 | Chèn **tài khoản test** vào `shop_pilot_members` staging | D-a | ghi |
+
+### Giai đoạn 2 — production (`ajvlcamxemgbxduhiqrl`), chỉ sau khi nghiệm thu preview
+
+| # | Thao tác | Packet | Ghi |
+|---|---|---|---|
+| 15 | Chứng minh mục tiêu **lại từ đầu** | B §1 | chỉ đọc |
+| 16 | Áp migration **#1 → #3** lên production | B-2 | ghi |
+| 17 | Deploy Edge Function dọn ảnh lên production — **KHÔNG đụng `CRON_SECRET`**, 5 cron đang dùng chung nó | C-2 | ghi |
+| 18 | Áp migration **#4 → #19** lên production | B-2 | ghi |
+| 19 | Ghi ledger 19 file — **không** chèn cho 12 file ngoài Shop | B-2 | ghi |
+| 20 | Merge nhánh → web production, **`SHOP_PUBLIC_INDEXING` vẫn TẮT** | A | ghi |
+| 21 | Packet D — Wave 0, tài khoản test | D | ghi |
+| 22 | Wave 1 — người bán thật đầu tiên | D | ghi · **chặn bởi B11 (Chính sách bảo mật)** |
+
+**Không có trong danh sách này, và cố ý:** bật `SHOP_PUBLIC_INDEXING`, gửi
+IndexNow, thêm Shop vào sitemap, sửa drift `news_source_ppa_tour_pause`, xoay
+`CRON_SECRET` của production.
