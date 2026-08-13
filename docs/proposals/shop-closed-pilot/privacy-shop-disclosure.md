@@ -1,15 +1,18 @@
 # Chính sách bảo mật — bổ sung dữ liệu Shop
 
-> **Trạng thái: ĐỀ XUẤT — CHƯA ÁP DỤNG, CHỜ PRODUCT OWNER DUYỆT RIÊNG.**
+> **Trạng thái: ĐÃ DUYỆT VÀ ĐÃ ÁP (13/08) — CHƯA DEPLOY.**
 >
-> `src/pages/Privacy.tsx`, `src/i18n/vi.ts` và `src/i18n/en.ts` **không bị sửa**
-> trong checkpoint này. Bản sửa nằm nguyên trong
-> [`privacy-shop-disclosure.patch`](./privacy-shop-disclosure.patch) và chỉ vào
-> mã nguồn khi có một quyết định riêng.
+> Product Owner duyệt toàn bộ bản sửa. Đã áp vào `src/pages/Privacy.tsx`,
+> `src/i18n/vi.ts`, `src/i18n/en.ts` — **chỉ trên nhánh cục bộ
+> `feat/shop-closed-pilot`**, chưa push, chưa deploy, nên
+> `thepicklehub.net/privacy` vẫn đang phục vụ bản cũ.
 >
-> Áp khi được duyệt:
-> `git apply docs/proposals/shop-closed-pilot/privacy-shop-disclosure.patch`
-> (đã kiểm bằng `git apply --check` — áp sạch trên `0f036e1e`).
+> File `.patch` đã **xoá** sau khi áp: giữ lại một bản sao thứ hai của cùng nội
+> dung là mời hai bản đi lệch nhau, và `git show` đã là bản ghi chính xác hơn.
+> Tài liệu này ở lại vì nó ghi **lý do** và **vòng đời dữ liệu**, thứ mà diff
+> không nói.
+>
+> Nội dung đã áp: `git show <commit Privacy> -- src/pages/Privacy.tsx src/i18n`.
 
 ---
 
@@ -95,23 +98,34 @@ ba" giữ nguyên văn; mục Shop nằm dưới nó chứ không thay nó.
 
 ---
 
-## 6. Đã kiểm những gì
+## 6. Test khoá nội dung này lại
 
-| Kiểm | Kết quả |
+`src/pages/__tests__/privacy-shop-disclosure.test.tsx` — **21 assertion**, hai
+tầng có chủ ý:
+
+| Tầng | Khoá cái gì |
 |---|---|
-| `git apply --check` trên cây sạch | áp sạch |
-| `npx tsc -b` khi patch đang được áp thử | exit 0 |
-| `npx vitest run src/i18n` khi patch đang được áp thử | 15 PASS · 2 file |
-| Cây làm việc sau khi thử | đã hoàn nguyên, `Privacy.tsx`/`vi.ts`/`en.ts` không đổi |
+| Qua **trang** (render Privacy, VI và EN) | bốn nhóm dữ liệu **thật sự hiển thị**; ngày hiệu lực `14/08/2026`; mục Shop nằm **sau** "Chia sẻ dữ liệu" và **trước** "Quyền của bạn" |
+| Qua **từ điển**, từng ngôn ngữ | bullet công khai **không** chứa địa chỉ lấy hàng / họ tên / số điện thoại / ghi chú quản trị; lời hứa không-IP không-fingerprint; nhật ký chỉ ghi *loại* kênh; **không câu nào** nói ThePickleHub giữ tiền, ký quỹ hay xử lý thanh toán; vòng đời chỉ hứa đúng những gì khoá ngoại làm |
+| Parity VI/EN | cùng hình dạng khoá, cùng bốn nhóm cùng thứ tự, và **bản dịch không phải bản sao chép** |
 
-Patch được sinh ra bằng cách **áp thật rồi hoàn nguyên**, chứ không viết tay —
-nên nó không thể là một diff không áp được.
+Vì sao có tầng "qua trang": một mục chỉ tồn tại trong từ điển là một mục **không
+ai được xem**. Đó đúng là chỗ bốn lỗi gần nhất của repo này nằm — test bảo vệ
+hàm chứ không bảo vệ chỗ nối.
+
+**Đỏ trước, xanh sau** — phá đúng call site production:
+
+| Phá gì | Kết quả |
+|---|---|
+| Xoá `<section>` Shop khỏi `Privacy.tsx` + trả ngày về `28/12/2024` | **4 đỏ** (cả hai ngôn ngữ, ngày, thứ tự) |
+| Nhét "địa chỉ lấy hàng" vào bullet **công khai** trong `vi.ts` | **1 đỏ** — đúng assertion về rò rỉ |
+| Hoàn nguyên cả hai | **21/21 xanh** |
 
 ---
 
-## 7. Quyết định cần từ Product Owner
+## 7. Quyết định còn lại
 
-1. Duyệt hay sửa nội dung mục Shop (VI là bản gốc, EN là bản dịch).
-2. Giữ hay bỏ việc đổi ngày hiệu lực sang 14/08/2026.
-3. Quyết định riêng cho vấn đề `ON DELETE RESTRICT` ở mục 3 — trước khi mời
-   người bán thật.
+1. ✅ Nội dung mục Shop — **DUYỆT**, đã áp.
+2. ✅ Ngày hiệu lực `14/08/2026` — **DUYỆT**, đã áp.
+3. ⬜ `ON DELETE RESTRICT` (mục 3) — **B12, vẫn mở**, checkpoint riêng. Chưa
+   implement gì.

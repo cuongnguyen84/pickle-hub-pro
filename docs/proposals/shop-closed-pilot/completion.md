@@ -306,8 +306,8 @@ quyết định về Chính sách bảo mật; chỉ việc mời người bán 
 | # | Blocker | Ai gỡ | Chặn |
 |---|---|---|---|
 | ~~B4″~~ | ✅ **ĐÃ GỠ 13/08 (CP15).** Quy chế v1 được duyệt toàn văn, `approved_at` `2026-08-13T07:30:00+07:00`, `effective_at` `2026-08-14T00:00:00+07:00`, hash `fb62bd47…c70c98`, ban hành bằng migration Packet B **#19**. Cửa vẫn đóng trên mọi môi trường **chưa chạy #19** — đúng thiết kế | — | — |
-| **B11** | 🔴 **Chính sách bảo mật chưa liệt kê dữ liệu Shop.** Quy chế §14 tự đặt mình **dưới** Chính sách bảo mật, nên mời người bán thật khi chính sách chưa nhắc tên hồ sơ đăng ký, kênh liên hệ công khai và bằng chứng chấp thuận là đặt hai văn bản của chính mình vào thế mâu thuẫn. Diff sẵn sàng, **chưa áp**: [`privacy-shop-disclosure.md`](./privacy-shop-disclosure.md) | Product Owner | Bước 15 — mời người bán thật |
-| **B12** | ⚠️ **`shops.owner_user_id` là `ON DELETE RESTRICT`** — người bán đã có shop **không xoá được tài khoản**; `delete-account` sẽ hỏng ở tầng khoá ngoại. Chưa sửa gì, cần một quyết định riêng | Product Owner | Bước 15 |
+| ~~B11~~ | ✅ **ĐÓNG CỤC BỘ 13/08.** Chính sách bảo mật nay nêu tên bốn nhóm dữ liệu Shop, mục đích, phạm vi người đọc và vòng đời; ngày hiệu lực `14/08/2026`. Khoá bằng 21 assertion. 🔴 **CHƯA DEPLOY** — bản đang phục vụ ở `thepicklehub.net/privacy` vẫn là bản cũ cho tới khi nhánh được merge (bước 13) | — | — |
+| **B12** | 🔴 **`shops.owner_user_id` là `ON DELETE RESTRICT`** — người bán đã có shop **không xoá được tài khoản**; `delete-account` sẽ hỏng ở tầng khoá ngoại. Chưa sửa gì, cần một quyết định riêng | Product Owner | Bước 15 — mời người bán thật |
 | ~~B3″~~ | ✅ **ĐÃ GỠ.** Ref staging = **`utokwfcljxjkpkaqgheo`**, đã điền vào toàn bộ tài liệu. Probe chỉ đọc xác nhận project trắng: 0 `auth.users`, 0 bảng `public`, 0 bucket, 0 Edge Function, 0 secret, **0 va chạm tên object Shop** | — | — |
 | **B9** | 🔴 **`pg_cron` / `pg_net` chưa cài trên staging** — khả dụng nhưng chưa bật. Bật là thao tác **ghi**, ngoài phạm vi kiểm chỉ đọc | Cuong, dashboard | **Packet C** |
 | **B10** | ⚠️ Gói **Pro** chưa xác minh được bằng API (`plan: null`) — chỉ dashboard đọc được | Cuong, S-1b | — |
