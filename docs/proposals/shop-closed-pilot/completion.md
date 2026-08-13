@@ -977,3 +977,143 @@ duyệt → **1 đỏ**. Hoàn nguyên → 16 xanh.
 `VariantEditor` (77) · `MediaEditor` (68) · `useSellerProducts` (36) ·
 `CatalogResults` (17) — tất cả **đã nằm trong mẫu số**, nên mỗi statement phủ
 được là một statement nâng tỷ lệ. Riêng `VariantEditor` + `MediaEditor` đã dư.
+
+---
+
+## 21. CP24 — đóng coverage, và hai lỗi thật rơi ra trên đường
+
+### Kết quả: ngưỡng CI đạt, hai lượt đo giống hệt nhau
+
+| Mốc | covered / total | statements | Mẫu số |
+|---|---|---|---|
+| Đầu CP24 | 4550 / 5603 | 81,20% | — |
+| + nhóm B `VariantEditor` | 4629 / 5605 | 82,58% | **+2** |
+| + nhóm D `MediaEditor` | 4711 / 5605 | 84,04% | không đổi |
+| + nhóm E `CatalogResults` | **4726 / 5605** | **84,31%** | không đổi |
+
+Bốn metric cuối: statements **84,31%** · branches **71,77%** · functions
+**79,84%** · lines **86,18%**. Ngưỡng CI cưỡng chế duy nhất là statements 83%
+→ **biên 1,31 điểm**. `npm run test -- --coverage` chạy hai lượt liên tiếp cho
+ra **con số giống hệt**: 4726/5605.
+
+### Mẫu số: +2, và cả hai là của chính bản vá
+
+CP23 kết luận phải phủ file **đã nằm trong mẫu số**. Làm đúng thế và mẫu số
+đứng yên: 5603 → 5605, đúng **hai statement** mà bản vá `VariantEditor` thêm
+vào. **Không file production nào mới lọt vào scope** — số file trong báo cáo
+giữ nguyên 179 suốt ba nhóm.
+
+| File | Trước | Sau |
+|---|---|---|
+| `VariantEditor.tsx` | 31/108 | **109/110** |
+| `MediaEditor.tsx` | 31/99 | **89/99** |
+| `useProductMedia.ts` | 13/41 | **35/41** |
+| `CatalogResults.tsx` | 20/37 | **30/37** |
+| `ProductCard.tsx` | 2/7 | **7/7** |
+
+`useProductMedia` và `ProductCard` lên theo, không phải vô tình: test
+`MediaEditor` đi **xuyên qua hook thật** tới một `shopRpc` giả, nên khẳng định
+được **tên RPC và tham số thật** chứ không chỉ "hook được gọi"; test
+`CatalogResults` render **thẻ thật** chứ không giả lập nó, vì ranh giới riêng
+tư nằm ở chỗ thẻ đọc DTO.
+
+`useSellerProducts` (35 statement còn thiếu) **cố ý không đụng tới**: mục tiêu
+đã đạt với biên an toàn, và mục I cấm tối ưu tiếp lên 85–90% trong checkpoint
+này.
+
+### 🔴 Hai lỗi thật, cùng một gốc — `9b7445dd`
+
+`applyGroups` dựng lại ma trận sau **mọi** thay đổi nhóm, kể cả những thay đổi
+**chưa hợp lệ**. `reconcileRows` chỉ giữ dòng nào còn combination trong tích
+Descartes, nên một cấu trúc nó không đặt được dòng vào sẽ **xoá dòng đó** — mà
+`proposeGroups` lại bỏ qua cảnh báo đúng lúc nhóm không hợp lệ:
+
+```js
+const losing = validateGroups(next) ? [] : removedRows(next, rows);
+```
+
+**Lỗi 1 — gõ nhầm một nhịp là mất hàng.** Người bán sửa "Trắng, Đen" mà lỡ để
+"Trắng, Trắng" một lần blur: hai dòng Đen biến mất **không một lời cảnh báo**.
+Sửa lại chính tả **không lấy lại được** — reconcile lúc này chạy trên tập dòng
+đã không còn dữ liệu đó, nên Đen · 39 và Đen · 40 quay lại **rỗng**, mất SKU
+B39/B40 và tồn kho 5/6.
+
+Cùng cơ chế ở chiều **vào** ma trận: đặt tên nhóm trước khi gõ giá trị là một
+trạng thái không thể tránh, và nó **làm rỗng tập dòng** — nên giá của sản phẩm
+đơn thực tế **chưa bao giờ** được mang sang, dù `seed` vẫn được truyền.
+
+**Lỗi 2 — tồn kho bịa ra.** Một combination mới được mồi bằng tồn kho của dòng
+đầu: thêm size 41 thì nó tự điền số hàng của size 39. Con số đó được lưu thành
+movement `correction` trong sổ kho — tức là **đặt trước mặt người mua món hàng
+không tồn tại**.
+
+Bản vá: chỉ dựng lại khi `validateGroups(next)` sạch, và mồi **giá** chứ không
+mồi **tồn kho**. Cấu trúc sai vẫn hiện lỗi của nó, bảng đứng yên, nút Lưu vốn
+đã bị khoá.
+
+### Red-proof — 9 đột biến production, không đột biến test nào
+
+| Nhóm | Phá gì | Đỏ |
+|---|---|---|
+| B | dựng lại theo **chỉ số mảng** thay vì `option_key` | 4 |
+| B | bỏ hộp xác nhận trước thay đổi phá huỷ | 6 |
+| B | cho dòng không hợp lệ đi qua nút Lưu | 5 |
+| D | xoá **ảnh đầu** thay vì ảnh được bấm | 1 |
+| D | retry sinh **client token mới** | 1 |
+| D | reorder chỉ gửi **cặp vừa đổi chỗ**; cover upload với `purpose: "logo"` | 4 |
+| E | chuyển `internal_note` vào thẻ người mua | 1 |
+| E | nhánh lỗi rơi xuống trạng thái rỗng | 2 |
+| E | fallback sang `draft_path` khi thiếu `public_path`; unknown coi là hết hàng | 2 |
+
+Một đột biến **không đỏ ở lượt đầu** — fallback `draft_path` — vì fixture để
+đường dẫn riêng tư ở gốc `card` chứ không trong `cover`. Test đã được sửa cho
+đúng hình dạng dữ liệu thật rồi mới tính là khoá được ranh giới.
+
+### Bất biến được khoá, theo nhóm
+
+**B — `VariantEditor`, 34 test.** Dòng là **combination** chứ không phải vị
+trí: đổi thứ tự giá trị làm dòng di chuyển, còn SKU/giá/tồn kho đi theo đúng
+combination của nó. Không gì biến mất mà không được **gọi tên trước** — kèm SKU
+và tồn kho — và "Giữ như cũ" để lại bảng **giống hệt từng byte**. Trùng SKU chỉ
+đánh dấu **dòng sau** và chỉ tên dòng nó đụng. Bulk báo đúng số dòng thật sự
+đổi và hoàn tác được. Bàn desktop và thẻ điện thoại là **một state**. "Đã lưu"
+chỉ hiện sau khi máy chủ trả lời. Không ghi đè lên mảng được truyền vào (fixture
+`Object.freeze`).
+
+**D — `MediaEditor`, 26 test.** Đổi thứ tự gửi **cả danh sách** theo thứ tự mới
+kèm version, sắp theo `position` chứ không theo thứ tự dòng về. Xoá gửi id của
+**đúng ảnh được bấm**. Gán ảnh cho phiên bản nêu cả hai phía và xoá gán bằng
+`null` chứ không phải `""`. Logo và bìa là **một component hai purpose**, mà
+`purpose` chỉ tồn tại **bên trong upload target** — nên test bắt target rồi gọi
+`init()`, cách duy nhất nhìn thấy nó. File hỏng giữ Thử lại trỏ vào **token của
+chính nó** (token *là* khoá dedupe của máy chủ), và một file chưa xong **không
+bao giờ** render thành ảnh của sản phẩm. Preview ký 300 giây và **không URL đã
+ký nào lọt vào tham số RPC**.
+
+**E — `CatalogResults`, 12 test.** Bốn trạng thái là **bốn câu trả lời khác
+nhau**; lỗi tải nói rõ là lỗi tải và giữ chữ "chưa có sản phẩm nào" ra khỏi màn
+hình. Ranh giới người mua: đưa cho lưới một dòng **có sẵn** `draft_path`,
+`rendition_source_path`, `stock_on_hand`, `internal_note`, `client_token` và
+một URL đã ký, rồi khẳng định **không cái nào** chạm tới `outerHTML` — chữ,
+thuộc tính và URL cùng lúc. Ảnh chỉ có draft path phải hiện **thành không có
+ảnh**. `unknown` **không** là hết hàng.
+
+### Cổng đã chạy
+
+lint repo-wide (0 error) · TheLine (4 file thay đổi) · migration duplicates
+(357) · edge auth registry strict (81/81/81, 0 finding) · `tsc -b --noEmit` ·
+`npm run test -- --coverage` **hai lượt giống hệt** · build · bundle
+`BUNDLE_STRICT=1` **1949,6 / 1970 KB**.
+
+⚠️ Bundle còn **20,4 KB headroom** — cảnh báo có sẵn của nhánh, không phải do
+lượt này (bản vá là ~10 dòng, phần lớn là chú thích). PR sau phải trả.
+
+Không chạy lại `db reset`/pgTAP cục bộ: lượt này **không đụng SQL và không đụng
+edge function nào**, và job `pgtap` trên CI đã xanh ở `c7c321fa`. Nó chạy lại
+trên CI cùng lượt push này.
+
+### Không đổi policy coverage
+
+Không sửa provider, threshold, exclusion hay reporter. Mẫu số tăng đúng 2 và cả
+hai là statement của bản vá — mọi statement còn lại đến từ việc phủ file **đã
+có trong mẫu số**, đúng như CP23 đã đo.
