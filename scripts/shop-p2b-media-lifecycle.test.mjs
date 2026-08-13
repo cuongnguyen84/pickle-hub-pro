@@ -341,4 +341,98 @@ describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
       });
     expect(error).not.toBeNull();
   });
+
+  // ── B13 ───────────────────────────────────────────────────────────────────
+  // The sweep used to ask product_media and only product_media, so a shop's
+  // logo — same buckets, different table — was an orphan by definition. Every
+  // assertion above walks product media, which is exactly why the defect
+  // survived this file for two migrations.
+  //
+  // Proven on real bytes and through the worker, because "no cleanup job was
+  // queued" is a weaker claim than "the image is still downloadable after the
+  // worker ran". The second is what a seller experiences.
+  it("reconcile + drain leaves a live logo alone, and still removes real orphans", async () => {
+    const admin = svc();
+    const { execFileSync } = await import("node:child_process");
+    const psql = (sql) =>
+      execFileSync("docker", [
+        "exec", process.env.SUPABASE_LOCAL_DB_CONTAINER ?? "supabase_db_ajvlcamxemgbxduhiqrl",
+        "psql", "-U", "postgres", "-q", "-c", sql,
+      ], { stdio: "pipe" });
+
+    // A logo, uploaded and verified the way the seller settings screen does it.
+    const { data: init, error: ie } = await owner.client.rpc("shop_profile_media_upload_init", {
+      _shop_id: shopId, _purpose: "logo", _content_type: "image/webp",
+      _byte_size: 4000, _original_filename: "logo.webp", _client_token: `p2b7m-logo-${run}`,
+    });
+    expect(ie).toBeNull();
+    for (const [path, bytes] of [[init.draft_path, webpBytes(64, 64)], [init.rendition_path, webpBytes(512, 512)]]) {
+      const { error } = await owner.client.storage.from(DRAFT)
+        .upload(path, new Blob([bytes], { type: "image/webp" }), { contentType: "image/webp", upsert: true });
+      expect(error).toBeNull();
+    }
+    const { error: fe } = await owner.client.rpc("shop_profile_media_finalize", {
+      _media_id: init.media_id, _width: 512, _height: 512,
+    });
+    expect(fe).toBeNull();
+
+    // Publish it, the way the worker would: copy, then commit.
+    const logoPublicKey = `${shopId}/profile/logo/live-${run}.webp`;
+    const { data: blob } = await admin.storage.from(DRAFT).download(init.rendition_path);
+    const { error: upErr } = await admin.storage.from(PUBLIC_BUCKET)
+      .upload(logoPublicKey, new Uint8Array(await blob.arrayBuffer()), {
+        contentType: "image/webp", upsert: true,
+      });
+    expect(upErr).toBeNull();
+    const { error: pce } = await admin.rpc("shop_profile_media_publish_commit", {
+      _media_id: init.media_id, _public_path: logoPublicKey,
+    });
+    expect(pce).toBeNull();
+    expect(await publicHead(logoPublicKey)).toBe(200);
+
+    // Two objects nothing points at.
+    const orphanDraft = `${shopId}/mo-coi/${run}/original`;
+    const orphanPublic = `${shopId}/mo-coi/${run}.webp`;
+    for (const [bucket, path] of [[DRAFT, orphanDraft], [PUBLIC_BUCKET, orphanPublic]]) {
+      const { error } = await admin.storage.from(bucket)
+        .upload(path, new Blob([webpBytes(32, 32)], { type: "image/webp" }), {
+          contentType: "image/webp", upsert: true,
+        });
+      expect(error).toBeNull();
+    }
+
+    // Age everything of ours past both grace windows. Without this the sweep
+    // correctly ignores all of it and the test would pass while proving
+    // nothing — the failure mode this file exists to avoid.
+    psql(`UPDATE storage.objects SET created_at = now() - interval '3 days' WHERE name LIKE '${shopId}/%';`);
+
+    const { error: re } = await admin.rpc("shop_media_reconcile");
+    expect(re).toBeNull();
+
+    // Only our own rows are asserted on: the queue is global by design, and
+    // other suites run against this database at the same time.
+    const queuedPaths = async () => {
+      const { data } = await admin.from("shop_media_cleanup_jobs")
+        .select("object_path, bucket_id, state").like("object_path", `${shopId}/%`);
+      return (data ?? []).filter((j) => j.state !== "done").map((j) => j.object_path);
+    };
+    const queued = await queuedPaths();
+    expect(queued, "the draft orphan is queued").toContain(orphanDraft);
+    expect(queued, "the public orphan is queued").toContain(orphanPublic);
+    expect(queued, "the live logo rendition is NOT queued").not.toContain(logoPublicKey);
+    expect(queued, "nor the logo original").not.toContain(init.draft_path);
+    expect(queued, "nor its rendition source").not.toContain(init.rendition_path);
+
+    // The part a seller would notice.
+    await drainCleanupQueue(admin);
+    expect(await publicHead(logoPublicKey), "the logo is still being served").toBe(200);
+    const { data: stillThere, error: dlErr } = await admin.storage.from(DRAFT).download(init.draft_path);
+    expect(dlErr).toBeNull();
+    expect(stillThere).toBeTruthy();
+
+    // …and the orphans are actually gone, so the sweep did not simply stop.
+    const { data: goneDraft } = await admin.storage.from(DRAFT).download(orphanDraft);
+    expect(goneDraft, "the draft orphan was removed").toBeFalsy();
+    expect([400, 404]).toContain(await publicHead(orphanPublic));
+  }, 60_000);
 });
