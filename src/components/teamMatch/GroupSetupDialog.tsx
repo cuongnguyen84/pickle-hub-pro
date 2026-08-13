@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { suggestGroupConfigs, distributePlayersToGroups } from '@/hooks/useQuickTable';
 import type { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useI18n } from '@/i18n';
+import { Button } from '@/components/ui/button';
 
 // ─── W2.4d shared tokens ─────────────────────────────────────────────────
 const surfaceCard: React.CSSProperties = {
@@ -533,16 +534,16 @@ export function GroupSetupDialog({
                     ] as const).map(([value, label, Icon]) => {
                       const selected = assignmentMode === value;
                       return (
-                        <button
+                        <Button
                           key={value}
                           type="button"
-                          className={selected ? 'tl-btn green' : 'tl-btn'}
+                          variant={selected ? 'default' : 'outline'}
                           onClick={() => setAssignmentMode(value)}
                           style={{ justifyContent: 'center', minHeight: 44 }}
                         >
                           <Icon className="h-4 w-4" />
                           {label}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -567,17 +568,18 @@ export function GroupSetupDialog({
                               const occupied = Object.entries(manualAssignments).filter(([id, gi]) => id !== team.id && gi === groupIndex).length;
                               const full = !selected && occupied >= (targetGroupSizes[groupIndex] ?? 0);
                               return (
-                                <button
+                                <Button
                                   key={groupIndex}
                                   type="button"
-                                  className={selected ? 'tl-btn green' : 'tl-btn'}
+                                  variant={selected ? 'default' : 'outline'}
+                                  size="sm"
                                   disabled={full}
                                   onClick={() => assignTeam(team.id, groupIndex)}
                                   style={{ minWidth: 44, justifyContent: 'center', padding: '7px 10px', opacity: full ? 0.4 : 1 }}
                                   aria-label={`${team.team_name} — ${txt.groupName(groupIndex)}`}
                                 >
                                   {String.fromCharCode(65 + groupIndex)}
-                                </button>
+                                </Button>
                               );
                             })}
                           </div>
@@ -832,15 +834,15 @@ export function GroupSetupDialog({
           </button>
 
           {phase === 'config' && (
-            <button
+            <Button
               type="button"
-              className="tl-btn green"
+              variant="default"
               onClick={assignmentMode === 'manual' ? handleConfirm : startDraw}
               disabled={!selectedGroupCount || (assignmentMode === 'manual' ? !manualComplete || isCreating : total === 0)}
             >
               {assignmentMode === 'manual' ? <Check className="h-4 w-4" /> : <Shuffle className="h-4 w-4" />}
               {assignmentMode === 'manual' ? (isCreating ? txt.processing : txt.confirm) : txt.startDraw}
-            </button>
+            </Button>
           )}
 
           {phase === 'drawing' && (
