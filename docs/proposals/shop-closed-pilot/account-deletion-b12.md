@@ -1,13 +1,19 @@
 # B12 — xoá tài khoản khi người đó đang sở hữu một shop
 
-> **Trạng thái: PHÂN TÍCH + ĐỀ XUẤT. Chưa implement gì.**
+> **Trạng thái: PHƯƠNG ÁN C ĐÃ DUYỆT (13/08) VÀ ĐÃ IMPLEMENT — chỉ cục bộ.**
 >
-> Chỉ có hai file được thêm, cả hai đều là **chẩn đoán** và không đổi hành vi
-> production:
-> `scripts/shop-account-deletion-b12.test.mjs` ·
-> `supabase/tests/shop_media_reconcile_profile_gap.test.sql`.
+> | | |
+> |---|---|
+> | **B12** | ✅ đóng cục bộ bằng phương án C — §7, §8 |
+> | **B13** | ✅ đã vá — migration `20260814110000`, §6 |
+> | **B14** | ⏸ **cố ý không sửa** — hồ sơ riêng: [`docs/defects/b14-delete-account-cleanup-noop.md`](../../defects/b14-delete-account-cleanup-noop.md) |
 >
-> Không migration, không đổi RLS/RPC, không sửa `delete-account`, không sửa UI.
+> 🔴 **Chưa deploy gì.** Nhánh chưa push; migration chưa áp ở đâu; hàm edge
+> chưa deploy. Trên production hôm nay, chủ shop vẫn gặp lỗi
+> `Database error deleting user` như mô tả ở §1.
+>
+> Phần phân tích bên dưới **giữ nguyên** làm hồ sơ vì sao chọn C — nó là bằng
+> chứng, không phải bản nháp.
 
 ---
 
@@ -232,31 +238,76 @@ không liên quan gì tới Shop; Shop chỉ làm nó lộ ra.
 
 ---
 
-## 6. 🔴 B13 — chặn Packet C, phát hiện trong lúc phân tích nhánh media
+## 6. ✅ B13 — đã vá bằng migration `20260814110000` (Packet B **#20**)
 
-`shop_media_reconcile()` quét bucket công khai tìm object "không dòng nào trỏ
-tới", và **chỉ hỏi `product_media`**. `shop_profile_media` ra đời hai migration
-sau đó (`20260811220000`), dùng **cùng bucket**, và không ai quay lại dạy cho
-hàm quét biết.
+`shop_media_reconcile()` quét bucket tìm object "không dòng nào trỏ tới", và
+**chỉ hỏi `product_media`**. `shop_profile_media` ra đời hai migration sau đó
+(`20260811220000`), dùng **cùng hai bucket**, và không ai quay lại dạy cho hàm
+quét biết.
 
-Đo bằng pgTAP chạy chính hàm đó
-(`supabase/tests/shop_media_reconcile_profile_gap.test.sql`):
+**Hai đường, và đường nguy hiểm hơn không phải đường đã báo cáo lần trước:**
 
-```
-logo đã publish + verified, object upload 2 giờ trước
-→ shop_media_reconcile() = {"unstuck": 0, "orphans_queued": 1}
-→ hàng đợi dọn chứa ĐÚNG đường dẫn logo đang sống
-```
+| Bucket | Ân hạn | Trạng thái thật |
+|---|---|---|
+| **draft** | 24 giờ | 🔴 **có thể xảy ra ngay hôm nay** — màn cài đặt shop upload logo/ảnh bìa vào đúng bucket này. Bản gốc và rendition source của mọi logo là "mồ côi" sau 24h |
+| **public** | 1 giờ | tiềm ẩn — `shop_profile_media_publish_commit()` **chưa có caller production nào**, nên chưa có object logo nào nằm trong bucket công khai |
 
-**Chưa từng xảy ra vì cron chưa từng được deploy ở đâu.** Môi trường đầu tiên
-bật nó — staging ở Packet C — sẽ xoá mọi logo và ảnh bìa **1 giờ sau khi upload**.
+> Đính chính so với báo cáo CP16: câu "mất logo sau 1 giờ" đúng về cơ chế nhưng
+> nhầm về đường. Đường **có thật hôm nay** là draft/24h; đường public/1h chỉ nổ
+> khi có thứ gì đó gọi publish cho profile media.
 
-Vá là một điều kiện `NOT EXISTS` thứ hai trong vòng quét, tức một migration mới.
-**Chưa viết**, vì migration cần được duyệt và Packet B đang đóng băng ở 19 file.
+Cả hai chưa từng nổ **vì cron chưa từng được deploy ở đâu**.
+
+### Bản vá không phải một điều kiện loại trừ
+
+Thêm "…và nó không phải logo" sẽ vá triệu chứng và giữ nguyên hình dạng của
+lỗi: hai miền media, một vòng quét biết một miền, và một miền thứ ba sau này
+không ai nhớ. Thứ thiếu là một **định nghĩa**, nên migration viết ra nó:
+
+`shop_media_referenced_objects()` — mọi cặp `(bucket, path)` mà hệ thống mong
+đợi tồn tại, từ **cả hai** miền, qua **mọi cột có thể chứa key**:
+`draft_path`, `rendition_source_path`, `public_path` của `product_media` và
+`shop_profile_media`. Vòng quét trở thành **phần bù** của tập đó.
+
+### Và nó đóng luôn một race mà ân hạn chỉ che *gần như*
+
+Rendition sản phẩm được worker copy tới key công khai **rồi mới** commit. Giữa
+hai việc đó, object tồn tại và không dòng nào trỏ tới nó. Bản cũ đặt cược vào
+"một giờ là đủ lâu". Key công khai là **tất định** (`shop/product/media-v<n>.webp`,
+do `product_publish_prepare` sinh), nên tập tham chiếu chứa luôn key mà một ảnh
+đã verified **sắp** được publish tới — cửa sổ đóng hẳn thay vì đóng *chắc là*.
+
+Profile media không có key tất định (commit nhận path từ worker), nên ở đó vẫn
+là ân hạn làm việc. Nói ra, không che.
+
+### Kiểm chứng
+
+`supabase/tests/shop_media_reconcile.test.sql` — **17 assertion**, một thế giới
+chứa đủ 10 trường hợp phải phân biệt: logo sống · cover sống · ảnh gốc sản phẩm
+· rendition đang phục vụ · original+rendition profile · mồ côi ở draft · mồ côi
+ở public · object đã có job · object đang giữa chừng publish + object trong ân
+hạn · shop active và shop suspended.
+
+Byte thật, qua worker thật: `scripts/shop-p2b-media-lifecycle.test.mjs` publish
+một logo, chạy reconcile thật, drain bằng vòng lặp worker thật, rồi khẳng định
+**ảnh vẫn tải được** — vì "không có job nào được xếp hàng" là lời khẳng định yếu
+hơn thứ người bán thật sự nhìn thấy.
+
+Đỏ trước, xanh sau — phá **định nghĩa ở call site production**: bỏ nửa profile
+media → **5 đỏ**; bỏ key publish tất định → **4 đỏ**.
+
+### Một finding giữ lại, không mở rộng
+
+Vòng quét vẫn đi qua **toàn bộ** hai bucket mỗi lần chạy. `EXPLAIN` cho thấy nó
+dùng bitmap index scan giới hạn theo bucket, tập tham chiếu được materialise
+một lần, và anti-join với hàng đợi là index-only — đúng ở quy mô pilot (vài
+trăm tới vài nghìn object). **Không phân trang**, có chủ ý: khi số object lên
+tới hàng chục nghìn, đây là chỗ phải xem lại, và đó là một quyết định riêng
+chứ không phải một bản redesign nhét vào bản vá.
 
 ---
 
-## 7. Khuyến nghị: **C**, đúng như Product Owner phác
+## 7. Quyết định: **C** — đã duyệt và đã implement
 
 Lý do C thắng ở pilot này không phải vì nó dễ nhất, mà vì:
 
@@ -282,63 +333,143 @@ Và điều C **không** được phép là: nói dối. Cụ thể:
 - Đây là **giải pháp tạm cho closed pilot**, không phải luồng tự phục vụ hoàn
   chỉnh. Nói vậy trong runbook, và không mô tả khác đi ở bất cứ đâu.
 
-### Runbook offboarding (admin) — thứ tự bắt buộc
+### Runbook offboarding chủ shop — 7 bước, thứ tự bắt buộc
 
-```
-1. Xác minh danh tính người yêu cầu qua email đã đăng ký.
-2. shop.state → 'suspended'   ← trigger thu hồi rendition công khai + ảnh hồ sơ
-   🔴 PHẢI làm qua màn admin (phiên aal2). shops_guard_privileged_columns
-      im lặng ghi đè NEW.state := OLD.state khi is_admin() sai — một lệnh
-      UPDATE chạy bằng psql là NO-OP CÂM, không báo lỗi, và trigger thu hồi
-      ảnh cũng không chạy. Bẫy này đã bắt được một lần ở P2b.
-3. Đợi hàng đợi dọn ảnh chạy hết; xác nhận URL công khai trả 404.
-4. Xuất bản ghi cần giữ (quyết định kiểm duyệt, bằng chứng chấp thuận) nếu
-   đang có tranh chấp — legal_acceptances sẽ CASCADE mất ở bước 6.
-5. Xoá shop  → cây CASCADE dọn products/media/contacts/lịch sử.
-6. Xoá auth user → lúc này RESTRICT không còn chặn.
-7. Ghi lại: ai yêu cầu, ai thực hiện, lúc nào.
-```
+> Đây là **quy trình thủ công cho closed pilot**, không phải luồng tự phục vụ.
+> Không bước nào chạy tự động, và không bước nào được gộp.
+>
+> 🔴 **Không có bước nào tự xoá shop, catalog hay tài khoản.** Bước 7 chỉ được
+> thực hiện khi có một quyết định riêng cho **chính yêu cầu đó**.
 
-Bước 3 **không tự động** khi cron chưa deploy — trước Packet C phải xoá tay.
-Bước 4 tồn tại vì bước 6 huỷ bằng chứng, và đó là thiết kế chứ không phải lỗi.
+**1. Xác minh người yêu cầu.**
+Yêu cầu phải đến từ **chính địa chỉ email đã đăng ký** của chủ shop. Trả lời
+vào địa chỉ đó và chờ xác nhận. Không xử lý yêu cầu đến từ Zalo/Messenger hay
+từ một email khác — mục 19 của Quy chế nói email là kênh chính thức, và đây
+đúng là loại việc cần một hồ sơ.
+
+**2. Ghi nhận shop và phạm vi dữ liệu.**
+Ghi lại `shop_id`, slug, số sản phẩm đã đăng, số ảnh, có tranh chấp/khiếu nại
+đang mở hay không. Đây là thứ quyết định bước 6 và bước 7 được phép làm gì.
+
+**3. Đình chỉ shop bằng đúng RPC/màn hình admin, phiên AAL2.**
+```
+/admin/shop/... → Đình chỉ shop     (KHÔNG psql, KHÔNG UPDATE tay)
+```
+🔴 `shops_guard_privileged_columns` im lặng ghi đè `NEW.state := OLD.state`
+khi `is_admin()` sai. Một lệnh `UPDATE public.shops SET state='suspended'`
+chạy bằng psql là **NO-OP CÂM**: không lỗi, không đổi gì, và
+`shops_revoke_media_on_state_change` **không chạy** — nên ảnh vẫn công khai
+trong khi bảng điều khiển trông như đã đình chỉ. Bẫy này đã bắt được một lần
+ở P2b.
+
+**4. Xác minh phần công khai đã biến mất.**
+Trang shop và trang sản phẩm trả về "không tồn tại"; `shop_public_shop` /
+`public_products` không còn dòng nào của shop này. Kiểm bằng một phiên **ẩn
+danh**, không phải phiên admin.
+
+**5. Xác minh job thu hồi ảnh đã được xếp hàng.**
+`shop_media_cleanup_jobs` có job `reason='suspend'` cho từng rendition công
+khai của shop (sản phẩm **và** logo/ảnh bìa — sau bản vá B13 thì cả hai đều
+được vòng quét hiểu đúng). Nếu **không có job nào**, bước 3 đã không thực sự
+chạy: quay lại bước 3.
+
+**6. Đợi worker drain và kiểm tra sức khoẻ.**
+`shop_media_cleanup_health` → `pending` về 0, `failed` = 0, `stuck` = 0. Xác
+nhận URL công khai của ảnh trả 404.
+⚠️ Khi cron chưa deploy (trước Packet C), **không có worker nào chạy**: phải
+drain tay và ghi rõ đã làm bằng tay.
+
+**7. Chỉ sau khi xử lý dữ liệu/audit theo policy — mới đóng tài khoản.**
+Trước khi xoá bất cứ thứ gì:
+- xuất bản ghi cần giữ nếu đang có tranh chấp (quyết định kiểm duyệt, bằng
+  chứng chấp thuận quy chế) — `legal_acceptances` **CASCADE mất** cùng tài
+  khoản, và đó là thiết kế của CP12, không phải lỗi;
+- có quyết định riêng cho yêu cầu này: xoá shop hay giữ shop ở trạng thái đình
+  chỉ, xoá tài khoản hay chỉ đóng shop.
+
+Chỉ khi đã có quyết định đó mới thực hiện thao tác tương ứng, và ghi lại: ai
+yêu cầu, ai duyệt, ai thực hiện, lúc nào. Sau khi shop không còn, chủ shop
+dùng lại được nút xoá tài khoản bình thường — không có đường riêng nào cả.
 
 ### Việc C KHÔNG giải quyết, và không giả vờ giải quyết
 
-- Phát hiện 1 (`delete-account` dọn hụt) vẫn còn. Nó **không** gây mất dữ liệu
-  hôm nay, nhưng nó là một quả mìn: cấp grant mà không sửa luồng sẽ biến vòng
-  lặp đang vô hại thành xoá thật, chạy **trước** `deleteUser`, không transaction.
-- Phát hiện 2 (hộp thoại hứa xoá giải đấu) vẫn còn. Sửa câu chữ là việc nhỏ và
-  nằm ngoài Shop; đề nghị làm cùng lúc vì cùng một hộp thoại.
-- B13 vẫn còn và **chặn Packet C**.
+- **B14** (`delete-account` dọn hụt) vẫn còn, **cố ý**. Nó không gây mất dữ
+  liệu hôm nay, nhưng nó là một quả mìn: cấp grant mà không sửa luồng sẽ biến
+  vòng lặp đang vô hại thành xoá thật, chạy **trước** `deleteUser`, không
+  transaction. Hồ sơ riêng:
+  [`docs/defects/b14-delete-account-cleanup-noop.md`](../../defects/b14-delete-account-cleanup-noop.md).
+- C **không phải** luồng tự phục vụ hoàn chỉnh. Nó là một quy trình thủ công
+  cho 3–5 người bán, và không được mô tả khác đi ở bất cứ đâu.
 
 ---
 
-## 8. Câu chữ cần đổi nếu chọn C
+## 8. Đã implement những gì
 
-Không câu nào trong **Chính sách bảo mật** cần đổi — bản vừa duyệt đã nói đúng.
+### Máy chủ — `supabase/functions/delete-account/index.ts`
 
-Cần thêm/sửa trong `DeleteAccountDialog` + `useDeleteAccount` (i18n VI/EN):
+Kiểm quyền sở hữu **trước bước dọn đầu tiên**, trả 409:
 
-| Chỗ | Hiện tại | Đề xuất |
+```json
+{ "error": "shop_owner_offboarding_required",
+  "code":  "shop_owner_offboarding_required",
+  "shop_count": 1,
+  "contact_email": "tapickleballvn@gmail.com",
+  "message": "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, vui lòng gửi yêu cầu tới tapickleballvn@gmail.com." }
+```
+
+Bốn điều đáng nói:
+
+1. **Thứ tự là toàn bộ vấn đề.** Bên dưới chỗ kiểm này là vòng lặp 13 bảng rồi
+   mới tới `deleteUser`, **không transaction**. Một lời từ chối đến từ Postgres
+   ở bước cuối là lời từ chối đến **sau khi** tài khoản đã bị tháo rời.
+2. **Không dựa vào FK làm hợp đồng UX.** `RESTRICT` vẫn là lớp cuối, nhưng
+   GoTrue nuốt nó thành `"Database error deleting user"`.
+3. **Lỗi khi kiểm thì đóng cửa** (`503 ownership_check_failed`). Không biết
+   tài khoản có shop hay không thì không phải lý do để bắt đầu xoá.
+4. **Quyền sở hữu, không phải tư cách thành viên.** Manager/support không bị
+   chặn — họ không sở hữu gì, nên không có gì mồ côi khi họ rời đi.
+
+Replay và hai request song song trả **cùng một 409**, không side effect: chưa
+có gì chạy để mà chạy dở.
+
+### Giao diện — `DeleteAccountDialog` + `useDeleteAccount`
+
+Chủ shop **không thấy ô gõ `DELETE`** và không có nút xác nhận. Họ thấy: điều
+gì đang chặn, vì sao pilot xử lý tay, và một nút **soạn** email.
+
+Câu giữ cho việc này trung thực: *"Nút bên dưới chỉ mở ứng dụng email của
+anh/chị — nó KHÔNG tự gửi yêu cầu."* Mở mail client không phải là một yêu cầu
+đã tới nơi, và người ngồi chờ hồi âm cho một email chưa từng gửi là đúng thứ
+câu đó ngăn lại.
+
+Câu hỏi "có sở hữu shop không" ở client dùng lại `useMyShop` — hook vốn đã
+nghĩa là `owner_user_id = tôi` — nên hai đường không thể lệch nhau.
+
+### Câu chữ — đã sửa
+
+| Chỗ | Trước | Sau |
 |---|---|---|
-| Danh sách "sẽ xoá" | "Các giải đấu bạn đã tạo" | 🔴 **Bỏ hoặc sửa** — không đúng (`SET NULL`) |
-| Trước khi mở hộp thoại | không kiểm tra gì | Nếu người này sở hữu shop: **không hiện ô gõ `DELETE`**; hiện lời giải thích + nút mở email |
-| Nội dung cho chủ shop | — | "Tài khoản này đang sở hữu shop **{tên}**. Vì shop còn sản phẩm và lịch sử kiểm duyệt, việc đóng tài khoản do ThePickleHub xử lý thủ công trong giai đoạn thử nghiệm. Gửi yêu cầu tới `tapickleballvn@gmail.com` từ chính email đã đăng ký; chúng tôi sẽ xác nhận trước khi làm bất cứ điều gì." |
-| Toast lỗi | "Failed to delete account" | Với chủ shop, luồng này không được chạm tới nữa. Giữ nguyên cho mọi trường hợp khác |
+| `deleteDataTournaments` | "Các giải đấu bạn đã tạo" (**sai**: `SET NULL`) | "Liên kết giữa bạn và các giải đấu bạn đã tạo (giải đấu vẫn còn, nhưng không còn gắn tên bạn)" |
+| Chính sách bảo mật | — | **không đổi**; 21 assertion xác nhận vẫn đúng |
 
-Một câu **không** được viết: bất cứ điều gì hàm ý tài khoản đã đóng, đang chờ
-đóng tự động, hay sẽ tự đóng sau N ngày.
+### Kiểm chứng
+
+| Bộ | Nội dung |
+|---|---|
+| `scripts/shop-account-deletion-b12.test.mjs` | 7 case qua **đúng call site production**: control · B14 · từ chối có mã ổn định · không đổi gì · replay song song · manager không bị chặn · sau offboarding thì xoá bình thường |
+| `src/components/account/__tests__/delete-account-dialog.test.tsx` | 6 case: không có ô gõ · CTA mailto · không tuyên bố đã gửi · không gọi được mutate · người thường **không** hồi quy · câu chữ giải đấu |
+
+Đỏ trước, xanh sau — phá **sản phẩm**, không phá test: gỡ khối kiểm ở máy chủ
+→ 2 đỏ; ép `ownsShop = false` ở component → 4 đỏ.
 
 ---
 
-## 9. Quyết định cần từ Product Owner
+## 9. Quyết định đã có, và cái còn lại
 
-1. **Chọn A / B / C** cho closed pilot. Khuyến nghị: **C**.
-2. **B13** — cho viết migration vá vòng quét orphan? Nó **chặn Packet C**.
-3. **Phát hiện 1** — quét grant cho `delete-account` là việc riêng, ngoài Shop.
-   Làm bây giờ hay sau pilot?
-4. **Phát hiện 2** — sửa câu "các giải đấu bạn đã tạo" cùng lúc với C?
-5. **§3.4** — bằng chứng chấp thuận CASCADE mất theo tài khoản: giữ nguyên cho
-   pilot, hay giữ bản ẩn danh?
-
-Chưa implement gì cho tới khi có quyết định.
+| # | Việc | Trạng thái |
+|---|---|---|
+| 1 | Chọn A/B/C | ✅ **C**, đã implement |
+| 2 | Vá B13 | ✅ migration `20260814110000` |
+| 3 | B14 | ⏸ **không sửa**, có hồ sơ riêng; 🔴 cấm cấp grant lẻ |
+| 4 | Câu "các giải đấu bạn đã tạo" | ✅ đã sửa cùng C |
+| 5 | §3.4 — bằng chứng chấp thuận CASCADE mất theo tài khoản | ⬜ **còn mở**: giữ nguyên cho pilot, hay giữ bản ẩn danh (hash + phiên bản + thời điểm, không danh tính)? Chỉ cần trả lời trước khi có thanh toán |

@@ -2,9 +2,9 @@
 
 > **Câu trạng thái được phép dùng:**
 >
-> `Seller Rules v1 and the Privacy disclosure are approved and applied locally;
-> closed-pilot package pending a Product Owner decision on account deletion
-> (B12) and approval to execute Packet S/B on staging.`
+> `Seller Rules v1, the Privacy disclosure, the B13 media fix and the B12
+> owner-offboarding block are approved and applied locally; closed-pilot
+> package pending approval to execute Packet S/B on staging.`
 >
 > **CẤM dùng:** *pilot deployed* · *production ready* · *remote verified* ·
 > *preview live* · *seller onboarded*.
@@ -19,9 +19,12 @@
 | Nhánh | **`feat/shop-closed-pilot`** |
 | Worktree | `/Users/cm10/pickle-hub-pro/.claude/worktrees/shop-closed-pilot` |
 | Trạng thái push | **CHƯA push** — nhánh chỉ tồn tại cục bộ |
-| Commit trên `f172a441` | **27** |
+| Commit trên `f172a441` | **31** |
 
 ```
+81604053 fix(account): block shop-owner self-service deletion safely
+9ac773bf fix(shop-media): reconcile product and profile media safely
+c673df59 docs(shop-pilot): CP16 record — gates, and a blocker that moved inward
 f9639ae7 style(privacy): drop an unused import from the disclosure test
 d7ab073e test(shop): what account deletion actually does, measured at the call site
 b69b3cb7 feat(privacy): name the data Shop actually processes
@@ -52,7 +55,74 @@ c3228f23 fix(shop): the media integration teardown walked two levels, not three
 
 ---
 
-## 2. CP16 — Chính sách bảo mật nói tên dữ liệu Shop, và ba phát hiện về xoá tài khoản
+## 2. CP17 — B13 đã vá, B12 đóng bằng phương án C, B14 để riêng
+
+### B13 — vòng quét dọn ảnh giờ hiểu cả hai miền media
+
+Migration `20260814110000` = **Packet B #20**. Nó không thêm một điều kiện loại
+trừ; nó viết ra thứ đang thiếu: `shop_media_referenced_objects()` — mọi cặp
+`(bucket, path)` hệ thống mong đợi tồn tại, từ **cả** `product_media` **và**
+`shop_profile_media`, qua **mọi cột chứa key**. Vòng quét là phần bù của tập đó,
+nên miền media thứ ba trong tương lai chỉ cách một `UNION`.
+
+Nhân tiện đóng một race mà ân hạn chỉ che *gần như*: key công khai của rendition
+sản phẩm là **tất định**, nên tập tham chiếu chứa luôn key mà một ảnh đã verified
+**sắp** được publish tới.
+
+🔴 **#20 phải áp trước khi bất kỳ môi trường nào bật cron dọn ảnh.**
+
+Đính chính CP16: đường nguy hiểm **có thật hôm nay** là **draft/24 giờ** (màn
+cài đặt shop upload logo vào bucket đó), không phải public/1 giờ — bucket công
+khai chưa có object profile nào vì `shop_profile_media_publish_commit()` chưa có
+caller production.
+
+### B12 — phương án C, và máy chủ là chỗ cưỡng chế
+
+`delete-account` hỏi **một câu trước bước dọn đầu tiên**: tài khoản này có sở
+hữu shop không. Có → **409 `shop_owner_offboarding_required`**, chưa đụng gì.
+
+Thứ tự là toàn bộ vấn đề: bên dưới chỗ kiểm là vòng lặp 13 bảng rồi mới tới
+`deleteUser`, **không transaction**. Một lời từ chối đến từ Postgres ở bước cuối
+là lời từ chối đến **sau khi** tài khoản đã bị tháo rời. Hôm nay điều đó không
+xảy ra — và chỉ vì may (B14). Khi B14 được sửa, chỗ kiểm này giữ cho nó an toàn.
+
+**Quyền sở hữu, không phải tư cách thành viên**: manager/support không bị chặn.
+
+Hộp thoại hỏi cùng câu đó qua `useMyShop` — hook vốn đã nghĩa là
+`owner_user_id = tôi` — và với chủ shop thì **không có ô gõ `DELETE`**, chỉ có
+lời giải thích và một nút **soạn** email. Câu giữ cho nó trung thực: *"nút bên
+dưới chỉ mở ứng dụng email — nó KHÔNG tự gửi yêu cầu."*
+
+Runbook offboarding 7 bước: [`account-deletion-b12.md` §7](./account-deletion-b12.md).
+
+### B14 — cố ý không sửa, và có một cảnh báo đi kèm
+
+Hồ sơ riêng: [`docs/defects/b14-delete-account-cleanup-noop.md`](../../defects/b14-delete-account-cleanup-noop.md),
+đã trỏ từ **Known Bugs** trong `CLAUDE.md`.
+
+🔴 **Không cấp các grant `service_role` còn thiếu như một bản vá lẻ.** Grant
+không phải là lỗi; lỗi là một chuỗi xoá nhiều bước không bảo đảm thứ tự, với một
+phản hồi thành công không phụ thuộc vào chính các bước của nó. Cấp grant lẻ biến
+một no-op vô hại thành xoá thật chạy trước `deleteUser`.
+
+Câu chữ đã sửa cùng lúc: hộp thoại từng hứa xoá "các giải đấu bạn đã tạo" trong
+khi `quick_tables`/`team_match_tournaments` là `SET NULL` và giải đấu **sống
+sót**.
+
+### Hai phát hiện về chính bộ máy kiểm thử
+
+- 🔴 **Edge runtime đang phục vụ `supabase/functions` của worktree KHÁC**
+  (`shop-p2b`), vì `supabase start` từng chạy từ đó. `docker restart` không sửa
+  được — mount nằm trong định nghĩa container. Đã `stop` + `start` lại từ
+  worktree này. `diff -rq` cho thấy chỉ **một** file khác nhau, nên các cổng
+  trước đó vẫn đứng vững.
+- 🔴 **Teardown nói dối lần thứ sáu**: job do reconciler ghi mang `shop_id`
+  **NULL**, nên `afterAll` xoá theo `shop_id` để sót 2 dòng. Đã vá bằng cách xoá
+  thêm theo `object_path`.
+
+---
+
+## 3. CP16 — Chính sách bảo mật nói tên dữ liệu Shop, và ba phát hiện về xoá tài khoản
 
 ### Privacy — B11 đóng cục bộ
 
@@ -93,7 +163,7 @@ biến vòng lặp vô hại đó thành một lần xoá thật, chạy trướ
 
 ---
 
-## 3. CP15 — Quy chế v1 được duyệt, và được ban hành
+## 4. CP15 — Quy chế v1 được duyệt, và được ban hành
 
 Product Owner **APPROVE** toàn văn ngày 13/08. Bản ghi:
 
@@ -161,7 +231,7 @@ lại: nó **không** dựng fixture nào, và đọc đúng dòng migration đ�
 
 ---
 
-## 4. CP13 — bản dự thảo quy chế, và mô hình bản-nháp
+## 5. CP13 — bản dự thảo quy chế, và mô hình bản-nháp
 
 > Ghi lại nguyên trạng lúc CP13. Văn bản này **đã được duyệt** ở CP15 (§2);
 > phần dưới mô tả nó khi còn là bản nháp.
@@ -202,7 +272,7 @@ cố duyệt một bản nháp bắt được. Đóng băng chuyển sang **lúc
 
 ---
 
-## 5. CP12 — blocker B5 đã đóng
+## 6. CP12 — blocker B5 đã đóng
 
 Chi tiết đầy đủ: [`seller-rules-enforcement.md`](./seller-rules-enforcement.md).
 
@@ -253,7 +323,7 @@ không tin.
 
 ---
 
-## 6. Ba defect các cổng bắt được trong CP12
+## 7. Ba defect các cổng bắt được trong CP12
 
 1. **Thiếu grant `service_role` trên `legal_documents`.** Bộ HTTP integration
    trả `42501` ngay lần chạy đầu. `service_role` đi vòng qua RLS nhưng **không**
@@ -274,23 +344,24 @@ không tin.
 
 ---
 
-## 7. Cổng kiểm tra — tất cả XANH
+## 8. Cổng kiểm tra — tất cả XANH
 
 Cơ sở dữ liệu dựng lại từ số không. Delta đầy đủ:
 [`gate-results.md`](./gate-results.md).
 
-| Cổng | Kết quả sau CP16 |
+| Cổng | Kết quả sau CP17 |
 |---|---|
 | `supabase db reset --local` | exit 0 |
-| Ledger parity | **352 / 352** |
-| pgTAP | **1 335 PASS** · 36 file · exit 0 |
-| Unit (gồm storage + vòng đời ảnh trên stack thật) | **2 088 PASS** · 10 skipped · 161 file |
+| Ledger parity | **353 / 353** |
+| pgTAP | **1 348 PASS** · 36 file · exit 0 |
+| Unit (gồm storage + vòng đời ảnh trên stack thật) | **2 096 PASS** · 10 skipped · 162 file |
 | HTTP integration quy chế, stack thật | **11 PASS · 0 skip** |
-| Chẩn đoán xoá tài khoản, gọi thật hàm edge | **6 PASS** |
+| Hợp đồng xoá tài khoản, gọi thật hàm edge | **7 PASS** |
+| Vòng đời ảnh byte thật (gồm case B13) | **8 PASS** |
 | noindex ở edge | **116 PASS** |
 | `tsc -b` · `eslint` · `build` | exit 0 · **0 lỗi** · exit 0 |
 | `BUNDLE_STRICT=1` | exit 0 |
-| Dọn dữ liệu, đếm độc lập | **10/10 bộ đếm = 0** |
+| Dọn dữ liệu, đếm độc lập | **10/10 bộ đếm = 0**, gồm cả hai bucket |
 
 `build:proto`, Q01–Q04 và nghiệm thu P2b **không chạy lại** ở CP15 — không có
 mã client nào đổi. Kết quả CP13 của chúng vẫn là kết quả mới nhất, và chép nó
@@ -299,9 +370,9 @@ sang một cột "sau CP15" sẽ làm nó trông như vừa được đo.
 ### Bundle delta
 
 ```
-              trước CP12    sau CP12    sau CP13    sau CP15    sau CP16    tổng
-INITIAL gz     226,6 KB     226,6 KB    226,6 KB    226,6 KB    226,6 KB    0,0 KB   / 280 KB
-Tổng gz JS    1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB   1939,2 KB   +3,9 KB   / backstop 1970 KB
+              trước CP12    sau CP13    sau CP15    sau CP16    sau CP17    tổng
+INITIAL gz     226,6 KB     226,6 KB    226,6 KB    226,6 KB    226,7 KB   +0,1 KB   / 280 KB
+Tổng gz JS    1935,3 KB    1937,8 KB   1938,2 KB   1939,2 KB   1940,8 KB   +5,5 KB   / backstop 1970 KB
 ```
 
 **Backstop KHÔNG nâng.** Còn 30,8 KB. Không thêm dependency nào. CP15 không đổi
@@ -311,7 +382,7 @@ nằm trong `INITIAL`.
 
 ---
 
-## 8. Quyết định Product Owner đã áp dụng
+## 9. Quyết định Product Owner đã áp dụng
 
 | # | Quyết định | Đã làm gì |
 |---|---|---|
@@ -323,7 +394,7 @@ nằm trong `INITIAL`.
 
 ---
 
-## 9. Thứ tự thi hành mới
+## 10. Thứ tự thi hành mới
 
 ```
  1. Cưỡng chế seller-rules ở cục bộ                     ✅ XONG
@@ -331,7 +402,7 @@ nằm trong `INITIAL`.
  3. Chốt effective_at + approved_by                     ✅ 14/08 00:00+07 · Cuong Nguyen
  4. Đóng băng content hash trên bản ĐÃ DUYỆT            ✅ fb62bd47…c70c98, migration #19
  5. Product Owner duyệt bản sửa Privacy                 ✅ 13/08 — đã áp, CHƯA deploy
- 5b. Product Owner chọn phương án B12                   ⬜ CHẶN bước 15
+ 5b. Chọn phương án B12 + vá B13                        ✅ 13/08 — C + migration #20
  6. Packet S — cấu hình staging (project đã tạo)        ⬜
  7. Packet B-1 — 19 migration lên STAGING               ⬜
  8. Packet C-1 — function + cron trên STAGING           ⬜
@@ -344,24 +415,24 @@ nằm trong `INITIAL`.
 15. Wave 1 — một người bán thật                         ⬜
 ```
 
-Bước 5b chặn bước 15, **không** chặn bước 6: hạ tầng dựng được trong lúc chờ
-quyết định về xoá tài khoản; chỉ việc mời người bán thật là không.
+Không còn blocker sản phẩm nào chặn bước 15 — mọi thứ còn lại là **quyền chạy
+remote** và bốn ô cấu hình trên dashboard.
 
-🔴 **Một ngoại lệ mới**: **B13 chặn bước 8** (Packet C-1). Bật cron dọn ảnh
-trước khi vá vòng quét orphan là mất mọi logo shop sau 1 giờ. Đây là blocker
-đầu tiên nằm **trong** chuỗi hạ tầng chứ không nằm ở cuối.
+🔴 **Ràng buộc thứ tự còn lại, và nó tuyệt đối**: Packet B **#20** phải chạy
+**trước** khi bật cron dọn ảnh ở bất kỳ môi trường nào. Bật cron trước #20 là
+mất ảnh của người bán, không phải một cảnh báo.
 
 ---
 
-## 10. Blocker còn lại
+## 11. Blocker còn lại
 
 | # | Blocker | Ai gỡ | Chặn |
 |---|---|---|---|
 | ~~B4″~~ | ✅ **ĐÃ GỠ 13/08 (CP15).** Quy chế v1 được duyệt toàn văn, `approved_at` `2026-08-13T07:30:00+07:00`, `effective_at` `2026-08-14T00:00:00+07:00`, hash `fb62bd47…c70c98`, ban hành bằng migration Packet B **#19**. Cửa vẫn đóng trên mọi môi trường **chưa chạy #19** — đúng thiết kế | — | — |
 | ~~B11~~ | ✅ **ĐÓNG CỤC BỘ 13/08.** Chính sách bảo mật nay nêu tên bốn nhóm dữ liệu Shop, mục đích, phạm vi người đọc và vòng đời; ngày hiệu lực `14/08/2026`. Khoá bằng 21 assertion. 🔴 **CHƯA DEPLOY** — bản đang phục vụ ở `thepicklehub.net/privacy` vẫn là bản cũ cho tới khi nhánh được merge (bước 13) | — | — |
-| **B12** | 🔴 **Chủ shop không xoá được tài khoản** (`shops.owner_user_id` = `RESTRICT`). Đã tái hiện qua **đúng call site production**. Phân tích + 3 phương án + runbook: [`account-deletion-b12.md`](./account-deletion-b12.md). Khuyến nghị **C** (chặn tự xoá, offboarding do admin). **Chưa implement gì** | Product Owner chọn phương án | Bước 15 — mời người bán thật |
-| **B13** | 🔴 **`shop_media_reconcile()` xếp logo/ảnh bìa ĐANG SỐNG vào hàng đợi xoá** — vòng quét orphan chỉ biết `product_media`, không biết `shop_profile_media` (ra đời 2 migration sau). Chưa từng xảy ra vì **cron chưa deploy ở đâu**; môi trường đầu tiên bật cron mất mọi logo sau 1 giờ. Đo bằng pgTAP chạy chính hàm đó | cần 1 migration, chờ duyệt | **Packet C** |
-| **B14** | ⚠️ `delete-account` **báo thành công trong khi cả 13 bước dọn dữ liệu thất bại** (10 × thiếu grant `service_role`, 2 bảng không tồn tại, 1 cột đổi tên). Không mất dữ liệu — CASCADE gánh hết — nhưng hộp thoại hứa xoá "các giải đấu bạn đã tạo" trong khi `quick_tables`/`team_match_tournaments` là `SET NULL` và **sống sót**. Ngoài phạm vi Shop | Product Owner | — |
+| ~~B12~~ | ✅ **ĐÓNG CỤC BỘ 13/08 bằng phương án C.** Máy chủ từ chối chủ shop bằng `409 shop_owner_offboarding_required` **trước** bước dọn đầu tiên; giao diện giải thích và mở email; runbook 7 bước trong [`account-deletion-b12.md`](./account-deletion-b12.md). 🔴 **Chưa deploy** | — | — |
+| ~~B13~~ | ✅ **ĐÃ VÁ** — migration `20260814110000` (Packet B **#20**) thay điều kiện loại trừ bằng một định nghĩa: `shop_media_referenced_objects()`. 🔴 **#20 phải áp TRƯỚC khi bật cron ở bất kỳ môi trường nào** | — | — |
+| **B14** | ⚠️ `delete-account` **báo thành công trong khi cả 13 bước dọn dữ liệu thất bại**. Hồ sơ riêng: [`docs/defects/b14-delete-account-cleanup-noop.md`](../../defects/b14-delete-account-cleanup-noop.md); đã vào **Known Bugs** của `CLAUDE.md`. 🔴 **Cấm cấp grant lẻ**. Câu chữ sai về giải đấu **đã sửa**. Điều kiện tiên quyết trước khi mở tự-xoá diện rộng | nền tảng | — |
 | ~~B3″~~ | ✅ **ĐÃ GỠ.** Ref staging = **`utokwfcljxjkpkaqgheo`**, đã điền vào toàn bộ tài liệu. Probe chỉ đọc xác nhận project trắng: 0 `auth.users`, 0 bảng `public`, 0 bucket, 0 Edge Function, 0 secret, **0 va chạm tên object Shop** | — | — |
 | **B9** | 🔴 **`pg_cron` / `pg_net` chưa cài trên staging** — khả dụng nhưng chưa bật. Bật là thao tác **ghi**, ngoài phạm vi kiểm chỉ đọc | Cuong, dashboard | **Packet C** |
 | **B10** | ⚠️ Gói **Pro** chưa xác minh được bằng API (`plan: null`) — chỉ dashboard đọc được | Cuong, S-1b | — |
@@ -390,7 +461,7 @@ Patch được sinh bằng cách **áp thật rồi hoàn nguyên**, đã kiểm
 
 ---
 
-## 11. Năm packet — không cái nào được duyệt
+## 12. Năm packet — không cái nào được duyệt
 
 | Packet | Nội dung | Mục tiêu | Tier |
 |---|---|---|---|
@@ -405,21 +476,21 @@ Checklist dashboard 7 mục cho Product Owner:
 
 ---
 
-## 12. Khuyến nghị: duyệt cái gì trước
+## 13. Khuyến nghị: duyệt cái gì trước
 
 Hai việc **song song**, không phụ thuộc nhau:
 
-**1. Chọn phương án B12** ([`account-deletion-b12.md`](./account-deletion-b12.md)
-§9 — năm câu hỏi). Khuyến nghị **C**. Không cần chờ hạ tầng, và giờ nó là thứ
-**duy nhất** chặn việc mời người bán thật.
+**1. Cấp quyền chạy Packet S/B trên staging.** Ref đã có
+(`utokwfcljxjkpkaqgheo`); còn thiếu chữ ký để bắt đầu ghi. Đây giờ là thứ
+**duy nhất** chặn tiến độ.
 
-**2. Cho phép vá B13** — một migration nhỏ, nhưng nó **chặn Packet C**, tức là
-chặn cả chuỗi staging từ bước 8 trở đi. Đây là việc gấp hơn cả B12 nếu muốn
-Packet S/B/C chạy sớm.
+**2. Bốn ô dashboard**: xác nhận gói Pro (S-1b) · Redirect URL của staging ·
+bật `pg_cron`/`pg_net` (S-9) · `SHOP_PUBLIC_INDEXING` ở Preview và Production.
 
-**3. Cấp quyền chạy Packet S/B trên staging.** Ref đã có
-(`utokwfcljxjkpkaqgheo`); còn thiếu chữ ký để bắt đầu ghi, và
-`pg_cron`/`pg_net` chưa bật (ô **S-9**).
+**3. Một câu hỏi còn mở, không gấp**: §3.4 của
+[`account-deletion-b12.md`](./account-deletion-b12.md) — bằng chứng chấp thuận
+CASCADE mất theo tài khoản. Giữ nguyên cho pilot, hay giữ một bản ẩn danh? Chỉ
+cần trả lời trước khi có thanh toán.
 
 Trong lúc điền checklist, mục **S-9** (`pg_cron`/`pg_net` đã bật chưa) đáng kiểm
 sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh worker chạy theo
@@ -428,7 +499,7 @@ sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh w
 
 ---
 
-## 13. Không thao tác remote nào đã thực hiện
+## 14. Không thao tác remote nào đã thực hiện
 
 | Cấm | Trạng thái |
 |---|---|
@@ -457,7 +528,7 @@ câu lệnh nào không bắt đầu bằng `SELECT`/`WITH`. Không giá trị s
 
 ---
 
-## 14. Thao tác remote **dự kiến**, đúng thứ tự — chưa cái nào chạy
+## 15. Thao tác remote **dự kiến**, đúng thứ tự — chưa cái nào chạy
 
 Danh sách này tồn tại để một thao tác remote không bao giờ được quyết định
 ngẫu hứng giữa chừng. Mỗi dòng là một lần ghi vào một hệ thống thật.
@@ -474,9 +545,9 @@ ngẫu hứng giữa chừng. Mỗi dòng là một lần ghi vào một hệ th
 | 4 | Đặt **Site URL** + **Redirect URLs** của staging = URL preview Cloudflare | S §4 | ghi |
 | 5 | Sinh **`CRON_SECRET` MỚI** cho staging + ghi cùng giá trị vào vault `cron_secret` | S §5 · C-1 | ghi · **không sao chép của production** |
 | 6 | Áp migration **#1 → #3** | B-1 | ghi |
-| 7 | Deploy Edge Function dọn ảnh lên staging | C-1 | ghi |
-| 8 | Áp migration **#4 → #19** (#19 = Quy chế v1) | B-1 | ghi |
-| 9 | Ghi ledger cho **19** file Shop đã áp — và **chỉ** những file đó | B-1 §4 | ghi |
+| 7 | Deploy Edge Function dọn ảnh lên staging | C-1 | ghi · 🔴 **cron chỉ được bật SAU bước 8** (migration #20) |
+| 8 | Áp migration **#4 → #20** (#19 = Quy chế v1, **#20 = bản vá B13**) | B-1 | ghi |
+| 9 | Ghi ledger cho **20** file Shop đã áp — và **chỉ** những file đó | B-1 §4 | ghi |
 | 10 | Kiểm sau #19: đúng 1 dòng `seller-rules/v1`, hash `fb62bd47…c70c98` | B-1 §5 | chỉ đọc |
 | 11 | Đặt biến Cloudflare Preview `VITE_SUPABASE_*` → staging | A | ghi |
 | 12 | **Push nhánh** `feat/shop-closed-pilot` → build preview | A | ghi · **lần đầu tiên nhánh rời máy** |
@@ -489,9 +560,9 @@ ngẫu hứng giữa chừng. Mỗi dòng là một lần ghi vào một hệ th
 |---|---|---|---|
 | 15 | Chứng minh mục tiêu **lại từ đầu** | B §1 | chỉ đọc |
 | 16 | Áp migration **#1 → #3** lên production | B-2 | ghi |
-| 17 | Deploy Edge Function dọn ảnh lên production — **KHÔNG đụng `CRON_SECRET`**, 5 cron đang dùng chung nó | C-2 | ghi |
-| 18 | Áp migration **#4 → #19** lên production | B-2 | ghi |
-| 19 | Ghi ledger 19 file — **không** chèn cho 12 file ngoài Shop | B-2 | ghi |
+| 17 | Deploy Edge Function dọn ảnh lên production — **KHÔNG đụng `CRON_SECRET`**, 5 cron đang dùng chung nó | C-2 | ghi · 🔴 cron chỉ bật SAU bước 18 |
+| 18 | Áp migration **#4 → #20** lên production | B-2 | ghi |
+| 19 | Ghi ledger 20 file — **không** chèn cho 12 file ngoài Shop | B-2 | ghi |
 | 20 | Merge nhánh → web production, **`SHOP_PUBLIC_INDEXING` vẫn TẮT** | A | ghi |
 | 21 | Packet D — Wave 0, tài khoản test | D | ghi |
 | 22 | Wave 1 — người bán thật đầu tiên | D | ghi · **chặn bởi B11 (Chính sách bảo mật)** |

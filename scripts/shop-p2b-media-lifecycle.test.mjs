@@ -173,6 +173,11 @@ describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
       await walk(shopId);
     }
     await admin.from("shop_media_cleanup_jobs").delete().eq("shop_id", shopId);
+    // Jobs the reconciler wrote carry shop_id NULL — it queues an object, not a
+    // shop. Deleting by shop_id alone left two rows behind on the first run of
+    // the B13 case, which is the same teardown-lied-to-us shape this suite has
+    // hit four times. The path still starts with the shop id, so match on that.
+    await admin.from("shop_media_cleanup_jobs").delete().like("object_path", `${shopId}/%`);
     await admin.from("products").delete().eq("shop_id", shopId);
     await admin.from("shops").delete().eq("id", shopId);
     for (const u of [owner, adminUser]) if (u) await admin.auth.admin.deleteUser(u.id);

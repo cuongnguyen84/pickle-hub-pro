@@ -114,6 +114,25 @@ Only investigate if `orphans_queued` is large and repeating — that means
 publishes are failing between copy and commit. Look at
 `shop-media-lifecycle` logs for `commit_failed`.
 
+> 🔴 **Do not enable the reconcile cron on an environment that has not applied
+> migration `20260814110000`.**
+>
+> Before that migration the orphan sweep asked only `product_media`, so a
+> shop's **live logo and cover** matched its definition of an orphan — their
+> originals after 24h in the draft bucket, a published rendition after 1h in
+> the public one. Turning the cron on without the fix deletes sellers' images.
+>
+> What decides "in use" is now one definition, `shop_media_referenced_objects()`,
+> covering both `product_media` and `shop_profile_media` across every column
+> that holds a key, plus the deterministic public key a verified product image
+> is about to be published to. Adding a third media domain later means adding a
+> `UNION` there — not adding another exclusion to the sweep.
+>
+> Quick check on any environment before enabling the cron:
+> ```sql
+> SELECT to_regprocedure('public.shop_media_referenced_objects()') IS NOT NULL;
+> ```
+
 ## A suspended or closed shop
 
 Suspension already revokes: `shops_revoke_media_on_state_change` clears every

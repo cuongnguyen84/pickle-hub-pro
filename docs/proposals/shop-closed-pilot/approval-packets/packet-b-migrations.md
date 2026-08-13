@@ -21,7 +21,7 @@
 |---|---|
 | Phương thức | Management API query endpoint (`ops-runbook.md` §1) |
 | Nền tảng | nhánh `feat/shop-closed-pilot` |
-| Số file | **19** |
+| Số file | **20** |
 
 🔴 **Trước MỌI lần ghi, chạy và ĐỌC câu chứng minh mục tiêu**
 ([`packet-s-staging.md` §8](./packet-s-staging.md)). `users` hàng nghìn nghĩa là
@@ -35,7 +35,7 @@ production; ở B-1 đó là lệnh dừng.
 |---|---|
 | Remote **chưa có** object Shop nào — 0 bảng, 0 type, 0 function, 0 bucket, 0 cron job | probe chỉ đọc 2026-08-12 |
 | **Không va chạm tên** với bất cứ thứ gì đang chạy | như trên |
-| Gần như mọi object đều **thêm mới**; 1 constraint được **widen** và 1 hàm bị **thay chữ ký** (§3) | đọc 19 file |
+| Gần như mọi object đều **thêm mới**; 1 constraint được **widen** và 1 hàm bị **thay chữ ký** (§3) | đọc 20 file |
 | `main` **không có** route Shop ⇒ web production không đổi một pixel | `git diff` |
 | `shop_pilot_members` rỗng ⇒ mọi hành động người bán bị từ chối | thiết kế |
 | Thao tác đắt nhất là revalidate constraint trên `audit_logs` (2 851 dòng / 2 328 kB) | **< 1 giây** |
@@ -44,7 +44,7 @@ Không cần cửa sổ bảo trì. Không cần dừng cron.
 
 ---
 
-## 3. Migration đang chờ — 19, đúng thứ tự
+## 3. Migration đang chờ — 20, đúng thứ tự
 
 ```
  1  20260811090000_shop_phase1_seller_onboarding.sql
@@ -66,13 +66,14 @@ Không cần cửa sổ bảo trì. Không cần dừng cron.
 17  20260813120000_shop_p2b_shop_slug_history.sql
 18  20260814090000_shop_seller_rules_acceptance.sql     ← CP12
 19  20260814100000_shop_seller_rules_v1_publish.sql     ← CP15
+20  20260814110000_shop_media_reconcile_profile_gap.sql ← CP17 (B13)
 ```
 
 **#18 là thứ đóng blocker B5.** Nó tạo `legal_documents` / `legal_acceptances`,
 và **thay chữ ký của `shop_application_submit()`**: `DROP FUNCTION IF EXISTS
 public.shop_application_submit();` rồi tạo lại với một tham số có mặc định.
 
-Đây là **đối tượng có sẵn duy nhất bị thay thế** trong cả 19 file. `DROP` là bắt
+Đây là **đối tượng có sẵn duy nhất bị thay thế** trong cả 20 file. `DROP` là bắt
 buộc: `CREATE OR REPLACE` sẽ để lại cả hai và một lời gọi không tham số trở nên
 nhập nhằng — 42725, đúng lỗi từng phá mọi quyết định duyệt trong tính năng này.
 
@@ -101,7 +102,11 @@ chạy xong **không lỗi**. Nếu nó lỗi, môi trường đó đang giữ m
 > nên `shop_application_submit()` vẫn từ chối bằng `seller_rules_not_published`
 > cho tới nửa đêm 14/08. Đó là hành vi đúng, không phải một lần áp hỏng.
 
-**Thứ tự thi hành:** file 1-3 → **Packet C** (deploy function) → file 4-19.
+**Thứ tự thi hành:** file 1-3 → **Packet C** (deploy function) → file 4-20.
+
+🔴 **#20 phải được áp TRƯỚC khi bất kỳ môi trường nào bật cron dọn ảnh.** Nó là
+bản vá B13: trước nó, vòng quét orphan coi logo/ảnh bìa đang sống là rác. Bật
+cron trước #20 là mất ảnh của người bán, không phải một cảnh báo.
 
 Nếu áp #4 trước khi function tồn tại, cron sẽ ghi 404 vào `net._http_response`
 mỗi 5 phút. Không nguy hiểm, nhưng nó làm mờ tín hiệu sức khoẻ đầu tiên — và
@@ -141,13 +146,13 @@ Bốn điều bắt buộc, đều là bài học từ production:
    `thepicklehub-prod` là lệnh dừng.
 2. **`SELECT 1;` ở đầu mỗi payload.** Câu lệnh đầu tiên đôi khi bị nuốt im lặng
    và trả về `[]` mà không làm gì.
-3. **Một file mỗi lần, kiểm sau mỗi file.** Không dồn 19 file vào một request.
+3. **Một file mỗi lần, kiểm sau mỗi file.** Không dồn 20 file vào một request.
 4. **Không `db push`, không `db push --include-all`.** Ledger remote có drift
    nặng có sẵn.
 
-> Trên **staging** ledger bắt đầu từ 0 và 19 file Shop là 19 file cuối trong một
-> lượt áp đầy đủ 352 file. Cách rẻ hơn nhiều: `npx supabase db reset` không dùng
-> được với remote, nên staging vẫn phải nhận đủ 352 file qua cùng cơ chế này,
+> Trên **staging** ledger bắt đầu từ 0 và 20 file Shop là 20 file cuối trong một
+> lượt áp đầy đủ 353 file. Cách rẻ hơn nhiều: `npx supabase db reset` không dùng
+> được với remote, nên staging vẫn phải nhận đủ 353 file qua cùng cơ chế này,
 > hoặc qua `supabase db push` **trên một project sạch, không có drift** — đó là
 > lựa chọn duy nhất trong tài liệu này nơi `db push` an toàn, chính xác vì
 > staging chưa có gì để lệch.
@@ -172,7 +177,7 @@ riêng, không thuộc packet này.
 ## 5. Xác nhận sau mỗi file
 
 Truy vấn đầy đủ: [`../migration-deployment.md` §8](../migration-deployment.md).
-Năm cột mốc:
+Sáu cột mốc:
 
 | Sau file | Kiểm | Kỳ vọng |
 |---|---|---|
@@ -182,6 +187,7 @@ Năm cột mốc:
 | #17 | `to_regclass('public.shop_slug_history')` | đúng |
 | #18 | `to_regclass('public.legal_documents')`, `legal_acceptances`; **đúng 1** `shop_application_submit`; `legal_current_document('seller-rules')` trả **0 dòng** | đúng — 0 dòng là tình trạng đúng: chưa có quy chế nào được ban hành |
 | #19 | `SELECT version, content_hash, approved_by, approved_at, effective_at FROM public.legal_documents WHERE document_key='seller-rules'` | **đúng 1 dòng**: `v1` · `fb62bd471d7b6b27c53d9eeded57dd636aa2f1f1f03db9a4a20abd49d7c70c98` · `Cuong Nguyen — Product Owner, ThePickleHub` · `2026-08-13 07:30:00+07` · `2026-08-14 00:00:00+07`. Migration tự kiểm bốn thứ này rồi, nên **lỗi khi áp = môi trường đang giữ văn bản khác** |
+| #20 | `SELECT count(*) FROM public.shop_media_referenced_objects();` chạy được, và `to_regprocedure('public.shop_media_referenced_objects()')` không NULL | có hàm, và **không** cấp quyền cho `authenticated` — chỉ `service_role`. 🔴 Không bật cron dọn ảnh trước file này |
 
 Smoke ẩn danh sau #17, trước khi có bất kỳ người dùng nào:
 
@@ -202,8 +208,8 @@ catalog rỗng, dữ liệu riêng tư không đọc được.
 
 | Thứ | Trước | Sau |
 |---|---|---|
-| Ledger (B-2, production) | 325 | **344** |
-| Ledger (B-1, staging) | 0 | **352** — staging nhận toàn bộ, không chỉ phần Shop |
+| Ledger (B-2, production) | 325 | **345** |
+| Ledger (B-1, staging) | 0 | **353** — staging nhận toàn bộ, không chỉ phần Shop |
 | Bảng `public` | — | **+20** (18 Shop + `legal_documents` + `legal_acceptances`) |
 | Enum | — | +10 |
 | View | — | +3 |

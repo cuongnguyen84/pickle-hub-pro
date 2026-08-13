@@ -6,59 +6,68 @@
 > **Đây là kết quả cục bộ.** Không có gì được deploy, và không con số nào ở đây
 > nói về remote.
 >
-> Cập nhật **sau CP16** (Chính sách bảo mật nêu tên dữ liệu Shop + chẩn đoán B12).
+> Cập nhật **sau CP17** (vá B13 + đóng B12 bằng phương án C).
 
 ---
 
 ## 1. Bảng kết quả
 
-| Cổng | Lệnh | Sau CP13 | Sau CP15 | **Sau CP16** |
+| Cổng | Lệnh | Sau CP15 | Sau CP16 | **Sau CP17** |
 |---|---|---|---|---|
 | Reset cơ sở dữ liệu | `npx supabase db reset --local` | exit 0 | exit 0 | **exit 0** |
-| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 351 / 351 | 352 / 352 | **352 / 352** |
-| pgTAP | `npx supabase test db --local supabase/tests` | 1 312 · 34 file | 1 331 · 35 file | **1 335 PASS · 36 file · exit 0** |
-| Unit | `npx vitest run` | 2 051 · 158 file | 2 061 · 159 file | **2 088 PASS · 10 skipped · 161 file · exit 0** |
+| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 352 / 352 | 352 / 352 | **353 / 353** |
+| pgTAP | `npx supabase test db --local supabase/tests` | 1 331 · 35 file | 1 335 · 36 file | **1 348 PASS · 36 file · exit 0** |
+| Unit | `npx vitest run` | 2 061 · 159 file | 2 088 · 161 file | **2 096 PASS · 10 skipped · 162 file · exit 0** |
 | HTTP integration quy chế | `npx vitest run scripts/shop-seller-rules-integration.test.mjs` | 11 PASS | 11 PASS | **11 PASS · 0 skip** |
-| Chẩn đoán xoá tài khoản | `npx vitest run scripts/shop-account-deletion-b12.test.mjs` | — | — | **6 PASS** — gọi thật hàm edge |
-| Storage + vòng đời ảnh | file integration trên stack thật | trong lượt unit | trong lượt unit | **trong lượt unit, không skip** |
+| Hợp đồng xoá tài khoản | `npx vitest run scripts/shop-account-deletion-b12.test.mjs` | — | 6 PASS (chẩn đoán) | **7 PASS** — gọi thật hàm edge, nay là hợp đồng |
+| Vòng đời ảnh, **byte thật** | `npx vitest run scripts/shop-p2b-media-lifecycle.test.mjs` | 7 PASS | 7 PASS | **8 PASS** — thêm case B13: publish logo thật → reconcile → drain → ảnh vẫn tải được |
 | noindex ở edge | 2 file `shop-pilot-seo*` | 116 PASS | 116 PASS | **116 PASS** (không đổi) |
 | Typecheck | `npx tsc -b` | exit 0 | exit 0 | **exit 0** |
 | Lint | `npx eslint .` | exit 0 · 29 cảnh báo | exit 0 | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
 | Build | `npm run build` | exit 0 | exit 0 | **exit 0** |
 | Bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | exit 0 | exit 0 | **exit 0** |
-| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 19/19 = 0 | 8/8 Shop = 0 | **10/10 bộ đếm = 0**, gồm `shop_media_cleanup_jobs` và object Storage |
+| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 8/8 Shop = 0 | 10/10 = 0 | **10/10 = 0**, gồm cả hai bucket Storage và `shop_media_cleanup_jobs` |
 
-Ba cổng **không chạy lại** ở CP15 và CP16: `build:proto`, Q01–Q04 và nghiệm thu
-P2b. Ở CP16 có đổi mã client (`Privacy.tsx` + hai file i18n), nhưng **không đổi
-shell, layout, route hay component dùng chung** — 37 màn hình prototype và 20
-route Shop không đi qua trang Chính sách bảo mật. Nói ra thay vì chép số cũ vào
-cột mới: một con số chép lại trông hệt một con số vừa đo.
+Ba cổng **không chạy lại** ở CP15–CP17: `build:proto`, Q01–Q04 và nghiệm thu
+P2b. Lý do, kiểm bằng grep chứ không bằng trí nhớ: mã client đổi ở CP16
+(`Privacy.tsx` + i18n) và CP17 (`DeleteAccountDialog`, `useDeleteAccount`,
+i18n) — **không file nào nằm trong shell, layout hay route dùng chung**.
+`DeleteAccountDialog` có **đúng một** nơi dùng, `src/pages/Account.tsx:331`, và
+`grep -rl` trên `src/proto` lẫn `src/components/layout` không thấy nó,
+`useDeleteAccount` hay `useMyShop`. 37 màn hình prototype và 20 route Shop
+không đi qua `/account`. Nói ra thay vì chép số cũ vào cột mới: một con số
+chép lại trông hệt một con số vừa đo.
 
-### Bundle — delta CP12 → CP16
+### Bundle — delta CP12 → CP17
 
 ```
-                  trước CP12    sau CP12    sau CP13    sau CP15    sau CP16   tổng
-INITIAL gz         226,6 KB     226,6 KB    226,6 KB    226,6 KB    226,6 KB    0,0 KB  / 280 KB
-CODE gz           1551,4 KB    1552,8 KB   1553,9 KB   1554,3 KB   1555,3 KB   +3,9 KB  / 1800 KB
+                  trước CP12    sau CP13    sau CP15    sau CP16    sau CP17   tổng
+INITIAL gz         226,6 KB     226,6 KB    226,6 KB    226,6 KB    226,7 KB   +0,1 KB  / 280 KB
+CODE gz           1551,4 KB    1553,9 KB   1554,3 KB   1555,3 KB   1556,9 KB   +5,5 KB  / 1800 KB
 CONTENT (blog)     383,9 KB     383,9 KB    383,9 KB    383,9 KB    383,9 KB    0,0 KB
-Tổng gz JS        1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB   1939,2 KB   +3,9 KB  / backstop 1970 KB
+Tổng gz JS        1935,3 KB    1937,8 KB   1938,2 KB   1939,2 KB   1940,8 KB   +5,5 KB  / backstop 1970 KB
 ```
 
 **CP15 không đổi một dòng mã client** — +0,4 KB ở cột đó là nhiễu build đã biết
 (±0,6 KB giữa hai lần build cùng một cây); quy chế sống trong cơ sở dữ liệu,
 không nằm trong bundle.
 
-**CP16 là +1,0 KB thật**: một mục mới trong Chính sách bảo mật, nhân hai ngôn
-ngữ. Nó nằm trong `locale-vi` / `locale-en`, **không** nằm trong `INITIAL` —
-`INITIAL` không đổi một byte qua cả bốn checkpoint.
+**CP16 là +1,0 KB thật**: một mục mới trong Chính sách bảo mật ×2 ngôn ngữ,
+nằm trong `locale-vi`/`locale-en`.
 
-**Backstop KHÔNG nâng.** Còn **30,8 KB**, dưới 5% — cổng nói thẳng rằng PR kế
+**CP17 là +1,6 KB**: nhánh chủ-shop trong hộp thoại xoá tài khoản, sáu chuỗi
+mới ×2 ngôn ngữ, và `useMyShop` được nạp trên route `/account`. **+0,1 KB ở
+`INITIAL`** là lần đầu con số đó nhúc nhích qua năm checkpoint — vẫn còn
+**53,3 KB** dưới ngân sách 280 KB, và nguyên nhân là `/account` kéo theo một
+hook Shop chứ không phải một dependency mới.
+
+**Backstop KHÔNG nâng.** Còn **29,2 KB**, dưới 5% — cổng nói thẳng rằng PR kế
 tiếp phải trả lại phần này.
 
-Chia theo checkpoint: **+1,5 KB** màn hình chấp thuận của người bán (CP12),
-**+1,0 KB** panel biên lai của người kiểm duyệt (CP13), **+1,0 KB** mục Shop
-trong Chính sách bảo mật ×2 ngôn ngữ (CP16). **Không thêm dependency nào** qua
-cả bốn đợt.
+Chia theo checkpoint: **+1,5 KB** màn chấp thuận của người bán (CP12), **+1,0
+KB** panel biên lai (CP13), **+1,0 KB** mục Shop trong Chính sách bảo mật
+(CP16), **+1,6 KB** nhánh offboarding chủ shop (CP17). **Không thêm dependency
+nào** qua cả năm đợt.
 
 ### Nghiệm thu P2b — 20 route × 6 chiều rộng + 6 hành trình
 
@@ -349,3 +358,66 @@ hàng đợi dọn chứa ĐÚNG đường dẫn logo đang sống
 
 Vòng quét orphan chỉ hỏi `product_media`; `shop_profile_media` ra đời hai
 migration sau, cùng bucket. Chưa từng nổ **chỉ vì cron chưa deploy ở đâu**.
+
+---
+
+## 8. CP17 — đỏ trước, xanh sau, ở hai call site khác nhau
+
+### B13 — định nghĩa "object đang sống"
+
+Phá **định nghĩa trong migration**, không phá test:
+
+| Phá gì | Kết quả |
+|---|---|
+| Bỏ nửa `shop_profile_media` khỏi `shop_media_referenced_objects()` | **5 đỏ** — gồm logo đang sống ở cả hai bucket, và shop bị đình chỉ mất ảnh gốc |
+| Bỏ key publish tất định | **4 đỏ** — gồm rendition bị xoá ngay dưới chân lệnh commit sắp trỏ vào nó |
+| Hoàn nguyên | **17/17 xanh** |
+
+Byte thật, worker thật: `shop-p2b-media-lifecycle.test.mjs` publish một logo,
+chạy `shop_media_reconcile()` thật, drain bằng vòng lặp claim→delete→complete,
+rồi khẳng định **ảnh vẫn tải được (200)** và **hai mồ côi đã biến mất**. "Không
+có job nào được xếp hàng" là lời khẳng định yếu hơn thứ người bán nhìn thấy.
+
+### B12 — chặn ở máy chủ
+
+| Phá gì | Kết quả |
+|---|---|
+| Gỡ khối kiểm quyền sở hữu khỏi `delete-account` | **2 đỏ** — mã ổn định và replay |
+| Ép `ownsShop = false` trong `DeleteAccountDialog` | **4 đỏ** — hướng dẫn, CTA, "không tuyên bố đã gửi", và không gọi được mutate |
+| Hoàn nguyên cả hai | **7 + 6 xanh** |
+
+### 🔴 Phát hiện môi trường: edge runtime đang phục vụ **worktree khác**
+
+Bản vá `delete-account` xanh ở mọi cách đọc mã, nhưng gọi thật vẫn trả lỗi cũ.
+Nguyên nhân:
+
+```
+docker inspect supabase_edge_runtime_… →
+  /host_mnt/…/.claude/worktrees/shop-p2b/supabase/functions
+```
+
+`supabase start` từng được chạy từ **worktree `shop-p2b`**, nên toàn bộ phiên
+này — kể cả các cổng đã báo xanh trước đó — đang chạy `supabase/functions` của
+nhánh kia. `docker restart` không sửa được: mount nằm trong định nghĩa
+container.
+
+Đã xử lý: `supabase stop` rồi `supabase start` **từ worktree này**, và xác minh
+lại mount. `diff -rq` giữa hai thư mục `functions` chỉ khác **đúng một file** —
+chính file đang sửa — nên kết quả các cổng trước đó vẫn đứng vững.
+
+> Bài học, cùng họ với "cố định cổng và khẳng định đúng máy chủ": **khẳng định
+> mình đang chạy đúng CÂY MÃ**. Một stack khởi động từ nhầm thư mục kiểm thử mã
+> mà không ai đang sửa, và nó xanh một cách thuyết phục.
+
+### 🔴 Teardown nói dối lần thứ sáu — và lần này là do bộ test mới
+
+Sau lượt chạy đầy đủ đầu tiên của case B13, đếm độc lập thấy
+`shop_media_cleanup_jobs = 2` còn lại. `afterAll` xoá job theo `shop_id`, nhưng
+job do **reconciler** ghi mang `shop_id` **NULL** — nó xếp hàng một *object*,
+không phải một *shop*.
+
+Vá: xoá thêm theo `object_path LIKE '<shop>/%'`. Sau đó **10/10 bộ đếm = 0**,
+gồm cả hai bucket Storage.
+
+Đúng hình dạng đã gặp năm lần trước: bộ đếm hỏi đúng câu hỏi mà nó tự nghĩ ra,
+và câu hỏi đó hẹp hơn thực tế.

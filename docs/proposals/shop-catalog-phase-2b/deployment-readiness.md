@@ -216,17 +216,26 @@ thị cho người mua.
       chưa có bản nào đã duyệt và đang hiệu lực — kể cả với Cuong. Nghĩa là ô
       này chỉ thật sự xanh trên môi trường **đã chạy #19 và đã qua 14/08**. Xem
       `docs/proposals/shop-closed-pilot/seller-rules-enforcement.md`.
-- [ ] 🔴 **Chính sách bảo mật chưa liệt kê dữ liệu Shop** — hồ sơ đăng ký người
-      bán, kênh liên hệ công khai, bằng chứng chấp thuận. Quy chế §14 tự đặt
-      mình **dưới** Chính sách bảo mật, nên mời người bán thật khi chính sách
-      chưa nhắc tên ba nhóm đó là đặt hai văn bản của chính mình vào thế mâu
-      thuẫn. Diff sẵn sàng và **chưa áp**:
-      `docs/proposals/shop-closed-pilot/privacy-shop-disclosure.md`.
-- [ ] ⚠️ **Người bán đã có shop không xoá được tài khoản** —
-      `shops.owner_user_id` là `ON DELETE RESTRICT`, và `delete-account` gọi
-      thẳng `auth.admin.deleteUser` không xử lý shop, nên nó hỏng ở tầng khoá
-      ngoại. Cần một đường xử lý shop khi chủ shop rời đi, hoặc nói rõ trong quy
-      chế rằng việc đó làm qua email.
+- [x] 🔴 **Chính sách bảo mật nêu tên dữ liệu Shop** — bốn nhóm (công khai · hồ
+      sơ nội bộ · bằng chứng chấp thuận · nhật ký kiểm duyệt), mục đích, ai đọc
+      được, vòng đời theo khoá ngoại thật; ngày hiệu lực 14/08/2026. Khoá bằng
+      21 assertion. 🔴 **CHƯA DEPLOY** — trang production vẫn là bản cũ.
+- [x] ⚠️ **Chủ shop không xoá được tài khoản** — đóng bằng **phương án C**:
+      `delete-account` từ chối bằng `409 shop_owner_offboarding_required`
+      **trước** bước dọn đầu tiên, giao diện giải thích và mở email, và có
+      runbook offboarding 7 bước
+      (`docs/proposals/shop-closed-pilot/account-deletion-b12.md` §7).
+      Đây là **quy trình thủ công cho closed pilot**, không phải luồng tự phục
+      vụ hoàn chỉnh.
+- [ ] 🔴 **Không bật cron dọn ảnh trước khi áp migration `20260814110000`** —
+      trước bản vá đó, vòng quét orphan coi logo/ảnh bìa **đang sống** là rác
+      (24 giờ ở bucket draft). Chưa từng nổ vì cron chưa deploy ở đâu; môi
+      trường đầu tiên bật cron mà thiếu #20 sẽ xoá ảnh của người bán.
+- [ ] ⚠️ **B14 — `delete-account` báo thành công trong khi cả 13 bước dọn dữ
+      liệu thất bại.** Không mất dữ liệu hôm nay (CASCADE gánh), nhưng 🔴 **cấm
+      cấp các grant `service_role` còn thiếu như một bản vá lẻ**. Hồ sơ:
+      `docs/defects/b14-delete-account-cleanup-noop.md`. Là **điều kiện tiên
+      quyết** trước khi mở tự-xoá tài khoản diện rộng.
 - [ ] 🔒 **Chính sách kênh liên hệ**: điều gì được duyệt, điều gì không. Hiện
       quy tắc nằm trong code (`shop_contact_value_is_safe`) chứ không nằm trong
       một văn bản người kiểm duyệt đọc được.
