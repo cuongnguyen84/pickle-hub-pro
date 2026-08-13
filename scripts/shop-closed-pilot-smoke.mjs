@@ -142,12 +142,28 @@ const get = async (path, init) => {
  * the same check aimed at Shop.
  */
 const looksLikeBareShell = (html) => {
-  const body = (html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1] ?? html)
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  // Walked rather than stripped. The obvious version — replace(/<script.*?<\/script>/)
+  // then replace(/<[^>]+>/) — reads like sanitisation, and CodeQL is right to
+  // flag it as the incomplete kind: `</script >` slips straight through. This
+  // counts words, it does not defend anything, and a scan makes both facts
+  // clear while removing the finding rather than baselining it.
+  const source = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1] ?? html;
+  const tag = /<\/?([a-zA-Z][^\s/>]*)[^>]*>/g;
+  let text = "";
+  let cursor = 0;
+  let inside = null; // 'script' | 'style' — element whose text is not content
+  let match;
+  while ((match = tag.exec(source)) !== null) {
+    if (inside === null) text += ` ${source.slice(cursor, match.index)}`;
+    const name = match[1].toLowerCase();
+    const closing = match[0][1] === "/";
+    if (!closing && (name === "script" || name === "style")) inside = name;
+    else if (closing && inside === name) inside = null;
+    cursor = tag.lastIndex;
+  }
+  if (inside === null) text += ` ${source.slice(cursor)}`;
+
+  const body = text.replace(/\s+/g, " ").trim();
   return { words: body.split(" ").filter(Boolean).length, sample: body.slice(0, 120) };
 };
 
