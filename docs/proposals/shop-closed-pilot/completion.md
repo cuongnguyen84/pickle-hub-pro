@@ -662,3 +662,76 @@ Migration **#4** (`20260811150000`) tạo `shop-media-reconcile-hourly`
 đó. Thứ tự an toàn: `#1–3 → deploy function → #5–20 → canary B13 → #4 cuối
 cùng`. Không file nào trong #5–20 phụ thuộc cron, nên dời #4 xuống cuối là đủ
 và không cần sửa thêm code.
+
+---
+
+## 17. CP19 — nhánh đã push, PR đã mở, và điểm dừng an toàn trước staging
+
+### Đã làm
+
+| Việc | Kết quả |
+|---|---|
+| Push `feat/shop-closed-pilot` | ✅ `origin/feat/shop-closed-pilot` @ `eb5b1612` |
+| Pull Request | ✅ **[#578](https://github.com/cuongnguyen84/pickle-hub-pro/pull/578)** → base `main` · 114 commit · 320 file · +76 061 |
+| CI | ✅ **Cloudflare Pages: pass**. Không có GitHub Actions run nào (ngân sách Actions đã cạn từ 27/07). Branch protection: API trả 403 *"Upgrade to GitHub Pro"* → **repo private không bật được branch protection**, nên tập "required checks" thực tế = build Cloudflare Pages |
+| Preview | ✅ `https://feat-shop-closed-pilot.pickle-hub-pro.pages.dev` — HTTP 200 |
+| `/shop` trên preview | ✅ `x-robots-tag: noindex, nofollow, noarchive` |
+
+### 🔴 Preview đang trỏ PRODUCTION — đúng như dự đoán, và là điều kiện dừng
+
+Bundle preview chứa `https://ajvlcamxemgbxduhiqrl.supabase.co`. Biến môi trường
+**Preview** của Cloudflare Pages chưa được đặt, nên build lấy giá trị production.
+
+Đây là điều kiện dừng đã ghi trong Packet S ("Preview trỏ production"), và việc
+sửa nó có một hệ quả cần biết trước khi bấm:
+
+> Cloudflare Pages **không** hỗ trợ biến theo từng nhánh (Packet S §6, phương
+> án S-a vs S-b). Đổi biến Preview sẽ trỏ **mọi preview của mọi nhánh** sang
+> staging — và staging hiện có **0 bảng**. Bốn PR đang mở khác (#575, #569,
+> #568, #524…) sẽ có preview hỏng cho tới khi migration chạy xong.
+
+Vì vậy việc này phải làm **ngay sát** lượt nghiệm thu staging, không làm sớm.
+
+### Vì sao dừng ở đây, chứ không phải vì hết ngữ cảnh
+
+Bước kế tiếp là áp **354 migration** lên staging theo cơ chế một-file-một-lần
+qua Management API. Bắt đầu một chuỗi như vậy mà không chắc chạy hết trong cùng
+một lượt là tự tạo ra **partial migration** — và nếu dừng nhầm chỗ, `#4` (tạo
+cron) có thể đã áp trong khi `#20` (bản vá B13) thì chưa. Đó đúng là hai điều
+kiện dừng đã ghi: *migration partial* và *nguy cơ cron chạy trước B13*.
+
+Đơn vị công việc an toàn nhỏ nhất ở đây là **toàn bộ chuỗi + canary + xác minh**,
+không phải từng file.
+
+### Trạng thái credential — đủ cả ba, đã kiểm
+
+| Hệ | Trạng thái |
+|---|---|
+| Supabase Management API | ✅ liệt kê được 4 project; staging `utokwfcljxjkpkaqgheo` = **ThePickleHub Staging**, org `hldorwnfmobdxhkkbrap`, ap-northeast-1, **ACTIVE_HEALTHY**, PG 17.6.1.155 |
+| GitHub | ✅ `gh` đăng nhập `cuongnguyen84`, scope `repo` + `workflow` |
+| Cloudflare | ✅ wrangler OAuth, account `7888e97…c281` (khớp account trong link CI) |
+
+### Staging — ảnh chụp chỉ-đọc trước khi ghi
+
+```
+auth.users            0
+public tables         0
+migration ledger      chưa tồn tại
+extensions            pg_stat_statements, pgcrypto, plpgsql, supabase_vault, uuid-ossp
+pg_cron / pg_net      CHƯA CÀI          ← B9, và là bước S2
+cluster_name          "main"            ← không dùng để tự nhận dạng project được
+gói Pro               API không trả trường plan  ← B10; xác minh bằng khả năng
+                                            bật pg_cron/pg_net trên thực tế
+```
+
+### Phiên kế tiếp bắt đầu từ đâu
+
+1. `project_url` vào vault staging (CP18) — **trước** mọi migration.
+2. Bật `pg_cron` + `pg_net` (đồng thời là phép thử Pro thực tế).
+3. Bật TOTP MFA staging · Site URL + Redirect URLs = preview URL ở trên.
+4. `CRON_SECRET` mới **chỉ cho staging** → Edge Function secret + vault.
+5. Áp `#1–3` → deploy `shop-media-lifecycle` → `#5–20` → **canary B13** → `#4`.
+6. Đổi biến Preview của Cloudflare sang staging (sau khi migration xong, để
+   preview của các nhánh khác chỉ hỏng trong thời gian ngắn nhất).
+7. Fixture + 24 case nghiệm thu + responsive/axe 6 chiều rộng.
+8. Rollback drill → merge #578 → production → Wave 0.
