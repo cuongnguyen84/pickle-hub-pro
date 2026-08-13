@@ -22,7 +22,7 @@ BEGIN
   END IF;
 
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/zalo-token-refresh',
+    url := public.ops_project_url() || '/functions/v1/zalo-token-refresh',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
