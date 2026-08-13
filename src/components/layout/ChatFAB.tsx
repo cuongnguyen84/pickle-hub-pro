@@ -41,6 +41,14 @@ const HIDDEN_PREFIXES = [
   "/vi/live/",
   "/rankings", // bảng xếp hạng — FAB che cột điểm 2-3 dòng cuối viewport (covers /rankings/ppa-tour)
   "/vi/rankings",
+  // Shop — FAB đè lên nút chính của thanh hành động dính ("Thêm vào giỏ",
+  // "Đặt đơn", "Gửi quyết định") ở 375px. Trên trang thương mại nút chat cộng
+  // đồng cũng thừa: liên hệ người bán nằm trong đơn hàng.
+  "/proto/shop", // bản mẫu màn hình
+  "/shop",
+  "/vi/shop",
+  "/seller",
+  "/admin/shop",
 ];
 
 const DESKTOP_BREAKPOINT = "(min-width: 768px)";
