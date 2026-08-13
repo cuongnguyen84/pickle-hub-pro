@@ -193,6 +193,12 @@ export interface Translations {
     deleteAccountIrreversible: string;
     deleteConfirmInstruction: string;
     deleteAccountConfirm: string;
+    deleteBlockedShopOwner: string;
+    deleteBlockedShopOwnerWhy: string;
+    deleteBlockedShopOwnerNoAutoSend: string;
+    deleteBlockedShopOwnerCta: string;
+    deleteBlockedShopOwnerBack: string;
+    deleteBlockedShopOwnerEmailSubject: string;
   };
   nav: {
     home: string;
@@ -3195,11 +3201,23 @@ export const vi: Translations = {
     deleteAccountTitle: "Xóa tài khoản vĩnh viễn",
     deleteAccountWarning: "Hành động này sẽ xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn, bao gồm:",
     deleteDataProfile: "Thông tin hồ sơ và ảnh đại diện",
-    deleteDataTournaments: "Các giải đấu bạn đã tạo",
+    // Không nói "xoá giải đấu bạn đã tạo": giải đấu KHÔNG bị xoá.
+    // quick_tables.creator_user_id và team_match_tournaments.created_by đều là
+    // ON DELETE SET NULL — giải đấu ở lại, chỉ mất liên kết tới người tạo.
+    deleteDataTournaments: "Liên kết giữa bạn và các giải đấu bạn đã tạo (giải đấu vẫn còn, nhưng không còn gắn tên bạn)",
     deleteDataContent: "Bình luận, lượt thích và dữ liệu tương tác",
     deleteAccountIrreversible: "Hành động này không thể hoàn tác.",
     deleteConfirmInstruction: "Nhập \"{word}\" để xác nhận:",
     deleteAccountConfirm: "Xóa tài khoản",
+    deleteBlockedShopOwner:
+      "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, vui lòng gửi yêu cầu tới tapickleballvn@gmail.com.",
+    deleteBlockedShopOwnerWhy:
+      "Shop còn sản phẩm, hình ảnh và lịch sử kiểm duyệt. Trong giai đoạn thử nghiệm kín, ThePickleHub xử lý việc đóng shop thủ công để không xoá nhầm thứ cần giữ.",
+    deleteBlockedShopOwnerNoAutoSend:
+      "Nút bên dưới chỉ mở ứng dụng email của anh/chị — nó KHÔNG tự gửi yêu cầu. Hãy gửi từ chính email đã đăng ký; chúng tôi sẽ xác nhận trước khi làm bất cứ điều gì.",
+    deleteBlockedShopOwnerCta: "Soạn email yêu cầu",
+    deleteBlockedShopOwnerBack: "Quay lại",
+    deleteBlockedShopOwnerEmailSubject: "Yêu cầu đóng shop và tài khoản",
   },
   nav: {
     home: "Trang chủ",

@@ -197,11 +197,23 @@ export const en: Translations = {
     deleteAccountTitle: "Permanently Delete Account",
     deleteAccountWarning: "This will permanently delete your account and all your data, including:",
     deleteDataProfile: "Profile information and avatar",
-    deleteDataTournaments: "Tournaments you created",
+    // Not "tournaments you created will be deleted": they are not.
+    // quick_tables.creator_user_id and team_match_tournaments.created_by are
+    // ON DELETE SET NULL, so a tournament stays and simply stops naming you.
+    deleteDataTournaments: "The link between you and the tournaments you created (the tournaments remain, no longer under your name)",
     deleteDataContent: "Comments, likes and interaction data",
     deleteAccountIrreversible: "This action cannot be undone.",
     deleteConfirmInstruction: "Type \"{word}\" to confirm:",
     deleteAccountConfirm: "Delete Account",
+    deleteBlockedShopOwner:
+      "This account owns a shop. To close the shop and the account safely, please send a request to tapickleballvn@gmail.com.",
+    deleteBlockedShopOwnerWhy:
+      "The shop still holds products, images and moderation history. During the closed pilot ThePickleHub closes shops by hand so that nothing worth keeping is deleted by accident.",
+    deleteBlockedShopOwnerNoAutoSend:
+      "The button below only opens your email app — it does NOT send anything. Please write from the address you registered with; we will confirm before doing anything.",
+    deleteBlockedShopOwnerCta: "Compose the request",
+    deleteBlockedShopOwnerBack: "Go back",
+    deleteBlockedShopOwnerEmailSubject: "Request to close my shop and account",
   },
   nav: {
     home: "Home",

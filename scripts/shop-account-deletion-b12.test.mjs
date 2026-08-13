@@ -1,10 +1,9 @@
 /**
- * B12 — what actually happens when a shop owner asks us to delete their account.
+ * B12 — a shop owner's account is closed by hand, and the server says so.
  *
- * DIAGNOSTIC. This file changes no production behaviour and fixes nothing; it
- * pins the CURRENT state so the proposal argues from measurements rather than
- * from reading foreign keys. Several assertions describe a defect and say so —
- * inverting them is the definition of done for B12.
+ * Option C, as approved: self-service deletion stays exactly as it was for
+ * everybody who owns no shop; a shop owner is refused with a stable code
+ * BEFORE anything is deleted, and told what to do instead.
  *
  * It goes through the real path, deliberately:
  *
@@ -12,15 +11,21 @@
  *                     →  supabase/functions/delete-account/index.ts
  *                     →  auth.admin.deleteUser()
  *
- * Reading FK definitions out of a migration would prove the constraint exists.
- * It would not tell us what the seller is shown, what is destroyed before the
- * failure, or whether the cleanup the function claims to do happens at all —
- * and the last one turned out to be the finding.
+ * The FK still backs this up — shops.owner_user_id is ON DELETE RESTRICT — but
+ * it is not the contract. GoTrue flattens the violation into "Database error
+ * deleting user", which tells a seller nothing, and it only fires at the END of
+ * a cleanup that has no transaction around it. The check is what makes the
+ * refusal early, legible and stable.
+ *
+ * Two assertions still describe B14 and say so; they are characterisation, not
+ * approval, and B14 is a separate defect record.
  *
  *   supabase start && supabase db reset
  *   npx vitest run scripts/shop-account-deletion-b12.test.mjs
  *
- * SKIPPED with a warning when no local stack is listening.
+ * 🔴 Edge functions are cached per isolate locally. After editing
+ * supabase/functions/**, restart the runtime or this file tests the old code:
+ *   docker restart supabase_edge_runtime_ajvlcamxemgbxduhiqrl
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient } from "@supabase/supabase-js";
@@ -36,6 +41,7 @@ const SERVICE =
 
 const PASSWORD = "b12-deletion-pw-1";
 const RUN = randomUUID().slice(0, 8);
+const OWNER_BLOCK = "shop_owner_offboarding_required";
 
 const up = await (async () => {
   try {
@@ -49,7 +55,7 @@ const up = await (async () => {
   }
 })();
 if (!up) {
-  console.warn(`\n⚠ B12 account-deletion diagnostic SKIPPED — no Supabase at ${URL_BASE}.\n`);
+  console.warn(`\n⚠ B12 account-deletion SKIPPED — no Supabase at ${URL_BASE}.\n`);
 }
 
 const svc = () => createClient(URL_BASE, SERVICE, { auth: { persistSession: false } });
@@ -65,14 +71,12 @@ async function makeUser(admin, email) {
   const client = anon();
   const { error: signInErr } = await client.auth.signInWithPassword({ email, password: PASSWORD });
   if (signInErr) throw new Error(`signIn: ${signInErr.message}`);
-  // The hook reads the session and passes the access token explicitly. Do the
-  // same, so this test breaks if that contract changes.
   const { data: session } = await client.auth.getSession();
   return { id: data.user.id, client, token: session.session.access_token };
 }
 
 /** A seller-shaped account: on the pilot list, with an application on file. */
-async function giveSellerRecords(admin, userId) {
+async function giveSellerRecords(admin, userId, suffix) {
   const { error: memberErr } = await admin.from("shop_pilot_members").insert({ user_id: userId });
   if (memberErr) throw new Error(`pilot member: ${memberErr.message}`);
   const { error: appErr } = await admin.from("shop_applications").insert({
@@ -80,7 +84,7 @@ async function giveSellerRecords(admin, userId) {
     seller_type: "ca-nhan",
     full_name: "Người Bán B12",
     phone: "0901234567",
-    shop_name: `Shop B12 ${RUN}`,
+    shop_name: `Shop B12 ${suffix}`,
     city: "Hà Nội",
   });
   if (appErr) throw new Error(`application: ${appErr.message}`);
@@ -91,6 +95,11 @@ const callDeleteAccount = (user) =>
   user.client.functions.invoke("delete-account", {
     headers: { Authorization: `Bearer ${user.token}` },
   });
+
+const errorBody = async (res) => {
+  if (!res.error?.context?.json) return null;
+  return res.error.context.json().catch(() => null);
+};
 
 const countRows = async (admin, table, column, value) => {
   const { count, error } = await admin
@@ -108,17 +117,20 @@ const authUserExists = async (admin, id) => {
 
 describe.skipIf(!up)("B12 — deleting the account of a shop owner", () => {
   let admin;
-  let plain; // seller records, no shop: the control
-  let owner; // owns a shop: the case
+  let plain;   // seller records, no shop: the control
+  let owner;   // owns a shop: the case
+  let manager; // on the owner's shop as staff, owns nothing
   let shopId;
+  let productId;
   let controlBody;
 
   beforeAll(async () => {
     admin = svc();
     plain = await makeUser(admin, `b12-plain-${RUN}@thepicklehub.test`);
     owner = await makeUser(admin, `b12-owner-${RUN}@thepicklehub.test`);
-    await giveSellerRecords(admin, plain.id);
-    await giveSellerRecords(admin, owner.id);
+    manager = await makeUser(admin, `b12-manager-${RUN}@thepicklehub.test`);
+    await giveSellerRecords(admin, plain.id, `${RUN}-a`);
+    await giveSellerRecords(admin, owner.id, `${RUN}-b`);
 
     const { data: shop, error } = await admin
       .from("shops")
@@ -133,13 +145,34 @@ describe.skipIf(!up)("B12 — deleting the account of a shop owner", () => {
       .single();
     if (error) throw new Error(`shop insert: ${error.message}`);
     shopId = shop.id;
-    await admin.from("shop_members").insert({ shop_id: shopId, user_id: owner.id, role: "owner" });
+
+    await admin.from("shop_members").insert([
+      { shop_id: shopId, user_id: owner.id, role: "owner" },
+      { shop_id: shopId, user_id: manager.id, role: "manager" },
+    ]);
+
+    // Something under the shop, so "nothing was touched" is a claim with
+    // substance rather than a claim about an empty shop.
+    const { data: product, error: pe } = await admin
+      .from("products")
+      .insert({
+        shop_id: shopId,
+        slug: `b12-vot-${RUN}`,
+        title: `Vợt B12 ${RUN}`,
+        condition: "new",
+        status: "approved",
+        is_published: true,
+      })
+      .select("id")
+      .single();
+    if (pe) throw new Error(`product insert: ${pe.message}`);
+    productId = product.id;
   }, 60_000);
 
   afterAll(async () => {
     if (!up || !admin) return;
     if (shopId) await admin.from("shops").delete().eq("id", shopId);
-    for (const u of [plain, owner]) {
+    for (const u of [plain, owner, manager]) {
       if (!u) continue;
       await admin.from("shop_applications").delete().eq("applicant_user_id", u.id);
       await admin.from("shop_pilot_members").delete().eq("user_id", u.id);
@@ -148,8 +181,6 @@ describe.skipIf(!up)("B12 — deleting the account of a shop owner", () => {
   }, 60_000);
 
   // ── The control ───────────────────────────────────────────────────────────
-  // Without it, "the shop owner's deletion fails" could mean the whole feature
-  // is broken rather than this one case.
 
   it("succeeds for a seller who owns no shop, and the cascades do the work", async () => {
     const res = await callDeleteAccount(plain);
@@ -164,17 +195,14 @@ describe.skipIf(!up)("B12 — deleting the account of a shop owner", () => {
     expect(await countRows(admin, "shop_pilot_members", "user_id", plain.id)).toBe(0);
   }, 30_000);
 
-  it("🔴 reports success while every table it claims to clean has failed", async () => {
-    // Measured, not inferred: service_role holds no DELETE privilege on any of
-    // the tables delete-account walks, two of them no longer exist, and one
-    // column was renamed. All thirteen steps fail, land in `warnings`, and the
-    // function returns 200 success anyway — the UI never reads `warnings`.
+  it("🔴 B14 — reports success while every table it claims to clean has failed", async () => {
+    // Measured, not inferred. service_role holds no DELETE on the tables
+    // delete-account walks, two of them no longer exist, one column was
+    // renamed. All thirteen steps fail into `warnings`, which nothing reads,
+    // and the account is deleted only because auth.users cascades.
     //
-    // The account IS deleted, but only because auth.users cascades. The
-    // explicit cleanup has been decorative for as long as the grants have been
-    // this way.
-    //
-    // 🔴 DESCRIBES A DEFECT. When it is fixed, this expects an empty array.
+    // 🔴 CHARACTERISATION, NOT APPROVAL. Tracked separately as B14; do not
+    // "fix" it by granting the missing permissions — see the defect record.
     expect(Array.isArray(controlBody?.warnings)).toBe(true);
     expect(controlBody.warnings.length).toBeGreaterThan(0);
     for (const w of controlBody.warnings) {
@@ -184,44 +212,60 @@ describe.skipIf(!up)("B12 — deleting the account of a shop owner", () => {
 
   // ── The case ──────────────────────────────────────────────────────────────
 
-  it("fails for a shop owner", async () => {
+  it("refuses a shop owner with a stable code, before touching anything", async () => {
     const res = await callDeleteAccount(owner);
-    expect(res.error, "deleting a shop owner must NOT report success").toBeTruthy();
+    expect(res.error, "a shop owner must not be deleted").toBeTruthy();
+    expect(res.error.context.status, "409, not a 500 — this is a decision, not a fault").toBe(409);
 
-    const body = await res.error.context.json().catch(() => ({}));
-    expect(body.error).toBe("Failed to delete account");
+    const body = await errorBody(res);
+    expect(body.code, "the UI branches on this string").toBe(OWNER_BLOCK);
+    expect(body.error).toBe(OWNER_BLOCK);
+    expect(body.shop_count).toBeGreaterThanOrEqual(1);
+    expect(body.contact_email).toBe("tapickleballvn@gmail.com");
+    expect(body.message).toContain("tapickleballvn@gmail.com");
     expect(body.success).not.toBe(true);
 
-    // 🔴 The reason never reaches anyone. GoTrue collapses the foreign-key
-    // violation into "Database error deleting user", so neither the seller nor
-    // the operator learns that a shop is what is in the way. Any fix has to
-    // supply that sentence itself rather than hope this improves.
-    expect(body.details).toBe("Database error deleting user");
-    expect(JSON.stringify(body)).not.toMatch(/shops_owner_user_id|foreign key/i);
+    // Not the FK talking. Reaching the FK would mean the cleanup already ran.
+    expect(JSON.stringify(body)).not.toMatch(/Database error deleting user/i);
   }, 30_000);
 
-  it("leaves the auth user AND the shop intact — the two never go out of step", async () => {
-    // RESTRICT means there can never be a shop whose owner does not exist, nor
-    // an owner whose shop silently vanished. That invariant holds.
+  it("changes nothing at all — account, shop, product, membership, application", async () => {
     expect(await authUserExists(admin, owner.id)).toBe(true);
     expect(await countRows(admin, "shops", "id", shopId)).toBe(1);
+    expect(await countRows(admin, "products", "id", productId)).toBe(1);
     expect(await countRows(admin, "shop_members", "user_id", owner.id)).toBe(1);
-  }, 30_000);
-
-  it("leaves the seller's other records intact too — but by accident, not by care", async () => {
-    // A reader could mistake this for careful ordering. It is not: the deletes
-    // that run before auth.admin.deleteUser all fail on permissions, so there
-    // is nothing left to be half-done. Grant those permissions without
-    // rethinking the flow and this becomes a genuine partial deletion —
-    // profile and roles gone, account still live, shop still standing.
     expect(await countRows(admin, "shop_applications", "applicant_user_id", owner.id)).toBe(1);
     expect(await countRows(admin, "shop_pilot_members", "user_id", owner.id)).toBe(1);
   }, 30_000);
 
-  it("succeeds on a retry once the shop is gone", async () => {
-    // The recovery an operator would reach for. It works, which is why option C
-    // is viable: the block is the shop, and nothing about the account is
-    // damaged while it is in place.
+  it("answers a replay identically, with no side effect", async () => {
+    const [a, b] = await Promise.all([callDeleteAccount(owner), callDeleteAccount(owner)]);
+    for (const res of [a, b]) {
+      expect(res.error).toBeTruthy();
+      expect(res.error.context.status).toBe(409);
+      expect((await errorBody(res)).code).toBe(OWNER_BLOCK);
+    }
+    // Two concurrent refusals must not add up to one deletion.
+    expect(await authUserExists(admin, owner.id)).toBe(true);
+    expect(await countRows(admin, "shops", "id", shopId)).toBe(1);
+  }, 30_000);
+
+  it("does not block a manager — ownership is the question, not membership", async () => {
+    // Staff on somebody else's shop own nothing, so nothing is orphaned when
+    // they leave. Blocking them would strand support accounts forever.
+    const res = await callDeleteAccount(manager);
+    expect(res.error, "a manager is not a shop owner").toBeNull();
+    expect(res.data?.success).toBe(true);
+    expect(await authUserExists(admin, manager.id)).toBe(false);
+    // …and their membership row went with them.
+    expect(await countRows(admin, "shop_members", "user_id", manager.id)).toBe(0);
+    // The shop and its owner are untouched by a member leaving.
+    expect(await countRows(admin, "shops", "id", shopId)).toBe(1);
+  }, 30_000);
+
+  it("works normally once the shop has been offboarded by hand", async () => {
+    // The end of the runbook: an admin has dealt with the shop, and the
+    // ordinary flow is available again. No special path, no second code.
     await admin.from("shops").delete().eq("id", shopId);
     shopId = null;
 
