@@ -37,6 +37,11 @@ import { writeFileSync } from "node:fs";
 // --allow-production, which is a second, deliberate keystroke.
 const TARGETS = [
   { re: /^https:\/\/[a-z0-9-]+\.pickle-hub-pro\.pages\.dev$/, kind: "preview" },
+  // Decision S-b: the pilot gets its OWN Pages project rather than repointing
+  // the shared preview environment, so a session working on another branch does
+  // not get a preview silently talking to an empty staging database. Named
+  // here explicitly — the pattern above deliberately does not match it.
+  { re: /^https:\/\/([a-z0-9-]+\.)?thepicklehub-shop-staging\.pages\.dev$/, kind: "staging" },
   { re: /^https:\/\/www\.thepicklehub\.net$/, kind: "production" },
 ];
 
