@@ -156,11 +156,31 @@ export function useMediaUpload(target: UploadTarget) {
       const controller = new AbortController();
       aborts.current.set(item.token, controller);
       const aborted = () => controller.signal.aborted;
+      /**
+       * Cancelling BETWEEN phases used to leave the row where it stood.
+       *
+       * processImage takes the signal, so a cancel during it throws AbortError
+       * and lands in the catch. But a cancel that arrives after a phase
+       * resolved and before the next one started only tripped a bare
+       * `if (aborted()) return`, which exited without touching the phase — so
+       * the item sat on "Đang xử lý ảnh" forever, `busy` stayed true, the save
+       * bar stayed disabled, and neither retry nor clearComplete could reach
+       * it. A reload was the only way out.
+       *
+       * Now every exit says what happened. Found by the cancel test below,
+       * which mocks a processImage that ignores the signal — which is exactly
+       * how the window looks in production.
+       */
+      const stopIfAborted = () => {
+        if (!aborted()) return false;
+        patch(item.token, { phase: "cancelled" });
+        return true;
+      };
 
       try {
         patch(item.token, { phase: "processing", error: undefined });
         const processed = await processImage(item.file, { signal: controller.signal, cap: t.cap });
-        if (aborted()) return;
+        if (stopIfAborted()) return;
 
         const init = await t.init({
           contentType: item.file.type || "image/jpeg",
@@ -168,7 +188,7 @@ export function useMediaUpload(target: UploadTarget) {
           filename: item.name,
           token: item.token,
         });
-        if (aborted()) return;
+        if (stopIfAborted()) return;
         patch(item.token, { mediaId: init.media_id, phase: "uploading_original" });
 
         // The ORIGINAL, exactly as the seller chose it. It never goes public;
@@ -177,7 +197,7 @@ export function useMediaUpload(target: UploadTarget) {
           .from(DRAFT_BUCKET)
           .upload(init.draft_path, item.file, { upsert: true, contentType: item.file.type });
         if (original.error) throw original.error;
-        if (aborted()) return;
+        if (stopIfAborted()) return;
 
         patch(item.token, { phase: "uploading_rendition" });
         const rendition = await supabase.storage
@@ -187,7 +207,7 @@ export function useMediaUpload(target: UploadTarget) {
             contentType: IMAGE_LIMITS.renditionType,
           });
         if (rendition.error) throw rendition.error;
-        if (aborted()) return;
+        if (stopIfAborted()) return;
 
         patch(item.token, { phase: "finalizing" });
         await t.finalize({
