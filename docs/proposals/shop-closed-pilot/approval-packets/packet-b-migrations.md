@@ -14,7 +14,7 @@
 
 | Lần | Project ref | Khi nào |
 |---|---|---|
-| **B-1** | **`<STAGING_PROJECT_REF>`** — Packet S cung cấp | Sau Packet S |
+| **B-1** | **`utokwfcljxjkpkaqgheo`** — Packet S cung cấp | Sau Packet S |
 | **B-2** | **`ajvlcamxemgbxduhiqrl`** (`thepicklehub-prod`) | Chỉ sau khi Product Owner nghiệm thu preview |
 
 | Thứ | Giá trị |
@@ -92,7 +92,7 @@ tín hiệu đó là thứ ta cần đọc được ngay lúc đó.
 ```sh
 PAT=$(grep -o 'sbp_[A-Za-z0-9_]*' ~/Downloads/secrets.local.md | head -1)
 
-# B-1: REF=<STAGING_PROJECT_REF>      B-2: REF=ajvlcamxemgbxduhiqrl
+# B-1: REF=utokwfcljxjkpkaqgheo      B-2: REF=ajvlcamxemgbxduhiqrl
 # Gõ tường minh, mỗi lần. Không để một biến từ phiên trước quyết định hộ.
 REF=<ĐIỀN>
 
@@ -258,7 +258,7 @@ Tôi hiểu rằng:
 
 Người thi hành: _____________  (KHÔNG phải subagent — RED tier)
 Thời điểm thi hành: __________
-Lần này là:  [ ] B-1 staging (<STAGING_PROJECT_REF>)   [ ] B-2 production (ajvlcamxemgbxduhiqrl)
+Lần này là:  [ ] B-1 staging (utokwfcljxjkpkaqgheo)   [ ] B-2 production (ajvlcamxemgbxduhiqrl)
 Câu chứng minh mục tiêu đã chạy và ĐỌC:  [ ] rồi   —  name trả về: ______________
 Ledger trước: _____     Ledger sau: _____
 ```

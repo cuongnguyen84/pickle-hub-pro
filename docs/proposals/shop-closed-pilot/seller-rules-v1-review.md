@@ -8,6 +8,28 @@
 > biết mình đang duyệt cái gì.
 >
 > **Agent không tự tick PASS ở bất kỳ dòng nào.**
+>
+> ---
+>
+> ## Vòng 1 — Product Owner: **REVISE** (2026-08-13)
+>
+> Bảy câu hỏi: **bốn đã được trả lời**, ba còn lại là kiểm tra chứ không phải
+> quyết định. Những gì đã sửa theo phản hồi:
+>
+> | # | Phản hồi | Đã sửa ở |
+> |---|---|---|
+> | 3 | Kênh hỗ trợ: **dùng chung** ba kênh sẵn có, nhưng **email là kênh chính thức**; Zalo/Messenger chỉ hỗ trợ thông thường | §19 viết lại thành bảng hai vai trò · §13 |
+> | 4 | §13: nêu rõ email nhận báo cáo, kèm URL + mô tả + bằng chứng; **không** đòi mật khẩu/OTP/thẻ; **không** tuyên bố có nút Báo cáo | §13 viết lại |
+> | 5 | §3 phải khớp taxonomy thật | §3 đổi từ danh sách ví dụ sang **bảng sáu ngành hàng đúng bằng database** |
+> | 6 | §14 phải phân biệt dữ liệu công khai và nội bộ, không làm yếu Chính sách bảo mật | §14 thêm bảng hai nhóm + mục quan hệ với Chính sách bảo mật |
+> | 7 | Chính sách đổi trả: kiểm lại `return_note` trước khi kết luận | 🔴 **Khoảng cách #1 SAI — đã sửa.** `shops.return_note` **có sẵn và đi xuyên suốt.** §11 nay chỉ thẳng vào ô đó |
+> | 8 | Giới hạn pilot: phân biệt vận hành thủ công và kỹ thuật | §1 nói rõ giới hạn thực hiện bằng quy trình, **không** phải hạn mức kỹ thuật |
+> | 10 | Kiểm duyệt: Cuong Nguyen, **tối thiểu 2 lần/ngày** | §16 ghi nhịp; `notification-decision.md` và `pilot-contract.md` cập nhật |
+>
+> `approved_by` dự kiến: **`Cuong Nguyen — Product Owner, ThePickleHub`** —
+> **metadata dự kiến**, chưa ghi vào bản ghi văn bản.
+>
+> **Vẫn chưa duyệt.** Chưa tính hash, chưa đặt `effective_at`, chưa ban hành.
 
 ## Ký hiệu
 
@@ -24,10 +46,10 @@
 
 | Mục | Loại | Ghi chú |
 |---|---|---|
-| **1. Mục đích và phạm vi** | 🟢 + 🔵 | "Chỉ người trong danh sách" và "không lập chỉ mục" là **CODE**: `shop_pilot_has_access()` gác mọi ghi; `X-Robots-Tag` đặt ở edge, 116 assertion. "Giới hạn số người bán/sản phẩm/thời gian" là **QUYẾT ĐỊNH** — hiện chưa có ràng buộc kỹ thuật nào cưỡng chế các giới hạn đó |
+| **1. Mục đích và phạm vi** | 🟢 + 🔵 | "Chỉ người trong danh sách" và "không lập chỉ mục" là **CODE**: `shop_pilot_has_access()` gác mọi ghi; `X-Robots-Tag` đặt ở edge, 116 assertion. ✅ Giới hạn số lượng nay được nói rõ là **vận hành thủ công, không phải hạn mức kỹ thuật** |
 | **2. Điều kiện trở thành người bán** | 🟢 | Cả 5 điều kiện đều cưỡng chế được: allowlist, hồ sơ, duyệt của admin, và **chấp thuận đúng version/hash** (migration `20260814090000`). "Không chuyển nhượng shop" là 🔵 — chưa có cơ chế chuyển chủ, nên không có gì để vi phạm về mặt kỹ thuật |
 | **2. "chưa được xác minh danh tính"** | 🟢 🔴 | **Đúng và quan trọng.** Pilot không thu CCCD/ngân hàng. Câu này phải **giữ nguyên, không làm nhẹ đi** — bỏ nó đi là để người mua tự suy ra một sự bảo đảm không tồn tại |
-| **3. Hàng hoá được phép** | 🟢 + 🔵 | Taxonomy do nền tảng sở hữu là **CODE** (Q3, không có API cho seller tạo category). Danh sách ngành hàng cụ thể là **QUYẾT ĐỊNH** — phải khớp `product_categories` thực tế khi ban hành |
+| **3. Hàng hoá được phép** | 🟢 | ✅ **Đã đối chiếu.** Sáu ngành hàng trong văn bản khớp **đúng** sáu dòng seed `product_categories` (migration `20260811120000`). Taxonomy do nền tảng sở hữu là CODE (Q3). Xem §Đối chiếu taxonomy |
 | **4. Hàng hoá và nội dung bị cấm** | 🟠 | Danh sách nghiệp vụ, hợp lý cho pilot. **Không đi sâu vào danh mục pháp lý chuyên ngành** (dược, thực phẩm, thiết bị y tế…) vì phạm vi pilot là pickleball. Nguyên tắc "tuân thủ pháp luật + quyền gỡ" là điều khoản bao trùm — 🟠 trước public launch |
 | **4. "giá mồi / khan hiếm giả / đánh giá giả"** | 🔵 | Cấm được viết ra, nhưng **không có cơ chế tự động phát hiện**. Cưỡng chế bằng kiểm duyệt thủ công và báo cáo |
 | **5. Nghĩa vụ thông tin sản phẩm** | 🟢 + 🔵 | Trường dữ liệu có thật (title, category, condition, description, variants, SKU, price, stock, media). **Ba trạng thái tồn kho** là 🟢 — `product_set_in_stock` và "chưa cập nhật số lượng" tồn tại trong mô hình. "Phải khai khuyết điểm" là 🔵 — **không có trường riêng cho khuyết điểm**, nó nằm trong mô tả tự do |
@@ -38,15 +60,15 @@
 | **8. Kênh liên hệ** | 🟢 | Mọi câu đều là CODE: `shop_contact_channels` với trạng thái duyệt, `shop_contact_value_is_safe`, sửa kênh đang sống → về `pending_review` (trigger), cảnh báo rời trang, **không** tự lấy email/phone tài khoản |
 | **9. Thanh toán** | 🟢 🔴 | **Mục quan trọng nhất về mặt rủi ro.** Mọi câu "KHÔNG" đều đúng — không có mã thanh toán nào trong phạm vi Shop pilot. **Đề nghị không làm mềm bất kỳ câu nào** ở đây |
 | **10. Giao hàng** | 🔵 | Không có tích hợp vận chuyển. Đây là nghĩa vụ của seller, cưỡng chế bằng kiểm duyệt |
-| **11. Đổi trả và khiếu nại** | 🔵 🔴 | **Không có trường "chính sách đổi trả" trên `shops` hay `products`.** Quy chế yêu cầu seller công bố chính sách, nhưng chỗ duy nhất để viết là phần mô tả. Xem §Khoảng cách #1 |
+| **11. Đổi trả và khiếu nại** | 🟢 | ✅ **Đã sửa.** `shops.return_note` (≤600 ký tự) tồn tại và đi xuyên suốt từ ô nhập tới trang shop và PDP. §11 nay chỉ thẳng vào nó. Xem §Khoảng cách #1 |
 | **12. Kiểm duyệt** | 🟢 | Sáu trạng thái khớp enum `product_status`. "Duyệt chưa phải là đang bán" và "mở lại để sửa cần đủ bốn bước" đều là CODE, có test (Q5) |
-| **13. Báo cáo vi phạm** | 🔵 🔴 | **Chưa có nút báo cáo trên bề mặt Shop.** Xem §Khoảng cách #2 |
-| **14. Dữ liệu cá nhân** | 🟢 + 🟠 | Danh sách thu/không thu đúng với schema. "Không lưu IP/fingerprint" là 🟢 — schema **cố ý không có cột**. "Ghi chú nội bộ không hiển thị cho seller" và "giá trị kênh không vào lịch sử" đều có assertion pgTAP. 🟠: đối chiếu với `src/pages/Privacy.tsx` trước khi ban hành |
+| **13. Báo cáo vi phạm** | 🟢 + 🔵 | ✅ **Đã sửa.** §13 nêu email chính thức, gửi gì, **không** gửi gì (mật khẩu/OTP/thẻ), và nói thẳng rằng **chưa có nút Báo cáo**. Nút vào backlog hậu pilot |
+| **14. Dữ liệu cá nhân** | 🟢 + 🟠 | Danh sách thu/không thu đúng với schema; "không lưu IP/fingerprint" là 🟢 (schema **cố ý không có cột**). ✅ Thêm bảng **công khai vs nội bộ** và mục quan hệ với Chính sách bảo mật. 🟠 **còn một quyết định**: Chính sách bảo mật chưa nêu tên dữ liệu Shop — xem §Đối chiếu Privacy |
 | **15. Bảo mật và phân quyền** | 🟢 | Vai trò khớp `shop_member_role`; "support không đọc ảnh gốc" là migration `20260811170000`; "kiểm duyệt cần xác thực hai lớp" là `is_admin()` ⇒ AAL2 |
 | **16. Giới hạn pilot** | 🟢 🔴 | **"Chưa có thông báo tự động" phải giữ nguyên** — nó là hệ quả trực tiếp của quyết định thông báo đã ký, và là điều người bán cần biết nhất trong cả văn bản. Câu "những giới hạn này không dùng để miễn trừ mọi trách nhiệm" là chủ ý: một điều khoản miễn trừ toàn phần là dark pattern |
 | **17. Tạm ngừng và chấm dứt** | 🟢 + 🔵 | Nút có thật (`product_decide('suspend')`, `shops.state`). **Quy trình** thì là 🔵 — "nêu lý do và cho cơ hội sửa" là một cam kết vận hành, không phải một ràng buộc kỹ thuật |
 | **18. Thay đổi quy chế** | 🟢 | Toàn bộ mục này là CODE: version bất biến (trigger), hash mới cho nội dung mới (cột GENERATED), không ghi lùi ngày (`effective_at` chặn), giữ acceptance cũ, cùng version không ký lại |
-| **19. Liên hệ hỗ trợ** | 🔴 | Ba kênh **có thật trong repo** (`Privacy.tsx`/`Terms.tsx` và `ChatFAB.tsx`). Nhưng **cần quyết định**: dùng chung hay lập kênh riêng cho pilot? Xem §Câu hỏi #4 |
+| **19. Liên hệ hỗ trợ** | 🟢 | ✅ **Đã quyết:** dùng chung ba kênh có thật trong repo, **email là kênh chính thức**, Zalo/Messenger chỉ hỗ trợ thông thường. §19 viết lại thành bảng hai vai trò |
 | **20. Hiệu lực và phê duyệt** | 🟢 | Năm điều kiện hiệu lực khớp đúng những gì migration cưỡng chế |
 
 ---
@@ -57,61 +79,130 @@ Văn bản **không** hứa gì hệ thống không làm. Nhưng nó **yêu cầ
 ba việc mà hệ thống chưa có chỗ để làm cho tử tế. Đây là các khoảng cách thật,
 không phải lỗi.
 
-### #1 — Không có trường "chính sách đổi trả" (mục 11)
+### ~~#1 — Không có trường "chính sách đổi trả"~~ 🔴 **SAI — đã sửa**
 
-Quy chế yêu cầu seller **công bố chính sách đổi trả**. Chỗ duy nhất để viết là
-phần mô tả sản phẩm hoặc phần giới thiệu shop.
+**Trường đã tồn tại và đi xuyên suốt.** Kết luận trước đó là một khẳng định
+không kiểm, và Product Owner yêu cầu kiểm lại trước khi kết luận — đúng.
 
-Hệ quả: mỗi seller viết một kiểu, người mua phải đọc mô tả để tìm, và người kiểm
-duyệt không có gì để kiểm.
+`shops.return_note TEXT` (≤ 600 ký tự), thêm ở migration
+`20260811180000_shop_profile.sql`. Đường dữ liệu đầy đủ:
 
-| Lựa chọn | Chi phí |
+| Chặng | Bằng chứng |
 |---|---|
-| **A. Giữ nguyên** — chính sách nằm trong mô tả | 0. Chấp nhận sự không đồng nhất trong pilot |
-| **B. Thêm trường `return_policy` trên `shops`** | Một migration + một ô nhập + hiển thị trên trang shop |
+| Ghi | `shop_profile_update` nhận `return_note` trong patch |
+| Nhập | `SellerShopSettings.tsx` — nhãn "Chính sách đổi trả", giới hạn 600 ký tự |
+| Xem trước | `ProductPreview.tsx` — "Đổi trả: …" |
+| Kiểm duyệt | mục tiêu yêu-cầu-sửa `{section:'shipping', field:'return_note'}` |
+| Công khai — trang shop | `ShopStore.tsx` — `<dt>Đổi trả</dt>` |
+| Công khai — trang sản phẩm | `ProductDetail.tsx` — `tl-pdp-note` |
+| Projection | `shop_public_shop`, `product_public_projection`, lịch sử slug |
 
-Khuyến nghị: **A cho pilot**, và ghi vào phần giới hạn. Với 3–5 seller, sự không
-đồng nhất là quản lý được; một migration nữa thì kéo dài vòng phê duyệt.
+**Không có wiring gap.** §11 nay chỉ thẳng vào ô đó, kèm giới hạn 600 ký tự và
+nơi người mua nhìn thấy nó. **Không tạo đường dữ liệu mới.**
 
-### #2 — Không có nút báo cáo trên bề mặt Shop (mục 13)
+### #2 — Không có nút báo cáo trên bề mặt Shop ✅ **đã xử lý bằng câu chữ**
 
-Quy chế nói người mua và người bán "có thể báo cáo". Trên thực tế **không có nút
-nào** trên trang sản phẩm hay trang shop. `content_reports` tồn tại cho diễn đàn
-nhưng không nối vào sản phẩm.
+Vẫn **không có nút nào** trên trang sản phẩm hay trang shop; `content_reports`
+tồn tại cho diễn đàn nhưng không nối vào sản phẩm. Đó là sự thật và §13 nay nói
+thẳng ra thay vì để người đọc đi tìm.
 
-Đường duy nhất đang có: các kênh liên hệ chung ở mục 19.
+Product Owner chọn **A**: báo cáo gửi qua `tapickleballvn@gmail.com`, và §13 nói
+rõ gửi gì, không gửi gì (mật khẩu/OTP/thẻ), và rằng Zalo/Messenger **không phải**
+kênh khiếu nại chính thức.
 
-| Lựa chọn | Chi phí |
-|---|---|
-| **A. Viết rõ trong quy chế rằng báo cáo gửi qua kênh hỗ trợ ở mục 19** | 0, và trung thực |
-| **B. Xây nút báo cáo** | Một migration + UI + hàng đợi cho admin |
+**Nút Báo cáo vào backlog hậu pilot — không phải blocker của closed pilot.**
 
-Khuyến nghị: **A cho pilot.** Nếu chọn A, đề nghị **sửa mục 13** để nói rõ báo
-cáo gửi qua kênh nào — hiện văn bản nói "có thể báo cáo" mà không nói bằng cách
-nào, và đó là một khoảng trống người đọc sẽ vấp phải.
+### #3 — Giới hạn số seller/sản phẩm không được cưỡng chế (mục 1) ✅ **đã nói rõ**
 
-### #3 — Giới hạn số seller/sản phẩm không được cưỡng chế (mục 1)
+Không có ràng buộc kỹ thuật nào; giới hạn được thực hiện bằng danh sách mời và
+bằng kiểm duyệt. Điều khoản **giữ lại** — quyền đó có thật — nhưng §1 nay phân
+biệt tường minh **giới hạn vận hành** với **hạn mức kỹ thuật**, và không con số
+nào được mô tả như thể hệ thống tự chặn.
 
-Quy chế nói ThePickleHub "có thể giới hạn số người bán, số sản phẩm". Không có
-ràng buộc kỹ thuật nào làm việc đó; nó được cưỡng chế bằng cách không thêm ai
-vào danh sách và bằng kiểm duyệt.
-
-Khuyến nghị: **giữ nguyên**. Câu này mô tả một quyền, không phải một cơ chế, và
-quyền đó có thật.
+**Không thêm hệ thống quota trong checkpoint này.**
 
 ---
 
-## Bảy câu hỏi cần Product Owner quyết
+## Bảy câu hỏi — trạng thái sau vòng 1
 
-| # | Câu hỏi | Vì sao không đoán được | Chặn hiệu lực? |
+| # | Câu hỏi | Trả lời | Chặn hiệu lực? |
 |---|---|---|---|
-| 1 | **Toàn văn có được duyệt không**, và cần sửa chỗ nào | Đây là văn bản ràng buộc người thật | 🔴 **CÓ** |
-| 2 | **`effective_at`** — ngày giờ hiệu lực | Không có mặc định đúng. Không được sớm hơn `approved_at` | 🔴 **CÓ** |
-| 3 | **`approved_by`** — tên hiển thị trong bản ghi | Dự kiến `Cuong Nguyen — Product Owner`; cần xác nhận đúng chuỗi | 🔴 **CÓ** |
-| 4 | **Kênh hỗ trợ (mục 19)** — dùng chung ba kênh hiện có, hay lập kênh riêng cho pilot | Quyết định vận hành | 🔴 **CÓ** — mục 19 không được mơ hồ ở bản hiệu lực |
-| 5 | **Mục 13** — có sửa để nói rõ báo cáo gửi qua kênh nào không (§Khoảng cách #2) | Quyết định nội dung | 🟠 nên sửa |
-| 6 | **Danh sách ngành hàng ở mục 3** — có khớp `product_categories` thực tế không | Danh sách trong văn bản phải khớp danh sách trong hệ thống | 🟠 kiểm trước khi ban hành |
-| 7 | **Đối chiếu mục 14 với `src/pages/Privacy.tsx`** — hai văn bản có mâu thuẫn nhau chỗ nào không | Hai văn bản cùng nói về dữ liệu cá nhân | 🟠 nên kiểm |
+| 1 | **Toàn văn có được duyệt không** | 🔴 **REVISE** — đã sửa theo phản hồi; **chờ duyệt lần cuối** | 🔴 **CÒN CHẶN** |
+| 2 | **`effective_at`** | ⏳ Chưa đặt, có chủ đích. Sau khi APPROVE, đề xuất **00:00:00 giờ Việt Nam của ngày kế tiếp**; timestamp ISO chính xác sẽ được báo lại **trước** khi tạo bản approved | 🔴 **CÒN CHẶN** |
+| 3 | **`approved_by`** | ✅ Dự kiến `Cuong Nguyen — Product Owner, ThePickleHub` — **metadata dự kiến**, chưa ghi vào bản ghi | ghi cùng lúc với #1 |
+| 4 | **Kênh hỗ trợ (mục 19)** | ✅ **Dùng chung ba kênh sẵn có.** Email = kênh chính thức; Zalo/Messenger = hỗ trợ thông thường. **Không tạo kênh mới** | ✅ đã gỡ |
+| 5 | **Mục 13 — cách báo cáo** | ✅ Đã viết rõ: email, kèm URL + mô tả + bằng chứng; không đòi mật khẩu/OTP/thẻ; nói thẳng là chưa có nút Báo cáo | ✅ đã gỡ |
+| 6 | **Ngành hàng mục 3** | ✅ Đã đối chiếu với `product_categories`; văn bản thu hẹp cho khớp | ✅ đã gỡ |
+| 7 | **Đối chiếu mục 14 với Privacy** | ⚠️ Đã đối chiếu và đã thêm phần quan hệ giữa hai văn bản. **Còn một quyết định cho Product Owner** — xem §Đối chiếu Privacy | 🟠 không chặn pilot |
+
+### Ngày hiệu lực — không tự suy đoán
+
+Quy tắc đã ghi: **không dùng thời điểm trong quá khứ** và **không tự suy đoán
+ngày phê duyệt**. Vì vậy `effective_at` **để trống** cho tới khi có APPROVE.
+
+Khi có APPROVE, agent sẽ báo lại một timestamp ISO 8601 chính xác dạng
+`YYYY-MM-DDT00:00:00+07:00` — tính từ **ngày APPROVE thực tế**, không phải từ một
+ngày đoán trước — và chờ xác nhận trước khi tạo bản ghi.
+
+Ràng buộc `legal_documents_no_backdate` cũng từ chối mọi `effective_at` sớm hơn
+`approved_at` ở tầng cơ sở dữ liệu, nên một lần đặt nhầm sẽ bị chặn chứ không
+lọt.
+
+---
+
+## Đối chiếu taxonomy — §3 với database
+
+Nguồn: `supabase/migrations/20260811120000_shop_phase2a_catalog.sql`, seed
+`product_categories` (6 dòng, `is_active` mặc định true).
+
+| Trong dự thảo (bản đầu) | Trong hệ thống (`slug` — `name_vi`) | Kết luận |
+|---|---|---|
+| vợt | `vot` — Vợt pickleball | ✅ **giữ** |
+| bóng | `bong` — Bóng | ✅ **giữ** |
+| giày | `giay` — Giày | ✅ **giữ** |
+| túi đựng | `tui-balo` — Túi & balo | ✏️ **sửa** — dùng đúng tên "Túi & balo" (gồm cả balo, dự thảo cũ hẹp hơn) |
+| quần áo thi đấu và tập luyện | `trang-phuc` — Trang phục | ✅ **giữ**, dùng đúng tên ngành hàng |
+| phụ kiện: cán quấn, băng bảo vệ | `grip-phu-kien` — Grip & phụ kiện | ✅ **giữ** |
+| phụ kiện: **lưới, phụ kiện sân** | *(không có ngành hàng nào)* | ❌ **BỎ** — rộng hơn database |
+
+**Kết quả:** dự thảo cũ **rộng hơn** database ở đúng một chỗ (lưới và thiết bị
+sân). Đã sửa theo database: §3 nay là **bảng sáu ngành hàng**, nói rõ đây là
+*toàn bộ* danh sách chứ không phải ví dụ, và nêu tên những thứ **không** thuộc
+phạm vi.
+
+**Không thêm category nào vào migration trong checkpoint này.**
+
+---
+
+## Đối chiếu Privacy — §14 với `src/pages/Privacy.tsx`
+
+Nguồn: `src/pages/Privacy.tsx` (render từ từ điển i18n `privacy.*`,
+`src/i18n/vi.ts`).
+
+| §14 quy chế nói | Chính sách bảo mật hiện nói | Khác biệt | Xử lý |
+|---|---|---|---|
+| Thu **email, tên hiển thị, ảnh đại diện** | ✅ có, liệt kê đúng | không | — |
+| Thu **hồ sơ đăng ký người bán**: họ tên, SĐT, tên shop, địa chỉ lấy hàng, tỉnh/thành | ❌ **không nêu tên** — mục thu thập chỉ có email/tên/avatar/dữ liệu giải đấu-video-livestream | Shop thêm loại dữ liệu mới mà Chính sách bảo mật chưa nhắc | §14 mô tả **đúng implementation**; thêm mục nói rõ Chính sách bảo mật vẫn có hiệu lực đầy đủ và **thắng khi mâu thuẫn**. 🟠 **Đề xuất Product Owner:** bổ sung dữ liệu Shop vào Chính sách bảo mật trước khi mời người bán thật |
+| Thu **kênh liên hệ công khai** do seller khai | ❌ không nêu | như trên | như trên; §14 nói rõ đây là **seller chủ động công bố**, không phải ThePickleHub chia sẻ dữ liệu cho bên thứ ba |
+| Thu **bằng chứng chấp thuận quy chế** | ❌ không nêu | như trên | như trên |
+| **Không** lưu IP / dấu vết thiết bị | không nhắc tới | quy chế **chặt hơn** | ✅ giữ — chặt hơn thì không mâu thuẫn |
+| **Không** thu CCCD / ngân hàng / payout | không nhắc tới | quy chế **chặt hơn** | ✅ giữ |
+| "Không bán hoặc chia sẻ dữ liệu cho bên thứ ba" | ✅ cam kết hiện có | quy chế **không** làm yếu | ✅ §14 nói rõ kênh liên hệ công khai là do seller chọn công bố, không phải một hành vi chia sẻ |
+| Quyền xem / sửa / dừng dịch vụ | ✅ cam kết hiện có | quy chế không đụng | ✅ không làm yếu |
+
+### Kết luận
+
+- Quy chế **không tuyên bố** thu thập bất kỳ loại dữ liệu nào không có trong
+  implementation.
+- Quy chế **không làm yếu** bất kỳ cam kết nào của Chính sách bảo mật.
+- **`Privacy.tsx` KHÔNG bị sửa trong checkpoint này** — đúng chỉ thị: chỉ sửa
+  nếu thật sự cần, và đây là chỗ cần một quyết định chứ không phải một lần sửa
+  câu chữ.
+
+🟠 **Đề xuất chờ Product Owner:** trước khi mời người bán thật, bổ sung vào
+Chính sách bảo mật một mục ngắn nêu tên ba loại dữ liệu Shop (hồ sơ đăng ký
+người bán, kênh liên hệ công khai, bằng chứng chấp thuận). Không chặn việc dựng
+hạ tầng hay chạy smoke bằng tài khoản test.
 
 ---
 
@@ -143,37 +234,34 @@ Ghi ra để không ai coi là thiếu sót:
 
 ---
 
-## Checklist Product Owner
+## Checklist Product Owner — vòng 2
 
 Agent **không** tick ô nào ở đây.
 
 ```
-Đọc toàn văn seller-rules-v1.md
+Vòng 1: REVISE (13/08). Bảy sửa đổi đã thực hiện — xem đầu tài liệu.
 
-  [ ] PASS — duyệt nguyên văn
-  [ ] REVISE — cần sửa, ghi rõ mục và câu:
+Đọc lại seller-rules-v1.md sau khi sửa:
+
+  [ ] APPROVE — duyệt bản này
+  [ ] REVISE  — còn cần sửa, ghi rõ mục và câu:
       ____________________________________________________________
-      ____________________________________________________________
-  [ ] REJECT — lý do: _________________________________________
+  [ ] REJECT  — lý do: ________________________________________
 
-Bảy câu hỏi ở §Bảy câu hỏi:
-  1. Toàn văn                     [ ] đã trả lời
-  2. effective_at = ______________________
-  3. approved_by  = ______________________
-  4. Kênh hỗ trợ:  [ ] dùng chung 3 kênh hiện có  [ ] lập kênh riêng: __________
-  5. Sửa mục 13 (cách báo cáo):   [ ] có  [ ] không
-  6. Ngành hàng mục 3 khớp product_categories:  [ ] đã kiểm
-  7. Mục 14 đối chiếu Privacy.tsx:              [ ] đã kiểm
+Nếu APPROVE, ba thứ đi kèm:
+  approved_by  = Cuong Nguyen — Product Owner, ThePickleHub   [ ] đúng chuỗi
+  effective_at = agent sẽ báo ISO 8601 (+07:00) tính từ NGÀY APPROVE THẬT,
+                 và chờ xác nhận trước khi tạo bản ghi          [ ] hiểu
+  content hash = chỉ tính SAU khi APPROVE, trên nội dung cuối   [ ] hiểu
 
-Ba khoảng cách:
-  #1 chính sách đổi trả:  [ ] A giữ nguyên   [ ] B thêm trường
-  #2 nút báo cáo:         [ ] A qua kênh hỗ trợ  [ ] B xây nút
-  #3 giới hạn số lượng:   [ ] giữ nguyên
+Một đề xuất không chặn pilot:
+  [ ] Bổ sung dữ liệu Shop vào Privacy.tsx trước khi mời người bán thật
+      (§Đối chiếu Privacy) — [ ] đồng ý  [ ] để sau  [ ] không cần
 
 Ký: ______________________   Ngày: ______________
 ```
 
-**Chỉ khi ô PASS được đánh dấu** mới được: điền `approved_by` / `approved_at`,
+**Chỉ khi ô APPROVE được đánh dấu** mới được: điền `approved_by`/`approved_at`,
 chốt `effective_at`, tính mã băm trên **nội dung cuối**, và chuẩn bị bản ghi ban
 hành. Tính hash trên bản DRAFT rồi coi đó là bản hiệu lực là đúng thứ quy trình
 này tồn tại để ngăn.

@@ -14,7 +14,7 @@
 
 | Lần | Project ref | Khi nào |
 |---|---|---|
-| **C-1** | **`<STAGING_PROJECT_REF>`** | Giữa file #3 và #4 của B-1 |
+| **C-1** | **`utokwfcljxjkpkaqgheo`** | Giữa file #3 và #4 của B-1 |
 | **C-2** | **`ajvlcamxemgbxduhiqrl`** | Giữa file #3 và #4 của B-2 |
 
 | Thứ | Giá trị |
@@ -44,7 +44,7 @@ Staging là một project mới; chưa có gì trong đó.
 ```sh
 # Giá trị mới, không in ra, không sao chép từ production.
 CRON=$(openssl rand -hex 32)
-npx supabase secrets set CRON_SECRET="$CRON" --project-ref <STAGING_PROJECT_REF>
+npx supabase secrets set CRON_SECRET="$CRON" --project-ref utokwfcljxjkpkaqgheo
 # rồi nạp CÙNG giá trị vào vault của staging:
 #   SELECT vault.create_secret('<giá trị>', 'cron_secret');
 ```
@@ -100,7 +100,7 @@ Packet B, file 5-18     phần còn lại
 
 ## 5. Lệnh chính xác
 
-> `REF` là `<STAGING_PROJECT_REF>` ở C-1 và `ajvlcamxemgbxduhiqrl` ở C-2. Gõ tường
+> `REF` là `utokwfcljxjkpkaqgheo` ở C-1 và `ajvlcamxemgbxduhiqrl` ở C-2. Gõ tường
 > minh mỗi lần; đừng để một biến từ phiên trước quyết định hộ.
 
 ### Bước 1 — deploy
@@ -227,7 +227,7 @@ rotate — xoá cả project là cách dọn dứt điểm.
 ```
 Packet C — deploy shop-media-lifecycle và xác nhận cron.
 
-Lần này là:  [ ] C-1 staging (<STAGING_PROJECT_REF>)   [ ] C-2 production (ajvlcamxemgbxduhiqrl)
+Lần này là:  [ ] C-1 staging (utokwfcljxjkpkaqgheo)   [ ] C-2 production (ajvlcamxemgbxduhiqrl)
 
 Tôi hiểu rằng:
   - C-1 TẠO một CRON_SECRET mới cho staging; C-2 KHÔNG đụng secret nào;

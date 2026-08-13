@@ -35,7 +35,10 @@ Những điều sau đúng với chương trình này:
   mới tham gia được. Không có cách tự đăng ký.
 - ThePickleHub có thể giới hạn **số người bán, số sản phẩm, ngành hàng và thời
   gian** của chương trình, và có thể thay đổi các giới hạn đó trong lúc chương
-  trình đang chạy.
+  trình đang chạy. Các giới hạn này được thực hiện **bằng quy trình vận hành** —
+  danh sách mời và việc kiểm duyệt — **chứ không phải bằng một hạn mức kỹ thuật**
+  do hệ thống tự chặn. Hai thứ khác nhau, và chúng tôi nói rõ mình đang dùng thứ
+  nào.
 - Shop trong giai đoạn này **không được các công cụ tìm kiếm lập chỉ mục**. Sản
   phẩm của anh/chị sẽ không xuất hiện trên Google.
 - Đây **không phải** một sàn thương mại điện tử hoàn chỉnh. Chưa có giỏ hàng,
@@ -86,14 +89,20 @@ Không người bán nào được mô tả mình là "đã được ThePickleHu
 ## 3. Hàng hoá được phép bán
 
 Chương trình thử nghiệm chỉ dành cho **sản phẩm pickleball và phụ kiện liên
-quan**, thuộc các ngành hàng nền tảng đã mở, ví dụ:
+quan**, và **chỉ trong sáu ngành hàng nền tảng đang mở**:
 
-- vợt;
-- bóng;
-- giày;
-- túi đựng;
-- quần áo thi đấu và tập luyện;
-- phụ kiện (cán quấn, băng bảo vệ, lưới, phụ kiện sân…).
+| Ngành hàng | Gồm những gì |
+|---|---|
+| **Vợt pickleball** | vợt và mặt vợt |
+| **Giày** | giày thi đấu, giày tập |
+| **Bóng** | bóng thi đấu, bóng tập |
+| **Túi & balo** | túi vợt, balo, túi đựng đồ |
+| **Grip & phụ kiện** | cán quấn, băng bảo vệ, dây đeo, phụ kiện nhỏ đi kèm |
+| **Trang phục** | quần áo thi đấu và tập luyện |
+
+Đây là **toàn bộ** danh sách, không phải ví dụ. Sản phẩm không thuộc sáu ngành
+hàng trên — lưới, thiết bị sân, đồ uống thể thao, dịch vụ — **không nằm trong
+phạm vi chương trình thử nghiệm**.
 
 Hàng **mới** và hàng **đã qua sử dụng** đều được bán, **với điều kiện mô tả đúng
 tình trạng thực tế** (mục 5).
@@ -329,6 +338,13 @@ nguồn khiếu nại phổ biến nhất.
 **Người bán phải công bố chính sách đổi trả trung thực** và thực hiện đúng chính
 sách mình đã công bố.
 
+Nơi khai: **ô "Chính sách đổi trả" trong phần cài đặt shop** (`/seller/settings`,
+tối đa 600 ký tự). Nội dung ô này hiển thị cho người mua trên **trang shop** và
+**trang sản phẩm**, và người kiểm duyệt có thể yêu cầu sửa riêng ô đó.
+
+Để trống ô này nghĩa là người mua không thấy chính sách nào — và một chính sách
+không được công bố là nguồn khiếu nại phổ biến nhất.
+
 Chính sách nên nêu:
 
 - trường hợp nào được đổi/trả;
@@ -395,9 +411,43 @@ Không có bước tắt.
 
 ## 13. Báo cáo vi phạm
 
-- **Người mua và người bán đều có thể báo cáo** một sản phẩm, một shop hoặc một
-  hành vi mà mình cho là vi phạm.
-- Khi báo cáo, hãy gửi **đường dẫn, mô tả ngắn gọn và bằng chứng** liên quan.
+**Người mua và người bán đều có thể báo cáo** một sản phẩm, một shop hoặc một
+hành vi mà mình cho là vi phạm.
+
+### Gửi báo cáo ở đâu
+
+**Gửi email tới `tapickleballvn@gmail.com`.** Đây là kênh tiếp nhận báo cáo,
+khiếu nại và bằng chứng **chính thức duy nhất** trong chương trình thử nghiệm.
+
+Trong email, xin gửi kèm:
+
+- **đường dẫn** tới sản phẩm hoặc shop;
+- **mô tả ngắn gọn** vấn đề;
+- **bằng chứng** nếu có (ảnh chụp màn hình, ảnh sản phẩm nhận được…).
+
+⚠️ **Chương trình thử nghiệm chưa có nút "Báo cáo" trên trang sản phẩm hay trang
+shop.** Email là cách duy nhất. Chúng tôi nói ra thay vì để anh/chị đi tìm một
+nút không tồn tại.
+
+**Zalo và Messenger không phải kênh khiếu nại chính thức.** Hai kênh đó dùng cho
+hỗ trợ thông thường và hướng dẫn ban đầu; khi cần người kiểm duyệt xử lý, lưu
+bằng chứng hoặc ra một quyết định chính thức, chúng tôi sẽ đề nghị anh/chị gửi
+email — vì một quyết định cần một hồ sơ, và tin nhắn thì không phải hồ sơ.
+
+### Những gì KHÔNG bao giờ gửi
+
+ThePickleHub **không bao giờ** yêu cầu anh/chị gửi:
+
+- **mật khẩu**;
+- **mã OTP** hoặc mã xác thực;
+- **thông tin thẻ ngân hàng**, số thẻ, mã CVV;
+- bất kỳ dữ liệu bí mật nào của tài khoản.
+
+Nếu ai đó tự xưng là ThePickleHub và hỏi những thứ trên, **đó là lừa đảo** — xin
+báo cho chúng tôi qua email ở trên.
+
+### Sau khi nhận báo cáo
+
 - **Chỉ gửi những gì cần thiết.** Đừng gửi kèm dữ liệu cá nhân của người khác
   vượt quá mức cần để chúng tôi hiểu vấn đề.
 - ThePickleHub **có thể tạm ẩn** sản phẩm hoặc shop trong lúc xem xét. Việc tạm
@@ -438,12 +488,37 @@ toán — việc đó sẽ đi kèm thông báo và chính sách tương ứng. 
 hứa rằng sẽ không bao giờ thu thập thêm; chúng tôi nói rằng sẽ không làm điều đó
 âm thầm.
 
-### Ai đọc được gì
+### Dữ liệu công khai của shop, và dữ liệu nội bộ
 
+Đây là hai nhóm khác nhau, và trộn chúng là cách một thông tin riêng tư trở thành
+công khai mà không ai định thế.
+
+| Nhóm | Gồm những gì | Ai thấy |
+|---|---|---|
+| **Công khai của shop** | tên shop, giới thiệu, tỉnh/thành, ngành hàng chính, ảnh logo/bìa, chính sách giao hàng, chính sách đổi trả, **kênh liên hệ đã duyệt**, sản phẩm và ảnh đã đăng | bất kỳ ai vào trang shop |
+| **Tài khoản và nội bộ** | email và số điện thoại tài khoản, họ tên trong hồ sơ đăng ký, **địa chỉ lấy hàng**, ghi chú nội bộ của quản trị viên, bằng chứng chấp thuận quy chế, nhật ký vận hành | chỉ anh/chị và quản trị viên |
+
+Ba điều cụ thể:
+
+- **Địa chỉ lấy hàng không hiển thị công khai.** Nó nằm trong hồ sơ đăng ký.
+- **Email và số điện thoại tài khoản không bao giờ tự động thành kênh liên hệ.**
+  Chỉ kênh anh/chị **chủ động khai** và quản trị viên **đã duyệt** mới hiển thị
+  (mục 8). Việc kênh đó xuất hiện công khai là do anh/chị chọn, không phải do
+  ThePickleHub chia sẻ dữ liệu của anh/chị cho bên thứ ba.
 - **Ghi chú nội bộ của quản trị viên không hiển thị cho người bán.** Ghi chú gửi
   cho người bán là một trường riêng.
 - **Số điện thoại và giá trị kênh liên hệ không xuất hiện trong lịch sử kiểm
   duyệt.** Lịch sử chỉ ghi *loại* kênh, không ghi *giá trị*.
+
+### Quan hệ với Chính sách bảo mật của ThePickleHub
+
+[Chính sách bảo mật](/privacy) áp dụng cho toàn bộ nền tảng và **vẫn có hiệu lực
+đầy đủ** với anh/chị. Quy chế này **không làm giảm** bất kỳ cam kết nào ở đó.
+
+Mục này mô tả **thêm** những loại dữ liệu mà tính năng Shop xử lý và Chính sách
+bảo mật hiện chưa liệt kê tên — hồ sơ đăng ký người bán, kênh liên hệ công khai,
+và bằng chứng chấp thuận quy chế. Nếu có bất kỳ mâu thuẫn nào giữa hai văn bản,
+**Chính sách bảo mật thắng**, và ThePickleHub có trách nhiệm cập nhật nó.
 
 ---
 
@@ -472,9 +547,11 @@ Nói trước để anh/chị không bất ngờ:
 - **Số người bán và số sản phẩm bị giới hạn.**
 - **Chưa có thông báo tự động.** Khi hồ sơ hoặc sản phẩm của anh/chị được duyệt,
   bị từ chối hoặc bị yêu cầu sửa, **hệ thống không gửi email hay thông báo đẩy.**
-  Anh/chị cần **tự mở trang quản lý của mình để xem trạng thái**. Người kiểm
-  duyệt sẽ cố gắng nhắn trực tiếp cho anh/chị sau mỗi quyết định, nhưng đó là
-  thao tác thủ công của con người, không phải một hệ thống.
+  Anh/chị cần **tự mở trang quản lý của mình để xem trạng thái** — đó là nguồn
+  thông tin đúng về hồ sơ và sản phẩm của anh/chị. Người kiểm duyệt kiểm tra hàng
+  đợi **ít nhất hai lần mỗi ngày** và sẽ nhắn trực tiếp cho anh/chị sau mỗi quyết
+  định, nhưng đó là thao tác thủ công của con người, không phải một hệ thống — và
+  nếu một tin nhắn bị lỡ, trang quản lý vẫn hiển thị đúng.
 - **Shop không được lập chỉ mục.** Sản phẩm của anh/chị không xuất hiện trên
   Google trong giai đoạn này.
 - **Đây không phải ngày ra mắt chính thức.**
@@ -535,20 +612,23 @@ mất.
 
 ## 19. Liên hệ hỗ trợ
 
-Trong chương trình thử nghiệm kín, dùng các kênh sau:
+Chương trình thử nghiệm dùng chung các kênh hỗ trợ sẵn có của ThePickleHub. Ba
+kênh, **hai vai trò khác nhau** — và sự khác nhau đó quan trọng:
 
-| Kênh | Địa chỉ |
-|---|---|
-| Email | `tapickleballvn@gmail.com` |
-| Zalo | `https://zalo.me/2932845421782592643` |
-| Messenger | `https://m.me/thepicklehubnet` |
+| Kênh | Địa chỉ | Dùng cho |
+|---|---|---|
+| **Email** | `tapickleballvn@gmail.com` | **Kênh chính thức.** Báo cáo vi phạm, khiếu nại, gửi bằng chứng, và mọi việc cần một quyết định chính thức |
+| Zalo | `https://zalo.me/2932845421782592643` | Hỗ trợ thông thường, hướng dẫn ban đầu |
+| Messenger | `https://m.me/thepicklehubnet` | Hỗ trợ thông thường, hướng dẫn ban đầu |
 
-Đây là các kênh hỗ trợ chung của ThePickleHub, đang dùng cho toàn bộ sản phẩm.
+**Khi nào phải dùng email:** bất cứ khi nào cần người kiểm duyệt xử lý, cần lưu
+bằng chứng, hoặc cần một quyết định chính thức. Nếu anh/chị bắt đầu bằng Zalo hay
+Messenger cho một việc như vậy, chúng tôi sẽ đề nghị chuyển sang email — không
+phải để làm khó, mà vì **một quyết định cần một hồ sơ, và tin nhắn không phải hồ
+sơ**.
 
-> ⚠️ **Cần Product Owner xác nhận trước khi văn bản có hiệu lực:** chương trình
-> thử nghiệm có dùng chung ba kênh này, hay cần một kênh riêng cho người bán
-> (ví dụ một nhóm Zalo riêng cho nhóm thử nghiệm)? Đây là quyết định vận hành,
-> và nó phải được chốt — không được để mơ hồ trong bản có hiệu lực.
+ThePickleHub **không bao giờ** hỏi mật khẩu, mã OTP hay thông tin thẻ qua bất kỳ
+kênh nào (mục 13).
 
 Chúng tôi **chưa cam kết thời gian phản hồi** trong giai đoạn thử nghiệm.
 

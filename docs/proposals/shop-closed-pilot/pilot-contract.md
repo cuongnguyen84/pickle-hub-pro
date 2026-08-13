@@ -123,7 +123,7 @@ Không mục nào dưới đây agent có căn cứ để chọn thay.
 | 4 | 🔴 **"Quy chế người bán v1"** | Bản dự thảo đầy đủ đã có ([`seller-rules-v1.md`](./seller-rules-v1.md)); cần **APPROVE/REVISE/REJECT** + `effective_at` + `approved_by` | Mời người bán thật (§5) |
 | 5 | ✅ **Chấp nhận pilot chạy không có thông báo tự động?** | **ĐÃ KÝ** — [`notification-decision.md`](./notification-decision.md). Còn trống: tên người kiểm hàng đợi hằng ngày | Packet D |
 | 6 | **Thời gian pilot** — bắt đầu, kết thúc | Không có mặc định đúng | Packet D, tiêu chí dừng |
-| 7 | **Ai trực kiểm duyệt, SLA bao lâu** | Hiện chỉ có một admin. Nếu người đó đi vắng một tuần thì hàng đợi đứng | Packet D |
+| 7 | ✅ **Ai trực kiểm duyệt** | **ĐÃ CHỐT** — Cuong Nguyen, kiểm hàng đợi **tối thiểu 2 lần/ngày**. Vẫn chỉ có một admin: nếu người đó đi vắng một tuần thì hàng đợi đứng, và đó là rủi ro đã biết chứ không phải một khoảng trống | Packet D |
 | 8 | **Ai trực sự cố** ngoài giờ | Như trên | Packet D |
 | 9 | **Giới hạn số shop / số sản phẩm** trong pilot | Là ngưỡng cảnh báo, không phải ràng buộc kỹ thuật | `operations.md` |
 | 10 | **Tiêu chí dừng bằng số** | §7 đưa danh sách sự kiện; ngưỡng là quyết định | Packet D |

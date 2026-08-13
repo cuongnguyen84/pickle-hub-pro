@@ -226,12 +226,14 @@ bản; chỉ việc mời người bán thật là không.
 
 | # | Blocker | Ai gỡ | Chặn |
 |---|---|---|---|
-| **B4′** | 🔴 **Quy chế v1 — bản dự thảo đã có, chờ DUYỆT.** Cần: `APPROVE`/`REVISE`/`REJECT` toàn văn, `effective_at`, `approved_by`, và bốn câu hỏi chặn ở [`seller-rules-v1-review.md`](./seller-rules-v1-review.md). Máy chủ vẫn từ chối mọi lần gửi hồ sơ với `seller_rules_not_published` — kể cả của Cuong | Cuong / pháp lý | Bước 13-14 |
-| **B3″** | 🔴 **Project ref staging.** Project **đã tạo** (ThePickleHub Staging · org ThePickleHub · Pro · ap-northeast-1 · sạch) nhưng **ref chưa được cung cấp** — chuỗi nhận được là placeholder `<STAGING_PROJECT_REF>`. Agent không đoán 20 ký tự base-36 | Product Owner, **một dòng** | **Packet B và C** |
+| **B4″** | 🔴 **Quy chế v1 — vòng 1 REVISE, đã sửa 7 điểm, chờ DUYỆT LẦN CUỐI.** Cần: `APPROVE`/`REVISE`/`REJECT` toàn văn, `effective_at`, `approved_by`, và bốn câu hỏi chặn ở [`seller-rules-v1-review.md`](./seller-rules-v1-review.md). Máy chủ vẫn từ chối mọi lần gửi hồ sơ với `seller_rules_not_published` — kể cả của Cuong | Cuong / pháp lý | Bước 13-14 |
+| ~~B3″~~ | ✅ **ĐÃ GỠ.** Ref staging = **`utokwfcljxjkpkaqgheo`**, đã điền vào toàn bộ tài liệu. Probe chỉ đọc xác nhận project trắng: 0 `auth.users`, 0 bảng `public`, 0 bucket, 0 Edge Function, 0 secret, **0 va chạm tên object Shop** | — | — |
+| **B9** | 🔴 **`pg_cron` / `pg_net` chưa cài trên staging** — khả dụng nhưng chưa bật. Bật là thao tác **ghi**, ngoài phạm vi kiểm chỉ đọc | Cuong, dashboard | **Packet C** |
+| **B10** | ⚠️ Gói **Pro** chưa xác minh được bằng API (`plan: null`) — chỉ dashboard đọc được | Cuong, S-1b | — |
 | **B1′** | URL preview trong **Redirect URLs của STAGING** | Cuong, dashboard | Packet A |
 | **B2** | `SHOP_PUBLIC_INDEXING` **không tồn tại** ở cả Production lẫn Preview | Cuong, dashboard | Packet A, D |
 | **B9** | `pg_cron`/`pg_net` **đã bật** trên staging chưa (Pro cho phép; cho phép ≠ đã bật) | Cuong, dashboard S-9 | Packet C |
-| **B6′** | Tên người **kiểm hàng đợi hằng ngày** (điều kiện #4 của quyết định thông báo) | Product Owner | Packet D |
+| ~~B6′~~ | ✅ **ĐÃ GỠ** — Cuong Nguyen, tối thiểu **2 lần/ngày** | — | — |
 | **B7** | 9 đầu vào của Packet D | Product Owner | Packet D |
 
 **B5 đã đóng** và không còn trong danh sách.

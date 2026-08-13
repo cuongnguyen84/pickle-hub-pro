@@ -38,22 +38,44 @@ Product Owner đã tạo project. Thông tin đã biết:
 | 3 | Region | **AWS ap-northeast-1** — **giống production**, nên độ trễ và hành vi Storage không phải biến số thứ hai |
 | 4 | Plan | **Pro** |
 | 5 | Trạng thái dữ liệu | **sạch** — không clone production, không copy người dùng production |
-| 6 | **Project ref** | 🔴 **`<STAGING_PROJECT_REF>` — CHƯA CÓ GIÁ TRỊ THẬT** |
+| 6 | **Project ref** | ✅ **`utokwfcljxjkpkaqgheo`** |
+| 7 | **Project URL** | ✅ `https://utokwfcljxjkpkaqgheo.supabase.co` |
 
-🔴 **Giá trị `project ref` chưa được cung cấp.** Chuỗi được đưa trong yêu cầu là
-`<STAGING_PROJECT_REF>` — một placeholder, không phải một ref. Agent **không đoán
-và không suy ra** một project ref: gõ nhầm 20 ký tự chữ-số là gõ vào một project
-của người khác.
+**Không** ghi database password, anon key, service-role key, access token hay
+cron secret vào bất kỳ tài liệu nào. Project ref và URL không phải bí mật — chúng
+nằm trong mọi request của client.
 
-Nó là **một dòng** cần điền, ở Supabase Dashboard → Project Settings → General →
-Reference ID (hoặc trong URL: `https://supabase.com/dashboard/project/<ref>`).
+### Đã xác minh bằng probe chỉ đọc (13/08)
 
-```
-Project ref staging: ______________________________
-```
+Trước mọi lệnh, script in ra ref mục tiêu và **từ chối chạy** với bất kỳ ref nào
+khác staging. Kết quả:
 
-Cho tới khi ô đó có giá trị, **không lệnh nào trong Packet B/C chạy được** — mọi
-lệnh đều dùng `$REF` và một `$REF` chưa giải là một lệnh không có mục tiêu.
+| Kiểm | Kết quả |
+|---|---|
+| Tên project | **ThePickleHub Staging** ✅ |
+| Organization | **ThePickleHub** ✅ |
+| Region | **ap-northeast-1** ✅ (giống production) |
+| Trạng thái | `ACTIVE_HEALTHY` |
+| PostgreSQL | 17.6.1.155 |
+| Tạo lúc | 2026-08-12T14:49:56Z |
+| **`auth.users`** | **0** ✅ — không có người dùng production |
+| **Bảng trong `public`** | **0** ✅ — project trắng |
+| Bảng `schema_migrations` | **chưa tồn tại** ✅ — chưa áp migration nào |
+| Storage bucket | **0** |
+| Edge Functions | **(không có)** |
+| Secret (tên) | **(không có)** |
+| **Va chạm tên object Shop** | **0** bảng, **0** function |
+| Extension **đã cài** | `pg_stat_statements`, `pgcrypto`, `plpgsql`, `supabase_vault`, `uuid-ossp` |
+| `pg_cron` | **khả dụng nhưng CHƯA cài** |
+| `pg_net` | **khả dụng nhưng CHƯA cài** |
+
+🔴 **`pg_cron` và `pg_net` khả dụng nhưng chưa bật.** Đây đúng là sự khác nhau
+checklist đã cảnh báo: *gói cho phép ≠ đã bật*. Packet C cần cả hai; bật chúng là
+một **thao tác ghi** và nằm ngoài phạm vi bước này.
+
+⚠️ **Gói Pro chưa xác minh được bằng API.** Endpoint `/v1/organizations` trả
+`plan: null`. "Pro" là thông tin Product Owner cung cấp và chỉ kiểm được trên
+dashboard — mục S-1 của checklist.
 
 ### Gói Pro gỡ được hai lo ngại
 
@@ -135,9 +157,9 @@ biến môi trường của môi trường Preview:
 
 | Biến | Preview (staging) | Production |
 |---|---|---|
-| `VITE_SUPABASE_URL` | `https://<STAGING_PROJECT_REF>.supabase.co` | production |
+| `VITE_SUPABASE_URL` | `https://utokwfcljxjkpkaqgheo.supabase.co` | production |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | anon key staging | production |
-| `VITE_SUPABASE_PROJECT_ID` | `<STAGING_PROJECT_REF>` | production |
+| `VITE_SUPABASE_PROJECT_ID` | `utokwfcljxjkpkaqgheo` | production |
 | `SHOP_PUBLIC_INDEXING` | **không đặt** | **không đặt** |
 
 ⚠️ **Đây là thay đổi có sức công phá nhất trong toàn bộ gói.** Đặt
@@ -220,7 +242,7 @@ Kiểm tra thứ hai, độc lập và không dựa vào trí nhớ:
 ```sh
 # Project ref phải xuất hiện TRONG chính lệnh, không qua biến chưa giải.
 curl -s -H "Authorization: Bearer $PAT" \
-  "https://api.supabase.com/v1/projects/<STAGING_PROJECT_REF>" | jq '{name, region, created_at}'
+  "https://api.supabase.com/v1/projects/utokwfcljxjkpkaqgheo" | jq '{name, region, created_at}'
 # name KHÔNG được là "thepicklehub-prod"
 ```
 

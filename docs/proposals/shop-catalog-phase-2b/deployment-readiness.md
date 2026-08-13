@@ -200,8 +200,11 @@ thị cho người mua.
       mất", "không đăng nhập được"?
 - [ ] 🔒 **Lưu trữ dữ liệu**: người bán rời chương trình thì shop và ảnh của họ
       xử lý thế nào, giữ bao lâu.
-- [ ] 🔒 **Nhân lực kiểm duyệt**: hiện chỉ có một admin. SLA duyệt là bao lâu?
-      48 giờ? Nếu Cuong đi vắng một tuần thì sao?
+- [~] 🔒 **Nhân lực kiểm duyệt**: **Cuong Nguyen**, kiểm hàng đợi **tối thiểu 2
+      lần mỗi ngày** trong suốt closed pilot (chốt 13/08). Vẫn **chỉ có một
+      admin** — nếu người đó đi vắng một tuần thì hàng đợi đứng. Đây là rủi ro
+      đã biết và đã chấp nhận cho pilot 3–5 người bán, không phải một khoảng
+      trống. Chưa cam kết SLA duyệt bằng số.
 - [~] 🔒 **Quy chế người bán v1** — bản **dự thảo đầy đủ** đã có ở
       `docs/proposals/shop-closed-pilot/seller-rules-v1.md`, trạng thái
       `DRAFT — PENDING PRODUCT OWNER APPROVAL`. Còn cần: Product Owner duyệt

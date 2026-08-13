@@ -31,14 +31,19 @@ quyết định, không phải một bất tiện.
 | 1 | Người bán **xem được trạng thái** trong dashboard của mình | ✅ `/seller/application/status`, `/seller/products`, `/seller/settings` — bảng ở §4 |
 | 2 | Admin có **hàng đợi rõ ràng** | ✅ `/admin/shop/applications`, `/admin/shop/products`, `/admin/shop/contacts` |
 | 3 | Có **runbook liên lạc tay** | ✅ §5 |
-| 4 | Có **người chịu trách nhiệm kiểm hàng đợi hằng ngày** | ⬜ Packet D §2 câu hỏi #6 — tên người, chưa điền |
+| 4 | Có **người chịu trách nhiệm kiểm hàng đợi hằng ngày** | ✅ **Cuong Nguyen**, kiểm hàng đợi **tối thiểu 2 lần/ngày** trong suốt closed pilot (Product Owner, 13/08) |
 | 5 | UI **không được nói "đã gửi thông báo"** | ✅ §6, và không có bề mặt nào nói vậy |
 | 6 | Giới hạn được ghi vào **pilot contract** | ✅ [`pilot-contract.md` §2 và §8](./pilot-contract.md) |
 
-Điều 4 là điều duy nhất còn trống, và nó là **tên một con người**, không phải
-một hệ thống. Với hạ tầng ở điều 1-3 nhưng không ai mở hàng đợi ra xem, pilot
-chạy mà người bán không nhận được câu trả lời nào — đúng thứ quyết định này
-đánh cược là sẽ không xảy ra.
+**Cả sáu điều kiện nay đã đủ.** Điều 4 — thứ duy nhất từng còn trống — là **tên
+một con người**, không phải một hệ thống: **Cuong Nguyen, tối thiểu hai lần mỗi
+ngày**. Với hạ tầng ở điều 1-3 nhưng không ai mở hàng đợi ra xem, pilot chạy mà
+người bán không nhận được câu trả lời nào; nhịp hai lần một ngày là thứ quyết
+định này đánh cược sẽ giữ được.
+
+Nhịp đó cũng nằm trong quy chế (§16), nên người bán biết mình đang chờ cái gì —
+và biết rằng **trang quản lý của họ là nguồn thông tin đúng**, không phải một tin
+nhắn có thể bị lỡ.
 
 ---
 
@@ -194,7 +199,7 @@ Quyết định: closed pilot chạy KHÔNG có thông báo tự động, kèm r
 [x] CHẤP NHẬN — Product Owner, 2026-08-12
 [ ] KHÔNG CHẤP NHẬN — mở scope riêng theo §7, và pilot chờ
 
-Còn trống: điều kiện #4 — tên người kiểm hàng đợi hằng ngày (Packet D §2 #6).
+Điều kiện #4 đã điền: **Cuong Nguyen · tối thiểu 2 lần/ngày** (13/08).
 ```
 
 **Hệ quả đã áp dụng:** không xây hạ tầng thông báo nào trong gói closed pilot.
@@ -203,4 +208,4 @@ liệu một dispatcher cần, trong cùng transaction quyết định — nên 
 Owner muốn tự động hoá, việc còn lại là chọn kênh gửi, không phải làm lại mô
 hình dữ liệu.
 
-**Điều còn thiếu để Packet D đầy đủ:** tên người ở điều kiện #4.
+**Không còn điều kiện nào trống.** Quyết định này đã đủ cho Packet D.
