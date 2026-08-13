@@ -205,16 +205,16 @@ const Tournaments = () => {
   // Community data — all 4 formats, active + completed
   // "Ended" has its own tab now — limit 100 so the list is actually complete (86 QT completed as of 2026-07)
   const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
-  const { data: activeQuickTables = [] } = useActivePublicQuickTables({ limit: 20 });
+  const { data: activeQuickTables = [], isLoading: activeQuickTablesLoading } = useActivePublicQuickTables({ limit: 20 });
   const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 100 });
 
-  const { data: openTeamMatches = [] } = useOpenTeamMatchTournaments({ limit: 20 });
+  const { data: openTeamMatches = [], isLoading: teamMatchesLoading } = useOpenTeamMatchTournaments({ limit: 20 });
   const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 100 });
 
-  const { data: activeDoublesElim = [] } = useActiveDoublesElimination({ limit: 20 });
+  const { data: activeDoublesElim = [], isLoading: doublesElimLoading } = useActiveDoublesElimination({ limit: 20 });
   const { data: completedDoublesElim = [] } = useCompletedDoublesElimination({ limit: 100 });
 
-  const { data: activeFlex = [] } = useActiveFlexTournaments({ limit: 20 });
+  const { data: activeFlex = [], isLoading: flexLoading } = useActiveFlexTournaments({ limit: 20 });
   const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 100 });
 
   // User's brackets
@@ -253,6 +253,23 @@ const Tournaments = () => {
     (total, parent) => total + parent.subEventCount,
     0,
   );
+  // These are standalone community tournaments that have actually started.
+  // Keep them separate from featuredParents: they are not multi-event parents
+  // and must never be presented as part of the curated multi-event collection.
+  const liveCommunityTournaments = FORMATS.flatMap((format) => {
+    const liveStatuses = format.fmt === "quick-tables"
+      ? new Set(["group_stage", "playoff"])
+      : format.fmt === "team-match"
+        ? new Set(["ongoing"])
+        : new Set(["active", "ongoing"]);
+    return formatData[format.fmt].ongoing
+      .filter((t) => liveStatuses.has(t.status))
+      .map((t) => ({ tournament: t, format }));
+  }).sort(
+    (a, b) => Date.parse(b.tournament.created_at) - Date.parse(a.tournament.created_at),
+  );
+  const liveCommunityLoading =
+    activeQuickTablesLoading || teamMatchesLoading || doublesElimLoading || flexLoading;
 
   const sortedPro = useMemo(() => {
     return [...tournaments].sort((a, b) => {
@@ -418,7 +435,7 @@ const Tournaments = () => {
           >
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             {vi ? "Giải nổi bật" : "Featured Tournaments"}
-            <span className="count">{featuredParents.length}</span>
+            <span className="count">{featuredParents.length + liveCommunityTournaments.length}</span>
           </button>
           <button
             type="button"
@@ -590,6 +607,66 @@ const Tournaments = () => {
                   ))}
                 </div>
               )}
+
+              <section className="tl-format-section" aria-labelledby="live-community-heading">
+                <div className="tl-format-section-head">
+                  <div>
+                    <h3 id="live-community-heading">{vi ? "Đang diễn ra" : "Live now"}</h3>
+                    <p className="desc">
+                      {vi
+                        ? "Các giải cộng đồng đang thi đấu, cập nhật điểm và kết quả trực tiếp."
+                        : "Community tournaments currently in play, with live scores and results."}
+                    </p>
+                  </div>
+                  <div className="right">
+                    <span className="count-pill">
+                      {liveCommunityTournaments.length} {vi ? "đang live" : "live"}
+                    </span>
+                  </div>
+                </div>
+
+                {liveCommunityLoading ? (
+                  <div className="tl-list" aria-busy="true" aria-label={vi ? "Đang tải giải đang diễn ra" : "Loading live tournaments"}>
+                    {[0, 1].map((item) => (
+                      <div
+                        key={item}
+                        className="h-[74px] animate-pulse border-b last:border-b-0"
+                        style={{ borderColor: "var(--tl-border)", background: "var(--tl-surface)" }}
+                      />
+                    ))}
+                  </div>
+                ) : liveCommunityTournaments.length === 0 ? (
+                  <div className="tl-empty">
+                    <h3>{vi ? "Chưa có giải nào đang thi đấu." : "No tournaments are live right now."}</h3>
+                    <p>{vi ? "Các giải sẽ xuất hiện ở đây ngay khi bắt đầu." : "Tournaments will appear here as soon as play begins."}</p>
+                  </div>
+                ) : (
+                  <div className="tl-list">
+                    {liveCommunityTournaments.map(({ tournament, format }) => (
+                      <Link
+                        key={`${format.fmt}:${tournament.id}`}
+                        to={`${format.linkBase}/${tournament.share_id}`}
+                        className="tl-bracket-row"
+                        style={{ ["--fc-accent" as string]: format.accent } as React.CSSProperties}
+                      >
+                        <div className="tl-br-fmt" />
+                        <div className="tl-br-body">
+                          <h4 className="tl-br-name">{tournament.name}</h4>
+                          <div className="tl-br-meta">
+                            <span>{vi ? `${format.title} · ${format.titleVi}` : format.title}</span>
+                            <span className="sep">·</span>
+                            <span>{format.renderMeta(tournament, vi)}</span>
+                            <span className="sep">·</span>
+                            <span>{formatRelative(tournament.created_at)}</span>
+                          </div>
+                        </div>
+                        <div className="tl-br-creator">{tournament.creator_display_name ?? "—"}</div>
+                        <span className="tl-br-status active">{vi ? "Đang diễn ra" : "Live"}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </section>
             </section>
           ) : tab === "watch" ? (
             tournamentsLoading ? (
