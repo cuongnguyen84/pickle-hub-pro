@@ -161,9 +161,10 @@ Bốn điều bắt buộc, đều là bài học từ production:
 4. **Không `db push`, không `db push --include-all`.** Ledger remote có drift
    nặng có sẵn.
 
-> Trên **staging** ledger bắt đầu từ 0 và 20 file Shop là 20 file cuối trong một
-> lượt áp đầy đủ **357** file. Cách rẻ hơn nhiều: `npx supabase db reset` không dùng
-> được với remote, nên staging vẫn phải nhận đủ **357** file qua cùng cơ chế này,
+> Trên **staging** ledger bắt đầu từ 0 và các file Shop là những file cuối trong
+> một lượt áp đầy đủ **358** file. Cách rẻ hơn nhiều: `npx supabase db reset`
+> không dùng được với remote, nên staging vẫn phải nhận đủ **358** file qua cùng
+> cơ chế này,
 > hoặc qua `supabase db push` **trên một project sạch, không có drift** — đó là
 > lựa chọn duy nhất trong tài liệu này nơi `db push` an toàn, chính xác vì
 > staging chưa có gì để lệch.
@@ -219,15 +220,20 @@ catalog rỗng, dữ liệu riêng tư không đọc được.
 
 | Thứ | Trước | Sau |
 |---|---|---|
-| Ledger (B-2, production) | 325 | **345** |
-| Ledger (B-1, staging) | 0 | **357** — staging nhận toàn bộ, không chỉ phần Shop |
+| Ledger (B-2, production) | 325 | **346** |
+| Ledger (B-1, staging) | 0 | **358** — staging nhận toàn bộ, không chỉ phần Shop |
 
 > ⚠️ **Sửa 13/08: 353 → 357.** Con số cũ đúng vào lúc viết packet; từ đó nhánh
 > merge `main` thêm **4 migration không thuộc Shop**. Đếm lại trước khi tin:
-> `ls supabase/migrations/*.sql | wc -l` = **357** (337 không-Shop + 20 Shop).
-> Đây đúng là kiểu số liệu im lặng lệch đi giữa lúc viết và lúc chạy, và nó là
-> **tiêu chí nghiệm thu** của B-1 — một ngưỡng sai làm lượt áp đúng trông như
-> thiếu file.
+> `ls supabase/migrations/*.sql | wc -l`. Đây đúng là kiểu số liệu im lặng lệch
+> đi giữa lúc viết và lúc chạy, và nó là **tiêu chí nghiệm thu** của B-1 — một
+> ngưỡng sai làm lượt áp đúng trông như thiếu file.
+>
+> ⚠️ **Sửa lần hai, 13/08 tối: 357 → 358.** CP25 thêm
+> `20260814120000_ops_remove_secret_sync_heal_cron.sql` (loại vĩnh viễn cron
+> `secret-sync-heal-30min`). Staging **đã đạt 358** sau khi áp; B-2 nhận thêm
+> đúng một file so với con số cũ, và ở production file đó là **no-op an toàn**
+> vì job đã bị xoá tay ngày 03/08.
 | Bảng `public` | — | **+20** (18 Shop + `legal_documents` + `legal_acceptances`) |
 | Enum | — | +10 |
 | View | — | +3 |

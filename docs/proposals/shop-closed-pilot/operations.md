@@ -315,3 +315,69 @@ của các nhánh khác bị hỏng ngay bây giờ" lấy "một project phải
 Đó là đổi đúng — thiệt hại của S-a rơi vào người không có mặt trong quyết định,
 còn nợ này rơi vào người ra quyết định. Nhưng nợ chỉ đúng nếu **thật sự trả**,
 nên nó nằm ở đây chứ không nằm trong trí nhớ ai.
+
+---
+
+## 10. Cách ly cron trên staging trong cửa sổ nghiệm thu — và cách bật lại
+
+🔴 **Chỉ áp dụng cho staging `utokwfcljxjkpkaqgheo`.** Đây là **trạng thái vận
+hành**, không phải migration: không có file nào trong `supabase/migrations` mang
+nó sang production, và production **không** tắt `social-poster-catchup-15min`.
+
+### Vì sao
+
+Staging nhận đủ 358 migration, nên nó cũng nhận 16 cron ops không liên quan gì
+tới Shop. Các job đó POST tới Edge Function chưa bao giờ được deploy lên staging
+và nhận **404** — `ops-job-telegram-commands` mỗi phút. Trong một cửa sổ nghiệm
+thu, mọi dòng 404 đó là tiếng ồn che mất tín hiệu thật.
+
+### Đặt vào trạng thái im lặng (13/08, 18:19 VN)
+
+In inventory và phân loại **từng job** trước. Chỉ chạy khi không còn job nào
+chưa phân loại:
+
+```sql
+SELECT cron.alter_job(jobid, active := false)
+FROM cron.job
+WHERE jobname NOT LIKE 'shop-media%'
+  AND active;
+```
+
+Kết quả: 20 job → vẫn 20 (không xoá gì), active 18 → **2**, cả hai là `shop-media%`.
+`alter_job` chỉ nhận `active`, nên không schedule/command nào bị sửa. Sau 3 phút,
+bộ đếm 404 đứng yên ở 36 trong khi cron cleanup vẫn trả 200.
+
+### Bật lại — 🔴 KHÔNG dùng lệnh bật-tất-cả
+
+`secret-sync-heal-30min` (jobid 6, nay đã bị migration `20260814120000` loại hẳn)
+và `social-poster-catchup-15min` (jobid 3) **vốn đã inactive trước** checkpoint
+này. Một câu `active := true` diện rộng sẽ bật lại đúng hai job gọi Cloudflare
+Worker **dùng chung với production**. Khôi phục theo snapshot, JOIN cả `jobid`
+lẫn `jobname` để một jobid đã đánh số lại không kéo nhầm job khác:
+
+```sql
+SELECT cron.alter_job(j.jobid, active := true)
+FROM cron.job j
+JOIN (VALUES
+  (13::bigint, 'auto-cancel-unpaid-registrations'),
+  (15, 'client-errors-retention-daily'),
+  (10, 'dupr-sync-daily'),
+  (16, 'dupr-webhook-events-retention-daily'),
+  (5,  'error-alert-dedup-gc'),
+  (18, 'errors-telegram-alert-10min'),
+  (7,  'feed-embeds-sync-hourly'),
+  (8,  'feed-generate-hourly'),
+  (12, 'match-expire-daily'),
+  (11, 'mux-sync-assets-every-4-hours'),
+  (17, 'news-rewrite-every-30m'),
+  (21, 'ops-edge-health-every-5m'),
+  (19, 'ops-job-digest-morning'),
+  (20, 'ops-job-telegram-commands'),
+  (1,  'surface-quick-table-results-daily'),
+  (14, 'zalo-token-refresh')
+) AS snap(jobid, jobname) ON snap.jobid = j.jobid AND snap.jobname = j.jobname;
+```
+
+Bật lại chỉ trả staging về đúng trạng thái ồn ào cũ. Nó **không** cần thiết
+trước khi xoá project staging (§9) — chỉ chạy nếu staging còn được dùng tiếp cho
+việc khác.

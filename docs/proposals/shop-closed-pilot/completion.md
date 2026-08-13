@@ -1237,3 +1237,158 @@ storage object.
 | `shop-media-cleanup-every-5m` · `shop-media-reconcile-hourly` | active, dùng `ops_project_url()` + tự ký bằng `cron_secret` |
 | Vault | `project_url`, `cron_secret` — đúng hai cái |
 | Edge Functions | `shop-media-lifecycle`, cổng cron 401 |
+
+---
+
+## 23. CP25 — cron reconcile chạy thật, staging im tiếng, và job hồi sinh bị đóng bằng migration
+
+### CP1 — `shop-media-reconcile-hourly`, lần chạy thật đầu tiên
+
+B-1/C-1 dừng lại với đúng một mắt xích chưa có bằng chứng: đường
+`action:"reconcile"` chưa từng đi hết chuỗi vault → `ops_project_url()` →
+Edge Function → xác thực **bằng lịch cron thật**. Ba bằng chứng gián tiếp đã có
+(canary chạy đúng hàm và xanh hai chiều · endpoint trả 401 khi thiếu secret ·
+cron cleanup đã đi trọn chuỗi) — nhưng gián tiếp không phải là đã chạy.
+
+Trước lần chạy 18:17, trồng một fixture **có commit** (canary B13 rollback nên nó
+chứng minh *hàm*, không chứng minh *lịch*): shop `cp1-cron-canary`, hai object
+**đang sống** (`logo` + `cover`, có dòng `shop_profile_media` trỏ tới) và một
+orphan **thật**, cả ba làm cũ 30 ngày để không cái nào được bảo vệ chỉ nhờ mới.
+
+```
+cron.job_run_details  shop-media-reconcile-hourly  succeeded  18:17:00 (VN)
+net._http_response    200  {"ok":true,"unstuck":0,"orphans_queued":1}
+                      logo   queued = 0   cover queued = 0   orphan queued = 1
+```
+
+Lần chạy thứ hai của cùng hàm đó: **vẫn 1 dòng job, vẫn `pending`** — chỉ mục
+duy nhất `uniq_shop_media_cleanup_open` làm việc, xếp lại không nhân đôi.
+
+Rồi cron cleanup lúc 18:20 đóng nốt vòng, và đây là phần không định trước nhưng
+đáng giá nhất: `shop-media-cleanup-every-5m` trả `200`, job chuyển `done`, và
+`storage.objects` của shop này **3 → 2**. Orphan bị xoá thật khỏi storage; logo
+và cover **còn nguyên**. Toàn bộ vòng đời chạy trên **lịch**, không có bàn tay
+nào chạm vào giữa chừng.
+
+| Điều kiện CP1 | Bằng chứng |
+|---|---|
+| Request tới Edge Function staging | `net._http_response` id 40, `application/json` |
+| HTTP 200 | ✅ |
+| Action đúng là `reconcile` | thân phản hồi có `unstuck`/`orphans_queued` — cleanup trả `claimed/deleted/failed` |
+| Xác thực bằng secret staging | vault `cron_secret` (giá trị mới ở C-1); thiếu/sai → 401 đã đo ở C-1 |
+| Không request nào sang production | `ops_project_url()` = `https://utokwfcljxjkpkaqgheo.supabase.co`; 0 job active nào mang URL literal (4 job không khớp regex là 4 job **SQL thuần**, không gọi HTTP) |
+| Live media còn tồn tại | logo + cover `queued=0`, object vẫn còn sau khi cleanup chạy |
+| Orphan thật được xử lý | `orphans_queued=1` → `done` → object biến mất |
+| Chạy lại idempotent | lần 2 → vẫn 1 dòng `pending` |
+| Health view sạch | `pending 1 · due_now 1 · stuck 0 · failed 0 · worst_attempts 0` |
+| Log không chứa secret/đường dẫn riêng tư/PII | thân phản hồi là `{"ok":true,…}`; `return_message` của cron là `DO` |
+
+11 lần chạy cron **thất bại** trên staging đều là job ngoài Shop và đều dừng ở
+`cron_secret`/`internal_anon_key is not configured` — tức là dừng **trước** khi
+gửi request. Không job Shop nào nằm trong đó.
+
+### CP2 — tắt cron ngoài Shop trên staging
+
+**Đây là trạng thái vận hành của staging, KHÔNG phải migration.** Không có gì
+trong `supabase/migrations` mang thay đổi này sang production, và production
+**không** tắt `social-poster-catchup-15min`.
+
+Inventory được in và phân loại **trước** khi đổi bất cứ thứ gì — 20 job, không
+job nào lạ: 14 job gọi Edge Function qua `ops_project_url()`, 4 job SQL thuần
+(`prune_client_errors`, hai DELETE retention, `surface-quick-table-results`), 2
+job gọi Cloudflare Worker dùng chung (cả hai đã inactive từ B-1).
+
+```sql
+SELECT cron.alter_job(jobid, active := false)
+FROM cron.job
+WHERE jobname NOT LIKE 'shop-media%'
+  AND active;
+```
+
+| Sau khi chạy | |
+|---|---|
+| Tổng số job | **20 → 20** (không xoá gì) |
+| Active | 18 → **2**, cả hai là `shop-media%` |
+| Schedule / command bị sửa | **0** — `alter_job` chỉ nhận `active` |
+| Job ngoài Shop chuyển inactive | **16** |
+| 404 mới sau khi tắt | **0** — bộ đếm đứng ở 36, dòng cuối 18:19:00, trong khi `ops-job-telegram-commands` chạy **mỗi phút** |
+| Shop cleanup/reconcile | vẫn chạy: 200 lúc 18:20 |
+
+Rollback **không dùng lệnh bật-tất-cả**: jobid 6 và 3 vốn đã inactive trước
+checkpoint, một lệnh `active := true` diện rộng sẽ bật lại đúng hai job gọi
+Worker dùng chung. Câu lệnh khôi phục liệt kê **16 cặp `(jobid, jobname)`** và
+JOIN theo cả hai, để một jobid đã bị đánh số lại không kéo nhầm job khác —
+`operations.md` §10.
+
+### CP3 — `secret-sync-heal-30min` bị loại vĩnh viễn, bằng migration
+
+Job này bị **gỡ khỏi production 03/08 bằng SQL tay**. Không có dòng nào trong
+repo ghi lại việc đó, nên `20260622000000` vẫn tạo nó và `20260715190000` vẫn
+`active := true` cho nó — mọi môi trường dựng từ migration đều có lại. Staging
+chứng minh điều đó bằng một database mới tinh chạy một job đã chết 10 ngày.
+
+`20260814120000_ops_remove_secret_sync_heal_cron.sql` — một câu:
+
+```sql
+SELECT cron.unschedule(jobid)
+FROM cron.job
+WHERE jobname = 'secret-sync-heal-30min';
+```
+
+**Idempotent do cấu trúc, không do cờ**: đó là một SELECT trên `cron.job`, nên
+môi trường không có job (production, sau lần xoá tay) chạy **0 lần gọi** và
+thành công. Khớp `=` chứ không `LIKE`: bán kính của một pattern là mọi job mà
+sau này ai đó đặt tên bất cẩn. Khối `DO` cuối file RAISE nếu job vẫn còn — một
+lần unschedule im lặng không thành công thì migration **không được ghi vào
+ledger**.
+
+Không đọc/ghi secret nào (`SCRAPER_AUTH_SECRET` và `secret_sync_heal_secret` giữ
+nguyên — chúng là bằng chứng), không gọi Worker, không sinh traffic.
+
+**Test `supabase/tests/ops_secret_sync_heal_removed.test.sql` (14 assertion), hai
+tầng.** Tầng một khẳng định *trạng thái của chính database này* sau khi mọi
+migration chạy — đó là call site thật. Tầng hai chạy lại phần thân dưới các
+fixture (job active · job inactive · job vắng mặt · ba tên gần giống ·
+social-poster · 2 cron Shop · chạy hai lần nữa) — và **không chép câu lệnh vào
+test**: nó đọc `statements` **ra từ ledger**, nên test xanh là test đã chạy đúng
+văn bản được ship.
+
+🔴 Cái bẫy phải chặn trước: version không có trong ledger → 0 statement → replay
+0 lệnh → **mọi assertion phía dưới xanh mà không chạy gì**. Assertion #2 khẳng
+định ledger có version đó với `array_length(statements,1) >= 1` **trước** khi
+dùng nó.
+
+**Red-proof — 3 đột biến trên migration, không đột biến nào trên test:**
+
+| Đột biến | Đỏ |
+|---|---|
+| Xoá hẳn phần loại bỏ (chỉ còn `SELECT 1;`) | **4** — test 1 (resurrection), 7, 10, 12 |
+| `= 'secret-sync-heal-30min'` → `LIKE 'secret-sync-heal%'` | **1** — test 12: `secret-sync-heal-30min-v2` và `'secret-sync-heal-30min '` bị nuốt |
+| Lối tắt hợp lý nhất: `WHERE command LIKE '%thecuong.workers.dev%'` ("xoá mọi job gọi Worker dùng chung") | **7** — trong đó test 12 vì **`social-poster-catchup-15min` bị xoá** |
+
+Đột biến thứ ba mới là cái đáng sợ: nó đọc như một bản dọn dẹp hợp lý, và nó lấy
+mất đúng job mà Product Owner đã quyết định giữ.
+
+### Áp lên staging — và **không** lên production ở checkpoint này
+
+| Sau khi áp | |
+|---|---|
+| Ledger staging | **358** (357 → 358; đích cũ 357 nay đã cũ) |
+| `secret-sync-heal-30min` | **không tồn tại** (cron.job 20 → 19) |
+| `social-poster-catchup-15min` | vẫn tồn tại, **inactive** (do CP2, không do migration) |
+| Cron Shop | cả hai vẫn active |
+| Outbound mới từ job đã loại | **0** — 404 vẫn 36, HTTP cuối là 200 của cleanup lúc 18:20 |
+
+Migration này vào **Packet B-2**; production nhận nó sau khi #578 merge. Ở đó nó
+là **no-op an toàn** vì job đã bị xoá tay — và đó chính là điểm: lần dựng lại
+tiếp theo sẽ không mang nó về nữa.
+
+⚠️ Ledger staging không có cột `statements` (runner B-1 chỉ ghi `version`+`name`),
+nên tầng hai của test chỉ chạy được ở local/CI, nơi `db reset` điền đầy đủ. Đó là
+lý do tầng một tồn tại riêng.
+
+### Cổng đã chạy cho CP25
+
+pgTAP **38 file / 1371 test** PASS (37/1357 → +1 file, +14) ·
+`migration-project-url.test.ts` **363** PASS (nó khẳng định từng file migration,
+kể cả file mới) · `db reset` áp trọn 358 file, `cron.job` 20 → 19.
