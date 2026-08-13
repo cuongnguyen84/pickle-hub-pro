@@ -472,6 +472,37 @@ function Setup(props: {
       {mode !== 'manual' ? (
         <Field label={vi ? 'Điểm thắng' : 'Win target'}>
           <Segmented options={[[11, '11'], [15, '15'], [21, '21']]} value={target} onChange={(v) => setTarget(v as number)} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ flex: 1, fontSize: 12, color: 'var(--tl-fg-3)' }}>
+              {vi ? 'Hoặc nhập số điểm' : 'Or enter a score'}
+            </span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={999}
+              step={1}
+              value={target}
+              aria-label={vi ? 'Nhập điểm thắng' : 'Enter win target'}
+              onFocus={(event) => event.currentTarget.select()}
+              onChange={(event) => {
+                const next = Number(event.currentTarget.value);
+                if (Number.isInteger(next) && next >= 1 && next <= 999) setTarget(next);
+              }}
+              style={{
+                width: 92,
+                padding: '10px 12px',
+                borderRadius: 'var(--tl-radius)',
+                border: '1px solid var(--tl-border)',
+                background: 'var(--tl-bg)',
+                color: 'var(--tl-fg)',
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 16,
+                fontWeight: 700,
+                textAlign: 'center',
+              }}
+            />
+          </label>
         </Field>
       ) : (
         <Field label={vi ? 'Số ván' : 'Sets'}>
