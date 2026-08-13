@@ -2,9 +2,9 @@
 
 > **Câu trạng thái được phép dùng:**
 >
-> `Seller Rules v1 approved and published locally; closed-pilot package pending
-> Product Owner approval of the Privacy update and approval to execute Packet
-> S/B on staging.`
+> `Seller Rules v1 and the Privacy disclosure are approved and applied locally;
+> closed-pilot package pending a Product Owner decision on account deletion
+> (B12) and approval to execute Packet S/B on staging.`
 >
 > **CẤM dùng:** *pilot deployed* · *production ready* · *remote verified* ·
 > *preview live* · *seller onboarded*.
@@ -19,9 +19,13 @@
 | Nhánh | **`feat/shop-closed-pilot`** |
 | Worktree | `/Users/cm10/pickle-hub-pro/.claude/worktrees/shop-closed-pilot` |
 | Trạng thái push | **CHƯA push** — nhánh chỉ tồn tại cục bộ |
-| Commit trên `f172a441` | **23** |
+| Commit trên `f172a441` | **27** |
 
 ```
+f9639ae7 style(privacy): drop an unused import from the disclosure test
+d7ab073e test(shop): what account deletion actually does, measured at the call site
+b69b3cb7 feat(privacy): name the data Shop actually processes
+75ead3a4 docs(shop-pilot): CP15 record, and the remote plan written down before anyone runs it
 4a142ec3 docs(shop-pilot): the Privacy disclosure Shop owes, as a patch nobody applied
 68b1bd2c feat(shop): the approved Seller Rules v1, published by migration
 0f036e1e docs(shop-pilot): revise Seller Rules v1, and fill in the real staging ref
@@ -48,7 +52,48 @@ c3228f23 fix(shop): the media integration teardown walked two levels, not three
 
 ---
 
-## 2. CP15 — Quy chế v1 được duyệt, và được ban hành
+## 2. CP16 — Chính sách bảo mật nói tên dữ liệu Shop, và ba phát hiện về xoá tài khoản
+
+### Privacy — B11 đóng cục bộ
+
+Product Owner duyệt toàn bộ bản sửa; đã áp vào `Privacy.tsx` + `vi.ts` + `en.ts`.
+Bốn nhóm dữ liệu (công khai · hồ sơ nội bộ · bằng chứng chấp thuận · nhật ký
+kiểm duyệt), mục đích, phạm vi người đọc, vòng đời **đúng tới đâu khoá ngoại
+làm được tới đó**, và ngày hiệu lực `14/08/2026`.
+
+🔴 **Chưa deploy.** `thepicklehub.net/privacy` vẫn phục vụ bản cũ cho tới khi
+nhánh này được merge.
+
+File `.patch` đã xoá sau khi áp — giữ hai bản sao của cùng nội dung là mời chúng
+đi lệch nhau, và `git show` là bản ghi chính xác hơn. Tài liệu giải thích ở lại
+vì nó mang **lý do** và bảng vòng đời, thứ diff không nói.
+
+Khoá bằng **21 assertion**, hai tầng có chủ ý — [`privacy-shop-disclosure.md`
+§6](./privacy-shop-disclosure.md). Tầng "qua trang" tồn tại vì **một mục chỉ
+nằm trong từ điển là một mục không ai được xem**; tầng "qua từ điển, từng ngôn
+ngữ" tồn tại vì "tiếng Việt nói địa chỉ lấy hàng là riêng tư, tiếng Anh quên
+mất" thì test render một ngôn ngữ không thấy được.
+
+### B12 — đo tại call site, và ba thứ đọc khoá ngoại không thấy
+
+Chi tiết: [`account-deletion-b12.md`](./account-deletion-b12.md). Hai file
+**chẩn đoán**, không đổi hành vi production.
+
+| # | Phát hiện | Trạng thái |
+|---|---|---|
+| **B12** | Chủ shop **không xoá được tài khoản** (`RESTRICT`). Người dùng **không** bị báo thành công giả, nhưng lỗi họ nhận là `Failed to delete account` và GoTrue nuốt nguyên nhân thành `"Database error deleting user"` — không ai biết cái chặn là một shop | 3 phương án, khuyến nghị **C**, chờ quyết |
+| **B13** | 🔴 `shop_media_reconcile()` xếp **logo đang sống** vào hàng đợi xoá — vòng quét orphan chỉ biết `product_media` | **chặn Packet C** |
+| **B14** | ⚠️ `delete-account` trả **200 success** trong khi **cả 13 bước dọn dữ liệu thất bại**; hộp thoại hứa xoá "các giải đấu bạn đã tạo" nhưng chúng là `SET NULL` và **sống sót** | ngoài phạm vi Shop |
+
+Điều đáng giữ lại nhất từ checkpoint này: hồ sơ của chủ shop **còn nguyên** sau
+một lần xoá thất bại — nhưng **do may**, không do cẩn thận. Những lệnh xoá đáng
+lẽ chạy trước `deleteUser` đều lỗi quyền. **Cấp quyền mà không sửa luồng** sẽ
+biến vòng lặp vô hại đó thành một lần xoá thật, chạy trước, không transaction.
+Đó chính là lý do phương án A nguy hiểm hơn vẻ ngoài.
+
+---
+
+## 3. CP15 — Quy chế v1 được duyệt, và được ban hành
 
 Product Owner **APPROVE** toàn văn ngày 13/08. Bản ghi:
 
@@ -116,7 +161,7 @@ lại: nó **không** dựng fixture nào, và đọc đúng dòng migration đ�
 
 ---
 
-## 3. CP13 — bản dự thảo quy chế, và mô hình bản-nháp
+## 4. CP13 — bản dự thảo quy chế, và mô hình bản-nháp
 
 > Ghi lại nguyên trạng lúc CP13. Văn bản này **đã được duyệt** ở CP15 (§2);
 > phần dưới mô tả nó khi còn là bản nháp.
@@ -157,7 +202,7 @@ cố duyệt một bản nháp bắt được. Đóng băng chuyển sang **lúc
 
 ---
 
-## 4. CP12 — blocker B5 đã đóng
+## 5. CP12 — blocker B5 đã đóng
 
 Chi tiết đầy đủ: [`seller-rules-enforcement.md`](./seller-rules-enforcement.md).
 
@@ -208,7 +253,7 @@ không tin.
 
 ---
 
-## 5. Ba defect các cổng bắt được trong CP12
+## 6. Ba defect các cổng bắt được trong CP12
 
 1. **Thiếu grant `service_role` trên `legal_documents`.** Bộ HTTP integration
    trả `42501` ngay lần chạy đầu. `service_role` đi vòng qua RLS nhưng **không**
@@ -229,22 +274,23 @@ không tin.
 
 ---
 
-## 6. Cổng kiểm tra — tất cả XANH
+## 7. Cổng kiểm tra — tất cả XANH
 
 Cơ sở dữ liệu dựng lại từ số không. Delta đầy đủ:
 [`gate-results.md`](./gate-results.md).
 
-| Cổng | Kết quả sau CP15 |
+| Cổng | Kết quả sau CP16 |
 |---|---|
 | `supabase db reset --local` | exit 0 |
 | Ledger parity | **352 / 352** |
-| pgTAP | **1 331 PASS** · 35 file · exit 0 |
-| Unit (gồm storage + vòng đời ảnh trên stack thật) | **2 061 PASS** · 10 skipped · 159 file |
+| pgTAP | **1 335 PASS** · 36 file · exit 0 |
+| Unit (gồm storage + vòng đời ảnh trên stack thật) | **2 088 PASS** · 10 skipped · 161 file |
 | HTTP integration quy chế, stack thật | **11 PASS · 0 skip** |
+| Chẩn đoán xoá tài khoản, gọi thật hàm edge | **6 PASS** |
 | noindex ở edge | **116 PASS** |
 | `tsc -b` · `eslint` · `build` | exit 0 · **0 lỗi** · exit 0 |
 | `BUNDLE_STRICT=1` | exit 0 |
-| Dọn dữ liệu, đếm độc lập | **8/8 bộ đếm Shop = 0** |
+| Dọn dữ liệu, đếm độc lập | **10/10 bộ đếm = 0** |
 
 `build:proto`, Q01–Q04 và nghiệm thu P2b **không chạy lại** ở CP15 — không có
 mã client nào đổi. Kết quả CP13 của chúng vẫn là kết quả mới nhất, và chép nó
@@ -253,18 +299,19 @@ sang một cột "sau CP15" sẽ làm nó trông như vừa được đo.
 ### Bundle delta
 
 ```
-              trước CP12    sau CP12    sau CP13    sau CP15    tổng
-INITIAL gz     226,6 KB     226,6 KB    226,6 KB    226,6 KB    0,0 KB   / 280 KB
-Tổng gz JS    1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB   +2,9 KB   / backstop 1970 KB
+              trước CP12    sau CP12    sau CP13    sau CP15    sau CP16    tổng
+INITIAL gz     226,6 KB     226,6 KB    226,6 KB    226,6 KB    226,6 KB    0,0 KB   / 280 KB
+Tổng gz JS    1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB   1939,2 KB   +3,9 KB   / backstop 1970 KB
 ```
 
-**Backstop KHÔNG nâng.** Còn 31,8 KB. Không thêm dependency nào. CP15 không đổi
-mã client; +0,4 KB nằm trong nhiễu build ±0,6 KB đã biết của repo này — ghi
-đúng số đo được thay vì làm tròn về 0.
+**Backstop KHÔNG nâng.** Còn 30,8 KB. Không thêm dependency nào. CP15 không đổi
+mã client (+0,4 KB là nhiễu build ±0,6 KB đã biết); CP16 là **+1,0 KB thật** —
+một mục mới trong Chính sách bảo mật ×2 ngôn ngữ, nằm trong `locale-*`, không
+nằm trong `INITIAL`.
 
 ---
 
-## 7. Quyết định Product Owner đã áp dụng
+## 8. Quyết định Product Owner đã áp dụng
 
 | # | Quyết định | Đã làm gì |
 |---|---|---|
@@ -276,14 +323,15 @@ mã client; +0,4 KB nằm trong nhiễu build ±0,6 KB đã biết của repo n�
 
 ---
 
-## 8. Thứ tự thi hành mới
+## 9. Thứ tự thi hành mới
 
 ```
  1. Cưỡng chế seller-rules ở cục bộ                     ✅ XONG
  2. Product Owner DUYỆT TOÀN VĂN v1                     ✅ APPROVE 13/08
  3. Chốt effective_at + approved_by                     ✅ 14/08 00:00+07 · Cuong Nguyen
  4. Đóng băng content hash trên bản ĐÃ DUYỆT            ✅ fb62bd47…c70c98, migration #19
- 5. Product Owner duyệt bản sửa Privacy                 ⬜ CHẶN bước 13
+ 5. Product Owner duyệt bản sửa Privacy                 ✅ 13/08 — đã áp, CHƯA deploy
+ 5b. Product Owner chọn phương án B12                   ⬜ CHẶN bước 15
  6. Packet S — cấu hình staging (project đã tạo)        ⬜
  7. Packet B-1 — 19 migration lên STAGING               ⬜
  8. Packet C-1 — function + cron trên STAGING           ⬜
@@ -296,12 +344,16 @@ mã client; +0,4 KB nằm trong nhiễu build ±0,6 KB đã biết của repo n�
 15. Wave 1 — một người bán thật                         ⬜
 ```
 
-Bước 5 chặn bước 15, **không** chặn bước 6: hạ tầng dựng được trong lúc chờ
-quyết định về Chính sách bảo mật; chỉ việc mời người bán thật là không.
+Bước 5b chặn bước 15, **không** chặn bước 6: hạ tầng dựng được trong lúc chờ
+quyết định về xoá tài khoản; chỉ việc mời người bán thật là không.
+
+🔴 **Một ngoại lệ mới**: **B13 chặn bước 8** (Packet C-1). Bật cron dọn ảnh
+trước khi vá vòng quét orphan là mất mọi logo shop sau 1 giờ. Đây là blocker
+đầu tiên nằm **trong** chuỗi hạ tầng chứ không nằm ở cuối.
 
 ---
 
-## 9. Blocker còn lại
+## 10. Blocker còn lại
 
 | # | Blocker | Ai gỡ | Chặn |
 |---|---|---|---|
@@ -338,7 +390,7 @@ Patch được sinh bằng cách **áp thật rồi hoàn nguyên**, đã kiểm
 
 ---
 
-## 10. Năm packet — không cái nào được duyệt
+## 11. Năm packet — không cái nào được duyệt
 
 | Packet | Nội dung | Mục tiêu | Tier |
 |---|---|---|---|
@@ -353,16 +405,19 @@ Checklist dashboard 7 mục cho Product Owner:
 
 ---
 
-## 11. Khuyến nghị: duyệt cái gì trước
+## 12. Khuyến nghị: duyệt cái gì trước
 
 Hai việc **song song**, không phụ thuộc nhau:
 
-**1. Đọc và trả lời bản sửa Chính sách bảo mật**
-([`privacy-shop-disclosure.md`](./privacy-shop-disclosure.md)). Không cần chờ hạ
-tầng, và giờ nó là thứ **duy nhất** chặn việc mời người bán thật — Quy chế v1 đã
-duyệt xong.
+**1. Chọn phương án B12** ([`account-deletion-b12.md`](./account-deletion-b12.md)
+§9 — năm câu hỏi). Khuyến nghị **C**. Không cần chờ hạ tầng, và giờ nó là thứ
+**duy nhất** chặn việc mời người bán thật.
 
-**2. Cấp quyền chạy Packet S/B trên staging.** Ref đã có
+**2. Cho phép vá B13** — một migration nhỏ, nhưng nó **chặn Packet C**, tức là
+chặn cả chuỗi staging từ bước 8 trở đi. Đây là việc gấp hơn cả B12 nếu muốn
+Packet S/B/C chạy sớm.
+
+**3. Cấp quyền chạy Packet S/B trên staging.** Ref đã có
 (`utokwfcljxjkpkaqgheo`); còn thiếu chữ ký để bắt đầu ghi, và
 `pg_cron`/`pg_net` chưa bật (ô **S-9**).
 
@@ -373,7 +428,7 @@ sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh w
 
 ---
 
-## 12. Không thao tác remote nào đã thực hiện
+## 13. Không thao tác remote nào đã thực hiện
 
 | Cấm | Trạng thái |
 |---|---|
@@ -387,7 +442,8 @@ sớm: nếu chưa, Packet C mất phần quan trọng nhất — chứng minh w
 | `supabase link` tới staging | ❌ không |
 | Đọc remote staging | ❌ **không một lần nào** — project ref chưa có, và không có ref thì không có gì để đọc |
 | Ban hành Quy chế v1 vào `legal_documents` **trên remote** | ❌ không — migration đã viết và chạy **chỉ trên cơ sở dữ liệu cục bộ**; nó là Packet B #19 và chờ duyệt như 18 file kia |
-| Áp bản sửa `Privacy.tsx` | ❌ không — chỉ là một patch trong `docs/`, cây làm việc không đổi ba file đó |
+| Áp bản sửa `Privacy.tsx` | ✅ **đã áp** trên nhánh cục bộ (được duyệt 13/08) — nhưng **chưa push, chưa deploy**; trang production vẫn là bản cũ |
+| Sửa `delete-account`, `shops`, hay vòng quét dọn ảnh (B12/B13/B14) | ❌ không — chỉ thêm **test chẩn đoán** |
 | Deploy Cloudflare | ❌ không |
 | Merge / push | ❌ không — nhánh chỉ ở cục bộ |
 | Gửi email/push thật | ❌ không |
@@ -401,7 +457,7 @@ câu lệnh nào không bắt đầu bằng `SELECT`/`WITH`. Không giá trị s
 
 ---
 
-## 13. Thao tác remote **dự kiến**, đúng thứ tự — chưa cái nào chạy
+## 14. Thao tác remote **dự kiến**, đúng thứ tự — chưa cái nào chạy
 
 Danh sách này tồn tại để một thao tác remote không bao giờ được quyết định
 ngẫu hứng giữa chừng. Mỗi dòng là một lần ghi vào một hệ thống thật.

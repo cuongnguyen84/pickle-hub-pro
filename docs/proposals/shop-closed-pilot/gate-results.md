@@ -6,57 +6,59 @@
 > **Đây là kết quả cục bộ.** Không có gì được deploy, và không con số nào ở đây
 > nói về remote.
 >
-> Cập nhật **sau CP15** (ban hành Quy chế người bán v1 đã duyệt).
+> Cập nhật **sau CP16** (Chính sách bảo mật nêu tên dữ liệu Shop + chẩn đoán B12).
 
 ---
 
 ## 1. Bảng kết quả
 
-| Cổng | Lệnh | Sau CP12 | Sau CP13 | **Sau CP15** |
+| Cổng | Lệnh | Sau CP13 | Sau CP15 | **Sau CP16** |
 |---|---|---|---|---|
 | Reset cơ sở dữ liệu | `npx supabase db reset --local` | exit 0 | exit 0 | **exit 0** |
-| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 351 / 351 | 351 / 351 | **352 / 352** |
-| pgTAP | `npx supabase test db --local supabase/tests` | 1 302 · 34 file | 1 312 · 34 file | **1 331 PASS · 35 file · exit 0** |
-| Unit | `npx vitest run` | 2 048 · 158 file | 2 051 · 158 file | **2 061 PASS · 10 skipped · 159 file · exit 0** |
-| HTTP integration quy chế | `npx vitest run scripts/shop-seller-rules-integration.test.mjs` | 11 PASS | 11 PASS | **11 PASS · 0 skip** — chạy thật trên stack cục bộ |
+| Ledger parity | `count(*) FROM supabase_migrations.schema_migrations` | 351 / 351 | 352 / 352 | **352 / 352** |
+| pgTAP | `npx supabase test db --local supabase/tests` | 1 312 · 34 file | 1 331 · 35 file | **1 335 PASS · 36 file · exit 0** |
+| Unit | `npx vitest run` | 2 051 · 158 file | 2 061 · 159 file | **2 088 PASS · 10 skipped · 161 file · exit 0** |
+| HTTP integration quy chế | `npx vitest run scripts/shop-seller-rules-integration.test.mjs` | 11 PASS | 11 PASS | **11 PASS · 0 skip** |
+| Chẩn đoán xoá tài khoản | `npx vitest run scripts/shop-account-deletion-b12.test.mjs` | — | — | **6 PASS** — gọi thật hàm edge |
 | Storage + vòng đời ảnh | file integration trên stack thật | trong lượt unit | trong lượt unit | **trong lượt unit, không skip** |
 | noindex ở edge | 2 file `shop-pilot-seo*` | 116 PASS | 116 PASS | **116 PASS** (không đổi) |
 | Typecheck | `npx tsc -b` | exit 0 | exit 0 | **exit 0** |
-| Lint | `npx eslint .` | exit 0 | exit 0 · 29 cảnh báo | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
+| Lint | `npx eslint .` | exit 0 · 29 cảnh báo | exit 0 | **exit 0 · 0 lỗi · 29 cảnh báo có sẵn** |
 | Build | `npm run build` | exit 0 | exit 0 | **exit 0** |
 | Bundle | `BUNDLE_STRICT=1 node scripts/check-bundle-size.mjs` | exit 0 | exit 0 | **exit 0** |
-| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 19/19 = 0 | 19/19 = 0 | **8/8 bộ đếm Shop = 0** (xem §6) |
+| Dọn dữ liệu | đếm độc lập trên cùng cơ sở dữ liệu | 19/19 = 0 | 8/8 Shop = 0 | **10/10 bộ đếm = 0**, gồm `shop_media_cleanup_jobs` và object Storage |
 
-Ba cổng **không chạy lại** ở CP15 vì không có mã client nào đổi: `build:proto`,
-Q01–Q04 và nghiệm thu P2b. Nói ra thay vì chép lại số cũ vào cột mới — một con
-số chép lại trông hệt một con số vừa đo.
+Ba cổng **không chạy lại** ở CP15 và CP16: `build:proto`, Q01–Q04 và nghiệm thu
+P2b. Ở CP16 có đổi mã client (`Privacy.tsx` + hai file i18n), nhưng **không đổi
+shell, layout, route hay component dùng chung** — 37 màn hình prototype và 20
+route Shop không đi qua trang Chính sách bảo mật. Nói ra thay vì chép số cũ vào
+cột mới: một con số chép lại trông hệt một con số vừa đo.
 
-### Bundle — delta CP12, CP13 và CP15
+### Bundle — delta CP12 → CP16
 
 ```
-                  trước CP12    sau CP12    sau CP13    sau CP15   tổng thay đổi
-INITIAL gz         226,6 KB     226,6 KB    226,6 KB    226,6 KB     0,0 KB  / 280 KB
-CODE gz           1551,4 KB    1552,8 KB   1553,9 KB   1554,3 KB    +2,9 KB  / 1800 KB
-CONTENT (blog)     383,9 KB     383,9 KB    383,9 KB    383,9 KB     0,0 KB
-Tổng gz JS        1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB    +2,9 KB  / backstop 1970 KB
+                  trước CP12    sau CP12    sau CP13    sau CP15    sau CP16   tổng
+INITIAL gz         226,6 KB     226,6 KB    226,6 KB    226,6 KB    226,6 KB    0,0 KB  / 280 KB
+CODE gz           1551,4 KB    1552,8 KB   1553,9 KB   1554,3 KB   1555,3 KB   +3,9 KB  / 1800 KB
+CONTENT (blog)     383,9 KB     383,9 KB    383,9 KB    383,9 KB    383,9 KB    0,0 KB
+Tổng gz JS        1935,3 KB    1936,8 KB   1937,8 KB   1938,2 KB   1939,2 KB   +3,9 KB  / backstop 1970 KB
 ```
 
-**CP15 không đổi một dòng mã client.** +0,4 KB là nhiễu build đã biết của repo
-này (±0,6 KB giữa hai lần build cùng một cây) chứ không phải chi phí của
-checkpoint — quy chế sống trong cơ sở dữ liệu, không nằm trong bundle. Ghi ra
-đúng con số đo được thay vì làm tròn về 0, vì làm tròn là cách một khoản tăng
-thật lọt qua lần sau.
+**CP15 không đổi một dòng mã client** — +0,4 KB ở cột đó là nhiễu build đã biết
+(±0,6 KB giữa hai lần build cùng một cây); quy chế sống trong cơ sở dữ liệu,
+không nằm trong bundle.
 
-**Backstop KHÔNG nâng.** Còn **31,8 KB**, dưới 5% — cổng nói thẳng rằng PR kế
+**CP16 là +1,0 KB thật**: một mục mới trong Chính sách bảo mật, nhân hai ngôn
+ngữ. Nó nằm trong `locale-vi` / `locale-en`, **không** nằm trong `INITIAL` —
+`INITIAL` không đổi một byte qua cả bốn checkpoint.
+
+**Backstop KHÔNG nâng.** Còn **30,8 KB**, dưới 5% — cổng nói thẳng rằng PR kế
 tiếp phải trả lại phần này.
 
-Chi phí chia đôi rõ ràng: **+1,5 KB** cho màn hình chấp thuận của người bán
-(CP12), **+1,0 KB** cho panel biên lai của người kiểm duyệt (CP13). **Không
-thêm dependency nào.**
-
-`INITIAL` **không đổi một byte** qua cả hai đợt — cả hai màn hình đều nằm trong
-chunk route của chúng (`/seller/application`, `/admin/shop/applications/:id`),
-không nằm trên đường tới paint đầu tiên.
+Chia theo checkpoint: **+1,5 KB** màn hình chấp thuận của người bán (CP12),
+**+1,0 KB** panel biên lai của người kiểm duyệt (CP13), **+1,0 KB** mục Shop
+trong Chính sách bảo mật ×2 ngôn ngữ (CP16). **Không thêm dependency nào** qua
+cả bốn đợt.
 
 ### Nghiệm thu P2b — 20 route × 6 chiều rộng + 6 hành trình
 
@@ -299,3 +301,51 @@ Dòng đầu tiên là dòng đáng đọc: bộ đếm **loại trừ** `seller
 không phải rác của test mà là dữ liệu do migration sở hữu. Một bộ đếm "0 tổng"
 ở đây sẽ đỏ mãi mãi kể từ CP15, và ai đó sẽ sửa nó bằng cách nới lỏng chứ không
 bằng cách hiểu.
+
+---
+
+## 7. CP16 — đỏ trước, xanh sau, lần này ở trang Chính sách bảo mật
+
+Phá **trang**, không phải test:
+
+| Phá gì | Kết quả |
+|---|---|
+| Xoá `<section>` Shop khỏi `Privacy.tsx` và trả ngày về `28/12/2024` | **4 đỏ** — cả VI lẫn EN, ngày, và thứ tự mục |
+| Nhét "địa chỉ lấy hàng" vào bullet **công khai** trong `vi.ts` | **1 đỏ** — đúng assertion tồn tại cho việc đó |
+| Hoàn nguyên | **21/21 xanh** |
+
+Vì sao khoá ở hai tầng: một mục chỉ tồn tại trong từ điển là một mục **không ai
+được xem**. Bốn lỗi gần nhất của repo này đều nằm ở chỗ nối, không nằm trong hàm.
+
+### Chẩn đoán B12 — đo, không suy luận
+
+`scripts/shop-account-deletion-b12.test.mjs` đi qua đúng đường
+`useDeleteAccount → functions.invoke → delete-account → auth.admin.deleteUser`.
+Quan hệ nhân quả nằm trong chính bộ test: **cùng một tài khoản**, cùng một lời
+gọi — có shop thì thất bại, xoá shop đi rồi gọi lại thì thành công.
+
+Ba điều chỉ đo mới thấy, đọc khoá ngoại thì không:
+
+1. `delete-account` trả **200 success** trong khi **cả 13 bước dọn dữ liệu của
+   nó thất bại** (10 thiếu grant, 2 bảng không tồn tại, 1 cột đổi tên). Tài
+   khoản vẫn bị xoá — nhờ CASCADE. → **B14**.
+2. GoTrue nuốt vi phạm khoá ngoại thành `"Database error deleting user"`. Không
+   ai — kể cả người vận hành — biết cái chặn là một shop.
+3. Hồ sơ của chủ shop **còn nguyên** sau lần xoá thất bại, nhưng **do may**:
+   những lệnh xoá đáng lẽ chạy trước đều lỗi quyền. Cấp quyền mà không sửa luồng
+   sẽ biến vòng lặp vô hại đó thành một lần xoá thật, chạy **trước**
+   `deleteUser`, không transaction.
+
+### B13 — chặn Packet C
+
+`supabase/tests/shop_media_reconcile_profile_gap.test.sql` chạy chính
+`shop_media_reconcile()` trên một logo **đã publish, đã verified**, upload 2 giờ
+trước:
+
+```
+{"unstuck": 0, "orphans_queued": 1}
+hàng đợi dọn chứa ĐÚNG đường dẫn logo đang sống
+```
+
+Vòng quét orphan chỉ hỏi `product_media`; `shop_profile_media` ra đời hai
+migration sau, cùng bucket. Chưa từng nổ **chỉ vì cron chưa deploy ở đâu**.
