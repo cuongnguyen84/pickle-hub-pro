@@ -30,9 +30,9 @@ export const DynamicMeta = ({
     ? rawUrl.replace(/\/+$/, "")
     : rawUrl;
   // The OAuth reviewer compares the homepage's presented application name
-  // literally with the consent-screen name. Avoid producing
-  // "ThePickleHub | ThePickleHub" on the root route.
-  const fullTitle = title === "ThePickleHub" ? title : `${title} | ThePickleHub`;
+  // literally with the consent-screen name — titles that already lead with
+  // the brand (home routes) must not get a second " | ThePickleHub" suffix.
+  const fullTitle = title.startsWith("ThePickleHub") ? title : `${title} | ThePickleHub`;
 
   useEffect(() => {
     // Update document title

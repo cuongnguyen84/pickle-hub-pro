@@ -24,9 +24,12 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
     : "";
 
-  // Keep the homepage identity identical to the verified OAuth app name.
-  // Product positioning belongs in the description, not in the brand name.
-  const title = "ThePickleHub";
+  // 2026-08-14 (approved by Cuong): bare "ThePickleHub" title left the EN home
+  // with zero keyword signal (GSC: pos 8.3, CTR 1.2% on 244 impressions).
+  // Brand name still leads VERBATIM for the OAuth reviewer's literal
+  // app-name comparison — same pattern /vi has shipped since launch with
+  // no OAuth issue. Mirrors the VI title for hreflang-pair consistency.
+  const title = "ThePickleHub – Pickleball Asia: Live & Tournaments";
   const description = "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.";
 
   return htmlResponse(buildHtml({
