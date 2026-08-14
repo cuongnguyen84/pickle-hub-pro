@@ -274,7 +274,7 @@ if (process.env.CP27_SKIP_SUSPEND) {
       AND object_path IN (SELECT public_path FROM public.product_media
                           WHERE product_id='${state.productId}' AND public_path IS NOT NULL);`));
   let media = [];
-  try { media = JSON.parse(pubFinal.text)?.media ?? []; } catch { /* not json */ }
+  try { media = JSON.parse(pubFinal.text)?.product?.media ?? []; } catch { /* not json */ }
   const keys = media.map((m) => m.public_path).filter(Boolean);
   const bytesAlive = async () => {
     const rs = await Promise.all(keys.map((k) => fetch(`${SB}/storage/v1/object/public/shop-product-media/${k}`)));

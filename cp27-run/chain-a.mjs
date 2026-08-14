@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 /**
- * CP27 cases 3–6: the application chain up to "changes requested".
- *
- * Stops there on purpose: cases 7 and 8 have to look at the seller's screen
- * while the application is in `needs_changes`, and the rest of the chain moves
- * it out of that state.
+ * CP27 cases 4–11: the application chain, at the contract layer.
  *
  * Every call is a real user JWT through PostgREST. The admin calls are made at
  * aal2 because that is the only level `is_admin()` accepts once a factor is
@@ -95,22 +91,22 @@ state.applicationId = appRow.id;
 {
   const r = await rpc("shop_application_decide", admin.token, {
     _application_id: state.applicationId,
-    _decision: "request-changes",
+    _decision: "request_changes",
     _applicant_note: "Vui lòng bổ sung ảnh mặt tiền và số điện thoại liên hệ.",
     _internal_note: "CP27 internal only — must never reach the applicant.",
-    _requested_fields: ["f-desc", "f-addr"],
+    _requested_fields: ["shop_intro", "pickup_address"],
   });
   const row = one(await sql(`
     SELECT status::text, applicant_note, internal_note, requested_fields::text
     FROM public.shop_applications WHERE id='${state.applicationId}';`));
   record(6, "request-changes carries structured targets and a public note",
-    r.status === 200 && row.status === "needs_changes" && row.applicant_note && row.requested_fields.includes("f-desc") ? "PASS" : "FAIL",
+    r.status === 200 && row.status === "needs_changes" && row.applicant_note && row.requested_fields.includes("shop_intro") ? "PASS" : "FAIL",
     `HTTP ${r.status} · status=${row.status} · fields=${row.requested_fields} · public note ${row.applicant_note ? "set" : "MISSING"}`);
 
   // A decision with no public note must be refused: "sửa lại hồ sơ" with no
   // reason is the failure mode this field exists to prevent.
   const noNote = await rpc("shop_application_decide", admin.token, {
-    _application_id: state.applicationId, _decision: "request-changes", _requested_fields: ["f-city"],
+    _application_id: state.applicationId, _decision: "request_changes", _requested_fields: ["city"],
   });
   record("6b", "request-changes without a public note is refused", noNote.status >= 400 ? "PASS" : "FAIL",
     `HTTP ${noNote.status} ${noNote.body.slice(0, 120)}`);
@@ -122,7 +118,82 @@ state.applicationId = appRow.id;
     `HTTP ${asSeller.status} · internal note present in applicant read: ${leaked}`);
 }
 
+// ─── case 9 — fix and resubmit, draft data survives ─────────────────────────
+{
+  const patch = await rest(`/shop_applications?id=eq.${state.applicationId}`, seller.token, {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ shop_intro: "Shop bán vợt và phụ kiện pickleball (fixture CP27).", pickup_address: "So 1 Duong Fixture, Phuong Test, Ha Noi" }),
+  });
+  const resubmit = await rpc("shop_application_submit", seller.token, { _expected_rules_version: "v1" });
+  const row = one(await sql(`
+    SELECT status::text, shop_name, city, shop_intro IS NOT NULL AS intro_set
+    FROM public.shop_applications WHERE id='${state.applicationId}';`));
+  record(9, "seller fixes the named fields and resubmits without losing draft data",
+    patch.status < 300 && resubmit.status === 200 && row.status === "submitted" && row.shop_name === "CP27 Vot Shop" && row.city === "Ha Noi" ? "PASS" : "FAIL",
+    `patch HTTP ${patch.status} · resubmit HTTP ${resubmit.status} · status=${row.status} · shop_name/city preserved=${row.shop_name === "CP27 Vot Shop" && row.city === "Ha Noi"}`);
+}
+
+// ─── case 10 — approve, and a replay does not make a second shop ────────────
+{
+  const r1 = await rpc("shop_application_decide", admin.token, {
+    _application_id: state.applicationId, _decision: "approve", _applicant_note: "Hồ sơ hợp lệ. Chúc anh/chị bán tốt.",
+  });
+  const after1 = one(await sql(`
+    SELECT (SELECT count(*)::int FROM public.shops WHERE owner_user_id='${uid("seller")}') AS shops,
+           (SELECT count(*)::int FROM public.shop_members m JOIN public.shops s ON s.id=m.shop_id
+             WHERE s.owner_user_id='${uid("seller")}' AND m.user_id='${uid("seller")}' AND m.role='owner') AS owner_rows,
+           (SELECT status::text FROM public.shop_applications WHERE id='${state.applicationId}') AS status;`));
+
+  const r2 = await rpc("shop_application_decide", admin.token, {
+    _application_id: state.applicationId, _decision: "approve", _applicant_note: "replay",
+  });
+  const after2 = one(await sql(`SELECT count(*)::int AS shops FROM public.shops WHERE owner_user_id='${uid("seller")}';`));
+
+  const shop = one(await sql(`SELECT id::text, slug, state::text, version FROM public.shops WHERE owner_user_id='${uid("seller")}' LIMIT 1;`));
+  state.shopId = shop?.id;
+  state.shopSlug = shop?.slug;
+
+  record(10, "approval creates shop + owner membership once; a replay creates nothing",
+    r1.status === 200 && after1.shops === 1 && after1.owner_rows === 1 && after2.shops === 1 ? "PASS" : "FAIL",
+    `HTTP ${r1.status} · shops=${after1.shops} owner_member=${after1.owner_rows} app=${after1.status} · replay HTTP ${r2.status} → shops=${after2.shops} · shop=${shop?.slug} state=${shop?.state}`);
+}
+
+// ─── case 11 — profile, slug and contact lifecycle ──────────────────────────
+{
+  const v = one(await sql(`SELECT version FROM public.shops WHERE id='${state.shopId}';`)).version;
+  const upd = await rpc("shop_profile_update", seller.token, {
+    _shop_id: state.shopId,
+    _expected_version: v,
+    _patch: {
+      name: "CP27 Vot Shop",
+      region: "Ha Noi",
+      shipping_note: "Giao trong 2-3 ngày, phí theo hãng vận chuyển.",
+      return_note: "Đổi trả trong 7 ngày nếu lỗi nhà sản xuất.",
+      intro: "Fixture shop cho nghiệm thu closed pilot.",
+    },
+  });
+  const slugRes = await rpc("shop_slug_update", seller.token, { _shop_id: state.shopId, _slug: "cp27-vot-shop" });
+  const contact = await rpc("shop_contact_upsert", seller.token, {
+    _shop_id: state.shopId, _type: "zalo", _value: "0900000000", _label: "Zalo shop", _is_public: true,
+  });
+  const cj = j(contact);
+  state.contactId = cj?.id;
+
+  const row = one(await sql(`
+    SELECT slug, region, shipping_note IS NOT NULL AS ship, return_note IS NOT NULL AS ret,
+           (SELECT status::text FROM public.shop_contact_channels WHERE shop_id='${state.shopId}' LIMIT 1) AS contact_status
+    FROM public.shops WHERE id='${state.shopId}';`));
+
+  record(11, "seller updates name/slug/region/shipping/return and adds a contact for review",
+    upd.status === 200 && slugRes.status < 300 && contact.status === 200 && row.slug === "cp27-vot-shop" && row.ship && row.ret ? "PASS" : "FAIL",
+    `profile HTTP ${upd.status} · slug HTTP ${slugRes.status} → ${row.slug} · region=${row.region} · shipping=${row.ship} return=${row.ret} · contact HTTP ${contact.status} status=${row.contact_status}`);
+
+  record("11b", "a new contact channel does not go public before a moderator sees it",
+    row.contact_status && row.contact_status !== "approved" ? "PASS" : "FAIL",
+    `contact status=${row.contact_status}`);
+}
 
 writeFileSync("/Users/cm10/.claude/jobs/708b78c5/tmp/cp27/state.json", JSON.stringify({ ...reg, ...state }, null, 2));
-console.log(`\nstate → state.json  application=${state.applicationId}`);
+console.log(`\nstate → state.json  application=${state.applicationId} shop=${state.shopId} slug=${state.shopSlug}`);
 process.exit(summary() ? 1 : 0);

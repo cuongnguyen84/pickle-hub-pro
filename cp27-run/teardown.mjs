@@ -24,8 +24,11 @@ const one = (r) => r.at(-1);
 console.log(`teardown for run ${reg.run} · ${reg.users.length} accounts`);
 
 // ─── 1. Storage, through the API that is allowed to delete it ───────────────
+// oldShopIds: shops this run created and then rewound away mid-acceptance —
+// their rows are gone but their draft objects are still this fixture's.
+const shopPrefixes = [state.shopId, ...(state.oldShopIds ?? [])].filter(Boolean);
 for (const bucket of ["shop-product-media-draft", "shop-product-media"]) {
-  const prefix = state.shopId ?? "";
+  for (const prefix of shopPrefixes) {
   const list = await fetch(`${SB}/storage/v1/object/list/${bucket}`, {
     method: "POST",
     headers: serviceHeaders,
@@ -43,14 +46,16 @@ for (const bucket of ["shop-product-media-draft", "shop-product-media"]) {
   } else {
     console.log(`  ${bucket}: nothing listed under ${prefix || "(no shop)"}`);
   }
+  }
 }
 
 // ─── 2. Rows that do not disappear on their own ─────────────────────────────
-// Ordered child → parent. shop_media_cleanup_jobs is scoped by this shop only:
-// it is a global queue and other runs may own rows in it.
+// Ordered child → parent. shop_media_cleanup_jobs is scoped to this run's
+// shops only: it is a global queue and other runs may own rows in it.
+const jobScope = shopPrefixes.map((p) => `shop_id = '${p}' OR object_path LIKE '${p}/%'`).join(" OR ");
 await sql(`
   DELETE FROM public.shop_media_cleanup_jobs
-   WHERE ${state.shopId ? `shop_id = '${state.shopId}' OR object_path LIKE '${state.shopId}/%'` : "false"};
+   WHERE ${jobScope || "false"};
   DELETE FROM public.product_media   WHERE product_id IN (SELECT id FROM public.products WHERE shop_id IN (SELECT id FROM public.shops WHERE owner_user_id IN (${ids})));
   DELETE FROM public.product_variants WHERE product_id IN (SELECT id FROM public.products WHERE shop_id IN (SELECT id FROM public.shops WHERE owner_user_id IN (${ids})));
   DELETE FROM public.products         WHERE shop_id IN (SELECT id FROM public.shops WHERE owner_user_id IN (${ids}));
