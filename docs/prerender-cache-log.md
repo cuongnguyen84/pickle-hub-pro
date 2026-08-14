@@ -122,3 +122,7 @@ and purge cached bot HTML from the rejected verification attempt.
 2026-08-08 — v37->v38: normalize the homepage document, social, and crawler
 titles to the exact OAuth app name `ThePickleHub`; purge cached homepage HTML
 that still included the former positioning tagline in the application name.
+2026-08-14 — v42->v43: EN home title enriched to "ThePickleHub – Pickleball
+Asia: Live & Tournaments" (safe: OAuth brand verification APPROVED 2026-08-09,
+see docs/seo-audit-2026-08-11.md banner) and HCMC recap (EN + VI) deep-links
+the WPR explainer; purge stale bot HTML for / and the recap pair. PR #579.
