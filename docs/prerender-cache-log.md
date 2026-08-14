@@ -126,3 +126,7 @@ that still included the former positioning tagline in the application name.
 Asia: Live & Tournaments" (safe: OAuth brand verification APPROVED 2026-08-09,
 see docs/seo-audit-2026-08-11.md banner) and HCMC recap (EN + VI) deep-links
 the WPR explainer; purge stale bot HTML for / and the recap pair. PR #579.
+2026-08-14 — v43->v44: GEO attribution test follow-up — the 2026 tournament
+calendar post (EN repo + VI Supabase row) now names ThePickleHub in its
+opening paragraph so an extracted snippet stays attributable; purge stale
+bot HTML for the calendar pair.

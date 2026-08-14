@@ -612,7 +612,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v42→v43 (2026-08-14): EN home title enriched ("ThePickleHub – Pickleball
   // Asia: Live & Tournaments") + HCMC recap deep-links the WPR explainer.
   // Purge stale bot HTML for / and /blog/hcmc-open-2026-recap.
-  const cacheKey = `pr:v44:${url.pathname}`;
+  // v43→v44 (2026-08-14): /tournaments upgraded into the 2026 pro tournament
+  // calendar hub. Purge stale bot HTML for /tournaments + /vi/tournaments.
+  // v44→v45 (2026-08-14): GEO attribution — 2026 tournament-calendar post
+  // (EN + VI) names ThePickleHub in the opening paragraph so AI-search
+  // citations can attribute the passage when extracted standalone.
+  const cacheKey = `pr:v45:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
