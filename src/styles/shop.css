@@ -540,11 +540,22 @@
      it for that reason until the detector started comparing right edges. */
   border: 1px solid var(--tl-border);
   border-radius: var(--tl-radius-lg);
-  overflow: hidden;
+  /* Clip only the X axis. The shell above is locked to 100dvh, so a plain
+     `overflow: hidden` left content taller than the frame with NO scrollbar
+     anywhere — mouse wheel dead, only programmatic scroll and Tab could
+     reach the decision panel (Wave 0, P0). The BODY is the scroller; the
+     sidebar scrolls on its own if its nav ever outgrows the frame. */
+  overflow-x: hidden;
   min-height: 320px;
 }
-@media (max-width: 767px) { .tl-admin-frame { grid-template-columns: 1fr; } }
-.tl-admin-frame > * { min-width: 0; }
+@media (max-width: 767px) {
+  .tl-admin-frame { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+}
+/* min-height:0 for the same reason as min-width:0 — grid items default to
+   min-size:auto, which forbids the child scroller from being shorter than
+   its content. */
+.tl-admin-frame > * { min-width: 0; min-height: 0; }
+.tl-admin-side { overflow-y: auto; }
 .tl-admin-side {
   background: var(--tl-bg-elev);
   border-right: 1px solid var(--tl-border);
@@ -567,7 +578,7 @@
 }
 .tl-admin-side li.is-new { color: var(--tl-fg); background: var(--tl-surface-2); box-shadow: inset 2px 0 0 var(--tl-green); }
 .tl-admin-side li.is-child > a, .tl-admin-side li.is-child { padding-left: 26px; font-size: 12px; }
-.tl-admin-body { padding: 16px; }
+.tl-admin-body { padding: 16px; overflow-y: auto; }
 
 /* ── F04 — Discovery primitives ────────────────────────────────────────── */
 

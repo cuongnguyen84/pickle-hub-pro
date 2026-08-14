@@ -25,6 +25,7 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react";
+import { renderRulesMarkdown } from "@/lib/shop/rulesMarkdown";
 import {
   useAcceptSellerRules,
   useSellerRulesDocument,
@@ -155,7 +156,6 @@ export function SellerRulesAcceptance({
           style={{
             maxHeight: 260,
             overflowY: "auto",
-            whiteSpace: "pre-wrap",
             fontSize: 13,
             lineHeight: 1.6,
             padding: "10px 12px",
@@ -163,7 +163,9 @@ export function SellerRulesAcceptance({
             borderRadius: 8,
           }}
         >
-          {document.body}
+          {/* Rendered for reading; what the acceptance SIGNS is still the
+              stored body, hash and all. */}
+          {renderRulesMarkdown(document.body)}
         </div>
       </div>
 

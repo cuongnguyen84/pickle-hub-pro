@@ -131,6 +131,25 @@ export const failingSteps = (d: ApplicationDraft): number[] =>
 
 export const targetByField = (field: string) => REQUEST_TARGETS.find((t) => t.field === field);
 
+// Vietnamese labels for the raw enums — shared by the queue AND the review
+// screen, so a moderator never reads `ca-nhan` or `submitted` off one screen
+// and the translation off the other.
+export const APPLICATION_STATUS_LABEL: Record<string, string> = {
+  draft: "Nháp",
+  submitted: "Đã gửi",
+  under_review: "Đang xem",
+  needs_changes: "Chờ sửa",
+  approved: "Đã duyệt",
+  rejected: "Từ chối",
+  withdrawn: "Đã rút",
+};
+
+export const SELLER_TYPE_LABEL: Record<string, string> = {
+  "ca-nhan": "Cá nhân",
+  "ho-kinh-doanh": "Hộ kinh doanh",
+  "cong-ty": "Công ty",
+};
+
 /** Deep link a moderator's request turns into for the applicant. */
 export const applicationDeepLink = (field: string): string => {
   const t = targetByField(field);
