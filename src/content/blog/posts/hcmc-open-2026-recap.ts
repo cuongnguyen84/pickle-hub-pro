@@ -40,7 +40,8 @@ const post: BlogPost = {
           heading: "Minh Quan & Vinh Hien: A Third PPA Asia Doubles Title",
           content: "The pairing Vietnamese fans fondly call the \"ong-chau\" (grandfather-and-grandson) duo, for the generation gap between them, now has three PPA Asia men's doubles titles together: Hangzhou in 2025, Beijing in June 2026, and now Ho Chi Minh City — their second of the 2026 season. The doubles champions banked US$5,500 and 500 ranking points; the MB HCMC Open carried a US$70,000 total prize pool across all draws.",
           internalLinks: [
-            { text: "Meet the Vietnamese players to watch in 2026", path: "/blog/vietnam-pickleball-players-to-watch-2026" }
+            { text: "Meet the Vietnamese players to watch in 2026", path: "/blog/vietnam-pickleball-players-to-watch-2026" },
+            { text: "How World Pickleball Rankings (WPR) points work", path: "/blog/world-pickleball-rankings-wpr-explained" }
           ]
         },
         {
@@ -130,7 +131,8 @@ const post: BlogPost = {
           heading: "Minh Quân & Vinh Hiển: chức vô địch đôi nam PPA Asia thứ ba",
           content: "Cặp đôi được người hâm mộ Việt Nam trìu mến gọi là \"ông - cháu\" vì khoảng cách thế hệ, giờ đã có ba chức vô địch đôi nam PPA Asia cùng nhau: Hàng Châu 2025, Bắc Kinh tháng 6/2026, và nay là TP.HCM — danh hiệu thứ hai của họ trong mùa 2026. Nhà vô địch đôi nam nhận 5.500 USD và 500 điểm xếp hạng; MB HCMC Open có tổng giải thưởng 70.000 USD cho toàn bộ các nội dung.",
           internalLinks: [
-            { text: "Các tay vợt Việt Nam đáng chú ý 2026", path: "/vi/blog/tay-vot-pickleball-viet-nam-dang-chu-y-2026" }
+            { text: "Các tay vợt Việt Nam đáng chú ý 2026", path: "/vi/blog/tay-vot-pickleball-viet-nam-dang-chu-y-2026" },
+            { text: "Cách tính điểm World Pickleball Rankings (WPR)", path: "/vi/blog/bang-xep-hang-pickleball-the-gioi-wpr" }
           ]
         },
         {

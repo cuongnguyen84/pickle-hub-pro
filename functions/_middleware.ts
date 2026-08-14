@@ -609,7 +609,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v41→v42 (2026-08-12): rankings page deep-links the DUPR/WPR explainer guides
   // (§6 wiring). Purge /rankings + /vi/rankings. (If PR #575 lands first at v42,
   // rebase this to v43 — versions must stay monotonic.)
-  const cacheKey = `pr:v42:${url.pathname}`;
+  // v42→v43 (2026-08-14): EN home title enriched ("ThePickleHub – Pickleball
+  // Asia: Live & Tournaments") + HCMC recap deep-links the WPR explainer.
+  // Purge stale bot HTML for / and /blog/hcmc-open-2026-recap.
+  const cacheKey = `pr:v43:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
