@@ -237,11 +237,16 @@ if (process.env.CP27_SKIP_SUSPEND) {
   // it the sweep after this file would measure an empty shell, the exact
   // false-green §8 forbids. The worker's copy step is an upsert, so a
   // republish after the suspension cleanup is its designed retry path.
+  const runsBefore = one(await sql(`
+    SELECT count(*)::int AS n FROM cron.job_run_details r
+    JOIN cron.job j USING (jobid)
+    WHERE j.jobname = 'shop-media-cleanup-every-5m' AND r.status = 'succeeded';`));
   const rePub = await fetch(`${SB}/functions/v1/shop-media-lifecycle`, {
     method: "POST",
     headers: { apikey: ANON, Authorization: `Bearer ${seller.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ action: "publish", product_id: state.productId }),
   });
+  const sweepAt = Date.now(); // product_publish_commit's queue sweep is behind this response
   const rePubBody = await rePub.text();
   const pubFinal = await publicProduct(state.productSlug);
   const searchFinal = await fetch(`${SB}/rest/v1/rpc/shop_public_search`, {
@@ -277,18 +282,18 @@ if (process.env.CP27_SKIP_SUSPEND) {
   };
   const aliveNow = keys.length > 0 && await bytesAlive();
 
-  // An arbitrary pause cannot bound a claimed batch (up to 25 sequential
-  // deletes). What can: the NEXT completed run of the cleanup cron. A run that
-  // starts after the publish sweep finds no job for these keys, and a worker
-  // still holding a pre-sweep payload across a whole 5-minute cycle would be
-  // sitting in `stuck`/`failed` — so wait for one fresh succeeded run with an
-  // idle queue, then ask for the bytes again and for a clean health row.
-  const runsBefore = one(await sql(`
-    SELECT count(*)::int AS n FROM cron.job_run_details r
-    JOIN cron.job j USING (jobid)
-    WHERE j.jobname = 'shop-media-cleanup-every-5m' AND r.status = 'succeeded';`));
+  // The only worker that can still delete these keys is one that CLAIMED a
+  // job before product_publish_commit swept the queue — its row is gone, so
+  // no queue or health column can see it. What bounds it is not the queue but
+  // the platform: the worker is an Edge Function, and Supabase caps a single
+  // invocation's wall clock at 400s. So the hard condition is elapsed time
+  // since the sweep > that cap — after which a pre-sweep worker cannot exist,
+  // and a post-sweep run cannot claim what the sweep removed. The fresh cron
+  // tick and idle queue are kept as supporting signals (pg_cron 'succeeded'
+  // alone only proves net.http_post was queued, not that a run completed).
+  const WORKER_WALL_CLOCK_MS = 400_000;
   let cycled = false;
-  for (let i = 0; i < 16 && !cycled; i++) {
+  for (let i = 0; i < 20 && !(cycled && Date.now() - sweepAt >= WORKER_WALL_CLOCK_MS); i++) {
     await new Promise((r) => setTimeout(r, 30_000));
     const now = one(await sql(`
       SELECT (SELECT count(*)::int FROM cron.job_run_details r JOIN cron.job j USING (jobid)
@@ -297,6 +302,7 @@ if (process.env.CP27_SKIP_SUSPEND) {
               WHERE bucket_id = 'shop-product-media' AND state = 'in_progress') AS in_flight;`));
     cycled = now.runs > runsBefore.n && now.in_flight === 0;
   }
+  const waitedPastWorkerCap = Date.now() - sweepAt >= WORKER_WALL_CLOCK_MS;
   const aliveStill = keys.length > 0 && await bytesAlive();
   const health = one(await sql(`SELECT stuck, failed FROM public.shop_media_cleanup_health;`));
 
@@ -304,9 +310,9 @@ if (process.env.CP27_SKIP_SUSPEND) {
     rePub.ok && pubFinal.found
       && searchFinal.status === 200 && searchFinal.text.includes(state.productSlug)
       && shopFinal.status === 200 && shopCount >= 1
-      && pendingJobs.n === 0 && aliveNow && cycled && aliveStill
+      && pendingJobs.n === 0 && aliveNow && cycled && waitedPastWorkerCap && aliveStill
       && health.stuck === 0 && health.failed === 0 ? "PASS" : "FAIL",
-    `republish HTTP ${rePub.status} ${rePubBody.slice(0, 80)} · PDP=${pubFinal.found} · search ${searchFinal.status} has slug=${searchFinal.text.includes(state.productSlug)} · shop page ${shopFinal.status} product_count=${shopCount} · cleanup jobs on public keys=${pendingJobs.n} · ${keys.length} rendition(s) alive now=${aliveNow} · fresh cleanup cycle observed=${cycled} · alive after cycle=${aliveStill} · health stuck=${health.stuck} failed=${health.failed}`);
+    `republish HTTP ${rePub.status} ${rePubBody.slice(0, 80)} · PDP=${pubFinal.found} · search ${searchFinal.status} has slug=${searchFinal.text.includes(state.productSlug)} · shop page ${shopFinal.status} product_count=${shopCount} · cleanup jobs on public keys=${pendingJobs.n} · ${keys.length} rendition(s) alive now=${aliveNow} · fresh cleanup cycle=${cycled} · waited past 400s worker cap=${waitedPastWorkerCap} · alive after=${aliveStill} · health stuck=${health.stuck} failed=${health.failed}`);
 }
 
 writeFileSync(STATE, JSON.stringify(state, null, 2));
