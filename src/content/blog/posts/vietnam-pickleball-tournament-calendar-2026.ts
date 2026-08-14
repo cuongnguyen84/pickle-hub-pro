@@ -36,6 +36,10 @@ const post: BlogPost = {
             "Vietnam sits at the center of Asia's pickleball boom in 2026. In a single year the country hosts two PPA Tour Asia stops and the first-ever Pickleball World Cup staged in Asia — on top of a fast-growing domestic tournament scene. This is a living calendar of every major event relevant to Vietnamese players and fans in 2026: the international tournaments on Vietnamese soil, the full regional PPA Tour Asia schedule, and the biggest domestic competitions. Bookmark it — we update it as dates, venues and line-ups are confirmed. The three events to circle first: the MB Hanoi Cup (Hanoi, Apr 1–5, completed), the Ho Chi Minh City Open (Aug 6–9), and the Heineken Pickleball World Cup in Da Nang (Aug 30–Sep 6).",
           internalLinks: [
             {
+              text: "Live 2026 calendar with statuses & results — the tournament hub",
+              path: "/tournaments",
+            },
+            {
               text: "How the pro circuits fit together — PPA, MLP, APP and PPA Tour Asia compared",
               path: "/blog/professional-pickleball-tours-guide-2026",
             },
@@ -175,6 +179,10 @@ const post: BlogPost = {
           content:
             "Việt Nam đang ở tâm điểm của làn sóng pickleball châu Á năm 2026. Chỉ trong một năm, nước ta đăng cai hai chặng PPA Tour Asia và kỳ Pickleball World Cup đầu tiên tổ chức tại châu Á — cộng thêm một hệ thống giải trong nước đang bùng nổ. Đây là lịch giải cập nhật liên tục cho mọi sự kiện lớn liên quan tới người chơi và fan Việt Nam trong 2026: các giải quốc tế trên sân nhà, lịch PPA Tour Asia đầy đủ của khu vực, và những giải trong nước lớn nhất. Hãy lưu lại — chúng tôi cập nhật khi ngày thi đấu, địa điểm và line-up được xác nhận. Ba sự kiện cần khoanh tròn trước tiên: MB Hanoi Cup (Hà Nội, 1–5/4, đã xong), Ho Chi Minh City Open (6–9/8), và Heineken Pickleball World Cup tại Đà Nẵng (30/8–6/9).",
           internalLinks: [
+            {
+              text: "Lịch giải 2026 bản sống — trạng thái & kết quả cập nhật liên tục",
+              path: "/vi/tournaments",
+            },
             {
               text: "Các giải chuyên nghiệp PPA, MLP, APP & PPA Tour Asia 2026 — toàn cảnh",
               path: "/vi/blog/cac-giai-pickleball-chuyen-nghiep-2026-toan-canh",

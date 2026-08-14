@@ -27,6 +27,7 @@ import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import ParentTournamentCard from "@/components/quicktable/ParentTournamentCard";
 import { useFeaturedParentTournaments } from "@/hooks/useFeaturedParentTournaments";
 import { Layers3, Sparkles, Trophy } from "lucide-react";
+import ProCalendar2026 from "@/components/tournaments/ProCalendar2026";
 
 type Tab = "featured" | "watch" | "community";
 type Fmt = "quick-tables" | "doubles-elim" | "flex" | "team-match";
@@ -424,6 +425,9 @@ const Tournaments = () => {
             <span className="tl-hub-arrow">{vi ? "Mở Bracket Lab →" : "Open Bracket Lab →"}</span>
           </Link>
         </div>
+
+        {/* Curated 2026 pro calendar (SEO trunk of the event cluster) */}
+        <ProCalendar2026 vi={vi} />
 
         {/* Tabs */}
         <div className="tl-tabs">

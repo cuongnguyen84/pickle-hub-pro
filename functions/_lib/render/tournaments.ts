@@ -18,6 +18,11 @@ import {
 } from "../utils";
 import { buildListJsonLd } from "./shared";
 import { displayChampionName } from "../../../src/lib/championDisplay";
+import {
+  PRO_CALENDAR_2026,
+  proCalendarDateRange,
+  proCalendarStatus,
+} from "../../../src/content/tournaments/pro-calendar-2026";
 import { render404 } from "./static-pages";
 
 // ─── Tournament ─────────────────────────────────��─────────
@@ -80,13 +85,55 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
     name: t.name,
   }));
 
-  // SEO-2.1 (2026-05-28) — locale-aware meta so EN canonical doesn't ship VN copy.
+  // Tournament-hub upgrade (2026-08-14, growth-tasks/PROPOSAL-tournament-hub):
+  // /tournaments doubles as the curated 2026 pro-calendar hub. Title targets
+  // the queries GSC already shows demand for ("vietnam pickleball tournament
+  // 2026 schedule" EN / "lịch giải pickleball" VI); both stay ≤60 bytes.
   const title = lang === "en"
-    ? "Pickleball Tournaments in Vietnam & Asia | ThePickleHub"
-    : "Giải đấu Pickleball | ThePickleHub";
+    ? "Vietnam Pickleball Tournaments 2026 | ThePickleHub"
+    : "Lịch giải Pickleball 2026 | ThePickleHub";
   const description = lang === "en"
-    ? "Live and upcoming pickleball tournaments in Vietnam and Asia. Live brackets, schedules, registration, and full results from PPA Tour Asia and local events."
-    : "Danh sách các giải đấu pickleball đang diễn ra và sắp tới tại Việt Nam. Xem lịch thi đấu, bảng đấu, kết quả trực tiếp và đăng ký tham gia giải pickleball.";
+    ? "2026 pickleball tournament calendar for Vietnam & Asia — full PPA Tour Asia schedule, Heineken World Cup Da Nang, prize money, dates and results."
+    : "Lịch giải pickleball 2026: đủ mùa PPA Tour Asia, World Cup Đà Nẵng 30/8–6/9, tiền thưởng, ngày thi đấu và kết quả. Cập nhật liên tục.";
+
+  // Curated calendar (shared data with the React page — see
+  // src/content/tournaments/pro-calendar-2026.ts). Bot-readable <table> +
+  // deep-links into our previews/recaps make this page the internal-link
+  // trunk of the whole event cluster.
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const statusLabel = (st: "past" | "live" | "upcoming") =>
+    lang === "vi"
+      ? st === "past" ? "Đã xong" : st === "live" ? "Đang diễn ra" : "Sắp diễn ra"
+      : st === "past" ? "Finished" : st === "live" ? "Live" : "Upcoming";
+  const calRows = PRO_CALENDAR_2026.map((ev) => {
+    const name = lang === "vi" ? ev.nameVi : ev.nameEn;
+    const blog = lang === "vi" ? ev.blogVi : ev.blogEn;
+    const nameCell = blog ? `<a href="${siteUrl}${blog}">${escapeHtml(name)}</a>` : escapeHtml(name);
+    const prize = lang === "vi" ? ev.prizeVi : ev.prizeEn;
+    return `<tr><td>${proCalendarDateRange(ev)}</td><td>${nameCell}</td><td>${escapeHtml(lang === "vi" ? ev.placeVi : ev.placeEn)}</td><td>${escapeHtml(ev.tier)}${prize ? ` · ${escapeHtml(prize)}` : ""}</td><td>${statusLabel(proCalendarStatus(ev, todayIso))}</td></tr>`;
+  }).join("");
+  const calHead = lang === "vi"
+    ? "<tr><th>Thời gian</th><th>Giải đấu</th><th>Địa điểm</th><th>Cấp / thưởng</th><th>Trạng thái</th></tr>"
+    : "<tr><th>Dates</th><th>Tournament</th><th>Location</th><th>Tier / prize</th><th>Status</th></tr>";
+  const calHeading = lang === "vi"
+    ? "Lịch giải Pickleball 2026 — Việt Nam & châu Á"
+    : "2026 Tournament Calendar — Vietnam & Asia";
+  const calendarHtml = `<h2>${calHeading}</h2><table><thead>${calHead}</thead><tbody>${calRows}</tbody></table>`;
+
+  // SportsEvent JSON-LD for live + upcoming curated events only (past events
+  // add noise; app-tournament ItemList below already covers internal ones).
+  const sportsEvents = PRO_CALENDAR_2026
+    .filter((ev) => proCalendarStatus(ev, todayIso) !== "past")
+    .map((ev) => ({
+      "@type": "SportsEvent",
+      name: lang === "vi" ? ev.nameVi : ev.nameEn,
+      sport: "Pickleball",
+      startDate: ev.startDate,
+      endDate: ev.endDate,
+      eventStatus: "https://schema.org/EventScheduled",
+      location: { "@type": "Place", name: lang === "vi" ? ev.placeVi : ev.placeEn },
+      organizer: { "@type": "Organization", name: "PPA Tour Asia" },
+    }));
 
   return htmlResponse(buildHtml({
     title,
@@ -94,8 +141,8 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     extraMeta: bilingualHreflang(`${siteUrl}/tournaments`, `${siteUrl}/vi/tournaments`),
-    jsonLd: buildListJsonLd(title, listItems),
-    bodyContent: items ? `<h2>${lang === "en" ? "Tournaments" : "Giải đấu"}</h2><ul>${items}</ul>` : "",
+    jsonLd: { "@context": "https://schema.org", "@graph": [buildListJsonLd(title, listItems), ...sportsEvents] },
+    bodyContent: `${calendarHtml}${items ? `<h2>${lang === "en" ? "Tournaments on ThePickleHub" : "Giải đấu trên ThePickleHub"}</h2><ul>${items}</ul>` : ""}`,
     lang,
   }));
 }
