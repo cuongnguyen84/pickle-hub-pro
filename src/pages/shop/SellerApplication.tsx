@@ -535,7 +535,15 @@ export default function SellerApplication() {
         </h1>
 
         <div style={{ marginTop: 16 }}>
-          <StepBody />
+          {/* A function CALL, not <StepBody /> — StepBody is redefined every
+              render, so mounting it as a component gives React a new element
+              type each time and the whole step subtree is unmounted and
+              remounted on every state change. That replacement is what kept
+              stealing focus: the moderator's deep link landed on the field
+              and lost it ~500ms later when the next query settled and
+              re-rendered the form (CP27 case 8). Inlining the JSX keeps the
+              same DOM nodes across renders. */}
+          {StepBody()}
         </div>
 
         {submitError && (
