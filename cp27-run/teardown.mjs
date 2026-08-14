@@ -27,25 +27,25 @@ console.log(`teardown for run ${reg.run} · ${reg.users.length} accounts`);
 // oldShopIds: shops this run created and then rewound away mid-acceptance —
 // their rows are gone but their draft objects are still this fixture's.
 const shopPrefixes = [state.shopId, ...(state.oldShopIds ?? [])].filter(Boolean);
+// EXACT names from the catalog, not the list API: the list endpoint returns
+// one LEVEL (folders), and remove() on a folder prefix reports HTTP 200 while
+// deleting nothing — the seventh time storage teardown has lied this way.
 for (const bucket of ["shop-product-media-draft", "shop-product-media"]) {
-  for (const prefix of shopPrefixes) {
-  const list = await fetch(`${SB}/storage/v1/object/list/${bucket}`, {
-    method: "POST",
-    headers: serviceHeaders,
-    body: JSON.stringify({ prefix, limit: 1000 }),
-  });
-  const items = await list.json().catch(() => []);
-  const names = Array.isArray(items) ? items.map((o) => `${prefix}/${o.name}`) : [];
+  const scope = shopPrefixes.map((p) => `name LIKE '${p}/%'`).join(" OR ");
+  const rows = await sql(`
+    SELECT name FROM storage.objects WHERE bucket_id = '${bucket}' AND (${scope || "false"});`);
+  const names = rows.map((r) => r.name);
   if (names.length) {
     const del = await fetch(`${SB}/storage/v1/object/${bucket}`, {
       method: "DELETE",
       headers: serviceHeaders,
       body: JSON.stringify({ prefixes: names }),
     });
-    console.log(`  ${bucket}: asked to remove ${names.length} object(s) → HTTP ${del.status}`);
+    const left = await sql(`
+      SELECT count(*)::int AS n FROM storage.objects WHERE bucket_id = '${bucket}' AND (${scope});`);
+    console.log(`  ${bucket}: ${names.length} object(s) → HTTP ${del.status}, remaining=${left.at(-1).n}`);
   } else {
-    console.log(`  ${bucket}: nothing listed under ${prefix || "(no shop)"}`);
-  }
+    console.log(`  ${bucket}: no objects under ${shopPrefixes.join(", ") || "(no shop)"}`);
   }
 }
 
