@@ -1,7 +1,8 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
+import fs from "fs";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -20,7 +21,39 @@ import { visualizer } from "rollup-plugin-visualizer";
 const BUILD_ID = Date.now().toString(36);
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+// Read through loadEnv, not process.env, so the plugin below and the
+// `import.meta.env.VITE_PROTO_SHOP` constant in App.tsx always agree — a .env
+// file that enabled one but not the other would ship a route pointing at a
+// stubbed module.
+const viteEnv = loadEnv(mode, process.cwd(), "VITE_");
+const protoShop = viteEnv.VITE_PROTO_SHOP === "1";
+
+// The Supabase this build talks to — and therefore the ONLY host the artifact
+// may name.
+// ----------------------------------------------------------------------------
+// The client reads VITE_SUPABASE_URL, but four things outside the JS graph used
+// to hardcode the production ref, so a staging build still reached production:
+//   * <link preconnect> + <link dns-prefetch> in index.html — a DNS lookup and
+//     a TLS handshake to production on every page load;
+//   * the CSP report-uri in public/_headers — violation reports POSTed to the
+//     production log-client-event, writing staging rows into production data;
+//   * two service-worker urlPattern regexes — pinned to the production host, so
+//     on any other environment they silently match NOTHING. The /rest/ one is a
+//     safety rule ("NEVER cache, responses are per-user"), and a safety rule
+//     that quietly stops applying is worse than one that was never written.
+// Found 2026-08-13 by the staging preflight, before the first write.
+//
+// The fallback is the production host on purpose: when the variable is absent
+// the artifact is byte-identical to what it was before this existed, so a build
+// with no env cannot silently produce a half-configured page.
+const SUPABASE_ORIGIN = (
+  viteEnv.VITE_SUPABASE_URL || "https://ajvlcamxemgbxduhiqrl.supabase.co"
+).replace(/\/+$/, "");
+
+const reEscape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+return ({
   server: {
     host: "::",
     port: 8080,
@@ -38,6 +71,54 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // Shop prototype separation (D4, 2026-08-11). The prototype keeps living in
+    // the repo — source, tests, and a runnable preview — but it must not reach
+    // the production artifact. App.tsx already drops the route behind a folded
+    // constant; this makes it independent of tree-shaking by resolving the one
+    // production entry point into src/proto/ to an empty module. If the flag is
+    // off, nothing under src/proto/shop/** can be reached from the graph, so no
+    // screen, scenario or fixture chunk is emitted.
+    !protoShop && {
+      name: "strip-proto-shop",
+      resolveId(id: string) {
+        return /proto\/shop\/ProtoShopApp$/.test(id) ? "\0proto-shop-disabled" : null;
+      },
+      load(id: string) {
+        return id === "\0proto-shop-disabled" ? "export default null;\n" : null;
+      },
+    },
+    // Point the two <link> hints and the CSP report-uri at THIS build's
+    // Supabase. Both live outside the JS graph, so no amount of env plumbing in
+    // src/ reaches them — see SUPABASE_ORIGIN above.
+    {
+      name: "supabase-origin-in-static-assets",
+      apply: "build" as const,
+      // `order: "pre"` is load-bearing, not tidiness. Vite's own HTML pass
+      // decodeURI()s every href, and "%SU" is an invalid percent-escape, so a
+      // marker left in place until the default order fails the build with
+      // "URI malformed".
+      transformIndexHtml: {
+        order: "pre" as const,
+        handler(html: string) {
+          return html.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN);
+        },
+      },
+      // public/_headers is copied verbatim, so it is rewritten after the copy.
+      // A miss here is silent — the header still parses, it just names the
+      // wrong host — so an absent marker is an error, not a no-op.
+      closeBundle() {
+        const headers = path.resolve(__dirname, "dist/_headers");
+        if (!fs.existsSync(headers)) return;
+        const before = fs.readFileSync(headers, "utf8");
+        if (!before.includes("%SUPABASE_ORIGIN%")) {
+          throw new Error(
+            "public/_headers no longer contains %SUPABASE_ORIGIN% — the CSP " +
+              "report-uri would ship pointing at a hardcoded environment.",
+          );
+        }
+        fs.writeFileSync(headers, before.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN));
+      },
+    },
     // /build-id.txt — freshness beacon for staleShell.ts. Root-level txt is
     // outside every precache glob (whitelist) and navigateFallback denylists
     // txt, so a fetch always reaches the CDN and a missing file 404s instead
@@ -210,12 +291,12 @@ export default defineConfig(({ mode }) => ({
           // legacy "supabase-rest" cache from the old NetworkFirst rule is
           // purged client-side (src/lib/pwa/cache.ts) on boot + sign-out.
           {
-            urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/rest\//,
+            urlPattern: new RegExp(`^${reEscape(SUPABASE_ORIGIN)}/rest/`),
             handler: "NetworkOnly",
           },
           // Supabase storage images — CacheFirst, long-lived
           {
-            urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/storage\//,
+            urlPattern: new RegExp(`^${reEscape(SUPABASE_ORIGIN)}/storage/`),
             handler: "CacheFirst",
             options: {
               cacheName: "supabase-storage",
@@ -295,6 +376,24 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // hls.js LIGHT build — 53 KB gz of the total budget (P2b.0).
+      // Nothing in src/ imports hls.js directly any more; the only importer is
+      // @mux/playback-core, which pulls the full build by specifier. Aliasing
+      // here catches that import too, so there is exactly one copy and it is
+      // the small one.
+      //
+      // Light drops subtitles/CEA-708, alternate audio, EME/DRM, CMCD and
+      // interstitials. This product uses none of them: there is no caption UI
+      // and no Mux transcription configured, match video is single-track, and
+      // mux-create-livestream's `playback_policy: "signed"` is a JWT on the
+      // URL — not Widevine/FairPlay (there is no drm_configuration anywhere).
+      //
+      // The failure mode if that ever changes is SILENT — the light build keeps
+      // the accessors and just reports no tracks. src/components/video/
+      // __tests__/hls-light-build.test.ts fails the moment captions or DRM are
+      // configured, so the trade has to be re-decided rather than discovered
+      // by a viewer.
+      "hls.js": path.resolve(__dirname, "./node_modules/hls.js/dist/hls.light.mjs"),
     },
   },
   build: {
@@ -387,4 +486,5 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}));
+});
+});

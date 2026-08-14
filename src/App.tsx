@@ -68,6 +68,45 @@ const Notifications = lazyRetry(() => import("./pages/Notifications"));
 const Search = lazyRetry(() => import("./pages/Search"));
 const OrganizationDetail = lazyRetry(() => import("./pages/OrganizationDetail"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
+// Shop screen prototype (docs/proposals/shop-marketplace-screen-tasks.md).
+// Isolated + noindex; see src/proto/shop/ProtoShopApp.tsx for the three guards.
+//
+// D4 (2026-08-11): the prototype stays in the repo but must not reach the
+// production artifact — 37 screens plus fixtures were costing ~106 KB gz of a
+// budget that is already over. `VITE_PROTO_SHOP=1` (npm run dev:proto /
+// build:proto) turns it back on. The constant is a literal after Vite's define
+// pass, so the ternary folds and the dynamic import is dropped at build time;
+// vite.config.ts additionally resolves the module to an empty stub when the
+// flag is off, so this does not depend on tree-shaking to be correct.
+const PROTO_SHOP_ENABLED = import.meta.env.VITE_PROTO_SHOP === "1";
+const ProtoShopApp = PROTO_SHOP_ENABLED
+  ? lazyRetry(() => import("./proto/shop/ProtoShopApp"))
+  : null;
+// Shop marketplace — Phase 1 (closed pilot). Server-side gate is
+// shop_pilot_has_access(); these routes only decide whether a door renders.
+const SellLanding = lazyRetry(() => import("./pages/shop/SellLanding"));
+const SellerApplication = lazyRetry(() => import("./pages/shop/SellerApplication"));
+const SellerApplicationStatus = lazyRetry(() => import("./pages/shop/SellerApplicationStatus"));
+const SellerShopSettings = lazyRetry(() => import("./pages/shop/SellerShopSettings"));
+const SellerHome = lazyRetry(() => import("./pages/shop/SellerHome"));
+const SellerProducts = lazyRetry(() => import("./pages/shop/SellerProducts"));
+// One component behind two routes: create and edit differ in three places and
+// agree everywhere else, so they share a chunk as well as a file.
+const SellerProductForm = lazyRetry(() => import("./pages/shop/SellerProductForm"));
+const AdminShopApplications = lazyRetry(() => import("./pages/admin/shop/AdminShopApplications"));
+const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/AdminShopApplicationReview"));
+// P2b.2 — moderation console. Separate lazy chunks from the buyer surfaces, so
+// a shopper never downloads the thing that can suspend their seller.
+const AdminShopProducts = lazyRetry(() => import("./pages/admin/shop/AdminShopProducts"));
+const AdminShopProductReview = lazyRetry(() => import("./pages/admin/shop/AdminShopProductReview"));
+const AdminShopContacts = lazyRetry(() => import("./pages/admin/shop/AdminShopContacts"));
+// P2b.4 — buyer catalogue. Separate chunks from the seller and admin
+// surfaces: a shopper must never download the moderation console.
+const ShopHome = lazyRetry(() => import("./pages/shop/ShopHome"));
+const ShopSearch = lazyRetry(() => import("./pages/shop/ShopSearch"));
+const ShopCategory = lazyRetry(() => import("./pages/shop/ShopCategory"));
+const ProductDetail = lazyRetry(() => import("./pages/shop/ProductDetail"));
+const ShopStore = lazyRetry(() => import("./pages/shop/ShopStore"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -524,8 +563,18 @@ interface MirroredRoute {
   viSkipWrapper?: boolean;
 }
 
+// Buyer catalogue (P2b.4) enters as three MIRRORED entries, never a
+// hand-written /vi pair (ARCH-05). Not indexed during the pilot (Q4); the
+// robots answer is served by the Pages Function, not written after hydration.
+// Comments cannot go INSIDE this array — route-snapshot.test.ts parses it line
+// by line and throws on anything that is not an entry.
 const MIRRORED: MirroredRoute[] = [
   { path: "/", element: <Index /> },
+  { path: "/shop", element: <ShopHome /> },
+  { path: "/shop/search", element: <ShopSearch /> },
+  { path: "/shop/category/:slug", element: <ShopCategory /> },
+  { path: "/shop/product/:slug", element: <ProductDetail /> },
+  { path: "/shop/store/:slug", element: <ShopStore /> },
   { path: "/live", element: <Live /> },
   { path: "/live/:id", element: <WatchLive /> },
   { path: "/videos", element: <Videos /> },
@@ -773,6 +822,26 @@ const App = () => (
                     <Route path="/creator/livestreams/:id/edit" element={<CreatorLivestreamForm />} />
                     <Route path="/creator/settings" element={<CreatorSettings />} />
                     <Route path="/creator/tournaments" element={<CreatorTournaments />} />
+                    {/* Shop screen prototype — noindex, not linked from anywhere in the
+                        product, and absent from the production build entirely (D4).
+                        In production this whole expression is `false`, so the path
+                        falls through to NotFound. */}
+                    {ProtoShopApp && <Route path="/proto/shop/*" element={<ProtoShopApp />} />}
+                    {/* Shop marketplace — Phase 1. Seller + admin surfaces are
+                        auth-gated here and re-authorised server-side by RLS. */}
+                    <Route path="/shop/sell" element={<SellLanding />} />
+                    <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
+                    <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
+                    <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
+                    <Route path="/seller/settings" element={<RequireAuth><SellerShopSettings /></RequireAuth>} />
+                    <Route path="/seller/products" element={<RequireAuth><SellerProducts /></RequireAuth>} />
+                    <Route path="/seller/products/new" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
+                    <Route path="/seller/products/:id/edit" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
+                    <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />
+                    <Route path="/admin/shop/applications/:id" element={<RequireAuth requiredRole="admin"><AdminShopApplicationReview /></RequireAuth>} />
+                    <Route path="/admin/shop/products" element={<RequireAuth requiredRole="admin"><AdminShopProducts /></RequireAuth>} />
+                    <Route path="/admin/shop/products/:id" element={<RequireAuth requiredRole="admin"><AdminShopProductReview /></RequireAuth>} />
+                    <Route path="/admin/shop/contacts" element={<RequireAuth requiredRole="admin"><AdminShopContacts /></RequireAuth>} />
                     {/* Public pages */}
 
                     {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}

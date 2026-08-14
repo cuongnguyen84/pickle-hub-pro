@@ -1,0 +1,1354 @@
+/* ============================================================================
+ * Shop prototype styles — scoped under .tl-shop
+ * ----------------------------------------------------------------------------
+ * F02. Every value here is either a The Line token (var(--tl-*)) or derived
+ * from one. No raw hex, no new font, nothing that leaks outside .tl-shop.
+ *
+ * Loaded only by the prototype route chunk, so production pages never pay for
+ * it. When the real Shop ships, this file moves next to the-line.css unchanged.
+ * ========================================================================== */
+
+.tl-shop {
+  /* Scroll ownership. html/body/#root are `overflow: hidden; height: 100%`
+     (src/index.css), so the document never scrolls — every page provides its
+     own scroller. Mirrors .tl-root / .tl-scroll in the-line.css. */
+  height: 100%;
+  /* Also a flex item of #main-content — claim the row either way. */
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--tl-bg);
+  color: var(--tl-fg);
+
+  /* ── Commerce semantic tokens (F02) ──────────────────────────────────────
+   * These are the only new semantics the shop introduces. They alias The Line
+   * tokens rather than inventing colours, so a future palette change to
+   * the-line.css moves the shop with it.
+   * -------------------------------------------------------------------- */
+  --shop-price:        var(--tl-fg);        /* the number the buyer pays */
+  --shop-price-was:    var(--tl-fg-3);      /* struck-through original */
+  --shop-stock-ok:     var(--tl-accent-qt); /* in stock */
+  --shop-stock-low:    var(--tl-gold);      /* few left — only when known */
+  --shop-stock-out:    var(--tl-fg-3);      /* out of stock: grey, not red */
+  --shop-verified:     var(--tl-blue);      /* identity we can prove */
+  --shop-warning:      var(--tl-gold);      /* needs the user's attention */
+  --shop-danger:       var(--tl-live);      /* destructive / money at risk */
+  --shop-used:         var(--tl-accent-team); /* second-hand condition */
+
+  /* Ink used ON an accent fill. Named because gate 48 forbids a raw hex
+     appearing anywhere below the token block.
+     Dark mode only: the accents are neon here, so the ink is near-black. Light
+     mode flips every one of them (block at the bottom of this file) — on paper
+     the same accents are deep, and black-on-deep-green measured 3.84:1. */
+  --shop-on-accent:    #101803;   /* on --tl-green */
+  --shop-on-gold:      #17140a;   /* on --tl-gold */
+  --shop-on-ok:        #04120b;   /* on --shop-stock-ok */
+  --shop-on-danger:    #fff8f7;   /* on --shop-danger-fill */
+  /* A red FILL carrying white text cannot be --tl-live: white on the dark-mode
+     live red is 3.30:1. This is the darker red reserved for filled states;
+     --shop-danger stays the text/border red. Same value in both modes. */
+  --shop-danger-fill:  #c62a20;
+  --shop-scrim:        rgb(0 0 0 / 0.55);
+  --shop-chrome-field: rgb(255 255 255 / 0.75);
+  --shop-chrome-edge:  rgb(0 0 0 / 0.35);
+
+  --shop-gap:          14px;
+  --shop-pad:          16px;
+  --shop-tap:          44px;                /* minimum touch target */
+}
+
+.tl-shop-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Prototype chrome ─────────────────────────────────────────────────────
+ * Board Rule 8: a prototype must never be mistaken for production. The banner
+ * is sticky, high-contrast, and present on every prototype screen.
+ * ---------------------------------------------------------------------- */
+.tl-proto-banner {
+  flex: none;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  background: repeating-linear-gradient(
+    135deg,
+    var(--tl-gold) 0 12px,
+    color-mix(in srgb, var(--tl-gold) 78%, black) 12px 24px
+  );
+  color: var(--shop-on-gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tl-proto-banner a {
+  color: var(--shop-on-gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tl-proto-banner select {
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  background: var(--shop-chrome-field);
+  color: var(--shop-on-gold);
+  border: 1px solid var(--shop-chrome-edge);
+  border-radius: 6px;
+  padding: 3px 6px;
+  min-height: 28px;
+}
+.tl-proto-spacer { flex: 1 1 auto; }
+
+/* ── Layout primitives ────────────────────────────────────────────────── */
+.tl-shop-page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px var(--shop-pad) 96px;
+}
+.tl-shop-page--narrow { max-width: 760px; }
+
+.tl-shop h1,
+.tl-shop h2,
+.tl-shop h3 { text-wrap: balance; }
+
+.tl-shop-h1 {
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+  color: var(--tl-fg);
+}
+.tl-shop-sub {
+  color: var(--tl-fg-3);
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+/* "← Về hàng đợi" and friends: a navigation control, so it needs a thumb-sized
+   box. AdminShopProductReview carried this as an inline style and
+   AdminShopApplicationReview did not — 77×17, caught by the P2b.7 sweep. One
+   class, so the third review screen cannot repeat it. */
+.tl-shop-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+.tl-shop-h2 {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 28px 0 12px;
+  color: var(--tl-fg);
+}
+.tl-shop-eyebrow {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tl-fg-3);
+}
+
+.tl-shop-card {
+  background: var(--tl-surface);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  padding: var(--shop-pad);
+}
+.tl-shop-grid {
+  display: grid;
+  gap: var(--shop-gap);
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+}
+@media (min-width: 900px) {
+  .tl-shop-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.tl-shop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--shop-tap);
+  padding: 0 18px;
+  border-radius: var(--tl-radius);
+  border: 1px solid var(--tl-border-2);
+  background: var(--tl-surface-2);
+  color: var(--tl-fg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.tl-shop-btn:hover:not(:disabled) { background: var(--tl-border); }
+.tl-shop-btn--primary {
+  background: var(--tl-green);
+  border-color: var(--tl-green);
+  color: var(--shop-on-accent);
+}
+.tl-shop-btn--primary:hover:not(:disabled) { background: var(--tl-green-dim); }
+.tl-shop-btn--danger {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--shop-danger) 55%, transparent);
+  color: var(--shop-danger);
+}
+.tl-shop-btn--ghost { background: transparent; }
+.tl-shop-btn--block { width: 100%; }
+.tl-shop-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.tl-shop-btn--sm { min-height: 36px; padding: 0 12px; font-size: 13px; }
+
+/* Focus is never removed — it is made obvious (global done criteria). */
+.tl-shop :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Form fields ──────────────────────────────────────────────────────── */
+.tl-shop-field { display: block; margin-bottom: 16px; }
+.tl-shop-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tl-fg-2);
+  margin-bottom: 6px;
+}
+.tl-shop-hint {
+  font-size: 12px;
+  color: var(--tl-fg-3);
+  margin-top: 6px;
+  line-height: 1.45;
+}
+.tl-shop-input,
+.tl-shop-select,
+.tl-shop-textarea {
+  width: 100%;
+  min-height: var(--shop-tap);
+  padding: 10px 12px;
+  background: var(--tl-bg-elev);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  color: var(--tl-fg);
+  font: inherit;
+  font-size: 15px; /* ≥16px avoids iOS zoom; 15 + -apple text-size-adjust is fine here */
+}
+.tl-shop-textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
+.tl-shop-input[aria-invalid="true"],
+.tl-shop-select[aria-invalid="true"],
+.tl-shop-textarea[aria-invalid="true"] {
+  border-color: var(--shop-danger);
+}
+.tl-shop-error {
+  display: flex;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--shop-danger);
+  margin-top: 6px;
+  line-height: 1.45;
+}
+
+/* ── Status pills ─────────────────────────────────────────────────────── */
+.tl-shop-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--tl-border-2);
+  background: var(--tl-surface-2);
+  color: var(--tl-fg-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.tl-shop-pill--ok      { color: var(--shop-stock-ok);  border-color: color-mix(in srgb, var(--shop-stock-ok) 45%, transparent); }
+.tl-shop-pill--warn    { color: var(--shop-warning);   border-color: color-mix(in srgb, var(--shop-warning) 45%, transparent); }
+.tl-shop-pill--danger  { color: var(--shop-danger);    border-color: color-mix(in srgb, var(--shop-danger) 45%, transparent); }
+.tl-shop-pill--info    { color: var(--shop-verified);  border-color: color-mix(in srgb, var(--shop-verified) 45%, transparent); }
+.tl-shop-pill--used    { color: var(--shop-used);      border-color: color-mix(in srgb, var(--shop-used) 45%, transparent); }
+.tl-shop-pill--muted   { color: var(--tl-fg-3); }
+
+/* ── Notices ──────────────────────────────────────────────────────────── */
+.tl-shop-notice {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--tl-radius);
+  border: 1px solid var(--tl-border-2);
+  background: var(--tl-surface);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--tl-fg-2);
+  margin-bottom: 16px;
+}
+.tl-shop-notice strong { color: var(--tl-fg); font-weight: 650; }
+.tl-shop-notice--warn   { border-color: color-mix(in srgb, var(--shop-warning) 45%, transparent); background: color-mix(in srgb, var(--shop-warning) 8%, var(--tl-surface)); }
+.tl-shop-notice--danger { border-color: color-mix(in srgb, var(--shop-danger) 45%, transparent);  background: color-mix(in srgb, var(--shop-danger) 8%, var(--tl-surface)); }
+.tl-shop-notice--info   { border-color: color-mix(in srgb, var(--shop-verified) 40%, transparent); background: color-mix(in srgb, var(--shop-verified) 8%, var(--tl-surface)); }
+.tl-shop-notice svg { flex: none; margin-top: 1px; }
+
+/* ── Skeletons (reduced-motion aware) ─────────────────────────────────── */
+.tl-shop-sk {
+  background: linear-gradient(90deg, var(--tl-surface) 25%, var(--tl-surface-2) 37%, var(--tl-surface) 63%);
+  background-size: 400% 100%;
+  animation: tl-shop-shimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+@keyframes tl-shop-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tl-shop-sk { animation: none; background: var(--tl-surface-2); }
+  .tl-shop *, .tl-shop *::before, .tl-shop *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────── */
+.tl-shop-empty {
+  border: 1px dashed var(--tl-border-2);
+  border-radius: var(--tl-radius-lg);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--tl-fg-3);
+}
+.tl-shop-empty-title {
+  color: var(--tl-fg);
+  font-size: 16px;
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+.tl-shop-empty p { margin: 0 auto 18px; max-width: 46ch; font-size: 14px; line-height: 1.55; }
+
+/* ── Visually-hidden (for live regions + skip links) ──────────────────── */
+.tl-shop-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Token specimen (F02 review evidence) ─────────────────────────────── */
+.tl-spec-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.tl-spec-chip {
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  overflow: hidden;
+  background: var(--tl-surface);
+}
+.tl-spec-swatch { height: 56px; }
+.tl-spec-meta { padding: 8px 10px; font-size: 11.5px; line-height: 1.5; }
+.tl-spec-meta code {
+  display: block;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  color: var(--tl-fg-3);
+  font-size: 10.5px;
+  word-break: break-all;
+}
+
+/* ── F03 — Shells ──────────────────────────────────────────────────────────
+ * Buyer header, Seller Center, and the Shop-inside-AdminLayout proposal.
+ * The prototype keeps the app's real BottomNav visible on buyer screens so
+ * the bottom clearance below is verified against the real thing, not a mock.
+ * ---------------------------------------------------------------------- */
+
+/* Bottom clearance: BottomNav is 56px on web, taller on native shells. Any
+   screen with a sticky bottom bar adds this on top of its own height. */
+.tl-shop {
+  --shop-bottomnav: 56px;
+  --shop-safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+.tl-shop-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  /* Opaque, not 88%. The blur is decoration; it was also being asked to keep
+     the title legible over whatever scrolled underneath, which it cannot
+     promise — axe reported the title's contrast as UNDETERMINABLE the moment a
+     product photo passed beneath it in the preview. A sticky header a seller
+     reads on every screen must not have a contrast that depends on the page
+     content behind it. */
+  background: var(--tl-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--tl-border);
+}
+.tl-shop-header-title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tl-shop-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--shop-tap);
+  height: var(--shop-tap);
+  border-radius: var(--tl-radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tl-fg-2);
+  cursor: pointer;
+  position: relative;
+}
+.tl-shop-iconbtn:hover { background: var(--tl-surface-2); color: var(--tl-fg); }
+.tl-shop-cart-count {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--tl-green);
+  color: var(--shop-on-accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Seller Center */
+.tl-seller {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+@media (min-width: 1024px) {
+  .tl-seller { flex-direction: row; }
+}
+.tl-seller-side {
+  display: none;
+  flex-direction: column;
+  width: 236px;
+  flex: none;
+  border-right: 1px solid var(--tl-border);
+  background: var(--tl-bg-elev);
+  padding: 16px 12px;
+  gap: 4px;
+}
+@media (min-width: 1024px) { .tl-seller-side { display: flex; } }
+.tl-seller-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--shop-tap);
+  padding: 0 12px;
+  border-radius: var(--tl-radius);
+  color: var(--tl-fg-2);
+  font-size: 14px;
+  font-weight: 550;
+}
+.tl-seller-nav-item[aria-current="page"] {
+  background: var(--tl-surface-2);
+  color: var(--tl-fg);
+  box-shadow: inset 2px 0 0 var(--tl-green);
+}
+.tl-seller-nav-item .tl-shop-pill { margin-left: auto; }
+.tl-seller-main { flex: 1; min-width: 0; }
+
+/* Seller mobile tab bar — sits ABOVE the app BottomNav is NOT allowed
+   (two stacked bars). Real /seller routes join BottomNav's hidden-prefix
+   list exactly like /creator; the prototype shows the resulting layout. */
+.tl-seller-tabs {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  border-top: 1px solid var(--tl-border);
+  background: var(--tl-bg-elev);
+  padding-bottom: var(--shop-safe-b);
+}
+@media (min-width: 1024px) { .tl-seller-tabs { display: none; } }
+.tl-seller-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: var(--shop-tap);
+  padding: 8px 4px;
+  color: var(--tl-fg-3);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.tl-seller-tab[aria-current="page"] { color: var(--tl-green); }
+
+/* Sticky mobile commerce bar (F06) — clears BottomNav on buyer screens. */
+.tl-shop-stickybar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--shop-bottomnav) + var(--shop-safe-b));
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--tl-bg-elev) 94%, transparent);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--tl-border);
+}
+@media (min-width: 900px) { .tl-shop-stickybar { display: none; } }
+
+/* Admin-integration proposal card */
+.tl-admin-frame {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  /* Grid items default to min-width:auto, so the table inside .tl-admin-body
+     forced the column wider than the viewport. The frame's own
+     `overflow: hidden` then CLIPPED it — content was cut off with no
+     scrollbar and no signal. Both the old and the new overflow check missed
+     it for that reason until the detector started comparing right edges. */
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  overflow: hidden;
+  min-height: 320px;
+}
+@media (max-width: 767px) { .tl-admin-frame { grid-template-columns: 1fr; } }
+.tl-admin-frame > * { min-width: 0; }
+.tl-admin-side {
+  background: var(--tl-bg-elev);
+  border-right: 1px solid var(--tl-border);
+  padding: 12px 10px;
+  font-size: 12.5px;
+}
+.tl-admin-side ul { list-style: none; margin: 0; padding: 0; }
+/* The padding belongs to the LINK, not to the list item.
+   With it on the <li>, the anchor's own box was 15px tall — a thumb landing
+   anywhere in that padding hit nothing at all, and getBoundingClientRect()
+   agreed with the thumb. Exactly the P2b.4 breadcrumb defect (26×44 fixed with
+   real padding on the anchor, not on a wrapper), one component over. */
+.tl-admin-side li { border-radius: 8px; color: var(--tl-fg-3); }
+.tl-admin-side li > a,
+.tl-admin-side li.is-soon {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 7px 10px;
+}
+.tl-admin-side li.is-new { color: var(--tl-fg); background: var(--tl-surface-2); box-shadow: inset 2px 0 0 var(--tl-green); }
+.tl-admin-side li.is-child > a, .tl-admin-side li.is-child { padding-left: 26px; font-size: 12px; }
+.tl-admin-body { padding: 16px; }
+
+/* ── F04 — Discovery primitives ────────────────────────────────────────── */
+
+/* Media always reserves its box before anything loads (global done criteria:
+   "Product image spaces reserve dimensions") — aspect-ratio, not a fixed px
+   height, so the reservation survives every viewport width. */
+.tl-shop-media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--tl-radius);
+  overflow: hidden;
+  background: var(--tl-surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tl-border);
+}
+.tl-shop-media--a { background: linear-gradient(140deg, var(--tl-surface-2), color-mix(in srgb, var(--tl-green) 14%, var(--tl-surface))); }
+.tl-shop-media--b { background: linear-gradient(140deg, var(--tl-surface-2), color-mix(in srgb, var(--tl-blue) 14%, var(--tl-surface))); }
+.tl-shop-media--c { background: linear-gradient(140deg, var(--tl-surface-2), color-mix(in srgb, var(--tl-gold) 14%, var(--tl-surface))); }
+.tl-shop-media-label {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tl-fg-3);
+  text-align: center;
+  padding: 0 8px;
+}
+.tl-shop-media--wide { aspect-ratio: 4 / 3; }
+
+.tl-shop-pcard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  padding: 8px;
+  position: relative;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.tl-shop-pcard:hover { border-color: var(--tl-border-2); background: var(--tl-surface); }
+.tl-shop-pcard--muted { opacity: 0.62; }
+.tl-shop-pcard-title {
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--tl-fg);
+  font-weight: 550;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+.tl-shop-pcard-title a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.tl-shop-pcard-foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+.tl-shop-price {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--shop-price);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.tl-shop-price--lg { font-size: clamp(20px, 5vw, 26px); }
+.tl-shop-price-was {
+  font-size: 12.5px;
+  color: var(--shop-price-was);
+  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+.tl-shop-price-note { font-size: 11.5px; color: var(--tl-fg-3); }
+
+.tl-shop-seller {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--tl-fg-2);
+  min-height: 24px;
+  position: relative;
+  z-index: 1;
+}
+.tl-shop-seller-mark {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  background: var(--tl-surface-2);
+  border: 1px solid var(--tl-border-2);
+  display: grid;
+  place-items: center;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--tl-fg-2);
+  letter-spacing: 0.02em;
+}
+.tl-shop-seller-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: 20ch;
+}
+
+.tl-shop-wish {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: var(--shop-tap);
+  height: var(--shop-tap);
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--tl-border);
+  background: color-mix(in srgb, var(--tl-bg) 72%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--tl-fg-2);
+  cursor: pointer;
+}
+.tl-shop-wish[aria-pressed="true"] { color: var(--tl-green); border-color: var(--tl-green); }
+
+.tl-shop-cats {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.tl-shop-cat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--shop-tap);
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--tl-border);
+  background: var(--tl-surface);
+  color: var(--tl-fg-2);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tl-shop-cat[aria-current="page"] { border-color: var(--tl-green); color: var(--tl-fg); }
+
+.tl-shop-deliv {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+  color: var(--tl-fg-3);
+  line-height: 1.5;
+}
+
+/* ── F05 — Search + filtering ──────────────────────────────────────────── */
+.tl-shop-searchfield { position: relative; display: flex; align-items: center; }
+.tl-shop-searchfield svg { position: absolute; left: 12px; color: var(--tl-fg-3); pointer-events: none; }
+.tl-shop-searchfield input {
+  width: 100%;
+  min-height: var(--shop-tap);
+  padding: 10px 40px 10px 38px;
+  background: var(--tl-bg-elev);
+  border: 1px solid var(--tl-border);
+  border-radius: 999px;
+  color: var(--tl-fg);
+  font: inherit;
+  font-size: 15px;
+}
+.tl-shop-searchfield button.clear {
+  position: absolute;
+  right: 4px;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border: 0; background: transparent;
+  color: var(--tl-fg-3); cursor: pointer; border-radius: 999px;
+}
+
+.tl-shop-results {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+@media (min-width: 1024px) {
+  .tl-shop-results { grid-template-columns: 248px minmax(0, 1fr); }
+}
+.tl-shop-rail { display: none; }
+@media (min-width: 1024px) { .tl-shop-rail { display: block; } }
+
+.tl-shop-facet { border-bottom: 1px solid var(--tl-border); padding: 12px 0; }
+.tl-shop-facet > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--tl-fg);
+}
+.tl-shop-facet > summary::-webkit-details-marker { display: none; }
+.tl-shop-facet-opts { display: flex; flex-direction: column; gap: 2px; padding-top: 8px; }
+.tl-shop-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--shop-tap);
+  font-size: 13.5px;
+  color: var(--tl-fg-2);
+  cursor: pointer;
+}
+.tl-shop-check input { width: 18px; height: 18px; accent-color: var(--tl-green); flex: none; }
+.tl-shop-check .count { margin-left: auto; color: var(--tl-fg-4); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+.tl-shop-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tl-shop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 6px 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--tl-border-2);
+  background: var(--tl-surface-2);
+  color: var(--tl-fg);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.tl-shop-chip button {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border: 0; background: transparent; color: var(--tl-fg-3);
+  cursor: pointer; border-radius: 999px;
+}
+.tl-shop-chip button:hover { color: var(--tl-fg); background: var(--tl-border); }
+
+.tl-shop-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.tl-shop-count { font-size: 13.5px; color: var(--tl-fg-2); }
+
+/* Mobile filter sheet */
+.tl-shop-sheet-backdrop {
+  position: fixed; inset: 0; z-index: 70;
+  background: var(--shop-scrim);
+}
+.tl-shop-sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 71;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--tl-bg-elev);
+  border-top-left-radius: var(--tl-radius-xl);
+  border-top-right-radius: var(--tl-radius-xl);
+  border-top: 1px solid var(--tl-border-2);
+}
+.tl-shop-sheet-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--tl-border);
+}
+.tl-shop-sheet-body { overflow-y: auto; padding: 4px 14px 14px; flex: 1; }
+.tl-shop-sheet-foot {
+  display: flex; gap: 10px;
+  padding: 12px 14px calc(12px + var(--shop-safe-b));
+  border-top: 1px solid var(--tl-border);
+}
+.tl-shop-sheet-foot .tl-shop-btn { flex: 1; }
+
+/* ── F06 — Commerce actions ────────────────────────────────────────────── */
+.tl-shop-optrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.tl-shop-opt {
+  min-height: var(--shop-tap);
+  padding: 0 14px;
+  border-radius: var(--tl-radius);
+  border: 1px solid var(--tl-border-2);
+  background: var(--tl-surface);
+  color: var(--tl-fg-2);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+.tl-shop-opt[aria-pressed="true"] {
+  border-color: var(--tl-green);
+  color: var(--tl-fg);
+  background: color-mix(in srgb, var(--tl-green) 12%, var(--tl-surface));
+}
+.tl-shop-opt:disabled {
+  color: var(--tl-fg-4);
+  cursor: not-allowed;
+  background: var(--tl-bg-elev);
+  text-decoration: line-through;
+}
+
+.tl-shop-qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tl-border-2);
+  border-radius: var(--tl-radius);
+  overflow: hidden;
+}
+.tl-shop-qty button {
+  width: var(--shop-tap);
+  height: var(--shop-tap);
+  display: grid; place-items: center;
+  border: 0; background: var(--tl-surface); color: var(--tl-fg);
+  cursor: pointer; font-size: 17px;
+}
+.tl-shop-qty button:disabled { color: var(--tl-fg-4); cursor: not-allowed; }
+.tl-shop-qty input {
+  width: 52px; height: var(--shop-tap);
+  border: 0; border-left: 1px solid var(--tl-border); border-right: 1px solid var(--tl-border);
+  background: var(--tl-bg-elev); color: var(--tl-fg);
+  text-align: center; font: inherit; font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-shop-sellergroup {
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.tl-shop-sellergroup-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--tl-bg-elev);
+  border-bottom: 1px solid var(--tl-border);
+}
+.tl-shop-sellergroup-body { padding: 4px 14px; }
+.tl-shop-sellergroup-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px;
+  border-top: 1px solid var(--tl-border);
+  background: var(--tl-surface);
+}
+.tl-shop-line { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--tl-border); }
+.tl-shop-line:last-child { border-bottom: 0; }
+.tl-shop-line-media { width: 68px; flex: none; }
+.tl-shop-line-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.tl-shop-line-title { font-size: 13.5px; line-height: 1.35; margin: 0; }
+
+.tl-shop-timeline { list-style: none; margin: 0; padding: 0; }
+.tl-shop-timeline li {
+  position: relative;
+  padding: 0 0 18px 24px;
+  border-left: 1px solid var(--tl-border-2);
+  margin-left: 5px;
+}
+.tl-shop-timeline li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.tl-shop-timeline li::before {
+  content: "";
+  position: absolute;
+  left: -5px; top: 4px;
+  width: 9px; height: 9px;
+  border-radius: 999px;
+  background: var(--tl-border-2);
+}
+.tl-shop-timeline li.is-done::before { background: var(--shop-stock-ok); }
+.tl-shop-timeline li.is-current::before { background: var(--tl-green); box-shadow: 0 0 0 4px var(--tl-green-glow); }
+.tl-shop-timeline-when { font-size: 11.5px; color: var(--tl-fg-3); font-variant-numeric: tabular-nums; }
+.tl-shop-timeline-what { font-size: 13.5px; color: var(--tl-fg); }
+/* --tl-fg-4 measures 4.24:1 on --tl-surface (passes only on --tl-bg), so
+   small meta text on a card uses fg-3. See Q02 finding P5. */
+.tl-shop-timeline-who { font-size: 11.5px; color: var(--tl-fg-3); }
+
+.tl-shop-policy { display: flex; flex-direction: column; gap: 10px; }
+.tl-shop-policy-item { display: flex; gap: 10px; font-size: 13px; line-height: 1.5; color: var(--tl-fg-2); }
+.tl-shop-policy-item svg { flex: none; margin-top: 2px; color: var(--tl-fg-3); }
+
+/* ── F07 — Seller / admin form primitives ──────────────────────────────── */
+.tl-shop-stepper { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; }
+.tl-shop-step {
+  flex: 1 0 auto;
+  min-width: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: var(--tl-radius);
+  border: 1px solid var(--tl-border);
+  background: var(--tl-surface);
+  font-size: 12px;
+  color: var(--tl-fg-3);
+  text-align: left;
+  cursor: pointer;
+}
+.tl-shop-step[aria-current="step"] { border-color: var(--tl-green); color: var(--tl-fg); }
+.tl-shop-step.is-done { color: var(--tl-fg-2); }
+.tl-shop-step-n {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 999px;
+  background: var(--tl-surface-2); color: var(--tl-fg-3);
+  font-size: 11px; font-weight: 700;
+}
+.tl-shop-step.is-done .tl-shop-step-n { background: var(--shop-stock-ok); color: var(--shop-on-ok); }
+.tl-shop-step[aria-current="step"] .tl-shop-step-n { background: var(--tl-green); color: var(--shop-on-accent); }
+.tl-shop-step.is-error { border-color: var(--shop-danger); }
+.tl-shop-step.is-error .tl-shop-step-n { background: var(--shop-danger-fill); color: var(--shop-on-danger); }
+
+.tl-shop-autosave {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--tl-fg-3);
+  min-height: 24px;
+}
+.tl-shop-autosave.is-error { color: var(--shop-danger); }
+.tl-shop-autosave.is-saved { color: var(--shop-stock-ok); }
+
+.tl-shop-upload {
+  display: flex; gap: 12px; align-items: center;
+  padding: 12px;
+  border: 1px dashed var(--tl-border-2);
+  border-radius: var(--tl-radius);
+  background: var(--tl-bg-elev);
+}
+.tl-shop-upload.is-rejected { border-color: var(--shop-danger); border-style: solid; }
+.tl-shop-upload.is-uploaded { border-style: solid; }
+.tl-shop-upload-thumb {
+  width: 56px; height: 56px; flex: none;
+  border-radius: 8px; background: var(--tl-surface-2);
+  display: grid; place-items: center; color: var(--tl-fg-3);
+}
+.tl-shop-upload-body { flex: 1; min-width: 0; }
+.tl-shop-progress { height: 4px; border-radius: 999px; background: var(--tl-surface-2); overflow: hidden; margin-top: 8px; }
+.tl-shop-progress > i { display: block; height: 100%; background: var(--tl-green); }
+
+.tl-shop-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tl-shop-table th, .tl-shop-table td { padding: 9px 10px; text-align: left; }
+.tl-shop-table thead th {
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--tl-fg-3); font-weight: 600;
+  border-bottom: 1px solid var(--tl-border);
+  white-space: nowrap;
+}
+.tl-shop-table tbody tr { border-bottom: 1px solid var(--tl-border); }
+.tl-shop-table input { max-width: 120px; }
+.tl-shop-tablewrap { overflow-x: auto; border: 1px solid var(--tl-border); border-radius: var(--tl-radius); }
+
+.tl-shop-varcards { display: flex; flex-direction: column; gap: 10px; }
+.tl-shop-varcard {
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  padding: 12px;
+}
+
+.tl-shop-evidence {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+.tl-shop-evidence-item {
+  border: 1px solid var(--tl-border-2);
+  border-radius: var(--tl-radius);
+  overflow: hidden;
+  background: var(--tl-surface);
+}
+.tl-shop-evidence-item .tl-shop-media { border: 0; border-radius: 0; }
+.tl-shop-evidence-cap { padding: 7px 9px; font-size: 11.5px; color: var(--tl-fg-2); line-height: 1.4; }
+
+.tl-shop-decision {
+  border: 1px solid var(--tl-border-2);
+  border-radius: var(--tl-radius-lg);
+  padding: 14px;
+  background: var(--tl-bg-elev);
+}
+.tl-shop-internal {
+  border-left: 3px solid var(--shop-warning);
+  background: color-mix(in srgb, var(--shop-warning) 7%, var(--tl-surface));
+  padding: 10px 12px;
+  border-radius: 0 var(--tl-radius) var(--tl-radius) 0;
+}
+.tl-shop-external {
+  border-left: 3px solid var(--shop-verified);
+  background: color-mix(in srgb, var(--shop-verified) 7%, var(--tl-surface));
+  padding: 10px 12px;
+  border-radius: 0 var(--tl-radius) var(--tl-radius) 0;
+}
+
+/* Responsive swap used where a table is genuinely unusable on a phone. */
+.tl-shop [data-desktop-only] { display: none; }
+.tl-shop [data-mobile-only]  { display: block; }
+@media (min-width: 768px) {
+  .tl-shop [data-desktop-only] { display: block; }
+  .tl-shop [data-mobile-only]  { display: none; }
+}
+
+/* ── B04 — Product detail ──────────────────────────────────────────────── */
+.tl-shop-pdp {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .tl-shop-pdp { grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr); gap: 40px; align-items: start; }
+  .tl-shop-pdp-media { position: sticky; top: 64px; }
+}
+.tl-shop-gallery { display: flex; flex-direction: column; gap: 10px; }
+.tl-shop-gallery-thumbs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.tl-shop-gallery-thumb {
+  width: 64px; flex: none; padding: 0; border: 1px solid var(--tl-border);
+  border-radius: 8px; overflow: hidden; background: transparent; cursor: pointer;
+}
+.tl-shop-gallery-thumb[aria-current="true"] { border-color: var(--tl-green); }
+.tl-shop-gallery-thumb .tl-shop-media { border: 0; border-radius: 0; }
+
+.tl-shop-specs { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tl-shop-specs th, .tl-shop-specs td { padding: 9px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--tl-border); }
+.tl-shop-specs th { color: var(--tl-fg-3); font-weight: 500; width: 44%; }
+
+.tl-shop-storecard {
+  display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;
+  border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg); padding: 14px;
+}
+
+/* Grid/flex children default to min-width:auto, which refuses to shrink below
+   their min-content and pushes the page wider than the viewport. Seen at 375px
+   on the product detail grid. */
+.tl-shop-pdp,
+.tl-shop-pdp > *,
+.tl-shop-results,
+.tl-shop-results > * { min-width: 0; }
+.tl-shop-page { overflow-wrap: break-word; }
+
+/* A pill holding a sentence (e.g. a verified-purchase receipt line) must be
+   allowed to wrap — nowrap on long copy pushes the whole page sideways at
+   375px. Short status chips keep nowrap. */
+.tl-shop-pill--wrap { white-space: normal; text-align: left; line-height: 1.45; }
+
+/* ── Q01 touch-target sweep ────────────────────────────────────────────────
+ * Board global criterion: every touch target ≥ 44×44. Small buttons and the
+ * search clear button were 36px; the seller link was 24px tall. Checkboxes and
+ * radios stay 18px on purpose — their <label> is the target and is already 44px
+ * tall, which is how a pointer actually hits them.
+ * ---------------------------------------------------------------------- */
+.tl-shop-btn--sm { min-height: var(--shop-tap); }
+.tl-shop-searchfield button.clear { width: var(--shop-tap); height: var(--shop-tap); right: 2px; }
+a.tl-shop-seller { min-height: var(--shop-tap); }
+.tl-shop-gallery-thumb { min-height: var(--shop-tap); }
+
+/* Filter chips are touch targets, not decoration — the remove button inside
+   one was 28px. Both the chip and its button now clear 44px. */
+.tl-shop-chip { min-height: var(--shop-tap); padding-right: 4px; }
+.tl-shop-chip button { width: var(--shop-tap); height: var(--shop-tap); }
+
+/* ── A03 mobile (P0) ───────────────────────────────────────────────────────
+ * Three problems at 375px: a 10-item fake sidebar stacked above the work, a
+ * two-column definition row that squeezed long Vietnamese values into a
+ * sliver, and a decision button that sat below three screens of evidence.
+ * ---------------------------------------------------------------------- */
+
+/* Sidebar → one disclosure row on a phone. */
+.tl-admin-drawer {
+  border-bottom: 1px solid var(--tl-border);
+  background: var(--tl-bg-elev);
+}
+.tl-admin-drawer > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--shop-tap);
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tl-fg-2);
+  cursor: pointer;
+}
+.tl-admin-drawer > summary::-webkit-details-marker { display: none; }
+.tl-admin-drawer[open] > summary { border-bottom: 1px solid var(--tl-border); }
+.tl-admin-drawer .tl-admin-side { border-right: 0; }
+
+/* Label/value pairs that stack under their label on a phone. */
+.tl-shop-deflist { margin: 0; display: grid; gap: 10px; font-size: 13.5px; }
+.tl-shop-deflist > div { display: grid; gap: 2px; }
+.tl-shop-deflist dt { color: var(--tl-fg-3); }
+.tl-shop-deflist dd { margin: 0; overflow-wrap: anywhere; }
+@media (min-width: 560px) {
+  .tl-shop-deflist > div {
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    gap: 16px;
+    align-items: baseline;
+  }
+  .tl-shop-deflist dd { text-align: right; }
+}
+
+/* The decision button follows the moderator down the form instead of sitting
+   below three screens of evidence. Sticky inside the form, not a second bar —
+   duplicating the submit is how a moderator double-decides. */
+.tl-shop-decision-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 14px -14px -14px;
+  padding: 12px 14px calc(12px + var(--shop-safe-b));
+  background: color-mix(in srgb, var(--tl-bg-elev) 94%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--tl-border);
+  border-radius: 0 0 var(--tl-radius-lg) var(--tl-radius-lg);
+}
+
+/* ── Light-mode ink flip ───────────────────────────────────────────────────
+ * On paper, --tl-green / --tl-gold / --tl-accent-qt are DEEP, not neon, so the
+ * near-black ink from the token block composites at 3.4–3.8:1 on its own fill.
+ * Nothing else about the shop palette changes between modes; these three do.
+ * Asserted in src/styles/__tests__/contrast.test.ts (INK_ON_FILL).
+ * -------------------------------------------------------------------- */
+[data-theme="the-line"][data-mode="light"] .tl-shop {
+  --shop-on-accent:  #f7fbee;   /* on --tl-green   #516c1b — 5.69:1 */
+  --shop-on-gold:    #fdfaf2;   /* on --tl-gold    #825e0f — 5.66:1 */
+  --shop-on-ok:      #f2fbf6;   /* on --tl-accent-qt #007342 — 5.64:1 */
+}
+
+/* ── Buyer catalogue (P2b.4) ──────────────────────────────────────────────
+ * The card is one link with no nested controls. The media box declares its
+ * aspect ratio so the grid reserves space before any photo lands — the CLS
+ * lesson from the homepage work, applied before it becomes a problem.
+ * ------------------------------------------------------------------------ */
+.tl-pgrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 768px) { .tl-pgrid { gap: 18px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+
+.tl-pcard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--tl-line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--tl-surface);
+  color: inherit;
+  text-decoration: none;
+  min-height: var(--shop-tap);
+}
+.tl-pcard:hover { border-color: var(--tl-fg-4); }
+.tl-pcard:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
+
+.tl-pcard-media { position: relative; width: 100%; background: var(--tl-surface-2); }
+.tl-pcard-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tl-pcard-noimg { width: 100%; height: 100%; background: var(--tl-surface-2); }
+
+.tl-pcard-flag {
+  position: absolute; left: 8px; top: 8px;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600;
+  background: var(--tl-bg); color: var(--tl-fg-2);
+  border: 1px solid var(--tl-line);
+}
+
+.tl-pcard-body { padding: 10px 11px 12px; display: grid; gap: 4px; }
+.tl-pcard-title {
+  margin: 0; font-size: 13.5px; line-height: 1.4; font-weight: 500;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tl-pcard-price { margin: 0; font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-pcard-noprice { font-weight: 500; color: var(--tl-fg-3); }
+.tl-pcard-meta { margin: 0; font-size: 12px; color: var(--tl-fg-3); }
+.tl-pcard-out { color: var(--tl-fg-3); }
+.tl-pcard-shop { margin: 0; font-size: 12px; color: var(--tl-fg-3); display: flex; align-items: center; gap: 3px; }
+.tl-pcard-verified { color: var(--tl-green); flex: none; }
+
+.tl-pcard--skeleton { pointer-events: none; }
+.tl-pcard-sk-line { display: block; height: 11px; border-radius: 4px; background: var(--tl-surface-2); }
+
+/* Filters: a rail on desktop, a sheet on a phone. */
+.tl-shop-layout { display: block; }
+@media (min-width: 900px) {
+  .tl-shop-layout { display: grid; grid-template-columns: 210px 1fr; gap: 24px; align-items: start; }
+}
+.tl-filter-rail { display: none; }
+@media (min-width: 900px) { .tl-filter-rail { display: block; position: sticky; top: 16px; } }
+.tl-filter-open { display: inline-flex; }
+@media (min-width: 900px) { .tl-filter-open { display: none; } }
+
+.tl-filter-group { margin: 0 0 18px; border: 0; padding: 0; }
+.tl-filter-group legend { font-size: 12px; font-weight: 600; color: var(--tl-fg-3); padding: 0 0 6px; }
+
+/* The sheet is a real dialog: Escape closes it, focus stays inside, and the
+ * page behind does not scroll. Apply/Huỷ are explicit because a filter that
+ * commits on every tap makes a phone user re-run four queries by accident. */
+.tl-sheet::backdrop { background: rgb(0 0 0 / 55%); }
+.tl-sheet {
+  border: 0; padding: 0; margin: auto auto 0; width: 100%; max-width: 100%;
+  background: var(--tl-surface); color: var(--tl-fg);
+  border-radius: 14px 14px 0 0;
+  max-height: 85dvh;
+}
+.tl-sheet-inner { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); overflow-y: auto; max-height: 70dvh; }
+.tl-sheet-actions {
+  position: sticky; bottom: 0; display: flex; gap: 10px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--tl-surface); border-top: 1px solid var(--tl-line);
+}
+.tl-sheet-actions > * { flex: 1; }
+
+/* P2b.4 QA findings.
+ *  · the breadcrumb link was 26x17, which is not a thumb target. Height only:
+ *    a 44px MIN-WIDTH on an inline breadcrumb pushed the 320px layout 43px
+ *    past its scroller, which is a worse bug than the one it fixed.
+ *  · the search row needs the input to be allowed to shrink, or it refuses to
+ *    go below its intrinsic width on a narrow phone. */
+.tl-shop-searchfield { gap: 8px; }
+.tl-shop-searchfield input { min-width: 0; flex: 1 1 auto; }
+.tl-shop-searchfield > .tl-shop-btn { flex: 0 0 auto; min-height: var(--shop-tap); padding: 0 14px; }
+/* A breadcrumb link is short text — "Chợ" is 26px wide — and a 44px touch
+ * target has to be the anchor's REAL box, not a pseudo-element: the gate
+ * measures getBoundingClientRect() on the anchor, and so does a thumb.
+ *
+ * Padding does it honestly (26 + 2*9 = 44). There is NO compensating negative
+ * margin: pulling the first crumb back by 9px to keep the text flush put the
+ * anchor's box at x = -9, i.e. a fifth of the touch target off the left edge
+ * of a 320px screen, and an edge click landed outside the window. A 9px indent
+ * is a much smaller price than a target a thumb cannot reach. */
+.tl-shop-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.tl-crumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--shop-tap);
+  padding-inline: 9px;
+}
+.tl-shop-crumbs .tl-crumb-sep { color: var(--tl-fg-4); }
+.tl-shop-crumbs .tl-crumb-current { padding-inline: 6px; }
+
+/* ── PDP (P2b.5) ──────────────────────────────────────────────────────────
+ * Media and info stack on a phone and sit side by side from 900px. The image
+ * carries width/height so its box is reserved before the bytes land. */
+.tl-pdp { display: grid; gap: 20px; }
+@media (min-width: 900px) { .tl-pdp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
+
+.tl-pdp-media img { display: block; width: 100%; height: auto; border-radius: 12px; background: var(--tl-surface-2); }
+.tl-pdp-thumbs { display: flex; gap: 8px; padding: 10px 0 0; margin: 0; list-style: none; overflow-x: auto; }
+.tl-pdp-thumb {
+  display: block; padding: 0; border: 2px solid transparent; border-radius: 8px;
+  background: none; cursor: pointer; min-width: var(--shop-tap); min-height: var(--shop-tap);
+}
+.tl-pdp-thumb[aria-current="true"] { border-color: var(--tl-green); }
+.tl-pdp-thumb img { display: block; width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
+
+.tl-pdp-info { display: grid; gap: 12px; }
+.tl-pdp-price { margin: 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tl-pdp-meta { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
+.tl-pdp-desc { margin: 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+
+.tl-pdp-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.tl-pdp-opt {
+  min-height: var(--shop-tap); min-width: var(--shop-tap); padding: 0 14px;
+  border: 1px solid var(--tl-line); border-radius: 999px;
+  background: var(--tl-surface); color: var(--tl-fg); font: inherit; cursor: pointer;
+}
+.tl-pdp-opt[aria-pressed="true"] { border-color: var(--tl-green); color: var(--tl-green); }
+/* Disabled means "this combination does not exist" or "sold out" — dimmed AND
+ * struck through, so it does not read as merely unselected. */
+.tl-pdp-opt:disabled { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; }
+.tl-pdp-opt:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
+
+.tl-pdp-seller { border: 1px solid var(--tl-line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
+.tl-pdp-shopname { margin: 0; display: flex; align-items: center; gap: 4px; font-weight: 600; }
+.tl-pdp-note { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
+.tl-pdp-cta { display: grid; gap: 8px; }

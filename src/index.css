@@ -486,3 +486,30 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* A11Y — the 16px floor that lets the viewport allow zoom again.
+   ----------------------------------------------------------------------------
+   index.html used to ship `maximum-scale=1.0, user-scalable=no`, which fails
+   WCAG 1.4.4 on every page of the site. It was there for one reason: iOS Safari
+   zooms the page when a focused text control renders below 16px, and several of
+   ours do (.tl-shop-input at 15px, .tl-chat-input at 13px, .tl-drawer-search at
+   14px, the readOnly `text-sm` inputs in the livestream form). Capping zoom hid
+   that cause instead of fixing it, and took pinch-zoom away from everyone.
+
+   So the cause is fixed once, in the shared layer: on touch-sized viewports
+   every text-entry control is at least 16px. `max(16px, 1em)` is a floor, not
+   an override — a control that already renders larger keeps its size.
+
+   !important is deliberate. Everything this must beat is a class selector or a
+   Tailwind utility, and a floor that loses to the thing it is flooring is not a
+   floor. Desktop typography is untouched: the query stops at 1024px.
+
+   checkbox / radio / range / color / file render no text of their own, so they
+   never trigger focus-zoom, and forcing a font-size on them moves their box. */
+@media (max-width: 1024px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}

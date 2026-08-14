@@ -200,7 +200,7 @@ Browse: `supabase/functions/`. Categories:
 
 ## Known Bugs (Not Fixed)
 
-_(none currently — Red5 residual columns were dropped by migration `20260716170000`, CLOSE-01)_
+- **B14 — `delete-account` returns success while all 13 of its cleanup steps fail.** 10 × missing `service_role` GRANT (all pre-Shop tables), 2 tables that no longer exist, 1 renamed column. Accounts are deleted only by `ON DELETE CASCADE`; the loop is decorative. 🔴 **Do NOT grant the missing permissions as an isolated fix** — the loop runs before `auth.admin.deleteUser` with no transaction, so granting them turns a harmless no-op into a real partial deletion. Full record: [`docs/defects/b14-delete-account-cleanup-noop.md`](./docs/defects/b14-delete-account-cleanup-noop.md)
 
 ## Coding Standards
 

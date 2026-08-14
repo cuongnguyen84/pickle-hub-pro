@@ -1,0 +1,91 @@
+// ============================================================================
+// /shop — prototype B01 in production.
+// ----------------------------------------------------------------------------
+// Search box and categories first; no marketing hero. On a 320px phone the
+// first product card is already peeking above the fold, which was B01's
+// acceptance criterion and is the only reason a catalogue home exists.
+//
+// The catalogue is genuinely small during the pilot, so the page says so
+// instead of padding itself with sections. There is no "bán chạy" (no sales
+// data), no "sắp hết" (no reservation model), and no carousel.
+// ============================================================================
+
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Search } from "lucide-react";
+import { DynamicMeta } from "@/components/seo/DynamicMeta";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
+import { CategoryChips, ResultsGrid } from "@/components/shop/CatalogResults";
+import "@/styles/shop.css";
+
+export default function ShopHome() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  const categories = usePublicCategories();
+  // The home grid is the same query the search page runs, with no arguments.
+  const latest = usePublicSearch({ limit: 12 });
+
+  return (
+    <TheLineLayout title="Chợ đồ pickleball">
+      {/* Q4: the pilot catalogue is not indexed. Server-rendered robots come
+          from the Pages Function; this is the SPA half of the same answer. */}
+      <DynamicMeta title="Chợ đồ pickleball" noindex />
+      <main className="tl-shop">
+        <h1 className="tl-shop-h1">Chợ đồ pickleball</h1>
+        <p className="tl-shop-sub">
+          Vợt, giày, bóng và phụ kiện từ những shop đã được xác minh giấy tờ.
+        </p>
+
+        <form
+          role="search"
+          className="tl-shop-searchfield"
+          onSubmit={(e) => {
+            e.preventDefault();
+            navigate(`/shop/search?q=${encodeURIComponent(q.trim())}`);
+          }}
+        >
+          <label htmlFor="shop-home-q" className="tl-shop-sr">Tìm sản phẩm</label>
+          <Search size={15} aria-hidden="true" />
+          <input
+            id="shop-home-q"
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Tìm vợt, giày, bóng…"
+            style={{ fontSize: 16 }}
+          />
+          <button type="submit" className="tl-shop-btn tl-shop-btn--primary">
+            Tìm
+          </button>
+        </form>
+
+        <section aria-labelledby="shop-cats">
+          <h2 className="tl-shop-h2" id="shop-cats">Ngành hàng</h2>
+          {categories.isLoading ? (
+            <p className="tl-shop-hint">Đang tải…</p>
+          ) : (
+            <CategoryChips
+              categories={categories.data ?? []}
+              active={null}
+              onPick={(slug) => slug && navigate(`/shop/category/${slug}`)}
+            />
+          )}
+        </section>
+
+        <section aria-labelledby="shop-latest">
+          <h2 className="tl-shop-h2" id="shop-latest">Mới đăng</h2>
+          <ResultsGrid
+            rows={latest.data?.rows ?? []}
+            total={latest.data?.total ?? 0}
+            isLoading={latest.isLoading}
+            isError={latest.isError}
+            onRetry={() => void latest.refetch()}
+            emptyTitle="Chưa có sản phẩm nào đang bán"
+            emptyBody="Sàn đang ở giai đoạn thử nghiệm với vài shop đầu tiên. Quay lại sau nhé."
+          />
+        </section>
+      </main>
+    </TheLineLayout>
+  );
+}

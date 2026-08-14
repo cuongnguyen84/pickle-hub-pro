@@ -4,6 +4,46 @@
     "element": "<Index />"
   },
   {
+    "path": "/shop",
+    "element": "<ShopHome />"
+  },
+  {
+    "path": "/vi/shop",
+    "element": "<ViLanguageWrapper><ShopHome /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/search",
+    "element": "<ShopSearch />"
+  },
+  {
+    "path": "/vi/shop/search",
+    "element": "<ViLanguageWrapper><ShopSearch /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/category/:slug",
+    "element": "<ShopCategory />"
+  },
+  {
+    "path": "/shop/product/:slug",
+    "element": "<ProductDetail />"
+  },
+  {
+    "path": "/vi/shop/product/:slug",
+    "element": "<ViLanguageWrapper><ProductDetail /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/store/:slug",
+    "element": "<ShopStore />"
+  },
+  {
+    "path": "/vi/shop/store/:slug",
+    "element": "<ViLanguageWrapper><ShopStore /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop/category/:slug",
+    "element": "<ViLanguageWrapper><ShopCategory /></ViLanguageWrapper>"
+  },
+  {
     "path": "/live",
     "element": "<Live />"
   },
@@ -574,6 +614,62 @@
   {
     "path": "/creator/tournaments",
     "element": "<CreatorTournaments />"
+  },
+  {
+    "path": "/proto/shop/*",
+    "element": "<ProtoShopApp />"
+  },
+  {
+    "path": "/shop/sell",
+    "element": "<SellLanding />"
+  },
+  {
+    "path": "/seller",
+    "element": "<RequireAuth><SellerHome /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application",
+    "element": "<RequireAuth><SellerApplication /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application/status",
+    "element": "<RequireAuth><SellerApplicationStatus /></RequireAuth>"
+  },
+  {
+    "path": "/seller/settings",
+    "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products",
+    "element": "<RequireAuth><SellerProducts /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/new",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/:id/edit",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplicationReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProducts /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProductReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/contacts",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopContacts /></RequireAuth>"
   },
   {
     "path": "/privacy",

@@ -42,6 +42,61 @@ Deno.serve(async (req) => {
     // Use service role client for deletion operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ── Shop owners are offboarded by hand, in the closed pilot (B12) ───────
+    // This runs BEFORE anything is deleted, and that ordering is the whole
+    // point. Below, the cleanup walks a list of tables and only calls
+    // deleteUser at the very end, with no transaction around any of it — so a
+    // refusal that arrives from Postgres at the last step arrives after the
+    // account has already been taken apart.
+    //
+    // Today that does not happen, and only by luck: service_role holds no
+    // DELETE on those tables, so every step fails harmlessly (B14). Grant them
+    // without moving this check first and the loop becomes a real partial
+    // deletion. The check is here so that fix stays safe whenever it lands.
+    //
+    // The FK (shops.owner_user_id ON DELETE RESTRICT) still backs this up, but
+    // it is not the contract: GoTrue flattens it into "Database error deleting
+    // user", which tells a seller nothing and tells an operator less.
+    //
+    // Ownership, not membership. A manager or support account attached through
+    // shop_members is not blocked — they own nothing, so nothing is orphaned
+    // when they leave.
+    const { count: ownedShops, error: ownershipError } = await supabaseAdmin
+      .from("shops")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_user_id", userId);
+
+    if (ownershipError) {
+      // Fail closed. Not knowing whether this account owns a shop is not a
+      // reason to start deleting it.
+      console.error("Ownership check failed:", ownershipError);
+      return new Response(JSON.stringify({
+        error: "ownership_check_failed",
+        code: "ownership_check_failed",
+        message: "Không kiểm tra được tài khoản này có shop hay không. Chưa xoá gì cả — vui lòng thử lại.",
+      }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if ((ownedShops ?? 0) > 0) {
+      // A stable code the UI can branch on. Replaying this request returns the
+      // identical response and changes nothing, because nothing has run yet.
+      return new Response(JSON.stringify({
+        error: "shop_owner_offboarding_required",
+        code: "shop_owner_offboarding_required",
+        shop_count: ownedShops,
+        contact_email: "tapickleballvn@gmail.com",
+        message:
+          "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, " +
+          "vui lòng gửi yêu cầu tới tapickleballvn@gmail.com.",
+      }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Delete user data from all relevant tables (order matters due to foreign keys)
     const tablesToClean = [
       // Notifications

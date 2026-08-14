@@ -201,7 +201,7 @@ BEGIN
   END IF;
 
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/news-rewrite',
+    url := public.ops_project_url() || '/functions/v1/news-rewrite',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
@@ -279,7 +279,7 @@ BEGIN
   END IF;
 
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/errors-telegram-alert',
+    url := public.ops_project_url() || '/functions/v1/errors-telegram-alert',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || v_anon_key,

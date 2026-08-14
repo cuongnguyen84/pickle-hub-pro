@@ -80,6 +80,11 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // Already-disallowed-by-robots-txt routes — defense-in-depth
   /^\/admin(?:\/|$)/,
   /^\/creator(?:\/|$)/,
+  // Design prototypes (/proto/shop/*). Never production, never indexable.
+  /^\/proto(?:\/|$)/,
+  // Seller Center — application data, phone numbers, addresses.
+  /^\/(?:vi\/)?seller(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/sell(?:\/|$)/,
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,
@@ -113,6 +118,31 @@ const NOINDEX_PATTERNS: RegExp[] = [
 ];
 
 const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
+
+// ─── Q4 (2026-08-12): the closed-pilot Shop is NOT indexed ──────────────────
+// The buyer catalogue runs for QA and for the pilot sellers, but a marketplace
+// with a handful of products invites a thin-content assessment, and the
+// Product Owner has not opened a launch gate.
+//
+// The switch is here, at the edge, and not a <meta> written after hydration:
+// a crawler that never executes the bundle would index the page anyway, which
+// is the exact failure this is meant to prevent. Flipping SHOP_PUBLIC_INDEXING
+// to "1" in the Pages environment is the whole launch action — no redeploy of
+// the SPA, no code change, and Seller/Admin stay noindex either way because
+// they are matched by their own patterns above.
+const SHOP_PUBLIC_PATTERNS: RegExp[] = [
+  /^\/(?:vi\/)?shop$/,
+  /^\/(?:vi\/)?shop\/search(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/category(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/product(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/store(?:\/|$)/,
+];
+
+export const shopIndexingEnabled = (env: { SHOP_PUBLIC_INDEXING?: string }) =>
+  env.SHOP_PUBLIC_INDEXING === "1";
+
+export const isPilotNoindexShopPath = (pathname: string) =>
+  SHOP_PUBLIC_PATTERNS.some((re) => re.test(pathname));
 
 // ─── GSC "Not found (404)" cleanup 2026-07-30 — 410 Gone for permanently
 //     removed URLs. Bots bypass public/_redirects, so a soft 404 here never
@@ -153,8 +183,14 @@ function isGoneUrl(pathname: string): boolean {
   return GONE_EXACT.has(pathname) || GONE_PATTERNS.some((re) => re.test(pathname));
 }
 
-function shouldNoindex(pathname: string): boolean {
-  return NOINDEX_PATTERNS.some((re) => re.test(pathname));
+// Exported so a test can call it with an env instead of grepping the source:
+// an earlier version of shop-pilot-seo.test.ts asserted that this file
+// CONTAINS the pilot check, and stayed green when the check was replaced with
+// `return false`.
+export function shouldNoindex(pathname: string, env?: { SHOP_PUBLIC_INDEXING?: string }): boolean {
+  if (NOINDEX_PATTERNS.some((re) => re.test(pathname))) return true;
+  // The pilot Shop, unless the launch flag is on.
+  return !shopIndexingEnabled(env ?? {}) && isPilotNoindexShopPath(pathname);
 }
 
 // SEO audit 2026-05-28 (batch 2) — bot path constructs each Response
@@ -283,6 +319,9 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
   CANONICAL_HOST: string;
   PRERENDER_CACHE?: KVNamespace;
+  /** Q4 launch gate. "1" opens the public Shop to crawlers; anything else
+   *  (including unset, which is the pilot default) keeps it noindex. */
+  SHOP_PUBLIC_INDEXING?: string;
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -534,7 +573,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      Slackbot, AhrefsBot tier-2) that doesn't trigger BOT_UA still
   //      sees the noindex signal. Header set BEFORE next() so we can
   //      mutate the response headers without re-buffering body.
-  const isNoindex = shouldNoindex(pathname);
+  const isNoindex = shouldNoindex(pathname, env);
   if (!isBot) {
     if (isNoindex) {
       const response = await next();

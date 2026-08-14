@@ -24,7 +24,7 @@ BEGIN
   END IF;
 
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/match-expire',
+    url := public.ops_project_url() || '/functions/v1/match-expire',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret
@@ -62,7 +62,7 @@ BEGIN
   END IF;
 
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/auto-cancel-unpaid-registrations',
+    url := public.ops_project_url() || '/functions/v1/auto-cancel-unpaid-registrations',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-cron-secret', v_secret

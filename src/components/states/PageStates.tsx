@@ -53,7 +53,16 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
       <h3>{t.errors.networkError}</h3>
       <p>{t.errors.networkErrorDesc}</p>
       {onRetry && (
-        <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
+        // 44px, stated in px rather than left to `h-11` (2.75rem). The board's
+        // global criterion is a physical target size; a rem-based height is
+        // only 44px while the root stays at 16px, and the browser gate
+        // measured this button at 41. `size="sm"` (h-9) was worse still — an
+        // error retry is the one control on the screen, not a dense one.
+        <Button
+          variant="outline"
+          className="mt-3 min-h-[44px] min-w-[44px] px-4"
+          onClick={onRetry}
+        >
           {t.common.retry}
         </Button>
       )}

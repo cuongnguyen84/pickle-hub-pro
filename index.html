@@ -8,7 +8,13 @@
     <script>
       try { if (localStorage.getItem('tl-theme-mode') === 'light') document.documentElement.setAttribute('data-mode', 'light'); } catch (e) {}
     </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content" />
+    <!-- No maximum-scale, no user-scalable=no. Capping zoom fails WCAG 1.4.4 on
+         every page of the site, and it was only ever there to hide a different
+         bug: form controls under 16px, which iOS answers by zooming on focus.
+         The floor in src/index.css fixes that cause, so the cap is gone.
+         `interactive-widget=overlays-content` keeps the keyboard from resizing
+         the viewport — unrelated to zoom, and load-bearing for the scroll shells. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content" />
     
     <!-- Google tag (gtag.js) -->
     <script>
@@ -74,8 +80,12 @@
     </style>
 
     <!-- Preconnect to critical origins for faster initial load -->
-    <link rel="preconnect" href="https://ajvlcamxemgbxduhiqrl.supabase.co" crossorigin />
-    <link rel="dns-prefetch" href="https://ajvlcamxemgbxduhiqrl.supabase.co" />
+    <!-- The origin below is substituted at build time from VITE_SUPABASE_URL
+         (vite.config.ts). Hardcoding the ref here made every staging page load
+         open a DNS + TLS connection to production. Do not name a project ref
+         in this comment either — the marker is replaced everywhere in the file. -->
+    <link rel="preconnect" href="%SUPABASE_ORIGIN%" crossorigin />
+    <link rel="dns-prefetch" href="%SUPABASE_ORIGIN%" />
     <!-- Preconnect for Google Drive images (common LCP element source) -->
     <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin />
     <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />

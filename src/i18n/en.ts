@@ -90,6 +90,25 @@ export const en: Translations = {
       title: "Contact",
       description: "If you have questions about this privacy policy, please contact:",
     },
+    shop: {
+      title: "Shop data (closed pilot)",
+      description:
+        "If you apply to sell in the closed pilot, ThePickleHub processes the additional data below. The programme collects no identity documents, no bank account numbers and no payout details.",
+      groups: {
+        public:
+          "Public on your shop page: shop name, description, city, categories, logo and cover images, delivery and return policies, products and product images, and the contact channels you chose to declare and an administrator approved.",
+        internal:
+          "Visible only to you and administrators: the full name, phone number and pickup address in your seller application. The pickup address is never shown publicly, and your account email or phone never becomes a public contact channel on its own.",
+        consent:
+          "Evidence that you accepted the seller rules: the version, the content hash and the time you agreed. No IP address and no device fingerprint — the system deliberately has nowhere to store either.",
+        moderation:
+          "Moderation history: approvals and change requests, suspensions, administrator notes, and which type of contact channel changed. It never records the value of a phone number or contact channel, and internal administrator notes are not shown to the seller.",
+      },
+      purpose:
+        "Used to review seller applications, display shop pages and products, moderate content, and handle complaints.",
+      retention:
+        "Your seller application and your acceptance evidence are deleted with your account. Moderation history is retained for dispute resolution but is no longer tied to a deleted account. If you own a shop, the shop must be dealt with before the account can be deleted.",
+    },
     effective: {
       text: "This policy was updated and is effective as of {date}.",
       update: "This policy may be updated as the platform develops new features.",
@@ -190,11 +209,23 @@ export const en: Translations = {
     deleteAccountTitle: "Permanently Delete Account",
     deleteAccountWarning: "This will permanently delete your account and all your data, including:",
     deleteDataProfile: "Profile information and avatar",
-    deleteDataTournaments: "Tournaments you created",
+    // Not "tournaments you created will be deleted": they are not.
+    // quick_tables.creator_user_id and team_match_tournaments.created_by are
+    // ON DELETE SET NULL, so a tournament stays and simply stops naming you.
+    deleteDataTournaments: "The link between you and the tournaments you created (the tournaments remain, no longer under your name)",
     deleteDataContent: "Comments, likes and interaction data",
     deleteAccountIrreversible: "This action cannot be undone.",
     deleteConfirmInstruction: "Type \"{word}\" to confirm:",
     deleteAccountConfirm: "Delete Account",
+    deleteBlockedShopOwner:
+      "This account owns a shop. To close the shop and the account safely, please send a request to tapickleballvn@gmail.com.",
+    deleteBlockedShopOwnerWhy:
+      "The shop still holds products, images and moderation history. During the closed pilot ThePickleHub closes shops by hand so that nothing worth keeping is deleted by accident.",
+    deleteBlockedShopOwnerNoAutoSend:
+      "The button below only opens your email app — it does NOT send anything. Please write from the address you registered with; we will confirm before doing anything.",
+    deleteBlockedShopOwnerCta: "Compose the request",
+    deleteBlockedShopOwnerBack: "Go back",
+    deleteBlockedShopOwnerEmailSubject: "Request to close my shop and account",
   },
   nav: {
     home: "Home",

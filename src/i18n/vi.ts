@@ -88,6 +88,18 @@ export interface Translations {
       title: string;
       description: string;
     };
+    shop: {
+      title: string;
+      description: string;
+      groups: {
+        public: string;
+        internal: string;
+        consent: string;
+        moderation: string;
+      };
+      purpose: string;
+      retention: string;
+    };
     effective: {
       text: string;
       update: string;
@@ -193,6 +205,12 @@ export interface Translations {
     deleteAccountIrreversible: string;
     deleteConfirmInstruction: string;
     deleteAccountConfirm: string;
+    deleteBlockedShopOwner: string;
+    deleteBlockedShopOwnerWhy: string;
+    deleteBlockedShopOwnerNoAutoSend: string;
+    deleteBlockedShopOwnerCta: string;
+    deleteBlockedShopOwnerBack: string;
+    deleteBlockedShopOwnerEmailSubject: string;
   };
   nav: {
     home: string;
@@ -3088,6 +3106,25 @@ export const vi: Translations = {
       title: "Liên hệ",
       description: "Nếu bạn có câu hỏi về chính sách bảo mật, vui lòng liên hệ:",
     },
+    shop: {
+      title: "Dữ liệu của tính năng Shop (thử nghiệm kín)",
+      description:
+        "Nếu bạn đăng ký bán hàng trong chương trình thử nghiệm kín, ThePickleHub xử lý thêm những nhóm dữ liệu dưới đây. Chương trình này không thu thập giấy tờ tuỳ thân, số tài khoản ngân hàng hay thông tin chi trả.",
+      groups: {
+        public:
+          "Công khai trên trang shop: tên shop, giới thiệu, tỉnh/thành, ngành hàng, ảnh logo và ảnh bìa, chính sách giao hàng và đổi trả, sản phẩm cùng ảnh sản phẩm, và những kênh liên hệ do bạn chủ động khai và quản trị viên đã duyệt.",
+        internal:
+          "Chỉ bạn và quản trị viên đọc được: họ tên, số điện thoại và địa chỉ lấy hàng trong hồ sơ đăng ký người bán. Địa chỉ lấy hàng không hiển thị công khai, và email hay số điện thoại tài khoản không bao giờ tự động trở thành kênh liên hệ công khai.",
+        consent:
+          "Bằng chứng chấp thuận quy chế người bán: phiên bản, mã băm nội dung và thời điểm bạn đồng ý. Không kèm địa chỉ IP và không kèm dấu vết thiết bị — hệ thống cố ý không có chỗ để lưu hai thứ đó.",
+        moderation:
+          "Nhật ký kiểm duyệt: quyết định duyệt hay yêu cầu sửa, việc tạm đình chỉ, ghi chú của quản trị viên, và loại kênh liên hệ đã thay đổi. Nhật ký không ghi giá trị số điện thoại hay kênh liên hệ, và ghi chú nội bộ của quản trị viên không hiển thị cho người bán.",
+      },
+      purpose:
+        "Dùng để xét duyệt hồ sơ người bán, hiển thị trang shop và sản phẩm, kiểm duyệt nội dung, và xử lý khiếu nại.",
+      retention:
+        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xoá cùng tài khoản của bạn. Nhật ký kiểm duyệt được giữ lại để đối chiếu khi có tranh chấp, nhưng không còn gắn với tài khoản đã xoá. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xoá được.",
+    },
     effective: {
       text: "Chính sách này được cập nhật và có hiệu lực từ ngày {date}.",
       update: "Chính sách có thể được cập nhật khi nền tảng phát triển thêm tính năng mới.",
@@ -3188,11 +3225,23 @@ export const vi: Translations = {
     deleteAccountTitle: "Xóa tài khoản vĩnh viễn",
     deleteAccountWarning: "Hành động này sẽ xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn, bao gồm:",
     deleteDataProfile: "Thông tin hồ sơ và ảnh đại diện",
-    deleteDataTournaments: "Các giải đấu bạn đã tạo",
+    // Không nói "xoá giải đấu bạn đã tạo": giải đấu KHÔNG bị xoá.
+    // quick_tables.creator_user_id và team_match_tournaments.created_by đều là
+    // ON DELETE SET NULL — giải đấu ở lại, chỉ mất liên kết tới người tạo.
+    deleteDataTournaments: "Liên kết giữa bạn và các giải đấu bạn đã tạo (giải đấu vẫn còn, nhưng không còn gắn tên bạn)",
     deleteDataContent: "Bình luận, lượt thích và dữ liệu tương tác",
     deleteAccountIrreversible: "Hành động này không thể hoàn tác.",
     deleteConfirmInstruction: "Nhập \"{word}\" để xác nhận:",
     deleteAccountConfirm: "Xóa tài khoản",
+    deleteBlockedShopOwner:
+      "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, vui lòng gửi yêu cầu tới tapickleballvn@gmail.com.",
+    deleteBlockedShopOwnerWhy:
+      "Shop còn sản phẩm, hình ảnh và lịch sử kiểm duyệt. Trong giai đoạn thử nghiệm kín, ThePickleHub xử lý việc đóng shop thủ công để không xoá nhầm thứ cần giữ.",
+    deleteBlockedShopOwnerNoAutoSend:
+      "Nút bên dưới chỉ mở ứng dụng email của anh/chị — nó KHÔNG tự gửi yêu cầu. Hãy gửi từ chính email đã đăng ký; chúng tôi sẽ xác nhận trước khi làm bất cứ điều gì.",
+    deleteBlockedShopOwnerCta: "Soạn email yêu cầu",
+    deleteBlockedShopOwnerBack: "Quay lại",
+    deleteBlockedShopOwnerEmailSubject: "Yêu cầu đóng shop và tài khoản",
   },
   nav: {
     home: "Trang chủ",
