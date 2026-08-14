@@ -246,7 +246,7 @@ if (process.env.CP27_SKIP_SUSPEND) {
     headers: { apikey: ANON, Authorization: `Bearer ${seller.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ action: "publish", product_id: state.productId }),
   });
-  const sweepAt = Date.now(); // product_publish_commit's queue sweep is behind this response
+  const sweepAt = performance.now(); // product_publish_commit's queue sweep is behind this response
   const rePubBody = await rePub.text();
   const pubFinal = await publicProduct(state.productSlug);
   const searchFinal = await fetch(`${SB}/rest/v1/rpc/shop_public_search`, {
@@ -293,7 +293,7 @@ if (process.env.CP27_SKIP_SUSPEND) {
   // alone only proves net.http_post was queued, not that a run completed).
   const WORKER_WALL_CLOCK_MS = 400_000;
   let cycled = false;
-  for (let i = 0; i < 20 && !(cycled && Date.now() - sweepAt >= WORKER_WALL_CLOCK_MS); i++) {
+  for (let i = 0; i < 20 && !(cycled && performance.now() - sweepAt >= WORKER_WALL_CLOCK_MS); i++) {
     await new Promise((r) => setTimeout(r, 30_000));
     const now = one(await sql(`
       SELECT (SELECT count(*)::int FROM cron.job_run_details r JOIN cron.job j USING (jobid)
@@ -302,7 +302,7 @@ if (process.env.CP27_SKIP_SUSPEND) {
               WHERE bucket_id = 'shop-product-media' AND state = 'in_progress') AS in_flight;`));
     cycled = now.runs > runsBefore.n && now.in_flight === 0;
   }
-  const waitedPastWorkerCap = Date.now() - sweepAt >= WORKER_WALL_CLOCK_MS;
+  const waitedPastWorkerCap = performance.now() - sweepAt >= WORKER_WALL_CLOCK_MS;
   const aliveStill = keys.length > 0 && await bytesAlive();
   const health = one(await sql(`SELECT stuck, failed FROM public.shop_media_cleanup_health;`));
 
