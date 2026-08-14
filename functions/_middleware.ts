@@ -617,7 +617,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v44→v45 (2026-08-14): GEO attribution — 2026 tournament-calendar post
   // (EN + VI) names ThePickleHub in the opening paragraph so AI-search
   // citations can attribute the passage when extracted standalone.
-  const cacheKey = `pr:v45:${url.pathname}`;
+  // v45→v46 (2026-08-14): GEO rollout — calendar-post opening now front-loads
+  // the full 2026 date list + "last updated" dateline, and 7 evergreen guides
+  // (WPR, World Cup Da Nang, PPA Asia guide, pro-tours guide, how-to-watch,
+  // players-to-watch, HK Slam) name ThePickleHub in their openings (EN + VI).
+  const cacheKey = `pr:v46:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

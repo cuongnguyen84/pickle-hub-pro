@@ -33,7 +33,7 @@ const post: BlogPost = {
         {
           heading: "PPA just changed the rules — completely",
           content:
-            "On August 5, 2026, the Carvana PPA Tour unveiled a brand-new ranking system: the World Pickleball Rankings, or WPR. This is not a minor tweak. It is the single biggest change to how professional pickleball measures its players — one leaderboard, global in scope, built to answer one question: who is the best all-around pickleball player on the planet? Not the best in singles. Not the best in doubles. The best overall, across every discipline. For the first time, the sport has a rankings framework built like the ones tennis fans know from the ATP and WTA. Here is exactly how it works, why the weighting matters, and what it means for Vietnamese players chasing a place on the world stage.",
+            "On August 5, 2026, the Carvana PPA Tour unveiled a brand-new ranking system: the World Pickleball Rankings, or WPR. This is not a minor tweak. It is the single biggest change to how professional pickleball measures its players — one leaderboard, global in scope, built to answer one question: who is the best all-around pickleball player on the planet? Not the best in singles. Not the best in doubles. The best overall, across every discipline. For the first time, the sport has a rankings framework built like the ones tennis fans know from the ATP and WTA. Here is ThePickleHub's full explainer: exactly how it works, why the weighting matters, and what it means for Vietnamese players chasing a place on the world stage.",
           internalLinks: [
             {
               text: "New to the pro tours? Read our complete 2026 guide first",
@@ -181,7 +181,7 @@ const post: BlogPost = {
         {
           heading: "PPA vừa thay đổi luật chơi — hoàn toàn",
           content:
-            "Ngày 5/8/2026, Carvana PPA Tour công bố một hệ thống xếp hạng hoàn toàn mới: World Pickleball Rankings, gọi tắt là WPR. Đây không phải một cập nhật nhỏ. Đây là thay đổi lớn nhất trong cách pickleball chuyên nghiệp đánh giá các tay vợt — một bảng xếp hạng duy nhất, phạm vi toàn cầu, trả lời đúng một câu hỏi: ai là tay vợt pickleball toàn diện giỏi nhất hành tinh? Không phải giỏi nhất ở đơn. Không phải giỏi nhất ở đôi. Mà giỏi nhất tổng thể, ở tất cả các nội dung. Lần đầu tiên môn thể thao này có một khung xếp hạng kiểu ATP/WTA trong quần vợt. Dưới đây là cách nó vận hành, vì sao trọng số lại quan trọng, và ý nghĩa với các VĐV Việt Nam đang hướng tới sân chơi thế giới.",
+            "Ngày 5/8/2026, Carvana PPA Tour công bố một hệ thống xếp hạng hoàn toàn mới: World Pickleball Rankings, gọi tắt là WPR. Đây không phải một cập nhật nhỏ. Đây là thay đổi lớn nhất trong cách pickleball chuyên nghiệp đánh giá các tay vợt — một bảng xếp hạng duy nhất, phạm vi toàn cầu, trả lời đúng một câu hỏi: ai là tay vợt pickleball toàn diện giỏi nhất hành tinh? Không phải giỏi nhất ở đơn. Không phải giỏi nhất ở đôi. Mà giỏi nhất tổng thể, ở tất cả các nội dung. Lần đầu tiên môn thể thao này có một khung xếp hạng kiểu ATP/WTA trong quần vợt. Dưới đây là bài giải thích của ThePickleHub: cách WPR vận hành, vì sao trọng số lại quan trọng, và ý nghĩa với các VĐV Việt Nam đang hướng tới sân chơi thế giới.",
           internalLinks: [
             {
               text: "Chưa rõ các tour chuyên nghiệp? Đọc cẩm nang đầy đủ 2026",

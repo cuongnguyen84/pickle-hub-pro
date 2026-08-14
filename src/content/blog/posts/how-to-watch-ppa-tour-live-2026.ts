@@ -17,7 +17,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Watch Professional Pickleball Live in 2026",
-          content: "Professional pickleball has never been more accessible. In 2026, you can watch the PPA Tour live on multiple streaming platforms, from premium subscription services to completely free options. Whether you want to follow the pros on the PPA Tour, watch MLP team matches, or catch local tournaments on The Pickle Hub, this guide covers all your options for watching pickleball live — and which platforms offer the best value.",
+          content: "Professional pickleball has never been more accessible. In 2026, you can watch the PPA Tour live on multiple streaming platforms, from premium subscription services to completely free options. Whether you want to follow the pros on the PPA Tour, watch MLP team matches, or catch local tournaments on ThePickleHub, this guide covers all your options for watching pickleball live — and which platforms offer the best value.",
           internalLinks: [
             { text: "New to the pro scene? Start with our guide to every pro pickleball tour in 2026", path: "/blog/professional-pickleball-tours-guide-2026" }
           ]
@@ -158,7 +158,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Xem Pickleball Chuyên Nghiệp Trực Tiếp Năm 2026",
-          content: "Pickleball chuyên nghiệp chưa bao giờ dễ tiếp cận như vậy. Năm 2026, bạn có thể xem PPA Tour trực tiếp trên nhiều nền tảng, từ dịch vụ trả phí đến hoàn toàn miễn phí. Dù bạn muốn theo dõi các tay vợt chuyên nghiệp trên PPA Tour, xem trận đấu đội MLP, hay bắt các giải đấu địa phương trên The Pickle Hub — hướng dẫn này sẽ giúp bạn chọn nền tảng phù hợp nhất."
+          content: "Pickleball chuyên nghiệp chưa bao giờ dễ tiếp cận như vậy. Năm 2026, bạn có thể xem PPA Tour trực tiếp trên nhiều nền tảng, từ dịch vụ trả phí đến hoàn toàn miễn phí. Dù bạn muốn theo dõi các tay vợt chuyên nghiệp trên PPA Tour, xem trận đấu đội MLP, hay bắt các giải đấu địa phương trên ThePickleHub — hướng dẫn này của ThePickleHub sẽ giúp bạn chọn nền tảng phù hợp nhất."
         },
         {
           heading: "PickleballTV (PBTV) — Lựa Chọn Cao Cấp",

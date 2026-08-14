@@ -194,7 +194,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "vietnam-pickleball-tournament-calendar-2026",
     publishedDate: "2026-07-06",
-    updatedDate: "2026-07-06",
+    updatedDate: "2026-08-14",
     author: "Cuong Nguyen",
     tags: ["vietnam pickleball tournament calendar 2026", "pickleball tournaments vietnam", "ho chi minh city open 2026", "pickleball world cup 2026 da nang", "ppa tour asia 2026 schedule", "mb hanoi cup", "pickleball vietnam"],
     ctaPath: "/live",

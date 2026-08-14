@@ -130,3 +130,7 @@ the WPR explainer; purge stale bot HTML for / and the recap pair. PR #579.
 calendar post (EN repo + VI Supabase row) now names ThePickleHub in its
 opening paragraph so an extracted snippet stays attributable; purge stale
 bot HTML for the calendar pair.
+2026-08-14 — v45->v46: GEO rollout — tournament-calendar opening front-loads
+the full 2026 date list + dateline (statuses refreshed to Aug 14), and 7
+evergreen guides name ThePickleHub in their opening paragraph (EN repo + VI
+Supabase rows) so extracted snippets stay attributable.
