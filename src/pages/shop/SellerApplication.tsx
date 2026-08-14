@@ -196,14 +196,19 @@ export default function SellerApplication() {
   );
 
   // Focus the step heading, unless a moderator deep-linked a specific field.
+  // Gated on the load finishing: on a cold navigation the first pass runs
+  // against the loading skeleton, focusField finds no element and gives up
+  // silently, and the deps never re-fired it — so the deep link focused only
+  // when the data happened to be cached. CP27 case 8 caught it.
   useEffect(() => {
+    if (remote.isLoading) return undefined;
     if (!focusTarget) {
       headingRef.current?.focus();
       return undefined;
     }
     const id = window.setTimeout(() => focusField(focusTarget), 60);
     return () => window.clearTimeout(id);
-  }, [step, focusTarget]);
+  }, [step, focusTarget, remote.isLoading]);
 
   const persist = (next: ApplicationDraft) => {
     setFields(next);
