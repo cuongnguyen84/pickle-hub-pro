@@ -19,7 +19,7 @@ export const useShopApplicationQueue = (status: ApplicationStatus | "all") =>
   useQuery({
     queryKey: [...QUEUE_KEY, status],
     queryFn: async (): Promise<ShopApplicationRow[]> => {
-      let q = shopFrom<ShopApplicationRow>("shop_applications")
+      let q = shopFrom<ShopApplicationRow>("shop_applications_admin")
         .select("*")
         .order("submitted_at", { ascending: true, nullsFirst: false });
       if (status !== "all") q = q.eq("status", status);
@@ -34,7 +34,7 @@ export const useShopApplication = (id: string | null) =>
     queryKey: [...QUEUE_KEY, "one", id],
     enabled: !!id,
     queryFn: async (): Promise<ShopApplicationRow | null> => {
-      const { data, error } = await shopFrom<ShopApplicationRow>("shop_applications")
+      const { data, error } = await shopFrom<ShopApplicationRow>("shop_applications_admin")
         .select("*")
         .eq("id", id!)
         .maybeSingle();

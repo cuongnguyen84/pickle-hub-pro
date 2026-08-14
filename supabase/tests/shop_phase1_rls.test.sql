@@ -7,7 +7,7 @@
 
 BEGIN;
 
-SELECT plan(38);
+SELECT plan(39);
 
 -- ─── Slug correctness ───────────────────────────────────────────────────────
 -- Not a permission test, and that is the point: all the other assertions here
@@ -65,10 +65,16 @@ SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND table
 SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='shop_pilot_members'), 'RLS enabled on shop_pilot_members');
 
 -- A grant without a policy is a locked door with no wall; a policy without a
--- grant is a 42501 that reads like a bug. Assert both exist.
+-- grant is a 42501 that reads like a bug. Since 20260814140000 the SELECT
+-- grant is column-scoped: everything except internal_note (CP27 case 6c —
+-- the applicant could read the moderator's note straight off the table).
 SELECT ok(
-  (SELECT has_table_privilege('authenticated', 'public.shop_applications', 'SELECT')),
-  'authenticated has SELECT grant on shop_applications'
+  (SELECT has_column_privilege('authenticated', 'public.shop_applications', 'id', 'SELECT')),
+  'authenticated has column-level SELECT on shop_applications'
+);
+SELECT ok(
+  (SELECT NOT has_column_privilege('authenticated', 'public.shop_applications', 'internal_note', 'SELECT')),
+  'but NOT on internal_note'
 );
 
 -- ─── A creates a draft ─────────────────────────────────────────────────────
@@ -96,13 +102,19 @@ SELECT is(
   'applicant CANNOT set status=approved (trigger pins it)'
 );
 
--- 2. An applicant cannot write moderator fields.
+-- 2. An applicant cannot write moderator fields. Since 20260814140000 they
+-- cannot READ internal_note either, so the verification read happens as
+-- postgres — the write path under test is still the applicant's.
 UPDATE public.shop_applications SET internal_note = 'tôi tự ghi' WHERE applicant_user_id = auth.uid();
+RESET role;
 SELECT is(
-  (SELECT internal_note FROM public.shop_applications WHERE applicant_user_id = auth.uid()),
+  (SELECT internal_note FROM public.shop_applications
+   WHERE applicant_user_id = '50010001-0000-4000-8000-000000000001'::uuid),
   NULL,
   'applicant CANNOT write internal_note'
 );
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50010001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 
 -- 3. The applicant-facing view does not expose internal_note at all.
 SELECT is(

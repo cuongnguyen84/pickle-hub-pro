@@ -379,7 +379,7 @@ export const SHOP_TABLES = [
   "shop_application_events",
 ] as const;
 
-export const SHOP_VIEWS = ["my_shop_application"] as const;
+export const SHOP_VIEWS = ["my_shop_application", "shop_applications_admin"] as const;
 
 export const SHOP_RPCS = [
   "shop_pilot_has_access",

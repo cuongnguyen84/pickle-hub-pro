@@ -22,7 +22,13 @@ import {
 const SQL = readFileSync(
   resolve(__dirname, "../../../supabase/migrations/20260811090000_shop_phase1_seller_onboarding.sql"),
   "utf8",
-);
+) +
+  // shop_applications_admin lives in its own migration: the internal_note
+  // column-privacy fix (CP27 case 6c) landed after phase 1 shipped.
+  readFileSync(
+    resolve(__dirname, "../../../supabase/migrations/20260814140000_shop_application_internal_note_privacy.sql"),
+    "utf8",
+  );
 
 describe("shop schema parity with migration 20260811090000", () => {
   it.each(SHOP_TABLES)("migration creates table %s", (table) => {
