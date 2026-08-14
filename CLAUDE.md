@@ -61,6 +61,12 @@ Every new blog post requires **4 simultaneous changes** in the same push, or bot
 2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array. **Single SEO source of truth** (SEO-02): `BLOG_POST_META` (SSR `<title>` = `metaTitleEn`) and `EN_BLOG_SLUGS` (sitemap) are GENERATED from it — never hand-edit `functions/_lib/render/blog-meta.ts` or `functions/_lib/static-blog-slugs.ts`.
 3. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
 4. `node scripts/gen-blog-barrel.mjs` — regenerates `src/content/blog/posts/all.ts`. That barrel is the ONLY loader the SSR bot path can use (Pages Functions cannot use `import.meta.glob`); skip it and Googlebot gets the shell with no article body. Missed on 2026-08-05 (`hong-kong-slam-2026-preview` served 71 words instead of 1518) — caught by `src/content/blog/__tests__/blog-barrel.test.ts`, fixed in #546.
+5. **GEO check on the opening paragraph** (rule since 2026-08-14, validated by blind passage-citation testing — full method in the `picklehub-builder` skill). AI search cites PASSAGES, not pages; the opening must survive being extracted standalone:
+   - Name **"ThePickleHub"** once, naturally, in the opening (EN + VI) — "This ThePickleHub guide covers...", "lịch giải do ThePickleHub cập nhật..." — so an AI answer can attribute the snippet ("theo ThePickleHub..."). One mention; don't stuff. Never the spaced variant "The Pickle Hub" in prose (entity dilution; alternateName-only).
+   - **Front-load the answer**: names + dates + places + numbers in the first two sentences. No throat-clearing intros ("Trong những năm gần đây...") — a passage that promises the answer loses to one that contains it.
+   - **Entity + year together**: "Ho Chi Minh City Open 2026 (6–9/8/2026)", not "(6–9/8)".
+   - Calendar/list/living posts: add a visible **"last updated: <date>"** dateline in the opening AND bump `updatedDate` in the post + metadata.ts (feeds dateModified schema). Refresh stale statuses (completed events must say completed).
+   - No pronoun-dependent openings ("chúng tôi", "công ty này") and no unverifiable superlatives without a number/source in the same passage.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).
