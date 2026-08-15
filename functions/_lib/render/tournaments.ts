@@ -48,10 +48,10 @@ function tournamentLead(
   name: string,
   dateRange: string,
   statusText: string,
-  organizerName: string | null,
+  broadcasterName: string | null,
 ): string {
   const when = dateRange ? ` diễn ra ${dateRange}` : "";
-  const who = organizerName ? `, do ${organizerName} tổ chức` : "";
+  const who = broadcasterName ? `, phát sóng bởi ${broadcasterName}` : "";
   return `${name} là giải pickleball${when}${who} — ${statusText.toLowerCase()}. Lịch thi đấu, trạng thái và kết quả được ThePickleHub cập nhật.`;
 }
 
@@ -75,11 +75,11 @@ function tournamentDescription(
   name: string,
   dateRange: string,
   statusText: string,
-  organizerName: string | null,
+  broadcasterName: string | null,
 ): string {
   const st = statusText.toLowerCase();
   const when = dateRange ? ` (${dateRange})` : "";
-  const who = organizerName ? `, do ${organizerName} tổ chức` : "";
+  const who = broadcasterName ? `, phát sóng bởi ${broadcasterName}` : "";
   const candidates = [
     `${name}${when} — giải pickleball ${st}${who}. Lịch thi đấu và kết quả cập nhật trên ThePickleHub.`,
     `${name}${when} — giải pickleball ${st}. Lịch thi đấu và kết quả trên ThePickleHub.`,
@@ -103,9 +103,17 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
 
   // PostgREST returns an embedded to-one relation as an object, but older
   // client typings widen it to an array — normalise both shapes.
+  //
+  // IMPORTANT: `tournaments.organization_id` is NOT the organiser. Migration
+  // 20260528100000 backfilled it from `livestreams.organization_id`, i.e. the
+  // channel that BROADCAST the event. Every PPA row currently points at
+  // TAPickleball, a Vietnamese streaming partner — calling that the organiser
+  // of a US PPA Tour stop would be exactly the kind of false claim this fix
+  // removes from the JSON-LD. Labelled as broadcaster in the body, and never
+  // emitted as schema.org `organizer`.
   const rawOrg = (t as { organizations?: unknown }).organizations;
   const org = (Array.isArray(rawOrg) ? rawOrg[0] : rawOrg) as { name?: string; slug?: string } | null | undefined;
-  const organizerName = org?.name ?? null;
+  const broadcasterName = org?.name ?? null;
 
   const statusText = t.status === "ongoing" ? "Đang diễn ra" : t.status === "upcoming" ? "Sắp diễn ra" : "Đã kết thúc";
   const dateRange = tournamentDateRange(t.start_date, t.end_date);
@@ -116,8 +124,8 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   // 70-word body, because `description` is empty for almost every row. Build
   // both from the data we actually have (name + dates + status + organiser) so
   // each URL is distinct and the opening passage answers the query.
-  const lead = tournamentLead(t.name, dateRange, statusText, organizerName);
-  const desc = tournamentDescription(t.name, dateRange, statusText, organizerName);
+  const lead = tournamentLead(t.name, dateRange, statusText, broadcasterName);
+  const desc = tournamentDescription(t.name, dateRange, statusText, broadcasterName);
 
   const crumbs = [
     { label: "Trang chủ", href: siteUrl },
@@ -129,8 +137,8 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   const facts = [
     dateRange ? `<li><strong>Thời gian:</strong> ${escapeHtml(dateRange)}</li>` : "",
     `<li><strong>Trạng thái:</strong> ${escapeHtml(statusText)}</li>`,
-    organizerName
-      ? `<li><strong>Đơn vị tổ chức:</strong> ${org?.slug ? `<a href="${siteUrl}/org/${escapeHtml(org.slug)}">${escapeHtml(organizerName)}</a>` : escapeHtml(organizerName)}</li>`
+    broadcasterName
+      ? `<li><strong>Đơn vị phát sóng:</strong> ${org?.slug ? `<a href="${siteUrl}/org/${escapeHtml(org.slug)}">${escapeHtml(broadcasterName)}</a>` : escapeHtml(broadcasterName)}</li>`
       : "",
     `<li><strong>Môn thi đấu:</strong> Pickleball</li>`,
   ].join("");
@@ -155,7 +163,8 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
     // a VirtualLocation and organised by ThePickleHub. All of that is false for
     // physical PPA/MLP events we only aggregate, so it is dropped rather than
     // replaced with an invented venue: honest omission beats wrong structured
-    // data. `location` is intentionally absent until the table carries one.
+    // data. `location` and `organizer` are both intentionally absent — the
+    // table carries neither (see the broadcaster note above).
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -166,7 +175,6 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
           url: `${siteUrl}/tournament/${t.slug}`,
           sport: "Pickleball",
           eventStatus: "https://schema.org/EventScheduled",
-          ...(organizerName ? { organizer: { "@type": "Organization", name: organizerName } } : {}),
           ...(t.start_date ? { startDate: t.start_date } : {}),
           ...(t.end_date ? { endDate: t.end_date } : {}),
         },

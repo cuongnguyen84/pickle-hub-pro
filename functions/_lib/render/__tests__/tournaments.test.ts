@@ -83,7 +83,19 @@ describe("renderTournamentDetail", () => {
     expect(html).not.toContain("VirtualLocation");
     expect(html).toContain('"startDate":"2026-03-11"');
     expect(html).toContain('"endDate":"2026-03-15"');
-    expect(html).toContain('"name":"PPA Tour"');
+  });
+
+  it("labels the linked organization as broadcaster, never as organiser", async () => {
+    // tournaments.organization_id was backfilled from livestreams, so it is the
+    // channel that broadcast the event. Calling TAPickleball the organiser of a
+    // US PPA Tour stop would be false.
+    const html = await render(ENDED_ROW);
+
+    expect(html).toContain("Đơn vị phát sóng:");
+    expect(html).not.toContain("Đơn vị tổ chức");
+    expect(html).toContain("phát sóng bởi PPA Tour");
+    expect(html).not.toContain("organizer");
+    expect(html).toContain('href="https://www.thepicklehub.net/org/ppa-tour"');
   });
 
   it("renders a single-day event and an organiser-less row without empty fields", async () => {
@@ -96,7 +108,7 @@ describe("renderTournamentDetail", () => {
 
     expect(html).toContain("11/3/2026");
     expect(html).toContain("Sắp diễn ra");
-    expect(html).not.toContain("Đơn vị tổ chức");
+    expect(html).not.toContain("Đơn vị phát sóng");
     expect(html).not.toContain("organizer");
   });
 
