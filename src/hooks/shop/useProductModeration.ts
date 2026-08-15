@@ -13,7 +13,6 @@
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { shopRpc } from "@/integrations/supabase/shop-client";
 import type { Decision, ModerationTarget } from "@/lib/shop/moderationDecision";
 
@@ -152,6 +151,10 @@ export const usePublishProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (productId: string) => {
+      // Imported lazily: client.ts creates the SDK client at module load and
+      // THROWS without env vars — a top-level import here took the whole
+      // MediaEditor test import-chain down on CI, where no .env exists.
+      const { supabase } = await import("@/integrations/supabase/client");
       const { data, error } = await supabase.functions.invoke("shop-media-lifecycle", {
         body: { action: "publish", product_id: productId },
       });

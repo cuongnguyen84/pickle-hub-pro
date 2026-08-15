@@ -328,6 +328,20 @@ function GroupEditor({
   // seller has actually left a field of that row.
   const [touched, setTouched] = useState<Set<number>>(new Set());
   const touch = (i: number) => setTouched((prev) => new Set(prev).add(i));
+  // Deleting group i shifts every later group down one index — the touched
+  // set must shift with them, or the group that slides into slot i inherits a
+  // blur it never had and shows its error mid-typing (Codex review).
+  const removeGroup = (i: number) => {
+    setTouched((prev) => {
+      const next = new Set<number>();
+      for (const t of prev) {
+        if (t < i) next.add(t);
+        else if (t > i) next.add(t - 1);
+      }
+      return next;
+    });
+    onChange(groups.filter((_, k) => k !== i));
+  };
   const shownError = error && (error.index === -1 || touched.has(error.index)) ? error : null;
 
   return (
@@ -388,7 +402,7 @@ function GroupEditor({
               type="button"
               className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--danger"
               style={{ marginTop: 10 }}
-              onClick={() => onChange(groups.filter((_, k) => k !== i))}
+              onClick={() => removeGroup(i)}
             >
               <Trash2 size={14} aria-hidden="true" /> Xoá nhóm
             </button>
