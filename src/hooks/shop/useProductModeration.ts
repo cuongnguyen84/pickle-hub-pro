@@ -13,6 +13,7 @@
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { shopRpc } from "@/integrations/supabase/shop-client";
 import type { Decision, ModerationTarget } from "@/lib/shop/moderationDecision";
 
@@ -135,6 +136,28 @@ export const useDecideProduct = () => {
     // Invalidate the whole moderation namespace: a decision changes the row,
     // the counts, and the audit timeline, and a screen showing two of the
     // three is how a moderator decides twice.
+    onSuccess: () => void qc.invalidateQueries({ queryKey: MOD_KEY }),
+  });
+};
+
+/**
+ * The step approve deliberately does NOT do: copy the verified renditions
+ * into the public bucket and flip is_published, via the worker that holds the
+ * only service-role over those buckets. Wave 0 found that NOTHING called it —
+ * the state machine was complete and the shelf stayed empty. The review
+ * screen calls this right after a successful approve, and offers it as a
+ * button whenever an approved product is still not publicly visible.
+ */
+export const usePublishProduct = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      const { data, error } = await supabase.functions.invoke("shop-media-lifecycle", {
+        body: { action: "publish", product_id: productId },
+      });
+      if (error) throw error;
+      return data as { ok?: boolean; renditions?: number };
+    },
     onSuccess: () => void qc.invalidateQueries({ queryKey: MOD_KEY }),
   });
 };

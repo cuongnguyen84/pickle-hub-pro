@@ -75,7 +75,7 @@ import {
   problemMessage,
 } from "@/lib/shop/submitProblems";
 import type { VariantRow } from "@/lib/shop/variantMatrix";
-import type { SubmitProblem } from "@/lib/shop/submitProblems";
+import { SECTION_LABEL, type SubmitProblem } from "@/lib/shop/submitProblems";
 import type { ProductRow } from "@/integrations/supabase/shop-schema";
 
 // Its own chunk: a seller editing a simple product never downloads the matrix.
@@ -443,7 +443,7 @@ export default function SellerProductForm() {
             <p style={{ margin: "6px 0 0", lineHeight: 1.55 }}>{row.applicant_note}</p>
             {row.requested_fields.length > 0 && (
               <p className="tl-shop-hint" style={{ marginTop: 8 }}>
-                Cần sửa: {row.requested_fields.join(", ")}
+                Cần sửa: {row.requested_fields.map((f) => SECTION_LABEL[f as keyof typeof SECTION_LABEL] ?? f).join(", ")}
               </p>
             )}
           </div>

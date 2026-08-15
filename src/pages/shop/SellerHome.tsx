@@ -109,9 +109,9 @@ export default function SellerHome() {
           <section aria-labelledby="s04-next">
             <h2 className="tl-shop-h2" id="s04-next">Bước tiếp theo</h2>
             <div className="tl-shop-card" style={{ fontSize: 14, lineHeight: 1.6 }}>
-              Đăng sản phẩm, quản lý đơn hàng và cài đặt shop thuộc giai đoạn 2 và 3. Các mục đó
-              đang hiện &ldquo;sắp có&rdquo; trong cột bên trái — chúng tôi không mở đường dẫn
-              tới màn hình chưa tồn tại.
+              Đăng sản phẩm và cài đặt shop đã mở ở cột bên trái. Quản lý đơn hàng chưa thuộc
+              giai đoạn thử nghiệm kín: sản phẩm hiển thị kèm kênh liên hệ của shop, người mua
+              nhắn trực tiếp cho anh/chị.
             </div>
           </section>
         </div>

@@ -182,9 +182,9 @@ SELECT throws_ok(
 SELECT throws_ok(
   format($$ SELECT public.product_public_projection(%L::uuid, false) $$, (SELECT v FROM t_authz WHERE k='draft')),
   'P0002', NULL, 'và đường công khai trả "không tìm thấy" — không hé lộ rằng bản nháp có tồn tại');
-SELECT is(
-  (SELECT count(*)::int FROM public.products WHERE id=(SELECT v FROM t_authz WHERE k='draft')),
-  0, 'khách cũng không đọc thẳng bảng được');
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.products $$,
+  '42501', NULL, 'khách cũng không đọc thẳng bảng được — 42501, không phải 0 dòng (20260815090000)');
 
 -- ─── The public path only opens for approved + published + active ───────────
 

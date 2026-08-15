@@ -34,7 +34,11 @@ export default function ShopHome() {
       <main className="tl-shop">
         <h1 className="tl-shop-h1">Chợ đồ pickleball</h1>
         <p className="tl-shop-sub">
-          Vợt, giày, bóng và phụ kiện từ những shop đã được xác minh giấy tờ.
+          {/* Wave 0: the pilot does not collect papers, so "đã xác minh giấy
+              tờ" was a claim about diligence nobody performed — the exact
+              class of overstatement the Seller Rules exist to prevent. Say
+              what actually happens. */}
+          Vợt, giày, bóng và phụ kiện từ những shop được ThePickleHub duyệt hồ sơ và kiểm duyệt từng sản phẩm.
         </p>
 
         <form

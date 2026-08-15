@@ -388,12 +388,12 @@ SELECT throws_ok(
 -- Anonymous: nothing that is not approved AND published AND in an active shop.
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
-SELECT is(
-  (SELECT count(*)::int FROM public.products), 0,
-  'khách KHÔNG đọc được sản phẩm nháp');
-SELECT is(
-  (SELECT count(*)::int FROM public.product_variants), 0,
-  'khách KHÔNG đọc được giá của sản phẩm nháp');
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.products $$,
+  '42501', NULL, 'khách KHÔNG chạm được bảng sản phẩm — thiếu cả GRANT (20260815090000)');
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.product_variants $$,
+  '42501', NULL, 'khách KHÔNG chạm được bảng phiên bản — giá công khai đi qua RPC');
 SELECT is(
   (SELECT count(*)::int FROM public.public_products), 0,
   'và projection công khai cũng rỗng');

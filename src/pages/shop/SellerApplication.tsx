@@ -302,11 +302,23 @@ export default function SellerApplication() {
       <ShopScrollShell>
         <ShopHeader title="Hồ sơ đăng ký bán hàng" backTo="/shop/sell" />
         <main className="tl-shop-page tl-shop-page--narrow">
-          <h1 className="tl-shop-h1">Hồ sơ đang được xử lý</h1>
-          <p className="tl-shop-sub">Hồ sơ ở trạng thái này không sửa được nữa.</p>
-          <Link to="/seller/application/status" className="tl-shop-btn tl-shop-btn--primary">
-            Xem trạng thái hồ sơ
-          </Link>
+          {status === "approved" ? (
+            <>
+              <h1 className="tl-shop-h1">Hồ sơ đã được duyệt</h1>
+              <p className="tl-shop-sub">Shop của anh/chị đã được tạo — mọi việc tiếp theo nằm trong kênh người bán.</p>
+              <Link to="/seller" className="tl-shop-btn tl-shop-btn--primary">
+                Vào kênh người bán
+              </Link>
+            </>
+          ) : (
+            <>
+              <h1 className="tl-shop-h1">Hồ sơ đang được xử lý</h1>
+              <p className="tl-shop-sub">Hồ sơ ở trạng thái này không sửa được nữa.</p>
+              <Link to="/seller/application/status" className="tl-shop-btn tl-shop-btn--primary">
+                Xem trạng thái hồ sơ
+              </Link>
+            </>
+          )}
         </main>
       </ShopScrollShell>
     );
