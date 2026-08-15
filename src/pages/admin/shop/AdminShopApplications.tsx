@@ -18,24 +18,8 @@ import { ErrorState, LoadingState } from "@/components/states/PageStates";
 import { useUrlBackedState } from "@/hooks/useUrlBackedState";
 import { useShopApplicationQueue } from "@/hooks/shop/useShopApplicationQueue";
 import type { ShopApplicationRow } from "@/integrations/supabase/shop-schema";
-import type { ApplicationStatus } from "@/lib/shop/applicationState";
+import { APPLICATION_STATUS_LABEL, SELLER_TYPE_LABEL, type ApplicationStatus } from "@/lib/shop/applicationState";
 import "@/styles/shop.css";
-
-const STATUS_LABEL: Record<ApplicationStatus, string> = {
-  draft: "Nháp",
-  submitted: "Đã gửi",
-  under_review: "Đang xem",
-  needs_changes: "Chờ sửa",
-  approved: "Đã duyệt",
-  rejected: "Từ chối",
-  withdrawn: "Đã rút",
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  "ca-nhan": "Cá nhân",
-  "ho-kinh-doanh": "Hộ kinh doanh",
-  "cong-ty": "Công ty",
-};
 
 const FILTERS = ["all", "submitted", "under_review", "needs_changes", "approved", "rejected"] as const;
 type Filter = (typeof FILTERS)[number];
@@ -77,7 +61,7 @@ export default function AdminShopApplications() {
                 aria-current={filter === f ? "page" : undefined}
                 onClick={() => setFilter(f)}
               >
-                {f === "all" ? "Tất cả" : STATUS_LABEL[f as ApplicationStatus]}
+                {f === "all" ? "Tất cả" : APPLICATION_STATUS_LABEL[f as ApplicationStatus]}
               </button>
             ))}
           </div>
@@ -111,14 +95,14 @@ export default function AdminShopApplications() {
                       return (
                         <tr key={a.id}>
                           <th scope="row" style={{ fontWeight: 600 }}>{a.shop_name ?? "(chưa đặt tên)"}</th>
-                          <td>{TYPE_LABEL[a.seller_type ?? ""] ?? "—"}</td>
+                          <td>{SELLER_TYPE_LABEL[a.seller_type ?? ""] ?? "—"}</td>
                           <td>
                             <span className={`tl-shop-pill ${
                               a.status === "needs_changes" || a.status === "rejected"
                                 ? "tl-shop-pill--danger"
                                 : a.status === "approved" ? "tl-shop-pill--ok" : "tl-shop-pill--muted"
                             }`}>
-                              {STATUS_LABEL[a.status]}
+                              {APPLICATION_STATUS_LABEL[a.status]}
                             </span>
                           </td>
                           <td>

@@ -265,8 +265,9 @@ export default function ProductDetail() {
               {product.shop.shipping_note && <p className="tl-pdp-note">{product.shop.shipping_note}</p>}
               {product.shop.return_note && <p className="tl-pdp-note">{product.shop.return_note}</p>}
               <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
-                Thông tin sản phẩm, giá và tình trạng hàng do shop tự khai. ThePickleHub xác minh
-                giấy tờ của shop, không kiểm tra từng sản phẩm.
+                Thông tin sản phẩm, giá và tình trạng hàng do shop tự khai và tự chịu trách nhiệm.
+                ThePickleHub duyệt hồ sơ shop và kiểm duyệt nội dung sản phẩm trước khi hiển thị;
+                tình trạng xác minh giấy tờ của shop (nếu có) xem trên trang shop.
               </p>
             </div>
 

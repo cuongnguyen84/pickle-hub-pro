@@ -458,8 +458,10 @@ SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT throws_ok(
   $$ SELECT count(*) FROM public.inventory_movements $$,
   '42501', NULL, 'khách KHÔNG chạm được tới sổ kho — thiếu cả GRANT, không chỉ policy');
-SELECT is((SELECT count(*)::int FROM public.product_variants), 0,
-  'khách KHÔNG đọc được phiên bản của sản phẩm nháp');
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.product_variants $$,
+  '42501', NULL,
+  'khách KHÔNG chạm được bảng phiên bản — cùng học thuyết với sổ kho (20260815090000)');
 
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50060005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';

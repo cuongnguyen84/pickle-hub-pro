@@ -27,7 +27,7 @@ import {
   useShopApplication,
 } from "@/hooks/shop/useShopApplicationQueue";
 import { SellerRulesReceiptPanel } from "@/components/shop/SellerRulesReceiptPanel";
-import { decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
+import { APPLICATION_STATUS_LABEL, SELLER_TYPE_LABEL, decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
 import "@/styles/shop.css";
 
 const CONSEQUENCE: Record<Decision, (n: number) => string> = {
@@ -113,11 +113,11 @@ export default function AdminShopApplicationReview() {
               <DefList
                 rows={[
                   ["Tên shop", row.shop_name ?? "—"],
-                  ["Loại người bán", row.seller_type ?? "—"],
+                  ["Loại người bán", row.seller_type ? (SELLER_TYPE_LABEL[row.seller_type] ?? row.seller_type) : "—"],
                   ["Họ tên", row.full_name ?? "—"],
                   ["Điện thoại", row.phone ?? "—"],
                   ["Gửi từ", row.city ?? "—"],
-                  ["Trạng thái", row.status],
+                  ["Trạng thái", APPLICATION_STATUS_LABEL[row.status] ?? row.status],
                 ]}
               />
             </div>
@@ -152,6 +152,7 @@ export default function AdminShopApplicationReview() {
                 {(["request-changes", "approve", "reject"] as Decision[]).map((d) => (
                   <label key={d} className="tl-shop-check">
                     <input type="radio" name="decision" checked={decision === d}
+                           aria-label={d === "request-changes" ? "Yêu cầu sửa" : d === "approve" ? "Duyệt" : "Từ chối"}
                            onChange={() => setDecision(d)} style={{ width: 18, height: 18 }} />
                     {d === "request-changes" ? "Yêu cầu sửa" : d === "approve" ? "Duyệt" : "Từ chối"}
                   </label>

@@ -34,6 +34,10 @@ export default function SellLanding() {
   const cta = (() => {
     if (!user) return { to: "/login?redirect=%2Fshop%2Fsell", label: "Đăng nhập để bắt đầu" };
     if (!pilot.data) return null;
+    // Wave 0: an ACTIVE seller landed here and was invited to "Bắt đầu đăng
+    // ký" — approved is terminal, but it is the one terminal state with a
+    // door, and the door is the seller channel.
+    if (status === "approved") return { to: "/seller", label: "Vào kênh người bán" };
     if (!status || isTerminal(status)) return { to: "/seller/application", label: "Bắt đầu đăng ký" };
     if (canEdit(status)) return { to: "/seller/application", label: "Làm tiếp hồ sơ" };
     return { to: "/seller/application/status", label: "Xem trạng thái hồ sơ" };

@@ -25,6 +25,7 @@ import { AdminShopFrame, DefList } from "@/components/shop/ShopShell";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
 import {
   useDecideProduct,
+  usePublishProduct,
   useModerationDetail,
 } from "@/hooks/shop/useProductModeration";
 import {
@@ -59,9 +60,11 @@ export default function AdminShopProductReview() {
   const { id } = useParams<{ id: string }>();
   const detail = useModerationDetail(id ?? null);
   const decide = useDecideProduct();
+  const publish = usePublishProduct();
 
   const [draft, setDraft] = useState<DecisionDraft>(emptyDraft);
   const [error, setError] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   // Stable per ATTEMPT: a retry of the same click must reuse the token so the
   // server replays instead of writing a second decision.
@@ -105,9 +108,28 @@ export default function AdminShopProductReview() {
       // A new token for the next decision on this product; reusing the old one
       // would replay the decision that just succeeded.
       tokenRef.current = crypto.randomUUID();
+      const decided = draft.decision;
       setDraft(emptyDraft());
+      // Approve does not publish — by design, and by acceptance test. The
+      // PUBLISH is its own action, and it happens here, right after: Wave 0
+      // proved that with no caller the product stays approved-and-invisible
+      // forever. A failure does not undo the approve; the "Đưa lên sàn"
+      // button below is the retry.
+      if (decided === "approve") await publishNow(row.id);
     } catch (e) {
       setError(moderationErrorMessage(e));
+    }
+  };
+
+  const publishNow = async (productId: string) => {
+    setPublishError(null);
+    try {
+      await publish.mutateAsync(productId);
+    } catch (e) {
+      setPublishError(
+        "Duyệt đã ghi nhưng chưa đưa lên sàn được: " + moderationErrorMessage(e) +
+          " — bấm “Đưa lên sàn” để thử lại.",
+      );
     }
   };
 
@@ -137,7 +159,7 @@ export default function AdminShopProductReview() {
 
   return (
     <AdminLayout>
-      <DynamicMeta title={`Duyệt: ${row.status}`} noindex />
+      <DynamicMeta title={`Duyệt: ${STATUS_LABEL[row.status] ?? row.status}`} noindex />
       <div className="tl-shop">
         <h1 className="tl-shop-h1">{preview.title ?? "Sản phẩm"}</h1>
         <p className="tl-shop-sub">
@@ -197,6 +219,24 @@ export default function AdminShopProductReview() {
               &ldquo;Đã duyệt&rdquo; và &ldquo;đang hiển thị&rdquo; là hai việc khác nhau: sau khi duyệt,
               ảnh còn phải được tải lên kho công khai thì người mua mới thấy.
             </p>
+            {/* Wave 0 P0: the machine was complete and NOTHING pressed this.
+                Duyệt now publishes automatically; this button is the retry
+                path, and the recovery for the reopen → approve cycle. */}
+            {row.status === "approved" && !row.moderation_state.publicly_visible && (
+              <div style={{ marginTop: 10 }}>
+                <button
+                  type="button"
+                  className="tl-shop-btn tl-shop-btn--primary"
+                  disabled={publish.isPending}
+                  onClick={() => void publishNow(row.id)}
+                >
+                  {publish.isPending ? "Đang đưa lên sàn…" : "Đưa lên sàn"}
+                </button>
+                {publishError && (
+                  <p className="tl-shop-error" role="alert" style={{ marginTop: 8 }}>{publishError}</p>
+                )}
+              </div>
+            )}
           </section>
 
           <section aria-labelledby="a04-shop">

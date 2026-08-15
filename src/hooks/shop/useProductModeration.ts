@@ -139,6 +139,32 @@ export const useDecideProduct = () => {
   });
 };
 
+/**
+ * The step approve deliberately does NOT do: copy the verified renditions
+ * into the public bucket and flip is_published, via the worker that holds the
+ * only service-role over those buckets. Wave 0 found that NOTHING called it —
+ * the state machine was complete and the shelf stayed empty. The review
+ * screen calls this right after a successful approve, and offers it as a
+ * button whenever an approved product is still not publicly visible.
+ */
+export const usePublishProduct = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      // Imported lazily: client.ts creates the SDK client at module load and
+      // THROWS without env vars — a top-level import here took the whole
+      // MediaEditor test import-chain down on CI, where no .env exists.
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase.functions.invoke("shop-media-lifecycle", {
+        body: { action: "publish", product_id: productId },
+      });
+      if (error) throw error;
+      return data as { ok?: boolean; renditions?: number };
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: MOD_KEY }),
+  });
+};
+
 // ─── Contact channels ───────────────────────────────────────────────────────
 
 export type ContactState = "draft" | "pending_review" | "approved" | "rejected" | "disabled";

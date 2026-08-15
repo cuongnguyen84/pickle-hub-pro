@@ -322,6 +322,28 @@ function GroupEditor({
   const patch = (index: number, next: Partial<OptionGroup>) =>
     onChange(groups.map((g, i) => (i === index ? { ...g, ...next } : g)));
 
+  // Wave 0: "Nhóm cần ít nhất một giá trị" flashed red WHILE the seller was
+  // still typing the group name — the values field simply had not been
+  // reached yet. Validity still blocks Save live; the MESSAGE waits until the
+  // seller has actually left a field of that row.
+  const [touched, setTouched] = useState<Set<number>>(new Set());
+  const touch = (i: number) => setTouched((prev) => new Set(prev).add(i));
+  // Deleting group i shifts every later group down one index — the touched
+  // set must shift with them, or the group that slides into slot i inherits a
+  // blur it never had and shows its error mid-typing (Codex review).
+  const removeGroup = (i: number) => {
+    setTouched((prev) => {
+      const next = new Set<number>();
+      for (const t of prev) {
+        if (t < i) next.add(t);
+        else if (t > i) next.add(t - 1);
+      }
+      return next;
+    });
+    onChange(groups.filter((_, k) => k !== i));
+  };
+  const shownError = error && (error.index === -1 || touched.has(error.index)) ? error : null;
+
   return (
     <div style={{ marginBottom: 16 }}>
       {groups.map((group, i) => (
@@ -338,8 +360,9 @@ function GroupEditor({
                 placeholder="Màu sắc"
                 disabled={disabled}
                 value={group.name}
-                aria-invalid={error?.index === i}
+                aria-invalid={shownError?.index === i}
                 onChange={(e) => patch(i, { name: e.target.value })}
+                onBlur={() => touch(i)}
               />
             </div>
             <div className="tl-shop-field" style={{ marginBottom: 0 }}>
@@ -352,8 +375,8 @@ function GroupEditor({
                 placeholder="Trắng, Đen"
                 disabled={disabled}
                 defaultValue={group.values.join(", ")}
-                aria-invalid={error?.index === i}
-                onBlur={(e) => patch(i, { values: parseValues(e.target.value) })}
+                aria-invalid={shownError?.index === i}
+                onBlur={(e) => { touch(i); patch(i, { values: parseValues(e.target.value) }); }}
               />
             </div>
           </div>
@@ -368,9 +391,9 @@ function GroupEditor({
             </div>
           )}
 
-          {error?.index === i && (
+          {shownError?.index === i && (
             <p className="tl-shop-error" role="alert">
-              {error.message}
+              {shownError.message}
             </p>
           )}
 
@@ -379,7 +402,7 @@ function GroupEditor({
               type="button"
               className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--danger"
               style={{ marginTop: 10 }}
-              onClick={() => onChange(groups.filter((_, k) => k !== i))}
+              onClick={() => removeGroup(i)}
             >
               <Trash2 size={14} aria-hidden="true" /> Xoá nhóm
             </button>
@@ -387,9 +410,9 @@ function GroupEditor({
         </div>
       ))}
 
-      {error && error.index === -1 && (
+      {shownError && shownError.index === -1 && (
         <p className="tl-shop-error" role="alert">
-          {error.message}
+          {shownError.message}
         </p>
       )}
 

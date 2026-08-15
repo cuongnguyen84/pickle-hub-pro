@@ -75,7 +75,8 @@ SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND table
 SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='product_categories'), 'RLS enabled on product_categories');
 
 SELECT ok((SELECT has_table_privilege('authenticated', 'public.products', 'INSERT')), 'authenticated has INSERT grant on products');
-SELECT ok((SELECT has_table_privilege('anon', 'public.products', 'SELECT')), 'anon has SELECT grant on products');
+SELECT ok((SELECT NOT has_table_privilege('anon', 'public.products', 'SELECT')),
+  'anon has NO grant on products at all — the public read is the definer view (20260815090000)');
 SELECT ok(
   (SELECT count(*)::int FROM pg_policies WHERE schemaname='public' AND tablename='products') >= 4,
   'products has policies, not just grants'
@@ -358,10 +359,13 @@ SELECT is(
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
-SELECT is(
-  (SELECT count(*)::int FROM public.products),
-  0,
-  'anon sees no unpublished product'
+-- Since 20260815090000 the base tables carry no anon grant at all:
+-- refusal outright, stronger than an empty result (same doctrine as the
+-- inventory ledger below/above).
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.products $$,
+  '42501', NULL,
+  'anon cannot read the products table at all'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.public_products),
@@ -493,11 +497,10 @@ SELECT is(
   1,
   'anon now sees the published product through the public projection'
 );
-SELECT is(
-  (SELECT count(*)::int FROM public.product_media
-   WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
-  1,
-  'anon sees the approved media row, and only that one'
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.product_media $$,
+  '42501', NULL,
+  'anon cannot read product_media at all — buyer media facts travel inside the public RPCs (20260815090000)'
 );
 
 -- ─── Unpublish revokes the rendition (D1) ──────────────────────────────────
@@ -532,10 +535,10 @@ SELECT is(
   0,
   'anon can no longer reach the unpublished product'
 );
-SELECT is(
-  (SELECT count(*)::int FROM public.product_media WHERE product_id='5b000001-0000-4000-8000-000000000001'::uuid),
-  0,
-  'anon can no longer reach its media row either'
+SELECT throws_ok(
+  $$ SELECT count(*) FROM public.product_media $$,
+  '42501', NULL,
+  'and the media table stays unreachable for anon'
 );
 
 -- ─── A suspended shop takes its catalog with it ────────────────────────────

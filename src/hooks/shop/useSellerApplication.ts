@@ -63,6 +63,11 @@ export const useApplicationEvents = (applicationId: string | null) =>
   useQuery({
     queryKey: KEY.events(applicationId),
     enabled: !!applicationId,
+    // The app-wide default is refetchOnMount:false, so an invalidation fired
+    // while this screen was UNMOUNTED (resubmit happens on the form page)
+    // left the timeline serving its stale cache until a hard reload (Wave 0).
+    // The milestones list is tiny; refetch it whenever the screen comes back.
+    refetchOnMount: "always",
     queryFn: async (): Promise<ShopApplicationEventRow[]> => {
       const { data, error } = await shopFrom<ShopApplicationEventRow>("shop_application_events")
         .select("*")
