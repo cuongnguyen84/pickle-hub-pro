@@ -454,7 +454,11 @@ return ({
   test: {
     include: [
       "src/**/*.test.{ts,tsx}",
-      "functions/_lib/__tests__/**/*.test.ts",
+      // Was "functions/_lib/__tests__/**" only, which silently skipped every
+      // suite under functions/_lib/render/__tests__/ (static-pages.test.ts had
+      // never run since SEO-04 split the renderers out). Match any __tests__
+      // directory under functions/ instead.
+      "functions/**/__tests__/**/*.test.ts",
       // Workers are pure node-compatible modules; coverage-excluded below,
       // so this only adds their fixture tests to the existing gate.
       "workers/*/src/**/*.test.ts",
