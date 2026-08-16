@@ -8,7 +8,7 @@
  * Plus: the cover is the LOWEST position, not the first row that arrived.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { SellerProductRow } from "@/integrations/supabase/shop-schema";
 
@@ -153,6 +153,31 @@ describe("Thumb", () => {
     expect(createSignedUrls).not.toHaveBeenCalled();
     // The existing pill keeps saying it in words.
     expect(screen.getAllByText("Chưa có ảnh").length).toBeGreaterThan(0);
+  });
+
+  it("a failed list says it failed — error is not empty, and retry refetches", () => {
+    const refetch = vi.fn();
+    listQuery.mockReturnValue({ data: undefined, isLoading: false, isError: true, error: {}, refetch });
+    render(
+      <MemoryRouter>
+        <SellerProducts />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("alert").textContent).toContain("Chưa tải được danh sách sản phẩm.");
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("a loading list shows skeleton rows, not thumbs", () => {
+    listQuery.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+    const { container } = render(
+      <MemoryRouter>
+        <SellerProducts />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Đang tải danh sách sản phẩm…")).toBeTruthy();
+    expect(container.querySelectorAll(".tl-shop-thumb")).toHaveLength(0);
   });
 
   it("(d) a refused mint falls back to ImageOff — no notice, no retry", async () => {

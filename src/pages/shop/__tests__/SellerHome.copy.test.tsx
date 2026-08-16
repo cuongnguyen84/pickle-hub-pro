@@ -133,6 +133,31 @@ describe("dashboard CTA row + product stats", () => {
     expect(fix.textContent).toContain("3"); // 2 needs_changes + 1 rejected
     expect(fix.getAttribute("href")).toBe("/seller/products");
   });
+
+  it("stats loading: four skeleton cells, marked busy", () => {
+    counts.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+    mount("active");
+    const grid = document.querySelector(".tl-shop-stats[aria-busy='true']");
+    expect(grid).toBeTruthy();
+    expect(grid!.querySelectorAll(".tl-shop-sk")).toHaveLength(4);
+  });
+
+  it("stats error: one hint line with a retry, not a full-screen error", () => {
+    const refetch = vi.fn();
+    counts.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch });
+    mount("active");
+    expect(screen.getByText(/Chưa tải được số liệu sản phẩm\./)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("stats empty: a small empty state pointing at the first product", () => {
+    counts.mockReturnValue({ data: {}, isLoading: false, isError: false });
+    mount("active");
+    expect(screen.getByText("Chưa có sản phẩm nào")).toBeTruthy();
+    const first = screen.getByRole("link", { name: "Đăng sản phẩm đầu tiên" }) as HTMLAnchorElement;
+    expect(first.getAttribute("href")).toBe("/seller/products/new");
+  });
 });
 
 describe("loading / error / no shop yet", () => {
