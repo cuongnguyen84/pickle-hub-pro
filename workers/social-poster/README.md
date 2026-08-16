@@ -28,7 +28,8 @@ news-fetcher (Worker) → news_items (EN)
 
 ## Files
 
-- `src/index.ts` — Worker entrypoint, all logic
+- `src/index.ts` — Worker entrypoint, Facebook pipeline
+- `src/x.ts` — X (Twitter) queue drain, see [§X](#x-twitter--xrun)
 - `wrangler.toml` — config + env vars + placement
 - `package.json` — npm scripts (`dev`, `deploy`, `tail`, `secrets`)
 - `tsconfig.json` — TS strict + ES2022
@@ -245,6 +246,120 @@ curl "$WORKER_URL/health"
 - **Caption prompt** trong `buildGeminiPrompt()`: chỉnh tone, hook, hashtag
   style theo phản hồi từ community.
 
+## X (Twitter) — `/x/run`
+
+Second pipeline in the same Worker. **Not** news-driven: it publishes only what
+Cuong has approved in the `x_posts` table.
+
+```
+Cuong writes/approves a row in x_posts (status='approved', English copy)
+                          ↓
+        cron x-poster-drain-5min → POST /x/run
+                          ↓
+  ├── Link-reply pass first (posted rows older than X_LINK_COMMENT_DELAY_SECONDS)
+  ├── Pacing gap (X_POST_MIN_GAP_MINUTES, default 90)
+  ├── Claim approved → posting  (CAS on status, no duplicate publish)
+  ├── POST api.x.com/2/tweets { text }
+  └── posted → x_post_id, then a later tick replies 🔗 <link_url>
+                          ↓
+        x_posts.status = link_commented   (or posted, if no link_url)
+```
+
+**The link-reply pass is dormant** (2026-08-16). X bills any API-created post
+whose text contains a URL at $0.200 instead of $0.015, and a self-reply carrying
+the link is billed the same — the exemption covers only summoned replies, which
+this pipeline never makes. So replying the link cost $0.215 per item against
+$0.200 for a link in the body: it bought distribution, never savings. The
+decision was to stop posting links through the API entirely and spell the domain
+out in the body ("thepicklehub dot net"), which X does not linkify.
+
+`link_url` is pinned NULL by CHECK `x_posts_no_link_url`, so every branch below
+that mentions a link is unreachable while that constraint exists. The code is
+left in place deliberately: `DROP CONSTRAINT x_posts_no_link_url` is the whole
+of reverting the policy. `checkXBody()` independently rejects a body containing
+a URL *or* a bare domain before any request is made, so a mistake in approved
+copy costs nothing rather than 13x.
+
+The original rationale, still true and still why the body carries the take: the
+"For you" ranking weights reply / quote / repost far above like, and a URL in
+the body suppresses distribution.
+
+### Content types
+
+`result` (hot scoreline) · `prediction` · `stat` (insight) · `blog_teaser`.
+Target 2-4 posts/day, published within 48h of the event.
+
+Luật soạn nội dung — bắt buộc đọc trước khi insert vào `x_posts`:
+**[docs/x-content-playbook.md](../../docs/x-content-playbook.md)**. Worker chỉ
+ép được phần cơ học (độ dài, trạng thái); phần "bài này nhắm vào reply hay vào
+quote" nằm hết ở đó. Playbook này chỉ áp dụng cho X — pipeline Facebook giữ
+nguyên prompt riêng của nó.
+
+### Setup
+
+Tokens live in Postgres, not in wrangler secrets — X rotates the refresh token
+on every use and a Worker cannot rewrite its own secrets at runtime.
+
+1. `x_oauth_tokens` must hold one row with `id='thepicklehub'` and a valid
+   access/refresh pair (generated from the X Developer Console for the app tied
+   to @thepicklehub, scopes `tweet.write tweet.read users.read offline.access`).
+2. Set the two app credentials the Worker needs to refresh that pair:
+
+```sh
+cd workers/social-poster
+wrangler secret put X_CLIENT_ID
+wrangler secret put X_CLIENT_SECRET
+wrangler deploy
+```
+
+Without them `/x/run` returns `{"skipped": true, "reason": "x_not_configured"}`
+and the Facebook pipeline is unaffected.
+
+### Smoke test
+
+```sh
+# Preview: shows weighted length (URLs count 23, emoji count 2) and the reply
+# that would be sent. No API call to X.
+curl -X POST "$WORKER_URL/x/run" \
+  -H "X-Auth-Secret: $AUTH_SECRET" \
+  -H "Content-Type: application/json" -d '{"dry_run":true}'
+
+# Publish one specific row now, bypassing the pacing gap.
+curl -X POST "$WORKER_URL/x/run" \
+  -H "X-Auth-Secret: $AUTH_SECRET" \
+  -H "Content-Type: application/json" -d '{"post_id":"<uuid>"}'
+
+# Token + queue depth
+curl "$WORKER_URL/health?deep=1"
+```
+
+### Operations
+
+Retry a failed row — the Worker only picks up `approved`:
+
+```sql
+UPDATE x_posts SET status = 'approved', error_message = NULL, attempt_count = 0
+WHERE id = '<uuid>';
+```
+
+Stop X posting without touching Facebook: disable the cron job
+(`SELECT cron.unschedule('x-poster-drain-5min');`) or delete the `X_CLIENT_ID`
+secret. Rows already published cannot be recalled from here — delete on X.
+
+A row wedged in `posting` (invocation crashed mid-publish) is moved to
+`failed` after 10 minutes and **never republished** — a duplicate tweet cannot
+be undone the way a duplicate Page post can. Its `error_message` says to check
+the timeline. If the tweet is live, record it instead of requeueing:
+
+```sql
+UPDATE x_posts SET status = 'posted', x_post_id = '<tweet id>', posted_at = now()
+WHERE id = '<uuid>';   -- the link reply then goes out on the next tick
+```
+
+`GET /health?deep=1` reports `link_reply_overdue` — published posts still
+missing their link reply after an hour. Anything above 0 means posts are live
+with no conversion path; check `link_comment_error` on those rows.
+
 ## Known limits
 
 - **Image post:** dùng `image_url` của news_item. Nếu image link 404 hoặc
@@ -252,6 +367,16 @@ curl "$WORKER_URL/health"
   Fallback: bỏ image_url, Worker tự fallback sang text post với link.
 - **News Group, không Page:** Worker này CHỈ post vào Page. Graph API đã
   deprecate Group posting từ 4/2024.
+- **X write cost:** pay-per-use bills $0.015 per post created, $0.200 if the
+  text contains a URL (since 2026-04-20), $0.005 per post read. With links
+  banned, one queued row is one request: **$0.015**. At the playbook's 2–4
+  posts/day that is roughly **$1.35/month**; the same volume with links would
+  be $19.35. The 90-minute pacing gap and the 3-attempt retry cap bound what a
+  stuck row can spend — worst case 3 × $0.015. Rejected 429s are not counted
+  against the retry budget, and whether X bills a rejected request at all is
+  not documented — check the first invoice.
+- **X duplicate content:** X rejects a post whose text matches a recent one
+  with 403. That is not retryable — the row goes to `failed` and needs new copy.
 - **Token expiry:** Page Access Token "không hết hạn" trong 99% case, nhưng
   nếu anh đổi password FB hoặc revoke app permissions, token sẽ chết và
   Worker sẽ log `failed` với status 190. Cần làm lại bước 1.
@@ -272,7 +397,9 @@ Worker không xoá data đã post lên FB — phải xoá manual trên FB Page.
 
 ## Future enhancements
 
-- Multi-platform: gửi cùng caption sang Twitter/X + Threads (cần adapter).
+- Auto-draft `x_posts` rows from finished matches / new blog posts so Cuong
+  only reviews and approves instead of writing from scratch. Threads adapter
+  next, same shape as `src/x.ts`.
 - A/B caption: sinh 2 caption, random chọn 1, track CTR qua UTM.
 - Smart skip: nếu importance < 2 thì skip auto-post (giảm noise).
 - Auto reply comments: hook FB webhook → reply bằng Gemini.
