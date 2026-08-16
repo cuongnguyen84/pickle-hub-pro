@@ -9,16 +9,85 @@
 // ============================================================================
 
 import { Link } from "react-router-dom";
-import { AlertTriangle, Check } from "lucide-react";
+import { AlertTriangle, Check, Store } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell, DefList } from "@/components/shop/ShopShell";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
 import { useMyApplication, useMyShop } from "@/hooks/shop/useSellerApplication";
+import { useProductStatusCounts } from "@/hooks/shop/useSellerProducts";
 import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
+
+/** The four numbers a seller acts on. "Cần sửa" pools needs_changes with
+ *  rejected: both mean the ball is in the seller's court. */
+function ProductStats({ counts }: { counts: ReturnType<typeof useProductStatusCounts> }) {
+  if (counts.isLoading) {
+    return (
+      <div className="tl-shop-stats" aria-busy="true">
+        {[0, 1, 2, 3].map((i) => (
+          <span key={i} className="tl-shop-sk" style={{ height: 76 }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (counts.isError) {
+    return (
+      <p className="tl-shop-hint" style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        Chưa tải được số liệu sản phẩm.
+        <button
+          type="button"
+          className="tl-shop-btn tl-shop-btn--sm"
+          onClick={() => void counts.refetch()}
+        >
+          Thử lại
+        </button>
+      </p>
+    );
+  }
+
+  const c = counts.data;
+  if (!c) return null;
+
+  const total = Object.values(c).reduce((n, v) => n + (v ?? 0), 0);
+  if (total === 0) {
+    return (
+      <div className="tl-shop-empty" style={{ padding: "24px 16px" }}>
+        <p className="tl-shop-empty-title">Chưa có sản phẩm nào</p>
+        <Link to="/seller/products/new" className="tl-shop-btn tl-shop-btn--primary">
+          Đăng sản phẩm đầu tiên
+        </Link>
+      </div>
+    );
+  }
+
+  const needsFix = (c.needs_changes ?? 0) + (c.rejected ?? 0);
+  const stats: Array<[label: string, n: number, attn?: boolean]> = [
+    ["Đã duyệt", c.approved ?? 0],
+    ["Chờ duyệt", c.pending_review ?? 0],
+    ["Cần sửa", needsFix, needsFix > 0],
+    ["Nháp", c.draft ?? 0],
+  ];
+
+  return (
+    <div className="tl-shop-stats">
+      {stats.map(([label, n, attn]) => (
+        <Link
+          key={label}
+          to="/seller/products"
+          className={`tl-shop-stat${attn ? " tl-shop-stat--attn" : ""}`}
+        >
+          <span className="tl-shop-stat-n">{n}</span>
+          <span className="tl-shop-stat-l">{label}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 export default function SellerHome() {
   const shop = useMyShop();
   const app = useMyApplication();
+  const counts = useProductStatusCounts(shop.data?.id ?? null);
 
   if (shop.isLoading || app.isLoading) return <LoadingState fullScreen />;
 
@@ -89,6 +158,25 @@ export default function SellerHome() {
               </div>
             </div>
           )}
+
+          {s.state === "active" && (
+            <div className="tl-shop-cta-row">
+              <a
+                href={`/shop/store/${s.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tl-shop-btn tl-shop-btn--primary"
+              >
+                <Store size={16} aria-hidden="true" />
+                Xem shop của tôi
+              </a>
+              <Link to="/seller/products/new" className="tl-shop-btn">
+                Đăng sản phẩm
+              </Link>
+            </div>
+          )}
+
+          <ProductStats counts={counts} />
 
           <section aria-labelledby="s04-shop">
             <h2 className="tl-shop-h2" id="s04-shop">Shop của anh/chị</h2>

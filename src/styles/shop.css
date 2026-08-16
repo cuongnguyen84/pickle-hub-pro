@@ -1427,3 +1427,49 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   color: var(--tl-fg-3);
   font-variant-numeric: tabular-nums;
 }
+
+/* Seller dashboard: the CTA row and the four numbers. */
+.tl-shop-cta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+@media (max-width: 559px) {
+  .tl-shop-cta-row .tl-shop-btn { flex: 1 1 100%; }
+}
+.tl-shop-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--shop-gap);
+  margin-bottom: 16px;
+}
+@media (min-width: 768px) {
+  .tl-shop-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.tl-shop-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  background: var(--tl-surface);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  padding: 14px;
+  min-height: 76px;
+  color: inherit;
+}
+.tl-shop-stat-n {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tl-fg);
+}
+.tl-shop-stat-l { font-size: 12px; color: var(--tl-fg-3); }
+.tl-shop-stat--attn { border-color: color-mix(in srgb, var(--shop-danger) 45%, transparent); }
+.tl-shop-stat--attn .tl-shop-stat-n { color: var(--shop-danger); }
+
+/* Pressed feedback, everywhere a shop button or stat card is tapped.
+   (prefers-reduced-motion is already neutralised by the block above.) */
+.tl-shop-btn:active:not(:disabled),
+.tl-shop-stat:active { transform: translateY(1px); }

@@ -2,7 +2,7 @@
 // SellerHome state copy after the activation button shipped: the pending
 // notice must stop promising "giai đoạn tiếp theo" (products are live), and
 // the active notice must link the public page + the first product.
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import SellerHome from "../SellerHome";
@@ -13,6 +13,17 @@ vi.mock("@/hooks/shop/useSellerApplication", () => ({
   useMyShop: () => myShop(),
   useMyApplication: () => myApp(),
 }));
+
+// SellerHome now reads useProductStatusCounts — a react-query hook this file
+// does not provide a QueryClient for, so the module is doubled.
+const counts = vi.fn();
+vi.mock("@/hooks/shop/useSellerProducts", () => ({
+  useProductStatusCounts: () => counts(),
+}));
+
+beforeEach(() => {
+  counts.mockReturnValue({ data: {}, isLoading: false, isError: false });
+});
 
 vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
 vi.mock("@/components/states/PageStates", () => ({
@@ -83,6 +94,44 @@ describe("active", () => {
   it("renders the shared Vietnamese state label", () => {
     mount("active");
     expect(screen.getByText("Đang hoạt động")).toBeTruthy();
+  });
+});
+
+describe("dashboard CTA row + product stats", () => {
+  it("active: 'Xem shop của tôi' opens the public page in a new tab, safely", () => {
+    mount("active");
+
+    const cta = screen.getByRole("link", { name: "Xem shop của tôi" }) as HTMLAnchorElement;
+    expect(cta.getAttribute("href")).toBe("/shop/store/shop-test");
+    expect(cta.getAttribute("target")).toBe("_blank");
+    const rel = cta.getAttribute("rel") ?? "";
+    expect(rel).toContain("noopener");
+    expect(rel).toContain("noreferrer");
+
+    const post = screen.getByRole("link", { name: "Đăng sản phẩm" }) as HTMLAnchorElement;
+    expect(post.getAttribute("href")).toBe("/seller/products/new");
+  });
+
+  it("the CTA row does not render for a non-active shop", () => {
+    mount("pending_activation");
+    expect(screen.queryByRole("link", { name: "Xem shop của tôi" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Đăng sản phẩm" })).toBeNull();
+  });
+
+  it("stats: the four labels, with Cần sửa pooling needs_changes + rejected", () => {
+    counts.mockReturnValue({
+      data: { approved: 3, pending_review: 1, needs_changes: 2, rejected: 1, draft: 4 },
+      isLoading: false,
+      isError: false,
+    });
+    mount("active");
+
+    for (const label of ["Đã duyệt", "Chờ duyệt", "Cần sửa", "Nháp"]) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
+    const fix = screen.getByRole("link", { name: /Cần sửa/ });
+    expect(fix.textContent).toContain("3"); // 2 needs_changes + 1 rejected
+    expect(fix.getAttribute("href")).toBe("/seller/products");
   });
 });
 
