@@ -10,6 +10,7 @@
 // its retired slug. Anything else confirms which shops are real.
 // ============================================================================
 
+import type { CSSProperties } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { BadgeCheck, ExternalLink, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -17,6 +18,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { LoadingState } from "@/components/states/PageStates";
 import { usePublicSearch, usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { ResultsGrid } from "@/components/shop/CatalogResults";
+import { ShopMonogram, monogramAccent } from "@/components/shop/ShopMonogram";
 import {
   CONTACT_LABEL,
   NO_CONTACT_COPY,
@@ -81,18 +83,32 @@ export default function ShopStore() {
           <span aria-current="page" className="tl-crumb-current">{shop.name}</span>
         </nav>
 
-        <h1 className="tl-shop-h1">
-          {shop.name}
-          {shop.verified && (
-            <>
-              {" "}
-              <BadgeCheck size={18} aria-hidden="true" className="tl-pcard-verified" />
-              <span className="tl-shop-sr">đã được ThePickleHub xác minh</span>
-            </>
-          )}
-        </h1>
-
-        {shop.intro && <p className="tl-shop-sub">{shop.intro}</p>}
+        <header
+          className="tl-shop-storehead"
+          style={{ "--mono-accent": monogramAccent(shop.name) } as CSSProperties}
+        >
+          <div className="tl-shop-storehead-banner" aria-hidden="true" />
+          <div className="tl-shop-storehead-row">
+            <ShopMonogram name={shop.name} size={56} />
+            <div className="tl-shop-storehead-id">
+              <h1 className="tl-shop-h1">
+                {shop.name}
+                {shop.verified && (
+                  <>
+                    {" "}
+                    <BadgeCheck size={18} aria-hidden="true" className="tl-pcard-verified" />
+                    <span className="tl-shop-sr">đã được ThePickleHub xác minh</span>
+                  </>
+                )}
+              </h1>
+              <p className="tl-shop-storehead-meta">
+                {shop.product_count} sản phẩm
+                {shop.region && ` · ${shop.region}`}
+              </p>
+            </div>
+          </div>
+          {shop.intro && <p className="tl-shop-sub">{shop.intro}</p>}
+        </header>
 
         <div className="tl-shop-card">
           <dl className="tl-shop-deflist">
@@ -109,7 +125,6 @@ export default function ShopStore() {
             </div>
             {shop.shipping_note && <div><dt>Giao hàng</dt><dd>{shop.shipping_note}</dd></div>}
             {shop.return_note && <div><dt>Đổi trả</dt><dd>{shop.return_note}</dd></div>}
-            <div><dt>Đang bán</dt><dd>{shop.product_count} sản phẩm</dd></div>
           </dl>
           <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
             Chính sách giao hàng và đổi trả do shop tự khai.

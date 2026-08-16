@@ -1388,3 +1388,42 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 }
 .tl-shop-thumb .tl-shop-sk { width: 100%; height: 100%; border-radius: 0; }
 .tl-shop-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Shop monogram — accent arrives as --mono-accent, whose value is a token. */
+.tl-shop-monogram {
+  border-radius: var(--tl-radius-lg);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex: none;
+  color: var(--tl-fg);
+  background: color-mix(in srgb, var(--mono-accent) 16%, var(--tl-surface));
+  border: 1px solid color-mix(in srgb, var(--mono-accent) 45%, transparent);
+}
+
+/* Storefront header: a low banner (same gradient recipe as .tl-shop-media--a/b/c,
+   keyed to the shop's hashed accent) with the monogram overlapping it, so the
+   banner costs no extra real height above the catalogue. */
+.tl-shop-storehead { margin-bottom: 4px; }
+.tl-shop-storehead-banner {
+  height: 56px;
+  border-radius: var(--tl-radius-lg);
+  background: linear-gradient(140deg, var(--tl-surface-2), color-mix(in srgb, var(--mono-accent) 14%, var(--tl-surface)));
+}
+@media (min-width: 768px) { .tl-shop-storehead-banner { height: 72px; } }
+.tl-shop-storehead-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: -28px;
+  padding: 0 6px;
+  margin-bottom: 10px;
+}
+.tl-shop-storehead-id { min-width: 0; }
+.tl-shop-storehead-id .tl-shop-h1 { margin-bottom: 0; }
+.tl-shop-storehead-meta {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--tl-fg-3);
+  font-variant-numeric: tabular-nums;
+}
