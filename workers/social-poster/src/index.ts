@@ -38,6 +38,7 @@
  */
 
 import { handleXRun, xHealth, type XRunBody } from './x';
+import { handleXDraft, type XDraftBody } from './x-draft';
 
 export interface Env {
   // vars
@@ -168,6 +169,10 @@ export default {
       if (url.pathname === '/x/run') {
         const body = (await safeJson(req)) as XRunBody;
         return json(await handleXRun(env, body));
+      }
+      if (url.pathname === '/x/draft') {
+        const body = (await safeJson(req)) as XDraftBody;
+        return json(await handleXDraft(env, body));
       }
       if (url.pathname === '/' || url.pathname === '') {
         const body = (await safeJson(req)) as SupabaseWebhookPayload;

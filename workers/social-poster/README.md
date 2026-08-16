@@ -30,6 +30,7 @@ news-fetcher (Worker) → news_items (EN)
 
 - `src/index.ts` — Worker entrypoint, Facebook pipeline
 - `src/x.ts` — X (Twitter) queue drain, see [§X](#x-twitter--xrun)
+- `src/x-draft.ts` — news → X draft generation, `POST /x/draft`
 - `wrangler.toml` — config + env vars + placement
 - `package.json` — npm scripts (`dev`, `deploy`, `tail`, `secrets`)
 - `tsconfig.json` — TS strict + ES2022
@@ -283,6 +284,42 @@ copy costs nothing rather than 13x.
 The original rationale, still true and still why the body carries the take: the
 "For you" ranking weights reply / quote / repost far above like, and a URL in
 the body suppresses distribution.
+
+### Draft generation — `POST /x/draft`
+
+Reads published **English** `news_items` (the EN original; the VI row the
+Facebook pipeline consumes is its child via `parent_news_id`), has Gemini
+rewrite each into a post per `docs/x-content-playbook.md`, and inserts
+`status='draft'` rows with `source_table='news_items'` + `source_id`.
+
+It cannot publish. The drain selects `approved` only, so the path from
+generated draft to live post runs through Cuong.
+
+Gemini is reached through the `social-caption` Edge Function in a new `x_en`
+mode. Omitting `mode` keeps the Vietnamese Facebook prompt byte for byte — the
+two surfaces want opposite things (FB wants a CTA and 3–5 hashtags, X penalises
+both), so they are separate prompt functions rather than flags on one.
+
+Three guards run on every generated body, because a model drifts back toward
+marketing copy no matter what the prompt says:
+
+| Guard | Rejects |
+|---|---|
+| `checkXBody` (shared with the publisher) | URL or bare domain — the $0.200 surcharge cannot enter via a draft either |
+| `AD_PATTERNS` | "read more", "check it out", "link in bio", "follow us", engagement bait, spelled-out domains, 👇 pointers |
+| specificity + hashtag cap | no number and no proper noun; more than one hashtag |
+
+Rejections are returned in the response rather than swallowed, so a prompt that
+starts producing ad copy is visible instead of quietly yielding zero drafts.
+
+```sh
+# preview without writing rows
+curl -X POST "$WORKER_URL/x/draft" -H "X-Auth-Secret: $SECRET" \
+  -H "Content-Type: application/json" -d '{"dry_run":true}'
+```
+
+Tunables: `X_DRAFT_LIMIT` (default 2, hard-capped at 10) and
+`X_DRAFT_LOOKBACK_HOURS` (default 36).
 
 ### Content types
 
