@@ -182,10 +182,11 @@ INSERT INTO storage.objects (bucket_id, name, metadata)
 SELECT 'shop-product-media-draft', draft_path,
        jsonb_build_object('size', 3000000, 'mimetype', 'image/jpeg')
 FROM public.product_media WHERE client_token='tok-A';
--- The client says it re-encoded to WebP. It uploaded a JPEG.
+-- The client says it re-encoded. It uploaded a PNG — still outside the
+-- rendition allowlist now that JPEG is a legal fallback (iOS Safari).
 INSERT INTO storage.objects (bucket_id, name, metadata)
 SELECT 'shop-product-media-draft', rendition_source_path,
-       jsonb_build_object('size', 240000, 'mimetype', 'image/jpeg')
+       jsonb_build_object('size', 240000, 'mimetype', 'image/png')
 FROM public.product_media WHERE client_token='tok-A';
 SET LOCAL role authenticated;
 

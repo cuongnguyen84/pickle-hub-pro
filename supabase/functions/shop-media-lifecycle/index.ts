@@ -27,6 +27,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCronRequest } from "../_shared/cron-auth.ts";
+import { inspectJpeg } from "./jpeg.ts";
 import { inspectWebp } from "./webp.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -93,8 +94,20 @@ async function publish(req: Request, productId: string): Promise<Response> {
 
     // Postgres checked the declared MIME type. This checks the actual bytes —
     // including that no EXIF chunk survived, so a seller's home coordinates
-    // cannot ride a "re-encoded" file onto a public CDN.
-    const verdict = inspectWebp(bytes);
+    // cannot ride a "re-encoded" file onto a public CDN. Dispatch on the real
+    // signature, never on the object key: every rendition key ends .webp even
+    // when the bytes are JPEG (iOS Safari fallback) — extension is a claim;
+    // the MIME in storage.objects is the truth.
+    const isWebp =
+      bytes.length >= 12 &&
+      bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+    const isJpeg = bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xd8;
+    if (!isWebp && !isJpeg) {
+      log({ event: "rendition_rejected", media_id: item.media_id, reason: "not_image" });
+      return json({ error: "rendition_not_image", media_id: item.media_id }, 422);
+    }
+    const verdict = isWebp ? inspectWebp(bytes) : inspectJpeg(bytes);
     if (!verdict.ok) {
       log({ event: "rendition_rejected", media_id: item.media_id, reason: verdict.reason });
       return json({ error: `rendition_${verdict.reason}`, media_id: item.media_id }, 422);
@@ -106,7 +119,7 @@ async function publish(req: Request, productId: string): Promise<Response> {
     // upsert so a retried publish overwrites its own half-finished copy rather
     // than failing forever on a key it wrote itself.
     const { error: upError } = await svc.storage.from(PUBLIC_BUCKET).upload(item.target, bytes, {
-      contentType: "image/webp",
+      contentType: isWebp ? "image/webp" : "image/jpeg",
       upsert: true,
       cacheControl: "3600",
     });

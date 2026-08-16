@@ -200,11 +200,14 @@ export function useMediaUpload(target: UploadTarget) {
         if (stopIfAborted()) return;
 
         patch(item.token, { phase: "uploading_rendition" });
+        // webp or jpeg (iOS Safari fallback), whatever the pipeline produced.
+        // The path stays *.webp regardless: extension is a claim; the MIME in
+        // storage.objects is the truth, and it is what finalize verifies.
         const rendition = await supabase.storage
           .from(DRAFT_BUCKET)
           .upload(init.rendition_path, processed.blob, {
             upsert: true,
-            contentType: IMAGE_LIMITS.renditionType,
+            contentType: processed.blob.type,
           });
         if (rendition.error) throw rendition.error;
         if (stopIfAborted()) return;

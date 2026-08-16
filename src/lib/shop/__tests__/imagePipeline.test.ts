@@ -56,9 +56,23 @@ const stubBitmap = (width: number, height: number) => {
   return { close };
 };
 
-/** Stand in for the encoder. `sizes` is walked as the quality ladder steps. */
-const stubCanvas = (sizes: number[], type: string = IMAGE_LIMITS.renditionType) => {
+/**
+ * Stand in for the encoder. `sizes` is walked as the quality ladder steps.
+ *
+ * `type` decides what the blob CLAIMS to be per call: by default the stub
+ * echoes the requested type (a capable browser); a string forces every blob to
+ * that type; a function gets the requested type and the call index — which is
+ * how Safari is simulated, answering a WebP request with a PNG-typed blob.
+ * Every requested encoder type and quality is recorded, so a test can assert
+ * the webp→jpeg order and the restart from 0.82.
+ */
+const stubCanvas = (
+  sizes: number[],
+  type?: string | ((requested: string, call: number) => string),
+) => {
   const drawImage = vi.fn();
+  const requestedTypes: string[] = [];
+  const requestedQualities: number[] = [];
   let call = 0;
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
     drawImage,
@@ -66,16 +80,26 @@ const stubCanvas = (sizes: number[], type: string = IMAGE_LIMITS.renditionType) 
   vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function (
     this: HTMLCanvasElement,
     cb: BlobCallback,
+    requested?: string,
+    quality?: number,
   ) {
+    requestedTypes.push(requested ?? "");
+    requestedQualities.push(quality ?? NaN);
     const size = sizes[Math.min(call, sizes.length - 1)];
+    const blobType =
+      typeof type === "function" ? type(requested ?? "", call) : type ?? requested ?? "";
     call += 1;
     if (size < 0) return cb(null);
-    const blob = new Blob(["x"], { type });
+    const blob = new Blob(["x"], { type: blobType });
     Object.defineProperty(blob, "size", { value: size });
     cb(blob);
   });
-  return { drawImage, calls: () => call };
+  return { drawImage, calls: () => call, requestedTypes, requestedQualities };
 };
+
+/** Safari's answer: a WebP request comes back PNG-typed; JPEG works. */
+const safariEncoder = (requested: string) =>
+  requested === IMAGE_LIMITS.renditionType ? "image/png" : requested;
 
 beforeEach(() => vi.restoreAllMocks());
 afterEach(() => vi.unstubAllGlobals());
@@ -162,11 +186,13 @@ describe("processImage — what a seller is allowed to send", () => {
 
   it("re-encodes to WebP and reports what the source really was", async () => {
     stubBitmap(1200, 900);
-    stubCanvas([500_000]);
+    const canvas = stubCanvas([500_000]);
     const out = await processImage(fileOf(PNG, 4000));
     expect(out.blob.type).toBe(IMAGE_LIMITS.renditionType);
     expect(out.sourceType).toBe("image/png");
     expect(out).toMatchObject({ width: 1200, height: 900 });
+    // Chrome/Android path unchanged: WebP worked, so JPEG is never asked for.
+    expect(canvas.requestedTypes).toEqual([IMAGE_LIMITS.renditionType]);
   });
 
   it("steps the quality down until it fits instead of failing just over", async () => {
@@ -187,12 +213,52 @@ describe("processImage — what a seller is allowed to send", () => {
     await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/vẫn quá nặng/i);
   });
 
-  it("refuses a browser that hands back something other than WebP", async () => {
-    // Silently accepting PNG here would move the failure to the server, where
-    // the seller sees finalize fail instead of this sentence.
+  it("falls back to JPEG when the WebP encoder is missing — iOS Safari", async () => {
+    // Safari answers a WebP request with a PNG-typed blob. The whole ladder
+    // runs again as JPEG, from the top quality, never mixing types mid-ladder.
+    stubBitmap(800, 800);
+    const canvas = stubCanvas([500_000], safariEncoder);
+    const out = await processImage(fileOf(JPEG, 4000));
+    expect(out.blob.type).toBe("image/jpeg");
+    expect(canvas.requestedTypes).toEqual([IMAGE_LIMITS.renditionType, "image/jpeg"]);
+    // The JPEG ladder restarts at 0.82 rather than resuming where WebP died.
+    expect(canvas.requestedQualities).toEqual([0.82, 0.82]);
+  });
+
+  it("falls back to JPEG when the WebP encoder answers with null, too", async () => {
+    // Some browsers say "no" with a null blob instead of a wrong-typed one.
+    // Either answer means the same thing — no WebP encoder — and gets the
+    // same fallback, not an immediate failure.
+    stubBitmap(800, 800);
+    const canvas = stubCanvas([-1, 500_000]); // call 0: webp → null; call 1: jpeg fits
+    const out = await processImage(fileOf(JPEG, 4000));
+    expect(out.blob.type).toBe("image/jpeg");
+    expect(canvas.requestedTypes).toEqual([IMAGE_LIMITS.renditionType, "image/jpeg"]);
+  });
+
+  it("steps the quality down inside the JPEG branch too", async () => {
+    stubBitmap(1000, 1000);
+    const canvas = stubCanvas(
+      [
+        500_000, // call 0: the WebP probe — type comes back wrong, size unused
+        IMAGE_LIMITS.maxRenditionBytes + 1, // jpeg 0.82 — 1 byte over
+        IMAGE_LIMITS.maxRenditionBytes + 1, // jpeg 0.70
+        IMAGE_LIMITS.maxRenditionBytes - 1, // jpeg 0.60 — fits
+      ],
+      safariEncoder,
+    );
+    const out = await processImage(fileOf(JPEG, 4000));
+    expect(out.blob.type).toBe("image/jpeg");
+    expect(out.blob.size).toBeLessThanOrEqual(IMAGE_LIMITS.maxRenditionBytes);
+    expect(canvas.requestedQualities).toEqual([0.82, 0.82, 0.7, 0.6]);
+  });
+
+  it("refuses a browser that can encode neither WebP nor JPEG", async () => {
+    // The old copy said "thử trình duyệt khác" because only WebP was accepted;
+    // now that a JPEG-capable browser always gets through, the advice changed.
     stubBitmap(800, 800);
     stubCanvas([1000], "image/png");
-    await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/WebP/);
+    await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/không nén được ảnh/i);
   });
 
   it("refuses when the browser cannot give a 2D context", async () => {
