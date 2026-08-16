@@ -660,7 +660,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // the full 2026 date list + "last updated" dateline, and 7 evergreen guides
   // (WPR, World Cup Da Nang, PPA Asia guide, pro-tours guide, how-to-watch,
   // players-to-watch, HK Slam) name ThePickleHub in their openings (EN + VI).
-  const cacheKey = `pr:v46:${url.pathname}`;
+  // v46→v47 (2026-08-16): site-audit fix — the 2026 calendar resolved event
+  // status against a UTC "today" instead of the VN calendar date (a day
+  // behind between 00:00 and 07:00 ICT), and every SportsEvent was published
+  // with organizer "PPA Tour Asia" including the Heineken World Cup Da Nang
+  // and the HK Slam, which neither of them organises. Purge stale bot HTML
+  // for /tournaments + /vi/tournaments.
+  const cacheKey = `pr:v47:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

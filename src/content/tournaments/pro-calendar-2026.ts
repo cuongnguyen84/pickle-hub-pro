@@ -28,6 +28,17 @@ export interface ProCalendarEvent {
   endDate: string; // ISO YYYY-MM-DD (last match day)
   /** Short tier label, e.g. "PPA Asia 500", "PPA Asia 1000", "Slam", "World Cup". */
   tier: string;
+  /**
+   * Organising body, used verbatim as schema.org `organizer` in the
+   * SportsEvent JSON-LD on /tournaments. Set it ONLY when one of our own
+   * fact-checked posts names the organiser — an absent `organizer` is valid
+   * schema.org, a wrong one is a false entity claim. Do NOT default this to
+   * "PPA Tour Asia": that is the sanctioning tour, not automatically the
+   * organiser. Two events on this calendar are deliberately left blank —
+   * the Heineken Pickleball World Cup (Da Nang) and the Hong Kong Slam
+   * (organised by F-Sports Promotions per our own preview post).
+   */
+  organizer?: string;
   prizeEn?: string;
   prizeVi?: string;
   blogEn?: string;
@@ -44,6 +55,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-04-01",
     endDate: "2026-04-05",
     tier: "PPA Asia 1000",
+    organizer: "PPA Tour Asia",
     prizeEn: "up to $300,000",
     prizeVi: "tối đa 300.000 USD",
     blogEn: "/blog/vietnam-hosts-ppa-tour-asia-2026",
@@ -58,6 +70,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-05-13",
     endDate: "2026-05-17",
     tier: "PPA Asia 500",
+    organizer: "PPA Tour Asia",
     prizeEn: "$50,000",
     prizeVi: "50.000 USD",
   },
@@ -70,6 +83,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-05-28",
     endDate: "2026-05-31",
     tier: "PPA Asia 500",
+    organizer: "PPA Tour Asia",
     prizeEn: "$70,000",
     prizeVi: "70.000 USD",
   },
@@ -82,6 +96,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-06-17",
     endDate: "2026-06-21",
     tier: "PPA Asia 500",
+    organizer: "PPA Tour Asia",
     prizeEn: "$70,000",
     prizeVi: "70.000 USD",
     blogEn: "/blog/ppa-beijing-open-2026-recap",
@@ -96,6 +111,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-07-01",
     endDate: "2026-07-04",
     tier: "PPA Asia 500",
+    organizer: "PPA Tour Asia",
     prizeEn: "$50,000",
     prizeVi: "50.000 USD",
   },
@@ -108,6 +124,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-07-23",
     endDate: "2026-07-26",
     tier: "PPA Asia 500",
+    organizer: "PPA Tour Asia",
     prizeEn: "$70,000",
     prizeVi: "70.000 USD",
     blogEn: "/blog/singapore-open-2026-recap",
@@ -122,6 +139,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-08-06",
     endDate: "2026-08-09",
     tier: "PPA Asia 500",
+    organizer: "PPA Tour Asia",
     prizeEn: "$70,000",
     prizeVi: "70.000 USD",
     blogEn: "/blog/hcmc-open-2026-recap",
@@ -139,6 +157,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-08-20",
     endDate: "2026-08-23",
     tier: "PPA Asia 500",
+    organizer: "PPA Tour Asia",
     prizeEn: "$70,000",
     prizeVi: "70.000 USD",
   },
@@ -163,6 +182,7 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-09-09",
     endDate: "2026-09-13",
     tier: "PPA Asia 1000",
+    organizer: "PPA Tour Asia",
     prizeEn: "up to $300,000",
     prizeVi: "tối đa 300.000 USD",
   },
@@ -175,6 +195,9 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     startDate: "2026-10-19",
     endDate: "2026-10-25",
     tier: "Slam",
+    // No organizer: our own preview sources the Hong Kong Slam to F-Sports
+    // Promotions (Hang Seng Bank is title sponsor). PPA Tour Asia sanctions
+    // the stop but does not organise it — omit rather than guess.
     prizeEn: "up to $1,100,000",
     prizeVi: "tối đa 1.100.000 USD",
     blogEn: "/blog/hong-kong-slam-2026-preview",
@@ -183,6 +206,24 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
 ];
 
 export type ProCalendarStatus = "past" | "live" | "upcoming";
+
+/**
+ * Today's date in the Vietnam calendar (UTC+7), as `YYYY-MM-DD`.
+ *
+ * `startDate`/`endDate` above are VN-local calendar dates, so the "today"
+ * they are compared against must be VN-local too. `new Date().toISOString()`
+ * is UTC and runs a day behind between 00:00 and 07:00 ICT — which made the
+ * calendar say "Sắp diễn ra" on the morning an event opened and "Đang diễn
+ * ra" on the morning after it closed, for the ~95% Vietnamese audience and
+ * for the SportsEvent JSON-LD (Cloudflare Pages Functions run in UTC).
+ *
+ * Fixed +7h offset on purpose: Vietnam has not observed DST since 1975, and
+ * a plain arithmetic shift behaves identically in the browser, in Node and
+ * in workerd — no dependency on the runtime shipping full-ICU tz data.
+ */
+export function vnTodayIso(now: Date = new Date()): string {
+  return new Date(now.getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 /** Status from calendar dates. `todayIso` injectable for SSR/tests. */
 export function proCalendarStatus(

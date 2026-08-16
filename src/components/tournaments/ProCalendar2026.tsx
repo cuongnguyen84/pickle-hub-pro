@@ -12,6 +12,7 @@ import {
   PRO_CALENDAR_2026,
   proCalendarDateRange,
   proCalendarStatus,
+  vnTodayIso,
   type ProCalendarStatus,
 } from "@/content/tournaments/pro-calendar-2026";
 
@@ -22,7 +23,9 @@ const STATUS_COPY: Record<ProCalendarStatus, { en: string; vi: string; cls: stri
 };
 
 export default function ProCalendar2026({ vi }: { vi: boolean }) {
-  const todayIso = new Date().toISOString().slice(0, 10);
+  // VN-local "today" — the calendar dates are VN calendar dates, and a UTC
+  // "today" ran a day behind every morning before 07:00 ICT.
+  const todayIso = vnTodayIso();
 
   return (
     <section aria-labelledby="pro-calendar-2026" style={{ margin: "32px 0" }}>

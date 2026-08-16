@@ -21,6 +21,7 @@ import {
   PRO_CALENDAR_2026,
   proCalendarDateRange,
   proCalendarStatus,
+  vnTodayIso,
 } from "../../../src/content/tournaments/pro-calendar-2026";
 import { render404 } from "./static-pages";
 
@@ -209,7 +210,8 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
   // src/content/tournaments/pro-calendar-2026.ts). Bot-readable <table> +
   // deep-links into our previews/recaps make this page the internal-link
   // trunk of the whole event cluster.
-  const todayIso = new Date().toISOString().slice(0, 10);
+  // Pages Functions run in UTC; the curated calendar uses VN calendar dates.
+  const todayIso = vnTodayIso();
   const statusLabel = (st: "past" | "live" | "upcoming") =>
     lang === "vi"
       ? st === "past" ? "Đã xong" : st === "live" ? "Đang diễn ra" : "Sắp diễn ra"
@@ -241,7 +243,12 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
       endDate: ev.endDate,
       eventStatus: "https://schema.org/EventScheduled",
       location: { "@type": "Place", name: lang === "vi" ? ev.placeVi : ev.placeEn },
-      organizer: { "@type": "Organization", name: "PPA Tour Asia" },
+      // Only emit an organizer we can actually source. The World Cup in Da
+      // Nang is not a PPA Tour Asia event — hardcoding it here published a
+      // false entity claim in structured data on our flagship VN event.
+      ...(ev.organizer
+        ? { organizer: { "@type": "Organization", name: ev.organizer } }
+        : {}),
     }));
 
   return htmlResponse(buildHtml({
