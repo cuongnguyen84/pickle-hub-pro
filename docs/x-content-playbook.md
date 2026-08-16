@@ -190,20 +190,33 @@ Trả về `weighted_length`, `valid` và `reason`.
 ## Insert mẫu
 
 ```sql
-insert into x_posts (content_type, body, source_table, source_id, status)
+insert into x_posts (content_type, body, status)
 values (
   'blog_teaser',
   E'Waters & Khlif were down 0-6 in the MLP Orlando Super Sunday decider and won it 15-13.\n\nWe went back through every point of that comeback.\n\nFull breakdown at thepicklehub dot net',
-  'blog',
-  'mlp-orlando-super-sunday-2026-best-game',
   'draft'
 );
 ```
 
 Không có cột `link_url` trong câu insert — cố tình. DB sẽ chặn nếu điền.
 
-`source_table` / `source_id` không bắt buộc nhưng nên điền — đó là cách duy
-nhất truy ngược một bài X về dữ liệu gốc khi cần kiểm chứng con số.
+`source_id` là kiểu **`uuid`**, không phải text. Nên chỉ điền được khi nguồn là
+một hàng trong DB (`news_items`, `matches`, `tournaments`…). **Bài blog là file
+trong repo, chỉ có slug, không có uuid** — với `blog_teaser` thì để trống cả
+`source_table` lẫn `source_id`, đừng nhét slug vào (`22P02 invalid input syntax
+for type uuid`). Nguồn nào có uuid thì nên điền, đó là cách duy nhất truy ngược
+một bài X về dữ liệu gốc khi cần kiểm chứng con số.
+
+### Duyệt rồi mới xem trước được
+
+Vòng drain **bỏ qua row `draft` kể cả khi `dry_run: true`** — nó chỉ nhìn row
+`approved`. Muốn xem trước một bài thì phải đổi sang `approved` trước, rồi mới
+gọi dry-run. An toàn: `approved` **không** tự lên bài, chỉ lần gọi `/x/run`
+không có `dry_run` mới đăng thật.
+
+```
+draft → (approved) → dry-run xem trước → /x/run thật → posted
+```
 
 **Số liệu phải có thật.** Mọi tỷ số, tên, kỷ lục trong bài phải truy được về
 `source_id`. Ví dụ minh hoạ trong doc thì đặt tên giả cũng được, nhưng row thật
