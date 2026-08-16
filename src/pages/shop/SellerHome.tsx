@@ -19,7 +19,13 @@ import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
 
 /** The four numbers a seller acts on. "Cần sửa" pools needs_changes with
  *  rejected: both mean the ball is in the seller's court. */
-function ProductStats({ counts }: { counts: ReturnType<typeof useProductStatusCounts> }) {
+function ProductStats({
+  counts,
+  shopState,
+}: {
+  counts: ReturnType<typeof useProductStatusCounts>;
+  shopState: string;
+}) {
   if (counts.isLoading) {
     return (
       <div className="tl-shop-stats" aria-busy="true">
@@ -48,19 +54,22 @@ function ProductStats({ counts }: { counts: ReturnType<typeof useProductStatusCo
   const c = counts.data;
   if (!c) return null;
 
-  const total = Object.values(c).reduce((n, v) => n + (v ?? 0), 0);
+  const needsFix = (c.needs_changes ?? 0) + (c.rejected ?? 0);
+  // Only the four displayed groups count — archived (and DB-only suspended)
+  // are "đã cất đi" and must not keep the dashboard out of its empty state.
+  const total = (c.approved ?? 0) + (c.pending_review ?? 0) + needsFix + (c.draft ?? 0);
   if (total === 0) {
     return (
       <div className="tl-shop-empty" style={{ padding: "24px 16px" }}>
         <p className="tl-shop-empty-title">Chưa có sản phẩm nào</p>
-        <Link to="/seller/products/new" className="tl-shop-btn tl-shop-btn--primary">
-          Đăng sản phẩm đầu tiên
-        </Link>
+        {shopState === "active" && (
+          <Link to="/seller/products/new" className="tl-shop-btn tl-shop-btn--primary">
+            Đăng sản phẩm đầu tiên
+          </Link>
+        )}
       </div>
     );
   }
-
-  const needsFix = (c.needs_changes ?? 0) + (c.rejected ?? 0);
   const stats: Array<[label: string, n: number, attn?: boolean]> = [
     ["Đã duyệt", c.approved ?? 0],
     ["Chờ duyệt", c.pending_review ?? 0],
@@ -176,7 +185,7 @@ export default function SellerHome() {
             </div>
           )}
 
-          <ProductStats counts={counts} />
+          <ProductStats counts={counts} shopState={s.state} />
 
           <section aria-labelledby="s04-shop">
             <h2 className="tl-shop-h2" id="s04-shop">Shop của anh/chị</h2>

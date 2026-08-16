@@ -450,6 +450,12 @@ function Thumb({
       : previews[cover.draft_path]
     : undefined;
 
+  // A new src deserves a fresh try — without this, one 404 pins ImageOff
+  // forever, even after the seller replaces the photo.
+  useEffect(() => {
+    setBroken(false);
+  }, [src]);
+
   return (
     <span className="tl-shop-thumb" aria-hidden="true">
       {!cover || broken || src === "" ? (

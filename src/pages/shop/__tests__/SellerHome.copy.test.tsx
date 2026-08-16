@@ -197,3 +197,20 @@ describe("loading / error / no shop yet", () => {
     expect(link.getAttribute("href")).toBe("/seller/application/status");
   });
 });
+
+describe("round-2 fixes: total from displayed groups, CTA gated on state", () => {
+  it("F1: archived-only counts still land in the empty state — archived is 'đã cất đi'", () => {
+    counts.mockReturnValue({ data: { archived: 3 }, isLoading: false, isError: false });
+    mount("active");
+    expect(screen.getByText("Chưa có sản phẩm nào")).toBeTruthy();
+    // Not the four zero cells.
+    expect(document.querySelector(".tl-shop-stats")).toBeNull();
+  });
+
+  it("F2: a non-active shop gets the empty line but NOT the first-product button", () => {
+    counts.mockReturnValue({ data: {}, isLoading: false, isError: false });
+    mount("pending_activation");
+    expect(screen.getByText("Chưa có sản phẩm nào")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Đăng sản phẩm đầu tiên" })).toBeNull();
+  });
+});

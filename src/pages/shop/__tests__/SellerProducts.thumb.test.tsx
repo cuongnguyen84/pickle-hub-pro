@@ -191,4 +191,35 @@ describe("Thumb", () => {
     expect(thumbImgs(container).length).toBe(0);
     expect(thumbSkeletons(container).length).toBe(0);
   });
+
+  it("a broken image un-breaks when the src changes — replacing the photo escapes ImageOff", async () => {
+    const { container, rerender } = mount([
+      row("p1", [{ id: "m1", position: 0, public_path: "shop-1/p1/old.webp", draft_path: "shop-1/p1/d.webp" }]),
+    ]);
+
+    for (const img of thumbImgs(container)) fireEvent.error(img);
+    expect(thumbImgs(container).length).toBe(0);
+    expect(thumbOffIcons(container).length).toBeGreaterThan(0);
+
+    // The seller uploads a replacement: same product, new public path.
+    listQuery.mockReturnValue({
+      data: {
+        rows: [row("p1", [{ id: "m2", position: 0, public_path: "shop-1/p1/new.webp", draft_path: "shop-1/p1/d2.webp" }])],
+        total: 1,
+        pageCount: 1,
+      },
+      isLoading: false,
+      isError: false,
+    });
+    rerender(
+      <MemoryRouter>
+        <SellerProducts />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(thumbImgs(container).length).toBeGreaterThan(0));
+    for (const img of thumbImgs(container)) {
+      expect(img.src).toContain("shop-1/p1/new.webp");
+    }
+  });
 });
