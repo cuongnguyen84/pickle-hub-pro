@@ -274,6 +274,12 @@ distribution. The body sells the take; the reply carries the link.
 `result` (hot scoreline) · `prediction` · `stat` (insight) · `blog_teaser`.
 Target 2-4 posts/day, published within 48h of the event.
 
+Luật soạn nội dung — bắt buộc đọc trước khi insert vào `x_posts`:
+**[docs/x-content-playbook.md](../../docs/x-content-playbook.md)**. Worker chỉ
+ép được phần cơ học (độ dài, trạng thái); phần "bài này nhắm vào reply hay vào
+quote" nằm hết ở đó. Playbook này chỉ áp dụng cho X — pipeline Facebook giữ
+nguyên prompt riêng của nó.
+
 ### Setup
 
 Tokens live in Postgres, not in wrangler secrets — X rotates the refresh token
