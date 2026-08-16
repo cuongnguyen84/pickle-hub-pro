@@ -10,7 +10,7 @@
 // data), no "sắp hết" (no reservation model), and no carousel.
 // ============================================================================
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -67,7 +67,11 @@ export default function ShopHome() {
         <section aria-labelledby="shop-cats">
           <h2 className="tl-shop-h2" id="shop-cats">Ngành hàng</h2>
           {categories.isLoading ? (
-            <p className="tl-shop-hint">Đang tải…</p>
+            <div className="tl-shop-cats" aria-busy="true" aria-label="Đang tải ngành hàng">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className="tl-shop-sk" style={{ width: 88, height: 44, borderRadius: 999, flex: "none" }} />
+              ))}
+            </div>
           ) : (
             <CategoryChips
               categories={categories.data ?? []}
@@ -87,6 +91,11 @@ export default function ShopHome() {
             onRetry={() => void latest.refetch()}
             emptyTitle="Chưa có sản phẩm nào đang bán"
             emptyBody="Sàn đang ở giai đoạn thử nghiệm với vài shop đầu tiên. Quay lại sau nhé."
+            emptyAction={
+              <p className="tl-shop-hint">
+                Anh/chị có đồ pickleball muốn bán? <Link to="/shop/sell">Tìm hiểu cách mở shop</Link>
+              </p>
+            }
           />
         </section>
       </main>

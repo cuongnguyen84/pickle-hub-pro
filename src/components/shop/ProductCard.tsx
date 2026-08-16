@@ -11,7 +11,7 @@
 // ============================================================================
 
 import { Link } from "react-router-dom";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, ImageOff } from "lucide-react";
 import type { ProductCard as Card } from "@/hooks/shop/usePublicShop";
 import {
   CONDITION_LABEL,
@@ -48,7 +48,10 @@ export function ProductCard({ card, eager = false }: { card: Card; eager?: boole
             decoding="async"
           />
         ) : (
-          <div className="tl-pcard-noimg" aria-hidden="true" />
+          <div className="tl-pcard-noimg" aria-hidden="true">
+            <ImageOff size={20} />
+            <span>Chưa có ảnh</span>
+          </div>
         )}
         {soldOut && <span className="tl-pcard-flag">Hết hàng</span>}
       </div>

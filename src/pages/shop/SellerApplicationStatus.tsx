@@ -109,6 +109,7 @@ export default function SellerApplicationStatus() {
       <ShopScrollShell>
         <ShopHeader title="Hồ sơ đăng ký" backTo="/shop/sell" />
         <main className="tl-shop-page tl-shop-page--narrow">
+          <FileText size={28} aria-hidden="true" style={{ color: "var(--tl-fg-3)", marginBottom: 10 }} />
           <h1 className="tl-shop-h1">Anh/chị chưa có hồ sơ nào</h1>
           <Link to="/seller/application" className="tl-shop-btn tl-shop-btn--primary">
             Bắt đầu đăng ký

@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
@@ -117,6 +118,7 @@ export default function ShopCategory() {
               onRetry={() => void results.refetch()}
               emptyTitle="Ngành hàng này chưa có sản phẩm nào"
               emptyBody="Sàn đang ở giai đoạn thử nghiệm. Thử ngành hàng khác nhé."
+              emptyIcon={<SearchX size={28} aria-hidden="true" />}
               onClearFilters={
                 filters.condition || filters.inStockOnly || filters.sort !== DEFAULT_FILTERS.sort
                   ? () => patch({ condition: null, stock: null, sort: null })

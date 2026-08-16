@@ -18,7 +18,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ImageOff, Plus, Search } from "lucide-react";
+import { AlertTriangle, ImageOff, PackageOpen, Plus, Search } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
@@ -323,6 +323,7 @@ function ProductList({
   if (result.total === 0 && catalogEmpty) {
     return (
       <div className="tl-shop-empty">
+        <PackageOpen size={28} aria-hidden="true" />
         <p className="tl-shop-empty-title">Chưa có sản phẩm nào</p>
         <p>Một sản phẩm cần tên, ngành hàng và giá là lưu được. Ảnh thêm sau.</p>
         {canWrite && (

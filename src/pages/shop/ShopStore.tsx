@@ -12,7 +12,7 @@
 
 import type { CSSProperties } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
-import { BadgeCheck, ExternalLink, Phone } from "lucide-react";
+import { BadgeCheck, ExternalLink, Package, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { LoadingState } from "@/components/states/PageStates";
@@ -173,6 +173,7 @@ export default function ShopStore() {
             onRetry={() => void catalog.refetch()}
             emptyTitle="Shop chưa đăng bán sản phẩm nào"
             emptyBody="Quay lại sau, hoặc liên hệ shop để hỏi trực tiếp."
+            emptyIcon={<Package size={28} aria-hidden="true" />}
           />
           {catalog.data?.has_more && rows.length > 0 && (
             <div style={{ marginTop: 16, display: "flex", justifyContent: "center" }}>
