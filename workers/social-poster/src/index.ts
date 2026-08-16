@@ -7,6 +7,9 @@
  * Endpoints:
  *   POST /            Supabase DB Webhook payload (table=news_items, INSERT/UPDATE)
  *   POST /run         Manual trigger; body { news_item_id?: string, dry_run?: boolean }
+ *   POST /x/run       X (Twitter) queue drain; body { post_id?: string, dry_run?: boolean }
+ *                     See src/x.ts — separate queue (x_posts), separate cadence,
+ *                     English copy approved by hand. Shares only auth + ops here.
  *
  * Auth: All POSTs require header X-Auth-Secret = $SOCIAL_POSTER_SECRET.
  * NOTE: this is a DEDICATED secret, separate from the news-translate
@@ -34,6 +37,8 @@
  *   review Gemini output before enabling the production webhook.
  */
 
+import { handleXRun, xHealth, type XRunBody } from './x';
+
 export interface Env {
   // vars
   SUPABASE_URL: string;
@@ -51,6 +56,14 @@ export interface Env {
   FB_PAGE_ACCESS_TOKEN: string;
   FB_SECONDARY_PAGE_ACCESS_TOKEN?: string;
   GEMINI_API_KEY: string;
+  // X (Twitter) — vars
+  X_POST_MIN_GAP_MINUTES?: string;
+  X_LINK_COMMENT_DELAY_SECONDS?: string;
+  X_MAX_ATTEMPTS?: string;
+  // X (Twitter) — secrets. Absent ⇒ /x/run reports x_not_configured and the
+  // Facebook pipeline is untouched.
+  X_CLIENT_ID?: string;
+  X_CLIENT_SECRET?: string;
 }
 
 interface NewsItem {
@@ -121,12 +134,14 @@ export default {
 
     if (req.method === 'GET' && url.pathname === '/health') {
       const pages = configuredPages(env);
+      const deep = url.searchParams.get('deep') === '1';
       return json({
         ok: true,
         name: 'social-poster',
-        pages: url.searchParams.get('deep') === '1'
+        pages: deep
           ? await verifyFacebookPages(env, pages)
           : pages.map((page) => ({ key: page.key, id: page.id, start_at: page.startAt })),
+        x: deep ? await xHealth(env) : { configured: !!env.X_CLIENT_ID },
       });
     }
 
@@ -149,6 +164,10 @@ export default {
       if (url.pathname === '/run') {
         const body = (await safeJson(req)) as RunBody;
         return await handleRun(env, body);
+      }
+      if (url.pathname === '/x/run') {
+        const body = (await safeJson(req)) as XRunBody;
+        return json(await handleXRun(env, body));
       }
       if (url.pathname === '/' || url.pathname === '') {
         const body = (await safeJson(req)) as SupabaseWebhookPayload;
