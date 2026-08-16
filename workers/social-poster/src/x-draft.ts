@@ -192,7 +192,11 @@ async function fetchDraftedIds(env: XDraftEnv): Promise<Set<string>> {
   return new Set(rows.map((r) => r.source_id).filter((id): id is string => !!id));
 }
 
-async function generateCaption(env: XDraftEnv, row: NewsRow): Promise<string> {
+async function generateCaption(
+  env: XDraftEnv,
+  row: NewsRow,
+  retryHint?: string,
+): Promise<string> {
   const res = await fetch(`${env.SUPABASE_URL}/functions/v1/social-caption`, {
     method: 'POST',
     headers: {
@@ -207,6 +211,7 @@ async function generateCaption(env: XDraftEnv, row: NewsRow): Promise<string> {
       content_html: row.content_html,
       category: row.category,
       link: '',
+      ...(retryHint ? { retry_hint: retryHint } : {}),
     }),
   });
   if (!res.ok) {
@@ -270,7 +275,28 @@ export async function handleXDraft(
       continue;
     }
 
-    const check = checkXDraft(caption);
+    let check = checkXDraft(caption);
+
+    // One retry, for length only. The first real run threw away a good post
+    // because it was 281 characters — one over. Length is the failure a model
+    // fixes reliably when told the number, unlike ad copy, where a retry tends
+    // to produce differently-worded ad copy and burns a call to learn that.
+    if (!check.ok && check.reason === 'invalid_body' && check.detail === 'too_long') {
+      try {
+        caption = await generateCaption(
+          env,
+          row,
+          `Your previous attempt was ${caption.length} characters, over the 280 limit. ` +
+            'Rewrite it under 240 characters. Cut the second sentence entirely if you must; ' +
+            'do not drop the score or the names.',
+        );
+        check = checkXDraft(caption);
+      } catch (err) {
+        results.push({ news_item_id: row.id, error: String(err).slice(0, 200) });
+        continue;
+      }
+    }
+
     if (!check.ok) {
       // Not an error: the guard did its job. Surface it so a prompt that keeps
       // producing ad copy is visible rather than silently dropping everything.

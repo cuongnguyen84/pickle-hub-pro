@@ -73,10 +73,24 @@ describe('checkXDraft', () => {
     if (!two.ok) expect(two.detail).toBe('hashtags:2');
   });
 
-  it('rejects a body over 280 weighted characters', () => {
+  // handleXDraft keys its one length-retry off exactly this reason/detail pair.
+  // If either string changes, the retry silently stops firing and long drafts
+  // go back to being thrown away — so this test pins the contract, not a label.
+  it('rejects a body over 280 weighted characters as invalid_body/too_long', () => {
     const r = checkXDraft(`Johns won 11-6. ${'a'.repeat(280)}`);
     expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe('invalid_body');
+    expect(r.detail).toBe('too_long');
+  });
+
+  it('rejects a body one character over, which is what the first live run hit', () => {
+    // The real draft came back at 281. Nothing about being barely over makes it
+    // publishable, but it is the case the retry exists to rescue.
+    const r = checkXDraft('J'.repeat(281));
+    expect(r.ok).toBe(false);
     if (!r.ok) expect(r.detail).toBe('too_long');
+    expect(checkXDraft(`Johns won 11-6 in Dallas. ${'a'.repeat(254)}`).ok).toBe(true);
   });
 
   it('does not mistake ordinary reporting for a call to action', () => {
