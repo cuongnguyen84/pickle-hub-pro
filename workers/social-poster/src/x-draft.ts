@@ -1,10 +1,14 @@
 /**
- * X draft generation — `POST /x/draft`.
+ * X post generation — `POST /x/draft`. Two producers, one daily run:
  *
- * Reads published ENGLISH `news_items`, has Gemini rewrite each into a post
- * that follows docs/x-content-playbook.md, and writes the result to `x_posts`
- * as `status='draft'`. It never publishes: the drain in x.ts only looks at
- * `approved`, so Cuong stays the only path from draft to X.
+ *   1. yesterday's pro-tour results as ONE templated post (see x-roundup.ts —
+ *      no model involved, so it cannot invent a score)
+ *   2. fresh English `news_items`, rewritten by Gemini per
+ *      docs/x-content-playbook.md
+ *
+ * Rows land at NEW_ROW_STATUS. While that is 'draft' the drain in x.ts cannot
+ * see them and Cuong is the only path to X; set it to 'approved' and the guards
+ * in this file are the only thing in the way.
  *
  * Why English rows and not the Vietnamese ones the Facebook pipeline uses:
  * news_items already stores the EN original (the VI row is a child via
@@ -26,6 +30,11 @@
  */
 
 import { checkXBody, type XEnv } from './x';
+import {
+  buildRoundupBody,
+  proTourProviderFilter,
+  type RoundupMatch,
+} from './x-roundup';
 
 const NEWS_SELECT = 'id,title,summary,content_html,category,importance,published_at,source';
 
@@ -155,6 +164,11 @@ const NUMBER_WORDS: Record<string, string> = {
   thirty: '30', forty: '40', fifty: '50',
 };
 
+const TENS_WORDS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40, fifty: 50 };
+const UNIT_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+};
+
 /**
  * Every number in the generated post must be traceable to the source text.
  *
@@ -172,6 +186,16 @@ export function unsourcedNumbers(body: string, sourceText: string): string[] {
   const digitsInSource = new Set(haystack.match(/\d+/g) ?? []);
   for (const [word, digits] of Object.entries(NUMBER_WORDS)) {
     if (new RegExp(`\\b${word}\\b`).test(haystack)) digitsInSource.add(digits);
+  }
+  // Compounds, because a game to 21 is written "twenty-one" and the guard was
+  // rejecting the correct digits for it — exactly the kind of false positive
+  // that gets a guard switched off.
+  for (const [tens, tv] of Object.entries(TENS_WORDS)) {
+    for (const [unit, uv] of Object.entries(UNIT_WORDS)) {
+      if (new RegExp(`\\b${tens}[- ]${unit}\\b`).test(haystack)) {
+        digitsInSource.add(String(tv + uv));
+      }
+    }
   }
   const used = body.match(/\d+/g) ?? [];
   return [...new Set(used.filter((n) => !digitsInSource.has(n)))];
@@ -429,7 +453,7 @@ export async function handleXDraft(
     fetchDraftedIds(env),
   ]);
   const ranked = rankNewsCandidates(candidates, drafted);
-  if (ranked.length === 0) return { drafted: 0, reason: 'no_new_news' };
+  if (ranked.length === 0) return { drafted: 0, reason: 'no_new_news', ...roundup };
 
   const limit = xDraftLimit(env, body.limit);
   const results: Array<Record<string, unknown>> = [];
@@ -446,7 +470,10 @@ export async function handleXDraft(
       continue;
     }
 
-    let check = checkXDraft(caption);
+    // The source text the numbers are checked against. content_html is what the
+    // model was given, so anything numeric it wrote should be traceable to it.
+    const sourceText = `${row.title} ${row.summary ?? ''} ${row.content_html ?? ''}`;
+    let check = checkXDraft(caption, sourceText);
 
     // One retry, for length only. The first real run threw away a good post
     // because it was 281 characters — one over. Length is the failure a model
@@ -461,7 +488,7 @@ export async function handleXDraft(
             'Rewrite it under 240 characters. Cut the second sentence entirely if you must; ' +
             'do not drop the score or the names.',
         );
-        check = checkXDraft(caption);
+        check = checkXDraft(caption, sourceText);
       } catch (err) {
         results.push({ news_item_id: row.id, error: String(err).slice(0, 200) });
         continue;
@@ -497,5 +524,5 @@ export async function handleXDraft(
     created += 1;
   }
 
-  return { drafted: created, considered: ranked.length, results };
+  return { drafted: created, considered: ranked.length, results, ...roundup };
 }
