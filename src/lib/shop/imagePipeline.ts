@@ -21,7 +21,12 @@ export const IMAGE_LIMITS = {
   maxDimension: 2048,
   maxPerProduct: 8,
   inputTypes: ["image/jpeg", "image/png", "image/webp"] as const,
+  /** Preferred. iOS Safari cannot encode WebP through canvas.toBlob. */
   renditionType: "image/webp",
+  /** What iOS Safari gets instead. The server accepts both — the object key
+   *  keeps its .webp suffix either way: extension is a claim; the MIME in
+   *  storage.objects is the truth. */
+  renditionFallbackType: "image/jpeg",
 } as const;
 
 export type SniffedType = "image/jpeg" | "image/png" | "image/webp" | "image/heic" | "unknown";
@@ -111,11 +116,13 @@ export function targetSize(width: number, height: number, cap: number = IMAGE_LI
 }
 
 /**
- * One image, from a File to the WebP the server will verify.
+ * One image, from a File to the rendition the server will verify.
  *
- * Quality steps down until the result fits max_rendition_bytes rather than
- * failing at 1 KB over: a seller whose photo is 1.05 MB does not want to be
- * told to go and resize it themselves.
+ * WebP first; a browser whose encoder hands back the wrong type (iOS Safari
+ * returns PNG for a WebP request) gets the whole ladder again as JPEG. Quality
+ * steps down until the result fits max_rendition_bytes rather than failing at
+ * 1 KB over: a seller whose photo is 1.05 MB does not want to be told to go
+ * and resize it themselves.
  */
 export async function processImage(
   file: File | Blob,
@@ -151,23 +158,34 @@ export async function processImage(
     if (!ctx) throw new ImageRejected("Trình duyệt này không xử lý được ảnh.");
     ctx.drawImage(bitmap, 0, 0, width, height);
 
-    for (const quality of [0.82, 0.7, 0.6, 0.5]) {
-      throwIfAborted();
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, IMAGE_LIMITS.renditionType, quality),
+    // One encoder type per ladder, never mixed mid-ladder. Returns null when
+    // the browser cannot produce that type at all (a null blob, or a blob of
+    // some other type — iOS Safari answers a WebP request with PNG).
+    const ladder = async (type: string): Promise<Blob | null> => {
+      for (const quality of [0.82, 0.7, 0.6, 0.5]) {
+        throwIfAborted();
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, type, quality),
+        );
+        if (!blob || blob.type !== type) return null;
+        if (blob.size <= IMAGE_LIMITS.maxRenditionBytes) return blob;
+      }
+      throw new ImageRejected("Ảnh vẫn quá nặng sau khi nén. Chọn ảnh nhỏ hơn.");
+    };
+
+    const blob =
+      (await ladder(IMAGE_LIMITS.renditionType)) ??
+      // The full ladder again, from 0.82: the server verifies the JPEG on the
+      // same size limits, and the object key keeps its .webp suffix.
+      (await ladder(IMAGE_LIMITS.renditionFallbackType));
+    if (!blob) {
+      // A JPEG-capable browser never lands here; "thử trình duyệt khác" would
+      // be the wrong advice now that JPEG is accepted end-to-end.
+      throw new ImageRejected(
+        "Trình duyệt này không nén được ảnh. Hãy thử cập nhật trình duyệt hoặc chọn ảnh khác.",
       );
-      if (!blob) throw new ImageRejected("Không nén được ảnh này.");
-      if (blob.type !== IMAGE_LIMITS.renditionType) {
-        // Refusing to guess: a browser that silently gave PNG back would fail
-        // finalize on the server, and the seller would see that failure
-        // instead of this sentence.
-        throw new ImageRejected("Trình duyệt này chưa tạo được ảnh WebP. Thử trình duyệt khác.");
-      }
-      if (blob.size <= IMAGE_LIMITS.maxRenditionBytes) {
-        return { blob, width, height, sourceType };
-      }
     }
-    throw new ImageRejected("Ảnh vẫn quá nặng sau khi nén. Chọn ảnh nhỏ hơn.");
+    return { blob, width, height, sourceType };
   } finally {
     // Big bitmaps are the thing that kills a phone tab. Released on every
     // path, including the throwing ones.

@@ -69,6 +69,13 @@ const jpeg = (size = 2048) => {
   body.set([0xff, 0xd8, 0xff, 0xe0]);
   return new Blob([body], { type: "image/jpeg" });
 };
+/** Still a legal INPUT type, but never a legal rendition — the negative
+ *  fixture moved here when JPEG became a valid fallback (iOS Safari). */
+const png = (size = 2048) => {
+  const body = new Uint8Array(size);
+  body.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  return new Blob([body], { type: "image/png" });
+};
 
 describe.skipIf(!up)("step 6 — ordering, variant media, profile media", () => {
   const run = randomUUID().slice(0, 8);
@@ -272,7 +279,7 @@ describe.skipIf(!up)("step 6 — ordering, variant media, profile media", () => 
     expect(data.verified).toBe(true);
   });
 
-  it("finalize refuses when the processed object is not really a WebP", async () => {
+  it("finalize refuses when the processed object is not an accepted rendition type", async () => {
     const { data: cover } = await ownerA.client.rpc("shop_profile_media_upload_init", {
       _shop_id: shopA, _purpose: "cover", _content_type: "image/jpeg",
       _byte_size: 2000, _original_filename: "bia.jpg", _client_token: `cover-${run}`,
@@ -280,10 +287,11 @@ describe.skipIf(!up)("step 6 — ordering, variant media, profile media", () => 
     await ownerA.client.storage.from(DRAFT).upload(cover.draft_path, jpeg(), {
       upsert: true, contentType: "image/jpeg",
     });
-    // A JPEG uploaded where the WebP rendition belongs — the exact lie the
-    // client could tell if finalize trusted it.
-    await ownerA.client.storage.from(DRAFT).upload(cover.rendition_path, jpeg(), {
-      upsert: true, contentType: "image/jpeg",
+    // A PNG uploaded where the rendition belongs — still the lie finalize
+    // must catch. (It was a JPEG until JPEG became a legal fallback for
+    // iOS Safari; the allowlist is now {webp, jpeg}, never png.)
+    await ownerA.client.storage.from(DRAFT).upload(cover.rendition_path, png(), {
+      upsert: true, contentType: "image/png",
     });
     const { error } = await ownerA.client.rpc("shop_profile_media_finalize", {
       _media_id: cover.media_id, _width: 1200, _height: 400,

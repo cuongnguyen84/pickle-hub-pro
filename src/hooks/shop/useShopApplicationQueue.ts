@@ -70,6 +70,66 @@ export const useDecideApplication = () => {
   });
 };
 
+// ─── Activation (the step after approve) ────────────────────────────────────
+
+const SHOP_STATE_KEY = ["shop", "admin", "shop-state"] as const;
+
+export interface AdminShopStateRow {
+  id: string;
+  slug: string;
+  name: string;
+  state: string;
+  verified_method: string | null;
+}
+
+/** The approved shop's live state — read via shops_select_member + is_admin(). */
+export const useShopState = (shopId: string | null) =>
+  useQuery({
+    queryKey: [...SHOP_STATE_KEY, shopId],
+    enabled: !!shopId,
+    queryFn: async (): Promise<AdminShopStateRow | null> => {
+      const { data, error } = await shopFrom<AdminShopStateRow>("shops")
+        .select("id, slug, name, state, verified_method")
+        .eq("id", shopId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+
+/**
+ * An RPC, not a PATCH: shops_guard_privileged_columns reverts a non-admin's
+ * state write WITHOUT erroring, so a table update from a stale session would
+ * report success and change nothing. shop_activate fails loudly instead.
+ */
+export const useActivateShop = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: { shopId: string; verifiedMethod: string | null }) =>
+      await shopRpc<string>("shop_activate", {
+        _shop_id: p.shopId,
+        _verified_method: p.verifiedMethod || null,
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: SHOP_STATE_KEY });
+    },
+  });
+};
+
+/** shop_activate guard failures, in the moderator's words. */
+export const activateErrorMessage = (err: unknown): string => {
+  const message = (err as { message?: string })?.message ?? "";
+  if (message.includes("admin_required")) {
+    return "Phiên đăng nhập chưa đủ quyền. Đăng nhập lại bằng 2FA rồi thử lại.";
+  }
+  if (message.includes("shop_not_activatable")) {
+    return "Shop không còn ở trạng thái chờ kích hoạt — có thể đã đổi ở nơi khác. Tải lại trang để xem trạng thái mới.";
+  }
+  // shop_not_found, invalid_verified_method và lỗi mạng đều rơi về đây: với
+  // moderator cả ba nghĩa là "chưa có gì đổi, thử lại".
+  return "Chưa kích hoạt được. Shop vẫn ở trạng thái cũ, chưa có gì công khai. Thử lại hoặc kiểm tra kết nối.";
+};
+
 /** Server-side guard failures, in the moderator's words. */
 export const decisionErrorMessage = (err: unknown): string => {
   const message = (err as { message?: string })?.message ?? "";

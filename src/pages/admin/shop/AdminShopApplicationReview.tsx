@@ -16,28 +16,187 @@
 
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AlertTriangle, Eye, Loader2, Lock } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, Eye, Loader2, Lock } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminShopFrame, DefList } from "@/components/shop/ShopShell";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
 import {
+  activateErrorMessage,
   decisionErrorMessage,
+  useActivateShop,
   useDecideApplication,
   useShopApplication,
+  useShopState,
 } from "@/hooks/shop/useShopApplicationQueue";
+import { useConfirm } from "@/hooks/useConfirm";
 import { SellerRulesReceiptPanel } from "@/components/shop/SellerRulesReceiptPanel";
-import { APPLICATION_STATUS_LABEL, SELLER_TYPE_LABEL, decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
+import { APPLICATION_STATUS_LABEL, SELLER_TYPE_LABEL, SHOP_STATE_LABEL, VERIFIED_METHOD_LABEL, decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
+import type { ShopState } from "@/integrations/supabase/shop-schema";
 import "@/styles/shop.css";
 
 const CONSEQUENCE: Record<Decision, (n: number) => string> = {
   "request-changes": (n) =>
     `Người nộp nhận thông báo kèm ghi chú bên dưới và ${n} đường dẫn đi thẳng tới đúng ô cần sửa. Hồ sơ quay lại trạng thái “Cần sửa”.`,
   approve: () =>
-    "Shop được tạo ở trạng thái chờ kích hoạt và người nộp trở thành chủ shop. Họ chưa đăng bán được cho tới khi hoàn tất bước tiếp theo.",
+    "Shop được tạo ở trạng thái chờ kích hoạt và người nộp trở thành chủ shop. Sau khi duyệt, mục “Kích hoạt shop” xuất hiện ngay trên trang này để đưa shop lên công khai.",
   reject: () =>
     "Hồ sơ đóng lại. Người nộp nhận đúng phần ghi chú bên dưới và vẫn nộp hồ sơ mới được.",
 };
+
+// ─── Activation (local by design — hook ordering stays safe, and the page
+//     stays self-contained like the rest of the A03 screen) ──────────────────
+
+function ActivationSection({ shopId }: { shopId: string }) {
+  const confirm = useConfirm();
+  const shop = useShopState(shopId);
+  const activate = useActivateShop();
+  const [method, setMethod] = useState("gap-truc-tiep");
+  const [error, setError] = useState<string | null>(null);
+
+  const s = shop.data;
+  const state = (s?.state ?? "") as ShopState;
+
+  const onActivate = async () => {
+    if (!s) return;
+    const ok = await confirm({
+      destructive: false,
+      title: `Kích hoạt shop “${s.name}”?`,
+      description:
+        "Shop hiện công khai trên /shop ngay lập tức, ai cũng xem được.\n" +
+        `Phương thức xác minh sẽ ghi: ${method ? VERIFIED_METHOD_LABEL[method] : "(không ghi)"}.\n` +
+        "Sau khi kích hoạt, anh tự báo seller qua Zalo.",
+      confirmText: "Kích hoạt",
+      cancelText: "Huỷ",
+    });
+    if (!ok) return;
+    setError(null);
+    try {
+      await activate.mutateAsync({ shopId, verifiedMethod: method || null });
+    } catch (err) {
+      setError(activateErrorMessage(err));
+    }
+  };
+
+  return (
+    <section aria-labelledby="a03-activate">
+      <h2 className="tl-shop-h2" id="a03-activate">Kích hoạt shop</h2>
+      <div className="tl-shop-card">
+        {shop.isLoading && <p className="tl-shop-hint">Đang tải trạng thái shop…</p>}
+
+        {(shop.isError || (!shop.isLoading && !shop.isError && !s)) && (
+          <>
+            <p className="tl-shop-error" role="alert">
+              <AlertTriangle size={13} aria-hidden="true" /> Chưa tải được trạng thái shop.
+            </p>
+            <button type="button" className="tl-shop-btn tl-shop-btn--sm"
+                    onClick={() => void shop.refetch()}>
+              Thử lại
+            </button>
+          </>
+        )}
+
+        {s && (
+          <>
+            <DefList
+              rows={[
+                ["Trạng thái shop", SHOP_STATE_LABEL[state] ?? s.state],
+                [
+                  "Trang shop",
+                  state === "active" ? (
+                    // ponytail: preview link only when active — shop_public_shop
+                    // answers found:false for every other state, so a link
+                    // before activation opens "không tìm thấy".
+                    <span style={{ overflowWrap: "anywhere" }}>
+                      <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
+                        Xem trước (mở tab mới) <ExternalLink size={13} aria-hidden="true" style={{ verticalAlign: -2 }} />
+                      </a>
+                    </span>
+                  ) : (
+                    <span style={{ overflowWrap: "anywhere" }}>{`/shop/store/${s.slug}`} (sẽ mở khi kích hoạt)</span>
+                  ),
+                ],
+                ...(state === "active" && s.verified_method
+                  ? ([["Xác minh", VERIFIED_METHOD_LABEL[s.verified_method] ?? s.verified_method]] as [string, string][])
+                  : []),
+              ]}
+            />
+
+            {state === "pending_activation" && (
+              <>
+                <div className="tl-shop-notice tl-shop-notice--warn">
+                  <AlertTriangle size={16} aria-hidden="true" />
+                  <div>
+                    <strong>Sau khi bấm:</strong> shop hiện công khai trên /shop ngay lập tức —
+                    ai cũng xem được, kể cả người chưa đăng nhập, và seller đăng bán được.
+                    Chưa có bước hoàn tác trong giao diện này.
+                  </div>
+                </div>
+
+                <label className="tl-shop-field">
+                  <span className="tl-shop-label">Phương thức xác minh (tuỳ chọn)</span>
+                  <select
+                    className="tl-shop-select"
+                    value={method}
+                    disabled={activate.isPending}
+                    onChange={(e) => setMethod(e.target.value)}
+                  >
+                    <option value="gap-truc-tiep">Gặp trực tiếp</option>
+                    <option value="giay-phep-kinh-doanh">Giấy phép kinh doanh</option>
+                    <option value="">Chưa xác minh</option>
+                  </select>
+                </label>
+                <p className="tl-shop-hint">
+                  Chỉ ghi lại cách anh đã xác minh người bán này — hệ thống không tự kiểm tra gì cả.
+                </p>
+
+                {error && (
+                  <p className="tl-shop-error" role="alert">
+                    <AlertTriangle size={13} aria-hidden="true" /> {error}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
+                  disabled={activate.isPending}
+                  onClick={() => void onActivate()}
+                >
+                  {activate.isPending ? (
+                    <><Loader2 size={15} className="animate-spin" aria-hidden="true" /> Đang kích hoạt…</>
+                  ) : "Kích hoạt shop"}
+                </button>
+              </>
+            )}
+
+            {state === "active" && (
+              <div className="tl-shop-notice tl-shop-notice--info" role="status">
+                <Check size={16} aria-hidden="true" />
+                <div>
+                  <strong>Đã kích hoạt.</strong> Shop đang công khai tại{" "}
+                  <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
+                    Xem trang shop (mở tab mới) <ExternalLink size={13} aria-hidden="true" style={{ verticalAlign: -2 }} />
+                  </a>
+                  . Nhớ báo seller qua Zalo — hệ thống không gửi thông báo tự động.
+                </div>
+              </div>
+            )}
+
+            {(state === "restricted" || state === "suspended" || state === "closed") && (
+              <div className="tl-shop-notice tl-shop-notice--warn">
+                <AlertTriangle size={16} aria-hidden="true" />
+                <div>
+                  Shop đang ở trạng thái “{SHOP_STATE_LABEL[state]}”. Chỉ kích hoạt được shop
+                  đang chờ kích hoạt — trạng thái này xử lý theo runbook, không qua màn hình này.
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export default function AdminShopApplicationReview() {
   const { id } = useParams();
@@ -126,6 +285,10 @@ export default function AdminShopApplicationReview() {
               chỉ hiện ở màn quản trị này, không đi vào thông báo, log hay URL.
             </p>
           </section>
+
+          {row.status === "approved" && row.shop_id != null && (
+            <ActivationSection shopId={row.shop_id} />
+          )}
 
           <SellerRulesReceiptPanel applicationId={row.id} />
 

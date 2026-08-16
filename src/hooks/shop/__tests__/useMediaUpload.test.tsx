@@ -77,7 +77,7 @@ beforeEach(() => {
   revokedUrls = [];
   upload.mockReset().mockResolvedValue({ error: null });
   rpc.mockReset().mockResolvedValue(okInit());
-  processImage.mockReset().mockResolvedValue({ blob: new Blob(["r"]), width: 800, height: 600, sourceType: "image/jpeg" });
+  processImage.mockReset().mockResolvedValue({ blob: new Blob(["r"], { type: "image/webp" }), width: 800, height: 600, sourceType: "image/jpeg" });
   vi.stubGlobal("URL", {
     ...URL,
     createObjectURL: vi.fn((f: File) => { const u = `blob:${f.name}`; createdUrls.push(u); return u; }),
@@ -97,10 +97,30 @@ describe("a file that works", () => {
     // Both objects, in order: the original the seller chose, then the rendition.
     expect(upload).toHaveBeenCalledTimes(2);
     expect(upload.mock.calls[0][0]).toContain("/original");
+    // The original goes up as exactly what the seller picked.
+    expect(upload.mock.calls[0][2]).toMatchObject({ contentType: "image/jpeg" });
     expect(upload.mock.calls[1][0]).toContain("/rendition.webp");
+    // The rendition's contentType is whatever the pipeline produced — it is
+    // the value Storage records in storage.objects, which finalize verifies.
+    expect(upload.mock.calls[1][2]).toMatchObject({ contentType: "image/webp" });
     expect(target.finalize).toHaveBeenCalledWith({ mediaId: "media-1", width: 800, height: 600 });
     expect(target.onSettled).toHaveBeenCalledTimes(1);
     expect(result.current.items[0].mediaId).toBe("media-1");
+  });
+
+  it("uploads a JPEG rendition as image/jpeg — under a key that still ends .webp", async () => {
+    // The iOS Safari fallback. The path is the DB's claim and never changes;
+    // extension is a claim; the MIME in storage.objects is the truth.
+    processImage.mockResolvedValue({
+      blob: new Blob(["r"], { type: "image/jpeg" }), width: 800, height: 600, sourceType: "image/jpeg",
+    });
+    const { result } = renderHook(() => useMediaUpload(spyTarget()));
+
+    await act(async () => { result.current.add([fileNamed("anh.jpg")]); });
+    await waitFor(() => expect(result.current.items[0].phase).toBe("complete"));
+
+    expect(upload.mock.calls[1][0]).toMatch(/\.webp$/);
+    expect(upload.mock.calls[1][2]).toMatchObject({ contentType: "image/jpeg" });
   });
 
   it("mints one token per file and hands the same one to init", async () => {

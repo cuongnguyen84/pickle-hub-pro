@@ -87,7 +87,7 @@ export default function ShopStore() {
             <>
               {" "}
               <BadgeCheck size={18} aria-hidden="true" className="tl-pcard-verified" />
-              <span className="tl-shop-sr">đã được xác minh giấy tờ</span>
+              <span className="tl-shop-sr">đã được ThePickleHub xác minh</span>
             </>
           )}
         </h1>
@@ -103,8 +103,8 @@ export default function ShopStore() {
               <dt>Xác minh</dt>
               <dd>
                 {shop.verified
-                  ? "ThePickleHub đã xem giấy tờ kinh doanh của shop này."
-                  : "Shop chưa gửi giấy tờ để xác minh."}
+                  ? "ThePickleHub đã xác minh shop này — đối chiếu giấy tờ hoặc gặp trực tiếp người bán."
+                  : "Shop chưa được ThePickleHub xác minh."}
               </dd>
             </div>
             {shop.shipping_note && <div><dt>Giao hàng</dt><dd>{shop.shipping_note}</dd></div>}

@@ -257,7 +257,7 @@ export default function ProductDetail() {
                 {product.shop.verified && (
                   <>
                     <BadgeCheck size={14} aria-hidden="true" className="tl-pcard-verified" />
-                    <span className="tl-shop-sr">shop đã được xác minh giấy tờ</span>
+                    <span className="tl-shop-sr">shop đã được ThePickleHub xác minh</span>
                   </>
                 )}
               </p>
@@ -267,7 +267,7 @@ export default function ProductDetail() {
               <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
                 Thông tin sản phẩm, giá và tình trạng hàng do shop tự khai và tự chịu trách nhiệm.
                 ThePickleHub duyệt hồ sơ shop và kiểm duyệt nội dung sản phẩm trước khi hiển thị;
-                tình trạng xác minh giấy tờ của shop (nếu có) xem trên trang shop.
+                tình trạng xác minh của shop (nếu có) xem trên trang shop.
               </p>
             </div>
 
