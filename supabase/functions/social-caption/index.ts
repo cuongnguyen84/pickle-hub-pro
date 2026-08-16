@@ -45,6 +45,12 @@ interface RequestBody {
    * both), and the Facebook pipeline is in production and not to be disturbed.
    */
   mode?: "fb_vi" | "x_en";
+  /**
+   * One-shot correction appended to the x_en prompt when the caller rejected
+   * the previous attempt (e.g. "that was 281 characters, cut it to 200").
+   * Ignored by the Facebook prompt.
+   */
+  retry_hint?: string;
 }
 
 function json(body: unknown, status = 200): Response {
@@ -104,7 +110,12 @@ HARD RULES — breaking any one of these makes the post unusable:
 - No emoji-arrow teasing (👇 ➡️) pointing at something to click.
 - At most ONE hashtag, and only if a real event tag exists. Hashtags carry no
   weight, so the default is zero.
-- 280 characters maximum, counting emoji as 2.
+- ALWAYS use digits for numbers, scores, streaks and seeds. Write "21-10", not
+  "twenty-one to ten". Write "13-match winning streak", not "thirteen-match".
+  Write "3-1", "2-0", "No. 5 seed". Spelled-out numbers read wrong for sport
+  and waste characters you do not have.
+- Aim for 180-240 characters. 280 is a hard ceiling, not a target: a post over
+  it is discarded unread, and the last draft that tried came in at 281.
 - At least one concrete detail from the source: a name, a score, a number.
   Never "great match", "exciting news", "big win".
 - Every fact must come from the source text below. Invent nothing. If the
@@ -121,7 +132,7 @@ not a prompt for engagement.
 
 OUTPUT: the post text only. No quotes around it, no preamble, no markdown, no
 explanation.
-
+${item.retry_hint ? `\nCORRECTION FOR THIS ATTEMPT: ${item.retry_hint}\n` : ''}
 --- SOURCE ---
 Title: ${item.title}
 Category: ${item.category ?? "general"}
