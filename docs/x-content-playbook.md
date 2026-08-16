@@ -35,11 +35,9 @@ giá $0,01, mà pipeline này không bao giờ sinh ra loại đó. Nghĩa là t
 "tách link ra reply" **chưa bao giờ tiết kiệm tiền** — nó tốn $0,215/bài so với
 $0,200 nếu nhét link thẳng vào body. Cái nó mua là phân phối, không phải chi phí.
 
-**Quyết định của Cuong 16/08/2026: bỏ hẳn link đăng qua API.** Cần dẫn về web
-thì **đánh vần domain**:
+**Quyết định của Cuong 16/08/2026: bỏ hẳn link đăng qua API.**
 
 ```
-✅ Full breakdown at thepicklehub dot net     → $0,015
 ❌ Full breakdown at thepicklehub.net         → $0,200
 ❌ Full breakdown at https://thepicklehub.net → $0,200
 ```
@@ -58,26 +56,65 @@ duy nhất của chính sách này, khác nhau đúng một ký tự.
 Đổi ý sau này: `DROP CONSTRAINT x_posts_no_link_url` là đường reply link chạy
 lại như cũ, code vẫn còn nguyên trong `x.ts`.
 
-Đánh đổi phải biết: mất link click được thì `blog_teaser` gần như không kéo
-được traffic về web nữa, chỉ còn giá trị nhận diện. Nếu sau này muốn traffic
-thật, rẻ nhất là **Cuong tự reply link bằng tay từ điện thoại** — reply thủ
-công không qua API thì $0.
+**Cũng đừng đánh vần domain.** Bản đầu của doc này gợi ý viết
+`thepicklehub dot net` để né phí. Bỏ rồi: nó không bấm được, nó là câu quảng
+cáo, và `OpenLinkWeight = 0.2` cho thấy kể cả link bấm được cũng gần như không
+đóng góp gì cho phân phối (xem mục dưới). Muốn traffic thật thì **Cuong tự reply
+link bằng tay từ điện thoại** — reply thủ công không qua API nên $0, và chỉ làm
+với bài thật sự đáng.
 
-## Nguyên tắc cốt lõi
+## Nguyên tắc cốt lõi — theo mã nguồn X công bố 14/08/2026
 
-Thuật toán "For you" của X chấm điểm hành động tương tác rất lệch:
+X mở mã "For you" tại [xai-org/x-algorithm](https://github.com/xai-org/x-algorithm)
+(Apache-2.0). Trọng số dưới đây lấy trực tiếp từ `home-mixer/params/param.rs`,
+không phải từ bài blog tóm tắt. Cột bên phải quy về đơn vị "bằng mấy cái like",
+vì `FavoriteWeight = 0.5` chứ không phải 1 — bản playbook đầu tiên ghi like = ×1
+nên **mọi tỷ lệ trong đó bị hụt đúng một nửa**.
 
-| Hành động | Trọng số |
-|---|---:|
-| Copy-link share | ×20 |
-| Reply | ×5–20 |
-| Quote | ×5 |
-| Share qua DM | ×5 |
-| Like | ×1 |
+| Hành động | Hằng số | Trọng số | ≈ bao nhiêu like |
+|---|---|---:|---:|
+| Copy-link share | `ShareViaCopyLinkWeight` | 20.0 | **40×** |
+| Reply từ người follow qua lại | `ReplyWeight` + `BidirectionalFollowReplyWeightBoost` | 5.0 + 15.0 | **40×** |
+| Reply thường | `ReplyWeight` | 5.0 | 10× |
+| Quote | `QuoteWeight` | 5.0 | 10× |
+| Share qua DM | `ShareViaDmWeight` | 5.0 | 10× |
+| **Follow tác giả** | `FollowAuthorWeight` | 4.0 | **8×** |
+| Share thường | `ShareWeight` | 2.0 | 4× |
+| Repost | `RetweetWeight` | 1.0 | 2× |
+| Like | `FavoriteWeight` | 0.5 | 1× |
+| Click | `ClickWeight` | 0.4 | 0,8× |
+| **Mở link** | `OpenLinkWeight` | 0.2 | **0,4×** |
+| Mở ảnh / video | `PhotoExpandWeight`, `VideoOpenWeight` | 0.05 | 0,1× |
+| Dwell, profile click | `DwellWeight`, `ProfileClickWeight` | **0.0** | 0 |
+| Bookmark | *không có trong bảng* | — | bị bỏ qua |
 
-Suy ra: **mỗi bài phải nhắm cụ thể vào một trong các hành động điểm cao**, không
-viết chung chung kiểu quảng cáo. Một bài hay mà chỉ moi được like thì gần như
-vô hình.
+### Điểm âm mới là thứ quyết định
+
+| Hành động | Hằng số | Trọng số | ≈ bao nhiêu like |
+|---|---|---:|---:|
+| Report | `ReportWeight` | −234.0 | **−468×** |
+| Mute tác giả | `MuteAuthorWeight` | −58.8 | **−118×** |
+| Not interested | `NotInterestedWeight` | −43.2 | **−86×** |
+| Block tác giả | `BlockAuthorWeight` | −31.2 | −62× |
+
+**Đây là lý do cấm bài quảng cáo, và là lý do bằng số chứ không phải khẩu vị.**
+Bài đọc ra mùi quảng cáo không chỉ ít like — nó mời người ta bấm "Not
+interested". Một cú bấm đó xoá sạch **86 like**; bài phải kiếm 87 like mới hoà
+vốn cho đúng một người. Một cú Mute là 118 like. Với tài khoản nhỏ, một bài
+quảng cáo dở có thể âm điểm ròng.
+
+### Bốn hệ quả bắt buộc khi viết
+
+1. **Chỉ nhắm copy-link share và reply.** Hai thứ đó 40×, mọi thứ khác là nhiễu.
+   Bài chỉ moi được like thì gần như vô hình.
+2. **Đừng viết cho lượt bấm.** Click 0.4, mở link 0.2, ảnh/video 0.05, dwell và
+   profile click **bằng 0**, bookmark không được tính. Bài "đọc thêm ở link",
+   "xem ảnh bên dưới", "lưu lại để dành" đều nhắm vào thứ gần như không có điểm.
+3. **Làm người ta muốn follow.** `FollowAuthorWeight = 4.0`, bằng 8 like — cao
+   bất ngờ. Bài chứng minh mình có dữ liệu mà chỗ khác không có (số liệu live
+   scoring, thống kê PPA) ăn thẳng vào tín hiệu này.
+4. **Bài phải tự đứng được.** Không link, không "xem tiếp", không CTA. Người đọc
+   lướt qua mà không bấm gì vẫn phải nhận được trọn vẹn một thông tin.
 
 ## 4 dạng bài
 
@@ -105,43 +142,60 @@ but [B] has looked sharper all week. Who takes it?
 
 ### 3. `stat` — insight số liệu
 
-Kích thích **quote + share**. Một con số cụ thể lấy từ dữ liệu live scoring /
-PPA Tour thật của ThePickleHub. Đây là lợi thế cạnh tranh duy nhất không ai
-copy được — dùng số thật, không suy đoán, không ước lượng.
+Kích thích **copy-link share (40×) + quote (10×)**, và đây cũng là dạng ăn
+`FollowAuthorWeight` (8×) mạnh nhất: người ta follow vì thấy mình có số liệu
+chỗ khác không có. Một con số cụ thể lấy từ dữ liệu live scoring / PPA Tour
+thật của ThePickleHub — số thật, không suy đoán, không ước lượng.
 
 ```
 [Player A] has now won 14 straight points on serve across the last two
 matches — best streak of the tournament so far.
 ```
 
-### 4. `blog_teaser` — teaser bài blog
+### 4. `blog_teaser` — nhận định rút từ bài dài
 
-Kích thích **reply**. Nêu một nhận định cụ thể, không hiển nhiên. Không còn
-link click được, nên bản thân bài phải đứng vững như một nhận định — người đọc
-không click cũng vẫn nhận được thứ gì đó.
+**Không còn là teaser.** Teaser là bài quảng cáo: nó giữ lại thông tin để bắt
+người ta bấm, mà click chỉ đáng 0.4 còn mở link 0.2 — giữ lại thông tin là trả
+giá bằng reply và copy-link (40×) để đổi lấy thứ gần như không có điểm.
+
+Cách viết đúng: **lấy kết luận sắc nhất trong bài dài ra đăng thẳng**. Bài dài
+vẫn còn đó cho ai muốn tìm; bài X phải trọn vẹn kể cả khi không ai bấm gì.
 
 ```
-[Player] was down 0-6 in the Super Sunday decider and won it 15-13.
-We went back through every point of that comeback.
+Waters & Khlif were down 0-6 in the Super Sunday decider and won it 15-13.
 
-Full breakdown at thepicklehub dot net
+The turn came when they stopped resetting to the middle and started
+attacking Patriquin's backhand at the kitchen line.
 ```
 
-Cấm kiểu "Check out our new article!" — đó là câu không mang thông tin nào.
-Dòng domain đánh vần là **tuỳ chọn**: chỉ thêm khi bài thật sự có chỗ để đọc
-tiếp, đừng dán vào mọi bài.
+Cấm tuyệt đối, đây đều là bài quảng cáo:
+
+```
+❌ Check out our new article!
+❌ We broke down every point — read the full analysis
+❌ Full breakdown at thepicklehub dot net
+❌ Link in bio / thread below 👇
+```
+
+Ba dòng đầu không mang thông tin nào. Dòng cuối cùng nhắm vào click. Cả bốn đều
+là loại làm người đọc bấm "Not interested" — mỗi cú bấm đó là −86 like.
 
 ## Luật bắt buộc khi sinh `body`
 
-- **Không URL, không domain trần, ở bất kỳ đâu.** Cần dẫn về web thì đánh vần:
-  `thepicklehub dot net`. Viết `thepicklehub.net` là tự tăng giá bài đó 13 lần.
+- **Không URL, không domain trần, không domain đánh vần.** Không có ngoại lệ.
+  `checkXBody()` chặn hai loại đầu; loại thứ ba máy không bắt được nên đây là
+  luật người phải giữ.
 - **`link_url` luôn để trống.** DB đã chặn bằng CHECK `x_posts_no_link_url`.
+- **Không CTA.** Không "read more", "check out", "link in bio", "thread below",
+  "follow us for more". Bài kết thúc bằng thông tin hoặc bằng câu hỏi thật, hết.
 - **Mỗi bài phải có ít nhất một chi tiết cụ thể** — tên, số, tỷ số. Cấm
-  "Great match today!", "Check out our new article".
-- **Ngắn.** Chừa dòng trống trước dòng "Full recap 👇" hoặc câu hỏi cuối để dễ
-  đọc trên mobile.
-- **Tối đa 1 hashtag**, và chỉ khi thật sự cần. X không thưởng hashtag trong
-  bảng trọng số.
+  "Great match today!", "Exciting stuff!".
+- **Không mồi tương tác.** "Like if you agree", "RT to spread the word",
+  "comment your pick 👇" — X có nhận diện engagement bait, và nó moi đúng loại
+  like 0.5 trong khi rủi ro Not interested là −43.2.
+- **Ngắn.** Chừa dòng trống trước câu cuối để dễ đọc trên mobile.
+- **Tối đa 1 hashtag**, và chỉ khi thật sự cần. Hashtag không có trong bảng
+  trọng số, tức không được thưởng gì.
 - **`status='draft'` khi mới sinh.** AI không được tự set `approved`. Cuong
   review rồi mới đổi sang `approved`; worker chỉ lấy row `approved` để đăng.
 
@@ -193,7 +247,7 @@ Trả về `weighted_length`, `valid` và `reason`.
 insert into x_posts (content_type, body, status)
 values (
   'blog_teaser',
-  E'Waters & Khlif were down 0-6 in the MLP Orlando Super Sunday decider and won it 15-13.\n\nWe went back through every point of that comeback.\n\nFull breakdown at thepicklehub dot net',
+  E'Waters & Khlif were down 0-6 in the MLP Orlando Super Sunday decider and won it 15-13.\n\nThe turn came when they stopped resetting to the middle and started attacking Patriquin''s backhand at the kitchen line.',
   'draft'
 );
 ```
