@@ -1371,3 +1371,20 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp-shopname { margin: 0; display: flex; align-items: center; gap: 4px; font-weight: 600; }
 .tl-pdp-note { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
 .tl-pdp-cta { display: grid; gap: 8px; }
+
+/* ── Shop UI polish R1 ────────────────────────────────────────────────────
+ * Seller-list thumbnails: the real cover in the box the layout already
+ * reserves (44px table row, 56px mobile card — width set by the parent). */
+.tl-shop-thumb {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: var(--tl-radius);
+  overflow: hidden;
+  background: var(--tl-surface-2);
+  border: 1px solid var(--tl-border);
+  display: grid;
+  place-items: center;
+  color: var(--tl-fg-3);
+}
+.tl-shop-thumb .tl-shop-sk { width: 100%; height: 100%; border-radius: 0; }
+.tl-shop-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }

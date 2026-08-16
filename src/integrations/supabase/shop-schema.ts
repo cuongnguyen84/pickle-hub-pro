@@ -256,7 +256,7 @@ export interface SellerProductRow extends ProductRow {
     ProductVariantRow,
     "id" | "price_vnd" | "stock_on_hand" | "position" | "sku" | "retired_at"
   >[];
-  product_media: Pick<ProductMediaRow, "id" | "position">[];
+  product_media: Pick<ProductMediaRow, "id" | "position" | "public_path" | "draft_path">[];
 }
 
 /**

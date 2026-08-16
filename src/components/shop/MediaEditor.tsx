@@ -14,8 +14,8 @@
 
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, ImageOff, Star, Trash2, Upload, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { shopErrorMessage } from "@/lib/shop/errors";
+import { useSignedPreviews } from "@/hooks/shop/useSignedPreviews";
 import { IMAGE_LIMITS } from "@/lib/shop/imagePipeline";
 import {
   PHASE_LABEL,
@@ -40,46 +40,11 @@ import type {
   ShopMediaPurpose,
 } from "@/integrations/supabase/shop-schema";
 
-const DRAFT_BUCKET = "shop-product-media-draft";
 const ACCEPT = IMAGE_LIMITS.inputTypes.join(",");
 
 /** An icon has no text to widen the box, so a 44px target has to be asked for.
  *  .tl-shop-btn--sm is 36px tall by 40 wide once an icon is all it holds. */
 const ICON_BUTTON = { minWidth: 44, minHeight: 44 } as const;
-
-/**
- * Signed previews, in memory only.
- *
- * The draft bucket is private, so a preview needs a signed URL. They live five
- * minutes, are never persisted, and are re-minted when the media list changes.
- */
-function useSignedPreviews(paths: string[]) {
-  const [urls, setUrls] = useState<Record<string, string>>({});
-  const key = paths.join("|");
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!paths.length) {
-      setUrls({});
-      return;
-    }
-    void supabase.storage
-      .from(DRAFT_BUCKET)
-      .createSignedUrls(paths, 300)
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        const next: Record<string, string> = {};
-        for (const row of data) if (row.path && row.signedUrl) next[row.path] = row.signedUrl;
-        setUrls(next);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-
-  return urls;
-}
 
 // ─── In-flight files ────────────────────────────────────────────────────────
 
