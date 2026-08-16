@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderTournamentDetail } from "../tournaments";
+import { renderTournamentDetail, renderTournaments } from "../tournaments";
 import type { SupabaseClient } from "../../supabase";
 
 const SITE = "https://www.thepicklehub.net";
@@ -139,5 +139,66 @@ describe("renderTournamentDetail", () => {
   it("404s an unknown slug", async () => {
     const res = await renderTournamentDetail(stubClient(null), "nope", SITE);
     expect(res.status).toBe(404);
+  });
+});
+
+/**
+ * Hub-level cover for the 2026-08-16 site-audit fix: the SportsEvent graph on
+ * /tournaments must only claim an organizer we can actually source. Before the
+ * fix every curated event was hardcoded to "PPA Tour Asia", including the
+ * Heineken Pickleball World Cup in Da Nang and the Hong Kong Slam.
+ */
+describe("renderTournaments — curated SportsEvent graph", () => {
+  /** Supabase stub for the hub: from().select().in().order().limit() → { data }. */
+  function hubClient(rows: Record<string, unknown>[]): SupabaseClient {
+    const chain = {
+      select: () => chain,
+      in: () => chain,
+      order: () => chain,
+      limit: async () => ({ data: rows, error: null }),
+    };
+    return { from: () => chain } as unknown as SupabaseClient;
+  }
+
+  const sportsEvents = async (lang: "en" | "vi" = "en") => {
+    const html = await (
+      await renderTournaments(hubClient([]), SITE, lang === "vi" ? "/vi/tournaments" : "/tournaments", lang)
+    ).text();
+    const block = html.match(
+      /<script type="application\/ld\+json">([\s\S]*?)<\/script>/,
+    );
+    expect(block, "hub emitted no JSON-LD").toBeTruthy();
+    const graph = JSON.parse(block![1])["@graph"] as Record<string, unknown>[];
+    return graph.filter((n) => n["@type"] === "SportsEvent");
+  };
+
+  it("omits organizer on the events PPA Tour Asia does not organise", async () => {
+    const events = await sportsEvents();
+    for (const name of ["Heineken Pickleball World Cup", "Hong Kong Slam"]) {
+      const ev = events.find((e) => e.name === name);
+      if (!ev) continue; // already past — the hub only graphs live + upcoming
+      expect(ev.organizer, `${name} must not claim an organizer`).toBeUndefined();
+    }
+  });
+
+  it("keeps the PPA Tour Asia attribution on the Opens it does organise", async () => {
+    const events = await sportsEvents();
+    const ppa = events.filter((e) => e.organizer !== undefined);
+    for (const ev of ppa) {
+      expect(ev.organizer).toEqual({
+        "@type": "Organization",
+        name: "PPA Tour Asia",
+      });
+    }
+  });
+
+  it("never emits an empty organizer object on either locale", async () => {
+    for (const lang of ["en", "vi"] as const) {
+      for (const ev of await sportsEvents(lang)) {
+        if ("organizer" in ev) {
+          expect((ev.organizer as { name?: string })?.name).toBeTruthy();
+        }
+      }
+    }
   });
 });
