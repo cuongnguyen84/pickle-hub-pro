@@ -233,7 +233,7 @@ export default function ProductPreview({
           <p className="tl-shop-hint">
             Thông tin sản phẩm, giá và tồn kho do shop tự khai và tự chịu trách nhiệm.
             {projection.shop.verified
-              ? " Shop đã được quản trị viên xác minh giấy tờ — đây không phải cam kết chất lượng."
+              ? " Shop đã được quản trị viên xác minh (đối chiếu giấy tờ hoặc gặp trực tiếp) — đây không phải cam kết chất lượng."
               : ""}
           </p>
 

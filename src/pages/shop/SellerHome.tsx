@@ -14,14 +14,7 @@ import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell, DefList } from "@/components/shop/ShopShell";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
 import { useMyApplication, useMyShop } from "@/hooks/shop/useSellerApplication";
-
-const STATE_LABEL: Record<string, string> = {
-  pending_activation: "Chờ kích hoạt",
-  active: "Đang hoạt động",
-  restricted: "Bị hạn chế",
-  suspended: "Tạm ngưng",
-  closed: "Đã đóng",
-};
+import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
 
 export default function SellerHome() {
   const shop = useMyShop();
@@ -78,8 +71,8 @@ export default function SellerHome() {
             <div className="tl-shop-notice tl-shop-notice--warn">
               <AlertTriangle size={16} aria-hidden="true" />
               <div>
-                <strong>Shop đã mở nhưng chưa hoạt động.</strong> Chức năng đăng sản phẩm sẽ bật
-                ở giai đoạn tiếp theo — chúng tôi sẽ báo anh/chị khi sẵn sàng.
+                <strong>Shop đã mở nhưng chưa hoạt động.</strong> Quản trị viên sẽ kích hoạt sau
+                khi xác minh với anh/chị — khi shop lên công khai, chúng tôi báo trực tiếp qua Zalo.
               </div>
             </div>
           )}
@@ -87,7 +80,13 @@ export default function SellerHome() {
           {s.state === "active" && (
             <div className="tl-shop-notice tl-shop-notice--info">
               <Check size={16} aria-hidden="true" />
-              <div>Shop đang hoạt động.</div>
+              <div>
+                <strong>Shop đang hoạt động</strong> — ai cũng xem được tại{" "}
+                <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
+                  trang shop của anh/chị (mở tab mới)
+                </a>
+                . Bước tiếp theo: <Link to="/seller/products/new">đăng sản phẩm đầu tiên</Link>.
+              </div>
             </div>
           )}
 
@@ -97,7 +96,7 @@ export default function SellerHome() {
               <DefList
                 rows={[
                   ["Tên shop", s.name],
-                  ["Trạng thái", STATE_LABEL[s.state] ?? s.state],
+                  ["Trạng thái", SHOP_STATE_LABEL[s.state] ?? s.state],
                   ["Đường dẫn", `/shop/store/${s.slug}`],
                   ["Gửi hàng từ", s.city ?? "—"],
                   ["Mở shop", new Date(s.created_at).toLocaleDateString("vi-VN")],

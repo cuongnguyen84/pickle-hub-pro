@@ -74,7 +74,7 @@ export function ProductCard({ card, eager = false }: { card: Card; eager?: boole
             <>
               {" "}
               <BadgeCheck size={13} aria-hidden="true" className="tl-pcard-verified" />
-              <span className="tl-shop-sr">shop đã được xác minh giấy tờ</span>
+              <span className="tl-shop-sr">shop đã được ThePickleHub xác minh</span>
             </>
           )}
         </p>

@@ -35,6 +35,7 @@ import {
   useUpsertContact,
   type ProfilePatch,
 } from "@/hooks/shop/useShopProfile";
+import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
 import {
   CHANNEL_LABEL,
   CHANNEL_PLACEHOLDER,
@@ -59,14 +60,6 @@ const FIELD_LABEL: Record<keyof ProfilePatch, string> = {
   primary_category_slug: "Ngành hàng chính",
   shipping_note: "Thông tin giao hàng",
   return_note: "Chính sách đổi trả",
-};
-
-const STATE_LABEL: Record<string, string> = {
-  pending_activation: "Chờ kích hoạt",
-  active: "Đang hoạt động",
-  restricted: "Bị hạn chế",
-  suspended: "Tạm ngưng",
-  closed: "Đã đóng",
 };
 
 const draftFromRow = (row: ShopRow): ProfilePatch => ({
@@ -369,7 +362,7 @@ export default function SellerShopSettings() {
         <h2 id="sec-status" className="tl-shop-h2">Trạng thái</h2>
         <DefList
           rows={[
-            ["Trạng thái shop", STATE_LABEL[row.state] ?? row.state],
+            ["Trạng thái shop", SHOP_STATE_LABEL[row.state] ?? row.state],
             [
               "Xác minh",
               row.verified_at

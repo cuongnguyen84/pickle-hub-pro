@@ -10,6 +10,8 @@
 // right field, never to decide whether a row may move.
 // ============================================================================
 
+import type { ShopState } from "@/integrations/supabase/shop-schema";
+
 export type ApplicationStatus =
   | "draft"
   | "submitted"
@@ -148,6 +150,22 @@ export const SELLER_TYPE_LABEL: Record<string, string> = {
   "ca-nhan": "Cá nhân",
   "ho-kinh-doanh": "Hộ kinh doanh",
   "cong-ty": "Công ty",
+};
+
+// Exhaustive over the shop_state enum — a new state fails the typecheck here
+// instead of rendering a raw English enum on both the Seller Center and the
+// admin review screen.
+export const SHOP_STATE_LABEL: Record<ShopState, string> = {
+  pending_activation: "Chờ kích hoạt",
+  active: "Đang hoạt động",
+  restricted: "Bị hạn chế",
+  suspended: "Tạm ngưng",
+  closed: "Đã đóng",
+};
+
+export const VERIFIED_METHOD_LABEL: Record<string, string> = {
+  "gap-truc-tiep": "Gặp trực tiếp",
+  "giay-phep-kinh-doanh": "Giấy phép kinh doanh",
 };
 
 /** Deep link a moderator's request turns into for the applicant. */
