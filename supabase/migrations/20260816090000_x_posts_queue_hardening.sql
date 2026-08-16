@@ -123,6 +123,23 @@ ALTER TABLE public.x_posts
   ADD CONSTRAINT x_posts_posted_needs_id
   CHECK (status NOT IN ('posted', 'link_commented') OR x_post_id IS NOT NULL) NOT VALID;
 
+-- Money guard, not style. Since 2026-04-20 X bills a post whose text contains a
+-- URL at $0.200 per request instead of $0.015 — 13x — and the surcharge applies
+-- to a self-reply carrying the link just as much as to the original post. Only
+-- "summoned" replies (a bot answering a mention) keep the $0.01 rate, which this
+-- pipeline never produces. Posting the link as a reply therefore never saved
+-- money; it cost $0.215 per item against $0.200 for a link in the body.
+--
+-- Cuong's call on 2026-08-16: no API-posted links at all. Bodies spell the
+-- domain out instead ("thepicklehub dot net"), which X does not linkify, so
+-- every post bills at $0.015. This CHECK is what makes that real — the Worker's
+-- link-reply path stays in the code but is unreachable while it holds. Reversing
+-- the policy is DROP CONSTRAINT x_posts_no_link_url and nothing else.
+ALTER TABLE public.x_posts DROP CONSTRAINT IF EXISTS x_posts_no_link_url;
+ALTER TABLE public.x_posts
+  ADD CONSTRAINT x_posts_no_link_url
+  CHECK (link_url IS NULL) NOT VALID;
+
 ALTER TABLE public.x_posts ENABLE ROW LEVEL SECURITY;
 
 -- Admin-only. The Worker reads and writes with the service_role key, which

@@ -38,7 +38,7 @@ coordinated operation.
 | `dupr-sync` | `0 20 * * *` | Daily 03:00 ICT | Backfill rating snapshots into recent match participants. | 2026-07-15 |
 | `match-expire` | `0 21 * * *` | Daily 04:00 ICT | Expire pending match confirmations older than seven days. | 2026-07-15 |
 | `errors-telegram-alert` | `*/10 * * * *` | Every 10 min | Scan browser error spikes and run the OPS-00 cron health checks below. | 2026-07-15 |
-| pg_cron → Worker: `x-poster-drain-5min` | `*/5 * * * *` | Every 5 min | Drain the hand-approved `x_posts` queue via social-poster `/x/run`: publish at most one post (throttled to one per 90 min by the Worker) and reply the canonical link to posts already published. The fast tick is for the link reply, not the post rate. | 2026-08-16 |
+| pg_cron → Worker: `x-poster-drain-5min` | `*/5 * * * *` | Every 5 min | Drain the hand-approved `x_posts` queue via social-poster `/x/run`: publish at most one post (throttled to one per 90 min by the Worker). The link-reply pass in the same tick is dormant — `link_url` is pinned NULL by CHECK `x_posts_no_link_url` because X bills a post containing a URL at $0.200 vs $0.015. | 2026-08-16 |
 | Database retention: `dupr-webhook-events-retention-daily` | `15 19 * * *` | Daily 02:15 ICT | Delete callback-ledger rows older than 30 days; this job runs SQL directly rather than invoking an Edge Function. | 2026-07-15 |
 
 SEC-04 standardized `auto-cancel-unpaid-registrations`, `dupr-sync`,

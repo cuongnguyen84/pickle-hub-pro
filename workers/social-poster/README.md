@@ -265,9 +265,24 @@ Cuong writes/approves a row in x_posts (status='approved', English copy)
         x_posts.status = link_commented   (or posted, if no link_url)
 ```
 
-Why the link is a reply and not part of the post: the "For you" ranking weights
-reply / quote / repost far above like, and a URL in the body suppresses
-distribution. The body sells the take; the reply carries the link.
+**The link-reply pass is dormant** (2026-08-16). X bills any API-created post
+whose text contains a URL at $0.200 instead of $0.015, and a self-reply carrying
+the link is billed the same — the exemption covers only summoned replies, which
+this pipeline never makes. So replying the link cost $0.215 per item against
+$0.200 for a link in the body: it bought distribution, never savings. The
+decision was to stop posting links through the API entirely and spell the domain
+out in the body ("thepicklehub dot net"), which X does not linkify.
+
+`link_url` is pinned NULL by CHECK `x_posts_no_link_url`, so every branch below
+that mentions a link is unreachable while that constraint exists. The code is
+left in place deliberately: `DROP CONSTRAINT x_posts_no_link_url` is the whole
+of reverting the policy. `checkXBody()` independently rejects a body containing
+a URL *or* a bare domain before any request is made, so a mistake in approved
+copy costs nothing rather than 13x.
+
+The original rationale, still true and still why the body carries the take: the
+"For you" ranking weights reply / quote / repost far above like, and a URL in
+the body suppresses distribution.
 
 ### Content types
 
@@ -352,9 +367,14 @@ with no conversion path; check `link_comment_error` on those rows.
   Fallback: bỏ image_url, Worker tự fallback sang text post với link.
 - **News Group, không Page:** Worker này CHỈ post vào Page. Graph API đã
   deprecate Group posting từ 4/2024.
-- **X write budget:** the X free tier allows very few writes per month and
-  each queued row costs two (post + link reply). The 90-minute pacing gap and
-  the 3-attempt retry cap exist to keep a stuck row from eating the budget.
+- **X write cost:** pay-per-use bills $0.015 per post created, $0.200 if the
+  text contains a URL (since 2026-04-20), $0.005 per post read. With links
+  banned, one queued row is one request: **$0.015**. At the playbook's 2–4
+  posts/day that is roughly **$1.35/month**; the same volume with links would
+  be $19.35. The 90-minute pacing gap and the 3-attempt retry cap bound what a
+  stuck row can spend — worst case 3 × $0.015. Rejected 429s are not counted
+  against the retry budget, and whether X bills a rejected request at all is
+  not documented — check the first invoice.
 - **X duplicate content:** X rejects a post whose text matches a recent one
   with 403. That is not retryable — the row goes to `failed` and needs new copy.
 - **Token expiry:** Page Access Token "không hết hạn" trong 99% case, nhưng

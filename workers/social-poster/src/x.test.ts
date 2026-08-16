@@ -39,7 +39,7 @@ describe('checkXBody', () => {
   it('accepts a normal post', () => {
     const result = checkXBody('Anna Leigh Waters takes the gold in three. Again.');
     expect(result.ok).toBe(true);
-    expect(result.warning).toBeUndefined();
+    expect(result.reason).toBeUndefined();
   });
 
   it('rejects an empty body', () => {
@@ -57,12 +57,30 @@ describe('checkXBody', () => {
     expect(checkXBody('a'.repeat(280)).ok).toBe(true);
   });
 
-  it('warns but still accepts a body containing a link', () => {
-    // Links belong in the reply. This is Cuong-approved copy, so we flag it
-    // rather than silently rewriting what he signed off on.
+  // Every case below is worth $0.185 of the $0.200 link surcharge. A body that
+  // reaches X with something linkifiable in it bills 13x, and the failure is
+  // silent — the post looks fine, the invoice does not.
+  it('rejects a body containing a scheme URL', () => {
     const result = checkXBody('Recap: https://www.thepicklehub.net/blog/x');
-    expect(result.ok).toBe(true);
-    expect(result.warning).toBe('body_contains_link');
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('contains_url');
+  });
+
+  it('rejects a bare domain, which X linkifies and bills identically', () => {
+    // The trap the spell-it-out policy exists for: one character from free.
+    expect(checkXBody('Full breakdown at thepicklehub.net').reason).toBe('contains_url');
+    expect(checkXBody('Full breakdown at www.thepicklehub.net').reason).toBe('contains_url');
+  });
+
+  it('accepts the spelled-out domain', () => {
+    expect(checkXBody('Full breakdown at thepicklehub dot net').ok).toBe(true);
+  });
+
+  it('does not mistake scores, ratings or abbreviations for domains', () => {
+    // These carry dots and must stay postable, or the guard eats real copy.
+    expect(checkXBody('Ben Johns def. Federico Staksrud 11-6, 11-9.').ok).toBe(true);
+    expect(checkXBody('He plays at a 3.5 level. Two years ago: 2.5.').ok).toBe(true);
+    expect(checkXBody('Best in the U.S. this season.').ok).toBe(true);
   });
 });
 

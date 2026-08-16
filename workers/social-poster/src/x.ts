@@ -112,26 +112,39 @@ export function countXWeighted(text: string): number {
 export interface XBodyCheck {
   ok: boolean;
   weighted: number;
-  reason?: 'empty' | 'too_long';
-  warning?: 'body_contains_link';
+  reason?: 'empty' | 'too_long' | 'contains_url';
 }
 
 /**
- * Validate a queued body BEFORE burning an API call. `warning` is advisory:
- * a link in the body is against the playbook (links belong in the reply, they
- * suppress reach in the "For you" ranking) but it is Cuong's approved copy,
- * so we surface it instead of rewriting it.
+ * Anything X will turn into a t.co link, which is what the $0.200 surcharge is
+ * keyed on — NOT just strings starting with a scheme. X linkifies a bare
+ * `label.tld` too, so "thepicklehub.net" in prose bills exactly the same as
+ * "https://thepicklehub.net". That is the whole trap in the spell-the-domain
+ * policy: the cheap form ("thepicklehub dot net") and the 13x form differ by
+ * one character, and the expensive one looks completely normal in review.
+ *
+ * The TLD half requires two or more letters, so scores and ratings ("11-9",
+ * "3.5", "def. Staksrud" — space after the dot) do not match. A missing space
+ * after a sentence ("year.The next") does match; that is a typo we are happy to
+ * bounce, and every false positive fails in the direction that costs nothing.
+ */
+const URLISH = /https?:\/\/|\b[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.[a-z]{2,24}\b/i;
+
+/**
+ * Validate a queued body BEFORE burning an API call — a rejection here is free,
+ * whereas learning about it from X costs the request. Since 2026-08-16 a URL in
+ * the body is a hard failure rather than the advisory warning it used to be:
+ * links are no longer posted through the API at all (see the
+ * `x_posts_no_link_url` CHECK), so a body that contains one is either a mistake
+ * or a 13x bill nobody approved.
  */
 export function checkXBody(body: string): XBodyCheck {
   const trimmed = body.trim();
   const weighted = countXWeighted(trimmed);
   if (!trimmed) return { ok: false, weighted, reason: 'empty' };
   if (weighted > 280) return { ok: false, weighted, reason: 'too_long' };
-  return {
-    ok: true,
-    weighted,
-    ...(/https?:\/\//i.test(trimmed) ? { warning: 'body_contains_link' as const } : {}),
-  };
+  if (URLISH.test(trimmed)) return { ok: false, weighted, reason: 'contains_url' };
+  return { ok: true, weighted };
 }
 
 /**
@@ -506,7 +519,6 @@ async function publishNext(
       weighted_length: check.weighted,
       valid: check.ok,
       reason: check.reason ?? null,
-      warning: check.warning ?? null,
       link_reply: row.link_url ? buildLinkReply(row.link_url) : null,
     };
   }
