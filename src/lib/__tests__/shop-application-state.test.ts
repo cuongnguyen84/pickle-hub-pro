@@ -61,6 +61,10 @@ describe("application state machine", () => {
     expect(canPerform("approved", "submit")).toBe(false);
     expect(canPerform("approved", "decide")).toBe(false);
   });
+
+  it("an unknown action is denied, not allowed by accident", () => {
+    expect(canPerform("draft", "activate" as never)).toBe(false);
+  });
 });
 
 describe("field validation", () => {

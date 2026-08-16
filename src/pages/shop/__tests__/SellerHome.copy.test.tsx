@@ -3,7 +3,7 @@
 // notice must stop promising "giai đoạn tiếp theo" (products are live), and
 // the active notice must link the public page + the first product.
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import SellerHome from "../SellerHome";
 
@@ -17,7 +17,9 @@ vi.mock("@/hooks/shop/useSellerApplication", () => ({
 vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
 vi.mock("@/components/states/PageStates", () => ({
   LoadingState: () => <div>loading…</div>,
-  ErrorState: () => <div>error</div>,
+  ErrorState: ({ onRetry }: { onRetry?: () => void }) => (
+    <button onClick={onRetry}>error</button>
+  ),
 }));
 vi.mock("@/components/shop/ShopShell", () => ({
   ShopScrollShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -81,5 +83,43 @@ describe("active", () => {
   it("renders the shared Vietnamese state label", () => {
     mount("active");
     expect(screen.getByText("Đang hoạt động")).toBeTruthy();
+  });
+});
+
+describe("loading / error / no shop yet", () => {
+  const mountRaw = (shopValue: unknown, appValue: unknown) => {
+    myShop.mockReturnValue(shopValue);
+    myApp.mockReturnValue(appValue);
+    render(
+      <MemoryRouter>
+        <SellerHome />
+      </MemoryRouter>,
+    );
+  };
+
+  it("shows the loading state while either query is in flight", () => {
+    mountRaw({ data: null, isLoading: true, isError: false }, { data: null, isLoading: false });
+    expect(screen.getByText("loading…")).toBeTruthy();
+  });
+
+  it("shows the error state and retry refetches the shop", () => {
+    const refetch = vi.fn();
+    mountRaw({ data: null, isLoading: false, isError: true, refetch }, { data: null, isLoading: false });
+    fireEvent.click(screen.getByText("error"));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("no shop, no application → points at the registration form", () => {
+    mountRaw({ data: null, isLoading: false, isError: false }, { data: null, isLoading: false });
+    expect(screen.getByText("Chưa có hồ sơ đăng ký nào.")).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Đăng ký bán hàng" }) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/shop/sell");
+  });
+
+  it("no shop but a pending application → points at the status page", () => {
+    mountRaw({ data: null, isLoading: false, isError: false }, { data: { id: "a1" }, isLoading: false });
+    expect(screen.getByText("Hồ sơ đăng ký của anh/chị chưa được duyệt xong.")).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Xem trạng thái hồ sơ" }) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/seller/application/status");
   });
 });
