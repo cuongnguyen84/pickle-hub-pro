@@ -1473,3 +1473,34 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
    (prefers-reduced-motion is already neutralised by the block above.) */
 .tl-shop-btn:active:not(:disabled),
 .tl-shop-stat:active { transform: translateY(1px); }
+
+/* Sell landing: hero + editorial FAQ rhythm instead of six identical grey
+   boxes. Copy is untouched — only the frames changed. */
+.tl-shop-hero .tl-shop-sub { font-size: 15px; }
+@media (max-width: 559px) {
+  .tl-shop-hero .tl-shop-btn { display: flex; width: 100%; }
+}
+.tl-shop-faq { margin-top: 28px; }
+.tl-shop-faq > section { border-top: 1px solid var(--tl-border); padding: 16px 0; }
+.tl-shop-faq .tl-shop-h2 {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tl-shop-faq .tl-shop-h2 svg { color: var(--tl-fg-3); flex: none; }
+.tl-shop-faq > section > div { font-size: 13.5px; line-height: 1.55; color: var(--tl-fg-2); }
+.tl-shop-faq strong { color: var(--tl-fg); font-weight: 650; }
+/* The one deliberate point of colour: the verified-badge item. */
+.tl-shop-faq > .tl-shop-faq--verify {
+  border-left: 3px solid var(--shop-verified);
+  padding-left: 14px;
+}
+
+/* Application timeline: the step that has not happened yet — hollow dashed
+   dot, muted text, no promised date. */
+.tl-shop-timeline li.is-next::before {
+  background: transparent;
+  border: 1px dashed var(--tl-border-2);
+}
+.tl-shop-timeline li.is-next .tl-shop-timeline-what { color: var(--tl-fg-3); }
