@@ -61,11 +61,18 @@ FB_POST_WINDOW_VN = "7-21"
 GEMINI_MODEL = "gemini-flash-lite-latest"
 FB_SECONDARY_PAGE_ID = "376956272170210"
 FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"
-# X pacing. 2-4 posts/day is the playbook target and the X free tier write
-# budget is small, so the gap is deliberately much wider than Facebook's.
-# No posting window: the X account is English-language and its audience is
-# not on Vietnam hours.
-X_POST_MIN_GAP_MINUTES = "90"
+# No pacing. Cuong's call on 2026-08-17: news should reach X as it arrives, not
+# on a drip. The drain still publishes one row per tick, so the real ceiling is
+# the 5-minute cron, and the queue only ever holds genuinely new stories —
+# x-draft skips any news_item that already has an x_posts row.
+#
+# The old 90 came from a 2-4 posts/day playbook target. That target still holds
+# editorially; it is now the writer's job, not the Worker's. Raise this again if
+# a busy day ever reads as a firehose.
+#
+# No posting window either: the X account is English and its audience is not on
+# Vietnam hours.
+X_POST_MIN_GAP_MINUTES = "0"
 # Link goes in a reply, not the post body — a bare link in the body suppresses
 # reach in the "For you" ranking. Wait long enough that the reply lands after
 # the post has been distributed, short enough that early readers still see it.
