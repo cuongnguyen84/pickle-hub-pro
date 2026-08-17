@@ -1510,9 +1510,31 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   border: 1px solid color-mix(in srgb, var(--mono-accent) 45%, transparent);
 }
 
-/* Storefront header (R3): no banner — a 72px monogram, the name, and one row
-   of pills. The catalogue is the page's main character; identity stays short. */
+/* Storefront header (R3 + R5): a 72px monogram-or-logo, the name, one row of
+   pills — and, only once the seller has PUBLISHED one, a cover banner on top.
+   The catalogue is the page's main character; identity stays short. */
 .tl-shop-storehead { margin-bottom: 4px; }
+.tl-shop-storehead-cover {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--shop-radius-card);
+  background: var(--tl-surface-2);
+  margin-bottom: 12px;
+}
+@media (min-width: 768px) {
+  .tl-shop-storehead-cover { height: 160px; }
+}
+.tl-shop-storehead-logo {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--shop-radius-card);
+  border: 1px solid var(--tl-border);
+  background: var(--tl-surface-2);
+}
 .tl-shop-storehead-row {
   display: flex;
   gap: 14px;

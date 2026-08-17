@@ -9,7 +9,7 @@
 
 BEGIN;
 
-SELECT plan(73);
+SELECT plan(74);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -424,10 +424,18 @@ SELECT throws_ok(
   format($$ SELECT public.shop_profile_media_publish_commit(%L::uuid, '7d000002-0000-4000-8000-000000000002/cuop.webp') $$,
     (SELECT v FROM t_med WHERE k='cover')),
   '22023', NULL, 'đường dẫn công khai ngoài thư mục shop bị từ chối');
+-- Since 20260817090000 commit refuses everything but the row's CURRENT
+-- deterministic key (stale-plan race), so the arbitrary key this test used to
+-- pass is now itself a refusal case.
+SELECT throws_ok(
+  format($$ SELECT public.shop_profile_media_publish_commit(%L::uuid, '7d000001-0000-4000-8000-000000000001/profile/cover/public.webp') $$,
+    (SELECT v FROM t_med WHERE k='cover')),
+  '22023', NULL, 'một khoá không đúng phiên bản hiện tại cũng bị từ chối');
 SELECT ok(
   public.shop_profile_media_publish_commit((SELECT v FROM t_med WHERE k='cover'),
-    '7d000001-0000-4000-8000-000000000001/profile/cover/public.webp'),
-  'worker công bố được ảnh bìa đã xác minh');
+    (SELECT shop_id::text || '/profile/' || purpose::text || '/' || id::text || '/v' || version::text || '/live.webp'
+     FROM public.shop_profile_media WHERE id = (SELECT v FROM t_med WHERE k='cover'))),
+  'worker công bố được ảnh bìa đã xác minh — theo đúng khoá phiên bản hiện tại');
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';

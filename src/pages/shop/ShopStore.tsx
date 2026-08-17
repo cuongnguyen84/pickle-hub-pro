@@ -18,6 +18,7 @@ import { LoadingState } from "@/components/states/PageStates";
 import { usePublicSearch, usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { ResultsGrid } from "@/components/shop/CatalogResults";
 import { ShopMonogram } from "@/components/shop/ShopMonogram";
+import { publicMediaUrl } from "@/lib/shop/publicCatalog";
 import {
   CONTACT_LABEL,
   NO_CONTACT_COPY,
@@ -26,6 +27,12 @@ import {
   type PublicContact,
 } from "@/lib/shop/contactCta";
 import "@/styles/shop.css";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+
+/** focal_y arrives from the server 0..1, but the style is built here — clamp
+ *  defensively so a bad value degrades to a legal position, not broken CSS. */
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 export default function ShopStore() {
   const { slug } = useParams<{ slug: string }>();
@@ -83,8 +90,30 @@ export default function ShopStore() {
         </nav>
 
         <header className="tl-shop-storehead">
+          {/* No published cover → no banner DOM at all: the R3 layout stands
+              unchanged until the seller actually publishes one. */}
+          {shop.cover_path && (
+            <img
+              src={publicMediaUrl(SUPABASE_URL, shop.cover_path)}
+              alt=""
+              className="tl-shop-storehead-cover"
+              style={{
+                objectPosition: `50% ${clamp01(shop.cover_focal_y ?? 0.5) * 100}%`,
+              }}
+            />
+          )}
           <div className="tl-shop-storehead-row">
-            <ShopMonogram name={shop.name} size={72} />
+            {shop.logo_path ? (
+              <img
+                src={publicMediaUrl(SUPABASE_URL, shop.logo_path)}
+                alt={`Logo shop ${shop.name}`}
+                width={72}
+                height={72}
+                className="tl-shop-storehead-logo"
+              />
+            ) : (
+              <ShopMonogram name={shop.name} size={72} />
+            )}
             <div className="tl-shop-storehead-id">
               <h1 className="tl-shop-h1">{shop.name}</h1>
               <div className="tl-shop-storehead-pills">

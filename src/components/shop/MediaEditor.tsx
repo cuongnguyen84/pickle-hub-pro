@@ -29,6 +29,7 @@ import {
   moveItem,
   useDeleteProductMedia,
   useDeleteProfileMedia,
+  usePublishProfileMedia,
   useReorderProductMedia,
   useSetCoverFocal,
   useSetVariantMedia,
@@ -418,7 +419,17 @@ function ProfileSlot({
   onChanged: () => void;
 }) {
   const profile = useShopProfileMedia(shopId);
-  const upload = useMediaUpload(profileMediaTarget(shopId, purpose, onChanged));
+  const publish = usePublishProfileMedia(shopId);
+  // After a successful finalize the image is verified but still private —
+  // publish is attempted automatically, once per finished upload. A publish
+  // failure is NOT an upload failure: the row stays verified, the status
+  // below says so honestly, and Thử lại retries just the publish leg.
+  const upload = useMediaUpload(
+    profileMediaTarget(shopId, purpose, () => {
+      onChanged();
+      publish.mutate();
+    }),
+  );
   const remove = useDeleteProfileMedia(shopId);
   const setFocal = useSetCoverFocal(shopId);
   const [error, setError] = useState<string | null>(null);
@@ -474,9 +485,33 @@ function ProfileSlot({
         <p className="tl-shop-hint">Đang chờ xác minh — chưa hiển thị ra ngoài.</p>
       )}
       {row?.verified_at && !row.public_path && (
-        <p className="tl-shop-hint">
-          Đã xác minh. Ảnh sẽ hiện trên trang shop công khai khi trang đó mở.
-        </p>
+        <div style={{ marginTop: 6 }}>
+          {publish.isPending ? (
+            <p className="tl-shop-hint" role="status">
+              Đang đưa ảnh lên trang shop công khai…
+            </p>
+          ) : (
+            <>
+              <p className="tl-shop-hint">
+                Đã xác minh nhưng chưa lên trang shop công khai.
+              </p>
+              {publish.isError && (
+                <p className="tl-shop-error" role="alert">
+                  Ảnh đã tải và xác minh xong — chỉ bước đưa lên trang shop bị lỗi. Bấm thử lại.
+                </p>
+              )}
+              {!disabled && (
+                <button
+                  type="button"
+                  className="tl-shop-btn tl-shop-btn--sm"
+                  onClick={() => publish.mutate()}
+                >
+                  Đưa lên trang shop
+                </button>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       {!disabled && (
@@ -560,8 +595,8 @@ export function ShopProfileMediaSection({
         Logo &amp; ảnh bìa
       </h2>
       <p className="tl-shop-hint" style={{ marginTop: -4 }}>
-        Ảnh được nén ngay trên máy anh/chị và thông tin vị trí bị loại bỏ trước khi gửi. Trang shop
-        công khai chưa mở, nên chưa ai ngoài shop nhìn thấy.
+        Ảnh được nén ngay trên máy anh/chị và thông tin vị trí bị loại bỏ trước khi gửi. Logo và
+        ảnh bìa hiện trên trang shop công khai sau khi được xác minh và đưa lên xong.
       </p>
       <ProfileSlot shopId={shopId} purpose="logo" disabled={disabled} onChanged={onChanged} />
       <ProfileSlot shopId={shopId} purpose="cover" disabled={disabled} onChanged={onChanged} />

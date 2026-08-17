@@ -94,6 +94,39 @@ export const useDeleteProfileMedia = (shopId: string | null) => {
   });
 };
 
+/**
+ * Publish every verified logo/cover of the shop to the public bucket, via the
+ * worker that holds the only service-role over it (pattern: usePublishProduct).
+ * The plan and every path are decided in Postgres; the client only names the
+ * shop. Partial success is real success: a failed cover does not roll back a
+ * committed logo, so the result is inspected rather than assumed.
+ */
+export const usePublishProfileMedia = (shopId: string | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      // Imported lazily: client.ts creates the SDK client at module load and
+      // THROWS without env vars — a top-level import here took the whole
+      // MediaEditor test import-chain down on CI, where no .env exists.
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase.functions.invoke("shop-media-lifecycle", {
+        body: { action: "publish_profile", shop_id: shopId },
+      });
+      if (error) throw error;
+      const result = data as {
+        ok?: boolean;
+        published?: { media_id: string; target: string }[];
+        failed?: { media_id: string; error: string }[];
+      };
+      if (!result?.ok) throw new Error("publish_profile_failed");
+      return result;
+    },
+    // Settled, not just success: a partial failure still committed some rows,
+    // and the screen must show the server's truth either way.
+    onSettled: () => void qc.invalidateQueries({ queryKey: shopMediaKeys.profile(shopId) }),
+  });
+};
+
 export const useSetCoverFocal = (shopId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
