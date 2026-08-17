@@ -412,26 +412,37 @@ async function draftProTourRoundup(
       'participants:match_participants(team,position,' +
       'profile:profiles!match_participants_player_id_fkey(display_name,username))',
   );
+  // Keyed on verified_at, NOT played_at. The scraper runs daily and, for MLP
+  // Newport Beach, ran at 18:00 UTC while the matches were played 19:00-23:00 —
+  // so results land up to a day after the game. A played_at window keeps missing
+  // them: the roundup fires, the matches are inside the window but unresolved,
+  // and by the time the scores arrive the window has moved on. verified_at is
+  // when a result actually became final, which is the thing worth posting about.
   url.searchParams.set('source_provider', proTourProviderFilter());
-  url.searchParams.set('played_at', `gte.${since}`);
-  url.searchParams.set('order', 'played_at.desc');
+  url.searchParams.set('verified_at', `gte.${since}`);
+  url.searchParams.set('winning_team', 'not.is.null');
+  url.searchParams.set('order', 'verified_at.desc');
   url.searchParams.set('limit', '60');
 
   const res = await fetch(url.toString(), { headers: restHeaders(env) });
   if (!res.ok) throw new Error(`matches read failed: ${res.status} ${await res.text()}`);
   const rows = (await res.json()) as Array<RoundupMatch & { source_provider: string }>;
-  if (rows.length === 0) return { roundup: 'skipped', reason: 'no_matches_in_24h' };
+  // Nothing became final in the window. Usually a quiet day; if it persists
+  // across days while fixtures exist, the scraper is behind rather than the
+  // sport being idle, and `unresolved_and_overdue` in the database says which.
+  if (rows.length === 0) {
+    return { roundup: 'skipped', reason: 'no_results_verified_in_24h' };
+  }
 
   const text = buildRoundupBody(rows, rows.map((r) => r.source_provider));
   if (!text) {
-    // Rows exist but none render. In practice this means the scraper has the
-    // fixtures and not the results yet — winning_team null, scores all zero —
-    // which is the state Newport Beach was in on 2026-08-17. Reporting the
-    // count is what tells the difference between "quiet day" and "scraper is
-    // behind"; returning null for both made them indistinguishable.
+    // Rows came back verified but still would not render — a missing player
+    // name or an empty score array. Report the counts rather than a bare null:
+    // for a day that told the difference between "quiet" and "scraper behind"
+    // only by hand-querying the database.
     return {
       roundup: 'skipped',
-      reason: 'no_finished_results',
+      reason: 'verified_but_unrenderable',
       matches_seen: rows.length,
       with_winner: rows.filter((r) => r.winning_team === 'a' || r.winning_team === 'b').length,
     };
