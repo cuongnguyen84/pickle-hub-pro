@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildAppComment,
   buildLinkComment,
   facebookMaxItemAgeDays,
   laterOf,
@@ -70,21 +71,27 @@ describe('sanitizeCaption', () => {
   });
 });
 
-describe('buildLinkComment', () => {
+describe('post comments', () => {
   const link = 'https://www.thepicklehub.net/vi/news/abc-123';
 
-  // The caption tells readers the link is in the first comment, so it has to be
-  // there and it has to be first — the app pitch cannot push it down.
-  it('leads with the article link, then the app CTA', () => {
-    const c = buildLinkComment(link);
-    expect(c.startsWith(link)).toBe(true);
-    expect(c).toContain('Tải app ThePickleHub');
-    expect(c).toContain('apps.apple.com');
-    expect(c.indexOf(link)).toBeLessThan(c.indexOf('apps.apple.com'));
+  // Two comments, not one. Combined, Facebook rendered a single comment with two
+  // links and gave neither its own preview card.
+  it('puts the article link alone in the first comment', () => {
+    expect(buildLinkComment(link)).toBe(link);
+    expect(buildLinkComment(link)).not.toContain('apps.apple.com');
   });
 
-  it('keeps the two on separate lines so Facebook renders both as links', () => {
-    expect(buildLinkComment(link).split('\n').filter(Boolean).length).toBeGreaterThan(1);
+  it('puts the app CTA alone in the second, with no article link in it', () => {
+    const app = buildAppComment();
+    expect(app).toContain('Tải app ThePickleHub');
+    expect(app).toContain('apps.apple.com');
+    expect(app).not.toContain('/vi/news/');
+  });
+
+  // The caption promises the article link is in the FIRST comment, so the two
+  // must never be swapped.
+  it('keeps them distinct so neither can stand in for the other', () => {
+    expect(buildLinkComment(link)).not.toBe(buildAppComment());
   });
 });
 

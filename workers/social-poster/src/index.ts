@@ -40,6 +40,7 @@
 import { handleXRun, xHealth, type XRunBody } from './x';
 import { handleXDraft, type XDraftBody } from './x-draft';
 import { isPromotionalSource } from './promo-filter';
+import { notifyPosted } from './notify';
 
 export interface Env {
   // vars
@@ -59,6 +60,8 @@ export interface Env {
   FB_PAGE_ACCESS_TOKEN: string;
   FB_SECONDARY_PAGE_ACCESS_TOKEN?: string;
   GEMINI_API_KEY: string;
+  TELEGRAM_BOT_TOKEN?: string;
+  TELEGRAM_CHAT_ID?: string;
   // X (Twitter) — vars
   X_POST_MIN_GAP_MINUTES?: string;
   X_LINK_COMMENT_DELAY_SECONDS?: string;
@@ -435,6 +438,19 @@ async function processNewsItem(
     });
 
     const comment = await publishLinkComment(env, page, postedId, link);
+    // App CTA as its own comment. Best effort and untracked: the article link
+    // is the one the caption promised, and losing the pitch is not worth
+    // failing or retrying a post that is already live.
+    const appComment = await publishLinkComment(env, page, postedId, buildAppComment());
+    if (appComment.status !== 'posted') {
+      console.warn('[social-poster] app CTA comment failed:', appComment.error);
+    }
+    await notifyPosted(
+      env,
+      `Facebook · ${page.key}`,
+      item.title,
+      `https://facebook.com/${postedId}`,
+    );
     await updateLinkComment(env, page.id, item.id, comment, 1);
     return {
       posted: true,
@@ -819,15 +835,23 @@ const APP_STORE_URL =
   'https://apps.apple.com/vn/app/thepicklehub-tournaments/id6759968026?l=vi';
 
 /**
- * The first comment carries two things, in this order.
+ * Two separate comments, not one.
  *
- * The article link comes first because the caption sends people here for it —
- * "đường dẫn ở bình luận đầu tiên" — so burying it under the app pitch would
- * break the promise the post just made. The app CTA follows.
+ * They were combined at first, which meant Facebook rendered a single comment
+ * carrying two links and gave neither its own preview. Split, each gets its own
+ * card and the app pitch can be pinned or deleted without touching the article
+ * link.
+ *
+ * Order is fixed and matters: the caption tells readers the link is in the
+ * first comment — "đường dẫn ở bình luận đầu tiên" — so the article has to be
+ * comment one, and the app CTA follows it.
  */
 export function buildLinkComment(link: string): string {
+  return link;
+}
+
+export function buildAppComment(): string {
   return (
-    `${link}\n\n` +
     '📲 Tải app ThePickleHub: Tournaments để xem livestream và cập nhật tin tức ' +
     `pickleball mới nhất:\n${APP_STORE_URL}`
   );

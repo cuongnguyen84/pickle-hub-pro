@@ -27,7 +27,9 @@
  * Rows with no link_url are terminal at `posted`.
  */
 
-export interface XEnv {
+import { notifyPosted, type NotifyEnv } from './notify';
+
+export interface XEnv extends NotifyEnv {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   X_CLIENT_ID?: string;
@@ -584,11 +586,15 @@ async function publishNext(
       posted_at: new Date().toISOString(),
       error_message: null,
     });
+    const url = `https://x.com/thepicklehub/status/${publishedId}`;
+    // Announced after the row is finalized, never before: a notification for a
+    // post whose bookkeeping then failed is worse than no notification at all.
+    await notifyPosted(env, 'X · @thepicklehub', row.body.split('\n')[0], url);
     return {
       posted: true,
       post_id: row.id,
       x_post_id: publishedId,
-      url: `https://x.com/thepicklehub/status/${publishedId}`,
+      url,
       link_reply_pending: !!row.link_url,
     };
   } catch (error) {
