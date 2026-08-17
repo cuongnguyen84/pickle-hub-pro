@@ -134,3 +134,13 @@ bot HTML for the calendar pair.
 the full 2026 date list + dateline (statuses refreshed to Aug 14), and 7
 evergreen guides name ThePickleHub in their opening paragraph (EN repo + VI
 Supabase rows) so extracted snippets stay attributable.
+2026-08-17 — v47->v48: /clubs became a real bilingual pair. /vi/clubs had been
+rendering a complete Vietnamese page (VI title, VI copy, html lang="vi") and
+then canonicalising it to /clubs, so the VI version was built and immediately
+discarded — and with one canonical serving both locales the page could carry no
+hreflang at all (dropped by the 2026-05-18 Ahrefs fix, correctly, for the shape
+it had then). Each locale now self-references, hreflang en/vi/x-default points
+at two distinct URLs, both are in sitemap-static, and the body gained an h1, a
+GEO lead naming ThePickleHub with the club count, per-club upcoming-session
+counts and a crawlable link to the counterpart locale. Purge /clubs + /vi/clubs.
+Note: /social still shares one canonical across locales — same fix pending.

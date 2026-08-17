@@ -666,7 +666,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // with organizer "PPA Tour Asia" including the Heineken World Cup Da Nang
   // and the HK Slam, which neither of them organises. Purge stale bot HTML
   // for /tournaments + /vi/tournaments.
-  const cacheKey = `pr:v47:${url.pathname}`;
+  const cacheKey = `pr:v48:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

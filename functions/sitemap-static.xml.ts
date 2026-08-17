@@ -65,7 +65,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // context), so the hreflang array points every alt-lang entry at
     // the same /social or /clubs URL — same pattern as /nguoi-choi/*.
     { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/social") },
-    { loc: "/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/clubs") },
+    // 2026-08-17 — /clubs moved off the single-canonical pattern to a real
+    // bilingual pair (renderClubList now self-references each locale), so
+    // both URLs are submitted and the hreflang points at two distinct URLs.
+    // /social is unchanged and still shares one canonical — see the note
+    // above it; same fix applies there but is a separate change.
+    { loc: "/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
+    { loc: "/vi/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
     { loc: "/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/vi/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/tools/flex-tournament", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: enOnly("/tools/flex-tournament") },
