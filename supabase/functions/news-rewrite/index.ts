@@ -255,6 +255,27 @@ function rewriteSchema() {
   };
 }
 
+/**
+ * Word-count bands, per content kind AND per language.
+ *
+ * One shared band was rejecting drafts in both directions at once: English
+ * briefs came in at 109-134 against a 150 floor, Vietnamese ones at 280-354
+ * against a 250 ceiling. Seven origins were stuck on exactly this.
+ *
+ * The Vietnamese numbers are not verbosity. The counter splits on whitespace,
+ * and Vietnamese writes syllables separately — "Việt Nam" counts as two,
+ * "vận động viên" as three — so the same article measures roughly 40% higher in
+ * Vietnamese than in English. Judging both against one band guarantees that a
+ * translation pair which is correct in both languages fails in one of them.
+ *
+ * The English floor also drops to 120: a thin source honestly yields a short
+ * brief, and discarding the article entirely is worse than publishing 130 words.
+ */
+const WORD_BANDS: Record<ContentKind, Record<"en" | "vi", [number, number]>> = {
+  full: { en: [350, 800], vi: [450, 1150] },
+  brief: { en: [120, 250], vi: [170, 380] },
+};
+
 function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
   for (const [language, value] of [
     ["en", draft?.en],
@@ -288,7 +309,7 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
     // editorial target even after corrective retries. Keep a hard floor that
     // still represents a substantive article instead of failing the queue
     // indefinitely; the prompt continues to target 500–800 words.
-    const [minimum, maximum] = kind === "full" ? [350, 800] : [150, 250];
+    const [minimum, maximum] = WORD_BANDS[kind][language];
     if (words < minimum || words > maximum) {
       throw new Error(`${language} body has ${words} words; expected ${minimum}-${maximum}`);
     }

@@ -344,39 +344,6 @@
       ],
       "status": "classified"
     },
-    "ops-job-digest": {
-      "verify_jwt": false,
-      "service_role": {
-        "uses_client": true,
-        "accepts_bearer": false
-      },
-      "flows": [
-        "cron.write.cron_secret.shared_secret"
-      ],
-      "status": "classified"
-    },
-    "ops-job-control": {
-      "verify_jwt": false,
-      "service_role": {
-        "uses_client": true,
-        "accepts_bearer": false
-      },
-      "flows": [
-        "cron.write.cron_secret.shared_secret"
-      ],
-      "status": "classified"
-    },
-    "ops-edge-health": {
-      "verify_jwt": false,
-      "service_role": {
-        "uses_client": true,
-        "accepts_bearer": false
-      },
-      "flows": [
-        "cron.write.cron_secret.shared_secret"
-      ],
-      "status": "classified"
-    },
     "feed-embeds-sync": {
       "verify_jwt": false,
       "service_role": {
@@ -575,6 +542,18 @@
       ],
       "status": "classified"
     },
+    "news-repair": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": false,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified",
+      "notes": "POST only, x-auth-secret must equal CRON_SECRET. Requeues failed news_origins rows and reports to Telegram; touches no other pipeline_status."
+    },
     "news-rewrite": {
       "verify_jwt": false,
       "service_role": {
@@ -589,6 +568,18 @@
       ],
       "status": "classified",
       "notes": "Public GET is health-only; POST requires admin+AAL, service-role bearer, or cron secret."
+    },
+    "news-social-caption": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": false,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "internal_service.write.shared_secret.shared_secret"
+      ],
+      "status": "classified",
+      "notes": "Deployment alias of social-caption; both slugs use the same authenticated handler."
     },
     "news-translate": {
       "verify_jwt": false,
@@ -749,6 +740,39 @@
       ],
       "status": "classified"
     },
+    "ops-edge-health": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified"
+    },
+    "ops-job-control": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified"
+    },
+    "ops-job-digest": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified"
+    },
     "phone-otp-send": {
       "verify_jwt": false,
       "service_role": {
@@ -862,6 +886,19 @@
       ],
       "status": "classified"
     },
+    "shop-media-lifecycle": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "user.write.user_jwt.resource_scope",
+        "cron.write.cron_secret.shared_secret"
+      ],
+      "status": "classified",
+      "notes": "publish authorizes by handing the caller's JWT to product_publish_prepare (pilot + manager checked in Postgres); cleanup and reconcile are cron-only behind requireCronRequest. Sole holder of the service role over the product-media buckets."
+    },
     "social-caption": {
       "verify_jwt": false,
       "service_role": {
@@ -872,18 +909,6 @@
         "internal_service.write.shared_secret.shared_secret"
       ],
       "status": "classified"
-    },
-    "news-social-caption": {
-      "verify_jwt": false,
-      "service_role": {
-        "uses_client": false,
-        "accepts_bearer": false
-      },
-      "flows": [
-        "internal_service.write.shared_secret.shared_secret"
-      ],
-      "status": "classified",
-      "notes": "Deployment alias of social-caption; both slugs use the same authenticated handler."
     },
     "submit-match-score": {
       "verify_jwt": false,
@@ -919,19 +944,6 @@
         "cron.write.cron_secret.shared_secret"
       ],
       "status": "classified"
-    },
-    "shop-media-lifecycle": {
-      "verify_jwt": false,
-      "service_role": {
-        "uses_client": true,
-        "accepts_bearer": false
-      },
-      "flows": [
-        "user.write.user_jwt.resource_scope",
-        "cron.write.cron_secret.shared_secret"
-      ],
-      "status": "classified",
-      "notes": "publish authorizes by handing the caller's JWT to product_publish_prepare (pilot + manager checked in Postgres); cleanup and reconcile are cron-only behind requireCronRequest. Sole holder of the service role over the product-media buckets."
     }
   }
 }
