@@ -47,6 +47,7 @@ export interface Env {
   SITE_URL: string;
   FB_GRAPH_VERSION: string;
   FB_POST_MIN_GAP_MINUTES: string;
+  FB_MAX_ITEM_AGE_DAYS?: string;
   GEMINI_MODEL: string;
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
@@ -110,6 +111,29 @@ interface FacebookPage {
 // claimed it crashed/timed out before finalizing) and may be re-claimed.
 const STALE_PENDING_MS = 10 * 60 * 1000;
 const FACEBOOK_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+/**
+ * How old a news item may be and still be worth posting.
+ *
+ * Not a preference — a defect fix. The queue is fed by news-rewrite, and
+ * recovering a failed origin creates a *new* news_items row carrying the
+ * *original* published_at. So repairing a week-old article manufactures a
+ * fresh-looking candidate for a stale story, and on 2026-08-17 that put
+ * 7-to-10-day-old posts on both pages: rows created at 11:30 today for
+ * articles published on the 7th.
+ *
+ * A one-off sweep cannot hold this, because the next repair run creates more.
+ * The filter has to live at selection time, which is here.
+ */
+/** The later of a page's start date and the staleness cutoff; either may be null. */
+export function laterOf(startAt: string | null, ageCutoff: string): string {
+  return startAt && startAt > ageCutoff ? startAt : ageCutoff;
+}
+
+export function facebookMaxItemAgeDays(env: Env): number {
+  const raw = Number(env.FB_MAX_ITEM_AGE_DAYS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 3;
+}
+
 const FACEBOOK_START_HOUR = 7;
 const FACEBOOK_END_HOUR = 20;
 
@@ -562,7 +586,13 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
-  if (page.startAt) url.searchParams.set('published_at', `gte.${page.startAt}`);
+  // published_at has two lower bounds: when this page started posting at all,
+  // and how stale an article may be. Take the later of the two.
+  const ageCutoff = new Date(
+    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
+  ).toISOString();
+  const floor = laterOf(page.startAt, ageCutoff);
+  url.searchParams.set('published_at', `gte.${floor}`);
   url.searchParams.set('order', 'importance.desc,published_at.desc');
   url.searchParams.set('limit', String(scanLimit));
   const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
