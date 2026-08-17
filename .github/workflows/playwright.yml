@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # 22, exactly: supabase-js needs native WebSocket (Node 22+) for the
           # auth session-mint helper, and node 24 broke loading that same
