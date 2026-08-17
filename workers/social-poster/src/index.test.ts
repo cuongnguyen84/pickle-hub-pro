@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildLinkComment,
   isFacebookPostingWindow,
   pickNextId,
   pickNextScanLimit,
@@ -64,5 +65,23 @@ describe('isFacebookPostingWindow', () => {
 describe('sanitizeCaption', () => {
   it('passes plain captions through', () => {
     expect(sanitizeCaption('Pickleball VN thắng lớn!')).toBe('Pickleball VN thắng lớn!');
+  });
+});
+
+describe('buildLinkComment', () => {
+  const link = 'https://www.thepicklehub.net/vi/news/abc-123';
+
+  // The caption tells readers the link is in the first comment, so it has to be
+  // there and it has to be first — the app pitch cannot push it down.
+  it('leads with the article link, then the app CTA', () => {
+    const c = buildLinkComment(link);
+    expect(c.startsWith(link)).toBe(true);
+    expect(c).toContain('Tải app ThePickleHub');
+    expect(c).toContain('apps.apple.com');
+    expect(c.indexOf(link)).toBeLessThan(c.indexOf('apps.apple.com'));
+  });
+
+  it('keeps the two on separate lines so Facebook renders both as links', () => {
+    expect(buildLinkComment(link).split('\n').filter(Boolean).length).toBeGreaterThan(1);
   });
 });

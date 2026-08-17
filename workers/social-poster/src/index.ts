@@ -324,7 +324,7 @@ async function processNewsItem(
       link,
       caption,
       fb_payload: fbPayload,
-      first_comment: link,
+      first_comment: buildLinkComment(link),
     };
   }
 
@@ -785,6 +785,24 @@ interface LinkCommentResult {
   error?: string;
 }
 
+const APP_STORE_URL =
+  'https://apps.apple.com/vn/app/thepicklehub-tournaments/id6759968026?l=vi';
+
+/**
+ * The first comment carries two things, in this order.
+ *
+ * The article link comes first because the caption sends people here for it —
+ * "đường dẫn ở bình luận đầu tiên" — so burying it under the app pitch would
+ * break the promise the post just made. The app CTA follows.
+ */
+export function buildLinkComment(link: string): string {
+  return (
+    `${link}\n\n` +
+    '📲 Tải app ThePickleHub: Tournaments để xem livestream và cập nhật tin tức ' +
+    `pickleball mới nhất:\n${APP_STORE_URL}`
+  );
+}
+
 async function publishLinkComment(
   env: Env,
   page: FacebookPage,
@@ -793,7 +811,7 @@ async function publishLinkComment(
 ): Promise<LinkCommentResult> {
   const url = `https://graph.facebook.com/${env.FB_GRAPH_VERSION}/${postId}/comments`;
   const form = new URLSearchParams({
-    message: link,
+    message: buildLinkComment(link),
     access_token: page.accessToken,
   });
   try {
