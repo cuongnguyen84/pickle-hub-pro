@@ -58,6 +58,11 @@ FB_POST_MIN_GAP_MINUTES = "15"
 # drained by the catchup cron next morning. Manual /run with news_item_id
 # bypasses this window.
 FB_POST_WINDOW_VN = "7-21"
+# How stale an article may be and still be posted. Repairing a failed origin
+# creates a NEW news_items row carrying the ORIGINAL published_at, so without
+# this a recovery run manufactures fresh-looking candidates for week-old
+# stories — which is what put 7-to-10-day-old posts on both pages on 17/08.
+FB_MAX_ITEM_AGE_DAYS = "3"
 GEMINI_MODEL = "gemini-flash-lite-latest"
 FB_SECONDARY_PAGE_ID = "376956272170210"
 FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"

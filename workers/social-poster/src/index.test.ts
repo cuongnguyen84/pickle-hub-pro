@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildLinkComment,
+  facebookMaxItemAgeDays,
+  laterOf,
   isFacebookPostingWindow,
   pickNextId,
   pickNextScanLimit,
@@ -83,5 +85,23 @@ describe('buildLinkComment', () => {
 
   it('keeps the two on separate lines so Facebook renders both as links', () => {
     expect(buildLinkComment(link).split('\n').filter(Boolean).length).toBeGreaterThan(1);
+  });
+});
+
+describe('Facebook staleness floor', () => {
+  it('defaults to 3 days and honours the env override', () => {
+    expect(facebookMaxItemAgeDays({} as never)).toBe(3);
+    expect(facebookMaxItemAgeDays({ FB_MAX_ITEM_AGE_DAYS: '7' } as never)).toBe(7);
+    expect(facebookMaxItemAgeDays({ FB_MAX_ITEM_AGE_DAYS: 'nonsense' } as never)).toBe(3);
+    expect(facebookMaxItemAgeDays({ FB_MAX_ITEM_AGE_DAYS: '0' } as never)).toBe(3);
+  });
+
+  // A page that joined recently must not suddenly reach back past its own start
+  // date just because the staleness window is wider than its history.
+  it('takes whichever bound is later', () => {
+    const cutoff = '2026-08-14T00:00:00Z';
+    expect(laterOf('2026-07-31T00:00:00Z', cutoff)).toBe(cutoff);
+    expect(laterOf('2026-08-16T00:00:00Z', cutoff)).toBe('2026-08-16T00:00:00Z');
+    expect(laterOf(null, cutoff)).toBe(cutoff);
   });
 });
