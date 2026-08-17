@@ -21,12 +21,20 @@
 // PWAs on offline launch).
 //
 // Env:
-//   BUNDLE_BUDGET_KB           total-gz backstop (default 1970)
 //   BUNDLE_CODE_BUDGET_KB      CODE budget (default 1800)
 //   BUNDLE_INITIAL_BUDGET_KB   INITIAL budget (default 280)
+//   BUNDLE_CONTENT_BUDGET_KB   CONTENT aggregate budget (default 600)
 //   BUNDLE_CONTENT_CHUNK_KB    per blog-post chunk cap (default 20)
 //   BUNDLE_STRICT              "1" => exit 1 on any breach
 //
+// Total gz JS is REPORTED but not enforced (DEBT-01, decided 2026-08-17).
+// It summed CODE + CONTENT, so every published blog post consumed backstop
+// headroom that no user ever downloads on any single request — blog chunks are
+// lazy per slug. Two EN posts took it from 1962.9 to 1979.3 KB and turned the
+// gate red for unrelated commits. CONTENT now has its own aggregate budget
+// below, so nothing is left unguarded; CODE and INITIAL still gate real
+// first-paint and app-code regressions.
+
 // Run after `npm run build`. Usage: node scripts/check-bundle-size.mjs
 // ============================================================================
 
@@ -35,9 +43,9 @@ import { gzipSync } from "node:zlib";
 import { join, dirname, resolve } from "node:path";
 
 const BUDGETS = {
-  total: Number(process.env.BUNDLE_BUDGET_KB || 1970),
   code: Number(process.env.BUNDLE_CODE_BUDGET_KB || 1800),
   initial: Number(process.env.BUNDLE_INITIAL_BUDGET_KB || 280),
+  content: Number(process.env.BUNDLE_CONTENT_BUDGET_KB || 600),
   contentChunk: Number(process.env.BUNDLE_CONTENT_CHUNK_KB || 20),
 };
 const STRICT = process.env.BUNDLE_STRICT === "1";
@@ -142,8 +150,8 @@ function main() {
     "",
     `**INITIAL (first-paint) gz: ${kb(totals.initial)} KB** / budget ${BUDGETS.initial} KB — ${initialRows.length} critical-path requests`,
     `**CODE gz: ${kb(totals.code)} KB** / budget ${BUDGETS.code} KB`,
-    `**CONTENT (blog) gz: ${kb(totals.content)} KB** across ${contentRows.length} chunks (cap ${BUDGETS.contentChunk} KB each)`,
-    `**Total gz JS: ${kb(totals.total)} KB** / backstop ${BUDGETS.total} KB`,
+    `**CONTENT (blog) gz: ${kb(totals.content)} KB** / budget ${BUDGETS.content} KB across ${contentRows.length} chunks (cap ${BUDGETS.contentChunk} KB each)`,
+    `**Total gz JS: ${kb(totals.total)} KB** (reported, not enforced — see DEBT-01)`,
   ];
   console.log(lines.join("\n"));
   if (process.env.GITHUB_STEP_SUMMARY) {
@@ -159,8 +167,8 @@ function main() {
     breaches.push(`INITIAL ${kb(totals.initial)} KB > ${BUDGETS.initial} KB`);
   if (totals.code > BUDGETS.code * 1024)
     breaches.push(`CODE ${kb(totals.code)} KB > ${BUDGETS.code} KB`);
-  if (totals.total > BUDGETS.total * 1024)
-    breaches.push(`Total ${kb(totals.total)} KB > backstop ${BUDGETS.total} KB`);
+  if (totals.content > BUDGETS.content * 1024)
+    breaches.push(`CONTENT ${kb(totals.content)} KB > ${BUDGETS.content} KB`);
   for (const r of contentRows)
     if (r.gz > BUDGETS.contentChunk * 1024)
       breaches.push(`content chunk ${r.file} ${kb(r.gz)} KB > ${BUDGETS.contentChunk} KB`);
@@ -207,9 +215,9 @@ function main() {
   // Headroom early-warning (proposal rankings-dupr-wpr-tabs, pre-mortem #3):
   // a PR that lands green with <5% headroom left silently books the red gate
   // for whichever unrelated PR comes next. Advisory only — never blocks.
-  const headroom = BUDGETS.total * 1024 - totals.total;
-  if (headroom > 0 && headroom < BUDGETS.total * 1024 * 0.05) {
-    console.warn(`⚠ Total headroom low: ${kb(headroom)} KB left of ${BUDGETS.total} KB backstop (<5%) — the next PR pays for this one`);
+  const headroom = BUDGETS.code * 1024 - totals.code;
+  if (headroom > 0 && headroom < BUDGETS.code * 1024 * 0.05) {
+    console.warn(`⚠ CODE headroom low: ${kb(headroom)} KB left of ${BUDGETS.code} KB budget (<5%) — the next PR pays for this one`);
   }
 
   if (breaches.length) {

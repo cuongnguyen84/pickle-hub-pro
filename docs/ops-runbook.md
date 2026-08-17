@@ -282,8 +282,10 @@ least yearly; record each run here.
   modulepreloads + their recursive static imports). Catches a lazy chunk
   silently going eager (the recharts bug class).
 - **CODE** ≤ 1800 KB — all JS except `blog-post-*` chunks.
-- **CONTENT** — blog-post chunks, per-chunk cap 20 KB.
-- Total backstop 1970 KB, ratchets DOWN only.
+- **CONTENT** — blog-post chunks, aggregate ≤ 600 KB plus a 20 KB per-chunk cap.
+- Total gz JS is reported but **not** enforced since DEBT-01 (17/8/2026): it
+  summed CODE + lazily-loaded blog content, so publishing posts turned the
+  gate red instead of real regressions. CODE and INITIAL still ratchet DOWN only.
 
 STRICT mode also asserts every initial-load chunk matches a PWA precache
 glob (a boot-critical chunk missing from precache bricks installed PWAs
