@@ -409,6 +409,89 @@ describe("stripJpegMetadata — what WebKit adds, the worker refuses", () => {
     expect(inspectJpeg(clean)).toEqual({ ok: true, width: 32, height: 32 });
   });
 
+  it("does not stop at a marker that carries no length", () => {
+    // TEM/RSTn are one marker and nothing else. Reading a length after one
+    // walks into the next segment's bytes and aborts the walk — which ships
+    // the Exif that this whole file exists to remove.
+    const app0 = seg(0xe0, [...ascii("JFIF"), 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]);
+    const structure = [
+      ...seg(0xdb, Array(65).fill(1)),
+      ...seg(0xc0, [8, 0, 32, 0, 32, 1, 0x11, 0x11, 0]), // SOF0 32×32
+      ...seg(0xda, [1, 1, 0, 0, 63, 0]), // SOS
+      0x77,
+      0xff, 0xd9,
+    ];
+    const dirty = new Uint8Array([
+      0xff, 0xd8,
+      ...app0,
+      0xff, 0x01, // TEM — standalone
+      ...seg(0xe1, [...ascii("Exif"), 0, 0]),
+      ...structure,
+    ]);
+
+    const clean = stripJpegMetadata(dirty);
+
+    expect(Array.from(clean)).toEqual([0xff, 0xd8, ...app0, 0xff, 0x01, ...structure]);
+    expect(inspectJpeg(clean)).toEqual({ ok: true, width: 32, height: 32 });
+  });
+
+  it("still strips when the file ends at EOI without ever reaching a scan", () => {
+    // Not a photo, but it is a file the walk must finish rather than abandon
+    // half-copied: the rebuild only happens after the loop, so an EOI treated
+    // as a length-carrying segment would truncate the output.
+    const app0 = seg(0xe0, [...ascii("JFIF"), 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]);
+    const dirty = new Uint8Array([
+      0xff, 0xd8,
+      ...app0,
+      ...seg(0xe1, [...ascii("Exif"), 0, 0]),
+      0xff, 0xd9,
+    ]);
+
+    expect(Array.from(stripJpegMetadata(dirty))).toEqual([0xff, 0xd8, ...app0, 0xff, 0xd9]);
+  });
+
+  // The three ways the walk can fail, each with a segment ALREADY dropped
+  // before it fails: that is the state where giving up has to mean "hand the
+  // encoder's bytes back", not "write out what we kept so far" — which would
+  // upload a file missing everything after the point we lost the thread.
+  const app0 = () => seg(0xe0, [...ascii("JFIF"), 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]);
+  const exif = () => seg(0xe1, [...ascii("Exif"), 0, 0]);
+
+  it("hands back the original when a byte where a marker belongs is not FF", () => {
+    const broken = new Uint8Array([
+      0xff, 0xd8,
+      ...exif(),
+      ...app0(),
+      0x00, // where FF should be
+      ...seg(0xdb, Array(65).fill(1)),
+      0xff, 0xd9,
+    ]);
+
+    expect(stripJpegMetadata(broken)).toBe(broken);
+  });
+
+  it("hands back the original when the file ends inside a run of fill bytes", () => {
+    const broken = new Uint8Array([
+      0xff, 0xd8,
+      ...exif(),
+      ...app0(),
+      0xff, 0xff, // fill, then nothing
+    ]);
+
+    expect(stripJpegMetadata(broken)).toBe(broken);
+  });
+
+  it("hands back the original when a segment header is cut off mid-length", () => {
+    const broken = new Uint8Array([
+      0xff, 0xd8,
+      ...exif(),
+      ...app0(),
+      0xff, 0xdb, // DQT with no length bytes at all
+    ]);
+
+    expect(stripJpegMetadata(broken)).toBe(broken);
+  });
+
   it("hands back the original file when a segment length is impossible", () => {
     // len < 2 cannot include its own two length bytes. Rewriting a file we
     // cannot parse is how a working photo becomes a corrupt one — the upload

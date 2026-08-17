@@ -14,10 +14,26 @@
 // ============================================================================
 
 import { describe, expect, it } from "vitest";
-import { edgeError, edgeErrorMessage } from "../errors";
+import { edgeError, edgeErrorMessage, shopErrorMessage } from "../errors";
 
 const res = (body: unknown, status: number) =>
   new Response(typeof body === "string" ? body : JSON.stringify(body), { status });
+
+describe("shopErrorMessage — the codes PostgREST answers in English", () => {
+  // Postgres raises these three in English, so nothing the seller reads can
+  // come from the raw message: each one has to be recognised by code and
+  // answered with the next step, in Vietnamese.
+  it.each([
+    ["23505", /đã có nơi khác dùng/i],
+    ["23514", /giá, tồn kho/i],
+    ["PGRST116", /không tìm thấy bản ghi/i],
+  ])("turns %s into something a seller can act on", (code, expected) => {
+    const out = shopErrorMessage({ code, message: "duplicate key value violates unique constraint" });
+    expect(out).toMatch(expected);
+    // The constraint name is a schema disclosure and means nothing to a seller.
+    expect(out).not.toContain("constraint");
+  });
+});
 
 describe("edgeErrorMessage — reading the worker's answer", () => {
   it("pulls the reason out of failed[] when the worker half-published", async () => {

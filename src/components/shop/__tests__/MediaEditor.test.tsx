@@ -107,6 +107,19 @@ const item = (over: Partial<UploadItem> = {}): UploadItem => ({
   ...over,
 });
 
+/** A logo or cover the worker has verified but nobody has published yet. */
+const verifiedRow = (purpose: "logo" | "cover") => ({
+  id: `pm-${purpose}`,
+  shop_id: "shop-1",
+  purpose,
+  draft_path: `shop-1/profile/${purpose}/pm/v1/original`,
+  rendition_source_path: `shop-1/profile/${purpose}/pm/v1/rendition.webp`,
+  public_path: null,
+  focal_y: 0.5,
+  version: 1,
+  verified_at: "2026-08-17T00:00:00Z",
+});
+
 const onChanged = vi.fn();
 
 const renderProduct = (over: Partial<Parameters<typeof ProductMediaSection>[0]> = {}) => {
@@ -190,6 +203,19 @@ describe("reordering photos", () => {
     expect(rpcCall("product_media_reorder")![1]._media_ids).toEqual(["m3", "m1", "m2"]);
   });
 
+  it("sends the list moved down when the down arrow is pressed", () => {
+    renderProduct();
+
+    fireEvent.click(screen.getByLabelText("Chuyển ảnh 1 xuống sau"));
+
+    return waitFor(() =>
+      // Down from index 0 is not "up from index 1 with the arguments swapped":
+      // the same wrong pair would satisfy the up-arrow test and silently move
+      // the wrong photo here.
+      expect(rpcCall("product_media_reorder")![1]._media_ids).toEqual(["m2", "m1", "m3"]),
+    );
+  });
+
   it("sends nothing at the ends of the list", () => {
     renderProduct();
 
@@ -270,6 +296,19 @@ describe("assigning a photo to a variant", () => {
 
     await waitFor(() => expect(rpcCall("product_variant_set_media")).toBeTruthy());
     expect(rpcCall("product_variant_set_media")![1]).toEqual({ _variant_id: "v1", _media_id: null });
+  });
+
+  it("says why the assignment did not stick instead of showing the new choice", async () => {
+    // The select is uncontrolled between renders, so a silent failure leaves it
+    // showing a photo the variant is not actually using.
+    shopRpc.mockRejectedValue({ code: "PT409" });
+    renderProduct();
+
+    fireEvent.change(screen.getByLabelText("Đen"), { target: { value: "m3" } });
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Bản ghi vừa được cập nhật ở nơi khác"),
+    );
   });
 
   it("is not offered for a product with one variant or no photos", () => {
@@ -423,18 +462,6 @@ describe("the shop logo and cover are one component with two purposes", () => {
 // ─── Publishing the logo and cover (round 5) ────────────────────────────────
 
 describe("publishing the logo and cover", () => {
-  const verifiedRow = (purpose: "logo" | "cover") => ({
-    id: `pm-${purpose}`,
-    shop_id: "shop-1",
-    purpose,
-    draft_path: `shop-1/profile/${purpose}/pm/v1/original`,
-    rendition_source_path: `shop-1/profile/${purpose}/pm/v1/rendition.webp`,
-    public_path: null,
-    focal_y: 0.5,
-    version: 1,
-    verified_at: "2026-08-17T00:00:00Z",
-  });
-
   it("attempts publish automatically once, right after a finalize settles", async () => {
     renderProfile();
 
@@ -640,6 +667,24 @@ describe("publishing the logo and cover", () => {
     expect(screen.queryByText(/Mã lỗi:/)).toBeNull();
   });
 
+  it("does not call a 200 that says ok:false a success", async () => {
+    profileRows = [verifiedRow("logo")];
+    // No `error` at all — a body the SDK is happy with. Trusting the status
+    // here is how a photo that was never copied reads as published.
+    functionsInvoke.mockResolvedValue({
+      data: { ok: false, published: [], failed: [{ media_id: "pm-logo", error: "rendition_too_large" }] },
+      error: null,
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Thử chọn ảnh khác"),
+    );
+    expect(screen.getByText("200 · rendition_too_large")).toBeTruthy();
+  });
+
   it("never hides the button while the call is in flight", async () => {
     profileRows = [verifiedRow("logo")];
     // A request that never settles — the state that used to leave the seller
@@ -654,6 +699,59 @@ describe("publishing the logo and cover", () => {
       expect(button.disabled).toBe(true);
     });
     expect(screen.getByRole("status").textContent).toContain("Đang đưa ảnh lên trang shop");
+  });
+});
+
+// ─── Replacing and reframing the shop's own photos ──────────────────────────
+
+describe("removing and reframing the logo and cover", () => {
+  it("deletes the row of the slot whose button was pressed", async () => {
+    // Only the logo exists, so only one Xoá is on screen — and it must carry
+    // the logo's id: the cover is one row away in the same table.
+    profileRows = [verifiedRow("logo")];
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Xoá/ }));
+
+    await waitFor(() => expect(rpcCall("shop_profile_media_delete")).toBeTruthy());
+    expect(rpcCall("shop_profile_media_delete")![1]).toEqual({ _media_id: "pm-logo" });
+  });
+
+  it("says why a delete was refused instead of leaving the photo looking gone", async () => {
+    profileRows = [verifiedRow("logo")];
+    shopRpc.mockRejectedValue({ code: "42501" });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Xoá/ }));
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("alert").some((el) => el.textContent?.includes("không có quyền")),
+      ).toBe(true),
+    );
+  });
+
+  it("sends the cover framing as a fraction, not the percent on the label", async () => {
+    // The slider is 0–100 and the column is 0–1. Sending 80 stores a focal
+    // point far outside the image and the shop header renders blank.
+    profileRows = [verifiedRow("cover")];
+    renderProfile();
+
+    fireEvent.change(await screen.findByLabelText(/Vị trí khung ảnh/), { target: { value: "80" } });
+
+    await waitFor(() => expect(rpcCall("shop_profile_media_set_focal")).toBeTruthy());
+    expect(rpcCall("shop_profile_media_set_focal")![1]).toEqual({
+      _media_id: "pm-cover",
+      _focal_y: 0.8,
+    });
+  });
+
+  it("clears a finished upload card once the server row is there", async () => {
+    profileRows = [verifiedRow("logo")];
+    uploadHandle.items = [item({ phase: "complete" })];
+    renderProfile();
+
+    await waitFor(() => expect(uploadHandle.clearComplete).toHaveBeenCalled());
   });
 });
 
