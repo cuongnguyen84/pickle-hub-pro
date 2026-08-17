@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 51 post objects at worker
+// a static import list would construct all 53 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -45,8 +45,10 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-tournament-budget-calculator-guide": () => import("./pickleball-tournament-budget-calculator-guide"),
   "pickleball-tournament-formats-explained": () => import("./pickleball-tournament-formats-explained"),
   "pickleball-vs-padel-vs-paddle-tennis": () => import("./pickleball-vs-padel-vs-paddle-tennis"),
+  "pickleball-warm-up-injury-prevention": () => import("./pickleball-warm-up-injury-prevention"),
   "pickleball-world-cup-2026-da-nang": () => import("./pickleball-world-cup-2026-da-nang"),
   "pickleball-world-cup-2026-da-nang-how-to-watch": () => import("./pickleball-world-cup-2026-da-nang-how-to-watch"),
+  "pickleball-world-cup-2026-group-a-vietnam": () => import("./pickleball-world-cup-2026-group-a-vietnam"),
   "ppa-beijing-open-2026-recap": () => import("./ppa-beijing-open-2026-recap"),
   "ppa-tour-asia-2026-complete-guide": () => import("./ppa-tour-asia-2026-complete-guide"),
   "ppa-tour-asia-2026-recap": () => import("./ppa-tour-asia-2026-recap"),
