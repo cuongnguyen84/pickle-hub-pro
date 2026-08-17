@@ -149,6 +149,47 @@ describe('isPromotionalSource', () => {
     expect(isPromotionalSource(title, summary as string | null)).toBe(true);
   });
 
+  // The one that actually reached the queue on 2026-08-17 and had to be
+  // deleted by hand. It matched none of the original sponsorship patterns.
+  it('blocks the paddle release that got through the first version', () => {
+    expect(
+      isPromotionalSource(
+        'Six Zero Expands Gemstone Paddle Line With Boulder Opal Release',
+        null,
+        'The Dink Pickleball',
+        'equipment',
+      ),
+    ).toBe(true);
+    // ...and still blocks it with the category stripped, via the gear patterns,
+    // because 256 of 392 rows in the feed carry no category at all.
+    expect(
+      isPromotionalSource(
+        'Six Zero Expands Gemstone Paddle Line With Boulder Opal Release',
+        null,
+      ),
+    ).toBe(true);
+  });
+
+  it('blocks the business-category brand tour', () => {
+    expect(
+      isPromotionalSource(
+        'PB5star Launches Cross-Country Road Trip to Promote Pickleball Brand',
+        null,
+        null,
+        'business',
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps the categories that are instructional rather than commercial', () => {
+    expect(isPromotionalSource('Mastering Connected Shot Sequences', null, null, 'community'))
+      .toBe(false);
+    expect(isPromotionalSource('Elevating Pickleball IQ', null, null, 'player')).toBe(false);
+    expect(
+      isPromotionalSource('Thrilling DreamBreakers Highlight MLP Playoffs', null, null, 'tournament'),
+    ).toBe(false);
+  });
+
   it('lets real reporting through, including the word "announced"', () => {
     expect(isPromotionalSource('Johns beats Staksrud in Hong Kong final', null)).toBe(false);
     expect(isPromotionalSource('MLP announced the playoff schedule', null)).toBe(false);
