@@ -445,12 +445,12 @@ async function processNewsItem(
     if (appComment.status !== 'posted') {
       console.warn('[social-poster] app CTA comment failed:', appComment.error);
     }
-    await notifyPosted(
-      env,
-      `Facebook · ${page.key}`,
-      item.title,
-      `https://facebook.com/${postedId}`,
-    );
+    await notifyPosted(env, {
+      platform: 'Facebook',
+      account: page.key,
+      body: item.title,
+      url: `https://facebook.com/${postedId}`,
+    });
     await updateLinkComment(env, page.id, item.id, comment, 1);
     return {
       posted: true,

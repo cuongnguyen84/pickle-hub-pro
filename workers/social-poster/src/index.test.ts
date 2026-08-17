@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildPostedMessage } from './notify';
 import {
   buildAppComment,
   buildLinkComment,
@@ -110,5 +111,42 @@ describe('Facebook staleness floor', () => {
     expect(laterOf('2026-07-31T00:00:00Z', cutoff)).toBe(cutoff);
     expect(laterOf('2026-08-16T00:00:00Z', cutoff)).toBe('2026-08-16T00:00:00Z');
     expect(laterOf(null, cutoff)).toBe(cutoff);
+  });
+});
+
+describe('Telegram post notice', () => {
+  const notice = {
+    platform: 'X',
+    account: '@thepicklehub',
+    body: 'Waters & Khlif were down 0-6 <b>and</b> won it 15-13.',
+    url: 'https://x.com/thepicklehub/status/123',
+  };
+
+  // The first roundup posted to X reads "Waters & Khlif". Telegram parses the
+  // message as HTML, so that one ampersand returns 400 and the notification
+  // vanishes — silently, because notifyPosted swallows failures.
+  it('escapes HTML so an ampersand in the post cannot kill the message', () => {
+    const m = buildPostedMessage(notice);
+    expect(m).toContain('Waters &amp; Khlif');
+    expect(m).toContain('&lt;b&gt;and&lt;/b&gt;');
+    expect(m).not.toContain('<b>and</b>');
+  });
+
+  it('keeps its own markup working while escaping the content', () => {
+    const m = buildPostedMessage(notice);
+    expect(m).toContain('<b>Đã đăng lên X</b>');
+  });
+
+  it('names the platform and the account, and ends with the link', () => {
+    const m = buildPostedMessage(notice);
+    expect(m).toContain('@thepicklehub');
+    expect(m.trim().endsWith('https://x.com/thepicklehub/status/123')).toBe(true);
+  });
+
+  it('escapes a Facebook headline the same way', () => {
+    const m = buildPostedMessage({ ...notice, platform: 'Facebook', account: 'TA Pickleball',
+      body: 'Dallas & Brooklyn vào bán kết' });
+    expect(m).toContain('Dallas &amp; Brooklyn');
+    expect(m).toContain('<b>Đã đăng lên Facebook</b> — TA Pickleball');
   });
 });
