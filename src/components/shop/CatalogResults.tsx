@@ -10,7 +10,7 @@
 // actually failed stops looking — the P2a lesson, on a buyer surface now.
 // ============================================================================
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, SlidersHorizontal } from "lucide-react";
 import type { PublicCategory, ProductCard as Card } from "@/hooks/shop/usePublicShop";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
@@ -209,6 +209,8 @@ export function ResultsGrid({
   onRetry,
   emptyTitle,
   emptyBody,
+  emptyIcon,
+  emptyAction,
   onClearFilters,
 }: {
   rows: Card[];
@@ -218,6 +220,10 @@ export function ResultsGrid({
   onRetry: () => void;
   emptyTitle: string;
   emptyBody?: string;
+  /** Decorative lucide icon above the empty title (28px, aria-hidden). */
+  emptyIcon?: ReactNode;
+  /** One extra line/CTA under the empty body — a prop, not a fork. */
+  emptyAction?: ReactNode;
   onClearFilters?: () => void;
 }) {
   if (isLoading) {
@@ -248,6 +254,7 @@ export function ResultsGrid({
   if (rows.length === 0) {
     return (
       <div className="tl-shop-empty">
+        {emptyIcon}
         <p className="tl-shop-empty-title">{emptyTitle}</p>
         {emptyBody && <p className="tl-shop-hint">{emptyBody}</p>}
         {onClearFilters && (
@@ -255,6 +262,7 @@ export function ResultsGrid({
             Bỏ bộ lọc
           </button>
         )}
+        {emptyAction}
       </div>
     );
   }
@@ -265,13 +273,19 @@ export function ResultsGrid({
     <>
       <p className="tl-shop-hint" role="status" style={{ marginTop: 0 }}>
         {total} sản phẩm
-        {mood === "sparse" && " — sàn đang ở giai đoạn thử nghiệm, đây là toàn bộ những gì đang bán."}
       </p>
       <ul className="tl-pgrid">
         {rows.map((c, i) => (
           <li key={c.id}><ProductCard card={c} eager={i < 4} /></li>
         ))}
       </ul>
+      {/* The honest-sparse sentence, verbatim, AFTER the grid — the products
+          are the page's main character, the caveat is a footnote. */}
+      {mood === "sparse" && (
+        <p className="tl-shop-hint">
+          Sàn đang ở giai đoạn thử nghiệm — đây là toàn bộ những gì đang bán.
+        </p>
+      )}
     </>
   );
 }

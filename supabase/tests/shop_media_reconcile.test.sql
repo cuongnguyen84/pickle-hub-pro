@@ -20,7 +20,7 @@
 
 BEGIN;
 
-SELECT plan(17);
+SELECT plan(19);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -130,6 +130,9 @@ VALUES
   ('shop-product-media', 'b1300002-0000-4000-8000-0000000000b2/b1300004-0000-4000-8000-0000000000b4/b1300005-0000-4000-8000-0000000000b5-v1.webp', NULL, now() - interval '3 days', now(), '{}'::jsonb),
   -- 9. mid-publish: bytes at the deterministic key, commit has not run
   ('shop-product-media', 'b1300002-0000-4000-8000-0000000000b2/b1300004-0000-4000-8000-0000000000b4/b1300006-0000-4000-8000-0000000000b6-v2.webp', NULL, now() - interval '3 days', now(), '{}'::jsonb),
+  -- 9c. same window for PROFILE media (20260817090000): a logo copied to its
+  -- deterministic pending target, shop_profile_media_publish_commit not yet run
+  ('shop-product-media', 'b1300002-0000-4000-8000-0000000000b2/profile/logo/b1300007-0000-4000-8000-0000000000b7/v1/live.webp', NULL, now() - interval '3 days', now(), '{}'::jsonb),
   ('shop-product-media', 'b1300002-0000-4000-8000-0000000000b2/profile/logo/v1/live.webp',  NULL, now() - interval '3 days', now(), '{}'::jsonb),
   ('shop-product-media', 'b1300002-0000-4000-8000-0000000000b2/profile/cover/v1/live.webp', NULL, now() - interval '3 days', now(), '{}'::jsonb),
   -- the suspended shop's revoked rendition: unreferenced now, but already has
@@ -162,6 +165,14 @@ SELECT ok(
   EXISTS (SELECT 1 FROM public.shop_media_referenced_objects()
            WHERE object_path = 'b1300002-0000-4000-8000-0000000000b2/b1300004-0000-4000-8000-0000000000b4/b1300006-0000-4000-8000-0000000000b6-v2.webp'),
   'and the key an uncommitted publish is copying to, computed the same way product_publish_prepare computes it');
+
+-- The identical-expression rule, extended to profile media (20260817090000):
+-- this hand-computed key must match what shop_profile_media_publish_prepare
+-- builds, or the sweep starts deleting logos mid-copy.
+SELECT ok(
+  EXISTS (SELECT 1 FROM public.shop_media_referenced_objects()
+           WHERE object_path = 'b1300002-0000-4000-8000-0000000000b2/profile/logo/b1300007-0000-4000-8000-0000000000b7/v1/live.webp'),
+  'a verified logo''s pending publish target is referenced, computed the same way shop_profile_media_publish_prepare computes it');
 
 -- ─── First sweep ────────────────────────────────────────────────────────────
 
@@ -206,6 +217,11 @@ SELECT is(
   (SELECT count(*)::int FROM public.shop_media_cleanup_jobs j
     WHERE j.object_path = 'b1300002-0000-4000-8000-0000000000b2/b1300004-0000-4000-8000-0000000000b4/b1300006-0000-4000-8000-0000000000b6-v2.webp'),
   0, 'a rendition mid-publish is not deleted underneath the commit that is about to point at it');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.shop_media_cleanup_jobs j
+    WHERE j.object_path = 'b1300002-0000-4000-8000-0000000000b2/profile/logo/b1300007-0000-4000-8000-0000000000b7/v1/live.webp'),
+  0, 'nor is a logo mid-publish — the profile arm covers the same window');
 
 SELECT is(
   (SELECT count(*)::int FROM public.shop_media_cleanup_jobs j

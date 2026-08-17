@@ -59,6 +59,35 @@
   --shop-gap:          14px;
   --shop-pad:          16px;
   --shop-tap:          44px;                /* minimum touch target */
+
+  /* ── R3 card-first sub-theme (04-ux-spec-round3) ─────────────────────────
+   * Buyer catalogue reads as cards, not editorial. Dark mode keeps the flat
+   * surface+border look (shadows carry nothing on a dark ground); light mode
+   * overrides at the bottom of this file. */
+  --shop-radius-card:    20px;
+  --shop-radius-media:   14px;
+  --shop-card-surface:   var(--tl-surface);
+  --shop-card-edge:      var(--tl-border);
+  --shop-shadow-1:       0 0 #0000;
+  --shop-shadow-2:       0 0 #0000;
+  --shop-chip-bg:        var(--tl-surface-2);
+  --shop-chip-ink:       var(--tl-fg-2);
+  --shop-chip-active-bg: var(--tl-fg);
+  --shop-chip-active-ink: var(--tl-bg);
+  --shop-gap-grid:       16px;
+  --shop-card-pad:       12px;
+
+  /* ── R4 ShopHome hero card (04-ux-spec-round4) ───────────────────────────
+   * Tints are color-mix(green N%, surface) PRE-COMPUTED to hex because the
+   * contrast gate only resolves hex literals (precedent: --shop-on-accent).
+   * Dark: mix over --tl-surface #131416 with --tl-green #b5e853.
+   *   strong = 16% green → #2d3620; weak = 5% green → #1b1f19. */
+  --shop-hero-tint-strong: #2d3620;
+  --shop-hero-tint-weak:   #1b1f19;
+  --shop-hero-edge: color-mix(in srgb, var(--tl-green) 28%, var(--tl-border));
+  --shop-hero-ink:     var(--tl-fg);
+  --shop-hero-sub-ink: var(--tl-fg-2);  /* NOT fg-3: it dips under AA on the tint */
+  --shop-hero-art-ink: var(--tl-green);
 }
 
 .tl-shop-scroll {
@@ -147,10 +176,10 @@
   min-width: 44px;
 }
 .tl-shop-h2 {
-  font-size: 16px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  margin: 28px 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 22px 0 10px;
   color: var(--tl-fg);
 }
 .tl-shop-eyebrow {
@@ -327,7 +356,7 @@
 /* ── Empty state ──────────────────────────────────────────────────────── */
 .tl-shop-empty {
   border: 1px dashed var(--tl-border-2);
-  border-radius: var(--tl-radius-lg);
+  border-radius: var(--shop-radius-card);
   padding: 40px 24px;
   text-align: center;
   color: var(--tl-fg-3);
@@ -725,14 +754,15 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--shop-tap);
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid var(--tl-border);
-  background: var(--tl-surface);
-  color: var(--tl-fg-2);
+  border: 1px solid transparent;
+  background: var(--shop-chip-bg);
+  color: var(--shop-chip-ink);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 /* The chip count had no rule of its own, so it glued onto the label —
    "Vợt pickleball1", "Chờ duyệt1" (Wave 0). */
@@ -742,7 +772,16 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.tl-shop-cat[aria-current="page"] { border-color: var(--tl-green); color: var(--tl-fg); }
+.tl-shop-cat:hover { background: color-mix(in srgb, var(--tl-fg) 10%, var(--shop-card-surface)); }
+.tl-shop-cat:active { transform: scale(0.97); }
+/* Active chip inverts, like the reference: ink pill on the page's own fg. */
+.tl-shop-cat[aria-current="page"] {
+  background: var(--shop-chip-active-bg);
+  color: var(--shop-chip-active-ink);
+  font-weight: 650;
+}
+.tl-shop-cat[aria-current="page"] .count { color: inherit; }
+.tl-shop-cat[aria-current="page"]:hover { opacity: 0.92; }
 
 .tl-shop-deliv {
   display: flex;
@@ -1217,6 +1256,20 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   --shop-on-accent:  #f7fbee;   /* on --tl-green   #516c1b — 5.69:1 */
   --shop-on-gold:    #fdfaf2;   /* on --tl-gold    #825e0f — 5.66:1 */
   --shop-on-ok:      #f2fbf6;   /* on --tl-accent-qt #007342 — 5.64:1 */
+
+  /* R3 card-first: white cards with a whisper of shadow on the cream page. */
+  --shop-card-surface: #ffffff;
+  --shop-card-edge: color-mix(in srgb, var(--tl-fg) 6%, transparent);
+  --shop-shadow-1: 0 1px 2px rgb(23 20 10 / 0.04), 0 6px 16px rgb(23 20 10 / 0.06);
+  --shop-shadow-2: 0 2px 4px rgb(23 20 10 / 0.05), 0 12px 28px rgb(23 20 10 / 0.10);
+  /* = color-mix(in srgb, --tl-fg #08090a 5%, #ffffff) pre-computed to hex so
+     the contrast gate can measure chip ink on it (fg-2/#f3f3f3 ≈ 10.4:1). */
+  --shop-chip-bg: #f3f3f3;
+
+  /* R4 hero tints, light: mix over --tl-surface #eeebe1 with --tl-green
+     #516c1b. strong = 12% green → #dbdcc9; weak = 4% green → #e8e6d9. */
+  --shop-hero-tint-strong: #dbdcc9;
+  --shop-hero-tint-weak:   #e8e6d9;
 }
 
 /* ── Buyer catalogue (P2b.4) ──────────────────────────────────────────────
@@ -1226,31 +1279,55 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
  * ------------------------------------------------------------------------ */
 .tl-pgrid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  /* 2 columns from 320px, like the reference — auto-fill gave one huge card. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
   padding: 0;
   list-style: none;
 }
-@media (min-width: 768px) { .tl-pgrid { gap: 18px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+@media (min-width: 400px) { .tl-pgrid { gap: var(--shop-gap-grid); } }
+@media (min-width: 768px) { .tl-pgrid { gap: 20px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
 
 .tl-pcard {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--tl-line);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--tl-surface);
+  border: 1px solid var(--shop-card-edge);
+  border-radius: var(--shop-radius-card);
+  background: var(--shop-card-surface);
+  box-shadow: var(--shop-shadow-1);
+  padding: 6px 6px 0;
   color: inherit;
   text-decoration: none;
   min-height: var(--shop-tap);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.tl-pcard:hover { border-color: var(--tl-fg-4); }
-.tl-pcard:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
+.tl-pcard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shop-shadow-2);
+  border-color: color-mix(in srgb, var(--tl-fg) 12%, transparent);
+}
+.tl-pcard:hover .tl-pcard-go { background: var(--tl-green); color: var(--shop-on-accent); }
+.tl-pcard:focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 2px;
+  transform: translateY(-2px);
+  box-shadow: var(--shop-shadow-2);
+}
+.tl-pcard:active { transform: scale(0.98); }
 
-.tl-pcard-media { position: relative; width: 100%; background: var(--tl-surface-2); }
+.tl-pcard-media {
+  position: relative;
+  display: block;
+  width: 100%;
+  /* 1:1 always — the box is the card's, not the photo's. */
+  aspect-ratio: 1 / 1;
+  border-radius: var(--shop-radius-media);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--tl-fg) 4%, var(--shop-card-surface));
+}
 .tl-pcard-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.tl-pcard-noimg { width: 100%; height: 100%; background: var(--tl-surface-2); }
+.tl-pcard-noimg { width: 100%; height: 100%; }
 
 .tl-pcard-flag {
   position: absolute; left: 8px; top: 8px;
@@ -1260,20 +1337,41 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   border: 1px solid var(--tl-line);
 }
 
-.tl-pcard-body { padding: 10px 11px 12px; display: grid; gap: 4px; }
+.tl-pcard-body { padding: 10px var(--shop-card-pad) var(--shop-card-pad); display: grid; gap: 4px; }
 .tl-pcard-title {
-  margin: 0; font-size: 13.5px; line-height: 1.4; font-weight: 500;
+  margin: 0; font-size: 14px; line-height: 1.35; font-weight: 600;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.tl-pcard-price { margin: 0; font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.tl-pcard-noprice { font-weight: 500; color: var(--tl-fg-3); }
-.tl-pcard-meta { margin: 0; font-size: 12px; color: var(--tl-fg-3); }
-.tl-pcard-out { color: var(--tl-fg-3); }
-.tl-pcard-shop { margin: 0; font-size: 12px; color: var(--tl-fg-3); display: flex; align-items: center; gap: 3px; }
+.tl-pcard-meta {
+  margin: 0; font-size: 11.5px; color: var(--tl-fg-3);
+  display: flex; align-items: center; gap: 3px; min-width: 0; white-space: nowrap;
+}
+.tl-pcard-meta .tl-pcard-shopname { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .tl-pcard-verified { color: var(--tl-green); flex: none; }
+
+.tl-pcard-foot { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tl-pcard-price {
+  flex: 1; min-width: 0; margin: 0;
+  font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Two 138px cards at 320px leave the price ~80px next to the go circle. */
+@media (max-width: 359px) { .tl-pcard-price { font-size: 14.5px; } }
+.tl-pcard-noprice { font-weight: 500; color: var(--tl-fg-3); }
+.tl-pcard-go {
+  flex: none;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--tl-fg);
+  color: var(--tl-bg);
+  transition: background 0.15s ease, color 0.15s ease;
+}
 
 .tl-pcard--skeleton { pointer-events: none; }
 .tl-pcard-sk-line { display: block; height: 11px; border-radius: 4px; background: var(--tl-surface-2); }
+.tl-pcard-sk-circle { flex: none; width: 34px; height: 34px; border-radius: 999px; background: var(--tl-surface-2); }
 
 /* Filters: a rail on desktop, a sheet on a phone. */
 .tl-shop-layout { display: block; }
@@ -1341,7 +1439,8 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp { display: grid; gap: 20px; }
 @media (min-width: 900px) { .tl-pdp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
 
-.tl-pdp-media img { display: block; width: 100%; height: auto; border-radius: 12px; background: var(--tl-surface-2); }
+.tl-pdp-media img { display: block; width: 100%; height: auto; border-radius: var(--shop-radius-card); background: var(--tl-surface-2); }
+.tl-pdp-media .tl-pcard-noimg { background: var(--tl-surface-2); border-radius: var(--shop-radius-card); }
 .tl-pdp-thumbs { display: flex; gap: 8px; padding: 10px 0 0; margin: 0; list-style: none; overflow-x: auto; }
 .tl-pdp-thumb {
   display: block; padding: 0; border: 2px solid transparent; border-radius: 8px;
@@ -1367,7 +1466,258 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp-opt:disabled { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; }
 .tl-pdp-opt:focus-visible { outline: 2px solid var(--tl-green); outline-offset: 2px; }
 
-.tl-pdp-seller { border: 1px solid var(--tl-line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
+.tl-pdp-seller {
+  background: var(--shop-card-surface);
+  border: 1px solid var(--shop-card-edge);
+  border-radius: var(--shop-radius-card);
+  box-shadow: var(--shop-shadow-1);
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+/* The self-declaration disclaimer keeps every word, at footnote size. */
+.tl-pdp-seller .tl-shop-hint { font-size: 11.5px; }
 .tl-pdp-shopname { margin: 0; display: flex; align-items: center; gap: 4px; font-weight: 600; }
 .tl-pdp-note { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
 .tl-pdp-cta { display: grid; gap: 8px; }
+
+/* ── Shop UI polish R1 ────────────────────────────────────────────────────
+ * Seller-list thumbnails: the real cover in the box the layout already
+ * reserves (44px table row, 56px mobile card — width set by the parent). */
+.tl-shop-thumb {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: var(--tl-radius);
+  overflow: hidden;
+  background: var(--tl-surface-2);
+  border: 1px solid var(--tl-border);
+  display: grid;
+  place-items: center;
+  color: var(--tl-fg-3);
+}
+.tl-shop-thumb .tl-shop-sk { width: 100%; height: 100%; border-radius: 0; }
+.tl-shop-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Shop monogram — accent arrives as --mono-accent, whose value is a token. */
+.tl-shop-monogram {
+  border-radius: var(--tl-radius-lg);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex: none;
+  color: var(--tl-fg);
+  background: color-mix(in srgb, var(--mono-accent) 16%, var(--tl-surface));
+  border: 1px solid color-mix(in srgb, var(--mono-accent) 45%, transparent);
+}
+
+/* Storefront header (R3 + R5): a 72px monogram-or-logo, the name, one row of
+   pills — and, only once the seller has PUBLISHED one, a cover banner on top.
+   The catalogue is the page's main character; identity stays short. */
+.tl-shop-storehead { margin-bottom: 4px; }
+.tl-shop-storehead-cover {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--shop-radius-card);
+  background: var(--tl-surface-2);
+  margin-bottom: 12px;
+}
+@media (min-width: 768px) {
+  .tl-shop-storehead-cover { height: 160px; }
+}
+.tl-shop-storehead-logo {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--shop-radius-card);
+  border: 1px solid var(--tl-border);
+  background: var(--tl-surface-2);
+}
+.tl-shop-storehead-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.tl-shop-storehead .tl-shop-monogram { border-radius: var(--shop-radius-card); }
+.tl-shop-storehead-id { min-width: 0; }
+.tl-shop-storehead-id .tl-shop-h1 { font-size: 24px; line-height: 28px; margin-bottom: 0; }
+.tl-shop-storehead-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.tl-shop-storehead-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tl-fg-3);
+  font-variant-numeric: tabular-nums;
+}
+.tl-shop-storehead-intro {
+  font-size: 13.5px;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Store footer: the full-sentence policies and the honest no-contact copy,
+   verbatim, below the catalogue instead of above it. */
+.tl-shop-storefoot {
+  border-top: 1px solid var(--tl-border);
+  padding: 20px 0;
+  margin-top: 28px;
+}
+.tl-shop-storefoot .tl-shop-deflist { font-size: 13px; }
+
+/* Seller dashboard: the CTA row and the four numbers. */
+.tl-shop-cta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+@media (max-width: 559px) {
+  .tl-shop-cta-row .tl-shop-btn { flex: 1 1 100%; }
+}
+.tl-shop-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--shop-gap);
+  margin-bottom: 16px;
+}
+@media (min-width: 768px) {
+  .tl-shop-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.tl-shop-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  background: var(--tl-surface);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  padding: 14px;
+  min-height: 76px;
+  color: inherit;
+}
+.tl-shop-stat-n {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tl-fg);
+}
+.tl-shop-stat-l { font-size: 12px; color: var(--tl-fg-3); }
+.tl-shop-stat--attn { border-color: color-mix(in srgb, var(--shop-danger) 45%, transparent); }
+.tl-shop-stat--attn .tl-shop-stat-n { color: var(--shop-danger); }
+
+/* Pressed feedback, everywhere a shop button or stat card is tapped.
+   (prefers-reduced-motion is already neutralised by the block above.) */
+.tl-shop-btn:active:not(:disabled),
+.tl-shop-stat:active { transform: translateY(1px); }
+
+/* Sell landing: hero + editorial FAQ rhythm instead of six identical grey
+   boxes. Copy is untouched — only the frames changed. */
+.tl-shop-hero .tl-shop-sub { font-size: 15px; }
+@media (max-width: 559px) {
+  .tl-shop-hero .tl-shop-btn { display: flex; width: 100%; }
+}
+.tl-shop-faq { margin-top: 28px; }
+.tl-shop-faq > section { border-top: 1px solid var(--tl-border); padding: 16px 0; }
+.tl-shop-faq .tl-shop-h2 {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tl-shop-faq .tl-shop-h2 svg { color: var(--tl-fg-3); flex: none; }
+.tl-shop-faq > section > div { font-size: 13.5px; line-height: 1.55; color: var(--tl-fg-2); }
+.tl-shop-faq strong { color: var(--tl-fg); font-weight: 650; }
+/* The one deliberate point of colour: the verified-badge item. */
+.tl-shop-faq > .tl-shop-faq--verify {
+  border-left: 3px solid var(--shop-verified);
+  padding-left: 14px;
+}
+
+/* Application timeline: the step that has not happened yet — hollow dashed
+   dot, muted text, no promised date. */
+.tl-shop-timeline li.is-next::before {
+  background: transparent;
+  border: 1px dashed var(--tl-border-2);
+}
+.tl-shop-timeline li.is-next .tl-shop-timeline-what { color: var(--tl-fg-3); }
+
+/* Buyer-facing empties: the no-photo card says so, and empty states carry a
+   small decorative icon above their title. */
+.tl-pcard-noimg {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  color: var(--tl-fg-3);
+  font-size: 11px;
+}
+.tl-shop-empty > svg {
+  display: block;
+  margin: 0 auto 10px;
+  color: var(--tl-fg-3);
+}
+
+/* ── R4 — ShopHome hero card (04-ux-spec-round4) ──────────────────────────
+ * Visual wrapper for h1 + sub + search on /shop only. Deliberately NOT
+ * .tl-shop-hero: that block is the sell landing's and its mobile rule
+ * (.tl-shop-hero .tl-shop-btn { width: 100% }) would break the "Tìm" button.
+ * ------------------------------------------------------------------------ */
+.tl-shop-herocard {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--shop-radius-card);
+  border: 1px solid var(--shop-hero-edge);
+  background: linear-gradient(135deg, var(--shop-hero-tint-strong), var(--shop-hero-tint-weak) 58%, var(--tl-surface));
+  box-shadow: var(--shop-shadow-1);
+  padding: 18px 16px 16px;
+  margin-bottom: 14px;
+}
+.tl-shop-herocard-title { color: var(--shop-hero-ink); margin-bottom: 4px; position: relative; }
+.tl-shop-herocard-sub {
+  color: var(--shop-hero-sub-ink);
+  font-size: 13.5px;
+  margin: 0 0 12px;
+  max-width: 52ch;
+  position: relative;
+}
+.tl-shop-herocard-search { position: relative; }
+/* Inside the hero the button joins the pill language of the input. */
+.tl-shop-herocard-search .tl-shop-btn { border-radius: 999px; }
+/* Input states: default/focus-visible come from the global rules; hover is the
+   only addition. No disabled/loading/error/success — submitting navigates
+   immediately, there is nothing to wait for or to fail inline. */
+.tl-shop-herocard-search input:hover { border-color: var(--tl-border-2); }
+.tl-shop-herocard-art {
+  position: absolute;
+  right: -18px;
+  top: -14px;
+  color: var(--shop-hero-art-ink);
+  opacity: 0.14;
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .tl-shop-herocard { padding: 26px 24px 22px; }
+  .tl-shop-herocard-search { max-width: 560px; }
+  .tl-shop-herocard-art { right: 8px; top: 50%; translate: 0 -50%; width: 180px; height: 180px; }
+}
+@media (max-width: 359px) {
+  .tl-shop-herocard { padding: 14px; }
+  .tl-shop-herocard-art { display: none; }
+  .tl-shop-herocard-sub {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

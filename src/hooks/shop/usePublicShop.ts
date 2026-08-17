@@ -124,6 +124,10 @@ export interface PublicShopResult {
     verified: boolean; verified_at: string | null;
     shipping_note: string | null; return_note: string | null;
     primary_category_slug: string | null; product_count: number;
+    /** Public-bucket keys, null until the seller publishes (round 5). */
+    logo_path: string | null;
+    cover_path: string | null;
+    cover_focal_y: number | null;
   };
   contacts?: { id: string; type: string; href: string; label: string | null }[];
 }

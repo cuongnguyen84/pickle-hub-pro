@@ -81,7 +81,7 @@ const PRODUCT_COLUMNS =
   "requested_fields,version,client_token,option_groups,created_at,updated_at";
 
 const LIST_COLUMNS =
-  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position)`;
+  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position,public_path,draft_path)`;
 
 export interface ProductListResult {
   rows: SellerProductRow[];

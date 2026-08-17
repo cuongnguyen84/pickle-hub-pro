@@ -20,6 +20,7 @@ import {
   useWithdrawApplication,
 } from "@/hooks/shop/useSellerApplication";
 import { applicationDeepLink, targetByField, type ApplicationStatus } from "@/lib/shop/applicationState";
+import { shopErrorMessage } from "@/lib/shop/errors";
 
 interface View {
   title: string;
@@ -108,6 +109,7 @@ export default function SellerApplicationStatus() {
       <ShopScrollShell>
         <ShopHeader title="Hồ sơ đăng ký" backTo="/shop/sell" />
         <main className="tl-shop-page tl-shop-page--narrow">
+          <FileText size={28} aria-hidden="true" style={{ color: "var(--tl-fg-3)", marginBottom: 10 }} />
           <h1 className="tl-shop-h1">Anh/chị chưa có hồ sơ nào</h1>
           <Link to="/seller/application" className="tl-shop-btn tl-shop-btn--primary">
             Bắt đầu đăng ký
@@ -164,19 +166,6 @@ export default function SellerApplicationStatus() {
           </section>
         )}
 
-        <section aria-labelledby="s03-summary">
-          <h2 className="tl-shop-h2" id="s03-summary">Thông tin đã gửi</h2>
-          <div className="tl-shop-card">
-            <DefList
-              rows={[
-                ["Tên shop", row.shop_name ?? "—"],
-                ["Loại người bán", row.seller_type ?? "—"],
-                ["Gửi từ", row.city ?? "—"],
-              ]}
-            />
-          </div>
-        </section>
-
         {events.data && events.data.length > 0 && (
           <section aria-labelledby="s03-history">
             <h2 className="tl-shop-h2" id="s03-history">Diễn biến</h2>
@@ -190,11 +179,41 @@ export default function SellerApplicationStatus() {
                   {e.note && <p className="tl-shop-hint" style={{ marginTop: 4 }}>{e.note}</p>}
                 </li>
               ))}
+              {/* The step that has not happened yet — a dashed ghost, no SLA.
+                  Spec đặt "trên cùng"; timeline này chạy cũ→mới nên bước kế
+                  tiếp đứng CUỐI danh sách để giữ đúng dòng thời gian. */}
+              {(row.status === "submitted" || row.status === "under_review") && (
+                <li className="is-next">
+                  <div className="tl-shop-timeline-what">
+                    Quản trị viên xem hồ sơ và trả lời tại đây
+                  </div>
+                </li>
+              )}
             </ol>
           </section>
         )}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 26, flexWrap: "wrap" }}>
+        <section aria-labelledby="s03-summary">
+          <h2 className="tl-shop-h2" id="s03-summary">Thông tin đã gửi</h2>
+          <div className="tl-shop-card">
+            <DefList
+              rows={[
+                ["Tên shop", row.shop_name ?? "—"],
+                ["Loại người bán", row.seller_type ?? "—"],
+                ["Gửi từ", row.city ?? "—"],
+              ]}
+            />
+          </div>
+        </section>
+
+        {withdraw.isError && (
+          <div className="tl-shop-notice tl-shop-notice--danger" role="alert" style={{ marginTop: 26, marginBottom: 0 }}>
+            <AlertTriangle size={16} aria-hidden="true" />
+            <span>{shopErrorMessage(withdraw.error)}</span>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, marginTop: withdraw.isError ? 12 : 26, flexWrap: "wrap" }}>
           <Link to={view.next.to} className={`tl-shop-btn ${view.next.primary ? "tl-shop-btn--primary" : ""}`}>
             {view.next.label}
           </Link>
@@ -203,12 +222,20 @@ export default function SellerApplicationStatus() {
               type="button"
               className="tl-shop-btn tl-shop-btn--ghost"
               disabled={withdraw.isPending}
+              aria-busy={withdraw.isPending || undefined}
               onClick={() => withdraw.mutate()}
             >
-              Rút hồ sơ
+              {withdraw.isPending ? "Đang rút…" : "Rút hồ sơ"}
             </button>
           )}
         </div>
+
+        {row.status !== "draft" && (
+          <div className="tl-shop-card" style={{ marginTop: 26, fontSize: 13.5, lineHeight: 1.6 }}>
+            <strong>Cần hỏi nhanh?</strong> Hồ sơ do người thật xem — nhắn Zalo cho ThePickleHub,
+            kèm tên shop dự kiến.
+          </div>
+        )}
       </main>
     </ShopScrollShell>
   );

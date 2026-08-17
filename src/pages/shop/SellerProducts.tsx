@@ -18,11 +18,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ImageOff, Plus, Search } from "lucide-react";
+import { AlertTriangle, ImageOff, PackageOpen, Plus, Search } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
 import { useMyShopMembership, useShopCategories, useShopProfile } from "@/hooks/shop/useShopProfile";
+import { useSignedPreviews } from "@/hooks/shop/useSignedPreviews";
+import { publicMediaUrl } from "@/lib/shop/publicCatalog";
 import {
   EMPTY_FILTERS,
   PAGE_SIZE,
@@ -42,6 +44,13 @@ import {
 } from "@/lib/shop/productState";
 import { shopErrorMessage } from "@/lib/shop/errors";
 import type { ProductStatus, SellerProductRow } from "@/integrations/supabase/shop-schema";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+
+/** The media row the list shows for a product: the lowest position — position
+ *  0 IS the main image, and a page that was reordered keeps that promise. */
+const coverMedia = (media: SellerProductRow["product_media"]) =>
+  media.length ? media.reduce((a, b) => (b.position < a.position ? b : a)) : null;
 
 const SHOP_STATE_NOTICE: Record<string, string> = {
   pending_activation:
@@ -265,6 +274,19 @@ function ProductList({
   onClearFilters: () => void;
   onPage: (page: number) => void;
 }) {
+  // ONE mint for the whole page: every draft-only cover path goes into a single
+  // createSignedUrls call, not one per card. Hooks run before any early return.
+  const rows = query.data?.rows;
+  const draftPaths = useMemo(
+    () =>
+      (rows ?? [])
+        .map((r) => coverMedia(r.product_media ?? []))
+        .filter((m): m is NonNullable<typeof m> => !!m && !m.public_path && !!m.draft_path)
+        .map((m) => m.draft_path),
+    [rows],
+  );
+  const previews = useSignedPreviews(draftPaths);
+
   if (query.isLoading) {
     return (
       <div aria-busy="true" aria-live="polite">
@@ -301,6 +323,7 @@ function ProductList({
   if (result.total === 0 && catalogEmpty) {
     return (
       <div className="tl-shop-empty">
+        <PackageOpen size={28} aria-hidden="true" />
         <p className="tl-shop-empty-title">Chưa có sản phẩm nào</p>
         <p>Một sản phẩm cần tên, ngành hàng và giá là lưu được. Ảnh thêm sau.</p>
         {canWrite && (
@@ -357,7 +380,7 @@ function ProductList({
           </thead>
           <tbody>
             {result.rows.map((row) => (
-              <ProductTableRow key={row.id} row={row} canWrite={canWrite} />
+              <ProductTableRow key={row.id} row={row} canWrite={canWrite} previews={previews} />
             ))}
           </tbody>
         </table>
@@ -370,7 +393,7 @@ function ProductList({
           desktop table at 1440px, caught by the QA sweep. */}
       <ul data-mobile-only style={{ listStyle: "none", margin: "10px 0 0", padding: 0 }}>
         {result.rows.map((row) => (
-          <ProductCard key={row.id} row={row} canWrite={canWrite} />
+          <ProductCard key={row.id} row={row} canWrite={canWrite} previews={previews} />
         ))}
       </ul>
 
@@ -401,18 +424,57 @@ function ProductList({
   );
 }
 
-/** The photo slot. It never pretends: step 6 owns uploading, and the private
- *  draft bucket needs a signed URL nobody is minting yet, so a product with no
- *  photo says it has no photo. */
-const Thumb = ({ count }: { count: number }) => (
-  <span
-    className="tl-shop-media"
-    aria-hidden="true"
-    style={{ display: "grid", placeItems: "center", width: "100%" }}
-  >
-    {count === 0 ? <ImageOff size={18} /> : <span className="tl-shop-media-label">{count} ảnh</span>}
-  </span>
-);
+/** The photo slot — the real cover, not a count.
+ *
+ *  Four states, in order of truth:
+ *    · no media at all           → ImageOff (the pill next door already says it)
+ *    · public_path               → <img> straight away, no mint, never expires
+ *    · draft-only, URL not back  → shimmer (chưa-tải ≠ không-có)
+ *    · mint failed / img 404     → ImageOff, no notice, no retry
+ *
+ *  Decorative: alt="" + aria-hidden — the link is the title, not the thumb. */
+function Thumb({
+  media,
+  previews,
+}: {
+  media: SellerProductRow["product_media"];
+  previews: Record<string, string>;
+}) {
+  const [broken, setBroken] = useState(false);
+  const cover = coverMedia(media ?? []);
+  // "" means the mint settled without a URL (useSignedPreviews marks failures);
+  // undefined means it has not settled yet.
+  const src = cover
+    ? cover.public_path
+      ? publicMediaUrl(SUPABASE_URL, cover.public_path)
+      : previews[cover.draft_path]
+    : undefined;
+
+  // A new src deserves a fresh try — without this, one 404 pins ImageOff
+  // forever, even after the seller replaces the photo.
+  useEffect(() => {
+    setBroken(false);
+  }, [src]);
+
+  return (
+    <span className="tl-shop-thumb" aria-hidden="true">
+      {!cover || broken || src === "" ? (
+        <ImageOff size={18} />
+      ) : src === undefined ? (
+        <span className="tl-shop-sk" />
+      ) : (
+        <img
+          className="tl-shop-thumb-img"
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setBroken(true)}
+        />
+      )}
+    </span>
+  );
+}
 
 const StatusPill = ({ status }: { status: ProductStatus }) => (
   <span
@@ -426,14 +488,22 @@ const StatusPill = ({ status }: { status: ProductStatus }) => (
 const dmy = (iso: string) =>
   new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-function ProductTableRow({ row, canWrite }: { row: SellerProductRow; canWrite: boolean }) {
+function ProductTableRow({
+  row,
+  canWrite,
+  previews,
+}: {
+  row: SellerProductRow;
+  canWrite: boolean;
+  previews: Record<string, string>;
+}) {
   const s = summarise(row);
   return (
     <tr>
       <th scope="row" style={{ fontWeight: 550, maxWidth: 320 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ width: 44, flex: "none" }}>
-            <Thumb count={s.mediaCount} />
+            <Thumb media={row.product_media ?? []} previews={previews} />
           </span>
           <span>
             {row.title}
@@ -467,13 +537,21 @@ function ProductTableRow({ row, canWrite }: { row: SellerProductRow; canWrite: b
   );
 }
 
-function ProductCard({ row, canWrite }: { row: SellerProductRow; canWrite: boolean }) {
+function ProductCard({
+  row,
+  canWrite,
+  previews,
+}: {
+  row: SellerProductRow;
+  canWrite: boolean;
+  previews: Record<string, string>;
+}) {
   const s = summarise(row);
   const action = canWrite && s.canEdit ? "Sửa" : "Xem";
   return (
     <li className="tl-shop-card" style={{ display: "flex", gap: 12, marginBottom: 10 }}>
       <span style={{ width: 56, flex: "none" }}>
-        <Thumb count={s.mediaCount} />
+        <Thumb media={row.product_media ?? []} previews={previews} />
       </span>
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
         {/* ONE interactive element per card, and it is the title.

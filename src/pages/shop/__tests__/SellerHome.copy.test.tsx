@@ -2,7 +2,7 @@
 // SellerHome state copy after the activation button shipped: the pending
 // notice must stop promising "giai đoạn tiếp theo" (products are live), and
 // the active notice must link the public page + the first product.
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import SellerHome from "../SellerHome";
@@ -13,6 +13,17 @@ vi.mock("@/hooks/shop/useSellerApplication", () => ({
   useMyShop: () => myShop(),
   useMyApplication: () => myApp(),
 }));
+
+// SellerHome now reads useProductStatusCounts — a react-query hook this file
+// does not provide a QueryClient for, so the module is doubled.
+const counts = vi.fn();
+vi.mock("@/hooks/shop/useSellerProducts", () => ({
+  useProductStatusCounts: () => counts(),
+}));
+
+beforeEach(() => {
+  counts.mockReturnValue({ data: {}, isLoading: false, isError: false });
+});
 
 vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
 vi.mock("@/components/states/PageStates", () => ({
@@ -86,6 +97,69 @@ describe("active", () => {
   });
 });
 
+describe("dashboard CTA row + product stats", () => {
+  it("active: 'Xem shop của tôi' opens the public page in a new tab, safely", () => {
+    mount("active");
+
+    const cta = screen.getByRole("link", { name: "Xem shop của tôi" }) as HTMLAnchorElement;
+    expect(cta.getAttribute("href")).toBe("/shop/store/shop-test");
+    expect(cta.getAttribute("target")).toBe("_blank");
+    const rel = cta.getAttribute("rel") ?? "";
+    expect(rel).toContain("noopener");
+    expect(rel).toContain("noreferrer");
+
+    const post = screen.getByRole("link", { name: "Đăng sản phẩm" }) as HTMLAnchorElement;
+    expect(post.getAttribute("href")).toBe("/seller/products/new");
+  });
+
+  it("the CTA row does not render for a non-active shop", () => {
+    mount("pending_activation");
+    expect(screen.queryByRole("link", { name: "Xem shop của tôi" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Đăng sản phẩm" })).toBeNull();
+  });
+
+  it("stats: the four labels, with Cần sửa pooling needs_changes + rejected", () => {
+    counts.mockReturnValue({
+      data: { approved: 3, pending_review: 1, needs_changes: 2, rejected: 1, draft: 4 },
+      isLoading: false,
+      isError: false,
+    });
+    mount("active");
+
+    for (const label of ["Đã duyệt", "Chờ duyệt", "Cần sửa", "Nháp"]) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
+    const fix = screen.getByRole("link", { name: /Cần sửa/ });
+    expect(fix.textContent).toContain("3"); // 2 needs_changes + 1 rejected
+    expect(fix.getAttribute("href")).toBe("/seller/products");
+  });
+
+  it("stats loading: four skeleton cells, marked busy", () => {
+    counts.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+    mount("active");
+    const grid = document.querySelector(".tl-shop-stats[aria-busy='true']");
+    expect(grid).toBeTruthy();
+    expect(grid!.querySelectorAll(".tl-shop-sk")).toHaveLength(4);
+  });
+
+  it("stats error: one hint line with a retry, not a full-screen error", () => {
+    const refetch = vi.fn();
+    counts.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch });
+    mount("active");
+    expect(screen.getByText(/Chưa tải được số liệu sản phẩm\./)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("stats empty: a small empty state pointing at the first product", () => {
+    counts.mockReturnValue({ data: {}, isLoading: false, isError: false });
+    mount("active");
+    expect(screen.getByText("Chưa có sản phẩm nào")).toBeTruthy();
+    const first = screen.getByRole("link", { name: "Đăng sản phẩm đầu tiên" }) as HTMLAnchorElement;
+    expect(first.getAttribute("href")).toBe("/seller/products/new");
+  });
+});
+
 describe("loading / error / no shop yet", () => {
   const mountRaw = (shopValue: unknown, appValue: unknown) => {
     myShop.mockReturnValue(shopValue);
@@ -121,5 +195,22 @@ describe("loading / error / no shop yet", () => {
     expect(screen.getByText("Hồ sơ đăng ký của anh/chị chưa được duyệt xong.")).toBeTruthy();
     const link = screen.getByRole("link", { name: "Xem trạng thái hồ sơ" }) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/seller/application/status");
+  });
+});
+
+describe("round-2 fixes: total from displayed groups, CTA gated on state", () => {
+  it("F1: archived-only counts still land in the empty state — archived is 'đã cất đi'", () => {
+    counts.mockReturnValue({ data: { archived: 3 }, isLoading: false, isError: false });
+    mount("active");
+    expect(screen.getByText("Chưa có sản phẩm nào")).toBeTruthy();
+    // Not the four zero cells.
+    expect(document.querySelector(".tl-shop-stats")).toBeNull();
+  });
+
+  it("F2: a non-active shop gets the empty line but NOT the first-product button", () => {
+    counts.mockReturnValue({ data: {}, isLoading: false, isError: false });
+    mount("pending_activation");
+    expect(screen.getByText("Chưa có sản phẩm nào")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Đăng sản phẩm đầu tiên" })).toBeNull();
   });
 });

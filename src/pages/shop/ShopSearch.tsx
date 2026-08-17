@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
@@ -143,6 +143,7 @@ export default function ShopSearch() {
               onRetry={() => void results.refetch()}
               emptyTitle={q ? `Không tìm thấy sản phẩm nào cho “${q}”` : "Không có sản phẩm nào khớp bộ lọc"}
               emptyBody="Thử bỏ bớt bộ lọc, hoặc tìm bằng từ ngắn hơn."
+              emptyIcon={<SearchX size={28} aria-hidden="true" />}
               onClearFilters={() => patch({ condition: null, stock: null, sort: null, cat: null })}
             />
 

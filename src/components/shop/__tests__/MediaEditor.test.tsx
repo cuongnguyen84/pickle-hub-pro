@@ -23,7 +23,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 
 import type { UploadItem, UploadTarget } from "@/hooks/shop/useMediaUpload";
 import type { ProductMediaRow, ProductVariantRow } from "@/integrations/supabase/shop-schema";
@@ -32,15 +32,21 @@ import type { ProductMediaRow, ProductVariantRow } from "@/integrations/supabase
 
 const shopRpc = vi.fn();
 const createSignedUrls = vi.fn();
+const functionsInvoke = vi.fn();
+/** What useShopProfileMedia sees. Mutable, so a test can seed a verified row. */
+let profileRows: unknown[] = [];
 
 vi.mock("@/integrations/supabase/shop-client", () => ({
   shopRpc: (fn: string, args?: Record<string, unknown>) => shopRpc(fn, args),
-  shopFrom: () => ({ select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }) }),
+  shopFrom: () => ({ select: () => ({ eq: () => Promise.resolve({ data: profileRows, error: null }) }) }),
   escapeLike: (s: string) => s,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { storage: { from: () => ({ createSignedUrls }) } },
+  supabase: {
+    storage: { from: () => ({ createSignedUrls }) },
+    functions: { invoke: (...args: unknown[]) => functionsInvoke(...args) },
+  },
 }));
 
 /** The upload hook, replaced by a handle the test drives. The real target
@@ -128,6 +134,11 @@ const rpcCall = (fn: string) => shopRpc.mock.calls.find((c) => c[0] === fn);
 beforeEach(() => {
   shopRpc.mockReset().mockResolvedValue([]);
   createSignedUrls.mockReset().mockResolvedValue({ data: [] });
+  functionsInvoke.mockReset().mockResolvedValue({
+    data: { ok: true, published: [], failed: [] },
+    error: null,
+  });
+  profileRows = [];
   uploadHandle.items = [];
   uploadHandle.add.mockReset();
   uploadHandle.retry.mockReset();
@@ -392,6 +403,71 @@ describe("the shop logo and cover are one component with two purposes", () => {
     expect(document.getElementById("pick-logo")).toBeNull();
     expect(screen.queryByRole("button", { name: /Xoá/ })).toBeNull();
     expect(screen.queryByLabelText(/Vị trí khung ảnh/)).toBeNull();
+  });
+});
+
+// ─── Publishing the logo and cover (round 5) ────────────────────────────────
+
+describe("publishing the logo and cover", () => {
+  const verifiedRow = (purpose: "logo" | "cover") => ({
+    id: `pm-${purpose}`,
+    shop_id: "shop-1",
+    purpose,
+    draft_path: `shop-1/profile/${purpose}/pm/v1/original`,
+    rendition_source_path: `shop-1/profile/${purpose}/pm/v1/rendition.webp`,
+    public_path: null,
+    focal_y: 0.5,
+    version: 1,
+    verified_at: "2026-08-17T00:00:00Z",
+  });
+
+  it("attempts publish automatically once, right after a finalize settles", async () => {
+    renderProfile();
+
+    // The upload machine calls onSettled only after finalize resolved; the
+    // slot's wrapper is what must then fire the publish leg.
+    await act(async () => {
+      targets[0].onSettled();
+    });
+
+    await waitFor(() =>
+      expect(functionsInvoke).toHaveBeenCalledWith("shop-media-lifecycle", {
+        body: { action: "publish_profile", shop_id: "shop-1" },
+      }),
+    );
+    expect(functionsInvoke).toHaveBeenCalledTimes(1);
+    // And the screen is told to refetch — the server's rows, not a guess.
+    expect(onChanged).toHaveBeenCalled();
+  });
+
+  it("shows a verified-but-unpublished row honestly, with a working retry", async () => {
+    profileRows = [verifiedRow("logo")];
+    renderProfile();
+
+    // Honest status: verified is not the same claim as public.
+    expect(await screen.findByText(/chưa lên trang shop công khai/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Đưa lên trang shop" }));
+    await waitFor(() =>
+      expect(functionsInvoke).toHaveBeenCalledWith("shop-media-lifecycle", {
+        body: { action: "publish_profile", shop_id: "shop-1" },
+      }),
+    );
+  });
+
+  it("never presents a publish failure as an upload failure", async () => {
+    profileRows = [verifiedRow("logo")];
+    functionsInvoke.mockResolvedValue({ data: null, error: new Error("edge down") });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Đưa lên trang shop" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("chỉ bước đưa lên trang shop bị lỗi"),
+    );
+    // The upload pipeline reports nothing: the file DID upload and verify.
+    expect(screen.queryByText("Chưa xong")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Thử lại" })).toBeNull();
   });
 });
 
