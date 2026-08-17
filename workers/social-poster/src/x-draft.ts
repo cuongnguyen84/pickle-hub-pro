@@ -6,9 +6,9 @@
  *   2. fresh English `news_items`, rewritten by Gemini per
  *      docs/x-content-playbook.md
  *
- * Rows land at NEW_ROW_STATUS. While that is 'draft' the drain in x.ts cannot
- * see them and Cuong is the only path to X; set it to 'approved' and the guards
- * in this file are the only thing in the way.
+ * Rows land at NEW_ROW_STATUS, which is `approved` since 2026-08-17 — the
+ * pipeline publishes unattended and the guards below are the whole review. See
+ * the constant for what they do and do not cover.
  *
  * Why English rows and not the Vietnamese ones the Facebook pipeline uses:
  * news_items already stores the EN original (the VI row is a child via
@@ -30,6 +30,7 @@
  */
 
 import { checkXBody, type XEnv } from './x';
+import { isPromotionalSource } from './promo-filter';
 import {
   buildRoundupBody,
   proTourProviderFilter,
@@ -57,17 +58,18 @@ const DEFAULT_LOOKBACK_HOURS = 36;
  * 'approved' means the guards in this file are the only thing between a
  * language model and a public brand account.
  *
- * Cuong asked for full automation on 2026-08-16. This is left at 'draft'
- * deliberately: flipping it is his call to make and his line to change, not a
- * detail buried in a diff. Everything else in this file is built for either
- * setting — change this one word, redeploy, done.
+ * Set to 'approved' on 2026-08-17 at Cuong's explicit instruction, after being
+ * shown what the guards do and do not replace. Recorded here so the next reader
+ * knows it was a decision and not an oversight:
  *
- * Before flipping, know what does and does not stand in for the review:
- *   covered — links, ad copy, hashtag spam, length, numbers not in the source
- *   NOT covered — a claim with no number in it that is simply wrong
- * The roundup post has no such gap: it is templated from database rows.
+ *   covered — links, ad copy, promotional sources, hashtag spam, length, and
+ *             numbers that do not appear in the source article
+ *   NOT covered — a claim containing no number that is simply wrong
+ *
+ * The roundup post has no such gap; it is templated from database rows with no
+ * model in the loop. The news posts do. Revert by changing this one word.
  */
-const NEW_ROW_STATUS: 'draft' | 'approved' = 'draft';
+const NEW_ROW_STATUS: 'draft' | 'approved' = 'approved';
 
 export interface XDraftEnv extends XEnv {
   /** Same secret the cron uses to call this Worker; social-caption checks it. */
@@ -91,6 +93,13 @@ export interface XDraftBody {
   dry_run?: boolean;
   limit?: number;
   news_item_id?: string;
+  /**
+   * Override the lookback for one call. The daily job wants a short window so
+   * it does not re-post yesterday's news, but a catch-up after an outage needs
+   * to reach back past it — items that failed to translate for a week are
+   * eligible now and would otherwise never be seen again.
+   */
+  lookback_hours?: number;
 }
 
 /**
@@ -120,64 +129,6 @@ const AD_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   // that surprise (eslint no-misleading-character-class flags exactly this).
   [/👇|⬇|➡|🔗/u, 'pointer_emoji'],
 ];
-
-/**
- * Categories that are marketing by definition. Measured, not guessed: over 60
- * days the EN feed produced 256 uncategorised, 57 player, 44 tournament, 18
- * community, 12 business, 5 equipment. The two blocked here are the two whose
- * sample titles are adverts —
- *   equipment: "Six Zero Expands Gemstone Paddle Line With Boulder Opal Release"
- *   business:  "PB5star Launches Cross-Country Road Trip to Promote Brand"
- * `community` and `player` read as instructional, not commercial, so they stay.
- */
-const BLOCKED_CATEGORIES: ReadonlyArray<string> = ['equipment', 'business'];
-
-/**
- * Second layer, for the 256 rows that carry no category at all — a category
- * filter cannot see those, and they are the majority of the feed.
- *
- * The first version of this list aimed at sponsorship language (sponsored,
- * presented by, promo code). That was the wrong guess: the paddle release that
- * actually reached the queue matched none of it. What this feed sells is gear,
- * so that is what these patterns describe.
- */
-const PROMO_SOURCE_PATTERNS: ReadonlyArray<RegExp> = [
-  // gear — the category that actually got through
-  /\bpaddle (?:line|lineup|series|release|launch|drop)\b/i,
-  /\b(?:unveils?|releases?|launches?|expands?|introduces?|debuts?) [^.]{0,30}\b(?:paddle|shoe|apparel|bag|gear|collection)\b/i,
-  /\bgear (?:review|guide|drop|roundup)\b/i,
-  /\bbest \d+ [a-z ]*(?:paddles?|shoes?)\b/i,
-  /\b(?:hands[- ]on|first look) (?:review|with)\b/i,
-  // sponsorship and commerce
-  /\bsponsored\b/i,
-  /\bpresented by\b/i,
-  /\bpartners? with\b/i,
-  /\bannounces? (?:a )?(?:partnership|sponsorship|collaboration)\b/i,
-  /\bnow available\b/i,
-  /\btickets? (?:are )?on sale\b/i,
-  /\b(?:use )?(?:promo|discount) code\b/i,
-  /\b\d+% off\b/i,
-  /\bgiveaway\b/i,
-  /\bpre-?order\b/i,
-];
-
-/** Publishers whose feed is mostly marketing. Add names as they show up. */
-const BLOCKED_SOURCES: ReadonlyArray<string> = [];
-
-/** True when the source article is an advert rather than news. */
-export function isPromotionalSource(
-  title: string,
-  summary: string | null,
-  source?: string | null,
-  category?: string | null,
-): boolean {
-  if (category && BLOCKED_CATEGORIES.includes(category.toLowerCase())) return true;
-  if (source && BLOCKED_SOURCES.some((s) => s.toLowerCase() === source.toLowerCase())) {
-    return true;
-  }
-  const text = `${title} ${summary ?? ''}`;
-  return PROMO_SOURCE_PATTERNS.some((p) => p.test(text));
-}
 
 /** Enough of English to recognise a number the model spelled out in its source. */
 const NUMBER_WORDS: Record<string, string> = {
@@ -317,7 +268,10 @@ async function fetchEnglishNews(env: XDraftEnv, body: XDraftBody): Promise<NewsR
   if (body.news_item_id) {
     url.searchParams.set('id', `eq.${body.news_item_id}`);
   } else {
-    const since = new Date(Date.now() - xDraftLookbackHours(env) * 3600_000).toISOString();
+    const hours = Number.isFinite(body.lookback_hours) && (body.lookback_hours as number) > 0
+      ? Math.min(body.lookback_hours as number, 24 * 30)
+      : xDraftLookbackHours(env);
+    const since = new Date(Date.now() - hours * 3600_000).toISOString();
     url.searchParams.set('published_at', `gte.${since}`);
     url.searchParams.set('order', 'importance.desc,published_at.desc');
     url.searchParams.set('limit', '40');

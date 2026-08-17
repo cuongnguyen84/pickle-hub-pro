@@ -39,6 +39,7 @@
 
 import { handleXRun, xHealth, type XRunBody } from './x';
 import { handleXDraft, type XDraftBody } from './x-draft';
+import { isPromotionalSource } from './promo-filter';
 
 export interface Env {
   // vars
@@ -459,6 +460,10 @@ function checkEligible(item: NewsItem | null | undefined): string | null {
   if (item.language !== 'vi') return 'not_vi';
   if (!item.ai_translated) return 'not_translated';
   if (item.status !== 'published') return 'not_published';
+  // Defence for the webhook entry point, which does not go through pickNext.
+  if (isPromotionalSource(item.title, item.summary, null, item.category)) {
+    return 'promotional_source';
+  }
   if (!item.title || item.title.trim().length === 0) return 'no_title';
   if (!item.slug || item.slug.trim().length === 0) return 'no_slug';
   return null;
@@ -551,7 +556,9 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   // the cap below, move this to an RPC that does the anti-join in SQL.
   const scanLimit = pickNextScanLimit(postedIds.length);
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/news_items`);
-  url.searchParams.set('select', 'id');
+  // title/summary/category ride along so promotional rows can be dropped during
+  // selection. Still no content_html, so the scan stays cheap.
+  url.searchParams.set('select', 'id,title,summary,category');
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
@@ -562,9 +569,21 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   if (!res.ok) {
     throw new Error(`pickNext news query failed: ${res.status} ${await res.text()}`);
   }
-  const rows = (await res.json()) as Array<{ id: string }>;
+  const rows = (await res.json()) as Array<{
+    id: string;
+    title: string;
+    summary: string | null;
+    category: string | null;
+  }>;
   const done = new Set(postedIds);
-  const nextId = rows.find((r) => !done.has(r.id))?.id;
+  // Adverts are excluded here rather than in checkEligible on purpose. A
+  // checkEligible rejection writes no fb_post_log row, so the item stays
+  // unposted and gets picked again on the next tick — one paddle release at the
+  // head of the queue would stall the whole pipeline, which is the same shape
+  // as the bug this function was just fixed for.
+  const nextId = rows.find(
+    (r) => !done.has(r.id) && !isPromotionalSource(r.title, r.summary, null, r.category),
+  )?.id;
   return nextId ? await fetchNewsItemById(env, nextId) : null;
 }
 

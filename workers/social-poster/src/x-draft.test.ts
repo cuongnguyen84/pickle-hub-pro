@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   checkXDraft,
-  isPromotionalSource,
+
   rankNewsCandidates,
   unsourcedNumbers,
   xDraftLimit,
   type NewsRow,
 } from './x-draft';
+import { isPromotionalSource } from './promo-filter';
 
 const news = (over: Partial<NewsRow> = {}): NewsRow => ({
   id: 'a',
@@ -188,6 +189,37 @@ describe('isPromotionalSource', () => {
     expect(
       isPromotionalSource('Thrilling DreamBreakers Highlight MLP Playoffs', null, null, 'tournament'),
     ).toBe(false);
+  });
+
+  // Facebook posts the Vietnamese child of the same story, so the filter has to
+  // work in both languages or the advert just moves audience. That is not
+  // theoretical: the Six Zero paddle release was blocked from X in the morning
+  // and went out to both Facebook pages at 03:00 the same day.
+  it('blocks the Vietnamese paddle release by category, as X does the English one', () => {
+    expect(
+      isPromotionalSource('Six Zero Ra Mắt Vợt Pickleball Boulder Opal Mới', null, null, 'equipment'),
+    ).toBe(true);
+    // ...and by keyword too, since 547 of 685 Vietnamese rows have no category.
+    expect(isPromotionalSource('Six Zero Ra Mắt Vợt Pickleball Boulder Opal Mới', null)).toBe(true);
+  });
+
+  it.each([
+    'Joola trình làng bộ sưu tập giày mới',
+    'Selkirk mở bán vợt Luxx tại Việt Nam',
+    'Giảm giá 30% toàn bộ vợt Six Zero',
+    'PPA công bố nhà tài trợ chính thức mùa 2026',
+    'Nhận quà tặng khi đặt trước vợt mới',
+  ])('blocks Vietnamese commercial copy: %s', (title) => {
+    expect(isPromotionalSource(title, null)).toBe(true);
+  });
+
+  it.each([
+    'Ben Johns thắng Staksrud 11-6, 11-9 ở chung kết Hong Kong',
+    'PPA ra mắt thể thức thi đấu mới cho mùa 2026',
+    'MLP ra mắt đội hình Newport Beach',
+    'Waters ngược dòng từ 0-6 để thắng 15-13',
+  ])('keeps real Vietnamese reporting: %s', (title) => {
+    expect(isPromotionalSource(title, null)).toBe(false);
   });
 
   it('lets real reporting through, including the word "announced"', () => {
