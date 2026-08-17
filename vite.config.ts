@@ -462,7 +462,11 @@ return ({
       // Workers are pure node-compatible modules; coverage-excluded below,
       // so this only adds their fixture tests to the existing gate.
       "workers/*/src/**/*.test.ts",
-      "supabase/functions/_shared/__tests__/**/*.test.ts",
+      // Any function may carry its own __tests__ folder. Keeping them out of
+      // _shared matters: CI redeploys EVERY edge function when a path under
+      // supabase/functions/_shared/ changes, and a test file should not cost
+      // a fleet redeploy.
+      "supabase/functions/**/__tests__/**/*.test.ts",
       "scripts/**/*.test.mjs",
     ],
     exclude: ["node_modules/**", "dist/**", "tests/**"],

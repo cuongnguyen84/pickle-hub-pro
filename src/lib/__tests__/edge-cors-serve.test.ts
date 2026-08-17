@@ -233,8 +233,8 @@ describe("Edge Function CORS and server entrypoints", () => {
   });
 
   it("uses Deno.serve for every function entrypoint", () => {
-    // 81 since P2a.2 added shop-media-lifecycle.
-    expect(functionSources).toHaveLength(81);
+    // 82 since news-repair joined on 2026-08-17.
+    expect(functionSources).toHaveLength(82);
     for (const [functionName, source] of functionSources) {
       const alias = source.match(/import\s+["']\.\.\/([^/]+)\/index\.ts["']/)?.[1];
       const effectiveSource = alias ? functionSources.get(alias) : source;
