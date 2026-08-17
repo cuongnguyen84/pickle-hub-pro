@@ -122,11 +122,33 @@ const AD_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
 ];
 
 /**
- * Source phrases that mark the ARTICLE as promotional, as opposed to the post
- * being written promotionally. Checked against the news title and summary, so a
- * press release never reaches the model at all.
+ * Categories that are marketing by definition. Measured, not guessed: over 60
+ * days the EN feed produced 256 uncategorised, 57 player, 44 tournament, 18
+ * community, 12 business, 5 equipment. The two blocked here are the two whose
+ * sample titles are adverts —
+ *   equipment: "Six Zero Expands Gemstone Paddle Line With Boulder Opal Release"
+ *   business:  "PB5star Launches Cross-Country Road Trip to Promote Brand"
+ * `community` and `player` read as instructional, not commercial, so they stay.
+ */
+const BLOCKED_CATEGORIES: ReadonlyArray<string> = ['equipment', 'business'];
+
+/**
+ * Second layer, for the 256 rows that carry no category at all — a category
+ * filter cannot see those, and they are the majority of the feed.
+ *
+ * The first version of this list aimed at sponsorship language (sponsored,
+ * presented by, promo code). That was the wrong guess: the paddle release that
+ * actually reached the queue matched none of it. What this feed sells is gear,
+ * so that is what these patterns describe.
  */
 const PROMO_SOURCE_PATTERNS: ReadonlyArray<RegExp> = [
+  // gear — the category that actually got through
+  /\bpaddle (?:line|lineup|series|release|launch|drop)\b/i,
+  /\b(?:unveils?|releases?|launches?|expands?|introduces?|debuts?) [^.]{0,30}\b(?:paddle|shoe|apparel|bag|gear|collection)\b/i,
+  /\bgear (?:review|guide|drop|roundup)\b/i,
+  /\bbest \d+ [a-z ]*(?:paddles?|shoes?)\b/i,
+  /\b(?:hands[- ]on|first look) (?:review|with)\b/i,
+  // sponsorship and commerce
   /\bsponsored\b/i,
   /\bpresented by\b/i,
   /\bpartners? with\b/i,
@@ -147,7 +169,9 @@ export function isPromotionalSource(
   title: string,
   summary: string | null,
   source?: string | null,
+  category?: string | null,
 ): boolean {
+  if (category && BLOCKED_CATEGORIES.includes(category.toLowerCase())) return true;
   if (source && BLOCKED_SOURCES.some((s) => s.toLowerCase() === source.toLowerCase())) {
     return true;
   }
@@ -270,7 +294,7 @@ export function xDraftLookbackHours(env: XDraftEnv): number {
 export function rankNewsCandidates(rows: NewsRow[], alreadyDrafted: Set<string>): NewsRow[] {
   return rows
     .filter((row) => !alreadyDrafted.has(row.id))
-    .filter((row) => !isPromotionalSource(row.title, row.summary, row.source))
+    .filter((row) => !isPromotionalSource(row.title, row.summary, row.source, row.category))
     .sort((a, b) => {
       if (b.importance !== a.importance) return b.importance - a.importance;
       return Date.parse(b.published_at) - Date.parse(a.published_at);
@@ -378,7 +402,7 @@ async function insertDraft(env: XDraftEnv, row: NewsRow, body: string): Promise<
 async function draftProTourRoundup(
   env: XDraftEnv,
   body: XDraftBody,
-): Promise<Record<string, unknown> | null> {
+): Promise<Record<string, unknown>> {
   const since = new Date(Date.now() - 24 * 3600_000).toISOString();
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/matches`);
   url.searchParams.set(
@@ -396,10 +420,22 @@ async function draftProTourRoundup(
   const res = await fetch(url.toString(), { headers: restHeaders(env) });
   if (!res.ok) throw new Error(`matches read failed: ${res.status} ${await res.text()}`);
   const rows = (await res.json()) as Array<RoundupMatch & { source_provider: string }>;
-  if (rows.length === 0) return null;
+  if (rows.length === 0) return { roundup: 'skipped', reason: 'no_matches_in_24h' };
 
   const text = buildRoundupBody(rows, rows.map((r) => r.source_provider));
-  if (!text) return null;
+  if (!text) {
+    // Rows exist but none render. In practice this means the scraper has the
+    // fixtures and not the results yet — winning_team null, scores all zero —
+    // which is the state Newport Beach was in on 2026-08-17. Reporting the
+    // count is what tells the difference between "quiet day" and "scraper is
+    // behind"; returning null for both made them indistinguishable.
+    return {
+      roundup: 'skipped',
+      reason: 'no_finished_results',
+      matches_seen: rows.length,
+      with_winner: rows.filter((r) => r.winning_team === 'a' || r.winning_team === 'b').length,
+    };
+  }
 
   // Same day, same results — do not post it twice if the job is re-run.
   const dupUrl = new URL(`${env.SUPABASE_URL}/rest/v1/x_posts`);
@@ -441,7 +477,7 @@ export async function handleXDraft(
 
   // Results first: they are the post with no model in the loop, so a failure
   // in the news half must not cost us the half that cannot be wrong.
-  let roundup: Record<string, unknown> | null = null;
+  let roundup: Record<string, unknown>;
   try {
     roundup = await draftProTourRoundup(env, body);
   } catch (err) {
