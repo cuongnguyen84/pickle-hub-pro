@@ -76,10 +76,23 @@ const MAX_ITEMS_PER_FEED = 8;
 const MAX_AGE_DAYS = 30;
 const TITLE_LIMIT = 120;
 const SUMMARY_LIMIT = 300;
+
 const MAX_ARTICLE_BYTES = 1_500_000;
 // A 500–800 word rewrite needs enough factual substrate. Anything thinner is
 // deliberately treated as a 150–250 word brief to avoid padding/invention.
-const MIN_FULL_BODY_CHARS = 2_500;
+//
+// Raised from 2_500 on 2026-08-17. The intent was always right; the number was
+// not. 2_500 characters is roughly 420 words, so a "full" article was being
+// asked for a rewrite as long as, or longer than, its own source. Gemini
+// compressed instead — correctly — and news-rewrite then rejected the result
+// against its own 350-word floor: "en body has 254 words; expected 350-800".
+// Thirty origins had died that way, four of the last eight failures.
+//
+// 4_000 characters is roughly 670 words, so the 350–800 target becomes a
+// compression rather than an expansion, which is the direction a rewrite should
+// go. Anything under it is a brief, which is what a listicle or a short news
+// hit actually is.
+const MIN_FULL_BODY_CHARS = 4_000;
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
