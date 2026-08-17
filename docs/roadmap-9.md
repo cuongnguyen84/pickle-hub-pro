@@ -23,7 +23,7 @@
 
 | ID | Effort | Việc | Kích hoạt khi |
 |---|---|---|---|
-| DEBT-01 | 0.5d | **Backstop total-gz còn 4.8%** (1881.5/1970 KB, mỗi bài blog ~10-15 KB) — quyết: nâng backstop có chủ đích HAY tách CONTENT khỏi backstop | Trước bài blog thứ ~6 kể từ 03/08, hoặc khi check-bundle đỏ |
+| ~~DEBT-01~~ ✅ **XONG 17/8/2026** | 0.5d | **Backstop total-gz** — trigger "khi check-bundle đỏ" đã nổ: 2 bài EN đẩy total 1962.9 → 1979.3 KB > 1970, Quality gate đỏ trên cả commit không liên quan. Quyết: **tách CONTENT khỏi backstop**. Total gz giờ chỉ báo cáo, không enforce; CONTENT có budget gộp riêng 600 KB (đang 408) + cap 20 KB/chunk; CODE 1800 và INITIAL 280 giữ nguyên vai trò gác. Không nâng ngưỡng nào (runbook: ratchets DOWN only) | — |
 | DEBT-02 | 1-2d | **react-router v6→v7** (2 moderate CVE; open-redirect có safeRedirect chắn, không dùng SSR-hydration) | Không gấp; gộp khi có đợt nâng deps |
 | DEBT-03 | 0.5d | **Gỡ blanket `disableRules(["color-contrast"])`** page-wide + 2 theme states đúng key `tl-theme-mode` (gotcha 2 hệ theme đã doc trong audit) | Bất kỳ lúc nào — 2 bug nó giấu đã fix, chỉ còn dựng lại guard |
 | DEBT-04 | 1d | **Test money-path**: RegistrationModal (70% miss) + LivestreamGateOverlay + seedFromDupr + wizard-reducer | Trước lần sửa lớn tiếp theo vào payment/registration |
