@@ -132,6 +132,12 @@ const INK_ON_FILL: Array<[string, string]> = [
   // meta text and the verified pill sit on the white card, not the page.
   ["--tl-fg-3", "--shop-card-surface"],
   ["--shop-verified", "--shop-card-surface"],
+  // R4 ShopHome hero card: title and sub sit on the gradient's STRONGEST tint
+  // (the weak end trends toward --tl-surface, already covered above).
+  ["--shop-hero-ink", "--shop-hero-tint-strong"],
+  ["--shop-hero-sub-ink", "--shop-hero-tint-strong"],
+  // R4: chip ink measured on its own fill (light chip-bg is now a hex literal).
+  ["--shop-chip-ink", "--shop-chip-bg"],
 ];
 
 /**

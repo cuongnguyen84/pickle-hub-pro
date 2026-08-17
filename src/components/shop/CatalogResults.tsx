@@ -283,7 +283,7 @@ export function ResultsGrid({
           are the page's main character, the caveat is a footnote. */}
       {mood === "sparse" && (
         <p className="tl-shop-hint">
-          — sàn đang ở giai đoạn thử nghiệm, đây là toàn bộ những gì đang bán.
+          Sàn đang ở giai đoạn thử nghiệm — đây là toàn bộ những gì đang bán.
         </p>
       )}
     </>

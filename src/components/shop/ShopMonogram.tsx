@@ -2,8 +2,8 @@
 // A shop's monogram — the first letter of its name on a deterministic tint.
 // ----------------------------------------------------------------------------
 // Pure: no data, no dependency. The accent is hashed from the name so the same
-// shop always gets the same colour, and the storehead banner reuses the SAME
-// hash (monogramAccent) rather than writing a second algorithm.
+// shop always gets the same colour. (R3 dropped the storehead banner, so this
+// component is now the only consumer of the hash.)
 //
 // Every colour goes through a The Line token: the accent travels as a CSS var
 // whose VALUE is `var(--tl-…)`, the tint is a color-mix over --tl-surface, and

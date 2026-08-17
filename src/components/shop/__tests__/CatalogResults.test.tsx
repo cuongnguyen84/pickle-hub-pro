@@ -128,7 +128,7 @@ describe("the four states are four different answers", () => {
     const { unmount } = grid({ rows: [card()], total: 3 });
     expect(screen.getByRole("status").textContent).toBe("3 sản phẩm");
     expect(document.body.textContent).toContain(
-      "sàn đang ở giai đoạn thử nghiệm, đây là toàn bộ những gì đang bán.",
+      "Sàn đang ở giai đoạn thử nghiệm — đây là toàn bộ những gì đang bán.",
     );
     unmount();
 
@@ -213,11 +213,11 @@ describe("a buyer card renders from the public DTO and nothing else", () => {
     grid({ rows: [card()] });
 
     expect(screen.queryByRole("button")).toBeNull();
-    const links = screen.getAllByRole("link");
+    // R4: no aria-label — the accessible name is the card's full text content
+    // (title AND price/shop), so a screen reader hears everything the eye sees.
+    const links = screen.getAllByRole("link", { name: /Giày Court Pro/ });
     expect(links).toHaveLength(1);
     expect(links[0].getAttribute("href")).toBe("/shop/product/giay-court-pro");
-    // Named for a screen reader, so a grid of cards is not a list of "link".
-    expect(links[0].getAttribute("aria-label")).toBe("Giày Court Pro");
   });
 
   it("loads only the first screenful eagerly", () => {

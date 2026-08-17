@@ -34,8 +34,10 @@ export function ProductCard({ card, eager = false }: { card: Card; eager?: boole
   const soldOut = isSoldOut(card.availability);
   const box = mediaBox(card.cover?.width ?? null, card.cover?.height ?? null, BOX_W);
 
+  // R4: no aria-label on the link — it would OVERRIDE the accessible name and
+  // hide the price/shop from screen readers. The name is the full text content.
   return (
-    <Link to={`/shop/product/${card.slug}`} className="tl-pcard" aria-label={card.title}>
+    <Link to={`/shop/product/${card.slug}`} className="tl-pcard">
       <span className="tl-pcard-media">
         {card.cover ? (
           <img

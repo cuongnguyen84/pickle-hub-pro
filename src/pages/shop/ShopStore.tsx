@@ -10,7 +10,6 @@
 // its retired slug. Anything else confirms which shops are real.
 // ============================================================================
 
-import type { CSSProperties } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { BadgeCheck, ExternalLink, Package, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -18,7 +17,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { LoadingState } from "@/components/states/PageStates";
 import { usePublicSearch, usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { ResultsGrid } from "@/components/shop/CatalogResults";
-import { ShopMonogram, monogramAccent } from "@/components/shop/ShopMonogram";
+import { ShopMonogram } from "@/components/shop/ShopMonogram";
 import {
   CONTACT_LABEL,
   NO_CONTACT_COPY,
@@ -83,10 +82,7 @@ export default function ShopStore() {
           <span aria-current="page" className="tl-crumb-current">{shop.name}</span>
         </nav>
 
-        <header
-          className="tl-shop-storehead"
-          style={{ "--mono-accent": monogramAccent(shop.name) } as CSSProperties}
-        >
+        <header className="tl-shop-storehead">
           <div className="tl-shop-storehead-row">
             <ShopMonogram name={shop.name} size={72} />
             <div className="tl-shop-storehead-id">
