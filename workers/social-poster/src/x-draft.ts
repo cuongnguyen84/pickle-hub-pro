@@ -1,10 +1,14 @@
 /**
- * X draft generation — `POST /x/draft`.
+ * X post generation — `POST /x/draft`. Two producers, one daily run:
  *
- * Reads published ENGLISH `news_items`, has Gemini rewrite each into a post
- * that follows docs/x-content-playbook.md, and writes the result to `x_posts`
- * as `status='draft'`. It never publishes: the drain in x.ts only looks at
- * `approved`, so Cuong stays the only path from draft to X.
+ *   1. yesterday's pro-tour results as ONE templated post (see x-roundup.ts —
+ *      no model involved, so it cannot invent a score)
+ *   2. fresh English `news_items`, rewritten by Gemini per
+ *      docs/x-content-playbook.md
+ *
+ * Rows land at NEW_ROW_STATUS. While that is 'draft' the drain in x.ts cannot
+ * see them and Cuong is the only path to X; set it to 'approved' and the guards
+ * in this file are the only thing in the way.
  *
  * Why English rows and not the Vietnamese ones the Facebook pipeline uses:
  * news_items already stores the EN original (the VI row is a child via
@@ -26,14 +30,44 @@
  */
 
 import { checkXBody, type XEnv } from './x';
+import {
+  buildRoundupBody,
+  proTourProviderFilter,
+  type RoundupMatch,
+} from './x-roundup';
 
-const NEWS_SELECT = 'id,title,summary,content_html,category,importance,published_at';
+const NEWS_SELECT = 'id,title,summary,content_html,category,importance,published_at,source';
 
-/** How many drafts one run may create. The playbook caps posting at 2-4/day. */
-const DEFAULT_DRAFT_LIMIT = 2;
+/**
+ * How many news posts one run may create. Cuong dropped the 2-4/day editorial
+ * cap on 2026-08-16, so this is a spend and spam ceiling, not an editorial one:
+ * a day where the fetcher lands 40 items should not become 40 posts. The Worker
+ * still paces publishing at one per X_POST_MIN_GAP_MINUTES regardless.
+ *
+ * ponytail: a plain number, not "unlimited". Raise X_DRAFT_LIMIT if 8 is short.
+ */
+const DEFAULT_DRAFT_LIMIT = 8;
 
 /** Only consider news published within this window — X 403s stale duplicates. */
 const DEFAULT_LOOKBACK_HOURS = 36;
+
+/**
+ * THE HUMAN GATE. Rows land at this status; the drain in x.ts publishes only
+ * `approved`, so 'draft' means Cuong reads every post before X sees it and
+ * 'approved' means the guards in this file are the only thing between a
+ * language model and a public brand account.
+ *
+ * Cuong asked for full automation on 2026-08-16. This is left at 'draft'
+ * deliberately: flipping it is his call to make and his line to change, not a
+ * detail buried in a diff. Everything else in this file is built for either
+ * setting — change this one word, redeploy, done.
+ *
+ * Before flipping, know what does and does not stand in for the review:
+ *   covered — links, ad copy, hashtag spam, length, numbers not in the source
+ *   NOT covered — a claim with no number in it that is simply wrong
+ * The roundup post has no such gap: it is templated from database rows.
+ */
+const NEW_ROW_STATUS: 'draft' | 'approved' = 'draft';
 
 export interface XDraftEnv extends XEnv {
   /** Same secret the cron uses to call this Worker; social-caption checks it. */
@@ -50,6 +84,7 @@ export interface NewsRow {
   category: string | null;
   importance: number;
   published_at: string;
+  source?: string | null;
 }
 
 export interface XDraftBody {
@@ -86,10 +121,91 @@ const AD_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/👇|⬇|➡|🔗/u, 'pointer_emoji'],
 ];
 
+/**
+ * Source phrases that mark the ARTICLE as promotional, as opposed to the post
+ * being written promotionally. Checked against the news title and summary, so a
+ * press release never reaches the model at all.
+ */
+const PROMO_SOURCE_PATTERNS: ReadonlyArray<RegExp> = [
+  /\bsponsored\b/i,
+  /\bpresented by\b/i,
+  /\bpartners? with\b/i,
+  /\bannounces? (?:a )?(?:partnership|sponsorship|collaboration)\b/i,
+  /\bnow available\b/i,
+  /\btickets? (?:are )?on sale\b/i,
+  /\b(?:use )?(?:promo|discount) code\b/i,
+  /\b\d+% off\b/i,
+  /\bgiveaway\b/i,
+  /\bpre-?order\b/i,
+];
+
+/** Publishers whose feed is mostly marketing. Add names as they show up. */
+const BLOCKED_SOURCES: ReadonlyArray<string> = [];
+
+/** True when the source article is an advert rather than news. */
+export function isPromotionalSource(
+  title: string,
+  summary: string | null,
+  source?: string | null,
+): boolean {
+  if (source && BLOCKED_SOURCES.some((s) => s.toLowerCase() === source.toLowerCase())) {
+    return true;
+  }
+  const text = `${title} ${summary ?? ''}`;
+  return PROMO_SOURCE_PATTERNS.some((p) => p.test(text));
+}
+
+/** Enough of English to recognise a number the model spelled out in its source. */
+const NUMBER_WORDS: Record<string, string> = {
+  zero: '0', one: '1', two: '2', three: '3', four: '4', five: '5', six: '6',
+  seven: '7', eight: '8', nine: '9', ten: '10', eleven: '11', twelve: '12',
+  thirteen: '13', fourteen: '14', fifteen: '15', sixteen: '16',
+  seventeen: '17', eighteen: '18', nineteen: '19', twenty: '20',
+  thirty: '30', forty: '40', fifty: '50',
+};
+
+const TENS_WORDS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40, fifty: 50 };
+const UNIT_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+};
+
+/**
+ * Every number in the generated post must be traceable to the source text.
+ *
+ * This exists because of one observed failure: asked to rewrite an MLP report,
+ * the model produced "No. 4 Columbus" — a seed that appeared nowhere in the
+ * source or in its own previous attempt. Under manual approval that is a typo
+ * someone catches; posting unattended it is the brand stating a false fact.
+ *
+ * Word forms count as present, because the prompt deliberately asks for digits
+ * ("21-10", not "twenty-one to ten"), so a correct conversion must not be
+ * treated as an invention.
+ */
+export function unsourcedNumbers(body: string, sourceText: string): string[] {
+  const haystack = sourceText.toLowerCase();
+  const digitsInSource = new Set(haystack.match(/\d+/g) ?? []);
+  for (const [word, digits] of Object.entries(NUMBER_WORDS)) {
+    if (new RegExp(`\\b${word}\\b`).test(haystack)) digitsInSource.add(digits);
+  }
+  // Compounds, because a game to 21 is written "twenty-one" and the guard was
+  // rejecting the correct digits for it — exactly the kind of false positive
+  // that gets a guard switched off.
+  for (const [tens, tv] of Object.entries(TENS_WORDS)) {
+    for (const [unit, uv] of Object.entries(UNIT_WORDS)) {
+      if (new RegExp(`\\b${tens}[- ]${unit}\\b`).test(haystack)) {
+        digitsInSource.add(String(tv + uv));
+      }
+    }
+  }
+  const used = body.match(/\d+/g) ?? [];
+  return [...new Set(used.filter((n) => !digitsInSource.has(n)))];
+}
+
 export type XDraftReject =
   | { ok: false; reason: 'invalid_body'; detail: string }
   | { ok: false; reason: 'ad_copy'; detail: string }
-  | { ok: false; reason: 'not_specific'; detail: string };
+  | { ok: false; reason: 'not_specific'; detail: string }
+  | { ok: false; reason: 'unsourced_number'; detail: string };
 
 export type XDraftCheck = { ok: true; weighted: number } | XDraftReject;
 
@@ -97,7 +213,7 @@ export type XDraftCheck = { ok: true; weighted: number } | XDraftReject;
  * Gate a generated body before it is allowed to become a draft row.
  * Rejecting here is free; rejecting after Cuong approves it is a live post.
  */
-export function checkXDraft(body: string): XDraftCheck {
+export function checkXDraft(body: string, sourceText = ''): XDraftCheck {
   const base = checkXBody(body);
   if (!base.ok) {
     return { ok: false, reason: 'invalid_body', detail: base.reason ?? 'unknown' };
@@ -124,6 +240,13 @@ export function checkXDraft(body: string): XDraftCheck {
     return { ok: false, reason: 'ad_copy', detail: `hashtags:${hashtags.length}` };
   }
 
+  if (sourceText) {
+    const invented = unsourcedNumbers(body, sourceText);
+    if (invented.length > 0) {
+      return { ok: false, reason: 'unsourced_number', detail: invented.join(',') };
+    }
+  }
+
   return { ok: true, weighted: base.weighted };
 }
 
@@ -147,6 +270,7 @@ export function xDraftLookbackHours(env: XDraftEnv): number {
 export function rankNewsCandidates(rows: NewsRow[], alreadyDrafted: Set<string>): NewsRow[] {
   return rows
     .filter((row) => !alreadyDrafted.has(row.id))
+    .filter((row) => !isPromotionalSource(row.title, row.summary, row.source))
     .sort((a, b) => {
       if (b.importance !== a.importance) return b.importance - a.importance;
       return Date.parse(b.published_at) - Date.parse(a.published_at);
@@ -235,7 +359,7 @@ async function insertDraft(env: XDraftEnv, row: NewsRow, body: string): Promise<
       // turns out to matter, classify then.
       content_type: 'result',
       body,
-      status: 'draft',
+      status: NEW_ROW_STATUS,
       source_table: 'news_items',
       source_id: row.id,
     }),
@@ -243,6 +367,68 @@ async function insertDraft(env: XDraftEnv, row: NewsRow, body: string): Promise<
   if (!res.ok) throw new Error(`x_posts insert failed: ${res.status} ${await res.text()}`);
   const inserted = (await res.json()) as Array<{ id: string }>;
   return inserted[0]?.id ?? '(unknown)';
+}
+
+/**
+ * Yesterday's pro-tour results, as one templated post. Runs in the same daily
+ * job as the news drafts because it is the same question ("what happened?")
+ * asked of a different table, and a second cron would be a second thing to
+ * forget.
+ */
+async function draftProTourRoundup(
+  env: XDraftEnv,
+  body: XDraftBody,
+): Promise<Record<string, unknown> | null> {
+  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const url = new URL(`${env.SUPABASE_URL}/rest/v1/matches`);
+  url.searchParams.set(
+    'select',
+    'id,tournament_name,tournament_round,round_name,team_a_score,team_b_score,' +
+      'winning_team,source_provider,' +
+      'participants:match_participants(team,position,' +
+      'profile:profiles!match_participants_player_id_fkey(display_name,username))',
+  );
+  url.searchParams.set('source_provider', proTourProviderFilter());
+  url.searchParams.set('played_at', `gte.${since}`);
+  url.searchParams.set('order', 'played_at.desc');
+  url.searchParams.set('limit', '60');
+
+  const res = await fetch(url.toString(), { headers: restHeaders(env) });
+  if (!res.ok) throw new Error(`matches read failed: ${res.status} ${await res.text()}`);
+  const rows = (await res.json()) as Array<RoundupMatch & { source_provider: string }>;
+  if (rows.length === 0) return null;
+
+  const text = buildRoundupBody(rows, rows.map((r) => r.source_provider));
+  if (!text) return null;
+
+  // Same day, same results — do not post it twice if the job is re-run.
+  const dupUrl = new URL(`${env.SUPABASE_URL}/rest/v1/x_posts`);
+  dupUrl.searchParams.set('select', 'id');
+  dupUrl.searchParams.set('source_table', 'eq.matches');
+  dupUrl.searchParams.set('created_at', `gte.${since}`);
+  dupUrl.searchParams.set('limit', '1');
+  const dupRes = await fetch(dupUrl.toString(), { headers: restHeaders(env) });
+  if (dupRes.ok && ((await dupRes.json()) as unknown[]).length > 0) {
+    return { roundup: 'skipped', reason: 'already_posted_today' };
+  }
+
+  if (body.dry_run) {
+    return { roundup: 'dry_run', matches: rows.length, body: text, length: text.length };
+  }
+
+  const ins = await fetch(`${env.SUPABASE_URL}/rest/v1/x_posts`, {
+    method: 'POST',
+    headers: { ...restHeaders(env), Prefer: 'return=representation' },
+    body: JSON.stringify({
+      content_type: 'result',
+      body: text,
+      status: NEW_ROW_STATUS,
+      source_table: 'matches',
+    }),
+  });
+  if (!ins.ok) throw new Error(`roundup insert failed: ${ins.status} ${await ins.text()}`);
+  const inserted = (await ins.json()) as Array<{ id: string }>;
+  return { roundup: inserted[0]?.id ?? '(unknown)', matches: rows.length, length: text.length };
 }
 
 export async function handleXDraft(
@@ -253,12 +439,21 @@ export async function handleXDraft(
     return { skipped: true, reason: 'social_poster_secret_missing' };
   }
 
+  // Results first: they are the post with no model in the loop, so a failure
+  // in the news half must not cost us the half that cannot be wrong.
+  let roundup: Record<string, unknown> | null = null;
+  try {
+    roundup = await draftProTourRoundup(env, body);
+  } catch (err) {
+    roundup = { roundup: 'error', detail: String(err).slice(0, 200) };
+  }
+
   const [candidates, drafted] = await Promise.all([
     fetchEnglishNews(env, body),
     fetchDraftedIds(env),
   ]);
   const ranked = rankNewsCandidates(candidates, drafted);
-  if (ranked.length === 0) return { drafted: 0, reason: 'no_new_news' };
+  if (ranked.length === 0) return { drafted: 0, reason: 'no_new_news', ...roundup };
 
   const limit = xDraftLimit(env, body.limit);
   const results: Array<Record<string, unknown>> = [];
@@ -275,7 +470,10 @@ export async function handleXDraft(
       continue;
     }
 
-    let check = checkXDraft(caption);
+    // The source text the numbers are checked against. content_html is what the
+    // model was given, so anything numeric it wrote should be traceable to it.
+    const sourceText = `${row.title} ${row.summary ?? ''} ${row.content_html ?? ''}`;
+    let check = checkXDraft(caption, sourceText);
 
     // One retry, for length only. The first real run threw away a good post
     // because it was 281 characters — one over. Length is the failure a model
@@ -290,7 +488,7 @@ export async function handleXDraft(
             'Rewrite it under 240 characters. Cut the second sentence entirely if you must; ' +
             'do not drop the score or the names.',
         );
-        check = checkXDraft(caption);
+        check = checkXDraft(caption, sourceText);
       } catch (err) {
         results.push({ news_item_id: row.id, error: String(err).slice(0, 200) });
         continue;
@@ -326,5 +524,5 @@ export async function handleXDraft(
     created += 1;
   }
 
-  return { drafted: created, considered: ranked.length, results };
+  return { drafted: created, considered: ranked.length, results, ...roundup };
 }

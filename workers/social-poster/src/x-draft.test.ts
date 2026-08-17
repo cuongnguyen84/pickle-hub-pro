@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   checkXDraft,
+  isPromotionalSource,
   rankNewsCandidates,
+  unsourcedNumbers,
   xDraftLimit,
   type NewsRow,
 } from './x-draft';
@@ -101,6 +103,66 @@ describe('checkXDraft', () => {
   });
 });
 
+describe('unsourcedNumbers', () => {
+  // The failure this exists for, verbatim: the model wrote "No. 4 Columbus"
+  // for a source that never mentioned a 4th seed. Under full automation that
+  // sentence is the brand asserting something false, with nobody to catch it.
+  it('flags a number the source never contained', () => {
+    expect(unsourcedNumbers('No. 4 Columbus fell 21-10', 'Columbus fell 21-10'))
+      .toEqual(['4']);
+  });
+
+  it('passes numbers that are present in the source', () => {
+    expect(unsourcedNumbers('Johns won 11-6, 11-9', 'He won 11-6 and 11-9')).toEqual([]);
+  });
+
+  // The prompt demands digits, so a correct word→digit conversion must not be
+  // mistaken for an invention or the guard fights its own instructions.
+  it('accepts digits converted from a spelled-out source number', () => {
+    expect(unsourcedNumbers('a 13-match streak', 'a thirteen-match winning streak'))
+      .toEqual([]);
+    expect(unsourcedNumbers('won 21-10', 'won twenty-one to ten')).toEqual([]);
+  });
+
+  it('is inert when no source text is supplied', () => {
+    expect(checkXDraft('Johns won 11-6 in Dallas.').ok).toBe(true);
+  });
+
+  it('rejects through checkXDraft with the offending number in the detail', () => {
+    const r = checkXDraft('No. 4 Columbus fell to Brooklyn', 'Columbus fell to Brooklyn');
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe('unsourced_number');
+    expect(r.detail).toBe('4');
+  });
+});
+
+describe('isPromotionalSource', () => {
+  it.each([
+    ['Sponsored: the new Joola paddle', null],
+    ['PPA announces partnership with Hyundai', null],
+    ['Hong Kong Slam tickets on sale Friday', null],
+    ['Ben Johns paddle now available', null],
+    ['Win a paddle in our giveaway', null],
+    ['Selkirk drops 20% off summer sale', null],
+  ])('skips the press release: %s', (title, summary) => {
+    expect(isPromotionalSource(title, summary as string | null)).toBe(true);
+  });
+
+  it('lets real reporting through, including the word "announced"', () => {
+    expect(isPromotionalSource('Johns beats Staksrud in Hong Kong final', null)).toBe(false);
+    expect(isPromotionalSource('MLP announced the playoff schedule', null)).toBe(false);
+  });
+
+  it('drops promotional items before they reach the model', () => {
+    const rows = [
+      news({ id: 'ad', title: 'Sponsored: new paddle drop' }),
+      news({ id: 'real', title: 'Waters wins Orlando' }),
+    ];
+    expect(rankNewsCandidates(rows, new Set()).map((r) => r.id)).toEqual(['real']);
+  });
+});
+
 describe('rankNewsCandidates', () => {
   it('puts importance first, then newest', () => {
     const rows = [
@@ -122,11 +184,11 @@ describe('rankNewsCandidates', () => {
 });
 
 describe('xDraftLimit', () => {
-  it('defaults to 2, respects the env, and caps runaway overrides', () => {
-    expect(xDraftLimit({} as never)).toBe(2);
+  it('defaults to 8, respects the env, and caps runaway overrides', () => {
+    expect(xDraftLimit({} as never)).toBe(8);
     expect(xDraftLimit({ X_DRAFT_LIMIT: '3' } as never)).toBe(3);
     expect(xDraftLimit({} as never, 4)).toBe(4);
     expect(xDraftLimit({} as never, 999)).toBe(10);
-    expect(xDraftLimit({ X_DRAFT_LIMIT: 'nonsense' } as never)).toBe(2);
+    expect(xDraftLimit({ X_DRAFT_LIMIT: 'nonsense' } as never)).toBe(8);
   });
 });
