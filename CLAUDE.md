@@ -186,7 +186,7 @@ Function `send-push-notification` verifies the JWT internally and requires the a
 
 The admin role requires an **aal2 session** (TOTP via Supabase MFA) once the user has a verified factor — self-activating, enforced in `is_admin()`/`has_role()` (migrations `20260730090000` + `20260730100000` sweep) and in admin-privileged edge functions via `_shared/admin-aal.ts`. UI gate: `AdminMFAGate` (wraps `AdminLayout` + `RequireAuth requiredRole="admin"`). Lost authenticator → delete the row in `auth.mfa_factors` to unlock.
 
-## Supabase Edge Functions (80 active — count enforced by `npm run auth:registry`)
+## Supabase Edge Functions (82 active — count enforced by `npm run auth:registry`)
 
 Browse: `supabase/functions/`. Categories:
 
