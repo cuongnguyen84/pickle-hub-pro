@@ -8,6 +8,7 @@
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { edgeError, edgeErrorMessage } from "@/lib/shop/errors";
 import { shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
 import { productKeys } from "@/hooks/shop/useSellerProducts";
 import type { ProductMediaRow, ShopProfileMediaRow } from "@/integrations/supabase/shop-schema";
@@ -109,16 +110,28 @@ export const usePublishProfileMedia = (shopId: string | null) => {
       // THROWS without env vars — a top-level import here took the whole
       // MediaEditor test import-chain down on CI, where no .env exists.
       const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase.functions.invoke("shop-media-lifecycle", {
+      // The Response comes back unread on the error path — it is the only place
+      // the worker's `failed[0].error` and the RPC's Vietnamese refusal exist.
+      // 20s, because the seller must never be left with a spinner and no
+      // button: publish_profile copies at most two items, so a call still
+      // running at 20s is not slow, it is gone.
+      const { data, error, response } = await supabase.functions.invoke("shop-media-lifecycle", {
         body: { action: "publish_profile", shop_id: shopId },
+        timeout: 20_000,
       });
-      if (error) throw error;
+      if (error) throw edgeError(await edgeErrorMessage(error, response));
       const result = data as {
         ok?: boolean;
         published?: { media_id: string; target: string }[];
         failed?: { media_id: string; error: string }[];
       };
-      if (!result?.ok) throw new Error("publish_profile_failed");
+      // Only reachable if the worker starts answering 200 for a partial
+      // publish; today a partial is a 502 and lands above.
+      if (!result?.ok) {
+        throw edgeError(
+          await edgeErrorMessage(null, new Response(JSON.stringify(result ?? {}), { status: 200 })),
+        );
+      }
       return result;
     },
     // Settled, not just success: a partial failure still committed some rows,

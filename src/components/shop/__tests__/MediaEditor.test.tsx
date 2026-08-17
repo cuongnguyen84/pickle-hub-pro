@@ -26,7 +26,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 
 import type { UploadItem, UploadTarget } from "@/hooks/shop/useMediaUpload";
-import type { ProductMediaRow, ProductVariantRow } from "@/integrations/supabase/shop-schema";
+import type { ProductMediaRow, ProductVariantRow, ShopState } from "@/integrations/supabase/shop-schema";
 
 // ─── Doubles ────────────────────────────────────────────────────────────────
 
@@ -47,6 +47,13 @@ vi.mock("@/integrations/supabase/client", () => ({
     storage: { from: () => ({ createSignedUrls }) },
     functions: { invoke: (...args: unknown[]) => functionsInvoke(...args) },
   },
+}));
+
+// The real one posts to the production log endpoint. Doubled so the test can
+// assert that a publish failure IS reported without sending anything.
+const reportCaughtError = vi.fn();
+vi.mock("@/lib/errorReporter", () => ({
+  reportCaughtError: (...args: unknown[]) => reportCaughtError(...args),
 }));
 
 /** The upload hook, replaced by a handle the test drives. The real target
@@ -120,11 +127,18 @@ const renderProduct = (over: Partial<Parameters<typeof ProductMediaSection>[0]> 
   );
 };
 
-const renderProfile = (disabled = false) => {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+const renderProfile = (disabled = false, shopState: ShopState = "active") => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   return rtlRender(
     <QueryClientProvider client={client}>
-      <ShopProfileMediaSection shopId="shop-1" disabled={disabled} onChanged={onChanged} />
+      <ShopProfileMediaSection
+        shopId="shop-1"
+        shopState={shopState}
+        disabled={disabled}
+        onChanged={onChanged}
+      />
     </QueryClientProvider>,
   );
 };
@@ -433,6 +447,8 @@ describe("publishing the logo and cover", () => {
     await waitFor(() =>
       expect(functionsInvoke).toHaveBeenCalledWith("shop-media-lifecycle", {
         body: { action: "publish_profile", shop_id: "shop-1" },
+        // 20s < the 30s "nothing hangs without a button" rule, in code.
+        timeout: 20_000,
       }),
     );
     expect(functionsInvoke).toHaveBeenCalledTimes(1);
@@ -440,34 +456,204 @@ describe("publishing the logo and cover", () => {
     expect(onChanged).toHaveBeenCalled();
   });
 
+  it("does not fire at a shop the prepare RPC will refuse anyway", async () => {
+    renderProfile(false, "pending_activation");
+
+    await act(async () => {
+      targets[0].onSettled();
+    });
+
+    // A 403 per upload is not information; the hint is.
+    expect(functionsInvoke).not.toHaveBeenCalled();
+    expect(onChanged).toHaveBeenCalled();
+  });
+
+  it("offers no button while the shop cannot publish, only what happens next", async () => {
+    profileRows = [verifiedRow("logo")];
+    renderProfile(false, "pending_activation");
+
+    expect(await screen.findByText(/Shop được kích hoạt xong là ảnh tự lên trang shop/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Thử đưa logo/ })).toBeNull();
+  });
+
+  it("names the state a suspended shop is actually in", async () => {
+    profileRows = [verifiedRow("logo")];
+    renderProfile(false, "suspended");
+
+    expect(await screen.findByText(/Shop đang ở trạng thái "Tạm ngưng"/)).toBeTruthy();
+  });
+
   it("shows a verified-but-unpublished row honestly, with a working retry", async () => {
     profileRows = [verifiedRow("logo")];
     renderProfile();
 
-    // Honest status: verified is not the same claim as public.
-    expect(await screen.findByText(/chưa lên trang shop công khai/)).toBeTruthy();
+    // The consequence, not the internal step: the shop page has no logo.
+    expect(await screen.findByText(/Trang shop hiện chưa có logo/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Đưa lên trang shop" }));
+    fireEvent.click(screen.getByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
     await waitFor(() =>
       expect(functionsInvoke).toHaveBeenCalledWith("shop-media-lifecycle", {
         body: { action: "publish_profile", shop_id: "shop-1" },
+        timeout: 20_000,
       }),
     );
   });
 
-  it("never presents a publish failure as an upload failure", async () => {
+  it("says what the worker actually refused, and shows the code to screenshot", async () => {
     profileRows = [verifiedRow("logo")];
-    functionsInvoke.mockResolvedValue({ data: null, error: new Error("edge down") });
+    // The production 502: each item carries its own reason and the body has no
+    // top-level `error` at all.
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("Edge Function returned a non-2xx status code"),
+      response: new Response(
+        JSON.stringify({ ok: false, published: [], failed: [{ error: "rendition_metadata_present" }] }),
+        { status: 502 },
+      ),
+    });
     renderProfile();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Đưa lên trang shop" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
 
     await waitFor(() =>
-      expect(screen.getByRole("alert").textContent).toContain("chỉ bước đưa lên trang shop bị lỗi"),
+      expect(screen.getByRole("alert").textContent).toContain("Thử chọn ảnh khác"),
     );
+    expect(screen.getByText("502 · rendition_metadata_present")).toBeTruthy();
+    // Reported once — and the reporter's own 5-minute dedupe means a second
+    // press inside that window adds no second client event.
+    expect(reportCaughtError).toHaveBeenCalledWith(expect.any(Error), "shop:publish_profile");
     // The upload pipeline reports nothing: the file DID upload and verify.
     expect(screen.queryByText("Chưa xong")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Thử lại" })).toBeNull();
+  });
+
+  it("keeps the seller's shop page refusal word for word", async () => {
+    profileRows = [verifiedRow("logo")];
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("non-2xx"),
+      response: new Response(
+        JSON.stringify({ error: "shop đang ở trạng thái restricted nên chưa đưa ảnh lên trang công khai được" }),
+        { status: 403 },
+      ),
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("shop đang ở trạng thái restricted"),
+    );
+  });
+
+  it("leaves a pressable button when the 20s timeout fires, not a dead sentence", async () => {
+    profileRows = [verifiedRow("logo")];
+    // What supabase-js hands back when its AbortController fires: no Response
+    // at all, and the error only identifies itself by `name`. No fake timers
+    // needed — the SHAPE is the contract, not the wall clock.
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: Object.assign(new Error("Failed to send a request to the Edge Function"), {
+        name: "FunctionsFetchError",
+      }),
+      response: undefined,
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain(
+        "Không kết nối được máy chủ. Kiểm tra mạng rồi bấm Thử lại.",
+      ),
+    );
+    expect(screen.getByText(/Mã lỗi:/)).toBeTruthy();
+    // The rule this protects: nothing hangs past 30s without a button.
+    const retry = screen.getByRole("button", {
+      name: "Thử đưa logo lên trang shop lại",
+    }) as HTMLButtonElement;
+    expect(retry.disabled).toBe(false);
+  });
+
+  it("names an expired session, the one failure a retry cannot fix", async () => {
+    profileRows = [verifiedRow("logo")];
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("non-2xx"),
+      response: new Response(JSON.stringify({ error: "JWT expired" }), { status: 403 }),
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Phiên đăng nhập đã hết hạn"),
+    );
+  });
+
+  it("keeps Postgres' English out of the sentence and in the code line", async () => {
+    profileRows = [verifiedRow("logo")];
+    // A missing GRANT reads as English from PostgREST. A seller can do nothing
+    // with it — but we need it in the screenshot, so it belongs in the code.
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("non-2xx"),
+      response: new Response(
+        JSON.stringify({ error: "permission denied for function shop_profile_media_publish_prepare" }),
+        { status: 403 },
+      ),
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Lỗi từ phía hệ thống"),
+    );
+    expect(screen.getByRole("alert").textContent).not.toContain("permission denied");
+    expect(screen.getByText(/permission denied for function/)).toBeTruthy();
+  });
+
+  it("clears the error line once a retry actually succeeds", async () => {
+    profileRows = [verifiedRow("logo")];
+    functionsInvoke
+      .mockResolvedValueOnce({
+        data: null,
+        error: new Error("non-2xx"),
+        response: new Response(
+          JSON.stringify({ ok: false, published: [], failed: [{ error: "rendition_metadata_present" }] }),
+          { status: 502 },
+        ),
+      })
+      .mockResolvedValue({
+        data: { ok: true, published: [{ media_id: "pm-logo", target: "public" }], failed: [] },
+        error: null,
+      });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+
+    fireEvent.click(screen.getByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    // A stale red line under a publish that worked is worse than no line.
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.queryByText(/Mã lỗi:/)).toBeNull();
+  });
+
+  it("never hides the button while the call is in flight", async () => {
+    profileRows = [verifiedRow("logo")];
+    // A request that never settles — the state that used to leave the seller
+    // with a sentence and nothing to press, forever.
+    functionsInvoke.mockReturnValue(new Promise(() => {}));
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() => {
+      const button = screen.getByRole("button", { name: "Đang đưa lên trang shop…" }) as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+    });
+    expect(screen.getByRole("status").textContent).toContain("Đang đưa ảnh lên trang shop");
   });
 });
 

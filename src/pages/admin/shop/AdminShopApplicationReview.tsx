@@ -29,6 +29,8 @@ import {
   useShopApplication,
   useShopState,
 } from "@/hooks/shop/useShopApplicationQueue";
+import { usePublishProfileMedia, useShopProfileMedia } from "@/hooks/shop/useProductMedia";
+import { shopErrorMessage } from "@/lib/shop/errors";
 import { useConfirm } from "@/hooks/useConfirm";
 import { SellerRulesReceiptPanel } from "@/components/shop/SellerRulesReceiptPanel";
 import { APPLICATION_STATUS_LABEL, SELLER_TYPE_LABEL, SHOP_STATE_LABEL, VERIFIED_METHOD_LABEL, decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
@@ -51,11 +53,33 @@ function ActivationSection({ shopId }: { shopId: string }) {
   const confirm = useConfirm();
   const shop = useShopState(shopId);
   const activate = useActivateShop();
+  const media = useShopProfileMedia(shopId);
+  const publish = usePublishProfileMedia(shopId);
   const [method, setMethod] = useState("gap-truc-tiep");
   const [error, setError] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const s = shop.data;
   const state = (s?.state ?? "") as ShopState;
+  // The gate is the server's rows, not a guess and not the wording of a refusal:
+  // most shops are activated BEFORE the seller uploads a logo, and calling
+  // publish there only collects a 403 "chưa có ảnh nào được xác minh".
+  const pendingMedia = (media.data ?? []).some((m) => m.verified_at && !m.public_path);
+
+  // Publish is its own failure. It never overwrites the activation's error, and
+  // it never puts the "Kích hoạt shop" button back — the shop IS active.
+  const publishNow = async () => {
+    setPublishError(null);
+    try {
+      await publish.mutateAsync();
+    } catch (e) {
+      setPublishError(
+        "Shop đã kích hoạt nhưng chưa đưa ảnh lên trang shop được: " +
+          shopErrorMessage(e) +
+          " — bấm “Đưa ảnh lên trang shop” để thử lại.",
+      );
+    }
+  };
 
   const onActivate = async () => {
     if (!s) return;
@@ -75,7 +99,13 @@ function ActivationSection({ shopId }: { shopId: string }) {
       await activate.mutateAsync({ shopId, verifiedMethod: method || null });
     } catch (err) {
       setError(activateErrorMessage(err));
+      return;
     }
+    // Sequential, and only after the state flipped: shop_profile_media_publish_prepare
+    // raises for every shop that is not active. The seller's screen already
+    // promises "kích hoạt xong là ảnh tự lên trang shop" — this is the caller
+    // that makes the sentence true.
+    if (pendingMedia) await publishNow();
   };
 
   return (
@@ -170,16 +200,39 @@ function ActivationSection({ shopId }: { shopId: string }) {
             )}
 
             {state === "active" && (
-              <div className="tl-shop-notice tl-shop-notice--info" role="status">
-                <Check size={16} aria-hidden="true" />
-                <div>
-                  <strong>Đã kích hoạt.</strong> Shop đang công khai tại{" "}
-                  <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
-                    Xem trang shop (mở tab mới) <ExternalLink size={13} aria-hidden="true" style={{ verticalAlign: -2 }} />
-                  </a>
-                  . Nhớ báo seller qua Zalo — hệ thống không gửi thông báo tự động.
+              <>
+                <div className="tl-shop-notice tl-shop-notice--info" role="status">
+                  <Check size={16} aria-hidden="true" />
+                  <div>
+                    <strong>Đã kích hoạt.</strong> Shop đang công khai tại{" "}
+                    <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
+                      Xem trang shop (mở tab mới) <ExternalLink size={13} aria-hidden="true" style={{ verticalAlign: -2 }} />
+                    </a>
+                    . Nhớ báo seller qua Zalo — hệ thống không gửi thông báo tự động.
+                  </div>
                 </div>
-              </div>
+
+                {/* Shown by the server's rows, not by a failure kept in memory:
+                    a button that dies on F5 leaves the shop complete and its
+                    shelf empty, which is exactly the Wave 0 defect. */}
+                {pendingMedia && (
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      type="button"
+                      className="tl-shop-btn tl-shop-btn--primary"
+                      disabled={publish.isPending}
+                      onClick={() => void publishNow()}
+                    >
+                      {publish.isPending ? "Đang đưa ảnh lên trang shop…" : "Đưa ảnh lên trang shop"}
+                    </button>
+                    {publishError && (
+                      <p className="tl-shop-error" role="alert" style={{ marginTop: 8 }}>
+                        <AlertTriangle size={13} aria-hidden="true" /> {publishError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             {(state === "restricted" || state === "suspended" || state === "closed") && (

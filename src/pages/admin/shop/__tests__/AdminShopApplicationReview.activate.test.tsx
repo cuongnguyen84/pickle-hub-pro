@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AdminShopApplicationReview from "../AdminShopApplicationReview";
 
 const rpc = vi.fn();
+const functionsInvoke = vi.fn();
 // per-table resolver so a test can hold the shops query pending or fail it
 const tableFetch: Record<string, () => Promise<{ data: unknown; error: { message: string } | null }>> = {};
 
@@ -21,9 +22,20 @@ vi.mock("@/integrations/supabase/shop-client", () => ({
       select: () => b,
       eq: () => b,
       maybeSingle: () => tableFetch[table](),
+      // The list queries (shop_profile_media) await the builder itself. Without
+      // `then` the await resolves to this object, the hook sees no rows, and
+      // every "there is something to publish" test passes for the wrong reason.
+      then: (ok: (v: unknown) => unknown, fail?: (e: unknown) => unknown) =>
+        tableFetch[table]().then(ok, fail),
     };
     return b;
   },
+}));
+
+// usePublishProfileMedia imports the SDK client lazily, and client.ts THROWS at
+// module load when the env vars are missing — which is every CI run.
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { functions: { invoke: (...args: unknown[]) => functionsInvoke(...args) } },
 }));
 
 // One controllable confirm — the section must respect a "Huỷ".
@@ -73,9 +85,23 @@ const shopRow = (over: Partial<Record<string, unknown>> = {}) => ({
   ...over,
 });
 
-const setRows = (app: unknown, shop: unknown) => {
+/** A logo the worker verified but nobody has copied to the public bucket. */
+const pendingLogo = () => ({
+  id: "pm-logo",
+  shop_id: SHOP_ID,
+  purpose: "logo",
+  draft_path: `${SHOP_ID}/profile/logo/pm/v1/original`,
+  rendition_source_path: `${SHOP_ID}/profile/logo/pm/v1/rendition.webp`,
+  public_path: null,
+  focal_y: 0.5,
+  version: 1,
+  verified_at: "2026-08-17T00:00:00Z",
+});
+
+const setRows = (app: unknown, shop: unknown, profileMedia: unknown[] = []) => {
   tableFetch["shop_applications_admin"] = () => Promise.resolve({ data: app, error: null });
   tableFetch["shops"] = () => Promise.resolve({ data: shop, error: null });
+  tableFetch["shop_profile_media"] = () => Promise.resolve({ data: profileMedia, error: null });
 };
 
 const mount = () => {
@@ -95,6 +121,13 @@ const findActivateButton = () => screen.findByRole("button", { name: "Kích ho�
 
 beforeEach(() => {
   rpc.mockReset();
+  functionsInvoke.mockReset().mockResolvedValue({
+    data: { ok: true, published: [], failed: [] },
+    error: null,
+  });
+  // Default: nothing waiting to be published, so a test that does not care
+  // about media never fires the publish leg by accident.
+  tableFetch["shop_profile_media"] = () => Promise.resolve({ data: [], error: null });
   confirmFn.mockClear();
   confirmAnswer = true;
 });
@@ -193,6 +226,132 @@ describe("pending_activation → activate", () => {
     expect(select.value).toBe("giay-phep-kinh-doanh");
     const btn = screen.getByRole("button", { name: "Kích hoạt shop" }) as HTMLButtonElement;
     expect(btn.disabled).toBe(false);
+  });
+});
+
+// ─── Activate → the photos actually reach the shop page ─────────────────────
+// Wave 0's failure, repeated on the profile leg: shop_activate flipped the
+// state, the logo stayed verified-and-private in the draft bucket, and the
+// seller's screen said "kích hoạt xong là ảnh tự lên trang shop" — a sentence
+// with no caller behind it.
+
+describe("activation publishes the shop's logo and cover", () => {
+  const PUBLISH_FAILED = {
+    data: null,
+    error: new Error("Edge Function returned a non-2xx status code"),
+    response: new Response(
+      JSON.stringify({ ok: false, published: [], failed: [{ error: "copy_failed" }] }),
+      { status: 502 },
+    ),
+  };
+
+  /** shops answers pending_activation until shop_activate resolves, the way
+   *  the server does — so the retry button's own condition is exercised. */
+  const setActivatingShop = (profileMedia: unknown[] = []) => {
+    let activated = false;
+    tableFetch["shop_applications_admin"] = () => Promise.resolve({ data: appRow(), error: null });
+    tableFetch["shops"] = () =>
+      Promise.resolve({
+        data: shopRow({ state: activated ? "active" : "pending_activation" }),
+        error: null,
+      });
+    tableFetch["shop_profile_media"] = () => Promise.resolve({ data: profileMedia, error: null });
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "shop_activate") activated = true;
+      return "active";
+    });
+  };
+
+  const findPublishButton = () =>
+    screen.findByRole("button", { name: "Đưa ảnh lên trang shop" });
+
+  it("calls publish_profile AFTER shop_activate, never beside it", async () => {
+    setActivatingShop([pendingLogo()]);
+    mount();
+    fireEvent.click(await findActivateButton());
+
+    await waitFor(() => expect(functionsInvoke).toHaveBeenCalledTimes(1));
+    expect(functionsInvoke).toHaveBeenCalledWith("shop-media-lifecycle", {
+      body: { action: "publish_profile", shop_id: SHOP_ID },
+      timeout: 20_000,
+    });
+    // Order is the whole point: publish_prepare raises while the shop is not
+    // active, so a parallel call is a guaranteed 403.
+    expect(rpc.mock.invocationCallOrder[0]).toBeLessThan(functionsInvoke.mock.invocationCallOrder[0]);
+  });
+
+  it("does not publish when the activation itself failed", async () => {
+    setRows(appRow(), shopRow(), [pendingLogo()]);
+    rpc.mockRejectedValue(new Error("shop_not_activatable:suspended"));
+    mount();
+    fireEvent.click(await findActivateButton());
+
+    expect(await screen.findByText(/không còn ở trạng thái chờ kích hoạt/i)).toBeTruthy();
+    expect(functionsInvoke).not.toHaveBeenCalled();
+  });
+
+  it("says nothing and calls nothing when there is no photo waiting", async () => {
+    setActivatingShop([]);
+    mount();
+    fireEvent.click(await findActivateButton());
+
+    expect(await screen.findByText("Đã kích hoạt.")).toBeTruthy();
+    // A shop activated before its logo exists is the COMMON case — prepare
+    // would answer 403 "chưa có ảnh nào được xác minh", which is not news.
+    expect(functionsInvoke).not.toHaveBeenCalled();
+    expect(screen.queryByText(/chưa đưa ảnh lên trang shop được/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Đưa ảnh lên trang shop" })).toBeNull();
+  });
+
+  it("keeps the activation when the publish leg fails, and offers the retry", async () => {
+    setActivatingShop([pendingLogo()]);
+    functionsInvoke.mockResolvedValue(PUBLISH_FAILED);
+    mount();
+    fireEvent.click(await findActivateButton());
+
+    // The shop IS active. A failed photo copy does not undo that, and must not
+    // put the "Kích hoạt shop" button back.
+    expect(await screen.findByText("Đã kích hoạt.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Kích hoạt shop" })).toBeNull();
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("alert").some((el) =>
+          el.textContent?.includes("Shop đã kích hoạt nhưng chưa đưa ảnh lên trang shop được"),
+        ),
+      ).toBe(true),
+    );
+    const retry = (await findPublishButton()) as HTMLButtonElement;
+    expect(retry.disabled).toBe(false);
+  });
+
+  it("retries just the publish leg, and clears the line when it works", async () => {
+    setActivatingShop([pendingLogo()]);
+    functionsInvoke
+      .mockResolvedValueOnce(PUBLISH_FAILED)
+      .mockResolvedValue({ data: { ok: true, published: [{ media_id: "pm-logo" }], failed: [] }, error: null });
+    mount();
+    fireEvent.click(await findActivateButton());
+    await waitFor(() => expect(functionsInvoke).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(await findPublishButton());
+
+    await waitFor(() => expect(functionsInvoke).toHaveBeenCalledTimes(2));
+    // No second shop_activate: the retry is the publish leg alone.
+    expect(rpc.mock.calls.filter((c) => c[0] === "shop_activate")).toHaveLength(1);
+    await waitFor(() =>
+      expect(screen.queryByText(/chưa đưa ảnh lên trang shop được/)).toBeNull(),
+    );
+  });
+
+  it("still offers the button on a fresh page load, with no failure in memory", async () => {
+    // The Wave 0 shape of this bug: a button that only exists while the error
+    // state does disappears on F5, and the shop stays complete-and-empty.
+    setRows(appRow(), shopRow({ state: "active" }), [pendingLogo()]);
+    mount();
+
+    expect(await findPublishButton()).toBeTruthy();
+    expect(functionsInvoke).not.toHaveBeenCalled();
   });
 });
 

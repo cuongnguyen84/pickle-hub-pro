@@ -19,6 +19,10 @@
 // ============================================================================
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+// The worker's own check, imported rather than described: the client fix is
+// only worth anything if the bytes it produces pass the exact function that
+// rejected them in production.
+import { inspectJpeg } from "../../../../supabase/functions/shop-media-lifecycle/jpeg";
 import {
   IMAGE_LIMITS,
   HEIC_MESSAGE,
@@ -27,6 +31,7 @@ import {
   readHead,
   runQueue,
   sniffImageType,
+  stripJpegMetadata,
   targetSize,
 } from "../imagePipeline";
 
@@ -294,6 +299,155 @@ describe("processImage — what a seller is allowed to send", () => {
     await expect(processImage(fileOf(JPEG, 4000), { signal: controller.signal })).rejects.toThrow(
       /abort/i,
     );
+  });
+});
+
+// ─── The JPEG fallback's own metadata ───────────────────────────────────────
+// Production, 2026-08-17: both of the shop's renditions were canvas-encoded
+// JPEGs — and both carried FFE1 "Exif" plus an FFED "Photoshop 3.0" block,
+// because WebKit encodes through ImageIO. inspectJpeg calls that
+// metadata_present, the worker answers 422, and publish_profile 502s. The
+// shape below is that file, minus the pixels.
+
+/** One marker segment: FF <marker> <len_be16> <payload>. */
+const seg = (marker: number, payload: number[]) => {
+  const len = payload.length + 2;
+  return [0xff, marker, (len >> 8) & 0xff, len & 0xff, ...payload];
+};
+
+const webkitJpeg = (width: number, height: number) =>
+  new Uint8Array([
+    0xff, 0xd8, // SOI
+    ...seg(0xe0, [...ascii("JFIF"), 0, 1, 1, 0, 0, 0x48, 0, 0x48, 0, 0]), // APP0
+    ...seg(0xe1, [...ascii("Exif"), 0, 0, ...ascii("MM"), 0, 42, 0, 0, 0, 8]), // APP1
+    ...seg(0xed, [...ascii("Photoshop 3.0"), 0, ...ascii("8BIM"), 4, 4, 0, 0]), // APP13
+    ...seg(0xdb, Array(65).fill(1)), // DQT
+    ...seg(0xc0, [8, (height >> 8) & 0xff, height & 0xff, (width >> 8) & 0xff, width & 0xff, 1, 0x11, 0x11, 0]),
+    ...seg(0xda, [1, 1, 0, 0, 63, 0]), // SOS
+    0x12, 0x34, 0x56,
+    0xff, 0xd9, // EOI
+  ]);
+
+describe("stripJpegMetadata — what WebKit adds, the worker refuses", () => {
+  it("is the reason the publish failed: the raw canvas JPEG is rejected", () => {
+    expect(inspectJpeg(webkitJpeg(2048, 1536))).toEqual({
+      ok: false,
+      reason: "metadata_present",
+    });
+  });
+
+  it("passes the worker's check after stripping, with the pixels intact", () => {
+    const clean = stripJpegMetadata(webkitJpeg(2048, 1536));
+    expect(inspectJpeg(clean)).toEqual({ ok: true, width: 2048, height: 1536 });
+    // Scan data and EOI travel untouched — only the metadata segments go.
+    expect(Array.from(clean.slice(-5))).toEqual([0x12, 0x34, 0x56, 0xff, 0xd9]);
+    expect(clean.length).toBeLessThan(webkitJpeg(2048, 1536).length);
+  });
+
+  it("returns the same array when there is nothing to strip", () => {
+    const clean = stripJpegMetadata(webkitJpeg(64, 32));
+    expect(stripJpegMetadata(clean)).toBe(clean);
+  });
+
+  it("leaves anything that is not a walkable JPEG exactly as it was", () => {
+    const png = bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+    expect(stripJpegMetadata(png)).toBe(png);
+    const truncated = webkitJpeg(100, 100).slice(0, 10);
+    expect(stripJpegMetadata(truncated)).toBe(truncated);
+  });
+
+  it("drops a whole run of APP segments, not just the first one", () => {
+    // ImageIO emits Exif, then Photoshop, then an ICC profile — back to back.
+    // Stopping after one leaves the file metadata_present all the same.
+    const structure = [
+      ...seg(0xdb, Array(65).fill(1)), // DQT
+      ...seg(0xc0, [8, 0, 64, 0, 64, 1, 0x11, 0x11, 0]), // SOF0 64×64
+      ...seg(0xda, [1, 1, 0, 0, 63, 0]), // SOS
+      0x12, 0x34, 0x56,
+      0xff, 0xd9,
+    ];
+    const app0 = seg(0xe0, [...ascii("JFIF"), 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]);
+    const dirty = new Uint8Array([
+      0xff, 0xd8,
+      ...app0,
+      ...seg(0xe1, [...ascii("Exif"), 0, 0]), // APP1
+      ...seg(0xed, [...ascii("Photoshop 3.0"), 0]), // APP13
+      ...seg(0xe2, [...ascii("ICC_PROFILE"), 0, 1, 1]), // APP2
+      ...structure,
+    ]);
+
+    const clean = stripJpegMetadata(dirty);
+
+    // Byte for byte: JFIF, the quantisation/frame/scan headers and the entropy
+    // data are exactly what went in — only the three APP blocks are gone.
+    expect(Array.from(clean)).toEqual([0xff, 0xd8, ...app0, ...structure]);
+    expect(inspectJpeg(clean)).toEqual({ ok: true, width: 64, height: 64 });
+  });
+
+  it("walks past fill bytes instead of giving up on the file", () => {
+    // FF FF before a marker is legal padding. Treating the second FF as the
+    // marker aborts the walk and ships the Exif untouched.
+    const app0 = seg(0xe0, [...ascii("JFIF"), 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]);
+    const tail = [
+      0xff, 0xff, // fill
+      ...seg(0xdb, Array(65).fill(1)),
+      ...seg(0xc0, [8, 0, 32, 0, 32, 1, 0x11, 0x11, 0]),
+      ...seg(0xda, [1, 1, 0, 0, 63, 0]),
+      0x77,
+      0xff, 0xd9,
+    ];
+    const dirty = new Uint8Array([
+      0xff, 0xd8,
+      ...app0,
+      ...seg(0xe1, [...ascii("Exif"), 0, 0]),
+      ...tail,
+    ]);
+
+    const clean = stripJpegMetadata(dirty);
+
+    expect(Array.from(clean)).toEqual([0xff, 0xd8, ...app0, ...tail]);
+    expect(inspectJpeg(clean)).toEqual({ ok: true, width: 32, height: 32 });
+  });
+
+  it("hands back the original file when a segment length is impossible", () => {
+    // len < 2 cannot include its own two length bytes. Rewriting a file we
+    // cannot parse is how a working photo becomes a corrupt one — the upload
+    // carries on with the bytes the encoder produced.
+    const broken = new Uint8Array([
+      0xff, 0xd8,
+      ...seg(0xe0, [...ascii("JFIF"), 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]),
+      0xff, 0xe1, 0x00, 0x01, // APP1 claiming a 1-byte length
+      0xff, 0xd9,
+    ]);
+
+    const out = stripJpegMetadata(broken);
+
+    expect(out).toBe(broken);
+    expect(Array.from(out)).toEqual(Array.from(broken));
+  });
+
+  it("cleans the JPEG the pipeline hands the uploader, and only the JPEG one", async () => {
+    stubBitmap(800, 800);
+    // Safari: the WebP request comes back PNG-typed, so the JPEG ladder runs —
+    // and the encoder's bytes carry Exif.
+    const dirty = webkitJpeg(800, 800);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      drawImage: vi.fn(),
+    } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function (
+      this: HTMLCanvasElement,
+      cb: BlobCallback,
+      requested?: string,
+    ) {
+      if (requested === IMAGE_LIMITS.renditionType) return cb(new Blob(["x"], { type: "image/png" }));
+      cb(new Blob([dirty.slice().buffer as ArrayBuffer], { type: "image/jpeg" }));
+    });
+
+    const out = await processImage(fileOf(JPEG, 4000));
+
+    expect(out.blob.type).toBe("image/jpeg");
+    const uploaded = new Uint8Array(await out.blob.arrayBuffer());
+    expect(inspectJpeg(uploaded)).toEqual({ ok: true, width: 800, height: 800 });
   });
 });
 
