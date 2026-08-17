@@ -385,7 +385,7 @@ async function draftProTourRoundup(
   // across days while fixtures exist, the scraper is behind rather than the
   // sport being idle, and `unresolved_and_overdue` in the database says which.
   if (rows.length === 0) {
-    return { roundup: 'skipped', reason: 'no_results_verified_in_24h' };
+    return { roundup: 'skipped', roundup_reason: 'no_results_verified_in_24h' };
   }
 
   const text = buildRoundupBody(rows, rows.map((r) => r.source_provider));
@@ -396,7 +396,7 @@ async function draftProTourRoundup(
     // only by hand-querying the database.
     return {
       roundup: 'skipped',
-      reason: 'verified_but_unrenderable',
+      roundup_reason: 'verified_but_unrenderable',
       matches_seen: rows.length,
       with_winner: rows.filter((r) => r.winning_team === 'a' || r.winning_team === 'b').length,
     };
@@ -410,7 +410,7 @@ async function draftProTourRoundup(
   dupUrl.searchParams.set('limit', '1');
   const dupRes = await fetch(dupUrl.toString(), { headers: restHeaders(env) });
   if (dupRes.ok && ((await dupRes.json()) as unknown[]).length > 0) {
-    return { roundup: 'skipped', reason: 'already_posted_today' };
+    return { roundup: 'skipped', roundup_reason: 'already_posted_today' };
   }
 
   if (body.dry_run) {
@@ -446,7 +446,7 @@ export async function handleXDraft(
   try {
     roundup = await draftProTourRoundup(env, body);
   } catch (err) {
-    roundup = { roundup: 'error', detail: String(err).slice(0, 200) };
+    roundup = { roundup: 'error', roundup_reason: String(err).slice(0, 200) };
   }
 
   const [candidates, drafted] = await Promise.all([
