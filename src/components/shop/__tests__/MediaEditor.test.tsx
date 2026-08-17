@@ -26,7 +26,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 
 import type { UploadItem, UploadTarget } from "@/hooks/shop/useMediaUpload";
-import type { ProductMediaRow, ProductVariantRow } from "@/integrations/supabase/shop-schema";
+import type { ProductMediaRow, ProductVariantRow, ShopState } from "@/integrations/supabase/shop-schema";
 
 // ─── Doubles ────────────────────────────────────────────────────────────────
 
@@ -47,6 +47,13 @@ vi.mock("@/integrations/supabase/client", () => ({
     storage: { from: () => ({ createSignedUrls }) },
     functions: { invoke: (...args: unknown[]) => functionsInvoke(...args) },
   },
+}));
+
+// The real one posts to the production log endpoint. Doubled so the test can
+// assert that a publish failure IS reported without sending anything.
+const reportCaughtError = vi.fn();
+vi.mock("@/lib/errorReporter", () => ({
+  reportCaughtError: (...args: unknown[]) => reportCaughtError(...args),
 }));
 
 /** The upload hook, replaced by a handle the test drives. The real target
@@ -100,6 +107,19 @@ const item = (over: Partial<UploadItem> = {}): UploadItem => ({
   ...over,
 });
 
+/** A logo or cover the worker has verified but nobody has published yet. */
+const verifiedRow = (purpose: "logo" | "cover") => ({
+  id: `pm-${purpose}`,
+  shop_id: "shop-1",
+  purpose,
+  draft_path: `shop-1/profile/${purpose}/pm/v1/original`,
+  rendition_source_path: `shop-1/profile/${purpose}/pm/v1/rendition.webp`,
+  public_path: null,
+  focal_y: 0.5,
+  version: 1,
+  verified_at: "2026-08-17T00:00:00Z",
+});
+
 const onChanged = vi.fn();
 
 const renderProduct = (over: Partial<Parameters<typeof ProductMediaSection>[0]> = {}) => {
@@ -120,11 +140,18 @@ const renderProduct = (over: Partial<Parameters<typeof ProductMediaSection>[0]> 
   );
 };
 
-const renderProfile = (disabled = false) => {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+const renderProfile = (disabled = false, shopState: ShopState = "active") => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   return rtlRender(
     <QueryClientProvider client={client}>
-      <ShopProfileMediaSection shopId="shop-1" disabled={disabled} onChanged={onChanged} />
+      <ShopProfileMediaSection
+        shopId="shop-1"
+        shopState={shopState}
+        disabled={disabled}
+        onChanged={onChanged}
+      />
     </QueryClientProvider>,
   );
 };
@@ -174,6 +201,19 @@ describe("reordering photos", () => {
 
     await waitFor(() => expect(rpcCall("product_media_reorder")).toBeTruthy());
     expect(rpcCall("product_media_reorder")![1]._media_ids).toEqual(["m3", "m1", "m2"]);
+  });
+
+  it("sends the list moved down when the down arrow is pressed", () => {
+    renderProduct();
+
+    fireEvent.click(screen.getByLabelText("Chuyển ảnh 1 xuống sau"));
+
+    return waitFor(() =>
+      // Down from index 0 is not "up from index 1 with the arguments swapped":
+      // the same wrong pair would satisfy the up-arrow test and silently move
+      // the wrong photo here.
+      expect(rpcCall("product_media_reorder")![1]._media_ids).toEqual(["m2", "m1", "m3"]),
+    );
   });
 
   it("sends nothing at the ends of the list", () => {
@@ -256,6 +296,19 @@ describe("assigning a photo to a variant", () => {
 
     await waitFor(() => expect(rpcCall("product_variant_set_media")).toBeTruthy());
     expect(rpcCall("product_variant_set_media")![1]).toEqual({ _variant_id: "v1", _media_id: null });
+  });
+
+  it("says why the assignment did not stick instead of showing the new choice", async () => {
+    // The select is uncontrolled between renders, so a silent failure leaves it
+    // showing a photo the variant is not actually using.
+    shopRpc.mockRejectedValue({ code: "PT409" });
+    renderProduct();
+
+    fireEvent.change(screen.getByLabelText("Đen"), { target: { value: "m3" } });
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Bản ghi vừa được cập nhật ở nơi khác"),
+    );
   });
 
   it("is not offered for a product with one variant or no photos", () => {
@@ -409,18 +462,6 @@ describe("the shop logo and cover are one component with two purposes", () => {
 // ─── Publishing the logo and cover (round 5) ────────────────────────────────
 
 describe("publishing the logo and cover", () => {
-  const verifiedRow = (purpose: "logo" | "cover") => ({
-    id: `pm-${purpose}`,
-    shop_id: "shop-1",
-    purpose,
-    draft_path: `shop-1/profile/${purpose}/pm/v1/original`,
-    rendition_source_path: `shop-1/profile/${purpose}/pm/v1/rendition.webp`,
-    public_path: null,
-    focal_y: 0.5,
-    version: 1,
-    verified_at: "2026-08-17T00:00:00Z",
-  });
-
   it("attempts publish automatically once, right after a finalize settles", async () => {
     renderProfile();
 
@@ -433,6 +474,8 @@ describe("publishing the logo and cover", () => {
     await waitFor(() =>
       expect(functionsInvoke).toHaveBeenCalledWith("shop-media-lifecycle", {
         body: { action: "publish_profile", shop_id: "shop-1" },
+        // 20s < the 30s "nothing hangs without a button" rule, in code.
+        timeout: 20_000,
       }),
     );
     expect(functionsInvoke).toHaveBeenCalledTimes(1);
@@ -440,34 +483,275 @@ describe("publishing the logo and cover", () => {
     expect(onChanged).toHaveBeenCalled();
   });
 
+  it("does not fire at a shop the prepare RPC will refuse anyway", async () => {
+    renderProfile(false, "pending_activation");
+
+    await act(async () => {
+      targets[0].onSettled();
+    });
+
+    // A 403 per upload is not information; the hint is.
+    expect(functionsInvoke).not.toHaveBeenCalled();
+    expect(onChanged).toHaveBeenCalled();
+  });
+
+  it("offers no button while the shop cannot publish, only what happens next", async () => {
+    profileRows = [verifiedRow("logo")];
+    renderProfile(false, "pending_activation");
+
+    expect(await screen.findByText(/Shop được kích hoạt xong là ảnh tự lên trang shop/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Thử đưa logo/ })).toBeNull();
+  });
+
+  it("names the state a suspended shop is actually in", async () => {
+    profileRows = [verifiedRow("logo")];
+    renderProfile(false, "suspended");
+
+    expect(await screen.findByText(/Shop đang ở trạng thái "Tạm ngưng"/)).toBeTruthy();
+  });
+
   it("shows a verified-but-unpublished row honestly, with a working retry", async () => {
     profileRows = [verifiedRow("logo")];
     renderProfile();
 
-    // Honest status: verified is not the same claim as public.
-    expect(await screen.findByText(/chưa lên trang shop công khai/)).toBeTruthy();
+    // The consequence, not the internal step: the shop page has no logo.
+    expect(await screen.findByText(/Trang shop hiện chưa có logo/)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Đưa lên trang shop" }));
+    fireEvent.click(screen.getByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
     await waitFor(() =>
       expect(functionsInvoke).toHaveBeenCalledWith("shop-media-lifecycle", {
         body: { action: "publish_profile", shop_id: "shop-1" },
+        timeout: 20_000,
       }),
     );
   });
 
-  it("never presents a publish failure as an upload failure", async () => {
+  it("says what the worker actually refused, and shows the code to screenshot", async () => {
     profileRows = [verifiedRow("logo")];
-    functionsInvoke.mockResolvedValue({ data: null, error: new Error("edge down") });
+    // The production 502: each item carries its own reason and the body has no
+    // top-level `error` at all.
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("Edge Function returned a non-2xx status code"),
+      response: new Response(
+        JSON.stringify({ ok: false, published: [], failed: [{ error: "rendition_metadata_present" }] }),
+        { status: 502 },
+      ),
+    });
     renderProfile();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Đưa lên trang shop" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
 
     await waitFor(() =>
-      expect(screen.getByRole("alert").textContent).toContain("chỉ bước đưa lên trang shop bị lỗi"),
+      expect(screen.getByRole("alert").textContent).toContain("Thử chọn ảnh khác"),
     );
+    expect(screen.getByText("502 · rendition_metadata_present")).toBeTruthy();
+    // Reported once — and the reporter's own 5-minute dedupe means a second
+    // press inside that window adds no second client event.
+    expect(reportCaughtError).toHaveBeenCalledWith(expect.any(Error), "shop:publish_profile");
     // The upload pipeline reports nothing: the file DID upload and verify.
     expect(screen.queryByText("Chưa xong")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Thử lại" })).toBeNull();
+  });
+
+  it("keeps the seller's shop page refusal word for word", async () => {
+    profileRows = [verifiedRow("logo")];
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("non-2xx"),
+      response: new Response(
+        JSON.stringify({ error: "shop đang ở trạng thái restricted nên chưa đưa ảnh lên trang công khai được" }),
+        { status: 403 },
+      ),
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("shop đang ở trạng thái restricted"),
+    );
+  });
+
+  it("leaves a pressable button when the 20s timeout fires, not a dead sentence", async () => {
+    profileRows = [verifiedRow("logo")];
+    // What supabase-js hands back when its AbortController fires: no Response
+    // at all, and the error only identifies itself by `name`. No fake timers
+    // needed — the SHAPE is the contract, not the wall clock.
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: Object.assign(new Error("Failed to send a request to the Edge Function"), {
+        name: "FunctionsFetchError",
+      }),
+      response: undefined,
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain(
+        "Không kết nối được máy chủ. Kiểm tra mạng rồi bấm Thử lại.",
+      ),
+    );
+    expect(screen.getByText(/Mã lỗi:/)).toBeTruthy();
+    // The rule this protects: nothing hangs past 30s without a button.
+    const retry = screen.getByRole("button", {
+      name: "Thử đưa logo lên trang shop lại",
+    }) as HTMLButtonElement;
+    expect(retry.disabled).toBe(false);
+  });
+
+  it("names an expired session, the one failure a retry cannot fix", async () => {
+    profileRows = [verifiedRow("logo")];
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("non-2xx"),
+      response: new Response(JSON.stringify({ error: "JWT expired" }), { status: 403 }),
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Phiên đăng nhập đã hết hạn"),
+    );
+  });
+
+  it("keeps Postgres' English out of the sentence and in the code line", async () => {
+    profileRows = [verifiedRow("logo")];
+    // A missing GRANT reads as English from PostgREST. A seller can do nothing
+    // with it — but we need it in the screenshot, so it belongs in the code.
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: new Error("non-2xx"),
+      response: new Response(
+        JSON.stringify({ error: "permission denied for function shop_profile_media_publish_prepare" }),
+        { status: 403 },
+      ),
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Lỗi từ phía hệ thống"),
+    );
+    expect(screen.getByRole("alert").textContent).not.toContain("permission denied");
+    expect(screen.getByText(/permission denied for function/)).toBeTruthy();
+  });
+
+  it("clears the error line once a retry actually succeeds", async () => {
+    profileRows = [verifiedRow("logo")];
+    functionsInvoke
+      .mockResolvedValueOnce({
+        data: null,
+        error: new Error("non-2xx"),
+        response: new Response(
+          JSON.stringify({ ok: false, published: [], failed: [{ error: "rendition_metadata_present" }] }),
+          { status: 502 },
+        ),
+      })
+      .mockResolvedValue({
+        data: { ok: true, published: [{ media_id: "pm-logo", target: "public" }], failed: [] },
+        error: null,
+      });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+
+    fireEvent.click(screen.getByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    // A stale red line under a publish that worked is worse than no line.
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(screen.queryByText(/Mã lỗi:/)).toBeNull();
+  });
+
+  it("does not call a 200 that says ok:false a success", async () => {
+    profileRows = [verifiedRow("logo")];
+    // No `error` at all — a body the SDK is happy with. Trusting the status
+    // here is how a photo that was never copied reads as published.
+    functionsInvoke.mockResolvedValue({
+      data: { ok: false, published: [], failed: [{ media_id: "pm-logo", error: "rendition_too_large" }] },
+      error: null,
+    });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("Thử chọn ảnh khác"),
+    );
+    expect(screen.getByText("200 · rendition_too_large")).toBeTruthy();
+  });
+
+  it("never hides the button while the call is in flight", async () => {
+    profileRows = [verifiedRow("logo")];
+    // A request that never settles — the state that used to leave the seller
+    // with a sentence and nothing to press, forever.
+    functionsInvoke.mockReturnValue(new Promise(() => {}));
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Thử đưa logo lên trang shop lại" }));
+
+    await waitFor(() => {
+      const button = screen.getByRole("button", { name: "Đang đưa lên trang shop…" }) as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+    });
+    expect(screen.getByRole("status").textContent).toContain("Đang đưa ảnh lên trang shop");
+  });
+});
+
+// ─── Replacing and reframing the shop's own photos ──────────────────────────
+
+describe("removing and reframing the logo and cover", () => {
+  it("deletes the row of the slot whose button was pressed", async () => {
+    // Only the logo exists, so only one Xoá is on screen — and it must carry
+    // the logo's id: the cover is one row away in the same table.
+    profileRows = [verifiedRow("logo")];
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Xoá/ }));
+
+    await waitFor(() => expect(rpcCall("shop_profile_media_delete")).toBeTruthy());
+    expect(rpcCall("shop_profile_media_delete")![1]).toEqual({ _media_id: "pm-logo" });
+  });
+
+  it("says why a delete was refused instead of leaving the photo looking gone", async () => {
+    profileRows = [verifiedRow("logo")];
+    shopRpc.mockRejectedValue({ code: "42501" });
+    renderProfile();
+
+    fireEvent.click(await screen.findByRole("button", { name: /Xoá/ }));
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("alert").some((el) => el.textContent?.includes("không có quyền")),
+      ).toBe(true),
+    );
+  });
+
+  it("sends the cover framing as a fraction, not the percent on the label", async () => {
+    // The slider is 0–100 and the column is 0–1. Sending 80 stores a focal
+    // point far outside the image and the shop header renders blank.
+    profileRows = [verifiedRow("cover")];
+    renderProfile();
+
+    fireEvent.change(await screen.findByLabelText(/Vị trí khung ảnh/), { target: { value: "80" } });
+
+    await waitFor(() => expect(rpcCall("shop_profile_media_set_focal")).toBeTruthy());
+    expect(rpcCall("shop_profile_media_set_focal")![1]).toEqual({
+      _media_id: "pm-cover",
+      _focal_y: 0.8,
+    });
+  });
+
+  it("clears a finished upload card once the server row is there", async () => {
+    profileRows = [verifiedRow("logo")];
+    uploadHandle.items = [item({ phase: "complete" })];
+    renderProfile();
+
+    await waitFor(() => expect(uploadHandle.clearComplete).toHaveBeenCalled());
   });
 });
 

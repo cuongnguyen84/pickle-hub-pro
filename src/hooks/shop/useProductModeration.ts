@@ -13,6 +13,7 @@
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { edgeError, edgeErrorMessage } from "@/lib/shop/errors";
 import { shopRpc } from "@/integrations/supabase/shop-client";
 import type { Decision, ModerationTarget } from "@/lib/shop/moderationDecision";
 
@@ -155,10 +156,13 @@ export const usePublishProduct = () => {
       // THROWS without env vars — a top-level import here took the whole
       // MediaEditor test import-chain down on CI, where no .env exists.
       const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase.functions.invoke("shop-media-lifecycle", {
+      // Same error-reading as the profile leg — and deliberately NO timeout:
+      // this one copies every rendition of a product, so a 20s cap would abort
+      // work that is progressing. Observability only.
+      const { data, error, response } = await supabase.functions.invoke("shop-media-lifecycle", {
         body: { action: "publish", product_id: productId },
       });
-      if (error) throw error;
+      if (error) throw edgeError(await edgeErrorMessage(error, response));
       return data as { ok?: boolean; renditions?: number };
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: MOD_KEY }),

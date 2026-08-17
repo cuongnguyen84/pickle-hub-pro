@@ -334,6 +334,7 @@ export default function SellerShopSettings() {
           <Suspense fallback={<p className="tl-shop-hint">Đang mở phần ảnh…</p>}>
             <ShopProfileMediaSection
               shopId={row.id}
+              shopState={row.state}
               disabled={!canEdit}
               onChanged={() => {}}
             />

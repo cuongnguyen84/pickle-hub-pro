@@ -40,6 +40,97 @@ export function shopErrorMessage(error: unknown): string {
   }
 }
 
+// ─── Edge Function errors ───────────────────────────────────────────────────
+// supabase-js throws away nothing — it hands back the untouched `Response` —
+// but every call site here used to drop it and show one hardcoded sentence for
+// every cause. The publish leg is where that hurt: a shop that is not active,
+// an expired session, a rejected rendition and a dead worker all looked the
+// same to the seller AND to us. This reads the body once and answers with the
+// sentence the seller can act on plus the short code they can screenshot.
+
+const EDGE_CODE_MAX = 80;
+
+/** What the seller sees, and the code that says which of the five it was. */
+export interface EdgeErrorText {
+  message: string;
+  code: string;
+}
+
+const truncateCode = (code: string) =>
+  code.length <= EDGE_CODE_MAX ? code : `${code.slice(0, EDGE_CODE_MAX - 1)}…`;
+
+export async function edgeErrorMessage(
+  error: unknown,
+  response?: Response,
+): Promise<EdgeErrorText> {
+  const name = (error as { name?: string } | null)?.name ?? "";
+  const status = response?.status ?? 0;
+
+  // The Response supabase-js returns has NOT been read, so the body is still
+  // there. A body that is not JSON is still evidence — keep the raw text.
+  let detail = "";
+  if (response) {
+    try {
+      const text = await response.text();
+      try {
+        const body = JSON.parse(text) as {
+          error?: string;
+          failed?: Array<{ error?: string }>;
+        };
+        detail = body?.error ?? body?.failed?.[0]?.error ?? text;
+      } catch {
+        detail = text;
+      }
+    } catch {
+      detail = "";
+    }
+  }
+  detail = detail.trim().slice(0, 200);
+
+  const code = truncateCode(status ? `${status} · ${detail || name || "không rõ"}` : name || "không rõ");
+
+  // Session first: a 401 and a JWT complaint mean the same thing to a seller,
+  // and no other branch can fix it for them.
+  if (status === 401 || /jwt|expired|not authenticated|invalid token/i.test(detail)) {
+    return { message: "Phiên đăng nhập đã hết hạn. Đăng nhập lại rồi bấm Thử lại giúp em.", code };
+  }
+  // No response at all: the request never came back — offline, DNS, or the
+  // 20s abort the publish hook arms.
+  if (!response || name === "AbortError" || name === "TimeoutError" || name === "FunctionsFetchError") {
+    return { message: "Không kết nối được máy chủ. Kiểm tra mạng rồi bấm Thử lại.", code };
+  }
+  // The RPC's own Vietnamese refusal is more specific than anything here —
+  // same rule as shopErrorMessage, so it is that function that decides.
+  if (status === 403) {
+    const passed = shopErrorMessage({ message: detail });
+    if (passed === detail && detail) {
+      return {
+        message: `${detail} Ảnh đã lưu rồi, kích hoạt shop xong bấm lại là hiện.`,
+        code,
+      };
+    }
+  }
+  // No status test: the product leg answers 422 with a top-level `error`, the
+  // profile leg answers 502 with the SAME reason inside failed[0].error and
+  // never 422 at all. The prefix is what identifies a photo refusal —
+  // copy_failed and commit_failed are the worker's own steps and still fall
+  // through to "lỗi hệ thống, thử lại", which is the truth for those two.
+  if (detail.startsWith("rendition_")) {
+    return { message: "Ảnh này máy chủ chưa nhận được. Thử chọn ảnh khác.", code };
+  }
+  return {
+    message:
+      "Lỗi từ phía hệ thống, không phải do ảnh của anh/chị. Em đã nhận được báo lỗi rồi, bấm Thử lại sau vài phút.",
+    code,
+  };
+}
+
+/** The thrown shape both publish hooks use: a normal Error for anything that
+ *  only reads `.message`, with the code hung off it for the screen that shows
+ *  both lines. */
+export const edgeError = (text: EdgeErrorText): Error =>
+  Object.assign(new Error(text.message), { code: text.code });
+
 /** True when the save lost a race, i.e. the screen must offer a reconcile
  *  rather than a plain retry. Both spellings occur: the RPC raises 40001 with
  *  a Vietnamese message, which the mapper passes through untouched. */
