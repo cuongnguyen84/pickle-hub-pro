@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { planRepair, type Origin } from '../plan';
+import { originAgeDays, planRepair, type Origin } from '../plan';
 
 const origin = (over: Partial<Origin> = {}): Origin => ({
   id: 'x', raw_title: 't', source_name: 's',
-  content_kind: 'full', attempts: 0, last_error: null,
+  content_kind: 'full', attempts: 0, last_error: null, published_at: null,
   ...over,
 });
 
@@ -43,5 +43,41 @@ describe('planRepair', () => {
     const p = planRepair(origin({ last_error: 'something nobody has seen before' }));
     expect(p.kind).toBe('leave');
     expect(p.reason).toContain('unrecognised');
+  });
+});
+
+describe('age cap', () => {
+  const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
+
+  // Cuong's rule, 2026-08-17: nothing older than a week gets pushed again.
+  it('refuses to recover an article past a week, whatever the error was', () => {
+    const p = planRepair(origin({
+      published_at: daysAgo(10),
+      last_error: 'en body has 254 words; expected 350-800',
+    }));
+    expect(p.kind).toBe('leave');
+    expect(p.reason).toContain('7-day limit');
+  });
+
+  it('still recovers anything inside the week', () => {
+    expect(planRepair(origin({
+      published_at: daysAgo(4),
+      last_error: 'en body has 254 words; expected 350-800',
+    })).kind).toBe('reclassify');
+  });
+
+  // A missing date must not silently mean "infinitely old" — that would quietly
+  // stop recovering rows the rule was never meant to touch.
+  it('treats an unknown date as recoverable, not as too old', () => {
+    expect(planRepair(origin({ published_at: null, last_error: 'Signal timed out.' })).kind)
+      .toBe('requeue');
+    expect(originAgeDays(origin({ published_at: null }))).toBeNull();
+    expect(originAgeDays(origin({ published_at: 'not-a-date' }))).toBeNull();
+  });
+
+  it('measures age in days from published_at', () => {
+    const a = originAgeDays(origin({ published_at: daysAgo(3) }));
+    expect(a).toBeGreaterThan(2.9);
+    expect(a).toBeLessThan(3.1);
   });
 });

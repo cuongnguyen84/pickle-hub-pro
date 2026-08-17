@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
   const dryRun = body.dry_run === true;
 
   const res = await fetch(
-    rest("news_origins?pipeline_status=eq.failed&select=id,raw_title,source_name,content_kind,attempts,last_error&limit=100"),
+    rest("news_origins?pipeline_status=eq.failed&select=id,raw_title,source_name,content_kind,attempts,last_error,published_at&limit=100"),
     { headers: headers() },
   );
   if (!res.ok) {
