@@ -273,13 +273,19 @@ export function ResultsGrid({
     <>
       <p className="tl-shop-hint" role="status" style={{ marginTop: 0 }}>
         {total} sản phẩm
-        {mood === "sparse" && " — sàn đang ở giai đoạn thử nghiệm, đây là toàn bộ những gì đang bán."}
       </p>
       <ul className="tl-pgrid">
         {rows.map((c, i) => (
           <li key={c.id}><ProductCard card={c} eager={i < 4} /></li>
         ))}
       </ul>
+      {/* The honest-sparse sentence, verbatim, AFTER the grid — the products
+          are the page's main character, the caveat is a footnote. */}
+      {mood === "sparse" && (
+        <p className="tl-shop-hint">
+          — sàn đang ở giai đoạn thử nghiệm, đây là toàn bộ những gì đang bán.
+        </p>
+      )}
     </>
   );
 }

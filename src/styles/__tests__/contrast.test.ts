@@ -125,6 +125,13 @@ const INK_ON_FILL: Array<[string, string]> = [
   ["--shop-on-gold", "--tl-gold"],
   ["--shop-on-ok", "--shop-stock-ok"],
   ["--shop-on-danger", "--shop-danger-fill"],
+  // R3 card-first sub-theme (04-ux-spec-round3 §8.3):
+  // the active chip inverts ink↔bg — also covers the card's "→" circle,
+  // which paints --tl-bg on --tl-fg.
+  ["--shop-chip-active-ink", "--shop-chip-active-bg"],
+  // meta text and the verified pill sit on the white card, not the page.
+  ["--tl-fg-3", "--shop-card-surface"],
+  ["--shop-verified", "--shop-card-surface"],
 ];
 
 /**

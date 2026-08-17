@@ -33,7 +33,9 @@ export default function ShopHome() {
       <DynamicMeta title="Chợ đồ pickleball" noindex />
       <main className="tl-shop">
         <h1 className="tl-shop-h1">Chợ đồ pickleball</h1>
-        <p className="tl-shop-sub">
+        {/* R3: tighter sub — every vertical px here pushes the first card
+            below the 320px fold (B01). */}
+        <p className="tl-shop-sub" style={{ marginBottom: 12, fontSize: 13.5 }}>
           {/* Wave 0: the pilot does not collect papers, so "đã xác minh giấy
               tờ" was a claim about diligence nobody performed — the exact
               class of overstatement the Seller Rules exist to prevent. Say
@@ -64,8 +66,9 @@ export default function ShopHome() {
           </button>
         </form>
 
-        <section aria-labelledby="shop-cats">
-          <h2 className="tl-shop-h2" id="shop-cats">Ngành hàng</h2>
+        {/* No "Ngành hàng" heading — the chips are self-evident and the
+            CategoryChips group already carries the aria-label. */}
+        <section style={{ marginTop: 14 }}>
           {categories.isLoading ? (
             <div className="tl-shop-cats" aria-busy="true" aria-label="Đang tải ngành hàng">
               {[0, 1, 2, 3].map((i) => (

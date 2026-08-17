@@ -123,12 +123,18 @@ describe("the four states are four different answers", () => {
   });
 
   it("admits a thin catalogue instead of implying there is more", () => {
+    // R3: the count line stays before the grid; the honest-sparse sentence
+    // moved AFTER the grid, verbatim — demoted, never deleted.
     const { unmount } = grid({ rows: [card()], total: 3 });
-    expect(screen.getByRole("status").textContent).toContain("giai đoạn thử nghiệm");
+    expect(screen.getByRole("status").textContent).toBe("3 sản phẩm");
+    expect(document.body.textContent).toContain(
+      "sàn đang ở giai đoạn thử nghiệm, đây là toàn bộ những gì đang bán.",
+    );
     unmount();
 
     grid({ rows: [card()], total: 40 });
     expect(screen.getByRole("status").textContent).toBe("40 sản phẩm");
+    expect(document.body.textContent).not.toContain("giai đoạn thử nghiệm");
   });
 });
 
@@ -148,9 +154,9 @@ describe("a buyer card renders from the public DTO and nothing else", () => {
     for (const value of Object.values(SEEDED_PRIVATE)) {
       expect(html).not.toContain(String(value));
     }
-    // The stock COUNT in particular: "Còn hàng" is the public answer, "4" is
-    // the seller's. A number here tells a competitor the shop's inventory.
-    expect(screen.getByText("Còn hàng")).toBeTruthy();
+    // The stock COUNT in particular: R3 cards say nothing when in stock
+    // ("Hết hàng" is the only flag) — and the seller's number never appears.
+    expect(document.body.textContent).not.toContain("Còn hàng");
     expect(document.body.textContent).not.toContain("4737");
   });
 
@@ -179,17 +185,20 @@ describe("a buyer card renders from the public DTO and nothing else", () => {
     expect(document.body.outerHTML).not.toContain("draft/");
   });
 
-  it("does not treat unknown stock as sold out, and says so in its own words", () => {
+  it("does not treat unknown stock as sold out", () => {
+    // R3 cards carry no availability text at all except the "Hết hàng" flag,
+    // so unknown stock must simply not raise the flag. (The PDP still says
+    // "Liên hệ shop để hỏi số lượng" in its own words.)
     grid({ rows: [card({ availability: null })] });
 
-    expect(screen.getByText("Liên hệ shop để hỏi số lượng")).toBeTruthy();
+    expect(screen.getByText("Giày Court Pro")).toBeTruthy();
     expect(document.body.textContent).not.toContain("Hết hàng");
   });
 
   it("flags sold out once, without inventing a countdown", () => {
     grid({ rows: [card({ availability: "out_of_stock" })] });
 
-    expect(screen.getAllByText("Hết hàng").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Hết hàng")).toHaveLength(1);
     expect(document.body.textContent).not.toMatch(/chỉ còn|sắp hết/i);
   });
 
