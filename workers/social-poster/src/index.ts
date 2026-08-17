@@ -535,21 +535,55 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   const postedRows = (await postedRes.json()) as Array<{ news_item_id: string }>;
   const postedIds = postedRows.map((r) => r.news_item_id);
 
+  // The candidate window has to be large enough to contain an unposted row,
+  // and "50" was not. Ordering is importance-first, so once 50 high-importance
+  // items are done the window is permanently full of finished work and this
+  // returns null on every call — the pipeline stops without failing. That is
+  // what happened: 683 eligible rows, all 50 in the window already posted, the
+  // waiting item sitting at rank 87 because its importance was 3.
+  //
+  // Scanning ids instead of `*` is what makes a big window affordable: the full
+  // row carries content_html. Sizing it off the number of finished rows keeps
+  // at least 50 unposted candidates in view no matter how the archive grows.
+  //
+  // ponytail: a bounded scan, not an anti-join. PostgREST cannot express one,
+  // and `id=not.in.(...700 uuids)` is a 25KB URL. If the archive ever passes
+  // the cap below, move this to an RPC that does the anti-join in SQL.
+  const scanLimit = pickNextScanLimit(postedIds.length);
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/news_items`);
-  url.searchParams.set('select', '*');
+  url.searchParams.set('select', 'id');
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
   if (page.startAt) url.searchParams.set('published_at', `gte.${page.startAt}`);
   url.searchParams.set('order', 'importance.desc,published_at.desc');
-  url.searchParams.set('limit', '50');
+  url.searchParams.set('limit', String(scanLimit));
   const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
   if (!res.ok) {
     throw new Error(`pickNext news query failed: ${res.status} ${await res.text()}`);
   }
-  const rows = (await res.json()) as NewsItem[];
-  const next = rows.find((r) => !postedIds.includes(r.id));
-  return next ?? null;
+  const rows = (await res.json()) as Array<{ id: string }>;
+  const done = new Set(postedIds);
+  const nextId = rows.find((r) => !done.has(r.id))?.id;
+  return nextId ? await fetchNewsItemById(env, nextId) : null;
+}
+
+/**
+ * Exported for the test: given the priority-ordered ids and the finished ones,
+ * which id is next? This is the whole of the bug that stalled Facebook, and it
+ * is pure, so it can be checked without a database.
+ */
+export function pickNextId(
+  orderedIds: string[],
+  doneIds: string[],
+  scanLimit: number,
+): string | null {
+  const done = new Set(doneIds);
+  return orderedIds.slice(0, scanLimit).find((id) => !done.has(id)) ?? null;
+}
+
+export function pickNextScanLimit(doneCount: number): number {
+  return Math.min(doneCount + 50, 2000);
 }
 
 async function fetchFbPostLogByNewsItem(
