@@ -226,13 +226,23 @@ ${sourceMaterial}`;
   throw new Error("Gemini rewrite attempts exhausted");
 }
 
+/** The only categories the pipeline accepts, shared by the schema and the validator. */
+const NEWS_CATEGORIES = ["tournament", "player", "equipment", "business", "community"] as const;
+
 function rewriteSchema() {
   const languageSchema = {
     type: "object",
     properties: {
       title: { type: "string" },
       summary: { type: "string" },
-      category: { type: "string" },
+      // Enum, not a bare string. The prompt already said "one of tournament,
+    // player, equipment, business, community" and Gemini still returned
+    // something else often enough to strand two articles at three attempts
+    // each — "en category is invalid" is a deterministic failure, so retrying
+    // it just spends the budget three times to reach the same place.
+    // Structured output honours an enum, so an invalid value stops being
+    // possible rather than being caught after generation.
+    category: { type: "string", enum: NEWS_CATEGORIES },
       importance: { type: "integer" },
       sections: {
         type: "array",
@@ -294,7 +304,7 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
     if (value.summary.trim().length < 120 || value.summary.length > 300) {
       throw new Error(`${language} summary length is invalid`);
     }
-    if (!["tournament", "player", "equipment", "business", "community"].includes(value.category)) {
+    if (!(NEWS_CATEGORIES as readonly string[]).includes(value.category)) {
       throw new Error(`${language} category is invalid`);
     }
     if (!Number.isInteger(value.importance) || value.importance < 1 || value.importance > 5) {
