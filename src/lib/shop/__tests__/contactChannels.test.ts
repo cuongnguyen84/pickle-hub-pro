@@ -136,15 +136,22 @@ describe("publicityLabel — says what is true, not what was asked for", () => {
     });
   });
 
-  it("opting public is not being public — approval decides", () => {
-    expect(publicityLabel({ is_public: true, state: "pending_review" }).text).toBe(
-      "Chờ duyệt — chưa hiển thị",
-    );
+  it("opting public is not being public — three things can still keep it dark", () => {
+    // Since 20260818160000 the seller's own save is what makes a channel live:
+    // admin approves opening the SHOP, and nothing inside it. What is left that
+    // can keep a channel dark is an admin takedown, or a shop that has not
+    // opened yet — and the label has to name the right one of those, because
+    // "Chưa gửi duyệt" named a button that never existed.
     expect(publicityLabel({ is_public: true, state: "draft" }).text).toBe(
-      "Chưa gửi duyệt — chưa hiển thị",
+      "Shop chưa mở bán — chưa hiển thị",
     );
     expect(publicityLabel({ is_public: true, state: "rejected" }).tone).toBe("warn");
     expect(publicityLabel({ is_public: true, state: "disabled" }).tone).toBe("warn");
+    // `pending_review` is no longer produced, but rows written before the
+    // change can still carry it and an admin can still decide them.
+    expect(publicityLabel({ is_public: true, state: "pending_review" }).text).toBe(
+      "Chờ duyệt — chưa hiển thị",
+    );
   });
 
   it("only both together read as public", () => {

@@ -137,7 +137,12 @@ export const CHANNEL_PLACEHOLDER: Record<ShopContactType, string> = {
 /**
  * What the seller sees under a channel row. Deliberately says what is TRUE
  * right now rather than what the seller asked for — "đã bật công khai" on a
- * channel nobody approved yet is a promise the product cannot keep.
+ * channel that is not actually reachable is a promise the product cannot keep.
+ *
+ * Since 20260818160000 a channel in an ACTIVE shop is live the moment it is
+ * saved: admin approves opening the shop, and nothing inside it. The states
+ * that still keep a channel dark are an admin takedown (`rejected`/`disabled`)
+ * and a shop that has not opened yet (`draft`).
  */
 export function publicityLabel(row: {
   is_public: boolean;
@@ -147,6 +152,8 @@ export function publicityLabel(row: {
   switch (row.state) {
     case "approved":
       return { text: "Đang hiển thị công khai", tone: "ok" };
+    // `pending_review` không còn được sinh ra từ 20260818160000, nhưng hàng
+    // cũ vẫn có thể mang nó và admin vẫn duyệt được — nhãn ở lại.
     case "pending_review":
       return { text: "Chờ duyệt — chưa hiển thị", tone: "warn" };
     case "rejected":
@@ -154,6 +161,8 @@ export function publicityLabel(row: {
     case "disabled":
       return { text: "Đã bị tắt — chưa hiển thị", tone: "warn" };
     default:
-      return { text: "Chưa gửi duyệt — chưa hiển thị", tone: "muted" };
+      // `draft` nay chỉ còn nghĩa MỘT thứ: shop chưa mở bán. Nhãn cũ là
+      // "Chưa gửi duyệt", đặt tên cho một nút chưa bao giờ tồn tại.
+      return { text: "Shop chưa mở bán — chưa hiển thị", tone: "muted" };
   }
 }
