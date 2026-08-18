@@ -333,8 +333,20 @@ export function breadcrumb(crumbs: { label: string; href?: string }[]): string {
 // used by PageSpeed Insights; treating it as a crawler made PSI audit the
 // lightweight SSR document rather than the SPA visitors actually use.
 // Search and social crawlers still receive SSR via their explicit tokens.
+//
+// The AI-citation tokens (oai-searchbot, chatgpt-user, claude-searchbot,
+// claude-user, perplexity-user, duckassistbot, mistralai-user) are the ones
+// that put a link back in an AI answer, and they are separate user agents
+// from the training crawlers that share their vendor's name. Listing only
+// gptbot/claudebot/perplexitybot inverted the whole policy: the crawlers
+// robots.txt DISALLOWS were served the full 3,177-word article, while
+// OAI-SearchBot and Claude-SearchBot — explicitly allowed since 2026-07-07
+// precisely so they can cite us — got the 324-word SPA shell with no article
+// body and no JSON-LD. Measured on /blog/pickleball-world-cup-2026-da-nang,
+// 2026-08-18. A crawler that reaches the page and finds nothing to read is
+// indistinguishable from one that was blocked at the edge.
 export const BOT_UA =
-  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|zalo|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|claudebot|perplexitybot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator|seonaut|crawlobserver|seobserver/i;
+  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|zalo|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|claudebot|perplexitybot|oai-searchbot|chatgpt-user|claude-searchbot|claude-user|perplexity-user|duckassistbot|mistralai-user|meta-externalagent|amazonbot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator|seonaut|crawlobserver|seobserver/i;
 
 // ─── Related content links ─────────────────────────────────
 
