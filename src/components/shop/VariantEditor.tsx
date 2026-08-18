@@ -22,7 +22,7 @@
 // product_variant_adjust_stock, whatever the UI looks like.
 // ============================================================================
 
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
 import { shopErrorMessage } from "@/lib/shop/errors";
 import { vnd } from "@/lib/shop/productState";
@@ -54,6 +54,13 @@ export interface VariantEditorProps {
     rows: VariantRow[];
     keepVariantId?: string | null;
   }) => Promise<unknown>;
+  /**
+   * Bảng này giữ trạng thái riêng và có nút lưu riêng, nên màn hình chứa nó
+   * không có cách nào biết người bán đã gõ gì mà chưa ghi. Đó là cách một sản
+   * phẩm được đăng lại với GIÁ CŨ trên production 18/08: sửa giá trong bảng,
+   * bấm thẳng "Đăng bán", và giá mới ở lại trong bộ nhớ trình duyệt.
+   */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -74,6 +81,7 @@ export default function VariantEditor({
   initialGroups,
   initialRows,
   onSave,
+  onDirtyChange,
 }: VariantEditorProps) {
   const [multi, setMulti] = useState(initialGroups.length > 0);
   const [groups, setGroups] = useState<OptionGroup[]>(initialGroups);
@@ -83,6 +91,20 @@ export default function VariantEditor({
   const [keepId, setKeepId] = useState<string | null>(initialRows[0]?.id ?? null);
   const [state, setState] = useState<SaveState>("idle");
   const [error, setError] = useState<string | null>(null);
+
+  // So sánh bằng JSON chứ không đi từng trường: bảng là một cấu trúc lồng
+  // (nhóm → giá trị, dòng → giá/tồn/SKU) và một phép so sánh viết tay sẽ bỏ sót
+  // đúng cái trường mới thêm vào tháng sau. Bảng nhỏ — nhiều nhất 100 dòng theo
+  // product_option_groups_valid — nên chi phí không đáng kể.
+  // ponytail: JSON.stringify là đủ; đổi sang so sánh sâu nếu bảng lớn lên.
+  const dirty = useMemo(
+    () =>
+      JSON.stringify({ groups, rows }) !== JSON.stringify({ groups: initialGroups, rows: initialRows }),
+    [groups, rows, initialGroups, initialRows],
+  );
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
 
   const groupsError = useMemo(() => validateGroups(groups), [groups]);
   const rowErrors = useMemo(() => validateRows(rows), [rows]);

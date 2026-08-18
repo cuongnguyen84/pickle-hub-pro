@@ -173,6 +173,10 @@ export default function SellerProductForm() {
   const preview = useProductPreview(productId, showPreview);
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Bảng phiên bản có nút lưu RIÊNG và RPC riêng (product_variants_reconcile),
+  // nên nút đăng bán không lưu hộ được — nó chỉ có thể từ chối đăng. Giá của
+  // một sản phẩm đã tồn tại sống trong bảng này, không phải ở ô giá đơn giản.
+  const [variantsDirty, setVariantsDirty] = useState(false);
   const submitTokenRef = useRef<string>(newToken());
 
   const [draft, setDraft] = useState<ProductDraft | null>(null);
@@ -295,13 +299,19 @@ export default function SellerProductForm() {
   };
 
   // ── Save ──────────────────────────────────────────────────────────────────
-  const save = useCallback(async () => {
-    if (!draft || !shopId) return;
+  /**
+   * Trả về HÀNG ĐÃ LƯU, hoặc null nếu không lưu được.
+   *
+   * Trước đây trả void, và "Đăng bán" vì thế không có cách nào biết bản nháp
+   * đã kịp lên máy chủ chưa — xem chỗ gọi nó ở nút đăng bán.
+   */
+  const save = useCallback(async (): Promise<ProductRow | null> => {
+    if (!draft || !shopId) return null;
     const found = validateDraft(draft);
     setErrors(found);
     if (Object.keys(found).some((k) => found[k as keyof DraftErrors])) {
       focusFirstError(found);
-      return;
+      return null;
     }
 
     setSaveState("saving");
@@ -314,7 +324,7 @@ export default function SellerProductForm() {
         // Straight to the edit route: the product now has an id, and staying
         // on /new with a saved product is how a second one gets made.
         navigate(`/seller/products/${(created as ProductRow).id}/edit`, { replace: true });
-        return;
+        return created as ProductRow;
       }
 
       if (!row) {
@@ -323,23 +333,25 @@ export default function SellerProductForm() {
         // disabled and the label on "Đang lưu…" with nothing in flight.
         setSaveState("error");
         setSaveError("Không tìm thấy sản phẩm. Tải lại trang giúp em.");
-        return;
+        return null;
       }
 
       // The variant half is deliberate: product_update refuses a _variant
       // payload for a product that has a matrix, so a form that always sent it
       // could not save the NAME of a product that had colours.
-      await update.mutateAsync({
+      const saved = await update.mutateAsync({
         expectedVersion: row.version,
         ...buildUpdatePayload(draft, multiVariant),
       });
       if (key) clearStored(key);
       setSaveState("saved");
       void preflight.refetch();
+      return saved as ProductRow;
     } catch (error) {
       setSaveState("error");
       setSaveError(shopErrorMessage(error));
       if (isConflict(error) && draft) setConflict(draft);
+      return null;
     }
   }, [draft, shopId, isNew, create, key, navigate, row, update, multiVariant, preflight]);
 
@@ -679,6 +691,7 @@ export default function SellerProductForm() {
             disabled={!editable}
             initialGroups={row.option_groups ?? []}
             initialRows={variantRows}
+            onDirtyChange={setVariantsDirty}
             onSave={async ({ groups, rows, keepVariantId }) => {
               await reconcile.mutateAsync({
                 expectedVersion: row.version,
@@ -843,6 +856,8 @@ export default function SellerProductForm() {
               problems={preflight.data ?? []}
               loading={preflight.isLoading}
               canSubmit={isManager && !shopBlocked && canEditContent(status)}
+              dirty={dirty}
+              variantsDirty={variantsDirty}
               state={submitState}
               error={submitError}
               onGoTo={(problem) => {
@@ -871,8 +886,25 @@ export default function SellerProductForm() {
                 setSubmitState("sending");
                 setSubmitError(null);
                 try {
+                  // Sửa xong mà chưa bấm "Lưu thay đổi" thì bản nháp CHỈ nằm
+                  // trong localStorage — không có autosave lên máy chủ. Trước
+                  // đây nút này đăng thẳng bản trên máy chủ, tức là đăng đúng
+                  // cái mà người bán vừa sửa xong và tưởng đã đổi. Người bán
+                  // gỡ hàng xuống, sửa giá, bấm đăng, và sản phẩm lên lại với
+                  // GIÁ CŨ, không một lời cảnh báo. Bấm "Đăng bán" nghĩa là
+                  // "đăng cái tôi đang NHÌN THẤY", nên lưu trước — và nếu lưu
+                  // hỏng (xung đột phiên bản, lỗi hợp lệ) thì KHÔNG đăng.
+                  let version = row.version;
+                  if (dirty) {
+                    const saved = await save();
+                    if (!saved) {
+                      setSubmitState("idle");
+                      return;
+                    }
+                    version = saved.version;
+                  }
                   const result = await submit.mutateAsync({
-                    expectedVersion: row.version,
+                    expectedVersion: version,
                     clientToken: submitTokenRef.current,
                   });
                   if (result.ok) {
@@ -1336,6 +1368,8 @@ function SubmitPanel({
   problems,
   loading,
   canSubmit,
+  dirty,
+  variantsDirty,
   state,
   error,
   onGoTo,
@@ -1344,6 +1378,11 @@ function SubmitPanel({
   problems: SubmitProblem[];
   loading: boolean;
   canSubmit: boolean;
+  /** Ô thường còn thay đổi chưa lưu. Nút sẽ lưu trước rồi mới đăng. */
+  dirty: boolean;
+  /** Bảng phiên bản còn thay đổi chưa lưu. Nút KHÔNG lưu hộ được — bảng có
+   *  RPC riêng — nên nó chặn và chỉ chỗ. */
+  variantsDirty: boolean;
   state: "idle" | "sending" | "sent" | "error";
   error: string | null;
   onGoTo: (problem: SubmitProblem) => void;
@@ -1377,10 +1416,21 @@ function SubmitPanel({
   return (
     <>
       {ready ? (
-        <p className="tl-shop-hint">
-          Đủ điều kiện đăng bán. Bấm là sản phẩm hiển thị ngay cho người mua — không qua bước
-          duyệt nào. Muốn sửa sau đó thì gỡ nó xuống, sửa, rồi đăng lại.
-        </p>
+        variantsDirty ? (
+          <div className="tl-shop-notice tl-shop-notice--warn" role="status">
+            <AlertTriangle size={16} aria-hidden="true" />
+            <span>
+              Bảng phiên bản còn thay đổi chưa lưu — bấm <strong>“Lưu bảng phiên bản”</strong> ở
+              trên trước. Đăng bây giờ là đăng đúng giá cũ.
+            </span>
+          </div>
+        ) : (
+          <p className="tl-shop-hint">
+            {dirty
+              ? "Còn thay đổi chưa lưu. Bấm nút dưới sẽ lưu trước rồi mới đăng — không đăng bản cũ."
+              : "Đủ điều kiện đăng bán. Bấm là sản phẩm hiển thị ngay cho người mua — không qua bước duyệt nào. Muốn sửa sau đó thì gỡ nó xuống, sửa, rồi đăng lại."}
+          </p>
+        )
       ) : (
         <div className="tl-shop-notice tl-shop-notice--warn" role="status">
           <AlertTriangle size={16} aria-hidden="true" />
@@ -1417,14 +1467,19 @@ function SubmitPanel({
           className="tl-shop-btn tl-shop-btn--primary"
           // Disabled in flight so a double tap cannot send it twice. The client
           // token makes that harmless anyway; this makes it impossible.
-          disabled={!ready || state === "sending"}
+          //
+          // `variantsDirty` chặn hẳn, không lưu hộ: bảng phiên bản đi qua
+          // product_variants_reconcile với quyết định riêng của nó
+          // (keepVariantId khi thu từ nhiều về một), và một nút đăng bán tự
+          // quyết hộ chuyện đó là một nút vứt SKU của người khác.
+          disabled={!ready || variantsDirty || state === "sending"}
           onClick={() => {
             const first = firstProblem(problems);
             if (first) onGoTo(first);
             else void onSubmit();
           }}
         >
-          {state === "sending" ? "Đang đăng…" : "Đăng bán"}
+          {state === "sending" ? "Đang đăng…" : dirty ? "Lưu và đăng bán" : "Đăng bán"}
         </button>
       )}
 
