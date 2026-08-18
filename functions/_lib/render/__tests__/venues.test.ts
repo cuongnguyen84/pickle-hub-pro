@@ -60,8 +60,11 @@ const utf8Bytes = (s: string) => new TextEncoder().encode(s).length;
  * in the attribute but 1 byte in the string the byte budget applies to.
  * Compare against the unescaped form the budget actually governs.
  */
+// `&amp;` is unescaped LAST. Doing it first turns "&amp;#39;" into "&#39;",
+// which the next replace then unescapes again — one round-trip too many, and
+// what CodeQL's js/double-escaping rule is pointing at.
 const unescape = (s: string) =>
-  s.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+  s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
 
 describe("renderVenueDetail — meta description budget (CTR-01)", () => {
   it("never ships a mid-word truncated snippet for a long Vietnamese venue", async () => {
