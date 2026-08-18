@@ -53,6 +53,12 @@ const SUPABASE_ORIGIN = (
 
 const reEscape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Filled in by the supabase-origin-in-static-assets plugin's configResolved
+// hook — the build's real output directory, and whether publicDir was copied
+// into it at all. Both are unknowable at config-factory time.
+let resolvedOutDir = "";
+let copiesPublicDir = false;
+
 return ({
   server: {
     host: "::",
@@ -103,12 +109,37 @@ return ({
           return html.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN);
         },
       },
-      // public/_headers is copied verbatim, so it is rewritten after the copy.
-      // A miss here is silent — the header still parses, it just names the
-      // wrong host — so an absent marker is an error, not a no-op.
+      // The emitted _headers is resolved from the build's OWN outDir, captured
+      // here rather than assumed to be "dist".
+      // ----------------------------------------------------------------------
+      // Vite copies publicDir into outDir in prepareOutDir(), before the bundle
+      // runs, so by closeBundle() the file is already there — but only at the
+      // outDir this build actually chose. A hardcoded "dist" reads the wrong
+      // path under `--outDir`, a configured `build.outDir`, or any second
+      // config that overrides it, and the two failure modes are opposite and
+      // both bad: a LEFTOVER dist/_headers from an earlier build fails a build
+      // that was fine, and an ABSENT one skipped the rewrite entirely and
+      // shipped the literal marker as the CSP report-uri — an unparseable URL,
+      // so every violation report is dropped and the client_errors CSP feed
+      // goes quiet with nothing to notice. The whole point of the throw below
+      // is that this substitution is never allowed to be silent, so the
+      // "file missing" branch cannot be a silent return either.
+      configResolved(resolved) {
+        resolvedOutDir = path.resolve(resolved.root, resolved.build.outDir);
+        copiesPublicDir = Boolean(resolved.build.copyPublicDir && resolved.publicDir);
+      },
       closeBundle() {
-        const headers = path.resolve(__dirname, "dist/_headers");
-        if (!fs.existsSync(headers)) return;
+        // Nothing was copied, so there is nothing to rewrite and nothing to
+        // ship wrong — the only branch where absence is genuinely fine.
+        if (!copiesPublicDir) return;
+
+        const headers = path.resolve(resolvedOutDir, "_headers");
+        if (!fs.existsSync(headers)) {
+          throw new Error(
+            `${headers} is missing — public/_headers was not copied into the ` +
+              "build output, so the CSP report-uri never got substituted.",
+          );
+        }
         const before = fs.readFileSync(headers, "utf8");
         if (!before.includes("%SUPABASE_ORIGIN%")) {
           throw new Error(
