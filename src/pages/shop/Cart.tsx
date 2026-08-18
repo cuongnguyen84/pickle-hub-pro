@@ -79,7 +79,13 @@ const groupPaused = (g: CartGroup) => !g.shop.ordering_enabled || g.shop.state !
 
 /** The contact button for a paused shop, so "we can't sell you this today" is
  *  not a dead end. Its own component because it needs its own query and a
- *  hook cannot be called inside a map. */
+ *  hook cannot be called inside a map.
+ *
+ *  Secondary, not primary. Green is the buy colour on this screen and nowhere
+ *  else — the paused group sits in the same list as groups that still have a
+ *  green "Đặt đơn shop này", so a green button here read as a second checkout
+ *  button. The product page already made the same call ("Green stays on the
+ *  buy button"), and one rule everywhere beats a per-screen exception. */
 function PausedShopContact({ shopSlug }: { shopSlug: string }) {
   const q = usePublicShopPage(shopSlug);
   const contacts = usableContacts(q.data?.contacts as PublicContact[] | undefined);
@@ -90,7 +96,7 @@ function PausedShopContact({ shopSlug }: { shopSlug: string }) {
   return (
     <a
       href={href}
-      className="tl-shop-btn tl-shop-btn--primary"
+      className="tl-shop-btn"
       target={first.type === "phone" ? undefined : "_blank"}
       rel="noopener noreferrer nofollow"
     >
@@ -252,7 +258,7 @@ export default function Cart() {
               {[0, 1, 2].map((i) => (
                 <div className="tl-shop-line" key={i}>
                   <div className="tl-shop-line-media">
-                    <span className="tl-shop-sk" style={{ display: "block", aspectRatio: "1 / 1", borderRadius: 8 }} />
+                    <span className="tl-shop-sk" />
                   </div>
                   <div className="tl-shop-line-body">
                     <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "70%" }} />
@@ -326,14 +332,9 @@ export default function Cart() {
                               height={box.height}
                               loading="lazy"
                               decoding="async"
-                              style={{ width: "100%", height: "auto", borderRadius: 8 }}
                             />
                           ) : (
-                            <div
-                              className="tl-pcard-noimg"
-                              style={{ aspectRatio: "1 / 1", borderRadius: 8 }}
-                              aria-hidden="true"
-                            />
+                            <div className="tl-pcard-noimg" aria-hidden="true" />
                           )}
                         </div>
                         <div className="tl-shop-line-body">
@@ -347,11 +348,11 @@ export default function Cart() {
                             )}
                           </p>
                           {optionSummary(line.option_values) && (
-                            <p className="tl-shop-hint" style={{ margin: 0 }}>
+                            <p className="tl-shop-hint tl-shop-flush">
                               {optionSummary(line.option_values)}
                             </p>
                           )}
-                          <p className="tl-shop-price" style={{ margin: 0 }}>
+                          <p className="tl-shop-price tl-shop-flush">
                             {formatVnd(line.unit_price_vnd * shownQty)}
                           </p>
 
@@ -410,7 +411,7 @@ export default function Cart() {
                             </button>
                           </div>
                           {shownQty >= CART_QTY_MAX && (
-                            <p className="tl-shop-hint" style={{ margin: 0 }}>{COPY.qtyMax}</p>
+                            <p className="tl-shop-hint tl-shop-flush">{COPY.qtyMax}</p>
                           )}
                         </div>
                       </div>
@@ -422,12 +423,12 @@ export default function Cart() {
                   className="tl-shop-sellergroup-foot"
                   ref={g.shop.slug === firstOrderable?.shop.slug ? setFootNode : undefined}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="tl-shop-grow">
                     <div className="tl-shop-row">
                       <span>{COPY.subtotal}</span>
                       <span>{formatVnd(subtotal)}</span>
                     </div>
-                    <p className="tl-shop-hint" style={{ margin: 0 }}>
+                    <p className="tl-shop-hint tl-shop-flush">
                       {g.shop.shipping_fee_vnd > 0
                         ? COPY.shipLater(g.shop.shipping_fee_vnd)
                         : COPY.shipFree}
@@ -446,7 +447,7 @@ export default function Cart() {
                       >
                         {COPY.checkoutShop}
                       </button>
-                      <p id={`cart-block-${g.shop.slug}`} className="tl-shop-hint" style={{ margin: 0 }}>
+                      <p id={`cart-block-${g.shop.slug}`} className="tl-shop-hint tl-shop-flush">
                         {COPY.needsFix(problems)}
                       </p>
                     </div>
@@ -473,7 +474,7 @@ export default function Cart() {
             data-shown={footOffScreen ? "true" : "false"}
             aria-hidden={footOffScreen ? undefined : true}
           >
-            <div style={{ minWidth: 0 }}>
+            <div>
               <p className="tl-shop-buybar-price">
                 {formatVnd(
                   firstOrderable.lines.reduce(

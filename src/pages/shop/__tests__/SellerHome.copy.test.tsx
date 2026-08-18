@@ -34,12 +34,6 @@ beforeEach(() => {
 });
 
 vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
-vi.mock("@/components/states/PageStates", () => ({
-  LoadingState: () => <div>loading…</div>,
-  ErrorState: ({ onRetry }: { onRetry?: () => void }) => (
-    <button onClick={onRetry}>error</button>
-  ),
-}));
 vi.mock("@/components/shop/ShopShell", () => ({
   ShopScrollShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SellerShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -179,9 +173,13 @@ describe("loading / error / no shop yet", () => {
     );
   };
 
-  it("shows the loading state while either query is in flight", () => {
+  // R6: no full-screen spinner. The wait is a skeleton in the shape of the
+  // dashboard, inside the Seller Center shell, so the nav stays usable.
+  it("shows a page-shaped skeleton while either query is in flight", () => {
     mountRaw({ data: null, isLoading: true, isError: false }, { data: null, isLoading: false });
-    expect(screen.getByText("loading…")).toBeTruthy();
+    const busy = screen.getByLabelText("Đang tải tổng quan shop");
+    expect(busy.getAttribute("aria-busy")).toBe("true");
+    expect(busy.querySelectorAll(".tl-shop-sk").length).toBeGreaterThan(1);
   });
 
   // R5 #7: the shop's own red-stripe notice, not the shadcn ErrorState.

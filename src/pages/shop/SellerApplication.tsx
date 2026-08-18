@@ -24,7 +24,6 @@ import {
   type SellerRulesState,
 } from "@/components/shop/SellerRulesAcceptance";
 import { ShopErrorNotice } from "@/components/shop/ShopNotice";
-import { LoadingState } from "@/components/states/PageStates";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import {
   applicationErrorMessage,
@@ -255,7 +254,22 @@ export default function SellerApplication() {
     }
   };
 
-  if (pilot.isLoading || remote.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình biểu mẫu nhiều bước: thanh tiến trình, tiêu đề bước,
+  // rồi các khối trường. Header có nút Quay lại hiện ngay từ đầu.
+  if (pilot.isLoading || remote.isLoading) {
+    return (
+      <ShopScrollShell>
+        <ShopHeader title="Hồ sơ đăng ký bán hàng" backTo="/shop/sell" />
+        <main className="tl-shop-page tl-shop-page--narrow" aria-busy="true" aria-label="Đang tải hồ sơ đăng ký">
+          <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "40%" }} />
+          <span className="tl-shop-sk tl-shop-sk--title" />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+        </main>
+      </ShopScrollShell>
+    );
+  }
 
   if (pilot.isError || remote.isError) {
     return (
@@ -330,7 +344,7 @@ export default function SellerApplication() {
     switch (step) {
       case 0:
         return (
-          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+          <fieldset className="tl-shop-fieldset">
             <legend className="tl-shop-label" style={{ padding: 0, marginBottom: 10 }}>
               Anh/chị bán với tư cách nào?
             </legend>

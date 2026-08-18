@@ -1977,3 +1977,75 @@ li.tl-shop-overdue { display: flex; }
 .tl-shop-sk--card { height: 84px; border-radius: var(--tl-radius); margin-bottom: 10px; }
 .tl-shop-sk--thumb { width: 56px; height: 56px; border-radius: 8px; flex: none; }
 .tl-shop-skrow { display: flex; gap: 8px; }
+
+/* ══ R6 · quét nốt style nội tuyến + khung xương cho màn người bán ══════════
+   Không token mới, không màu mới, không file CSS mới. Đây là những giá trị đã
+   được gõ lại bằng tay ở 6 file màn Shop — mỗi cái xuất hiện từ 3 lần trở lên,
+   nên nó đáng có một cái tên thay vì một object style ở mỗi chỗ dùng. */
+
+/* Đoạn văn nằm sát trong một thẻ/hàng: không có margin của riêng nó, vì hàng
+   hoặc thẻ bao ngoài mới là thứ quyết định khoảng cách. */
+.tl-shop-flush   { margin: 0; }
+.tl-shop-flush-t { margin-top: 0; }
+.tl-shop-flush-b { margin-bottom: 0; }
+
+/* Cột co giãn trong một hàng flex. `min-width: 0` là phần quan trọng: thiếu nó
+   thì tên sản phẩm dài phá vỡ hàng thay vì bị cắt bằng ellipsis. */
+.tl-shop-grow { flex: 1; min-width: 0; }
+
+/* <ul> chỉ dùng để gom các thẻ — dấu chấm đầu dòng và thụt lề mặc định của
+   trình duyệt không có việc gì ở đây, nhưng ngữ nghĩa danh sách thì có. */
+.tl-shop-plainlist { list-style: none; margin: 0; padding: 0; }
+
+/* Một hàng đơn hàng: ảnh/monogram bên trái, nội dung bên phải. Dùng chung cho
+   thẻ thật và cho khung xương của nó, nên hai cái không thể lệch nhau nữa. */
+.tl-shop-orderrow { display: flex; gap: 12px; margin-bottom: 10px; }
+.tl-shop-orderrow-body { display: flex; flex-direction: column; gap: 4px; }
+
+/* Khung xương của một ô thống kê — đúng chiều cao tối thiểu của .tl-shop-stat
+   để lưới không nhảy khi số liệu về. */
+.tl-shop-sk--tile { display: block; min-height: 76px; border-radius: var(--tl-radius); }
+
+/* Khung xương của một chip lọc (.tl-shop-cat) — viên thuốc 88×44, không co. */
+.tl-shop-sk--chip { width: 88px; height: 44px; border-radius: 999px; flex: none; }
+
+/* Khung xương của một monogram shop 56px. Bo góc đọc từ chính token mà
+   .tl-shop-monogram dùng, thay vì gõ tay 12px ở chỗ dùng. */
+.tl-shop-sk--mono {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--tl-radius-lg);
+  flex: none;
+}
+
+/* Nhóm trường không cần khung: <fieldset> vẫn là ngữ nghĩa đúng cho một nhóm
+   input có <legend>, nhưng viền và padding mặc định của trình duyệt thì không.
+   Bốn màn Shop đang tự tay khai lại đúng ba dòng này. */
+.tl-shop-fieldset { border: 0; margin: 0; padding: 0; }
+
+/* Ô ảnh của một dòng giỏ hàng. Ảnh thật, ô "chưa có ảnh" và khung xương đều
+   phải vừa khít 68px và bo cùng một góc — trước đây ba chỗ tự khai lại. */
+.tl-shop-line-media > * { display: block; width: 100%; border-radius: 8px; }
+.tl-shop-line-media > img { height: auto; }
+.tl-shop-line-media > :not(img) { aspect-ratio: 1 / 1; }
+
+/* Cột chữ của thanh mua dính đáy (giá + tên shop). `min-width: 0` để tên shop
+   dài bị cắt bằng ellipsis thay vì đẩy nút mua ra khỏi màn hình. */
+.tl-shop-buybar > div { min-width: 0; }
+
+/* Banner "mất kết nối" (PageStates.tsx) treo ở App.tsx, ngoài .tl-shop, nên nó
+   không biết gì về thanh mua. Đo được ở 390×640: cả hai cùng nằm ở dải
+   516–568px, banner đè lên đúng nút Mua. Quy tắc này chỉ tồn tại khi shop.css
+   được nạp — tức là chỉ trên các màn Shop, đúng nơi có thanh mua — và chỉ khớp
+   khi thanh đang thật sự hiện, nên mọi màn khác giữ nguyên vị trí cũ. */
+body:has(.tl-shop-buybar[data-shown="true"]) .tl-offline-banner {
+  /* 72px = chiều cao BottomNav (viết thẳng, vì --shop-bottomnav khai trên
+     .tl-shop và banner không nằm trong đó); 68px = chiều cao thanh mua. */
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 68px);
+}
+/* Từ 768px trở lên BottomNav đã ẩn nên banner về sát mép; thanh mua vẫn ở trên
+   nó (bottom 72 + safe) và hai cái không còn gặp nhau. */
+@media (min-width: 768px) {
+  body:has(.tl-shop-buybar[data-shown="true"]) .tl-offline-banner { bottom: 0; }
+}

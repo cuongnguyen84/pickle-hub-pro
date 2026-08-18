@@ -32,7 +32,6 @@ import {
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { ShopErrorNotice } from "@/components/shop/ShopNotice";
-import { LoadingState } from "@/components/states/PageStates";
 import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
@@ -157,8 +156,19 @@ export default function SellerOrderDetail() {
     </ShopScrollShell>
   );
 
+  // Khung xương đúng hình trang: mã đơn, tiêu đề, dòng trạng thái, rồi các thẻ
+  // (hành động, hàng hoá, người nhận, nhật ký).
   if (membership.isLoading || profile.isLoading || q.isPending) {
-    return <LoadingState fullScreen />;
+    return shell(
+      <div aria-busy="true" aria-label={COPY.loading}>
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "35%" }} />
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "60%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+      </div>,
+    );
   }
 
   if (membership.isError || profile.isError) {

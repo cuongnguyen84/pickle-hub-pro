@@ -421,7 +421,7 @@ export default function ProductDetail() {
                         : PDP_COPY.add}
                   </button>
                   {addBlockedReason && (
-                    <p className="tl-shop-hint" id="pdp-add-why" style={{ marginTop: 0 }}>
+                    <p className="tl-shop-hint tl-shop-flush-t" id="pdp-add-why">
                       {addBlockedReason}
                     </p>
                   )}
@@ -463,13 +463,13 @@ export default function ProductDetail() {
                       );
                     })}
                   </div>
-                  <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
+                  <p className="tl-shop-hint tl-shop-flush-b">
                     {contacts.map((c) => CONTACT_DESTINATION[c.type]).join(" · ")}. ThePickleHub
                     không có tin nhắn nội bộ — anh/chị trao đổi thẳng với shop.
                   </p>
                 </>
               ) : (
-                <p className="tl-shop-hint" style={{ marginBottom: 0 }}>{NO_CONTACT_COPY}</p>
+                <p className="tl-shop-hint tl-shop-flush-b">{NO_CONTACT_COPY}</p>
               )}
             </div>
 
@@ -492,7 +492,7 @@ export default function ProductDetail() {
               {product.shop.return_note && <p className="tl-pdp-note">{product.shop.return_note}</p>}
               {/* R5 (cắt chữ): ba dòng miễn trừ còn một. Không mất nghĩa nào —
                   ai khai, ai duyệt — chỉ mất phần lặp lại trang shop đã nói. */}
-              <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
+              <p className="tl-shop-hint tl-shop-flush-b">
                 Giá và tình trạng hàng do shop tự khai. ThePickleHub kiểm duyệt nội dung trước khi
                 hiển thị.
               </p>

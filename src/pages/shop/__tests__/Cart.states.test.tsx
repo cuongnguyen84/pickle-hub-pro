@@ -233,7 +233,12 @@ describe("a shop that has paused selling", () => {
     expect(document.body.textContent).not.toContain("Shop bị tạm ngưng");
     expect(screen.queryByText("Đặt hàng shop này")).toBeNull();
     // The contact channel from the stubbed shop query.
-    expect(screen.getByText("Nhắn Zalo").getAttribute("href")).toBe("https://zalo.me/123");
+    const contact = screen.getByText("Nhắn Zalo");
+    expect(contact.getAttribute("href")).toBe("https://zalo.me/123");
+    // R6: green is the buy colour. This list still shows green "Đặt hàng shop
+    // này" buttons for the shops that CAN sell, so a green contact button here
+    // read as a second checkout button.
+    expect(contact.className).not.toContain("tl-shop-btn--primary");
     // The goods stay in the cart.
     expect(screen.getByText("Vợt QA")).toBeTruthy();
   });

@@ -373,14 +373,18 @@ export default function Checkout() {
             <strong>{COPY.paused}</strong> {COPY.pausedCartKept}
           </div>
         </div>
-        <div className="tl-shop-cta-row">
+        {/* Secondary, not primary: green means "this buys something", and on a
+            paused shop nothing on this screen does. The product page and the
+            cart already say it the same way. Contact still reads first because
+            "quay lại giỏ" drops to ghost below it — three weights, one rule. */}
+        <div className="tl-shop-contactrow">
           {contacts.map((c) => {
             const href = contactHref(c);
             return href ? (
               <a
                 key={c.id}
                 href={href}
-                className="tl-shop-btn tl-shop-btn--primary"
+                className="tl-shop-btn"
                 target={c.type === "phone" ? undefined : "_blank"}
                 rel="noopener noreferrer nofollow"
               >
@@ -388,7 +392,9 @@ export default function Checkout() {
               </a>
             ) : null;
           })}
-          <Link to="/shop/cart" className="tl-shop-btn">{COPY.backToCart}</Link>
+          <Link to="/shop/cart" className="tl-shop-btn tl-shop-btn--ghost">
+            {COPY.backToCart}
+          </Link>
         </div>
       </>,
     );
@@ -496,7 +502,7 @@ export default function Checkout() {
 
       <section aria-labelledby="co-pay" className="tl-shop-section">
         <h2 className="tl-shop-h2" id="co-pay">{COPY.paymentH}</h2>
-        <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
+        <fieldset className="tl-shop-fieldset">
           <legend className="tl-shop-sr">{COPY.paymentH}</legend>
           <label className="tl-shop-check">
             <input
@@ -525,13 +531,13 @@ export default function Checkout() {
 
       <section aria-labelledby="co-review" className="tl-shop-section">
         <h2 className="tl-shop-h2" id="co-review">{COPY.reviewH}</h2>
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+        <ul className="tl-shop-plainlist">
           {group.lines.map((l) => (
             <li className="tl-shop-line" key={l.cart_item_id}>
               <div className="tl-shop-line-body">
                 <p className="tl-shop-line-title">{l.product_title ?? "Sản phẩm"}</p>
                 {optionSummary(l.option_values) && (
-                  <p className="tl-shop-hint" style={{ margin: 0 }}>
+                  <p className="tl-shop-hint tl-shop-flush">
                     {optionSummary(l.option_values)}
                   </p>
                 )}
@@ -574,7 +580,7 @@ export default function Checkout() {
             totalVnd={total}
             itemCount={itemCount}
           />
-          <p className="tl-shop-hint" style={{ marginBottom: 0 }}>{COPY.shipEveryProvince}</p>
+          <p className="tl-shop-hint tl-shop-flush-b">{COPY.shipEveryProvince}</p>
         </div>
 
         <div ref={setSubmitNode}>
@@ -605,7 +611,7 @@ export default function Checkout() {
       data-shown={submitOffScreen ? "true" : "false"}
       aria-hidden={submitOffScreen ? undefined : true}
     >
-      <div style={{ minWidth: 0 }}>
+      <div>
         <p className="tl-shop-buybar-price">{formatVnd(total)}</p>
         <p className="tl-shop-buybar-sub">{shopName}</p>
       </div>

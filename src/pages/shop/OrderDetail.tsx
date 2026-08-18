@@ -268,13 +268,13 @@ export default function OrderDetail() {
         <h2 className="tl-shop-h2" id="ord-ship">{COPY.shippingH}</h2>
         {order.tracking_code ? (
           <>
-            <p style={{ margin: 0 }}>
+            <p className="tl-shop-flush">
               <strong>{order.tracking_code}</strong>
             </p>
             <p className="tl-shop-hint">{COPY.trackingNote}</p>
           </>
         ) : (
-          <p className="tl-shop-hint" style={{ marginTop: 0 }}>{COPY.noTracking}</p>
+          <p className="tl-shop-hint tl-shop-flush-t">{COPY.noTracking}</p>
         )}
       </section>
 
@@ -317,13 +317,13 @@ export default function OrderDetail() {
 
       <section aria-labelledby="ord-items">
         <h2 className="tl-shop-h2" id="ord-items">{COPY.itemsH}</h2>
-        <ul style={{ listStyle: "none", margin: "0 0 12px", padding: 0 }}>
+        <ul className="tl-shop-plainlist" style={{ marginBottom: 12 }}>
           {order.items.map((i) => (
             <li className="tl-shop-line" key={i.id}>
               <div className="tl-shop-line-body">
                 <p className="tl-shop-line-title">{i.product_title}</p>
                 {i.variant_label && (
-                  <p className="tl-shop-hint" style={{ margin: 0 }}>{i.variant_label}</p>
+                  <p className="tl-shop-hint tl-shop-flush">{i.variant_label}</p>
                 )}
                 <div className="tl-shop-row">
                   <span>SL {i.qty}</span>
@@ -343,9 +343,9 @@ export default function OrderDetail() {
 
       <section aria-labelledby="ord-address">
         <h2 className="tl-shop-h2" id="ord-address">{COPY.addressH}</h2>
-        <p style={{ margin: 0 }}>{order.recipient_name}</p>
-        <p style={{ margin: 0 }}>{order.recipient_phone}</p>
-        <p style={{ margin: 0 }}>{order.shipping_address}</p>
+        <p className="tl-shop-flush">{order.recipient_name}</p>
+        <p className="tl-shop-flush">{order.recipient_phone}</p>
+        <p className="tl-shop-flush">{order.shipping_address}</p>
         {order.delivery_note && (
           <p className="tl-shop-hint">{COPY.noteLabel}: {order.delivery_note}</p>
         )}
@@ -353,7 +353,7 @@ export default function OrderDetail() {
 
       <section aria-labelledby="ord-pay">
         <h2 className="tl-shop-h2" id="ord-pay">{COPY.paymentH}</h2>
-        <p style={{ margin: 0 }}>
+        <p className="tl-shop-flush">
           {order.payment_method === "cod" ? <strong>{COPY.payCod}</strong> : COPY.payBank}
         </p>
         <p className="tl-shop-hint">Đặt lúc {formatWhen(order.created_at)}</p>

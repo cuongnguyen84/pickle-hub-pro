@@ -23,11 +23,6 @@ vi.mock("@/components/shop/ShopShell", () => ({
   ShopScrollShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SellerShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-vi.mock("@/components/states/PageStates", () => ({
-  LoadingState: () => <p>Đang tải…</p>,
-  ErrorState: () => <p>Lỗi</p>,
-}));
-
 const state = {
   role: "owner" as "owner" | "support",
   orderingEnabled: true,

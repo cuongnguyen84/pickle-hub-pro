@@ -59,7 +59,7 @@ export default function ShopStore() {
           <div className="tl-shop-page" aria-busy="true" aria-label="Đang tải trang shop">
             <div className="tl-shop-storehead-row">
               <span className="tl-shop-sk" style={{ width: 72, height: 72, borderRadius: 20, flex: "none" }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="tl-shop-grow">
                 <span className="tl-shop-sk tl-shop-sk--title" />
                 <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "45%" }} />
               </div>
@@ -180,7 +180,7 @@ export default function ShopStore() {
                 );
               })}
             </div>
-            <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
+            <p className="tl-shop-hint tl-shop-flush-b">
               Bấm sẽ mở ứng dụng ngoài — anh/chị rời ThePickleHub.
             </p>
           </section>

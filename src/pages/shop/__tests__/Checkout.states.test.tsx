@@ -213,9 +213,17 @@ describe("a shop that paused selling while the form was open", () => {
     expect(screen.queryByLabelText("Số điện thoại")).toBeNull();
     expect(screen.queryByRole("button", { name: /Đặt đơn/ })).toBeNull();
     // The way out is the shop's own channels, plus the cart.
-    expect(screen.getByText("Nhắn Zalo").getAttribute("href")).toBe("https://zalo.me/123");
-    expect(screen.getByText("Gọi điện").getAttribute("href")).toBe("tel:+84912345678");
-    expect(screen.getByText("Về giỏ hàng").getAttribute("href")).toBe("/shop/cart");
+    const zalo = screen.getByText("Nhắn Zalo");
+    const phone = screen.getByText("Gọi điện");
+    const back = screen.getByText("Về giỏ hàng");
+    expect(zalo.getAttribute("href")).toBe("https://zalo.me/123");
+    expect(phone.getAttribute("href")).toBe("tel:+84912345678");
+    expect(back.getAttribute("href")).toBe("/shop/cart");
+    // R6: green means "this buys something" and nothing here does. Contact is
+    // still the loudest thing on the screen because the way back drops to ghost.
+    expect(zalo.className).not.toContain("tl-shop-btn--primary");
+    expect(phone.className).not.toContain("tl-shop-btn--primary");
+    expect(back.className).toContain("tl-shop-btn--ghost");
   });
 
   it("a shop that is not active is paused too, even with ordering_enabled", () => {

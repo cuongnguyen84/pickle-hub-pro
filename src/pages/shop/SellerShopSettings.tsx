@@ -23,7 +23,6 @@ import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { DefList, ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { ShopErrorNotice } from "@/components/shop/ShopNotice";
-import { LoadingState } from "@/components/states/PageStates";
 import {
   shopErrorMessage,
   useDeleteContact,
@@ -119,8 +118,6 @@ export default function SellerShopSettings() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [dirty]);
 
-  if (membership.isLoading || profile.isLoading) return <LoadingState fullScreen />;
-
   const shellWrap = (children: React.ReactNode) => (
     <ShopScrollShell>
       <DynamicMeta title="Cài đặt shop" noindex />
@@ -129,6 +126,20 @@ export default function SellerShopSettings() {
       </SellerShell>
     </ShopScrollShell>
   );
+
+  // Khung xương đúng hình trang: tiêu đề, dòng phụ, rồi các thẻ nhóm trường
+  // (thông tin shop, kênh liên hệ, vận chuyển, đổi trả).
+  if (membership.isLoading || profile.isLoading) {
+    return shellWrap(
+      <div aria-busy="true" aria-label="Đang tải cài đặt shop">
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "70%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+      </div>,
+    );
+  }
 
   if (membership.isError || profile.isError) {
     return shellWrap(

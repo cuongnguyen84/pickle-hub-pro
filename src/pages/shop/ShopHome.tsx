@@ -105,7 +105,7 @@ export default function ShopHome() {
           {categories.isLoading ? (
             <div className="tl-shop-cats" aria-busy="true" aria-label="Đang tải ngành hàng">
               {[0, 1, 2, 3].map((i) => (
-                <span key={i} className="tl-shop-sk" style={{ width: 88, height: 44, borderRadius: 999, flex: "none" }} />
+                <span key={i} className="tl-shop-sk tl-shop-sk--chip" />
               ))}
             </div>
           ) : (

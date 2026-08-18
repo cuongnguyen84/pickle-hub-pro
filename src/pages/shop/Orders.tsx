@@ -157,12 +157,12 @@ export default function Orders() {
     return shell(
       <div aria-busy="true" aria-label={COPY.loading}>
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="tl-shop-card" style={{ display: "flex", gap: 12, marginBottom: 10 }}>
-            <span className="tl-shop-sk" style={{ display: "block", width: 56, height: 56, borderRadius: 12, flex: "none" }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div key={i} className="tl-shop-card tl-shop-orderrow">
+            <span className="tl-shop-sk tl-shop-sk--mono" />
+            <div className="tl-shop-grow">
               <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "35%" }} />
               <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "75%", height: 16 }} />
-              <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "55%", marginBottom: 0 }} />
+              <span className="tl-shop-sk tl-shop-sk--line tl-shop-flush-b" style={{ width: "55%" }} />
             </div>
           </div>
         ))}
@@ -257,7 +257,7 @@ export default function Orders() {
           </div>
         ) : (
           <>
-            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            <ul className="tl-shop-plainlist">
               {page.map((row) => (
                 <OrderRow key={row.id} row={row} />
               ))}
@@ -286,14 +286,14 @@ function OrderRow({ row }: { row: OrderListRow }) {
   const todo = row.status === "cancelled" ? cancelledSentence(row) : BUYER_TODO[row.status];
 
   return (
-    <li className="tl-shop-card" style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+    <li className="tl-shop-card tl-shop-orderrow">
       {/* The order has no photo of its own: shop_order_items snapshot the title
           and the price, not the image, so that an order stays readable after
           the product is taken down. The shop's monogram is the honest stand-in
           and costs no second query. */}
       <ShopMonogram name={shopName} size={56} />
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-        <p className="tl-shop-hint" style={{ margin: 0 }}>{shopName}</p>
+      <div className="tl-shop-grow tl-shop-orderrow-body">
+        <p className="tl-shop-hint tl-shop-flush">{shopName}</p>
         {/* One main link per card, and it is what was bought. R5 #15: with
             `color: inherit` and no underline it read as plain text, so it
             carries a chevron and answers a tap. */}
@@ -304,10 +304,10 @@ function OrderRow({ row }: { row: OrderListRow }) {
           </span>
           <ChevronRight size={18} aria-hidden="true" />
         </Link>
-        <div className="tl-shop-hint" style={{ margin: 0, fontVariantNumeric: "tabular-nums" }}>
+        <div className="tl-shop-hint tl-shop-flush" style={{ fontVariantNumeric: "tabular-nums" }}>
           {row.code} · {dm(row.created_at)} · {formatVnd(row.total_vnd)}
         </div>
-        <p className="tl-shop-hint" style={{ margin: 0 }}>{todo}</p>
+        <p className="tl-shop-hint tl-shop-flush">{todo}</p>
         {row.status === "shipped" && (
           <div>
             {/* A link, not a button: confirming receipt asks first, and the

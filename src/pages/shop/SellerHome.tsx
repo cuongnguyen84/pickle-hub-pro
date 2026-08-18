@@ -13,7 +13,6 @@ import { AlertTriangle, Check, Store } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell, DefList } from "@/components/shop/ShopShell";
 import { ShopErrorNotice } from "@/components/shop/ShopNotice";
-import { LoadingState } from "@/components/states/PageStates";
 import { useMyApplication, useMyShop } from "@/hooks/shop/useSellerApplication";
 import { useProductStatusCounts } from "@/hooks/shop/useSellerProducts";
 import { useShopOrders } from "@/hooks/shop/useOrders";
@@ -33,7 +32,7 @@ function ProductStats({
     return (
       <div className="tl-shop-stats" aria-busy="true">
         {[0, 1, 2, 3].map((i) => (
-          <span key={i} className="tl-shop-sk" style={{ height: 76 }} />
+          <span key={i} className="tl-shop-sk tl-shop-sk--tile" />
         ))}
       </div>
     );
@@ -123,7 +122,29 @@ export default function SellerHome() {
   const app = useMyApplication();
   const counts = useProductStatusCounts(shop.data?.id ?? null);
 
-  if (shop.isLoading || app.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình trang: một ô "đơn cần xử lý", bốn ô thống kê sản
+  // phẩm, hai thẻ mục. Nav của Kênh người bán hiện ngay từ đầu — trước đây
+  // vòng xoay toàn màn hình nuốt luôn thanh điều hướng nên không đi đâu được
+  // trong lúc chờ.
+  if (shop.isLoading || app.isLoading) {
+    return (
+      <ShopScrollShell>
+        <SellerShell active="dashboard" title="Kênh người bán">
+          <div className="tl-shop-page" aria-busy="true" aria-label="Đang tải tổng quan shop">
+            {/* marginBottom 16 giống hệt ô OrdersToDo thật ngay bên dưới. */}
+            <span className="tl-shop-sk tl-shop-sk--tile" style={{ marginBottom: 16 }} />
+            <div className="tl-shop-stats">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className="tl-shop-sk tl-shop-sk--tile" />
+              ))}
+            </div>
+            <span className="tl-shop-sk tl-shop-sk--card" />
+            <span className="tl-shop-sk tl-shop-sk--card" />
+          </div>
+        </SellerShell>
+      </ShopScrollShell>
+    );
+  }
 
   if (shop.isError) {
     return (

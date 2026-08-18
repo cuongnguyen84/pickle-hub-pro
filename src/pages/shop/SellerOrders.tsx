@@ -22,7 +22,6 @@ import { AlertTriangle, Clock, Inbox, PackageOpen } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { ShopErrorNotice } from "@/components/shop/ShopNotice";
-import { LoadingState } from "@/components/states/PageStates";
 import { useMyShopMembership, useShopProfile } from "@/hooks/shop/useShopProfile";
 import { useShopOrders, type OrderListRow } from "@/hooks/shop/useOrders";
 import { shopErrorMessage } from "@/lib/shop/errors";
@@ -96,7 +95,24 @@ export default function SellerOrders() {
     </ShopScrollShell>
   );
 
-  if (membership.isLoading || profile.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình trang: tiêu đề, dòng phụ, bốn chip trạng thái, ba
+  // thẻ đơn — cùng khuôn với khối `list.isLoading` bên dưới.
+  if (membership.isLoading || profile.isLoading) {
+    return shell(
+      <div aria-busy="true" aria-label={COPY.loading}>
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "65%" }} />
+        <div className="tl-shop-cats">
+          {SELLER_TABS.map((t) => (
+            <span key={t.key} className="tl-shop-sk tl-shop-sk--chip" />
+          ))}
+        </div>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="tl-shop-sk tl-shop-sk--card" />
+        ))}
+      </div>,
+    );
+  }
 
   if (membership.isError || profile.isError) {
     return shell(
@@ -168,7 +184,7 @@ export default function SellerOrders() {
         {list.isLoading ? (
           <div aria-busy="true" aria-live="polite" aria-label={COPY.loading}>
             {[0, 1, 2].map((i) => (
-              <div key={i} className="tl-shop-sk tl-shop-sk--card" style={{ height: 76 }} />
+              <div key={i} className="tl-shop-sk tl-shop-sk--card" />
             ))}
           </div>
         ) : list.isError ? (

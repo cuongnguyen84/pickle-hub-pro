@@ -14,7 +14,6 @@ import { AlertTriangle, Check, Clock, FileText, RotateCcw, X } from "lucide-reac
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, ShopHeader, DefList } from "@/components/shop/ShopShell";
 import { ShopErrorNotice } from "@/components/shop/ShopNotice";
-import { LoadingState } from "@/components/states/PageStates";
 import {
   useApplicationEvents,
   useMyApplication,
@@ -92,7 +91,21 @@ export default function SellerApplicationStatus() {
   const events = useApplicationEvents(app.data?.id ?? null);
   const withdraw = useWithdrawApplication();
 
-  if (app.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình trang: thẻ trạng thái lớn, một nút, rồi dòng thời
+  // gian của hồ sơ. Header có nút Quay lại hiện ngay từ đầu.
+  if (app.isLoading) {
+    return (
+      <ShopScrollShell>
+        <ShopHeader title="Hồ sơ đăng ký" backTo="/shop/sell" />
+        <main className="tl-shop-page tl-shop-page--narrow" aria-busy="true" aria-label="Đang tải hồ sơ đăng ký">
+          <span className="tl-shop-sk tl-shop-sk--title" />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+          <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "45%" }} />
+          <span className="tl-shop-sk tl-shop-sk--card" />
+        </main>
+      </ShopScrollShell>
+    );
+  }
 
   if (app.isError) {
     return (
