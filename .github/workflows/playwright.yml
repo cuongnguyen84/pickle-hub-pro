@@ -15,9 +15,11 @@ concurrency:
 
 jobs:
   smoke:
-    # Installing Chromium + WebKit can exceed ten minutes on a cold runner;
-    # keep the smoke job from being cancelled before tests start.
-    timeout-minutes: 20
+    # Cache miss lần đầu vẫn phải cài trình duyệt từ đầu, và sau đó còn chờ
+    # preview deploy (tối đa 5') + chờ CDN settle (tối đa ~5') trước khi test
+    # bắt đầu. 20 phút vừa đủ để trượt; 30 cho lần miss thở được, còn lần hit
+    # thì job xong sớm hơn nhiều nên trần cao không tốn gì.
+    timeout-minutes: 30
     runs-on: ubuntu-latest
 
     env:
@@ -39,8 +41,38 @@ jobs:
       - name: Install npm deps
         run: npm ci
 
-      - name: Install Playwright browser (Chromium only)
+      # Cài Chromium + WebKit từ đầu tốn ~10 phút trên runner nguội, ăn hết nửa
+      # ngân sách 20 phút của job trước khi có test nào chạy — đó là lý do smoke
+      # timeout ở đúng mốc 20m19s hai lần liền (16-17/08). WebKit KHÔNG bỏ được:
+      # nó là bề mặt iOS Safari duy nhất trong CI, mà khán giả VN gần như toàn
+      # mobile (xem project mobile-webkit trong playwright.config.ts).
+      #
+      # Key gồm version playwright thật đã resolve, không phải range trong
+      # package.json — nâng 1.60 → 1.61 phải làm cache miss, nếu không runner
+      # dùng binary cũ với thư viện mới và lỗi rất khó đọc.
+      - name: Resolve Playwright version
+        id: pw
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit
+
+      # Cache chỉ giữ được binary trình duyệt, KHÔNG giữ được thư viện hệ thống
+      # apt mà `--with-deps` cài — chúng nằm ngoài ~/.cache. Nên khi cache hit
+      # vẫn phải chạy install-deps (nhanh, vài chục giây), bỏ qua là WebKit
+      # không khởi động được.
+      - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium webkit
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium webkit
 
       # For PRs from non-fork branches, hit the Cloudflare preview deploy
       # instead of prod. Branch name pattern: <branch>.pickle-hub-pro.pages.dev
