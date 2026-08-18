@@ -48,4 +48,19 @@ describe("Organization sameAs", () => {
       expect(list).toContain("https://apps.apple.com/app/id6759968026");
     }
   });
+
+  it("points Facebook at our page, not the Indian business with the same name", () => {
+    // BRAND-01, 2026-08-18. The list previously carried
+    // facebook.com/ThePickleHub. It returns 200, so the "every entry has to
+    // resolve" rule above passed it — but Facebook resolves that vanity URL to
+    // facebook.com/thepicklehub/ = "Pickle Hub | Guntur", a business in Andhra
+    // Pradesh, India. Resolving is not enough; it has to resolve to US, or the
+    // schema asserts we are a different company that shares the brand name.
+    // Ours is verified by og:url = https://www.facebook.com/thepicklehubnet/
+    // and og:title = "thepicklehub.net".
+    for (const list of blocks) {
+      expect(list).toContain("https://www.facebook.com/thepicklehubnet/");
+      expect(list.some((u) => /facebook\.com\/ThePickleHub\/?$/i.test(u))).toBe(false);
+    }
+  });
 });
