@@ -57,6 +57,13 @@ const SEGMENT_PATHS = [
   // renderVenueDetail + renderVenuesCity ship bot-prerender (functions/_lib/
   // render/venues.ts), so every URL resolves to a real 200.
   "/sitemap-venues.xml",
+  // Phase 4 (2026-08-18) — shop product / storefront / category URLs, now
+  // that renderShopProduct & co. ship bot-prerender. Referenced
+  // unconditionally: the segment itself reads SHOP_PUBLIC_INDEXING and
+  // answers an empty urlset while the gate is closed, which is a valid
+  // sitemap. A segment that 404s would flag the whole index in Search
+  // Console for as long as the gate stayed shut.
+  "/sitemap-shop.xml",
 ];
 
 export const onRequest: PagesFunction<Env> = (context) => {

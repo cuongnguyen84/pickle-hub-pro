@@ -29,9 +29,12 @@ export default function ShopHome() {
 
   return (
     <TheLineLayout title="Chợ đồ pickleball">
-      {/* Q4: the pilot catalogue is not indexed. Server-rendered robots come
-          from the Pages Function; this is the SPA half of the same answer. */}
-      <DynamicMeta title="Chợ đồ pickleball" noindex />
+      {/* Phase 4 launch: the robots decision is the edge's alone.
+          SHOP_PUBLIC_INDEXING lives in the Pages environment, so this
+          component cannot read it — and a hardcoded `noindex` here was not
+          "the SPA half of the same answer", it was a second answer that
+          could never change. It stayed noindex through the whole launch. */}
+      <DynamicMeta title="Chợ đồ pickleball" />
       <main className="tl-shop">
         {/* R5 #1: .tl-shop-page is the ONLY source of the page gutter and of
             the bottom clearance for BottomNav. Without it the hero card and

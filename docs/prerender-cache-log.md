@@ -144,3 +144,18 @@ at two distinct URLs, both are in sitemap-static, and the body gained an h1, a
 GEO lead naming ThePickleHub with the club count, per-club upcoming-session
 counts and a crawlable link to the counterpart locale. Purge /clubs + /vi/clubs.
 Note: /social still shares one canonical across locales — same fix pending.
+
+2026-08-18 — v48->v49: the venue meta-description template changed, so every
+cached /san/ + /vi/san/ entry held a stale, mid-word-truncated snippet. Bumped
+rather than requesting ?nocache=1 on 1,688 URLs.
+
+2026-08-18 — v49->v50: Shop Phase 4 public launch. /shop, /shop/category/*,
+/shop/product/* and /shop/store/* (plus /vi/ twins) had been caching the
+renderNoindexShell body under the pilot gate, because the bot path
+short-circuited before routeAndRender ever ran. Without this bump, flipping
+SHOP_PUBLIC_INDEXING to "1" would have kept serving that shell — noindex meta
+intact — for another six hours, and the launch would have looked like it
+silently failed. Same commit adds renderShopCatalog / renderShopCategory /
+renderShopProduct / renderShopStore and drops the shop paths to the 5-minute
+HUB_LIST_TTL, because price and availability sit inside both the body and the
+Offer JSON-LD.

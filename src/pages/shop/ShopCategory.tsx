@@ -83,7 +83,10 @@ export default function ShopCategory() {
 
   return (
     <TheLineLayout title={category?.name ?? "Ngành hàng"}>
-      <DynamicMeta title={category ? category.name : "Ngành hàng"} noindex />
+      {/* Phase 4: robots is decided at the edge by SHOP_PUBLIC_INDEXING. The
+          not-found branch above keeps its own noindex — that one is a real
+          state, not a launch gate. */}
+      <DynamicMeta title={category ? category.name : "Ngành hàng"} />
       <main className="tl-shop">
         <div className="tl-shop-page">
         <div className="tl-shop-topline">

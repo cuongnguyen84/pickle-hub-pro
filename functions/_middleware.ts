@@ -22,6 +22,7 @@ import {
   renderSocialList,
   renderClubList,
   renderVenuesList, renderVenueDetail, renderVenuesCity,
+  renderShopCatalog, renderShopCategory, renderShopProduct, renderShopStore,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage, renderToolNewPage,
@@ -95,6 +96,13 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // character after "order" is an "s", not a slash or the end of the string.
   // One letter, one uncovered page of somebody's purchase history.
   /^\/(?:vi\/)?shop\/orders(?:\/|$)/,
+  // Catalogue SEARCH — permanently noindex, and NOT part of the Q4 launch
+  // set below. One result page per query string is thin duplicate content
+  // wearing the catalogue's own products; the canonical home for every one
+  // of those products is /shop/product/:slug, which now renders for bots.
+  // It sat in SHOP_PUBLIC_PATTERNS until the Phase 4 launch, where "open the
+  // catalogue" would have silently opened the query-string surface too.
+  /^\/(?:vi\/)?shop\/search(?:\/|$)/,
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,
@@ -142,7 +150,6 @@ const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
 // they are matched by their own patterns above.
 const SHOP_PUBLIC_PATTERNS: RegExp[] = [
   /^\/(?:vi\/)?shop$/,
-  /^\/(?:vi\/)?shop\/search(?:\/|$)/,
   /^\/(?:vi\/)?shop\/category(?:\/|$)/,
   /^\/(?:vi\/)?shop\/product(?:\/|$)/,
   /^\/(?:vi\/)?shop\/store(?:\/|$)/,
@@ -319,6 +326,13 @@ function pathCacheTtl(pathname: string): number {
   // name within minutes. Zalo/FB keep their own copy forever regardless —
   // OG is a snapshot at share time (accepted, see proposal ADR note).
   if (stripped.startsWith("/tools/")) {
+    return HUB_LIST_TTL_SECONDS;
+  }
+  // Shop: price and availability are inside the rendered HTML AND inside the
+  // Offer JSON-LD. At the 6h default, a sold-out product keeps telling Google
+  // schema.org/InStock for most of a day — the one kind of stale that gets a
+  // rich result demoted rather than merely out of date.
+  if (stripped === "/shop" || stripped.startsWith("/shop/")) {
     return HUB_LIST_TTL_SECONDS;
   }
   return DEFAULT_TTL_SECONDS;
@@ -680,7 +694,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // every cached /san/ + /vi/san/ entry holds a stale, mid-word-truncated
   // snippet. Bump invalidates them in one go rather than needing ?nocache=1 on
   // 1,688 URLs.
-  const cacheKey = `pr:v49:${url.pathname}`;
+  // v50 (Phase 4 shop launch, 2026-08-18): /shop, /shop/category/*,
+  // /shop/product/*, /shop/store/* previously cached the renderNoindexShell
+  // body under the pilot gate. Without a bump, flipping SHOP_PUBLIC_INDEXING
+  // would serve that shell — noindex intact — for another six hours, and the
+  // launch would look like it silently failed.
+  const cacheKey = `pr:v50:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -863,6 +882,18 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // so a freshly-published event/club is discoverable within minutes.
   if (path === "/social") return await renderSocialList(supabase, siteUrl, lang);
   if (path === "/clubs") return await renderClubList(supabase, siteUrl, lang);
+
+  // Shop catalogue (Phase 4 public launch). Reached only when
+  // SHOP_PUBLIC_INDEXING=1 — otherwise `isNoindex` short-circuits to the
+  // noindex shell long before here. /shop/search has no arm on purpose: it
+  // is matched by NOINDEX_PATTERNS and never arrives.
+  if (path === "/shop") return await renderShopCatalog(supabase, siteUrl, lang);
+  match = path.match(/^\/shop\/category\/([^/]+)$/);
+  if (match) return await renderShopCategory(supabase, match[1], siteUrl, lang);
+  match = path.match(/^\/shop\/store\/([^/]+)$/);
+  if (match) return await renderShopStore(supabase, match[1], siteUrl, lang);
+  match = path.match(/^\/shop\/product\/([^/]+)$/);
+  if (match) return await renderShopProduct(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
 
   if (path === "/san") return await renderVenuesList(supabase, siteUrl, lang);
   match = path.match(/^\/san\/khu-vuc\/([^/]+)$/);
