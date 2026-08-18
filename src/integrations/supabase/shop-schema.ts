@@ -149,6 +149,10 @@ export type ProductStatus =
   | "needs_changes"
   | "approved"
   | "rejected"
+  // Có trong enum của Postgres từ 20260812090000 nhưng chưa bao giờ được chép
+  // sang đây. Màn sửa sản phẩm vì thế rơi vào nhánh mặc định và nói sai với một
+  // trạng thái có thật. Bắt được khi thêm nhánh copy cho `suspended` ở P4c.
+  | "suspended"
   | "archived";
 
 export type ProductCondition = "new" | "used";
@@ -696,6 +700,11 @@ export const SHOP_P4_RPCS = [
   "shop_order_claim_payment",
   "shop_order_confirm_payment",
 ] as const;
+
+/** P4c (20260818170000) — người bán tự đăng bán. `product_submit` không nằm ở
+ *  đây vì nó có từ trước và chỉ đổi trạng thái đích; hàm mới là đường quay lại
+ *  mà việc bỏ admin khỏi vòng lặp bắt buộc phải có. */
+export const SHOP_P4C_RPCS = ["product_edit_again"] as const;
 
 /** `my_shop_orders` is a VIEW, not a table: shop_orders' policy admits every
  *  party to an order, and "Đơn của tôi" means the buyer's own. The view puts

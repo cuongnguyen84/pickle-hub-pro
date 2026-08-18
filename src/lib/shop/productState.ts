@@ -16,8 +16,9 @@ export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
   draft: "Nháp",
   pending_review: "Chờ duyệt",
   needs_changes: "Cần sửa",
-  approved: "Đã duyệt",
+  approved: "Đang bán",
   rejected: "Bị từ chối",
+  suspended: "Bị gỡ",
   archived: "Ngừng bán",
 };
 
@@ -25,11 +26,12 @@ export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
  *  seller's terms. A badge that only names the state leaves them guessing
  *  whether anybody can see it. */
 export const PRODUCT_STATUS_HINT: Record<ProductStatus, string> = {
-  draft: "Chưa gửi duyệt. Người mua chưa thấy.",
+  draft: "Chưa đăng bán. Người mua chưa thấy.",
   pending_review: "Đang chờ quản trị viên xem. Người mua chưa thấy.",
   needs_changes: "Quản trị viên yêu cầu sửa. Người mua chưa thấy.",
-  approved: "Đã duyệt. Bật bán thì người mua mới thấy.",
+  approved: "Đang bán. Người mua thấy sản phẩm này.",
   rejected: "Bị từ chối. Người mua không thấy.",
+  suspended: "Quản trị viên đã gỡ. Chỉ quản trị viên mở lại được.",
   archived: "Đã ngừng bán. Người mua không thấy, bật lại được.",
 };
 
@@ -39,6 +41,7 @@ export const PRODUCT_STATUS_TONE: Record<ProductStatus, "ok" | "warn" | "danger"
   needs_changes: "danger",
   approved: "ok",
   rejected: "danger",
+  suspended: "danger",
   archived: "muted",
 };
 

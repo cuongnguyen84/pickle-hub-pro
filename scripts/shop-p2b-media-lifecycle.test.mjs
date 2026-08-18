@@ -148,14 +148,13 @@ describe.skipIf(!up)("P2b.7.6 media lifecycle — the whole loop", () => {
     if (fe) throw fe;
 
     const { data: v } = await admin.from("products").select("version").eq("id", productId).single();
+    // Từ 20260818170000 `product_submit` đi thẳng tới `approved` — không còn
+    // bước admin duyệt ở giữa, và gọi `product_decide('approve')` ở đây sẽ
+    // raise vì sản phẩm đã approved rồi.
     const { error: sbe } = await owner.client.rpc("product_submit", {
       _product_id: productId, _expected_version: v.version, _client_token: `p2b7m-sub-${run}`,
     });
     if (sbe) throw sbe;
-    const { error: de } = await adminUser.client.rpc("product_decide", {
-      _product_id: productId, _decision: "approve", _client_token: `p2b7m-ap-${run}`,
-    });
-    if (de) throw de;
   }, 60_000);
 
   afterAll(async () => {
