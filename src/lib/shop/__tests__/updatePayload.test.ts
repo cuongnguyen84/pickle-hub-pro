@@ -1,16 +1,31 @@
 /**
- * The product_update payload — and the bug it was built to lock down.
+ * The product_update payload — and the two bugs that shaped it.
  *
- * product_update REFUSES a `_variant` payload for a product that has an option
- * matrix, because the matrix is the only place price and stock may be edited.
- * The form sent one anyway, from the hidden single-product fields, so saving a
- * multi-variant product ALWAYS failed: a seller could not change the name of a
- * product that had colours, and the error pointed them at a table they had not
- * touched.
+ * **Bug 1.** product_update REFUSES a `_variant` payload for a product that has
+ * an option matrix, because the matrix is the only place price and stock may be
+ * edited. The form sent one anyway, from the hidden single-product fields, so
+ * saving a multi-variant product ALWAYS failed: a seller could not change the
+ * name of a product that had colours, and the error pointed them at a table
+ * they had not touched. Fixed by skipping the variant when `multiVariant`.
  *
- * Proven at the RPC before the fix — `22023: sản phẩm này có nhiều phiên bản`,
- * and the title unchanged. These assertions are the layer where the bug lived,
- * and the storage integration re-proves it end to end.
+ * **Bug 2 — the one this file used to guarantee.** That guard was one case too
+ * narrow. The simple price/stock inputs render only when `isNew`; on the EDIT
+ * screen they do not exist, single variant or six. But `buildUpdatePayload` was
+ * reached ONLY from the edit screen, and it sent `variant` whenever
+ * `!multiVariant` — so every save of a single-variant product wrote
+ * `draft.price_vnd`, seeded from the row at page load, unchangeable and
+ * invisible, over whatever the matrix had just saved.
+ *
+ * A real seller lost a real price change to this twice on 2026-08-18: they set
+ * 2 500 000 in the matrix, saved it, then pressed save/publish and got
+ * 2 900 000 back. `products.version` climbed 5 → 18 while `price_vnd` never
+ * moved — the signature of a write that keeps re-writing the same stale number.
+ * The old test suite was green throughout, because it asserted that the
+ * single-variant case SENDS the price. It was pinning the bug.
+ *
+ * So the contract is now flat: this payload is TEXT ONLY. Price and stock reach
+ * the server through the matrix (product_variants_reconcile) or, for a brand
+ * new product, through product_create. Never through here.
  */
 import { describe, expect, it } from "vitest";
 import { buildUpdatePayload } from "../productState";
@@ -20,37 +35,51 @@ const draft = {
   description: "Mô tả sản phẩm.",
   category_slug: "giay",
   condition: "new" as const,
-  // What the hidden single-product fields still hold on a multi-variant
-  // product: whatever they were seeded with. This is what must not travel.
+  // What the hidden single-product fields still hold on an existing product:
+  // whatever they were seeded with at page load. This is what must not travel.
   price_vnd: "1290000",
   stock_on_hand: "3",
 };
 
-describe("multi-variant: the matrix is not touched", () => {
-  const payload = buildUpdatePayload(draft, true);
+describe("the payload never carries money", () => {
+  const payload = buildUpdatePayload(draft);
 
   it("sends no variant at all", () => {
-    expect(payload.variant).toBeUndefined();
     expect("variant" in payload).toBe(false);
   });
 
-  it("sends no price and no stock anywhere in the payload", () => {
-    // The strongest form of the assertion: the numbers are simply not there,
-    // by any key, at any depth.
+  it("sends no price and no stock anywhere in it, by any key, at any depth", () => {
     const serialised = JSON.stringify(payload);
     expect(serialised).not.toContain("1290000");
-    expect(serialised).not.toContain("price_vnd");
-    expect(serialised).not.toContain("stock_on_hand");
+    expect(serialised).not.toContain("price");
+    expect(serialised).not.toContain("stock");
   });
 
   it("does not send an empty variant object either", () => {
-    // `variant: {}` would still be a _variant payload to the RPC, and would
-    // still be refused — a different spelling of the same bug.
-    expect(payload.variant).not.toEqual({});
+    // `variant: {}` would still be a _variant payload to the RPC — a different
+    // spelling of the same bug.
+    expect((payload as { variant?: unknown }).variant).toBeUndefined();
   });
 
-  it("still sends every text field the seller edited", () => {
-    expect(payload.patch).toEqual({
+  it("ignores the price the draft is still holding, whatever it says", () => {
+    // The draft keeps price_vnd because the CREATE screen needs it. Reaching
+    // this function means the product already exists, so the number is stale
+    // by construction — and a payload that carried it would overwrite the
+    // matrix with it.
+    // Gán ra biến trước: kiểm tra thuộc tính thừa của TypeScript chỉ áp cho
+    // object literal viết thẳng vào lời gọi, mà ở đây điều cần dựng lại chính
+    // là một draft MANG THEO giá — đúng thứ màn hình thật vẫn cầm.
+    const stillHoldsAPrice = { ...draft, price_vnd: "2500000", stock_on_hand: "99" };
+    const changed = buildUpdatePayload(stillHoldsAPrice);
+    expect(JSON.stringify(changed)).not.toContain("2500000");
+    expect(JSON.stringify(changed)).not.toContain("99");
+    expect(changed).toEqual(payload);
+  });
+});
+
+describe("the text half, which is all of it", () => {
+  it("sends every text field the seller edited", () => {
+    expect(buildUpdatePayload(draft).patch).toEqual({
       title: "Giày pickleball Court Pro",
       description: "Mô tả sản phẩm.",
       category_slug: "giay",
@@ -60,62 +89,19 @@ describe("multi-variant: the matrix is not touched", () => {
 
   it("trims the title but leaves the description as typed", () => {
     // A description is prose: trailing blank lines are the seller's choice.
-    const withSpace = buildUpdatePayload({ ...draft, description: "Dòng 1\n\n" }, true);
+    const withSpace = buildUpdatePayload({ ...draft, description: "Dòng 1\n\n" });
     expect(withSpace.patch.title).toBe("Giày pickleball Court Pro");
     expect(withSpace.patch.description).toBe("Dòng 1\n\n");
-  });
-});
-
-describe("single-variant: the default variant still travels", () => {
-  const payload = buildUpdatePayload(draft, false);
-
-  it("sends the price and stock the seller typed", () => {
-    expect(payload.variant).toEqual({ price_vnd: "1290000", stock_on_hand: "3" });
-  });
-
-  it("trims them, because a stray space is not a number", () => {
-    const spaced = buildUpdatePayload({ ...draft, price_vnd: " 990000 ", stock_on_hand: " 5 " }, false);
-    expect(spaced.variant).toEqual({ price_vnd: "990000", stock_on_hand: "5" });
-  });
-
-  it("keeps an empty stock empty rather than inventing a zero", () => {
-    // "" means "not counted"; 0 means "sold out". Collapsing them would change
-    // what the seller said.
-    const untracked = buildUpdatePayload({ ...draft, stock_on_hand: "" }, false);
-    expect(untracked.variant?.stock_on_hand).toBe("");
-  });
-
-  it("sends the same patch as the multi-variant case", () => {
-    expect(payload.patch).toEqual(buildUpdatePayload(draft, true).patch);
-  });
-});
-
-describe("switching modes changes only the variant half", () => {
-  it("single → multi drops the variant and nothing else", () => {
-    const single = buildUpdatePayload(draft, false);
-    const multi = buildUpdatePayload(draft, true);
-    expect(multi.patch).toEqual(single.patch);
-    expect(single.variant).toBeDefined();
-    expect(multi.variant).toBeUndefined();
-  });
-
-  it("multi → single restores it from what the form holds", () => {
-    expect(buildUpdatePayload(draft, false).variant).toEqual({
-      price_vnd: "1290000",
-      stock_on_hand: "3",
-    });
   });
 
   it("is pure: the same draft twice gives the same payload", () => {
     // A save retry must send exactly what the first attempt did.
-    expect(buildUpdatePayload(draft, true)).toEqual(buildUpdatePayload(draft, true));
-    expect(buildUpdatePayload(draft, false)).toEqual(buildUpdatePayload(draft, false));
+    expect(buildUpdatePayload(draft)).toEqual(buildUpdatePayload(draft));
   });
 
   it("does not mutate the draft it was given", () => {
     const before = JSON.stringify(draft);
-    buildUpdatePayload(draft, true);
-    buildUpdatePayload(draft, false);
+    buildUpdatePayload(draft);
     expect(JSON.stringify(draft)).toBe(before);
   });
 });
