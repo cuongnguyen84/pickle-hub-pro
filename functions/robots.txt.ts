@@ -13,7 +13,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const siteUrl = context.env.CANONICAL_HOST || "https://www.thepicklehub.net";
   // The buyer catalogue is Disallowed for the whole closed pilot. /shop/sell
   // and /seller stay Disallowed in BOTH states — they are seller surfaces and
-  // the launch gate has nothing to do with them.
+  // the launch gate has nothing to do with them. So do /shop/cart,
+  // /shop/checkout and /shop/order: those are one buyer's own data, and no
+  // launch gate ever makes them crawlable.
   const shopPilotDisallow =
     context.env.SHOP_PUBLIC_INDEXING === "1"
       ? ""
@@ -41,7 +43,15 @@ Disallow: /proto/
 Disallow: /seller
 Disallow: /seller/
 Disallow: /vi/seller
-Disallow: /shop/sell${shopPilotDisallow}
+Disallow: /shop/sell
+Disallow: /shop/cart
+Disallow: /shop/checkout
+Disallow: /shop/order
+Disallow: /shop/orders
+Disallow: /vi/shop/cart
+Disallow: /vi/shop/checkout
+Disallow: /vi/shop/order
+Disallow: /vi/shop/orders${shopPilotDisallow}
 Disallow: /auth/
 Disallow: /login
 Disallow: /vi/login

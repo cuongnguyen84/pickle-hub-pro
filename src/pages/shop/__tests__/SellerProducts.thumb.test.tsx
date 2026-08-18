@@ -38,10 +38,6 @@ vi.mock("@/hooks/shop/useShopProfile", () => ({
 }));
 
 vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
-vi.mock("@/components/states/PageStates", () => ({
-  LoadingState: () => <div>loading…</div>,
-  ErrorState: () => <div>error</div>,
-}));
 vi.mock("@/components/shop/ShopShell", () => ({
   ShopScrollShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SellerShell: ({ children, actions }: { children: React.ReactNode; actions?: React.ReactNode }) => (

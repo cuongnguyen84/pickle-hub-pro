@@ -18,10 +18,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ImageOff, PackageOpen, Plus, Search } from "lucide-react";
+import { AlertTriangle, ImageOff, PackageOpen, Plus, Search, SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { useMyShopMembership, useShopCategories, useShopProfile } from "@/hooks/shop/useShopProfile";
 import { useSignedPreviews } from "@/hooks/shop/useSignedPreviews";
 import { publicMediaUrl } from "@/lib/shop/publicCatalog";
@@ -102,11 +102,29 @@ export default function SellerProducts() {
     </ShopScrollShell>
   );
 
-  if (membership.isLoading || profile.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình trang: tiêu đề, dòng phụ, hàng chip lọc, ba thẻ sản
+  // phẩm. Đi qua `shell` nên thanh điều hướng Kênh người bán có mặt ngay.
+  if (membership.isLoading || profile.isLoading) {
+    return shell(
+      <div aria-busy="true" aria-label="Đang tải danh sách sản phẩm">
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "60%" }} />
+        <div className="tl-shop-cats">
+          <span className="tl-shop-sk tl-shop-sk--chip" />
+          <span className="tl-shop-sk tl-shop-sk--chip" />
+          <span className="tl-shop-sk tl-shop-sk--chip" />
+        </div>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="tl-shop-sk tl-shop-sk--card" />
+        ))}
+      </div>,
+    );
+  }
 
   if (membership.isError || profile.isError) {
     return shell(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được shop của anh/chị."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();
@@ -137,9 +155,9 @@ export default function SellerProducts() {
   return shell(
     <>
       <h1 className="tl-shop-h1">Sản phẩm</h1>
+      {/* R5 #4 — "trang mua hàng chưa mở" stopped being true in Phase 3. */}
       <p className="tl-shop-sub">
-        Danh mục của shop. Người mua chỉ thấy sản phẩm đã duyệt và đang bật bán — trang mua hàng
-        chưa mở trong giai đoạn này.
+        Danh mục của shop. Người mua chỉ thấy sản phẩm đã duyệt và đang bật bán.
       </p>
 
       {!canWrite && (
@@ -292,7 +310,7 @@ function ProductList({
       <div aria-busy="true" aria-live="polite">
         <p className="tl-shop-hint">Đang tải danh sách sản phẩm…</p>
         {[0, 1, 2].map((i) => (
-          <div key={i} className="tl-shop-sk" style={{ height: 76, borderRadius: 10, marginBottom: 10 }} />
+          <div key={i} className="tl-shop-sk tl-shop-sk--card" />
         ))}
       </div>
     );
@@ -338,6 +356,7 @@ function ProductList({
   if (result.total === 0) {
     return (
       <div className="tl-shop-empty">
+        <SearchX size={28} aria-hidden="true" />
         <p className="tl-shop-empty-title">Không có sản phẩm nào khớp</p>
         <p>
           {hasActiveFilter(filters)

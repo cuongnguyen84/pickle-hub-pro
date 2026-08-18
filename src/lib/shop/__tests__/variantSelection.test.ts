@@ -9,6 +9,7 @@ import {
   optionState,
   pickOption,
   resolveVariant,
+  shownMediaId,
   type OptionGroup,
   type PublicVariant,
 } from "../variantSelection";
@@ -129,5 +130,28 @@ describe("activeMediaId", () => {
   it("falls back to the main image rather than blanking the gallery", () => {
     const noMedia = VARIANTS.map((x) => ({ ...x, media_id: null }));
     expect(activeMediaId(null, noMedia, {}, "m-main")).toBe("m-main");
+  });
+});
+
+// R5 #3. The half that was missing: on a product with five photos and NO
+// options every thumbnail resolved to the same variant photo, so tapping
+// 2..5 did nothing and the page read as broken.
+describe("shownMediaId — the buyer's own tap", () => {
+  const MEDIA = [{ id: "m-1" }, { id: "m-2" }, { id: "m-3" }];
+
+  it("a picked photo wins over the variant's photo", () => {
+    expect(shownMediaId("m-3", MEDIA, "m-1")).toBe("m-3");
+  });
+
+  it("with nothing picked, the variant still decides", () => {
+    expect(shownMediaId(null, MEDIA, "m-den")).toBe("m-den");
+  });
+
+  it("a pick that no longer exists falls back instead of blanking", () => {
+    expect(shownMediaId("m-gone", MEDIA, "m-1")).toBe("m-1");
+  });
+
+  it("no photos at all is not an exception", () => {
+    expect(shownMediaId("m-1", [], null)).toBeNull();
   });
 });

@@ -64,9 +64,31 @@ describe("the decision is made at the edge, not in the browser", () => {
   });
 
   it("Seller and Admin stay noindex whatever the launch flag says", () => {
-    for (const path of ["/seller", "/seller/products", "/vi/seller", "/shop/sell", "/admin/shop/products"]) {
+    for (const path of [
+      "/seller",
+      "/seller/products",
+      "/seller/orders",
+      "/seller/orders/PH-2608-AB12",
+      "/vi/seller",
+      "/shop/sell",
+      "/admin/shop/products",
+    ]) {
       expect(shouldNoindex(path, { SHOP_PUBLIC_INDEXING: "1" }), path).toBe(true);
     }
+  });
+
+  it("the buyer's own order LIST is noindex, and is not a catalogue page", () => {
+    // /shop/orders is one letter away from /shop/order, and
+    // `^\/(?:vi\/)?shop\/order(?:\/|$)` does not match it: the next character
+    // is an "s". It also must not be in SHOP_PUBLIC_PATTERNS, or opening the
+    // launch gate would index a purchase history.
+    for (const path of ["/shop/orders", "/vi/shop/orders"]) {
+      expect(shouldNoindex(path, {}), path).toBe(true);
+      expect(shouldNoindex(path, { SHOP_PUBLIC_INDEXING: "1" }), path).toBe(true);
+      expect(isPilotNoindexShopPath(path), path).toBe(false);
+    }
+    // The order detail page it sits next to is still covered by its own rule.
+    expect(shouldNoindex("/shop/order/PH-2608-AB12", { SHOP_PUBLIC_INDEXING: "1" })).toBe(true);
   });
 });
 
@@ -75,6 +97,17 @@ describe("robots.txt", () => {
 
   it("disallows the buyer catalogue during the pilot, in both languages", () => {
     for (const p of ["/shop/search", "/shop/category", "/shop/product", "/shop/store"]) {
+      expect(robots).toContain(`Disallow: ${p}`);
+      expect(robots).toContain(`Disallow: /vi${p}`);
+    }
+  });
+
+  it("disallows the buyer's own order surfaces in both languages", () => {
+    // /shop/orders is listed separately from /shop/order. robots.txt matches
+    // by PREFIX so one would have covered the other — but the middleware
+    // regexes do not, and a reader comparing the two files should not have to
+    // work out which rule is doing the work.
+    for (const p of ["/shop/cart", "/shop/checkout", "/shop/order", "/shop/orders"]) {
       expect(robots).toContain(`Disallow: ${p}`);
       expect(robots).toContain(`Disallow: /vi${p}`);
     }

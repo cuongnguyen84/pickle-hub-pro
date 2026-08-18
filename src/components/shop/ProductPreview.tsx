@@ -173,7 +173,7 @@ export default function ProductPreview({
           <p className={`tl-shop-pill tl-shop-pill--${availability.tone}`}>{availability.label}</p>
 
           {groups.map((group) => (
-            <fieldset key={group.name} style={{ border: 0, padding: 0, margin: "16px 0 0" }}>
+            <fieldset key={group.name} className="tl-shop-fieldset" style={{ marginTop: 16 }}>
               <legend className="tl-shop-label" style={{ padding: 0 }}>
                 {group.name}
               </legend>

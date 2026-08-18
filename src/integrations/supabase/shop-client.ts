@@ -48,6 +48,10 @@ export interface ShopTable<T> {
   select(columns: string, options?: { count?: "exact" | "planned" | "estimated"; head?: boolean }): ShopQuery<T>;
   insert(row: Record<string, unknown>): ShopQuery<T>;
   update(row: Record<string, unknown>): ShopQuery<T>;
+  /** Only the cart uses it: a cart line is removed, not archived, and qty 0 is
+   *  not a value the CHECK allows. Every other shop table is append-only or
+   *  RPC-guarded. */
+  delete(): ShopQuery<T>;
 }
 
 type RawClient = {

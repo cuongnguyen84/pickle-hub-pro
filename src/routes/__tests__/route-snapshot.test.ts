@@ -97,7 +97,10 @@ describe("App.tsx route table characterization", () => {
     expect(mirrored.length).toBe(braceCount);
     // 61 -> 64: P2b.4 adds /shop, /shop/search and /shop/category/:slug.
     // 64 -> 66: P2b.5 adds the PDP and the public shop page.
-    expect(mirrored.length).toBe(66);
+    // 66 -> 69: P3 adds the cart, the checkout and the order detail page.
+    // 69 -> 70: P3 S5 adds /shop/orders. /seller/orders(/:code) are NOT here —
+    // no /seller route is mirrored, they are literal <Route> tags.
+    expect(mirrored.length).toBe(70);
   });
 
   it("route table matches the checked-in snapshot exactly", () => {

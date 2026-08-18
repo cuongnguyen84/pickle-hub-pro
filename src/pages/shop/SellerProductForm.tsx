@@ -36,7 +36,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, Check, GitCompare, ImageOff } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { useMyShopMembership, useShopCategories, useShopProfile } from "@/hooks/shop/useShopProfile";
 import {
   useArchiveProduct,
@@ -341,10 +341,6 @@ export default function SellerProductForm() {
     }
   }, [draft, shopId, isNew, create, key, navigate, row, update, multiVariant, preflight]);
 
-  if (membership.isLoading || profile.isLoading || (productId && product.isLoading)) {
-    return <LoadingState fullScreen />;
-  }
-
   const shell = (children: React.ReactNode) => (
     <ShopScrollShell>
       <DynamicMeta title={isNew ? "Thêm sản phẩm" : "Sửa sản phẩm"} noindex />
@@ -354,9 +350,25 @@ export default function SellerProductForm() {
     </ShopScrollShell>
   );
 
+  // Khung xương đúng hình biểu mẫu: tiêu đề, rồi bốn khối trường (thông tin,
+  // ảnh, phân loại/giá, mô tả) — không phải một vòng xoay giữa màn hình.
+  if (membership.isLoading || profile.isLoading || (productId && product.isLoading)) {
+    return shell(
+      <div aria-busy="true" aria-label="Đang tải biểu mẫu sản phẩm">
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "55%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+      </div>,
+    );
+  }
+
   if (membership.isError || profile.isError || product.isError) {
     return shell(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được sản phẩm này."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();
@@ -541,7 +553,7 @@ export default function SellerProductForm() {
           />
         </Field>
 
-        <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
+        <fieldset className="tl-shop-fieldset" style={{ marginBottom: 16 }}>
           <legend className="tl-shop-label" style={{ padding: 0 }}>
             Tình trạng
           </legend>

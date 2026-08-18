@@ -45,11 +45,6 @@ vi.mock("@/components/shop/ShopShell", () => ({
   DefList: () => null,
 }));
 
-vi.mock("@/components/states/PageStates", () => ({
-  LoadingState: () => <p>loading</p>,
-  ErrorState: () => <p>error</p>,
-}));
-
 vi.mock("@/hooks/shop/useShopProfile", () => ({
   useMyShopMembership: () => ({ data: { shop_id: "shop-1", role: "owner" }, isLoading: false, isError: false, refetch: vi.fn() }),
   useShopProfile: () => ({ data: { id: "shop-1", state: "active" }, isLoading: false, isError: false, refetch: vi.fn() }),

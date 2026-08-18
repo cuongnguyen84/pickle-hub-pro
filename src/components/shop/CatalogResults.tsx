@@ -11,9 +11,10 @@
 // ============================================================================
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertTriangle, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import type { PublicCategory, ProductCard as Card } from "@/hooks/shop/usePublicShop";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
+import { ShopErrorNotice } from "./ShopNotice";
 import { catalogMood } from "@/lib/shop/publicCatalog";
 
 export interface Filters {
@@ -212,6 +213,8 @@ export function ResultsGrid({
   emptyIcon,
   emptyAction,
   onClearFilters,
+  hideCount = false,
+  hidePilotNote = false,
 }: {
   rows: Card[];
   total: number;
@@ -225,6 +228,10 @@ export function ResultsGrid({
   /** One extra line/CTA under the empty body — a prop, not a fork. */
   emptyAction?: ReactNode;
   onClearFilters?: () => void;
+  /** /shop shows twelve of `total`, so the count would be a lie there (#11). */
+  hideCount?: boolean;
+  /** The pilot caveat belongs on ONE screen, under the /shop grid (R5 copy). */
+  hidePilotNote?: boolean;
 }) {
   if (isLoading) {
     return (
@@ -239,15 +246,14 @@ export function ResultsGrid({
   if (isError) {
     // Never "không có sản phẩm nào": a shopper told that when the request
     // failed stops looking, and the catalogue looks empty rather than broken.
+    // R5 #8: and never inside the dashed frame either — that frame IS the
+    // empty state, so the two looked identical no matter what the words said.
     return (
-      <div className="tl-shop-empty" role="alert">
-        <p className="tl-shop-empty-title">
-          <AlertTriangle size={15} aria-hidden="true" style={{ verticalAlign: -2 }} />{" "}
-          Chưa tải được danh sách
-        </p>
-        <p className="tl-shop-hint">Đây là lỗi tải dữ liệu, không phải sàn đang trống.</p>
-        <button type="button" className="tl-shop-btn" onClick={onRetry}>Thử lại</button>
-      </div>
+      <ShopErrorNotice
+        title="Chưa tải được danh sách."
+        body="Đây là lỗi tải dữ liệu, không phải sàn đang trống."
+        onRetry={onRetry}
+      />
     );
   }
 
@@ -271,9 +277,11 @@ export function ResultsGrid({
 
   return (
     <>
-      <p className="tl-shop-hint" role="status" style={{ marginTop: 0 }}>
-        {total} sản phẩm
-      </p>
+      {!hideCount && (
+        <p className="tl-shop-hint" role="status" style={{ marginTop: 0 }}>
+          {total} sản phẩm
+        </p>
+      )}
       <ul className="tl-pgrid">
         {rows.map((c, i) => (
           <li key={c.id}><ProductCard card={c} eager={i < 4} /></li>
@@ -281,7 +289,7 @@ export function ResultsGrid({
       </ul>
       {/* The honest-sparse sentence, verbatim, AFTER the grid — the products
           are the page's main character, the caveat is a footnote. */}
-      {mood === "sparse" && (
+      {mood === "sparse" && !hidePilotNote && (
         <p className="tl-shop-hint">
           Sàn đang ở giai đoạn thử nghiệm — đây là toàn bộ những gì đang bán.
         </p>

@@ -107,6 +107,14 @@ const ShopSearch = lazyRetry(() => import("./pages/shop/ShopSearch"));
 const ShopCategory = lazyRetry(() => import("./pages/shop/ShopCategory"));
 const ProductDetail = lazyRetry(() => import("./pages/shop/ProductDetail"));
 const ShopStore = lazyRetry(() => import("./pages/shop/ShopStore"));
+// P3 buyer flow. Own chunks: a shopper browsing the catalogue never downloads
+// the checkout form, and /shop/order carries no cart code.
+const ShopCart = lazyRetry(() => import("./pages/shop/Cart"));
+const ShopCheckout = lazyRetry(() => import("./pages/shop/Checkout"));
+const ShopOrderDetail = lazyRetry(() => import("./pages/shop/OrderDetail"));
+const ShopOrders = lazyRetry(() => import("./pages/shop/Orders"));
+const SellerOrders = lazyRetry(() => import("./pages/shop/SellerOrders"));
+const SellerOrderDetail = lazyRetry(() => import("./pages/shop/SellerOrderDetail"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -261,6 +269,22 @@ const CreatorTournaments = lazyRetry(() => import("./pages/creator/CreatorTourna
 // - refetchOnMount false: respect staleTime on remount (major mobile win)
 // - retry: skip retry on 4xx, max 2 retries with exponential backoff
 // Individual hooks can override these (e.g., live data uses staleTime: 30s already).
+
+/**
+ * Không thử lại lỗi 4xx / Never retry a 4xx.
+ *
+ * Chỉ dùng cho `queries`. `PostgrestError` không mang trường `status` (chỉ
+ * `{message, details, hint, code}`), nên predicate này mù với lỗi PostgREST —
+ * đó là hành vi có sẵn, giữ nguyên để không đổi hành vi của queries.
+ */
+const retryUnless4xx =
+  (max: number) =>
+  (failureCount: number, error: unknown) => {
+    const status = (error as { status?: number } | null)?.status;
+    if (status && status >= 400 && status < 500) return false;
+    return failureCount < max;
+  };
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -269,15 +293,17 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: true,
-      retry: (failureCount, error: unknown) => {
-        const status = (error as { status?: number } | null)?.status;
-        if (status && status >= 400 && status < 500) return false;
-        return failureCount < 2;
-      },
+      retry: retryUnless4xx(2),
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
     },
     mutations: {
-      retry: 1,
+      // Mutation KHÔNG retry. `retry: 1` là một cú treo, không phải một request
+      // chậm: retryer của react-query chỉ đi tiếp khi `focusManager.isFocused()`,
+      // nên một mutation fail lúc tab đang ẩn sẽ PAUSE thay vì settle —
+      // `mutateAsync` không bao giờ resolve và nút cứ quay mãi (bug thật, bắt
+      // được ở checkout Shop 18/08). Không lọc theo 4xx được vì `PostgrestError`
+      // không có trường `status`. Ghi lại là ghi, không đoán lại.
+      retry: false,
     },
   },
 });
@@ -575,6 +601,10 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/shop/category/:slug", element: <ShopCategory /> },
   { path: "/shop/product/:slug", element: <ProductDetail /> },
   { path: "/shop/store/:slug", element: <ShopStore /> },
+  { path: "/shop/cart", element: <RequireAuth><ShopCart /></RequireAuth> },
+  { path: "/shop/checkout/:shopSlug", element: <RequireAuth><ShopCheckout /></RequireAuth> },
+  { path: "/shop/order/:code", element: <RequireAuth><ShopOrderDetail /></RequireAuth> },
+  { path: "/shop/orders", element: <RequireAuth><ShopOrders /></RequireAuth> },
   { path: "/live", element: <Live /> },
   { path: "/live/:id", element: <WatchLive /> },
   { path: "/videos", element: <Videos /> },
@@ -837,6 +867,8 @@ const App = () => (
                     <Route path="/seller/products" element={<RequireAuth><SellerProducts /></RequireAuth>} />
                     <Route path="/seller/products/new" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
                     <Route path="/seller/products/:id/edit" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
+                    <Route path="/seller/orders" element={<RequireAuth><SellerOrders /></RequireAuth>} />
+                    <Route path="/seller/orders/:code" element={<RequireAuth><SellerOrderDetail /></RequireAuth>} />
                     <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />
                     <Route path="/admin/shop/applications/:id" element={<RequireAuth requiredRole="admin"><AdminShopApplicationReview /></RequireAuth>} />
                     <Route path="/admin/shop/products" element={<RequireAuth requiredRole="admin"><AdminShopProducts /></RequireAuth>} />

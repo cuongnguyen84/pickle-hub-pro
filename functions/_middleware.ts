@@ -85,6 +85,16 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // Seller Center — application data, phone numbers, addresses.
   /^\/(?:vi\/)?seller(?:\/|$)/,
   /^\/(?:vi\/)?shop\/sell(?:\/|$)/,
+  // P3 buyer surfaces. NOT in SHOP_PUBLIC_PATTERNS — these stay noindex after
+  // the Q4 launch gate opens, because they hold a recipient's name, phone
+  // number and home address, which the catalogue pages do not.
+  /^\/(?:vi\/)?shop\/cart(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/checkout(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/order(?:\/|$)/,
+  // …and the LIST. `/shop/order(/|$)` does not match `/shop/orders`: the
+  // character after "order" is an "s", not a slash or the end of the string.
+  // One letter, one uncovered page of somebody's purchase history.
+  /^\/(?:vi\/)?shop\/orders(?:\/|$)/,
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,
