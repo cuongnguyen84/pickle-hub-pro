@@ -142,6 +142,33 @@
 .tl-proto-spacer { flex: 1 1 auto; }
 
 /* ── Layout primitives ────────────────────────────────────────────────── */
+/* ── Ai sở hữu quyền cuộn ─────────────────────────────────────────────────
+ * `.tl-shop` ở trên tự nhận quyền cuộn: `height: 100%` + `overflow: hidden`,
+ * và trông chờ một `.tl-shop-scroll` bên trong. Đúng cho các màn người bán, vì
+ * `ShopScrollShell` dựng đúng khuôn đó.
+ *
+ * Các màn người mua thì KHÔNG: chúng đi qua `TheLineLayout`, và layout đó đã
+ * có sẵn `.tl-scroll` (`flex: 1; overflow-y: auto`) làm scroller. Lồng thêm một
+ * hộp `height: 100%; overflow: hidden` vào trong một scroller nghĩa là khoá
+ * cứng nội dung đúng một màn hình rồi cắt phần còn lại — không có đường nào
+ * cuộn tới.
+ *
+ * Trên desktop không ai thấy, vì nội dung shop (626px) vẫn thấp hơn viewport
+ * (713px) nên chưa chạm mép. Trên iPhone thì mất hẳn nửa trang: PO mở
+ * /shop/checkout và không thấy nút Đặt đơn, mở trang sản phẩm và không thấy ô
+ * chọn Size. Đo được: main.tl-shop clientHeight === scrollHeight === 713 trong
+ * khi .tl-scroll scrollHeight là 1149.
+ *
+ * Nằm trong `.tl-scroll` thì nhường quyền cuộn cho nó và cứ cao theo nội dung.
+ * -------------------------------------------------------------------------- */
+.tl-scroll main.tl-shop,
+.tl-scroll .tl-shop {
+  height: auto;
+  min-height: 100%;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
 .tl-shop-page {
   max-width: 1240px;
   margin: 0 auto;
