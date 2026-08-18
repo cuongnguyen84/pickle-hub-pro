@@ -59,6 +59,13 @@ vi.mock("@/hooks/shop/useOrders", () => ({
   useOrderTransition: () => ({ mutateAsync: transitionMock, isPending: false }),
 }));
 
+// P4b. The payment card has its own tests; here it only has to not pull a
+// QueryClient into a tree that has none.
+vi.mock("@/hooks/shop/useOrderPayment", () => ({
+  useOrderPaymentInfo: () => ({ data: undefined, isPending: false, isError: false }),
+  useConfirmPayment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+
 const { default: SellerOrderDetail } = await import("../SellerOrderDetail");
 
 const order = (over: Partial<ShopOrderDetail> = {}): ShopOrderDetail =>

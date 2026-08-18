@@ -97,7 +97,9 @@ export default function ShopStore() {
 
   return (
     <TheLineLayout title={shop.name}>
-      <DynamicMeta title={shop.name} description={shop.intro ?? undefined} noindex />
+      {/* Phase 4: robots is decided at the edge by SHOP_PUBLIC_INDEXING. The
+          loading and not-found branches above keep theirs. */}
+      <DynamicMeta title={shop.name} description={shop.intro ?? undefined} />
       <main className="tl-shop">
         <div className="tl-shop-page">
         <div className="tl-shop-topline">

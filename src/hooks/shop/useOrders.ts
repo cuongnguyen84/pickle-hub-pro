@@ -35,7 +35,8 @@ export const orderKeys = {
 const ORDER_SELECT =
   "id,code,status,payment_method,recipient_name,recipient_phone,shipping_address," +
   "delivery_note,items_total_vnd,shipping_fee_vnd,total_vnd,confirm_due_at," +
-  "tracking_code,cancel_reason,created_at,updated_at," +
+  "tracking_code,cancel_reason,payment_claimed_at,payment_confirmed_at," +
+  "created_at,updated_at," +
   "shop:shops(slug,name,state)," +
   "items:shop_order_items(id,product_id,variant_id,qty,product_title,variant_label,sku,unit_price_vnd,line_total_vnd)," +
   "events:shop_order_events(id,action,from_status,to_status,metadata,created_at)";

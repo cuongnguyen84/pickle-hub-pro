@@ -12,7 +12,7 @@
 
 BEGIN;
 
-SELECT plan(53);
+SELECT plan(54);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -352,10 +352,28 @@ SELECT is(
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+-- Was `is(count(*), 0)`: anon held a SELECT grant, and the `TO public` policy
+-- (approved AND is_public AND the shop is active) filtered the row away. Since
+-- 20260818140000 anon holds no grant on this table at all, so the answer is a
+-- refusal rather than an empty count — strictly stronger, and the reason the
+-- grant went is that the row is wider than the public door beside it
+-- (internal_note, review_note, approved_by, value_raw).
+--
+-- The error names `shops`, not this table: Postgres checks privileges for every
+-- relation in the plan, and the policy's EXISTS pulls `shops` in. Both are
+-- denied; only the SQLSTATE is worth asserting.
+SELECT throws_ok(
+  $$ SELECT count(*)::int FROM public.shop_contact_channels
+     WHERE shop_id='7f000001-0000-4000-8000-000000000001'::uuid AND state='approved' $$,
+  '42501', NULL,
+  'anon không đọc được bảng kênh liên hệ — cửa công khai là shop_public_contacts');
+
+-- The public door still answers, and still hides the channel that went back to
+-- pending_review. That is the assertion this section was really making.
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels
-   WHERE shop_id='7f000001-0000-4000-8000-000000000001'::uuid AND state='approved'),
-  0, 'kênh vừa đổi giá trị không còn công khai cho tới khi được duyệt lại');
+  public.shop_public_contacts('7f000001-0000-4000-8000-000000000001'::uuid),
+  '[]'::jsonb,
+  'kênh vừa đổi giá trị không còn công khai cho tới khi được duyệt lại');
 
 -- ─── Append-only must not mean undeletable-subject ──────────────────────────
 -- Found by the P2a profile suite the moment this table existed: a blanket

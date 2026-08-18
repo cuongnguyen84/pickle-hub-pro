@@ -13,7 +13,7 @@
 
 BEGIN;
 
-SELECT plan(72);
+SELECT plan(73);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -468,6 +468,23 @@ SELECT is(
 -- screens later. Neither key is a secret — both are facts a buyer needs
 -- BEFORE they type an address.
 
+-- "Không phải hằng số trong hàm" is a claim about the FUNCTION, not about the
+-- caller: product_public_projection is SECURITY DEFINER, so it returns the same
+-- JSON to anyone allowed to call it. The role is dropped for these two because
+-- since 20260818130000 anon holds no SELECT on `shops` at all, so the
+-- comparison side of the assertion would raise 42501 and abort the whole file.
+-- The property that genuinely needs anon is "an anonymous buyer can READ these
+-- keys", and that is the pair below, back under the role.
+RESET ROLE;
+SELECT is(
+  (public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop' -> 'ordering_enabled',
+  to_jsonb((SELECT ordering_enabled FROM public.shops WHERE id = '61000001-0000-4000-8000-000000000001'::uuid)),
+  'giá trị lấy thẳng từ bảng shops, không phải hằng số trong hàm');
+SELECT is(
+  (public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop' -> 'shipping_fee_vnd',
+  to_jsonb((SELECT shipping_fee_vnd FROM public.shops WHERE id = '61000001-0000-4000-8000-000000000001'::uuid)),
+  'phí ship cũng vậy');
+
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 
@@ -477,14 +494,12 @@ SELECT is(
 SELECT is(
   ((public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop') ->> 'shipping_fee_vnd',
   '30000', 'và phí vận chuyển của shop');
-SELECT is(
-  (public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop' -> 'ordering_enabled',
-  to_jsonb((SELECT ordering_enabled FROM public.shops WHERE id = '61000001-0000-4000-8000-000000000001'::uuid)),
-  'giá trị lấy thẳng từ bảng shops, không phải hằng số trong hàm');
-SELECT is(
-  (public.product_public_projection('62000001-0000-4000-8000-000000000001'::uuid, false)) -> 'shop' -> 'shipping_fee_vnd',
-  to_jsonb((SELECT shipping_fee_vnd FROM public.shops WHERE id = '61000001-0000-4000-8000-000000000001'::uuid)),
-  'phí ship cũng vậy');
+
+-- …and the table itself stays shut to them, which is the other half of the
+-- same guarantee: the projection is the door, not one door among several.
+SELECT throws_ok(
+  $$ SELECT ordering_enabled FROM public.shops $$, '42501', NULL,
+  'nhưng KHÔNG đọc được thẳng bảng shops');
 
 -- The public door inherits both, because it calls the same projection.
 SELECT is(

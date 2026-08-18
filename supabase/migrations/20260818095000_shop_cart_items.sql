@@ -1,6 +1,14 @@
 -- ============================================================================
 -- Shop Phase 3 — S1: the cart.
 -- ----------------------------------------------------------------------------
+-- Renamed 20260818090000 → 20260818095000 on 2026-08-18. #614
+-- (news_origins_abandoned_status) was merged the same day and picked the same
+-- timestamp, so main went red on check-migration-duplicates and the ledger row
+-- at 20260818090000 belonged to the other migration. This file already ran on
+-- production under the old name; the rename only fixes the version, and 095000
+-- keeps it ahead of 20260818100000_shop_orders, which is the ordering that
+-- actually matters.
+-- ----------------------------------------------------------------------------
 -- One table, and deliberately only one. A cart line is a user, a variant and a
 -- quantity; everything else a cart is normally asked to remember is either
 -- derivable or a lie waiting to happen:

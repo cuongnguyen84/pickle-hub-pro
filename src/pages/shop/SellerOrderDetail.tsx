@@ -35,8 +35,10 @@ import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
+import { OrderPaymentCard } from "@/components/shop/OrderPaymentCard";
 import { useMyShopMembership, useShopProfile } from "@/hooks/shop/useShopProfile";
 import { useOrder, useOrderTransition } from "@/hooks/shop/useOrders";
+import { useConfirmPayment, useOrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
 import { shopErrorReason, shopReasonMessage } from "@/lib/shop/errors";
 import { formatVnd } from "@/lib/shop/publicCatalog";
 import { addressForClipboard, formatWhen, telHref } from "@/lib/shop/orderFormat";
@@ -101,8 +103,11 @@ const COPY = {
 
   payCod:
     "Trả khi nhận hàng. Anh/chị thu tiền trực tiếp; ThePickleHub không giữ tiền của đơn này.",
+  // P4b — the account number is no longer something the seller sends by hand:
+  // the buyer sees a QR built from the shop's own bank fields. What has NOT
+  // changed is who holds the money, and that sentence stays.
   payBank:
-    "Người mua chọn chuyển khoản trước. Anh/chị tự gửi thông tin tài khoản và tự xác nhận đã nhận tiền. ThePickleHub không nhận, không giữ và không đối soát khoản nào.",
+    "Người mua chọn chuyển khoản trước và thấy mã QR dựng từ tài khoản của shop. Tiền đi thẳng vào tài khoản anh/chị — ThePickleHub không nhận, không giữ và không đối soát khoản nào.",
 
   // EN: This order was just updated somewhere else — the buyer may have
   // cancelled. The page has reloaded.
@@ -120,6 +125,11 @@ export default function SellerOrderDetail() {
   const profile = useShopProfile(membership.data?.shop_id ?? null);
   const q = useOrder(code ?? null);
   const transition = useOrderTransition();
+  const paymentQ = useOrderPaymentInfo(
+    code ?? null,
+    q.data?.payment_method === "bank_transfer",
+  );
+  const confirmPayment = useConfirmPayment();
 
   const [pending, setPending] = useState<Pending>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -482,6 +492,18 @@ export default function SellerOrderDetail() {
           {order.payment_method === "cod" ? COPY.payCod : COPY.payBank}
         </p>
       </section>
+
+      {/* `support` reads this screen and moves nothing on it — money included.
+          The server refuses them too; this only keeps the button off a screen
+          where pressing it could not work. */}
+      {paymentQ.data && canAct && (
+        <OrderPaymentCard
+          info={paymentQ.data}
+          side="seller"
+          cancelled={order.status === "cancelled"}
+          onMark={() => confirmPayment.mutateAsync(order.code)}
+        />
+      )}
 
       <section aria-labelledby="sod-timeline">
         <h2 className="tl-shop-h2" id="sod-timeline">{COPY.timelineH}</h2>

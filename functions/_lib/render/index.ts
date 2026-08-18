@@ -50,3 +50,13 @@ export { renderVenuesList, renderVenueDetail, renderVenuesCity } from "./venues"
 // Previously fell through to renderDefault → bot saw generic "ThePickleHub
 // - Pickleball Community" with no upcoming-event content or schema.
 export { renderSocialList, renderClubList } from "./social-list";
+
+// Phase 4 public launch — the four catalogue surfaces. Before this they had
+// no renderer at all because the bot path never reached routeAndRender while
+// SHOP_PUBLIC_INDEXING was off. /shop/search stays out on purpose.
+export {
+  renderShopCatalog,
+  renderShopCategory,
+  renderShopProduct,
+  renderShopStore,
+} from "./shop";

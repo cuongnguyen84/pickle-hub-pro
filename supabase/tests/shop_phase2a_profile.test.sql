@@ -58,8 +58,8 @@ SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND table
   'RLS enabled on shop_contact_channels');
 SELECT ok((SELECT has_table_privilege('authenticated','public.shop_contact_channels','INSERT')),
   'authenticated has an INSERT grant to go with the policy');
-SELECT ok((SELECT has_table_privilege('anon','public.shop_contact_channels','SELECT')),
-  'anon has the SELECT grant its public policy needs');
+SELECT ok(NOT (SELECT has_table_privilege('anon','public.shop_contact_channels','SELECT')),
+  'and anon holds no SELECT at all — the public door is shop_public_contacts');
 
 -- The Phase 1 policy name said "owner" while the rule said "manager".
 SELECT is(
@@ -275,12 +275,15 @@ SELECT is(
   'và không sinh dòng thứ hai'
 );
 
--- Anonymous sees nothing until it is both public and approved.
+-- Anonymous sees nothing until it is both public and approved. Read through
+-- the public door, because since 20260818140000 the table itself is shut to
+-- anon — the row carries internal_note, review_note and approved_by, none of
+-- which the door hands out.
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels),
-  0,
+  public.shop_public_contacts('7a000001-0000-4000-8000-000000000001'::uuid),
+  '[]'::jsonb,
   'khách vãng lai không thấy kênh chưa duyệt'
 );
 
@@ -304,7 +307,7 @@ SELECT is(
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels),
+  jsonb_array_length(public.shop_public_contacts('7a000001-0000-4000-8000-000000000001'::uuid)),
   1,
   'sau khi duyệt + công khai thì khách mới thấy'
 );
@@ -326,8 +329,8 @@ SELECT ok(
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels),
-  0,
+  public.shop_public_contacts('7a000001-0000-4000-8000-000000000001'::uuid),
+  '[]'::jsonb,
   'khách không còn thấy kênh vừa bị đưa lại hàng chờ'
 );
 

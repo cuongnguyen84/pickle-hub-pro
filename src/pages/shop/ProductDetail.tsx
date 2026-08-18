@@ -226,8 +226,11 @@ export default function ProductDetail() {
 
   const onAdd = async () => {
     // No (variant, qty) is stashed across the login round trip — deliberately.
-    // The pilot is noindex with near-zero traffic, and a restored selection
-    // that no longer exists is a worse bug than picking the size again.
+    // A restored selection that no longer exists (retired variant, sold out
+    // while the buyer was signing in) is a worse bug than picking the size
+    // again. The original reason given here — "the pilot is noindex with
+    // near-zero traffic" — stopped being true at the Phase 4 launch; the
+    // reason above did not depend on it.
     if (!user) {
       navigate(getLoginUrl(location.pathname + location.search));
       return;
@@ -245,7 +248,11 @@ export default function ProductDetail() {
 
   return (
     <TheLineLayout title={product.title}>
-      <DynamicMeta title={product.title} description={product.description ?? undefined} noindex />
+      {/* Phase 4: robots is decided at the edge by SHOP_PUBLIC_INDEXING, and
+          the bot never gets this far anyway — renderShopProduct answers it
+          with the Product/Offer schema. The loading and not-found branches
+          above keep their own noindex. */}
+      <DynamicMeta title={product.title} description={product.description ?? undefined} />
       <main className="tl-shop">
         <div className="tl-shop-page">
         <div className="tl-shop-topline">

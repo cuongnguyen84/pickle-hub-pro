@@ -25,7 +25,9 @@ import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
+import { OrderPaymentCard } from "@/components/shop/OrderPaymentCard";
 import { useOrder, useOrderTransition } from "@/hooks/shop/useOrders";
+import { useClaimPayment, useOrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
 import { usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatVnd } from "@/lib/shop/publicCatalog";
@@ -102,6 +104,10 @@ export default function OrderDetail() {
   const [pendingAction, setPendingAction] = useState<"cancel" | "deliver" | null>(null);
 
   const order = q.data ?? null;
+  // Only asked for when it can matter. A COD order has nothing to show, and
+  // the RPC would answer `bank: null` after a round trip nobody reads.
+  const paymentQ = useOrderPaymentInfo(code ?? null, order?.payment_method === "bank_transfer");
+  const claim = useClaimPayment();
   const shopQ = usePublicShopPage(order?.shop?.slug ?? null);
   const contacts = usableContacts(shopQ.data?.contacts as PublicContact[] | undefined);
 
@@ -262,6 +268,15 @@ export default function OrderDetail() {
             </button>
           )}
         </div>
+      )}
+
+      {paymentQ.data && (
+        <OrderPaymentCard
+          info={paymentQ.data}
+          side="buyer"
+          cancelled={order.status === "cancelled"}
+          onMark={() => claim.mutateAsync(order.code)}
+        />
       )}
 
       <section aria-labelledby="ord-ship">
