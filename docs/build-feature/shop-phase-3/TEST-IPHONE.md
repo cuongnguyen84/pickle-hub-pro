@@ -6,7 +6,46 @@
 
 ---
 
-## PHẦN 0 — Chuẩn bị (bắt buộc, làm trước khi mở iPhone)
+## ✅ PHẦN 0 ĐÃ CHẠY XONG — anh mở iPhone là test được ngay
+
+Ngày 18/08, đã làm trên production:
+
+| Bước | Trạng thái |
+|---|---|
+| Pre-flight 3 câu `SELECT DISTINCT` | ✅ Sạch — `event_category`: admin/match/stream/tournament · `resource_type`: 8 giá trị · `inventory_movements.reason`: chỉ `opening`. Không giá trị nào ngoài danh sách CHECK mới |
+| Cất bản cũ 5 hàm + `shops_guard_privileged_columns` | ✅ Dump `pg_get_functiondef` xong trước khi áp |
+| Áp 4 migration đúng thứ tự | ✅ Cả 4 trả rỗng (không lỗi) |
+| Verify trên prod | ✅ 4 bảng + view `my_shop_orders` + 4 RPC + 2 cột `shops` đã có. `anon` đọc `shop_orders` = **false**; `authenticated` thấy `buyer_user_id` = **false**, `cancelled_by` = **false** |
+| Bật bán cho shop `thepicklehub` | ✅ `ordering_enabled = true`, `shipping_fee_vnd = 30000` |
+| Ledger 4 migration | ❌ **CÒN LẠI CHO ANH** — classifier chặn ghi vào `supabase_migrations.schema_migrations`. Xem §0.8 |
+| `supabase gen types` | ⏭️ **Cố ý bỏ qua** — xem §0.9 |
+
+### Dữ liệu thật để test (shop `thepicklehub`, phí ship 30.000₫)
+
+| Sản phẩm | Giá | Tồn kho | Dùng cho |
+|---|---|---|---|
+| **Kaiwin Diamond** `/shop/product/kaiwin-diamond` | 2.900.000₫ | **10** | TC-02 (trần 10), TC-07 (huỷ → hoàn kho), TC-17 (hết hàng) — đây là variant **duy nhất có đếm tồn** |
+| **Negin shoes** `/shop/product/negin-shoes` | 1.299.000₫ | không đếm | TC-11 giỏ nhiều dòng, luồng không đếm tồn |
+
+`variant_id` của Kaiwin Diamond: `d5f369ee-5902-4a31-8f36-e9689722ec66`
+
+### §0.8 — Ledger (anh chạy, 30 giây)
+```sql
+INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
+ ('20260818090000','shop_cart_items'),
+ ('20260818100000','shop_orders'),
+ ('20260818110000','append_only_actor_null'),
+ ('20260818120000','shop_phase3_projection_and_address')
+ON CONFLICT (version) DO NOTHING;
+```
+Không chạy thì `check-migration-drift.mjs` (`DRIFT_STRICT=1`) sẽ đỏ mọi commit trên main.
+
+### §0.9 — Vì sao KHÔNG chạy `gen types`
+`types.ts` sẽ phình **9 282 → 12 170 dòng**, phần lớn là **drift có sẵn từ trước**, không phải Phase 3. Code Shop cố tình không dùng file đó — nó đi qua `shop-schema.ts` viết tay bằng `shopFrom`/`shopRpc`, có test parity canh. Nhét 2 888 dòng drift lạ vào PR này làm review không đọc nổi. Nên tách thành một việc riêng.
+
+---
+
+## PHẦN 0 (tham khảo) — các bước đã chạy, giữ lại để lần sau dùng
 
 Preview Cloudflare trỏ vào **cùng project Supabase production**. Không áp migration thì mở preview ra là trang trắng / lỗi.
 
@@ -235,6 +274,7 @@ Chỉ cần **một tài khoản duy nhất** — `thecuong@gmail.com` vừa là
 - [ ] ⚠️ Không nơi nào được hiện chữ "Shop **bị** tạm ngưng" (chuỗi cấm)
 
 ### TC-17 · Hết hàng
+> Dùng **Kaiwin Diamond** — variant `d5f369ee-5902-4a31-8f36-e9689722ec66`, đây là variant duy nhất có đếm tồn (10 cái).
 - [ ] Đặt tồn kho variant về 0 (phải bọc `DISABLE/ENABLE TRIGGER product_variants_guard_stock` hoặc dùng màn điều chỉnh kho của người bán)
 - [ ] Mở `/shop/cart` → dòng đó có cảnh báo (icon + chữ, không chỉ đổi màu), nút đặt của nhóm bị chặn kèm câu "Còn 1 món cần sửa trước khi đặt."
 - [ ] Đặt tồn = 4 nhưng để số lượng 8 trong giỏ → phải hiện **"Chỉ còn 4 cái. Giảm số lượng để đặt tiếp."**, KHÔNG phải "vừa hết hàng"
