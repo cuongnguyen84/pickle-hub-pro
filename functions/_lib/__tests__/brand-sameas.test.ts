@@ -64,12 +64,15 @@ describe("Organization sameAs", () => {
     }
   });
 
-  it("does not claim an Instagram profile — there is no Instagram presence", () => {
-    // Removed 2026-08-18, confirmed by Cuong. instagram.com/thepicklehub is
-    // not ours: it matched the brand name, which is precisely how the wrong
-    // Facebook page got in. A plausible handle is not evidence of ownership.
+  it("claims no Instagram or YouTube profile — neither presence exists", () => {
+    // Removed 2026-08-18, confirmed by Cuong. instagram.com/thepicklehub and
+    // youtube.com/@thepicklehub (channel UC00BA7NxlshRE9ik9ssTYiw, 15 subs)
+    // are somebody else's. Both matched the brand name and both returned 200,
+    // which is exactly how the wrong Facebook page got in. A handle that
+    // matches the brand is not evidence of ownership — ask Cuong.
     for (const list of blocks) {
       expect(list.some((u) => u.includes("instagram.com"))).toBe(false);
+      expect(list.some((u) => u.includes("youtube.com"))).toBe(false);
     }
   });
 

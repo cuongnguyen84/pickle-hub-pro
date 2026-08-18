@@ -96,10 +96,16 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           // og:title = thepicklehub.net. (Facebook's own og:url appends a
           // trailing slash; both forms serve the same page.)
           //
-          // Instagram removed 2026-08-18: instagram.com/thepicklehub is not
-          // ours (Cuong confirmed there is no Instagram presence). The handle
-          // matched the brand name, which is exactly how the wrong Facebook
-          // page got in here too — a plausible-looking URL nobody owned.
+          // Instagram and YouTube both removed 2026-08-18: Cuong confirmed
+          // neither presence exists. instagram.com/thepicklehub and
+          // youtube.com/@thepicklehub (channel UC00BA7NxlshRE9ik9ssTYiw, 15
+          // subscribers, og:title "ThePickleHub") are somebody else's.
+          //
+          // All three bad entries got in the same way, and it is worth naming
+          // the pattern: a handle matched the brand name, the URL returned
+          // 200, and that was treated as proof of ownership. It is not. Only
+          // Cuong can confirm a profile is ours — verify with him before
+          // adding anything to this list.
           //
           // X added 2026-08-18, and unlike the Facebook entry it is evidenced
           // rather than guessed: workers/social-poster/wrangler.toml documents
@@ -112,7 +118,6 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           sameAs: [
             "https://www.facebook.com/thepicklehubnet",
             "https://x.com/thepicklehub",
-            "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",
           ],
         },
@@ -239,10 +244,16 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           // og:title = thepicklehub.net. (Facebook's own og:url appends a
           // trailing slash; both forms serve the same page.)
           //
-          // Instagram removed 2026-08-18: instagram.com/thepicklehub is not
-          // ours (Cuong confirmed there is no Instagram presence). The handle
-          // matched the brand name, which is exactly how the wrong Facebook
-          // page got in here too — a plausible-looking URL nobody owned.
+          // Instagram and YouTube both removed 2026-08-18: Cuong confirmed
+          // neither presence exists. instagram.com/thepicklehub and
+          // youtube.com/@thepicklehub (channel UC00BA7NxlshRE9ik9ssTYiw, 15
+          // subscribers, og:title "ThePickleHub") are somebody else's.
+          //
+          // All three bad entries got in the same way, and it is worth naming
+          // the pattern: a handle matched the brand name, the URL returned
+          // 200, and that was treated as proof of ownership. It is not. Only
+          // Cuong can confirm a profile is ours — verify with him before
+          // adding anything to this list.
           //
           // X added 2026-08-18, and unlike the Facebook entry it is evidenced
           // rather than guessed: workers/social-poster/wrangler.toml documents
@@ -255,7 +266,6 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           sameAs: [
             "https://www.facebook.com/thepicklehubnet",
             "https://x.com/thepicklehub",
-            "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",
           ],
         },
