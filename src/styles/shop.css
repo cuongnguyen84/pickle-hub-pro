@@ -1443,7 +1443,18 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp { display: grid; gap: 20px; }
 @media (min-width: 900px) { .tl-pdp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
 
-.tl-pdp-media img { display: block; width: 100%; height: auto; border-radius: var(--shop-radius-card); background: var(--tl-surface-2); }
+/* Ảnh sản phẩm là ảnh người bán tự chụp — phần lớn là ảnh dọc. Để `height:auto`
+ * thì một tấm 3:4 ở 375px cao 500px, cộng header và bottom nav là hết sạch màn
+ * hình đầu: giá, chọn phiên bản và nút mua đều rơi xuống màn thứ hai. Chốt trần
+ * theo chiều cao màn hình và `contain` để không cắt ảnh; khung giữ tỉ lệ sẵn nên
+ * không giật layout lúc ảnh về (CLS). */
+.tl-pdp-media img {
+  display: block; width: 100%; height: auto;
+  max-height: 46svh; object-fit: contain;
+  border-radius: var(--shop-radius-card); background: var(--tl-surface-2);
+}
+@supports not (height: 1svh) { .tl-pdp-media img { max-height: 46vh; } }
+@media (min-width: 900px) { .tl-pdp-media img { max-height: none; } }
 .tl-pdp-media .tl-pcard-noimg { background: var(--tl-surface-2); border-radius: var(--shop-radius-card); }
 .tl-pdp-thumbs { display: flex; gap: 8px; padding: 10px 0 0; margin: 0; list-style: none; overflow-x: auto; }
 .tl-pdp-thumb {
@@ -1484,6 +1495,37 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp-shopname { margin: 0; display: flex; align-items: center; gap: 4px; font-weight: 600; }
 .tl-pdp-note { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
 .tl-pdp-cta { display: grid; gap: 8px; }
+
+/* ── Thanh mua dính đáy (chỉ mobile) ──────────────────────────────────────
+ * Trang sản phẩm dài hơn một màn hình: ảnh, giá, chọn phiên bản, nút mua, thẻ
+ * shop, mô tả. Cuộn xuống đọc mô tả là mất nút mua. Thanh này chỉ hiện khi nút
+ * mua trong trang đã trôi khỏi tầm nhìn, nên không bao giờ có hai nút mua cùng
+ * lúc trên màn hình — vẫn đúng luật "một hành động chính mỗi màn".
+ * Đáy phải chừa bottom nav: 72px là ca cao nhất (Android native), cộng safe
+ * area của iPhone. Cùng cách tính với ChatFAB. */
+.tl-pdp-buybar {
+  position: fixed; left: 0; right: 0;
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px) * 0);
+  background: var(--tl-bg);
+  border-top: 1px solid var(--tl-border);
+  box-shadow: 0 -6px 20px rgb(0 0 0 / 12%);
+  transform: translateY(110%);
+  transition: transform 200ms ease-out;
+}
+.tl-pdp-buybar[data-shown="true"] { transform: translateY(0); }
+.tl-pdp-buybar .tl-pdp-buybar-price {
+  margin: 0; font-size: 16px; font-weight: 700;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.tl-pdp-buybar .tl-shop-btn { flex: 1; min-height: 46px; }
+@media (min-width: 900px) { .tl-pdp-buybar { display: none; } }
+@media (prefers-reduced-motion: reduce) { .tl-pdp-buybar { transition: none; } }
+
+/* Chừa chỗ cho thanh mua để nó không che dòng cuối của mô tả. */
+@media (max-width: 899px) { .tl-pdp-has-buybar { padding-bottom: 76px; } }
 
 /* ── Shop UI polish R1 ────────────────────────────────────────────────────
  * Seller-list thumbnails: the real cover in the box the layout already

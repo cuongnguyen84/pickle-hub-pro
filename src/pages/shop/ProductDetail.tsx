@@ -15,7 +15,7 @@
 // to find out who they are buying from.
 // ============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, BadgeCheck, ExternalLink, Loader2, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -69,6 +69,8 @@ const PDP_COPY = {
   soldOut:
     "Phiên bản này đang hết hàng. Chọn phiên bản khác, hoặc nhắn shop để hỏi.",
   pickVariant: (group: string) => `Chọn ${group} trước.`,
+  /** Nhãn ngắn cho thanh dính đáy — chỗ đó chỉ vừa vài chữ. */
+  pickVariantShort: "Chọn phiên bản",
   pausedTitle: "Shop đang tạm ngưng bán.",
   pausedBody: "Anh/chị vẫn liên hệ trực tiếp với shop được.",
 };
@@ -107,6 +109,22 @@ export default function ProductDetail() {
   const [addError, setAddError] = useState<string | null>(null);
   const [toastNonce, setToastNonce] = useState(0);
   const [toastOpen, setToastOpen] = useState(false);
+
+  // Thanh mua dính đáy chỉ xuất hiện khi nút mua trong trang đã trôi khỏi tầm
+  // nhìn — không bao giờ có hai nút mua cùng lúc trên màn hình.
+  // Giữ node trong state chứ không phải ref: effect tự chạy lại đúng lúc node
+  // gắn vào hoặc rời đi, khỏi phải đoán dependency.
+  const [ctaNode, setCtaNode] = useState<HTMLDivElement | null>(null);
+  const [ctaOffScreen, setCtaOffScreen] = useState(false);
+  useEffect(() => {
+    if (!ctaNode || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setCtaOffScreen(!entry.isIntersecting),
+      { rootMargin: "-8px 0px 0px 0px" },
+    );
+    io.observe(ctaNode);
+    return () => io.disconnect();
+  }, [ctaNode]);
 
   const product = (q.data?.product ?? null) as PublicProduct | null;
   const contacts = usableContacts(q.data?.contacts as PublicContact[] | undefined);
@@ -212,7 +230,7 @@ export default function ProductDetail() {
           <ShopCartLink />
         </div>
 
-        <div className="tl-pdp">
+        <div className={ordering ? "tl-pdp tl-pdp-has-buybar" : "tl-pdp"}>
           <section aria-labelledby="pdp-media-h" className="tl-pdp-media">
             <h2 id="pdp-media-h" className="tl-shop-sr">Ảnh sản phẩm</h2>
             {shown ? (
@@ -315,33 +333,11 @@ export default function ProductDetail() {
               </fieldset>
             ))}
 
-            {/* Seller, shipping and returns BEFORE the action. */}
-            <div className="tl-pdp-seller">
-              <p className="tl-pdp-shopname">
-                <Link to={`/shop/store/${product.shop.slug}`} className="tl-crumb">
-                  {product.shop.name}
-                </Link>
-                {product.shop.verified && (
-                  <>
-                    <BadgeCheck size={14} aria-hidden="true" className="tl-pcard-verified" />
-                    <span className="tl-shop-sr">shop đã được ThePickleHub xác minh</span>
-                  </>
-                )}
-              </p>
-              {product.shop.region && <p className="tl-pdp-note">Gửi từ {product.shop.region}</p>}
-              {product.shop.shipping_note && <p className="tl-pdp-note">{product.shop.shipping_note}</p>}
-              {product.shop.return_note && <p className="tl-pdp-note">{product.shop.return_note}</p>}
-              <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
-                Thông tin sản phẩm, giá và tình trạng hàng do shop tự khai và tự chịu trách nhiệm.
-                ThePickleHub duyệt hồ sơ shop và kiểm duyệt nội dung sản phẩm trước khi hiển thị;
-                tình trạng xác minh của shop (nếu có) xem trên trang shop.
-              </p>
-            </div>
 
             {/* P3: cart first, contact second — but only one primary on the
                 screen. When the shop is not selling, the contact buttons take
                 the primary back (C3). */}
-            <div className="tl-pdp-cta">
+            <div className="tl-pdp-cta" ref={setCtaNode}>
               {ordering ? (
                 <>
                   <label className="tl-shop-label" htmlFor="pdp-qty">{PDP_COPY.qtyLabel}</label>
@@ -440,6 +436,30 @@ export default function ProductDetail() {
               )}
             </div>
 
+            {/* Trust info ngay DƯỚI nút mua: người mua quyết định xong mới đọc
+                điều khoản, chứ không phải lội qua đoạn miễn trừ dài rồi mới thấy nút. */}
+            <div className="tl-pdp-seller">
+              <p className="tl-pdp-shopname">
+                <Link to={`/shop/store/${product.shop.slug}`} className="tl-crumb">
+                  {product.shop.name}
+                </Link>
+                {product.shop.verified && (
+                  <>
+                    <BadgeCheck size={14} aria-hidden="true" className="tl-pcard-verified" />
+                    <span className="tl-shop-sr">shop đã được ThePickleHub xác minh</span>
+                  </>
+                )}
+              </p>
+              {product.shop.region && <p className="tl-pdp-note">Gửi từ {product.shop.region}</p>}
+              {product.shop.shipping_note && <p className="tl-pdp-note">{product.shop.shipping_note}</p>}
+              {product.shop.return_note && <p className="tl-pdp-note">{product.shop.return_note}</p>}
+              <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
+                Thông tin sản phẩm, giá và tình trạng hàng do shop tự khai và tự chịu trách nhiệm.
+                ThePickleHub duyệt hồ sơ shop và kiểm duyệt nội dung sản phẩm trước khi hiển thị;
+                tình trạng xác minh của shop (nếu có) xem trên trang shop.
+              </p>
+            </div>
+
             {product.description && (
               <section aria-labelledby="pdp-desc">
                 <h2 className="tl-shop-h2" id="pdp-desc">Mô tả</h2>
@@ -448,6 +468,38 @@ export default function ProductDetail() {
             )}
           </section>
         </div>
+
+        {ordering && (
+          <div
+            className="tl-pdp-buybar"
+            data-shown={ctaOffScreen ? "true" : "false"}
+            aria-hidden={ctaOffScreen ? undefined : true}
+          >
+            <p className="tl-pdp-buybar-price">
+              {resolved
+                ? formatVnd(resolved.price_vnd)
+                : price
+                  ? formatVnd(price.min)
+                  : "Chưa có giá"}
+            </p>
+            <button
+              type="button"
+              className="tl-shop-btn tl-shop-btn--primary"
+              disabled={adding || !!addBlockedReason}
+              aria-busy={adding || undefined}
+              // Chưa chọn phiên bản thì đưa người mua về đúng chỗ phải chọn,
+              // thay vì để họ bấm một nút xám không nói gì.
+              onClick={() =>
+                addBlockedReason
+                  ? ctaNode?.scrollIntoView({ block: "center", behavior: "smooth" })
+                  : void onAdd()
+              }
+            >
+              {adding && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+              {adding ? PDP_COPY.addBusy : addBlockedReason ? PDP_COPY.pickVariantShort : PDP_COPY.add}
+            </button>
+          </div>
+        )}
 
         <CartAddedToast
           open={toastOpen}
