@@ -237,13 +237,18 @@ export const useUpdateProduct = (productId: string | null) => {
     mutationFn: async (input: {
       expectedVersion: number;
       patch: Partial<Pick<ProductDraft, "title" | "description" | "category_slug" | "condition">>;
-      variant?: { price_vnd?: string; stock_on_hand?: string; sku?: string };
+      // KHÔNG có `variant` ở đây, một cách có chủ ý. RPC vẫn nhận `_variant`
+      // — đó là API hợp lệ của máy chủ — nhưng màn hình sửa sản phẩm không có
+      // ô giá nào, nên mọi con số gửi từ đây đều là số ôi thiu ghi đè lên thứ
+      // bảng phiên bản vừa lưu. Đó là lỗi đã ăn mất hai lần sửa giá thật ngày
+      // 18/08, và nó sống được vì cái tham số này tồn tại để ai đó điền vào.
+      // Bỏ nó đi làm cho lỗi không viết ra được nữa, thay vì chỉ không xảy ra.
     }) =>
       await shopRpc<ProductRow>("product_update", {
         _product_id: productId,
         _expected_version: input.expectedVersion,
         _patch: input.patch,
-        _variant: input.variant ?? null,
+        _variant: null,
       }),
     onSuccess: () => {
       // Refetch rather than patching the cache: the variant write happened in

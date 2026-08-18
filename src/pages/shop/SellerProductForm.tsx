@@ -258,10 +258,22 @@ export default function SellerProductForm() {
     }
   }, [key, draft, isNew, serverDraft]);
 
-  const dirty = useMemo(
-    () => !!draft && !!serverDraft && !sameDraft(draft, serverDraft),
-    [draft, serverDraft],
-  );
+  /**
+   * "Còn thay đổi chưa lưu" nghĩa là: thứ lệnh lưu SẼ GỬI khác thứ máy chủ
+   * đang giữ. So bằng chính payload, nên hai cái không thể lệch nhau.
+   *
+   * So cả `price_vnd`/`stock_on_hand` là sai ở màn sửa: hai ô đó không hiện,
+   * `draft` giữ nguyên con số gieo lúc tải trang, và sau một lần lưu bảng phiên
+   * bản thì `serverDraft` mang giá MỚI trong khi `draft` vẫn giá cũ. Cờ dirty
+   * bật vĩnh viễn, nút ghi "Lưu và đăng bán" trong khi không có gì để lưu — và
+   * trước bản vá này nó còn kéo theo một lệnh ghi đè giá cũ thật.
+   */
+  const dirty = useMemo(() => {
+    if (!draft || !serverDraft) return false;
+    return (
+      JSON.stringify(buildUpdatePayload(draft)) !== JSON.stringify(buildUpdatePayload(serverDraft))
+    );
+  }, [draft, serverDraft]);
   const dirtyNew = useMemo(() => !!draft && isNew && !sameDraft(draft, EMPTY_DRAFT), [draft, isNew]);
 
   // Persist locally on every change. This is the thing that survives a closed
@@ -336,12 +348,13 @@ export default function SellerProductForm() {
         return null;
       }
 
-      // The variant half is deliberate: product_update refuses a _variant
-      // payload for a product that has a matrix, so a form that always sent it
-      // could not save the NAME of a product that had colours.
+      // TEXT ONLY. Giá và tồn kho của một sản phẩm ĐÃ TỒN TẠI thuộc về bảng
+      // phiên bản — ô giá đơn giản chỉ hiện khi TẠO MỚI, nên gửi kèm nó ở đây
+      // là gửi một con số người bán không nhìn thấy và không sửa được. Đó đúng
+      // là con số đã đè mất hai lần sửa giá thật ngày 18/08.
       const saved = await update.mutateAsync({
         expectedVersion: row.version,
-        ...buildUpdatePayload(draft, multiVariant),
+        ...buildUpdatePayload(draft),
       });
       if (key) clearStored(key);
       setSaveState("saved");
@@ -353,7 +366,7 @@ export default function SellerProductForm() {
       if (isConflict(error) && draft) setConflict(draft);
       return null;
     }
-  }, [draft, shopId, isNew, create, key, navigate, row, update, multiVariant, preflight]);
+  }, [draft, shopId, isNew, create, key, navigate, row, update, preflight]);
 
   const shell = (children: React.ReactNode) => (
     <ShopScrollShell>
