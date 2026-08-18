@@ -57,10 +57,35 @@ tag là không đủ — lỗi 2026-08-05 có tag hoàn hảo và bài rỗng.
 Rồi: GSC URL Inspection → Request Indexing cho `/shop` và 2 PDP · IndexNow cho
 Bing.
 
-### 2.4 Điền tài khoản ngân hàng của shop
+### 2.4 🔴 Duyệt kênh liên hệ — CHẶN việc mở cửa
 
-`/seller/settings` → mục "Tài khoản nhận chuyển khoản". Chưa điền thì người mua
-chọn chuyển khoản vẫn đặt được, chỉ là không thấy QR và phải liên hệ shop.
+Kiểm trên production 18/08:
+
+```sql
+SELECT c.type, c.is_public, c.state::text, s.bank_code IS NOT NULL AS has_bank
+FROM public.shops s LEFT JOIN public.shop_contact_channels c ON c.shop_id = s.id
+WHERE s.slug = 'thepicklehub';
+→ zalo | true | draft | false
+```
+
+Kênh Zalo duy nhất đang ở `draft` — **chưa bao giờ gửi duyệt**. Nên
+`shop_public_contacts` trả `[]`, và **mọi nút "Liên hệ shop" đang render ra
+rỗng**: người mua trên shop thật hiện KHÔNG có cách nào liên hệ người bán.
+
+Việc này quan trọng hơn nó trông: điều kiện an toàn để Phase 3 cắt bỏ
+trả hàng/khiếu nại là *"nút liên hệ shop có mặt ở mọi trạng thái đơn cả hai
+phía"*. Điều kiện đó **đúng trong code và rỗng trong dữ liệu**. Với người mua
+lạ từ Google thì đó là ngõ cụt.
+
+Sửa: `/seller/settings` → mục Liên hệ → gửi duyệt kênh Zalo → admin duyệt.
+
+### 2.5 Điền tài khoản ngân hàng của shop
+
+Cùng câu truy vấn trên: `has_bank = false`. Chưa điền thì người mua chọn chuyển
+khoản vẫn đặt được, chỉ là không thấy QR — và fallback là "liên hệ shop", thứ
+hiện cũng đang rỗng (§2.4). Hai việc này đi cùng nhau.
+
+`/seller/settings` → "Tài khoản nhận chuyển khoản", điền đủ ba ô.
 
 ---
 
