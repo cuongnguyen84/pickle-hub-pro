@@ -15,6 +15,7 @@ import {
   SHOP_P3_RPCS,
   SHOP_P3_TABLES,
   SHOP_P3_VIEWS,
+  SHOP_P4_RPCS,
   SHOP_RPCS,
   SHOP_RULES_RPCS,
   SHOP_RULES_TABLES,
@@ -595,5 +596,91 @@ describe("shop schema parity with the Phase 3 migrations", () => {
     );
     const code = P3_SQL.replace(/--[^\n]*/g, "");
     expect(code).not.toMatch(/'completed'|'awaiting_payment'|notify_key/);
+  });
+});
+
+// ── Phase 4b — bank transfer ────────────────────────────────────────────────
+// D2 said no bank column, no QR, no reconciliation. This is the migration that
+// reverses that, so the assertions here are mostly about what it did NOT also
+// reverse: the five-state machine, and who is allowed to say money arrived.
+
+const P4_SQL = migrationByName("shop_bank_transfer");
+
+describe("shop schema parity with the Phase 4b migration", () => {
+  it.each(SHOP_P4_RPCS)("the P4b migration creates function %s", (fn) => {
+    expect(P4_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  });
+
+  it("every P4b RPC is SECURITY DEFINER with a pinned search_path", () => {
+    for (const fn of SHOP_P4_RPCS) {
+      const at = P4_SQL.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+      const head = P4_SQL.slice(at, at + 900);
+      expect(head, `${fn} must be SECURITY DEFINER`).toContain("SECURITY DEFINER");
+      expect(head, `${fn} must pin search_path`).toContain("SET search_path = public");
+    }
+  });
+
+  it("stores the bank trio all-or-nothing", () => {
+    // Two of three renders a QR a banking app accepts and then fails to
+    // complete, and the buyer believes they have paid.
+    expect(P4_SQL).toMatch(
+      /CHECK \(num_nonnulls\(bank_code, bank_account_number, bank_account_name\) IN \(0, 3\)\)/,
+    );
+  });
+
+  it("still has no awaiting_payment and touches no status", () => {
+    // The whole point: payment is an ATTRIBUTE of an order, not a stage of it.
+    const code = P4_SQL.replace(/--[^\n]*/g, "");
+    expect(code).not.toMatch(/'awaiting_payment'|'completed'/);
+    expect(code).not.toContain("shop_order_transition");
+  });
+
+  it("never grants payment_confirmed_by, and keeps it out of the view", () => {
+    // It is a uid, and 20260504100000 lets every logged-in user read all of
+    // profiles. Same rule as buyer_user_id and cancelled_by, not a second one.
+    expect(P4_SQL).toContain("GRANT SELECT (payment_claimed_at, payment_confirmed_at)");
+    expect(P4_SQL).not.toMatch(/GRANT SELECT \([^)]*payment_confirmed_by/);
+
+    const view = P4_SQL.slice(
+      P4_SQL.indexOf("CREATE VIEW public.my_shop_orders"),
+      P4_SQL.indexOf("COMMENT ON VIEW public.my_shop_orders"),
+    );
+    expect(view.length, "the view definition must be found").toBeGreaterThan(0);
+    expect(view).toContain("o.payment_claimed_at, o.payment_confirmed_at");
+    expect(view).not.toContain("payment_confirmed_by");
+    expect(view).not.toContain("buyer_user_id,");
+  });
+
+  it("refuses `support` on the money, the same way it is refused on the status", () => {
+    const at = P4_SQL.indexOf("CREATE OR REPLACE FUNCTION public.shop_order_confirm_payment(");
+    const body = P4_SQL.slice(at);
+    expect(body).toContain("m.role IN ('owner', 'manager', 'fulfillment')");
+    expect(body.replace(/--[^\n]*/g, "")).not.toContain("'support'");
+  });
+
+  it("restates shop_profile_update in full rather than patching it", () => {
+    // 20260818100000's header records what happens otherwise: a CREATE OR
+    // REPLACE that restated an OLDER body silently un-did the slug_write
+    // escape hatch, and no reader noticed. If this migration restates the
+    // function, it must carry every field the previous version had.
+    const at = P4_SQL.indexOf("CREATE OR REPLACE FUNCTION public.shop_profile_update(");
+    expect(at, "shop_profile_update must be restated here").toBeGreaterThan(-1);
+    const body = P4_SQL.slice(at);
+    for (const field of [
+      "name",
+      "intro",
+      "city",
+      "region",
+      "primary_category_slug",
+      "shipping_note",
+      "return_note",
+      "bank_code",
+      "bank_account_number",
+      "bank_account_name",
+    ]) {
+      expect(body, `shop_profile_update must still write ${field}`).toContain(`${field} `);
+    }
+    // And the optimistic-concurrency check it is easy to drop while retyping.
+    expect(body).toContain("_row.version <> _expected_version");
   });
 });

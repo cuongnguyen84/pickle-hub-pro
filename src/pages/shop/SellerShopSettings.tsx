@@ -36,6 +36,7 @@ import {
   type ProfilePatch,
 } from "@/hooks/shop/useShopProfile";
 import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
+import { VN_BANKS } from "@/lib/payment/banks";
 import {
   CHANNEL_LABEL,
   CHANNEL_PLACEHOLDER,
@@ -60,6 +61,9 @@ const FIELD_LABEL: Record<keyof ProfilePatch, string> = {
   primary_category_slug: "Ngành hàng chính",
   shipping_note: "Thông tin giao hàng",
   return_note: "Chính sách đổi trả",
+  bank_code: "Ngân hàng",
+  bank_account_number: "Số tài khoản",
+  bank_account_name: "Chủ tài khoản",
 };
 
 const draftFromRow = (row: ShopRow): ProfilePatch => ({
@@ -70,6 +74,9 @@ const draftFromRow = (row: ShopRow): ProfilePatch => ({
   primary_category_slug: row.primary_category_slug ?? "",
   shipping_note: row.shipping_note ?? "",
   return_note: row.return_note ?? "",
+  bank_code: row.bank_code ?? "",
+  bank_account_number: row.bank_account_number ?? "",
+  bank_account_name: row.bank_account_name ?? "",
 });
 
 export default function SellerShopSettings() {
@@ -179,6 +186,30 @@ export default function SellerShopSettings() {
     if ((d.return_note ?? "").length > 600) errors.return_note = "Tối đa 600 ký tự";
     const region = (d.region ?? "").trim();
     if (region && (region.length < 2 || region.length > 80)) errors.region = "Khu vực cần từ 2 đến 80 ký tự";
+
+    // The bank trio, checked here as ONE thing rather than three. The CHECK
+    // constraint refuses a partial set with a 23514 and no field name, so a
+    // seller who fills two of three would otherwise get "không lưu được" with
+    // nothing pointing at the empty box.
+    const bankCode = (d.bank_code ?? "").trim();
+    // Whitespace is stripped, not rejected: every banking app prints an
+    // account number in groups, and telling a seller their own account is
+    // invalid because they pasted it faithfully is the wrong answer.
+    const bankNo = (d.bank_account_number ?? "").replace(/\s/g, "");
+    const bankName = (d.bank_account_name ?? "").trim();
+    const filled = [bankCode, bankNo, bankName].filter(Boolean).length;
+    if (filled > 0 && filled < 3) {
+      const missing =
+        !bankCode ? "bank_code" : !bankNo ? "bank_account_number" : "bank_account_name";
+      errors[missing as keyof ProfilePatch] =
+        "Điền đủ cả ba ô thì người mua mới quét được QR — thiếu một ô là QR hỏng";
+    }
+    if (bankNo && !/^[0-9]{6,20}$/.test(bankNo)) {
+      errors.bank_account_number = "Số tài khoản chỉ gồm chữ số, 6–20 số";
+    }
+    if (bankName && (bankName.length < 2 || bankName.length > 100)) {
+      errors.bank_account_name = "Tên chủ tài khoản cần từ 2 đến 100 ký tự";
+    }
     return errors;
   };
 
@@ -320,6 +351,65 @@ export default function SellerShopSettings() {
             value={draft?.return_note ?? ""}
             onChange={(e) => setField("return_note", e.target.value)}
           />
+        </Field>
+      </section>
+
+      {/* ── Bank transfer (P4b) ──────────────────────────────────────────── */}
+      <section aria-labelledby="sec-bank">
+        <h2 id="sec-bank" className="tl-shop-h2">Tài khoản nhận chuyển khoản</h2>
+        <p className="tl-shop-hint" style={{ marginTop: 0 }}>
+          Điền đủ ba ô thì người mua chọn “chuyển khoản” sẽ thấy mã QR quét là
+          chuyển được ngay. Tiền vào thẳng tài khoản anh/chị — ThePickleHub
+          không nhận, không giữ và không đối soát. Để trống cả ba thì người mua
+          vẫn đặt được, chỉ là phải liên hệ shop để xin số tài khoản.
+        </p>
+        <Field id="shop-bank-code" label={FIELD_LABEL.bank_code} error={fieldError.bank_code}>
+          <select
+            id="shop-bank-code"
+            className="tl-shop-input"
+            disabled={!canEdit}
+            value={draft?.bank_code ?? ""}
+            onChange={(e) => setField("bank_code", e.target.value)}
+          >
+            <option value="">— Chưa chọn —</option>
+            {VN_BANKS.map((b) => (
+              <option key={b.code} value={b.code}>{b.shortName}</option>
+            ))}
+          </select>
+        </Field>
+        <Field
+          id="shop-bank-no"
+          label={FIELD_LABEL.bank_account_number}
+          error={fieldError.bank_account_number}
+        >
+          <input
+            id="shop-bank-no"
+            className="tl-shop-input"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={30}
+            disabled={!canEdit}
+            value={draft?.bank_account_number ?? ""}
+            onChange={(e) => setField("bank_account_number", e.target.value)}
+          />
+        </Field>
+        <Field
+          id="shop-bank-name"
+          label={FIELD_LABEL.bank_account_name}
+          error={fieldError.bank_account_name}
+        >
+          <input
+            id="shop-bank-name"
+            className="tl-shop-input"
+            autoComplete="off"
+            maxLength={100}
+            disabled={!canEdit}
+            value={draft?.bank_account_name ?? ""}
+            onChange={(e) => setField("bank_account_name", e.target.value)}
+          />
+          <p className="tl-shop-hint">
+            Viết hoa không dấu, đúng như ngân hàng in — ví dụ NGUYEN VAN CUONG.
+          </p>
         </Field>
       </section>
 

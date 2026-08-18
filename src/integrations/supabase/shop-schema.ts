@@ -96,6 +96,14 @@ export interface ShopRow {
   ordering_enabled: boolean;
   /** D3 — flat fee, all provinces, snapshotted onto the order. 0 is free. */
   shipping_fee_vnd: number;
+  /* ── Phase 4b (migration 20260818150000) ── */
+  /** VietQR trio. All three or none — the CHECK refuses a partial set. The
+   *  seller owns these: not pinned by shops_guard_privileged_columns, same as
+   *  shipping_fee_vnd. A BUYER never reads them from here — the only door is
+   *  shop_order_payment_info, and only for an order they are a party to. */
+  bank_code: string | null;
+  bank_account_number: string | null;
+  bank_account_name: string | null;
 }
 
 export type ShopContactType = "zalo" | "messenger" | "phone";
@@ -605,6 +613,12 @@ export interface ShopOrderRow {
   confirm_due_at: string;
   tracking_code: string | null;
   cancel_reason: string | null;
+  /** P4b — the BUYER said they sent the money. Self-declared, never proof. */
+  payment_claimed_at: string | null;
+  /** P4b — a human on the SELLER side saw it arrive. This is the one that
+   *  counts, and it is deliberately independent of `status`: there is still no
+   *  `awaiting_payment` (D2). */
+  payment_confirmed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -667,6 +681,20 @@ export const SHOP_P3_RPCS = [
   "shop_order_is_party",
   /* ── 20260818120000 ── */
   "shop_last_shipping_address",
+] as const;
+
+/** P4b (20260818150000) — bank transfer. Its own list because it is its own
+ *  migration: the parity test reads the file each list names, and folding
+ *  these into SHOP_P3_RPCS made it look for them in the Phase 3 migrations.
+ *
+ *  The bank trio is NOT a column on any projection. shop_order_payment_info
+ *  is a DEFINER door that answers only for somebody already a party to the
+ *  order — and answers a stranger's code and a made-up code identically, so
+ *  it cannot be used to probe which order codes exist. */
+export const SHOP_P4_RPCS = [
+  "shop_order_payment_info",
+  "shop_order_claim_payment",
+  "shop_order_confirm_payment",
 ] as const;
 
 /** `my_shop_orders` is a VIEW, not a table: shop_orders' policy admits every

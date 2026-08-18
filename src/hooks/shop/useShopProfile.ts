@@ -109,6 +109,13 @@ export interface ProfilePatch {
   primary_category_slug?: string;
   shipping_note?: string;
   return_note?: string;
+  /** P4b — the VietQR trio. All three or none: the CHECK refuses a partial
+   *  set, because a half-filled trio renders a QR that scans and then fails,
+   *  which is worse than no QR. The server strips whitespace from the account
+   *  number, so a seller can paste it the way their banking app prints it. */
+  bank_code?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
 }
 
 /**
