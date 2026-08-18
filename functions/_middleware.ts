@@ -666,7 +666,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // with organizer "PPA Tour Asia" including the Heineken World Cup Da Nang
   // and the HK Slam, which neither of them organises. Purge stale bot HTML
   // for /tournaments + /vi/tournaments.
-  const cacheKey = `pr:v48:${url.pathname}`;
+  // v49 (CTR-01, 2026-08-18): the venue meta-description template changed, so
+  // every cached /san/ + /vi/san/ entry holds a stale, mid-word-truncated
+  // snippet. Bump invalidates them in one go rather than needing ?nocache=1 on
+  // 1,688 URLs.
+  const cacheKey = `pr:v49:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

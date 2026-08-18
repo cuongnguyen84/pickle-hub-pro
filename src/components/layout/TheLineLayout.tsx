@@ -1100,7 +1100,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               aria-label={language === "vi" ? "Mạng xã hội" : "Social channels"}
             >
               <a
-                href="https://www.facebook.com/ThePickleHub"
+                // BRAND-01 (2026-08-18): /ThePickleHub is someone else's page —
+                // Facebook resolves that vanity URL to "Pickle Hub | Guntur"
+                // (India). Ours is /thepicklehubnet/. Kept in sync with the
+                // Organization sameAs list in functions/_lib/render/home.ts.
+                href="https://www.facebook.com/thepicklehubnet/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={language === "vi" ? "ThePickleHub trên Facebook" : "ThePickleHub on Facebook"}

@@ -70,9 +70,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
           },
-          // sameAs must only ever list profiles that resolve. A 404 here is a
-          // dirty signal on the exact entity these blocks exist to consolidate
-          // ("the pickle hub" ranks ~pos 8 on its own name).
+          // sameAs must only ever list profiles that resolve AND that are ours.
+          // A 404 here is a dirty signal on the exact entity these blocks exist
+          // to consolidate ("the pickle hub" ranks ~pos 8 on its own name) —
+          // and, per BRAND-01 below, a 200 that belongs to someone else is
+          // worse than a 404, because it asserts we ARE the other company.
           //
           // The App Store listing is verified live: apps.apple.com/app/id6759968026
           // returns 200 as "ThePickleHub: Tournaments", developer NGUYEN THE CUONG.
@@ -82,8 +84,20 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           // 404s on every locale and app-id variant tried (hl=vi&gl=VN, hl=en&gl=US,
           // com.thepicklehub.app, net.thepicklehub). The Android app is not
           // published. Add it here when it is.
+          // BRAND-01, 2026-08-18 — the Facebook entry used to be
+          // facebook.com/ThePickleHub. That vanity URL is NOT ours: Facebook
+          // resolves it to facebook.com/thepicklehub/, whose og:title is
+          // Pickle Hub | Guntur — an unrelated business in Andhra Pradesh,
+          // India. The one block written to consolidate the brand entity was
+          // instead asserting sameAs identity with a different company that
+          // shares the name, which is the confusion behind the spaced query
+          // sitting at position 8. Ours is verified by og:url =
+          // facebook.com/thepicklehubnet/ and og:title = thepicklehub.net.
+          //
+          // NB: keep prose out of this array — brand-sameas.test.ts extracts
+          // every quoted string inside it and asserts each one is a URL.
           sameAs: [
-            "https://www.facebook.com/ThePickleHub",
+            "https://www.facebook.com/thepicklehubnet/",
             "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",
@@ -186,9 +200,11 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
           },
-          // sameAs must only ever list profiles that resolve. A 404 here is a
-          // dirty signal on the exact entity these blocks exist to consolidate
-          // ("the pickle hub" ranks ~pos 8 on its own name).
+          // sameAs must only ever list profiles that resolve AND that are ours.
+          // A 404 here is a dirty signal on the exact entity these blocks exist
+          // to consolidate ("the pickle hub" ranks ~pos 8 on its own name) —
+          // and, per BRAND-01 below, a 200 that belongs to someone else is
+          // worse than a 404, because it asserts we ARE the other company.
           //
           // The App Store listing is verified live: apps.apple.com/app/id6759968026
           // returns 200 as "ThePickleHub: Tournaments", developer NGUYEN THE CUONG.
@@ -198,8 +214,20 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           // 404s on every locale and app-id variant tried (hl=vi&gl=VN, hl=en&gl=US,
           // com.thepicklehub.app, net.thepicklehub). The Android app is not
           // published. Add it here when it is.
+          // BRAND-01, 2026-08-18 — the Facebook entry used to be
+          // facebook.com/ThePickleHub. That vanity URL is NOT ours: Facebook
+          // resolves it to facebook.com/thepicklehub/, whose og:title is
+          // Pickle Hub | Guntur — an unrelated business in Andhra Pradesh,
+          // India. The one block written to consolidate the brand entity was
+          // instead asserting sameAs identity with a different company that
+          // shares the name, which is the confusion behind the spaced query
+          // sitting at position 8. Ours is verified by og:url =
+          // facebook.com/thepicklehubnet/ and og:title = thepicklehub.net.
+          //
+          // NB: keep prose out of this array — brand-sameas.test.ts extracts
+          // every quoted string inside it and asserts each one is a URL.
           sameAs: [
-            "https://www.facebook.com/ThePickleHub",
+            "https://www.facebook.com/thepicklehubnet/",
             "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",

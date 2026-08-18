@@ -14,7 +14,7 @@
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, buildTitle, breadcrumb, type Lang } from "../utils";
-import { pickMetaDescription } from "../seo-helpers";
+import { fitLead, fitSegments, pickMetaDescription, upperFirst } from "../seo-helpers";
 import { render404 } from "./index";
 
 const LIST_LIMIT = 100;
@@ -353,24 +353,51 @@ export async function renderVenueDetail(
   // CTR: venue-name queries are navigational — the searcher wants to book a
   // court. Surfacing the booking phone number in the snippet is the single
   // most actionable fact we hold that Maps/Facebook results often bury.
-  const phoneVi = v.phone ? ` SĐT đặt sân ${v.phone}.` : "";
-  const phoneEn = v.phone ? ` Phone ${v.phone}.` : "";
+  //
+  // 2026-08-18 (CTR-01): the previous template was a single fixed string whose
+  // generic tail ("Địa chỉ, bản đồ, chỉ đường & các sân pickleball ở <city>
+  // trên ThePickleHub.") alone costs ~95 UTF-8 bytes, so 592 of the 760 venue
+  // rows (78%) blew the 160-byte meta budget and pickMetaDescription ellipsised
+  // them mid-word — production was shipping snippets ending "…ở Hà…" and
+  // "…các sân pickl…". A live sample of 30 /vi/san/ pages found 16 truncated.
+  // /vi/san/ carries 68% of all site impressions at avg position 7.6 but only
+  // 1.41% CTR, versus 6.98% for /vi/blog/ at the same position band.
+  //
+  // Fix: assemble the snippet from priority-ordered segments and append each
+  // one only if it still fits the budget. Highest-value facts go first, the
+  // generic tail last, so a long venue name degrades by losing boilerplate
+  // instead of getting its city keyword sliced off. Nothing is ever truncated.
   // Same de-dup as the title: skip the "Sân pickleball" / "pickleball court"
   // label when the name already carries the keyword, so the snippet doesn't read
   // "Sân pickleball Sân Pickleball FLC Sầm Sơn".
   const leadVi = nameHasKw ? name : `Sân pickleball ${name}`;
   const leadEn = nameHasKw ? name : `${name} pickleball court`;
-  const fallbackDescVi =
-    `${leadVi}${cityName ? ` tại ${cityName}` : ""}` +
-    `${courtsVi ? ` — ${courtsVi}` : ""}${indoorVi ? `, ${indoorVi}` : ""}.` +
-    phoneVi +
-    ` Địa chỉ, bản đồ, chỉ đường & các sân pickleball${cityName ? ` ở ${cityName}` : " gần bạn"} trên ThePickleHub.`;
-  const fallbackDescEn =
-    `${leadEn}${cityName ? ` in ${cityName}` : ""}` +
-    `${courtsEn ? ` — ${courtsEn}` : ""}${indoorEn ? `, ${indoorEn}` : ""}.` +
-    phoneEn +
-    ` Address, map, directions & other pickleball courts${cityName ? ` in ${cityName}` : " near you"} on ThePickleHub.`;
-  const description = pickMetaDescription(null, lang === "vi" ? fallbackDescVi : fallbackDescEn);
+  const factsVi = [courtsVi, indoorVi].filter(Boolean).join(", ");
+  const factsEn = [courtsEn, indoorEn].filter(Boolean).join(", ");
+  const descVariants =
+    lang === "vi"
+      ? {
+          core: fitLead(leadVi, cityName ? ` tại ${cityName}.` : "."),
+          segments: [
+            factsVi ? ` ${upperFirst(factsVi)}.` : "",
+            v.phone ? ` Đặt sân: ${v.phone}.` : "",
+            " Địa chỉ, bản đồ & chỉ đường.",
+            ` Sân pickleball ${cityName ? `ở ${cityName} ` : "gần bạn "}trên ThePickleHub.`,
+          ],
+        }
+      : {
+          core: fitLead(leadEn, cityName ? ` in ${cityName}.` : "."),
+          segments: [
+            factsEn ? ` ${upperFirst(factsEn)}.` : "",
+            v.phone ? ` Booking: ${v.phone}.` : "",
+            " Address, map & directions.",
+            ` More pickleball courts ${cityName ? `in ${cityName} ` : ""}on ThePickleHub.`,
+          ],
+        };
+  const description = pickMetaDescription(
+    null,
+    fitSegments(descVariants.core, descVariants.segments),
+  );
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
