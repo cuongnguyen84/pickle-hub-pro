@@ -267,20 +267,25 @@ INSERT INTO t_q5 VALUES ('c1',
   (public.shop_contact_upsert('7f000001-0000-4000-8000-000000000001'::uuid,
      'phone', '0912345678', 'Gọi giờ hành chính', true, NULL)).id);
 
+-- Quyết định đem ra thử ở đây là `disable`, không phải `approve`. Từ
+-- 20260818160000 kênh trong một shop active sinh ra đã ở `approved`, nên
+-- `approve` là lệnh rỗng — hàm idempotent-theo-kết-quả sẽ trả về sớm và KHÔNG
+-- ghi sự kiện nào. Câu hỏi của mục này là "một quyết định có để lại lịch sử
+-- đọc được không", nên nó phải hỏi bằng một quyết định thật sự đổi thứ gì đó.
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 SELECT is(
-  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'approve',
+  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'disable',
      (SELECT version FROM public.shop_contact_channels WHERE id=(SELECT v FROM t_q5 WHERE k='c1')),
-     NULL, 'nội bộ: đã gọi thử số này', 'tok-q5c1')) ->> 'state',
-  'approved', 'quản trị viên duyệt kênh');
+     'Số này gọi không ai nghe', 'nội bộ: đã gọi thử số này', 'tok-q5c1')) ->> 'state',
+  'disabled', 'quản trị viên tắt được một kênh đang hiển thị');
 
 SELECT is(
   (SELECT count(*)::int FROM public.shop_contact_moderation_events
-   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='approve'),
+   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='disable'),
   1, 'đúng một sự kiện được ghi');
 
 SELECT is(
-  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'approve', NULL, NULL, NULL, 'tok-q5c1')) ->> 'replayed',
+  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'disable', NULL, 'lại lý do', NULL, 'tok-q5c1')) ->> 'replayed',
   'true', 'gửi lại cùng mã trả về câu trả lời cũ');
 SELECT is(
   (SELECT count(*)::int FROM public.shop_contact_moderation_events
@@ -295,7 +300,7 @@ SELECT ok(
   'số điện thoại KHÔNG bị chép vào nhật ký — nhật ký nói "kênh phone", không nói số nào');
 SELECT is(
   (SELECT channel_type::text FROM public.shop_contact_moderation_events
-   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='approve'),
+   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='disable'),
   'phone', 'chỉ LOẠI kênh đi theo lịch sử');
 
 -- Seller reads their half; nobody else reads any of it.
@@ -334,21 +339,26 @@ SELECT throws_ok(
   $$ UPDATE public.shop_contact_moderation_events SET internal_note='sửa' $$,
   NULL, NULL, 'nhật ký kênh liên hệ chỉ ghi thêm');
 
--- A seller editing an approved channel sends it back to review, and that shows
--- in the history rather than leaving an unexplained gap.
+-- Người bán gõ số khác vào một kênh ĐÃ BỊ TẮT: nó không sống lại. Đây là chỗ
+-- duy nhất trigger còn quyết định thay người bán sau 20260818160000, và nó giữ
+-- vì lý do khác hẳn cổng duyệt cũ — không phải "chưa ai xem", mà là "đã có
+-- người xem và nói không".
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 SELECT is(
   (public.shop_contact_upsert('7f000001-0000-4000-8000-000000000001'::uuid,
      'phone', '0987654321', 'Số mới', true, (SELECT v FROM t_q5 WHERE k='c1'))).state::text,
-  'pending_review', 'người bán đổi số đã duyệt thì kênh quay lại chờ duyệt');
+  'disabled', 'người bán đổi số trên kênh đã bị tắt: nó KHÔNG tự sống lại');
 -- Read as postgres: the assertion four tests up proves a seller sees nothing
 -- through RLS, so counting the row from the seller's session would measure the
 -- policy, not the trigger.
 SET LOCAL role postgres;
+-- `resubmitted` chỉ được ghi cho bước approved → pending_review, và bước đó
+-- không còn tồn tại. Khẳng định 0 chứ không xoá dòng này: nếu một ngày nào đó
+-- nó lại > 0 thì cổng duyệt đã quay về mà không ai nói.
 SELECT is(
   (SELECT count(*)::int FROM public.shop_contact_moderation_events
    WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='resubmitted'),
-  1, 'và lịch sử ghi lại việc đó — không để một khoảng trống không ai giải thích');
+  0, 'không còn bước "gửi duyệt lại" nào để ghi — cổng duyệt đã đi');
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
@@ -368,12 +378,12 @@ SELECT throws_ok(
   '42501', NULL,
   'anon không đọc được bảng kênh liên hệ — cửa công khai là shop_public_contacts');
 
--- The public door still answers, and still hides the channel that went back to
--- pending_review. That is the assertion this section was really making.
+-- The public door still answers, and still hides the channel an admin took
+-- down. That is the assertion this section was really making.
 SELECT is(
   public.shop_public_contacts('7f000001-0000-4000-8000-000000000001'::uuid),
   '[]'::jsonb,
-  'kênh vừa đổi giá trị không còn công khai cho tới khi được duyệt lại');
+  'kênh bị admin tắt không còn công khai, kể cả sau khi người bán sửa số');
 
 -- ─── Append-only must not mean undeletable-subject ──────────────────────────
 -- Found by the P2a profile suite the moment this table existed: a blanket

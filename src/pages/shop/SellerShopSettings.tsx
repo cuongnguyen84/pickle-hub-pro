@@ -699,8 +699,9 @@ function ContactSection({
     <section aria-labelledby="sec-contact">
       <h2 id="sec-contact" className="tl-shop-h2">Kênh liên hệ công khai</h2>
       <p className="tl-shop-hint">
-        Người mua sẽ thấy đúng những kênh anh/chị bật công khai và quản trị viên đã duyệt.
-        Email và số điện thoại đăng nhập <strong>không bao giờ</strong> tự hiện ra ngoài.
+        Người mua sẽ thấy đúng những kênh anh/chị bật công khai — <strong>hiện ra ngay</strong>,
+        không phải chờ ai duyệt. Email và số điện thoại đăng nhập
+        <strong> không bao giờ</strong> tự hiện ra ngoài.
       </p>
 
       {loading ? (
@@ -824,7 +825,7 @@ function ContactSection({
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
             />
-            <span>Cho phép hiện kênh này ra ngoài (vẫn cần quản trị viên duyệt)</span>
+            <span>Cho phép hiện kênh này ra ngoài</span>
           </label>
 
           <button
