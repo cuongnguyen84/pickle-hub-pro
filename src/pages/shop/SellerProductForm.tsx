@@ -258,10 +258,22 @@ export default function SellerProductForm() {
     }
   }, [key, draft, isNew, serverDraft]);
 
-  const dirty = useMemo(
-    () => !!draft && !!serverDraft && !sameDraft(draft, serverDraft),
-    [draft, serverDraft],
-  );
+  /**
+   * "Còn thay đổi chưa lưu" nghĩa là: thứ lệnh lưu SẼ GỬI khác thứ máy chủ
+   * đang giữ. So bằng chính payload, nên hai cái không thể lệch nhau.
+   *
+   * So cả `price_vnd`/`stock_on_hand` là sai ở màn sửa: hai ô đó không hiện,
+   * `draft` giữ nguyên con số gieo lúc tải trang, và sau một lần lưu bảng phiên
+   * bản thì `serverDraft` mang giá MỚI trong khi `draft` vẫn giá cũ. Cờ dirty
+   * bật vĩnh viễn, nút ghi "Lưu và đăng bán" trong khi không có gì để lưu — và
+   * trước bản vá này nó còn kéo theo một lệnh ghi đè giá cũ thật.
+   */
+  const dirty = useMemo(() => {
+    if (!draft || !serverDraft) return false;
+    return (
+      JSON.stringify(buildUpdatePayload(draft)) !== JSON.stringify(buildUpdatePayload(serverDraft))
+    );
+  }, [draft, serverDraft]);
   const dirtyNew = useMemo(() => !!draft && isNew && !sameDraft(draft, EMPTY_DRAFT), [draft, isNew]);
 
   // Persist locally on every change. This is the thing that survives a closed
