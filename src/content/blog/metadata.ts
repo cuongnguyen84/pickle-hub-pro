@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["shenzhen open 2026", "skechers shenzhen open", "ppa tour asia", "ppa asia 500", "pickleball china", "shenzhen pickleball", "ppa asia schedule"],
     ctaPath: "/live",
     ctaLabel: { en: "Follow live scores on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/shenzhen-open-2026-preview-hero.webp", alt: "Skechers Shenzhen Open 2026 preview graphic — PPA Asia 500 event banner over the Shenzhen skyline with two pickleball players at the net, listing August 20-23 2026 at Bao'an Sports Center Gymnasium, a US$70,000 prize pool, 500 PPA points and 615 players." },
     titleEn: "Skechers Shenzhen Open 2026 Preview: Schedule, Format and How to Watch the PPA Asia 500",
     titleVi: "Skechers Shenzhen Open 2026: lịch thi đấu, thể thức và cách xem chặng PPA Asia 500",
     metaTitleEn: "Shenzhen Open 2026: Schedule, Format & How to Watch",
