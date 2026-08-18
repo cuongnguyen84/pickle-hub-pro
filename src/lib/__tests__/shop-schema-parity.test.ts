@@ -3,7 +3,7 @@
 // test is what makes the temporary copy safe to keep until the migration is
 // applied and `supabase gen types` can take over.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -434,12 +434,25 @@ describe("seller-rules acceptance parity with migration 20260814090000", () => {
 // Phase 3 screens can be trusted with money: the total is the database's, and
 // nothing new collects a bank detail.
 
+// Resolved by NAME, not by full filename. `shop_cart_items` was renamed
+// 20260818090000 → 20260818095000 when #614 landed the same timestamp, and
+// this list — which hardcoded the old filename — was the one thing in the repo
+// that broke. A migration's version is allowed to move (it did, and had to);
+// its name is what identifies it here.
+const MIGRATIONS_DIR = resolve(__dirname, "../../../supabase/migrations");
+
+function migrationByName(name: string): string {
+  const hit = readdirSync(MIGRATIONS_DIR).find((f) => f.endsWith(`_${name}.sql`));
+  if (!hit) throw new Error(`no migration named ${name} in supabase/migrations`);
+  return readFileSync(resolve(MIGRATIONS_DIR, hit), "utf8");
+}
+
 const P3_SQL = [
-  "20260818090000_shop_cart_items.sql",
-  "20260818100000_shop_orders.sql",
-  "20260818120000_shop_phase3_projection_and_address.sql",
+  "shop_cart_items",
+  "shop_orders",
+  "shop_phase3_projection_and_address",
 ]
-  .map((f) => readFileSync(resolve(__dirname, "../../../supabase/migrations", f), "utf8"))
+  .map(migrationByName)
   .join("\n");
 
 describe("shop schema parity with the Phase 3 migrations", () => {
