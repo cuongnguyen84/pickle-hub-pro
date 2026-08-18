@@ -46,13 +46,27 @@ Tắt lại = đổi giá trị thành `0` (hoặc xoá biến). Nó là nút t�
 
 ### 2.3 Sau khi bật: verify rồi mới xin index
 
+Script SEO có sẵn của repo nay biết 6 đường của shop — **opt-in**, vì khi cổng
+còn đóng thì chúng trả vỏ noindex và một script mặc định đỏ ở trạng thái cố ý
+đóng là một cổng không ai đọc được:
+
+```sh
+SHOP_PRODUCT_SLUG=kaiwin-diamond ./scripts/seo-verify.sh
+```
+
+Nó kiểm canonical, hreflang, JSON-LD **parse được**, og:title, og:image, meta
+description và "không noindex ngoài ý muốn" cho từng đường. Chạy trên preview
+18/08: **88/88 pass**.
+
+Thêm một lần kiểm bằng mắt, vì script không đếm chữ:
+
 ```sh
 curl -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" \
-  "https://www.thepicklehub.net/shop/product/kaiwin-diamond?nocache=1"
+  "https://www.thepicklehub.net/shop/product/kaiwin-diamond?nocache=1" \
+  | sed 's/<[^>]*>/ /g' | wc -w
 ```
-Phải thấy: **200**, `<title>` có tên sản phẩm + giá, JSON-LD `Product` kèm
-`offers.price`, hreflang en/vi/x-default, và **đếm chữ body > 100**. Chỉ kiểm
-tag là không đủ — lỗi 2026-08-05 có tag hoàn hảo và bài rỗng.
+Phải **> 100 chữ**. Chỉ kiểm tag là không đủ — lỗi 2026-08-05 có tag hoàn hảo
+và bài rỗng 71 chữ.
 
 Rồi: GSC URL Inspection → Request Indexing cho `/shop` và 2 PDP · IndexNow cho
 Bing.
