@@ -109,7 +109,11 @@ export default function Cart() {
   const [hidden, setHidden] = useState<string[]>([]);
   const [pendingQty, setPendingQty] = useState<Record<string, number>>({});
   const [lineError, setLineError] = useState<Record<string, string>>({});
-  const [undo, setUndo] = useState<{ variantId: string; qty: number; title: string } | null>(null);
+  // `cartItemId` đi kèm để khi hoàn tác hỏng còn biết trả dòng nào về chỗ cũ và
+  // treo câu lỗi lên đúng dòng đó — `lineError` khoá theo cart_item_id.
+  const [undo, setUndo] = useState<
+    { variantId: string; qty: number; title: string; cartItemId: string } | null
+  >(null);
   const undoTimer = useRef<number | null>(null);
 
   useEffect(() => () => {
@@ -150,6 +154,7 @@ export default function Cart() {
       variantId: line.variant_id,
       qty: line.qty,
       title: line.product_title ?? "Sản phẩm",
+      cartItemId: line.cart_item_id,
     });
     undoTimer.current = window.setTimeout(() => setUndo(null), 10_000);
   };
@@ -172,9 +177,15 @@ export default function Cart() {
     setUndo(null);
     try {
       await restore.mutateAsync({ variantId: snapshot.variantId, qty: snapshot.qty });
-      setHidden([]);
+      // Chỉ bỏ ẩn đúng dòng vừa khôi phục. `setHidden([])` làm mọi món đã bỏ
+      // trước đó nhấp nháy hiện lại cho tới lần refetch kế.
+      setHidden((h) => h.filter((id) => id !== snapshot.cartItemId));
     } catch (err) {
-      setLineError((e) => ({ ...e, [snapshot.variantId]: shopErrorMessage(err) }));
+      // Hoàn tác hỏng thì phải trả dòng về màn hình, nếu không món biến mất mà
+      // người mua không được báo gì. Khoá lỗi là cart_item_id — đúng khoá mà
+      // chỗ render đọc; dùng variant_id thì câu lỗi không bao giờ hiện ra.
+      setHidden((h) => h.filter((id) => id !== snapshot.cartItemId));
+      setLineError((e) => ({ ...e, [snapshot.cartItemId]: shopErrorMessage(err) }));
     }
   };
 
