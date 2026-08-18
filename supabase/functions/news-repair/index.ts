@@ -152,13 +152,14 @@ Deno.serve(async (req) => {
 
   // Only speak when something is worth knowing. A silent run is the normal
   // case and a daily "0 failures" message trains people to ignore the channel.
-  if (repaired.length || abandoned.length || left.length) {
+  // Abandoned rows are deliberately absent from the message. They are closed,
+  // nothing can be done about them, and naming them turns the channel into a
+  // recurring list of things nobody will ever act on. The count stays in the
+  // HTTP response and the reason stays on the row for anyone investigating.
+  if (repaired.length || left.length) {
     const lines = [
       `🛠 <b>news-repair</b> — ${origins.length} failed origin(s)`,
       repaired.length ? `\n<b>Requeued ${repaired.length}</b>\n${repaired.join("\n")}` : "",
-      abandoned.length
-        ? `\n<b>Đã đóng — ${abandoned.length}</b> (không còn cách tự động; row giữ lại ở trạng thái abandoned)\n${abandoned.join("\n")}`
-        : "",
       left.length ? `\n<b>Chưa xử lý được — ${left.length}</b>\n${left.join("\n")}` : "",
       dryRun ? "\n<i>dry run — nothing was written</i>" : "",
     ].filter(Boolean);
