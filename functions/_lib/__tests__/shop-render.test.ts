@@ -287,6 +287,35 @@ describe("renderShopCategory", () => {
     expect(html).not.toMatch(/<h1>vot<\/h1>/);
   });
 
+  it("does not say 'pickleball' twice when the category name already has it", async () => {
+    // Caught on the live preview, not by a reviewer: the taxonomy is
+    // Vietnamese and some names carry the word already. The EN title read
+    // "Pickleball Vợt pickleball — prices and sellers" and the VI one read
+    // "Vợt pickleball pickleball — giá và nơi mua".
+    const call = (lang: "en" | "vi", name: string) =>
+      renderShopCategory(
+        fakeSupabase({
+          shop_public_search: { rows: [CARD], total: 1 },
+          shop_public_categories: [{ slug: "c", name }],
+        }),
+        "c",
+        SITE,
+        lang,
+      ).then((r) => r.text());
+
+    const viHas = await call("vi", "Vợt pickleball");
+    expect(viHas).not.toMatch(/pickleball pickleball/i);
+    const enHas = await call("en", "Vợt pickleball");
+    expect(enHas).not.toMatch(/Pickleball Vợt pickleball/i);
+
+    // …and it is still added when the name does NOT carry it, because that is
+    // the keyword the page is for.
+    const viNo = await call("vi", "Giày");
+    expect(viNo).toContain("Giày pickleball");
+    const enNo = await call("en", "Giày");
+    expect(enNo).toContain("Pickleball Giày");
+  });
+
   it("does not advertise a price floor it cannot back with a number", async () => {
     const html = await (
       await renderShopCategory(

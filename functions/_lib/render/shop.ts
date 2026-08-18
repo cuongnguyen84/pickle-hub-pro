@@ -293,12 +293,21 @@ export async function renderShopCategory(
     console.error("renderShopCategory: categories fatal", err);
   }
 
+  // The taxonomy is Vietnamese and some names already carry the word — "Vợt
+  // pickleball" does, "Giày" does not. Appending it unconditionally produced
+  // "Vợt pickleball pickleball" and "Pickleball Vợt pickleball" on the live
+  // preview. The keyword is worth having when it is absent and is noise when
+  // it is not, so it is added conditionally rather than dropped.
+  const hasKeyword = /pickleball/i.test(catName);
+  const catVi = hasKeyword ? catName : `${catName} pickleball`;
+  const catEn = hasKeyword ? catName : `Pickleball ${catName}`;
+
   const title = lang === "vi"
-    ? `${catName} pickleball — giá và nơi mua | ThePickleHub`
-    : `Pickleball ${catName} — prices and sellers | ThePickleHub`;
+    ? `${catVi} — giá và nơi mua | ThePickleHub`
+    : `${catEn} — prices and sellers | ThePickleHub`;
   const description = lang === "vi"
-    ? `${total} sản phẩm ${catName.toLowerCase()} pickleball đang bán trên ThePickleHub, giá niêm yết bằng VNĐ từ shop đã xác minh, giao hàng toàn quốc.`
-    : `${total} pickleball ${catName.toLowerCase()} listings on ThePickleHub with VND prices from verified Vietnamese sellers and nationwide delivery.`;
+    ? `${total} sản phẩm ${catVi.toLowerCase()} đang bán trên ThePickleHub, giá niêm yết bằng VNĐ từ shop đã xác minh, giao hàng toàn quốc.`
+    : `${total} ${catEn.toLowerCase()} listings on ThePickleHub with VND prices from verified Vietnamese sellers and nationwide delivery.`;
 
   // "starting at" is only said when a real number backs it — a category whose
   // rows all price null must not advertise a floor of Infinity₫.
@@ -312,10 +321,10 @@ export async function renderShopCategory(
   const lead = total > 0
     ? lang === "vi"
       ? `<p>ThePickleHub đang liệt kê ${total} sản phẩm thuộc danh mục ${escapeHtml(catName)}${escapeHtml(fromLabel)}, bán bởi shop đã xác minh và giao hàng toàn quốc.</p>`
-      : `<p>ThePickleHub lists ${total} ${escapeHtml(catName.toLowerCase())} products${escapeHtml(fromLabel)}, from verified Vietnamese sellers with nationwide delivery.</p>`
+      : `<p>ThePickleHub lists ${total} ${escapeHtml(catEn.toLowerCase())} products${escapeHtml(fromLabel)}, from verified Vietnamese sellers with nationwide delivery.</p>`
     : lang === "vi"
       ? `<p>ThePickleHub chưa có sản phẩm nào trong danh mục ${escapeHtml(catName)}.</p>`
-      : `<p>ThePickleHub has no ${escapeHtml(catName.toLowerCase())} products listed yet.</p>`;
+      : `<p>ThePickleHub has no ${escapeHtml(catEn.toLowerCase())} products listed yet.</p>`;
 
   const bodyContent = `${breadcrumb(lang, siteUrl, [
     { name: lang === "vi" ? "Cửa hàng" : "Shop", href: `${siteUrl}${lang === "vi" ? "/vi" : ""}/shop` },

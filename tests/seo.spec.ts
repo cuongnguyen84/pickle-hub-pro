@@ -300,12 +300,21 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   );
   expect(childUrls.length).toBeGreaterThan(0);
 
-  // Segments allowed to serve an empty urlset. Currently NONE — all 11 prod
-  // segments carry URLs (checked 2026-07-16), and sitemap generators swallow
+  // Segments allowed to serve an empty urlset. Sitemap generators swallow
   // Supabase query errors into an empty 200 urlset (sitemap-news.xml.ts:62),
   // so an unexpected empty segment must fail loud, not skip silently
   // (Codex P1). If a segment becomes legitimately emptiable, add it here.
-  const MAY_BE_EMPTY = new Set<string>([]);
+  //
+  // sitemap-shop.xml (Phase 4, 2026-08-18) is the first entry, and it is empty
+  // BY DESIGN while SHOP_PUBLIC_INDEXING is off: the index references the
+  // segment unconditionally, because a segment that 404s flags the whole index
+  // in Search Console for as long as the gate stays shut. An empty urlset is
+  // valid; a missing segment is not.
+  //
+  // When the launch flag goes to "1" on production, this entry should come
+  // back OUT and a floor should go into SEGMENT_MIN_URLS instead — an empty
+  // shop sitemap after launch means the generator broke.
+  const MAY_BE_EMPTY = new Set<string>(["sitemap-shop.xml"]);
 
   // Segments whose detail pages must carry a specific article schema.
   // (sitemap-blog.xml lists /vi/blog/* pages; both blog handlers emit
