@@ -92,6 +92,8 @@ export default function ShopSearch() {
     <TheLineLayout title="Tìm sản phẩm">
       <DynamicMeta title={q ? `Tìm: ${q}` : "Tìm sản phẩm"} noindex />
       <main className="tl-shop">
+        {/* R5 #1 — the page frame: gutters + max-width + BottomNav clearance. */}
+        <div className="tl-shop-page">
         {/* No breadcrumb on this screen, so the topline carries the cart badge
             alone. It must NOT go in TheLineLayout's tl-nav — that nav is
             shared with /live, /feed and /blog. */}
@@ -145,6 +147,7 @@ export default function ShopSearch() {
             <ResultsGrid
               rows={rows}
               total={results.data?.total ?? 0}
+              hidePilotNote
               isLoading={results.isLoading}
               isError={results.isError}
               onRetry={() => void results.refetch()}
@@ -187,6 +190,7 @@ export default function ShopSearch() {
             });
           }}
         />
+        </div>
       </main>
     </TheLineLayout>
   );

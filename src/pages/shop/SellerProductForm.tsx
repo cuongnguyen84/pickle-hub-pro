@@ -36,7 +36,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, Check, GitCompare, ImageOff } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
+import { LoadingState } from "@/components/states/PageStates";
 import { useMyShopMembership, useShopCategories, useShopProfile } from "@/hooks/shop/useShopProfile";
 import {
   useArchiveProduct,
@@ -356,7 +357,8 @@ export default function SellerProductForm() {
 
   if (membership.isError || profile.isError || product.isError) {
     return shell(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được sản phẩm này."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();

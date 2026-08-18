@@ -22,7 +22,8 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Check, Plus, Trash2 } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { DefList, ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
+import { LoadingState } from "@/components/states/PageStates";
 import {
   shopErrorMessage,
   useDeleteContact,
@@ -131,7 +132,8 @@ export default function SellerShopSettings() {
 
   if (membership.isError || profile.isError) {
     return shellWrap(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được cài đặt shop."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();

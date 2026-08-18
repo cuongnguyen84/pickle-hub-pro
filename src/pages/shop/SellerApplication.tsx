@@ -23,7 +23,8 @@ import {
   SellerRulesAcceptance,
   type SellerRulesState,
 } from "@/components/shop/SellerRulesAcceptance";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
+import { LoadingState } from "@/components/states/PageStates";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import {
   applicationErrorMessage,
@@ -261,7 +262,8 @@ export default function SellerApplication() {
       <ShopScrollShell>
         <ShopHeader title="Hồ sơ đăng ký bán hàng" backTo="/shop/sell" />
         <main className="tl-shop-page tl-shop-page--narrow">
-          <ErrorState
+          <ShopErrorNotice
+            title="Chưa tải được trang đăng ký."
             onRetry={() => {
               void pilot.refetch();
               void remote.refetch();

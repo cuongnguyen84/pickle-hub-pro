@@ -16,10 +16,11 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, PackageOpen, Search } from "lucide-react";
+import { ChevronRight, PackageOpen, Search, SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { ShopCartLink } from "@/components/shop/CartLink";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { ShopMonogram } from "@/components/shop/ShopMonogram";
 import { useMyOrders, type OrderListRow } from "@/hooks/shop/useOrders";
 import { formatVnd } from "@/lib/shop/publicCatalog";
@@ -138,10 +139,9 @@ export default function Orders() {
       <main className="tl-shop">
         <div className="tl-shop-page tl-shop-page--narrow">
           <div className="tl-shop-topline">
-            <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
+            {/* R5 #14 — the crumb repeated the <h1> right below it. */}
+            <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
               <Link to="/shop" className="tl-crumb">Chợ</Link>
-              <span aria-hidden="true" className="tl-crumb-sep">/</span>
-              <span aria-current="page" className="tl-crumb-current">{COPY.title}</span>
             </nav>
             <ShopCartLink />
           </div>
@@ -153,11 +153,18 @@ export default function Orders() {
   );
 
   if (q.isPending) {
+    // R5 #6 — the shape of an order card: monogram + three text rows.
     return shell(
-      <div aria-busy="true">
-        <p className="tl-shop-hint">{COPY.loading}</p>
+      <div aria-busy="true" aria-label={COPY.loading}>
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="tl-shop-sk" style={{ height: 92, borderRadius: 10, marginBottom: 10 }} />
+          <div key={i} className="tl-shop-card" style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+            <span className="tl-shop-sk" style={{ display: "block", width: 56, height: 56, borderRadius: 12, flex: "none" }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "35%" }} />
+              <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "75%", height: 16 }} />
+              <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "55%", marginBottom: 0 }} />
+            </div>
+          </div>
         ))}
       </div>,
     );
@@ -165,20 +172,7 @@ export default function Orders() {
 
   if (q.isError) {
     return shell(
-      <div className="tl-shop-notice tl-shop-notice--danger" role="alert">
-        <AlertTriangle size={16} aria-hidden="true" />
-        <div>
-          <p style={{ margin: 0 }}>{COPY.loadError}</p>
-          <button
-            type="button"
-            className="tl-shop-btn tl-shop-btn--sm"
-            style={{ marginTop: 10 }}
-            onClick={() => void q.refetch()}
-          >
-            {COPY.retry}
-          </button>
-        </div>
-      </div>,
+      <ShopErrorNotice title={COPY.loadError} body={null} onRetry={() => void q.refetch()} />,
     );
   }
 
@@ -222,7 +216,13 @@ export default function Orders() {
               type="button"
               role="tab"
               id={`orders-tab-${t.key}`}
+              // R5 #2 — BOTH attributes, on purpose. `aria-selected` is what a
+              // role="tab" is required to carry (dropping it is an ARIA
+              // violation), and `aria-current="page"` is the only selector
+              // shop.css styles a chip on. With just the first one, the four
+              // chips were identical grey and the screen was broken, not ugly.
               aria-selected={tab === t.key}
+              aria-current={tab === t.key ? "page" : undefined}
               aria-controls="orders-list"
               className="tl-shop-cat"
               onClick={() => pick(t.key)}
@@ -233,11 +233,12 @@ export default function Orders() {
         </div>
       </section>
 
-      <section aria-labelledby="orders-list-h" id="orders-list" style={{ marginTop: 16 }}>
+      <section aria-labelledby="orders-list-h" id="orders-list" className="tl-shop-section">
         <h2 id="orders-list-h" className="tl-shop-sr">Danh sách đơn</h2>
 
         {filtered.length === 0 ? (
           <div className="tl-shop-empty">
+            <SearchX size={28} aria-hidden="true" />
             <p className="tl-shop-empty-title">
               {needle ? COPY.noMatch(search.trim()) : "Không có đơn nào ở mục này"}
             </p>
@@ -293,21 +294,15 @@ function OrderRow({ row }: { row: OrderListRow }) {
       <ShopMonogram name={shopName} size={56} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
         <p className="tl-shop-hint" style={{ margin: 0 }}>{shopName}</p>
-        {/* One main link per card, and it is what was bought. */}
-        <Link
-          to={`/shop/order/${row.code}`}
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            lineHeight: 1.35,
-            color: "inherit",
-            display: "flex",
-            alignItems: "center",
-            minHeight: 44,
-          }}
-        >
-          {first}
-          {others > 0 ? ` ${COPY.otherItems(others)}` : ""}
+        {/* One main link per card, and it is what was bought. R5 #15: with
+            `color: inherit` and no underline it read as plain text, so it
+            carries a chevron and answers a tap. */}
+        <Link to={`/shop/order/${row.code}`} className="tl-shop-rowlink">
+          <span>
+            {first}
+            {others > 0 ? ` ${COPY.otherItems(others)}` : ""}
+          </span>
+          <ChevronRight size={18} aria-hidden="true" />
         </Link>
         <div className="tl-shop-hint" style={{ margin: 0, fontVariantNumeric: "tabular-nums" }}>
           {row.code} · {dm(row.created_at)} · {formatVnd(row.total_vnd)}

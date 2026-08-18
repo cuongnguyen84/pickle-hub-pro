@@ -76,7 +76,8 @@ describe("the four page-level answers stay distinct", () => {
     state.isPending = true;
     state.data = undefined;
     render(<Orders />);
-    expect(screen.getByText("Đang tải danh sách đơn…")).toBeTruthy();
+    // R5 #6: skeleton in the shape of an order card, no "Đang tải…" sentence.
+    expect(screen.getByLabelText("Đang tải danh sách đơn…")).toBeTruthy();
     expect(screen.queryByText("Anh/chị chưa có đơn hàng nào")).toBeNull();
     expect(document.querySelector('[aria-busy="true"]')).toBeTruthy();
   });

@@ -13,7 +13,8 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, Check, Clock, FileText, RotateCcw, X } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, ShopHeader, DefList } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
+import { LoadingState } from "@/components/states/PageStates";
 import {
   useApplicationEvents,
   useMyApplication,
@@ -98,7 +99,10 @@ export default function SellerApplicationStatus() {
       <ShopScrollShell>
         <ShopHeader title="Hồ sơ đăng ký" backTo="/shop/sell" />
         <main className="tl-shop-page tl-shop-page--narrow">
-          <ErrorState onRetry={() => void app.refetch()} />
+          <ShopErrorNotice
+            title="Chưa tải được hồ sơ đăng ký."
+            onRetry={() => void app.refetch()}
+          />
         </main>
       </ShopScrollShell>
     );

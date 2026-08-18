@@ -20,7 +20,6 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from "react-route
 import { AlertTriangle, BadgeCheck, ExternalLink, Loader2, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { LoadingState } from "@/components/states/PageStates";
 import { usePublicProduct } from "@/hooks/shop/usePublicShop";
 import { CartAddedToast, ShopCartLink } from "@/components/shop/CartLink";
 import { CART_QTY_MAX, useCartMutations } from "@/hooks/shop/useCart";
@@ -36,6 +35,7 @@ import {
 } from "@/lib/shop/publicCatalog";
 import {
   activeMediaId,
+  shownMediaId,
   displayPrice,
   initialSelection,
   optionState,
@@ -101,6 +101,16 @@ export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const q = usePublicProduct(slug ?? null);
   const [selection, setSelection] = useState<Selection | null>(null);
+  // R5 #3. The photo used to be derived ENTIRELY from the variant, so on a
+  // product with five photos and no options — the common case for a used
+  // paddle — tapping thumbnails 2..5 did nothing at all and the page read as
+  // broken. A picked photo wins until the buyer changes the variant, at which
+  // point it is dropped and the variant's own photo takes over again.
+  const [pickedMediaId, setPickedMediaId] = useState<string | null>(null);
+  const chooseVariant = (next: Selection) => {
+    setSelection(next);
+    setPickedMediaId(null);
+  };
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -141,16 +151,38 @@ export default function ProductDetail() {
     () => (product ? displayPrice(variants, sel, resolved) : null),
     [product, variants, sel, resolved],
   );
-  const shownMediaId = product
+  const variantMediaId = product
     ? activeMediaId(resolved, variants, sel, product.primary_media_id)
     : null;
-  const shown = product?.media.find((m) => m.id === shownMediaId) ?? product?.media[0] ?? null;
+  const currentMediaId = shownMediaId(pickedMediaId, product?.media ?? [], variantMediaId);
+  const shown = product?.media.find((m) => m.id === currentMediaId) ?? product?.media[0] ?? null;
 
   if (q.isLoading) {
+    // R5 #6 — the shape of a PDP, not a centred spinner: photo box, title,
+    // price, one option row, the buy button.
     return (
       <TheLineLayout title="Sản phẩm">
         <DynamicMeta title="Sản phẩm" noindex />
-        <main className="tl-shop"><LoadingState /></main>
+        <main className="tl-shop">
+          <div className="tl-shop-page" aria-busy="true" aria-label="Đang tải sản phẩm">
+            <div className="tl-pdp">
+              <div className="tl-pdp-media">
+                <span className="tl-shop-sk tl-shop-sk--media" />
+                <div className="tl-shop-skrow" style={{ marginTop: 10 }}>
+                  <span className="tl-shop-sk tl-shop-sk--thumb" />
+                  <span className="tl-shop-sk tl-shop-sk--thumb" />
+                  <span className="tl-shop-sk tl-shop-sk--thumb" />
+                </div>
+              </div>
+              <div className="tl-pdp-info">
+                <span className="tl-shop-sk tl-shop-sk--title" />
+                <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "40%", height: 22 }} />
+                <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "60%" }} />
+                <span className="tl-shop-sk tl-shop-sk--card" style={{ height: 46 }} />
+              </div>
+            </div>
+          </div>
+        </main>
       </TheLineLayout>
     );
   }
@@ -166,11 +198,13 @@ export default function ProductDetail() {
       <TheLineLayout title="Không tìm thấy sản phẩm">
         <DynamicMeta title="Không tìm thấy sản phẩm" noindex />
         <main className="tl-shop">
-          <h1 className="tl-shop-h1">Không tìm thấy sản phẩm này</h1>
-          <p className="tl-shop-sub">
-            Có thể sản phẩm đã được gỡ, hoặc đường dẫn không đúng.
-          </p>
-          <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          <div className="tl-shop-page">
+            <h1 className="tl-shop-h1">Không tìm thấy sản phẩm này</h1>
+            <p className="tl-shop-sub">
+              Có thể sản phẩm đã được gỡ, hoặc đường dẫn không đúng.
+            </p>
+            <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          </div>
         </main>
       </TheLineLayout>
     );
@@ -213,24 +247,25 @@ export default function ProductDetail() {
     <TheLineLayout title={product.title}>
       <DynamicMeta title={product.title} description={product.description ?? undefined} noindex />
       <main className="tl-shop">
+        <div className="tl-shop-page">
         <div className="tl-shop-topline">
-        <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
-          <Link to="/shop" className="tl-crumb">Chợ</Link>
-          <span aria-hidden="true" className="tl-crumb-sep">/</span>
-          {product.category && (
-            <>
-              <Link to={`/shop/category/${product.category.slug}`} className="tl-crumb">
-                {product.category.name}
-              </Link>
-              <span aria-hidden="true" className="tl-crumb-sep">/</span>
-            </>
-          )}
-          <span aria-current="page" className="tl-crumb-current">{product.title}</span>
-        </nav>
+          {/* The product title is the <h1> two lines down; repeating it as a
+              crumb was noise on a 375px row (R5 #14). */}
+          <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
+            <Link to="/shop" className="tl-crumb">Chợ</Link>
+            {product.category && (
+              <>
+                <span aria-hidden="true" className="tl-crumb-sep">/</span>
+                <Link to={`/shop/category/${product.category.slug}`} className="tl-crumb">
+                  {product.category.name}
+                </Link>
+              </>
+            )}
+          </nav>
           <ShopCartLink />
         </div>
 
-        <div className={ordering ? "tl-pdp tl-pdp-has-buybar" : "tl-pdp"}>
+        <div className={ordering ? "tl-pdp tl-shop-has-buybar" : "tl-pdp"}>
           <section aria-labelledby="pdp-media-h" className="tl-pdp-media">
             <h2 id="pdp-media-h" className="tl-shop-sr">Ảnh sản phẩm</h2>
             {shown ? (
@@ -253,14 +288,16 @@ export default function ProductDetail() {
                     <button
                       type="button"
                       className="tl-pdp-thumb"
-                      aria-current={m.id === shownMediaId ? "true" : undefined}
+                      aria-current={m.id === currentMediaId ? "true" : undefined}
                       aria-label={`Xem ảnh ${m.alt_text ?? ""}`.trim()}
                       onClick={() => {
                         // Picking a thumbnail selects the variant that photo
                         // belongs to, so the price and SKU follow the image
-                        // instead of drifting from it.
+                        // instead of drifting from it — and the photo shows
+                        // either way, which is the half that was missing.
                         const owner = variants.find((v) => v.media_id === m.id);
                         if (owner?.option_values) setSelection({ ...owner.option_values });
+                        setPickedMediaId(m.id);
                       }}
                     >
                       <img
@@ -319,7 +356,7 @@ export default function ProductDetail() {
                         // sold out, is disabled — with the reason in the label
                         // rather than left to the buyer to guess.
                         disabled={!st.exists || !st.available}
-                        onClick={() => setSelection(pickOption(groups, variants, sel, g.name, val))}
+                        onClick={() => chooseVariant(pickOption(groups, variants, sel, g.name, val))}
                       >
                         {val}
                         {st.exists && !st.available && (
@@ -399,33 +436,33 @@ export default function ProductDetail() {
 
               {contacts.length > 0 ? (
                 <>
-                  {contacts.map((c) => {
-                    const href = contactHref(c)!;
-                    return (
-                      <a
-                        key={c.id}
-                        href={href}
-                        className={
-                          ordering
-                            ? "tl-shop-btn tl-shop-btn--block"
-                            : "tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
-                        }
-                        target={c.type === "phone" ? undefined : "_blank"}
-                        rel="noopener noreferrer nofollow"
-                        onClick={() => {
-                          // Type and public ids only. Never the number or URL.
-                          void contactAnalyticsPayload(c, product.id, product.shop.slug);
-                        }}
-                      >
-                        {c.type === "phone" ? (
-                          <Phone size={15} aria-hidden="true" />
-                        ) : (
-                          <ExternalLink size={15} aria-hidden="true" />
-                        )}
-                        {CONTACT_LABEL[c.type]}
-                      </a>
-                    );
-                  })}
+                  {/* R5 #12 — a horizontal row of secondary buttons, the same
+                      on the storefront. Green stays on the buy button. */}
+                  <div className="tl-shop-contactrow">
+                    {contacts.map((c) => {
+                      const href = contactHref(c)!;
+                      return (
+                        <a
+                          key={c.id}
+                          href={href}
+                          className="tl-shop-btn"
+                          target={c.type === "phone" ? undefined : "_blank"}
+                          rel="noopener noreferrer nofollow"
+                          onClick={() => {
+                            // Type and public ids only. Never the number or URL.
+                            void contactAnalyticsPayload(c, product.id, product.shop.slug);
+                          }}
+                        >
+                          {c.type === "phone" ? (
+                            <Phone size={15} aria-hidden="true" />
+                          ) : (
+                            <ExternalLink size={15} aria-hidden="true" />
+                          )}
+                          {CONTACT_LABEL[c.type]}
+                        </a>
+                      );
+                    })}
+                  </div>
                   <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
                     {contacts.map((c) => CONTACT_DESTINATION[c.type]).join(" · ")}. ThePickleHub
                     không có tin nhắn nội bộ — anh/chị trao đổi thẳng với shop.
@@ -453,10 +490,11 @@ export default function ProductDetail() {
               {product.shop.region && <p className="tl-pdp-note">Gửi từ {product.shop.region}</p>}
               {product.shop.shipping_note && <p className="tl-pdp-note">{product.shop.shipping_note}</p>}
               {product.shop.return_note && <p className="tl-pdp-note">{product.shop.return_note}</p>}
+              {/* R5 (cắt chữ): ba dòng miễn trừ còn một. Không mất nghĩa nào —
+                  ai khai, ai duyệt — chỉ mất phần lặp lại trang shop đã nói. */}
               <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
-                Thông tin sản phẩm, giá và tình trạng hàng do shop tự khai và tự chịu trách nhiệm.
-                ThePickleHub duyệt hồ sơ shop và kiểm duyệt nội dung sản phẩm trước khi hiển thị;
-                tình trạng xác minh của shop (nếu có) xem trên trang shop.
+                Giá và tình trạng hàng do shop tự khai. ThePickleHub kiểm duyệt nội dung trước khi
+                hiển thị.
               </p>
             </div>
 
@@ -468,14 +506,15 @@ export default function ProductDetail() {
             )}
           </section>
         </div>
+        </div>
 
         {ordering && (
           <div
-            className="tl-pdp-buybar"
+            className="tl-shop-buybar"
             data-shown={ctaOffScreen ? "true" : "false"}
             aria-hidden={ctaOffScreen ? undefined : true}
           >
-            <p className="tl-pdp-buybar-price">
+            <p className="tl-shop-buybar-price">
               {resolved
                 ? formatVnd(resolved.price_vnd)
                 : price
@@ -485,8 +524,14 @@ export default function ProductDetail() {
             <button
               type="button"
               className="tl-shop-btn tl-shop-btn--primary"
-              disabled={adding || !!addBlockedReason}
+              // KHÔNG disable khi chưa chọn phiên bản: nút bị disable thì
+              // onClick bên dưới không bao giờ chạy, tức là một nút xám không
+              // làm gì và không có chỗ nào trong thanh để giải thích tại sao.
+              disabled={adding}
               aria-busy={adding || undefined}
+              // Ẩn khỏi thứ tự Tab khi thanh chưa hiện — nếu không, người dùng
+              // bàn phím rơi vào một nút vô hình.
+              tabIndex={ctaOffScreen ? undefined : -1}
               // Chưa chọn phiên bản thì đưa người mua về đúng chỗ phải chọn,
               // thay vì để họ bấm một nút xám không nói gì.
               onClick={() =>

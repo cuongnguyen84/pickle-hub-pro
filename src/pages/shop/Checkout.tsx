@@ -21,10 +21,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, ShoppingBag } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { ShopCartLink } from "@/components/shop/CartLink";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { cartGroupFor, useCartView } from "@/hooks/shop/useCart";
 import { useLastShippingAddress, useOrderCreate } from "@/hooks/shop/useOrders";
@@ -64,19 +65,19 @@ const COPY = {
   addressPlaceholder:
     "Số 12 ngõ 5 Trần Duy Hưng, phường Trung Hoà, quận Cầu Giấy, Hà Nội",
   // EN: Pay on delivery (COD) / Bank transfer first — the shop will send details
+  // R5 (cắt chữ): mỗi radio còn ĐÚNG một dòng. Câu "ThePickleHub không nhận
+  // tiền, không giữ tiền" chỉ nói một lần, ngay cạnh nút đặt đơn.
   codLabel: "Trả khi nhận hàng (COD)",
-  codHint:
-    "Anh/chị trả tiền trực tiếp cho người giao. ThePickleHub không giữ tiền của anh/chị.",
+  codHint: "Anh/chị trả tiền trực tiếp cho người giao.",
   bankLabel: "Chuyển khoản trước — shop sẽ gửi thông tin",
-  bankHint:
-    "Đặt xong, anh/chị nhắn shop qua Zalo hoặc gọi điện để nhận thông tin chuyển khoản. ThePickleHub không nhận tiền, không giữ tiền và không tự đối soát.",
+  bankHint: "Đặt xong, anh/chị nhắn Zalo hoặc gọi shop để nhận thông tin chuyển khoản.",
   // EN: This fee applies to every province… no promised delivery date.
+  // R5 (cắt chữ): hai đoạn gộp một, không mất thông tin nào.
   shipEveryProvince:
-    "Phí này áp dụng cho mọi tỉnh thành. ThePickleHub chưa nối với đơn vị vận chuyển nên không hứa ngày giao — người bán sẽ đưa mã vận đơn để anh/chị tự tra.",
-  noOtherFees: "Không có phí nào khác. ThePickleHub không thu phí của người mua.",
+    "Phí này áp dụng mọi tỉnh thành. ThePickleHub không thu thêm phí nào và chưa nối với đơn vị vận chuyển, nên người bán sẽ đưa mã vận đơn để anh/chị tự tra.",
   // EN: Pressing "Order" sends a request to {shop}. They confirm before shipping.
   submitNote: (shop: string) =>
-    `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Người bán xác nhận rồi mới gửi hàng.`,
+    `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Người bán xác nhận rồi mới gửi hàng. ThePickleHub không nhận tiền và không giữ tiền của đơn này.`,
   submit: "Đặt đơn",
   submitBusy: "Đang gửi đơn…",
   submitRetry: "Thử lại",
@@ -163,6 +164,24 @@ export default function Checkout() {
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLTextAreaElement>(null);
+
+  // R5 #9 — sticky order bar, the ProductDetail mechanism reused verbatim:
+  // the node is state (not a ref) so the effect re-runs exactly when the
+  // button mounts or unmounts.
+  const [submitNode, setSubmitNode] = useState<HTMLDivElement | null>(null);
+  const [submitOffScreen, setSubmitOffScreen] = useState(false);
+  useEffect(() => {
+    if (!submitNode || typeof IntersectionObserver === "undefined") {
+      setSubmitOffScreen(false);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => setSubmitOffScreen(!entry.isIntersecting),
+      { rootMargin: "-8px 0px 0px 0px" },
+    );
+    io.observe(submitNode);
+    return () => io.disconnect();
+  }, [submitNode]);
 
   const errors = problems(form);
   // Only a mistake the buyer has already been TOLD about disables the button.
@@ -286,27 +305,37 @@ export default function Checkout() {
     </div>
   );
 
-  const shell = (children: React.ReactNode) => (
+  const shell = (children: React.ReactNode, sticky?: React.ReactNode) => (
     <TheLineLayout title={COPY.title}>
       <DynamicMeta title={COPY.title} noindex />
       <main className="tl-shop">
-        <div className="tl-shop-page tl-shop-page--narrow">
+        <div
+          className={
+            sticky
+              ? "tl-shop-page tl-shop-page--narrow tl-shop-has-buybar"
+              : "tl-shop-page tl-shop-page--narrow"
+          }
+        >
           {topline}
           {children}
         </div>
+        {sticky}
       </main>
     </TheLineLayout>
   );
 
   if (cart.isPending) {
+    // R5 #6 — the shape of this form: three fields and the total card.
     return shell(
-      <div aria-busy="true">
+      <div aria-busy="true" aria-label={COPY.loading}>
         <h1 className="tl-shop-h1">{COPY.title}</h1>
-        <p className="tl-shop-hint">{COPY.loading}</p>
-        <div className="tl-shop-sk" style={{ height: 68, marginBottom: 12 }} />
-        <div className="tl-shop-sk" style={{ height: 68, marginBottom: 12 }} />
-        <div className="tl-shop-sk" style={{ height: 68, marginBottom: 12 }} />
-        <div className="tl-shop-sk" style={{ height: 120 }} />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "30%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" style={{ height: 44 }} />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "30%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" style={{ height: 44 }} />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "40%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" style={{ height: 96 }} />
+        <span className="tl-shop-sk tl-shop-sk--card" style={{ height: 120 }} />
       </div>,
     );
   }
@@ -315,19 +344,7 @@ export default function Checkout() {
     return shell(
       <>
         <h1 className="tl-shop-h1">{COPY.title}</h1>
-        <div className="tl-shop-notice tl-shop-notice--danger" role="alert">
-          <AlertTriangle size={16} aria-hidden="true" />
-          <div>
-            <p style={{ margin: 0 }}>{COPY.loadError}</p>
-            <button
-              type="button"
-              className="tl-shop-btn tl-shop-btn--sm"
-              onClick={() => void cart.refetch()}
-            >
-              {COPY.retry}
-            </button>
-          </div>
-        </div>
+        <ShopErrorNotice title={COPY.loadError} body={null} onRetry={() => void cart.refetch()} />
       </>,
     );
   }
@@ -337,6 +354,7 @@ export default function Checkout() {
       <>
         <h1 className="tl-shop-h1">{COPY.title}</h1>
         <div className="tl-shop-empty">
+          <ShoppingBag size={28} aria-hidden="true" />
           <p className="tl-shop-empty-title">{COPY.emptyGroup}</p>
           <Link to="/shop/cart" className="tl-shop-btn tl-shop-btn--primary">{COPY.backToCart}</Link>
         </div>
@@ -388,7 +406,7 @@ export default function Checkout() {
         </div>
       )}
 
-      <section aria-labelledby="co-address">
+      <section aria-labelledby="co-address" className="tl-shop-section">
         <h2 className="tl-shop-h2" id="co-address">{COPY.addressH}</h2>
 
         <div className="tl-shop-field">
@@ -476,7 +494,7 @@ export default function Checkout() {
         </div>
       </section>
 
-      <section aria-labelledby="co-pay">
+      <section aria-labelledby="co-pay" className="tl-shop-section">
         <h2 className="tl-shop-h2" id="co-pay">{COPY.paymentH}</h2>
         <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
           <legend className="tl-shop-sr">{COPY.paymentH}</legend>
@@ -505,7 +523,7 @@ export default function Checkout() {
         </fieldset>
       </section>
 
-      <section aria-labelledby="co-review">
+      <section aria-labelledby="co-review" className="tl-shop-section">
         <h2 className="tl-shop-h2" id="co-review">{COPY.reviewH}</h2>
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {group.lines.map((l) => (
@@ -528,7 +546,7 @@ export default function Checkout() {
       </section>
 
       {(shopQ.data?.shop?.shipping_note || shopQ.data?.shop?.return_note) && (
-        <section aria-labelledby="co-policy">
+        <section aria-labelledby="co-policy" className="tl-shop-section">
           <h2 className="tl-shop-h2" id="co-policy">{COPY.policyH}</h2>
           <dl className="tl-shop-deflist">
             {shopQ.data?.shop?.shipping_note && (
@@ -547,7 +565,7 @@ export default function Checkout() {
         </section>
       )}
 
-      <section aria-labelledby="co-total">
+      <section aria-labelledby="co-total" className="tl-shop-section">
         <h2 className="tl-shop-h2" id="co-total">{COPY.totalH}</h2>
         <div className="tl-shop-card">
           <OrderMoneyRows
@@ -556,27 +574,54 @@ export default function Checkout() {
             totalVnd={total}
             itemCount={itemCount}
           />
-          <p className="tl-shop-hint">{COPY.shipEveryProvince}</p>
-          <p className="tl-shop-hint" style={{ marginBottom: 0 }}>{COPY.noOtherFees}</p>
+          <p className="tl-shop-hint" style={{ marginBottom: 0 }}>{COPY.shipEveryProvince}</p>
         </div>
 
-        <button
-          type="button"
-          className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
-          style={{ marginTop: 16 }}
-          disabled={busy || blocked}
-          aria-busy={busy || undefined}
-          aria-describedby={blocked ? "co-blocked" : "co-submit-note"}
-          onClick={() => void onSubmit()}
-        >
-          {busy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-          {buttonLabel}
-        </button>
-        {blocked && (
-          <p className="tl-shop-hint" id="co-blocked">{COPY.errBlocked}</p>
-        )}
-        <p className="tl-shop-hint" id="co-submit-note">{COPY.submitNote(shopName)}</p>
+        <div ref={setSubmitNode}>
+          <button
+            type="button"
+            className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
+            style={{ marginTop: 16 }}
+            disabled={busy || blocked}
+            aria-busy={busy || undefined}
+            aria-describedby={blocked ? "co-blocked" : "co-submit-note"}
+            onClick={() => void onSubmit()}
+          >
+            {busy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+            {buttonLabel}
+          </button>
+          {blocked && (
+            <p className="tl-shop-hint" id="co-blocked">{COPY.errBlocked}</p>
+          )}
+          <p className="tl-shop-hint" id="co-submit-note">{COPY.submitNote(shopName)}</p>
+        </div>
       </section>
     </>,
+    // R5 #9 — the same sticky bar as the product page. "Đặt đơn" sat about
+    // three and a half screens down at 375px; the bar carries it until the
+    // real button is on screen, and never shows two live buttons at once.
+    <div
+      className="tl-shop-buybar"
+      data-shown={submitOffScreen ? "true" : "false"}
+      aria-hidden={submitOffScreen ? undefined : true}
+    >
+      <div style={{ minWidth: 0 }}>
+        <p className="tl-shop-buybar-price">{formatVnd(total)}</p>
+        <p className="tl-shop-buybar-sub">{shopName}</p>
+      </div>
+      <button
+        type="button"
+        className="tl-shop-btn tl-shop-btn--primary"
+        disabled={busy}
+        aria-busy={busy || undefined}
+        tabIndex={submitOffScreen ? undefined : -1}
+        // Thiếu thông tin nhận hàng thì đưa người mua lên đúng ô phải điền,
+        // thay vì để họ bấm một nút xám không giải thích được ở đây.
+        onClick={() => void onSubmit()}
+      >
+        {busy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+        {busy ? COPY.submitBusy : failed ? COPY.submitRetry : COPY.submit}
+      </button>
+    </div>,
   );
 }

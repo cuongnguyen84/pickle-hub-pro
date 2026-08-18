@@ -14,10 +14,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ShoppingBag } from "lucide-react";
+import { AlertTriangle, ShoppingBag, Trash2 } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { ShopCartLink } from "@/components/shop/CartLink";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { useCartMutations, useCartView, CART_QTY_MAX } from "@/hooks/shop/useCart";
 import { usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { formatVnd, mediaBox, publicMediaUrl } from "@/lib/shop/publicCatalog";
@@ -47,10 +48,6 @@ const COPY = {
   // order and receive per shop — shipping is charged separately too.
   multiShop: (n: number) =>
     `Giỏ có sản phẩm của ${n} shop. Mỗi shop tự gửi hàng nên anh/chị đặt và nhận riêng từng shop — phí vận chuyển cũng tính riêng.`,
-  // EN: There is no "order everything" button: each shop is its own order —
-  // shipped separately, charged separately, returned under that shop's policy.
-  noPlaceAll:
-    "Không có nút “đặt tất cả” vì mỗi shop là một đơn riêng: gửi riêng, phí riêng, đổi trả theo chính sách riêng của từng shop.",
   // EN: Shipping ({fee}) is added at checkout. / This shop ships free.
   shipLater: (fee: number) =>
     `Chưa gồm phí vận chuyển (${formatVnd(fee)}), tính ở bước đặt hàng.`,
@@ -71,8 +68,12 @@ const COPY = {
   pausedCartKept: "Sản phẩm vẫn nằm trong giỏ, anh/chị đặt được khi shop mở lại.",
   // EN: Max 10 of any one item per order.
   qtyMax: `Mỗi phiên bản tối đa ${CART_QTY_MAX} cái trong một đơn.`,
-  viewProduct: "Xem sản phẩm",
 };
+
+/** How many lines in this shop's group the buyer has to fix first. One
+ *  definition, read by the group footer AND by the sticky bar, so the two can
+ *  never disagree about whether this shop can be ordered from. */
+const groupBlocked = (g: CartGroup) => g.lines.filter((l) => cartLineProblem(l) !== null).length;
 
 const groupPaused = (g: CartGroup) => !g.shop.ordering_enabled || g.shop.state !== "active";
 
@@ -122,6 +123,26 @@ export default function Cart() {
         .filter((g) => g.lines.length > 0),
     [q.data, hidden],
   );
+
+  // R5 #10 — the sticky order bar, the same mechanism as the product page.
+  // Two shops × three lines at 375px puts the FIRST "Đặt hàng shop này" below
+  // the fold on arrival; the bar carries that one shop's button until its real
+  // button is on screen, and never shows two at once.
+  const firstOrderable = groups.find((g) => !groupPaused(g) && groupBlocked(g) === 0) ?? null;
+  const [footNode, setFootNode] = useState<HTMLDivElement | null>(null);
+  const [footOffScreen, setFootOffScreen] = useState(false);
+  useEffect(() => {
+    if (!footNode || typeof IntersectionObserver === "undefined") {
+      setFootOffScreen(false);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => setFootOffScreen(!entry.isIntersecting),
+      { rootMargin: "-8px 0px 0px 0px" },
+    );
+    io.observe(footNode);
+    return () => io.disconnect();
+  }, [footNode]);
 
   const armUndo = (line: CartLine) => {
     if (undoTimer.current) window.clearTimeout(undoTimer.current);
@@ -175,10 +196,9 @@ export default function Cart() {
 
   const topline = (
     <div className="tl-shop-topline">
-      <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
+      {/* R5 #14 — the last crumb WAS the <h1>, 4px below it. */}
+      <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
         <Link to="/shop" className="tl-crumb">Chợ</Link>
-        <span aria-hidden="true" className="tl-crumb-sep">/</span>
-        <span aria-current="page" className="tl-crumb-current">{COPY.title}</span>
       </nav>
       <ShopCartLink />
     </div>
@@ -188,7 +208,13 @@ export default function Cart() {
     <TheLineLayout title={COPY.title}>
       <DynamicMeta title={COPY.title} noindex />
       <main className="tl-shop">
-        <div className="tl-shop-page tl-shop-page--narrow">
+        <div
+          className={
+            firstOrderable
+              ? "tl-shop-page tl-shop-page--narrow tl-shop-has-buybar"
+              : "tl-shop-page tl-shop-page--narrow"
+          }
+        >
           {topline}
           <h1 className="tl-shop-h1">{COPY.title}</h1>
 
@@ -207,29 +233,28 @@ export default function Cart() {
             )}
           </div>
 
+          {/* R5 #6 — the shape of a cart line (thumbnail + two text rows), and
+              no "Đang tải…" sentence: aria-busy + aria-label already say it,
+              and the sentence was the only thing four screens had in common. */}
           {q.isPending && (
-            <div aria-busy="true">
-              <p className="tl-shop-hint">{COPY.loading}</p>
-              <div className="tl-shop-sk" style={{ height: 88, marginBottom: 12 }} />
-              <div className="tl-shop-sk" style={{ height: 88, marginBottom: 12 }} />
-              <div className="tl-shop-sk" style={{ height: 88 }} />
+            <div aria-busy="true" aria-label={COPY.loading}>
+              {[0, 1, 2].map((i) => (
+                <div className="tl-shop-line" key={i}>
+                  <div className="tl-shop-line-media">
+                    <span className="tl-shop-sk" style={{ display: "block", aspectRatio: "1 / 1", borderRadius: 8 }} />
+                  </div>
+                  <div className="tl-shop-line-body">
+                    <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "70%" }} />
+                    <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "35%" }} />
+                    <span className="tl-shop-sk" style={{ display: "block", height: 44, width: 132, borderRadius: 8 }} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
           {q.isError && (
-            <div className="tl-shop-notice tl-shop-notice--danger" role="alert">
-              <AlertTriangle size={16} aria-hidden="true" />
-              <div>
-                <p style={{ margin: 0 }}>{COPY.loadError}</p>
-                <button
-                  type="button"
-                  className="tl-shop-btn tl-shop-btn--sm"
-                  onClick={() => void q.refetch()}
-                >
-                  {COPY.retry}
-                </button>
-              </div>
-            </div>
+            <ShopErrorNotice title={COPY.loadError} body={null} onRetry={() => void q.refetch()} />
           )}
 
           {!q.isPending && !q.isError && groups.length === 0 && (
@@ -243,7 +268,7 @@ export default function Cart() {
 
           {groups.map((g) => {
             const paused = groupPaused(g);
-            const problems = g.lines.filter((l) => cartLineProblem(l) !== null).length;
+            const problems = groupBlocked(g);
             const subtotal = g.lines.reduce(
               (sum, l) => sum + l.unit_price_vnd * (pendingQty[l.cart_item_id] ?? l.qty),
               0,
@@ -332,7 +357,12 @@ export default function Cart() {
                             </p>
                           )}
 
-                          <div className="tl-shop-cta-row">
+                          {/* R5 #17 — three 44px controls wrapped to two rows
+                              at 375px. The stepper stays, "Bỏ" shrinks and
+                              moves right (chốt: giữ icon + chữ, không icon
+                              only), and "Xem sản phẩm" goes: the title above
+                              is already a link to the same page. */}
+                          <div className="tl-shop-line-actions">
                             <span className="tl-shop-qty" aria-busy={busy || undefined}>
                               <button
                                 type="button"
@@ -360,20 +390,13 @@ export default function Cart() {
                             </span>
                             <button
                               type="button"
-                              className="tl-shop-btn tl-shop-btn--sm"
+                              className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--ghost"
                               aria-label={`Bỏ ${title} khỏi giỏ`}
                               onClick={() => void onRemove(line)}
                             >
+                              <Trash2 size={15} aria-hidden="true" />
                               {COPY.remove}
                             </button>
-                            {problem && line.product_slug && (
-                              <Link
-                                to={`/shop/product/${line.product_slug}`}
-                                className="tl-shop-btn tl-shop-btn--sm"
-                              >
-                                {COPY.viewProduct}
-                              </Link>
-                            )}
                           </div>
                           {shownQty >= CART_QTY_MAX && (
                             <p className="tl-shop-hint" style={{ margin: 0 }}>{COPY.qtyMax}</p>
@@ -384,7 +407,10 @@ export default function Cart() {
                   })}
                 </div>
 
-                <div className="tl-shop-sellergroup-foot">
+                <div
+                  className="tl-shop-sellergroup-foot"
+                  ref={g.shop.slug === firstOrderable?.shop.slug ? setFootNode : undefined}
+                >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="tl-shop-row">
                       <span>{COPY.subtotal}</span>
@@ -425,9 +451,37 @@ export default function Cart() {
               </section>
             );
           })}
-
-          {groups.length > 1 && <p className="tl-shop-hint">{COPY.noPlaceAll}</p>}
         </div>
+
+        {/* R5 #10 — one shop's button, and only while its real button is off
+            screen. The bar names the shop, because with two groups "Đặt hàng
+            shop này" on its own would be a button pointing at nothing. */}
+        {firstOrderable && (
+          <div
+            className="tl-shop-buybar"
+            data-shown={footOffScreen ? "true" : "false"}
+            aria-hidden={footOffScreen ? undefined : true}
+          >
+            <div style={{ minWidth: 0 }}>
+              <p className="tl-shop-buybar-price">
+                {formatVnd(
+                  firstOrderable.lines.reduce(
+                    (sum, l) => sum + l.unit_price_vnd * (pendingQty[l.cart_item_id] ?? l.qty),
+                    0,
+                  ),
+                )}
+              </p>
+              <p className="tl-shop-buybar-sub">{firstOrderable.shop.name}</p>
+            </div>
+            <Link
+              to={`/shop/checkout/${firstOrderable.shop.slug}`}
+              className="tl-shop-btn tl-shop-btn--primary"
+              tabIndex={footOffScreen ? undefined : -1}
+            >
+              {COPY.checkoutShop}
+            </Link>
+          </div>
+        )}
       </main>
     </TheLineLayout>
   );

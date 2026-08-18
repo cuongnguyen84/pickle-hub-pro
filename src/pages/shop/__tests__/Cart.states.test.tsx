@@ -110,16 +110,27 @@ afterEach(() => {
 describe("cart, one shop", () => {
   it("offers exactly one order button and none of the multi-shop wording", () => {
     cartState.data = [group()];
-    render(<Cart />);
+    const { container } = render(<Cart />);
 
-    const buttons = screen.getAllByText("Đặt hàng shop này");
+    // R5 #10: the sticky bar carries a SECOND copy of the same button for the
+    // first orderable shop, aria-hidden until the real one scrolls away. The
+    // invariant that matters is unchanged — one button per shop group, and no
+    // button anywhere that orders every shop at once.
+    const page = container.querySelector(".tl-shop-page") as HTMLElement;
+    const buttons = Array.from(page.querySelectorAll("a")).filter(
+      (a) => a.textContent === "Đặt hàng shop này",
+    );
     expect(buttons).toHaveLength(1);
     expect(buttons[0].getAttribute("href")).toBe("/shop/checkout/shop-a");
+    const bar = container.querySelector(".tl-shop-buybar") as HTMLElement;
+    expect(bar.getAttribute("aria-hidden")).toBe("true");
+    expect(bar.querySelector("a")?.getAttribute("href")).toBe("/shop/checkout/shop-a");
     expect(screen.queryByText(/Giỏ có sản phẩm của/)).toBeNull();
     expect(screen.queryByText(/đặt tất cả/)).toBeNull();
     // The line total is qty × unit price, not the unit price — and with one
-    // line the subtotal is the same number, so it appears twice.
-    expect(screen.getAllByText("1.500.000₫")).toHaveLength(2);
+    // line the subtotal is the same number, so it appears twice in the page
+    // and once more in the sticky bar.
+    expect(screen.getAllByText("1.500.000₫")).toHaveLength(3);
     expect(screen.queryByText("750.000₫")).toBeNull();
   });
 
@@ -141,7 +152,7 @@ describe("cart, one shop", () => {
 });
 
 describe("cart, two shops", () => {
-  it("gives each shop its own button and explains why", () => {
+  it("gives each shop its own button, and the sticky bar names ONE of them", () => {
     cartState.data = [
       group(),
       group({
@@ -155,11 +166,22 @@ describe("cart, two shops", () => {
         lines: [line({ cart_item_id: "ci2", variant_id: "v2", product_title: "Giày QA" })],
       }),
     ];
-    render(<Cart />);
+    const { container } = render(<Cart />);
 
-    expect(screen.getAllByText("Đặt hàng shop này")).toHaveLength(2);
+    const page = container.querySelector(".tl-shop-page") as HTMLElement;
+    const buttons = Array.from(page.querySelectorAll("a")).filter(
+      (a) => a.textContent === "Đặt hàng shop này",
+    );
+    expect(buttons).toHaveLength(2);
     expect(screen.getByText(/Giỏ có sản phẩm của 2 shop/)).toBeTruthy();
-    expect(screen.getByText(/Không có nút “đặt tất cả”/)).toBeTruthy();
+    // R5 (cắt chữ): the "Không có nút đặt tất cả" paragraph is gone — the
+    // sentence above already says each shop is ordered and shipped on its own,
+    // and there is still no button that would order both.
+    expect(document.body.textContent).not.toContain("đặt tất cả");
+    // The bar belongs to the FIRST orderable shop and says which one.
+    const bar = container.querySelector(".tl-shop-buybar") as HTMLElement;
+    expect(bar.textContent).toContain("Shop A");
+    expect(bar.querySelector("a")?.getAttribute("href")).toBe("/shop/checkout/shop-a");
   });
 });
 
@@ -215,7 +237,10 @@ describe("the four page-level answers stay distinct", () => {
     cartState.isPending = true;
     cartState.data = undefined;
     render(<Cart />);
-    expect(screen.getByText("Đang tải giỏ hàng…")).toBeTruthy();
+    // R5 #6: the sentence "Đang tải giỏ hàng…" is gone from the page — the
+    // skeleton has the shape of a cart line and aria-busy + aria-label carry
+    // the state for assistive tech.
+    expect(screen.getByLabelText("Đang tải giỏ hàng…").getAttribute("aria-busy")).toBe("true");
     expect(screen.queryByText("Giỏ hàng đang trống")).toBeNull();
   });
 

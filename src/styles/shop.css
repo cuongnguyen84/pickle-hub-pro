@@ -412,10 +412,14 @@
  * the bottom clearance below is verified against the real thing, not a mock.
  * ---------------------------------------------------------------------- */
 
-/* Bottom clearance: BottomNav is 56px on web, taller on native shells. Any
-   screen with a sticky bottom bar adds this on top of its own height. */
+/* Bottom clearance: BottomNav is 56px on web, 68px on iOS and 72px on the
+   Android shell. R5 audit: this file used to declare 56 here and hard-code 72
+   in .tl-pdp-buybar, so the toast sat UNDER the nav on a phone. One constant,
+   the tallest case — 16px of slack on web is cheaper than hiding content on
+   iOS. Every fixed bottom element measures from this variable, never from a
+   literal. */
 .tl-shop {
-  --shop-bottomnav: 56px;
+  --shop-bottomnav: 72px;
   --shop-safe-b: env(safe-area-inset-bottom, 0px);
 }
 
@@ -1426,7 +1430,18 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
  * anchor's box at x = -9, i.e. a fifth of the touch target off the left edge
  * of a 320px screen, and an edge click landed outside the window. A 9px indent
  * is a much smaller price than a target a thumb cannot reach. */
-.tl-shop-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+/* R5 audit #13: the crumb row used to borrow .tl-shop-sub, the same class the
+   page subtitle and the order-status sentence use — one class, three meanings,
+   so a change to any of them moved the other two. Crumbs own their type now. */
+.tl-shop-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--tl-fg-3);
+}
 .tl-crumb {
   display: inline-flex;
   align-items: center;
@@ -1496,36 +1511,47 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp-note { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
 .tl-pdp-cta { display: grid; gap: 8px; }
 
-/* ── Thanh mua dính đáy (chỉ mobile) ──────────────────────────────────────
- * Trang sản phẩm dài hơn một màn hình: ảnh, giá, chọn phiên bản, nút mua, thẻ
- * shop, mô tả. Cuộn xuống đọc mô tả là mất nút mua. Thanh này chỉ hiện khi nút
- * mua trong trang đã trôi khỏi tầm nhìn, nên không bao giờ có hai nút mua cùng
- * lúc trên màn hình — vẫn đúng luật "một hành động chính mỗi màn".
- * Đáy phải chừa bottom nav: 72px là ca cao nhất (Android native), cộng safe
- * area của iPhone. Cùng cách tính với ChatFAB. */
-.tl-pdp-buybar {
+/* ── Thanh hành động dính đáy (chỉ mobile) ────────────────────────────────
+ * Trang sản phẩm, giỏ hàng và trang đặt hàng đều dài hơn một màn hình, nên nút
+ * chính trôi khỏi tầm nhìn khi người mua đọc tiếp. Thanh này CHỈ hiện khi nút
+ * trong trang đã trôi đi, nên không bao giờ có hai nút chính cùng lúc trên màn
+ * hình — vẫn đúng luật "một hành động chính mỗi màn".
+ * Đáy đo theo var(--shop-bottomnav) — R5 #5: trước đây hằng số 72 viết cứng ở
+ * đây còn toast tính theo 56, hai thanh nằm chồng nhau trên iOS. */
+.tl-shop-buybar {
   position: fixed; left: 0; right: 0;
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--shop-bottomnav) + var(--shop-safe-b));
   z-index: 60;
   display: flex; align-items: center; gap: 12px;
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px) * 0);
+  padding: 10px 14px;
   background: var(--tl-bg);
   border-top: 1px solid var(--tl-border);
   box-shadow: 0 -6px 20px rgb(0 0 0 / 12%);
   transform: translateY(110%);
   transition: transform 200ms ease-out;
 }
-.tl-pdp-buybar[data-shown="true"] { transform: translateY(0); }
-.tl-pdp-buybar .tl-pdp-buybar-price {
+.tl-shop-buybar[data-shown="true"] { transform: translateY(0); }
+.tl-shop-buybar-price {
   margin: 0; font-size: 16px; font-weight: 700;
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.tl-pdp-buybar .tl-shop-btn { flex: 1; min-height: 46px; }
-@media (min-width: 900px) { .tl-pdp-buybar { display: none; } }
-@media (prefers-reduced-motion: reduce) { .tl-pdp-buybar { transition: none; } }
+/* Dòng phụ dưới giá (tên shop / số món) — không bao giờ đẩy thanh cao thêm. */
+.tl-shop-buybar-sub {
+  margin: 0; font-size: 11.5px; color: var(--tl-fg-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 16ch;
+}
+.tl-shop-buybar .tl-shop-btn { flex: 1; min-height: 46px; }
+@media (min-width: 900px) { .tl-shop-buybar { display: none; } }
+@media (prefers-reduced-motion: reduce) { .tl-shop-buybar { transition: none; } }
 
-/* Chừa chỗ cho thanh mua để nó không che dòng cuối của mô tả. */
-@media (max-width: 899px) { .tl-pdp-has-buybar { padding-bottom: 76px; } }
+/* Chừa chỗ cho thanh dính để nó không che dòng cuối của nội dung.
+   Trên .tl-pdp (khối bên trong) thì 76px là cộng thêm vào padding của trang.
+   Trên chính .tl-shop-page thì phải CỘNG vào 96px sẵn có — nếu không, class
+   này lại ghi đè xuống 76px và ăn mất phần chừa cho bottom nav. */
+@media (max-width: 899px) {
+  .tl-shop-has-buybar { padding-bottom: 76px; }
+  .tl-shop-page.tl-shop-has-buybar { padding-bottom: calc(96px + 76px); }
+}
 
 /* ── Shop UI polish R1 ────────────────────────────────────────────────────
  * Seller-list thumbnails: the real cover in the box the layout already
@@ -1860,3 +1886,67 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   font-size: 13px;
 }
 li.tl-shop-overdue { display: flex; }
+
+/* ══ R5 · audit UI toàn bộ màn Shop (round5-ui-audit) ══════════════════════
+   Không token mới, không màu mới. Sáu class, mỗi class trả lời đúng một mục
+   trong bảng audit; phần còn lại của bản sửa là JSX dùng lại class đã có. */
+
+/* #20 · Khoảng cách giữa các khối. Trước đó là 5 giá trị inline khác nhau
+   trong 6 file, nên hai màn cạnh nhau thở khác nhau. Section đầu tiên không
+   tự đẩy mình xuống — tiêu đề trang đã có margin của nó rồi. */
+.tl-shop-section { margin-top: 22px; }
+.tl-shop-section:first-of-type { margin-top: 16px; }
+
+/* #12 · Hàng nút liên hệ. KHÔNG dùng .tl-shop-cta-row: quy tắc mobile của nó
+   kéo mỗi nút thành một hàng riêng, đúng thứ audit bảo bỏ. Ở đây các nút chia
+   nhau một hàng ngang và chỉ xuống dòng khi thật sự không đủ chỗ. */
+.tl-shop-contactrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tl-shop-contactrow .tl-shop-btn { flex: 1 1 auto; min-width: 44px; }
+
+/* #15 · Link chính của một thẻ đơn. `color: inherit` không gạch chân trông
+   như chữ thường, nên nó có mũi tên riêng và phản hồi khi chạm. */
+.tl-shop-rowlink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--shop-tap);
+  color: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.tl-shop-rowlink > span:first-child { flex: 1; min-width: 0; }
+.tl-shop-rowlink svg { flex: none; color: var(--tl-fg-3); }
+.tl-shop-rowlink:active { transform: scale(0.99); }
+
+/* #17 · Hàng thao tác của một dòng giỏ hàng. Stepper bên trái, "Bỏ" nhỏ dạt
+   sang phải — vẫn có chữ (chốt: đọc được quan trọng hơn gọn). */
+.tl-shop-line-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tl-shop-line-actions > .tl-shop-btn { margin-inline-start: auto; padding: 0 10px; }
+
+/* #6 · Skeleton đúng hình. Ba hình dạng, không còn khối xám 88/68/100/92px
+   tuỳ hứng: một khung ảnh, một dòng chữ, một thẻ. */
+.tl-shop-sk--media,
+.tl-shop-sk--line,
+.tl-shop-sk--title,
+.tl-shop-sk--card { display: block; }
+.tl-shop-sk--media {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 46svh;
+  border-radius: var(--shop-radius-card);
+}
+@supports not (height: 1svh) { .tl-shop-sk--media { max-height: 46vh; } }
+.tl-shop-sk--line { height: 13px; margin-bottom: 8px; }
+.tl-shop-sk--title { height: 24px; width: 70%; margin-bottom: 12px; }
+.tl-shop-sk--card { height: 84px; border-radius: var(--tl-radius); margin-bottom: 10px; }
+.tl-shop-sk--thumb { width: 56px; height: 56px; border-radius: 8px; flex: none; }
+.tl-shop-skrow { display: flex; gap: 8px; }

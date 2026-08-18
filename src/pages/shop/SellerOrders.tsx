@@ -18,10 +18,11 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, Clock, PackageOpen } from "lucide-react";
+import { AlertTriangle, Clock, Inbox, PackageOpen } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
+import { LoadingState } from "@/components/states/PageStates";
 import { useMyShopMembership, useShopProfile } from "@/hooks/shop/useShopProfile";
 import { useShopOrders, type OrderListRow } from "@/hooks/shop/useOrders";
 import { shopErrorMessage } from "@/lib/shop/errors";
@@ -99,7 +100,8 @@ export default function SellerOrders() {
 
   if (membership.isError || profile.isError) {
     return shell(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được shop của anh/chị."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();
@@ -145,7 +147,11 @@ export default function SellerOrders() {
               key={t.key}
               type="button"
               role="tab"
+              // R5 #2 — aria-selected keeps role="tab" legal; aria-current is
+              // what shop.css paints. Without the second one all four chips
+              // were the same grey and the filter looked broken.
               aria-selected={tab === t.key}
+              aria-current={tab === t.key ? "page" : undefined}
               aria-controls="so-list"
               className="tl-shop-cat"
               onClick={() => setTab(t.key)}
@@ -160,24 +166,18 @@ export default function SellerOrders() {
         <h2 id="so-list-h" className="tl-shop-sr">Danh sách đơn</h2>
 
         {list.isLoading ? (
-          <div aria-busy="true" aria-live="polite">
-            <p className="tl-shop-hint">{COPY.loading}</p>
+          <div aria-busy="true" aria-live="polite" aria-label={COPY.loading}>
             {[0, 1, 2].map((i) => (
-              <div key={i} className="tl-shop-sk" style={{ height: 76, borderRadius: 10, marginBottom: 10 }} />
+              <div key={i} className="tl-shop-sk tl-shop-sk--card" style={{ height: 76 }} />
             ))}
           </div>
         ) : list.isError ? (
-          <div className="tl-shop-notice tl-shop-notice--danger" role="alert">
-            <AlertTriangle size={16} aria-hidden="true" />
-            <div>
-              <strong>{COPY.loadError}</strong> {shopErrorMessage(list.error)} {COPY.loadErrorTail}
-              <div style={{ marginTop: 10 }}>
-                <button type="button" className="tl-shop-btn tl-shop-btn--sm" onClick={() => void list.refetch()}>
-                  {COPY.retry}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ShopErrorNotice
+            title={COPY.loadError}
+            body={`${shopErrorMessage(list.error)} ${COPY.loadErrorTail}`}
+            retryLabel={COPY.retry}
+            onRetry={() => void list.refetch()}
+          />
         ) : rows.length === 0 ? (
           // Never sold anything, versus this tab is empty, versus this tab is
           // empty AND it is the one that matters. Three answers.
@@ -188,6 +188,7 @@ export default function SellerOrders() {
           </div>
         ) : shown.length === 0 ? (
           <div className="tl-shop-empty">
+            <Inbox size={28} aria-hidden="true" />
             <p className="tl-shop-empty-title">
               {tab === "todo" ? COPY.emptyTodoTitle : COPY.emptyTabTitle}
             </p>

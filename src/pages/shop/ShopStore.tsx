@@ -14,7 +14,6 @@ import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { BadgeCheck, ExternalLink, Package, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { LoadingState } from "@/components/states/PageStates";
 import { usePublicSearch, usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { ResultsGrid } from "@/components/shop/CatalogResults";
 import { ShopMonogram } from "@/components/shop/ShopMonogram";
@@ -50,10 +49,24 @@ export default function ShopStore() {
   );
 
   if (q.isLoading) {
+    // R5 #6: a bare centred spinner told the buyer nothing about what is
+    // coming. The skeleton is the storefront header's own shape — monogram,
+    // name, one meta line — so the page does not jump when the data lands.
     return (
       <TheLineLayout title="Shop">
         <DynamicMeta title="Shop" noindex />
-        <main className="tl-shop"><LoadingState /></main>
+        <main className="tl-shop">
+          <div className="tl-shop-page" aria-busy="true" aria-label="Đang tải trang shop">
+            <div className="tl-shop-storehead-row">
+              <span className="tl-shop-sk" style={{ width: 72, height: 72, borderRadius: 20, flex: "none" }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span className="tl-shop-sk tl-shop-sk--title" />
+                <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "45%" }} />
+              </div>
+            </div>
+            <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "80%" }} />
+          </div>
+        </main>
       </TheLineLayout>
     );
   }
@@ -69,9 +82,11 @@ export default function ShopStore() {
       <TheLineLayout title="Không tìm thấy shop">
         <DynamicMeta title="Không tìm thấy shop" noindex />
         <main className="tl-shop">
-          <h1 className="tl-shop-h1">Không tìm thấy shop này</h1>
-          <p className="tl-shop-sub">Có thể shop đã đổi đường dẫn hoặc không còn hoạt động.</p>
-          <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          <div className="tl-shop-page">
+            <h1 className="tl-shop-h1">Không tìm thấy shop này</h1>
+            <p className="tl-shop-sub">Có thể shop đã đổi đường dẫn hoặc không còn hoạt động.</p>
+            <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          </div>
         </main>
       </TheLineLayout>
     );
@@ -84,11 +99,11 @@ export default function ShopStore() {
     <TheLineLayout title={shop.name}>
       <DynamicMeta title={shop.name} description={shop.intro ?? undefined} noindex />
       <main className="tl-shop">
+        <div className="tl-shop-page">
         <div className="tl-shop-topline">
-          <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
+          {/* Last crumb = the <h1> below it, so it is dropped (R5 #14). */}
+          <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
             <Link to="/shop" className="tl-crumb">Chợ</Link>
-            <span aria-hidden="true" className="tl-crumb-sep">/</span>
-            <span aria-current="page" className="tl-crumb-current">{shop.name}</span>
           </nav>
           <ShopCartLink />
         </div>
@@ -141,15 +156,17 @@ export default function ShopStore() {
         </header>
 
         {contacts.length > 0 && (
-          <section aria-label="Liên hệ">
-            <div className="tl-pdp-cta">
+          <section aria-label="Liên hệ" className="tl-shop-section">
+            {/* R5 #12 — one horizontal row of SECONDARY buttons. Green is for
+                buying, and it is the same decision on the product page. */}
+            <div className="tl-shop-contactrow">
               {contacts.map((c) => {
                 const href = contactHref(c)!;
                 return (
                   <a
                     key={c.id}
                     href={href}
-                    className="tl-shop-btn tl-shop-btn--primary"
+                    className="tl-shop-btn"
                     target={c.type === "phone" ? undefined : "_blank"}
                     rel="noopener noreferrer nofollow"
                   >
@@ -162,18 +179,19 @@ export default function ShopStore() {
                   </a>
                 );
               })}
-              <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
-                Bấm sẽ mở ứng dụng ngoài — anh/chị rời ThePickleHub.
-              </p>
             </div>
+            <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
+              Bấm sẽ mở ứng dụng ngoài — anh/chị rời ThePickleHub.
+            </p>
           </section>
         )}
 
-        <section aria-labelledby="store-catalog">
+        <section aria-labelledby="store-catalog" className="tl-shop-section">
           <h2 className="tl-shop-h2" id="store-catalog">Sản phẩm</h2>
           <ResultsGrid
             rows={rows}
             total={catalog.data?.total ?? 0}
+            hidePilotNote
             isLoading={catalog.isLoading}
             isError={catalog.isError}
             onRetry={() => void catalog.refetch()}
@@ -224,6 +242,7 @@ export default function ShopStore() {
           </p>
           {contacts.length === 0 && <p className="tl-shop-hint">{NO_CONTACT_COPY}</p>}
         </footer>
+        </div>
       </main>
     </TheLineLayout>
   );

@@ -71,9 +71,11 @@ export default function ShopCategory() {
       <TheLineLayout title="Không tìm thấy ngành hàng">
         <DynamicMeta title="Không tìm thấy ngành hàng" noindex />
         <main className="tl-shop">
-          <h1 className="tl-shop-h1">Không tìm thấy ngành hàng này</h1>
-          <p className="tl-shop-sub">Có thể đường dẫn đã đổi, hoặc ngành hàng không còn mở.</p>
-          <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          <div className="tl-shop-page">
+            <h1 className="tl-shop-h1">Không tìm thấy ngành hàng này</h1>
+            <p className="tl-shop-sub">Có thể đường dẫn đã đổi, hoặc ngành hàng không còn mở.</p>
+            <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          </div>
         </main>
       </TheLineLayout>
     );
@@ -83,11 +85,12 @@ export default function ShopCategory() {
     <TheLineLayout title={category?.name ?? "Ngành hàng"}>
       <DynamicMeta title={category ? category.name : "Ngành hàng"} noindex />
       <main className="tl-shop">
+        <div className="tl-shop-page">
         <div className="tl-shop-topline">
-          <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
+          {/* The last crumb is the page's own <h1> one line below it, so it is
+              dropped (R5 #14, chốt: giữ h1). The crumb row is the way back. */}
+          <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
             <Link to="/shop" className="tl-crumb">Chợ</Link>
-            <span aria-hidden="true" className="tl-crumb-sep">/</span>
-            <span aria-current="page" className="tl-crumb-current">{category?.name ?? "…"}</span>
           </nav>
           <ShopCartLink />
         </div>
@@ -117,6 +120,7 @@ export default function ShopCategory() {
             <ResultsGrid
               rows={rows}
               total={results.data?.total ?? 0}
+              hidePilotNote
               isLoading={results.isLoading || !known}
               isError={results.isError}
               onRetry={() => void results.refetch()}
@@ -163,6 +167,7 @@ export default function ShopCategory() {
             });
           }}
         />
+        </div>
       </main>
     </TheLineLayout>
   );

@@ -21,8 +21,16 @@ vi.mock("@/hooks/shop/useSellerProducts", () => ({
   useProductStatusCounts: () => counts(),
 }));
 
+// R5 #16 — the dashboard also reads the shop's orders for the "Đơn cần xử lý"
+// tile. Same reason as above: no QueryClient in this file.
+const shopOrders = vi.fn();
+vi.mock("@/hooks/shop/useOrders", () => ({
+  useShopOrders: () => shopOrders(),
+}));
+
 beforeEach(() => {
   counts.mockReturnValue({ data: {}, isLoading: false, isError: false });
+  shopOrders.mockReturnValue({ data: [], isLoading: false, isError: false });
 });
 
 vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
@@ -176,10 +184,12 @@ describe("loading / error / no shop yet", () => {
     expect(screen.getByText("loading…")).toBeTruthy();
   });
 
+  // R5 #7: the shop's own red-stripe notice, not the shadcn ErrorState.
   it("shows the error state and retry refetches the shop", () => {
     const refetch = vi.fn();
     mountRaw({ data: null, isLoading: false, isError: true, refetch }, { data: null, isLoading: false });
-    fireEvent.click(screen.getByText("error"));
+    expect(screen.getByRole("alert").textContent).toContain("Chưa tải được shop của anh/chị.");
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 

@@ -23,6 +23,7 @@ import { Link, useParams } from "react-router-dom";
 import {
   AlertTriangle,
   Check,
+  ChevronLeft,
   Clock,
   Copy,
   Loader2,
@@ -30,7 +31,8 @@ import {
 } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
+import { LoadingState } from "@/components/states/PageStates";
 import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
@@ -160,25 +162,22 @@ export default function SellerOrderDetail() {
   }
 
   if (membership.isError || profile.isError) {
-    return shell(<ErrorState onRetry={() => void membership.refetch()} />);
+    return shell(
+      <ShopErrorNotice
+        title="Chưa tải được shop của anh/chị."
+        onRetry={() => void membership.refetch()}
+      />,
+    );
   }
 
   if (q.isError) {
     return shell(
-      <div className="tl-shop-notice tl-shop-notice--danger" role="alert">
-        <AlertTriangle size={16} aria-hidden="true" />
-        <div>
-          <p style={{ margin: 0 }}>{COPY.loadError}</p>
-          <button
-            type="button"
-            className="tl-shop-btn tl-shop-btn--sm"
-            style={{ marginTop: 10 }}
-            onClick={() => void q.refetch()}
-          >
-            {COPY.retry}
-          </button>
-        </div>
-      </div>,
+      <ShopErrorNotice
+        title={COPY.loadError}
+        body={null}
+        retryLabel={COPY.retry}
+        onRetry={() => void q.refetch()}
+      />,
     );
   }
 
@@ -248,9 +247,13 @@ export default function SellerOrderDetail() {
 
   return shell(
     <>
-      <p className="tl-shop-eyebrow">
-        <Link to="/seller/orders" className="tl-crumb">{COPY.backToList}</Link>
-      </p>
+      {/* Chốt 8: seller screens keep their own nav instead of a breadcrumb —
+          but the way back must not be 10px uppercase mono. .tl-shop-back is
+          the control the review screens already use. */}
+      <Link to="/seller/orders" className="tl-shop-back">
+        <ChevronLeft size={16} aria-hidden="true" />
+        {COPY.backToList}
+      </Link>
       <h1 className="tl-shop-h1">{COPY.h1(order.code)}</h1>
       <p className="tl-shop-sub">
         {COPY.placedAt(formatWhen(order.created_at), PAYMENT_METHOD_LABEL[order.payment_method])}

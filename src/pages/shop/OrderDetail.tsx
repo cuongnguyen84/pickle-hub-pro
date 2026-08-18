@@ -17,10 +17,11 @@
 
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { AlertTriangle, ExternalLink, Loader2, Phone } from "lucide-react";
+import { AlertTriangle, ExternalLink, Loader2, PackageX, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { ShopCartLink } from "@/components/shop/CartLink";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
@@ -145,8 +146,10 @@ export default function OrderDetail() {
 
   const topline = (
     <div className="tl-shop-topline">
-      <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
-        <Link to="/shop" className="tl-crumb">Chợ</Link>
+      {/* The <h1> here is what the buyer has to DO, not "Đơn hàng", so this
+          last crumb is not a duplicate and stays. */}
+      <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
+        <Link to="/shop/orders" className="tl-crumb">Đơn của tôi</Link>
         <span aria-hidden="true" className="tl-crumb-sep">/</span>
         <span aria-current="page" className="tl-crumb-current">{COPY.title}</span>
       </nav>
@@ -167,38 +170,29 @@ export default function OrderDetail() {
   );
 
   if (q.isPending) {
+    // R5 #6 — the shape of this page: code line, h1, status line, three cards.
     return shell(
-      <div aria-busy="true">
-        <p className="tl-shop-hint">{COPY.loading}</p>
-        <div className="tl-shop-sk" style={{ height: 32, marginBottom: 12 }} />
-        <div className="tl-shop-sk" style={{ height: 100, marginBottom: 12 }} />
-        <div className="tl-shop-sk" style={{ height: 100, marginBottom: 12 }} />
-        <div className="tl-shop-sk" style={{ height: 100 }} />
+      <div aria-busy="true" aria-label={COPY.loading}>
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "35%" }} />
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "60%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
       </div>,
     );
   }
 
   if (q.isError) {
     return shell(
-      <div className="tl-shop-notice tl-shop-notice--danger" role="alert">
-        <AlertTriangle size={16} aria-hidden="true" />
-        <div>
-          <p style={{ margin: 0 }}>{COPY.loadError}</p>
-          <button
-            type="button"
-            className="tl-shop-btn tl-shop-btn--sm"
-            onClick={() => void q.refetch()}
-          >
-            {COPY.retry}
-          </button>
-        </div>
-      </div>,
+      <ShopErrorNotice title={COPY.loadError} body={null} onRetry={() => void q.refetch()} />,
     );
   }
 
   if (!order) {
     return shell(
       <div className="tl-shop-empty">
+        <PackageX size={28} aria-hidden="true" />
         <p className="tl-shop-empty-title">{COPY.notFound}</p>
         <p>{COPY.notFoundBody}</p>
         <Link to="/shop/orders" className="tl-shop-btn tl-shop-btn--primary">{COPY.backToOrders}</Link>

@@ -18,10 +18,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ImageOff, PackageOpen, Plus, Search } from "lucide-react";
+import { AlertTriangle, ImageOff, PackageOpen, Plus, Search, SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
+import { LoadingState } from "@/components/states/PageStates";
 import { useMyShopMembership, useShopCategories, useShopProfile } from "@/hooks/shop/useShopProfile";
 import { useSignedPreviews } from "@/hooks/shop/useSignedPreviews";
 import { publicMediaUrl } from "@/lib/shop/publicCatalog";
@@ -106,7 +107,8 @@ export default function SellerProducts() {
 
   if (membership.isError || profile.isError) {
     return shell(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được shop của anh/chị."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();
@@ -137,9 +139,9 @@ export default function SellerProducts() {
   return shell(
     <>
       <h1 className="tl-shop-h1">Sản phẩm</h1>
+      {/* R5 #4 — "trang mua hàng chưa mở" stopped being true in Phase 3. */}
       <p className="tl-shop-sub">
-        Danh mục của shop. Người mua chỉ thấy sản phẩm đã duyệt và đang bật bán — trang mua hàng
-        chưa mở trong giai đoạn này.
+        Danh mục của shop. Người mua chỉ thấy sản phẩm đã duyệt và đang bật bán.
       </p>
 
       {!canWrite && (
@@ -338,6 +340,7 @@ function ProductList({
   if (result.total === 0) {
     return (
       <div className="tl-shop-empty">
+        <SearchX size={28} aria-hidden="true" />
         <p className="tl-shop-empty-title">Không có sản phẩm nào khớp</p>
         <p>
           {hasActiveFilter(filters)
