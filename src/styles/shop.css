@@ -1725,3 +1725,96 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
     overflow: hidden;
   }
 }
+
+/* ══ Phase 3 — cart, checkout, order ═══════════════════════════════════════
+   Four blocks, and no fifth. Everything else these screens use already exists
+   above; redefining a class here would give two rules the same name and the
+   loser would depend on file order. */
+
+/* 1 · The button state nobody wrote (C4).
+   .tl-shop-btn:disabled is opacity .45, which is right for "you may not press
+   this" and wrong for "this is working" — the label "Đang gửi đơn…" is the one
+   the buyer most needs to read. `progress` is also the honest cursor. */
+.tl-shop-btn[aria-busy="true"]:disabled { opacity: 1; cursor: progress; }
+
+/* 2 · Label — value row (M4). Money in a table wants a horizontal scroller at
+   320px; this is a flex row, so it wraps nothing and scrolls nowhere. The
+   value carries tabular-nums, or the digits shift column between rows. */
+.tl-shop-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  padding: 6px 0;
+}
+.tl-shop-row > :last-child {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tl-shop-row--total {
+  border-top: 1px solid var(--tl-border);
+  margin-top: 4px;
+  padding-top: 10px;
+  font-size: 15px;
+}
+
+/* 3 · The toast (§4.1). Fixed, so it never pushes the page out from under the
+   thumb that just tapped. Below the sheet (70/71), above the sticky bar (35). */
+.tl-shop-toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--shop-bottomnav) + var(--shop-safe-b) + 8px);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--tl-bg-elev);
+  border: 1px solid var(--tl-border-2);
+  border-radius: var(--tl-radius);
+  padding: 10px 12px;
+  box-shadow: var(--shop-shadow-2);
+  font-size: 13.5px;
+  /* The repo has no --ease-* token; the literal is the same curve the rest of
+     the Line uses inline. */
+  animation: tl-shop-toast-in 160ms ease-out both;
+}
+.tl-shop-toast > span { flex: 1; min-width: 0; }
+@keyframes tl-shop-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (min-width: 768px) {
+  .tl-shop-toast { left: auto; right: 16px; max-width: 380px; }
+}
+/* The blanket reduced-motion rule above is scoped to `.tl-shop`, and this is
+   fixed to the viewport rather than nested inside it — so it declares its own
+   or it animates for somebody who asked us not to. */
+@media (prefers-reduced-motion: reduce) {
+  .tl-shop-toast { animation: none; }
+}
+
+/* 4 · The breadcrumb row that hosts the cart badge (C1). Crumbs take the
+   space, the badge sits at the end; with no crumbs (on /shop and
+   /shop/search) the badge still ends up on the right. */
+.tl-shop-topline {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.tl-shop-topline > .tl-shop-crumbs { flex: 1; min-width: 0; }
+
+/* 5 · Phase 3 · an order past the deadline the seller promised themselves.
+   Icon and words carry the meaning (see DueLine); this stripe is the third
+   channel, never the only one. Inline on a table cell, block on a card — one
+   rule, because `border-inline-start` behaves for both. */
+.tl-shop-overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-inline-start: 3px solid var(--shop-danger);
+  padding-inline-start: 9px;
+  font-size: 13px;
+}
+li.tl-shop-overdue { display: flex; }

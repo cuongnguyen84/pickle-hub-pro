@@ -18,6 +18,7 @@ import { Search, SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
+import { ShopCartLink } from "@/components/shop/CartLink";
 import {
   CategoryChips,
   FilterFields,
@@ -91,6 +92,12 @@ export default function ShopSearch() {
     <TheLineLayout title="Tìm sản phẩm">
       <DynamicMeta title={q ? `Tìm: ${q}` : "Tìm sản phẩm"} noindex />
       <main className="tl-shop">
+        {/* No breadcrumb on this screen, so the topline carries the cart badge
+            alone. It must NOT go in TheLineLayout's tl-nav — that nav is
+            shared with /live, /feed and /blog. */}
+        <div className="tl-shop-topline">
+          <ShopCartLink />
+        </div>
         <h1 className="tl-shop-h1">Tìm sản phẩm</h1>
 
         <form role="search" className="tl-shop-searchfield" onSubmit={(e) => e.preventDefault()}>

@@ -13,6 +13,7 @@ import { SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
+import { ShopCartLink } from "@/components/shop/CartLink";
 import {
   DEFAULT_FILTERS,
   FilterFields,
@@ -82,11 +83,14 @@ export default function ShopCategory() {
     <TheLineLayout title={category?.name ?? "Ngành hàng"}>
       <DynamicMeta title={category ? category.name : "Ngành hàng"} noindex />
       <main className="tl-shop">
-        <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
-          <Link to="/shop" className="tl-crumb">Chợ</Link>
-          <span aria-hidden="true" className="tl-crumb-sep">/</span>
-          <span aria-current="page" className="tl-crumb-current">{category?.name ?? "…"}</span>
-        </nav>
+        <div className="tl-shop-topline">
+          <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
+            <Link to="/shop" className="tl-crumb">Chợ</Link>
+            <span aria-hidden="true" className="tl-crumb-sep">/</span>
+            <span aria-current="page" className="tl-crumb-current">{category?.name ?? "…"}</span>
+          </nav>
+          <ShopCartLink />
+        </div>
 
         <h1 className="tl-shop-h1">{category?.name ?? "Ngành hàng"}</h1>
 

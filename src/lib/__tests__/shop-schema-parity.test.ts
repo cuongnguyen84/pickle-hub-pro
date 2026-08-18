@@ -12,6 +12,9 @@ import {
   SHOP_P2B_PUBLIC_RPCS,
   SHOP_P2B_RPCS,
   SHOP_P2B_TABLES,
+  SHOP_P3_RPCS,
+  SHOP_P3_TABLES,
+  SHOP_P3_VIEWS,
   SHOP_RPCS,
   SHOP_RULES_RPCS,
   SHOP_RULES_TABLES,
@@ -423,5 +426,161 @@ describe("seller-rules acceptance parity with migration 20260814090000", () => {
     // prose is testing the prose.
     const code = RULES_SQL.replace(/--[^\n]*/g, "");
     expect(code).not.toMatch(/\bip\s+(inet|text)\b|user_agent|fingerprint/i);
+  });
+});
+
+// ── Phase 3 — cart and orders ───────────────────────────────────────────────
+// The same net as P2a/P2b, plus the two invariants that decide whether the
+// Phase 3 screens can be trusted with money: the total is the database's, and
+// nothing new collects a bank detail.
+
+const P3_SQL = [
+  "20260818090000_shop_cart_items.sql",
+  "20260818100000_shop_orders.sql",
+  "20260818120000_shop_phase3_projection_and_address.sql",
+]
+  .map((f) => readFileSync(resolve(__dirname, "../../../supabase/migrations", f), "utf8"))
+  .join("\n");
+
+describe("shop schema parity with the Phase 3 migrations", () => {
+  it.each(SHOP_P3_TABLES)("a P3 migration creates table %s", (table) => {
+    expect(P3_SQL).toContain(`CREATE TABLE IF NOT EXISTS public.${table}`);
+  });
+
+  it.each(SHOP_P3_RPCS)("a P3 migration creates function %s", (fn) => {
+    expect(P3_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  });
+
+  it.each(SHOP_P3_VIEWS)("a P3 migration creates view %s", (view) => {
+    expect(P3_SQL).toContain(`CREATE VIEW public.${view}`);
+    // Deliberately NOT security_invoker, and the reason is COLUMN privileges,
+    // not policies. With invoker=on the view's own `WHERE buyer_user_id =
+    // auth.uid()` would still run (RLS would only stack on top of it) — but
+    // Postgres would then check column privileges as the CALLER, and
+    // `authenticated` holds no SELECT on shop_orders.buyer_user_id. The view
+    // would answer 42501 to every buyer. Written down because a wrong reason
+    // here is exactly how the next person "fixes" this into a 42501.
+    expect(P3_SQL, view).not.toMatch(/WITH\s*\(\s*security_invoker/i);
+    expect(P3_SQL, view).toContain(`GRANT SELECT ON public.${view} TO authenticated`);
+  });
+
+  it("every P3 table enables RLS, revokes the table and grants COLUMNS", () => {
+    // `GRANT[^;]*ON public.<table> TO` matched a grant to service_role and
+    // called it a day — so a table with nothing at all for `authenticated`, or
+    // with a bare table grant handing over every column, both passed. The two
+    // halves are asserted separately because they answer different questions:
+    // REVOKE closes the table, the column-scoped GRANT reopens exactly the
+    // columns that are allowed out.
+    for (const table of SHOP_P3_TABLES) {
+      expect(P3_SQL, table).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
+      expect(P3_SQL, table).toMatch(
+        new RegExp(`REVOKE ALL ON public\\.${table}\\s+FROM anon, authenticated`),
+      );
+      expect(P3_SQL, table).toMatch(
+        new RegExp(`GRANT SELECT \\([^)]*\\)\\s*ON public\\.${table} TO authenticated`, "s"),
+      );
+    }
+  });
+
+  it("every state-changing P3 RPC is SECURITY DEFINER with a pinned search_path", () => {
+    for (const fn of ["shop_cart_view", "shop_order_create", "shop_order_transition"]) {
+      const at = P3_SQL.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+      const head = P3_SQL.slice(at, at + 900);
+      expect(head, `${fn} must be SECURITY DEFINER`).toContain("SECURITY DEFINER");
+      expect(head, `${fn} must pin search_path`).toContain("SET search_path = public");
+    }
+  });
+
+  it("still collects nothing the pilot decided not to collect", () => {
+    // D2: no bank details at the pilot, so no table to start collecting into.
+    // A comment explaining the decision is fine; a CREATE TABLE is not.
+    const created = [...P3_SQL.matchAll(/CREATE TABLE (?:IF NOT EXISTS )?public\.(\w+)/g)].map(
+      (m) => m[1],
+    );
+    for (const forbidden of [
+      "shop_bank_accounts",
+      "shop_payments",
+      "payments",
+      "shipments",
+      "returns",
+      "disputes",
+      "wishlist_items",
+    ]) {
+      expect(created).not.toContain(forbidden);
+    }
+  });
+
+  it("keeps the money in generated columns", () => {
+    // The RPC never receives a total and never computes one — so there is no
+    // arithmetic for a client to forge and none for the server to get wrong.
+    expect(P3_SQL).toMatch(
+      /total_vnd\s+INTEGER GENERATED ALWAYS AS \(items_total_vnd \+ shipping_fee_vnd\) STORED/,
+    );
+    expect(P3_SQL).toMatch(
+      /line_total_vnd INTEGER GENERATED ALWAYS AS \(qty \* unit_price_vnd\) STORED/,
+    );
+  });
+
+  it("never grants a bare UPDATE on the cart", () => {
+    // A bare GRANT UPDATE lets a client rewrite variant_id, which is a
+    // different product at the same row id.
+    expect(P3_SQL).toContain("GRANT UPDATE (qty)");
+    expect(P3_SQL).not.toMatch(/GRANT\s+UPDATE\s+ON public\.shop_cart_items/);
+  });
+
+  it("withholds buyer_user_id and client_token from the client", () => {
+    const grant = P3_SQL.slice(
+      P3_SQL.indexOf("GRANT SELECT (\n  id, code, shop_id"),
+      P3_SQL.indexOf(") ON public.shop_orders TO authenticated"),
+    );
+    expect(grant.length, "the shop_orders column grant must exist").toBeGreaterThan(0);
+    expect(grant).not.toContain("buyer_user_id");
+    expect(grant).not.toContain("client_token");
+  });
+
+  it("keeps shop_order_events append-only in BOTH ways", () => {
+    // The GRANT answers before the trigger runs, so an append-only claim needs
+    // both halves — a trigger alone once passed while a missing grant was doing
+    // the work.
+    expect(P3_SQL).toMatch(/CREATE TRIGGER shop_order_events_append_only_trg/);
+    expect(P3_SQL).toMatch(/REVOKE ALL ON public\.shop_order_events FROM anon, authenticated/);
+    expect(P3_SQL).not.toMatch(/GRANT[^;]*UPDATE[^;]*ON public\.shop_order_events TO authenticated/s);
+  });
+
+  it("moves stock itself instead of calling product_variant_adjust_stock", () => {
+    // That RPC PERFORMs product_assert_writable(), which demands
+    // is_shop_manager(); a buyer is not a member of the shop they buy from, so
+    // the call would be an insufficient_privilege by design (§B.S2).
+    // Slice to the END OF shop_order_create, not to the end of the file:
+    // shop_order_transition moves stock too and has its own set_config pair, so
+    // an open-ended slice let THAT one satisfy this assertion — deleting
+    // set_config from shop_order_create left the test green.
+    const body = P3_SQL.slice(
+      P3_SQL.indexOf("CREATE OR REPLACE FUNCTION public.shop_order_create("),
+      P3_SQL.indexOf("REVOKE ALL   ON FUNCTION public.shop_order_create"),
+    );
+    expect(body.length, "the shop_order_create body must be found").toBeGreaterThan(0);
+    expect(body).not.toContain("product_variant_adjust_stock");
+    expect(body).toContain("set_config('shop.stock_write', 'on', true)");
+    expect(body).toContain("'sale'");
+  });
+
+  it("adds exactly one inventory reason and reuses 'return' for cancellations", () => {
+    expect(P3_SQL).toContain(
+      "reason IN ('opening', 'restock', 'correction', 'damage', 'lost', 'return', 'manual', 'sale')",
+    );
+    // Comments stripped first: the migration's own note explaining why it did
+    // NOT add 'order_cancel' contains the word, and the first version of this
+    // assertion failed on that note. A grep test that reads prose tests prose —
+    // the same lesson the seller-rules fingerprint assertion learned.
+    expect(P3_SQL.replace(/--[^\n]*/g, "")).not.toContain("order_cancel");
+  });
+
+  it("has no completed, no awaiting_payment and no notify_key", () => {
+    expect(P3_SQL).toContain(
+      "status IN ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled')",
+    );
+    const code = P3_SQL.replace(/--[^\n]*/g, "");
+    expect(code).not.toMatch(/'completed'|'awaiting_payment'|notify_key/);
   });
 });

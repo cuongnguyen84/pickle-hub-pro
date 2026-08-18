@@ -18,6 +18,7 @@ import { LoadingState } from "@/components/states/PageStates";
 import { usePublicSearch, usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { ResultsGrid } from "@/components/shop/CatalogResults";
 import { ShopMonogram } from "@/components/shop/ShopMonogram";
+import { ShopCartLink } from "@/components/shop/CartLink";
 import { publicMediaUrl } from "@/lib/shop/publicCatalog";
 import {
   CONTACT_LABEL,
@@ -83,11 +84,14 @@ export default function ShopStore() {
     <TheLineLayout title={shop.name}>
       <DynamicMeta title={shop.name} description={shop.intro ?? undefined} noindex />
       <main className="tl-shop">
-        <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
-          <Link to="/shop" className="tl-crumb">Chợ</Link>
-          <span aria-hidden="true" className="tl-crumb-sep">/</span>
-          <span aria-current="page" className="tl-crumb-current">{shop.name}</span>
-        </nav>
+        <div className="tl-shop-topline">
+          <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
+            <Link to="/shop" className="tl-crumb">Chợ</Link>
+            <span aria-hidden="true" className="tl-crumb-sep">/</span>
+            <span aria-current="page" className="tl-crumb-current">{shop.name}</span>
+          </nav>
+          <ShopCartLink />
+        </div>
 
         <header className="tl-shop-storehead">
           {/* No published cover → no banner DOM at all: the R3 layout stands

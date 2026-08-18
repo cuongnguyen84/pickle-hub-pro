@@ -44,6 +44,30 @@
     "element": "<ViLanguageWrapper><ShopCategory /></ViLanguageWrapper>"
   },
   {
+    "path": "/shop/cart",
+    "element": "<RequireAuth><ShopCart /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/cart",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopCart /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/checkout/:shopSlug",
+    "element": "<RequireAuth><ShopCheckout /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/checkout/:shopSlug",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopCheckout /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/order/:code",
+    "element": "<RequireAuth><ShopOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/order/:code",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrderDetail /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
     "path": "/live",
     "element": "<Live />"
   },
@@ -878,5 +902,21 @@
   {
     "path": "/vi/rankings/ppa-tour",
     "element": "<ViLanguageWrapper><PpaRankings /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/seller/orders",
+    "element": "<RequireAuth><SellerOrders /></RequireAuth>"
+  },
+  {
+    "path": "/seller/orders/:code",
+    "element": "<RequireAuth><SellerOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/shop/orders",
+    "element": "<RequireAuth><ShopOrders /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/orders",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrders /></RequireAuth></ViLanguageWrapper>"
   }
 ]

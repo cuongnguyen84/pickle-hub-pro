@@ -17,6 +17,7 @@ import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
 import { CategoryChips, ResultsGrid } from "@/components/shop/CatalogResults";
+import { ShopCartLink } from "@/components/shop/CartLink";
 import "@/styles/shop.css";
 
 export default function ShopHome() {
@@ -32,6 +33,11 @@ export default function ShopHome() {
           from the Pages Function; this is the SPA half of the same answer. */}
       <DynamicMeta title="Chợ đồ pickleball" noindex />
       <main className="tl-shop">
+        {/* /shop has no breadcrumb, so the cart badge sits alone above the
+            hero card (§4.2). Never in TheLineLayout's tl-nav. */}
+        <div className="tl-shop-topline">
+          <ShopCartLink />
+        </div>
         {/* R4 hero card — purely visual wrapper, no new behaviour. NOT
             .tl-shop-hero: that class belongs to the sell landing and its
             mobile rule would stretch the "Tìm" button full-width. */}

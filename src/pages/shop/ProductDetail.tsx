@@ -16,12 +16,17 @@
 // ============================================================================
 
 import { useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
-import { BadgeCheck, ExternalLink, Phone } from "lucide-react";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { AlertTriangle, BadgeCheck, ExternalLink, Loader2, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { LoadingState } from "@/components/states/PageStates";
 import { usePublicProduct } from "@/hooks/shop/usePublicShop";
+import { CartAddedToast, ShopCartLink } from "@/components/shop/CartLink";
+import { CART_QTY_MAX, useCartMutations } from "@/hooks/shop/useCart";
+import { useAuth } from "@/hooks/useAuth";
+import { getLoginUrl } from "@/lib/auth-config";
+import { shopErrorMessage } from "@/lib/shop/errors";
 import {
   CONDITION_LABEL,
   availabilityLabel,
@@ -53,6 +58,21 @@ import "@/styles/shop.css";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
 
+// EN: Add to cart · Adding… · Try again · Quantity · This option is sold out.
+// Pick another one, or message the shop. · Choose a {group} first. · This shop
+// has paused selling. · You can still contact the shop directly.
+const PDP_COPY = {
+  add: "Thêm vào giỏ",
+  addBusy: "Đang thêm…",
+  addRetry: "Thử lại",
+  qtyLabel: "Số lượng",
+  soldOut:
+    "Phiên bản này đang hết hàng. Chọn phiên bản khác, hoặc nhắn shop để hỏi.",
+  pickVariant: (group: string) => `Chọn ${group} trước.`,
+  pausedTitle: "Shop đang tạm ngưng bán.",
+  pausedBody: "Anh/chị vẫn liên hệ trực tiếp với shop được.",
+};
+
 interface PublicProduct {
   id: string;
   slug: string;
@@ -63,6 +83,11 @@ interface PublicProduct {
   shop: {
     slug: string; name: string; region: string | null; verified: boolean;
     shipping_note: string | null; return_note: string | null;
+    /** D1. Carried by product_public_projection since 20260818120000, so it is
+     *  always present — no "the projection did not say" case to defend. */
+    ordering_enabled: boolean;
+    /** D3. 0 is free. */
+    shipping_fee_vnd: number;
   };
   option_groups: OptionGroup[];
   variants: PublicVariant[];
@@ -74,6 +99,14 @@ export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const q = usePublicProduct(slug ?? null);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { add } = useCartMutations();
+  const [qty, setQty] = useState(1);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [toastNonce, setToastNonce] = useState(0);
+  const [toastOpen, setToastOpen] = useState(false);
 
   const product = (q.data?.product ?? null) as PublicProduct | null;
   const contacts = usableContacts(q.data?.contacts as PublicContact[] | undefined);
@@ -127,10 +160,42 @@ export default function ProductDetail() {
 
   const box = mediaBox(shown?.width ?? null, shown?.height ?? null, 800);
 
+  // D1. The same flag shop_order_create refuses on, so the button and the
+  // server cannot disagree.
+  const ordering = product.shop.ordering_enabled;
+  const maxQty = CART_QTY_MAX;
+  const missingGroup = groups.find((g) => !sel[g.name]);
+  const addBlockedReason = !resolved
+    ? PDP_COPY.pickVariant(missingGroup?.name ?? "phiên bản")
+    : resolved.availability === "out_of_stock"
+      ? PDP_COPY.soldOut
+      : null;
+  const adding = add.isPending;
+
+  const onAdd = async () => {
+    // No (variant, qty) is stashed across the login round trip — deliberately.
+    // The pilot is noindex with near-zero traffic, and a restored selection
+    // that no longer exists is a worse bug than picking the size again.
+    if (!user) {
+      navigate(getLoginUrl(location.pathname + location.search));
+      return;
+    }
+    if (!resolved) return;
+    setAddError(null);
+    try {
+      await add.mutateAsync({ variantId: resolved.id, qty });
+      setToastNonce((n) => n + 1);
+      setToastOpen(true);
+    } catch (err) {
+      setAddError(shopErrorMessage(err));
+    }
+  };
+
   return (
     <TheLineLayout title={product.title}>
       <DynamicMeta title={product.title} description={product.description ?? undefined} noindex />
       <main className="tl-shop">
+        <div className="tl-shop-topline">
         <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
           <Link to="/shop" className="tl-crumb">Chợ</Link>
           <span aria-hidden="true" className="tl-crumb-sep">/</span>
@@ -144,6 +209,8 @@ export default function ProductDetail() {
           )}
           <span aria-current="page" className="tl-crumb-current">{product.title}</span>
         </nav>
+          <ShopCartLink />
+        </div>
 
         <div className="tl-pdp">
           <section aria-labelledby="pdp-media-h" className="tl-pdp-media">
@@ -271,8 +338,69 @@ export default function ProductDetail() {
               </p>
             </div>
 
-            {/* D2: contact, not cart. */}
+            {/* P3: cart first, contact second — but only one primary on the
+                screen. When the shop is not selling, the contact buttons take
+                the primary back (C3). */}
             <div className="tl-pdp-cta">
+              {ordering ? (
+                <>
+                  <label className="tl-shop-label" htmlFor="pdp-qty">{PDP_COPY.qtyLabel}</label>
+                  <span className="tl-shop-qty" id="pdp-qty-box">
+                    <button
+                      type="button"
+                      aria-label="Giảm số lượng"
+                      disabled={qty <= 1 || adding}
+                      onClick={() => setQty((n) => Math.max(1, n - 1))}
+                    >
+                      −
+                    </button>
+                    <input id="pdp-qty" type="text" inputMode="numeric" readOnly value={qty} />
+                    <button
+                      type="button"
+                      aria-label="Tăng số lượng"
+                      disabled={qty >= maxQty || adding}
+                      onClick={() => setQty((n) => Math.min(maxQty, n + 1))}
+                    >
+                      +
+                    </button>
+                  </span>
+
+                  {addError && (
+                    <p className="tl-shop-notice tl-shop-notice--danger" role="alert">
+                      <AlertTriangle size={16} aria-hidden="true" />
+                      <span>{addError}</span>
+                    </p>
+                  )}
+
+                  <button
+                    type="button"
+                    className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
+                    disabled={adding || !!addBlockedReason}
+                    aria-busy={adding || undefined}
+                    aria-describedby={addBlockedReason ? "pdp-add-why" : undefined}
+                    onClick={() => void onAdd()}
+                  >
+                    {adding && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                    {adding
+                      ? PDP_COPY.addBusy
+                      : addError
+                        ? PDP_COPY.addRetry
+                        : PDP_COPY.add}
+                  </button>
+                  {addBlockedReason && (
+                    <p className="tl-shop-hint" id="pdp-add-why" style={{ marginTop: 0 }}>
+                      {addBlockedReason}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="tl-shop-notice">
+                  <div>
+                    <strong>{PDP_COPY.pausedTitle}</strong> {PDP_COPY.pausedBody}
+                  </div>
+                </div>
+              )}
+
               {contacts.length > 0 ? (
                 <>
                   {contacts.map((c) => {
@@ -281,7 +409,11 @@ export default function ProductDetail() {
                       <a
                         key={c.id}
                         href={href}
-                        className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
+                        className={
+                          ordering
+                            ? "tl-shop-btn tl-shop-btn--block"
+                            : "tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
+                        }
                         target={c.type === "phone" ? undefined : "_blank"}
                         rel="noopener noreferrer nofollow"
                         onClick={() => {
@@ -316,6 +448,12 @@ export default function ProductDetail() {
             )}
           </section>
         </div>
+
+        <CartAddedToast
+          open={toastOpen}
+          nonce={toastNonce}
+          onClose={() => setToastOpen(false)}
+        />
       </main>
     </TheLineLayout>
   );
