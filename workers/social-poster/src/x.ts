@@ -589,7 +589,14 @@ async function publishNext(
     const url = `https://x.com/thepicklehub/status/${publishedId}`;
     // Announced after the row is finalized, never before: a notification for a
     // post whose bookkeeping then failed is worse than no notification at all.
-    await notifyPosted(env, 'X · @thepicklehub', row.body.split('\n')[0], url);
+    await notifyPosted(env, {
+      platform: 'X',
+      account: '@thepicklehub',
+      // The whole post, not its first line: an X post is at most 280
+      // characters, so the notification can show exactly what went out.
+      body: row.body,
+      url,
+    });
     return {
       posted: true,
       post_id: row.id,
