@@ -148,23 +148,36 @@ export const useDecideProduct = () => {
  * screen calls this right after a successful approve, and offers it as a
  * button whenever an approved product is still not publicly visible.
  */
+/**
+ * The publish leg itself, as a plain function.
+ *
+ * Extracted from the hook because there are now TWO callers and the second one
+ * is the one that matters: since 20260818170000 the seller's own "Đăng bán"
+ * reaches `approved`, and a product that reaches `approved` without this call
+ * is approved and invisible — the exact Wave-0 shape described above, just
+ * moved to the other screen. One implementation, so the two cannot drift.
+ */
+export async function invokePublishProduct(
+  productId: string,
+): Promise<{ ok?: boolean; renditions?: number }> {
+  // Imported lazily: client.ts creates the SDK client at module load and
+  // THROWS without env vars — a top-level import here took the whole
+  // MediaEditor test import-chain down on CI, where no .env exists.
+  const { supabase } = await import("@/integrations/supabase/client");
+  // Same error-reading as the profile leg — and deliberately NO timeout:
+  // this one copies every rendition of a product, so a 20s cap would abort
+  // work that is progressing. Observability only.
+  const { data, error, response } = await supabase.functions.invoke("shop-media-lifecycle", {
+    body: { action: "publish", product_id: productId },
+  });
+  if (error) throw edgeError(await edgeErrorMessage(error, response));
+  return data as { ok?: boolean; renditions?: number };
+}
+
 export const usePublishProduct = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (productId: string) => {
-      // Imported lazily: client.ts creates the SDK client at module load and
-      // THROWS without env vars — a top-level import here took the whole
-      // MediaEditor test import-chain down on CI, where no .env exists.
-      const { supabase } = await import("@/integrations/supabase/client");
-      // Same error-reading as the profile leg — and deliberately NO timeout:
-      // this one copies every rendition of a product, so a 20s cap would abort
-      // work that is progressing. Observability only.
-      const { data, error, response } = await supabase.functions.invoke("shop-media-lifecycle", {
-        body: { action: "publish", product_id: productId },
-      });
-      if (error) throw edgeError(await edgeErrorMessage(error, response));
-      return data as { ok?: boolean; renditions?: number };
-    },
+    mutationFn: invokePublishProduct,
     onSuccess: () => void qc.invalidateQueries({ queryKey: MOD_KEY }),
   });
 };

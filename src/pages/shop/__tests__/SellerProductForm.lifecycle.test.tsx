@@ -68,6 +68,8 @@ vi.mock("@/hooks/shop/useProductSubmit", () => ({
   useSubmitPreflight: () => ({ data: preflightProblems, isLoading: false, refetch: refetchPreflight }),
   useSubmitProduct: () => ({ mutateAsync: submitProduct, isPending: false }),
   useWithdrawSubmission: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  // P4c: đường quay lại cho hàng đang bán. Màn này gọi nó vô điều kiện.
+  useEditAgain: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }),
   useProductPreview: () => ({ data: null }),
 }));
 
@@ -158,7 +160,11 @@ describe("the slug is a link somebody may already hold", () => {
     fireEvent.click(screen.getByRole("button", { name: "Đổi đường dẫn" }));
 
     expect(screen.queryByLabelText("Đường dẫn mới")).toBeNull();
-    expect(document.body.textContent).toContain("Sản phẩm đã qua duyệt nên chưa sửa nội dung");
+    // Khoá sửa vẫn nguyên; chỉ câu giải thích đổi, vì từ 20260818170000 hàng
+    // `approved` là hàng ĐANG BÁN chứ không phải hàng vừa qua duyệt. Và màn
+    // hình nay phải đưa ra đường thoát, nếu không người bán tự khoá mình.
+    expect(document.body.textContent).toContain("Sản phẩm đang bán nên khoá sửa");
+    expect(screen.getByRole("button", { name: /Gỡ xuống để sửa/ })).toBeTruthy();
     expect(updateSlug).not.toHaveBeenCalled();
   });
 
@@ -261,7 +267,7 @@ describe("the submit gate is the server's answer, not the screen's guess", () =>
     render();
     await waitFor(() => expect(document.body.textContent).toContain("Chưa có ảnh nào."));
     expect(document.body.textContent).toContain("Phiên bản này chưa có giá.");
-    expect(document.body.textContent).toContain("Còn 2 chỗ chưa xong trước khi gửi duyệt:");
+    expect(document.body.textContent).toContain("Còn 2 chỗ chưa xong trước khi đăng bán:");
     // One "go to it" affordance per problem, so a checklist entry is never a
     // dead end the seller has to hunt for.
     expect(screen.getAllByRole("button", { name: "Đi tới chỗ cần sửa" })).toHaveLength(2);
@@ -271,7 +277,7 @@ describe("the submit gate is the server's answer, not the screen's guess", () =>
     preflightProblems = [{ code: "no_media", section: "media" }];
     render();
     await waitFor(() => expect(document.body.textContent).toContain("Chưa có ảnh nào."));
-    const submit = screen.queryByRole("button", { name: /Gửi duyệt/ });
+    const submit = screen.queryByRole("button", { name: /Đăng bán/ });
     if (submit) {
       expect(submit.hasAttribute("disabled")).toBe(true);
       fireEvent.click(submit);
@@ -282,7 +288,7 @@ describe("the submit gate is the server's answer, not the screen's guess", () =>
   it("submits once the checklist is clean", async () => {
     preflightProblems = [];
     render();
-    const submit = await waitFor(() => screen.getByRole("button", { name: /Gửi duyệt/ }));
+    const submit = await waitFor(() => screen.getByRole("button", { name: /Đăng bán/ }));
     expect(submit.hasAttribute("disabled")).toBe(false);
     fireEvent.click(submit);
     await waitFor(() => expect(submitProduct).toHaveBeenCalledTimes(1));
@@ -291,7 +297,7 @@ describe("the submit gate is the server's answer, not the screen's guess", () =>
   it("🔴 a rejected submit does not move the product to pending review", async () => {
     submitProduct.mockRejectedValueOnce(new Error("preflight_failed"));
     render();
-    const submit = await waitFor(() => screen.getByRole("button", { name: /Gửi duyệt/ }));
+    const submit = await waitFor(() => screen.getByRole("button", { name: /Đăng bán/ }));
     fireEvent.click(submit);
     await waitFor(() => expect(submitProduct).toHaveBeenCalled());
     // Still the editable draft screen: no badge, no lock, no false comfort.

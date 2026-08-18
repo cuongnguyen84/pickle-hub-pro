@@ -67,6 +67,7 @@ import {
   useSubmitPreflight,
   useSubmitProduct,
   useWithdrawSubmission,
+  useEditAgain,
 } from "@/hooks/shop/useProductSubmit";
 import {
   firstProblem,
@@ -167,6 +168,7 @@ export default function SellerProductForm() {
   const preflight = useSubmitPreflight(productId, !isNew);
   const submit = useSubmitProduct(productId);
   const withdraw = useWithdrawSubmission(productId);
+  const editAgain = useEditAgain(productId);
   const [showPreview, setShowPreview] = useState(false);
   const preview = useProductPreview(productId, showPreview);
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -440,7 +442,11 @@ export default function SellerProductForm() {
               ? "Sản phẩm đang chờ duyệt nên tạm khoá sửa — quyết định của quản trị viên phải rơi vào đúng bản đã xem. Rút lại để sửa tiếp."
               : status === "archived"
                 ? "Sản phẩm đã ngừng bán. Bật bán lại thì sửa tiếp được."
-                : "Sản phẩm đã qua duyệt nên chưa sửa nội dung ở màn hình này. Luồng gửi lại để duyệt mở ở bản cập nhật tới."}
+                : status === "approved"
+                  ? "Sản phẩm đang bán nên khoá sửa. Bấm “Gỡ xuống để sửa” bên dưới — nó rời kệ trong lúc anh/chị sửa, rồi đăng lại."
+                  : status === "suspended"
+                    ? "Sản phẩm bị quản trị viên gỡ. Chỉ quản trị viên mở lại được, và khi mở sẽ kèm chỗ cần sửa."
+                    : "Sản phẩm ở trạng thái này chưa sửa nội dung được."}
           </span>
         </div>
       )}
@@ -508,7 +514,7 @@ export default function SellerProductForm() {
           id="p-cat"
           label="Ngành hàng"
           error={errors.category_slug}
-          hint="Người mua lọc theo ngành hàng. Bắt buộc trước khi gửi duyệt."
+          hint="Người mua lọc theo ngành hàng. Bắt buộc trước khi đăng bán."
         >
           <select
             id="p-cat"
@@ -699,7 +705,7 @@ export default function SellerProductForm() {
             <div>
               <strong>Lưu nháp trước rồi thêm ảnh.</strong> Ảnh gắn với một sản phẩm đã tồn tại,
               nên bấm &ldquo;Lưu nháp&rdquo; xong là màn hình ảnh mở ra ngay ở bước tiếp theo.
-              Sản phẩm cần ít nhất một ảnh mới gửi duyệt được.
+              Sản phẩm cần ít nhất một ảnh mới đăng bán được.
             </div>
           </div>
         </section>
@@ -770,7 +776,7 @@ export default function SellerProductForm() {
       {!isNew && (
         <section aria-labelledby="sec-submit">
           <h2 id="sec-submit" className="tl-shop-h2">
-            Xem trước &amp; gửi duyệt
+            Xem trước &amp; đăng bán
           </h2>
 
           {status === "pending_review" ? (
@@ -796,6 +802,40 @@ export default function SellerProductForm() {
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          ) : status === "approved" ? (
+            /* Live. The only thing this screen can offer is the way back —
+               without it, self-publishing means the seller publishes once and
+               can never fix a typo. */
+            <div className="tl-shop-notice tl-shop-notice--info" role="status">
+              <Check size={16} aria-hidden="true" />
+              <div>
+                <strong>Đang bán.</strong>
+                <p style={{ margin: "6px 0 0", lineHeight: 1.55 }}>
+                  Người mua đang thấy sản phẩm này. Muốn sửa thì gỡ xuống đã — sản phẩm rời kệ
+                  ngay, sửa xong bấm “Đăng bán” là lên lại.
+                </p>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                  <Link to="/seller/products" className="tl-shop-btn tl-shop-btn--sm">
+                    Về danh sách sản phẩm
+                  </Link>
+                  {isManager && !shopBlocked && (
+                    <button
+                      type="button"
+                      className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--ghost"
+                      disabled={editAgain.isPending}
+                      onClick={() => void editAgain.mutateAsync(row?.version).catch(() => {})}
+                    >
+                      {editAgain.isPending ? "Đang gỡ…" : "Gỡ xuống để sửa"}
+                    </button>
+                  )}
+                </div>
+                {editAgain.isError && (
+                  <p className="tl-shop-hint" role="alert" style={{ marginTop: 8 }}>
+                    {shopErrorMessage(editAgain.error)}
+                  </p>
+                )}
               </div>
             </div>
           ) : (
@@ -1314,10 +1354,10 @@ function SubmitPanel({
       <div className="tl-shop-notice tl-shop-notice--info" role="status">
         <Check size={16} aria-hidden="true" />
         <div>
-          <strong>Đã gửi duyệt.</strong>
+          <strong>Đã đăng bán.</strong>
           <p style={{ margin: "6px 0 0", lineHeight: 1.55 }}>
-            Quản trị viên sẽ xem và phản hồi. Anh/chị không cần sửa gì thêm cho tới lúc đó — nếu
-            cần sửa, phản hồi sẽ ghi rõ chỗ nào.
+            Sản phẩm đang hiển thị cho người mua. Muốn sửa thì mở lại sản phẩm và bấm
+            “Gỡ xuống để sửa” — nó rời kệ trong lúc anh/chị sửa, rồi đăng lại.
           </p>
           <div style={{ marginTop: 10 }}>
             <Link to="/seller/products" className="tl-shop-btn tl-shop-btn--sm">
@@ -1338,14 +1378,14 @@ function SubmitPanel({
     <>
       {ready ? (
         <p className="tl-shop-hint">
-          Sản phẩm đã đủ điều kiện gửi duyệt. Sau khi gửi, anh/chị sẽ không sửa được cho tới khi
-          có phản hồi.
+          Đủ điều kiện đăng bán. Bấm là sản phẩm hiển thị ngay cho người mua — không qua bước
+          duyệt nào. Muốn sửa sau đó thì gỡ nó xuống, sửa, rồi đăng lại.
         </p>
       ) : (
         <div className="tl-shop-notice tl-shop-notice--warn" role="status">
           <AlertTriangle size={16} aria-hidden="true" />
           <div style={{ width: "100%" }}>
-            <strong>Còn {problems.length} chỗ chưa xong trước khi gửi duyệt:</strong>
+            <strong>Còn {problems.length} chỗ chưa xong trước khi đăng bán:</strong>
             {groups.map((group) => (
               <div key={group.section} style={{ marginTop: 8 }}>
                 <p className="tl-shop-eyebrow" style={{ display: "block" }}>
@@ -1384,7 +1424,7 @@ function SubmitPanel({
             else void onSubmit();
           }}
         >
-          {state === "sending" ? "Đang gửi…" : "Gửi duyệt"}
+          {state === "sending" ? "Đang đăng…" : "Đăng bán"}
         </button>
       )}
 

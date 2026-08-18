@@ -12,7 +12,7 @@
 
 BEGIN;
 
-SELECT plan(54);
+SELECT plan(52);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -73,17 +73,12 @@ UPDATE public.product_media SET verified_at = now() WHERE id=(SELECT v FROM t_q5
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 
+-- Từ 20260818170000 người bán bấm một lần là tới `approved`; bước admin duyệt
+-- ở giữa không còn tồn tại, và gọi nó bây giờ sẽ raise vì sản phẩm đã approved.
 SELECT is(
   (public.product_submit((SELECT v FROM t_q5 WHERE k='p1'),
-     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s1')) ->> 'ok',
-  'true', 'gửi duyệt');
-
-SET LOCAL request.jwt.claims TO '{"sub":"5f0e0004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
-SELECT is(
-  (public.product_decide((SELECT v FROM t_q5 WHERE k='p1'), 'approve',
-     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-     NULL, NULL, '[]'::jsonb, 'tok-q5d1')) ->> 'status',
-  'approved', 'duyệt lần đầu');
+     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s1')) ->> 'status',
+  'approved', 'người bán đăng bán, không qua ai');
 
 -- The worker's commit.
 SET LOCAL role postgres;
@@ -226,28 +221,33 @@ SET LOCAL request.jwt.claims TO '{"sub":"5f0e0001-0000-4000-8000-000000000001","
 
 SELECT is(
   (public.product_submit((SELECT v FROM t_q5 WHERE k='p1'),
-     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s2')) ->> 'ok',
-  'true', 'người bán gửi duyệt lại bằng đúng luồng P2a');
+     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s2')) ->> 'status',
+  'approved', 'người bán sửa xong đăng lại, không qua ai');
+
+-- Bất biến quan trọng nhất của cả migration 20260818170000: chạm tới
+-- `approved` bằng tay NGƯỜI BÁN vẫn KHÔNG làm sản phẩm hiện ra. Byte ảnh phải
+-- vào bucket công khai đã, và chỉ `product_publish_commit` (service_role) ghi
+-- được `is_published`. Bốn tầng khoá không bị nới cái nào — chỉ có trạng thái
+-- mà thao tác người bán chạm tới là đổi.
 SELECT is(
-  (SELECT status::text FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-  'pending_review', 'sản phẩm quay lại hàng đợi');
+  (SELECT is_published FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
+  false, 'nhưng vẫn chờ byte lên bucket mới thật sự công khai');
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT throws_ok(
   format($$ SELECT public.product_public_projection(%L::uuid, false) $$, (SELECT v FROM t_q5 WHERE k='p1')),
-  'P0002', NULL, 'gửi lại KHÔNG tự công khai');
+  'P0002', NULL, 'và khách vẫn không thấy nó');
 
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
+-- Đòn gỡ vẫn với tới được. Đây là lý do người bán dừng ở đúng `approved` chứ
+-- không đặt ra một trạng thái mới: điều kiện của `suspend` là status='approved'.
 SELECT is(
-  (public.product_decide((SELECT v FROM t_q5 WHERE k='p1'), 'approve',
+  (public.product_decide((SELECT v FROM t_q5 WHERE k='p1'), 'suspend',
      (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-     NULL, NULL, '[]'::jsonb, 'tok-q5d4')) ->> 'status',
-  'approved', 'quản trị viên duyệt lại — bốn bước, không phải một nút');
-SELECT is(
-  (SELECT is_published FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-  false, 'và vẫn chờ worker đưa byte lên mới thật sự công khai');
+     'Gỡ lần hai', NULL, '[]'::jsonb, 'tok-q5d4')) ->> 'status',
+  'suspended', 'admin vẫn gỡ được hàng người bán tự đăng');
 
 -- ─── Q6: contact moderation events ──────────────────────────────────────────
 
