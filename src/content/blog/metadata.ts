@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "shenzhen-open-2026-preview",
+    publishedDate: "2026-08-18",
+    updatedDate: "2026-08-18",
+    author: "The PickleHub Team",
+    tags: ["shenzhen open 2026", "skechers shenzhen open", "ppa tour asia", "ppa asia 500", "pickleball china", "shenzhen pickleball", "ppa asia schedule"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow live scores on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    titleEn: "Skechers Shenzhen Open 2026 Preview: Schedule, Format and How to Watch the PPA Asia 500",
+    titleVi: "Skechers Shenzhen Open 2026: lịch thi đấu, thể thức và cách xem chặng PPA Asia 500",
+    metaTitleEn: "Shenzhen Open 2026: Schedule, Format & How to Watch",
+    metaTitleVi: "Shenzhen Open 2026: Lịch thi đấu & cách xem",
+    metaDescriptionEn: "Skechers Shenzhen Open 2026 (Aug 20-23) at Bao'an Sports Center Gymnasium: US$70,000, 500 PPA points, 615 players, daily schedule and how to watch.",
+    metaDescriptionVi: "Skechers Shenzhen Open 2026 (20-23/8) tại Bao'an Sports Center: 70.000 USD, 500 điểm PPA, 615 VĐV, lịch từng ngày và cách xem từ Việt Nam.",
+  },
+  {
     slug: "pickleball-world-cup-2026-group-a-vietnam",
     publishedDate: "2026-08-17",
     updatedDate: "2026-08-17",
