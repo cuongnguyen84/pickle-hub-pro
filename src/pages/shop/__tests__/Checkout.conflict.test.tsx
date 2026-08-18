@@ -72,20 +72,20 @@ const cartGroup: CartGroup = {
   ],
 };
 
-vi.mock("@/hooks/shop/useCart", async () => {
-  const actual = await vi.importActual<typeof import("@/hooks/shop/useCart")>(
-    "@/hooks/shop/useCart",
-  );
-  return {
-    ...actual,
-    useCartView: () => ({
-      data: [cartGroup],
-      isPending: false,
-      isError: false,
-      refetch: refetchMock,
-    }),
-  };
-});
+// Mock trọn, KHÔNG `importActual`: module thật kéo theo supabase client, mà
+// client đòi VITE_SUPABASE_URL lúc import — CI không có .env nên suite chết ở
+// khâu mocking trước cả test đầu tiên. `cartGroupFor` là một dòng, chép rẻ hơn
+// là kéo cả cây import vào.
+vi.mock("@/hooks/shop/useCart", () => ({
+  cartGroupFor: (groups: CartGroup[] | undefined, shopSlug: string | undefined) =>
+    groups?.find((g) => g.shop.slug === shopSlug) ?? null,
+  useCartView: () => ({
+    data: [cartGroup],
+    isPending: false,
+    isError: false,
+    refetch: refetchMock,
+  }),
+}));
 
 /** The exact body the tester captured off the RPC with a buyer JWT. */
 const PRICE_CHANGED = {
