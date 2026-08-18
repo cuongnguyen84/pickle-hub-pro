@@ -567,3 +567,52 @@ describe("while the product is waiting for review", () => {
     expect(cell("Mã hàng", "Đen · 40").value).toBe("B40");
   });
 });
+
+// ─── Nói ra ngoài rằng đang có thay đổi chưa lưu ────────────────────────────
+//
+// Bảng này giữ trạng thái riêng và có nút lưu riêng, nên màn hình chứa nó
+// không có cách nào biết người bán đã gõ gì mà chưa ghi. Đó là cách sản phẩm
+// `kaiwin-diamond` được đăng lại với GIÁ CŨ trên production 18/08: sửa giá
+// trong bảng, bấm thẳng "Đăng bán", và giá mới ở lại trong bộ nhớ trình duyệt.
+// Dấu vết: 12 giây giữa `unpublished_to_edit` và `submitted`, và
+// `products.version` KHÔNG nhích giữa hai mốc đó.
+
+describe("bảng báo ra ngoài khi còn thay đổi chưa lưu", () => {
+  const last = (m: ReturnType<typeof vi.fn>) => m.mock.calls[m.mock.calls.length - 1][0];
+
+  it("im lặng khi vừa mở, kêu ngay khi sửa một ô giá", async () => {
+    const onDirtyChange = vi.fn();
+    mount({ onDirtyChange });
+
+    // Lần gọi đầu là lúc mount, và nó phải là `false` — nếu không thì màn hình
+    // chứa bảng sẽ chặn nút đăng bán ngay cả khi chưa ai gõ gì.
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalled());
+    expect(onDirtyChange.mock.calls[0][0]).toBe(false);
+
+    type("Giá", "Trắng · 39", "3400000");
+    await waitFor(() => expect(last(onDirtyChange)).toBe(true));
+  });
+
+  it("kêu cả khi chỉ sửa mã hàng hay tồn kho — không riêng giá", async () => {
+    const onDirtyChange = vi.fn();
+    mount({ onDirtyChange });
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalled());
+
+    type("Mã hàng", "Đen · 40", "B40-2026");
+    await waitFor(() => expect(last(onDirtyChange)).toBe(true));
+  });
+
+  it("gõ rồi gõ trả lại đúng như cũ thì hết kêu", async () => {
+    // Không phải chi tiết vụn: một cờ chỉ biết bật sẽ khoá nút đăng bán vĩnh
+    // viễn sau một lần chạm nhầm, và người bán không có cách nào gỡ ngoài tải
+    // lại trang.
+    const onDirtyChange = vi.fn();
+    mount({ onDirtyChange });
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalled());
+
+    type("Giá", "Trắng · 39", "3400000");
+    await waitFor(() => expect(last(onDirtyChange)).toBe(true));
+    type("Giá", "Trắng · 39", "1000000");
+    await waitFor(() => expect(last(onDirtyChange)).toBe(false));
+  });
+});

@@ -23,6 +23,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 
 const updateSlug = vi.fn();
+const updateProduct = vi.fn();
 const archive = vi.fn();
 const submitProduct = vi.fn();
 const refetchPreflight = vi.fn();
@@ -55,7 +56,7 @@ vi.mock("@/hooks/shop/useShopProfile", () => ({
 vi.mock("@/hooks/shop/useSellerProducts", () => ({
   useSellerProduct: () => ({ data: productRow, isLoading: false, isError: false, refetch: vi.fn() }),
   useCreateProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useUpdateProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateProduct: () => ({ mutateAsync: updateProduct, isPending: false }),
   useUpdateProductSlug: () => ({ mutateAsync: updateSlug, isPending: false }),
   useArchiveProduct: () => ({ mutateAsync: archive, isPending: false }),
 }));
@@ -113,6 +114,7 @@ const baseProduct = (over: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   updateSlug.mockReset().mockResolvedValue("giay-court-pro-2");
+  updateProduct.mockReset().mockResolvedValue({ ...baseProduct(), version: 5 });
   archive.mockReset().mockResolvedValue({ ok: true });
   submitProduct.mockReset().mockResolvedValue({ ok: true });
   refetchPreflight.mockReset();
@@ -292,6 +294,52 @@ describe("the submit gate is the server's answer, not the screen's guess", () =>
     expect(submit.hasAttribute("disabled")).toBe(false);
     fireEvent.click(submit);
     await waitFor(() => expect(submitProduct).toHaveBeenCalledTimes(1));
+  });
+
+  it("🔴 đăng bán KHÔNG đăng đè bản cũ khi còn thay đổi chưa lưu", async () => {
+    // Lỗi thật trên production 18/08: người bán gỡ hàng xuống, sửa giá, bấm
+    // "Đăng bán" — và sản phẩm lên lại với GIÁ CŨ. Không có autosave lên máy
+    // chủ; bản sửa chỉ nằm trong localStorage, và nút đăng đọc thẳng hàng trên
+    // máy chủ. Dấu vết: 12 giây giữa `unpublished_to_edit` và `submitted`, và
+    // `products.version` KHÔNG nhích giữa hai mốc đó.
+    preflightProblems = [];
+    render();
+    await waitFor(() => screen.getByLabelText("Tên sản phẩm"));
+    fireEvent.change(screen.getByLabelText("Tên sản phẩm"), { target: { value: "Giày Court Pro 2026" } });
+
+    // Nhãn nút phải nói ra rằng nó sẽ lưu trước.
+    const submit = await waitFor(() => screen.getByRole("button", { name: /Lưu và đăng bán/ }));
+    fireEvent.click(submit);
+
+    // Lưu TRƯỚC, kèm đúng con số vừa gõ…
+    await waitFor(() => expect(updateProduct).toHaveBeenCalledTimes(1));
+    expect(updateProduct.mock.calls[0][0].patch.title).toBe("Giày Court Pro 2026");
+    // …rồi mới đăng, và đăng theo phiên bản MỚI mà lệnh lưu vừa trả về.
+    await waitFor(() => expect(submitProduct).toHaveBeenCalledTimes(1));
+    expect(submitProduct.mock.calls[0][0].expectedVersion).toBe(5);
+  });
+
+  it("🔴 lưu hỏng thì KHÔNG đăng", async () => {
+    // Xung đột phiên bản hay lỗi hợp lệ đều phải chặn hẳn: đăng tiếp sau một
+    // lệnh lưu hỏng là đăng đúng bản cũ mà lỗi này sinh ra.
+    preflightProblems = [];
+    updateProduct.mockRejectedValueOnce(new Error("PT409"));
+    render();
+    await waitFor(() => screen.getByLabelText("Tên sản phẩm"));
+    fireEvent.change(screen.getByLabelText("Tên sản phẩm"), { target: { value: "Giày Court Pro 2026" } });
+    fireEvent.click(screen.getByRole("button", { name: /Lưu và đăng bán/ }));
+
+    await waitFor(() => expect(updateProduct).toHaveBeenCalledTimes(1));
+    expect(submitProduct).not.toHaveBeenCalled();
+  });
+
+  it("không lưu thừa khi không có gì thay đổi", async () => {
+    preflightProblems = [];
+    render();
+    const submit = await waitFor(() => screen.getByRole("button", { name: /^Đăng bán$/ }));
+    fireEvent.click(submit);
+    await waitFor(() => expect(submitProduct).toHaveBeenCalledTimes(1));
+    expect(updateProduct).not.toHaveBeenCalled();
   });
 
   it("🔴 a rejected submit does not move the product to pending review", async () => {
