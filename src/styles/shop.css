@@ -167,6 +167,17 @@
   min-height: 100%;
   flex: 0 0 auto;
   overflow: visible;
+
+  /* Và thôi làm flex container. `.tl-shop-page` có `margin: 0 auto` để căn
+     giữa trên desktop; auto margin theo trục ngang của một flex item thì
+     HUỶ `stretch`, nên nó tự co theo `fit-content` thay vì rộng bằng cha.
+     Đo ở 390px: `.tl-shop-page` ra 813px, lưới sản phẩm thành 2 cột 384px,
+     ảnh 370px — tràn ra ngoài màn hình và không cuộn ngang tới được, vì
+     `.tl-scroll` là `overflow-x: hidden`.
+     Lỗi này có sẵn từ trước; `overflow: hidden` cũ đang che nó. Ở đây
+     `main` chỉ là hộp dòng chảy bình thường, `margin: 0 auto` căn giữa như
+     mọi khối khác, và mọi con đều rộng đúng bằng viewport. */
+  display: block;
 }
 
 .tl-shop-page {
