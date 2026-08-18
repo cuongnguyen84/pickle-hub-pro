@@ -94,10 +94,17 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           // sitting at position 8. Ours is verified by og:url =
           // facebook.com/thepicklehubnet/ and og:title = thepicklehub.net.
           //
+          // X added 2026-08-18, and unlike the Facebook entry it is evidenced
+          // rather than guessed: workers/social-poster/wrangler.toml documents
+          // X_CLIENT_ID as "console.x.com, @thepicklehub", the account the
+          // poster authenticates as. x.com/thepicklehub returns 200 while a
+          // nonsense handle returns 404, so the 200 is meaningful here.
+          //
           // NB: keep prose out of this array — brand-sameas.test.ts extracts
           // every quoted string inside it and asserts each one is a URL.
           sameAs: [
             "https://www.facebook.com/thepicklehubnet/",
+            "https://x.com/thepicklehub",
             "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",
@@ -224,10 +231,17 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           // sitting at position 8. Ours is verified by og:url =
           // facebook.com/thepicklehubnet/ and og:title = thepicklehub.net.
           //
+          // X added 2026-08-18, and unlike the Facebook entry it is evidenced
+          // rather than guessed: workers/social-poster/wrangler.toml documents
+          // X_CLIENT_ID as "console.x.com, @thepicklehub", the account the
+          // poster authenticates as. x.com/thepicklehub returns 200 while a
+          // nonsense handle returns 404, so the 200 is meaningful here.
+          //
           // NB: keep prose out of this array — brand-sameas.test.ts extracts
           // every quoted string inside it and asserts each one is a URL.
           sameAs: [
             "https://www.facebook.com/thepicklehubnet/",
+            "https://x.com/thepicklehub",
             "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",

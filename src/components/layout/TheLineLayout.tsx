@@ -1135,6 +1135,16 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                   <path d="M21.58 7.2a2.5 2.5 0 0 0-1.77-1.77C18.2 5 12 5 12 5s-6.2 0-7.81.43A2.5 2.5 0 0 0 2.42 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .42 4.8 2.5 2.5 0 0 0 1.77 1.77C5.8 19 12 19 12 19s6.2 0 7.81-.43a2.5 2.5 0 0 0 1.77-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.42-4.8zM10 15V9l5.2 3L10 15z" />
                 </svg>
               </a>
+              <a
+                href="https://x.com/thepicklehub"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={language === "vi" ? "ThePickleHub trên X" : "ThePickleHub on X"}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
             </div>
             <span>
               <Link to={language === "vi" ? "/vi/advertise" : "/advertise"} style={{ color: "inherit", textDecoration: "none" }}>

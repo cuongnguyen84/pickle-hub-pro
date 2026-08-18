@@ -63,4 +63,21 @@ describe("Organization sameAs", () => {
       expect(list.some((u) => /facebook\.com\/ThePickleHub\/?$/i.test(u))).toBe(false);
     }
   });
+
+  it("claims the X account the social poster actually authenticates as", () => {
+    // workers/social-poster/wrangler.toml documents X_CLIENT_ID as
+    // "console.x.com, @thepicklehub". Confirmed by Cuong 2026-08-18.
+    for (const list of blocks) {
+      expect(list).toContain("https://x.com/thepicklehub");
+    }
+  });
+
+  it("lists only profiles of this entity, not partner brands", () => {
+    // TA Pickleball (FB_SECONDARY_PAGE_ID 376956272170210) is also Cuong's
+    // page, but it is a separate brand. sameAs means "this IS us" — putting a
+    // second entity in here repeats the Guntur mistake with a friendlier face.
+    for (const list of blocks) {
+      expect(list.some((u) => /tapickleball|376956272170210/i.test(u))).toBe(false);
+    }
+  });
 });
