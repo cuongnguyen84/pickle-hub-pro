@@ -91,8 +91,15 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           // India. The one block written to consolidate the brand entity was
           // instead asserting sameAs identity with a different company that
           // shares the name, which is the confusion behind the spaced query
-          // sitting at position 8. Ours is verified by og:url =
-          // facebook.com/thepicklehubnet/ and og:title = thepicklehub.net.
+          // sitting at position 8. Ours is facebook.com/thepicklehubnet —
+          // confirmed by Cuong 2026-08-18, page ID 61579261671499, and by
+          // og:title = thepicklehub.net. (Facebook's own og:url appends a
+          // trailing slash; both forms serve the same page.)
+          //
+          // Instagram removed 2026-08-18: instagram.com/thepicklehub is not
+          // ours (Cuong confirmed there is no Instagram presence). The handle
+          // matched the brand name, which is exactly how the wrong Facebook
+          // page got in here too — a plausible-looking URL nobody owned.
           //
           // X added 2026-08-18, and unlike the Facebook entry it is evidenced
           // rather than guessed: workers/social-poster/wrangler.toml documents
@@ -103,9 +110,8 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           // NB: keep prose out of this array — brand-sameas.test.ts extracts
           // every quoted string inside it and asserts each one is a URL.
           sameAs: [
-            "https://www.facebook.com/thepicklehubnet/",
+            "https://www.facebook.com/thepicklehubnet",
             "https://x.com/thepicklehub",
-            "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",
           ],
@@ -228,8 +234,15 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           // India. The one block written to consolidate the brand entity was
           // instead asserting sameAs identity with a different company that
           // shares the name, which is the confusion behind the spaced query
-          // sitting at position 8. Ours is verified by og:url =
-          // facebook.com/thepicklehubnet/ and og:title = thepicklehub.net.
+          // sitting at position 8. Ours is facebook.com/thepicklehubnet —
+          // confirmed by Cuong 2026-08-18, page ID 61579261671499, and by
+          // og:title = thepicklehub.net. (Facebook's own og:url appends a
+          // trailing slash; both forms serve the same page.)
+          //
+          // Instagram removed 2026-08-18: instagram.com/thepicklehub is not
+          // ours (Cuong confirmed there is no Instagram presence). The handle
+          // matched the brand name, which is exactly how the wrong Facebook
+          // page got in here too — a plausible-looking URL nobody owned.
           //
           // X added 2026-08-18, and unlike the Facebook entry it is evidenced
           // rather than guessed: workers/social-poster/wrangler.toml documents
@@ -240,9 +253,8 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           // NB: keep prose out of this array — brand-sameas.test.ts extracts
           // every quoted string inside it and asserts each one is a URL.
           sameAs: [
-            "https://www.facebook.com/thepicklehubnet/",
+            "https://www.facebook.com/thepicklehubnet",
             "https://x.com/thepicklehub",
-            "https://www.instagram.com/thepicklehub",
             "https://www.youtube.com/@thepicklehub",
             "https://apps.apple.com/app/id6759968026",
           ],

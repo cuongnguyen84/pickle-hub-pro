@@ -1104,7 +1104,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 // Facebook resolves that vanity URL to "Pickle Hub | Guntur"
                 // (India). Ours is /thepicklehubnet/. Kept in sync with the
                 // Organization sameAs list in functions/_lib/render/home.ts.
-                href="https://www.facebook.com/thepicklehubnet/"
+                href="https://www.facebook.com/thepicklehubnet"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={language === "vi" ? "ThePickleHub trên Facebook" : "ThePickleHub on Facebook"}
@@ -1113,18 +1113,9 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                   <path d="M13.5 21v-8h2.7l.4-3.13H13.5V7.9c0-.9.25-1.52 1.55-1.52h1.66V3.57c-.29-.04-1.27-.12-2.42-.12-2.4 0-4.04 1.46-4.04 4.15v2.31H7.55V13h2.7v8h3.25z" />
                 </svg>
               </a>
-              <a
-                href="https://www.instagram.com/thepicklehub"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={language === "vi" ? "ThePickleHub trên Instagram" : "ThePickleHub on Instagram"}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false">
-                  <rect x="3" y="3" width="18" height="18" rx="5" />
-                  <circle cx="12" cy="12" r="4" />
-                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-                </svg>
-              </a>
+              {/* No Instagram link: instagram.com/thepicklehub is not ours
+                  (confirmed 2026-08-18). Removed alongside the matching
+                  Organization sameAs entry in functions/_lib/render/home.ts. */}
               <a
                 href="https://www.youtube.com/@thepicklehub"
                 target="_blank"

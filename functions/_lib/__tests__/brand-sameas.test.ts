@@ -56,11 +56,20 @@ describe("Organization sameAs", () => {
     // facebook.com/thepicklehub/ = "Pickle Hub | Guntur", a business in Andhra
     // Pradesh, India. Resolving is not enough; it has to resolve to US, or the
     // schema asserts we are a different company that shares the brand name.
-    // Ours is verified by og:url = https://www.facebook.com/thepicklehubnet/
-    // and og:title = "thepicklehub.net".
+    // Ours is https://www.facebook.com/thepicklehubnet — the URL Cuong
+    // supplied, page ID 61579261671499, og:title "thepicklehub.net".
     for (const list of blocks) {
-      expect(list).toContain("https://www.facebook.com/thepicklehubnet/");
+      expect(list).toContain("https://www.facebook.com/thepicklehubnet");
       expect(list.some((u) => /facebook\.com\/ThePickleHub\/?$/i.test(u))).toBe(false);
+    }
+  });
+
+  it("does not claim an Instagram profile — there is no Instagram presence", () => {
+    // Removed 2026-08-18, confirmed by Cuong. instagram.com/thepicklehub is
+    // not ours: it matched the brand name, which is precisely how the wrong
+    // Facebook page got in. A plausible handle is not evidence of ownership.
+    for (const list of blocks) {
+      expect(list.some((u) => u.includes("instagram.com"))).toBe(false);
     }
   });
 
