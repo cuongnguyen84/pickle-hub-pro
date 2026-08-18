@@ -28,7 +28,25 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 const TG_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const TG_CHAT = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
 
-async function sendTelegram(text: string): Promise<void> {
+/**
+ * Buttons that ops-job-control already understands. Its webhook maps
+ * `diagnose|<key>` and `fix|<key>` onto /diagnose and /fix, and /fix falls
+ * through to a queued /agentfix for the local agent when no hard-coded branch
+ * matches — which is the case here. So this needs no change on that side; it
+ * only needs `news-repair` to exist in ops_cron_monitors, which the companion
+ * migration adds.
+ *
+ * Without buttons the report is a wall of text naming problems with nothing to
+ * press, which is what the first real run looked like.
+ */
+const REPAIR_BUTTONS = {
+  inline_keyboard: [[
+    { text: "🔎 Chẩn đoán", callback_data: "diagnose|news-repair" },
+    { text: "🛠 Xử lý", callback_data: "fix|news-repair" },
+  ]],
+};
+
+async function sendTelegram(text: string, withButtons = false): Promise<void> {
   if (!TG_TOKEN || !TG_CHAT) return;
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
@@ -39,6 +57,7 @@ async function sendTelegram(text: string): Promise<void> {
         text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
+        ...(withButtons ? { reply_markup: REPAIR_BUTTONS } : {}),
       }),
     });
   } catch (error) {
@@ -124,7 +143,10 @@ Deno.serve(async (req) => {
       left.length ? `\n<b>Needs a look — ${left.length}</b>\n${left.join("\n")}` : "",
       dryRun ? "\n<i>dry run — nothing was written</i>" : "",
     ].filter(Boolean);
-    await sendTelegram(lines.join("\n"));
+    // Buttons only when a row is genuinely stuck: a report that merely says
+    // "requeued 8" needs no action, and an always-present button trains
+    // people to ignore it.
+    await sendTelegram(lines.join("\n"), left.length > 0);
   }
 
   return new Response(
