@@ -104,6 +104,7 @@ Deno.serve(async (req) => {
   }
 
   const repaired: string[] = [];
+  const abandoned: string[] = [];
   const left: string[] = [];
 
   for (const origin of origins) {
@@ -111,7 +112,22 @@ Deno.serve(async (req) => {
     const title = (origin.raw_title ?? origin.id).slice(0, 60);
 
     if (plan.kind === "leave") {
-      left.push(`• ${title} — ${plan.reason}`);
+      // Close it. Leaving the row at 'failed' meant every hourly run rescanned
+      // it, reported it again and counted it in `left`, which held the cron
+      // health at partial_success forever and made the "Xử lý" button re-run
+      // the same decline. There is no automatic path left for these, so say so
+      // once and stop.
+      if (!dryRun) {
+        await fetch(rest(`news_origins?id=eq.${origin.id}`), {
+          method: "PATCH",
+          headers: headers(),
+          body: JSON.stringify({
+            pipeline_status: "abandoned",
+            last_error: `${origin.last_error ?? ""} | abandoned: ${plan.reason}`.slice(0, 500),
+          }),
+        });
+      }
+      abandoned.push(`• ${title} — ${plan.reason}`);
       continue;
     }
     if (dryRun) {
@@ -136,11 +152,15 @@ Deno.serve(async (req) => {
 
   // Only speak when something is worth knowing. A silent run is the normal
   // case and a daily "0 failures" message trains people to ignore the channel.
+  // Abandoned rows are deliberately absent from the message. They are closed,
+  // nothing can be done about them, and naming them turns the channel into a
+  // recurring list of things nobody will ever act on. The count stays in the
+  // HTTP response and the reason stays on the row for anyone investigating.
   if (repaired.length || left.length) {
     const lines = [
       `🛠 <b>news-repair</b> — ${origins.length} failed origin(s)`,
       repaired.length ? `\n<b>Requeued ${repaired.length}</b>\n${repaired.join("\n")}` : "",
-      left.length ? `\n<b>Needs a look — ${left.length}</b>\n${left.join("\n")}` : "",
+      left.length ? `\n<b>Chưa xử lý được — ${left.length}</b>\n${left.join("\n")}` : "",
       dryRun ? "\n<i>dry run — nothing was written</i>" : "",
     ].filter(Boolean);
     // Buttons only when a row is genuinely stuck: a report that merely says
@@ -154,6 +174,7 @@ Deno.serve(async (req) => {
       ok: true,
       failed: origins.length,
       repaired: repaired.length,
+      abandoned: abandoned.length,
       left: left.length,
       dry_run: dryRun,
     }),
