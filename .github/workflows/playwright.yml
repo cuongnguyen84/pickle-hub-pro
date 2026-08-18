@@ -41,15 +41,22 @@ jobs:
       - name: Install npm deps
         run: npm ci
 
-      # Cài Chromium + WebKit từ đầu tốn ~10 phút trên runner nguội, ăn hết nửa
-      # ngân sách 20 phút của job trước khi có test nào chạy — đó là lý do smoke
-      # timeout ở đúng mốc 20m19s hai lần liền (16-17/08). WebKit KHÔNG bỏ được:
-      # nó là bề mặt iOS Safari duy nhất trong CI, mà khán giả VN gần như toàn
-      # mobile (xem project mobile-webkit trong playwright.config.ts).
+      # Bước cài trình duyệt ăn TRỌN ngân sách 20 phút của job và bị huỷ trước
+      # khi có test nào chạy (18/08 12:47:48 → 13:07:47). Đọc log thì chỗ treo
+      # KHÔNG phải tải binary mà là `apt-get` của `--with-deps` kéo gói từ
+      # azure.archive.ubuntu.com: có gói mất hơn một phút, 39 gói thì hết giờ.
+      # Cùng bước đó trên runner khoẻ chỉ mất 52 giây — nên đây là mirror stall
+      # ngẫu nhiên, không phải chậm đều.
       #
-      # Key gồm version playwright thật đã resolve, không phải range trong
-      # package.json — nâng 1.60 → 1.61 phải làm cache miss, nếu không runner
-      # dùng binary cũ với thư viện mới và lỗi rất khó đọc.
+      # WebKit KHÔNG bỏ được: nó là bề mặt iOS Safari duy nhất trong CI, mà khán
+      # giả VN gần như toàn mobile (project mobile-webkit trong
+      # playwright.config.ts). Nên phải chịu apt, chỉ chặn không cho nó nuốt cả
+      # job — xem bước cài bên dưới.
+      #
+      # Cache thì cắt được nửa còn lại (tải binary). Key gồm version playwright
+      # THẬT đã resolve, không phải range `^1.60.0` trong package.json — range
+      # đó đang resolve ra 1.61.1, và nếu key bám theo range thì lần nâng minor
+      # sau sẽ tái dùng binary cũ với thư viện mới, lỗi rất khó lần ra.
       - name: Resolve Playwright version
         id: pw
         run: |
@@ -63,16 +70,28 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit
 
       # Cache chỉ giữ được binary trình duyệt, KHÔNG giữ được thư viện hệ thống
-      # apt mà `--with-deps` cài — chúng nằm ngoài ~/.cache. Nên khi cache hit
-      # vẫn phải chạy install-deps (nhanh, vài chục giây), bỏ qua là WebKit
-      # không khởi động được.
-      - name: Install Playwright browsers
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium webkit
-
-      - name: Install Playwright system deps (cache hit)
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium webkit
+      # apt — chúng nằm ngoài ~/.cache. Nên cache hit vẫn phải chạy
+      # `install-deps`, tức vẫn đi qua đúng cái apt đã treo. Cache một mình
+      # KHÔNG chữa được lần hỏng 18/08; phần chữa nằm ở vòng lặp dưới đây.
+      #
+      # `timeout 420` là chốt chặn: một mirror treo giờ tốn 7 phút rồi bị cắt
+      # và thử lại, thay vì im lặng gặm hết ngân sách job. Ba lần thử vẫn nằm
+      # gọn trong trần 30' kể cả trường hợp xấu nhất. Dùng `timeout` được vì
+      # đây là runner Linux (trên macOS thì không có — xem memory 16/08).
+      - name: Install Playwright browsers + system deps
+        run: |
+          if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
+            CMD="npx playwright install-deps chromium webkit"
+          else
+            CMD="npx playwright install --with-deps chromium webkit"
+          fi
+          echo "lệnh: $CMD"
+          for i in 1 2 3; do
+            if timeout 420 $CMD; then exit 0; fi
+            echo "::warning::[$i/3] cài trình duyệt treo hoặc lỗi sau 7' — thử lại"
+          done
+          echo "::error::cài trình duyệt thất bại cả 3 lần"
+          exit 1
 
       # For PRs from non-fork branches, hit the Cloudflare preview deploy
       # instead of prod. Branch name pattern: <branch>.pickle-hub-pro.pages.dev
