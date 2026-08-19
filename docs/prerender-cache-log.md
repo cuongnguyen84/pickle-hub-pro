@@ -169,3 +169,14 @@ they are purged with ?nocache=1 post-deploy instead, the inverse of the v48->v49
 call above. Deliberately avoided a bump here for a second reason: the venue
 reviews work in flight owns the next version number, and racing it would give
 one of the two changes a key the other already used.
+
+2026-08-19 — NO bump: the duplicate-<h1> fix, the club SportsOrganization
+schema and the sitemap-players hreflang removal all change SSR output, and the
+h1 fix alone touches roughly 1,046 cached URLs (all /news/*, all /nguoi-choi/*,
+/rankings and /privacy in both locales). A version bump is still the wrong tool:
+none of this is time-critical — a duplicate h1 is a clarity problem, not an
+indexing block — and the default 6h TTL clears the whole set on its own before
+the next crawl of any consequence. The sitemap is generated per request and was
+never cached, so the hreflang removal is live immediately. Bumping would purge
+all 3,218 prerendered URLs to fix a cosmetic heading, which costs a full re-render
+of the site for no gain.

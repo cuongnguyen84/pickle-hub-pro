@@ -61,21 +61,29 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         const lastmod = toLastmod(p.created_at, TODAY);
         const profileUrl = `${siteUrl}/nguoi-choi/${p.username}`;
         // Sprint 4 Phase 4D: profile URL is single-canonical (no /vi/nguoi-choi/*
-        // mirror in src/App.tsx; the path itself is Vietnamese-friendly).
-        // Both hreflang values therefore point at the same URL — the React
-        // app switches language via its own toggle on the same route. The
-        // reciprocal hreflang still helps Google understand the page is
-        // bilingual rather than English-only.
+        // mirror in src/App.tsx; the path itself is Vietnamese-friendly) and the
+        // React app switches language via its own toggle on the same route.
+        //
+        // 2026-08-19 — hreflang REMOVED. It previously emitted vi + en +
+        // x-default all pointing at this one URL, hoping to signal "bilingual
+        // rather than English-only". Google's spec requires different URLs for
+        // different languages; same-URL annotations are invalid and dropped, so
+        // the tag bought nothing. This repo already reached that conclusion
+        // twice — the 2026-05-18 Ahrefs Site Audit fix stripped exactly this
+        // pattern from /social and /clubs, and renderSocialList/renderClubList
+        // still carry the comment calling it "a genuinely invalid signal".
+        // The sitemap was the last place it survived, and it contradicted the
+        // pages, which emit no hreflang at all.
+        //
+        // Emitting nothing is the honest state for a single-canonical route.
+        // Giving players a real bilingual pair would mean splitting the
+        // canonical the way /clubs (a1233f4c) and /social did — a separate
+        // change with its own renderer work, not a sitemap tweak.
         return buildUrlEntry({
           loc: profileUrl,
           lastmod,
           changefreq: "weekly",
           priority: "0.6",
-          hreflang: [
-            { lang: "vi", href: profileUrl },
-            { lang: "en", href: profileUrl },
-            { lang: "x-default", href: profileUrl },
-          ],
         });
       });
 
