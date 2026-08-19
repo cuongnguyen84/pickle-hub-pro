@@ -1,5 +1,30 @@
 # BÀN GIAO — Shop Phase 4
 
+> ## ⚠️ Cập nhật 19/08 — đọc trước phần còn lại
+>
+> File dưới là ảnh chụp tối 18/08 và đã lệch ở vài chỗ. Không sửa lại thân bài
+> (nó là bản ghi của lúc đó); đây là phần đính chính:
+>
+> | Mục cũ | Nay |
+> |---|---|
+> | §2.1 merge PR #615 | ✅ đã merge |
+> | §2.4 kênh liên hệ kẹt `draft` | ✅ đã sống — và admin **không còn duyệt** kênh liên hệ lẫn sản phẩm (PO quyết 18/08: admin chỉ duyệt mở shop) |
+> | §2.5 chưa điền tài khoản ngân hàng | ✅ đã điền đủ |
+> | §8 nợ 1 — drift 13 migration | ✅ **ĐÓNG** (PR #622) — 385 = 385 sạch hai chiều, `DRIFT_STRICT=1` exit 0 |
+> | §8 nợ 2 — báo đơn qua Telegram | ✅ làm bằng **push FCM**, không phải Telegram (PR #626) |
+>
+> **§2.2 bật `SHOP_PUBLIC_INDEXING` vẫn CHƯA làm** — PO hoãn có chủ ý ngày 19/08.
+> Lý do có căn cứ mới: xem `2026-08-19-nghien-cuu-tinh-nang-shop.html` trong
+> `docs/proposals/shop-marketplace/`. Ba trong bốn rào cản mua hàng lớn nhất của
+> người Việt (không đánh giá, đổi trả mập mờ, phí ship lộ muộn) đang mở toang,
+> nên mở cửa cho người lạ lúc này là lãng phí lượt truy cập đầu tiên.
+>
+> **Phát hiện ngoài phạm vi, đã vá:** mọi push bắn từ trigger Postgres trong dự
+> án đã trả 401 câm nhiều tháng — trigger gửi anon key, còn `send-push-notification`
+> chỉ nhận service-role. Đo bằng chính pg_net trên production (req 62590 → 401;
+> sau vá req 63730 → 200, 4 token / 1 người). **Còn nợ: 2 trigger cũ (đăng ký sự
+> kiện → ban tổ chức, club admin) vẫn chưa nối vào helper mới.**
+
 > Chốt 18/08/2026. Đọc file này trước, mọi thứ khác là chi tiết.
 > Nhánh `feat/shop-phase-4` · **PR #615** · worktree `.claude/worktrees/shop-phase-3`
 > Preview: https://feat-shop-phase-4.pickle-hub-pro.pages.dev/shop
