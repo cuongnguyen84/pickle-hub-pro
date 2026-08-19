@@ -74,7 +74,7 @@ const EN_POSTS: RssItem[] = [
   {
     title: "Pickleball Live Streaming — How to Watch & Stream Pickleball Online",
     link: "/blog/pickleball-live-streaming-guide",
-    description: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform.",
+    description: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with ThePickleHub's free livestreaming platform.",
     pubDate: "2026-03-29",
     lang: "en",
   },

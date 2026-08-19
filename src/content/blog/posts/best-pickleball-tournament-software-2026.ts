@@ -22,7 +22,7 @@ const post: BlogPost = {
           heading: "Top Pickleball Tournament Software in 2026",
           content: "We evaluated the most popular pickleball tournament platforms based on features, ease of use, pricing, and mobile experience. Here's our breakdown:",
           listItems: [
-            "The Pickle Hub — Free, mobile-first platform with round robin bracket generator, MLP team match, double elimination, and flex tournament tools. Real-time scoring, referee mode, court scheduling. No signup required to create tournaments.",
+            "ThePickleHub — Free, mobile-first platform with round robin bracket generator, MLP team match, double elimination, and flex tournament tools. Real-time scoring, referee mode, court scheduling. No signup required to create tournaments.",
             "Pickleball Brackets — Popular among recreational players. Supports basic round robin and single elimination. Limited to smaller events.",
             "Challonge — Generic tournament platform that works for pickleball but lacks sport-specific features like court rotation and doubles pairing logic.",
             "PicklePlay — Club management platform with tournament features. Paid subscription required. Better for leagues than one-off events.",
@@ -36,14 +36,14 @@ const post: BlogPost = {
             "Court scheduling — Does the software optimize match order to minimize player wait times across limited courts?",
             "Format variety — Can you run round robin, single elimination, double elimination, and team matches from one platform?",
             "Real-time scoring — Can referees update scores from their phones with live standings for all participants?",
-            "Free access — Many platforms charge per tournament or require monthly subscriptions. The Pickle Hub is completely free.",
+            "Free access — Many platforms charge per tournament or require monthly subscriptions. ThePickleHub is completely free.",
             "No signup barrier — Players and spectators should access brackets without creating accounts.",
             "Mobile experience — Most pickleball scoring happens on phones at the court. The interface must be touch-optimized."
           ]
         },
         {
-          heading: "Why The Pickle Hub Stands Out",
-          content: "The Pickle Hub was built specifically for pickleball organizers who need powerful tools without the complexity or cost of enterprise platforms. Every tool is free, works on any device, and requires no technical expertise. You can create a complete tournament bracket in under 60 seconds. The platform supports four distinct tournament formats — Quick Tables (round robin), Team Match (MLP-style), Double Elimination, and Flex Tournament (custom formats) — making it the most versatile free option available in 2026."
+          heading: "Why ThePickleHub Stands Out",
+          content: "ThePickleHub was built specifically for pickleball organizers who need powerful tools without the complexity or cost of enterprise platforms. Every tool is free, works on any device, and requires no technical expertise. You can create a complete tournament bracket in under 60 seconds. The platform supports four distinct tournament formats — Quick Tables (round robin), Team Match (MLP-style), Double Elimination, and Flex Tournament (custom formats) — making it the most versatile free option available in 2026."
         },
         {
           heading: "How to Choose the Right Tournament Software",
@@ -70,7 +70,7 @@ const post: BlogPost = {
           heading: "Top phần mềm tổ chức giải Pickleball 2026",
           content: "Chúng tôi đánh giá các nền tảng phổ biến nhất dựa trên tính năng, dễ sử dụng, giá cả và trải nghiệm mobile:",
           listItems: [
-            "The Pickle Hub — Miễn phí, ưu tiên mobile. Có round robin, MLP team match, loại kép, và flex tournament. Chấm điểm realtime, chế độ trọng tài, xếp lịch sân. Không cần đăng ký.",
+            "ThePickleHub — Miễn phí, ưu tiên mobile. Có round robin, MLP team match, loại kép, và flex tournament. Chấm điểm realtime, chế độ trọng tài, xếp lịch sân. Không cần đăng ký.",
             "Pickleball Brackets — Phổ biến với người chơi phong trào. Hỗ trợ round robin và loại trực tiếp cơ bản. Giới hạn cho giải nhỏ.",
             "Challonge — Nền tảng giải đấu tổng hợp, dùng được cho pickleball nhưng thiếu tính năng chuyên biệt như xoay sân và ghép đôi.",
             "PicklePlay — Nền tảng quản lý CLB có tính năng giải đấu. Cần đăng ký trả phí. Phù hợp hơn cho giải liên tục.",
@@ -84,14 +84,14 @@ const post: BlogPost = {
             "Xếp lịch sân — Phần mềm có tối ưu thứ tự trận đấu để giảm thời gian chờ không?",
             "Đa dạng thể thức — Có thể chạy round robin, loại trực tiếp, loại kép, và đồng đội từ một nền tảng?",
             "Chấm điểm realtime — Trọng tài có thể cập nhật điểm từ điện thoại với bảng xếp hạng trực tiếp không?",
-            "Miễn phí — Nhiều nền tảng thu phí theo giải hoặc hàng tháng. The Pickle Hub hoàn toàn miễn phí.",
+            "Miễn phí — Nhiều nền tảng thu phí theo giải hoặc hàng tháng. ThePickleHub hoàn toàn miễn phí.",
             "Không cần đăng ký — Người chơi và khán giả xem bracket mà không cần tạo tài khoản.",
             "Trải nghiệm mobile — Chấm điểm pickleball chủ yếu trên điện thoại. Giao diện phải tối ưu cho cảm ứng."
           ]
         },
         {
-          heading: "Tại sao The Pickle Hub nổi bật?",
-          content: "The Pickle Hub được xây dựng đặc biệt cho ban tổ chức pickleball cần công cụ mạnh mẽ mà không phức tạp hay tốn chi phí. Mọi công cụ đều miễn phí, hoạt động trên mọi thiết bị, không cần kiến thức kỹ thuật. Bạn có thể tạo bracket giải đấu hoàn chỉnh trong chưa đầy 60 giây. Nền tảng hỗ trợ 4 thể thức — Quick Tables (vòng tròn), Team Match (kiểu MLP), Double Elimination, và Flex Tournament (tùy chỉnh) — là lựa chọn miễn phí đa năng nhất năm 2026."
+          heading: "Tại sao ThePickleHub nổi bật?",
+          content: "ThePickleHub được xây dựng đặc biệt cho ban tổ chức pickleball cần công cụ mạnh mẽ mà không phức tạp hay tốn chi phí. Mọi công cụ đều miễn phí, hoạt động trên mọi thiết bị, không cần kiến thức kỹ thuật. Bạn có thể tạo bracket giải đấu hoàn chỉnh trong chưa đầy 60 giây. Nền tảng hỗ trợ 4 thể thức — Quick Tables (vòng tròn), Team Match (kiểu MLP), Double Elimination, và Flex Tournament (tùy chỉnh) — là lựa chọn miễn phí đa năng nhất năm 2026."
         },
         {
           heading: "Cách chọn phần mềm phù hợp",
