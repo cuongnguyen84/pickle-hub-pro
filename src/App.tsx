@@ -241,6 +241,7 @@ const AdminModeration = lazyRetry(() => import("./pages/admin/AdminModeration"))
 const AdminDisputes = lazyRetry(() => import("./pages/admin/AdminDisputes"));
 const AdminReports = lazyRetry(() => import("./pages/admin/AdminReports"));
 const AdminNews = lazyRetry(() => import("./pages/admin/AdminNews"));
+const AdminReviews = lazyRetry(() => import("./pages/admin/AdminReviews"));
 const AdminEmbeds = lazyRetry(() => import("./pages/admin/AdminEmbeds"));
 const AdminLivestreamViewers = lazyRetry(() => import("./pages/admin/AdminLivestreamViewers"));
 const AdminPushNotification = lazyRetry(() => import("./pages/admin/AdminPushNotification"));
@@ -830,6 +831,7 @@ const App = () => (
                     <Route path="/admin/disputes" element={<AdminDisputes />} />
                     <Route path="/admin/reports" element={<AdminReports />} />
                     <Route path="/admin/news" element={<AdminNews />} />
+                    <Route path="/admin/reviews" element={<AdminReviews />} />
                     <Route path="/admin/embeds" element={<AdminEmbeds />} />
                     <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                     <Route path="/admin/push" element={<AdminPushNotification />} />

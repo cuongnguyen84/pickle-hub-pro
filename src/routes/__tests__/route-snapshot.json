@@ -556,6 +556,10 @@
     "element": "<AdminNews />"
   },
   {
+    "path": "/admin/reviews",
+    "element": "<AdminReviews />"
+  },
+  {
     "path": "/admin/embeds",
     "element": "<AdminEmbeds />"
   },
