@@ -502,6 +502,32 @@ return ({
     ],
     exclude: ["node_modules/**", "dist/**", "tests/**"],
     environment: "node",
+    // src/integrations/supabase/client.ts calls createClient() at module load
+    // and throws "supabaseUrl is required." when VITE_SUPABASE_URL is unset.
+    // quality.yml supplies the VITE_SUPABASE_* vars to the Build step only,
+    // not to the Vitest step, so any suite that transitively imports the real
+    // client is a landmine: SellerProductForm.save.test.tsx reaches it through
+    // a React.lazy chunk and reds `npm run test` intermittently (2 runs in 3
+    // on a clean checkout of main, 3 in 3 when run alone) while CI happens to
+    // stay green. Twenty test files already carry a per-file vi.mock purely to
+    // dodge this; the config is where it belongs.
+    //
+    // Dummy values on purpose, and NOT a *.supabase.co host: this must never
+    // resolve to a real project, and src/__tests__/supabase-origin-not-
+    // hardcoded.test.ts scans this file for `<ref>.supabase.co` literals.
+    // Vitest's `env` overrides both a local .env and the shell, so a developer
+    // with real credentials gets the dummies here too.
+    //
+    // LIMITATION — this de-mines jsdom suites only. Under the default
+    // `environment: "node"` the next line of client.ts (`storage: localStorage`)
+    // still throws ReferenceError, so the per-file vi.mock workarounds in
+    // node-env tests remain load-bearing. Do not delete them on the strength
+    // of this block. Closing that half needs a setupFiles localStorage stub.
+    env: {
+      VITE_SUPABASE_URL: "http://127.0.0.1:54321",
+      VITE_SUPABASE_PROJECT_ID: "test-project",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "test-anon-key-not-a-real-credential",
+    },
     // Coverage of test-imported files. Threshold locks the baseline
     // (86.9% statements on 2026-05-29) so a regression that adds untested
     // imported code reds the gate. Buffer left below baseline to avoid
