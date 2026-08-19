@@ -6999,6 +6999,47 @@ export type Database = {
         }
         Relationships: []
       }
+      venue_reviews: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string
+          id: string
+          rating: number
+          status: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          rating: number
+          status?: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          rating?: number
+          status?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_reviews_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           address: string | null
@@ -7019,6 +7060,8 @@ export type Database = {
           name_vi: string | null
           num_courts: number | null
           phone: string | null
+          review_avg: number | null
+          review_count: number
           slug: string
           surface_type: string | null
           updated_at: string | null
@@ -7043,6 +7086,8 @@ export type Database = {
           name_vi?: string | null
           num_courts?: number | null
           phone?: string | null
+          review_avg?: number | null
+          review_count?: number
           slug: string
           surface_type?: string | null
           updated_at?: string | null
@@ -7067,6 +7112,8 @@ export type Database = {
           name_vi?: string | null
           num_courts?: number | null
           phone?: string | null
+          review_avg?: number | null
+          review_count?: number
           slug?: string
           surface_type?: string | null
           updated_at?: string | null

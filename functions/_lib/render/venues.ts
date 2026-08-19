@@ -31,6 +31,7 @@ interface VenueListRow {
 }
 
 interface VenueDetailRow {
+  id: string;
   slug: string;
   name: string;
   name_vi: string | null;
@@ -48,6 +49,8 @@ interface VenueDetailRow {
   amenities: string[] | null;
   hours_json: unknown;
   cover_image_url: string | null;
+  review_count: number | null;
+  review_avg: number | null;
 }
 
 // Guard-0: a venue with no location AND no facts is a pure UGC stub (created via
@@ -350,13 +353,26 @@ export async function renderVenueDetail(
   siteUrl: string,
   lang: Lang = "vi",
 ): Promise<Response> {
-  const { data, error } = await supabase
+  const VENUE_BASE_COLS =
+    "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url";
+  const VENUE_REVIEW_COLS = ", review_count, review_avg";
+  let { data, error } = await supabase
     .from("venues")
-    .select(
-      "slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url",
-    )
+    .select(VENUE_BASE_COLS + VENUE_REVIEW_COLS)
     .eq("slug", slug)
     .maybeSingle();
+
+  // Deploy-safe: if this ships before the venue_reviews migration is applied,
+  // review_count/review_avg don't exist and the select errors. Retry without
+  // them so venue pages never 404 on ordering — the aggregateRating + reviews
+  // section just stay hidden until the migration + first reviews land.
+  if (error) {
+    ({ data, error } = await supabase
+      .from("venues")
+      .select(VENUE_BASE_COLS)
+      .eq("slug", slug)
+      .maybeSingle());
+  }
 
   if (error) {
     console.error("renderVenueDetail: lookup error", { slug, error });
@@ -364,6 +380,25 @@ export async function renderVenueDetail(
   if (!data) return render404(`/san/${slug}`, siteUrl);
 
   const v = data as unknown as VenueDetailRow;
+
+  // Published reviews for this venue (SSR-visible text + Review schema). Separate
+  // query so a missing venue_reviews table (pre-migration) is a caught no-op, not
+  // a venue-page failure. Newest 5 for the body; aggregate comes from v.review_*.
+  let reviews: { rating: number; body: string | null; created_at: string }[] = [];
+  if (v.review_count && v.review_count > 0) {
+    try {
+      const { data: rv } = await supabase
+        .from("venue_reviews")
+        .select("rating, body, created_at")
+        .eq("venue_id", v.id)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      reviews = (rv ?? []) as { rating: number; body: string | null; created_at: string }[];
+    } catch {
+      // non-fatal — aggregateRating still renders from the venue columns
+    }
+  }
   const enUrl = `${siteUrl}/san/${v.slug}`;
   const viUrl = `${siteUrl}/vi/san/${v.slug}`;
   const url = lang === "vi" ? viUrl : enUrl;
@@ -530,6 +565,20 @@ export async function renderVenueDetail(
     // description was NOT rebuilt around them (see commit 88520b58).
     ...(amenityFeatures.length ? { amenityFeature: amenityFeatures } : {}),
     ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
+    // aggregateRating from OUR own users' reviews (venue = third-party entity,
+    // legitimate like TripAdvisor/Yelp — unlike republishing Google's rating).
+    // Backed by the visible review section rendered in the body below.
+    ...(v.review_count && v.review_count > 0 && v.review_avg != null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: v.review_avg,
+            reviewCount: v.review_count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
 
   const homeLabel = lang === "vi" ? "Trang chủ" : "Home";
@@ -580,6 +629,27 @@ export async function renderVenueDetail(
   if (v.phone) parts.push(`<p><strong>${lbl.phone}:</strong> ${escapeHtml(v.phone)}</p>`);
   if (v.website)
     parts.push(`<p><a href="${escapeHtml(v.website)}" rel="nofollow noopener">Website</a></p>`);
+
+  // Community reviews — first-hand content (the SEO moat) + the visible backing
+  // for the aggregateRating emitted above. Anonymous in SSR (names shown in the
+  // SPA); rating + body + date is what a bot cites.
+  if (reviews.length > 0) {
+    const revHeading = lang === "vi" ? "Đánh giá từ cộng đồng" : "Community reviews";
+    const avgLine =
+      v.review_avg != null
+        ? `<p><strong>★ ${v.review_avg}</strong> · ${v.review_count} ${lang === "vi" ? "đánh giá" : "reviews"}</p>`
+        : "";
+    const revItems = reviews
+      .map((r) => {
+        const clamped = Math.max(1, Math.min(5, r.rating));
+        const stars = "★".repeat(clamped) + "☆".repeat(5 - clamped);
+        const date = (r.created_at || "").slice(0, 10);
+        const body = r.body ? `<p>${escapeHtml(r.body)}</p>` : "";
+        return `<li><span aria-label="${clamped}/5">${stars}</span>${date ? ` <time datetime="${date}">${date}</time>` : ""}${body}</li>`;
+      })
+      .join("");
+    parts.push(`<section><h2>${escapeHtml(revHeading)}</h2>${avgLine}<ul>${revItems}</ul></section>`);
+  }
 
   // Unique intro (after H1) + internal links to other courts in the same
   // city — reduces thin content and interlinks the directory.
