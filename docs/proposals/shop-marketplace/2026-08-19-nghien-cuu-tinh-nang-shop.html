@@ -1,0 +1,505 @@
+<title>Niềm tin trước tính năng</title>
+
+<style>
+  /* Bảng màu lấy nguyên từ src/styles/the-line.css — trang này phải trông như
+     ThePickleHub chứ không như một bản báo cáo lạ. Light là mặc định trên :root,
+     dark ghi đè ở hai chỗ để thắng cả prefers-color-scheme lẫn nút chuyển. */
+  :root {
+    --bg:       #fcfbf7;
+    --bg-elev:  #f5f3ee;
+    --surface:  #eeebe1;
+    --border:   #d8d4c8;
+    --fg:       #08090a;
+    --fg-2:     #3a3933;
+    --fg-3:     #605d56;
+    --green:    #516c1b;
+    --live:     #bc2d23;
+    --gold:     #825e0f;
+    --blue:     #1c61c0;
+    --shadow:   0 1px 2px rgba(8, 9, 10, .06), 0 8px 24px rgba(8, 9, 10, .04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:      #08090a;
+      --bg-elev: #0f1012;
+      --surface: #131416;
+      --border:  #22252a;
+      --fg:      #f5f3ee;
+      --fg-2:    #c7c3bb;
+      --fg-3:    #93908a;
+      --green:   #b5e853;
+      --live:    #ff4136;
+      --gold:    #e9b649;
+      --blue:    #4f9bff;
+      --shadow:  0 1px 2px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:      #08090a;
+    --bg-elev: #0f1012;
+    --surface: #131416;
+    --border:  #22252a;
+    --fg:      #f5f3ee;
+    --fg-2:    #c7c3bb;
+    --fg-3:    #93908a;
+    --green:   #b5e853;
+    --live:    #ff4136;
+    --gold:    #e9b649;
+    --blue:    #4f9bff;
+    --shadow:  0 1px 2px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .kicker {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: .6875rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+  }
+
+  h1 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(2.1rem, 7vw, 3.1rem);
+    line-height: 1.08;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: .5rem 0 0;
+  }
+
+  h2 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.6rem;
+    line-height: 1.2;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 1.0625rem;
+    font-weight: 640;
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  p { margin: 0; }
+  section { display: flex; flex-direction: column; gap: 1rem; }
+  .lede { color: var(--fg-2); font-size: 1.0625rem; }
+  strong { font-weight: 640; }
+  em { font-style: italic; }
+
+  .rule { height: 1px; background: var(--border); border: 0; margin: 0; }
+
+  /* ── Thẻ số liệu ──────────────────────────────────────────────────────── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: .75rem;
+  }
+  .stat {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+  .stat .n {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.85rem;
+    line-height: 1;
+    letter-spacing: -.02em;
+    color: var(--live);
+  }
+  .stat .l { font-size: .875rem; color: var(--fg-2); line-height: 1.4; }
+
+  /* ── Bảng đối chiếu ───────────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 30rem;
+    font-size: .9375rem;
+  }
+  th, td {
+    text-align: left;
+    padding: .7rem .75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .6875rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  .tag {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .6875rem;
+    letter-spacing: .04em;
+    padding: .15rem .45rem;
+    border-radius: 5px;
+    white-space: nowrap;
+    border: 1px solid;
+  }
+  .tag.no   { color: var(--live);  border-color: var(--live);  background: color-mix(in srgb, var(--live) 9%, transparent); }
+  .tag.part { color: var(--gold);  border-color: var(--gold);  background: color-mix(in srgb, var(--gold) 11%, transparent); }
+  .tag.yes  { color: var(--green); border-color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
+
+  /* ── Danh sách xếp hạng ───────────────────────────────────────────────── */
+  .ranked { display: flex; flex-direction: column; gap: .75rem; counter-reset: r; }
+  .item {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.1rem 1.15rem;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: .3rem .85rem;
+    align-items: baseline;
+  }
+  .item::before {
+    counter-increment: r;
+    content: counter(r);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.35rem;
+    color: var(--fg-3);
+    grid-row: 1 / span 3;
+    align-self: start;
+    line-height: 1.25;
+  }
+  .item .why  { grid-column: 2; color: var(--fg-2); font-size: .9375rem; }
+  .item .meta { grid-column: 2; display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .35rem; }
+
+  .item.first { border-color: color-mix(in srgb, var(--green) 45%, var(--border)); }
+
+  /* ── Khối "chỉ mình làm được" ─────────────────────────────────────────── */
+  .edge {
+    border-left: 2px solid var(--blue);
+    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+  .edge .h { font-weight: 640; }
+  .edge .b { color: var(--fg-2); font-size: .9375rem; }
+
+  .note {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    font-size: .9375rem;
+    color: var(--fg-2);
+  }
+  .note b { color: var(--fg); }
+
+  ul { margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .4rem; }
+  li { color: var(--fg-2); }
+  li b, li strong { color: var(--fg); }
+
+  a { color: var(--blue); }
+  footer { font-size: .8125rem; color: var(--fg-3); display: flex; flex-direction: column; gap: .5rem; }
+  footer a { color: var(--fg-3); }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Nghiên cứu · 19/08/2026 · Shop ThePickleHub</div>
+    <h1>Niềm tin trước tính năng</h1>
+    <p class="lede" style="margin-top:1rem">
+      Ba thứ Phase 3 cắt có chủ ý — đánh giá, trả hàng, khiếu nại — chính là ba
+      rào cản lớn nhất khiến người Việt bỏ giỏ hàng. Không phải trùng hợp: chúng
+      bị cắt vì <em>khó làm</em>, và chúng lớn vì người mua <em>sợ đúng chỗ đó</em>.
+    </p>
+  </header>
+
+  <hr class="rule">
+
+  <section>
+    <div class="kicker">Người Việt bỏ giỏ vì cái gì</div>
+    <h2>Số liệu, không phải cảm giác</h2>
+    <div class="stats">
+      <div class="stat">
+        <div class="n">49%</div>
+        <div class="l">rào cản là <b>thiếu niềm tin</b> vào người bán</div>
+      </div>
+      <div class="stat">
+        <div class="n">48%</div>
+        <div class="l">bỏ giỏ vì <b>chi phí phát sinh</b> lộ ra muộn</div>
+      </div>
+      <div class="stat">
+        <div class="n">~50%</div>
+        <div class="l">bỏ đi khi shop <b>không có đánh giá</b> nào</div>
+      </div>
+      <div class="stat">
+        <div class="n">22,5%</div>
+        <div class="l">rào cản là <b>chính sách đổi trả mập mờ</b></div>
+      </div>
+      <div class="stat">
+        <div class="n">45%</div>
+        <div class="l">vẫn chọn <b>COD</b> — tiền mặt là bảo hiểm</div>
+      </div>
+      <div class="stat">
+        <div class="n">37%</div>
+        <div class="l">than phiền nhiều nhất: <b>giao chậm, không biết hàng đâu</b></div>
+      </div>
+    </div>
+    <p class="note">
+      <b>Đọc lại con số COD.</b> 45% không phải vì người ta ghét chuyển khoản —
+      họ có ứng dụng ngân hàng cả rồi. Họ giữ COD vì đó là <b>quyền từ chối nhận
+      hàng</b> khi hộp móp hoặc sai món. Shop mình hiện chỉ nhận chuyển khoản
+      trước, tức là bắt người lạ trả tiền trước cho một cửa hàng họ chưa từng
+      nghe tên. Enum trong CSDL <em>đã có</em> <code>cod</code>, chỉ chưa mở.
+    </p>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="kicker">Đối chiếu</div>
+    <h2>Người mua cần gì · shop đang có gì</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Thứ người mua tìm</th><th>Hiện tại</th><th>Ghi chú</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Đánh giá của người mua trước</td>
+            <td><span class="tag no">chưa có</span></td>
+            <td>Cắt ở Phase 3. Rào cản đơn lẻ lớn nhất.</td>
+          </tr>
+          <tr>
+            <td>Chính sách đổi trả rõ ràng</td>
+            <td><span class="tag no">chưa có</span></td>
+            <td>Cắt ở Phase 3 với điều kiện “nút liên hệ có mặt mọi nơi”.</td>
+          </tr>
+          <tr>
+            <td>Phí ship biết trước khi vào giỏ</td>
+            <td><span class="tag part">một phần</span></td>
+            <td><code>shipping_fee_vnd</code> có, nhưng lộ ở bước thanh toán.</td>
+          </tr>
+          <tr>
+            <td>COD</td>
+            <td><span class="tag part">có trong CSDL</span></td>
+            <td>Chưa mở ra giao diện. Đơn thật duy nhất là chuyển khoản.</td>
+          </tr>
+          <tr>
+            <td>Theo dõi đơn</td>
+            <td><span class="tag part">một phần</span></td>
+            <td>Có <code>tracking_code</code>, chưa nối hãng vận chuyển.</td>
+          </tr>
+          <tr>
+            <td>Thông số vợt để so sánh</td>
+            <td><span class="tag no">chưa có</span></td>
+            <td>Chỉ có tiêu đề, mô tả, phân loại, mới/cũ.</td>
+          </tr>
+          <tr>
+            <td>Hỏi người bán trước khi mua</td>
+            <td><span class="tag yes">có</span></td>
+            <td>Zalo, đã duyệt và đang sống.</td>
+          </tr>
+          <tr>
+            <td>Người bán biết có đơn ngay</td>
+            <td><span class="tag yes">vừa xong</span></td>
+            <td>Push đêm 19/08 — trước đó chỉ có chuông trong app.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="kicker">Đề xuất · xếp theo thứ tự nên làm</div>
+    <h2>Thứ tự này theo rào cản, không theo độ vui khi code</h2>
+
+    <div class="ranked">
+      <div class="item first">
+        <h3>Thông số vợt có cấu trúc + bộ lọc</h3>
+        <p class="why">
+          Người mua vợt so sánh sáu thứ: trọng lượng, lõi, mặt, hình dáng, cỡ cán,
+          giá. Shop hiện không có ô nào cho chúng — nên người mua phải đọc mô tả
+          tự do và tự đoán. Đây vừa là rào cản mua, vừa là <em>thứ Shopee làm dở
+          nhất</em>: chợ tổng không biết lõi polymer khác nomex chỗ nào.
+        </p>
+        <div class="meta">
+          <span class="tag yes">tác động cao</span>
+          <span class="tag part">2–3 ngày</span>
+          <span class="tag part">cần: bảng thuộc tính theo danh mục</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <h3>Chính sách đổi trả viết ra, hiện ở trang sản phẩm</h3>
+        <p class="why">
+          Chưa cần dựng luồng trả hàng. 22,5% rào cản đến từ sự <em>mập mờ</em>,
+          không phải từ việc thiếu nút bấm. Một đoạn “đổi trong 7 ngày nếu hàng
+          lỗi, nhắn Zalo” hiện ngay dưới nút mua đã đóng phần lớn khoảng trống —
+          và trung thực với thứ mình làm được.
+        </p>
+        <div class="meta">
+          <span class="tag yes">tác động cao</span>
+          <span class="tag yes">nửa ngày</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <h3>Phí ship hiện trên trang sản phẩm</h3>
+        <p class="why">
+          48% bỏ giỏ vì chi phí lộ muộn. Dữ liệu đã có sẵn, chỉ là đang hiện sai
+          chỗ. Rẻ nhất trong danh sách này.
+        </p>
+        <div class="meta">
+          <span class="tag yes">tác động cao</span>
+          <span class="tag yes">vài giờ</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <h3>Mở COD</h3>
+        <p class="why">
+          Với người lạ từ Google, trả trước cho một shop chưa nghe tên là rào cản
+          thật. Enum đã có <code>cod</code>; việc còn lại là giao diện, hạn mức, và
+          một quy tắc cho đơn giá trị lớn. Đổi rủi ro tiền lấy rủi ro mất đơn —
+          và ở giai đoạn này mất đơn đắt hơn.
+        </p>
+        <div class="meta">
+          <span class="tag yes">tác động cao</span>
+          <span class="tag part">1 ngày</span>
+          <span class="tag part">cần anh quyết hạn mức</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <h3>Đánh giá — nhưng gắn với người chơi có thật</h3>
+        <p class="why">
+          Đây là rào cản lớn nhất, nhưng xếp thứ năm vì nó cần <em>đơn đã giao</em>
+          mới có gì để đánh giá. Làm sớm quá thì ra một khung trống, và khung
+          trống còn tệ hơn không có. Khi làm thì đừng chép Shopee: gắn đánh giá
+          với hồ sơ người chơi + trình DUPR. “Người 3.5 nói vợt này nặng tay” đáng
+          tin hơn năm sao vô danh.
+        </p>
+        <div class="meta">
+          <span class="tag yes">tác động rất cao</span>
+          <span class="tag part">3–4 ngày</span>
+          <span class="tag no">chờ có đơn đã giao</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="kicker">Lợi thế riêng</div>
+    <h2>Thứ ThePickleHub làm được mà chợ tổng thì không</h2>
+    <p class="lede">
+      Cạnh tranh giá và giao hàng với Shopee là thua từ đầu. Bốn thứ dưới đây
+      không đối thủ nào ở Việt Nam làm được, vì chúng cần dữ liệu mà chỉ một nền
+      tảng pickleball mới có.
+    </p>
+
+    <div class="edge">
+      <div class="h">Bán trong livestream — hạ tầng đã có sẵn</div>
+      <div class="b">
+        Livestream là động cơ tăng trưởng số một của thương mại điện tử Việt Nam
+        hiện nay, và ThePickleHub <b>đã có Mux</b> cho giải đấu. Bán vợt ngay
+        trong buổi phát giải là thứ không shop pickleball Việt nào chạm tới được.
+      </div>
+    </div>
+
+    <div class="edge">
+      <div class="h">Gợi ý vợt theo trình DUPR</div>
+      <div class="b">
+        “Vợt cho người 3.0–3.5” là câu hỏi người mới hỏi nhiều nhất, và là câu
+        Shopee không bao giờ trả lời được. Mình có trình của người dùng.
+      </div>
+    </div>
+
+    <div class="edge">
+      <div class="h">Chợ vợt cũ</div>
+      <div class="b">
+        Cột <code>condition: new | used</code> <b>đã có sẵn trong CSDL</b>. Người
+        chơi Việt đang mua bán vợt cũ trong các nhóm Facebook, không có gì bảo
+        chứng. Chính thức hoá việc đó, gắn với hồ sơ người chơi có thật, là một
+        thị trường sẵn sàng chứ không phải một canh bạc.
+      </div>
+    </div>
+
+    <div class="edge">
+      <div class="h">Mua theo giải, theo câu lạc bộ</div>
+      <div class="b">
+        “Đặt trước giải X, nhận hàng tại sân” — giải quyết luôn nỗi lo giao chậm
+        (37% than phiền) bằng cách bỏ hẳn khâu giao. Cần lịch giải, thứ mình
+        vốn đã có.
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section>
+    <div class="kicker">Một cảnh báo</div>
+    <h2>Đừng mở cửa cho Google trước khi có đánh giá và chính sách đổi trả</h2>
+    <p class="lede">
+      Người quen tha thứ cho một shop mới. Người lạ từ tìm kiếm thì không: họ
+      không có lý do gì để tin, và ba trong bốn rào cản lớn nhất đang mở toang.
+      Cờ <code>SHOP_PUBLIC_INDEXING</code> đang tắt — nên giữ thế cho tới khi ít
+      nhất mục 2 và 3 xong, cả hai cộng lại chưa tới một ngày làm.
+    </p>
+  </section>
+
+  <hr class="rule">
+
+  <footer>
+    <div><b>Nguồn</b></div>
+    <div>
+      <a href="https://tgmresearch.com/vietnam-online-consumer-segments.html">TGM Research — phân khúc người mua trực tuyến Việt Nam</a> ·
+      <a href="https://www.globenewswire.com/news-release/2026/04/22/3279204/28124/en/vietnam-social-commerce-market-report-q1-2026-update-competitive-dynamics-shift-as-shopee-and-tiktok-lead-vietnam-s-social-commerce.html">Vietnam Social Commerce Market Report Q1 2026</a> ·
+      <a href="https://learning-gate.com/index.php/2576-8484/article/download/8723/2919/11703">Tác động của chính sách đổi trả tới ý định mua — TP.HCM</a> ·
+      <a href="https://www.mobiloud.com/blog/trust-signals-cart-abandonment">MobiLoud — tín hiệu niềm tin và bỏ giỏ hàng</a> ·
+      <a href="https://pickleball.com/docs/en/article/pickleball-paddle-buying-guide-how-to-choose-the-right-paddle">Pickleball.com — hướng dẫn chọn vợt</a> ·
+      <a href="https://heliospickleball.com/blogs/news/pickleball-paddle-comparison-guide">Helios — 7 thông số so sánh vợt</a>
+    </div>
+    <div style="margin-top:.5rem">
+      Trạng thái shop lấy trực tiếp từ production ngày 19/08/2026: 2 sản phẩm
+      đang bán, 1 kênh liên hệ, 1 đơn thật, tài khoản ngân hàng đã điền,
+      <code>SHOP_PUBLIC_INDEXING</code> tắt.
+    </div>
+  </footer>
+
+</div>
