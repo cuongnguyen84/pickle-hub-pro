@@ -347,10 +347,19 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       let replyMarkup: Record<string, unknown> | undefined;
       if (command.toLowerCase().startsWith("/jobs")) {
         const functions = await edgeStates(supabase);
-        const facebook = await facebookCountsToday(supabase);
         const sources = await newsSourcesLine(supabase);
         const failedEdges = functions.filter((fn) => fn.state !== "available").length;
-        reply = `${jobsText(jobs)}\n📣 Facebook hôm nay: ThePickleHub ${facebook.thepicklehub ?? "—"} bài · TAPickleball ${facebook.taPickleball ?? "—"} bài${sources ? `\n${sources}` : ""}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
+        // MỘT dòng Facebook. `jobsText` nay tự in dòng đó từ metrics của job
+        // social-poster (migration 20260802190000 làm giàu snapshot). Đếm trực
+        // tiếp qua facebookCountsToday chỉ còn là đường lùi khi snapshot chưa
+        // có job ấy — nếu chạy cả hai thì /jobs in Facebook hai lần với hai con
+        // số khác nhau, cùng lỗi vừa vá trong job-health-digest.
+        const facebookFallback = jobs.some((job) => job.job_key === "social-poster")
+          ? ""
+          : await facebookCountsToday(supabase).then((fb) =>
+            `\n📣 Facebook hôm nay: ThePickleHub ${fb.thepicklehub ?? "—"} bài · TAPickleball ${fb.taPickleball ?? "—"} bài`
+          );
+        reply = `${jobsText(jobs)}${facebookFallback}${sources ? `\n${sources}` : ""}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
         replyMarkup = jobActionButtons(jobs);
       } else if (command.toLowerCase().startsWith("/functions")) {
         reply = functionsText(await edgeStates(supabase));
@@ -368,7 +377,7 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
         else if (command.toLowerCase().startsWith("/diagnose")) {
           // Giữ khung của main (đã Việt hoá + giờ ICT) và nối thêm dòng số liệu
           // nghiệp vụ của nhánh này. `.filter(Boolean)` vì businessDetail trả
-          // chuỗi rỗng cho job không có số nghiệp vụ nào.
+          // null cho job không có số nghiệp vụ nào.
           reply = [
             `🔎 ${job.display_name}`,
             `Job: ${job.job_key}`,
