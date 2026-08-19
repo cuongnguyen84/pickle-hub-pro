@@ -68,7 +68,7 @@ interface FormatDef {
   fmt: Fmt;
   title: string;
   /** VI suffix appended to `title`. The format names are product nouns we keep
-   *  in English, but a Vietnamese player reading "Doubles Elimination" cold has
+   *  in English, but a Vietnamese player reading "Double Elimination" cold has
    *  no idea whether it is the bracket their friend invited them to. */
   titleVi: string;
   desc: { en: string; vi: string };
@@ -117,7 +117,7 @@ const FORMATS: FormatDef[] = [
   },
   {
     fmt: "doubles-elim",
-    title: "Doubles Elimination",
+    title: "Double Elimination",
     titleVi: "Loại kép",
     desc: {
       en: "Double elimination bracket — lose once, fall to losers bracket, fight back to the final.",

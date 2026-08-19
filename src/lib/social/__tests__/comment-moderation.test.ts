@@ -100,7 +100,7 @@ describe("resolveDeletePermission", () => {
 
 describe("moderationTooltip", () => {
   it("owner gets neutral copy in both languages", () => {
-    expect(moderationTooltip("owner", "vi")).toBe("Xoá bình luận");
+    expect(moderationTooltip("owner", "vi")).toBe("Xóa bình luận");
     expect(moderationTooltip("owner", "en")).toBe("Delete comment");
   });
 

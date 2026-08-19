@@ -463,7 +463,7 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
       toast.error(language === "vi" ? "Lỗi" : "Error", { description: error.message });
       return;
     }
-    toast.success(language === "vi" ? "Đã xoá" : "Deleted");
+    toast.success(language === "vi" ? "Đã xóa" : "Deleted");
     await queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] });
   };
 
@@ -669,7 +669,7 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
                   onClick={() => setDialogOpen(false)}
                   disabled={submitting}
                 >
-                  {language === "vi" ? "Huỷ" : "Cancel"}
+                  {language === "vi" ? "Hủy" : "Cancel"}
                 </Button>
                 <Button onClick={submit} disabled={submitting} className="gap-2">
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -826,7 +826,7 @@ function WatchlistRowItem({
               <Button
                 size="icon"
                 variant="ghost"
-                title={language === "vi" ? "Xoá" : "Delete"}
+                title={language === "vi" ? "Xóa" : "Delete"}
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
@@ -835,7 +835,7 @@ function WatchlistRowItem({
               <AlertDialogHeader>
                 <AlertDialogTitle>
                   {language === "vi"
-                    ? "Xoá entry này?"
+                    ? "Xóa entry này?"
                     : "Delete this entry?"}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
@@ -846,10 +846,10 @@ function WatchlistRowItem({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>
-                  {language === "vi" ? "Huỷ" : "Cancel"}
+                  {language === "vi" ? "Hủy" : "Cancel"}
                 </AlertDialogCancel>
                 <AlertDialogAction onClick={() => onDelete(row)}>
-                  {language === "vi" ? "Xoá" : "Delete"}
+                  {language === "vi" ? "Xóa" : "Delete"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

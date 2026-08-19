@@ -383,7 +383,7 @@ function WebhookSection() {
       title="3. Webhook (RATING events)"
       subtitle={
         vi
-          ? "DUPR gọi POST /functions/v1/dupr-webhook khi rating thay đổi. SSO callback đăng ký subscription tự động; disconnect huỷ subscription."
+          ? "DUPR gọi POST /functions/v1/dupr-webhook khi rating thay đổi. SSO callback đăng ký subscription tự động; disconnect hủy subscription."
           : "DUPR calls POST /functions/v1/dupr-webhook on rating changes. SSO callback auto-subscribes; disconnect unsubscribes."
       }
       action={
@@ -1123,7 +1123,7 @@ function SubmissionsSection() {
   };
 
   const handleDelete = async (row: SubmissionRow) => {
-    if (!(await confirm({ description: vi ? `Xoá match ${row.match_code}?` : `Delete match ${row.match_code}?`, destructive: true }))) return;
+    if (!(await confirm({ description: vi ? `Xóa match ${row.match_code}?` : `Delete match ${row.match_code}?`, destructive: true }))) return;
     setBusyId(row.identifier);
     try {
       const [src, internalId] = (() => {
@@ -1134,7 +1134,7 @@ function SubmissionsSection() {
         body: { action: "delete", internal_source: src, internal_match_id: internalId },
       });
       if (error) throw error;
-      toast.success(vi ? "Đã xoá" : "Deleted", { description: JSON.stringify(data) });
+      toast.success(vi ? "Đã xóa" : "Deleted", { description: JSON.stringify(data) });
       qc.invalidateQueries({ queryKey: ["dupr-submissions"] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -1148,7 +1148,7 @@ function SubmissionsSection() {
     <Section
       title="4b. Submitted matches (lifecycle table)"
       subtitle={vi
-        ? "20 match gần nhất anh đã push lên DUPR. Xoá ở đây gọi DELETE /match/v1.0/delete."
+        ? "20 match gần nhất anh đã push lên DUPR. Xóa ở đây gọi DELETE /match/v1.0/delete."
         : "20 most recent matches you've pushed to DUPR. Delete here calls DELETE /match/v1.0/delete."}
       action={
         <button type="button" className="tl-btn" onClick={() => q.refetch()} disabled={q.isLoading}>
@@ -1206,7 +1206,7 @@ function SubmissionsSection() {
                         onClick={() => handleDelete(row)}
                         disabled={busyId === row.identifier}
                       >
-                        {busyId === row.identifier ? <Loader2 className="h-3 w-3 animate-spin" /> : (vi ? "Xoá" : "Delete")}
+                        {busyId === row.identifier ? <Loader2 className="h-3 w-3 animate-spin" /> : (vi ? "Xóa" : "Delete")}
                       </button>
                     </span>
                   )}
@@ -1288,7 +1288,7 @@ function SubmissionsSection() {
 
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" className="tl-btn" onClick={() => !editBusy && setEditState(null)} disabled={editBusy}>
-                {vi ? "Huỷ" : "Cancel"}
+                {vi ? "Hủy" : "Cancel"}
               </button>
               <button type="button" className="tl-btn primary" onClick={submitUpdate} disabled={editBusy}>
                 {editBusy

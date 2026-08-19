@@ -96,7 +96,7 @@ export default function DoublesEliminationList() {
     >
       <HreflangTags enPath="/tools/doubles-elimination" />
       <WebApplicationSchema
-        name="Doubles Elimination Bracket Generator"
+        name="Double Elimination Bracket Generator"
         description="Create doubles elimination brackets for pickleball tournaments. Support for 4-32 teams with best-of-1, best-of-3, or best-of-5 match formats."
         url="https://www.thepicklehub.net/tools/doubles-elimination"
         applicationCategory="SportsApplication"
@@ -114,7 +114,7 @@ export default function DoublesEliminationList() {
         <nav className="tl-breadcrumb">
           <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
           <span className="sep">/</span>
-          <span className="current">Doubles Elimination</span>
+          <span className="current">Double Elimination</span>
         </nav>
 
         <header className="tl-page-head">

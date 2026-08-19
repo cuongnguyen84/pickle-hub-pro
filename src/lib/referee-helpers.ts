@@ -12,7 +12,7 @@
  *   - FK column name (`table_id` for quick_table; `tournament_id` for the
  *     other three)
  *   - Whether the hook also exposes a `userRole` object (Quick Table and
- *     Team Match do; Doubles Elimination does not)
+ *     Team Match do; Double Elimination does not)
  *
  * This module extracts the genuinely shared parts (fetch + profile join,
  * lookup-by-email, existence check, insert, delete) and leaves the small

@@ -116,7 +116,7 @@ export function renderTools(siteUrl: string, _rawPath = "/tools", lang: "en" | "
             ]
             : [
               { "@type": "ListItem", position: 1, name: "Quick Tables (Round Robin)", url: `${siteUrl}/tools/quick-tables` },
-              { "@type": "ListItem", position: 2, name: "Doubles Elimination Bracket", url: `${siteUrl}/tools/doubles-elimination` },
+              { "@type": "ListItem", position: 2, name: "Double Elimination Bracket", url: `${siteUrl}/tools/doubles-elimination` },
               { "@type": "ListItem", position: 3, name: "Flex Tournament", url: `${siteUrl}/tools/flex-tournament` },
               { "@type": "ListItem", position: 4, name: "Team Match (MLP Format)", url: `${siteUrl}/tools/team-match` },
             ],
@@ -174,7 +174,7 @@ ${TOOLS_FAQ_VI.map(([q, a]) => `<p><strong>${q}</strong> ${a}</p>`).join("\n")}
 <ul>
   <li><a href="${siteUrl}/tools/quick-tables">Quick Tables – Round Robin &amp; Single Elimination</a></li>
   <li><a href="${siteUrl}/tools/team-match">Team Match – MLP Format</a></li>
-  <li><a href="${siteUrl}/tools/doubles-elimination">Doubles Elimination Bracket</a></li>
+  <li><a href="${siteUrl}/tools/doubles-elimination">Double Elimination Bracket</a></li>
   <li><a href="${siteUrl}/tools/flex-tournament">Flex Tournament</a></li>
 </ul>
 <h2>What Bracket Lab actually does</h2>
@@ -206,7 +206,7 @@ const TOOL_PAGE_META: Record<string, { title: string; description: string }> = {
     description: "Free MLP-style team match pickleball bracket tool. Manage team lineups, track singles and doubles results, and generate instant standings. No signup required.",
   },
   "doubles-elimination": {
-    title: "Doubles Elimination Bracket Generator | ThePickleHub",
+    title: "Double Elimination Bracket Generator | ThePickleHub",
     description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. No signup — ThePickleHub.",
   },
   "flex-tournament": {
@@ -251,11 +251,11 @@ const TOOL_NEW_PAGE_META: Record<string, {
 }> = {
   "doubles-elimination": {
     en: {
-      title: "Create Doubles Elimination Bracket | ThePickleHub",
+      title: "Create Double Elimination Bracket | ThePickleHub",
       description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. No signup — ThePickleHub.",
     },
     vi: {
-      title: "Tạo Doubles Elimination Bracket | ThePickleHub",
+      title: "Tạo Double Elimination Bracket | ThePickleHub",
       description: "Công cụ miễn phí tạo bracket loại kép pickleball. Bốc thăm tự động, chấm điểm trực tiếp, chia sẻ kết quả qua link. Không cần đăng ký — ThePickleHub.",
     },
   },

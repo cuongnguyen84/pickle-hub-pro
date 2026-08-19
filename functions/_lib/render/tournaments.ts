@@ -319,9 +319,9 @@ export async function renderDoublesElimination(supabase: SupabaseClient, shareId
     : "";
   const duprDescSuffix = hasRange ? ` Khuyến nghị DUPR ${rangeStr}.` : "";
 
-  const title = buildTitle(de.name, " | Doubles Elimination");
+  const title = buildTitle(de.name, " | Double Elimination");
   const desc = `Giải đấu loại trực tiếp ${de.name} – ${de.team_count} đội.${duprDescSuffix} Xem bracket và kết quả trực tiếp trên ThePickleHub.`.slice(0, 160);
-  const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Doubles Elimination", href: `${siteUrl}/tools/doubles-elimination` }, { label: de.name }]);
+  const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Double Elimination", href: `${siteUrl}/tools/doubles-elimination` }, { label: de.name }]);
 
   // SportsEvent JSON-LD — informational only (page stays noindex). Skill
   // range surfaces as audience requirement when DUPR is enforced.

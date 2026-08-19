@@ -2,7 +2,7 @@
 // seedDoublesTeams — compute team-level DUPR avg + seed source
 // ----------------------------------------------------------------------------
 // DUPR Phase 1 (2026-05-29). Companion to seedFromDupr.ts which seeds INDIVIDUAL
-// players for QuickTables / Mexicano. Doubles Elimination teams have TWO players,
+// players for QuickTables / Mexicano. Double Elimination teams have TWO players,
 // so the seed value is the team avg DUPR (doubles bucket). One singles fallback
 // per player still allowed → seed_source becomes 'approx'. When at least one
 // player is missing DUPR entirely the team is uncomputable (returns null avg,
@@ -47,7 +47,7 @@ const STALE_MS = 30 * 24 * 60 * 60 * 1000;
  *   - 'approx' → at least one player used dupr_singles fallback
  *   - 'none'   → at least one player has no DUPR at all (avg = null)
  *
- * Why doubles-only: Doubles Elimination is by definition a doubles bracket.
+ * Why doubles-only: Double Elimination is by definition a doubles bracket.
  * Singles ratings are only used as a fallback when the player has zero
  * doubles history — matches seedFromDupr.ts singles-fallback policy.
  */

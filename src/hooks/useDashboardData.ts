@@ -58,7 +58,7 @@ export const useActiveTournaments = () => {
         );
       }
 
-      // Doubles Elimination (active)
+      // Double Elimination (active)
       const { data: de } = await supabase
         .from("doubles_elimination_tournaments")
         .select("id, name, share_id, status")

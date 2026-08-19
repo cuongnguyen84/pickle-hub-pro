@@ -358,7 +358,7 @@ const MyTournaments = () => {
           <p>
             {isVi
               ? "Tất cả giải đấu bạn đã tạo qua Bảng đấu nhanh, Loại trực tiếp Đôi, Linh hoạt, và Đấu đồng đội. Xem, chia sẻ, hoặc xóa từ một nơi."
-              : "Every tournament you've created across Quick Tables, Doubles Elimination, Flex, and Team Match. View, share, or delete from one place."}
+              : "Every tournament you've created across Quick Tables, Double Elimination, Flex, and Team Match. View, share, or delete from one place."}
           </p>
         </header>
 

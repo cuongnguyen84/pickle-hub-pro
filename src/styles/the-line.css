@@ -96,7 +96,7 @@
 
   /* Per-format accents (Tournaments hub / bracket rows) */
   --tl-accent-qt:   #00b96b;  /* Quick Tables */
-  --tl-accent-elim: #e9b649;  /* Doubles Elimination */
+  --tl-accent-elim: #e9b649;  /* Double Elimination */
   --tl-accent-flex: #4f9bff;  /* Flex Format */
   --tl-accent-team: #ff7a4d;  /* Team Match */
 

@@ -134,7 +134,7 @@ const News = lazyRetry(() => import("./pages/News"));
 const NewsArticle = lazyRetry(() => import("./pages/NewsArticle"));
 const ShareRedirect = lazyRetry(() => import("./pages/ShareRedirect"));
 
-// Doubles Elimination pages
+// Double Elimination pages
 const DoublesEliminationList = lazyRetry(() => import("./pages/DoublesEliminationList"));
 const DoublesEliminationSetup = lazyRetry(() => import("./pages/DoublesEliminationSetup"));
 const DoublesEliminationView = lazyRetry(() => import("./pages/DoublesEliminationView"));
@@ -334,7 +334,7 @@ class ChunkErrorBoundary extends Component<
 > {
   // REVIEW: reload cap dùng CỬA SỔ THỜI GIAN, không reset bằng timer.
   // Lịch sử: timer 5s (fix loop 2026-04-27) lại gây loop kiểu khác — trên mạng
-  // chậm (đang xem live) lazy import fail SAU 5s, counter đã bị xoá nên mỗi
+  // chậm (đang xem live) lazy import fail SAU 5s, counter đã bị xóa nên mỗi
   // vòng đếm lại từ 0 → reload vô hạn, kẹt "Đang tải lại..." (2026-07-08).
   // Giờ: quá MAX_RELOADS lần trong 2 phút → dừng, hiện nút tải thủ công.
 
@@ -808,7 +808,7 @@ const App = () => (
                     {/* Tools routes */}
                     <Route path="/tools/quick-tables/referee/:matchId" element={<QuickTableRefereeScoring />} />
                     {/* Team Match routes */}
-                    {/* Doubles Elimination routes */}
+                    {/* Double Elimination routes */}
                     {/* Flex Tournament routes */}
                     {/* Dashboard routes */}
                     {/* Legacy Quick Tables redirects */}

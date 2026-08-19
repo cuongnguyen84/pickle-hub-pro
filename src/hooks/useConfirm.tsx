@@ -14,7 +14,7 @@ import { useI18n } from "@/i18n";
 /**
  * Branded confirm dialog to replace the blocking, off-brand window.confirm().
  * One provider renders a single AlertDialog; call sites do:
- *   if (!(await confirm("Xoá?"))) return;
+ *   if (!(await confirm("Xóa?"))) return;
  * Pass a string for a plain message, or options for a titled/destructive dialog.
  *
  * ponytail: one shared dialog for ~9 call sites — cheaper than 9 inline dialogs.
@@ -70,7 +70,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => settle(false)}>
-              {opts.cancelText ?? (language === "vi" ? "Huỷ" : "Cancel")}
+              {opts.cancelText ?? (language === "vi" ? "Hủy" : "Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => settle(true)}

@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Users, UserPlus, UserMinus, Mail, Loader2 } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
-// Generic referee display type — works for both Quick Tables and Doubles Elimination
+// Generic referee display type — works for both Quick Tables and Double Elimination
 interface RefereeDisplay {
   id: string;
   email?: string;

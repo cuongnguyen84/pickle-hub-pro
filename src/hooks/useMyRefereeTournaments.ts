@@ -50,7 +50,7 @@ export function useMyRefereeTournaments() {
         if (qt.creator_user_id) creatorIds.add(qt.creator_user_id);
       });
 
-      // Fetch Doubles Elimination where user is referee
+      // Fetch Double Elimination where user is referee
       const { data: doublesReferees } = await supabase
         .from('doubles_elimination_referees')
         .select('tournament_id')

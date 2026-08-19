@@ -637,7 +637,7 @@ export default function DoublesEliminationSetup() {
       <SetupLoginGate
         layoutTitle={t.doublesElimination.setup.title}
         noindex={true}
-        toolLabel="Doubles Elimination"
+        toolLabel="Double Elimination"
         toolPath="/tools/doubles-elimination"
         icon={Trophy}
         title={t.doublesElimination.loginRequired}
@@ -653,7 +653,7 @@ export default function DoublesEliminationSetup() {
   return (
     <TheLineLayout title={t.doublesElimination.setup.title} description={t.doublesElimination.description} noindex={true} active="lab">
       <div className="tl-shell">
-        <SetupBreadcrumb toolLabel="Doubles Elimination" toolPath="/tools/doubles-elimination" />
+        <SetupBreadcrumb toolLabel="Double Elimination" toolPath="/tools/doubles-elimination" />
 
         <SetupPageHead
           kicker={language === 'vi' ? 'Tạo giải mới · Loại kép' : 'New tournament · Double elimination'}

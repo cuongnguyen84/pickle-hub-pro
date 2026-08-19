@@ -53,7 +53,7 @@ export const ToolsHubSeoContent = () => (
           <p className="text-sm text-muted-foreground mt-1">Best for: Team-based events with 2–16 teams. Inspired by Major League Pickleball with lineup management, dreambreaker games, and rally scoring.</p>
         </div>
         <div className="p-4 rounded-lg bg-muted/50 border border-border">
-          <Link to="/tools/doubles-elimination" className="font-semibold text-primary hover:underline">Doubles Elimination — Double Elimination Bracket</Link>
+          <Link to="/tools/doubles-elimination" className="font-semibold text-primary hover:underline">Double Elimination — Double Elimination Bracket</Link>
           <p className="text-sm text-muted-foreground mt-1">Best for: Competitive events with 32+ teams. Gives every team a second chance through the losers bracket before elimination.</p>
         </div>
         <div className="p-4 rounded-lg bg-muted/50 border border-border">

@@ -127,7 +127,7 @@ export default function VenueDetail() {
           </h1>
           <p className="mb-6 text-sm text-muted-foreground">
             {language === "vi"
-              ? "Sân bạn tìm có thể đã bị xoá hoặc đường dẫn không đúng."
+              ? "Sân bạn tìm có thể đã bị xóa hoặc đường dẫn không đúng."
               : "This court may have been removed or the link is incorrect."}
           </p>
           <Link to="/san" className="tl-btn">

@@ -402,7 +402,7 @@ export function useTeamMatchTeamManagement() {
     },
   });
 
-  // BTC: xác nhận / huỷ xác nhận đã nhận lệ phí.
+  // BTC: xác nhận / hủy xác nhận đã nhận lệ phí.
   const confirmPaymentMutation = useMutation({
     mutationFn: async ({ teamId, tournamentId, confirmed = true }: { teamId: string; tournamentId: string; confirmed?: boolean }) => {
       const { error } = await supabase.rpc(
@@ -416,7 +416,7 @@ export function useTeamMatchTeamManagement() {
     onSuccess: ({ tournamentId, confirmed }) => {
       queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
       queryClient.invalidateQueries({ queryKey: ['team-match-user-team'] });
-      toast({ title: confirmed ? 'Đã xác nhận' : 'Đã huỷ xác nhận', description: confirmed ? 'Đội đã nộp lệ phí, chính thức tham gia.' : 'Đã đưa về trạng thái chờ.' });
+      toast({ title: confirmed ? 'Đã xác nhận' : 'Đã hủy xác nhận', description: confirmed ? 'Đội đã nộp lệ phí, chính thức tham gia.' : 'Đã đưa về trạng thái chờ.' });
     },
     onError: (error: Error) => {
       toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });

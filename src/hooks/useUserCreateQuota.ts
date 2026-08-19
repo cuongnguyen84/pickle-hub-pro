@@ -9,7 +9,7 @@ import { useAuth } from './useAuth';
  * higher integer) for the cap, and `count_user_tournaments(user)` for the
  * SUM of the caller's tournaments across Quick + Flex + Doubles + TeamMatch.
  *
- * Used by the Flex / Doubles Elimination / Team Match list pages to render
+ * Used by the Flex / Double Elimination / Team Match list pages to render
  * a "TOTAL_USED / QUOTA" stats-row alongside the page's own per-tool count.
  * Quick Tables list page reads the same numbers via getUserQuotaInfo() in
  * useQuickTable (the underlying get_user_quota_info RPC is now TOTAL-aware
