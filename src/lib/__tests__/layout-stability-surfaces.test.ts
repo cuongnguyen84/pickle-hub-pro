@@ -40,9 +40,14 @@ describe("layout-stable public content surfaces", () => {
     // that drives it. sessionStorage made every new session's first pageview
     // unreserved, which is what CrUX measures — field CLS p75 0.37 on mobile.
     // Guard that the hint stays device-scoped and never regresses to session
-    // scope; readLiveLeadHint/writeLiveLeadHint own the TTL and failure modes.
-    expect(home).toContain("readLiveLeadHint");
+    // scope. Later the same day the default flipped too: shouldReserveLiveSlot
+    // reserves unless a live hint positively says the slot was empty, so a
+    // first visit reserves. Asserting the decision helper rather than the raw
+    // reader is deliberate — reading the hint directly would reintroduce the
+    // bug where "unknown" was treated as "known empty".
+    expect(home).toContain("shouldReserveLiveSlot");
     expect(home).toContain("writeLiveLeadHint");
+    expect(home).not.toContain("readLiveLeadHint(");
     // Assert the call, not the word — the surrounding comment in Index.tsx
     // names sessionStorage to explain what was wrong with it.
     expect(home).not.toContain("sessionStorage.getItem");
