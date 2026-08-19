@@ -10,6 +10,7 @@ type Job = {
   error_message: string | null;
   executor: string;
   schedule_label: string;
+  metrics: Record<string, unknown>;
 };
 
 const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
@@ -61,8 +62,22 @@ function jobsText(jobs: Job[]): string {
   for (const job of jobs.filter((item) => ["warning", "failed"].includes(item.health_state))) {
     lines.push(`${job.health_state === "failed" ? "❌" : "⚠️"} ${job.job_key}: ${job.error_message || job.summary || "Không có chi tiết"}`);
   }
+  const social = jobs.find((job) => job.job_key === "social-poster");
+  if (social) lines.push(`📣 Facebook: ThePickleHub ${Number(social.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(social.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(social.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`);
+  const proTour = jobs.find((job) => job.job_key === "pro-tour-scraper");
+  if (proTour) lines.push(`🏓 Pro Tour: lượt gần nhất ${Number(proTour.metrics?.matches_imported ?? 0)} trận · hôm nay ${Number(proTour.metrics?.matches_today ?? 0)} trận · ${Number(proTour.metrics?.events_processed ?? proTour.metrics?.due ?? 0)} event`);
   lines.push("https://www.thepicklehub.net/admin/jobs");
   return lines.join("\n").slice(0, 4000);
+}
+
+function businessDetail(job: Job): string | null {
+  if (job.job_key === "social-poster") {
+    return `Facebook hôm nay: ThePickleHub ${Number(job.metrics?.thepicklehub_posts_today ?? 0)} bài · TA Pickleball ${Number(job.metrics?.ta_pickleball_posts_today ?? 0)} bài${Number(job.metrics?.pages_no_eligible ?? 0) > 0 ? " · không có bài đủ điều kiện" : ""}`;
+  }
+  if (job.job_key === "pro-tour-scraper") {
+    return `Pro Tour ingest: lượt gần nhất ${Number(job.metrics?.matches_imported ?? 0)} trận · hôm nay ${Number(job.metrics?.matches_today ?? 0)} trận · ${Number(job.metrics?.events_processed ?? job.metrics?.due ?? 0)} event · ${Number(job.metrics?.events_failed ?? job.metrics?.failed ?? 0)} lỗi`;
+  }
+  return null;
 }
 
 type EdgeState = { function_slug: string; display_name: string; job_key: string | null; state: string; http_status: number | null; response_ms: number | null; reason: string | null };
@@ -332,10 +347,19 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
       let replyMarkup: Record<string, unknown> | undefined;
       if (command.toLowerCase().startsWith("/jobs")) {
         const functions = await edgeStates(supabase);
-        const facebook = await facebookCountsToday(supabase);
         const sources = await newsSourcesLine(supabase);
         const failedEdges = functions.filter((fn) => fn.state !== "available").length;
-        reply = `${jobsText(jobs)}\n📣 Facebook hôm nay: ThePickleHub ${facebook.thepicklehub ?? "—"} bài · TAPickleball ${facebook.taPickleball ?? "—"} bài${sources ? `\n${sources}` : ""}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
+        // MỘT dòng Facebook. `jobsText` nay tự in dòng đó từ metrics của job
+        // social-poster (migration 20260802190000 làm giàu snapshot). Đếm trực
+        // tiếp qua facebookCountsToday chỉ còn là đường lùi khi snapshot chưa
+        // có job ấy — nếu chạy cả hai thì /jobs in Facebook hai lần với hai con
+        // số khác nhau, cùng lỗi vừa vá trong job-health-digest.
+        const facebookFallback = jobs.some((job) => job.job_key === "social-poster")
+          ? ""
+          : await facebookCountsToday(supabase).then((fb) =>
+            `\n📣 Facebook hôm nay: ThePickleHub ${fb.thepicklehub ?? "—"} bài · TAPickleball ${fb.taPickleball ?? "—"} bài`
+          );
+        reply = `${jobsText(jobs)}${facebookFallback}${sources ? `\n${sources}` : ""}\n⚙️ Edge runtime: ${functions.length - failedEdges}/${functions.length} available${failedEdges ? ` · ❌ ${failedEdges}` : ""}`;
         replyMarkup = jobActionButtons(jobs);
       } else if (command.toLowerCase().startsWith("/functions")) {
         reply = functionsText(await edgeStates(supabase));
@@ -351,6 +375,9 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
         const job = jobs.find((item) => item.job_key === key);
         if (!job) reply = `Không tìm thấy job: ${key}`;
         else if (command.toLowerCase().startsWith("/diagnose")) {
+          // Giữ khung của main (đã Việt hoá + giờ ICT) và nối thêm dòng số liệu
+          // nghiệp vụ của nhánh này. `.filter(Boolean)` vì businessDetail trả
+          // null cho job không có số nghiệp vụ nào.
           reply = [
             `🔎 ${job.display_name}`,
             `Job: ${job.job_key}`,
@@ -358,7 +385,8 @@ async function processTelegram(supabase: ReturnType<typeof createClient>, onlyId
             `Lịch: ${job.schedule_label}`,
             `Lần gần nhất: ${fmtICT(job.last_activity_at)} (giờ VN)`,
             `Lý do: ${job.error_message || job.summary || "Không có chi tiết"}`,
-          ].join("\n");
+            businessDetail(job),
+          ].filter(Boolean).join("\n");
         } else {
           if (command.toLowerCase().startsWith("/fix")) {
             const functions = await runEdgeProbe(supabase);

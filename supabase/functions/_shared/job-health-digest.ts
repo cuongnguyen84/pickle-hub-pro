@@ -50,7 +50,8 @@ export function formatJobHealthDigest(
 
   const news = snapshot.jobs.find((job) => job.job_key === "news-fetcher");
   const proTour = snapshot.jobs.find((job) => job.job_key === "pro-tour-scraper");
-  if (news || proTour) lines.push("", "*Kết quả chính:*");
+  const social = snapshot.jobs.find((job) => job.job_key === "social-poster");
+  if (news || proTour || social) lines.push("", "*Kết quả chính:*");
   if (news) {
     const inserted = metric(news.metrics ?? {}, ["inserted", "items_inserted"]);
     const sources = metric(news.metrics ?? {}, ["sources_succeeded", "sources_total"]);
@@ -58,10 +59,26 @@ export function formatJobHealthDigest(
   }
   if (proTour) {
     const matches = metric(proTour.metrics ?? {}, ["matches_imported", "matches_extracted"]);
-    const skipped = metric(proTour.metrics ?? {}, ["skipped", "skipped_inactive"]);
-    lines.push(`• Pro Tour: ${matches} trận · ${skipped} event bỏ qua hợp lệ`);
+    const matchesToday = metric(proTour.metrics ?? {}, ["matches_today"]);
+    const events = metric(proTour.metrics ?? {}, ["events_processed", "due"]);
+    const failed = metric(proTour.metrics ?? {}, ["events_failed", "failed"]);
+    lines.push(`• Pro Tour: lượt gần nhất ${matches} trận · hôm nay ${matchesToday} trận · ${events} event${failed ? ` · ${failed} lỗi` : ""}`);
   }
-  if (snapshot.facebook_posts) {
+  // MỘT dòng Facebook, không hai. Hai nguồn số cùng tồn tại: metrics của job
+  // `social-poster` (do migration 20260802190000 làm giàu) và trường
+  // `facebook_posts` ở cấp snapshot. Merge nhánh job-business-metrics vào main
+  // 19/08 để cả hai cùng push và digest in Facebook hai lần với hai con số khác
+  // nhau — đúng kiểu lỗi mà người đọc digest sẽ không bao giờ báo, chỉ ngầm hết
+  // tin nó.
+  //
+  // Ưu tiên metrics của job: nó nói được cả lý do ("không có bài đủ điều kiện"),
+  // còn facebook_posts chỉ đếm. Chỉ dùng facebook_posts khi không có job.
+  if (social) {
+    const tph = metric(social.metrics ?? {}, ["thepicklehub_posts_today"]);
+    const ta = metric(social.metrics ?? {}, ["ta_pickleball_posts_today"]);
+    const noEligible = metric(social.metrics ?? {}, ["pages_no_eligible"]);
+    lines.push(`• Facebook: ThePickleHub ${tph} bài · TA Pickleball ${ta} bài${noEligible ? " · không có bài đủ điều kiện" : ""}`);
+  } else if (snapshot.facebook_posts) {
     const primary = snapshot.facebook_posts.thepicklehub;
     const secondary = snapshot.facebook_posts.ta_pickleball;
     lines.push(
