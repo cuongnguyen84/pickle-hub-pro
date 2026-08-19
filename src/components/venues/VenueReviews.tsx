@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface VenueReviewsProps {
   venueId: string;
@@ -26,9 +27,9 @@ const t = (language: "vi" | "en", vi: string, en: string) => (language === "vi" 
 function Stars({ value }: { value: number }) {
   const clamped = Math.max(1, Math.min(5, value));
   return (
-    <span aria-label={`${clamped}/5`} style={{ color: "#f5a623", letterSpacing: "1px" }}>
+    <span aria-label={`${clamped}/5`} className="tracking-wide text-amber-400">
       {"★".repeat(clamped)}
-      <span style={{ color: "var(--tl-muted, #bbb)" }}>{"★".repeat(5 - clamped)}</span>
+      <span className="text-muted-foreground">{"★".repeat(5 - clamped)}</span>
     </span>
   );
 }
@@ -148,13 +149,9 @@ export function VenueReviews({ venueId, language }: VenueReviewsProps) {
                   aria-checked={effectiveRating === n}
                   role="radio"
                   onClick={() => setRating(n)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "1.5rem",
-                    color: n <= effectiveRating ? "#f5a623" : "var(--tl-muted, #bbb)",
-                  }}
+                  className={`cursor-pointer border-0 bg-transparent text-2xl leading-none ${
+                    n <= effectiveRating ? "text-amber-400" : "text-muted-foreground"
+                  }`}
                 >
                   ★
                 </button>
@@ -172,19 +169,21 @@ export function VenueReviews({ venueId, language }: VenueReviewsProps) {
               )}
               className="w-full p-2 rounded border mb-2"
             />
-            <button type="submit" className="tl-btn" disabled={submit.isPending || effectiveRating < 1}>
+            <Button type="submit" variant="tl-primary" disabled={submit.isPending || effectiveRating < 1}>
               {submit.isPending
                 ? t(language, "Đang lưu…", "Saving…")
                 : mine
                   ? t(language, "Cập nhật đánh giá", "Update review")
                   : t(language, "Gửi đánh giá", "Post review")}
-            </button>
+            </Button>
           </form>
         ) : (
           <p className="mb-4">
-            <Link to="/login" className="tl-btn" style={{ textDecoration: "none" }}>
-              {t(language, "Đăng nhập để đánh giá sân", "Sign in to review this court")}
-            </Link>
+            <Button asChild variant="outline">
+              <Link to="/login">
+                {t(language, "Đăng nhập để đánh giá sân", "Sign in to review this court")}
+              </Link>
+            </Button>
           </p>
         ))}
 
