@@ -10,6 +10,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { useNavigate } from 'react-router-dom';
+import { resolvePushRoute } from '@/lib/push/notificationRoute';
 import { supabase } from '@/integrations/supabase/client';
 import { isNativeApp, getPlatform } from '@/lib/capacitor-utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -70,26 +71,7 @@ export const usePushNotifications = () => {
   // Handle notification tap - navigate to relevant page
   const handleNotificationTap = useCallback((data: Record<string, unknown>) => {
     console.log('[Push] Notification tapped, data:', data);
-
-    const entityType = data.entity_type as string;
-    const relatedId = data.related_id as string;
-
-    if (!entityType) return;
-
-    switch (entityType) {
-      case 'organization':
-        if (relatedId) {
-          navigate(`/live/${relatedId}`);
-        }
-        break;
-      case 'tournament':
-        if (relatedId) {
-          navigate(`/live/${relatedId}`);
-        }
-        break;
-      default:
-        navigate('/notifications');
-    }
+    navigate(resolvePushRoute(data));
   }, [navigate]);
 
   // Keep refs in sync with latest callbacks
