@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "mlp-2026-semifinals-new-york-preview",
+    publishedDate: "2026-08-19",
+    updatedDate: "2026-08-19",
+    author: "The PickleHub Team",
+    tags: ["mlp 2026", "mlp semifinals", "major league pickleball", "mlp finals new york", "new jersey 5s", "st louis shock", "brooklyn pickleball team", "dallas flash", "alix truong", "central park pickleball"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow live scores on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    titleEn: "MLP 2026 Semifinals Preview: Four Teams Left, One Trophy, and Central Park",
+    titleVi: "Bán kết MLP 2026 tại Central Park: 4 đội cuối cùng, lịch thi đấu và cách xem",
+    metaTitleEn: "MLP 2026 Semifinals: Matchups, Schedule & How to Watch",
+    metaTitleVi: "Bán kết MLP 2026: Lịch thi đấu và cách xem",
+    metaDescriptionEn: "MLP 2026 semifinals in Central Park, Aug 28-30: New Jersey 5s vs Brooklyn, St. Louis Shock vs Dallas Flash. Rosters, format and how to watch.",
+    metaDescriptionVi: "Bán kết MLP 2026 (28-30/8) tại Central Park, New York: New Jersey 5s gặp Brooklyn, St. Louis Shock gặp Dallas Flash. Lịch giờ Việt Nam.",
+  },
+  {
     slug: "shenzhen-open-2026-preview",
     publishedDate: "2026-08-18",
     updatedDate: "2026-08-19",
