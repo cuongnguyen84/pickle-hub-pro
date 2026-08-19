@@ -51,6 +51,10 @@ export function renderPrivacy(siteUrl: string, rawPath: string, lang: Lang): Res
     siteUrl,
     lang,
     bodyContent,
+    // renderPrivacy's bodyContent opens with its own <h1>; the auto-header
+    // was adding a second. renderTerms below passes NO bodyContent and needs
+    // the auto-header for its only h1 — do not copy this flag there.
+    omitAutoHeader: true,
     alternates: [
       { hreflang: "en", href: `${siteUrl}/privacy` },
       { hreflang: "vi", href: `${siteUrl}/vi/privacy` },

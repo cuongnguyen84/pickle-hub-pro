@@ -45,6 +45,7 @@ interface ClubRow {
   name: string;
   description: string | null;
   location_text: string | null;
+  logo_url: string | null;
 }
 
 interface ClubEventRow {
@@ -302,7 +303,7 @@ export async function renderClub(
 ): Promise<Response> {
   const { data, error } = await supabase
     .from("clubs")
-    .select("id, slug, name, description, location_text")
+    .select("id, slug, name, description, location_text, logo_url")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -336,20 +337,38 @@ export async function renderClub(
     .limit(20);
 
   const upcoming = (events ?? []) as ClubEventRow[];
-  const itemListJsonLd =
-    upcoming.length > 0
-      ? {
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: `${club.name} — sự kiện sắp diễn ra`,
-          itemListElement: upcoming.map((e, i) => ({
-            "@type": "ListItem",
-            position: i + 1,
-            url: `${siteUrl}/social/${e.slug}`,
-            name: e.title_vi,
-          })),
-        }
-      : undefined;
+  // 2026-08-19 — the club itself is now always described. Previously the only
+  // JSON-LD on this page was the upcoming-events ItemList, which is undefined
+  // when a club has no published future event, so a quiet club rendered with
+  // NO structured data at all — the organisation behind the page was never
+  // stated to a crawler. The ItemList still rides along when there is one.
+  const orgJsonLd: Record<string, unknown> = {
+    "@type": "SportsOrganization",
+    "@id": `${url}#organization`,
+    name: club.name,
+    url,
+    sport: "Pickleball",
+    ...(club.description ? { description: club.description } : {}),
+    ...(club.location_text
+      ? { address: { "@type": "PostalAddress", addressLocality: club.location_text } }
+      : {}),
+    ...(club.logo_url ? { logo: club.logo_url } : {}),
+  };
+
+  const graph: Record<string, unknown>[] = [orgJsonLd];
+  if (upcoming.length > 0) {
+    graph.push({
+      "@type": "ItemList",
+      name: `${club.name} — sự kiện sắp diễn ra`,
+      itemListElement: upcoming.map((e, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${siteUrl}/social/${e.slug}`,
+        name: e.title_vi,
+      })),
+    });
+  }
+  const clubJsonLd = { "@context": "https://schema.org", "@graph": graph };
 
   // PR73 Phase 2D (audit I-13) — "CLB" crumb now links to the /clubs hub
   // list instead of the homepage (it was pointing at siteUrl, identical
@@ -389,7 +408,7 @@ export async function renderClub(
       // Supabase function). Falls back to DEFAULT_OG_IMAGE when the
       // proxy is unreachable.
       image: `${siteUrl}/og/clb/${encodeURIComponent(club.slug)}.png`,
-      jsonLd: itemListJsonLd,
+      jsonLd: clubJsonLd,
       bodyContent,
       lang: "vi",
       // PR73 Phase 2D (audit I-5) — reciprocal hreflang on the single-

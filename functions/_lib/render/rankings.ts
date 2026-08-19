@@ -141,5 +141,8 @@ export async function renderRankings(
       ${guidesNav}
       ${itemListJsonLd}
     `,
+    // The body already opens with its own <h1>; without this the shared
+    // auto-header adds a second one titled "<title> | ThePickleHub".
+    omitAutoHeader: true,
   }));
 }

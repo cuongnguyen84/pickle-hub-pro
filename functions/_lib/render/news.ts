@@ -203,6 +203,9 @@ async function renderNewsArticleByLang(
     jsonLd,
     lang: language,
     bodyContent: `${bc}<article><h1>${escapeHtml(r.title)}</h1>${sourceAttribution}${articleBody}</article>${relatedSection}`,
+    // The body already opens with its own <h1>; without this the shared
+    // auto-header adds a second one titled "<title> | ThePickleHub".
+    omitAutoHeader: true,
   }));
 }
 
