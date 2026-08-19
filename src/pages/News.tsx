@@ -185,7 +185,7 @@ const News = ({ language: languageProp }: NewsProps = {}) => {
                       <h3 className="tl-news-row-title">{item.title}</h3>
                       <p className="tl-news-row-summary">{item.summary}</p>
                       <div className="tl-news-row-meta">
-                        <span>{formatRelative(item.published_at)}</span>
+                        <span>{formatRelative(item.published_at, language)}</span>
                         <span className="sep">·</span>
                         <span>
                           {internalPath
