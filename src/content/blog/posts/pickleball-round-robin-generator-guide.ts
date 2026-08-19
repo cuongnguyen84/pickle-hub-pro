@@ -218,8 +218,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Luật rally vs side-out cho giải vòng tròn", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức", path: "/tools" },
-            { text: "Bảng đấu nhanh — công cụ xếp lịch vòng tròn", path: "/tools/quick-tables" }
+            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức", path: "/vi/tools" },
+            { text: "Bảng đấu nhanh — công cụ xếp lịch vòng tròn", path: "/vi/tools/quick-tables" }
           ]
         },
         {

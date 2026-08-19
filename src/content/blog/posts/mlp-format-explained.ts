@@ -151,7 +151,7 @@ const post: BlogPost = {
           internalLinks: [
             { text: "So sánh đầy đủ: Các thể thức giải Pickleball", path: "/blog/pickleball-tournament-formats-explained" },
             { text: "Chiến thuật đôi chiến thắng dreambreaker", path: "/blog/pickleball-doubles-strategy-guide" },
-            { text: "Tạo bracket miễn phí cho sự kiện kiểu MLP", path: "/tools" }
+            { text: "Tạo bracket miễn phí cho sự kiện kiểu MLP", path: "/vi/tools" }
           ]
         }
       ]

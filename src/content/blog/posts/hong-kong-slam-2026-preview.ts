@@ -237,7 +237,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Tạo bảng đấu miễn phí với công cụ ThePickleHub",
-              path: "/tools",
+              path: "/vi/tools",
             },
           ],
         },

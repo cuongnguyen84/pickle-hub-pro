@@ -151,3 +151,81 @@ describe("renderVenueDetail — meta description budget (CTR-01)", () => {
     expect(desc).not.toMatch(/\.\.\.$/);
   });
 });
+
+/**
+ * SEO-GUARD-01 (2026-08-19) — venue JSON-LD carried only name/address/geo/
+ * phone, so two courts in the same district looked near-identical to a parser
+ * even though we hold court count and indoor/outdoor for them.
+ *
+ * Deliberately NOT covered here: the meta description. Commit 88520b58 (18/8)
+ * rebuilt it and the GSC read that would measure it only runs to 16/8 — the
+ * description is left untouched so that experiment stays clean.
+ */
+describe("renderVenueDetail — amenityFeature + openingHoursSpecification", () => {
+  const jsonLd = (html: string) => {
+    const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    expect(block, "no JSON-LD emitted").toBeTruthy();
+    return JSON.parse(block![1]) as Record<string, unknown>;
+  };
+  const features = (html: string) =>
+    (jsonLd(html).amenityFeature ?? []) as { name: string; value: unknown }[];
+
+  it("exposes court count and indoor/outdoor as structured features", async () => {
+    const f = features(await render(BASE));
+    expect(f.find((x) => x.name === "Sân ngoài trời")?.value).toBe(true);
+    expect(f.find((x) => x.name === "Số sân pickleball")?.value).toBe(4);
+  });
+
+  it("localizes the feature names for the EN cluster", async () => {
+    const f = features(await render(BASE, "en"));
+    expect(f.map((x) => x.name)).toContain("Outdoor courts");
+    expect(f.map((x) => x.name)).toContain("Number of pickleball courts");
+  });
+
+  it("omits amenityFeature rather than emitting empty facts", async () => {
+    // num_courts is null on 61% of rows and surface_type on 99% — the absent
+    // case is the common one, so it must not produce a stub node.
+    const f = features(await render({ ...BASE, num_courts: null, is_indoor: null }));
+    expect(f).toHaveLength(0);
+    expect(await render({ ...BASE, num_courts: null, is_indoor: null })).not.toContain(
+      "amenityFeature",
+    );
+  });
+
+  it("adds free-form amenities when the column is eventually populated", async () => {
+    const f = features(await render({ ...BASE, amenities: ["Bãi đỗ xe", "Đèn ban đêm"] }));
+    expect(f.map((x) => x.name)).toEqual(
+      expect.arrayContaining(["Bãi đỗ xe", "Đèn ban đêm"]),
+    );
+  });
+
+  it("builds openingHoursSpecification from the per-day object form", async () => {
+    const html = await render({
+      ...BASE,
+      hours_json: { mon: "6:00-22:00", sat: "5h30 - 23h", bogus: "x", sun: "" },
+    });
+    const spec = jsonLd(html).openingHoursSpecification as Record<string, unknown>[];
+
+    expect(spec).toEqual([
+      { "@type": "OpeningHoursSpecification", dayOfWeek: "https://schema.org/Monday", opens: "06:00", closes: "22:00" },
+      { "@type": "OpeningHoursSpecification", dayOfWeek: "https://schema.org/Saturday", opens: "05:30", closes: "23:00" },
+    ]);
+  });
+
+  it("emits no hours schema for the free-text form it cannot parse per day", async () => {
+    // "6h-22h hằng ngày" has no day breakdown; schema.org needs dayOfWeek +
+    // opens + closes, and guessing them would be invented data. The visible
+    // body line still renders.
+    const html = await render({ ...BASE, hours_json: ["6h-22h hằng ngày"] });
+    expect(html).not.toContain("openingHoursSpecification");
+    expect(html).toContain("6h-22h hằng ngày");
+  });
+
+  it("keeps the existing hreflang triple and SportsActivityLocation type", async () => {
+    const html = await render(BASE);
+    expect(jsonLd(html)["@type"]).toBe("SportsActivityLocation");
+    expect(html).toContain('hreflang="en"');
+    expect(html).toContain('hreflang="vi"');
+    expect(html).toContain('hreflang="x-default"');
+  });
+});

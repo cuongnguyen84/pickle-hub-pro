@@ -149,7 +149,7 @@ const post: BlogPost = {
             { text: "Cách tổ chức giải Pickleball từ A–Z", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Các thể thức giải Pickleball", path: "/blog/pickleball-tournament-formats-explained" },
             { text: "Phần mềm tổ chức giải tốt nhất 2026", path: "/blog/best-pickleball-tournament-software-2026" },
-            { text: "Dùng thử Bracket Lab miễn phí", path: "/tools" }
+            { text: "Dùng thử Bracket Lab miễn phí", path: "/vi/tools" }
           ]
         }
       ],

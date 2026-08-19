@@ -170,7 +170,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Quick Tables: round robin & single elimination",
-              path: "/tools/quick-tables",
+              path: "/vi/tools/quick-tables",
             },
             {
               text: "DUPR là gì? — hệ thống rating toàn cầu giải thích cho VĐV Việt",

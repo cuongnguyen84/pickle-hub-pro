@@ -699,7 +699,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // body under the pilot gate. Without a bump, flipping SHOP_PUBLIC_INDEXING
   // would serve that shell — noindex intact — for another six hours, and the
   // launch would look like it silently failed.
-  const cacheKey = `pr:v50:${url.pathname}`;
+  //
+  // v51 — SEO-GUARD-01 (2026-08-19): /tools gained HowTo schema + visible
+  // steps, tournament detail gained the broadcast section + subEvent graph +
+  // per-tournament og:image, venue detail gained amenityFeature. All three
+  // change SSR output. Bumped past v50 rather than reusing it: the shop launch
+  // had already published entries under that key, so sharing it would serve
+  // pre-change HTML for the full TTL on every route this commit touches.
+  const cacheKey = `pr:v51:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

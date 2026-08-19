@@ -192,7 +192,7 @@ const post: BlogPost = {
             "Cấu trúc chung kết — vô địch nhánh thắng gặp vô địch nhánh thua. Nếu đội nhánh thua thắng, đấu thêm trận reset để phân định."
           ],
           internalLinks: [
-            { text: "Công cụ dựng bracket loại kép (32+ đội)", path: "/tools/doubles-elimination" }
+            { text: "Công cụ dựng bracket loại kép (32+ đội)", path: "/vi/tools/doubles-elimination" }
           ]
         },
         {
@@ -208,7 +208,7 @@ const post: BlogPost = {
             "Chia sẻ link — Gửi link giải cho tất cả người chơi. Họ xem bracket và điểm realtime từ điện thoại."
           ],
           internalLinks: [
-            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức, không cần đăng ký", path: "/tools" }
+            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức, không cần đăng ký", path: "/vi/tools" }
           ]
         },
         {

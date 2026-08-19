@@ -106,6 +106,60 @@ const DAY_LABEL: Record<string, { vi: string; en: string }> = {
   sun: { vi: "Chủ nhật", en: "Sun" },
 };
 
+/** schema.org day URIs, keyed by the same 3-letter prefix DAY_LABEL uses. */
+const DAY_SCHEMA: Record<string, string> = {
+  mon: "https://schema.org/Monday",
+  tue: "https://schema.org/Tuesday",
+  wed: "https://schema.org/Wednesday",
+  thu: "https://schema.org/Thursday",
+  fri: "https://schema.org/Friday",
+  sat: "https://schema.org/Saturday",
+  sun: "https://schema.org/Sunday",
+};
+
+/** "6:00-22:00" / "06h00 - 22h00" / "6h-22h" → ["06:00", "22:00"]. */
+function parseHourRange(raw: string): [string, string] | null {
+  const m = raw.match(
+    /(\d{1,2})\s*(?:[:h.]\s*(\d{2}))?\s*(?:-|–|—|to|đến)\s*(\d{1,2})\s*(?:[:h.]\s*(\d{2}))?/i,
+  );
+  if (!m) return null;
+  const [oh, om, ch, cm] = [Number(m[1]), Number(m[2] ?? 0), Number(m[3]), Number(m[4] ?? 0)];
+  if (oh > 23 || ch > 24 || om > 59 || cm > 59) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return [`${pad(oh)}:${pad(om)}`, `${pad(ch === 24 ? 23 : ch)}:${ch === 24 ? "59" : pad(cm)}`];
+}
+
+/**
+ * openingHoursSpecification from the OBJECT form of hours_json only.
+ *
+ * The array/free-text forms ("6h-22h hằng ngày") carry no per-day breakdown, and
+ * schema.org requires dayOfWeek + opens + closes — deriving those from prose
+ * would be a guess. Those venues keep the human-readable body line and emit no
+ * hours schema, which is valid.
+ *
+ * Note (2026-08-19): hours_json is 0% populated across all 691 VN rows today,
+ * so this returns [] in production. It is wired now so the schema lights up the
+ * moment the venue form starts collecting hours, rather than being forgotten.
+ */
+function buildOpeningHours(hoursJson: unknown): Record<string, unknown>[] {
+  if (!hoursJson || typeof hoursJson !== "object" || Array.isArray(hoursJson)) return [];
+  const out: Record<string, unknown>[] = [];
+  for (const [day, val] of Object.entries(hoursJson as Record<string, unknown>)) {
+    if (typeof val !== "string" || !val.trim()) continue;
+    const dayUri = DAY_SCHEMA[day.slice(0, 3).toLowerCase()];
+    if (!dayUri) continue;
+    const range = parseHourRange(val);
+    if (!range) continue;
+    out.push({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: dayUri,
+      opens: range[0],
+      closes: range[1],
+    });
+  }
+  return out;
+}
+
 function hoursLines(hoursJson: unknown, lang: Lang): string[] {
   if (!hoursJson) return [];
   if (Array.isArray(hoursJson)) {
@@ -399,6 +453,43 @@ export async function renderVenueDetail(
     fitSegments(descVariants.core, descVariants.segments),
   );
 
+  // Structured facts for amenityFeature. Names are English schema keys with a
+  // localized `name` so the value is readable in both clusters; `value` carries
+  // the machine-readable payload (boolean for a flag, number for a count).
+  const amenityFeatures: Record<string, unknown>[] = [];
+  if (v.is_indoor != null) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? (v.is_indoor ? "Sân trong nhà" : "Sân ngoài trời") : v.is_indoor ? "Indoor courts" : "Outdoor courts",
+      value: true,
+    });
+  }
+  if (v.num_courts != null && v.num_courts > 0) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? "Số sân pickleball" : "Number of pickleball courts",
+      value: v.num_courts,
+    });
+  }
+  if (v.surface_type) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? "Mặt sân" : "Court surface",
+      value: v.surface_type,
+    });
+  }
+  for (const a of v.amenities ?? []) {
+    if (typeof a === "string" && a.trim()) {
+      amenityFeatures.push({ "@type": "LocationFeatureSpecification", name: a.trim(), value: true });
+    }
+  }
+
+  // openingHoursSpecification — only from the object form of hours_json, where
+  // day and range are separable. The free-text/array forms stay body-only:
+  // schema.org needs dayOfWeek + opens/closes, and inventing those from a
+  // string like "6h-22h hằng ngày" would be a guess, not data.
+  const openingHours = buildOpeningHours(v.hours_json);
+
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "SportsActivityLocation",
@@ -425,6 +516,20 @@ export async function renderVenueDetail(
     ...(v.latitude != null && v.longitude != null
       ? { hasMap: `https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}` }
       : {}),
+    // amenityFeature — SEO-GUARD-01 (2026-08-19). Venue JSON-LD carried only
+    // name/address/geo/phone, so two courts in the same district were nearly
+    // identical to a parser even though we hold court count and indoor/outdoor
+    // for them. Both are already rendered in the visible body above, so this
+    // adds no claim the page does not show.
+    //
+    // Coverage check before writing this (691 VN rows, 2026-08-19):
+    //   is_indoor 100% · num_courts 39% · surface_type 1%
+    //   amenities 0% · hours_json 0% · website 0% · cover_image_url 0%
+    // The last four are empty columns today — the `hours`/`amenities` branches
+    // below emit nothing until they are backfilled, which is why the meta
+    // description was NOT rebuilt around them (see commit 88520b58).
+    ...(amenityFeatures.length ? { amenityFeature: amenityFeatures } : {}),
+    ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
   };
 
   const homeLabel = lang === "vi" ? "Trang chủ" : "Home";
