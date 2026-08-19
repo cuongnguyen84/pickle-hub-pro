@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { VenueCard } from "@/components/venues/VenueCard";
+import { VenueReviews } from "@/components/venues/VenueReviews";
 import { cmsHeroImageSources } from "@/lib/image-utils";
 import {
   type Venue,
@@ -324,6 +325,9 @@ export default function VenueDetail() {
             </div>
           </section>
         )}
+
+        {/* Community reviews — first-hand content + aggregateRating source */}
+        <VenueReviews venueId={venue.id} language={language === "vi" ? "vi" : "en"} />
 
         {/* Other courts in the same city — internal links */}
         {venue.city && nearbyLoading && (

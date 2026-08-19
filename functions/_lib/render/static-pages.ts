@@ -38,6 +38,10 @@ export function renderPrivacy(siteUrl: string, rawPath: string, lang: Lang): Res
       <p>This policy was updated and is effective as of August 8, 2026.</p>
       <p><a href="${siteUrl}/">Return to ThePickleHub</a></p>`;
 
+  // sitemap-static has always submitted /privacy + /vi/privacy as a bilingual
+  // pair, but the head emitted no alternates — sitemap and page disagreed.
+  // Both locales already self-reference via rawPath, so the alternates point
+  // at distinct URLs and the signal is valid.
   return htmlResponse(buildHtml({
     title: isVi ? "Chính sách bảo mật | ThePickleHub" : "Privacy Policy | ThePickleHub",
     description: isVi
@@ -47,6 +51,11 @@ export function renderPrivacy(siteUrl: string, rawPath: string, lang: Lang): Res
     siteUrl,
     lang,
     bodyContent,
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/privacy` },
+      { hreflang: "vi", href: `${siteUrl}/vi/privacy` },
+      { hreflang: "x-default", href: `${siteUrl}/privacy` },
+    ],
   }));
 }
 
@@ -57,6 +66,12 @@ export function renderTerms(siteUrl: string, rawPath: string, lang: Lang): Respo
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,
+    // Same sitemap/head mismatch as renderPrivacy above.
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/terms` },
+      { hreflang: "vi", href: `${siteUrl}/vi/terms` },
+      { hreflang: "x-default", href: `${siteUrl}/terms` },
+    ],
   }));
 }
 

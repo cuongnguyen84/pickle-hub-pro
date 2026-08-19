@@ -159,3 +159,13 @@ silently failed. Same commit adds renderShopCatalog / renderShopCategory /
 renderShopProduct / renderShopStore and drops the shop paths to the 5-minute
 HUB_LIST_TTL, because price and availability sit inside both the body and the
 Offer JSON-LD.
+
+2026-08-19 — NO bump: /social + /vi/social moved off the single-canonical
+pattern to a real bilingual pair (the follow-up a1233f4c deferred by name when
+it fixed /clubs), and /privacy + /terms + their /vi twins gained the hreflang
+their sitemap entries always claimed. The cached entries are stale for all six
+URLs, but six is well under the threshold where a global bump pays for itself —
+they are purged with ?nocache=1 post-deploy instead, the inverse of the v48->v49
+call above. Deliberately avoided a bump here for a second reason: the venue
+reviews work in flight owns the next version number, and racing it would give
+one of the two changes a key the other already used.
