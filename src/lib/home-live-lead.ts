@@ -33,26 +33,45 @@ interface LiveLeadHint {
 }
 
 /**
- * Whether the live slot should be reserved on this paint. False whenever the
- * hint is missing, malformed, expired, or future-dated (a clock moved
- * backwards makes a stale hint look fresh, so treat it as untrustworthy).
+ * What the last visit recorded, or `null` when there is nothing trustworthy to
+ * go on — no hint, malformed, expired, or future-dated (a clock moved
+ * backwards makes a stale hint look fresh).
+ *
+ * The three states matter. Returning `false` for "never seen this device"
+ * conflated "we know there is no live slot" with "we do not know yet", and the
+ * caller then reserved nothing on a first visit — the single case that
+ * produces the shift, and the one a lab run and a new reader both hit.
  */
-export function readLiveLeadHint(now: number = Date.now()): boolean {
+export function readLiveLeadHint(now: number = Date.now()): boolean | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
+    if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<LiveLeadHint> | null;
     if (typeof parsed?.leads !== "boolean" || typeof parsed?.at !== "number") {
-      return false;
+      return null;
     }
     const age = now - parsed.at;
-    if (age < 0 || age >= LIVE_LEAD_HINT_TTL_MS) return false;
+    if (age < 0 || age >= LIVE_LEAD_HINT_TTL_MS) return null;
     return parsed.leads;
   } catch {
     // Private mode, disabled storage, or a corrupt value. The hint is an
     // optimisation; never let it break the render.
-    return false;
+    return null;
   }
+}
+
+/**
+ * Whether to reserve the live slot on this paint.
+ *
+ * With no usable hint we reserve. The slot leads whenever a stream is on air,
+ * scheduled, OR ended within the last seven days, so on this site "something
+ * is in the live slot" is the ordinary state and an empty one is the
+ * exception. Guessing the common case wrong costs one collapse shift on a
+ * quiet week; guessing the rare case wrong cost an insertion shift on every
+ * first visit, which is what CrUX was measuring.
+ */
+export function shouldReserveLiveSlot(now: number = Date.now()): boolean {
+  return readLiveLeadHint(now) !== false;
 }
 
 /** Records the resolved lead state for the next visit. Never throws. */

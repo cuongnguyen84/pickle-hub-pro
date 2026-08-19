@@ -16,7 +16,7 @@ import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
 import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
-import { readLiveLeadHint, writeLiveLeadHint } from "@/lib/home-live-lead";
+import { shouldReserveLiveSlot, writeLiveLeadHint } from "@/lib/home-live-lead";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
@@ -112,11 +112,19 @@ const Index = () => {
   // scope reserved the slot only on repeat navigations, leaving the first
   // pageview of every session unreserved, and that is the pageview CrUX
   // weights most: field CLS was p75 0.37 on mobile with 37.5% of users above
-  // 0.25. Device scope narrows the unreserved case to the first ever visit.
+  // 0.25. Device scope narrowed that to the first ever visit.
+  //
+  // Later the same day: even that residual was the wrong default. The slot
+  // leads whenever a stream is on air, scheduled, OR ended within seven days,
+  // so an occupied slot is the ordinary state here and an empty one is the
+  // exception. shouldReserveLiveSlot therefore reserves unless the hint
+  // positively says otherwise — a first visit now reserves too. The cost is a
+  // collapse shift on a genuinely quiet week; the thing it buys back is the
+  // insertion shift that was hitting every new reader and every lab run.
   // See src/lib/home-live-lead.ts for the TTL and the failure modes.
   const liveQueriesLoading =
     liveQuery.isLoading || scheduledQuery.isLoading || endedQuery.isLoading;
-  const [expectLiveLead] = useState<boolean>(() => readLiveLeadHint());
+  const [expectLiveLead] = useState<boolean>(() => shouldReserveLiveSlot());
   useEffect(() => {
     if (liveQueriesLoading) return;
     const leads =
