@@ -654,7 +654,7 @@ const Tournaments = () => {
                             <span className="sep">·</span>
                             <span>{format.renderMeta(tournament, vi)}</span>
                             <span className="sep">·</span>
-                            <span>{formatRelative(tournament.created_at)}</span>
+                            <span>{formatRelative(tournament.created_at, language)}</span>
                           </div>
                         </div>
                         <div className="tl-br-creator">{tournament.creator_display_name ?? "—"}</div>
@@ -905,7 +905,7 @@ const Tournaments = () => {
                             <div className="tl-br-meta">
                               <span>{currentFormat.renderMeta(t, vi)}</span>
                               <span className="sep">·</span>
-                              <span>{formatRelative(t.created_at)}</span>
+                              <span>{formatRelative(t.created_at, language)}</span>
                             </div>
                           </div>
                           <div className="tl-br-creator">

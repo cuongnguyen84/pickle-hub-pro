@@ -15,7 +15,7 @@ import { blogHeroSrcSet } from "@/lib/image-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
-import { formatDate, formatTime } from "@/lib/format-datetime";
+import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
 import { readLiveLeadHint, writeLiveLeadHint } from "@/lib/home-live-lead";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
@@ -43,31 +43,6 @@ const isoWeekNumber = (d = new Date()): number => {
     target.setUTCMonth(0, 1 + ((4 - target.getUTCDay()) + 7) % 7);
   }
   return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
-};
-
-const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"): string => {
-  if (!iso) return "";
-  const dt = new Date(iso).getTime();
-  if (Number.isNaN(dt)) return "";
-  const diff = dt - Date.now();
-  const absMin = Math.abs(Math.round(diff / 60000));
-  const isVi = lang === "vi";
-  if (absMin < 1) return isVi ? "vừa xong" : "now";
-  if (absMin < 60) {
-    return isVi
-      ? (diff > 0 ? `trong ${absMin} phút` : `${absMin} phút trước`)
-      : (diff > 0 ? `in ${absMin}m` : `${absMin}m ago`);
-  }
-  const hrs = Math.round(absMin / 60);
-  if (hrs < 24) {
-    return isVi
-      ? (diff > 0 ? `trong ${hrs} giờ` : `${hrs} giờ trước`)
-      : (diff > 0 ? `in ${hrs}h` : `${hrs}h ago`);
-  }
-  const days = Math.round(hrs / 24);
-  return isVi
-    ? (diff > 0 ? `trong ${days} ngày` : `${days} ngày trước`)
-    : (diff > 0 ? `in ${days}d` : `${days}d ago`);
 };
 
 const HOME_NEWS_LIMIT = 4;

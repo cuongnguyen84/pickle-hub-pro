@@ -179,7 +179,7 @@ const NewsArticle = ({ language }: Props) => {
             </div>
             <h1>{article.title}</h1>
             <div className="tl-article-meta">
-              <span>{formatRelative(article.published_at)}</span>
+              <span>{formatRelative(article.published_at, language)}</span>
               {!article.content_html && (
                 <span
                   style={{

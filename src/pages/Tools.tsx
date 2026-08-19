@@ -479,7 +479,7 @@ const Tools = () => {
                       <span className="sep">·</span>
                       <span>{row.meta}</span>
                       <span className="sep">·</span>
-                      <span>{formatRelative(row.created_at)}</span>
+                      <span>{formatRelative(row.created_at, language)}</span>
                     </div>
                   </div>
                   <div className="tl-br-creator">{row.creator ?? "—"}</div>
