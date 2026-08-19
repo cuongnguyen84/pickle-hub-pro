@@ -60,16 +60,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // typical refresh cadence — kudos/comments shift the order constantly.
     { loc: "/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
     { loc: "/vi/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
-    // PR73 Phase 2B — Social Events MVP hub list pages.
-    // Single canonical URL serves both locales (SPA toggles via i18n
-    // context), so the hreflang array points every alt-lang entry at
-    // the same /social or /clubs URL — same pattern as /nguoi-choi/*.
-    { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/social") },
-    // 2026-08-17 — /clubs moved off the single-canonical pattern to a real
-    // bilingual pair (renderClubList now self-references each locale), so
-    // both URLs are submitted and the hreflang points at two distinct URLs.
-    // /social is unchanged and still shares one canonical — see the note
-    // above it; same fix applies there but is a separate change.
+    // PR73 Phase 2B shipped these as Social Events MVP hub list pages on a
+    // single canonical serving both locales. 2026-08-17 moved /clubs off
+    // that pattern and 2026-08-19 moved /social — renderSocialList and
+    // renderClubList now self-reference each locale, so both URLs are
+    // submitted and each hreflang array points at two distinct URLs.
+    { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/vi/social") },
+    { loc: "/vi/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/vi/social") },
     { loc: "/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
     { loc: "/vi/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
     { loc: "/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
