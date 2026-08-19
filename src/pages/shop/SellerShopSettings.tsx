@@ -43,6 +43,7 @@ import {
   publicityLabel,
   validateChannel,
 } from "@/lib/shop/contactChannels";
+import { formatVnd } from "@/lib/shop/publicCatalog";
 import type { ShopContactType, ShopRow } from "@/integrations/supabase/shop-schema";
 
 // Shares its chunk with the product photo editor — one upload machine, two
@@ -59,7 +60,8 @@ const FIELD_LABEL: Record<keyof ProfilePatch, string> = {
   city: "Tỉnh/thành",
   region: "Khu vực hoạt động",
   primary_category_slug: "Ngành hàng chính",
-  shipping_note: "Thông tin giao hàng",
+  shipping_fee_vnd: "Phí giao hàng (₫)",
+  shipping_note: "Mô tả giao hàng",
   return_note: "Chính sách đổi trả",
   bank_code: "Ngân hàng",
   bank_account_number: "Số tài khoản",
@@ -72,6 +74,7 @@ const draftFromRow = (row: ShopRow): ProfilePatch => ({
   city: row.city ?? "",
   region: row.region ?? "",
   primary_category_slug: row.primary_category_slug ?? "",
+  shipping_fee_vnd: row.shipping_fee_vnd ?? 0,
   shipping_note: row.shipping_note ?? "",
   return_note: row.return_note ?? "",
   bank_code: row.bank_code ?? "",
@@ -171,7 +174,10 @@ export default function SellerShopSettings() {
     );
   }
 
-  const setField = (key: keyof ProfilePatch, value: string) => {
+  // `number` cho phí giao hàng: gửi nó dạng chuỗi thì `_patch ->> ...` ở server
+  // vẫn cast được, nhưng draft mang chuỗi sẽ làm mọi so sánh số phía client sai
+  // lặng lẽ ("0" > 0 là false, nhưng "0" khác 0 khi so bằng ===).
+  const setField = (key: keyof ProfilePatch, value: string | number) => {
     setDraft((d) => ({ ...(d ?? {}), [key]: value }));
     setSaveState("idle");
     setFieldError((e) => ({ ...e, [key]: undefined }));
@@ -183,6 +189,14 @@ export default function SellerShopSettings() {
     if (name.length < 3 || name.length > 120) errors.name = "Tên shop cần từ 3 đến 120 ký tự";
     if ((d.intro ?? "").length > 1000) errors.intro = "Giới thiệu tối đa 1000 ký tự";
     if ((d.shipping_note ?? "").length > 600) errors.shipping_note = "Tối đa 600 ký tự";
+    // Trần 1 triệu khớp với server. Chặn ở đây để người bán thấy lỗi ngay dưới
+    // ô mình vừa gõ, thay vì một câu 23514 chung chung sau khi bấm Lưu.
+    const fee = d.shipping_fee_vnd;
+    if (fee !== undefined) {
+      if (!Number.isInteger(fee)) errors.shipping_fee_vnd = "Phí giao hàng phải là số nguyên";
+      else if (fee < 0) errors.shipping_fee_vnd = "Phí giao hàng không được âm";
+      else if (fee > 1000000) errors.shipping_fee_vnd = "Tối đa 1.000.000₫ — kiểm lại xem có thừa số 0 không";
+    }
     if ((d.return_note ?? "").length > 600) errors.return_note = "Tối đa 600 ký tự";
     const region = (d.region ?? "").trim();
     if (region && (region.length < 2 || region.length > 80)) errors.region = "Khu vực cần từ 2 đến 80 ký tự";
@@ -330,6 +344,33 @@ export default function SellerShopSettings() {
       {/* ── Shipping / returns ───────────────────────────────────────────── */}
       <section aria-labelledby="sec-ship">
         <h2 id="sec-ship" className="tl-shop-h2">Giao hàng & đổi trả</h2>
+        {/* Ô SỐ đứng trước ô chữ, có chủ đích: đây mới là con số người mua bị
+            thu ở giỏ hàng, và trước 19/08 người bán không sửa được nó ở đâu —
+            chỉ sửa được đoạn mô tả bên dưới. Kết quả là shop ghi "miễn phí toàn
+            quốc" trong khi giỏ thu 30.000₫. */}
+        <Field
+          id="shop-ship-fee"
+          label={FIELD_LABEL.shipping_fee_vnd}
+          error={fieldError.shipping_fee_vnd}
+        >
+          <input
+            id="shop-ship-fee"
+            className="tl-shop-input"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={1000000}
+            step={1000}
+            disabled={!canEdit}
+            value={draft?.shipping_fee_vnd ?? 0}
+            onChange={(e) => setField("shipping_fee_vnd", Number(e.target.value))}
+          />
+          <p className="tl-shop-hint">
+            {(draft?.shipping_fee_vnd ?? 0) > 0
+              ? `Người mua thấy “Phí giao hàng ${formatVnd(draft?.shipping_fee_vnd ?? 0)}” ngay ở trang sản phẩm.`
+              : "Để 0 thì người mua thấy “Miễn phí giao hàng” ở trang sản phẩm."}
+          </p>
+        </Field>
         <Field id="shop-ship" label={FIELD_LABEL.shipping_note} error={fieldError.shipping_note}>
           <textarea
             id="shop-ship"
@@ -340,6 +381,11 @@ export default function SellerShopSettings() {
             value={draft?.shipping_note ?? ""}
             onChange={(e) => setField("shipping_note", e.target.value)}
           />
+          <p className="tl-shop-hint">
+            Mô tả thêm (thời gian giao, khu vực…). Đừng nhắc lại số tiền ở đây —
+            ô phía trên đã hiện cho người mua rồi, và hai chỗ nói khác nhau là
+            lý do người ta bỏ giỏ hàng.
+          </p>
         </Field>
         <Field id="shop-return" label={FIELD_LABEL.return_note} error={fieldError.return_note}>
           <textarea

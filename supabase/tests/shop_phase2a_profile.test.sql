@@ -8,7 +8,7 @@
 
 BEGIN;
 
-SELECT plan(82);
+SELECT plan(88);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -420,6 +420,67 @@ SELECT ok(
      (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
      '{"shipping_note":"Giao trong 2 ngày ở TP.HCM"}'::jsonb)).shipping_note IS NOT NULL,
   'manager cũng sửa được hồ sơ'
+);
+
+-- ─── Phí giao hàng do người bán tự đặt (20260819130000) ────────────────────
+-- Trước file migration đó, người bán chỉ sửa được `shipping_note` — ô CHỮ — nên
+-- chữ trôi khỏi số: production 19/08 ghi "Giao hàng miễn phí toàn quốc" trong
+-- khi giỏ hàng thu 30.000₫.
+
+SELECT is(
+  (public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid,
+     (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+     '{"shipping_fee_vnd":25000}'::jsonb)).shipping_fee_vnd,
+  25000,
+  'người bán đặt được phí giao hàng'
+);
+
+-- 0 là một LỰA CHỌN ("miễn phí"), không phải ô bỏ trống. Nếu bị coi là trống mà
+-- giữ giá trị cũ thì người bán không bao giờ chuyển về miễn phí được.
+SELECT is(
+  (public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid,
+     (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+     '{"shipping_fee_vnd":0}'::jsonb)).shipping_fee_vnd,
+  0,
+  'đặt về 0 được — miễn phí là lựa chọn, không phải ô trống'
+);
+
+-- Chụp version TRƯỚC hai patch hỏng, để câu cuối so được thật chứ không so
+-- một biểu thức với chính nó.
+CREATE TEMP TABLE t_fee_ver AS
+SELECT version AS v FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid;
+
+SELECT throws_ok(
+  format($$ SELECT public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid, %s, '{"shipping_fee_vnd":-1}'::jsonb) $$,
+    (SELECT v FROM t_fee_ver)),
+  '23514', NULL,
+  'phí âm bị từ chối'
+);
+
+-- Thừa một số 0 là lỗi gõ hay gặp nhất, và CHECK trên bảng chỉ chặn số âm nên
+-- nó sẽ lọt: shop âm thầm bị định giá ra khỏi thị trường mà không ai báo.
+SELECT throws_ok(
+  format($$ SELECT public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid, %s, '{"shipping_fee_vnd":3000000}'::jsonb) $$,
+    (SELECT v FROM t_fee_ver)),
+  '23514', NULL,
+  'phí vượt trần 1.000.000₫ bị từ chối'
+);
+
+-- Patch hỏng KHÔNG được nhích version: nếu nhích, lần lưu hợp lệ ngay sau đó
+-- của người bán sẽ nhận PT409 cho một thay đổi chưa hề xảy ra.
+SELECT is(
+  (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+  (SELECT v FROM t_fee_ver),
+  'version không nhích sau hai patch bị từ chối'
+);
+
+-- Không nhắc tới phí thì phí giữ nguyên — patch là vá, không phải thay cả hồ sơ.
+SELECT is(
+  (public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid,
+     (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+     '{"shipping_note":"Giao trong 2 ngày"}'::jsonb)).shipping_fee_vnd,
+  0,
+  'patch không nhắc phí thì phí giữ nguyên'
 );
 
 SET LOCAL request.jwt.claims TO '{"sub":"50040003-0000-4000-8000-000000000003","role":"authenticated","aal":"aal1"}';
