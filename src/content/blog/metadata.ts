@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["mlp 2026", "mlp semifinals", "major league pickleball", "mlp finals new york", "new jersey 5s", "st louis shock", "brooklyn pickleball team", "dallas flash", "alix truong", "central park pickleball"],
     ctaPath: "/live",
     ctaLabel: { en: "Follow live scores on ThePickleHub", vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub" },
+    heroImage: { src: "/images/blog/mlp-2026-semifinals-new-york-preview-hero.webp", alt: "MLP 2026 Semifinals promo graphic - two pickleball players at the net on a blue outdoor court in Central Park at sunset, with the Manhattan skyline and a full grandstand behind them, over the title MLP 2026 Semifinals, Central Park New York City, August 28-30 2026." },
     titleEn: "MLP 2026 Semifinals Preview: Four Teams Left, One Trophy, and Central Park",
     titleVi: "Bán kết MLP 2026 tại Central Park: 4 đội cuối cùng, lịch thi đấu và cách xem",
     metaTitleEn: "MLP 2026 Semifinals: Matchups, Schedule & How to Watch",

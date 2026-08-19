@@ -22,6 +22,10 @@ const post: BlogPost = {
     en: "Follow live scores on ThePickleHub",
     vi: "Theo dõi tỷ số trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/mlp-2026-semifinals-new-york-preview-hero.webp",
+    alt: "MLP 2026 Semifinals promo graphic - two pickleball players at the net on a blue outdoor court in Central Park at sunset, with the Manhattan skyline and a full grandstand behind them, over the title MLP 2026 Semifinals, Central Park New York City, August 28-30 2026.",
+  },
   content: {
     en: {
       title:
