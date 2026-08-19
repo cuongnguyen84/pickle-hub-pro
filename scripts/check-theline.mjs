@@ -13,7 +13,7 @@
 //              class instead. `hsl(var(--x))` is fine (token-based).
 //   [advisory] A new routed page (src/pages/<name>.tsx) should render inside
 //              TheLineLayout so it inherits nav/footer/theme.
-//   [advisory] DS-03 ratchet: a changed file must not INCREASE its `.tl-btn`
+//   [hard] DS-03 ratchet: a changed file must not INCREASE its `.tl-btn`
 //              (legacy CSS-class button) count vs the base revision — new
 //              buttons are <Button variant="outline|default|tl-primary">.
 //              Changed-files-only by design (a full-tree count flaps on
@@ -55,6 +55,30 @@ function baseSha() {
   } catch {
     return null;
   }
+}
+
+// Renamed files reach us under their NEW path (diff-filter includes R), but
+// `git show <base>:<newpath>` fails → before=0 → false RATCHET increase.
+// Map new path → old path once via --find-renames so Rule 4 diffs against
+// the file's true base content.
+let renameMap = null;
+function basePathOf(base, f) {
+  if (!renameMap) {
+    renameMap = new Map();
+    try {
+      const out = execSync(
+        `git diff --find-renames --name-status --diff-filter=R ${base} HEAD`,
+        { stdio: ["ignore", "pipe", "ignore"] },
+      ).toString();
+      for (const line of out.split("\n")) {
+        const parts = line.split("\t"); // "R100\told/path\tnew/path"
+        if (parts.length === 3) renameMap.set(parts[2], parts[1]);
+      }
+    } catch {
+      /* no rename info — fall through to same-path lookup */
+    }
+  }
+  return renameMap.get(f) ?? f;
 }
 
 function targetFiles() {
@@ -139,7 +163,8 @@ for (const f of files) {
     }
   }
 
-  // Rule 4 — DS-03 ratchet (advisory during trial; see header). Count
+  // Rule 4 — DS-03 ratchet (HARD since 2026-08-03, milestone THELINE-HARD:
+  // dry-run clean on 5 merged + 14 open PRs, rename false-positive fixed). Count
   // `.tl-btn` inside string literals (className strings — comments and prose
   // don't match) and compare against the same file at base.
   if (f.endsWith(".tsx")) {
@@ -150,16 +175,16 @@ for (const f of files) {
       let before = 0;
       if (base) {
         try {
-          const baseSrc = execSync(`git show ${base}:${f}`, {
+          const baseSrc = execSync(`git show ${base}:${basePathOf(base, f)}`, {
             stdio: ["ignore", "pipe", "ignore"],
           }).toString();
           before = (baseSrc.match(RATCHET_RE) || []).length;
         } catch {
-          before = 0; // new file — every occurrence is an increase
+          before = 0; // truly new file — every occurrence is an increase
         }
       }
       if (now > before) {
-        advisory.push(
+        hard.push(
           `${f}  RATCHET: .tl-btn count ${before} → ${now} — new buttons must be <Button variant="outline|default|tl-primary"> (docs/design-tokens.md)`,
         );
       }

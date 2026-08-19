@@ -77,7 +77,8 @@ const post: BlogPost = {
           heading: "Bottom Line",
           content: "The new DUPR algorithm does not grade you on whether you won or lost. It grades you on whether you played at your level. Beat a much weaker opponent comfortably? Not impressive. Lose narrowly to a much stronger opponent? Very impressive. This is exactly why a player like Tama Shimabukuro — 15 years old — can climb rating very quickly when he loses close matches against Ben Johns or Federico Staksrud. And it is also why so many recreational players are shocked when they win a match and watch their rating drop. DUPR doesn't care that you won. DUPR cares how you played relative to expectation.",
           internalLinks: [
-            { text: "DUPR Vietnam partnership: how DUPR is coming to Vietnamese tournaments", path: "/blog/dupr-vietnam-partnership-ta-pickleball-thepicklehub" }
+            { text: "DUPR Vietnam partnership: how DUPR is coming to Vietnamese tournaments", path: "/blog/dupr-vietnam-partnership-ta-pickleball-thepicklehub" },
+            { text: "Free pickleball bracket generator — snake-seeds the draw by DUPR rating", path: "/tools" }
           ]
         },
         {

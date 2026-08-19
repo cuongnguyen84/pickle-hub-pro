@@ -576,3 +576,146 @@ redeploy; probe trực tiếp và dùng CLI local khi blob-loss tái phát.
 - **Regex format-specifier: flag class không được chứa dấu cách** — "75% of players" bị đọc thành %o, chặn oan 4 bản dịch (scripts/native-i18n-gates.mjs đã fix).
 - **Đòn bẩy đổi signature đo thật +457 key** (ước lượng vòng 2 +143~156) — LocalizedStringKey lan qua helper mở khóa nhiều call site hơn census AST-lite thấy; đo bằng export thật > mọi ước lượng.
 - **`xcodebuild test` CÀI ĐÈ app lên sim đích** — test host (CODE_SIGNING_ALLOWED=NO) thay mất bản có ký đã cài tay → Cuong mở app dính "Auth session missing"/"keychain error" dù trước đó login tốt (28/07, sau merge #495). Luật: sau MỌI lần chạy test trên sim mà Cuong đang test tay, cài lại bản có ký (`xcodebuild build` không flag + `simctl install`); hoặc chạy test trên sim khác.
+- **Python urllib/requests treo hàng phút trên máy này với call curl làm <1s** (đo 03/08: requests treo 449s, urllib treo >8 phút fetch sitemap; curl luôn ≤7.5s). Script mới đụng network → shell qua `curl --max-time` (index_coverage.py là mẫu). Script scripts/seo/ cũ dùng requests vẫn có nguy cơ treo.
+- **GSC trả chuỗi bản địa hoá, không phải enum** — `coverageState` đổi theo languageCode ('vi' → "Đã được gửi và lập chỉ mục"), header CSV export theo ngôn ngữ UI ("Trang hàng đầu" chứ không phải "Trang"). Mọi parser GSC phải pin languageCode=en-US + normalize enum + hard-fail chuỗi lạ; so sánh chuỗi thô = đếm ra 0 âm thầm.
+- **Gate khoá HÀM không khoá CALLER thì bug tái phát qua đường vòng** — #468 khoá buildTitle byte-safe nhưng venues.ts:306-309 tiền-kiểm `.length` rồi né hàm → 5/10 title venue prod cụt mà utils.test.ts vẫn xanh. Sửa xong một bug đếm-đơn-vị: grep mọi caller và mọi tiền-kiểm cùng hằng số.
+- **Gate SEO lấy mẫu hàng khoẻ nhất là gate mù** — sweep lấy `<loc>` đầu tiên + segment sort updated_at DESC = luôn test bản ghi vừa được chăm. Floor số lượng + sample first/middle/last (ship PR #530) là thuốc; mọi gate sampling mới phải tự hỏi "mẫu này có bias về phía khoẻ không".
+- **Soak baseline 24h pha loãng bởi giờ đêm — so với GIỜ LIỀN KỀ, không so trung bình 24h** (03/08: 0.23/phút nhìn như spike 6x vs baseline 24h nhưng THẤP hơn 3 giờ trước merge; repo từng revert oan vì đúng lỗi này 27/07).
+
+## notification-bell-not-clickable (2026-07-23, PR #454 / 9e77431a)
+- **Pseudo-element hit-area nuốt click**: `.tl-icon-btn::after {position:absolute; inset:-4px}` (PR #300, mở hit-area 44px) hit-test NHƯ element gốc + đè trên con trong paint order. Khi class nằm trên `<div>` bọc (UnifiedNotificationBell truyền className vào div, KHÔNG vào Button) → pseudo của div nuốt mọi pointer click, button bên trong không bao giờ nhận. Chuông chết click 2 TUẦN, không ai bắt. Keyboard vẫn sống. Fix scoped 1 dòng: `div.tl-icon-btn::after {pointer-events:none}` (chỉ div, 5 nút `<button>` thật giữ 44px). Bẫy chẩn đoán: `button.click()` JS LUÔN mở panel (bỏ qua hit-test) — chỉ click chuột thật / Playwright click mới lộ. Test regression PHẢI là e2e click thật (J11), jsdom vô dụng.
+- **Coupling chí mạng: GitHub Actions artifact-storage-quota giết luôn self-heal blob-loss**. Khi quota artifact hết → job Visual/Security đỏ ở bước UPLOAD (gate thực chất vẫn success) VÀ các workflow self-heal blob (deploy-guard poll + uptime-ping) KHÔNG chạy được → Supabase blob-loss flap không được tự vá. Trong phiên này blob-loss chết 68/76 fn 2 lần (lúc ship + giữa soak), phải `supabase functions deploy --use-api` vá tay cả 2 lần (heal ~2', idempotent, 0/76 sau đó). Bài học: khi thấy blob-loss KHÔNG tự lành sau 10-15', nghi ngay Actions quota — self-heal đang chết. Fix gốc = Cuong tắt integration "Deploy to production" + giải phóng Actions storage.
+- **/idea thiếu script**: `scripts/agents/debate-ledger.mjs` + `risk-tier.mjs` không tồn tại trong repo — cưỡng chế luật vòng 2 thủ công (mọi CONCEDE/REFINE kèm file:line), ghi chú trung thực vào proposal.
+
+## 2026-08-04 — audit fact-check + đóng lỗ RLS + dựng soak-watch/risk-tier (PR #538, #539)
+
+- **Bảng audit "khắt khe" vẫn phải fact-check từng số.** 23 claim → 12 đúng, 4 đúng-hướng-sai-số
+  (i18n thật 1686 ternary chứ không phải 1017; xcstrings 1764 needs_review chứ không phải 851 —
+  TỆ HƠN báo cáo), 3 sai/stale (types.ts KHÔNG thiếu bảng; coverage đã 85.92% từ CLOSE-03 nên đề
+  xuất "re-base ngưỡng" là thuốc sai bệnh). Mẫu lỗi: chỗ sai đều là **trạng thái cũ** — audit viết
+  một phần từ ghi chú thay vì đo tươi. Luật: điểm số của audit vô nghĩa, danh sách việc mới có giá.
+- **Grep repo KHÔNG đủ để quyết định REVOKE một grant.** Trước khi revoke phải hỏi DB:
+  RPC nào ghi bảng, `prosecdef` DEFINER hay INVOKER, và **INVOKER thì EXECUTE cấp cho role nào**.
+  `social_event_guest_register` là INVOKER + có INSERT — nếu authenticated có EXECUTE thì REVOKE đã
+  giết luồng guest OTP. Thoát vì EXECUTE chỉ cấp service_role. Chi tiết: [[event-registrations-insert-hole-closed]].
+- **Drop policy phải drop CẢ CỤM, không chỉ cái thủng.** Policy còn lại mà không có grant hiện ra
+  như "thiếu grant" dưới sweep `pg_policies × has_table_privilege` → lần sweep sau tự cấp lại grant,
+  mở lại đúng lỗ vừa vá.
+- **`scripts/agents/` chưa từng tồn tại** dù release-pilot.md + risk-auditor.md gọi 4 script trong đó
+  từ lúc viết. Mọi "soak 30p 🟢" trước 04/08 là lệnh KHÔNG THỂ chạy. Bài học rộng hơn: **agent doc mô tả
+  một lệnh không có thật thì agent sẽ ứng biến im lặng thay vì báo lỗi** — định kỳ kiểm mọi đường dẫn
+  script trong .claude/agents/*.md có thật hay không.
+- **Công cụ chống-xanh-giả tự tạo xanh giả.** qa-verifier bắt: `--minutes 0` hoặc gõ nhầm
+  `--minutes abc` (`Number("abc")=NaN`) làm `while (Date.now() < deadline)` false ngay → 0 lần poll,
+  0 lần gọi API, vẫn in "🟢 soak clean" exit 0. Luật cho MỌI gate mới: test trường hợp **gate không chạy**,
+  không chỉ trường hợp gate pass/fail. Alarm chưa từng thấy kêu = alarm chưa tồn tại — phải ép nó kêu
+  (baseline rỗng → exit 1 với 14 signature) trước khi tin.
+- **ESLint không phủ `.mjs`** (`eslint.config.js` chỉ match `**/*.{ts,tsx}`) — `npx eslint file.mjs`
+  exit 0 vì KHÔNG MATCH CONFIG, không phải vì sạch. Đúng cho mọi script trong scripts/.
+- **`fast-xml-parser` là dep của worker con** (`workers/news-fetcher/package.json`), root `npm install`
+  không kéo về → `tsc -b` + 1 suite vitest đỏ local trong khi CI xanh. Worktree còn cần symlink riêng
+  `workers/news-fetcher/node_modules`. Đỏ local ≠ đỏ thật; kiểm CI trước khi đi sửa.
+
+## 2026-08-04 (b) — DS-04 error states cho Live/News/TournamentDetail (PR #540)
+
+- **Thêm test có thể LÀM TỤT coverage.** Test import 3 page lớn → lần đầu kéo cả cây con vào
+  MẪU SỐ v8 (DoublesEliminationBracket ~280 stmt @6%, useDoublesElimination 111 @0.9%) →
+  1334 test pass nhưng statements 85.92%→72.22%, gate 83% đỏ. Local chạy `vitest run` KHÔNG thấy.
+  **Luật: test nào import component lớn phải chạy `--coverage` trước khi push.** Cách sửa đúng là
+  stub barrel con mà test không dùng (`@/components/tournament`, `@/components/content`) → 84.32%;
+  KHÔNG hạ ngưỡng, KHÔNG blanket exclude.
+- **`hidden={...}` là xanh giả kiểu CSS.** `.tl-filters` có `display:flex` từ author stylesheet, đè
+  `[hidden]` của UA → phần tử VẪN HIỆN trên màn hình nhưng BIẾN MẤT khỏi cây a11y, nên
+  `queryByRole(...)` trả null và test PASS. jsdom không đọc stylesheet nên không unit test nào phân
+  biệt được. **Muốn ẩn thì unmount, đừng dùng `hidden`** — ghi lý do vào cả component lẫn test.
+- **`.single()` là bẫy của convention DS-04**: PGRST116 khi 0 dòng làm "slug không tồn tại" và
+  "mạng chết" tới trang dưới cùng một `isError` → chỉ hiện được 1 thông báo cho 2 chuyện ngược nhau
+  (not-found bảo người ta bỏ cuộc, network error bảo thử lại). Dùng `.maybeSingle()`. Đã ghi vào
+  docs/state-patterns.md.
+- **Luôn thử gỡ bản vá xem test có đỏ không.** Làm với cả 4 test ở PR này — đỏ cả 4. Test state mà
+  pass ở cả hai chiều là đồ trang trí. Cùng họ với bài học soak-watch: alarm chưa thấy kêu = chưa có.
+- **Checkout chính có thể đứng sau main hàng chục commit** (04/08: nhánh phiên khác, sau main 32
+  commit) → mọi phép đếm/audit chạy ở đó đo nhầm cây. Audit/fact-check phải ghi rõ **commit SHA**
+  mình đứng, và đo trên worktree tạo từ `origin/main` khi kết luận về "repo hiện tại".
+
+## 2026-08-05 — `git pull` in "Updating X..Y" rồi vẫn FAIL, và deploy từ tree cũ (dính 2 lần trong 1 ngày)
+- `git pull --ff-only` khi tree bẩn: in dòng `Updating <old>..<new>` TRƯỚC rồi mới abort vì "local changes would be overwritten" — `tail -1` nuốt mất lỗi, ref KHÔNG nhích. Hậu quả thật 05/08: deploy 3 edge function từ tree cũ ngay sau khi merge PR #549 (phát hiện nhờ `git log -1` in ra SHA cũ; đã redeploy đúng trong vài phút).
+- LUẬT: mọi lệnh deploy-from-tree phải assert cùng câu lệnh: `[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && <deploy>` — đúng guard đã thêm vào redeploy-edge-functions.sh, áp cả cho deploy tay.
+- `git checkout <branch> -- <file>` GHI ĐÈ patch chưa commit trong working tree (mất patch ops-job-control 1 lần, phải gõ lại).
+- Commit với path tường minh vẫn cuốn theo file ĐANG STAGED từ trước (stash pop tự stage) — `git restore --staged .` trước khi commit có chủ đích.
+
+## 2026-08-06 (b) — live-viewer-count-comparison: /idea + ship Option A' (PR #555)
+
+- **Recon đếm consumer bằng grep tên file mà KHÔNG truy barrel + git log = sai 3-thành-1.** Vòng 1
+  recon báo useLivePresence có 3 consumer; thật ra LiveBroadcastHero bị gỡ khỏi trang chủ từ #251 và
+  LiveCardWithPresence chỉ còn trong barrel không ai lấy — 2 agent phải CONCEDE ở vòng 2 sau khi tự
+  truy `components/content/index.ts` qua cả 6 caller và `git log -S`. LUẬT: kết luận "X có N consumer"
+  phải truy barrel re-export tới caller thật + git log -S trước khi cho vào proposal.
+- **`scripts/agents/debate-ledger.mjs` vẫn không tồn tại** — lần /idea thứ 2 liên tiếp orchestrator
+  phải cưỡng chế luật vòng 2 bằng tay (ghi vào debate.json khoá `ledger_enforcement`). Viết nó hoặc
+  xoá khỏi skill /idea.
+- **Worktree guard chặn CẢ Bash compound** (`for`/`until`/`;` dài) trong session worktree — poll dài
+  phải ghi script ra scratchpad rồi `bash script.sh` (1 lệnh đơn). Và worktree KHÔNG có node_modules:
+  npx fallback lên node_modules repo chính (stale) gây lỗi ma (`fast-xml-parser` thiếu dù
+  package.json@main có) — `npm ci` trong worktree (~4s nhờ cache) là bắt buộc trước tsc/build.
+- **Bot PAT bị classifier chặn cả 2 đường (file + env) → release-pilot dừng đúng luật, KHÔNG mượn
+  keyring user.** Đường thoát đã dùng: soạn sẵn PR body ra file + đưa Cuong lệnh `! gh pr create/merge`
+  — user tự bấm bằng danh tính thật, agent chỉ watch CI/smoke/soak (đọc-only). Soak chuẩn
+  (soak-watch.mjs) cũng cần PAT → chỉ chạy được soak giảm cấp uptime-poll; ghi rõ "giảm cấp" vào
+  close-out, đừng để dòng soak xanh nói quá điều nó chứng minh.
+
+---
+
+## Venue directory data-source policy (Cường approved 2026-07-28)
+
+**Rule:** Build the `/san` venue directory ONLY from legit sources:
+- **OSM** (Overpass, license ODbL — reusable with attribution) — primary bulk source.
+- **Community submissions** (`/san/them`) — how the 691 VN venues were built; owned data, no ToS risk. The real moat.
+- Public association/listicle pages — selective, factual, with care.
+
+**NEVER scrape / reproduce for the directory:**
+- **Google Maps / Places API** — ToS forbids storing/caching place data to build a permanent directory. Risk: Google penalty/deindex of the whole site (would nuke the organic SEO we're building).
+- **Pickleheads / PlayPickleball** (and similar) — direct competitors; their compiled venue DB is their core asset. Scraping = ToS breach + database-rights/legal risk (cease-and-desist).
+
+**Court count / other fields:** fill ONLY when a public source states it. Never fabricate.
+
+**Context:** OSM coverage of pickleball in Asia is very uneven (2026-07 scan: MY 24, PH 30, TH 8 workable; KR 0, ID 1, TW 2, JP rate-limited = near-empty). Comprehensive data for the empty countries lives in Pickleheads/Google → off-limits. Grow those via community submissions, not scraping.
+
+---
+
+## Cowork: read/edit code from a FRESH github clone, NEVER the stale mount (reinforced 2026-07-30, Cuong)
+
+**Occurrence:** Misdiagnosed "2 newest VI posts missing from homepage" as a prerender-cache issue by reading `src/pages/Index.tsx` from the mounted repo, which sat on commit `b3569523` (a side branch whose homepage sources stories from Supabase `vi_blog_posts`). Deployed `main` actually builds homepage "Tuần này" stories from `blogMetadata` (static bilingual manifest) — a different code path that structurally cannot show VI-only posts. The stale read produced a wrong root-cause and cost a round.
+
+**Rule:** Before reasoning about DEPLOYED behavior or editing any source file, fetch it fresh from `origin/main` (GitHub API `contents?ref=main`, or `git clone --depth 1`). The mount `/Users/cm10/pickle-hub-pro` is frequently on a stale/side branch (git HEAD may be far from `main`). Do edits in the fresh clone and push from there. Verify `git rev-parse HEAD` of the clone matches `main` before trusting any file.
+
+**Also:** homepage VI stories (deployed main) = `blogMetadata` manifest only (EN+VI titles). VI-only Supabase posts appear on `/vi/blog` (Bảng tin) but NOT the homepage unless the homepage is changed to read `usePublishedViBlogPosts()` (branch `fix-home-vi-stories-supabase`, PR 2026-07-30).
+
+---
+
+## US growth: task tracker + báo cáo sau MỖI task (Cường yêu cầu 2026-08-07)
+
+**Rule:**
+- Mọi task phát triển US ghi ở **`growth-tasks/US-GROWTH-TASKS.md`** (tracker sống: STATUS + OWNER + ngày + "Nhật ký task"). Đây là nguồn sự thật cho tiến độ US; đừng để task trôi trong session.
+- **Báo cáo sau MỖI task US hoàn thành** — thêm 1 dòng "Nhật ký task" (kết quả + link commit/verify) + notify Cường ngắn gọn. **KHÔNG gộp im lặng** nhiều task rồi mới báo.
+- Owner: **em** (Claude) = on-page/đo GSC/content; **anh** (Cường) = backlink outreach + duyệt keyword. Đo GSC US **hàng tuần** khi Cường mở browser → ghi `US-CLICKS-GROWTH-PLAN`.
+- Chiến lược: `US-GROWTH-SPRINT-2026-08-07.md` (sprint 30 lồng 90 ngày). Đòn bẩy #1 = backlink trỏ `/tools` (cụm generator đã tự leo pos ~15 không cần link).
+
+**Cập nhật 2026-08-07 (Cường chốt):**
+- Báo cáo per-task = **CHAT** là đủ (không tạo file report riêng mỗi task). Mục "Nhật ký task" trong `US-GROWTH-TASKS.md` vẫn cập nhật làm bản lưu bền.
+- **Backlink**: Cường tự làm toàn bộ + **chủ động cung cấp thông tin** (đã gửi link nào, ở đâu) khi agent cần đo/theo dõi. Agent không tự đọc được hoạt động outreach → không đoán, chờ Cường đưa dữ liệu.
+
+## VI blog posts: meta_title ≤60 bytes, meta_description ≤160 BYTES (not chars) — Vietnamese is multi-byte
+
+**Occurrence (1 — HCMC recap VI insert, 2026-08-10):** First `vi_blog_posts` INSERT for `hcmc-open-2026-ket-qua` failed `23514` check constraint `vi_blog_posts_meta_description_seo_bytes`. meta_description was 154 chars but **176 bytes** (Vietnamese diacritics + `Đ`/`ế`/`ị`… are 2–3 UTF-8 bytes each). meta_title similarly capped.
+
+**Constraints (live on `public.vi_blog_posts`):**
+- `vi_blog_posts_meta_title_seo_bytes` → `octet_length(meta_title) <= 60`
+- `vi_blog_posts_meta_description_seo_bytes` → `octet_length(meta_description) <= 160`
+- `title` (the H1) has **no** byte cap — only meta_title/meta_description do.
+
+**Rule:** When composing a VI post, size meta_title/meta_description in **bytes**, not characters. Rule of thumb: a VN string with typical diacritics runs ~1.15–1.25 bytes/char, so keep meta_title ≲ 48–50 chars and meta_description ≲ 128–135 chars, then verify:
+```python
+len(s.encode('utf-8'))  # meta_title ≤60, meta_description ≤160
+```
+Trim set-score parentheticals / drop the leading "Kết quả PPA Asia 500 …" prefix first — those buy the most bytes. The INSERT uses `WHERE NOT EXISTS` on slug, so a failed attempt leaves **no partial row** — just fix the two fields and re-run (idempotent).

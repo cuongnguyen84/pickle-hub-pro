@@ -11,8 +11,9 @@
 //     crawler still sees real anchor text + venue/club info (no JS
 //     execution required)
 //   - JSON-LD ItemList covering the same entries (richer SERP card)
-//   - hreflang vi / en / x-default — single canonical pattern matches
-//     renderFeed; the SPA toggles locale on the same URL
+//   - hreflang vi / en / x-default across a split canonical — each locale
+//     self-references (/social vs /vi/social, /clubs vs /vi/clubs) so the
+//     alternates point at distinct URLs and the signal is valid
 //   - Breadcrumb + cross-discovery nav at the bottom
 //
 // KV cache: middleware applies a 5-minute TTL override for these paths
@@ -45,6 +46,8 @@ interface ClubListRow {
   name: string;
   location_text: string | null;
   logo_url: string | null;
+  /** Only on the club_listing view — absent on the base-table fallback. */
+  upcoming_events?: number | null;
 }
 
 function fmtDateVN(iso: string, lang: Lang): string {
@@ -113,7 +116,15 @@ export async function renderSocialList(
   siteUrl: string,
   lang: Lang,
 ): Promise<Response> {
-  const canonical = `${siteUrl}/social`;
+  // 2026-08-19 — split canonical, same pattern as /clubs (a1233f4c), /san
+  // and /tools. Before this, /vi/social rendered a complete Vietnamese page
+  // (VI title, VI copy, html lang="vi") and then canonicalised it to
+  // /social, so Google built the Vietnamese version and discarded it; the
+  // pair also could not carry hreflang at all. Each locale now
+  // self-references. This is the follow-up a1233f4c deferred by name.
+  const enUrl = `${siteUrl}/social`;
+  const viUrl = `${siteUrl}/vi/social`;
+  const canonical = lang === "vi" ? viUrl : enUrl;
   const nowIso = new Date().toISOString();
 
   let rows: SocialListRow[] = [];
@@ -207,12 +218,41 @@ export async function renderSocialList(
       ? `<nav aria-label="breadcrumb"><ol><li><a href="${siteUrl}/vi">Trang chủ</a></li> &gt; <li>Sự kiện</li></ol></nav>`
       : `<nav aria-label="breadcrumb"><ol><li><a href="${siteUrl}/">Home</a></li> &gt; <li>Events</li></ol></nav>`;
 
+  const h1 = lang === "vi"
+    ? "Sự kiện pickleball cộng đồng tại Việt Nam"
+    : "Pickleball community events in Vietnam";
+
+  // GEO lead — names ThePickleHub once and front-loads the numbers that are
+  // actually being rendered below (event count, how many are club-hosted).
+  // Both come from `rows`; nothing here is asserted beyond the query result.
+  const clubHosted = rows.filter((e) => e.club).length;
+  const clubViText = clubHosted > 0 ? ` ${clubHosted} sự kiện do câu lạc bộ đứng ra tổ chức.` : "";
+  const clubEnText = clubHosted > 0
+    ? ` ${clubHosted} of them ${clubHosted > 1 ? "are" : "is"} hosted by a club.`
+    : "";
+  const lead = rows.length > 0
+    ? lang === "vi"
+      ? `<p>ThePickleHub đang mở đăng ký ${rows.length} sự kiện pickleball cộng đồng sắp diễn ra tại Việt Nam — Hà Nội, TP.HCM và các tỉnh thành khác — kèm ngày giờ, sân, số sân và phí tham gia.${clubViText} Danh sách sắp xếp theo ngày diễn ra gần nhất.</p>`
+      : `<p>ThePickleHub has ${rows.length} upcoming pickleball community events open for signup across Vietnam — Hanoi, Ho Chi Minh City and other provinces — with date, venue, court count and fee.${clubEnText} The list is ordered by the soonest start date.</p>`
+    : lang === "vi"
+      ? `<p>ThePickleHub tổng hợp sự kiện pickleball cộng đồng tại Việt Nam kèm ngày giờ, sân và phí tham gia. Hiện chưa có sự kiện công khai nào sắp diễn ra — bạn có thể tạo sự kiện miễn phí.</p>`
+      : `<p>ThePickleHub collects pickleball community events across Vietnam with date, venue and fee. No public events are upcoming right now — you can create one for free.</p>`;
+
+  // Bilingual counterpart link: the two locales are separate URLs now, so
+  // give bots (and readers) a crawlable path between them.
+  const swap = lang === "vi"
+    ? `<p><a href="${enUrl}" hreflang="en">English version</a></p>`
+    : `<p><a href="${viUrl}" hreflang="vi">Phiên bản tiếng Việt</a></p>`;
+
   const bodyContent = `${breadcrumbHtml}
+<h1>${escapeHtml(h1)}</h1>
+${lead}
 <section>
 <h2>${escapeHtml(lang === "vi" ? "Sự kiện sắp diễn ra" : "Upcoming events")}</h2>
 ${rows.length > 0 ? `<ol>${itemsHtml}</ol>` : `<p>${escapeHtml(emptyMsg)}</p>`}
 </section>
-<nav><h2>${escapeHtml(headingMore)}</h2><ul>${moreLinks}</ul></nav>`;
+<nav><h2>${escapeHtml(headingMore)}</h2><ul>${moreLinks}</ul></nav>
+${swap}`;
 
   return htmlResponse(
     buildHtml({
@@ -222,16 +262,21 @@ ${rows.length > 0 ? `<ol>${itemsHtml}</ol>` : `<p>${escapeHtml(emptyMsg)}</p>`}
       siteUrl,
       lang,
       type: "website",
-      // PR (2026-05-18 Ahrefs Site Audit fix) — Ahrefs flagged
-      // "One page is linked for more than one language" because previous
-      // emit had en+vi+x-default all pointing to the same canonical URL.
-      // Google's hreflang spec requires DIFFERENT URLs for different
-      // languages; same-URL pattern is "invalid signal." Since this
-      // page serves a single canonical for both locales (the SPA
-      // toggles language client-side), we omit hreflang entirely —
-      // safer than wrong signal.
+      // The 2026-05-18 Ahrefs fix ("One page is linked for more than one
+      // language") dropped hreflang here because en+vi+x-default all
+      // pointed at the same /social URL — a genuinely invalid signal. That
+      // fix was right for the shape the page had; the shape was the
+      // problem. Now that each locale self-references (/social vs
+      // /vi/social, above), the alternates point at DIFFERENT URLs and
+      // hreflang is valid — same as /clubs, /san and /tools.
       jsonLd: itemListJsonLd,
       bodyContent,
+      alternates: [
+        { hreflang: "en", href: enUrl },
+        { hreflang: "vi", href: viUrl },
+        { hreflang: "x-default", href: enUrl },
+      ],
+      omitAutoHeader: true,
     }),
   );
 }
@@ -243,7 +288,14 @@ export async function renderClubList(
   siteUrl: string,
   lang: Lang,
 ): Promise<Response> {
-  const canonical = `${siteUrl}/clubs`;
+  // 2026-08-17 — split canonical, same pattern as /san (see venues.ts).
+  // Before this, /vi/clubs rendered a complete Vietnamese page (VI title,
+  // VI copy, html lang="vi") and then canonicalised it to /clubs — so the
+  // VI version was built and immediately discarded by Google, and the pair
+  // could not carry hreflang at all. Each locale now self-references.
+  const enUrl = `${siteUrl}/clubs`;
+  const viUrl = `${siteUrl}/vi/clubs`;
+  const canonical = lang === "vi" ? viUrl : enUrl;
 
   // Prefer the club_listing view (sorted by upcoming_events DESC then
   // created_at DESC) when it exists — that's what the SPA's ClubsList page
@@ -252,7 +304,7 @@ export async function renderClubList(
   try {
     const { data, error } = await supabase
       .from("club_listing")
-      .select("id, slug, name, location_text, logo_url")
+      .select("id, slug, name, location_text, logo_url, upcoming_events")
       .order("upcoming_events", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(LIST_LIMIT);
@@ -287,7 +339,14 @@ export async function renderClubList(
   const itemsHtml = rows
     .map((c) => {
       const locationText = c.location_text ? ` — ${escapeHtml(c.location_text)}` : "";
-      return `<li><a href="${siteUrl}/clb/${escapeHtml(c.slug)}">${escapeHtml(c.name)}</a>${locationText}</li>`;
+      // Surface the upcoming-session count the club_listing view already
+      // sorts by: it is the one fact that tells a reader (and a bot) which
+      // clubs are actually active, and it cost nothing to fetch.
+      const n = c.upcoming_events ?? 0;
+      const events = n > 0
+        ? ` · ${lang === "vi" ? `${n} buổi sắp tới` : `${n} upcoming session${n > 1 ? "s" : ""}`}`
+        : "";
+      return `<li><a href="${siteUrl}/clb/${escapeHtml(c.slug)}">${escapeHtml(c.name)}</a>${locationText}${events}</li>`;
     })
     .join("");
 
@@ -335,12 +394,40 @@ export async function renderClubList(
       ? `<nav aria-label="breadcrumb"><ol><li><a href="${siteUrl}/vi">Trang chủ</a></li> &gt; <li>Câu lạc bộ</li></ol></nav>`
       : `<nav aria-label="breadcrumb"><ol><li><a href="${siteUrl}/">Home</a></li> &gt; <li>Clubs</li></ol></nav>`;
 
+  const h1 = lang === "vi" ? "Câu lạc bộ pickleball Việt Nam" : "Pickleball clubs in Vietnam";
+
+  // GEO lead (CLAUDE.md rule) — front-load the count + cities and name
+  // ThePickleHub exactly once, so an AI answer can attribute the passage.
+  // No superlatives: the number is the claim, and it comes from the row
+  // count we just rendered.
+  const activeCount = rows.filter((c) => (c.upcoming_events ?? 0) > 0).length;
+  const activeVi = activeCount > 0 ? ` Trong đó ${activeCount} CLB đang có buổi sinh hoạt sắp tới.` : "";
+  const activeEn = activeCount > 0
+    ? ` ${activeCount} of them ${activeCount > 1 ? "have" : "has"} a session already on the calendar.`
+    : "";
+  const lead = rows.length > 0
+    ? lang === "vi"
+      ? `<p>ThePickleHub đang liệt kê ${rows.length} câu lạc bộ pickleball tại Việt Nam — Hà Nội, TP.HCM và các tỉnh thành khác — kèm địa chỉ sân, lịch sinh hoạt và cách tham gia.${activeVi} Danh sách sắp xếp theo số buổi sắp diễn ra.</p>`
+      : `<p>ThePickleHub lists ${rows.length} pickleball clubs in Vietnam — Hanoi, Ho Chi Minh City and other provinces — with their home courts, session schedules and how to join.${activeEn} The list is ordered by upcoming sessions.</p>`
+    : lang === "vi"
+      ? `<p>ThePickleHub tổng hợp câu lạc bộ pickleball tại Việt Nam kèm lịch sinh hoạt và cách tham gia. Hiện chưa có CLB nào được đăng — bạn có thể tạo CLB miễn phí.</p>`
+      : `<p>ThePickleHub collects pickleball clubs in Vietnam with their session schedules and how to join. No clubs are listed yet — you can create one for free.</p>`;
+
+  // Bilingual counterpart link: the two locales are separate URLs now, so
+  // give bots (and readers) a crawlable path between them.
+  const swap = lang === "vi"
+    ? `<p><a href="${enUrl}" hreflang="en">English version</a></p>`
+    : `<p><a href="${viUrl}" hreflang="vi">Phiên bản tiếng Việt</a></p>`;
+
   const bodyContent = `${breadcrumbHtml}
+<h1>${escapeHtml(h1)}</h1>
+${lead}
 <section>
 <h2>${escapeHtml(lang === "vi" ? "Câu lạc bộ nổi bật" : "Featured clubs")}</h2>
 ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
 </section>
-<nav><h2>${escapeHtml(headingMore)}</h2><ul>${moreLinks}</ul></nav>`;
+<nav><h2>${escapeHtml(headingMore)}</h2><ul>${moreLinks}</ul></nav>
+${swap}`;
 
   return htmlResponse(
     buildHtml({
@@ -350,16 +437,21 @@ ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
       siteUrl,
       lang,
       type: "website",
-      // PR (2026-05-18 Ahrefs Site Audit fix) — Ahrefs flagged
-      // "One page is linked for more than one language" because previous
-      // emit had en+vi+x-default all pointing to the same canonical URL.
-      // Google's hreflang spec requires DIFFERENT URLs for different
-      // languages; same-URL pattern is "invalid signal." Since this
-      // page serves a single canonical for both locales (the SPA
-      // toggles language client-side), we omit hreflang entirely —
-      // safer than wrong signal.
+      // The 2026-05-18 Ahrefs fix ("One page is linked for more than one
+      // language") dropped hreflang here because en+vi+x-default all
+      // pointed at the same /clubs URL — a genuinely invalid signal. That
+      // fix was right for the shape the page had; the shape was the
+      // problem. Now that each locale self-references (/clubs vs
+      // /vi/clubs, above), the alternates point at DIFFERENT URLs and
+      // hreflang is valid — same as /san and /tools.
       jsonLd: itemListJsonLd,
       bodyContent,
+      alternates: [
+        { hreflang: "en", href: enUrl },
+        { hreflang: "vi", href: viUrl },
+        { hreflang: "x-default", href: enUrl },
+      ],
+      omitAutoHeader: true,
     }),
   );
 }

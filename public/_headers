@@ -1,7 +1,6 @@
 # Content-hashed static assets — immutable cache
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
-  X-Content-Type-Options: nosniff
 
 # KHÔNG dùng rule /*.js immutable! Nó từng nuốt cả /sw.js → CDN Cloudflare
 # giữ service worker cũ 29 ngày → mọi client cài lại SW cũ với precache chunk
@@ -34,7 +33,6 @@
 
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
-  X-Content-Type-Options: nosniff
 
 # Favicon
 /favicon.ico
@@ -47,13 +45,16 @@
 /robots.txt
   Cache-Control: public, max-age=3600
 
-# HTML pages — short cache, security headers
+# Homepage — short cache only. Security headers come from /* below.
+#
+# 2026-08-19 — this block used to repeat X-Content-Type-Options,
+# X-Frame-Options and Referrer-Policy, which /* already sets. Pages applies
+# EVERY matching rule rather than the most specific one (see the sw.js note
+# at the top of this file), so the homepage shipped each of those three
+# twice. Permissions-Policy was declared ONLY here, so every page except /
+# shipped without it — it now lives in /* and covers the whole site.
 /
   Cache-Control: public, max-age=300, s-maxage=3600
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: SAMEORIGIN
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 # All other pages inherit security headers + CSP including DUPR SSO iframe
 # allowance. DUPR SSO embeds dashboard.dupr.com (prod) or uat.dupr.gg
@@ -68,5 +69,7 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.instagram.com https://challenges.cloudflare.com; worker-src 'self' blob:; child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com https://challenges.cloudflare.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.instagram.com https://challenges.cloudflare.com; worker-src 'self' blob:; child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com https://challenges.cloudflare.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; report-uri https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/log-client-event?type=csp_violation
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.instagram.com https://challenges.cloudflare.com; worker-src 'self' blob:; child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://dashboard.dupr.com https://uat.dupr.gg https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.instagram.com https://challenges.cloudflare.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; report-uri %SUPABASE_ORIGIN%/functions/v1/log-client-event?type=csp_violation

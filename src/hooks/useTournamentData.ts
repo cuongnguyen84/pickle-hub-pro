@@ -38,11 +38,17 @@ export function useTournamentBySlug(slug: string) {
   return useQuery({
     queryKey: ["tournament", slug],
     queryFn: async () => {
+      // maybeSingle, not single: `.single()` raises PGRST116 on zero rows, so
+      // a genuinely missing slug and a dead network arrived at the page as the
+      // same isError, and the page could only render one message for both.
+      // Null = not found (render the 404 surface); throw = real failure
+      // (render ErrorState and let react-query retry) — the DS-04 convention
+      // in docs/state-patterns.md, same as useSocialEvent/useClub.
       const { data, error } = await supabase
         .from("tournaments")
         .select("*")
         .eq("slug", slug)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

@@ -4,6 +4,7 @@ import { useI18n } from "@/i18n";
 import { useLivestreams } from "@/hooks/useSupabaseData";
 import type { Livestream } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { ErrorState } from "@/components/states/PageStates";
 import { formatTime, formatRelative } from "@/lib/format-datetime";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -47,13 +48,13 @@ const MatchCard = ({ stream, language }: MatchCardProps) => {
     ) : stream.status === "scheduled" ? (
       <div className="tl-match-head">
         <span className="stat upcoming">● {language === "vi" ? "Sắp diễn ra" : "Scheduled"}</span>
-        <span className="ctx">{formatRelative(stream.scheduled_start_at)}</span>
+        <span className="ctx">{formatRelative(stream.scheduled_start_at, language)}</span>
       </div>
     ) : (
       <div className="tl-match-head">
         <span className="stat final">{language === "vi" ? "Replay" : "Replay"}</span>
         <span className="ctx">
-          {stream.ended_at ? formatRelative(stream.ended_at) : language === "vi" ? "Đã kết thúc" : "Ended"}
+          {stream.ended_at ? formatRelative(stream.ended_at, language) : language === "vi" ? "Đã kết thúc" : "Ended"}
         </span>
       </div>
     );
@@ -97,9 +98,24 @@ const Live = () => {
   const { language } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
 
-  const { data: live = [], isLoading: liveLoading } = useLivestreams("live");
-  const { data: scheduled = [], isLoading: schedLoading } = useLivestreams("scheduled");
-  const { data: ended = [], isLoading: endedLoading } = useLivestreams("ended");
+  const liveQuery = useLivestreams("live");
+  const schedQuery = useLivestreams("scheduled");
+  const endedQuery = useLivestreams("ended");
+
+  const { data: live = [], isLoading: liveLoading } = liveQuery;
+  const { data: scheduled = [], isLoading: schedLoading } = schedQuery;
+  const { data: ended = [], isLoading: endedLoading } = endedQuery;
+
+  // Any of the three failing means the counts and the list are wrong, not
+  // empty. Without this the `= []` defaults render "no matches in this view"
+  // during an outage — telling the viewer nothing is on when the truth is we
+  // could not ask (DS-04; the PGRST002 outages made this concrete).
+  const isError = liveQuery.isError || schedQuery.isError || endedQuery.isError;
+  const refetchAll = () => {
+    void liveQuery.refetch();
+    void schedQuery.refetch();
+    void endedQuery.refetch();
+  };
 
   const queryClient = useQueryClient();
   const ptrState = usePullToRefresh(async () => {
@@ -166,6 +182,15 @@ const Live = () => {
           </p>
         </header>
 
+        {/* Counts come from the same `= []` defaults the body no longer trusts:
+            rendering "Live 0 · Replays 0" directly above a network error is the
+            same fabricated zero, just in smaller type. Filtering nothing is
+            pointless during an outage, so the whole row goes.
+            Unmounted rather than `hidden`: `.tl-filters` sets display:flex from
+            the author stylesheet, which beats the UA `[hidden]` rule — the row
+            would have stayed on screen while disappearing from the a11y tree
+            (and from the test that checks it). */}
+        {!isError && (
         <div className="tl-filters">
           {([
             { key: "all", labelEn: "All", labelVi: "Tất cả" },
@@ -184,6 +209,7 @@ const Live = () => {
             </button>
           ))}
         </div>
+        )}
 
         <div style={{ paddingBottom: 80 }}>
           {isLoading ? (
@@ -192,6 +218,8 @@ const Live = () => {
                 {language === "vi" ? "Đang tải…" : "Loading live courts…"}
               </p>
             </div>
+          ) : isError ? (
+            <ErrorState onRetry={refetchAll} />
           ) : items.length === 0 ? (
             <div className="tl-empty">
               <h3>{language === "vi" ? "Không có trận trong mục này." : "No matches in this view."}</h3>

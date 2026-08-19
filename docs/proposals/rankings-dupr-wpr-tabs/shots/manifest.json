@@ -1,0 +1,982 @@
+{
+  "base": "https://feat-rankings-wpr-tabs.pickle-hub-pro.pages.dev",
+  "capturedAt": "2026-08-06T07:08:00.131Z",
+  "shots": [
+    {
+      "name": "mobile-vi_rankings",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-vi_rankings.png"
+    },
+    {
+      "name": "mobile-vi_rankings-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-vi_rankings-full.png",
+      "fullPage": true
+    },
+    {
+      "name": "mobile-vi_rankings_ppa-tour",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-vi_rankings_ppa-tour.png"
+    },
+    {
+      "name": "mobile-vi_rankings_ppa-tour-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-vi_rankings_ppa-tour-full.png",
+      "fullPage": true
+    },
+    {
+      "name": "mobile-rankings",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-rankings.png"
+    },
+    {
+      "name": "mobile-rankings-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-rankings-full.png",
+      "fullPage": true
+    },
+    {
+      "name": "mobile-rankings_ppa-tour",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-rankings_ppa-tour.png"
+    },
+    {
+      "name": "mobile-rankings_ppa-tour-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/mobile-rankings_ppa-tour-full.png",
+      "fullPage": true
+    },
+    {
+      "name": "desktop-vi_rankings",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-vi_rankings.png"
+    },
+    {
+      "name": "desktop-vi_rankings-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-vi_rankings-full.png",
+      "fullPage": true
+    },
+    {
+      "name": "desktop-vi_rankings_ppa-tour",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-vi_rankings_ppa-tour.png"
+    },
+    {
+      "name": "desktop-vi_rankings_ppa-tour-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-vi_rankings_ppa-tour-full.png",
+      "fullPage": true
+    },
+    {
+      "name": "desktop-rankings",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-rankings.png"
+    },
+    {
+      "name": "desktop-rankings-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-rankings-full.png",
+      "fullPage": true
+    },
+    {
+      "name": "desktop-rankings_ppa-tour",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-rankings_ppa-tour.png"
+    },
+    {
+      "name": "desktop-rankings_ppa-tour-full",
+      "file": "/Users/cm10/pickle-hub-pro/docs/proposals/rankings-dupr-wpr-tabs/shots/desktop-rankings_ppa-tour-full.png",
+      "fullPage": true
+    }
+  ],
+  "console": {
+    "mobile/vi/rankings": [],
+    "mobile/vi/rankings/ppa-tour": [],
+    "mobile/rankings": [],
+    "mobile/rankings/ppa-tour": [],
+    "desktop/vi/rankings": [],
+    "desktop/vi/rankings/ppa-tour": [],
+    "desktop/rankings": [],
+    "desktop/rankings/ppa-tour": []
+  },
+  "measure": {
+    "mobile/vi/rankings": {
+      "tabs": {
+        "x": 16,
+        "y": 357,
+        "w": 358,
+        "h": 72
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 17,
+            "y": 358,
+            "w": 109,
+            "h": 70
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 146,
+            "y": 358,
+            "w": 131,
+            "h": 70
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": null,
+      "scopeChips": [
+        {
+          "t": "Việt Nam",
+          "h": 44,
+          "ariaPressed": "true",
+          "y": 460
+        },
+        {
+          "t": "Hạng mở",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Trẻ",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Châu Á",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Bắc Mỹ",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Nam Mỹ",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Châu Đại Dương",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Châu Âu",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Đôi12",
+          "h": 44,
+          "ariaPressed": null,
+          "y": 540
+        },
+        {
+          "t": "Đơn12",
+          "h": 44,
+          "ariaPressed": null,
+          "y": 540
+        }
+      ],
+      "docScrollW": 390,
+      "innerW": 390,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng top. Toàn cầu, tính theo DUPR.",
+      "searchInput": null,
+      "searchLabel": [],
+      "helper": null,
+      "details": [],
+      "intro": [
+        {
+          "t": "DUPR là chuẩn rating pickleball toàn cầu, cập nhật theo kết quả giải đấu.",
+          "h": 50
+        }
+      ],
+      "fetchedAt": null,
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    },
+    "mobile/vi/rankings/ppa-tour": {
+      "tabs": {
+        "x": 16,
+        "y": 322,
+        "w": 358,
+        "h": 72
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 17,
+            "y": 323,
+            "w": 109,
+            "h": 70
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 146,
+            "y": 323,
+            "w": 131,
+            "h": 70
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": {
+        "text": "1.653,8",
+        "cls": "tl-rank-score",
+        "rect": {
+          "x": 294,
+          "y": 2358,
+          "w": 79,
+          "h": 50
+        }
+      },
+      "scopeChips": [
+        {
+          "t": "Nam25",
+          "h": 44,
+          "ariaPressed": "true",
+          "y": 598
+        },
+        {
+          "t": "Nữ25",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 598
+        }
+      ],
+      "docScrollW": 390,
+      "innerW": 390,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng đầu thế giới nhà nghề.",
+      "searchInput": {
+        "x": 33,
+        "y": 485,
+        "w": 324,
+        "h": 24
+      },
+      "searchLabel": [
+        "TÌM VĐV"
+      ],
+      "helper": "Chỉ tìm trong 90 VĐV ThePickleHub trích dẫn. Bảng WPR đầy đủ có hơn 2.000 VĐV — tra trên trang gốc ↗",
+      "details": [
+        {
+          "summary": "→ Xem tất cả 42 VĐV Việt / gốc Việt",
+          "open": false
+        }
+      ],
+      "intro": [
+        {
+          "t": "WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+          "h": 50
+        }
+      ],
+      "fetchedAt": "◆ PPA TOUR · WPR · Số liệu lấy ngày 6 thg 8, 2026Ai đang đứng đầu thế giới nhà nghề.WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    },
+    "mobile/rankings": {
+      "tabs": {
+        "x": 16,
+        "y": 357,
+        "w": 358,
+        "h": 72
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 17,
+            "y": 358,
+            "w": 109,
+            "h": 70
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 146,
+            "y": 358,
+            "w": 131,
+            "h": 70
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": null,
+      "scopeChips": [
+        {
+          "t": "Việt Nam",
+          "h": 44,
+          "ariaPressed": "true",
+          "y": 460
+        },
+        {
+          "t": "Hạng mở",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Trẻ",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Châu Á",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Bắc Mỹ",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Nam Mỹ",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Châu Đại Dương",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Châu Âu",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 460
+        },
+        {
+          "t": "Đôi12",
+          "h": 44,
+          "ariaPressed": null,
+          "y": 540
+        },
+        {
+          "t": "Đơn12",
+          "h": 44,
+          "ariaPressed": null,
+          "y": 540
+        }
+      ],
+      "docScrollW": 390,
+      "innerW": 390,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng top. Toàn cầu, tính theo DUPR.",
+      "searchInput": null,
+      "searchLabel": [],
+      "helper": null,
+      "details": [],
+      "intro": [
+        {
+          "t": "DUPR là chuẩn rating pickleball toàn cầu, cập nhật theo kết quả giải đấu.",
+          "h": 50
+        }
+      ],
+      "fetchedAt": null,
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    },
+    "mobile/rankings/ppa-tour": {
+      "tabs": {
+        "x": 16,
+        "y": 322,
+        "w": 358,
+        "h": 72
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 17,
+            "y": 323,
+            "w": 109,
+            "h": 70
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 146,
+            "y": 323,
+            "w": 131,
+            "h": 70
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": {
+        "text": "1.653,8",
+        "cls": "tl-rank-score",
+        "rect": {
+          "x": 294,
+          "y": 2358,
+          "w": 79,
+          "h": 50
+        }
+      },
+      "scopeChips": [
+        {
+          "t": "Nam25",
+          "h": 44,
+          "ariaPressed": "true",
+          "y": 598
+        },
+        {
+          "t": "Nữ25",
+          "h": 44,
+          "ariaPressed": "false",
+          "y": 598
+        }
+      ],
+      "docScrollW": 390,
+      "innerW": 390,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng đầu thế giới nhà nghề.",
+      "searchInput": {
+        "x": 33,
+        "y": 485,
+        "w": 324,
+        "h": 24
+      },
+      "searchLabel": [
+        "TÌM VĐV"
+      ],
+      "helper": "Chỉ tìm trong 90 VĐV ThePickleHub trích dẫn. Bảng WPR đầy đủ có hơn 2.000 VĐV — tra trên trang gốc ↗",
+      "details": [
+        {
+          "summary": "→ Xem tất cả 42 VĐV Việt / gốc Việt",
+          "open": false
+        }
+      ],
+      "intro": [
+        {
+          "t": "WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+          "h": 50
+        }
+      ],
+      "fetchedAt": "◆ PPA TOUR · WPR · Số liệu lấy ngày 6 thg 8, 2026Ai đang đứng đầu thế giới nhà nghề.WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    },
+    "desktop/vi/rankings": {
+      "tabs": {
+        "x": 20,
+        "y": 427,
+        "w": 1400,
+        "h": 75
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 21,
+            "y": 428,
+            "w": 109,
+            "h": 73
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 160,
+            "y": 428,
+            "w": 131,
+            "h": 73
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": null,
+      "scopeChips": [
+        {
+          "t": "Việt Nam",
+          "h": 34,
+          "ariaPressed": "true",
+          "y": 534
+        },
+        {
+          "t": "Hạng mở",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 577
+        },
+        {
+          "t": "Trẻ",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 577
+        },
+        {
+          "t": "Châu Á",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Bắc Mỹ",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Nam Mỹ",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Châu Đại Dương",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Châu Âu",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Đôi12",
+          "h": 36,
+          "ariaPressed": null,
+          "y": 686
+        },
+        {
+          "t": "Đơn12",
+          "h": 36,
+          "ariaPressed": null,
+          "y": 686
+        }
+      ],
+      "docScrollW": 1440,
+      "innerW": 1440,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng top. Toàn cầu, tính theo DUPR.",
+      "searchInput": null,
+      "searchLabel": [],
+      "helper": null,
+      "details": [],
+      "intro": [
+        {
+          "t": "DUPR là chuẩn rating pickleball toàn cầu, cập nhật theo kết quả giải đấu.",
+          "h": 25
+        }
+      ],
+      "fetchedAt": null,
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    },
+    "desktop/vi/rankings/ppa-tour": {
+      "tabs": {
+        "x": 20,
+        "y": 365,
+        "w": 1400,
+        "h": 75
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 21,
+            "y": 366,
+            "w": 109,
+            "h": 73
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 160,
+            "y": 366,
+            "w": 131,
+            "h": 73
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": {
+        "text": "1.653,8",
+        "cls": "tl-rank-score",
+        "rect": {
+          "x": 1087,
+          "y": 2412,
+          "w": 332,
+          "h": 54
+        }
+      },
+      "scopeChips": [
+        {
+          "t": "Nam25",
+          "h": 36,
+          "ariaPressed": "true",
+          "y": 626
+        },
+        {
+          "t": "Nữ25",
+          "h": 36,
+          "ariaPressed": "false",
+          "y": 626
+        }
+      ],
+      "docScrollW": 1440,
+      "innerW": 1440,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng đầu thế giới nhà nghề.",
+      "searchInput": {
+        "x": 37,
+        "y": 531,
+        "w": 1366,
+        "h": 24
+      },
+      "searchLabel": [
+        "TÌM VĐV"
+      ],
+      "helper": "Chỉ tìm trong 90 VĐV ThePickleHub trích dẫn. Bảng WPR đầy đủ có hơn 2.000 VĐV — tra trên trang gốc ↗",
+      "details": [
+        {
+          "summary": "→ Xem tất cả 42 VĐV Việt / gốc Việt",
+          "open": false
+        }
+      ],
+      "intro": [
+        {
+          "t": "WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+          "h": 25
+        }
+      ],
+      "fetchedAt": "◆ PPA TOUR · WPR · Số liệu lấy ngày 6 thg 8, 2026Ai đang đứng đầu thế giới nhà nghề.WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    },
+    "desktop/rankings": {
+      "tabs": {
+        "x": 20,
+        "y": 427,
+        "w": 1400,
+        "h": 75
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 21,
+            "y": 428,
+            "w": 109,
+            "h": 73
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 160,
+            "y": 428,
+            "w": 131,
+            "h": 73
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": null,
+      "scopeChips": [
+        {
+          "t": "Việt Nam",
+          "h": 34,
+          "ariaPressed": "true",
+          "y": 534
+        },
+        {
+          "t": "Hạng mở",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 577
+        },
+        {
+          "t": "Trẻ",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 577
+        },
+        {
+          "t": "Châu Á",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Bắc Mỹ",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Nam Mỹ",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Châu Đại Dương",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Châu Âu",
+          "h": 34,
+          "ariaPressed": "false",
+          "y": 621
+        },
+        {
+          "t": "Đôi12",
+          "h": 36,
+          "ariaPressed": null,
+          "y": 686
+        },
+        {
+          "t": "Đơn12",
+          "h": 36,
+          "ariaPressed": null,
+          "y": 686
+        }
+      ],
+      "docScrollW": 1440,
+      "innerW": 1440,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng top. Toàn cầu, tính theo DUPR.",
+      "searchInput": null,
+      "searchLabel": [],
+      "helper": null,
+      "details": [],
+      "intro": [
+        {
+          "t": "DUPR là chuẩn rating pickleball toàn cầu, cập nhật theo kết quả giải đấu.",
+          "h": 25
+        }
+      ],
+      "fetchedAt": null,
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    },
+    "desktop/rankings/ppa-tour": {
+      "tabs": {
+        "x": 20,
+        "y": 365,
+        "w": 1400,
+        "h": 75
+      },
+      "tabsLabel": "Loại bảng xếp hạng",
+      "tabItems": [
+        {
+          "title": "DUPR",
+          "caption": "RATING CÁ NHÂN",
+          "active": false,
+          "ariaCurrent": null,
+          "href": "/vi/rankings",
+          "rect": {
+            "x": 21,
+            "y": 366,
+            "w": 109,
+            "h": 73
+          },
+          "bg": "rgba(0, 0, 0, 0)",
+          "color": "rgb(109, 106, 98)",
+          "capOverflow": false
+        },
+        {
+          "title": "WPR",
+          "caption": "NHÀ NGHỀ PPA TOUR",
+          "active": true,
+          "ariaCurrent": "page",
+          "href": "/vi/rankings/ppa-tour",
+          "rect": {
+            "x": 160,
+            "y": 366,
+            "w": 131,
+            "h": 73
+          },
+          "bg": "rgb(8, 9, 10)",
+          "color": "rgb(8, 9, 10)",
+          "capOverflow": false
+        }
+      ],
+      "firstRow": {
+        "text": "1.653,8",
+        "cls": "tl-rank-score",
+        "rect": {
+          "x": 1087,
+          "y": 2412,
+          "w": 332,
+          "h": 54
+        }
+      },
+      "scopeChips": [
+        {
+          "t": "Nam25",
+          "h": 36,
+          "ariaPressed": "true",
+          "y": 626
+        },
+        {
+          "t": "Nữ25",
+          "h": 36,
+          "ariaPressed": "false",
+          "y": 626
+        }
+      ],
+      "docScrollW": 1440,
+      "innerW": 1440,
+      "hOverflow": false,
+      "fab": false,
+      "fabEls": [],
+      "h1": "Ai đang đứng đầu thế giới nhà nghề.",
+      "searchInput": {
+        "x": 37,
+        "y": 531,
+        "w": 1366,
+        "h": 24
+      },
+      "searchLabel": [
+        "TÌM VĐV"
+      ],
+      "helper": "Chỉ tìm trong 90 VĐV ThePickleHub trích dẫn. Bảng WPR đầy đủ có hơn 2.000 VĐV — tra trên trang gốc ↗",
+      "details": [
+        {
+          "summary": "→ Xem tất cả 42 VĐV Việt / gốc Việt",
+          "open": false
+        }
+      ],
+      "intro": [
+        {
+          "t": "WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+          "h": 25
+        }
+      ],
+      "fetchedAt": "◆ PPA TOUR · WPR · Số liệu lấy ngày 6 thg 8, 2026Ai đang đứng đầu thế giới nhà nghề.WPR xếp hạng VĐV nhà nghề PPA Tour theo điểm 52 tuần gần nhất.",
+      "proPill": null,
+      "viBlockCount": "@font-face{font-family:\"Geist\";font-style:normal;font-weight:400 600;font-displa"
+    }
+  }
+}

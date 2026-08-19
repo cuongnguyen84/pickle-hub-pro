@@ -47,6 +47,17 @@ export interface Translations {
         improve: string;
       };
     };
+    googleData: {
+      title: string;
+      description: string;
+      items: {
+        access: string;
+        use: string;
+        storage: string;
+        sharing: string;
+        advertising: string;
+      };
+    };
     sharing: {
       title: string;
       description: string;
@@ -61,6 +72,7 @@ export interface Translations {
         storage: string;
         measures: string;
         access: string;
+        retention: string;
       };
     };
     rights: {
@@ -75,6 +87,18 @@ export interface Translations {
     contact: {
       title: string;
       description: string;
+    };
+    shop: {
+      title: string;
+      description: string;
+      groups: {
+        public: string;
+        internal: string;
+        consent: string;
+        moderation: string;
+      };
+      purpose: string;
+      retention: string;
     };
     effective: {
       text: string;
@@ -181,6 +205,12 @@ export interface Translations {
     deleteAccountIrreversible: string;
     deleteConfirmInstruction: string;
     deleteAccountConfirm: string;
+    deleteBlockedShopOwner: string;
+    deleteBlockedShopOwnerWhy: string;
+    deleteBlockedShopOwnerNoAutoSend: string;
+    deleteBlockedShopOwnerCta: string;
+    deleteBlockedShopOwnerBack: string;
+    deleteBlockedShopOwnerEmailSubject: string;
   };
   nav: {
     home: string;
@@ -421,6 +451,7 @@ export interface Translations {
     scheduledFor: string;
     replay: string;
     watchingTooltip: string;
+    watchingAria: string;
     totalViewsTooltip: string;
     hubTitle: string;
     hubDescription: string;
@@ -2988,7 +3019,7 @@ export interface Translations {
 // Vietnamese translations
 export const vi: Translations = {
   common: {
-    appName: "The PickleHub",
+    appName: "ThePickleHub",
     loading: "Đang tải...",
     error: "Có lỗi xảy ra",
     retry: "Thử lại",
@@ -3009,10 +3040,10 @@ export const vi: Translations = {
     loadMore: "Xem thêm",
   },
   privacy: {
-    title: "Chính sách bảo mật – The Pickle Hub",
+    title: "Chính sách bảo mật – ThePickleHub",
     intro: {
       title: "Giới thiệu",
-      description: "The Pickle Hub là nền tảng video, livestream và công cụ tổ chức giải đấu Pickleball.",
+      description: "ThePickleHub là nền tảng pickleball dành cho người chơi theo dõi tin tức và livestream, tìm người chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng.",
       commitment: "Chúng tôi tôn trọng quyền riêng tư của người dùng và cam kết bảo vệ dữ liệu cá nhân.",
     },
     dataCollection: {
@@ -3034,9 +3065,20 @@ export const vi: Translations = {
         improve: "Cải thiện trải nghiệm người dùng",
       },
     },
+    googleData: {
+      title: "Dữ liệu từ Google Sign-In",
+      description: "Khi bạn chọn đăng nhập bằng Google, ThePickleHub chỉ yêu cầu dữ liệu cơ bản cần thiết để tạo và bảo vệ tài khoản của bạn.",
+      items: {
+        access: "Dữ liệu truy cập: tên, địa chỉ email và ảnh đại diện từ tài khoản Google của bạn.",
+        use: "Mục đích sử dụng: xác thực danh tính, tạo tài khoản ThePickleHub và cá nhân hóa hồ sơ của bạn.",
+        storage: "Lưu trữ: dữ liệu tài khoản được lưu trên hạ tầng đám mây bảo mật trong thời gian tài khoản hoạt động hoặc khi pháp luật yêu cầu.",
+        sharing: "Chia sẻ: dữ liệu chỉ được xử lý bởi Google, nhà cung cấp xác thực và hạ tầng dịch vụ cần thiết để vận hành đăng nhập; chúng tôi không bán dữ liệu Google của bạn.",
+        advertising: "Quảng cáo: dữ liệu Google Sign-In không được dùng cho quảng cáo cá nhân hóa, nhắm mục tiêu quảng cáo hoặc đánh giá tín dụng.",
+      },
+    },
     sharing: {
       title: "Chia sẻ dữ liệu",
-      description: "Chúng tôi không bán hoặc chia sẻ dữ liệu cá nhân cho bên thứ ba. Chỉ chia sẻ với:",
+      description: "Chúng tôi không bán dữ liệu cá nhân. Dữ liệu chỉ được chia sẻ khi cần để cung cấp dịch vụ hoặc tuân thủ pháp luật:",
       items: {
         oauth: "Nhà cung cấp xác thực (Google) để đăng nhập",
         legal: "Cơ quan pháp luật khi có yêu cầu hợp lệ",
@@ -3048,6 +3090,7 @@ export const vi: Translations = {
         storage: "Dữ liệu được lưu trữ an toàn trên hạ tầng đám mây",
         measures: "Áp dụng các biện pháp bảo mật tiêu chuẩn ngành",
         access: "Giới hạn quyền truy cập dữ liệu cho nhân viên cần thiết",
+        retention: "Dữ liệu được giữ trong thời gian tài khoản hoạt động và được xóa theo yêu cầu, trừ khi pháp luật yêu cầu lưu giữ lâu hơn",
       },
     },
     rights: {
@@ -3063,16 +3106,35 @@ export const vi: Translations = {
       title: "Liên hệ",
       description: "Nếu bạn có câu hỏi về chính sách bảo mật, vui lòng liên hệ:",
     },
+    shop: {
+      title: "Dữ liệu của tính năng Shop (thử nghiệm kín)",
+      description:
+        "Nếu bạn đăng ký bán hàng trong chương trình thử nghiệm kín, ThePickleHub xử lý thêm những nhóm dữ liệu dưới đây. Chương trình này không thu thập giấy tờ tuỳ thân, số tài khoản ngân hàng hay thông tin chi trả.",
+      groups: {
+        public:
+          "Công khai trên trang shop: tên shop, giới thiệu, tỉnh/thành, ngành hàng, ảnh logo và ảnh bìa, chính sách giao hàng và đổi trả, sản phẩm cùng ảnh sản phẩm, và những kênh liên hệ do bạn chủ động khai và quản trị viên đã duyệt.",
+        internal:
+          "Chỉ bạn và quản trị viên đọc được: họ tên, số điện thoại và địa chỉ lấy hàng trong hồ sơ đăng ký người bán. Địa chỉ lấy hàng không hiển thị công khai, và email hay số điện thoại tài khoản không bao giờ tự động trở thành kênh liên hệ công khai.",
+        consent:
+          "Bằng chứng chấp thuận quy chế người bán: phiên bản, mã băm nội dung và thời điểm bạn đồng ý. Không kèm địa chỉ IP và không kèm dấu vết thiết bị — hệ thống cố ý không có chỗ để lưu hai thứ đó.",
+        moderation:
+          "Nhật ký kiểm duyệt: quyết định duyệt hay yêu cầu sửa, việc tạm đình chỉ, ghi chú của quản trị viên, và loại kênh liên hệ đã thay đổi. Nhật ký không ghi giá trị số điện thoại hay kênh liên hệ, và ghi chú nội bộ của quản trị viên không hiển thị cho người bán.",
+      },
+      purpose:
+        "Dùng để xét duyệt hồ sơ người bán, hiển thị trang shop và sản phẩm, kiểm duyệt nội dung, và xử lý khiếu nại.",
+      retention:
+        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xoá cùng tài khoản của bạn. Nhật ký kiểm duyệt được giữ lại để đối chiếu khi có tranh chấp, nhưng không còn gắn với tài khoản đã xoá. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xoá được.",
+    },
     effective: {
-      text: "Chính sách này có hiệu lực từ ngày {date}.",
+      text: "Chính sách này được cập nhật và có hiệu lực từ ngày {date}.",
       update: "Chính sách có thể được cập nhật khi nền tảng phát triển thêm tính năng mới.",
     },
   },
   terms: {
-    title: "Điều khoản Sử dụng – The Pickle Hub",
+    title: "Điều khoản Sử dụng – ThePickleHub",
     intro: {
       title: "Giới thiệu",
-      description: "Chào mừng bạn đến với The Pickle Hub. Bằng việc sử dụng dịch vụ của chúng tôi, bạn đồng ý tuân thủ các điều khoản sau đây.",
+      description: "Chào mừng bạn đến với ThePickleHub. Bằng việc sử dụng dịch vụ của chúng tôi, bạn đồng ý tuân thủ các điều khoản sau đây.",
       acceptance: "Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng không sử dụng dịch vụ.",
     },
     account: {
@@ -3086,7 +3148,7 @@ export const vi: Translations = {
     },
     acceptableUse: {
       title: "Sử dụng Hợp lệ",
-      description: "Khi sử dụng The Pickle Hub, bạn cam kết:",
+      description: "Khi sử dụng ThePickleHub, bạn cam kết:",
       items: {
         noIllegal: "Không thực hiện hành vi bất hợp pháp",
         noHarassment: "Không quấy rối, đe dọa hoặc xúc phạm người khác",
@@ -3106,11 +3168,11 @@ export const vi: Translations = {
     },
     intellectualProperty: {
       title: "Sở hữu Trí tuệ",
-      description: "Thương hiệu, logo và nội dung của The Pickle Hub được bảo vệ bởi luật sở hữu trí tuệ. Bạn không được sao chép hoặc sử dụng mà không có sự cho phép.",
+      description: "Thương hiệu, logo và nội dung của ThePickleHub được bảo vệ bởi luật sở hữu trí tuệ. Bạn không được sao chép hoặc sử dụng mà không có sự cho phép.",
     },
     liability: {
       title: "Giới hạn Trách nhiệm",
-      description: "The Pickle Hub cung cấp dịch vụ với các giới hạn sau:",
+      description: "ThePickleHub cung cấp dịch vụ với các giới hạn sau:",
       items: {
         asIs: "Dịch vụ được cung cấp \"nguyên trạng\"",
         noWarranty: "Không đảm bảo dịch vụ hoạt động liên tục hoặc không có lỗi",
@@ -3163,11 +3225,23 @@ export const vi: Translations = {
     deleteAccountTitle: "Xóa tài khoản vĩnh viễn",
     deleteAccountWarning: "Hành động này sẽ xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn, bao gồm:",
     deleteDataProfile: "Thông tin hồ sơ và ảnh đại diện",
-    deleteDataTournaments: "Các giải đấu bạn đã tạo",
+    // Không nói "xoá giải đấu bạn đã tạo": giải đấu KHÔNG bị xoá.
+    // quick_tables.creator_user_id và team_match_tournaments.created_by đều là
+    // ON DELETE SET NULL — giải đấu ở lại, chỉ mất liên kết tới người tạo.
+    deleteDataTournaments: "Liên kết giữa bạn và các giải đấu bạn đã tạo (giải đấu vẫn còn, nhưng không còn gắn tên bạn)",
     deleteDataContent: "Bình luận, lượt thích và dữ liệu tương tác",
     deleteAccountIrreversible: "Hành động này không thể hoàn tác.",
     deleteConfirmInstruction: "Nhập \"{word}\" để xác nhận:",
     deleteAccountConfirm: "Xóa tài khoản",
+    deleteBlockedShopOwner:
+      "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, vui lòng gửi yêu cầu tới tapickleballvn@gmail.com.",
+    deleteBlockedShopOwnerWhy:
+      "Shop còn sản phẩm, hình ảnh và lịch sử kiểm duyệt. Trong giai đoạn thử nghiệm kín, ThePickleHub xử lý việc đóng shop thủ công để không xoá nhầm thứ cần giữ.",
+    deleteBlockedShopOwnerNoAutoSend:
+      "Nút bên dưới chỉ mở ứng dụng email của anh/chị — nó KHÔNG tự gửi yêu cầu. Hãy gửi từ chính email đã đăng ký; chúng tôi sẽ xác nhận trước khi làm bất cứ điều gì.",
+    deleteBlockedShopOwnerCta: "Soạn email yêu cầu",
+    deleteBlockedShopOwnerBack: "Quay lại",
+    deleteBlockedShopOwnerEmailSubject: "Yêu cầu đóng shop và tài khoản",
   },
   nav: {
     home: "Trang chủ",
@@ -3345,7 +3419,7 @@ export const vi: Translations = {
   },
   home: {
     hero: {
-      title: "The Pickle Hub",
+      title: "ThePickleHub",
       subtitle: "Nền tảng media chuyên nghiệp về Pickleball",
       description: "Livestream trực tiếp và video theo yêu cầu từ các giải đấu hàng đầu",
       cta: "Khám phá giải đấu",
@@ -3407,7 +3481,8 @@ export const vi: Translations = {
     noLivestreams: "Không có livestream nào",
     scheduledFor: "Bắt đầu lúc",
     replay: "Xem lại",
-    watchingTooltip: "Số người đang xem trực tiếp ngay bây giờ",
+    watchingTooltip: "Số người đang xem lúc này",
+    watchingAria: "{count} người đang xem trực tiếp",
     totalViewsTooltip: "Tổng số lượt xem từ khi bắt đầu phát",
     previewRemaining: "Xem thử miễn phí · Còn {seconds} giây",
     previewEndingSoon: "Còn {seconds} giây · Đăng ký để xem tiếp",

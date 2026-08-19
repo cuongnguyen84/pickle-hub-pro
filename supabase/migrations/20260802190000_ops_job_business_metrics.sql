@@ -1,3 +1,7 @@
+-- Khôi phục 18/08: file này đã áp lên production 02/08 nhưng nhánh
+-- agent/job-business-metrics không bao giờ merge, nên main mất file trong khi
+-- prod đã có object. Nội dung lấy nguyên văn từ commit 8671e28e, không sửa gì.
+--
 -- Enrich transport-level job health with the business outcomes operators need.
 -- Keep the original classifier as a base so this migration stays focused and
 -- future migrations can still replace the base independently.

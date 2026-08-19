@@ -8,6 +8,9 @@
 #   - POST /        → Supabase DB webhook payload (auto)
 #   - POST /run     → manual trigger (admin); body { news_item_id?, dry_run? }
 #                     Requires header X-Auth-Secret: $SOCIAL_POSTER_SECRET.
+#   - POST /x/run   → X (Twitter) queue drain; body { post_id?, dry_run? }
+#                     Same auth. Publishes hand-approved rows from x_posts and
+#                     replies the canonical link ~90s later. See src/x.ts.
 #
 # Bindings + env required:
 #   [vars]
@@ -15,16 +18,26 @@
 #     SITE_URL                      Frontend canonical (https://www.thepicklehub.net)
 #     FB_GRAPH_VERSION              Graph API version (e.g. v20.0)
 #     FB_POST_MIN_GAP_MINUTES       Min gap between posts (default 5)
+#     FB_POST_WINDOW_VN             Posting window, VN local hours (default 7-21)
 #     GEMINI_MODEL                  Gemini model name (e.g. gemini-2.0-flash)
 #
 #   [secrets] (wrangler secret put)
 #     SUPABASE_SERVICE_ROLE_KEY     Reads news_items, upserts fb_post_log.
 #     SOCIAL_POSTER_SECRET          Dedicated secret for cron + /run.
 #     SOCIAL_POSTER_ADMIN_SECRET    Dedicated secret for manual admin runs.
+#     TELEGRAM_BOT_TOKEN            Optional. Absent => no post notifications;
+#     TELEGRAM_CHAT_ID              the pipelines run exactly as before.
 #     FB_PAGE_ID                    Numeric Page ID, e.g. 100000123456789.
 #     FB_PAGE_ACCESS_TOKEN          Long-lived (never-expire) Page token.
 #     FB_SECONDARY_PAGE_ACCESS_TOKEN Long-lived token for TA Pickleball.
 #     GEMINI_API_KEY                Google AI Studio key (caption generation).
+#     X_CLIENT_ID                   X app client id (console.x.com, @thepicklehub).
+#     X_CLIENT_SECRET               X app client secret. Both are only used to
+#                                   refresh the OAuth2 token stored in the
+#                                   x_oauth_tokens table — the access/refresh
+#                                   tokens themselves live in Postgres, never here,
+#                                   because X rotates the refresh token on use and
+#                                   a wrangler secret cannot be rewritten at runtime.
 #
 # Why a Worker and not a Supabase Edge Function?
 #   - Graph API is sometimes flaky from Supabase's Tokyo region; Cloudflare
@@ -42,9 +55,36 @@ SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
 SITE_URL = "https://www.thepicklehub.net"
 FB_GRAPH_VERSION = "v20.0"
 FB_POST_MIN_GAP_MINUTES = "15"
+# Quiet hours: no auto-posts outside 07:00-21:00 VN. The webhook fires when
+# news-rewrite creates VI rows (US news = VN night); deferred items are
+# drained by the catchup cron next morning. Manual /run with news_item_id
+# bypasses this window.
+FB_POST_WINDOW_VN = "7-21"
+# How stale an article may be and still be posted. Repairing a failed origin
+# creates a NEW news_items row carrying the ORIGINAL published_at, so without
+# this a recovery run manufactures fresh-looking candidates for week-old
+# stories — which is what put 7-to-10-day-old posts on both pages on 17/08.
+FB_MAX_ITEM_AGE_DAYS = "3"
 GEMINI_MODEL = "gemini-flash-lite-latest"
 FB_SECONDARY_PAGE_ID = "376956272170210"
 FB_SECONDARY_START_AT = "2026-07-31T10:04:31Z"
+# No pacing. Cuong's call on 2026-08-17: news should reach X as it arrives, not
+# on a drip. The drain still publishes one row per tick, so the real ceiling is
+# the 5-minute cron, and the queue only ever holds genuinely new stories —
+# x-draft skips any news_item that already has an x_posts row.
+#
+# The old 90 came from a 2-4 posts/day playbook target. That target still holds
+# editorially; it is now the writer's job, not the Worker's. Raise this again if
+# a busy day ever reads as a firehose.
+#
+# No posting window either: the X account is English and its audience is not on
+# Vietnam hours.
+X_POST_MIN_GAP_MINUTES = "0"
+# Link goes in a reply, not the post body — a bare link in the body suppresses
+# reach in the "For you" ranking. Wait long enough that the reply lands after
+# the post has been distributed, short enough that early readers still see it.
+X_LINK_COMMENT_DELAY_SECONDS = "90"
+X_MAX_ATTEMPTS = "3"
 
 [observability]
 enabled = true

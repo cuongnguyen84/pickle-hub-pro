@@ -9,7 +9,6 @@ import { buildHtml, htmlResponse } from "../html";
 import {
   escapeHtml,
   buildTitle,
-  buildMetaDescription,
   breadcrumb,
   relatedToolLinks,
   bilingualHreflang,
@@ -18,22 +17,154 @@ import {
 } from "../utils";
 import { buildListJsonLd } from "./shared";
 import { displayChampionName } from "../../../src/lib/championDisplay";
+import {
+  PRO_CALENDAR_2026,
+  proCalendarDateRange,
+  proCalendarStatus,
+  vnTodayIso,
+} from "../../../src/content/tournaments/pro-calendar-2026";
 import { render404 } from "./static-pages";
 
-// ─── Tournament ─────────────────────────────────��─────────
+// ─── Tournament ───────────────────────────────────────────
+
+/** Vietnamese date range for a tournament: "11–15/3/2026" / "28/12/2025–3/1/2026". */
+function tournamentDateRange(startDate: string | null, endDate: string | null): string {
+  if (!startDate) return "";
+  const [sy, sm, sd] = startDate.split("-");
+  if (!endDate || endDate === startDate) return `${Number(sd)}/${Number(sm)}/${sy}`;
+  const [ey, em, ed] = endDate.split("-");
+  if (sy === ey && sm === em) return `${Number(sd)}–${Number(ed)}/${Number(sm)}/${sy}`;
+  if (sy === ey) return `${Number(sd)}/${Number(sm)}–${Number(ed)}/${Number(em)}/${sy}`;
+  return `${Number(sd)}/${Number(sm)}/${sy}–${Number(ed)}/${Number(em)}/${ey}`;
+}
+
+/**
+ * Lead sentence for a tournament — the passage AI search extracts and cites.
+ * GEO rule (CLAUDE.md, 2026-08-14): front-load name + dates + status and name
+ * "ThePickleHub" exactly once so an answer engine can attribute the snippet.
+ * This is the BODY lead and is allowed to run long; the <meta> description is
+ * built separately by tournamentDescription() against a hard byte budget.
+ */
+function tournamentLead(
+  name: string,
+  dateRange: string,
+  statusText: string,
+  broadcasterName: string | null,
+): string {
+  const when = dateRange ? ` diễn ra ${dateRange}` : "";
+  const who = broadcasterName ? `, phát sóng bởi ${broadcasterName}` : "";
+  return `${name} là giải pickleball${when}${who} — ${statusText.toLowerCase()}. Lịch thi đấu, trạng thái và kết quả được ThePickleHub cập nhật.`;
+}
+
+const DESCRIPTION_BYTE_BUDGET = 160;
+const utf8Bytes = (s: string) => new TextEncoder().encode(s).length;
+
+/**
+ * <meta name="description"> for a tournament.
+ *
+ * buildHtml truncates the description at 160 UTF-8 BYTES, and a Vietnamese
+ * diacritic costs 2-3 of them — so a sentence that looks comfortably under
+ * 160 *characters* gets cut mid-clause. Feeding the body lead straight through
+ * dropped the trailing "ThePickleHub" attribution on every single row, which
+ * is the one token the GEO rule exists to protect. Instead: try progressively
+ * shorter variants and emit the first that fits the budget whole, so the brand
+ * mention and the dates always survive. Never falls back to the generic
+ * "ThePickleHub là nền tảng…" boilerplate — that string was the original bug
+ * (all 14 tournament URLs shared it verbatim).
+ */
+function tournamentDescription(
+  name: string,
+  dateRange: string,
+  statusText: string,
+  broadcasterName: string | null,
+): string {
+  const st = statusText.toLowerCase();
+  const when = dateRange ? ` (${dateRange})` : "";
+  const who = broadcasterName ? `, phát sóng bởi ${broadcasterName}` : "";
+  const candidates = [
+    `${name}${when} — giải pickleball ${st}${who}. Lịch thi đấu và kết quả cập nhật trên ThePickleHub.`,
+    `${name}${when} — giải pickleball ${st}. Lịch thi đấu và kết quả trên ThePickleHub.`,
+    `${name}${when} — giải pickleball ${st}. Kết quả trên ThePickleHub.`,
+    `${name} — giải pickleball ${st}. Kết quả trên ThePickleHub.`,
+  ];
+  const fits = candidates.find((c) => utf8Bytes(c) <= DESCRIPTION_BYTE_BUDGET);
+  // Last resort (pathologically long name): let buildHtml ellipsise the
+  // shortest variant rather than swapping in the shared boilerplate.
+  return fits ?? candidates[candidates.length - 1];
+}
+
+/** "20/2/2026" from an ISO timestamp, in the VN calendar (UTC+7). */
+function vnDayFromTimestamp(ts: string | null): string {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "";
+  const vn = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  return `${vn.getUTCDate()}/${vn.getUTCMonth() + 1}/${vn.getUTCFullYear()}`;
+}
 
 export async function renderTournamentDetail(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
   const { data: t } = await supabase
     .from("tournaments")
-    .select("id, name, description, status, start_date, end_date, slug")
+    .select("id, name, description, status, start_date, end_date, slug, organizations(name, slug)")
     .eq("slug", slug)
     .single();
 
   if (!t) return render404(`/tournament/${slug}`, siteUrl);
 
+  // SEO-GUARD-01 (2026-08-19) — the `tournaments` table carries only name,
+  // dates, status and a (mis-named) org FK, so a body built from it alone tops
+  // out around 145 words on every one of the 14 URLs. The broadcasts we
+  // actually hold ARE the missing content: 29 livestreams are linked to 13 of
+  // the 14 tournaments via `livestreams.tournament_id`. Listing them adds real
+  // per-tournament text, real internal links into /watch + /live (which had no
+  // inbound path from the tournament page at all), a per-tournament og:image
+  // from the stream thumbnail, and honest `subEvent` + `VideoObject` schema.
+  const { data: streamRows } = await supabase
+    .from("livestreams")
+    .select("id, title, status, scheduled_start_at, started_at, thumbnail_url, mux_playback_id, vod_url")
+    .eq("tournament_id", t.id)
+    .order("scheduled_start_at", { ascending: true })
+    .limit(25);
+  const streams = (streamRows ?? []) as {
+    id: string;
+    title: string;
+    status: string | null;
+    scheduled_start_at: string | null;
+    started_at: string | null;
+    thumbnail_url: string | null;
+    mux_playback_id: string | null;
+    vod_url: string | null;
+  }[];
+  // A stream is replayable when it has a recording; otherwise the /live URL is
+  // still the right destination (upcoming or currently on air).
+  const streamUrl = (s: (typeof streams)[number]) =>
+    s.mux_playback_id || s.vod_url ? `${siteUrl}/watch/${s.id}` : `${siteUrl}/live/${s.id}`;
+
+  // PostgREST returns an embedded to-one relation as an object, but older
+  // client typings widen it to an array — normalise both shapes.
+  //
+  // IMPORTANT: `tournaments.organization_id` is NOT the organiser. Migration
+  // 20260528100000 backfilled it from `livestreams.organization_id`, i.e. the
+  // channel that BROADCAST the event. Every PPA row currently points at
+  // TAPickleball, a Vietnamese streaming partner — calling that the organiser
+  // of a US PPA Tour stop would be exactly the kind of false claim this fix
+  // removes from the JSON-LD. Labelled as broadcaster in the body, and never
+  // emitted as schema.org `organizer`.
+  const rawOrg = (t as { organizations?: unknown }).organizations;
+  const org = (Array.isArray(rawOrg) ? rawOrg[0] : rawOrg) as { name?: string; slug?: string } | null | undefined;
+  const broadcasterName = org?.name ?? null;
+
   const statusText = t.status === "ongoing" ? "Đang diễn ra" : t.status === "upcoming" ? "Sắp diễn ra" : "Đã kết thúc";
+  const dateRange = tournamentDateRange(t.start_date, t.end_date);
   const title = buildTitle(t.name, " | Pickleball Tournament");
-  const desc = buildMetaDescription(t.description, { type: "default", title: t.name });
+
+  // Before this fix every tournament page shipped the same generic
+  // "ThePickleHub là nền tảng pickleball hàng đầu…" fallback description and a
+  // 70-word body, because `description` is empty for almost every row. Build
+  // both from the data we actually have (name + dates + status + organiser) so
+  // each URL is distinct and the opening passage answers the query.
+  const lead = tournamentLead(t.name, dateRange, statusText, broadcasterName);
+  const desc = tournamentDescription(t.name, dateRange, statusText, broadcasterName);
 
   const crumbs = [
     { label: "Trang chủ", href: siteUrl },
@@ -42,13 +173,71 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   ];
   const bc = breadcrumb(crumbs);
 
+  const facts = [
+    dateRange ? `<li><strong>Thời gian:</strong> ${escapeHtml(dateRange)}</li>` : "",
+    `<li><strong>Trạng thái:</strong> ${escapeHtml(statusText)}</li>`,
+    broadcasterName
+      ? `<li><strong>Đơn vị phát sóng:</strong> ${org?.slug ? `<a href="${siteUrl}/org/${escapeHtml(org.slug)}">${escapeHtml(broadcasterName)}</a>` : escapeHtml(broadcasterName)}</li>`
+      : "",
+    `<li><strong>Môn thi đấu:</strong> Pickleball</li>`,
+  ].join("");
+
+  // Broadcast list — the only genuinely per-tournament content we hold.
+  const streamItems = streams
+    .map((s) => {
+      const day = vnDayFromTimestamp(s.scheduled_start_at ?? s.started_at);
+      const replay = !!(s.mux_playback_id || s.vod_url);
+      const tag = replay ? "Xem lại" : s.status === "live" ? "Đang phát" : "Sắp phát";
+      return `<li><a href="${streamUrl(s)}">${escapeHtml(s.title)}</a>${day ? ` — ${escapeHtml(day)}` : ""} · ${tag}</li>`;
+    })
+    .join("");
+  const replayCount = streams.filter((s) => s.mux_playback_id || s.vod_url).length;
+  const ogImage = streams.find((s) => s.thumbnail_url)?.thumbnail_url ?? null;
+  const broadcastSection = streams.length
+    ? `<h2>Trận đấu &amp; livestream tại ${escapeHtml(t.name)}</h2>
+<p>ThePickleHub lưu ${streams.length} buổi phát của ${escapeHtml(t.name)}${dateRange ? ` (${escapeHtml(dateRange)})` : ""}${replayCount ? `, trong đó ${replayCount} buổi đã có bản xem lại đầy đủ` : ""}. Bấm vào từng trận để xem trực tiếp hoặc xem lại, kèm tỉ số và thành phần thi đấu.</p>
+<ul>${streamItems}</ul>`
+    : "";
+
+  // Static explainer — same for every row on purpose, but it is the section
+  // that turns a data stub into a page a reader can use, and it carries the
+  // internal links (rankings, livestream hub, calendar) that the tournament
+  // pages previously had no path to. Kept below the per-tournament sections so
+  // the unique content is what an AI answer extracts first.
+  const howToFollow = `<h2>Cách theo dõi ${escapeHtml(t.name)}</h2>
+<p>Có ba cách theo dõi ${escapeHtml(t.name)} trên ThePickleHub. Một là trang này — trạng thái, khung thời gian và toàn bộ buổi phát được cập nhật khi giải diễn ra. Hai là <a href="${siteUrl}/vi/live">trang livestream</a>, nơi tập hợp mọi trận đang phát trực tiếp theo thời gian thực. Ba là <a href="${siteUrl}/vi/news">mục tin tức</a>, nơi kết quả từng ngày và các diễn biến đáng chú ý được tổng hợp bằng tiếng Việt.</p>
+<h2>Giải này nằm ở đâu trong mùa 2026</h2>
+<p>${escapeHtml(t.name)} là một chặng trong hệ thống giải pickleball chuyên nghiệp mùa 2026 mà ThePickleHub theo dõi, gồm PPA Tour, PPA Tour Asia, MLP và các giải khu vực châu Á. Toàn bộ khung lịch — ngày thi đấu, địa điểm, cấp giải và tiền thưởng — nằm ở <a href="${siteUrl}/vi/tournaments">lịch giải pickleball 2026</a>. Muốn biết các kết quả này ảnh hưởng thế nào tới thứ hạng vận động viên, xem <a href="${siteUrl}/vi/rankings">bảng xếp hạng pickleball</a>.</p>`;
+
+  const bodyContent = [
+    bc,
+    `<h1>${escapeHtml(t.name)}</h1>`,
+    `<p>${escapeHtml(lead)}</p>`,
+    `<ul>${facts}</ul>`,
+    t.description ? `<p>${escapeHtml(t.description)}</p>` : "",
+    broadcastSection,
+    howToFollow,
+    `<p><a href="${siteUrl}/tournaments">Lịch giải Pickleball 2026 — Việt Nam &amp; châu Á</a> · <a href="${siteUrl}/vi/tournaments">Xem bản tiếng Việt</a></p>`,
+  ].join("");
+
   return htmlResponse(buildHtml({
     title,
     description: desc,
     url: `${siteUrl}/tournament/${t.slug}`,
     siteUrl,
+    // Per-tournament og:image from the first broadcast thumbnail we hold.
+    // Previously all 14 URLs shared DEFAULT_OG_IMAGE, so every share card of
+    // every tournament looked identical. Falls back to the default when the
+    // tournament has no linked stream (1 of 14 rows today).
+    ...(ogImage ? { image: ogImage } : {}),
     extraMeta: singleCanonicalHreflang(`${siteUrl}/tournament/${t.slug}`, "en"),
-    // SEO-3.1 — @graph pattern combines SportsEvent + BreadcrumbList
+    // SEO-3.1 — @graph pattern combines SportsEvent + BreadcrumbList.
+    // The previous version declared every tournament as an online event held at
+    // a VirtualLocation and organised by ThePickleHub. All of that is false for
+    // physical PPA/MLP events we only aggregate, so it is dropped rather than
+    // replaced with an invented venue: honest omission beats wrong structured
+    // data. `location` and `organizer` are both intentionally absent — the
+    // table carries neither (see the broadcaster note above).
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -58,17 +247,37 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
           description: desc,
           url: `${siteUrl}/tournament/${t.slug}`,
           sport: "Pickleball",
+          // Stays EventScheduled for every status. schema.org EventStatusType
+          // has no "completed" member (only Scheduled / Cancelled / Postponed /
+          // Rescheduled / MovedOnline), and an event that simply finished as
+          // planned IS EventScheduled. "EventCompleted" is a value Google
+          // ignores and validators flag — do not "fix" this to that.
           eventStatus: "https://schema.org/EventScheduled",
-          eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
-          location: { "@type": "VirtualLocation", url: `${siteUrl}/tournament/${t.slug}` },
-          organizer: { "@type": "Organization", name: "ThePickleHub", url: siteUrl },
           ...(t.start_date ? { startDate: t.start_date } : {}),
           ...(t.end_date ? { endDate: t.end_date } : {}),
+          ...(ogImage ? { image: ogImage } : {}),
+          // Broadcasts as subEvents — sourced from livestreams.tournament_id,
+          // so this claims nothing we do not hold. `location`/`organizer` stay
+          // absent for the same reason (see the note above).
+          ...(streams.length
+            ? {
+              subEvent: streams.map((s) => ({
+                "@type": "BroadcastEvent",
+                name: s.title,
+                url: streamUrl(s),
+                isLiveBroadcast: s.status === "live",
+                ...(s.scheduled_start_at || s.started_at
+                  ? { startDate: s.scheduled_start_at ?? s.started_at }
+                  : {}),
+              })),
+            }
+            : {}),
         },
         buildBreadcrumbJsonLd(crumbs),
       ],
     },
-    bodyContent: `${bc}<p>${statusText}</p>`,
+    bodyContent,
+    omitAutoHeader: true,
   }));
 }
 
@@ -80,13 +289,61 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
     name: t.name,
   }));
 
-  // SEO-2.1 (2026-05-28) — locale-aware meta so EN canonical doesn't ship VN copy.
+  // Tournament-hub upgrade (2026-08-14, growth-tasks/PROPOSAL-tournament-hub):
+  // /tournaments doubles as the curated 2026 pro-calendar hub. Title targets
+  // the queries GSC already shows demand for ("vietnam pickleball tournament
+  // 2026 schedule" EN / "lịch giải pickleball" VI); both stay ≤60 bytes.
   const title = lang === "en"
-    ? "Pickleball Tournaments in Vietnam & Asia | ThePickleHub"
-    : "Giải đấu Pickleball | ThePickleHub";
+    ? "Vietnam Pickleball Tournaments 2026 | ThePickleHub"
+    : "Lịch giải Pickleball 2026 | ThePickleHub";
   const description = lang === "en"
-    ? "Live and upcoming pickleball tournaments in Vietnam and Asia. Live brackets, schedules, registration, and full results from PPA Tour Asia and local events."
-    : "Danh sách các giải đấu pickleball đang diễn ra và sắp tới tại Việt Nam. Xem lịch thi đấu, bảng đấu, kết quả trực tiếp và đăng ký tham gia giải pickleball.";
+    ? "2026 pickleball tournament calendar for Vietnam & Asia — full PPA Tour Asia schedule, Heineken World Cup Da Nang, prize money, dates and results."
+    : "Lịch giải pickleball 2026: đủ mùa PPA Tour Asia, World Cup Đà Nẵng 30/8–6/9, tiền thưởng, ngày thi đấu và kết quả. Cập nhật liên tục.";
+
+  // Curated calendar (shared data with the React page — see
+  // src/content/tournaments/pro-calendar-2026.ts). Bot-readable <table> +
+  // deep-links into our previews/recaps make this page the internal-link
+  // trunk of the whole event cluster.
+  // Pages Functions run in UTC; the curated calendar uses VN calendar dates.
+  const todayIso = vnTodayIso();
+  const statusLabel = (st: "past" | "live" | "upcoming") =>
+    lang === "vi"
+      ? st === "past" ? "Đã xong" : st === "live" ? "Đang diễn ra" : "Sắp diễn ra"
+      : st === "past" ? "Finished" : st === "live" ? "Live" : "Upcoming";
+  const calRows = PRO_CALENDAR_2026.map((ev) => {
+    const name = lang === "vi" ? ev.nameVi : ev.nameEn;
+    const blog = lang === "vi" ? ev.blogVi : ev.blogEn;
+    const nameCell = blog ? `<a href="${siteUrl}${blog}">${escapeHtml(name)}</a>` : escapeHtml(name);
+    const prize = lang === "vi" ? ev.prizeVi : ev.prizeEn;
+    return `<tr><td>${proCalendarDateRange(ev)}</td><td>${nameCell}</td><td>${escapeHtml(lang === "vi" ? ev.placeVi : ev.placeEn)}</td><td>${escapeHtml(ev.tier)}${prize ? ` · ${escapeHtml(prize)}` : ""}</td><td>${statusLabel(proCalendarStatus(ev, todayIso))}</td></tr>`;
+  }).join("");
+  const calHead = lang === "vi"
+    ? "<tr><th>Thời gian</th><th>Giải đấu</th><th>Địa điểm</th><th>Cấp / thưởng</th><th>Trạng thái</th></tr>"
+    : "<tr><th>Dates</th><th>Tournament</th><th>Location</th><th>Tier / prize</th><th>Status</th></tr>";
+  const calHeading = lang === "vi"
+    ? "Lịch giải Pickleball 2026 — Việt Nam & châu Á"
+    : "2026 Tournament Calendar — Vietnam & Asia";
+  const calendarHtml = `<h2>${calHeading}</h2><table><thead>${calHead}</thead><tbody>${calRows}</tbody></table>`;
+
+  // SportsEvent JSON-LD for live + upcoming curated events only (past events
+  // add noise; app-tournament ItemList below already covers internal ones).
+  const sportsEvents = PRO_CALENDAR_2026
+    .filter((ev) => proCalendarStatus(ev, todayIso) !== "past")
+    .map((ev) => ({
+      "@type": "SportsEvent",
+      name: lang === "vi" ? ev.nameVi : ev.nameEn,
+      sport: "Pickleball",
+      startDate: ev.startDate,
+      endDate: ev.endDate,
+      eventStatus: "https://schema.org/EventScheduled",
+      location: { "@type": "Place", name: lang === "vi" ? ev.placeVi : ev.placeEn },
+      // Only emit an organizer we can actually source. The World Cup in Da
+      // Nang is not a PPA Tour Asia event — hardcoding it here published a
+      // false entity claim in structured data on our flagship VN event.
+      ...(ev.organizer
+        ? { organizer: { "@type": "Organization", name: ev.organizer } }
+        : {}),
+    }));
 
   return htmlResponse(buildHtml({
     title,
@@ -94,8 +351,8 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     extraMeta: bilingualHreflang(`${siteUrl}/tournaments`, `${siteUrl}/vi/tournaments`),
-    jsonLd: buildListJsonLd(title, listItems),
-    bodyContent: items ? `<h2>${lang === "en" ? "Tournaments" : "Giải đấu"}</h2><ul>${items}</ul>` : "",
+    jsonLd: { "@context": "https://schema.org", "@graph": [buildListJsonLd(title, listItems), ...sportsEvents] },
+    bodyContent: `${calendarHtml}${items ? `<h2>${lang === "en" ? "Tournaments on ThePickleHub" : "Giải đấu trên ThePickleHub"}</h2><ul>${items}</ul>` : ""}`,
     lang,
   }));
 }

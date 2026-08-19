@@ -1,3 +1,5 @@
+-- Khôi phục 18/08 cùng lý do với 20260802190000 — nguyên văn từ commit 40a2f9e0.
+--
 -- Refine business metrics after the first live scheduled runs:
 -- use the latest completed social dispatch and distinguish latest Pro Tour
 -- batch output from the number of matches imported during the ICT day.

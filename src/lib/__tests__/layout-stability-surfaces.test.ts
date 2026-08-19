@@ -11,14 +11,47 @@ describe("layout-stable public content surfaces", () => {
     const news = source("src/components/home/HomeNewsFeed.tsx");
     const live = source("src/components/home/LiveSection.tsx");
 
-    expect(home).toContain("const liveLeads = hasLiveData || scheduledStreams.length > 0");
-    expect(home).toContain("liveLeads ? liveNode : null");
-    expect(home).toContain("priority={liveLeads}");
+    expect(home).toContain(
+      "hasLiveData || scheduledStreams.length > 0 || recentEnded.length > 0",
+    );
+    expect(home).toContain("const liveNode = liveQueriesLoading");
+    expect(home).toContain("priority");
     expect(home).toContain("viPostsLoading");
     expect(home).toContain("isLoading={homeNewsQuery.isLoading}");
     expect(news).toContain("tl-news-item--skeleton");
-    expect(live).toContain("{ width: 768, height: 432 }");
+    expect(live).toContain('{ width: 768, height: 432, fit: "contain" }');
     expect(live).toContain('loading={priority ? "eager" : "lazy"}');
+  });
+
+  it("live watch page, DUPR banner and home hero reserve geometry (cls-attribution)", () => {
+    const watch = source("src/pages/WatchLive.tsx");
+    const banner = source("src/components/dupr/ConnectDuprBanner.tsx");
+    const home = source("src/pages/Index.tsx");
+
+    // INC1: stats row must not rewrap; loading tree mirrors resolved container.
+    expect(watch).toContain("whitespace-nowrap overflow-x-auto");
+    expect(watch.match(/container-wide section-spacing/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(watch).toContain('<Skeleton className="hidden lg:block aspect-video rounded-xl" />');
+    // INC2: banner renders invisible (slot reserved), never late-inserts.
+    expect(banner).toContain('visibility: reserving ? "hidden" : undefined');
+    // INC3: home reserves the live hero slot while queries resolve.
+    expect(home).toContain("LiveSectionSkeleton");
+    // INC3 follow-up (2026-08-19): the reservation is only as good as the hint
+    // that drives it. sessionStorage made every new session's first pageview
+    // unreserved, which is what CrUX measures — field CLS p75 0.37 on mobile.
+    // Guard that the hint stays device-scoped and never regresses to session
+    // scope. Later the same day the default flipped too: shouldReserveLiveSlot
+    // reserves unless a live hint positively says the slot was empty, so a
+    // first visit reserves. Asserting the decision helper rather than the raw
+    // reader is deliberate — reading the hint directly would reintroduce the
+    // bug where "unknown" was treated as "known empty".
+    expect(home).toContain("shouldReserveLiveSlot");
+    expect(home).toContain("writeLiveLeadHint");
+    expect(home).not.toContain("readLiveLeadHint(");
+    // Assert the call, not the word — the surrounding comment in Index.tsx
+    // names sessionStorage to explain what was wrong with it.
+    expect(home).not.toContain("sessionStorage.getItem");
+    expect(home).not.toContain("sessionStorage.setItem");
   });
 
   it("venue and blog loading states reserve media geometry", () => {

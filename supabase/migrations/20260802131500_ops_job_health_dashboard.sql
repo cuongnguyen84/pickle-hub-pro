@@ -332,7 +332,7 @@ BEGIN
   WHERE name='cron_secret' LIMIT 1;
   IF v_secret IS NULL THEN RAISE EXCEPTION 'cron_secret is not configured'; END IF;
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/ops-job-digest',
+    url := public.ops_project_url() || '/functions/v1/ops-job-digest',
     headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',v_secret),
     body := '{"mode":"send"}'::jsonb,
     timeout_milliseconds := 30000
@@ -378,7 +378,7 @@ BEGIN
   SELECT decrypted_secret INTO v_secret FROM vault.decrypted_secrets WHERE name='cron_secret' LIMIT 1;
   IF v_secret IS NULL THEN RAISE EXCEPTION 'cron_secret missing from vault — feed-embeds-sync aborted'; END IF;
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/feed-embeds-sync',
+    url := public.ops_project_url() || '/functions/v1/feed-embeds-sync',
     headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',v_secret),
     body := '{}'::jsonb, timeout_milliseconds := 60000
   ) INTO v_request_id;
@@ -395,7 +395,7 @@ BEGIN
   SELECT decrypted_secret INTO v_secret FROM vault.decrypted_secrets WHERE name='cron_secret' LIMIT 1;
   IF v_secret IS NULL THEN RAISE EXCEPTION 'cron_secret missing from vault — feed-generate aborted'; END IF;
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/feed-generate',
+    url := public.ops_project_url() || '/functions/v1/feed-generate',
     headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',v_secret),
     body := '{}'::jsonb, timeout_milliseconds := 60000
   ) INTO v_request_id;
@@ -429,7 +429,7 @@ BEGIN
   SELECT decrypted_secret INTO v_secret FROM vault.decrypted_secrets WHERE name='cron_secret' LIMIT 1;
   IF v_secret IS NULL THEN RAISE EXCEPTION 'cron_secret is not configured'; END IF;
   SELECT net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/zalo-token-refresh',
+    url := public.ops_project_url() || '/functions/v1/zalo-token-refresh',
     headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',v_secret),
     body := '{}'::jsonb, timeout_milliseconds := 30000
   ) INTO v_request_id;

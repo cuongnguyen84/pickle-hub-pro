@@ -66,6 +66,19 @@ const Privacy = () => {
               </ul>
             </section>
 
+            {/* Google OAuth disclosure */}
+            <section>
+              <h2 className="text-lg font-semibold text-foreground mb-3">{p.googleData.title}</h2>
+              <p className="mb-2">{p.googleData.description}</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>{p.googleData.items.access}</li>
+                <li>{p.googleData.items.use}</li>
+                <li>{p.googleData.items.storage}</li>
+                <li>{p.googleData.items.sharing}</li>
+                <li>{p.googleData.items.advertising}</li>
+              </ul>
+            </section>
+
             {/* Data Sharing */}
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-3">{p.sharing.title}</h2>
@@ -76,6 +89,20 @@ const Privacy = () => {
               </ul>
             </section>
 
+            {/* Shop — closed pilot */}
+            <section>
+              <h2 className="text-lg font-semibold text-foreground mb-3">{p.shop.title}</h2>
+              <p className="mb-2">{p.shop.description}</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>{p.shop.groups.public}</li>
+                <li>{p.shop.groups.internal}</li>
+                <li>{p.shop.groups.consent}</li>
+                <li>{p.shop.groups.moderation}</li>
+              </ul>
+              <p className="mt-2">{p.shop.purpose}</p>
+              <p className="mt-2">{p.shop.retention}</p>
+            </section>
+
             {/* Security */}
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-3">{p.security.title}</h2>
@@ -83,6 +110,7 @@ const Privacy = () => {
                 <li>{p.security.items.storage}</li>
                 <li>{p.security.items.measures}</li>
                 <li>{p.security.items.access}</li>
+                <li>{p.security.items.retention}</li>
               </ul>
             </section>
 
@@ -113,7 +141,7 @@ const Privacy = () => {
             {/* Effective Date */}
             <section className="pt-4 border-t border-border">
               <p className="text-sm text-foreground-muted">
-                {p.effective.text.replace("{date}", "28/12/2024")}
+                {p.effective.text.replace("{date}", "14/08/2026")}
               </p>
               <p className="text-sm text-foreground-muted mt-1">
                 {p.effective.update}

@@ -14,7 +14,7 @@
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, buildTitle, breadcrumb, type Lang } from "../utils";
-import { pickMetaDescription } from "../seo-helpers";
+import { fitLead, fitSegments, pickMetaDescription, upperFirst } from "../seo-helpers";
 import { render404 } from "./index";
 
 const LIST_LIMIT = 100;
@@ -31,6 +31,7 @@ interface VenueListRow {
 }
 
 interface VenueDetailRow {
+  id: string;
   slug: string;
   name: string;
   name_vi: string | null;
@@ -48,6 +49,8 @@ interface VenueDetailRow {
   amenities: string[] | null;
   hours_json: unknown;
   cover_image_url: string | null;
+  review_count: number | null;
+  review_avg: number | null;
 }
 
 // Guard-0: a venue with no location AND no facts is a pure UGC stub (created via
@@ -106,6 +109,60 @@ const DAY_LABEL: Record<string, { vi: string; en: string }> = {
   sun: { vi: "Chủ nhật", en: "Sun" },
 };
 
+/** schema.org day URIs, keyed by the same 3-letter prefix DAY_LABEL uses. */
+const DAY_SCHEMA: Record<string, string> = {
+  mon: "https://schema.org/Monday",
+  tue: "https://schema.org/Tuesday",
+  wed: "https://schema.org/Wednesday",
+  thu: "https://schema.org/Thursday",
+  fri: "https://schema.org/Friday",
+  sat: "https://schema.org/Saturday",
+  sun: "https://schema.org/Sunday",
+};
+
+/** "6:00-22:00" / "06h00 - 22h00" / "6h-22h" → ["06:00", "22:00"]. */
+function parseHourRange(raw: string): [string, string] | null {
+  const m = raw.match(
+    /(\d{1,2})\s*(?:[:h.]\s*(\d{2}))?\s*(?:-|–|—|to|đến)\s*(\d{1,2})\s*(?:[:h.]\s*(\d{2}))?/i,
+  );
+  if (!m) return null;
+  const [oh, om, ch, cm] = [Number(m[1]), Number(m[2] ?? 0), Number(m[3]), Number(m[4] ?? 0)];
+  if (oh > 23 || ch > 24 || om > 59 || cm > 59) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return [`${pad(oh)}:${pad(om)}`, `${pad(ch === 24 ? 23 : ch)}:${ch === 24 ? "59" : pad(cm)}`];
+}
+
+/**
+ * openingHoursSpecification from the OBJECT form of hours_json only.
+ *
+ * The array/free-text forms ("6h-22h hằng ngày") carry no per-day breakdown, and
+ * schema.org requires dayOfWeek + opens + closes — deriving those from prose
+ * would be a guess. Those venues keep the human-readable body line and emit no
+ * hours schema, which is valid.
+ *
+ * Note (2026-08-19): hours_json is 0% populated across all 691 VN rows today,
+ * so this returns [] in production. It is wired now so the schema lights up the
+ * moment the venue form starts collecting hours, rather than being forgotten.
+ */
+function buildOpeningHours(hoursJson: unknown): Record<string, unknown>[] {
+  if (!hoursJson || typeof hoursJson !== "object" || Array.isArray(hoursJson)) return [];
+  const out: Record<string, unknown>[] = [];
+  for (const [day, val] of Object.entries(hoursJson as Record<string, unknown>)) {
+    if (typeof val !== "string" || !val.trim()) continue;
+    const dayUri = DAY_SCHEMA[day.slice(0, 3).toLowerCase()];
+    if (!dayUri) continue;
+    const range = parseHourRange(val);
+    if (!range) continue;
+    out.push({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: dayUri,
+      opens: range[0],
+      closes: range[1],
+    });
+  }
+  return out;
+}
+
 function hoursLines(hoursJson: unknown, lang: Lang): string[] {
   if (!hoursJson) return [];
   if (Array.isArray(hoursJson)) {
@@ -132,6 +189,11 @@ export async function renderVenuesList(
   const enUrl = `${siteUrl}/san`;
   const viUrl = `${siteUrl}/vi/san`;
   const canonical = lang === "vi" ? viUrl : enUrl;
+  // Internal links must stay inside the reader's language cluster. Hardcoding
+  // /san/ meant every VI page (844 URLs in sitemap-venues) linked back to the
+  // EN cluster and received ZERO internal inlinks of its own — Googlebot
+  // entering /vi/san/* had no path to any other VI page (panel 02/08).
+  const sanBase = lang === "vi" ? viUrl : enUrl;
 
   let rows: VenueListRow[] = [];
   try {
@@ -171,7 +233,7 @@ export async function renderVenuesList(
       const nm = displayName(v, lang);
       const loc = locationLine(v);
       const locText = loc ? ` — ${escapeHtml(loc)}` : "";
-      return `<li><a href="${siteUrl}/san/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${locText}</li>`;
+      return `<li><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${locText}</li>`;
     })
     .join("");
 
@@ -217,7 +279,7 @@ export async function renderVenuesList(
 
   const cityHeading = lang === "vi" ? "Sân pickleball theo tỉnh/thành" : "Pickleball courts by city";
   const cityLinks = Object.entries(VENUE_CITY_NAME)
-    .map(([sl, nm]) => `<li><a href="${siteUrl}/san/khu-vuc/${sl}">${escapeHtml(nm)}</a></li>`)
+    .map(([sl, nm]) => `<li><a href="${sanBase}/khu-vuc/${sl}">${escapeHtml(nm)}</a></li>`)
     .join("");
 
   const breadcrumbHtml =
@@ -255,6 +317,35 @@ ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
   );
 }
 
+// SEO wiring (2026-08-11, docs/seo-topical-authority-plan.md §6) — deep-link
+// venue + city-hub pages to the evergreen local guides most relevant to a
+// court-finder's intent (cost, court size, rules, how-to), instead of only the
+// blog index. Raises topical relevance from the /san cluster (the traffic
+// engine) into the editorial cluster. Slugs are verified live 200 on both
+// tracks (EN from BLOG_POST_META, VI from vi_blog_posts) — keep them in sync if
+// a guide is renamed/301'd, or the link becomes a redirect hop.
+const VENUE_GUIDE_SLUGS: Record<Lang, { slug: string; label: string }[]> = {
+  vi: [
+    { slug: "chi-phi-choi-pickleball-viet-nam-2026", label: "Chi phí chơi pickleball ở Việt Nam" },
+    { slug: "kich-thuoc-san-pickleball-tieu-chuan", label: "Kích thước sân pickleball tiêu chuẩn" },
+    { slug: "luat-pickleball-co-ban", label: "Luật pickleball cơ bản" },
+    { slug: "cach-choi-pickleball-cho-nguoi-moi", label: "Cách chơi pickleball cho người mới" },
+  ],
+  en: [
+    { slug: "pickleball-cost-vietnam-2026", label: "How much pickleball costs in Vietnam" },
+    { slug: "pickleball-court-dimensions-setup-guide", label: "Pickleball court dimensions & setup" },
+    { slug: "pickleball-rules-complete-guide", label: "Complete pickleball rules" },
+    { slug: "how-to-play-pickleball", label: "How to play pickleball" },
+  ],
+};
+
+function venueGuideLinksHtml(siteUrl: string, lang: Lang): string {
+  const base = lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`;
+  return VENUE_GUIDE_SLUGS[lang]
+    .map((g) => `<li><a href="${base}/${escapeHtml(g.slug)}">${escapeHtml(g.label)}</a></li>`)
+    .join("");
+}
+
 // ── /san/:slug — detail ─────────────────────────────────────────────────────
 export async function renderVenueDetail(
   supabase: SupabaseClient,
@@ -262,13 +353,26 @@ export async function renderVenueDetail(
   siteUrl: string,
   lang: Lang = "vi",
 ): Promise<Response> {
-  const { data, error } = await supabase
+  const VENUE_BASE_COLS =
+    "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url";
+  const VENUE_REVIEW_COLS = ", review_count, review_avg";
+  let { data, error } = await supabase
     .from("venues")
-    .select(
-      "slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url",
-    )
+    .select(VENUE_BASE_COLS + VENUE_REVIEW_COLS)
     .eq("slug", slug)
     .maybeSingle();
+
+  // Deploy-safe: if this ships before the venue_reviews migration is applied,
+  // review_count/review_avg don't exist and the select errors. Retry without
+  // them so venue pages never 404 on ordering — the aggregateRating + reviews
+  // section just stay hidden until the migration + first reviews land.
+  if (error) {
+    ({ data, error } = await supabase
+      .from("venues")
+      .select(VENUE_BASE_COLS)
+      .eq("slug", slug)
+      .maybeSingle());
+  }
 
   if (error) {
     console.error("renderVenueDetail: lookup error", { slug, error });
@@ -276,9 +380,29 @@ export async function renderVenueDetail(
   if (!data) return render404(`/san/${slug}`, siteUrl);
 
   const v = data as unknown as VenueDetailRow;
+
+  // Published reviews for this venue (SSR-visible text + Review schema). Separate
+  // query so a missing venue_reviews table (pre-migration) is a caught no-op, not
+  // a venue-page failure. Newest 5 for the body; aggregate comes from v.review_*.
+  let reviews: { rating: number; body: string | null; created_at: string }[] = [];
+  if (v.review_count && v.review_count > 0) {
+    try {
+      const { data: rv } = await supabase
+        .from("venue_reviews")
+        .select("rating, body, created_at")
+        .eq("venue_id", v.id)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      reviews = (rv ?? []) as { rating: number; body: string | null; created_at: string }[];
+    } catch {
+      // non-fatal — aggregateRating still renders from the venue columns
+    }
+  }
   const enUrl = `${siteUrl}/san/${v.slug}`;
   const viUrl = `${siteUrl}/vi/san/${v.slug}`;
   const url = lang === "vi" ? viUrl : enUrl;
+  const sanBase = lang === "vi" ? `${siteUrl}/vi/san` : `${siteUrl}/san`;
   const name = displayName(v, lang);
   const addr = fullAddress(v);
 
@@ -304,10 +428,12 @@ export async function renderVenueDetail(
       : `${name} Pickleball Court`;
   const cityTail = cityName && !cityInName ? ` – ${cityName}` : "";
   const brand = " | ThePickleHub";
-  const title =
-    (kwName + cityTail + brand).length <= 60
-      ? kwName + cityTail + brand
-      : buildTitle(kwName, brand);
+  // buildTitle budgets in BYTES (60) and is the only place allowed to decide
+  // whether the brand suffix fits. The old `.length <= 60` pre-check here
+  // counted CHARS and shipped titles like "…Nguyễn Chánh – Hà Nội |…" — a
+  // 53-char/61-byte title passed the char gate, then truncateForSeo cut it
+  // mid-brand (bug #468 recurring through a caller that bypassed the fix).
+  const title = buildTitle(kwName + cityTail, brand);
 
   // CTR: lead the description with the concrete, search-intent facts (name,
   // city, court count, indoor/outdoor) then a clear next step. Address is
@@ -316,24 +442,88 @@ export async function renderVenueDetail(
   // CTR: venue-name queries are navigational — the searcher wants to book a
   // court. Surfacing the booking phone number in the snippet is the single
   // most actionable fact we hold that Maps/Facebook results often bury.
-  const phoneVi = v.phone ? ` SĐT đặt sân ${v.phone}.` : "";
-  const phoneEn = v.phone ? ` Phone ${v.phone}.` : "";
+  //
+  // 2026-08-18 (CTR-01): the previous template was a single fixed string whose
+  // generic tail ("Địa chỉ, bản đồ, chỉ đường & các sân pickleball ở <city>
+  // trên ThePickleHub.") alone costs ~95 UTF-8 bytes, so 592 of the 760 venue
+  // rows (78%) blew the 160-byte meta budget and pickMetaDescription ellipsised
+  // them mid-word — production was shipping snippets ending "…ở Hà…" and
+  // "…các sân pickl…". A live sample of 30 /vi/san/ pages found 16 truncated.
+  // /vi/san/ carries 68% of all site impressions at avg position 7.6 but only
+  // 1.41% CTR, versus 6.98% for /vi/blog/ at the same position band.
+  //
+  // Fix: assemble the snippet from priority-ordered segments and append each
+  // one only if it still fits the budget. Highest-value facts go first, the
+  // generic tail last, so a long venue name degrades by losing boilerplate
+  // instead of getting its city keyword sliced off. Nothing is ever truncated.
   // Same de-dup as the title: skip the "Sân pickleball" / "pickleball court"
   // label when the name already carries the keyword, so the snippet doesn't read
   // "Sân pickleball Sân Pickleball FLC Sầm Sơn".
   const leadVi = nameHasKw ? name : `Sân pickleball ${name}`;
   const leadEn = nameHasKw ? name : `${name} pickleball court`;
-  const fallbackDescVi =
-    `${leadVi}${cityName ? ` tại ${cityName}` : ""}` +
-    `${courtsVi ? ` — ${courtsVi}` : ""}${indoorVi ? `, ${indoorVi}` : ""}.` +
-    phoneVi +
-    ` Địa chỉ, bản đồ, chỉ đường & các sân pickleball${cityName ? ` ở ${cityName}` : " gần bạn"} trên ThePickleHub.`;
-  const fallbackDescEn =
-    `${leadEn}${cityName ? ` in ${cityName}` : ""}` +
-    `${courtsEn ? ` — ${courtsEn}` : ""}${indoorEn ? `, ${indoorEn}` : ""}.` +
-    phoneEn +
-    ` Address, map, directions & other pickleball courts${cityName ? ` in ${cityName}` : " near you"} on ThePickleHub.`;
-  const description = pickMetaDescription(null, lang === "vi" ? fallbackDescVi : fallbackDescEn);
+  const factsVi = [courtsVi, indoorVi].filter(Boolean).join(", ");
+  const factsEn = [courtsEn, indoorEn].filter(Boolean).join(", ");
+  const descVariants =
+    lang === "vi"
+      ? {
+          core: fitLead(leadVi, cityName ? ` tại ${cityName}.` : "."),
+          segments: [
+            factsVi ? ` ${upperFirst(factsVi)}.` : "",
+            v.phone ? ` Đặt sân: ${v.phone}.` : "",
+            " Địa chỉ, bản đồ & chỉ đường.",
+            ` Sân pickleball ${cityName ? `ở ${cityName} ` : "gần bạn "}trên ThePickleHub.`,
+          ],
+        }
+      : {
+          core: fitLead(leadEn, cityName ? ` in ${cityName}.` : "."),
+          segments: [
+            factsEn ? ` ${upperFirst(factsEn)}.` : "",
+            v.phone ? ` Booking: ${v.phone}.` : "",
+            " Address, map & directions.",
+            ` More pickleball courts ${cityName ? `in ${cityName} ` : ""}on ThePickleHub.`,
+          ],
+        };
+  const description = pickMetaDescription(
+    null,
+    fitSegments(descVariants.core, descVariants.segments),
+  );
+
+  // Structured facts for amenityFeature. Names are English schema keys with a
+  // localized `name` so the value is readable in both clusters; `value` carries
+  // the machine-readable payload (boolean for a flag, number for a count).
+  const amenityFeatures: Record<string, unknown>[] = [];
+  if (v.is_indoor != null) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? (v.is_indoor ? "Sân trong nhà" : "Sân ngoài trời") : v.is_indoor ? "Indoor courts" : "Outdoor courts",
+      value: true,
+    });
+  }
+  if (v.num_courts != null && v.num_courts > 0) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? "Số sân pickleball" : "Number of pickleball courts",
+      value: v.num_courts,
+    });
+  }
+  if (v.surface_type) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? "Mặt sân" : "Court surface",
+      value: v.surface_type,
+    });
+  }
+  for (const a of v.amenities ?? []) {
+    if (typeof a === "string" && a.trim()) {
+      amenityFeatures.push({ "@type": "LocationFeatureSpecification", name: a.trim(), value: true });
+    }
+  }
+
+  // openingHoursSpecification — only from the object form of hours_json, where
+  // day and range are separable. The free-text/array forms stay body-only:
+  // schema.org needs dayOfWeek + opens/closes, and inventing those from a
+  // string like "6h-22h hằng ngày" would be a guess, not data.
+  const openingHours = buildOpeningHours(v.hours_json);
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -361,6 +551,34 @@ export async function renderVenueDetail(
     ...(v.latitude != null && v.longitude != null
       ? { hasMap: `https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}` }
       : {}),
+    // amenityFeature — SEO-GUARD-01 (2026-08-19). Venue JSON-LD carried only
+    // name/address/geo/phone, so two courts in the same district were nearly
+    // identical to a parser even though we hold court count and indoor/outdoor
+    // for them. Both are already rendered in the visible body above, so this
+    // adds no claim the page does not show.
+    //
+    // Coverage check before writing this (691 VN rows, 2026-08-19):
+    //   is_indoor 100% · num_courts 39% · surface_type 1%
+    //   amenities 0% · hours_json 0% · website 0% · cover_image_url 0%
+    // The last four are empty columns today — the `hours`/`amenities` branches
+    // below emit nothing until they are backfilled, which is why the meta
+    // description was NOT rebuilt around them (see commit 88520b58).
+    ...(amenityFeatures.length ? { amenityFeature: amenityFeatures } : {}),
+    ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
+    // aggregateRating from OUR own users' reviews (venue = third-party entity,
+    // legitimate like TripAdvisor/Yelp — unlike republishing Google's rating).
+    // Backed by the visible review section rendered in the body below.
+    ...(v.review_count && v.review_count > 0 && v.review_avg != null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: v.review_avg,
+            reviewCount: v.review_count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
 
   const homeLabel = lang === "vi" ? "Trang chủ" : "Home";
@@ -369,10 +587,10 @@ export async function renderVenueDetail(
   const citySlug = v.city ? CITY_SLUG_BY_NAME[v.city] : undefined;
   const bcCrumbs: { label: string; href?: string }[] = [
     { label: homeLabel, href: homeHref },
-    { label: courtsLabel, href: `${siteUrl}/san` },
+    { label: courtsLabel, href: sanBase },
   ];
   if (citySlug && v.city) {
-    bcCrumbs.push({ label: v.city, href: `${siteUrl}/san/khu-vuc/${citySlug}` });
+    bcCrumbs.push({ label: v.city, href: `${sanBase}/khu-vuc/${citySlug}` });
   }
   bcCrumbs.push({ label: name });
   const bc = breadcrumb(bcCrumbs);
@@ -412,6 +630,27 @@ export async function renderVenueDetail(
   if (v.website)
     parts.push(`<p><a href="${escapeHtml(v.website)}" rel="nofollow noopener">Website</a></p>`);
 
+  // Community reviews — first-hand content (the SEO moat) + the visible backing
+  // for the aggregateRating emitted above. Anonymous in SSR (names shown in the
+  // SPA); rating + body + date is what a bot cites.
+  if (reviews.length > 0) {
+    const revHeading = lang === "vi" ? "Đánh giá từ cộng đồng" : "Community reviews";
+    const avgLine =
+      v.review_avg != null
+        ? `<p><strong>★ ${v.review_avg}</strong> · ${v.review_count} ${lang === "vi" ? "đánh giá" : "reviews"}</p>`
+        : "";
+    const revItems = reviews
+      .map((r) => {
+        const clamped = Math.max(1, Math.min(5, r.rating));
+        const stars = "★".repeat(clamped) + "☆".repeat(5 - clamped);
+        const date = (r.created_at || "").slice(0, 10);
+        const body = r.body ? `<p>${escapeHtml(r.body)}</p>` : "";
+        return `<li><span aria-label="${clamped}/5">${stars}</span>${date ? ` <time datetime="${date}">${date}</time>` : ""}${body}</li>`;
+      })
+      .join("");
+    parts.push(`<section><h2>${escapeHtml(revHeading)}</h2>${avgLine}<ul>${revItems}</ul></section>`);
+  }
+
   // Unique intro (after H1) + internal links to other courts in the same
   // city — reduces thin content and interlinks the directory.
   const typeWord =
@@ -442,7 +681,7 @@ export async function renderVenueDetail(
       if (nearby.length > 0) {
         const heading = lang === "vi" ? `Sân pickleball khác tại ${v.city}` : `Other pickleball courts in ${v.city}`;
         const items = nearby
-          .map((n) => `<li><a href="${siteUrl}/san/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>${n.district ? ` — ${escapeHtml(n.district)}` : ""}</li>`)
+          .map((n) => `<li><a href="${sanBase}/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>${n.district ? ` — ${escapeHtml(n.district)}` : ""}</li>`)
           .join("");
         parts.push(`<h2>${escapeHtml(heading)}</h2><ul>${items}</ul>`);
       }
@@ -451,7 +690,7 @@ export async function renderVenueDetail(
     }
     if (citySlug) {
       const allLabel = lang === "vi" ? `Xem tất cả sân pickleball tại ${v.city}` : `See all pickleball courts in ${v.city}`;
-      parts.push(`<p><a href="${siteUrl}/san/khu-vuc/${citySlug}">${escapeHtml(allLabel)} →</a></p>`);
+      parts.push(`<p><a href="${sanBase}/khu-vuc/${citySlug}">${escapeHtml(allLabel)} →</a></p>`);
     }
   }
 
@@ -461,8 +700,11 @@ export async function renderVenueDetail(
   const blogHref = lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`;
   const newsHref = lang === "vi" ? `${siteUrl}/vi/news` : `${siteUrl}/news`;
   const tipsHeading = lang === "vi" ? "Mẹo chơi & tin tức" : "Tips & news";
+  // Deep-link the four evergreen local guides first (topical relevance venue →
+  // editorial), then the blog/news indexes for discovery.
   parts.push(
     `<nav><h2>${escapeHtml(tipsHeading)}</h2><ul>` +
+      venueGuideLinksHtml(siteUrl, lang) +
       `<li><a href="${blogHref}">${escapeHtml(lang === "vi" ? "Blog & hướng dẫn pickleball" : "Pickleball blog & guides")}</a></li>` +
       `<li><a href="${newsHref}">${escapeHtml(lang === "vi" ? "Tin tức pickleball mới nhất" : "Latest pickleball news")}</a></li>` +
       `</ul></nav>`,
@@ -655,6 +897,7 @@ export async function renderVenuesCity(
   const enUrl = `${siteUrl}/san/khu-vuc/${citySlug}`;
   const viUrl = `${siteUrl}/vi/san/khu-vuc/${citySlug}`;
   const canonical = lang === "vi" ? viUrl : enUrl;
+  const sanBase = lang === "vi" ? `${siteUrl}/vi/san` : `${siteUrl}/san`;
 
   let rows: VenueListRow[] = [];
   try {
@@ -690,7 +933,7 @@ export async function renderVenuesCity(
         v.num_courts && v.num_courts > 0 ? (lang === "vi" ? `${v.num_courts} sân` : `${v.num_courts} courts`) : "",
         v.is_indoor == null ? "" : lang === "vi" ? (v.is_indoor ? "trong nhà" : "ngoài trời") : v.is_indoor ? "indoor" : "outdoor",
       ].filter(Boolean);
-      return `<li><a href="${siteUrl}/san/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${facts.length ? ` — ${escapeHtml(facts.join(" · "))}` : ""}</li>`;
+      return `<li><a href="${sanBase}/${escapeHtml(v.slug)}">${escapeHtml(nm)}</a>${facts.length ? ` — ${escapeHtml(facts.join(" · "))}` : ""}</li>`;
     })
     .join("");
 
@@ -724,7 +967,7 @@ export async function renderVenuesCity(
   const courtsLabel = lang === "vi" ? "Tìm sân" : "Courts";
   const bc = breadcrumb([
     { label: homeLabel, href: homeHref },
-    { label: courtsLabel, href: `${siteUrl}/san` },
+    { label: courtsLabel, href: sanBase },
     { label: cityName },
   ]);
   const h1 = lang === "vi" ? `Sân Pickleball ${cityName}` : `Pickleball courts in ${cityName}`;
@@ -762,10 +1005,15 @@ export async function renderVenuesCity(
 
   const eventHtml = cityEventLink(citySlug, lang, siteUrl);
 
+  // Evergreen counterpart to the time-boxed cityEventLink: deep-link the local
+  // guides a "sân pickleball <city>" searcher also wants (cost, court size,
+  // rules, how-to). Permanent editorial wiring that survives past any event.
+  const guidesHeading = lang === "vi" ? "Hướng dẫn chơi pickleball" : "Pickleball guides";
+  const guidesHtml = `<nav><h2>${escapeHtml(guidesHeading)}</h2><ul>${venueGuideLinksHtml(siteUrl, lang)}</ul></nav>`;
 
   const moreHeading = lang === "vi" ? "Khám phá thêm" : "Discover more";
   const moreLinks = [
-    `<li><a href="${siteUrl}/san">${escapeHtml(allLabel)}</a></li>`,
+    `<li><a href="${sanBase}">${escapeHtml(allLabel)}</a></li>`,
     `<li><a href="${siteUrl}/clubs">${lang === "vi" ? "Câu lạc bộ" : "Clubs"}</a></li>`,
     `<li><a href="${siteUrl}/social">${lang === "vi" ? "Sự kiện cộng đồng" : "Community events"}</a></li>`,
     `<li><a href="${lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`}">${lang === "vi" ? "Blog & mẹo chơi" : "Blog & tips"}</a></li>`,
@@ -777,6 +1025,7 @@ export async function renderVenuesCity(
     introHtml +
     eventHtml +
     (n > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`) +
+    guidesHtml +
     `<nav><h2>${escapeHtml(otherCitiesHeading)}</h2><ul>${otherCitiesHtml}</ul></nav>` +
     `<nav><h2>${escapeHtml(moreHeading)}</h2><ul>${moreLinks}</ul></nav>`;
 

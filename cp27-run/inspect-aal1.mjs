@@ -1,0 +1,10 @@
+import { launch, close, actor, assertIdentity } from "./browser.mjs";
+await launch();
+const a = await actor("admin", { aal2: false });
+console.log("identity:", JSON.stringify(await assertIdentity(a)));
+await a.goto("/admin/shop/applications");
+await a.page.waitForTimeout(4000);
+console.log("url:", a.page.url());
+console.log("--- body text ---");
+console.log((await a.page.locator("body").innerText()).slice(0, 1500));
+await close();

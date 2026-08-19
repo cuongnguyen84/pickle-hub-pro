@@ -186,13 +186,13 @@ const ViBlogPost = () => {
               srcSet={coverImage.srcSet}
               sizes="(max-width: 912px) calc(100vw - 32px), 832px"
               alt={post.title}
-              width={1536}
-              height={1024}
+              width={1200}
+              height={630}
               loading="eager"
               fetchPriority="high"
               decoding="async"
               className="w-full rounded-xl mb-8 border border-border"
-              style={{ marginTop: "2rem", aspectRatio: "3 / 2", objectFit: "cover" }}
+              style={{ marginTop: "2rem", display: "block", height: "auto" }}
             />
           )}
 

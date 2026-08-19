@@ -62,8 +62,13 @@
   --tl-border-2:   #2e3238;
   --tl-fg:         #f5f3ee;
   --tl-fg-2:       #c7c3bb;
-  --tl-fg-3:       #86837d;
-  --tl-fg-4:       #7c7973;  /* a11y 2026-07-08: was #54514c (2.52:1 on --tl-bg, Lighthouse fail); 4.59:1 now */
+  /* a11y 2026-08-11: both greys were tuned against --tl-bg only, so they fell
+     under AA the moment they landed on an elevated card (--tl-surface-2):
+     fg-3 4.17:1, fg-4 3.65:1. Retuned against the WORST surface they may sit
+     on, keeping a visible step between them — 5.36:1 and 4.60:1.
+     Gate: src/styles/__tests__/contrast.test.ts */
+  --tl-fg-3:       #93908a;
+  --tl-fg-4:       #8a8780;
   /* Two-tone display "dim" — one step brighter than fg-3 so the faded serif
      half of split headlines stays legible (~6:1 on dark) without losing the
      de-emphasis. Scoped to .dim headline spans, NOT the global meta grey. */
@@ -72,6 +77,10 @@
   /* DS-02: legacy aliases fg-1/bg-1/bg-2 deleted — canonical names only.
      hairline stays: it is a canonical token (thinnest separator). */
   --tl-hairline:   var(--tl-border);
+  /* Audit 2026-08-09: these two were referenced by components but never
+     defined (silent visual fallback). Alias to the canonical tokens. */
+  --tl-border-strong: var(--tl-border-2);
+  --tl-amber:      var(--tl-gold);
 
   /* Accent — single (optic-lime, the pickleball ball colour) */
   --tl-green:      #b5e853;
@@ -143,6 +152,25 @@
 }
 @supports not (backdrop-filter: blur(14px)) {
   [data-theme="the-line"] .tl-nav { background: var(--tl-bg); }
+}
+
+/* The header does not fit a 320px phone when a back button is present.
+ *
+ * Measured, not guessed: back 36 + brand 22 + auth pills 120 + nav-right 80
+ * = 258 of content, plus 4x16 gap and 2x20 padding = 362 in a 320 box. The
+ * page then scrolls sideways by 43px at 320 and 1px at 375 — reproduced on
+ * /tools, which shipped long before the Shop, so this is not new.
+ *
+ * Only the gutters and the gap give way. Nothing is hidden and no control
+ * shrinks below its touch target: 258 + 3*8 + 2*12 = 306, which fits with
+ * room to spare, and 375 has never been close after that.
+ */
+@media (max-width: 380px) {
+  [data-theme="the-line"] .tl-nav {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    gap: 8px;
+  }
 }
 [data-theme="the-line"] .tl-brand {
   display: flex; align-items: center; gap: 10px;
@@ -1835,6 +1863,30 @@
 }
 [data-theme="the-line"] .tl-news-row-meta .sep { color: var(--tl-fg-4); }
 
+/* Loading rows for /news. They carry the same classes as a real row and fill
+   their text nodes with non-breaking spaces, so the browser derives the
+   reserved height from the identical CSS rather than from numbers copied here
+   that would drift the next time the row is restyled. Only the paint differs. */
+[data-theme="the-line"] .tl-news-row--skeleton { pointer-events: none; }
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-title,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-summary,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span {
+  color: transparent;
+  border-radius: 5px;
+  background: linear-gradient(100deg, var(--tl-surface) 25%, var(--tl-bg-elev) 45%, var(--tl-surface) 65%);
+  background-size: 220% 100%;
+  animation: tl-feed-skeleton-pulse 1.6s ease-in-out infinite;
+}
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker { width: 92px; }
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span { width: 128px; display: inline-block; }
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-title,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-summary,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span { animation: none; }
+}
+
 /* ========== Manifesto ========== */
 [data-theme="the-line"] .tl-manifesto {
   padding: 96px 0;
@@ -1877,6 +1929,14 @@
 [data-theme="the-line"] .tl-manifesto .item p em {
   font-family: "Instrument Serif"; font-style: italic; color: var(--tl-green); font-size: 1.05em;
 }
+[data-theme="the-line"] .tl-manifesto .item .data-note {
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tl-border);
+  color: var(--tl-fg-3); font-size: 12px; line-height: 1.55;
+}
+[data-theme="the-line"] .tl-manifesto .item .data-note a {
+  color: var(--tl-green); text-decoration: none;
+}
+[data-theme="the-line"] .tl-manifesto .item .data-note a:hover { text-decoration: underline; }
 
 /* ========== Footer ========== */
 [data-theme="the-line"] .tl-footer {
@@ -1973,6 +2033,9 @@
   width: 100%; height: 100%; object-fit: cover; display: block;
   transition: transform 0.5s ease;
 }
+[data-theme="the-line"] .tl-live-main-thumb img {
+  object-fit: contain;
+}
 [data-theme="the-line"] .tl-live-main:hover .tl-live-main-thumb img { transform: scale(1.03); }
 [data-theme="the-line"] .tl-live-thumb-ph {
   position: absolute; inset: 0;
@@ -2043,7 +2106,7 @@
   color: inherit;
 }
 [data-theme="the-line"] .tl-live-inline-start > img {
-  display: block; width: 100%; height: 100%; object-fit: cover;
+  display: block; width: 100%; height: 100%; object-fit: contain;
 }
 [data-theme="the-line"] .tl-live-start-icon {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -2524,7 +2587,7 @@
 @media (max-width: 900px) { [data-theme="the-line"] .tl-blog-hero { grid-template-columns: 1fr; gap: 28px; padding-bottom: 32px; margin-bottom: 36px; } }
 
 [data-theme="the-line"] .tl-blog-hero-visual {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   background: linear-gradient(160deg, #1a2820 0%, #0f1a14 50%, #080a08 100%);
   border: 1px solid var(--tl-border);
   border-radius: var(--tl-radius-lg);
@@ -2814,18 +2877,28 @@
   --tl-border-2:   #c7c2b3;
   --tl-fg:         #08090a;
   --tl-fg-2:       #3a3933;
-  --tl-fg-3:       #6d6a62;
-  --tl-fg-4:       #787366;  /* a11y 2026-07-08: was #a5a299 (2.42:1 on light bg); 4.55:1 now — mirrors native fg4 light */
-  --tl-dim:        #5a5750;  /* two-tone display "dim" on paper — ~6.4:1 */
-  --tl-green:      #5e7d1f;  /* deep lime — bright lime is illegible on paper */
-  --tl-green-dim:  #4a6418;
-  --tl-green-glow: rgba(94, 125, 31, 0.14);
-  --tl-live:       #d83428;
-  --tl-gold:       #8a6410; /* a11y: 5.2:1 on light --tl-bg (was #a37613 ≈3.9:1) */
-  --tl-gold-glow:  rgba(138, 100, 16, 0.12);
-  --tl-blue:       #1d63c4; /* a11y: darkened blue readable on paper bg */
-  --tl-blue-glow:  rgba(29, 99, 196, 0.12);
-  --tl-accent-elim: #8a6410; /* amber retuned for paper bg (matches --tl-gold) */
+  /* a11y 2026-08-11: every colour below is now measured against the DARKEST
+     light surface (--tl-surface-2 #e6e2d5), not just the page background.
+     Tuning against --tl-bg alone is what let a card-mounted badge ship at
+     4.14:1. Gate: src/styles/__tests__/contrast.test.ts */
+  --tl-fg-3:       #605d56;  /* was #6d6a62 — 4.17:1 on a card */
+  --tl-fg-4:       #686459;  /* was #787366 — 3.94:1 on a card */
+  --tl-dim:        #5a5750;  /* two-tone display "dim" on paper — 5.56:1 */
+  --tl-green:      #516c1b;  /* was #5e7d1f (3.98:1 on a card). Also the focus ring. */
+  --tl-green-dim:  #415816;
+  --tl-green-glow: rgba(81, 108, 27, 0.14);
+  --tl-live:       #bc2d23;  /* was #d83428 — 3.65:1 on a card */
+  --tl-gold:       #825e0f;  /* was #8a6410 — 4.14:1 on a card */
+  --tl-gold-glow:  rgba(130, 94, 15, 0.12);
+  --tl-blue:       #1c61c0;  /* was #1d63c4 — 4.46:1 on a card */
+  --tl-blue-glow:  rgba(28, 97, 192, 0.12);
+  --tl-accent-elim: #825e0f; /* amber retuned for paper bg (matches --tl-gold) */
+  /* These three had NO light-mode value at all, so paper inherited the
+     dark-mode neon: 1.99:1 for qt and team. That is the whole stock-ok /
+     used-badge defect — the token layer, not the screens. */
+  --tl-accent-qt:   #007342;
+  --tl-accent-team: #9f4c30;
+  --tl-accent-flex: #1c61c0; /* mirrors --tl-blue */
 
   /* Production HSL token swap — light D4 */
   --background:          42 42% 98%;
@@ -2839,7 +2912,7 @@
   --secondary:           42 22% 91%;
   --secondary-foreground: 220 10% 3%;
   --muted:               42 22% 91%;
-  --muted-foreground:    42 6% 41%;
+  --muted-foreground:    42 6% 39%;  /* a11y CLOSE-03 2026-08-03: was 41% = #6f6b62, 4.41:1 on bg-muted #edeae3 (needs 4.5) — 39% = #69665d, 4.78:1. 9 axe nodes on /clubs + /san monogram tiles */
   --accent:              42 22% 91%;
   --accent-foreground:   220 10% 3%;
   --destructive:         4 70% 50%;
@@ -3116,7 +3189,7 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 24px 0 12px;
+  margin: 12px 0 8px;
 }
 [data-theme="the-line"] .tl-rank-scope-row {
   display: flex;
@@ -3156,8 +3229,87 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   border-color: var(--tl-fg);
 }
 @media (max-width: 640px) {
-  [data-theme="the-line"] .tl-rank-scope-label { margin-right: 0; flex-basis: 100%; }
-  [data-theme="the-line"] .tl-rank-scope { font-size: 12px; padding: 5px 10px; }
+  /* Single horizontal rail (proposal rankings-dupr-wpr-tabs §4a subtraction c):
+     labels stay inline, chips scroll — reclaims ~150px vs 3 stacked rows. */
+  [data-theme="the-line"] .tl-rank-scopes {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    gap: 8px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  [data-theme="the-line"] .tl-rank-scope-row { flex-wrap: nowrap; flex: 0 0 auto; }
+  [data-theme="the-line"] .tl-rank-scope-label { margin-right: 0; flex: 0 0 auto; }
+  [data-theme="the-line"] .tl-rank-scope {
+    font-size: 12px;
+    padding: 5px 12px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    /* 44px touch target (design tokens) — visual pill stays compact */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  [data-theme="the-line"] .tl-filter { min-height: 44px; }
+}
+[data-theme="the-line"] .tl-rank-scope:focus-visible,
+[data-theme="the-line"] .tl-filter:focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 2px;
+}
+
+/* ========== Ranking-type tabs (DUPR | WPR) ========== */
+[data-theme="the-line"] .tl-rank-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  overflow: hidden;
+  margin: 12px 0 4px;
+}
+[data-theme="the-line"] .tl-rank-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+  text-decoration: none;
+  color: var(--tl-fg-2);
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+[data-theme="the-line"] .tl-rank-tab + .tl-rank-tab { border-left: 1px solid var(--tl-border); }
+[data-theme="the-line"] .tl-rank-tab:hover { color: var(--tl-fg); }
+[data-theme="the-line"] .tl-rank-tab.active {
+  background: var(--tl-fg);
+  color: var(--tl-bg);
+}
+[data-theme="the-line"] .tl-rank-tab:focus-visible {
+  outline: 2px solid var(--tl-green);
+  outline-offset: -2px;
+}
+[data-theme="the-line"] .tl-rank-tab-title {
+  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+[data-theme="the-line"] .tl-rank-tab-caption {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tl-fg-3);
+}
+/* Caption on the inverted active tab — reuse the measured color-mix formula
+   (see .tl-filter .count contrast note): 6.1:1 both themes. */
+[data-theme="the-line"] .tl-rank-tab.active .tl-rank-tab-caption {
+  color: color-mix(in oklab, var(--tl-bg) 60%, var(--tl-fg));
 }
 
 /* ========== Rankings table ========== */
@@ -3854,9 +4006,10 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
 [data-theme="the-line"] .tl-br-meta .sep { color: var(--tl-fg-4); margin: 0 5px; }
 /* Social-proof registration count — green + 600 to stand out from the muted
    mono meta line. Uses --tl-green-DIM (not --tl-green): the brighter lime sits at
-   ~4.6:1 in light mode (#5e7d1f on cream) — a borderline pass, exactly the blind
-   spot that shipped #426. -dim resolves to a darker green in both modes (~6:1
-   light, ~11:1 dark), comfortably clear of WCAG AA either way. */
+   right on the AA line in light mode — a borderline pass, exactly the blind
+   spot that shipped #426. -dim resolves to a darker green in both modes,
+   comfortably clear of WCAG AA either way. (Both were re-tuned 2026-08-11;
+   the ratios are now asserted in src/styles/__tests__/contrast.test.ts.) */
 [data-theme="the-line"] .tl-br-reg { color: var(--tl-green-dim); font-weight: 600; }
 [data-theme="the-line"] .tl-br-creator {
   font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-3);
@@ -3885,7 +4038,17 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   flex: 1; background: transparent; border: 0; color: var(--tl-fg);
   font: inherit; font-size: 16px; letter-spacing: -0.01em;
 }
+/* Ring lives on the container — a bare outline:0 on the input was a WCAG
+   2.4.7 fail (ui-ux blocker #5, proposal rankings-dupr-wpr-tabs). */
 [data-theme="the-line"] .tl-search-input input:focus { outline: 0; }
+[data-theme="the-line"] .tl-search-input:focus-within {
+  outline: 2px solid var(--tl-green);
+  outline-offset: 2px;
+}
+[data-theme="the-line"] .tl-search-input input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
 [data-theme="the-line"] .tl-search-input input::placeholder { color: var(--tl-fg-4); }
 [data-theme="the-line"] .tl-search-input kbd {
   font-family: "Geist Mono"; font-size: 11px; padding: 3px 6px;

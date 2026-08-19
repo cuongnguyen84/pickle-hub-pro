@@ -3,7 +3,7 @@ import type { Translations } from "./vi";
 
 export const en: Translations = {
   common: {
-    appName: "The PickleHub",
+    appName: "ThePickleHub",
     loading: "Loading...",
     error: "An error occurred",
     retry: "Retry",
@@ -24,10 +24,10 @@ export const en: Translations = {
     loadMore: "Load more",
   },
   privacy: {
-    title: "Privacy Policy – The Pickle Hub",
+    title: "Privacy Policy – ThePickleHub",
     intro: {
       title: "Introduction",
-      description: "The Pickle Hub is a video, livestream and Pickleball tournament organization platform.",
+      description: "ThePickleHub is a pickleball platform where players follow news and livestreams, find players and courts, and create or join tournaments and community events.",
       commitment: "We respect our users' privacy and are committed to protecting personal data.",
     },
     dataCollection: {
@@ -49,9 +49,20 @@ export const en: Translations = {
         improve: "Improve user experience",
       },
     },
+    googleData: {
+      title: "Google Sign-In Data",
+      description: "When you choose Google Sign-In, ThePickleHub requests only the basic information needed to create and secure your account.",
+      items: {
+        access: "Data accessed: your name, email address, and profile photo from your Google Account.",
+        use: "How we use it: to authenticate you, create your ThePickleHub account, and personalize your profile.",
+        storage: "Storage: account data is stored on secure cloud infrastructure while your account remains active or as required by law.",
+        sharing: "Sharing: the data is processed only by Google, our authentication provider, and service infrastructure needed to operate sign-in; we do not sell your Google user data.",
+        advertising: "Advertising: Google Sign-In data is not used for personalized advertising, ad targeting, or credit-worthiness decisions.",
+      },
+    },
     sharing: {
       title: "Data Sharing",
-      description: "We do not sell or share personal data with third parties. We only share with:",
+      description: "We do not sell personal data. We disclose it only when needed to provide the service or comply with law:",
       items: {
         oauth: "Authentication providers (Google) for sign-in",
         legal: "Legal authorities when required by law",
@@ -63,6 +74,7 @@ export const en: Translations = {
         storage: "Data is stored securely on cloud infrastructure",
         measures: "Industry-standard security measures are applied",
         access: "Data access is limited to essential personnel only",
+        retention: "Data is retained while your account is active and deleted on request unless a longer period is required by law",
       },
     },
     rights: {
@@ -78,16 +90,35 @@ export const en: Translations = {
       title: "Contact",
       description: "If you have questions about this privacy policy, please contact:",
     },
+    shop: {
+      title: "Shop data (closed pilot)",
+      description:
+        "If you apply to sell in the closed pilot, ThePickleHub processes the additional data below. The programme collects no identity documents, no bank account numbers and no payout details.",
+      groups: {
+        public:
+          "Public on your shop page: shop name, description, city, categories, logo and cover images, delivery and return policies, products and product images, and the contact channels you chose to declare and an administrator approved.",
+        internal:
+          "Visible only to you and administrators: the full name, phone number and pickup address in your seller application. The pickup address is never shown publicly, and your account email or phone never becomes a public contact channel on its own.",
+        consent:
+          "Evidence that you accepted the seller rules: the version, the content hash and the time you agreed. No IP address and no device fingerprint — the system deliberately has nowhere to store either.",
+        moderation:
+          "Moderation history: approvals and change requests, suspensions, administrator notes, and which type of contact channel changed. It never records the value of a phone number or contact channel, and internal administrator notes are not shown to the seller.",
+      },
+      purpose:
+        "Used to review seller applications, display shop pages and products, moderate content, and handle complaints.",
+      retention:
+        "Your seller application and your acceptance evidence are deleted with your account. Moderation history is retained for dispute resolution but is no longer tied to a deleted account. If you own a shop, the shop must be dealt with before the account can be deleted.",
+    },
     effective: {
-      text: "This policy is effective as of {date}.",
+      text: "This policy was updated and is effective as of {date}.",
       update: "This policy may be updated as the platform develops new features.",
     },
   },
   terms: {
-    title: "Terms of Service – The Pickle Hub",
+    title: "Terms of Service – ThePickleHub",
     intro: {
       title: "Introduction",
-      description: "Welcome to The Pickle Hub. By using our services, you agree to comply with the following terms.",
+      description: "Welcome to ThePickleHub. By using our services, you agree to comply with the following terms.",
       acceptance: "If you do not agree with any of these terms, please do not use our services.",
     },
     account: {
@@ -101,7 +132,7 @@ export const en: Translations = {
     },
     acceptableUse: {
       title: "Acceptable Use",
-      description: "When using The Pickle Hub, you agree to:",
+      description: "When using ThePickleHub, you agree to:",
       items: {
         noIllegal: "Not engage in illegal activities",
         noHarassment: "Not harass, threaten, or insult others",
@@ -121,11 +152,11 @@ export const en: Translations = {
     },
     intellectualProperty: {
       title: "Intellectual Property",
-      description: "The Pickle Hub brand, logo, and content are protected by intellectual property laws. You may not copy or use them without permission.",
+      description: "ThePickleHub brand, logo, and content are protected by intellectual property laws. You may not copy or use them without permission.",
     },
     liability: {
       title: "Limitation of Liability",
-      description: "The Pickle Hub provides services with the following limitations:",
+      description: "ThePickleHub provides services with the following limitations:",
       items: {
         asIs: "Services are provided \"as is\"",
         noWarranty: "We do not guarantee uninterrupted or error-free service",
@@ -178,11 +209,23 @@ export const en: Translations = {
     deleteAccountTitle: "Permanently Delete Account",
     deleteAccountWarning: "This will permanently delete your account and all your data, including:",
     deleteDataProfile: "Profile information and avatar",
-    deleteDataTournaments: "Tournaments you created",
+    // Not "tournaments you created will be deleted": they are not.
+    // quick_tables.creator_user_id and team_match_tournaments.created_by are
+    // ON DELETE SET NULL, so a tournament stays and simply stops naming you.
+    deleteDataTournaments: "The link between you and the tournaments you created (the tournaments remain, no longer under your name)",
     deleteDataContent: "Comments, likes and interaction data",
     deleteAccountIrreversible: "This action cannot be undone.",
     deleteConfirmInstruction: "Type \"{word}\" to confirm:",
     deleteAccountConfirm: "Delete Account",
+    deleteBlockedShopOwner:
+      "This account owns a shop. To close the shop and the account safely, please send a request to tapickleballvn@gmail.com.",
+    deleteBlockedShopOwnerWhy:
+      "The shop still holds products, images and moderation history. During the closed pilot ThePickleHub closes shops by hand so that nothing worth keeping is deleted by accident.",
+    deleteBlockedShopOwnerNoAutoSend:
+      "The button below only opens your email app — it does NOT send anything. Please write from the address you registered with; we will confirm before doing anything.",
+    deleteBlockedShopOwnerCta: "Compose the request",
+    deleteBlockedShopOwnerBack: "Go back",
+    deleteBlockedShopOwnerEmailSubject: "Request to close my shop and account",
   },
   nav: {
     home: "Home",
@@ -360,7 +403,7 @@ export const en: Translations = {
   },
   home: {
     hero: {
-      title: "The Pickle Hub",
+      title: "ThePickleHub",
       subtitle: "Professional Pickleball Media Platform",
       description: "Live streaming and on-demand videos from top tournaments",
       cta: "Explore Tournaments",
@@ -422,7 +465,8 @@ export const en: Translations = {
     noLivestreams: "No livestreams",
     scheduledFor: "Scheduled for",
     replay: "Replay",
-    watchingTooltip: "Number of people watching live right now",
+    watchingTooltip: "People watching right now",
+    watchingAria: "{count} people watching live",
     totalViewsTooltip: "Total number of views since the stream started",
     previewRemaining: "Free preview · {seconds}s left",
     previewEndingSoon: "{seconds}s left · Sign up to keep watching",

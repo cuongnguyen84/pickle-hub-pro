@@ -9,6 +9,29 @@ import AVKit
 /// control. Live streams pass `progressKey: nil` (no resume). AVPlayer surfaces
 /// AirPlay + the system PiP button through the standard player controls.
 struct VideoPlayerScreen: View {
+    private enum PlaybackQuality: Int, CaseIterable, Identifiable {
+        case auto = 0
+        case p1080 = 1080
+        case p720 = 720
+        case p540 = 540
+        case p360 = 360
+        case p270 = 270
+
+        var id: Int { rawValue }
+        var label: String { self == .auto ? "Tự động" : "\(rawValue)p" }
+        var muxResolution: String? { self == .auto ? nil : "\(rawValue)p" }
+        var resolution: CGSize {
+            switch self {
+            case .auto: return .zero
+            case .p1080: return CGSize(width: 1920, height: 1080)
+            case .p720: return CGSize(width: 1280, height: 720)
+            case .p540: return CGSize(width: 960, height: 540)
+            case .p360: return CGSize(width: 640, height: 360)
+            case .p270: return CGSize(width: 480, height: 270)
+            }
+        }
+    }
+
     let url: URL
     let title: String
     var progressKey: String? = nil
@@ -17,19 +40,26 @@ struct VideoPlayerScreen: View {
 
     @State private var player: AVPlayer?
     @State private var observer: Any?
+    @State private var playbackQuality: PlaybackQuality = .auto
+
+    private var isHLS: Bool { url.pathExtension.lowercased() == "m3u8" }
+    private var isLiveStream: Bool { livestreamID != nil && progressKey == nil }
+    private var isMuxHLS: Bool {
+        isHLS && url.host?.lowercased().hasSuffix("mux.com") == true
+    }
 
     var body: some View {
         Group {
             if let livestreamID {
                 // Player pinned at 16:9 up top, chat fills the rest.
                 VStack(spacing: 0) {
-                    VideoPlayer(player: player)
+                    playerView
                         .aspectRatio(16.0 / 9.0, contentMode: .fit)
                         .background(Color.black)
                     ChatPanel(livestreamID: livestreamID.uuidString.lowercased())
                 }
             } else {
-                VideoPlayer(player: player)
+                playerView
                     .background(Color.black)
                     .ignoresSafeArea(edges: .bottom)
             }
@@ -48,10 +78,53 @@ struct VideoPlayerScreen: View {
         .onDisappear(perform: stop)
     }
 
+    private var playerView: some View {
+        ZStack(alignment: .topTrailing) {
+            VideoPlayer(player: player)
+            if isHLS {
+                qualityMenu.padding(8)
+            }
+        }
+    }
+
+    private var qualityMenu: some View {
+        Menu {
+            ForEach(PlaybackQuality.allCases) { quality in
+                Button {
+                    playbackQuality = quality
+                    applyPlaybackQuality()
+                } label: {
+                    if playbackQuality == quality {
+                        Label(quality.label, systemImage: "checkmark")
+                    } else {
+                        Text(quality.label)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "gearshape.fill")
+                Text(playbackQuality == .auto ? "Auto" : playbackQuality.label)
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .frame(height: 38)
+            .background(.black.opacity(0.55), in: Capsule())
+        }
+        .accessibilityLabel("Chất lượng video")
+        .accessibilityValue(playbackQuality.label)
+    }
+
     private func start() {
         configureAudioSession()
         guard player == nil else { player?.play(); return }
-        let avPlayer = AVPlayer(url: url)
+        let item = makePlayerItem(for: playbackQuality)
+        let avPlayer = AVPlayer(playerItem: item)
+        // Prefer a short startup wait over repeatedly freezing on brief CDN or
+        // cellular jitter. The item below keeps four 2-second Mux segments
+        // buffered for live playback; AVPlayer still adapts normally in Auto.
+        avPlayer.automaticallyWaitsToMinimizeStalling = true
         player = avPlayer
 
         // Resume VOD at the saved position.
@@ -70,6 +143,47 @@ struct VideoPlayerScreen: View {
             }
         }
         avPlayer.play()
+    }
+
+    private func applyPlaybackQuality() {
+        guard let player else { return }
+
+        // AVPlayer's preferredMaximumResolution is advisory and may keep the
+        // current rendition. Mux manifest constraints make a manual selection
+        // deterministic by returning only the requested rendition.
+        let position = player.currentTime()
+        let shouldResume = player.timeControlStatus != .paused
+        player.replaceCurrentItem(with: makePlayerItem(for: playbackQuality))
+
+        if progressKey != nil, position.isValid, position.seconds.isFinite {
+            player.seek(to: position, toleranceBefore: .zero, toleranceAfter: .zero)
+        }
+        if shouldResume { player.play() }
+    }
+
+    private func makePlayerItem(for quality: PlaybackQuality) -> AVPlayerItem {
+        let item = AVPlayerItem(url: playbackURL(for: quality))
+        item.preferredMaximumResolution = quality.resolution
+        item.preferredPeakBitRate = 0
+        if isLiveStream {
+            item.preferredForwardBufferDuration = 8
+        }
+        return item
+    }
+
+    private func playbackURL(for quality: PlaybackQuality) -> URL {
+        guard isMuxHLS, var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return url
+        }
+
+        var queryItems = components.queryItems ?? []
+        queryItems.removeAll { $0.name == "min_resolution" || $0.name == "max_resolution" }
+        if let resolution = quality.muxResolution {
+            queryItems.append(URLQueryItem(name: "min_resolution", value: resolution))
+            queryItems.append(URLQueryItem(name: "max_resolution", value: resolution))
+        }
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+        return components.url ?? url
     }
 
     private func stop() {

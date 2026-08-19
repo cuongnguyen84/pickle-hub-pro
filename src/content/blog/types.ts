@@ -4,6 +4,7 @@ export interface BlogSection {
   listItems?: string[];
   orderedList?: string[];
   internalLinks?: { text: string; path: string }[];
+  table?: { caption?: string; headers: string[]; rows: string[][] };
   image?: { src: string; alt: string; caption?: string };
 }
 

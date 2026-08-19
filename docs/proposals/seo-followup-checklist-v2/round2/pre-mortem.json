@@ -1,0 +1,37 @@
+{
+  "agent": "pre-mortem",
+  "rebuttals": [
+    {
+      "id": "D3",
+      "topic": "Increment 4 — siết thin-gate cho news/matches sau khi classifier cho số thật: cơ chế Sự cố 1 (venues) có áp dụng nguyên xi không?",
+      "myRound1Position": "Sự cố 1: siết isThinVenue() deindex 56% click; metric coverage báo THÀNH CÔNG trong khi traffic sập; internal-link block không lọc thin nên cụm tự ăn chính nó; đòi floor <loc> count (≥900) trong CI trước khi bàn bất kỳ thay đổi gate nào.",
+      "stance": "REFINE",
+      "evidence": [
+        "functions/_lib/render/news.ts:175-182 — related-news strip lọc DUY NHẤT status/language, không predicate thin, y hệt khối venues.ts:435-447",
+        "functions/_lib/render/match-page.ts:218-231 — related-matches lọc DUY NHẤT is_public; sitemap-matches.xml.ts:41-59 lọc thêm verification_status + played_at 365d + qt-/-test → hai bộ lọc ĐỘC LẬP",
+        "tests/seo.spec.ts:285-320 — sweep lấy <loc> ĐẦU TIÊN; sitemap-news.xml.ts:59 order published_at DESC; sitemap-matches.xml.ts:43 order updated_at DESC → mẫu CI luôn là hàng mới nhất",
+        "solution-architect.md:112 — ngưỡng kích hoạt increment 4 là '≥70% news Discovered/Crawled - not indexed' = chính con số metric",
+        "supabase/functions/match-expire/index.ts:35-44 + docs/cron-schedules.md:39 — cron 21:00 UTC flip pending→expired; sitemap-matches.xml.ts:41 tính 'pending' là hợp lệ"
+      ],
+      "reasoning": "REFINE chứ không HOLD: cấu trúc khác thật ở 2 điểm nhưng 3/4 mắt xích áp dụng NGUYÊN XI, một mắt xích TỆ HƠN. (a) NGUYÊN XI — internal-link block không lọc thin ở cả news lẫn match; hai khối này thêm 28/05 CHÍNH ĐỂ chữa 'Pages with little content 414 URL' + 'Orphan pages 281 URL' — increment 4 tháo đúng miếng vá đó. (b) NGUYÊN XI MẠNH HƠN — gate lấy mẫu hàng khoẻ nhất: news-ingest 6h/lần nên URL mẫu luôn là bài mới nhất, cohort mà architect thừa nhận 'chưa kịp crawl'. (c) TỆ NHẤT — ở venues tiêu chí là dữ liệu, metric là hệ quả; ở increment 4 tiêu chí CHÍNH LÀ metric → vòng lặp đóng kín trong một biến: noindex làm Google quên URL, 138 tụt, checklist ghi ĐẠT. (d) KHÁC THẬT — không có predicate chung sẵn cho news/matches → không có bẫy 'một dòng hai hậu quả'; nếu noindex chặt hơn sitemap thì GSC nổ bucket ồn ào, phát hiện 1-2 tuần, TỐT hơn venues. (e) KHÁC THẬT — quy mô: matches 8 URL/7 click/62 impr (đau 2/10, rút từ 9/10); news 89 URL/56 click/1741 impr, trong đó 51 URL 0-click nhưng 1097 impr = đúng hình dạng venues, nhỏ hơn 18 lần. KẾT: an toàn hơn về QUY MÔ, KHÔNG an toàn hơn về CƠ CHẾ. ĐIỀU KIỆN TỐI THIỂU (đủ 6, thiếu 1 là không chạy): [1] Floor <loc> CI cho cả 3 segment (venues ≥900, news/matches ≥ hôm nay −5%). [2] Sweep lấy thêm <loc> CUỐI + 1 ngẫu nhiên mỗi segment. [3] CẤM share predicate với sitemap: chỉ noindex, GIỮ URL trong sitemap; muốn drop sau 28 ngày thì PR riêng. [4] Cohort log trước-sau: SELECT count(*) + danh sách slug vào docs/ TRƯỚC merge; URL nào impression > 0 loại bằng allowlist. [5] Nếu predicate đụng verification_status: phải có test khoá việc match-expire cron tự noindex hàng loạt lúc 21:00 UTC — không có thì cấm dùng cột đó. [6] Nguồn số phải chịu được tail: Trang.csv cắt cứng 1000 dòng, /san chiếm 811 → news/matches ở đuôi bị cắt, 'vắng mặt' ≠ '0 click'; increment 4 phải phân biệt zero với unknown và chạy ≥300 URL thật (architect mới đạt 15 trước timeout)."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Cron trở thành người deploy thay đổi SEO — nhánh hỏng không gate nào chạm",
+      "with": "solution-architect",
+      "myPosition": "sitemap-matches.xml.ts:41 coi verification_status='pending' hợp lệ; match-expire (index.ts:35-44, cron 0 21 * * *) flip pending→expired sau 7 ngày → thay đổi SEO ship bằng DỮ LIỆU không bằng code: không commit, CI không chạy, soak không có gì, TTL 6h rồi trang đổi noindex. Venues KHÔNG có cơ chế này (isThinVenue đọc cột người sửa). Lập trường: increment 4 cấm dùng cột do cron ghi làm đầu vào predicate, trừ khi có test khoá riêng."
+    },
+    {
+      "topic": "Divergence sẵn có giữa sitemap-matches và renderMatch — nên sửa TRƯỚC, tách khỏi increment 4",
+      "with": "solution-architect",
+      "myPosition": "sitemap-matches.xml.ts:57-59 loại qt-* và *-test nhưng match-page.ts:75 + :221-224 chỉ lọc is_public → mỗi trang /tran-dau/* đang phát link tới đúng URL sitemap cố giấu; trang test/seed vẫn 200 cho Googlebot. Sửa (thêm 2 filter vào match-page.ts:221-224) là việc RẺ, độc lập, không cần classifier — làm trước để xoá một biến khỏi increment 4."
+    },
+    {
+      "topic": "Precondition '≥70% news not-indexed' là điều kiện SAI để noindex",
+      "with": "solution-architect",
+      "myPosition": "News mới ingest 6h/lần → not-indexed cao là trạng thái BÌNH THƯỜNG TẠM THỜI (architect tự viết: 4/4 mẫu là bài mới nhất chưa kịp crawl). Điều kiện đúng: tỉ lệ not-indexed của cohort ≥60 ngày tuổi, không phải toàn segment. Đo sai cohort → ngưỡng 70% gần như chắc chắn đạt → increment 4 tự kích hoạt bởi artefact của nhịp ingest."
+    }
+  ],
+  "filesVerified": ["functions/_lib/render/news.ts", "functions/_lib/render/match-page.ts", "functions/_lib/render/match-seo.ts", "functions/sitemap-news.xml.ts", "functions/sitemap-matches.xml.ts", "functions/sitemap-venues.xml.ts", "tests/seo.spec.ts", "supabase/functions/match-expire/index.ts", "docs/cron-schedules.md", "functions/_middleware.ts", "~/Downloads/.../Trang.csv"]
+}

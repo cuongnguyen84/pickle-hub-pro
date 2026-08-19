@@ -59,6 +59,12 @@ function renderSections(content: BlogPostContent, siteUrl: string): string {
     if (s.orderedList?.length) {
       out.push(`<ol>${s.orderedList.map(renderListItem).join("")}</ol>`);
     }
+    if (s.table?.headers?.length) {
+      const cap = s.table.caption ? `<caption>${escapeHtml(s.table.caption)}</caption>` : "";
+      const head = `<thead><tr>${s.table.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>`;
+      const rows = s.table.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join("")}</tr>`).join("");
+      out.push(`<table>${cap}${head}<tbody>${rows}</tbody></table>`);
+    }
     if (s.image?.src) {
       out.push(
         `<figure><img src="${escapeHtml(s.image.src)}" alt="${escapeHtml(s.image.alt)}" loading="lazy"/>` +
@@ -93,7 +99,7 @@ export async function renderEnBlogBody(slug: string, siteUrl: string): Promise<s
   const post: BlogPost | undefined = await loadBlogPost(slug);
   if (!post) return "";
   const en = post.content.en;
-  return `<article>${renderSections(en, siteUrl)}${renderFaq(en)}</article>`;
+  return `<article><h1>${escapeHtml(en.title)}</h1>${renderSections(en, siteUrl)}${renderFaq(en)}</article>`;
 }
 
 /** FAQPage node for the @graph, or null when the post has no FAQ. */

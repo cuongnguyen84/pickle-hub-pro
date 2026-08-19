@@ -4,6 +4,70 @@
     "element": "<Index />"
   },
   {
+    "path": "/shop",
+    "element": "<ShopHome />"
+  },
+  {
+    "path": "/vi/shop",
+    "element": "<ViLanguageWrapper><ShopHome /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/search",
+    "element": "<ShopSearch />"
+  },
+  {
+    "path": "/vi/shop/search",
+    "element": "<ViLanguageWrapper><ShopSearch /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/category/:slug",
+    "element": "<ShopCategory />"
+  },
+  {
+    "path": "/shop/product/:slug",
+    "element": "<ProductDetail />"
+  },
+  {
+    "path": "/vi/shop/product/:slug",
+    "element": "<ViLanguageWrapper><ProductDetail /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/store/:slug",
+    "element": "<ShopStore />"
+  },
+  {
+    "path": "/vi/shop/store/:slug",
+    "element": "<ViLanguageWrapper><ShopStore /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop/category/:slug",
+    "element": "<ViLanguageWrapper><ShopCategory /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/cart",
+    "element": "<RequireAuth><ShopCart /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/cart",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopCart /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/checkout/:shopSlug",
+    "element": "<RequireAuth><ShopCheckout /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/checkout/:shopSlug",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopCheckout /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/order/:code",
+    "element": "<RequireAuth><ShopOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/order/:code",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrderDetail /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
     "path": "/live",
     "element": "<Live />"
   },
@@ -492,6 +556,10 @@
     "element": "<AdminNews />"
   },
   {
+    "path": "/admin/reviews",
+    "element": "<AdminReviews />"
+  },
+  {
     "path": "/admin/embeds",
     "element": "<AdminEmbeds />"
   },
@@ -574,6 +642,62 @@
   {
     "path": "/creator/tournaments",
     "element": "<CreatorTournaments />"
+  },
+  {
+    "path": "/proto/shop/*",
+    "element": "<ProtoShopApp />"
+  },
+  {
+    "path": "/shop/sell",
+    "element": "<SellLanding />"
+  },
+  {
+    "path": "/seller",
+    "element": "<RequireAuth><SellerHome /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application",
+    "element": "<RequireAuth><SellerApplication /></RequireAuth>"
+  },
+  {
+    "path": "/seller/application/status",
+    "element": "<RequireAuth><SellerApplicationStatus /></RequireAuth>"
+  },
+  {
+    "path": "/seller/settings",
+    "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products",
+    "element": "<RequireAuth><SellerProducts /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/new",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
+    "path": "/seller/products/:id/edit",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplicationReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProducts /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProductReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/contacts",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopContacts /></RequireAuth>"
   },
   {
     "path": "/privacy",
@@ -774,5 +898,29 @@
   {
     "path": "/vi/*",
     "element": "<ViLanguageWrapper><NotFound /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/rankings/ppa-tour",
+    "element": "<PpaRankings />"
+  },
+  {
+    "path": "/vi/rankings/ppa-tour",
+    "element": "<ViLanguageWrapper><PpaRankings /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/seller/orders",
+    "element": "<RequireAuth><SellerOrders /></RequireAuth>"
+  },
+  {
+    "path": "/seller/orders/:code",
+    "element": "<RequireAuth><SellerOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/shop/orders",
+    "element": "<RequireAuth><ShopOrders /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/orders",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrders /></RequireAuth></ViLanguageWrapper>"
   }
 ]

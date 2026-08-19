@@ -154,7 +154,7 @@ const WatchVideo = () => {
           needs the video.other type + thumbnail image specifically. */}
       <DynamicMeta
         title={video.title}
-        description={video.description ?? `Watch ${video.title} on The Pickle Hub`}
+        description={video.description ?? `Watch ${video.title} on ThePickleHub`}
         image={video.thumbnail_url ?? undefined}
         type="video.other"
       />

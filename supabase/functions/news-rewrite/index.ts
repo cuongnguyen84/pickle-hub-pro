@@ -226,13 +226,23 @@ ${sourceMaterial}`;
   throw new Error("Gemini rewrite attempts exhausted");
 }
 
+/** The only categories the pipeline accepts, shared by the schema and the validator. */
+const NEWS_CATEGORIES = ["tournament", "player", "equipment", "business", "community"] as const;
+
 function rewriteSchema() {
   const languageSchema = {
     type: "object",
     properties: {
       title: { type: "string" },
       summary: { type: "string" },
-      category: { type: "string" },
+      // Enum, not a bare string. The prompt already said "one of tournament,
+    // player, equipment, business, community" and Gemini still returned
+    // something else often enough to strand two articles at three attempts
+    // each — "en category is invalid" is a deterministic failure, so retrying
+    // it just spends the budget three times to reach the same place.
+    // Structured output honours an enum, so an invalid value stops being
+    // possible rather than being caught after generation.
+    category: { type: "string", enum: NEWS_CATEGORIES },
       importance: { type: "integer" },
       sections: {
         type: "array",
@@ -255,6 +265,27 @@ function rewriteSchema() {
   };
 }
 
+/**
+ * Word-count bands, per content kind AND per language.
+ *
+ * One shared band was rejecting drafts in both directions at once: English
+ * briefs came in at 109-134 against a 150 floor, Vietnamese ones at 280-354
+ * against a 250 ceiling. Seven origins were stuck on exactly this.
+ *
+ * The Vietnamese numbers are not verbosity. The counter splits on whitespace,
+ * and Vietnamese writes syllables separately — "Việt Nam" counts as two,
+ * "vận động viên" as three — so the same article measures roughly 40% higher in
+ * Vietnamese than in English. Judging both against one band guarantees that a
+ * translation pair which is correct in both languages fails in one of them.
+ *
+ * The English floor also drops to 120: a thin source honestly yields a short
+ * brief, and discarding the article entirely is worse than publishing 130 words.
+ */
+const WORD_BANDS: Record<ContentKind, Record<"en" | "vi", [number, number]>> = {
+  full: { en: [350, 800], vi: [450, 1150] },
+  brief: { en: [120, 250], vi: [170, 380] },
+};
+
 function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
   for (const [language, value] of [
     ["en", draft?.en],
@@ -273,7 +304,7 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
     if (value.summary.trim().length < 120 || value.summary.length > 300) {
       throw new Error(`${language} summary length is invalid`);
     }
-    if (!["tournament", "player", "equipment", "business", "community"].includes(value.category)) {
+    if (!(NEWS_CATEGORIES as readonly string[]).includes(value.category)) {
       throw new Error(`${language} category is invalid`);
     }
     if (!Number.isInteger(value.importance) || value.importance < 1 || value.importance > 5) {
@@ -288,7 +319,7 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
     // editorial target even after corrective retries. Keep a hard floor that
     // still represents a substantive article instead of failing the queue
     // indefinitely; the prompt continues to target 500–800 words.
-    const [minimum, maximum] = kind === "full" ? [350, 800] : [150, 250];
+    const [minimum, maximum] = WORD_BANDS[kind][language];
     if (words < minimum || words > maximum) {
       throw new Error(`${language} body has ${words} words; expected ${minimum}-${maximum}`);
     }

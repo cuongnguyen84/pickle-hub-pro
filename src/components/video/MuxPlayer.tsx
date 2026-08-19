@@ -3,7 +3,7 @@ import { useRef, useState, useCallback, forwardRef, useImperativeHandle, useEffe
 import { TapToPlayOverlay } from "./TapToPlayOverlay";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface MuxPlayerHandle {
@@ -35,6 +35,8 @@ const MAX_RETRIES = 3;
 const STALL_TIMEOUT_MS = 10000; // 10 seconds
 const HEALTH_CHECK_INTERVAL_MS = 5000; // 5 seconds
 const RETRY_DELAYS = [2000, 4000, 8000]; // Exponential backoff
+type NativeHlsQuality = "auto" | "1080p" | "720p" | "540p" | "360p" | "270p";
+const NATIVE_HLS_QUALITIES: NativeHlsQuality[] = ["auto", "1080p", "720p", "540p", "360p", "270p"];
 
 export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   playbackId,
@@ -49,18 +51,32 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
 }, ref) => {
   const { t } = useI18n();
   const { toast } = useToast();
+  // Safari on macOS/iPadOS otherwise uses native HLS, where browsers do not
+  // expose the rendition ladder and Mux cannot render its quality selector.
+  // Do not feature-detect window.MediaSource here: Safari may expose its
+  // managed MSE implementation differently. Mux handles the engine details;
+  // only iPhone/iPod must stay on Apple's native HLS because MSE is unavailable.
+  const requiresNativeHls = typeof navigator !== "undefined"
+    && /iPhone|iPod/i.test(navigator.userAgent);
   const playerRef = useRef<ComponentRef<typeof MuxPlayerReact> | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [, setIsReady] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [nativeHlsQuality, setNativeHlsQuality] = useState<NativeHlsQuality>("auto");
+  const pinnedNativeResolution = nativeHlsQuality === "auto" ? undefined : nativeHlsQuality;
+  const nativeHlsSourceParams = pinnedNativeResolution
+    ? { min_resolution: pinnedNativeResolution, max_resolution: pinnedNativeResolution }
+    : {};
 
   // Refs for health monitoring
   const lastCurrentTimeRef = useRef<number>(0);
   const stallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const healthCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
   const isPlayingRef = useRef(false);
   const gatedRef = useRef(gated);
 
@@ -118,8 +134,11 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   }, []);
 
   // Auto-reconnect logic
-  const attemptReconnect = useCallback(async () => {
-    if (retryCount >= MAX_RETRIES) {
+  const attemptReconnect = useCallback(() => {
+    if (retryTimeoutRef.current) return;
+
+    const currentRetry = retryCountRef.current;
+    if (currentRetry >= MAX_RETRIES) {
       console.log("[MuxPlayer] Max retries reached, showing error state");
       setIsReconnecting(false);
       setHasError(true);
@@ -131,12 +150,13 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
       return;
     }
 
-    const delay = RETRY_DELAYS[retryCount] || 8000;
-    console.log(`[MuxPlayer] Attempting reconnect (${retryCount + 1}/${MAX_RETRIES}) in ${delay}ms`);
+    const delay = RETRY_DELAYS[currentRetry] || 8000;
+    console.log(`[MuxPlayer] Attempting reconnect (${currentRetry + 1}/${MAX_RETRIES}) in ${delay}ms`);
     
     setIsReconnecting(true);
 
     retryTimeoutRef.current = setTimeout(async () => {
+      retryTimeoutRef.current = null;
       try {
         if (playerRef.current) {
           console.log("[MuxPlayer] Reloading player...");
@@ -149,20 +169,22 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
             await playerRef.current.play();
             console.log("[MuxPlayer] Reconnect successful");
             setIsReconnecting(false);
+            retryCountRef.current = 0;
             setRetryCount(0);
           }
         }
       } catch (err) {
         console.error("[MuxPlayer] Reconnect failed:", err);
-        setRetryCount(prev => prev + 1);
+        retryCountRef.current += 1;
+        setRetryCount(retryCountRef.current);
         attemptReconnect();
       }
     }, delay);
-  }, [retryCount, toast, t]);
+  }, [toast, t]);
 
   // Health check for live streams
   useEffect(() => {
-    if (!isLive || !isPlayingRef.current) return undefined;
+    if (!isLive || !isPlaying) return undefined;
 
     healthCheckIntervalRef.current = setInterval(() => {
       if (!playerRef.current || !isPlayingRef.current) return;
@@ -196,7 +218,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         healthCheckIntervalRef.current = null;
       }
     };
-  }, [isLive, attemptReconnect]);
+  }, [isLive, isPlaying, attemptReconnect]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -230,6 +252,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
       setShowOverlay(false);
       setHasError(false);
       isPlayingRef.current = true;
+      setIsPlaying(true);
     } catch (error) {
       console.error("[MuxPlayer] Play error:", error);
       toast({
@@ -245,6 +268,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
     console.log("[MuxPlayer] Manual retry triggered");
     setHasError(false);
     setIsReconnecting(false);
+    retryCountRef.current = 0;
     setRetryCount(0);
     setShowOverlay(true);
     clearAllTimeouts();
@@ -265,20 +289,28 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
     setShowOverlay(false);
     setHasError(false);
     setIsReconnecting(false);
+    retryCountRef.current = 0;
     setRetryCount(0);
     isPlayingRef.current = true;
+    setIsPlaying(true);
     onPlayStateChange?.(true);
   }, [onPlayStateChange, exitNativeSurfaces]);
 
   const handlePause = useCallback(() => {
     console.log("[MuxPlayer] Pause event");
     isPlayingRef.current = false;
+    setIsPlaying(false);
     onPlayStateChange?.(false);
     // Clear stall detection when paused
     if (stallTimeoutRef.current) {
       clearTimeout(stallTimeoutRef.current);
       stallTimeoutRef.current = null;
     }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    setIsReconnecting(false);
   }, [onPlayStateChange]);
 
   const handleError = useCallback((event: unknown) => {
@@ -321,7 +353,12 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
       clearTimeout(stallTimeoutRef.current);
       stallTimeoutRef.current = null;
     }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
     setIsReconnecting(false);
+    retryCountRef.current = 0;
     setRetryCount(0);
   }, []);
 
@@ -376,6 +413,28 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         </div>
       )}
 
+      {/* iPhone browsers must use Apple's native HLS engine, which does not
+          expose Mux's built-in rendition menu. Pin both manifest bounds from
+          this native <select>; Auto removes the bounds and restores ABR. */}
+      {requiresNativeHls && !showOverlay && !isReconnecting && (
+        <label className="absolute right-3 top-3 z-30 flex h-9 items-center gap-1.5 rounded-lg bg-black/75 px-2.5 text-xs font-semibold text-white backdrop-blur-sm">
+          <Settings className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Chất lượng video</span>
+          <select
+            aria-label="Chất lượng video"
+            value={nativeHlsQuality}
+            onChange={(event) => setNativeHlsQuality(event.target.value as NativeHlsQuality)}
+            className="max-w-[5.5rem] appearance-none bg-transparent pr-1 text-white outline-none"
+          >
+            {NATIVE_HLS_QUALITIES.map((quality) => (
+              <option key={quality} value={quality} className="text-black">
+                {quality === "auto" ? "Auto" : quality}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       {/* Mux Player - always rendered but behind overlay until played */}
       <MuxPlayerReact
         ref={playerRef}
@@ -388,6 +447,8 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
         muted={false}
         playsInline={true}
         streamType={streamType}
+        preferPlayback={requiresNativeHls ? undefined : "mse"}
+        extraSourceParams={requiresNativeHls ? nativeHlsSourceParams : undefined}
         className="w-full h-full"
         primaryColor="#22c55e"
         accentColor="#16a34a"

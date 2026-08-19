@@ -1,0 +1,46 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Hình dạng fix hàng metadata WatchLive (viewer chip + async values)",
+      "myRound1Position": "INC3 tối thiểu: chỉ giữ chỗ span viewer-count (min-w/visibility:hidden), không đụng cấu trúc hàng — hàng metadata là nghi phạm PHỤ, chính là banner DUPR + ngưỡng keyboard.",
+      "move": "CONCEDE",
+      "evidence": "src/pages/WatchLive.tsx:43 — `const { data: viewCount = 0 } = useViewCount(\"livestream\", id!);` → src/hooks/useInteractionData.ts:60-77 — query RIÊNG trên bảng `view_counts`, default 0, và `refetchInterval: 30 * 1000` (dòng 76). Vòng 1 em chỉ mở :420-431 nên không thấy dòng 43.",
+      "note": "Dữ kiện này lật đúng kết luận của em, theo hai bước: (1) `viewCount` là flex-item ANH EM trong cùng `flex flex-wrap gap-4` (WatchLive.tsx:390), đổi bề rộng khi 0 → '1.234 lượt xem' — min-w đặt riêng trên span viewer KHÔNG chặn được rewrap do sibling này gây ra, nên fix tối thiểu của em sai về mặt cơ học chứ không chỉ thiếu. (2) `refetchInterval: 30s` biến nó thành cơ chế LẶP suốt phiên 40 phút, đúng hình dạng tích luỹ mà PERF-05 nghi — mạnh hơn banner DUPR (one-shot) vốn giờ mất chỗ dựa vì auth_state toàn (not set) (00-data-ga4-raw.txt:56-59). Em đảo increments: hàng metadata lên INC1, banner tụt xuống sau. Hai chỉnh trên toa của critic, không phải phản đối: (a) `tabular-nums` đã có sẵn toàn cục ở src/styles/the-line.css:106 trong khối `:root[data-theme=\"the-line\"]` (mở ở :15) → bỏ khỏi diff, nó là no-op; (b) slot `visibility:hidden` phải bọc CẢ cụm viewCount + chip viewer, không chỉ chip viewer, nếu không rewrap 30s vẫn còn."
+    },
+    {
+      "id": "D2",
+      "topic": "Predicate thành công của proposal (toàn cục ≥75% vs per-route /live n≥100)",
+      "myRound1Position": "Đọc lại PERF-05B: %good CLS toàn cục VN+mobile ≥75% tại T+7 sau khi ship increments.",
+      "move": "CONCEDE",
+      "evidence": "docs/proposals/cls-attribution/00-data-ga4-raw.txt:15-53 — em tự cộng lại từng dòng, không lấy số của auditor: good=148 (90+20+15+6+3+2+2+1×10), poor=291 (179+37+22+17+15+3+3+3+2+2+2+1×6), ni=18 (10+3+2+2+1); tổng 457. 75% × 457 = 342,75 → cần 343 good. Sửa hoàn hảo stream d7750a98 (179 poor + 10 ni) → 337/457 = 73,74%. Cut non-live: 125/197 = 63,45%.",
+      "note": "Bốn con số khớp. Kết luận em không né được: predicate của em bị quyết định bởi TRAFFIC MIX chứ không bởi fix — nhánh 'tuần tới có buổi phát lớn' trượt ở 73,7% dù fix hoàn hảo, nhánh 'không có buổi phát' trượt ở 63,5% dù fix hoàn hảo. Một predicate mà cả hai nhánh đều trượt bất kể fix đúng hay sai thì không phải predicate, nó là một cái bẫy revert. Nhận toa R5. REFINE nhỏ khi viết mốc, không phải cãi lại: mẫu số `pagePath /live/*` thừa hưởng đúng lỗi R4 của chính auditor (CLS document-scoped, pageContext đóng băng lúc boot — src/lib/webVitalsRum.ts:170 `navigation_scope: \"document\"`, :259-264), nên mốc phải ghi rõ đây là PROXY, kèm thêm p75 CLS tuyệt đối của cut đó (không chỉ %good) và đối chiếu `route` vs `pagePath` khi dim `route` có data. Baseline em xác nhận: live good 20+3=23 / tổng live 260 = 8,85%."
+    },
+    {
+      "id": "D3",
+      "topic": "Font Vietnamese swap/preload có thuộc scope pass này không",
+      "myRound1Position": "Không nằm trong increments; là mục 'chưa loại trừ được' để nhìn lại nếu INC1-3 không nhích, không phải target của pass này.",
+      "move": "HOLD",
+      "evidence": "00-data-ga4-raw.txt:24,35,41-53 — các trang chữ NHIỀU nhất và async ÍT nhất lại sạch nhất: /onboarding 6 good / 0 poor, /vi/blog/* 6 good / 3 poor, /vi/san/* 4 good / 2 poor, /login 90 good / 15 poor (86% good). Poor dồn 226/246 vào /live/*. Cộng src/lib/webVitalsRum.ts:170 + :259-264.",
+      "note": "Ba điểm bác trực diện, không lặp lại vòng 1. (1) PHÂN BỐ: nếu inter-vietnamese swap reflow 'mọi trang' như critic viết, các trang text-heavy không-async phải bẩn NHẤT; dữ liệu cho ngược lại chính xác. Một reflow font toàn cục về mặt cơ học không tạo ra được phân bố dồn cục vào /live. (2) 'Font là lời giải DUY NHẤT hợp lý cho /login 15 poor' — sai, đã có lời giải rẻ hơn và được cả ba agent xác minh độc lập: CLS là document-scoped và pageContext đóng băng lúc boot (webVitalsRum.ts:170, :259-264), nên một document vào từ /login rồi soft-nav sang /live tích shift ở /live vẫn được ghi với entry-context /login. 15 poor đó không cần giả thuyết font nào. (3) GIÁ THẬT: toa (c) metric-match `size-adjust`/`ascent-override` đo lại theo Roboto là thay đổi METRIC CHỮ TOÀN SITE — blast radius lớn nhất trong cả pass, không một byte field evidence chống lưng, và rơi đúng vào cửa sổ đo attribution; đây đúng loại lỗi risk-auditor R8 đã chặn (tách PR, tách cửa sổ đo). Toa (a) thêm preload font thứ 3 tranh băng thông 4G với HLS manifest trong khi LCP còn 77ms biên (2423/2500). CHỈNH PHẠM VI, không phải nhượng bộ: critic tìm được một defect THẬT nhưng không phải CLS — index.html:62-63, `inter-latin` là `optional` còn `inter-vietnamese` là `swap`, sinh chữ lai font trong cùng một từ. Em xác minh body font đúng là Inter (src/index.css:162-164 `body{font-family:'Inter'}` đè kế thừa Geist từ `:root[data-theme=\"the-line\"]` ở src/styles/the-line.css:102), nên defect này có thật. Nó đi ticket riêng 'chất lượng chữ Việt', một dòng đổi `optional`→`swap`, không gộp vào pass CLS và không phải blocker của pass CLS."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Predicate thay thế của R5 dùng pagePath /live/* làm mẫu số, trong khi R4 của chính risk-auditor lập luận pagePath KHÔNG xác định được nơi shift xảy ra (CLS document-scoped + soft-nav). Hai finding này mâu thuẫn nội bộ. Em nhận predicate nhưng nó phải được viết là proxy có khuyết tật đã biết, kèm p75 CLS tuyệt đối của cut và một bước đối chiếu route vs pagePath — nếu không, vòng sau lại tuyên THẮNG/THUA trên một mẫu số không ai tin.",
+      "with": "risk-auditor",
+      "myPosition": "Nhận %good /live/* n≥100 làm predicate chính, NHƯNG mốc phải ghi kèm: (a) nhãn 'proxy, document-scoped', (b) p75 CLS tuyệt đối của cut /live/*, (c) nhánh 'route lệch pagePath nhiều → predicate vô hiệu, đọc lại bằng route'."
+    },
+    {
+      "topic": "Thứ tự thi công trên /live: critic xếp #1 = dựng lại shell WatchLive (bỏ early-return isLoading, hợp nhất cây loading và cây thật); em xếp hàng metadata (#2 của critic) lên trước.",
+      "with": "ui-ux-critic",
+      "myPosition": "Hàng metadata đi trước. Shell là shift MỘT LẦN lúc load; hàng metadata là cơ chế LẶP mỗi 30s suốt phiên 40 phút (WatchLive.tsx:43 + useInteractionData.ts:76 refetchInterval) — khớp đúng hình dạng tích luỹ đang điều tra, mà giả thuyết tích luỹ mới là thứ giải thích được 0.67. Chi phí cũng lệch hẳn: ~15 dòng trong một khối vs dựng lại cả trang, trên đúng trang có tiền lệ sự cố live (src/lib/chunkError.ts, 2026-07-19) và 0 dòng test hồi quy (risk-auditor R11). Shell vẫn nên làm, nhưng làm sau STOP-AND-LOOK, không phải trước."
+    },
+    {
+      "topic": "Thiếu param auth_state trên event web_vital làm mọi giả thuyết phụ-thuộc-đăng-nhập (banner DUPR) không kiểm chứng được bằng field data (00-data-ga4-raw.txt:56-59). Dim đã đăng ký sẵn.",
+      "with": "orchestrator",
+      "myPosition": "Thêm `auth_state` vào `buildWebVitalEvent` (src/lib/webVitalsRum.ts, quanh :163-171) — 1 dòng, 0 KB, dim đã tồn tại. Gộp vào PR đầu tiên. Không có nó thì mọi kết luận về banner DUPR mãi mãi là suy diễn từ code."
+    }
+  ]
+}

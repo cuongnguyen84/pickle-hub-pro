@@ -110,3 +110,73 @@ updatedDate; pickleball-rules-complete-guide gains its hero og:image.
 fixpoint and normalizeImageUrl uses a hostname check (CodeQL #45/46/47,
 #22). Output identical for well-formed content; bump purges any cached
 page whose HTML a single-pass strip under-sanitized.
+2026-08-08 — v34->v35: invalidate cached bot-facing homepage HTML after
+adding the complete ThePickleHub purpose statement for Google OAuth branding
+verification. Without the bump, Googlebot can continue seeing v34 for 6 hours.
+2026-08-08 — v35->v36: invalidate the homepage and Privacy Policy after adding
+the explicit Google Sign-In data-purpose disclosure and a complete bot-readable
+privacy document for OAuth verification crawlers.
+2026-08-08 — v36->v37: make the exact OAuth app name `ThePickleHub` a prominent
+homepage heading beside its purpose, normalize visible spaced brand variants,
+and purge cached bot HTML from the rejected verification attempt.
+2026-08-08 — v37->v38: normalize the homepage document, social, and crawler
+titles to the exact OAuth app name `ThePickleHub`; purge cached homepage HTML
+that still included the former positioning tagline in the application name.
+2026-08-14 — v42->v43: EN home title enriched to "ThePickleHub – Pickleball
+Asia: Live & Tournaments" (safe: OAuth brand verification APPROVED 2026-08-09,
+see docs/seo-audit-2026-08-11.md banner) and HCMC recap (EN + VI) deep-links
+the WPR explainer; purge stale bot HTML for / and the recap pair. PR #579.
+2026-08-14 — v43->v44: GEO attribution test follow-up — the 2026 tournament
+calendar post (EN repo + VI Supabase row) now names ThePickleHub in its
+opening paragraph so an extracted snippet stays attributable; purge stale
+bot HTML for the calendar pair.
+2026-08-14 — v45->v46: GEO rollout — tournament-calendar opening front-loads
+the full 2026 date list + dateline (statuses refreshed to Aug 14), and 7
+evergreen guides name ThePickleHub in their opening paragraph (EN repo + VI
+Supabase rows) so extracted snippets stay attributable.
+2026-08-17 — v47->v48: /clubs became a real bilingual pair. /vi/clubs had been
+rendering a complete Vietnamese page (VI title, VI copy, html lang="vi") and
+then canonicalising it to /clubs, so the VI version was built and immediately
+discarded — and with one canonical serving both locales the page could carry no
+hreflang at all (dropped by the 2026-05-18 Ahrefs fix, correctly, for the shape
+it had then). Each locale now self-references, hreflang en/vi/x-default points
+at two distinct URLs, both are in sitemap-static, and the body gained an h1, a
+GEO lead naming ThePickleHub with the club count, per-club upcoming-session
+counts and a crawlable link to the counterpart locale. Purge /clubs + /vi/clubs.
+Note: /social still shares one canonical across locales — same fix pending.
+
+2026-08-18 — v48->v49: the venue meta-description template changed, so every
+cached /san/ + /vi/san/ entry held a stale, mid-word-truncated snippet. Bumped
+rather than requesting ?nocache=1 on 1,688 URLs.
+
+2026-08-18 — v49->v50: Shop Phase 4 public launch. /shop, /shop/category/*,
+/shop/product/* and /shop/store/* (plus /vi/ twins) had been caching the
+renderNoindexShell body under the pilot gate, because the bot path
+short-circuited before routeAndRender ever ran. Without this bump, flipping
+SHOP_PUBLIC_INDEXING to "1" would have kept serving that shell — noindex meta
+intact — for another six hours, and the launch would have looked like it
+silently failed. Same commit adds renderShopCatalog / renderShopCategory /
+renderShopProduct / renderShopStore and drops the shop paths to the 5-minute
+HUB_LIST_TTL, because price and availability sit inside both the body and the
+Offer JSON-LD.
+
+2026-08-19 — NO bump: /social + /vi/social moved off the single-canonical
+pattern to a real bilingual pair (the follow-up a1233f4c deferred by name when
+it fixed /clubs), and /privacy + /terms + their /vi twins gained the hreflang
+their sitemap entries always claimed. The cached entries are stale for all six
+URLs, but six is well under the threshold where a global bump pays for itself —
+they are purged with ?nocache=1 post-deploy instead, the inverse of the v48->v49
+call above. Deliberately avoided a bump here for a second reason: the venue
+reviews work in flight owns the next version number, and racing it would give
+one of the two changes a key the other already used.
+
+2026-08-19 — NO bump: the duplicate-<h1> fix, the club SportsOrganization
+schema and the sitemap-players hreflang removal all change SSR output, and the
+h1 fix alone touches roughly 1,046 cached URLs (all /news/*, all /nguoi-choi/*,
+/rankings and /privacy in both locales). A version bump is still the wrong tool:
+none of this is time-critical — a duplicate h1 is a clarity problem, not an
+indexing block — and the default 6h TTL clears the whole set on its own before
+the next crawl of any consequence. The sitemap is generated per request and was
+never cached, so the hreflang removal is live immediately. Bumping would purge
+all 3,218 prerendered URLs to fix a cosmetic heading, which costs a full re-render
+of the site for no gain.

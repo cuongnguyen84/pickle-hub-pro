@@ -32,7 +32,7 @@ interface LiveSectionProps {
  */
 const streamThumb = (
   s: Livestream,
-  size: { width: number; height: number },
+  size: { width: number; height: number; fit?: "cover" | "contain" },
 ): string | undefined =>
   homepageThumbnailUrl(
     s.thumbnail_url
@@ -65,6 +65,28 @@ const rowTime = (iso: string | null | undefined): string => {
 
 const MAX_ROWS = 5;
 
+// CLS INC3 (proposal cls-attribution): Index renders this while the live
+// queries resolve and the previous navigation said live leads the page —
+// the hero section inserting itself after data arrived was the home page's
+// main layout shift. Same section/head/media classes as the real render,
+// so geometry (incl. the 16/9 media box) is reserved, not approximated.
+export function LiveSectionSkeleton() {
+  return (
+    <section className="tl-section tl-live-sec" aria-hidden="true">
+      <div className="tl-shell">
+        <div className="tl-live-head">
+          <h2 className="tl-live-title">&nbsp;</h2>
+        </div>
+        <div className="tl-live-main">
+          <div className="tl-live-main-media">
+            <span className="tl-live-thumb-ph" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams = [], language, priority = false }: LiveSectionProps) {
   const [inlinePlaybackRequested, setInlinePlaybackRequested] = useState(false);
   const isLive = liveStreams.length > 0;
@@ -84,7 +106,9 @@ export function LiveSection({ liveStreams, scheduledStreams = [], endedStreams =
   // The hero renders at ~374px on mobile and at most ~768px in the feed.
   // Asking Google Drive for 1280x720 transferred a 1.3MB image even while the
   // section was below the fold; the 768px derivative remains sharp at 2x DPR.
-  const mainThumb = main ? streamThumb(main, { width: 768, height: 432 }) : undefined;
+  const mainThumb = main
+    ? streamThumb(main, { width: 768, height: 432, fit: "contain" })
+    : undefined;
   const mainIsLive = main?.status === "live";
   const fallbackTitle = isLive
     ? (language === "vi" ? "Trận đang trực tiếp" : "Live match")

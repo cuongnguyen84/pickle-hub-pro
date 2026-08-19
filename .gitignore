@@ -81,3 +81,8 @@ playwright/.auth/
 
 # graphify knowledge graph output
 graphify-out/
+
+# index_coverage.py inspection cache
+scripts/seo/.index_coverage.sqlite
+docs/proposals/shop-marketplace/screenshots/
+scripts/seo/.seo_drift.db

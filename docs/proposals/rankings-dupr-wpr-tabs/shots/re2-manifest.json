@@ -1,0 +1,322 @@
+{
+  "rankingsMobile": {
+    "navFound": true,
+    "navBox": {
+      "x": 16,
+      "y": 313.6,
+      "w": 358,
+      "h": 57.5
+    },
+    "navDisplay": "grid",
+    "navCols": "178px 178px",
+    "tabs": [
+      {
+        "text": "DUPR | RATING CÁ NHÂN",
+        "active": true,
+        "box": {
+          "x": 17,
+          "w": 178,
+          "h": 55.5
+        },
+        "tabBg": "rgb(8, 9, 10)",
+        "titleColor": "rgb(252, 251, 247)",
+        "titleBgResolved": "rgb(8, 9, 10)",
+        "capColor": "oklab(0.648223 -0.000732186 0.00215108)"
+      },
+      {
+        "text": "WPR | NHÀ NGHỀ PPA TOUR",
+        "active": false,
+        "box": {
+          "x": 195,
+          "w": 178,
+          "h": 55.5
+        },
+        "tabBg": "rgba(0, 0, 0, 0)",
+        "titleColor": "rgb(58, 57, 51)",
+        "titleBgResolved": "rgba(0, 0, 0, 0)",
+        "capColor": "rgb(109, 106, 98)"
+      }
+    ],
+    "rankCandidates": [
+      {
+        "txt": "01",
+        "cls": "tl-rank-pos",
+        "y": 668.3,
+        "tag": "TD"
+      }
+    ],
+    "h1": "Ai đang đứng top, tính theo DUPR.",
+    "h1Box": {
+      "y": 144,
+      "h": 69,
+      "bottom": 213
+    },
+    "brCount": 0,
+    "viewportH": 844
+  },
+  "rankingsRows": {
+    "viewportH": 844,
+    "rows": [],
+    "fullyVisible": 0,
+    "partVisible": 0
+  },
+  "rankingsMobileConsole": [],
+  "tournaments_mobile_preview": {
+    "found": true,
+    "box": {
+      "x": 16,
+      "y": 1180.1,
+      "w": 358,
+      "h": 61
+    },
+    "display": "flex",
+    "cols": "none",
+    "border": "",
+    "margin": "0px 0px 32px",
+    "borderRadius": "0px",
+    "tabs": [
+      {
+        "text": "Giải nổi bật | 0",
+        "active": true,
+        "box": {
+          "x": 16,
+          "w": 148,
+          "h": 60
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(138, 100, 16)",
+        "padding": "13px 4px 14px",
+        "font": "22px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Xem Pro | 13",
+        "active": false,
+        "box": {
+          "x": 184,
+          "w": 108.5,
+          "h": 60
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "13px 4px 14px",
+        "font": "22px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Cộng đồng | 35",
+        "active": false,
+        "box": {
+          "x": 312.5,
+          "w": 128.2,
+          "h": 60
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "13px 4px 14px",
+        "font": "22px 400 \"Instrument Serif\""
+      }
+    ]
+  },
+  "tournaments_mobile_console": [],
+  "tournaments_desktop_preview": {
+    "found": true,
+    "box": {
+      "x": 20,
+      "y": 793.8,
+      "w": 1400,
+      "h": 76
+    },
+    "display": "flex",
+    "cols": "none",
+    "border": "",
+    "margin": "0px 0px 32px",
+    "borderRadius": "0px",
+    "tabs": [
+      {
+        "text": "Giải nổi bật | 0",
+        "active": true,
+        "box": {
+          "x": 20,
+          "w": 185.2,
+          "h": 75
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(138, 100, 16)",
+        "padding": "16px 4px 14px",
+        "font": "30px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Xem Pro | 13",
+        "active": false,
+        "box": {
+          "x": 235.2,
+          "w": 135.5,
+          "h": 75
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "16px 4px 14px",
+        "font": "30px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Cộng đồng | 35",
+        "active": false,
+        "box": {
+          "x": 400.8,
+          "w": 162.4,
+          "h": 75
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "16px 4px 14px",
+        "font": "30px 400 \"Instrument Serif\""
+      }
+    ]
+  },
+  "tournaments_desktop_console": [],
+  "tournaments_mobile_prod": {
+    "found": true,
+    "box": {
+      "x": 16,
+      "y": 1180.1,
+      "w": 358,
+      "h": 61
+    },
+    "display": "flex",
+    "cols": "none",
+    "border": "",
+    "margin": "0px 0px 32px",
+    "borderRadius": "0px",
+    "tabs": [
+      {
+        "text": "Giải nổi bật | 0",
+        "active": true,
+        "box": {
+          "x": 16,
+          "w": 148,
+          "h": 60
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(138, 100, 16)",
+        "padding": "13px 4px 14px",
+        "font": "22px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Xem Pro | 13",
+        "active": false,
+        "box": {
+          "x": 184,
+          "w": 108.5,
+          "h": 60
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "13px 4px 14px",
+        "font": "22px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Cộng đồng | 35",
+        "active": false,
+        "box": {
+          "x": 312.5,
+          "w": 128.2,
+          "h": 60
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "13px 4px 14px",
+        "font": "22px 400 \"Instrument Serif\""
+      }
+    ]
+  },
+  "tournaments_desktop_prod": {
+    "found": true,
+    "box": {
+      "x": 20,
+      "y": 793.8,
+      "w": 1400,
+      "h": 76
+    },
+    "display": "flex",
+    "cols": "none",
+    "border": "",
+    "margin": "0px 0px 32px",
+    "borderRadius": "0px",
+    "tabs": [
+      {
+        "text": "Giải nổi bật | 0",
+        "active": true,
+        "box": {
+          "x": 20,
+          "w": 185.2,
+          "h": 75
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(138, 100, 16)",
+        "padding": "16px 4px 14px",
+        "font": "30px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Xem Pro | 13",
+        "active": false,
+        "box": {
+          "x": 235.2,
+          "w": 135.5,
+          "h": 75
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "16px 4px 14px",
+        "font": "30px 400 \"Instrument Serif\""
+      },
+      {
+        "text": "Cộng đồng | 35",
+        "active": false,
+        "box": {
+          "x": 400.8,
+          "w": 162.4,
+          "h": 75
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(109, 106, 98)",
+        "padding": "16px 4px 14px",
+        "font": "30px 400 \"Instrument Serif\""
+      }
+    ]
+  },
+  "quicktables_preview": {
+    "found": false,
+    "url": "https://feat-rankings-wpr-tabs.pickle-hub-pro.pages.dev/vi/quick-tables",
+    "title": "404 – Không tìm thấy | ThePickleHub"
+  },
+  "quicktables_console": [],
+  "quicktables_prod": {
+    "found": false,
+    "url": "https://www.thepicklehub.net/vi/quick-tables",
+    "title": "404 – Không tìm thấy | ThePickleHub"
+  },
+  "ppa_inputFound": true,
+  "ppa_search": {
+    "inputValue": "truong",
+    "inputType": "search",
+    "cancelBtnAppearance": "textfield",
+    "cancelBtnDisplay": "block",
+    "inputBg": "rgba(0, 0, 0, 0)",
+    "wrapBg": "rgb(238, 235, 225)",
+    "buttons": [
+      {
+        "text": "✕",
+        "label": "Xoá tìm kiếm",
+        "w": 44,
+        "h": 44,
+        "color": "rgb(58, 57, 51)",
+        "bg": "rgba(0, 0, 0, 0)"
+      }
+    ]
+  },
+  "ppa_afterClear": {
+    "value": "",
+    "focused": "wpr-search"
+  },
+  "ppa_console": [],
+  "en_rankings_console": []
+}

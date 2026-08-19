@@ -7,6 +7,9 @@
  * Endpoints:
  *   POST /            Supabase DB Webhook payload (table=news_items, INSERT/UPDATE)
  *   POST /run         Manual trigger; body { news_item_id?: string, dry_run?: boolean }
+ *   POST /x/run       X (Twitter) queue drain; body { post_id?: string, dry_run?: boolean }
+ *                     See src/x.ts — separate queue (x_posts), separate cadence,
+ *                     English copy approved by hand. Shares only auth + ops here.
  *
  * Auth: All POSTs require header X-Auth-Secret = $SOCIAL_POSTER_SECRET.
  * NOTE: this is a DEDICATED secret, separate from the news-translate
@@ -34,12 +37,18 @@
  *   review Gemini output before enabling the production webhook.
  */
 
+import { handleXRun, xHealth, type XRunBody } from './x';
+import { handleXDraft, type XDraftBody } from './x-draft';
+import { isPromotionalSource } from './promo-filter';
+import { notifyPosted } from './notify';
+
 export interface Env {
   // vars
   SUPABASE_URL: string;
   SITE_URL: string;
   FB_GRAPH_VERSION: string;
   FB_POST_MIN_GAP_MINUTES: string;
+  FB_MAX_ITEM_AGE_DAYS?: string;
   GEMINI_MODEL: string;
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
@@ -51,6 +60,16 @@ export interface Env {
   FB_PAGE_ACCESS_TOKEN: string;
   FB_SECONDARY_PAGE_ACCESS_TOKEN?: string;
   GEMINI_API_KEY: string;
+  TELEGRAM_BOT_TOKEN?: string;
+  TELEGRAM_CHAT_ID?: string;
+  // X (Twitter) — vars
+  X_POST_MIN_GAP_MINUTES?: string;
+  X_LINK_COMMENT_DELAY_SECONDS?: string;
+  X_MAX_ATTEMPTS?: string;
+  // X (Twitter) — secrets. Absent ⇒ /x/run reports x_not_configured and the
+  // Facebook pipeline is untouched.
+  X_CLIENT_ID?: string;
+  X_CLIENT_SECRET?: string;
 }
 
 interface NewsItem {
@@ -94,6 +113,32 @@ interface FacebookPage {
 // A 'pending' row older than this is considered orphaned (the Worker that
 // claimed it crashed/timed out before finalizing) and may be re-claimed.
 const STALE_PENDING_MS = 10 * 60 * 1000;
+const FACEBOOK_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+/**
+ * How old a news item may be and still be worth posting.
+ *
+ * Not a preference — a defect fix. The queue is fed by news-rewrite, and
+ * recovering a failed origin creates a *new* news_items row carrying the
+ * *original* published_at. So repairing a week-old article manufactures a
+ * fresh-looking candidate for a stale story, and on 2026-08-17 that put
+ * 7-to-10-day-old posts on both pages: rows created at 11:30 today for
+ * articles published on the 7th.
+ *
+ * A one-off sweep cannot hold this, because the next repair run creates more.
+ * The filter has to live at selection time, which is here.
+ */
+/** The later of a page's start date and the staleness cutoff; either may be null. */
+export function laterOf(startAt: string | null, ageCutoff: string): string {
+  return startAt && startAt > ageCutoff ? startAt : ageCutoff;
+}
+
+export function facebookMaxItemAgeDays(env: Env): number {
+  const raw = Number(env.FB_MAX_ITEM_AGE_DAYS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 3;
+}
+
+const FACEBOOK_START_HOUR = 7;
+const FACEBOOK_END_HOUR = 20;
 
 interface SupabaseWebhookPayload {
   type: 'INSERT' | 'UPDATE' | 'DELETE';
@@ -118,12 +163,14 @@ export default {
 
     if (req.method === 'GET' && url.pathname === '/health') {
       const pages = configuredPages(env);
+      const deep = url.searchParams.get('deep') === '1';
       return json({
         ok: true,
         name: 'social-poster',
-        pages: url.searchParams.get('deep') === '1'
+        pages: deep
           ? await verifyFacebookPages(env, pages)
           : pages.map((page) => ({ key: page.key, id: page.id, start_at: page.startAt })),
+        x: deep ? await xHealth(env) : { configured: !!env.X_CLIENT_ID },
       });
     }
 
@@ -146,6 +193,14 @@ export default {
       if (url.pathname === '/run') {
         const body = (await safeJson(req)) as RunBody;
         return await handleRun(env, body);
+      }
+      if (url.pathname === '/x/run') {
+        const body = (await safeJson(req)) as XRunBody;
+        return json(await handleXRun(env, body));
+      }
+      if (url.pathname === '/x/draft') {
+        const body = (await safeJson(req)) as XDraftBody;
+        return json(await handleXDraft(env, body));
       }
       if (url.pathname === '/' || url.pathname === '') {
         const body = (await safeJson(req)) as SupabaseWebhookPayload;
@@ -296,7 +351,21 @@ async function processNewsItem(
       link,
       caption,
       fb_payload: fbPayload,
-      first_comment: link,
+      first_comment: buildLinkComment(link),
+    };
+  }
+
+  // Real Facebook publishing is restricted to daytime in Vietnam. Items
+  // crawled/translated overnight remain eligible and unclaimed, so the
+  // catch-up cron drains them gradually after 07:00 instead of dropping or
+  // bursting them during the night.
+  if (!isFacebookPostingWindow()) {
+    return {
+      deferred: true,
+      page_key: page.key,
+      news_item_id: item.id,
+      reason: 'outside_posting_window',
+      posting_window: '07:00-20:00 Asia/Ho_Chi_Minh',
     };
   }
 
@@ -369,6 +438,19 @@ async function processNewsItem(
     });
 
     const comment = await publishLinkComment(env, page, postedId, link);
+    // App CTA as its own comment. Best effort and untracked: the article link
+    // is the one the caption promised, and losing the pitch is not worth
+    // failing or retrying a post that is already live.
+    const appComment = await publishLinkComment(env, page, postedId, buildAppComment());
+    if (appComment.status !== 'posted') {
+      console.warn('[social-poster] app CTA comment failed:', appComment.error);
+    }
+    await notifyPosted(env, {
+      platform: 'Facebook',
+      account: page.key,
+      body: item.title,
+      url: `https://facebook.com/${postedId}`,
+    });
     await updateLinkComment(env, page.id, item.id, comment, 1);
     return {
       posted: true,
@@ -399,6 +481,16 @@ async function processNewsItem(
   }
 }
 
+export function isFacebookPostingWindow(now = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: FACEBOOK_TIME_ZONE,
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? -1);
+  return hour >= FACEBOOK_START_HOUR && hour < FACEBOOK_END_HOUR;
+}
+
 // ---------------------------------------------------------------------------
 // Eligibility
 // ---------------------------------------------------------------------------
@@ -408,6 +500,10 @@ function checkEligible(item: NewsItem | null | undefined): string | null {
   if (item.language !== 'vi') return 'not_vi';
   if (!item.ai_translated) return 'not_translated';
   if (item.status !== 'published') return 'not_published';
+  // Defence for the webhook entry point, which does not go through pickNext.
+  if (isPromotionalSource(item.title, item.summary, null, item.category)) {
+    return 'promotional_source';
+  }
   if (!item.title || item.title.trim().length === 0) return 'no_title';
   if (!item.slug || item.slug.trim().length === 0) return 'no_slug';
   return null;
@@ -484,21 +580,75 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
   const postedRows = (await postedRes.json()) as Array<{ news_item_id: string }>;
   const postedIds = postedRows.map((r) => r.news_item_id);
 
+  // The candidate window has to be large enough to contain an unposted row,
+  // and "50" was not. Ordering is importance-first, so once 50 high-importance
+  // items are done the window is permanently full of finished work and this
+  // returns null on every call — the pipeline stops without failing. That is
+  // what happened: 683 eligible rows, all 50 in the window already posted, the
+  // waiting item sitting at rank 87 because its importance was 3.
+  //
+  // Scanning ids instead of `*` is what makes a big window affordable: the full
+  // row carries content_html. Sizing it off the number of finished rows keeps
+  // at least 50 unposted candidates in view no matter how the archive grows.
+  //
+  // ponytail: a bounded scan, not an anti-join. PostgREST cannot express one,
+  // and `id=not.in.(...700 uuids)` is a 25KB URL. If the archive ever passes
+  // the cap below, move this to an RPC that does the anti-join in SQL.
+  const scanLimit = pickNextScanLimit(postedIds.length);
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/news_items`);
-  url.searchParams.set('select', '*');
+  // title/summary/category ride along so promotional rows can be dropped during
+  // selection. Still no content_html, so the scan stays cheap.
+  url.searchParams.set('select', 'id,title,summary,category');
   url.searchParams.set('language', 'eq.vi');
   url.searchParams.set('ai_translated', 'eq.true');
   url.searchParams.set('status', 'eq.published');
-  if (page.startAt) url.searchParams.set('published_at', `gte.${page.startAt}`);
+  // published_at has two lower bounds: when this page started posting at all,
+  // and how stale an article may be. Take the later of the two.
+  const ageCutoff = new Date(
+    Date.now() - facebookMaxItemAgeDays(env) * 24 * 3600_000,
+  ).toISOString();
+  const floor = laterOf(page.startAt, ageCutoff);
+  url.searchParams.set('published_at', `gte.${floor}`);
   url.searchParams.set('order', 'importance.desc,published_at.desc');
-  url.searchParams.set('limit', '50');
+  url.searchParams.set('limit', String(scanLimit));
   const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
   if (!res.ok) {
     throw new Error(`pickNext news query failed: ${res.status} ${await res.text()}`);
   }
-  const rows = (await res.json()) as NewsItem[];
-  const next = rows.find((r) => !postedIds.includes(r.id));
-  return next ?? null;
+  const rows = (await res.json()) as Array<{
+    id: string;
+    title: string;
+    summary: string | null;
+    category: string | null;
+  }>;
+  const done = new Set(postedIds);
+  // Adverts are excluded here rather than in checkEligible on purpose. A
+  // checkEligible rejection writes no fb_post_log row, so the item stays
+  // unposted and gets picked again on the next tick — one paddle release at the
+  // head of the queue would stall the whole pipeline, which is the same shape
+  // as the bug this function was just fixed for.
+  const nextId = rows.find(
+    (r) => !done.has(r.id) && !isPromotionalSource(r.title, r.summary, null, r.category),
+  )?.id;
+  return nextId ? await fetchNewsItemById(env, nextId) : null;
+}
+
+/**
+ * Exported for the test: given the priority-ordered ids and the finished ones,
+ * which id is next? This is the whole of the bug that stalled Facebook, and it
+ * is pure, so it can be checked without a database.
+ */
+export function pickNextId(
+  orderedIds: string[],
+  doneIds: string[],
+  scanLimit: number,
+): string | null {
+  const done = new Set(doneIds);
+  return orderedIds.slice(0, scanLimit).find((id) => !done.has(id)) ?? null;
+}
+
+export function pickNextScanLimit(doneCount: number): number {
+  return Math.min(doneCount + 50, 2000);
 }
 
 async function fetchFbPostLogByNewsItem(
@@ -681,6 +831,32 @@ interface LinkCommentResult {
   error?: string;
 }
 
+const APP_STORE_URL =
+  'https://apps.apple.com/vn/app/thepicklehub-tournaments/id6759968026?l=vi';
+
+/**
+ * Two separate comments, not one.
+ *
+ * They were combined at first, which meant Facebook rendered a single comment
+ * carrying two links and gave neither its own preview. Split, each gets its own
+ * card and the app pitch can be pinned or deleted without touching the article
+ * link.
+ *
+ * Order is fixed and matters: the caption tells readers the link is in the
+ * first comment — "đường dẫn ở bình luận đầu tiên" — so the article has to be
+ * comment one, and the app CTA follows it.
+ */
+export function buildLinkComment(link: string): string {
+  return link;
+}
+
+export function buildAppComment(): string {
+  return (
+    '📲 Tải app ThePickleHub: Tournaments để xem livestream và cập nhật tin tức ' +
+    `pickleball mới nhất:\n${APP_STORE_URL}`
+  );
+}
+
 async function publishLinkComment(
   env: Env,
   page: FacebookPage,
@@ -689,7 +865,7 @@ async function publishLinkComment(
 ): Promise<LinkCommentResult> {
   const url = `https://graph.facebook.com/${env.FB_GRAPH_VERSION}/${postId}/comments`;
   const form = new URLSearchParams({
-    message: link,
+    message: buildLinkComment(link),
     access_token: page.accessToken,
   });
   try {
@@ -825,9 +1001,13 @@ export function sanitizeCaption(text: string): string {
   out = out.replace(/^📝?\s*BÀI ĐĂNG FACEBOOK.*$/im, '').trim();
   // The canonical URL is published as the first Page comment, never in the
   // main caption—even if a stale prompt or model response includes it.
+  // Line scan instead of /^.*https?:\/\/\S+.*$/gim and /[ \t]+\n/g — both
+  // anchored/repetition regexes are polynomial on adversarial input (CodeQL
+  // js/polynomial-redos); per-line test + trimEnd() are linear.
   out = out
-    .replace(/^.*https?:\/\/\S+.*$/gim, '🔗 Link bài viết ở bình luận đầu tiên.')
-    .replace(/[ \t]+\n/g, '\n')
+    .split('\n')
+    .map((line) => (/https?:\/\//i.test(line) ? '🔗 Link bài viết ở bình luận đầu tiên.' : line.trimEnd()))
+    .join('\n')
     .trim();
   // Collapse 3+ newlines.
   out = out.replace(/\n{3,}/g, '\n\n');

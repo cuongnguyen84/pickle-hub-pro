@@ -1,0 +1,45 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Slice 1 có product editor tối thiểu không — điểm dừng của PR đầu tiên",
+      "myRound1Position": "KHÔNG — Option B dừng sau shops + /admin/shops + màn chấp thuận điều khoản (5 nửa ngày), chỉ mở products khi cả 3 shop pilot đã active.",
+      "move": "CONCEDE",
+      "evidence": "src/hooks/useClubLogoUpload.ts:L12-14,L60-66 — bucket public + mime whitelist (jpeg/png/webp) + giới hạn 2MB + path `<uid>/<ts>-<rand>.<ext>` + getPublicUrl, tức là template upload ảnh KHÔNG-PII đã tồn tại sẵn; supabase/migrations/20260512160200_clubs_logos_bucket_limits.sql:L26-36 — bucket public kèm file_size_limit + allowed_mime_types đã có tiền lệ chạy prod; docs/proposals/shop-marketplace-plan.md:L936 — Exit của Phase 1 là 'one approved seller can publish one real product safely', mâu thuẫn trực tiếp với L991 'Do not include products'.",
+      "note": "Em tự mở 3 chỗ trên và thấy tiền đề định giá của vòng 1 sai: em đã tính products = 9 nửa ngày vì gộp cả variant + bảng media + catalogue công khai, còn thứ ui-ux-critic đề xuất (tên, giá, 1-3 ảnh, tồn kho, draft/published, không catalogue) tái dùng nguyên khuôn clubs-logos — thêm ~4 nửa ngày, KHÔNG mở lớp rủi ro mới (không private bucket, không signed URL nên P0-1 Smart CDN không chạm tới). Với giá đó, một slice không đo được nửa chỉ số Cuong đặt ra là lựa chọn tệ hơn. Em giữ 4 ràng buộc phạm vi: (1) một migration RED duy nhất gồm shops + products + bucket ảnh; (2) products/editor đi PR RIÊNG sau PR shops để migration RED được review nhỏ, nhưng cùng một khối việc, không phải một lần quyết định lại; (3) không catalogue công khai, không route buyer, không variant; (4) ảnh qua bucket public khai allowed_mime_types (không svg) + file_size_limit, không cacheControl mặc định copy mù."
+    },
+    {
+      "id": "D2",
+      "topic": "Chấp thuận điều khoản + pending_activation trong UI slice 1",
+      "myRound1Position": "CÓ — shop sinh ở pending_activation, seller vào /seller bấm đồng ý Quy chế người bán v1 → shop_accept_policy() → active.",
+      "move": "REFINE",
+      "evidence": "docs/proposals/shop-marketplace-plan.md:L307-315 — enum 5 shop state là mô tả DB, không phải yêu cầu UI; docs/proposals/shop-marketplace/round1/ui-ux-critic.md:L98 — KN2 chỉ ràng buộc phần render.",
+      "note": "Chỉnh phạm vi chứ không đổi lập trường: giữ nguyên pending_activation + RPC shop_accept_policy(_shop_id,_version) ghi version/timestamp/user_id — sau khi CONCEDE D1 thì trạng thái này hết 'trang trí', nó là điều kiện chặn PUBLISH sản phẩm (RLS: chỉ shop active mới set products.status='published'), tức có hành vi gắn vào, và là hồ sơ pháp lý duy nhất trong slice cho một sàn có bên thứ ba bán hàng. Em nhượng đúng phần ui-ux-critic đúng: UI slice 1 KHÔNG render bộ 5 badge. Chỉ 3 nhánh màn hình theo hành vi — màn chấp thuận (pending_activation), màn gian hàng bình thường (active), dải thông báo tạm ngưng (suspended). restricted/closed khai trong enum DB (thêm giá trị enum sau = migration RED nữa) nhưng không có copy VI/EN, không có màu token, không có test trong slice này."
+    },
+    {
+      "id": "D3",
+      "topic": "shop_members tạo ngay trong slice 1 hay hoãn sau helper is_shop_member()",
+      "myRound1Position": "HOÃN — chỉ 1 bảng shops; is_shop_member(shop_id) thân hàm 'owner_user_id = auth.uid() OR is_admin()'.",
+      "move": "HOLD",
+      "note": "Cả hai đều dẫn về plan §6 (docs/proposals/shop-marketplace-plan.md:L317-326) — em đã mở lại: đó là tuyên bố mô hình sở hữu ('đừng thêm seller vào app_role'), và shops.owner_user_id một mình thoả đúng ràng buộc đó cho slice 1; không có dữ kiện repo mới nào ở đây, nên theo luật vòng 2 em không được CONCEDE. Ngược lại, bảng rỗng KHÔNG miễn phí đúng theo tiêu chuẩn của chính risk-auditor: P0-2 buộc mọi bảng shop_% phải rowsecurity=true + ≥1 policy + assertion pgTAP, nên shop_members chưa ai đọc vẫn đẻ ra một bề mặt policy và một khối GRANT canh giữ số 0. Chi phí hoãn cũng bằng 0: slice orders chắc chắn có migration riêng, shop_members đi ké miễn phí ở đó. Điều kiện em tự áp: (a) mọi policy shop_%/product_% gọi is_shop_member(shop_id), cấm viết thẳng owner_user_id = auth.uid() trong policy; (b) một assertion pgTAP quét pg_policies và FAIL nếu qual/with_check chứa chuỗi 'owner_user_id'."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Bucket ảnh sản phẩm PUBLIC trong slice 1 — không nằm cùng lớp rủi ro với bucket KYC private",
+      "with": "risk-auditor",
+      "myPosition": "Bucket public không sinh signed URL nào nên chuỗi P0-1 không tồn tại. Khuôn đúng: 20260512160200_clubs_logos_bucket_limits.sql:L26-36 + useClubLogoUpload.ts, KHÔNG phải useOgImageUpload.ts. Bắt buộc: allowed_mime_types jpeg/png/webp (loại svg), file_size_limit, path <uid>/<ts>-<rand>.<ext>, ghi rõ trong copy VI/EN rằng ảnh sản phẩm là công khai kể cả khi draft. CCCD vẫn KHÔNG vào slice."
+    },
+    {
+      "topic": "B3 là thật, nhưng bản sửa (a) phone-OTP vào /login KHÔNG đi chung PR với migration shop",
+      "with": "ui-ux-critic",
+      "myPosition": "Em xác nhận B3: Login.tsx chỉ có OAuth Google (L135) + Apple (L172) + email/password qua useAuth.tsx:L86; grep 'signInWithOtp' toàn src/ = 0 kết quả. Nhưng sửa /login là chạm bề mặt auth ⇒ RED riêng cần Cuong ký. Slice 1 chỉ làm bản (b) — nhận diện UA, ẩn nút Google, banner + Sao chép liên kết, ~1 KB, 0 rủi ro auth; bản (a) là PR độc lập, ưu tiên cao, xếp TRƯỚC khi gửi link cho seller thật."
+    },
+    {
+      "topic": "Điểm dừng-và-nhìn dời sang sau product editor; phễu đo tách 3 số",
+      "with": "ui-ux-critic",
+      "myPosition": "Bảng theo dõi phễu cung ở admin phải tách 3 số riêng — (1) shop được tạo, (2) seller đăng nhập được và bấm đồng ý, (3) sản phẩm published. Gộp lại thì một lỗi OAuth trong WebView bị đọc thành 'seller không quan tâm' và Cuong kết luận sai về bài toán cung."
+    }
+  ]
+}

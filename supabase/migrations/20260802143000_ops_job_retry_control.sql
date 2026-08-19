@@ -98,7 +98,7 @@ BEGIN
   SELECT decrypted_secret INTO v_secret FROM vault.decrypted_secrets WHERE name='cron_secret' LIMIT 1;
   IF v_secret IS NULL THEN RAISE EXCEPTION 'cron_secret is not configured'; END IF;
   PERFORM net.http_post(
-    url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/ops-job-control',
+    url := public.ops_project_url() || '/functions/v1/ops-job-control',
     headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',v_secret),
     body := '{"action":"process_telegram"}'::jsonb,
     timeout_milliseconds := 30000

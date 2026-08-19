@@ -1,0 +1,40 @@
+-- ============================================================================
+-- P2b.1 — one enum value, on its own, because Postgres insists.
+-- ----------------------------------------------------------------------------
+-- `ALTER TYPE ... ADD VALUE` cannot be used by anything in the same
+-- transaction that added it. The moderation backend needs to reference
+-- 'suspended' in constraints and function bodies, so the value lands in its
+-- own migration and everything that uses it lands in the next one.
+--
+-- WHY A NEW STATE AT ALL, rather than reusing what P2a has:
+--
+--   * `is_published = false` alone is not a takedown. Publishing needs
+--     `is_shop_manager OR is_admin` and status='approved', so a seller whose
+--     product an admin just unpublished can simply publish it again. An
+--     admin action a seller can undo is not moderation.
+--   * 'rejected' is the answer to a SUBMISSION. Reusing it for a takedown
+--     would tell a seller their pending review was refused when in fact an
+--     approved, live product was pulled, and it would corrupt the queue
+--     counts that P2b.2 renders.
+--   * 'archived' is the SELLER's own withdrawal. An admin writing it would
+--     make the audit trail claim the seller did this.
+--
+-- So this extends the P2a state machine by one terminal-for-now state. It does
+-- NOT create a second machine: `status` still means moderation, `is_published`
+-- still means publication, and `products_publish_requires_approval` already
+-- forces is_published=false for any status that is not 'approved'.
+--
+-- ── BLOCKER, deliberately not resolved here ────────────────────────────────
+-- There is no `restore`. Coming back from 'suspended' has more than one
+-- defensible destination — straight back to 'approved' (the takedown was
+-- wrong), or to 'needs_changes' (the seller must fix it and resubmit) — and
+-- they differ in whether the product returns to sale without anyone looking at
+-- it again. The brief is explicit that a transition whose consequence is
+-- undecided must be reported rather than invented, so it is.
+--
+-- Until the Product Owner decides, a suspended product stays suspended. No
+-- data is lost: the row, its variants, its media and its history are all
+-- intact, and the recovery path can be added later without a backfill.
+-- ============================================================================
+
+ALTER TYPE public.product_status ADD VALUE IF NOT EXISTS 'suspended';

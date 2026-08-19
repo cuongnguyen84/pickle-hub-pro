@@ -134,9 +134,14 @@ const SSR_ROUTES = [
   {
     path: "/rankings",
     expectedTitlePart: /(ranking|xếp hạng)/i,
-    // Rankings page is currently EN-only; no /vi/rankings twin shipped
-    // yet. Flip to true once the VI variant + hreflang tags exist.
-    expectsHreflang: false,
+    // renderRankings emits the en/vi/x-default triplet (rankings.ts:103) —
+    // comment previously said "no /vi twin" long after the twin shipped.
+    expectsHreflang: true,
+  },
+  {
+    path: "/rankings/ppa-tour",
+    expectedTitlePart: /(ppa tour|wpr)/i,
+    expectsHreflang: true,
   },
   {
     path: "/news",
@@ -284,7 +289,7 @@ test("every child sitemap referenced by the index resolves to a valid urlset", a
 // bot 404s" class for every non-blog surface the slug-parity guard misses.
 
 test("first URL of every sitemap segment renders for Googlebot", async () => {
-  test.setTimeout(120_000); // up to ~10 segments × 2 fetches, serial
+  test.setTimeout(240_000); // ~10 segments × 2 fetches + 3 floored segments × 2 extra samples, serial
   const ctx = await request.newContext({
     extraHTTPHeaders: { "User-Agent": GOOGLEBOT_UA },
   });
@@ -295,12 +300,21 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
   );
   expect(childUrls.length).toBeGreaterThan(0);
 
-  // Segments allowed to serve an empty urlset. Currently NONE — all 11 prod
-  // segments carry URLs (checked 2026-07-16), and sitemap generators swallow
+  // Segments allowed to serve an empty urlset. Sitemap generators swallow
   // Supabase query errors into an empty 200 urlset (sitemap-news.xml.ts:62),
   // so an unexpected empty segment must fail loud, not skip silently
   // (Codex P1). If a segment becomes legitimately emptiable, add it here.
-  const MAY_BE_EMPTY = new Set<string>([]);
+  //
+  // sitemap-shop.xml (Phase 4, 2026-08-18) is the first entry, and it is empty
+  // BY DESIGN while SHOP_PUBLIC_INDEXING is off: the index references the
+  // segment unconditionally, because a segment that 404s flags the whole index
+  // in Search Console for as long as the gate stays shut. An empty urlset is
+  // valid; a missing segment is not.
+  //
+  // When the launch flag goes to "1" on production, this entry should come
+  // back OUT and a floor should go into SEGMENT_MIN_URLS instead — an empty
+  // shop sitemap after launch means the generator broke.
+  const MAY_BE_EMPTY = new Set<string>(["sitemap-shop.xml"]);
 
   // Segments whose detail pages must carry a specific article schema.
   // (sitemap-blog.xml lists /vi/blog/* pages; both blog handlers emit
@@ -310,13 +324,43 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
     "sitemap-news.xml": "NewsArticle",
   };
 
+  // Inventory floors for the segments that carry the site's organic traffic
+  // (venues = 56% of clicks / 83% of impressions per GSC 2026-08-01). A
+  // predicate change that silently shrinks a sitemap must fail HERE, in CI,
+  // not 4 weeks later in a GSC chart: sitemap-venues collapsing 1688 → 40
+  // URLs passed every gate on 2026-08-02 because this sweep only asserted
+  // "urlset is not empty". Counts on 2026-08-02: venues 1688 · news 1000 ·
+  // matches 246. Floors are ~10-20% below that — inventory naturally grows,
+  // so a floor breach means deliberate pruning (update the floor in the same
+  // PR, with the before/after counts) or a broken generator.
+  const SEGMENT_MIN_URLS: Record<string, number> = {
+    "sitemap-venues.xml": 1500,
+    "sitemap-news.xml": 700,
+    "sitemap-matches.xml": 200,
+  };
+
+  // A title that ends in a separator + ellipsis ("… – Hà Nội |…") is the
+  // byte-truncation bug shape: a pre-check counted CHARS, truncateForSeo cut
+  // BYTES. Vietnamese diacritics are 2-3 bytes, so titles that "fit" get
+  // chopped mid-brand. Legit truncation ends mid-word ("word…"), never in a
+  // dangling separator.
+  const CUT_TITLE_TAIL = /[|–-]\s*…$/;
+  // No exemptions: the venues char-vs-byte pre-check that shipped cut titles
+  // was removed (same PR as this line). Prerender cache holds old titles for
+  // up to 6h after that deploy — if this assert reds on a venue URL right
+  // after a deploy, warm that path once with ?nocache=1 before diagnosing.
+  const CUT_TITLE_EXEMPT = new Set<string>([]);
+
   for (const child of childUrls) {
     const childXml = await (await ctx.get(onBaseOrigin(child))).text();
     const segment = new URL(child).pathname.slice(1);
-    // First page URL this segment lists (<loc> may be CDATA-wrapped).
-    const first = childXml.match(
-      /<url[\s>][\s\S]*?<loc>\s*(?:<!\[CDATA\[)?\s*([^<\]\s]+)/,
-    )?.[1];
+    // Every page URL this segment lists (<loc> may be CDATA-wrapped).
+    const allLocs = [
+      ...childXml.matchAll(
+        /<url[\s>][\s\S]*?<loc>\s*(?:<!\[CDATA\[)?\s*([^<\]\s]+)/g,
+      ),
+    ].map((m) => m[1]);
+    const first = allLocs[0];
     if (!first) {
       expect(
         MAY_BE_EMPTY.has(segment),
@@ -327,7 +371,33 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
       continue;
     }
 
-    const target = onBaseOrigin(first);
+    const floor = SEGMENT_MIN_URLS[segment];
+    if (floor) {
+      expect(
+        allLocs.length,
+        `${segment} lists ${allLocs.length} URLs — below its committed floor ` +
+          `of ${floor}. If this shrink is deliberate, raise/adjust the floor ` +
+          `in this same PR with before/after counts; otherwise the generator ` +
+          `or its predicate just silently pruned live inventory.`,
+      ).toBeGreaterThanOrEqual(floor);
+    }
+
+    // Segments ORDER BY updated_at/published_at DESC, so the first <loc> is
+    // always the freshest, best-maintained row — sampling only it means the
+    // gate never sees the old cohort. For floored (traffic-bearing) segments
+    // also fetch the LAST and MIDDLE entries.
+    const samples = floor
+      ? [
+          ...new Set([
+            first,
+            allLocs[Math.floor(allLocs.length / 2)],
+            allLocs[allLocs.length - 1],
+          ]),
+        ]
+      : [first];
+
+    for (const pageUrl of samples) {
+    const target = onBaseOrigin(pageUrl);
     const res = await ctx.get(target, { timeout: 20_000 });
     expect(res.status(), `bot fetch ${target} (from ${child})`).toBe(200);
     const html = await res.text();
@@ -337,6 +407,13 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
     expect(title!, `title not empty/undefined on ${target}`).not.toMatch(
       /^\s*$|undefined/i,
     );
+    if (!CUT_TITLE_EXEMPT.has(segment)) {
+      expect(
+        title!,
+        `title on ${target} ends in a dangling separator + ellipsis — ` +
+          `char-count-vs-byte-cut truncation (see buildTitle / #468)`,
+      ).not.toMatch(CUT_TITLE_TAIL);
+    }
 
     // SPA-fallback guard (Codex P1): when SSR fails, _middleware falls
     // through to the SPA shell, which carries the ROOT canonical and no
@@ -372,6 +449,7 @@ test("first URL of every sitemap segment renders for Googlebot", async () => {
         `JSON-LD on ${target} — zero blocks on the root path means the ` +
           `SPA fallback shell was served instead of the SSR home render`,
       ).toBeGreaterThan(0);
+    }
     }
   }
   await ctx.dispose();

@@ -94,7 +94,7 @@ jobs:
         # regressions without flapping on normal growth.
         env:
           BUNDLE_STRICT: "1"
-          BUNDLE_BUDGET_KB: "1970" # bumped from 1950 (hit exactly 1950.0 on 2026-07-16, blocking SQL-only PRs); PERF-01 must set a real budget and PERF-02 must claw back headroom (TeamMatchView 241KB chunk is the known lever)
+          BUNDLE_CONTENT_BUDGET_KB: "600" # DEBT-01 (2026-08-17): replaced the total-gz backstop, which summed CODE + lazy per-slug blog chunks and so went red on ordinary blog posts rather than on real regressions. CONTENT was 408.0 KB across 54 chunks when this landed. CODE (1800) and INITIAL (280) still gate app-code and first-paint; PERF-02 still owns clawing back CODE headroom (TeamMatchView 241KB chunk is the known lever).
         run: node scripts/check-bundle-size.mjs
 
       - name: Notify Telegram on failure

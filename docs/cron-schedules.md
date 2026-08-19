@@ -27,7 +27,7 @@ coordinated operation.
 
 | Function | Schedule (cron) | Frequency | Purpose | Last modified |
 |---|---|---|---|---|
-| `auto-archive-tournaments` | `0 3 * * *` | Daily 03:00 ICT | Move tournaments older than N days from `ongoing` → `completed` so the list views don't grow unbounded. Also clears stale `live_referee_id` on matches that have been "in progress" for >12h (orphaned scoring sessions). | 2026-04-22 |
+| `auto-archive-tournaments` | `0 3 * * *` | Daily 03:00 ICT | Move unfinished community tournaments created more than 30 days ago to `completed` across Quick Tables, Team Match, Flex, and Doubles Elimination. | 2026-08-13 |
 | `auto-cancel-unpaid-registrations` | `0 * * * *` | Hourly | Cancel registrations that have been in `pending_payment` status for >24h. Releases the seat back to the pool so a paying user can claim it. | 2026-07-15 |
 | `feed-embeds-sync` | `20 * * * *` | Hourly at :20 | Refresh curated Instagram embed metadata and ingest newly published reels. | 2026-07-15 |
 | `feed-generate` | `50 * * * *` | Hourly at :50 | Generate idempotent milestone, leaderboard, pro-tour, and recap cards. | 2026-07-15 |
@@ -38,6 +38,8 @@ coordinated operation.
 | `dupr-sync` | `0 20 * * *` | Daily 03:00 ICT | Backfill rating snapshots into recent match participants. | 2026-07-15 |
 | `match-expire` | `0 21 * * *` | Daily 04:00 ICT | Expire pending match confirmations older than seven days. | 2026-07-15 |
 | `errors-telegram-alert` | `*/10 * * * *` | Every 10 min | Scan browser error spikes and run the OPS-00 cron health checks below. | 2026-07-15 |
+| pg_cron → Worker: `x-poster-drain-5min` | `*/5 * * * *` | Every 5 min | Drain the hand-approved `x_posts` queue via social-poster `/x/run`: publish at most one post per tick (no pacing gap since 2026-08-17 — news goes out as it arrives). The link-reply pass in the same tick is dormant — `link_url` is pinned NULL by CHECK `x_posts_no_link_url` because X bills a post containing a URL at $0.200 vs $0.015. | 2026-08-16 |
+| pg_cron → Worker: `x-draft-every-30min` | `5,35 * * * *` | Every 30 min | Turn fresh English `news_items` into `x_posts` rows via social-poster `/x/draft` (Gemini through `social-caption` in `x_en` mode), plus one templated pro-tour results post. Rows land at `approved` since 2026-08-17, so the drain publishes them unattended. Idempotent: skips any news_item already drafted, and one roundup per day. | 2026-08-16 |
 | Database retention: `dupr-webhook-events-retention-daily` | `15 19 * * *` | Daily 02:15 ICT | Delete callback-ledger rows older than 30 days; this job runs SQL directly rather than invoking an Edge Function. | 2026-07-15 |
 
 SEC-04 standardized `auto-cancel-unpaid-registrations`, `dupr-sync`,

@@ -24,6 +24,10 @@ Rules of thumb:
 - Never reuse the 404 surface for errors: "not found" tells the user to give
   up; "network error" tells them to retry. The hook-throws convention keeps
   the two separable.
+- `.single()` is a trap for this convention: it raises PGRST116 on zero rows,
+  so "missing slug" and "network down" reach the page as the same `isError`
+  and only one message can be shown for both. Use `.maybeSingle()` and let
+  null mean not-found (fixed in `useTournamentBySlug`, 2026-08-04).
 - All three shared components live in one file:
   `src/components/states/PageStates.tsx` (tests:
   `src/components/states/__tests__/page-states.test.tsx`).

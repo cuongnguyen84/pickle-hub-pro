@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 47 post objects at worker
+// a static import list would construct all 55 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -19,11 +19,15 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "dupr-thepicklehub-user-guide": () => import("./dupr-thepicklehub-user-guide"),
   "dupr-vietnam-partnership-ta-pickleball-thepicklehub": () => import("./dupr-vietnam-partnership-ta-pickleball-thepicklehub"),
   "hcmc-open-2026-preview": () => import("./hcmc-open-2026-preview"),
+  "hcmc-open-2026-recap": () => import("./hcmc-open-2026-recap"),
+  "hong-kong-slam-2026-preview": () => import("./hong-kong-slam-2026-preview"),
   "how-to-create-pickleball-bracket": () => import("./how-to-create-pickleball-bracket"),
   "how-to-organize-pickleball-tournament": () => import("./how-to-organize-pickleball-tournament"),
   "how-to-play-pickleball": () => import("./how-to-play-pickleball"),
   "how-to-watch-ppa-tour-live-2026": () => import("./how-to-watch-ppa-tour-live-2026"),
+  "mlp-2026-semifinals-new-york-preview": () => import("./mlp-2026-semifinals-new-york-preview"),
   "mlp-format-explained": () => import("./mlp-format-explained"),
+  "mlp-orlando-super-sunday-2026-best-game": () => import("./mlp-orlando-super-sunday-2026-best-game"),
   "mlp-vs-ppa-2026-which-tour-to-watch": () => import("./mlp-vs-ppa-2026-which-tour-to-watch"),
   "pickleball-club-management-software-comparison": () => import("./pickleball-club-management-software-comparison"),
   "pickleball-cost-vietnam-2026": () => import("./pickleball-cost-vietnam-2026"),
@@ -42,12 +46,15 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-tournament-budget-calculator-guide": () => import("./pickleball-tournament-budget-calculator-guide"),
   "pickleball-tournament-formats-explained": () => import("./pickleball-tournament-formats-explained"),
   "pickleball-vs-padel-vs-paddle-tennis": () => import("./pickleball-vs-padel-vs-paddle-tennis"),
+  "pickleball-warm-up-injury-prevention": () => import("./pickleball-warm-up-injury-prevention"),
   "pickleball-world-cup-2026-da-nang": () => import("./pickleball-world-cup-2026-da-nang"),
   "pickleball-world-cup-2026-da-nang-how-to-watch": () => import("./pickleball-world-cup-2026-da-nang-how-to-watch"),
+  "pickleball-world-cup-2026-group-a-vietnam": () => import("./pickleball-world-cup-2026-group-a-vietnam"),
   "ppa-beijing-open-2026-recap": () => import("./ppa-beijing-open-2026-recap"),
   "ppa-tour-asia-2026-complete-guide": () => import("./ppa-tour-asia-2026-complete-guide"),
   "ppa-tour-asia-2026-recap": () => import("./ppa-tour-asia-2026-recap"),
   "professional-pickleball-tours-guide-2026": () => import("./professional-pickleball-tours-guide-2026"),
+  "shenzhen-open-2026-preview": () => import("./shenzhen-open-2026-preview"),
   "singapore-open-2026-preview": () => import("./singapore-open-2026-preview"),
   "singapore-open-2026-recap": () => import("./singapore-open-2026-recap"),
   "tama-shimabukuro-ppa-atlanta-final-15-year-old": () => import("./tama-shimabukuro-ppa-atlanta-final-15-year-old"),
@@ -58,6 +65,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "vietnam-pickleball-players-to-watch-2026": () => import("./vietnam-pickleball-players-to-watch-2026"),
   "vietnam-pickleball-tournament-calendar-2026": () => import("./vietnam-pickleball-tournament-calendar-2026"),
   "what-is-dupr-pickleball-rating-system": () => import("./what-is-dupr-pickleball-rating-system"),
+  "world-pickleball-rankings-wpr-explained": () => import("./world-pickleball-rankings-wpr-explained"),
 };
 
 export const blogPostSlugs = Object.keys(blogPostLoaders);

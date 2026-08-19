@@ -160,11 +160,9 @@ export function initPwa() {
     },
     onOfflineReady() {
       // Site is cached and ready for offline use.
-      // eslint-disable-next-line no-console
       console.info("[PWA] App is ready to work offline.");
     },
     onRegisterError(error) {
-      // eslint-disable-next-line no-console
       console.warn("[PWA] Service worker registration failed:", error);
     },
   });

@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { simpleCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { adminSessionAalOk } from "../_shared/admin-aal.ts";
 import {
+  classifyPushCaller,
   processPush,
   type FcmSendResult,
   type PushPayload,
@@ -105,20 +106,38 @@ Deno.serve(async (req) => {
     // on the header let any unauthenticated caller spoof pushes to every user.
     // We now require either (a) an internal service-role bearer (used by
     // mark-payment-claimed / auto-cancel-unpaid-registrations via
-    // supabase.functions.invoke with a service-role client), or (b) a valid user
-    // JWT belonging to an admin.
+    // supabase.functions.invoke with a service-role client), (b) a valid user
+    // JWT belonging to an admin, or (c) the internal shared secret — see below.
+    //
+    // (c) tồn tại vì trigger trong Postgres gọi hàm này qua pg_net, và nó
+    // KHÔNG cầm được thứ gì trong (a)/(b): vault chỉ có anon key, và trigger
+    // không mượn được JWT admin. Các trigger cũ gửi anon key và vì thế nhận
+    // 401 CÂM suốt — đã đo bằng chính pg_net trên production 18/08 (req 62590
+    // → 401). Header `x-cron-secret` + `CRON_SECRET` là đúng cơ chế đã có sẵn
+    // cho người gọi nội bộ không phải người dùng (xem _shared/cron-auth.ts),
+    // và registry vốn đã khai luồng `...shared_secret` cho hàm này.
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    const caller = classifyPushCaller(
+      {
+        authorization: authHeader,
+        cronSecret: req.headers.get("x-cron-secret"),
+      },
+      {
+        serviceRoleKey,
+        cronSecret: Deno.env.get("CRON_SECRET"),
+      },
+    );
+
+    if (caller === "missing") {
       return new Response(
         JSON.stringify({ error: "Missing authorization" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
-    const isInternalServiceCall = bearer === serviceRoleKey;
+    const bearer = (authHeader ?? "").replace(/^Bearer\s+/i, "").trim();
 
-    if (!isInternalServiceCall) {
+    if (caller === "user_jwt") {
       // User-facing path: verify the JWT (ES256-safe via Auth API) and admin role.
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
       const supabaseUser = createClient(supabaseUrl, anonKey, {

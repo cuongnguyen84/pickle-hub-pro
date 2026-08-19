@@ -1,0 +1,56 @@
+{
+  "slug": "shop-catalog-phase-2a",
+  "round2_run": false,
+  "round2_skip_reason": "Cả 4 bất đồng đều là quyết định sản phẩm/ngân sách thuộc về Cuong, không phải tranh chấp dữ kiện mà một vòng đối chất giữa agent giải quyết được. Ghi thành OPEN_FOR_CUONG thay vì mài mòn agent. Đây là một sai lệch có chủ ý so với Bước 5 của skill — orchestrator ghi rõ để Cuong biết và yêu cầu chạy lại nếu muốn.",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Bucket ảnh sản phẩm: public đường-dẫn-khó-đoán hay private + signed URL",
+      "status": "RESOLVED_BY_PRODUCT_OWNER",
+      "positions": {
+        "solution-architect": "Public, đường dẫn <shop_id>/<product_id>/<uuid>. Dòng product_media bị RLS che nên không ai liệt kê được. Mô hình đe doạ thật là 'người bán chia sẻ link ảnh cái vợt họ sắp đăng bán' — không phải bí mật. Private là net-new (0 createSignedUrl toàn repo), +1.5 nửa ngày.",
+        "risk-auditor": "🔴 RED. Bucket public phục vụ KHÔNG qua RLS — ảnh draft/rejected/suspended public ngay từ lúc upload. Chỉ hạ xuống AMBER khi bucket draft là public:false + createSignedUrl.",
+        "ui-ux-critic": "Public — vì optimizeImageUrl là transform CDN của Supabase và CHỈ chạy trên bucket public. Private = mất tối ưu ảnh, mà site đang có CLS p75 ~0.67 và LCP ảnh-nặng lần đầu."
+      },
+      "note": "ui-ux-critic đứng cùng phía solution-architect nhưng vì một lý do KỸ THUẬT KHÁC (CDN transform), không phải vì cùng đánh giá rủi ro. Đây là ràng buộc mới không agent nào khác nêu.",
+      "resolution": "Hybrid: original/draft/pending/rejected private; chỉ approved rendition của sản phẩm đã duyệt + publishable mới public, phục vụ PDP/CDN qua path riêng; thu hồi rendition khi unpublish/reject/suspend; người bán không tự publish bằng path hay status. Ràng buộc CDN transform mà ui-ux-critic nêu vẫn được giữ vì rendition đã duyệt là public."
+    },
+    {
+      "id": "D2",
+      "topic": "Phase 2a có ship đường liên hệ người bán trên trang sản phẩm không",
+      "status": "RESOLVED_BY_PRODUCT_OWNER",
+      "positions": {
+        "ui-ux-critic": "BLOCKER. Không có giỏ, không có đơn, ChatFAB đã ẩn trên /shop → PDP không có hành động tiếp theo. Thêm shops.contact_channel + contact_value, thu có consent nguyên văn, CTA 'Nhắn Zalo cho shop'.",
+        "gpt-5.6": "Không. Mọi nhãn liên hệ đều hứa việc 2a không làm được; CTA phải là 'Xem shop'.",
+        "solution-architect": "Không nêu — không có trong phạm vi phương án nào."
+      },
+      "note": "Đây là câu hỏi 2a CÓ PHẢI MỘT SẢN PHẨM DÙNG ĐƯỢC hay chỉ là catalogue để ngắm. Nếu không duyệt cột liên hệ, phải nói thẳng điều đó trong proposal.",
+      "resolution": "Có CTA \"Liên hệ shop\", nhưng chỉ kênh công khai do người bán tự khai và admin duyệt; không lộ email/SĐT tài khoản; không PII trong URL; không giả lập chat nội bộ; thuộc P2b cùng PDP, không phải 2a."
+    },
+    {
+      "id": "D3",
+      "topic": "UI kiểm duyệt sản phẩm: trong 2a (brief) hay hoãn sang P2b (map)",
+      "status": "RESOLVED_BY_PRODUCT_OWNER",
+      "positions": {
+        "brief-cua-Cuong": "Checkpoint 2a.4 — moderation queue, review, approve/reject/request-changes/suspend, audit timeline.",
+        "production-implementation-map": "P2b, sau 2a. Dòng 45-46.",
+        "solution-architect": "Hoãn (Option B). 2a không có mặt tiền người mua nên hàng đợi duyệt đang gác một cánh cửa chưa dựng. Tiết kiệm 5.5 nửa ngày. Với 2-5 shop pilot, Cuong duyệt bằng SQL — RPC vẫn đúng, UI sau gọi cùng hàm.",
+        "risk-auditor": "Không phản đối hoãn; tier 2a.3 là AMBER dù làm hay không."
+      },
+      "resolution": "P2b. production-implementation-map thắng brief. 2a không dựng moderation UI và không dựng public discovery, nhưng vẫn dựng state machine, guarded transition, RLS, pgTAP cho P2b dùng lại."
+    },
+    {
+      "id": "D4",
+      "topic": "Ngân sách bundle đã vượt — prototype là nguyên nhân nhưng Cuong cấm xoá trước parity sign-off",
+      "status": "RESOLVED_BY_PRODUCT_OWNER",
+      "positions": {
+        "risk-auditor": "Điều kiện cứng số 1: BUNDLE_STRICT=1 phải exit 0. Hiện exit 1 với 2054.7 KB / backstop 1970.",
+        "orchestrator-verified": "Đã chạy thật trên 1fac6b4f: exit code 1. Prototype = 106.4 KB gz / 38 chunk. Bỏ prototype → 1948.3 KB, còn 21.7 KB headroom cho toàn bộ 2a.",
+        "rang-buoc-cua-Cuong": "'Không xoá prototype trước parity sign-off' (brief Phase 1) — trực tiếp mâu thuẫn với việc merge được 2a."
+      },
+      "note": "Không phải bất đồng giữa agent — là mâu thuẫn giữa hai ràng buộc do Cuong đặt. Chỉ Cuong gỡ được.",
+      "resolution": "Giữ prototype trong repo (source + test + chạy được) nhưng loại khỏi production artifact bằng build-time flag, loại ở compile time. Backstop giữ 1970 KB. Đã thi hành ở 8b329622: 2055.5 → 1927.8 KB gz, BUNDLE_STRICT=1 exit 0, headroom thật 42.2 KB."
+    }
+  ],
+  "resolved_by": "Product Owner, 2026-08-11. Nguồn sự thật: docs/proposals/shop-marketplace/production-implementation-map.md §11."
+}

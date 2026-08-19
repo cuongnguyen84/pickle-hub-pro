@@ -24,7 +24,12 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
     : "";
 
-  const title = "ThePickleHub – Pickleball Asia: Live, Brackets & News";
+  // 2026-08-14 (approved by Cuong): bare "ThePickleHub" title left the EN home
+  // with zero keyword signal (GSC: pos 8.3, CTR 1.2% on 244 impressions).
+  // Brand name still leads VERBATIM for the OAuth reviewer's literal
+  // app-name comparison — same pattern /vi has shipped since launch with
+  // no OAuth issue. Mirrors the VI title for hreflang-pair consistency.
+  const title = "ThePickleHub – Pickleball Asia: Live & Tournaments";
   const description = "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.";
 
   return htmlResponse(buildHtml({
@@ -33,6 +38,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     url: siteUrl,
     siteUrl,
     lang: "en",
+    // SEO audit 2026-08-11 — buildHtml auto-generates an <h1> from `title`,
+    // and bodyContent already carries its own <h1>ThePickleHub</h1>, so the
+    // page shipped two H1s. Omit the auto header and keep the body H1 as the
+    // single H1 (same pattern as venues.ts / social-event.ts).
+    omitAutoHeader: true,
     // PR73 Phase 2D (audit I-12) — canonical (set via `url: siteUrl` above)
     // has no trailing slash, but the hreflang en + x-default previously
     // pointed at `${siteUrl}/` (with slash). Mismatched canonical and
@@ -60,9 +70,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
           },
-          // sameAs must only ever list profiles that resolve. A 404 here is a
-          // dirty signal on the exact entity these blocks exist to consolidate
-          // ("the pickle hub" ranks ~pos 8 on its own name).
+          // sameAs must only ever list profiles that resolve AND that are ours.
+          // A 404 here is a dirty signal on the exact entity these blocks exist
+          // to consolidate ("the pickle hub" ranks ~pos 8 on its own name) —
+          // and, per BRAND-01 below, a 200 that belongs to someone else is
+          // worse than a 404, because it asserts we ARE the other company.
           //
           // The App Store listing is verified live: apps.apple.com/app/id6759968026
           // returns 200 as "ThePickleHub: Tournaments", developer NGUYEN THE CUONG.
@@ -72,10 +84,40 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
           // 404s on every locale and app-id variant tried (hl=vi&gl=VN, hl=en&gl=US,
           // com.thepicklehub.app, net.thepicklehub). The Android app is not
           // published. Add it here when it is.
+          // BRAND-01, 2026-08-18 — the Facebook entry used to be
+          // facebook.com/ThePickleHub. That vanity URL is NOT ours: Facebook
+          // resolves it to facebook.com/thepicklehub/, whose og:title is
+          // Pickle Hub | Guntur — an unrelated business in Andhra Pradesh,
+          // India. The one block written to consolidate the brand entity was
+          // instead asserting sameAs identity with a different company that
+          // shares the name, which is the confusion behind the spaced query
+          // sitting at position 8. Ours is facebook.com/thepicklehubnet —
+          // confirmed by Cuong 2026-08-18, page ID 61579261671499, and by
+          // og:title = thepicklehub.net. (Facebook's own og:url appends a
+          // trailing slash; both forms serve the same page.)
+          //
+          // Instagram and YouTube both removed 2026-08-18: Cuong confirmed
+          // neither presence exists. instagram.com/thepicklehub and
+          // youtube.com/@thepicklehub (channel UC00BA7NxlshRE9ik9ssTYiw, 15
+          // subscribers, og:title "ThePickleHub") are somebody else's.
+          //
+          // All three bad entries got in the same way, and it is worth naming
+          // the pattern: a handle matched the brand name, the URL returned
+          // 200, and that was treated as proof of ownership. It is not. Only
+          // Cuong can confirm a profile is ours — verify with him before
+          // adding anything to this list.
+          //
+          // X added 2026-08-18, and unlike the Facebook entry it is evidenced
+          // rather than guessed: workers/social-poster/wrangler.toml documents
+          // X_CLIENT_ID as "console.x.com, @thepicklehub", the account the
+          // poster authenticates as. x.com/thepicklehub returns 200 while a
+          // nonsense handle returns 404, so the 200 is meaningful here.
+          //
+          // NB: keep prose out of this array — brand-sameas.test.ts extracts
+          // every quoted string inside it and asserts each one is a URL.
           sameAs: [
-            "https://www.facebook.com/ThePickleHub",
-            "https://www.instagram.com/thepicklehub",
-            "https://www.youtube.com/@thepicklehub",
+            "https://www.facebook.com/thepicklehubnet",
+            "https://x.com/thepicklehub",
             "https://apps.apple.com/app/id6759968026",
           ],
         },
@@ -97,7 +139,10 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
       ],
     },
     bodyContent: `
-      <p>ThePickleHub — editorial coverage of professional pickleball, headquartered in Ho Chi Minh City and reporting from PPA, APP, MLP, European Open, and Asia Pacific Series venues worldwide.</p>
+      <h1>Everything a pickleball player needs, in one place.</h1>
+      <p>ThePickleHub is a pickleball platform for players to follow news and livestreams, find players and courts, and create or join tournaments and community events.</p>
+      <p>Google Sign-In uses only your name, email address, and profile photo to create, secure, and personalize your account. Read our <a href="${siteUrl}/privacy">Privacy Policy</a>.</p>
+      <p>Our editorial team is headquartered in Ho Chi Minh City and reports from PPA, APP, MLP, European Open, and Asia Pacific Series venues worldwide.</p>
       <ul>
         <li><a href="${siteUrl}/live">Live courts</a> — Watch matches streaming right now</li>
         <li><a href="${siteUrl}/tournaments">Tournaments</a> — Schedules, brackets, results across PPA Asia and beyond</li>
@@ -147,6 +192,10 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
     url: `${siteUrl}/vi`,
     siteUrl,
     lang: "vi",
+    // SEO audit 2026-08-11 — see renderHome: drop the auto <h1> (title) so the
+    // body <h1> is the single H1. The VI page was doubly wrong here — the auto
+    // H1 was the full 58-char title AND the body had its own H1.
+    omitAutoHeader: true,
     // PR73 Phase 2D (audit I-12) — see renderHome above. Same trailing-
     // slash mismatch (canonical without slash vs hreflang en/x-default
     // with slash). Aligned to the no-trailing-slash convention.
@@ -169,9 +218,11 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
           },
-          // sameAs must only ever list profiles that resolve. A 404 here is a
-          // dirty signal on the exact entity these blocks exist to consolidate
-          // ("the pickle hub" ranks ~pos 8 on its own name).
+          // sameAs must only ever list profiles that resolve AND that are ours.
+          // A 404 here is a dirty signal on the exact entity these blocks exist
+          // to consolidate ("the pickle hub" ranks ~pos 8 on its own name) —
+          // and, per BRAND-01 below, a 200 that belongs to someone else is
+          // worse than a 404, because it asserts we ARE the other company.
           //
           // The App Store listing is verified live: apps.apple.com/app/id6759968026
           // returns 200 as "ThePickleHub: Tournaments", developer NGUYEN THE CUONG.
@@ -181,10 +232,40 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
           // 404s on every locale and app-id variant tried (hl=vi&gl=VN, hl=en&gl=US,
           // com.thepicklehub.app, net.thepicklehub). The Android app is not
           // published. Add it here when it is.
+          // BRAND-01, 2026-08-18 — the Facebook entry used to be
+          // facebook.com/ThePickleHub. That vanity URL is NOT ours: Facebook
+          // resolves it to facebook.com/thepicklehub/, whose og:title is
+          // Pickle Hub | Guntur — an unrelated business in Andhra Pradesh,
+          // India. The one block written to consolidate the brand entity was
+          // instead asserting sameAs identity with a different company that
+          // shares the name, which is the confusion behind the spaced query
+          // sitting at position 8. Ours is facebook.com/thepicklehubnet —
+          // confirmed by Cuong 2026-08-18, page ID 61579261671499, and by
+          // og:title = thepicklehub.net. (Facebook's own og:url appends a
+          // trailing slash; both forms serve the same page.)
+          //
+          // Instagram and YouTube both removed 2026-08-18: Cuong confirmed
+          // neither presence exists. instagram.com/thepicklehub and
+          // youtube.com/@thepicklehub (channel UC00BA7NxlshRE9ik9ssTYiw, 15
+          // subscribers, og:title "ThePickleHub") are somebody else's.
+          //
+          // All three bad entries got in the same way, and it is worth naming
+          // the pattern: a handle matched the brand name, the URL returned
+          // 200, and that was treated as proof of ownership. It is not. Only
+          // Cuong can confirm a profile is ours — verify with him before
+          // adding anything to this list.
+          //
+          // X added 2026-08-18, and unlike the Facebook entry it is evidenced
+          // rather than guessed: workers/social-poster/wrangler.toml documents
+          // X_CLIENT_ID as "console.x.com, @thepicklehub", the account the
+          // poster authenticates as. x.com/thepicklehub returns 200 while a
+          // nonsense handle returns 404, so the 200 is meaningful here.
+          //
+          // NB: keep prose out of this array — brand-sameas.test.ts extracts
+          // every quoted string inside it and asserts each one is a URL.
           sameAs: [
-            "https://www.facebook.com/ThePickleHub",
-            "https://www.instagram.com/thepicklehub",
-            "https://www.youtube.com/@thepicklehub",
+            "https://www.facebook.com/thepicklehubnet",
+            "https://x.com/thepicklehub",
             "https://apps.apple.com/app/id6759968026",
           ],
         },
@@ -206,7 +287,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
       ],
     },
     bodyContent: `
-      <p>ThePickleHub — đưa tin pickleball chuyên nghiệp toàn cầu, trụ sở tại TP.HCM, tường thuật từ PPA, APP, MLP, European Open và Asia Pacific Series.</p>
+      <h1>Mọi thứ người chơi pickleball cần, trong một điểm đến.</h1>
+      <p>ThePickleHub là nền tảng pickleball dành cho người chơi trên toàn thế giới theo dõi tin tức và livestream, tìm bạn chơi và sân, đồng thời tạo hoặc tham gia giải đấu và sự kiện cộng đồng.</p>
+      <p>Đội ngũ biên tập đặt tại TP.HCM và tường thuật từ PPA, APP, MLP, European Open cùng Asia Pacific Series trên toàn thế giới.</p>
       <ul>
         <li><a href="${siteUrl}/vi/live">Sân trực tiếp</a> — Xem trận đấu đang diễn ra</li>
         <li><a href="${siteUrl}/vi/tournaments">Giải đấu</a> — Lịch, bracket, kết quả</li>

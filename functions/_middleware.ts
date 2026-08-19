@@ -22,12 +22,13 @@ import {
   renderSocialList,
   renderClubList,
   renderVenuesList, renderVenueDetail, renderVenuesCity,
+  renderShopCatalog, renderShopCategory, renderShopProduct, renderShopStore,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
-  renderLivestreamList, renderRankings, renderPrivacy, renderTerms,
+  renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms, renderAdvertise,
   renderNotificationsShell,
   renderNoindexShell,
   render404,
@@ -80,6 +81,28 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // Already-disallowed-by-robots-txt routes — defense-in-depth
   /^\/admin(?:\/|$)/,
   /^\/creator(?:\/|$)/,
+  // Design prototypes (/proto/shop/*). Never production, never indexable.
+  /^\/proto(?:\/|$)/,
+  // Seller Center — application data, phone numbers, addresses.
+  /^\/(?:vi\/)?seller(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/sell(?:\/|$)/,
+  // P3 buyer surfaces. NOT in SHOP_PUBLIC_PATTERNS — these stay noindex after
+  // the Q4 launch gate opens, because they hold a recipient's name, phone
+  // number and home address, which the catalogue pages do not.
+  /^\/(?:vi\/)?shop\/cart(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/checkout(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/order(?:\/|$)/,
+  // …and the LIST. `/shop/order(/|$)` does not match `/shop/orders`: the
+  // character after "order" is an "s", not a slash or the end of the string.
+  // One letter, one uncovered page of somebody's purchase history.
+  /^\/(?:vi\/)?shop\/orders(?:\/|$)/,
+  // Catalogue SEARCH — permanently noindex, and NOT part of the Q4 launch
+  // set below. One result page per query string is thin duplicate content
+  // wearing the catalogue's own products; the canonical home for every one
+  // of those products is /shop/product/:slug, which now renders for bots.
+  // It sat in SHOP_PUBLIC_PATTERNS until the Phase 4 launch, where "open the
+  // catalogue" would have silently opened the query-string surface too.
+  /^\/(?:vi\/)?shop\/search(?:\/|$)/,
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,
@@ -113,6 +136,30 @@ const NOINDEX_PATTERNS: RegExp[] = [
 ];
 
 const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
+
+// ─── Q4 (2026-08-12): the closed-pilot Shop is NOT indexed ──────────────────
+// The buyer catalogue runs for QA and for the pilot sellers, but a marketplace
+// with a handful of products invites a thin-content assessment, and the
+// Product Owner has not opened a launch gate.
+//
+// The switch is here, at the edge, and not a <meta> written after hydration:
+// a crawler that never executes the bundle would index the page anyway, which
+// is the exact failure this is meant to prevent. Flipping SHOP_PUBLIC_INDEXING
+// to "1" in the Pages environment is the whole launch action — no redeploy of
+// the SPA, no code change, and Seller/Admin stay noindex either way because
+// they are matched by their own patterns above.
+const SHOP_PUBLIC_PATTERNS: RegExp[] = [
+  /^\/(?:vi\/)?shop$/,
+  /^\/(?:vi\/)?shop\/category(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/product(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/store(?:\/|$)/,
+];
+
+export const shopIndexingEnabled = (env: { SHOP_PUBLIC_INDEXING?: string }) =>
+  env.SHOP_PUBLIC_INDEXING === "1";
+
+export const isPilotNoindexShopPath = (pathname: string) =>
+  SHOP_PUBLIC_PATTERNS.some((re) => re.test(pathname));
 
 // ─── GSC "Not found (404)" cleanup 2026-07-30 — 410 Gone for permanently
 //     removed URLs. Bots bypass public/_redirects, so a soft 404 here never
@@ -153,8 +200,14 @@ function isGoneUrl(pathname: string): boolean {
   return GONE_EXACT.has(pathname) || GONE_PATTERNS.some((re) => re.test(pathname));
 }
 
-function shouldNoindex(pathname: string): boolean {
-  return NOINDEX_PATTERNS.some((re) => re.test(pathname));
+// Exported so a test can call it with an env instead of grepping the source:
+// an earlier version of shop-pilot-seo.test.ts asserted that this file
+// CONTAINS the pilot check, and stayed green when the check was replaced with
+// `return false`.
+export function shouldNoindex(pathname: string, env?: { SHOP_PUBLIC_INDEXING?: string }): boolean {
+  if (NOINDEX_PATTERNS.some((re) => re.test(pathname))) return true;
+  // The pilot Shop, unless the launch flag is on.
+  return !shopIndexingEnabled(env ?? {}) && isPilotNoindexShopPath(pathname);
 }
 
 // SEO audit 2026-05-28 (batch 2) — bot path constructs each Response
@@ -275,6 +328,13 @@ function pathCacheTtl(pathname: string): number {
   if (stripped.startsWith("/tools/")) {
     return HUB_LIST_TTL_SECONDS;
   }
+  // Shop: price and availability are inside the rendered HTML AND inside the
+  // Offer JSON-LD. At the 6h default, a sold-out product keeps telling Google
+  // schema.org/InStock for most of a day — the one kind of stale that gets a
+  // rich result demoted rather than merely out of date.
+  if (stripped === "/shop" || stripped.startsWith("/shop/")) {
+    return HUB_LIST_TTL_SECONDS;
+  }
   return DEFAULT_TTL_SECONDS;
 }
 
@@ -283,6 +343,9 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
   CANONICAL_HOST: string;
   PRERENDER_CACHE?: KVNamespace;
+  /** Q4 launch gate. "1" opens the public Shop to crawlers; anything else
+   *  (including unset, which is the pilot default) keeps it noindex. */
+  SHOP_PUBLIC_INDEXING?: string;
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -312,6 +375,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (url.pathname === "/dupr") {
     return secureRedirect(
       `https://${url.hostname}/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam`,
+      301,
+    );
+  }
+
+  // GSC 2026-08-09: an old, truncated livestream URL is still being crawled.
+  // Its surviving recording has the same unique prefix, so preserve the old
+  // URL's equity with a single permanent hop instead of returning a soft 404.
+  if (url.pathname === "/live/10779a7c") {
+    return secureRedirect(
+      `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565`,
       301,
     );
   }
@@ -524,7 +597,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      Slackbot, AhrefsBot tier-2) that doesn't trigger BOT_UA still
   //      sees the noindex signal. Header set BEFORE next() so we can
   //      mutate the response headers without re-buffering body.
-  const isNoindex = shouldNoindex(pathname);
+  const isNoindex = shouldNoindex(pathname, env);
   if (!isBot) {
     if (isNoindex) {
       const response = await next();
@@ -577,7 +650,69 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // docs/prerender-cache-log.md (SEO-04) — append there on every bump.
   // Current: v29 (2026-07-17 — SEO-02: BLOG_POST_META generated from
   // metadata.ts; 28 EN blog <title>s switch to metaTitleEn).
-  const cacheKey = `pr:v32:${url.pathname}`;
+  // v33→v34 (2026-08-06): /rankings SSR body changed (self-referential
+  // ?scope=open link replaced with a real anchor to /rankings/ppa-tour).
+  // v34→v35 (2026-08-08): homepage purpose copy changed for Google OAuth
+  // branding verification; invalidate the cached bot-facing homepage.
+  // v35→v36 (2026-08-08): add explicit Google user-data disclosure to the
+  // homepage and serve the complete Privacy Policy to verification crawlers.
+  // v36→v37 (2026-08-08): expose the exact OAuth app name and purpose together
+  // above the fold; purge bot HTML that retained the old homepage heading.
+  // v37→v38 (2026-08-08): normalize the homepage title to the exact OAuth
+  // application name and invalidate the previously rendered homepage HTML.
+  // v38→v39 (2026-08-11): Singapore Open preview updated to post-event state
+  // (recap callout + new meta description, EN + VI) and PPA Tour Asia VI guide
+  // refreshed with 7-stop results section; purge stale bot HTML for both.
+  // v39→v40 (2026-08-11): SEO audit — EN + VI /blog indexes now emit
+  // ItemList + BreadcrumbList JSON-LD, and both homepages drop the duplicate
+  // auto <h1> (single body H1). Purge stale bot HTML for /, /vi, /blog, /vi/blog.
+  // v40→v41 (2026-08-11): venue wiring — venue detail + per-city hub deep-link
+  // the 4 evergreen local guides (cost/court-size/rules/how-to) instead of only
+  // the blog index. Purge stale bot HTML for /san/* + /san/khu-vuc/*.
+  // v41→v42 (2026-08-12): rankings page deep-links the DUPR/WPR explainer guides
+  // (§6 wiring). Purge /rankings + /vi/rankings. (If PR #575 lands first at v42,
+  // rebase this to v43 — versions must stay monotonic.)
+  // v42→v43 (2026-08-14): EN home title enriched ("ThePickleHub – Pickleball
+  // Asia: Live & Tournaments") + HCMC recap deep-links the WPR explainer.
+  // Purge stale bot HTML for / and /blog/hcmc-open-2026-recap.
+  // v43→v44 (2026-08-14): /tournaments upgraded into the 2026 pro tournament
+  // calendar hub. Purge stale bot HTML for /tournaments + /vi/tournaments.
+  // v44→v45 (2026-08-14): GEO attribution — 2026 tournament-calendar post
+  // (EN + VI) names ThePickleHub in the opening paragraph so AI-search
+  // citations can attribute the passage when extracted standalone.
+  // v45→v46 (2026-08-14): GEO rollout — calendar-post opening now front-loads
+  // the full 2026 date list + "last updated" dateline, and 7 evergreen guides
+  // (WPR, World Cup Da Nang, PPA Asia guide, pro-tours guide, how-to-watch,
+  // players-to-watch, HK Slam) name ThePickleHub in their openings (EN + VI).
+  // v46→v47 (2026-08-16): site-audit fix — the 2026 calendar resolved event
+  // status against a UTC "today" instead of the VN calendar date (a day
+  // behind between 00:00 and 07:00 ICT), and every SportsEvent was published
+  // with organizer "PPA Tour Asia" including the Heineken World Cup Da Nang
+  // and the HK Slam, which neither of them organises. Purge stale bot HTML
+  // for /tournaments + /vi/tournaments.
+  // v49 (CTR-01, 2026-08-18): the venue meta-description template changed, so
+  // every cached /san/ + /vi/san/ entry holds a stale, mid-word-truncated
+  // snippet. Bump invalidates them in one go rather than needing ?nocache=1 on
+  // 1,688 URLs.
+  // v50 (Phase 4 shop launch, 2026-08-18): /shop, /shop/category/*,
+  // /shop/product/*, /shop/store/* previously cached the renderNoindexShell
+  // body under the pilot gate. Without a bump, flipping SHOP_PUBLIC_INDEXING
+  // would serve that shell — noindex intact — for another six hours, and the
+  // launch would look like it silently failed.
+  //
+  // v51 — SEO-GUARD-01 (2026-08-19): /tools gained HowTo schema + visible
+  // steps, tournament detail gained the broadcast section + subEvent graph +
+  // per-tournament og:image, venue detail gained amenityFeature. All three
+  // change SSR output. Bumped past v50 rather than reusing it: the shop launch
+  // had already published entries under that key, so sharing it would serve
+  // pre-change HTML for the full TTL on every route this commit touches.
+  //
+  // v52 — brand cleanup (2026-08-19): the spaced "The Pickle Hub" was replaced
+  // with "ThePickleHub" in 35 places across 6 blog posts, 30 places across 8
+  // Supabase vi_blog_posts rows, and in blog metadata.ts — which is the SSR
+  // truth table for <title> and <meta description>. Cached HTML would keep
+  // serving the diluted entity name for the full TTL otherwise.
+  const cacheKey = `pr:v52:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -761,6 +896,18 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (path === "/social") return await renderSocialList(supabase, siteUrl, lang);
   if (path === "/clubs") return await renderClubList(supabase, siteUrl, lang);
 
+  // Shop catalogue (Phase 4 public launch). Reached only when
+  // SHOP_PUBLIC_INDEXING=1 — otherwise `isNoindex` short-circuits to the
+  // noindex shell long before here. /shop/search has no arm on purpose: it
+  // is matched by NOINDEX_PATTERNS and never arrives.
+  if (path === "/shop") return await renderShopCatalog(supabase, siteUrl, lang);
+  match = path.match(/^\/shop\/category\/([^/]+)$/);
+  if (match) return await renderShopCategory(supabase, match[1], siteUrl, lang);
+  match = path.match(/^\/shop\/store\/([^/]+)$/);
+  if (match) return await renderShopStore(supabase, match[1], siteUrl, lang);
+  match = path.match(/^\/shop\/product\/([^/]+)$/);
+  if (match) return await renderShopProduct(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
+
   if (path === "/san") return await renderVenuesList(supabase, siteUrl, lang);
   match = path.match(/^\/san\/khu-vuc\/([^/]+)$/);
   if (match) return await renderVenuesCity(supabase, match[1], siteUrl, lang);
@@ -896,10 +1043,15 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // ItemList JSON-LD. Static global/continental scopes remain in the
   // SPA only (low SEO priority).
   if (path === "/rankings") return await renderRankings(supabase, siteUrl, rawPath, lang);
+  // PPA Tour WPR — separate pathname on purpose: /rankings keeps its DUPR
+  // Việt Nam title/default; query-string scopes never reach this renderer
+  // (routeAndRender is pathname-only), so a "tab" could never be a landing.
+  if (path === "/rankings/ppa-tour") return renderPpaRankings(siteUrl, rawPath, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
   if (path === "/terms") return renderTerms(siteUrl, rawPath, lang);
+  if (path === "/advertise") return renderAdvertise(siteUrl, rawPath, lang);
 
   // 404 fallback — unmatched routes get a proper 404 + noindex, not a
   // generic 200 shell that would waste crawl budget and create soft-404s.

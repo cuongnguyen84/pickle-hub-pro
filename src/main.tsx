@@ -1,3 +1,13 @@
+// crypto.randomUUID chỉ có trong secure context (HTTPS/localhost) và từ iOS
+// 15.4 — thiếu nó thì mọi trang gọi tới (journeys, upload...) sập nguyên trang.
+// Fallback dùng getRandomValues (không bị giới hạn secure context).
+if (typeof crypto !== "undefined" && !crypto.randomUUID) {
+  crypto.randomUUID = () =>
+    "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
+      (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),
+    ) as ReturnType<Crypto["randomUUID"]>;
+}
+
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";

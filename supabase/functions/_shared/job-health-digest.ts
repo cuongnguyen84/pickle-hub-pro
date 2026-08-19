@@ -14,6 +14,15 @@ export interface JobHealthDigestSnapshot {
   generated_at: string;
   counts: Record<JobHealthState, number>;
   jobs: JobHealthDigestRow[];
+  facebook_posts?: {
+    thepicklehub: number | null;
+    ta_pickleball: number | null;
+  };
+  news_sources?: {
+    active: number;
+    total: number;
+    needs_attention: string[];
+  };
 }
 
 function escapeMarkdown(value: string): string {
@@ -55,11 +64,37 @@ export function formatJobHealthDigest(
     const failed = metric(proTour.metrics ?? {}, ["events_failed", "failed"]);
     lines.push(`• Pro Tour: lượt gần nhất ${matches} trận · hôm nay ${matchesToday} trận · ${events} event${failed ? ` · ${failed} lỗi` : ""}`);
   }
+  // MỘT dòng Facebook, không hai. Hai nguồn số cùng tồn tại: metrics của job
+  // `social-poster` (do migration 20260802190000 làm giàu) và trường
+  // `facebook_posts` ở cấp snapshot. Merge nhánh job-business-metrics vào main
+  // 19/08 để cả hai cùng push và digest in Facebook hai lần với hai con số khác
+  // nhau — đúng kiểu lỗi mà người đọc digest sẽ không bao giờ báo, chỉ ngầm hết
+  // tin nó.
+  //
+  // Ưu tiên metrics của job: nó nói được cả lý do ("không có bài đủ điều kiện"),
+  // còn facebook_posts chỉ đếm. Chỉ dùng facebook_posts khi không có job.
   if (social) {
     const tph = metric(social.metrics ?? {}, ["thepicklehub_posts_today"]);
     const ta = metric(social.metrics ?? {}, ["ta_pickleball_posts_today"]);
     const noEligible = metric(social.metrics ?? {}, ["pages_no_eligible"]);
     lines.push(`• Facebook: ThePickleHub ${tph} bài · TA Pickleball ${ta} bài${noEligible ? " · không có bài đủ điều kiện" : ""}`);
+  } else if (snapshot.facebook_posts) {
+    const primary = snapshot.facebook_posts.thepicklehub;
+    const secondary = snapshot.facebook_posts.ta_pickleball;
+    lines.push(
+      `• Facebook hôm nay: ThePickleHub ${primary ?? "—"} bài · TAPickleball ${secondary ?? "—"} bài`,
+    );
+  }
+  if (snapshot.news_sources) {
+    // Nguồn tin tắt-có-ghi-chú phải hiện việc-cần-làm mỗi sáng cho tới khi được
+    // xử lý — tắt câm là cách mất nguồn tin 5 tuần không ai biết.
+    let sourcesLine = `• Nguồn tin: ${snapshot.news_sources.active}/${snapshot.news_sources.total} active`;
+    if (snapshot.news_sources.needs_attention.length > 0) {
+      sourcesLine += ` · cần xử lý: ${
+        snapshot.news_sources.needs_attention.map((name) => escapeMarkdown(name)).join(", ")
+      }`;
+    }
+    lines.push(sourcesLine);
   }
 
   const unhealthy = snapshot.jobs.filter((job) =>

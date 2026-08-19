@@ -277,7 +277,7 @@ const post: BlogPost = {
           heading: "Tải xuống, tham chiếu và công cụ",
           content: "Với BTC giải đấu và trọng tài, một công cụ chấm điểm số loại bỏ hầu hết tranh cãi ở châu Á — các câu hỏi về số điểm và số người giao biến mất khi điểm được chiếu lên mọi điện thoại ngoài sân.",
           internalLinks: [
-            { text: "Công cụ chấm điểm Pickleball miễn phí (Quick Tables)", path: "/tools/quick-tables" },
+            { text: "Công cụ chấm điểm Pickleball miễn phí (Quick Tables)", path: "/vi/tools/quick-tables" },
             { text: "Hướng dẫn tổ chức giải Pickleball (tiếng Anh)", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Luật tính điểm Pickleball (tiếng Anh)", path: "/blog/pickleball-scoring-rules-guide" },
             { text: "Luật Pickleball cơ bản (tiếng Việt)", path: "/blog/pickleball-rules-complete-guide" }

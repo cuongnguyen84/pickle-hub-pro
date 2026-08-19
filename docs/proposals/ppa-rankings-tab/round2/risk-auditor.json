@@ -1,0 +1,36 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "verdict": "REFINE",
+      "reasoning": "Thu hẹp, không hạ. BỎ: cơ chế 'mất 25 internal link /nguoi-choi/' — superset SSR vô hiệu hoá nó thật, đã mở file kiểm chứng (rankings.ts:76,88-94: các khối ghép chuỗi độc lập, thêm khối PPA không xoá khối VN). GIỮ RED cho đúng một hành động: đổi default + viết lại title/description (increment 3). Lý do superset không chạm tới: trần 60 BYTE ở utils.ts:44 — đo thật 'Bảng xếp hạng PPA Tour WPR & DUPR Việt Nam | ThePickleHub' = 65 byte > 60, bị cắt → không tồn tại title chứa cả hai thực thể. Superset cứu được BODY, không cứu được TITLE, mà cụm 'bảng xếp hạng DUPR Việt Nam' sống bằng title. Recovery crawl-rate-bound (tuần), không revert được → theo luật rollback, ở lại RED. Đã chạy lại risk-tier.mjs: bộ file increment 1-2 (adapters + src/content + Rankings.tsx) = GREEN toàn bộ; chỉ bộ có workers/ + migrations/ mới RED.",
+      "evidence": [
+        "functions/_lib/render/rankings.ts:76,88-94 — khối VN ghép chuỗi độc lập, superset chạy được thật → BỎ finding #6 vòng 1",
+        "functions/_lib/utils.ts:44 — maxTotal=60 BYTE; title gộp hai thực thể = 65 byte, bị cắt",
+        "functions/_lib/render/rankings.ts:27-31 — title hiện là exact-match 'Bảng xếp hạng DUPR Pickleball Việt Nam'",
+        "round1/solution-architect.md:125 — architect tự nhận chưa mở GSC",
+        "scripts/agents/risk-tier.mjs — chạy lại: increment 1-2 GREEN, workers/+migrations/ RED",
+        "scripts/seo/gsc_report.py:134 — có sẵn --page-contains, baseline là MỘT lệnh"
+      ],
+      "revised_position": "Increment 1-2 (parser + fixture + tab PPA KHÔNG mặc định, không đổi title) — KHÔNG chặn, GREEN. Increment 3 (đổi default + trung tính hoá title) — RED, gate bằng điều kiện có thể sai: chạy gsc_report.py --page-contains /rankings lấy baseline 28 ngày query-level. Nếu /rankings gần như 0 impression cho cụm DUPR VN thì phản đối tự sụp bằng dữ liệu và Cuong cứ đổi. Muốn bị bác bằng số, không bằng suy đoán."
+    },
+    {
+      "id": "D3",
+      "verdict": "HOLD",
+      "reasoning": "Fetch lại ToS hôm nay (200, Last updated May 22, 2026) — trích dẫn vòng 1 ĐÚNG từng chữ, không hallucination. Bằng chứng mạnh nhất của architect ('robots.txt Allow') không lật được vì 2 lý do mới kiểm: (1) robots.txt PPA không phải file bỏ hoang — có 4 dòng Disallow có chủ đích (/live/, /brackets/, ...), tức PPA dùng robots điều khiển CRAWL và đặt tuyên bố sở hữu + giấy phép ở ToS; 'Allow: /' là VẮNG MẶT lệnh chặn crawl, không phải SỰ CÓ MẶT của giấy phép tái xuất bản. (2) Đề xuất không phải 'crawl' mà là mirror vào DB rồi tái xuất bản liên tục lên landing priority 0.9 — đúng 3 động từ trong câu cấm ('scrape, mirror, rebroadcast') + đúng tính từ ('commercially'); trang đó cạnh tranh trực tiếp với ppatour.com/rankings trên SERP — cơ chế biến 'không ai để ý' thành 'có người để ý'. 'Không chạm auth/payments' đo blast radius KỸ THUẬT; RED đến từ luật rollback: takedown/IP block không có nút revert, người hứng là Cuong một mình. Tự đối chất chỗ bất lợi: repo ĐÃ có pro-tour-scraper ăn dữ liệu PPA/MLP — tiền lệ không hợp thức hoá cái mới; ToS liệt 'brackets data' là tài sản + robots Disallow /brackets/ → nhiều khả năng là phơi nhiễm CÙNG LOẠI đang tồn tại, đáng để Cuong biết, không phải lá chắn.",
+      "evidence": [
+        "https://www.ppatour.com/about/terms/ (fetch 2026-08-06, 200): 'Don't scrape, mirror, or rebroadcast our content commercially without written permission.'",
+        "Cùng trang: 'All match footage, brackets data, photography, and tour branding are property of the Carvana PPA Tour... commercial use requires a license.'",
+        "https://www.ppatour.com/robots.txt: Allow: / NHƯNG Disallow: /live/, /brackets/, /events/...-live/, /hero-preview/",
+        "supabase/functions/create-payment-order + mark-payment-claimed — tiền đề 'sản phẩm thương mại' là dữ kiện trong repo",
+        "Contact trong ToS: legal@ppatour.com"
+      ],
+      "revised_position": "Giữ RED cho scrape/mirror tự động. Thu hẹp đường mở khoá: blocker là MỘT email xin văn bản cho phép (legal@ppatour.com), không phải bức tường vĩnh viễn; có thư đồng ý lưu external/ → RED tắt. Đường AMBER giữ nguyên kèm giới hạn nói thẳng: nhập tay top 10-25 + credit tránh động từ 'scrape', nhưng mức trích dẫn bao nhiêu là đủ an toàn KHÔNG phải thứ AI được quyết — lựa chọn thuộc về Cuong, người chịu trách nhiệm pháp lý."
+    }
+  ],
+  "notes": [
+    "Bất đồng thật giữa risk và architect hẹp hơn debate.json: increment 1-2 của architect chính là đường AMBER của risk. Tranh chấp còn lại đúng 2 điểm: gate GSC trước increment 3, và văn bản cho phép trước increment 4-5.",
+    "Bác một phần pre-mortem Sự cố 1: 'không tồn tại URL nào cho bot thấy nội dung VN' chỉ đúng nếu khối VN bị THAY, mà architect giữ lại. Hai agent cùng phe tìm lỗi gật đầu với nhau không tạo ra bằng chứng."
+  ]
+}

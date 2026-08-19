@@ -60,12 +60,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // typical refresh cadence — kudos/comments shift the order constantly.
     { loc: "/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
     { loc: "/vi/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
-    // PR73 Phase 2B — Social Events MVP hub list pages.
-    // Single canonical URL serves both locales (SPA toggles via i18n
-    // context), so the hreflang array points every alt-lang entry at
-    // the same /social or /clubs URL — same pattern as /nguoi-choi/*.
-    { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/social") },
-    { loc: "/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/clubs") },
+    // PR73 Phase 2B shipped these as Social Events MVP hub list pages on a
+    // single canonical serving both locales. 2026-08-17 moved /clubs off
+    // that pattern and 2026-08-19 moved /social — renderSocialList and
+    // renderClubList now self-reference each locale, so both URLs are
+    // submitted and each hreflang array points at two distinct URLs.
+    { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/vi/social") },
+    { loc: "/vi/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/vi/social") },
+    { loc: "/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
+    { loc: "/vi/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
     { loc: "/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/vi/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/tools/flex-tournament", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: enOnly("/tools/flex-tournament") },
@@ -80,6 +83,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // ranking content surfaced by dupr_leaderboard_vietnam RPC.
     { loc: "/rankings", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/rankings", "/vi/rankings") },
     { loc: "/vi/rankings", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/rankings", "/vi/rankings") },
+    { loc: "/rankings/ppa-tour", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/rankings/ppa-tour", "/vi/rankings/ppa-tour") },
+    { loc: "/vi/rankings/ppa-tour", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/rankings/ppa-tour", "/vi/rankings/ppa-tour") },
     // SEO-1.1 — bracket / tournament tool public landing pages. Each has
     // a dedicated SSR handler (renderToolNewPage) but were never added
     // to the sitemap.
@@ -90,6 +95,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/privacy", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/privacy", "/vi/privacy") },
     { loc: "/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
     { loc: "/vi/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
+    { loc: "/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
+    { loc: "/vi/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
     { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
   ];
 

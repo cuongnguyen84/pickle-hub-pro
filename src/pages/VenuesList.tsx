@@ -15,13 +15,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { VenueCard } from "@/components/venues/VenueCard";
+import { VenueCardSkeleton } from "@/components/venues/VenueCardSkeleton";
 import {
   type VenueListItem,
   VENUE_LIST_COLUMNS,
@@ -31,6 +32,10 @@ import {
 } from "@/lib/venues";
 
 const PAGE_SIZE = 60;
+
+// One phone viewport's worth of cards, not all 60. Over-reserving would swap
+// a downward shift for an upward one on every short result set.
+const VENUE_SKELETON_CARDS = 6;
 
 // Mirrors ClubsList.escapePostgrestSearch — PostgREST's .or() parser treats
 // commas / parens as separators, so a user typing "Quận 1, HCMC" would break
@@ -236,8 +241,16 @@ export default function VenuesList() {
         )}
 
         {isLoading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          // CLS: a centred spinner reserved ~100px and the resolved grid then
+          // pushed everything below it down. Reserve the grid's real shape
+          // instead — same columns, same gap, same card box.
+          <div
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            aria-busy="true"
+          >
+            {Array.from({ length: VENUE_SKELETON_CARDS }, (_, i) => (
+              <VenueCardSkeleton key={i} />
+            ))}
           </div>
         ) : hasResults ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -238,7 +238,7 @@ const FeaturedImage = ({ src, alt }: { src: string | null; alt: string }) => {
       srcSet={blogHeroSrcSet(src)?.srcSet}
       sizes="(max-width: 900px) 100vw, 45vw"
       alt={alt}
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
       loading="eager"
       onError={() => setFailed(true)}
     />

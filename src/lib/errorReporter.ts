@@ -55,10 +55,13 @@ function send(type: "js_error" | "unhandled_rejection", payload: ReportPayload) 
   const fp = fingerprint(payload.message, payload.stack);
   if (!shouldSend(fp)) return;
 
-  const body = JSON.stringify(payload);
   const url = `${ENDPOINT}?type=${type}`;
 
   try {
+    // Inside the try with everything else: `payload` is ours and cannot
+    // currently throw, but the invariant this file keeps is that reporting
+    // never throws, not that today's payload happens to be safe.
+    const body = JSON.stringify(payload);
     // sendBeacon is the right tool — survives navigation, ignores response.
     // Some browsers cap payload at 64 KB; we truncate aggressively below.
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {
@@ -99,6 +102,95 @@ function isIgnored(message: string): boolean {
   return IGNORE_MESSAGES.some((m) => message.includes(m));
 }
 
+// A rejected promise carries whatever the thrower passed, and BOTH obvious
+// ways to render that are hostile:
+//   * JSON.stringify returns undefined — not a string — for undefined, a
+//     function or a symbol, so calling .slice() on the result throws; and it
+//     throws outright on a circular structure or a BigInt.
+//   * String() throws on a null-prototype object, on an object with a
+//     poisoned toString, and on a bare symbol.
+// The previous implementation called .slice() on the stringify result with no
+// guard, so a rejection carrying `undefined`, or a circular object such as a
+// fetch/Supabase error holding a reference back to its own request, threw
+// inside the handler. Production paid for it twice over between 06 and
+// 18/08/2026: the real rejection was never recorded, and the throw was logged
+// as "TypeError: undefined is not an object (evaluating
+// 'JSON.stringify(t).slice')" instead. So every fallback below is itself
+// guarded — a describeReason that can throw is the same bug one layer down.
+
+/** String(value), or null when the value refuses to be stringified. */
+function safeString(value: unknown): string | null {
+  try {
+    const text = String(value);
+    return typeof text === "string" ? text : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Constructor name, for objects that will not stringify usefully. */
+function safeConstructorName(value: object): string {
+  try {
+    return value.constructor?.name || "Object";
+  } catch {
+    return "Object";
+  }
+}
+
+/** A few own keys — enough to recognise the shape in the triage table. */
+function safeKeys(value: object): string {
+  try {
+    return Object.keys(value).slice(0, 20).join(", ");
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * A message for the client_errors table, for any rejection reason at all.
+ * Never throws, never returns an empty string.
+ */
+export function describeReason(reason: unknown): string {
+  if (reason instanceof Error) return reason.message || reason.name || "Error";
+  if (typeof reason === "string") return reason || "Promise rejected with an empty string";
+  if (reason === undefined) return "Promise rejected with undefined";
+  if (reason === null) return "Promise rejected with null";
+
+  if (typeof reason === "object") {
+    let json: string | undefined;
+    try {
+      json = JSON.stringify(reason);
+    } catch {
+      json = undefined;
+    }
+    // "{}" is what a DOMException, an ErrorEvent and several Supabase error
+    // shapes serialise to: a string, technically, and useless in triage. Four
+    // such rows landed in client_errors in the fortnight to 18/08/2026.
+    if (typeof json === "string" && json !== "{}" && json !== "") return json;
+
+    const name = safeConstructorName(reason);
+    const text = safeString(reason);
+    if (text && text !== "[object Object]") return `${name}: ${text}`;
+    const keys = safeKeys(reason);
+    return keys ? `${name} { ${keys} }` : name;
+  }
+
+  return safeString(reason) ?? `Promise rejected with a ${typeof reason}`;
+}
+
+// React render errors caught by an error boundary never reach
+// window.onerror in production — the boundary must report explicitly.
+// Same dedupe/ignore pipeline as the global listeners.
+export function reportCaughtError(error: Error, context: string): void {
+  const message = error.message ?? "unknown_error";
+  if (isIgnored(message)) return;
+  send("js_error", {
+    message: truncate(`[${context}] ${message}`, 1000)!,
+    stack: truncate(error.stack, 4000),
+    url: typeof window !== "undefined" ? window.location.href : undefined,
+  });
+}
+
 export function initErrorReporter(): void {
   if (typeof window === "undefined") return;
 
@@ -118,18 +210,28 @@ export function initErrorReporter(): void {
   });
 
   window.addEventListener("unhandledrejection", (ev: PromiseRejectionEvent) => {
-    const reason = ev.reason;
-    const message =
-      reason instanceof Error
-        ? reason.message
-        : typeof reason === "string"
-          ? reason
-          : JSON.stringify(reason).slice(0, 1000);
-    if (isIgnored(message)) return;
-    send("unhandled_rejection", {
-      message: truncate(message, 1000)!,
-      stack: truncate(reason instanceof Error ? reason.stack : undefined, 4000),
-      url: window.location.href,
-    });
+    // Guarded end to end. A throw in here does not just lose the rejection —
+    // it re-enters as a window "error" event and lands in client_errors as a
+    // js_error describing the reporter instead of the bug. That is exactly
+    // what the old `JSON.stringify(reason).slice(...)` did in production.
+    try {
+      const reason = ev.reason;
+      const message = describeReason(reason);
+      if (isIgnored(message)) return;
+      send("unhandled_rejection", {
+        message: truncate(message, 1000)!,
+        stack: truncate(reason instanceof Error ? reason.stack : undefined, 4000),
+        url: window.location.href,
+      });
+    } catch {
+      // Silence would be the worse failure: an unreported rejection is
+      // invisible in triage, while a vague row is at least a thread to pull.
+      // This payload is a constant, so it cannot fail the same way.
+      try {
+        send("unhandled_rejection", { message: "unreportable_rejection" });
+      } catch {
+        /* swallow — error reporter cannot error */
+      }
+    }
   });
 }

@@ -5,8 +5,8 @@
 APP_ENVIRONMENT = production
 APS_ENVIRONMENT = production
 PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
-MARKETING_VERSION = 2.0.0
-CURRENT_PROJECT_VERSION = 4
+MARKETING_VERSION = 2.0.3
+CURRENT_PROJECT_VERSION = 8
 
 // Native guest registration is active. A valid public Turnstile key remains
 // required because the production OTP endpoint rejects unverified requests.

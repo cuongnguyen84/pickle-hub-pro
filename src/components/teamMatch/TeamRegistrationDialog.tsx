@@ -123,6 +123,9 @@ export function TeamRegistrationDialog({
   const [selectedMasterTeamId, setSelectedMasterTeamId] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [excludedMemberIds, setExcludedMemberIds] = useState<Set<string>>(new Set());
+  const [registrationTeamName, setRegistrationTeamName] = useState('');
+  const [registrationCaptainName, setRegistrationCaptainName] = useState('');
+  const [registrationNameErrors, setRegistrationNameErrors] = useState<{ team?: string; captain?: string }>({});
 
   const { team: selectedMasterTeam, roster: masterRoster, isLoading: isLoadingRoster } = useMasterTeamWithRoster(
     selectedMasterTeamId || undefined,
@@ -217,6 +220,9 @@ export function TeamRegistrationDialog({
   const handleSelectMasterTeam = (teamId: string) => {
     setSelectedMasterTeamId(teamId);
     setExcludedMemberIds(new Set());
+    setRegistrationTeamName(masterTeams?.find((team) => team.id === teamId)?.team_name ?? '');
+    setRegistrationCaptainName(profile?.display_name ?? '');
+    setRegistrationNameErrors({});
   };
 
   const form = useForm<FormValues>({
@@ -229,7 +235,18 @@ export function TeamRegistrationDialog({
   });
 
   const hasMasterTeams = masterTeams && masterTeams.length > 0;
-  const canRegisterWithExisting = selectedMasterTeam && !rosterExceedsLimit;
+  const canRegisterWithExisting = selectedMasterTeam
+    && !rosterExceedsLimit
+    && registrationTeamName.trim().length >= 2
+    && registrationCaptainName.trim().length >= 2;
+
+  // The master roster arrives after the selected team. Use its captain name
+  // as the default, while preserving anything the user has already typed.
+  useEffect(() => {
+    if (!selectedMasterTeamId || registrationCaptainName.trim()) return;
+    const captain = masterRoster.find((member) => member.is_captain);
+    if (captain?.player_name) setRegistrationCaptainName(captain.player_name);
+  }, [selectedMasterTeamId, masterRoster, registrationCaptainName]);
 
   // ─── DUPR gating (MLP) ─── captain = logged-in user, MLP is doubles-only.
   const { data: duprConn } = useDuprConnection();
@@ -258,6 +275,10 @@ export function TeamRegistrationDialog({
     setMode(initialMode);
     if (initialMode === 'use-existing' && masterTeams?.length === 1) {
       setSelectedMasterTeamId(masterTeams[0].id);
+      setExcludedMemberIds(new Set());
+      setRegistrationTeamName(masterTeams[0].team_name);
+      setRegistrationCaptainName(profile?.display_name ?? '');
+      setRegistrationNameErrors({});
     }
     // Pre-fill captain name from the logged-in profile (DUPR/account name).
     if (profile?.display_name && !form.getValues('captain_name')) {
@@ -323,13 +344,24 @@ export function TeamRegistrationDialog({
   const handleUseExistingTeam = async () => {
     if (!user || !selectedMasterTeam) return;
 
+    const teamName = registrationTeamName.trim();
+    const captainName = registrationCaptainName.trim();
+    const errors = {
+      ...(teamName.length < 2 || teamName.length > 50 ? { team: c.teamNameError } : {}),
+      ...(captainName.length < 2 || captainName.length > 50 ? { captain: c.captainNameError } : {}),
+    };
+    setRegistrationNameErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setIsRegistering(true);
     try {
       await registerExistingTeam({
         tournamentId,
-        masterTeam: { id: selectedMasterTeam.id, team_name: selectedMasterTeam.team_name },
+        // These are tournament snapshot names. The reusable master team and
+        // its roster keep their original names.
+        masterTeam: { id: selectedMasterTeam.id, team_name: teamName },
         roster: effectiveRoster.map((member) => ({
-          player_name: member.player_name,
+          player_name: member.is_captain ? captainName : member.player_name,
           gender: member.gender,
           skill_level: member.skill_level,
           user_id: member.user_id,
@@ -338,6 +370,9 @@ export function TeamRegistrationDialog({
       });
       setMode('select');
       setSelectedMasterTeamId(null);
+      setRegistrationTeamName('');
+      setRegistrationCaptainName('');
+      setRegistrationNameErrors({});
       onOpenChange(false);
       onSuccess?.();
     } catch {
@@ -351,6 +386,9 @@ export function TeamRegistrationDialog({
     setMode('select');
     setSelectedMasterTeamId(null);
     setExcludedMemberIds(new Set());
+    setRegistrationTeamName('');
+    setRegistrationCaptainName('');
+    setRegistrationNameErrors({});
     form.reset();
   };
 
@@ -358,6 +396,9 @@ export function TeamRegistrationDialog({
     setMode('select');
     setSelectedMasterTeamId(null);
     setExcludedMemberIds(new Set());
+    setRegistrationTeamName('');
+    setRegistrationCaptainName('');
+    setRegistrationNameErrors({});
     form.reset();
     onOpenChange(false);
   };
@@ -683,6 +724,38 @@ export function TeamRegistrationDialog({
 
                 {/* Selected Team Preview */}
                 {selectedMasterTeamId && (
+                  <>
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label htmlFor="existing-team-name" style={fieldLabel}>{txt.teamNameLabel}</label>
+                      <Input
+                        id="existing-team-name"
+                        value={registrationTeamName}
+                        maxLength={50}
+                        placeholder={txt.teamNamePh}
+                        onChange={(event) => {
+                          setRegistrationTeamName(event.target.value);
+                          setRegistrationNameErrors((current) => ({ ...current, team: undefined }));
+                        }}
+                      />
+                      {registrationNameErrors.team && <p style={{ margin: 0, fontSize: 12, color: 'var(--destructive)' }}>{registrationNameErrors.team}</p>}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label htmlFor="existing-captain-name" style={fieldLabel}>{txt.captainNameLabel}</label>
+                      <Input
+                        id="existing-captain-name"
+                        value={registrationCaptainName}
+                        maxLength={50}
+                        placeholder={txt.captainNamePh}
+                        onChange={(event) => {
+                          setRegistrationCaptainName(event.target.value);
+                          setRegistrationNameErrors((current) => ({ ...current, captain: undefined }));
+                        }}
+                      />
+                      {registrationNameErrors.captain && <p style={{ margin: 0, fontSize: 12, color: 'var(--destructive)' }}>{registrationNameErrors.captain}</p>}
+                    </div>
+                  </div>
+
                   <div style={{ ...surfaceCard, padding: 14 }}>
                     <div
                       style={{
@@ -798,6 +871,7 @@ export function TeamRegistrationDialog({
                       )}
                     </div>
                   </div>
+                  </>
                 )}
 
                 <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>

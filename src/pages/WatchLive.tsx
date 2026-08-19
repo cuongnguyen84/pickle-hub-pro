@@ -106,14 +106,36 @@ const WatchLive = () => {
   });
 
   if (isLoading) {
+    // CLS INC1: loading tree mirrors the resolved tree's geometry — same
+    // container, back-link row, full-bleed sticky mobile player box, same
+    // grid gap. A skeleton with different layout IS the layout shift.
     return (
       <TheLineLayout title={t.live.live} active="live">
-        <div className="tl-shell" style={{ paddingTop: 32, paddingBottom: 80 }}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="container-wide section-spacing">
+          <Link
+            to="/live"
+            className="inline-flex items-center gap-2 text-foreground-secondary hover:text-foreground mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">{t.nav.live}</span>
+          </Link>
+          <div className="lg:hidden sticky top-14 z-40 -mx-4 sm:-mx-6 bg-background">
+            <div className="aspect-video bg-surface-elevated overflow-hidden relative">
+              <Skeleton className="w-full h-full" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Skeleton className="aspect-video rounded-xl" />
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="hidden lg:block aspect-video rounded-xl" />
+              <Skeleton className="lg:hidden h-10 w-full" />
+              {/* Mirror the resolved info column: multi-line title, organizer
+                  row, stats row, like/share row — the text block below the
+                  player is ~290px the old skeleton left unreserved. */}
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-10 w-full" />
             </div>
           </div>
         </div>
@@ -206,6 +228,37 @@ const WatchLive = () => {
         }))
     : [];
 
+  const scheduledPoster = livestream.thumbnail_url ? (
+    <div className="relative w-full h-full bg-muted">
+      <img
+        src={livestream.thumbnail_url}
+        alt={streamTitle}
+        className="w-full h-full object-cover"
+      />
+      <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-4 pb-4 pt-16 sm:px-6 sm:pb-5">
+        <Radio className="h-6 w-6 shrink-0 text-white" aria-hidden="true" />
+        <p className="text-sm font-medium text-white sm:text-base">
+          {t.live.scheduled} - {livestream.scheduled_start_at && format(
+            new Date(livestream.scheduled_start_at),
+            "dd MMM yyyy, HH:mm",
+            { locale: dateLocale }
+          )}
+        </p>
+      </div>
+    </div>
+  ) : (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
+      <Radio className="w-12 h-12 text-foreground-muted" />
+      <p className="text-foreground-secondary text-center px-4">
+        {t.live.scheduled} - {livestream.scheduled_start_at && format(
+          new Date(livestream.scheduled_start_at),
+          "dd MMM yyyy, HH:mm",
+          { locale: dateLocale }
+        )}
+      </p>
+    </div>
+  );
+
   return (
     <TheLineLayout title={livestream.title ?? t.live.live} description={seoDescription} active="live">
       {/* Dynamic SEO tags - auto-generated from livestream data */}
@@ -258,16 +311,7 @@ const WatchLive = () => {
                 onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
               />
             ) : isScheduled ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
-                <Radio className="w-12 h-12 text-foreground-muted" />
-                <p className="text-foreground-secondary text-center px-4">
-                  {t.live.scheduled} - {livestream.scheduled_start_at && format(
-                    new Date(livestream.scheduled_start_at),
-                    "dd MMM yyyy, HH:mm",
-                    { locale: dateLocale }
-                  )}
-                </p>
-              </div>
+              scheduledPoster
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
                 {livestream.thumbnail_url ? (
@@ -307,16 +351,7 @@ const WatchLive = () => {
                   onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
                 />
               ) : isScheduled ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
-                  <Radio className="w-12 h-12 text-foreground-muted" />
-                  <p className="text-foreground-secondary text-center px-4">
-                    {t.live.scheduled} - {livestream.scheduled_start_at && format(
-                      new Date(livestream.scheduled_start_at),
-                      "dd MMM yyyy, HH:mm",
-                      { locale: dateLocale }
-                    )}
-                  </p>
-                </div>
+                scheduledPoster
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
                   {livestream.thumbnail_url ? (
@@ -375,16 +410,23 @@ const WatchLive = () => {
                 </Badge>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 text-sm text-foreground-secondary">
-                {livestream.organization && (
+              {/* CLS INC1: organizer on its own row; stats row is nowrap,
+                  ordered stable→volatile: date (fixed), viewCount (refetch
+                  30s, width moves only on digit rollover), viewer chip
+                  (every Presence sync — most volatile, so last: its growth
+                  moves nothing). Residual accepted: a viewCount digit
+                  rollover still nudges the chip a few px — rare, and far
+                  below the old full-row rewrap. */}
+              {livestream.organization && (
+                <div className="text-sm">
                   <Link
                     to={`/org/${livestream.organization.slug}`}
                     className="font-medium text-primary hover:underline inline-flex items-center gap-2"
                   >
                     <Avatar className="w-6 h-6 border border-primary/20">
-                      <AvatarImage 
-                        src={livestream.organization.display_logo ?? livestream.organization.logo_url ?? undefined} 
-                        alt={livestream.organization.name} 
+                      <AvatarImage
+                        src={livestream.organization.display_logo ?? livestream.organization.logo_url ?? undefined}
+                        alt={livestream.organization.name}
                       />
                       <AvatarFallback className="bg-primary/10 text-primary text-xs">
                         {livestream.organization.name.charAt(0).toUpperCase()}
@@ -395,26 +437,29 @@ const WatchLive = () => {
                       <BadgeCheck className="w-4 h-4 text-creator-badge" />
                     </span>
                   </Link>
-                )}
+                </div>
+              )}
+              <div className="flex items-center gap-4 text-sm text-foreground-secondary whitespace-nowrap overflow-x-auto">
+                {/* Date/time first — stable from first paint */}
+                {isEnded && livestream.ended_at ? (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {t.live.endedAt} {format(new Date(livestream.ended_at), "dd MMM yyyy, HH:mm", {
+                      locale: dateLocale,
+                    })}
+                  </span>
+                ) : livestream.scheduled_start_at ? (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {format(new Date(livestream.scheduled_start_at), "dd MMM yyyy, HH:mm", {
+                      locale: dateLocale,
+                    })}
+                  </span>
+                ) : null}
                 {/* View counts with context-aware labels and tooltips */}
                 <TooltipProvider>
                   {isLive ? (
-                    // LIVE: Show both concurrent viewers and total views
                     <>
-                      {/* Concurrent viewers (real-time) */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1 cursor-help">
-                            <Users className="w-4 h-4 text-live" />
-                            <span className="text-live font-medium">
-                              {isConnected ? concurrentViewers.toLocaleString() : "—"} {t.live.watching}
-                            </span>
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t.live.watchingTooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
                       {/* Total views */}
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -427,6 +472,19 @@ const WatchLive = () => {
                           <p>{t.live.totalViewsTooltip}</p>
                         </TooltipContent>
                       </Tooltip>
+                      {/* On the watch page, show the real-time audience even
+                          when it is small. The list-card social-proof floor is
+                          intentionally not applied here. Mounted invisible so
+                          Presence connecting reveals, not inserts. */}
+                      <span
+                        className={`flex items-center gap-1${isConnected && concurrentViewers > 0 ? "" : " invisible"}`}
+                        aria-label={t.live.watchingAria.replace("{count}", concurrentViewers.toLocaleString())}
+                      >
+                        <Users className="w-4 h-4 text-live" aria-hidden="true" />
+                        <span className="text-live font-medium">
+                          {concurrentViewers.toLocaleString()} {t.live.watching}
+                        </span>
+                      </span>
                     </>
                   ) : (
                     // ENDED/SCHEDULED: Only show total views
@@ -443,24 +501,6 @@ const WatchLive = () => {
                     </Tooltip>
                   )}
                 </TooltipProvider>
-                {/* Date/time display based on status */}
-                {isEnded && livestream.ended_at ? (
-                  // Ended: show when it ended
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {t.live.endedAt} {format(new Date(livestream.ended_at), "dd MMM yyyy, HH:mm", {
-                      locale: dateLocale,
-                    })}
-                  </span>
-                ) : livestream.scheduled_start_at ? (
-                  // Live/Scheduled: show scheduled start time
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {format(new Date(livestream.scheduled_start_at), "dd MMM yyyy, HH:mm", {
-                      locale: dateLocale,
-                    })}
-                  </span>
-                ) : null}
               </div>
 
               {/* Like & Share Buttons */}
@@ -561,7 +601,6 @@ const WatchLive = () => {
                       key={stream.id}
                       id={stream.id ?? ""}
                       title={stream.title ?? "Livestream"}
-                      viewerCount={0}
                       organizationName={stream.organization?.name ?? ""}
                       organizationSlug={stream.organization?.slug}
                       status={stream.status as "live" | "scheduled" | "ended"}

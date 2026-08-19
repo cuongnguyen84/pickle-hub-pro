@@ -34,6 +34,8 @@ function snapshot(): JobHealthDigestSnapshot {
         error_message: null,
       },
     ],
+    facebook_posts: { thepicklehub: 3, ta_pickleball: 2 },
+    news_sources: { active: 4, total: 5, needs_attention: ["ppa-tour"] },
   };
 }
 
@@ -44,6 +46,25 @@ describe("formatJobHealthDigest", () => {
     expect(text).toContain("News: 0 bài mới · 4 nguồn OK");
     expect(text).toContain("Pro Tour: lượt gần nhất 4 trận · hôm nay 34 trận · 4 event · 1 lỗi");
     expect(text).toContain("Facebook: ThePickleHub 0 bài · TA Pickleball 0 bài · không có bài đủ điều kiện");
+    expect(text).toContain("Nguồn tin: 4/5 active · cần xử lý: ppa\\-tour");
+  });
+
+  it("chỉ in MỘT dòng Facebook kể cả khi có cả job metrics lẫn facebook_posts", () => {
+    // Merge 19/08 từng để cả hai nhánh cùng push: digest in Facebook hai lần
+    // với hai con số khác nhau (0 bài từ job metrics, 3 bài từ facebook_posts).
+    // Fixture dưới có ĐỦ cả hai nguồn, nên test này đỏ nếu lỗi đó quay lại.
+    const text = formatJobHealthDigest(snapshot(), "2026-08-02");
+    const facebookLines = text.split("\n").filter((line) => line.includes("Facebook"));
+    expect(facebookLines).toHaveLength(1);
+    // Và dòng còn lại phải là dòng nói được lý do, không phải dòng chỉ đếm.
+    expect(facebookLines[0]).toContain("không có bài đủ điều kiện");
+  });
+
+  it("dùng facebook_posts khi không có job social-poster", () => {
+    const snap = snapshot();
+    snap.jobs = snap.jobs.filter((job) => job.job_key !== "social-poster");
+    const text = formatJobHealthDigest(snap, "2026-08-02");
+    expect(text).toContain("Facebook hôm nay: ThePickleHub 3 bài · TAPickleball 2 bài");
   });
 
   it("lists only warning/failed details and escapes Telegram MarkdownV2", () => {

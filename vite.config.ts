@@ -1,7 +1,8 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
+import fs from "fs";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -20,7 +21,45 @@ import { visualizer } from "rollup-plugin-visualizer";
 const BUILD_ID = Date.now().toString(36);
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+// Read through loadEnv, not process.env, so the plugin below and the
+// `import.meta.env.VITE_PROTO_SHOP` constant in App.tsx always agree — a .env
+// file that enabled one but not the other would ship a route pointing at a
+// stubbed module.
+const viteEnv = loadEnv(mode, process.cwd(), "VITE_");
+const protoShop = viteEnv.VITE_PROTO_SHOP === "1";
+
+// The Supabase this build talks to — and therefore the ONLY host the artifact
+// may name.
+// ----------------------------------------------------------------------------
+// The client reads VITE_SUPABASE_URL, but four things outside the JS graph used
+// to hardcode the production ref, so a staging build still reached production:
+//   * <link preconnect> + <link dns-prefetch> in index.html — a DNS lookup and
+//     a TLS handshake to production on every page load;
+//   * the CSP report-uri in public/_headers — violation reports POSTed to the
+//     production log-client-event, writing staging rows into production data;
+//   * two service-worker urlPattern regexes — pinned to the production host, so
+//     on any other environment they silently match NOTHING. The /rest/ one is a
+//     safety rule ("NEVER cache, responses are per-user"), and a safety rule
+//     that quietly stops applying is worse than one that was never written.
+// Found 2026-08-13 by the staging preflight, before the first write.
+//
+// The fallback is the production host on purpose: when the variable is absent
+// the artifact is byte-identical to what it was before this existed, so a build
+// with no env cannot silently produce a half-configured page.
+const SUPABASE_ORIGIN = (
+  viteEnv.VITE_SUPABASE_URL || "https://ajvlcamxemgbxduhiqrl.supabase.co"
+).replace(/\/+$/, "");
+
+const reEscape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Filled in by the supabase-origin-in-static-assets plugin's configResolved
+// hook — the build's real output directory, and whether publicDir was copied
+// into it at all. Both are unknowable at config-factory time.
+let resolvedOutDir = "";
+let copiesPublicDir = false;
+
+return ({
   server: {
     host: "::",
     port: 8080,
@@ -38,6 +77,79 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // Shop prototype separation (D4, 2026-08-11). The prototype keeps living in
+    // the repo — source, tests, and a runnable preview — but it must not reach
+    // the production artifact. App.tsx already drops the route behind a folded
+    // constant; this makes it independent of tree-shaking by resolving the one
+    // production entry point into src/proto/ to an empty module. If the flag is
+    // off, nothing under src/proto/shop/** can be reached from the graph, so no
+    // screen, scenario or fixture chunk is emitted.
+    !protoShop && {
+      name: "strip-proto-shop",
+      resolveId(id: string) {
+        return /proto\/shop\/ProtoShopApp$/.test(id) ? "\0proto-shop-disabled" : null;
+      },
+      load(id: string) {
+        return id === "\0proto-shop-disabled" ? "export default null;\n" : null;
+      },
+    },
+    // Point the two <link> hints and the CSP report-uri at THIS build's
+    // Supabase. Both live outside the JS graph, so no amount of env plumbing in
+    // src/ reaches them — see SUPABASE_ORIGIN above.
+    {
+      name: "supabase-origin-in-static-assets",
+      apply: "build" as const,
+      // `order: "pre"` is load-bearing, not tidiness. Vite's own HTML pass
+      // decodeURI()s every href, and "%SU" is an invalid percent-escape, so a
+      // marker left in place until the default order fails the build with
+      // "URI malformed".
+      transformIndexHtml: {
+        order: "pre" as const,
+        handler(html: string) {
+          return html.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN);
+        },
+      },
+      // The emitted _headers is resolved from the build's OWN outDir, captured
+      // here rather than assumed to be "dist".
+      // ----------------------------------------------------------------------
+      // Vite copies publicDir into outDir in prepareOutDir(), before the bundle
+      // runs, so by closeBundle() the file is already there — but only at the
+      // outDir this build actually chose. A hardcoded "dist" reads the wrong
+      // path under `--outDir`, a configured `build.outDir`, or any second
+      // config that overrides it, and the two failure modes are opposite and
+      // both bad: a LEFTOVER dist/_headers from an earlier build fails a build
+      // that was fine, and an ABSENT one skipped the rewrite entirely and
+      // shipped the literal marker as the CSP report-uri — an unparseable URL,
+      // so every violation report is dropped and the client_errors CSP feed
+      // goes quiet with nothing to notice. The whole point of the throw below
+      // is that this substitution is never allowed to be silent, so the
+      // "file missing" branch cannot be a silent return either.
+      configResolved(resolved) {
+        resolvedOutDir = path.resolve(resolved.root, resolved.build.outDir);
+        copiesPublicDir = Boolean(resolved.build.copyPublicDir && resolved.publicDir);
+      },
+      closeBundle() {
+        // Nothing was copied, so there is nothing to rewrite and nothing to
+        // ship wrong — the only branch where absence is genuinely fine.
+        if (!copiesPublicDir) return;
+
+        const headers = path.resolve(resolvedOutDir, "_headers");
+        if (!fs.existsSync(headers)) {
+          throw new Error(
+            `${headers} is missing — public/_headers was not copied into the ` +
+              "build output, so the CSP report-uri never got substituted.",
+          );
+        }
+        const before = fs.readFileSync(headers, "utf8");
+        if (!before.includes("%SUPABASE_ORIGIN%")) {
+          throw new Error(
+            "public/_headers no longer contains %SUPABASE_ORIGIN% — the CSP " +
+              "report-uri would ship pointing at a hardcoded environment.",
+          );
+        }
+        fs.writeFileSync(headers, before.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN));
+      },
+    },
     // /build-id.txt — freshness beacon for staleShell.ts. Root-level txt is
     // outside every precache glob (whitelist) and navigateFallback denylists
     // txt, so a fetch always reaches the CDN and a missing file 404s instead
@@ -210,12 +322,12 @@ export default defineConfig(({ mode }) => ({
           // legacy "supabase-rest" cache from the old NetworkFirst rule is
           // purged client-side (src/lib/pwa/cache.ts) on boot + sign-out.
           {
-            urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/rest\//,
+            urlPattern: new RegExp(`^${reEscape(SUPABASE_ORIGIN)}/rest/`),
             handler: "NetworkOnly",
           },
           // Supabase storage images — CacheFirst, long-lived
           {
-            urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/storage\//,
+            urlPattern: new RegExp(`^${reEscape(SUPABASE_ORIGIN)}/storage/`),
             handler: "CacheFirst",
             options: {
               cacheName: "supabase-storage",
@@ -295,6 +407,24 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // hls.js LIGHT build — 53 KB gz of the total budget (P2b.0).
+      // Nothing in src/ imports hls.js directly any more; the only importer is
+      // @mux/playback-core, which pulls the full build by specifier. Aliasing
+      // here catches that import too, so there is exactly one copy and it is
+      // the small one.
+      //
+      // Light drops subtitles/CEA-708, alternate audio, EME/DRM, CMCD and
+      // interstitials. This product uses none of them: there is no caption UI
+      // and no Mux transcription configured, match video is single-track, and
+      // mux-create-livestream's `playback_policy: "signed"` is a JWT on the
+      // URL — not Widevine/FairPlay (there is no drm_configuration anywhere).
+      //
+      // The failure mode if that ever changes is SILENT — the light build keeps
+      // the accessors and just reports no tracks. src/components/video/
+      // __tests__/hls-light-build.test.ts fails the moment captions or DRM are
+      // configured, so the trade has to be re-decided rather than discovered
+      // by a viewer.
+      "hls.js": path.resolve(__dirname, "./node_modules/hls.js/dist/hls.light.mjs"),
     },
   },
   build: {
@@ -355,12 +485,49 @@ export default defineConfig(({ mode }) => ({
   test: {
     include: [
       "src/**/*.test.{ts,tsx}",
-      "functions/_lib/__tests__/**/*.test.ts",
-      "supabase/functions/_shared/__tests__/**/*.test.ts",
-      "scripts/*.test.mjs",
+      // Was "functions/_lib/__tests__/**" only, which silently skipped every
+      // suite under functions/_lib/render/__tests__/ (static-pages.test.ts had
+      // never run since SEO-04 split the renderers out). Match any __tests__
+      // directory under functions/ instead.
+      "functions/**/__tests__/**/*.test.ts",
+      // Workers are pure node-compatible modules; coverage-excluded below,
+      // so this only adds their fixture tests to the existing gate.
+      "workers/*/src/**/*.test.ts",
+      // Any function may carry its own __tests__ folder. Keeping them out of
+      // _shared matters: CI redeploys EVERY edge function when a path under
+      // supabase/functions/_shared/ changes, and a test file should not cost
+      // a fleet redeploy.
+      "supabase/functions/**/__tests__/**/*.test.ts",
+      "scripts/**/*.test.mjs",
     ],
     exclude: ["node_modules/**", "dist/**", "tests/**"],
     environment: "node",
+    // src/integrations/supabase/client.ts calls createClient() at module load
+    // and throws "supabaseUrl is required." when VITE_SUPABASE_URL is unset.
+    // quality.yml supplies the VITE_SUPABASE_* vars to the Build step only,
+    // not to the Vitest step, so any suite that transitively imports the real
+    // client is a landmine: SellerProductForm.save.test.tsx reaches it through
+    // a React.lazy chunk and reds `npm run test` intermittently (2 runs in 3
+    // on a clean checkout of main, 3 in 3 when run alone) while CI happens to
+    // stay green. Twenty test files already carry a per-file vi.mock purely to
+    // dodge this; the config is where it belongs.
+    //
+    // Dummy values on purpose, and NOT a *.supabase.co host: this must never
+    // resolve to a real project, and src/__tests__/supabase-origin-not-
+    // hardcoded.test.ts scans this file for `<ref>.supabase.co` literals.
+    // Vitest's `env` overrides both a local .env and the shell, so a developer
+    // with real credentials gets the dummies here too.
+    //
+    // LIMITATION — this de-mines jsdom suites only. Under the default
+    // `environment: "node"` the next line of client.ts (`storage: localStorage`)
+    // still throws ReferenceError, so the per-file vi.mock workarounds in
+    // node-env tests remain load-bearing. Do not delete them on the strength
+    // of this block. Closing that half needs a setupFiles localStorage stub.
+    env: {
+      VITE_SUPABASE_URL: "http://127.0.0.1:54321",
+      VITE_SUPABASE_PROJECT_ID: "test-project",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "test-anon-key-not-a-real-credential",
+    },
     // Coverage of test-imported files. Threshold locks the baseline
     // (86.9% statements on 2026-05-29) so a regression that adds untested
     // imported code reds the gate. Buffer left below baseline to avoid
@@ -372,10 +539,17 @@ export default defineConfig(({ mode }) => ({
       // 2026-07-18; keep the statements threshold scoped to the original src/
       // + supabase baseline instead of re-basing it on partially covered SSR
       // helpers.
-      exclude: [...coverageConfigDefaults.exclude, "functions/**"],
+      // workers/** + scripts/** excluded 2026-08-03 (CLOSE-03): same rationale
+      // as functions/** — Cloudflare workers ship with their own fixture-based
+      // tests and CI scripts are exercised by CI itself; the 83% threshold is
+      // calibrated for src/. Before excluding, workers were 11.3% covered and
+      // alone accounted for 41% of the statement gap, holding the quality gate
+      // red on every main push since 30/07 (75.04% vs 83%). After: 85.9%.
+      exclude: [...coverageConfigDefaults.exclude, "functions/**", "workers/**", "scripts/**"],
       thresholds: {
         statements: 83,
       },
     },
   },
-}));
+});
+});

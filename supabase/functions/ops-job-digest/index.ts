@@ -18,6 +18,11 @@ function reportDateIct(now = new Date()): string {
   }).format(now);
 }
 
+function ictDayBounds(reportDate: string): { start: string; end: string } {
+  const start = new Date(`${reportDate}T00:00:00+07:00`);
+  return { start: start.toISOString(), end: new Date(start.getTime() + 86_400_000).toISOString() };
+}
+
 async function sendTelegram(text: string): Promise<{ ok: boolean; error?: string }> {
   const token = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
   const chatId = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
@@ -65,8 +70,32 @@ Deno.serve(async (req) => {
   const { data, error } = await supabase.rpc("ops_job_health_snapshot");
   if (error) return Response.json({ error: "snapshot_failed", detail: error.message }, { status: 500 });
 
-  const snapshot = data as HealthSnapshot;
   const reportDate = reportDateIct();
+  const snapshot = data as HealthSnapshot;
+  const bounds = ictDayBounds(reportDate);
+  const { data: facebookRows, error: facebookError } = await supabase
+    .from("fb_post_log")
+    .select("page_key")
+    .eq("status", "posted")
+    .gte("posted_at", bounds.start)
+    .lt("posted_at", bounds.end);
+  snapshot.facebook_posts = facebookError
+    ? { thepicklehub: null, ta_pickleball: null }
+    : {
+      thepicklehub: (facebookRows ?? []).filter((row) => row.page_key === "thepicklehub").length,
+      ta_pickleball: (facebookRows ?? []).filter((row) => row.page_key === "ta-pickleball").length,
+    };
+  const { data: sourceRows, error: sourcesError } = await supabase
+    .from("news_sources")
+    .select("id,active,last_error");
+  if (!sourcesError && (sourceRows ?? []).length > 0) {
+    const rows = sourceRows as { id: string; active: boolean; last_error: string | null }[];
+    snapshot.news_sources = {
+      active: rows.filter((row) => row.active).length,
+      total: rows.length,
+      needs_attention: rows.filter((row) => !row.active && row.last_error).map((row) => row.id),
+    };
+  }
   const text = formatJobHealthDigest(snapshot, reportDate);
   if (mode === "preview") return Response.json({ ok: true, mode, report_date: reportDate, deployment_revision: deploymentRevision, text, snapshot });
 

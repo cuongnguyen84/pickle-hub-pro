@@ -136,7 +136,7 @@ CSP enforce + CSP Report-Only đồng thời. Report-uri trỏ tới `log-client
 ### Telegram bot
 
 **Bot:** `@Tphaisupport_bot` (TPH AI Support)
-- TOKEN: `8647605878:AAFnwsf7XBXV9cgzIQFy6r5ZBtXmZXxiLL4`
+- TOKEN: xem `~/Downloads/secrets.local.md` (KHÔNG commit token vào git — token cũ bị lộ trong repo đã rotate 09/08/2026)
 - CHAT_ID: `233837066` (Cuong's chat)
 - Set vào Supabase secrets cho edge function
 - Cũng set vào GitHub Actions secrets cho Playwright CI failure alert

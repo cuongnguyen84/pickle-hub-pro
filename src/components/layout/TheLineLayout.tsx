@@ -515,10 +515,10 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             </Link>
           );
         })()}
-        <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="The PickleHub home">
+        <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="ThePickleHub home">
           <span className="tl-brand-mark" aria-hidden="true" />
           <span className="tl-brand-text">
-            The <em>Pickle</em>Hub
+            The<em>Pickle</em>Hub
           </span>
         </Link>
 
@@ -1060,7 +1060,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                   : <>Reporters. <em>Rackets.</em> Real coverage.</>}
               </div>
               <h3>
-                The <em style={{ fontFamily: "inherit" }}>Pickle</em>Hub
+                The<em style={{ fontFamily: "inherit" }}>Pickle</em>Hub
               </h3>
               <p>
                 {language === "vi"
@@ -1093,14 +1093,18 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             </div>
           </div>
           <div className="tl-foot-bottom">
-            <span>© 2026 The PickleHub · Ho Chi Minh City</span>
+            <span>© 2026 ThePickleHub · Ho Chi Minh City</span>
             <div
               className="tl-social"
               role="group"
               aria-label={language === "vi" ? "Mạng xã hội" : "Social channels"}
             >
               <a
-                href="https://www.facebook.com/ThePickleHub"
+                // BRAND-01 (2026-08-18): /ThePickleHub is someone else's page —
+                // Facebook resolves that vanity URL to "Pickle Hub | Guntur"
+                // (India). Ours is /thepicklehubnet/. Kept in sync with the
+                // Organization sameAs list in functions/_lib/render/home.ts.
+                href="https://www.facebook.com/thepicklehubnet"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={language === "vi" ? "ThePickleHub trên Facebook" : "ThePickleHub on Facebook"}
@@ -1109,26 +1113,19 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                   <path d="M13.5 21v-8h2.7l.4-3.13H13.5V7.9c0-.9.25-1.52 1.55-1.52h1.66V3.57c-.29-.04-1.27-.12-2.42-.12-2.4 0-4.04 1.46-4.04 4.15v2.31H7.55V13h2.7v8h3.25z" />
                 </svg>
               </a>
+              {/* Instagram and YouTube links removed 2026-08-18: neither
+                  instagram.com/thepicklehub nor youtube.com/@thepicklehub is
+                  ours (confirmed by Cuong). Kept in sync with the Organization
+                  sameAs list in functions/_lib/render/home.ts — do not restore
+                  either without confirming ownership first. */}
               <a
-                href="https://www.instagram.com/thepicklehub"
+                href="https://x.com/thepicklehub"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={language === "vi" ? "ThePickleHub trên Instagram" : "ThePickleHub on Instagram"}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false">
-                  <rect x="3" y="3" width="18" height="18" rx="5" />
-                  <circle cx="12" cy="12" r="4" />
-                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-                </svg>
-              </a>
-              <a
-                href="https://www.youtube.com/@thepicklehub"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={language === "vi" ? "ThePickleHub trên YouTube" : "ThePickleHub on YouTube"}
+                aria-label={language === "vi" ? "ThePickleHub trên X" : "ThePickleHub on X"}
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-                  <path d="M21.58 7.2a2.5 2.5 0 0 0-1.77-1.77C18.2 5 12 5 12 5s-6.2 0-7.81.43A2.5 2.5 0 0 0 2.42 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .42 4.8 2.5 2.5 0 0 0 1.77 1.77C5.8 19 12 19 12 19s6.2 0 7.81-.43a2.5 2.5 0 0 0 1.77-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.42-4.8zM10 15V9l5.2 3L10 15z" />
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </a>
             </div>

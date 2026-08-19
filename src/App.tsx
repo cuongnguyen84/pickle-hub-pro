@@ -68,6 +68,53 @@ const Notifications = lazyRetry(() => import("./pages/Notifications"));
 const Search = lazyRetry(() => import("./pages/Search"));
 const OrganizationDetail = lazyRetry(() => import("./pages/OrganizationDetail"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
+// Shop screen prototype (docs/proposals/shop-marketplace-screen-tasks.md).
+// Isolated + noindex; see src/proto/shop/ProtoShopApp.tsx for the three guards.
+//
+// D4 (2026-08-11): the prototype stays in the repo but must not reach the
+// production artifact — 37 screens plus fixtures were costing ~106 KB gz of a
+// budget that is already over. `VITE_PROTO_SHOP=1` (npm run dev:proto /
+// build:proto) turns it back on. The constant is a literal after Vite's define
+// pass, so the ternary folds and the dynamic import is dropped at build time;
+// vite.config.ts additionally resolves the module to an empty stub when the
+// flag is off, so this does not depend on tree-shaking to be correct.
+const PROTO_SHOP_ENABLED = import.meta.env.VITE_PROTO_SHOP === "1";
+const ProtoShopApp = PROTO_SHOP_ENABLED
+  ? lazyRetry(() => import("./proto/shop/ProtoShopApp"))
+  : null;
+// Shop marketplace — Phase 1 (closed pilot). Server-side gate is
+// shop_pilot_has_access(); these routes only decide whether a door renders.
+const SellLanding = lazyRetry(() => import("./pages/shop/SellLanding"));
+const SellerApplication = lazyRetry(() => import("./pages/shop/SellerApplication"));
+const SellerApplicationStatus = lazyRetry(() => import("./pages/shop/SellerApplicationStatus"));
+const SellerShopSettings = lazyRetry(() => import("./pages/shop/SellerShopSettings"));
+const SellerHome = lazyRetry(() => import("./pages/shop/SellerHome"));
+const SellerProducts = lazyRetry(() => import("./pages/shop/SellerProducts"));
+// One component behind two routes: create and edit differ in three places and
+// agree everywhere else, so they share a chunk as well as a file.
+const SellerProductForm = lazyRetry(() => import("./pages/shop/SellerProductForm"));
+const AdminShopApplications = lazyRetry(() => import("./pages/admin/shop/AdminShopApplications"));
+const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/AdminShopApplicationReview"));
+// P2b.2 — moderation console. Separate lazy chunks from the buyer surfaces, so
+// a shopper never downloads the thing that can suspend their seller.
+const AdminShopProducts = lazyRetry(() => import("./pages/admin/shop/AdminShopProducts"));
+const AdminShopProductReview = lazyRetry(() => import("./pages/admin/shop/AdminShopProductReview"));
+const AdminShopContacts = lazyRetry(() => import("./pages/admin/shop/AdminShopContacts"));
+// P2b.4 — buyer catalogue. Separate chunks from the seller and admin
+// surfaces: a shopper must never download the moderation console.
+const ShopHome = lazyRetry(() => import("./pages/shop/ShopHome"));
+const ShopSearch = lazyRetry(() => import("./pages/shop/ShopSearch"));
+const ShopCategory = lazyRetry(() => import("./pages/shop/ShopCategory"));
+const ProductDetail = lazyRetry(() => import("./pages/shop/ProductDetail"));
+const ShopStore = lazyRetry(() => import("./pages/shop/ShopStore"));
+// P3 buyer flow. Own chunks: a shopper browsing the catalogue never downloads
+// the checkout form, and /shop/order carries no cart code.
+const ShopCart = lazyRetry(() => import("./pages/shop/Cart"));
+const ShopCheckout = lazyRetry(() => import("./pages/shop/Checkout"));
+const ShopOrderDetail = lazyRetry(() => import("./pages/shop/OrderDetail"));
+const ShopOrders = lazyRetry(() => import("./pages/shop/Orders"));
+const SellerOrders = lazyRetry(() => import("./pages/shop/SellerOrders"));
+const SellerOrderDetail = lazyRetry(() => import("./pages/shop/SellerOrderDetail"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
 const QuickTables = lazyRetry(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazyRetry(() => import("./pages/QuickTableSetup"));
@@ -171,6 +218,7 @@ const EmbedLive = lazyRetry(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazyRetry(() => import("./pages/embed/EmbedVideo"));
 
 const Rankings = lazyRetry(() => import("./pages/Rankings"));
+const PpaRankings = lazyRetry(() => import("./pages/PpaRankings"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -193,6 +241,7 @@ const AdminModeration = lazyRetry(() => import("./pages/admin/AdminModeration"))
 const AdminDisputes = lazyRetry(() => import("./pages/admin/AdminDisputes"));
 const AdminReports = lazyRetry(() => import("./pages/admin/AdminReports"));
 const AdminNews = lazyRetry(() => import("./pages/admin/AdminNews"));
+const AdminReviews = lazyRetry(() => import("./pages/admin/AdminReviews"));
 const AdminEmbeds = lazyRetry(() => import("./pages/admin/AdminEmbeds"));
 const AdminLivestreamViewers = lazyRetry(() => import("./pages/admin/AdminLivestreamViewers"));
 const AdminPushNotification = lazyRetry(() => import("./pages/admin/AdminPushNotification"));
@@ -221,6 +270,22 @@ const CreatorTournaments = lazyRetry(() => import("./pages/creator/CreatorTourna
 // - refetchOnMount false: respect staleTime on remount (major mobile win)
 // - retry: skip retry on 4xx, max 2 retries with exponential backoff
 // Individual hooks can override these (e.g., live data uses staleTime: 30s already).
+
+/**
+ * Không thử lại lỗi 4xx / Never retry a 4xx.
+ *
+ * Chỉ dùng cho `queries`. `PostgrestError` không mang trường `status` (chỉ
+ * `{message, details, hint, code}`), nên predicate này mù với lỗi PostgREST —
+ * đó là hành vi có sẵn, giữ nguyên để không đổi hành vi của queries.
+ */
+const retryUnless4xx =
+  (max: number) =>
+  (failureCount: number, error: unknown) => {
+    const status = (error as { status?: number } | null)?.status;
+    if (status && status >= 400 && status < 500) return false;
+    return failureCount < max;
+  };
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -229,15 +294,17 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: true,
-      retry: (failureCount, error: unknown) => {
-        const status = (error as { status?: number } | null)?.status;
-        if (status && status >= 400 && status < 500) return false;
-        return failureCount < 2;
-      },
+      retry: retryUnless4xx(2),
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
     },
     mutations: {
-      retry: 1,
+      // Mutation KHÔNG retry. `retry: 1` là một cú treo, không phải một request
+      // chậm: retryer của react-query chỉ đi tiếp khi `focusManager.isFocused()`,
+      // nên một mutation fail lúc tab đang ẩn sẽ PAUSE thay vì settle —
+      // `mutateAsync` không bao giờ resolve và nút cứ quay mãi (bug thật, bắt
+      // được ở checkout Shop 18/08). Không lọc theo 4xx được vì `PostgrestError`
+      // không có trường `status`. Ghi lại là ghi, không đoán lại.
+      retry: false,
     },
   },
 });
@@ -259,6 +326,7 @@ const PageLoader = () => <LoadingState fullScreen />;
 // Chunk-error detection lives in @/lib/chunkError — shared with pwa.ts so
 // the browser-specific message list can never drift between the two again.
 import { isChunkErrorMessage } from "@/lib/chunkError";
+import { reportCaughtError } from "@/lib/errorReporter";
 
 // Error boundary for lazy-loaded chunks (handles stale cache after deploy)
 class ChunkErrorBoundary extends Component<
@@ -280,7 +348,12 @@ class ChunkErrorBoundary extends Component<
   }
   async componentDidCatch(error: Error) {
     console.error("[ChunkErrorBoundary] Caught error:", error.message, error.stack);
-    if (!isChunkErrorMessage(error.message)) return;
+    if (!isChunkErrorMessage(error.message)) {
+      // Boundary-caught render errors never reach window.onerror in prod —
+      // without this the crash is contained in UI but invisible to ops.
+      reportCaughtError(error, "render");
+      return;
+    }
 
     // Eagerly clear caches + unregister SW BEFORE reload. Existing users
     // with a pre-9425f6a SW have OLD index.html precached referencing
@@ -517,8 +590,22 @@ interface MirroredRoute {
   viSkipWrapper?: boolean;
 }
 
+// Buyer catalogue (P2b.4) enters as three MIRRORED entries, never a
+// hand-written /vi pair (ARCH-05). Not indexed during the pilot (Q4); the
+// robots answer is served by the Pages Function, not written after hydration.
+// Comments cannot go INSIDE this array — route-snapshot.test.ts parses it line
+// by line and throws on anything that is not an entry.
 const MIRRORED: MirroredRoute[] = [
   { path: "/", element: <Index /> },
+  { path: "/shop", element: <ShopHome /> },
+  { path: "/shop/search", element: <ShopSearch /> },
+  { path: "/shop/category/:slug", element: <ShopCategory /> },
+  { path: "/shop/product/:slug", element: <ProductDetail /> },
+  { path: "/shop/store/:slug", element: <ShopStore /> },
+  { path: "/shop/cart", element: <RequireAuth><ShopCart /></RequireAuth> },
+  { path: "/shop/checkout/:shopSlug", element: <RequireAuth><ShopCheckout /></RequireAuth> },
+  { path: "/shop/order/:code", element: <RequireAuth><ShopOrderDetail /></RequireAuth> },
+  { path: "/shop/orders", element: <RequireAuth><ShopOrders /></RequireAuth> },
   { path: "/live", element: <Live /> },
   { path: "/live/:id", element: <WatchLive /> },
   { path: "/videos", element: <Videos /> },
@@ -549,6 +636,7 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/news", element: <News />, viElement: <News language="vi" /> },
   { path: "/news/:slug", element: <NewsArticle language="en" />, viElement: <NewsArticle language="vi" /> },
   { path: "/rankings", element: <Rankings /> },
+  { path: "/rankings/ppa-tour", element: <PpaRankings /> },
   { path: "/feed", element: <Feed /> },
   { path: "/blog", element: <Blog /> },
   { path: "/blog/:slug", element: <BlogPost />, viElement: <ViBlogPost /> },
@@ -743,6 +831,7 @@ const App = () => (
                     <Route path="/admin/disputes" element={<AdminDisputes />} />
                     <Route path="/admin/reports" element={<AdminReports />} />
                     <Route path="/admin/news" element={<AdminNews />} />
+                    <Route path="/admin/reviews" element={<AdminReviews />} />
                     <Route path="/admin/embeds" element={<AdminEmbeds />} />
                     <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                     <Route path="/admin/push" element={<AdminPushNotification />} />
@@ -765,6 +854,28 @@ const App = () => (
                     <Route path="/creator/livestreams/:id/edit" element={<CreatorLivestreamForm />} />
                     <Route path="/creator/settings" element={<CreatorSettings />} />
                     <Route path="/creator/tournaments" element={<CreatorTournaments />} />
+                    {/* Shop screen prototype — noindex, not linked from anywhere in the
+                        product, and absent from the production build entirely (D4).
+                        In production this whole expression is `false`, so the path
+                        falls through to NotFound. */}
+                    {ProtoShopApp && <Route path="/proto/shop/*" element={<ProtoShopApp />} />}
+                    {/* Shop marketplace — Phase 1. Seller + admin surfaces are
+                        auth-gated here and re-authorised server-side by RLS. */}
+                    <Route path="/shop/sell" element={<SellLanding />} />
+                    <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
+                    <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
+                    <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
+                    <Route path="/seller/settings" element={<RequireAuth><SellerShopSettings /></RequireAuth>} />
+                    <Route path="/seller/products" element={<RequireAuth><SellerProducts /></RequireAuth>} />
+                    <Route path="/seller/products/new" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
+                    <Route path="/seller/products/:id/edit" element={<RequireAuth><SellerProductForm /></RequireAuth>} />
+                    <Route path="/seller/orders" element={<RequireAuth><SellerOrders /></RequireAuth>} />
+                    <Route path="/seller/orders/:code" element={<RequireAuth><SellerOrderDetail /></RequireAuth>} />
+                    <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />
+                    <Route path="/admin/shop/applications/:id" element={<RequireAuth requiredRole="admin"><AdminShopApplicationReview /></RequireAuth>} />
+                    <Route path="/admin/shop/products" element={<RequireAuth requiredRole="admin"><AdminShopProducts /></RequireAuth>} />
+                    <Route path="/admin/shop/products/:id" element={<RequireAuth requiredRole="admin"><AdminShopProductReview /></RequireAuth>} />
+                    <Route path="/admin/shop/contacts" element={<RequireAuth requiredRole="admin"><AdminShopContacts /></RequireAuth>} />
                     {/* Public pages */}
 
                     {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}

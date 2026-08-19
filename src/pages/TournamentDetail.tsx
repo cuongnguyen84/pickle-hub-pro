@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { ContentCard, LiveCard, EmptyState } from "@/components/content";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/states/PageStates";
 import { useI18n } from "@/i18n";
 import { useTournamentBySlug, useTournamentContent } from "@/hooks/useSupabaseData";
 import { TournamentHero, ContentSection, CourtTabs } from "@/components/tournament";
@@ -12,7 +13,12 @@ const TournamentDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useI18n();
   
-  const { data: tournament, isLoading: tournamentLoading } = useTournamentBySlug(slug ?? "");
+  const {
+    data: tournament,
+    isLoading: tournamentLoading,
+    isError: tournamentError,
+    refetch: refetchTournament,
+  } = useTournamentBySlug(slug ?? "");
   const { data: content, isLoading: contentLoading } = useTournamentContent(tournament?.id ?? "");
 
   const [videoFilter, setVideoFilter] = useState<"all" | "short" | "long">("all");
@@ -64,6 +70,18 @@ const TournamentDetail = () => {
               </div>
             ))}
           </div>
+        </div>
+      </TheLineLayout>
+    );
+  }
+
+  // Before the not-found branch: a failed lookup must say "retry", not
+  // "this tournament does not exist" — the two send the user opposite ways.
+  if (tournamentError) {
+    return (
+      <TheLineLayout title={t.errors.networkError} active="tournaments" noindex>
+        <div className="tl-shell" style={{ padding: "60px 16px" }}>
+          <ErrorState onRetry={() => refetchTournament()} />
         </div>
       </TheLineLayout>
     );
@@ -145,7 +163,6 @@ const TournamentDetail = () => {
                         key={stream.id}
                         id={stream.id!}
                         title={stream.title ?? ""}
-                        viewerCount={0}
                         organizationName={stream.organization?.name ?? ""}
                         status="live"
                         thumbnail={stream.thumbnail_url ?? undefined}

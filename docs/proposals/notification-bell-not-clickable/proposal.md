@@ -1,6 +1,6 @@
 # Chuông thông báo không bấm được (click-dead bell)
 
-> Slug: `notification-bell-not-clickable` · Ngày: `2026-07-23` · Trạng thái: `draft`
+> Slug: `notification-bell-not-clickable` · Ngày: `2026-07-23` · Trạng thái: `shipped`
 > Sinh bởi `/idea`. Panel 4 agent: `solution-architect` · `ui-ux-critic` (+GPT-5.6) ·
 > `risk-auditor` (+GPT-5.6) · `pre-mortem`. Model ngoài: xem `external/*.meta.json`.
 > Model thiếu key trong lần chạy này: `none`
@@ -229,6 +229,10 @@ Không có — mọi CONCEDE đều kèm file:line (pre-mortem: playwright.confi
 
 ## 9. Sau khi ship
 
-- SHA: · PR: · Ngày:
-- Khác kế hoạch:
-- Học được:
+- SHA: `9e77431a` (squash) · PR: #454 · Ngày: 2026-07-23
+- **Verify prod:** merge → CF Pages deploy success → smoke `/` 200, `/feed` 200, Googlebot `/` 200 (title+og:image+hreflang en/vi/x-default), seo-verify 39/0. J11 (real-click chuông) PASS thật trên CI (`journeys.spec.ts:342`, không skip). Rule CSS live trong bundle preview + prod.
+- **Khác kế hoạch:**
+  - Option B đúng như đề xuất, không đổi. 1 dòng CSS + J11.
+  - CI đỏ 2 check (Visual regression, Security/codeql) — **cả hai thuần GitHub artifact-storage-quota** (job chết ở bước upload, phần gate thực chất "Visual diff advisory" + "Gate on CodeQL findings" đều success). Cuong duyệt phương án A (merge vượt 2 đỏ quota). Không phải regression từ fix.
+  - **Sự cố nền tảng chen ngang:** Supabase blob-loss (`NOT_FOUND_FUNCTION_BLOB`) đánh sập 68/76 edge function giữa lúc ship → làm đỏ contract test trong Playwright smoke. Vá tay bằng `functions deploy --use-api` (heal 0/76), re-run smoke → xanh. **Tái phát lần nữa GIỮA SOAK** → vá tay lần 2. Fix chuông KHÔNG liên quan; prod home/feed giữ 200 suốt.
+- **Học được:** xem `.claude/memory/lessons-learned.md` — coupling quota↔self-heal.

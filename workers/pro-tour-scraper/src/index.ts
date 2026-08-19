@@ -198,7 +198,11 @@ async function runScheduledBatch(env: Env): Promise<void> {
           // until an admin noticed pro_tour_ingestion_logs failures
           // piling up. Now: failed scrapes leave next_scrape_at as-is
           // so the next cron tick (every 6h) picks the row up again.
-          if (result.ok) {
+          // Same rule for skipped (event-not-active) results: skipped has
+          // ok=true but imported nothing — advancing would delay an
+          // upcoming event's first real scrape by +24h/+7d after it goes
+          // live instead of catching it on the next 6h tick.
+          if (result.ok && !result.skipped) {
             await updateWatchlistAfterScrape(env, row.id, row.scrape_frequency);
             return result;
           }
@@ -321,13 +325,25 @@ async function runScrape(
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     if (errMsg.includes("this event is not currently active")) {
+      // Manual path pre-creates a 'running' log row — finalize it or the
+      // admin Logs tab shows "running / 0 matches" forever. Scheduled path
+      // (no log_id) intentionally leaves no row: upcoming watchlist events
+      // skip on every cron tick and would spam failed rows.
+      if (body.log_id) {
+        await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
+          (e) => console.error(`[runScrape] skip markLogFailed: ${e}`),
+        );
+      }
       return {
         ok: true,
         skipped: true,
         error_code: "event_not_active",
         matches_extracted: 0,
         players_extracted: 0,
-        error: errMsg,
+        // Static message — do not echo the caught exception to the HTTP body
+        // (CodeQL js/stack-trace-exposure). Full detail is logged server-side
+        // via recordFailure + console.error, same as the generic catch path.
+        error: "event not currently active — skipped",
       };
     }
     // Record the failure in the Logs tab — PATCH the pre-created row

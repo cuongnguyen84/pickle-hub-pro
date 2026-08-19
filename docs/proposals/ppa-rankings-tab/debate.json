@@ -1,0 +1,56 @@
+{
+  "slug": "ppa-rankings-tab",
+  "ledger_note": "scripts/agents/debate-ledger.mjs KHÔNG tồn tại trong repo (đã biết từ memory 'idea-pipeline-missing-scripts'). Luật vòng 2 được orchestrator cưỡng chế thủ công theo docs/agent-round2-rules.md: mọi CONCEDE đều có bằng chứng nguồn sơ cấp (tự fetch ToS) → không có CONCEDE nào bị loại.",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Có được đổi tab mặc định của /rankings sang PPA không (yêu cầu gốc của Cuong)?",
+      "positions": {
+        "solution-architect": "R1: Được — đổi default ở increment 3, SSR superset giữ khối VN. R2: CONCEDE (tự fetch ToS ppatour.com — không còn dataset hợp pháp để đôn lên default; chưa có baseline GSC). Nhượng bộ vì ToS, KHÔNG vì lập luận phễu của ui-ux-critic.",
+        "ui-ux-critic": "R1: Blocker — không đổi default. R2: HOLD với bằng chứng mới: superset là bot-only theo cấu tạo (_middleware.ts:518-528 gate UA; Rankings.tsx:207 SPA chỉ render một bảng). Tự đính chính 'phễu duy nhất' → 'phễu ngữ cảnh duy nhất trên đường deep-link'.",
+        "risk-auditor": "R1: RED. R2: REFINE — BỎ finding 'mất 25 internal link' (superset vô hiệu hoá thật); GIỮ RED cho riêng hành động đổi default + đổi title (trần 60 byte: không tồn tại title chứa cả 2 thực thể; đo 65 byte > 60). Gate mở lại: baseline GSC query-level 28 ngày — 'muốn bị bác bằng số'."
+      },
+      "resolution": "RESOLVED — KHÔNG đổi default bây giờ (3/3 hội tụ, mỗi bên vì lý do riêng đã kiểm chứng). Đường mở lại: (1) văn bản cho phép từ PPA + (2) baseline GSC cho thấy cụm 'DUPR Việt Nam' không có impression đáng kể. Vì đây là yêu cầu gốc của Cuong → đưa lên mục 0 để anh xác nhận hoặc override."
+    },
+    {
+      "id": "D2",
+      "topic": "Hình dạng: scope tab trong /rankings, route riêng /rankings/ppa-tour, hay nhúng vào bài blog WPR có sẵn?",
+      "positions": {
+        "solution-architect": "R1: cùng trang, SSR superset. R2: REFINE — bỏ superset (chết theo D1); KHÔNG route mới: SEO landing đã tồn tại = bài blog world-pickleball-rankings-wpr-explained (ship 05/08, metadata.ts:13-27, nhắm đúng cụm WPR/PPA, EN+VI, đã có SSR/sitemap/hreflang). Nhúng bảng trích top 10 nam/nữ + tên gốc Việt vào bài + 1 link từ /rankings. Route mới = tự cạnh tranh SERP + 5 bề mặt phải nuôi.",
+        "ui-ux-critic": "R1: route riêng. R2: HOLD — superset cứu crawlability không cứu relevance (1 title/1 canonical/1 H1 mỗi pathname); bằng chứng sống: rankings.ts:118 link '?scope=open' đang là internal link tự trỏ với bot trên prod; route riêng rẻ (1 dòng dispatch + 2 entry sitemap), không chạm renderRankings. (Chưa được phản hồi đề xuất blog của architect — nó xuất hiện cùng vòng.)",
+        "pre-mortem": "R1: route riêng. R2: REFINE — BỎ mệnh đề 'không còn URL nào cho bot thấy nội dung VN' (superset khả thi, rankings.ts:105-121); đổi thành 3 ràng buộc nếu đi cùng pathname: fail-loud khi khối VN rỗng, assert ≥20 '/nguoi-choi/' trong seo.spec, baseline GSC + ngưỡng revert >30% impressions. Không baseline = quay lại HOLD."
+      },
+      "resolution": "OPEN_FOR_CUONG — sau khi D1/D3 chốt, câu hỏi còn lại là hình dạng v1: (a) bảng trích trong bài blog WPR + link từ /rankings [architect]; (b) tab PPA không mặc định trong /rankings, top-25 nhập tay [risk-auditor AMBER path]; (c) route riêng /rankings/ppa-tour bản editorial [ui-ux-critic]. Lưu ý: ToS chặn bảng đầy đủ ở CẢ ba hình dạng cho tới khi có giấy phép."
+    },
+    {
+      "id": "D3",
+      "topic": "Pháp lý scrape ppatour.com + verdict tier: AMBER hay RED?",
+      "positions": {
+        "solution-architect": "R1: AMBER, robots.txt Allow. R2: CONCEDE — tự fetch ToS xác nhận nguyên văn ('Don't scrape, mirror, or rebroadcast our content commercially without written permission' / 'commercial use requires a license', Last updated 22/05/2026); robots.txt là chỉ thị crawl, không phải giấy phép; ThePickleHub có payment → thương mại. Increment 4-5 (worker+bảng+cron) bị CHẶN, không phải hoãn.",
+        "risk-auditor": "R1: RED, chặn merge scrape đến khi có văn bản cho phép. R2: HOLD — robots.txt PPA có 4 dòng Disallow chủ đích → 'Allow: /' là vắng mặt lệnh chặn crawl, không phải giấy phép tái xuất bản; đề xuất khớp đúng 3 động từ bị cấm + 'commercially'; tự đối chất: pro-tour-scraper hiện có nhiều khả năng là phơi nhiễm cùng loại đang tồn tại (ToS liệt 'brackets data', robots Disallow /brackets/) — đáng để Cuong biết, không phải lá chắn."
+      },
+      "resolution": "RESOLVED — RED đứng cho mọi scrape/mirror tự động. Đường mở khoá rẻ: MỘT email tới legal@ppatour.com xin văn bản cho phép; có thư → lưu external/ → RED tắt, Option A mở lại nguyên vẹn. Mức trích dẫn editorial an toàn bao nhiêu là quyết định pháp lý của Cuong, không phải của AI."
+    }
+  ],
+  "new_disagreements_round2": [
+    {
+      "id": "N1",
+      "topic": "Lập luận 'phễu DUPR' của ui-ux-critic sai dữ kiện?",
+      "positions": {
+        "solution-architect": "CTA /rankings là cửa /dupr thứ TƯ không phải duy nhất (HeaderDuprBadge mọi trang, ConnectDuprBanner toàn cục, HomeLogMatchCTA); và với khách chưa đăng nhập nó chưa bao giờ là phễu (/dupr RequireAuth, badge return null khi !user).",
+        "ui-ux-critic": "(chưa được phản hồi — xuất hiện cùng vòng; lập trường đã tự thu hẹp thành 'phễu ngữ cảnh duy nhất trên đường deep-link')"
+      },
+      "orchestrator_verification": "Đã kiểm: TheLineLayout.tsx:691 mount HeaderDuprBadge; HeaderDuprBadge.tsx:35 `if (!user) return null`; App.tsx:635 `/dupr` bọc RequireAuth. Dữ kiện của architect ĐÚNG. Kết luận D1 không đổi (đã chốt vì ToS), nhưng khi Cuong tìm đường đưa bảng VN 12→200 người thì đừng đầu tư dựa trên lập luận phễu nguyên bản của ui-ux.",
+      "resolution": "NOTED — không ảnh hưởng kết luận D1."
+    },
+    {
+      "id": "N2",
+      "topic": "Ngay cả tab không mặc định (AMBER path) cũng thừa cho v1?",
+      "positions": {
+        "solution-architect": "Tab vô hình với bot (D2) nên không tự sinh câu trả lời từ GSC; bảng nuôi tay sẽ mục (DUPR_LAST_UPDATED trôi 17 ngày); bảng cũ trong /rankings trông như sản phẩm hỏng, cùng dữ liệu trong bài blog có ngày tháng là bình thường. V1 = chỉ bài blog + 1 link, đo 2 tuần.",
+        "risk-auditor": "(chưa được phản hồi) AMBER path = tab không mặc định top-25 nhập tay."
+      },
+      "resolution": "GỘP VÀO O2 (mục 0) — đây là cùng một quyết định hình dạng v1."
+    }
+  ]
+}

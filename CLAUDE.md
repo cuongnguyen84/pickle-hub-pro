@@ -55,17 +55,24 @@ npx cap open android # Open Android Studio
 
 ### New blog post checklist (EN + VI bilingual)
 
-Every new blog post requires **3 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
+Every new blog post requires **4 simultaneous changes** in the same push, or bots will 404 / VI won't render / hreflang breaks:
 
 1. `src/content/blog/posts/<slug>.ts` — full BlogPost with content.en AND content.vi
 2. `src/content/blog/metadata.ts` — prepend BlogPostMetadata entry at top of array. **Single SEO source of truth** (SEO-02): `BLOG_POST_META` (SSR `<title>` = `metaTitleEn`) and `EN_BLOG_SLUGS` (sitemap) are GENERATED from it — never hand-edit `functions/_lib/render/blog-meta.ts` or `functions/_lib/static-blog-slugs.ts`.
 3. Supabase `vi_blog_posts` INSERT — VI HTML version with `alternate_en_slug` pointing back to the EN slug. Required for `/vi/blog/<vi-slug>` route + reciprocal hreflang.
+4. `node scripts/gen-blog-barrel.mjs` — regenerates `src/content/blog/posts/all.ts`. That barrel is the ONLY loader the SSR bot path can use (Pages Functions cannot use `import.meta.glob`); skip it and Googlebot gets the shell with no article body. Missed on 2026-08-05 (`hong-kong-slam-2026-preview` served 71 words instead of 1518) — caught by `src/content/blog/__tests__/blog-barrel.test.ts`, fixed in #546.
+5. **GEO check on the opening paragraph** (rule since 2026-08-14, validated by blind passage-citation testing — full method in the `picklehub-builder` skill). AI search cites PASSAGES, not pages; the opening must survive being extracted standalone:
+   - Name **"ThePickleHub"** once, naturally, in the opening (EN + VI) — "This ThePickleHub guide covers...", "lịch giải do ThePickleHub cập nhật..." — so an AI answer can attribute the snippet ("theo ThePickleHub..."). One mention; don't stuff. Never the spaced variant "The Pickle Hub" in prose (entity dilution; alternateName-only).
+   - **Front-load the answer**: names + dates + places + numbers in the first two sentences. No throat-clearing intros ("Trong những năm gần đây...") — a passage that promises the answer loses to one that contains it.
+   - **Entity + year together**: "Ho Chi Minh City Open 2026 (6–9/8/2026)", not "(6–9/8)".
+   - Calendar/list/living posts: add a visible **"last updated: <date>"** dateline in the opening AND bump `updatedDate` in the post + metadata.ts (feeds dateModified schema). Refresh stale statuses (completed events must say completed).
+   - No pronoun-dependent openings ("chúng tôi", "công ty này") and no unverifiable superlatives without a number/source in the same passage.
 
 After `git push main` and Cloudflare deploy succeeds, **immediately request indexing**:
 - Google: open GSC URL Inspection → paste EN URL + VI URL → "Request Indexing". No public Google Indexing API for blog posts (only JobPosting + BroadcastEvent).
 - Bing: IndexNow POST via `functions/api/indexnow.ts` (or direct `https://api.indexnow.org/indexnow?url=<URL>&key=<KEY>`). Requires `<KEY>.txt` at root.
 
-Verify via `curl -A "Googlebot"` returning 200 with correct title + og:image + hreflang en/vi/x-default tags before declaring done.
+Verify via `curl -A "Googlebot"` returning 200 with correct title + og:image + hreflang en/vi/x-default tags before declaring done. Append `?nocache=1` — without it the prerender KV serves the pre-deploy HTML and the check passes on stale content. Assert the body is actually present (word count), not just the tags: the 2026-08-05 miss had perfect tags and an empty article.
 
 ## Critical Architecture Notes
 
@@ -83,7 +90,7 @@ Key examples: `mux-create-livestream`, `delete-account`, `send-push-notification
 
 SEO prerendering for bot crawlers is handled by `functions/_middleware.ts` + `functions/_lib/render/`, NOT by Supabase edge functions.
 
-- Cache key: **`pr:v32:${pathname}`** in KV namespace `PRERENDER_CACHE` (bump version when changing SSR output to invalidate stale HTML). The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
+- Cache key: **`pr:v34:${pathname}`** in KV namespace `PRERENDER_CACHE` (bump version when changing SSR output to invalidate stale HTML). The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
 - Per-route handlers: `renderBlog`, `renderViBlog`, `renderTournament`, `renderMatch` (`match-seo.ts`), `renderSocialEvent`, `renderRankings`, `renderLive`, `renderNews`, etc.
 - `BLOG_POST_META` in `functions/_lib/render/blog-meta.ts` is the SSR truth table for blog posts — missing entry = bot 404. Since SEO-02 (`ce6a0fa`) it is **generated at module load** from `src/content/blog/metadata.ts`; do not hand-edit it, add the metadata entry instead.
 
@@ -179,7 +186,7 @@ Function `send-push-notification` verifies the JWT internally and requires the a
 
 The admin role requires an **aal2 session** (TOTP via Supabase MFA) once the user has a verified factor — self-activating, enforced in `is_admin()`/`has_role()` (migrations `20260730090000` + `20260730100000` sweep) and in admin-privileged edge functions via `_shared/admin-aal.ts`. UI gate: `AdminMFAGate` (wraps `AdminLayout` + `RequireAuth requiredRole="admin"`). Lost authenticator → delete the row in `auth.mfa_factors` to unlock.
 
-## Supabase Edge Functions (50 active)
+## Supabase Edge Functions (82 active — count enforced by `npm run auth:registry`)
 
 Browse: `supabase/functions/`. Categories:
 
@@ -193,14 +200,14 @@ Browse: `supabase/functions/`. Categories:
 
 ## Known Bugs (Not Fixed)
 
-_(none currently — Red5 residual columns were dropped by migration `20260716170000`, CLOSE-01)_
+- **B14 — `delete-account` returns success while all 13 of its cleanup steps fail.** 10 × missing `service_role` GRANT (all pre-Shop tables), 2 tables that no longer exist, 1 renamed column. Accounts are deleted only by `ON DELETE CASCADE`; the loop is decorative. 🔴 **Do NOT grant the missing permissions as an isolated fix** — the loop runs before `auth.admin.deleteUser` with no transaction, so granting them turns a harmless no-op into a real partial deletion. Full record: [`docs/defects/b14-delete-account-cleanup-noop.md`](./docs/defects/b14-delete-account-cleanup-noop.md)
 
 ## Coding Standards
 
 - **Code output:** Always write complete files for copy-paste. No snippets, no partial diffs. Especially for Cloudflare Worker, Supabase edge functions, config files.
 - **Vietnamese comments OK** in code where Cuong is the sole maintainer.
 - **Bilingual content:** All user-facing text should have Vietnamese and English translations.
-- **Follow existing patterns:** Match the code style of surrounding files. Many pages have `.legacy.tsx` siblings used for 14-day rollback windows — do not edit legacy files unless rolling back.
+- **Follow existing patterns:** Match the code style of surrounding files. `.legacy.tsx` rollback siblings: all retired as of 2026-08-03 (CLOSE-03 audit — 0 files remain); if one reappears it is a 14-day rollback window — do not edit it unless rolling back.
 
 ## Response Style
 
