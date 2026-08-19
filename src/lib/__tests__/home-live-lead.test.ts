@@ -1,0 +1,98 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  LIVE_LEAD_HINT_TTL_MS,
+  readLiveLeadHint,
+  writeLiveLeadHint,
+} from "../home-live-lead";
+
+const KEY = "tph.home-live-lead";
+const NOW = 1_755_000_000_000;
+
+beforeEach(() => {
+  localStorage.clear();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("home live-lead hint", () => {
+  it("returns false on a first ever visit, so nothing is reserved blindly", () => {
+    expect(readLiveLeadHint(NOW)).toBe(false);
+  });
+
+  it("round-trips a positive hint written on a previous visit", () => {
+    writeLiveLeadHint(true, NOW);
+    expect(readLiveLeadHint(NOW)).toBe(true);
+  });
+
+  it("round-trips a negative hint so an absent live slot stays unreserved", () => {
+    writeLiveLeadHint(false, NOW);
+    expect(readLiveLeadHint(NOW)).toBe(false);
+  });
+
+  it("survives a new session — the regression this module exists for", () => {
+    // sessionStorage was cleared between sessions, which left the first
+    // pageview of every session unreserved. The hint must outlive it.
+    writeLiveLeadHint(true, NOW);
+    sessionStorage.clear();
+    expect(readLiveLeadHint(NOW)).toBe(true);
+  });
+
+  it("persists to localStorage, not sessionStorage", () => {
+    writeLiveLeadHint(true, NOW);
+    expect(localStorage.getItem(KEY)).not.toBeNull();
+    expect(sessionStorage.getItem(KEY)).toBeNull();
+  });
+
+  it("still trusts a hint one millisecond inside the TTL", () => {
+    writeLiveLeadHint(true, NOW);
+    expect(readLiveLeadHint(NOW + LIVE_LEAD_HINT_TTL_MS - 1)).toBe(true);
+  });
+
+  it("drops a hint that has reached the TTL", () => {
+    writeLiveLeadHint(true, NOW);
+    expect(readLiveLeadHint(NOW + LIVE_LEAD_HINT_TTL_MS)).toBe(false);
+  });
+
+  it("expires on the same 7 days the replay window keeps a stream in the lead slot", () => {
+    expect(LIVE_LEAD_HINT_TTL_MS).toBe(7 * 86_400_000);
+  });
+
+  it("distrusts a future-dated hint, because a backwards clock makes stale look fresh", () => {
+    writeLiveLeadHint(true, NOW + 60_000);
+    expect(readLiveLeadHint(NOW)).toBe(false);
+  });
+
+  it("ignores a corrupt value instead of throwing", () => {
+    localStorage.setItem(KEY, "not json");
+    expect(() => readLiveLeadHint(NOW)).not.toThrow();
+    expect(readLiveLeadHint(NOW)).toBe(false);
+  });
+
+  it("ignores the old sessionStorage-era value shape", () => {
+    // The previous implementation stored the bare strings "1" / "0".
+    localStorage.setItem(KEY, "1");
+    expect(readLiveLeadHint(NOW)).toBe(false);
+  });
+
+  it("ignores a hint missing its timestamp", () => {
+    localStorage.setItem(KEY, JSON.stringify({ leads: true }));
+    expect(readLiveLeadHint(NOW)).toBe(false);
+  });
+
+  it("returns false rather than throwing when storage reads are blocked", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("SecurityError: storage disabled");
+    });
+    expect(readLiveLeadHint(NOW)).toBe(false);
+  });
+
+  it("swallows a write failure — losing the hint only costs one shift", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+    expect(() => writeLiveLeadHint(true, NOW)).not.toThrow();
+  });
+});
