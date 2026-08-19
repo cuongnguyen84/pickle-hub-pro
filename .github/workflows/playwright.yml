@@ -74,10 +74,28 @@ jobs:
       # `install-deps`, tức vẫn đi qua đúng cái apt đã treo. Cache một mình
       # KHÔNG chữa được lần hỏng 18/08; phần chữa nằm ở vòng lặp dưới đây.
       #
-      # `timeout 420` là chốt chặn: một mirror treo giờ tốn 7 phút rồi bị cắt
-      # và thử lại, thay vì im lặng gặm hết ngân sách job. Ba lần thử vẫn nằm
-      # gọn trong trần 30' kể cả trường hợp xấu nhất. Dùng `timeout` được vì
-      # đây là runner Linux (trên macOS thì không có — xem memory 16/08).
+      # `timeout 300` là chốt chặn: mirror treo thì bị cắt sau 5 phút rồi thử
+      # lại, thay vì im lặng gặm hết ngân sách job. Cài bình thường mất dưới
+      # một phút nên 5 phút đã rất rộng, và ba lần thử vẫn gọn trong trần 30'.
+      # Dùng `timeout` được vì đây là runner Linux (macOS không có — memory 16/08).
+      #
+      # 🔴 Dọn apt giữa các lần thử KHÔNG phải cẩn thận thừa. Bản đầu của vòng
+      # lặp này thiếu nó và hỏng đúng lúc cần (run 32206787421, 19/08):
+      #
+      #   [1/3] timeout cắt sau 7'
+      #   [2/3] E: Could not get lock /var/lib/dpkg/lock-frontend.
+      #         It is held by process 2763 (apt-get)      ← chết trong 8 giây
+      #   [3/3] cùng lỗi, cùng pid                        ← chết trong 8 giây
+      #
+      # `timeout` chỉ giết tiến trình con TRỰC TIẾP (npx). `apt-get` cháu sống
+      # sót và vẫn ôm lock, nên mọi lần thử lại đều va vào con ma của lần trước
+      # và vòng lặp thành vô dụng — tệ hơn không có, vì job đỏ nhanh kèm thông
+      # báo "thất bại cả 3 lần" nghe như mạng hỏng thật.
+      #
+      # Cách chữa tận gốc là bỏ apt đi hẳn: chạy job trong image
+      # mcr.microsoft.com/playwright:v<ver>-noble, vốn đã có sẵn thư viện. Đổi
+      # lại phải ghim tag image theo version playwright. Chưa làm ở đây vì nó
+      # đổi cả môi trường job; ghi ra để lần sau không phải điều tra lại.
       - name: Install Playwright browsers + system deps
         run: |
           if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
@@ -87,8 +105,16 @@ jobs:
           fi
           echo "lệnh: $CMD"
           for i in 1 2 3; do
-            if timeout 420 $CMD; then exit 0; fi
-            echo "::warning::[$i/3] cài trình duyệt treo hoặc lỗi sau 7' — thử lại"
+            if timeout 300 $CMD; then exit 0; fi
+            echo "::warning::[$i/3] cài trình duyệt treo hoặc lỗi sau 5' — dọn apt rồi thử lại"
+            sudo pkill -KILL -f apt-get 2>/dev/null || true
+            sudo pkill -KILL -f 'dpkg' 2>/dev/null || true
+            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock \
+                       /var/lib/apt/lists/lock /var/cache/apt/archives/lock || true
+            # Tiến trình bị giết giữa chừng để lại gói cài dở; không configure
+            # lại thì apt lần sau từ chối làm bất cứ việc gì.
+            sudo dpkg --configure -a || true
+            sleep 5
           done
           echo "::error::cài trình duyệt thất bại cả 3 lần"
           exit 1
