@@ -1863,6 +1863,30 @@
 }
 [data-theme="the-line"] .tl-news-row-meta .sep { color: var(--tl-fg-4); }
 
+/* Loading rows for /news. They carry the same classes as a real row and fill
+   their text nodes with non-breaking spaces, so the browser derives the
+   reserved height from the identical CSS rather than from numbers copied here
+   that would drift the next time the row is restyled. Only the paint differs. */
+[data-theme="the-line"] .tl-news-row--skeleton { pointer-events: none; }
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-title,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-summary,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span {
+  color: transparent;
+  border-radius: 5px;
+  background: linear-gradient(100deg, var(--tl-surface) 25%, var(--tl-bg-elev) 45%, var(--tl-surface) 65%);
+  background-size: 220% 100%;
+  animation: tl-feed-skeleton-pulse 1.6s ease-in-out infinite;
+}
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker { width: 92px; }
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span { width: 128px; display: inline-block; }
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-title,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-summary,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span { animation: none; }
+}
+
 /* ========== Manifesto ========== */
 [data-theme="the-line"] .tl-manifesto {
   padding: 96px 0;
