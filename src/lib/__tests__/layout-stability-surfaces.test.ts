@@ -36,6 +36,17 @@ describe("layout-stable public content surfaces", () => {
     expect(banner).toContain('visibility: reserving ? "hidden" : undefined');
     // INC3: home reserves the live hero slot while queries resolve.
     expect(home).toContain("LiveSectionSkeleton");
+    // INC3 follow-up (2026-08-19): the reservation is only as good as the hint
+    // that drives it. sessionStorage made every new session's first pageview
+    // unreserved, which is what CrUX measures — field CLS p75 0.37 on mobile.
+    // Guard that the hint stays device-scoped and never regresses to session
+    // scope; readLiveLeadHint/writeLiveLeadHint own the TTL and failure modes.
+    expect(home).toContain("readLiveLeadHint");
+    expect(home).toContain("writeLiveLeadHint");
+    // Assert the call, not the word — the surrounding comment in Index.tsx
+    // names sessionStorage to explain what was wrong with it.
+    expect(home).not.toContain("sessionStorage.getItem");
+    expect(home).not.toContain("sessionStorage.setItem");
   });
 
   it("venue and blog loading states reserve media geometry", () => {
