@@ -495,6 +495,15 @@ export default function ProductDetail() {
                 )}
               </p>
               {product.shop.region && <p className="tl-pdp-note">Gửi từ {product.shop.region}</p>}
+              {/* Con số, không phải lời hứa. `shipping_note` là ô chữ tự do và
+                  nó đã từng ghi "miễn phí toàn quốc" trong khi giỏ hàng thu
+                  30.000₫ — chi phí lộ muộn là nguyên nhân bỏ giỏ số một. Đây
+                  đọc thẳng `shipping_fee_vnd`, đúng con số checkout sẽ cộng. */}
+              <p className="tl-pdp-note">
+                {product.shop.shipping_fee_vnd > 0
+                  ? `Phí giao hàng ${formatVnd(product.shop.shipping_fee_vnd)}`
+                  : "Miễn phí giao hàng"}
+              </p>
               {product.shop.shipping_note && <p className="tl-pdp-note">{product.shop.shipping_note}</p>}
               {product.shop.return_note && <p className="tl-pdp-note">{product.shop.return_note}</p>}
               {/* R5 (cắt chữ): ba dòng miễn trừ còn một. Không mất nghĩa nào —
