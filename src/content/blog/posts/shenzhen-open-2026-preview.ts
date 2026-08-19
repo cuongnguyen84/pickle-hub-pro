@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "shenzhen-open-2026-preview",
   publishedDate: "2026-08-18",
-  updatedDate: "2026-08-18",
+  updatedDate: "2026-08-19",
   author: "The PickleHub Team",
   tags: [
     "shenzhen open 2026",
@@ -21,7 +21,7 @@ const post: BlogPost = {
   },
   heroImage: {
     src: "/images/blog/shenzhen-open-2026-preview-hero.webp",
-    alt: "Skechers Shenzhen Open 2026 preview graphic — PPA Asia 500 event banner over the Shenzhen skyline with two pickleball players at the net, listing August 20-23 2026 at Bao'an Sports Center Gymnasium, a US$70,000 prize pool, 500 PPA points and 615 players.",
+    alt: "Skechers Shenzhen Open 2026 preview graphic — PPA Asia 500 event banner over the Shenzhen skyline with two pickleball players at the net, listing August 20-23 2026 at Bao'an Sports Center Gymnasium, a US$70,000 prize pool and 500 PPA points.",
   },
   content: {
     en: {
@@ -29,12 +29,12 @@ const post: BlogPost = {
         "Skechers Shenzhen Open 2026 Preview: Schedule, Format and How to Watch the PPA Asia 500",
       metaTitle: "Shenzhen Open 2026: Schedule, Format & How to Watch",
       metaDescription:
-        "Skechers Shenzhen Open 2026 (Aug 20-23) at Bao'an Sports Center Gymnasium: US$70,000, 500 PPA points, 615 players, daily schedule and how to watch.",
+        "Skechers Shenzhen Open 2026 (Aug 20-23): the draws are out. Bellamy, Chao Yi Wang and Vietnam's Hien Truong seeded. Schedule, format, how to watch.",
       sections: [
         {
           heading: "Skechers Shenzhen Open 2026 at a glance",
           content:
-            "Updated August 18, 2026. The Skechers Shenzhen Open 2026 runs August 20-23, 2026 at the Bao'an Sports Center Gymnasium in Shenzhen, China — a PPA Tour Asia 500 stop worth US$70,000 in prize money and 500 ranking points to each gold medalist. Registration closed on July 30 with 615 players entered, and this ThePickleHub preview covers what is actually confirmed: the day-by-day schedule, the pro and amateur formats, the entry rule that shapes the field, and where to watch. One thing is not confirmed yet — as of August 18 the main draw has not been published on the official PPA Tour Asia event page, whose pro results panel still shows placeholder data from March 2025. Everything below comes from the official event listing and tournament regulations, not from projected brackets.",
+            "Updated August 19, 2026 — the draws are out. The Skechers Shenzhen Open 2026 runs August 20-23, 2026 at the Bao'an Sports Center Gymnasium in Shenzhen, China, a PPA Tour Asia 500 stop worth US$70,000 in prize money and 500 ranking points to each gold medalist. PPA Tour Asia published the main draws on August 18: Roscoe Bellamy is the #1 seed in Men's Singles on his Asia debut, Chao Yi Wang is #1 in Women's Singles, and Vietnam's Hien Truong is seeded #5 in Men's Singles. First ball is Thursday, August 20 at 9:00 AM GMT+8 — 8:00 AM Vietnam time. This ThePickleHub preview covers the named seeds, the day-by-day schedule, the pro and amateur formats, the entry rule that shapes the field, and where to watch.",
           internalLinks: [
             {
               text: "See the full PPA Tour Asia 2026 calendar and prize money",
@@ -45,7 +45,7 @@ const post: BlogPost = {
         {
           heading: "The essentials, confirmed",
           content:
-            "Everything below is published by PPA Tour Asia and on the official tournament listing, read on August 18, 2026:",
+            "Everything below is published by PPA Tour Asia and on the official tournament listing, read on August 19, 2026:",
           listItems: [
             "Event: Skechers Shenzhen Open 2026 — the official name, not the generic 'China Open 2' used on some season calendars",
             "Dates: August 20-23, 2026 (Thursday to Sunday)",
@@ -53,7 +53,7 @@ const post: BlogPost = {
             "Tier: PPA Asia 500 — the same tier as the Beijing Open and the Ho Chi Minh City Open earlier this season",
             "Prize money: US$70,000 total",
             "Ranking points: 500 to gold, 400 silver, 300 bronze, 200 fourth, 100 quarter-final, 50 round of 16",
-            "Field: 615 players registered across pro and amateur draws; registration closed July 30, 2026",
+            "Field: 611 players listed on the official tournament page on August 19, 2026, across the pro and amateur draws. Registration closed on July 30 with 615 entered; the count has moved with withdrawals",
             "Title sponsor: Skechers. Equipment partner JOOLA; paddle partners Franklin, Facolos and Paddletek; organising unit the Chinese Tennis Association",
             "Official ball: JOOLA HC-40",
             "Local time: Shenzhen is GMT+8 — one hour ahead of Hanoi, so a 10:00 match in Shenzhen starts at 09:00 Vietnam time",
@@ -84,6 +84,18 @@ const post: BlogPost = {
           ],
         },
         {
+          heading: "The draws are out: the seeds PPA Tour Asia named",
+          content:
+            "PPA Tour Asia released the Shenzhen main draws on August 18, 2026 and named its seeds in the official tournament article. It did not publish a full seeding table there, so for the doubles draws and the complete entry list use the Brackets and Player Lists tabs on the official event page. These are the seeds it put in writing:",
+          listItems: [
+            "Men's Singles #1: Roscoe Bellamy, on his first PPA Tour Asia appearance — World No.6 in Men's Singles and World No.23 overall on the World Pickleball Rankings, and one of the highest-ranked players to debut in Asia this season",
+            "Men's Singles behind him: #2 Zane Ford, #3 Hong Kit Wong — the three-time reigning champion on this tour — #5 Hien Truong of Vietnam, and #6 Adam Harvey, who took Men's Singles gold in Ho Chi Minh City on August 9",
+            "Women's Singles #1: Chao Yi Wang, returning to the tour at the top of the draw",
+            "Women's Singles behind her: #2 Sahra Dennehy, #3 Yufei Long, #4 Rika Fujiwara. Long is playing in her hometown and arrives off a double crown in Singapore and Women's Doubles gold in Ho Chi Minh City",
+            "Elsie Hendershot, 13, is entered in three events: seeded #4 in Women's Doubles with Aiko Yoshitomi, #8 in Mixed Doubles with Zane Navratil, and in the Women's Singles draw",
+          ],
+        },
+        {
           heading:
             "The rule that shapes this field: top-20 players are locked out",
           content:
@@ -98,7 +110,7 @@ const post: BlogPost = {
         {
           heading: "Day-by-day pro schedule",
           content:
-            "PPA Tour Asia lists the pro schedule as tentative — match times for each day were still marked TBD when this preview was written. The round structure per day, however, is fixed:",
+            "Play starts on Thursday, August 20 at 9:00 AM GMT+8 (8:00 AM Vietnam time) with qualifying and the round of 32 — confirmed by PPA Tour Asia when it released the draws. Individual match times for the later rounds are still listed as tentative. The round structure per day is fixed:",
           orderedList: [
             "Thursday, August 20: qualifying, plus main draw round of 32 (to be confirmed) across all events",
             "Friday, August 21: main draw round of 16 and quarter-finals, all events",
@@ -143,9 +155,9 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "The Vietnamese angle — and what nobody can confirm yet",
+          heading: "The Vietnamese angle: Hien Truong is in, seeded #5",
           content:
-            "Vietnam has medalled at every PPA Tour Asia stop it has contested in 2026, and China has been good ground: Truong Vinh Hien and Do Minh Quan won men's doubles gold at the Beijing Open in June, then repeated in an all-Vietnamese final at the Ho Chi Minh City Open on August 6-9. Going back further, at the Hangzhou Open that closed the 2025 season in December, Ly Hoang Nam took men's singles and Hien and Quan took Vietnam's first PPA Tour Asia men's doubles gold. But whether any of them are in Shenzhen is not something anyone can state yet — the main draw has not been published. There is also a scheduling reality worth naming: the Shenzhen final is on August 23, and the Heineken Pickleball World Cup opens in Da Nang on August 30. That is a seven-day gap between a tournament in southern China and the biggest home event in Vietnamese pickleball history, which is a real argument for resting rather than travelling. Treat any 'confirmed line-up' circulating before the official draw as unverified.",
+            "The draw answers the question this preview could not answer a day earlier. Hien Truong — Truong Vinh Hien — is seeded #5 in Men's Singles at Shenzhen, and he is the only Vietnamese player PPA Tour Asia named when it released the draws. He arrives in the best form of his career. He and Do Minh Quan beat Hoang Nam Ly and Collin Johns 11-13, 11-6, 11-4 for Men's Doubles gold at the Ho Chi Minh City Open on August 9 — a third title as a partnership after the Hangzhou Open 2025 and the Beijing Open 2026, and Truong is unbeaten in Men's Doubles finals on this tour. Whether he also plays doubles in Shenzhen, and with whom, was not named in the draw article; the official player lists are the place to check. What makes his entry worth noting is the calendar. The Shenzhen final is on August 23 and the Heineken Pickleball World Cup opens in Da Nang on August 30, seven days later. Flying to southern China in that window instead of resting for the biggest home event in Vietnamese pickleball history is a real decision — and the published draw says he has entered. Beyond Truong, treat any 'confirmed Vietnamese line-up' that is not in the official player list as unverified.",
           internalLinks: [
             {
               text: "Vietnam's players to watch in 2026",
@@ -182,7 +194,13 @@ const post: BlogPost = {
         {
           question: "Has the Shenzhen Open 2026 draw been published?",
           answer:
-            "Not as of August 18, 2026. The official PPA Tour Asia event page still shows placeholder pro results dated March 2025, and no main draw or seeding list has been posted. Registration closed on July 30 with 615 players entered.",
+            "Yes. PPA Tour Asia published the main draws on August 18, 2026 and named its top seeds: Roscoe Bellamy #1 in Men's Singles on his Asia debut, Chao Yi Wang #1 in Women's Singles, and Vietnam's Hien Truong #5 in Men's Singles. The full brackets and player lists are on the official event page.",
+        },
+        {
+          question:
+            "Which Vietnamese players are in the Shenzhen Open 2026 draw?",
+          answer:
+            "PPA Tour Asia's draw article names one: Hien Truong (Truong Vinh Hien), seeded #5 in Men's Singles. No other Vietnamese entry was named when the draws were released on August 18, 2026. The complete entry list is on the official event page under Player Lists.",
         },
         {
           question: "Why are the world's top players not at the Shenzhen Open?",
@@ -197,7 +215,7 @@ const post: BlogPost = {
         {
           question: "What time do Shenzhen Open matches start in Vietnam?",
           answer:
-            "Shenzhen is GMT+8 and Vietnam is GMT+7, so subtract one hour: a match listed at 10:00 in Shenzhen starts at 09:00 Vietnam time. Exact match times were still listed as TBD by the organisers as of August 18, 2026.",
+            "Shenzhen is GMT+8 and Vietnam is GMT+7, so subtract one hour. Play starts on Thursday, August 20 at 9:00 AM GMT+8, which is 8:00 AM Vietnam time. Exact times for the later rounds were still listed as tentative by the organisers as of August 19, 2026.",
         },
       ],
     },
@@ -206,12 +224,12 @@ const post: BlogPost = {
         "Skechers Shenzhen Open 2026: lịch thi đấu, thể thức và cách xem chặng PPA Asia 500",
       metaTitle: "Shenzhen Open 2026: Lịch thi đấu & cách xem",
       metaDescription:
-        "Skechers Shenzhen Open 2026 (20-23/8) tại Bao'an Sports Center: 70.000 USD, 500 điểm PPA, 615 VĐV, lịch từng ngày và cách xem từ Việt Nam.",
+        "Shenzhen Open 2026 (20-23/8) đã có bảng đấu: Trương Vinh Hiển hạt giống #5 đơn nam. Lịch giờ Việt Nam, thể thức và cách xem.",
       sections: [
         {
           heading: "Skechers Shenzhen Open 2026 — những gì đã chắc chắn",
           content:
-            "Cập nhật 18/8/2026. Skechers Shenzhen Open 2026 diễn ra 20-23/8/2026 tại Bao'an Sports Center Gymnasium, Thâm Quyến (Trung Quốc) — chặng PPA Tour Asia 500 với 70.000 USD tiền thưởng và 500 điểm xếp hạng cho mỗi HCV. Đăng ký đã đóng ngày 30/7 với 615 VĐV. ThePickleHub tổng hợp phần đã công bố chính thức: lịch từng ngày, thể thức pro và nghiệp dư, quy định chặn top 20 quyết định chất lượng giải, và cách xem. Một điều chưa có: tính đến 18/8, bảng đấu chính thức vẫn chưa được đăng — trang sự kiện của PPA Tour Asia vẫn hiển thị dữ liệu mẫu từ tháng 3/2025.",
+            "Cập nhật 19/8/2026 — bảng đấu đã công bố. Skechers Shenzhen Open 2026 diễn ra 20-23/8/2026 tại Bao'an Sports Center Gymnasium, Thâm Quyến (Trung Quốc), chặng PPA Tour Asia 500 với 70.000 USD tiền thưởng và 500 điểm xếp hạng cho mỗi HCV. PPA Tour Asia công bố bảng chính ngày 18/8: Roscoe Bellamy là hạt giống #1 đơn nam trong lần đầu dự giải châu Á, Chao Yi Wang hạt giống #1 đơn nữ, và Trương Vinh Hiển của Việt Nam là hạt giống #5 đơn nam. Trận đầu tiên lăn bóng thứ Năm 20/8 lúc 9:00 giờ Thâm Quyến — 8:00 giờ Việt Nam. ThePickleHub tổng hợp danh sách hạt giống đã công bố, lịch từng ngày, thể thức pro và nghiệp dư, quy định chặn top 20 quyết định chất lượng giải, và cách xem.",
           internalLinks: [
             {
               text: "Lịch thi đấu và tiền thưởng PPA Tour Asia 2026",
@@ -221,7 +239,7 @@ const post: BlogPost = {
         },
         {
           heading: "Thông tin cốt lõi",
-          content: "Số liệu đọc từ nguồn chính thức ngày 18/8/2026:",
+          content: "Số liệu đọc từ nguồn chính thức ngày 19/8/2026:",
           listItems: [
             "Tên chính thức: Skechers Shenzhen Open 2026 — không phải 'China Open 2' như một số lịch mùa giải ghi chung chung",
             "Thời gian: 20-23/8/2026 (thứ Năm đến Chủ nhật)",
@@ -229,7 +247,7 @@ const post: BlogPost = {
             "Hạng: PPA Asia 500 — cùng hạng với Beijing Open và HCMC Open mùa này",
             "Tiền thưởng: 70.000 USD",
             "Điểm xếp hạng: 500 cho HCV, 400 HCB, 300 HCĐ, 200 hạng tư, 100 tứ kết, 50 vòng 1/8",
-            "Quy mô: 615 VĐV đăng ký cả pro lẫn nghiệp dư; đóng đăng ký 30/7/2026",
+            "Quy mô: 611 VĐV trên trang giải chính thức tính đến 19/8/2026, gồm cả pro lẫn nghiệp dư. Lúc đóng đăng ký 30/7 là 615 — con số thay đổi theo các ca rút lui",
             "Nhà tài trợ chính: Skechers. JOOLA là đối tác thiết bị; Franklin, Facolos, Paddletek là đối tác vợt; đơn vị tổ chức là Hiệp hội Quần vợt Trung Quốc",
             "Bóng thi đấu: JOOLA HC-40",
             "Múi giờ: Thâm Quyến GMT+8, nhanh hơn Việt Nam 1 tiếng — trận ghi 10:00 giờ Thâm Quyến là 09:00 giờ Việt Nam",
@@ -260,6 +278,18 @@ const post: BlogPost = {
           ],
         },
         {
+          heading: "Bảng đấu đã công bố: những hạt giống được nêu tên",
+          content:
+            "PPA Tour Asia công bố bảng chính Thâm Quyến ngày 18/8/2026 và nêu tên các hạt giống trong bài viết chính thức của giải. Bài đó không đăng bảng hạt giống đầy đủ, nên với các nội dung đôi và danh sách VĐV trọn vẹn, hãy xem tab Brackets và Player Lists trên trang sự kiện chính thức. Đây là những cái tên đã được ghi rõ:",
+          listItems: [
+            "Đơn nam hạt giống #1: Roscoe Bellamy, lần đầu dự PPA Tour Asia — hạng 6 thế giới nội dung đơn nam và hạng 23 thế giới chung cuộc trên World Pickleball Rankings, một trong những tay vợt xếp hạng cao nhất ra mắt châu Á mùa này",
+            "Phía sau anh: #2 Zane Ford, #3 Hong Kit Wong — đương kim vô địch 3 lần liên tiếp ở tour này — #5 Trương Vinh Hiển của Việt Nam, và #6 Adam Harvey, người vừa vô địch đơn nam HCMC Open ngày 9/8",
+            "Đơn nữ hạt giống #1: Chao Yi Wang, trở lại giải và trở lại ngay vị trí cao nhất bảng",
+            "Phía sau cô: #2 Sahra Dennehy, #3 Yufei Long, #4 Rika Fujiwara. Long thi đấu ngay trên quê nhà Thâm Quyến, đến giải sau cú đúp danh hiệu ở Singapore và HCV đôi nữ tại TP.HCM",
+            "Elsie Hendershot, 13 tuổi, đăng ký 3 nội dung: hạt giống #4 đôi nữ cùng Aiko Yoshitomi, #8 đôi nam nữ cùng Zane Navratil, và có mặt ở bảng đơn nữ",
+          ],
+        },
+        {
           heading: "Quy định quan trọng nhất: top 20 thế giới bị chặn",
           content:
             "Đây là điều dễ bỏ qua nhất nhưng quyết định toàn bộ cách đọc giải. Theo quy định đăng ký của PPA Tour Asia, VĐV nằm trong top 20 PPA ở một nội dung KHÔNG đủ điều kiện dự nội dung đó, trừ khi được mời làm wild card — và mỗi nội dung tối đa 2 suất wild card, do ban tổ chức đề xuất và phải được UPA Standards Committee khu vực duyệt. Nghĩa là một chặng 500 như Thâm Quyến vốn dĩ không phải sân chơi của nhóm đầu thế giới. Nó được thiết kế như một giải cơ hội: nơi VĐV chuyên nghiệp khu vực và các tay vợt đang lên kiếm điểm xếp hạng thật mà không phải gặp top 20 ngay vòng đầu. Nếu bạn xem và chờ những cái tên quen thuộc ở các giải PPA tại Mỹ, phần lớn họ bị quy định loại khỏi giải này.",
@@ -273,7 +303,7 @@ const post: BlogPost = {
         {
           heading: "Lịch thi đấu pro từng ngày",
           content:
-            "PPA Tour Asia ghi rõ lịch này là tạm thời, giờ thi đấu từng trận vẫn để TBD tại thời điểm viết bài. Cấu trúc theo ngày thì đã cố định:",
+            "Giải khởi tranh thứ Năm 20/8 lúc 9:00 giờ Thâm Quyến (8:00 giờ Việt Nam) với vòng loại và vòng 1/16 — giờ này được PPA Tour Asia xác nhận khi công bố bảng đấu. Giờ thi đấu chi tiết các vòng sau vẫn để tạm thời. Cấu trúc theo ngày đã cố định:",
           orderedList: [
             "Thứ Năm 20/8: vòng loại, cộng vòng 1/16 bảng chính (chờ xác nhận) ở tất cả nội dung",
             "Thứ Sáu 21/8: vòng 1/8 và tứ kết, tất cả nội dung",
@@ -318,9 +348,9 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Góc Việt Nam — và điều chưa ai xác nhận được",
+          heading: "Góc Việt Nam: Trương Vinh Hiển góp mặt, hạt giống #5",
           content:
-            "Việt Nam có huy chương ở mọi chặng PPA Tour Asia đã dự trong 2026, và Trung Quốc là mảnh đất lành: Trương Vinh Hiển và Đỗ Minh Quân vô địch đôi nam Beijing Open tháng 6, rồi lặp lại trong trận chung kết toàn Việt tại HCMC Open ngày 6-9/8. Xa hơn, ở Hangzhou Open tháng 12/2025 — chặng khép lại mùa giải 2025 — Lý Hoàng Nam vô địch đơn nam còn Hiển và Quân giành HCV đôi nam đầu tiên của Việt Nam tại PPA Tour Asia. Nhưng liệu ai trong số họ có mặt ở Thâm Quyến thì chưa ai khẳng định được — bảng đấu chưa công bố. Còn một thực tế lịch thi đấu đáng nói: chung kết Thâm Quyến ngày 23/8, còn Heineken Pickleball World Cup khai mạc tại Đà Nẵng ngày 30/8. Bảy ngày giữa một giải ở miền Nam Trung Quốc và sự kiện sân nhà lớn nhất lịch sử pickleball Việt Nam là lý do rất thật để nghỉ dưỡng sức thay vì bay. Mọi 'danh sách chốt' lan truyền trước khi có bảng đấu chính thức đều là chưa kiểm chứng.",
+            "Bảng đấu vừa trả lời đúng câu hỏi mà bài này hôm qua chưa trả lời được. Trương Vinh Hiển là hạt giống #5 đơn nam tại Thâm Quyến, và anh là VĐV Việt Nam duy nhất được PPA Tour Asia nêu tên khi công bố bảng. Hiển đến giải trong phong độ tốt nhất sự nghiệp: anh và Đỗ Minh Quân thắng Lý Hoàng Nam cùng Collin Johns 11-13, 11-6, 11-4 để lấy HCV đôi nam HCMC Open ngày 9/8 — danh hiệu thứ ba của cặp đôi này sau Hangzhou Open 2025 và Beijing Open 2026, và Hiển vẫn bất bại ở các trận chung kết đôi nam tại tour này. Anh có đánh đôi ở Thâm Quyến hay không, và với ai, thì bài công bố bảng đấu không nêu — cần xem danh sách VĐV chính thức. Điều đáng chú ý ở suất đăng ký này là lịch thi đấu: chung kết Thâm Quyến ngày 23/8, còn Heineken Pickleball World Cup khai mạc tại Đà Nẵng ngày 30/8, cách đúng bảy ngày. Bay sang miền Nam Trung Quốc trong khoảng đó thay vì nghỉ dưỡng sức cho sự kiện sân nhà lớn nhất lịch sử pickleball Việt Nam là một lựa chọn thật sự — và bảng đấu đã công bố cho thấy anh đã đăng ký. Ngoài Hiển, mọi 'danh sách VĐV Việt Nam' không có trong danh sách chính thức đều là chưa kiểm chứng.",
           internalLinks: [
             {
               text: "Bảng A World Cup 2026: Việt Nam gặp ai",
@@ -357,7 +387,12 @@ const post: BlogPost = {
         {
           question: "Bảng đấu Shenzhen Open 2026 đã công bố chưa?",
           answer:
-            "Tính đến 18/8/2026 là chưa. Trang sự kiện chính thức của PPA Tour Asia vẫn hiển thị kết quả mẫu đề ngày tháng 3/2025, chưa có bảng chính hay danh sách hạt giống. Đăng ký đã đóng ngày 30/7 với 615 VĐV.",
+            "Rồi. PPA Tour Asia công bố bảng chính ngày 18/8/2026 và nêu tên các hạt giống đầu bảng: Roscoe Bellamy #1 đơn nam trong lần đầu dự giải châu Á, Chao Yi Wang #1 đơn nữ, và Trương Vinh Hiển của Việt Nam #5 đơn nam. Bảng đấu và danh sách VĐV đầy đủ nằm trên trang sự kiện chính thức.",
+        },
+        {
+          question: "VĐV Việt Nam nào có tên trong bảng đấu Shenzhen Open 2026?",
+          answer:
+            "Bài công bố bảng đấu của PPA Tour Asia nêu tên một người: Trương Vinh Hiển, hạt giống #5 đơn nam. Không có VĐV Việt Nam nào khác được nêu tên khi bảng đấu công bố ngày 18/8/2026. Danh sách đăng ký đầy đủ nằm ở mục Player Lists trên trang sự kiện chính thức.",
         },
         {
           question: "Vì sao nhóm top thế giới không dự Shenzhen Open?",
@@ -372,7 +407,7 @@ const post: BlogPost = {
         {
           question: "Giờ thi đấu Shenzhen Open quy ra giờ Việt Nam thế nào?",
           answer:
-            "Thâm Quyến ở múi giờ GMT+8, Việt Nam GMT+7, nên trừ đi 1 tiếng: trận ghi 10:00 giờ Thâm Quyến bắt đầu lúc 09:00 giờ Việt Nam. Giờ thi đấu chi tiết vẫn được ban tổ chức để TBD tính đến 18/8/2026.",
+            "Thâm Quyến ở múi giờ GMT+8, Việt Nam GMT+7, nên trừ đi 1 tiếng. Giải khởi tranh thứ Năm 20/8 lúc 9:00 giờ Thâm Quyến, tức 8:00 giờ Việt Nam. Giờ thi đấu chi tiết các vòng sau vẫn được ban tổ chức để tạm thời tính đến 19/8/2026.",
         },
       ],
     },
