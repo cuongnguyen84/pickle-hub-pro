@@ -243,6 +243,11 @@
       rào cản lớn nhất khiến người Việt bỏ giỏ hàng. Không phải trùng hợp: chúng
       bị cắt vì <em>khó làm</em>, và chúng lớn vì người mua <em>sợ đúng chỗ đó</em>.
     </p>
+    <p class="lede">
+      Nhưng thứ đắt nhất tìm được đêm nay không nằm trong danh sách bị cắt. Nó là
+      một dòng chữ shop tự khai đang <b>nói ngược lại với số tiền thu ở giỏ hàng</b> —
+      và nó sửa trong vài phút.
+    </p>
   </header>
 
   <hr class="rule">
@@ -276,13 +281,25 @@
         <div class="l">than phiền nhiều nhất: <b>giao chậm, không biết hàng đâu</b></div>
       </div>
     </div>
-    <p class="note">
-      <b>Đọc lại con số COD.</b> 45% không phải vì người ta ghét chuyển khoản —
-      họ có ứng dụng ngân hàng cả rồi. Họ giữ COD vì đó là <b>quyền từ chối nhận
-      hàng</b> khi hộp móp hoặc sai món. Shop mình hiện chỉ nhận chuyển khoản
-      trước, tức là bắt người lạ trả tiền trước cho một cửa hàng họ chưa từng
-      nghe tên. Enum trong CSDL <em>đã có</em> <code>cod</code>, chỉ chưa mở.
-    </p>
+    <div class="note">
+      <p><b>Con số 48% không phải chuyện tương lai — nó đang xảy ra ngay bây giờ.</b></p>
+      <p style="margin-top:.6rem">Trên production, cùng một đơn hàng đang được kể ba cách khác nhau:</p>
+      <div class="scroll" style="margin-top:.6rem">
+        <table>
+          <tbody>
+            <tr><td>Trang sản phẩm</td><td><b>“Giao hàng miễn phí toàn quốc”</b></td></tr>
+            <tr><td>Giỏ hàng</td><td>“Chưa gồm phí vận chuyển (<b>30.000&nbsp;₫</b>)”</td></tr>
+            <tr><td>Thanh toán</td><td>thu <b>30.000&nbsp;₫</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:.7rem">
+        <code>shops.shipping_note</code> nói miễn phí, <code>shops.shipping_fee_vnd</code>
+        bằng 30000. Không phải lỗi mã — mã còn có sẵn câu “Shop này miễn phí vận
+        chuyển” cho trường hợp phí bằng 0. Là <b>dữ liệu tự mâu thuẫn</b>, và nó
+        dựng đúng cái bẫy khiến 48% người mua bỏ đi.
+      </p>
+    </div>
   </section>
 
   <hr class="rule">
@@ -303,18 +320,23 @@
           </tr>
           <tr>
             <td>Chính sách đổi trả rõ ràng</td>
-            <td><span class="tag no">chưa có</span></td>
-            <td>Cắt ở Phase 3 với điều kiện “nút liên hệ có mặt mọi nơi”.</td>
+            <td><span class="tag part">có, nhưng mập mờ</span></td>
+            <td>Trang sản phẩm hiện <em>“Đổi trả theo chính sách của từng hãng”</em> — người mua không biết mình được gì.</td>
           </tr>
           <tr>
             <td>Phí ship biết trước khi vào giỏ</td>
-            <td><span class="tag part">một phần</span></td>
-            <td><code>shipping_fee_vnd</code> có, nhưng lộ ở bước thanh toán.</td>
+            <td><span class="tag no">đang mâu thuẫn</span></td>
+            <td>Trang sản phẩm nói miễn phí, giỏ hàng thu 30.000&nbsp;₫.</td>
           </tr>
           <tr>
             <td>COD</td>
-            <td><span class="tag part">có trong CSDL</span></td>
-            <td>Chưa mở ra giao diện. Đơn thật duy nhất là chuyển khoản.</td>
+            <td><span class="tag yes">có, là mặc định</span></td>
+            <td>Đã bật sẵn ở thanh toán. Đơn thật duy nhất chọn chuyển khoản, nhưng đó là lựa chọn của người mua chứ không phải giới hạn.</td>
+          </tr>
+          <tr>
+            <td>Biết hàng gửi từ đâu</td>
+            <td><span class="tag no">trống</span></td>
+            <td>Trang sản phẩm có sẵn dòng “Gửi từ …” nhưng <code>shops.region</code> đang <code>null</code>.</td>
           </tr>
           <tr>
             <td>Theo dõi đơn</td>
@@ -347,60 +369,71 @@
     <div class="kicker">Đề xuất · xếp theo thứ tự nên làm</div>
     <h2>Thứ tự này theo rào cản, không theo độ vui khi code</h2>
 
+    <p class="note" style="background:transparent;border:1px solid var(--border);padding:1rem 1.1rem">
+      <b>Ba mục đầu không cần lập trình.</b> Chúng là dữ liệu shop tự khai, sửa
+      trong <code>/seller/settings</code>, tổng cộng khoảng mười phút. Điều đó
+      cũng có nghĩa là chúng đang sai <em>ngay lúc này</em> — không phải đang
+      chờ ai xây gì cả.
+    </p>
+
     <div class="ranked">
       <div class="item first">
-        <h3>Thông số vợt có cấu trúc + bộ lọc</h3>
+        <h3>Cho phí ship thôi tự mâu thuẫn</h3>
+        <p class="why">
+          Hoặc đặt <code>shipping_fee_vnd = 0</code> cho đúng câu “miễn phí toàn
+          quốc”, hoặc sửa câu đó thành “30.000&nbsp;₫ toàn quốc”. Cách nào cũng
+          được — <em>đang nói hai câu khác nhau</em> mới là thứ giết đơn. Mã đã
+          có sẵn câu “Shop này miễn phí vận chuyển” cho trường hợp phí bằng 0.
+        </p>
+        <div class="meta">
+          <span class="tag yes">tác động cao</span>
+          <span class="tag yes">vài phút</span>
+          <span class="tag part">cần anh quyết: miễn phí thật hay không</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <h3>Viết lại câu đổi trả cho ra một lời hứa</h3>
+        <p class="why">
+          Hiện là <em>“Đổi trả theo chính sách của từng hãng”</em> — đúng về mặt
+          pháp lý và vô dụng với người mua: họ không biết hãng nào, chính sách gì,
+          và ai chịu tiền ship trả về. 22,5% rào cản đến từ đúng sự mập mờ này,
+          không phải từ việc thiếu nút bấm. Một câu như “Đổi trong 7 ngày nếu hàng
+          lỗi hoặc sai mẫu, shop chịu phí gửi lại — nhắn Zalo” đóng gần hết khoảng
+          trống, và trung thực với thứ mình làm được.
+        </p>
+        <div class="meta">
+          <span class="tag yes">tác động cao</span>
+          <span class="tag yes">vài phút</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <h3>Điền <code>region</code></h3>
+        <p class="why">
+          Trang sản phẩm đã có sẵn dòng “Gửi từ …” nhưng trường đang trống nên
+          dòng đó không hiện. Với người mua ở xa, biết hàng gửi từ Hà Nội hay
+          TP.HCM là biết chờ mấy ngày — mà giao chậm là than phiền số một (37%).
+        </p>
+        <div class="meta">
+          <span class="tag part">tác động vừa</span>
+          <span class="tag yes">một phút</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <h3>Thông số vợt có cấu trúc + bộ lọc <span class="tag yes">việc lập trình lớn nhất</span></h3>
         <p class="why">
           Người mua vợt so sánh sáu thứ: trọng lượng, lõi, mặt, hình dáng, cỡ cán,
-          giá. Shop hiện không có ô nào cho chúng — nên người mua phải đọc mô tả
-          tự do và tự đoán. Đây vừa là rào cản mua, vừa là <em>thứ Shopee làm dở
-          nhất</em>: chợ tổng không biết lõi polymer khác nomex chỗ nào.
+          giá. Shop hiện không có ô nào cho chúng — chỉ có tiêu đề, mô tả tự do,
+          phân loại và mới/cũ — nên người mua phải đọc mô tả rồi tự đoán. Đây vừa
+          là rào cản mua, vừa là <em>thứ chợ tổng làm dở nhất</em>: Shopee không
+          biết lõi polymer khác nomex chỗ nào.
         </p>
         <div class="meta">
           <span class="tag yes">tác động cao</span>
           <span class="tag part">2–3 ngày</span>
           <span class="tag part">cần: bảng thuộc tính theo danh mục</span>
-        </div>
-      </div>
-
-      <div class="item">
-        <h3>Chính sách đổi trả viết ra, hiện ở trang sản phẩm</h3>
-        <p class="why">
-          Chưa cần dựng luồng trả hàng. 22,5% rào cản đến từ sự <em>mập mờ</em>,
-          không phải từ việc thiếu nút bấm. Một đoạn “đổi trong 7 ngày nếu hàng
-          lỗi, nhắn Zalo” hiện ngay dưới nút mua đã đóng phần lớn khoảng trống —
-          và trung thực với thứ mình làm được.
-        </p>
-        <div class="meta">
-          <span class="tag yes">tác động cao</span>
-          <span class="tag yes">nửa ngày</span>
-        </div>
-      </div>
-
-      <div class="item">
-        <h3>Phí ship hiện trên trang sản phẩm</h3>
-        <p class="why">
-          48% bỏ giỏ vì chi phí lộ muộn. Dữ liệu đã có sẵn, chỉ là đang hiện sai
-          chỗ. Rẻ nhất trong danh sách này.
-        </p>
-        <div class="meta">
-          <span class="tag yes">tác động cao</span>
-          <span class="tag yes">vài giờ</span>
-        </div>
-      </div>
-
-      <div class="item">
-        <h3>Mở COD</h3>
-        <p class="why">
-          Với người lạ từ Google, trả trước cho một shop chưa nghe tên là rào cản
-          thật. Enum đã có <code>cod</code>; việc còn lại là giao diện, hạn mức, và
-          một quy tắc cho đơn giá trị lớn. Đổi rủi ro tiền lấy rủi ro mất đơn —
-          và ở giai đoạn này mất đơn đắt hơn.
-        </p>
-        <div class="meta">
-          <span class="tag yes">tác động cao</span>
-          <span class="tag part">1 ngày</span>
-          <span class="tag part">cần anh quyết hạn mức</span>
         </div>
       </div>
 
@@ -474,12 +507,16 @@
 
   <section>
     <div class="kicker">Một cảnh báo</div>
-    <h2>Đừng mở cửa cho Google trước khi có đánh giá và chính sách đổi trả</h2>
+    <h2>Đừng mở cửa cho Google khi trang sản phẩm còn hứa sai về phí ship</h2>
     <p class="lede">
-      Người quen tha thứ cho một shop mới. Người lạ từ tìm kiếm thì không: họ
-      không có lý do gì để tin, và ba trong bốn rào cản lớn nhất đang mở toang.
-      Cờ <code>SHOP_PUBLIC_INDEXING</code> đang tắt — nên giữ thế cho tới khi ít
-      nhất mục 2 và 3 xong, cả hai cộng lại chưa tới một ngày làm.
+      Người quen tha thứ cho một shop mới. Người lạ từ tìm kiếm thì không — họ
+      không có lý do gì để tin, và lượt truy cập đầu tiên chỉ đến một lần.
+    </p>
+    <p class="lede">
+      Cờ <code>SHOP_PUBLIC_INDEXING</code> đang tắt. Ba mục đầu trong danh sách
+      trên tổng cộng <b>khoảng mười phút</b> và không cần lập trình dòng nào.
+      Làm xong ba mục đó rồi mở cửa thì hợp lý; mở trước thì đang trả tiền quảng
+      cáo cho một lời hứa sai.
     </p>
   </section>
 
