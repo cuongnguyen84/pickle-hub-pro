@@ -13,7 +13,7 @@
 // way a TLS failure does (status 0), without needing the network.
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,7 +59,7 @@ describe("seo_verify transport failures", () => {
   });
 
   it("builds its TLS context from certifi so a bare interpreter still works", () => {
-    const src = execFileSync("cat", [SCRIPT], { encoding: "utf8" });
+    const src = readFileSync(SCRIPT, "utf8");
     expect(src).toContain("import certifi");
     expect(src).toContain("cafile=certifi.where()");
     expect(src).toContain("context=_TLS_CONTEXT");
