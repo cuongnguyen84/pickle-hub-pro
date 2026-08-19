@@ -56,7 +56,7 @@ const post: BlogPost = {
         },
         {
           heading: "How to Organize Your Own MLP-Style Event",
-          content: "You don't need to be a professional league to run MLP format. The Pickle Hub's Team Match tool makes it easy for clubs and groups:",
+          content: "You don't need to be a professional league to run MLP format. ThePickleHub's Team Match tool makes it easy for clubs and groups:",
           orderedList: [
             "Create a tournament — Choose the number of teams (4-16 recommended) and set the game template (which game types each match includes).",
             "Register teams — Teams sign up with full rosters. Assign captains who will make lineup decisions.",
@@ -130,7 +130,7 @@ const post: BlogPost = {
         },
         {
           heading: "Cách tổ chức sự kiện kiểu MLP của riêng bạn",
-          content: "Bạn không cần là giải chuyên nghiệp để chạy thể thức MLP. Công cụ Team Match của The Pickle Hub giúp CLB và nhóm dễ dàng tổ chức:",
+          content: "Bạn không cần là giải chuyên nghiệp để chạy thể thức MLP. Công cụ Team Match của ThePickleHub giúp CLB và nhóm dễ dàng tổ chức:",
           orderedList: [
             "Tạo giải đấu — Chọn số đội (khuyến nghị 4-16) và đặt template game.",
             "Đăng ký đội — Đội đăng ký với roster đầy đủ. Chỉ định đội trưởng quyết định lineup.",

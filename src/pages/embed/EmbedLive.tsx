@@ -137,7 +137,7 @@ const EmbedLive = () => {
             rel="noopener noreferrer"
             className="text-white/60 hover:text-white text-xs underline"
           >
-            Watch on The Pickle Hub
+            Watch on ThePickleHub
           </a>
         </div>
       )}

@@ -706,7 +706,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // change SSR output. Bumped past v50 rather than reusing it: the shop launch
   // had already published entries under that key, so sharing it would serve
   // pre-change HTML for the full TTL on every route this commit touches.
-  const cacheKey = `pr:v51:${url.pathname}`;
+  //
+  // v52 — brand cleanup (2026-08-19): the spaced "The Pickle Hub" was replaced
+  // with "ThePickleHub" in 35 places across 6 blog posts, 30 places across 8
+  // Supabase vi_blog_posts rows, and in blog metadata.ts — which is the SSR
+  // truth table for <title> and <meta description>. Cached HTML would keep
+  // serving the diluted entity name for the full TTL otherwise.
+  const cacheKey = `pr:v52:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

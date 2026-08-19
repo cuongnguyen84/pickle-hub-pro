@@ -799,7 +799,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Trực tiếp Pickleball — Cách xem và phát sóng trực tuyến",
     metaTitleEn: "Pickleball Live Streaming 2026 | Watch & Stream Free",
     metaTitleVi: "Xem & phát trực tiếp Pickleball | Hướng dẫn",
-    metaDescriptionEn: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform.",
+    metaDescriptionEn: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with ThePickleHub's free livestreaming platform.",
     metaDescriptionVi: "Xem trực tiếp pickleball miễn phí và hướng dẫn phát sóng giải đấu với nền tảng livestream miễn phí của ThePickleHub.",
   },  {
     slug: "pickleball-round-robin-generator-guide",
