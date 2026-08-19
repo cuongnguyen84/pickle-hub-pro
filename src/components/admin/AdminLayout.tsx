@@ -28,6 +28,7 @@ import {
   Instagram,
   Gavel,
   Activity,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,6 +57,7 @@ const navItems = [
   { path: "/admin/disputes", icon: Gavel, labelKey: "disputes" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
   { path: "/admin/news", icon: Newspaper, labelKey: "news" as const },
+  { path: "/admin/reviews", icon: Star, labelKey: "reviews" as const },
   { path: "/admin/embeds", icon: Instagram, labelKey: "embeds" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
   { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
@@ -193,6 +195,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       viewers: t.admin.viewers.title,
       push: "Push",
       forum: t.forum.title,
+      reviews: "Đánh giá sân",
       // "embeds" bypasses i18n like proTour — "IG Reels" reads the same in
       // VI and EN.
       embeds: "IG Reels",
