@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "hien-truong-quan-do-vietnam-pickleball-2026",
+    publishedDate: "2026-08-20",
+    updatedDate: "2026-08-20",
+    author: "Cuong Nguyen",
+    tags: ["hien truong pickleball", "truong vinh hien", "quan do pickleball", "do minh quan", "vietnam pickleball team", "ppa tour asia", "pickleball world cup 2026"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Follow Vietnamese players live on ThePickleHub", vi: "Theo dõi tay vợt Việt Nam trực tiếp trên ThePickleHub" },
+    titleEn: "Hien Truong and Quan Do: Inside Vietnam's Most Successful Pickleball Partnership",
+    titleVi: "Trương Vinh Hiển và Đỗ Minh Quân: hồ sơ cặp đôi thành công nhất pickleball Việt Nam",
+    metaTitleEn: "Hien Truong & Quan Do: Vietnam's Top Pickleball Pair",
+    metaTitleVi: "Trương Vinh Hiển & Đỗ Minh Quân: hồ sơ 2026",
+    metaDescriptionEn: "Hien Truong and Quan Do have three PPA Tour Asia men's doubles golds. Full record, singles breakthrough, and their split roles at the 2026 World Cup.",
+    metaDescriptionVi: "Trương Vinh Hiển và Đỗ Minh Quân: 3 HCV đôi nam PPA Tour Asia, cú đột phá đơn nam và vai trò tại World Cup 2026 ở Đà Nẵng.",
+  },
+  {
     slug: "mlp-2026-semifinals-new-york-preview",
     publishedDate: "2026-08-19",
     updatedDate: "2026-08-19",
