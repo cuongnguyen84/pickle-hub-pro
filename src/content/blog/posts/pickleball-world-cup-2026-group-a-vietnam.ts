@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-group-a-vietnam",
   publishedDate: "2026-08-17",
-  updatedDate: "2026-08-17",
+  updatedDate: "2026-08-20",
   author: "Cuong Nguyen",
   tags: [
     "pickleball world cup 2026",
@@ -34,7 +34,7 @@ const post: BlogPost = {
         {
           heading: "Group A at a glance",
           content:
-            "Vietnam has been drawn into Group A at the Heineken Pickleball World Cup 2026 in Da Nang (August 30 – September 6, 2026) alongside Colombia, Chile and the Cayman Islands. On paper the strongest individual in the group is Colombia's Pablo Tellez — currently world No. 27 in men's play on the PPA Tour with eight career finals; Chile brings two South American professionals who have already broken into the PPA Challenger circuit; and the Cayman Islands, a nation of roughly 70,000 people, reached the quarter-finals of the 2024 Pickleball World Cup in Lima. This ThePickleHub scouting report breaks down each rival using public PPA Tour, DUPR and international press data, and states clearly which parts are confirmed and which are not. Last updated August 17, 2026.",
+            "Vietnam has been drawn into Group A at the Heineken Pickleball World Cup 2026 in Da Nang (August 30 – September 6, 2026) alongside Colombia, Chile and the Cayman Islands. On paper the strongest individual in the group is Colombia's Pablo Tellez — currently world No. 27 in men's play on the PPA Tour with eight career finals; Chile brings two South American professionals who have already broken into the PPA Challenger circuit; and the Cayman Islands, a nation of roughly 70,000 people, reached the quarter-finals of the 2024 Pickleball World Cup in Lima. This ThePickleHub scouting report breaks down each rival using public PPA Tour, DUPR and international press data, and states clearly which parts are confirmed and which are not. The organisers held the official draw on August 16, 2026, which confirmed this group. Last updated August 20, 2026.",
           table: {
             caption: "Group A — Pickleball World Cup 2026, Da Nang",
             headers: ["Team", "Strength on paper", "Risk to Vietnam"],
@@ -170,7 +170,7 @@ const post: BlogPost = {
           listItems: [
             "Confirmed: the dates and venues (August 30 – September 6, 2026, Da Nang); Pablo Tellez's PPA Tour record; the Cayman Islands' 2024 quarter-final run; DUPR as the official rating system.",
             "Not confirmed: official squad lists for Colombia, Chile and the Cayman Islands had not been published at the time of writing. This analysis is built from public data on each nation's most prominent players, so the travelling rosters may differ. DUPR figures move constantly and should be read as a range, not a fixed number.",
-            "On the draw itself: the Group A composition reported here is what ThePickleHub has from the community and organisers; the full tournament draw has not been posted publicly on international channels. This article will be updated when an official announcement lands.",
+            "On the draw itself: the organisers held the official draw on August 16, 2026, and Dan Tri reported the following day that Vietnam is in Group A with Colombia, the Cayman Islands and Chile — the composition this article had carried since publication. The World Cup drew 156 national teams in total, 64 of them in the Open division across 16 groups. A full bracket still has not been posted on an international channel.",
           ],
         },
       ],
@@ -178,7 +178,7 @@ const post: BlogPost = {
         {
           question: "Which group is Vietnam in at the Pickleball World Cup 2026?",
           answer:
-            "Vietnam is in Group A alongside Colombia, Chile and the Cayman Islands. The tournament runs in Da Nang from August 30 to September 6, 2026. Official squad lists for the other three nations had not been published as of August 17, 2026.",
+            "Vietnam is in Group A alongside Colombia, Chile and the Cayman Islands, confirmed by the official draw held on August 16, 2026. The tournament runs in Da Nang from August 30 to September 6, 2026, with 64 teams in the Open division split across 16 groups. Official squad lists for the other three nations had not been published as of August 20, 2026.",
         },
         {
           question: "What is the team match format at the Pickleball World Cup 2026?",
@@ -212,7 +212,7 @@ const post: BlogPost = {
         {
           heading: "Bảng A gồm những đội nào?",
           content:
-            "Cập nhật 17/8/2026. Đội tuyển Việt Nam nằm ở bảng A Heineken Pickleball World Cup 2026 (Đà Nẵng, 30/8–6/9/2026) cùng Colombia, Chile và Cayman Islands. Trên hồ sơ quốc tế, người mạnh nhất bảng là Pablo Tellez của Colombia — hạng 27 thế giới nam trên PPA Tour, 8 lần vào chung kết; Chile có hai tay vợt Nam Mỹ đã bước vào hệ thống PPA Challenger; còn Cayman Islands, dù dân số chỉ khoảng 70.000, đã vào tới tứ kết Pickleball World Cup 2024 tại Lima. ThePickleHub phân tích từng đối thủ dựa trên dữ liệu công khai của PPA Tour, DUPR và báo chí quốc tế, kèm rõ phần nào đã chắc và phần nào còn chờ xác nhận.",
+            "Cập nhật 20/8/2026. Đội tuyển Việt Nam nằm ở bảng A Heineken Pickleball World Cup 2026 (Đà Nẵng, 30/8–6/9/2026) cùng Colombia, Chile và Cayman Islands. Trên hồ sơ quốc tế, người mạnh nhất bảng là Pablo Tellez của Colombia — hạng 27 thế giới nam trên PPA Tour, 8 lần vào chung kết; Chile có hai tay vợt Nam Mỹ đã bước vào hệ thống PPA Challenger; còn Cayman Islands, dù dân số chỉ khoảng 70.000, đã vào tới tứ kết Pickleball World Cup 2024 tại Lima. ThePickleHub phân tích từng đối thủ dựa trên dữ liệu công khai của PPA Tour, DUPR và báo chí quốc tế, kèm rõ phần nào đã chắc và phần nào còn chờ xác nhận. Ban tổ chức đã bốc thăm chính thức ngày 16/8/2026, xác nhận phân bảng này.",
           internalLinks: [
             {
               text: "Tổng quan Heineken Pickleball World Cup 2026 tại Đà Nẵng",
@@ -321,7 +321,7 @@ const post: BlogPost = {
           listItems: [
             "Đã chắc: thời gian và địa điểm giải; hồ sơ thi đấu của Pablo Tellez trên PPA Tour; thành tích tứ kết World Cup 2024 của Cayman Islands; DUPR là hệ thống xếp hạng chính thức.",
             "Chưa chắc: danh sách VĐV chính thức của Colombia, Chile và Cayman Islands chưa được công bố tại thời điểm viết bài, nên đội hình thực tế có thể khác. Chỉ số DUPR biến động liên tục nên chỉ nên đọc như khoảng tham chiếu.",
-            "Về bảng đấu: phân bảng ghi nhận ở bài này là thông tin ThePickleHub nắm được từ cộng đồng và ban tổ chức; bảng đấu đầy đủ chưa được ban tổ chức đăng công khai trên kênh quốc tế.",
+            "Về bảng đấu: ban tổ chức đã bốc thăm chính thức chiều 16/8/2026, và Dân trí đưa tin ngay hôm sau rằng Việt Nam nằm ở bảng A cùng Colombia, Cayman Islands và Chile — đúng phân bảng bài này ghi từ đầu. Giải có 156 đội đăng ký, riêng nội dung Open là 64 đội chia 16 bảng. Sơ đồ nhánh đầy đủ vẫn chưa được đăng trên kênh quốc tế.",
           ],
         },
       ],
