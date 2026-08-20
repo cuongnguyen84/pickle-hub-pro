@@ -261,3 +261,36 @@ Không lưu được tỉ số.
 Không cập nhật được điểm trực tiếp.
 Không nhận được quyền chấm trận.
 Không tạo được bảng đấu.
+
+# --- 19/08: Shop native vào git (PR #641) ---
+# Toàn bộ 22 chuỗi dưới là MỘT nghĩa ở mọi chỗ dùng — phần lớn là từ vựng
+# thương mại điện tử lặp lại giữa giỏ / thanh toán / chi tiết đơn.
+# Ba chuỗi generic đáng soát lại nếu sau này bản EN đi khác nhau:
+# "Phương thức" (QuickTable payment vs Shop checkout), "Chọn", "Tìm".
+Còn hàng
+Hết hàng
+Giỏ hàng
+Tổng cộng
+Phí vận chuyển
+Sản phẩm
+Sản phẩm không còn hiển thị
+Chưa thể cập nhật
+Chưa chọn
+Chọn
+Tìm
+Tìm vợt, giày, bóng…
+Phương thức
+Chủ tài khoản
+Số tiền
+Tôi đã chuyển khoản
+Khu vực chưa công bố
+Shop chưa công bố thông tin giao hàng.
+Hà Nội
+Mặt sân
+Sân cứng
+Ngoài trời
+
+# --- 19/08: có sẵn trên main trước PR #641, gate đã đỏ vì hai dòng này ---
+# Nhãn ticker: LIVE và UPCOMING, một nghĩa ở cả hai chỗ.
+TRỰC TIẾP
+SẮP TỚI
