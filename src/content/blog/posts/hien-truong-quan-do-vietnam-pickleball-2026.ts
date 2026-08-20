@@ -19,6 +19,10 @@ const post: BlogPost = {
     en: "Follow Vietnamese players live on ThePickleHub",
     vi: "Theo dõi tay vợt Việt Nam trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/hien-truong-quan-do-vietnam-pickleball-2026-hero.webp",
+    alt: "Vietnam's Golden Pair promo graphic for Hien Truong and Quan Do — two Vietnamese men's pickleball players in front of a Vietnamese flag, one holding a paddle and one holding a PPA Tour Asia men's doubles champion trophy, beside three gold trophies labelled Hangzhou 2025, Beijing 2026 and Ho Chi Minh City 2026, the Ho Chi Minh City final score 11-13, 11-6, 11-4, and a Da Nang 2026 World Cup at home panel.",
+  },
   content: {
     en: {
       title:
