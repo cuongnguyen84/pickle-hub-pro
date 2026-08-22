@@ -1,0 +1,48 @@
+{
+  "slug": "arch-05-vi-route-mirror",
+  "disagreements": [
+    {
+      "id": "D1",
+      "topic": "Hình dạng route: config array map 2 lần (giữ per-route ViLanguageWrapper) hay route cha /vi (parent layout, wrapper render <Outlet/>)?",
+      "positions": {
+        "solution-architect": "Option A — config array MIRRORED double-map, byte-identical; bác nested /vi layout (Option C) vì không đạt mục tiêu và đổi mount semantics.",
+        "ui-ux-critic": "Route cha /vi giữ mount là NÂNG CẤP UX: sửa được nhóm bug ngôn-ngữ-sai + bug /vi/<sai> ra NotFound tiếng Anh; ViLanguageWrapper đổi {children} → <Outlet/>."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "HOLD",
+          "evidence": "src/components/layout/ViLanguageWrapper.tsx:31 (return <>{children}</>, chưa có <Outlet/>) + src/App.tsx route ranking v6",
+          "note": "Mọi lợi ích critic gán cho route cha đều đạt trong config-array phẳng: bug ngôn ngữ = bỏ viSkipWrapper (D2); VI NotFound = thêm 1 route /vi/* wrapped NotFound (v6 rank theo specificity). Route cha còn dính bẫy nested-Outlet của risk-auditor."
+        },
+        "ui-ux-critic": {
+          "move": "CONCEDE",
+          "evidence": "src/components/layout/ViLanguageWrapper.tsx:15,29 — effect deps rỗng [] (keyed mount/unmount, không theo pathname) → mọi bug UX vá được trong Option A: bọc wrapper 3 route ngoại lệ + 1 route /vi/*→NotFound; route cha đổi mount semantics + mang bẫy trắng-trang risk-auditor mà không mua thêm gì ngoài 'en flash' cosmetic.",
+          "note": "Nhượng vehicle (config array thắng), giữ yêu cầu: các bản vá ngôn ngữ + VI-404 phải ship (chuyển sang D2)."
+        }
+      },
+      "status": "RESOLVED_EVIDENCE",
+      "resolution": "Config array double-map (Option A) thắng — giữ mount semantics, né bẫy trắng trang; các fix UX (wrapper cho route ngoại lệ, VI NotFound) thực hiện được ngay trong config array."
+    },
+    {
+      "id": "D2",
+      "topic": "Scope hành vi: byte-identical hay vá luôn 3 route bỏ ViLanguageWrapper (SocialEventLive, Rankings, Feed) + VI NotFound trong cùng đợt?",
+      "positions": {
+        "solution-architect": "Byte-identical — refactor không đổi hành vi; 3 ngoại lệ giữ nguyên, chuẩn hoá là việc khác.",
+        "ui-ux-critic": "Vá 3 route ngoại lệ + 404-VI trong cùng PR gần như free, giá trị UX thật cho 95% user VI."
+      },
+      "round2": {
+        "solution-architect": {
+          "move": "REFINE",
+          "evidence": "src/components/layout/ViLanguageWrapper.tsx:15-29 (cleanup set 'en') + src/i18n/index.tsx:111-120 (ref-guard không restore cho route không-wrapper) + src/App.tsx:658,661 (Feed/Rankings trần) + grep không có UrlLanguageSync",
+          "note": "Vòng 1 chưa verify; vòng 2 trace xác nhận bug ngôn ngữ THẬT trên SPA-nav. Nới scope: vá Feed + Rankings (bỏ viSkipWrapper) + VI NotFound cùng PR. SocialEventLive (App.tsx:585, court-side live scoring) ở LẠI ngoài scope tới khi audit socket xong."
+        },
+        "ui-ux-critic": {
+          "move": "REFINE",
+          "evidence": "git blame a5cd6ec2/6c8c3b79/ab9e2a35 — 3 route bỏ wrapper là bất nhất lịch sử, không có lý do kỹ thuật ghi lại",
+          "note": "'Free' đúng cho Feed/Rankings/VI-404; nói quá cho SocialEventLive (cần audit socket/SSE trước khi bọc — defer riêng route đó). Sequencing same-PR vs follow-up là quyết định của Cuong."
+        }
+      },
+      "status": "OPEN_FOR_CUONG"
+    }
+  ]
+}
