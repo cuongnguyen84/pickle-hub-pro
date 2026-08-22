@@ -70,10 +70,42 @@ struct NewsDetailView: View {
     let news: FeedNews
     let publishedAt: Date?
 
+    @State private var detail: NewsArticleDetail?
+    @State private var phase: Phase = .loading
+
+    private let repository = FeedRepository()
+    private enum Phase: Equatable { case loading, loaded, failed(String) }
+
     var body: some View {
-        // Full editorial content lives on ThePickleHub's canonical news page.
-        // Source attribution remains plain text in the eyebrow; the private
-        // origin URL is never requested by the native client.
+        Group {
+            switch phase {
+            case .loading:
+                ProgressView()
+                    .tint(TLColor.accentText)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityLabel("Đang tải bài viết")
+            case .loaded:
+                if let detail {
+                    ArticleWebView(bodyHTML: NewsArticleHTML.body(detail))
+                        .ignoresSafeArea(edges: .bottom)
+                } else {
+                    fallbackReader
+                }
+            case .failed(let message):
+                TLErrorState(title: "Không tải được bài viết", message: message) {
+                    Task { await load() }
+                }
+            }
+        }
+        .background(TLColor.bg)
+        .navigationTitle(news.source?.nonEmpty ?? "Tin tức")
+        .navigationBarTitleDisplayMode(.inline)
+        .task(id: news.slug) { await load() }
+    }
+
+    /// Keeps the old summary + web handoff available only when the published
+    /// row has no full editorial body (legacy data), never during normal reads.
+    private var fallbackReader: some View {
         ArticleDetailView(
             imageURL: news.imageURL,
             eyebrow: .init(
@@ -85,7 +117,49 @@ struct NewsDetailView: View {
             title: news.title,
             bodyText: news.summary,
             readURL: WebRoutes.news(slug: news.slug, language: news.language),
-            readLabel: "Đọc bài viết"
+            readLabel: "Đọc trên ThePickleHub"
         )
+    }
+
+    private func load() async {
+        phase = .loading
+        do {
+            detail = try await repository.newsDetail(slug: news.slug, language: news.language)
+            phase = .loaded
+        } catch {
+            phase = .failed(error.localizedDescription)
+        }
+    }
+}
+
+/// Builds the trusted editorial fragment consumed by `ArticleWebView`. Every
+/// database metadata value is escaped; only `contentHtml` remains markup, as it
+/// is produced by the protected editorial pipeline and rendered under a strict
+/// no-script/no-frame CSP.
+enum NewsArticleHTML {
+    static func body(_ detail: NewsArticleDetail) -> String {
+        var html = "<article class=\"news-article\">"
+        if let image = detail.imageURL?.nonEmpty,
+           let url = WebRoutes.asset(image),
+           url.scheme?.lowercased() == "https" {
+            html += "<img class=\"hero\" src=\"\(ArticleHTML.escapeText(url.absoluteString))\" alt=\"\">"
+        }
+
+        let publishedDate = detail.publishedAt.flatMap { FeedDate.parse($0) }
+        let relative = publishedDate.map { FeedDate.relative($0) } ?? ""
+        let metadata = [relative.nonEmpty, detail.source?.nonEmpty]
+            .compactMap { $0 }
+            .map { ArticleHTML.escapeText($0.uppercased()) }
+        html += "<p class=\"eyebrow\">\(metadata.joined(separator: " &nbsp;·&nbsp; "))"
+        if !metadata.isEmpty { html += " &nbsp;·&nbsp; " }
+        html += "<span>TIN</span>"
+        if detail.aiTranslated { html += " &nbsp;·&nbsp; <b>AI</b>" }
+        html += "</p>"
+        html += "<h1 class=\"headline\">\(ArticleHTML.escapeText(detail.title))</h1>"
+        if let summary = detail.summary?.nonEmpty {
+            html += "<p class=\"dek\">\(ArticleHTML.escapeText(summary))</p>"
+        }
+        html += "<div class=\"article-body\">\(detail.contentHtml)</div></article>"
+        return html
     }
 }
