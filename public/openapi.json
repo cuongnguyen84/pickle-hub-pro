@@ -46,7 +46,14 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/IndexNowResult"
+            "description": "IndexNow submission result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexNowResult"
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -89,7 +96,14 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/IndexNowResult"
+            "description": "IndexNow submission result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexNowResult"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid JSON body or URL list",

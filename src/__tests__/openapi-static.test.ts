@@ -28,6 +28,30 @@ describe("public OpenAPI document", () => {
     expect(document.paths["/api/rum-context"].get.responses["200"]).toBeDefined();
   });
 
+  it("gives every operation a directly discoverable typed success response", () => {
+    const operations = Object.values(document.paths).flatMap((path) =>
+      Object.entries(path)
+        .filter(([method]) => ["get", "post", "put", "patch", "delete"].includes(method))
+        .map(([, operation]) => operation),
+    );
+
+    expect(operations).toHaveLength(3);
+    for (const operation of operations) {
+      expect(operation.responses["200"].content["application/json"].schema).toBeDefined();
+    }
+  });
+
+  it("publishes actionable agent guidance and links it from llms.txt", () => {
+    const instructions = readFileSync("public/agents.md", "utf8");
+    const agentGuide = readFileSync("public/llms.txt", "utf8");
+
+    expect(instructions).toContain("## When to use ThePickleHub");
+    expect(instructions).toContain("## Source and citation guidance");
+    expect(instructions).toContain("must not call, probe, or attempt to discover that secret");
+    expect(instructions).toContain("Training crawlers such as GPTBot and ClaudeBot are intentionally blocked");
+    expect(agentGuide).toContain("https://www.thepicklehub.net/agents.md");
+  });
+
   it("does not expose an example or default administrative secret", () => {
     const serialized = JSON.stringify(document);
     expect(serialized).not.toMatch(/example[^}]*key|default[^}]*key/i);
