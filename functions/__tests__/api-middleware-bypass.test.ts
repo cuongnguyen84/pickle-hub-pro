@@ -113,4 +113,14 @@ describe("Pages API middleware bypass", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ issuer: "https://issuer.example" });
   });
+
+  it("serves a static markdown agent instruction file instead of SPA 404", async () => {
+    const source = new Response("# Agent instructions", {
+      headers: { "Content-Type": "text/markdown; charset=utf-8" },
+    });
+    const response = await invoke("/agents.md", source, "text/markdown");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/markdown");
+    await expect(response.text()).resolves.toContain("# Agent instructions");
+  });
 });
