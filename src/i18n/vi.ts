@@ -221,6 +221,10 @@ export interface Translations {
     feed: string;
     /** Bottom-nav primary slot — replaces the tournaments tile. */
     social: string;
+    /** Ô cố định trên thanh dưới kể từ 23/08. */
+    shop: string;
+    /** Ô cuối thanh dưới — mở tấm trượt chứa mọi bề mặt còn lại. */
+    more: string;
     search: string;
     profile: string;
     viewProfile: string;
@@ -3251,6 +3255,8 @@ export const vi: Translations = {
     tools: "Công cụ",
     feed: "Bảng tin",
     social: "Social",
+    shop: "Chợ",
+    more: "Thêm",
     search: "Tìm kiếm",
     profile: "Tài khoản",
     viewProfile: "Xem hồ sơ",
