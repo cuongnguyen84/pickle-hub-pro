@@ -34,6 +34,17 @@ describe("raw homepage fallback for agents without JavaScript", () => {
 
     expect(nodes.some((node) => node["@type"] === "Organization")).toBe(true);
     expect(nodes.some((node) => node["@type"] === "WebSite")).toBe(true);
+    expect(
+      nodes.find((node) => node["@type"] === "Organization")?.contactPoint,
+    ).toEqual(expect.objectContaining({
+      "@type": "ContactPoint",
+      url: "https://www.thepicklehub.net/contact",
+    }));
+  });
+
+  it("links machine-readable developer resources", () => {
+    expect(root).toContain('href="/openapi.json"');
+    expect(root).toContain('href="/llms.txt"');
   });
 
   it("keeps the React bootstrap that replaces the fallback", () => {

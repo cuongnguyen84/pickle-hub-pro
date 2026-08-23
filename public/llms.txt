@@ -16,6 +16,7 @@ ThePickleHub is built and operated in Vietnam. It covers Vietnamese pickleball â
 - [Tournament Tools](https://www.thepicklehub.net/tools): free bracket generator, round robin, team match, live scoring
 - [About](https://www.thepicklehub.net/about): who operates ThePickleHub, what it does, and who it serves
 - [Contact](https://www.thepicklehub.net/contact): support, corrections, tournament coverage, and partnerships
+- [OpenAPI specification](https://www.thepicklehub.net/openapi.json): machine-readable contract for the public HTTP API
 
 ## Notable Guides
 

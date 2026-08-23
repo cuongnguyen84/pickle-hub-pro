@@ -11,6 +11,13 @@ describe("public OpenAPI document", () => {
     );
   });
 
+  it("is discoverable from the homepage fallback and agent guide", () => {
+    const homepage = readFileSync("index.html", "utf8");
+    const agentGuide = readFileSync("public/llms.txt", "utf8");
+    expect(homepage).toContain('href="/openapi.json"');
+    expect(agentGuide).toContain("https://www.thepicklehub.net/openapi.json");
+  });
+
   it("documents every public Pages API route", () => {
     expect(Object.keys(document.paths).sort()).toEqual([
       "/api/indexnow",

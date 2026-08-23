@@ -199,7 +199,7 @@ export function renderDefault(path: string, siteUrl: string, lang: Lang): Respon
 
 // ─── 404 ──────────────────────────────��───────────────────
 
-export function render404(path: string, siteUrl: string): Response {
+export function render404(path: string, siteUrl: string, accept = ""): Response {
   const isVi = detectLang(path) === "vi";
   const title = isVi
     ? "404 - Không tìm thấy trang | ThePickleHub"
@@ -209,6 +209,20 @@ export function render404(path: string, siteUrl: string): Response {
     : "The page you're looking for doesn't exist. Return to ThePickleHub for pickleball tournaments, livestreams, and Vietnam's pickleball community.";
   const homeHref = isVi ? `${siteUrl}/vi` : `${siteUrl}/`;
   const homeLabel = isVi ? "Quay lại trang chủ" : "Return to home";
+  if (accept.includes("text/markdown")) {
+    const markdown = isVi
+      ? `# 404 — Không tìm thấy trang\n\nTài nguyên \`${path}\` không tồn tại.\n\n- [Trang chủ](${siteUrl}/vi)\n- [Hướng dẫn cho AI agent](${siteUrl}/llms.txt)\n- [Đặc tả OpenAPI](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`
+      : `# 404 — Page not found\n\nThe resource \`${path}\` does not exist.\n\n- [Homepage](${siteUrl}/)\n- [AI agent guide](${siteUrl}/llms.txt)\n- [OpenAPI specification](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`;
+    return new Response(markdown, {
+      status: 404,
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex, nofollow",
+        Vary: "Accept",
+      },
+    });
+  }
   // No canonical or og:url — emitting a canonical on a 404 sends a
   // contradictory signal (canonical = "this URL is authoritative" vs.
   // noindex = "don't index this"). Omitting both is correct for 404s.
@@ -232,7 +246,12 @@ export function render404(path: string, siteUrl: string): Response {
 <body>
 <h1>${escapeHtml(title)}</h1>
 <p>${escapeHtml(description)}</p>
-<p><a href="${escapeHtml(homeHref)}">${escapeHtml(homeLabel)}</a></p>
+<ul>
+<li><a href="${escapeHtml(homeHref)}">${escapeHtml(homeLabel)}</a></li>
+<li><a href="${escapeHtml(siteUrl)}/llms.txt">AI agent guide</a></li>
+<li><a href="${escapeHtml(siteUrl)}/openapi.json">OpenAPI specification</a></li>
+<li><a href="${escapeHtml(siteUrl)}/sitemap.xml">Sitemap</a></li>
+</ul>
 </body>
 </html>`;
   return htmlResponse(html, 404);

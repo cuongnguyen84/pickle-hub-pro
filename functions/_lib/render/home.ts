@@ -70,6 +70,13 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
           },
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "customer support",
+            email: "tapickleballvn@gmail.com",
+            url: `${siteUrl}/contact`,
+            availableLanguage: ["vi", "en"],
+          },
           // sameAs must only ever list profiles that resolve AND that are ours.
           // A 404 here is a dirty signal on the exact entity these blocks exist
           // to consolidate ("the pickle hub" ranks ~pos 8 on its own name) —
@@ -156,6 +163,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
         <li><a href="${siteUrl}/news">News</a> — Daily pickleball updates</li>
         <li><a href="${siteUrl}/videos">Videos</a> — Match highlights (Courtside)</li>
         <li><a href="${siteUrl}/forum">Forum</a> — Community discussions</li>
+        <li><a href="${siteUrl}/openapi.json">API specification</a> — Machine-readable OpenAPI 3.1 contract</li>
       </ul>
       <h2>Find pickleball courts by city</h2>
       <ul>
@@ -217,6 +225,13 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
             "@type": "PostalAddress",
             addressLocality: "Ho Chi Minh City",
             addressCountry: "VN",
+          },
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "customer support",
+            email: "tapickleballvn@gmail.com",
+            url: `${siteUrl}/contact`,
+            availableLanguage: ["vi", "en"],
           },
           // sameAs must only ever list profiles that resolve AND that are ours.
           // A 404 here is a dirty signal on the exact entity these blocks exist
@@ -303,6 +318,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
         <li><a href="${siteUrl}/vi/news">Tin tức</a> — Cập nhật pickleball hàng ngày</li>
         <li><a href="${siteUrl}/vi/videos">Video</a> — Highlights trận đấu</li>
         <li><a href="${siteUrl}/vi/forum">Diễn đàn</a> — Thảo luận cộng đồng</li>
+        <li><a href="${siteUrl}/openapi.json">Đặc tả API</a> — Hợp đồng OpenAPI 3.1 dành cho máy đọc</li>
       </ul>
       <h2>Tìm sân pickleball theo khu vực</h2>
       <ul>

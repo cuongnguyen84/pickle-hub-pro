@@ -168,6 +168,40 @@ export const isPilotNoindexShopPath = (pathname: string) =>
 export const isPagesApiPath = (pathname: string) =>
   pathname === "/api" || pathname.startsWith("/api/");
 
+export const isWellKnownPath = (pathname: string) =>
+  pathname === "/.well-known" || pathname.startsWith("/.well-known/");
+
+export const isHtmlSpaFallback = (response: Response) =>
+  response.status === 200 &&
+  (response.headers.get("content-type") || "").includes("text/html");
+
+export function jsonNotFound(pathname: string): Response {
+  const headers = new Headers({
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "X-Robots-Tag": "noindex, nofollow",
+  });
+  applySecurityHeaders(headers);
+  return new Response(JSON.stringify({ error: "not_found", path: pathname }), {
+    status: 404,
+    headers,
+  });
+}
+
+export function homepageMarkdown(siteUrl: string, lang: "en" | "vi"): Response {
+  const body = lang === "vi"
+    ? `# ThePickleHub\n\nThePickleHub là nền tảng pickleball song ngữ tại Việt Nam và châu Á, cung cấp giải đấu, livestream, bảng đấu, bảng xếp hạng, tin tức và công cụ miễn phí cho ban tổ chức.\n\n## Khám phá\n\n- [Giải đấu](${siteUrl}/vi/tournaments)\n- [Trực tiếp](${siteUrl}/vi/live)\n- [Tin tức](${siteUrl}/vi/news)\n- [Hướng dẫn cho AI agent](${siteUrl}/llms.txt)\n- [Đặc tả OpenAPI](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`
+    : `# ThePickleHub\n\nThePickleHub is a bilingual pickleball platform for Vietnam and Asia, covering tournaments, livestreams, brackets, rankings and news, with free tools for organizers.\n\n## Explore\n\n- [Tournaments](${siteUrl}/tournaments)\n- [Livestreams](${siteUrl}/live)\n- [News](${siteUrl}/news)\n- [AI agent guide](${siteUrl}/llms.txt)\n- [OpenAPI specification](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`;
+
+  const headers = new Headers({
+    "Content-Type": "text/markdown; charset=utf-8",
+    "Cache-Control": "public, max-age=300, s-maxage=3600",
+    Vary: "Accept",
+  });
+  applySecurityHeaders(headers);
+  return new Response(body, { headers });
+}
+
 // ─── GSC "Not found (404)" cleanup 2026-07-30 — 410 Gone for permanently
 //     removed URLs. Bots bypass public/_redirects, so a soft 404 here never
 //     clears the coverage report; 410 is a definitive removal signal Google
@@ -555,8 +589,31 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return secureRedirect(`https://${url.hostname}/vi${url.search}`, 301);
   }
 
+  // ─── 1h. Markdown content negotiation ────────────────
+  // Agents can request a compact, self-contained homepage representation.
+  // Human/browser requests continue through the existing HTML/SPA path.
+  if (
+    request.method === "GET" &&
+    (url.pathname === "/" || url.pathname === "/vi") &&
+    (request.headers.get("accept") || "").includes("text/markdown")
+  ) {
+    const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
+    return homepageMarkdown(siteUrl, url.pathname === "/vi" ? "vi" : "en");
+  }
+
   // ─── 2. Static asset bypass (before bot detection) ───
   const pathname = url.pathname;
+
+  // A missing machine-readable discovery document must not masquerade as a
+  // valid JSON endpoint. Preserve real .well-known resources, but turn the
+  // SPA rewrite fallback into an honest JSON 404.
+  if (isWellKnownPath(pathname)) {
+    const discoveryResponse = await next();
+    return isHtmlSpaFallback(discoveryResponse)
+      ? jsonNotFound(pathname)
+      : discoveryResponse;
+  }
+
   const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];
   const STATIC_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|json|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
   const STATIC_EXACT = new Set(["/favicon.ico", "/robots.txt", "/manifest.json", "/_worker.js", "/_redirects", "/_headers"]);
@@ -599,7 +656,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // endpoint for an unknown SPA route and returns 404 before the endpoint's
   // own function can authenticate, validate, and respond.
   if (isPagesApiPath(pathname)) {
-    return next();
+    const apiResponse = await next();
+    return isHtmlSpaFallback(apiResponse) ? jsonNotFound(pathname) : apiResponse;
   }
 
   // ─── 3. Bot detection ─────────────────────────────────
@@ -616,7 +674,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (!isBot) {
     if (!isKnownSpaPath(pathname)) {
       const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
-      const response = render404(pathname, siteUrl);
+      const response = render404(pathname, siteUrl, request.headers.get("accept") || "");
       const headers = new Headers(response.headers);
       headers.set("X-Robots-Tag", "noindex, nofollow");
       headers.set("Cache-Control", "no-store");
@@ -769,7 +827,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // — a served shell is far better for the crawler than a hung 5xx.
     const RENDER_BUDGET_MS = 8000;
     const response = await Promise.race([
-      routeAndRender(url.pathname, env, siteUrl),
+      routeAndRender(url.pathname, env, siteUrl, request.headers.get("accept") || ""),
       new Promise<Response>((_, reject) =>
         setTimeout(() => reject(new Error("prerender-timeout")), RENDER_BUDGET_MS),
       ),
@@ -872,7 +930,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
 // ─── Router ───────────────���─────────────────────────────────
 
-async function routeAndRender(pathname: string, env: Env, siteUrl: string): Promise<Response> {
+async function routeAndRender(pathname: string, env: Env, siteUrl: string, accept = ""): Promise<Response> {
   const rawPath = pathname;
   const lang = detectLang(rawPath);
   const path = stripLangPrefix(rawPath);
@@ -1085,5 +1143,5 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
 
   // 404 fallback — unmatched routes get a proper 404 + noindex, not a
   // generic 200 shell that would waste crawl budget and create soft-404s.
-  return render404(rawPath, siteUrl);
+  return render404(rawPath, siteUrl, accept);
 }
