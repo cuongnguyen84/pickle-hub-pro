@@ -100,6 +100,8 @@ const TeamMatchScoring = lazyRetry(() => import("./pages/TeamMatchScoring"));
 const JoinTeam = lazyRetry(() => import("./pages/JoinTeam"));
 const Privacy = lazyRetry(() => import("./pages/Privacy"));
 const Terms = lazyRetry(() => import("./pages/Terms"));
+const About = lazyRetry(() => import("./pages/About"));
+const Contact = lazyRetry(() => import("./pages/Contact"));
 const Advertise = lazyRetry(() => import("./pages/Advertise"));
 const AffiliateDisclosurePage = lazyRetry(() => import("./pages/AffiliateDisclosure"));
 const TeamMatchList = lazyRetry(() => import("./pages/TeamMatchList"));
@@ -600,6 +602,8 @@ const MIRRORED: MirroredRoute[] = [
   { path: "/tools/dashboard/:type/:id", element: <TournamentDashboard /> },
   { path: "/privacy", element: <Privacy /> },
   { path: "/terms", element: <Terms /> },
+  { path: "/about", element: <About /> },
+  { path: "/contact", element: <Contact /> },
   { path: "/advertise", element: <Advertise /> },
   { path: "/affiliate-disclosure", element: <AffiliateDisclosurePage /> },
 ];

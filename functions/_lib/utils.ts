@@ -334,7 +334,7 @@ export function breadcrumb(crumbs: { label: string; href?: string }[]): string {
 // lightweight SSR document rather than the SPA visitors actually use.
 // Search and social crawlers still receive SSR via their explicit tokens.
 export const BOT_UA =
-  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|zalo|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|claudebot|perplexitybot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator|seonaut|crawlobserver|seobserver/i;
+  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|zalo|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-searchbot|claude-user|perplexitybot|deepseekbot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator|seonaut|crawlobserver|seobserver/i;
 
 // ─── Related content links ─────────────────────────────────
 

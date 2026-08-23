@@ -14,6 +14,8 @@ ThePickleHub is built and operated in Vietnam. It covers Vietnamese pickleball â
 - [Vietnam DUPR Rankings](https://www.thepicklehub.net/rankings): live Vietnam DUPR leaderboard
 - [Live](https://www.thepicklehub.net/live): livestreams of Vietnamese tournaments and matches
 - [Tournament Tools](https://www.thepicklehub.net/tools): free bracket generator, round robin, team match, live scoring
+- [About](https://www.thepicklehub.net/about): who operates ThePickleHub, what it does, and who it serves
+- [Contact](https://www.thepicklehub.net/contact): support, corrections, tournament coverage, and partnerships
 
 ## Notable Guides
 

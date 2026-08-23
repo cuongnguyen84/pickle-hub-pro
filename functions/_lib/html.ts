@@ -71,6 +71,8 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
     return `<footer>
 <p>&copy; 2026 ThePickleHub - Cộng đồng Pickleball Việt Nam</p>
 <nav>
+<a href="${siteUrl}${prefix}/about">Về chúng tôi</a>
+<a href="${siteUrl}${prefix}/contact">Liên hệ</a>
 <a href="${siteUrl}${prefix}/privacy">Chính sách bảo mật</a>
 <a href="${siteUrl}${prefix}/terms">Điều khoản sử dụng</a>
 </nav>
@@ -79,6 +81,8 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
   return `<footer>
 <p>&copy; 2026 ThePickleHub - Pickleball Tournaments, Livestream &amp; Community</p>
 <nav>
+<a href="${siteUrl}/about">About</a>
+<a href="${siteUrl}/contact">Contact</a>
 <a href="${siteUrl}/privacy">Privacy Policy</a>
 <a href="${siteUrl}/terms">Terms of Service</a>
 </nav>

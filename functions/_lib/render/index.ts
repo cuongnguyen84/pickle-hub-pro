@@ -31,6 +31,8 @@ export { renderFeed } from "./feed";
 export {
   renderPrivacy,
   renderTerms,
+  renderAbout,
+  renderContact,
   renderNotificationsShell,
   renderNoindexShell,
   renderDefault,

@@ -8,6 +8,7 @@
  */
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
+import { isKnownSpaPath } from "./_lib/spa-routes";
 import { createSupabaseClient } from "./_lib/supabase";
 import {
   renderHome, renderHomeVi,
@@ -28,6 +29,7 @@ import {
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
   renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms,
+  renderAbout, renderContact,
   renderNotificationsShell,
   renderNoindexShell,
   render404,
@@ -531,6 +533,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      mutate the response headers without re-buffering body.
   const isNoindex = shouldNoindex(pathname);
   if (!isBot) {
+    // Cloudflare Pages' SPA fallback serves index.html with status 200 for any
+    // path. Reject paths React does not own before that fallback so browsers
+    // and lightweight agents receive an honest 404.
+    if (!isKnownSpaPath(pathname)) {
+      const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
+      const response = render404(pathname, siteUrl);
+      const headers = new Headers(response.headers);
+      headers.set("X-Robots-Tag", "noindex, nofollow");
+      headers.set("Cache-Control", "no-store");
+      applySecurityHeaders(headers);
+      return new Response(response.body, { status: 404, headers });
+    }
     if (isNoindex) {
       const response = await next();
       const headers = new Headers(response.headers);
@@ -911,6 +925,8 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
   if (path === "/terms") return renderTerms(siteUrl, rawPath, lang);
+  if (path === "/about") return renderAbout(siteUrl, rawPath, lang);
+  if (path === "/contact") return renderContact(siteUrl, rawPath, lang);
 
   // 404 fallback — unmatched routes get a proper 404 + noindex, not a
   // generic 200 shell that would waste crawl budget and create soft-404s.

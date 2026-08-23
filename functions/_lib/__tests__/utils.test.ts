@@ -25,6 +25,24 @@ describe("BOT_UA prerender routing", () => {
       expect(BOT_UA.test(ua)).toBe(true);
     }
   });
+
+  it("prerenders AI search and user-request agents", () => {
+    for (const ua of [
+      "ChatGPT-User/1.0",
+      "OAI-SearchBot/1.0",
+      "Claude-SearchBot/1.0",
+      "Claude-User/1.0",
+      "PerplexityBot/1.0",
+      "DeepSeekBot/1.0",
+    ]) {
+      expect(BOT_UA.test(ua)).toBe(true);
+    }
+  });
+
+  it("still recognizes training crawlers for the SSR path when infrastructure permits them", () => {
+    expect(BOT_UA.test("GPTBot/1.0")).toBe(true);
+    expect(BOT_UA.test("ClaudeBot/1.0")).toBe(true);
+  });
 });
 
 describe("sanitizeBlogHtml", () => {
