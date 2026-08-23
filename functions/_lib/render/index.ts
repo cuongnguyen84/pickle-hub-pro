@@ -32,6 +32,8 @@ export {
   renderPrivacy,
   renderTerms,
   renderAdvertise,
+  renderAbout,
+  renderContact,
   renderNotificationsShell,
   renderNoindexShell,
   renderDefault,

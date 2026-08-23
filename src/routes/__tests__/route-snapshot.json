@@ -922,5 +922,21 @@
   {
     "path": "/vi/shop/orders",
     "element": "<ViLanguageWrapper><RequireAuth><ShopOrders /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/about",
+    "element": "<About />"
+  },
+  {
+    "path": "/contact",
+    "element": "<Contact />"
+  },
+  {
+    "path": "/vi/about",
+    "element": "<ViLanguageWrapper><About /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/contact",
+    "element": "<ViLanguageWrapper><Contact /></ViLanguageWrapper>"
   }
 ]

@@ -103,6 +103,40 @@ export function renderAdvertise(siteUrl: string, rawPath: string, lang: Lang): R
   }));
 }
 
+export function renderAbout(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const isVi = lang === "vi";
+  return htmlResponse(buildHtml({
+    title: isVi ? "Về ThePickleHub" : "About ThePickleHub",
+    description: isVi ? "Nền tảng pickleball song ngữ xây dựng tại Việt Nam." : "A bilingual pickleball platform built in Vietnam.",
+    url: `${siteUrl}${rawPath}`, siteUrl, lang,
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/about` },
+      { hreflang: "vi", href: `${siteUrl}/vi/about` },
+      { hreflang: "x-default", href: `${siteUrl}/about` },
+    ],
+    bodyContent: isVi
+      ? `<section><h2>Chúng tôi làm gì</h2><p>ThePickleHub tập hợp công cụ quản lý giải đấu miễn phí, lịch và kết quả thi đấu, livestream, video, tin tức, bảng xếp hạng DUPR, danh bạ sân và hoạt động cộng đồng trong một nền tảng song ngữ Việt–Anh. Người tổ chức có thể thử các công cụ round robin, loại trực tiếp và thể thức đồng đội mà không cần đăng ký.</p><h2>Chúng tôi phục vụ ai</h2><p>Nền tảng dành cho người chơi, câu lạc bộ và ban tổ chức. Đội ngũ đặt tại TP.HCM và tập trung đặc biệt vào hệ sinh thái pickleball Việt Nam và châu Á.</p><h2>Nguyên tắc biên tập</h2><p>Chúng tôi ưu tiên thông tin có nguồn, cập nhật rõ ràng và nội dung hữu ích từ trải nghiệm thực tế của cộng đồng địa phương.</p></section>`
+      : `<section><h2>What we do</h2><p>ThePickleHub brings together free tournament-management tools, schedules and results, livestreams, video, news, DUPR rankings, court discovery, and community events in one Vietnamese–English platform. Organizers can try round-robin, elimination, and team formats without creating an account.</p><h2>Who we serve</h2><p>The platform serves players, clubs, and tournament organizers. Our team is based in Ho Chi Minh City with a particular focus on pickleball in Vietnam and Asia.</p><h2>Editorial principles</h2><p>We prioritize sourced information, transparent updates, and useful coverage grounded in first-hand local community experience.</p></section>`,
+  }));
+}
+
+export function renderContact(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const isVi = lang === "vi";
+  return htmlResponse(buildHtml({
+    title: isVi ? "Liên hệ ThePickleHub" : "Contact ThePickleHub",
+    description: isVi ? "Hỗ trợ, nội dung, giải đấu và hợp tác." : "Support, editorial, tournaments, and partnerships.",
+    url: `${siteUrl}${rawPath}`, siteUrl, lang,
+    alternates: [
+      { hreflang: "en", href: `${siteUrl}/contact` },
+      { hreflang: "vi", href: `${siteUrl}/vi/contact` },
+      { hreflang: "x-default", href: `${siteUrl}/contact` },
+    ],
+    bodyContent: isVi
+      ? `<section><h2>Hỗ trợ và phản hồi</h2><p>Đội ngũ ThePickleHub hỗ trợ người chơi, câu lạc bộ và ban tổ chức về tài khoản, công cụ giải đấu, livestream, nội dung và dữ liệu công khai. Khi báo lỗi, vui lòng gửi URL, thiết bị và các bước dẫn đến lỗi.</p><h2>Nội dung và hợp tác</h2><p>Ban tổ chức, câu lạc bộ, vận động viên và đối tác truyền thông có thể gửi lịch thi đấu, yêu cầu chỉnh sửa, thông cáo hoặc đề xuất hợp tác.</p><h2>Thông tin liên hệ</h2><p>Email: <a href="mailto:tapickleballvn@gmail.com">tapickleballvn@gmail.com</a>. Đội ngũ vận hành tại TP.HCM, Việt Nam. Không gửi mật khẩu hoặc mã đăng nhập qua email.</p></section>`
+      : `<section><h2>Support and feedback</h2><p>ThePickleHub helps players, clubs, and organizers with accounts, tournament tools, livestreams, editorial content, and public information. When reporting a problem, include the URL, device, and steps that produced it.</p><h2>Editorial and partnerships</h2><p>Organizers, clubs, athletes, and media partners may send schedule updates, correction requests, press information, or partnership proposals.</p><h2>Contact details</h2><p>Email: <a href="mailto:tapickleballvn@gmail.com">tapickleballvn@gmail.com</a>. The team operates from Ho Chi Minh City, Vietnam. Do not send passwords or login codes by email.</p></section>`,
+  }));
+}
+
 // ─── Notifications page shell (Sprint 5 PR-C bot view) ────────────────────
 //
 // /notifications, /thong-bao, /vi/notifications, /vi/thong-bao all render

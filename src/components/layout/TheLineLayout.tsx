@@ -1098,6 +1098,14 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 {language === "vi" ? "Quảng cáo" : "Advertise"}
               </Link>
               {" · "}
+              <Link to={language === "vi" ? "/vi/about" : "/about"} style={{ color: "inherit", textDecoration: "none" }}>
+                {language === "vi" ? "Về chúng tôi" : "About"}
+              </Link>
+              <span aria-hidden="true">·</span>
+              <Link to={language === "vi" ? "/vi/contact" : "/contact"} style={{ color: "inherit", textDecoration: "none" }}>
+                {language === "vi" ? "Liên hệ" : "Contact"}
+              </Link>
+              <span aria-hidden="true">·</span>
               <Link to="/privacy" style={{ color: "inherit", textDecoration: "none" }}>
                 {language === "vi" ? "Quyền riêng tư" : "Privacy"}
               </Link>
