@@ -7,7 +7,6 @@
     "/_routes.json",
     "/favicon.ico",
     "/og-image.png",
-    "/.well-known/*",
     "/manifest.json"
   ]
 }
