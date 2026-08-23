@@ -102,6 +102,10 @@ const AdminShopProductReview = lazyRetry(() => import("./pages/admin/shop/AdminS
 const AdminShopContacts = lazyRetry(() => import("./pages/admin/shop/AdminShopContacts"));
 // P2b.4 — buyer catalogue. Separate chunks from the seller and admin
 // surfaces: a shopper must never download the moderation console.
+// Cổng chợ (PO 23/08): người dùng thấy trang "đang hoàn thiện" cho tới khi
+// SHOP_PUBLIC_OPEN bật. KHÔNG lazy — nó quyết định cái gì được vẽ, nên phải
+// có mặt trước, và nó chỉ là một câu if.
+import ShopGate from "./components/shop/ShopGate";
 const ShopHome = lazyRetry(() => import("./pages/shop/ShopHome"));
 const ShopSearch = lazyRetry(() => import("./pages/shop/ShopSearch"));
 const ShopCategory = lazyRetry(() => import("./pages/shop/ShopCategory"));
@@ -597,13 +601,13 @@ interface MirroredRoute {
 // by line and throws on anything that is not an entry.
 const MIRRORED: MirroredRoute[] = [
   { path: "/", element: <Index /> },
-  { path: "/shop", element: <ShopHome /> },
-  { path: "/shop/search", element: <ShopSearch /> },
-  { path: "/shop/category/:slug", element: <ShopCategory /> },
-  { path: "/shop/product/:slug", element: <ProductDetail /> },
-  { path: "/shop/store/:slug", element: <ShopStore /> },
-  { path: "/shop/cart", element: <RequireAuth><ShopCart /></RequireAuth> },
-  { path: "/shop/checkout/:shopSlug", element: <RequireAuth><ShopCheckout /></RequireAuth> },
+  { path: "/shop", element: <ShopGate><ShopHome /></ShopGate> },
+  { path: "/shop/search", element: <ShopGate><ShopSearch /></ShopGate> },
+  { path: "/shop/category/:slug", element: <ShopGate><ShopCategory /></ShopGate> },
+  { path: "/shop/product/:slug", element: <ShopGate><ProductDetail /></ShopGate> },
+  { path: "/shop/store/:slug", element: <ShopGate><ShopStore /></ShopGate> },
+  { path: "/shop/cart", element: <ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate> },
+  { path: "/shop/checkout/:shopSlug", element: <ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate> },
   { path: "/shop/order/:code", element: <RequireAuth><ShopOrderDetail /></RequireAuth> },
   { path: "/shop/orders", element: <RequireAuth><ShopOrders /></RequireAuth> },
   { path: "/live", element: <Live /> },

@@ -46,16 +46,16 @@ describe("MORE_ITEMS", () => {
     }
   });
 
-  it("ghi nhận đúng những mục CÒN hiện nhãn tiếng Anh cho người Việt", () => {
-    // Đây là test ghi nhận hiện trạng, không phải test chúc mừng. Bản đầu chỉ
-    // kiểm "nhãn không rỗng" và xanh ngay cả khi 5/9 mục hiện tiếng Anh trên
-    // trang /vi — đúng kiểu test tự khen. Danh sách này là quyết định sản phẩm
-    // đang treo (nav trên và drawer cũng hiện y hệt, có từ trước tấm trượt).
+  it("KHÔNG mục nào rơi về nhãn tiếng Anh trên trang /vi", () => {
+    // Bản đầu của test này chỉ kiểm "nhãn không rỗng" nên xanh ngay cả khi 5/9
+    // mục hiện Live / Tournaments / Bracket Lab / Rankings / Stories cho người
+    // đọc tiếng Việt — test tự khen. PO chốt 23/08: dịch hết.
     //
-    // Thêm một mục mới không có labelVi thì test này ĐỎ, và người thêm phải
-    // quyết định thay vì để nó lặng lẽ ra tiếng Anh.
+    // Giữ dạng "phải RỖNG" chứ không phải "đếm bằng 9": thêm một mục mới không
+    // có labelVi là ĐỎ ngay, và người thêm phải quyết định thay vì để nó lặng
+    // lẽ ra tiếng Anh.
     const chuaDich = MORE_ITEMS.filter((i) => !i.labelVi).map((i) => i.to);
-    expect(chuaDich).toEqual(["/live", "/tournaments", "/tools", "/rankings", "/blog"]);
+    expect(chuaDich).toEqual([]);
   });
 });
 

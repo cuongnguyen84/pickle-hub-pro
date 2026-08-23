@@ -37,8 +37,8 @@ export interface NavParent {
 export type NavItem = NavLeaf | NavParent;
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Live", to: "/live", key: "live" },
-  { label: "Tournaments", to: "/tournaments", key: "tournaments" },
+  { label: "Live", labelVi: "Trực tiếp", to: "/live", key: "live" },
+  { label: "Tournaments", labelVi: "Giải đấu", to: "/tournaments", key: "tournaments" },
   {
     label: "Social",
     labelVi: "Social",
@@ -60,8 +60,8 @@ export const NAV_ITEMS: NavItem[] = [
   // rồi hết đường đi tiếp. `/vi/shop` có thật: mảng MIRRORED trong App.tsx
   // mount mọi path hai lần.
   { label: "Shop", labelVi: "Chợ", to: "/shop", key: "shop" },
-  { label: "Bracket Lab", to: "/tools", key: "lab" },
-  { label: "Rankings", to: "/rankings", key: "rankings" },
+  { label: "Bracket Lab", labelVi: "Công cụ", to: "/tools", key: "lab" },
+  { label: "Rankings", labelVi: "Xếp hạng", to: "/rankings", key: "rankings" },
   { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
-  { label: "Stories", to: "/blog", key: "stories" },
+  { label: "Stories", labelVi: "Bài viết", to: "/blog", key: "stories" },
 ];

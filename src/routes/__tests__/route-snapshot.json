@@ -5,59 +5,59 @@
   },
   {
     "path": "/shop",
-    "element": "<ShopHome />"
+    "element": "<ShopGate><ShopHome /></ShopGate>"
   },
   {
     "path": "/vi/shop",
-    "element": "<ViLanguageWrapper><ShopHome /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopHome /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/search",
-    "element": "<ShopSearch />"
+    "element": "<ShopGate><ShopSearch /></ShopGate>"
   },
   {
     "path": "/vi/shop/search",
-    "element": "<ViLanguageWrapper><ShopSearch /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopSearch /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/category/:slug",
-    "element": "<ShopCategory />"
+    "element": "<ShopGate><ShopCategory /></ShopGate>"
   },
   {
     "path": "/shop/product/:slug",
-    "element": "<ProductDetail />"
+    "element": "<ShopGate><ProductDetail /></ShopGate>"
   },
   {
     "path": "/vi/shop/product/:slug",
-    "element": "<ViLanguageWrapper><ProductDetail /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ProductDetail /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/store/:slug",
-    "element": "<ShopStore />"
+    "element": "<ShopGate><ShopStore /></ShopGate>"
   },
   {
     "path": "/vi/shop/store/:slug",
-    "element": "<ViLanguageWrapper><ShopStore /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopStore /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/vi/shop/category/:slug",
-    "element": "<ViLanguageWrapper><ShopCategory /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopCategory /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/cart",
-    "element": "<RequireAuth><ShopCart /></RequireAuth>"
+    "element": "<ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate>"
   },
   {
     "path": "/vi/shop/cart",
-    "element": "<ViLanguageWrapper><RequireAuth><ShopCart /></RequireAuth></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/checkout/:shopSlug",
-    "element": "<RequireAuth><ShopCheckout /></RequireAuth>"
+    "element": "<ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate>"
   },
   {
     "path": "/vi/shop/checkout/:shopSlug",
-    "element": "<ViLanguageWrapper><RequireAuth><ShopCheckout /></RequireAuth></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/order/:code",
