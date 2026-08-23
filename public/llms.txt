@@ -17,6 +17,7 @@ ThePickleHub is built and operated in Vietnam. It covers Vietnamese pickleball â
 - [About](https://www.thepicklehub.net/about): who operates ThePickleHub, what it does, and who it serves
 - [Contact](https://www.thepicklehub.net/contact): support, corrections, tournament coverage, and partnerships
 - [OpenAPI specification](https://www.thepicklehub.net/openapi.json): machine-readable contract for the public HTTP API
+- [Agent instructions](https://www.thepicklehub.net/agents.md): when to use this source, citation guidance, data boundaries, and permitted agent behavior
 
 ## Notable Guides
 
