@@ -30,6 +30,10 @@
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, type Lang } from "../utils";
+// Cùng một từ điển thông số mà biểu mẫu người bán và trang sản phẩm dùng —
+// giống cách blog-meta.ts đọc thẳng src/content/blog/metadata.ts. Một bản sao
+// nhãn thông số ở đây là một bản sao sẽ lệch.
+import { specRows } from "../../../src/lib/shop/productSpecs";
 
 const LIST_LIMIT = 24;
 
@@ -51,6 +55,8 @@ interface ProductRow {
   slug: string;
   title: string;
   description: string | null;
+  /** Thông số kỹ thuật, khoá → chuỗi. Rỗng cho sản phẩm chưa khai. */
+  specs: Record<string, string> | null;
   condition: "new" | "used" | null;
   in_stock: boolean | null;
   category: { slug: string; name: string } | null;
@@ -500,11 +506,22 @@ export async function renderShopProduct(
     ? `${product.title} giá ${priceLabel}, bán bởi ${shopName} trên ThePickleHub.${shippingLabel ? ` Phí giao hàng ${shippingLabel}.` : ""} ${soldOut ? "Hiện tạm hết hàng." : "Đặt hàng trực tiếp, thanh toán khi nhận hoặc chuyển khoản."}`
     : `${product.title} at ${priceLabel} from ${shopName} on ThePickleHub.${shippingLabel ? ` Shipping ${shippingLabel}.` : ""} ${soldOut ? "Currently sold out." : "Order online, pay on delivery or by bank transfer."}`;
 
+  // Thông số kỹ thuật, theo thứ tự từ điển. Đây là phần một câu trả lời AI có
+  // thể trích nguyên đoạn ("vợt X nặng 220 g, lõi 16 mm"), nên nó đi vào cả
+  // HTML đọc được lẫn additionalProperty của schema.
+  const specs = specRows(product.category?.slug, product.specs, lang === "vi" ? "vi" : "en");
+
   // GEO lead: product, price, seller and shipping in the first sentence, with
-  // ThePickleHub named exactly once.
+  // ThePickleHub named exactly once. Ba thông số đầu đi kèm vì một đoạn được
+  // trích ra ("vợt X nặng 220 g, lõi 16 mm, giá …") tự đứng được, còn một đoạn
+  // chỉ hứa có thông số thì không.
+  const specLead = specs
+    .slice(0, 3)
+    .map((s) => `${s.label.toLocaleLowerCase(lang === "vi" ? "vi" : "en")} ${s.value}`)
+    .join(", ");
   const lead = lang === "vi"
-    ? `<p>${escapeHtml(product.title)} có giá ${escapeHtml(priceLabel)}, do ${escapeHtml(shopName)} bán trên ThePickleHub${catName ? `, thuộc danh mục ${escapeHtml(catName)}` : ""}.${shippingLabel ? ` Phí giao hàng ${escapeHtml(shippingLabel)}.` : ""} ${soldOut ? "Sản phẩm hiện tạm hết hàng." : orderingOff ? "Shop hiện tạm chưa nhận đơn trực tuyến — liên hệ shop để đặt." : "Đặt hàng trực tiếp trên trang, thanh toán khi nhận hàng hoặc chuyển khoản."}</p>`
-    : `<p>${escapeHtml(product.title)} is priced at ${escapeHtml(priceLabel)} and sold by ${escapeHtml(shopName)} on ThePickleHub${catName ? `, in the ${escapeHtml(catName)} category` : ""}.${shippingLabel ? ` Shipping is ${escapeHtml(shippingLabel)}.` : ""} ${soldOut ? "It is currently sold out." : orderingOff ? "This store is not taking online orders right now — contact them to buy." : "Order it on the page and pay on delivery or by bank transfer."}</p>`;
+    ? `<p>${escapeHtml(product.title)} có giá ${escapeHtml(priceLabel)}, do ${escapeHtml(shopName)} bán trên ThePickleHub${catName ? `, thuộc danh mục ${escapeHtml(catName)}` : ""}.${shippingLabel ? ` Phí giao hàng ${escapeHtml(shippingLabel)}.` : ""}${specLead ? ` Thông số: ${escapeHtml(specLead)}.` : ""} ${soldOut ? "Sản phẩm hiện tạm hết hàng." : orderingOff ? "Shop hiện tạm chưa nhận đơn trực tuyến — liên hệ shop để đặt." : "Đặt hàng trực tiếp trên trang, thanh toán khi nhận hàng hoặc chuyển khoản."}</p>`
+    : `<p>${escapeHtml(product.title)} is priced at ${escapeHtml(priceLabel)} and sold by ${escapeHtml(shopName)} on ThePickleHub${catName ? `, in the ${escapeHtml(catName)} category` : ""}.${shippingLabel ? ` Shipping is ${escapeHtml(shippingLabel)}.` : ""}${specLead ? ` Specs: ${escapeHtml(specLead)}.` : ""} ${soldOut ? "It is currently sold out." : orderingOff ? "This store is not taking online orders right now — contact them to buy." : "Order it on the page and pay on delivery or by bank transfer."}</p>`;
 
   const facts = [
     catName
@@ -566,6 +583,15 @@ export async function renderShopProduct(
         ...(product.description ? { description: product.description } : {}),
         ...(images.length > 0 ? { image: images } : {}),
         ...(catName ? { category: catName } : {}),
+        ...(specs.length > 0
+          ? {
+              additionalProperty: specs.map((s) => ({
+                "@type": "PropertyValue",
+                name: s.label,
+                value: s.value,
+              })),
+            }
+          : {}),
         ...(product.condition
           ? {
               itemCondition:
@@ -615,6 +641,7 @@ export async function renderShopProduct(
   ])}
 <h1>${escapeHtml(product.title)}</h1>
 ${lead}
+${specs.length > 0 ? `<section><h2>${escapeHtml(lang === "vi" ? "Thông số" : "Specifications")}</h2><ul>${specs.map((s) => `<li><strong>${escapeHtml(s.label)}:</strong> ${escapeHtml(s.value)}</li>`).join("")}</ul></section>` : ""}
 ${product.description ? `<section><h2>${escapeHtml(lang === "vi" ? "Mô tả" : "Description")}</h2><p>${escapeHtml(product.description)}</p></section>` : ""}
 <section><h2>${escapeHtml(lang === "vi" ? "Thông tin" : "Details")}</h2><ul>${facts}</ul></section>
 ${discoverNav(siteUrl, lang, product.shop ? [`<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/shop/store/${escapeHtml(product.shop.slug)}">${escapeHtml(lang === "vi" ? `Tất cả sản phẩm của ${shopName}` : `All products from ${shopName}`)}</a></li>`] : [])}

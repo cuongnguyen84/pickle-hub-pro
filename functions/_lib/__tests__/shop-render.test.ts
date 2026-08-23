@@ -61,6 +61,7 @@ const PRODUCT = {
     shipping_fee_vnd: 30000,
     ordering_enabled: true,
   },
+  specs: { weight_g: "220", core_mm: "16", face: "Carbon thô (raw carbon)" },
   media: [{ public_path: "dab96b89/547511b0/e7f2aeae-v1.webp", alt_text: null }],
   variants: [{ price_vnd: 2900000, availability: "in_stock", sku: null }],
 };
@@ -111,6 +112,27 @@ describe("renderShopProduct", () => {
     // …and a real anchor back into the catalogue, so the page is not an orphan.
     expect(html).toContain(`${SITE}/vi/shop/category/vot`);
     expect(html).toContain(`${SITE}/vi/shop/store/thepicklehub`);
+  });
+
+  it("mang thông số vào cả phần đọc được lẫn schema — bot không đọc được bảng CSS", async () => {
+    const html = await (await call()).text();
+    expect(html).toContain("Trọng lượng");
+    expect(html).toContain("220 g");
+    expect(html).toContain("16 mm");
+    // Câu mở đầu tự đứng được: một đoạn được AI trích ra phải CHỨA con số,
+    // không phải hứa rằng trang có con số.
+    expect(html).toMatch(/Thông số: thương hiệu|Thông số: trọng lượng/);
+    expect(nodeOfType(html, "Product")?.additionalProperty).toEqual([
+      { "@type": "PropertyValue", name: "Trọng lượng", value: "220 g" },
+      { "@type": "PropertyValue", name: "Độ dày lõi", value: "16 mm" },
+      { "@type": "PropertyValue", name: "Chất liệu mặt", value: "Carbon thô (raw carbon)" },
+    ]);
+  });
+
+  it("sản phẩm chưa khai thông số thì không có khối rỗng và không có additionalProperty", async () => {
+    const html = await (await call({ specs: {} })).text();
+    expect(html).not.toContain("Thông số");
+    expect(nodeOfType(html, "Product")?.additionalProperty).toBeUndefined();
   });
 
   it("puts the same price in the Offer as in the body", async () => {

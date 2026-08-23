@@ -712,7 +712,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Supabase vi_blog_posts rows, and in blog metadata.ts — which is the SSR
   // truth table for <title> and <meta description>. Cached HTML would keep
   // serving the diluted entity name for the full TTL otherwise.
-  const cacheKey = `pr:v52:${url.pathname}`;
+  //
+  // v53 — thông số sản phẩm (2026-08-23): trang /shop/product/:slug nay có
+  // khối "Thông số", additionalProperty trong schema Product, và ba thông số
+  // đầu nằm trong câu mở đầu. HTML cũ trong KV không có bất kỳ thứ nào.
+  const cacheKey = `pr:v53:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

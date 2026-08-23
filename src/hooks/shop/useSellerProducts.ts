@@ -78,7 +78,7 @@ export const productKeys = {
 const PRODUCT_COLUMNS =
   "id,shop_id,slug,title,description,category_slug,condition,status,is_published," +
   "in_stock,availability_updated_at,submitted_at,decided_at,applicant_note," +
-  "requested_fields,version,client_token,option_groups,created_at,updated_at";
+  "requested_fields,version,client_token,option_groups,specs,created_at,updated_at";
 
 const LIST_COLUMNS =
   `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position,public_path,draft_path)`;
@@ -186,6 +186,10 @@ export interface ProductDraft {
   description: string;
   category_slug: string;
   condition: "new" | "used";
+  /** Thông số kỹ thuật theo ngành hàng. Chỉ gửi khi SỬA — product_create
+   *  không nhận specs, và màn thêm sản phẩm nói thẳng "lưu nháp trước", đúng
+   *  như nó đang làm với ảnh. */
+  specs: Record<string, string>;
   /** Kept as the seller typed it. Parsed and validated in Postgres, which is
    *  the only place that may decide what a price is. */
   price_vnd: string;
@@ -236,7 +240,9 @@ export const useUpdateProduct = (productId: string | null) => {
   return useMutation({
     mutationFn: async (input: {
       expectedVersion: number;
-      patch: Partial<Pick<ProductDraft, "title" | "description" | "category_slug" | "condition">>;
+      patch: Partial<
+        Pick<ProductDraft, "title" | "description" | "category_slug" | "condition" | "specs">
+      >;
       // KHÔNG có `variant` ở đây, một cách có chủ ý. RPC vẫn nhận `_variant`
       // — đó là API hợp lệ của máy chủ — nhưng màn hình sửa sản phẩm không có
       // ô giá nào, nên mọi con số gửi từ đây đều là số ôi thiu ghi đè lên thứ

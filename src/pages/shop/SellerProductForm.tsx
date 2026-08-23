@@ -75,6 +75,14 @@ import {
   groupProblems,
   problemMessage,
 } from "@/lib/shop/submitProblems";
+import {
+  SPEC_VALUE_MAX,
+  cleanSpecs,
+  specFieldsFor,
+  specSummary,
+  specsEqual,
+  type SpecField,
+} from "@/lib/shop/productSpecs";
 import type { VariantRow } from "@/lib/shop/variantMatrix";
 import { SECTION_LABEL, type SubmitProblem } from "@/lib/shop/submitProblems";
 import type { ProductRow } from "@/integrations/supabase/shop-schema";
@@ -90,11 +98,17 @@ const ProductPreview = lazy(() => import("@/components/shop/ProductPreview"));
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
+/** Ngưỡng của product_submit_preflight (migration 20260823090000). Chép ở đây
+ *  CHỈ để đếm ngược cho người bán — nó không chặn lưu nháp, và máy chủ vẫn là
+ *  nơi duy nhất từ chối đăng bán. */
+const DESC_MIN = 40;
+
 const EMPTY_DRAFT: ProductDraft = {
   title: "",
   description: "",
   category_slug: "",
   condition: "new",
+  specs: {},
   price_vnd: "",
   stock_on_hand: "",
 };
@@ -143,8 +157,12 @@ const newToken = () =>
     ? crypto.randomUUID()
     : `t-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+// `specs` là object nên so bằng `===` là so địa chỉ ô nhớ: hai bản giống hệt
+// nhau vẫn khác nhau, và màn hình sẽ hỏi "dùng bản nào?" ở MỌI lần mở sản phẩm.
 const sameDraft = (a: ProductDraft, b: ProductDraft) =>
-  (Object.keys(EMPTY_DRAFT) as (keyof ProductDraft)[]).every((k) => a[k] === b[k]);
+  (Object.keys(EMPTY_DRAFT) as (keyof ProductDraft)[]).every((k) =>
+    k === "specs" ? specsEqual(a.specs, b.specs) : a[k] === b[k],
+  );
 
 export default function SellerProductForm() {
   const { id } = useParams<{ id: string }>();
@@ -202,6 +220,7 @@ export default function SellerProductForm() {
       description: row.description ?? "",
       category_slug: row.category_slug ?? "",
       condition: row.condition,
+      specs: cleanSpecs(row.specs),
       price_vnd: variant ? String(variant.price_vnd) : "",
       stock_on_hand: variant && variant.stock_on_hand !== null ? String(variant.stock_on_hand) : "",
     };
@@ -303,6 +322,14 @@ export default function SellerProductForm() {
     setDraft((d) => ({ ...(d ?? EMPTY_DRAFT), [field]: value }));
     setSaveState("idle");
     setErrors((e) => ({ ...e, [field]: undefined }));
+  };
+
+  const setSpec = (key: string, value: string) => {
+    setDraft((d) => {
+      const base = d ?? EMPTY_DRAFT;
+      return { ...base, specs: { ...base.specs, [key]: value } };
+    });
+    setSaveState("idle");
   };
 
   const focusFirstError = (found: DraftErrors) => {
@@ -427,6 +454,10 @@ export default function SellerProductForm() {
   }
 
   const status = row?.status ?? "draft";
+  const descLength = (draft?.description ?? "").trim().length;
+  // Ngành hàng đang chọn trong BẢN NHÁP, không phải trong hàng đã lưu: người
+  // bán đổi ngành hàng sang "Vợt" là các ô thông số hiện ra ngay.
+  const specFields = specFieldsFor(draft?.category_slug);
   // Three separate reasons the form may be read-only, and the seller is told
   // which one applies — "không sửa được" alone sends them to check their login.
   const editable = isManager && !shopBlocked && (isNew || canEditContent(status));
@@ -614,12 +645,30 @@ export default function SellerProductForm() {
           )}
         </fieldset>
 
-        <Field id="p-desc" label="Mô tả" error={errors.description}>
+        <Field
+          id="p-desc"
+          label="Mô tả"
+          error={errors.description}
+          // Con số 40 là ngưỡng THẬT của máy chủ (product_submit_preflight),
+          // nói ra ở đây thay vì để người bán biết lúc bấm đăng bán.
+          hint={
+            descLength === 0
+              ? "Người mua đọc đoạn này để quyết định. Viết tình trạng thật, lý do bán, đã dùng bao lâu — ít nhất 40 ký tự mới đăng bán được."
+              : descLength < DESC_MIN
+                ? `Còn ${DESC_MIN - descLength} ký tự nữa mới đăng bán được. Viết thêm tình trạng thật và lý do bán.`
+                : `${descLength} ký tự. Thông số kỹ thuật có ô riêng bên dưới — đoạn này để nói những gì con số không nói được.`
+          }
+        >
           <textarea
             id="p-desc"
             className="tl-shop-textarea"
             rows={5}
             maxLength={4000}
+            placeholder={
+              draft?.condition === "used"
+                ? "Ví dụ: Vợt dùng 3 tháng, mặt còn nguyên nhám, cán có vết xước nhỏ ở đuôi. Bán vì đã đổi sang cây lõi 16mm. Kèm bao vợt."
+                : "Ví dụ: Hàng chính hãng, còn nguyên seal, bảo hành 6 tháng theo hãng. Hợp người chơi thiên kiểm soát, dùng tốt cho cả đánh đôi và đánh đơn."
+            }
             disabled={!editable}
             value={draft?.description ?? ""}
             aria-invalid={!!errors.description}
@@ -628,6 +677,51 @@ export default function SellerProductForm() {
           />
         </Field>
       </section>
+
+      {/* ── 2b. Thông số kỹ thuật ────────────────────────────────────────── */}
+      {/* Chỉ hiện khi ngành hàng có từ điển thông số. Một ngành hàng không có
+          thông số nào để so sánh thì một khối trống chỉ mời người bán bịa. */}
+      {specFields.length > 0 && (
+        <section aria-labelledby="sec-specs">
+          <h2 id="sec-specs" className="tl-shop-h2">
+            Thông số kỹ thuật
+          </h2>
+          {isNew ? (
+            <div className="tl-shop-notice tl-shop-notice--info" role="status">
+              <ImageOff size={16} aria-hidden="true" />
+              <div>
+                <strong>Lưu nháp trước rồi điền thông số.</strong> Giống phần ảnh: thông số gắn
+                với một sản phẩm đã tồn tại, nên bấm &ldquo;Lưu nháp&rdquo; xong là các ô hiện ra
+                ngay ở bước tiếp theo.
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="tl-shop-hint" style={{ marginTop: -4 }}>
+                Người mua vợt so sánh đúng mấy con số này trước khi chọn. Ô nào không biết thì bỏ
+                trống — bỏ trống là không hiện, không phải hiện dấu gạch.
+              </p>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 12,
+                }}
+              >
+                {specFields.map((field) => (
+                  <SpecInput
+                    key={field.key}
+                    field={field}
+                    value={draft?.specs?.[field.key] ?? ""}
+                    disabled={!editable}
+                    onChange={(value) => setSpec(field.key, value)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {/* ── 3. Price and stock ───────────────────────────────────────────── */}
       {/* A new product is single-variant until it exists: the matrix is a
@@ -1005,6 +1099,63 @@ function Field({
   );
 }
 
+/**
+ * Một ô thông số. Hộp chọn khi từ điển có danh sách, ô gõ khi không.
+ *
+ * KHÔNG kiểm tra khoảng giá trị ở đây: Postgres chỉ từ chối ô quá dài, và một
+ * client chặt hơn máy chủ sẽ chặn một giá trị đúng mà người bán không có cách
+ * nào biết vì sao. Câu gợi ý nói khoảng thường gặp, người bán quyết.
+ */
+function SpecInput({
+  field,
+  value,
+  disabled,
+  onChange,
+}: {
+  field: SpecField;
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const id = `p-spec-${field.key}`;
+  const label = field.unit ? `${field.label} (${field.unit})` : field.label;
+
+  return (
+    <Field id={id} label={label} hint={field.hint}>
+      {field.options ? (
+        <select
+          id={id}
+          className="tl-shop-select"
+          disabled={disabled}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">— Chưa chọn —</option>
+          {field.options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+          {/* Giá trị cũ không còn trong danh sách vẫn phải chọn được, nếu không
+              mở trang lên là ô tự nhảy về rỗng và lần lưu sau xoá mất nó. */}
+          {value && !field.options.includes(value) && <option value={value}>{value}</option>}
+        </select>
+      ) : (
+        <input
+          id={id}
+          className="tl-shop-input"
+          inputMode={field.numeric ? "numeric" : undefined}
+          maxLength={SPEC_VALUE_MAX}
+          placeholder={field.placeholder}
+          disabled={disabled}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </Field>
+  );
+}
+
 function SaveBar({
   state,
   error,
@@ -1114,15 +1265,22 @@ function ConflictNotice({
   onTakeServer: () => void;
   onKeepMine: () => void | Promise<void>;
 }) {
-  const differing = (Object.keys(mine) as (keyof ProductDraft)[]).filter((k) => mine[k] !== theirs[k]);
   const LABEL: Record<keyof ProductDraft, string> = {
     title: "Tên",
     description: "Mô tả",
     category_slug: "Ngành hàng",
     condition: "Tình trạng",
+    specs: "Thông số",
     price_vnd: "Giá",
     stock_on_hand: "Hàng đang có",
   };
+  // Mọi trường về một chuỗi TRƯỚC khi so: `specs` là object, và `!==` trên hai
+  // object luôn đúng — bảng sẽ báo "Thông số khác nhau" ở mọi lần xung đột.
+  const text = (draft: ProductDraft, key: keyof ProductDraft) =>
+    key === "specs" ? specSummary(draft.category_slug, draft.specs) : String(draft[key] ?? "");
+  const differing = (Object.keys(LABEL) as (keyof ProductDraft)[]).filter(
+    (k) => text(mine, k) !== text(theirs, k),
+  );
   const short = (value: string) => (value.length > 60 ? `${value.slice(0, 60)}…` : value || "(trống)");
 
   return (
@@ -1148,7 +1306,7 @@ function ConflictNotice({
             </p>
             {differing.map((k) => (
               <div key={k} style={{ fontSize: 13.5 }}>
-                {LABEL[k]}: {short(theirs[k])}
+                {LABEL[k]}: {short(text(theirs, k))}
               </div>
             ))}
           </div>
@@ -1158,7 +1316,7 @@ function ConflictNotice({
             </p>
             {differing.map((k) => (
               <div key={k} style={{ fontSize: 13.5 }}>
-                {LABEL[k]}: {short(mine[k])}
+                {LABEL[k]}: {short(text(mine, k))}
               </div>
             ))}
           </div>
