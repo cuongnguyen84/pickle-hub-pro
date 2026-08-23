@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang-how-to-watch",
   publishedDate: "2026-07-17",
-  updatedDate: "2026-07-17",
+  updatedDate: "2026-08-23",
   author: "The PickleHub Team",
   tags: ["world cup pickleball", "da nang", "vietnam", "how to watch", "registration", "2026", "guide"],
   ctaPath: "/live",
@@ -16,23 +16,23 @@ const post: BlogPost = {
     en: {
       title: "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
       metaTitle: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
-      metaDescription: "Heineken Pickleball World Cup 2026, Da Nang (Aug 30–Sep 6): day-by-day schedule, all 7 venues, entry fees, deadlines and how to watch.",
+      metaDescription: "Heineken Pickleball World Cup 2026, Da Nang (Aug 30–Sep 6): the Aug 16 draw, Vietnam in Group A, all 7 venues, day-by-day plan and how to watch.",
       sections: [
         {
           heading: "The Short Version",
-          content: "The Heineken Pickleball World Cup 2026 runs August 30 – September 6, 2026 across seven venues in Da Nang, Vietnam. Our main guide covers what the tournament is and why it matters; this one is the practical companion — when to turn up, where the courts actually are, how to watch if you are not in Da Nang, and how to enter if you want to play. Two things worth knowing up front. The most time-sensitive: public registration for the individual tournament closes July 31, 2026, and the current price window is the last one. The most significant for Vietnamese readers: this will be Vietnam's first appearance at the Pickleball World Cup, as hosts — the country has never fielded a team at a previous edition.",
+          content: "Last updated August 23, 2026 — one week out. The Heineken Pickleball World Cup 2026 runs August 30 – September 6, 2026 across seven venues in Da Nang, Vietnam, and the national-team draw was made on the afternoon of August 16: 156 registered teams, with Vietnam drawn into Group A in the Open, Junior and Kids categories. Entries for the parallel individual tournament closed on July 31, 2026. Our main guide covers what the tournament is and why it matters; this ThePickleHub companion is the practical one — when to turn up, where the courts actually are, and how to watch if you are not in Da Nang. The most significant fact for Vietnamese readers has not changed: this will be Vietnam's first appearance at the Pickleball World Cup, as hosts — the country has never fielded a team at a previous edition.",
           internalLinks: [
             { text: "Read the full Heineken Pickleball World Cup 2026 guide", path: "/blog/pickleball-world-cup-2026-da-nang" }
           ]
         },
         {
-          heading: "Can I Enter? Yes — but Entries Close July 31, 2026",
-          content: "There are two competitions running in parallel, and only one of them is open to you. The national-team World Cup itself is invitation-only through national federations. Alongside it runs the 2026 Heineken International Tournament – Pickleball World Cup Edition, which anyone can enter through the event's official entry platform at sporttora.com/pwc2026 — a site that also runs in Vietnamese. You need an active DUPR account; amateur events are bracketed by DUPR rating from 3.0 to 5.0, and there are separate Pro divisions plus Junior and wheelchair categories. Entry fees have risen through a series of windows, and the one open now is the last:",
+          heading: "Can I Enter? Entries Closed on July 31, 2026",
+          content: "Two competitions run in parallel, and entry to the open one has now closed. The national-team World Cup itself is invitation-only through national federations. Alongside it runs the 2026 Heineken International Tournament – Pickleball World Cup Edition, which anyone could enter through the event's official entry platform at sporttora.com/pwc2026 — a site that also runs in Vietnamese. It required an active DUPR account; amateur events were bracketed by DUPR rating from 3.0 to 5.0, with separate Pro divisions plus Junior and wheelchair categories. Every published entry window has now closed, the last of them on July 31, 2026, and we have seen no announcement of an extension. The fee ladder is kept here as a record of what the event cost to enter, and because the same windows are likely to reappear at the next edition:",
           listItems: [
             "Unique Chance (May 1–30, 2026): $30 first category, $20 each additional — closed",
             "1st Presale (June 1–30, 2026): $40 first category, $20 each additional — closed",
             "2nd Presale (July 1–15, 2026): $50 first category, $20 each additional — closed",
-            "Last Chance (July 16–31, 2026): $60 first category, $20 each additional — open now, and the final window",
+            "Last Chance (July 16–31, 2026): $60 first category, $20 each additional — the final window, now closed",
             "Pro divisions: $100 first category, $75 each additional",
             "Da Nang Junior discount: a flat 500,000₫ per category, all-inclusive (no entry fee, no service fee)"
           ]
@@ -94,7 +94,7 @@ const post: BlogPost = {
         },
         {
           heading: "What Still Isn't Known",
-          content: "Being straight about the gaps, as of July 17, 2026: spectator ticket prices have not been published — the platform currently sells competitor entries, not general admission. The pro player leading the clinic has not been named. The list of invited top-20 players has not been confirmed, and an invitation is not an entry, so treat any circulating line-up as speculation. And the schedule is explicitly marked subject to change. We will update this guide as each is confirmed."
+          content: "Being straight about the gaps, as of August 23, 2026 — one week out. A detailed match schedule with times and court assignments has still not been published: the draw ceremony on August 16 produced the groups, not a timetable, and the day-by-day outline below is still the July version marked subject to change. Spectator ticket prices have still not been published; the platform sold competitor entries, not general admission. The pro player leading the clinic has not been named. The list of invited top-20 players has not been confirmed, and an invitation is not an entry, so treat any circulating line-up as speculation. We will update this guide as each is confirmed."
         }
       ],
       faqItems: [
@@ -135,23 +135,23 @@ const post: BlogPost = {
     vi: {
       title: "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
       metaTitle: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
-      metaDescription: "Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9): lịch từng ngày, 7 địa điểm, cách đăng ký, phí và cách xem trực tiếp.",
+      metaDescription: "World Cup Pickleball 2026 Đà Nẵng (30/8–6/9): bốc thăm 16/8, Việt Nam bảng A, 7 địa điểm, lịch từng ngày và cách xem trực tiếp.",
       sections: [
         {
           heading: "Tóm tắt nhanh",
-          content: "Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại bảy địa điểm ở Đà Nẵng. Bài trụ cột của chúng tôi trả lời \"giải này là gì\"; bài này là phần thực tế đi kèm — đi lúc nào, sân nằm ở đâu, không ở Đà Nẵng thì xem bằng cách nào, và muốn thi đấu thì đăng ký ra sao. Hai điều đáng biết trước. Gấp nhất: đăng ký thi đấu Giải Cá nhân đóng ngày 31/7/2026, và chặng giá hiện tại là chặng cuối cùng. Đáng chú ý nhất với người Việt: đây sẽ là lần đầu tiên Việt Nam góp mặt tại World Cup Pickleball, với tư cách chủ nhà — các kỳ trước Việt Nam chưa từng có đội tuyển thi đấu.",
+          content: "Cập nhật lần cuối 23/8/2026 — còn đúng một tuần. Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại bảy địa điểm ở Đà Nẵng, và lễ bốc thăm hạng mục quốc gia đã diễn ra chiều 16/8: 156 đội đăng ký, đội tuyển Việt Nam nằm ở bảng A ở cả ba nội dung Open, Junior và Kids. Đăng ký Giải Cá nhân chạy song song đã đóng ngày 31/7/2026. Bài trụ cột của ThePickleHub trả lời \"giải này là gì\"; bài này là phần thực tế đi kèm — đi lúc nào, sân nằm ở đâu, và không ở Đà Nẵng thì xem bằng cách nào. Điều đáng chú ý nhất với người Việt thì không đổi: đây sẽ là lần đầu tiên Việt Nam góp mặt tại World Cup Pickleball, với tư cách chủ nhà — các kỳ trước Việt Nam chưa từng có đội tuyển thi đấu.",
           internalLinks: [
             { text: "Đọc bài đầy đủ về Heineken Pickleball World Cup 2026", path: "/vi/blog/world-cup-pickleball-2026-da-nang" }
           ]
         },
         {
-          heading: "Tôi đăng ký thi đấu được không? Được — nhưng hạn chót là 31/7/2026",
-          content: "Có hai giải chạy song song, và chỉ một giải mở cho bạn. Giải World Cup đồng đội quốc gia chỉ theo lời mời qua liên đoàn quốc gia. Song song là 2026 Heineken International Tournament – Pickleball World Cup Edition, ai cũng đăng ký được qua nền tảng chính thức sporttora.com/pwc2026 — trang này có sẵn giao diện tiếng Việt. Điều kiện: có tài khoản DUPR đang hoạt động. Các nội dung phong trào chia theo trình DUPR từ 3.0 đến 5.0, ngoài ra có nhóm Pro riêng cùng nội dung Junior và xe lăn. Phí tăng dần qua từng chặng, và chặng đang mở là chặng cuối:",
+          heading: "Tôi đăng ký thi đấu được không? Đã đóng đăng ký từ 31/7/2026",
+          content: "Có hai giải chạy song song, và giải mở cho tất cả thì nay đã đóng đăng ký. Giải World Cup đồng đội quốc gia chỉ theo lời mời qua liên đoàn quốc gia. Song song là 2026 Heineken International Tournament – Pickleball World Cup Edition, ai cũng đăng ký được qua nền tảng chính thức sporttora.com/pwc2026 — trang này có sẵn giao diện tiếng Việt. Điều kiện là có tài khoản DUPR đang hoạt động; các nội dung phong trào chia theo trình DUPR từ 3.0 đến 5.0, ngoài ra có nhóm Pro riêng cùng nội dung Junior và xe lăn. Mọi chặng giá đã công bố đều đã đóng, chặng cuối cùng đóng ngày 31/7/2026, và chúng tôi chưa thấy thông báo gia hạn nào. Bảng phí bên dưới giữ lại để bạn biết giải này tốn bao nhiêu để dự, và vì các chặng giá tương tự nhiều khả năng lặp lại ở kỳ sau:",
           listItems: [
             "Unique Chance (1–30/5/2026): 30 USD nội dung đầu, 20 USD mỗi nội dung thêm — đã đóng",
             "1º Presale (1–30/6/2026): 40 USD nội dung đầu, 20 USD mỗi nội dung thêm — đã đóng",
             "2º Presale (1–15/7/2026): 50 USD nội dung đầu, 20 USD mỗi nội dung thêm — đã đóng",
-            "Last Chance (16–31/7/2026): 60 USD nội dung đầu, 20 USD mỗi nội dung thêm — đang mở, và là chặng cuối",
+            "Last Chance (16–31/7/2026): 60 USD nội dung đầu, 20 USD mỗi nội dung thêm — chặng cuối, nay đã đóng",
             "Nhóm Pro: 100 USD nội dung đầu, 75 USD mỗi nội dung thêm",
             "Ưu đãi Junior Đà Nẵng: trọn gói 500.000₫ mỗi nội dung (không phí đăng ký, không phí dịch vụ)"
           ]
@@ -212,7 +212,7 @@ const post: BlogPost = {
         },
         {
           heading: "Những gì vẫn chưa biết",
-          content: "Nói thẳng về các khoảng trống, tính tới ngày 17/7/2026: giá vé cho khán giả chưa được công bố — nền tảng hiện chỉ bán suất đăng ký thi đấu, chưa bán vé vào cửa. Tay vợt chuyên nghiệp đứng lớp clinic chưa được nêu tên. Danh sách tay vợt top-20 được mời chưa xác nhận, và lời mời không đồng nghĩa với đăng ký — nên mọi line-up đang lan truyền đều chỉ là đồn đoán. Và lịch thi đấu được ghi rõ là có thể thay đổi. Chúng tôi sẽ cập nhật bài này khi từng mục được xác nhận."
+          content: "Nói thẳng về các khoảng trống, tính tới ngày 23/8/2026 — còn một tuần. Lịch thi đấu chi tiết kèm giờ và sân vẫn chưa được công bố: lễ bốc thăm 16/8 chỉ ra bảng đấu, không ra thời gian biểu, và phần lịch từng ngày bên dưới vẫn là bản tháng 7 được ghi rõ là có thể thay đổi. Giá vé cho khán giả vẫn chưa được công bố; nền tảng chỉ bán suất đăng ký thi đấu, không bán vé vào cửa. Tay vợt chuyên nghiệp đứng lớp clinic chưa được nêu tên. Danh sách tay vợt top-20 được mời chưa xác nhận, và lời mời không đồng nghĩa với đăng ký — nên mọi line-up đang lan truyền đều chỉ là đồn đoán. Chúng tôi sẽ cập nhật bài này khi từng mục được xác nhận."
         }
       ],
       faqItems: [
