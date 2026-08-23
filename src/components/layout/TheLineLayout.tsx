@@ -13,21 +13,8 @@ import { UnifiedNotificationBell } from "@/components/social/notifications";
 import { ConnectDuprBanner } from "@/components/dupr/ConnectDuprBanner";
 import { HeaderDuprBadge } from "@/components/dupr/HeaderDuprBadge";
 import { supabase } from "@/integrations/supabase/client";
+import { NAV_ITEMS, type Active } from "./navItems";
 import "@/styles/the-line.css";
-
-/* ---------------------------------------------------------------------------
- * The Line layout — production chrome for / and /vi.
- *
- * Promoted from the preview shell during the 2026-04-25 cutover; the
- * retired /preview/the-line/* source pages were deleted (CLOSE-01).
- *
- * - Pins data-theme="the-line" on <html> while mounted (cleans up on unmount)
- * - Restores previous data-mode (light/dark) preference from localStorage
- * - Mobile drawer with search, nav, mode toggle, language toggle, auth
- * - Children render INSIDE the chrome
- * ------------------------------------------------------------------------- */
-
-type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social" | "venues" | "players" | "news" | "tools" | "blog" | "videos" | "search" | "shop";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -40,57 +27,17 @@ export interface TheLineLayoutProps {
 
 const STORAGE_KEY = "tl-theme-mode";
 
-/**
- * Optional `labelVi` opts a nav item into bilingual rendering. Items without
- * a labelVi keep the existing English-only behaviour (Live, Tournaments,
- * etc. read the same in both locales). Feed gets a Vietnamese label
- * because "Feed" doesn't carry meaning for VI-only readers.
+/* ---------------------------------------------------------------------------
+ * The Line layout — production chrome for / and /vi.
  *
- * PR69 — items may declare `children` for a 2-level dropdown. Parents with
- * children render as a button that toggles a popup; clicking a child
- * navigates. The parent itself has no `to` (it's only a menu trigger). The
- * highlight matches on the parent's `key` when any child is the active page.
- */
-interface NavLeaf {
-  label: string;
-  labelVi?: string;
-  to: string;
-  key: Active;
-}
-interface NavParent {
-  label: string;
-  labelVi?: string;
-  key: Active;
-  children: NavLeaf[];
-}
-type NavItem = NavLeaf | NavParent;
-
-/** Xuất ra để test khoá được thành phần của nav — xem nav-items.test.ts. */
-export const NAV_ITEMS: NavItem[] = [
-  { label: "Live", to: "/live", key: "live" },
-  { label: "Tournaments", to: "/tournaments", key: "tournaments" },
-  {
-    label: "Social",
-    labelVi: "Social",
-    key: "social",
-    children: [
-      { label: "Courts", labelVi: "Sân", to: "/san", key: "venues" },
-      { label: "Find players", labelVi: "Tìm bạn chơi", to: "/tim-ban-choi", key: "players" },
-      { label: "Tickets", labelVi: "Xé vé", to: "/social", key: "events" },
-      { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
-    ],
-  },
-  // Chợ vào NAV_ITEMS chứ không chỉ vào chân trang: mảng này nuôi CẢ nav
-  // desktop lẫn drawer mobile, nên một dòng ở đây là hai bề mặt. Trước 19/08
-  // toàn bộ layout không có một chỗ nào nhắc `/shop` — người mua từ Google rơi
-  // vào trang sản phẩm rồi hết đường đi tiếp.
-  // `/vi/shop` có thật: mảng MIRRORED trong App.tsx mount mọi path hai lần.
-  { label: "Shop", labelVi: "Chợ", to: "/shop", key: "shop" },
-  { label: "Bracket Lab", to: "/tools", key: "lab" },
-  { label: "Rankings", to: "/rankings", key: "rankings" },
-  { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
-  { label: "Stories", to: "/blog", key: "stories" },
-];
+ * Promoted from the preview shell during the 2026-04-25 cutover; the
+ * retired /preview/the-line/* source pages were deleted (CLOSE-01).
+ *
+ * - Pins data-theme="the-line" on <html> while mounted (cleans up on unmount)
+ * - Restores previous data-mode (light/dark) preference from localStorage
+ * - Mobile drawer with search, nav, mode toggle, language toggle, auth
+ * - Children render INSIDE the chrome
+ * ------------------------------------------------------------------------- */
 
 /**
  * Prefix path with /vi when active language is Vietnamese so primary nav

@@ -1,11 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
+import { NAV_ITEMS } from "../navItems";
 
-// TheLineLayout kéo theo auth, supabase, react-query, presence heartbeat. Test
-// này chỉ cần MẢNG nav nên chặn side-effect ở mức import, không dựng cả cây.
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-vi.mock("@/styles/the-line.css", () => ({}));
-
-const { NAV_ITEMS } = await import("../TheLineLayout");
+// Import thẳng, không mock gì: `navItems.ts` là dữ liệu thuần, không kéo theo
+// auth/supabase/CSS nào. Bản đầu của file này import từ TheLineLayout và kéo
+// 1100 dòng component vào mẫu số coverage — statements tụt 83% → 72% và gate
+// Quality đỏ trong khi 3289 test đều xanh. Đó là lý do mảng nav được tách ra.
 
 const leaves = NAV_ITEMS.flatMap((item) =>
   "children" in item ? item.children : [item],
