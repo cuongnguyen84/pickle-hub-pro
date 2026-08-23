@@ -27,7 +27,7 @@ import "@/styles/the-line.css";
  * - Children render INSIDE the chrome
  * ------------------------------------------------------------------------- */
 
-type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social" | "venues" | "players" | "news" | "tools" | "blog" | "videos" | "search";
+type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social" | "venues" | "players" | "news" | "tools" | "blog" | "videos" | "search" | "shop";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -65,7 +65,8 @@ interface NavParent {
 }
 type NavItem = NavLeaf | NavParent;
 
-const NAV_ITEMS: NavItem[] = [
+/** Xuất ra để test khoá được thành phần của nav — xem nav-items.test.ts. */
+export const NAV_ITEMS: NavItem[] = [
   { label: "Live", to: "/live", key: "live" },
   { label: "Tournaments", to: "/tournaments", key: "tournaments" },
   {
@@ -79,6 +80,12 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
     ],
   },
+  // Chợ vào NAV_ITEMS chứ không chỉ vào chân trang: mảng này nuôi CẢ nav
+  // desktop lẫn drawer mobile, nên một dòng ở đây là hai bề mặt. Trước 19/08
+  // toàn bộ layout không có một chỗ nào nhắc `/shop` — người mua từ Google rơi
+  // vào trang sản phẩm rồi hết đường đi tiếp.
+  // `/vi/shop` có thật: mảng MIRRORED trong App.tsx mount mọi path hai lần.
+  { label: "Shop", labelVi: "Chợ", to: "/shop", key: "shop" },
   { label: "Bracket Lab", to: "/tools", key: "lab" },
   { label: "Rankings", to: "/rankings", key: "rankings" },
   { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
@@ -1089,6 +1096,16 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               <ul>
                 <li><Link to={language === "vi" ? "/vi/blog" : "/blog"}>{language === "vi" ? "Bài viết" : "Stories"}</Link></li>
                 <li><Link to="/news">{language === "vi" ? "Tin tức" : "News"}</Link></li>
+              </ul>
+            </div>
+            {/* Chân trang là chỗ người mua đến sau khi cuộn hết một trang sản
+                phẩm mà chưa quyết mua. Trước 19/08 nó chỉ có link tin tức và
+                giải đấu — đúng lúc cần một đường về chợ thì không có đường nào. */}
+            <div className="tl-foot-col">
+              <h4>{language === "vi" ? "MUA SẮM" : "Shop"}</h4>
+              <ul>
+                <li><Link to={localizedPath("/shop", language)}>{language === "vi" ? "Chợ đồ pickleball" : "Marketplace"}</Link></li>
+                <li><Link to="/shop/sell">{language === "vi" ? "Mở shop" : "Sell with us"}</Link></li>
               </ul>
             </div>
           </div>
