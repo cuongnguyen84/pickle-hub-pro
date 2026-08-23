@@ -13,21 +13,8 @@ import { UnifiedNotificationBell } from "@/components/social/notifications";
 import { ConnectDuprBanner } from "@/components/dupr/ConnectDuprBanner";
 import { HeaderDuprBadge } from "@/components/dupr/HeaderDuprBadge";
 import { supabase } from "@/integrations/supabase/client";
+import { NAV_ITEMS, type Active } from "./navItems";
 import "@/styles/the-line.css";
-
-/* ---------------------------------------------------------------------------
- * The Line layout — production chrome for / and /vi.
- *
- * Promoted from the preview shell during the 2026-04-25 cutover; the
- * retired /preview/the-line/* source pages were deleted (CLOSE-01).
- *
- * - Pins data-theme="the-line" on <html> while mounted (cleans up on unmount)
- * - Restores previous data-mode (light/dark) preference from localStorage
- * - Mobile drawer with search, nav, mode toggle, language toggle, auth
- * - Children render INSIDE the chrome
- * ------------------------------------------------------------------------- */
-
-type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social" | "venues" | "players" | "news" | "tools" | "blog" | "videos" | "search";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -40,50 +27,17 @@ export interface TheLineLayoutProps {
 
 const STORAGE_KEY = "tl-theme-mode";
 
-/**
- * Optional `labelVi` opts a nav item into bilingual rendering. Items without
- * a labelVi keep the existing English-only behaviour (Live, Tournaments,
- * etc. read the same in both locales). Feed gets a Vietnamese label
- * because "Feed" doesn't carry meaning for VI-only readers.
+/* ---------------------------------------------------------------------------
+ * The Line layout — production chrome for / and /vi.
  *
- * PR69 — items may declare `children` for a 2-level dropdown. Parents with
- * children render as a button that toggles a popup; clicking a child
- * navigates. The parent itself has no `to` (it's only a menu trigger). The
- * highlight matches on the parent's `key` when any child is the active page.
- */
-interface NavLeaf {
-  label: string;
-  labelVi?: string;
-  to: string;
-  key: Active;
-}
-interface NavParent {
-  label: string;
-  labelVi?: string;
-  key: Active;
-  children: NavLeaf[];
-}
-type NavItem = NavLeaf | NavParent;
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "Live", to: "/live", key: "live" },
-  { label: "Tournaments", to: "/tournaments", key: "tournaments" },
-  {
-    label: "Social",
-    labelVi: "Social",
-    key: "social",
-    children: [
-      { label: "Courts", labelVi: "Sân", to: "/san", key: "venues" },
-      { label: "Find players", labelVi: "Tìm bạn chơi", to: "/tim-ban-choi", key: "players" },
-      { label: "Tickets", labelVi: "Xé vé", to: "/social", key: "events" },
-      { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
-    ],
-  },
-  { label: "Bracket Lab", to: "/tools", key: "lab" },
-  { label: "Rankings", to: "/rankings", key: "rankings" },
-  { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
-  { label: "Stories", to: "/blog", key: "stories" },
-];
+ * Promoted from the preview shell during the 2026-04-25 cutover; the
+ * retired /preview/the-line/* source pages were deleted (CLOSE-01).
+ *
+ * - Pins data-theme="the-line" on <html> while mounted (cleans up on unmount)
+ * - Restores previous data-mode (light/dark) preference from localStorage
+ * - Mobile drawer with search, nav, mode toggle, language toggle, auth
+ * - Children render INSIDE the chrome
+ * ------------------------------------------------------------------------- */
 
 /**
  * Prefix path with /vi when active language is Vietnamese so primary nav
@@ -1089,6 +1043,16 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               <ul>
                 <li><Link to={language === "vi" ? "/vi/blog" : "/blog"}>{language === "vi" ? "Bài viết" : "Stories"}</Link></li>
                 <li><Link to="/news">{language === "vi" ? "Tin tức" : "News"}</Link></li>
+              </ul>
+            </div>
+            {/* Chân trang là chỗ người mua đến sau khi cuộn hết một trang sản
+                phẩm mà chưa quyết mua. Trước 19/08 nó chỉ có link tin tức và
+                giải đấu — đúng lúc cần một đường về chợ thì không có đường nào. */}
+            <div className="tl-foot-col">
+              <h4>{language === "vi" ? "MUA SẮM" : "Shop"}</h4>
+              <ul>
+                <li><Link to={localizedPath("/shop", language)}>{language === "vi" ? "Chợ đồ pickleball" : "Marketplace"}</Link></li>
+                <li><Link to="/shop/sell">{language === "vi" ? "Mở shop" : "Sell with us"}</Link></li>
               </ul>
             </div>
           </div>

@@ -1944,7 +1944,10 @@
   background: var(--tl-bg);
 }
 [data-theme="the-line"] .tl-foot-grid {
-  display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 36px;
+  /* 4 cột link kể từ 19/08 (thêm MUA SẮM). Gap 36 → 28 để cột thương hiệu
+     không bị bóp lại khi thêm cột thứ tư. Quy tắc mobile bên dưới vẫn 2 cột
+     nên cột mới chỉ xuống hàng, không cần đụng gì thêm. */
+  display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 28px;
   margin-bottom: 40px;
 }
 @media (max-width: 860px) { [data-theme="the-line"] .tl-foot-grid { grid-template-columns: 1fr 1fr; gap: 28px; } }
