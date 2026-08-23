@@ -46,7 +46,12 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "Courts", labelVi: "Sân", to: "/san", key: "venues" },
       { label: "Find players", labelVi: "Tìm bạn chơi", to: "/tim-ban-choi", key: "players" },
-      { label: "Tickets", labelVi: "Xé vé", to: "/social", key: "events" },
+      // "Social", không phải "Xé vé": đó là tên ô mà người dùng đã quen suốt
+      // thời gian /social giữ nút xanh giữa thanh dưới. Ô đó bị gỡ ngày 23/08
+      // và bề mặt lùi vào tấm trượt "Thêm" — đổi tên cùng lúc với đổi chỗ là
+      // bắt người ta học lại hai thứ để tìm đúng một trang. PO chốt dùng
+      // "Social" ở CẢ ba bề mặt (nav desktop, drawer, tấm trượt).
+      { label: "Social", labelVi: "Social", to: "/social", key: "events" },
       { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
     ],
   },
