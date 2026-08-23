@@ -44,7 +44,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "shenzhen-open-2026-preview",
     publishedDate: "2026-08-18",
-    updatedDate: "2026-08-19",
+    updatedDate: "2026-08-23",
     author: "The PickleHub Team",
     tags: ["shenzhen open 2026", "skechers shenzhen open", "ppa tour asia", "ppa asia 500", "pickleball china", "shenzhen pickleball", "ppa asia schedule"],
     ctaPath: "/live",
@@ -54,8 +54,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Skechers Shenzhen Open 2026: lịch thi đấu, thể thức và cách xem chặng PPA Asia 500",
     metaTitleEn: "Shenzhen Open 2026: Schedule, Format & How to Watch",
     metaTitleVi: "Shenzhen Open 2026: Lịch thi đấu & cách xem",
-    metaDescriptionEn: "Skechers Shenzhen Open 2026 (Aug 20-23): the draws are out. Bellamy, Chao Yi Wang and Vietnam's Hien Truong seeded. Schedule, format, how to watch.",
-    metaDescriptionVi: "Shenzhen Open 2026 (20-23/8) đã có bảng đấu: Trương Vinh Hiển hạt giống #5 đơn nam. Lịch giờ Việt Nam, thể thức và cách xem.",
+    metaDescriptionEn: "Shenzhen Open 2026 finals, Sunday Aug 23: Hien Truong plays Grayson Goldin for singles gold, plus the mixed final with Sophia Nhi Huynh. Times, how to watch.",
+    metaDescriptionVi: "Chung kết Shenzhen Open 2026 (23/8): Trương Vinh Hiển đấu Goldin ở đơn nam, đánh đôi nam nữ cùng Sophia Nhi Huỳnh. Giờ Việt Nam.",
   },
   {
     slug: "pickleball-world-cup-2026-group-a-vietnam",
