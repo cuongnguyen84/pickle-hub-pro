@@ -3,6 +3,13 @@ import { describe, expect, it } from "vitest";
 
 const document = JSON.parse(readFileSync("public/openapi.json", "utf8"));
 
+interface OpenApiOperation {
+  operationId?: string;
+  responses: Record<string, {
+    content?: Record<string, { schema?: unknown }>;
+  }>;
+}
+
 describe("public OpenAPI document", () => {
   it("uses OpenAPI 3.1 and the canonical production server", () => {
     expect(document.openapi).toBe("3.1.0");
@@ -29,7 +36,8 @@ describe("public OpenAPI document", () => {
   });
 
   it("gives every operation a directly discoverable typed success response", () => {
-    const operations = Object.values(document.paths).flatMap((path) =>
+    const paths = document.paths as Record<string, Record<string, OpenApiOperation>>;
+    const operations = Object.values(paths).flatMap((path) =>
       Object.entries(path)
         .filter(([method]) => ["get", "post", "put", "patch", "delete"].includes(method))
         .map(([, operation]) => operation),
@@ -37,7 +45,7 @@ describe("public OpenAPI document", () => {
 
     expect(operations).toHaveLength(3);
     for (const operation of operations) {
-      expect(operation.responses["200"].content["application/json"].schema).toBeDefined();
+      expect(operation.responses["200"].content?.["application/json"].schema).toBeDefined();
     }
   });
 
