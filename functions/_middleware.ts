@@ -163,6 +163,11 @@ export const shopIndexingEnabled = (env: { SHOP_PUBLIC_INDEXING?: string }) =>
 export const isPilotNoindexShopPath = (pathname: string) =>
   SHOP_PUBLIC_PATTERNS.some((re) => re.test(pathname));
 
+// Cloudflare Pages Functions under functions/api/ must reach `next()` before
+// the SPA soft-404 guard runs. They are HTTP endpoints, not client-side routes.
+export const isPagesApiPath = (pathname: string) =>
+  pathname === "/api" || pathname.startsWith("/api/");
+
 // ─── GSC "Not found (404)" cleanup 2026-07-30 — 410 Gone for permanently
 //     removed URLs. Bots bypass public/_redirects, so a soft 404 here never
 //     clears the coverage report; 410 is a definitive removal signal Google
@@ -587,6 +592,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
     }
     return assetResponse;
+  }
+
+  // ─── 2b. Pages API bypass ─────────────────────────────
+  // Without this, the non-bot soft-404 guard below mistakes every /api/*
+  // endpoint for an unknown SPA route and returns 404 before the endpoint's
+  // own function can authenticate, validate, and respond.
+  if (isPagesApiPath(pathname)) {
+    return next();
   }
 
   // ─── 3. Bot detection ─────────────────────────────────
