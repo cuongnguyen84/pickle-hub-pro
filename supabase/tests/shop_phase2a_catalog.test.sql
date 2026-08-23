@@ -119,7 +119,9 @@ SET LOCAL request.jwt.claims TO '{"sub":"50020001-0000-4000-8000-000000000001","
 INSERT INTO public.products (id, shop_id, slug, title, description, category_slug)
 VALUES ('5b000001-0000-4000-8000-000000000001'::uuid,
         '5a000001-0000-4000-8000-000000000001'::uuid,
-        'vot-a-mot', 'Vợt A Một', 'Mô tả', 'vot');
+        -- Mô tả đủ dài: product_submit_for_review đi qua preflight, và
+        -- preflight từ chối mô tả dưới 40 ký tự kể từ 20260823090000.
+        'vot-a-mot', 'Vợt A Một', 'Vợt carbon T700, lõi tổ ong 16mm, hàng mới nguyên hộp.', 'vot');
 
 SELECT is(
   (SELECT status::text FROM public.products WHERE id='5b000001-0000-4000-8000-000000000001'::uuid),
@@ -256,7 +258,7 @@ SELECT throws_ok(
 INSERT INTO public.products (id, shop_id, slug, title, description, category_slug)
 VALUES ('5b000002-0000-4000-8000-000000000002'::uuid,
         '5a000001-0000-4000-8000-000000000001'::uuid,
-        'vot-a-hai', 'Vợt A Hai', 'Mô tả cho vợt A hai.', 'vot');
+        'vot-a-hai', 'Vợt A Hai', 'Vợt A hai, mặt carbon, lõi 14mm, cán 4.25 inch.', 'vot');
 
 -- Same shop, same SKU (different case + padding) → refused.
 SELECT throws_ok(

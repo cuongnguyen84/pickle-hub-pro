@@ -1522,6 +1522,17 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 .tl-pdp-meta { margin: 0; font-size: 13px; color: var(--tl-fg-3); }
 .tl-pdp-desc { margin: 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
 
+/* Bảng thông số: hai cột trên màn hẹp cũng đọc được vì nhãn xuống dòng được,
+ * và mỗi dòng có gạch chân mảnh để mắt dò ngang không nhảy hàng. */
+.tl-pdp-specs { margin: 0; display: grid; gap: 0; font-size: 13.5px; }
+.tl-pdp-specs > div {
+  display: grid; grid-template-columns: minmax(38%, auto) 1fr; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--tl-line);
+}
+.tl-pdp-specs > div:last-child { border-bottom: 0; }
+.tl-pdp-specs dt { margin: 0; color: var(--tl-fg-3); }
+.tl-pdp-specs dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
 .tl-pdp-opts { display: flex; flex-wrap: wrap; gap: 8px; }
 .tl-pdp-opt {
   min-height: var(--shop-tap); min-width: var(--shop-tap); padding: 0 14px;

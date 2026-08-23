@@ -11,6 +11,7 @@
 // ============================================================================
 
 import type { ProductStatus, SellerProductRow } from "@/integrations/supabase/shop-schema";
+import { cleanSpecs } from "@/lib/shop/productSpecs";
 
 export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
   draft: "Nháp",
@@ -237,6 +238,9 @@ export interface UpdatePayload {
     description: string;
     category_slug: string;
     condition: "new" | "used";
+    /** Dạng chuẩn của cleanSpecs: bỏ ô trống, khoá sắp alphabet. Thứ tự khoá
+     *  là một phần của payload vì cờ dirty so hai chuỗi JSON. */
+    specs: Record<string, string>;
   };
   /** Deliberately no `variant`. The RPC still accepts one — it is a valid
    *  server API — but this form must never send it. See the note above. */
@@ -276,6 +280,7 @@ export function buildUpdatePayload(draft: {
   description: string;
   category_slug: string;
   condition: "new" | "used";
+  specs?: Record<string, string>;
 }): UpdatePayload {
   return {
     patch: {
@@ -284,6 +289,9 @@ export function buildUpdatePayload(draft: {
       description: draft.description,
       category_slug: draft.category_slug,
       condition: draft.condition,
+      // Ô trống bị bỏ ở đây và một lần nữa trong product_update: người bán xoá
+      // một thông số thì nó biến mất khỏi trang, không thành một dòng rỗng.
+      specs: cleanSpecs(draft.specs),
     },
   };
 }

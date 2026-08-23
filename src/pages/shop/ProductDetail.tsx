@@ -22,6 +22,7 @@ import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicProduct } from "@/hooks/shop/usePublicShop";
 import { CartAddedToast, ShopCartLink } from "@/components/shop/CartLink";
+import { SpecList } from "@/components/shop/SpecList";
 import { CART_QTY_MAX, useCartMutations } from "@/hooks/shop/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { getLoginUrl } from "@/lib/auth-config";
@@ -81,6 +82,8 @@ interface PublicProduct {
   title: string;
   description: string | null;
   condition: "new" | "used";
+  /** Luôn có mặt kể từ migration 20260823090000 — mặc định `{}`. */
+  specs: Record<string, string>;
   category: { slug: string; name: string } | null;
   shop: {
     slug: string; name: string; region: string | null; verified: boolean;
@@ -513,6 +516,10 @@ export default function ProductDetail() {
                 hiển thị.
               </p>
             </div>
+
+            {/* Thông số trước mô tả: người mua vợt so sánh con số rồi mới đọc
+                văn xuôi, và con số là thứ họ mở hai tab để đặt cạnh nhau. */}
+            <SpecList categorySlug={product.category?.slug} specs={product.specs} />
 
             {product.description && (
               <section aria-labelledby="pdp-desc">

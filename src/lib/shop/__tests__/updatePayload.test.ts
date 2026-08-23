@@ -84,6 +84,9 @@ describe("the text half, which is all of it", () => {
       description: "Mô tả sản phẩm.",
       category_slug: "giay",
       condition: "new",
+      // Luôn có mặt, kể cả rỗng: gửi thiếu khoá `specs` nghĩa là "đừng đụng
+      // tới thông số", và người bán xoá hết thông số sẽ không xoá được gì.
+      specs: {},
     });
   });
 

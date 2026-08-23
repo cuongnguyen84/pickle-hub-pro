@@ -183,6 +183,10 @@ export interface ProductRow {
   /** [{"name":"Màu sắc","values":["Trắng","Đen"]}] in DISPLAY order. Empty for
    *  a product with no options. Written only by the reconcile RPC. */
   option_groups: OptionGroup[];
+  /** Thông số kỹ thuật, khoá → chuỗi (migration 20260823090000). Từ điển khoá
+   *  theo ngành hàng ở src/lib/shop/productSpecs.ts — Postgres chỉ giữ hình
+   *  dạng, nên một khoá lạ là dữ liệu cũ chứ không phải lỗi. */
+  specs: Record<string, string>;
   created_at: string;
   updated_at: string;
 }
@@ -292,6 +296,9 @@ export interface ProductProjection {
   title: string;
   description: string | null;
   condition: ProductCondition;
+  /** Thông số kỹ thuật. Luôn có mặt (mặc định `{}`), nên màn hình không phải
+   *  đoán "projection có nói không". */
+  specs: Record<string, string>;
   category: { slug: string; name: string } | null;
   shop: {
     slug: string;
