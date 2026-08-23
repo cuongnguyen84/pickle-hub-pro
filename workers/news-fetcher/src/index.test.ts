@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   decodeEntities,
   HTML_SCRAPE_CONFIGS,
+  isTransientFetchError,
   normalizeItemLink,
   parseListingCards,
 } from "./index";
@@ -90,5 +91,21 @@ describe("decodeEntities", () => {
 
   it("giữ nguyên entity lạ hoặc mã số vô lý", () => {
     expect(decodeEntities("&unknownthing; &#99999999;")).toBe("&unknownthing; &#99999999;");
+  });
+});
+
+describe("isTransientFetchError", () => {
+  it("chỉ nhận timeout/abort, không nhận lỗi HTTP hay lỗi thường", () => {
+    const timeout = new Error("The operation was aborted due to timeout");
+    timeout.name = "TimeoutError";
+    const abort = new Error("aborted");
+    abort.name = "AbortError";
+
+    expect(isTransientFetchError(timeout)).toBe(true);
+    expect(isTransientFetchError(abort)).toBe(true);
+    expect(isTransientFetchError(new Error("feed HTTP 404"))).toBe(false);
+    expect(isTransientFetchError(new TypeError("bad url"))).toBe(false);
+    expect(isTransientFetchError(null)).toBe(false);
+    expect(isTransientFetchError("timeout")).toBe(false);
   });
 });

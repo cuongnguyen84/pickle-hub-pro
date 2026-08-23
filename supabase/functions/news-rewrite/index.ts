@@ -4,7 +4,15 @@ import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { getAuthUser } from "../_shared/auth.ts";
 import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
 
-const BATCH_SIZE = 2;
+// 2 -> 5 (Cuong yêu cầu 23/08): sau khi thêm 4 nguồn, hàng chờ 21 bài ở nhịp
+// 2 bài/30 phút mất hơn 5 tiếng mới lên hết.
+const BATCH_SIZE = 5;
+// Vòng lặp dưới chạy TUẦN TỰ và mỗi bài tốn ~15-20s đo được trên prod (bài lên
+// lúc :30:30 và :00:32 sau cron :30/:00), nên 5 bài có thể vượt thời gian sống
+// của một lần gọi edge function. Hết ngân sách thì không nhận bài mới nữa và
+// TRẢ phần chưa xử lý về 'pending' NGAY — để nguyên thì chúng kẹt ở
+// 'rewriting' tới STALE_MINUTES phút mới được quét cứu.
+const BATCH_DEADLINE_MS = 110_000;
 const STALE_MINUTES = 15;
 const GEMINI_MODEL = "gemini-flash-lite-latest";
 const GEMINI_ENDPOINT =
@@ -117,7 +125,19 @@ async function runBatch(supabase: SupabaseClient, geminiKey: string) {
     details: [] as Array<Record<string, unknown>>,
   };
 
-  for (const origin of origins) {
+  const batchStartedAt = Date.now();
+
+  for (const [index, origin] of origins.entries()) {
+    if (Date.now() - batchStartedAt > BATCH_DEADLINE_MS) {
+      const deferred = origins.slice(index);
+      await releaseClaims(supabase, deferred.map((row) => row.id));
+      result.details.push({
+        status: "deferred",
+        count: deferred.length,
+        reason: "batch deadline reached",
+      });
+      break;
+    }
     try {
       const draft = await rewriteOrigin(origin, geminiKey);
       const en = prepareForPublish(draft.en, origin, "en");
@@ -143,6 +163,24 @@ async function runBatch(supabase: SupabaseClient, geminiKey: string) {
   }
 
   return result;
+}
+
+// Trả các bài đã claim nhưng chưa kịp xử lý về hàng chờ. Chỉ đụng hàng còn
+// nguyên 'rewriting' để không ghi đè kết quả của một lần chạy khác.
+async function releaseClaims(
+  supabase: SupabaseClient,
+  originIds: string[],
+): Promise<void> {
+  if (originIds.length === 0) return;
+  const { error } = await supabase
+    .from("news_origins")
+    .update({ pipeline_status: "pending" })
+    .in("id", originIds)
+    .eq("pipeline_status", "rewriting");
+  if (error) {
+    // Không ném: quét stale ở đầu lần chạy sau vẫn cứu được, chỉ chậm hơn.
+    console.warn(`[news-rewrite] release claims failed: ${error.message}`);
+  }
 }
 
 async function rewriteOrigin(
