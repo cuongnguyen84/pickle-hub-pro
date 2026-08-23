@@ -40,11 +40,22 @@ describe("MORE_ITEMS", () => {
     expect(new Set(MORE_ITEMS.map((i) => i.to))).toEqual(new Set(expected));
   });
 
-  it("mọi mục đều có nhãn tiếng Việt dùng được", () => {
-    // 95% người đọc là người Việt; rơi labelVi là để họ nhìn thấy nhãn tiếng Anh.
+  it("mọi mục đều có nhãn hiện được", () => {
     for (const item of MORE_ITEMS) {
       expect((item.labelVi ?? item.label).length).toBeGreaterThan(0);
     }
+  });
+
+  it("ghi nhận đúng những mục CÒN hiện nhãn tiếng Anh cho người Việt", () => {
+    // Đây là test ghi nhận hiện trạng, không phải test chúc mừng. Bản đầu chỉ
+    // kiểm "nhãn không rỗng" và xanh ngay cả khi 5/9 mục hiện tiếng Anh trên
+    // trang /vi — đúng kiểu test tự khen. Danh sách này là quyết định sản phẩm
+    // đang treo (nav trên và drawer cũng hiện y hệt, có từ trước tấm trượt).
+    //
+    // Thêm một mục mới không có labelVi thì test này ĐỎ, và người thêm phải
+    // quyết định thay vì để nó lặng lẽ ra tiếng Anh.
+    const chuaDich = MORE_ITEMS.filter((i) => !i.labelVi).map((i) => i.to);
+    expect(chuaDich).toEqual(["/live", "/tournaments", "/tools", "/rankings", "/blog"]);
   });
 });
 
