@@ -13,6 +13,7 @@
  */
 
 import { createSupabaseClient } from "./_lib/supabase";
+import { PROFILE_BIO_MIN_LENGTH } from "./_lib/seo-helpers";
 import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
@@ -29,6 +30,61 @@ interface Env {
   CANONICAL_HOST: string;
 }
 
+interface ProfileRow {
+  username: string | null;
+  created_at: string | null;
+  bio: string | null;
+  dupr_id: string | null;
+  dupr_doubles: number | null;
+  dupr_singles: number | null;
+}
+
+/**
+ * Substance gate — 2026-08-23 site audit.
+ *
+ * Every URL this sitemap emitted was indexable and 52–70 words long, because
+ * renderProfile (functions/_lib/render/profile.ts) can only print what the row
+ * holds: breadcrumb + "<name> @<username>" + skill level + two nav links. With
+ * no DUPR rating and no bio there is nothing else, so 29 of the 40 URLs were
+ * the same boilerplate with one name swapped in — including the QA accounts
+ * ("test DUPR 2", "test DUPR 3", "admindupr", "theta", "cmtheta2"), which were
+ * being handed to Google under the brand.
+ *
+ * A sitemap means "these are the pages I consider important". Thin near-
+ * duplicates in it spend crawl budget and teach Google that /nguoi-choi/* is a
+ * low-value pattern — a bill the real profiles pay later. The repo doc already
+ * stated the intended contract ("players: DUPR-linked public profiles only",
+ * CLAUDE.md, Sitemaps section); the query never implemented it.
+ *
+ * Deliberately NOT paired with a noindex on the excluded pages. Dropping a URL
+ * from the sitemap withdraws a recommendation; noindex would actively remove a
+ * real member's profile from search for their own name — and those pages stay
+ * internally linked from ClubCard, CommentRow and TheLineLayout, so they remain
+ * reachable. Excluded profiles re-enter this sitemap by themselves the moment
+ * they link DUPR or write a bio.
+ *
+ * The bio threshold is PROFILE_BIO_MIN_LENGTH, imported rather than repeated:
+ * it is the same number pickProfileMetaDescription() uses to decide a bio is
+ * worth showing as the meta description instead of the generic city/DUPR
+ * fallback. Sharing the constant is the point — two independent 30s would
+ * drift, which is the class of bug this whole change is fixing.
+ *
+ * dupr_id alone (linked, but no rating synced yet) keeps a profile, even though
+ * renderProfile prints only the ratings. A link that has not synced yet is a
+ * pending page, not an empty one; profiles.dupr_last_error is where a link that
+ * never syncs shows up, and pruning those is sync's job, not the sitemap's.
+ */
+export function hasIndexableSubstance(p: {
+  bio: string | null;
+  dupr_id: string | null;
+  dupr_doubles: number | null;
+  dupr_singles: number | null;
+}): boolean {
+  if (p.dupr_id) return true;
+  if (p.dupr_doubles != null || p.dupr_singles != null) return true;
+  return (p.bio ?? "").trim().length >= PROFILE_BIO_MIN_LENGTH;
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const siteUrl = context.env.CANONICAL_HOST || SITE_URL_DEFAULT;
   const TODAY = today();
@@ -37,7 +93,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const supabase = createSupabaseClient(context.env);
     const { data: players, error } = await supabase
       .from("profiles")
-      .select("username, created_at")
+      // bio + dupr_* feed hasIndexableSubstance(); they are not rendered here.
+      .select("username, created_at, bio, dupr_id, dupr_doubles, dupr_singles")
       .eq("is_ghost", false)
       .eq("country", "VN")
       .not("username", "is", null)
@@ -56,8 +113,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const entries = (players || [])
-      .filter((p: { username: string | null }) => p.username && URL_SAFE_USERNAME_RE.test(p.username))
-      .map((p: { username: string; created_at: string | null }) => {
+      .filter(
+        (p: ProfileRow): p is ProfileRow & { username: string } =>
+          Boolean(p.username) && URL_SAFE_USERNAME_RE.test(p.username as string),
+      )
+      // See hasIndexableSubstance() above — keeps stub and QA profiles out.
+      .filter((p) => hasIndexableSubstance(p))
+      .map((p) => {
         const lastmod = toLastmod(p.created_at, TODAY);
         const profileUrl = `${siteUrl}/nguoi-choi/${p.username}`;
         // Sprint 4 Phase 4D: profile URL is single-canonical (no /vi/nguoi-choi/*

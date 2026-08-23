@@ -101,7 +101,7 @@ The legacy `prerender-worker` Cloudflare Worker is still active and **MUST be pr
 Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` referencing segment sitemaps:
 
 - `sitemap-static.xml`, `sitemap-blog.xml`, `sitemap-tournaments.xml`, `sitemap-matches.xml`, `sitemap-events.xml`, `sitemap-news.xml`
-- `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: DUPR-linked public profiles only)
+- `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: profiles with real content only — DUPR-linked, a synced DUPR rating, or a bio ≥30 chars; see `hasIndexableSubstance()` in `functions/sitemap-players.xml.ts`)
 
 All segments support `xhtml:link` hreflang (en, vi, x-default).
 
