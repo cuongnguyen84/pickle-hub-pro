@@ -235,6 +235,8 @@ export const en: Translations = {
     tools: "Tools",
     feed: "Feed",
     social: "Social",
+    shop: "Shop",
+    more: "More",
     search: "Search",
     profile: "Profile",
     viewProfile: "View my profile",

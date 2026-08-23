@@ -157,6 +157,14 @@ const SHOP_PUBLIC_PATTERNS: RegExp[] = [
   /^\/(?:vi\/)?shop\/store(?:\/|$)/,
 ];
 
+/**
+ * 🔴 Đi CẶP với `SHOP_PUBLIC_OPEN` trong src/lib/shop/shopGate.ts.
+ *
+ * Cờ này quyết định BOT thấy gì; cờ kia quyết định NGƯỜI thấy gì. Bật cờ này
+ * trong khi cờ kia còn `false` nghĩa là Googlebot đọc được trang sản phẩm thật
+ * còn người dùng thấy "Chợ đang hoàn thiện" — đó là cloaking, và Google phạt
+ * đúng chuyện đó. Mở thì mở cả hai, đóng thì đóng cả hai.
+ */
 export const shopIndexingEnabled = (env: { SHOP_PUBLIC_INDEXING?: string }) =>
   env.SHOP_PUBLIC_INDEXING === "1";
 

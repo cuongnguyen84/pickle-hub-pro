@@ -37,8 +37,8 @@ export interface NavParent {
 export type NavItem = NavLeaf | NavParent;
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Live", to: "/live", key: "live" },
-  { label: "Tournaments", to: "/tournaments", key: "tournaments" },
+  { label: "Live", labelVi: "Trực tiếp", to: "/live", key: "live" },
+  { label: "Tournaments", labelVi: "Giải đấu", to: "/tournaments", key: "tournaments" },
   {
     label: "Social",
     labelVi: "Social",
@@ -46,7 +46,12 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "Courts", labelVi: "Sân", to: "/san", key: "venues" },
       { label: "Find players", labelVi: "Tìm bạn chơi", to: "/tim-ban-choi", key: "players" },
-      { label: "Tickets", labelVi: "Xé vé", to: "/social", key: "events" },
+      // "Social", không phải "Xé vé": đó là tên ô mà người dùng đã quen suốt
+      // thời gian /social giữ nút xanh giữa thanh dưới. Ô đó bị gỡ ngày 23/08
+      // và bề mặt lùi vào tấm trượt "Thêm" — đổi tên cùng lúc với đổi chỗ là
+      // bắt người ta học lại hai thứ để tìm đúng một trang. PO chốt dùng
+      // "Social" ở CẢ ba bề mặt (nav desktop, drawer, tấm trượt).
+      { label: "Social", labelVi: "Social", to: "/social", key: "events" },
       { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
     ],
   },
@@ -55,8 +60,8 @@ export const NAV_ITEMS: NavItem[] = [
   // rồi hết đường đi tiếp. `/vi/shop` có thật: mảng MIRRORED trong App.tsx
   // mount mọi path hai lần.
   { label: "Shop", labelVi: "Chợ", to: "/shop", key: "shop" },
-  { label: "Bracket Lab", to: "/tools", key: "lab" },
-  { label: "Rankings", to: "/rankings", key: "rankings" },
+  { label: "Bracket Lab", labelVi: "Công cụ", to: "/tools", key: "lab" },
+  { label: "Rankings", labelVi: "Xếp hạng", to: "/rankings", key: "rankings" },
   { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
-  { label: "Stories", to: "/blog", key: "stories" },
+  { label: "Stories", labelVi: "Bài viết", to: "/blog", key: "stories" },
 ];
