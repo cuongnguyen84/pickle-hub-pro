@@ -76,6 +76,12 @@ describe("specRows", () => {
     expect(specRows("bong", {})).toEqual([]);
     expect(specRows(null, {})).toEqual([]);
   });
+
+  it("đổi ngành hàng sang loại không có từ điển thì GIẤU, không hiện khoá thô", () => {
+    // Dữ liệu vẫn nằm trong bảng — đổi ngành hàng về Vợt là hiện lại.
+    expect(specRows("giay", { weight_g: "220" })).toEqual([]);
+    expect(specRows("vot", { weight_g: "220" })).toHaveLength(1);
+  });
 });
 
 describe("payload gửi lên product_update", () => {

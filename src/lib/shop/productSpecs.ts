@@ -162,6 +162,11 @@ export function specRows(
 ): SpecRow[] {
   const clean = cleanSpecs(specs);
   const fields = specFieldsFor(categorySlug);
+  // Ngành hàng không có từ điển thì không hiện gì — kể cả khi hàng còn giữ
+  // thông số cũ. Người bán đổi ngành hàng từ Vợt sang Giày không làm trang
+  // sản phẩm hiện ra dòng "weight_g: 220"; dữ liệu vẫn nằm nguyên trong bảng,
+  // đổi ngành hàng về là hiện lại.
+  if (fields.length === 0) return [];
   const known = new Set(fields.map((f) => f.key));
   const rows: SpecRow[] = [];
 
