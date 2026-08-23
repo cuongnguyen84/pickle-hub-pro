@@ -82,6 +82,9 @@ const MAX_ITEMS_PER_FEED = 8;
 // đẩy run qua trần. Bài vượt ngân sách KHÔNG insert (để lần chạy sau lấy đủ
 // body), backlog tự rút cạn qua các run 2h kế tiếp.
 const MAX_ARTICLE_FETCHES_PER_RUN = 10;
+// Thử lại feed tối đa 2 lần cho CẢ run (không phải mỗi nguồn) — nếu mỗi nguồn
+// được thử lại thì 9 nguồn cùng hỏng sẽ đẩy run qua trần 50 subrequest.
+const MAX_FEED_RETRIES_PER_RUN = 2;
 const MAX_AGE_DAYS = 30;
 const TITLE_LIMIT = 120;
 const SUMMARY_LIMIT = 300;
@@ -232,7 +235,7 @@ async function runAllSources(env: Env): Promise<SourceRunResult[]> {
   const sources = await fetchActiveSources(env);
   const results: SourceRunResult[] = [];
   // Ngân sách dùng chung cho cả run, các nguồn tiêu theo thứ tự.
-  const budget: FetchBudget = { left: MAX_ARTICLE_FETCHES_PER_RUN };
+  const budget: FetchBudget = { left: MAX_ARTICLE_FETCHES_PER_RUN, retries: MAX_FEED_RETRIES_PER_RUN };
 
   for (const source of sources) {
     const started = Date.now();
@@ -338,6 +341,8 @@ async function markSourceError(
 
 interface FetchBudget {
   left: number;
+  /** Số lần được thử lại feed trong CẢ run — xem MAX_FEED_RETRIES_PER_RUN. */
+  retries: number;
 }
 
 interface IngestCounts {
@@ -730,20 +735,7 @@ async function fetchAndParse(
     throw new Error(`unsafe feed_url rejected: ${source.feed_url}`);
   }
 
-  const res = await fetch(source.feed_url, {
-    headers: {
-      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
-      Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9",
-    },
-    // 20s thay cho 12s. KHÔNG phải bản vá: pickleball-com abort ở 4/15 lần
-    // cron gần nhất và lần cron đầu tiên chạy trên 20s vẫn abort. Cùng feed
-    // đó trả lời trong 1.4s từ laptop, nên nhiều khả năng request treo khi
-    // gọi từ edge của Cloudflare chứ không chỉ là chậm. Nới vẫn giữ vì đây là
-    // thời gian CHỜ mạng, không tính vào 30s CPU của scheduled handler. Lỗi
-    // tự lành ở run sau (dedupe chặn trùng), tệ nhất trễ 2h cho một nguồn.
-    signal: AbortSignal.timeout(20_000),
-  });
-
+  const res = await fetchFeedWithRetry(source.feed_url, budget);
   if (!res.ok) throw new Error(`feed HTTP ${res.status}`);
   const xml = await res.text();
   const parsed = xmlParser.parse(xml);
@@ -751,6 +743,46 @@ async function fetchAndParse(
   if (source.feed_type === "rss") return parseRss(parsed);
   if (source.feed_type === "atom") return parseAtom(parsed);
   throw new Error(`Unsupported feed_type ${source.feed_type}`);
+}
+
+/** Lỗi mạng nhất thời (timeout / abort) — đáng thử lại; HTTP 4xx/5xx thì không. */
+export function isTransientFetchError(error: unknown): boolean {
+  const name = (error as { name?: string } | null)?.name;
+  return name === "TimeoutError" || name === "AbortError";
+}
+
+// pickleball-com abort ~4/15 lần cron trong khi đo từ edge Cloudflare feed đó
+// trả lời trong 250ms — tức là sự cố NHẤT THỜI chứ không phải chậm kinh niên,
+// nên nới thời gian chờ không chữa được mà thử lại thì chữa được. Lần thử lại
+// chỉ tốn ~250ms trong trường hợp thường vì nó chỉ chạy khi đã hỏng.
+async function fetchFeedWithRetry(feedUrl: string, budget: FetchBudget): Promise<Response> {
+  try {
+    return await fetchFeedOnce(feedUrl);
+  } catch (error) {
+    if (budget.retries <= 0 || !isTransientFetchError(error)) throw error;
+    budget.retries -= 1;
+    console.warn(
+      `[feed] thử lại ${feedUrl} sau lỗi nhất thời: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return await fetchFeedOnce(feedUrl);
+  }
+}
+
+async function fetchFeedOnce(feedUrl: string): Promise<Response> {
+  return await fetch(feedUrl, {
+    headers: {
+      "User-Agent": "ThePickleHub-news-fetcher/1.0 (+https://www.thepicklehub.net)",
+      Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9",
+    },
+    // 20s (trước là 12s). Đo từ chính edge Cloudflare: feed pickleball.com trả
+    // lời 250ms, lần đầu 2.4s — nên 20s là dư sức cho đường bình thường, và
+    // những lần abort là sự cố nhất thời, xử bằng thử lại chứ không phải bằng
+    // nới thêm. Đây là thời gian CHỜ mạng, không tính vào 30s CPU của
+    // scheduled handler.
+    signal: AbortSignal.timeout(20_000),
+  });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
