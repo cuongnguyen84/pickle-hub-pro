@@ -90,7 +90,15 @@ Key examples: `mux-create-livestream`, `delete-account`, `send-push-notification
 
 SEO prerendering for bot crawlers is handled by `functions/_middleware.ts` + `functions/_lib/render/`, NOT by Supabase edge functions.
 
-- Cache key: **`pr:v34:${pathname}`** in KV namespace `PRERENDER_CACHE` (bump version when changing SSR output to invalidate stale HTML). The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
+- Cache key: **`pr:v<N>:${pathname}`** in KV namespace `PRERENDER_CACHE`. **Do not trust a version number written here** — this line said `pr:v34` while production had been on `v53` for weeks. Read the current value from the source instead:
+
+  ```sh
+  grep -n 'const cacheKey' functions/_middleware.ts
+  ```
+
+  Bump `<N>` in the same commit as any change to SSR output, or cached HTML serves the pre-change version for the full TTL. The number carries no meaning beyond being different from the deployed one, so when two open branches both bump it, take the higher and move on. Add a one-line comment above the constant saying what changed — that comment block is the real changelog.
+
+  The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
 - Per-route handlers: `renderBlog`, `renderViBlog`, `renderTournament`, `renderMatch` (`match-seo.ts`), `renderSocialEvent`, `renderRankings`, `renderLive`, `renderNews`, etc.
 - `BLOG_POST_META` in `functions/_lib/render/blog-meta.ts` is the SSR truth table for blog posts — missing entry = bot 404. Since SEO-02 (`ce6a0fa`) it is **generated at module load** from `src/content/blog/metadata.ts`; do not hand-edit it, add the metadata entry instead.
 
