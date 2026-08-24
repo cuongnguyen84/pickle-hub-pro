@@ -151,6 +151,51 @@ export function hoursLabel(range: string, lang: Lang): string {
   return range;
 }
 
+// ── NEAR-01: proximity block ───────────────────────────────────────────────
+/** Rows pulled for the two "other courts" blocks on a venue detail page. */
+interface NearbyRow {
+  slug: string;
+  name: string;
+  name_vi: string | null;
+  district: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  num_courts: number | null;
+}
+
+/** Worst case is TP.HCM at 150 rows; 300 leaves headroom without unbounded IO. */
+const CITY_POOL_LIMIT = 300;
+const NEAREST_COUNT = 6;
+const DISTRICT_COUNT = 6;
+
+/**
+ * Great-circle distance in km. Venues sit inside one city, so the small-angle
+ * error of the spherical model is far below the precision we print (0.1 km) —
+ * no need for an ellipsoidal formula here.
+ */
+export function haversineKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/** "450 m" under a km, "1,2 km" above — VI uses a comma decimal separator. */
+export function formatKm(km: number, lang: Lang): string {
+  if (km < 1) return `${Math.round(km * 100) * 10} m`;
+  const one = km.toFixed(1);
+  return `${lang === "vi" ? one.replace(".", ",") : one} km`;
+}
+
 function displayName(v: { name: string; name_vi: string | null }, lang: Lang): string {
   if (lang === "vi" && v.name_vi && v.name_vi.trim().length > 0) return v.name_vi;
   return v.name;
@@ -847,21 +892,85 @@ export async function renderVenueDetail(
 
   if (v.city) {
     try {
+      // NEAR-01 (2026-08-24) — this block used to be
+      //   .eq(city).order(is_verified).order(num_courts).limit(8)
+      // which is a DETERMINISTIC city-wide query: it ignores which venue the
+      // reader is actually on, so every one of the 136 Hà Nội pages shipped the
+      // byte-identical list of 8 links, and every one of the 150 TP.HCM pages
+      // shipped another. Verified in production before this change — /vi/san/
+      // 789-pickleball-club, baca-pickleballs-nguyen-chanh and san-pickleball-
+      // 83-hao-nam all rendered the same 8 slugs in the same order.
+      //
+      // That block is ~40% of a venue page's word count, so the majority of the
+      // "unique" content on the /san cluster was one boilerplate list repeated
+      // hundreds of times — exactly the mass-templated-inventory signal Guard-0
+      // above was written to fight, and the likeliest reason the cluster sits at
+      // 1.4% CTR while carrying 68% of site impressions.
+      //
+      // latitude/longitude are populated on 760/760 rows (the ONE column with
+      // full coverage), so real proximity is computable. Pull the city once and
+      // rank in JS: 150 rows is the worst case, and this path is bot-only and
+      // KV-cached, so the cost is paid once per URL per TTL, not per request.
       const { data: nb } = await supabase
         .from("venues")
-        .select("slug, name, name_vi, district")
+        .select("slug, name, name_vi, district, latitude, longitude, num_courts")
         .eq("city", v.city)
         .neq("slug", v.slug)
-        .order("is_verified", { ascending: false })
-        .order("num_courts", { ascending: false })
-        .limit(8);
-      const nearby = (nb ?? []) as { slug: string; name: string; name_vi: string | null; district: string | null }[];
-      if (nearby.length > 0) {
-        const heading = lang === "vi" ? `Sân pickleball khác tại ${v.city}` : `Other pickleball courts in ${v.city}`;
-        const items = nearby
-          .map((n) => `<li><a href="${sanBase}/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>${n.district ? ` — ${escapeHtml(n.district)}` : ""}</li>`)
+        .limit(CITY_POOL_LIMIT);
+      const pool = (nb ?? []) as NearbyRow[];
+
+      const nearest = v.latitude != null && v.longitude != null
+        ? pool
+            .filter((n) => n.latitude != null && n.longitude != null)
+            .map((n) => ({
+              row: n,
+              km: haversineKm(v.latitude!, v.longitude!, n.latitude!, n.longitude!),
+            }))
+            // Guard against duplicate coordinates (a few rows share a mall's
+            // centroid): a 0.0 km "neighbour" reads like a data bug to a user.
+            .filter((n) => n.km > 0.01)
+            .sort((a, b) => a.km - b.km)
+            .slice(0, NEAREST_COUNT)
+        : [];
+
+      const shown = new Set(nearest.map((n) => n.row.slug));
+
+      if (nearest.length > 0) {
+        const heading =
+          lang === "vi" ? `Sân pickleball gần ${name}` : `Pickleball courts near ${name}`;
+        const items = nearest
+          .map(
+            ({ row, km }) =>
+              `<li><a href="${sanBase}/${escapeHtml(row.slug)}">${escapeHtml(displayName(row, lang))}</a>` +
+              ` — ${formatKm(km, lang)}${row.district ? ` · ${escapeHtml(row.district)}` : ""}</li>`,
+          )
           .join("");
         parts.push(`<h2>${escapeHtml(heading)}</h2><ul>${items}</ul>`);
+      }
+
+      // District block: narrower than the old city list (Quận 2 holds 33 of
+      // TP.HCM's 150 venues) and it is the unit people search by. Deduped
+      // against the proximity list so the two never print the same slug twice.
+      const districtName2 = v.district ? v.district.trim() : "";
+      if (districtName2) {
+        const sameDistrict = pool
+          .filter((n) => (n.district ?? "").trim() === districtName2 && !shown.has(n.slug))
+          .sort((a, b) => (b.num_courts ?? 0) - (a.num_courts ?? 0))
+          .slice(0, DISTRICT_COUNT);
+        if (sameDistrict.length > 0) {
+          const heading =
+            lang === "vi"
+              ? `Sân pickleball khác ở ${districtName2}`
+              : `Other pickleball courts in ${districtName2}`;
+          const items = sameDistrict
+            .map(
+              (n) =>
+                `<li><a href="${sanBase}/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>` +
+                `${n.num_courts && n.num_courts > 0 ? ` — ${n.num_courts} ${lang === "vi" ? "sân" : n.num_courts > 1 ? "courts" : "court"}` : ""}</li>`,
+            )
+            .join("");
+          parts.push(`<h2>${escapeHtml(heading)}</h2><ul>${items}</ul>`);
+        }
       }
     } catch {
       // non-fatal

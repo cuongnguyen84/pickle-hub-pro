@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   renderVenueDetail, isVerifiedSource, shortPrice, longPrice,
-  priceRangeText, uniformHours, hoursLabel,
+  priceRangeText, uniformHours, hoursLabel, haversineKm, formatKm,
 } from "../venues";
 import type { SupabaseClient } from "../../supabase";
 
@@ -15,7 +15,7 @@ type Row = Record<string, unknown> | null;
  *   2. from("venues").select()...                  → nearby venues (awaited
  *      directly, so the chain must be thenable and resolve to a list)
  */
-function stubClient(row: Row): SupabaseClient {
+function stubClient(row: Row, pool: unknown[] = []): SupabaseClient {
   const chain = {
     select: () => chain,
     eq: () => chain,
@@ -25,7 +25,7 @@ function stubClient(row: Row): SupabaseClient {
     limit: () => chain,
     maybeSingle: async () => ({ data: row, error: null }),
     then: (resolve: (r: { data: unknown[]; error: null }) => unknown) =>
-      resolve({ data: [], error: null }),
+      resolve({ data: pool, error: null }),
   };
   return { from: () => chain } as unknown as SupabaseClient;
 }
@@ -54,8 +54,8 @@ const BASE = {
   hours_source: null,
 };
 
-const render = async (row: Row, lang: "vi" | "en" = "vi") =>
-  (await renderVenueDetail(stubClient(row), "s", SITE, lang)).text();
+const render = async (row: Row, lang: "vi" | "en" = "vi", pool: unknown[] = []) =>
+  (await renderVenueDetail(stubClient(row, pool), "s", SITE, lang)).text();
 
 const metaDescription = (html: string) =>
   html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "";
@@ -442,5 +442,130 @@ describe("price + hours helpers", () => {
     expect(hoursLabel("00:00-24:00", "vi")).toBe("Mở cả ngày");
     expect(hoursLabel("00:00-24:00", "en")).toBe("Open 24 hours");
     expect(hoursLabel("06:00-22:00", "vi")).toBe("06:00-22:00");
+  });
+});
+
+/**
+ * NEAR-01 (2026-08-24) — the "other courts" block used to be a deterministic
+ * city-wide query, so all 136 Hà Nội venue pages shipped the byte-identical
+ * list of 8 links (verified in production against three live URLs). That block
+ * is ~40% of a venue page's word count, which made most of the /san cluster's
+ * "unique" content one boilerplate list repeated hundreds of times.
+ *
+ * It is now ranked by real distance from the venue being viewed, using the
+ * lat/long columns — the only two populated on 760/760 rows.
+ */
+describe("renderVenueDetail — proximity block (NEAR-01)", () => {
+  // BASE sits at 21.02, 105.82. Roughly: 0.01 lat ≈ 1.1 km.
+  const POOL = [
+    { slug: "xa-nhat", name: "Xa Nhất", name_vi: null, district: "Ba Đình", latitude: 21.12, longitude: 105.82, num_courts: 9 },
+    { slug: "gan-nhi", name: "Gần Nhì", name_vi: null, district: "Đống Đa", latitude: 21.03, longitude: 105.82, num_courts: 2 },
+    { slug: "gan-nhat", name: "Gần Nhất", name_vi: null, district: "Đống Đa", latitude: 21.021, longitude: 105.82, num_courts: 1 },
+    { slug: "cung-quan-xa", name: "Cùng Quận Xa", name_vi: null, district: "Đống Đa", latitude: 21.09, longitude: 105.82, num_courts: 7 },
+    // Five more Đống Đa courts, all farther out than the four above, so the
+    // nearest-6 cut leaves some over for the district block to pick up. Without
+    // a pool bigger than NEAREST_COUNT the dedup would empty that block.
+    ...[0, 1, 2, 3, 4].map((i) => ({
+      slug: `xa-${i}`,
+      name: `Xa ${i}`,
+      name_vi: null,
+      district: "Đống Đa",
+      latitude: 21.3 + i / 100,
+      longitude: 105.82,
+      num_courts: 5 - i,
+    })),
+  ];
+
+  const slugsUnder = (html: string, heading: RegExp) => {
+    const block = html.match(new RegExp(`<h2>${heading.source}[^<]*</h2><ul>([\\s\\S]*?)</ul>`));
+    return block ? [...block[1].matchAll(/\/san\/([a-z0-9-]+)"/g)].map((m) => m[1]) : [];
+  };
+
+  it("orders the nearby list by real distance, nearest first", async () => {
+    const html = await render(BASE, "vi", POOL);
+    const slugs = slugsUnder(html, /Sân pickleball gần/);
+
+    expect(slugs.slice(0, 3)).toEqual(["gan-nhat", "gan-nhi", "cung-quan-xa"]);
+    expect(slugs).toContain("xa-nhat");
+  });
+
+  it("is genuinely different for two venues in the same city — the NEAR-01 defect", async () => {
+    const a = slugsUnder(await render(BASE, "vi", POOL), /Sân pickleball gần/);
+    // Same city + same pool, different coordinates: the far corner of Hà Nội.
+    const b = slugsUnder(
+      await render({ ...BASE, slug: "khac", latitude: 21.13, longitude: 105.82 }, "vi", POOL),
+      /Sân pickleball gần/,
+    );
+
+    expect(a).not.toEqual(b);
+    expect(b[0]).toBe("xa-nhat");
+  });
+
+  it("prints a distance next to every nearby court", async () => {
+    const html = await render(BASE, "vi", POOL);
+
+    // 0.001 lat ≈ 110 m, rendered in metres under 1 km.
+    expect(html).toMatch(/Gần Nhất<\/a> — \d+ m/);
+    // 0.01 lat ≈ 1.1 km, rendered in km with a VI comma decimal.
+    expect(html).toMatch(/Gần Nhì<\/a> — 1,1 km/);
+  });
+
+  it("uses a dot decimal separator in the EN cluster", async () => {
+    expect(await render(BASE, "en", POOL)).toMatch(/Gần Nhì<\/a> — 1\.1 km/);
+  });
+
+  it("adds a district block and never repeats a slug already shown as nearby", async () => {
+    const html = await render(BASE, "vi", POOL);
+    const near = slugsUnder(html, /Sân pickleball gần/);
+    const district = slugsUnder(html, /Sân pickleball khác ở/);
+
+    expect(html).toContain("Sân pickleball khác ở Đống Đa");
+    for (const slug of district) expect(near).not.toContain(slug);
+  });
+
+  it("drops zero-distance rows — duplicate coordinates read as a data bug", async () => {
+    const html = await render(BASE, "vi", [
+      { slug: "trung-toa-do", name: "Trùng Toạ Độ", name_vi: null, district: "Đống Đa", latitude: 21.02, longitude: 105.82, num_courts: 3 },
+      ...POOL,
+    ]);
+
+    expect(slugsUnder(html, /Sân pickleball gần/)).not.toContain("trung-toa-do");
+  });
+
+  it("omits the proximity block rather than guessing when the venue has no coordinates", async () => {
+    const html = await render({ ...BASE, latitude: null, longitude: null }, "vi", POOL);
+
+    expect(html).not.toContain("Sân pickleball gần");
+    // The district block does not depend on geo, so it still renders.
+    expect(html).toContain("Sân pickleball khác ở Đống Đa");
+  });
+
+  it("survives an empty city pool without emitting an empty list", async () => {
+    const html = await render(BASE, "vi", []);
+
+    expect(html).not.toContain("<ul></ul>");
+    expect(html).not.toContain("Sân pickleball gần");
+  });
+});
+
+describe("haversineKm / formatKm", () => {
+  it("matches a known Hà Nội → TP.HCM great-circle distance", () => {
+    // ~1138 km by great circle; allow 15 km for the spherical approximation.
+    expect(haversineKm(21.028, 105.854, 10.823, 106.63)).toBeGreaterThan(1123);
+    expect(haversineKm(21.028, 105.854, 10.823, 106.63)).toBeLessThan(1153);
+  });
+
+  it("is zero for identical points and symmetric between two points", () => {
+    expect(haversineKm(21.02, 105.82, 21.02, 105.82)).toBe(0);
+    expect(haversineKm(21.02, 105.82, 21.03, 105.83)).toBeCloseTo(
+      haversineKm(21.03, 105.83, 21.02, 105.82),
+      9,
+    );
+  });
+
+  it("switches from metres to km at 1 km, localizing the decimal separator", () => {
+    expect(formatKm(0.45, "vi")).toBe("450 m");
+    expect(formatKm(1.25, "vi")).toBe("1,3 km");
+    expect(formatKm(1.25, "en")).toBe("1.3 km");
   });
 });

@@ -817,7 +817,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // real price + opening hours in <title>, the snippet and JSON-LD; the other
   // 741 gained a labelled regional price line in the body. Cached HTML would
   // serve the price-less version for the full TTL.
-  const cacheKey = `pr:v57:${url.pathname}`;
+  //
+  // v58 — NEAR-01 (2026-08-24): the "other courts" block on /san is now ranked
+  // by real distance from the venue being viewed instead of a deterministic
+  // city-wide query, so the body of every venue page changes again (×2 for the
+  // en/vi pair). Cached HTML would keep serving the identical city-wide list —
+  // the exact boilerplate this change exists to remove.
+  const cacheKey = `pr:v58:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
