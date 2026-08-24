@@ -29,7 +29,7 @@ const post: BlogPost = {
         "How to Watch — and Enter — the Heineken Pickleball World Cup 2026 in Da Nang",
       metaTitle: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
       metaDescription:
-        "Pickleball World Cup 2026 Da Nang (Aug 30–Sep 6): the confirmed day-by-day schedule, national-team dates, venues, tickets and how to watch on FPT Play.",
+        "Pickleball World Cup 2026 Da Nang: tickets, all 7 venues, FPT Play broadcast, hotels and the key dates. Aug 30-Sep 6, with Vietnam at home.",
       sections: [
         {
           heading: "The Short Version",
@@ -71,42 +71,15 @@ const post: BlogPost = {
           ],
         },
         {
-          heading:
-            "Day by Day: the Individual Tournament, August 30 – September 6",
+          heading: "The Dates That Matter",
           content:
-            'Two tournaments run under one banner and they do not start on the same day. This is the individual tournament — the open-entry one, bracketed by DUPR rating — which occupies the first four days on its own before the national teams arrive. Competition days run 08:00 to 18:00. The organizers mark the schedule "subject to change", so confirm before booking travel around any single day.',
-          listItems: [
-            "Sun Aug 30 — Men's singles and women's doubles, 3.0–5.0, across all venues",
-            "Mon Aug 31 — Men's doubles 3.0–5.0, plus Men's & Women's Pro Singles at Tuyen Son A&D and Tien Son",
-            "Tue Sep 1 — Mixed doubles 3.0–5.0, plus Men's & Women's Pro Doubles",
-            "Wed Sep 2 — Women's singles 3.0–5.0, Mixed Pro Doubles and wheelchair singles. Opening Ceremony 18:00–20:00, Vietnam's National Day",
-            "Thu Sep 3 — Junior mixed doubles at Truong Son and Hop Thanh Phat, plus the Entrepreneur and Celebrity events",
-            "Fri Sep 4 — Entrepreneur, Celebrity and wheelchair doubles",
-            "Sat Sep 5 — Junior boys' and girls' singles across five venues, plus wheelchair hybrid",
-            "Sun Sep 6 — Junior boys' and girls' doubles, then All Pro Categories Finals, 08:00–18:00 on Tien Son court 1",
-          ],
-        },
-        {
-          heading: "The National-Team Competition: September 3–6",
-          content:
-            "This is the World Cup proper — the part with Vietnam in it — and it does not begin until the individual tournament is nearly over. 152 teams were drawn on August 16 across five categories: 64 in Open, 40 in Seniors (50+), 20 in Masters (60+), 14 in Juniors (U18) and 14 in Kids (U14). Vietnam is the top seed in Group A in Open, Masters, Juniors and Kids, and has no team in Seniors. A team tie is decided over six games — men's doubles, women's doubles, two mixed doubles, women's singles, then men's singles — played to 21 with rally scoring, win by 2.",
-          listItems: [
-            "Thu Sep 3 — Open group stage, pools A–L from 08:00 and pools M–P from 14:00; Seniors group stage",
-            "Fri Sep 4 — group stages for Kids, Masters, Seniors and Juniors from 08:00, then the first knockout rounds: Seniors and Masters round of 32 and round of 16, Open round of 32, Juniors round of 16",
-            "Sat Sep 5 — quarter-finals for Seniors, Kids, Open and Masters from 08:00; semi-finals for Seniors, Kids and Open; Kids bronze and final at 12:00; Masters and Juniors finals and bronze matches in the afternoon",
-            "Sun Sep 6 — Seniors final and Juniors final",
-          ],
+            "Four milestones cover the whole week. The individual tournament — the open-entry one, bracketed by DUPR rating — starts Sunday August 30 and has the first four days to itself. The Opening Ceremony is Wednesday September 2, 18:00–20:00, on Vietnam's National Day. The national-team competition, the part with Vietnam in it, runs Thursday September 3 to Sunday September 6, and Vietnam opens against Colombia in the Open group stage at 08:00 on September 3. The All Pro Categories Finals close the individual tournament on Sunday September 6, 08:00–18:00 on Tien Son court 1. One gap to know about before booking travel: the Open final has no date, time or court in the published schedule at all — September 6 is expected, not confirmed. Competition days run 08:00 to 18:00 and the organizers mark the schedule subject to change.",
           internalLinks: [
             {
-              text: "Group A: who Vietnam plays and how the draw fell",
-              path: "/blog/pickleball-world-cup-2026-group-a-vietnam",
+              text: "Full day-by-day schedule for both tournaments, and Vietnam's dates",
+              path: "/blog/pickleball-world-cup-2026-da-nang-schedule",
             },
           ],
-        },
-        {
-          heading: "When Does the Open Final Actually Happen?",
-          content:
-            'Worth flagging because the published team schedule does not answer it. Saturday September 5 lists Open quarter-finals and semi-finals, and Sunday September 6 lists only the Seniors and Juniors finals — the Open final, the biggest match of the tournament, is not written on either day. The bracket in the organizers\' own system does contain an Open final and a third-place match, so the match exists; it simply has no date, time or court assigned yet. Everything else points to Sunday September 6: the only ticket product labelled FINALS is dated September 6, the five-day package describes the sequence as "Opening → Rounds → Quarterfinals → Semifinals → Finals & Music Festival", and the individual tournament puts its All Pro Categories Finals on Tien Son court 1 that same day. Treat September 6 as expected rather than confirmed, and do not book a flight home on the strength of it until the organizers publish a time.',
         },
         {
           heading: "Where: Seven Venues, Not One",
@@ -237,7 +210,7 @@ const post: BlogPost = {
         "Cẩm nang xem và thi đấu Heineken Pickleball World Cup 2026 tại Đà Nẵng",
       metaTitle: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
       metaDescription:
-        "World Cup Pickleball 2026 Đà Nẵng (30/8–6/9): lịch thi đấu từng ngày, lịch đội tuyển VN 3–6/9, 7 sân, vé và cách xem trên FPT Play.",
+        "World Cup Pickleball 2026 Đà Nẵng: vé, 7 địa điểm, xem trên FPT Play, khách sạn và các mốc chính. 30/8-6/9, Việt Nam đá sân nhà.",
       sections: [
         {
           heading: "Tóm tắt nhanh",
@@ -280,41 +253,15 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Lịch từng ngày: Giải Cá nhân, 30/8 – 6/9",
+          heading: "Những mốc thời gian cần nhớ",
           content:
-            'Hai giải chạy dưới cùng một tên gọi, và chúng KHÔNG khởi tranh cùng ngày. Đây là Giải Cá nhân — giải mở đăng ký, chia bảng theo điểm DUPR — chiếm trọn bốn ngày đầu trước khi các đội tuyển quốc gia vào cuộc. Ngày thi đấu chạy 08:00–18:00. Ban tổ chức ghi rõ lịch "có thể thay đổi", nên xác nhận lại trước khi đặt vé máy bay theo một ngày cụ thể. Một lưu ý nữa từ chính ban tổ chức: giờ ghi trên lịch là khung giờ của CẢ nội dung (từ trận đầu tới trận cuối), không phải giờ trận của bạn.',
-          listItems: [
-            "CN 30/8 — Đơn nam và đôi nữ, 3.0–5.0, trải trên toàn bộ các sân",
-            "Thứ Hai 31/8 — Đôi nam 3.0–5.0, cùng Pro đơn nam và Pro đơn nữ tại Tuyên Sơn A&D và Tiên Sơn",
-            "Thứ Ba 1/9 — Đôi nam nữ 3.0–5.0, cùng Pro đôi nam và Pro đôi nữ",
-            "Thứ Tư 2/9 — Đơn nữ 3.0–5.0, Pro đôi nam nữ và đơn xe lăn. Lễ khai mạc 18:00–20:00, đúng ngày Quốc khánh",
-            "Thứ Năm 3/9 — Đôi nam nữ Junior tại Trường Sơn và Hợp Thành Phát, cùng nội dung Doanh nhân và Người nổi tiếng",
-            "Thứ Sáu 4/9 — Doanh nhân, Người nổi tiếng và đôi xe lăn",
-            "Thứ Bảy 5/9 — Đơn nam và đơn nữ Junior trải trên năm sân, cùng nội dung xe lăn hỗn hợp",
-            "CN 6/9 — Đôi nam và đôi nữ Junior, sau đó Chung kết toàn bộ nhóm Pro, 08:00–18:00 tại Tiên Sơn sân 1",
-          ],
-        },
-        {
-          heading: "Giải Đồng đội Quốc gia: 3–6/9",
-          content:
-            "Đây mới là World Cup theo đúng nghĩa — phần có Việt Nam — và nó chỉ bắt đầu khi Giải Cá nhân đã gần xong. 152 đội được bốc thăm ngày 16/8 ở năm hạng mục: 64 đội Open, 40 đội Seniors (50+), 20 đội Masters (60+), 14 đội Juniors (U18) và 14 đội Kids (U14). Việt Nam là hạt giống số 1 bảng A ở Open, Masters, Juniors và Kids, và KHÔNG có đội ở Seniors. Mỗi trận đồng đội phân định qua sáu ván — đôi nam, đôi nữ, hai trận đôi nam nữ, đơn nữ, rồi đơn nam — đánh tới 21 điểm theo rally scoring, cách biệt 2.",
-          listItems: [
-            "Thứ Năm 3/9 — Vòng bảng Open, các bảng A–L từ 08:00 và các bảng M–P từ 14:00; vòng bảng Seniors",
-            "Thứ Sáu 4/9 — Vòng bảng Kids, Masters, Seniors và Juniors từ 08:00, rồi các vòng loại trực tiếp đầu tiên: Seniors và Masters vòng 32 và vòng 16, Open vòng 32, Juniors vòng 16",
-            "Thứ Bảy 5/9 — Tứ kết Seniors, Kids, Open và Masters từ 08:00; bán kết Seniors, Kids và Open; Kids tranh HCĐ và chung kết lúc 12:00; chung kết và tranh HCĐ Masters, Juniors vào buổi chiều",
-            "CN 6/9 — Chung kết Seniors và chung kết Juniors",
-          ],
+            "Bốn mốc là đủ cho cả tuần. Giải Cá nhân — giải mở đăng ký, chia bảng theo điểm DUPR — khởi tranh Chủ nhật 30/8 và chiếm trọn bốn ngày đầu. Lễ khai mạc vào thứ Tư 2/9, 18:00–20:00, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia, phần có đội tuyển Việt Nam, đấu từ thứ Năm 3/9 đến Chủ nhật 6/9, và Việt Nam ra quân gặp Colombia ở vòng bảng Open lúc 08:00 ngày 3/9. Chung kết toàn bộ nhóm Pro khép lại Giải Cá nhân vào Chủ nhật 6/9, 08:00–18:00 tại Tiên Sơn sân 1. Một khoảng trống cần biết trước khi đặt vé: trận chung kết Open hoàn toàn chưa có ngày, giờ hay sân trong lịch đã công bố — 6/9 là dự kiến, chưa phải đã chốt. Ngày thi đấu chạy 08:00–18:00 và ban tổ chức ghi rõ lịch có thể thay đổi.",
           internalLinks: [
             {
-              text: "Bảng A: Việt Nam gặp ai và kết quả bốc thăm",
-              path: "/vi/blog/bang-a-world-cup-pickleball-2026-doi-thu-viet-nam",
+              text: "Lịch thi đấu đầy đủ từng ngày của cả hai giải, và Việt Nam đấu ngày nào",
+              path: "/vi/blog/lich-thi-dau-pickleball-world-cup-2026-da-nang",
             },
           ],
-        },
-        {
-          heading: "Vậy chung kết Open đấu lúc nào?",
-          content:
-            'Đáng nêu ra vì lịch đồng đội đã công bố KHÔNG trả lời câu này. Thứ Bảy 5/9 có tứ kết và bán kết Open; Chủ nhật 6/9 chỉ ghi chung kết Seniors và chung kết Juniors — trận chung kết Open, trận lớn nhất giải, không nằm ở ngày nào cả. Trong hệ thống bracket của chính ban tổ chức thì trận chung kết Open và trận tranh hạng ba đều tồn tại, nên trận đấu là có thật; nó chỉ chưa được gán ngày, giờ và sân. Mọi dấu hiệu còn lại đều trỏ về Chủ nhật 6/9: gói vé duy nhất mang nhãn FINALS đề ngày 6/9, gói trọn năm ngày mô tả trình tự "Khai mạc → Các vòng đấu → Tứ kết → Bán kết → Chung kết & Music Festival", và Giải Cá nhân cũng đặt Chung kết nhóm Pro tại Tiên Sơn sân 1 đúng ngày đó. Hãy coi 6/9 là DỰ KIẾN chứ chưa phải đã chốt, và đừng đặt vé máy bay về dựa trên nó cho tới khi ban tổ chức công bố giờ.',
         },
         {
           heading: "Ở đâu: bảy địa điểm, không phải một",

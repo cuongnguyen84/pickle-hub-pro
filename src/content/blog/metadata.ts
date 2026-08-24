@@ -10,6 +10,36 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-world-cup-2026-da-nang-schedule",
+    publishedDate: "2026-08-24",
+    updatedDate: "2026-08-24",
+    author: "Cuong Nguyen",
+    tags: [
+      "lịch thi đấu world cup pickleball",
+      "pickleball world cup 2026",
+      "world cup pickleball da nang",
+      "lich thi dau pickleball",
+      "doi tuyen pickleball viet nam",
+      "pickleball da nang 2026",
+      "heineken pickleball world cup",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow the World Cup live on ThePickleHub",
+      vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
+    },
+    titleEn:
+      "Pickleball World Cup 2026 Da Nang Schedule: Every Date, Both Tournaments",
+    titleVi:
+      "Lịch thi đấu Pickleball World Cup 2026 Đà Nẵng: đủ hai giải, từng ngày",
+    metaTitleEn: "Pickleball World Cup 2026 Schedule: Day by Day",
+    metaTitleVi: "Lịch thi đấu World Cup Pickleball 2026 Đà Nẵng",
+    metaDescriptionEn:
+      "Pickleball World Cup 2026 Da Nang schedule: individual draws from Aug 30, national teams Sep 3-6, Vietnam's dates, venues and the Open final gap.",
+    metaDescriptionVi:
+      "Lịch thi đấu World Cup Pickleball 2026 Đà Nẵng: Cá nhân từ 30/8, Đồng đội 3-6/9, Việt Nam đấu ngày nào và ở sân nào.",
+  },
+  {
     slug: "sophia-huynh-ken-tam-womens-doubles-gold-2026",
     publishedDate: "2026-08-24",
     updatedDate: "2026-08-24",
@@ -456,9 +486,9 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaTitleEn: "Pickleball World Cup 2026 Da Nang: How to Watch & Register",
     metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Cách xem",
     metaDescriptionEn:
-      "Pickleball World Cup 2026 Da Nang (Aug 30–Sep 6): the confirmed day-by-day schedule, national-team dates, venues, tickets and how to watch on FPT Play.",
+      "Pickleball World Cup 2026 Da Nang: tickets, all 7 venues, FPT Play broadcast, hotels and the key dates. Aug 30-Sep 6, with Vietnam at home.",
     metaDescriptionVi:
-      "World Cup Pickleball 2026 Đà Nẵng (30/8–6/9): lịch thi đấu từng ngày, lịch đội tuyển VN 3–6/9, 7 sân, vé và cách xem trên FPT Play.",
+      "World Cup Pickleball 2026 Đà Nẵng: vé, 7 địa điểm, xem trên FPT Play, khách sạn và các mốc chính. 30/8-6/9, Việt Nam đá sân nhà.",
   },
   {
     slug: "vietnam-pickleball-players-to-watch-2026",
