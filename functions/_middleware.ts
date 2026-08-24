@@ -806,7 +806,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v53 — thông số sản phẩm (2026-08-23): trang /shop/product/:slug nay có
   // khối "Thông số", additionalProperty trong schema Product, và ba thông số
   // đầu nằm trong câu mở đầu. HTML cũ trong KV không có bất kỳ thứ nào.
-  const cacheKey = `pr:v53:${url.pathname}`;
+  //
+  // v54 — CTR-02 (2026-08-24): /san titles and meta descriptions now lead with
+  // the district ("– Đống Đa, Hà Nội") instead of the city alone. 690 of 760
+  // venue rows change their <title> and <meta description>, ×2 for the en/vi
+  // pair, so every cached venue page would otherwise serve the old city-only
+  // title for the full TTL.
+  const cacheKey = `pr:v54:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

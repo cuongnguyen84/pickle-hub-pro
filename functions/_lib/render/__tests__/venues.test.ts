@@ -53,6 +53,8 @@ const render = async (row: Row, lang: "vi" | "en" = "vi") =>
 const metaDescription = (html: string) =>
   html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "";
 
+const titleTag = (html: string) => html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+
 const utf8Bytes = (s: string) => new TextEncoder().encode(s).length;
 
 /**
@@ -93,7 +95,10 @@ describe("renderVenueDetail — meta description budget (CTR-01)", () => {
     const desc = unescape(metaDescription(await render(BASE)));
 
     expect(desc).toContain("Hà Nội");
-    expect(desc.startsWith("Đảo Sen Pickleball tại Hà Nội.")).toBe(true);
+    // CTR-02: the tail now leads with the district, which is what venue
+    // searchers actually type ("sân pickleball quận 2"). The city keyword
+    // still survives immediately after it.
+    expect(desc.startsWith("Đảo Sen Pickleball tại Đống Đa, Hà Nội.")).toBe(true);
   });
 
   it("does not repeat the pickleball keyword when the name already carries it", async () => {
@@ -106,10 +111,10 @@ describe("renderVenueDetail — meta description budget (CTR-01)", () => {
     const row = { ...BASE, name: "Tăng Bạt Hổ" };
 
     expect(unescape(metaDescription(await render(row)))).toContain(
-      "Sân pickleball Tăng Bạt Hổ tại Hà Nội.",
+      "Sân pickleball Tăng Bạt Hổ tại Đống Đa, Hà Nội.",
     );
     expect(unescape(metaDescription(await render(row, "en")))).toContain(
-      "Tăng Bạt Hổ pickleball court in Hà Nội.",
+      "Tăng Bạt Hổ pickleball court in Đống Đa, Hà Nội.",
     );
   });
 
@@ -125,10 +130,53 @@ describe("renderVenueDetail — meta description budget (CTR-01)", () => {
     // The generic tail is the first thing sacrificed, not the venue name.
     expect(desc).toContain("Sân Pickleball Rất Dài");
     expect(desc).not.toContain("trên ThePickleHub");
-    // The city keyword survives: the lead is elided at a word boundary rather
-    // than the whole string being hard-cut mid-word inside "tại Hà Nội".
-    expect(desc).toContain("tại Hà Nội.");
-    expect(desc).toMatch(/…\s?tại Hà Nội\.$/);
+    // The location keywords survive: the lead is elided at a word boundary
+    // rather than the whole string being hard-cut mid-word inside the tail.
+    expect(desc).toContain("tại Đống Đa, Hà Nội.");
+    expect(desc).toMatch(/…\s?tại Đống Đa, Hà Nội\.$/);
+  });
+
+  // ── CTR-02: district in title + snippet ────────────────────────────────
+  it("leads the title with the district, then the city", async () => {
+    const title = titleTag(await render(BASE));
+
+    expect(title).toContain("Đảo Sen Pickleball – Đống Đa, Hà Nội");
+  });
+
+  it("falls back to the district alone when the full pair blows the 60-byte title budget", async () => {
+    // 38-byte name: " – Đống Đa" lands it at 54 bytes (fits), while
+    // " – Đống Đa, Hà Nội" would be 65 (over). District beats city because it
+    // is the segment that actually narrows a 136-venue city.
+    const title = titleTag(
+      await render({ ...BASE, name: "Sân Pickleball Khu Đô Thị Ciputra" }),
+    );
+
+    expect(utf8Bytes(unescape(title))).toBeLessThanOrEqual(60);
+    expect(title).toContain("Đống Đa");
+    expect(title).not.toContain("Đống Đa, Hà Nội");
+  });
+
+  it("never ellipsises the title — it degrades to a shorter variant instead", async () => {
+    const title = unescape(titleTag(await render({ ...BASE, name: "Sân Pickleball " + "Rất Dài ".repeat(4).trim() })));
+
+    expect(utf8Bytes(title)).toBeLessThanOrEqual(60);
+    expect(title).not.toContain("…");
+  });
+
+  it("omits the district when the venue name already carries it", async () => {
+    const title = titleTag(await render({ ...BASE, name: "Pickleball Đống Đa" }));
+
+    expect(title).not.toContain("Đống Đa, Hà Nội");
+    expect(title).not.toContain("– Đống Đa");
+  });
+
+  it("still renders city-only for the 70 rows with no district", async () => {
+    const row = { ...BASE, district: null };
+
+    expect(titleTag(await render(row))).toContain("Đảo Sen Pickleball – Hà Nội");
+    expect(unescape(metaDescription(await render(row)))).toContain(
+      "Đảo Sen Pickleball tại Hà Nội.",
+    );
   });
 
   it("omits absent facts instead of emitting empty punctuation", async () => {
