@@ -40,6 +40,10 @@ import {
   surfaceLabel,
   citySlugFromName,
   VENUE_LIST_COLUMNS,
+  isVerifiedVenueSource,
+  venuePriceRange,
+  uniformWeekHours,
+  formatHoursRange,
   type VenueListItem,
 } from "@/lib/venues";
 import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
@@ -83,13 +87,29 @@ export default function VenueDetail() {
     staleTime: 60_000,
   });
 
+  const lang = language === "vi" ? "vi" : "en";
+
+  // PRICE-01: 'default' means a blanket placeholder on 753 of 896 rows, not a
+  // fact about this venue. Showing it unlabelled is how a player ends up
+  // outside a court that shut at 21:00. See VENUE_SOURCE_CONTRACT in lib/venues.
+  const hoursVerified = isVerifiedVenueSource(venue?.hours_source ?? null);
+  const weekHours = useMemo(() => uniformWeekHours(venue?.hours_json ?? null), [venue]);
+
   const hours = useMemo(() => {
-    if (!venue?.hours_json) return [];
+    // A uniform week is one line, not seven identical rows — which is what
+    // production rendered before this change.
+    if (!venue?.hours_json || weekHours) return [];
     return DAY_ORDER.filter((d) => venue.hours_json?.[d]).map((d) => ({
       day: language === "vi" ? DAY_LABELS[d].vi : DAY_LABELS[d].en,
       value: venue.hours_json![d],
     }));
-  }, [venue, language]);
+  }, [venue, language, weekHours]);
+
+  const priceText = useMemo(
+    () => venuePriceRange(venue?.price_min_vnd ?? null, venue?.price_max_vnd ?? null),
+    [venue],
+  );
+  const priceVerified = isVerifiedVenueSource(venue?.price_source ?? null);
 
   if (isLoading) {
     return (
@@ -304,18 +324,44 @@ export default function VenueDetail() {
           </div>
         )}
 
-        {/* Opening hours */}
-        {hours.length > 0 && (
+        {/* Price + opening hours.
+            A verified figure is stated plainly. A default is shown as what
+            courts in the area cost, with this venue explicitly excluded from
+            the claim — same split the bot renderer applies. */}
+        {(priceText || weekHours || hours.length > 0) && (
           <section className="mb-6">
             <h2 className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              {language === "vi" ? "Giờ mở cửa" : "Opening hours"}
+              {language === "vi" ? "Giá & giờ mở cửa" : "Price & opening hours"}
             </h2>
             <div className="rounded-md border border-border">
+              {priceText && priceVerified && (
+                <div className="flex items-center justify-between px-4 py-2 text-sm">
+                  <span className="text-muted-foreground">
+                    {language === "vi" ? "Giá thuê" : "Price"}
+                  </span>
+                  <span className="font-medium">
+                    {priceText}
+                    {language === "vi" ? "/giờ" : "/hour"}
+                  </span>
+                </div>
+              )}
+              {weekHours && hoursVerified && (
+                <div
+                  className={`flex items-center justify-between px-4 py-2 text-sm ${
+                    priceText && priceVerified ? "border-t border-border" : ""
+                  }`}
+                >
+                  <span className="text-muted-foreground">
+                    {language === "vi" ? "Giờ mở cửa" : "Opening hours"}
+                  </span>
+                  <span>{formatHoursRange(weekHours, lang)}</span>
+                </div>
+              )}
               {hours.map((h, i) => (
                 <div
                   key={h.day}
                   className={`flex items-center justify-between px-4 py-2 text-sm ${
-                    i > 0 ? "border-t border-border" : ""
+                    i > 0 || (priceText && priceVerified) ? "border-t border-border" : ""
                   }`}
                 >
                   <span className="text-muted-foreground">{h.day}</span>
@@ -323,6 +369,18 @@ export default function VenueDetail() {
                 </div>
               ))}
             </div>
+
+            {priceText && !priceVerified && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {language === "vi"
+                  ? `Chưa có bảng giá riêng của sân này. Sân pickleball${
+                      venue.city ? ` ở ${venue.city}` : ""
+                    } thường thuê ${priceText}/giờ — gọi sân để hỏi giá và giờ chính xác.`
+                  : `No confirmed rate for this court yet. Pickleball courts${
+                      venue.city ? ` in ${venue.city}` : ""
+                    } typically rent for ${priceText} per hour — call ahead for the exact price and hours.`}
+              </p>
+            )}
           </section>
         )}
 
