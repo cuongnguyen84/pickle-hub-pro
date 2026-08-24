@@ -51,6 +51,10 @@ interface VenueDetailRow {
   cover_image_url: string | null;
   review_count: number | null;
   review_avg: number | null;
+  price_min_vnd: number | null;
+  price_max_vnd: number | null;
+  price_source: SourceTag;
+  hours_source: SourceTag;
 }
 
 // Guard-0: a venue with no location AND no facts is a pure UGC stub (created via
@@ -73,6 +77,78 @@ export function isThinVenue(v: {
   const hasCourts = !!(v.num_courts && v.num_courts > 0);
   const hasPhone = !!(v.phone && v.phone.trim());
   return !hasAddress && !hasGeo && !hasCourts && !hasPhone;
+}
+
+// ── PRICE-01: price + opening hours ────────────────────────────────────────
+/**
+ * `price_source`/`hours_source` say where a figure came from, and the display
+ * rules follow from that — full contract in the 20260824100000 migration.
+ *
+ *   'partner' | 'manual' — a real figure for THIS venue. Safe in <title>, the
+ *                          meta description, the body, and schema.org.
+ *   'default'            — the blanket 80.000–200.000 đ / 06:00–24:00 placed on
+ *                          741 rows we hold no figure for. Identical across all
+ *                          of them, so it is NOT a fact about any one venue.
+ *
+ * A default must never reach the title, the snippet or JSON-LD:
+ *  - in a title it is a claim about a specific court we cannot support, and a
+ *    player who turns up and pays 300k has been misled by us;
+ *  - in a snippet it would be the same characters on 741 search results, which
+ *    is the duplicate-boilerplate problem the /san cluster already has;
+ *  - in `priceRange` it is a structured, machine-readable assertion — the worst
+ *    of the three places to put a number nobody verified.
+ *
+ * It stays visible in the body, labelled as a regional guide, because "courts
+ * around here run 80–200k" is true and useful. It just is not a quote.
+ */
+export type SourceTag = "partner" | "manual" | "default" | null;
+
+export function isVerifiedSource(source: SourceTag): boolean {
+  return source === "partner" || source === "manual";
+}
+
+/** 100000 → "100K". Titles are byte-starved; Vietnamese costs 2-3 bytes/char. */
+export function shortPrice(vnd: number): string {
+  return `${Math.round(vnd / 1000)}K`;
+}
+
+/** 100000 → "100.000đ" — the long form for body copy and snippets. */
+export function longPrice(vnd: number): string {
+  return `${Math.round(vnd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}đ`;
+}
+
+export function priceRangeText(
+  min: number | null,
+  max: number | null,
+  style: "short" | "long",
+): string | null {
+  if (min == null || max == null) return null;
+  const fmt = style === "short" ? shortPrice : longPrice;
+  return min === max ? fmt(min) : `${fmt(min)}–${fmt(max)}`;
+}
+
+/**
+ * Every row this import wrote carries the same range on all seven days, so
+ * printing seven identical lines would be noise. Collapse a uniform week to one
+ * range and leave the existing per-day list for anything edited by hand later.
+ */
+export function uniformHours(hoursJson: unknown): string | null {
+  if (!hoursJson || typeof hoursJson !== "object" || Array.isArray(hoursJson)) return null;
+  const vals = Object.values(hoursJson as Record<string, unknown>).filter(
+    (x): x is string => typeof x === "string" && x.trim().length > 0,
+  );
+  if (vals.length < 7) return null;
+  const first = vals[0].trim();
+  return vals.every((x) => x.trim() === first) ? first : null;
+}
+
+/** "00:00-24:00" reads better as "mở cả ngày" than as a clock range. */
+export function hoursLabel(range: string, lang: Lang): string {
+  const flat = range.replace(/\s/g, "");
+  if (flat === "00:00-24:00" || flat === "0:00-24:00") {
+    return lang === "vi" ? "Mở cả ngày" : "Open 24 hours";
+  }
+  return range;
 }
 
 function displayName(v: { name: string; name_vi: string | null }, lang: Lang): string {
@@ -356,9 +432,13 @@ export async function renderVenueDetail(
   const VENUE_BASE_COLS =
     "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url";
   const VENUE_REVIEW_COLS = ", review_count, review_avg";
+  // PRICE-01 columns ride with the review columns so they share the existing
+  // deploy-safe retry below: if this ships before the migration is applied the
+  // select errors and we fall back to VENUE_BASE_COLS rather than 404ing.
+  const VENUE_PRICE_COLS = ", price_min_vnd, price_max_vnd, price_source, hours_source";
   let { data, error } = await supabase
     .from("venues")
-    .select(VENUE_BASE_COLS + VENUE_REVIEW_COLS)
+    .select(VENUE_BASE_COLS + VENUE_REVIEW_COLS + VENUE_PRICE_COLS)
     .eq("slug", slug)
     .maybeSingle();
 
@@ -451,7 +531,17 @@ export async function renderVenueDetail(
   // the city-only one: "Quận 2" narrows a 150-venue city to 33 venues, while
   // "TP.HCM" narrows nothing. Ambiguity across cities is acceptable — the
   // address, breadcrumb and JSON-LD all still carry the city.
+  // PRICE-01: a verified price is the most clickable fact we hold for a court
+  // query, so it outranks location when both fit. Never built from a 'default'
+  // source — see isVerifiedSource.
+  const pricePart = isVerifiedSource(v.price_source)
+    ? priceRangeText(v.price_min_vnd, v.price_max_vnd, "short")
+    : null;
+  const priceTail = pricePart ? ` – ${pricePart}` : "";
   const titleVariants = [
+    useDistrict && useCity && pricePart ? `${kwName} – ${districtName}, ${cityName}${priceTail}` : "",
+    useDistrict && pricePart ? `${kwName} – ${districtName}${priceTail}` : "",
+    useCity && pricePart ? `${kwName} – ${cityName}${priceTail}` : "",
     useDistrict && useCity ? `${kwName} – ${districtName}, ${cityName}` : "",
     useDistrict ? `${kwName} – ${districtName}` : "",
     useCity ? `${kwName} – ${cityName}` : "",
@@ -486,6 +576,10 @@ export async function renderVenueDetail(
   // "Sân pickleball Sân Pickleball FLC Sầm Sơn".
   const leadVi = nameHasKw ? name : `Sân pickleball ${name}`;
   const leadEn = nameHasKw ? name : `${name} pickleball court`;
+  const verifiedPriceLong = isVerifiedSource(v.price_source)
+    ? priceRangeText(v.price_min_vnd, v.price_max_vnd, "long")
+    : null;
+  const verifiedHours = isVerifiedSource(v.hours_source) ? uniformHours(v.hours_json) : null;
   const factsVi = [courtsVi, indoorVi].filter(Boolean).join(", ");
   const factsEn = [courtsEn, indoorEn].filter(Boolean).join(", ");
   // CTR-02: carry the district into the snippet tail too, for the same reason
@@ -509,6 +603,8 @@ export async function renderVenueDetail(
       ? {
           core: fitLead(leadVi, locationTail((loc) => ` tại ${loc}.`)),
           segments: [
+            verifiedPriceLong ? ` Giá ${verifiedPriceLong}/giờ.` : "",
+            verifiedHours ? ` ${hoursLabel(verifiedHours, "vi")}.` : "",
             factsVi ? ` ${upperFirst(factsVi)}.` : "",
             v.phone ? ` Đặt sân: ${v.phone}.` : "",
             " Địa chỉ, bản đồ & chỉ đường.",
@@ -518,6 +614,8 @@ export async function renderVenueDetail(
       : {
           core: fitLead(leadEn, locationTail((loc) => ` in ${loc}.`)),
           segments: [
+            verifiedPriceLong ? ` From ${verifiedPriceLong}/hour.` : "",
+            verifiedHours ? ` ${hoursLabel(verifiedHours, "en")}.` : "",
             factsEn ? ` ${upperFirst(factsEn)}.` : "",
             v.phone ? ` Booking: ${v.phone}.` : "",
             " Address, map & directions.",
@@ -564,7 +662,13 @@ export async function renderVenueDetail(
   // day and range are separable. The free-text/array forms stay body-only:
   // schema.org needs dayOfWeek + opens/closes, and inventing those from a
   // string like "6h-22h hằng ngày" would be a guess, not data.
-  const openingHours = buildOpeningHours(v.hours_json);
+  // Same rule as priceRange: openingHoursSpecification is a structured claim
+  // about THIS venue, so it is built only from a verified source. The blanket
+  // 06:00–24:00 stays out of schema even though it is stored on the row —
+  // otherwise we would be telling Google 741 courts are open 18 hours a day.
+  const openingHours = isVerifiedSource(v.hours_source)
+    ? buildOpeningHours(v.hours_json)
+    : [];
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -587,6 +691,13 @@ export async function renderVenueDetail(
       ? { geo: { "@type": "GeoCoordinates", latitude: v.latitude, longitude: v.longitude } }
       : {}),
     ...(v.phone ? { telephone: v.phone } : {}),
+    // priceRange is a machine-readable assertion. Only ever emit it from a
+    // verified source — a default would tell Google a price for 741 venues
+    // that nobody checked.
+    ...(isVerifiedSource(v.price_source) &&
+    priceRangeText(v.price_min_vnd, v.price_max_vnd, "long")
+      ? { priceRange: priceRangeText(v.price_min_vnd, v.price_max_vnd, "long") as string }
+      : {}),
     ...(v.website ? { sameAs: [v.website] } : {}),
     ...(v.cover_image_url ? { image: v.cover_image_url } : {}),
     ...(v.latitude != null && v.longitude != null
@@ -638,8 +749,8 @@ export async function renderVenueDetail(
 
   const lbl =
     lang === "vi"
-      ? { addr: "Địa chỉ", courts: "Số sân", type: "Loại sân", surface: "Mặt sân", phone: "Điện thoại", hours: "Giờ mở cửa", amenities: "Tiện ích", map: "Xem bản đồ", directions: "Chỉ đường" }
-      : { addr: "Address", courts: "Courts", type: "Type", surface: "Surface", phone: "Phone", hours: "Opening hours", amenities: "Amenities", map: "View map", directions: "Directions" };
+      ? { addr: "Địa chỉ", courts: "Số sân", type: "Loại sân", surface: "Mặt sân", phone: "Điện thoại", hours: "Giờ mở cửa", amenities: "Tiện ích", map: "Xem bản đồ", directions: "Chỉ đường", price: "Giá thuê" }
+      : { addr: "Address", courts: "Courts", type: "Type", surface: "Surface", phone: "Phone", hours: "Opening hours", amenities: "Amenities", map: "View map", directions: "Directions", price: "Price" };
 
   const parts: string[] = [bc, `<h1>${escapeHtml(name)}</h1>`];
   if (v.cover_image_url)
@@ -658,7 +769,33 @@ export async function renderVenueDetail(
     parts.push(`<p><strong>${lbl.type}:</strong> ${escapeHtml(lang === "vi" ? indoorVi : indoorEn)}</p>`);
   if (v.surface_type)
     parts.push(`<p><strong>${lbl.surface}:</strong> ${escapeHtml(v.surface_type)}</p>`);
-  const hours = hoursLines(v.hours_json, lang);
+
+  // PRICE-01 body rows. A verified figure is stated plainly as this venue's
+  // price; a default is stated as what courts in the area cost, with the venue
+  // explicitly excluded from the claim, so the page never asserts a number we
+  // did not check. Same split for hours.
+  const bodyPrice = priceRangeText(v.price_min_vnd, v.price_max_vnd, "long");
+  if (bodyPrice) {
+    parts.push(
+      isVerifiedSource(v.price_source)
+        ? `<p><strong>${lbl.price}:</strong> ${escapeHtml(bodyPrice)}${lang === "vi" ? "/giờ" : " per hour"}</p>`
+        : `<p>${escapeHtml(
+            lang === "vi"
+              ? `Chưa có bảng giá riêng của sân này. Sân pickleball${cityName ? ` ở ${cityName}` : ""} thường thuê ${bodyPrice}/giờ — gọi sân để hỏi giá chính xác.`
+              : `No confirmed rate for this court yet. Pickleball courts${cityName ? ` in ${cityName}` : ""} typically rent for ${bodyPrice} per hour — call ahead for the exact price.`,
+          )}</p>`,
+    );
+  }
+  const weekHours = uniformHours(v.hours_json);
+  if (weekHours && isVerifiedSource(v.hours_source)) {
+    parts.push(
+      `<p><strong>${lbl.hours}:</strong> ${escapeHtml(hoursLabel(weekHours, lang))}</p>`,
+    );
+  }
+  // Skip the per-day list when the week is uniform — the single line above
+  // already said it, and seven identical rows is exactly the padding the /san
+  // cluster is being penalised for.
+  const hours = weekHours ? [] : hoursLines(v.hours_json, lang);
   if (hours.length > 0)
     parts.push(
       `<p><strong>${lbl.hours}:</strong></p><ul>${hours.map((h) => `<li>${escapeHtml(h)}</li>`).join("")}</ul>`,

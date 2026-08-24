@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { renderVenueDetail } from "../venues";
+import {
+  renderVenueDetail, isVerifiedSource, shortPrice, longPrice,
+  priceRangeText, uniformHours, hoursLabel,
+} from "../venues";
 import type { SupabaseClient } from "../../supabase";
 
 const SITE = "https://www.thepicklehub.net";
@@ -45,6 +48,10 @@ const BASE = {
   amenities: null,
   hours_json: null,
   cover_image_url: null,
+  price_min_vnd: null,
+  price_max_vnd: null,
+  price_source: null,
+  hours_source: null,
 };
 
 const render = async (row: Row, lang: "vi" | "en" = "vi") =>
@@ -250,7 +257,11 @@ describe("renderVenueDetail — amenityFeature + openingHoursSpecification", () 
   it("builds openingHoursSpecification from the per-day object form", async () => {
     const html = await render({
       ...BASE,
+      // PRICE-01: hours schema is now gated on a verified hours_source, so a
+      // fixture that only sets hours_json emits nothing. That gate is the point
+      // — the blanket 06:00-24:00 on 741 rows must not become structured data.
       hours_json: { mon: "6:00-22:00", sat: "5h30 - 23h", bogus: "x", sun: "" },
+      hours_source: "partner",
     });
     const spec = jsonLd(html).openingHoursSpecification as Record<string, unknown>[];
 
@@ -275,5 +286,161 @@ describe("renderVenueDetail — amenityFeature + openingHoursSpecification", () 
     expect(html).toContain('hreflang="en"');
     expect(html).toContain('hreflang="vi"');
     expect(html).toContain('hreflang="x-default"');
+  });
+});
+
+
+/**
+ * PRICE-01 (2026-08-24) — venues now carry a price range and opening hours, and
+ * `price_source`/`hours_source` say where each came from.
+ *
+ * 108 of 850 rows hold a real figure imported from a booking source. The other
+ * 741 carry a blanket 80.000–200.000 đ / 06:00–24:00 that is identical across
+ * all of them, so it is not a fact about any one venue. These tests pin the
+ * line between the two: a verified figure may be asserted anywhere, a default
+ * may appear only as visible, labelled body copy.
+ */
+const WEEK = (range) =>
+  Object.fromEntries(["mon","tue","wed","thu","fri","sat","sun"].map((d) => [d, range]));
+
+const PARTNER = {
+  ...BASE,
+  price_min_vnd: 100000,
+  price_max_vnd: 160000,
+  price_source: "partner",
+  hours_json: WEEK("05:00-22:00"),
+  hours_source: "partner",
+};
+const DEFAULTED = {
+  ...BASE,
+  price_min_vnd: 80000,
+  price_max_vnd: 200000,
+  price_source: "default",
+  hours_json: WEEK("06:00-24:00"),
+  hours_source: "default",
+};
+
+const jsonLdOf = (html: string) => {
+  const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  return m ? JSON.parse(m[1]) : {};
+};
+
+describe("renderVenueDetail — verified price reaches every surface", () => {
+  it("puts the price in the title, after the location", async () => {
+    const title = titleTag(await render(PARTNER));
+
+    expect(title).toContain("100K–160K");
+    expect(utf8Bytes(unescape(title))).toBeLessThanOrEqual(60);
+  });
+
+  it("front-loads the price in the snippet, ahead of court count and phone", async () => {
+    const desc = unescape(metaDescription(await render(PARTNER)));
+
+    expect(desc).toContain("Giá 100.000đ–160.000đ/giờ.");
+    expect(desc.indexOf("Giá")).toBeLessThan(desc.indexOf("Đặt sân"));
+    expect(utf8Bytes(desc)).toBeLessThanOrEqual(160);
+  });
+
+  it("emits priceRange and openingHoursSpecification in JSON-LD", async () => {
+    const ld = jsonLdOf(await render(PARTNER));
+
+    expect(ld.priceRange).toBe("100.000đ–160.000đ");
+    expect(Array.isArray(ld.openingHoursSpecification)).toBe(true);
+    expect(ld.openingHoursSpecification).toHaveLength(7);
+    expect(ld.openingHoursSpecification[0].opens).toBe("05:00");
+  });
+
+  it("states the price plainly in the body", async () => {
+    const html = await render(PARTNER);
+
+    expect(html).toContain("Giá thuê");
+    expect(html).toContain("100.000đ–160.000đ/giờ");
+  });
+
+  it("collapses a uniform week to one line instead of seven identical rows", async () => {
+    const html = await render(PARTNER);
+
+    expect(html).toContain("05:00-22:00");
+    expect(html).not.toContain("Thứ 2: 05:00-22:00");
+  });
+});
+
+describe("renderVenueDetail — a default price is never asserted as fact", () => {
+  it("keeps the default out of the title", async () => {
+    const title = titleTag(await render(DEFAULTED));
+
+    expect(title).not.toContain("80K");
+    expect(title).not.toContain("200K");
+  });
+
+  it("keeps the default out of the meta description", async () => {
+    const desc = unescape(metaDescription(await render(DEFAULTED)));
+
+    expect(desc).not.toContain("80.000đ");
+    expect(desc).not.toContain("Giá ");
+  });
+
+  it("keeps the default out of JSON-LD — the worst place for an unchecked number", async () => {
+    const ld = jsonLdOf(await render(DEFAULTED));
+
+    expect(ld.priceRange).toBeUndefined();
+    expect(ld.openingHoursSpecification).toBeUndefined();
+  });
+
+  it("shows it in the body as a regional guide, explicitly not this venue's rate", async () => {
+    const html = await render(DEFAULTED);
+
+    expect(html).toContain("Chưa có bảng giá riêng của sân này");
+    expect(html).toContain("80.000đ–200.000đ");
+    expect(html).toContain("gọi sân để hỏi giá chính xác");
+    // Never under the "Giá thuê" label, which reads as a quote for this court.
+    expect(html).not.toContain("<strong>Giá thuê:</strong>");
+  });
+
+  it("says the same thing in English", async () => {
+    const html = await render(DEFAULTED, "en");
+
+    expect(html).toContain("No confirmed rate for this court yet");
+    expect(html).toContain("call ahead for the exact price");
+  });
+
+  it("omits the hours row rather than showing an unverified 06:00-24:00", async () => {
+    const html = await render(DEFAULTED);
+
+    expect(html).not.toContain("<strong>Giờ mở cửa:</strong>");
+  });
+});
+
+describe("price + hours helpers", () => {
+  it("treats only partner and manual as verified", () => {
+    expect(isVerifiedSource("partner")).toBe(true);
+    expect(isVerifiedSource("manual")).toBe(true);
+    expect(isVerifiedSource("default")).toBe(false);
+    expect(isVerifiedSource(null)).toBe(false);
+  });
+
+  it("formats prices short for titles and long for prose", () => {
+    expect(shortPrice(100000)).toBe("100K");
+    expect(longPrice(100000)).toBe("100.000đ");
+    expect(longPrice(1250000)).toBe("1.250.000đ");
+  });
+
+  it("collapses an equal min and max to a single figure", () => {
+    expect(priceRangeText(100000, 100000, "long")).toBe("100.000đ");
+    expect(priceRangeText(100000, 160000, "short")).toBe("100K–160K");
+    expect(priceRangeText(null, 160000, "long")).toBeNull();
+  });
+
+  it("returns a week range only when all seven days agree", () => {
+    expect(uniformHours(WEEK("06:00-22:00"))).toBe("06:00-22:00");
+    expect(uniformHours({ ...WEEK("06:00-22:00"), sun: "08:00-20:00" })).toBeNull();
+    expect(uniformHours({ mon: "06:00-22:00" })).toBeNull();
+    expect(uniformHours(null)).toBeNull();
+  });
+
+  it("renders a full day as words, not as a clock range", () => {
+    expect(hoursLabel("00:00-24:00", "vi")).toBe("Mở cả ngày");
+    expect(hoursLabel("00:00-24:00", "en")).toBe("Open 24 hours");
+    expect(hoursLabel("06:00-22:00", "vi")).toBe("06:00-22:00");
   });
 });

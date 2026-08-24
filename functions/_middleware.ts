@@ -812,7 +812,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // venue rows change their <title> and <meta description>, ×2 for the en/vi
   // pair, so every cached venue page would otherwise serve the old city-only
   // title for the full TTL.
-  const cacheKey = `pr:v54:${url.pathname}`;
+  //
+  // v57 — PRICE-01 (2026-08-24): every /san page changes. 108 venues gained a
+  // real price + opening hours in <title>, the snippet and JSON-LD; the other
+  // 741 gained a labelled regional price line in the body. Cached HTML would
+  // serve the price-less version for the full TTL.
+  const cacheKey = `pr:v57:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
