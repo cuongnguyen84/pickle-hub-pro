@@ -36,6 +36,33 @@ export interface Venue {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  price_min_vnd: number | null;
+  price_max_vnd: number | null;
+  /** See VENUE_SOURCE_CONTRACT below — 'default' is not a fact about this venue. */
+  price_source: VenueSourceTag;
+  hours_source: VenueSourceTag;
+}
+
+/**
+ * VENUE_SOURCE_CONTRACT (PRICE-01, 2026-08-24)
+ *
+ * `price_source`/`hours_source` record where a figure came from:
+ *
+ *   'partner' | 'manual' — a real figure for THIS venue.
+ *   'default'            — the blanket 80.000–200.000 đ / 06:00–24:00 sitting
+ *                          on 753 of 896 rows. Identical across all of them,
+ *                          therefore not a fact about any one of them.
+ *
+ * The bot renderer (functions/_lib/render/venues.ts) already keeps 'default'
+ * out of <title>, the meta description and JSON-LD. The same rule has to hold
+ * here: a visitor reading "06:00–24:00" on a venue page has no way to know we
+ * never checked, and a court that actually shuts at 21:00 has been
+ * misrepresented to someone standing outside it.
+ */
+export type VenueSourceTag = "partner" | "manual" | "default" | null;
+
+export function isVerifiedVenueSource(source: VenueSourceTag): boolean {
+  return source === "partner" || source === "manual";
 }
 
 /** Lightweight row for the /san grid. */
@@ -59,7 +86,44 @@ export const VENUE_LIST_COLUMNS =
   "id, slug, name, name_vi, address, district, city, country, num_courts, surface_type, is_indoor, cover_image_url, is_verified";
 
 export const VENUE_DETAIL_COLUMNS =
-  "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, hours_json, amenities, cover_image_url, is_verified, created_by, created_at, updated_at";
+  "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, hours_json, amenities, cover_image_url, is_verified, created_by, created_at, updated_at, price_min_vnd, price_max_vnd, price_source, hours_source";
+
+/** 100000 → "100.000đ". Matches longPrice() in the bot renderer. */
+export function formatVnd(vnd: number): string {
+  return `${Math.round(vnd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}đ`;
+}
+
+export function venuePriceRange(
+  min: number | null,
+  max: number | null,
+): string | null {
+  if (min == null || max == null) return null;
+  return min === max ? formatVnd(min) : `${formatVnd(min)}–${formatVnd(max)}`;
+}
+
+/**
+ * The import writes the same range on all seven days, so the per-day table
+ * renders seven identical rows — which is what production showed before this
+ * change. Collapse a uniform week to a single line.
+ */
+export function uniformWeekHours(
+  hoursJson: Record<string, string> | null,
+): string | null {
+  if (!hoursJson) return null;
+  const vals = Object.values(hoursJson).filter((v) => typeof v === "string" && v.trim());
+  if (vals.length < 7) return null;
+  const first = vals[0].trim();
+  return vals.every((v) => v.trim() === first) ? first : null;
+}
+
+/** "06:00-24:00" reads better as words than as a clock range. */
+export function formatHoursRange(range: string, language: "vi" | "en"): string {
+  const flat = range.replace(/\s/g, "");
+  if (flat === "00:00-24:00" || flat === "0:00-24:00") {
+    return language === "vi" ? "Mở cả ngày" : "Open 24 hours";
+  }
+  return range;
+}
 
 /** Country display label for the /san country tabs. VN-first directory; the
  *  SEA pilot adds SG. Unknown codes fall back to the raw code. */
