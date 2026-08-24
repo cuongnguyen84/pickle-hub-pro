@@ -19,6 +19,10 @@ const post: BlogPost = {
     en: "Follow the World Cup live on ThePickleHub",
     vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/pickleball-world-cup-2026-da-nang-schedule-hero.webp",
+    alt: "Tournament schedule graphic for the Pickleball World Cup 2026 in Da Nang, Vietnam, August 30 to September 6 — two Vietnamese players at the net on a blue court with the Dragon Bridge and a Vietnamese flag behind them, and a timeline of four dates: Aug 30 tournament begins, Sep 2 opening ceremony, Sep 3 team events, Sep 6 championship finals.",
+  },
   content: {
     en: {
       title:
