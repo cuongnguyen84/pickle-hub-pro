@@ -400,7 +400,7 @@ async function main() {
   // latitude/longitude are needed by cityFromNearest — omitting them made the
   // coordinate fallback silently return null for every row.
   const existing = await rest(
-    "venues?select=id,slug,name,city,district,phone,price_source,latitude,longitude&limit=2000",
+    "venues?select=id,slug,name,city,district,country,phone,price_source,latitude,longitude&limit=2000",
   );
   const bySlug = new Map(existing.map((v) => [v.slug, v]));
 
@@ -517,6 +517,15 @@ async function main() {
   for (const row of existing) {
     if (touched.has(row.slug)) continue;
     if (row.price_source === "manual" || row.price_source === "partner") continue;
+    // The default is 80.000-200.000 VND. It is a statement about the Vietnamese
+    // market and means nothing anywhere else — applied blindly it put
+    // "Sân pickleball ở Singapore thường thuê 80.000đ-200.000đ/giờ" on 60 SG/MY/BN
+    // pages before this guard existed. A venue outside VN keeps no price at all
+    // until someone supplies a figure in its own currency.
+    if ((row.country ?? "VN") !== "VN") {
+      plan.heldBack.push({ name: row.slug, why: [`outside VN (${row.country}) — VND default does not apply`] });
+      continue;
+    }
     plan.defaulted.push(row.slug);
   }
 
