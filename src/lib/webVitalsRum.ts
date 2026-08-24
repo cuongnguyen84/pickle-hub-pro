@@ -1,5 +1,4 @@
 import type { Metric } from "web-vitals";
-import { getPlatform } from "@/lib/capacitor-utils";
 import { trackEvent } from "@/utils/ga";
 
 export type DeviceClass = "mobile" | "tablet" | "desktop";
@@ -220,10 +219,9 @@ export function getLocale(pathname: string): "vi" | "en" {
   return "en";
 }
 
+// Capacitor nghỉ hưu 2026-08-24 — web là bề mặt duy nhất chạy bundle này. Giữ
+// nguyên union vì GA4 còn dữ liệu lịch sử mang hai giá trị capacitor_*.
 export function getAppSurface(): RumPageContext["appSurface"] {
-  const platform = getPlatform();
-  if (platform === "ios") return "capacitor_ios";
-  if (platform === "android") return "capacitor_android";
   return "web";
 }
 

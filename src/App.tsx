@@ -10,7 +10,6 @@ import { I18nProvider } from "@/i18n";
 import { LoadingState, OfflineBanner } from "@/components/states/PageStates";
 import { ConfirmProvider } from "@/hooks/useConfirm";
 import { lazy, Suspense, Component, ReactNode, useLayoutEffect } from "react";
-import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useLivestreamGateAttribution } from "@/lib/livestreamGateAttribution";
 import BottomNav from "@/components/layout/BottomNav";
@@ -18,15 +17,10 @@ import ChatFAB from "@/components/layout/ChatFAB";
 import AppHeader from "@/components/layout/AppHeader";
 
 import { ViLanguageWrapper } from "@/components/layout/ViLanguageWrapper";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useUnifiedNotificationsRealtime } from "@/hooks/social";
-import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
-
-// Initialize Native Google Auth plugin on app startup
-initializeGoogleAuth();
 
 // Lazy load all other pages for code splitting.
 // lazyRetry: thử lại import 1 lần sau 1.5s — lỗi mạng thoáng qua (đang xem
@@ -468,18 +462,6 @@ class ChunkErrorBoundary extends Component<
   }
 }
 
-// Component to initialize deep link handler
-const DeepLinkInitializer = (): null => {
-  useDeepLinkHandler();
-  return null;
-};
-
-// Component to initialize push notifications
-const PushNotificationInitializer = (): null => {
-  usePushNotifications();
-  return null;
-};
-
 // Mount the unified-notifications realtime subscription ONCE per page
 // (Codex P2 follow-up on PR #27). AppHeader renders the bell twice
 // (desktop md:block + mobile md:hidden side-by-side, CSS-toggled), so
@@ -695,8 +677,6 @@ const App = () => (
             <Sonner />
             <OfflineBanner />
             <BrowserRouter>
-              <DeepLinkInitializer />
-              <PushNotificationInitializer />
               <NotificationsRealtimeInitializer />
               <PageTracker />
               <LivestreamGateAttribution />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { isIOS } from "@/lib/capacitor-utils";
+import { isIOS } from "@/lib/platform";
 
 /**
  * Pull-to-refresh on the main `.tl-scroll` container, iOS-native only.

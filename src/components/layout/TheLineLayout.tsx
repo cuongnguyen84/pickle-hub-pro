@@ -83,12 +83,9 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     }
     return `${window.location.origin}${location.pathname}`;
   }, [location.pathname]);
-  // PR63 — universal back button. iOS users in the Capacitor wrapper
-  // don't have a browser back gesture by default (true edge-swipe
-  // requires an AppDelegate.swift edit — see capacitor.config.ts
-  // note). Android has a hardware back button but a visible chrome
-  // affordance is still helpful. Web users always get this when
-  // they navigated in via a link rather than typing the URL.
+  // PR63 — universal back button. Web users get this when they navigated
+  // in via a link rather than typing the URL; a visible chrome affordance
+  // beats relying on the browser's own back gesture.
   //
   // Hidden on root pages so the brand mark stays the leftmost item
   // when you can't actually go anywhere back. The history-length
