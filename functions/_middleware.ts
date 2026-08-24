@@ -883,9 +883,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // their own query and limit instead of sharing one 40-row created_at window,
   // and upcoming is ordered by air time. Output is unchanged while nothing is
   // live or scheduled, but the cached copy must not outlive the first stream
-  // that is. (v60 is taken by the open GEO-01 branch — CLAUDE.md says take the
-  // higher number when two branches both bump.)
-  const cacheKey = `pr:v61:${url.pathname}`;
+  // that is.
+  //
+  // v62 — GEO-01 (2026-08-24, landed 2026-08-25): the opening paragraph on all
+  // /san pages is rewritten to front-load real facts and name ThePickleHub,
+  // replacing a template that ended by pointing further down the page. This
+  // branch had reserved v60, but /live windowing took v61 to production first,
+  // so it moves to v62 — CLAUDE.md's rule is that the number only has to differ
+  // from the one already deployed.
+  const cacheKey = `pr:v62:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
