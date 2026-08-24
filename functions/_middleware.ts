@@ -828,7 +828,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // copy (/live 59 words -> ~354, /rankings 135 -> ~378) and /live now falls
   // back to replays instead of rendering its own empty state. Four cached URLs
   // (en/vi x 2 routes) would otherwise serve the thin version for the full TTL.
-  const cacheKey = `pr:v59:${url.pathname}`;
+  //
+  // v60 — GEO-01 (2026-08-24): the opening paragraph on all 896 /san pages is
+  // rewritten to front-load real facts and name ThePickleHub, replacing a
+  // template that ended by pointing further down the page.
+  const cacheKey = `pr:v60:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
