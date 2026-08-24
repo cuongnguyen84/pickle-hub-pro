@@ -48,9 +48,6 @@ verify_jwt = false
 [functions.news-translate]
 verify_jwt = false
 
-[functions.news-repair]
-verify_jwt = false
-
 [functions.news-rewrite]
 verify_jwt = false
 
@@ -60,6 +57,15 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.social-caption]
+verify_jwt = false
+
+[functions.product-import-enrich]
+verify_jwt = false
+
+[functions.news-repair]
+verify_jwt = false
+
+[functions.shop-media-lifecycle]
 verify_jwt = false
 
 [functions.news-social-caption]
@@ -424,23 +430,3 @@ verify_jwt = false
 verify_jwt = false
 # Internal shared-secret mailer. A missing INTERNAL_NOTIFY_SECRET returns 503;
 # configuration failure never disables caller authentication.
-
-[functions.shop-media-lifecycle]
-verify_jwt = false
-
-# ── Local auth: TOTP MFA ────────────────────────────────────────────────────
-# Admin routes sit behind AdminMFAGate, and is_admin() has required aal2 since
-# migration 20260730090000. The CLI's default local stack ships TOTP DISABLED,
-# so enrolment returns 422 `mfa_totp_enroll_not_enabled` and every admin screen
-# renders "Lỗi xác thực 2 yếu tố" instead of itself.
-#
-# That made the admin browser QA unrunnable — and, worse, briefly made it pass
-# against an error page. Turning TOTP on here makes the local stack match the
-# production project, so the gate exercises the REAL gate instead of skipping
-# it. It does not weaken anything: aal2 is still required, AdminMFAGate is
-# untouched, and no test bypass exists.
-#
-# Keys verified against `supabase init` output from CLI 2.111.0, not guessed.
-[auth.mfa.totp]
-enroll_enabled = true
-verify_enabled = true
