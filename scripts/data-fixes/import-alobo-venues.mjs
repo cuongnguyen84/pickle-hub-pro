@@ -469,6 +469,30 @@ async function main() {
   const score = (r) =>
     (r.price_min_vnd ? 2 : 0) + (r.phone ? 1 : 0) +
     (r.latitude != null ? 1 : 0) + (r.address ? 1 : 0);
+
+  // Two venues can share a name without being the same place — "Go Pickleball"
+  // appears once in Nha Trang and once in Vũng Tàu, at different addresses with
+  // different phone numbers. Collapsing those by slug drops a real court, so
+  // disambiguate with the city first — which is also the convention the
+  // existing 760 rows follow (789-pickleball-club-ha-noi) — and only treat what
+  // still collides afterwards as a genuine duplicate record.
+  const nameCount = new Map();
+  for (const row of plan.createNew) {
+    nameCount.set(row.slug, (nameCount.get(row.slug) ?? 0) + 1);
+  }
+  for (const row of plan.createNew) {
+    // Only WITHIN-batch collisions get a suffix. A slug that already exists in
+    // the table is deliberately left alone so it trips the "already exists"
+    // guard below: on a re-run that is a row this script created last time, and
+    // suffixing it would insert a second copy of the same court instead of
+    // skipping it.
+    if (nameCount.get(row.slug) === 1) continue;
+    const citySuffix = slugify(row.city);
+    if (citySuffix && !row.slug.endsWith(citySuffix)) {
+      row.slug = `${row.slug}-${citySuffix}`;
+    }
+  }
+
   const bestBySlug = new Map();
   for (const row of plan.createNew) {
     const prev = bestBySlug.get(row.slug);
@@ -524,8 +548,18 @@ async function main() {
     await rest("venues?on_conflict=slug", {
       method: "POST",
       headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
+      // PostgREST rejects a bulk insert whose objects do not all carry the same
+      // keys (PGRST102 "All object keys must match"). Rows here legitimately
+      // differ — a venue with no price has no price_* keys at all — so flatten
+      // every row onto one shape with explicit nulls before sending.
       body: JSON.stringify(
-        plan.createNew.slice(i, i + 50).map(({ review, ...row }) => row),
+        plan.createNew.slice(i, i + 50).map(({ review, ...row }) => ({
+          slug: null, name: null, city: null, district: null, address: null,
+          phone: null, latitude: null, longitude: null,
+          price_min_vnd: null, price_max_vnd: null, price_source: null,
+          hours_json: null, hours_source: null, price_updated_at: null,
+          ...row,
+        })),
       ),
     });
   }
