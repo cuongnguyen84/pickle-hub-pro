@@ -39,7 +39,7 @@ jobs:
           cache: npm
 
       - name: Install npm deps
-        run: npm ci
+        run: npm install
 
       # Bước cài trình duyệt ăn TRỌN ngân sách 20 phút của job và bị huỷ trước
       # khi có test nào chạy (18/08 12:47:48 → 13:07:47). Đọc log thì chỗ treo

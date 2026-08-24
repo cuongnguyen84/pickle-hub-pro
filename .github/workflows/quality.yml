@@ -31,7 +31,7 @@ jobs:
           cache: npm
 
       - name: Install deps
-        run: npm ci
+        run: npm install
 
       - name: Lint (repo-wide)
         # QA-02 (2026-07-17): the 267-error backlog is cleared — the whole
