@@ -823,7 +823,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // city-wide query, so the body of every venue page changes again (×2 for the
   // en/vi pair). Cached HTML would keep serving the identical city-wide list —
   // the exact boilerplate this change exists to remove.
-  const cacheKey = `pr:v58:${url.pathname}`;
+  //
+  // v59 — THIN-01 (2026-08-24): /live and /rankings both gained standing body
+  // copy (/live 59 words -> ~354, /rankings 135 -> ~378) and /live now falls
+  // back to replays instead of rendering its own empty state. Four cached URLs
+  // (en/vi x 2 routes) would otherwise serve the thin version for the full TTL.
+  const cacheKey = `pr:v59:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
