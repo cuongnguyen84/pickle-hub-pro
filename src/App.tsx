@@ -43,6 +43,8 @@ const lazyRetry = <T extends React.ComponentType<any>>(factory: () => Promise<{ 
     ),
   );
 
+import { warmRouteChunk } from "@/lib/warmRouteChunk";
+
 const loadIndexPage = () => import("./pages/Index");
 const Index = lazyRetry(loadIndexPage);
 
@@ -198,12 +200,18 @@ const VenuesCity = lazyRetry(() => import("./pages/VenuesCity"));
 // Start the active public page chunk while the rest of App is still being
 // evaluated. This preserves code splitting without adding a render-time
 // request waterfall on cold deep links.
+//
+// warmRouteChunk, not a bare `void load()`: this promise is a duplicate of the
+// one React.lazy makes, so a rejection here is already handled elsewhere — but
+// `void` does not handle it, and the stale-chunk rejection was landing in
+// client_errors as an unactionable "Importing a module script failed". See
+// @/lib/warmRouteChunk for why swallowing is correct at THIS call site only.
 if (typeof window !== "undefined") {
   const criticalPath = window.location.pathname.replace(/\/+$/, "") || "/";
-  if (criticalPath === "/" || criticalPath === "/vi") void loadIndexPage();
-  else if (/^\/vi\/blog\/[^/]+$/.test(criticalPath)) void loadViBlogPostPage();
-  else if (/^\/blog\/[^/]+$/.test(criticalPath)) void loadBlogPostPage();
-  else if (/^(?:\/vi)?\/san\/[^/]+$/.test(criticalPath)) void loadVenueDetailPage();
+  if (criticalPath === "/" || criticalPath === "/vi") void warmRouteChunk(loadIndexPage);
+  else if (/^\/vi\/blog\/[^/]+$/.test(criticalPath)) void warmRouteChunk(loadViBlogPostPage);
+  else if (/^\/blog\/[^/]+$/.test(criticalPath)) void warmRouteChunk(loadBlogPostPage);
+  else if (/^(?:\/vi)?\/san\/[^/]+$/.test(criticalPath)) void warmRouteChunk(loadVenueDetailPage);
 }
 // Find players ("Tìm bạn chơi") + in-app messaging
 const FindPlayers = lazyRetry(() => import("./pages/FindPlayers"));
