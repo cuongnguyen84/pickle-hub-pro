@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "shenzhen-open-2026-preview",
   publishedDate: "2026-08-18",
-  updatedDate: "2026-08-23",
+  updatedDate: "2026-08-24",
   author: "The PickleHub Team",
   tags: [
     "shenzhen open 2026",
@@ -26,15 +26,15 @@ const post: BlogPost = {
   content: {
     en: {
       title:
-        "Skechers Shenzhen Open 2026 Preview: Schedule, Format and How to Watch the PPA Asia 500",
-      metaTitle: "Shenzhen Open 2026: Schedule, Format & How to Watch",
+        "Skechers Shenzhen Open 2026 Results: Huynh Wins Vietnam's First Women's Doubles Gold, Truong Takes Two Silvers",
+      metaTitle: "Shenzhen Open 2026 Results: Every Final Score",
       metaDescription:
-        "Shenzhen Open 2026 finals, Sunday Aug 23: Hien Truong plays Grayson Goldin for singles gold, plus the mixed final with Sophia Nhi Huynh. Times, how to watch.",
+        "Shenzhen Open 2026 results: Sophia Nhi Huynh wins Women's Doubles gold, a Vietnamese first on PPA Tour Asia. Hien Truong takes two silvers. All final scores.",
       sections: [
         {
           heading: "Skechers Shenzhen Open 2026 at a glance",
           content:
-            "Updated August 23, 2026 — it is Championship Sunday in Shenzhen, and Vietnam has a player in three of the five finals. Hien Truong meets Grayson Goldin for Men's Singles gold and partners Sophia Nhi Huynh in the Mixed Doubles final against Sahra Dennehy and Tama Shimabukuro, while Huynh also plays the Women's Doubles final with Ho Tam. Bronze medal playoffs start Sunday, August 23 at 9:00 AM GMT+8 (8:00 AM Vietnam time) and the finals begin not before 2:00 PM GMT+8 (1:00 PM Vietnam time). The Skechers Shenzhen Open 2026 runs August 20-23, 2026 at the Bao'an Sports Center Gymnasium in Shenzhen, China, a PPA Tour Asia 500 stop worth US$70,000 in prize money and 500 ranking points to each gold medalist. PPA Tour Asia published the main draws on August 18: Roscoe Bellamy is the #1 seed in Men's Singles on his Asia debut, Chao Yi Wang is #1 in Women's Singles, and Vietnam's Hien Truong is seeded #5 in Men's Singles. This ThePickleHub guide covers the Sunday finals line-up, the seeds, the day-by-day schedule, the pro and amateur formats, the entry rule that shapes the field, and where to watch.",
+            "Updated August 24, 2026 — the Skechers Shenzhen Open 2026 finished on Sunday, August 23, and Vietnam leaves Shenzhen with a first. Sophia Nhi Huynh and Ho Tam beat Lingwei Kong and Selina Turulja 11-9, 3-11, 11-6 for Women's Doubles gold, which PPA Tour Asia called the first Women's Doubles title won by Vietnamese women on the tour. Hien Truong (Truong Vinh Hien) finished with two silvers: Grayson Goldin saved a match point and beat him 4-11, 11-9, 12-10 in the Men's Singles final, and Sahra Dennehy with Tama Shimabukuro beat Huynh and Truong 11-6, 11-1 in the Mixed Doubles final. Collin Johns and Len Yang took Men's Doubles 11-7, 11-8 over Eunggwon Kim and Hong Kit Wong; Chao Yi Wang beat Rika Fujiwara 11-4, 11-8 for Women's Singles. The event ran August 20-23, 2026 at the Bao'an Sports Center Gymnasium in Shenzhen, China, a PPA Tour Asia 500 stop worth US$70,000 in prize money and 500 ranking points to each gold medalist. This ThePickleHub guide has every final score, how Truong lost from 10-5 up in the deciding game, the seeds and format, and what the week means for Vietnam a week before the World Cup in Da Nang.",
           internalLinks: [
             {
               text: "See the full PPA Tour Asia 2026 calendar and prize money",
@@ -43,15 +43,15 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Championship Sunday: the five finals",
+          heading: "Championship Sunday: all five finals and the scores",
           content:
-            "PPA Tour Asia set the finals on Saturday, August 22. Bronze medal playoffs start at 9:00 AM GMT+8 (8:00 AM Vietnam time) on Sunday, August 23; the gold medal matches begin not before 2:00 PM GMT+8 (1:00 PM Vietnam time). These are the five title matches:",
+            "The medal matches were played on Sunday, August 23. Every score below is from PPA Tour Asia's own Championship Sunday report, published that evening. Winners are listed first:",
           listItems: [
-            "Men's Singles: Hien Truong (Vietnam) vs Grayson Goldin (USA). Truong came through Adam Harvey 11-8, 6-11, 11-3; Goldin beat Macao Open champion Tama Shimabukuro 11-8, 11-4",
-            "Women's Singles: Chao Yi Wang vs Rika Fujiwara. Wang edged Yu-Chieh Hsieh 6-11, 11-0, 13-11 and Fujiwara outlasted Sahra Dennehy 11-8, 9-11, 12-10 — both semifinals went three games",
-            "Men's Doubles: Eunggwon Kim and Hong Kit Wong vs Collin Johns and Len Yang. The top seeds beat Shimabukuro and Joey Wild 11-8, 11-7 to reach their first final of 2026 after losing six straight semifinals",
-            "Women's Doubles: Lingwei Kong and Selina Turulja vs Sophia Nhi Huynh and Ho Tam",
-            "Mixed Doubles: Sahra Dennehy and Tama Shimabukuro vs Sophia Nhi Huynh and Hien Truong",
+            "Men's Singles: Grayson Goldin (USA) beat Hien Truong (Vietnam) 4-11, 11-9, 12-10 — Goldin saved a match point at 10-5 down in the third",
+            "Women's Singles: Chao Yi Wang beat Rika Fujiwara 11-4, 11-8. Wang had lost two previous singles finals in China",
+            "Men's Doubles: Collin Johns and Len Yang beat Eunggwon Kim and Hong Kit Wong 11-7, 11-8. The top seeds had ended a run of six straight semifinal defeats the day before, only to lose the final",
+            "Women's Doubles: Sophia Nhi Huynh and Ho Tam beat Lingwei Kong and Selina Turulja 11-9, 3-11, 11-6 — described by PPA Tour Asia as the first Women's Doubles gold won by Vietnamese women on the tour",
+            "Mixed Doubles: Sahra Dennehy and Tama Shimabukuro beat Sophia Nhi Huynh and Hien Truong 11-6, 11-1. Dennehy was celebrating her 23rd birthday",
           ],
           internalLinks: [
             {
@@ -63,7 +63,7 @@ const post: BlogPost = {
         {
           heading: "The two triple crown bids that both ended on Saturday",
           content:
-            "Two players arrived at semifinal day still alive in all three of their events, and neither survived it. Tama Shimabukuro, 15, lost the Men's Singles semifinal to Goldin and the Men's Doubles semifinal alongside Joey Wild, but still has the Mixed Doubles final to play with Dennehy. Yu-Chieh Hsieh's bid collapsed completely: she lost all three semifinals on the same day — Women's Singles to Chao Yi Wang, Women's Doubles alongside Albie Huang, and Mixed Doubles with Luc Pham, that last one to Dennehy and Shimabukuro.",
+            "Two players arrived at semifinal day still alive in all three of their events, and neither completed the sweep. Tama Shimabukuro, 15, lost the Men's Singles semifinal to Goldin and the Men's Doubles semifinal alongside Joey Wild — but he did not leave empty-handed, winning Mixed Doubles gold with Sahra Dennehy on the Sunday. Yu-Chieh Hsieh's bid collapsed completely: she lost all three semifinals on the same day — Women's Singles to Chao Yi Wang, Women's Doubles alongside Albie Huang, and Mixed Doubles with Luc Pham, that last one to Dennehy and Shimabukuro.",
         },
         {
           heading: "The essentials, confirmed",
@@ -178,9 +178,9 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "The Vietnamese angle: Truong in two finals, Huynh in two",
+          heading: "The Vietnamese angle: one gold, two silvers, and a collapse from 10-5",
           content:
-            "Seeded #5 in Men's Singles when the draws came out, Hien Truong — Truong Vinh Hien — has gone all the way to Sunday in two events: the Men's Singles final against Grayson Goldin, and the Mixed Doubles final with Sophia Nhi Huynh, who is listed as a Vietnamese player on pickleball.com and who reached the Women's Doubles final as well. Truong was the only Vietnamese player PPA Tour Asia named in its draw article, but he is not the only one in Shenzhen: Do Minh Quan is here too, and he and Jamie Haas closed Championship Court on day one, coming from a game down to beat Kwan Wun Man and Chenyuan Ma 9-11, 11-7, 11-4 in the Mixed Doubles round of 32. Truong arrives in the best form of his career. He and Do Minh Quan beat Hoang Nam Ly and Collin Johns 11-13, 11-6, 11-4 for Men's Doubles gold at the Ho Chi Minh City Open on August 9 — a third title as a partnership after the Hangzhou Open 2025 and the Beijing Open 2026, and Truong is unbeaten in Men's Doubles finals on this tour. What makes his week worth noting is the calendar. The Shenzhen final is on August 23 and the Heineken Pickleball World Cup opens in Da Nang on August 30, seven days later. Flying to southern China in that window instead of resting for the biggest home event in Vietnamese pickleball history was a real decision — and he has played his way into two gold medal matches on the last day before that seven-day gap begins. Beyond Truong, Quan and Huynh, treat any 'confirmed Vietnamese line-up' that is not in the official player list as unverified.",
+            "Vietnam ended the week with a first and a near miss. Sophia Nhi Huynh — listed as a Vietnamese player on pickleball.com — won Women's Doubles gold with Ho Tam, 11-9, 3-11, 11-6 over Lingwei Kong and Selina Turulja. PPA Tour Asia's own report called it the first Women's Doubles gold won by Vietnamese women on the tour; that framing is the tour's, and we have not found an earlier result that contradicts it. Hien Truong (Truong Vinh Hien), seeded #5 in Men's Singles, reached two finals and lost both. The singles final is the one that will be replayed: he took the opening game 11-4 and led 10-5 in the third, one point from the title, before Grayson Goldin saved match point and won seven straight to take it 4-11, 11-9, 12-10. Goldin, per PPA Tour Asia, had suffered two strokes in February and temporarily lost his speech. Truong and Huynh then lost the Mixed Doubles final to Dennehy and Shimabukuro 11-6, 11-1. Truong was the only Vietnamese player PPA Tour Asia named in its draw article, but he was not the only one in Shenzhen: Do Minh Quan played too, and he and Jamie Haas closed Championship Court on day one, coming from a game down to beat Kwan Wun Man and Chenyuan Ma 9-11, 11-7, 11-4 in the Mixed Doubles round of 32. Truong arrived in the best form of his career — he and Quan beat Hoang Nam Ly and Collin Johns 11-13, 11-6, 11-4 for Men's Doubles gold at the Ho Chi Minh City Open on August 9, a third title as a partnership after the Hangzhou Open 2025 and the Beijing Open 2026. The calendar is what makes the week worth arguing about: the Shenzhen final was August 23 and the Heineken Pickleball World Cup opens in Da Nang on August 30, seven days later. Flying to southern China in that window instead of resting for the biggest home event in Vietnamese pickleball history was a real decision, and it produced two finals and no gold. Beyond Truong, Quan and Huynh, treat any 'confirmed Vietnamese line-up' that is not in the official player list as unverified.",
           internalLinks: [
             {
               text: "Vietnam's players to watch in 2026",
@@ -215,15 +215,15 @@ const post: BlogPost = {
             "August 20-23, 2026 at the Bao'an Sports Center Gymnasium, 2112 Xinhu Road, Bao'an District, Shenzhen, Guangdong, China. It is a PPA Tour Asia 500 stop with US$70,000 in prize money and 500 ranking points to each gold medalist.",
         },
         {
-          question: "Has the Shenzhen Open 2026 draw been published?",
+          question: "Who won the Shenzhen Open 2026?",
           answer:
-            "Yes. PPA Tour Asia published the main draws on August 18, 2026 and named its top seeds: Roscoe Bellamy #1 in Men's Singles on his Asia debut, Chao Yi Wang #1 in Women's Singles, and Vietnam's Hien Truong #5 in Men's Singles. The full brackets and player lists are on the official event page.",
+            "Five gold medals were decided on Sunday, August 23, 2026. Men's Singles: Grayson Goldin beat Hien Truong 4-11, 11-9, 12-10. Women's Singles: Chao Yi Wang beat Rika Fujiwara 11-4, 11-8. Men's Doubles: Collin Johns and Len Yang beat Eunggwon Kim and Hong Kit Wong 11-7, 11-8. Women's Doubles: Sophia Nhi Huynh and Ho Tam beat Lingwei Kong and Selina Turulja 11-9, 3-11, 11-6. Mixed Doubles: Sahra Dennehy and Tama Shimabukuro beat Huynh and Truong 11-6, 11-1.",
         },
         {
           question:
-            "Which Vietnamese players are in the Shenzhen Open 2026 draw?",
+            "How did the Vietnamese players do at the Shenzhen Open 2026?",
           answer:
-            "PPA Tour Asia's draw article names one: Hien Truong (Truong Vinh Hien), seeded #5 in Men's Singles. No other Vietnamese entry was named when the draws were released on August 18, 2026. The complete entry list is on the official event page under Player Lists.",
+            "Sophia Nhi Huynh won Women's Doubles gold with Ho Tam, which PPA Tour Asia described as the first Women's Doubles title won by Vietnamese women on the tour. Hien Truong took two silvers, losing the Men's Singles final to Grayson Goldin 4-11, 11-9, 12-10 from 10-5 up in the third, and the Mixed Doubles final alongside Huynh. Do Minh Quan also played, in Mixed Doubles with Jamie Haas.",
         },
         {
           question: "Why are the world's top players not at the Shenzhen Open?",
@@ -244,15 +244,15 @@ const post: BlogPost = {
     },
     vi: {
       title:
-        "Skechers Shenzhen Open 2026: lịch thi đấu, thể thức và cách xem chặng PPA Asia 500",
-      metaTitle: "Shenzhen Open 2026: Lịch thi đấu & cách xem",
+        "Kết quả Skechers Shenzhen Open 2026: Sophia Nhi Huỳnh vô địch đôi nữ, Trương Vinh Hiển 2 HCB",
+      metaTitle: "Kết quả Shenzhen Open 2026: HCV đôi nữ cho Huỳnh",
       metaDescription:
-        "Chung kết Shenzhen Open 2026 (23/8): Trương Vinh Hiển đấu Goldin ở đơn nam, đánh đôi nam nữ cùng Sophia Nhi Huỳnh. Giờ Việt Nam.",
+        "Kết quả Shenzhen Open 2026: Sophia Nhi Huỳnh vô địch đôi nữ, Trương Vinh Hiển 2 HCB. Tỷ số đủ 5 trận chung kết.",
       sections: [
         {
           heading: "Skechers Shenzhen Open 2026 — những gì đã chắc chắn",
           content:
-            "Cập nhật 23/8/2026 — hôm nay là ngày chung kết tại Thâm Quyến, và Việt Nam có người ở 3 trong 5 trận chung kết. Trương Vinh Hiển gặp Grayson Goldin ở chung kết đơn nam, đồng thời đánh chung kết đôi nam nữ cùng Sophia Nhi Huỳnh trước Sahra Dennehy và Tama Shimabukuro; Huỳnh còn đánh cả chung kết đôi nữ cùng Ho Tam. Các trận tranh HCĐ bắt đầu 9:00 giờ Thâm Quyến (8:00 giờ Việt Nam) Chủ nhật 23/8, các trận chung kết không sớm hơn 14:00 giờ Thâm Quyến (13:00 giờ Việt Nam). Skechers Shenzhen Open 2026 diễn ra 20-23/8/2026 tại Bao'an Sports Center Gymnasium, Thâm Quyến (Trung Quốc), chặng PPA Tour Asia 500 với 70.000 USD tiền thưởng và 500 điểm xếp hạng cho mỗi HCV. PPA Tour Asia công bố bảng chính ngày 18/8: Roscoe Bellamy là hạt giống #1 đơn nam trong lần đầu dự giải châu Á, Chao Yi Wang hạt giống #1 đơn nữ, và Trương Vinh Hiển của Việt Nam là hạt giống #5 đơn nam. ThePickleHub tổng hợp cặp đấu 5 trận chung kết Chủ nhật, danh sách hạt giống, lịch từng ngày, thể thức pro và nghiệp dư, quy định chặn top 20, và cách xem.",
+            "Cập nhật 24/8/2026 — Skechers Shenzhen Open 2026 đã khép lại Chủ nhật 23/8, và Việt Nam rời Thâm Quyến với một cột mốc. Sophia Nhi Huỳnh cùng Ho Tam thắng Lingwei Kong và Selina Turulja 11-9, 3-11, 11-6 để lấy HCV đôi nữ — PPA Tour Asia gọi đây là tấm HCV đôi nữ đầu tiên của các nữ VĐV Việt Nam trên tour này. Trương Vinh Hiển khép giải với 2 HCB: Grayson Goldin cứu match point rồi thắng anh 4-11, 11-9, 12-10 ở chung kết đơn nam, và Sahra Dennehy cùng Tama Shimabukuro thắng Huỳnh - Hiển 11-6, 11-1 ở chung kết đôi nam nữ. Đôi nam thuộc về Collin Johns và Len Yang (11-7, 11-8 trước Eunggwon Kim và Hong Kit Wong); đơn nữ thuộc về Chao Yi Wang (11-4, 11-8 trước Rika Fujiwara). Giải diễn ra 20-23/8/2026 tại Bao'an Sports Center Gymnasium, Thâm Quyến (Trung Quốc), chặng PPA Tour Asia 500 với 70.000 USD tiền thưởng và 500 điểm xếp hạng cho mỗi HCV. ThePickleHub tổng hợp tỷ số đủ 5 trận chung kết, diễn biến trận đơn nam Hiển dẫn 10-5 ván 3 rồi thua ngược, hạt giống và thể thức, cùng ý nghĩa của tuần này khi World Cup Đà Nẵng chỉ còn cách 7 ngày.",
           internalLinks: [
             {
               text: "Lịch thi đấu và tiền thưởng PPA Tour Asia 2026",
@@ -261,15 +261,15 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Ngày chung kết: 5 trận tranh HCV",
+          heading: "Ngày chung kết: đủ 5 trận và tỷ số",
           content:
-            "PPA Tour Asia chốt các cặp chung kết vào thứ Bảy 22/8. Các trận tranh HCĐ bắt đầu 9:00 giờ Thâm Quyến (8:00 giờ Việt Nam) Chủ nhật 23/8; các trận tranh HCV không sớm hơn 14:00 giờ Thâm Quyến (13:00 giờ Việt Nam). Năm cặp chung kết:",
+            "Các trận tranh huy chương đấu Chủ nhật 23/8. Mọi tỷ số dưới đây lấy từ bài tổng kết Championship Sunday của chính PPA Tour Asia, đăng tối cùng ngày. Người thắng ghi trước:",
           listItems: [
-            "Đơn nam: Trương Vinh Hiển (Việt Nam) gặp Grayson Goldin (Mỹ). Hiển thắng Adam Harvey 11-8, 6-11, 11-3; Goldin thắng nhà vô địch Macao Open Tama Shimabukuro 11-8, 11-4",
-            "Đơn nữ: Chao Yi Wang gặp Rika Fujiwara. Wang thắng Yu-Chieh Hsieh 6-11, 11-0, 13-11, Fujiwara thắng Sahra Dennehy 11-8, 9-11, 12-10 — cả hai trận bán kết đều phải phân định ở ván 3",
-            "Đôi nam: Eunggwon Kim và Hong Kit Wong gặp Collin Johns và Len Yang. Cặp hạt giống số 1 thắng Shimabukuro cùng Joey Wild 11-8, 11-7 để vào chung kết đầu tiên trong năm 2026, sau 6 lần liên tiếp dừng ở bán kết",
-            "Đôi nữ: Lingwei Kong và Selina Turulja gặp Sophia Nhi Huỳnh và Ho Tam",
-            "Đôi nam nữ: Sahra Dennehy và Tama Shimabukuro gặp Sophia Nhi Huỳnh và Trương Vinh Hiển",
+            "Đơn nam: Grayson Goldin (Mỹ) thắng Trương Vinh Hiển (Việt Nam) 4-11, 11-9, 12-10 — Goldin cứu match point khi đang bị dẫn 5-10 ở ván 3",
+            "Đơn nữ: Chao Yi Wang thắng Rika Fujiwara 11-4, 11-8. Trước đó Wang đã thua 2 trận chung kết đơn tại Trung Quốc",
+            "Đôi nam: Collin Johns và Len Yang thắng Eunggwon Kim và Hong Kit Wong 11-7, 11-8. Cặp hạt giống số 1 vừa chấm dứt chuỗi 6 lần liên tiếp dừng ở bán kết hôm trước, rồi lại thua ở trận cuối",
+            "Đôi nữ: Sophia Nhi Huỳnh và Ho Tam thắng Lingwei Kong và Selina Turulja 11-9, 3-11, 11-6 — PPA Tour Asia gọi đây là HCV đôi nữ đầu tiên của các nữ VĐV Việt Nam trên tour",
+            "Đôi nam nữ: Sahra Dennehy và Tama Shimabukuro thắng Sophia Nhi Huỳnh và Trương Vinh Hiển 11-6, 11-1. Dennehy đá trận này đúng sinh nhật tuổi 23",
           ],
           internalLinks: [
             {
@@ -281,7 +281,7 @@ const post: BlogPost = {
         {
           heading: "Hai tham vọng \"triple crown\" cùng tan vỡ trong một ngày",
           content:
-            "Hai VĐV bước vào ngày bán kết còn nguyên cơ hội ở cả ba nội dung, và không ai đi tiếp trọn vẹn. Tama Shimabukuro, 15 tuổi, thua bán kết đơn nam trước Goldin và thua bán kết đôi nam cùng Joey Wild, nhưng vẫn còn trận chung kết đôi nam nữ với Dennehy. Yu-Chieh Hsieh thì mất sạch: thua cả ba trận bán kết trong cùng một ngày — đơn nữ trước Chao Yi Wang, đôi nữ cùng Albie Huang, và đôi nam nữ cùng Luc Pham, trận cuối thua chính Dennehy và Shimabukuro.",
+            "Hai VĐV bước vào ngày bán kết còn nguyên cơ hội ở cả ba nội dung, và không ai gom đủ. Tama Shimabukuro, 15 tuổi, thua bán kết đơn nam trước Goldin và thua bán kết đôi nam cùng Joey Wild — nhưng không về tay trắng: cậu lấy HCV đôi nam nữ cùng Sahra Dennehy vào Chủ nhật. Yu-Chieh Hsieh thì mất sạch: thua cả ba trận bán kết trong cùng một ngày — đơn nữ trước Chao Yi Wang, đôi nữ cùng Albie Huang, và đôi nam nữ cùng Luc Pham, trận cuối thua chính Dennehy và Shimabukuro.",
         },
         {
           heading: "Thông tin cốt lõi",
@@ -394,9 +394,9 @@ const post: BlogPost = {
           ],
         },
         {
-          heading: "Góc Việt Nam: Hiển vào 2 chung kết, Huỳnh vào 2 chung kết",
+          heading: "Góc Việt Nam: 1 HCV, 2 HCB, và cú sụp từ 10-5",
           content:
-            "Là hạt giống #5 đơn nam khi bảng đấu công bố, Trương Vinh Hiển đã đi tới Chủ nhật ở hai nội dung: chung kết đơn nam gặp Grayson Goldin, và chung kết đôi nam nữ cùng Sophia Nhi Huỳnh — VĐV được pickleball.com ghi quốc tịch Việt Nam, và cũng đã vào chung kết đôi nữ. Hiển là VĐV Việt Nam duy nhất được PPA Tour Asia nêu tên trong bài công bố bảng đấu, nhưng không phải người Việt duy nhất ở Thâm Quyến: Đỗ Minh Quân cũng có mặt, và anh cùng Jamie Haas khép lại sân Championship ngày đầu tiên bằng màn ngược dòng thắng Kwan Wun Man và Chenyuan Ma 9-11, 11-7, 11-4 ở vòng 32 đôi nam nữ. Hiển đến giải trong phong độ tốt nhất sự nghiệp: anh và Đỗ Minh Quân thắng Lý Hoàng Nam cùng Collin Johns 11-13, 11-6, 11-4 để lấy HCV đôi nam HCMC Open ngày 9/8 — danh hiệu thứ ba của cặp đôi này sau Hangzhou Open 2025 và Beijing Open 2026, và Hiển vẫn bất bại ở các trận chung kết đôi nam tại tour này. Điều đáng chú ý ở tuần này là lịch thi đấu: chung kết Thâm Quyến ngày 23/8, còn Heineken Pickleball World Cup khai mạc tại Đà Nẵng ngày 30/8, cách đúng bảy ngày. Bay sang miền Nam Trung Quốc trong khoảng đó thay vì nghỉ dưỡng sức cho sự kiện sân nhà lớn nhất lịch sử pickleball Việt Nam là một lựa chọn thật sự — và anh đã chơi tới hai trận tranh HCV đúng ngày cuối trước khi khoảng nghỉ bảy ngày đó bắt đầu. Ngoài Hiển, Quân và Huỳnh, mọi 'danh sách VĐV Việt Nam' không có trong danh sách chính thức đều là chưa kiểm chứng.",
+            "Việt Nam khép tuần này với một cột mốc và một tiếc nuối. Sophia Nhi Huỳnh — VĐV được pickleball.com ghi quốc tịch Việt Nam — vô địch đôi nữ cùng Ho Tam, thắng Lingwei Kong và Selina Turulja 11-9, 3-11, 11-6. Bài tổng kết của chính PPA Tour Asia gọi đây là HCV đôi nữ đầu tiên mà các nữ VĐV Việt Nam giành được trên tour; đó là cách diễn đạt của ban tổ chức, và chúng tôi chưa tìm thấy kết quả nào trước đó mâu thuẫn với nó. Trương Vinh Hiển, hạt giống #5 đơn nam, vào 2 chung kết và thua cả hai. Trận đơn nam là trận sẽ còn được nhắc lại: anh thắng ván đầu 11-4, dẫn 10-5 ở ván 3, chỉ còn 1 điểm là vô địch, trước khi Goldin cứu match point rồi ghi liền 7 điểm để thắng ngược 4-11, 11-9, 12-10. Theo PPA Tour Asia, Goldin từng bị 2 cơn đột quỵ hồi tháng 2 và mất khả năng nói tạm thời. Sau đó Hiển và Huỳnh thua Dennehy - Shimabukuro 11-6, 11-1 ở chung kết đôi nam nữ. Hiển là VĐV Việt Nam duy nhất được PPA Tour Asia nêu tên trong bài công bố bảng đấu, nhưng không phải người Việt duy nhất ở Thâm Quyến: Đỗ Minh Quân cũng có mặt, và anh cùng Jamie Haas khép lại sân Championship ngày đầu tiên bằng màn ngược dòng thắng Kwan Wun Man và Chenyuan Ma 9-11, 11-7, 11-4 ở vòng 32 đôi nam nữ. Hiển đến giải trong phong độ tốt nhất sự nghiệp: anh và Quân thắng Lý Hoàng Nam cùng Collin Johns 11-13, 11-6, 11-4 để lấy HCV đôi nam HCMC Open ngày 9/8 — danh hiệu thứ ba của cặp đôi này sau Hangzhou Open 2025 và Beijing Open 2026. Điều đáng bàn nhất vẫn là lịch thi đấu: chung kết Thâm Quyến ngày 23/8, còn Heineken Pickleball World Cup khai mạc tại Đà Nẵng ngày 30/8, cách đúng bảy ngày. Bay sang miền Nam Trung Quốc trong khoảng đó thay vì nghỉ dưỡng sức cho sự kiện sân nhà lớn nhất lịch sử pickleball Việt Nam là một lựa chọn thật sự — và nó đổi lại hai trận chung kết nhưng không tấm HCV nào. Ngoài Hiển, Quân và Huỳnh, mọi 'danh sách VĐV Việt Nam' không có trong danh sách chính thức đều là chưa kiểm chứng.",
           internalLinks: [
             {
               text: "Bảng A World Cup 2026: Việt Nam gặp ai",
@@ -431,14 +431,14 @@ const post: BlogPost = {
             "Ngày 20-23/8/2026 tại Bao'an Sports Center Gymnasium, số 2112 đường Xinhu, quận Bao'an, Thâm Quyến, Quảng Đông, Trung Quốc. Đây là chặng PPA Tour Asia 500 với 70.000 USD tiền thưởng và 500 điểm xếp hạng cho mỗi HCV.",
         },
         {
-          question: "Bảng đấu Shenzhen Open 2026 đã công bố chưa?",
+          question: "Ai vô địch Shenzhen Open 2026?",
           answer:
-            "Rồi. PPA Tour Asia công bố bảng chính ngày 18/8/2026 và nêu tên các hạt giống đầu bảng: Roscoe Bellamy #1 đơn nam trong lần đầu dự giải châu Á, Chao Yi Wang #1 đơn nữ, và Trương Vinh Hiển của Việt Nam #5 đơn nam. Bảng đấu và danh sách VĐV đầy đủ nằm trên trang sự kiện chính thức.",
+            "Năm tấm HCV được phân định Chủ nhật 23/8/2026. Đơn nam: Grayson Goldin thắng Trương Vinh Hiển 4-11, 11-9, 12-10. Đơn nữ: Chao Yi Wang thắng Rika Fujiwara 11-4, 11-8. Đôi nam: Collin Johns và Len Yang thắng Eunggwon Kim và Hong Kit Wong 11-7, 11-8. Đôi nữ: Sophia Nhi Huỳnh và Ho Tam thắng Lingwei Kong và Selina Turulja 11-9, 3-11, 11-6. Đôi nam nữ: Sahra Dennehy và Tama Shimabukuro thắng Huỳnh - Hiển 11-6, 11-1.",
         },
         {
-          question: "VĐV Việt Nam nào có tên trong bảng đấu Shenzhen Open 2026?",
+          question: "VĐV Việt Nam đạt thành tích gì ở Shenzhen Open 2026?",
           answer:
-            "Bài công bố bảng đấu của PPA Tour Asia nêu tên một người: Trương Vinh Hiển, hạt giống #5 đơn nam. Không có VĐV Việt Nam nào khác được nêu tên khi bảng đấu công bố ngày 18/8/2026. Danh sách đăng ký đầy đủ nằm ở mục Player Lists trên trang sự kiện chính thức.",
+            "Sophia Nhi Huỳnh vô địch đôi nữ cùng Ho Tam — PPA Tour Asia gọi đây là HCV đôi nữ đầu tiên của các nữ VĐV Việt Nam trên tour. Trương Vinh Hiển giành 2 HCB: thua chung kết đơn nam trước Grayson Goldin 4-11, 11-9, 12-10 dù đã dẫn 10-5 ở ván 3, và thua chung kết đôi nam nữ khi đánh cặp với Huỳnh. Đỗ Minh Quân cũng dự giải, ở nội dung đôi nam nữ cùng Jamie Haas.",
         },
         {
           question: "Vì sao nhóm top thế giới không dự Shenzhen Open?",
