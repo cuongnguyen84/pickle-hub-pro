@@ -17,11 +17,41 @@ const SITE = "https://www.thepicklehub.net";
 
 const countH1 = (html: string) => (html.match(/<h1[\s>]/g) ?? []).length;
 
+/**
+ * Drop <script> elements by index scan rather than by regex.
+ *
+ * A tag-matching regex here is a losing game: `/<script[\s\S]*?<\/script>/g`
+ * misses `<SCRIPT>`, adding `i` then misses `</script >`, and CodeQL's
+ * js/bad-tag-filter keeps finding the next variant. This walks the string
+ * instead, so casing and whitespace inside the closing tag are irrelevant.
+ *
+ * It is not a sanitizer — nothing here is security-sensitive. But a script
+ * block that survives the strip gets counted as prose, and since these tests
+ * assert /live and /rankings are no longer thin, the JSON-LD payload would
+ * inflate every count below.
+ */
+const stripScriptElements = (html: string): string => {
+  const lower = html.toLowerCase();
+  const parts: string[] = [];
+  let cursor = 0;
+  for (;;) {
+    const open = lower.indexOf("<script", cursor);
+    if (open === -1) {
+      parts.push(html.slice(cursor));
+      return parts.join(" ");
+    }
+    parts.push(html.slice(cursor, open));
+    const close = lower.indexOf("</script", open);
+    if (close === -1) return parts.join(" "); // unterminated: drop the rest
+    const gt = html.indexOf(">", close);
+    if (gt === -1) return parts.join(" ");
+    cursor = gt + 1;
+  }
+};
+
 const bodyWords = (html: string) => {
-  const body = html.match(/<body[^>]*>([\s\S]*?)<\/body>/);
-  const stripped = (body ? body[1] : html)
-    .replace(/<script[\s\S]*?<\/script>/g, " ")
-    .replace(/<[^>]+>/g, " ");
+  const body = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const stripped = stripScriptElements(body ? body[1] : html).replace(/<[^>]+>/g, " ");
   return stripped.split(/\s+/).filter(Boolean).length;
 };
 
