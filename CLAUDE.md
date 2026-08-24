@@ -13,9 +13,9 @@ Website: https://www.thepicklehub.net
 - **Frontend:** React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + vite-plugin-pwa
 - **Backend:** Supabase (project ref `ajvlcamxemgbxduhiqrl`)
 - **Hosting:** Cloudflare Pages (project `pickle-hub-pro`, production branch `main`) + Cloudflare Workers for scheduled scrapers
-- **Mobile:** Capacitor (iOS + Android, app ID `net.thepicklehub.app`)
+- **Mobile:** native SwiftUI iOS app in `/apple` (app ID `net.thepicklehub.app`). Capacitor retired 2026-08-24 — the iOS wrapper was replaced on the App Store by native 2.0.3, and the Android wrapper never shipped. There is no Android app.
 - **Livestream:** Mux
-- **Push:** Firebase Cloud Messaging (FCM via Capacitor)
+- **Push:** Firebase Cloud Messaging (FCM, registered natively by `/apple`)
 - **Email:** Resend
 - **AI translation:** Google Gemini (EN → VI for news)
 - **Analytics:** GA4, Google Search Console (read via Chrome when needed), Ahrefs Web Analytics (free script in `index.html`, data since 2026-07-04 — read the dashboard via Chrome at app.ahrefs.com/web-analytics). _Ahrefs MCP tools ALL return "Insufficient plan" (even `web-analytics-*`); do not call them._ GA4 caveat: heavily polluted by US datacenter bot traffic — trust the Vietnam segment / Ahrefs numbers instead.
@@ -38,14 +38,7 @@ Regenerate Supabase types (canonical command — `--schema public` is REQUIRED; 
 npx supabase gen types typescript --project-id ajvlcamxemgbxduhiqrl --schema public > src/integrations/supabase/types.ts
 ```
 
-Mobile (Capacitor) — see [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md). Common commands:
-
-```sh
-npx cap sync ios     # Sync web assets to iOS
-npx cap sync android # Sync web assets to Android
-npx cap open ios     # Open Xcode
-npx cap open android # Open Android Studio
-```
+Mobile — the app lives in `/apple` (SwiftUI). Build loop: `xcodegen` → `xcodebuild` → `simctl`.
 
 ## Critical Workflow Notes
 
@@ -151,7 +144,7 @@ Each worker has its own `wrangler.toml`. Deploy with `wrangler deploy` from insi
 
 `vite-plugin-pwa` config in `vite.config.ts`:
 
-- Service worker is registered **manually** in `src/pwa.ts` so we can skip registration inside Capacitor native WebView (mobile app uses live remote URL, not a precached shell)
+- Service worker is registered **manually** in `src/pwa.ts` (kept manual after the Capacitor retirement — `injectRegister: null` lets us control ordering against the chunk-error recovery)
 - Navigation requests use `NetworkFirst` with 3s timeout — `index.html` is **excluded** from precache so users always get the freshest shell after deploy
 - Runtime cache rules for Supabase REST/storage, Mux images, Google avatars, Google Fonts — see `vite.config.ts` for full list
 

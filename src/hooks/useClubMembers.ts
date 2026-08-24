@@ -12,13 +12,12 @@
 // PR 20260527 — list_club_members RPC now returns 4 DUPR columns
 // (migration 20260527130000); UI renders connection badge per member.
 //
-// PR 20260527 (mobile UX) — useClubMembers wires 3 refetch triggers so
+// PR 20260527 (mobile UX) — useClubMembers wires 2 refetch triggers so
 // the organizer dashboard updates without manual refresh:
 //   1. Supabase realtime channel listening to INSERT/UPDATE/DELETE on
 //      club_members filtered by club_id.
 //   2. document.visibilitychange (web) — refetch when tab regains focus.
-//   3. Capacitor App appStateChange (iOS/Android native) — refetch when
-//      WebView app resumes from background.
+// (Trigger thứ 3, Capacitor App appStateChange, bỏ cùng Capacitor 24/08/2026.)
 // `refetchOnWindowFocus: true` is set per-query to override the global
 // `false` default (App.tsx defaultOptions).
 //
@@ -29,7 +28,6 @@ import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { isNativeApp } from "@/lib/capacitor-utils";
 
 export type ClubMemberStatus = "pending" | "active";
 
@@ -146,30 +144,11 @@ export function useClubMembers(clubId: string | undefined) {
       document.addEventListener("visibilitychange", onVis);
     }
 
-    // 3. Capacitor App appStateChange — refetch when native WebView resumes.
-    let nativeListenerCleanup: (() => void) | null = null;
-    if (isNativeApp()) {
-      void (async () => {
-        try {
-          const { App } = await import("@capacitor/app");
-          const handle = await App.addListener("appStateChange", ({ isActive }) => {
-            if (isActive) void refetch();
-          });
-          nativeListenerCleanup = () => {
-            void handle.remove();
-          };
-        } catch {
-          // Plugin not available — ignore.
-        }
-      })();
-    }
-
     return () => {
       void supabase.removeChannel(channel);
       if (typeof document !== "undefined") {
         document.removeEventListener("visibilitychange", onVis);
       }
-      nativeListenerCleanup?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId]);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { isNativeApp, isIOS, isAndroid } from "@/lib/capacitor-utils";
+import { isIOS } from "@/lib/platform";
 
 /**
  * Floating chat-with-admin buttons (Messenger + Zalo) anchored to the
@@ -118,14 +118,9 @@ const ChatFAB = () => {
 
   // Clear BottomNav on mobile — match the height logic used by BottomNav.
   const isIOSDevice = isIOS();
-  const isAndroidDevice = isAndroid();
-  const isNative = isNativeApp();
 
   const getBottomOffset = (): string => {
     if (isDesktop) return "24px";
-    if (isAndroidDevice && isNative) {
-      return "calc(72px + max(env(safe-area-inset-bottom, 14px), 14px) + 12px)";
-    }
     if (isIOSDevice) {
       return "calc(68px + env(safe-area-inset-bottom, 0px) + 12px)";
     }

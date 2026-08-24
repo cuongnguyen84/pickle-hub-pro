@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { Home, Radio, MoreHorizontal, Wrench, Newspaper, Store, type LucideIcon } from "lucide-react";
-import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
+import { isIOS } from "@/lib/platform";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import { useLivestreams } from "@/hooks/useSupabaseData";
 import { isMorePath } from "./moreItems";
@@ -29,7 +29,7 @@ import MoreSheet from "./MoreSheet";
  *   - Mobile only (md:hidden)
  *   - Hide on /admin, /creator, /embed
  *   - Hide when virtual keyboard is open
- *   - iOS / Android Capacitor safe-area padding helpers
+ *   - iOS safe-area padding helper
  *   - i18n labels unchanged
  *
  * ── 23/08/2026, quyết định của PO sau bản so sánh 5 phương án ───────────────
@@ -117,24 +117,11 @@ const BottomNav = () => {
   ];
 
   const isIOSDevice = isIOS();
-  const isAndroidDevice = isAndroid();
-  const isNative = isNativeApp();
 
-  const getBottomPadding = () => {
-    if (isAndroidDevice && isNative) {
-      return "max(env(safe-area-inset-bottom, 14px), 14px)";
-    }
-    if (isIOSDevice) {
-      return "env(safe-area-inset-bottom, 0px)";
-    }
-    return "0px";
-  };
+  const getBottomPadding = () =>
+    isIOSDevice ? "env(safe-area-inset-bottom, 0px)" : "0px";
 
-  const getNavHeight = () => {
-    if (isAndroidDevice && isNative) return "72px";
-    if (isIOSDevice) return "68px";
-    return "56px";
-  };
+  const getNavHeight = () => (isIOSDevice ? "68px" : "56px");
 
   const cellStyle = (isActive: boolean, isLast: boolean): React.CSSProperties => ({
     borderRight: isLast ? "none" : "1px solid var(--tl-border, #22252a)",

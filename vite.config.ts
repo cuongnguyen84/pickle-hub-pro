@@ -179,8 +179,7 @@ return ({
       // rule /*.js) → bump v3 sau khi _headers đã BỎ hẳn /*.js. KHÔNG đổi lại
       // tên cũ kể cả khi purge CDN.
       filename: "sw-v3.js",
-      // Register SW at runtime (we do manual registration in src/pwa.ts so we can
-      // skip it inside Capacitor native WebView — see src/pwa.ts)
+      // Register SW at runtime — manual registration lives in src/pwa.ts.
       injectRegister: null,
       // Static assets to include in precache
       includeAssets: [
@@ -246,7 +245,6 @@ return ({
           "assets/vendor-supabase-*.js",
           "assets/vendor-query-*.js",
           "assets/vendor-date-*.js",
-          "assets/vendor-capacitor-*.js",
           "assets/types-*.js",
           // North-star journey screens (docs/journey-screens.md)
           "assets/Index-*.js",
@@ -460,14 +458,6 @@ return ({
             "@dnd-kit/utilities",
           ],
           "vendor-date": ["date-fns"],
-          "vendor-capacitor": [
-            "@capacitor/core",
-            "@capacitor/app",
-            "@capacitor/browser",
-            "@capacitor/push-notifications",
-            "@capacitor/splash-screen",
-            "@capacitor/status-bar",
-          ],
           "vendor-video": ["@mux/mux-player-react", "hls.js"],
         },
       },
