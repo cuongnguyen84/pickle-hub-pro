@@ -20,6 +20,10 @@ const post: BlogPost = {
     en: "Follow Vietnamese players live on ThePickleHub",
     vi: "Theo dõi tay vợt Việt Nam trực tiếp trên ThePickleHub",
   },
+  heroImage: {
+    src: "/images/blog/sophia-huynh-ken-tam-womens-doubles-gold-2026-hero.webp",
+    alt: "Championship graphic for Sophia Huynh Tran and Ken Tam winning Women's Doubles gold at the Shenzhen Open 2026 — the two Vietnamese players raising a gold trophy engraved Shenzhen Open 2026 Women's Doubles Champion, with the Vietnamese flag behind them, the Vietnamese headline \"HCV doi nu dau tien\" and the final score 11-9, 3-11, 11-6.",
+  },
   content: {
     en: {
       title:
