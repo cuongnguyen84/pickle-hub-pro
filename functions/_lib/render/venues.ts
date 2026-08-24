@@ -426,14 +426,39 @@ export async function renderVenueDetail(
     : lang === "vi"
       ? `Sân Pickleball ${name}`
       : `${name} Pickleball Court`;
-  const cityTail = cityName && !cityInName ? ` – ${cityName}` : "";
   const brand = " | ThePickleHub";
-  // buildTitle budgets in BYTES (60) and is the only place allowed to decide
-  // whether the brand suffix fits. The old `.length <= 60` pre-check here
-  // counted CHARS and shipped titles like "…Nguyễn Chánh – Hà Nội |…" — a
-  // 53-char/61-byte title passed the char gate, then truncateForSeo cut it
-  // mid-brand (bug #468 recurring through a caller that bypassed the fix).
-  const title = buildTitle(kwName + cityTail, brand);
+  // 2026-08-24 (CTR-02): venue queries in GSC are district-led, not city-led —
+  // "sân pickleball quận 2", "keyfit pickleball quận 5", "sân level up quận 2".
+  // The city-only tail ("– TP.HCM") answered none of them, and TP.HCM alone
+  // holds 150 venues so the tail carried almost no distinguishing signal.
+  // district is populated on 690/760 rows and is stored in exactly the form
+  // searchers type ("Quận 2", "Cầu Giấy", "Hoàng Mai"), so it goes first.
+  //
+  // Title budget is 60 BYTES and Vietnamese costs 2-3 bytes/char, so the full
+  // "name – district, city" only fits 343/400 sampled rows. Rather than let
+  // buildTitle ellipsise (which would amputate the city mid-word, bug #468),
+  // degrade through progressively shorter variants and hand buildTitle the
+  // first one that already fits. buildTitle stays the only place that decides
+  // whether the brand suffix fits and the only place that ever ellipsises.
+  const districtName = v.district ? v.district.trim() : "";
+  const districtInName = districtName
+    ? name.toLowerCase().includes(districtName.toLowerCase())
+    : false;
+  const useDistrict = districtName && !districtInName;
+  const useCity = cityName && !cityInName;
+  const titleBytes = (s: string) => new TextEncoder().encode(s).length;
+  // Ordered most → least informative. Note the district-only variant outranks
+  // the city-only one: "Quận 2" narrows a 150-venue city to 33 venues, while
+  // "TP.HCM" narrows nothing. Ambiguity across cities is acceptable — the
+  // address, breadcrumb and JSON-LD all still carry the city.
+  const titleVariants = [
+    useDistrict && useCity ? `${kwName} – ${districtName}, ${cityName}` : "",
+    useDistrict ? `${kwName} – ${districtName}` : "",
+    useCity ? `${kwName} – ${cityName}` : "",
+    kwName,
+  ].filter(Boolean);
+  const rawTitle = titleVariants.find((t) => titleBytes(t) <= 60) ?? kwName;
+  const title = buildTitle(rawTitle, brand);
 
   // CTR: lead the description with the concrete, search-intent facts (name,
   // city, court count, indoor/outdoor) then a clear next step. Address is
@@ -463,10 +488,26 @@ export async function renderVenueDetail(
   const leadEn = nameHasKw ? name : `${name} pickleball court`;
   const factsVi = [courtsVi, indoorVi].filter(Boolean).join(", ");
   const factsEn = [courtsEn, indoorEn].filter(Boolean).join(", ");
+  // CTR-02: carry the district into the snippet tail too, for the same reason
+  // it now leads the title. fitLead protects the TAIL and shrinks the venue
+  // name to pay for it, so cap how much the tail may grow — a pathological
+  // district value must never eat the name, which is the primary keyword.
+  // "Quận 2"/"Cầu Giấy" cost 8-11 bytes, well inside the cap.
+  const MAX_LOCATION_TAIL_BYTES = 34;
+  const locationTail = (template: (loc: string) => string): string => {
+    if (!cityName) return ".";
+    if (useDistrict) {
+      const withDistrict = template(`${districtName}, ${cityName}`);
+      if (new TextEncoder().encode(withDistrict).length <= MAX_LOCATION_TAIL_BYTES) {
+        return withDistrict;
+      }
+    }
+    return template(cityName);
+  };
   const descVariants =
     lang === "vi"
       ? {
-          core: fitLead(leadVi, cityName ? ` tại ${cityName}.` : "."),
+          core: fitLead(leadVi, locationTail((loc) => ` tại ${loc}.`)),
           segments: [
             factsVi ? ` ${upperFirst(factsVi)}.` : "",
             v.phone ? ` Đặt sân: ${v.phone}.` : "",
@@ -475,7 +516,7 @@ export async function renderVenueDetail(
           ],
         }
       : {
-          core: fitLead(leadEn, cityName ? ` in ${cityName}.` : "."),
+          core: fitLead(leadEn, locationTail((loc) => ` in ${loc}.`)),
           segments: [
             factsEn ? ` ${upperFirst(factsEn)}.` : "",
             v.phone ? ` Booking: ${v.phone}.` : "",
