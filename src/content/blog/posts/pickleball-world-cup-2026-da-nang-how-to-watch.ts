@@ -202,7 +202,7 @@ const post: BlogPost = {
           question:
             "How much are spectator tickets for the Pickleball World Cup 2026?",
           answer:
-            "Spectator ticket pricing has not been published as of July 17, 2026. The official platform at sporttora.com/pwc2026 currently handles competitor entries rather than general admission. We will update this guide when ticketing is announced.",
+            "As of August 24, 2026 the official platform sells four hospitality packages and has published no general-admission ticket at any price: Finals & Music Festival table for two on Sep 6 at $2,000; VVIP Finals single seat on Sep 6 at $1,000; Full Package for all five days Sep 2–6 at $3,600; and VVIP Special, a table of three across five days, at $5,400. We will update this if the organizers open general admission.",
         },
         {
           question: "Where exactly are the matches played?",
@@ -219,6 +219,11 @@ const post: BlogPost = {
             "How can I watch the Pickleball World Cup 2026 from outside Da Nang?",
           answer:
             "FPT Play is the exclusive Vietnamese broadcaster, carrying the event on SmartTV, mobile, FPT Play Box and fptplay.vn with a subscription. International broadcast arrangements have not been announced. Follow @pickleballworldcupofficial on Instagram and ThePickleHub for bilingual coverage.",
+        },
+        {
+          question: "When does Vietnam play at the Pickleball World Cup 2026?",
+          answer:
+            "The national-team competition runs Thursday September 3 to Sunday September 6. Vietnam is the top seed in Group A in Open, Masters, Juniors and Kids, and has no team in Seniors. The Open group stage begins at 08:00 on September 3 with pools A–L. The Open squad is captained by Quan Do and includes Hoang Nam Ly, Quang Duong, Phuc Huynh, Hien Truong, Linh Giang Trinh, Ken Tam, Sophia Huynh Tran, Trang Huynh and Boi Ngoc Si.",
         },
         {
           question: "Where should I stay for the Pickleball World Cup 2026?",
@@ -403,7 +408,7 @@ const post: BlogPost = {
         {
           question: "Vé xem World Cup Pickleball 2026 giá bao nhiêu?",
           answer:
-            "Tính tới ngày 17/7/2026, giá vé cho khán giả chưa được công bố. Nền tảng chính thức sporttora.com/pwc2026 hiện xử lý đăng ký thi đấu chứ chưa bán vé vào cửa. Chúng tôi sẽ cập nhật bài này khi có thông tin vé.",
+            "Tính tới 24/8/2026, nền tảng chính thức chỉ bán bốn gói hospitality và chưa công bố vé vào cửa phổ thông ở bất kỳ mức giá nào: Finals & Music Festival bàn 2 khách ngày 6/9 giá 2.000 USD; VVIP Finals 1 ghế ngày 6/9 giá 1.000 USD; Full Package trọn 5 ngày 2–6/9 giá 3.600 USD; VVIP Special bàn 3 khách 5 ngày giá 5.400 USD. Chúng tôi sẽ cập nhật nếu ban tổ chức mở bán vé phổ thông.",
         },
         {
           question: "Các trận đấu diễn ra chính xác ở đâu?",
@@ -420,6 +425,11 @@ const post: BlogPost = {
             "Ở ngoài Đà Nẵng thì xem World Cup Pickleball 2026 bằng cách nào?",
           answer:
             "FPT Play là đơn vị phát sóng độc quyền tại Việt Nam, phát trên SmartTV, di động, FPT Play Box và fptplay.vn (cần thuê bao). Các thỏa thuận phát sóng quốc tế chưa được công bố. Theo dõi Instagram @pickleballworldcupofficial và ThePickleHub để cập nhật song ngữ.",
+        },
+        {
+          question: "Đội tuyển Việt Nam thi đấu ngày nào?",
+          answer:
+            "Giải Đồng đội Quốc gia đấu từ thứ Năm 3/9 đến Chủ nhật 6/9. Việt Nam là hạt giống số 1 bảng A ở Open, Masters, Junior và Kids, và không có đội ở Seniors. Vòng bảng Open bắt đầu 08:00 ngày 3/9 với các bảng A–L. Đội hình Open do Đỗ Minh Quân làm đội trưởng, gồm Lý Hoàng Nam, Quang Dương, Phúc Huỳnh, Trương Vinh Hiển, Trịnh Linh Giang, Ken Tâm, Sophia Huỳnh Trần, Trang Huỳnh và Sĩ Bội Ngọc.",
         },
         {
           question: "Nên ở khách sạn nào khi đi xem World Cup Pickleball 2026?",
