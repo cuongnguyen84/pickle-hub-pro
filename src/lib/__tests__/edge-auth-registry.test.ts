@@ -40,9 +40,9 @@ describe("Edge Function auth registry", () => {
 
     // 81 since P2a.2 added shop-media-lifecycle. The count is pinned on
     // purpose: a new Edge Function that nobody classified should red this gate.
-    expect(snapshot.sourceFunctions).toHaveLength(82);
-    expect(snapshot.configFunctions).toHaveLength(82);
-    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(82);
+    expect(snapshot.sourceFunctions).toHaveLength(83);
+    expect(snapshot.configFunctions).toHaveLength(83);
+    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(83);
     expect(snapshot.registry.enforcement).toBe("strict");
     expect(findings).toEqual([]);
   });

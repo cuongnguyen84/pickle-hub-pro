@@ -469,6 +469,7 @@ return ({
             "@capacitor/status-bar",
           ],
           "vendor-video": ["@mux/mux-player-react", "hls.js"],
+          "vendor-xlsx": ["xlsx"],
         },
       },
     },

@@ -219,7 +219,7 @@ describe("Edge Function CORS and server entrypoints", () => {
         source.includes('_shared/cors.ts"'),
       ),
       // 75 since P2a.2: shop-media-lifecycle imports the shared preset too.
-    ).toHaveLength(75);
+    ).toHaveLength(76);
     expect(combined).not.toMatch(/const corsHeaders\s*=/i);
     expect(combined).not.toMatch(
       /import\s*\{[^}]*corsHeaders[^}]*\}\s*from\s*["']\.\.\/_shared\/auth\.ts["']/s,
@@ -234,7 +234,7 @@ describe("Edge Function CORS and server entrypoints", () => {
 
   it("uses Deno.serve for every function entrypoint", () => {
     // 82 since news-repair joined on 2026-08-17.
-    expect(functionSources).toHaveLength(82);
+    expect(functionSources).toHaveLength(83);
     for (const [functionName, source] of functionSources) {
       const alias = source.match(/import\s+["']\.\.\/([^/]+)\/index\.ts["']/)?.[1];
       const effectiveSource = alias ? functionSources.get(alias) : source;

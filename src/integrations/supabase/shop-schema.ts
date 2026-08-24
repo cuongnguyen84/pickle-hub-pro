@@ -187,8 +187,29 @@ export interface ProductRow {
    *  theo ngành hàng ở src/lib/shop/productSpecs.ts — Postgres chỉ giữ hình
    *  dạng, nên một khoá lạ là dữ liệu cũ chứ không phải lỗi. */
   specs: Record<string, string>;
+  /* ── Bulk AI import (migration 20260824120000) ── */
+  /** Groups product rows created by the same bulk-upload session. */
+  import_batch_id: string | null;
+  /** TRUE when Gemini auto-filled this row from a bare product name. */
+  ai_enriched: boolean;
+  ai_confidence: number | null;
+  ai_source_urls: string[];
   created_at: string;
   updated_at: string;
+}
+
+/** Minimal shape the bulk-import hook inserts into public.products. */
+export interface ProductBulkImportInsert {
+  shop_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  category_slug: string | null;
+  specs: Record<string, string>;
+  status: "draft";
+  import_batch_id: string;
+  ai_enriched: true;
+  ai_confidence: number | null;
 }
 
 /** Price and stock live here, always — including for a product with no options,
@@ -409,6 +430,7 @@ export const SHOP_TABLES = [
   "shop_members",
   "shop_applications",
   "shop_application_events",
+  "products",
 ] as const;
 
 export const SHOP_VIEWS = ["my_shop_application", "shop_applications_admin"] as const;
