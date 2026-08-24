@@ -151,7 +151,10 @@ const BlogPost = () => {
       description={content.metaDescription}
       active="stories"
     >
-      <DynamicMeta title={content.metaTitle} description={content.metaDescription} />
+      <DynamicMeta
+        title={content.metaTitle}
+        description={content.metaDescription}
+      />
       <HreflangTags
         enPath={`/blog/${post.slug}`}
         viPath={viSlug ? `/vi/blog/${viSlug}` : undefined}
@@ -332,27 +335,29 @@ const BlogPost = () => {
                   </ol>
                 )}
                 {section.table && section.table.headers.length > 0 && (
-                  <table>
-                    {section.table.caption && (
-                      <caption>{section.table.caption}</caption>
-                    )}
-                    <thead>
-                      <tr>
-                        {section.table.headers.map((h, i) => (
-                          <th key={i}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {section.table.rows.map((row, ri) => (
-                        <tr key={ri}>
-                          {row.map((cell, ci) => (
-                            <td key={ci}>{cell}</td>
+                  <div className="tl-table-wrap">
+                    <table>
+                      {section.table.caption && (
+                        <caption>{section.table.caption}</caption>
+                      )}
+                      <thead>
+                        <tr>
+                          {section.table.headers.map((h, i) => (
+                            <th key={i}>{h}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {section.table.rows.map((row, ri) => (
+                          <tr key={ri}>
+                            {row.map((cell, ci) => (
+                              <td key={ci}>{cell}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
                 {section.internalLinks && section.internalLinks.length > 0 && (
                   <p>

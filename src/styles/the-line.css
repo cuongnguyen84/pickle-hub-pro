@@ -2781,6 +2781,60 @@
   margin: 0 0 22px; padding-left: 22px; color: var(--tl-fg-2);
 }
 [data-theme="the-line"] .tl-longform li { margin-bottom: 6px; }
+
+/* Longform tables. EN posts render section.table as a real <table> inside
+ * .tl-longform; VI posts get equivalent markup from Supabase HTML inside
+ * .prose, which ViBlogPost styles with Tailwind Typography prose-table:*
+ * utilities. .tl-longform had NO table rules at all, so every EN table
+ * rendered unstyled — no border, no header fill, columns running together.
+ * Reported 2026-08-24 against the World Cup schedule post, but it affected
+ * all 19 tables across 8 EN posts, not just that one. These rules mirror the
+ * VI surface so the two languages look the same.
+ * The wrapper exists because these tables carry long prose cells (a full
+ * round-by-round description per row) and would otherwise overflow the
+ * 720px .tl-longform column on a phone. */
+[data-theme="the-line"] .tl-longform .tl-table-wrap {
+  margin: 0 0 22px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+[data-theme="the-line"] .tl-longform table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--tl-border);
+  font-size: 15px;
+  line-height: 1.55;
+}
+[data-theme="the-line"] .tl-longform caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 13.5px;
+  color: var(--tl-fg-3);
+  padding: 0 0 8px;
+}
+[data-theme="the-line"] .tl-longform th,
+[data-theme="the-line"] .tl-longform td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-longform thead th {
+  background: var(--tl-surface-2);
+  color: var(--tl-fg);
+  font-weight: 600;
+  border-top: 0;
+}
+[data-theme="the-line"] .tl-longform tbody td { color: var(--tl-fg-2); }
+[data-theme="the-line"] .tl-longform tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--tl-surface-2) 45%, transparent);
+}
+/* First column of a schedule table is a short label (a date, a finish
+ * position) — keep it on one line so the long cell beside it does the
+ * wrapping. Only where there is room; on a phone the wrapper scrolls. */
+@media (min-width: 640px) {
+  [data-theme="the-line"] .tl-longform tbody td:first-child { white-space: nowrap; }
+}
 [data-theme="the-line"] .tl-longform blockquote {
   font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
   font-size: 24px; line-height: 1.35; color: var(--tl-fg);
