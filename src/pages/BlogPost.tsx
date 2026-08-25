@@ -20,7 +20,7 @@ import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { blogHeroSrcSet } from "@/lib/image-utils";
+import { blogHeroSrcSet, heroDimsProps } from "@/lib/image-utils";
 import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -269,8 +269,7 @@ const BlogPost = () => {
                 srcSet={blogHeroSrcSet(post.heroImage.src)?.srcSet}
                 sizes="(max-width: 900px) 100vw, 832px"
                 alt={post.heroImage.alt}
-                width={1200}
-                height={630}
+                {...heroDimsProps(post.heroImage.src)}
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"

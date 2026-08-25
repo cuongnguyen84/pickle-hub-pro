@@ -12,7 +12,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
-import { cmsHeroImageSources } from "@/lib/image-utils";
+import { cmsHeroImageSources, heroDimsProps } from "@/lib/image-utils";
 
 // App.tsx starts this route chunk during cold deep-link bootstrap. Begin the
 // public CMS read as soon as the module evaluates so React Query can consume
@@ -186,8 +186,7 @@ const ViBlogPost = () => {
               srcSet={coverImage.srcSet}
               sizes="(max-width: 912px) calc(100vw - 32px), 832px"
               alt={post.title}
-              width={1200}
-              height={630}
+              {...heroDimsProps(post.cover_image_url)}
               loading="eager"
               fetchPriority="high"
               decoding="async"
