@@ -106,7 +106,7 @@ Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` refe
 
 All segments support `xhtml:link` hreflang (en, vi, x-default).
 
-⚠️ **PostgREST caps every response at 1000 rows** and does it silently — `.limit(5000)` returns exactly 1000 rows, HTTP 200, `error = null`. sitemap-news served 500 of 709 EN articles that way for months (fixed 2026-08-23, #644). Any sitemap whose table can pass 1000 rows must use `fetchAllRows()` from `functions/_lib/sitemap-helpers.ts`, with a unique tie breaker in the ORDER BY. news + matches already do; the rest still use a bare `.limit(5000)` and are only safe while they stay under the cap.
+⚠️ **PostgREST caps every response at 1000 rows** and does it silently — `.limit(5000)` returns exactly 1000 rows, HTTP 200, `error = null`. sitemap-news served 500 of 709 EN articles that way for months (fixed 2026-08-23, #644). Any sitemap whose table can pass 1000 rows must use `fetchAllRows()` from `functions/_lib/sitemap-helpers.ts`, with a unique tie breaker in the ORDER BY. news + matches + venues already do, and `functions/__tests__/sitemap-row-cap.test.ts` holds them there; the rest still use a bare `.limit(5000)` and are only safe while they stay under the cap (2026-08-25 counts: blog 68, events 27, livestreams 29, organizations 3, players 40 after its DB-side filters, tournaments 15, videos 6 — versus venues at 896 and growing ~100/month, which is why it was moved).
 
 News URLs are pushed to IndexNow by the `indexnow-news-hourly` pg_cron job (migration `20260823060000`), not by `functions/api/indexnow.ts` — that endpoint covers static routes + blog only.
 
