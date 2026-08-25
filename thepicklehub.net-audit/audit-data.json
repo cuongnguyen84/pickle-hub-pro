@@ -1,0 +1,294 @@
+{
+  "summary": {
+    "health_score": 66,
+    "business_type": "Bilingual (EN/VI) sports platform + local directory + news aggregator — Vietnam pickleball",
+    "audit_date": "2026-08-25",
+    "index_size": 4015,
+    "top_findings": [
+      "CLS = 0.35 in CrUX field data (mobile p75) — fails the 0.25 poor threshold; 31.4% of mobile visits are poor",
+      "87% of the index (3,499 of 4,015 URLs) is thin: venue pages median 238 words, news pages median 179 words",
+      "1,551 news URLs are automated republishing of third-party articles with zero outbound link to the source and no byline — site-reputation-abuse exposure",
+      "The indexable (bot) HTML contains no application JS and effectively zero in-body <img> — 132 of 135 crawled pages have 0 images",
+      "Six page types emit zero hreflang: /tournament/, /tran-dau/, /nguoi-choi/, /live/, /watch/, /org/"
+    ],
+    "quick_wins": [
+      "Add outbound rel-links to the original publisher on every news article (attribution already exists as plain text 'Source: X')",
+      "Remove the empty sitemap-shop.xml from the sitemap index (0 URLs listed)",
+      "Add lastmod to the 59 static-sitemap URLs that lack it (all 58 EN blog entries + /rss.xml)",
+      "Drop /rss.xml from sitemap-static.xml — it is a feed, has no title/canonical/h1",
+      "Add image + aggregateRating to the existing SportsActivityLocation schema on venue pages"
+    ]
+  },
+  "categories": [
+    {
+      "name": "Technical SEO",
+      "score": 80,
+      "weight": 0.22,
+      "what_works": [
+        "135/135 crawled URLs returned HTTP 200 with zero redirect hops",
+        "Canonical present on 134/135 pages and self-referential on 100% of them",
+        "Server-rendered body content confirmed for bots on every page type — no SPA shell",
+        "Redirect and CSP parity locked by tests (redirect-parity.test.ts, csp-parity.test.ts, robots-fallback-parity.test.ts)",
+        "HSTS preload, nosniff, X-Frame-Options, referrer-policy and Permissions-Policy all set",
+        "No sitemap URL is blocked by robots.txt"
+      ],
+      "findings": [
+        {
+          "title": "Six page types emit zero hreflang",
+          "severity": "High",
+          "description": "curl -A Googlebot | grep -c hreflang returns 0 for /tournament/mlp-san-diego, /tran-dau/mlp-mlp-c95ddd4b-..., /nguoi-choi/pham-quang, /live/d41a4662-..., /watch/91cf2783-..., /org/pb-academy. Their sitemaps also contain zero xhtml:link elements (tournaments, matches, players, videos, livestreams, organizations). CLAUDE.md states 'All segments support xhtml:link hreflang (en, vi, x-default)' — that is inaccurate.",
+          "recommendation": "Add the en/vi/x-default triad to the six renderers and the six sitemap handlers. Mitigating context: /vi/nguoi-choi/* and /vi/live/* return 200 but canonicalise to the non-/vi/ URL, so duplication is already consolidated; /vi/tournament/*, /vi/watch/* and /vi/org/* return 301."
+        },
+        {
+          "title": "Empty sitemap-shop.xml referenced in the sitemap index",
+          "severity": "Medium",
+          "description": "sitemap-shop.xml returns HTTP 200 with 0 <loc> entries while still being listed in /sitemap.xml. Shop routes are additionally Disallowed in robots.txt.",
+          "recommendation": "Emit the shop entry in the index only when the shop pilot flag enables public indexing."
+        },
+        {
+          "title": "59 of 102 static-sitemap URLs have no lastmod",
+          "severity": "Medium",
+          "description": "sitemap-static.xml contains 102 <loc> but only 43 <lastmod>. All 58 EN blog entries plus /rss.xml are missing it.",
+          "recommendation": "Pass lastmod for EN blog entries in functions/sitemap-static.xml.ts from the post updatedDate."
+        },
+        {
+          "title": "/rss.xml is listed in sitemap-static.xml",
+          "severity": "Low",
+          "description": "/rss.xml is the only crawled URL with no <title>, no canonical, no H1 and no meta description — because it is an XML feed, not a page.",
+          "recommendation": "Remove it from the sitemap; keep it discoverable via <link rel=alternate type=application/rss+xml>."
+        },
+        {
+          "title": "robots.txt relies on the $ end-anchor, which is a Google/Bing extension",
+          "severity": "Low",
+          "description": "Disallow: /shop$ and Allow: /tools$ style rules are honoured by Google and Bing but treated literally by other crawlers and by most third-party SEO tools.",
+          "recommendation": "Keep for Google/Bing, but back the private shop routes with X-Robots-Tag headers so non-conforming crawlers are also covered."
+        }
+      ]
+    },
+    {
+      "name": "Content Quality",
+      "score": 38,
+      "weight": 0.23,
+      "what_works": [
+        "Blog is genuinely strong: 16/16 sampled posts above 750 words, median 1,250, max 2,335 — zero thin posts",
+        "Venue metadata is real data, not boilerplate: court count, price band, opening hours and booking phone vary per venue",
+        "Venue meta descriptions match the URL locale correctly on 20/20 sampled pages (no EN copy on /vi/ pages or vice versa)",
+        "Zero duplicate meta descriptions across the whole 135-page sample"
+      ],
+      "findings": [
+        {
+          "title": "87% of the index is thin content",
+          "severity": "Critical",
+          "description": "Measured Googlebot-rendered body word counts: venues 20/20 sampled under 300 words (min 120, median 238, max 276) across 1,948 URLs; news 10/16 under 300 words (min 132, median 179) across 1,551 URLs; players 6/6 at 61-71 words; club/event pages 8/8 at 56-89 words; organizations 3/3 at 48-54 words. Venues + news alone are 3,499 of 4,015 URLs.",
+          "recommendation": "Give venue pages first-hand substance — surface the in-house review system, add photos, opening-hours detail, surface conditions, parking and a written verdict. Target 400-600 unique words. Consider noindex for player/club/org profiles below a substance threshold, mirroring the existing hasIndexableSubstance() gate used for the player sitemap."
+        },
+        {
+          "title": "News section republishes third-party articles with no outbound source link and no byline",
+          "severity": "Critical",
+          "description": "1,551 URLs (39% of the index) are fetched, AI-rewritten and Gemini-translated from external publishers. Verified on live pages: attribution appears only as plain text ('Source: Pickleball...') with zero outbound <a href> to the original — 0 external links found across 30 sampled pages site-wide, and 0 on the news pages specifically. No author byline exists.",
+          "recommendation": "Link every article to its original source, add a real byline and an editorial-review step, and add an original-analysis layer for a Vietnamese audience. Where none of that is feasible, noindex the syndicated set and keep it as an on-site feed only."
+        },
+        {
+          "title": "The in-house venue review system is not present in the indexable HTML",
+          "severity": "High",
+          "description": "No aggregateRating, no review markup and no rating text appear in the bot HTML of sampled venue pages — the differentiating first-hand asset is invisible to search.",
+          "recommendation": "Render reviews server-side and emit aggregateRating/review inside the existing SportsActivityLocation block."
+        },
+        {
+          "title": "Weak E-E-A-T identity signals",
+          "severity": "High",
+          "description": "/about is 122 words and 13 internal links, with no named people. No author pages, no bylines on blog or news, no published editorial policy.",
+          "recommendation": "Publish a founder bio with credentials and community involvement, byline the blog posts to a real person, expand /about to 400+ words with an editorial policy, and wire Person/sameAs schema to it."
+        }
+      ]
+    },
+    {
+      "name": "On-Page SEO",
+      "score": 84,
+      "weight": 0.2,
+      "what_works": [
+        "Exactly one H1 on 134/135 crawled pages (the sole exception is /rss.xml, which is a feed)",
+        "Zero duplicate meta descriptions; only two duplicate titles in the whole sample, both on genuinely recurring events",
+        "Title lengths are disciplined — one short outlier (/about at 18 chars) and no truncation-length titles",
+        "City hubs fan out fully: /san/khu-vuc/ha-noi links to all 184 of its venues in the bot HTML, no pagination gap",
+        "og:image present on 134/135 pages"
+      ],
+      "findings": [
+        {
+          "title": "Effectively zero outbound external links across the site",
+          "severity": "Medium",
+          "description": "Across 30 fully link-parsed pages, only two external domains were linked at all (www.ppatour.com once, www.google.com twice, the latter being map links). For a news aggregator and a directory this is an outlier pattern and removes a normal trust signal.",
+          "recommendation": "Link out to original publishers on news, to official tournament sites, to federation pages and to venue websites/Facebook pages."
+        },
+        {
+          "title": "/about title and description are undersized",
+          "severity": "Low",
+          "description": "Title 'About ThePickleHub' is 18 characters; meta description 'A bilingual pickleball platform built in Vietnam.' is 49 characters.",
+          "recommendation": "Expand both to carry the Vietnam/bilingual/pickleball entity terms; this page is also the E-E-A-T landing target."
+        }
+      ]
+    },
+    {
+      "name": "Schema / Structured Data",
+      "score": 78,
+      "weight": 0.1,
+      "what_works": [
+        "Zero invalid JSON-LD blocks across the whole 135-page sample",
+        "Venue detail pages emit valid SportsActivityLocation with address, geo, amenityFeature, hasMap, sport and — where the data exists — telephone, openingHoursSpecification and priceRange (verified on /san/happy-pickleball-ba-ria)",
+        "City hubs emit ItemList of SportsActivityLocation (Hà Nội hub: numberOfItems 184)",
+        "Homepage emits Organization + WebSite + SearchAction + ContactPoint + PostalAddress",
+        "BlogPosting and NewsArticle carry correct bilingual inLanguage (en-US / vi-VN)",
+        "Tournaments emit SportsEvent, with BroadcastEvent subevents where a livestream is linked"
+      ],
+      "findings": [
+        {
+          "title": "Venue schema omits image and aggregateRating",
+          "severity": "Medium",
+          "description": "SportsActivityLocation is emitted on all 1,948 venue pages but never carries image or aggregateRating/review, so the venue results cannot earn rating-enhanced local snippets.",
+          "recommendation": "Add image (venue photo) and aggregateRating/review sourced from the existing in-house review system."
+        },
+        {
+          "title": "/watch/* and /live/* carry no VideoObject or BroadcastEvent schema",
+          "severity": "Medium",
+          "description": "Video replay and livestream pages are in the sitemaps (6 and 31 URLs) but emit no video schema, so they are ineligible for video rich results and the video carousel.",
+          "recommendation": "Emit VideoObject (name, description, thumbnailUrl, uploadDate, duration, contentUrl/embedUrl) on /watch/*, and BroadcastEvent with isLiveBroadcast on /live/*."
+        }
+      ]
+    },
+    {
+      "name": "Performance (CWV)",
+      "score": 72,
+      "weight": 0.1,
+      "what_works": [
+        "FCP 1,079ms and TTFB 638ms at mobile p75 — both comfortably good",
+        "Desktop field LCP 2,035ms is good",
+        "Both CLS and LCP are trending in the right direction quarter over quarter (CLS 0.68 to 0.35, LCP 2,684ms to 2,485ms)"
+      ],
+      "findings": [
+        {
+          "title": "CLS 0.35 at mobile p75 — fails the poor threshold — FIXED #676 (2026-08-25)",
+          "severity": "Critical",
+          "description": "CrUX origin-level mobile p75 CLS is 0.35 against a 0.1 good / 0.25 poor threshold; 31.4% of mobile visits are classed poor. Audience is ~95% Vietnamese mobile.",
+          "recommendation": "Reserve space with aspect-ratio on feed and list cards, set explicit width/height on every image including the hero, and reserve height for late-loading blocks. SHIPPED: real cause was LiveSectionSkeleton under-reserving 279px + unpreloaded inter-vietnamese.woff2. Production lab CLS /vi 0.419 -> 0.024; EN / 0.015 -> 0.031. CrUX field pending ~28 days."
+        },
+        {
+          "title": "LCP 2,485ms sits 15ms under the pass line",
+          "severity": "High",
+          "description": "Mobile p75 LCP is 2,485ms against the 2,500ms good threshold — a pass with no margin. Contributors identified: render-blocking CSS (~1,811ms), an unoptimised hero image (~548 kB), and script execution before the LCP resource is requested.",
+          "recommendation": "Preload the hero with a responsive srcset in WebP/AVIF, defer non-critical CSS, and delay realtime subscriptions until after LCP."
+        },
+        {
+          "title": "~115 kB of unused JavaScript shipped site-wide",
+          "severity": "Medium",
+          "description": "Supabase client and UI components load on all routes but are needed only on some.",
+          "recommendation": "Route-level code splitting for the Supabase client and heavy UI chunks."
+        }
+      ]
+    },
+    {
+      "name": "AI Search Readiness (GEO)",
+      "score": 66,
+      "weight": 0.1,
+      "what_works": [
+        "llms.txt exists at /llms.txt (2,934 bytes) and is well structured, with a clear entity description and key-page map",
+        "Brand naming is consistent — 'ThePickleHub' one word throughout, no spaced-variant dilution found",
+        "Citation-oriented crawlers (PerplexityBot, Google-Extended, OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User) are allowed while training-only crawlers are blocked",
+        "68% of sampled blog openings pass the passage-citability rules"
+      ],
+      "findings": [
+        {
+          "title": "News openings are 0% citable back to the brand",
+          "severity": "High",
+          "description": "Every sampled news article opens with 'Source: <external publisher>' and never names ThePickleHub in the opening passage, so an AI answer extracting that passage attributes it to the original publisher, not to this site.",
+          "recommendation": "Rewrite the news opening template to front-load the answer and name ThePickleHub once naturally, keeping the source attribution as a linked line beneath rather than as the opening."
+        },
+        {
+          "title": "Missing answer-shaped pages for high-volume Vietnamese queries",
+          "severity": "Medium",
+          "description": "No unified rules explainer, no doubles-strategy guide and no Vietnamese equipment buying guide — all are extractable-answer formats for Vietnamese AI queries the site currently cannot serve.",
+          "recommendation": "Publish the three as bilingual guides with front-loaded definitional openings."
+        }
+      ]
+    },
+    {
+      "name": "Images",
+      "score": 35,
+      "weight": 0.05,
+      "what_works": [
+        "og:image is present on 134 of 135 crawled pages, so social and link previews are covered",
+        "Of the handful of images that do reach the bot HTML, 0 are missing alt text"
+      ],
+      "findings": [
+        {
+          "title": "The indexable HTML contains almost no in-body images",
+          "severity": "High",
+          "description": "The prerender path serves bots a fully static document with no application JS — the only <script src> is analytics.ahrefs.com. Verified with a browser UA the same URL returns the Vite module bundle (/assets/index-*.js), confirming images are client-rendered only. Result: 132 of 135 crawled pages contain zero <img>; the whole 135-page sample contains 5 <img> tags total, all on three blog posts.",
+          "recommendation": "Render in-body images server-side in the prerender output — at minimum the article hero on blog and news, and the venue photo on /san/*. Without this, Google Images and Discover image eligibility rest on og:image alone."
+        }
+      ]
+    }
+  ],
+  "action_plan": {
+    "phases": [
+      {
+        "name": "Phase 1: Critical Fixes",
+        "timeframe": "Week 1",
+        "items": [
+          "DONE #676 — CLS fix shipped 2026-08-25. Production lab CLS /vi 0.419 -> 0.024. CrUX field confirmation pending ~28 days.",
+          "Add an outbound rel link to the original publisher on all 1,551 news articles, plus a real byline.",
+          "Decide the news policy: editorial review + original analysis layer, or noindex the syndicated set."
+        ]
+      },
+      {
+        "name": "Phase 2: High-Impact Improvements",
+        "timeframe": "Weeks 2-3",
+        "items": [
+          "Server-render in-body images in the prerender output for blog, news and venue pages.",
+          "Surface the in-house venue reviews server-side and emit aggregateRating/review inside SportsActivityLocation; add image.",
+          "Add the en/vi/x-default hreflang triad to the six page types and six sitemap handlers that lack it.",
+          "LCP work: preload responsive WebP/AVIF hero, defer non-critical CSS, delay realtime subscriptions.",
+          "Rewrite the news opening template so ThePickleHub is named in the citable passage."
+        ]
+      },
+      {
+        "name": "Phase 3: Content & Authority",
+        "timeframe": "Month 2",
+        "items": [
+          "Raise venue pages to 400-600 unique words with first-hand substance (verdict, conditions, parking, photos).",
+          "Publish founder bio + author pages + editorial policy; byline the blog; expand /about past 400 words.",
+          "Publish the three missing answer-shaped guides: pickleball rules explainer, doubles strategy, Vietnamese equipment buying guide.",
+          "Add VideoObject to /watch/* and BroadcastEvent to /live/*.",
+          "Start link acquisition against Vietnamese federations, clubs and sports media using the venue directory and free bracket tools as the linkable assets."
+        ]
+      },
+      {
+        "name": "Phase 4: Monitoring & Iteration",
+        "timeframe": "Ongoing",
+        "items": [
+          "Remove sitemap-shop.xml from the index until the shop is publicly indexable; add lastmod to the 59 static URLs missing it; drop /rss.xml from the sitemap.",
+          "Alert on p75 CLS above 0.25 or LCP above 2,600ms for three consecutive days.",
+          "Watch sitemap-venues.xml as it passes 2,000 rows and plan the split.",
+          "Configure a Search Console service account — this audit had no GSC or GA4 access, so indexation coverage and real query data are unmeasured."
+        ]
+      }
+    ]
+  },
+  "artifacts": {
+    "findings_dir": "findings/",
+    "screenshots_dir": "screenshots/",
+    "raw": [
+      "all-urls.tsv",
+      "crawl-sample.json",
+      "links.json",
+      "robots.txt",
+      "sitemap-index.xml",
+      "sm-*.xml",
+      "llms.txt"
+    ]
+  },
+  "coverage_limits": [
+    "Google Search Console and GA4 were not authenticated — no indexation-coverage or real query/click data in this audit.",
+    "Backlink analysis ran at Tier 0 (no Moz or Bing API); Common Crawl graph output did not complete, so no referring-domain list or DA/PA figure is reported.",
+    "135 of 4,015 URLs were crawled as a stratified sample, not a full 500-page crawl; per-segment conclusions are sample-based."
+  ]
+}
