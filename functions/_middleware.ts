@@ -891,7 +891,17 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // branch had reserved v60, but /live windowing took v61 to production first,
   // so it moves to v62 — CLAUDE.md's rule is that the number only has to differ
   // from the one already deployed.
-  const cacheKey = `pr:v62:${url.pathname}`;
+  //
+  // v63 — CTR-03 + content refresh (2026-08-25). Three separate reasons the
+  // cached HTML is now wrong:
+  //   1. / and /vi carry new meta descriptions. The VI one was being cut
+  //      mid-word at the 160-BYTE budget ("…miễn…") because the string was 148
+  //      characters and 186 bytes; both now interpolate the venue count.
+  //   2. /blog/hcmc-open-2026-preview and /vi/blog/hcmc-open-2026 now open with
+  //      the result (the event finished on 2026-08-09) and carry new titles.
+  //   3. /blog/hong-kong-slam-2026-preview and /vi/blog/hong-kong-slam-2026
+  //      say registration is open rather than that it opens on August 10.
+  const cacheKey = `pr:v63:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

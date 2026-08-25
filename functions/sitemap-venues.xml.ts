@@ -64,7 +64,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         .range(from, to),
     );
 
-    const entries = (venues || [])
+    // fetchAllRows always resolves to an array, so no `|| []` guard here.
+    const entries = venues
       .filter(
         (v: VenueSitemapRow) => v.slug && URL_SAFE_SLUG_RE.test(v.slug) && !isThinVenue(v),
       )

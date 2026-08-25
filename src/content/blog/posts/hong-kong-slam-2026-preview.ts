@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "hong-kong-slam-2026-preview",
   publishedDate: "2026-08-05",
-  updatedDate: "2026-08-05",
+  updatedDate: "2026-08-25",
   author: "Cuong Nguyen",
   tags: [
     "hong kong slam 2026",
@@ -33,10 +33,10 @@ const post: BlogPost = {
         {
           heading: "Asia's first-ever pickleball Slam",
           content:
-            "Professional pickleball's Asian season will end with its biggest event yet. On August 3, 2026, PPA Tour Asia confirmed the PPA Asia 1500 Hang Seng Bank Hong Kong Slam — the first Slam ever staged in Asia and the grand finale of the 2026 tour — for October 19–25, 2026 at the Kai Tak Arena inside Hong Kong's new Kai Tak Sports Park. Organized by F-Sports Promotions and title-sponsored by Hang Seng Bank, with support from the Hong Kong, China Tennis Association, the Slam carries a prize purse of up to US$1.1 million (about HK$8.58 million) — the highest in Asian professional pickleball history — and 1,500 ranking points, the most on offer at any tour stop. Coming just weeks after Vietnam's own August of pickleball, it is the event the whole region's season has been building toward. This ThePickleHub preview covers everything confirmed so far, and we will update it as qualification, tickets and the player field are announced.",
+            "Last updated: August 25, 2026 — registration is now open. The PPA Asia 1500 Hang Seng Bank Hong Kong Slam runs October 19–25, 2026 at the Kai Tak Arena inside Hong Kong's new Kai Tak Sports Park: the first Slam ever staged in Asia, the grand finale of the 2026 tour, and — at up to US$1.1 million (about HK$8.58 million) — the richest prize purse in Asian professional pickleball history. Entry for both the Professional and Amateur divisions opened on August 10, 2026 and remains open on a first-come, first-served basis for amateurs. Organized by F-Sports Promotions and title-sponsored by Hang Seng Bank, with support from the Hong Kong, China Tennis Association, the Slam awards 1,500 ranking points to gold — the most on offer at any tour stop. This ThePickleHub preview covers everything PPA Tour Asia has confirmed, and is updated as qualification, tickets and the player field are announced.",
           internalLinks: [
             {
-              text: "Vietnam's PPA Asia 500 this August — the HCMC Open 2026 preview",
+              text: "Vietnam's PPA Asia 500 in August — how the HCMC Open 2026 finished",
               path: "/blog/hcmc-open-2026-preview",
             },
           ],
@@ -55,7 +55,7 @@ const post: BlogPost = {
             "Status: the 2026 season finale — the last chance to claim the season's 'roaring dragon head' trophy",
             "Organizer: F-Sports Promotions Limited; title sponsor Hang Seng Bank; supported by the Hong Kong, China Tennis Association",
             "Divisions: Pro and Amateur (men's and women's singles, men's and women's doubles, mixed doubles) across age groups and skill levels",
-            "Registration: opens August 10, 2026 at 3:15 PM HKT for both Pro and Amateur — amateur places are first-come, first-served",
+            "Registration: open since August 10, 2026 for both Pro and Amateur — amateur places are first-come, first-served",
           ],
           internalLinks: [
             {
@@ -83,22 +83,22 @@ const post: BlogPost = {
         {
           heading: "What it means for Vietnamese players",
           content:
-            "For Vietnamese fans, the Slam is the finish line of a breakout season. Truong Vinh Hien has medalled across the Asia swing — a men's doubles gold with Do Minh Quan at the Beijing Open, a title in Kuala Lumpur, and doubles silver plus singles bronze at the Leapmotor Singapore Open in July. Ly Hoang Nam won the men's singles title at the MB Hanoi Cup in April, and teenager Le Xuan Duc has announced himself in qualifying. Every ranking point these players bank at stops like the Ho Chi Minh City Open (August 6–9) builds toward the season's biggest payday and the global ranking. PPA Tour Asia has said further details will follow once qualification is confirmed, so exactly who lines up in Hong Kong will become clear closer to October — but a record-setting finale is precisely the stage this new generation of Vietnamese pros has been chasing all year.",
+            "For Vietnamese fans, the Slam is the finish line of a breakout season. Truong Vinh Hien has medalled across the Asia swing — a men's doubles gold with Do Minh Quan at the Beijing Open, a title in Kuala Lumpur, and doubles silver plus singles bronze at the Leapmotor Singapore Open in July. Ly Hoang Nam won the men's singles title at the MB Hanoi Cup in April, and teenager Le Xuan Duc has announced himself in qualifying. At the MB Ho Chi Minh City Open on August 6–9 the two met in an all-Vietnamese men's doubles final, Hien and Quan beating Nam and Collin Johns 2–1 for another 500 points apiece. Every point banked at stops like that one builds toward the season's biggest payday and the global ranking. PPA Tour Asia has said further details will follow once qualification is confirmed, so exactly who lines up in Hong Kong will become clear closer to October — but a record-setting finale is precisely the stage this new generation of Vietnamese pros has been chasing all year.",
           internalLinks: [
             {
               text: "PPA Tour Asia 2026 mid-season recap: Vietnam's champions so far",
               path: "/blog/ppa-tour-asia-2026-recap",
             },
             {
-              text: "HCMC Open 2026 preview — the next points on the road to Hong Kong",
-              path: "/blog/hcmc-open-2026-preview",
+              text: "HCMC Open 2026 results — the all-Vietnamese final on the road to Hong Kong",
+              path: "/blog/hcmc-open-2026-recap",
             },
           ],
         },
         {
           heading: "How to register (Pro and Amateur)",
           content:
-            "Like every PPA Tour Asia stop, the Hong Kong Slam pairs its elite professional draws with open amateur competition — a chance to play the same venue, the same week, as the pros. Online registration for both the Professional and Amateur divisions opens on August 10, 2026 at 3:15 PM HKT, with amateur spots handed out first-come, first-served, so early entry matters. Amateur events span men's and women's singles, men's and women's doubles and mixed doubles across age groups and skill levels. Register your interest on the official event page. And if you run a club or want to organize your own bracket to warm up for the season finale, our free tools can set one up in minutes.",
+            "Like every PPA Tour Asia stop, the Hong Kong Slam pairs its elite professional draws with open amateur competition — a chance to play the same venue, the same week, as the pros. Online registration for both the Professional and Amateur divisions opened on August 10, 2026 and is open now, with amateur spots handed out first-come, first-served, so early entry matters. Amateur events span men's and women's singles, men's and women's doubles and mixed doubles across age groups and skill levels. Register your interest on the official event page. And if you run a club or want to organize your own bracket to warm up for the season finale, our free tools can set one up in minutes.",
           internalLinks: [
             {
               text: "Build a free tournament bracket with ThePickleHub tools",
@@ -145,7 +145,7 @@ const post: BlogPost = {
         {
           question: "When does registration for the Hong Kong Slam open?",
           answer:
-            "Online registration for both the Professional and Amateur divisions opens on August 10, 2026 at 3:15 PM HKT. Amateur places are first-come, first-served. Further details will be announced once qualification is confirmed.",
+            "Online registration for both the Professional and Amateur divisions opened on August 10, 2026 and is open now. Amateur places are first-come, first-served. Further details will be announced once qualification is confirmed.",
         },
         {
           question: "Can amateur players compete at the Hong Kong Slam?",

@@ -324,7 +324,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "hong-kong-slam-2026-preview",
     publishedDate: "2026-08-05",
-    updatedDate: "2026-08-05",
+    updatedDate: "2026-08-25",
     author: "Cuong Nguyen",
     tags: [
       "hong kong slam 2026",
@@ -595,7 +595,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "hcmc-open-2026-preview",
     publishedDate: "2026-07-10",
-    updatedDate: "2026-07-27",
+    updatedDate: "2026-08-25",
     author: "Cuong Nguyen",
     tags: [
       "hcmc open 2026",
@@ -616,14 +616,14 @@ export const blogMetadata: BlogPostMetadata[] = [
       alt: "MB HCMC Open 2026 hero — outdoor pickleball stadium court at golden hour in Ho Chi Minh City with the city skyline behind a packed grandstand, PPA Asia 500 event banner for August 6-9.",
     },
     titleEn:
-      "HCMC Open 2026 Preview: The PPA Asia 500 Comes to Ho Chi Minh City",
-    titleVi: "HCMC Open 2026: Toàn cảnh giải PPA Asia 500 tại TP.HCM",
-    metaTitleEn: "HCMC Open 2026 Preview | PPA Asia 500 in Ho Chi Minh City",
-    metaTitleVi: "HCMC Open 2026 | Lịch & giải thưởng",
+      "HCMC Open 2026: Results, Prize Money and the All-Vietnamese Final",
+    titleVi: "HCMC Open 2026: Kết quả, tiền thưởng và trận chung kết toàn Việt",
+    metaTitleEn: "HCMC Open 2026 Results | PPA Asia 500 Ho Chi Minh City",
+    metaTitleVi: "HCMC Open 2026 | Kết quả & tiền thưởng",
     metaDescriptionEn:
-      "The MB Ho Chi Minh City Open, Aug 6–9 2026 at New Sports Club: a US$70,000 PPA Tour Asia 500 stop. Prize money, entry and how to watch.",
+      "MB Ho Chi Minh City Open 2026 (Aug 6–9): Do Minh Quan & Truong Vinh Hien beat Ly Hoang Nam & Collin Johns 2–1 in an all-Vietnamese men's doubles final.",
     metaDescriptionVi:
-      "MB Ho Chi Minh City Open 6–9/8/2026 tại New Sports Club — chặng PPA Tour Asia 500, thưởng 70.000 USD. Lịch, đăng ký, cách xem.",
+      "HCMC Open 2026 (6–9/8): Đỗ Minh Quân & Trương Vĩnh Hiển thắng Lý Hoàng Nam & Collin Johns 2–1 ở chung kết đôi nam toàn Việt.",
   },
   {
     slug: "vietnam-pickleball-tournament-calendar-2026",

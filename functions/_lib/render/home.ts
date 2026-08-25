@@ -9,11 +9,39 @@ import { escapeHtml, DEFAULT_OG_IMAGE } from "../utils";
 
 // ─── Home ───────────────────────────���─────────────────────
 
+/**
+ * CTR-03 (2026-08-25) — the court count, floored to the nearest 50.
+ *
+ * Both home descriptions used to be claims ("the only bilingual pickleball
+ * platform built for Asia") rather than facts, and a claim is the weakest
+ * thing to put in front of a searcher deciding which of ten results to open.
+ * The court count is the largest concrete number the site holds — 896 on
+ * 2026-08-25 — so it goes in the snippet instead.
+ *
+ * Floored to 50 and phrased as "hơn X" / "X+" so the string stays true between
+ * deploys as venues are added, and so the copy doesn't churn on every import.
+ * Returns null when the count is unavailable; callers then fall back to a
+ * number-free sentence rather than printing "hơn 0 sân". A meta description is
+ * not worth failing a page render over.
+ */
+async function flooredVenueCount(supabase: SupabaseClient): Promise<number | null> {
+  try {
+    const { count, error } = await supabase
+      .from("venues")
+      .select("slug", { count: "exact", head: true });
+    if (error || count == null || count < 50) return null;
+    return Math.floor(count / 50) * 50;
+  } catch {
+    return null;
+  }
+}
+
 export async function renderHome(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
-  const [liveRes, videoRes, viBlogRes] = await Promise.all([
+  const [liveRes, videoRes, viBlogRes, venueCount] = await Promise.all([
     supabase.from("public_livestreams").select("id, title, status").in("status", ["live", "scheduled"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(10),
     supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(3),
+    flooredVenueCount(supabase),
   ]);
 
   const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
@@ -30,7 +58,21 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
   // app-name comparison — same pattern /vi has shipped since launch with
   // no OAuth issue. Mirrors the VI title for hreflang-pair consistency.
   const title = "ThePickleHub – Pickleball Asia: Live & Tournaments";
-  const description = "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.";
+  // CTR-03 (2026-08-25) — description rewritten; title deliberately untouched.
+  //
+  // GSC 16–22/08: this page took 381 impressions at avg position 8.4 for 4
+  // clicks (1.05% CTR). The old snippet spent its whole budget on a
+  // self-description ("The only bilingual pickleball platform built for Asia")
+  // and named not one thing a searcher could be looking for. Replaced with the
+  // four surfaces people actually arrive for — streams, schedules, rankings,
+  // courts — leading with the count.
+  //
+  // The TITLE is left exactly as it was. It was changed on 2026-08-14 and 11
+  // days is not enough signal to judge it; changing both at once would mean
+  // never learning which one moved the number.
+  const description = venueCount
+    ? `Live pickleball streams, PPA Tour Asia schedules, DUPR rankings and ${venueCount}+ courts across Vietnam — updated daily on ThePickleHub.`
+    : "Live pickleball streams, PPA Tour Asia schedules, DUPR rankings and pickleball courts across Vietnam — updated daily on ThePickleHub.";
 
   return htmlResponse(buildHtml({
     title,
@@ -182,10 +224,11 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
 }
 
 export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
-  const [liveRes, videoRes, blogRes] = await Promise.all([
+  const [liveRes, videoRes, blogRes, venueCount] = await Promise.all([
     supabase.from("public_livestreams").select("id, title, status").in("status", ["live", "scheduled"]).order("created_at", { ascending: false }).limit(10),
     supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(10),
     supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(6),
+    flooredVenueCount(supabase),
   ]);
 
   const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
@@ -196,7 +239,21 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
 
   return htmlResponse(buildHtml({
     title: "ThePickleHub – Pickleball Châu Á: Live & Giải đấu",
-    description: "Nền tảng pickleball song ngữ duy nhất xây cho châu Á. Giải đấu, livestream và tin tức bằng tiếng Việt và tiếng Anh — miễn phí cho BTC và người chơi.",
+    // CTR-03 (2026-08-25) — this description was being TRUNCATED in production.
+    // At 186 UTF-8 bytes it blew pickMetaDescription's 160-byte budget, and the
+    // live page was serving "…miễn…" — the sentence stopped mid-word. Nobody
+    // noticed because the string is 148 characters, which looks safely inside
+    // 160 until you remember Vietnamese diacritics cost 2-3 bytes each. Same
+    // unit confusion as buildTitle #468 and the venue snippets in CTR-01.
+    //
+    // The replacement is 156 bytes with the count, 146 without, and it leads
+    // with what VI searchers actually query — lịch giải, xem trực tiếp, bảng
+    // xếp hạng, sân — instead of a claim about the platform. Byte budget is
+    // enforced by functions/_lib/render/__tests__/home-meta.test.ts; do not
+    // edit this string without running it.
+    description: venueCount
+      ? `Lịch giải pickleball, link xem trực tiếp, bảng xếp hạng DUPR và hơn ${venueCount} sân khắp Việt Nam. Cập nhật hằng ngày trên ThePickleHub.`
+      : "Lịch giải pickleball, link xem trực tiếp, bảng xếp hạng DUPR và sân chơi khắp Việt Nam. Cập nhật hằng ngày trên ThePickleHub.",
     url: `${siteUrl}/vi`,
     siteUrl,
     lang: "vi",

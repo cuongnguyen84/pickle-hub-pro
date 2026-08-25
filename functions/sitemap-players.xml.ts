@@ -19,6 +19,7 @@ import {
   SITEMAP_CACHE_HEADERS,
   URL_SAFE_USERNAME_RE,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -91,28 +92,34 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
-    const { data: players, error } = await supabase
-      .from("profiles")
-      // bio + dupr_* feed hasIndexableSubstance(); they are not rendered here.
-      .select("username, created_at, bio, dupr_id, dupr_doubles, dupr_singles")
-      .eq("is_ghost", false)
-      .eq("country", "VN")
-      .not("username", "is", null)
-      .not("onboarding_completed_at", "is", null)
+    // CAP-01 (2026-08-25) — paged. PostgREST silently caps every response at
+    // 1000 rows, so `.limit(5000)` returns 1000 rows with HTTP 200 and
+    // error = null (the bug that cost sitemap-news 209 URLs, #644). `profiles`
+    // is ~1669 rows today and only the opt-in public subset survives the
+    // filters, so the emitted list is small — but the CAP applies to the QUERY,
+    // not the filtered result, so a truncated page would drop eligible players
+    // before this code ever sees them. `username` is the unique tie breaker.
+    const players = await fetchAllRows<ProfileRow>((from, to) =>
+      supabase
+        .from("profiles")
+        // bio + dupr_* feed hasIndexableSubstance(); they are not rendered here.
+        .select("username, created_at, bio, dupr_id, dupr_doubles, dupr_singles")
+        .eq("is_ghost", false)
+        .eq("country", "VN")
+        .not("username", "is", null)
+        .not("onboarding_completed_at", "is", null)
       // Sprint A4 (2026-05-27) — only opt-in public profiles. Renamed
       // renderPlayer (functions/_lib/render/index.ts:1325) now filters
       // is_public_profile = true → sitemap must match or risk emitting
       // 404 URLs again. Until users opt-out themselves, this matches the
       // 24 profiles backfilled true by migration 20260528030000.
-      .eq("is_public_profile", true)
-      .order("created_at", { ascending: false })
-      .limit(5000);
+        .eq("is_public_profile", true)
+        .order("created_at", { ascending: false })
+        .order("username", { ascending: true })
+        .range(from, to),
+    );
 
-    if (error) {
-      console.error("sitemap-players: query error:", error);
-    }
-
-    const entries = (players || [])
+    const entries = players
       .filter(
         (p: ProfileRow): p is ProfileRow & { username: string } =>
           Boolean(p.username) && URL_SAFE_USERNAME_RE.test(p.username as string),

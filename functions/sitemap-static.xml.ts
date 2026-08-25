@@ -13,6 +13,7 @@ import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
   buildUrlEntry,
+  fetchAllRows,
   today,
   wrapUrlset,
   type UrlEntry,
@@ -108,11 +109,23 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const enToViSlug = new Map<string, string>();
   try {
     const supabase = createSupabaseClient(context.env);
-    const { data: viPosts } = await supabase
-      .from("vi_blog_posts")
-      .select("slug, alternate_en_slug")
-      .eq("status", "published");
-    for (const p of viPosts || []) {
+    // CAP-01 (2026-08-25) — paged. This query had no .limit() at all, which
+    // does not mean "no cap": PostgREST applies max-rows = 1000 by default and
+    // reports nothing. The consequence here is quieter than a missing URL —
+    // the EN entries would still be emitted, just stripped of their VI
+    // hreflang, so EN and VI would compete instead of pairing. 66 rows today.
+    // `slug` is the unique tie breaker.
+    const viPosts = await fetchAllRows<{ slug: string; alternate_en_slug: string | null }>(
+      (from, to) =>
+        supabase
+          .from("vi_blog_posts")
+          .select("slug, alternate_en_slug")
+          .eq("status", "published")
+          .order("published_at", { ascending: false })
+          .order("slug", { ascending: true })
+          .range(from, to),
+    );
+    for (const p of viPosts) {
       if (p.alternate_en_slug) enToViSlug.set(p.alternate_en_slug, p.slug);
     }
   } catch (err) {
