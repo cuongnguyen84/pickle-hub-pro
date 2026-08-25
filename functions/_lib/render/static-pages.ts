@@ -106,8 +106,16 @@ export function renderAdvertise(siteUrl: string, rawPath: string, lang: Lang): R
 export function renderAbout(siteUrl: string, rawPath: string, lang: Lang): Response {
   const isVi = lang === "vi";
   return htmlResponse(buildHtml({
-    title: isVi ? "Về ThePickleHub" : "About ThePickleHub",
-    description: isVi ? "Nền tảng pickleball song ngữ xây dựng tại Việt Nam." : "A bilingual pickleball platform built in Vietnam.",
+    // /about is the E-E-A-T landing page, so its own meta has to carry the
+    // entity. The 2026-08-25 audit found it was the shortest on the site: an
+    // 18-character title and a 49-character description, against a 60/160
+    // BYTE budget that buildHtml enforces (truncateForSeo). Vietnamese
+    // diacritics cost 2-3 bytes each, so both VI strings are measured, not
+    // eyeballed — VI title 56B, VI description 152B.
+    title: isVi ? "Về ThePickleHub — Nền tảng pickleball song ngữ" : "About ThePickleHub — Bilingual Pickleball Platform",
+    description: isVi
+      ? "ThePickleHub — nền tảng pickleball song ngữ Việt–Anh: phần mềm giải đấu miễn phí, livestream, xếp hạng DUPR, danh bạ sân."
+      : "ThePickleHub is Vietnam's bilingual pickleball platform: free tournament software, livestreams, DUPR rankings, a court directory and news. Based in HCMC.",
     url: `${siteUrl}${rawPath}`, siteUrl, lang,
     alternates: [
       { hreflang: "en", href: `${siteUrl}/about` },

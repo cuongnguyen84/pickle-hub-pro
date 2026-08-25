@@ -920,12 +920,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      the result (the event finished on 2026-08-09) and carry new titles.
   //   3. /blog/hong-kong-slam-2026-preview and /vi/blog/hong-kong-slam-2026
   //      say registration is open rather than that it opens on August 10.
-  // v64 (2026-08-25, C3) — every /news/:slug now carries
+  // v65 (2026-08-25, LOW sweep, #678) — /about and /vi/about carry new titles
+  // and meta descriptions. The old ones were the shortest on the site (18-char
+  // title, 49-char description).
+  //
+  // v66 (2026-08-25, C3, this branch) — every /news/:slug now carries
   // <meta name="robots" content="noindex, follow"> and no hreflang, and every
-  // /vi/news/:slug now self-references in hreflang instead of pairing with the
-  // EN URL. Without a bump, cached HTML would keep serving the indexable EN
-  // page and the old EN↔VI cluster for the full TTL.
-  const cacheKey = `pr:v64:${url.pathname}`;
+  // /vi/news/:slug self-references in hreflang instead of pairing with the EN
+  // URL. Without a bump, cached HTML would keep serving the indexable EN page
+  // and the old EN<->VI cluster for the full TTL.
+  //
+  // This branch originally took v64. #678 merged first with v65, so it moves
+  // to v66 — CLAUDE.md's rule for two open branches bumping the same number:
+  // take the higher and move on.
+  const cacheKey = `pr:v66:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

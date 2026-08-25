@@ -8,7 +8,7 @@
  */
 
 import { createSupabaseClient } from "./_lib/supabase";
-import { EN_BLOG_SLUGS } from "./_lib/static-blog-slugs";
+import { EN_BLOG_ENTRIES } from "./_lib/static-blog-slugs";
 import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
@@ -102,7 +102,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
     { loc: "/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
     { loc: "/vi/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
-    { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
+    // /rss.xml is deliberately NOT here. It is an RSS feed, not a page: the
+    // 2026-08-25 audit found it was the only crawled URL on the site with no
+    // <title>, no canonical, no H1 and no meta description, because there is
+    // nothing there to have them. A sitemap lists indexable pages; the feed is
+    // discovered through <link rel="alternate" type="application/rss+xml">.
   ];
 
   // Build EN blog post entries with optional bilingual hreflang
@@ -136,12 +140,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     buildUrlEntry({ loc: `${siteUrl}${u.loc}`, lastmod: u.lastmod, changefreq: u.changefreq, priority: u.priority, hreflang: u.hreflang }),
   );
 
-  const enBlogEntries = EN_BLOG_SLUGS.map((slug) => {
+  const enBlogEntries = EN_BLOG_ENTRIES.map(({ slug, lastmod }) => {
     const viSlug = enToViSlug.get(slug);
     const hreflang = viSlug
       ? bilingual(`/blog/${slug}`, `/vi/blog/${viSlug}`)
       : enOnly(`/blog/${slug}`);
-    return buildUrlEntry({ loc: `${siteUrl}/blog/${slug}`, changefreq: "monthly", priority: "0.7", hreflang });
+    // lastmod is the post's own updatedDate/publishedDate, never TODAY — see
+    // the note on EN_BLOG_ENTRIES. These 58 URLs carried no lastmod at all.
+    return buildUrlEntry({ loc: `${siteUrl}/blog/${slug}`, lastmod, changefreq: "monthly", priority: "0.7", hreflang });
   });
 
   const xml = wrapUrlset([...staticEntries, ...enBlogEntries]);

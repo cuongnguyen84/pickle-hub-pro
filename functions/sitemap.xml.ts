@@ -26,6 +26,7 @@ interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   CANONICAL_HOST: string;
+  SHOP_PUBLIC_INDEXING?: string;
 }
 
 const SEGMENT_PATHS = [
@@ -57,17 +58,28 @@ const SEGMENT_PATHS = [
   // renderVenueDetail + renderVenuesCity ship bot-prerender (functions/_lib/
   // render/venues.ts), so every URL resolves to a real 200.
   "/sitemap-venues.xml",
-  // Phase 4 (2026-08-18) — shop product / storefront / category URLs, now
-  // that renderShopProduct & co. ship bot-prerender. Referenced
-  // unconditionally: the segment itself reads SHOP_PUBLIC_INDEXING and
-  // answers an empty urlset while the gate is closed, which is a valid
-  // sitemap. A segment that 404s would flag the whole index in Search
-  // Console for as long as the gate stayed shut.
-  "/sitemap-shop.xml",
 ];
+
+// Phase 4 (2026-08-18) — shop product / storefront / category URLs, now that
+// renderShopProduct & co. ship bot-prerender.
+//
+// 2026-08-25: this used to be listed unconditionally, on the reasoning that a
+// segment which 404s would flag the whole index in Search Console for as long
+// as the gate stayed shut. That constraint still holds and is respected here —
+// omitting an entry is not the same as serving a 404, and /sitemap-shop.xml
+// still answers 200 with an empty urlset for anyone who requests it directly.
+// What changes is that the index no longer advertises a segment that is
+// guaranteed to be empty: the audit found it listed with 0 URLs, which sends
+// Google to fetch nothing on every index read. It reappears the moment
+// SHOP_PUBLIC_INDEXING flips to "1", in the same deploy as the URLs it names.
+const SHOP_SEGMENT_PATH = "/sitemap-shop.xml";
 
 export const onRequest: PagesFunction<Env> = (context) => {
   const siteUrl = context.env.CANONICAL_HOST || SITE_URL_DEFAULT;
-  const xml = wrapSitemapIndex(siteUrl, SEGMENT_PATHS, today());
+  const segments =
+    context.env.SHOP_PUBLIC_INDEXING === "1"
+      ? [...SEGMENT_PATHS, SHOP_SEGMENT_PATH]
+      : SEGMENT_PATHS;
+  const xml = wrapSitemapIndex(siteUrl, segments, today());
   return new Response(xml, { status: 200, headers: SITEMAP_CACHE_HEADERS });
 };
