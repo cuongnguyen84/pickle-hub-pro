@@ -70,8 +70,5 @@
 /vi/blog/thuat-toan-dupr-vi-sao-thang-mat-diem           /vi/blog/thuat-toan-dupr-thang-mat-diem-thua-tang-diem    301
 /vi/blog/to-chuc-giai-pickleball                         /vi/blog/cach-to-chuc-giai-pickleball                     301
 /vi/blog/luat-pickleball-day-du                          /vi/blog/luat-pickleball-co-ban                           301
-# Retired /dupr landing → live VI DUPR explainer (mirrored in _middleware.ts)
-/dupr                                                    /vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam     301
-
 # SPA fallback
 /* /index.html 200

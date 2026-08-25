@@ -77,6 +77,27 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/account(?:\/|$)/,
   /^\/vi\/account(?:\/|$)/,
   /^\/onboarding(?:\/|$)/,
+  // DUPR account linking. Auth-gated app action, never an indexable content
+  // page — same category as /account and /onboarding above.
+  //
+  // 2026-08-23 (#650) this path was given a 301 to the VI DUPR explainer in
+  // section 1b, labelled "Retired /dupr landing", to clear a GSC "Not found
+  // (404)" from 2026-07-30. It was not retired: App.tsx still mounts
+  // <RequireAuth><DuprConnect /></RequireAuth> on it, eight product surfaces
+  // link to it, and two blog posts tell readers to type thepicklehub.net/dupr
+  // by hand when the header button does not appear. Section 1b runs BEFORE the
+  // `if (!isBot)` branch, so the 301 hit humans too and that typed-URL
+  // fallback landed on an article instead of the connect screen.
+  //
+  // REVIEW: noindex rather than GONE_EXACT (where the closest neighbours,
+  // /match/new and /match/confirm, live). GONE_EXACT returns 410, which
+  // asserts the resource is permanently gone — false here, it renders for
+  // every authenticated user — and the SSR'd blog CTA (ctaPath: "/dupr" in
+  // dupr-thepicklehub-user-guide) would then be an internal link to a 410.
+  // A crawlable 200 + noindex clears the GSC report just as definitively.
+  // Deliberately NOT added to robots.txt: Disallow would stop Google
+  // recrawling the URL, so it would never see the noindex it must honour.
+  /^\/dupr(?:\/|$)/,
   // Personal pages
   /^\/(?:vi\/)?notifications(?:\/|$)/,
   /^\/(?:vi\/)?thong-bao(?:\/|$)/,
@@ -416,16 +437,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const uMatch = url.pathname.match(/^\/(?:vi\/)?u\/([^/?#]+)$/);
   if (uMatch) {
     return secureRedirect(`https://${url.hostname}/nguoi-choi/${uMatch[1]}${url.search}`, 301);
-  }
-
-  // ─── 1b-dupr. Retired /dupr landing → live VI DUPR explainer (301).
-  //       GSC "Not found (404)" 2026-07-30. Branded "dupr" intent, so recover
-  //       to the pillar post rather than 410 it.
-  if (url.pathname === "/dupr") {
-    return secureRedirect(
-      `https://${url.hostname}/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam`,
-      301,
-    );
   }
 
   // GSC 2026-08-09: an old, truncated livestream URL is still being crawled.
