@@ -188,8 +188,13 @@ describe("renderLivestreamList — standing content (THIN-01)", () => {
     expect(html).toContain('hreflang="x-default"');
   });
 
-  it("links replays to the localized path in the VI cluster", async () => {
-    expect(await renderLiveHub([ENDED], "vi")).toContain(`${SITE}/vi/live/cccc3333`);
+  // Reversed 2026-08-25. The VI hub used to link /vi/live/:id, which
+  // _middleware.ts rule 1d now 301s to /live/:id — so the "localized" link was
+  // a redirect hop to the page we actually index. Both locales link the
+  // canonical URL; the stream page itself renders Vietnamese-first regardless.
+  it("links replays to the single canonical /live/:id from both clusters", async () => {
+    expect(await renderLiveHub([ENDED], "vi")).toContain(`${SITE}/live/cccc3333`);
+    expect(await renderLiveHub([ENDED], "vi")).not.toContain(`${SITE}/vi/live/cccc3333`);
     expect(await renderLiveHub([ENDED], "en")).toContain(`${SITE}/live/cccc3333`);
   });
 });

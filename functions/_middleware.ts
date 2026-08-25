@@ -504,7 +504,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       VI rendering path the safer signal is a permanent redirect
   //       to the EN canonical — readers stay on one URL per entity
   //       and SEOnaut sees one indexable surface per organization.
-  const viOrgMatch = url.pathname.match(/^\/vi\/(org|tournament|watch)\/([^/?#]+)$/);
+  //
+  //       2026-08-25: extended to tran-dau, nguoi-choi and live/:id, which
+  //       were the other half of the same problem and had been left behind.
+  //       They served 200 with the EN canonical — the exact "hreflang to non
+  //       canonical" shape this rule exists to remove. /vi/tran-dau/* and
+  //       /vi/nguoi-choi/* were worse than duplicates: the SPA has no route
+  //       for either, so a human hard-navigating one got the NotFound page
+  //       while bots got a full render. Only the id form is matched, so the
+  //       real VI listing pages (/vi/live, /vi/tournaments) are untouched.
+  const viOrgMatch = url.pathname.match(
+    /^\/vi\/(org|tournament|watch|tran-dau|nguoi-choi|live)\/([^/?#]+)$/,
+  );
   if (viOrgMatch) {
     return secureRedirect(`https://${url.hostname}/${viOrgMatch[1]}/${viOrgMatch[2]}${url.search}`, 301);
   }
@@ -939,7 +950,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // vi_blog_posts.cover_image_url), both with real width/height. Cached HTML
   // has no <img> at all, so without a bump Google Images keeps seeing the
   // imageless version for the full TTL.
-  const cacheKey = `pr:v67:${url.pathname}`;
+  // v68 (2026-08-25) — the VI live hub links to /live/:id instead of
+  // /vi/live/:id, so its cached body would otherwise keep pointing at URLs
+  // that now 301.
+  const cacheKey = `pr:v68:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
