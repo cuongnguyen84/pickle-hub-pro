@@ -37,7 +37,7 @@ const outFile = resolve(here, "..", "src", "content", "blog", "image-dims.ts");
  * encoders in this repo emit: lossy (VP8 ), lossless (VP8L) and extended
  * (VP8X, which is what any animated/alpha/ICC file uses).
  */
-export function webpSize(buf, label) {
+function webpSize(buf, label) {
   if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WEBP") {
     throw new Error(`${label}: not a WebP file`);
   }

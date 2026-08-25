@@ -15,7 +15,27 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BLOG_IMAGE_DIMS, blogImageDims } from "../image-dims";
 import { blogMetadata } from "../metadata";
-import { webpSize } from "../../../../scripts/gen-blog-image-dims.mjs";
+
+// Deliberately a SECOND implementation of the header parse rather than an
+// import from scripts/gen-blog-image-dims.mjs: a drift test that shares its
+// parser with the generator would agree with the generator about a wrong
+// number. (It also keeps `tsc -b` out of an untyped .mjs.)
+function webpSize(buf: Buffer, label: string): [number, number] {
+  if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WEBP") {
+    throw new Error(`${label}: not a WebP file`);
+  }
+  const fourcc = buf.toString("ascii", 12, 16);
+  if (fourcc === "VP8 ") return [buf.readUInt16LE(26) & 0x3fff, buf.readUInt16LE(28) & 0x3fff];
+  if (fourcc === "VP8L") {
+    const bits = buf.readUInt32LE(21);
+    return [(bits & 0x3fff) + 1, ((bits >> 14) & 0x3fff) + 1];
+  }
+  if (fourcc === "VP8X") {
+    const read24 = (o: number) => buf[o] | (buf[o + 1] << 8) | (buf[o + 2] << 16);
+    return [read24(24) + 1, read24(27) + 1];
+  }
+  throw new Error(`${label}: unknown WebP chunk "${fourcc}"`);
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const IMAGES_DIR = resolve(here, "..", "..", "..", "..", "public", "images", "blog");
