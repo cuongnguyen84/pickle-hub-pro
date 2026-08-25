@@ -70,16 +70,59 @@ const MAX_ROWS = 5;
 // the hero section inserting itself after data arrived was the home page's
 // main layout shift. Same section/head/media classes as the real render,
 // so geometry (incl. the 16/9 media box) is reserved, not approximated.
+/**
+ * Reserves the geometry of a loaded LiveSection, not a token of it.
+ *
+ * Measured on production /vi at 390px on 2026-08-25: this skeleton was 319px
+ * while the section it stands in for resolved to 598px. The 279px it did not
+ * reserve pushed the entire page below it down on resolve — one 0.208 layout
+ * shift, which a throttled Chrome trace showed was the whole of the VI home
+ * page's measurable CLS (0.2238 total, of which the ticker is 0.0002).
+ *
+ * The earlier version reserved a bare head plus one 16/9 media box. Three
+ * things were missing and all three are height: the head's "see all" link
+ * (min-height 44px), the main card's body under the thumb (130px), and the
+ * schedule list (85px). It also used .tl-live-main-media (aspect-ratio 16/9)
+ * where a loaded card uses .tl-live-main-thumb (16/10), so even the part it
+ * did reserve was the wrong size.
+ *
+ * Every box below therefore carries the loaded element's own class, so its
+ * height is computed by the same CSS that lays out the real thing and cannot
+ * drift when the section is restyled. Do not give this component heights of
+ * its own — that is the failure mode it exists to avoid. Same rule as the
+ * /news and /san skeletons; see src/pages/__tests__/hub-list-cls.test.ts.
+ *
+ * It reserves the common shape: one featured stream plus one schedule row.
+ * A quieter week resolves shorter and collapses a little, which is the trade
+ * src/lib/home-live-lead.ts already documents and accepts.
+ */
 export function LiveSectionSkeleton() {
   return (
     <section className="tl-section tl-live-sec" aria-hidden="true">
       <div className="tl-shell">
         <div className="tl-live-head">
           <h2 className="tl-live-title">&nbsp;</h2>
+          <span className="tl-live-all">&nbsp;</span>
         </div>
         <div className="tl-live-main">
-          <div className="tl-live-main-media">
+          <div className="tl-live-main-thumb">
             <span className="tl-live-thumb-ph" />
+          </div>
+          <div className="tl-live-main-body">
+            {/* Two lines: .tl-live-main-name is line-clamped to 2 and real
+                stream titles wrap to both more often than not. */}
+            <div className="tl-live-main-name">&nbsp;<br />&nbsp;</div>
+            <div className="tl-live-meta">&nbsp;</div>
+          </div>
+        </div>
+        <div className="tl-live-list">
+          <div className="tl-live-row">
+            <div className="tl-live-row-thumb" />
+            <div>
+              <div className="tl-live-row-name">&nbsp;</div>
+              <div className="tl-live-row-meta">&nbsp;</div>
+            </div>
+            <div className="tl-live-row-when">&nbsp;</div>
           </div>
         </div>
       </div>
