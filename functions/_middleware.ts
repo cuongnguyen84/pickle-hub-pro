@@ -839,7 +839,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // copy (/live 59 words -> ~354, /rankings 135 -> ~378) and /live now falls
   // back to replays instead of rendering its own empty state. Four cached URLs
   // (en/vi x 2 routes) would otherwise serve the thin version for the full TTL.
-  const cacheKey = `pr:v59:${url.pathname}`;
+  //
+  // v61 — /live query windowing (2026-08-25): live / scheduled / ended each get
+  // their own query and limit instead of sharing one 40-row created_at window,
+  // and upcoming is ordered by air time. Output is unchanged while nothing is
+  // live or scheduled, but the cached copy must not outlive the first stream
+  // that is. (v60 is taken by the open GEO-01 branch — CLAUDE.md says take the
+  // higher number when two branches both bump.)
+  const cacheKey = `pr:v61:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
