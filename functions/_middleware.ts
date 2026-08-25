@@ -920,7 +920,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      the result (the event finished on 2026-08-09) and carry new titles.
   //   3. /blog/hong-kong-slam-2026-preview and /vi/blog/hong-kong-slam-2026
   //      say registration is open rather than that it opens on August 10.
-  const cacheKey = `pr:v63:${url.pathname}`;
+  // v64 (2026-08-25, C3) — every /news/:slug now carries
+  // <meta name="robots" content="noindex, follow"> and no hreflang, and every
+  // /vi/news/:slug now self-references in hreflang instead of pairing with the
+  // EN URL. Without a bump, cached HTML would keep serving the indexable EN
+  // page and the old EN↔VI cluster for the full TTL.
+  const cacheKey = `pr:v64:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

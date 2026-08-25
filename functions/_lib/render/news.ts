@@ -72,7 +72,9 @@ async function renderNewsArticleByLang(
 
   const { data: row } = await supabase
     .from("news_items")
-    .select("id, title, summary, source, image_url, language, slug, published_at, updated_at, parent_news_id, ai_translated, content_html")
+    .select(
+      "id, title, summary, source, image_url, language, slug, published_at, updated_at, parent_news_id, ai_translated, content_html"
+    )
     .eq("language", language)
     .eq("slug", slug)
     .eq("status", "published")
@@ -82,43 +84,40 @@ async function renderNewsArticleByLang(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const r = row as any;
 
-  let siblingSlug: string | null = null;
-  if (language === "en") {
-    const { data: vi } = await supabase
-      .from("news_items")
-      .select("slug")
-      .eq("parent_news_id", r.id)
-      .eq("language", "vi")
-      .eq("status", "published")
-      .maybeSingle();
-    siblingSlug = (vi as { slug: string } | null)?.slug ?? null;
-  } else if (r.parent_news_id) {
-    const { data: en } = await supabase
-      .from("news_items")
-      .select("slug")
-      .eq("id", r.parent_news_id)
-      .eq("language", "en")
-      .eq("status", "published")
-      .maybeSingle();
-    siblingSlug = (en as { slug: string } | null)?.slug ?? null;
-  }
+  // C3 (2026-08-25) — the EN news feed is noindex; the VI feed is kept.
+  //
+  // Every article in this table is a third-party piece the fetcher pulled in,
+  // so an EN page competes head-on with the publisher it was taken from: same
+  // content, published later, far less authority. The VI page is a different
+  // proposition — a Vietnamese rendering of something that exists only in
+  // English is a real service to a ~95%-Vietnamese audience.
+  //
+  // GSC, 2026-05-23..08-22: the whole /news/ segment earned 48 clicks and 447
+  // impressions from 12 pages out of 1,551, and every page in that set we
+  // could attribute was a /vi/ one. So this costs no measured traffic while
+  // removing 746 duplicate URLs — 19% of the index — from the scaled-content
+  // exposure. Full workings in thepicklehub.net-audit/ACTION-PLAN.md (C3).
+  //
+  // noindex,follow rather than nofollow: the related-news strip and the /news
+  // hub should still pass equity, and Google has to keep crawling these to
+  // keep seeing the directive — which is also why /news/ must stay OUT of
+  // robots.txt. Disallow would freeze the current indexed state instead.
+  const robotsMeta =
+    language === "en" ? `<meta name="robots" content="noindex, follow"/>` : "";
 
-  const enUrl = language === "en"
-    ? `${siteUrl}${canonicalPath}`
-    : siblingSlug
-      ? `${siteUrl}/news/${siblingSlug}`
-      : null;
-  const viUrl = language === "vi"
-    ? `${siteUrl}${canonicalPath}`
-    : siblingSlug
-      ? `${siteUrl}/vi/news/${siblingSlug}`
-      : null;
-
-  const hreflangs: string[] = [];
-  if (enUrl) hreflangs.push(`<link rel="alternate" hreflang="en" href="${enUrl}"/>`);
-  if (viUrl) hreflangs.push(`<link rel="alternate" hreflang="vi" href="${viUrl}"/>`);
-  hreflangs.push(`<link rel="alternate" hreflang="x-default" href="${enUrl ?? `${siteUrl}${canonicalPath}`}"/>`);
-  const extraMeta = hreflangs.join("\n");
+  // A noindexed URL must not sit in an hreflang cluster: Google mishandles or
+  // drops the whole cluster when one member is unindexable. The VI page
+  // therefore self-references, and the EN page emits no hreflang at all. This
+  // also removes the sibling lookup that used to run on every news render —
+  // one fewer Supabase round trip per page.
+  const hreflangs =
+    language === "vi"
+      ? [
+          `<link rel="alternate" hreflang="vi" href="${siteUrl}${canonicalPath}"/>`,
+          `<link rel="alternate" hreflang="x-default" href="${siteUrl}${canonicalPath}"/>`,
+        ]
+      : [];
+  const extraMeta = [robotsMeta, ...hreflangs].filter(Boolean).join("\n");
 
   const title = buildTitle(r.title, " | ThePickleHub");
   const description = buildMetaDescription(r.summary, { type: "default", title: r.title });
