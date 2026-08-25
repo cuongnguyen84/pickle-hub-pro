@@ -44,6 +44,7 @@ import {
   venuePriceRange,
   uniformWeekHours,
   formatHoursRange,
+  venuePriceHoursVisibility,
   type VenueListItem,
 } from "@/lib/venues";
 import { fetchVenueDetail, venueDetailQueryKey } from "@/lib/venue-detail-query";
@@ -110,6 +111,16 @@ export default function VenueDetail() {
     [venue],
   );
   const priceVerified = isVerifiedVenueSource(venue?.price_source ?? null);
+
+  // Every row in the bordered box needs a *verified* source, so the box has to
+  // be gated on the same thing the rows are — see venuePriceHoursVisibility().
+  const priceHours = venuePriceHoursVisibility({
+    priceText,
+    priceVerified,
+    weekHours,
+    hoursVerified,
+    dayRowCount: hours.length,
+  });
 
   if (isLoading) {
     return (
@@ -328,50 +339,53 @@ export default function VenueDetail() {
             A verified figure is stated plainly. A default is shown as what
             courts in the area cost, with this venue explicitly excluded from
             the claim — same split the bot renderer applies. */}
-        {(priceText || weekHours || hours.length > 0) && (
+        {priceHours.section && (
           <section className="mb-6">
             <h2 className="mb-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
               {language === "vi" ? "Giá & giờ mở cửa" : "Price & opening hours"}
             </h2>
-            <div className="rounded-md border border-border">
-              {priceText && priceVerified && (
-                <div className="flex items-center justify-between px-4 py-2 text-sm">
-                  <span className="text-muted-foreground">
-                    {language === "vi" ? "Giá thuê" : "Price"}
-                  </span>
-                  <span className="font-medium">
-                    {priceText}
-                    {language === "vi" ? "/giờ" : "/hour"}
-                  </span>
-                </div>
-              )}
-              {weekHours && hoursVerified && (
-                <div
-                  className={`flex items-center justify-between px-4 py-2 text-sm ${
-                    priceText && priceVerified ? "border-t border-border" : ""
-                  }`}
-                >
-                  <span className="text-muted-foreground">
-                    {language === "vi" ? "Giờ mở cửa" : "Opening hours"}
-                  </span>
-                  <span>{formatHoursRange(weekHours, lang)}</span>
-                </div>
-              )}
-              {hours.map((h, i) => (
-                <div
-                  key={h.day}
-                  className={`flex items-center justify-between px-4 py-2 text-sm ${
-                    i > 0 || (priceText && priceVerified) ? "border-t border-border" : ""
-                  }`}
-                >
-                  <span className="text-muted-foreground">{h.day}</span>
-                  <span>{h.value}</span>
-                </div>
-              ))}
-            </div>
+            {priceHours.box && (
+              <div className="rounded-md border border-border">
+                {priceHours.priceRow && (
+                  <div className="flex items-center justify-between px-4 py-2 text-sm">
+                    <span className="text-muted-foreground">
+                      {language === "vi" ? "Giá thuê" : "Price"}
+                    </span>
+                    <span className="font-medium">
+                      {priceText}
+                      {language === "vi" ? "/giờ" : "/hour"}
+                    </span>
+                  </div>
+                )}
+                {priceHours.weekHoursRow && (
+                  <div
+                    className={`flex items-center justify-between px-4 py-2 text-sm ${
+                      priceHours.priceRow ? "border-t border-border" : ""
+                    }`}
+                  >
+                    <span className="text-muted-foreground">
+                      {language === "vi" ? "Giờ mở cửa" : "Opening hours"}
+                    </span>
+                    <span>{formatHoursRange(priceHours.weekHoursRow, lang)}</span>
+                  </div>
+                )}
+                {priceHours.dayRows &&
+                  hours.map((h, i) => (
+                    <div
+                      key={h.day}
+                      className={`flex items-center justify-between px-4 py-2 text-sm ${
+                        i > 0 || priceHours.priceRow ? "border-t border-border" : ""
+                      }`}
+                    >
+                      <span className="text-muted-foreground">{h.day}</span>
+                      <span>{h.value}</span>
+                    </div>
+                  ))}
+              </div>
+            )}
 
-            {priceText && !priceVerified && (
-              <p className="mt-2 text-sm text-muted-foreground">
+            {priceHours.disclaimer && (
+              <p className={`text-sm text-muted-foreground ${priceHours.box ? "mt-2" : ""}`}>
                 {language === "vi"
                   ? `Chưa có bảng giá riêng của sân này. Sân pickleball${
                       venue.city ? ` ở ${venue.city}` : ""
