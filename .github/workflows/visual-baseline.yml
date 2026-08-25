@@ -30,7 +30,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install deps
-        run: npm install
+        run: npm ci
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: Capture baselines
