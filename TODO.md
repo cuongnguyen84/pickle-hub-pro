@@ -31,7 +31,7 @@ Sau migration hoàn tất (14/04/2026). Các task còn lại không urgent, prio
 
 **Verification:**
 - Login Apple trên www.thepicklehub.net → expect success
-- Test trên iOS Capacitor app → verify Universal Links flow
+- Test trên app iOS native (`/apple`) → verify Universal Links flow
 - Check Supabase logs: Authentication → Logs → tìm Apple provider events
 
 ---

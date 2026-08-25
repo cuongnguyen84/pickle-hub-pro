@@ -20,6 +20,7 @@ import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -44,17 +45,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
-    const { data, error } = await supabase
-      .from("public_livestreams")
-      .select("id, status, created_at, scheduled_start_at")
-      .order("created_at", { ascending: false })
-      .limit(5000);
+    // CAP-01 (2026-08-25) — paged. PostgREST caps every response at 1000 rows
+    // silently: `.limit(5000)` returns 1000 rows, HTTP 200, error = null. That
+    // is how sitemap-news served 500 of 709 articles for months (#644). 29
+    // streams today, but every livestream ever created lands here, so this
+    // table only goes one way. `id` is the unique tie breaker.
+    const streams = await fetchAllRows<StreamRow>((from, to) =>
+      supabase
+        .from("public_livestreams")
+        .select("id, status, created_at, scheduled_start_at")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
-    if (error) {
-      console.error("sitemap-livestreams: query error:", error);
-    }
-
-    const entries = ((data ?? []) as StreamRow[]).map((s) => {
+    const entries = streams.map((s) => {
       const lastmod = toLastmod(s.scheduled_start_at || s.created_at, TODAY);
       const url = `${siteUrl}/live/${s.id}`;
       // Live + scheduled streams refresh fast; ended streams behave

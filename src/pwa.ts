@@ -1,11 +1,7 @@
 /**
  * PWA service worker registration.
- *
- * Skips registration when running inside Capacitor native WebView to avoid
- * conflicts with native asset loading. Web browsers get the full PWA flow.
  */
 import { registerSW } from "virtual:pwa-register";
-import { Capacitor } from "@capacitor/core";
 import { purgeAuthSensitiveCaches } from "@/lib/pwa/cache";
 import { isChunkErrorMessage } from "@/lib/chunkError";
 import { installStaleShellGuard } from "@/lib/staleShell";
@@ -19,9 +15,6 @@ import { installStaleShellGuard } from "@/lib/staleShell";
  * UI shows the generic error boundary on every nav click. A one-time
  * cache-busting reload picks up the fresh index.html which references
  * the new chunk hashes.
- *
- * Runs in BOTH browser PWA and Capacitor WebView — Capacitor caches the
- * JS bundle too, so the same recovery path applies.
  */
 function installChunkErrorRecovery(): void {
   const RELOAD_FLAG = "__chunk_reload_pending__";
@@ -96,15 +89,12 @@ function installChunkErrorRecovery(): void {
 }
 
 export function initPwa() {
-  // Chunk-import error recovery runs everywhere — Capacitor WebView and
-  // browser PWA alike. Must register BEFORE any lazy imports fire so
-  // the early-route navigation crash can self-heal.
+  // Chunk-import error recovery. Must register BEFORE any lazy imports fire
+  // so the early-route navigation crash can self-heal.
   installChunkErrorRecovery();
 
   // Preventive layer: detect a newer deploy BEFORE a stale lazy chunk 404s.
-  // Runs in Capacitor WebView too (remote URL, no SW — this is its only
-  // freshness signal besides the reactive boundary above). Skip in dev:
-  // there's no build-id.txt and Vite serves modules unhashed.
+  // Skip in dev: there's no build-id.txt and Vite serves modules unhashed.
   if (!import.meta.env.DEV) {
     installStaleShellGuard();
   }
@@ -113,11 +103,6 @@ export function initPwa() {
   // NetworkFirst SW (now NetworkOnly). Runs on every boot; a no-op once the
   // cache is gone. Prevents stale per-user REST data lingering after upgrade.
   void purgeAuthSensitiveCaches();
-
-  // Do not register SW inside Capacitor native WebView — native handles assets.
-  if (Capacitor.isNativePlatform()) {
-    return;
-  }
 
   // Don't register in development unless explicitly enabled
   if (import.meta.env.DEV) {

@@ -12,6 +12,7 @@ import {
   SITEMAP_CACHE_HEADERS,
   URL_SAFE_SLUG_RE,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -47,15 +48,28 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // organizations) and surface query errors as 503 so the failure
     // mode is visible to monitoring instead of silently de-listing
     // every tournament page.
-    const { data: tournaments, error } = await supabase
-      .from("tournaments")
-      .select("slug, created_at, status")
-      .in("status", ["ongoing", "ended", "upcoming"])
-      .order("start_date", { ascending: false })
-      .limit(5000);
+    // CAP-01 (2026-08-25) — paged. PostgREST caps every response at 1000 rows
+    // silently (`.limit(5000)` → 1000 rows, HTTP 200, error = null), the bug
+    // that cost sitemap-news 209 URLs in #644. `tournaments` is only 15 rows
+    // today, nowhere near the cap — this is here so the table can grow without
+    // anyone having to remember that it must not pass 1000. `slug` is the
+    // unique tie breaker; `start_date` alone repeats across same-day events.
+    const tournaments = await fetchAllRows<TournamentRow>((from, to) =>
+      supabase
+        .from("tournaments")
+        .select("slug, created_at, status")
+        .in("status", ["ongoing", "ended", "upcoming"])
+        .order("start_date", { ascending: false })
+        .order("slug", { ascending: true })
+        .range(from, to),
+    );
 
-    if (error) {
-      console.error("sitemap-tournaments: query error:", error);
+    if (tournaments.length === 0) {
+      // An empty result here is indistinguishable from a failed query, and
+      // AUTOFIX 2026-06-05 (below) is the precedent: a bad select served an
+      // empty urlset with HTTP 200 and silently de-listed every tournament.
+      // 503 keeps that failure mode visible to monitoring.
+      console.error("sitemap-tournaments: no rows returned");
       return new Response(wrapUrlset([]), { status: 503, headers: SITEMAP_CACHE_HEADERS });
     }
 
@@ -63,7 +77,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // batch 5 made tournament pages single-locale (/vi/tournament/* now
     // 301s to the EN canonical), so advertising a vi alternate in the
     // sitemap would point hreflang at a redirect.
-    const entries = ((tournaments || []) as TournamentRow[])
+    const entries = tournaments
       .filter((t) => t.slug && URL_SAFE_SLUG_RE.test(t.slug))
       .map((t) => {
         const lastmod = toLastmod(t.created_at, TODAY);

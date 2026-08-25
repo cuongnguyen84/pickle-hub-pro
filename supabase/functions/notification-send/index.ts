@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 // Internal helper invoked by other functions (match-create, match-confirm,
 // kudos triggers, etc.) — not directly by client. Sprint 4 will implement:
-// insert notifications row, send Capacitor push (when iOS shipped),
+// insert notifications row, send push via FCM to the native iOS app,
 // queue weekly email digest entries.
 //
 // BLOCKED: notifications table schema decision (Option A/B/C in Sprint 1

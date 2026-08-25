@@ -283,13 +283,6 @@ export async function renderLivestreamList(
   // Two fixes: (1) never show a bare empty state — 29 ended streams exist and
   // stay watchable as replays, so fall back to those; (2) carry standing copy
   // that is true whether or not anything is live right now.
-  const { data: streams } = await supabase
-    .from("public_livestreams")
-    .select("id, title, status, scheduled_start_at, ended_at")
-    .in("status", ["live", "scheduled", "ended"])
-    .order("created_at", { ascending: false })
-    .limit(40);
-
   type Stream = {
     id: string;
     title: string;
@@ -297,12 +290,51 @@ export async function renderLivestreamList(
     scheduled_start_at: string | null;
     ended_at: string | null;
   };
-  const all = (streams ?? []) as Stream[];
-  const liveNow = all.filter((s) => s.status === "live");
-  const upcoming = all.filter((s) => s.status === "scheduled").slice(0, 10);
-  const replays = all.filter((s) => s.status === "ended").slice(0, 10);
+  const COLUMNS = "id, title, status, scheduled_start_at, ended_at";
 
-  const href = (s: Stream) => `${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${escapeHtml(s.id)}`;
+  // One window per status, not one shared window for all three.
+  //
+  // THIN-01 widened a single `.in(["live","scheduled","ended"]).limit(40)`
+  // ordered by created_at, which puts the three statuses in the same 40-row
+  // budget. Ended streams are the only bucket that grows without bound — 29 of
+  // them already sit in that window — so once 40 rows are newer than a given
+  // scheduled stream, the stream silently stops appearing on /live. The rows
+  // most exposed are exactly the ones announced furthest in advance: a
+  // tournament broadcast created weeks before it airs. With WC-DANANG-LIVE
+  // armed, that is the shape we cannot afford to drop.
+  //
+  // Upcoming is ordered by when it AIRS, not by when the row was created. A
+  // stream entered later but starting in December must not sit above one
+  // starting tomorrow, which is what created_at ordering did.
+  const [liveRes, scheduledRes, endedRes] = await Promise.all([
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "live")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "scheduled")
+      .order("scheduled_start_at", { ascending: true, nullsFirst: false })
+      .limit(10),
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "ended")
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  const liveNow = ((liveRes?.data ?? []) as Stream[]).filter((s) => s.status === "live");
+  const upcoming = ((scheduledRes?.data ?? []) as Stream[]).filter((s) => s.status === "scheduled");
+  const replays = ((endedRes?.data ?? []) as Stream[]).filter((s) => s.status === "ended");
+
+  // /live/:id is single-canonical — /vi/live/:id 301s to it (_middleware.ts
+  // rule 1d). Linking to the /vi form from the VI hub sent every crawler and
+  // every reader through a redirect hop to reach the page we actually index.
+  const href = (s: Stream) => `${siteUrl}/live/${escapeHtml(s.id)}`;
   const dateLabel = (iso: string | null) =>
     iso
       ? new Date(iso).toLocaleDateString(lang === "vi" ? "vi-VN" : "en-GB", {
@@ -323,7 +355,7 @@ export async function renderLivestreamList(
 
   // ItemList covers whatever is actually on the page, in the order shown.
   const listItems = [...liveNow, ...upcoming, ...replays].map((s) => ({
-    url: `${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${s.id}`,
+    url: `${siteUrl}/live/${s.id}`,
     name: s.title,
   }));
 

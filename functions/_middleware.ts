@@ -77,6 +77,27 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/account(?:\/|$)/,
   /^\/vi\/account(?:\/|$)/,
   /^\/onboarding(?:\/|$)/,
+  // DUPR account linking. Auth-gated app action, never an indexable content
+  // page — same category as /account and /onboarding above.
+  //
+  // 2026-08-23 (#650) this path was given a 301 to the VI DUPR explainer in
+  // section 1b, labelled "Retired /dupr landing", to clear a GSC "Not found
+  // (404)" from 2026-07-30. It was not retired: App.tsx still mounts
+  // <RequireAuth><DuprConnect /></RequireAuth> on it, eight product surfaces
+  // link to it, and two blog posts tell readers to type thepicklehub.net/dupr
+  // by hand when the header button does not appear. Section 1b runs BEFORE the
+  // `if (!isBot)` branch, so the 301 hit humans too and that typed-URL
+  // fallback landed on an article instead of the connect screen.
+  //
+  // REVIEW: noindex rather than GONE_EXACT (where the closest neighbours,
+  // /match/new and /match/confirm, live). GONE_EXACT returns 410, which
+  // asserts the resource is permanently gone — false here, it renders for
+  // every authenticated user — and the SSR'd blog CTA (ctaPath: "/dupr" in
+  // dupr-thepicklehub-user-guide) would then be an internal link to a 410.
+  // A crawlable 200 + noindex clears the GSC report just as definitively.
+  // Deliberately NOT added to robots.txt: Disallow would stop Google
+  // recrawling the URL, so it would never see the noindex it must honour.
+  /^\/dupr(?:\/|$)/,
   // Personal pages
   /^\/(?:vi\/)?notifications(?:\/|$)/,
   /^\/(?:vi\/)?thong-bao(?:\/|$)/,
@@ -233,11 +254,14 @@ const GONE_EXACT = new Set<string>([
   // Ended / deleted livestreams (last two Google truncated at the dash)
   "/live/612bd532-0751-4623-915b-2a13babc9a4e",
   "/live/81ff3365-0ccf-4ce3-bf19-e7d7829735c3",
+  "/live/80b73967", "/live/6277dca2", "/live/10779a7c",
   "/live/80b73967-", "/live/b083fc1f-",
   // Transactional app actions — never indexable content pages
   "/match/new", "/match/confirm",
   // Google-truncated blog URLs (no such slug; full posts live elsewhere)
   "/vi/blog/hop-", "/vi/blog/thuat-",
+  // Truncated news slug emitted by an old internal link; no unambiguous post.
+  "/vi/news/vi-sao-cu-",
 ]);
 const GONE_PATTERNS: RegExp[] = [
   // Old MLP-Dallas scraper double-"mlp-mlp-" slug bug (matches 001–025);
@@ -418,16 +442,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return secureRedirect(`https://${url.hostname}/nguoi-choi/${uMatch[1]}${url.search}`, 301);
   }
 
-  // ─── 1b-dupr. Retired /dupr landing → live VI DUPR explainer (301).
-  //       GSC "Not found (404)" 2026-07-30. Branded "dupr" intent, so recover
-  //       to the pillar post rather than 410 it.
-  if (url.pathname === "/dupr") {
-    return secureRedirect(
-      `https://${url.hostname}/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam`,
-      301,
-    );
-  }
-
   // GSC 2026-08-09: an old, truncated livestream URL is still being crawled.
   // Its surviving recording has the same unique prefix, so preserve the old
   // URL's equity with a single permanent hop instead of returning a soft 404.
@@ -436,6 +450,45 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565`,
       301,
     );
+  }
+
+  // ─── 1c-bis. 2026-08-25 site audit — retired duplicate /san slugs.
+  //
+  //       Running scripts/data-fixes/import-alobo-venues.mjs three times on
+  //       2026-08-24 created six venues twice. The "slug already exists" guard
+  //       tested only the final slug while the disambiguation step rewrote that
+  //       slug on within-batch collisions, so a venue listed once in one export
+  //       and twice in the next arrived under two slugs and the guard saw
+  //       neither as a repeat. Root cause fixed in resolveNewVenueSlugs().
+  //
+  //       Each pair was two /san pages with identical titles and identical meta
+  //       descriptions, both in sitemap-venues.xml. The duplicate rows are
+  //       deleted; these 301s carry whatever equity the retired URLs picked up
+  //       in their one day of life, and keep any bot that already saw them off
+  //       a 404. The kept slug is the older one — it is also what the importer
+  //       generates for a venue listed once, so a future run stays idempotent.
+  //
+  //       public/_redirects carries the same six rules for humans; bots bypass
+  //       _redirects entirely, which is why they are mirrored here.
+  const RETIRED_VENUE_SLUGS: Record<string, string> = {
+    "lakeside-pickleball-coffe-rua-xe-da-nang": "lakeside-pickleball-coffe-rua-xe",
+    "ob-pickleball-quang-ngai": "ob-pickleball",
+    "pickleball-yen-hoa-ha-noi": "pickleball-yen-hoa",
+    "san-pickleball-quan-doi-tp-hcm": "san-pickleball-quan-doi",
+    "the-pickleball-lounge-ha-noi": "the-pickleball-lounge",
+    // Same court, listed twice under two names and two phone numbers. The
+    // kept row is "Sân Lê Ninh T.A" — the fuller name and the earlier insert.
+    "le-ninh-t-a": "san-le-ninh-t-a",
+  };
+  const sanMatch = url.pathname.match(/^\/(vi\/)?san\/([^/?#]+)$/);
+  if (sanMatch) {
+    const target = RETIRED_VENUE_SLUGS[sanMatch[2]];
+    if (target) {
+      return secureRedirect(
+        `https://${url.hostname}/${sanMatch[1] ?? ""}san/${target}${url.search}`,
+        301,
+      );
+    }
   }
 
   // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
@@ -451,7 +504,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       VI rendering path the safer signal is a permanent redirect
   //       to the EN canonical — readers stay on one URL per entity
   //       and SEOnaut sees one indexable surface per organization.
-  const viOrgMatch = url.pathname.match(/^\/vi\/(org|tournament|watch)\/([^/?#]+)$/);
+  //
+  //       2026-08-25: extended to tran-dau, nguoi-choi and live/:id, which
+  //       were the other half of the same problem and had been left behind.
+  //       They served 200 with the EN canonical — the exact "hreflang to non
+  //       canonical" shape this rule exists to remove. /vi/tran-dau/* and
+  //       /vi/nguoi-choi/* were worse than duplicates: the SPA has no route
+  //       for either, so a human hard-navigating one got the NotFound page
+  //       while bots got a full render. Only the id form is matched, so the
+  //       real VI listing pages (/vi/live, /vi/tournaments) are untouched.
+  const viOrgMatch = url.pathname.match(
+    /^\/vi\/(org|tournament|watch|tran-dau|nguoi-choi|live)\/([^/?#]+)$/,
+  );
   if (viOrgMatch) {
     return secureRedirect(`https://${url.hostname}/${viOrgMatch[1]}/${viOrgMatch[2]}${url.search}`, 301);
   }
@@ -471,6 +535,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const viPrefix = livestreamMatch[1] || "";
     const tail = livestreamMatch[2] || "";
     return secureRedirect(`https://${url.hostname}/${viPrefix}live${tail}${url.search}`, 301);
+  }
+
+  // GSC 2026-08-25 — news rows were re-ingested under stable UUID-derived
+  // slugs after the first URLs had already been crawled. Preserve the accrued
+  // signals and send readers to the same surviving story instead of 404ing.
+  const NEWS_REDIRECTS: Record<string, string> = {
+    "/news/wong-sets-record-with-third-straight-gold-1f1um3": "/news/hong-kit-wong-makes-history-with-third-consecutive-singles-crown-at-singapore-op-58d5a53d",
+    "/vi/news/wong-lap-ky-luc-voi-h-hcv-lien-tiep-1f1um3": "/vi/news/hong-kit-wong-lap-ky-luc-voi-huy-chuong-vang-don-nam-lien-tiep-tai-singapore-58d5a53d",
+    "/news/the-dink-minor-league-pickleball-format-explained-every-way-to-play-1hfoe4": "/news/understanding-the-dink-minor-league-pickleball-structure-68400027",
+    "/vi/news/giai-ma-the-thuc-minor-league-pickleball-san-choi-dong-doi-dinh-cao-1hfoe4": "/vi/news/tim-hieu-cau-truc-giai-dau-pickleball-nghiep-du-68400027",
+    "/news/a-summer-to-remember-recapping-the-2026-joola-pops-summer-tour-1fp8r3": "/news/joola-concludes-nationwide-summer-tour-9e811e50",
+    "/vi/news/mua-he-dang-nho-nhin-lai-hanh-trinh-joola-pops-summer-tour-2026-1fp8r3": "/vi/news/hanh-trinh-xuyen-quoc-gia-cua-joola-khep-lai-thanh-cong-9e811e50",
+  };
+  const newsDestination = NEWS_REDIRECTS[url.pathname];
+  if (newsDestination) {
+    return secureRedirect(`https://${url.hostname}${newsDestination}${url.search}`, 301);
   }
 
   // ─── 1e. SEO audit batch 8 — /vi/blog/{slug} → /blog/{en-slug} 301.
@@ -828,7 +908,52 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // copy (/live 59 words -> ~354, /rankings 135 -> ~378) and /live now falls
   // back to replays instead of rendering its own empty state. Four cached URLs
   // (en/vi x 2 routes) would otherwise serve the thin version for the full TTL.
-  const cacheKey = `pr:v59:${url.pathname}`;
+  //
+  // v61 — /live query windowing (2026-08-25): live / scheduled / ended each get
+  // their own query and limit instead of sharing one 40-row created_at window,
+  // and upcoming is ordered by air time. Output is unchanged while nothing is
+  // live or scheduled, but the cached copy must not outlive the first stream
+  // that is.
+  //
+  // v62 — GEO-01 (2026-08-24, landed 2026-08-25): the opening paragraph on all
+  // /san pages is rewritten to front-load real facts and name ThePickleHub,
+  // replacing a template that ended by pointing further down the page. This
+  // branch had reserved v60, but /live windowing took v61 to production first,
+  // so it moves to v62 — CLAUDE.md's rule is that the number only has to differ
+  // from the one already deployed.
+  //
+  // v63 — CTR-03 + content refresh (2026-08-25). Three separate reasons the
+  // cached HTML is now wrong:
+  //   1. / and /vi carry new meta descriptions. The VI one was being cut
+  //      mid-word at the 160-BYTE budget ("…miễn…") because the string was 148
+  //      characters and 186 bytes; both now interpolate the venue count.
+  //   2. /blog/hcmc-open-2026-preview and /vi/blog/hcmc-open-2026 now open with
+  //      the result (the event finished on 2026-08-09) and carry new titles.
+  //   3. /blog/hong-kong-slam-2026-preview and /vi/blog/hong-kong-slam-2026
+  //      say registration is open rather than that it opens on August 10.
+  // v65 (2026-08-25, LOW sweep, #678) — /about and /vi/about carry new titles
+  // and meta descriptions. The old ones were the shortest on the site (18-char
+  // title, 49-char description).
+  //
+  // v66 (2026-08-25, C3, this branch) — every /news/:slug now carries
+  // <meta name="robots" content="noindex, follow"> and no hreflang, and every
+  // /vi/news/:slug self-references in hreflang instead of pairing with the EN
+  // URL. Without a bump, cached HTML would keep serving the indexable EN page
+  // and the old EN<->VI cluster for the full TTL.
+  //
+  // This branch originally took v64. #678 merged first with v65, so it moves
+  // to v66 — CLAUDE.md's rule for two open branches bumping the same number:
+  // take the higher and move on.
+  // v67 (2026-08-25, H1) — blog posts now render their hero image in the bot
+  // HTML: <figure><img> after the <h1> on the EN side (from metadata.ts
+  // heroImage) and after the content_html <h1> on the VI side (from
+  // vi_blog_posts.cover_image_url), both with real width/height. Cached HTML
+  // has no <img> at all, so without a bump Google Images keeps seeing the
+  // imageless version for the full TTL.
+  // v68 (2026-08-25) — the VI live hub links to /live/:id instead of
+  // /vi/live/:id, so its cached body would otherwise keep pointing at URLs
+  // that now 301.
+  const cacheKey = `pr:v68:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

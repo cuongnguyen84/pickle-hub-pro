@@ -13,9 +13,9 @@ Website: https://www.thepicklehub.net
 - **Frontend:** React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + vite-plugin-pwa
 - **Backend:** Supabase (project ref `ajvlcamxemgbxduhiqrl`)
 - **Hosting:** Cloudflare Pages (project `pickle-hub-pro`, production branch `main`) + Cloudflare Workers for scheduled scrapers
-- **Mobile:** Capacitor (iOS + Android, app ID `net.thepicklehub.app`)
+- **Mobile:** native SwiftUI iOS app in `/apple` (app ID `net.thepicklehub.app`). Capacitor retired 2026-08-24 — the iOS wrapper was replaced on the App Store by native 2.0.3, and the Android wrapper never shipped. There is no Android app.
 - **Livestream:** Mux
-- **Push:** Firebase Cloud Messaging (FCM via Capacitor)
+- **Push:** Firebase Cloud Messaging (FCM, registered natively by `/apple`)
 - **Email:** Resend
 - **AI translation:** Google Gemini (EN → VI for news)
 - **Analytics:** GA4, Google Search Console (read via Chrome when needed), Ahrefs Web Analytics (free script in `index.html`, data since 2026-07-04 — read the dashboard via Chrome at app.ahrefs.com/web-analytics). _Ahrefs MCP tools ALL return "Insufficient plan" (even `web-analytics-*`); do not call them._ GA4 caveat: heavily polluted by US datacenter bot traffic — trust the Vietnam segment / Ahrefs numbers instead.
@@ -38,14 +38,7 @@ Regenerate Supabase types (canonical command — `--schema public` is REQUIRED; 
 npx supabase gen types typescript --project-id ajvlcamxemgbxduhiqrl --schema public > src/integrations/supabase/types.ts
 ```
 
-Mobile (Capacitor) — see [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md). Common commands:
-
-```sh
-npx cap sync ios     # Sync web assets to iOS
-npx cap sync android # Sync web assets to Android
-npx cap open ios     # Open Xcode
-npx cap open android # Open Android Studio
-```
+Mobile — the app lives in `/apple` (SwiftUI). Build loop: `xcodegen` → `xcodebuild` → `simctl`.
 
 ## Critical Workflow Notes
 
@@ -111,9 +104,9 @@ Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` refe
 - `sitemap-static.xml`, `sitemap-blog.xml`, `sitemap-tournaments.xml`, `sitemap-matches.xml`, `sitemap-events.xml`, `sitemap-news.xml`
 - `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: profiles with real content only — DUPR-linked, a synced DUPR rating, or a bio ≥30 chars; see `hasIndexableSubstance()` in `functions/sitemap-players.xml.ts`)
 
-All segments support `xhtml:link` hreflang (en, vi, x-default).
+`xhtml:link` hreflang (en, vi, x-default) is emitted only by the segments that genuinely have two URLs per entity: **blog, news, events, venues, static**. **tournaments, matches, players, livestreams, videos, organizations emit none, deliberately** — those entities are single-canonical (one URL serves both locales via the SPA language toggle), so `singleCanonicalHreflang()` in `functions/_lib/utils.ts` returns `""` and the sitemaps carry no `xhtml:link`. Google's rule: if only one URL is indexed across all locales, omit hreflang. Adding it back re-triggers Ahrefs' "no return-tag" + "referenced for more than one language" — the exact regression batches 6 and 9 fixed on 2026-05-28. `/vi/org/*`, `/vi/tournament/*` and `/vi/watch/*` additionally 301 to the EN path (`_middleware.ts` rule 1d).
 
-⚠️ **PostgREST caps every response at 1000 rows** and does it silently — `.limit(5000)` returns exactly 1000 rows, HTTP 200, `error = null`. sitemap-news served 500 of 709 EN articles that way for months (fixed 2026-08-23, #644). Any sitemap whose table can pass 1000 rows must use `fetchAllRows()` from `functions/_lib/sitemap-helpers.ts`, with a unique tie breaker in the ORDER BY. news + matches already do; the rest still use a bare `.limit(5000)` and are only safe while they stay under the cap.
+⚠️ **PostgREST caps every response at 1000 rows** and does it silently — `.limit(5000)` returns exactly 1000 rows, HTTP 200, `error = null`. sitemap-news served 500 of 709 EN articles that way for months (fixed 2026-08-23, #644). Any sitemap whose table can pass 1000 rows must use `fetchAllRows()` from `functions/_lib/sitemap-helpers.ts`, with a unique tie breaker in the ORDER BY. news + matches + venues already do, and `functions/__tests__/sitemap-row-cap.test.ts` holds them there; the rest still use a bare `.limit(5000)` and are only safe while they stay under the cap (2026-08-25 counts: blog 68, events 27, livestreams 29, organizations 3, players 40 after its DB-side filters, tournaments 15, videos 6 — versus venues at 896 and growing ~100/month, which is why it was moved).
 
 News URLs are pushed to IndexNow by the `indexnow-news-hourly` pg_cron job (migration `20260823060000`), not by `functions/api/indexnow.ts` — that endpoint covers static routes + blog only.
 
@@ -151,7 +144,7 @@ Each worker has its own `wrangler.toml`. Deploy with `wrangler deploy` from insi
 
 `vite-plugin-pwa` config in `vite.config.ts`:
 
-- Service worker is registered **manually** in `src/pwa.ts` so we can skip registration inside Capacitor native WebView (mobile app uses live remote URL, not a precached shell)
+- Service worker is registered **manually** in `src/pwa.ts` (kept manual after the Capacitor retirement — `injectRegister: null` lets us control ordering against the chunk-error recovery)
 - Navigation requests use `NetworkFirst` with 3s timeout — `index.html` is **excluded** from precache so users always get the freshest shell after deploy
 - Runtime cache rules for Supabase REST/storage, Mux images, Google avatars, Google Fonts — see `vite.config.ts` for full list
 

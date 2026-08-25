@@ -1,1 +1,0 @@
-import{j as t}from"./vendor-ui-BOGudCw4.js";import{c as o,N as a}from"./vendor-react-9qAqvRgE.js";import"./vendor-supabase-CWTiL5sZ.js";const u=()=>{const{categorySlug:r}=o();return t.jsx(a,{to:`/forum?category=${r}`,replace:!0})};export{u as default};
