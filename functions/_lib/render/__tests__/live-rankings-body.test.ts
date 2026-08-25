@@ -57,14 +57,47 @@ const bodyWords = (html: string) => {
 
 // ── /live ──────────────────────────────────────────────────────────────────
 
-function streamClient(rows: unknown[]): SupabaseClient {
-  const chain = {
-    select: () => chain,
-    in: () => chain,
-    order: () => chain,
-    limit: async () => ({ data: rows, error: null }),
+type StreamRow = { status?: string };
+type OrderCall = { column: string; opts?: { ascending?: boolean; nullsFirst?: boolean } };
+type QueryLog = { status: string; order: OrderCall[]; limit: number };
+
+/**
+ * The renderer asks for one status per query (see the comment in live-video.ts),
+ * so the mock filters `rows` by whatever `.eq("status", …)` asked for. Passing a
+ * mixed array still works exactly as it did when there was a single `.in()`.
+ *
+ * `log` records the query shape so a test can assert the *windowing* — which is
+ * where the bug lived — and not only the rendered HTML.
+ */
+function streamClient(rows: unknown[], log: QueryLog[] = []): SupabaseClient {
+  const from = () => {
+    const q: QueryLog = { status: "", order: [], limit: 0 };
+    const chain = {
+      select: () => chain,
+      in: () => chain,
+      eq: (col: string, val: string) => {
+        if (col === "status") q.status = val;
+        return chain;
+      },
+      order: (column: string, opts?: OrderCall["opts"]) => {
+        q.order.push({ column, opts });
+        return chain;
+      },
+      limit: async (n: number) => {
+        q.limit = n;
+        log.push(q);
+        const filtered = q.status
+          ? (rows as StreamRow[]).filter((r) => r.status === q.status)
+          : rows;
+        // Honour the limit. PostgREST does, and a mock that returns everything
+        // is exactly why a shared 40-row window across three statuses looked
+        // correct in CI for a day.
+        return { data: filtered.slice(0, n), error: null };
+      },
+    };
+    return chain;
   };
-  return { from: () => chain } as unknown as SupabaseClient;
+  return { from } as unknown as SupabaseClient;
 }
 
 const LIVE = {
@@ -158,6 +191,62 @@ describe("renderLivestreamList — standing content (THIN-01)", () => {
   it("links replays to the localized path in the VI cluster", async () => {
     expect(await renderLiveHub([ENDED], "vi")).toContain(`${SITE}/vi/live/cccc3333`);
     expect(await renderLiveHub([ENDED], "en")).toContain(`${SITE}/live/cccc3333`);
+  });
+});
+
+/**
+ * 2026-08-25 site audit.
+ *
+ * THIN-01 widened the query to `.in(["live","scheduled","ended"]).limit(40)`
+ * ordered by created_at. That gives the three statuses one shared 40-row budget,
+ * and `ended` is the only bucket that grows without bound — 29 rows already sat
+ * in it. Once 40 rows are newer than a scheduled stream, the stream stops
+ * appearing on /live with nothing to show it was dropped, and the rows most at
+ * risk are the ones announced furthest ahead: a tournament broadcast created
+ * weeks before it airs.
+ *
+ * These tests pin the windowing itself. The HTML assertions above cannot see it
+ * — the mock returns everything it is given, which is precisely why a shared
+ * window looked fine in CI.
+ */
+describe("renderLivestreamList — one query window per status", () => {
+  const shape = async (rows: unknown[]) => {
+    const log: QueryLog[] = [];
+    await renderLivestreamList(streamClient(rows, log), SITE, "/live", "en");
+    return log;
+  };
+
+  it("gives live, scheduled and ended their own limit", async () => {
+    const log = await shape([LIVE, SCHEDULED, ENDED]);
+
+    expect(log.map((q) => q.status).sort()).toEqual(["ended", "live", "scheduled"]);
+    // No status may share a budget with another — that is the whole bug.
+    for (const q of log) expect(q.limit).toBeGreaterThan(0);
+    expect(new Set(log.map((q) => q.status)).size).toBe(3);
+  });
+
+  it("orders upcoming by air time, not by when the row was created", async () => {
+    const log = await shape([SCHEDULED]);
+    const scheduled = log.find((q) => q.status === "scheduled")!;
+
+    expect(scheduled.order[0].column).toBe("scheduled_start_at");
+    expect(scheduled.order[0].opts?.ascending).toBe(true);
+  });
+
+  it("still shows a scheduled stream when ended rows outnumber the old window", async () => {
+    // 60 replays — more than the old shared .limit(40) — plus one stream
+    // scheduled long ago. Under the old query the scheduled row was past the
+    // cut and the section vanished.
+    const manyEnded = Array.from({ length: 60 }, (_, i) => ({
+      ...ENDED,
+      id: `ended${i}`,
+      title: `Replay ${i}`,
+    }));
+    const html = await renderLiveHub([...manyEnded, SCHEDULED], "vi");
+
+    expect(html).toContain("Sắp diễn ra");
+    expect(html).toContain("Bán kết đôi nữ Hà Nội Open");
+    expect(html).toContain("1 trận đã lên lịch");
   });
 });
 
