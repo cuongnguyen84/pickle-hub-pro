@@ -7,10 +7,13 @@ const About = () => {
   const vi = language === "vi";
   return (
     <TheLineLayout
-      title={vi ? "Về ThePickleHub" : "About ThePickleHub"}
+      // Kept byte-for-byte in step with renderAbout in
+      // functions/_lib/render/static-pages.ts — the bot path and the human
+      // path must not describe the same page differently.
+      title={vi ? "Về ThePickleHub — Nền tảng pickleball song ngữ" : "About ThePickleHub — Bilingual Pickleball Platform"}
       description={vi
-        ? "Nền tảng pickleball song ngữ xây dựng tại Việt Nam."
-        : "A bilingual pickleball platform built in Vietnam."}
+        ? "ThePickleHub — nền tảng pickleball song ngữ Việt–Anh: phần mềm giải đấu miễn phí, livestream, xếp hạng DUPR, danh bạ sân."
+        : "ThePickleHub is Vietnam's bilingual pickleball platform: free tournament software, livestreams, DUPR rankings, a court directory and news. Based in HCMC."}
     >
       <main className="mx-auto w-full max-w-3xl px-4 py-12 text-foreground-secondary">
         <h1 className="mb-8 text-3xl font-bold text-foreground">{vi ? "Về ThePickleHub" : "About ThePickleHub"}</h1>

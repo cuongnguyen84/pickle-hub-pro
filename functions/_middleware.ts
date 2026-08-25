@@ -920,7 +920,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      the result (the event finished on 2026-08-09) and carry new titles.
   //   3. /blog/hong-kong-slam-2026-preview and /vi/blog/hong-kong-slam-2026
   //      say registration is open rather than that it opens on August 10.
-  const cacheKey = `pr:v63:${url.pathname}`;
+  // v65 (2026-08-25, LOW sweep) — /about and /vi/about carry new titles and
+  // meta descriptions. The old ones were the shortest on the site (18-char
+  // title, 49-char description) and cached HTML would keep serving them for
+  // the full TTL. Nothing else in this sweep touches SSR output.
+  //
+  // v64 is claimed by the open branch seo/news-en-noindex (#677). Two open
+  // branches bumping the same number is exactly the case CLAUDE.md covers:
+  // take the higher and move on. Whichever merges second still invalidates.
+  const cacheKey = `pr:v65:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
