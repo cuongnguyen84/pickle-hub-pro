@@ -67,74 +67,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         .range(from, to)
     );
 
-    // Index VI rows by parent_news_id so we can pair each EN row with its
-    // sibling (when one exists). VI rows without a known EN parent are
-    // skipped — they shouldn't happen in practice, but defending against
-    // it keeps the sitemap valid.
-    const viByParent = new Map<string, NewsRow>();
-    for (const r of rows) {
-      if (r.language === "vi" && r.parent_news_id) {
-        viByParent.set(r.parent_news_id, r);
-      }
-    }
-
     const entries: string[] = [];
 
-    for (const en of rows) {
-      if (en.language !== "en" || !en.slug) continue;
-      const vi = viByParent.get(en.id);
-      const lastmod = toLastmod(en.updated_at ?? en.published_at, TODAY);
-
-      // EN entry.
-      const enHreflang = vi
-        ? [
-            { lang: "en", href: `${siteUrl}/news/${en.slug}` },
-            { lang: "vi", href: `${siteUrl}/vi/news/${vi.slug}` },
-            { lang: "x-default", href: `${siteUrl}/news/${en.slug}` },
-          ]
-        : [
-            { lang: "en", href: `${siteUrl}/news/${en.slug}` },
-            { lang: "x-default", href: `${siteUrl}/news/${en.slug}` },
-          ];
-      entries.push(
-        buildUrlEntry({
-          loc: `${siteUrl}/news/${en.slug}`,
-          lastmod,
-          changefreq: "weekly",
-          priority: "0.6",
-          hreflang: enHreflang,
-        })
-      );
-
-      // VI entry (only when sibling exists).
-      if (vi && vi.slug) {
-        const viLastmod = toLastmod(vi.updated_at ?? vi.published_at, TODAY);
-        entries.push(
-          buildUrlEntry({
-            loc: `${siteUrl}/vi/news/${vi.slug}`,
-            lastmod: viLastmod,
-            changefreq: "weekly",
-            priority: "0.6",
-            hreflang: [
-              { lang: "en", href: `${siteUrl}/news/${en.slug}` },
-              { lang: "vi", href: `${siteUrl}/vi/news/${vi.slug}` },
-              { lang: "x-default", href: `${siteUrl}/news/${en.slug}` },
-            ],
-          })
-        );
-      }
-    }
-
-    // VI rows the loop above can never reach: it walks EN rows and pulls the
-    // sibling in, so a VI article whose EN parent is missing (or is itself
-    // unpublished / slug-less) drops out of the sitemap entirely. 61 rows were
-    // in that state on 2026-08-23 — mostly a Feb–Mar seed batch that only ever
-    // existed in Vietnamese. Emit them single-language: there is no EN URL to
-    // pair with, and a self-referencing hreflang would be a lie.
-    const enIds = new Set(rows.filter((r) => r.language === "en").map((r) => r.id));
+    // C3 (2026-08-25) — VI only. The EN feed is noindex (see the block in
+    // functions/_lib/render/news.ts), and a sitemap must not advertise URLs
+    // that carry a noindex: it asks Google to spend crawl budget confirming a
+    // directive we already know the answer to, and it is a contradictory
+    // signal on its face.
+    //
+    // Every VI row is emitted, whether or not it has an EN parent, and it
+    // self-references in hreflang. Pairing with the EN URL would put a
+    // noindexed page in the cluster, which is the one thing hreflang must
+    // never do — so the EN/VI pairing index this loop used to need is gone.
     for (const vi of rows) {
       if (vi.language !== "vi" || !vi.slug) continue;
-      if (vi.parent_news_id && enIds.has(vi.parent_news_id)) continue; // already emitted as a pair
       entries.push(
         buildUrlEntry({
           loc: `${siteUrl}/vi/news/${vi.slug}`,
