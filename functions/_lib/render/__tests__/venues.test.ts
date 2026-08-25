@@ -581,10 +581,23 @@ describe("haversineKm / formatKm", () => {
  * route that carries 68% of site impressions.
  */
 describe("renderVenueDetail — GEO opening (GEO-01)", () => {
+  // Loop to a fixpoint rather than strip once: `<<b>b>` survives a single pass
+  // and reassembles into a tag. Harmless in a test helper, but CodeQL's
+  // js/incomplete-multi-character-sanitization cannot tell test code from the
+  // real sanitizer and failed the security gate on every PR — the same shape
+  // functions/_lib/utils.ts:238 already uses.
+  const stripTags = (text: string) => {
+    let out = text;
+    let prev: string;
+    do {
+      prev = out;
+      out = out.replace(/<[^>]+>/g, "");
+    } while (out !== prev);
+    return out;
+  };
+
   const opening = (html: string) => {
-    const ps = [...html.matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) =>
-      m[1].replace(/<[^>]+>/g, "").trim(),
-    );
+    const ps = [...html.matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) => stripTags(m[1]).trim());
     return unescape(ps.find((p) => p.length > 40) ?? "");
   };
 
