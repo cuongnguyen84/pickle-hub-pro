@@ -331,7 +331,10 @@ export async function renderLivestreamList(
   const upcoming = ((scheduledRes?.data ?? []) as Stream[]).filter((s) => s.status === "scheduled");
   const replays = ((endedRes?.data ?? []) as Stream[]).filter((s) => s.status === "ended");
 
-  const href = (s: Stream) => `${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${escapeHtml(s.id)}`;
+  // /live/:id is single-canonical — /vi/live/:id 301s to it (_middleware.ts
+  // rule 1d). Linking to the /vi form from the VI hub sent every crawler and
+  // every reader through a redirect hop to reach the page we actually index.
+  const href = (s: Stream) => `${siteUrl}/live/${escapeHtml(s.id)}`;
   const dateLabel = (iso: string | null) =>
     iso
       ? new Date(iso).toLocaleDateString(lang === "vi" ? "vi-VN" : "en-GB", {
@@ -352,7 +355,7 @@ export async function renderLivestreamList(
 
   // ItemList covers whatever is actually on the page, in the order shown.
   const listItems = [...liveNow, ...upcoming, ...replays].map((s) => ({
-    url: `${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${s.id}`,
+    url: `${siteUrl}/live/${s.id}`,
     name: s.title,
   }));
 
