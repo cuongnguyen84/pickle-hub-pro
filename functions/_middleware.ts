@@ -933,7 +933,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // This branch originally took v64. #678 merged first with v65, so it moves
   // to v66 — CLAUDE.md's rule for two open branches bumping the same number:
   // take the higher and move on.
-  const cacheKey = `pr:v66:${url.pathname}`;
+  // v67 (2026-08-25, H1) — blog posts now render their hero image in the bot
+  // HTML: <figure><img> after the <h1> on the EN side (from metadata.ts
+  // heroImage) and after the content_html <h1> on the VI side (from
+  // vi_blog_posts.cover_image_url), both with real width/height. Cached HTML
+  // has no <img> at all, so without a bump Google Images keeps seeing the
+  // imageless version for the full TTL.
+  const cacheKey = `pr:v67:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

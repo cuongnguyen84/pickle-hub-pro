@@ -12,6 +12,7 @@ import {
   escapeJsonLd,
   buildTitle,
   absImage,
+  normalizeImageUrl,
   normalizeImagesInHtml,
   sanitizeBlogHtml,
   breadcrumb,
@@ -20,6 +21,7 @@ import {
   buildBreadcrumbJsonLd,
   DEFAULT_OG_IMAGE,
 } from "../utils";
+import { blogImageDims } from "../../../src/content/blog/image-dims";
 import { render404 } from "./static-pages";
 
 // ─── Blog ─────────────────────��───────────────────────────
@@ -171,6 +173,34 @@ export function renderBlog(siteUrl: string): Response {
 
 // ─── Vietnamese Blog (database) ───────────────────────────
 
+// Audit 2026-08-25, H1 — the VI article body reached Googlebot with no <img>
+// at all. 57 of 66 published posts carry a cover_image_url that until now only
+// fed og:image and the BlogPosting schema, neither of which puts the asset in
+// the indexable HTML.
+//
+// Placed after the <h1> that lives inside content_html (falls back to the top
+// of the article when a post has none) and skipped entirely when the editor
+// already embedded that same image, so re-running the translation pipeline
+// cannot double it up.
+export function withViCoverImage(
+  contentHtml: string,
+  coverImageUrl: string | null | undefined,
+  title: string,
+): string {
+  if (!coverImageUrl) return contentHtml;
+  const src = normalizeImageUrl(coverImageUrl);
+  if (!src || contentHtml.includes(src)) return contentHtml;
+  const dims = blogImageDims(src);
+  const sized = dims ? ` width="${dims[0]}" height="${dims[1]}"` : "";
+  const figure =
+    `<figure><img src="${escapeHtml(src)}" alt="${escapeHtml(title)}"${sized}` +
+    ` loading="eager" fetchpriority="high" decoding="async"/></figure>`;
+  const afterH1 = contentHtml.indexOf("</h1>");
+  return afterH1 === -1
+    ? `${figure}${contentHtml}`
+    : `${contentHtml.slice(0, afterH1 + 5)}${figure}${contentHtml.slice(afterH1 + 5)}`;
+}
+
 export async function renderViBlogPost(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
   // Fire post + related queries in parallel — `related` doesn't depend on
   // post data (filters by slug !== current), so waiting for post first is
@@ -293,7 +323,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     type: "article",
     lang: "vi",
     extraMeta,
-    bodyContent: `${bc}<article>${sanitizeBlogHtml(normalizeImagesInHtml(p.content_html))}</article>${relatedSection}`,
+    bodyContent: `${bc}<article>${withViCoverImage(sanitizeBlogHtml(normalizeImagesInHtml(p.content_html)), p.cover_image_url, p.title)}</article>${relatedSection}`,
   }));
 }
 
