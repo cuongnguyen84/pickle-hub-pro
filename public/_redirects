@@ -87,5 +87,13 @@
 /san/le-ninh-t-a                                  /san/san-le-ninh-t-a                      301
 /vi/san/le-ninh-t-a                               /vi/san/san-le-ninh-t-a                   301
 
+# GSC 2026-08-25 — news rows re-ingested under stable replacement slugs.
+/news/wong-sets-record-with-third-straight-gold-1f1um3  /news/hong-kit-wong-makes-history-with-third-consecutive-singles-crown-at-singapore-op-58d5a53d  301
+/vi/news/wong-lap-ky-luc-voi-h-hcv-lien-tiep-1f1um3  /vi/news/hong-kit-wong-lap-ky-luc-voi-huy-chuong-vang-don-nam-lien-tiep-tai-singapore-58d5a53d  301
+/news/the-dink-minor-league-pickleball-format-explained-every-way-to-play-1hfoe4  /news/understanding-the-dink-minor-league-pickleball-structure-68400027  301
+/vi/news/giai-ma-the-thuc-minor-league-pickleball-san-choi-dong-doi-dinh-cao-1hfoe4  /vi/news/tim-hieu-cau-truc-giai-dau-pickleball-nghiep-du-68400027  301
+/news/a-summer-to-remember-recapping-the-2026-joola-pops-summer-tour-1fp8r3  /news/joola-concludes-nationwide-summer-tour-9e811e50  301
+/vi/news/mua-he-dang-nho-nhin-lai-hanh-trinh-joola-pops-summer-tour-2026-1fp8r3  /vi/news/hanh-trinh-xuyen-quoc-gia-cua-joola-khep-lai-thanh-cong-9e811e50  301
+
 # SPA fallback
 /* /index.html 200

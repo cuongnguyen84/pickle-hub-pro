@@ -160,6 +160,20 @@ describe("_redirects rule ordering", () => {
   });
 });
 
+describe("redirect parity: replaced news slugs", () => {
+  const middlewareNews = parseDict("NEWS_REDIRECTS");
+  const fileNews: Record<string, string> = {};
+  for (const line of redirectsFile.split("\n")) {
+    const match = line.trim().match(/^(\/(?:vi\/)?news\/\S+)\s+(\/(?:vi\/)?news\/\S+)\s+301\b/);
+    if (match) fileNews[match[1]] = match[2];
+  }
+
+  it("keeps human and bot news redirects identical", () => {
+    expect(Object.keys(middlewareNews).length).toBeGreaterThan(0);
+    expect(fileNews).toEqual(middlewareNews);
+  });
+});
+
 describe("redirect parity: merged /blog/* posts between _redirects and _middleware.ts", () => {
   const redirects = parseRedirectsEnBlog();
   const merged = parseDict("BLOG_MERGED");
