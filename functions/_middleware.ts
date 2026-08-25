@@ -449,6 +449,45 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
+  // ─── 1c-bis. 2026-08-25 site audit — retired duplicate /san slugs.
+  //
+  //       Running scripts/data-fixes/import-alobo-venues.mjs three times on
+  //       2026-08-24 created six venues twice. The "slug already exists" guard
+  //       tested only the final slug while the disambiguation step rewrote that
+  //       slug on within-batch collisions, so a venue listed once in one export
+  //       and twice in the next arrived under two slugs and the guard saw
+  //       neither as a repeat. Root cause fixed in resolveNewVenueSlugs().
+  //
+  //       Each pair was two /san pages with identical titles and identical meta
+  //       descriptions, both in sitemap-venues.xml. The duplicate rows are
+  //       deleted; these 301s carry whatever equity the retired URLs picked up
+  //       in their one day of life, and keep any bot that already saw them off
+  //       a 404. The kept slug is the older one — it is also what the importer
+  //       generates for a venue listed once, so a future run stays idempotent.
+  //
+  //       public/_redirects carries the same six rules for humans; bots bypass
+  //       _redirects entirely, which is why they are mirrored here.
+  const RETIRED_VENUE_SLUGS: Record<string, string> = {
+    "lakeside-pickleball-coffe-rua-xe-da-nang": "lakeside-pickleball-coffe-rua-xe",
+    "ob-pickleball-quang-ngai": "ob-pickleball",
+    "pickleball-yen-hoa-ha-noi": "pickleball-yen-hoa",
+    "san-pickleball-quan-doi-tp-hcm": "san-pickleball-quan-doi",
+    "the-pickleball-lounge-ha-noi": "the-pickleball-lounge",
+    // Same court, listed twice under two names and two phone numbers. The
+    // kept row is "Sân Lê Ninh T.A" — the fuller name and the earlier insert.
+    "le-ninh-t-a": "san-le-ninh-t-a",
+  };
+  const sanMatch = url.pathname.match(/^\/(vi\/)?san\/([^/?#]+)$/);
+  if (sanMatch) {
+    const target = RETIRED_VENUE_SLUGS[sanMatch[2]];
+    if (target) {
+      return secureRedirect(
+        `https://${url.hostname}/${sanMatch[1] ?? ""}san/${target}${url.search}`,
+        301,
+      );
+    }
+  }
+
   // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
   //       to the EN canonical. renderOrgDetail() and
   //       renderTournamentDetail() always emit url:/org/<slug> and
