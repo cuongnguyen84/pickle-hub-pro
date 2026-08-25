@@ -70,5 +70,22 @@
 /vi/blog/thuat-toan-dupr-vi-sao-thang-mat-diem           /vi/blog/thuat-toan-dupr-thang-mat-diem-thua-tang-diem    301
 /vi/blog/to-chuc-giai-pickleball                         /vi/blog/cach-to-chuc-giai-pickleball                     301
 /vi/blog/luat-pickleball-day-du                          /vi/blog/luat-pickleball-co-ban                           301
+# 2026-08-25 site audit — six venues the alobo importer created twice on
+# 2026-08-24 (root cause fixed in resolveNewVenueSlugs). The duplicate rows are
+# deleted; keep the retired URLs off a 404. Mirrored in functions/_middleware.ts
+# RETIRED_VENUE_SLUGS because bots bypass this file.
+/san/lakeside-pickleball-coffe-rua-xe-da-nang     /san/lakeside-pickleball-coffe-rua-xe     301
+/vi/san/lakeside-pickleball-coffe-rua-xe-da-nang  /vi/san/lakeside-pickleball-coffe-rua-xe  301
+/san/ob-pickleball-quang-ngai                     /san/ob-pickleball                        301
+/vi/san/ob-pickleball-quang-ngai                  /vi/san/ob-pickleball                     301
+/san/pickleball-yen-hoa-ha-noi                    /san/pickleball-yen-hoa                   301
+/vi/san/pickleball-yen-hoa-ha-noi                 /vi/san/pickleball-yen-hoa                301
+/san/san-pickleball-quan-doi-tp-hcm               /san/san-pickleball-quan-doi              301
+/vi/san/san-pickleball-quan-doi-tp-hcm            /vi/san/san-pickleball-quan-doi           301
+/san/the-pickleball-lounge-ha-noi                 /san/the-pickleball-lounge                301
+/vi/san/the-pickleball-lounge-ha-noi              /vi/san/the-pickleball-lounge             301
+/san/le-ninh-t-a                                  /san/san-le-ninh-t-a                      301
+/vi/san/le-ninh-t-a                               /vi/san/san-le-ninh-t-a                   301
+
 # SPA fallback
 /* /index.html 200

@@ -360,6 +360,107 @@ export function slugify(name) {
 }
 
 // ── main ───────────────────────────────────────────────────────────────────
+/**
+ * Decide the slug of every venue this run wants to CREATE, and drop the ones
+ * that are not new.
+ *
+ * Extracted from main() on 2026-08-25 so it can be tested. It was six inlined
+ * loops before, and the bug below shipped because there was no way to assert
+ * the behaviour without a live database.
+ *
+ * Three things happen here, in order:
+ *
+ * 1. Two venues can share a name without being the same place — "Go Pickleball"
+ *    appears once in Nha Trang and once in Vũng Tàu, different addresses,
+ *    different phones. So a within-batch name collision is disambiguated by
+ *    city first (the convention the existing rows follow:
+ *    789-pickleball-club-ha-noi), and only what still collides afterwards is
+ *    treated as one duplicated record.
+ *
+ * 2. The export holds the same venue more than once — "Lakeside Pickleball –
+ *    Coffe – Rửa xe" appears 3x, "OB Pickleball" and "Sân Pickleball Quân Đội"
+ *    2x each. venues.slug is UNIQUE, so the second insert of a pair is a 409
+ *    that aborts its whole 50-row batch. Collapse them and keep the most
+ *    complete copy rather than letting batch ordering decide.
+ *
+ * 3. A venue we already hold is an update, never an insert — the approved-match
+ *    file is the only sanctioned route to touching an existing row.
+ *
+ * ── The 2026-08-24 duplicate incident ────────────────────────────────────────
+ * Step 3 used to test only the FINAL slug, while step 1 rewrote that slug based
+ * on within-batch collisions. So the same real venue took two different paths
+ * on two runs of the same script:
+ *
+ *   07:33 run — "Lakeside…" appears once in the batch  -> no suffix
+ *               -> inserted as `lakeside-pickleball-coffe-rua-xe`
+ *   07:51 run — "Lakeside…" appears twice in the batch -> suffixed
+ *               -> `lakeside-pickleball-coffe-rua-xe-da-nang` is not a slug we
+ *                  hold, so the guard let it through -> SECOND COPY
+ *
+ * Six venues were duplicated that way (Lakeside, OB Pickleball, Pickleball Yên
+ * Hòa, Sân Pickleball Quân Đội, The Pickleball Lounge, Lê Ninh T.A), each one
+ * a pair of /san pages with identical titles and identical meta descriptions,
+ * both sitting in sitemap-venues.xml.
+ *
+ * The guard now also tests the pre-suffix slug, and holds the row back when the
+ * venue we already have under that slug is in the SAME city. The city check is
+ * what keeps "Go Pickleball" in Vũng Tàu insertable while `go-pickleball` in
+ * Nha Trang exists — a bare base-slug check would have swallowed a real court.
+ */
+export function resolveNewVenueSlugs(createNew, bySlug) {
+  const score = (r) =>
+    (r.price_min_vnd ? 2 : 0) + (r.phone ? 1 : 0) +
+    (r.latitude != null ? 1 : 0) + (r.address ? 1 : 0);
+
+  const sameCity = (a, b) => {
+    const x = slugify(a ?? "");
+    const y = slugify(b ?? "");
+    return Boolean(x) && x === y;
+  };
+
+  const nameCount = new Map();
+  for (const row of createNew) {
+    nameCount.set(row.slug, (nameCount.get(row.slug) ?? 0) + 1);
+  }
+
+  const rows = createNew.map((row) => ({ ...row, baseSlug: row.slug }));
+  for (const row of rows) {
+    if (nameCount.get(row.baseSlug) === 1) continue;
+    const citySuffix = slugify(row.city);
+    if (citySuffix && !row.slug.endsWith(citySuffix)) {
+      row.slug = `${row.slug}-${citySuffix}`;
+    }
+  }
+
+  const bestBySlug = new Map();
+  for (const row of rows) {
+    const prev = bestBySlug.get(row.slug);
+    if (!prev || score(row) > score(prev)) bestBySlug.set(row.slug, row);
+  }
+
+  const heldBack = [];
+  for (const [slug, row] of [...bestBySlug]) {
+    if (bySlug.has(slug)) {
+      heldBack.push({ name: slug, why: ["slug already exists — not in the approved match list"] });
+      bestBySlug.delete(slug);
+      continue;
+    }
+    const held = row.baseSlug !== slug ? bySlug.get(row.baseSlug) : null;
+    if (held && sameCity(held.city, row.city)) {
+      heldBack.push({
+        name: slug,
+        why: [`${row.baseSlug} already exists in ${held.city ?? "the same city"} — suffixing it would insert a second copy`],
+      });
+      bestBySlug.delete(slug);
+    }
+  }
+
+  return {
+    rows: [...bestBySlug.values()].map(({ baseSlug: _baseSlug, ...row }) => row),
+    heldBack,
+  };
+}
+
 async function rest(path, init = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...init,
@@ -375,6 +476,31 @@ async function rest(path, init = {}) {
   // status alone is not enough to decide whether there is JSON to parse.
   const body = await res.text();
   return body ? JSON.parse(body) : null;
+}
+
+/**
+ * Page a PostgREST table read 1000 rows at a time.
+ *
+ * PostgREST caps every response at max-rows = 1000 and does it silently:
+ * `&limit=2000` answers 200 with exactly 1000 rows and no error. The venue
+ * snapshot below is what the "slug already exists" guard consults, so a
+ * truncated read does not merely miss rows — it turns every venue past the cap
+ * into a fresh insert. venues held 896 rows on 2026-08-25 and grows ~100/month.
+ *
+ * `slug` is the tie breaker: venues.updated_at is bulk-set by this very script,
+ * so same-timestamp rows are the norm and would otherwise shuffle between pages.
+ */
+async function restAll(table, select) {
+  const PAGE = 1000;
+  const out = [];
+  for (let from = 0; ; from += PAGE) {
+    const rows = await rest(
+      `${table}?select=${select}&order=slug.asc&offset=${from}&limit=${PAGE}`,
+    );
+    const page = rows ?? [];
+    out.push(...page);
+    if (page.length < PAGE) return out;
+  }
 }
 
 async function main() {
@@ -399,8 +525,9 @@ async function main() {
   }
   // latitude/longitude are needed by cityFromNearest — omitting them made the
   // coordinate fallback silently return null for every row.
-  const existing = await rest(
-    "venues?select=id,slug,name,city,district,phone,price_source,latitude,longitude&limit=2000",
+  const existing = await restAll(
+    "venues",
+    "id,slug,name,city,district,phone,price_source,latitude,longitude",
   );
   const bySlug = new Map(existing.map((v) => [v.slug, v]));
 
@@ -460,54 +587,10 @@ async function main() {
     }
   }
 
-  // The export holds the same venue more than once — "Lakeside Pickleball –
-  // Coffe – Rửa xe" appears 3x, "OB Pickleball" and "Sân Pickleball Quân Đội"
-  // 2x each. venues.slug is UNIQUE, so the second insert of a pair is a 409
-  // that would abort its whole 50-row batch. Collapse them here and keep the
-  // most complete copy, rather than letting batch ordering decide which
-  // version of a venue we end up with.
-  const score = (r) =>
-    (r.price_min_vnd ? 2 : 0) + (r.phone ? 1 : 0) +
-    (r.latitude != null ? 1 : 0) + (r.address ? 1 : 0);
-
-  // Two venues can share a name without being the same place — "Go Pickleball"
-  // appears once in Nha Trang and once in Vũng Tàu, at different addresses with
-  // different phone numbers. Collapsing those by slug drops a real court, so
-  // disambiguate with the city first — which is also the convention the
-  // existing 760 rows follow (789-pickleball-club-ha-noi) — and only treat what
-  // still collides afterwards as a genuine duplicate record.
-  const nameCount = new Map();
-  for (const row of plan.createNew) {
-    nameCount.set(row.slug, (nameCount.get(row.slug) ?? 0) + 1);
-  }
-  for (const row of plan.createNew) {
-    // Only WITHIN-batch collisions get a suffix. A slug that already exists in
-    // the table is deliberately left alone so it trips the "already exists"
-    // guard below: on a re-run that is a row this script created last time, and
-    // suffixing it would insert a second copy of the same court instead of
-    // skipping it.
-    if (nameCount.get(row.slug) === 1) continue;
-    const citySuffix = slugify(row.city);
-    if (citySuffix && !row.slug.endsWith(citySuffix)) {
-      row.slug = `${row.slug}-${citySuffix}`;
-    }
-  }
-
-  const bestBySlug = new Map();
-  for (const row of plan.createNew) {
-    const prev = bestBySlug.get(row.slug);
-    if (!prev || score(row) > score(prev)) bestBySlug.set(row.slug, row);
-  }
-  // A slug we already hold is an update, never an insert — the approved-match
-  // file is the only sanctioned route to touching an existing venue.
-  for (const slug of bestBySlug.keys()) {
-    if (bySlug.has(slug)) {
-      plan.heldBack.push({ name: slug, why: ["slug already exists — not in the approved match list"] });
-      bestBySlug.delete(slug);
-    }
-  }
-  plan.duplicatesCollapsed = plan.createNew.length - bestBySlug.size;
-  plan.createNew = [...bestBySlug.values()];
+  const resolved = resolveNewVenueSlugs(plan.createNew, bySlug);
+  plan.heldBack.push(...resolved.heldBack);
+  plan.duplicatesCollapsed = plan.createNew.length - resolved.rows.length - resolved.heldBack.length;
+  plan.createNew = resolved.rows;
 
   // Everything we did not touch gets the labelled default.
   const touched = new Set([
