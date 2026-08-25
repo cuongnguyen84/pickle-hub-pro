@@ -246,7 +246,6 @@ return ({
           "assets/vendor-supabase-*.js",
           "assets/vendor-query-*.js",
           "assets/vendor-date-*.js",
-          "assets/vendor-capacitor-*.js",
           "assets/types-*.js",
           // North-star journey screens (docs/journey-screens.md)
           "assets/Index-*.js",
@@ -460,14 +459,6 @@ return ({
             "@dnd-kit/utilities",
           ],
           "vendor-date": ["date-fns"],
-          "vendor-capacitor": [
-            "@capacitor/core",
-            "@capacitor/app",
-            "@capacitor/browser",
-            "@capacitor/push-notifications",
-            "@capacitor/splash-screen",
-            "@capacitor/status-bar",
-          ],
           "vendor-video": ["@mux/mux-player-react", "hls.js"],
           "vendor-xlsx": ["xlsx"],
         },
