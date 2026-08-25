@@ -136,7 +136,17 @@ const Index = () => {
   const { data: homeStats } = useHomepageStats();
   // VI homepage stories come from Supabase vi_blog_posts (mirrors /vi/blog) so
   // VI-only posts without an EN manifest entry still surface on the homepage.
-  const { data: viPosts = [], isLoading: viPostsLoading } = usePublishedViBlogPosts();
+  // isFetched, not isLoading: isLoading only covers the first in-flight fetch.
+  // On /vi the editorial slot used to fall through to `null` in the window
+  // where the query had stopped loading but `viPosts` was still [] — the
+  // section left layout entirely (measured 2026-08-25: h 369 -> 0 -> reinserted
+  // at y 755, a single 0.208 layout shift, the largest on the VI home page).
+  // isFetched stays false until a result actually lands, so the slot holds.
+  const {
+    data: viPosts = [],
+    isLoading: viPostsLoading,
+    isFetched: viPostsSettled,
+  } = usePublishedViBlogPosts();
 
   const homeNewsQuery = useNewsItems({
     limit: HOME_NEWS_LIMIT + 6,
@@ -567,7 +577,7 @@ const Index = () => {
               </div>
             </div>
           </section>
-        ) : language === "vi" && viPostsLoading ? (
+        ) : language === "vi" && (viPostsLoading || !viPostsSettled) ? (
           <section className="tl-section tl-editorial-skeleton" aria-busy="true" aria-label="Đang tải bài viết">
             <div className="tl-shell">
               <div className="tl-sec-head" aria-hidden="true">
