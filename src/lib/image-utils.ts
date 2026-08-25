@@ -163,6 +163,29 @@ export function homepageThumbnailUrl(
       return `https://i.ytimg.com/vi/${match[1]}/hqdefault.jpg`;
     }
 
+    // Pickleball.com's image optimizer accepts bounded width/height values.
+    // Replace feed-provided hero dimensions so its 1320px images do not reach
+    // the homepage unchanged.
+    if (host === "cdn.pickleball.com" && url.searchParams.get("optimizer") === "image") {
+      url.searchParams.set("width", String(options.width));
+      if (options.fit !== "contain") {
+        url.searchParams.set("height", String(options.height));
+      } else {
+        url.searchParams.delete("height");
+      }
+      return url.toString();
+    }
+
+    // APP's Webflow feed serves pre-encoded AVIF editorial assets. The current
+    // corpus is bounded (all audited assets <= 74KB); keep the extension and
+    // exact-host guards so arbitrary Webflow originals remain blocked.
+    if (
+      host === "cdn.prod.website-files.com" &&
+      url.pathname.toLowerCase().endsWith(".avif")
+    ) {
+      return url.toString();
+    }
+
     // Same-origin absolute URLs are as controlled as root-relative assets.
     if (host === "thepicklehub.net" || host === "www.thepicklehub.net") {
       return `${url.pathname}${url.search}`;
