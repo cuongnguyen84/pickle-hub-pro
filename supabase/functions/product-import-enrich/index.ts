@@ -17,6 +17,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const GEMINI_MODEL = "gemini-flash-lite-latest";
+const PRODUCT_SEARCH_MODEL = "gemini-2.5-flash";
 
 const ENRICHMENT_PROMPT = `You are a pickleball equipment expert.
 Given a product name, return structured JSON with:
@@ -102,6 +103,21 @@ function htmlAttribute(html: string, property: string): string | null {
     if (match?.[1]) return match[1].replace(/&amp;/g, "&");
   }
   return null;
+}
+
+function productImageAttributes(html: string, productName: string): string[] {
+  const images: string[] = [];
+  for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = match[0];
+    const alt = tag.match(/\b(?:alt|title)=["']([^"']*)["']/i)?.[1] ?? "";
+    const src = tag.match(/\b(?:src|data-src|data-original|data-lazy-src)=["']([^"']+)["']/i)?.[1];
+    if (!src) continue;
+    // Product pages contain logos, recommendations and tracking pixels too.
+    // Only accept inline images whose accessible label or filename identifies
+    // the imported model; metadata/JSON-LD remain the preferred sources.
+    if (productNameMatches(productName, `${alt} ${src}`)) images.push(src.replace(/&amp;/g, "&"));
+  }
+  return images;
 }
 
 const GENERIC_PRODUCT_WORDS = new Set([
@@ -220,7 +236,7 @@ async function findProductImages(sourceUrls: unknown, productName: string): Prom
   const candidates: ProductImageCandidate[] = [];
   const seen = new Set<string>();
 
-  for (const sourceValue of sourceUrls.slice(0, 5)) {
+  for (const sourceValue of sourceUrls.slice(0, 8)) {
     const initialSource = safePublicHttpsUrl(sourceValue);
     if (!initialSource) continue;
     try {
@@ -255,6 +271,8 @@ async function findProductImages(sourceUrls: unknown, productName: string): Prom
         ...(structured?.images ?? []),
         htmlAttribute(html, "og:image"),
         htmlAttribute(html, "twitter:image"),
+        htmlAttribute(html, "image"),
+        ...productImageAttributes(html, productName),
       ].filter((value): value is string => Boolean(value));
       for (const rawImage of rawImages.slice(0, 3)) {
         const image = safePublicHttpsUrl(new URL(rawImage, source).toString());
@@ -292,14 +310,18 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
 async function searchProductPageUrls(productName: string): Promise<string[]> {
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${PRODUCT_SEARCH_MODEL}:generateContent`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `Find the exact product page for: ${productName}. Prefer the official manufacturer, then reputable retailers. Return only JSON: {"source_urls":["https://..."]}. Maximum 5 URLs.` }] }],
+          contents: [{ parts: [{ text: `Search the web thoroughly for the exact purchasable product named: "${productName}".
+Run multiple searches when needed: the exact quoted name, the model plus its brand, the official manufacturer, and reputable pickleball retailers.
+Return direct canonical PRODUCT PAGE URLs only — never search-result pages, homepages, category pages, social posts, or a different product type/model.
+Prefer official manufacturer and Shopify product pages because their original product gallery can be verified.
+Return only JSON: {"source_urls":["https://..."]}. Maximum 8 URLs.` }] }],
           tools: [{ google_search: {} }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
+          generationConfig: { temperature: 0, maxOutputTokens: 768 },
         }),
         signal: AbortSignal.timeout(12_000),
       },
@@ -424,8 +446,16 @@ Deno.serve(async (req: Request) => {
 
     // Generate slug for the product
     const slug = slugify(parsed.name ?? productName);
-    const sourceUrls = await searchProductPageUrls(parsed.name ?? productName);
-    const imageCandidates = await findProductImages(sourceUrls, parsed.name ?? productName);
+    const canonicalName = parsed.name ?? productName;
+    const searchName = canonicalName.toLowerCase() === productName.toLowerCase()
+      ? canonicalName
+      : `${canonicalName} (imported name: ${productName})`;
+    const searchedUrls = await searchProductPageUrls(searchName);
+    const aiSourceUrls = Array.isArray(parsed.source_urls)
+      ? parsed.source_urls.filter((url): url is string => typeof url === "string")
+      : [];
+    const sourceUrls = [...new Set([...searchedUrls, ...aiSourceUrls])].slice(0, 8);
+    const imageCandidates = await findProductImages(sourceUrls, canonicalName);
 
     return jsonResponse({
       ...parsed,
