@@ -228,13 +228,19 @@ export function useBulkProductImport() {
 
   const downloadTemplate = useCallback(() => {
     const template = [
-      { [COLUMN_NAME]: "Joola Ben Johns Hyperion CAS 16mm", [COLUMN_PRICE]: 4290000, [COLUMN_CATEGORY]: "paddle" },
-      { [COLUMN_NAME]: "Selkirk Vanguard Power Air Invikta", [COLUMN_PRICE]: "", [COLUMN_CATEGORY]: "" },
-      { [COLUMN_NAME]: "Franklin X-40 Outdoor Pickleballs 12-pack", [COLUMN_PRICE]: "", [COLUMN_CATEGORY]: "ball" },
+      { [COLUMN_NAME]: "Joola Ben Johns Hyperion CAS 16mm", [COLUMN_PRICE]: 4290000, [COLUMN_CATEGORY]: "Vợt" },
+      { [COLUMN_NAME]: "Franklin X-40 Outdoor Pickleballs 12-pack", [COLUMN_PRICE]: 500000, [COLUMN_CATEGORY]: "Bóng" },
     ];
     const ws = XLSX.utils.json_to_sheet(template);
+    ws["!cols"] = [{ wch: 48 }, { wch: 16 }, { wch: 22 }];
+    const categories = XLSX.utils.json_to_sheet(SYSTEM_CATEGORIES.map(({ label, slug }) => ({
+      "Danh mục hợp lệ": label,
+      "Mã hệ thống": slug,
+    })));
+    categories["!cols"] = [{ wch: 24 }, { wch: 22 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sản phẩm");
+    XLSX.utils.book_append_sheet(wb, categories, "Danh mục hợp lệ");
     XLSX.writeFile(wb, "thepicklehub-product-import-template.xlsx");
   }, []);
 
@@ -286,7 +292,24 @@ function imageSources(row: ProductRow): string[] {
   return source ? [row.selectedImageUrl, source] : [row.selectedImageUrl];
 }
 
+const SYSTEM_CATEGORIES = [
+  { slug: "vot", label: "Vợt" },
+  { slug: "bong", label: "Bóng" },
+  { slug: "tui-balo", label: "Túi & balo" },
+  { slug: "giay", label: "Giày" },
+  { slug: "trang-phuc", label: "Trang phục" },
+  { slug: "grip-phu-kien", label: "Grip & phụ kiện" },
+] as const;
+
 const CATEGORY_MAP: Record<string, string> = {
+  vot: "vot",
+  bong: "bong",
+  "tui-balo": "tui-balo",
+  "tui-va-balo": "tui-balo",
+  giay: "giay",
+  "trang-phuc": "trang-phuc",
+  "grip-phu-kien": "grip-phu-kien",
+  "grip-va-phu-kien": "grip-phu-kien",
   paddle: "vot",
   ball: "bong",
   bag: "tui-balo",
@@ -299,7 +322,13 @@ const CATEGORY_MAP: Record<string, string> = {
 
 function normalizeCategory(value: string | null | undefined): string | null {
   if (!value) return null;
-  return CATEGORY_MAP[value] ?? value;
+  const key = value.trim().toLowerCase().normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/&/g, " va ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return CATEGORY_MAP[key] ?? null;
 }
 
 async function uploadProductImage(productId: string, file: File): Promise<void> {
