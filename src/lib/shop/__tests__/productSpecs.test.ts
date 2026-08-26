@@ -35,6 +35,11 @@ describe("cleanSpecs", () => {
     expect(cleanSpecs(null)).toEqual({});
     expect(cleanSpecs(undefined)).toEqual({});
   });
+
+  it("chuẩn hoá số và boolean từ JSON/AI thay vì gọi trim trực tiếp", () => {
+    const runtimeSpecs = { weight_g: 220, usap: true } as unknown as Record<string, string>;
+    expect(cleanSpecs(runtimeSpecs)).toEqual({ usap: "true", weight_g: "220" });
+  });
 });
 
 describe("specsEqual", () => {

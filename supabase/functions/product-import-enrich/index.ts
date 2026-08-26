@@ -408,6 +408,17 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "ai_invalid_json" }, 502);
     }
 
+    if (parsed.specs && typeof parsed.specs === "object" && !Array.isArray(parsed.specs)) {
+      parsed.specs = Object.fromEntries(
+        Object.entries(parsed.specs)
+          .filter(([, value]) => ["string", "number", "boolean"].includes(typeof value))
+          .map(([key, value]) => [key, String(value).trim().slice(0, 120)])
+          .filter(([, value]) => value.length > 0),
+      );
+    } else {
+      parsed.specs = null;
+    }
+
     // Log enrichment for rate limit tracking
     await serviceRole.from("rate_limits").insert({ key: rateLimitKey });
 

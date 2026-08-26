@@ -213,7 +213,7 @@ export function useBulkProductImport() {
             ai_confidence: row.aiConfidence,
             ai_source_urls: imageSources(row),
             specs: cleanSpecs({
-              ...(row.aiData!.specs ?? {}),
+              ...normalizeAiSpecs(row.aiData!.specs),
               ...(row.aiData!.brand ? { brand: row.aiData!.brand } : {}),
             }),
           })
@@ -336,6 +336,18 @@ function parsePrice(value: unknown): number | undefined {
 function parseOptions(value: unknown): string[] {
   if (typeof value !== "string") return [];
   return [...new Set(value.split(/[,;|\n]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
+}
+
+function normalizeAiSpecs(input: unknown): Record<string, string> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const output: Record<string, string> = {};
+  for (const [key, rawValue] of Object.entries(input as Record<string, unknown>)) {
+    if (rawValue === null || rawValue === undefined) continue;
+    if (!["string", "number", "boolean"].includes(typeof rawValue)) continue;
+    const value = String(rawValue).trim().slice(0, 120);
+    if (value) output[key] = value;
+  }
+  return output;
 }
 
 function imageSources(row: ProductRow): string[] {
