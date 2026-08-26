@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang",
   publishedDate: "2026-04-23",
-  updatedDate: "2026-07-17",
+  updatedDate: "2026-08-26",
   author: "The PickleHub Team",
   tags: ["world cup pickleball", "da nang", "vietnam", "tournament", "asia", "2026", "guide"],
   ctaPath: "/tournaments",
@@ -20,7 +20,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Pickleball World Cup 2026: First Time in Asia, Hosted by Da Nang",
-          content: "The Heineken Pickleball World Cup 2026 (WCP 2026) will take place in Da Nang, Vietnam from August 30 through September 6, 2026 — the event's first appearance in Asia after three editions in the Americas. Heineken was confirmed as title sponsor at the tournament's April 24, 2026 press conference, making the brewer's name part of the official event title. Organizers are targeting roughly 80 countries and 4,000 participants, which would make it the largest Pickleball World Cup ever. The tournament is a country-team competition run by the Peruvian Cabieses siblings' Pickleball World Cup organization, now partnered with the Global Pickleball Federation (GPF), and co-hosted locally by the Da Nang City Pickleball Federation. Vietnam's selection follows Da Nang's breakout success in hosting the PPA Tour Asia – MB Vietnam Cup 2025, where a Guinness-certified 7,906-fan crowd signaled the country's explosive pickleball boom. This ThePickleHub guide collects everything confirmed so far: dates, venues, competition categories and how to follow the event."
+          content: "Last updated August 26, 2026 — the Heineken Pickleball World Cup 2026 (WCP 2026) takes place in Da Nang, Vietnam from August 30 through September 6, 2026 — the event's first appearance in Asia after three editions in the Americas. Heineken was confirmed as title sponsor at the tournament's April 24, 2026 press conference, making the brewer's name part of the official event title. Organizers are targeting roughly 80 countries and 4,000 participants, which would make it the largest Pickleball World Cup ever. The tournament is a country-team competition run by the Peruvian Cabieses siblings' Pickleball World Cup organization, now partnered with the Global Pickleball Federation (GPF), and co-hosted locally by the Da Nang City Pickleball Federation. Vietnam's selection follows Da Nang's breakout success in hosting the PPA Tour Asia – MB Vietnam Cup 2025, where a Guinness-certified 7,906-fan crowd signaled the country's explosive pickleball boom. This ThePickleHub guide collects everything confirmed so far: dates, venues, competition categories and how to follow the event."
         },
         {
           heading: "Key Facts — Pickleball World Cup 2026 at a Glance",
@@ -174,7 +174,7 @@ const post: BlogPost = {
       sections: [
         {
           heading: "World Cup Pickleball 2026: Lần đầu tiên tại châu Á, Đà Nẵng đăng cai",
-          content: "Heineken Pickleball World Cup 2026 (WCP 2026) sẽ diễn ra tại Đà Nẵng, Việt Nam từ ngày 30 tháng 8 đến 6 tháng 9 năm 2026 — đây là lần đầu tiên giải đấu này được tổ chức ở châu Á sau ba kỳ trước đó tại châu Mỹ. Heineken được công bố là nhà tài trợ danh xưng tại họp báo ngày 24/4/2026, đưa tên thương hiệu này vào tên chính thức của giải. Ban tổ chức đặt mục tiêu gần 80 quốc gia và khoảng 4.000 người tham dự, hứa hẹn trở thành kỳ World Cup Pickleball lớn nhất từ trước đến nay. Giải đấu có thể thức thi đấu đồng đội quốc gia, do tổ chức Pickleball World Cup của hai anh em người Peru Hercilio và Miranda Cabieses vận hành, vừa hợp tác chiến lược với Liên đoàn Pickleball Toàn cầu (GPF), và do Liên đoàn Pickleball thành phố Đà Nẵng đồng tổ chức tại chỗ. Việc Đà Nẵng được chọn là kết quả tất yếu sau thành công đột phá của PPA Tour Asia – MB Vietnam Cup 2025, nơi kỷ lục Guinness với 7.906 khán giả đã đánh dấu cơn sốt pickleball bùng nổ tại Việt Nam. Bài viết này của ThePickleHub tổng hợp mọi thông tin đã xác nhận: thời gian, địa điểm, các nội dung thi đấu và cách theo dõi sự kiện."
+          content: "Cập nhật 26/8/2026 — Heineken Pickleball World Cup 2026 (WCP 2026) diễn ra tại Đà Nẵng, Việt Nam từ ngày 30 tháng 8 đến 6 tháng 9 năm 2026 — đây là lần đầu tiên giải đấu này được tổ chức ở châu Á sau ba kỳ trước đó tại châu Mỹ. Heineken được công bố là nhà tài trợ danh xưng tại họp báo ngày 24/4/2026, đưa tên thương hiệu này vào tên chính thức của giải. Ban tổ chức đặt mục tiêu gần 80 quốc gia và khoảng 4.000 người tham dự, hứa hẹn trở thành kỳ World Cup Pickleball lớn nhất từ trước đến nay. Giải đấu có thể thức thi đấu đồng đội quốc gia, do tổ chức Pickleball World Cup của hai anh em người Peru Hercilio và Miranda Cabieses vận hành, vừa hợp tác chiến lược với Liên đoàn Pickleball Toàn cầu (GPF), và do Liên đoàn Pickleball thành phố Đà Nẵng đồng tổ chức tại chỗ. Việc Đà Nẵng được chọn là kết quả tất yếu sau thành công đột phá của PPA Tour Asia – MB Vietnam Cup 2025, nơi kỷ lục Guinness với 7.906 khán giả đã đánh dấu cơn sốt pickleball bùng nổ tại Việt Nam. Bài viết này của ThePickleHub tổng hợp mọi thông tin đã xác nhận: thời gian, địa điểm, các nội dung thi đấu và cách theo dõi sự kiện."
         },
         {
           heading: "Tóm tắt nhanh — World Cup Pickleball 2026 cần biết gì?",
