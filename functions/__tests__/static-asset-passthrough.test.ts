@@ -97,8 +97,11 @@ describe("static asset passthrough", () => {
     expect(isStaticAssetPath("/manifest.json")).toBe(true);
   });
 
-  it("serves root site-ownership verifier files", () => {
+  it("serves root site-ownership verifier files, with or without .html", () => {
     expect(isStaticAssetPath("/zalo_verifierAbC-123_xyz.html")).toBe(true);
+    // Cloudflare Pages' html_handling 308s the .html away, so the extensionless
+    // redirect target must resolve too or the verifier still 404s.
+    expect(isStaticAssetPath("/zalo_verifierAbC-123_xyz")).toBe(true);
     expect(isStaticAssetPath("/BingSiteAuth.xml")).toBe(true);
   });
 

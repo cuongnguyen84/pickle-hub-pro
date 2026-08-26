@@ -246,7 +246,15 @@ const STATIC_EXACT = new Set([
 // (the messenger ~everyone in Vietnam uses) serves its verifier as .html, so
 // it looks exactly like an SPA route to every rule above. Matching the shape
 // rather than one token means a re-issued verifier keeps working.
-const ROOT_VERIFICATION_RE = /^\/(?:zalo_verifier|google[0-9a-f]{16}|BingSiteAuth|pinterest-)[A-Za-z0-9_-]*\.(?:html|xml)$/;
+//
+// The extension is OPTIONAL, and that is the load-bearing part. Cloudflare
+// Pages applies `html_handling` to everything its asset handler serves, so a
+// request for `/zalo_verifier<token>.html` comes back as a 308 to the
+// extensionless `/zalo_verifier<token>`. Match only the `.html` form and the
+// redirect lands on a path this list does not recognise, which drops into the
+// SPA soft-404 guard and 404s — the redirect target has to be servable too.
+// (Both forms verified on preview builds a37fe065 / 37bf339e before this.)
+const ROOT_VERIFICATION_RE = /^\/(?:zalo_verifier|google[0-9a-f]{16}|BingSiteAuth|pinterest-)[A-Za-z0-9_-]*(?:\.(?:html|xml))?$/;
 
 export const isStaticAssetPath = (pathname: string): boolean =>
   STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
