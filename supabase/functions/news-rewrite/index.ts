@@ -3,6 +3,7 @@ import { requireCronRequest } from "../_shared/cron-auth.ts";
 import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { getAuthUser } from "../_shared/auth.ts";
 import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
+import { missingViDiacritics } from "../_shared/vi-diacritics.ts";
 
 // 2 -> 5 (Cuong yêu cầu 23/08): sau khi thêm 4 nguồn, hàng chờ 21 bài ở nhịp
 // 2 bài/30 phút mất hơn 5 tiếng mới lên hết.
@@ -215,8 +216,18 @@ Rules:
 - Vietnamese must read like natural Vietnamese sports journalism and use full
   Vietnamese diacritics in the title, summary, headings, and paragraphs.
 - Keep player, brand, tournament, PPA, MLP, APP, and DUPR names accurate.
-- summary must be 120–300 characters and must not repeat the title.
-- Use 2–4 sections. A heading is optional; paragraphs must be plain text.
+- Title: lead with the most searchable entity (tournament, player, or brand
+  name, plus the year when the source gives one) and keep the essential part
+  within the first 65 characters.
+- The Vietnamese title and headings must use phrases Vietnamese fans actually
+  type into search ("lịch thi đấu", "kết quả", "công bố", "vô địch", "trực
+  tiếp"), not a word-for-word translation of the English title.
+- summary must be 120–300 characters, must not repeat the title, and must read
+  like a search snippet: name the main entity and state the concrete news so a
+  searcher knows why to click.
+- Use 2–4 sections. For a full article give every section a short heading that
+  works in a natural secondary keyword; for a brief, headings are optional.
+  Paragraphs must be plain text.
 - category is one of tournament, player, equipment, business, community.
 - importance is an integer from 1 to 5.
 
@@ -366,13 +377,14 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
       throw new Error(`${language} draft contains a URL`);
     }
     if (language === "vi") {
-      const vietnameseWords = allText
-        .split(/\s+/)
-        .filter((word) => /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i.test(word))
-        .length;
-      const totalWords = allText.split(/\s+/).filter(Boolean).length;
-      if (vietnameseWords / totalWords < 0.1) {
-        throw new Error("vi draft is missing Vietnamese diacritics");
+      for (const [field, text] of [
+        ["title", value.title],
+        ["summary", value.summary],
+        ["body", paragraphs.join(" ")],
+      ] as const) {
+        if (missingViDiacritics(text)) {
+          throw new Error(`vi ${field} is missing Vietnamese diacritics`);
+        }
       }
     }
   }
