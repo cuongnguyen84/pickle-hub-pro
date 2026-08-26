@@ -169,7 +169,10 @@ export function useBulkProductImport() {
       for (const row of approved) {
         const product = await shopRpc<ShopProductRow>("product_create", {
           _shop_id: currentShopId,
-          _client_token: `bulk-${batchId}-${row.rowId}`,
+          // products_client_token_len allows at most 64 characters. rowId is
+          // already a stable UUID for this imported row, so it is both valid
+          // and idempotent when the seller retries after a network failure.
+          _client_token: row.rowId,
           _payload: {
             title: (row.aiData!.name || row.name).trim(),
             description: row.aiData!.description ?? "",
