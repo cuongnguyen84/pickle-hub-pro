@@ -183,6 +183,38 @@ async function fetchProductPage(initialUrl: URL): Promise<{ response: Response; 
   return null;
 }
 
+async function shopifyProduct(source: URL): Promise<{ name: string; images: string[] } | null> {
+  const productPath = source.pathname.match(/^(.*\/products\/[^/]+)/)?.[1];
+  if (!productPath) return null;
+  try {
+    const endpoint = new URL(`${productPath}.js`, source.origin);
+    const response = await fetch(endpoint, {
+      headers: { "user-agent": "Mozilla/5.0 (compatible; ThePickleHubBot/1.0; +https://thepicklehub.net)" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!response.ok || !(contentType.includes("json") || contentType.includes("javascript"))) return null;
+    const data = await response.json() as {
+      title?: unknown;
+      images?: unknown;
+      featured_image?: unknown;
+    };
+    const images = [
+      ...(Array.isArray(data.images) ? data.images : []),
+      data.featured_image,
+    ].flatMap((image) => {
+      if (typeof image === "string") return [image];
+      if (image && typeof image === "object" && typeof (image as { src?: unknown }).src === "string") {
+        return [(image as { src: string }).src];
+      }
+      return [];
+    });
+    return { name: typeof data.title === "string" ? data.title : "", images };
+  } catch {
+    return null;
+  }
+}
+
 async function findProductImages(sourceUrls: unknown, productName: string): Promise<ProductImageCandidate[]> {
   if (!Array.isArray(sourceUrls)) return [];
   const candidates: ProductImageCandidate[] = [];
@@ -195,12 +227,29 @@ async function findProductImages(sourceUrls: unknown, productName: string): Prom
       const fetched = await fetchProductPage(initialSource);
       if (!fetched) continue;
       const { response, url: source } = fetched;
+      // Most pickleball manufacturers run Shopify. Their storefront HTML is
+      // frequently bot-protected, while the public product JSON endpoint is
+      // the same source the storefront itself uses and exposes canonical
+      // title + product gallery without executing JavaScript.
+      const shopify = await shopifyProduct(source);
+      if (shopify && productNameMatches(productName, `${shopify.name} ${source.hostname}`)) {
+        for (const rawImage of shopify.images.slice(0, 3)) {
+          const image = safePublicHttpsUrl(new URL(rawImage, source).toString());
+          if (!image || seen.has(image.toString())) continue;
+          seen.add(image.toString());
+          candidates.push({
+            url: image.toString(),
+            source_url: source.toString(),
+            alt: shopify.name || productName,
+          });
+        }
+      }
       if (!response.ok || !(response.headers.get("content-type") ?? "").includes("text/html")) continue;
       const html = (await response.text()).slice(0, 500_000);
       const structured = productJsonLd(html);
       const pageName = structured?.name || htmlAttribute(html, "og:title") ||
         html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "";
-      if (!productNameMatches(productName, pageName)) continue;
+      if (!productNameMatches(productName, `${pageName} ${source.hostname}`)) continue;
 
       const rawImages = [
         ...(structured?.images ?? []),
