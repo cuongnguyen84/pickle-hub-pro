@@ -1,0 +1,28 @@
+{
+  "agent": "solution-architect",
+  "rebuttals": [
+    {
+      "id": "D1",
+      "topic": "Trình tự ARCH-02: extraction trước, hay bắt buộc characterization tests + i18n copy VI trước MỌI lát tách?",
+      "myRound1Position": "Xếp extraction trước; increment 1 (cancel/reactivate → handler.ts) '0 rủi ro UI', increment 2 (RegistrationModal → hook) chỉ manual-verify.",
+      "move": "REFINE",
+      "evidence": "src/pages/PlayerRegistration.tsx:155-186 — caller cancel/reactivate chỉ phụ thuộc HTTP status + field `code` (map sang i18n toast); supabase/functions/cancel-registration/index.ts:140-164 giữ nguyên response shape `{ok,cancelled_at}` / `{error,code}`.",
+      "note": "Giữ HOLD cho increment 1: đây là edge-handler extraction contract-only — caller duy nhất (PlayerRegistration, KHÔNG phải RegistrationModal) chỉ đọc status+code, tách Deno.serve→handler.ts không đổi byte nào client thấy; vitest tôi đề xuất land CÙNG commit tách (mẫu ARCH-04), nên không cần 'test-parity gate đứng trước' cho lát này. NHƯNG chỉnh increment 2: kéo 7 call money-path (Turnstile/OTP/payment `{data,error}` không throw) qua ranh giới hook mà không có parity test = regress vô hình đúng như critic + risk-auditor #2 nói — nâng nó thành gate cứng: characterization tests xanh trên code hiện tại TRƯỚC khi tách. Còn mandate 'i18n copy byte-for-byte trước' của critic nhắm TeamMatchSetup Step 5 (Flow B) — đó là ARCH-03/deferred, KHÔNG nằm trong increment 1-3, nên nó không reorder plan gần hạn."
+    },
+    {
+      "id": "D2",
+      "topic": "Bug member-path overbooking (register_event_as_member thiếu advisory lock): vá trước như phần của cụm này, hay ngoài scope ARCH-02?",
+      "myRound1Position": "Ngoài scope — ARCH-02 là layering refactor, không phải vá race DB; tôi giả định DB-01 đã đẩy toàn bộ race xuống Postgres.",
+      "move": "CONCEDE",
+      "evidence": "supabase/migrations/20260522180000_authed_user_skip_otp.sql:76-81 — `SELECT COUNT(*) ... IF v_active_count >= max_players THEN RAISE event_full` KHÔNG có pg_advisory_xact_lock (comment 'race-safe re-count' sai); supabase/migrations/20260716090000_db01_atomic_event_capacity.sql chỉ vá `social_event_reactivate_registration` + `social_event_guest_register`, KHÔNG đụng register_event_as_member; scripts/qa/db-race.mjs:156,182 chỉ test 2 path đó, không có member case.",
+      "note": "Vòng 1 tôi CHƯA mở migration này, giả định sai rằng DB-01 phủ hết race. Mở ra rồi: member path (1-click cho mọi user đã đăng nhập) chạy COUNT→check→INSERT trần, đúng lỗ hổng DB-01 vá cho 2 path kia. Bug sống, SLO 4 (overbooked-slot incident). Chỉnh phạm vi: KHÔNG gộp vào các increment layering (AMBER) — đây là 1 migration standalone theo đúng mẫu DB-01 (thêm `pg_advisory_xact_lock(hashtextextended('event_capacity:'||p_event_id::text,0))` trước dòng 76) + 1 member-race case vào db-race.mjs, ship PR riêng, RED-handling (prod-first apply, không git-revert được). Vá TRƯỚC khi tách lớp member-path. Risk-auditor cũng chấp nhận 'tách PR riêng'."
+    }
+  ],
+  "newDisagreements": [
+    {
+      "topic": "Critic nâng 'i18n hoá copy VI byte-for-byte' thành blocker chặn MỌI lát tách. Nhưng khối copy ternary cứng ~20 chuỗi nằm ở TeamMatchSetup Step 5 (Flow B) — không thuộc increment 1-3 của ARCH-02. Áp nó như gate lên near-term ARCH-02 là scope-mismatch: nó chặn một lát (TeamMatch) tôi đã defer, không chặn lát tôi định làm trước.",
+      "with": "ui-ux-critic",
+      "myPosition": "i18n-copy-first là gate ĐÚNG nhưng chỉ cho lát chạm TeamMatchSetup Step 5; increment 1 (edge handler) + increment 2 (RegistrationModal hook) không bị nó chi phối vì chúng không di dời khối copy ternary đó. Gate cho increment 2 là characterization test, không phải i18n copy."
+    }
+  ]
+}

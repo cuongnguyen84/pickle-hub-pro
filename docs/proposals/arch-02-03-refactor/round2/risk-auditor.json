@@ -1,0 +1,14 @@
+{
+  "agent": "risk-auditor",
+  "rebuttals": [
+    {
+      "id": "D2",
+      "topic": "Bug sống member-path overbooking (register_event_as_member thiếu advisory lock): vá TRƯỚC như phần cụm ARCH-02, hay ngoài scope?",
+      "myRound1Position": "Rủi ro Cao độc lập; DB-01 vá sót member path; ARCH-02 sờ đúng vùng này zero-net → PHẢI vá trước như một phần cụm này.",
+      "move": "REFINE",
+      "evidence": "supabase/migrations/20260522190000_fix_register_member_ambiguous_column.sql:77-106 — định nghĩa MỚI NHẤT của register_event_as_member vẫn chỉ SELECT COUNT(*) capacity check, không pg_advisory_xact_lock/FOR UPDATE; supabase/migrations/20260716090000_db01_atomic_event_capacity.sql — grep register_event_as_member = 0, DB-01 chỉ vá social_event_guest_register + social_event_reactivate_registration; src/components/social-events/RegistrationModal.tsx:594 — caller thật, path 1-click authed đang sống.",
+      "note": "Bug ĐÃ xác minh còn sống — architect không phản bác cơ chế, chỉ nêu scope, nên không CONCEDE. Nhưng REFINE khung 'phần cụm này': đây là migration KHÔNG git-revert được, gộp vào PR refactor layering làm hỏng rollback của cả hai. Chỉnh phạm vi: tách thành task riêng DB-01c (1 dòng pg_advisory_xact_lock(hashtext('event:'||p_event_id::text)) trước COUNT, mirror DB-01; thêm member-path case vào db-race.mjs), ship prod-first theo ops-runbook, ~30 phút. KHÔNG block refactor, nhưng PHẢI được track và làm — vì ARCH-02 refactor quanh đúng vùng code hở này. Verdict tổng vẫn AMBER (phần migration prod-first, không RED nếu làm đúng quy trình)."
+    }
+  ],
+  "newDisagreements": []
+}
