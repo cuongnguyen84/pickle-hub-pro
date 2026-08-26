@@ -178,4 +178,24 @@ describe("homepageThumbnailUrl", () => {
       ),
     ).toBeUndefined();
   });
+
+  it("allows generated WordPress images from trusted news publishers only", () => {
+    const pickleballUnion =
+      "https://pickleballunion.com/wp-content/uploads/2026/08/inside-foot-in-pickleball-1024x731.jpg";
+    const majorLeaguePickleball =
+      "https://majorleaguepickleball.co/wp-content/uploads/MLP-FINALS-1024x427.png";
+
+    expect(
+      homepageThumbnailUrl(pickleballUnion, { width: 168, height: 168 }),
+    ).toBe(pickleballUnion);
+    expect(
+      homepageThumbnailUrl(majorLeaguePickleball, { width: 168, height: 168 }),
+    ).toBe(majorLeaguePickleball);
+    expect(
+      homepageThumbnailUrl(
+        "https://unknown.example/wp-content/uploads/2026/08/news.jpg",
+        { width: 168, height: 168 },
+      ),
+    ).toBeUndefined();
+  });
 });
