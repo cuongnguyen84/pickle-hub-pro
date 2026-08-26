@@ -24,7 +24,11 @@ Given a product name, return structured JSON with:
 - category: one of ["paddle","ball","bag","shoe","apparel","net","accessory","other"]
 - brand: manufacturer brand name
 - description: 2-3 sentence Vietnamese product description
-- specs: key-value pairs (weight, material, core, face, shape, grip_size, etc.)
+- specs: for paddles use ONLY these exact keys when known:
+  brand, weight_g, core_mm, face, shape, handle_mm, grip_mm, usap.
+  Values must not include units for numeric fields. face should describe face material.
+- versions: product versions/models sold under this listing, array of short strings (for example ["14mm","16mm"])
+- colors: real available colors, array of short Vietnamese strings
 - price_estimate_vnd: estimated retail price in VND (integer, 0 if unknown)
 - tags: searchable Vietnamese keywords array
 - confidence: 0.00-1.00 how confident you are in this enrichment
@@ -44,6 +48,8 @@ interface EnrichedProduct {
   specs: Record<string, string> | null;
   price_estimate_vnd: number | null;
   tags: string[] | null;
+  versions: string[] | null;
+  colors: string[] | null;
   confidence: number;
   source_urls?: string[] | null;
 }
@@ -53,8 +59,6 @@ interface ProductImageCandidate {
   source_url: string;
   alt: string;
 }
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function slugify(text: string): string {
   return text
@@ -374,4 +378,3 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "ai_error" }, 500);
   }
 });
-

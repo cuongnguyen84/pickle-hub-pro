@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
+import { specFieldsFor } from "@/lib/shop/productSpecs";
 
 export default function BulkImport() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -99,6 +100,17 @@ export default function BulkImport() {
     if (!row?.aiData) return;
     updateRow(rowId, {
       aiData: { ...row.aiData, [field]: value || null },
+    });
+  };
+
+  const updateAiSpec = (rowId: string, key: string, value: string) => {
+    const row = rows.find((item) => item.rowId === rowId);
+    if (!row?.aiData) return;
+    updateRow(rowId, {
+      aiData: {
+        ...row.aiData,
+        specs: { ...(row.aiData.specs ?? {}), [key]: value },
+      },
     });
   };
 
@@ -216,6 +228,58 @@ export default function BulkImport() {
                             placeholder="Không bắt buộc"
                           />
                         </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`versions-${row.rowId}`}>Phiên bản</Label>
+                          <Input
+                            id={`versions-${row.rowId}`}
+                            defaultValue={row.versionOptions.join(", ")}
+                            onBlur={(event) => updateRow(row.rowId, { versionOptions: splitOptions(event.target.value) })}
+                            placeholder="14mm, 16mm"
+                          />
+                          <p className="text-xs text-muted-foreground">Phân cách nhiều phiên bản bằng dấu phẩy.</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`colors-${row.rowId}`}>Màu sắc</Label>
+                          <Input
+                            id={`colors-${row.rowId}`}
+                            defaultValue={row.colorOptions.join(", ")}
+                            onBlur={(event) => updateRow(row.rowId, { colorOptions: splitOptions(event.target.value) })}
+                            placeholder="Đen, Trắng"
+                          />
+                          <p className="text-xs text-muted-foreground">Mỗi màu sẽ tạo các phiên bản bán tương ứng.</p>
+                        </div>
+                        {specFieldsFor(row.categoryOverride ?? row.aiData.category)
+                          .filter((field) => field.key !== "brand")
+                          .map((field) => (
+                            <div className="space-y-1.5" key={field.key}>
+                              <Label htmlFor={`spec-${field.key}-${row.rowId}`}>
+                                {field.label}{field.unit ? ` (${field.unit})` : ""}
+                              </Label>
+                              {field.options ? (
+                                <select
+                                  id={`spec-${field.key}-${row.rowId}`}
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                  value={row.aiData.specs?.[field.key] ?? ""}
+                                  onChange={(event) => updateAiSpec(row.rowId, field.key, event.target.value)}
+                                >
+                                  <option value="">Chưa rõ</option>
+                                  {field.options.map((option) => <option key={option} value={option}>{option}</option>)}
+                                  {row.aiData.specs?.[field.key]
+                                    && !field.options.includes(row.aiData.specs[field.key])
+                                    && <option value={row.aiData.specs[field.key]}>{row.aiData.specs[field.key]}</option>}
+                                </select>
+                              ) : (
+                                <Input
+                                  id={`spec-${field.key}-${row.rowId}`}
+                                  inputMode={field.numeric ? "decimal" : "text"}
+                                  value={row.aiData.specs?.[field.key] ?? ""}
+                                  onChange={(event) => updateAiSpec(row.rowId, field.key, event.target.value)}
+                                  placeholder={field.placeholder}
+                                />
+                              )}
+                              {field.hint && <p className="text-xs text-muted-foreground">{field.hint}</p>}
+                            </div>
+                          ))}
                         <div className="space-y-1.5">
                           <Label htmlFor={`price-${row.rowId}`}>Giá bán (₫)</Label>
                           <Input
@@ -441,6 +505,9 @@ const PRODUCT_CATEGORIES = [
   { value: "trang-phuc", label: "Trang phục" },
   { value: "grip-phu-kien", label: "Grip & phụ kiện" },
 ] as const;
+
+const splitOptions = (value: string) =>
+  [...new Set(value.split(/[,;|\n]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
 
 function publishErrorMessage(error: unknown): string {
   const detail = error as { message?: string; code?: string; details?: string; hint?: string };

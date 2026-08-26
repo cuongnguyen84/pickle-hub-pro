@@ -20,6 +20,8 @@ import { shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductRow as ShopProductRow } from "@/integrations/supabase/shop-schema";
 import { invokePublishProduct } from "@/hooks/shop/useProductModeration";
+import { cleanSpecs } from "@/lib/shop/productSpecs";
+import { cartesian } from "@/lib/shop/variantMatrix";
 
 export interface EnrichedData {
   name: string;
@@ -29,6 +31,8 @@ export interface EnrichedData {
   specs: Record<string, string> | null;
   price_estimate_vnd: number | null;
   tags: string[] | null;
+  versions: string[] | null;
+  colors: string[] | null;
   confidence: number;
   slug: string;
   image_candidates: ProductImageCandidate[];
@@ -47,6 +51,8 @@ export interface ProductRow {
   name: string;
   priceOverride: number | undefined;
   categoryOverride: string | undefined;
+  versionOptions: string[];
+  colorOptions: string[];
   aiEnriched: boolean;
   aiConfidence: number;
   aiData: EnrichedData | null;
@@ -72,6 +78,8 @@ interface SubmitResult {
 const COLUMN_NAME = "Tên sản phẩm";
 const COLUMN_PRICE = "Giá bán";
 const COLUMN_CATEGORY = "Danh mục";
+const COLUMN_VERSION = "Phiên bản";
+const COLUMN_COLOR = "Màu sắc";
 
 export function useBulkProductImport() {
   const [rows, setRows] = useState<ProductRow[]>([]);
@@ -99,14 +107,18 @@ export function useBulkProductImport() {
           category: typeof row[COLUMN_CATEGORY] === "string"
             ? row[COLUMN_CATEGORY].trim()
             : "",
+          versions: parseOptions(row[COLUMN_VERSION]),
+          colors: parseOptions(row[COLUMN_COLOR]),
         }))
         .filter(({ name }) => name.length >= 2)
         .slice(0, 100)
-        .map(({ name, price, category }) => ({
+        .map(({ name, price, category, versions, colors }) => ({
           rowId: crypto.randomUUID(),
           name,
           priceOverride: price,
           categoryOverride: normalizeCategory(category) || undefined,
+          versionOptions: versions,
+          colorOptions: colors,
           aiEnriched: false,
           aiConfidence: 0,
           aiData: null,
@@ -140,15 +152,20 @@ export function useBulkProductImport() {
     const normalizedData = {
       ...data,
       image_candidates: data.image_candidates ?? [],
+      versions: data.versions ?? [],
+      colors: data.colors ?? [],
     };
-    updateRow(rowId, {
+    setRows((previous) => previous.map((row) => row.rowId === rowId ? {
+      ...row,
       aiEnriched: true,
       aiConfidence: data.confidence,
       aiData: { ...normalizedData, category: normalizeCategory(normalizedData.category) },
+      versionOptions: row.versionOptions.length ? row.versionOptions : normalizedData.versions,
+      colorOptions: row.colorOptions.length ? row.colorOptions : normalizedData.colors,
       selectedImageUrl: normalizedData.image_candidates[0]?.url ?? null,
       status: data.confidence < 0.5 ? "low_confidence" : "done",
       errorMessage: null,
-    });
+    } : row));
   }, [updateRow]);
 
   const publishBatch = useCallback(async (): Promise<PublishResult> => {
@@ -195,19 +212,49 @@ export function useBulkProductImport() {
             ai_enriched: true,
             ai_confidence: row.aiConfidence,
             ai_source_urls: imageSources(row),
+            specs: cleanSpecs({
+              ...(row.aiData!.specs ?? {}),
+              ...(row.aiData!.brand ? { brand: row.aiData!.brand } : {}),
+            }),
           })
           .eq("id", product.id)
           .select("*")
           .single();
         if (error) throw error;
         const current = updated ?? product;
+        const groups = [
+          ...(row.versionOptions.length ? [{ name: "Phiên bản", values: row.versionOptions }] : []),
+          ...(row.colorOptions.length ? [{ name: "Màu sắc", values: row.colorOptions }] : []),
+        ];
+        if (groups.length) {
+          const optionValues = cartesian(groups);
+          await shopRpc("product_variants_reconcile", {
+            _product_id: current.id,
+            _expected_version: current.version,
+            _option_groups: groups,
+            _rows: optionValues.map((values, index) => ({
+              option_values: values,
+              price_vnd: String(row.priceOverride ?? row.aiData!.price_estimate_vnd),
+              stock_on_hand: null,
+              sku: null,
+              position: index,
+            })),
+            _client_token: `variants-${row.rowId}`,
+            _keep_variant_id: null,
+          });
+        }
+        const { data: publishable, error: refreshError } = await shopFrom<ShopProductRow>("products")
+          .select("*")
+          .eq("id", current.id)
+          .single();
+        if (refreshError) throw refreshError;
         const image = await resolveProductImage(row);
         if (!image) throw new Error("product_image_required");
         await uploadProductImage(current.id, image);
 
         const submitted = await shopRpc<SubmitResult>("product_submit", {
           _product_id: current.id,
-          _expected_version: current.version,
+          _expected_version: (publishable ?? current).version,
           _client_token: `publish-${row.rowId}`,
         });
         if (!submitted.ok) {
@@ -228,11 +275,11 @@ export function useBulkProductImport() {
 
   const downloadTemplate = useCallback(() => {
     const template = [
-      { [COLUMN_NAME]: "Joola Ben Johns Hyperion CAS 16mm", [COLUMN_PRICE]: 4290000, [COLUMN_CATEGORY]: "Vợt" },
-      { [COLUMN_NAME]: "Franklin X-40 Outdoor Pickleballs 12-pack", [COLUMN_PRICE]: 500000, [COLUMN_CATEGORY]: "Bóng" },
+      { [COLUMN_NAME]: "Joola Ben Johns Hyperion CAS", [COLUMN_PRICE]: 4290000, [COLUMN_CATEGORY]: "Vợt", [COLUMN_VERSION]: "14mm, 16mm", [COLUMN_COLOR]: "Đen, Trắng" },
+      { [COLUMN_NAME]: "Franklin X-40 Outdoor Pickleballs 12-pack", [COLUMN_PRICE]: 500000, [COLUMN_CATEGORY]: "Bóng", [COLUMN_VERSION]: "12 quả", [COLUMN_COLOR]: "Vàng" },
     ];
     const ws = XLSX.utils.json_to_sheet(template);
-    ws["!cols"] = [{ wch: 48 }, { wch: 16 }, { wch: 22 }];
+    ws["!cols"] = [{ wch: 48 }, { wch: 16 }, { wch: 22 }, { wch: 28 }, { wch: 28 }];
     const categories = XLSX.utils.json_to_sheet(SYSTEM_CATEGORIES.map(({ label, slug }) => ({
       "Danh mục hợp lệ": label,
       "Mã hệ thống": slug,
@@ -284,6 +331,11 @@ function parsePrice(value: unknown): number | undefined {
   if (typeof value !== "string") return undefined;
   const parsed = Number(value.replace(/[^\d]/g, ""));
   return parsed > 0 ? parsed : undefined;
+}
+
+function parseOptions(value: unknown): string[] {
+  if (typeof value !== "string") return [];
+  return [...new Set(value.split(/[,;|\n]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
 }
 
 function imageSources(row: ProductRow): string[] {
