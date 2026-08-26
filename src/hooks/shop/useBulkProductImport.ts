@@ -19,6 +19,7 @@ import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 import { shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductRow as ShopProductRow } from "@/integrations/supabase/shop-schema";
+import { invokePublishProduct } from "@/hooks/shop/useProductModeration";
 
 export interface EnrichedData {
   name: string;
@@ -60,6 +61,12 @@ export interface ProductRow {
 export interface PublishResult {
   count: number;
   batchId: string;
+}
+
+interface SubmitResult {
+  ok: boolean;
+  needs_publish?: boolean;
+  problems?: Array<{ code?: string }>;
 }
 
 const COLUMN_NAME = "Tên sản phẩm";
@@ -182,22 +189,33 @@ export function useBulkProductImport() {
             stock_on_hand: "",
           },
         });
-        const { error } = await shopFrom<ShopProductRow>("products")
+        const { data: updated, error } = await shopFrom<ShopProductRow>("products")
           .update({
             import_batch_id: batchId,
             ai_enriched: true,
             ai_confidence: row.aiConfidence,
             ai_source_urls: imageSources(row),
           })
-          .eq("id", product.id);
+          .eq("id", product.id)
+          .select("*")
+          .single();
         if (error) throw error;
-        inserted.push(product);
-      }
+        const current = updated ?? product;
+        const image = await resolveProductImage(row);
+        if (!image) throw new Error("product_image_required");
+        await uploadProductImage(current.id, image);
 
-      for (let index = 0; index < approved.length; index++) {
-        const file = approved[index].selectedImageFile;
-        const product = inserted[index];
-        if (file && product) await uploadProductImage(product.id, file);
+        const submitted = await shopRpc<SubmitResult>("product_submit", {
+          _product_id: current.id,
+          _expected_version: current.version,
+          _client_token: `publish-${row.rowId}`,
+        });
+        if (!submitted.ok) {
+          const codes = submitted.problems?.map((problem) => problem.code).filter(Boolean).join(",");
+          throw new Error(`product_preflight_failed:${codes || "unknown"}`);
+        }
+        if (submitted.needs_publish) await invokePublishProduct(current.id);
+        inserted.push(current);
       }
 
       rows.forEach((row) => row.imagePreviewUrl && URL.revokeObjectURL(row.imagePreviewUrl));
@@ -238,6 +256,21 @@ export function useBulkProductImport() {
     setRows,
     shopId: shop.data?.id ?? null,
   };
+}
+
+async function resolveProductImage(row: ProductRow): Promise<File | null> {
+  if (row.selectedImageFile) return row.selectedImageFile;
+  if (!row.selectedImageUrl) return null;
+  try {
+    const response = await fetch(row.selectedImageUrl, { mode: "cors", credentials: "omit" });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    if (!blob.type.match(/^image\/(jpeg|png|webp)$/) || blob.size > 8 * 1024 * 1024) return null;
+    const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+    return new File([blob], `ai-product-${row.rowId}.${extension}`, { type: blob.type });
+  } catch {
+    return null;
+  }
 }
 
 function parsePrice(value: unknown): number | undefined {

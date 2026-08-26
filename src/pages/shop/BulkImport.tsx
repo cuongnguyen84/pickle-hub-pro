@@ -73,7 +73,7 @@ export default function BulkImport() {
     setPublishError(null);
     try {
       const result = await publishBatch();
-      setPublishResult(`Đã lưu ${result.count} sản phẩm dưới dạng bản nháp.`);
+      setPublishResult(`Đã xuất bản ${result.count} sản phẩm lên Shop.`);
     } catch (error) {
       setPublishError(publishErrorMessage(error));
     }
@@ -396,7 +396,7 @@ export default function BulkImport() {
                     {publishing ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Đang lưu…
+                        Đang xuất bản…
                       </>
                     ) : (
                       `Xuất bản ${doneCount} sản phẩm`
@@ -448,6 +448,8 @@ function publishErrorMessage(error: unknown): string {
   if (message.includes("shop_unavailable")) return "Không tìm thấy shop đang hoạt động.";
   if (message.includes("no_products_selected")) return "Chọn ít nhất một sản phẩm đã sẵn sàng.";
   if (message.includes("invalid_product_data")) return "Tên sản phẩm, danh mục và giá bán là bắt buộc.";
+  if (message.includes("product_image_required")) return "Cần một ảnh sản phẩm hợp lệ. Ảnh tìm tự động không tải được; hãy tải ảnh từ thiết bị rồi thử lại.";
+  if (message.includes("product_preflight_failed")) return `Sản phẩm chưa đạt điều kiện xuất bản (${message.split(":")[1] || "dữ liệu chưa đủ"}).`;
   if (message.includes("duplicate") || message.includes("unique")) return "Có sản phẩm bị trùng. Hãy đổi tên rồi thử lại.";
   if (message.includes("row-level security") || message.includes("42501")) return "Tài khoản chưa có quyền thêm sản phẩm cho shop này.";
   if (message.includes("products_specs_shape")) return "Thông số AI có dữ liệu không hợp lệ. Hãy chạy AI lại hoặc thử xuất bản lần nữa.";
