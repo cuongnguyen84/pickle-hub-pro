@@ -13,6 +13,7 @@ import { SearchX } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
+import { ShopCartLink } from "@/components/shop/CartLink";
 import {
   DEFAULT_FILTERS,
   FilterFields,
@@ -70,9 +71,11 @@ export default function ShopCategory() {
       <TheLineLayout title="Không tìm thấy ngành hàng">
         <DynamicMeta title="Không tìm thấy ngành hàng" noindex />
         <main className="tl-shop">
-          <h1 className="tl-shop-h1">Không tìm thấy ngành hàng này</h1>
-          <p className="tl-shop-sub">Có thể đường dẫn đã đổi, hoặc ngành hàng không còn mở.</p>
-          <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          <div className="tl-shop-page">
+            <h1 className="tl-shop-h1">Không tìm thấy ngành hàng này</h1>
+            <p className="tl-shop-sub">Có thể đường dẫn đã đổi, hoặc ngành hàng không còn mở.</p>
+            <Link to="/shop" className="tl-shop-btn">Về trang chợ</Link>
+          </div>
         </main>
       </TheLineLayout>
     );
@@ -80,13 +83,20 @@ export default function ShopCategory() {
 
   return (
     <TheLineLayout title={category?.name ?? "Ngành hàng"}>
-      <DynamicMeta title={category ? category.name : "Ngành hàng"} noindex />
+      {/* Phase 4: robots is decided at the edge by SHOP_PUBLIC_INDEXING. The
+          not-found branch above keeps its own noindex — that one is a real
+          state, not a launch gate. */}
+      <DynamicMeta title={category ? category.name : "Ngành hàng"} />
       <main className="tl-shop">
-        <nav aria-label="Đường dẫn" className="tl-shop-sub tl-shop-crumbs">
-          <Link to="/shop" className="tl-crumb">Chợ</Link>
-          <span aria-hidden="true" className="tl-crumb-sep">/</span>
-          <span aria-current="page" className="tl-crumb-current">{category?.name ?? "…"}</span>
-        </nav>
+        <div className="tl-shop-page">
+        <div className="tl-shop-topline">
+          {/* The last crumb is the page's own <h1> one line below it, so it is
+              dropped (R5 #14, chốt: giữ h1). The crumb row is the way back. */}
+          <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
+            <Link to="/shop" className="tl-crumb">Chợ</Link>
+          </nav>
+          <ShopCartLink />
+        </div>
 
         <h1 className="tl-shop-h1">{category?.name ?? "Ngành hàng"}</h1>
 
@@ -113,6 +123,7 @@ export default function ShopCategory() {
             <ResultsGrid
               rows={rows}
               total={results.data?.total ?? 0}
+              hidePilotNote
               isLoading={results.isLoading || !known}
               isError={results.isError}
               onRetry={() => void results.refetch()}
@@ -159,6 +170,7 @@ export default function ShopCategory() {
             });
           }}
         />
+        </div>
       </main>
     </TheLineLayout>
   );

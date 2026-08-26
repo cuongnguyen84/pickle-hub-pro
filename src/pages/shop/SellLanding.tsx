@@ -9,7 +9,6 @@ import { Link } from "react-router-dom";
 import { Check, Clock, ShieldCheck } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, ShopHeader } from "@/components/shop/ShopShell";
-import { LoadingState } from "@/components/states/PageStates";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplication, useShopPilotAccess } from "@/hooks/shop/useSellerApplication";
 import { canEdit, isTerminal } from "@/lib/shop/applicationState";
@@ -28,7 +27,22 @@ export default function SellLanding() {
   const pilot = useShopPilotAccess();
   const app = useMyApplication();
 
-  if (user && (pilot.isLoading || app.isLoading)) return <LoadingState fullScreen />;
+  // Màn thứ 9 — spinner toàn màn nuốt luôn tiêu đề và nút Quay lại, nên trong
+  // lúc chờ người dùng không biết mình đang ở đâu. Khung xương đi qua đúng vỏ.
+  if (user && (pilot.isLoading || app.isLoading)) {
+    return (
+      <ShopScrollShell>
+        <DynamicMeta title="Bán hàng trên ThePickleHub" noindex />
+        <ShopHeader title="Bán hàng trên ThePickleHub" backTo="/" />
+        <main className="tl-shop-page tl-shop-page--narrow" aria-busy="true" aria-label="Đang tải">
+          <div className="tl-shop-sk tl-shop-sk--title" />
+          <div className="tl-shop-sk tl-shop-sk--line" />
+          <div className="tl-shop-sk tl-shop-sk--line" />
+          <div className="tl-shop-sk tl-shop-sk--card" />
+        </main>
+      </ShopScrollShell>
+    );
+  }
 
   const status = app.data?.status;
   const cta = (() => {

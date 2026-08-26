@@ -19,6 +19,7 @@ import {
   SITEMAP_CACHE_HEADERS,
   URL_SAFE_SLUG_RE,
   buildUrlEntry,
+  fetchAllRows,
   toLastmod,
   today,
   wrapUrlset,
@@ -52,30 +53,36 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
-    const [eventsRes, clubsRes] = await Promise.all([
-      supabase
-        .from("social_events")
-        .select("slug, updated_at, start_at")
-        .eq("status", "published")
-        .eq("visibility", "public")
-        .gte("start_at", cutoffIso)
-        .order("start_at", { ascending: false })
-        .limit(5000),
-      supabase
-        .from("clubs")
-        .select("slug, created_at")
-        .order("created_at", { ascending: false })
-        .limit(2000),
+    // CAP-01 (2026-08-25) — both queries paged. PostgREST caps every response
+    // at 1000 rows silently: `.limit(5000)` returns 1000 rows with HTTP 200 and
+    // error = null, which is how sitemap-news lost 209 article URLs (#644).
+    // Neither table is near the cap today (27 events, 3 clubs), but social
+    // events are user-generated and grow without anyone watching this file.
+    // `slug` is the unique tie breaker on both — `start_at` and `created_at`
+    // repeat, and repeated sort keys make rows jump between pages.
+    const [events, clubs] = await Promise.all([
+      fetchAllRows<EventRow>((from, to) =>
+        supabase
+          .from("social_events")
+          .select("slug, updated_at, start_at")
+          .eq("status", "published")
+          .eq("visibility", "public")
+          .gte("start_at", cutoffIso)
+          .order("start_at", { ascending: false })
+          .order("slug", { ascending: true })
+          .range(from, to),
+      ),
+      fetchAllRows<ClubRow>((from, to) =>
+        supabase
+          .from("clubs")
+          .select("slug, created_at")
+          .order("created_at", { ascending: false })
+          .order("slug", { ascending: true })
+          .range(from, to),
+      ),
     ]);
 
-    if (eventsRes.error) {
-      console.error("sitemap-events: events query error:", eventsRes.error);
-    }
-    if (clubsRes.error) {
-      console.error("sitemap-events: clubs query error:", clubsRes.error);
-    }
-
-    const eventEntries = ((eventsRes.data ?? []) as EventRow[])
+    const eventEntries = events
       .filter((e) => e.slug && URL_SAFE_SLUG_RE.test(e.slug))
       .flatMap((e) => {
         const enLoc = `${siteUrl}/social/${e.slug}`;
@@ -104,7 +111,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         ];
       });
 
-    const clubEntries = ((clubsRes.data ?? []) as ClubRow[])
+    const clubEntries = clubs
       .filter((c) => c.slug && URL_SAFE_SLUG_RE.test(c.slug))
       .map((c) => {
         const loc = `${siteUrl}/clb/${c.slug}`;

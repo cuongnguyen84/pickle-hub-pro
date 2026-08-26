@@ -153,4 +153,29 @@ describe("homepageThumbnailUrl", () => {
       homepageThumbnailUrl("/images/blog/local.webp", { width: 168, height: 168 }),
     ).toBe("/images/blog/local.webp");
   });
+
+  it("uses Pickleball.com's bounded image optimizer", () => {
+    const result = homepageThumbnailUrl(
+      "https://cdn.pickleball.com/news/example.jpg?width=1320&height=528&optimizer=image",
+      { width: 168, height: 168 },
+    )!;
+
+    expect(new URL(result).searchParams.get("width")).toBe("168");
+    expect(new URL(result).searchParams.get("height")).toBe("168");
+  });
+
+  it("allows APP Webflow AVIF assets but rejects other Webflow originals", () => {
+    const thumbnail =
+      "https://cdn.prod.website-files.com/site/asset_MaddoxBatesWin-Thumb.avif";
+
+    expect(
+      homepageThumbnailUrl(thumbnail, { width: 168, height: 168 }),
+    ).toBe(thumbnail);
+    expect(
+      homepageThumbnailUrl(
+        "https://cdn.prod.website-files.com/site/asset_MaddoxBatesWin.png",
+        { width: 168, height: 168 },
+      ),
+    ).toBeUndefined();
+  });
 });

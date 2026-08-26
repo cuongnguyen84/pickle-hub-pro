@@ -108,7 +108,19 @@ export interface ProfilePatch {
   region?: string;
   primary_category_slug?: string;
   shipping_note?: string;
+  /** Con số người mua thật sự bị thu ở giỏ hàng. Trước 19/08 người bán chỉ sửa
+   *  được `shipping_note` — ô chữ tự do — nên chữ trôi khỏi số: shop ghi "miễn
+   *  phí toàn quốc" trong khi giỏ thu 30.000₫. Gửi dạng số, không phải chuỗi;
+   *  server chặn số âm và trần 1.000.000₫. */
+  shipping_fee_vnd?: number;
   return_note?: string;
+  /** P4b — the VietQR trio. All three or none: the CHECK refuses a partial
+   *  set, because a half-filled trio renders a QR that scans and then fails,
+   *  which is worse than no QR. The server strips whitespace from the account
+   *  number, so a seller can paste it the way their banking app prints it. */
+  bank_code?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
 }
 
 /**

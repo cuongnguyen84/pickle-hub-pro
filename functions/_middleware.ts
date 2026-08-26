@@ -8,6 +8,7 @@
  */
 
 import { BOT_UA, detectLang, stripLangPrefix } from "./_lib/utils";
+import { isKnownSpaPath } from "./_lib/spa-routes";
 import { createSupabaseClient } from "./_lib/supabase";
 import {
   renderHome, renderHomeVi,
@@ -22,12 +23,14 @@ import {
   renderSocialList,
   renderClubList,
   renderVenuesList, renderVenueDetail, renderVenuesCity,
+  renderShopCatalog, renderShopCategory, renderShopProduct, renderShopStore,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
   renderLivestreamList, renderRankings, renderPpaRankings, renderPrivacy, renderTerms, renderAdvertise,
+  renderAbout, renderContact,
   renderNotificationsShell,
   renderNoindexShell,
   render404,
@@ -74,6 +77,27 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/account(?:\/|$)/,
   /^\/vi\/account(?:\/|$)/,
   /^\/onboarding(?:\/|$)/,
+  // DUPR account linking. Auth-gated app action, never an indexable content
+  // page — same category as /account and /onboarding above.
+  //
+  // 2026-08-23 (#650) this path was given a 301 to the VI DUPR explainer in
+  // section 1b, labelled "Retired /dupr landing", to clear a GSC "Not found
+  // (404)" from 2026-07-30. It was not retired: App.tsx still mounts
+  // <RequireAuth><DuprConnect /></RequireAuth> on it, eight product surfaces
+  // link to it, and two blog posts tell readers to type thepicklehub.net/dupr
+  // by hand when the header button does not appear. Section 1b runs BEFORE the
+  // `if (!isBot)` branch, so the 301 hit humans too and that typed-URL
+  // fallback landed on an article instead of the connect screen.
+  //
+  // REVIEW: noindex rather than GONE_EXACT (where the closest neighbours,
+  // /match/new and /match/confirm, live). GONE_EXACT returns 410, which
+  // asserts the resource is permanently gone — false here, it renders for
+  // every authenticated user — and the SSR'd blog CTA (ctaPath: "/dupr" in
+  // dupr-thepicklehub-user-guide) would then be an internal link to a 410.
+  // A crawlable 200 + noindex clears the GSC report just as definitively.
+  // Deliberately NOT added to robots.txt: Disallow would stop Google
+  // recrawling the URL, so it would never see the noindex it must honour.
+  /^\/dupr(?:\/|$)/,
   // Personal pages
   /^\/(?:vi\/)?notifications(?:\/|$)/,
   /^\/(?:vi\/)?thong-bao(?:\/|$)/,
@@ -85,6 +109,23 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // Seller Center — application data, phone numbers, addresses.
   /^\/(?:vi\/)?seller(?:\/|$)/,
   /^\/(?:vi\/)?shop\/sell(?:\/|$)/,
+  // P3 buyer surfaces. NOT in SHOP_PUBLIC_PATTERNS — these stay noindex after
+  // the Q4 launch gate opens, because they hold a recipient's name, phone
+  // number and home address, which the catalogue pages do not.
+  /^\/(?:vi\/)?shop\/cart(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/checkout(?:\/|$)/,
+  /^\/(?:vi\/)?shop\/order(?:\/|$)/,
+  // …and the LIST. `/shop/order(/|$)` does not match `/shop/orders`: the
+  // character after "order" is an "s", not a slash or the end of the string.
+  // One letter, one uncovered page of somebody's purchase history.
+  /^\/(?:vi\/)?shop\/orders(?:\/|$)/,
+  // Catalogue SEARCH — permanently noindex, and NOT part of the Q4 launch
+  // set below. One result page per query string is thin duplicate content
+  // wearing the catalogue's own products; the canonical home for every one
+  // of those products is /shop/product/:slug, which now renders for bots.
+  // It sat in SHOP_PUBLIC_PATTERNS until the Phase 4 launch, where "open the
+  // catalogue" would have silently opened the query-string surface too.
+  /^\/(?:vi\/)?shop\/search(?:\/|$)/,
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,
@@ -132,17 +173,63 @@ const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
 // they are matched by their own patterns above.
 const SHOP_PUBLIC_PATTERNS: RegExp[] = [
   /^\/(?:vi\/)?shop$/,
-  /^\/(?:vi\/)?shop\/search(?:\/|$)/,
   /^\/(?:vi\/)?shop\/category(?:\/|$)/,
   /^\/(?:vi\/)?shop\/product(?:\/|$)/,
   /^\/(?:vi\/)?shop\/store(?:\/|$)/,
 ];
 
+/**
+ * 🔴 Đi CẶP với `SHOP_PUBLIC_OPEN` trong src/lib/shop/shopGate.ts.
+ *
+ * Cờ này quyết định BOT thấy gì; cờ kia quyết định NGƯỜI thấy gì. Bật cờ này
+ * trong khi cờ kia còn `false` nghĩa là Googlebot đọc được trang sản phẩm thật
+ * còn người dùng thấy "Chợ đang hoàn thiện" — đó là cloaking, và Google phạt
+ * đúng chuyện đó. Mở thì mở cả hai, đóng thì đóng cả hai.
+ */
 export const shopIndexingEnabled = (env: { SHOP_PUBLIC_INDEXING?: string }) =>
   env.SHOP_PUBLIC_INDEXING === "1";
 
 export const isPilotNoindexShopPath = (pathname: string) =>
   SHOP_PUBLIC_PATTERNS.some((re) => re.test(pathname));
+
+// Cloudflare Pages Functions under functions/api/ must reach `next()` before
+// the SPA soft-404 guard runs. They are HTTP endpoints, not client-side routes.
+export const isPagesApiPath = (pathname: string) =>
+  pathname === "/api" || pathname.startsWith("/api/");
+
+export const isWellKnownPath = (pathname: string) =>
+  pathname === "/.well-known" || pathname.startsWith("/.well-known/");
+
+export const isHtmlSpaFallback = (response: Response) =>
+  response.status === 200 &&
+  (response.headers.get("content-type") || "").includes("text/html");
+
+export function jsonNotFound(pathname: string): Response {
+  const headers = new Headers({
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    "X-Robots-Tag": "noindex, nofollow",
+  });
+  applySecurityHeaders(headers);
+  return new Response(JSON.stringify({ error: "not_found", path: pathname }), {
+    status: 404,
+    headers,
+  });
+}
+
+export function homepageMarkdown(siteUrl: string, lang: "en" | "vi"): Response {
+  const body = lang === "vi"
+    ? `# ThePickleHub\n\nThePickleHub là nền tảng pickleball song ngữ tại Việt Nam và châu Á, cung cấp giải đấu, livestream, bảng đấu, bảng xếp hạng, tin tức và công cụ miễn phí cho ban tổ chức.\n\n## Khám phá\n\n- [Giải đấu](${siteUrl}/vi/tournaments)\n- [Trực tiếp](${siteUrl}/vi/live)\n- [Tin tức](${siteUrl}/vi/news)\n- [Hướng dẫn cho AI agent](${siteUrl}/llms.txt)\n- [Đặc tả OpenAPI](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`
+    : `# ThePickleHub\n\nThePickleHub is a bilingual pickleball platform for Vietnam and Asia, covering tournaments, livestreams, brackets, rankings and news, with free tools for organizers.\n\n## Explore\n\n- [Tournaments](${siteUrl}/tournaments)\n- [Livestreams](${siteUrl}/live)\n- [News](${siteUrl}/news)\n- [AI agent guide](${siteUrl}/llms.txt)\n- [OpenAPI specification](${siteUrl}/openapi.json)\n- [Sitemap](${siteUrl}/sitemap.xml)\n`;
+
+  const headers = new Headers({
+    "Content-Type": "text/markdown; charset=utf-8",
+    "Cache-Control": "public, max-age=300, s-maxage=3600",
+    Vary: "Accept",
+  });
+  applySecurityHeaders(headers);
+  return new Response(body, { headers });
+}
 
 // ─── GSC "Not found (404)" cleanup 2026-07-30 — 410 Gone for permanently
 //     removed URLs. Bots bypass public/_redirects, so a soft 404 here never
@@ -167,11 +254,14 @@ const GONE_EXACT = new Set<string>([
   // Ended / deleted livestreams (last two Google truncated at the dash)
   "/live/612bd532-0751-4623-915b-2a13babc9a4e",
   "/live/81ff3365-0ccf-4ce3-bf19-e7d7829735c3",
+  "/live/80b73967", "/live/6277dca2", "/live/10779a7c",
   "/live/80b73967-", "/live/b083fc1f-",
   // Transactional app actions — never indexable content pages
   "/match/new", "/match/confirm",
   // Google-truncated blog URLs (no such slug; full posts live elsewhere)
   "/vi/blog/hop-", "/vi/blog/thuat-",
+  // Truncated news slug emitted by an old internal link; no unambiguous post.
+  "/vi/news/vi-sao-cu-",
 ]);
 const GONE_PATTERNS: RegExp[] = [
   // Old MLP-Dallas scraper double-"mlp-mlp-" slug bug (matches 001–025);
@@ -311,6 +401,13 @@ function pathCacheTtl(pathname: string): number {
   if (stripped.startsWith("/tools/")) {
     return HUB_LIST_TTL_SECONDS;
   }
+  // Shop: price and availability are inside the rendered HTML AND inside the
+  // Offer JSON-LD. At the 6h default, a sold-out product keeps telling Google
+  // schema.org/InStock for most of a day — the one kind of stale that gets a
+  // rich result demoted rather than merely out of date.
+  if (stripped === "/shop" || stripped.startsWith("/shop/")) {
+    return HUB_LIST_TTL_SECONDS;
+  }
   return DEFAULT_TTL_SECONDS;
 }
 
@@ -345,16 +442,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return secureRedirect(`https://${url.hostname}/nguoi-choi/${uMatch[1]}${url.search}`, 301);
   }
 
-  // ─── 1b-dupr. Retired /dupr landing → live VI DUPR explainer (301).
-  //       GSC "Not found (404)" 2026-07-30. Branded "dupr" intent, so recover
-  //       to the pillar post rather than 410 it.
-  if (url.pathname === "/dupr") {
-    return secureRedirect(
-      `https://${url.hostname}/vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam`,
-      301,
-    );
-  }
-
   // GSC 2026-08-09: an old, truncated livestream URL is still being crawled.
   // Its surviving recording has the same unique prefix, so preserve the old
   // URL's equity with a single permanent hop instead of returning a soft 404.
@@ -363,6 +450,45 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       `https://${url.hostname}/live/10779a7c-46f4-4501-a65e-e852eb2fb565`,
       301,
     );
+  }
+
+  // ─── 1c-bis. 2026-08-25 site audit — retired duplicate /san slugs.
+  //
+  //       Running scripts/data-fixes/import-alobo-venues.mjs three times on
+  //       2026-08-24 created six venues twice. The "slug already exists" guard
+  //       tested only the final slug while the disambiguation step rewrote that
+  //       slug on within-batch collisions, so a venue listed once in one export
+  //       and twice in the next arrived under two slugs and the guard saw
+  //       neither as a repeat. Root cause fixed in resolveNewVenueSlugs().
+  //
+  //       Each pair was two /san pages with identical titles and identical meta
+  //       descriptions, both in sitemap-venues.xml. The duplicate rows are
+  //       deleted; these 301s carry whatever equity the retired URLs picked up
+  //       in their one day of life, and keep any bot that already saw them off
+  //       a 404. The kept slug is the older one — it is also what the importer
+  //       generates for a venue listed once, so a future run stays idempotent.
+  //
+  //       public/_redirects carries the same six rules for humans; bots bypass
+  //       _redirects entirely, which is why they are mirrored here.
+  const RETIRED_VENUE_SLUGS: Record<string, string> = {
+    "lakeside-pickleball-coffe-rua-xe-da-nang": "lakeside-pickleball-coffe-rua-xe",
+    "ob-pickleball-quang-ngai": "ob-pickleball",
+    "pickleball-yen-hoa-ha-noi": "pickleball-yen-hoa",
+    "san-pickleball-quan-doi-tp-hcm": "san-pickleball-quan-doi",
+    "the-pickleball-lounge-ha-noi": "the-pickleball-lounge",
+    // Same court, listed twice under two names and two phone numbers. The
+    // kept row is "Sân Lê Ninh T.A" — the fuller name and the earlier insert.
+    "le-ninh-t-a": "san-le-ninh-t-a",
+  };
+  const sanMatch = url.pathname.match(/^\/(vi\/)?san\/([^/?#]+)$/);
+  if (sanMatch) {
+    const target = RETIRED_VENUE_SLUGS[sanMatch[2]];
+    if (target) {
+      return secureRedirect(
+        `https://${url.hostname}/${sanMatch[1] ?? ""}san/${target}${url.search}`,
+        301,
+      );
+    }
   }
 
   // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
@@ -378,7 +504,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       VI rendering path the safer signal is a permanent redirect
   //       to the EN canonical — readers stay on one URL per entity
   //       and SEOnaut sees one indexable surface per organization.
-  const viOrgMatch = url.pathname.match(/^\/vi\/(org|tournament|watch)\/([^/?#]+)$/);
+  //
+  //       2026-08-25: extended to tran-dau, nguoi-choi and live/:id, which
+  //       were the other half of the same problem and had been left behind.
+  //       They served 200 with the EN canonical — the exact "hreflang to non
+  //       canonical" shape this rule exists to remove. /vi/tran-dau/* and
+  //       /vi/nguoi-choi/* were worse than duplicates: the SPA has no route
+  //       for either, so a human hard-navigating one got the NotFound page
+  //       while bots got a full render. Only the id form is matched, so the
+  //       real VI listing pages (/vi/live, /vi/tournaments) are untouched.
+  const viOrgMatch = url.pathname.match(
+    /^\/vi\/(org|tournament|watch|tran-dau|nguoi-choi|live)\/([^/?#]+)$/,
+  );
   if (viOrgMatch) {
     return secureRedirect(`https://${url.hostname}/${viOrgMatch[1]}/${viOrgMatch[2]}${url.search}`, 301);
   }
@@ -398,6 +535,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const viPrefix = livestreamMatch[1] || "";
     const tail = livestreamMatch[2] || "";
     return secureRedirect(`https://${url.hostname}/${viPrefix}live${tail}${url.search}`, 301);
+  }
+
+  // GSC 2026-08-25 — news rows were re-ingested under stable UUID-derived
+  // slugs after the first URLs had already been crawled. Preserve the accrued
+  // signals and send readers to the same surviving story instead of 404ing.
+  const NEWS_REDIRECTS: Record<string, string> = {
+    "/news/wong-sets-record-with-third-straight-gold-1f1um3": "/news/hong-kit-wong-makes-history-with-third-consecutive-singles-crown-at-singapore-op-58d5a53d",
+    "/vi/news/wong-lap-ky-luc-voi-h-hcv-lien-tiep-1f1um3": "/vi/news/hong-kit-wong-lap-ky-luc-voi-huy-chuong-vang-don-nam-lien-tiep-tai-singapore-58d5a53d",
+    "/news/the-dink-minor-league-pickleball-format-explained-every-way-to-play-1hfoe4": "/news/understanding-the-dink-minor-league-pickleball-structure-68400027",
+    "/vi/news/giai-ma-the-thuc-minor-league-pickleball-san-choi-dong-doi-dinh-cao-1hfoe4": "/vi/news/tim-hieu-cau-truc-giai-dau-pickleball-nghiep-du-68400027",
+    "/news/a-summer-to-remember-recapping-the-2026-joola-pops-summer-tour-1fp8r3": "/news/joola-concludes-nationwide-summer-tour-9e811e50",
+    "/vi/news/mua-he-dang-nho-nhin-lai-hanh-trinh-joola-pops-summer-tour-2026-1fp8r3": "/vi/news/hanh-trinh-xuyen-quoc-gia-cua-joola-khep-lai-thanh-cong-9e811e50",
+  };
+  const newsDestination = NEWS_REDIRECTS[url.pathname];
+  if (newsDestination) {
+    return secureRedirect(`https://${url.hostname}${newsDestination}${url.search}`, 301);
   }
 
   // ─── 1e. SEO audit batch 8 — /vi/blog/{slug} → /blog/{en-slug} 301.
@@ -524,10 +677,33 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return secureRedirect(`https://${url.hostname}/vi${url.search}`, 301);
   }
 
+  // ─── 1h. Markdown content negotiation ────────────────
+  // Agents can request a compact, self-contained homepage representation.
+  // Human/browser requests continue through the existing HTML/SPA path.
+  if (
+    request.method === "GET" &&
+    (url.pathname === "/" || url.pathname === "/vi") &&
+    (request.headers.get("accept") || "").includes("text/markdown")
+  ) {
+    const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
+    return homepageMarkdown(siteUrl, url.pathname === "/vi" ? "vi" : "en");
+  }
+
   // ─── 2. Static asset bypass (before bot detection) ───
   const pathname = url.pathname;
+
+  // A missing machine-readable discovery document must not masquerade as a
+  // valid JSON endpoint. Preserve real .well-known resources, but turn the
+  // SPA rewrite fallback into an honest JSON 404.
+  if (isWellKnownPath(pathname)) {
+    const discoveryResponse = await next();
+    return isHtmlSpaFallback(discoveryResponse)
+      ? jsonNotFound(pathname)
+      : discoveryResponse;
+  }
+
   const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];
-  const STATIC_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|json|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
+  const STATIC_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|md|json|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
   const STATIC_EXACT = new Set(["/favicon.ico", "/robots.txt", "/manifest.json", "/_worker.js", "/_redirects", "/_headers"]);
   if (
     STATIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
@@ -563,6 +739,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return assetResponse;
   }
 
+  // ─── 2b. Pages API bypass ─────────────────────────────
+  // Without this, the non-bot soft-404 guard below mistakes every /api/*
+  // endpoint for an unknown SPA route and returns 404 before the endpoint's
+  // own function can authenticate, validate, and respond.
+  if (isPagesApiPath(pathname)) {
+    const apiResponse = await next();
+    return isHtmlSpaFallback(apiResponse) ? jsonNotFound(pathname) : apiResponse;
+  }
+
   // ─── 3. Bot detection ─────────────────────────────────
   const ua = request.headers.get("user-agent") || "";
   const isBot = BOT_UA.test(ua);
@@ -575,6 +760,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //      mutate the response headers without re-buffering body.
   const isNoindex = shouldNoindex(pathname, env);
   if (!isBot) {
+    if (!isKnownSpaPath(pathname)) {
+      const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
+      const response = render404(pathname, siteUrl, request.headers.get("accept") || "");
+      const headers = new Headers(response.headers);
+      headers.set("X-Robots-Tag", "noindex, nofollow");
+      headers.set("Cache-Control", "no-store");
+      applySecurityHeaders(headers);
+      return new Response(response.body, { status: 404, headers });
+    }
     if (isNoindex) {
       const response = await next();
       const headers = new Headers(response.headers);
@@ -666,7 +860,100 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // with organizer "PPA Tour Asia" including the Heineken World Cup Da Nang
   // and the HK Slam, which neither of them organises. Purge stale bot HTML
   // for /tournaments + /vi/tournaments.
-  const cacheKey = `pr:v48:${url.pathname}`;
+  // v49 (CTR-01, 2026-08-18): the venue meta-description template changed, so
+  // every cached /san/ + /vi/san/ entry holds a stale, mid-word-truncated
+  // snippet. Bump invalidates them in one go rather than needing ?nocache=1 on
+  // 1,688 URLs.
+  // v50 (Phase 4 shop launch, 2026-08-18): /shop, /shop/category/*,
+  // /shop/product/*, /shop/store/* previously cached the renderNoindexShell
+  // body under the pilot gate. Without a bump, flipping SHOP_PUBLIC_INDEXING
+  // would serve that shell — noindex intact — for another six hours, and the
+  // launch would look like it silently failed.
+  //
+  // v51 — SEO-GUARD-01 (2026-08-19): /tools gained HowTo schema + visible
+  // steps, tournament detail gained the broadcast section + subEvent graph +
+  // per-tournament og:image, venue detail gained amenityFeature. All three
+  // change SSR output. Bumped past v50 rather than reusing it: the shop launch
+  // had already published entries under that key, so sharing it would serve
+  // pre-change HTML for the full TTL on every route this commit touches.
+  //
+  // v52 — brand cleanup (2026-08-19): the spaced "The Pickle Hub" was replaced
+  // with "ThePickleHub" in 35 places across 6 blog posts, 30 places across 8
+  // Supabase vi_blog_posts rows, and in blog metadata.ts — which is the SSR
+  // truth table for <title> and <meta description>. Cached HTML would keep
+  // serving the diluted entity name for the full TTL otherwise.
+  //
+  // v53 — thông số sản phẩm (2026-08-23): trang /shop/product/:slug nay có
+  // khối "Thông số", additionalProperty trong schema Product, và ba thông số
+  // đầu nằm trong câu mở đầu. HTML cũ trong KV không có bất kỳ thứ nào.
+  //
+  // v54 — CTR-02 (2026-08-24): /san titles and meta descriptions now lead with
+  // the district ("– Đống Đa, Hà Nội") instead of the city alone. 690 of 760
+  // venue rows change their <title> and <meta description>, ×2 for the en/vi
+  // pair, so every cached venue page would otherwise serve the old city-only
+  // title for the full TTL.
+  //
+  // v57 — PRICE-01 (2026-08-24): every /san page changes. 108 venues gained a
+  // real price + opening hours in <title>, the snippet and JSON-LD; the other
+  // 741 gained a labelled regional price line in the body. Cached HTML would
+  // serve the price-less version for the full TTL.
+  //
+  // v58 — NEAR-01 (2026-08-24): the "other courts" block on /san is now ranked
+  // by real distance from the venue being viewed instead of a deterministic
+  // city-wide query, so the body of every venue page changes again (×2 for the
+  // en/vi pair). Cached HTML would keep serving the identical city-wide list —
+  // the exact boilerplate this change exists to remove.
+  //
+  // v59 — THIN-01 (2026-08-24): /live and /rankings both gained standing body
+  // copy (/live 59 words -> ~354, /rankings 135 -> ~378) and /live now falls
+  // back to replays instead of rendering its own empty state. Four cached URLs
+  // (en/vi x 2 routes) would otherwise serve the thin version for the full TTL.
+  //
+  // v61 — /live query windowing (2026-08-25): live / scheduled / ended each get
+  // their own query and limit instead of sharing one 40-row created_at window,
+  // and upcoming is ordered by air time. Output is unchanged while nothing is
+  // live or scheduled, but the cached copy must not outlive the first stream
+  // that is.
+  //
+  // v62 — GEO-01 (2026-08-24, landed 2026-08-25): the opening paragraph on all
+  // /san pages is rewritten to front-load real facts and name ThePickleHub,
+  // replacing a template that ended by pointing further down the page. This
+  // branch had reserved v60, but /live windowing took v61 to production first,
+  // so it moves to v62 — CLAUDE.md's rule is that the number only has to differ
+  // from the one already deployed.
+  //
+  // v63 — CTR-03 + content refresh (2026-08-25). Three separate reasons the
+  // cached HTML is now wrong:
+  //   1. / and /vi carry new meta descriptions. The VI one was being cut
+  //      mid-word at the 160-BYTE budget ("…miễn…") because the string was 148
+  //      characters and 186 bytes; both now interpolate the venue count.
+  //   2. /blog/hcmc-open-2026-preview and /vi/blog/hcmc-open-2026 now open with
+  //      the result (the event finished on 2026-08-09) and carry new titles.
+  //   3. /blog/hong-kong-slam-2026-preview and /vi/blog/hong-kong-slam-2026
+  //      say registration is open rather than that it opens on August 10.
+  // v65 (2026-08-25, LOW sweep, #678) — /about and /vi/about carry new titles
+  // and meta descriptions. The old ones were the shortest on the site (18-char
+  // title, 49-char description).
+  //
+  // v66 (2026-08-25, C3, this branch) — every /news/:slug now carries
+  // <meta name="robots" content="noindex, follow"> and no hreflang, and every
+  // /vi/news/:slug self-references in hreflang instead of pairing with the EN
+  // URL. Without a bump, cached HTML would keep serving the indexable EN page
+  // and the old EN<->VI cluster for the full TTL.
+  //
+  // This branch originally took v64. #678 merged first with v65, so it moves
+  // to v66 — CLAUDE.md's rule for two open branches bumping the same number:
+  // take the higher and move on.
+  // v67 (2026-08-25, H1) — blog posts now render their hero image in the bot
+  // HTML: <figure><img> after the <h1> on the EN side (from metadata.ts
+  // heroImage) and after the content_html <h1> on the VI side (from
+  // vi_blog_posts.cover_image_url), both with real width/height. Cached HTML
+  // has no <img> at all, so without a bump Google Images keeps seeing the
+  // imageless version for the full TTL.
+  // v68 (2026-08-25) — the VI live hub links to /live/:id instead of
+  // /vi/live/:id, so its cached body would otherwise keep pointing at URLs
+  // that now 301.
+  const cacheKey = `pr:v68:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -695,7 +982,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // — a served shell is far better for the crawler than a hung 5xx.
     const RENDER_BUDGET_MS = 8000;
     const response = await Promise.race([
-      routeAndRender(url.pathname, env, siteUrl),
+      routeAndRender(url.pathname, env, siteUrl, request.headers.get("accept") || ""),
       new Promise<Response>((_, reject) =>
         setTimeout(() => reject(new Error("prerender-timeout")), RENDER_BUDGET_MS),
       ),
@@ -798,7 +1085,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
 // ─── Router ───────────────���─────────────────────────────────
 
-async function routeAndRender(pathname: string, env: Env, siteUrl: string): Promise<Response> {
+async function routeAndRender(pathname: string, env: Env, siteUrl: string, accept = ""): Promise<Response> {
   const rawPath = pathname;
   const lang = detectLang(rawPath);
   const path = stripLangPrefix(rawPath);
@@ -849,6 +1136,18 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // so a freshly-published event/club is discoverable within minutes.
   if (path === "/social") return await renderSocialList(supabase, siteUrl, lang);
   if (path === "/clubs") return await renderClubList(supabase, siteUrl, lang);
+
+  // Shop catalogue (Phase 4 public launch). Reached only when
+  // SHOP_PUBLIC_INDEXING=1 — otherwise `isNoindex` short-circuits to the
+  // noindex shell long before here. /shop/search has no arm on purpose: it
+  // is matched by NOINDEX_PATTERNS and never arrives.
+  if (path === "/shop") return await renderShopCatalog(supabase, siteUrl, lang);
+  match = path.match(/^\/shop\/category\/([^/]+)$/);
+  if (match) return await renderShopCategory(supabase, match[1], siteUrl, lang);
+  match = path.match(/^\/shop\/store\/([^/]+)$/);
+  if (match) return await renderShopStore(supabase, match[1], siteUrl, lang);
+  match = path.match(/^\/shop\/product\/([^/]+)$/);
+  if (match) return await renderShopProduct(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
 
   if (path === "/san") return await renderVenuesList(supabase, siteUrl, lang);
   match = path.match(/^\/san\/khu-vuc\/([^/]+)$/);
@@ -994,8 +1293,10 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
   if (path === "/terms") return renderTerms(siteUrl, rawPath, lang);
   if (path === "/advertise") return renderAdvertise(siteUrl, rawPath, lang);
+  if (path === "/about") return renderAbout(siteUrl, rawPath, lang);
+  if (path === "/contact") return renderContact(siteUrl, rawPath, lang);
 
   // 404 fallback — unmatched routes get a proper 404 + noindex, not a
   // generic 200 shell that would waste crawl budget and create soft-404s.
-  return render404(rawPath, siteUrl);
+  return render404(rawPath, siteUrl, accept);
 }

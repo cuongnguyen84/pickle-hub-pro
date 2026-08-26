@@ -72,11 +72,17 @@
       html{-webkit-text-size-adjust:100%;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
       body{background-color:hsl(220 15% 8%);color:hsl(60 10% 96%);min-height:100dvh}
       #root{height:100dvh;display:flex;flex-direction:column}
-      .shell-header{height:3.5rem;border-bottom:1px solid hsl(220 15% 15%);display:flex;align-items:center;padding:0 1rem}
-      .shell-logo{font-weight:700;font-size:1.125rem;color:hsl(60 10% 96%)}
-      .shell-main{flex:1;display:flex;align-items:center;justify-content:center}
-      .shell-pulse{color:hsl(220 10% 50%);animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}
-      @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+      .shell-header{min-height:3.5rem;border-bottom:1px solid hsl(220 15% 15%);display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 1rem}
+      .shell-logo{font-weight:700;font-size:1.125rem;color:hsl(60 10% 96%);text-decoration:none}
+      .shell-nav{display:flex;flex-wrap:wrap;gap:.75rem}
+      .shell-nav a,.shell-content a,.shell-footer a{color:hsl(142 60% 70%)}
+      .shell-content{flex:1;overflow:auto;width:100%;max-width:64rem;margin:0 auto;padding:clamp(2rem,6vw,5rem) 1rem}
+      .shell-content article{max-width:48rem}
+      .shell-content h1{font-size:clamp(2rem,6vw,4rem);line-height:1.05;margin-bottom:1.5rem}
+      .shell-content h2{font-size:1.25rem;margin:2rem 0 .75rem}
+      .shell-content p{color:hsl(220 10% 72%);line-height:1.7;margin-top:1rem}
+      .shell-links{display:flex;flex-wrap:wrap;gap:.5rem 1rem;padding:0;list-style:none}
+      .shell-footer{border-top:1px solid hsl(220 15% 15%);padding:1rem;text-align:center;color:hsl(220 10% 62%)}
     </style>
 
     <!-- Preconnect to critical origins for faster initial load -->
@@ -97,6 +103,19 @@
       href="/fonts/geist-latin.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin
       href="/fonts/geist-vietnamese.woff2" />
+    <!-- Inter is the base body stack (html{} below, and body{} in index.css),
+         so .tl-story-summary and every unstyled run of copy render in it.
+         Its Vietnamese subset is font-display:swap and was NOT preloaded, so
+         on /vi it landed after first paint and reflowed the page: Lighthouse
+         mobile CLS was 0.419 on /vi against 0.015 on / (2026-08-25). The EN
+         page is clean because inter-latin is font-display:optional and never
+         swaps — which isolates the shift to this one 10 KB file. Preloading
+         only the Vietnamese subset closes the swap window without spending
+         another 47 KB of critical bandwidth on the latin one, which does not
+         need it. If inter-latin is ever moved off `optional`, preload it here
+         too or the same shift comes back on the EN page. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="/fonts/inter-vietnamese.woff2" />
     <title>ThePickleHub – Pickleball Asia: Live & Tournaments</title>
     <meta name="description" content="The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.">
     <meta name="author" content="ThePickleHub" />
@@ -117,6 +136,48 @@
     <meta name="twitter:title" content="ThePickleHub" />
     <meta name="twitter:description" content="The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players." />
     <meta name="twitter:image" content="https://www.thepicklehub.net/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.thepicklehub.net#org",
+            "name": "ThePickleHub",
+            "alternateName": ["The Pickle Hub", "Pickle Hub", "Picklehub"],
+            "url": "https://www.thepicklehub.net",
+            "logo": "https://www.thepicklehub.net/og-image.png",
+            "description": "Bilingual Vietnamese-English coverage of pickleball tournaments, livestreams, brackets, rankings, news and community activity across Asia.",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Ho Chi Minh City",
+              "addressCountry": "VN"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer support",
+              "email": "tapickleballvn@gmail.com",
+              "url": "https://www.thepicklehub.net/contact",
+              "availableLanguage": ["vi", "en"]
+            },
+            "sameAs": [
+              "https://www.facebook.com/thepicklehubnet",
+              "https://x.com/thepicklehub",
+              "https://apps.apple.com/app/id6759968026"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://www.thepicklehub.net#website",
+            "url": "https://www.thepicklehub.net",
+            "name": "ThePickleHub",
+            "publisher": { "@id": "https://www.thepicklehub.net#org" },
+            "inLanguage": ["vi", "en"]
+          }
+        ]
+      }
+    </script>
 
     <!-- Sitemap reference -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
@@ -184,7 +245,37 @@
   </head>
 
   <body>
-    <div id="root"><div class="shell-header"><span class="shell-logo">ThePickleHub</span></div><div class="shell-main"><span class="shell-pulse">Loading...</span></div></div>
+    <div id="root">
+      <header class="shell-header">
+        <a class="shell-logo" href="/">ThePickleHub</a>
+        <nav class="shell-nav" aria-label="Điều hướng chính">
+          <a href="/tournaments">Giải đấu</a>
+          <a href="/live">Trực tiếp</a>
+          <a href="/news">Tin tức</a>
+          <a href="/about">Giới thiệu</a>
+        </nav>
+      </header>
+      <main class="shell-content">
+        <article>
+          <h1>ThePickleHub — pickleball tournaments, livestreams and community</h1>
+          <p>ThePickleHub là nền tảng pickleball song ngữ dành cho người chơi, ban tổ chức và người hâm mộ tại Việt Nam và châu Á. Chúng tôi tập hợp lịch giải đấu, nhánh đấu, kết quả, bảng xếp hạng, video trực tiếp và tin tức chuyên môn tại một địa chỉ dễ tìm kiếm. Người dùng có thể theo dõi diễn biến giải, khám phá câu lạc bộ và vận động viên, hoặc đọc những hướng dẫn giúp họ hiểu và tham gia môn thể thao này.</p>
+          <p>For international readers and automated agents, ThePickleHub provides Vietnamese and English coverage of professional and community pickleball. The site documents tournaments, live matches, brackets, player profiles, venues and editorial news across the region. Organizers can publish competition information while players and fans can discover reliable event details without searching across disconnected social channels.</p>
+          <p>Các tài nguyên công khai được lập chỉ mục trong sitemap, nguồn cấp RSS và tệp hướng dẫn dành cho AI agent. Nội dung về doanh nghiệp, phương thức liên hệ và chính sách quyền riêng tư cũng được công bố rõ ràng để người đọc và hệ thống tự động có thể xác minh nguồn. JavaScript nâng cấp trang thành ứng dụng tương tác đầy đủ, nhưng phần giới thiệu cốt lõi này vẫn có thể đọc trực tiếp từ HTML.</p>
+          <h2>Khám phá ThePickleHub</h2>
+          <ul class="shell-links">
+            <li><a href="/tournaments">Tournaments</a></li>
+            <li><a href="/live">Livestreams</a></li>
+            <li><a href="/news">Pickleball news</a></li>
+            <li><a href="/sitemap.xml">XML sitemap</a></li>
+            <li><a href="/llms.txt">AI agent guide</a></li>
+            <li><a href="/openapi.json">OpenAPI specification</a></li>
+          </ul>
+        </article>
+      </main>
+      <footer class="shell-footer">
+        <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/privacy">Privacy</a>
+      </footer>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <!-- Static footer for SEO crawlers (Google OAuth Branding Verification) -->
     <noscript>

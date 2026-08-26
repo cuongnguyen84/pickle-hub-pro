@@ -1,0 +1,635 @@
+<title>Ô thứ sáu</title>
+<style>
+  /* ── The Line, đúng token của repo (src/styles/the-line.css) ───────────────
+     Trang này cố ý một chủ đề tối: nó phải hiện thanh điều hướng thật, và
+     thanh thật chỉ tồn tại trên nền #08090a. Mọi màu vẫn khai thẳng nên trang
+     không mượn nền của máy người xem. */
+  :root {
+    --bg:      #08090a;
+    --panel:   #0e1012;
+    --panel-2: #141618;
+    --line:    #22252a;
+    --fg:      #f5f3ee;
+    --fg-2:    #b8b4ac;
+    --fg-3:    #86837d;
+    --green:   #00b96b;
+    --live:    #ff4136;
+    --amber:   #e0a33e;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    margin: 0 0 14px;
+  }
+  .kicker b { color: var(--green); font-weight: 500; }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(34px, 7vw, 54px);
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+
+  .lede { font-size: 17px; color: var(--fg-2); max-width: 62ch; margin: 0 0 6px; }
+  .lede strong { color: var(--fg); font-weight: 600; }
+
+  hr.rule { border: 0; border-top: 1px solid var(--line); margin: 34px 0; }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    font-weight: 500;
+    margin: 0 0 16px;
+  }
+
+  /* ── Số thật ───────────────────────────────────────────────────────────── */
+  .data {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 34px;
+  }
+  .stat { background: var(--panel); padding: 18px 18px 16px; }
+  .stat-n {
+    font-family: var(--mono); font-size: 30px; font-weight: 500; letter-spacing: -.02em;
+    margin: 0 0 2px; color: var(--fg); font-variant-numeric: tabular-nums;
+  }
+  .stat-n span { color: var(--fg-3); font-size: 18px; }
+  .stat-l {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--green); margin: 0 0 8px;
+  }
+  .stat-s { font-size: 12.5px; line-height: 1.55; color: var(--fg-3); margin: 0; }
+  .stat-s b { color: var(--fg-2); font-weight: 600; }
+
+  /* ── Bộ chọn phương án ─────────────────────────────────────────────────── */
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .opt {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 10px 14px;
+    min-height: 44px;
+    cursor: pointer;
+    transition: color .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .opt:hover { color: var(--fg-2); }
+  .opt[aria-pressed="true"] { color: var(--fg); border-color: var(--green); background: var(--panel-2); }
+  .opt-pick { border-color: rgba(0,185,107,.45); color: var(--fg-2); }
+  .opt:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  .widths { display: flex; gap: 8px; align-items: center; margin: 0 0 26px; }
+  .widths span { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
+
+  /* ── Bố cục chính ──────────────────────────────────────────────────────── */
+  .cols { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 40px; align-items: start; }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; gap: 30px; } }
+
+  /* ── Khung điện thoại ──────────────────────────────────────────────────── */
+  .phone-shell { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .phone {
+    width: 390px;
+    max-width: 100%;
+    height: 500px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: width .2s ease;
+  }
+  .phone-w { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--fg-3); text-transform: uppercase; }
+
+  /* Nội dung giả — chỉ để thanh dưới có thứ gì đó tì lên */
+  .screen { flex: 1; padding: 18px 16px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
+  .screen .sk { background: var(--panel-2); border-radius: 3px; }
+  .screen .sk.t { height: 22px; width: 62%; margin-bottom: 14px; }
+  .screen .sk.c { height: 120px; width: 100%; margin-bottom: 12px; }
+  .screen .sk.l { height: 11px; margin-bottom: 8px; }
+
+  /* ── Thanh điều hướng thật ─────────────────────────────────────────────── */
+  .bar {
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    position: relative;
+  }
+  .bar-cells { display: flex; align-items: stretch; justify-content: space-around; min-height: 56px; }
+  .cell {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px;
+    color: var(--fg-3);
+    text-decoration: none;
+    min-width: 0;
+  }
+  .cell:not(:last-child) { border-right: 1px solid var(--line); }
+  .cell.active { color: var(--fg); }
+  .cell .accent {
+    position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+    width: 28px; height: 3px; background: var(--green);
+  }
+  .glyph { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .cell.fab .glyph {
+    background: var(--green); color: #0c0d0f;
+    width: 44px; height: 44px; border-radius: 22px; margin-top: -16px;
+    box-shadow: 0 4px 12px rgba(0,185,107,.35), 0 0 0 4px var(--bg);
+  }
+  .dot {
+    position: absolute; top: -3px; right: -5px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--live); box-shadow: 0 0 0 2px var(--bg);
+  }
+  .tab-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 6px;
+    white-space: nowrap;
+  }
+  .cell.fab .tab-label { color: var(--green); font-weight: 700; margin-top: 4px; }
+  /* Nhãn tràn khỏi ô: viền hổ phách để nhìn thấy chỗ chật, không phải nghe kể */
+  .cell.overflow .tab-label { color: var(--amber); }
+  .cell.overflow::after {
+    content: ""; position: absolute; inset: 0; border: 1px dashed var(--amber); opacity: .55; pointer-events: none;
+  }
+
+  /* Vạch tâm — để thấy nút nổi lệch tâm khi có 6 ô */
+  .centerline { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: rgba(224,163,62,.45); }
+  .centerline::after {
+    content: "tâm màn hình"; position: absolute; top: -18px; left: 4px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: .12em; color: var(--amber); white-space: nowrap;
+  }
+
+  /* Sheet "Thêm" */
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--panel); border-top: 1px solid var(--line);
+    padding: 14px 16px 12px;
+    transform: translateY(0);
+  }
+  .sheet-grab { width: 34px; height: 3px; border-radius: 2px; background: var(--line); margin: 0 auto 14px; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .sheet-item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 12px 6px; min-height: 72px; color: var(--fg-2); text-decoration: none;
+    border-radius: 3px; background: var(--panel-2);
+  }
+  .sheet-item span {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  }
+  .sheet-item.new { color: var(--fg); box-shadow: inset 0 2px 0 var(--green); }
+
+  /* ── Bảng phân tích ────────────────────────────────────────────────────── */
+  .panel { border: 1px solid var(--line); background: var(--panel); padding: 22px 22px 6px; }
+  .panel h3 {
+    font-family: var(--serif); font-size: 24px; line-height: 1.2; margin: 0 0 4px; letter-spacing: -.01em;
+  }
+  .panel .sub { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); margin: 0 0 18px; }
+  .panel p { margin: 0 0 14px; color: var(--fg-2); }
+  .panel p strong { color: var(--fg); font-weight: 600; }
+
+  .verdict {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    padding: 6px 10px; border: 1px solid currentColor; border-radius: 2px; margin-bottom: 16px;
+  }
+  .verdict.ok   { color: var(--green); }
+  .verdict.warn { color: var(--amber); }
+  .verdict.no   { color: var(--live); }
+
+  .facts { width: 100%; border-collapse: collapse; margin: 4px 0 18px; font-size: 13.5px; }
+  .facts th, .facts td { text-align: left; padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .facts th {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--fg-3); font-weight: 500; width: 42%;
+  }
+  .facts td { color: var(--fg-2); font-variant-numeric: tabular-nums; }
+  .facts td b { color: var(--fg); font-weight: 600; }
+  .facts tr:last-child th, .facts tr:last-child td { border-bottom: 0; }
+
+  ul.tight { margin: 0 0 16px; padding-left: 18px; color: var(--fg-2); }
+  ul.tight li { margin-bottom: 7px; }
+  ul.tight li::marker { color: var(--fg-3); }
+
+  .law {
+    border-left: 2px solid var(--line); padding: 2px 0 2px 16px; margin: 0 0 20px;
+    font-size: 13.5px; color: var(--fg-3);
+  }
+  .law b { color: var(--fg-2); font-weight: 600; }
+
+  .rec {
+    border: 1px solid var(--green); background: linear-gradient(180deg, rgba(0,185,107,.06), transparent);
+    padding: 24px 24px 10px;
+  }
+  .rec .kicker b { color: var(--green); }
+
+  code {
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 2px; padding: 1px 5px;
+    color: var(--fg-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <p class="kicker">The Line · điều hướng · <b>23/08/2026</b></p>
+  <h1>Ô thứ sáu</h1>
+  <p class="lede">
+    Thanh dưới hiện có <strong>5 ô</strong>: Trang chủ · Trực tiếp · <strong>Social</strong> (nút xanh nổi) ·
+    Bảng tin · Công cụ. Câu hỏi là có nhét <strong>Chợ</strong> vào thành ô thứ sáu không.
+    Năm phương án dưới đây dựng bằng đúng mã của <code>BottomNav.tsx</code> — cùng chiều cao 56px,
+    cùng nhãn mono 9px, cùng nút nổi 44px — nên chỗ chật là chật thật, không phải hình minh hoạ.
+    Phương án <strong>E</strong> là đề xuất của Cuong, và số liệu bên dưới là lý do nó thắng.
+  </p>
+
+  <hr class="rule">
+
+  <h2>Số thật, đọc từ database production 23/08</h2>
+  <div class="data">
+    <div class="stat">
+      <p class="stat-n">10<span>/90</span></p>
+      <p class="stat-l">ngày có livestream</p>
+      <p class="stat-s">Buổi gần nhất <b>08/08</b> — 15 ngày trước. Gần như luôn quanh 22h.</p>
+    </div>
+    <div class="stat">
+      <p class="stat-n">6.346</p>
+      <p class="stat-l">lượt xem live · 375 người</p>
+      <p class="stat-s">Dồn vào <b>5 ngày</b>. Khi có live, đây là thứ đông nhất trên site.</p>
+    </div>
+    <div class="stat">
+      <p class="stat-n">16 <span>·</span> 6</p>
+      <p class="stat-l">buổi social tạo · đăng ký (30 ngày)</p>
+      <p class="stat-s">90 ngày trước đó có 42 đăng ký — <b>đang giảm</b>.</p>
+    </div>
+    <div class="stat">
+      <p class="stat-n">2 <span>·</span> 1</p>
+      <p class="stat-l">sản phẩm đang bán · đơn hàng</p>
+      <p class="stat-s">Chợ mới mở. Ô này là <b>đặt cược</b>, không phải phản ánh lưu lượng.</p>
+    </div>
+  </div>
+
+  <h2>Chọn phương án</h2>
+  <div class="opts" role="group" aria-label="Phương án thanh điều hướng">
+    <button class="opt" type="button" data-opt="A" aria-pressed="true">A · Giữ 5 ô</button>
+    <button class="opt" type="button" data-opt="B" aria-pressed="false">B · 6 ô, thêm Chợ</button>
+    <button class="opt" type="button" data-opt="C" aria-pressed="false">C · Chợ thay Công cụ</button>
+    <button class="opt" type="button" data-opt="D" aria-pressed="false">D · Ô cuối là “Thêm”</button>
+    <button class="opt opt-pick" type="button" data-opt="E" aria-pressed="false">E · Đề xuất của Cuong ★</button>
+  </div>
+  <div class="widths">
+    <span>Khổ máy</span>
+    <button class="opt" type="button" data-w="390" aria-pressed="true">390 · iPhone 13</button>
+    <button class="opt" type="button" data-w="360" aria-pressed="false">360 · Android phổ thông</button>
+  </div>
+
+  <div class="widths" id="state-row" hidden>
+    <span>Trạng thái</span>
+    <button class="opt" type="button" data-state="idle" aria-pressed="true">Ngày thường</button>
+    <button class="opt" type="button" data-state="live" aria-pressed="false">Đang có trận live</button>
+  </div>
+
+  <div class="cols">
+    <div class="phone-shell">
+      <div class="phone" id="phone">
+        <div class="screen" aria-hidden="true">
+          <div class="sk t"></div>
+          <div class="sk c"></div>
+          <div class="sk l" style="width:96%"></div>
+          <div class="sk l" style="width:88%"></div>
+          <div class="sk l" style="width:71%"></div>
+          <div class="sk c" style="height:90px;margin-top:14px"></div>
+        </div>
+        <div id="sheet-slot"></div>
+        <nav class="bar" id="bar" aria-label="Bản mô phỏng thanh điều hướng"></nav>
+      </div>
+      <p class="phone-w" id="phone-w">390 px · nội dung giả, thanh là thật</p>
+    </div>
+
+    <div>
+      <div class="panel" id="panel"></div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <h2>Luật đang áp</h2>
+  <p class="law">
+    <b>Apple HIG:</b> tab bar trên iPhone tối đa 5 mục. &nbsp;·&nbsp;
+    <b>Material 3:</b> bottom navigation 3–5 điểm đến; quá thì dùng <b>overflow / “Thêm”</b>. &nbsp;·&nbsp;
+    <b>A11Y-02 của chính repo:</b> vùng chạm tối thiểu 44×44px, cách nhau ≥8px.
+  </p>
+
+  <div class="rec">
+    <p class="kicker">Kết luận · <b>làm phương án E, kèm ba điều kiện</b></p>
+    <p style="color:var(--fg-2);max-width:62ch">
+      Đề xuất của anh đúng ở chỗ khó nhất: nó đọc được <em>hình dạng</em> của dữ liệu. Livestream không phải
+      bề mặt yếu — nó là bề mặt <strong>dồn cục</strong>: chết 89% số ngày, rồi bùng lên đông hơn tất cả những
+      thứ khác cộng lại vào đúng 5 ngày. Một ô cố định phục vụ sai cả hai trạng thái đó; một ô biết nhường chỗ
+      phục vụ đúng cả hai.
+    </p>
+    <p style="color:var(--fg-2);max-width:62ch">
+      <strong>Điều kiện 1 — chống nhấp nháy.</strong> Lúc chưa biết có live hay không thì hiện Công cụ, và
+      trong một phiên thì không đổi lại. Nút đổi tên dưới ngón tay là lỗi tệ hơn cả việc chậm một nhịp.
+    </p>
+    <p style="color:var(--fg-2);max-width:62ch">
+      <strong>Điều kiện 2 — Social phải vào sheet Thêm ở vị trí đầu.</strong> Nó vẫn là bề mặt tạo ra nhiều
+      nội dung nhất (16 buổi/30 ngày). Bỏ nút xanh là bỏ một cái phễu; ghi lại con số 6 đăng ký/30 ngày
+      hôm nay để một tháng nữa biết việc bỏ đó có làm nó tệ thêm không.
+    </p>
+    <p style="color:var(--fg-2);max-width:62ch">
+      <strong>Điều kiện 3 — Chợ là đặt cược, hãy gọi đúng tên.</strong> 2 sản phẩm, 1 đơn hàng. Ô này không
+      phản ánh lưu lượng đang có mà đánh cược vào lưu lượng sắp có. Đó là quyết định của anh và nó hợp lý
+      khi chợ là hướng đi mới — chỉ cần biết rằng nếu sau 6–8 tuần chợ vẫn hai sản phẩm thì ô đó nên
+      trả lại cho Công cụ.
+    </p>
+  </div>
+</div>
+
+<script>
+  // ── Icon: vẽ tay theo hình lucide đang dùng thật trong BottomNav.tsx ──────
+  const ico = {
+    home:    '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+    radio:   '<circle cx="12" cy="12" r="2.2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2"/>',
+    calplus: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 14v5M9.5 16.5h5"/>',
+    news:    '<path d="M3 6h13v14H4a1 1 0 0 1-1-1z"/><path d="M16 9h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-4"/><path d="M6.5 9.5h6M6.5 13h6M6.5 16.5h4"/>',
+    wrench:  '<path d="M15.5 3.5a5 5 0 0 0-6.2 6.2L3.6 15.4a2 2 0 1 0 2.8 2.8l5.7-5.7a5 5 0 0 0 6.2-6.2l-2.9 2.9-2.3-.6-.6-2.3z"/>',
+    bag:     '<path d="M6 8h12l-1 12H7z"/><path d="M9.2 8V6.4a2.8 2.8 0 0 1 5.6 0V8"/>',
+    more:    '<circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/>',
+    users:   '<circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 5M17.5 20a5.6 5.6 0 0 0-2.2-4.4"/>',
+    pin:     '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    trophy:  '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a3 3 0 0 0 3 3M17 6h2.5a3 3 0 0 1-3 3"/><path d="M12 14v3M8.5 20h7l-.7-3h-5.6z"/>'
+  };
+
+  const svg = (name, size, stroke) =>
+    '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" ' +
+    'aria-hidden="true">' + ico[name] + '</svg>';
+
+  // ── Bốn thanh ─────────────────────────────────────────────────────────────
+  const HOME = { label: "Trang chủ", icon: "home", active: true };
+  const LIVE = { label: "Trực tiếp", icon: "radio", live: true };
+  const SOCI = { label: "Social",    icon: "calplus", fab: true };
+  const FEED = { label: "Bảng tin",  icon: "news" };
+  const TOOL = { label: "Công cụ",   icon: "wrench" };
+  const SHOP = { label: "Chợ",       icon: "bag" };
+  const MORE = { label: "Thêm",      icon: "more" };
+
+  const OPTIONS = {
+    A: {
+      name: "Giữ nguyên 5 ô",
+      sub: "Hiện đang chạy trên production",
+      verdict: ["ok", "Đúng luật · 0 dòng mã"],
+      cells: [HOME, LIVE, SOCI, FEED, TOOL],
+      body: `<p>Năm ô, nút xanh <strong>Social</strong> nằm đúng giữa và ăn tâm màn hình — đó là thứ giữ cho
+             thanh này có một điểm neo thay vì năm ô ngang nhau.</p>
+             <p>Chợ không biến mất: từ #646 nó đã có trong nav trên và cột MUA SẮM ở chân trang, nên
+             người đọc tin hay xem giải vẫn tìm được đường sang.</p>`,
+      facts: [
+        ["Chiều rộng mỗi ô", "<b>78 px</b> ở khổ 390"],
+        ["Nhãn dài nhất", "TRANG CHỦ"],
+        ["Nút nổi", "ô 3/5 — <b>đúng tâm</b>"],
+        ["Chi phí", "0"],
+        ["Cái mất", "Chợ không có mặt ở thanh chính"]
+      ]
+    },
+    B: {
+      name: "Sáu ô, thêm Chợ",
+      sub: "Điều anh hỏi — và đây là chỗ nó gãy",
+      verdict: ["no", "Phá 2 luật nền tảng"],
+      cells: [HOME, LIVE, SOCI, FEED, SHOP, TOOL],
+      body: `<p><strong>Nút xanh mất tâm.</strong> Với 6 ô, ô thứ 3 không còn nằm giữa: nút nổi lệch trái
+             <b>một nửa ô</b>. Vạch hổ phách trên khung máy là tâm màn hình — nhìn khoảng cách.</p>
+             <p><strong>Nhãn bắt đầu tràn.</strong> Ô nào có nhãn rộng hơn lòng ô sẽ được viền đứt hổ phách.
+             Đổi sang khổ 360 để thấy máy Android phổ thông ở Việt Nam gãy nặng hơn.</p>
+             <p>Cắt nhãn cho vừa thì rơi vào <em>nav-label-icon</em>: điều hướng chỉ còn biểu tượng là điều hướng đoán mò.</p>`,
+      facts: [
+        ["Chiều rộng mỗi ô", "<b>65 px</b> ở khổ 390 · <b>60 px</b> ở 360"],
+        ["Apple HIG", "tab bar iPhone <b>tối đa 5</b>"],
+        ["Material 3", "bottom nav <b>3–5</b> điểm đến"],
+        ["Nút nổi", "ô 3/6 — <b>lệch tâm 32,5 px</b>"],
+        ["Chi phí", "1 dòng mã, nhưng hỏng bố cục"]
+      ]
+    },
+    C: {
+      name: "Chợ thay Công cụ",
+      sub: "Vẫn 5 ô — đổi chỗ, không thêm chỗ",
+      verdict: ["warn", "Đúng luật · đổi 1 dòng"],
+      cells: [HOME, LIVE, SOCI, FEED, SHOP],
+      body: `<p>Thanh giữ nguyên hình dáng, nút xanh giữ nguyên tâm. Chợ lên hàng đầu ngay hôm nay với
+             <strong>đúng một dòng</strong> trong <code>BottomNav.tsx</code>.</p>
+             <p>Cái mất là <strong>Công cụ</strong> — Bracket Lab, QuickTable, bảng đấu. Nó lùi về menu hamburger,
+             và đó là bề mặt có lượng tìm kiếm tự nhiên chứ không phải một trang phụ.</p>
+             <p>Đánh đổi thật: đổi một bề mặt <em>đang có người dùng</em> lấy một bề mặt <em>đang có 2 sản phẩm</em>.</p>`,
+      facts: [
+        ["Chiều rộng mỗi ô", "<b>78 px</b> — không đổi"],
+        ["Nút nổi", "ô 3/5 — <b>đúng tâm</b>"],
+        ["Chi phí", "1 dòng mã"],
+        ["Cái mất", "Công cụ rời thanh chính"],
+        ["Hợp khi", "chợ đã có hàng để xem"]
+      ]
+    },
+    D: {
+      name: "Ô cuối là “Thêm”",
+      sub: "Đường thoát tiêu chuẩn của thanh 5 ô",
+      verdict: ["ok", "Đúng luật · mở đường cho 5 bề mặt"],
+      cells: [HOME, LIVE, SOCI, FEED, MORE],
+      sheet: [
+        { label: "Chợ",      icon: "bag",    isNew: true },
+        { label: "Công cụ",  icon: "wrench" },
+        { label: "CLB",      icon: "users" },
+        { label: "Sân",      icon: "pin" },
+        { label: "Xếp hạng", icon: "trophy" },
+        { label: "Tin tức",  icon: "news" }
+      ],
+      body: `<p>Ô thứ năm không đi đâu cả — nó mở một tấm sheet. Chợ vào đó, và <strong>bốn bề mặt khác
+             hiện chỉ nằm trong menu hamburger</strong> cũng vào theo: CLB, Sân, Xếp hạng, Tin tức.</p>
+             <p>Đây là cách Material gọi tên đúng cho tình huống này: quá 5 điểm đến thì dùng
+             <em>overflow</em>, đừng nhồi. Một ô mở nhiều cửa, và lần sau thêm bề mặt mới không phải hỏi lại câu này.</p>
+             <p>Đắt hơn C: cần một sheet mới (~60 dòng), có bẫy an toàn vùng đáy và bẫy tiêu điểm bàn phím.</p>`,
+      facts: [
+        ["Chiều rộng mỗi ô", "<b>78 px</b> — không đổi"],
+        ["Nút nổi", "ô 3/5 — <b>đúng tâm</b>"],
+        ["Mở ra", "<b>6 bề mặt</b> trong một ô"],
+        ["Chi phí", "một sheet mới, ~60 dòng"],
+        ["Hợp khi", "muốn giải quyết cả CLB/Sân/Xếp hạng"]
+      ]
+    }
+  };
+
+  // ── E: đề xuất của Cuong. Ô 2 đổi danh tính theo việc có live hay không ──
+  OPTIONS.E = {
+    name: "Trang chủ · Trực tiếp/Công cụ · Chợ · Bảng tin · Thêm",
+    sub: "Đề xuất của Cuong — ô 2 đổi theo tình hình",
+    verdict: ["ok", "Số liệu ủng hộ · cần chống nhấp nháy"],
+    cells: [HOME, TOOL, SHOP, FEED, MORE],
+    cellsLive: [HOME, LIVE, SHOP, FEED, MORE],
+    sheet: [
+      { label: "Social",   icon: "calplus", isNew: true },
+      { label: "Công cụ",  icon: "wrench" },
+      { label: "CLB",      icon: "users" },
+      { label: "Sân",      icon: "pin" },
+      { label: "Xếp hạng", icon: "trophy" },
+      { label: "Trực tiếp",icon: "radio" }
+    ],
+    body: `<p><strong>Số liệu đứng về phía anh.</strong> 90 ngày qua chỉ có 10 ngày có livestream, buổi gần
+           nhất cách đây 15 ngày — một ô Trực tiếp cố định là ô chết <b>89% thời gian</b>. Nhưng đúng 5 ngày
+           có live thì nó kéo 375 người và 6.346 lượt xem, đông hơn mọi bề mặt khác cộng lại.
+           Một ô biết nhường chỗ là câu trả lời đúng cho hình dạng dữ liệu đó.</p>
+           <p><strong>Bỏ nút xanh Social:</strong> 30 ngày qua 16 buổi được tạo nhưng chỉ 6 lượt đăng ký
+           (90 ngày trước đó: 42). Đang giảm, nên nhường vị trí đẹp nhất là hợp lý — nhưng đây là con số
+           phải theo dõi sau khi bỏ, vì đăng ký là chỗ ra tiền.</p>
+           <p><strong>Chỗ phải cẩn thận — nhấp nháy.</strong> <code>useLivestreams("live")</code> là dữ liệu
+           tải bất đồng bộ. Nếu vẽ thanh trước rồi đổi nhãn khi dữ liệu về, người dùng thấy ô đổi tên ngay
+           dưới ngón tay, và ai bấm đúng lúc đó sẽ tới nhầm trang. Luật: <b>lúc chưa biết thì hiện Công cụ</b>,
+           và <b>không đổi lại giữa phiên</b> — thà chậm một nhịp còn hơn nút nhảy dưới ngón tay.</p>`,
+    facts: [
+      ["Chiều rộng mỗi ô", "<b>78 px</b> — 5 ô, đúng luật"],
+      ["Ô 2 là Trực tiếp", "<b>~11%</b> số ngày (10/90)"],
+      ["Ô 2 là Công cụ", "<b>~89%</b> số ngày"],
+      ["Chi phí", "~2 dòng cho ô morph + 1 sheet mới"],
+      ["Rủi ro", "nhấp nháy khi dữ liệu live về muộn"],
+      ["Cần theo dõi", "đăng ký social sau khi bỏ nút xanh"]
+    ]
+  };
+
+  let current = "A";
+  let width = 390;
+  let liveState = "idle";
+
+  const bar    = document.getElementById("bar");
+  const panel  = document.getElementById("panel");
+  const phone  = document.getElementById("phone");
+  const phoneW = document.getElementById("phone-w");
+  const sheetSlot = document.getElementById("sheet-slot");
+
+  function renderBar() {
+    const opt = OPTIONS[current];
+    const list = opt.cellsLive && liveState === "live" ? opt.cellsLive : opt.cells;
+    const cells = list.map((c, i) => {
+      const last = i === list.length - 1;
+      const size = c.fab ? 22 : 20;
+      const stroke = c.fab ? 2 : 1.5;
+      return (
+        '<a href="#" class="cell' + (c.active ? " active" : "") + (c.fab ? " fab" : "") + '"' +
+        (c.active ? ' aria-current="page"' : "") + ' style="' + (last ? "border-right:none" : "") + '">' +
+          (c.active ? '<span class="accent" aria-hidden="true"></span>' : "") +
+          '<span class="glyph">' + svg(c.icon, size, stroke) +
+            (c.live ? '<span class="dot" aria-hidden="true"></span>' : "") +
+          '</span>' +
+          '<span class="tab-label">' + c.label + '</span>' +
+        '</a>'
+      );
+    }).join("");
+
+    // Vạch tâm chỉ hiện ở phương án 6 ô — nơi nó nói lên điều gì đó.
+    const line = list.length === 6 ? '<span class="centerline" aria-hidden="true"></span>' : "";
+    bar.innerHTML = '<div class="bar-cells">' + cells + '</div>' + line;
+
+    sheetSlot.innerHTML = opt.sheet
+      ? '<div class="sheet"><div class="sheet-grab" aria-hidden="true"></div><div class="sheet-grid">' +
+        opt.sheet.map(s =>
+          '<a href="#" class="sheet-item' + (s.isNew ? " new" : "") + '">' + svg(s.icon, 20, 1.5) +
+          '<span>' + s.label + '</span></a>'
+        ).join("") + '</div></div>'
+      : "";
+
+    // Đo thật: nhãn nào rộng hơn lòng ô thì đánh dấu, không đoán.
+    requestAnimationFrame(() => {
+      bar.querySelectorAll(".cell").forEach(cell => {
+        const label = cell.querySelector(".tab-label");
+        const room = cell.clientWidth - 8;
+        cell.classList.toggle("overflow", label.scrollWidth > room);
+      });
+    });
+  }
+
+  function renderPanel() {
+    const opt = OPTIONS[current];
+    const [tone, text] = opt.verdict;
+    panel.innerHTML =
+      '<h3>' + opt.name + '</h3>' +
+      '<p class="sub">' + opt.sub + '</p>' +
+      '<span class="verdict ' + tone + '">' + text + '</span>' +
+      opt.body +
+      '<table class="facts"><tbody>' +
+      opt.facts.map(([k, v]) => '<tr><th>' + k + '</th><td>' + v + '</td></tr>').join("") +
+      '</tbody></table>';
+  }
+
+  function render() { renderBar(); renderPanel(); }
+
+  const stateRow = document.getElementById("state-row");
+
+  document.querySelectorAll("[data-opt]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      current = btn.dataset.opt;
+      document.querySelectorAll("[data-opt]").forEach(b =>
+        b.setAttribute("aria-pressed", String(b === btn)));
+      // Nút trạng thái chỉ có nghĩa ở phương án có ô đổi danh tính.
+      stateRow.hidden = !OPTIONS[current].cellsLive;
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-state]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      liveState = btn.dataset.state;
+      document.querySelectorAll("[data-state]").forEach(b =>
+        b.setAttribute("aria-pressed", String(b === btn)));
+      renderBar();
+    });
+  });
+
+  document.querySelectorAll("[data-w]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      width = Number(btn.dataset.w);
+      document.querySelectorAll("[data-w]").forEach(b =>
+        b.setAttribute("aria-pressed", String(b === btn)));
+      phone.style.width = width + "px";
+      phoneW.textContent = width + " px · nội dung giả, thanh là thật";
+      renderBar();
+    });
+  });
+
+  window.addEventListener("resize", renderBar);
+  render();
+</script>

@@ -5,10 +5,16 @@
 -- tables carry no public policy and no anon grant AT ALL, and the definer
 -- view is the only anonymous read. Re-granting anon or re-adding a public
 -- policy — the one-liner that reopens the hole — turns this file red.
+--
+-- That sweep listed three tables and forgot the fourth. `shops` kept its anon
+-- grant until 20260818130000, and a probe against production returned
+-- owner_user_id for the live storefront. The shops assertions live HERE rather
+-- than in a file of their own precisely because this file was the guard that
+-- was supposed to catch it: a table missing from the list is the failure mode.
 
 BEGIN;
 
-SELECT plan(12);
+SELECT plan(16);
 
 -- ─── Fixture: one active shop, one published product, real private values ───
 
@@ -46,6 +52,7 @@ VALUES ('61030001-0000-4000-8000-000000000001'::uuid, '60030001-0000-4000-8000-0
 SELECT is(has_table_privilege('anon', 'public.products',         'SELECT'), false, 'anon holds no SELECT on products');
 SELECT is(has_table_privilege('anon', 'public.product_variants', 'SELECT'), false, 'anon holds no SELECT on product_variants');
 SELECT is(has_table_privilege('anon', 'public.product_media',    'SELECT'), false, 'anon holds no SELECT on product_media');
+SELECT is(has_table_privilege('anon', 'public.shops',            'SELECT'), false, 'anon holds no SELECT on shops');
 
 SELECT is(
   (SELECT count(*)::int FROM pg_policies
@@ -65,6 +72,19 @@ SELECT throws_ok($$ SELECT internal_note, decided_by FROM public.products $$, '4
   'internal_note / decided_by are unreachable for anon');
 SELECT throws_ok($$ SELECT draft_path FROM public.product_media $$, '42501', NULL,
   'draft paths are unreachable for anon');
+SELECT throws_ok($$ SELECT owner_user_id FROM public.shops $$, '42501', NULL,
+  'the storefront no longer hands anon a join key into profiles');
+
+-- The public storefront still works — through the allowlist, as designed.
+SELECT is(
+  public.shop_public_shop('colscope-shop') -> 'found',
+  'true'::jsonb,
+  'the definer RPC still serves the active shop to anon'
+);
+SELECT ok(
+  NOT (public.shop_public_shop('colscope-shop') -> 'shop' ? 'owner_user_id'),
+  'and its allowlist carries no owner_user_id'
+);
 
 SELECT is(
   (SELECT count(*)::int FROM public.public_products WHERE slug = 'colscope-vot'),

@@ -36,7 +36,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, Check, GitCompare, ImageOff } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { useMyShopMembership, useShopCategories, useShopProfile } from "@/hooks/shop/useShopProfile";
 import {
   useArchiveProduct,
@@ -67,6 +67,7 @@ import {
   useSubmitPreflight,
   useSubmitProduct,
   useWithdrawSubmission,
+  useEditAgain,
 } from "@/hooks/shop/useProductSubmit";
 import {
   firstProblem,
@@ -74,6 +75,14 @@ import {
   groupProblems,
   problemMessage,
 } from "@/lib/shop/submitProblems";
+import {
+  SPEC_VALUE_MAX,
+  cleanSpecs,
+  specFieldsFor,
+  specSummary,
+  specsEqual,
+  type SpecField,
+} from "@/lib/shop/productSpecs";
 import type { VariantRow } from "@/lib/shop/variantMatrix";
 import { SECTION_LABEL, type SubmitProblem } from "@/lib/shop/submitProblems";
 import type { ProductRow } from "@/integrations/supabase/shop-schema";
@@ -89,11 +98,17 @@ const ProductPreview = lazy(() => import("@/components/shop/ProductPreview"));
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
+/** Ngưỡng của product_submit_preflight (migration 20260823090000). Chép ở đây
+ *  CHỈ để đếm ngược cho người bán — nó không chặn lưu nháp, và máy chủ vẫn là
+ *  nơi duy nhất từ chối đăng bán. */
+const DESC_MIN = 40;
+
 const EMPTY_DRAFT: ProductDraft = {
   title: "",
   description: "",
   category_slug: "",
   condition: "new",
+  specs: {},
   price_vnd: "",
   stock_on_hand: "",
 };
@@ -142,8 +157,12 @@ const newToken = () =>
     ? crypto.randomUUID()
     : `t-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+// `specs` là object nên so bằng `===` là so địa chỉ ô nhớ: hai bản giống hệt
+// nhau vẫn khác nhau, và màn hình sẽ hỏi "dùng bản nào?" ở MỌI lần mở sản phẩm.
 const sameDraft = (a: ProductDraft, b: ProductDraft) =>
-  (Object.keys(EMPTY_DRAFT) as (keyof ProductDraft)[]).every((k) => a[k] === b[k]);
+  (Object.keys(EMPTY_DRAFT) as (keyof ProductDraft)[]).every((k) =>
+    k === "specs" ? specsEqual(a.specs, b.specs) : a[k] === b[k],
+  );
 
 export default function SellerProductForm() {
   const { id } = useParams<{ id: string }>();
@@ -167,10 +186,15 @@ export default function SellerProductForm() {
   const preflight = useSubmitPreflight(productId, !isNew);
   const submit = useSubmitProduct(productId);
   const withdraw = useWithdrawSubmission(productId);
+  const editAgain = useEditAgain(productId);
   const [showPreview, setShowPreview] = useState(false);
   const preview = useProductPreview(productId, showPreview);
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Bảng phiên bản có nút lưu RIÊNG và RPC riêng (product_variants_reconcile),
+  // nên nút đăng bán không lưu hộ được — nó chỉ có thể từ chối đăng. Giá của
+  // một sản phẩm đã tồn tại sống trong bảng này, không phải ở ô giá đơn giản.
+  const [variantsDirty, setVariantsDirty] = useState(false);
   const submitTokenRef = useRef<string>(newToken());
 
   const [draft, setDraft] = useState<ProductDraft | null>(null);
@@ -196,6 +220,7 @@ export default function SellerProductForm() {
       description: row.description ?? "",
       category_slug: row.category_slug ?? "",
       condition: row.condition,
+      specs: cleanSpecs(row.specs),
       price_vnd: variant ? String(variant.price_vnd) : "",
       stock_on_hand: variant && variant.stock_on_hand !== null ? String(variant.stock_on_hand) : "",
     };
@@ -252,10 +277,22 @@ export default function SellerProductForm() {
     }
   }, [key, draft, isNew, serverDraft]);
 
-  const dirty = useMemo(
-    () => !!draft && !!serverDraft && !sameDraft(draft, serverDraft),
-    [draft, serverDraft],
-  );
+  /**
+   * "Còn thay đổi chưa lưu" nghĩa là: thứ lệnh lưu SẼ GỬI khác thứ máy chủ
+   * đang giữ. So bằng chính payload, nên hai cái không thể lệch nhau.
+   *
+   * So cả `price_vnd`/`stock_on_hand` là sai ở màn sửa: hai ô đó không hiện,
+   * `draft` giữ nguyên con số gieo lúc tải trang, và sau một lần lưu bảng phiên
+   * bản thì `serverDraft` mang giá MỚI trong khi `draft` vẫn giá cũ. Cờ dirty
+   * bật vĩnh viễn, nút ghi "Lưu và đăng bán" trong khi không có gì để lưu — và
+   * trước bản vá này nó còn kéo theo một lệnh ghi đè giá cũ thật.
+   */
+  const dirty = useMemo(() => {
+    if (!draft || !serverDraft) return false;
+    return (
+      JSON.stringify(buildUpdatePayload(draft)) !== JSON.stringify(buildUpdatePayload(serverDraft))
+    );
+  }, [draft, serverDraft]);
   const dirtyNew = useMemo(() => !!draft && isNew && !sameDraft(draft, EMPTY_DRAFT), [draft, isNew]);
 
   // Persist locally on every change. This is the thing that survives a closed
@@ -287,19 +324,33 @@ export default function SellerProductForm() {
     setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
+  const setSpec = (key: string, value: string) => {
+    setDraft((d) => {
+      const base = d ?? EMPTY_DRAFT;
+      return { ...base, specs: { ...base.specs, [key]: value } };
+    });
+    setSaveState("idle");
+  };
+
   const focusFirstError = (found: DraftErrors) => {
     const first = DRAFT_FIELD_ORDER.find((f) => found[f]);
     if (first) fieldRefs.current[first]?.focus();
   };
 
   // ── Save ──────────────────────────────────────────────────────────────────
-  const save = useCallback(async () => {
-    if (!draft || !shopId) return;
+  /**
+   * Trả về HÀNG ĐÃ LƯU, hoặc null nếu không lưu được.
+   *
+   * Trước đây trả void, và "Đăng bán" vì thế không có cách nào biết bản nháp
+   * đã kịp lên máy chủ chưa — xem chỗ gọi nó ở nút đăng bán.
+   */
+  const save = useCallback(async (): Promise<ProductRow | null> => {
+    if (!draft || !shopId) return null;
     const found = validateDraft(draft);
     setErrors(found);
     if (Object.keys(found).some((k) => found[k as keyof DraftErrors])) {
       focusFirstError(found);
-      return;
+      return null;
     }
 
     setSaveState("saving");
@@ -312,7 +363,7 @@ export default function SellerProductForm() {
         // Straight to the edit route: the product now has an id, and staying
         // on /new with a saved product is how a second one gets made.
         navigate(`/seller/products/${(created as ProductRow).id}/edit`, { replace: true });
-        return;
+        return created as ProductRow;
       }
 
       if (!row) {
@@ -321,29 +372,28 @@ export default function SellerProductForm() {
         // disabled and the label on "Đang lưu…" with nothing in flight.
         setSaveState("error");
         setSaveError("Không tìm thấy sản phẩm. Tải lại trang giúp em.");
-        return;
+        return null;
       }
 
-      // The variant half is deliberate: product_update refuses a _variant
-      // payload for a product that has a matrix, so a form that always sent it
-      // could not save the NAME of a product that had colours.
-      await update.mutateAsync({
+      // TEXT ONLY. Giá và tồn kho của một sản phẩm ĐÃ TỒN TẠI thuộc về bảng
+      // phiên bản — ô giá đơn giản chỉ hiện khi TẠO MỚI, nên gửi kèm nó ở đây
+      // là gửi một con số người bán không nhìn thấy và không sửa được. Đó đúng
+      // là con số đã đè mất hai lần sửa giá thật ngày 18/08.
+      const saved = await update.mutateAsync({
         expectedVersion: row.version,
-        ...buildUpdatePayload(draft, multiVariant),
+        ...buildUpdatePayload(draft),
       });
       if (key) clearStored(key);
       setSaveState("saved");
       void preflight.refetch();
+      return saved as ProductRow;
     } catch (error) {
       setSaveState("error");
       setSaveError(shopErrorMessage(error));
       if (isConflict(error) && draft) setConflict(draft);
+      return null;
     }
-  }, [draft, shopId, isNew, create, key, navigate, row, update, multiVariant, preflight]);
-
-  if (membership.isLoading || profile.isLoading || (productId && product.isLoading)) {
-    return <LoadingState fullScreen />;
-  }
+  }, [draft, shopId, isNew, create, key, navigate, row, update, preflight]);
 
   const shell = (children: React.ReactNode) => (
     <ShopScrollShell>
@@ -354,9 +404,25 @@ export default function SellerProductForm() {
     </ShopScrollShell>
   );
 
+  // Khung xương đúng hình biểu mẫu: tiêu đề, rồi bốn khối trường (thông tin,
+  // ảnh, phân loại/giá, mô tả) — không phải một vòng xoay giữa màn hình.
+  if (membership.isLoading || profile.isLoading || (productId && product.isLoading)) {
+    return shell(
+      <div aria-busy="true" aria-label="Đang tải biểu mẫu sản phẩm">
+        <span className="tl-shop-sk tl-shop-sk--title" />
+        <span className="tl-shop-sk tl-shop-sk--line" style={{ width: "55%" }} />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+        <span className="tl-shop-sk tl-shop-sk--card" />
+      </div>,
+    );
+  }
+
   if (membership.isError || profile.isError || product.isError) {
     return shell(
-      <ErrorState
+      <ShopErrorNotice
+        title="Chưa tải được sản phẩm này."
         onRetry={() => {
           void membership.refetch();
           void profile.refetch();
@@ -388,6 +454,10 @@ export default function SellerProductForm() {
   }
 
   const status = row?.status ?? "draft";
+  const descLength = (draft?.description ?? "").trim().length;
+  // Ngành hàng đang chọn trong BẢN NHÁP, không phải trong hàng đã lưu: người
+  // bán đổi ngành hàng sang "Vợt" là các ô thông số hiện ra ngay.
+  const specFields = specFieldsFor(draft?.category_slug);
   // Three separate reasons the form may be read-only, and the seller is told
   // which one applies — "không sửa được" alone sends them to check their login.
   const editable = isManager && !shopBlocked && (isNew || canEditContent(status));
@@ -428,7 +498,11 @@ export default function SellerProductForm() {
               ? "Sản phẩm đang chờ duyệt nên tạm khoá sửa — quyết định của quản trị viên phải rơi vào đúng bản đã xem. Rút lại để sửa tiếp."
               : status === "archived"
                 ? "Sản phẩm đã ngừng bán. Bật bán lại thì sửa tiếp được."
-                : "Sản phẩm đã qua duyệt nên chưa sửa nội dung ở màn hình này. Luồng gửi lại để duyệt mở ở bản cập nhật tới."}
+                : status === "approved"
+                  ? "Sản phẩm đang bán nên khoá sửa. Bấm “Gỡ xuống để sửa” bên dưới — nó rời kệ trong lúc anh/chị sửa, rồi đăng lại."
+                  : status === "suspended"
+                    ? "Sản phẩm bị quản trị viên gỡ. Chỉ quản trị viên mở lại được, và khi mở sẽ kèm chỗ cần sửa."
+                    : "Sản phẩm ở trạng thái này chưa sửa nội dung được."}
           </span>
         </div>
       )}
@@ -496,7 +570,7 @@ export default function SellerProductForm() {
           id="p-cat"
           label="Ngành hàng"
           error={errors.category_slug}
-          hint="Người mua lọc theo ngành hàng. Bắt buộc trước khi gửi duyệt."
+          hint="Người mua lọc theo ngành hàng. Bắt buộc trước khi đăng bán."
         >
           <select
             id="p-cat"
@@ -541,7 +615,7 @@ export default function SellerProductForm() {
           />
         </Field>
 
-        <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
+        <fieldset className="tl-shop-fieldset" style={{ marginBottom: 16 }}>
           <legend className="tl-shop-label" style={{ padding: 0 }}>
             Tình trạng
           </legend>
@@ -571,12 +645,30 @@ export default function SellerProductForm() {
           )}
         </fieldset>
 
-        <Field id="p-desc" label="Mô tả" error={errors.description}>
+        <Field
+          id="p-desc"
+          label="Mô tả"
+          error={errors.description}
+          // Con số 40 là ngưỡng THẬT của máy chủ (product_submit_preflight),
+          // nói ra ở đây thay vì để người bán biết lúc bấm đăng bán.
+          hint={
+            descLength === 0
+              ? "Người mua đọc đoạn này để quyết định. Viết tình trạng thật, lý do bán, đã dùng bao lâu — ít nhất 40 ký tự mới đăng bán được."
+              : descLength < DESC_MIN
+                ? `Còn ${DESC_MIN - descLength} ký tự nữa mới đăng bán được. Viết thêm tình trạng thật và lý do bán.`
+                : `${descLength} ký tự. Thông số kỹ thuật có ô riêng bên dưới — đoạn này để nói những gì con số không nói được.`
+          }
+        >
           <textarea
             id="p-desc"
             className="tl-shop-textarea"
             rows={5}
             maxLength={4000}
+            placeholder={
+              draft?.condition === "used"
+                ? "Ví dụ: Vợt dùng 3 tháng, mặt còn nguyên nhám, cán có vết xước nhỏ ở đuôi. Bán vì đã đổi sang cây lõi 16mm. Kèm bao vợt."
+                : "Ví dụ: Hàng chính hãng, còn nguyên seal, bảo hành 6 tháng theo hãng. Hợp người chơi thiên kiểm soát, dùng tốt cho cả đánh đôi và đánh đơn."
+            }
             disabled={!editable}
             value={draft?.description ?? ""}
             aria-invalid={!!errors.description}
@@ -585,6 +677,51 @@ export default function SellerProductForm() {
           />
         </Field>
       </section>
+
+      {/* ── 2b. Thông số kỹ thuật ────────────────────────────────────────── */}
+      {/* Chỉ hiện khi ngành hàng có từ điển thông số. Một ngành hàng không có
+          thông số nào để so sánh thì một khối trống chỉ mời người bán bịa. */}
+      {specFields.length > 0 && (
+        <section aria-labelledby="sec-specs">
+          <h2 id="sec-specs" className="tl-shop-h2">
+            Thông số kỹ thuật
+          </h2>
+          {isNew ? (
+            <div className="tl-shop-notice tl-shop-notice--info" role="status">
+              <ImageOff size={16} aria-hidden="true" />
+              <div>
+                <strong>Lưu nháp trước rồi điền thông số.</strong> Giống phần ảnh: thông số gắn
+                với một sản phẩm đã tồn tại, nên bấm &ldquo;Lưu nháp&rdquo; xong là các ô hiện ra
+                ngay ở bước tiếp theo.
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="tl-shop-hint" style={{ marginTop: -4 }}>
+                Người mua vợt so sánh đúng mấy con số này trước khi chọn. Ô nào không biết thì bỏ
+                trống — bỏ trống là không hiện, không phải hiện dấu gạch.
+              </p>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 12,
+                }}
+              >
+                {specFields.map((field) => (
+                  <SpecInput
+                    key={field.key}
+                    field={field}
+                    value={draft?.specs?.[field.key] ?? ""}
+                    disabled={!editable}
+                    onChange={(value) => setSpec(field.key, value)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {/* ── 3. Price and stock ───────────────────────────────────────────── */}
       {/* A new product is single-variant until it exists: the matrix is a
@@ -661,6 +798,7 @@ export default function SellerProductForm() {
             disabled={!editable}
             initialGroups={row.option_groups ?? []}
             initialRows={variantRows}
+            onDirtyChange={setVariantsDirty}
             onSave={async ({ groups, rows, keepVariantId }) => {
               await reconcile.mutateAsync({
                 expectedVersion: row.version,
@@ -687,7 +825,7 @@ export default function SellerProductForm() {
             <div>
               <strong>Lưu nháp trước rồi thêm ảnh.</strong> Ảnh gắn với một sản phẩm đã tồn tại,
               nên bấm &ldquo;Lưu nháp&rdquo; xong là màn hình ảnh mở ra ngay ở bước tiếp theo.
-              Sản phẩm cần ít nhất một ảnh mới gửi duyệt được.
+              Sản phẩm cần ít nhất một ảnh mới đăng bán được.
             </div>
           </div>
         </section>
@@ -758,7 +896,7 @@ export default function SellerProductForm() {
       {!isNew && (
         <section aria-labelledby="sec-submit">
           <h2 id="sec-submit" className="tl-shop-h2">
-            Xem trước &amp; gửi duyệt
+            Xem trước &amp; đăng bán
           </h2>
 
           {status === "pending_review" ? (
@@ -786,11 +924,47 @@ export default function SellerProductForm() {
                 </div>
               </div>
             </div>
+          ) : status === "approved" ? (
+            /* Live. The only thing this screen can offer is the way back —
+               without it, self-publishing means the seller publishes once and
+               can never fix a typo. */
+            <div className="tl-shop-notice tl-shop-notice--info" role="status">
+              <Check size={16} aria-hidden="true" />
+              <div>
+                <strong>Đang bán.</strong>
+                <p style={{ margin: "6px 0 0", lineHeight: 1.55 }}>
+                  Người mua đang thấy sản phẩm này. Muốn sửa thì gỡ xuống đã — sản phẩm rời kệ
+                  ngay, sửa xong bấm “Đăng bán” là lên lại.
+                </p>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                  <Link to="/seller/products" className="tl-shop-btn tl-shop-btn--sm">
+                    Về danh sách sản phẩm
+                  </Link>
+                  {isManager && !shopBlocked && (
+                    <button
+                      type="button"
+                      className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--ghost"
+                      disabled={editAgain.isPending}
+                      onClick={() => void editAgain.mutateAsync(row?.version).catch(() => {})}
+                    >
+                      {editAgain.isPending ? "Đang gỡ…" : "Gỡ xuống để sửa"}
+                    </button>
+                  )}
+                </div>
+                {editAgain.isError && (
+                  <p className="tl-shop-hint" role="alert" style={{ marginTop: 8 }}>
+                    {shopErrorMessage(editAgain.error)}
+                  </p>
+                )}
+              </div>
+            </div>
           ) : (
             <SubmitPanel
               problems={preflight.data ?? []}
               loading={preflight.isLoading}
               canSubmit={isManager && !shopBlocked && canEditContent(status)}
+              dirty={dirty}
+              variantsDirty={variantsDirty}
               state={submitState}
               error={submitError}
               onGoTo={(problem) => {
@@ -819,8 +993,25 @@ export default function SellerProductForm() {
                 setSubmitState("sending");
                 setSubmitError(null);
                 try {
+                  // Sửa xong mà chưa bấm "Lưu thay đổi" thì bản nháp CHỈ nằm
+                  // trong localStorage — không có autosave lên máy chủ. Trước
+                  // đây nút này đăng thẳng bản trên máy chủ, tức là đăng đúng
+                  // cái mà người bán vừa sửa xong và tưởng đã đổi. Người bán
+                  // gỡ hàng xuống, sửa giá, bấm đăng, và sản phẩm lên lại với
+                  // GIÁ CŨ, không một lời cảnh báo. Bấm "Đăng bán" nghĩa là
+                  // "đăng cái tôi đang NHÌN THẤY", nên lưu trước — và nếu lưu
+                  // hỏng (xung đột phiên bản, lỗi hợp lệ) thì KHÔNG đăng.
+                  let version = row.version;
+                  if (dirty) {
+                    const saved = await save();
+                    if (!saved) {
+                      setSubmitState("idle");
+                      return;
+                    }
+                    version = saved.version;
+                  }
                   const result = await submit.mutateAsync({
-                    expectedVersion: row.version,
+                    expectedVersion: version,
                     clientToken: submitTokenRef.current,
                   });
                   if (result.ok) {
@@ -905,6 +1096,63 @@ function Field({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Một ô thông số. Hộp chọn khi từ điển có danh sách, ô gõ khi không.
+ *
+ * KHÔNG kiểm tra khoảng giá trị ở đây: Postgres chỉ từ chối ô quá dài, và một
+ * client chặt hơn máy chủ sẽ chặn một giá trị đúng mà người bán không có cách
+ * nào biết vì sao. Câu gợi ý nói khoảng thường gặp, người bán quyết.
+ */
+function SpecInput({
+  field,
+  value,
+  disabled,
+  onChange,
+}: {
+  field: SpecField;
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const id = `p-spec-${field.key}`;
+  const label = field.unit ? `${field.label} (${field.unit})` : field.label;
+
+  return (
+    <Field id={id} label={label} hint={field.hint}>
+      {field.options ? (
+        <select
+          id={id}
+          className="tl-shop-select"
+          disabled={disabled}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">— Chưa chọn —</option>
+          {field.options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+          {/* Giá trị cũ không còn trong danh sách vẫn phải chọn được, nếu không
+              mở trang lên là ô tự nhảy về rỗng và lần lưu sau xoá mất nó. */}
+          {value && !field.options.includes(value) && <option value={value}>{value}</option>}
+        </select>
+      ) : (
+        <input
+          id={id}
+          className="tl-shop-input"
+          inputMode={field.numeric ? "numeric" : undefined}
+          maxLength={SPEC_VALUE_MAX}
+          placeholder={field.placeholder}
+          disabled={disabled}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </Field>
   );
 }
 
@@ -1017,15 +1265,22 @@ function ConflictNotice({
   onTakeServer: () => void;
   onKeepMine: () => void | Promise<void>;
 }) {
-  const differing = (Object.keys(mine) as (keyof ProductDraft)[]).filter((k) => mine[k] !== theirs[k]);
   const LABEL: Record<keyof ProductDraft, string> = {
     title: "Tên",
     description: "Mô tả",
     category_slug: "Ngành hàng",
     condition: "Tình trạng",
+    specs: "Thông số",
     price_vnd: "Giá",
     stock_on_hand: "Hàng đang có",
   };
+  // Mọi trường về một chuỗi TRƯỚC khi so: `specs` là object, và `!==` trên hai
+  // object luôn đúng — bảng sẽ báo "Thông số khác nhau" ở mọi lần xung đột.
+  const text = (draft: ProductDraft, key: keyof ProductDraft) =>
+    key === "specs" ? specSummary(draft.category_slug, draft.specs) : String(draft[key] ?? "");
+  const differing = (Object.keys(LABEL) as (keyof ProductDraft)[]).filter(
+    (k) => text(mine, k) !== text(theirs, k),
+  );
   const short = (value: string) => (value.length > 60 ? `${value.slice(0, 60)}…` : value || "(trống)");
 
   return (
@@ -1051,7 +1306,7 @@ function ConflictNotice({
             </p>
             {differing.map((k) => (
               <div key={k} style={{ fontSize: 13.5 }}>
-                {LABEL[k]}: {short(theirs[k])}
+                {LABEL[k]}: {short(text(theirs, k))}
               </div>
             ))}
           </div>
@@ -1061,7 +1316,7 @@ function ConflictNotice({
             </p>
             {differing.map((k) => (
               <div key={k} style={{ fontSize: 13.5 }}>
-                {LABEL[k]}: {short(mine[k])}
+                {LABEL[k]}: {short(text(mine, k))}
               </div>
             ))}
           </div>
@@ -1284,6 +1539,8 @@ function SubmitPanel({
   problems,
   loading,
   canSubmit,
+  dirty,
+  variantsDirty,
   state,
   error,
   onGoTo,
@@ -1292,6 +1549,11 @@ function SubmitPanel({
   problems: SubmitProblem[];
   loading: boolean;
   canSubmit: boolean;
+  /** Ô thường còn thay đổi chưa lưu. Nút sẽ lưu trước rồi mới đăng. */
+  dirty: boolean;
+  /** Bảng phiên bản còn thay đổi chưa lưu. Nút KHÔNG lưu hộ được — bảng có
+   *  RPC riêng — nên nó chặn và chỉ chỗ. */
+  variantsDirty: boolean;
   state: "idle" | "sending" | "sent" | "error";
   error: string | null;
   onGoTo: (problem: SubmitProblem) => void;
@@ -1302,10 +1564,10 @@ function SubmitPanel({
       <div className="tl-shop-notice tl-shop-notice--info" role="status">
         <Check size={16} aria-hidden="true" />
         <div>
-          <strong>Đã gửi duyệt.</strong>
+          <strong>Đã đăng bán.</strong>
           <p style={{ margin: "6px 0 0", lineHeight: 1.55 }}>
-            Quản trị viên sẽ xem và phản hồi. Anh/chị không cần sửa gì thêm cho tới lúc đó — nếu
-            cần sửa, phản hồi sẽ ghi rõ chỗ nào.
+            Sản phẩm đang hiển thị cho người mua. Muốn sửa thì mở lại sản phẩm và bấm
+            “Gỡ xuống để sửa” — nó rời kệ trong lúc anh/chị sửa, rồi đăng lại.
           </p>
           <div style={{ marginTop: 10 }}>
             <Link to="/seller/products" className="tl-shop-btn tl-shop-btn--sm">
@@ -1325,15 +1587,26 @@ function SubmitPanel({
   return (
     <>
       {ready ? (
-        <p className="tl-shop-hint">
-          Sản phẩm đã đủ điều kiện gửi duyệt. Sau khi gửi, anh/chị sẽ không sửa được cho tới khi
-          có phản hồi.
-        </p>
+        variantsDirty ? (
+          <div className="tl-shop-notice tl-shop-notice--warn" role="status">
+            <AlertTriangle size={16} aria-hidden="true" />
+            <span>
+              Bảng phiên bản còn thay đổi chưa lưu — bấm <strong>“Lưu bảng phiên bản”</strong> ở
+              trên trước. Đăng bây giờ là đăng đúng giá cũ.
+            </span>
+          </div>
+        ) : (
+          <p className="tl-shop-hint">
+            {dirty
+              ? "Còn thay đổi chưa lưu. Bấm nút dưới sẽ lưu trước rồi mới đăng — không đăng bản cũ."
+              : "Đủ điều kiện đăng bán. Bấm là sản phẩm hiển thị ngay cho người mua — không qua bước duyệt nào. Muốn sửa sau đó thì gỡ nó xuống, sửa, rồi đăng lại."}
+          </p>
+        )
       ) : (
         <div className="tl-shop-notice tl-shop-notice--warn" role="status">
           <AlertTriangle size={16} aria-hidden="true" />
           <div style={{ width: "100%" }}>
-            <strong>Còn {problems.length} chỗ chưa xong trước khi gửi duyệt:</strong>
+            <strong>Còn {problems.length} chỗ chưa xong trước khi đăng bán:</strong>
             {groups.map((group) => (
               <div key={group.section} style={{ marginTop: 8 }}>
                 <p className="tl-shop-eyebrow" style={{ display: "block" }}>
@@ -1365,14 +1638,19 @@ function SubmitPanel({
           className="tl-shop-btn tl-shop-btn--primary"
           // Disabled in flight so a double tap cannot send it twice. The client
           // token makes that harmless anyway; this makes it impossible.
-          disabled={!ready || state === "sending"}
+          //
+          // `variantsDirty` chặn hẳn, không lưu hộ: bảng phiên bản đi qua
+          // product_variants_reconcile với quyết định riêng của nó
+          // (keepVariantId khi thu từ nhiều về một), và một nút đăng bán tự
+          // quyết hộ chuyện đó là một nút vứt SKU của người khác.
+          disabled={!ready || variantsDirty || state === "sending"}
           onClick={() => {
             const first = firstProblem(problems);
             if (first) onGoTo(first);
             else void onSubmit();
           }}
         >
-          {state === "sending" ? "Đang gửi…" : "Gửi duyệt"}
+          {state === "sending" ? "Đang đăng…" : dirty ? "Lưu và đăng bán" : "Đăng bán"}
         </button>
       )}
 

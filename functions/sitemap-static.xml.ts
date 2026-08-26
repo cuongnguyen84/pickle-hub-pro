@@ -8,11 +8,12 @@
  */
 
 import { createSupabaseClient } from "./_lib/supabase";
-import { EN_BLOG_SLUGS } from "./_lib/static-blog-slugs";
+import { EN_BLOG_ENTRIES } from "./_lib/static-blog-slugs";
 import {
   SITE_URL_DEFAULT,
   SITEMAP_CACHE_HEADERS,
   buildUrlEntry,
+  fetchAllRows,
   today,
   wrapUrlset,
   type UrlEntry,
@@ -60,16 +61,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // typical refresh cadence — kudos/comments shift the order constantly.
     { loc: "/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
     { loc: "/vi/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
-    // PR73 Phase 2B — Social Events MVP hub list pages.
-    // Single canonical URL serves both locales (SPA toggles via i18n
-    // context), so the hreflang array points every alt-lang entry at
-    // the same /social or /clubs URL — same pattern as /nguoi-choi/*.
-    { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/social") },
-    // 2026-08-17 — /clubs moved off the single-canonical pattern to a real
-    // bilingual pair (renderClubList now self-references each locale), so
-    // both URLs are submitted and the hreflang points at two distinct URLs.
-    // /social is unchanged and still shares one canonical — see the note
-    // above it; same fix applies there but is a separate change.
+    // PR73 Phase 2B shipped these as Social Events MVP hub list pages on a
+    // single canonical serving both locales. 2026-08-17 moved /clubs off
+    // that pattern and 2026-08-19 moved /social — renderSocialList and
+    // renderClubList now self-reference each locale, so both URLs are
+    // submitted and each hreflang array points at two distinct URLs.
+    { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/vi/social") },
+    { loc: "/vi/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/vi/social") },
     { loc: "/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
     { loc: "/vi/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/vi/clubs") },
     { loc: "/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
@@ -96,22 +94,42 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/tools/team-match/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/team-match/new") },
     { loc: "/privacy", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/privacy", "/vi/privacy") },
     { loc: "/vi/privacy", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/privacy", "/vi/privacy") },
+    { loc: "/about", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/about", "/vi/about") },
+    { loc: "/vi/about", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/about", "/vi/about") },
+    { loc: "/contact", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/contact", "/vi/contact") },
+    { loc: "/vi/contact", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/contact", "/vi/contact") },
     { loc: "/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
     { loc: "/vi/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
     { loc: "/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
     { loc: "/vi/advertise", changefreq: "monthly", priority: "0.4", lastmod: TODAY, hreflang: bilingual("/advertise", "/vi/advertise") },
-    { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
+    // /rss.xml is deliberately NOT here. It is an RSS feed, not a page: the
+    // 2026-08-25 audit found it was the only crawled URL on the site with no
+    // <title>, no canonical, no H1 and no meta description, because there is
+    // nothing there to have them. A sitemap lists indexable pages; the feed is
+    // discovered through <link rel="alternate" type="application/rss+xml">.
   ];
 
   // Build EN blog post entries with optional bilingual hreflang
   const enToViSlug = new Map<string, string>();
   try {
     const supabase = createSupabaseClient(context.env);
-    const { data: viPosts } = await supabase
-      .from("vi_blog_posts")
-      .select("slug, alternate_en_slug")
-      .eq("status", "published");
-    for (const p of viPosts || []) {
+    // CAP-01 (2026-08-25) — paged. This query had no .limit() at all, which
+    // does not mean "no cap": PostgREST applies max-rows = 1000 by default and
+    // reports nothing. The consequence here is quieter than a missing URL —
+    // the EN entries would still be emitted, just stripped of their VI
+    // hreflang, so EN and VI would compete instead of pairing. 66 rows today.
+    // `slug` is the unique tie breaker.
+    const viPosts = await fetchAllRows<{ slug: string; alternate_en_slug: string | null }>(
+      (from, to) =>
+        supabase
+          .from("vi_blog_posts")
+          .select("slug, alternate_en_slug")
+          .eq("status", "published")
+          .order("published_at", { ascending: false })
+          .order("slug", { ascending: true })
+          .range(from, to),
+    );
+    for (const p of viPosts) {
       if (p.alternate_en_slug) enToViSlug.set(p.alternate_en_slug, p.slug);
     }
   } catch (err) {
@@ -122,12 +140,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     buildUrlEntry({ loc: `${siteUrl}${u.loc}`, lastmod: u.lastmod, changefreq: u.changefreq, priority: u.priority, hreflang: u.hreflang }),
   );
 
-  const enBlogEntries = EN_BLOG_SLUGS.map((slug) => {
+  const enBlogEntries = EN_BLOG_ENTRIES.map(({ slug, lastmod }) => {
     const viSlug = enToViSlug.get(slug);
     const hreflang = viSlug
       ? bilingual(`/blog/${slug}`, `/vi/blog/${viSlug}`)
       : enOnly(`/blog/${slug}`);
-    return buildUrlEntry({ loc: `${siteUrl}/blog/${slug}`, changefreq: "monthly", priority: "0.7", hreflang });
+    // lastmod is the post's own updatedDate/publishedDate, never TODAY — see
+    // the note on EN_BLOG_ENTRIES. These 58 URLs carried no lastmod at all.
+    return buildUrlEntry({ loc: `${siteUrl}/blog/${slug}`, lastmod, changefreq: "monthly", priority: "0.7", hreflang });
   });
 
   const xml = wrapUrlset([...staticEntries, ...enBlogEntries]);

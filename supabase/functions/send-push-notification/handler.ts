@@ -11,6 +11,44 @@
 // UNREGISTERED are pruned so dead devices stop inflating failure counts.
 // ============================================================================
 
+/**
+ * Ai được phép bắt hàm này gửi push.
+ *
+ * Tách khỏi index.ts để test khoá được — và nó cần được khoá: đường
+ * `internal_trigger` sinh ra chính vì đường cũ (trigger Postgres gửi anon key)
+ * đã trả 401 CÂM nhiều tháng mà không gate nào kêu. Một quyết định bảo mật
+ * nằm chôn trong Deno.serve là một quyết định không ai đo được.
+ *
+ * - `service_role`     — hàm khác gọi bằng supabase.functions.invoke service-role
+ * - `internal_trigger` — trigger Postgres qua pg_net, xác thực bằng x-cron-secret
+ * - `user_jwt`         — có bearer nhưng chưa biết là ai; index.ts phải xác minh
+ *                        JWT + vai admin + aal2 trước khi cho qua
+ * - `missing`          — không xuất trình gì cả
+ */
+export type PushCaller = "service_role" | "internal_trigger" | "user_jwt" | "missing";
+
+export function classifyPushCaller(
+  presented: { authorization: string | null; cronSecret: string | null },
+  env: { serviceRoleKey: string | undefined; cronSecret: string | undefined },
+): PushCaller {
+  // `length > 0` ở cả hai nhánh là chốt chặn thật, không phải phòng thủ thừa:
+  // thiếu biến môi trường thì hai chuỗi rỗng bằng nhau và cửa mở toang cho
+  // bất kỳ ai gửi header rỗng.
+  const cronSecret = env.cronSecret ?? "";
+  const presentedCron = presented.cronSecret ?? "";
+  if (cronSecret.length > 0 && presentedCron === cronSecret) {
+    return "internal_trigger";
+  }
+
+  const bearer = (presented.authorization ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (bearer.length === 0) return "missing";
+
+  const serviceRoleKey = env.serviceRoleKey ?? "";
+  if (serviceRoleKey.length > 0 && bearer === serviceRoleKey) return "service_role";
+
+  return "user_jwt";
+}
+
 export interface PushPayload {
   broadcast?: boolean;
   user_ids?: string[];

@@ -11,10 +11,13 @@ SELECT has_column('public', 'ops_job_retry_requests', 'verified_at', 'retry reco
 SELECT has_table('public', 'ops_edge_function_registry', 'edge function registry exists');
 SELECT has_table('public', 'ops_edge_function_state', 'edge runtime state exists');
 
+-- 14 since 2026-08-18: news-repair and x-draft joined. The count is pinned so
+-- a job cannot be added to, or quietly dropped from, monitoring without a
+-- deliberate change here.
 SELECT is(
   (SELECT count(*) FROM public.ops_job_registry WHERE enabled),
-  12::bigint,
-  'exactly twelve business jobs are enabled'
+  14::bigint,
+  'exactly fourteen business jobs are enabled'
 );
 
 SELECT has_column('public', 'ops_edge_function_registry', 'probe_url', 'registry supports external URL probes');

@@ -1,0 +1,214 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ThePickleHub Public API",
+    "version": "1.0.0",
+    "description": "Machine-readable contract for the public HTTP API exposed by ThePickleHub. Editorial pages, tournaments, livestreams and other discoverable content are indexed separately in /sitemap.xml and /llms.txt."
+  },
+  "servers": [
+    {
+      "url": "https://www.thepicklehub.net",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/api/rum-context": {
+      "get": {
+        "operationId": "getRumContext",
+        "summary": "Resolve coarse market context",
+        "description": "Returns the request country supplied by Cloudflare and the corresponding coarse market segment. The response is private and is not cached.",
+        "responses": {
+          "200": {
+            "description": "Request market context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RumContext"
+                }
+              }
+            }
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          }
+        }
+      }
+    },
+    "/api/indexnow": {
+      "get": {
+        "operationId": "submitKnownUrlsToIndexNow",
+        "summary": "Submit known site URLs to IndexNow",
+        "description": "Administrative operation protected by a secret query parameter. It submits the site's known URLs to IndexNow.",
+        "security": [
+          {
+            "indexNowSecret": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "IndexNow submission result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexNowResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      },
+      "post": {
+        "operationId": "submitSelectedUrlsToIndexNow",
+        "summary": "Submit selected site URLs to IndexNow",
+        "description": "Administrative operation protected by a secret query parameter. Only absolute URLs under https://www.thepicklehub.net/ are accepted.",
+        "security": [
+          {
+            "indexNowSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["urls"],
+                "properties": {
+                  "urls": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "format": "uri",
+                      "pattern": "^https://www\\.thepicklehub\\.net/"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "IndexNow submission result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexNowResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON body or URL list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "indexNowSecret": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "key",
+        "description": "Administrative IndexNow submission secret."
+      }
+    },
+    "schemas": {
+      "RumContext": {
+        "type": "object",
+        "required": ["country", "market_segment"],
+        "properties": {
+          "country": {
+            "type": ["string", "null"],
+            "description": "Uppercase ISO 3166-1 alpha-2 country code when available."
+          },
+          "market_segment": {
+            "type": "string"
+          }
+        }
+      },
+      "IndexNowResult": {
+        "type": "object",
+        "required": ["submitted", "urls", "indexnow_status", "indexnow_response"],
+        "properties": {
+          "submitted": { "type": "integer", "minimum": 0 },
+          "urls": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          },
+          "indexnow_status": { "type": "integer" },
+          "indexnow_response": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    },
+    "responses": {
+      "IndexNowResult": {
+        "description": "IndexNow submission result",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/IndexNowResult"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid secret",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Submission rate limit exceeded",
+        "headers": {
+          "Retry-After": {
+            "schema": { "type": "integer" }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "MethodNotAllowed": {
+        "description": "HTTP method is not supported",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  }
+}

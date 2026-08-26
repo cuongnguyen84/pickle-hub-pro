@@ -2,7 +2,7 @@
 
 **The first bilingual (Vietnamese-English) pickleball platform — live scores, tournaments, court directory, player profiles, and community. Built in Vietnam, played worldwide.**
 
-🌐 **Live:** [thepicklehub.net](https://www.thepicklehub.net) · 📱 iOS/Android via Capacitor · 👥 ~2,000 active users
+🌐 **Live:** [thepicklehub.net](https://www.thepicklehub.net) · 📱 Native iOS app · 👥 ~2,000 active users
 
 
 ## Why this exists
@@ -50,7 +50,7 @@ Solutions in this repo that may help other indie devs:
 | Frontend | React 18, TypeScript, Vite, shadcn/ui, Tailwind CSS |
 | Backend | Supabase (Postgres, Auth, 25 Edge Functions) |
 | Edge | Cloudflare Pages + Workers (SEO prerendering) |
-| Mobile | Capacitor (iOS/Android) — App ID `net.thepicklehub.app` |
+| Mobile | Native SwiftUI iOS app in `/apple` — App ID `net.thepicklehub.app` |
 | Data | DUPR API (approved), PPA Tour pipeline |
 
 ## Setup
@@ -87,9 +87,11 @@ Push to `main` triggers automatic deployment via **Cloudflare Pages**.
 - Backend: Supabase (Postgres + Auth + Edge Functions)
 - Domain: `thepicklehub.net` → `www.thepicklehub.net`
 
-## Mobile (Capacitor)
+## Mobile
 
-See [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md) for iOS/Android build steps.
+Native SwiftUI iOS app in [`apple/`](./apple). Build with `xcodegen` → `xcodebuild`.
+There is no Android app; the Capacitor wrappers were retired on 2026-08-24
+(see [ADR-001](./docs/adr/001-mobile-platform-direction.md)).
 
 ## Roadmap
 

@@ -1863,6 +1863,30 @@
 }
 [data-theme="the-line"] .tl-news-row-meta .sep { color: var(--tl-fg-4); }
 
+/* Loading rows for /news. They carry the same classes as a real row and fill
+   their text nodes with non-breaking spaces, so the browser derives the
+   reserved height from the identical CSS rather than from numbers copied here
+   that would drift the next time the row is restyled. Only the paint differs. */
+[data-theme="the-line"] .tl-news-row--skeleton { pointer-events: none; }
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-title,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-summary,
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span {
+  color: transparent;
+  border-radius: 5px;
+  background: linear-gradient(100deg, var(--tl-surface) 25%, var(--tl-bg-elev) 45%, var(--tl-surface) 65%);
+  background-size: 220% 100%;
+  animation: tl-feed-skeleton-pulse 1.6s ease-in-out infinite;
+}
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker { width: 92px; }
+[data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span { width: 128px; display: inline-block; }
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-kicker,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-title,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-summary,
+  [data-theme="the-line"] .tl-news-row--skeleton .tl-news-row-meta span { animation: none; }
+}
+
 /* ========== Manifesto ========== */
 [data-theme="the-line"] .tl-manifesto {
   padding: 96px 0;
@@ -1920,7 +1944,10 @@
   background: var(--tl-bg);
 }
 [data-theme="the-line"] .tl-foot-grid {
-  display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 36px;
+  /* 4 cột link kể từ 19/08 (thêm MUA SẮM). Gap 36 → 28 để cột thương hiệu
+     không bị bóp lại khi thêm cột thứ tư. Quy tắc mobile bên dưới vẫn 2 cột
+     nên cột mới chỉ xuống hàng, không cần đụng gì thêm. */
+  display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 28px;
   margin-bottom: 40px;
 }
 @media (max-width: 860px) { [data-theme="the-line"] .tl-foot-grid { grid-template-columns: 1fr 1fr; gap: 28px; } }
@@ -2754,6 +2781,60 @@
   margin: 0 0 22px; padding-left: 22px; color: var(--tl-fg-2);
 }
 [data-theme="the-line"] .tl-longform li { margin-bottom: 6px; }
+
+/* Longform tables. EN posts render section.table as a real <table> inside
+ * .tl-longform; VI posts get equivalent markup from Supabase HTML inside
+ * .prose, which ViBlogPost styles with Tailwind Typography prose-table:*
+ * utilities. .tl-longform had NO table rules at all, so every EN table
+ * rendered unstyled — no border, no header fill, columns running together.
+ * Reported 2026-08-24 against the World Cup schedule post, but it affected
+ * all 19 tables across 8 EN posts, not just that one. These rules mirror the
+ * VI surface so the two languages look the same.
+ * The wrapper exists because these tables carry long prose cells (a full
+ * round-by-round description per row) and would otherwise overflow the
+ * 720px .tl-longform column on a phone. */
+[data-theme="the-line"] .tl-longform .tl-table-wrap {
+  margin: 0 0 22px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+[data-theme="the-line"] .tl-longform table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--tl-border);
+  font-size: 15px;
+  line-height: 1.55;
+}
+[data-theme="the-line"] .tl-longform caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 13.5px;
+  color: var(--tl-fg-3);
+  padding: 0 0 8px;
+}
+[data-theme="the-line"] .tl-longform th,
+[data-theme="the-line"] .tl-longform td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-longform thead th {
+  background: var(--tl-surface-2);
+  color: var(--tl-fg);
+  font-weight: 600;
+  border-top: 0;
+}
+[data-theme="the-line"] .tl-longform tbody td { color: var(--tl-fg-2); }
+[data-theme="the-line"] .tl-longform tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--tl-surface-2) 45%, transparent);
+}
+/* First column of a schedule table is a short label (a date, a finish
+ * position) — keep it on one line so the long cell beside it does the
+ * wrapping. Only where there is room; on a phone the wrapper scrolls. */
+@media (min-width: 640px) {
+  [data-theme="the-line"] .tl-longform tbody td:first-child { white-space: nowrap; }
+}
 [data-theme="the-line"] .tl-longform blockquote {
   font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
   font-size: 24px; line-height: 1.35; color: var(--tl-fg);

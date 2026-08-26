@@ -3,7 +3,7 @@
  * chunk-error recovery (src/lib/chunkError.ts + ChunkErrorBoundary).
  *
  * Cloudflare Pages deletes the previous build's hashed chunks on every deploy.
- * A tab left open across a deploy (overnight tab, Capacitor WebView) still
+ * A tab left open across a deploy (an overnight tab, say) still
  * runs the OLD bundle; its next SPA navigation lazy-imports a chunk hash that
  * no longer exists → "Importing a module script failed". Instead of waiting
  * for that crash, we compare our baked-in __BUILD_ID__ against /build-id.txt

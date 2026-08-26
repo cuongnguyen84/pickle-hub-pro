@@ -34,11 +34,6 @@ vi.mock("@/components/shop/ShopShell", () => ({
   DefList: () => null,
 }));
 
-vi.mock("@/components/states/PageStates", () => ({
-  LoadingState: () => <p>loading</p>,
-  ErrorState: () => <p>error</p>,
-}));
-
 vi.mock("@/hooks/shop/useShopProfile", () => ({
   useMyShopMembership: () => ({ data: { shop_id: "shop-1", role: "owner" }, isLoading: false, isError: false, refetch: vi.fn() }),
   useShopProfile: () => ({ data: { id: "shop-1", state: "active" }, isLoading: false, isError: false, refetch: vi.fn() }),
@@ -66,6 +61,8 @@ vi.mock("@/hooks/shop/useProductSubmit", () => ({
   useSubmitPreflight: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
   useSubmitProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useWithdrawSubmission: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  // P4c: đường quay lại cho hàng đang bán. Màn này gọi nó vô điều kiện.
+  useEditAgain: () => ({ mutateAsync: vi.fn(), isPending: false, isError: false, error: null }),
   useProductPreview: () => ({ data: null }),
 }));
 
@@ -147,7 +144,14 @@ describe("multi-variant save leaves the matrix alone", () => {
     expect(payload.expectedVersion).toBe(4);
   });
 
-  it("still sends the default variant for a single product", async () => {
+  it("🔴 KHÔNG gửi giá cho sản phẩm đơn nữa — kể cả khi biểu mẫu vẫn cầm một con số", async () => {
+    // Câu này trước đây khoá điều NGƯỢC LẠI: "vẫn gửi phiên bản mặc định cho
+    // sản phẩm đơn". Nó xanh suốt trong khi một người bán thật mất hai lần sửa
+    // giá ngày 18/08 — vì cái nó khoá chính là con đường gây lỗi.
+    //
+    // Ô giá đơn giản CHỈ hiện khi tạo mới. Ở màn sửa nó không tồn tại, nên
+    // `draft.price_vnd` mãi là con số gieo từ lúc tải trang; gửi nó đi là ghi
+    // đè lên đúng cái giá mà bảng phiên bản vừa lưu.
     productRow = baseProduct();
     mutate.mockResolvedValue({});
     render(<SellerProductForm />);
@@ -156,7 +160,14 @@ describe("multi-variant save leaves the matrix alone", () => {
     fireEvent.click(saveButton());
 
     await waitFor(() => expect(mutate).toHaveBeenCalledTimes(1));
-    expect(mutate.mock.calls[0][0].variant).toEqual({ price_vnd: "1290000", stock_on_hand: "3" });
+    const payload = mutate.mock.calls[0][0];
+    expect(payload.variant).toBeUndefined();
+    // Con số gieo từ fixture (1290000) tuyệt đối không được đi kèm.
+    expect(JSON.stringify(payload)).not.toContain("1290000");
+    expect(JSON.stringify(payload)).not.toContain("price");
+    expect(JSON.stringify(payload)).not.toContain("stock");
+    // Nhưng phần chữ vẫn phải đi, nếu không thì "sửa tên" cũng hỏng theo.
+    expect(payload.patch.title).toBe("Giày Court Pro Mới");
   });
 });
 

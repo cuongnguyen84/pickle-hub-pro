@@ -68,7 +68,7 @@ const post: BlogPost = {
         },
         {
           heading: "Step-by-Step: Creating a Pickleball Bracket with Quick Tables",
-          content: "Once you know your format and size, building the bracket itself takes about a minute with The Pickle Hub's free tools. Here's how:",
+          content: "Once you know your format and size, building the bracket itself takes about a minute with ThePickleHub's free tools. Here's how:",
           orderedList: [
             "Go to the Quick Tables tool — No account needed. Click \"Create Tournament\" to start.",
             "Enter player count — Tell the system how many players or doubles teams are competing. Works with 4 to 200+ participants.",
@@ -139,7 +139,7 @@ const post: BlogPost = {
         },
         {
           question: "Can I print a pickleball bracket for the venue wall?",
-          answer: "Yes. The Pickle Hub brackets are printable, so you can post a wall copy while players follow live scores on their phones from the same shared link. A printed bracket is also a useful fallback if your venue has weak mobile signal."
+          answer: "Yes. ThePickleHub brackets are printable, so you can post a wall copy while players follow live scores on their phones from the same shared link. A printed bracket is also a useful fallback if your venue has weak mobile signal."
         }
       ]
     },
@@ -192,12 +192,12 @@ const post: BlogPost = {
             "Cấu trúc chung kết — vô địch nhánh thắng gặp vô địch nhánh thua. Nếu đội nhánh thua thắng, đấu thêm trận reset để phân định."
           ],
           internalLinks: [
-            { text: "Công cụ dựng bracket loại kép (32+ đội)", path: "/tools/doubles-elimination" }
+            { text: "Công cụ dựng bracket loại kép (32+ đội)", path: "/vi/tools/doubles-elimination" }
           ]
         },
         {
           heading: "Hướng dẫn từng bước: Tạo Bracket với Quick Tables",
-          content: "Khi đã chốt thể thức và kích thước, dựng bracket chỉ mất khoảng một phút với công cụ miễn phí của The Pickle Hub:",
+          content: "Khi đã chốt thể thức và kích thước, dựng bracket chỉ mất khoảng một phút với công cụ miễn phí của ThePickleHub:",
           orderedList: [
             "Vào công cụ Quick Tables — Không cần tài khoản. Nhấn \"Tạo giải\" để bắt đầu.",
             "Nhập số người chơi — Cho hệ thống biết bao nhiêu người hoặc đội đôi tham gia. Hỗ trợ 4 đến 200+.",
@@ -208,7 +208,7 @@ const post: BlogPost = {
             "Chia sẻ link — Gửi link giải cho tất cả người chơi. Họ xem bracket và điểm realtime từ điện thoại."
           ],
           internalLinks: [
-            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức, không cần đăng ký", path: "/tools" }
+            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức, không cần đăng ký", path: "/vi/tools" }
           ]
         },
         {
@@ -268,7 +268,7 @@ const post: BlogPost = {
         },
         {
           question: "Có in bracket ra dán ở sân được không?",
-          answer: "Được. Bracket của The Pickle Hub in được, bạn dán một bản ở sân trong khi người chơi theo dõi điểm trực tiếp trên điện thoại qua cùng một link chia sẻ. Bản in cũng là phương án dự phòng khi sân sóng yếu."
+          answer: "Được. Bracket của ThePickleHub in được, bạn dán một bản ở sân trong khi người chơi theo dõi điểm trực tiếp trên điện thoại qua cùng một link chia sẻ. Bản in cũng là phương án dự phòng khi sân sóng yếu."
         }
       ]
     }

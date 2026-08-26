@@ -28,13 +28,14 @@ import {
   Instagram,
   Gavel,
   Activity,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useRef } from "react";
 import { getLoginUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
-import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
+import { isIOS } from "@/lib/platform";
 // Load the The Line theme rules on admin pages. Without this import the
 // the-line.css chunk only ships with TheLineLayout, so pinning
 // data-theme="the-line" below would set the attribute with no matching rules
@@ -56,6 +57,7 @@ const navItems = [
   { path: "/admin/disputes", icon: Gavel, labelKey: "disputes" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
   { path: "/admin/news", icon: Newspaper, labelKey: "news" as const },
+  { path: "/admin/reviews", icon: Star, labelKey: "reviews" as const },
   { path: "/admin/embeds", icon: Instagram, labelKey: "embeds" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
   { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
@@ -94,13 +96,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       : location.pathname.startsWith(path);
 
   const isIOSDevice = isIOS();
-  const isAndroidDevice = isAndroid();
-  const isNative = isNativeApp();
-  const mobileBottomNavOffset = (isAndroidDevice && isNative)
-    ? 'calc(72px + max(env(safe-area-inset-bottom, 14px), 14px))'
-    : isIOSDevice
-      ? 'calc(68px + env(safe-area-inset-bottom, 0px))'
-      : '56px';
+  const mobileBottomNavOffset = isIOSDevice
+    ? 'calc(68px + env(safe-area-inset-bottom, 0px))'
+    : '56px';
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -193,6 +191,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       viewers: t.admin.viewers.title,
       push: "Push",
       forum: t.forum.title,
+      reviews: "Đánh giá sân",
       // "embeds" bypasses i18n like proTour — "IG Reels" reads the same in
       // VI and EN.
       embeds: "IG Reels",
@@ -298,16 +297,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <nav
         className="fixed bottom-0 left-0 right-0 z-[9999] lg:hidden bg-background-elevated border-t border-border-subtle"
         style={{
-          paddingBottom: (isAndroidDevice && isNative)
-            ? 'max(env(safe-area-inset-bottom, 14px), 14px)'
-            : isIOSDevice
-              ? 'env(safe-area-inset-bottom, 0px)'
-              : '0px',
+          paddingBottom: isIOSDevice ? 'env(safe-area-inset-bottom, 0px)' : '0px',
         }}
       >
         <div
           className="flex items-stretch justify-around"
-          style={{ minHeight: isIOSDevice ? '68px' : (isAndroidDevice && isNative) ? '72px' : '56px' }}
+          style={{ minHeight: isIOSDevice ? '68px' : '56px' }}
         >
           {mobileTabItems.map((item) => {
             const isActive = item.exact

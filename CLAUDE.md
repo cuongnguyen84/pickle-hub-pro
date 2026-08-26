@@ -13,9 +13,9 @@ Website: https://www.thepicklehub.net
 - **Frontend:** React 18 + TypeScript + Vite + shadcn/ui + Tailwind CSS + vite-plugin-pwa
 - **Backend:** Supabase (project ref `ajvlcamxemgbxduhiqrl`)
 - **Hosting:** Cloudflare Pages (project `pickle-hub-pro`, production branch `main`) + Cloudflare Workers for scheduled scrapers
-- **Mobile:** Capacitor (iOS + Android, app ID `net.thepicklehub.app`)
+- **Mobile:** native SwiftUI iOS app in `/apple` (app ID `net.thepicklehub.app`). Capacitor retired 2026-08-24 — the iOS wrapper was replaced on the App Store by native 2.0.3, and the Android wrapper never shipped. There is no Android app.
 - **Livestream:** Mux
-- **Push:** Firebase Cloud Messaging (FCM via Capacitor)
+- **Push:** Firebase Cloud Messaging (FCM, registered natively by `/apple`)
 - **Email:** Resend
 - **AI translation:** Google Gemini (EN → VI for news)
 - **Analytics:** GA4, Google Search Console (read via Chrome when needed), Ahrefs Web Analytics (free script in `index.html`, data since 2026-07-04 — read the dashboard via Chrome at app.ahrefs.com/web-analytics). _Ahrefs MCP tools ALL return "Insufficient plan" (even `web-analytics-*`); do not call them._ GA4 caveat: heavily polluted by US datacenter bot traffic — trust the Vietnam segment / Ahrefs numbers instead.
@@ -38,14 +38,7 @@ Regenerate Supabase types (canonical command — `--schema public` is REQUIRED; 
 npx supabase gen types typescript --project-id ajvlcamxemgbxduhiqrl --schema public > src/integrations/supabase/types.ts
 ```
 
-Mobile (Capacitor) — see [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md). Common commands:
-
-```sh
-npx cap sync ios     # Sync web assets to iOS
-npx cap sync android # Sync web assets to Android
-npx cap open ios     # Open Xcode
-npx cap open android # Open Android Studio
-```
+Mobile — the app lives in `/apple` (SwiftUI). Build loop: `xcodegen` → `xcodebuild` → `simctl`.
 
 ## Critical Workflow Notes
 
@@ -90,7 +83,15 @@ Key examples: `mux-create-livestream`, `delete-account`, `send-push-notification
 
 SEO prerendering for bot crawlers is handled by `functions/_middleware.ts` + `functions/_lib/render/`, NOT by Supabase edge functions.
 
-- Cache key: **`pr:v34:${pathname}`** in KV namespace `PRERENDER_CACHE` (bump version when changing SSR output to invalidate stale HTML). The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
+- Cache key: **`pr:v<N>:${pathname}`** in KV namespace `PRERENDER_CACHE`. **Do not trust a version number written here** — this line said `pr:v34` while production had been on `v53` for weeks. Read the current value from the source instead:
+
+  ```sh
+  grep -n 'const cacheKey' functions/_middleware.ts
+  ```
+
+  Bump `<N>` in the same commit as any change to SSR output, or cached HTML serves the pre-change version for the full TTL. The number carries no meaning beyond being different from the deployed one, so when two open branches both bump it, take the higher and move on. Add a one-line comment above the constant saying what changed — that comment block is the real changelog.
+
+  The query string is **not** part of the key. To force-refresh a single path after changing content or og:image, request it once with **`?nocache=1`** — the value must be exactly `1` (`_middleware.ts` compares `=== "1"`); any other value silently serves the cached copy.
 - Per-route handlers: `renderBlog`, `renderViBlog`, `renderTournament`, `renderMatch` (`match-seo.ts`), `renderSocialEvent`, `renderRankings`, `renderLive`, `renderNews`, etc.
 - `BLOG_POST_META` in `functions/_lib/render/blog-meta.ts` is the SSR truth table for blog posts — missing entry = bot 404. Since SEO-02 (`ce6a0fa`) it is **generated at module load** from `src/content/blog/metadata.ts`; do not hand-edit it, add the metadata entry instead.
 
@@ -101,9 +102,13 @@ The legacy `prerender-worker` Cloudflare Worker is still active and **MUST be pr
 Root `/sitemap.xml` is a sitemap index served by `functions/sitemap.xml.ts` referencing segment sitemaps:
 
 - `sitemap-static.xml`, `sitemap-blog.xml`, `sitemap-tournaments.xml`, `sitemap-matches.xml`, `sitemap-events.xml`, `sitemap-news.xml`
-- `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: DUPR-linked public profiles only)
+- `sitemap-players.xml`, `sitemap-venues.xml`, `sitemap-livestreams.xml`, `sitemap-organizations.xml` are **enabled** in the index (venues: /san detail + /san/khu-vuc/<city> hub pairs; players: profiles with real content only — DUPR-linked, a synced DUPR rating, or a bio ≥30 chars; see `hasIndexableSubstance()` in `functions/sitemap-players.xml.ts`)
 
-All segments support `xhtml:link` hreflang (en, vi, x-default).
+`xhtml:link` hreflang (en, vi, x-default) is emitted only by the segments that genuinely have two URLs per entity: **blog, news, events, venues, static**. **tournaments, matches, players, livestreams, videos, organizations emit none, deliberately** — those entities are single-canonical (one URL serves both locales via the SPA language toggle), so `singleCanonicalHreflang()` in `functions/_lib/utils.ts` returns `""` and the sitemaps carry no `xhtml:link`. Google's rule: if only one URL is indexed across all locales, omit hreflang. Adding it back re-triggers Ahrefs' "no return-tag" + "referenced for more than one language" — the exact regression batches 6 and 9 fixed on 2026-05-28. `/vi/org/*`, `/vi/tournament/*` and `/vi/watch/*` additionally 301 to the EN path (`_middleware.ts` rule 1d).
+
+⚠️ **PostgREST caps every response at 1000 rows** and does it silently — `.limit(5000)` returns exactly 1000 rows, HTTP 200, `error = null`. sitemap-news served 500 of 709 EN articles that way for months (fixed 2026-08-23, #644). Any sitemap whose table can pass 1000 rows must use `fetchAllRows()` from `functions/_lib/sitemap-helpers.ts`, with a unique tie breaker in the ORDER BY. news + matches + venues already do, and `functions/__tests__/sitemap-row-cap.test.ts` holds them there; the rest still use a bare `.limit(5000)` and are only safe while they stay under the cap (2026-08-25 counts: blog 68, events 27, livestreams 29, organizations 3, players 40 after its DB-side filters, tournaments 15, videos 6 — versus venues at 896 and growing ~100/month, which is why it was moved).
+
+News URLs are pushed to IndexNow by the `indexnow-news-hourly` pg_cron job (migration `20260823060000`), not by `functions/api/indexnow.ts` — that endpoint covers static routes + blog only.
 
 ### News Aggregator (Phase 1-5)
 
@@ -139,7 +144,7 @@ Each worker has its own `wrangler.toml`. Deploy with `wrangler deploy` from insi
 
 `vite-plugin-pwa` config in `vite.config.ts`:
 
-- Service worker is registered **manually** in `src/pwa.ts` so we can skip registration inside Capacitor native WebView (mobile app uses live remote URL, not a precached shell)
+- Service worker is registered **manually** in `src/pwa.ts` (kept manual after the Capacitor retirement — `injectRegister: null` lets us control ordering against the chunk-error recovery)
 - Navigation requests use `NetworkFirst` with 3s timeout — `index.html` is **excluded** from precache so users always get the freshest shell after deploy
 - Runtime cache rules for Supabase REST/storage, Mux images, Google avatars, Google Fonts — see `vite.config.ts` for full list
 

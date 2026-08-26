@@ -27,7 +27,9 @@
  * Rows with no link_url are terminal at `posted`.
  */
 
-export interface XEnv {
+import { notifyPosted, type NotifyEnv } from './notify';
+
+export interface XEnv extends NotifyEnv {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   X_CLIENT_ID?: string;
@@ -584,11 +586,22 @@ async function publishNext(
       posted_at: new Date().toISOString(),
       error_message: null,
     });
+    const url = `https://x.com/thepicklehub/status/${publishedId}`;
+    // Announced after the row is finalized, never before: a notification for a
+    // post whose bookkeeping then failed is worse than no notification at all.
+    await notifyPosted(env, {
+      platform: 'X',
+      account: '@thepicklehub',
+      // The whole post, not its first line: an X post is at most 280
+      // characters, so the notification can show exactly what went out.
+      body: row.body,
+      url,
+    });
     return {
       posted: true,
       post_id: row.id,
       x_post_id: publishedId,
-      url: `https://x.com/thepicklehub/status/${publishedId}`,
+      url,
       link_reply_pending: !!row.link_url,
     };
   } catch (error) {
@@ -699,6 +712,30 @@ async function drainLinkComment(
  * /health is unauthenticated (it is what the uptime monitor hits), so this
  * returns states and counts only — never a Supabase or X error body.
  */
+/**
+ * Most recent token-related failure recorded against a post, or null.
+ *
+ * Read-only and cheap. Deliberately NOT a live credential check: the only way
+ * to prove the client secret works is to spend the refresh token, and X rotates
+ * it on use — a health endpoint that consumes the credential it is testing
+ * would take the pipeline down every time someone polled it.
+ */
+async function lastTokenError(env: XEnv): Promise<string | null> {
+  const url = new URL(`${env.SUPABASE_URL}/rest/v1/x_posts`);
+  url.searchParams.set('select', 'error_message,updated_at');
+  url.searchParams.set('error_message', 'ilike.*token*');
+  url.searchParams.set('order', 'updated_at.desc');
+  url.searchParams.set('limit', '1');
+  try {
+    const res = await fetch(url.toString(), { headers: restHeaders(env) });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Array<{ error_message: string | null }>;
+    return rows[0]?.error_message?.slice(0, 200) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function xHealth(env: XEnv): Promise<Record<string, unknown>> {
   if (!xConfigured(env)) return { configured: false };
   try {
@@ -716,10 +753,19 @@ export async function xHealth(env: XEnv): Promise<Record<string, unknown>> {
       url.searchParams.set('posted_at', `lt.${overdueCutoff}`);
       url.searchParams.set('limit', '100');
     });
+    // The most recent token failure, surfaced rather than left in a row nobody
+    // reads. `configured: true` only ever meant "both variables are non-empty",
+    // and it reported healthy through two separate outages in two days — once
+    // when `wrangler secret put` stored an empty string, once when the stored
+    // client secret no longer matched the one X expected. Neither was visible
+    // here; both were sitting in x_posts.error_message the whole time.
+    const tokenError = await lastTokenError(env);
+
     return {
       configured: true,
       token_expires_at: row.expires_at,
       token_needs_refresh: shouldRefreshToken(row.expires_at),
+      ...(tokenError ? { last_token_error: tokenError } : {}),
       approved_queue: queued.length,
       link_reply_overdue: overdue.length,
     };

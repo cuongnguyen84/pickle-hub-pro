@@ -140,7 +140,7 @@ const Videos = () => {
                       {v.published_at && (
                         <>
                           <span>·</span>
-                          <span>{formatRelative(v.published_at)}</span>
+                          <span>{formatRelative(v.published_at, language)}</span>
                         </>
                       )}
                     </div>

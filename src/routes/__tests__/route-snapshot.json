@@ -5,43 +5,67 @@
   },
   {
     "path": "/shop",
-    "element": "<ShopHome />"
+    "element": "<ShopGate><ShopHome /></ShopGate>"
   },
   {
     "path": "/vi/shop",
-    "element": "<ViLanguageWrapper><ShopHome /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopHome /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/search",
-    "element": "<ShopSearch />"
+    "element": "<ShopGate><ShopSearch /></ShopGate>"
   },
   {
     "path": "/vi/shop/search",
-    "element": "<ViLanguageWrapper><ShopSearch /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopSearch /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/category/:slug",
-    "element": "<ShopCategory />"
+    "element": "<ShopGate><ShopCategory /></ShopGate>"
   },
   {
     "path": "/shop/product/:slug",
-    "element": "<ProductDetail />"
+    "element": "<ShopGate><ProductDetail /></ShopGate>"
   },
   {
     "path": "/vi/shop/product/:slug",
-    "element": "<ViLanguageWrapper><ProductDetail /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ProductDetail /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/shop/store/:slug",
-    "element": "<ShopStore />"
+    "element": "<ShopGate><ShopStore /></ShopGate>"
   },
   {
     "path": "/vi/shop/store/:slug",
-    "element": "<ViLanguageWrapper><ShopStore /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopStore /></ShopGate></ViLanguageWrapper>"
   },
   {
     "path": "/vi/shop/category/:slug",
-    "element": "<ViLanguageWrapper><ShopCategory /></ViLanguageWrapper>"
+    "element": "<ViLanguageWrapper><ShopGate><ShopCategory /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/cart",
+    "element": "<ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate>"
+  },
+  {
+    "path": "/vi/shop/cart",
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/checkout/:shopSlug",
+    "element": "<ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate>"
+  },
+  {
+    "path": "/vi/shop/checkout/:shopSlug",
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/shop/order/:code",
+    "element": "<RequireAuth><ShopOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/order/:code",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrderDetail /></RequireAuth></ViLanguageWrapper>"
   },
   {
     "path": "/live",
@@ -532,6 +556,10 @@
     "element": "<AdminNews />"
   },
   {
+    "path": "/admin/reviews",
+    "element": "<AdminReviews />"
+  },
+  {
     "path": "/admin/embeds",
     "element": "<AdminEmbeds />"
   },
@@ -882,5 +910,37 @@
   {
     "path": "/vi/rankings/ppa-tour",
     "element": "<ViLanguageWrapper><PpaRankings /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/seller/orders",
+    "element": "<RequireAuth><SellerOrders /></RequireAuth>"
+  },
+  {
+    "path": "/seller/orders/:code",
+    "element": "<RequireAuth><SellerOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/shop/orders",
+    "element": "<RequireAuth><ShopOrders /></RequireAuth>"
+  },
+  {
+    "path": "/vi/shop/orders",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrders /></RequireAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/about",
+    "element": "<About />"
+  },
+  {
+    "path": "/contact",
+    "element": "<Contact />"
+  },
+  {
+    "path": "/vi/about",
+    "element": "<ViLanguageWrapper><About /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/contact",
+    "element": "<ViLanguageWrapper><Contact /></ViLanguageWrapper>"
   }
 ]

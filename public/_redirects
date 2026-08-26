@@ -70,8 +70,30 @@
 /vi/blog/thuat-toan-dupr-vi-sao-thang-mat-diem           /vi/blog/thuat-toan-dupr-thang-mat-diem-thua-tang-diem    301
 /vi/blog/to-chuc-giai-pickleball                         /vi/blog/cach-to-chuc-giai-pickleball                     301
 /vi/blog/luat-pickleball-day-du                          /vi/blog/luat-pickleball-co-ban                           301
-# Retired /dupr landing → live VI DUPR explainer (mirrored in _middleware.ts)
-/dupr                                                    /vi/blog/dupr-la-gi-huong-dan-cho-nguoi-choi-viet-nam     301
+# 2026-08-25 site audit — six venues the alobo importer created twice on
+# 2026-08-24 (root cause fixed in resolveNewVenueSlugs). The duplicate rows are
+# deleted; keep the retired URLs off a 404. Mirrored in functions/_middleware.ts
+# RETIRED_VENUE_SLUGS because bots bypass this file.
+/san/lakeside-pickleball-coffe-rua-xe-da-nang     /san/lakeside-pickleball-coffe-rua-xe     301
+/vi/san/lakeside-pickleball-coffe-rua-xe-da-nang  /vi/san/lakeside-pickleball-coffe-rua-xe  301
+/san/ob-pickleball-quang-ngai                     /san/ob-pickleball                        301
+/vi/san/ob-pickleball-quang-ngai                  /vi/san/ob-pickleball                     301
+/san/pickleball-yen-hoa-ha-noi                    /san/pickleball-yen-hoa                   301
+/vi/san/pickleball-yen-hoa-ha-noi                 /vi/san/pickleball-yen-hoa                301
+/san/san-pickleball-quan-doi-tp-hcm               /san/san-pickleball-quan-doi              301
+/vi/san/san-pickleball-quan-doi-tp-hcm            /vi/san/san-pickleball-quan-doi           301
+/san/the-pickleball-lounge-ha-noi                 /san/the-pickleball-lounge                301
+/vi/san/the-pickleball-lounge-ha-noi              /vi/san/the-pickleball-lounge             301
+/san/le-ninh-t-a                                  /san/san-le-ninh-t-a                      301
+/vi/san/le-ninh-t-a                               /vi/san/san-le-ninh-t-a                   301
+
+# GSC 2026-08-25 — news rows re-ingested under stable replacement slugs.
+/news/wong-sets-record-with-third-straight-gold-1f1um3  /news/hong-kit-wong-makes-history-with-third-consecutive-singles-crown-at-singapore-op-58d5a53d  301
+/vi/news/wong-lap-ky-luc-voi-h-hcv-lien-tiep-1f1um3  /vi/news/hong-kit-wong-lap-ky-luc-voi-huy-chuong-vang-don-nam-lien-tiep-tai-singapore-58d5a53d  301
+/news/the-dink-minor-league-pickleball-format-explained-every-way-to-play-1hfoe4  /news/understanding-the-dink-minor-league-pickleball-structure-68400027  301
+/vi/news/giai-ma-the-thuc-minor-league-pickleball-san-choi-dong-doi-dinh-cao-1hfoe4  /vi/news/tim-hieu-cau-truc-giai-dau-pickleball-nghiep-du-68400027  301
+/news/a-summer-to-remember-recapping-the-2026-joola-pops-summer-tour-1fp8r3  /news/joola-concludes-nationwide-summer-tour-9e811e50  301
+/vi/news/mua-he-dang-nho-nhin-lai-hanh-trinh-joola-pops-summer-tour-2026-1fp8r3  /vi/news/hanh-trinh-xuyen-quoc-gia-cua-joola-khep-lai-thanh-cong-9e811e50  301
 
 # SPA fallback
 /* /index.html 200

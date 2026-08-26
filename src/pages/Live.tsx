@@ -48,13 +48,13 @@ const MatchCard = ({ stream, language }: MatchCardProps) => {
     ) : stream.status === "scheduled" ? (
       <div className="tl-match-head">
         <span className="stat upcoming">● {language === "vi" ? "Sắp diễn ra" : "Scheduled"}</span>
-        <span className="ctx">{formatRelative(stream.scheduled_start_at)}</span>
+        <span className="ctx">{formatRelative(stream.scheduled_start_at, language)}</span>
       </div>
     ) : (
       <div className="tl-match-head">
         <span className="stat final">{language === "vi" ? "Replay" : "Replay"}</span>
         <span className="ctx">
-          {stream.ended_at ? formatRelative(stream.ended_at) : language === "vi" ? "Đã kết thúc" : "Ended"}
+          {stream.ended_at ? formatRelative(stream.ended_at, language) : language === "vi" ? "Đã kết thúc" : "Ended"}
         </span>
       </div>
     );

@@ -8,7 +8,7 @@
 
 BEGIN;
 
-SELECT plan(77);
+SELECT plan(88);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -58,8 +58,8 @@ SELECT ok((SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND table
   'RLS enabled on shop_contact_channels');
 SELECT ok((SELECT has_table_privilege('authenticated','public.shop_contact_channels','INSERT')),
   'authenticated has an INSERT grant to go with the policy');
-SELECT ok((SELECT has_table_privilege('anon','public.shop_contact_channels','SELECT')),
-  'anon has the SELECT grant its public policy needs');
+SELECT ok(NOT (SELECT has_table_privilege('anon','public.shop_contact_channels','SELECT')),
+  'and anon holds no SELECT at all — the public door is shop_public_contacts');
 
 -- The Phase 1 policy name said "owner" while the rule said "manager".
 SELECT is(
@@ -235,10 +235,19 @@ SET LOCAL role authenticated;
 
 -- ─── Contact channels ───────────────────────────────────────────────────────
 
+-- Trước 20260818160000 dòng này khoá `draft`, và đó là lý do tính năng chưa
+-- bao giờ chạm tới được: trigger ghim draft, upsert không đụng state, và màn
+-- cài đặt không có nút gửi duyệt. Nay ranh giới tin cậy là CÁI SHOP — shop đã
+-- active thì kênh của người bán lên luôn.
 SELECT is(
   (public.shop_contact_upsert('7a000001-0000-4000-8000-000000000001'::uuid, 'zalo', '0901234567', 'Zalo shop', true)).state::text,
-  'draft',
-  'kênh mới luôn bắt đầu ở draft — chọn công khai là quyền người bán, duyệt thì không'
+  'approved',
+  'shop đã mở bán thì kênh mới lên luôn — admin chỉ duyệt việc mở shop'
+);
+SELECT ok(
+  (SELECT approved_at IS NOT NULL AND approved_by IS NULL
+   FROM public.shop_contact_channels WHERE shop_id='7a000001-0000-4000-8000-000000000001'::uuid),
+  'và approved_by để TRỐNG — không người nào duyệt cả, bịa một uid vào đó là nói dối nhật ký'
 );
 SELECT is(
   (SELECT value_normalized FROM public.shop_contact_channels WHERE shop_id='7a000001-0000-4000-8000-000000000001'::uuid),
@@ -251,15 +260,18 @@ SELECT ok(
   'email tài khoản KHÔNG bao giờ tự thành kênh liên hệ'
 );
 
--- The seller cannot approve their own channel.
+-- Người bán không viết được vào SỔ KIỂM DUYỆT. Trước 20260818160000 câu này
+-- khoá cả `state`; nay state là của người bán, còn review_note / approved_by
+-- vẫn là chữ của người kiểm duyệt và trigger vẫn ghim.
 UPDATE public.shop_contact_channels
-SET state='approved', approved_at=now(), review_note='tự duyệt'
+SET review_note='tự ghi', approved_by='50040001-0000-4000-8000-000000000001'::uuid
 WHERE shop_id='7a000001-0000-4000-8000-000000000001'::uuid;
 SELECT is(
-  (SELECT state::text || '/' || coalesce(review_note,'∅') FROM public.shop_contact_channels
+  (SELECT coalesce(review_note,'∅') || '/' || coalesce(approved_by::text,'∅')
+   FROM public.shop_contact_channels
    WHERE shop_id='7a000001-0000-4000-8000-000000000001'::uuid),
-  'draft/∅',
-  'người bán KHÔNG tự duyệt được kênh của mình'
+  '∅/∅',
+  'người bán KHÔNG viết được lời phê hay tên người duyệt lên kênh của mình'
 );
 
 -- Re-adding the same channel updates rather than erroring on the unique index.
@@ -275,16 +287,19 @@ SELECT is(
   'và không sinh dòng thứ hai'
 );
 
--- Anonymous sees nothing until it is both public and approved.
+-- Khách vãng lai thấy kênh NGAY. Đọc qua cửa công khai, vì từ 20260818140000
+-- bảng đã đóng với anon — hàng mang internal_note, review_note và approved_by,
+-- không cái nào cửa đó trao ra.
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels),
-  0,
-  'khách vãng lai không thấy kênh chưa duyệt'
+  jsonb_array_length(public.shop_public_contacts('7a000001-0000-4000-8000-000000000001'::uuid)),
+  1,
+  'shop đã mở bán thì khách thấy kênh ngay, không chờ ai duyệt'
 );
 
--- Admin approves.
+-- Hàm duyệt vẫn còn, vẫn admin-only. Nó không còn là cổng phải đi qua, nhưng
+-- nó là ĐÒN GỠ, nên nó phải chạy được — và phải vẫn đòi lý do.
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50040005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 SELECT throws_ok(
@@ -294,41 +309,74 @@ SELECT throws_ok(
   'từ chối mà không có lý do cho người bán là không hợp lệ'
 );
 SELECT is(
-  -- P2b.1 contract: a JSONB envelope, and the notes moved behind
-  -- _expected_version so a decision can be pinned to the version reviewed.
   (public.shop_contact_decide((SELECT id FROM public.shop_contact_channels LIMIT 1), 'approve')) ->> 'state',
   'approved',
-  'admin duyệt kênh'
+  'admin vẫn duyệt được (nay là xác nhận lại, không phải mở cổng)'
 );
 
-SET LOCAL role anon;
-SET LOCAL request.jwt.claims TO '{"role":"anon"}';
-SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels),
-  1,
-  'sau khi duyệt + công khai thì khách mới thấy'
-);
-
--- Editing an approved value must drop the badge.
+-- Sửa giá trị của một kênh đang hiển thị: nó vẫn hiển thị, nhưng dấu thời gian
+-- phải NHẢY sang giá trị mới. Bất biến mà nhánh này tồn tại để giữ không phải
+-- "đã có người xem" mà là "huy hiệu mô tả đúng cái đang hiện ra".
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50040001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 SELECT is(
   (public.shop_contact_upsert('7a000001-0000-4000-8000-000000000001'::uuid, 'zalo', '0987654321', 'Zalo', true,
      (SELECT id FROM public.shop_contact_channels LIMIT 1))).state::text,
-  'pending_review',
-  'sửa giá trị đã duyệt thì huy hiệu duyệt bị thu lại'
+  'approved',
+  'sửa giá trị thì kênh vẫn hiển thị — không còn ai để chờ'
 );
+-- KHÔNG khẳng định "approved_at nhảy tới mốc mới": pgTAP chạy trong một
+-- transaction và `now()` đứng yên trong đó, nên phép so sánh ấy luôn sai bất kể
+-- code đúng hay không. Thứ kiểm được là bất biến thật: kênh vẫn hiển thị, vẫn
+-- không có tên người duyệt, và cửa công khai trả GIÁ TRỊ MỚI (khẳng định ngay
+-- dưới) — đó mới là điều "huy hiệu mô tả đúng cái đang hiện ra" thật sự nói.
 SELECT ok(
-  (SELECT approved_at IS NULL AND approved_by IS NULL FROM public.shop_contact_channels LIMIT 1),
-  'và dấu vết duyệt cũ bị xoá, không treo lại trên giá trị mới'
+  (SELECT approved_at IS NOT NULL AND approved_by IS NULL
+   FROM public.shop_contact_channels LIMIT 1),
+  'vẫn có dấu thời gian, và vẫn không có tên người duyệt'
 );
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels),
-  0,
-  'khách không còn thấy kênh vừa bị đưa lại hàng chờ'
+  (public.shop_public_contacts('7a000001-0000-4000-8000-000000000001'::uuid) -> 0) ->> 'href',
+  'https://zalo.me/84987654321',
+  'và khách thấy ngay GIÁ TRỊ MỚI, không phải giá trị cũ'
+);
+
+-- Đòn gỡ của admin KHÔNG bị người bán gỡ ngược bằng cách gõ lại số. Đây là chỗ
+-- duy nhất trigger còn quyết định thay người bán, và nó giữ vì lý do khác hẳn:
+-- không phải "chưa ai xem", mà là "đã có người xem và nói không".
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50040005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
+SELECT is(
+  (public.shop_contact_decide((SELECT id FROM public.shop_contact_channels LIMIT 1),
+     'disable', NULL, 'Số này dẫn tới nơi khác')) ->> 'state',
+  'disabled',
+  'admin tắt được một kênh đang hiển thị'
+);
+SET LOCAL request.jwt.claims TO '{"sub":"50040001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+SELECT is(
+  (public.shop_contact_upsert('7a000001-0000-4000-8000-000000000001'::uuid, 'zalo', '0977777777', 'Zalo', true,
+     (SELECT id FROM public.shop_contact_channels LIMIT 1))).state::text,
+  'disabled',
+  'người bán gõ số khác vào kênh đã bị tắt: nó KHÔNG sống lại'
+);
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+SELECT is(
+  public.shop_public_contacts('7a000001-0000-4000-8000-000000000001'::uuid),
+  '[]'::jsonb,
+  'và khách vẫn không thấy nó'
+);
+
+-- Trả kênh về trạng thái hiển thị để phần dưới của file đọc đúng hình dạng nó
+-- đã dựng.
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50040005-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
+SELECT ok(
+  (public.shop_contact_decide((SELECT id FROM public.shop_contact_channels LIMIT 1), 'approve')) ->> 'state' = 'approved',
+  'admin bật lại được kênh đã tắt'
 );
 
 -- Same rule for the business phone, with a value class that did not exist
@@ -354,8 +402,8 @@ SET LOCAL request.jwt.claims TO '{"sub":"50040001-0000-4000-8000-000000000001","
 SELECT is(
   (public.shop_contact_upsert('7a000001-0000-4000-8000-000000000001'::uuid, 'phone', '028 3822 1234', 'Hotline', true,
      (SELECT id FROM public.shop_contact_channels WHERE type='phone' LIMIT 1))).state::text,
-  'pending_review',
-  'phone: đổi từ di động sang số bàn thì quay lại hàng chờ duyệt'
+  'approved',
+  'phone: đổi từ di động sang số bàn vẫn hiển thị ngay'
 );
 SELECT is(
   (SELECT value_normalized FROM public.shop_contact_channels WHERE type='phone' LIMIT 1),
@@ -372,6 +420,67 @@ SELECT ok(
      (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
      '{"shipping_note":"Giao trong 2 ngày ở TP.HCM"}'::jsonb)).shipping_note IS NOT NULL,
   'manager cũng sửa được hồ sơ'
+);
+
+-- ─── Phí giao hàng do người bán tự đặt (20260819130000) ────────────────────
+-- Trước file migration đó, người bán chỉ sửa được `shipping_note` — ô CHỮ — nên
+-- chữ trôi khỏi số: production 19/08 ghi "Giao hàng miễn phí toàn quốc" trong
+-- khi giỏ hàng thu 30.000₫.
+
+SELECT is(
+  (public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid,
+     (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+     '{"shipping_fee_vnd":25000}'::jsonb)).shipping_fee_vnd,
+  25000,
+  'người bán đặt được phí giao hàng'
+);
+
+-- 0 là một LỰA CHỌN ("miễn phí"), không phải ô bỏ trống. Nếu bị coi là trống mà
+-- giữ giá trị cũ thì người bán không bao giờ chuyển về miễn phí được.
+SELECT is(
+  (public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid,
+     (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+     '{"shipping_fee_vnd":0}'::jsonb)).shipping_fee_vnd,
+  0,
+  'đặt về 0 được — miễn phí là lựa chọn, không phải ô trống'
+);
+
+-- Chụp version TRƯỚC hai patch hỏng, để câu cuối so được thật chứ không so
+-- một biểu thức với chính nó.
+CREATE TEMP TABLE t_fee_ver AS
+SELECT version AS v FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid;
+
+SELECT throws_ok(
+  format($$ SELECT public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid, %s, '{"shipping_fee_vnd":-1}'::jsonb) $$,
+    (SELECT v FROM t_fee_ver)),
+  '23514', NULL,
+  'phí âm bị từ chối'
+);
+
+-- Thừa một số 0 là lỗi gõ hay gặp nhất, và CHECK trên bảng chỉ chặn số âm nên
+-- nó sẽ lọt: shop âm thầm bị định giá ra khỏi thị trường mà không ai báo.
+SELECT throws_ok(
+  format($$ SELECT public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid, %s, '{"shipping_fee_vnd":3000000}'::jsonb) $$,
+    (SELECT v FROM t_fee_ver)),
+  '23514', NULL,
+  'phí vượt trần 1.000.000₫ bị từ chối'
+);
+
+-- Patch hỏng KHÔNG được nhích version: nếu nhích, lần lưu hợp lệ ngay sau đó
+-- của người bán sẽ nhận PT409 cho một thay đổi chưa hề xảy ra.
+SELECT is(
+  (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+  (SELECT v FROM t_fee_ver),
+  'version không nhích sau hai patch bị từ chối'
+);
+
+-- Không nhắc tới phí thì phí giữ nguyên — patch là vá, không phải thay cả hồ sơ.
+SELECT is(
+  (public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid,
+     (SELECT version FROM public.shops WHERE id='7a000001-0000-4000-8000-000000000001'::uuid),
+     '{"shipping_note":"Giao trong 2 ngày"}'::jsonb)).shipping_fee_vnd,
+  0,
+  'patch không nhắc phí thì phí giữ nguyên'
 );
 
 SET LOCAL request.jwt.claims TO '{"sub":"50040003-0000-4000-8000-000000000003","role":"authenticated","aal":"aal1"}';
@@ -395,16 +504,33 @@ SELECT throws_ok(
   'support KHÔNG thêm được kênh liên hệ'
 );
 
+-- Một kênh RIÊNG, để câu hỏi "người ngoài thấy gì" ở dưới có nghĩa. Không có
+-- nó thì khẳng định kia chỉ đếm được thứ vốn đã công khai.
+SET LOCAL request.jwt.claims TO '{"sub":"50040001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+SELECT is(
+  (public.shop_contact_upsert('7a000001-0000-4000-8000-000000000001'::uuid,
+     'messenger', 'm.me/shopnoibo', 'Nội bộ', false)).is_public,
+  false,
+  'người bán thêm được một kênh chỉ mình mình thấy'
+);
+
 SET LOCAL request.jwt.claims TO '{"sub":"50040004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal1"}';
 SELECT throws_ok(
   $$ SELECT public.shop_profile_update('7a000001-0000-4000-8000-000000000001'::uuid, 99, '{"name":"Shop khác sửa"}'::jsonb) $$,
   '42501', NULL,
   'chủ shop khác KHÔNG sửa được'
 );
+-- Trước 20260818160000 câu này khoá `0`, nhưng nó khoá con số ấy vì mọi kênh
+-- trong fixture đều CHƯA duyệt — tức là nó đo CỔNG DUYỆT, không đo quyền riêng
+-- tư. Nay kênh công khai thì ai cũng đọc được; đó là nghĩa của công khai, và
+-- anon lấy được qua RPC từ lâu. Bất biến câu này thật sự định nói: một kênh
+-- KHÔNG công khai thì người ngoài không thấy — và fixture ở trên vừa dựng đúng
+-- một kênh như thế để câu hỏi có nghĩa.
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels WHERE shop_id='7a000001-0000-4000-8000-000000000001'::uuid),
-  0,
-  'chủ shop khác không đọc được kênh liên hệ chưa công khai'
+  (SELECT count(*)::int FROM public.shop_contact_channels
+   WHERE shop_id='7a000001-0000-4000-8000-000000000001'::uuid),
+  2,
+  'chủ shop khác chỉ đọc được kênh ĐANG CÔNG KHAI, không thấy kênh riêng'
 );
 SELECT throws_ok(
   $$ SELECT public.shop_contact_decide((SELECT id FROM public.shop_contact_channels LIMIT 1), 'approve') $$,

@@ -15,7 +15,8 @@ import { blogHeroSrcSet } from "@/lib/image-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/components/Countdown";
-import { formatDate, formatTime } from "@/lib/format-datetime";
+import { formatDate, formatRelative, formatTime } from "@/lib/format-datetime";
+import { shouldReserveLiveSlot, writeLiveLeadHint } from "@/lib/home-live-lead";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,31 +43,6 @@ const isoWeekNumber = (d = new Date()): number => {
     target.setUTCMonth(0, 1 + ((4 - target.getUTCDay()) + 7) % 7);
   }
   return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
-};
-
-const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"): string => {
-  if (!iso) return "";
-  const dt = new Date(iso).getTime();
-  if (Number.isNaN(dt)) return "";
-  const diff = dt - Date.now();
-  const absMin = Math.abs(Math.round(diff / 60000));
-  const isVi = lang === "vi";
-  if (absMin < 1) return isVi ? "vừa xong" : "now";
-  if (absMin < 60) {
-    return isVi
-      ? (diff > 0 ? `trong ${absMin} phút` : `${absMin} phút trước`)
-      : (diff > 0 ? `in ${absMin}m` : `${absMin}m ago`);
-  }
-  const hrs = Math.round(absMin / 60);
-  if (hrs < 24) {
-    return isVi
-      ? (diff > 0 ? `trong ${hrs} giờ` : `${hrs} giờ trước`)
-      : (diff > 0 ? `in ${hrs}h` : `${hrs}h ago`);
-  }
-  const days = Math.round(hrs / 24);
-  return isVi
-    ? (diff > 0 ? `trong ${days} ngày` : `${days} ngày trước`)
-    : (diff > 0 ? `in ${days}d` : `${days}d ago`);
 };
 
 const HOME_NEWS_LIMIT = 4;
@@ -128,26 +104,32 @@ const Index = () => {
   const recentEnded = endedStreams
     .filter((s) => s.ended_at && Date.now() - new Date(s.ended_at).getTime() < 7 * 86_400_000)
     .slice(0, 4);
-  // CLS INC3: remember whether live led the page last navigation so the
-  // hero slot is reserved from first paint (skeleton) instead of inserting
-  // itself above the news feed when the queries resolve. First-ever visit
-  // of a session still shifts once; repeat navigations go to zero.
+  // CLS INC3: remember whether live led the page last time so the hero slot is
+  // reserved from first paint (skeleton) instead of inserting itself above the
+  // editorial section when the queries resolve.
+  //
+  // 2026-08-19 — the hint moved from sessionStorage to localStorage. Session
+  // scope reserved the slot only on repeat navigations, leaving the first
+  // pageview of every session unreserved, and that is the pageview CrUX
+  // weights most: field CLS was p75 0.37 on mobile with 37.5% of users above
+  // 0.25. Device scope narrowed that to the first ever visit.
+  //
+  // Later the same day: even that residual was the wrong default. The slot
+  // leads whenever a stream is on air, scheduled, OR ended within seven days,
+  // so an occupied slot is the ordinary state here and an empty one is the
+  // exception. shouldReserveLiveSlot therefore reserves unless the hint
+  // positively says otherwise — a first visit now reserves too. The cost is a
+  // collapse shift on a genuinely quiet week; the thing it buys back is the
+  // insertion shift that was hitting every new reader and every lab run.
+  // See src/lib/home-live-lead.ts for the TTL and the failure modes.
   const liveQueriesLoading =
     liveQuery.isLoading || scheduledQuery.isLoading || endedQuery.isLoading;
-  const [expectLiveLead] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem("tph.home-live-lead") === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [expectLiveLead] = useState<boolean>(() => shouldReserveLiveSlot());
   useEffect(() => {
     if (liveQueriesLoading) return;
     const leads =
       liveStreams.length > 0 || scheduledStreams.length > 0 || recentEnded.length > 0;
-    try {
-      sessionStorage.setItem("tph.home-live-lead", leads ? "1" : "0");
-    } catch { /* ignore */ }
+    writeLiveLeadHint(leads);
   }, [liveQueriesLoading, liveStreams.length, scheduledStreams.length, recentEnded.length]);
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });

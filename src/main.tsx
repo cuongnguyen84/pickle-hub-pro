@@ -27,5 +27,5 @@ initWebVitalsRum();
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Register service worker (skipped inside Capacitor + in dev mode)
+// Register service worker (skipped in dev mode)
 initPwa();

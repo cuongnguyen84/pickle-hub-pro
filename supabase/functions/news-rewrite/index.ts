@@ -3,8 +3,17 @@ import { requireCronRequest } from "../_shared/cron-auth.ts";
 import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { getAuthUser } from "../_shared/auth.ts";
 import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
+import { missingViDiacritics } from "../_shared/vi-diacritics.ts";
 
-const BATCH_SIZE = 2;
+// 2 -> 5 (Cuong yêu cầu 23/08): sau khi thêm 4 nguồn, hàng chờ 21 bài ở nhịp
+// 2 bài/30 phút mất hơn 5 tiếng mới lên hết.
+const BATCH_SIZE = 5;
+// Vòng lặp dưới chạy TUẦN TỰ và mỗi bài tốn ~15-20s đo được trên prod (bài lên
+// lúc :30:30 và :00:32 sau cron :30/:00), nên 5 bài có thể vượt thời gian sống
+// của một lần gọi edge function. Hết ngân sách thì không nhận bài mới nữa và
+// TRẢ phần chưa xử lý về 'pending' NGAY — để nguyên thì chúng kẹt ở
+// 'rewriting' tới STALE_MINUTES phút mới được quét cứu.
+const BATCH_DEADLINE_MS = 110_000;
 const STALE_MINUTES = 15;
 const GEMINI_MODEL = "gemini-flash-lite-latest";
 const GEMINI_ENDPOINT =
@@ -117,7 +126,19 @@ async function runBatch(supabase: SupabaseClient, geminiKey: string) {
     details: [] as Array<Record<string, unknown>>,
   };
 
-  for (const origin of origins) {
+  const batchStartedAt = Date.now();
+
+  for (const [index, origin] of origins.entries()) {
+    if (Date.now() - batchStartedAt > BATCH_DEADLINE_MS) {
+      const deferred = origins.slice(index);
+      await releaseClaims(supabase, deferred.map((row) => row.id));
+      result.details.push({
+        status: "deferred",
+        count: deferred.length,
+        reason: "batch deadline reached",
+      });
+      break;
+    }
     try {
       const draft = await rewriteOrigin(origin, geminiKey);
       const en = prepareForPublish(draft.en, origin, "en");
@@ -143,6 +164,24 @@ async function runBatch(supabase: SupabaseClient, geminiKey: string) {
   }
 
   return result;
+}
+
+// Trả các bài đã claim nhưng chưa kịp xử lý về hàng chờ. Chỉ đụng hàng còn
+// nguyên 'rewriting' để không ghi đè kết quả của một lần chạy khác.
+async function releaseClaims(
+  supabase: SupabaseClient,
+  originIds: string[],
+): Promise<void> {
+  if (originIds.length === 0) return;
+  const { error } = await supabase
+    .from("news_origins")
+    .update({ pipeline_status: "pending" })
+    .in("id", originIds)
+    .eq("pipeline_status", "rewriting");
+  if (error) {
+    // Không ném: quét stale ở đầu lần chạy sau vẫn cứu được, chỉ chậm hơn.
+    console.warn(`[news-rewrite] release claims failed: ${error.message}`);
+  }
 }
 
 async function rewriteOrigin(
@@ -177,8 +216,18 @@ Rules:
 - Vietnamese must read like natural Vietnamese sports journalism and use full
   Vietnamese diacritics in the title, summary, headings, and paragraphs.
 - Keep player, brand, tournament, PPA, MLP, APP, and DUPR names accurate.
-- summary must be 120–300 characters and must not repeat the title.
-- Use 2–4 sections. A heading is optional; paragraphs must be plain text.
+- Title: lead with the most searchable entity (tournament, player, or brand
+  name, plus the year when the source gives one) and keep the essential part
+  within the first 65 characters.
+- The Vietnamese title and headings must use phrases Vietnamese fans actually
+  type into search ("lịch thi đấu", "kết quả", "công bố", "vô địch", "trực
+  tiếp"), not a word-for-word translation of the English title.
+- summary must be 120–300 characters, must not repeat the title, and must read
+  like a search snippet: name the main entity and state the concrete news so a
+  searcher knows why to click.
+- Use 2–4 sections. For a full article give every section a short heading that
+  works in a natural secondary keyword; for a brief, headings are optional.
+  Paragraphs must be plain text.
 - category is one of tournament, player, equipment, business, community.
 - importance is an integer from 1 to 5.
 
@@ -226,13 +275,23 @@ ${sourceMaterial}`;
   throw new Error("Gemini rewrite attempts exhausted");
 }
 
+/** The only categories the pipeline accepts, shared by the schema and the validator. */
+const NEWS_CATEGORIES = ["tournament", "player", "equipment", "business", "community"] as const;
+
 function rewriteSchema() {
   const languageSchema = {
     type: "object",
     properties: {
       title: { type: "string" },
       summary: { type: "string" },
-      category: { type: "string" },
+      // Enum, not a bare string. The prompt already said "one of tournament,
+    // player, equipment, business, community" and Gemini still returned
+    // something else often enough to strand two articles at three attempts
+    // each — "en category is invalid" is a deterministic failure, so retrying
+    // it just spends the budget three times to reach the same place.
+    // Structured output honours an enum, so an invalid value stops being
+    // possible rather than being caught after generation.
+    category: { type: "string", enum: NEWS_CATEGORIES },
       importance: { type: "integer" },
       sections: {
         type: "array",
@@ -294,7 +353,7 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
     if (value.summary.trim().length < 120 || value.summary.length > 300) {
       throw new Error(`${language} summary length is invalid`);
     }
-    if (!["tournament", "player", "equipment", "business", "community"].includes(value.category)) {
+    if (!(NEWS_CATEGORIES as readonly string[]).includes(value.category)) {
       throw new Error(`${language} category is invalid`);
     }
     if (!Number.isInteger(value.importance) || value.importance < 1 || value.importance > 5) {
@@ -318,13 +377,14 @@ function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
       throw new Error(`${language} draft contains a URL`);
     }
     if (language === "vi") {
-      const vietnameseWords = allText
-        .split(/\s+/)
-        .filter((word) => /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i.test(word))
-        .length;
-      const totalWords = allText.split(/\s+/).filter(Boolean).length;
-      if (vietnameseWords / totalWords < 0.1) {
-        throw new Error("vi draft is missing Vietnamese diacritics");
+      for (const [field, text] of [
+        ["title", value.title],
+        ["summary", value.summary],
+        ["body", paragraphs.join(" ")],
+      ] as const) {
+        if (missingViDiacritics(text)) {
+          throw new Error(`vi ${field} is missing Vietnamese diacritics`);
+        }
       }
     }
   }

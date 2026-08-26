@@ -39,7 +39,7 @@ const post: BlogPost = {
         },
         {
           heading: "How to Build the Schedule in Quick Tables",
-          content: "Quick Tables is the free pickleball scheduling tool on The Pickle Hub — it handles everything from schedule creation to live standings, with no account required. Here's the full workflow:",
+          content: "Quick Tables is the free pickleball scheduling tool on ThePickleHub — it handles everything from schedule creation to live standings, with no account required. Here's the full workflow:",
           orderedList: [
             "Open Quick Tables — Navigate to thepicklehub.net/tools/quick-tables. The tool loads instantly in your browser — no download, no signup for basic use.",
             "Set your player count — Enter the total number of players or teams. The tool supports 2 to 200+ participants in a single event, automatically splitting large fields into multiple groups.",
@@ -121,7 +121,7 @@ const post: BlogPost = {
           listItems: [
             "How do you calculate the number of matches in a round robin? Use the formula n × (n-1) ÷ 2. For 6 players: 6 × 5 ÷ 2 = 15 matches. For 8 players: 8 × 7 ÷ 2 = 28 matches. For 10 players: 45 matches. This is the total for one group — multiply by the number of groups for your event total.",
             "How long does a 16-player pickleball round robin take? If you run all 16 as one group (120 matches), budget 8+ hours — not practical. Standard approach: four groups of 4, each completing 6 matches in ~60-75 minutes with 2 courts per group, followed by a 4-team playoff. Total event time: approximately 3-3.5 hours.",
-            "Can you combine round robin with playoffs? Yes — this is the most popular structure for mid-size events. Run round robin in the morning to determine group rankings, then run a 4-8 team single or double elimination playoff in the afternoon. The Pickle Hub tools support this structure natively.",
+            "Can you combine round robin with playoffs? Yes — this is the most popular structure for mid-size events. Run round robin in the morning to determine group rankings, then run a 4-8 team single or double elimination playoff in the afternoon. ThePickleHub tools support this structure natively.",
             "What's the best way to handle an odd number of players in round robin? A 'bye' is assigned to the extra player each round. That player sits out one round, then returns normally. A 5-player group needs 5 rounds (one player byes each round). The Quick Tables generator handles bye scheduling automatically.",
             "Can you run a doubles round robin where partners rotate every match? Yes. Rotating-partner doubles round robins are popular at social events. Each player gets a different partner each round, creating a social mixing format. Generate the schedule in Quick Tables using the partner rotation setting.",
             "Is round robin fair when players have different skill levels? It's fair in that everyone plays the same number of matches. But without seeded groups, beginners often face advanced players every match, which isn't enjoyable for either side. Solve this by splitting players into skill-based pools (e.g., 3.0-3.5 and 4.0+ groups) or use DUPR ratings to balance group composition."
@@ -139,7 +139,7 @@ const post: BlogPost = {
         },
         {
           question: "Can you combine round robin with playoffs in pickleball?",
-          answer: "Yes — this hybrid format is the most popular structure for mid-size events. Run round robin in the morning to determine group rankings, then a 4-8 team elimination playoff in the afternoon. It balances guaranteed play time (from round robin) with a clear champion (from playoffs). The Pickle Hub's Quick Tables tool supports this format."
+          answer: "Yes — this hybrid format is the most popular structure for mid-size events. Run round robin in the morning to determine group rankings, then a 4-8 team elimination playoff in the afternoon. It balances guaranteed play time (from round robin) with a clear champion (from playoffs). ThePickleHub's Quick Tables tool supports this format."
         },
         {
           question: "What's the best way to handle an odd number of players in round robin?",
@@ -218,8 +218,8 @@ const post: BlogPost = {
           ],
           internalLinks: [
             { text: "Luật rally vs side-out cho giải vòng tròn", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức", path: "/tools" },
-            { text: "Bảng đấu nhanh — công cụ xếp lịch vòng tròn", path: "/tools/quick-tables" }
+            { text: "Công cụ tạo bảng đấu pickleball miễn phí — mọi thể thức", path: "/vi/tools" },
+            { text: "Bảng đấu nhanh — công cụ xếp lịch vòng tròn", path: "/vi/tools/quick-tables" }
           ]
         },
         {

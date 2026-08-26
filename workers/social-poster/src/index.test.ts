@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { buildPostedMessage } from './notify';
 import {
+  buildAppComment,
   buildLinkComment,
   facebookMaxItemAgeDays,
   laterOf,
@@ -70,21 +72,27 @@ describe('sanitizeCaption', () => {
   });
 });
 
-describe('buildLinkComment', () => {
+describe('post comments', () => {
   const link = 'https://www.thepicklehub.net/vi/news/abc-123';
 
-  // The caption tells readers the link is in the first comment, so it has to be
-  // there and it has to be first — the app pitch cannot push it down.
-  it('leads with the article link, then the app CTA', () => {
-    const c = buildLinkComment(link);
-    expect(c.startsWith(link)).toBe(true);
-    expect(c).toContain('Tải app ThePickleHub');
-    expect(c).toContain('apps.apple.com');
-    expect(c.indexOf(link)).toBeLessThan(c.indexOf('apps.apple.com'));
+  // Two comments, not one. Combined, Facebook rendered a single comment with two
+  // links and gave neither its own preview card.
+  it('puts the article link alone in the first comment', () => {
+    expect(buildLinkComment(link)).toBe(link);
+    expect(buildLinkComment(link)).not.toContain('apps.apple.com');
   });
 
-  it('keeps the two on separate lines so Facebook renders both as links', () => {
-    expect(buildLinkComment(link).split('\n').filter(Boolean).length).toBeGreaterThan(1);
+  it('puts the app CTA alone in the second, with no article link in it', () => {
+    const app = buildAppComment();
+    expect(app).toContain('Tải app ThePickleHub');
+    expect(app).toContain('apps.apple.com');
+    expect(app).not.toContain('/vi/news/');
+  });
+
+  // The caption promises the article link is in the FIRST comment, so the two
+  // must never be swapped.
+  it('keeps them distinct so neither can stand in for the other', () => {
+    expect(buildLinkComment(link)).not.toBe(buildAppComment());
   });
 });
 
@@ -103,5 +111,42 @@ describe('Facebook staleness floor', () => {
     expect(laterOf('2026-07-31T00:00:00Z', cutoff)).toBe(cutoff);
     expect(laterOf('2026-08-16T00:00:00Z', cutoff)).toBe('2026-08-16T00:00:00Z');
     expect(laterOf(null, cutoff)).toBe(cutoff);
+  });
+});
+
+describe('Telegram post notice', () => {
+  const notice = {
+    platform: 'X',
+    account: '@thepicklehub',
+    body: 'Waters & Khlif were down 0-6 <b>and</b> won it 15-13.',
+    url: 'https://x.com/thepicklehub/status/123',
+  };
+
+  // The first roundup posted to X reads "Waters & Khlif". Telegram parses the
+  // message as HTML, so that one ampersand returns 400 and the notification
+  // vanishes — silently, because notifyPosted swallows failures.
+  it('escapes HTML so an ampersand in the post cannot kill the message', () => {
+    const m = buildPostedMessage(notice);
+    expect(m).toContain('Waters &amp; Khlif');
+    expect(m).toContain('&lt;b&gt;and&lt;/b&gt;');
+    expect(m).not.toContain('<b>and</b>');
+  });
+
+  it('keeps its own markup working while escaping the content', () => {
+    const m = buildPostedMessage(notice);
+    expect(m).toContain('<b>Đã đăng lên X</b>');
+  });
+
+  it('names the platform and the account, and ends with the link', () => {
+    const m = buildPostedMessage(notice);
+    expect(m).toContain('@thepicklehub');
+    expect(m.trim().endsWith('https://x.com/thepicklehub/status/123')).toBe(true);
+  });
+
+  it('escapes a Facebook headline the same way', () => {
+    const m = buildPostedMessage({ ...notice, platform: 'Facebook', account: 'TA Pickleball',
+      body: 'Dallas & Brooklyn vào bán kết' });
+    expect(m).toContain('Dallas &amp; Brooklyn');
+    expect(m).toContain('<b>Đã đăng lên Facebook</b> — TA Pickleball');
   });
 });

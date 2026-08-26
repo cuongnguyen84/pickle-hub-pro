@@ -1,8 +1,31 @@
 # ADR-001: Mobile platform direction
 
-- Status: Accepted
+- Status: Accepted — transition completed 2026-08-24
 - Date: 2026-07-11
 - Owners: Cuong + Codex
+
+## Outcome (2026-08-24)
+
+The transition this ADR describes is finished, and the Capacitor code has been
+deleted from the repository.
+
+- Native SwiftUI took over the App Store identity `net.thepicklehub.app` at
+  2.0.3 (build 8), following the Capacitor release 1.0.1 (2). App Store
+  versions only move forward, so there is no rollback path to Capacitor and
+  keeping its project served no purpose.
+- The Android wrapper was never published. Cuong confirmed this on 2026-08-24,
+  which resolves follow-up item 6 and decision 5 by removal: nothing shipped,
+  so nothing inherits the Capacitor callback.
+- `SEC-01` closes by retirement, the second of the two options in follow-up
+  item 1: the transitional token callback no longer exists in any shipped
+  surface.
+- Removed: `ios/`, `android/`, `capacitor.config.ts`, `MOBILE_BUILD_GUIDE.md`,
+  all `@capacitor/*` and `@capgo/*` packages, and the four web modules that
+  only ran inside the wrapper (deep-link handler, native Google auth, push
+  registration, platform detection). Push tokens are now registered solely by
+  `apple/ThePickleHub/Core/Notifications/RemotePushService.swift`.
+
+The record below is the original 2026-07-11 decision, kept unedited.
 
 ## Context
 

@@ -13,10 +13,12 @@
  *   });
  */
 
-import { isIOS, isAndroid, isNativeApp } from "@/lib/capacitor-utils";
-
 export interface DeviceMeta {
   ua: string;
+  /**
+   * Luôn là "web" từ 24/08/2026 (Capacitor nghỉ hưu). Giữ tên cột và cả hai
+   * giá trị cũ vì `device_meta` đã lưu trong DB không viết lại được.
+   */
   capacitor_platform: "ios" | "android" | "web";
   device_fp: string;
   screen: { w: number; h: number; dpr: number } | null;
@@ -59,14 +61,6 @@ function browserFingerprint(): string {
   return `${h.toString(36)}-${salt}`;
 }
 
-function platform(): DeviceMeta["capacitor_platform"] {
-  if (isNativeApp()) {
-    if (isIOS()) return "ios";
-    if (isAndroid()) return "android";
-  }
-  return "web";
-}
-
 export function collectDeviceMeta(): DeviceMeta {
   if (typeof window === "undefined") {
     return {
@@ -76,7 +70,7 @@ export function collectDeviceMeta(): DeviceMeta {
   }
   return {
     ua: navigator.userAgent.slice(0, 240),
-    capacitor_platform: platform(),
+    capacitor_platform: "web",
     device_fp: browserFingerprint(),
     screen: {
       w: window.screen.width,

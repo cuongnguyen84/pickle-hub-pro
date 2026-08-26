@@ -28,7 +28,25 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 const TG_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const TG_CHAT = Deno.env.get("TELEGRAM_CHAT_ID") ?? "";
 
-async function sendTelegram(text: string): Promise<void> {
+/**
+ * Buttons that ops-job-control already understands. Its webhook maps
+ * `diagnose|<key>` and `fix|<key>` onto /diagnose and /fix, and /fix falls
+ * through to a queued /agentfix for the local agent when no hard-coded branch
+ * matches — which is the case here. So this needs no change on that side; it
+ * only needs `news-repair` to exist in ops_cron_monitors, which the companion
+ * migration adds.
+ *
+ * Without buttons the report is a wall of text naming problems with nothing to
+ * press, which is what the first real run looked like.
+ */
+const REPAIR_BUTTONS = {
+  inline_keyboard: [[
+    { text: "🔎 Chẩn đoán", callback_data: "diagnose|news-repair" },
+    { text: "🛠 Xử lý", callback_data: "fix|news-repair" },
+  ]],
+};
+
+async function sendTelegram(text: string, withButtons = false): Promise<void> {
   if (!TG_TOKEN || !TG_CHAT) return;
   try {
     await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
@@ -39,6 +57,7 @@ async function sendTelegram(text: string): Promise<void> {
         text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
+        ...(withButtons ? { reply_markup: REPAIR_BUTTONS } : {}),
       }),
     });
   } catch (error) {
@@ -68,7 +87,7 @@ Deno.serve(async (req) => {
   const dryRun = body.dry_run === true;
 
   const res = await fetch(
-    rest("news_origins?pipeline_status=eq.failed&select=id,raw_title,source_name,content_kind,attempts,last_error&limit=100"),
+    rest("news_origins?pipeline_status=eq.failed&select=id,raw_title,source_name,content_kind,attempts,last_error,published_at&limit=100"),
     { headers: headers() },
   );
   if (!res.ok) {
@@ -85,6 +104,7 @@ Deno.serve(async (req) => {
   }
 
   const repaired: string[] = [];
+  const abandoned: string[] = [];
   const left: string[] = [];
 
   for (const origin of origins) {
@@ -92,7 +112,22 @@ Deno.serve(async (req) => {
     const title = (origin.raw_title ?? origin.id).slice(0, 60);
 
     if (plan.kind === "leave") {
-      left.push(`• ${title} — ${plan.reason}`);
+      // Close it. Leaving the row at 'failed' meant every hourly run rescanned
+      // it, reported it again and counted it in `left`, which held the cron
+      // health at partial_success forever and made the "Xử lý" button re-run
+      // the same decline. There is no automatic path left for these, so say so
+      // once and stop.
+      if (!dryRun) {
+        await fetch(rest(`news_origins?id=eq.${origin.id}`), {
+          method: "PATCH",
+          headers: headers(),
+          body: JSON.stringify({
+            pipeline_status: "abandoned",
+            last_error: `${origin.last_error ?? ""} | abandoned: ${plan.reason}`.slice(0, 500),
+          }),
+        });
+      }
+      abandoned.push(`• ${title} — ${plan.reason}`);
       continue;
     }
     if (dryRun) {
@@ -117,14 +152,21 @@ Deno.serve(async (req) => {
 
   // Only speak when something is worth knowing. A silent run is the normal
   // case and a daily "0 failures" message trains people to ignore the channel.
+  // Abandoned rows are deliberately absent from the message. They are closed,
+  // nothing can be done about them, and naming them turns the channel into a
+  // recurring list of things nobody will ever act on. The count stays in the
+  // HTTP response and the reason stays on the row for anyone investigating.
   if (repaired.length || left.length) {
     const lines = [
       `🛠 <b>news-repair</b> — ${origins.length} failed origin(s)`,
       repaired.length ? `\n<b>Requeued ${repaired.length}</b>\n${repaired.join("\n")}` : "",
-      left.length ? `\n<b>Needs a look — ${left.length}</b>\n${left.join("\n")}` : "",
+      left.length ? `\n<b>Chưa xử lý được — ${left.length}</b>\n${left.join("\n")}` : "",
       dryRun ? "\n<i>dry run — nothing was written</i>" : "",
     ].filter(Boolean);
-    await sendTelegram(lines.join("\n"));
+    // Buttons only when a row is genuinely stuck: a report that merely says
+    // "requeued 8" needs no action, and an always-present button trains
+    // people to ignore it.
+    await sendTelegram(lines.join("\n"), left.length > 0);
   }
 
   return new Response(
@@ -132,6 +174,7 @@ Deno.serve(async (req) => {
       ok: true,
       failed: origins.length,
       repaired: repaired.length,
+      abandoned: abandoned.length,
       left: left.length,
       dry_run: dryRun,
     }),

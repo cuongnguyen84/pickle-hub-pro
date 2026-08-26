@@ -46,6 +46,11 @@ export interface SubmitResult {
   event?: string;
   replayed?: boolean;
   problems?: SubmitProblem[];
+  /** Server says the row reached `approved` but the photos are not in the
+   *  public bucket yet. Set by product_submit since 20260818170000. */
+  needs_publish?: boolean;
+  /** Set by the client once the publish leg has actually run. */
+  published?: boolean;
 }
 
 /**
@@ -62,12 +67,27 @@ export interface SubmitResult {
 export const useSubmitProduct = (productId: string | null) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { expectedVersion: number; clientToken: string }) =>
-      await shopRpc<SubmitResult>("product_submit", {
+    // NEVER retry — same reason as useOrderCreate: a paused retryer on a
+    // hidden tab never settles, and this mutation has a side effect (bytes
+    // copied into a public bucket) that must not run twice by accident.
+    retry: false,
+    mutationFn: async (input: { expectedVersion: number; clientToken: string }) => {
+      const result = await shopRpc<SubmitResult>("product_submit", {
         _product_id: productId,
         _expected_version: input.expectedVersion,
         _client_token: input.clientToken,
-      }),
+      });
+      // The RPC only moves the ROW. Photos still sit in the private bucket, and
+      // shop_public_search requires a committed public_path — so a product that
+      // stops here is approved and invisible. Since 20260818170000 the seller
+      // is the one who reaches `approved`, so the seller's screen is where the
+      // publish leg has to run; before that it lived only on the admin review
+      // screen, which the seller never opens.
+      if (!result.ok || !result.needs_publish || !productId) return result;
+      const { invokePublishProduct } = await import("@/hooks/shop/useProductModeration");
+      await invokePublishProduct(productId);
+      return { ...result, published: true };
+    },
     onSuccess: (result) => {
       void qc.invalidateQueries({ queryKey: submitKeys.preflight(productId) });
       if (!result.ok) return;
@@ -89,6 +109,33 @@ export const useWithdrawSubmission = (productId: string | null) => {
       void qc.invalidateQueries({ queryKey: productKeys.one(productId) });
       void qc.invalidateQueries({ queryKey: productKeys.all });
       void qc.invalidateQueries({ queryKey: submitKeys.preflight(productId) });
+    },
+  });
+};
+
+/**
+ * Take a live product back off the shelf to edit it.
+ *
+ * The counterpart to self-publishing. `product_status_is_editable()` is
+ * draft|needs_changes, so before 20260818170000 an approved product could only
+ * be reopened by an admin — which is fine while an admin is in the loop and
+ * absurd once they are not: the seller publishes, spots a typo, and has no way
+ * back. This is that way back.
+ */
+export const useEditAgain = (productId: string | null) => {
+  const qc = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: async (expectedVersion?: number) =>
+      await shopRpc<{ ok: boolean; status: string; renditions_revoked: number }>(
+        "product_edit_again",
+        { _product_id: productId, _expected_version: expectedVersion ?? null },
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: productKeys.one(productId) });
+      void qc.invalidateQueries({ queryKey: productKeys.all });
+      void qc.invalidateQueries({ queryKey: submitKeys.preflight(productId) });
+      void qc.invalidateQueries({ queryKey: submitKeys.preview(productId) });
     },
   });
 };

@@ -20,7 +20,7 @@ import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { blogHeroSrcSet } from "@/lib/image-utils";
+import { blogHeroSrcSet, heroDimsProps } from "@/lib/image-utils";
 import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -151,7 +151,10 @@ const BlogPost = () => {
       description={content.metaDescription}
       active="stories"
     >
-      <DynamicMeta title={content.metaTitle} description={content.metaDescription} />
+      <DynamicMeta
+        title={content.metaTitle}
+        description={content.metaDescription}
+      />
       <HreflangTags
         enPath={`/blog/${post.slug}`}
         viPath={viSlug ? `/vi/blog/${viSlug}` : undefined}
@@ -266,8 +269,7 @@ const BlogPost = () => {
                 srcSet={blogHeroSrcSet(post.heroImage.src)?.srcSet}
                 sizes="(max-width: 900px) 100vw, 832px"
                 alt={post.heroImage.alt}
-                width={1200}
-                height={630}
+                {...heroDimsProps(post.heroImage.src)}
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
@@ -332,27 +334,29 @@ const BlogPost = () => {
                   </ol>
                 )}
                 {section.table && section.table.headers.length > 0 && (
-                  <table>
-                    {section.table.caption && (
-                      <caption>{section.table.caption}</caption>
-                    )}
-                    <thead>
-                      <tr>
-                        {section.table.headers.map((h, i) => (
-                          <th key={i}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {section.table.rows.map((row, ri) => (
-                        <tr key={ri}>
-                          {row.map((cell, ci) => (
-                            <td key={ci}>{cell}</td>
+                  <div className="tl-table-wrap">
+                    <table>
+                      {section.table.caption && (
+                        <caption>{section.table.caption}</caption>
+                      )}
+                      <thead>
+                        <tr>
+                          {section.table.headers.map((h, i) => (
+                            <th key={i}>{h}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {section.table.rows.map((row, ri) => (
+                          <tr key={ri}>
+                            {row.map((cell, ci) => (
+                              <td key={ci}>{cell}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
                 {section.internalLinks && section.internalLinks.length > 0 && (
                   <p>

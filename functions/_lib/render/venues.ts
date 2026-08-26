@@ -14,7 +14,7 @@
 import type { SupabaseClient } from "../supabase";
 import { buildHtml, htmlResponse } from "../html";
 import { escapeHtml, buildTitle, breadcrumb, type Lang } from "../utils";
-import { pickMetaDescription } from "../seo-helpers";
+import { fitLead, fitSegments, pickMetaDescription, upperFirst } from "../seo-helpers";
 import { render404 } from "./index";
 
 const LIST_LIMIT = 100;
@@ -31,6 +31,7 @@ interface VenueListRow {
 }
 
 interface VenueDetailRow {
+  id: string;
   slug: string;
   name: string;
   name_vi: string | null;
@@ -48,6 +49,12 @@ interface VenueDetailRow {
   amenities: string[] | null;
   hours_json: unknown;
   cover_image_url: string | null;
+  review_count: number | null;
+  review_avg: number | null;
+  price_min_vnd: number | null;
+  price_max_vnd: number | null;
+  price_source: SourceTag;
+  hours_source: SourceTag;
 }
 
 // Guard-0: a venue with no location AND no facts is a pure UGC stub (created via
@@ -70,6 +77,123 @@ export function isThinVenue(v: {
   const hasCourts = !!(v.num_courts && v.num_courts > 0);
   const hasPhone = !!(v.phone && v.phone.trim());
   return !hasAddress && !hasGeo && !hasCourts && !hasPhone;
+}
+
+// ── PRICE-01: price + opening hours ────────────────────────────────────────
+/**
+ * `price_source`/`hours_source` say where a figure came from, and the display
+ * rules follow from that — full contract in the 20260824100000 migration.
+ *
+ *   'partner' | 'manual' — a real figure for THIS venue. Safe in <title>, the
+ *                          meta description, the body, and schema.org.
+ *   'default'            — the blanket 80.000–200.000 đ / 06:00–24:00 placed on
+ *                          741 rows we hold no figure for. Identical across all
+ *                          of them, so it is NOT a fact about any one venue.
+ *
+ * A default must never reach the title, the snippet or JSON-LD:
+ *  - in a title it is a claim about a specific court we cannot support, and a
+ *    player who turns up and pays 300k has been misled by us;
+ *  - in a snippet it would be the same characters on 741 search results, which
+ *    is the duplicate-boilerplate problem the /san cluster already has;
+ *  - in `priceRange` it is a structured, machine-readable assertion — the worst
+ *    of the three places to put a number nobody verified.
+ *
+ * It stays visible in the body, labelled as a regional guide, because "courts
+ * around here run 80–200k" is true and useful. It just is not a quote.
+ */
+export type SourceTag = "partner" | "manual" | "default" | null;
+
+export function isVerifiedSource(source: SourceTag): boolean {
+  return source === "partner" || source === "manual";
+}
+
+/** 100000 → "100K". Titles are byte-starved; Vietnamese costs 2-3 bytes/char. */
+export function shortPrice(vnd: number): string {
+  return `${Math.round(vnd / 1000)}K`;
+}
+
+/** 100000 → "100.000đ" — the long form for body copy and snippets. */
+export function longPrice(vnd: number): string {
+  return `${Math.round(vnd).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}đ`;
+}
+
+export function priceRangeText(
+  min: number | null,
+  max: number | null,
+  style: "short" | "long",
+): string | null {
+  if (min == null || max == null) return null;
+  const fmt = style === "short" ? shortPrice : longPrice;
+  return min === max ? fmt(min) : `${fmt(min)}–${fmt(max)}`;
+}
+
+/**
+ * Every row this import wrote carries the same range on all seven days, so
+ * printing seven identical lines would be noise. Collapse a uniform week to one
+ * range and leave the existing per-day list for anything edited by hand later.
+ */
+export function uniformHours(hoursJson: unknown): string | null {
+  if (!hoursJson || typeof hoursJson !== "object" || Array.isArray(hoursJson)) return null;
+  const vals = Object.values(hoursJson as Record<string, unknown>).filter(
+    (x): x is string => typeof x === "string" && x.trim().length > 0,
+  );
+  if (vals.length < 7) return null;
+  const first = vals[0].trim();
+  return vals.every((x) => x.trim() === first) ? first : null;
+}
+
+/** "00:00-24:00" reads better as "mở cả ngày" than as a clock range. */
+export function hoursLabel(range: string, lang: Lang): string {
+  const flat = range.replace(/\s/g, "");
+  if (flat === "00:00-24:00" || flat === "0:00-24:00") {
+    return lang === "vi" ? "Mở cả ngày" : "Open 24 hours";
+  }
+  return range;
+}
+
+// ── NEAR-01: proximity block ───────────────────────────────────────────────
+/** Rows pulled for the two "other courts" blocks on a venue detail page. */
+interface NearbyRow {
+  slug: string;
+  name: string;
+  name_vi: string | null;
+  district: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  num_courts: number | null;
+}
+
+/** Worst case is TP.HCM at 150 rows; 300 leaves headroom without unbounded IO. */
+const CITY_POOL_LIMIT = 300;
+const NEAREST_COUNT = 6;
+const DISTRICT_COUNT = 6;
+
+/**
+ * Great-circle distance in km. Venues sit inside one city, so the small-angle
+ * error of the spherical model is far below the precision we print (0.1 km) —
+ * no need for an ellipsoidal formula here.
+ */
+export function haversineKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/** "450 m" under a km, "1,2 km" above — VI uses a comma decimal separator. */
+export function formatKm(km: number, lang: Lang): string {
+  if (km < 1) return `${Math.round(km * 100) * 10} m`;
+  const one = km.toFixed(1);
+  return `${lang === "vi" ? one.replace(".", ",") : one} km`;
 }
 
 function displayName(v: { name: string; name_vi: string | null }, lang: Lang): string {
@@ -105,6 +229,60 @@ const DAY_LABEL: Record<string, { vi: string; en: string }> = {
   sat: { vi: "Thứ 7", en: "Sat" },
   sun: { vi: "Chủ nhật", en: "Sun" },
 };
+
+/** schema.org day URIs, keyed by the same 3-letter prefix DAY_LABEL uses. */
+const DAY_SCHEMA: Record<string, string> = {
+  mon: "https://schema.org/Monday",
+  tue: "https://schema.org/Tuesday",
+  wed: "https://schema.org/Wednesday",
+  thu: "https://schema.org/Thursday",
+  fri: "https://schema.org/Friday",
+  sat: "https://schema.org/Saturday",
+  sun: "https://schema.org/Sunday",
+};
+
+/** "6:00-22:00" / "06h00 - 22h00" / "6h-22h" → ["06:00", "22:00"]. */
+function parseHourRange(raw: string): [string, string] | null {
+  const m = raw.match(
+    /(\d{1,2})\s*(?:[:h.]\s*(\d{2}))?\s*(?:-|–|—|to|đến)\s*(\d{1,2})\s*(?:[:h.]\s*(\d{2}))?/i,
+  );
+  if (!m) return null;
+  const [oh, om, ch, cm] = [Number(m[1]), Number(m[2] ?? 0), Number(m[3]), Number(m[4] ?? 0)];
+  if (oh > 23 || ch > 24 || om > 59 || cm > 59) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return [`${pad(oh)}:${pad(om)}`, `${pad(ch === 24 ? 23 : ch)}:${ch === 24 ? "59" : pad(cm)}`];
+}
+
+/**
+ * openingHoursSpecification from the OBJECT form of hours_json only.
+ *
+ * The array/free-text forms ("6h-22h hằng ngày") carry no per-day breakdown, and
+ * schema.org requires dayOfWeek + opens + closes — deriving those from prose
+ * would be a guess. Those venues keep the human-readable body line and emit no
+ * hours schema, which is valid.
+ *
+ * Note (2026-08-19): hours_json is 0% populated across all 691 VN rows today,
+ * so this returns [] in production. It is wired now so the schema lights up the
+ * moment the venue form starts collecting hours, rather than being forgotten.
+ */
+function buildOpeningHours(hoursJson: unknown): Record<string, unknown>[] {
+  if (!hoursJson || typeof hoursJson !== "object" || Array.isArray(hoursJson)) return [];
+  const out: Record<string, unknown>[] = [];
+  for (const [day, val] of Object.entries(hoursJson as Record<string, unknown>)) {
+    if (typeof val !== "string" || !val.trim()) continue;
+    const dayUri = DAY_SCHEMA[day.slice(0, 3).toLowerCase()];
+    if (!dayUri) continue;
+    const range = parseHourRange(val);
+    if (!range) continue;
+    out.push({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: dayUri,
+      opens: range[0],
+      closes: range[1],
+    });
+  }
+  return out;
+}
 
 function hoursLines(hoursJson: unknown, lang: Lang): string[] {
   if (!hoursJson) return [];
@@ -296,13 +474,30 @@ export async function renderVenueDetail(
   siteUrl: string,
   lang: Lang = "vi",
 ): Promise<Response> {
-  const { data, error } = await supabase
+  const VENUE_BASE_COLS =
+    "id, slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url";
+  const VENUE_REVIEW_COLS = ", review_count, review_avg";
+  // PRICE-01 columns ride with the review columns so they share the existing
+  // deploy-safe retry below: if this ships before the migration is applied the
+  // select errors and we fall back to VENUE_BASE_COLS rather than 404ing.
+  const VENUE_PRICE_COLS = ", price_min_vnd, price_max_vnd, price_source, hours_source";
+  let { data, error } = await supabase
     .from("venues")
-    .select(
-      "slug, name, name_vi, address, district, city, country, latitude, longitude, num_courts, surface_type, is_indoor, phone, website, amenities, hours_json, cover_image_url",
-    )
+    .select(VENUE_BASE_COLS + VENUE_REVIEW_COLS + VENUE_PRICE_COLS)
     .eq("slug", slug)
     .maybeSingle();
+
+  // Deploy-safe: if this ships before the venue_reviews migration is applied,
+  // review_count/review_avg don't exist and the select errors. Retry without
+  // them so venue pages never 404 on ordering — the aggregateRating + reviews
+  // section just stay hidden until the migration + first reviews land.
+  if (error) {
+    ({ data, error } = await supabase
+      .from("venues")
+      .select(VENUE_BASE_COLS)
+      .eq("slug", slug)
+      .maybeSingle());
+  }
 
   if (error) {
     console.error("renderVenueDetail: lookup error", { slug, error });
@@ -310,6 +505,25 @@ export async function renderVenueDetail(
   if (!data) return render404(`/san/${slug}`, siteUrl);
 
   const v = data as unknown as VenueDetailRow;
+
+  // Published reviews for this venue (SSR-visible text + Review schema). Separate
+  // query so a missing venue_reviews table (pre-migration) is a caught no-op, not
+  // a venue-page failure. Newest 5 for the body; aggregate comes from v.review_*.
+  let reviews: { rating: number; body: string | null; created_at: string }[] = [];
+  if (v.review_count && v.review_count > 0) {
+    try {
+      const { data: rv } = await supabase
+        .from("venue_reviews")
+        .select("rating, body, created_at")
+        .eq("venue_id", v.id)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      reviews = (rv ?? []) as { rating: number; body: string | null; created_at: string }[];
+    } catch {
+      // non-fatal — aggregateRating still renders from the venue columns
+    }
+  }
   const enUrl = `${siteUrl}/san/${v.slug}`;
   const viUrl = `${siteUrl}/vi/san/${v.slug}`;
   const url = lang === "vi" ? viUrl : enUrl;
@@ -337,14 +551,49 @@ export async function renderVenueDetail(
     : lang === "vi"
       ? `Sân Pickleball ${name}`
       : `${name} Pickleball Court`;
-  const cityTail = cityName && !cityInName ? ` – ${cityName}` : "";
   const brand = " | ThePickleHub";
-  // buildTitle budgets in BYTES (60) and is the only place allowed to decide
-  // whether the brand suffix fits. The old `.length <= 60` pre-check here
-  // counted CHARS and shipped titles like "…Nguyễn Chánh – Hà Nội |…" — a
-  // 53-char/61-byte title passed the char gate, then truncateForSeo cut it
-  // mid-brand (bug #468 recurring through a caller that bypassed the fix).
-  const title = buildTitle(kwName + cityTail, brand);
+  // 2026-08-24 (CTR-02): venue queries in GSC are district-led, not city-led —
+  // "sân pickleball quận 2", "keyfit pickleball quận 5", "sân level up quận 2".
+  // The city-only tail ("– TP.HCM") answered none of them, and TP.HCM alone
+  // holds 150 venues so the tail carried almost no distinguishing signal.
+  // district is populated on 690/760 rows and is stored in exactly the form
+  // searchers type ("Quận 2", "Cầu Giấy", "Hoàng Mai"), so it goes first.
+  //
+  // Title budget is 60 BYTES and Vietnamese costs 2-3 bytes/char, so the full
+  // "name – district, city" only fits 343/400 sampled rows. Rather than let
+  // buildTitle ellipsise (which would amputate the city mid-word, bug #468),
+  // degrade through progressively shorter variants and hand buildTitle the
+  // first one that already fits. buildTitle stays the only place that decides
+  // whether the brand suffix fits and the only place that ever ellipsises.
+  const districtName = v.district ? v.district.trim() : "";
+  const districtInName = districtName
+    ? name.toLowerCase().includes(districtName.toLowerCase())
+    : false;
+  const useDistrict = districtName && !districtInName;
+  const useCity = cityName && !cityInName;
+  const titleBytes = (s: string) => new TextEncoder().encode(s).length;
+  // Ordered most → least informative. Note the district-only variant outranks
+  // the city-only one: "Quận 2" narrows a 150-venue city to 33 venues, while
+  // "TP.HCM" narrows nothing. Ambiguity across cities is acceptable — the
+  // address, breadcrumb and JSON-LD all still carry the city.
+  // PRICE-01: a verified price is the most clickable fact we hold for a court
+  // query, so it outranks location when both fit. Never built from a 'default'
+  // source — see isVerifiedSource.
+  const pricePart = isVerifiedSource(v.price_source)
+    ? priceRangeText(v.price_min_vnd, v.price_max_vnd, "short")
+    : null;
+  const priceTail = pricePart ? ` – ${pricePart}` : "";
+  const titleVariants = [
+    useDistrict && useCity && pricePart ? `${kwName} – ${districtName}, ${cityName}${priceTail}` : "",
+    useDistrict && pricePart ? `${kwName} – ${districtName}${priceTail}` : "",
+    useCity && pricePart ? `${kwName} – ${cityName}${priceTail}` : "",
+    useDistrict && useCity ? `${kwName} – ${districtName}, ${cityName}` : "",
+    useDistrict ? `${kwName} – ${districtName}` : "",
+    useCity ? `${kwName} – ${cityName}` : "",
+    kwName,
+  ].filter(Boolean);
+  const rawTitle = titleVariants.find((t) => titleBytes(t) <= 60) ?? kwName;
+  const title = buildTitle(rawTitle, brand);
 
   // CTR: lead the description with the concrete, search-intent facts (name,
   // city, court count, indoor/outdoor) then a clear next step. Address is
@@ -353,24 +602,118 @@ export async function renderVenueDetail(
   // CTR: venue-name queries are navigational — the searcher wants to book a
   // court. Surfacing the booking phone number in the snippet is the single
   // most actionable fact we hold that Maps/Facebook results often bury.
-  const phoneVi = v.phone ? ` SĐT đặt sân ${v.phone}.` : "";
-  const phoneEn = v.phone ? ` Phone ${v.phone}.` : "";
+  //
+  // 2026-08-18 (CTR-01): the previous template was a single fixed string whose
+  // generic tail ("Địa chỉ, bản đồ, chỉ đường & các sân pickleball ở <city>
+  // trên ThePickleHub.") alone costs ~95 UTF-8 bytes, so 592 of the 760 venue
+  // rows (78%) blew the 160-byte meta budget and pickMetaDescription ellipsised
+  // them mid-word — production was shipping snippets ending "…ở Hà…" and
+  // "…các sân pickl…". A live sample of 30 /vi/san/ pages found 16 truncated.
+  // /vi/san/ carries 68% of all site impressions at avg position 7.6 but only
+  // 1.41% CTR, versus 6.98% for /vi/blog/ at the same position band.
+  //
+  // Fix: assemble the snippet from priority-ordered segments and append each
+  // one only if it still fits the budget. Highest-value facts go first, the
+  // generic tail last, so a long venue name degrades by losing boilerplate
+  // instead of getting its city keyword sliced off. Nothing is ever truncated.
   // Same de-dup as the title: skip the "Sân pickleball" / "pickleball court"
   // label when the name already carries the keyword, so the snippet doesn't read
   // "Sân pickleball Sân Pickleball FLC Sầm Sơn".
   const leadVi = nameHasKw ? name : `Sân pickleball ${name}`;
   const leadEn = nameHasKw ? name : `${name} pickleball court`;
-  const fallbackDescVi =
-    `${leadVi}${cityName ? ` tại ${cityName}` : ""}` +
-    `${courtsVi ? ` — ${courtsVi}` : ""}${indoorVi ? `, ${indoorVi}` : ""}.` +
-    phoneVi +
-    ` Địa chỉ, bản đồ, chỉ đường & các sân pickleball${cityName ? ` ở ${cityName}` : " gần bạn"} trên ThePickleHub.`;
-  const fallbackDescEn =
-    `${leadEn}${cityName ? ` in ${cityName}` : ""}` +
-    `${courtsEn ? ` — ${courtsEn}` : ""}${indoorEn ? `, ${indoorEn}` : ""}.` +
-    phoneEn +
-    ` Address, map, directions & other pickleball courts${cityName ? ` in ${cityName}` : " near you"} on ThePickleHub.`;
-  const description = pickMetaDescription(null, lang === "vi" ? fallbackDescVi : fallbackDescEn);
+  const verifiedPriceLong = isVerifiedSource(v.price_source)
+    ? priceRangeText(v.price_min_vnd, v.price_max_vnd, "long")
+    : null;
+  const verifiedHours = isVerifiedSource(v.hours_source) ? uniformHours(v.hours_json) : null;
+  const factsVi = [courtsVi, indoorVi].filter(Boolean).join(", ");
+  const factsEn = [courtsEn, indoorEn].filter(Boolean).join(", ");
+  // CTR-02: carry the district into the snippet tail too, for the same reason
+  // it now leads the title. fitLead protects the TAIL and shrinks the venue
+  // name to pay for it, so cap how much the tail may grow — a pathological
+  // district value must never eat the name, which is the primary keyword.
+  // "Quận 2"/"Cầu Giấy" cost 8-11 bytes, well inside the cap.
+  const MAX_LOCATION_TAIL_BYTES = 34;
+  const locationTail = (template: (loc: string) => string): string => {
+    if (!cityName) return ".";
+    if (useDistrict) {
+      const withDistrict = template(`${districtName}, ${cityName}`);
+      if (new TextEncoder().encode(withDistrict).length <= MAX_LOCATION_TAIL_BYTES) {
+        return withDistrict;
+      }
+    }
+    return template(cityName);
+  };
+  const descVariants =
+    lang === "vi"
+      ? {
+          core: fitLead(leadVi, locationTail((loc) => ` tại ${loc}.`)),
+          segments: [
+            verifiedPriceLong ? ` Giá ${verifiedPriceLong}/giờ.` : "",
+            verifiedHours ? ` ${hoursLabel(verifiedHours, "vi")}.` : "",
+            factsVi ? ` ${upperFirst(factsVi)}.` : "",
+            v.phone ? ` Đặt sân: ${v.phone}.` : "",
+            " Địa chỉ, bản đồ & chỉ đường.",
+            ` Sân pickleball ${cityName ? `ở ${cityName} ` : "gần bạn "}trên ThePickleHub.`,
+          ],
+        }
+      : {
+          core: fitLead(leadEn, locationTail((loc) => ` in ${loc}.`)),
+          segments: [
+            verifiedPriceLong ? ` From ${verifiedPriceLong}/hour.` : "",
+            verifiedHours ? ` ${hoursLabel(verifiedHours, "en")}.` : "",
+            factsEn ? ` ${upperFirst(factsEn)}.` : "",
+            v.phone ? ` Booking: ${v.phone}.` : "",
+            " Address, map & directions.",
+            ` More pickleball courts ${cityName ? `in ${cityName} ` : ""}on ThePickleHub.`,
+          ],
+        };
+  const description = pickMetaDescription(
+    null,
+    fitSegments(descVariants.core, descVariants.segments),
+  );
+
+  // Structured facts for amenityFeature. Names are English schema keys with a
+  // localized `name` so the value is readable in both clusters; `value` carries
+  // the machine-readable payload (boolean for a flag, number for a count).
+  const amenityFeatures: Record<string, unknown>[] = [];
+  if (v.is_indoor != null) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? (v.is_indoor ? "Sân trong nhà" : "Sân ngoài trời") : v.is_indoor ? "Indoor courts" : "Outdoor courts",
+      value: true,
+    });
+  }
+  if (v.num_courts != null && v.num_courts > 0) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? "Số sân pickleball" : "Number of pickleball courts",
+      value: v.num_courts,
+    });
+  }
+  if (v.surface_type) {
+    amenityFeatures.push({
+      "@type": "LocationFeatureSpecification",
+      name: lang === "vi" ? "Mặt sân" : "Court surface",
+      value: v.surface_type,
+    });
+  }
+  for (const a of v.amenities ?? []) {
+    if (typeof a === "string" && a.trim()) {
+      amenityFeatures.push({ "@type": "LocationFeatureSpecification", name: a.trim(), value: true });
+    }
+  }
+
+  // openingHoursSpecification — only from the object form of hours_json, where
+  // day and range are separable. The free-text/array forms stay body-only:
+  // schema.org needs dayOfWeek + opens/closes, and inventing those from a
+  // string like "6h-22h hằng ngày" would be a guess, not data.
+  // Same rule as priceRange: openingHoursSpecification is a structured claim
+  // about THIS venue, so it is built only from a verified source. The blanket
+  // 06:00–24:00 stays out of schema even though it is stored on the row —
+  // otherwise we would be telling Google 741 courts are open 18 hours a day.
+  const openingHours = isVerifiedSource(v.hours_source)
+    ? buildOpeningHours(v.hours_json)
+    : [];
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -393,10 +736,45 @@ export async function renderVenueDetail(
       ? { geo: { "@type": "GeoCoordinates", latitude: v.latitude, longitude: v.longitude } }
       : {}),
     ...(v.phone ? { telephone: v.phone } : {}),
+    // priceRange is a machine-readable assertion. Only ever emit it from a
+    // verified source — a default would tell Google a price for 741 venues
+    // that nobody checked.
+    ...(isVerifiedSource(v.price_source) &&
+    priceRangeText(v.price_min_vnd, v.price_max_vnd, "long")
+      ? { priceRange: priceRangeText(v.price_min_vnd, v.price_max_vnd, "long") as string }
+      : {}),
     ...(v.website ? { sameAs: [v.website] } : {}),
     ...(v.cover_image_url ? { image: v.cover_image_url } : {}),
     ...(v.latitude != null && v.longitude != null
       ? { hasMap: `https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}` }
+      : {}),
+    // amenityFeature — SEO-GUARD-01 (2026-08-19). Venue JSON-LD carried only
+    // name/address/geo/phone, so two courts in the same district were nearly
+    // identical to a parser even though we hold court count and indoor/outdoor
+    // for them. Both are already rendered in the visible body above, so this
+    // adds no claim the page does not show.
+    //
+    // Coverage check before writing this (691 VN rows, 2026-08-19):
+    //   is_indoor 100% · num_courts 39% · surface_type 1%
+    //   amenities 0% · hours_json 0% · website 0% · cover_image_url 0%
+    // The last four are empty columns today — the `hours`/`amenities` branches
+    // below emit nothing until they are backfilled, which is why the meta
+    // description was NOT rebuilt around them (see commit 88520b58).
+    ...(amenityFeatures.length ? { amenityFeature: amenityFeatures } : {}),
+    ...(openingHours.length ? { openingHoursSpecification: openingHours } : {}),
+    // aggregateRating from OUR own users' reviews (venue = third-party entity,
+    // legitimate like TripAdvisor/Yelp — unlike republishing Google's rating).
+    // Backed by the visible review section rendered in the body below.
+    ...(v.review_count && v.review_count > 0 && v.review_avg != null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: v.review_avg,
+            reviewCount: v.review_count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
       : {}),
   };
 
@@ -416,8 +794,8 @@ export async function renderVenueDetail(
 
   const lbl =
     lang === "vi"
-      ? { addr: "Địa chỉ", courts: "Số sân", type: "Loại sân", surface: "Mặt sân", phone: "Điện thoại", hours: "Giờ mở cửa", amenities: "Tiện ích", map: "Xem bản đồ", directions: "Chỉ đường" }
-      : { addr: "Address", courts: "Courts", type: "Type", surface: "Surface", phone: "Phone", hours: "Opening hours", amenities: "Amenities", map: "View map", directions: "Directions" };
+      ? { addr: "Địa chỉ", courts: "Số sân", type: "Loại sân", surface: "Mặt sân", phone: "Điện thoại", hours: "Giờ mở cửa", amenities: "Tiện ích", map: "Xem bản đồ", directions: "Chỉ đường", price: "Giá thuê" }
+      : { addr: "Address", courts: "Courts", type: "Type", surface: "Surface", phone: "Phone", hours: "Opening hours", amenities: "Amenities", map: "View map", directions: "Directions", price: "Price" };
 
   const parts: string[] = [bc, `<h1>${escapeHtml(name)}</h1>`];
   if (v.cover_image_url)
@@ -436,7 +814,33 @@ export async function renderVenueDetail(
     parts.push(`<p><strong>${lbl.type}:</strong> ${escapeHtml(lang === "vi" ? indoorVi : indoorEn)}</p>`);
   if (v.surface_type)
     parts.push(`<p><strong>${lbl.surface}:</strong> ${escapeHtml(v.surface_type)}</p>`);
-  const hours = hoursLines(v.hours_json, lang);
+
+  // PRICE-01 body rows. A verified figure is stated plainly as this venue's
+  // price; a default is stated as what courts in the area cost, with the venue
+  // explicitly excluded from the claim, so the page never asserts a number we
+  // did not check. Same split for hours.
+  const bodyPrice = priceRangeText(v.price_min_vnd, v.price_max_vnd, "long");
+  if (bodyPrice) {
+    parts.push(
+      isVerifiedSource(v.price_source)
+        ? `<p><strong>${lbl.price}:</strong> ${escapeHtml(bodyPrice)}${lang === "vi" ? "/giờ" : " per hour"}</p>`
+        : `<p>${escapeHtml(
+            lang === "vi"
+              ? `Chưa có bảng giá riêng của sân này. Sân pickleball${cityName ? ` ở ${cityName}` : ""} thường thuê ${bodyPrice}/giờ — gọi sân để hỏi giá chính xác.`
+              : `No confirmed rate for this court yet. Pickleball courts${cityName ? ` in ${cityName}` : ""} typically rent for ${bodyPrice} per hour — call ahead for the exact price.`,
+          )}</p>`,
+    );
+  }
+  const weekHours = uniformHours(v.hours_json);
+  if (weekHours && isVerifiedSource(v.hours_source)) {
+    parts.push(
+      `<p><strong>${lbl.hours}:</strong> ${escapeHtml(hoursLabel(weekHours, lang))}</p>`,
+    );
+  }
+  // Skip the per-day list when the week is uniform — the single line above
+  // already said it, and seven identical rows is exactly the padding the /san
+  // cluster is being penalised for.
+  const hours = weekHours ? [] : hoursLines(v.hours_json, lang);
   if (hours.length > 0)
     parts.push(
       `<p><strong>${lbl.hours}:</strong></p><ul>${hours.map((h) => `<li>${escapeHtml(h)}</li>`).join("")}</ul>`,
@@ -449,6 +853,27 @@ export async function renderVenueDetail(
   if (v.website)
     parts.push(`<p><a href="${escapeHtml(v.website)}" rel="nofollow noopener">Website</a></p>`);
 
+  // Community reviews — first-hand content (the SEO moat) + the visible backing
+  // for the aggregateRating emitted above. Anonymous in SSR (names shown in the
+  // SPA); rating + body + date is what a bot cites.
+  if (reviews.length > 0) {
+    const revHeading = lang === "vi" ? "Đánh giá từ cộng đồng" : "Community reviews";
+    const avgLine =
+      v.review_avg != null
+        ? `<p><strong>★ ${v.review_avg}</strong> · ${v.review_count} ${lang === "vi" ? "đánh giá" : "reviews"}</p>`
+        : "";
+    const revItems = reviews
+      .map((r) => {
+        const clamped = Math.max(1, Math.min(5, r.rating));
+        const stars = "★".repeat(clamped) + "☆".repeat(5 - clamped);
+        const date = (r.created_at || "").slice(0, 10);
+        const body = r.body ? `<p>${escapeHtml(r.body)}</p>` : "";
+        return `<li><span aria-label="${clamped}/5">${stars}</span>${date ? ` <time datetime="${date}">${date}</time>` : ""}${body}</li>`;
+      })
+      .join("");
+    parts.push(`<section><h2>${escapeHtml(revHeading)}</h2>${avgLine}<ul>${revItems}</ul></section>`);
+  }
+
   // Unique intro (after H1) + internal links to other courts in the same
   // city — reduces thin content and interlinks the directory.
   const typeWord =
@@ -459,29 +884,140 @@ export async function renderVenueDetail(
         ? `${v.num_courts} sân`
         : `${v.num_courts} court${v.num_courts > 1 ? "s" : ""}`
       : "";
+  // GEO-01 (2026-08-24) — the old opening was
+  //   "<name> là sân pickleball <type> tại <address>. Xem địa chỉ, bản đồ,
+  //    chỉ đường và các sân pickleball khác tại <city> bên dưới."
+  // which breaks two rules in CLAUDE.md's GEO section, on all 896 pages:
+  //
+  //  - it never names ThePickleHub, so an AI answer quoting the passage has
+  //    nothing to attribute it to;
+  //  - it ENDS by promising the answer is further down. CLAUDE.md puts it
+  //    plainly: a passage that promises the answer loses to one that contains
+  //    it. "Xem địa chỉ, bản đồ, chỉ đường … bên dưới" is the whole
+  //    anti-pattern in one clause.
+  //
+  // Rewritten to front-load whatever concrete facts this row actually holds —
+  // courts, surface, indoor/outdoor, district, verified price, verified hours,
+  // booking phone — and to close on the phone rather than on a pointer. Every
+  // fact is optional, so the sentence degrades to the venue name plus location
+  // when the row is bare, instead of padding with boilerplate.
+  //
+  // This also raises how much of the page differs per venue: the old opening
+  // varied only by name and address, the new one varies by up to six fields.
+  const factsVn: string[] = [];
+  if (courtsWord) factsVn.push(courtsWord);
+  if (typeWord) factsVn.push(typeWord);
+  if (v.surface_type) factsVn.push(lang === "vi" ? `mặt ${v.surface_type}` : `${v.surface_type} surface`);
+  const openingPrice = isVerifiedSource(v.price_source)
+    ? priceRangeText(v.price_min_vnd, v.price_max_vnd, "long")
+    : null;
+  const openingHoursText = isVerifiedSource(v.hours_source) ? uniformHours(v.hours_json) : null;
+
   const intro =
     lang === "vi"
-      ? `${name} là sân pickleball${typeWord ? ` ${typeWord}` : ""}${addr ? ` tại ${addr}` : ""}${courtsWord ? ` với ${courtsWord}` : ""}${v.surface_type ? `, mặt sân ${v.surface_type}` : ""}. Xem địa chỉ, bản đồ, chỉ đường và các sân pickleball khác${v.city ? ` tại ${v.city}` : ""} bên dưới.`
-      : `${name} is a pickleball court${addr ? ` at ${addr}` : ""}${courtsWord ? ` with ${courtsWord}` : ""}${typeWord ? ` (${typeWord})` : ""}${v.surface_type ? `, ${v.surface_type} surface` : ""}. See the address, map, directions and other pickleball courts${v.city ? ` in ${v.city}` : ""} below.`;
+      ? [
+          `${name} là sân pickleball${factsVn.length ? ` ${factsVn.join(", ")}` : ""}` +
+            `${locationLine(v) ? ` ở ${locationLine(v)}` : ""}, có trên ThePickleHub.`,
+          openingPrice ? `Giá thuê ${openingPrice}/giờ.` : "",
+          openingHoursText ? `Mở cửa ${hoursLabel(openingHoursText, lang).toLowerCase()}.` : "",
+          addr ? `Địa chỉ ${addr}.` : "",
+          v.phone ? `Đặt sân gọi ${v.phone}.` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : [
+          `${name} is a pickleball court${factsVn.length ? ` with ${factsVn.join(", ")}` : ""}` +
+            `${locationLine(v) ? ` in ${locationLine(v)}` : ""}, listed on ThePickleHub.`,
+          openingPrice ? `Courts rent for ${openingPrice} per hour.` : "",
+          openingHoursText ? `Open ${hoursLabel(openingHoursText, lang).toLowerCase()}.` : "",
+          addr ? `Address: ${addr}.` : "",
+          v.phone ? `Book by phone on ${v.phone}.` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
   parts.splice(2, 0, `<p>${escapeHtml(intro)}</p>`);
 
   if (v.city) {
     try {
+      // NEAR-01 (2026-08-24) — this block used to be
+      //   .eq(city).order(is_verified).order(num_courts).limit(8)
+      // which is a DETERMINISTIC city-wide query: it ignores which venue the
+      // reader is actually on, so every one of the 136 Hà Nội pages shipped the
+      // byte-identical list of 8 links, and every one of the 150 TP.HCM pages
+      // shipped another. Verified in production before this change — /vi/san/
+      // 789-pickleball-club, baca-pickleballs-nguyen-chanh and san-pickleball-
+      // 83-hao-nam all rendered the same 8 slugs in the same order.
+      //
+      // That block is ~40% of a venue page's word count, so the majority of the
+      // "unique" content on the /san cluster was one boilerplate list repeated
+      // hundreds of times — exactly the mass-templated-inventory signal Guard-0
+      // above was written to fight, and the likeliest reason the cluster sits at
+      // 1.4% CTR while carrying 68% of site impressions.
+      //
+      // latitude/longitude are populated on 760/760 rows (the ONE column with
+      // full coverage), so real proximity is computable. Pull the city once and
+      // rank in JS: 150 rows is the worst case, and this path is bot-only and
+      // KV-cached, so the cost is paid once per URL per TTL, not per request.
       const { data: nb } = await supabase
         .from("venues")
-        .select("slug, name, name_vi, district")
+        .select("slug, name, name_vi, district, latitude, longitude, num_courts")
         .eq("city", v.city)
         .neq("slug", v.slug)
-        .order("is_verified", { ascending: false })
-        .order("num_courts", { ascending: false })
-        .limit(8);
-      const nearby = (nb ?? []) as { slug: string; name: string; name_vi: string | null; district: string | null }[];
-      if (nearby.length > 0) {
-        const heading = lang === "vi" ? `Sân pickleball khác tại ${v.city}` : `Other pickleball courts in ${v.city}`;
-        const items = nearby
-          .map((n) => `<li><a href="${sanBase}/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>${n.district ? ` — ${escapeHtml(n.district)}` : ""}</li>`)
+        .limit(CITY_POOL_LIMIT);
+      const pool = (nb ?? []) as NearbyRow[];
+
+      const nearest = v.latitude != null && v.longitude != null
+        ? pool
+            .filter((n) => n.latitude != null && n.longitude != null)
+            .map((n) => ({
+              row: n,
+              km: haversineKm(v.latitude!, v.longitude!, n.latitude!, n.longitude!),
+            }))
+            // Guard against duplicate coordinates (a few rows share a mall's
+            // centroid): a 0.0 km "neighbour" reads like a data bug to a user.
+            .filter((n) => n.km > 0.01)
+            .sort((a, b) => a.km - b.km)
+            .slice(0, NEAREST_COUNT)
+        : [];
+
+      const shown = new Set(nearest.map((n) => n.row.slug));
+
+      if (nearest.length > 0) {
+        const heading =
+          lang === "vi" ? `Sân pickleball gần ${name}` : `Pickleball courts near ${name}`;
+        const items = nearest
+          .map(
+            ({ row, km }) =>
+              `<li><a href="${sanBase}/${escapeHtml(row.slug)}">${escapeHtml(displayName(row, lang))}</a>` +
+              ` — ${formatKm(km, lang)}${row.district ? ` · ${escapeHtml(row.district)}` : ""}</li>`,
+          )
           .join("");
         parts.push(`<h2>${escapeHtml(heading)}</h2><ul>${items}</ul>`);
+      }
+
+      // District block: narrower than the old city list (Quận 2 holds 33 of
+      // TP.HCM's 150 venues) and it is the unit people search by. Deduped
+      // against the proximity list so the two never print the same slug twice.
+      const districtName2 = v.district ? v.district.trim() : "";
+      if (districtName2) {
+        const sameDistrict = pool
+          .filter((n) => (n.district ?? "").trim() === districtName2 && !shown.has(n.slug))
+          .sort((a, b) => (b.num_courts ?? 0) - (a.num_courts ?? 0))
+          .slice(0, DISTRICT_COUNT);
+        if (sameDistrict.length > 0) {
+          const heading =
+            lang === "vi"
+              ? `Sân pickleball khác ở ${districtName2}`
+              : `Other pickleball courts in ${districtName2}`;
+          const items = sameDistrict
+            .map(
+              (n) =>
+                `<li><a href="${sanBase}/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>` +
+                `${n.num_courts && n.num_courts > 0 ? ` — ${n.num_courts} ${lang === "vi" ? "sân" : n.num_courts > 1 ? "courts" : "court"}` : ""}</li>`,
+            )
+            .join("");
+          parts.push(`<h2>${escapeHtml(heading)}</h2><ul>${items}</ul>`);
+        }
       }
     } catch {
       // non-fatal

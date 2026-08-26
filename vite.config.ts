@@ -53,6 +53,12 @@ const SUPABASE_ORIGIN = (
 
 const reEscape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Filled in by the supabase-origin-in-static-assets plugin's configResolved
+// hook — the build's real output directory, and whether publicDir was copied
+// into it at all. Both are unknowable at config-factory time.
+let resolvedOutDir = "";
+let copiesPublicDir = false;
+
 return ({
   server: {
     host: "::",
@@ -103,12 +109,37 @@ return ({
           return html.replaceAll("%SUPABASE_ORIGIN%", SUPABASE_ORIGIN);
         },
       },
-      // public/_headers is copied verbatim, so it is rewritten after the copy.
-      // A miss here is silent — the header still parses, it just names the
-      // wrong host — so an absent marker is an error, not a no-op.
+      // The emitted _headers is resolved from the build's OWN outDir, captured
+      // here rather than assumed to be "dist".
+      // ----------------------------------------------------------------------
+      // Vite copies publicDir into outDir in prepareOutDir(), before the bundle
+      // runs, so by closeBundle() the file is already there — but only at the
+      // outDir this build actually chose. A hardcoded "dist" reads the wrong
+      // path under `--outDir`, a configured `build.outDir`, or any second
+      // config that overrides it, and the two failure modes are opposite and
+      // both bad: a LEFTOVER dist/_headers from an earlier build fails a build
+      // that was fine, and an ABSENT one skipped the rewrite entirely and
+      // shipped the literal marker as the CSP report-uri — an unparseable URL,
+      // so every violation report is dropped and the client_errors CSP feed
+      // goes quiet with nothing to notice. The whole point of the throw below
+      // is that this substitution is never allowed to be silent, so the
+      // "file missing" branch cannot be a silent return either.
+      configResolved(resolved) {
+        resolvedOutDir = path.resolve(resolved.root, resolved.build.outDir);
+        copiesPublicDir = Boolean(resolved.build.copyPublicDir && resolved.publicDir);
+      },
       closeBundle() {
-        const headers = path.resolve(__dirname, "dist/_headers");
-        if (!fs.existsSync(headers)) return;
+        // Nothing was copied, so there is nothing to rewrite and nothing to
+        // ship wrong — the only branch where absence is genuinely fine.
+        if (!copiesPublicDir) return;
+
+        const headers = path.resolve(resolvedOutDir, "_headers");
+        if (!fs.existsSync(headers)) {
+          throw new Error(
+            `${headers} is missing — public/_headers was not copied into the ` +
+              "build output, so the CSP report-uri never got substituted.",
+          );
+        }
         const before = fs.readFileSync(headers, "utf8");
         if (!before.includes("%SUPABASE_ORIGIN%")) {
           throw new Error(
@@ -148,8 +179,7 @@ return ({
       // rule /*.js) → bump v3 sau khi _headers đã BỎ hẳn /*.js. KHÔNG đổi lại
       // tên cũ kể cả khi purge CDN.
       filename: "sw-v3.js",
-      // Register SW at runtime (we do manual registration in src/pwa.ts so we can
-      // skip it inside Capacitor native WebView — see src/pwa.ts)
+      // Register SW at runtime — manual registration lives in src/pwa.ts.
       injectRegister: null,
       // Static assets to include in precache
       includeAssets: [
@@ -215,7 +245,6 @@ return ({
           "assets/vendor-supabase-*.js",
           "assets/vendor-query-*.js",
           "assets/vendor-date-*.js",
-          "assets/vendor-capacitor-*.js",
           "assets/types-*.js",
           // North-star journey screens (docs/journey-screens.md)
           "assets/Index-*.js",
@@ -429,14 +458,6 @@ return ({
             "@dnd-kit/utilities",
           ],
           "vendor-date": ["date-fns"],
-          "vendor-capacitor": [
-            "@capacitor/core",
-            "@capacitor/app",
-            "@capacitor/browser",
-            "@capacitor/push-notifications",
-            "@capacitor/splash-screen",
-            "@capacitor/status-bar",
-          ],
           "vendor-video": ["@mux/mux-player-react", "hls.js"],
         },
       },
@@ -471,6 +492,32 @@ return ({
     ],
     exclude: ["node_modules/**", "dist/**", "tests/**"],
     environment: "node",
+    // src/integrations/supabase/client.ts calls createClient() at module load
+    // and throws "supabaseUrl is required." when VITE_SUPABASE_URL is unset.
+    // quality.yml supplies the VITE_SUPABASE_* vars to the Build step only,
+    // not to the Vitest step, so any suite that transitively imports the real
+    // client is a landmine: SellerProductForm.save.test.tsx reaches it through
+    // a React.lazy chunk and reds `npm run test` intermittently (2 runs in 3
+    // on a clean checkout of main, 3 in 3 when run alone) while CI happens to
+    // stay green. Twenty test files already carry a per-file vi.mock purely to
+    // dodge this; the config is where it belongs.
+    //
+    // Dummy values on purpose, and NOT a *.supabase.co host: this must never
+    // resolve to a real project, and src/__tests__/supabase-origin-not-
+    // hardcoded.test.ts scans this file for `<ref>.supabase.co` literals.
+    // Vitest's `env` overrides both a local .env and the shell, so a developer
+    // with real credentials gets the dummies here too.
+    //
+    // LIMITATION — this de-mines jsdom suites only. Under the default
+    // `environment: "node"` the next line of client.ts (`storage: localStorage`)
+    // still throws ReferenceError, so the per-file vi.mock workarounds in
+    // node-env tests remain load-bearing. Do not delete them on the strength
+    // of this block. Closing that half needs a setupFiles localStorage stub.
+    env: {
+      VITE_SUPABASE_URL: "http://127.0.0.1:54321",
+      VITE_SUPABASE_PROJECT_ID: "test-project",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "test-anon-key-not-a-real-credential",
+    },
     // Coverage of test-imported files. Threshold locks the baseline
     // (86.9% statements on 2026-05-29) so a regression that adds untested
     // imported code reds the gate. Buffer left below baseline to avoid

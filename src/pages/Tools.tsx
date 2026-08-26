@@ -10,6 +10,7 @@ import {
   useCompletedPublicQuickTables,
 } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { ToolsHubFaqSection } from "@/components/seo/ToolsHubFaqSection";
 import { formatRelative } from "@/lib/format-datetime";
 
 const Tools = () => {
@@ -363,6 +364,11 @@ const Tools = () => {
           </div>
         </section>
 
+        {/* How-to steps + FAQ. Copy is shared with the SSR renderer
+            (src/content/tools/hub-copy.ts) so the HowTo/FAQPage JSON-LD the bot
+            path emits always describes content a human visitor can see. */}
+        <ToolsHubFaqSection />
+
         {/* Extra tools / utilities */}
         <section style={{ marginBottom: 56 }}>
           <div className="tl-sec-head">
@@ -473,7 +479,7 @@ const Tools = () => {
                       <span className="sep">·</span>
                       <span>{row.meta}</span>
                       <span className="sep">·</span>
-                      <span>{formatRelative(row.created_at)}</span>
+                      <span>{formatRelative(row.created_at, language)}</span>
                     </div>
                   </div>
                   <div className="tl-br-creator">{row.creator ?? "—"}</div>

@@ -17,6 +17,11 @@ interface NewsProps {
   language?: "en" | "vi";
 }
 
+// Enough rows to cover a phone viewport before the fetch resolves; the list
+// itself asks for 60. Reserving all 60 would be worse, not better — it would
+// overshoot every short result set and shift the other way.
+const NEWS_SKELETON_ROWS = 6;
+
 const News = ({ language: languageProp }: NewsProps = {}) => {
   // Canonical /news reads the display + list language from the i18n context
   // (geo-aware, same model as /rankings & /feed), so Vietnamese visitors get a
@@ -123,10 +128,24 @@ const News = ({ language: languageProp }: NewsProps = {}) => {
 
         <div style={{ paddingBottom: 80 }}>
           {isLoading ? (
-            <div className="tl-empty">
-              <p style={{ fontFamily: "Geist Mono", fontSize: 12, letterSpacing: "0.04em" }}>
-                {language === "vi" ? "Đang tải tin…" : "Loading news…"}
-              </p>
+            // CLS: this used to be a single line of "Đang tải tin…" that the
+            // resolved list then pushed off the screen — PageSpeed measured
+            // lab CLS 0.483 on this route, second worst on the site after the
+            // homepage. The skeleton reuses the REAL row classes with
+            // non-breaking spaces instead of copying pixel heights, so the
+            // reserved geometry is computed by the same CSS that lays out the
+            // loaded row and cannot drift away from it.
+            <div className="tl-news-list" aria-busy="true" aria-label={language === "vi" ? "Đang tải tin" : "Loading news"}>
+              {Array.from({ length: NEWS_SKELETON_ROWS }, (_, i) => (
+                <div className="tl-news-row tl-news-row--skeleton" key={i} aria-hidden="true">
+                  <div className="tl-news-row-body">
+                    <div className="tl-news-row-kicker">&nbsp;</div>
+                    <h3 className="tl-news-row-title">&nbsp;<br />&nbsp;</h3>
+                    <p className="tl-news-row-summary">&nbsp;<br />&nbsp;</p>
+                    <div className="tl-news-row-meta"><span>&nbsp;</span></div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : isError ? (
             // A failed fetch used to fall through to "No news in this view",
@@ -166,7 +185,7 @@ const News = ({ language: languageProp }: NewsProps = {}) => {
                       <h3 className="tl-news-row-title">{item.title}</h3>
                       <p className="tl-news-row-summary">{item.summary}</p>
                       <div className="tl-news-row-meta">
-                        <span>{formatRelative(item.published_at)}</span>
+                        <span>{formatRelative(item.published_at, language)}</span>
                         <span className="sep">·</span>
                         <span>
                           {internalPath

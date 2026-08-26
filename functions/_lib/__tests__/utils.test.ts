@@ -25,6 +25,64 @@ describe("BOT_UA prerender routing", () => {
       expect(BOT_UA.test(ua)).toBe(true);
     }
   });
+
+  it("prerenders AI search and user-request agents", () => {
+    for (const ua of [
+      "ChatGPT-User/1.0",
+      "OAI-SearchBot/1.0",
+      "Claude-SearchBot/1.0",
+      "Claude-User/1.0",
+      "PerplexityBot/1.0",
+      "DeepSeekBot/1.0",
+    ]) {
+      expect(BOT_UA.test(ua)).toBe(true);
+    }
+  });
+
+  it("still recognizes training crawlers for the SSR path when infrastructure permits them", () => {
+    expect(BOT_UA.test("GPTBot/1.0")).toBe(true);
+    expect(BOT_UA.test("ClaudeBot/1.0")).toBe(true);
+  });
+});
+
+describe("BOT_UA covers the AI crawlers that cite, not just the ones that train", () => {
+  // 2026-08-18: measured on /blog/pickleball-world-cup-2026-da-nang, the
+  // policy was exactly inverted. GPTBot and ClaudeBot — both Disallow: / in
+  // robots.txt — received the full 3,177-word article, while OAI-SearchBot
+  // and Claude-SearchBot, allowed on purpose so an AI answer can cite and
+  // link back, received the 324-word SPA shell: no article body, no JSON-LD.
+  it("prerenders the search/assistant agents that produce citations", () => {
+    const citationUas = [
+      "Mozilla/5.0 (compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot)",
+      "Mozilla/5.0 (compatible; ChatGPT-User/1.0; +https://openai.com/bot)",
+      "Mozilla/5.0 (compatible; Claude-SearchBot/1.0; +Claude-SearchBot@anthropic.com)",
+      "Mozilla/5.0 (compatible; Claude-User/1.0; +Claude-User@anthropic.com)",
+      "Mozilla/5.0 (compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)",
+      "Mozilla/5.0 (compatible; DuckAssistBot/1.0; +https://duckduckgo.com/duckassistbot.html)",
+      "Mozilla/5.0 (compatible; MistralAI-User/1.0)",
+      "meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)",
+      "Mozilla/5.0 (compatible; Amazonbot/0.1; +https://developer.amazon.com/support/amazonbot)",
+    ];
+
+    for (const ua of citationUas) {
+      expect(BOT_UA.test(ua)).toBe(true);
+    }
+  });
+
+  it("does not let a vendor prefix stand in for the specific agent", () => {
+    // Each agent is its own token. "claude" or "perplexity" alone must not
+    // match, or an unrelated UA containing the vendor name gets SSR.
+    expect(BOT_UA.test("Mozilla/5.0 (compatible; claude/1.0)")).toBe(false);
+    expect(BOT_UA.test("Mozilla/5.0 (compatible; perplexity/1.0)")).toBe(false);
+    expect(BOT_UA.test("Mozilla/5.0 (compatible; openai/1.0)")).toBe(false);
+  });
+
+  it("still keeps a normal human browser on the SPA path", () => {
+    const human =
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) " +
+      "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7 Mobile/15E148 Safari/604.1";
+    expect(BOT_UA.test(human)).toBe(false);
+  });
 });
 
 describe("sanitizeBlogHtml", () => {

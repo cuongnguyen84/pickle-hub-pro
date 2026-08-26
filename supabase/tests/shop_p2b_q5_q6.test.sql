@@ -12,7 +12,7 @@
 
 BEGIN;
 
-SELECT plan(53);
+SELECT plan(52);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -73,17 +73,12 @@ UPDATE public.product_media SET verified_at = now() WHERE id=(SELECT v FROM t_q5
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 
+-- Từ 20260818170000 người bán bấm một lần là tới `approved`; bước admin duyệt
+-- ở giữa không còn tồn tại, và gọi nó bây giờ sẽ raise vì sản phẩm đã approved.
 SELECT is(
   (public.product_submit((SELECT v FROM t_q5 WHERE k='p1'),
-     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s1')) ->> 'ok',
-  'true', 'gửi duyệt');
-
-SET LOCAL request.jwt.claims TO '{"sub":"5f0e0004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
-SELECT is(
-  (public.product_decide((SELECT v FROM t_q5 WHERE k='p1'), 'approve',
-     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-     NULL, NULL, '[]'::jsonb, 'tok-q5d1')) ->> 'status',
-  'approved', 'duyệt lần đầu');
+     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s1')) ->> 'status',
+  'approved', 'người bán đăng bán, không qua ai');
 
 -- The worker's commit.
 SET LOCAL role postgres;
@@ -226,28 +221,33 @@ SET LOCAL request.jwt.claims TO '{"sub":"5f0e0001-0000-4000-8000-000000000001","
 
 SELECT is(
   (public.product_submit((SELECT v FROM t_q5 WHERE k='p1'),
-     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s2')) ->> 'ok',
-  'true', 'người bán gửi duyệt lại bằng đúng luồng P2a');
+     (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')), 'tok-q5s2')) ->> 'status',
+  'approved', 'người bán sửa xong đăng lại, không qua ai');
+
+-- Bất biến quan trọng nhất của cả migration 20260818170000: chạm tới
+-- `approved` bằng tay NGƯỜI BÁN vẫn KHÔNG làm sản phẩm hiện ra. Byte ảnh phải
+-- vào bucket công khai đã, và chỉ `product_publish_commit` (service_role) ghi
+-- được `is_published`. Bốn tầng khoá không bị nới cái nào — chỉ có trạng thái
+-- mà thao tác người bán chạm tới là đổi.
 SELECT is(
-  (SELECT status::text FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-  'pending_review', 'sản phẩm quay lại hàng đợi');
+  (SELECT is_published FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
+  false, 'nhưng vẫn chờ byte lên bucket mới thật sự công khai');
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
 SELECT throws_ok(
   format($$ SELECT public.product_public_projection(%L::uuid, false) $$, (SELECT v FROM t_q5 WHERE k='p1')),
-  'P0002', NULL, 'gửi lại KHÔNG tự công khai');
+  'P0002', NULL, 'và khách vẫn không thấy nó');
 
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
+-- Đòn gỡ vẫn với tới được. Đây là lý do người bán dừng ở đúng `approved` chứ
+-- không đặt ra một trạng thái mới: điều kiện của `suspend` là status='approved'.
 SELECT is(
-  (public.product_decide((SELECT v FROM t_q5 WHERE k='p1'), 'approve',
+  (public.product_decide((SELECT v FROM t_q5 WHERE k='p1'), 'suspend',
      (SELECT version FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-     NULL, NULL, '[]'::jsonb, 'tok-q5d4')) ->> 'status',
-  'approved', 'quản trị viên duyệt lại — bốn bước, không phải một nút');
-SELECT is(
-  (SELECT is_published FROM public.products WHERE id=(SELECT v FROM t_q5 WHERE k='p1')),
-  false, 'và vẫn chờ worker đưa byte lên mới thật sự công khai');
+     'Gỡ lần hai', NULL, '[]'::jsonb, 'tok-q5d4')) ->> 'status',
+  'suspended', 'admin vẫn gỡ được hàng người bán tự đăng');
 
 -- ─── Q6: contact moderation events ──────────────────────────────────────────
 
@@ -267,20 +267,25 @@ INSERT INTO t_q5 VALUES ('c1',
   (public.shop_contact_upsert('7f000001-0000-4000-8000-000000000001'::uuid,
      'phone', '0912345678', 'Gọi giờ hành chính', true, NULL)).id);
 
+-- Quyết định đem ra thử ở đây là `disable`, không phải `approve`. Từ
+-- 20260818160000 kênh trong một shop active sinh ra đã ở `approved`, nên
+-- `approve` là lệnh rỗng — hàm idempotent-theo-kết-quả sẽ trả về sớm và KHÔNG
+-- ghi sự kiện nào. Câu hỏi của mục này là "một quyết định có để lại lịch sử
+-- đọc được không", nên nó phải hỏi bằng một quyết định thật sự đổi thứ gì đó.
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0004-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 SELECT is(
-  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'approve',
+  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'disable',
      (SELECT version FROM public.shop_contact_channels WHERE id=(SELECT v FROM t_q5 WHERE k='c1')),
-     NULL, 'nội bộ: đã gọi thử số này', 'tok-q5c1')) ->> 'state',
-  'approved', 'quản trị viên duyệt kênh');
+     'Số này gọi không ai nghe', 'nội bộ: đã gọi thử số này', 'tok-q5c1')) ->> 'state',
+  'disabled', 'quản trị viên tắt được một kênh đang hiển thị');
 
 SELECT is(
   (SELECT count(*)::int FROM public.shop_contact_moderation_events
-   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='approve'),
+   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='disable'),
   1, 'đúng một sự kiện được ghi');
 
 SELECT is(
-  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'approve', NULL, NULL, NULL, 'tok-q5c1')) ->> 'replayed',
+  (public.shop_contact_decide((SELECT v FROM t_q5 WHERE k='c1'), 'disable', NULL, 'lại lý do', NULL, 'tok-q5c1')) ->> 'replayed',
   'true', 'gửi lại cùng mã trả về câu trả lời cũ');
 SELECT is(
   (SELECT count(*)::int FROM public.shop_contact_moderation_events
@@ -295,7 +300,7 @@ SELECT ok(
   'số điện thoại KHÔNG bị chép vào nhật ký — nhật ký nói "kênh phone", không nói số nào');
 SELECT is(
   (SELECT channel_type::text FROM public.shop_contact_moderation_events
-   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='approve'),
+   WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='disable'),
   'phone', 'chỉ LOẠI kênh đi theo lịch sử');
 
 -- Seller reads their half; nobody else reads any of it.
@@ -334,28 +339,51 @@ SELECT throws_ok(
   $$ UPDATE public.shop_contact_moderation_events SET internal_note='sửa' $$,
   NULL, NULL, 'nhật ký kênh liên hệ chỉ ghi thêm');
 
--- A seller editing an approved channel sends it back to review, and that shows
--- in the history rather than leaving an unexplained gap.
+-- Người bán gõ số khác vào một kênh ĐÃ BỊ TẮT: nó không sống lại. Đây là chỗ
+-- duy nhất trigger còn quyết định thay người bán sau 20260818160000, và nó giữ
+-- vì lý do khác hẳn cổng duyệt cũ — không phải "chưa ai xem", mà là "đã có
+-- người xem và nói không".
 SET LOCAL request.jwt.claims TO '{"sub":"5f0e0001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 SELECT is(
   (public.shop_contact_upsert('7f000001-0000-4000-8000-000000000001'::uuid,
      'phone', '0987654321', 'Số mới', true, (SELECT v FROM t_q5 WHERE k='c1'))).state::text,
-  'pending_review', 'người bán đổi số đã duyệt thì kênh quay lại chờ duyệt');
+  'disabled', 'người bán đổi số trên kênh đã bị tắt: nó KHÔNG tự sống lại');
 -- Read as postgres: the assertion four tests up proves a seller sees nothing
 -- through RLS, so counting the row from the seller's session would measure the
 -- policy, not the trigger.
 SET LOCAL role postgres;
+-- `resubmitted` chỉ được ghi cho bước approved → pending_review, và bước đó
+-- không còn tồn tại. Khẳng định 0 chứ không xoá dòng này: nếu một ngày nào đó
+-- nó lại > 0 thì cổng duyệt đã quay về mà không ai nói.
 SELECT is(
   (SELECT count(*)::int FROM public.shop_contact_moderation_events
    WHERE contact_channel_id=(SELECT v FROM t_q5 WHERE k='c1') AND action='resubmitted'),
-  1, 'và lịch sử ghi lại việc đó — không để một khoảng trống không ai giải thích');
+  0, 'không còn bước "gửi duyệt lại" nào để ghi — cổng duyệt đã đi');
 
 SET LOCAL role anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
+-- Was `is(count(*), 0)`: anon held a SELECT grant, and the `TO public` policy
+-- (approved AND is_public AND the shop is active) filtered the row away. Since
+-- 20260818140000 anon holds no grant on this table at all, so the answer is a
+-- refusal rather than an empty count — strictly stronger, and the reason the
+-- grant went is that the row is wider than the public door beside it
+-- (internal_note, review_note, approved_by, value_raw).
+--
+-- The error names `shops`, not this table: Postgres checks privileges for every
+-- relation in the plan, and the policy's EXISTS pulls `shops` in. Both are
+-- denied; only the SQLSTATE is worth asserting.
+SELECT throws_ok(
+  $$ SELECT count(*)::int FROM public.shop_contact_channels
+     WHERE shop_id='7f000001-0000-4000-8000-000000000001'::uuid AND state='approved' $$,
+  '42501', NULL,
+  'anon không đọc được bảng kênh liên hệ — cửa công khai là shop_public_contacts');
+
+-- The public door still answers, and still hides the channel an admin took
+-- down. That is the assertion this section was really making.
 SELECT is(
-  (SELECT count(*)::int FROM public.shop_contact_channels
-   WHERE shop_id='7f000001-0000-4000-8000-000000000001'::uuid AND state='approved'),
-  0, 'kênh vừa đổi giá trị không còn công khai cho tới khi được duyệt lại');
+  public.shop_public_contacts('7f000001-0000-4000-8000-000000000001'::uuid),
+  '[]'::jsonb,
+  'kênh bị admin tắt không còn công khai, kể cả sau khi người bán sửa số');
 
 -- ─── Append-only must not mean undeletable-subject ──────────────────────────
 -- Found by the P2a profile suite the moment this table existed: a blanket

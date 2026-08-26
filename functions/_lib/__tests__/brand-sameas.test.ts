@@ -48,4 +48,48 @@ describe("Organization sameAs", () => {
       expect(list).toContain("https://apps.apple.com/app/id6759968026");
     }
   });
+
+  it("points Facebook at our page, not the Indian business with the same name", () => {
+    // BRAND-01, 2026-08-18. The list previously carried
+    // facebook.com/ThePickleHub. It returns 200, so the "every entry has to
+    // resolve" rule above passed it — but Facebook resolves that vanity URL to
+    // facebook.com/thepicklehub/ = "Pickle Hub | Guntur", a business in Andhra
+    // Pradesh, India. Resolving is not enough; it has to resolve to US, or the
+    // schema asserts we are a different company that shares the brand name.
+    // Ours is https://www.facebook.com/thepicklehubnet — the URL Cuong
+    // supplied, page ID 61579261671499, og:title "thepicklehub.net".
+    for (const list of blocks) {
+      expect(list).toContain("https://www.facebook.com/thepicklehubnet");
+      expect(list.some((u) => /facebook\.com\/ThePickleHub\/?$/i.test(u))).toBe(false);
+    }
+  });
+
+  it("claims no Instagram or YouTube profile — neither presence exists", () => {
+    // Removed 2026-08-18, confirmed by Cuong. instagram.com/thepicklehub and
+    // youtube.com/@thepicklehub (channel UC00BA7NxlshRE9ik9ssTYiw, 15 subs)
+    // are somebody else's. Both matched the brand name and both returned 200,
+    // which is exactly how the wrong Facebook page got in. A handle that
+    // matches the brand is not evidence of ownership — ask Cuong.
+    for (const list of blocks) {
+      expect(list.some((u) => u.includes("instagram.com"))).toBe(false);
+      expect(list.some((u) => u.includes("youtube.com"))).toBe(false);
+    }
+  });
+
+  it("claims the X account the social poster actually authenticates as", () => {
+    // workers/social-poster/wrangler.toml documents X_CLIENT_ID as
+    // "console.x.com, @thepicklehub". Confirmed by Cuong 2026-08-18.
+    for (const list of blocks) {
+      expect(list).toContain("https://x.com/thepicklehub");
+    }
+  });
+
+  it("lists only profiles of this entity, not partner brands", () => {
+    // TA Pickleball (FB_SECONDARY_PAGE_ID 376956272170210) is also Cuong's
+    // page, but it is a separate brand. sameAs means "this IS us" — putting a
+    // second entity in here repeats the Guntur mistake with a friendlier face.
+    for (const list of blocks) {
+      expect(list.some((u) => /tapickleball|376956272170210/i.test(u))).toBe(false);
+    }
+  });
 });

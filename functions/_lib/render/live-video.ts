@@ -275,20 +275,87 @@ export async function renderLivestreamList(
   rawPath: string,
   lang: Lang,
 ): Promise<Response> {
-  const { data: streams } = await supabase
-    .from("public_livestreams")
-    .select("id, title, status")
-    .in("status", ["live", "scheduled"])
-    .order("created_at", { ascending: false })
-    .limit(20);
+  // THIN-01 (2026-08-24) — this hub rendered 59 words for Googlebot, and on a
+  // quiet day the entire body was the string "No live streams right now."
+  // A hub page whose only content is its own empty state cannot rank, and
+  // /live is linked from the global nav on every page on the site.
+  //
+  // Two fixes: (1) never show a bare empty state — 29 ended streams exist and
+  // stay watchable as replays, so fall back to those; (2) carry standing copy
+  // that is true whether or not anything is live right now.
+  type Stream = {
+    id: string;
+    title: string;
+    status: string;
+    scheduled_start_at: string | null;
+    ended_at: string | null;
+  };
+  const COLUMNS = "id, title, status, scheduled_start_at, ended_at";
 
-  const items = (streams ?? [])
-    .map((s: { id: string; title: string; status: string }) =>
-      `<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${escapeHtml(s.id)}">${escapeHtml(s.title)}</a> (${escapeHtml(s.status)})</li>`,
-    )
-    .join("");
-  const listItems = (streams ?? []).map((s: { id: string; title: string }) => ({
-    url: `${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${s.id}`,
+  // One window per status, not one shared window for all three.
+  //
+  // THIN-01 widened a single `.in(["live","scheduled","ended"]).limit(40)`
+  // ordered by created_at, which puts the three statuses in the same 40-row
+  // budget. Ended streams are the only bucket that grows without bound — 29 of
+  // them already sit in that window — so once 40 rows are newer than a given
+  // scheduled stream, the stream silently stops appearing on /live. The rows
+  // most exposed are exactly the ones announced furthest in advance: a
+  // tournament broadcast created weeks before it airs. With WC-DANANG-LIVE
+  // armed, that is the shape we cannot afford to drop.
+  //
+  // Upcoming is ordered by when it AIRS, not by when the row was created. A
+  // stream entered later but starting in December must not sit above one
+  // starting tomorrow, which is what created_at ordering did.
+  const [liveRes, scheduledRes, endedRes] = await Promise.all([
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "live")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "scheduled")
+      .order("scheduled_start_at", { ascending: true, nullsFirst: false })
+      .limit(10),
+    supabase
+      .from("public_livestreams")
+      .select(COLUMNS)
+      .eq("status", "ended")
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  const liveNow = ((liveRes?.data ?? []) as Stream[]).filter((s) => s.status === "live");
+  const upcoming = ((scheduledRes?.data ?? []) as Stream[]).filter((s) => s.status === "scheduled");
+  const replays = ((endedRes?.data ?? []) as Stream[]).filter((s) => s.status === "ended");
+
+  // /live/:id is single-canonical — /vi/live/:id 301s to it (_middleware.ts
+  // rule 1d). Linking to the /vi form from the VI hub sent every crawler and
+  // every reader through a redirect hop to reach the page we actually index.
+  const href = (s: Stream) => `${siteUrl}/live/${escapeHtml(s.id)}`;
+  const dateLabel = (iso: string | null) =>
+    iso
+      ? new Date(iso).toLocaleDateString(lang === "vi" ? "vi-VN" : "en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+      : "";
+  const section = (heading: string, rows: Stream[], stamp: (s: Stream) => string) =>
+    rows.length === 0
+      ? ""
+      : `<h2>${escapeHtml(heading)}</h2><ul>${rows
+          .map((s) => {
+            const when = stamp(s);
+            return `<li><a href="${href(s)}">${escapeHtml(s.title)}</a>${when ? ` — ${escapeHtml(when)}` : ""}</li>`;
+          })
+          .join("")}</ul>`;
+
+  // ItemList covers whatever is actually on the page, in the order shown.
+  const listItems = [...liveNow, ...upcoming, ...replays].map((s) => ({
+    url: `${siteUrl}/live/${s.id}`,
     name: s.title,
   }));
 
@@ -299,6 +366,59 @@ export async function renderLivestreamList(
     ? "Watch live pickleball streams from Vietnam and PPA Tour Asia free on ThePickleHub. Live tournaments and matches — no signup required."
     : "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.";
 
+  // GEO rule (CLAUDE.md): name ThePickleHub once, naturally, and front-load the
+  // answer so the opening survives being extracted as a standalone passage by
+  // an AI search engine. No throat-clearing intro.
+  const h1 = lang === "en" ? "Pickleball live streams" : "Livestream pickleball";
+  const lead =
+    lang === "en"
+      ? `ThePickleHub streams pickleball from Vietnam and PPA Tour Asia free, with no signup and no paywall. ${
+          liveNow.length > 0
+            ? `${liveNow.length} stream${liveNow.length > 1 ? "s are" : " is"} live right now.`
+            : upcoming.length > 0
+              ? `Nothing is live at this moment; ${upcoming.length} stream${upcoming.length > 1 ? "s are" : " is"} scheduled.`
+              : "Nothing is live at this moment — past broadcasts stay watchable as replays below."
+        }`
+      : `ThePickleHub phát livestream pickleball Việt Nam và PPA Tour Asia miễn phí, không cần đăng ký, không tường phí. ${
+          liveNow.length > 0
+            ? `Hiện có ${liveNow.length} trận đang phát trực tiếp.`
+            : upcoming.length > 0
+              ? `Hiện chưa có trận nào đang phát; ${upcoming.length} trận đã lên lịch.`
+              : "Hiện chưa có trận nào đang phát — các trận đã phát vẫn xem lại được bên dưới."
+        }`;
+
+  // Standing copy: true on a quiet day as well as a busy one, so the page is
+  // never reduced to its empty state.
+  const about =
+    lang === "en"
+      ? `<h2>What you can watch here</h2><p>Coverage centres on Vietnamese tournaments — club opens, provincial championships and national events — alongside PPA Tour Asia stops relevant to players in the region. Streams open in the browser on phone and desktop; no account, app or subscription is needed to watch.</p><p>Every broadcast stays on the site after it ends, so a match you missed is still there as a replay with the same link.</p>`
+      : `<h2>Xem được gì ở đây</h2><p>Nội dung tập trung vào giải đấu tại Việt Nam — giải câu lạc bộ, giải tỉnh thành và giải quốc gia — cùng các chặng PPA Tour Asia liên quan tới người chơi trong khu vực. Livestream mở thẳng trên trình duyệt điện thoại và máy tính; không cần tài khoản, không cần cài app, không cần đăng ký gói.</p><p>Mọi trận đã phát đều được giữ lại trên site, nên trận bạn bỏ lỡ vẫn xem lại được ở đúng đường dẫn cũ.</p>`;
+
+  const nav =
+    lang === "en"
+      ? `<nav><h2>Elsewhere on ThePickleHub</h2><ul>` +
+        `<li><a href="${siteUrl}/tournaments">Pickleball tournament calendar</a></li>` +
+        `<li><a href="${siteUrl}/news">Latest pickleball news</a></li>` +
+        `<li><a href="${siteUrl}/rankings">Vietnam DUPR rankings</a></li>` +
+        `<li><a href="${siteUrl}/videos">Match videos and highlights</a></li>` +
+        `</ul></nav>`
+      : `<nav><h2>Khác trên ThePickleHub</h2><ul>` +
+        `<li><a href="${siteUrl}/vi/tournaments">Lịch giải pickleball</a></li>` +
+        `<li><a href="${siteUrl}/vi/news">Tin tức pickleball mới nhất</a></li>` +
+        `<li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng DUPR Việt Nam</a></li>` +
+        `<li><a href="${siteUrl}/vi/videos">Video trận đấu & highlight</a></li>` +
+        `</ul></nav>`;
+
+  const body =
+    `<header><h1>${escapeHtml(h1)}</h1><p>${escapeHtml(lead)}</p></header>` +
+    section(lang === "en" ? "Live now" : "Đang phát trực tiếp", liveNow, () => "") +
+    section(lang === "en" ? "Scheduled" : "Sắp diễn ra", upcoming, (s) =>
+      dateLabel(s.scheduled_start_at),
+    ) +
+    section(lang === "en" ? "Replays" : "Xem lại", replays, (s) => dateLabel(s.ended_at)) +
+    about +
+    nav;
+
   return htmlResponse(buildHtml({
     title,
     description,
@@ -306,9 +426,10 @@ export async function renderLivestreamList(
     siteUrl,
     extraMeta: bilingualHreflang(`${siteUrl}/live`, `${siteUrl}/vi/live`),
     jsonLd: buildListJsonLd(title, listItems),
-    bodyContent: items
-      ? `<h2>${lang === "en" ? "Now streaming" : "Đang phát sóng"}</h2><ul>${items}</ul>`
-      : `<p>${lang === "en" ? "No live streams right now. Check back soon." : "Hiện chưa có livestream. Quay lại sau."}</p>`,
+    bodyContent: body,
     lang,
+    // The body opens with its own <h1>; without this the shared auto-header
+    // adds a second one titled "<title> | ThePickleHub" (one-h1 rule, #635).
+    omitAutoHeader: true,
   }));
 }

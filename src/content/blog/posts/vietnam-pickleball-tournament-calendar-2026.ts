@@ -119,7 +119,7 @@ const post: BlogPost = {
               path: "/blog/how-to-organize-pickleball-tournament",
             },
             {
-              text: "Free bracket, round-robin and scheduling tools",
+              text: "Free pickleball bracket generator — round robin, elimination and scheduling",
               path: "/tools",
             },
           ],
@@ -259,8 +259,8 @@ const post: BlogPost = {
               path: "/vi/blog/huong-dan-to-chuc-giai",
             },
             {
-              text: "Công cụ tạo bracket, vòng tròn và xếp lịch miễn phí",
-              path: "/tools",
+              text: "Tạo bảng đấu pickleball miễn phí — vòng tròn, loại trực tiếp & xếp lịch",
+              path: "/vi/tools",
             },
           ],
         },

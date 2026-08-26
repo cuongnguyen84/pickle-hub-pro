@@ -1,1 +1,0 @@
-const o="https://img.vietqr.io/image";function m(e){const t=e.template??"compact2",a=Number.isFinite(e.amount)&&e.amount>=0?Math.floor(e.amount):0,n=new URLSearchParams;return n.set("amount",String(a)),n.set("addInfo",e.memo),n.set("accountName",e.accountName),`${o}/${encodeURIComponent(e.bankCode)}-${encodeURIComponent(e.accountNumber)}-${t}.png?`+n.toString()}export{m as g};

@@ -3,7 +3,7 @@
 // test is what makes the temporary copy safe to keep until the migration is
 // applied and `supabase gen types` can take over.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -12,6 +12,10 @@ import {
   SHOP_P2B_PUBLIC_RPCS,
   SHOP_P2B_RPCS,
   SHOP_P2B_TABLES,
+  SHOP_P3_RPCS,
+  SHOP_P3_TABLES,
+  SHOP_P3_VIEWS,
+  SHOP_P4_RPCS,
   SHOP_RPCS,
   SHOP_RULES_RPCS,
   SHOP_RULES_TABLES,
@@ -423,5 +427,260 @@ describe("seller-rules acceptance parity with migration 20260814090000", () => {
     // prose is testing the prose.
     const code = RULES_SQL.replace(/--[^\n]*/g, "");
     expect(code).not.toMatch(/\bip\s+(inet|text)\b|user_agent|fingerprint/i);
+  });
+});
+
+// ── Phase 3 — cart and orders ───────────────────────────────────────────────
+// The same net as P2a/P2b, plus the two invariants that decide whether the
+// Phase 3 screens can be trusted with money: the total is the database's, and
+// nothing new collects a bank detail.
+
+// Resolved by NAME, not by full filename. `shop_cart_items` was renamed
+// 20260818090000 → 20260818095000 when #614 landed the same timestamp, and
+// this list — which hardcoded the old filename — was the one thing in the repo
+// that broke. A migration's version is allowed to move (it did, and had to);
+// its name is what identifies it here.
+const MIGRATIONS_DIR = resolve(__dirname, "../../../supabase/migrations");
+
+function migrationByName(name: string): string {
+  const hit = readdirSync(MIGRATIONS_DIR).find((f) => f.endsWith(`_${name}.sql`));
+  if (!hit) throw new Error(`no migration named ${name} in supabase/migrations`);
+  return readFileSync(resolve(MIGRATIONS_DIR, hit), "utf8");
+}
+
+const P3_SQL = [
+  "shop_cart_items",
+  "shop_orders",
+  "shop_phase3_projection_and_address",
+]
+  .map(migrationByName)
+  .join("\n");
+
+describe("shop schema parity with the Phase 3 migrations", () => {
+  it.each(SHOP_P3_TABLES)("a P3 migration creates table %s", (table) => {
+    expect(P3_SQL).toContain(`CREATE TABLE IF NOT EXISTS public.${table}`);
+  });
+
+  it.each(SHOP_P3_RPCS)("a P3 migration creates function %s", (fn) => {
+    expect(P3_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  });
+
+  it.each(SHOP_P3_VIEWS)("a P3 migration creates view %s", (view) => {
+    expect(P3_SQL).toContain(`CREATE VIEW public.${view}`);
+    // Deliberately NOT security_invoker, and the reason is COLUMN privileges,
+    // not policies. With invoker=on the view's own `WHERE buyer_user_id =
+    // auth.uid()` would still run (RLS would only stack on top of it) — but
+    // Postgres would then check column privileges as the CALLER, and
+    // `authenticated` holds no SELECT on shop_orders.buyer_user_id. The view
+    // would answer 42501 to every buyer. Written down because a wrong reason
+    // here is exactly how the next person "fixes" this into a 42501.
+    expect(P3_SQL, view).not.toMatch(/WITH\s*\(\s*security_invoker/i);
+    expect(P3_SQL, view).toContain(`GRANT SELECT ON public.${view} TO authenticated`);
+  });
+
+  it("every P3 table enables RLS, revokes the table and grants COLUMNS", () => {
+    // `GRANT[^;]*ON public.<table> TO` matched a grant to service_role and
+    // called it a day — so a table with nothing at all for `authenticated`, or
+    // with a bare table grant handing over every column, both passed. The two
+    // halves are asserted separately because they answer different questions:
+    // REVOKE closes the table, the column-scoped GRANT reopens exactly the
+    // columns that are allowed out.
+    for (const table of SHOP_P3_TABLES) {
+      expect(P3_SQL, table).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
+      expect(P3_SQL, table).toMatch(
+        new RegExp(`REVOKE ALL ON public\\.${table}\\s+FROM anon, authenticated`),
+      );
+      expect(P3_SQL, table).toMatch(
+        new RegExp(`GRANT SELECT \\([^)]*\\)\\s*ON public\\.${table} TO authenticated`, "s"),
+      );
+    }
+  });
+
+  it("every state-changing P3 RPC is SECURITY DEFINER with a pinned search_path", () => {
+    for (const fn of ["shop_cart_view", "shop_order_create", "shop_order_transition"]) {
+      const at = P3_SQL.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+      const head = P3_SQL.slice(at, at + 900);
+      expect(head, `${fn} must be SECURITY DEFINER`).toContain("SECURITY DEFINER");
+      expect(head, `${fn} must pin search_path`).toContain("SET search_path = public");
+    }
+  });
+
+  it("still collects nothing the pilot decided not to collect", () => {
+    // D2: no bank details at the pilot, so no table to start collecting into.
+    // A comment explaining the decision is fine; a CREATE TABLE is not.
+    const created = [...P3_SQL.matchAll(/CREATE TABLE (?:IF NOT EXISTS )?public\.(\w+)/g)].map(
+      (m) => m[1],
+    );
+    for (const forbidden of [
+      "shop_bank_accounts",
+      "shop_payments",
+      "payments",
+      "shipments",
+      "returns",
+      "disputes",
+      "wishlist_items",
+    ]) {
+      expect(created).not.toContain(forbidden);
+    }
+  });
+
+  it("keeps the money in generated columns", () => {
+    // The RPC never receives a total and never computes one — so there is no
+    // arithmetic for a client to forge and none for the server to get wrong.
+    expect(P3_SQL).toMatch(
+      /total_vnd\s+INTEGER GENERATED ALWAYS AS \(items_total_vnd \+ shipping_fee_vnd\) STORED/,
+    );
+    expect(P3_SQL).toMatch(
+      /line_total_vnd INTEGER GENERATED ALWAYS AS \(qty \* unit_price_vnd\) STORED/,
+    );
+  });
+
+  it("never grants a bare UPDATE on the cart", () => {
+    // A bare GRANT UPDATE lets a client rewrite variant_id, which is a
+    // different product at the same row id.
+    expect(P3_SQL).toContain("GRANT UPDATE (qty)");
+    expect(P3_SQL).not.toMatch(/GRANT\s+UPDATE\s+ON public\.shop_cart_items/);
+  });
+
+  it("withholds buyer_user_id and client_token from the client", () => {
+    const grant = P3_SQL.slice(
+      P3_SQL.indexOf("GRANT SELECT (\n  id, code, shop_id"),
+      P3_SQL.indexOf(") ON public.shop_orders TO authenticated"),
+    );
+    expect(grant.length, "the shop_orders column grant must exist").toBeGreaterThan(0);
+    expect(grant).not.toContain("buyer_user_id");
+    expect(grant).not.toContain("client_token");
+  });
+
+  it("keeps shop_order_events append-only in BOTH ways", () => {
+    // The GRANT answers before the trigger runs, so an append-only claim needs
+    // both halves — a trigger alone once passed while a missing grant was doing
+    // the work.
+    expect(P3_SQL).toMatch(/CREATE TRIGGER shop_order_events_append_only_trg/);
+    expect(P3_SQL).toMatch(/REVOKE ALL ON public\.shop_order_events FROM anon, authenticated/);
+    expect(P3_SQL).not.toMatch(/GRANT[^;]*UPDATE[^;]*ON public\.shop_order_events TO authenticated/s);
+  });
+
+  it("moves stock itself instead of calling product_variant_adjust_stock", () => {
+    // That RPC PERFORMs product_assert_writable(), which demands
+    // is_shop_manager(); a buyer is not a member of the shop they buy from, so
+    // the call would be an insufficient_privilege by design (§B.S2).
+    // Slice to the END OF shop_order_create, not to the end of the file:
+    // shop_order_transition moves stock too and has its own set_config pair, so
+    // an open-ended slice let THAT one satisfy this assertion — deleting
+    // set_config from shop_order_create left the test green.
+    const body = P3_SQL.slice(
+      P3_SQL.indexOf("CREATE OR REPLACE FUNCTION public.shop_order_create("),
+      P3_SQL.indexOf("REVOKE ALL   ON FUNCTION public.shop_order_create"),
+    );
+    expect(body.length, "the shop_order_create body must be found").toBeGreaterThan(0);
+    expect(body).not.toContain("product_variant_adjust_stock");
+    expect(body).toContain("set_config('shop.stock_write', 'on', true)");
+    expect(body).toContain("'sale'");
+  });
+
+  it("adds exactly one inventory reason and reuses 'return' for cancellations", () => {
+    expect(P3_SQL).toContain(
+      "reason IN ('opening', 'restock', 'correction', 'damage', 'lost', 'return', 'manual', 'sale')",
+    );
+    // Comments stripped first: the migration's own note explaining why it did
+    // NOT add 'order_cancel' contains the word, and the first version of this
+    // assertion failed on that note. A grep test that reads prose tests prose —
+    // the same lesson the seller-rules fingerprint assertion learned.
+    expect(P3_SQL.replace(/--[^\n]*/g, "")).not.toContain("order_cancel");
+  });
+
+  it("has no completed, no awaiting_payment and no notify_key", () => {
+    expect(P3_SQL).toContain(
+      "status IN ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled')",
+    );
+    const code = P3_SQL.replace(/--[^\n]*/g, "");
+    expect(code).not.toMatch(/'completed'|'awaiting_payment'|notify_key/);
+  });
+});
+
+// ── Phase 4b — bank transfer ────────────────────────────────────────────────
+// D2 said no bank column, no QR, no reconciliation. This is the migration that
+// reverses that, so the assertions here are mostly about what it did NOT also
+// reverse: the five-state machine, and who is allowed to say money arrived.
+
+const P4_SQL = migrationByName("shop_bank_transfer");
+
+describe("shop schema parity with the Phase 4b migration", () => {
+  it.each(SHOP_P4_RPCS)("the P4b migration creates function %s", (fn) => {
+    expect(P4_SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+  });
+
+  it("every P4b RPC is SECURITY DEFINER with a pinned search_path", () => {
+    for (const fn of SHOP_P4_RPCS) {
+      const at = P4_SQL.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
+      const head = P4_SQL.slice(at, at + 900);
+      expect(head, `${fn} must be SECURITY DEFINER`).toContain("SECURITY DEFINER");
+      expect(head, `${fn} must pin search_path`).toContain("SET search_path = public");
+    }
+  });
+
+  it("stores the bank trio all-or-nothing", () => {
+    // Two of three renders a QR a banking app accepts and then fails to
+    // complete, and the buyer believes they have paid.
+    expect(P4_SQL).toMatch(
+      /CHECK \(num_nonnulls\(bank_code, bank_account_number, bank_account_name\) IN \(0, 3\)\)/,
+    );
+  });
+
+  it("still has no awaiting_payment and touches no status", () => {
+    // The whole point: payment is an ATTRIBUTE of an order, not a stage of it.
+    const code = P4_SQL.replace(/--[^\n]*/g, "");
+    expect(code).not.toMatch(/'awaiting_payment'|'completed'/);
+    expect(code).not.toContain("shop_order_transition");
+  });
+
+  it("never grants payment_confirmed_by, and keeps it out of the view", () => {
+    // It is a uid, and 20260504100000 lets every logged-in user read all of
+    // profiles. Same rule as buyer_user_id and cancelled_by, not a second one.
+    expect(P4_SQL).toContain("GRANT SELECT (payment_claimed_at, payment_confirmed_at)");
+    expect(P4_SQL).not.toMatch(/GRANT SELECT \([^)]*payment_confirmed_by/);
+
+    const view = P4_SQL.slice(
+      P4_SQL.indexOf("CREATE VIEW public.my_shop_orders"),
+      P4_SQL.indexOf("COMMENT ON VIEW public.my_shop_orders"),
+    );
+    expect(view.length, "the view definition must be found").toBeGreaterThan(0);
+    expect(view).toContain("o.payment_claimed_at, o.payment_confirmed_at");
+    expect(view).not.toContain("payment_confirmed_by");
+    expect(view).not.toContain("buyer_user_id,");
+  });
+
+  it("refuses `support` on the money, the same way it is refused on the status", () => {
+    const at = P4_SQL.indexOf("CREATE OR REPLACE FUNCTION public.shop_order_confirm_payment(");
+    const body = P4_SQL.slice(at);
+    expect(body).toContain("m.role IN ('owner', 'manager', 'fulfillment')");
+    expect(body.replace(/--[^\n]*/g, "")).not.toContain("'support'");
+  });
+
+  it("restates shop_profile_update in full rather than patching it", () => {
+    // 20260818100000's header records what happens otherwise: a CREATE OR
+    // REPLACE that restated an OLDER body silently un-did the slug_write
+    // escape hatch, and no reader noticed. If this migration restates the
+    // function, it must carry every field the previous version had.
+    const at = P4_SQL.indexOf("CREATE OR REPLACE FUNCTION public.shop_profile_update(");
+    expect(at, "shop_profile_update must be restated here").toBeGreaterThan(-1);
+    const body = P4_SQL.slice(at);
+    for (const field of [
+      "name",
+      "intro",
+      "city",
+      "region",
+      "primary_category_slug",
+      "shipping_note",
+      "return_note",
+      "bank_code",
+      "bank_account_number",
+      "bank_account_name",
+    ]) {
+      expect(body, `shop_profile_update must still write ${field}`).toContain(`${field} `);
+    }
+    // And the optimistic-concurrency check it is easy to drop while retyping.
+    expect(body).toContain("_row.version <> _expected_version");
   });
 });

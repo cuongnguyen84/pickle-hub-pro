@@ -90,6 +90,20 @@ export interface ShopRow {
   return_note: string | null;
   /** Optimistic-concurrency token. Bumped by trigger; never sent as an edit. */
   version: number;
+  /* ── Phase 3 (migration 20260818100000) ── */
+  /** D1 — the platform's kill switch, pinned by shops_guard_privileged_columns
+   *  for anybody who is not an admin. false = no new orders. */
+  ordering_enabled: boolean;
+  /** D3 — flat fee, all provinces, snapshotted onto the order. 0 is free. */
+  shipping_fee_vnd: number;
+  /* ── Phase 4b (migration 20260818150000) ── */
+  /** VietQR trio. All three or none — the CHECK refuses a partial set. The
+   *  seller owns these: not pinned by shops_guard_privileged_columns, same as
+   *  shipping_fee_vnd. A BUYER never reads them from here — the only door is
+   *  shop_order_payment_info, and only for an order they are a party to. */
+  bank_code: string | null;
+  bank_account_number: string | null;
+  bank_account_name: string | null;
 }
 
 export type ShopContactType = "zalo" | "messenger" | "phone";
@@ -135,6 +149,10 @@ export type ProductStatus =
   | "needs_changes"
   | "approved"
   | "rejected"
+  // Có trong enum của Postgres từ 20260812090000 nhưng chưa bao giờ được chép
+  // sang đây. Màn sửa sản phẩm vì thế rơi vào nhánh mặc định và nói sai với một
+  // trạng thái có thật. Bắt được khi thêm nhánh copy cho `suspended` ở P4c.
+  | "suspended"
   | "archived";
 
 export type ProductCondition = "new" | "used";
@@ -165,6 +183,10 @@ export interface ProductRow {
   /** [{"name":"Màu sắc","values":["Trắng","Đen"]}] in DISPLAY order. Empty for
    *  a product with no options. Written only by the reconcile RPC. */
   option_groups: OptionGroup[];
+  /** Thông số kỹ thuật, khoá → chuỗi (migration 20260823090000). Từ điển khoá
+   *  theo ngành hàng ở src/lib/shop/productSpecs.ts — Postgres chỉ giữ hình
+   *  dạng, nên một khoá lạ là dữ liệu cũ chứ không phải lỗi. */
+  specs: Record<string, string>;
   created_at: string;
   updated_at: string;
 }
@@ -274,6 +296,9 @@ export interface ProductProjection {
   title: string;
   description: string | null;
   condition: ProductCondition;
+  /** Thông số kỹ thuật. Luôn có mặt (mặc định `{}`), nên màn hình không phải
+   *  đoán "projection có nói không". */
+  specs: Record<string, string>;
   category: { slug: string; name: string } | null;
   shop: {
     slug: string;
@@ -283,6 +308,13 @@ export interface ProductProjection {
     verified: boolean;
     shipping_note: string | null;
     return_note: string | null;
+    /** D1 — false hides the quantity box and the buy button, and is the same
+     *  flag shop_order_create refuses on. Added by migration 20260818120000;
+     *  not optional, because "the projection did not say" is not a state the
+     *  screen should have to guess about. */
+    ordering_enabled: boolean;
+    /** D3 — 0 renders as "Miễn phí", never as "0đ". */
+    shipping_fee_vnd: number;
   };
   option_groups: OptionGroup[];
   variants: {
@@ -490,3 +522,199 @@ export const SHOP_RULES_RPCS = [
   "legal_accept",
   "shop_application_rules_receipt",
 ] as const;
+
+/* ── Phase 3 — cart and orders (migrations 20260818090000 / 20260818100000) ──
+ * Same contract as the lists above: the parity test reads these back out and
+ * fails if a name here has no migration behind it, so the P3 screens cannot
+ * call a table or an RPC that does not exist.
+ */
+
+export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+
+export type OrderAction = "confirm" | "ship" | "deliver" | "cancel";
+
+/** Both behave identically as far as status is concerned (D2). `bank_transfer`
+ *  means "the shop will send you its details" — there is no bank column, no QR
+ *  and no reconciliation anywhere in Phase 3. */
+export type PaymentMethod = "cod" | "bank_transfer";
+
+/** Why a cart line cannot be bought right now. `null` means it can. */
+export type CartLineUnavailableReason =
+  | "product_unavailable"
+  | "variant_retired"
+  | "out_of_stock"
+  | "shop_inactive"
+  | "ordering_disabled";
+
+export interface ShopCartItemRow {
+  id: string;
+  /** DEFAULT auth.uid(); the client has no INSERT privilege on this column. */
+  user_id: string;
+  variant_id: string;
+  qty: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One line of `shop_cart_view()`. Note what is NOT here: no reference price
+ *  and no `price_changed` flag (§B.S5). `unit_price_vnd` is the CURRENT price,
+ *  and price drift is caught once, at shop_order_create. */
+export interface CartLine {
+  cart_item_id: string;
+  variant_id: string;
+  qty: number;
+  product_id: string;
+  product_slug: string | null;
+  product_title: string | null;
+  option_values: Record<string, string> | null;
+  sku: string | null;
+  unit_price_vnd: number;
+  line_total_vnd: number;
+  /** NULL = the shop does not count this one, which is not the same as 0. */
+  stock_on_hand: number | null;
+  cover: {
+    id: string;
+    alt_text: string | null;
+    public_path: string | null;
+    width: number | null;
+    height: number | null;
+  } | null;
+  unavailable_reason: CartLineUnavailableReason | null;
+}
+
+export interface CartGroup {
+  shop: {
+    slug: string;
+    name: string;
+    state: ShopState;
+    /** D1 — false hides "add to cart" and makes shop_order_create refuse. */
+    ordering_enabled: boolean;
+    /** D3 — 0 renders as "Miễn phí", never as "0đ". */
+    shipping_fee_vnd: number;
+  };
+  lines: CartLine[];
+}
+
+/**
+ * `shop_orders`, as a client may read it.
+ *
+ * `buyer_user_id`, `client_token` and `cancelled_by` are absent because they
+ * are not granted: REVOKE ALL then a column list that omits all three. The
+ * seller identifies the buyer from the snapshotted name and phone, never from
+ * an account id — and `cancelled_by` is an account id too, so the timeline
+ * says who cancelled with `metadata->>'actor_kind'` instead.
+ */
+export interface ShopOrderRow {
+  id: string;
+  /** PH-YYMM-XXXX, random tail — a sequential one would leak the shop's volume. */
+  code: string;
+  shop_id: string;
+  status: OrderStatus;
+  payment_method: PaymentMethod;
+  recipient_name: string;
+  recipient_phone: string;
+  /** One free-text field (D4). There is no province dropdown. */
+  shipping_address: string;
+  delivery_note: string | null;
+  items_total_vnd: number;
+  shipping_fee_vnd: number;
+  /** GENERATED ALWAYS AS (items + shipping) STORED. Never sent by a client. */
+  total_vnd: number;
+  /** Seller-side working tool only (D6). No countdown for the buyer, no job. */
+  confirm_due_at: string;
+  tracking_code: string | null;
+  cancel_reason: string | null;
+  /** P4b — the BUYER said they sent the money. Self-declared, never proof. */
+  payment_claimed_at: string | null;
+  /** P4b — a human on the SELLER side saw it arrive. This is the one that
+   *  counts, and it is deliberately independent of `status`: there is still no
+   *  `awaiting_payment` (D2). */
+  payment_confirmed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Immutable snapshot: the order stays readable after the product is renamed,
+ *  repriced or taken down. No client may write these. */
+export interface ShopOrderItemRow {
+  id: string;
+  order_id: string;
+  shop_id: string;
+  product_id: string;
+  variant_id: string;
+  qty: number;
+  product_title: string;
+  variant_label: string | null;
+  sku: string | null;
+  unit_price_vnd: number;
+  /** GENERATED ALWAYS AS (qty * unit_price_vnd) STORED. */
+  line_total_vnd: number;
+  created_at: string;
+}
+
+/** Append-only. No notify_key and no client_token: idempotency lives on
+ *  shop_orders and in the guarded UPDATE. */
+export interface ShopOrderEventRow {
+  id: string;
+  order_id: string;
+  shop_id: string;
+  /** A snapshot of who acted — no FK, so closing an account cannot fail on it. */
+  actor_user_id: string | null;
+  from_status: OrderStatus | null;
+  to_status: OrderStatus;
+  action: OrderAction | "create";
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+/** What shop_order_create and shop_order_transition hand back. */
+export interface ShopOrderDetail extends Omit<ShopOrderRow, "shop_id"> {
+  shop: { slug: string; name: string; state: ShopState };
+  items: Omit<ShopOrderItemRow, "order_id" | "shop_id" | "created_at">[];
+  events: Pick<
+    ShopOrderEventRow,
+    "id" | "action" | "from_status" | "to_status" | "metadata" | "created_at"
+  >[];
+}
+
+export const SHOP_P3_TABLES = [
+  "shop_cart_items",
+  "shop_orders",
+  "shop_order_items",
+  "shop_order_events",
+] as const;
+
+export const SHOP_P3_RPCS = [
+  "shop_cart_view",
+  "shop_order_create",
+  "shop_order_transition",
+  "shop_order_json",
+  "shop_order_is_party",
+  /* ── 20260818120000 ── */
+  "shop_last_shipping_address",
+] as const;
+
+/** P4b (20260818150000) — bank transfer. Its own list because it is its own
+ *  migration: the parity test reads the file each list names, and folding
+ *  these into SHOP_P3_RPCS made it look for them in the Phase 3 migrations.
+ *
+ *  The bank trio is NOT a column on any projection. shop_order_payment_info
+ *  is a DEFINER door that answers only for somebody already a party to the
+ *  order — and answers a stranger's code and a made-up code identically, so
+ *  it cannot be used to probe which order codes exist. */
+export const SHOP_P4_RPCS = [
+  "shop_order_payment_info",
+  "shop_order_claim_payment",
+  "shop_order_confirm_payment",
+] as const;
+
+/** P4c (20260818170000) — người bán tự đăng bán. `product_submit` không nằm ở
+ *  đây vì nó có từ trước và chỉ đổi trạng thái đích; hàm mới là đường quay lại
+ *  mà việc bỏ admin khỏi vòng lặp bắt buộc phải có. */
+export const SHOP_P4C_RPCS = ["product_edit_again"] as const;
+
+/** `my_shop_orders` is a VIEW, not a table: shop_orders' policy admits every
+ *  party to an order, and "Đơn của tôi" means the buyer's own. The view puts
+ *  auth.uid() in the WHERE, which the client cannot do — buyer_user_id is not
+ *  granted, so it is neither selectable nor filterable. */
+export const SHOP_P3_VIEWS = ["my_shop_orders"] as const;

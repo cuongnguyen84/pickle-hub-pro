@@ -11,13 +11,15 @@
 // ============================================================================
 
 import type { ProductStatus, SellerProductRow } from "@/integrations/supabase/shop-schema";
+import { cleanSpecs } from "@/lib/shop/productSpecs";
 
 export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
   draft: "Nháp",
   pending_review: "Chờ duyệt",
   needs_changes: "Cần sửa",
-  approved: "Đã duyệt",
+  approved: "Đang bán",
   rejected: "Bị từ chối",
+  suspended: "Bị gỡ",
   archived: "Ngừng bán",
 };
 
@@ -25,11 +27,12 @@ export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
  *  seller's terms. A badge that only names the state leaves them guessing
  *  whether anybody can see it. */
 export const PRODUCT_STATUS_HINT: Record<ProductStatus, string> = {
-  draft: "Chưa gửi duyệt. Người mua chưa thấy.",
+  draft: "Chưa đăng bán. Người mua chưa thấy.",
   pending_review: "Đang chờ quản trị viên xem. Người mua chưa thấy.",
   needs_changes: "Quản trị viên yêu cầu sửa. Người mua chưa thấy.",
-  approved: "Đã duyệt. Bật bán thì người mua mới thấy.",
+  approved: "Đang bán. Người mua thấy sản phẩm này.",
   rejected: "Bị từ chối. Người mua không thấy.",
+  suspended: "Quản trị viên đã gỡ. Chỉ quản trị viên mở lại được.",
   archived: "Đã ngừng bán. Người mua không thấy, bật lại được.",
 };
 
@@ -39,6 +42,7 @@ export const PRODUCT_STATUS_TONE: Record<ProductStatus, "ok" | "warn" | "danger"
   needs_changes: "danger",
   approved: "ok",
   rejected: "danger",
+  suspended: "danger",
   archived: "muted",
 };
 
@@ -234,50 +238,60 @@ export interface UpdatePayload {
     description: string;
     category_slug: string;
     condition: "new" | "used";
+    /** Dạng chuẩn của cleanSpecs: bỏ ô trống, khoá sắp alphabet. Thứ tự khoá
+     *  là một phần của payload vì cờ dirty so hai chuỗi JSON. */
+    specs: Record<string, string>;
   };
-  /** Absent means "do not touch the default variant". The RPC turns it into
-   *  `_variant: null`, which is the contract for leaving the matrix alone. */
-  variant?: { price_vnd: string; stock_on_hand: string };
+  /** Deliberately no `variant`. The RPC still accepts one — it is a valid
+   *  server API — but this form must never send it. See the note above. */
 }
 
 /**
- * What the main form sends when the seller saves.
+ * What the main form sends when the seller saves. TEXT ONLY — never a price,
+ * never a stock count.
  *
- * The variant half is the whole point. product_update REFUSES a `_variant`
- * payload for a product that has an option matrix — correctly, because the
- * matrix is the only place those numbers may be edited — so a form that always
- * sent it made every save of a multi-variant product fail with "sản phẩm này có
- * nhiều phiên bản". The seller could not change the NAME of a product that had
- * colours, and the error pointed them at a table they had not touched.
+ * This used to take a `multiVariant` flag and send `variant: {price_vnd,
+ * stock_on_hand}` whenever it was false. That guard was one case too narrow,
+ * and the gap cost a real seller a real price change twice on 2026-08-18:
  *
- * The hidden single-product price and stock fields still hold whatever they
- * were seeded with, which is what makes this dangerous rather than merely
- * broken: if the RPC had accepted the payload it would have collapsed a
- * six-row matrix onto one price.
+ *   · The simple price/stock inputs are rendered ONLY when `isNew` — see
+ *     SellerProductForm's `isNew || multiVariant` branch. On the EDIT screen
+ *     they do not exist, whether the product has one variant or six.
+ *   · `save()` reaches this function only when NOT new.
+ *   · So on every edit-screen save of a single-variant product, this sent
+ *     `draft.price_vnd` — seeded from the row at page load, unchangeable,
+ *     invisible — and product_update wrote it over the variant.
+ *
+ * The seller edited the price in the matrix, pressed "Lưu bảng phiên bản"
+ * (2 500 000 written), then pressed save/publish — and this payload put
+ * 2 900 000 back. `products.version` climbed 5 → 18 while `price_vnd` never
+ * moved, which is exactly what a write that keeps re-writing the same stale
+ * number looks like.
+ *
+ * The variant half is gone rather than re-guarded: on an existing product the
+ * matrix owns price and stock, full stop, and a branch that can only ever fire
+ * with stale data is not a branch worth keeping correct.
  *
  * A pure function so the shape can be asserted without a browser, a network or
- * a database — the layer where this bug lived.
+ * a database — the layer where this bug lived, twice.
  */
-export function buildUpdatePayload(
-  draft: {
-    title: string;
-    description: string;
-    category_slug: string;
-    condition: "new" | "used";
-    price_vnd: string;
-    stock_on_hand: string;
-  },
-  multiVariant: boolean,
-): UpdatePayload {
-  const patch = {
-    title: draft.title.trim(),
-    description: draft.description,
-    category_slug: draft.category_slug,
-    condition: draft.condition,
-  };
-  if (multiVariant) return { patch };
+export function buildUpdatePayload(draft: {
+  title: string;
+  description: string;
+  category_slug: string;
+  condition: "new" | "used";
+  specs?: Record<string, string>;
+}): UpdatePayload {
   return {
-    patch,
-    variant: { price_vnd: draft.price_vnd.trim(), stock_on_hand: draft.stock_on_hand.trim() },
+    patch: {
+      title: draft.title.trim(),
+      // A description is prose: trailing blank lines are the seller's choice.
+      description: draft.description,
+      category_slug: draft.category_slug,
+      condition: draft.condition,
+      // Ô trống bị bỏ ở đây và một lần nữa trong product_update: người bán xoá
+      // một thông số thì nó biến mất khỏi trang, không thành một dòng rỗng.
+      specs: cleanSpecs(draft.specs),
+    },
   };
 }

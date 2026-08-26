@@ -205,6 +205,66 @@ export const SHOP_ROUTES = [
     rpcs: ["shop_public_shop", "shop_public_search", "shop_public_contacts"],
     states: ["active", "suspended", "never existed", "retired slug"],
   },
+
+  // ── Buyer, Phase 3 ───────────────────────────────────────────────────────
+  // Signed-in only, and noindex for good: these three carry a name, a phone
+  // number and a home address.
+  {
+    key: "shop-cart", pattern: "/shop/cart", audience: "buyer", path: () => "/shop/cart",
+    mirrored: true, auth: "auth", aal: "aal1", noindex: true,
+    h1: /Giỏ hàng/,
+    marker: /Tạm tính|Giỏ hàng đang trống|Đặt hàng shop này/,
+    rpcs: ["shop_cart_view", "shop_cart_items insert/update/delete"],
+    states: ["empty", "one shop", "two shops", "line unavailable", "shop paused", "load error"],
+  },
+  {
+    key: "shop-checkout", pattern: "/shop/checkout/:shopSlug", audience: "buyer",
+    path: (s) => `/shop/checkout/${s.shops.a.slug}`,
+    mirrored: true, auth: "auth", aal: "aal1", noindex: true,
+    h1: /Đặt hàng/,
+    marker: /Địa chỉ nhận hàng|Trả khi nhận hàng|Đặt đơn/,
+    rpcs: ["shop_cart_view", "shop_public_shop", "shop_order_create"],
+    states: ["form", "validation", "price changed", "shipping changed", "sold out", "shop paused", "empty group"],
+  },
+  {
+    key: "shop-order", pattern: "/shop/order/:code", audience: "buyer",
+    path: () => "/shop/order/PH-2608-0000",
+    mirrored: true, auth: "auth", aal: "aal1", noindex: true,
+    h1: /Shop chưa xác nhận đơn|Người bán đang chuẩn bị hàng|Hàng đang trên đường|Đơn đã xong|Đơn đã huỷ|Không tìm thấy đơn này/,
+    marker: /Mã đơn|Diễn biến|Không tìm thấy đơn này/,
+    rpcs: ["shop_orders select", "shop_order_items select", "shop_order_events select", "shop_order_transition"],
+    states: ["just placed", "pending", "confirmed", "shipped", "delivered", "cancelled", "not found"],
+  },
+  {
+    key: "shop-orders", pattern: "/shop/orders", audience: "buyer", path: () => "/shop/orders",
+    mirrored: true, auth: "auth", aal: "aal1", noindex: true,
+    h1: /Đơn của tôi/,
+    marker: /Đang tới|Anh\/chị chưa có đơn hàng nào|Đã xong/,
+    // my_shop_orders, not shop_orders: the table's policy admits every party
+    // to an order, so a seller reading it here would be handed their own
+    // customers' addresses under the heading "Đơn của tôi".
+    rpcs: ["my_shop_orders select"],
+    states: ["loading", "never ordered", "no match for search", "one page", "more than ten", "load error"],
+  },
+
+  // ── Seller, Phase 3 ──────────────────────────────────────────────────────
+  {
+    key: "seller-orders", pattern: "/seller/orders", audience: "seller", path: () => "/seller/orders",
+    auth: "auth", aal: "aal1", noindex: true,
+    h1: /Đơn hàng/,
+    marker: /Cần xử lý|Shop chưa có đơn hàng nào|Việc cần làm/,
+    rpcs: ["shop_orders select", "shop_order_items select", "shop_order_events select", "shops select"],
+    states: ["never sold", "todo empty", "other tab empty", "overdue first", "ordering disabled", "support read-only", "load error"],
+  },
+  {
+    key: "seller-order", pattern: "/seller/orders/:code", audience: "seller",
+    path: () => "/seller/orders/PH-2608-0000",
+    auth: "auth", aal: "aal1", noindex: true,
+    h1: /Đơn PH-|Không tìm thấy đơn này/,
+    marker: /Việc cần làm|Không tìm thấy đơn này/,
+    rpcs: ["shop_orders select", "shop_order_items select", "shop_order_events select", "shop_order_transition"],
+    states: ["pending", "confirmed", "shipped", "delivered", "cancelled", "stale status", "support read-only", "not found"],
+  },
 ];
 
 /** Viewports every route is measured at. 390 is the iPhone 14/15 default. */

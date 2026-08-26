@@ -12,10 +12,12 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, Check, Store } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell, DefList } from "@/components/shop/ShopShell";
-import { ErrorState, LoadingState } from "@/components/states/PageStates";
+import { ShopErrorNotice } from "@/components/shop/ShopNotice";
 import { useMyApplication, useMyShop } from "@/hooks/shop/useSellerApplication";
 import { useProductStatusCounts } from "@/hooks/shop/useSellerProducts";
+import { useShopOrders } from "@/hooks/shop/useOrders";
 import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
+import { inSellerTab } from "@/lib/shop/sellerOrders";
 
 /** The four numbers a seller acts on. "Cần sửa" pools needs_changes with
  *  rejected: both mean the ball is in the seller's court. */
@@ -30,7 +32,7 @@ function ProductStats({
     return (
       <div className="tl-shop-stats" aria-busy="true">
         {[0, 1, 2, 3].map((i) => (
-          <span key={i} className="tl-shop-sk" style={{ height: 76 }} />
+          <span key={i} className="tl-shop-sk tl-shop-sk--tile" />
         ))}
       </div>
     );
@@ -93,19 +95,66 @@ function ProductStats({
   );
 }
 
+/** R5 #16 — the only number on this page about TODAY's work. Orders are the
+ *  seller's daily job since Phase 3, and the dashboard had four counters about
+ *  products and none about orders. Emphasised only when it is > 0: a red 0 is
+ *  an alarm about nothing. */
+function OrdersToDo({ shopId }: { shopId: string | null }) {
+  const list = useShopOrders(shopId);
+  if (list.isLoading || list.isError) return null;
+  const n = (list.data ?? []).filter((o) => inSellerTab(o.status, "todo")).length;
+  return (
+    <Link
+      to="/seller/orders"
+      className={`tl-shop-stat${n > 0 ? " tl-shop-stat--attn" : ""}`}
+      style={{ marginBottom: 16 }}
+    >
+      <span className="tl-shop-stat-n">{n}</span>
+      <span className="tl-shop-stat-l">
+        {n > 0 ? "Đơn cần xử lý — mở ngay" : "Đơn cần xử lý"}
+      </span>
+    </Link>
+  );
+}
+
 export default function SellerHome() {
   const shop = useMyShop();
   const app = useMyApplication();
   const counts = useProductStatusCounts(shop.data?.id ?? null);
 
-  if (shop.isLoading || app.isLoading) return <LoadingState fullScreen />;
+  // Khung xương đúng hình trang: một ô "đơn cần xử lý", bốn ô thống kê sản
+  // phẩm, hai thẻ mục. Nav của Kênh người bán hiện ngay từ đầu — trước đây
+  // vòng xoay toàn màn hình nuốt luôn thanh điều hướng nên không đi đâu được
+  // trong lúc chờ.
+  if (shop.isLoading || app.isLoading) {
+    return (
+      <ShopScrollShell>
+        <SellerShell active="dashboard" title="Kênh người bán">
+          <div className="tl-shop-page" aria-busy="true" aria-label="Đang tải tổng quan shop">
+            {/* marginBottom 16 giống hệt ô OrdersToDo thật ngay bên dưới. */}
+            <span className="tl-shop-sk tl-shop-sk--tile" style={{ marginBottom: 16 }} />
+            <div className="tl-shop-stats">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className="tl-shop-sk tl-shop-sk--tile" />
+              ))}
+            </div>
+            <span className="tl-shop-sk tl-shop-sk--card" />
+            <span className="tl-shop-sk tl-shop-sk--card" />
+          </div>
+        </SellerShell>
+      </ShopScrollShell>
+    );
+  }
 
   if (shop.isError) {
     return (
       <ShopScrollShell>
         <SellerShell active="dashboard" title="Tổng quan">
           <div className="tl-shop-page">
-            <ErrorState onRetry={() => void shop.refetch()} />
+            <ShopErrorNotice
+              title="Chưa tải được shop của anh/chị."
+              onRetry={() => void shop.refetch()}
+            />
           </div>
         </SellerShell>
       </ShopScrollShell>
@@ -185,9 +234,11 @@ export default function SellerHome() {
             </div>
           )}
 
+          {s.state === "active" && <OrdersToDo shopId={s.id} />}
+
           <ProductStats counts={counts} shopState={s.state} />
 
-          <section aria-labelledby="s04-shop">
+          <section aria-labelledby="s04-shop" className="tl-shop-section">
             <h2 className="tl-shop-h2" id="s04-shop">Shop của anh/chị</h2>
             <div className="tl-shop-card">
               <DefList
@@ -202,12 +253,14 @@ export default function SellerHome() {
             </div>
           </section>
 
-          <section aria-labelledby="s04-next">
+          {/* R5 #4 — the old "Bước tiếp theo" block said order management was
+              not part of the closed pilot. It has been open since Phase 3, and
+              the number above is the honest version of the same sentence. */}
+          <section aria-labelledby="s04-next" className="tl-shop-section">
             <h2 className="tl-shop-h2" id="s04-next">Bước tiếp theo</h2>
             <div className="tl-shop-card" style={{ fontSize: 14, lineHeight: 1.6 }}>
-              Đăng sản phẩm và cài đặt shop đã mở ở cột bên trái. Quản lý đơn hàng chưa thuộc
-              giai đoạn thử nghiệm kín: sản phẩm hiển thị kèm kênh liên hệ của shop, người mua
-              nhắn trực tiếp cho anh/chị.
+              Đăng sản phẩm, nhận đơn và cài đặt shop đều đã mở. Người mua đặt hàng ngay trên
+              ThePickleHub, và vẫn nhắn được thẳng cho anh/chị qua kênh liên hệ của shop.
             </div>
           </section>
         </div>

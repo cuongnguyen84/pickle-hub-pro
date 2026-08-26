@@ -3,7 +3,7 @@
 // import.meta.glob (Cloudflare Pages Functions / the SSR bot path).
 //
 // Loaders, not values, on purpose: _middleware.ts runs for EVERY request, and
-// a static import list would construct all 53 post objects at worker
+// a static import list would construct all 59 post objects at worker
 // startup. esbuild wraps dynamically-imported modules in lazy __esm() inits, so
 // a request only pays for the one post it renders.
 //
@@ -20,11 +20,13 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "dupr-vietnam-partnership-ta-pickleball-thepicklehub": () => import("./dupr-vietnam-partnership-ta-pickleball-thepicklehub"),
   "hcmc-open-2026-preview": () => import("./hcmc-open-2026-preview"),
   "hcmc-open-2026-recap": () => import("./hcmc-open-2026-recap"),
+  "hien-truong-quan-do-vietnam-pickleball-2026": () => import("./hien-truong-quan-do-vietnam-pickleball-2026"),
   "hong-kong-slam-2026-preview": () => import("./hong-kong-slam-2026-preview"),
   "how-to-create-pickleball-bracket": () => import("./how-to-create-pickleball-bracket"),
   "how-to-organize-pickleball-tournament": () => import("./how-to-organize-pickleball-tournament"),
   "how-to-play-pickleball": () => import("./how-to-play-pickleball"),
   "how-to-watch-ppa-tour-live-2026": () => import("./how-to-watch-ppa-tour-live-2026"),
+  "mlp-2026-semifinals-new-york-preview": () => import("./mlp-2026-semifinals-new-york-preview"),
   "mlp-format-explained": () => import("./mlp-format-explained"),
   "mlp-orlando-super-sunday-2026-best-game": () => import("./mlp-orlando-super-sunday-2026-best-game"),
   "mlp-vs-ppa-2026-which-tour-to-watch": () => import("./mlp-vs-ppa-2026-which-tour-to-watch"),
@@ -36,6 +38,7 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-doubles-strategy-guide": () => import("./pickleball-doubles-strategy-guide"),
   "pickleball-erne-shot-tutorial": () => import("./pickleball-erne-shot-tutorial"),
   "pickleball-for-tennis-players-2026": () => import("./pickleball-for-tennis-players-2026"),
+  "pickleball-group-draw-schedule-guide": () => import("./pickleball-group-draw-schedule-guide"),
   "pickleball-live-streaming-guide": () => import("./pickleball-live-streaming-guide"),
   "pickleball-round-robin-generator-guide": () => import("./pickleball-round-robin-generator-guide"),
   "pickleball-rules-complete-guide": () => import("./pickleball-rules-complete-guide"),
@@ -48,13 +51,16 @@ export const blogPostLoaders: Record<string, () => Promise<{ default: BlogPost }
   "pickleball-warm-up-injury-prevention": () => import("./pickleball-warm-up-injury-prevention"),
   "pickleball-world-cup-2026-da-nang": () => import("./pickleball-world-cup-2026-da-nang"),
   "pickleball-world-cup-2026-da-nang-how-to-watch": () => import("./pickleball-world-cup-2026-da-nang-how-to-watch"),
+  "pickleball-world-cup-2026-da-nang-schedule": () => import("./pickleball-world-cup-2026-da-nang-schedule"),
   "pickleball-world-cup-2026-group-a-vietnam": () => import("./pickleball-world-cup-2026-group-a-vietnam"),
   "ppa-beijing-open-2026-recap": () => import("./ppa-beijing-open-2026-recap"),
   "ppa-tour-asia-2026-complete-guide": () => import("./ppa-tour-asia-2026-complete-guide"),
   "ppa-tour-asia-2026-recap": () => import("./ppa-tour-asia-2026-recap"),
   "professional-pickleball-tours-guide-2026": () => import("./professional-pickleball-tours-guide-2026"),
+  "shenzhen-open-2026-preview": () => import("./shenzhen-open-2026-preview"),
   "singapore-open-2026-preview": () => import("./singapore-open-2026-preview"),
   "singapore-open-2026-recap": () => import("./singapore-open-2026-recap"),
+  "sophia-huynh-ken-tam-womens-doubles-gold-2026": () => import("./sophia-huynh-ken-tam-womens-doubles-gold-2026"),
   "tama-shimabukuro-ppa-atlanta-final-15-year-old": () => import("./tama-shimabukuro-ppa-atlanta-final-15-year-old"),
   "tournament-organizer-hub": () => import("./tournament-organizer-hub"),
   "vietnam-dupr-leaderboard-launch": () => import("./vietnam-dupr-leaderboard-launch"),

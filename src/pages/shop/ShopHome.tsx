@@ -12,11 +12,12 @@
 
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
 import { CategoryChips, ResultsGrid } from "@/components/shop/CatalogResults";
+import { ShopCartLink } from "@/components/shop/CartLink";
 import "@/styles/shop.css";
 
 export default function ShopHome() {
@@ -28,10 +29,22 @@ export default function ShopHome() {
 
   return (
     <TheLineLayout title="Chợ đồ pickleball">
-      {/* Q4: the pilot catalogue is not indexed. Server-rendered robots come
-          from the Pages Function; this is the SPA half of the same answer. */}
-      <DynamicMeta title="Chợ đồ pickleball" noindex />
+      {/* Phase 4 launch: the robots decision is the edge's alone.
+          SHOP_PUBLIC_INDEXING lives in the Pages environment, so this
+          component cannot read it — and a hardcoded `noindex` here was not
+          "the SPA half of the same answer", it was a second answer that
+          could never change. It stayed noindex through the whole launch. */}
+      <DynamicMeta title="Chợ đồ pickleball" />
       <main className="tl-shop">
+        {/* R5 #1: .tl-shop-page is the ONLY source of the page gutter and of
+            the bottom clearance for BottomNav. Without it the hero card and
+            every product touched the edge of the phone. */}
+        <div className="tl-shop-page">
+        {/* /shop has no breadcrumb, so the cart badge sits alone above the
+            hero card (§4.2). Never in TheLineLayout's tl-nav. */}
+        <div className="tl-shop-topline">
+          <ShopCartLink />
+        </div>
         {/* R4 hero card — purely visual wrapper, no new behaviour. NOT
             .tl-shop-hero: that class belongs to the sell landing and its
             mobile rule would stretch the "Tìm" button full-width. */}
@@ -56,12 +69,13 @@ export default function ShopHome() {
             <circle cx="109" cy="58" r="1.6" fill="currentColor" stroke="none" />
           </svg>
           <h1 className="tl-shop-h1 tl-shop-herocard-title">Chợ đồ pickleball</h1>
-          <p className="tl-shop-sub tl-shop-herocard-sub">
+          <p className="tl-shop-herocard-sub">
             {/* Wave 0: the pilot does not collect papers, so "đã xác minh giấy
                 tờ" was a claim about diligence nobody performed — the exact
                 class of overstatement the Seller Rules exist to prevent. Say
-                what actually happens. */}
-            Vợt, giày, bóng và phụ kiện từ những shop được ThePickleHub duyệt hồ sơ và kiểm duyệt từng sản phẩm.
+                what actually happens.
+                R5 (cắt chữ): 27 chữ đọc như thông cáo → 13 chữ, cùng nghĩa. */}
+            Vợt, giày, bóng và phụ kiện từ các shop đã được ThePickleHub duyệt.
           </p>
 
           <form
@@ -90,11 +104,11 @@ export default function ShopHome() {
 
         {/* No "Ngành hàng" heading — the chips are self-evident and the
             CategoryChips group already carries the aria-label. */}
-        <section style={{ marginTop: 14 }}>
+        <section className="tl-shop-section">
           {categories.isLoading ? (
             <div className="tl-shop-cats" aria-busy="true" aria-label="Đang tải ngành hàng">
               {[0, 1, 2, 3].map((i) => (
-                <span key={i} className="tl-shop-sk" style={{ width: 88, height: 44, borderRadius: 999, flex: "none" }} />
+                <span key={i} className="tl-shop-sk tl-shop-sk--chip" />
               ))}
             </div>
           ) : (
@@ -106,11 +120,15 @@ export default function ShopHome() {
           )}
         </section>
 
-        <section aria-labelledby="shop-latest">
+        <section aria-labelledby="shop-latest" className="tl-shop-section">
           <h2 className="tl-shop-h2" id="shop-latest">Mới đăng</h2>
+          {/* R5 #11: the grid asks for twelve rows, so printing `total` said
+              "48 sản phẩm" above twelve cards and no way to reach the rest.
+              No count here, and a real door to the full catalogue instead. */}
           <ResultsGrid
             rows={latest.data?.rows ?? []}
             total={latest.data?.total ?? 0}
+            hideCount
             isLoading={latest.isLoading}
             isError={latest.isError}
             onRetry={() => void latest.refetch()}
@@ -122,7 +140,16 @@ export default function ShopHome() {
               </p>
             }
           />
+          {(latest.data?.rows.length ?? 0) > 0 && (
+            <div style={{ marginTop: 14, display: "flex", justifyContent: "center" }}>
+              <Link to="/shop/search" className="tl-shop-btn">
+                Xem tất cả sản phẩm
+                <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
+          )}
         </section>
+        </div>
       </main>
     </TheLineLayout>
   );

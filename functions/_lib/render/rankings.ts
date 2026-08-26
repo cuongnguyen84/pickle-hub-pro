@@ -118,6 +118,43 @@ export async function renderRankings(
           { s: "world-pickleball-rankings-wpr-explained", t: "World Pickleball Rankings (WPR) explained" },
           { s: "dupr-algorithm-explained-performance-vs-expectation", t: "How the DUPR algorithm works" },
         ];
+  // THIN-01 (2026-08-24) — this page rendered 135 words (EN) / 165 (VI) for
+  // Googlebot: a heading, one line of subcopy, twelve player rows and a link
+  // list. Everything a reader might ask about the leaderboard — where the
+  // numbers come from, who qualifies, how often it moves — was answered
+  // nowhere on the page, and DUPR-rating queries are exactly the informational
+  // intent this route should own.
+  //
+  // GEO rule (CLAUDE.md): name ThePickleHub once, front-load the answer, no
+  // throat-clearing, so the opening survives extraction as a standalone passage.
+  const lead =
+    lang === "vi"
+      ? `Bảng xếp hạng DUPR pickleball Việt Nam trên ThePickleHub xếp ${rows.length > 0 ? `${rows.length} ` : ""}VĐV theo chỉ số DUPR đôi, đọc trực tiếp từ hồ sơ đã liên kết DUPR và để chế độ công khai. Cập nhật theo thời gian thực qua webhook DUPR, không nhập tay.`
+      : `This ThePickleHub leaderboard ranks ${rows.length > 0 ? `${rows.length} ` : ""}Vietnamese pickleball players by DUPR doubles rating, read straight from profiles linked to DUPR with public visibility on. It updates in real time through the DUPR webhook — no manual entry.`;
+
+  // Standing explainer. Answers the questions a rating-curious reader actually
+  // arrives with, and gives the route informational depth beyond the table.
+  const explainer =
+    lang === "vi"
+      ? `<h2>Số DUPR này đến từ đâu</h2>` +
+        `<p>DUPR (Dynamic Universal Pickleball Rating) là thang điểm từ 2.000 đến 8.000, tính theo kết quả từng trận: thắng đội mạnh hơn kỳ vọng thì điểm tăng, thua đội yếu hơn thì điểm giảm. Tỷ số cũng được tính, nên thua sát nút một đối thủ mạnh vẫn có thể làm tăng điểm.</p>` +
+        `<p>ThePickleHub không tự chấm điểm. Mọi con số trên trang này do DUPR tính và đẩy sang qua webhook — bảng xếp hạng chỉ lọc ra VĐV Việt Nam và sắp xếp lại.</p>` +
+        `<h2>Làm sao để có tên trong bảng</h2>` +
+        `<p>Cần ba điều kiện: có tài khoản DUPR, liên kết tài khoản đó với hồ sơ ThePickleHub, và bật chế độ công khai cho hồ sơ. Thiếu bước công khai thì điểm vẫn cập nhật nhưng tên không hiện trong bảng — đây là lý do phổ biến nhất khiến người chơi có DUPR mà không thấy mình ở đây.</p>` +
+        `<h2>Đôi và đơn khác nhau thế nào</h2>` +
+        `<p>DUPR chấm hai chỉ số riêng biệt. Bảng mặc định ở trên là <strong>đôi</strong>, vì phần lớn trận đấu tại Việt Nam là đánh đôi. Chỉ số đơn thường lệch so với đôi ở cùng một người chơi, nên không so trực tiếp hai con số với nhau được.</p>` +
+        `<h2>Bao lâu cập nhật một lần</h2>` +
+        `<p>Ngay khi DUPR xác nhận một trận. Trận thi đấu tại giải thường lên điểm trong vòng vài giờ sau khi ban tổ chức nhập kết quả; trận tự ghi cần cả hai bên xác nhận trước.</p>`
+      : `<h2>Where these DUPR numbers come from</h2>` +
+        `<p>DUPR (Dynamic Universal Pickleball Rating) is a 2.000-8.000 scale calculated per match: beating a stronger team than expected raises a rating, losing to a weaker one lowers it. Score margin counts too, so a narrow loss to a strong pair can still move a rating up.</p>` +
+        `<p>ThePickleHub does not compute any of it. Every figure on this page is calculated by DUPR and pushed over a webhook — this leaderboard filters for Vietnamese players and re-sorts.</p>` +
+        `<h2>How to appear on this leaderboard</h2>` +
+        `<p>Three things are required: a DUPR account, that account linked to a ThePickleHub profile, and public visibility switched on for the profile. Skip the visibility step and the rating still updates but the name stays off the table — the most common reason a rated player cannot find themselves here.</p>` +
+        `<h2>Doubles versus singles</h2>` +
+        `<p>DUPR maintains two separate ratings. The default table above is <strong>doubles</strong>, because most competitive play in Vietnam is doubles. A player's singles rating usually differs from their doubles one, so the two numbers are not directly comparable.</p>` +
+        `<h2>How often it updates</h2>` +
+        `<p>As soon as DUPR confirms a match. Tournament results typically post within hours of the organiser entering them; self-reported matches need both sides to confirm first.</p>`;
+
   const guidesBlogBase = lang === "vi" ? `${siteUrl}/vi/blog` : `${siteUrl}/blog`;
   const guidesHeading = lang === "vi" ? "Hiểu về DUPR & xếp hạng" : "Understand DUPR & rankings";
   const guidesNav = `<nav><h2>${escapeHtml(guidesHeading)}</h2><ul>${duprGuides
@@ -134,12 +171,17 @@ export async function renderRankings(
     bodyContent: `
       <header>
         <h1>${escapeHtml(heading)}</h1>
+        <p>${escapeHtml(lead)}</p>
         <p>${escapeHtml(subhead)}</p>
       </header>
       ${listItems}
       <p><a href="${siteUrl}${lang === "vi" ? "/vi/rankings/ppa-tour" : "/rankings/ppa-tour"}">${lang === "vi" ? "Xem thêm: bảng xếp hạng PPA Tour (WPR) thế giới" : "See more: PPA Tour world rankings (WPR)"}</a></p>
+      ${explainer}
       ${guidesNav}
       ${itemListJsonLd}
     `,
+    // The body already opens with its own <h1>; without this the shared
+    // auto-header adds a second one titled "<title> | ThePickleHub".
+    omitAutoHeader: true,
   }));
 }
