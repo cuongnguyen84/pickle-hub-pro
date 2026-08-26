@@ -158,11 +158,17 @@ describe("_routes.json stays consistent with the middleware", () => {
     expect(routes.exclude).toContain("/manifest.webmanifest");
   });
 
-  it("excludes every root verification file present in public/", () => {
-    const verifiers = walk(PUBLIC_DIR).filter((p) =>
-      /^\/(?:zalo_verifier|google[0-9a-f]{16}|BingSiteAuth|pinterest-)[A-Za-z0-9_-]*\.(?:html|xml)$/.test(p),
-    );
-    for (const verifier of verifiers) expect(routes.exclude).toContain(verifier);
+  /**
+   * Root .html verifiers must NOT be excluded. Cloudflare Pages' own static
+   * handler applies html_handling to anything it serves directly, so an
+   * excluded `/foo.html` gets a 308 to the extensionless `/foo` — which is not
+   * a static path, falls into the SPA guard, and 404s. Verified on preview
+   * a37fe065. They go through the Function, which returns the file as-is.
+   */
+  it("does not exclude root .html verifiers (Pages would 308 away the .html)", () => {
+    for (const excluded of routes.exclude) {
+      expect(excluded.endsWith(".html")).toBe(false);
+    }
   });
 
   it("keeps every excluded path servable if the exclude list is ever trimmed", () => {

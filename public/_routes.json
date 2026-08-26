@@ -1,6 +1,8 @@
 {
   "version": 1,
-  "include": ["/*"],
+  "include": [
+    "/*"
+  ],
   "exclude": [
     "/_headers",
     "/_redirects",
@@ -8,7 +10,6 @@
     "/favicon.ico",
     "/og-image.png",
     "/manifest.json",
-    "/manifest.webmanifest",
-    "/zalo_verifierN8wI0DoU1LuMZTLxa8rSHHI2-M7uz2mvEJGm.html"
+    "/manifest.webmanifest"
   ]
 }
