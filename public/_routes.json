@@ -1,12 +1,15 @@
 {
   "version": 1,
-  "include": ["/*"],
+  "include": [
+    "/*"
+  ],
   "exclude": [
     "/_headers",
     "/_redirects",
     "/_routes.json",
     "/favicon.ico",
     "/og-image.png",
-    "/manifest.json"
+    "/manifest.json",
+    "/manifest.webmanifest"
   ]
 }
