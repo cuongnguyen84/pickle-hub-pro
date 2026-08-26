@@ -10,6 +10,37 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-world-cup-2026-mens-pro-doubles-field",
+    publishedDate: "2026-08-26",
+    updatedDate: "2026-08-26",
+    author: "Cuong Nguyen",
+    tags: [
+      "pickleball world cup 2026",
+      "men's pro doubles",
+      "doi nam chuyen nghiep",
+      "jack munro",
+      "quang duong",
+      "jay devilliers",
+      "world cup pickleball da nang",
+      "heineken pickleball world cup",
+    ],
+    ctaPath: "/live",
+    ctaLabel: {
+      en: "Follow the World Cup live on ThePickleHub",
+      vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
+    },
+    titleEn:
+      "Pickleball World Cup 2026 Men's Pro Doubles: The Final Field, Ranked by Combined DUPR",
+    titleVi:
+      "Đôi nam chuyên nghiệp Pickleball World Cup 2026: danh sách đã chốt, xếp theo tổng DUPR",
+    metaTitleEn: "World Cup 2026 Men's Pro Doubles: Field Ranked by DUPR",
+    metaTitleVi: "Đôi nam pro World Cup 2026: xếp theo DUPR",
+    metaDescriptionEn:
+      "Men's Pro Doubles at the Pickleball World Cup 2026 Da Nang plays Tuesday Sep 1. The final field ranked by combined DUPR, with every pair broken down.",
+    metaDescriptionVi:
+      "Đôi nam pro World Cup Pickleball 2026 Đà Nẵng đấu thứ Ba 1/9. Danh sách chốt, xếp theo tổng DUPR.",
+  },
+  {
     slug: "pickleball-group-draw-schedule-guide",
     publishedDate: "2026-08-26",
     updatedDate: "2026-08-26",
