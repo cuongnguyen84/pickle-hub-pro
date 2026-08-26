@@ -29,6 +29,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       en: "Generate your bracket free — no signup",
       vi: "Chia bảng & tạo lịch miễn phí — không cần đăng ký",
     },
+    heroImage: {
+      src: "/images/blog/pickleball-group-draw-schedule-guide-hero.webp",
+      alt: "Top-down view of a pickleball tournament organizer setup: a clipboard with a five-team round-robin rotation diagram and schedule grid next to a blue pickleball court with two paddles, balls and a whistle.",
+    },
     titleEn:
       "Pickleball Group Draws & Round Robin Schedules: 4–10 Teams, Odd Counts, Limited Courts",
     titleVi:
