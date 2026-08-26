@@ -18,7 +18,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ImageOff, PackageOpen, Plus, Search } from "lucide-react";
+import { AlertTriangle, FileUp, ImageOff, PackageOpen, Plus, Search } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { ErrorState, LoadingState } from "@/components/states/PageStates";
@@ -128,10 +128,16 @@ export default function SellerProducts() {
 
   const addButton =
     canWrite && !shopBlocked ? (
-      <Link to="/seller/products/new" className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--primary">
-        <Plus size={15} aria-hidden="true" />
-        Thêm
-      </Link>
+      <span style={{ display: "flex", gap: 8 }}>
+        <Link to="/seller/products/import" className="tl-shop-btn tl-shop-btn--sm">
+          <FileUp size={15} aria-hidden="true" />
+          Nhập Excel + AI
+        </Link>
+        <Link to="/seller/products/new" className="tl-shop-btn tl-shop-btn--sm tl-shop-btn--primary">
+          <Plus size={15} aria-hidden="true" />
+          Thêm
+        </Link>
+      </span>
     ) : undefined;
 
   return shell(
