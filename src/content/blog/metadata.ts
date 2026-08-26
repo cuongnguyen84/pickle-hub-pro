@@ -10,6 +10,37 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-group-draw-schedule-guide",
+    publishedDate: "2026-08-26",
+    updatedDate: "2026-08-26",
+    author: "Cuong Nguyen",
+    tags: [
+      "chia bảng pickleball",
+      "xếp lịch thi đấu pickleball",
+      "vòng tròn pickleball",
+      "chia bảng đấu",
+      "lịch thi đấu vòng tròn",
+      "công cụ chia bảng",
+      "group draw",
+      "round robin schedule",
+    ],
+    ctaPath: "/tools",
+    ctaLabel: {
+      en: "Generate your bracket free — no signup",
+      vi: "Chia bảng & tạo lịch miễn phí — không cần đăng ký",
+    },
+    titleEn:
+      "Pickleball Group Draws & Round Robin Schedules: 4–10 Teams, Odd Counts, Limited Courts",
+    titleVi:
+      "Cách chia bảng & xếp lịch thi đấu pickleball: vòng tròn 4–10 đội, kèm công cụ miễn phí",
+    metaTitleEn: "Pickleball Group Draw & Round Robin Schedule Guide",
+    metaTitleVi: "Cách chia bảng & xếp lịch thi đấu pickleball",
+    metaDescriptionEn:
+      "How to split pickleball teams into groups and schedule a round robin — 5-team rotations, court-limited scheduling, tiebreakers, and a free generator.",
+    metaDescriptionVi:
+      "Cách chia bảng pickleball, xếp lịch vòng tròn 5 đội, luật tính hạng khi bằng điểm — kèm công cụ miễn phí.",
+  },
+  {
     slug: "pickleball-world-cup-2026-da-nang-schedule",
     publishedDate: "2026-08-24",
     updatedDate: "2026-08-24",
