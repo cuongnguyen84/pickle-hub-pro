@@ -29,6 +29,10 @@ export const blogMetadata: BlogPostMetadata[] = [
       en: "Follow the World Cup live on ThePickleHub",
       vi: "Theo dõi World Cup trực tiếp trên ThePickleHub",
     },
+    heroImage: {
+      src: "/images/blog/pickleball-world-cup-2026-mens-pro-doubles-field-hero.webp",
+      alt: "Official bracket cards for Men's Pro Doubles at the Heineken Pickleball World Cup 2026 in Da Nang, showing six pairs with their DUPR ratings: Jay Devilliers 6.599 and Emilien Burnel 5.666; Richard Livornese Jr 6.187 and Jack Munro 6.323; Max Manthou 6.281 and Trinh Linh Giang 5.566; Duong Thien Quang 6.258 and Harsh Mehta 5.921; Zack Marceau 5.629 and Ronan Camron 6.125; Brandon Lane 5.994 and Ryler DeHeart 6.03.",
+    },
     titleEn:
       "Pickleball World Cup 2026 Men's Pro Doubles: The Final Field, Ranked by Combined DUPR",
     titleVi:
