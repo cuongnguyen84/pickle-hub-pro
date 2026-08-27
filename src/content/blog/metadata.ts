@@ -533,7 +533,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-da-nang-how-to-watch",
     publishedDate: "2026-07-17",
-    updatedDate: "2026-08-26",
+    updatedDate: "2026-08-27",
     author: "The PickleHub Team",
     tags: [
       "world cup pickleball",
@@ -1468,7 +1468,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "pickleball-world-cup-2026-da-nang",
     publishedDate: "2026-04-23",
-    updatedDate: "2026-08-26",
+    updatedDate: "2026-08-27",
     author: "The PickleHub Team",
     tags: [
       "world cup pickleball",
