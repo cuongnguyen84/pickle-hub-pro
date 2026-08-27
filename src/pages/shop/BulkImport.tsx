@@ -62,7 +62,7 @@ export default function BulkImport() {
     setEnriching(true);
     try {
       for (const row of rows) {
-        if (row.status !== "idle") continue;
+        if (!row.selected || row.status !== "idle") continue;
         await enrichOne(row.rowId, row.name);
         await new Promise((resolve) => setTimeout(resolve, 1_200));
       }
@@ -114,7 +114,7 @@ export default function BulkImport() {
     });
   };
 
-  const idleCount = rows.filter((r) => r.status === "idle").length;
+  const idleCount = rows.filter((r) => r.selected && r.status === "idle").length;
   const doneCount = rows.filter((r) => r.selected && r.status === "done").length;
 
   return (
@@ -177,10 +177,10 @@ export default function BulkImport() {
                       <Checkbox
                         id={`select-${row.rowId}`}
                         checked={row.selected}
-                        disabled={row.status !== "done"}
+                        disabled={row.status === "enriching"}
                         onCheckedChange={(v) => updateRow(row.rowId, { selected: !!v })}
                         className="mt-0.5"
-                        aria-label={`Chọn ${row.aiData?.name || row.name} để xuất bản`}
+                        aria-label={`Chọn ${row.aiData?.name || row.name} để AI điền thông tin và xuất bản`}
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{row.aiData?.name || row.name}</p>

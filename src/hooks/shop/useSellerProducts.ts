@@ -290,3 +290,14 @@ export const useArchiveProduct = () => {
     },
   });
 };
+
+export const useDeleteProducts = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (productIds: string[]) =>
+      await shopRpc<string[]>("products_delete", { _product_ids: productIds }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
+};

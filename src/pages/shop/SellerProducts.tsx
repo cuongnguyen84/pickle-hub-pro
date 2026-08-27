@@ -18,7 +18,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, FileUp, ImageOff, PackageOpen, Plus, Search, SearchX } from "lucide-react";
+import { AlertTriangle, FileUp, ImageOff, PackageOpen, Plus, Search, SearchX, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { ShopErrorNotice } from "@/components/shop/ShopNotice";
@@ -31,6 +42,7 @@ import {
   PRODUCT_SORTS,
   hasActiveFilter,
   useProductStatusCounts,
+  useDeleteProducts,
   useSellerProducts,
   type ProductListFilters,
   type ProductSort,
@@ -301,6 +313,10 @@ function ProductList({
   // ONE mint for the whole page: every draft-only cover path goes into a single
   // createSignedUrls call, not one per card. Hooks run before any early return.
   const rows = query.data?.rows;
+  const deleteProducts = useDeleteProducts();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const draftPaths = useMemo(
     () =>
       (rows ?? [])
@@ -310,6 +326,30 @@ function ProductList({
     [rows],
   );
   const previews = useSignedPreviews(draftPaths);
+  useEffect(() => {
+    const visible = new Set((rows ?? []).map((row) => row.id));
+    setSelectedIds((current) => current.filter((id) => visible.has(id)));
+  }, [rows]);
+
+  const toggleProduct = (productId: string, checked: boolean) =>
+    setSelectedIds((current) => checked
+      ? [...new Set([...current, productId])]
+      : current.filter((id) => id !== productId));
+
+  const confirmDelete = async () => {
+    if (!confirmIds?.length) return;
+    setDeleteError(null);
+    try {
+      await deleteProducts.mutateAsync(confirmIds);
+      setSelectedIds((current) => current.filter((id) => !confirmIds.includes(id)));
+      setConfirmIds(null);
+    } catch (error) {
+      const message = error instanceof Error && error.message.includes("product_has_orders")
+        ? "Không thể xoá sản phẩm đã phát sinh đơn hàng. Anh/chị có thể ngừng bán sản phẩm đó."
+        : shopErrorMessage(error);
+      setDeleteError(message);
+    }
+  };
 
   if (query.isLoading) {
     return (
@@ -381,11 +421,28 @@ function ProductList({
 
   return (
     <>
-      <p className="tl-shop-count" role="status">
-        {result.total === result.rows.length && filters.page === 0
-          ? `${result.total} sản phẩm`
-          : `${from}–${to} trên ${result.total} sản phẩm`}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <p className="tl-shop-count" role="status">
+          {result.total === result.rows.length && filters.page === 0
+            ? `${result.total} sản phẩm`
+            : `${from}–${to} trên ${result.total} sản phẩm`}
+          {selectedIds.length > 0 ? ` · Đã chọn ${selectedIds.length}` : ""}
+        </p>
+        {canWrite && selectedIds.length > 0 && (
+          <button
+            type="button"
+            className="tl-shop-btn tl-shop-btn--sm"
+            style={{ color: "var(--shop-danger)" }}
+            onClick={() => {
+              setDeleteError(null);
+              setConfirmIds(selectedIds);
+            }}
+          >
+            <Trash2 size={15} aria-hidden="true" />
+            Xoá {selectedIds.length} sản phẩm
+          </button>
+        )}
+      </div>
 
       {/* Desktop table */}
       <div className="tl-shop-tablewrap" tabIndex={0} data-desktop-only style={{ marginTop: 10 }}>
@@ -393,6 +450,15 @@ function ProductList({
           <caption className="tl-shop-sr">Sản phẩm của shop</caption>
           <thead>
             <tr>
+              {canWrite && (
+                <th scope="col" style={{ width: 44 }}>
+                  <Checkbox
+                    checked={result.rows.length > 0 && result.rows.every((row) => selectedIds.includes(row.id))}
+                    onCheckedChange={(checked) => setSelectedIds(checked ? result.rows.map((row) => row.id) : [])}
+                    aria-label="Chọn tất cả sản phẩm trên trang"
+                  />
+                </th>
+              )}
               <th scope="col">Sản phẩm</th>
               <th scope="col">Trạng thái</th>
               <th scope="col">Giá</th>
@@ -405,7 +471,18 @@ function ProductList({
           </thead>
           <tbody>
             {result.rows.map((row) => (
-              <ProductTableRow key={row.id} row={row} canWrite={canWrite} previews={previews} />
+              <ProductTableRow
+                key={row.id}
+                row={row}
+                canWrite={canWrite}
+                previews={previews}
+                selected={selectedIds.includes(row.id)}
+                onSelectedChange={(checked) => toggleProduct(row.id, checked)}
+                onDelete={() => {
+                  setDeleteError(null);
+                  setConfirmIds([row.id]);
+                }}
+              />
             ))}
           </tbody>
         </table>
@@ -418,7 +495,18 @@ function ProductList({
           desktop table at 1440px, caught by the QA sweep. */}
       <ul data-mobile-only style={{ listStyle: "none", margin: "10px 0 0", padding: 0 }}>
         {result.rows.map((row) => (
-          <ProductCard key={row.id} row={row} canWrite={canWrite} previews={previews} />
+          <ProductCard
+            key={row.id}
+            row={row}
+            canWrite={canWrite}
+            previews={previews}
+            selected={selectedIds.includes(row.id)}
+            onSelectedChange={(checked) => toggleProduct(row.id, checked)}
+            onDelete={() => {
+              setDeleteError(null);
+              setConfirmIds([row.id]);
+            }}
+          />
         ))}
       </ul>
 
@@ -445,6 +533,31 @@ function ProductList({
           </button>
         </nav>
       )}
+
+      <AlertDialog open={confirmIds !== null} onOpenChange={(open) => !open && !deleteProducts.isPending && setConfirmIds(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xoá {confirmIds?.length ?? 0} sản phẩm?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sản phẩm và ảnh liên quan sẽ bị xoá vĩnh viễn. Sản phẩm đã phát sinh đơn hàng sẽ được giữ lại để bảo toàn lịch sử mua bán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && <p className="text-sm text-destructive" role="alert">{deleteError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteProducts.isPending}>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteProducts.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              {deleteProducts.isPending ? "Đang xoá…" : "Xoá vĩnh viễn"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -517,14 +630,29 @@ function ProductTableRow({
   row,
   canWrite,
   previews,
+  selected,
+  onSelectedChange,
+  onDelete,
 }: {
   row: SellerProductRow;
   canWrite: boolean;
   previews: Record<string, string>;
+  selected: boolean;
+  onSelectedChange: (checked: boolean) => void;
+  onDelete: () => void;
 }) {
   const s = summarise(row);
   return (
     <tr>
+      {canWrite && (
+        <td>
+          <Checkbox
+            checked={selected}
+            onCheckedChange={(checked) => onSelectedChange(checked === true)}
+            aria-label={`Chọn sản phẩm ${row.title}`}
+          />
+        </td>
+      )}
       <th scope="row" style={{ fontWeight: 550, maxWidth: 320 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ width: 44, flex: "none" }}>
@@ -552,11 +680,25 @@ function ProductTableRow({
       <td style={{ fontVariantNumeric: "tabular-nums" }}>{s.stock}</td>
       <td style={{ whiteSpace: "nowrap" }}>{dmy(row.updated_at)}</td>
       <td>
-        {/* Everyone gets a link; what it opens is decided by state and role
-            inside the editor, and by the database regardless. */}
-        <Link to={`/seller/products/${row.id}/edit`} className="tl-shop-btn tl-shop-btn--sm">
-          {canWrite && s.canEdit ? "Sửa" : "Xem"}
-        </Link>
+        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+          {/* Everyone gets a link; what it opens is decided by state and role
+              inside the editor, and by the database regardless. */}
+          <Link to={`/seller/products/${row.id}/edit`} className="tl-shop-btn tl-shop-btn--sm">
+            {canWrite && s.canEdit ? "Sửa" : "Xem"}
+          </Link>
+          {canWrite && (
+            <button
+              type="button"
+              className="tl-shop-btn tl-shop-btn--sm"
+              style={{ color: "var(--shop-danger)" }}
+              onClick={onDelete}
+              aria-label={`Xoá sản phẩm ${row.title}`}
+            >
+              <Trash2 size={15} aria-hidden="true" />
+              Xoá
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -566,15 +708,29 @@ function ProductCard({
   row,
   canWrite,
   previews,
+  selected,
+  onSelectedChange,
+  onDelete,
 }: {
   row: SellerProductRow;
   canWrite: boolean;
   previews: Record<string, string>;
+  selected: boolean;
+  onSelectedChange: (checked: boolean) => void;
+  onDelete: () => void;
 }) {
   const s = summarise(row);
   const action = canWrite && s.canEdit ? "Sửa" : "Xem";
   return (
     <li className="tl-shop-card" style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+      {canWrite && (
+        <Checkbox
+          checked={selected}
+          onCheckedChange={(checked) => onSelectedChange(checked === true)}
+          aria-label={`Chọn sản phẩm ${row.title}`}
+          style={{ marginTop: 12 }}
+        />
+      )}
       <span style={{ width: 56, flex: "none" }}>
         <Thumb media={row.product_media ?? []} previews={previews} />
       </span>
@@ -616,6 +772,17 @@ function ProductCard({
           <p className="tl-shop-hint" style={{ marginTop: 0 }}>
             {s.nextAction}
           </p>
+        )}
+        {canWrite && (
+          <button
+            type="button"
+            className="tl-shop-btn tl-shop-btn--sm"
+            style={{ alignSelf: "flex-start", color: "var(--shop-danger)" }}
+            onClick={onDelete}
+          >
+            <Trash2 size={15} aria-hidden="true" />
+            Xoá
+          </button>
         )}
       </div>
     </li>
