@@ -56,7 +56,8 @@ export interface ProductRow {
   aiEnriched: boolean;
   aiConfidence: number;
   aiData: EnrichedData | null;
-  selectedImageUrl: string | null;
+  selectedImageUrls: string[];
+  manualImageUrl: string | null;
   selectedImageFile: File | null;
   imagePreviewUrl: string | null;
   selected: boolean;
@@ -122,7 +123,8 @@ export function useBulkProductImport() {
           aiEnriched: false,
           aiConfidence: 0,
           aiData: null,
-          selectedImageUrl: null,
+          selectedImageUrls: [],
+          manualImageUrl: null,
           selectedImageFile: null,
           imagePreviewUrl: null,
           selected: true,
@@ -162,7 +164,9 @@ export function useBulkProductImport() {
       aiData: { ...normalizedData, category: normalizeCategory(normalizedData.category) },
       versionOptions: row.versionOptions.length ? row.versionOptions : normalizedData.versions,
       colorOptions: row.colorOptions.length ? row.colorOptions : normalizedData.colors,
-      selectedImageUrl: normalizedData.image_candidates[0]?.url ?? null,
+      selectedImageUrls: normalizedData.image_candidates[0]?.url
+        ? [normalizedData.image_candidates[0].url]
+        : [],
       status: data.confidence < 0.5 ? "low_confidence" : "done",
       errorMessage: null,
     } : row));
@@ -248,9 +252,9 @@ export function useBulkProductImport() {
           .eq("id", current.id)
           .single();
         if (refreshError) throw refreshError;
-        const image = await resolveProductImage(row);
-        if (!image) throw new Error("product_image_required");
-        await uploadProductImage(current.id, image);
+        const images = await resolveProductImages(row);
+        if (images.length === 0) throw new Error("product_image_required");
+        for (const image of images) await uploadProductImage(current.id, image);
 
         const submitted = await shopRpc<SubmitResult>("product_submit", {
           _product_id: current.id,
@@ -311,19 +315,22 @@ export function useBulkProductImport() {
   };
 }
 
-async function resolveProductImage(row: ProductRow): Promise<File | null> {
-  if (row.selectedImageFile) return row.selectedImageFile;
-  if (!row.selectedImageUrl) return null;
-  try {
-    const response = await fetch(row.selectedImageUrl, { mode: "cors", credentials: "omit" });
-    if (!response.ok) return null;
-    const blob = await response.blob();
-    if (!blob.type.match(/^image\/(jpeg|png|webp)$/) || blob.size > 8 * 1024 * 1024) return null;
-    const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
-    return new File([blob], `ai-product-${row.rowId}.${extension}`, { type: blob.type });
-  } catch {
-    return null;
+async function resolveProductImages(row: ProductRow): Promise<File[]> {
+  const files = row.selectedImageFile ? [row.selectedImageFile] : [];
+  const urls = [...new Set([...row.selectedImageUrls, row.manualImageUrl].filter(Boolean) as string[])];
+  for (const [index, url] of urls.entries()) {
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (!response.ok) continue;
+      const blob = await response.blob();
+      if (!blob.type.match(/^image\/(jpeg|png|webp)$/) || blob.size > 8 * 1024 * 1024) continue;
+      const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+      files.push(new File([blob], `ai-product-${row.rowId}-${index + 1}.${extension}`, { type: blob.type }));
+    } catch {
+      // One remote host may block downloads; preserve every other selected image.
+    }
   }
+  return files;
 }
 
 function parsePrice(value: unknown): number | undefined {
@@ -351,9 +358,12 @@ function normalizeAiSpecs(input: unknown): Record<string, string> {
 }
 
 function imageSources(row: ProductRow): string[] {
-  if (!row.selectedImageUrl) return [];
-  const source = row.aiData?.image_candidates.find((candidate) => candidate.url === row.selectedImageUrl)?.source_url;
-  return source ? [row.selectedImageUrl, source] : [row.selectedImageUrl];
+  const sources = row.selectedImageUrls.flatMap((url) => {
+    const source = row.aiData?.image_candidates.find((candidate) => candidate.url === url)?.source_url;
+    return source ? [url, source] : [url];
+  });
+  if (row.manualImageUrl) sources.push(row.manualImageUrl);
+  return [...new Set(sources)];
 }
 
 const SYSTEM_CATEGORIES = [

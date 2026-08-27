@@ -22,6 +22,7 @@ import {
   Pencil,
   ImagePlus,
   Trash2,
+  Check,
 } from "lucide-react";
 import { ShopScrollShell, SellerShell } from "@/components/shop/ShopShell";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,6 @@ export default function BulkImport() {
     updateRow(rowId, {
       selectedImageFile: file,
       imagePreviewUrl: file ? URL.createObjectURL(file) : null,
-      selectedImageUrl: file ? null : row.selectedImageUrl,
     });
   };
 
@@ -311,28 +311,29 @@ export default function BulkImport() {
                         <fieldset className="space-y-2 sm:col-span-2">
                           <legend className="text-sm font-medium">Ảnh sản phẩm</legend>
                           {row.aiData.image_candidates.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                              {row.aiData.image_candidates.map((candidate) => {
-                                const selected = row.selectedImageUrl === candidate.url;
-                                return (
-                                  <label
-                                    key={candidate.url}
-                                    className={`cursor-pointer overflow-hidden rounded-lg border-2 bg-muted ${selected ? "border-primary" : "border-transparent"}`}
-                                  >
-                                    <input
-                                      type="radio"
-                                      name={`image-${row.rowId}`}
-                                      className="sr-only"
-                                      checked={selected}
-                                      onChange={() => {
-                                        if (row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
-                                        updateRow(row.rowId, {
-                                          selectedImageUrl: candidate.url,
-                                          selectedImageFile: null,
-                                          imagePreviewUrl: null,
-                                        });
-                                      }}
-                                    />
+                            <div className="space-y-2">
+                              <p className="text-xs text-muted-foreground" aria-live="polite">
+                                Đã chọn {row.selectedImageUrls.length} ảnh · Bấm vào ảnh để chọn hoặc bỏ chọn
+                              </p>
+                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                {row.aiData.image_candidates.map((candidate) => {
+                                  const selected = row.selectedImageUrls.includes(candidate.url);
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={candidate.url}
+                                      aria-pressed={selected}
+                                      aria-label={`${selected ? "Bỏ chọn" : "Chọn"} ảnh ${candidate.alt || row.aiData!.name}`}
+                                      onClick={() => updateRow(row.rowId, {
+                                        selectedImageUrls: selected
+                                          ? row.selectedImageUrls.filter((url) => url !== candidate.url)
+                                          : [...row.selectedImageUrls, candidate.url],
+                                      })}
+                                      className={`group relative overflow-hidden rounded-lg border-2 bg-muted text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? "border-primary ring-1 ring-primary" : "border-transparent hover:border-muted-foreground/40"}`}
+                                    >
+                                      <span className={`absolute right-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full border shadow-sm ${selected ? "border-primary bg-primary text-primary-foreground" : "border-white/70 bg-black/35 text-transparent"}`}>
+                                        <Check className="h-4 w-4" aria-hidden="true" />
+                                      </span>
                                     <img
                                       src={candidate.url}
                                       alt={candidate.alt || row.aiData!.name}
@@ -343,9 +344,10 @@ export default function BulkImport() {
                                     <span className="block truncate px-2 py-1.5 text-xs text-muted-foreground">
                                       {new URL(candidate.source_url).hostname.replace(/^www\./, "")}
                                     </span>
-                                  </label>
-                                );
-                              })}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground">
@@ -396,16 +398,13 @@ export default function BulkImport() {
                           <Input
                             id={`image-url-${row.rowId}`}
                             type="url"
-                            value={row.selectedImageUrl ?? ""}
+                            value={row.manualImageUrl ?? ""}
                             onChange={(event) => {
-                              if (row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
                               updateRow(row.rowId, {
-                                selectedImageUrl: event.target.value || null,
-                                selectedImageFile: null,
-                                imagePreviewUrl: null,
+                                manualImageUrl: event.target.value || null,
                               });
                             }}
-                            placeholder="https://…/anh-san-pham.jpg"
+                            placeholder="Thêm một URL ảnh khác (không bắt buộc)"
                           />
                         </fieldset>
                         {row.status === "low_confidence" && (
