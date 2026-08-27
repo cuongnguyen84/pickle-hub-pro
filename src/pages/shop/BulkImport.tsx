@@ -118,14 +118,19 @@ export default function BulkImport() {
     });
   };
 
-  const handleRemoveBackground = async (rowId: string, imageUrl: string) => {
+  const handleRemoveBackground = async (rowId: string, imageUrl: string, sourceUrl: string) => {
     const key = `${rowId}:${imageUrl}`;
     setBackgroundError(null);
     setBackgroundJobs((current) => ({ ...current, [key]: true }));
     try {
-      await removeImageBackground(rowId, imageUrl);
-    } catch {
-      setBackgroundError("Chưa xoá được nền ảnh này. Anh/chị thử lại sau.");
+      await removeImageBackground(rowId, imageUrl, sourceUrl);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "";
+      setBackgroundError(detail.includes("image_source_unavailable")
+        ? "Ảnh gốc không còn truy cập được từ website nguồn. Anh/chị chọn ảnh khác."
+        : detail.includes(":401:")
+          ? "Phiên đăng nhập đã hết hạn. Anh/chị tải lại trang rồi thử lại."
+          : "Cloudflare chưa xử lý được ảnh này. Anh/chị thử ảnh khác hoặc thử lại sau.");
     } finally {
       setBackgroundJobs((current) => ({ ...current, [key]: false }));
     }
@@ -383,7 +388,7 @@ export default function BulkImport() {
                                         disabled={processing}
                                         onClick={() => processed
                                           ? restoreImageBackground(row.rowId, candidate.url)
-                                          : void handleRemoveBackground(row.rowId, candidate.url)}
+                                          : void handleRemoveBackground(row.rowId, candidate.url, candidate.source_url)}
                                       >
                                         {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
                                         {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}

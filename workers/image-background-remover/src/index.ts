@@ -57,11 +57,15 @@ async function isSeller(request: Request, env: Env): Promise<boolean> {
   return rows.length > 0;
 }
 
-async function fetchPublicImage(initial: URL): Promise<Response | null> {
+async function fetchPublicImage(initial: URL, referer: URL | null): Promise<Response | null> {
   let current = initial;
   for (let redirect = 0; redirect <= 4; redirect++) {
     const response = await fetch(current, {
-      headers: { "user-agent": "Mozilla/5.0 (compatible; ThePickleHubImageBot/1.0)" },
+      headers: {
+        Accept: "image/avif,image/webp,image/png,image/jpeg,*/*;q=0.8",
+        "user-agent": "Mozilla/5.0 (compatible; ThePickleHubImageBot/1.0)",
+        ...(referer ? { Referer: referer.toString() } : {}),
+      },
       redirect: "manual",
     });
     if (response.status < 300 || response.status >= 400) return response;
@@ -83,15 +87,23 @@ export default {
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: cors });
     if (!(await isSeller(request, env))) return new Response("Unauthorized", { status: 401, headers: cors });
 
-    const payload = await request.json().catch(() => null) as { image_url?: unknown } | null;
+    const payload = await request.json().catch(() => null) as {
+      image_url?: unknown;
+      source_url?: unknown;
+    } | null;
     const source = safeImageUrl(payload?.image_url);
+    const referer = safeImageUrl(payload?.source_url);
     if (!source) return new Response("Invalid image URL", { status: 400, headers: cors });
-    const imageResponse = await fetchPublicImage(source);
-    if (!imageResponse) return new Response("Unsupported image", { status: 422, headers: cors });
+    const imageResponse = await fetchPublicImage(source, referer);
+    if (!imageResponse) {
+      console.warn("image source redirect rejected", source.hostname);
+      return new Response("image_source_unavailable", { status: 422, headers: cors });
+    }
     const contentType = imageResponse.headers.get("content-type") ?? "";
     const declaredSize = Number(imageResponse.headers.get("content-length") ?? 0);
     if (!imageResponse.ok || !contentType.match(/^image\/(jpeg|png|webp)/) || declaredSize > MAX_IMAGE_BYTES) {
-      return new Response("Unsupported image", { status: 422, headers: cors });
+      console.warn("image source rejected", source.hostname, imageResponse.status, contentType);
+      return new Response("image_source_unavailable", { status: 422, headers: cors });
     }
     const bytes = await imageResponse.arrayBuffer();
     if (bytes.byteLength === 0 || bytes.byteLength > MAX_IMAGE_BYTES) {
@@ -110,7 +122,7 @@ export default {
       });
     } catch (error) {
       console.error("background removal failed", error);
-      return new Response("Background removal failed", { status: 502, headers: cors });
+      return new Response("background_model_failed", { status: 502, headers: cors });
     }
   },
 };

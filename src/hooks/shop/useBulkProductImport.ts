@@ -307,7 +307,7 @@ export function useBulkProductImport() {
     setRows([]);
   }, [rows]);
 
-  const removeImageBackground = useCallback(async (rowId: string, imageUrl: string) => {
+  const removeImageBackground = useCallback(async (rowId: string, imageUrl: string, sourceUrl: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) throw new Error("unauthorized");
     const response = await fetch(
@@ -318,10 +318,13 @@ export function useBulkProductImport() {
           Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ image_url: imageUrl }),
+        body: JSON.stringify({ image_url: imageUrl, source_url: sourceUrl }),
       },
     );
-    if (!response.ok) throw new Error(`background_removal_failed:${response.status}`);
+    if (!response.ok) {
+      const reason = (await response.text()).slice(0, 100);
+      throw new Error(`background_removal_failed:${response.status}:${reason}`);
+    }
     const blob = await response.blob();
     if (blob.type !== "image/png" || blob.size === 0 || blob.size > 8 * 1024 * 1024) {
       throw new Error("background_removal_invalid");
