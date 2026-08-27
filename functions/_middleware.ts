@@ -1018,7 +1018,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v68 (2026-08-25) — the VI live hub links to /live/:id instead of
   // /vi/live/:id, so its cached body would otherwise keep pointing at URLs
   // that now 301.
-  const cacheKey = `pr:v68:${url.pathname}`;
+  // v69 (2026-08-27, CTR-01) — new <title> + <meta description> on /rankings,
+  // /vi/rankings, /rankings/ppa-tour and the Shenzhen Open post. The VI
+  // rankings title and the VI PPA description were over the byte clamp and
+  // cached with a trailing ellipsis; without a bump that truncated HTML keeps
+  // serving for the full TTL.
+  const cacheKey = `pr:v69:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

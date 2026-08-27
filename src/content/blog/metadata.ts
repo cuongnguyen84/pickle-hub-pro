@@ -246,10 +246,18 @@ export const blogMetadata: BlogPostMetadata[] = [
       "Skechers Shenzhen Open 2026 Results: Huynh Wins Vietnam's First Women's Doubles Gold, Truong Takes Two Silvers",
     titleVi:
       "Kết quả Skechers Shenzhen Open 2026: Sophia Nhi Huỳnh vô địch đôi nữ, Trương Vinh Hiển 2 HCB",
-    metaTitleEn: "Shenzhen Open 2026 Results: Every Final Score",
+    // CTR-01 (2026-08-27) — EN meta only; body and updatedDate untouched
+    // because nothing in the article changed. GSC 28d for this URL: 903
+    // impressions, 22 clicks, and the single biggest query is "ppa shenzhen
+    // 2026" (91 impressions, position 8.6, zero clicks) with "ppa shenzhen",
+    // "shenzhen ppa" and "ppa tour shenzhen" behind it. The old title never
+    // said PPA, so the snippet did not visibly answer the query it ranked
+    // for. The VI twin (shenzhen-open-2026-lich-thi-dau-cach-xem) converts at
+    // 19.7% against this page's 2.44% from a comparable position.
+    metaTitleEn: "PPA Shenzhen Open 2026 Results: All Scores",
     metaTitleVi: "Kết quả Shenzhen Open 2026: HCV đôi nữ cho Huỳnh",
     metaDescriptionEn:
-      "Shenzhen Open 2026 results: Sophia Nhi Huynh wins Women's Doubles gold, a Vietnamese first on PPA Tour Asia. Hien Truong takes two silvers. All final scores.",
+      "PPA Shenzhen Open 2026 results, Aug 20-23: Sophia Nhi Huynh wins Vietnam's first Women's Doubles gold, Hien Truong two silvers. Every final score.",
     metaDescriptionVi:
       "Kết quả Shenzhen Open 2026: Sophia Nhi Huỳnh vô địch đôi nữ, Trương Vinh Hiển 2 HCB. Tỷ số đủ 5 trận chung kết.",
   },

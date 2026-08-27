@@ -93,12 +93,19 @@ const Rankings = () => {
   const globalScopes = DUPR_SCOPES.filter((s) => s.group === "global");
   const continentScopes = DUPR_SCOPES.filter((s) => s.group === "continent");
 
+  // CTR-01 (2026-08-27) — the title/description below must stay byte-identical
+  // to the SSR strings in functions/_lib/render/rankings.ts. DynamicMeta
+  // appends " | ThePickleHub" itself, so the brand is omitted here. Before this
+  // commit the bot saw the SSR title and a hydrated browser overwrote it with
+  // "DUPR Rankings | ThePickleHub" — two different titles for one URL.
   return (
     <TheLineLayout
-      title={language === "vi" ? "Bảng xếp hạng DUPR" : "DUPR Rankings"}
+      title={language === "vi"
+        ? "Bảng xếp hạng DUPR Việt Nam"
+        : "DUPR Pickleball Rankings: Vietnam & World"}
       description={language === "vi"
-        ? "Top vận động viên pickleball toàn cầu theo DUPR — Open, Junior, và 5 châu lục. Cập nhật từ DUPR."
-        : "Top pickleball players worldwide by DUPR — Open, Junior, and 5 continents. Sourced from DUPR."}
+        ? "Bảng xếp hạng DUPR pickleball: bảng Việt Nam cập nhật trực tiếp từ DUPR, kèm Open, Junior và 5 châu lục. Xem cách để có tên."
+        : "DUPR pickleball rankings: the Vietnam board updated live from DUPR, plus Open, Junior and five continental boards. See how to get listed."}
       active="rankings"
     >
       <div className="tl-shell">

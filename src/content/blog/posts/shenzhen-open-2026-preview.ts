@@ -27,9 +27,13 @@ const post: BlogPost = {
     en: {
       title:
         "Skechers Shenzhen Open 2026 Results: Huynh Wins Vietnam's First Women's Doubles Gold, Truong Takes Two Silvers",
-      metaTitle: "Shenzhen Open 2026 Results: Every Final Score",
+      // CTR-01 (2026-08-27) — keep in sync with the metaTitleEn /
+      // metaDescriptionEn pair in src/content/blog/metadata.ts, which is what
+      // the SSR bot path actually serves. Rationale for the wording lives on
+      // that entry.
+      metaTitle: "PPA Shenzhen Open 2026 Results: All Scores",
       metaDescription:
-        "Shenzhen Open 2026 results: Sophia Nhi Huynh wins Women's Doubles gold, a Vietnamese first on PPA Tour Asia. Hien Truong takes two silvers. All final scores.",
+        "PPA Shenzhen Open 2026 results, Aug 20-23: Sophia Nhi Huynh wins Vietnam's first Women's Doubles gold, Hien Truong two silvers. Every final score.",
       sections: [
         {
           heading: "Skechers Shenzhen Open 2026 at a glance",
