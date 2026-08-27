@@ -339,7 +339,7 @@ export default function BulkImport() {
                                   const jobKey = `${row.rowId}:${candidate.url}`;
                                   const processing = !!backgroundJobs[jobKey];
                                   return (
-                                    <div key={candidate.url} className="overflow-hidden rounded-lg border bg-card">
+                                    <div key={candidate.url} className="relative overflow-hidden rounded-lg border bg-card">
                                       <button
                                         type="button"
                                         aria-pressed={selected}
@@ -377,9 +377,9 @@ export default function BulkImport() {
                                       </button>
                                       <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant="secondary"
                                         size="sm"
-                                        className="w-full rounded-none text-xs"
+                                        className="absolute left-2 top-2 z-20 h-7 bg-background/90 px-2 text-xs shadow-md backdrop-blur-sm hover:bg-background"
                                         disabled={processing}
                                         onClick={() => processed
                                           ? restoreImageBackground(row.rowId, candidate.url)
