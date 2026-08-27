@@ -187,6 +187,24 @@ export function homepageThumbnailUrl(
       return url.toString();
     }
 
+    // The current Pickleball Union and MLP feeds publish their card artwork
+    // from WordPress' generated upload variants. Keep this deliberately
+    // limited to known editorial hosts + the uploads path: accepting every
+    // remote WordPress URL here would undo the homepage byte-budget guard.
+    const trustedWordPressNewsHosts = new Set([
+      "pickleballunion.com",
+      "www.pickleballunion.com",
+      "majorleaguepickleball.co",
+      "www.majorleaguepickleball.co",
+    ]);
+    if (
+      trustedWordPressNewsHosts.has(host) &&
+      url.pathname.startsWith("/wp-content/uploads/") &&
+      /\.(?:avif|jpe?g|png|webp)$/i.test(url.pathname)
+    ) {
+      return url.toString();
+    }
+
     // Same-origin absolute URLs are as controlled as root-relative assets.
     if (host === "thepicklehub.net" || host === "www.thepicklehub.net") {
       return `${url.pathname}${url.search}`;

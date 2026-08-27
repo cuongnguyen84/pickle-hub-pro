@@ -84,6 +84,8 @@ export const BLOG_IMAGE_DIMS: Record<string, readonly [number, number]> = {
   "/images/blog/pickleball-world-cup-2026-da-nang-how-to-watch-hero.webp": [1731, 909],
   "/images/blog/pickleball-world-cup-2026-da-nang-schedule-hero-768.webp": [768, 403],
   "/images/blog/pickleball-world-cup-2026-da-nang-schedule-hero.webp": [1600, 840],
+  "/images/blog/pickleball-world-cup-2026-mens-pro-doubles-field-hero-768.webp": [768, 403],
+  "/images/blog/pickleball-world-cup-2026-mens-pro-doubles-field-hero.webp": [1600, 840],
   "/images/blog/play-where-pros-play-768.webp": [768, 429],
   "/images/blog/play-where-pros-play.webp": [1200, 670],
   "/images/blog/ppa-beijing-open-2026-recap-hero-768.webp": [768, 576],

@@ -200,6 +200,68 @@ export const isPagesApiPath = (pathname: string) =>
 export const isWellKnownPath = (pathname: string) =>
   pathname === "/.well-known" || pathname.startsWith("/.well-known/");
 
+// ─── Static asset passthrough ──────────────────────────────────────────────
+// Anything that exists as a real file in public/ (or is emitted into the build
+// output) must reach `next()` untouched. A path that misses every rule below
+// falls all the way through to the SPA soft-404 guard and is served as an HTML
+// 404 — with a 200-looking file sitting in the deploy the whole time.
+//
+// That is not hypothetical: `/manifest.webmanifest` 404'd in production because
+// STATIC_EXACT still listed the pre-vite-plugin-pwa filename `/manifest.json`,
+// and `webmanifest` was missing from the extension list. Chrome could not read
+// the PWA manifest, so "Add to Home Screen" / install was unavailable sitewide
+// — silent, because nothing on the page fails visibly when a manifest 404s.
+//
+// Note the manifest is NOT in public/ — vite-plugin-pwa emits it into the build
+// output, which is exactly why it was easy to miss. So the drift guard in
+// `functions/__tests__/static-asset-passthrough.test.ts` covers both: it walks
+// public/ AND asserts the build-emitted filenames by name. Add a file type to
+// either and the test tells you here, not production months later.
+const STATIC_PREFIXES = [
+  "/og-images/",
+  "/assets/",
+  "/images/",
+  "/fonts/",
+  "/icons/",
+  "/static/",
+];
+
+const STATIC_EXT_RE =
+  /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|md|json|webmanifest|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
+
+// `/manifest.json` is the pre-rename filename. `public/_routes.json` excludes
+// it from Functions entirely, so this entry is belt-and-braces — it only bites
+// if that exclude list is ever trimmed.
+const STATIC_EXACT = new Set([
+  "/favicon.ico",
+  "/robots.txt",
+  "/manifest.json",
+  "/manifest.webmanifest",
+  "/_worker.js",
+  "/_redirects",
+  "/_headers",
+]);
+
+// Site-ownership proof files that platforms fetch at the domain root. Zalo
+// (the messenger ~everyone in Vietnam uses) serves its verifier as .html, so
+// it looks exactly like an SPA route to every rule above. Matching the shape
+// rather than one token means a re-issued verifier keeps working.
+//
+// The extension is OPTIONAL, and that is the load-bearing part. Cloudflare
+// Pages applies `html_handling` to everything its asset handler serves, so a
+// request for `/zalo_verifier<token>.html` comes back as a 308 to the
+// extensionless `/zalo_verifier<token>`. Match only the `.html` form and the
+// redirect lands on a path this list does not recognise, which drops into the
+// SPA soft-404 guard and 404s — the redirect target has to be servable too.
+// (Both forms verified on preview builds a37fe065 / 37bf339e before this.)
+const ROOT_VERIFICATION_RE = /^\/(?:zalo_verifier|google[0-9a-f]{16}|BingSiteAuth|pinterest-)[A-Za-z0-9_-]*(?:\.(?:html|xml))?$/;
+
+export const isStaticAssetPath = (pathname: string): boolean =>
+  STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+  STATIC_EXT_RE.test(pathname) ||
+  STATIC_EXACT.has(pathname) ||
+  ROOT_VERIFICATION_RE.test(pathname);
+
 export const isHtmlSpaFallback = (response: Response) =>
   response.status === 200 &&
   (response.headers.get("content-type") || "").includes("text/html");
@@ -243,7 +305,11 @@ const GONE_EXACT = new Set<string>([
   "/nguoi-choi/lecam-test", "/nguoi-choi/lyhoangnam-test",
   "/nguoi-choi/nguyenvana-test", "/nguoi-choi/phamquang-test",
   "/nguoi-choi/tranthib-test", "/nguoi-choi/vothanh-test",
-  "/clb/clb-test", "/clb/test-3", "/clb/test-5",
+  // 2026-08-27 site audit: "/clb/test" belongs to the same fixture family as
+  // the three below (name "test", description "test", archived 2026-07-28) and
+  // was the only one still answering 200 to a crawler. Removing it from
+  // sitemap-events.xml withdraws the recommendation; this removes the URL.
+  "/clb/clb-test", "/clb/test", "/clb/test-3", "/clb/test-5",
   "/tran-dau/nguyenvana-test-vs-lyhoangnam-test-20260504-37e3d1",
   "/tran-dau/nguyenvana-test-vs-tranthib-test-20260504-ad583f",
   "/tran-dau/lyhoangnam-test-vs-phamquang-test-20260507-4371a9",
@@ -702,15 +768,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       : discoveryResponse;
   }
 
-  const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];
-  const STATIC_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|md|json|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
-  const STATIC_EXACT = new Set(["/favicon.ico", "/robots.txt", "/manifest.json", "/_worker.js", "/_redirects", "/_headers"]);
-  if (
-    STATIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
-    STATIC_EXT_RE.test(pathname) ||
-    STATIC_EXACT.has(pathname)
-  ) {
+  if (isStaticAssetPath(pathname)) {
     const assetResponse = await next();
+    // Root verification files really ARE text/html — Zalo, Google and Bing all
+    // serve their site-ownership proof as an HTML document. The guard below
+    // exists for hashed assets that came back as the SPA shell; applying it
+    // here would turn a correct 200 into a 404 and break verification, which
+    // is the whole reason the file exists.
+    if (ROOT_VERIFICATION_RE.test(pathname)) return assetResponse;
     // A hashed asset that no longer exists — a stale index.html (cached up to
     // 5 min) still pointing at a chunk the latest deploy replaced, a scanner,
     // or a half-propagated edge — otherwise falls through to the SPA rule
