@@ -16,6 +16,7 @@ import { getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+const BRAVE_SEARCH_API_KEY = Deno.env.get("BRAVE_SEARCH_API_KEY") ?? "";
 const GEMINI_MODEL = "gemini-flash-lite-latest";
 const PRODUCT_SEARCH_MODEL = "gemini-2.5-flash";
 
@@ -137,6 +138,81 @@ function productNameMatches(expected: string, actual: string): boolean {
   const matched = expectedTokens.filter((token) => actualTokens.has(token)).length;
   const required = expectedTokens.length <= 2 ? expectedTokens.length : Math.max(2, Math.ceil(expectedTokens.length * 0.6));
   return matched >= required;
+}
+
+function strictProductMatchScore(expected: string, actual: string): number {
+  const expectedTokens = [...new Set(matchTokens(expected))];
+  const actualTokens = new Set(matchTokens(actual));
+  if (expectedTokens.length === 0 || !actualTokens.has(expectedTokens[0])) return 0;
+  const matched = expectedTokens.filter((token) => actualTokens.has(token)).length;
+  const required = expectedTokens.length <= 3
+    ? expectedTokens.length
+    : Math.ceil(expectedTokens.length * 0.75);
+  return matched >= required ? matched / expectedTokens.length : 0;
+}
+
+interface BraveImageResult {
+  title?: unknown;
+  url?: unknown;
+  source?: unknown;
+  confidence?: unknown;
+  properties?: { url?: unknown; width?: unknown; height?: unknown };
+}
+
+async function searchBraveProductImages(productName: string): Promise<ProductImageCandidate[]> {
+  if (!BRAVE_SEARCH_API_KEY) return [];
+  try {
+    const endpoint = new URL("https://api.search.brave.com/res/v1/images/search");
+    endpoint.searchParams.set("q", `"${productName}" pickleball product`);
+    endpoint.searchParams.set("country", "ALL");
+    endpoint.searchParams.set("search_lang", "en");
+    endpoint.searchParams.set("count", "30");
+    endpoint.searchParams.set("safesearch", "strict");
+    endpoint.searchParams.set("spellcheck", "false");
+    const response = await fetch(endpoint, {
+      headers: {
+        Accept: "application/json",
+        "X-Subscription-Token": BRAVE_SEARCH_API_KEY,
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+      console.warn("[product-import-enrich] Brave image search HTTP", response.status);
+      return [];
+    }
+    const data = await response.json() as { results?: BraveImageResult[] };
+    const ranked = (Array.isArray(data.results) ? data.results : []).flatMap((result) => {
+      const image = safePublicHttpsUrl(result.properties?.url);
+      const source = safePublicHttpsUrl(result.url);
+      if (!image || !source) return [];
+      const title = typeof result.title === "string" ? result.title : "";
+      const sourceName = typeof result.source === "string" ? result.source : "";
+      const score = strictProductMatchScore(
+        productName,
+        `${title} ${sourceName} ${source.hostname} ${source.pathname} ${image.pathname}`,
+      );
+      if (score === 0) return [];
+      const width = typeof result.properties?.width === "number" ? result.properties.width : 0;
+      const height = typeof result.properties?.height === "number" ? result.properties.height : 0;
+      if ((width && width < 400) || (height && height < 400)) return [];
+      const confidenceBoost = result.confidence === "high" ? 0.2 : result.confidence === "medium" ? 0.1 : 0;
+      const resolutionBoost = width >= 800 && height >= 800 ? 0.1 : 0;
+      return [{
+        candidate: { url: image.toString(), source_url: source.toString(), alt: title || productName },
+        score: score + confidenceBoost + resolutionBoost,
+      }];
+    }).sort((a, b) => b.score - a.score);
+
+    const seen = new Set<string>();
+    return ranked.flatMap(({ candidate }) => {
+      if (seen.has(candidate.url)) return [];
+      seen.add(candidate.url);
+      return [candidate];
+    }).slice(0, 4);
+  } catch (error) {
+    console.warn("[product-import-enrich] Brave image search skipped", error);
+    return [];
+  }
 }
 
 function productJsonLd(html: string): { name: string; images: string[] } | null {
@@ -450,12 +526,20 @@ Deno.serve(async (req: Request) => {
     const searchName = canonicalName.toLowerCase() === productName.toLowerCase()
       ? canonicalName
       : `${canonicalName} (imported name: ${productName})`;
-    const searchedUrls = await searchProductPageUrls(searchName);
-    const aiSourceUrls = Array.isArray(parsed.source_urls)
-      ? parsed.source_urls.filter((url): url is string => typeof url === "string")
-      : [];
-    const sourceUrls = [...new Set([...searchedUrls, ...aiSourceUrls])].slice(0, 8);
-    const imageCandidates = await findProductImages(sourceUrls, canonicalName);
+    let imageCandidates = await searchBraveProductImages(canonicalName);
+    if (imageCandidates.length < 2) {
+      const searchedUrls = await searchProductPageUrls(searchName);
+      const aiSourceUrls = Array.isArray(parsed.source_urls)
+        ? parsed.source_urls.filter((url): url is string => typeof url === "string")
+        : [];
+      const sourceUrls = [...new Set([...searchedUrls, ...aiSourceUrls])].slice(0, 8);
+      const fallbackCandidates = await findProductImages(sourceUrls, canonicalName);
+      const seen = new Set(imageCandidates.map((candidate) => candidate.url));
+      imageCandidates = [
+        ...imageCandidates,
+        ...fallbackCandidates.filter((candidate) => !seen.has(candidate.url)),
+      ].slice(0, 4);
+    }
 
     return jsonResponse({
       ...parsed,
