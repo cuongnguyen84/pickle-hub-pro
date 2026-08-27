@@ -32,10 +32,18 @@ const SQL = readFileSync(
   readFileSync(
     resolve(__dirname, "../../../supabase/migrations/20260814140000_shop_application_internal_note_privacy.sql"),
     "utf8",
+  ) +
+  // products table lives in its own migration (P2a), not in phase 1.
+  readFileSync(
+    resolve(__dirname, "../../../supabase/migrations/20260812091000_shop_p2b_moderation_backend.sql"),
+    "utf8",
   );
 
+/** Tables created in the phase-1 migration (products is added by P2a). */
+const PHASE1_TABLES = SHOP_TABLES.filter((t) => t !== "products") as readonly (typeof SHOP_TABLES[number])[];
+
 describe("shop schema parity with migration 20260811090000", () => {
-  it.each(SHOP_TABLES)("migration creates table %s", (table) => {
+  it.each(PHASE1_TABLES)("migration creates table %s", (table) => {
     expect(SQL).toContain(`CREATE TABLE IF NOT EXISTS public.${table}`);
   });
 
@@ -48,13 +56,13 @@ describe("shop schema parity with migration 20260811090000", () => {
   });
 
   it("every created table enables RLS", () => {
-    for (const table of SHOP_TABLES) {
+    for (const table of PHASE1_TABLES) {
       expect(SQL).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
     }
   });
 
   it("every created table has a GRANT — a policy without a grant is a 42501", () => {
-    for (const table of SHOP_TABLES) {
+    for (const table of PHASE1_TABLES) {
       expect(SQL).toMatch(new RegExp(`GRANT[^;]*ON public\\.${table}\\s+TO`, "s"));
     }
   });

@@ -1,71 +1,283 @@
 [
   {
+    "path": "*",
+    "element": "<NotFound />"
+  },
+  {
     "path": "/",
     "element": "<Index />"
   },
   {
-    "path": "/shop",
-    "element": "<ShopGate><ShopHome /></ShopGate>"
+    "path": "/about",
+    "element": "<About />"
   },
   {
-    "path": "/vi/shop",
-    "element": "<ViLanguageWrapper><ShopGate><ShopHome /></ShopGate></ViLanguageWrapper>"
+    "path": "/account",
+    "element": "<Account />"
   },
   {
-    "path": "/shop/search",
-    "element": "<ShopGate><ShopSearch /></ShopGate>"
+    "path": "/account/my-tournaments",
+    "element": "<RequireAuth><MyTournaments /></RequireAuth>"
   },
   {
-    "path": "/vi/shop/search",
-    "element": "<ViLanguageWrapper><ShopGate><ShopSearch /></ShopGate></ViLanguageWrapper>"
+    "path": "/admin",
+    "element": "<AdminOverview />"
   },
   {
-    "path": "/shop/category/:slug",
-    "element": "<ShopGate><ShopCategory /></ShopGate>"
+    "path": "/admin/analytics",
+    "element": "<AdminAnalytics />"
   },
   {
-    "path": "/shop/product/:slug",
-    "element": "<ShopGate><ProductDetail /></ShopGate>"
+    "path": "/admin/api-keys",
+    "element": "<AdminApiKeys />"
   },
   {
-    "path": "/vi/shop/product/:slug",
-    "element": "<ViLanguageWrapper><ShopGate><ProductDetail /></ShopGate></ViLanguageWrapper>"
+    "path": "/admin/audit-log",
+    "element": "<AdminAuditLog />"
   },
   {
-    "path": "/shop/store/:slug",
-    "element": "<ShopGate><ShopStore /></ShopGate>"
+    "path": "/admin/disputes",
+    "element": "<AdminDisputes />"
   },
   {
-    "path": "/vi/shop/store/:slug",
-    "element": "<ViLanguageWrapper><ShopGate><ShopStore /></ShopGate></ViLanguageWrapper>"
+    "path": "/admin/dupr",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminDuprDashboard /></RequireAuth>"
   },
   {
-    "path": "/vi/shop/category/:slug",
-    "element": "<ViLanguageWrapper><ShopGate><ShopCategory /></ShopGate></ViLanguageWrapper>"
+    "path": "/admin/embeds",
+    "element": "<AdminEmbeds />"
   },
   {
-    "path": "/shop/cart",
-    "element": "<ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate>"
+    "path": "/admin/errors",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminErrors /></RequireAuth>"
   },
   {
-    "path": "/vi/shop/cart",
-    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate></ViLanguageWrapper>"
+    "path": "/admin/forum",
+    "element": "<AdminForum />"
   },
   {
-    "path": "/shop/checkout/:shopSlug",
-    "element": "<ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate>"
+    "path": "/admin/jobs",
+    "element": "<AdminJobs />"
   },
   {
-    "path": "/vi/shop/checkout/:shopSlug",
-    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate></ViLanguageWrapper>"
+    "path": "/admin/moderation",
+    "element": "<AdminModeration />"
   },
   {
-    "path": "/shop/order/:code",
-    "element": "<RequireAuth><ShopOrderDetail /></RequireAuth>"
+    "path": "/admin/news",
+    "element": "<AdminNews />"
   },
   {
-    "path": "/vi/shop/order/:code",
-    "element": "<ViLanguageWrapper><RequireAuth><ShopOrderDetail /></RequireAuth></ViLanguageWrapper>"
+    "path": "/admin/organizations",
+    "element": "<AdminOrganizations />"
+  },
+  {
+    "path": "/admin/pro-tour",
+    "element": "<ProTourAdmin />"
+  },
+  {
+    "path": "/admin/push",
+    "element": "<AdminPushNotification />"
+  },
+  {
+    "path": "/admin/reports",
+    "element": "<AdminReports />"
+  },
+  {
+    "path": "/admin/reviews",
+    "element": "<AdminReviews />"
+  },
+  {
+    "path": "/admin/shop/applications",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/applications/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplicationReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/contacts",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopContacts /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProducts /></RequireAuth>"
+  },
+  {
+    "path": "/admin/shop/products/:id",
+    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProductReview /></RequireAuth>"
+  },
+  {
+    "path": "/admin/tournaments",
+    "element": "<AdminTournaments />"
+  },
+  {
+    "path": "/admin/users",
+    "element": "<AdminUsers />"
+  },
+  {
+    "path": "/admin/vi-blog",
+    "element": "<AdminViBlog />"
+  },
+  {
+    "path": "/admin/vi-blog/:id/edit",
+    "element": "<AdminViBlogEditor />"
+  },
+  {
+    "path": "/admin/vi-blog/new",
+    "element": "<AdminViBlogEditor />"
+  },
+  {
+    "path": "/admin/viewers",
+    "element": "<AdminLivestreamViewers />"
+  },
+  {
+    "path": "/advertise",
+    "element": "<Advertise />"
+  },
+  {
+    "path": "/affiliate-disclosure",
+    "element": "<AffiliateDisclosurePage />"
+  },
+  {
+    "path": "/auth/callback",
+    "element": "<AuthCallback />"
+  },
+  {
+    "path": "/auth/reset-password",
+    "element": "<ResetPassword />"
+  },
+  {
+    "path": "/blog",
+    "element": "<Blog />"
+  },
+  {
+    "path": "/blog/:slug",
+    "element": "<BlogPost />"
+  },
+  {
+    "path": "/clb/:slug",
+    "element": "<ClubLanding />"
+  },
+  {
+    "path": "/clb/:slug/quan-ly",
+    "element": "<ClubManage />"
+  },
+  {
+    "path": "/clb/:slug/quan-ly/cai-dat",
+    "element": "<EditClub />"
+  },
+  {
+    "path": "/clb/:slug/quan-ly/social/:event_slug/sua",
+    "element": "<EditSocialEvent />"
+  },
+  {
+    "path": "/clb/:slug/quan-ly/su-kien/:event_slug/sua",
+    "element": "<NavigateClbEditEvent />"
+  },
+  {
+    "path": "/clb/:slug/social/moi",
+    "element": "<CreateSocialEvent />"
+  },
+  {
+    "path": "/clb/:slug/su-kien/moi",
+    "element": "<NavigateClbCreateEvent />"
+  },
+  {
+    "path": "/clubs",
+    "element": "<ClubsList />"
+  },
+  {
+    "path": "/clubs/new",
+    "element": "<CreateClub />"
+  },
+  {
+    "path": "/contact",
+    "element": "<Contact />"
+  },
+  {
+    "path": "/creator",
+    "element": "<CreatorOverview />"
+  },
+  {
+    "path": "/creator/analytics",
+    "element": "<CreatorAnalytics />"
+  },
+  {
+    "path": "/creator/livestreams",
+    "element": "<CreatorLivestreams />"
+  },
+  {
+    "path": "/creator/livestreams/:id/edit",
+    "element": "<CreatorLivestreamForm />"
+  },
+  {
+    "path": "/creator/livestreams/new",
+    "element": "<CreatorLivestreamForm />"
+  },
+  {
+    "path": "/creator/settings",
+    "element": "<CreatorSettings />"
+  },
+  {
+    "path": "/creator/tournaments",
+    "element": "<CreatorTournaments />"
+  },
+  {
+    "path": "/creator/videos",
+    "element": "<CreatorVideos />"
+  },
+  {
+    "path": "/creator/videos/:id/edit",
+    "element": "<CreatorVideoForm />"
+  },
+  {
+    "path": "/creator/videos/new",
+    "element": "<CreatorVideoForm />"
+  },
+  {
+    "path": "/dang-ky/:magic_token",
+    "element": "<PlayerRegistration />"
+  },
+  {
+    "path": "/dupr",
+    "element": "<RequireAuth><DuprConnect /></RequireAuth>"
+  },
+  {
+    "path": "/embed/live/:id",
+    "element": "<EmbedLive />"
+  },
+  {
+    "path": "/embed/video/:id",
+    "element": "<EmbedVideo />"
+  },
+  {
+    "path": "/feed",
+    "element": "<Feed />"
+  },
+  {
+    "path": "/forum",
+    "element": "<Forum />"
+  },
+  {
+    "path": "/forum/:categorySlug",
+    "element": "<ForumCategory />"
+  },
+  {
+    "path": "/forum/new",
+    "element": "<ForumPostCreate />"
+  },
+  {
+    "path": "/forum/post/:postId",
+    "element": "<ForumPostDetail />"
+  },
+  {
+    "path": "/join/:inviteCode",
+    "element": "<JoinTeam />"
+  },
+  {
+    "path": "/khoi-phuc-dang-ky",
+    "element": "<RecoveryRegistration />"
   },
   {
     "path": "/live",
@@ -84,60 +296,12 @@
     "element": "<LivestreamRedirect />"
   },
   {
-    "path": "/videos",
-    "element": "<Videos />"
-  },
-  {
-    "path": "/watch/:id",
-    "element": "<WatchVideo />"
-  },
-  {
-    "path": "/tournaments",
-    "element": "<Tournaments />"
-  },
-  {
-    "path": "/tournament/:slug",
-    "element": "<ConditionalAuth><TournamentDetail /></ConditionalAuth>"
-  },
-  {
-    "path": "/org/:slug",
-    "element": "<OrganizationDetail />"
-  },
-  {
     "path": "/login",
     "element": "<Login />"
   },
   {
-    "path": "/auth/callback",
-    "element": "<AuthCallback />"
-  },
-  {
-    "path": "/auth/reset-password",
-    "element": "<ResetPassword />"
-  },
-  {
-    "path": "/account",
-    "element": "<Account />"
-  },
-  {
-    "path": "/dupr",
-    "element": "<RequireAuth><DuprConnect /></RequireAuth>"
-  },
-  {
-    "path": "/admin/dupr",
-    "element": "<RequireAuth requiredRole=\"admin\"><AdminDuprDashboard /></RequireAuth>"
-  },
-  {
-    "path": "/admin/errors",
-    "element": "<RequireAuth requiredRole=\"admin\"><AdminErrors /></RequireAuth>"
-  },
-  {
     "path": "/match",
     "element": "<RequireAuth><MatchSubmitPage /></RequireAuth>"
-  },
-  {
-    "path": "/match/new",
-    "element": "<RequireAuth><MatchNewPage /></RequireAuth>"
   },
   {
     "path": "/match/confirm",
@@ -148,216 +312,12 @@
     "element": "<MatchInviteConfirm />"
   },
   {
-    "path": "/account/my-tournaments",
-    "element": "<RequireAuth><MyTournaments /></RequireAuth>"
+    "path": "/match/new",
+    "element": "<RequireAuth><MatchNewPage /></RequireAuth>"
   },
   {
-    "path": "/tran-dau/moi",
-    "element": "<RequireAuth><MatchCheckIn /></RequireAuth>"
-  },
-  {
-    "path": "/tran-dau/:slug",
-    "element": "<MatchPage />"
-  },
-  {
-    "path": "/onboarding",
-    "element": "<Onboarding />"
-  },
-  {
-    "path": "/nguoi-choi/:username",
-    "element": "<PlayerProfile />"
-  },
-  {
-    "path": "/social",
-    "element": "<SocialEventList />"
-  },
-  {
-    "path": "/vi/social",
-    "element": "<ViLanguageWrapper><SocialEventList /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/social/:slug",
-    "element": "<SocialEventDetail />"
-  },
-  {
-    "path": "/vi/social/:slug",
-    "element": "<ViLanguageWrapper><SocialEventDetail /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/social/:slug/danh-sach",
-    "element": "<SocialEventRoster />"
-  },
-  {
-    "path": "/vi/social/:slug/danh-sach",
-    "element": "<ViLanguageWrapper><SocialEventRoster /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/social/:slug/xep-cap",
-    "element": "<SocialEventMatchmaking />"
-  },
-  {
-    "path": "/vi/social/:slug/xep-cap",
-    "element": "<ViLanguageWrapper><SocialEventMatchmaking /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/social/:slug/live",
-    "element": "<SocialEventLive />"
-  },
-  {
-    "path": "/vi/social/:slug/live",
-    "element": "<SocialEventLive />"
-  },
-  {
-    "path": "/su-kien",
-    "element": "<Navigate to=\"/social\" replace />"
-  },
-  {
-    "path": "/vi/su-kien",
-    "element": "<Navigate to=\"/vi/social\" replace />"
-  },
-  {
-    "path": "/su-kien/:slug",
-    "element": "<NavigateSuKienDetail />"
-  },
-  {
-    "path": "/su-kien/:slug/danh-sach",
-    "element": "<NavigateSuKienDanhSach />"
-  },
-  {
-    "path": "/su-kien/:slug/xep-cap",
-    "element": "<NavigateSuKienXepCap />"
-  },
-  {
-    "path": "/su-kien/:slug/live",
-    "element": "<NavigateSuKienLive />"
-  },
-  {
-    "path": "/vi/su-kien/:slug/live",
-    "element": "<NavigateSuKienLiveVi />"
-  },
-  {
-    "path": "/clb/:slug",
-    "element": "<ClubLanding />"
-  },
-  {
-    "path": "/clb/:slug/quan-ly",
-    "element": "<ClubManage />"
-  },
-  {
-    "path": "/clb/:slug/social/moi",
-    "element": "<CreateSocialEvent />"
-  },
-  {
-    "path": "/clb/:slug/su-kien/moi",
-    "element": "<NavigateClbCreateEvent />"
-  },
-  {
-    "path": "/u/:slug",
-    "element": "<NavigateUSlug />"
-  },
-  {
-    "path": "/vi/u/:slug",
-    "element": "<NavigateUSlugVi />"
-  },
-  {
-    "path": "/clubs",
-    "element": "<ClubsList />"
-  },
-  {
-    "path": "/vi/clubs",
-    "element": "<ViLanguageWrapper><ClubsList /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/clubs/new",
-    "element": "<CreateClub />"
-  },
-  {
-    "path": "/san",
-    "element": "<VenuesList />"
-  },
-  {
-    "path": "/vi/san",
-    "element": "<ViLanguageWrapper><VenuesList /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/san/them",
-    "element": "<VenueSubmit />"
-  },
-  {
-    "path": "/vi/san/them",
-    "element": "<ViLanguageWrapper><VenueSubmit /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/san/khu-vuc/:city",
-    "element": "<VenuesCity />"
-  },
-  {
-    "path": "/vi/san/khu-vuc/:city",
-    "element": "<ViLanguageWrapper><VenuesCity /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/tim-ban-choi",
-    "element": "<FindPlayers />"
-  },
-  {
-    "path": "/vi/tim-ban-choi",
-    "element": "<ViLanguageWrapper><FindPlayers /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/tin-nhan",
-    "element": "<Messages />"
-  },
-  {
-    "path": "/vi/tin-nhan",
-    "element": "<ViLanguageWrapper><Messages /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/san/:slug",
-    "element": "<VenueDetail />"
-  },
-  {
-    "path": "/vi/san/:slug",
-    "element": "<ViLanguageWrapper><VenueDetail /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/clb/:slug/quan-ly/cai-dat",
-    "element": "<EditClub />"
-  },
-  {
-    "path": "/dang-ky/:magic_token",
-    "element": "<PlayerRegistration />"
-  },
-  {
-    "path": "/vi/dang-ky/:magic_token",
-    "element": "<ViLanguageWrapper><PlayerRegistration /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/clb/:slug/quan-ly/social/:event_slug/sua",
-    "element": "<EditSocialEvent />"
-  },
-  {
-    "path": "/clb/:slug/quan-ly/su-kien/:event_slug/sua",
-    "element": "<NavigateClbEditEvent />"
-  },
-  {
-    "path": "/khoi-phuc-dang-ky",
-    "element": "<RecoveryRegistration />"
-  },
-  {
-    "path": "/vi/khoi-phuc-dang-ky",
-    "element": "<ViLanguageWrapper><RecoveryRegistration /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/notifications",
-    "element": "<Notifications />"
-  },
-  {
-    "path": "/thong-bao",
-    "element": "<Notifications />"
-  },
-  {
-    "path": "/search",
-    "element": "<Search />"
+    "path": "/matches/:matchId/score",
+    "element": "<LegacyMatchScoringRedirect />"
   },
   {
     "path": "/news",
@@ -368,128 +328,28 @@
     "element": "<NewsArticle language=\"en\" />"
   },
   {
-    "path": "/rankings",
-    "element": "<Rankings />"
+    "path": "/nguoi-choi/:username",
+    "element": "<PlayerProfile />"
   },
   {
-    "path": "/vi/rankings",
-    "element": "<ViLanguageWrapper><Rankings /></ViLanguageWrapper>"
+    "path": "/notifications",
+    "element": "<Notifications />"
   },
   {
-    "path": "/feed",
-    "element": "<Feed />"
+    "path": "/onboarding",
+    "element": "<Onboarding />"
   },
   {
-    "path": "/vi/feed",
-    "element": "<ViLanguageWrapper><Feed /></ViLanguageWrapper>"
+    "path": "/org/:slug",
+    "element": "<OrganizationDetail />"
   },
   {
-    "path": "/blog",
-    "element": "<Blog />"
+    "path": "/privacy",
+    "element": "<Privacy />"
   },
   {
-    "path": "/blog/:slug",
-    "element": "<BlogPost />"
-  },
-  {
-    "path": "/forum",
-    "element": "<Forum />"
-  },
-  {
-    "path": "/forum/:categorySlug",
-    "element": "<ForumCategory />"
-  },
-  {
-    "path": "/forum/post/:postId",
-    "element": "<ForumPostDetail />"
-  },
-  {
-    "path": "/forum/new",
-    "element": "<ForumPostCreate />"
-  },
-  {
-    "path": "/share/live/:id",
-    "element": "<ShareRedirect type=\"live\" />"
-  },
-  {
-    "path": "/share/video/:id",
-    "element": "<ShareRedirect type=\"video\" />"
-  },
-  {
-    "path": "/tools",
-    "element": "<Tools />"
-  },
-  {
-    "path": "/tools/quick-tables",
-    "element": "<QuickTables />"
-  },
-  {
-    "path": "/tools/quick-tables/parent/:shareId",
-    "element": "<ParentTournamentPage />"
-  },
-  {
-    "path": "/tools/quick-tables/:shareId",
-    "element": "<ConditionalAuth><QuickTableView /></ConditionalAuth>"
-  },
-  {
-    "path": "/tools/quick-tables/:shareId/setup",
-    "element": "<QuickTableSetup />"
-  },
-  {
-    "path": "/tools/quick-tables/referee/:matchId",
-    "element": "<QuickTableRefereeScoring />"
-  },
-  {
-    "path": "/tools/team-match",
-    "element": "<TeamMatchList />"
-  },
-  {
-    "path": "/tools/team-match/new",
-    "element": "<TeamMatchSetup />"
-  },
-  {
-    "path": "/tools/team-match/match/:matchId/score",
-    "element": "<TeamMatchScoring />"
-  },
-  {
-    "path": "/tools/team-match/:id",
-    "element": "<ConditionalAuth><TeamMatchView /></ConditionalAuth>"
-  },
-  {
-    "path": "/tools/doubles-elimination",
-    "element": "<DoublesEliminationList />"
-  },
-  {
-    "path": "/tools/doubles-elimination/new",
-    "element": "<DoublesEliminationSetup />"
-  },
-  {
-    "path": "/tools/doubles-elimination/:shareId",
-    "element": "<ConditionalAuth><DoublesEliminationView /></ConditionalAuth>"
-  },
-  {
-    "path": "/tools/doubles-elimination/match/:matchId/score",
-    "element": "<DoublesEliminationScoring />"
-  },
-  {
-    "path": "/tools/flex-tournament",
-    "element": "<FlexTournamentList />"
-  },
-  {
-    "path": "/tools/flex-tournament/new",
-    "element": "<FlexTournamentSetup />"
-  },
-  {
-    "path": "/tools/flex-tournament/:shareId",
-    "element": "<ConditionalAuth><FlexTournamentView /></ConditionalAuth>"
-  },
-  {
-    "path": "/tools/dashboard",
-    "element": "<DashboardPicker />"
-  },
-  {
-    "path": "/tools/dashboard/:type/:id",
-    "element": "<TournamentDashboard />"
+    "path": "/proto/shop/*",
+    "element": "<ProtoShopApp />"
   },
   {
     "path": "/quick-tables",
@@ -504,152 +364,32 @@
     "element": "<QuickTableSetupRedirect />"
   },
   {
-    "path": "/matches/:matchId/score",
-    "element": "<LegacyMatchScoringRedirect />"
+    "path": "/rankings",
+    "element": "<Rankings />"
   },
   {
-    "path": "/join/:inviteCode",
-    "element": "<JoinTeam />"
+    "path": "/rankings/ppa-tour",
+    "element": "<PpaRankings />"
   },
   {
-    "path": "/embed/live/:id",
-    "element": "<EmbedLive />"
+    "path": "/san",
+    "element": "<VenuesList />"
   },
   {
-    "path": "/embed/video/:id",
-    "element": "<EmbedVideo />"
+    "path": "/san/:slug",
+    "element": "<VenueDetail />"
   },
   {
-    "path": "/admin",
-    "element": "<AdminOverview />"
+    "path": "/san/khu-vuc/:city",
+    "element": "<VenuesCity />"
   },
   {
-    "path": "/admin/organizations",
-    "element": "<AdminOrganizations />"
+    "path": "/san/them",
+    "element": "<VenueSubmit />"
   },
   {
-    "path": "/admin/users",
-    "element": "<AdminUsers />"
-  },
-  {
-    "path": "/admin/tournaments",
-    "element": "<AdminTournaments />"
-  },
-  {
-    "path": "/admin/api-keys",
-    "element": "<AdminApiKeys />"
-  },
-  {
-    "path": "/admin/moderation",
-    "element": "<AdminModeration />"
-  },
-  {
-    "path": "/admin/disputes",
-    "element": "<AdminDisputes />"
-  },
-  {
-    "path": "/admin/reports",
-    "element": "<AdminReports />"
-  },
-  {
-    "path": "/admin/news",
-    "element": "<AdminNews />"
-  },
-  {
-    "path": "/admin/reviews",
-    "element": "<AdminReviews />"
-  },
-  {
-    "path": "/admin/embeds",
-    "element": "<AdminEmbeds />"
-  },
-  {
-    "path": "/admin/viewers",
-    "element": "<AdminLivestreamViewers />"
-  },
-  {
-    "path": "/admin/push",
-    "element": "<AdminPushNotification />"
-  },
-  {
-    "path": "/admin/pro-tour",
-    "element": "<ProTourAdmin />"
-  },
-  {
-    "path": "/admin/forum",
-    "element": "<AdminForum />"
-  },
-  {
-    "path": "/admin/audit-log",
-    "element": "<AdminAuditLog />"
-  },
-  {
-    "path": "/admin/vi-blog",
-    "element": "<AdminViBlog />"
-  },
-  {
-    "path": "/admin/vi-blog/new",
-    "element": "<AdminViBlogEditor />"
-  },
-  {
-    "path": "/admin/vi-blog/:id/edit",
-    "element": "<AdminViBlogEditor />"
-  },
-  {
-    "path": "/admin/analytics",
-    "element": "<AdminAnalytics />"
-  },
-  {
-    "path": "/admin/jobs",
-    "element": "<AdminJobs />"
-  },
-  {
-    "path": "/creator",
-    "element": "<CreatorOverview />"
-  },
-  {
-    "path": "/creator/analytics",
-    "element": "<CreatorAnalytics />"
-  },
-  {
-    "path": "/creator/videos",
-    "element": "<CreatorVideos />"
-  },
-  {
-    "path": "/creator/videos/new",
-    "element": "<CreatorVideoForm />"
-  },
-  {
-    "path": "/creator/videos/:id/edit",
-    "element": "<CreatorVideoForm />"
-  },
-  {
-    "path": "/creator/livestreams",
-    "element": "<CreatorLivestreams />"
-  },
-  {
-    "path": "/creator/livestreams/new",
-    "element": "<CreatorLivestreamForm />"
-  },
-  {
-    "path": "/creator/livestreams/:id/edit",
-    "element": "<CreatorLivestreamForm />"
-  },
-  {
-    "path": "/creator/settings",
-    "element": "<CreatorSettings />"
-  },
-  {
-    "path": "/creator/tournaments",
-    "element": "<CreatorTournaments />"
-  },
-  {
-    "path": "/proto/shop/*",
-    "element": "<ProtoShopApp />"
-  },
-  {
-    "path": "/shop/sell",
-    "element": "<SellLanding />"
+    "path": "/search",
+    "element": "<Search />"
   },
   {
     "path": "/seller",
@@ -664,216 +404,244 @@
     "element": "<RequireAuth><SellerApplicationStatus /></RequireAuth>"
   },
   {
-    "path": "/seller/settings",
-    "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
+    "path": "/seller/orders",
+    "element": "<RequireAuth><SellerOrders /></RequireAuth>"
+  },
+  {
+    "path": "/seller/orders/:code",
+    "element": "<RequireAuth><SellerOrderDetail /></RequireAuth>"
   },
   {
     "path": "/seller/products",
     "element": "<RequireAuth><SellerProducts /></RequireAuth>"
   },
   {
-    "path": "/seller/products/new",
-    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
-  },
-  {
     "path": "/seller/products/:id/edit",
     "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
   },
   {
-    "path": "/admin/shop/applications",
-    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplications /></RequireAuth>"
+    "path": "/seller/products/import",
+    "element": "<RequireAuth><SellerBulkImport /></RequireAuth>"
   },
   {
-    "path": "/admin/shop/applications/:id",
-    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopApplicationReview /></RequireAuth>"
+    "path": "/seller/products/new",
+    "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
   },
   {
-    "path": "/admin/shop/products",
-    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProducts /></RequireAuth>"
+    "path": "/seller/settings",
+    "element": "<RequireAuth><SellerShopSettings /></RequireAuth>"
   },
   {
-    "path": "/admin/shop/products/:id",
-    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopProductReview /></RequireAuth>"
+    "path": "/share/live/:id",
+    "element": "<ShareRedirect type=\"live\" />"
   },
   {
-    "path": "/admin/shop/contacts",
-    "element": "<RequireAuth requiredRole=\"admin\"><AdminShopContacts /></RequireAuth>"
+    "path": "/share/video/:id",
+    "element": "<ShareRedirect type=\"video\" />"
   },
   {
-    "path": "/privacy",
-    "element": "<Privacy />"
+    "path": "/shop",
+    "element": "<ShopGate><ShopHome /></ShopGate>"
+  },
+  {
+    "path": "/shop/cart",
+    "element": "<ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate>"
+  },
+  {
+    "path": "/shop/category/:slug",
+    "element": "<ShopGate><ShopCategory /></ShopGate>"
+  },
+  {
+    "path": "/shop/checkout/:shopSlug",
+    "element": "<ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate>"
+  },
+  {
+    "path": "/shop/order/:code",
+    "element": "<RequireAuth><ShopOrderDetail /></RequireAuth>"
+  },
+  {
+    "path": "/shop/orders",
+    "element": "<RequireAuth><ShopOrders /></RequireAuth>"
+  },
+  {
+    "path": "/shop/product/:slug",
+    "element": "<ShopGate><ProductDetail /></ShopGate>"
+  },
+  {
+    "path": "/shop/search",
+    "element": "<ShopGate><ShopSearch /></ShopGate>"
+  },
+  {
+    "path": "/shop/sell",
+    "element": "<SellLanding />"
+  },
+  {
+    "path": "/shop/store/:slug",
+    "element": "<ShopGate><ShopStore /></ShopGate>"
+  },
+  {
+    "path": "/social",
+    "element": "<SocialEventList />"
+  },
+  {
+    "path": "/social/:slug",
+    "element": "<SocialEventDetail />"
+  },
+  {
+    "path": "/social/:slug/danh-sach",
+    "element": "<SocialEventRoster />"
+  },
+  {
+    "path": "/social/:slug/live",
+    "element": "<SocialEventLive />"
+  },
+  {
+    "path": "/social/:slug/xep-cap",
+    "element": "<SocialEventMatchmaking />"
+  },
+  {
+    "path": "/su-kien",
+    "element": "<Navigate to=\"/social\" replace />"
+  },
+  {
+    "path": "/su-kien/:slug",
+    "element": "<NavigateSuKienDetail />"
+  },
+  {
+    "path": "/su-kien/:slug/danh-sach",
+    "element": "<NavigateSuKienDanhSach />"
+  },
+  {
+    "path": "/su-kien/:slug/live",
+    "element": "<NavigateSuKienLive />"
+  },
+  {
+    "path": "/su-kien/:slug/xep-cap",
+    "element": "<NavigateSuKienXepCap />"
   },
   {
     "path": "/terms",
     "element": "<Terms />"
   },
   {
-    "path": "/advertise",
-    "element": "<Advertise />"
+    "path": "/thong-bao",
+    "element": "<Notifications />"
   },
   {
-    "path": "/affiliate-disclosure",
-    "element": "<AffiliateDisclosurePage />"
+    "path": "/tim-ban-choi",
+    "element": "<FindPlayers />"
+  },
+  {
+    "path": "/tin-nhan",
+    "element": "<Messages />"
+  },
+  {
+    "path": "/tools",
+    "element": "<Tools />"
+  },
+  {
+    "path": "/tools/dashboard",
+    "element": "<DashboardPicker />"
+  },
+  {
+    "path": "/tools/dashboard/:type/:id",
+    "element": "<TournamentDashboard />"
+  },
+  {
+    "path": "/tools/doubles-elimination",
+    "element": "<DoublesEliminationList />"
+  },
+  {
+    "path": "/tools/doubles-elimination/:shareId",
+    "element": "<ConditionalAuth><DoublesEliminationView /></ConditionalAuth>"
+  },
+  {
+    "path": "/tools/doubles-elimination/match/:matchId/score",
+    "element": "<DoublesEliminationScoring />"
+  },
+  {
+    "path": "/tools/doubles-elimination/new",
+    "element": "<DoublesEliminationSetup />"
+  },
+  {
+    "path": "/tools/flex-tournament",
+    "element": "<FlexTournamentList />"
+  },
+  {
+    "path": "/tools/flex-tournament/:shareId",
+    "element": "<ConditionalAuth><FlexTournamentView /></ConditionalAuth>"
+  },
+  {
+    "path": "/tools/flex-tournament/new",
+    "element": "<FlexTournamentSetup />"
+  },
+  {
+    "path": "/tools/quick-tables",
+    "element": "<QuickTables />"
+  },
+  {
+    "path": "/tools/quick-tables/:shareId",
+    "element": "<ConditionalAuth><QuickTableView /></ConditionalAuth>"
+  },
+  {
+    "path": "/tools/quick-tables/:shareId/setup",
+    "element": "<QuickTableSetup />"
+  },
+  {
+    "path": "/tools/quick-tables/parent/:shareId",
+    "element": "<ParentTournamentPage />"
+  },
+  {
+    "path": "/tools/quick-tables/referee/:matchId",
+    "element": "<QuickTableRefereeScoring />"
+  },
+  {
+    "path": "/tools/team-match",
+    "element": "<TeamMatchList />"
+  },
+  {
+    "path": "/tools/team-match/:id",
+    "element": "<ConditionalAuth><TeamMatchView /></ConditionalAuth>"
+  },
+  {
+    "path": "/tools/team-match/match/:matchId/score",
+    "element": "<TeamMatchScoring />"
+  },
+  {
+    "path": "/tools/team-match/new",
+    "element": "<TeamMatchSetup />"
+  },
+  {
+    "path": "/tournament/:slug",
+    "element": "<ConditionalAuth><TournamentDetail /></ConditionalAuth>"
+  },
+  {
+    "path": "/tournaments",
+    "element": "<Tournaments />"
+  },
+  {
+    "path": "/tran-dau/:slug",
+    "element": "<MatchPage />"
+  },
+  {
+    "path": "/tran-dau/moi",
+    "element": "<RequireAuth><MatchCheckIn /></RequireAuth>"
+  },
+  {
+    "path": "/u/:slug",
+    "element": "<NavigateUSlug />"
   },
   {
     "path": "/vi",
     "element": "<ViLanguageWrapper><Index /></ViLanguageWrapper>"
   },
   {
-    "path": "/vi/live",
-    "element": "<ViLanguageWrapper><Live /></ViLanguageWrapper>"
+    "path": "/vi/*",
+    "element": "<ViLanguageWrapper><NotFound /></ViLanguageWrapper>"
   },
   {
-    "path": "/vi/live/:id",
-    "element": "<ViLanguageWrapper><WatchLive /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/videos",
-    "element": "<ViLanguageWrapper><Videos /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/watch/:id",
-    "element": "<ViLanguageWrapper><WatchVideo /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tournaments",
-    "element": "<ViLanguageWrapper><Tournaments /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tournament/:slug",
-    "element": "<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/org/:slug",
-    "element": "<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/news",
-    "element": "<ViLanguageWrapper><News language=\"vi\" /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/news/:slug",
-    "element": "<ViLanguageWrapper><NewsArticle language=\"vi\" /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/blog",
-    "element": "<ViLanguageWrapper><Blog /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/blog/:slug",
-    "element": "<ViLanguageWrapper><ViBlogPost /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/forum",
-    "element": "<ViLanguageWrapper><Forum /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/forum/:categorySlug",
-    "element": "<ViLanguageWrapper><ForumCategory /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/forum/post/:postId",
-    "element": "<ViLanguageWrapper><ForumPostDetail /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/forum/new",
-    "element": "<ViLanguageWrapper><ForumPostCreate /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools",
-    "element": "<ViLanguageWrapper><Tools /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/quick-tables",
-    "element": "<ViLanguageWrapper><QuickTables /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/quick-tables/parent/:shareId",
-    "element": "<ViLanguageWrapper><ParentTournamentPage /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/quick-tables/:shareId",
-    "element": "<ViLanguageWrapper><ConditionalAuth><QuickTableView /></ConditionalAuth></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/quick-tables/:shareId/setup",
-    "element": "<ViLanguageWrapper><QuickTableSetup /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/team-match",
-    "element": "<ViLanguageWrapper><TeamMatchList /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/team-match/new",
-    "element": "<ViLanguageWrapper><TeamMatchSetup /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/team-match/match/:matchId/score",
-    "element": "<ViLanguageWrapper><TeamMatchScoring /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/team-match/:id",
-    "element": "<ViLanguageWrapper><ConditionalAuth><TeamMatchView /></ConditionalAuth></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/doubles-elimination",
-    "element": "<ViLanguageWrapper><DoublesEliminationList /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/doubles-elimination/new",
-    "element": "<ViLanguageWrapper><DoublesEliminationSetup /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/doubles-elimination/:shareId",
-    "element": "<ViLanguageWrapper><ConditionalAuth><DoublesEliminationView /></ConditionalAuth></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/doubles-elimination/match/:matchId/score",
-    "element": "<ViLanguageWrapper><DoublesEliminationScoring /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/flex-tournament",
-    "element": "<ViLanguageWrapper><FlexTournamentList /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/flex-tournament/new",
-    "element": "<ViLanguageWrapper><FlexTournamentSetup /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/flex-tournament/:shareId",
-    "element": "<ViLanguageWrapper><ConditionalAuth><FlexTournamentView /></ConditionalAuth></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/dashboard",
-    "element": "<ViLanguageWrapper><DashboardPicker /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/tools/dashboard/:type/:id",
-    "element": "<ViLanguageWrapper><TournamentDashboard /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/search",
-    "element": "<ViLanguageWrapper><Search /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/privacy",
-    "element": "<ViLanguageWrapper><Privacy /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/terms",
-    "element": "<ViLanguageWrapper><Terms /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/advertise",
-    "element": "<ViLanguageWrapper><Advertise /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/affiliate-disclosure",
-    "element": "<ViLanguageWrapper><AffiliateDisclosurePage /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/vi/login",
-    "element": "<ViLanguageWrapper><Login /></ViLanguageWrapper>"
+    "path": "/vi/about",
+    "element": "<ViLanguageWrapper><About /></ViLanguageWrapper>"
   },
   {
     "path": "/vi/account",
@@ -884,59 +652,295 @@
     "element": "<ViLanguageWrapper><RequireAuth><MyTournaments /></RequireAuth></ViLanguageWrapper>"
   },
   {
+    "path": "/vi/advertise",
+    "element": "<ViLanguageWrapper><Advertise /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/affiliate-disclosure",
+    "element": "<ViLanguageWrapper><AffiliateDisclosurePage /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/blog",
+    "element": "<ViLanguageWrapper><Blog /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/blog/:slug",
+    "element": "<ViLanguageWrapper><ViBlogPost /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/clubs",
+    "element": "<ViLanguageWrapper><ClubsList /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/contact",
+    "element": "<ViLanguageWrapper><Contact /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/dang-ky/:magic_token",
+    "element": "<ViLanguageWrapper><PlayerRegistration /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/feed",
+    "element": "<ViLanguageWrapper><Feed /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/forum",
+    "element": "<ViLanguageWrapper><Forum /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/forum/:categorySlug",
+    "element": "<ViLanguageWrapper><ForumCategory /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/forum/new",
+    "element": "<ViLanguageWrapper><ForumPostCreate /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/forum/post/:postId",
+    "element": "<ViLanguageWrapper><ForumPostDetail /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/khoi-phuc-dang-ky",
+    "element": "<ViLanguageWrapper><RecoveryRegistration /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/live",
+    "element": "<ViLanguageWrapper><Live /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/live/:id",
+    "element": "<ViLanguageWrapper><WatchLive /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/login",
+    "element": "<ViLanguageWrapper><Login /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/news",
+    "element": "<ViLanguageWrapper><News language=\"vi\" /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/news/:slug",
+    "element": "<ViLanguageWrapper><NewsArticle language=\"vi\" /></ViLanguageWrapper>"
+  },
+  {
     "path": "/vi/notifications",
     "element": "<ViLanguageWrapper><Notifications /></ViLanguageWrapper>"
   },
   {
-    "path": "/vi/thong-bao",
-    "element": "<ViLanguageWrapper><Notifications /></ViLanguageWrapper>"
+    "path": "/vi/org/:slug",
+    "element": "<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>"
   },
   {
-    "path": "*",
-    "element": "<NotFound />"
+    "path": "/vi/privacy",
+    "element": "<ViLanguageWrapper><Privacy /></ViLanguageWrapper>"
   },
   {
-    "path": "/vi/*",
-    "element": "<ViLanguageWrapper><NotFound /></ViLanguageWrapper>"
-  },
-  {
-    "path": "/rankings/ppa-tour",
-    "element": "<PpaRankings />"
+    "path": "/vi/rankings",
+    "element": "<ViLanguageWrapper><Rankings /></ViLanguageWrapper>"
   },
   {
     "path": "/vi/rankings/ppa-tour",
     "element": "<ViLanguageWrapper><PpaRankings /></ViLanguageWrapper>"
   },
   {
-    "path": "/seller/orders",
-    "element": "<RequireAuth><SellerOrders /></RequireAuth>"
+    "path": "/vi/san",
+    "element": "<ViLanguageWrapper><VenuesList /></ViLanguageWrapper>"
   },
   {
-    "path": "/seller/orders/:code",
-    "element": "<RequireAuth><SellerOrderDetail /></RequireAuth>"
+    "path": "/vi/san/:slug",
+    "element": "<ViLanguageWrapper><VenueDetail /></ViLanguageWrapper>"
   },
   {
-    "path": "/shop/orders",
-    "element": "<RequireAuth><ShopOrders /></RequireAuth>"
+    "path": "/vi/san/khu-vuc/:city",
+    "element": "<ViLanguageWrapper><VenuesCity /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/san/them",
+    "element": "<ViLanguageWrapper><VenueSubmit /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/search",
+    "element": "<ViLanguageWrapper><Search /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop",
+    "element": "<ViLanguageWrapper><ShopGate><ShopHome /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop/cart",
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCart /></RequireAuth></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop/category/:slug",
+    "element": "<ViLanguageWrapper><ShopGate><ShopCategory /></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop/checkout/:shopSlug",
+    "element": "<ViLanguageWrapper><ShopGate><RequireAuth><ShopCheckout /></RequireAuth></ShopGate></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/shop/order/:code",
+    "element": "<ViLanguageWrapper><RequireAuth><ShopOrderDetail /></RequireAuth></ViLanguageWrapper>"
   },
   {
     "path": "/vi/shop/orders",
     "element": "<ViLanguageWrapper><RequireAuth><ShopOrders /></RequireAuth></ViLanguageWrapper>"
   },
   {
-    "path": "/about",
-    "element": "<About />"
+    "path": "/vi/shop/product/:slug",
+    "element": "<ViLanguageWrapper><ShopGate><ProductDetail /></ShopGate></ViLanguageWrapper>"
   },
   {
-    "path": "/contact",
-    "element": "<Contact />"
+    "path": "/vi/shop/search",
+    "element": "<ViLanguageWrapper><ShopGate><ShopSearch /></ShopGate></ViLanguageWrapper>"
   },
   {
-    "path": "/vi/about",
-    "element": "<ViLanguageWrapper><About /></ViLanguageWrapper>"
+    "path": "/vi/shop/store/:slug",
+    "element": "<ViLanguageWrapper><ShopGate><ShopStore /></ShopGate></ViLanguageWrapper>"
   },
   {
-    "path": "/vi/contact",
-    "element": "<ViLanguageWrapper><Contact /></ViLanguageWrapper>"
+    "path": "/vi/social",
+    "element": "<ViLanguageWrapper><SocialEventList /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/social/:slug",
+    "element": "<ViLanguageWrapper><SocialEventDetail /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/social/:slug/danh-sach",
+    "element": "<ViLanguageWrapper><SocialEventRoster /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/social/:slug/live",
+    "element": "<SocialEventLive />"
+  },
+  {
+    "path": "/vi/social/:slug/xep-cap",
+    "element": "<ViLanguageWrapper><SocialEventMatchmaking /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/su-kien",
+    "element": "<Navigate to=\"/vi/social\" replace />"
+  },
+  {
+    "path": "/vi/su-kien/:slug/live",
+    "element": "<NavigateSuKienLiveVi />"
+  },
+  {
+    "path": "/vi/terms",
+    "element": "<ViLanguageWrapper><Terms /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/thong-bao",
+    "element": "<ViLanguageWrapper><Notifications /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tim-ban-choi",
+    "element": "<ViLanguageWrapper><FindPlayers /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tin-nhan",
+    "element": "<ViLanguageWrapper><Messages /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools",
+    "element": "<ViLanguageWrapper><Tools /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/dashboard",
+    "element": "<ViLanguageWrapper><DashboardPicker /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/dashboard/:type/:id",
+    "element": "<ViLanguageWrapper><TournamentDashboard /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/doubles-elimination",
+    "element": "<ViLanguageWrapper><DoublesEliminationList /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/doubles-elimination/:shareId",
+    "element": "<ViLanguageWrapper><ConditionalAuth><DoublesEliminationView /></ConditionalAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/doubles-elimination/match/:matchId/score",
+    "element": "<ViLanguageWrapper><DoublesEliminationScoring /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/doubles-elimination/new",
+    "element": "<ViLanguageWrapper><DoublesEliminationSetup /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/flex-tournament",
+    "element": "<ViLanguageWrapper><FlexTournamentList /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/flex-tournament/:shareId",
+    "element": "<ViLanguageWrapper><ConditionalAuth><FlexTournamentView /></ConditionalAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/flex-tournament/new",
+    "element": "<ViLanguageWrapper><FlexTournamentSetup /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/quick-tables",
+    "element": "<ViLanguageWrapper><QuickTables /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/quick-tables/:shareId",
+    "element": "<ViLanguageWrapper><ConditionalAuth><QuickTableView /></ConditionalAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/quick-tables/:shareId/setup",
+    "element": "<ViLanguageWrapper><QuickTableSetup /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/quick-tables/parent/:shareId",
+    "element": "<ViLanguageWrapper><ParentTournamentPage /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/team-match",
+    "element": "<ViLanguageWrapper><TeamMatchList /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/team-match/:id",
+    "element": "<ViLanguageWrapper><ConditionalAuth><TeamMatchView /></ConditionalAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/team-match/match/:matchId/score",
+    "element": "<ViLanguageWrapper><TeamMatchScoring /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tools/team-match/new",
+    "element": "<ViLanguageWrapper><TeamMatchSetup /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tournament/:slug",
+    "element": "<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/tournaments",
+    "element": "<ViLanguageWrapper><Tournaments /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/u/:slug",
+    "element": "<NavigateUSlugVi />"
+  },
+  {
+    "path": "/vi/videos",
+    "element": "<ViLanguageWrapper><Videos /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/vi/watch/:id",
+    "element": "<ViLanguageWrapper><WatchVideo /></ViLanguageWrapper>"
+  },
+  {
+    "path": "/videos",
+    "element": "<Videos />"
+  },
+  {
+    "path": "/watch/:id",
+    "element": "<WatchVideo />"
   }
 ]

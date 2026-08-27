@@ -459,6 +459,7 @@ return ({
           ],
           "vendor-date": ["date-fns"],
           "vendor-video": ["@mux/mux-player-react", "hls.js"],
+          "vendor-xlsx": ["xlsx"],
         },
       },
     },

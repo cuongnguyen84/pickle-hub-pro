@@ -109,6 +109,13 @@ export const SHOP_ROUTES = [
     rpcs: ["product_create"], states: ["empty form", "validation"],
   },
   {
+    key: "seller-bulk-import", pattern: "/seller/products/import", audience: "seller", path: () => "/seller/products/import",
+    auth: "auth", aal: "aal1", noindex: true,
+    h1: /Nhập sản phẩm hàng loạt|Chưa có shop/, marker: /Chọn file Excel|Tên sản phẩm/,
+    rpcs: ["product-import-enrich"],
+    states: ["no file", "rows loaded", "enriching", "done", "low confidence", "failed", "published"],
+  },
+  {
     key: "seller-product-edit", pattern: "/seller/products/:id/edit", audience: "seller",
     path: (s) => `/seller/products/${s.products.needsChanges.id}/edit`,
     auth: "auth", aal: "aal1", noindex: true,
