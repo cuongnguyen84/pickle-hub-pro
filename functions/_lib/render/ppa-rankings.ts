@@ -32,12 +32,19 @@ export function renderPpaRankings(
 ): Response {
   const vi = lang === "vi";
 
+  // CTR-01 (2026-08-27) — the VI description was 164 UTF-8 bytes against the
+  // 160-byte clamp in html.ts and shipped truncated mid-phrase ("…kèm các VĐV
+  // Việt Nam và gốc…"). Both titles were already under budget; they gained the
+  // "Top 25" count because that is the concrete thing the page has and the old
+  // "(WPR)" parenthetical spent characters on an acronym nobody searches for
+  // ("wpr rankings": 4 impressions in 28 days, versus 40+ for "ppa ranking*").
+  // Byte budgets enforced by functions/__tests__/ssr-meta-byte-budget.test.ts.
   const title = vi
-    ? "Bảng xếp hạng PPA Tour (WPR) | ThePickleHub"
-    : "PPA Tour Rankings (WPR) | ThePickleHub";
+    ? "Bảng xếp hạng PPA Tour: Top 25 WPR | ThePickleHub"
+    : "PPA Tour Rankings — Top 25 WPR | ThePickleHub";
   const description = vi
-    ? "Top VĐV pickleball nhà nghề thế giới theo World Pickleball Ranking (WPR) của PPA Tour — bảng Nam và Nữ, kèm các VĐV Việt Nam và gốc Việt."
-    : "Top professional pickleball players by PPA Tour's World Pickleball Ranking (WPR) — men's and women's boards, with Vietnamese and Vietnamese-origin pros.";
+    ? "Xếp hạng PPA Tour: top 25 nam và top 25 nữ theo điểm World Pickleball Ranking, kèm các VĐV Việt Nam và gốc Việt."
+    : "PPA Tour world rankings: top 25 men and top 25 women by World Pickleball Ranking points, plus every Vietnamese pro on the board.";
 
   const heading = vi
     ? "Bảng xếp hạng PPA Tour — World Pickleball Ranking (WPR)"
