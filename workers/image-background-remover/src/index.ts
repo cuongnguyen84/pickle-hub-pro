@@ -54,7 +54,7 @@ async function authorizeSeller(request: Request, env: Env): Promise<SellerAuthRe
   const membership = new URL(`${env.SUPABASE_URL}/rest/v1/shop_members`);
   membership.searchParams.set("user_id", `eq.${user.id}`);
   membership.searchParams.set("role", "in.(owner,manager)");
-  membership.searchParams.set("select", "id");
+  membership.searchParams.set("select", "shop_id");
   membership.searchParams.set("limit", "1");
   const memberResponse = await fetch(membership, { headers: authHeaders });
   if (!memberResponse.ok) {
