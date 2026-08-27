@@ -3,7 +3,8 @@ import { filterWpr, WPR_SEARCH_INDEX } from "../wpr-search";
 
 describe("filterWpr", () => {
   // Pre-mortem P0: Telex input with diacritics MUST match ASCII source names.
-  // Hien Truong (#38 men, countryCode vn) lives only in the highlights list —
+  // Hien Truong (#28 men at the 2026-08-27 snapshot, countryCode vn) lives
+  // only in the highlights list —
   // this test also pins the union scope (not just the top-25 boards).
   it('finds Hien Truong for "Trương" (diacritics + union scope)', () => {
     const names = filterWpr("Trương").map((r) => r.name);
