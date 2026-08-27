@@ -128,8 +128,12 @@ export default function BulkImport() {
       const detail = error instanceof Error ? error.message : "";
       setBackgroundError(detail.includes("image_source_unavailable")
         ? "Ảnh gốc không còn truy cập được từ website nguồn. Anh/chị chọn ảnh khác."
-        : detail.includes(":401:")
+        : detail.includes("session_invalid")
           ? "Phiên đăng nhập đã hết hạn. Anh/chị tải lại trang rồi thử lại."
+          : detail.includes("seller_required")
+            ? "Tài khoản hiện tại chưa có quyền quản lý shop."
+            : detail.includes("auth_unavailable")
+              ? "Chưa kết nối được dịch vụ xác thực. Anh/chị thử lại sau."
           : "Cloudflare chưa xử lý được ảnh này. Anh/chị thử ảnh khác hoặc thử lại sau.");
     } finally {
       setBackgroundJobs((current) => ({ ...current, [key]: false }));

@@ -38,23 +38,31 @@ function safeImageUrl(value: unknown): URL | null {
   }
 }
 
-async function isSeller(request: Request, env: Env): Promise<boolean> {
+type SellerAuthResult = "ok" | "session_invalid" | "seller_required" | "auth_unavailable";
+
+async function authorizeSeller(request: Request, env: Env): Promise<SellerAuthResult> {
   const authorization = request.headers.get("authorization") ?? "";
-  if (!authorization.startsWith("Bearer ")) return false;
+  if (!authorization.startsWith("Bearer ")) return "session_invalid";
   const authHeaders = { authorization, apikey: env.SUPABASE_PUBLISHABLE_KEY };
   const userResponse = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, { headers: authHeaders });
-  if (!userResponse.ok) return false;
+  if (!userResponse.ok) {
+    console.warn("supabase user verification failed", userResponse.status);
+    return userResponse.status === 401 || userResponse.status === 403 ? "session_invalid" : "auth_unavailable";
+  }
   const user = await userResponse.json() as { id?: string };
-  if (!user.id) return false;
+  if (!user.id) return "session_invalid";
   const membership = new URL(`${env.SUPABASE_URL}/rest/v1/shop_members`);
   membership.searchParams.set("user_id", `eq.${user.id}`);
   membership.searchParams.set("role", "in.(owner,manager)");
   membership.searchParams.set("select", "id");
   membership.searchParams.set("limit", "1");
   const memberResponse = await fetch(membership, { headers: authHeaders });
-  if (!memberResponse.ok) return false;
+  if (!memberResponse.ok) {
+    console.warn("seller membership lookup failed", memberResponse.status);
+    return "auth_unavailable";
+  }
   const rows = await memberResponse.json() as unknown[];
-  return rows.length > 0;
+  return rows.length > 0 ? "ok" : "seller_required";
 }
 
 async function fetchPublicImage(initial: URL, referer: URL | null): Promise<Response | null> {
@@ -85,7 +93,11 @@ export default {
     const cors = corsHeaders(origin);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: cors });
-    if (!(await isSeller(request, env))) return new Response("Unauthorized", { status: 401, headers: cors });
+    const sellerAuth = await authorizeSeller(request, env);
+    if (sellerAuth !== "ok") {
+      const status = sellerAuth === "session_invalid" ? 401 : sellerAuth === "seller_required" ? 403 : 503;
+      return new Response(sellerAuth, { status, headers: cors });
+    }
 
     const payload = await request.json().catch(() => null) as {
       image_url?: unknown;
