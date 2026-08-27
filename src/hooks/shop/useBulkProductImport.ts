@@ -44,6 +44,11 @@ export interface ProductImageCandidate {
   alt: string;
 }
 
+export interface ProcessedProductImage {
+  file: File;
+  previewUrl: string;
+}
+
 export type RowStatus = "idle" | "enriching" | "done" | "low_confidence" | "failed";
 
 export interface ProductRow {
@@ -60,6 +65,7 @@ export interface ProductRow {
   manualImageUrl: string | null;
   selectedImageFile: File | null;
   imagePreviewUrl: string | null;
+  backgroundRemovedImages: Record<string, ProcessedProductImage>;
   selected: boolean;
   status: RowStatus;
   errorMessage: string | null;
@@ -127,6 +133,7 @@ export function useBulkProductImport() {
           manualImageUrl: null,
           selectedImageFile: null,
           imagePreviewUrl: null,
+          backgroundRemovedImages: {},
           selected: true,
           status: "idle" as const,
           errorMessage: null,
@@ -269,7 +276,7 @@ export function useBulkProductImport() {
         inserted.push(current);
       }
 
-      rows.forEach((row) => row.imagePreviewUrl && URL.revokeObjectURL(row.imagePreviewUrl));
+      rows.forEach(revokeRowPreviews);
       setRows([]);
       return { count: inserted.length, batchId };
     } finally {
@@ -296,9 +303,56 @@ export function useBulkProductImport() {
   }, []);
 
   const reset = useCallback(() => {
-    rows.forEach((row) => row.imagePreviewUrl && URL.revokeObjectURL(row.imagePreviewUrl));
+    rows.forEach(revokeRowPreviews);
     setRows([]);
   }, [rows]);
+
+  const removeImageBackground = useCallback(async (rowId: string, imageUrl: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error("unauthorized");
+    const response = await fetch(
+      "https://picklehub-image-background-remover.thecuong.workers.dev",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ image_url: imageUrl }),
+      },
+    );
+    if (!response.ok) throw new Error(`background_removal_failed:${response.status}`);
+    const blob = await response.blob();
+    if (blob.type !== "image/png" || blob.size === 0 || blob.size > 8 * 1024 * 1024) {
+      throw new Error("background_removal_invalid");
+    }
+    const file = new File([blob], `product-no-background-${crypto.randomUUID()}.png`, { type: "image/png" });
+    const previewUrl = URL.createObjectURL(file);
+    setRows((current) => current.map((row) => {
+      if (row.rowId !== rowId) return row;
+      const previous = row.backgroundRemovedImages[imageUrl];
+      if (previous) URL.revokeObjectURL(previous.previewUrl);
+      return {
+        ...row,
+        backgroundRemovedImages: {
+          ...row.backgroundRemovedImages,
+          [imageUrl]: { file, previewUrl },
+        },
+      };
+    }));
+  }, []);
+
+  const restoreImageBackground = useCallback((rowId: string, imageUrl: string) => {
+    setRows((current) => current.map((row) => {
+      if (row.rowId !== rowId) return row;
+      const previous = row.backgroundRemovedImages[imageUrl];
+      if (!previous) return row;
+      URL.revokeObjectURL(previous.previewUrl);
+      const next = { ...row.backgroundRemovedImages };
+      delete next[imageUrl];
+      return { ...row, backgroundRemovedImages: next };
+    }));
+  }, []);
 
   return {
     rows,
@@ -310,6 +364,8 @@ export function useBulkProductImport() {
     downloadTemplate,
     reset,
     updateRow,
+    removeImageBackground,
+    restoreImageBackground,
     setRows,
     shopId: shop.data?.id ?? null,
   };
@@ -319,6 +375,11 @@ async function resolveProductImages(row: ProductRow): Promise<File[]> {
   const files = row.selectedImageFile ? [row.selectedImageFile] : [];
   const urls = [...new Set([...row.selectedImageUrls, row.manualImageUrl].filter(Boolean) as string[])];
   for (const [index, url] of urls.entries()) {
+    const processed = row.backgroundRemovedImages[url];
+    if (processed) {
+      files.push(processed.file);
+      continue;
+    }
     try {
       const response = await fetch(url, { mode: "cors", credentials: "omit" });
       if (!response.ok) continue;
@@ -331,6 +392,11 @@ async function resolveProductImages(row: ProductRow): Promise<File[]> {
     }
   }
   return files;
+}
+
+function revokeRowPreviews(row: ProductRow): void {
+  if (row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
+  Object.values(row.backgroundRemovedImages).forEach((image) => URL.revokeObjectURL(image.previewUrl));
 }
 
 function parsePrice(value: unknown): number | undefined {

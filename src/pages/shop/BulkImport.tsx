@@ -39,6 +39,8 @@ export default function BulkImport() {
   const [enriching, setEnriching] = useState(false);
   const [publishResult, setPublishResult] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [backgroundJobs, setBackgroundJobs] = useState<Record<string, boolean>>({});
+  const [backgroundError, setBackgroundError] = useState<string | null>(null);
   const {
     rows,
     uploading,
@@ -49,6 +51,8 @@ export default function BulkImport() {
     downloadTemplate,
     reset,
     updateRow,
+    removeImageBackground,
+    restoreImageBackground,
     shopId,
   } = useBulkProductImport();
 
@@ -112,6 +116,19 @@ export default function BulkImport() {
         specs: { ...(row.aiData.specs ?? {}), [key]: value },
       },
     });
+  };
+
+  const handleRemoveBackground = async (rowId: string, imageUrl: string) => {
+    const key = `${rowId}:${imageUrl}`;
+    setBackgroundError(null);
+    setBackgroundJobs((current) => ({ ...current, [key]: true }));
+    try {
+      await removeImageBackground(rowId, imageUrl);
+    } catch {
+      setBackgroundError("Chưa xoá được nền ảnh này. Anh/chị thử lại sau.");
+    } finally {
+      setBackgroundJobs((current) => ({ ...current, [key]: false }));
+    }
   };
 
   const idleCount = rows.filter((r) => r.selected && r.status === "idle").length;
@@ -318,36 +335,64 @@ export default function BulkImport() {
                               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                 {row.aiData.image_candidates.map((candidate) => {
                                   const selected = row.selectedImageUrls.includes(candidate.url);
+                                  const processed = row.backgroundRemovedImages[candidate.url];
+                                  const jobKey = `${row.rowId}:${candidate.url}`;
+                                  const processing = !!backgroundJobs[jobKey];
                                   return (
-                                    <button
-                                      type="button"
-                                      key={candidate.url}
-                                      aria-pressed={selected}
-                                      aria-label={`${selected ? "Bỏ chọn" : "Chọn"} ảnh ${candidate.alt || row.aiData!.name}`}
-                                      onClick={() => updateRow(row.rowId, {
-                                        selectedImageUrls: selected
-                                          ? row.selectedImageUrls.filter((url) => url !== candidate.url)
-                                          : [...row.selectedImageUrls, candidate.url],
-                                      })}
-                                      className={`group relative overflow-hidden rounded-lg border-2 bg-muted text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? "border-primary ring-1 ring-primary" : "border-transparent hover:border-muted-foreground/40"}`}
-                                    >
-                                      <span className={`absolute right-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full border shadow-sm ${selected ? "border-primary bg-primary text-primary-foreground" : "border-white/70 bg-black/35 text-transparent"}`}>
-                                        <Check className="h-4 w-4" aria-hidden="true" />
-                                      </span>
-                                    <img
-                                      src={candidate.url}
-                                      alt={candidate.alt || row.aiData!.name}
-                                      className="aspect-square w-full object-contain"
-                                      loading="lazy"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                    <span className="block truncate px-2 py-1.5 text-xs text-muted-foreground">
-                                      {new URL(candidate.source_url).hostname.replace(/^www\./, "")}
-                                    </span>
-                                    </button>
+                                    <div key={candidate.url} className="overflow-hidden rounded-lg border bg-card">
+                                      <button
+                                        type="button"
+                                        aria-pressed={selected}
+                                        aria-label={`${selected ? "Bỏ chọn" : "Chọn"} ảnh ${candidate.alt || row.aiData!.name}`}
+                                        onClick={() => updateRow(row.rowId, {
+                                          selectedImageUrls: selected
+                                            ? row.selectedImageUrls.filter((url) => url !== candidate.url)
+                                            : [...row.selectedImageUrls, candidate.url],
+                                        })}
+                                        className={`group relative block w-full overflow-hidden border-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? "border-primary ring-1 ring-primary" : "border-transparent hover:border-muted-foreground/40"}`}
+                                      >
+                                        <span className={`absolute right-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full border shadow-sm ${selected ? "border-primary bg-primary text-primary-foreground" : "border-white/70 bg-black/35 text-transparent"}`}>
+                                          <Check className="h-4 w-4" aria-hidden="true" />
+                                        </span>
+                                        <span
+                                          className="block bg-muted"
+                                          style={processed ? {
+                                            backgroundColor: "#fff",
+                                            backgroundImage: "linear-gradient(45deg,#e5e7eb 25%,transparent 25%),linear-gradient(-45deg,#e5e7eb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e5e7eb 75%),linear-gradient(-45deg,transparent 75%,#e5e7eb 75%)",
+                                            backgroundPosition: "0 0,0 8px,8px -8px,-8px 0",
+                                            backgroundSize: "16px 16px",
+                                          } : undefined}
+                                        >
+                                          <img
+                                            src={processed?.previewUrl ?? candidate.url}
+                                            alt={candidate.alt || row.aiData!.name}
+                                            className="aspect-square w-full object-contain"
+                                            loading="lazy"
+                                            referrerPolicy="no-referrer"
+                                          />
+                                        </span>
+                                        <span className="block truncate px-2 py-1.5 text-xs text-muted-foreground">
+                                          {processed ? "Nền trong suốt" : new URL(candidate.source_url).hostname.replace(/^www\./, "")}
+                                        </span>
+                                      </button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full rounded-none text-xs"
+                                        disabled={processing}
+                                        onClick={() => processed
+                                          ? restoreImageBackground(row.rowId, candidate.url)
+                                          : void handleRemoveBackground(row.rowId, candidate.url)}
+                                      >
+                                        {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
+                                        {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}
+                                      </Button>
+                                    </div>
                                   );
                                 })}
                               </div>
+                              {backgroundError && <p className="text-xs text-destructive" role="alert">{backgroundError}</p>}
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground">
