@@ -305,7 +305,11 @@ const GONE_EXACT = new Set<string>([
   "/nguoi-choi/lecam-test", "/nguoi-choi/lyhoangnam-test",
   "/nguoi-choi/nguyenvana-test", "/nguoi-choi/phamquang-test",
   "/nguoi-choi/tranthib-test", "/nguoi-choi/vothanh-test",
-  "/clb/clb-test", "/clb/test-3", "/clb/test-5",
+  // 2026-08-27 site audit: "/clb/test" belongs to the same fixture family as
+  // the three below (name "test", description "test", archived 2026-07-28) and
+  // was the only one still answering 200 to a crawler. Removing it from
+  // sitemap-events.xml withdraws the recommendation; this removes the URL.
+  "/clb/clb-test", "/clb/test", "/clb/test-3", "/clb/test-5",
   "/tran-dau/nguyenvana-test-vs-lyhoangnam-test-20260504-37e3d1",
   "/tran-dau/nguyenvana-test-vs-tranthib-test-20260504-ad583f",
   "/tran-dau/lyhoangnam-test-vs-phamquang-test-20260507-4371a9",
