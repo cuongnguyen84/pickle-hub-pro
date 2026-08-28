@@ -261,6 +261,10 @@ export const useOrderTransition = () => {
       }),
     onSuccess: (order) => {
       qc.setQueryData(orderKeys.one(order.code), order);
+      // The buyer may return through "Đơn của tôi" immediately after marking
+      // a parcel received. Keep that list (and the seller's tabs) from showing
+      // the old action/status until its 30-second stale window expires.
+      void qc.invalidateQueries({ queryKey: ["shop", "orders"] });
     },
   });
 };

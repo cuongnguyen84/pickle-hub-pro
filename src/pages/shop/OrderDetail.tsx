@@ -95,6 +95,12 @@ const COPY = {
   confirmReceivedBody: "Đơn sẽ chuyển sang trạng thái đã giao.",
   confirmReceivedYes: "Đã nhận hàng",
   confirmReceivedNo: "Chưa nhận",
+  returnH: "Cần đổi hoặc trả hàng?",
+  returnBody:
+    "Anh/chị liên hệ trực tiếp với shop qua Zalo để trao đổi về tình trạng sản phẩm và cách xử lý.",
+  returnZalo: "Liên hệ Zalo của shop",
+  returnNoZalo:
+    "Shop chưa có Zalo được duyệt. Anh/chị dùng kênh liên hệ ở mục Người bán bên dưới.",
 };
 
 export default function OrderDetail() {
@@ -115,6 +121,8 @@ export default function OrderDetail() {
   const sepay = useSePayCheckout();
   const shopQ = usePublicShopPage(order?.shop?.slug ?? null);
   const contacts = usableContacts(shopQ.data?.contacts as PublicContact[] | undefined);
+  const zalo = contacts.find((contact) => contact.type === "zalo") ?? null;
+  const zaloHref = zalo ? contactHref(zalo) : null;
 
   // A bank-transfer buyer already chose to pay at checkout. As soon as the
   // order and its party-scoped payment projection arrive, prepare the inline
@@ -293,6 +301,28 @@ export default function OrderDetail() {
             </button>
           )}
         </div>
+      )}
+
+      {order.status === "delivered" && (
+        <section className="tl-shop-card" aria-labelledby="ord-return-help">
+          <h2 className="tl-shop-h2" id="ord-return-help">{COPY.returnH}</h2>
+          <p className="tl-shop-flush-t">{COPY.returnBody}</p>
+          {zaloHref ? (
+            <div className="tl-shop-cta-row">
+              <a
+                href={zaloHref}
+                className="tl-shop-btn tl-shop-btn--primary"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+              >
+                <ExternalLink size={15} aria-hidden="true" />
+                {COPY.returnZalo}
+              </a>
+            </div>
+          ) : (
+            <p className="tl-shop-hint">{COPY.returnNoZalo}</p>
+          )}
+        </section>
       )}
 
       {paymentQ.data && (
