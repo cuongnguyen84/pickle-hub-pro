@@ -123,12 +123,12 @@ export default function ShopCategory() {
             <ResultsGrid
               rows={rows}
               total={results.data?.total ?? 0}
-              hidePilotNote
+              hideSparseNote
               isLoading={results.isLoading || !known}
               isError={results.isError}
               onRetry={() => void results.refetch()}
               emptyTitle="Ngành hàng này chưa có sản phẩm nào"
-              emptyBody="Sàn đang ở giai đoạn thử nghiệm. Thử ngành hàng khác nhé."
+              emptyBody="Chưa có sản phẩm trong ngành hàng này. Thử ngành hàng khác nhé."
               emptyIcon={<SearchX size={28} aria-hidden="true" />}
               onClearFilters={
                 filters.condition || filters.inStockOnly || filters.sort !== DEFAULT_FILTERS.sort

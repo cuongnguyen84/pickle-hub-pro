@@ -193,7 +193,7 @@ export default function ShopStore() {
           <ResultsGrid
             rows={rows}
             total={catalog.data?.total ?? 0}
-            hidePilotNote
+            hideSparseNote
             isLoading={catalog.isLoading}
             isError={catalog.isError}
             onRetry={() => void catalog.refetch()}

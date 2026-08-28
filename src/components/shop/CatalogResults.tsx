@@ -15,7 +15,6 @@ import { SlidersHorizontal } from "lucide-react";
 import type { PublicCategory, ProductCard as Card } from "@/hooks/shop/usePublicShop";
 import { ProductCard, ProductCardSkeleton } from "./ProductCard";
 import { ShopErrorNotice } from "./ShopNotice";
-import { catalogMood } from "@/lib/shop/publicCatalog";
 
 export interface Filters {
   condition: "new" | "used" | null;
@@ -214,7 +213,7 @@ export function ResultsGrid({
   emptyAction,
   onClearFilters,
   hideCount = false,
-  hidePilotNote = false,
+  hideSparseNote = false,
 }: {
   rows: Card[];
   total: number;
@@ -230,8 +229,8 @@ export function ResultsGrid({
   onClearFilters?: () => void;
   /** /shop shows twelve of `total`, so the count would be a lie there (#11). */
   hideCount?: boolean;
-  /** The pilot caveat belongs on ONE screen, under the /shop grid (R5 copy). */
-  hidePilotNote?: boolean;
+  /** Search/category/store already communicate their scope in the heading. */
+  hideSparseNote?: boolean;
 }) {
   if (isLoading) {
     return (
@@ -273,8 +272,6 @@ export function ResultsGrid({
     );
   }
 
-  const mood = catalogMood(total);
-
   return (
     <>
       {!hideCount && (
@@ -287,11 +284,9 @@ export function ResultsGrid({
           <li key={c.id}><ProductCard card={c} eager={i < 4} /></li>
         ))}
       </ul>
-      {/* The honest-sparse sentence, verbatim, AFTER the grid — the products
-          are the page's main character, the caveat is a footnote. */}
-      {mood === "sparse" && !hidePilotNote && (
+      {total > 0 && total < 12 && !hideSparseNote && (
         <p className="tl-shop-hint">
-          Sàn đang ở giai đoạn thử nghiệm — đây là toàn bộ những gì đang bán.
+          Đây là toàn bộ sản phẩm đang bán.
         </p>
       )}
     </>

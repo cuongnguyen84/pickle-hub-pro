@@ -1,11 +1,6 @@
 // ============================================================================
 // Cổng chợ — một công tắc, và nó là công tắc DUY NHẤT.
 // ----------------------------------------------------------------------------
-// PO quyết 23/08/2026: nút "Chợ" đã có ô cố định trên thanh dưới, nhưng người
-// dùng bấm vào thì thấy trang "đang hoàn thiện" cho tới khi những việc còn nợ
-// được xử lý xong — hai sản phẩm, mô tả ba chữ, ảnh test, và ghi chú phí giao
-// hàng còn mâu thuẫn với con số thật.
-//
 // Đóng ở TẦNG ĐƯỜNG ĐI, không phải ở cái nút. Giấu một nút không đóng được cửa:
 // chợ còn lối vào từ nav trên, chân trang, liên kết đã chia sẻ và kết quả tìm
 // kiếm. Cổng đặt ở route nên mọi lối vào đều tới cùng một trang.
@@ -29,4 +24,4 @@
  * đã có một đơn thật chạy qua chợ, và đóng cửa không có nghĩa là bỏ rơi người
  * đã mua.
  */
-export const SHOP_PUBLIC_OPEN = false;
+export const SHOP_PUBLIC_OPEN = true;

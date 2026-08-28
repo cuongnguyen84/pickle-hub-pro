@@ -5,8 +5,8 @@
 // first product card is already peeking above the fold, which was B01's
 // acceptance criterion and is the only reason a catalogue home exists.
 //
-// The catalogue is genuinely small during the pilot, so the page says so
-// instead of padding itself with sections. There is no "bán chạy" (no sales
+// The catalogue is intentionally compact instead of padding itself with
+// invented sections. There is no "bán chạy" (no sales
 // data), no "sắp hết" (no reservation model), and no carousel.
 // ============================================================================
 
@@ -80,8 +80,8 @@ export default function ShopHome() {
           </svg>
           <h1 className="tl-shop-h1 tl-shop-herocard-title">Chợ đồ pickleball</h1>
           <p className="tl-shop-herocard-sub">
-            {/* Wave 0: the pilot does not collect papers, so "đã xác minh giấy
-                tờ" was a claim about diligence nobody performed — the exact
+            {/* "Đã xác minh giấy tờ" would be a claim about diligence the
+                current application does not perform — the exact
                 class of overstatement the Seller Rules exist to prevent. Say
                 what actually happens.
                 R5 (cắt chữ): 27 chữ đọc như thông cáo → 13 chữ, cùng nghĩa. */}
@@ -143,7 +143,7 @@ export default function ShopHome() {
             isError={latest.isError}
             onRetry={() => void latest.refetch()}
             emptyTitle="Chưa có sản phẩm nào đang bán"
-            emptyBody="Sàn đang ở giai đoạn thử nghiệm với vài shop đầu tiên. Quay lại sau nhé."
+            emptyBody="Các shop đang cập nhật sản phẩm. Anh/chị quay lại sau nhé."
             emptyAction={
               <p className="tl-shop-hint">
                 Anh/chị có đồ pickleball muốn bán? <Link to="/shop/sell">Tìm hiểu cách mở shop</Link>

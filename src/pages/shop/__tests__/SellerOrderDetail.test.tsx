@@ -14,6 +14,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ShopOrderDetail } from "@/integrations/supabase/shop-schema";
+import type { OrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
 
 vi.mock("react-router-dom", () => ({
   Link: ({ children, to, ...rest }: { children: React.ReactNode; to: string }) => (
@@ -31,6 +32,7 @@ vi.mock("@/components/shop/ShopShell", () => ({
 const state = {
   role: "owner" as "owner" | "support",
   order: null as ShopOrderDetail | null,
+  payment: undefined as OrderPaymentInfo | undefined,
 };
 
 vi.mock("@/hooks/shop/useShopProfile", () => ({
@@ -62,7 +64,7 @@ vi.mock("@/hooks/shop/useOrders", () => ({
 // P4b. The payment card has its own tests; here it only has to not pull a
 // QueryClient into a tree that has none.
 vi.mock("@/hooks/shop/useOrderPayment", () => ({
-  useOrderPaymentInfo: () => ({ data: undefined, isPending: false, isError: false }),
+  useOrderPaymentInfo: () => ({ data: state.payment, isPending: false, isError: false }),
   useConfirmPayment: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useMarkRefunded: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
@@ -119,6 +121,7 @@ const writeText = vi.fn().mockResolvedValue(undefined);
 beforeEach(() => {
   state.role = "owner";
   state.order = order();
+  state.payment = undefined;
   writeText.mockReset().mockResolvedValue(undefined);
   transitionMock.mockReset().mockResolvedValue(undefined);
   Object.defineProperty(navigator, "clipboard", {
@@ -131,6 +134,27 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+});
+
+describe("payment ownership copy", () => {
+  it("does not tell the seller a platform SePay payment went straight to their bank", () => {
+    state.order = order({ payment_method: "bank_transfer" });
+    state.payment = {
+      found: true,
+      method: "bank_transfer",
+      amount_vnd: 1_480_000,
+      memo: "PH-2608-AB12",
+      confirmed_at: null,
+      gateway: { enabled: true, provider: "sepay", status: "initiated" },
+      bank: null,
+    };
+
+    render(<SellerOrderDetail />);
+
+    expect(document.body.textContent).toContain("mã QR của nền tảng");
+    expect(document.body.textContent).toContain("tự động đối soát");
+    expect(document.body.textContent).not.toContain("Tiền đi thẳng vào tài khoản anh/chị");
+  });
 });
 
 describe("the delivery address block", () => {

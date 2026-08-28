@@ -158,7 +158,6 @@ const ADMIN_SHOP_NAV = [
   { to: "/admin/shop/applications", label: "Hồ sơ đăng ký", ready: true },
   { to: "/admin/shop/products", label: "Sản phẩm", ready: true },
   { to: "/admin/shop/contacts", label: "Kênh liên hệ", ready: true },
-  { to: "/admin/shop/disputes", label: "Khiếu nại", ready: false },
 ];
 
 const AdminShopNav = ({ pathname }: { pathname: string }) => (

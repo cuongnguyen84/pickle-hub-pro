@@ -108,11 +108,10 @@ const COPY = {
 
   payCod:
     "Trả khi nhận hàng. Anh/chị thu tiền trực tiếp; ThePickleHub không giữ tiền của đơn này.",
-  // P4b — the account number is no longer something the seller sends by hand:
-  // the buyer sees a QR built from the shop's own bank fields. What has NOT
-  // changed is who holds the money, and that sentence stays.
-  payBank:
+  payBankManual:
     "Người mua chọn chuyển khoản trước và thấy mã QR dựng từ tài khoản của shop. Tiền đi thẳng vào tài khoản anh/chị — ThePickleHub không nhận, không giữ và không đối soát khoản nào.",
+  payBankGateway:
+    "Người mua thanh toán bằng mã QR của nền tảng. Hệ thống tự động đối soát và cập nhật đơn khi nhận được giao dịch.",
 
   // EN: This order was just updated somewhere else — the buyer may have
   // cancelled. The page has reloaded.
@@ -498,11 +497,13 @@ export default function SellerOrderDetail() {
         />
       </section>
 
-      {/* ── 4. Who holds the money (nobody here) ───────────────────────── */}
+      {/* ── 4. Payment summary ─────────────────────────────────────────── */}
       <section aria-labelledby="sod-pay">
         <h2 className="tl-shop-h2" id="sod-pay">{COPY.paymentH}</h2>
         <p style={{ marginTop: 0 }}>
-          {order.payment_method === "cod" ? COPY.payCod : COPY.payBank}
+          {order.payment_method === "cod"
+            ? COPY.payCod
+            : paymentQ.data?.gateway?.enabled ? COPY.payBankGateway : COPY.payBankManual}
         </p>
       </section>
 

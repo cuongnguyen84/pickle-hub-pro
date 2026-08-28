@@ -22,16 +22,13 @@ import { SHOP_PUBLIC_OPEN } from "@/lib/shop/shopGate";
 // chủ, để phục vụ một trang gần như không ai thấy.
 const ShopComingSoon = lazy(() => import("@/pages/shop/ShopComingSoon"));
 
-export function ShopGate({ children }: { children: ReactNode }) {
-  // Cổng mở thì không hỏi vai trò làm gì — mọi truy vấn user_roles ở đây là
-  // một truy vấn thừa trên mọi trang chợ, cho mọi người, mãi mãi.
+function ClosedShopGate({ children }: { children: ReactNode }) {
   const { isAdmin, isLoading } = useAdminAuth();
   // Nhóm tester của pilot (bảng shop_pilot_members, admin thêm bằng tay) đi
   // qua cổng như admin. Cùng một allowlist với người được nộp đơn bán — "trong
   // pilot" là một chuyện, không phải hai.
   const pilot = useShopPilotAccess();
 
-  if (SHOP_PUBLIC_OPEN) return <>{children}</>;
   // Chưa biết là ai: đứng yên. Vẽ trang đóng cửa trước rồi thay bằng chợ khi
   // biết là admin sẽ làm màn hình nháy ở mỗi lần chuyển trang.
   if (isLoading || pilot.isLoading) return null;
@@ -41,6 +38,13 @@ export function ShopGate({ children }: { children: ReactNode }) {
       <ShopComingSoon />
     </Suspense>
   );
+}
+
+export function ShopGate({ children }: { children: ReactNode }) {
+  // Tách cổng đóng thành component riêng để khi Shop đã mở, React không tạo
+  // hai truy vấn quyền thừa trên mỗi lần người mua đổi trang.
+  if (SHOP_PUBLIC_OPEN) return <>{children}</>;
+  return <ClosedShopGate>{children}</ClosedShopGate>;
 }
 
 export default ShopGate;

@@ -147,7 +147,7 @@ export default function ShopSearch() {
             <ResultsGrid
               rows={rows}
               total={results.data?.total ?? 0}
-              hidePilotNote
+              hideSparseNote
               isLoading={results.isLoading}
               isError={results.isError}
               onRetry={() => void results.refetch()}

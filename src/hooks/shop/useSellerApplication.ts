@@ -184,7 +184,7 @@ export const useWithdrawApplication = () => {
 export const applicationErrorMessage = (err: unknown): string => {
   const message = (err as { message?: string })?.message ?? "";
   const table: Record<string, string> = {
-    shop_pilot_access_required: "Tài khoản của anh/chị chưa nằm trong nhóm thử nghiệm. Liên hệ ThePickleHub để được thêm vào.",
+    shop_pilot_access_required: "Đăng ký mở shop hiện áp dụng theo lời mời. Liên hệ ThePickleHub để được hướng dẫn.",
     no_editable_application: "Hồ sơ này không còn ở trạng thái sửa được.",
     no_open_application: "Không có hồ sơ nào đang mở để rút.",
     missing_seller_type: "Chưa chọn loại người bán.",

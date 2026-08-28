@@ -81,13 +81,11 @@ describe("Privacy page — the Shop section reaches the reader", () => {
   });
 
   it("shows the effective date the policy was actually updated on", () => {
-    // The Shop section was added on 2026-08-14. A policy that gains new
-    // content while still claiming to be effective from 2024 is a quiet
-    // untruth, and the date is a literal in the page rather than a value
-    // anything computes — so this is the only thing that pins it.
+    // Orders, payment confirmation and refunds changed what this section says
+    // on 2026-08-28. The date is a page literal, so pin it here.
     const text = renderIn(viTranslations);
-    expect(text).toContain("14/08/2026");
-    expect(text).not.toContain("28/12/2024");
+    expect(text).toContain("28/08/2026");
+    expect(text).not.toContain("14/08/2026");
   });
 
   it("keeps the Shop section above the security section, not appended at the end", () => {
@@ -107,14 +105,18 @@ describe.each(LANGUAGES)("Privacy Shop copy in $name says what the implementatio
   const shop = dict.privacy.shop;
   const all = Object.values(shop.groups).join(" ") + shop.description + shop.purpose + shop.retention;
 
+  it("contains no pilot or test-stage wording", () => {
+    expect(all + shop.title).not.toMatch(/thử nghiệm|closed pilot|\bpilot\b|\bMVP\b/i);
+  });
+
   it("never describes internal data as public", () => {
     // The public bullet lists what anybody can see on a shop page. The three
     // fields below are in shop_applications and are visible to the applicant
     // and administrators only — if one of them migrates into this sentence,
     // the policy starts authorising a leak we do not perform.
     const internalOnly = [
-      /địa chỉ lấy hàng|pickup address/i,
-      /họ tên|full name/i,
+      /địa chỉ (lấy|giao) hàng|pickup|delivery address/i,
+      /họ tên|full name|recipient name/i,
       /số điện thoại|phone number/i,
       /ghi chú.*quản trị|administrator notes/i,
     ];
@@ -123,8 +125,8 @@ describe.each(LANGUAGES)("Privacy Shop copy in $name says what the implementatio
     }
   });
 
-  it("states the pickup address is not shown publicly", () => {
-    expect(shop.groups.internal).toMatch(/không hiển thị công khai|never shown publicly/i);
+  it("states pickup and delivery addresses are not shown publicly", () => {
+    expect(shop.groups.internal).toMatch(/địa chỉ lấy hàng và giao hàng không hiển thị công khai|pickup and delivery addresses are never shown publicly/i);
   });
 
   it("states that an account email or phone does not become a public contact channel on its own", () => {
@@ -146,32 +148,20 @@ describe.each(LANGUAGES)("Privacy Shop copy in $name says what the implementatio
     );
   });
 
-  it("never claims ThePickleHub handles money", () => {
-    // The closed pilot has no cart, no orders, no payments and no payouts.
-    // A privacy policy that implies otherwise creates an expectation the
-    // product cannot meet, and it is the kind of sentence that gets added by
-    // someone copying wording from a real marketplace.
-    const custodyClaims = [
-      /giữ tiền|ký quỹ|ví điện tử|thanh toán qua ThePickleHub/i,
-      /holds? funds|escrow|process(es|ing)? payments?|handles? payments?/i,
-    ];
-    for (const claim of custodyClaims) {
-      expect(all, `must not claim ${claim}`).not.toMatch(claim);
-    }
-    // …and it says the opposite explicitly.
-    expect(shop.description).toMatch(
-      /số tài khoản ngân hàng|bank account numbers?/i,
-    );
-    expect(shop.description).toMatch(/thông tin chi trả|payout details/i);
+  it("covers order, payment, refund, and sensitive banking data accurately", () => {
+    expect(all).toMatch(/đơn hàng|orders?/i);
+    expect(all).toMatch(/thanh toán|payments?/i);
+    expect(all).toMatch(/hoàn tiền|refunds?/i);
+    expect(shop.description).toMatch(/mật khẩu ngân hàng|online-banking passwords?/i);
+    expect(shop.description).toMatch(/dữ liệu thẻ|payment-card data/i);
   });
 
   it("describes deletion only as far as the foreign keys go", () => {
-    // Application + acceptance CASCADE with the account; moderation history
-    // survives with the actor nulled; a shop OWNER cannot delete their account
-    // at all (shops.owner_user_id is ON DELETE RESTRICT). Promising a clean
-    // "everything is deleted" would be the untrue version of this paragraph.
+    // Application + acceptance CASCADE. Orders keep their recipient snapshot
+    // but lose the buyer_user_id link. A shop OWNER cannot delete the account.
     expect(shop.retention).toMatch(/xoá cùng tài khoản|deleted with your account/i);
-    expect(shop.retention).toMatch(/không còn gắn với tài khoản đã xoá|no longer tied to a deleted account/i);
+    expect(shop.retention).toMatch(/liên kết tới tài khoản được gỡ|account link is removed/i);
+    expect(shop.retention).toMatch(/thông tin giao nhận|delivery details/i);
     expect(shop.retention).toMatch(
       /shop phải được xử lý trước|shop must be dealt with before/i,
     );

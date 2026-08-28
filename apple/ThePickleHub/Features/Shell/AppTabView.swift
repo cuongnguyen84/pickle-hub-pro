@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Primary tab shell. A shipping Shop pilot takes the centre slot and moves
+/// Primary tab shell. Shop takes the centre slot and moves
 /// the displaced Social and Tools surfaces into a visible More tab. A build
 /// without both Shop gates retains the existing five-tab navigation.
 /// Rankings, Tournaments and Profile are reached from the Home toolbar,
