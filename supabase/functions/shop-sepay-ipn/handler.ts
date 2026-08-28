@@ -85,15 +85,15 @@ export async function processSePayIpn(
   expectedSecret: string,
   store: SePayIpnStore,
 ): Promise<IpnResult> {
-  if (!secretMatches(presentedSecret, expectedSecret)) {
-    return { status: 401, body: { error: "unauthorized", code: "unauthorized" } };
-  }
-
   // SePay's dashboard sends this undocumented notification when the merchant
-  // clicks "Gửi test". It is only a connectivity probe: acknowledge it after
-  // authenticating the merchant secret, but never let it touch payment state.
+  // clicks "Gửi test". The probe may omit X-Secret-Key. It has no order or
+  // transaction semantics, so acknowledge it without ever touching state.
   if (object(payload)?.notification_type === "PAYMENT_SUCCESS") {
     return { status: 200, body: { success: true, result: "connectivity_test" } };
+  }
+
+  if (!secretMatches(presentedSecret, expectedSecret)) {
+    return { status: 401, body: { error: "unauthorized", code: "unauthorized" } };
   }
 
   const input = parseSePayIpn(payload);

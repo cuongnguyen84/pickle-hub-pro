@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
   console.log(JSON.stringify({
     function: "shop-sepay-ipn",
     status: result.status,
+    has_secret_header: Boolean(req.headers.get("X-Secret-Key")),
     notification_type: typeof payload === "object" && payload ? (payload as Record<string, unknown>).notification_type : null,
   }));
   return jsonResponse(result.body, result.status);

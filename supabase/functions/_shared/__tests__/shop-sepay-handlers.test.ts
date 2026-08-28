@@ -108,11 +108,11 @@ describe("shop SePay IPN", () => {
     expect(apply).not.toHaveBeenCalled();
   });
 
-  it("acknowledges SePay's authenticated dashboard probe without reconciling", async () => {
+  it("acknowledges SePay's headerless dashboard probe without reconciling", async () => {
     const apply = vi.fn();
     const result = await processSePayIpn(
       { notification_type: "PAYMENT_SUCCESS" },
-      "right",
+      "",
       "right",
       { apply },
     );

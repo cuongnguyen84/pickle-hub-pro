@@ -28,6 +28,9 @@ SEPAY_MERCHANT_ID=<sandbox merchant id>
 SEPAY_SECRET_KEY=<sandbox merchant secret>
 # SePay Gateway sends the merchant SECRET KEY in X-Secret-Key.
 # Do not set SEPAY_IPN_SECRET unless SePay explicitly provisions a separate IPN key.
+
+# The dashboard's PAYMENT_SUCCESS connectivity probe may omit X-Secret-Key.
+# The endpoint acknowledges only that no-op probe; real payment events still require the key.
 SITE_URL=https://www.thepicklehub.net
 ```
 
