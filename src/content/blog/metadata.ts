@@ -698,7 +698,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "vietnam-pickleball-tournament-calendar-2026",
     publishedDate: "2026-07-06",
-    updatedDate: "2026-08-14",
+    updatedDate: "2026-08-28",
     author: "Cuong Nguyen",
     tags: [
       "vietnam pickleball tournament calendar 2026",
@@ -1735,7 +1735,7 @@ export const blogMetadata: BlogPostMetadata[] = [
   {
     slug: "ppa-tour-asia-2026-complete-guide",
     publishedDate: "2026-04-16",
-    updatedDate: "2026-04-16",
+    updatedDate: "2026-08-28",
     author: "The PickleHub Team",
     tags: ["ppa tour asia", "tournament", "asia", "schedule", "guide"],
     ctaPath: "/tournaments",

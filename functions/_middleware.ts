@@ -1018,7 +1018,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v68 (2026-08-25) — the VI live hub links to /live/:id instead of
   // /vi/live/:id, so its cached body would otherwise keep pointing at URLs
   // that now 301.
-  const cacheKey = `pr:v68:${url.pathname}`;
+  // v69 (2026-08-28) — the Aug 20-23 PPA Asia stop is renamed from its
+  // placeholder "China Open 2" to the official "Skechers Shenzhen Open" on
+  // /tournaments + /vi/tournaments and in two blog bodies, and its status
+  // flips Upcoming -> Completed. Cached HTML would keep serving the wrong
+  // entity name and a finished event billed as upcoming.
+  const cacheKey = `pr:v69:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

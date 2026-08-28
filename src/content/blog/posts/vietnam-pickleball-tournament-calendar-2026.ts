@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "vietnam-pickleball-tournament-calendar-2026",
   publishedDate: "2026-07-06",
-  updatedDate: "2026-08-14",
+  updatedDate: "2026-08-28",
   author: "Cuong Nguyen",
   tags: [
     "vietnam pickleball tournament calendar 2026",
@@ -33,7 +33,7 @@ const post: BlogPost = {
         {
           heading: "Vietnam's 2026 pickleball calendar at a glance",
           content:
-            "Vietnam sits at the center of Asia's pickleball boom in 2026. In a single year the country hosts two PPA Tour Asia stops and the first-ever Pickleball World Cup staged in Asia — on top of a fast-growing domestic tournament scene. This is ThePickleHub's living calendar of every major event relevant to Vietnamese players and fans in 2026: the international tournaments on Vietnamese soil, the full regional PPA Tour Asia schedule, and the biggest domestic competitions. Bookmark it — ThePickleHub updates it as dates, venues and line-ups are confirmed (last updated: August 14, 2026). The key 2026 dates: the MB Hanoi Cup 2026 (Hanoi, April 1–5, completed), the Ho Chi Minh City Open 2026 (HCMC, August 6–9, completed — an all-Vietnamese men's doubles final), the Heineken Pickleball World Cup 2026 in Da Nang (August 30–September 6), the Kuala Lumpur Cup 2026 (September 9–13), the Hong Kong Slam 2026 (October 19–25, season finale) — and in November 2026, pickleball's first appearance at Vietnam's National Sports Games (Đại hội Thể thao Toàn quốc).",
+            "Vietnam sits at the center of Asia's pickleball boom in 2026. In a single year the country hosts two PPA Tour Asia stops and the first-ever Pickleball World Cup staged in Asia — on top of a fast-growing domestic tournament scene. This is ThePickleHub's living calendar of every major event relevant to Vietnamese players and fans in 2026: the international tournaments on Vietnamese soil, the full regional PPA Tour Asia schedule, and the biggest domestic competitions. Bookmark it — ThePickleHub updates it as dates, venues and line-ups are confirmed (last updated: August 28, 2026). The key 2026 dates: the MB Hanoi Cup 2026 (Hanoi, April 1–5, completed), the Ho Chi Minh City Open 2026 (HCMC, August 6–9, completed — an all-Vietnamese men's doubles final), the Heineken Pickleball World Cup 2026 in Da Nang (August 30–September 6), the Kuala Lumpur Cup 2026 (September 9–13), the Hong Kong Slam 2026 (October 19–25, season finale) — and in November 2026, pickleball's first appearance at Vietnam's National Sports Games (Đại hội Thể thao Toàn quốc).",
           internalLinks: [
             {
               text: "Live 2026 calendar with statuses & results — the tournament hub",
@@ -89,7 +89,7 @@ const post: BlogPost = {
         {
           heading: "Full PPA Tour Asia 2026 schedule (all 10 stops)",
           content:
-            "Vietnamese fans follow the whole regional tour, not only the home stops — and both of Vietnam's events sit inside a ten-stop season across seven markets. Here is the complete PPA Tour Asia 2026 calendar, with prize money, level and status as of August 14, 2026 (Vietnam stops in bold):",
+            "Vietnamese fans follow the whole regional tour, not only the home stops — and both of Vietnam's events sit inside a ten-stop season across seven markets. Here is the complete PPA Tour Asia 2026 calendar, with prize money, level and status as of August 28, 2026 (Vietnam stops in bold):",
           listItems: [
             "MB Hanoi Cup — Hanoi, Vietnam — Apr 1–5 — up to US$300,000 (1000-level) — Completed",
             "Panas Kuala Lumpur Open — Malaysia — May 13–17 — US$50,000 (500-level) — Completed",
@@ -98,7 +98,7 @@ const post: BlogPost = {
             "Tokyo Open — Japan — Jul 1–4 — US$50,000 (500-level) — Completed",
             "Singapore Open — Singapore — Jul 23–26 — US$70,000 (500-level) — Completed",
             "Ho Chi Minh City Open — Vietnam — Aug 6–9 — US$70,000 (500-level) — Completed",
-            "China Open 2 — China — Aug 20–23 — US$70,000 (500-level) — Upcoming",
+            "Skechers Shenzhen Open — Shenzhen, China — Aug 20–23 — US$70,000 (500-level) — Completed (listed as \"China Open 2\" on the original season announcement)",
             "Kuala Lumpur Cup — Malaysia — Sep 9–13 — up to US$300,000 (1000-level) — Upcoming",
             "Hong Kong Slam — Hong Kong — Oct 19–25 — up to US$1,100,000 — Upcoming (season finale)",
           ],
@@ -177,7 +177,7 @@ const post: BlogPost = {
         {
           heading: "Lịch giải pickleball Việt Nam 2026 — nhìn nhanh",
           content:
-            "Việt Nam đang ở tâm điểm của làn sóng pickleball châu Á năm 2026. Chỉ trong một năm, nước ta đăng cai hai chặng PPA Tour Asia và kỳ Pickleball World Cup đầu tiên tổ chức tại châu Á — cộng thêm một hệ thống giải trong nước đang bùng nổ. Đây là lịch giải do ThePickleHub cập nhật liên tục cho mọi sự kiện lớn liên quan tới người chơi và fan Việt Nam trong 2026: các giải quốc tế trên sân nhà, lịch PPA Tour Asia đầy đủ của khu vực, và những giải trong nước lớn nhất. Hãy lưu lại — ThePickleHub cập nhật khi ngày thi đấu, địa điểm và line-up được xác nhận (cập nhật lần cuối: 14/8/2026). Các mốc chính 2026: MB Hanoi Cup 2026 (Hà Nội, 1–5/4, đã xong), Ho Chi Minh City Open 2026 (TP.HCM, 6–9/8, đã xong — chung kết đôi nam toàn Việt), Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9), Kuala Lumpur Cup 2026 (9–13/9), Hong Kong Slam 2026 (19–25/10, chung kết mùa) — và tháng 11/2026, pickleball lần đầu xuất hiện tại Đại hội Thể thao Toàn quốc.",
+            "Việt Nam đang ở tâm điểm của làn sóng pickleball châu Á năm 2026. Chỉ trong một năm, nước ta đăng cai hai chặng PPA Tour Asia và kỳ Pickleball World Cup đầu tiên tổ chức tại châu Á — cộng thêm một hệ thống giải trong nước đang bùng nổ. Đây là lịch giải do ThePickleHub cập nhật liên tục cho mọi sự kiện lớn liên quan tới người chơi và fan Việt Nam trong 2026: các giải quốc tế trên sân nhà, lịch PPA Tour Asia đầy đủ của khu vực, và những giải trong nước lớn nhất. Hãy lưu lại — ThePickleHub cập nhật khi ngày thi đấu, địa điểm và line-up được xác nhận (cập nhật lần cuối: 28/8/2026). Các mốc chính 2026: MB Hanoi Cup 2026 (Hà Nội, 1–5/4, đã xong), Ho Chi Minh City Open 2026 (TP.HCM, 6–9/8, đã xong — chung kết đôi nam toàn Việt), Heineken Pickleball World Cup 2026 tại Đà Nẵng (30/8–6/9), Kuala Lumpur Cup 2026 (9–13/9), Hong Kong Slam 2026 (19–25/10, chung kết mùa) — và tháng 11/2026, pickleball lần đầu xuất hiện tại Đại hội Thể thao Toàn quốc.",
           internalLinks: [
             {
               text: "Lịch giải 2026 bản sống — trạng thái & kết quả cập nhật liên tục",
@@ -229,7 +229,7 @@ const post: BlogPost = {
         {
           heading: "Lịch PPA Tour Asia 2026 đầy đủ (cả 10 chặng)",
           content:
-            "Fan Việt theo dõi cả tour khu vực, không chỉ hai chặng sân nhà — và cả hai sự kiện của Việt Nam đều nằm trong một mùa giải 10 chặng trải khắp bảy thị trường. Đây là lịch PPA Tour Asia 2026 đầy đủ, kèm tiền thưởng, cấp độ và trạng thái tính tới 14/8/2026 (các chặng Việt Nam in đậm):",
+            "Fan Việt theo dõi cả tour khu vực, không chỉ hai chặng sân nhà — và cả hai sự kiện của Việt Nam đều nằm trong một mùa giải 10 chặng trải khắp bảy thị trường. Đây là lịch PPA Tour Asia 2026 đầy đủ, kèm tiền thưởng, cấp độ và trạng thái tính tới 28/8/2026 (các chặng Việt Nam in đậm):",
           listItems: [
             "MB Hanoi Cup — Hà Nội, Việt Nam — 1–5/4 — tối đa 300.000 USD (cấp 1000) — Đã xong",
             "Panas Kuala Lumpur Open — Malaysia — 13–17/5 — 50.000 USD (cấp 500) — Đã xong",
@@ -238,7 +238,7 @@ const post: BlogPost = {
             "Tokyo Open — Nhật Bản — 1–4/7 — 50.000 USD (cấp 500) — Đã xong",
             "Singapore Open — Singapore — 23–26/7 — 70.000 USD (cấp 500) — Đã xong",
             "Ho Chi Minh City Open — Việt Nam — 6–9/8 — 70.000 USD (cấp 500) — Đã xong",
-            "China Open 2 — Trung Quốc — 20–23/8 — 70.000 USD (cấp 500) — Sắp diễn ra",
+            "Skechers Shenzhen Open — Thâm Quyến, Trung Quốc — 20–23/8 — 70.000 USD (cấp 500) — Đã xong (lịch mùa giải công bố ban đầu ghi là \"China Open 2\")",
             "Kuala Lumpur Cup — Malaysia — 9–13/9 — tối đa 300.000 USD (cấp 1000) — Sắp diễn ra",
             "Hong Kong Slam — Hồng Kông — 19–25/10 — tối đa 1.100.000 USD — Sắp diễn ra (chung mùa)",
           ],

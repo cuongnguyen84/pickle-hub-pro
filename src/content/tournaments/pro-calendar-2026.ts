@@ -146,20 +146,24 @@ export const PRO_CALENDAR_2026: ProCalendarEvent[] = [
     blogVi: "/vi/blog/hcmc-open-2026-ket-qua",
   },
   {
-    id: "china-open-2-2026",
-    // City intentionally omitted — official announcements list dates/tier only
-    // so far (see docs/milestones.md CN-OPEN2-PREVIEW). Add city + preview
-    // links when the draw/venue is published on ppatourasia.
-    nameEn: "China Open 2",
-    nameVi: "China Open 2",
-    placeEn: "China",
-    placeVi: "Trung Quốc",
+    id: "shenzhen-open-2026",
+    // "China Open 2" was the placeholder name on the season announcement. The
+    // official event name is the Skechers Shenzhen Open — confirmed 2026-08-18
+    // from the PPA Tour Asia event page + pickleballtournaments.com listing,
+    // and used as the entity throughout our own preview/recap post. See
+    // docs/milestones.md CN-OPEN2-PREVIEW.
+    nameEn: "Skechers Shenzhen Open",
+    nameVi: "Skechers Shenzhen Open",
+    placeEn: "Shenzhen, China",
+    placeVi: "Thâm Quyến, Trung Quốc",
     startDate: "2026-08-20",
     endDate: "2026-08-23",
     tier: "PPA Asia 500",
     organizer: "PPA Tour Asia",
     prizeEn: "$70,000",
     prizeVi: "70.000 USD",
+    blogEn: "/blog/shenzhen-open-2026-preview",
+    blogVi: "/vi/blog/shenzhen-open-2026-lich-thi-dau-cach-xem",
   },
   {
     id: "pickleball-world-cup-2026",
