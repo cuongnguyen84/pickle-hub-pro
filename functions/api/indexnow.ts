@@ -37,13 +37,36 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 // Best-effort per-IP rate limit using the prerender KV (M7). If no KV binding
 // is present it degrades to no limit (secret auth still applies).
+//
+// "Best-effort" has to mean it too (2026-08-28): this runs on the request path
+// and a KV read/write that throws would propagate out of the handler and become
+// an opaque Cloudflare 502 HTML page. The rate limit is defence-in-depth behind
+// a secret, so failing open is strictly better than failing the request.
+//
+// This is not hypothetical. Workers KV caps writes at roughly one per second
+// per key, and every request from a given IP writes the SAME key. Two calls in
+// quick succession from one address are enough to make `put()` throw — which is
+// the most reproducible of the 502s in
+// docs/defects/2026-08-25-indexnow-endpoint-502.md, and the one that explains
+// the otherwise-unaccounted-for `retry-after: 60` on the failing response.
 async function isRateLimited(env: Env, ip: string): Promise<boolean> {
   if (!env.PRERENDER_CACHE) return false;
-  const key = `indexnow:rl:${ip}`;
-  const current = parseInt((await env.PRERENDER_CACHE.get(key)) || "0", 10);
-  if (current >= 10) return true; // >10 requests / 60s window
-  await env.PRERENDER_CACHE.put(key, String(current + 1), { expirationTtl: 60 });
-  return false;
+  try {
+    const key = `indexnow:rl:${ip}`;
+    const current = parseInt((await env.PRERENDER_CACHE.get(key)) || "0", 10);
+    if (current >= 10) return true; // >10 requests / 60s window
+    await env.PRERENDER_CACHE.put(key, String(current + 1), { expirationTtl: 60 });
+    return false;
+  } catch (err) {
+    console.error(`[indexnow] rate-limit KV unavailable, failing open: ${errorMessage(err)}`);
+    return false;
+  }
+}
+
+// Error → string without leaking a stack trace into any response body
+// (CodeQL js/stack-trace-exposure). Only `message` is ever surfaced.
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
 const HOST = "www.thepicklehub.net";
@@ -119,10 +142,31 @@ function buildAllUrls(viSlugs: string[]): string[] {
   return urls;
 }
 
+// How long we are willing to wait on api.indexnow.org before giving up. The
+// upstream ping is a courtesy to Bing/Yandex — it is never worth holding a
+// Pages Function open for it.
+export const INDEXNOW_TIMEOUT_MS = 10_000;
+
+/**
+ * POST the URL list to IndexNow.
+ *
+ * Contract (2026-08-28): this function NEVER throws. It used to be a bare
+ * `await fetch(...)` on the request path with no try/catch and no timeout, so
+ * a refused connection, a TLS failure or a hang at api.indexnow.org would
+ * escape the handler and let the edge answer with its own "Bad gateway" HTML
+ * page — status 502, `content-type: text/html`, no JSON. A caller that parses
+ * the response as JSON then gets a syntax error instead of a diagnosis, and
+ * nothing in the body says which failure fired. That is the class of outage
+ * recorded in docs/defects/2026-08-25-indexnow-endpoint-502.md.
+ *
+ * Every other outbound call in this file (`getViBlogSlugs`) already degrades
+ * instead of throwing. This one now does the same, and reports `status: 0`
+ * plus an `error` so the handler can say what went wrong in JSON.
+ */
 async function submitToIndexNow(
   apiKey: string,
   urls: string[]
-): Promise<{ status: number; body: string }> {
+): Promise<{ status: number; body: string; error?: string }> {
   const payload = {
     host: HOST,
     key: apiKey,
@@ -130,14 +174,23 @@ async function submitToIndexNow(
     urlList: urls,
   };
 
-  const res = await fetch(INDEXNOW_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(INDEXNOW_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(INDEXNOW_TIMEOUT_MS),
+    });
 
-  const body = await res.text();
-  return { status: res.status, body };
+    const body = await res.text();
+    return { status: res.status, body };
+  } catch (err) {
+    const message = errorMessage(err);
+    console.error(`[indexnow] upstream ping failed: ${message}`);
+    // status 0 = "we never got an HTTP answer", distinct from a real upstream
+    // status the handler would otherwise report verbatim.
+    return { status: 0, body: "", error: message };
+  }
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -210,16 +263,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   const result = await submitToIndexNow(env.INDEXNOW_KEY, urlsToSubmit);
+  const ok = result.status === 200 || result.status === 202;
 
+  // Always a JSON body, including on 502. The two failure modes are now
+  // distinguishable by the caller: `indexnow_status` > 0 means IndexNow
+  // answered and refused, `indexnow_status` 0 plus `indexnow_error` means we
+  // never reached it (timeout / DNS / TLS).
   return new Response(
     JSON.stringify({
       submitted: urlsToSubmit.length,
       urls: urlsToSubmit,
       indexnow_status: result.status,
       indexnow_response: result.body,
+      ...(result.error ? { indexnow_error: result.error } : {}),
     }),
     {
-      status: result.status === 200 || result.status === 202 ? 200 : 502,
+      status: ok ? 200 : 502,
       headers: { "Content-Type": "application/json" },
     }
   );
