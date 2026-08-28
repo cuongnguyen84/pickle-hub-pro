@@ -96,6 +96,35 @@ describe("OrderPaymentCard — the buyer", () => {
     const btn = screen.getByRole("button", { name: /Tôi đã chuyển khoản/ }) as HTMLButtonElement;
     expect(btn.disabled).toBe(false);
   });
+
+  it("uses SePay as the only money route when the gateway is enabled", async () => {
+    const onGatewayCheckout = vi.fn().mockResolvedValue(undefined);
+    render(
+      <OrderPaymentCard
+        info={{ ...BANK, bank: null, gateway: { enabled: true, provider: "sepay", status: "not_started" } }}
+        side="buyer"
+        onMark={vi.fn()}
+        onGatewayCheckout={onGatewayCheckout}
+      />,
+    );
+    expect(screen.queryByAltText(/QR/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Tôi đã chuyển khoản/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Thanh toán qua SePay/ }));
+    expect(onGatewayCheckout).toHaveBeenCalledOnce();
+  });
+
+  it("explains the short IPN wait after checkout has started", () => {
+    render(
+      <OrderPaymentCard
+        info={{ ...BANK, bank: null, gateway: { enabled: true, provider: "sepay", status: "initiated" } }}
+        side="buyer"
+        onMark={vi.fn()}
+        onGatewayCheckout={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/chờ SePay xác nhận/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Tiếp tục thanh toán/ })).toBeTruthy();
+  });
 });
 
 describe("OrderPaymentCard — the seller", () => {
@@ -136,5 +165,17 @@ describe("OrderPaymentCard — the seller", () => {
   it("points the seller at their own settings when the trio is empty", () => {
     render(<OrderPaymentCard info={{ ...BANK, bank: null }} side="seller" onMark={vi.fn()} />);
     expect(screen.getByText(/Cài đặt shop/)).toBeTruthy();
+  });
+
+  it("does not ask the seller to reconcile a SePay payment", () => {
+    render(
+      <OrderPaymentCard
+        info={{ ...BANK, bank: null, gateway: { enabled: true, provider: "sepay", status: "initiated" } }}
+        side="seller"
+        onMark={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/tự động xác nhận/)).toBeTruthy();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

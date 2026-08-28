@@ -1,5 +1,5 @@
 // ============================================================================
-// P4b — the bank-transfer card, one component for both sides of the order.
+// Payment card — manual seller VietQR or automatic SePay, for both parties.
 // ----------------------------------------------------------------------------
 // Two people look at the same four facts (bank, account, amount, memo) and
 // each has exactly one button. Splitting that into a buyer card and a seller
@@ -15,13 +15,13 @@
 //                               a buyer who mis-tapped still needs the number
 //   seller confirmed          → done, QR gone, nothing left to pay
 //
-// The QR is an <img> against img.vietqr.io. No API key, no merchant account,
-// no webhook — the same helper event fees (20260512130000) and team-match fees
-// (20260701120001) have used all along.
+// Exactly one recipient route is rendered. When SePay is enabled the server
+// withholds seller bank details, so a buyer can never see gateway + manual QR
+// for the same order. Secrets and IPN handling remain server-side.
 // ============================================================================
 
 import { useState } from "react";
-import { CheckCircle2, Clock, Copy, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock, Copy, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
 import { generateVietQRUrl } from "@/lib/payment/vietqr";
 import { findBankByCode } from "@/lib/payment/banks";
 import { formatVnd } from "@/lib/shop/publicCatalog";
@@ -53,6 +53,13 @@ const COPY = {
   noBankSeller:
     "Shop chưa điền thông tin ngân hàng, nên người mua không thấy mã QR. Điền trong Cài đặt shop.",
   error: "Không lưu được. Thử lại giúp em.",
+  gatewayH: "Thanh toán an toàn qua SePay",
+  gatewayBody: "SePay tạo mã thanh toán và tự động đối soát. ThePickleHub không lưu thông tin ngân hàng hoặc thẻ của anh/chị.",
+  gatewayPay: "Thanh toán qua SePay",
+  gatewayContinue: "Tiếp tục thanh toán",
+  gatewayBusy: "Đang mở SePay…",
+  gatewaySeller: "SePay sẽ tự động xác nhận khi tiền về; shop không cần bấm đối soát thủ công.",
+  gatewayPending: "Nếu anh/chị vừa thanh toán, hệ thống đang chờ SePay xác nhận — thường chỉ mất vài giây.",
 };
 
 export interface OrderPaymentCardProps {
@@ -61,6 +68,7 @@ export interface OrderPaymentCardProps {
   /** Cancelled orders render nothing — there is no money left to move. */
   cancelled?: boolean;
   onMark: () => Promise<unknown>;
+  onGatewayCheckout?: () => Promise<unknown>;
 }
 
 function CopyRow({ label, value }: { label: string; value: string }) {
@@ -94,7 +102,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function OrderPaymentCard({ info, side, cancelled, onMark }: OrderPaymentCardProps) {
+export function OrderPaymentCard({ info, side, cancelled, onMark, onGatewayCheckout }: OrderPaymentCardProps) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -104,6 +112,7 @@ export function OrderPaymentCard({ info, side, cancelled, onMark }: OrderPayment
   const claimed = !!info.claimed_at;
   const bank = info.bank ?? null;
   const bankName = bank ? findBankByCode(bank.code)?.shortName ?? bank.code : null;
+  const gateway = info.gateway?.enabled ? info.gateway : null;
 
   const qrUrl =
     bank && !confirmed
@@ -128,6 +137,19 @@ export function OrderPaymentCard({ info, side, cancelled, onMark }: OrderPayment
     }
   };
 
+  const runGateway = async () => {
+    if (!onGatewayCheckout) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      await onGatewayCheckout();
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <section className="tl-shop-card" aria-labelledby="ord-pay">
       <h2 className="tl-shop-h2" id="ord-pay">{COPY.h}</h2>
@@ -139,11 +161,44 @@ export function OrderPaymentCard({ info, side, cancelled, onMark }: OrderPayment
         </p>
       ) : (
         <>
-          {!bank && (
+          {gateway ? (
+            <>
+              <p className="tl-shop-notice tl-shop-notice--info">
+                <ShieldCheck size={16} aria-hidden="true" />
+                <span><strong>{COPY.gatewayH}</strong><br />{COPY.gatewayBody}</span>
+              </p>
+              {gateway.status === "initiated" && (
+                <p className="tl-shop-notice tl-shop-notice--warn">
+                  <Clock size={16} aria-hidden="true" />
+                  <span>{COPY.gatewayPending}</span>
+                </p>
+              )}
+              {side === "seller" ? (
+                <p className="tl-shop-hint">{COPY.gatewaySeller}</p>
+              ) : (
+                <div className="tl-shop-cta-row">
+                  <button
+                    type="button"
+                    className="tl-shop-btn tl-shop-btn--primary"
+                    disabled={busy || !onGatewayCheckout}
+                    aria-busy={busy || undefined}
+                    onClick={() => void runGateway()}
+                  >
+                    {busy
+                      ? <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                      : <ExternalLink size={16} aria-hidden="true" />}
+                    {busy
+                      ? COPY.gatewayBusy
+                      : gateway.status === "initiated" ? COPY.gatewayContinue : COPY.gatewayPay}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : !bank && (
             <p className="tl-shop-hint">{side === "seller" ? COPY.noBankSeller : COPY.noBank}</p>
           )}
 
-          {bank && (
+          {!gateway && bank && (
             <>
               {qrUrl && (
                 <p style={{ textAlign: "center", margin: "4px 0 8px" }}>
@@ -176,13 +231,13 @@ export function OrderPaymentCard({ info, side, cancelled, onMark }: OrderPayment
             </>
           )}
 
-          {claimed && (
+          {!gateway && claimed && (
             <p className="tl-shop-notice tl-shop-notice--warn">
               <Clock size={16} aria-hidden="true" />
               <span>{side === "seller" ? COPY.claimedSeller : COPY.claimed}</span>
             </p>
           )}
-          {!claimed && side === "seller" && <p className="tl-shop-hint">{COPY.notClaimedSeller}</p>}
+          {!gateway && !claimed && side === "seller" && <p className="tl-shop-hint">{COPY.notClaimedSeller}</p>}
 
           {failed && (
             <p className="tl-shop-notice tl-shop-notice--danger" role="alert">{COPY.error}</p>
@@ -190,7 +245,7 @@ export function OrderPaymentCard({ info, side, cancelled, onMark }: OrderPayment
 
           {/* The buyer's button disappears once they have pressed it; the
               seller's stays until the money is actually confirmed. */}
-          {(side === "seller" || !claimed) && (
+          {!gateway && (side === "seller" || !claimed) && (
             <div className="tl-shop-cta-row">
               <button
                 type="button"

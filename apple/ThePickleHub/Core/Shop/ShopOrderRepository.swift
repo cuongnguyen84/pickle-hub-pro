@@ -23,6 +23,7 @@ protocol ShopOrderRepository: Sendable {
     func paymentInfo(code: String) async throws -> ShopOrderPaymentInfo
     func claimPayment(code: String) async throws -> ShopOrderPaymentInfo
     func confirmPayment(code: String) async throws -> ShopOrderPaymentInfo
+    func startSePayCheckout(code: String) async throws -> ShopSePayCheckout
 }
 
 struct SupabaseShopOrderRepository: ShopOrderRepository {
@@ -63,11 +64,19 @@ struct SupabaseShopOrderRepository: ShopOrderRepository {
         return try await mergedInfo(code: code, marks: marks)
     }
 
+    func startSePayCheckout(code: String) async throws -> ShopSePayCheckout {
+        struct Body: Encodable { let code: String }
+        return try await client.functions.invoke(
+            "shop-sepay-checkout",
+            options: FunctionInvokeOptions(body: Body(code: code))
+        )
+    }
+
     private func mergedInfo(code: String, marks: PaymentMarks) async throws -> ShopOrderPaymentInfo {
         let info = try await paymentInfo(code: code)
         return ShopOrderPaymentInfo(found: info.found, method: info.method, amountVND: info.amountVND,
                                     memo: info.memo, claimedAt: marks.claimedAt,
-                                    confirmedAt: marks.confirmedAt, bank: info.bank)
+                                    confirmedAt: marks.confirmedAt, bank: info.bank, gateway: info.gateway)
     }
 
     private struct PaymentMarks: Decodable {

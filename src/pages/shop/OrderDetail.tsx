@@ -27,7 +27,7 @@ import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderSt
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
 import { OrderPaymentCard } from "@/components/shop/OrderPaymentCard";
 import { useOrder, useOrderTransition } from "@/hooks/shop/useOrders";
-import { useClaimPayment, useOrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
+import { useClaimPayment, useOrderPaymentInfo, useSePayCheckout } from "@/hooks/shop/useOrderPayment";
 import { usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatVnd } from "@/lib/shop/publicCatalog";
@@ -73,6 +73,8 @@ const COPY = {
   // details — the buttons are under "Người bán". ThePickleHub holds no money.
   placedBank: (shop: string) =>
     `Đã gửi đơn tới người bán. Anh/chị nhắn hoặc gọi ${shop} để nhận thông tin chuyển khoản — nút ở mục Người bán bên dưới. ThePickleHub không nhận và không giữ tiền.`,
+  placedSePay:
+    "Đã gửi đơn tới người bán. Anh/chị thanh toán qua SePay ở mục bên dưới; hệ thống sẽ tự xác nhận khi tiền về.",
   // EN: ThePickleHub isn't connected to any courier… check the code yourself.
   trackingNote:
     "ThePickleHub chưa nối với đơn vị vận chuyển nên không theo dõi được tự động — anh/chị tra mã này trên trang của hãng.",
@@ -81,6 +83,7 @@ const COPY = {
   payCod: "Trả khi nhận hàng.",
   payBank:
     "Chuyển khoản trước. Anh/chị trao đổi trực tiếp với shop; ThePickleHub không nhận và không giữ tiền của đơn này.",
+  paySePay: "Chuyển khoản qua cổng SePay; hệ thống tự động đối soát.",
   noteLabel: "Ghi chú",
   confirmCancelTitle: "Huỷ đơn này?",
   confirmCancelBody:
@@ -108,6 +111,7 @@ export default function OrderDetail() {
   // the RPC would answer `bank: null` after a round trip nobody reads.
   const paymentQ = useOrderPaymentInfo(code ?? null, order?.payment_method === "bank_transfer");
   const claim = useClaimPayment();
+  const sepay = useSePayCheckout();
   const shopQ = usePublicShopPage(order?.shop?.slug ?? null);
   const contacts = usableContacts(shopQ.data?.contacts as PublicContact[] | undefined);
 
@@ -218,7 +222,7 @@ export default function OrderDetail() {
           <div>
             {order.payment_method === "cod"
               ? COPY.placedCod(shopName)
-              : COPY.placedBank(shopName)}
+              : paymentQ.data?.gateway?.enabled ? COPY.placedSePay : COPY.placedBank(shopName)}
           </div>
         </div>
       )}
@@ -276,6 +280,7 @@ export default function OrderDetail() {
           side="buyer"
           cancelled={order.status === "cancelled"}
           onMark={() => claim.mutateAsync(order.code)}
+          onGatewayCheckout={() => sepay.mutateAsync(order.code)}
         />
       )}
 
@@ -369,7 +374,9 @@ export default function OrderDetail() {
       <section aria-labelledby="ord-pay">
         <h2 className="tl-shop-h2" id="ord-pay">{COPY.paymentH}</h2>
         <p className="tl-shop-flush">
-          {order.payment_method === "cod" ? <strong>{COPY.payCod}</strong> : COPY.payBank}
+          {order.payment_method === "cod"
+            ? <strong>{COPY.payCod}</strong>
+            : paymentQ.data?.gateway?.enabled ? COPY.paySePay : COPY.payBank}
         </p>
         <p className="tl-shop-hint">Đặt lúc {formatWhen(order.created_at)}</p>
       </section>

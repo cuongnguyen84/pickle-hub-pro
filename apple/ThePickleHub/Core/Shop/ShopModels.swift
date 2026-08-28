@@ -257,7 +257,7 @@ enum ShopRoute: Hashable {
 enum ShopPaymentMethod: String, Codable, CaseIterable, Sendable {
     case cod
     case bankTransfer = "bank_transfer"
-    var title: String { self == .cod ? "Thanh toán khi nhận hàng" : "Chuyển khoản VietQR" }
+    var title: String { self == .cod ? "Thanh toán khi nhận hàng" : "Chuyển khoản trước" }
 }
 
 enum ShopOrderStatus: String, Codable, Sendable {
@@ -329,6 +329,11 @@ struct ShopOrderPaymentInfo: Codable, Equatable, Sendable {
         let accountName: String
         enum CodingKeys: String, CodingKey { case code; case accountNumber = "account_number"; case accountName = "account_name" }
     }
+    struct Gateway: Codable, Equatable, Sendable {
+        let enabled: Bool
+        let provider: String
+        let status: String
+    }
     let found: Bool
     let method: ShopPaymentMethod?
     let amountVND: Int?
@@ -336,9 +341,23 @@ struct ShopOrderPaymentInfo: Codable, Equatable, Sendable {
     let claimedAt: String?
     let confirmedAt: String?
     let bank: Bank?
+    let gateway: Gateway?
     enum CodingKeys: String, CodingKey {
-        case found, method, memo, bank
+        case found, method, memo, bank, gateway
         case amountVND = "amount_vnd"; case claimedAt = "claimed_at"; case confirmedAt = "confirmed_at"
+    }
+}
+
+struct ShopSePayCheckout: Codable, Equatable, Sendable, Identifiable {
+    var id: String { invoiceNumber }
+    let checkoutURL: String
+    let fields: [String: String]
+    let invoiceNumber: String
+    let environment: String
+    enum CodingKeys: String, CodingKey {
+        case fields, environment
+        case checkoutURL = "checkout_url"
+        case invoiceNumber = "invoice_number"
     }
 }
 

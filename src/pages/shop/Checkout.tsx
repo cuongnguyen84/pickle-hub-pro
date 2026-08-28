@@ -30,6 +30,7 @@ import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { cartGroupFor, useCartView } from "@/hooks/shop/useCart";
 import { useLastShippingAddress, useOrderCreate } from "@/hooks/shop/useOrders";
 import { usePublicShopPage } from "@/hooks/shop/usePublicShop";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { formatVnd } from "@/lib/shop/publicCatalog";
 import { optionSummary } from "@/lib/shop/orderFormat";
 import { shopErrorDetail, shopErrorReason, shopReasonMessage } from "@/lib/shop/errors";
@@ -65,19 +66,23 @@ const COPY = {
   addressPlaceholder:
     "Số 12 ngõ 5 Trần Duy Hưng, phường Trung Hoà, quận Cầu Giấy, Hà Nội",
   // EN: Pay on delivery (COD) / Bank transfer first — the shop will send details
-  // R5 (cắt chữ): mỗi radio còn ĐÚNG một dòng. Câu "ThePickleHub không nhận
-  // tiền, không giữ tiền" chỉ nói một lần, ngay cạnh nút đặt đơn.
+  // R5 (cắt chữ): mỗi radio còn ĐÚNG một dòng. Disclosure đổi theo cùng setting
+  // mà backend dùng, để manual seller-transfer và platform gateway không nói
+  // hai điều trái nhau trên một màn hình.
   codLabel: "Trả khi nhận hàng (COD)",
   codHint: "Anh/chị trả tiền trực tiếp cho người giao.",
-  bankLabel: "Chuyển khoản trước — shop sẽ gửi thông tin",
-  bankHint: "Đặt xong, anh/chị nhắn Zalo hoặc gọi shop để nhận thông tin chuyển khoản.",
+  bankLabel: (sepay: boolean) => sepay ? "Chuyển khoản tự động qua SePay" : "Chuyển khoản trước — shop sẽ gửi thông tin",
+  bankHint: (sepay: boolean) => sepay
+    ? "Đặt xong, anh/chị thanh toán trên cổng SePay; hệ thống tự đối soát khi tiền về."
+    : "Đặt xong, anh/chị nhắn Zalo hoặc gọi shop để nhận thông tin chuyển khoản.",
   // EN: This fee applies to every province… no promised delivery date.
   // R5 (cắt chữ): hai đoạn gộp một, không mất thông tin nào.
   shipEveryProvince:
     "Phí này áp dụng mọi tỉnh thành. ThePickleHub không thu thêm phí nào và chưa nối với đơn vị vận chuyển, nên người bán sẽ đưa mã vận đơn để anh/chị tự tra.",
   // EN: Pressing "Order" sends a request to {shop}. They confirm before shipping.
-  submitNote: (shop: string) =>
-    `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Người bán xác nhận rồi mới gửi hàng. ThePickleHub không nhận tiền và không giữ tiền của đơn này.`,
+  submitNote: (shop: string, sepay: boolean) => sepay
+    ? `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Nếu chọn chuyển khoản, bước tiếp theo sẽ mở cổng SePay để thanh toán và tự đối soát.`
+    : `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Người bán xác nhận rồi mới gửi hàng. ThePickleHub không nhận tiền và không giữ tiền của đơn này.`,
   submit: "Đặt đơn",
   submitBusy: "Đang gửi đơn…",
   submitRetry: "Thử lại",
@@ -151,6 +156,8 @@ export default function Checkout() {
   const shopQ = usePublicShopPage(shopSlug ?? null);
   const lastAddress = useLastShippingAddress();
   const create = useOrderCreate();
+  const settings = useSystemSettings();
+  const sePayEnabled = settings.data?.shop_sepay_gateway_enabled === true;
 
   const group = cartGroupFor(cart.data, shopSlug);
   const [form, setForm] = useState<Form>({ name: "", phone: "", address: "", note: "" });
@@ -523,9 +530,9 @@ export default function Checkout() {
               checked={payment === "bank_transfer"}
               onChange={() => setPayment("bank_transfer")}
             />
-            <span>{COPY.bankLabel}</span>
+            <span>{COPY.bankLabel(sePayEnabled)}</span>
           </label>
-          <p className="tl-shop-hint">{COPY.bankHint}</p>
+          <p className="tl-shop-hint">{COPY.bankHint(sePayEnabled)}</p>
         </fieldset>
       </section>
 
@@ -599,7 +606,7 @@ export default function Checkout() {
           {blocked && (
             <p className="tl-shop-hint" id="co-blocked">{COPY.errBlocked}</p>
           )}
-          <p className="tl-shop-hint" id="co-submit-note">{COPY.submitNote(shopName)}</p>
+          <p className="tl-shop-hint" id="co-submit-note">{COPY.submitNote(shopName, sePayEnabled)}</p>
         </div>
       </section>
     </>,

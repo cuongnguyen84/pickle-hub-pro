@@ -38,11 +38,11 @@ describe("Edge Function auth registry", () => {
     const snapshot = loadRepositorySnapshot(projectRoot);
     const findings = validateRegistrySnapshot(snapshot);
 
-    // 81 since P2a.2 added shop-media-lifecycle. The count is pinned on
+    // 84 since Shop added buyer checkout + SePay IPN. The count is pinned on
     // purpose: a new Edge Function that nobody classified should red this gate.
-    expect(snapshot.sourceFunctions).toHaveLength(82);
-    expect(snapshot.configFunctions).toHaveLength(82);
-    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(82);
+    expect(snapshot.sourceFunctions).toHaveLength(84);
+    expect(snapshot.configFunctions).toHaveLength(84);
+    expect(Object.keys(snapshot.registry.functions ?? {})).toHaveLength(84);
     expect(snapshot.registry.enforcement).toBe("strict");
     expect(findings).toEqual([]);
   });

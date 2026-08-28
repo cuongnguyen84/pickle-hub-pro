@@ -126,7 +126,7 @@ struct ShopCheckoutView: View {
                     ForEach(ShopPaymentMethod.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 Text(model.paymentMethod == .bankTransfer
-                     ? "Sau khi đặt đơn, anh/chị sẽ nhận mã VietQR nếu shop đã khai báo tài khoản. Chuyển khoản được shop đối soát thủ công."
+                     ? "Sau khi đặt đơn, ứng dụng sẽ hiển thị cổng SePay hoặc VietQR mà shop đang sử dụng, cùng trạng thái đối soát."
                      : "Thanh toán trực tiếp khi nhận hàng.")
                     .font(TLType.bodySans(11)).foregroundStyle(TLColor.fg3)
             }

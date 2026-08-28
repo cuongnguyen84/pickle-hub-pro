@@ -43,6 +43,9 @@ vi.mock("@/components/shop/CartLink", () => ({
 vi.mock("@/hooks/shop/usePublicShop", () => ({
   usePublicShopPage: () => ({ data: { found: true, contacts: [], shop: { name: "Shop A" } } }),
 }));
+vi.mock("@/hooks/useSystemSettings", () => ({
+  useSystemSettings: () => ({ data: { shop_sepay_gateway_enabled: false } }),
+}));
 
 const refetchMock = vi.fn();
 const cartGroup: CartGroup = {

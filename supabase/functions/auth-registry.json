@@ -886,6 +886,30 @@
       ],
       "status": "classified"
     },
+    "shop-sepay-checkout": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": false,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "user.write.user_jwt.resource_scope"
+      ],
+      "status": "classified",
+      "notes": "Bearer JWT is verified internally; the party-scoped prepare RPC derives the buyer identity and freezes invoice plus amount before signing."
+    },
+    "shop-sepay-ipn": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "internal_service.callback.shared_secret.shared_secret"
+      ],
+      "status": "classified",
+      "notes": "SePay authenticates with X-Secret-Key. The service role is held only by the adapter and can call the narrow idempotent reconciliation RPC."
+    },
     "shop-media-lifecycle": {
       "verify_jwt": false,
       "service_role": {
