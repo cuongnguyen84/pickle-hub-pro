@@ -26,6 +26,7 @@ import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
 import { OrderPaymentCard } from "@/components/shop/OrderPaymentCard";
+import { OrderRefundCard } from "@/components/shop/OrderRefundCard";
 import { useOrder, useOrderTransition } from "@/hooks/shop/useOrders";
 import { useClaimPayment, useOrderPaymentInfo, useSePayCheckout } from "@/hooks/shop/useOrderPayment";
 import { usePublicShopPage } from "@/hooks/shop/usePublicShop";
@@ -258,6 +259,12 @@ export default function OrderDetail() {
         cancelReason={order.cancel_reason}
         cancelledAt={cancelEvent?.created_at ?? null}
         shopName={shopName}
+      />
+
+      <OrderRefundCard
+        refundDueVnd={order.refund_due_vnd}
+        refundedAt={order.refunded_at}
+        side="buyer"
       />
 
       {actionError && (

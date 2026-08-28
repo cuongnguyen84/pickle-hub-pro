@@ -190,9 +190,24 @@ struct ShopOrderDetailView: View {
                     moneyRow("Phí vận chuyển", order.shippingFeeVND)
                     moneyRow("Tổng cộng", order.totalVND, bold: true)
                 }
+                if let due = order.refundDueVND { refundCard(due, refundedAt: order.refundedAt) }
                 if let payment = model.payment { paymentCard(payment, cancelled: order.status == .cancelled) }
             }
             .padding(TLSpacing.lg)
+        }
+    }
+
+    /// A paid order that got cancelled: the promise, then the receipt.
+    private func refundCard(_ due: Int, refundedAt: String?) -> some View {
+        card {
+            Text("Hoàn tiền").font(TLType.titleSans(15))
+            if refundedAt != nil {
+                Label("Shop đã chuyển trả \(ShopMoney.vnd(due)). Kiểm tra tài khoản của anh/chị.",
+                      systemImage: "checkmark.circle.fill").foregroundStyle(TLColor.accentText)
+            } else {
+                Text("Shop sẽ chuyển trả \(ShopMoney.vnd(due)) về tài khoản anh/chị đã dùng để thanh toán.")
+                    .font(TLType.bodySans(12)).foregroundStyle(TLColor.fg2)
+            }
         }
     }
 

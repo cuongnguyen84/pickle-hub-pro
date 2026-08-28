@@ -217,11 +217,20 @@ Rules:
   Vietnamese diacritics in the title, summary, headings, and paragraphs.
 - Keep player, brand, tournament, PPA, MLP, APP, and DUPR names accurate.
 - Title: lead with the most searchable entity (tournament, player, or brand
-  name, plus the year when the source gives one) and keep the essential part
-  within the first 65 characters.
-- The Vietnamese title and headings must use phrases Vietnamese fans actually
-  type into search ("lịch thi đấu", "kết quả", "công bố", "vô địch", "trực
-  tiếp"), not a word-for-word translation of the English title.
+  name) and keep the essential part within the first 65 characters.
+- Any year in the title or body must be the year of the event being described,
+  taken from SOURCE MATERIAL. A stale year copied from the source's archive
+  furniture, or a season label that contradicts the publication date, is a
+  factual error — omit the year entirely rather than guess. If the source
+  gives no year, do not add one.
+- The Vietnamese title and headings must read like phrases Vietnamese fans
+  actually type into search, not a word-for-word translation of the English
+  title. Choose that wording from what the article ACTUALLY contains: use
+  "lịch thi đấu" only for an article that gives a schedule, "kết quả" only for
+  one that reports results, "trực tiếp" only where broadcast details appear.
+  Never prepend a search phrase to an article that does not deliver it — a
+  coaching or technique piece titled "Lịch thi đấu và ..." is a hard error.
+  If none of those phrases genuinely fits, title the article plainly.
 - summary must be 120–300 characters, must not repeat the title, and must read
   like a search snippet: name the main entity and state the concrete news so a
   searcher knows why to click.

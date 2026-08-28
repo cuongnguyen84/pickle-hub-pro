@@ -12,6 +12,7 @@
 
 import { Suspense, lazy, type ReactNode } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useShopPilotAccess } from "@/hooks/shop/useSellerApplication";
 import { SHOP_PUBLIC_OPEN } from "@/lib/shop/shopGate";
 
 // Chunk riêng, có lý do đo được: cổng này được import THẲNG trong App.tsx (nó
@@ -25,12 +26,16 @@ export function ShopGate({ children }: { children: ReactNode }) {
   // Cổng mở thì không hỏi vai trò làm gì — mọi truy vấn user_roles ở đây là
   // một truy vấn thừa trên mọi trang chợ, cho mọi người, mãi mãi.
   const { isAdmin, isLoading } = useAdminAuth();
+  // Nhóm tester của pilot (bảng shop_pilot_members, admin thêm bằng tay) đi
+  // qua cổng như admin. Cùng một allowlist với người được nộp đơn bán — "trong
+  // pilot" là một chuyện, không phải hai.
+  const pilot = useShopPilotAccess();
 
   if (SHOP_PUBLIC_OPEN) return <>{children}</>;
   // Chưa biết là ai: đứng yên. Vẽ trang đóng cửa trước rồi thay bằng chợ khi
   // biết là admin sẽ làm màn hình nháy ở mỗi lần chuyển trang.
-  if (isLoading) return null;
-  if (isAdmin) return <>{children}</>;
+  if (isLoading || pilot.isLoading) return null;
+  if (isAdmin || pilot.data === true) return <>{children}</>;
   return (
     <Suspense fallback={null}>
       <ShopComingSoon />
