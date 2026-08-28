@@ -44,6 +44,10 @@ const orderState = vi.hoisted(() => ({
   },
 }));
 
+const contactState = vi.hoisted(() => ({
+  data: [] as Array<{ id: string; type: string; href: string; label: string | null }>,
+}));
+
 vi.mock("react-router-dom", () => ({
   Link: ({ children, to, ...rest }: { children: React.ReactNode; to: string }) => (
     <a href={to} {...rest}>{children}</a>
@@ -75,7 +79,7 @@ vi.mock("@/hooks/shop/useOrderPayment", () => ({
   }),
 }));
 vi.mock("@/hooks/shop/usePublicShop", () => ({
-  usePublicShopPage: () => ({ data: { contacts: [] } }),
+  usePublicShopPage: () => ({ data: { contacts: contactState.data } }),
 }));
 
 vi.mock("@/hooks/shop/useOrders", () => ({
@@ -91,6 +95,8 @@ vi.mock("@/hooks/shop/useOrders", () => ({
 const { default: OrderDetail } = await import("../OrderDetail");
 
 beforeEach(() => {
+  orderState.data.status = "shipped";
+  contactState.data = [];
   mocks.confirm.mockReset().mockResolvedValue(true);
   mocks.transition.mockReset().mockResolvedValue(undefined);
   mocks.refetch.mockReset();
@@ -118,5 +124,29 @@ describe("buyer delivery confirmation", () => {
 
     await waitFor(() => expect(mocks.confirm).toHaveBeenCalledTimes(1));
     expect(mocks.transition).not.toHaveBeenCalled();
+  });
+
+  it("hands a delivered-order return request to the shop's approved Zalo", () => {
+    orderState.data.status = "delivered";
+    contactState.data = [{
+      id: "contact-1",
+      type: "zalo",
+      href: "https://zalo.me/shop-a",
+      label: "Zalo Shop A",
+    }];
+
+    render(<OrderDetail />);
+
+    const link = screen.getByRole("link", { name: "Liên hệ Zalo của shop" });
+    expect(link.getAttribute("href")).toBe("https://zalo.me/shop-a");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(screen.queryByRole("button", { name: "Tôi đã nhận hàng" })).toBeNull();
+  });
+
+  it("does not invent a Zalo link when the shop has none approved", () => {
+    orderState.data.status = "delivered";
+    render(<OrderDetail />);
+    expect(screen.queryByRole("link", { name: "Liên hệ Zalo của shop" })).toBeNull();
+    expect(screen.getByText(/Shop chưa có Zalo được duyệt/)).toBeTruthy();
   });
 });
