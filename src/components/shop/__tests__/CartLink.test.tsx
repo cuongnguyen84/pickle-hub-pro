@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 const state = vi.hoisted(() => ({ signedIn: true, count: 0 as number | null }));
 
@@ -14,7 +14,7 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 vi.mock("@/hooks/shop/useCart", () => ({ useCartCount: () => state.count }));
 
-const { ShopCartLink } = await import("../CartLink");
+const { CartAddedToast, ShopCartLink } = await import("../CartLink");
 
 afterEach(() => {
   cleanup();
@@ -44,5 +44,16 @@ describe("buyer shortcuts", () => {
     render(<ShopCartLink />);
     expect(screen.getByRole("link", { name: "Giỏ hàng, 12 món" })).toBeTruthy();
     expect(screen.getByText("12")).toBeTruthy();
+  });
+
+  it("lets the buyer open or dismiss the added-to-cart notice", () => {
+    const onClose = vi.fn();
+    render(<CartAddedToast open onClose={onClose} />);
+
+    expect(screen.getByRole("link", { name: "Xem giỏ" }).getAttribute("href")).toBe(
+      "/shop/cart",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Đóng thông báo" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
