@@ -68,7 +68,9 @@ BEGIN
   IF NEW.status = 'cancelled' AND OLD.status IS DISTINCT FROM 'cancelled'
      AND NEW.payment_confirmed_at IS NOT NULL
      AND NEW.refund_due_vnd IS NULL THEN
-    NEW.refund_due_vnd := NEW.total_vnd;
+    -- total_vnd is GENERATED and not yet computed in a BEFORE trigger, so it
+    -- reads NULL here; the two inputs it is generated from are real.
+    NEW.refund_due_vnd := NEW.items_total_vnd + NEW.shipping_fee_vnd;
   END IF;
   RETURN NEW;
 END $$;
@@ -141,9 +143,12 @@ BEGIN
   RETURN NEW;
 END $$;
 
+-- `OF status`, not `OF refund_due_vnd`: an UPDATE OF list matches the SET
+-- clause of the statement, and the debt is written by the BEFORE trigger, not
+-- by any statement's SET. The function itself checks the column moved.
 DROP TRIGGER IF EXISTS trg_shop_order_push_refund_due ON public.shop_orders;
 CREATE TRIGGER trg_shop_order_push_refund_due
-  AFTER UPDATE OF refund_due_vnd ON public.shop_orders
+  AFTER UPDATE OF status ON public.shop_orders
   FOR EACH ROW EXECUTE FUNCTION public.tg_shop_order_push_refund_due();
 
 -- ─── 4. The seller says the money went back ─────────────────────────────────
