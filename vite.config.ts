@@ -128,7 +128,12 @@ return ({
         resolvedOutDir = path.resolve(resolved.root, resolved.build.outDir);
         copiesPublicDir = Boolean(resolved.build.copyPublicDir && resolved.publicDir);
       },
-      closeBundle() {
+      closeBundle(error?: Error) {
+        // Rollup also calls closeBundle when the BUILD failed — before
+        // prepareOutDir ever copied public/. Throwing "_headers is missing"
+        // here would replace the real compile error with a misleading one
+        // (the 2026-08-27 Cloudflare preview failures on feat/shop-unified).
+        if (error) return;
         // Nothing was copied, so there is nothing to rewrite and nothing to
         // ship wrong — the only branch where absence is genuinely fine.
         if (!copiesPublicDir) return;
