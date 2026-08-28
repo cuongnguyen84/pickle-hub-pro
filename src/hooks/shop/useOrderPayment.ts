@@ -64,10 +64,16 @@ export const useOrderPaymentInfo = (code: string | null, enabled = true) =>
     },
   });
 
-export const useSePayCheckout = () => useMutation({
-  retry: false,
-  mutationFn: startSePayCheckout,
-});
+export const useSePayCheckout = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: startSePayCheckout,
+    onSuccess: (_payment, code) => {
+      void qc.invalidateQueries({ queryKey: paymentKeys.one(code) });
+    },
+  });
+};
 
 /**
  * Both mutations are `retry: false`, for the reason recorded on

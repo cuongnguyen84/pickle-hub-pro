@@ -349,15 +349,21 @@ struct ShopOrderPaymentInfo: Codable, Equatable, Sendable {
 }
 
 struct ShopSePayCheckout: Codable, Equatable, Sendable, Identifiable {
-    var id: String { invoiceNumber }
-    let checkoutURL: String
-    let fields: [String: String]
-    let invoiceNumber: String
-    let environment: String
+    var id: String { memo }
+    let qrURL: String
+    let bankCode: String
+    let accountNumber: String
+    let accountName: String
+    let amountVND: Int
+    let memo: String
+    let status: String
     enum CodingKeys: String, CodingKey {
-        case fields, environment
-        case checkoutURL = "checkout_url"
-        case invoiceNumber = "invoice_number"
+        case memo, status
+        case qrURL = "qr_url"
+        case bankCode = "bank_code"
+        case accountNumber = "account_number"
+        case accountName = "account_name"
+        case amountVND = "amount_vnd"
     }
 }
 

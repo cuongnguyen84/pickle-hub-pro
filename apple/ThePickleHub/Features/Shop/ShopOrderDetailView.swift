@@ -84,6 +84,7 @@ final class ShopOrderDetailViewModel {
     let analytics: any ShopAnalytics
     var order: ShopOrderDetail?
     var payment: ShopOrderPaymentInfo?
+    var gatewayPayment: ShopSePayCheckout?
     var isLoading = true
     var isWorking = false
     var errorMessage: String?
@@ -99,7 +100,13 @@ final class ShopOrderDetailViewModel {
         isLoading = true; defer { isLoading = false }
         do {
             order = try await repository.order(code: code)
-            if order?.paymentMethod == .bankTransfer { payment = try await repository.paymentInfo(code: code) }
+            if order?.paymentMethod == .bankTransfer {
+                payment = try await repository.paymentInfo(code: code)
+                if payment?.gateway?.enabled == true && payment?.confirmedAt == nil {
+                    gatewayPayment = try await repository.startSePayCheckout(code: code)
+                    payment = try await repository.paymentInfo(code: code)
+                }
+            }
         } catch { errorMessage = error.localizedDescription }
     }
 
@@ -112,26 +119,29 @@ final class ShopOrderDetailViewModel {
         catch { errorMessage = error.localizedDescription }
     }
 
-    func startSePayCheckout() async -> ShopSePayCheckout? {
+    func startSePayCheckout() async {
         isWorking = true; defer { isWorking = false }
-        do { return try await repository.startSePayCheckout(code: code) }
-        catch { errorMessage = error.localizedDescription; return nil }
+        do {
+            gatewayPayment = try await repository.startSePayCheckout(code: code)
+            payment = try await repository.paymentInfo(code: code)
+        }
+        catch { errorMessage = error.localizedDescription }
     }
 
-    func refreshAfterSePayReturn() async {
-        for _ in 0..<5 {
+    func pollAutomaticPayment() async {
+        for _ in 0..<300 {
             do {
                 payment = try await repository.paymentInfo(code: code)
                 if payment?.confirmedAt != nil { return }
             } catch { errorMessage = error.localizedDescription; return }
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .seconds(3))
+            if Task.isCancelled { return }
         }
     }
 }
 
 struct ShopOrderDetailView: View {
     @State private var model: ShopOrderDetailViewModel
-    @State private var sePayCheckout: ShopSePayCheckout?
     init(code: String, repository: any ShopOrderRepository = SupabaseShopOrderRepository(),
          analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
         _model = State(initialValue: ShopOrderDetailViewModel(
@@ -147,25 +157,8 @@ struct ShopOrderDetailView: View {
         }
         .background(TLColor.bg).navigationTitle(model.code).navigationBarTitleDisplayMode(.inline)
         .task { await model.load() }
-        .sheet(item: $sePayCheckout) { checkout in
-            NavigationStack {
-                ShopSePayCheckoutView(
-                    checkout: checkout,
-                    orderCode: model.code,
-                    onReturn: {
-                        sePayCheckout = nil
-                        Task { await model.refreshAfterSePayReturn() }
-                    },
-                    onError: { message in
-                        sePayCheckout = nil
-                        model.errorMessage = message
-                    }
-                )
-                .ignoresSafeArea(edges: .bottom)
-                .navigationTitle("Thanh toán SePay")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Đóng") { sePayCheckout = nil } } }
-            }
+        .task(id: model.gatewayPayment?.id) {
+            if model.gatewayPayment != nil { await model.pollAutomaticPayment() }
         }
         .alert("Chưa thể cập nhật", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })) {
             Button("Đóng", role: .cancel) { model.errorMessage = nil }
@@ -212,20 +205,19 @@ struct ShopOrderDetailView: View {
                 Text("Đơn đã huỷ; không chuyển khoản cho đơn này.").foregroundStyle(ShopTokens.unavailable)
             } else {
                 if info.gateway?.enabled == true {
-                    Label("Thanh toán an toàn qua SePay", systemImage: "checkmark.shield")
-                        .font(TLType.titleSans(13))
-                    Text("SePay tạo mã thanh toán và tự động đối soát. Ứng dụng không lưu thông tin ngân hàng hoặc thẻ.")
-                        .font(TLType.bodySans(11)).foregroundStyle(TLColor.fg3)
                     if info.gateway?.status == "initiated" {
-                        Label("Đang chờ SePay xác nhận nếu anh/chị vừa thanh toán.", systemImage: "clock")
+                        Label("Hệ thống đang kiểm tra giao dịch nếu anh/chị vừa thanh toán.", systemImage: "clock")
                             .font(TLType.bodySans(11)).foregroundStyle(TLColor.fg2)
                     }
-                    Button(model.isWorking ? "Đang mở SePay…" : (info.gateway?.status == "initiated" ? "Tiếp tục thanh toán" : "Thanh toán qua SePay")) {
-                        Task { if let checkout = await model.startSePayCheckout() { sePayCheckout = checkout } }
+                    if let gatewayPayment = model.gatewayPayment {
+                        ShopSePayCheckoutView(checkout: gatewayPayment)
+                    } else if model.isWorking {
+                        ProgressView("Đang tải mã thanh toán…").frame(maxWidth: .infinity)
+                    } else {
+                        Button("Tải lại mã thanh toán") { Task { await model.startSePayCheckout() } }
+                            .font(TLType.titleSans(13)).foregroundStyle(TLColor.accentInk)
+                            .frame(maxWidth: .infinity, minHeight: 48).background(TLColor.accent, in: Capsule())
                     }
-                    .font(TLType.titleSans(13)).foregroundStyle(TLColor.accentInk)
-                    .frame(maxWidth: .infinity, minHeight: 48).background(TLColor.accent, in: Capsule())
-                    .disabled(model.isWorking)
                 } else if let bank = info.bank, let amount = info.amountVND, let memo = info.memo {
                     if let url = VietQR.imageURL(bankCode: bank.code, accountNumber: bank.accountNumber,
                                                   accountName: bank.accountName, amountVnd: amount, memo: memo) {

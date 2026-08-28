@@ -21,11 +21,12 @@
 // ============================================================================
 
 import { useState } from "react";
-import { CheckCircle2, Clock, Copy, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Clock, Copy, Loader2, ShieldCheck } from "lucide-react";
 import { generateVietQRUrl } from "@/lib/payment/vietqr";
 import { findBankByCode } from "@/lib/payment/banks";
 import { formatVnd } from "@/lib/shop/publicCatalog";
 import type { OrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
+import type { SePayCheckoutResponse } from "@/lib/payment/sepay";
 
 const COPY = {
   h: "Thanh toán chuyển khoản",
@@ -53,13 +54,12 @@ const COPY = {
   noBankSeller:
     "Shop chưa điền thông tin ngân hàng, nên người mua không thấy mã QR. Điền trong Cài đặt shop.",
   error: "Không lưu được. Thử lại giúp em.",
-  gatewayH: "Thanh toán an toàn qua SePay",
-  gatewayBody: "SePay tạo mã thanh toán và tự động đối soát. ThePickleHub không lưu thông tin ngân hàng hoặc thẻ của anh/chị.",
-  gatewayPay: "Thanh toán qua SePay",
-  gatewayContinue: "Tiếp tục thanh toán",
-  gatewayBusy: "Đang mở SePay…",
-  gatewaySeller: "SePay sẽ tự động xác nhận khi tiền về; shop không cần bấm đối soát thủ công.",
-  gatewayPending: "Nếu anh/chị vừa thanh toán, hệ thống đang chờ SePay xác nhận — thường chỉ mất vài giây.",
+  gatewayH: "Thanh toán ngay",
+  gatewayBody: "Quét mã bằng ứng dụng ngân hàng. Số tiền và nội dung chuyển khoản đã được điền sẵn.",
+  gatewayRetry: "Tải lại mã thanh toán",
+  gatewayBusy: "Đang tải mã thanh toán…",
+  gatewaySeller: "Hệ thống sẽ tự động xác nhận khi tiền về; shop không cần bấm đối soát thủ công.",
+  gatewayPending: "Nếu anh/chị vừa thanh toán, hệ thống đang kiểm tra giao dịch — thường chỉ mất vài giây.",
 };
 
 export interface OrderPaymentCardProps {
@@ -69,6 +69,9 @@ export interface OrderPaymentCardProps {
   cancelled?: boolean;
   onMark: () => Promise<unknown>;
   onGatewayCheckout?: () => Promise<unknown>;
+  gatewayPayment?: SePayCheckoutResponse;
+  gatewayLoading?: boolean;
+  gatewayFailed?: boolean;
 }
 
 function CopyRow({ label, value }: { label: string; value: string }) {
@@ -102,7 +105,16 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function OrderPaymentCard({ info, side, cancelled, onMark, onGatewayCheckout }: OrderPaymentCardProps) {
+export function OrderPaymentCard({
+  info,
+  side,
+  cancelled,
+  onMark,
+  onGatewayCheckout,
+  gatewayPayment,
+  gatewayLoading,
+  gatewayFailed,
+}: OrderPaymentCardProps) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -176,22 +188,56 @@ export function OrderPaymentCard({ info, side, cancelled, onMark, onGatewayCheck
               {side === "seller" ? (
                 <p className="tl-shop-hint">{COPY.gatewaySeller}</p>
               ) : (
-                <div className="tl-shop-cta-row">
-                  <button
-                    type="button"
-                    className="tl-shop-btn tl-shop-btn--primary"
-                    disabled={busy || !onGatewayCheckout}
-                    aria-busy={busy || undefined}
-                    onClick={() => void runGateway()}
-                  >
-                    {busy
-                      ? <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-                      : <ExternalLink size={16} aria-hidden="true" />}
-                    {busy
-                      ? COPY.gatewayBusy
-                      : gateway.status === "initiated" ? COPY.gatewayContinue : COPY.gatewayPay}
-                  </button>
-                </div>
+                <>
+                  {(gatewayLoading || busy) && (
+                    <p className="tl-shop-hint" aria-live="polite">
+                      <Loader2 size={16} className="animate-spin" aria-hidden="true" /> {COPY.gatewayBusy}
+                    </p>
+                  )}
+                  {gatewayPayment && (
+                    <>
+                      <p style={{ textAlign: "center", margin: "4px 0 8px" }}>
+                        <img
+                          src={gatewayPayment.qr_url}
+                          alt="Mã QR thanh toán"
+                          width={320}
+                          height={420}
+                          style={{ maxWidth: "100%", height: "auto" }}
+                        />
+                      </p>
+                      <div className="tl-shop-row">
+                        <span>{COPY.amount}</span>
+                        <strong>{formatVnd(gatewayPayment.amount_vnd)}</strong>
+                      </div>
+                      <div className="tl-shop-row">
+                        <span>{COPY.bank}</span>
+                        <strong>{gatewayPayment.bank_code}</strong>
+                      </div>
+                      <CopyRow label={COPY.account} value={gatewayPayment.account_number} />
+                      <div className="tl-shop-row">
+                        <span>{COPY.holder}</span>
+                        <strong>{gatewayPayment.account_name}</strong>
+                      </div>
+                      <CopyRow label={COPY.memo} value={gatewayPayment.memo} />
+                      <p className="tl-shop-hint">{COPY.memoHint}</p>
+                    </>
+                  )}
+                  {(gatewayFailed || failed) && !gatewayPayment && (
+                    <>
+                      <p className="tl-shop-notice tl-shop-notice--danger" role="alert">{COPY.error}</p>
+                      <div className="tl-shop-cta-row">
+                        <button
+                          type="button"
+                          className="tl-shop-btn tl-shop-btn--primary"
+                          disabled={busy || !onGatewayCheckout}
+                          onClick={() => void runGateway()}
+                        >
+                          {COPY.gatewayRetry}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
             </>
           ) : !bank && (
@@ -239,7 +285,7 @@ export function OrderPaymentCard({ info, side, cancelled, onMark, onGatewayCheck
           )}
           {!gateway && !claimed && side === "seller" && <p className="tl-shop-hint">{COPY.notClaimedSeller}</p>}
 
-          {failed && (
+          {failed && !gateway && (
             <p className="tl-shop-notice tl-shop-notice--danger" role="alert">{COPY.error}</p>
           )}
 

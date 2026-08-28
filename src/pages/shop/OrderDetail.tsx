@@ -15,7 +15,7 @@
 // SAME sentence. Telling them apart tells a stranger which codes are real.
 // ============================================================================
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { AlertTriangle, ExternalLink, Loader2, PackageX, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -74,7 +74,7 @@ const COPY = {
   placedBank: (shop: string) =>
     `Đã gửi đơn tới người bán. Anh/chị nhắn hoặc gọi ${shop} để nhận thông tin chuyển khoản — nút ở mục Người bán bên dưới. ThePickleHub không nhận và không giữ tiền.`,
   placedSePay:
-    "Đã gửi đơn tới người bán. Anh/chị thanh toán qua SePay ở mục bên dưới; hệ thống sẽ tự xác nhận khi tiền về.",
+    "Đã gửi đơn tới người bán. Quét mã bên dưới để thanh toán ngay; hệ thống sẽ tự xác nhận khi tiền về.",
   // EN: ThePickleHub isn't connected to any courier… check the code yourself.
   trackingNote:
     "ThePickleHub chưa nối với đơn vị vận chuyển nên không theo dõi được tự động — anh/chị tra mã này trên trang của hãng.",
@@ -83,7 +83,7 @@ const COPY = {
   payCod: "Trả khi nhận hàng.",
   payBank:
     "Chuyển khoản trước. Anh/chị trao đổi trực tiếp với shop; ThePickleHub không nhận và không giữ tiền của đơn này.",
-  paySePay: "Chuyển khoản qua cổng SePay; hệ thống tự động đối soát.",
+  paySePay: "Chuyển khoản bằng mã QR; hệ thống tự động đối soát.",
   noteLabel: "Ghi chú",
   confirmCancelTitle: "Huỷ đơn này?",
   confirmCancelBody:
@@ -114,6 +114,20 @@ export default function OrderDetail() {
   const sepay = useSePayCheckout();
   const shopQ = usePublicShopPage(order?.shop?.slug ?? null);
   const contacts = usableContacts(shopQ.data?.contacts as PublicContact[] | undefined);
+
+  // A bank-transfer buyer already chose to pay at checkout. As soon as the
+  // order and its party-scoped payment projection arrive, prepare the inline
+  // QR without asking for a second confirmation click.
+  useEffect(() => {
+    if (
+      order?.payment_method === "bank_transfer"
+      && paymentQ.data?.gateway?.enabled
+      && !paymentQ.data.confirmed_at
+      && sepay.isIdle
+    ) {
+      sepay.mutate(order.code);
+    }
+  }, [order?.code, order?.payment_method, paymentQ.data?.confirmed_at, paymentQ.data?.gateway?.enabled, sepay.isIdle, sepay.mutate]);
 
   const cancelEvent = [...(order?.events ?? [])].reverse().find((e) => e.action === "cancel");
   const cancelledBy = (cancelEvent?.metadata?.actor_kind as CancelActorKind | undefined) ?? null;
@@ -281,6 +295,9 @@ export default function OrderDetail() {
           cancelled={order.status === "cancelled"}
           onMark={() => claim.mutateAsync(order.code)}
           onGatewayCheckout={() => sepay.mutateAsync(order.code)}
+          gatewayPayment={sepay.data}
+          gatewayLoading={sepay.isPending}
+          gatewayFailed={sepay.isError}
         />
       )}
 

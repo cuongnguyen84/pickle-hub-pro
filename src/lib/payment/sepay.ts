@@ -1,44 +1,33 @@
 import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
 
 export interface SePayCheckoutResponse {
-  checkout_url: string;
-  fields: Record<string, string | number>;
-  invoice_number: string;
-  environment: "sandbox" | "production";
+  qr_url: string;
+  bank_code: string;
+  account_number: string;
+  account_name: string;
+  amount_vnd: number;
+  memo: string;
+  status: "initiated" | "voided";
 }
 
-const CHECKOUT_HOSTS = new Set(["pay-sandbox.sepay.vn", "pay.sepay.vn"]);
-const FIELD_ALLOWLIST = new Set([
-  "operation", "payment_method", "order_invoice_number", "order_amount", "currency",
-  "order_description", "success_url", "error_url", "cancel_url", "merchant", "signature",
-]);
-
-export function postToSePay(checkout: SePayCheckoutResponse): void {
-  const url = new URL(checkout.checkout_url);
-  if (url.protocol !== "https:" || !CHECKOUT_HOSTS.has(url.hostname) || url.pathname !== "/v1/checkout/init") {
-    throw new Error("SePay trả về địa chỉ thanh toán không hợp lệ.");
+export function validSePayCheckoutResponse(data: unknown): data is SePayCheckoutResponse {
+  if (typeof data !== "object" || data === null) return false;
+  const payment = data as Partial<SePayCheckoutResponse>;
+  if (typeof payment.qr_url !== "string") return false;
+  let qr: URL;
+  try {
+    qr = new URL(payment.qr_url);
+  } catch {
+    return false;
   }
-
-  const entries = Object.entries(checkout.fields);
-  if (!entries.length || entries.some(([name, value]) =>
-    !FIELD_ALLOWLIST.has(name) || (typeof value !== "string" && typeof value !== "number")
-  )) {
-    throw new Error("SePay trả về biểu mẫu thanh toán không hợp lệ.");
-  }
-
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = url.toString();
-  form.hidden = true;
-  for (const [name, value] of entries) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = String(value);
-    form.appendChild(input);
-  }
-  document.body.appendChild(form);
-  form.submit();
+  return qr.protocol === "https:"
+    && qr.hostname === "vietqr.app"
+    && qr.pathname === "/img"
+    && Number.isSafeInteger(payment.amount_vnd)
+    && Number(payment.amount_vnd) > 0
+    && typeof payment.account_number === "string" && payment.account_number.length > 0
+    && typeof payment.account_name === "string" && payment.account_name.length > 0
+    && typeof payment.memo === "string" && payment.memo.length > 0;
 }
 
 export async function startSePayCheckout(code: string): Promise<SePayCheckoutResponse> {
@@ -48,7 +37,7 @@ export async function startSePayCheckout(code: string): Promise<SePayCheckoutRes
   );
   if (error || !data) {
     const response = (error as { context?: Response } | null)?.context;
-    let message = "Chưa mở được cổng SePay. Thử lại giúp em.";
+    let message = "Chưa tải được yêu cầu thanh toán. Thử lại giúp em.";
     if (response && typeof response.clone === "function") {
       try {
         const body = await response.clone().json() as { error?: unknown };
@@ -59,6 +48,9 @@ export async function startSePayCheckout(code: string): Promise<SePayCheckoutRes
     }
     throw new Error(message);
   }
-  postToSePay(data);
+
+  if (!validSePayCheckoutResponse(data)) {
+    throw new Error("Yêu cầu thanh toán không hợp lệ.");
+  }
   return data;
 }

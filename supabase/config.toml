@@ -429,8 +429,8 @@ verify_jwt = false
 verify_jwt = false
 
 # Buyer JWT is verified inside the checkout function (ES256 workaround).
-# SePay calls the IPN with X-Secret-Key; the handler then uses service_role for
-# the single reconciliation RPC.
+# SePay bank webhooks use raw-body HMAC-SHA256; legacy Payment Gateway IPNs use
+# X-Secret-Key. The handler uses service_role for one reconciliation RPC.
 [functions.shop-sepay-checkout]
 verify_jwt = false
 

@@ -23,6 +23,16 @@ const BANK: OrderPaymentInfo = {
   bank: { code: "MB", account_number: "0123456789", account_name: "NGUYEN VAN CUONG" },
 };
 
+const GATEWAY_PAYMENT = {
+  qr_url: "https://vietqr.app/img?acc=0123456789&bank=MB&amount=1030000&des=PH-2608-AB12",
+  bank_code: "MB",
+  account_number: "0123456789",
+  account_name: "THE PICKLE HUB",
+  amount_vnd: 1030000,
+  memo: "PH-2608-AB12",
+  status: "initiated" as const,
+};
+
 // Not automatic in this repo's vitest setup — without it every getBy* after
 // the first render finds two of everything.
 afterEach(cleanup);
@@ -97,20 +107,20 @@ describe("OrderPaymentCard — the buyer", () => {
     expect(btn.disabled).toBe(false);
   });
 
-  it("uses SePay as the only money route when the gateway is enabled", async () => {
-    const onGatewayCheckout = vi.fn().mockResolvedValue(undefined);
+  it("shows the inline QR automatically as the only money route", () => {
     render(
       <OrderPaymentCard
         info={{ ...BANK, bank: null, gateway: { enabled: true, provider: "sepay", status: "not_started" } }}
         side="buyer"
         onMark={vi.fn()}
-        onGatewayCheckout={onGatewayCheckout}
+        onGatewayCheckout={vi.fn()}
+        gatewayPayment={GATEWAY_PAYMENT}
       />,
     );
-    expect(screen.queryByAltText(/QR/i)).toBeNull();
+    expect(screen.getByAltText("Mã QR thanh toán")).toBeTruthy();
+    expect(screen.getByText("1.030.000₫")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Tôi đã chuyển khoản/ })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Thanh toán qua SePay/ }));
-    expect(onGatewayCheckout).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("button", { name: /Thanh toán/ })).toBeNull();
   });
 
   it("explains the short IPN wait after checkout has started", () => {
@@ -120,10 +130,11 @@ describe("OrderPaymentCard — the buyer", () => {
         side="buyer"
         onMark={vi.fn()}
         onGatewayCheckout={vi.fn()}
+        gatewayPayment={GATEWAY_PAYMENT}
       />,
     );
-    expect(screen.getByText(/chờ SePay xác nhận/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Tiếp tục thanh toán/ })).toBeTruthy();
+    expect(screen.getByText(/hệ thống đang kiểm tra giao dịch/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Thanh toán|Tiếp tục/ })).toBeNull();
   });
 });
 

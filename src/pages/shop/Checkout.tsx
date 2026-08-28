@@ -71,17 +71,17 @@ const COPY = {
   // hai điều trái nhau trên một màn hình.
   codLabel: "Trả khi nhận hàng (COD)",
   codHint: "Anh/chị trả tiền trực tiếp cho người giao.",
-  bankLabel: (sepay: boolean) => sepay ? "Chuyển khoản tự động qua SePay" : "Chuyển khoản trước — shop sẽ gửi thông tin",
-  bankHint: (sepay: boolean) => sepay
-    ? "Đặt xong, anh/chị thanh toán trên cổng SePay; hệ thống tự đối soát khi tiền về."
+  bankLabel: (automatic: boolean) => automatic ? "Thanh toán chuyển khoản ngay" : "Chuyển khoản trước — shop sẽ gửi thông tin",
+  bankHint: (automatic: boolean) => automatic
+    ? "Đặt xong, mã QR thanh toán sẽ hiện ngay; hệ thống tự xác nhận khi tiền về."
     : "Đặt xong, anh/chị nhắn Zalo hoặc gọi shop để nhận thông tin chuyển khoản.",
   // EN: This fee applies to every province… no promised delivery date.
   // R5 (cắt chữ): hai đoạn gộp một, không mất thông tin nào.
   shipEveryProvince:
     "Phí này áp dụng mọi tỉnh thành. ThePickleHub không thu thêm phí nào và chưa nối với đơn vị vận chuyển, nên người bán sẽ đưa mã vận đơn để anh/chị tự tra.",
   // EN: Pressing "Order" sends a request to {shop}. They confirm before shipping.
-  submitNote: (shop: string, sepay: boolean) => sepay
-    ? `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Nếu chọn chuyển khoản, bước tiếp theo sẽ mở cổng SePay để thanh toán và tự đối soát.`
+  submitNote: (shop: string, automatic: boolean) => automatic
+    ? `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Nếu chọn chuyển khoản, bước tiếp theo sẽ hiện mã QR để thanh toán ngay.`
     : `Bấm “Đặt đơn” là gửi yêu cầu tới ${shop}. Người bán xác nhận rồi mới gửi hàng. ThePickleHub không nhận tiền và không giữ tiền của đơn này.`,
   submit: "Đặt đơn",
   submitBusy: "Đang gửi đơn…",

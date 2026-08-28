@@ -40,7 +40,7 @@ struct ShopPhase4PaymentContractTests {
         #expect(info.confirmedAt == nil)
     }
 
-    @Test("SePay payment info and signed form decode without secrets")
+    @Test("automatic payment info and inline QR decode without secrets")
     func sePayContract() throws {
         let infoJSON = #"{"found":true,"method":"bank_transfer","amount_vnd":125000,"memo":"PH-2608-A1B2","claimed_at":null,"confirmed_at":null,"bank":null,"gateway":{"enabled":true,"provider":"sepay","status":"initiated"}}"#
         let info = try JSONDecoder().decode(ShopOrderPaymentInfo.self, from: Data(infoJSON.utf8))
@@ -49,10 +49,10 @@ struct ShopPhase4PaymentContractTests {
         #expect(info.gateway?.status == "initiated")
         #expect(info.bank == nil)
 
-        let checkoutJSON = #"{"checkout_url":"https://pay-sandbox.sepay.vn/v1/checkout/init","fields":{"operation":"PURCHASE","order_amount":"125000","signature":"signed"},"invoice_number":"PH-2608-A1B2","environment":"sandbox"}"#
+        let checkoutJSON = #"{"qr_url":"https://vietqr.app/img?acc=0123456789&bank=MB&amount=125000&des=PH-2608-A1B2","bank_code":"MB","account_number":"0123456789","account_name":"THE PICKLE HUB","amount_vnd":125000,"memo":"PH-2608-A1B2","status":"initiated"}"#
         let checkout = try JSONDecoder().decode(ShopSePayCheckout.self, from: Data(checkoutJSON.utf8))
-        #expect(checkout.checkoutURL == "https://pay-sandbox.sepay.vn/v1/checkout/init")
-        #expect(checkout.fields["order_amount"] == "125000")
-        #expect(checkout.fields["secret_key"] == nil)
+        #expect(checkout.qrURL.hasPrefix("https://vietqr.app/img"))
+        #expect(checkout.amountVND == 125000)
+        #expect(checkout.memo == "PH-2608-A1B2")
     }
 }

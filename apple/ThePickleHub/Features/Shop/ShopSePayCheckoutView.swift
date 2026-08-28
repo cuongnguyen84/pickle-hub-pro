@@ -1,87 +1,46 @@
 import SwiftUI
-import WebKit
+import UIKit
 
-/// Hosted SePay checkout loaded by POST. Merchant secrets never enter the app;
-/// the server returns only the signed fields that a browser form must submit.
-struct ShopSePayCheckoutView: UIViewRepresentable {
+/// Inline bank-transfer request. The QR carries the exact platform recipient,
+/// order amount and memo; the linked bank webhook confirms the payment.
+struct ShopSePayCheckoutView: View {
     let checkout: ShopSePayCheckout
-    let orderCode: String
-    let onReturn: @MainActor () -> Void
-    let onError: @MainActor (String) -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    func makeUIView(context: Context) -> WKWebView {
-        let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()
-        let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.navigationDelegate = context.coordinator
-        webView.allowsBackForwardNavigationGestures = true
-        context.coordinator.load(checkout: checkout, in: webView)
-        return webView
+    var body: some View {
+        VStack(alignment: .leading, spacing: TLSpacing.md) {
+            Label("Thanh toán ngay", systemImage: "qrcode")
+                .font(TLType.titleSans(13))
+            Text("Quét mã bằng ứng dụng ngân hàng. Số tiền và nội dung chuyển khoản đã được điền sẵn.")
+                .font(TLType.bodySans(11)).foregroundStyle(TLColor.fg3)
+            if let url = URL(string: checkout.qrURL), url.scheme == "https", url.host == "vietqr.app" {
+                AsyncImage(url: url) { image in
+                    image.resizable().scaledToFit()
+                } placeholder: {
+                    ProgressView().frame(maxWidth: .infinity, minHeight: 220)
+                }
+                .frame(maxWidth: 320).frame(maxWidth: .infinity)
+                .accessibilityLabel("Mã QR thanh toán")
+            }
+            copyRow("Số tiền", ShopMoney.vnd(checkout.amountVND))
+            copyRow("Ngân hàng", checkout.bankCode)
+            copyRow("Số tài khoản", checkout.accountNumber)
+            copyRow("Chủ tài khoản", checkout.accountName)
+            copyRow("Nội dung", checkout.memo)
+            Text("Giữ nguyên số tiền và nội dung để hệ thống xác nhận đúng đơn.")
+                .font(TLType.bodySans(10)).foregroundStyle(TLColor.fg3)
+        }
     }
 
-    func updateUIView(_ webView: WKWebView, context: Context) {}
-
-    final class Coordinator: NSObject, WKNavigationDelegate {
-        private static let allowedFields: Set<String> = [
-            "operation", "payment_method", "order_invoice_number", "order_amount", "currency",
-            "order_description", "success_url", "error_url", "cancel_url", "merchant", "signature"
-        ]
-        private static let requiredFields: Set<String> = [
-            "operation", "payment_method", "order_invoice_number", "order_amount", "currency",
-            "merchant", "signature"
-        ]
-
-        private let parent: ShopSePayCheckoutView
-        init(_ parent: ShopSePayCheckoutView) { self.parent = parent }
-
-        func load(checkout: ShopSePayCheckout, in webView: WKWebView) {
-            guard let action = URL(string: checkout.checkoutURL),
-                  action.scheme == "https",
-                  ["pay-sandbox.sepay.vn", "pay.sepay.vn"].contains(action.host ?? ""),
-                  action.path == "/v1/checkout/init",
-                  !checkout.fields.isEmpty,
-                  Set(checkout.fields.keys).isSubset(of: Self.allowedFields),
-                  Self.requiredFields.isSubset(of: Set(checkout.fields.keys)) else {
-                Task { @MainActor in parent.onError("Địa chỉ thanh toán SePay không hợp lệ.") }
-                return
+    private func copyRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).foregroundStyle(TLColor.fg3)
+            Spacer()
+            Text(value).font(TLType.dataMono(11))
+            Button { UIPasteboard.general.string = value } label: {
+                Image(systemName: "doc.on.doc")
             }
-            let controls = checkout.fields.sorted { $0.key < $1.key }.map {
-                "<input type=\"hidden\" name=\"\(escape($0.key))\" value=\"\(escape($0.value))\">"
-            }.joined()
-            let html = """
-            <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; form-action https://pay-sandbox.sepay.vn https://pay.sepay.vn; script-src 'unsafe-inline'">
-            </head><body><form id="checkout" method="POST" action="\(escape(action.absoluteString))">\(controls)</form>
-            <script>document.getElementById('checkout').submit();</script></body></html>
-            """
-            webView.loadHTMLString(html, baseURL: nil)
+            .accessibilityLabel("Sao chép \(label)")
         }
-
-        func webView(_ webView: WKWebView,
-                     decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
-            guard let url = navigationAction.request.url,
-                  ["www.thepicklehub.net", "thepicklehub.net"].contains(url.host ?? ""),
-                  url.path == "/shop/order/\(parent.orderCode)",
-                  URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                    .queryItems?.contains(where: { $0.name == "payment" }) == true else {
-                return .allow
-            }
-            parent.onReturn()
-            return .cancel
-        }
-
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            Task { @MainActor in parent.onError(error.localizedDescription) }
-        }
-
-        private func escape(_ value: String) -> String {
-            value.replacingOccurrences(of: "&", with: "&amp;")
-                .replacingOccurrences(of: "<", with: "&lt;")
-                .replacingOccurrences(of: ">", with: "&gt;")
-                .replacingOccurrences(of: "\"", with: "&quot;")
-                .replacingOccurrences(of: "'", with: "&#39;")
-        }
+        .font(TLType.bodySans(11))
     }
 }

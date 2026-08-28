@@ -24,24 +24,22 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Dữ liệu không hợp lệ.", code: "invalid_json" }, 400);
   }
 
-  const env = Deno.env.get("SEPAY_ENV") === "production" ? "production" : "sandbox";
   const result = await processSePayCheckout(body, {
     async prepare(code) {
       const { data, error } = await client.rpc("shop_sepay_checkout_prepare", { _code: code });
       return { row: data as PreparedPayment | null, error: error?.message ?? null };
     },
   }, {
-    env,
-    merchantId: Deno.env.get("SEPAY_MERCHANT_ID") ?? "",
-    secretKey: Deno.env.get("SEPAY_SECRET_KEY") ?? "",
-    siteUrl: Deno.env.get("SITE_URL") ?? "https://www.thepicklehub.net",
+    bankCode: Deno.env.get("SEPAY_BANK_CODE") ?? "",
+    accountNumber: Deno.env.get("SEPAY_BANK_ACCOUNT_NUMBER") ?? "",
+    accountName: Deno.env.get("SEPAY_BANK_ACCOUNT_NAME") ?? "",
   });
 
   console.log(JSON.stringify({
     function: "shop-sepay-checkout",
     status: result.status,
     code: typeof body === "object" && body ? (body as Record<string, unknown>).code : null,
-    env,
+    mode: "inline_vietqr",
   }));
   return jsonResponse(result.body, result.status);
 });
