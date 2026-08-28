@@ -12,15 +12,24 @@ final class ShopHomeViewModel {
     }
 
     let repository: any ShopRepository
+    let analytics: any ShopAnalytics
     var phase: Phase = .loading
     var categories: [ShopCategory] = []
     var products: [ShopProductCardSummary] = []
 
-    init(repository: any ShopRepository = ShopRepositoryFactory.appRepository()) {
+    private var hasTrackedView = false
+
+    init(repository: any ShopRepository = ShopRepositoryFactory.appRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
         self.repository = repository
+        self.analytics = analytics
     }
 
     func load() async {
+        if !hasTrackedView {
+            hasTrackedView = true
+            await analytics.track(.homeViewed)
+        }
         phase = .loading
         do {
             async let categories = repository.categories()
@@ -38,8 +47,9 @@ struct ShopHomeView: View {
     @State private var model: ShopHomeViewModel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    init(repository: any ShopRepository = ShopRepositoryFactory.appRepository()) {
-        _model = State(initialValue: ShopHomeViewModel(repository: repository))
+    init(repository: any ShopRepository = ShopRepositoryFactory.appRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        _model = State(initialValue: ShopHomeViewModel(repository: repository, analytics: analytics))
     }
 
     var body: some View {

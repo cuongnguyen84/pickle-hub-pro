@@ -3,6 +3,7 @@ import SwiftUI
 struct ShopStoreView: View {
     let storeSlug: String
     let repository: any ShopRepository
+    let analytics: any ShopAnalytics
     @State private var store: ShopStorefront?
     @State private var products: [ShopProductCardSummary] = []
     @State private var loaded = false
@@ -13,9 +14,11 @@ struct ShopStoreView: View {
     @State private var isLoadingMore = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    init(storeSlug: String, repository: any ShopRepository = ShopRepositoryFactory.appRepository()) {
+    init(storeSlug: String, repository: any ShopRepository = ShopRepositoryFactory.appRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
         self.storeSlug = storeSlug
         self.repository = repository
+        self.analytics = analytics
     }
 
     var body: some View {
@@ -64,6 +67,7 @@ struct ShopStoreView: View {
                 ShopPublicSearchRequest(shopSlug: storeSlug, limit: 24)
             )
             store = try await loadedStore
+            if store != nil { await analytics.track(.storeViewed(storeSlug: storeSlug)) }
             let page = try await loadedProducts
             products = page.products
             hasMore = page.hasMore

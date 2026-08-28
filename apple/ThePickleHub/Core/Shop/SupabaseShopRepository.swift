@@ -142,7 +142,7 @@ struct SupabaseShopRepository: ShopRepository {
                 returnPolicy: dto.shop.returnNote
             ),
             media: media, optionOrder: dto.optionGroups.map(\.name), variants: variants,
-            attributes: [:], contacts: try contacts.map(mapContact)
+            attributes: dto.specs ?? [:], contacts: try contacts.map(mapContact)
         )
     }
 

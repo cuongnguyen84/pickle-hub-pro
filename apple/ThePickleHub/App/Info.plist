@@ -69,6 +69,10 @@
 	<string>$(NATIVE_EVENT_REGISTRATION_ENABLED)</string>
 	<key>RemotePushEnabled</key>
 	<string>$(REMOTE_PUSH_ENABLED)</string>
+	<key>ShopNativeBuiltIn</key>
+	<string>$(SHOP_NATIVE_BUILT_IN)</string>
+	<key>ShopNativePilotEnabled</key>
+	<string>$(SHOP_NATIVE_PILOT_ENABLED)</string>
 	<key>SupabaseAnonKey</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SupabaseProjectRef</key>

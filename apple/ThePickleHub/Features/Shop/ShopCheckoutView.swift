@@ -6,6 +6,7 @@ final class ShopCheckoutViewModel {
     let shopSlug: String
     let cartRepository: any ShopCartRepository
     let orderRepository: any ShopOrderRepository
+    let analytics: any ShopAnalytics
     var group: ShopCartGroup?
     var isLoading = true
     var isSubmitting = false
@@ -16,10 +17,13 @@ final class ShopCheckoutViewModel {
     var deliveryNote = ""
     var paymentMethod: ShopPaymentMethod = .cod
     private var clientToken = UUID()
+    private var hasTrackedStart = false
 
     init(shopSlug: String, cartRepository: any ShopCartRepository = SupabaseShopCartRepository(),
-         orderRepository: any ShopOrderRepository = SupabaseShopOrderRepository()) {
+         orderRepository: any ShopOrderRepository = SupabaseShopOrderRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
         self.shopSlug = shopSlug; self.cartRepository = cartRepository; self.orderRepository = orderRepository
+        self.analytics = analytics
     }
 
     /// Why the order cannot be placed yet, or nil when it can.
@@ -49,7 +53,13 @@ final class ShopCheckoutViewModel {
 
     func load() async {
         isLoading = true; defer { isLoading = false }
-        do { group = try await cartRepository.cart().first { $0.shop.slug == shopSlug } }
+        do {
+            group = try await cartRepository.cart().first { $0.shop.slug == shopSlug }
+            if !hasTrackedStart, let group {
+                hasTrackedStart = true
+                await analytics.track(.checkoutStarted(itemCount: group.lines.reduce(0) { $0 + $1.quantity }))
+            }
+        }
         catch { errorMessage = error.localizedDescription }
     }
 
@@ -57,7 +67,7 @@ final class ShopCheckoutViewModel {
         guard canSubmit, let group else { return nil }
         isSubmitting = true; errorMessage = nil; defer { isSubmitting = false }
         do {
-            return try await orderRepository.create(.init(
+            let order = try await orderRepository.create(.init(
                 clientToken: clientToken, paymentMethod: paymentMethod,
                 recipientName: recipientName.trimmingCharacters(in: .whitespacesAndNewlines),
                 recipientPhone: recipientPhone, shippingAddress: shippingAddress.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -65,6 +75,11 @@ final class ShopCheckoutViewModel {
                 expectedShippingFeeVND: group.shop.shippingFeeVND,
                 items: group.lines.map { .init(variantID: $0.variantID, quantity: $0.quantity, expectedUnitPriceVND: $0.unitPriceVND) }
             ))
+            await analytics.track(.orderCreateSucceeded(
+                itemCount: group.lines.reduce(0) { $0 + $1.quantity },
+                paymentMethod: paymentMethod
+            ))
+            return order
         } catch { errorMessage = error.localizedDescription; return nil }
     }
 }
@@ -74,8 +89,12 @@ struct ShopCheckoutView: View {
     @State private var pathOrder: ShopRoute?
 
     init(shopSlug: String, cartRepository: any ShopCartRepository = SupabaseShopCartRepository(),
-         orderRepository: any ShopOrderRepository = SupabaseShopOrderRepository()) {
-        _model = State(initialValue: ShopCheckoutViewModel(shopSlug: shopSlug, cartRepository: cartRepository, orderRepository: orderRepository))
+         orderRepository: any ShopOrderRepository = SupabaseShopOrderRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        _model = State(initialValue: ShopCheckoutViewModel(
+            shopSlug: shopSlug, cartRepository: cartRepository,
+            orderRepository: orderRepository, analytics: analytics
+        ))
     }
 
     var body: some View {

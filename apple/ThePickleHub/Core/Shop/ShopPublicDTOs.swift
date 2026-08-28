@@ -176,6 +176,7 @@ struct ShopPublicProductDTO: Codable, Equatable, Identifiable, Sendable {
     let slug: String
     let title: String
     let description: String?
+    let specs: [String: String]?
     let condition: ShopProductCondition
     let category: Category?
     let shop: Shop
@@ -187,7 +188,7 @@ struct ShopPublicProductDTO: Codable, Equatable, Identifiable, Sendable {
     let isPreview: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id, slug, title, description, condition, category, shop, variants, media
+        case id, slug, title, description, specs, condition, category, shop, variants, media
         case optionGroups = "option_groups"
         case primaryMediaID = "primary_media_id"
         case isPublished = "is_published"

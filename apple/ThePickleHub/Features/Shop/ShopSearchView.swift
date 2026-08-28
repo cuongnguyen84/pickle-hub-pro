@@ -20,6 +20,7 @@ final class ShopSearchViewModel {
     }
 
     private let repository: any ShopRepository
+    private let analytics: any ShopAnalytics
     var query: String
     var category: ShopCategory?
     var sort: Sort = .relevant
@@ -37,8 +38,10 @@ final class ShopSearchViewModel {
     private var cursorAt: Date?
     private var cursorID: UUID?
 
-    init(repository: any ShopRepository, query: String, category: ShopCategory?) {
+    init(repository: any ShopRepository, query: String, category: ShopCategory?,
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
         self.repository = repository
+        self.analytics = analytics
         self.query = query
         self.category = category
     }
@@ -53,6 +56,7 @@ final class ShopSearchViewModel {
             apply(page, appending: false)
             attributeFacets = [:]
             phase = .loaded
+            await analytics.track(.searchSubmitted(queryLength: query.count, resultCount: products.count))
         } catch is CancellationError {
             return
         } catch {
@@ -108,12 +112,14 @@ struct ShopSearchView: View {
     init(
         initialQuery: String = "",
         initialCategory: ShopCategory? = nil,
-        repository: any ShopRepository = ShopRepositoryFactory.appRepository()
+        repository: any ShopRepository = ShopRepositoryFactory.appRepository(),
+        analytics: any ShopAnalytics = FirebaseShopAnalytics()
     ) {
         _model = State(initialValue: ShopSearchViewModel(
             repository: repository,
             query: initialQuery,
-            category: initialCategory
+            category: initialCategory,
+            analytics: analytics
         ))
     }
 

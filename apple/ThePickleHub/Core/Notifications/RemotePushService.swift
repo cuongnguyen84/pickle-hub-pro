@@ -20,6 +20,14 @@ enum RemoteNotificationRoute {
             return link
         }
 
+        // Shop database triggers use `url`, while legacy social pushes use
+        // `link_url`. Both still pass through the same trusted-host/internal-
+        // path parser, so an arbitrary push value cannot open an unsafe URL.
+        if let linkURL = string("url", in: userInfo),
+           let link = deepLink(fromPath: linkURL) {
+            return link
+        }
+
         if let slug = string("event_slug", in: userInfo)?.nonEmpty {
             return .socialEvent(slug: slug)
         }

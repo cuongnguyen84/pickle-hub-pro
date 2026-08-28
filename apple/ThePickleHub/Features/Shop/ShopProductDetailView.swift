@@ -6,6 +6,7 @@ struct ShopProductDetailView: View {
     let productSlug: String
     let repository: any ShopRepository
     let cartRepository: any ShopCartRepository
+    let analytics: any ShopAnalytics
     @State private var product: ShopProduct?
     @State private var variantSelection = ShopVariantSelection()
     @State private var selectedMediaIndex = 0
@@ -20,10 +21,12 @@ struct ShopProductDetailView: View {
     @Environment(\.openURL) private var openURL
 
     init(productSlug: String, repository: any ShopRepository = ShopRepositoryFactory.appRepository(),
-         cartRepository: any ShopCartRepository = SupabaseShopCartRepository()) {
+         cartRepository: any ShopCartRepository = SupabaseShopCartRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
         self.productSlug = productSlug
         self.repository = repository
         self.cartRepository = cartRepository
+        self.analytics = analytics
         _showsVariants = State(initialValue: UserDefaults.standard.bool(forKey: "startShopVariant"))
     }
 
@@ -65,7 +68,10 @@ struct ShopProductDetailView: View {
     private func load() async {
         isLoading = true
         errorMessage = nil
-        do { product = try await repository.product(slug: productSlug) }
+        do {
+            product = try await repository.product(slug: productSlug)
+            if let product { await analytics.track(.productViewed(productID: product.id)) }
+        }
         catch { errorMessage = error.localizedDescription }
         isLoading = false
     }
@@ -124,9 +130,13 @@ struct ShopProductDetailView: View {
             }
         }
         .onChange(of: variantSelection.selectedVariant(in: product)?.id) { _, _ in
-            let variantIndex = product.mediaIndex(for: variantSelection.selectedVariant(in: product))
+            let selectedVariant = variantSelection.selectedVariant(in: product)
+            let variantIndex = product.mediaIndex(for: selectedVariant)
             if product.media.indices.contains(variantIndex) {
                 withAnimation { selectedMediaIndex = variantIndex }
+            }
+            if let selectedVariant {
+                Task { await analytics.track(.variantSelected(productID: product.id, variantID: selectedVariant.id)) }
             }
         }
     }
@@ -220,10 +230,13 @@ struct ShopProductDetailView: View {
     }
 
     private func specifications(_ product: ShopProduct) -> some View {
-        VStack(alignment: .leading, spacing: TLSpacing.md) {
-            Text("Thông số").font(TLType.titleSans(20))
-            ForEach(product.attributes.keys.sorted(), id: \.self) { key in
-                HStack { Text(key).foregroundStyle(TLColor.fg3); Spacer(); Text(product.attributes[key] ?? "—") }
+        let rows = ShopProductSpecs.rows(category: product.category, attributes: product.attributes)
+        return VStack(alignment: .leading, spacing: TLSpacing.md) {
+            if !rows.isEmpty {
+                Text("Thông số").font(TLType.titleSans(20))
+            }
+            ForEach(rows) { row in
+                HStack { Text(row.label).foregroundStyle(TLColor.fg3); Spacer(); Text(row.value) }
                     .font(TLType.bodySans(12)).padding(.vertical, 6)
                 Divider()
             }
@@ -254,17 +267,18 @@ struct ShopProductDetailView: View {
                 isDisabled: isAddingToCart || (!needsSelection && variant?.isAvailable != true)
             ) {
                 if needsSelection { showsVariants = true }
-                else if let variant { Task { await addToCart(variant) } }
+                else if let variant { Task { await addToCart(variant, product: product) } }
             }
         }
     }
 
-    @MainActor private func addToCart(_ variant: ShopVariant) async {
+    @MainActor private func addToCart(_ variant: ShopVariant, product: ShopProduct) async {
         guard case .signedIn = session.state else { showsLogin = true; return }
         isAddingToCart = true
         defer { isAddingToCart = false }
         do {
             try await cartRepository.add(variantID: variant.id, quantity: quantity)
+            await analytics.track(.cartAddSucceeded(productID: product.id, variantID: variant.id, quantity: quantity))
             // Move the badge immediately, then reconcile against the server so a
             // partially-applied add cannot leave the count permanently wrong.
             ShopCartBadge.shared.add(quantity)

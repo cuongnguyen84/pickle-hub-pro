@@ -180,6 +180,59 @@ struct ShopProduct: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
+struct ShopProductSpecRow: Identifiable, Equatable, Sendable {
+    let key: String
+    let label: String
+    let value: String
+    var id: String { key }
+}
+
+enum ShopProductSpecs {
+    private struct Field {
+        let key: String
+        let label: String
+        let unit: String?
+    }
+
+    // Mirrors production web's canonical paddle-spec dictionary and order.
+    private static let paddleFields: [Field] = [
+        Field(key: "brand", label: "Thương hiệu", unit: nil),
+        Field(key: "weight_g", label: "Trọng lượng", unit: "g"),
+        Field(key: "core_mm", label: "Độ dày lõi", unit: "mm"),
+        Field(key: "face", label: "Chất liệu mặt", unit: nil),
+        Field(key: "shape", label: "Hình dáng", unit: nil),
+        Field(key: "handle_mm", label: "Chiều dài cán", unit: "mm"),
+        Field(key: "grip_mm", label: "Chu vi cán", unit: "mm"),
+        Field(key: "usap", label: "Chứng nhận USA Pickleball", unit: nil),
+    ]
+
+    static func rows(category: ShopCategory, attributes: [String: String]) -> [ShopProductSpecRow] {
+        let cleaned = attributes.compactMapValues { raw -> String? in
+            let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            return value.isEmpty ? nil : value
+        }
+        // Matches the web contract: specs retained after a category change do
+        // not leak irrelevant paddle rows onto another category's PDP.
+        guard category == .paddles else { return [] }
+
+        let knownKeys = Set(paddleFields.map(\.key))
+        let knownRows = paddleFields.compactMap { field -> ShopProductSpecRow? in
+            guard let rawValue = cleaned[field.key] else { return nil }
+            let value: String
+            if let unit = field.unit, !rawValue.lowercased().hasSuffix(" \(unit)") {
+                value = "\(rawValue) \(unit)"
+            } else {
+                value = rawValue
+            }
+            return ShopProductSpecRow(key: field.key, label: field.label, value: value)
+        }
+        let otherRows = cleaned.keys.filter { !knownKeys.contains($0) }.sorted().map {
+            ShopProductSpecRow(key: $0, label: $0, value: cleaned[$0]!)
+        }
+        return knownRows + otherRows
+    }
+}
+
 enum ShopMoney {
     static func vnd(_ amount: Int) -> String {
         let formatter = NumberFormatter()

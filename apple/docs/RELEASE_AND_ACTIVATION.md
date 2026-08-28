@@ -7,13 +7,18 @@ không bật OTP và không đổi production setting nếu chưa có phê duy�
 
 | Configuration | Bundle ID | Version | Environment | Native registration | FCM push |
 |---|---|---|---|---|---|
-| Debug | `net.thepicklehub.app` | `2.0.3 (8)` | development | ON | OFF |
-| Release | `net.thepicklehub.app` | `2.0.3 (8)` | production | ON | ON |
+| Debug | `net.thepicklehub.app` | `2.1.0 (9)` | development | ON | OFF |
+| Release | `net.thepicklehub.app` | `2.1.0 (9)` | production | ON | ON |
 
-`2.0.3 (8)` nối tiếp bản đã upload `2.0.2 (7)`. Nếu App Store Connect
+`2.1.0 (9)` là Shop MVP candidate nối tiếp bản đang sống `2.0.3 (8)`. Nếu App Store Connect
 đã có build/version mới hơn bảng này, tăng cả `MARKETING_VERSION` và
 `CURRENT_PROJECT_VERSION` trong `Config/Debug.xcconfig` + `Config/Release.xcconfig`
 trước khi archive.
+
+Shop native chỉ hiện khi **đồng thời** `SHOP_NATIVE_BUILT_IN=YES` và
+`SHOP_NATIVE_PILOT_ENABLED=YES`. Release bật cả hai; Debug compile Shop nhưng
+để pilot OFF mặc định nhằm fail closed. Khi Shop bật, Social và Công cụ vẫn có
+trong tab **Thêm**, không bị mất khỏi điều hướng.
 
 Native registration chỉ mở khi **đồng thời** đạt bốn gate:
 
@@ -223,14 +228,11 @@ riêng, không nằm trong script này.
 
 ## 6. Rollout và rollback
 
-Theo quyết định release ngày 2026-07-22, bỏ phân phối TestFlight và gửi build
-thẳng vào App Store Review. Native registration vẫn để OFF/Safari fallback trong
-binary đầu tiên; không bật remote OTP/payment cùng lúc với native rewrite.
-
-Trạng thái hiện tại: `ThePickleHub.ipa` đã upload thành công lên App Store
-Connect từ signed cloud-distributed archive `ThePickleHub-1.1.0-3.xcarchive`.
-Apple đang xử lý package; bước còn lại là hoàn tất metadata và submit trong
-App Store Connect.
+Trạng thái ngày 28/08/2026: App Store đang sống ở `2.0.3 (8)`; Shop MVP
+`2.1.0 (9)` mới là release candidate cục bộ, **chưa archive ký, chưa upload và
+chưa submit review**. Rollout Shop dùng phased release của App Store và cohort
+validation được mời có chủ đích; không bật `SHOP_PUBLIC_INDEXING` trong giai đoạn
+validation.
 
 1. Upload signed build vào App Store Connect và chọn trực tiếp cho App Review.
 2. Giữ `native_event_registration_enabled=false`; Safari tiếp tục xử lý đăng ký.

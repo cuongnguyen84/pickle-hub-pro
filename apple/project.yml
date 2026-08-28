@@ -65,6 +65,8 @@ targets:
         product: GoogleSignIn
       - package: Firebase
         product: FirebaseMessaging
+      - package: Firebase
+        product: FirebaseAnalytics
 
   ThePickleHubTests:
     type: bundle.unit-test

@@ -1,11 +1,13 @@
 import SwiftUI
 
-/// Primary tab shell mirroring the web `BottomNav` (Home, Live, Social, Feed,
-/// Tools). Rankings, Tournaments and Profile are reached from the Home toolbar,
+/// Primary tab shell. A shipping Shop pilot takes the centre slot and moves
+/// the displaced Social and Tools surfaces into a visible More tab. A build
+/// without both Shop gates retains the existing five-tab navigation.
+/// Rankings, Tournaments and Profile are reached from the Home toolbar,
 /// like the web header — they are first-class, not behind a hamburger menu.
 struct AppTabView: View {
     enum Tab: String, Hashable {
-        case home, live, social, feed, tools
+        case home, live, social, shop, feed, tools, more
     }
 
     @State private var selection: Tab = Self.launchTab
@@ -20,17 +22,29 @@ struct AppTabView: View {
                 .tag(Tab.live)
                 .tabItem { Label("Trực tiếp", systemImage: "dot.radiowaves.up.forward") }
 
-            SocialHubView()
-                .tag(Tab.social)
-                .tabItem { Label("Social", systemImage: "calendar.badge.plus") }
+            if ShopFeatureGate.isEnabled {
+                NavigationStack { ShopHomeView() }
+                    .tag(Tab.shop)
+                    .tabItem { Label("Chợ", systemImage: "storefront.fill") }
+            } else {
+                SocialHubView()
+                    .tag(Tab.social)
+                    .tabItem { Label("Social", systemImage: "calendar.badge.plus") }
+            }
 
             NavigationStack { FeedView() }
                 .tag(Tab.feed)
                 .tabItem { Label("Bảng tin", systemImage: "newspaper.fill") }
 
-            ToolsView()
-                .tag(Tab.tools)
-                .tabItem { Label("Công cụ", systemImage: "wrench.adjustable.fill") }
+            if ShopFeatureGate.isEnabled {
+                moreTab
+                    .tag(Tab.more)
+                    .tabItem { Label("Thêm", systemImage: "ellipsis.circle.fill") }
+            } else {
+                ToolsView()
+                    .tag(Tab.tools)
+                    .tabItem { Label("Công cụ", systemImage: "wrench.adjustable.fill") }
+            }
         }
         .tint(TLColor.accent)
     }
@@ -38,10 +52,40 @@ struct AppTabView: View {
     /// Initial tab, overridable via the `-startTab <tab>` launch argument
     /// (lands in the UserDefaults argument domain). Foundation for deep links.
     private static var launchTab: Tab {
-        UserDefaults.standard.string(forKey: "startTab").flatMap(Tab.init) ?? .home
+        guard let requested = UserDefaults.standard.string(forKey: "startTab").flatMap(Tab.init) else {
+            return .home
+        }
+        if requested == .shop && !ShopFeatureGate.isEnabled { return .home }
+        if ShopFeatureGate.isEnabled && (requested == .social || requested == .tools) { return .more }
+        if requested == .more && !ShopFeatureGate.isEnabled { return .home }
+        return requested
     }
 
-    @State private var homePath = NavigationPath()
+    private var moreTab: some View {
+        NavigationStack {
+            List {
+                Section("Cộng đồng") {
+                    NavigationLink {
+                        SocialHubView()
+                    } label: {
+                        Label("Social", systemImage: "calendar.badge.plus")
+                    }
+                }
+                Section("Tiện ích") {
+                    NavigationLink {
+                        ToolsView()
+                    } label: {
+                        Label("Công cụ", systemImage: "wrench.adjustable.fill")
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(TLColor.bg)
+            .navigationTitle("Thêm")
+        }
+    }
+
+    @State private var homePath = Self.launchHomePath
     @State private var unreadCount = 0
     @State private var avatarURL: String?
     @State private var dupr: ProfileRepository.DuprChip?
@@ -53,6 +97,7 @@ struct AppTabView: View {
                 .navigationTitle("ThePickleHub")
                 .navigationDestination(for: HomeRoute.self) { route in
                     switch route {
+                    case .shop: ShopHomeView()
                     case .tournaments: TournamentsView()
                     case .rankings: RankingsView()
                     case .notifications: AuthenticationRequiredView { NotificationsView() }
@@ -74,6 +119,31 @@ struct AppTabView: View {
                     duprLoaded = true
                 }
         }
+    }
+
+    /// Review hooks live in the launch-argument UserDefaults domain only. They
+    /// make release screenshots and UI smoke deterministic without changing
+    /// normal navigation or silently falling back to fixtures in production.
+    private static var launchHomePath: NavigationPath {
+        var path = NavigationPath()
+        guard ShopFeatureGate.isEnabled else { return path }
+        if UserDefaults.standard.bool(forKey: "startShop") || UserDefaults.standard.bool(forKey: "startShopSearch") {
+            path.append(HomeRoute.shop)
+        }
+        if UserDefaults.standard.bool(forKey: "startShopSearch") { path.append(ShopRoute.search) }
+        if UserDefaults.standard.bool(forKey: "startShopCategory") {
+            path.append(HomeRoute.shop)
+            path.append(ShopRoute.category(.paddles))
+        }
+        if UserDefaults.standard.bool(forKey: "startShopProduct") || UserDefaults.standard.bool(forKey: "startShopVariant") {
+            path.append(HomeRoute.shop)
+            path.append(ShopRoute.product(ShopFixtures.products[1].slug))
+        }
+        if UserDefaults.standard.bool(forKey: "startShopStore") {
+            path.append(HomeRoute.shop)
+            path.append(ShopRoute.store(ShopFixtures.gearSeller.slug))
+        }
+        return path
     }
 
     /// Full-width Home header: prominent lime "cup" (tournaments) on the left,

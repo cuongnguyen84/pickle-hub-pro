@@ -3,17 +3,96 @@ import SwiftUI
 import UIKit
 
 @MainActor @Observable
+final class ShopOrdersViewModel {
+    let repository: any ShopOrderRepository
+    let analytics: any ShopAnalytics
+    var orders: [ShopOrderDetail] = []
+    var isLoading = true
+    var errorMessage: String?
+    private var hasTrackedView = false
+
+    init(repository: any ShopOrderRepository = SupabaseShopOrderRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        self.repository = repository
+        self.analytics = analytics
+    }
+
+    func load() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            orders = try await repository.orders()
+            if !hasTrackedView {
+                hasTrackedView = true
+                await analytics.track(.orderListViewed(orderCount: orders.count))
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+
+struct ShopOrdersView: View {
+    @State private var model: ShopOrdersViewModel
+
+    init(repository: any ShopOrderRepository = SupabaseShopOrderRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        _model = State(initialValue: ShopOrdersViewModel(repository: repository, analytics: analytics))
+    }
+
+    var body: some View {
+        Group {
+            if model.isLoading && model.orders.isEmpty {
+                TLLoadingView(rows: 5).padding(TLSpacing.lg)
+            } else if model.orders.isEmpty {
+                TLEmptyState(icon: "shippingbox", title: "Chưa có đơn mua", subtitle: "Đơn đã đặt sẽ xuất hiện tại đây.")
+            } else {
+                List(model.orders) { order in
+                    NavigationLink(value: ShopRoute.order(order.code)) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text(order.code).font(TLType.dataMono(12))
+                                Spacer()
+                                Text(ShopMoney.vnd(order.totalVND)).font(TLType.dataMono(12))
+                            }
+                            Text(order.shop.name).font(TLType.titleSans(14))
+                            Text(order.status.message).font(TLType.bodySans(11)).foregroundStyle(TLColor.fg3)
+                        }
+                        .padding(.vertical, 6)
+                    }
+                }
+                .scrollContentBackground(.hidden)
+            }
+        }
+        .background(TLColor.bg)
+        .navigationTitle("Đơn mua")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await model.load() }
+        .refreshable { await model.load() }
+        .alert("Chưa tải được đơn", isPresented: Binding(
+            get: { model.errorMessage != nil },
+            set: { if !$0 { model.errorMessage = nil } }
+        )) { Button("Thử lại") { Task { await model.load() } } }
+        message: { Text(model.errorMessage ?? "") }
+    }
+}
+
+@MainActor @Observable
 final class ShopOrderDetailViewModel {
     let code: String
     let repository: any ShopOrderRepository
+    let analytics: any ShopAnalytics
     var order: ShopOrderDetail?
     var payment: ShopOrderPaymentInfo?
     var isLoading = true
     var isWorking = false
     var errorMessage: String?
 
-    init(code: String, repository: any ShopOrderRepository = SupabaseShopOrderRepository()) {
-        self.code = code; self.repository = repository
+    init(code: String, repository: any ShopOrderRepository = SupabaseShopOrderRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        self.code = code
+        self.repository = repository
+        self.analytics = analytics
     }
 
     func load() async {
@@ -26,15 +105,21 @@ final class ShopOrderDetailViewModel {
 
     func claimPayment() async {
         isWorking = true; defer { isWorking = false }
-        do { payment = try await repository.claimPayment(code: code) }
+        do {
+            payment = try await repository.claimPayment(code: code)
+            await analytics.track(.paymentClaimed)
+        }
         catch { errorMessage = error.localizedDescription }
     }
 }
 
 struct ShopOrderDetailView: View {
     @State private var model: ShopOrderDetailViewModel
-    init(code: String, repository: any ShopOrderRepository = SupabaseShopOrderRepository()) {
-        _model = State(initialValue: ShopOrderDetailViewModel(code: code, repository: repository))
+    init(code: String, repository: any ShopOrderRepository = SupabaseShopOrderRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        _model = State(initialValue: ShopOrderDetailViewModel(
+            code: code, repository: repository, analytics: analytics
+        ))
     }
 
     var body: some View {

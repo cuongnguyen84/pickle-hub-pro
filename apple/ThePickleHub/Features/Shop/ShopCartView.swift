@@ -5,18 +5,29 @@ import SwiftUI
 final class ShopCartViewModel {
     enum Phase { case loading, loaded, failed(String) }
     let repository: any ShopCartRepository
+    let analytics: any ShopAnalytics
     var phase: Phase = .loading
     var groups: [ShopCartGroup] = []
     var workingItemID: UUID?
     var notice: String?
+    private var hasTrackedView = false
 
-    init(repository: any ShopCartRepository = SupabaseShopCartRepository()) { self.repository = repository }
+    init(repository: any ShopCartRepository = SupabaseShopCartRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        self.repository = repository
+        self.analytics = analytics
+    }
 
     func load() async {
         phase = .loading
         do {
             groups = try await repository.cart()
             phase = .loaded
+            if !hasTrackedView {
+                hasTrackedView = true
+                let itemCount = groups.flatMap(\.lines).reduce(0) { $0 + $1.quantity }
+                await analytics.track(.cartViewed(itemCount: itemCount, sellerCount: groups.count))
+            }
             // Every mutation in this view routes back through load(), so this is
             // the one place the badge has to be reconciled — removing the last
             // item would otherwise leave a count on an empty cart.
@@ -43,8 +54,9 @@ final class ShopCartViewModel {
 struct ShopCartView: View {
     @State private var model: ShopCartViewModel
 
-    init(repository: any ShopCartRepository = SupabaseShopCartRepository()) {
-        _model = State(initialValue: ShopCartViewModel(repository: repository))
+    init(repository: any ShopCartRepository = SupabaseShopCartRepository(),
+         analytics: any ShopAnalytics = FirebaseShopAnalytics()) {
+        _model = State(initialValue: ShopCartViewModel(repository: repository, analytics: analytics))
     }
 
     var body: some View {
