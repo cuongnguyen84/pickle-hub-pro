@@ -88,6 +88,14 @@ export async function processSePayIpn(
   if (!secretMatches(presentedSecret, expectedSecret)) {
     return { status: 401, body: { error: "unauthorized", code: "unauthorized" } };
   }
+
+  // SePay's dashboard sends this undocumented notification when the merchant
+  // clicks "Gửi test". It is only a connectivity probe: acknowledge it after
+  // authenticating the merchant secret, but never let it touch payment state.
+  if (object(payload)?.notification_type === "PAYMENT_SUCCESS") {
+    return { status: 200, body: { success: true, result: "connectivity_test" } };
+  }
+
   const input = parseSePayIpn(payload);
   if (!input || !["ORDER_PAID", "TRANSACTION_VOID"].includes(input.notification_type)) {
     return { status: 400, body: { error: "invalid_payload", code: "invalid_payload" } };

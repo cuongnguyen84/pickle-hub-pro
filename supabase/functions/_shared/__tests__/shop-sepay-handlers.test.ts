@@ -108,6 +108,19 @@ describe("shop SePay IPN", () => {
     expect(apply).not.toHaveBeenCalled();
   });
 
+  it("acknowledges SePay's authenticated dashboard probe without reconciling", async () => {
+    const apply = vi.fn();
+    const result = await processSePayIpn(
+      { notification_type: "PAYMENT_SUCCESS" },
+      "right",
+      "right",
+      { apply },
+    );
+    expect(result.status).toBe(200);
+    expect(result.body).toEqual({ success: true, result: "connectivity_test" });
+    expect(apply).not.toHaveBeenCalled();
+  });
+
   it("passes an approved IPN to the idempotent database RPC and acknowledges it", async () => {
     const apply = vi.fn().mockResolvedValue({ row: { ok: true, result: "paid" }, error: null });
     const result = await processSePayIpn(PAID_IPN, "right", "right", { apply });

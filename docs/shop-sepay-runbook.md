@@ -26,7 +26,8 @@ the database:
 SEPAY_ENV=sandbox
 SEPAY_MERCHANT_ID=<sandbox merchant id>
 SEPAY_SECRET_KEY=<sandbox merchant secret>
-SEPAY_IPN_SECRET=<IPN X-Secret-Key; omit only when it is intentionally identical>
+# SePay Gateway sends the merchant SECRET KEY in X-Secret-Key.
+# Do not set SEPAY_IPN_SECRET unless SePay explicitly provisions a separate IPN key.
 SITE_URL=https://www.thepicklehub.net
 ```
 
