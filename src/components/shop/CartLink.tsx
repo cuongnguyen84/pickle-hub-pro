@@ -14,18 +14,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, X } from "lucide-react";
+import { ClipboardList, ShoppingBag, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCartCount } from "@/hooks/shop/useCart";
 
-// EN: "Cart" / "Cart, {n} item(s)"
+// EN: "My orders" / "Cart" / "Cart, {n} item(s)"
+const ORDERS_LABEL = "Đơn của tôi";
 const CART_ARIA = (count: number | null) =>
   count && count > 0 ? `Giỏ hàng, ${count} món` : "Giỏ hàng";
 
 /**
- * Signed out renders nothing at all: the cart is the buyer's own data, and an
- * empty badge on a page they cannot use is a promise of a screen that will
- * bounce them to /login.
+ * Signed out renders nothing at all: orders and the cart are the buyer's own
+ * data, and links to screens that immediately bounce to /login are noise.
  *
  * A null count (loading, or the query failed) renders the link WITHOUT the
  * number. A wrong badge is worse than no badge.
@@ -35,14 +35,20 @@ export function ShopCartLink() {
   const count = useCartCount();
   if (!user) return null;
   return (
-    <Link to="/shop/cart" className="tl-shop-iconbtn" aria-label={CART_ARIA(count)}>
-      <ShoppingBag size={20} aria-hidden="true" />
-      {count !== null && count > 0 && (
-        <span className="tl-shop-cart-count" aria-hidden="true">
-          {count > 99 ? "99+" : count}
-        </span>
-      )}
-    </Link>
+    <>
+      <Link to="/shop/orders" className="tl-shop-btn tl-shop-btn--sm">
+        <ClipboardList size={17} aria-hidden="true" />
+        {ORDERS_LABEL}
+      </Link>
+      <Link to="/shop/cart" className="tl-shop-iconbtn" aria-label={CART_ARIA(count)}>
+        <ShoppingBag size={20} aria-hidden="true" />
+        {count !== null && count > 0 && (
+          <span className="tl-shop-cart-count" aria-hidden="true">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </Link>
+    </>
   );
 }
 
