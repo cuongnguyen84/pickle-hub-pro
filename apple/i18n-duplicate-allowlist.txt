@@ -294,3 +294,6 @@ Ngoài trời
 # Nhãn ticker: LIVE và UPCOMING, một nghĩa ở cả hai chỗ.
 TRỰC TIẾP
 SẮP TỚI
+# --- 28/08: cùng nghĩa ở cả hai chỗ (tab Cộng đồng / nút sao chép) ---
+Cộng đồng
+Sao chép \(label)
