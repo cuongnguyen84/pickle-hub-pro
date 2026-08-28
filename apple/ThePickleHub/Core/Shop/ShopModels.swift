@@ -308,6 +308,9 @@ struct ShopOrderDetail: Codable, Hashable, Sendable, Identifiable {
     let cancelReason: String?
     let paymentClaimedAt: String?
     let paymentConfirmedAt: String?
+    /// Set when a PAID order was cancelled: what the shop owes back. nil = nothing owed.
+    let refundDueVND: Int?
+    let refundedAt: String?
     let shop: Shop
     let items: [ShopOrderItem]
 
@@ -319,6 +322,7 @@ struct ShopOrderDetail: Codable, Hashable, Sendable, Identifiable {
         case shippingFeeVND = "shipping_fee_vnd"; case totalVND = "total_vnd"
         case trackingCode = "tracking_code"; case cancelReason = "cancel_reason"
         case paymentClaimedAt = "payment_claimed_at"; case paymentConfirmedAt = "payment_confirmed_at"
+        case refundDueVND = "refund_due_vnd"; case refundedAt = "refunded_at"
     }
 }
 

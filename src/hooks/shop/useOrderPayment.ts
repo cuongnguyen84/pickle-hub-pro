@@ -116,3 +116,25 @@ export const useClaimPayment = () => useMarkPayment("shop_order_claim_payment");
 /** owner | manager | fulfillment | admin. `support` can read an order and can
  *  move neither it nor its money. */
 export const useConfirmPayment = () => useMarkPayment("shop_order_confirm_payment");
+
+export interface RefundMarks {
+  code: string;
+  refund_due_vnd: number;
+  refunded_at: string | null;
+}
+
+/** Seller says the refund for a paid-then-cancelled order went back. Same
+ *  roles and the same idempotency as useConfirmPayment. */
+export const useMarkRefunded = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: (code: string) => shopRpc<RefundMarks>("shop_order_mark_refunded", { _code: code }),
+    onSuccess: (marks) => {
+      qc.setQueryData(orderKeys.one(marks.code), (prev: Record<string, unknown> | undefined) =>
+        prev ? { ...prev, refund_due_vnd: marks.refund_due_vnd, refunded_at: marks.refunded_at } : prev,
+      );
+      void qc.invalidateQueries({ queryKey: ["shop", "orders"] });
+    },
+  });
+};

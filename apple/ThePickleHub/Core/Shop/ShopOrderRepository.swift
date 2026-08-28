@@ -35,7 +35,7 @@ struct SupabaseShopOrderRepository: ShopOrderRepository {
     }
 
     func orders() async throws -> [ShopOrderDetail] {
-        let select = "id,code,status,payment_method,recipient_name,recipient_phone,shipping_address,delivery_note,items_total_vnd,shipping_fee_vnd,total_vnd,tracking_code,cancel_reason,payment_claimed_at,payment_confirmed_at,shop:shops(slug,name,state),items:shop_order_items(id,product_id,variant_id,qty,product_title,variant_label,sku,unit_price_vnd,line_total_vnd)"
+        let select = "id,code,status,payment_method,recipient_name,recipient_phone,shipping_address,delivery_note,items_total_vnd,shipping_fee_vnd,total_vnd,tracking_code,cancel_reason,payment_claimed_at,payment_confirmed_at,refund_due_vnd,refunded_at,shop:shops(slug,name,state),items:shop_order_items(id,product_id,variant_id,qty,product_title,variant_label,sku,unit_price_vnd,line_total_vnd)"
         return try await client.from("shop_orders")
             .select(select)
             .order("created_at", ascending: false)
@@ -44,7 +44,7 @@ struct SupabaseShopOrderRepository: ShopOrderRepository {
     }
 
     func order(code: String) async throws -> ShopOrderDetail? {
-        let select = "id,code,status,payment_method,recipient_name,recipient_phone,shipping_address,delivery_note,items_total_vnd,shipping_fee_vnd,total_vnd,tracking_code,cancel_reason,payment_claimed_at,payment_confirmed_at,shop:shops(slug,name,state),items:shop_order_items(id,product_id,variant_id,qty,product_title,variant_label,sku,unit_price_vnd,line_total_vnd)"
+        let select = "id,code,status,payment_method,recipient_name,recipient_phone,shipping_address,delivery_note,items_total_vnd,shipping_fee_vnd,total_vnd,tracking_code,cancel_reason,payment_claimed_at,payment_confirmed_at,refund_due_vnd,refunded_at,shop:shops(slug,name,state),items:shop_order_items(id,product_id,variant_id,qty,product_title,variant_label,sku,unit_price_vnd,line_total_vnd)"
         let rows: [ShopOrderDetail] = try await client.from("shop_orders").select(select)
             .eq("code", value: code).limit(1).execute().value
         return rows.first
