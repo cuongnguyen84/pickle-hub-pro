@@ -1023,7 +1023,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // /tournaments + /vi/tournaments and in two blog bodies, and its status
   // flips Upcoming -> Completed. Cached HTML would keep serving the wrong
   // entity name and a finished event billed as upcoming.
-  const cacheKey = `pr:v69:${url.pathname}`;
+  // v70 (2026-08-28) — every news article changes shape: the related strip
+  // becomes prev/next neighbours instead of the same six newest items for all
+  // 843 URLs, and the source credit becomes a dateline naming ThePickleHub
+  // with a visible date. Cached HTML would keep serving the six-link version
+  // that produced the orphans.
+  const cacheKey = `pr:v70:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
