@@ -10,11 +10,11 @@
 // its retired slug. Anything else confirms which shops are real.
 // ============================================================================
 
-import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { BadgeCheck, ExternalLink, Package, Phone } from "lucide-react";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { usePublicSearch, usePublicShopPage } from "@/hooks/shop/usePublicShop";
+import { usePublicSearchPages, usePublicShopPage } from "@/hooks/shop/usePublicShop";
 import { ResultsGrid } from "@/components/shop/CatalogResults";
 import { ShopMonogram } from "@/components/shop/ShopMonogram";
 import { ShopCartLink } from "@/components/shop/CartLink";
@@ -36,14 +36,11 @@ const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 export default function ShopStore() {
   const { slug } = useParams<{ slug: string }>();
-  const [params, setParams] = useSearchParams();
   const q = usePublicShopPage(slug ?? null);
 
-  const catalog = usePublicSearch(
+  const catalog = usePublicSearchPages(
     {
       shopSlug: slug ?? null,
-      cursorAt: params.get("after"),
-      cursorId: params.get("after_id"),
     },
     !!slug && q.data?.found === true,
   );
@@ -93,7 +90,7 @@ export default function ShopStore() {
   }
 
   const contacts = usableContacts(q.data?.contacts as PublicContact[] | undefined);
-  const rows = catalog.data?.rows ?? [];
+  const rows = catalog.data?.pages.flatMap((pg) => pg.rows) ?? [];
 
   return (
     <TheLineLayout title={shop.name}>
@@ -192,7 +189,7 @@ export default function ShopStore() {
           <h2 className="tl-shop-h2" id="store-catalog">Sản phẩm</h2>
           <ResultsGrid
             rows={rows}
-            total={catalog.data?.total ?? 0}
+            total={catalog.data?.pages[0]?.total ?? 0}
             hideSparseNote
             isLoading={catalog.isLoading}
             isError={catalog.isError}
@@ -201,20 +198,15 @@ export default function ShopStore() {
             emptyBody="Quay lại sau, hoặc liên hệ shop để hỏi trực tiếp."
             emptyIcon={<Package size={28} aria-hidden="true" />}
           />
-          {catalog.data?.has_more && rows.length > 0 && (
+          {catalog.hasNextPage && rows.length > 0 && (
             <div style={{ marginTop: 16, display: "flex", justifyContent: "center" }}>
               <button
                 type="button"
                 className="tl-shop-btn"
-                onClick={() => {
-                  const last = rows[rows.length - 1];
-                  const next = new URLSearchParams(params);
-                  next.set("after", last.created_at);
-                  next.set("after_id", last.id);
-                  setParams(next);
-                }}
+                onClick={() => void catalog.fetchNextPage()}
+                  disabled={catalog.isFetchingNextPage}
               >
-                Xem thêm
+                {catalog.isFetchingNextPage ? "Đang tải…" : "Xem thêm"}
               </button>
             </div>
           )}
