@@ -1028,7 +1028,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 843 URLs, and the source credit becomes a dateline naming ThePickleHub
   // with a visible date. Cached HTML would keep serving the six-link version
   // that produced the orphans.
-  const cacheKey = `pr:v70:${url.pathname}`;
+  // v71 (2026-08-29): World Cup T-1 refresh — how-to-watch + schedule + overview
+  // now carry the Sep 6 final times, the withdrawn ticket link, current hotel
+  // rates and the confirmed 81-nation field. Old HTML would serve the stale
+  // "the Open final is not on the schedule" claim for the whole TTL.
+  const cacheKey = `pr:v71:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

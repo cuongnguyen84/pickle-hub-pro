@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang-schedule",
   publishedDate: "2026-08-24",
-  updatedDate: "2026-08-24",
+  updatedDate: "2026-08-29",
   author: "Cuong Nguyen",
   tags: [
     "lịch thi đấu world cup pickleball",
@@ -34,7 +34,7 @@ const post: BlogPost = {
         {
           heading: "Every date that matters, in one place",
           content:
-            "Updated August 24, 2026 — the Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, and it is really two tournaments on one schedule. The individual tournament starts Sunday August 30. The Opening Ceremony is Wednesday September 2, 18:00–20:00, on Vietnam's National Day. The national-team competition — the part with Vietnam in it — does not start until Thursday September 3, and the finals close the event on Sunday September 6. This ThePickleHub schedule page lists both competitions day by day, names the venues, and is explicit about the one thing the organizers have not published: the Open final has no date, time or court assigned yet. All times are Vietnam time (GMT+7), and the organizers mark the schedule subject to change.",
+            "Updated August 29, 2026 — play starts tomorrow. The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, and it is really two tournaments on one schedule. The individual tournament starts Sunday August 30 at 08:00, with 47 events across eight court clusters on day one. The Opening Ceremony is Wednesday September 2, on Vietnam's National Day. The national-team competition — the part with Vietnam in it — does not start until Thursday September 3, and the finals close the event on Sunday September 6 at Tien Son, where the five OPEN Pro finals are now timed 10:10 to 14:50. This ThePickleHub schedule page lists both competitions day by day and names the venues. All times are Vietnam time (GMT+7), and the organizers mark the schedule subject to change.",
           internalLinks: [
             {
               text: "Tickets, venues and how to watch on FPT Play",
@@ -68,7 +68,10 @@ const post: BlogPost = {
                 "Sat Sep 5",
                 "Quarter-finals for Seniors, Kids, Open and Masters from 08:00. Semi-finals for Seniors, Kids and Open. Kids bronze and final at 12:00. Masters and Juniors finals and bronze matches through the afternoon",
               ],
-              ["Sun Sep 6", "Seniors final. Juniors final"],
+              [
+                "Sun Sep 6",
+                "Three timed team matches at Tien Son — 08:00, 16:00 and 18:00. The published day view does not label which division each one is",
+              ],
             ],
           },
         },
@@ -158,9 +161,9 @@ const post: BlogPost = {
           },
         },
         {
-          heading: "The Open final is not on the schedule",
+          heading: "The finals now have times — one gap left",
           content:
-            'Stating this plainly because it affects travel plans. Saturday September 5 lists Open quarter-finals and semi-finals. Sunday September 6 lists only the Seniors and Juniors finals. The Open final — the biggest match of the tournament — does not appear on either day. The bracket in the organizers\' own system does contain an Open final and a third-place match, so the match exists; it simply has no date, time or court assigned. Three things point to Sunday September 6: the only ticket product labelled FINALS is dated September 6, the five-day hospitality package describes the sequence as "Opening → Rounds → Quarterfinals → Semifinals → Finals & Music Festival", and the individual tournament puts its All Pro Categories Finals on Tien Son court 1 that same day. Treat September 6 as expected, not confirmed, and do not book a departure flight around it until the organizers publish a time.',
+            "This section used to say the Open final had no slot at all. As of August 29 that is no longer true, so here is the corrected reading. September 6 at Tien Son now carries eight individually timed matches. Five of them are the OPEN Pro finals: women's singles 10:10, men's singles 11:20, women's doubles 12:30, men's doubles 13:40, mixed doubles 14:50. The other three are national-team matches at 08:00, 16:00 and 18:00. The remaining gap is narrower but real: the public day view does not say which division each of those three team matches belongs to, so we still cannot point at one slot and call it the Open team final. The 18:00 slot is the last match of the tournament and the hospitality package describes the day as ending with \"Finals & Music Festival\", which makes it the obvious candidate — but the organizers have not labelled it, so we are not stating it as fact. If you are booking a departure flight, book after 18:00 on September 6 or the following morning.",
         },
         {
           heading: "Where each day is played",
@@ -182,7 +185,7 @@ const post: BlogPost = {
         {
           heading: "What the schedule does not tell you",
           content:
-            "Three gaps to plan around. First, there are no individual match times or court assignments anywhere — the schedule gives each day's events and venues only, and the organizers note explicitly that a listed time covers the whole event window from first match to last, not your match. Turn up for the window, not the time. Second, the Open final has no slot, as above. Third, the organizers mark the entire schedule subject to change, and they have already moved things: the venue list on their own site no longer matches the venues in their own schedule. If you are travelling for a specific match, confirm the day before.",
+            "Three gaps to plan around. First, there are no individual match times or court assignments anywhere — the schedule gives each day's events and venues only, and the organizers note explicitly that a listed time covers the whole event window from first match to last, not your match. Turn up for the window, not the time. Second, the three timed national-team matches on September 6 are not labelled by division, as above. Third, the organizers mark the entire schedule subject to change, and they have already moved things: the venue list on their own site no longer matches the venues in their own schedule. If you are travelling for a specific match, confirm the day before.",
         },
         {
           heading: "How to follow it",
@@ -204,7 +207,7 @@ const post: BlogPost = {
         {
           question: "When does the Pickleball World Cup 2026 in Da Nang start?",
           answer:
-            "The individual tournament starts Sunday August 30, 2026. The Opening Ceremony is Wednesday September 2, 18:00–20:00, on Vietnam's National Day. The national-team competition starts Thursday September 3 and the finals are on Sunday September 6.",
+            "The individual tournament starts Sunday August 30, 2026 at 08:00, with 47 events across eight court clusters. The Opening Ceremony is Wednesday September 2 at Tien Son Sports Palace, on Vietnam's National Day — the schedule has shown an 18:00–20:00 window, while FPT Play gave the start as 17:30 when it announced its broadcast on August 28. The national-team competition starts Thursday September 3 and the finals are on Sunday September 6.",
         },
         {
           question: "When does Vietnam play at the Pickleball World Cup 2026?",
@@ -214,7 +217,7 @@ const post: BlogPost = {
         {
           question: "When is the Open final at the Pickleball World Cup 2026?",
           answer:
-            "It has not been published. The team schedule lists Open quarter-finals and semi-finals on September 5 and only the Seniors and Juniors finals on September 6, and the Open final has no date, time or court assigned in the organizers' system. September 6 is expected — the FINALS ticket is dated September 6 and the Pro finals are on Tien Son court 1 that day — but it is not confirmed.",
+            "Sunday September 6 at Tien Son, but the exact slot is still unlabelled. As of August 29 the day carries three timed national-team matches — 08:00, 16:00 and 18:00 — without saying which division each is, alongside the five OPEN Pro finals from 10:10 to 14:50. The 18:00 slot closes the tournament and is the obvious candidate for the Open team final, but the organizers have not confirmed it.",
         },
         {
           question: "How many teams are at the Pickleball World Cup 2026?",
@@ -243,7 +246,7 @@ const post: BlogPost = {
         {
           heading: "Toàn bộ mốc thời gian, gom về một chỗ",
           content:
-            "Cập nhật 24/8/2026 — Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng, và thực chất đây là hai giải chạy trên cùng một lịch. Giải Cá nhân khởi tranh Chủ nhật 30/8. Lễ khai mạc vào thứ Tư 2/9, 18:00–20:00, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia — phần có đội tuyển Việt Nam — tới thứ Năm 3/9 mới bắt đầu, và các trận chung kết khép lại giải Chủ nhật 6/9. Trang lịch này của ThePickleHub liệt kê cả hai giải theo từng ngày, nêu rõ sân thi đấu, và nói thẳng về thứ duy nhất ban tổ chức chưa công bố: trận chung kết Open chưa được gán ngày, giờ hay sân. Mọi giờ đều là giờ Việt Nam (GMT+7), và ban tổ chức ghi rõ lịch có thể thay đổi.",
+            "Cập nhật 29/8/2026 — mai bóng lăn. Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng, và thực chất đây là hai giải chạy trên cùng một lịch. Giải Cá nhân khởi tranh Chủ nhật 30/8 lúc 08:00, ngày đầu có 47 nội dung trải trên 8 cụm sân. Lễ khai mạc thứ Tư 2/9, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia — phần có đội tuyển Việt Nam — tới thứ Năm 3/9 mới bắt đầu, và các trận chung kết khép lại giải Chủ nhật 6/9 tại Tiên Sơn, nơi 5 trận chung kết OPEN nhóm Pro nay đã có giờ từ 10:10 đến 14:50. Trang lịch này của ThePickleHub liệt kê cả hai giải theo từng ngày và nêu rõ sân thi đấu. Mọi giờ đều là giờ Việt Nam (GMT+7), và ban tổ chức ghi rõ lịch có thể thay đổi.",
           internalLinks: [
             {
               text: "Vé, sân bãi và cách xem trên FPT Play",
@@ -277,7 +280,10 @@ const post: BlogPost = {
                 "Thứ Bảy 5/9",
                 "Tứ kết Seniors, Kids, Open và Masters từ 08:00. Bán kết Seniors, Kids và Open. Kids tranh HCĐ và chung kết lúc 12:00. Chung kết và tranh HCĐ Masters, Juniors suốt buổi chiều",
               ],
-              ["Chủ nhật 6/9", "Chung kết Seniors. Chung kết Juniors"],
+              [
+                "Chủ nhật 6/9",
+                "Ba trận Đồng đội có giờ riêng tại Tiên Sơn — 08:00, 16:00 và 18:00. Bản lịch công khai không ghi mỗi trận thuộc nội dung nào",
+              ],
             ],
           },
         },
@@ -363,9 +369,9 @@ const post: BlogPost = {
           },
         },
         {
-          heading: "Chung kết Open không nằm trên lịch",
+          heading: "Chung kết đã có giờ — chỉ còn một khoảng trống",
           content:
-            'Nói thẳng vì nó ảnh hưởng tới kế hoạch đi lại. Thứ Bảy 5/9 có tứ kết và bán kết Open. Chủ nhật 6/9 chỉ ghi chung kết Seniors và chung kết Juniors. Trận chung kết Open — trận lớn nhất giải — không xuất hiện ở ngày nào cả. Trong hệ thống bracket của chính ban tổ chức thì trận chung kết Open và trận tranh hạng ba đều tồn tại, nên trận đấu là có thật; nó chỉ chưa được gán ngày, giờ và sân. Ba dấu hiệu trỏ về Chủ nhật 6/9: gói vé duy nhất mang nhãn FINALS đề ngày 6/9, gói hospitality trọn năm ngày mô tả trình tự "Khai mạc → Các vòng đấu → Tứ kết → Bán kết → Chung kết & Music Festival", và Giải Cá nhân cũng đặt Chung kết nhóm Pro tại Tiên Sơn sân 1 đúng ngày đó. Hãy coi 6/9 là dự kiến, chưa phải đã chốt, và đừng đặt vé máy bay về dựa vào nó cho tới khi ban tổ chức công bố giờ.',
+            'Mục này trước đây viết rằng chung kết Open hoàn toàn chưa có suất trên lịch. Tính đến 29/8 điều đó không còn đúng, nên đây là cách đọc đã sửa. Ngày 6/9 tại Tiên Sơn nay có tám trận được gán giờ riêng. Năm trong số đó là chung kết nhóm Pro nội dung OPEN: đơn nữ 10:10, đơn nam 11:20, đôi nữ 12:30, đôi nam 13:40, đôi nam nữ 14:50. Ba trận còn lại là Đồng đội, lúc 08:00, 16:00 và 18:00. Khoảng trống còn lại hẹp hơn nhưng vẫn có thật: bản lịch công khai không ghi mỗi trận Đồng đội đó thuộc nội dung nào, nên vẫn chưa chỉ được suất nào là chung kết Đồng đội Open. Suất 18:00 là trận cuối cùng của cả giải, và gói hospitality mô tả ngày này khép lại bằng "Chung kết & Music Festival" — nên đó là ứng viên rõ nhất; nhưng ban tổ chức chưa dán nhãn, nên chúng tôi không viết như một sự thật đã chốt. Nếu đặt vé máy bay về, hãy đặt sau 18:00 ngày 6/9 hoặc sáng hôm sau.',
         },
         {
           heading: "Mỗi ngày đấu ở sân nào",
@@ -387,12 +393,12 @@ const post: BlogPost = {
         {
           heading: "Những gì lịch này không cho bạn biết",
           content:
-            "Ba khoảng trống cần tính trước. Thứ nhất, không có giờ từng trận hay phân sân cụ thể ở bất kỳ đâu — lịch chỉ cho biết mỗi ngày đấu nội dung gì ở sân nào, và ban tổ chức ghi rõ rằng giờ ghi cạnh một nội dung là khung của cả nội dung đó, từ trận đầu tới trận cuối, không phải giờ trận của bạn. Hãy có mặt theo khung giờ, đừng canh theo con số. Thứ hai, chung kết Open chưa có suất trên lịch, như đã nói ở trên. Thứ ba, ban tổ chức ghi toàn bộ lịch là có thể thay đổi, và họ đã đổi thật: danh sách sân trên trang của chính họ hiện không còn khớp với sân trong lịch của chính họ. Nếu bạn đi xa để xem một trận cụ thể, hãy xác nhận lại vào hôm trước.",
+            "Ba khoảng trống cần tính trước. Thứ nhất, không có giờ từng trận hay phân sân cụ thể ở bất kỳ đâu — lịch chỉ cho biết mỗi ngày đấu nội dung gì ở sân nào, và ban tổ chức ghi rõ rằng giờ ghi cạnh một nội dung là khung của cả nội dung đó, từ trận đầu tới trận cuối, không phải giờ trận của bạn. Hãy có mặt theo khung giờ, đừng canh theo con số. Thứ hai, ba trận Đồng đội có giờ ngày 6/9 không được ghi thuộc nội dung nào, như đã nói ở trên. Thứ ba, ban tổ chức ghi toàn bộ lịch là có thể thay đổi, và họ đã đổi thật: danh sách sân trên trang của chính họ hiện không còn khớp với sân trong lịch của chính họ. Nếu bạn đi xa để xem một trận cụ thể, hãy xác nhận lại vào hôm trước.",
         },
         {
           heading: "Theo dõi giải bằng cách nào",
           content:
-            "FPT Play vừa là đơn vị đồng tổ chức vừa là đơn vị phát sóng độc quyền tại Việt Nam, phát trên SmartTV, di động, FPT Play Box và fptplay.vn. Việc giải nằm trong gói miễn phí hay sau thuê bao thì chưa được nói rõ, và thỏa thuận phát sóng quốc tế cũng chưa được công bố. Về vé, lưu ý hiện chỉ bán bốn gói hospitality từ 1.000 đến 5.400 USD — chưa có vé vào cửa phổ thông nào được công bố ở bất kỳ mức giá nào. ThePickleHub cập nhật song ngữ và theo dõi tỷ số trực tiếp suốt giải.",
+            "FPT Play vừa là đơn vị đồng tổ chức vừa là đơn vị phát sóng độc quyền tại Việt Nam — ngày 28/8 họ xác nhận phát trực tiếp và độc quyền toàn bộ giải, trên ứng dụng Smart TV, điện thoại, PC/laptop, FPT Play Box và fptplay.vn. Việc giải nằm trong gói miễn phí hay sau thuê bao thì vẫn chưa được nói rõ, và thỏa thuận phát sóng quốc tế cũng chưa được công bố. Ngoài ra ban tổ chức bán gói Livestream Premium của riêng họ, 250.000₫ trọn giải cho 16 sân PRO và Đồng đội. Về vé vào sân: chưa từng có vé phổ thông nào được công bố, và đường link vé nay đã biến mất khỏi trang chủ giải. ThePickleHub cập nhật song ngữ và theo dõi tỷ số trực tiếp suốt giải.",
           internalLinks: [
             {
               text: "Pickleball trực tiếp trên ThePickleHub",
@@ -409,7 +415,7 @@ const post: BlogPost = {
         {
           question: "World Cup Pickleball 2026 tại Đà Nẵng khởi tranh khi nào?",
           answer:
-            "Giải Cá nhân khởi tranh Chủ nhật 30/8/2026. Lễ khai mạc vào thứ Tư 2/9, 18:00–20:00, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia bắt đầu thứ Năm 3/9 và các trận chung kết diễn ra Chủ nhật 6/9.",
+            "Giải Cá nhân khởi tranh Chủ nhật 30/8/2026 lúc 08:00, với 47 nội dung trải trên 8 cụm sân. Lễ khai mạc thứ Tư 2/9 tại Cung Thể thao Tiên Sơn, đúng ngày Quốc khánh — lịch của ban tổ chức ghi khung 18:00–20:00, còn FPT Play khi công bố bản quyền ngày 28/8 cho biết bắt đầu lúc 17:30. Giải Đồng đội Quốc gia bắt đầu thứ Năm 3/9 và các trận chung kết diễn ra Chủ nhật 6/9.",
         },
         {
           question: "Đội tuyển Việt Nam thi đấu ngày nào?",
@@ -419,7 +425,7 @@ const post: BlogPost = {
         {
           question: "Chung kết Open World Cup Pickleball 2026 đấu ngày nào?",
           answer:
-            "Chưa được công bố. Lịch đồng đội ghi tứ kết và bán kết Open ngày 5/9, còn ngày 6/9 chỉ có chung kết Seniors và Juniors; trận chung kết Open chưa được gán ngày, giờ hay sân trong hệ thống của ban tổ chức. Ngày 6/9 là dự kiến — vé nhãn FINALS đề ngày 6/9 và Chung kết nhóm Pro cũng đấu ở Tiên Sơn sân 1 hôm đó — nhưng chưa phải đã chốt.",
+            "Chủ nhật 6/9 tại Tiên Sơn, nhưng suất chính xác thì vẫn chưa được dán nhãn. Tính đến 29/8, ngày này có ba trận Đồng đội được gán giờ — 08:00, 16:00 và 18:00 — mà không ghi mỗi trận thuộc nội dung nào, bên cạnh 5 trận chung kết nhóm Pro nội dung OPEN từ 10:10 đến 14:50. Suất 18:00 khép lại cả giải nên là ứng viên rõ nhất cho chung kết Đồng đội Open, nhưng ban tổ chức chưa xác nhận.",
         },
         {
           question: "World Cup Pickleball 2026 có bao nhiêu đội?",
