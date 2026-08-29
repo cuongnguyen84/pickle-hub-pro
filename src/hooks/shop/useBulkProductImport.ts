@@ -69,9 +69,10 @@ export interface ProductRow {
   aiConfidence: number;
   aiData: EnrichedData | null;
   selectedImageUrls: string[];
-  manualImageUrl: string | null;
-  selectedImageFile: File | null;
-  imagePreviewUrl: string | null;
+  /** Raw textarea: một hoặc nhiều URL, cách nhau bằng xuống dòng/khoảng trắng/phẩy. */
+  manualImageUrls: string;
+  /** Ảnh tải từ thiết bị (nhiều), mỗi cái giữ object URL để xem trước. */
+  selectedImageFiles: ProcessedProductImage[];
   backgroundRemovedImages: Record<string, ProcessedProductImage>;
   selected: boolean;
   status: RowStatus;
@@ -140,9 +141,8 @@ export function useBulkProductImport() {
           aiConfidence: 0,
           aiData: null,
           selectedImageUrls: [],
-          manualImageUrl: null,
-          selectedImageFile: null,
-          imagePreviewUrl: null,
+          manualImageUrls: "",
+          selectedImageFiles: [],
           backgroundRemovedImages: {},
           selected: true,
           status: "idle" as const,
@@ -352,8 +352,8 @@ export function useBulkProductImport() {
 }
 
 async function resolveProductImages(row: ProductRow): Promise<File[]> {
-  const files = row.selectedImageFile ? [row.selectedImageFile] : [];
-  const urls = [...new Set([...row.selectedImageUrls, row.manualImageUrl].filter(Boolean) as string[])];
+  const files = row.selectedImageFiles.map((image) => image.file);
+  const urls = [...new Set([...row.selectedImageUrls, ...parseImageUrlList(row.manualImageUrls)])];
   for (const [index, url] of urls.entries()) {
     const processed = row.backgroundRemovedImages[url];
     if (processed) {
@@ -375,8 +375,15 @@ async function resolveProductImages(row: ProductRow): Promise<File[]> {
 }
 
 function revokeRowPreviews(row: ProductRow): void {
-  if (row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
+  row.selectedImageFiles.forEach((image) => URL.revokeObjectURL(image.previewUrl));
   Object.values(row.backgroundRemovedImages).forEach((image) => URL.revokeObjectURL(image.previewUrl));
+}
+
+/** "Dán nhiều URL": tách theo xuống dòng, khoảng trắng hoặc phẩy; chỉ giữ http(s). */
+export function parseImageUrlList(text: string): string[] {
+  return [...new Set(
+    text.split(/[\s,]+/).map((part) => part.trim()).filter((part) => /^https?:\/\//i.test(part)),
+  )];
 }
 
 const rowPrice = (row: ProductRow): number =>
@@ -411,7 +418,7 @@ function imageSources(row: ProductRow): string[] {
     const source = row.aiData?.image_candidates.find((candidate) => candidate.url === url)?.source_url;
     return source ? [url, source] : [url];
   });
-  if (row.manualImageUrl) sources.push(row.manualImageUrl);
+  sources.push(...parseImageUrlList(row.manualImageUrls));
   return [...new Set(sources)];
 }
 

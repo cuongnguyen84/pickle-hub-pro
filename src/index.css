@@ -179,7 +179,13 @@
     inset: 0;
     width: 100%;
     height: 100%;
+    /* `clip`, not `hidden`: a hidden box is still scrollable by script and by
+       focus. Picking a file focused a visually-hidden <input type=file> and
+       Chrome scrolled #root 800px to "show" it — the whole app went black
+       (bulk import, 29/08). clip forbids every kind of scroll; hidden stays
+       as the fallback for engines without clip. */
     overflow: hidden;
+    overflow: clip;
     background-color: hsl(var(--background));
   }
 
