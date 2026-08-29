@@ -82,10 +82,6 @@ export function FilterFields({
           />
           Chỉ hiện sản phẩm còn hàng
         </label>
-        <p className="tl-shop-hint" style={{ marginTop: 4, marginBottom: 0 }}>
-          Shop chưa khai số lượng thì vẫn hiện, kèm ghi chú — không coi &ldquo;chưa khai&rdquo; là
-          hết hàng.
-        </p>
       </fieldset>
     </>
   );
