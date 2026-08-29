@@ -1970,6 +1970,8 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
    Mọi style riêng của FAB nằm trong max-width 899px — .tl-shop-btn gốc có nền/viền
    riêng, reset ở desktop sẽ phá nút "Đơn của tôi". */
 .tl-shop-fab { display: flex; align-items: center; gap: 8px; }
+/* Nhãn chữ chỉ mở trên desktop; mobile FAB là icon-only. */
+.tl-shop-fab-label { display: none; }
 
 @media (max-width: 899px) {
   .tl-shop-fab {
@@ -2018,7 +2020,40 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
 }
 
 @media (min-width: 900px) {
-  .tl-shop-fab { position: static; flex-direction: row; }
+  .tl-shop-fab { position: static; flex-direction: row; gap: 10px; }
+  /* Desktop: hai nút pill 44px có chữ — Đơn (viền) + Giỏ (xanh, đậm nhất trên topline). */
+  .tl-shop-fab > .tl-shop-iconbtn {
+    width: auto;
+    height: var(--shop-tap);
+    padding: 0 16px 0 14px;
+    gap: 8px;
+    border-radius: 999px;
+    border: 1px solid var(--tl-border-2);
+    background: var(--tl-surface-2);
+    color: var(--tl-fg);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .tl-shop-fab > .tl-shop-iconbtn:hover { background: var(--tl-surface); }
+  .tl-shop-fab > .tl-shop-iconbtn svg { width: 20px; height: 20px; }
+  .tl-shop-fab-label { display: inline; }
+  .tl-shop-fab > .tl-shop-fab-cart,
+  .tl-shop-fab > .tl-shop-fab-cart:hover {
+    background: var(--tl-green);
+    border-color: var(--tl-green);
+    color: var(--shop-on-accent);
+  }
+  .tl-shop-fab > .tl-shop-fab-cart:hover { background: var(--tl-green-dim); border-color: var(--tl-green-dim); }
+  /* Số món: inline trong pill thay vì bám góc. */
+  .tl-shop-fab > .tl-shop-fab-cart .tl-shop-cart-count {
+    position: static;
+    margin-left: 2px;
+    min-width: 20px;
+    height: 20px;
+    background: var(--tl-fg);
+    color: var(--tl-bg);
+  }
 }
 
 /* 5 · Phase 3 · an order past the deadline the seller promised themselves.
