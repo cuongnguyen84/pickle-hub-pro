@@ -257,7 +257,7 @@ export default function ProductDetail() {
           above keep their own noindex. */}
       <DynamicMeta title={product.title} description={product.description ?? undefined} />
       <main className="tl-shop">
-        <div className="tl-shop-page">
+        <div className="tl-shop-page tl-shop-has-fab">
         <div className="tl-shop-topline">
           {/* The product title is the <h1> two lines down; repeating it as a
               crumb was noise on a 375px row (R5 #14). */}
@@ -272,7 +272,7 @@ export default function ProductDetail() {
               </>
             )}
           </nav>
-          <ShopCartLink />
+          <ShopCartLink floating />
         </div>
 
         <div className={ordering ? "tl-pdp tl-shop-has-buybar" : "tl-pdp"}>

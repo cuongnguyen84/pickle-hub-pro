@@ -88,14 +88,14 @@ export default function ShopCategory() {
           state, not a launch gate. */}
       <DynamicMeta title={category ? category.name : "Ngành hàng"} />
       <main className="tl-shop">
-        <div className="tl-shop-page">
+        <div className="tl-shop-page tl-shop-has-fab">
         <div className="tl-shop-topline">
           {/* The last crumb is the page's own <h1> one line below it, so it is
               dropped (R5 #14, chốt: giữ h1). The crumb row is the way back. */}
           <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
             <Link to="/shop" className="tl-crumb">Chợ</Link>
           </nav>
-          <ShopCartLink />
+          <ShopCartLink floating />
         </div>
 
         <h1 className="tl-shop-h1">{category?.name ?? "Ngành hàng"}</h1>
