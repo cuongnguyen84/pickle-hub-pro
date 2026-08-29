@@ -20,6 +20,7 @@ import { useCartCount } from "@/hooks/shop/useCart";
 
 // EN: "My orders" / "Cart" / "Cart, {n} item(s)"
 const ORDERS_LABEL = "Đơn của tôi";
+const CART_LABEL = "Giỏ hàng";
 const CART_ARIA = (count: number | null) =>
   count && count > 0 ? `Giỏ hàng, ${count} món` : "Giỏ hàng";
 
@@ -44,9 +45,12 @@ export function ShopCartLink({ floating = false }: { floating?: boolean } = {}) 
   const links = (
     <>
       {floating ? (
-        // FAB: icon-only, the label lives in aria (PO 29/08: chữ làm cụm rộng).
+        // FAB mobile: icon-only (PO 29/08: chữ làm cụm rộng). Desktop ≥900px:
+        // cùng markup nhưng CSS mở nhãn ra thành nút pill — hai icon trần trên
+        // web "thiếu nổi bật, quá bé" (PO chiều 29/08).
         <Link to="/shop/orders" className="tl-shop-iconbtn" aria-label={ORDERS_LABEL}>
           <ClipboardList size={24} aria-hidden="true" />
+          <span className="tl-shop-fab-label" aria-hidden="true">{ORDERS_LABEL}</span>
         </Link>
       ) : (
         <Link to="/shop/orders" className="tl-shop-btn tl-shop-btn--sm">
@@ -56,6 +60,7 @@ export function ShopCartLink({ floating = false }: { floating?: boolean } = {}) 
       )}
       <Link to="/shop/cart" className={cartClass} aria-label={CART_ARIA(count)}>
         <ShoppingBag size={floating ? 26 : 20} aria-hidden="true" />
+        {floating && <span className="tl-shop-fab-label" aria-hidden="true">{CART_LABEL}</span>}
         {hasItems && (
           <span className="tl-shop-cart-count" aria-hidden="true">
             {count > 99 ? "99+" : count}
