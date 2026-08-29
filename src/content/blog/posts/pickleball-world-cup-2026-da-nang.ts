@@ -87,7 +87,8 @@ const post: BlogPost = {
             "Official website: copamundialdepickleball.com",
             "Instagram: @pickleballworldcupofficial (bio: \"One World, One Game, One Champion\")",
             "GPF announcement: globalpickleballfederation.org",
-            "Vietnamese broadcast: FPT Play — co-organizer and exclusive broadcaster (subscription required)",
+            "Vietnamese broadcast: FPT Play — co-organizer, and confirmed on August 28 as the exclusive live broadcaster in Vietnam. Whether it sits in the free tier or behind a subscription has not been stated",
+            "Finals day: Sunday September 6 at Tien Son — the five OPEN Pro finals are timed 10:10 (women's singles), 11:20 (men's singles), 12:30 (women's doubles), 13:40 (men's doubles) and 14:50 (mixed), with three national-team matches at 08:00, 16:00 and 18:00 that the published schedule does not label by division",
             "ThePickleHub — bilingual English + Vietnamese coverage, schedules, and live updates"
           ],
           internalLinks: [
@@ -242,7 +243,8 @@ const post: BlogPost = {
             "Website chính thức: copamundialdepickleball.com",
             "Instagram: @pickleballworldcupofficial (bio: \"One World, One Game, One Champion\")",
             "Thông báo GPF: globalpickleballfederation.org",
-            "Phát sóng tại Việt Nam: FPT Play — đồng tổ chức kiêm đơn vị phát sóng độc quyền (cần đăng ký)",
+            "Phát sóng tại Việt Nam: FPT Play — đồng tổ chức, và ngày 28/8 xác nhận là đơn vị phát trực tiếp độc quyền tại Việt Nam. Giải nằm trong gói miễn phí hay sau thuê bao thì chưa được nói rõ",
+            "Ngày chung kết: Chủ nhật 6/9 tại Tiên Sơn — 5 trận chung kết OPEN nhóm Pro có giờ 10:10 (đơn nữ), 11:20 (đơn nam), 12:30 (đôi nữ), 13:40 (đôi nam), 14:50 (đôi nam nữ); cùng ba trận Đồng đội lúc 08:00, 16:00 và 18:00 mà lịch công bố không ghi thuộc nội dung nào",
             "ThePickleHub — bài viết song ngữ Việt – Anh, lịch thi đấu và cập nhật trực tiếp"
           ],
           internalLinks: [

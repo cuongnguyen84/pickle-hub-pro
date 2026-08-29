@@ -191,7 +191,7 @@ const post: BlogPost = {
           question:
             "How can I watch the Pickleball World Cup 2026 from outside Da Nang?",
           answer:
-            "FPT Play is the exclusive Vietnamese broadcaster, carrying the event on SmartTV, mobile, FPT Play Box and fptplay.vn with a subscription. International broadcast arrangements have not been announced. Follow @pickleballworldcupofficial on Instagram and ThePickleHub for bilingual coverage.",
+            "Two routes. The organizers' own Livestream Premium package is 250,000₫ for the whole tournament, covering the 16 PRO and national-team courts. FPT Play is the exclusive Vietnamese broadcaster — it confirmed on August 28 that it will carry the whole tournament live and exclusively, on its Smart TV app, mobile, PC and laptop, FPT Play Box and fptplay.vn; it has not said whether that sits inside its free tier or behind a subscription. International broadcast arrangements have not been announced. Follow @pickleballworldcupofficial on Instagram and ThePickleHub for bilingual coverage.",
         },
         {
           question: "When does Vietnam play at the Pickleball World Cup 2026?",
