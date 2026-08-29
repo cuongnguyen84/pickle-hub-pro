@@ -31,7 +31,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { publishErrorMessage, useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
+import { useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
+import { publishErrorMessage } from "@/lib/shop/publishRetry";
 import { specFieldsFor } from "@/lib/shop/productSpecs";
 
 export default function BulkImport() {

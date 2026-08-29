@@ -6,11 +6,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: null }) }));
-vi.mock("@/hooks/shop/useSellerApplication", () => ({ useMyShop: () => ({ data: null }) }));
-
-const { isTransientNetworkError, withNetworkRetry, publishErrorMessage } = await import("../useBulkProductImport");
+import { isTransientNetworkError, publishErrorMessage, withNetworkRetry } from "@/lib/shop/publishRetry";
 
 describe("isTransientNetworkError", () => {
   it("treats Safari's and Chrome's fetch failures as transient", () => {
