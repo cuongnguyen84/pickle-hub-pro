@@ -175,7 +175,7 @@ struct ShopHomeView: View {
                 TLEmptyState(
                     icon: "shippingbox",
                     title: "Chưa có sản phẩm nào đang bán",
-                    subtitle: "Shop đang thử nghiệm với những người bán đầu tiên. Anh/chị quay lại sau nhé."
+                    subtitle: "Các shop đang cập nhật sản phẩm. Anh/chị quay lại sau nhé."
                 )
             case .loaded:
                 LazyVGrid(columns: columns, spacing: TLSpacing.md) {

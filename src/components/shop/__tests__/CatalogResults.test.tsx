@@ -122,19 +122,16 @@ describe("the four states are four different answers", () => {
     expect(screen.queryByRole("button", { name: "Bỏ bộ lọc" })).toBeNull();
   });
 
-  it("admits a thin catalogue instead of implying there is more", () => {
-    // R3: the count line stays before the grid; the honest-sparse sentence
-    // moved AFTER the grid, verbatim — demoted, never deleted.
+  it("states the exact catalogue scope without launch-stage wording", () => {
     const { unmount } = grid({ rows: [card()], total: 3 });
     expect(screen.getByRole("status").textContent).toBe("3 sản phẩm");
-    expect(document.body.textContent).toContain(
-      "Sàn đang ở giai đoạn thử nghiệm — đây là toàn bộ những gì đang bán.",
-    );
+    expect(document.body.textContent).toContain("Đây là toàn bộ sản phẩm đang bán.");
+    expect(document.body.textContent).not.toContain("thử nghiệm");
     unmount();
 
     grid({ rows: [card()], total: 40 });
     expect(screen.getByRole("status").textContent).toBe("40 sản phẩm");
-    expect(document.body.textContent).not.toContain("giai đoạn thử nghiệm");
+    expect(document.body.textContent).not.toContain("Đây là toàn bộ sản phẩm đang bán.");
   });
 });
 

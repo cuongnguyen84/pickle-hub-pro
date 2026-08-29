@@ -253,9 +253,8 @@ export default function SellerHome() {
             </div>
           </section>
 
-          {/* R5 #4 — the old "Bước tiếp theo" block said order management was
-              not part of the closed pilot. It has been open since Phase 3, and
-              the number above is the honest version of the same sentence. */}
+          {/* R5 #4 — the old "Bước tiếp theo" block described order management
+              as unavailable. The number above is the current source of truth. */}
           <section aria-labelledby="s04-next" className="tl-shop-section">
             <h2 className="tl-shop-h2" id="s04-next">Bước tiếp theo</h2>
             <div className="tl-shop-card" style={{ fontSize: 14, lineHeight: 1.6 }}>

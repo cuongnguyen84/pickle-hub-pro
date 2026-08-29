@@ -76,7 +76,7 @@ struct HomeView: View {
                     .frame(width: 44, height: 44)
                     .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("SHOP / PILOT")
+                    Text("SHOP")
                         .font(TLType.eyebrowMono(9)).tracking(1)
                         .foregroundStyle(TLColor.accentText)
                     Text("Đồ pickleball từ người bán trong nước")

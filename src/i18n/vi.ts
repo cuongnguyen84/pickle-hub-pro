@@ -3111,23 +3111,23 @@ export const vi: Translations = {
       description: "Nếu bạn có câu hỏi về chính sách bảo mật, vui lòng liên hệ:",
     },
     shop: {
-      title: "Dữ liệu của tính năng Shop (thử nghiệm kín)",
+      title: "Dữ liệu của Shop",
       description:
-        "Nếu bạn đăng ký bán hàng trong chương trình thử nghiệm kín, ThePickleHub xử lý thêm những nhóm dữ liệu dưới đây. Chương trình này không thu thập giấy tờ tuỳ thân, số tài khoản ngân hàng hay thông tin chi trả.",
+        "Khi bạn mua hoặc bán hàng qua Shop, ThePickleHub xử lý thông tin cần thiết để hiển thị sản phẩm, tạo và giao đơn, xác nhận thanh toán, hỗ trợ hoàn tiền và giải quyết vấn đề phát sinh. ThePickleHub không thu thập mật khẩu ngân hàng hoặc dữ liệu thẻ thanh toán.",
       groups: {
         public:
           "Công khai trên trang shop: tên shop, giới thiệu, tỉnh/thành, ngành hàng, ảnh logo và ảnh bìa, chính sách giao hàng và đổi trả, sản phẩm cùng ảnh sản phẩm, và những kênh liên hệ do bạn chủ động khai và quản trị viên đã duyệt.",
         internal:
-          "Chỉ bạn và quản trị viên đọc được: họ tên, số điện thoại và địa chỉ lấy hàng trong hồ sơ đăng ký người bán. Địa chỉ lấy hàng không hiển thị công khai, và email hay số điện thoại tài khoản không bao giờ tự động trở thành kênh liên hệ công khai.",
+          "Chỉ hiển thị cho các bên cần xử lý: họ tên, số điện thoại và địa chỉ lấy hàng trong hồ sơ người bán; tên người nhận, số điện thoại, địa chỉ giao hàng, ghi chú và các món trong đơn; thông tin tài khoản nhận chuyển khoản do shop khai. Địa chỉ lấy hàng và giao hàng không hiển thị công khai, và email hay số điện thoại tài khoản không bao giờ tự động trở thành kênh liên hệ công khai.",
         consent:
           "Bằng chứng chấp thuận quy chế người bán: phiên bản, mã băm nội dung và thời điểm bạn đồng ý. Không kèm địa chỉ IP và không kèm dấu vết thiết bị — hệ thống cố ý không có chỗ để lưu hai thứ đó.",
         moderation:
-          "Nhật ký kiểm duyệt: quyết định duyệt hay yêu cầu sửa, việc tạm đình chỉ, ghi chú của quản trị viên, và loại kênh liên hệ đã thay đổi. Nhật ký không ghi giá trị số điện thoại hay kênh liên hệ, và ghi chú nội bộ của quản trị viên không hiển thị cho người bán.",
+          "Nhật ký vận hành: quyết định kiểm duyệt, thay đổi trạng thái đơn, thời điểm báo hoặc xác nhận thanh toán, mã tham chiếu giao dịch từ cổng thanh toán và việc hoàn tiền. Nhật ký kiểm duyệt kênh liên hệ chỉ ghi loại kênh thay đổi, không ghi giá trị; ghi chú nội bộ của quản trị viên không hiển thị cho người bán.",
       },
       purpose:
-        "Dùng để xét duyệt hồ sơ người bán, hiển thị trang shop và sản phẩm, kiểm duyệt nội dung, và xử lý khiếu nại.",
+        "Dùng để xét duyệt người bán, hiển thị shop và sản phẩm, thực hiện đơn hàng, đối soát thanh toán, hỗ trợ giao nhận, hoàn tiền, chống gian lận và xử lý khiếu nại.",
       retention:
-        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xoá cùng tài khoản của bạn. Nhật ký kiểm duyệt được giữ lại để đối chiếu khi có tranh chấp, nhưng không còn gắn với tài khoản đã xoá. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xoá được.",
+        "Hồ sơ đăng ký và bằng chứng chấp thuận bị xoá cùng tài khoản của bạn. Đơn hàng và nhật ký cần cho giao nhận, thanh toán, hoàn tiền hoặc đối chiếu có thể được giữ lại; khi người mua xoá tài khoản, liên kết tới tài khoản được gỡ nhưng thông tin giao nhận đã lưu trong đơn vẫn còn trong thời gian cần thiết. Nếu bạn đang sở hữu một shop, shop phải được xử lý trước thì tài khoản mới xoá được.",
     },
     effective: {
       text: "Chính sách này được cập nhật và có hiệu lực từ ngày {date}.",
@@ -3240,7 +3240,7 @@ export const vi: Translations = {
     deleteBlockedShopOwner:
       "Tài khoản này đang sở hữu một shop. Để đóng shop và tài khoản an toàn, vui lòng gửi yêu cầu tới tapickleballvn@gmail.com.",
     deleteBlockedShopOwnerWhy:
-      "Shop còn sản phẩm, hình ảnh và lịch sử kiểm duyệt. Trong giai đoạn thử nghiệm kín, ThePickleHub xử lý việc đóng shop thủ công để không xoá nhầm thứ cần giữ.",
+      "Shop còn sản phẩm, đơn hàng, hình ảnh và lịch sử kiểm duyệt. ThePickleHub xử lý việc đóng shop thủ công để bảo toàn dữ liệu cần đối chiếu và không xoá nhầm nội dung cần giữ.",
     deleteBlockedShopOwnerNoAutoSend:
       "Nút bên dưới chỉ mở ứng dụng email của anh/chị — nó KHÔNG tự gửi yêu cầu. Hãy gửi từ chính email đã đăng ký; chúng tôi sẽ xác nhận trước khi làm bất cứ điều gì.",
     deleteBlockedShopOwnerCta: "Soạn email yêu cầu",
