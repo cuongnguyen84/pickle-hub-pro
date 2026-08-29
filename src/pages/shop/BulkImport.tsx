@@ -33,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { compareAtFromPct } from "@/lib/shop/discount";
-import { useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
+import { parseImageUrlList, useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
 import { publishErrorMessage } from "@/lib/shop/publishRetry";
 import { specFieldsFor } from "@/lib/shop/productSpecs";
 
@@ -155,12 +155,16 @@ export default function BulkImport() {
     });
   };
 
-  const handleRemoveBackground = async (rowId: string, imageUrl: string, sourceUrl: string) => {
-    const key = `${rowId}:${imageUrl}`;
+  const handleRemoveBackground = async (
+    rowId: string,
+    imageKey: string,
+    source: { url: string; sourceUrl: string } | { file: File },
+  ) => {
+    const key = `${rowId}:${imageKey}`;
     setBackgroundError(null);
     setBackgroundJobs((current) => ({ ...current, [key]: true }));
     try {
-      await removeImageBackground(rowId, imageUrl, sourceUrl);
+      await removeImageBackground(rowId, imageKey, source);
     } catch (error) {
       const detail = error instanceof Error ? error.message : "";
       setBackgroundError(detail.includes("image_source_unavailable")
@@ -454,7 +458,7 @@ export default function BulkImport() {
                                         disabled={processing}
                                         onClick={() => processed
                                           ? restoreImageBackground(row.rowId, candidate.url)
-                                          : void handleRemoveBackground(row.rowId, candidate.url, candidate.source_url)}
+                                          : void handleRemoveBackground(row.rowId, candidate.url, { url: candidate.url, sourceUrl: candidate.source_url })}
                                       >
                                         {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
                                         {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}
@@ -472,25 +476,43 @@ export default function BulkImport() {
                           )}
                           {row.selectedImageFiles.length > 0 && (
                             <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-                              {row.selectedImageFiles.map((image, index) => (
-                                <div key={image.previewUrl} className="relative overflow-hidden rounded-lg border-2 border-primary bg-muted">
-                                  <img
-                                    src={image.previewUrl}
-                                    alt={`Ảnh tải lên ${index + 1} cho ${row.aiData!.name}`}
-                                    className="aspect-square w-full object-contain"
-                                  />
-                                  <Button
-                                    type="button"
-                                    size="icon"
-                                    variant="destructive"
-                                    className="absolute right-1 top-1 h-7 w-7"
-                                    onClick={() => removeImageFile(row.rowId, image.previewUrl)}
-                                    aria-label={`Bỏ ảnh tải lên ${index + 1}`}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
+                              {row.selectedImageFiles.map((image, index) => {
+                                const processed = row.backgroundRemovedImages[image.previewUrl];
+                                const processing = !!backgroundJobs[`${row.rowId}:${image.previewUrl}`];
+                                return (
+                                  <div key={image.previewUrl} className="relative overflow-hidden rounded-lg border-2 border-primary bg-muted">
+                                    <img
+                                      src={processed?.previewUrl ?? image.previewUrl}
+                                      alt={`Ảnh tải lên ${index + 1} cho ${row.aiData!.name}`}
+                                      className="aspect-square w-full object-contain"
+                                      style={processed ? CHECKERBOARD : undefined}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      className="absolute left-1 top-1 z-20 h-7 bg-background/90 px-2 text-xs shadow-md backdrop-blur-sm hover:bg-background"
+                                      disabled={processing}
+                                      onClick={() => processed
+                                        ? restoreImageBackground(row.rowId, image.previewUrl)
+                                        : void handleRemoveBackground(row.rowId, image.previewUrl, { file: image.file })}
+                                    >
+                                      {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
+                                      {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="destructive"
+                                      className="absolute right-1 top-1 h-7 w-7"
+                                      onClick={() => removeImageFile(row.rowId, image.previewUrl)}
+                                      aria-label={`Bỏ ảnh tải lên ${index + 1}`}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-2">
@@ -551,6 +573,42 @@ export default function BulkImport() {
                             rows={2}
                             placeholder="Dán một hoặc nhiều URL ảnh — mỗi dòng một URL (không bắt buộc)"
                           />
+                          {parseImageUrlList(row.manualImageUrls).length > 0 && (
+                            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                              {parseImageUrlList(row.manualImageUrls).map((url, index) => {
+                                const processed = row.backgroundRemovedImages[url];
+                                const processing = !!backgroundJobs[`${row.rowId}:${url}`];
+                                return (
+                                  <div key={url} className="relative overflow-hidden rounded-lg border-2 border-primary bg-muted">
+                                    <img
+                                      src={processed?.previewUrl ?? url}
+                                      alt={`Ảnh từ URL ${index + 1} cho ${row.aiData!.name}`}
+                                      className="aspect-square w-full object-contain"
+                                      style={processed ? CHECKERBOARD : undefined}
+                                      loading="lazy"
+                                      referrerPolicy="no-referrer"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      className="absolute left-1 top-1 z-20 h-7 bg-background/90 px-2 text-xs shadow-md backdrop-blur-sm hover:bg-background"
+                                      disabled={processing}
+                                      onClick={() => processed
+                                        ? restoreImageBackground(row.rowId, url)
+                                        : void handleRemoveBackground(row.rowId, url, { url, sourceUrl: url })}
+                                    >
+                                      {processing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
+                                      {processing ? "Đang xoá nền…" : processed ? "Hoàn tác" : "Xoá nền"}
+                                    </Button>
+                                    <span className="block truncate px-2 py-1.5 text-xs text-muted-foreground">
+                                      {processed ? "Nền trong suốt" : new URL(url).hostname.replace(/^www\./, "")}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </fieldset>
                         {row.status === "low_confidence" && (
                           <div className="sm:col-span-2">
@@ -651,6 +709,14 @@ const PRODUCT_CATEGORIES = [
   { value: "trang-phuc", label: "Trang phục" },
   { value: "grip-phu-kien", label: "Grip & phụ kiện" },
 ] as const;
+
+/** Nền ca-rô cho ảnh đã xoá nền (PNG trong suốt), dùng chung 3 lưới ảnh. */
+const CHECKERBOARD = {
+  backgroundColor: "#fff",
+  backgroundImage: "linear-gradient(45deg,#e5e7eb 25%,transparent 25%),linear-gradient(-45deg,#e5e7eb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e5e7eb 75%),linear-gradient(-45deg,transparent 75%,#e5e7eb 75%)",
+  backgroundPosition: "0 0,0 8px,8px -8px,-8px 0",
+  backgroundSize: "16px 16px",
+} as const;
 
 const splitOptions = (value: string) =>
   [...new Set(value.split(/[,;|\n]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);

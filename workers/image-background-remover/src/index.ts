@@ -99,25 +99,38 @@ export default {
       return new Response(sellerAuth, { status, headers: cors });
     }
 
-    const payload = await request.json().catch(() => null) as {
-      image_url?: unknown;
-      source_url?: unknown;
-    } | null;
-    const source = safeImageUrl(payload?.image_url);
-    const referer = safeImageUrl(payload?.source_url);
-    if (!source) return new Response("Invalid image URL", { status: 400, headers: cors });
-    const imageResponse = await fetchPublicImage(source, referer);
-    if (!imageResponse) {
-      console.warn("image source redirect rejected", source.hostname);
-      return new Response("image_source_unavailable", { status: 422, headers: cors });
+    // Two ways in: JSON { image_url, source_url } for a public image, or the
+    // image bytes themselves (Content-Type: image/*) for a file the seller
+    // picked on their device — nothing public to fetch in that case.
+    const requestType = request.headers.get("content-type") ?? "";
+    let bytes: ArrayBuffer;
+    let contentType: string;
+    if (/^image\/(jpeg|png|webp)/.test(requestType)) {
+      const declared = Number(request.headers.get("content-length") ?? 0);
+      if (declared > MAX_IMAGE_BYTES) return new Response("Image is too large", { status: 413, headers: cors });
+      bytes = await request.arrayBuffer();
+      contentType = requestType.split(";")[0].trim();
+    } else {
+      const payload = await request.json().catch(() => null) as {
+        image_url?: unknown;
+        source_url?: unknown;
+      } | null;
+      const source = safeImageUrl(payload?.image_url);
+      const referer = safeImageUrl(payload?.source_url);
+      if (!source) return new Response("Invalid image URL", { status: 400, headers: cors });
+      const imageResponse = await fetchPublicImage(source, referer);
+      if (!imageResponse) {
+        console.warn("image source redirect rejected", source.hostname);
+        return new Response("image_source_unavailable", { status: 422, headers: cors });
+      }
+      contentType = imageResponse.headers.get("content-type") ?? "";
+      const declaredSize = Number(imageResponse.headers.get("content-length") ?? 0);
+      if (!imageResponse.ok || !contentType.match(/^image\/(jpeg|png|webp)/) || declaredSize > MAX_IMAGE_BYTES) {
+        console.warn("image source rejected", source.hostname, imageResponse.status, contentType);
+        return new Response("image_source_unavailable", { status: 422, headers: cors });
+      }
+      bytes = await imageResponse.arrayBuffer();
     }
-    const contentType = imageResponse.headers.get("content-type") ?? "";
-    const declaredSize = Number(imageResponse.headers.get("content-length") ?? 0);
-    if (!imageResponse.ok || !contentType.match(/^image\/(jpeg|png|webp)/) || declaredSize > MAX_IMAGE_BYTES) {
-      console.warn("image source rejected", source.hostname, imageResponse.status, contentType);
-      return new Response("image_source_unavailable", { status: 422, headers: cors });
-    }
-    const bytes = await imageResponse.arrayBuffer();
     if (bytes.byteLength === 0 || bytes.byteLength > MAX_IMAGE_BYTES) {
       return new Response("Image is too large", { status: 413, headers: cors });
     }

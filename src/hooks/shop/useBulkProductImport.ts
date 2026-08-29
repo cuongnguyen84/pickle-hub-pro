@@ -259,19 +259,31 @@ export function useBulkProductImport() {
     setRows([]);
   }, [rows]);
 
-  const removeImageBackground = useCallback(async (rowId: string, imageUrl: string, sourceUrl: string) => {
+  /**
+   * Xoá nền. `key` là URL ảnh (ứng viên AI, URL seller dán) hoặc previewUrl
+   * của ảnh tải từ thiết bị; kết quả lưu ở backgroundRemovedImages[key].
+   * Ảnh thiết bị gửi thẳng bytes cho worker (không có URL công khai).
+   */
+  const removeImageBackground = useCallback(async (
+    rowId: string,
+    key: string,
+    source: { url: string; sourceUrl: string } | { file: File },
+  ) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) throw new Error("unauthorized");
     const response = await fetch(
       "https://picklehub-image-background-remover.thecuong.workers.dev",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
+      "file" in source
+        ? {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": source.file.type },
+          body: source.file,
+        }
+        : {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ image_url: source.url, source_url: source.sourceUrl }),
         },
-        body: JSON.stringify({ image_url: imageUrl, source_url: sourceUrl }),
-      },
     );
     if (!response.ok) {
       const reason = (await response.text()).slice(0, 100);
@@ -285,13 +297,13 @@ export function useBulkProductImport() {
     const previewUrl = URL.createObjectURL(file);
     setRows((current) => current.map((row) => {
       if (row.rowId !== rowId) return row;
-      const previous = row.backgroundRemovedImages[imageUrl];
+      const previous = row.backgroundRemovedImages[key];
       if (previous) URL.revokeObjectURL(previous.previewUrl);
       return {
         ...row,
         backgroundRemovedImages: {
           ...row.backgroundRemovedImages,
-          [imageUrl]: { file, previewUrl },
+          [key]: { file, previewUrl },
         },
       };
     }));
@@ -352,7 +364,8 @@ export function useBulkProductImport() {
 }
 
 async function resolveProductImages(row: ProductRow): Promise<File[]> {
-  const files = row.selectedImageFiles.map((image) => image.file);
+  // Ảnh thiết bị: bản đã xoá nền (nếu có) thay cho bản gốc.
+  const files = row.selectedImageFiles.map((image) => row.backgroundRemovedImages[image.previewUrl]?.file ?? image.file);
   const urls = [...new Set([...row.selectedImageUrls, ...parseImageUrlList(row.manualImageUrls)])];
   for (const [index, url] of urls.entries()) {
     const processed = row.backgroundRemovedImages[url];
