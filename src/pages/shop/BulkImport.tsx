@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
+import { publishErrorMessage, useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
 import { specFieldsFor } from "@/lib/shop/productSpecs";
 
 export default function BulkImport() {
@@ -79,7 +79,11 @@ export default function BulkImport() {
     setPublishError(null);
     try {
       const result = await publishBatch();
-      setPublishResult(`Đã xuất bản ${result.count} sản phẩm lên Shop.`);
+      setPublishResult(
+        result.failed
+          ? `Đã xuất bản ${result.count} sản phẩm. ${result.failed} sản phẩm chưa lên — xem lỗi ở từng dòng, sửa rồi bấm Xuất bản lần nữa.`
+          : `Đã xuất bản ${result.count} sản phẩm lên Shop.`,
+      );
     } catch (error) {
       setPublishError(publishErrorMessage(error));
     }
@@ -211,7 +215,7 @@ export default function BulkImport() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{row.aiData?.name || row.name}</p>
                         {!row.aiData && <p className="mt-1 text-xs text-muted-foreground">Dữ liệu gốc từ file</p>}
-                        {row.status === "failed" && row.errorMessage && (
+                        {row.errorMessage && (
                           <p className="mt-1 text-xs text-destructive" role="alert">{row.errorMessage}</p>
                         )}
                       </div>
@@ -477,16 +481,18 @@ export default function BulkImport() {
                         )}
                       </div>
                     )}
-                    {row.status === "failed" && (
+                    {/* Mọi dòng đã qua AI đều chạy lại được — sau khi seller sửa tên/thông tin
+                        thì AI đọc theo tên mới (PO 29/08). Giá/danh mục tự nhập được giữ. */}
+                    {row.status !== "idle" && row.status !== "enriching" && (
                       <div className="mt-3 border-t pt-3">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => void enrichOne(row.rowId, row.name)}
+                          onClick={() => void enrichOne(row.rowId, row.aiData?.name || row.name)}
                         >
                           <Sparkles className="mr-2 h-4 w-4" />
-                          Thử lại sản phẩm này
+                          {row.status === "failed" ? "Thử lại sản phẩm này" : "Chạy lại AI cho sản phẩm này"}
                         </Button>
                       </div>
                     )}
@@ -562,23 +568,6 @@ const PRODUCT_CATEGORIES = [
 const splitOptions = (value: string) =>
   [...new Set(value.split(/[,;|\n]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
 
-function publishErrorMessage(error: unknown): string {
-  const detail = error as { message?: string; code?: string; details?: string; hint?: string };
-  const message = detail.message ?? "";
-  if (message.includes("shop_unavailable")) return "Không tìm thấy shop đang hoạt động.";
-  if (message.includes("no_products_selected")) return "Chọn ít nhất một sản phẩm đã sẵn sàng.";
-  if (message.includes("invalid_product_data")) return "Tên sản phẩm, danh mục và giá bán là bắt buộc.";
-  if (message.includes("product_image_required")) return "Cần một ảnh sản phẩm hợp lệ. Ảnh tìm tự động không tải được; hãy tải ảnh từ thiết bị rồi thử lại.";
-  if (message.includes("product_preflight_failed")) return `Sản phẩm chưa đạt điều kiện xuất bản (${message.split(":")[1] || "dữ liệu chưa đủ"}).`;
-  if (message.includes("duplicate") || message.includes("unique")) return "Có sản phẩm bị trùng. Hãy đổi tên rồi thử lại.";
-  if (message.includes("row-level security") || message.includes("42501")) return "Tài khoản chưa có quyền thêm sản phẩm cho shop này.";
-  if (message.includes("products_specs_shape")) return "Thông số AI có dữ liệu không hợp lệ. Hãy chạy AI lại hoặc thử xuất bản lần nữa.";
-  if (message.includes("products_category_slug_fkey")) return "Danh mục sản phẩm không tồn tại trong hệ thống.";
-  const diagnostic = [detail.code, message, detail.details].filter(Boolean).join(" · ");
-  return diagnostic
-    ? `Chưa lưu được sản phẩm: ${diagnostic}`
-    : "Chưa lưu được sản phẩm. Dữ liệu chỉnh sửa vẫn còn nguyên — thử lại sau vài giây.";
-}
 
 function StatusBadge({ status, confidence }: { status: string; confidence: number }) {
   switch (status) {

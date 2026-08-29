@@ -77,6 +77,36 @@ export interface ProductRow {
 export interface PublishResult {
   count: number;
   batchId: string;
+  /** Rows that stayed in the list with an errorMessage — the seller retries them. */
+  failed: number;
+}
+
+/**
+ * Safari reports any network-layer fetch failure as `TypeError: Load failed`
+ * (Chrome: "Failed to fetch"). On mobile data a 15-product publish is ~150
+ * requests including image uploads, so one dropped connection is expected,
+ * not exceptional. Every write in publishRow carries an idempotent client
+ * token, so replaying the whole row is safe.
+ */
+export const isTransientNetworkError = (error: unknown): boolean => {
+  const message = (error as { message?: unknown })?.message;
+  return (
+    error instanceof TypeError
+    || (typeof message === "string" && /load failed|failed to fetch|network ?error|NOT_FOUND_FUNCTION_BLOB/i.test(message))
+  );
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function withNetworkRetry<T>(work: () => Promise<T>, retries = 3): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await work();
+    } catch (error) {
+      if (attempt >= retries || !isTransientNetworkError(error)) throw error;
+      await sleep(800 * (attempt + 1));
+    }
+  }
 }
 
 interface SubmitResult {
@@ -201,91 +231,33 @@ export function useBulkProductImport() {
     setPublishing(true);
     try {
       const inserted: ShopProductRow[] = [];
+      const failures: Array<{ rowId: string; error: unknown }> = [];
       // Use the canonical editor RPC: it creates the default priced variant in
       // the same transaction. A raw products insert leaves no price for the
       // seller list or storefront and is therefore not a valid shop product.
+      //
+      // One row at a time, and one row's failure does not abandon the rest:
+      // before 29/08 a single dropped upload on 5G threw out of the loop with
+      // fourteen products already live and every row still on screen.
       for (const row of approved) {
-        const product = await shopRpc<ShopProductRow>("product_create", {
-          _shop_id: currentShopId,
-          // products_client_token_len allows at most 64 characters. rowId is
-          // already a stable UUID for this imported row, so it is both valid
-          // and idempotent when the seller retries after a network failure.
-          _client_token: row.rowId,
-          _payload: {
-            title: (row.aiData!.name || row.name).trim(),
-            description: row.aiData!.description ?? "",
-            category_slug: normalizeCategory(row.categoryOverride ?? row.aiData!.category),
-            condition: "new",
-            price_vnd: String(row.priceOverride ?? row.aiData!.price_estimate_vnd),
-            stock_on_hand: "",
-          },
-        });
-        const { data: updated, error } = await shopFrom<ShopProductRow>("products")
-          .update({
-            import_batch_id: batchId,
-            ai_enriched: true,
-            ai_confidence: row.aiConfidence,
-            ai_source_urls: imageSources(row),
-            specs: cleanSpecs({
-              ...normalizeAiSpecs(row.aiData!.specs),
-              ...(row.aiData!.brand ? { brand: row.aiData!.brand } : {}),
-            }),
-          })
-          .eq("id", product.id)
-          .select("*")
-          .single();
-        if (error) throw error;
-        const current = updated ?? product;
-        const groups = [
-          ...(row.versionOptions.length ? [{ name: "Phiên bản", values: row.versionOptions }] : []),
-          ...(row.colorOptions.length ? [{ name: "Màu sắc", values: row.colorOptions }] : []),
-        ];
-        if (groups.length) {
-          const optionValues = cartesian(groups);
-          await shopRpc("product_variants_reconcile", {
-            _product_id: current.id,
-            _expected_version: current.version,
-            _option_groups: groups,
-            _rows: optionValues.map((values, index) => ({
-              option_values: values,
-              price_vnd: String(row.priceOverride ?? row.aiData!.price_estimate_vnd),
-              stock_on_hand: null,
-              sku: null,
-              position: index,
-            })),
-            _client_token: `variants-${row.rowId}`,
-            _keep_variant_id: null,
-          });
+        try {
+          const current = await withNetworkRetry(() => publishRow(row, currentShopId, batchId));
+          inserted.push(current);
+          setRows((previous) => previous.filter((r) => r.rowId !== row.rowId));
+          revokeRowPreviews(row);
+        } catch (error) {
+          failures.push({ rowId: row.rowId, error });
+          updateRow(row.rowId, { errorMessage: publishRowErrorMessage(error) });
         }
-        const { data: publishable, error: refreshError } = await shopFrom<ShopProductRow>("products")
-          .select("*")
-          .eq("id", current.id)
-          .single();
-        if (refreshError) throw refreshError;
-        const images = await resolveProductImages(row);
-        if (images.length === 0) throw new Error("product_image_required");
-        for (const image of images) await uploadProductImage(current.id, image);
-
-        const submitted = await shopRpc<SubmitResult>("product_submit", {
-          _product_id: current.id,
-          _expected_version: (publishable ?? current).version,
-          _client_token: `publish-${row.rowId}`,
-        });
-        if (!submitted.ok) {
-          const codes = submitted.problems?.map((problem) => problem.code).filter(Boolean).join(",");
-          throw new Error(`product_preflight_failed:${codes || "unknown"}`);
-        }
-        if (submitted.needs_publish) await invokePublishProduct(current.id);
-        inserted.push(current);
       }
 
-      rows.forEach(revokeRowPreviews);
-      setRows([]);
-      return { count: inserted.length, batchId };
+      if (inserted.length === 0 && failures.length) throw failures[0].error;
+      return { count: inserted.length, batchId, failed: failures.length };
     } finally {
       setPublishing(false);
     }
-  }, [rows, shop.data?.id, user]);
+  }, [rows, shop.data?.id, user, updateRow]);
+
 
   const downloadTemplate = useCallback(() => {
     const template = [
@@ -527,6 +499,103 @@ async function processProductImage(file: File): Promise<{ blob: Blob; width: num
     bitmap.close();
   }
 }
+
+async function publishRow(row: ProductRow, currentShopId: string, batchId: string): Promise<ShopProductRow> {
+  const product = await shopRpc<ShopProductRow>("product_create", {
+    _shop_id: currentShopId,
+    // products_client_token_len allows at most 64 characters. rowId is
+    // already a stable UUID for this imported row, so it is both valid
+    // and idempotent when the seller retries after a network failure.
+    _client_token: row.rowId,
+    _payload: {
+      title: (row.aiData!.name || row.name).trim(),
+      description: row.aiData!.description ?? "",
+      category_slug: normalizeCategory(row.categoryOverride ?? row.aiData!.category),
+      condition: "new",
+      price_vnd: String(row.priceOverride ?? row.aiData!.price_estimate_vnd),
+      stock_on_hand: "",
+    },
+  });
+  const { data: updated, error } = await shopFrom<ShopProductRow>("products")
+    .update({
+      import_batch_id: batchId,
+      ai_enriched: true,
+      ai_confidence: row.aiConfidence,
+      ai_source_urls: imageSources(row),
+      specs: cleanSpecs({
+        ...normalizeAiSpecs(row.aiData!.specs),
+        ...(row.aiData!.brand ? { brand: row.aiData!.brand } : {}),
+      }),
+    })
+    .eq("id", product.id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  const current = updated ?? product;
+  const groups = [
+    ...(row.versionOptions.length ? [{ name: "Phiên bản", values: row.versionOptions }] : []),
+    ...(row.colorOptions.length ? [{ name: "Màu sắc", values: row.colorOptions }] : []),
+  ];
+  if (groups.length) {
+    const optionValues = cartesian(groups);
+    await shopRpc("product_variants_reconcile", {
+      _product_id: current.id,
+      _expected_version: current.version,
+      _option_groups: groups,
+      _rows: optionValues.map((values, index) => ({
+        option_values: values,
+        price_vnd: String(row.priceOverride ?? row.aiData!.price_estimate_vnd),
+        stock_on_hand: null,
+        sku: null,
+        position: index,
+      })),
+      _client_token: `variants-${row.rowId}`,
+      _keep_variant_id: null,
+    });
+  }
+  const { data: publishable, error: refreshError } = await shopFrom<ShopProductRow>("products")
+    .select("*")
+    .eq("id", current.id)
+    .single();
+  if (refreshError) throw refreshError;
+  const images = await resolveProductImages(row);
+  if (images.length === 0) throw new Error("product_image_required");
+  for (const image of images) await uploadProductImage(current.id, image);
+
+  const submitted = await shopRpc<SubmitResult>("product_submit", {
+    _product_id: current.id,
+    _expected_version: (publishable ?? current).version,
+    _client_token: `publish-${row.rowId}`,
+  });
+  if (!submitted.ok) {
+    const codes = submitted.problems?.map((problem) => problem.code).filter(Boolean).join(",");
+    throw new Error(`product_preflight_failed:${codes || "unknown"}`);
+  }
+  if (submitted.needs_publish) await invokePublishProduct(current.id);
+  return current;
+}
+
+export function publishErrorMessage(error: unknown): string {
+  const detail = error as { message?: string; code?: string; details?: string; hint?: string };
+  const message = detail.message ?? "";
+  if (isTransientNetworkError(error)) return "Mất kết nối khi tải lên (đã tự thử lại 3 lần). Bấm Xuất bản lần nữa — sản phẩm đã lên sẽ không bị trùng.";
+  if (message.includes("shop_unavailable")) return "Không tìm thấy shop đang hoạt động.";
+  if (message.includes("no_products_selected")) return "Chọn ít nhất một sản phẩm đã sẵn sàng.";
+  if (message.includes("invalid_product_data")) return "Tên sản phẩm, danh mục và giá bán là bắt buộc.";
+  if (message.includes("product_image_required")) return "Cần một ảnh sản phẩm hợp lệ. Ảnh tìm tự động không tải được; hãy tải ảnh từ thiết bị rồi thử lại.";
+  if (message.includes("product_preflight_failed")) return `Sản phẩm chưa đạt điều kiện xuất bản (${message.split(":")[1] || "dữ liệu chưa đủ"}).`;
+  if (message.includes("duplicate") || message.includes("unique")) return "Có sản phẩm bị trùng. Hãy đổi tên rồi thử lại.";
+  if (message.includes("row-level security") || message.includes("42501")) return "Tài khoản chưa có quyền thêm sản phẩm cho shop này.";
+  if (message.includes("products_specs_shape")) return "Thông số AI có dữ liệu không hợp lệ. Hãy chạy AI lại hoặc thử xuất bản lần nữa.";
+  if (message.includes("products_category_slug_fkey")) return "Danh mục sản phẩm không tồn tại trong hệ thống.";
+  const diagnostic = [detail.code, message, detail.details].filter(Boolean).join(" · ");
+  return diagnostic
+    ? `Chưa lưu được sản phẩm: ${diagnostic}`
+    : "Chưa lưu được sản phẩm. Dữ liệu chỉnh sửa vẫn còn nguyên — thử lại sau vài giây.";
+}
+
+/** Per-row copy of the same mapping — the row keeps its edits and shows why it stayed. */
+const publishRowErrorMessage = (error: unknown): string => publishErrorMessage(error);
 
 async function enrichmentErrorMessage(error: unknown): Promise<string> {
   const response = (error as { context?: Response })?.context;
