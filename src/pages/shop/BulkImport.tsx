@@ -165,7 +165,7 @@ export default function BulkImport() {
               <input
                 ref={fileRef}
                 type="file"
-                accept=".xlsx,.xls,.csv"
+                accept=".xlsx,.csv"
                 className="hidden"
                 disabled={uploading}
                 onChange={(e) => {
@@ -285,20 +285,20 @@ export default function BulkImport() {
                                 <select
                                   id={`spec-${field.key}-${row.rowId}`}
                                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                  value={row.aiData.specs?.[field.key] ?? ""}
+                                  value={row.aiData?.specs?.[field.key] ?? ""}
                                   onChange={(event) => updateAiSpec(row.rowId, field.key, event.target.value)}
                                 >
                                   <option value="">Chưa rõ</option>
                                   {field.options.map((option) => <option key={option} value={option}>{option}</option>)}
-                                  {row.aiData.specs?.[field.key]
-                                    && !field.options.includes(row.aiData.specs[field.key])
-                                    && <option value={row.aiData.specs[field.key]}>{row.aiData.specs[field.key]}</option>}
+                                  {row.aiData?.specs?.[field.key]
+                                    && !field.options.includes(row.aiData?.specs[field.key])
+                                    && <option value={row.aiData?.specs[field.key]}>{row.aiData?.specs[field.key]}</option>}
                                 </select>
                               ) : (
                                 <Input
                                   id={`spec-${field.key}-${row.rowId}`}
                                   inputMode={field.numeric ? "decimal" : "text"}
-                                  value={row.aiData.specs?.[field.key] ?? ""}
+                                  value={row.aiData?.specs?.[field.key] ?? ""}
                                   onChange={(event) => updateAiSpec(row.rowId, field.key, event.target.value)}
                                   placeholder={field.placeholder}
                                 />

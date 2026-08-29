@@ -817,6 +817,18 @@
       ],
       "status": "classified"
     },
+    "product-import-enrich": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "user.write.user_jwt.resource_scope"
+      ],
+      "status": "classified",
+      "notes": "Seller bulk-import AI enrichment. Bearer verified via getAuthUser(); seller membership checked against shop_members before the service-role client is used."
+    },
     "reactivate-registration": {
       "verify_jwt": false,
       "service_role": {

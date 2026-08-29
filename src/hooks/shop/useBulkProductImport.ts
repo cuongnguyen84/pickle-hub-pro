@@ -12,7 +12,10 @@
 // ============================================================================
 
 import { useCallback, useState } from "react";
-import * as XLSX from "xlsx";
+// ponytail: the mini build (76 KB gz vs 219 KB) reads XLSX/CSV and writes
+// XLSX — everything this hook needs. It drops legacy .xls/ODS codecs; switch
+// back to "xlsx" if a seller ever needs those.
+import * as XLSX from "xlsx/dist/xlsx.mini.min.js";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyShop } from "@/hooks/shop/useSellerApplication";
 import { invokeWithBlobRetry } from "@/lib/edgeInvoke";
