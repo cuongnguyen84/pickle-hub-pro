@@ -84,6 +84,7 @@ import {
   type SpecField,
 } from "@/lib/shop/productSpecs";
 import type { VariantRow } from "@/lib/shop/variantMatrix";
+import { compareAtError, discountPct, parseCompareAt } from "@/lib/shop/discount";
 import { SECTION_LABEL, type SubmitProblem } from "@/lib/shop/submitProblems";
 import type { ProductRow } from "@/integrations/supabase/shop-schema";
 
@@ -110,6 +111,7 @@ const EMPTY_DRAFT: ProductDraft = {
   condition: "new",
   specs: {},
   price_vnd: "",
+  compare_at_price_vnd: "",
   stock_on_hand: "",
 };
 
@@ -161,7 +163,8 @@ const newToken = () =>
 // nhau vẫn khác nhau, và màn hình sẽ hỏi "dùng bản nào?" ở MỌI lần mở sản phẩm.
 const sameDraft = (a: ProductDraft, b: ProductDraft) =>
   (Object.keys(EMPTY_DRAFT) as (keyof ProductDraft)[]).every((k) =>
-    k === "specs" ? specsEqual(a.specs, b.specs) : a[k] === b[k],
+    // `?? ""`: bản nháp lưu trước khi có ô giá gốc thiếu khoá đó — thiếu và rỗng là một.
+    k === "specs" ? specsEqual(a.specs, b.specs) : (a[k] ?? "") === (b[k] ?? ""),
   );
 
 export default function SellerProductForm() {
@@ -222,6 +225,7 @@ export default function SellerProductForm() {
       condition: row.condition,
       specs: cleanSpecs(row.specs),
       price_vnd: variant ? String(variant.price_vnd) : "",
+      compare_at_price_vnd: variant?.compare_at_price_vnd != null ? String(variant.compare_at_price_vnd) : "",
       stock_on_hand: variant && variant.stock_on_hand !== null ? String(variant.stock_on_hand) : "",
     };
   }, [row]);
@@ -231,6 +235,20 @@ export default function SellerProductForm() {
    *  place to edit the same numbers. */
   const multiVariant = (row?.option_groups?.length ?? 0) > 0;
 
+  // Giá gốc: "" là không có. Hint sống theo cả hai ô; lỗi chỉ hiện khi bấm lưu.
+  const compareText = draft?.compare_at_price_vnd ?? "";
+  const priceText = draft?.price_vnd ?? "";
+  const compareAt = compareAtError(compareText, priceText, "x") ? null : parseCompareAt(compareText).value;
+  const comparePct =
+    compareAt != null && /^[0-9]+$/.test(priceText.trim()) ? discountPct(Number(priceText), compareAt) : null;
+  const compareHint = !compareText.trim()
+    ? "Giá trước giảm. Người mua thấy giá này gạch ngang và % giảm."
+    : compareAt != null && comparePct == null
+      ? "Nhập giá bán trước để tính % giảm."
+      : compareAt != null && comparePct != null
+        ? `Người mua thấy: ${vnd(compareAt)} gạch ngang · -${comparePct}%`
+        : "Giá trước giảm. Người mua thấy giá này gạch ngang và % giảm.";
+
   /** Server variants in the shape the editor works in. Retired rows are gone
    *  from this list — they keep their history but are not on the shelf. */
   const variantRows = useMemo<VariantRow[]>(
@@ -239,6 +257,7 @@ export default function SellerProductForm() {
         id: v.id,
         optionValues: v.option_values ?? {},
         priceVnd: String(v.price_vnd),
+        compareAtVnd: v.compare_at_price_vnd == null ? "" : String(v.compare_at_price_vnd),
         stockOnHand: v.stock_on_hand === null ? "" : String(v.stock_on_hand),
         sku: v.sku ?? "",
       })),
@@ -257,7 +276,7 @@ export default function SellerProductForm() {
         // did land before the tab died, "Lưu nháp" returns that product rather
         // than making a second one.
         tokenRef.current = stored.clientToken;
-        setDraft(stored.draft);
+        setDraft({ ...EMPTY_DRAFT, ...stored.draft });
       } else {
         setDraft(EMPTY_DRAFT);
       }
@@ -785,7 +804,31 @@ export default function SellerProductForm() {
                   onChange={(e) => setField("stock_on_hand", e.target.value)}
                 />
               </Field>
+
+              <Field
+                id="p-compare"
+                label="Giá gốc (₫) — không bắt buộc"
+                error={errors.compare_at_price_vnd}
+                hint={compareHint}
+              >
+                <input
+                  id="p-compare"
+                  className="tl-shop-input"
+                  inputMode="numeric"
+                  disabled={!editable}
+                  value={draft?.compare_at_price_vnd ?? ""}
+                  aria-invalid={!!errors.compare_at_price_vnd}
+                  aria-describedby={errors.compare_at_price_vnd ? undefined : "p-compare-hint"}
+                  ref={(el) => (fieldRefs.current.compare_at_price_vnd = el)}
+                  onChange={(e) => setField("compare_at_price_vnd", e.target.value)}
+                />
+              </Field>
             </div>
+          )}
+          {!multiVariant && compareAt != null && (
+            <p className="tl-shop-hint">
+              Chỉ nhập giá shop thật sự từng bán món này. Giá gốc đặt cho có sẽ bị gỡ khi kiểm duyệt.
+            </p>
           )}
         </section>
       ) : null}
@@ -1088,7 +1131,7 @@ function Field({
         {label}
       </label>
       {children}
-      {hint && !error && <p className="tl-shop-hint">{hint}</p>}
+      {hint && !error && <p className="tl-shop-hint" id={`${id}-hint`}>{hint}</p>}
       {/* Next to its field, not in a toast that scrolls away. */}
       {error && (
         <p className="tl-shop-error" role="alert">
@@ -1272,6 +1315,7 @@ function ConflictNotice({
     condition: "Tình trạng",
     specs: "Thông số",
     price_vnd: "Giá",
+    compare_at_price_vnd: "Giá gốc",
     stock_on_hand: "Hàng đang có",
   };
   // Mọi trường về một chuỗi TRƯỚC khi so: `specs` là object, và `!==` trên hai

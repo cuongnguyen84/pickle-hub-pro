@@ -9,7 +9,7 @@
 
 BEGIN;
 
-SELECT plan(90);
+SELECT plan(95);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -559,6 +559,41 @@ SELECT lives_ok(
 SELECT ok(
   (SELECT jsonb_array_length(option_groups) FROM public.products WHERE id=(SELECT v FROM t_var WHERE k='p1')) = 1,
   '…nhưng bộ tuỳ chọn vẫn còn nguyên — cột bị ghim, không phải bị chặn');
+
+-- ─── Giá gốc (compare_at_price_vnd) qua product_update ─────────────────────
+-- p2 là sản phẩm đơn (giá 990000), chủ shop 1 đang đăng nhập ở trên.
+
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50060001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT lives_ok(
+  format($$ SELECT public.product_update(%L::uuid,
+      (SELECT version FROM public.products WHERE id = %L::uuid),
+      '{}'::jsonb, '{"compare_at_price_vnd":1500000}'::jsonb) $$,
+    (SELECT v FROM t_var WHERE k='p2'), (SELECT v FROM t_var WHERE k='p2')),
+  'giá gốc lớn hơn giá bán được nhận');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  1500000, 'và ghi đúng vào cột compare_at_price_vnd');
+
+SELECT lives_ok(
+  format($$ SELECT public.product_update(%L::uuid,
+      (SELECT version FROM public.products WHERE id = %L::uuid),
+      '{}'::jsonb, '{"compare_at_price_vnd":null}'::jsonb) $$,
+    (SELECT v FROM t_var WHERE k='p2'), (SELECT v FROM t_var WHERE k='p2')),
+  'gửi null là xoá giá gốc');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  NULL, 'cột về NULL');
+
+SELECT throws_ok(
+  format($$ SELECT public.product_update(%L::uuid,
+      (SELECT version FROM public.products WHERE id = %L::uuid),
+      '{}'::jsonb, '{"compare_at_price_vnd":990000}'::jsonb) $$,
+    (SELECT v FROM t_var WHERE k='p2'), (SELECT v FROM t_var WHERE k='p2')),
+  '23514', NULL, 'giá gốc bằng hoặc thấp hơn giá bán bị constraint chặn');
 
 -- …but the shop itself must still be deletable, cascade and all. A ledger that
 -- makes its own shop undeletable is not protecting history, it is a leak: it

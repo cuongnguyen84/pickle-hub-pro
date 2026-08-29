@@ -26,6 +26,9 @@ export interface ProductCard {
   shop: { slug: string; name: string; verified: boolean };
   price_min: number | null;
   price_max: number | null;
+  /** Từ shop_public_search (20260829120000). Card chỉ in, không tự tính. */
+  discount_pct_max?: number | null;
+  compare_at_min?: number | null;
   availability: Availability | null;
   cover: { public_path: string; alt_text: string | null; width: number | null; height: number | null } | null;
 }

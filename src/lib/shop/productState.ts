@@ -12,6 +12,7 @@
 
 import type { ProductStatus, SellerProductRow } from "@/integrations/supabase/shop-schema";
 import { cleanSpecs } from "@/lib/shop/productSpecs";
+import { compareAtError } from "@/lib/shop/discount";
 
 export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
   draft: "Nháp",
@@ -180,6 +181,7 @@ export interface DraftErrors {
   category_slug?: string;
   description?: string;
   price_vnd?: string;
+  compare_at_price_vnd?: string;
   stock_on_hand?: string;
 }
 
@@ -188,6 +190,8 @@ export function validateDraft(draft: {
   description: string;
   category_slug: string;
   price_vnd: string;
+  /** Tuỳ chọn để bản nháp cũ trong localStorage (chưa có ô này) vẫn qua. */
+  compare_at_price_vnd?: string;
   stock_on_hand: string;
 }): DraftErrors {
   const errors: DraftErrors = {};
@@ -210,6 +214,9 @@ export function validateDraft(draft: {
     errors.price_vnd = "Giá vượt mức cho phép";
   }
 
+  const compare = compareAtError(draft.compare_at_price_vnd ?? "", price, "Chỉ nhập số, không dấu chấm.");
+  if (compare) errors.compare_at_price_vnd = compare;
+
   const stock = draft.stock_on_hand.trim();
   if (stock && !/^[0-9]+$/.test(stock)) {
     errors.stock_on_hand = "Tồn kho phải là số nguyên không âm, để trống nếu không đếm";
@@ -227,6 +234,7 @@ export const DRAFT_FIELD_ORDER: (keyof DraftErrors)[] = [
   "title",
   "description",
   "price_vnd",
+  "compare_at_price_vnd",
   "stock_on_hand",
 ];
 

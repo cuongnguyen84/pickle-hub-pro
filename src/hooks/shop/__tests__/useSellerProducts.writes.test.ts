@@ -63,6 +63,7 @@ vi.mock("@tanstack/react-query", () => ({
 const {
   productKeys,
   useArchiveProduct,
+  useCreateProduct,
   useDeleteProducts,
   useProductStatusCounts,
   useSellerProduct,
@@ -144,6 +145,18 @@ describe("useSellerProduct", () => {
 });
 
 describe("write hooks", () => {
+  it("useCreateProduct gửi compare_at_price_vnd là null khi ô trống, số khi có", async () => {
+    const draft = {
+      title: "Vợt", description: "", category_slug: "vot", condition: "new" as const, specs: {},
+      price_vnd: "1000000", compare_at_price_vnd: "", stock_on_hand: "",
+    };
+    const m = useCreateProduct("shop-1") as unknown as MutationOpts<{ clientToken: string; draft: typeof draft }, unknown>;
+    await m.mutationFn({ clientToken: "tok", draft });
+    await m.mutationFn({ clientToken: "tok", draft: { ...draft, compare_at_price_vnd: " 1250000 " } });
+    const payloads = rpc().map((c) => (c.args[1] as { _payload: { compare_at_price_vnd: unknown } })._payload.compare_at_price_vnd);
+    expect(payloads).toEqual([null, 1250000]);
+  });
+
   it("useUpdateProductSlug calls product_slug_update and invalidates detail + list", async () => {
     rpcResponse = { data: "vot-moi", error: null };
     const m = useUpdateProductSlug("p-1") as unknown as MutationOpts<string, string>;

@@ -27,6 +27,7 @@ import { CART_QTY_MAX, useCartMutations } from "@/hooks/shop/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { getLoginUrl } from "@/lib/auth-config";
 import { shopErrorMessage } from "@/lib/shop/errors";
+import { discountPct, maxDiscountPct } from "@/lib/shop/discount";
 import {
   CONDITION_LABEL,
   availabilityLabel,
@@ -154,6 +155,15 @@ export default function ProductDetail() {
     () => (product ? displayPrice(variants, sel, resolved) : null),
     [product, variants, sel, resolved],
   );
+  // Đã chọn phiên bản: % của đúng phiên bản đó (cùng floor với card). Chưa
+  // chọn: % lớn nhất trong các phiên bản, không gạch giá vì chưa biết gạch giá nào.
+  const resolvedWas =
+    resolved && discountPct(resolved.price_vnd, resolved.compare_at_price_vnd) != null
+      ? resolved.compare_at_price_vnd!
+      : null;
+  const pct = resolved
+    ? discountPct(resolved.price_vnd, resolved.compare_at_price_vnd)
+    : maxDiscountPct(variants);
   const variantMediaId = product
     ? activeMediaId(resolved, variants, sel, product.primary_media_id)
     : null;
@@ -330,11 +340,24 @@ export default function ProductDetail() {
             <h1 className="tl-shop-h1">{product.title}</h1>
 
             <p className="tl-pdp-price">
-              {price
-                ? price.min === price.max
-                  ? formatVnd(price.min)
-                  : `${formatVnd(price.min)} – ${formatVnd(price.max)}`
-                : "Chưa có giá"}
+              {resolvedWas != null && (
+                <span className="tl-shop-price-was">
+                  <span className="tl-shop-sr">giá gốc </span>
+                  {formatVnd(resolvedWas)}
+                </span>
+              )}
+              <span>
+                {price
+                  ? price.min === price.max
+                    ? formatVnd(price.min)
+                    : `${formatVnd(price.min)} – ${formatVnd(price.max)}`
+                  : "Chưa có giá"}
+              </span>
+              {pct != null && (
+                <span className="tl-pdp-off">
+                  <span className="tl-shop-sr">giảm </span>-{pct}%
+                </span>
+              )}
             </p>
 
             <p className="tl-pdp-meta">
@@ -512,8 +535,8 @@ export default function ProductDetail() {
               {/* R5 (cắt chữ): ba dòng miễn trừ còn một. Không mất nghĩa nào —
                   ai khai, ai duyệt — chỉ mất phần lặp lại trang shop đã nói. */}
               <p className="tl-shop-hint tl-shop-flush-b">
-                Giá và tình trạng hàng do shop tự khai. ThePickleHub kiểm duyệt nội dung trước khi
-                hiển thị.
+                Giá, giá gốc và tình trạng hàng do shop tự khai. ThePickleHub kiểm duyệt nội dung
+                trước khi hiển thị.
               </p>
             </div>
 
@@ -538,6 +561,12 @@ export default function ProductDetail() {
             aria-hidden={ctaOffScreen ? undefined : true}
           >
             <p className="tl-shop-buybar-price">
+              {resolvedWas != null && (
+                <span className="tl-shop-price-was">
+                  <span className="tl-shop-sr">giá gốc </span>
+                  {formatVnd(resolvedWas)}
+                </span>
+              )}
               {resolved
                 ? formatVnd(resolved.price_vnd)
                 : price
