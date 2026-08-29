@@ -9,7 +9,7 @@
 
 BEGIN;
 
-SELECT plan(95);
+SELECT plan(99);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -594,6 +594,35 @@ SELECT throws_ok(
       '{}'::jsonb, '{"compare_at_price_vnd":990000}'::jsonb) $$,
     (SELECT v FROM t_var WHERE k='p2'), (SELECT v FROM t_var WHERE k='p2')),
   '23514', NULL, 'giá gốc bằng hoặc thấp hơn giá bán bị constraint chặn');
+
+-- ─── % giảm trên sản phẩm ĐANG BÁN qua product_discount_set ────────────────
+-- Đặt p2 lên kệ như admin đã duyệt, rồi chủ shop đặt giảm giá không cần gỡ.
+SET LOCAL role postgres;
+UPDATE public.products SET status = 'approved', is_published = true
+ WHERE id = (SELECT v FROM t_var WHERE k='p2');
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"50060001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
+
+SELECT lives_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 50) $$, (SELECT v FROM t_var WHERE k='p2')),
+  'sản phẩm đang bán vẫn đặt được % giảm');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  1980000, '50% trên giá 990000 → giá gốc 1980000');
+SELECT is(
+  (SELECT status::text FROM public.products WHERE id=(SELECT v FROM t_var WHERE k='p2')),
+  'approved', 'và sản phẩm vẫn ở trên kệ, không bị kéo về nháp');
+SELECT lives_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 0) $$, (SELECT v FROM t_var WHERE k='p2')),
+  '0% là bỏ giảm giá');
+SELECT is(
+  (SELECT compare_at_price_vnd FROM public.product_variants
+   WHERE product_id=(SELECT v FROM t_var WHERE k='p2') AND retired_at IS NULL),
+  NULL, 'giá gốc về NULL');
+SELECT throws_ok(
+  format($$ SELECT public.product_discount_set(%L::uuid, 95) $$, (SELECT v FROM t_var WHERE k='p2')),
+  '22023', NULL, 'ngoài 0–90 bị từ chối');
 
 -- …but the shop itself must still be deletable, cascade and all. A ledger that
 -- makes its own shop undeletable is not protecting history, it is a leak: it

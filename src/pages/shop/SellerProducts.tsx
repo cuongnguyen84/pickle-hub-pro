@@ -43,6 +43,7 @@ import {
   hasActiveFilter,
   useProductStatusCounts,
   useDeleteProducts,
+  useSetProductDiscount,
   useSellerProducts,
   type ProductListFilters,
   type ProductSort,
@@ -55,6 +56,7 @@ import {
   summarise,
 } from "@/lib/shop/productState";
 import { shopErrorMessage } from "@/lib/shop/errors";
+import { discountPct } from "@/lib/shop/discount";
 import type { ProductStatus, SellerProductRow } from "@/integrations/supabase/shop-schema";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
@@ -462,6 +464,7 @@ function ProductList({
               <th scope="col">Sản phẩm</th>
               <th scope="col">Trạng thái</th>
               <th scope="col">Giá</th>
+              <th scope="col">Giảm</th>
               <th scope="col">Tồn kho</th>
               <th scope="col">Cập nhật</th>
               <th scope="col">
@@ -677,6 +680,7 @@ function ProductTableRow({
         )}
       </td>
       <td style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{s.price}</td>
+      <td><DiscountCell row={row} canWrite={canWrite} /></td>
       <td style={{ fontVariantNumeric: "tabular-nums" }}>{s.stock}</td>
       <td style={{ whiteSpace: "nowrap" }}>{dmy(row.updated_at)}</td>
       <td>
@@ -763,6 +767,7 @@ function ProductCard({
         <div className="tl-shop-hint" style={{ marginTop: 0 }}>
           {s.price} · Tồn kho: {s.stock} · Cập nhật {dmy(row.updated_at)}
         </div>
+        <DiscountCell row={row} canWrite={canWrite} />
         {row.applicant_note && (
           <p className="tl-shop-hint" style={{ marginTop: 0, color: "var(--shop-danger)" }}>
             {row.applicant_note}
@@ -786,5 +791,63 @@ function ProductCard({
         )}
       </div>
     </li>
+  );
+}
+
+/** % giảm hiện tại của một sản phẩm: từ phiên bản rẻ nhất còn bán. */
+const currentDiscountPct = (row: SellerProductRow): number | null => {
+  const live = row.product_variants.filter((v) => v.retired_at === null);
+  if (!live.length) return null;
+  const cheapest = live.reduce((a, b) => (b.price_vnd < a.price_vnd ? b : a));
+  return discountPct(cheapest.price_vnd, cheapest.compare_at_price_vnd);
+};
+
+/**
+ * Ô "% giảm" ngay trên danh sách — sản phẩm đang bán không phải gỡ xuống để
+ * đặt giảm giá (PO 29/08). Server tính giá gốc từ giá đang công khai; gõ 0
+ * (hoặc xoá trắng) là bỏ giảm. Lưu khi blur hoặc Enter.
+ */
+function DiscountCell({ row, canWrite }: { row: SellerProductRow; canWrite: boolean }) {
+  const current = currentDiscountPct(row);
+  const setDiscount = useSetProductDiscount();
+  const [text, setText] = useState(current == null ? "" : String(current));
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { setText(current == null ? "" : String(current)); }, [current]);
+  const canSet = canWrite && !["archived", "suspended"].includes(row.status);
+
+  if (!canSet) {
+    return <span style={{ fontVariantNumeric: "tabular-nums" }}>{current == null ? "—" : `-${current}%`}</span>;
+  }
+  const commit = () => {
+    const pct = text.trim() === "" ? 0 : Number(text);
+    if (!Number.isInteger(pct) || pct < 0 || pct > 90) {
+      setError("0–90");
+      return;
+    }
+    setError(null);
+    if (pct === (current ?? 0)) return;
+    setDiscount.mutate({ productId: row.id, pct }, {
+      onError: (e) => setError(shopErrorMessage(e)),
+    });
+  };
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+      <input
+        className="tl-shop-input"
+        style={{ width: 64, minHeight: 36, padding: "0 8px", fontVariantNumeric: "tabular-nums" }}
+        inputMode="numeric"
+        value={text}
+        placeholder="0"
+        aria-label={`% giảm giá cho ${row.title}`}
+        aria-invalid={!!error}
+        disabled={setDiscount.isPending}
+        onChange={(e) => setText(e.target.value.replace(/\D/g, "").slice(0, 2))}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
+      />
+      <span className="tl-shop-hint" style={{ marginTop: 0 }}>%</span>
+      {setDiscount.isPending && <span className="tl-shop-hint" style={{ marginTop: 0 }}>đang lưu…</span>}
+      {error && <span className="tl-shop-hint" style={{ marginTop: 0, color: "var(--shop-danger)" }} role="alert">{error}</span>}
+    </span>
   );
 }

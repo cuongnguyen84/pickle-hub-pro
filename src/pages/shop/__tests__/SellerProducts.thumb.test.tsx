@@ -23,6 +23,8 @@ vi.mock("@/hooks/shop/useSellerProducts", async (importOriginal) => {
   return {
     ...actual,
     useSellerProducts: () => listQuery(),
+    // DiscountCell lives in every row; the thumb tests render rows without a QueryClient.
+    useSetProductDiscount: () => ({ mutate: () => {}, isPending: false }),
     useProductStatusCounts: () => ({ data: { approved: 1 }, isLoading: false, isError: false }),
     useDeleteProducts: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };

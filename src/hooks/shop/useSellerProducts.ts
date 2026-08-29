@@ -305,3 +305,19 @@ export const useDeleteProducts = () => {
     },
   });
 };
+
+/**
+ * % giảm trên sản phẩm đang bán, từ danh sách — không phải gỡ xuống sửa.
+ * Server tính giá gốc từ giá đang công khai; 0 là bỏ giảm giá.
+ */
+export const useSetProductDiscount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { productId: string; pct: number }) =>
+      await shopRpc<ProductRow>("product_discount_set", { _product_id: input.productId, _pct: input.pct }),
+    onSuccess: (_row, input) => {
+      void qc.invalidateQueries({ queryKey: productKeys.one(input.productId) });
+      void qc.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
+};
