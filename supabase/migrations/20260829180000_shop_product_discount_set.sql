@@ -34,7 +34,7 @@ BEGIN
       USING ERRCODE = 'invalid_parameter_value';
   END IF;
   IF _pct IS NOT NULL AND (_pct < 0 OR _pct > 90) THEN
-    RAISE EXCEPTION '% giảm giá chỉ nhận 0–90' USING ERRCODE = 'invalid_parameter_value';
+    RAISE EXCEPTION '%% giảm giá chỉ nhận 0–90' USING ERRCODE = 'invalid_parameter_value';
   END IF;
 
   PERFORM set_config('shop.privileged_write', 'on', true);
