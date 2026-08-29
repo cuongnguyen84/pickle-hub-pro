@@ -105,7 +105,16 @@ function mediaUrl(mediaBase: string, publicPath: string): string | null {
   return `${mediaBase.replace(/\/$/, "")}/storage/v1/object/public/shop-product-media/${publicPath}`;
 }
 
-/** Both locales are real, distinct URLs, so hreflang is a valid signal here. */
+/**
+ * Both locales are real, distinct URLs, so hreflang is a valid signal here.
+ *
+ * x-default → VI (SEO audit 2026-08-29, PO chọn phương án a): the taxonomy,
+ * the seller copy and 95% of the buyers are Vietnamese, and the EN page is a
+ * translated frame around a Vietnamese description. Sending an unmatched
+ * locale to the half-translated page was the wrong fallback. Must agree with
+ * sitemap-shop.xml.ts — conflicting x-default between HTML and sitemap makes
+ * Google drop the pair.
+ */
 function localePair(siteUrl: string, path: string) {
   const enUrl = `${siteUrl}${path}`;
   const viUrl = `${siteUrl}/vi${path}`;
@@ -115,9 +124,47 @@ function localePair(siteUrl: string, path: string) {
     alternates: [
       { hreflang: "en", href: enUrl },
       { hreflang: "vi", href: viUrl },
-      { hreflang: "x-default", href: enUrl },
+      { hreflang: "x-default", href: viUrl },
     ],
   };
+}
+
+/**
+ * The taxonomy (`product_categories.name`) is Vietnamese only. On the EN
+ * page a title like "Vợt pickleball for 1.800.000₫" is half a language, so
+ * the six known slugs get an English name here. Unknown slugs fall back to
+ * the Vietnamese name — a wrong-language heading beats a slug as a heading.
+ * ponytail: a map, not a name_en column — six rows that change once a year.
+ */
+const CATEGORY_NAME_EN: Record<string, string> = {
+  vot: "Pickleball paddles",
+  giay: "Pickleball shoes",
+  bong: "Pickleball balls",
+  "tui-balo": "Pickleball bags & backpacks",
+  "grip-phu-kien": "Grips & accessories",
+  "trang-phuc": "Pickleball apparel",
+};
+
+function categoryName(cat: { slug: string; name: string } | null, lang: Lang): string {
+  if (!cat) return "";
+  return lang === "en" ? (CATEGORY_NAME_EN[cat.slug] ?? cat.name) : cat.name;
+}
+
+const utf8Bytes = (s: string) => new TextEncoder().encode(s).length;
+
+/**
+ * First candidate that fits buildHtml's 60-byte <title> budget, else the
+ * shortest one. Vietnamese costs 2–3 bytes a glyph, so "Tên — Danh mục giá
+ * 1.800.000₫ | ThePickleHub" was ellipsised on ~40 of 52 product pages and
+ * lost exactly the part that carried the price. Price lives in the
+ * description and the Offer; the title keeps name + category + brand.
+ */
+function fitTitle(candidates: string[]): string {
+  return candidates.find((c) => utf8Bytes(c) <= 60) ?? candidates[candidates.length - 1];
+}
+
+function imgTag(src: string, alt: string, eager = false): string {
+  return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="${eager ? "eager" : "lazy"}" decoding="async">`;
 }
 
 function swapLink(lang: Lang, enUrl: string, viUrl: string): string {
@@ -138,15 +185,23 @@ function breadcrumb(lang: Lang, siteUrl: string, trail: { name: string; href?: s
 
 // ─── Shared product list ────────────────────────────────────────────────────
 
-function cardsHtml(rows: CardRow[], siteUrl: string, lang: Lang): string {
+/**
+ * `mediaBase` optional: the list pages did not receive it before the 2026-08-29
+ * audit found bot HTML carried ZERO <img> on all 62 shop URLs — no Google
+ * Images for a catalogue of paddles. Without it the card is text-only, as
+ * before; with it the cover ships as a real <img> with alt text.
+ */
+function cardsHtml(rows: CardRow[], siteUrl: string, lang: Lang, mediaBase?: string): string {
   return rows
-    .map((p) => {
+    .map((p, i) => {
       const price = fmtPriceRange(p.price_min, p.price_max, lang);
       const cond = conditionLabel(p.condition, lang);
       const shop = p.shop ? ` — ${escapeHtml(p.shop.name)}` : "";
-      const cat = p.category ? ` · ${escapeHtml(p.category.name)}` : "";
+      const cat = p.category ? ` · ${escapeHtml(categoryName(p.category, lang))}` : "";
       const sold = p.availability === "out_of_stock" ? ` · ${lang === "vi" ? "Tạm hết hàng" : "Sold out"}` : "";
-      return `<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/shop/product/${escapeHtml(p.slug)}">${escapeHtml(p.title)}</a> — <strong>${escapeHtml(price)}</strong>${cat}${cond ? ` · ${escapeHtml(cond)}` : ""}${shop}${sold}</li>`;
+      const cover = mediaBase && p.cover?.public_path ? mediaUrl(mediaBase, p.cover.public_path) : null;
+      const img = cover ? imgTag(cover, p.cover?.alt_text || p.title, i < 4) + " " : "";
+      return `<li>${img}<a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/shop/product/${escapeHtml(p.slug)}">${escapeHtml(p.title)}</a> — <strong>${escapeHtml(price)}</strong>${cat}${cond ? ` · ${escapeHtml(cond)}` : ""}${shop}${sold}</li>`;
     })
     .join("");
 }
@@ -209,6 +264,7 @@ export async function renderShopCatalog(
   supabase: SupabaseClient,
   siteUrl: string,
   lang: Lang,
+  mediaBase?: string,
 ): Promise<Response> {
   const { enUrl, viUrl, alternates } = localePair(siteUrl, "/shop");
   const { rows, total } = await fetchCards(supabase, {}, "renderShopCatalog");
@@ -230,7 +286,7 @@ export async function renderShopCatalog(
 
   // GEO lead: the count, the categories and the name in the first two
   // sentences, so the passage survives being quoted on its own.
-  const catNames = categories.slice(0, 5).map((c) => c.name).join(", ");
+  const catNames = categories.slice(0, 5).map((c) => categoryName(c, lang)).join(", ");
   const lead = total > 0
     ? lang === "vi"
       ? `<p>ThePickleHub Shop đang mở bán ${total} sản phẩm pickleball từ các shop đã được xác minh${catNames ? ` — ${escapeHtml(catNames)}` : ""}. Giá niêm yết bằng VNĐ, đặt hàng trực tiếp trên trang và thanh toán khi nhận hàng hoặc chuyển khoản.</p>`
@@ -243,7 +299,7 @@ export async function renderShopCatalog(
     ? `<section><h2>${escapeHtml(lang === "vi" ? "Danh mục" : "Categories")}</h2><ul>${categories
         .map(
           (c) =>
-            `<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/shop/category/${escapeHtml(c.slug)}">${escapeHtml(c.name)}</a>${
+            `<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/shop/category/${escapeHtml(c.slug)}">${escapeHtml(categoryName(c, lang))}</a>${
               c.product_count ? ` · ${c.product_count}` : ""
             }</li>`,
         )
@@ -256,7 +312,7 @@ ${lead}
 ${catHtml}
 <section>
 <h2>${escapeHtml(lang === "vi" ? "Sản phẩm đang bán" : "Products on sale")}</h2>
-${rows.length > 0 ? `<ul>${cardsHtml(rows, siteUrl, lang)}</ul>` : `<p>${escapeHtml(lang === "vi" ? "Chưa có sản phẩm nào." : "No products yet.")}</p>`}
+${rows.length > 0 ? `<ul>${cardsHtml(rows, siteUrl, lang, mediaBase)}</ul>` : `<p>${escapeHtml(lang === "vi" ? "Chưa có sản phẩm nào." : "No products yet.")}</p>`}
 </section>
 ${discoverNav(siteUrl, lang)}
 ${swapLink(lang, enUrl, viUrl)}`;
@@ -284,6 +340,7 @@ export async function renderShopCategory(
   slug: string,
   siteUrl: string,
   lang: Lang,
+  mediaBase?: string,
 ): Promise<Response> {
   const { enUrl, viUrl, alternates } = localePair(siteUrl, `/shop/category/${slug}`);
   const { rows, total } = await fetchCards(supabase, { _category_slug: slug }, "renderShopCategory");
@@ -294,7 +351,7 @@ export async function renderShopCategory(
   try {
     const { data } = await supabase.rpc("shop_public_categories", { _only_stocked: false });
     const hit = ((data as { slug: string; name: string }[]) ?? []).find((c) => c.slug === slug);
-    if (hit) catName = hit.name;
+    if (hit) catName = categoryName(hit, lang);
   } catch (err) {
     console.error("renderShopCategory: categories fatal", err);
   }
@@ -339,7 +396,7 @@ export async function renderShopCategory(
 <h1>${escapeHtml(catName)}</h1>
 ${lead}
 <section>
-${rows.length > 0 ? `<ul>${cardsHtml(rows, siteUrl, lang)}</ul>` : `<p>${escapeHtml(lang === "vi" ? "Chưa có sản phẩm nào." : "No products yet.")}</p>`}
+${rows.length > 0 ? `<ul>${cardsHtml(rows, siteUrl, lang, mediaBase)}</ul>` : `<p>${escapeHtml(lang === "vi" ? "Chưa có sản phẩm nào." : "No products yet.")}</p>`}
 </section>
 ${discoverNav(siteUrl, lang)}
 ${swapLink(lang, enUrl, viUrl)}`;
@@ -367,6 +424,7 @@ export async function renderShopStore(
   slug: string,
   siteUrl: string,
   lang: Lang,
+  mediaBase?: string,
 ): Promise<Response> {
   const { enUrl, viUrl, alternates } = localePair(siteUrl, `/shop/store/${slug}`);
 
@@ -436,7 +494,7 @@ ${lead}
 ${policies ? `<section><h2>${escapeHtml(lang === "vi" ? "Chính sách" : "Store policies")}</h2><ul>${policies}</ul></section>` : ""}
 <section>
 <h2>${escapeHtml(lang === "vi" ? "Sản phẩm của shop" : "Products from this store")}</h2>
-${rows.length > 0 ? `<ul>${cardsHtml(rows, siteUrl, lang)}</ul>` : `<p>${escapeHtml(lang === "vi" ? "Shop chưa đăng bán sản phẩm nào." : "This store has no products listed.")}</p>`}
+${rows.length > 0 ? `<ul>${cardsHtml(rows, siteUrl, lang, mediaBase)}</ul>` : `<p>${escapeHtml(lang === "vi" ? "Shop chưa đăng bán sản phẩm nào." : "This store has no products listed.")}</p>`}
 </section>
 ${discoverNav(siteUrl, lang)}
 ${swapLink(lang, enUrl, viUrl)}`;
@@ -490,21 +548,25 @@ export async function renderShopProduct(
     .filter((u): u is string => !!u);
 
   const shopName = product.shop?.name ?? "";
-  const catName = product.category?.name ?? "";
+  const catName = categoryName(product.category, lang);
   const priceLabel = fmtPriceRange(priceMin, priceMax, lang);
   const soldOut = product.in_stock === false;
   const orderingOff = product.shop?.ordering_enabled === false;
 
-  const title = lang === "vi"
-    ? `${product.title}${catName ? ` — ${catName}` : ""} giá ${priceLabel} | ThePickleHub`
-    : `${product.title}${catName ? ` — ${catName}` : ""} for ${priceLabel} | ThePickleHub`;
+  const title = fitTitle([
+    `${product.title}${catName ? ` — ${catName}` : ""} | ThePickleHub`,
+    `${product.title} | ThePickleHub`,
+    product.title,
+  ]);
 
   const shipping = product.shop?.shipping_fee_vnd;
   const shippingLabel = typeof shipping === "number" ? fmtVnd(shipping, lang) : null;
 
+  // Budget is 160 BYTES; the old sentence ("…thanh toán khi nhận hoặc chuyển
+  // khoản") was cut mid-clause on most VI pages. Say less, finish the sentence.
   const description = lang === "vi"
-    ? `${product.title} giá ${priceLabel}, bán bởi ${shopName} trên ThePickleHub.${shippingLabel ? ` Phí giao hàng ${shippingLabel}.` : ""} ${soldOut ? "Hiện tạm hết hàng." : "Đặt hàng trực tiếp, thanh toán khi nhận hoặc chuyển khoản."}`
-    : `${product.title} at ${priceLabel} from ${shopName} on ThePickleHub.${shippingLabel ? ` Shipping ${shippingLabel}.` : ""} ${soldOut ? "Currently sold out." : "Order online, pay on delivery or by bank transfer."}`;
+    ? `${product.title} giá ${priceLabel} tại ${shopName}.${shippingLabel ? ` Ship ${shippingLabel}.` : ""} ${soldOut ? "Tạm hết hàng." : "Đặt online, COD hoặc chuyển khoản."}`
+    : `${product.title} at ${priceLabel} from ${shopName}.${shippingLabel ? ` Shipping ${shippingLabel}.` : ""} ${soldOut ? "Sold out." : "Order online, COD or bank transfer."}`;
 
   // Thông số kỹ thuật, theo thứ tự từ điển. Đây là phần một câu trả lời AI có
   // thể trích nguyên đoạn ("vợt X nặng 220 g, lõi 16 mm"), nên nó đi vào cả
@@ -515,6 +577,13 @@ export async function renderShopProduct(
   // ThePickleHub named exactly once. Ba thông số đầu đi kèm vì một đoạn được
   // trích ra ("vợt X nặng 220 g, lõi 16 mm, giá …") tự đứng được, còn một đoạn
   // chỉ hứa có thông số thì không.
+  // Merchant listings read `brand` as a Brand entity, not a PropertyValue; the
+  // seller already typed it into the spec sheet. One SKU only when the product
+  // IS one variant — a paddle in five weights has five SKUs, not one.
+  const brand = product.specs?.brand?.trim() || null;
+  const skus = (product.variants ?? []).map((v) => v.sku).filter((x): x is string => !!x);
+  const sku = skus.length === 1 ? skus[0] : null;
+
   const specLead = specs
     .slice(0, 3)
     .map((s) => `${s.label.toLocaleLowerCase(lang === "vi" ? "vi" : "en")} ${s.value}`)
@@ -583,6 +652,8 @@ export async function renderShopProduct(
         ...(product.description ? { description: product.description } : {}),
         ...(images.length > 0 ? { image: images } : {}),
         ...(catName ? { category: catName } : {}),
+        ...(brand ? { brand: { "@type": "Brand", name: brand } } : {}),
+        ...(sku ? { sku } : {}),
         ...(specs.length > 0
           ? {
               additionalProperty: specs.map((s) => ({
@@ -640,6 +711,7 @@ export async function renderShopProduct(
     { name: product.title },
   ])}
 <h1>${escapeHtml(product.title)}</h1>
+${images.length > 0 ? `<figure>${images.map((src, i) => imgTag(src, product.media?.[i]?.alt_text || `${product.title}${i > 0 ? ` (${i + 1})` : ""}`, i === 0)).join("")}</figure>` : ""}
 ${lead}
 ${specs.length > 0 ? `<section><h2>${escapeHtml(lang === "vi" ? "Thông số" : "Specifications")}</h2><ul>${specs.map((s) => `<li><strong>${escapeHtml(s.label)}:</strong> ${escapeHtml(s.value)}</li>`).join("")}</ul></section>` : ""}
 ${product.description ? `<section><h2>${escapeHtml(lang === "vi" ? "Mô tả" : "Description")}</h2><p>${escapeHtml(product.description)}</p></section>` : ""}

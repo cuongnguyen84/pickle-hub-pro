@@ -160,6 +160,19 @@ export interface SpecRow {
  * hiện, xếp cuối, với chính khoá làm nhãn — dữ liệu người bán đã nhập không bị
  * một lần sửa từ điển làm biến mất khỏi trang.
  */
+/**
+ * AI bulk import wrote the USA Pickleball flag as the literal "true"; the
+ * product page then read "Chứng nhận USA Pickleball: true" (SEO audit
+ * 2026-08-29). Display-side only — the stored value stays what the seller or
+ * the importer wrote.
+ */
+const yesNo = (value: string, lang: "vi" | "en"): string => {
+  const v = value.trim().toLowerCase();
+  if (v === "true" || v === "yes") return lang === "en" ? "Yes" : "Có";
+  if (v === "false" || v === "no") return lang === "en" ? "No" : "Không";
+  return value;
+};
+
 export function specRows(
   categorySlug: string | null | undefined,
   specs: Specs | null | undefined,
@@ -181,7 +194,7 @@ export function specRows(
     rows.push({
       key: field.key,
       label: lang === "en" ? field.labelEn : field.label,
-      value: field.unit ? `${value} ${field.unit}` : value,
+      value: field.unit ? `${value} ${field.unit}` : yesNo(value, lang),
     });
   }
   for (const key of Object.keys(clean)) {

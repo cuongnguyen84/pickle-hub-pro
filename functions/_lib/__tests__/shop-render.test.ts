@@ -394,3 +394,61 @@ describe("renderShopStore", () => {
     expect(res.status).toBe(404);
   });
 });
+
+// ─── SEO audit 2026-08-29 (shop open to the public) ─────────────────────────
+
+describe("shop SSR — 2026-08-29 audit fixes", () => {
+  const product = (overrides: Record<string, unknown> = {}, lang: "en" | "vi" = "vi") =>
+    renderShopProduct(
+      fakeSupabase({ shop_public_product: { found: true, product: { ...PRODUCT, ...overrides } } }),
+      "kaiwin-diamond",
+      SITE,
+      lang,
+      MEDIA,
+    ).then((r) => r.text());
+
+  it("ships the gallery as real <img> tags with alt text (bot HTML had zero images)", async () => {
+    const html = await product();
+    expect(html).toMatch(/<img src="https:\/\/[^"]+\/shop-product-media\/dab96b89\/547511b0\/e7f2aeae-v1\.webp" alt="Kaiwin Diamond"/);
+  });
+
+  it("list pages render the cover <img> only when given a media base", async () => {
+    const routes = { shop_public_search: { rows: [CARD], total: 1 }, shop_public_categories: [] };
+    const withBase = await (await renderShopCatalog(fakeSupabase(routes), SITE, "vi", MEDIA)).text();
+    expect(withBase).toContain('alt="Kaiwin Diamond"');
+    const without = await (await renderShopCatalog(fakeSupabase(routes), SITE, "vi")).text();
+    expect(without).not.toContain("<img");
+  });
+
+  it("keeps the price OUT of the <title> so Vietnamese titles no longer truncate", async () => {
+    const html = await product({ title: "Selkirk Vanguard Control Invikta - Blue" });
+    const title = html.match(/<title>([^<]*)<\/title>/)![1];
+    expect(title).not.toContain("…");
+    expect(title).not.toContain("₫");
+    expect(new TextEncoder().encode(title).length).toBeLessThanOrEqual(60);
+  });
+
+  it("x-default points at the Vietnamese URL on both the page and the alternates", async () => {
+    const html = await product({}, "en");
+    expect(html).toContain(`hreflang="x-default" href="${SITE}/vi/shop/product/kaiwin-diamond"`);
+  });
+
+  it("names the category in English on the EN page", async () => {
+    const html = await product({}, "en");
+    expect(html).toContain("Pickleball paddles");
+    expect(html).not.toMatch(/in the Vợt pickleball category/);
+  });
+
+  it("emits brand as a Brand entity and sku when the product is a single variant", async () => {
+    const html = await product({
+      specs: { brand: "Selkirk", usap: "true" },
+      variants: [{ price_vnd: 100, availability: "in_stock", sku: "SV-1" }],
+    });
+    const p = nodeOfType(html, "Product");
+    expect(p.brand).toEqual({ "@type": "Brand", name: "Selkirk" });
+    expect(p.sku).toBe("SV-1");
+    // AI import wrote the boolean literally; the page must not say "true".
+    expect(html).toContain("Chứng nhận USA Pickleball:</strong> Có");
+    expect(html).not.toMatch(/USA Pickleball:<\/strong> true/);
+  });
+});
