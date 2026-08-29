@@ -57,8 +57,56 @@ struct DeepLinkDestinationView: View {
                 TournamentDashboardPickerView()
             case .tournamentDashboard(let type, let id):
                 TournamentDashboardDeepLinkView(type: type, id: id)
+            case .shopHome:
+                ShopFeatureDestination { ShopHomeView() }
+            case .shopSearch(let query):
+                ShopFeatureDestination { ShopSearchView(initialQuery: query ?? "") }
+            case .shopCategory(let category):
+                ShopFeatureDestination { ShopSearchView(initialCategory: category) }
+            case .shopProduct(let slug):
+                ShopFeatureDestination { ShopProductSlugLoaderView(slug: slug) }
+            case .shopStore(let slug):
+                ShopFeatureDestination { ShopStoreSlugLoaderView(slug: slug) }
+            case .shopOrder(let code):
+                ShopFeatureDestination {
+                    AuthenticationRequiredView { ShopOrderDetailView(code: code) }
+                }
             }
         }
+    }
+}
+
+private struct ShopFeatureDestination<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if ShopFeatureGate.isEnabled {
+            content()
+        } else {
+            TLEmptyState(
+                icon: "bag",
+                title: "Shop chưa được mở",
+                subtitle: "Tính năng đang trong giai đoạn thử nghiệm giới hạn."
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(TLColor.bg)
+        }
+    }
+}
+
+private struct ShopProductSlugLoaderView: View {
+    let slug: String
+
+    var body: some View {
+        ShopProductDetailView(productSlug: slug)
+    }
+}
+
+private struct ShopStoreSlugLoaderView: View {
+    let slug: String
+
+    var body: some View {
+        ShopStoreView(storeSlug: slug)
     }
 }
 

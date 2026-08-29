@@ -144,11 +144,14 @@ const GONE_EXACT = new Set<string>([
   // Ended / deleted livestreams (last two Google truncated at the dash)
   "/live/612bd532-0751-4623-915b-2a13babc9a4e",
   "/live/81ff3365-0ccf-4ce3-bf19-e7d7829735c3",
+  "/live/80b73967", "/live/6277dca2", "/live/10779a7c",
   "/live/80b73967-", "/live/b083fc1f-",
   // Transactional app actions — never indexable content pages
   "/match/new", "/match/confirm",
   // Google-truncated blog URLs (no such slug; full posts live elsewhere)
   "/vi/blog/hop-", "/vi/blog/thuat-",
+  // Truncated news slug emitted by an old internal link; no unambiguous post.
+  "/vi/news/vi-sao-cu-",
 ]);
 const GONE_PATTERNS: RegExp[] = [
   // Old MLP-Dallas scraper double-"mlp-mlp-" slug bug (matches 001–025);
@@ -356,6 +359,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const viPrefix = livestreamMatch[1] || "";
     const tail = livestreamMatch[2] || "";
     return secureRedirect(`https://${url.hostname}/${viPrefix}live${tail}${url.search}`, 301);
+  }
+
+  // GSC 2026-08-25 — news rows were re-ingested under stable UUID-derived
+  // slugs after the first URLs had already been crawled. Preserve the accrued
+  // signals and send readers to the same surviving story instead of 404ing.
+  const NEWS_REDIRECTS: Record<string, string> = {
+    "/news/wong-sets-record-with-third-straight-gold-1f1um3": "/news/hong-kit-wong-makes-history-with-third-consecutive-singles-crown-at-singapore-op-58d5a53d",
+    "/vi/news/wong-lap-ky-luc-voi-h-hcv-lien-tiep-1f1um3": "/vi/news/hong-kit-wong-lap-ky-luc-voi-huy-chuong-vang-don-nam-lien-tiep-tai-singapore-58d5a53d",
+    "/news/the-dink-minor-league-pickleball-format-explained-every-way-to-play-1hfoe4": "/news/understanding-the-dink-minor-league-pickleball-structure-68400027",
+    "/vi/news/giai-ma-the-thuc-minor-league-pickleball-san-choi-dong-doi-dinh-cao-1hfoe4": "/vi/news/tim-hieu-cau-truc-giai-dau-pickleball-nghiep-du-68400027",
+    "/news/a-summer-to-remember-recapping-the-2026-joola-pops-summer-tour-1fp8r3": "/news/joola-concludes-nationwide-summer-tour-9e811e50",
+    "/vi/news/mua-he-dang-nho-nhin-lai-hanh-trinh-joola-pops-summer-tour-2026-1fp8r3": "/vi/news/hanh-trinh-xuyen-quoc-gia-cua-joola-khep-lai-thanh-cong-9e811e50",
+  };
+  const newsDestination = NEWS_REDIRECTS[url.pathname];
+  if (newsDestination) {
+    return secureRedirect(`https://${url.hostname}${newsDestination}${url.search}`, 301);
   }
 
   // ─── 1e. SEO audit batch 8 — /vi/blog/{slug} → /blog/{en-slug} 301.

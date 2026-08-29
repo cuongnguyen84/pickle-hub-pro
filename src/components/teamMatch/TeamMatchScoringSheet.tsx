@@ -323,14 +323,19 @@ export function TeamMatchScoringSheet({
     backHref: '',
   } : null;
   const refFinish = async (a: number, b: number) => {
+    // Close the referee engine before handleSaveGame advances currentGame.
+    // Otherwise the still-mounted engine briefly receives game 2's callbacks
+    // with game 1's score state and its realtime effect can copy that score to
+    // the next game.
+    const finishedGameId = currentGame?.id;
+    setRefereeing(false);
     setLocalScoreA(a); setLocalScoreB(b);
     await handleSaveGame(a, b);
     // Clear the live envelope with plain game-id authority — the screen's
     // ownership-gated onLiveState(null) may no longer match post-finish.
-    if (currentGame) {
-      try { await supabase.from('team_match_games').update({ referee_live_state: null } as never).eq('id', currentGame.id); } catch { /* best-effort */ }
+    if (finishedGameId) {
+      try { await supabase.from('team_match_games').update({ referee_live_state: null } as never).eq('id', finishedGameId); } catch { /* best-effort */ }
     }
-    setRefereeing(false);
   };
   // Codex round 3: every live write carries a server-side ownership
   // predicate — a queued write from a taken-over referee must not commit.
@@ -991,6 +996,7 @@ export function TeamMatchScoringSheet({
       {refereeing && refLoaded && refInit.ready && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
           <RefereeScoringScreen
+            key={refLoaded.matchId}
             loaded={refLoaded}
             vi={language === 'vi'}
             persistKey={`tm-ref:${refLoaded.matchId}`}

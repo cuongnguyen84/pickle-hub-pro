@@ -88,6 +88,7 @@ const SellLanding = lazyRetry(() => import("./pages/shop/SellLanding"));
 const SellerApplication = lazyRetry(() => import("./pages/shop/SellerApplication"));
 const SellerApplicationStatus = lazyRetry(() => import("./pages/shop/SellerApplicationStatus"));
 const SellerHome = lazyRetry(() => import("./pages/shop/SellerHome"));
+const SellerBulkImport = lazyRetry(() => import("./pages/shop/BulkImport"));
 const AdminShopApplications = lazyRetry(() => import("./pages/admin/shop/AdminShopApplications"));
 const AdminShopApplicationReview = lazyRetry(() => import("./pages/admin/shop/AdminShopApplicationReview"));
 const Tools = lazyRetry(() => import("./pages/Tools"));
@@ -802,6 +803,7 @@ const App = () => (
                         auth-gated here and re-authorised server-side by RLS. */}
                     <Route path="/shop/sell" element={<SellLanding />} />
                     <Route path="/seller" element={<RequireAuth><SellerHome /></RequireAuth>} />
+                    <Route path="/seller/products/import" element={<RequireAuth><SellerBulkImport /></RequireAuth>} />
                     <Route path="/seller/application" element={<RequireAuth><SellerApplication /></RequireAuth>} />
                     <Route path="/seller/application/status" element={<RequireAuth><SellerApplicationStatus /></RequireAuth>} />
                     <Route path="/admin/shop/applications" element={<RequireAuth requiredRole="admin"><AdminShopApplications /></RequireAuth>} />

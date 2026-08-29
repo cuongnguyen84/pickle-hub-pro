@@ -3,6 +3,16 @@ import { requireCronRequest } from "../_shared/cron-auth.ts";
 import { cronCorsHeaders as corsHeaders } from "../_shared/cors.ts";
 import { getAuthUser } from "../_shared/auth.ts";
 import { adminSessionAalOk, bearerToken } from "../_shared/admin-aal.ts";
+import {
+  WORD_LIMITS,
+  classifyRewriteFailure,
+  fallbackContentKind,
+  validateLanguageDraft,
+  type DraftValidationIssue,
+  type NewsContentKind,
+  type NewsLanguage,
+  type NewsLanguageDraft,
+} from "../_shared/news-rewrite-validation.ts";
 
 const BATCH_SIZE = 2;
 const STALE_MINUTES = 15;
@@ -10,10 +20,11 @@ const GEMINI_MODEL = "gemini-flash-lite-latest";
 const GEMINI_ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-type ContentKind = "full" | "brief";
+type ContentKind = NewsContentKind;
 
 interface OriginRow {
   id: string;
+  attempts: number;
   source_id: string | null;
   source_name: string;
   source_url: string;
@@ -24,16 +35,7 @@ interface OriginRow {
   published_at: string;
 }
 
-interface LanguageDraft {
-  title: string;
-  summary: string;
-  category: string;
-  importance: number;
-  sections: Array<{
-    heading?: string;
-    paragraphs: string[];
-  }>;
-}
+type LanguageDraft = NewsLanguageDraft;
 
 interface RewriteDraft {
   en: LanguageDraft;
@@ -119,20 +121,28 @@ async function runBatch(supabase: SupabaseClient, geminiKey: string) {
 
   for (const origin of origins) {
     try {
-      const draft = await rewriteOrigin(origin, geminiKey);
-      const en = prepareForPublish(draft.en, origin, "en");
-      const vi = prepareForPublish(draft.vi, origin, "vi");
+      const rewritten = await rewriteOrigin(origin, geminiKey);
+      if (rewritten.contentKind !== origin.content_kind) {
+        const { error: kindError } = await supabase
+          .from("news_origins")
+          .update({ content_kind: rewritten.contentKind })
+          .eq("id", origin.id);
+        if (kindError) throw new Error(`content kind update failed: ${kindError.message}`);
+      }
+      const en = prepareForPublish(rewritten.draft.en, origin, "en");
+      const vi = prepareForPublish(rewritten.draft.vi, origin, "vi");
       const { data: published, error: publishError } = await supabase.rpc(
         "publish_rewritten_news",
         { p_origin_id: origin.id, p_en: en, p_vi: vi },
       );
       if (publishError) throw new Error(`publish failed: ${publishError.message}`);
+      await clearFailureMetadata(supabase, origin.id);
       result.published += 1;
       result.details.push({ origin_id: origin.id, status: "published", published });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.warn(`[news-rewrite] ${origin.id}: ${message}`);
-      await markFailed(supabase, origin.id, message);
+      await markFailed(supabase, origin, message);
       result.failed += 1;
       result.details.push({
         origin_id: origin.id,
@@ -148,8 +158,9 @@ async function runBatch(supabase: SupabaseClient, geminiKey: string) {
 async function rewriteOrigin(
   origin: OriginRow,
   geminiKey: string,
-): Promise<RewriteDraft> {
-  const range = origin.content_kind === "full" ? "500–800" : "150–250";
+): Promise<{ draft: RewriteDraft; contentKind: ContentKind }> {
+  const target = WORD_LIMITS[origin.content_kind].target;
+  const range = `${target[0]}–${target[1]}`;
   const sourceMaterial = [
     `SOURCE NAME: ${origin.source_name}`,
     `SOURCE TITLE: ${origin.raw_title}`,
@@ -177,20 +188,65 @@ Rules:
 - Vietnamese must read like natural Vietnamese sports journalism and use full
   Vietnamese diacritics in the title, summary, headings, and paragraphs.
 - Keep player, brand, tournament, PPA, MLP, APP, and DUPR names accurate.
-- summary must be 120–300 characters and must not repeat the title.
-- Use 2–4 sections. A heading is optional; paragraphs must be plain text.
+- Title: lead with the most searchable entity (tournament, player, or brand
+  name, plus the year when the source gives one) and keep the essential part
+  within the first 65 characters.
+- The Vietnamese title and headings must use phrases Vietnamese fans actually
+  type into search ("lịch thi đấu", "kết quả", "công bố", "vô địch", "trực
+  tiếp"), not a word-for-word translation of the English title.
+- summary must be 120–300 characters, must not repeat the title, and must read
+  like a search snippet: name the main entity and state the concrete news so a
+  searcher knows why to click.
+- Use 2–4 sections. For a full article give every section a short heading that
+  works in a natural secondary keyword; for a brief, headings are optional.
+  Paragraphs must be plain text.
 - category is one of tournament, player, equipment, business, community.
 - importance is an integer from 1 to 5.
 
 SOURCE MATERIAL
 ${sourceMaterial}`;
 
-  let validationFeedback = "";
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const prompt = validationFeedback
-      ? `${basePrompt}\n\nYour previous response was rejected: ${validationFeedback}. Regenerate the complete EN and VI result and strictly satisfy every rule.`
-      : basePrompt;
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(geminiKey)}`, {
+  const draft = await generateJson<RewriteDraft>(geminiKey, basePrompt, rewriteSchema(),
+    origin.content_kind === "full" ? 5_000 : 2_000, 0.35);
+
+  for (let repairAttempt = 1; repairAttempt <= 2; repairAttempt += 1) {
+    const issues = collectDraftIssues(draft, origin.content_kind);
+    if (issues.length === 0) return { draft, contentKind: origin.content_kind };
+
+    for (const language of ["en", "vi"] as const) {
+      const languageIssues = issues.filter((issue) => issue.language === language);
+      if (languageIssues.length === 0) continue;
+      draft[language] = await repairLanguageDraft(
+        origin,
+        language,
+        draft[language],
+        languageIssues,
+        geminiKey,
+        repairAttempt,
+      );
+    }
+  }
+
+  const remaining = collectDraftIssues(draft, origin.content_kind);
+  if (remaining.length === 0) return { draft, contentKind: origin.content_kind };
+
+  // A source may contain plenty of scraped characters but too few independent
+  // facts for a safe full article. Preserve the usable copy as a brief instead
+  // of asking the model to pad it or leaving the queue permanently failed.
+  const fallback = fallbackContentKind(origin.content_kind, draft.en, draft.vi);
+  if (fallback) return { draft, contentKind: fallback };
+
+  throw new Error(remaining.map((issue) => issue.message).join("; "));
+}
+
+async function generateJson<T>(
+  geminiKey: string,
+  prompt: string,
+  responseSchema: Record<string, unknown>,
+  maxOutputTokens: number,
+  temperature: number,
+): Promise<T> {
+  const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(geminiKey)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: AbortSignal.timeout(45_000),
@@ -198,36 +254,76 @@ ${sourceMaterial}`;
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
-          responseSchema: rewriteSchema(),
-          temperature: attempt === 1 ? 0.35 : 0.2,
-          maxOutputTokens: origin.content_kind === "full" ? 5_000 : 2_000,
+          responseSchema,
+          temperature,
+          maxOutputTokens,
         },
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Gemini HTTP ${response.status}: ${(await response.text()).slice(0, 250)}`);
-    }
-
-    const payload = await response.json() as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-    const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("Gemini returned no JSON text");
-
-    try {
-      const draft = JSON.parse(text) as RewriteDraft;
-      validateDraft(draft, origin.content_kind);
-      return draft;
-    } catch (error) {
-      validationFeedback = error instanceof Error ? error.message : "invalid response";
-      if (attempt === 3) throw new Error(validationFeedback);
-    }
+  if (!response.ok) {
+    throw new Error(`Gemini HTTP ${response.status}: ${(await response.text()).slice(0, 250)}`);
   }
-  throw new Error("Gemini rewrite attempts exhausted");
+
+  const payload = await response.json() as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Gemini returned no JSON text");
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error("Gemini returned invalid JSON");
+  }
 }
 
-function rewriteSchema() {
-  const languageSchema = {
+function collectDraftIssues(draft: RewriteDraft, kind: ContentKind): DraftValidationIssue[] {
+  return [
+    ...validateLanguageDraft("en", draft?.en, kind),
+    ...validateLanguageDraft("vi", draft?.vi, kind),
+  ];
+}
+
+async function repairLanguageDraft(
+  origin: OriginRow,
+  language: NewsLanguage,
+  draft: LanguageDraft,
+  issues: DraftValidationIssue[],
+  geminiKey: string,
+  attempt: number,
+): Promise<LanguageDraft> {
+  const [minimum, maximum] = WORD_LIMITS[origin.content_kind].target;
+  const sourceMaterial = [origin.raw_title, origin.raw_summary, origin.raw_body ?? ""]
+    .filter(Boolean).join("\n\n");
+  const prompt = `You are a strict ${language.toUpperCase()} copy editor.
+
+Repair ONLY the supplied ${language.toUpperCase()} draft. Return one JSON language draft, not an EN/VI wrapper.
+- Resolve every validation error below.
+- Body target: ${minimum}-${maximum} words. Count before returning.
+- Preserve the draft's verified facts and meaning; use only SOURCE MATERIAL.
+- Do not add facts, quotes, URLs, Markdown, a byline, or commentary.
+- Keep title 12-120 characters and summary 120-300 characters.
+- Keep 2-4 sections with complete, natural paragraphs.
+- Vietnamese output must use natural Vietnamese with full diacritics.
+
+VALIDATION ERRORS
+${issues.map((issue) => `- ${issue.message}`).join("\n")}
+
+CURRENT DRAFT
+${JSON.stringify(draft)}
+
+SOURCE MATERIAL
+${sourceMaterial}`;
+  return await generateJson<LanguageDraft>(
+    geminiKey,
+    prompt,
+    languageDraftSchema(),
+    origin.content_kind === "full" ? 3_000 : 1_500,
+    attempt === 1 ? 0.2 : 0.1,
+  );
+}
+
+function languageDraftSchema() {
+  return {
     type: "object",
     properties: {
       title: { type: "string" },
@@ -247,66 +343,16 @@ function rewriteSchema() {
       },
     },
     required: ["title", "summary", "category", "importance", "sections"],
-  };
+  } as Record<string, unknown>;
+}
+
+function rewriteSchema() {
+  const languageSchema = languageDraftSchema();
   return {
     type: "object",
     properties: { en: languageSchema, vi: languageSchema },
     required: ["en", "vi"],
   };
-}
-
-function validateDraft(draft: RewriteDraft, kind: ContentKind): void {
-  for (const [language, value] of [
-    ["en", draft?.en],
-    ["vi", draft?.vi],
-  ] as const) {
-    if (!value) throw new Error(`${language} draft is missing`);
-    if (
-      typeof value.title !== "string" ||
-      typeof value.summary !== "string" ||
-      !Array.isArray(value.sections) ||
-      !value.sections.length
-    ) throw new Error(`${language} draft is incomplete`);
-    if (value.title.trim().length < 12 || value.title.length > 120) {
-      throw new Error(`${language} title length is invalid`);
-    }
-    if (value.summary.trim().length < 120 || value.summary.length > 300) {
-      throw new Error(`${language} summary length is invalid`);
-    }
-    if (!["tournament", "player", "equipment", "business", "community"].includes(value.category)) {
-      throw new Error(`${language} category is invalid`);
-    }
-    if (!Number.isInteger(value.importance) || value.importance < 1 || value.importance > 5) {
-      throw new Error(`${language} importance is invalid`);
-    }
-    const paragraphs = value.sections.flatMap((section) => section.paragraphs ?? []);
-    if (!paragraphs.length || paragraphs.some((paragraph) => typeof paragraph !== "string")) {
-      throw new Error(`${language} paragraphs are invalid`);
-    }
-    const words = paragraphs.join(" ").trim().split(/\s+/).filter(Boolean).length;
-    // Gemini's structured bilingual output can finish slightly below the
-    // editorial target even after corrective retries. Keep a hard floor that
-    // still represents a substantive article instead of failing the queue
-    // indefinitely; the prompt continues to target 500–800 words.
-    const [minimum, maximum] = kind === "full" ? [350, 800] : [150, 250];
-    if (words < minimum || words > maximum) {
-      throw new Error(`${language} body has ${words} words; expected ${minimum}-${maximum}`);
-    }
-    const allText = `${value.title} ${value.summary} ${paragraphs.join(" ")}`;
-    if (/https?:\/\/|www\./i.test(allText)) {
-      throw new Error(`${language} draft contains a URL`);
-    }
-    if (language === "vi") {
-      const vietnameseWords = allText
-        .split(/\s+/)
-        .filter((word) => /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i.test(word))
-        .length;
-      const totalWords = allText.split(/\s+/).filter(Boolean).length;
-      if (vietnameseWords / totalWords < 0.1) {
-        throw new Error("vi draft is missing Vietnamese diacritics");
-      }
-    }
-  }
 }
 
 function prepareForPublish(
@@ -362,14 +408,33 @@ function slugify(title: string, originId: string, language: "en" | "vi"): string
 
 async function markFailed(
   supabase: SupabaseClient,
-  originId: string,
+  origin: OriginRow,
   message: string,
 ): Promise<void> {
+  const failure = classifyRewriteFailure(message);
+  const retryable = failure.retryable && origin.attempts < 5;
+  const retryDelayMinutes = Math.min(240, 15 * Math.max(1, 2 ** (origin.attempts - 1)));
   const { error } = await supabase
     .from("news_origins")
-    .update({ pipeline_status: "failed", last_error: message.slice(0, 500) })
+    .update({
+      pipeline_status: "failed",
+      last_error: message.slice(0, 500),
+      failure_kind: failure.kind,
+      retryable,
+      next_retry_at: retryable
+        ? new Date(Date.now() + retryDelayMinutes * 60_000).toISOString()
+        : null,
+    })
+    .eq("id", origin.id);
+  if (error) console.error(`[news-rewrite] failed to record ${origin.id}: ${error.message}`);
+}
+
+async function clearFailureMetadata(supabase: SupabaseClient, originId: string): Promise<void> {
+  const { error } = await supabase
+    .from("news_origins")
+    .update({ failure_kind: null, retryable: false, next_retry_at: null })
     .eq("id", originId);
-  if (error) console.error(`[news-rewrite] failed to record ${originId}: ${error.message}`);
+  if (error) console.error(`[news-rewrite] failed to clear retry metadata ${originId}: ${error.message}`);
 }
 
 function json(body: unknown, status = 200): Response {

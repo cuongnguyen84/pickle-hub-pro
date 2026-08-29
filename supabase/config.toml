@@ -59,6 +59,9 @@ verify_jwt = false
 [functions.social-caption]
 verify_jwt = false
 
+[functions.product-import-enrich]
+verify_jwt = false
+
 [functions.news-social-caption]
 verify_jwt = false
 

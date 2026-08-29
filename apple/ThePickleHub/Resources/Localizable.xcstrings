@@ -119,6 +119,9 @@
         }
       }
     },
+    "-%lld%%" : {
+
+    },
     "–" : {
       "localizations" : {
         "en" : {
@@ -581,6 +584,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ → %2$lld suất vào playoff"
+          }
+        }
+      }
+    },
+    "%@ × %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ × %2$lld"
           }
         }
       }
@@ -1513,6 +1526,9 @@
         }
       }
     },
+    "×%lld" : {
+
+    },
     "−%lld%% · %@ đ" : {
       "localizations" : {
         "en" : {
@@ -1805,6 +1821,9 @@
         }
       }
     },
+    "99+" : {
+
+    },
     "action.remove" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1892,6 +1911,16 @@
         }
       }
     },
+    "Ảnh %lld trên %lld" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ảnh %1$lld trên %2$lld"
+          }
+        }
+      }
+    },
     "Ảnh chụp %@" : {
       "localizations" : {
         "en" : {
@@ -1911,6 +1940,9 @@
           }
         }
       }
+    },
+    "Anh/chị đã báo chuyển khoản; đang chờ shop đối soát." : {
+
     },
     "Apple không trả về mã xác thực." : {
       "localizations" : {
@@ -2852,6 +2884,12 @@
         }
       }
     },
+    "Bỏ" : {
+
+    },
+    "Bỏ bộ lọc %@" : {
+
+    },
     "Bỏ check-in" : {
       "localizations" : {
         "en" : {
@@ -2891,6 +2929,9 @@
           }
         }
       }
+    },
+    "Bỏ lưu %@" : {
+
     },
     "Bỏ qua" : {
       "localizations" : {
@@ -3566,6 +3607,9 @@
         }
       }
     },
+    "Chất lượng video" : {
+
+    },
     "Châu Á" : {
       "localizations" : {
         "en" : {
@@ -3646,6 +3690,9 @@
         }
       }
     },
+    "Chỉ kênh liên hệ đã được duyệt mới được hiển thị" : {
+
+    },
     "Chỉ khả dụng với ≥32 người" : {
       "localizations" : {
         "en" : {
@@ -3655,6 +3702,12 @@
           }
         }
       }
+    },
+    "Chỉ sản phẩm mới" : {
+
+    },
+    "Chi tiết" : {
+
     },
     "Chi tiết từng ván" : {
       "localizations" : {
@@ -3809,6 +3862,9 @@
         }
       }
     },
+    "Chợ" : {
+
+    },
     "Chờ %@ xác nhận" : {
       "localizations" : {
         "en" : {
@@ -3848,6 +3904,9 @@
           }
         }
       }
+    },
+    "Chợ đồ pickleball" : {
+
     },
     "Chờ đội trưởng duyệt" : {
       "localizations" : {
@@ -4156,6 +4215,12 @@
         }
       }
     },
+    "Chọn phiên bản" : {
+
+    },
+    "Chọn phiên bản sản phẩm rồi thêm vào giỏ để tiếp tục." : {
+
+    },
     "Chọn sân, giờ và trình độ" : {
       "localizations" : {
         "en" : {
@@ -4456,6 +4521,9 @@
         }
       }
     },
+    "Chưa có đơn mua" : {
+
+    },
     "Chưa có đồng đội" : {
       "localizations" : {
         "en" : {
@@ -4585,6 +4653,9 @@
           }
         }
       }
+    },
+    "Chưa có sản phẩm nào đang bán" : {
+
     },
     "Chưa có sự kiện sắp tới" : {
       "localizations" : {
@@ -4819,6 +4890,9 @@
         }
       }
     },
+    "Chưa lưu" : {
+
+    },
     "Chưa lưu bản nháp" : {
       "localizations" : {
         "en" : {
@@ -4828,6 +4902,9 @@
           }
         }
       }
+    },
+    "Chưa lưu sản phẩm" : {
+
     },
     "Chưa nộp lệ phí" : {
       "localizations" : {
@@ -4859,6 +4936,9 @@
         }
       }
     },
+    "Chưa tải được đơn" : {
+
+    },
     "Chưa tải được hồ sơ của bạn." : {
       "localizations" : {
         "en" : {
@@ -4878,6 +4958,12 @@
           }
         }
       }
+    },
+    "Chưa thể cập nhật" : {
+
+    },
+    "Chưa thể đặt đơn" : {
+
     },
     "Chưa trả" : {
       "localizations" : {
@@ -5152,6 +5238,9 @@
         }
       }
     },
+    "Còn hàng" : {
+
+    },
     "Công cụ" : {
       "localizations" : {
         "en" : {
@@ -5221,6 +5310,9 @@
           }
         }
       }
+    },
+    "Cửa hàng" : {
+
     },
     "Của tôi" : {
       "localizations" : {
@@ -5628,6 +5720,9 @@
         }
       }
     },
+    "Đã lưu %@" : {
+
+    },
     "Đã lưu lịch — mở Điều hành trực tiếp để chạy buổi chơi." : {
       "localizations" : {
         "en" : {
@@ -5707,6 +5802,9 @@
           }
         }
       }
+    },
+    "Đã qua sử dụng ·" : {
+
     },
     "Đã sao chép mã PIN." : {
       "localizations" : {
@@ -6031,6 +6129,9 @@
           }
         }
       }
+    },
+    "Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
+
     },
     "Đang kiểm tra DUPR…" : {
       "localizations" : {
@@ -6498,6 +6599,9 @@
         }
       }
     },
+    "Đang tải danh mục" : {
+
+    },
     "Đang tải điểm DUPR" : {
       "localizations" : {
         "en" : {
@@ -6507,6 +6611,12 @@
           }
         }
       }
+    },
+    "Đang tải mã thanh toán…" : {
+
+    },
+    "Đang tải sản phẩm" : {
+
     },
     "Đang tải…" : {
       "localizations" : {
@@ -6678,6 +6788,12 @@
         }
       }
     },
+    "Danh mục" : {
+
+    },
+    "Danh mục %@" : {
+
+    },
     "Danh sách có %lld đội nhưng bước thiết lập khai báo %lld đội." : {
       "localizations" : {
         "en" : {
@@ -6703,6 +6819,9 @@
           }
         }
       }
+    },
+    "Danh sách đã lưu chưa khả dụng" : {
+
     },
     "Danh sách đăng ký" : {
       "localizations" : {
@@ -6754,6 +6873,12 @@
         }
       }
     },
+    "Đặt đơn tại %@" : {
+
+    },
+    "Đặt hàng" : {
+
+    },
     "Đặt lại" : {
       "localizations" : {
         "en" : {
@@ -6783,6 +6908,9 @@
           }
         }
       }
+    },
+    "Đặt riêng từng shop" : {
+
     },
     "Đặt username + trình độ" : {
       "localizations" : {
@@ -7095,7 +7223,11 @@
         }
       }
     },
+    "Đồ pickleball từ người bán trong nước" : {
+
+    },
     "Đọc bài gốc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7116,6 +7248,7 @@
       }
     },
     "Đọc toàn bộ tại %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7397,6 +7530,9 @@
         }
       }
     },
+    "Đổi lại %@" : {
+
+    },
     "Đôi nam" : {
       "localizations" : {
         "en" : {
@@ -7486,6 +7622,9 @@
           }
         }
       }
+    },
+    "Đổi nickname" : {
+
     },
     "Đôi nữ" : {
       "localizations" : {
@@ -7656,6 +7795,18 @@
           }
         }
       }
+    },
+    "Đơn đã đặt sẽ xuất hiện tại đây." : {
+
+    },
+    "Đơn đã huỷ; không chuyển khoản cho đơn này." : {
+
+    },
+    "Đơn không tồn tại hoặc không thuộc tài khoản này." : {
+
+    },
+    "Đơn mua" : {
+
     },
     "Đơn nam" : {
       "localizations" : {
@@ -8140,6 +8291,9 @@
         }
       }
     },
+    "Ghi chú cho shop (không bắt buộc)" : {
+
+    },
     "Ghi chú nội bộ" : {
       "localizations" : {
         "en" : {
@@ -8209,6 +8363,9 @@
           }
         }
       }
+    },
+    "Giá gốc %@" : {
+
     },
     "Giá vé (VNĐ, 0 = miễn phí)" : {
       "localizations" : {
@@ -8512,6 +8669,9 @@
         }
       }
     },
+    "Giảm %lld phần trăm" : {
+
+    },
     "Giảm điểm %@" : {
       "localizations" : {
         "en" : {
@@ -8541,6 +8701,9 @@
           }
         }
       }
+    },
+    "Giao đến" : {
+
     },
     "Giao diện" : {
       "localizations" : {
@@ -8588,6 +8751,9 @@
         }
       }
     },
+    "Giỏ" : {
+
+    },
     "GIỜ" : {
       "localizations" : {
         "en" : {
@@ -8617,6 +8783,18 @@
           }
         }
       }
+    },
+    "Giỏ hàng" : {
+
+    },
+    "Giỏ hàng của shop này có thể đã thay đổi." : {
+
+    },
+    "Giỏ hàng đang trống" : {
+
+    },
+    "Giỏ hàng, %lld món" : {
+
     },
     "GIỜ MỞ CỬA" : {
       "localizations" : {
@@ -8707,6 +8885,9 @@
           }
         }
       }
+    },
+    "Giữ nguyên số tiền và nội dung để SePay tự động xác nhận đúng đơn." : {
+
     },
     "GLOBAL STANDARD · 2018 → 2026" : {
       "localizations" : {
@@ -9007,6 +9188,9 @@
         }
       }
     },
+    "Hệ thống đang kiểm tra nếu anh/chị vừa thanh toán." : {
+
+    },
     "Hệ thống đang tạm dừng gửi tin tự động. Hãy liên hệ ban tổ chức." : {
       "localizations" : {
         "en" : {
@@ -9067,6 +9251,9 @@
         }
       }
     },
+    "Hết hàng" : {
+
+    },
     "Hiện chưa có trận trực tiếp" : {
       "localizations" : {
         "en" : {
@@ -9097,12 +9284,12 @@
         }
       }
     },
-    "Hoàn tất & mở đăng ký" : {
+    "HOÀN TÁC" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Finish & open registration"
+            "value" : "UNDO"
           }
         }
       }
@@ -9137,6 +9324,9 @@
         }
       }
     },
+    "Họ tên" : {
+
+    },
     "Hoặc tham gia một đội đã có" : {
       "localizations" : {
         "en" : {
@@ -9147,22 +9337,22 @@
         }
       }
     },
-    "HOÀN TÁC" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "UNDO"
-          }
-        }
-      }
-    },
     "Hoàn tất" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Done"
+          }
+        }
+      }
+    },
+    "Hoàn tất & mở đăng ký" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Finish & open registration"
           }
         }
       }
@@ -9276,6 +9466,9 @@
           }
         }
       }
+    },
+    "Huy hiệu xác minh xác nhận trạng thái hồ sơ; không bảo đảm chất lượng từng sản phẩm." : {
+
     },
     "Hủy sự kiện" : {
       "localizations" : {
@@ -9597,6 +9790,9 @@
         }
       }
     },
+    "Không có ảnh" : {
+
+    },
     "Không có cấu hình bảng phù hợp cho %lld người. Thử số người khác." : {
       "localizations" : {
         "en" : {
@@ -9636,6 +9832,9 @@
           }
         }
       }
+    },
+    "Không còn sản phẩm để đặt" : {
+
     },
     "Không còn trận nào trong hàng đợi." : {
       "localizations" : {
@@ -10276,6 +10475,9 @@
         }
       }
     },
+    "Không thể đổi nickname. Vui lòng thử lại." : {
+
+    },
     "Không thể đưa trận đã hoàn tất về trạng thái đang đấu." : {
       "localizations" : {
         "en" : {
@@ -10576,6 +10778,9 @@
         }
       }
     },
+    "Không tìm thấy đơn" : {
+
+    },
     "Không tìm thấy giải" : {
       "localizations" : {
         "en" : {
@@ -10655,6 +10860,9 @@
           }
         }
       }
+    },
+    "Không tìm thấy sản phẩm" : {
+
     },
     "Không tìm thấy sự kiện" : {
       "localizations" : {
@@ -11207,6 +11415,9 @@
         }
       }
     },
+    "Lọc & sắp xếp" : {
+
+    },
     "Lọc theo khu vực (VD: Hà Nội)" : {
       "localizations" : {
         "en" : {
@@ -11332,6 +11543,9 @@
           }
         }
       }
+    },
+    "Lưu %@" : {
+
     },
     "Lưu nháp" : {
       "localizations" : {
@@ -11463,6 +11677,16 @@
         }
       }
     },
+    "Mã đơn %@ · %@" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mã đơn %1$@ · %2$@"
+          }
+        }
+      }
+    },
     "Mã hiện tại sẽ ngừng hoạt động ngay. Những trọng tài đã tham gia vẫn giữ quyền chấm điểm." : {
       "localizations" : {
         "en" : {
@@ -11541,6 +11765,12 @@
           }
         }
       }
+    },
+    "Mã QR thanh toán SePay" : {
+
+    },
+    "Mã VietQR thanh toán" : {
+
     },
     "MAI" : {
       "localizations" : {
@@ -11661,6 +11891,9 @@
         }
       }
     },
+    "Miễn phí vận chuyển" : {
+
+    },
     "Min" : {
       "localizations" : {
         "en" : {
@@ -11750,6 +11983,9 @@
           }
         }
       }
+    },
+    "Mở Shop ThePickleHub" : {
+
     },
     "Mô tả" : {
       "localizations" : {
@@ -11856,6 +12092,9 @@
           }
         }
       }
+    },
+    "Mới đăng" : {
+
     },
     "Mỗi đội" : {
       "localizations" : {
@@ -12124,22 +12363,25 @@
         }
       }
     },
-    "Ngồi ngoài: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Sitting out: %@"
-          }
-        }
-      }
-    },
     "Ngoài trời" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Outdoor"
+          }
+        }
+      }
+    },
+    "Ngoại tuyến. Đang hiển thị dữ liệu công khai đã lưu gần đây" : {
+
+    },
+    "Ngồi ngoài: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Sitting out: %@"
           }
         }
       }
@@ -12304,6 +12546,9 @@
         }
       }
     },
+    "Người nhận" : {
+
+    },
     "Nguồn rating" : {
       "localizations" : {
         "en" : {
@@ -12343,6 +12588,9 @@
           }
         }
       }
+    },
+    "Nhấn biểu tượng trái tim để xem lại sản phẩm tại đây." : {
+
     },
     "Nhận lời và tham gia đội" : {
       "localizations" : {
@@ -12497,6 +12745,9 @@
           }
         }
       }
+    },
+    "Nhập nickname" : {
+
     },
     "Nhập rồi Enter" : {
       "localizations" : {
@@ -12668,6 +12919,12 @@
         }
       }
     },
+    "Nickname phải có từ 2 đến 30 ký tự." : {
+
+    },
+    "Nickname:" : {
+
+    },
     "Nội dung" : {
       "localizations" : {
         "en" : {
@@ -12677,6 +12934,9 @@
           }
         }
       }
+    },
+    "Nội dung chuyển khoản phải đúng mã đơn để shop đối soát thủ công." : {
+
     },
     "Nội dung CK:" : {
       "localizations" : {
@@ -12881,6 +13141,15 @@
           }
         }
       }
+    },
+    "Phí vận chuyển" : {
+
+    },
+    "Phí vận chuyển: %@" : {
+
+    },
+    "PHIÊN BẢN" : {
+
     },
     "Phiên đăng nhập Apple đã hết hạn. Vui lòng thử lại." : {
       "localizations" : {
@@ -13192,6 +13461,9 @@
         }
       }
     },
+    "Quét mã bằng ứng dụng ngân hàng. Số tiền và nội dung chuyển khoản đã được điền sẵn." : {
+
+    },
     "Quét mã để chuyển %@ đ" : {
       "localizations" : {
         "en" : {
@@ -13446,6 +13718,18 @@
         }
       }
     },
+    "Sản phẩm" : {
+
+    },
+    "Sản phẩm có thể đã được gỡ hoặc chưa được duyệt." : {
+
+    },
+    "Sản phẩm được duyệt sẽ xuất hiện tại đây." : {
+
+    },
+    "Sản phẩm không còn hiển thị" : {
+
+    },
     "SẴN SÀNG GỬI" : {
       "localizations" : {
         "en" : {
@@ -13505,6 +13789,9 @@
           }
         }
       }
+    },
+    "Sao chép %@" : {
+
     },
     "Sao chép link" : {
       "localizations" : {
@@ -13648,6 +13935,12 @@
         }
       }
     },
+    "Sắp xếp" : {
+
+    },
+    "Sau khi đặt đơn, ứng dụng hiển thị mã thanh toán SePay với số tiền và nội dung đã điền sẵn. Hệ thống tự động xác nhận khi nhận được tiền." : {
+
+    },
     "Sau khi tạo, BTC chọn cách ghép đội: bốc thăm ngẫu nhiên hoặc xếp thủ công ngay trong app." : {
       "localizations" : {
         "en" : {
@@ -13766,6 +14059,39 @@
           }
         }
       }
+    },
+    "SePay tự động đối soát giao dịch" : {
+
+    },
+    "SHOP / PILOT" : {
+
+    },
+    "Shop chưa có sản phẩm" : {
+
+    },
+    "Shop chưa công bố kênh liên hệ" : {
+
+    },
+    "Shop chưa cung cấp tài khoản nhận tiền. Anh/chị chưa nên chuyển khoản và hãy liên hệ shop." : {
+
+    },
+    "Shop chưa được mở" : {
+
+    },
+    "Shop có thể đang tạm ngưng hoặc không còn công khai." : {
+
+    },
+    "Shop đã xác minh" : {
+
+    },
+    "Shop đã xác nhận nhận được tiền" : {
+
+    },
+    "Shop đang thử nghiệm với những người bán đầu tiên. Anh/chị quay lại sau nhé." : {
+
+    },
+    "Shop không khả dụng" : {
+
     },
     "Sideout %lld" : {
       "localizations" : {
@@ -13939,6 +14265,9 @@
         }
       }
     },
+    "Số điện thoại 10 số" : {
+
+    },
     "Số điện thoại không hợp lệ." : {
       "localizations" : {
         "en" : {
@@ -14109,6 +14438,12 @@
         }
       }
     },
+    "Số lượng" : {
+
+    },
+    "Số lượng %lld" : {
+
+    },
     "Số người không chia hết cho 4 — sẽ có người ngồi ngoài luân phiên." : {
       "localizations" : {
         "en" : {
@@ -14138,6 +14473,9 @@
           }
         }
       }
+    },
+    "Số nhà, đường, phường, quận, tỉnh" : {
+
     },
     "Số sân" : {
       "localizations" : {
@@ -14519,6 +14857,9 @@
         }
       }
     },
+    "Tải lại mã SePay" : {
+
+    },
     "Tải lên" : {
       "localizations" : {
         "en" : {
@@ -14538,6 +14879,12 @@
           }
         }
       }
+    },
+    "Tạm tính" : {
+
+    },
+    "Tạm tính sản phẩm, chưa gồm phí vận chuyển" : {
+
     },
     "Tăng điểm %@" : {
       "localizations" : {
@@ -15437,6 +15784,9 @@
         }
       }
     },
+    "Thanh toán" : {
+
+    },
     "THANH TOÁN" : {
       "localizations" : {
         "en" : {
@@ -15456,6 +15806,15 @@
           }
         }
       }
+    },
+    "Thanh toán chuyển khoản" : {
+
+    },
+    "Thanh toán ngay" : {
+
+    },
+    "Thanh toán trực tiếp khi nhận hàng." : {
+
     },
     "Thành viên" : {
       "localizations" : {
@@ -15976,6 +16335,9 @@
         }
       }
     },
+    "Thoát toàn màn hình" : {
+
+    },
     "Thôi" : {
       "localizations" : {
         "en" : {
@@ -16025,6 +16387,9 @@
           }
         }
       }
+    },
+    "Thông số" : {
+
     },
     "Thông tin" : {
       "localizations" : {
@@ -16086,6 +16451,12 @@
         }
       }
     },
+    "Thông tin sản phẩm và thông số do người bán cung cấp." : {
+
+    },
+    "Thông tin shop" : {
+
+    },
     "Thủ công" : {
       "localizations" : {
         "en" : {
@@ -16115,6 +16486,9 @@
           }
         }
       }
+    },
+    "Thử từ khóa ngắn hơn hoặc bỏ danh mục đang chọn." : {
+
     },
     "Thứ tự ra sân ngẫu nhiên" : {
       "localizations" : {
@@ -16332,6 +16706,9 @@
         }
       }
     },
+    "Tìm sản phẩm trong Shop" : {
+
+    },
     "TÌM SÂN THEO KHU VỰC" : {
       "localizations" : {
         "en" : {
@@ -16371,6 +16748,9 @@
           }
         }
       }
+    },
+    "Tìm vợt, giày, bóng…" : {
+
     },
     "Timeout thường, còn %lld" : {
       "localizations" : {
@@ -16462,6 +16842,12 @@
         }
       }
     },
+    "Tính năng đang trong giai đoạn thử nghiệm giới hạn." : {
+
+    },
+    "Tính năng đồng bộ sẽ được mở sau khi hoàn tất bảo vệ tài khoản." : {
+
+    },
     "Tính theo tổng điểm" : {
       "localizations" : {
         "en" : {
@@ -16481,6 +16867,9 @@
           }
         }
       }
+    },
+    "Tình trạng" : {
+
     },
     "Tính vào bảng xếp hạng" : {
       "localizations" : {
@@ -16511,6 +16900,9 @@
           }
         }
       }
+    },
+    "Toàn màn hình" : {
+
     },
     "Tối" : {
       "localizations" : {
@@ -16648,6 +17040,12 @@
           }
         }
       }
+    },
+    "Tổng cộng" : {
+
+    },
+    "Tổng đơn" : {
+
     },
     "Tổng quan" : {
       "localizations" : {
@@ -17138,6 +17536,9 @@
           }
         }
       }
+    },
+    "TRỰC TIẾP" : {
+
     },
     "TRUNG CẤP" : {
       "localizations" : {
@@ -18277,6 +18678,9 @@
         }
       }
     },
+    "Vợt, giày, bóng và phụ kiện từ những shop được ThePickleHub duyệt hồ sơ và kiểm duyệt từng sản phẩm." : {
+
+    },
     "vs" : {
       "localizations" : {
         "en" : {
@@ -18512,6 +18916,9 @@
           }
         }
       }
+    },
+    "Xem %lld sản phẩm" : {
+
     },
     "XEM BẢNG ĐẤU" : {
       "localizations" : {
@@ -19069,6 +19476,9 @@
           }
         }
       }
+    },
+    "Xóa từ khóa" : {
+
     },
     "Xóa VĐV" : {
       "localizations" : {

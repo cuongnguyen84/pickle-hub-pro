@@ -40,6 +40,7 @@ export interface Env {
   SITE_URL: string;
   FB_GRAPH_VERSION: string;
   FB_POST_MIN_GAP_MINUTES: string;
+  FB_POST_WINDOW_VN?: string;
   GEMINI_MODEL: string;
   FB_SECONDARY_PAGE_ID?: string;
   FB_SECONDARY_START_AT?: string;
@@ -80,6 +81,7 @@ interface FbPostLogRow {
   posted_at: string | null;
   updated_at: string | null;
   fb_post_id: string | null;
+  link_comment_id: string | null;
   link_comment_status: 'pending' | 'posted' | 'failed' | 'skipped' | null;
   link_comment_attempt_count: number;
 }
@@ -95,8 +97,8 @@ interface FacebookPage {
 // claimed it crashed/timed out before finalizing) and may be re-claimed.
 const STALE_PENDING_MS = 10 * 60 * 1000;
 const FACEBOOK_TIME_ZONE = 'Asia/Ho_Chi_Minh';
-const FACEBOOK_START_HOUR = 7;
-const FACEBOOK_END_HOUR = 20;
+const DEFAULT_FACEBOOK_WINDOW = '7-21';
+const APP_STORE_URL = 'https://apps.apple.com/vn/app/thepicklehub-tournaments/id6759968026?l=vi';
 
 interface SupabaseWebhookPayload {
   type: 'INSERT' | 'UPDATE' | 'DELETE';
@@ -300,6 +302,7 @@ async function processNewsItem(
       caption,
       fb_payload: fbPayload,
       first_comment: link,
+      second_comment: buildAppComment(),
     };
   }
 
@@ -307,7 +310,7 @@ async function processNewsItem(
   // crawled/translated overnight remain eligible and unclaimed, so the
   // catch-up cron drains them gradually after 07:00 instead of dropping or
   // bursting them during the night.
-  if (!isFacebookPostingWindow()) {
+  if (!isWithinPostWindow(env)) {
     return {
       deferred: true,
       page_key: page.key,
@@ -385,15 +388,41 @@ async function processNewsItem(
       link_comment_status: 'pending',
     });
 
-    const comment = await publishLinkComment(env, page, postedId, link);
-    await updateLinkComment(env, page.id, item.id, comment, 1);
+    const linkComment = await publishLinkComment(env, page, postedId, link);
+    if (linkComment.status === 'failed') {
+      await updateLinkComment(env, page.id, item.id, linkComment, 1);
+      return {
+        posted: true,
+        page_key: page.key,
+        news_item_id: item.id,
+        fb_post_id: postedId,
+        permalink,
+        link_comment: 'failed',
+        app_comment: 'skipped',
+      };
+    }
+
+    // Persist the first comment ID before creating the app comment. If the
+    // second request fails, retryLinkComment can resume at comment 2 without
+    // duplicating the article link.
+    await updateLinkComment(env, page.id, item.id, {
+      status: 'failed',
+      id: linkComment.id,
+      error: 'app_comment_pending',
+    }, 1);
+    const appComment = await publishLinkComment(env, page, postedId, buildAppComment());
+    await updateLinkComment(env, page.id, item.id, {
+      ...appComment,
+      id: linkComment.id,
+    }, 1);
     return {
       posted: true,
       page_key: page.key,
       news_item_id: item.id,
       fb_post_id: postedId,
       permalink,
-      link_comment: comment.status,
+      link_comment: linkComment.status,
+      app_comment: appComment.status,
     };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
@@ -416,14 +445,22 @@ async function processNewsItem(
   }
 }
 
-export function isFacebookPostingWindow(now = new Date()): boolean {
+export function isWithinPostWindow(env: Env, nowMs = Date.now()): boolean {
+  const match = (env.FB_POST_WINDOW_VN ?? DEFAULT_FACEBOOK_WINDOW)
+    .match(/^([01]?\d|2[0-3])-([01]?\d|2[0-3])$/);
+  // A malformed optional setting must not silently stop publishing.
+  if (!match) return true;
+  const startHour = Number(match[1]);
+  const endHour = Number(match[2]);
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: FACEBOOK_TIME_ZONE,
     hour: '2-digit',
     hourCycle: 'h23',
-  }).formatToParts(now);
+  }).formatToParts(new Date(nowMs));
   const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? -1);
-  return hour >= FACEBOOK_START_HOUR && hour < FACEBOOK_END_HOUR;
+  return startHour < endHour
+    ? hour >= startHour && hour < endHour
+    : hour >= startHour || hour < endHour;
 }
 
 // ---------------------------------------------------------------------------
@@ -509,23 +546,32 @@ async function pickNextNewsItem(env: Env, page: FacebookPage): Promise<NewsItem 
     throw new Error(`pickNext done query failed: ${postedRes.status} ${await postedRes.text()}`);
   }
   const postedRows = (await postedRes.json()) as Array<{ news_item_id: string }>;
-  const postedIds = postedRows.map((r) => r.news_item_id);
+  const postedIds = new Set(postedRows.map((r) => r.news_item_id));
 
-  const url = new URL(`${env.SUPABASE_URL}/rest/v1/news_items`);
-  url.searchParams.set('select', '*');
-  url.searchParams.set('language', 'eq.vi');
-  url.searchParams.set('ai_translated', 'eq.true');
-  url.searchParams.set('status', 'eq.published');
-  if (page.startAt) url.searchParams.set('published_at', `gte.${page.startAt}`);
-  url.searchParams.set('order', 'importance.desc,published_at.desc');
-  url.searchParams.set('limit', '50');
-  const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
-  if (!res.ok) {
-    throw new Error(`pickNext news query failed: ${res.status} ${await res.text()}`);
+  // Filter after fetching because PostgREST cannot express this per-page
+  // anti-join. Paginate until an unposted row is found: limiting the query to
+  // the first 50 before filtering starved newer/lower-importance articles once
+  // all of those 50 had already been posted.
+  const pageSize = 100;
+  for (let offset = 0; ; offset += pageSize) {
+    const url = new URL(`${env.SUPABASE_URL}/rest/v1/news_items`);
+    url.searchParams.set('select', '*');
+    url.searchParams.set('language', 'eq.vi');
+    url.searchParams.set('ai_translated', 'eq.true');
+    url.searchParams.set('status', 'eq.published');
+    if (page.startAt) url.searchParams.set('published_at', `gte.${page.startAt}`);
+    url.searchParams.set('order', 'importance.desc,published_at.desc');
+    url.searchParams.set('limit', String(pageSize));
+    url.searchParams.set('offset', String(offset));
+    const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
+    if (!res.ok) {
+      throw new Error(`pickNext news query failed: ${res.status} ${await res.text()}`);
+    }
+    const rows = (await res.json()) as NewsItem[];
+    const next = rows.find((row) => !postedIds.has(row.id));
+    if (next) return next;
+    if (rows.length < pageSize) return null;
   }
-  const rows = (await res.json()) as NewsItem[];
-  const next = rows.find((r) => !postedIds.includes(r.id));
-  return next ?? null;
 }
 
 async function fetchFbPostLogByNewsItem(
@@ -534,7 +580,7 @@ async function fetchFbPostLogByNewsItem(
   newsItemId: string,
 ): Promise<FbPostLogRow | null> {
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
-  url.searchParams.set('select', 'id,news_item_id,page_id,page_key,status,attempt_count,posted_at,updated_at,fb_post_id,link_comment_status,link_comment_attempt_count');
+  url.searchParams.set('select', 'id,news_item_id,page_id,page_key,status,attempt_count,posted_at,updated_at,fb_post_id,link_comment_id,link_comment_status,link_comment_attempt_count');
   url.searchParams.set('news_item_id', `eq.${newsItemId}`);
   url.searchParams.set('page_id', `eq.${pageId}`);
   url.searchParams.set('limit', '1');
@@ -712,11 +758,11 @@ async function publishLinkComment(
   env: Env,
   page: FacebookPage,
   postId: string,
-  link: string,
+  message: string,
 ): Promise<LinkCommentResult> {
   const url = `https://graph.facebook.com/${env.FB_GRAPH_VERSION}/${postId}/comments`;
   const form = new URLSearchParams({
-    message: link,
+    message,
     access_token: page.accessToken,
   });
   try {
@@ -769,7 +815,7 @@ async function retryLinkComment(
   page: FacebookPage,
 ): Promise<Record<string, unknown> | null> {
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
-  url.searchParams.set('select', 'id,news_item_id,page_id,page_key,status,attempt_count,posted_at,updated_at,fb_post_id,link_comment_status,link_comment_attempt_count');
+  url.searchParams.set('select', 'id,news_item_id,page_id,page_key,status,attempt_count,posted_at,updated_at,fb_post_id,link_comment_id,link_comment_status,link_comment_attempt_count');
   url.searchParams.set('page_id', `eq.${page.id}`);
   url.searchParams.set('status', 'eq.posted');
   url.searchParams.set('link_comment_status', 'in.(pending,failed)');
@@ -783,19 +829,52 @@ async function retryLinkComment(
   if (!log?.fb_post_id) return null;
 
   const item = await fetchNewsItemById(env, log.news_item_id);
-  const result = await publishLinkComment(env, page, log.fb_post_id, buildNewsLink(env, item));
+  let linkCommentId = log.link_comment_id;
+  if (!linkCommentId) {
+    const linkResult = await publishLinkComment(
+      env,
+      page,
+      log.fb_post_id,
+      buildNewsLink(env, item),
+    );
+    if (linkResult.status === 'failed') {
+      await updateLinkComment(
+        env,
+        page.id,
+        item.id,
+        linkResult,
+        (log.link_comment_attempt_count ?? 0) + 1,
+      );
+      return {
+        page_key: page.key,
+        news_item_id: item.id,
+        post_already_existed: true,
+        link_comment: 'failed',
+        app_comment: 'skipped',
+      };
+    }
+    linkCommentId = linkResult.id ?? null;
+    await updateLinkComment(env, page.id, item.id, {
+      status: 'failed',
+      id: linkCommentId ?? undefined,
+      error: 'app_comment_pending',
+    }, log.link_comment_attempt_count ?? 0);
+  }
+
+  const result = await publishLinkComment(env, page, log.fb_post_id, buildAppComment());
   await updateLinkComment(
     env,
     page.id,
     item.id,
-    result,
+    { ...result, id: linkCommentId ?? undefined },
     (log.link_comment_attempt_count ?? 0) + 1,
   );
   return {
     page_key: page.key,
     news_item_id: item.id,
     post_already_existed: true,
-    link_comment: result.status,
+    link_comment: 'posted',
+    app_comment: result.status,
   };
 }
 
@@ -871,6 +950,13 @@ export function sanitizeCaption(text: string): string {
 
 function buildNewsLink(env: Env, item: NewsItem): string {
   return `${env.SITE_URL.replace(/\/$/, '')}/vi/news/${item.slug}`;
+}
+
+export function buildAppComment(): string {
+  return [
+    '📲 Tải app ThePickleHub: Tournaments để xem livestream và cập nhật tin tức pickleball mới nhất:',
+    APP_STORE_URL,
+  ].join('\n');
 }
 
 interface FbPayload {

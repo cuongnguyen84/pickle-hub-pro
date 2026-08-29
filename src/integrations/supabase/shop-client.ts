@@ -31,7 +31,7 @@ export interface ShopQuery<T> extends PromiseLike<ShopResult<T[] | null>> {
 
 export interface ShopTable<T> {
   select(columns: string): ShopQuery<T>;
-  insert(row: Record<string, unknown>): ShopQuery<T>;
+  insert(row: Record<string, unknown> | Record<string, unknown>[]): ShopQuery<T>;
   update(row: Record<string, unknown>): ShopQuery<T>;
 }
 

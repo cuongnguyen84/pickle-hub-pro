@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RefreshCw, Eye, EyeOff, AlertCircle, CheckCircle2, Languages, ExternalLink, Play } from "lucide-react";
+import { RefreshCw, Eye, EyeOff, AlertCircle, CheckCircle2, Languages, ExternalLink, Play, Facebook } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -75,6 +75,27 @@ type NewsOriginAdmin = {
   last_error: string | null;
   created_at: string;
 };
+
+type FacebookPostStatus = "queued" | "pending" | "posted" | "failed" | "skipped";
+
+type FacebookQueueItem = {
+  id: string;
+  title: string;
+  slug: string | null;
+  published_at: string;
+  importance: number;
+  pages: Record<string, {
+    status: FacebookPostStatus;
+    error: string | null;
+    permalink: string | null;
+    updated_at: string | null;
+  }>;
+};
+
+const FACEBOOK_PAGES = [
+  { key: "thepicklehub", label: "thepicklehub.net", startAt: null },
+  { key: "ta-pickleball", label: "TA Pickleball", startAt: "2026-07-31T10:04:31Z" },
+] as const;
 
 function useSources() {
   return useQuery({
@@ -145,6 +166,69 @@ function useRecentNews(statusFilter: string, languageFilter: string) {
   });
 }
 
+function useFacebookQueue() {
+  return useQuery({
+    queryKey: ["admin-news-facebook-queue"],
+    queryFn: async () => {
+      // Match the Worker's ordering so the first row here is the next article
+      // each Page will claim. Fetch enough candidates to expose backlog that
+      // used to be hidden behind the already-posted top 50.
+      const { data: news, error: newsError } = await supabase
+        .from("news_items")
+        .select("id,title,slug,published_at,importance")
+        .eq("language", "vi")
+        .eq("ai_translated", true)
+        .eq("status", "published")
+        .order("importance", { ascending: false })
+        .order("published_at", { ascending: false })
+        .limit(500);
+      if (newsError) throw newsError;
+
+      const ids = (news ?? []).map((item) => item.id);
+      if (ids.length === 0) return [] as FacebookQueueItem[];
+      const { data: logs, error: logsError } = await supabase
+        .from("fb_post_log")
+        .select("news_item_id,page_key,status,error_message,fb_permalink,updated_at")
+        .in("news_item_id", ids);
+      if (logsError) throw logsError;
+
+      const byItem = new Map<string, Map<string, typeof logs[number]>>();
+      for (const log of logs ?? []) {
+        const pageLogs = byItem.get(log.news_item_id) ?? new Map();
+        pageLogs.set(log.page_key, log);
+        byItem.set(log.news_item_id, pageLogs);
+      }
+
+      return (news ?? []).map((item) => ({
+        ...item,
+        pages: Object.fromEntries(FACEBOOK_PAGES.map((page) => {
+          const log = byItem.get(item.id)?.get(page.key);
+          const beforePageStart = page.startAt !== null &&
+            new Date(item.published_at).getTime() < new Date(page.startAt).getTime();
+          return [page.key, {
+            status: (log?.status ?? (beforePageStart ? "skipped" : "queued")) as FacebookPostStatus,
+            error: log?.error_message ?? null,
+            permalink: log?.fb_permalink ?? null,
+            updated_at: log?.updated_at ?? null,
+          }];
+        })),
+      })) as FacebookQueueItem[];
+    },
+    refetchInterval: 15_000,
+  });
+}
+
+function facebookStatusLabel(status: FacebookPostStatus) {
+  return ({ queued: "Chờ đăng", pending: "Đang đăng", posted: "Đã đăng", failed: "Lỗi", skipped: "Bỏ qua" })[status];
+}
+
+function facebookStatusVariant(status: FacebookPostStatus): "default" | "secondary" | "destructive" | "outline" {
+  if (status === "posted") return "default";
+  if (status === "failed") return "destructive";
+  if (status === "pending") return "secondary";
+  return "outline";
+}
+
 export default function AdminNews() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("all");
@@ -157,6 +241,10 @@ export default function AdminNews() {
     statusFilter,
     languageFilter
   );
+  const { data: facebookQueue, isLoading: facebookQueueLoading, error: facebookQueueError } = useFacebookQueue();
+  const facebookBacklog = facebookQueue?.filter((item) =>
+    FACEBOOK_PAGES.some((page) => !["posted", "skipped"].includes(item.pages[page.key].status)),
+  ) ?? [];
 
   // ----- Mutations -----
   const toggleActive = useMutation({
@@ -200,7 +288,11 @@ export default function AdminNews() {
         .update(
           {
             pipeline_status: "pending",
+            attempts: 0,
             last_error: null,
+            failure_kind: null,
+            retryable: false,
+            next_retry_at: null,
           },
           { count: "exact" },
         )
@@ -419,6 +511,95 @@ export default function AdminNews() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* === Facebook publishing queue === */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Facebook className="w-4 h-4" /> Hàng đợi fanpage
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tự làm mới mỗi 15 giây · thứ tự ưu tiên giống Worker đăng bài.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {FACEBOOK_PAGES.map((page) => {
+                  const queued = facebookQueue?.filter((item) =>
+                    !["posted", "skipped"].includes(item.pages[page.key].status),
+                  ).length ?? 0;
+                  const failed = facebookQueue?.filter((item) => item.pages[page.key].status === "failed").length ?? 0;
+                  return (
+                    <Badge key={page.key} variant={failed ? "destructive" : "secondary"}>
+                      {page.label}: {queued} chờ{failed ? ` · ${failed} lỗi` : ""}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+
+            {facebookQueueLoading ? (
+              <Skeleton className="h-32 w-full" />
+            ) : facebookQueueError ? (
+              <div className="rounded border border-destructive/40 p-4 text-sm text-destructive">
+                Không tải được hàng đợi Facebook: {facebookQueueError.message}
+              </div>
+            ) : facebookBacklog.length === 0 ? (
+              <div className="rounded border p-6 text-center text-sm text-muted-foreground">
+                Không còn bài nào chờ đăng lên hai fanpage.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {facebookBacklog.slice(0, 50).map((item, index) => (
+                  <div key={item.id} className="border rounded p-3">
+                    <div className="flex items-start gap-3">
+                      <Badge variant="outline" className="shrink-0">#{index + 1}</Badge>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">{item.title}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Ưu tiên {item.importance} · {formatDistanceToNow(new Date(item.published_at), { addSuffix: true, locale: vi })}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {FACEBOOK_PAGES.map((page) => {
+                            const state = item.pages[page.key];
+                            const badge = (
+                              <Badge variant={facebookStatusVariant(state.status)}>
+                                {page.label}: {facebookStatusLabel(state.status)}
+                              </Badge>
+                            );
+                            return state.permalink ? (
+                              <a key={page.key} href={state.permalink} target="_blank" rel="noopener noreferrer" title="Mở bài Facebook">
+                                {badge}
+                              </a>
+                            ) : <span key={page.key} title={state.error ?? undefined}>{badge}</span>;
+                          })}
+                        </div>
+                        {FACEBOOK_PAGES.map((page) => item.pages[page.key].error ? (
+                          <div key={`${page.key}-error`} className="text-xs text-destructive mt-1 truncate">
+                            {page.label}: {item.pages[page.key].error}
+                          </div>
+                        ) : null)}
+                      </div>
+                      {item.slug && (
+                        <Button size="sm" variant="ghost" asChild>
+                          <a href={`/vi/news/${item.slug}`} target="_blank" rel="noopener noreferrer" aria-label={`Xem bài "${item.title}"`}>
+                            <Eye className="w-3 h-3" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {facebookBacklog.length > 50 && (
+                  <p className="text-xs text-muted-foreground text-center pt-2">
+                    Đang hiển thị 50/{facebookBacklog.length} bài chờ.
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

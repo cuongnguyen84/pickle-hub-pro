@@ -2,14 +2,17 @@
 // client-shippable Supabase credentials and an optional public Turnstile key.
 #include "Secrets.xcconfig"
 
-APP_ENVIRONMENT = development
+// Simulator/device QA talks to the same production Supabase project as the
+// shipping build. Keep APS/push in development/off below; those are separate
+// from API/auth environment selection.
+APP_ENVIRONMENT = production
 APS_ENVIRONMENT = development
 // Native Sign in with Apple issues the bundle identifier as the ID-token
 // audience. Supabase production is configured for the shipping App ID, so
 // device builds used for production QA must share that identity.
 PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
-MARKETING_VERSION = 2.0.0
-CURRENT_PROJECT_VERSION = 4
+MARKETING_VERSION = 2.1.4
+CURRENT_PROJECT_VERSION = 9
 
 // Native registration mirrors production: Turnstile protects the email OTP
 // endpoint before any delivery attempt.
@@ -18,4 +21,10 @@ NATIVE_EVENT_REGISTRATION_ENABLED = YES
 // Production push uses a Firebase iOS app bound to the live bundle. Keep the
 // isolated development bundle off until it has its own Firebase app record.
 REMOTE_PUSH_ENABLED = NO
-CAPACITOR_AUTH_RESET_APPROVED = NO
+// Same production bundle identity as Release. Allow the one-time cleanup of
+// the legacy Capacitor auth storage before supabase-swift owns the session.
+CAPACITOR_AUTH_RESET_APPROVED = YES
+
+// Native Shop production QA. Both keys remain fail-closed in AppConfig.
+SHOP_NATIVE_BUILT_IN = YES
+SHOP_NATIVE_PILOT_ENABLED = YES

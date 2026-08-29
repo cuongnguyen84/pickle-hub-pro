@@ -1,0 +1,2078 @@
+diff --git a/scripts/shop-media-ordering-integration.test.mjs b/scripts/shop-media-ordering-integration.test.mjs
+index ecc86135..93b2fe0a 100644
+--- a/scripts/shop-media-ordering-integration.test.mjs
++++ b/scripts/shop-media-ordering-integration.test.mjs
+@@ -69,6 +69,13 @@ const jpeg = (size = 2048) => {
+   body.set([0xff, 0xd8, 0xff, 0xe0]);
+   return new Blob([body], { type: "image/jpeg" });
+ };
++/** Still a legal INPUT type, but never a legal rendition — the negative
++ *  fixture moved here when JPEG became a valid fallback (iOS Safari). */
++const png = (size = 2048) => {
++  const body = new Uint8Array(size);
++  body.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
++  return new Blob([body], { type: "image/png" });
++};
+ 
+ describe.skipIf(!up)("step 6 — ordering, variant media, profile media", () => {
+   const run = randomUUID().slice(0, 8);
+@@ -272,7 +279,7 @@ describe.skipIf(!up)("step 6 — ordering, variant media, profile media", () =>
+     expect(data.verified).toBe(true);
+   });
+ 
+-  it("finalize refuses when the processed object is not really a WebP", async () => {
++  it("finalize refuses when the processed object is not an accepted rendition type", async () => {
+     const { data: cover } = await ownerA.client.rpc("shop_profile_media_upload_init", {
+       _shop_id: shopA, _purpose: "cover", _content_type: "image/jpeg",
+       _byte_size: 2000, _original_filename: "bia.jpg", _client_token: `cover-${run}`,
+@@ -280,10 +287,11 @@ describe.skipIf(!up)("step 6 — ordering, variant media, profile media", () =>
+     await ownerA.client.storage.from(DRAFT).upload(cover.draft_path, jpeg(), {
+       upsert: true, contentType: "image/jpeg",
+     });
+-    // A JPEG uploaded where the WebP rendition belongs — the exact lie the
+-    // client could tell if finalize trusted it.
+-    await ownerA.client.storage.from(DRAFT).upload(cover.rendition_path, jpeg(), {
+-      upsert: true, contentType: "image/jpeg",
++    // A PNG uploaded where the rendition belongs — still the lie finalize
++    // must catch. (It was a JPEG until JPEG became a legal fallback for
++    // iOS Safari; the allowlist is now {webp, jpeg}, never png.)
++    await ownerA.client.storage.from(DRAFT).upload(cover.rendition_path, png(), {
++      upsert: true, contentType: "image/png",
+     });
+     const { error } = await ownerA.client.rpc("shop_profile_media_finalize", {
+       _media_id: cover.media_id, _width: 1200, _height: 400,
+diff --git a/src/components/shop/ProductCard.tsx b/src/components/shop/ProductCard.tsx
+index 989148e6..d441711e 100644
+--- a/src/components/shop/ProductCard.tsx
++++ b/src/components/shop/ProductCard.tsx
+@@ -74,7 +74,7 @@ export function ProductCard({ card, eager = false }: { card: Card; eager?: boole
+             <>
+               {" "}
+               <BadgeCheck size={13} aria-hidden="true" className="tl-pcard-verified" />
+-              <span className="tl-shop-sr">shop đã được xác minh giấy tờ</span>
++              <span className="tl-shop-sr">shop đã được ThePickleHub xác minh</span>
+             </>
+           )}
+         </p>
+diff --git a/src/components/shop/ProductPreview.tsx b/src/components/shop/ProductPreview.tsx
+index 020c1e88..c2c6dac8 100644
+--- a/src/components/shop/ProductPreview.tsx
++++ b/src/components/shop/ProductPreview.tsx
+@@ -233,7 +233,7 @@ export default function ProductPreview({
+           <p className="tl-shop-hint">
+             Thông tin sản phẩm, giá và tồn kho do shop tự khai và tự chịu trách nhiệm.
+             {projection.shop.verified
+-              ? " Shop đã được quản trị viên xác minh giấy tờ — đây không phải cam kết chất lượng."
++              ? " Shop đã được quản trị viên xác minh (đối chiếu giấy tờ hoặc gặp trực tiếp) — đây không phải cam kết chất lượng."
+               : ""}
+           </p>
+ 
+diff --git a/src/hooks/shop/__tests__/activateErrorMessage.test.ts b/src/hooks/shop/__tests__/activateErrorMessage.test.ts
+new file mode 100644
+index 00000000..9f667596
+--- /dev/null
++++ b/src/hooks/shop/__tests__/activateErrorMessage.test.ts
+@@ -0,0 +1,36 @@
++// The three branches of activateErrorMessage — the strings a moderator reads
++// when shop_activate refuses. Matched on substrings of the RAISE messages in
++// migration 20260816090000; pgTAP pins the server side of the same contract.
++import { describe, expect, it, vi } from "vitest";
++
++// The hooks module pulls the supabase client at import time; the pure function
++// under test never touches it.
++vi.mock("@/integrations/supabase/shop-client", () => ({
++  shopFrom: vi.fn(),
++  shopRpc: vi.fn(),
++}));
++
++import { activateErrorMessage } from "@/hooks/shop/useShopApplicationQueue";
++
++describe("activateErrorMessage", () => {
++  it("admin_required → the 2FA re-login line (same wording as decisions)", () => {
++    expect(activateErrorMessage(new Error("admin_required"))).toBe(
++      "Phiên đăng nhập chưa đủ quyền. Đăng nhập lại bằng 2FA rồi thử lại.",
++    );
++  });
++
++  it("shop_not_activatable:<state> → reload guidance, whatever the state", () => {
++    expect(activateErrorMessage(new Error("shop_not_activatable:suspended"))).toBe(
++      "Shop không còn ở trạng thái chờ kích hoạt — có thể đã đổi ở nơi khác. Tải lại trang để xem trạng thái mới.",
++    );
++  });
++
++  it("everything else (shop_not_found, invalid method, network) → nothing changed, retry", () => {
++    const fallback =
++      "Chưa kích hoạt được. Shop vẫn ở trạng thái cũ, chưa có gì công khai. Thử lại hoặc kiểm tra kết nối.";
++    expect(activateErrorMessage(new Error("shop_not_found"))).toBe(fallback);
++    expect(activateErrorMessage(new Error("invalid_verified_method"))).toBe(fallback);
++    expect(activateErrorMessage(new TypeError("Failed to fetch"))).toBe(fallback);
++    expect(activateErrorMessage(undefined)).toBe(fallback);
++  });
++});
+diff --git a/src/hooks/shop/__tests__/useMediaUpload.test.tsx b/src/hooks/shop/__tests__/useMediaUpload.test.tsx
+index 206d3340..c1bb8d5f 100644
+--- a/src/hooks/shop/__tests__/useMediaUpload.test.tsx
++++ b/src/hooks/shop/__tests__/useMediaUpload.test.tsx
+@@ -77,7 +77,7 @@ beforeEach(() => {
+   revokedUrls = [];
+   upload.mockReset().mockResolvedValue({ error: null });
+   rpc.mockReset().mockResolvedValue(okInit());
+-  processImage.mockReset().mockResolvedValue({ blob: new Blob(["r"]), width: 800, height: 600, sourceType: "image/jpeg" });
++  processImage.mockReset().mockResolvedValue({ blob: new Blob(["r"], { type: "image/webp" }), width: 800, height: 600, sourceType: "image/jpeg" });
+   vi.stubGlobal("URL", {
+     ...URL,
+     createObjectURL: vi.fn((f: File) => { const u = `blob:${f.name}`; createdUrls.push(u); return u; }),
+@@ -97,12 +97,32 @@ describe("a file that works", () => {
+     // Both objects, in order: the original the seller chose, then the rendition.
+     expect(upload).toHaveBeenCalledTimes(2);
+     expect(upload.mock.calls[0][0]).toContain("/original");
++    // The original goes up as exactly what the seller picked.
++    expect(upload.mock.calls[0][2]).toMatchObject({ contentType: "image/jpeg" });
+     expect(upload.mock.calls[1][0]).toContain("/rendition.webp");
++    // The rendition's contentType is whatever the pipeline produced — it is
++    // the value Storage records in storage.objects, which finalize verifies.
++    expect(upload.mock.calls[1][2]).toMatchObject({ contentType: "image/webp" });
+     expect(target.finalize).toHaveBeenCalledWith({ mediaId: "media-1", width: 800, height: 600 });
+     expect(target.onSettled).toHaveBeenCalledTimes(1);
+     expect(result.current.items[0].mediaId).toBe("media-1");
+   });
+ 
++  it("uploads a JPEG rendition as image/jpeg — under a key that still ends .webp", async () => {
++    // The iOS Safari fallback. The path is the DB's claim and never changes;
++    // extension is a claim; the MIME in storage.objects is the truth.
++    processImage.mockResolvedValue({
++      blob: new Blob(["r"], { type: "image/jpeg" }), width: 800, height: 600, sourceType: "image/jpeg",
++    });
++    const { result } = renderHook(() => useMediaUpload(spyTarget()));
++
++    await act(async () => { result.current.add([fileNamed("anh.jpg")]); });
++    await waitFor(() => expect(result.current.items[0].phase).toBe("complete"));
++
++    expect(upload.mock.calls[1][0]).toMatch(/\.webp$/);
++    expect(upload.mock.calls[1][2]).toMatchObject({ contentType: "image/jpeg" });
++  });
++
+   it("mints one token per file and hands the same one to init", async () => {
+     const target = spyTarget();
+     const { result } = renderHook(() => useMediaUpload(target));
+diff --git a/src/hooks/shop/useMediaUpload.ts b/src/hooks/shop/useMediaUpload.ts
+index 0a404173..6e5350da 100644
+--- a/src/hooks/shop/useMediaUpload.ts
++++ b/src/hooks/shop/useMediaUpload.ts
+@@ -200,11 +200,14 @@ export function useMediaUpload(target: UploadTarget) {
+         if (stopIfAborted()) return;
+ 
+         patch(item.token, { phase: "uploading_rendition" });
++        // webp or jpeg (iOS Safari fallback), whatever the pipeline produced.
++        // The path stays *.webp regardless: extension is a claim; the MIME in
++        // storage.objects is the truth, and it is what finalize verifies.
+         const rendition = await supabase.storage
+           .from(DRAFT_BUCKET)
+           .upload(init.rendition_path, processed.blob, {
+             upsert: true,
+-            contentType: IMAGE_LIMITS.renditionType,
++            contentType: processed.blob.type,
+           });
+         if (rendition.error) throw rendition.error;
+         if (stopIfAborted()) return;
+diff --git a/src/hooks/shop/useShopApplicationQueue.ts b/src/hooks/shop/useShopApplicationQueue.ts
+index 80b21227..267f83b1 100644
+--- a/src/hooks/shop/useShopApplicationQueue.ts
++++ b/src/hooks/shop/useShopApplicationQueue.ts
+@@ -70,6 +70,66 @@ export const useDecideApplication = () => {
+   });
+ };
+ 
++// ─── Activation (the step after approve) ────────────────────────────────────
++
++const SHOP_STATE_KEY = ["shop", "admin", "shop-state"] as const;
++
++export interface AdminShopStateRow {
++  id: string;
++  slug: string;
++  name: string;
++  state: string;
++  verified_method: string | null;
++}
++
++/** The approved shop's live state — read via shops_select_member + is_admin(). */
++export const useShopState = (shopId: string | null) =>
++  useQuery({
++    queryKey: [...SHOP_STATE_KEY, shopId],
++    enabled: !!shopId,
++    queryFn: async (): Promise<AdminShopStateRow | null> => {
++      const { data, error } = await shopFrom<AdminShopStateRow>("shops")
++        .select("id, slug, name, state, verified_method")
++        .eq("id", shopId!)
++        .maybeSingle();
++      if (error) throw error;
++      return data ?? null;
++    },
++  });
++
++/**
++ * An RPC, not a PATCH: shops_guard_privileged_columns reverts a non-admin's
++ * state write WITHOUT erroring, so a table update from a stale session would
++ * report success and change nothing. shop_activate fails loudly instead.
++ */
++export const useActivateShop = () => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: async (p: { shopId: string; verifiedMethod: string | null }) =>
++      await shopRpc<string>("shop_activate", {
++        _shop_id: p.shopId,
++        _verified_method: p.verifiedMethod || null,
++      }),
++    onSuccess: () => {
++      void qc.invalidateQueries({ queryKey: SHOP_STATE_KEY });
++    },
++  });
++};
++
++/** shop_activate guard failures, in the moderator's words. */
++export const activateErrorMessage = (err: unknown): string => {
++  const message = (err as { message?: string })?.message ?? "";
++  if (message.includes("admin_required")) {
++    return "Phiên đăng nhập chưa đủ quyền. Đăng nhập lại bằng 2FA rồi thử lại.";
++  }
++  if (message.includes("shop_not_activatable")) {
++    return "Shop không còn ở trạng thái chờ kích hoạt — có thể đã đổi ở nơi khác. Tải lại trang để xem trạng thái mới.";
++  }
++  // shop_not_found, invalid_verified_method và lỗi mạng đều rơi về đây: với
++  // moderator cả ba nghĩa là "chưa có gì đổi, thử lại".
++  return "Chưa kích hoạt được. Shop vẫn ở trạng thái cũ, chưa có gì công khai. Thử lại hoặc kiểm tra kết nối.";
++};
++
+ /** Server-side guard failures, in the moderator's words. */
+ export const decisionErrorMessage = (err: unknown): string => {
+   const message = (err as { message?: string })?.message ?? "";
+diff --git a/src/lib/shop/__tests__/imagePipeline.test.ts b/src/lib/shop/__tests__/imagePipeline.test.ts
+index c598513c..04b7f775 100644
+--- a/src/lib/shop/__tests__/imagePipeline.test.ts
++++ b/src/lib/shop/__tests__/imagePipeline.test.ts
+@@ -56,9 +56,23 @@ const stubBitmap = (width: number, height: number) => {
+   return { close };
+ };
+ 
+-/** Stand in for the encoder. `sizes` is walked as the quality ladder steps. */
+-const stubCanvas = (sizes: number[], type: string = IMAGE_LIMITS.renditionType) => {
++/**
++ * Stand in for the encoder. `sizes` is walked as the quality ladder steps.
++ *
++ * `type` decides what the blob CLAIMS to be per call: by default the stub
++ * echoes the requested type (a capable browser); a string forces every blob to
++ * that type; a function gets the requested type and the call index — which is
++ * how Safari is simulated, answering a WebP request with a PNG-typed blob.
++ * Every requested encoder type and quality is recorded, so a test can assert
++ * the webp→jpeg order and the restart from 0.82.
++ */
++const stubCanvas = (
++  sizes: number[],
++  type?: string | ((requested: string, call: number) => string),
++) => {
+   const drawImage = vi.fn();
++  const requestedTypes: string[] = [];
++  const requestedQualities: number[] = [];
+   let call = 0;
+   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+     drawImage,
+@@ -66,17 +80,27 @@ const stubCanvas = (sizes: number[], type: string = IMAGE_LIMITS.renditionType)
+   vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function (
+     this: HTMLCanvasElement,
+     cb: BlobCallback,
++    requested?: string,
++    quality?: number,
+   ) {
++    requestedTypes.push(requested ?? "");
++    requestedQualities.push(quality ?? NaN);
+     const size = sizes[Math.min(call, sizes.length - 1)];
++    const blobType =
++      typeof type === "function" ? type(requested ?? "", call) : type ?? requested ?? "";
+     call += 1;
+     if (size < 0) return cb(null);
+-    const blob = new Blob(["x"], { type });
++    const blob = new Blob(["x"], { type: blobType });
+     Object.defineProperty(blob, "size", { value: size });
+     cb(blob);
+   });
+-  return { drawImage, calls: () => call };
++  return { drawImage, calls: () => call, requestedTypes, requestedQualities };
+ };
+ 
++/** Safari's answer: a WebP request comes back PNG-typed; JPEG works. */
++const safariEncoder = (requested: string) =>
++  requested === IMAGE_LIMITS.renditionType ? "image/png" : requested;
++
+ beforeEach(() => vi.restoreAllMocks());
+ afterEach(() => vi.unstubAllGlobals());
+ 
+@@ -162,11 +186,13 @@ describe("processImage — what a seller is allowed to send", () => {
+ 
+   it("re-encodes to WebP and reports what the source really was", async () => {
+     stubBitmap(1200, 900);
+-    stubCanvas([500_000]);
++    const canvas = stubCanvas([500_000]);
+     const out = await processImage(fileOf(PNG, 4000));
+     expect(out.blob.type).toBe(IMAGE_LIMITS.renditionType);
+     expect(out.sourceType).toBe("image/png");
+     expect(out).toMatchObject({ width: 1200, height: 900 });
++    // Chrome/Android path unchanged: WebP worked, so JPEG is never asked for.
++    expect(canvas.requestedTypes).toEqual([IMAGE_LIMITS.renditionType]);
+   });
+ 
+   it("steps the quality down until it fits instead of failing just over", async () => {
+@@ -187,12 +213,52 @@ describe("processImage — what a seller is allowed to send", () => {
+     await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/vẫn quá nặng/i);
+   });
+ 
+-  it("refuses a browser that hands back something other than WebP", async () => {
+-    // Silently accepting PNG here would move the failure to the server, where
+-    // the seller sees finalize fail instead of this sentence.
++  it("falls back to JPEG when the WebP encoder is missing — iOS Safari", async () => {
++    // Safari answers a WebP request with a PNG-typed blob. The whole ladder
++    // runs again as JPEG, from the top quality, never mixing types mid-ladder.
++    stubBitmap(800, 800);
++    const canvas = stubCanvas([500_000], safariEncoder);
++    const out = await processImage(fileOf(JPEG, 4000));
++    expect(out.blob.type).toBe("image/jpeg");
++    expect(canvas.requestedTypes).toEqual([IMAGE_LIMITS.renditionType, "image/jpeg"]);
++    // The JPEG ladder restarts at 0.82 rather than resuming where WebP died.
++    expect(canvas.requestedQualities).toEqual([0.82, 0.82]);
++  });
++
++  it("falls back to JPEG when the WebP encoder answers with null, too", async () => {
++    // Some browsers say "no" with a null blob instead of a wrong-typed one.
++    // Either answer means the same thing — no WebP encoder — and gets the
++    // same fallback, not an immediate failure.
++    stubBitmap(800, 800);
++    const canvas = stubCanvas([-1, 500_000]); // call 0: webp → null; call 1: jpeg fits
++    const out = await processImage(fileOf(JPEG, 4000));
++    expect(out.blob.type).toBe("image/jpeg");
++    expect(canvas.requestedTypes).toEqual([IMAGE_LIMITS.renditionType, "image/jpeg"]);
++  });
++
++  it("steps the quality down inside the JPEG branch too", async () => {
++    stubBitmap(1000, 1000);
++    const canvas = stubCanvas(
++      [
++        500_000, // call 0: the WebP probe — type comes back wrong, size unused
++        IMAGE_LIMITS.maxRenditionBytes + 1, // jpeg 0.82 — 1 byte over
++        IMAGE_LIMITS.maxRenditionBytes + 1, // jpeg 0.70
++        IMAGE_LIMITS.maxRenditionBytes - 1, // jpeg 0.60 — fits
++      ],
++      safariEncoder,
++    );
++    const out = await processImage(fileOf(JPEG, 4000));
++    expect(out.blob.type).toBe("image/jpeg");
++    expect(out.blob.size).toBeLessThanOrEqual(IMAGE_LIMITS.maxRenditionBytes);
++    expect(canvas.requestedQualities).toEqual([0.82, 0.82, 0.7, 0.6]);
++  });
++
++  it("refuses a browser that can encode neither WebP nor JPEG", async () => {
++    // The old copy said "thử trình duyệt khác" because only WebP was accepted;
++    // now that a JPEG-capable browser always gets through, the advice changed.
+     stubBitmap(800, 800);
+     stubCanvas([1000], "image/png");
+-    await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/WebP/);
++    await expect(processImage(fileOf(JPEG, 4000))).rejects.toThrow(/không nén được ảnh/i);
+   });
+ 
+   it("refuses when the browser cannot give a 2D context", async () => {
+diff --git a/src/lib/shop/applicationState.ts b/src/lib/shop/applicationState.ts
+index abea3db5..e8573db6 100644
+--- a/src/lib/shop/applicationState.ts
++++ b/src/lib/shop/applicationState.ts
+@@ -10,6 +10,8 @@
+ // right field, never to decide whether a row may move.
+ // ============================================================================
+ 
++import type { ShopState } from "@/integrations/supabase/shop-schema";
++
+ export type ApplicationStatus =
+   | "draft"
+   | "submitted"
+@@ -150,6 +152,22 @@ export const SELLER_TYPE_LABEL: Record<string, string> = {
+   "cong-ty": "Công ty",
+ };
+ 
++// Exhaustive over the shop_state enum — a new state fails the typecheck here
++// instead of rendering a raw English enum on both the Seller Center and the
++// admin review screen.
++export const SHOP_STATE_LABEL: Record<ShopState, string> = {
++  pending_activation: "Chờ kích hoạt",
++  active: "Đang hoạt động",
++  restricted: "Bị hạn chế",
++  suspended: "Tạm ngưng",
++  closed: "Đã đóng",
++};
++
++export const VERIFIED_METHOD_LABEL: Record<string, string> = {
++  "gap-truc-tiep": "Gặp trực tiếp",
++  "giay-phep-kinh-doanh": "Giấy phép kinh doanh",
++};
++
+ /** Deep link a moderator's request turns into for the applicant. */
+ export const applicationDeepLink = (field: string): string => {
+   const t = targetByField(field);
+diff --git a/src/lib/shop/imagePipeline.ts b/src/lib/shop/imagePipeline.ts
+index c60015b6..6d963c67 100644
+--- a/src/lib/shop/imagePipeline.ts
++++ b/src/lib/shop/imagePipeline.ts
+@@ -21,7 +21,12 @@ export const IMAGE_LIMITS = {
+   maxDimension: 2048,
+   maxPerProduct: 8,
+   inputTypes: ["image/jpeg", "image/png", "image/webp"] as const,
++  /** Preferred. iOS Safari cannot encode WebP through canvas.toBlob. */
+   renditionType: "image/webp",
++  /** What iOS Safari gets instead. The server accepts both — the object key
++   *  keeps its .webp suffix either way: extension is a claim; the MIME in
++   *  storage.objects is the truth. */
++  renditionFallbackType: "image/jpeg",
+ } as const;
+ 
+ export type SniffedType = "image/jpeg" | "image/png" | "image/webp" | "image/heic" | "unknown";
+@@ -111,11 +116,13 @@ export function targetSize(width: number, height: number, cap: number = IMAGE_LI
+ }
+ 
+ /**
+- * One image, from a File to the WebP the server will verify.
++ * One image, from a File to the rendition the server will verify.
+  *
+- * Quality steps down until the result fits max_rendition_bytes rather than
+- * failing at 1 KB over: a seller whose photo is 1.05 MB does not want to be
+- * told to go and resize it themselves.
++ * WebP first; a browser whose encoder hands back the wrong type (iOS Safari
++ * returns PNG for a WebP request) gets the whole ladder again as JPEG. Quality
++ * steps down until the result fits max_rendition_bytes rather than failing at
++ * 1 KB over: a seller whose photo is 1.05 MB does not want to be told to go
++ * and resize it themselves.
+  */
+ export async function processImage(
+   file: File | Blob,
+@@ -151,23 +158,34 @@ export async function processImage(
+     if (!ctx) throw new ImageRejected("Trình duyệt này không xử lý được ảnh.");
+     ctx.drawImage(bitmap, 0, 0, width, height);
+ 
+-    for (const quality of [0.82, 0.7, 0.6, 0.5]) {
+-      throwIfAborted();
+-      const blob = await new Promise<Blob | null>((resolve) =>
+-        canvas.toBlob(resolve, IMAGE_LIMITS.renditionType, quality),
+-      );
+-      if (!blob) throw new ImageRejected("Không nén được ảnh này.");
+-      if (blob.type !== IMAGE_LIMITS.renditionType) {
+-        // Refusing to guess: a browser that silently gave PNG back would fail
+-        // finalize on the server, and the seller would see that failure
+-        // instead of this sentence.
+-        throw new ImageRejected("Trình duyệt này chưa tạo được ảnh WebP. Thử trình duyệt khác.");
+-      }
+-      if (blob.size <= IMAGE_LIMITS.maxRenditionBytes) {
+-        return { blob, width, height, sourceType };
++    // One encoder type per ladder, never mixed mid-ladder. Returns null when
++    // the browser cannot produce that type at all (a null blob, or a blob of
++    // some other type — iOS Safari answers a WebP request with PNG).
++    const ladder = async (type: string): Promise<Blob | null> => {
++      for (const quality of [0.82, 0.7, 0.6, 0.5]) {
++        throwIfAborted();
++        const blob = await new Promise<Blob | null>((resolve) =>
++          canvas.toBlob(resolve, type, quality),
++        );
++        if (!blob || blob.type !== type) return null;
++        if (blob.size <= IMAGE_LIMITS.maxRenditionBytes) return blob;
+       }
++      throw new ImageRejected("Ảnh vẫn quá nặng sau khi nén. Chọn ảnh nhỏ hơn.");
++    };
++
++    const blob =
++      (await ladder(IMAGE_LIMITS.renditionType)) ??
++      // The full ladder again, from 0.82: the server verifies the JPEG on the
++      // same size limits, and the object key keeps its .webp suffix.
++      (await ladder(IMAGE_LIMITS.renditionFallbackType));
++    if (!blob) {
++      // A JPEG-capable browser never lands here; "thử trình duyệt khác" would
++      // be the wrong advice now that JPEG is accepted end-to-end.
++      throw new ImageRejected(
++        "Trình duyệt này không nén được ảnh. Hãy thử cập nhật trình duyệt hoặc chọn ảnh khác.",
++      );
+     }
+-    throw new ImageRejected("Ảnh vẫn quá nặng sau khi nén. Chọn ảnh nhỏ hơn.");
++    return { blob, width, height, sourceType };
+   } finally {
+     // Big bitmaps are the thing that kills a phone tab. Released on every
+     // path, including the throwing ones.
+diff --git a/src/main.tsx b/src/main.tsx
+index 5cbf9d60..9d635a0c 100644
+--- a/src/main.tsx
++++ b/src/main.tsx
+@@ -1,3 +1,13 @@
++// crypto.randomUUID chỉ có trong secure context (HTTPS/localhost) và từ iOS
++// 15.4 — thiếu nó thì mọi trang gọi tới (journeys, upload...) sập nguyên trang.
++// Fallback dùng getRandomValues (không bị giới hạn secure context).
++if (typeof crypto !== "undefined" && !crypto.randomUUID) {
++  crypto.randomUUID = () =>
++    "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
++      (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),
++    ) as ReturnType<Crypto["randomUUID"]>;
++}
++
+ import { createRoot } from "react-dom/client";
+ import App from "./App.tsx";
+ import "./index.css";
+diff --git a/src/pages/admin/shop/AdminShopApplicationReview.tsx b/src/pages/admin/shop/AdminShopApplicationReview.tsx
+index bf71764a..efd96fe9 100644
+--- a/src/pages/admin/shop/AdminShopApplicationReview.tsx
++++ b/src/pages/admin/shop/AdminShopApplicationReview.tsx
+@@ -16,29 +16,188 @@
+ 
+ import { useState } from "react";
+ import { Link, useParams } from "react-router-dom";
+-import { AlertTriangle, Eye, Loader2, Lock } from "lucide-react";
++import { AlertTriangle, Check, ExternalLink, Eye, Loader2, Lock } from "lucide-react";
+ import { DynamicMeta } from "@/components/seo/DynamicMeta";
+ import { AdminLayout } from "@/components/admin/AdminLayout";
+ import { AdminShopFrame, DefList } from "@/components/shop/ShopShell";
+ import { ErrorState, LoadingState } from "@/components/states/PageStates";
+ import {
++  activateErrorMessage,
+   decisionErrorMessage,
++  useActivateShop,
+   useDecideApplication,
+   useShopApplication,
++  useShopState,
+ } from "@/hooks/shop/useShopApplicationQueue";
++import { useConfirm } from "@/hooks/useConfirm";
+ import { SellerRulesReceiptPanel } from "@/components/shop/SellerRulesReceiptPanel";
+-import { APPLICATION_STATUS_LABEL, SELLER_TYPE_LABEL, decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
++import { APPLICATION_STATUS_LABEL, SELLER_TYPE_LABEL, SHOP_STATE_LABEL, VERIFIED_METHOD_LABEL, decisionBlocker, REQUEST_TARGETS, type Decision } from "@/lib/shop/applicationState";
++import type { ShopState } from "@/integrations/supabase/shop-schema";
+ import "@/styles/shop.css";
+ 
+ const CONSEQUENCE: Record<Decision, (n: number) => string> = {
+   "request-changes": (n) =>
+     `Người nộp nhận thông báo kèm ghi chú bên dưới và ${n} đường dẫn đi thẳng tới đúng ô cần sửa. Hồ sơ quay lại trạng thái “Cần sửa”.`,
+   approve: () =>
+-    "Shop được tạo ở trạng thái chờ kích hoạt và người nộp trở thành chủ shop. Họ chưa đăng bán được cho tới khi hoàn tất bước tiếp theo.",
++    "Shop được tạo ở trạng thái chờ kích hoạt và người nộp trở thành chủ shop. Sau khi duyệt, mục “Kích hoạt shop” xuất hiện ngay trên trang này để đưa shop lên công khai.",
+   reject: () =>
+     "Hồ sơ đóng lại. Người nộp nhận đúng phần ghi chú bên dưới và vẫn nộp hồ sơ mới được.",
+ };
+ 
++// ─── Activation (local by design — hook ordering stays safe, and the page
++//     stays self-contained like the rest of the A03 screen) ──────────────────
++
++function ActivationSection({ shopId }: { shopId: string }) {
++  const confirm = useConfirm();
++  const shop = useShopState(shopId);
++  const activate = useActivateShop();
++  const [method, setMethod] = useState("gap-truc-tiep");
++  const [error, setError] = useState<string | null>(null);
++
++  const s = shop.data;
++  const state = (s?.state ?? "") as ShopState;
++
++  const onActivate = async () => {
++    if (!s) return;
++    const ok = await confirm({
++      destructive: false,
++      title: `Kích hoạt shop “${s.name}”?`,
++      description:
++        "Shop hiện công khai trên /shop ngay lập tức, ai cũng xem được.\n" +
++        `Phương thức xác minh sẽ ghi: ${method ? VERIFIED_METHOD_LABEL[method] : "(không ghi)"}.\n` +
++        "Sau khi kích hoạt, anh tự báo seller qua Zalo.",
++      confirmText: "Kích hoạt",
++      cancelText: "Huỷ",
++    });
++    if (!ok) return;
++    setError(null);
++    try {
++      await activate.mutateAsync({ shopId, verifiedMethod: method || null });
++    } catch (err) {
++      setError(activateErrorMessage(err));
++    }
++  };
++
++  return (
++    <section aria-labelledby="a03-activate">
++      <h2 className="tl-shop-h2" id="a03-activate">Kích hoạt shop</h2>
++      <div className="tl-shop-card">
++        {shop.isLoading && <p className="tl-shop-hint">Đang tải trạng thái shop…</p>}
++
++        {(shop.isError || (!shop.isLoading && !shop.isError && !s)) && (
++          <>
++            <p className="tl-shop-error" role="alert">
++              <AlertTriangle size={13} aria-hidden="true" /> Chưa tải được trạng thái shop.
++            </p>
++            <button type="button" className="tl-shop-btn tl-shop-btn--sm"
++                    onClick={() => void shop.refetch()}>
++              Thử lại
++            </button>
++          </>
++        )}
++
++        {s && (
++          <>
++            <DefList
++              rows={[
++                ["Trạng thái shop", SHOP_STATE_LABEL[state] ?? s.state],
++                [
++                  "Trang shop",
++                  state === "active" ? (
++                    // ponytail: preview link only when active — shop_public_shop
++                    // answers found:false for every other state, so a link
++                    // before activation opens "không tìm thấy".
++                    <span style={{ overflowWrap: "anywhere" }}>
++                      <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
++                        Xem trước (mở tab mới) <ExternalLink size={13} aria-hidden="true" style={{ verticalAlign: -2 }} />
++                      </a>
++                    </span>
++                  ) : (
++                    <span style={{ overflowWrap: "anywhere" }}>{`/shop/store/${s.slug}`} (sẽ mở khi kích hoạt)</span>
++                  ),
++                ],
++                ...(state === "active" && s.verified_method
++                  ? ([["Xác minh", VERIFIED_METHOD_LABEL[s.verified_method] ?? s.verified_method]] as [string, string][])
++                  : []),
++              ]}
++            />
++
++            {state === "pending_activation" && (
++              <>
++                <div className="tl-shop-notice tl-shop-notice--warn">
++                  <AlertTriangle size={16} aria-hidden="true" />
++                  <div>
++                    <strong>Sau khi bấm:</strong> shop hiện công khai trên /shop ngay lập tức —
++                    ai cũng xem được, kể cả người chưa đăng nhập, và seller đăng bán được.
++                    Chưa có bước hoàn tác trong giao diện này.
++                  </div>
++                </div>
++
++                <label className="tl-shop-field">
++                  <span className="tl-shop-label">Phương thức xác minh (tuỳ chọn)</span>
++                  <select
++                    className="tl-shop-select"
++                    value={method}
++                    disabled={activate.isPending}
++                    onChange={(e) => setMethod(e.target.value)}
++                  >
++                    <option value="gap-truc-tiep">Gặp trực tiếp</option>
++                    <option value="giay-phep-kinh-doanh">Giấy phép kinh doanh</option>
++                    <option value="">Chưa xác minh</option>
++                  </select>
++                </label>
++                <p className="tl-shop-hint">
++                  Chỉ ghi lại cách anh đã xác minh người bán này — hệ thống không tự kiểm tra gì cả.
++                </p>
++
++                {error && (
++                  <p className="tl-shop-error" role="alert">
++                    <AlertTriangle size={13} aria-hidden="true" /> {error}
++                  </p>
++                )}
++
++                <button
++                  type="button"
++                  className="tl-shop-btn tl-shop-btn--primary tl-shop-btn--block"
++                  disabled={activate.isPending}
++                  onClick={() => void onActivate()}
++                >
++                  {activate.isPending ? (
++                    <><Loader2 size={15} className="animate-spin" aria-hidden="true" /> Đang kích hoạt…</>
++                  ) : "Kích hoạt shop"}
++                </button>
++              </>
++            )}
++
++            {state === "active" && (
++              <div className="tl-shop-notice tl-shop-notice--info" role="status">
++                <Check size={16} aria-hidden="true" />
++                <div>
++                  <strong>Đã kích hoạt.</strong> Shop đang công khai tại{" "}
++                  <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
++                    Xem trang shop (mở tab mới) <ExternalLink size={13} aria-hidden="true" style={{ verticalAlign: -2 }} />
++                  </a>
++                  . Nhớ báo seller qua Zalo — hệ thống không gửi thông báo tự động.
++                </div>
++              </div>
++            )}
++
++            {(state === "restricted" || state === "suspended" || state === "closed") && (
++              <div className="tl-shop-notice tl-shop-notice--warn">
++                <AlertTriangle size={16} aria-hidden="true" />
++                <div>
++                  Shop đang ở trạng thái “{SHOP_STATE_LABEL[state]}”. Chỉ kích hoạt được shop
++                  đang chờ kích hoạt — trạng thái này xử lý theo runbook, không qua màn hình này.
++                </div>
++              </div>
++            )}
++          </>
++        )}
++      </div>
++    </section>
++  );
++}
++
+ export default function AdminShopApplicationReview() {
+   const { id } = useParams();
+   const app = useShopApplication(id ?? null);
+@@ -127,6 +286,10 @@ export default function AdminShopApplicationReview() {
+             </p>
+           </section>
+ 
++          {row.status === "approved" && row.shop_id != null && (
++            <ActivationSection shopId={row.shop_id} />
++          )}
++
+           <SellerRulesReceiptPanel applicationId={row.id} />
+ 
+           {row.internal_note && (
+diff --git a/src/pages/admin/shop/__tests__/AdminShopApplicationReview.activate.test.tsx b/src/pages/admin/shop/__tests__/AdminShopApplicationReview.activate.test.tsx
+new file mode 100644
+index 00000000..0c7c3ea0
+--- /dev/null
++++ b/src/pages/admin/shop/__tests__/AdminShopApplicationReview.activate.test.tsx
+@@ -0,0 +1,217 @@
++/** @vitest-environment jsdom */
++// The activation section, exercised through the REAL page and REAL hooks to a
++// fake shop-client. The pilot lesson these tests encode: a test that protects
++// the FUNCTION but not the CALL SITE goes green while the wiring is missing —
++// so the assertions here are on shopRpc("shop_activate", …) leaving the page,
++// with the exact parameter names the migration declares.
++import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
++import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
++import { MemoryRouter, Route, Routes } from "react-router-dom";
++import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
++import AdminShopApplicationReview from "../AdminShopApplicationReview";
++
++const rpc = vi.fn();
++// per-table resolver so a test can hold the shops query pending or fail it
++const tableFetch: Record<string, () => Promise<{ data: unknown; error: { message: string } | null }>> = {};
++
++vi.mock("@/integrations/supabase/shop-client", () => ({
++  shopRpc: async (name: string, args: unknown) => rpc(name, args),
++  shopFrom: (table: string) => {
++    const b = {
++      select: () => b,
++      eq: () => b,
++      maybeSingle: () => tableFetch[table](),
++    };
++    return b;
++  },
++}));
++
++// One controllable confirm — the section must respect a "Huỷ".
++let confirmAnswer = true;
++const confirmFn = vi.fn(async () => confirmAnswer);
++vi.mock("@/hooks/useConfirm", () => ({ useConfirm: () => confirmFn }));
++
++// Chrome only — the review screen is the subject, not the shells.
++vi.mock("@/components/admin/AdminLayout", () => ({
++  AdminLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
++}));
++vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
++vi.mock("@/components/states/PageStates", () => ({
++  LoadingState: () => <div>loading…</div>,
++  ErrorState: () => <div>error</div>,
++}));
++vi.mock("@/components/shop/SellerRulesReceiptPanel", () => ({ SellerRulesReceiptPanel: () => null }));
++vi.mock("@/components/shop/ShopShell", () => ({
++  AdminShopFrame: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
++  DefList: ({ rows }: { rows: [string, React.ReactNode][] }) => (
++    <dl>{rows.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}</dl>
++  ),
++}));
++
++const APP_ID = "80010001-0000-4000-8000-000000000001";
++const SHOP_ID = "80020001-0000-4000-8000-000000000001";
++
++const appRow = (over: Partial<Record<string, unknown>> = {}) => ({
++  id: APP_ID,
++  status: "approved",
++  shop_id: SHOP_ID,
++  shop_name: "Shop Test",
++  seller_type: "ca-nhan",
++  full_name: "Nguyen Van T",
++  phone: "0901234567",
++  city: "Đà Nẵng",
++  internal_note: null,
++  ...over,
++});
++
++const shopRow = (over: Partial<Record<string, unknown>> = {}) => ({
++  id: SHOP_ID,
++  slug: "shop-test",
++  name: "Shop Test",
++  state: "pending_activation",
++  verified_method: null,
++  ...over,
++});
++
++const setRows = (app: unknown, shop: unknown) => {
++  tableFetch["shop_applications_admin"] = () => Promise.resolve({ data: app, error: null });
++  tableFetch["shops"] = () => Promise.resolve({ data: shop, error: null });
++};
++
++const mount = () => {
++  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
++  render(
++    <QueryClientProvider client={qc}>
++      <MemoryRouter initialEntries={[`/admin/shop/applications/${APP_ID}`]}>
++        <Routes>
++          <Route path="/admin/shop/applications/:id" element={<AdminShopApplicationReview />} />
++        </Routes>
++      </MemoryRouter>
++    </QueryClientProvider>,
++  );
++};
++
++const findActivateButton = () => screen.findByRole("button", { name: "Kích hoạt shop" });
++
++beforeEach(() => {
++  rpc.mockReset();
++  confirmFn.mockClear();
++  confirmAnswer = true;
++});
++afterEach(cleanup);
++
++describe("section visibility", () => {
++  it("renders for an approved application with a shop_id", async () => {
++    setRows(appRow(), shopRow());
++    mount();
++    expect(await screen.findByRole("heading", { name: "Kích hoạt shop" })).toBeTruthy();
++  });
++
++  it("is absent while the application is still under review", async () => {
++    setRows(appRow({ status: "under_review", shop_id: null }), shopRow());
++    mount();
++    await screen.findByText(/xét hồ sơ/i);
++    expect(screen.queryByRole("heading", { name: "Kích hoạt shop" })).toBeNull();
++  });
++
++  it("is absent when approved but shop_id is missing", async () => {
++    setRows(appRow({ shop_id: null }), shopRow());
++    mount();
++    await screen.findByText(/xét hồ sơ/i);
++    expect(screen.queryByRole("heading", { name: "Kích hoạt shop" })).toBeNull();
++  });
++});
++
++describe("shop-state query states", () => {
++  it("shows the one-line loading hint while the shop row is in flight", async () => {
++    tableFetch["shop_applications_admin"] = () => Promise.resolve({ data: appRow(), error: null });
++    tableFetch["shops"] = () => new Promise(() => {}); // never settles
++    mount();
++    expect(await screen.findByText("Đang tải trạng thái shop…")).toBeTruthy();
++  });
++
++  it("shows the error + retry, and the retry refetches", async () => {
++    let calls = 0;
++    tableFetch["shop_applications_admin"] = () => Promise.resolve({ data: appRow(), error: null });
++    tableFetch["shops"] = () => {
++      calls += 1;
++      return calls === 1
++        ? Promise.resolve({ data: null, error: { message: "boom" } })
++        : Promise.resolve({ data: shopRow(), error: null });
++    };
++    mount();
++    expect(await screen.findByText(/chưa tải được trạng thái shop/i)).toBeTruthy();
++    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
++    expect(await findActivateButton()).toBeTruthy();
++    expect(rpc).not.toHaveBeenCalled();
++  });
++});
++
++describe("pending_activation → activate", () => {
++  it("cancelling the confirm makes zero RPC calls", async () => {
++    setRows(appRow(), shopRow());
++    confirmAnswer = false;
++    mount();
++    fireEvent.click(await findActivateButton());
++    await waitFor(() => expect(confirmFn).toHaveBeenCalledTimes(1));
++    expect(rpc).not.toHaveBeenCalled();
++  });
++
++  it("confirming calls shop_activate with the migration's exact parameter names", async () => {
++    setRows(appRow(), shopRow());
++    rpc.mockResolvedValue("active");
++    mount();
++    fireEvent.click(await findActivateButton());
++    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
++    expect(rpc).toHaveBeenCalledWith("shop_activate", {
++      _shop_id: SHOP_ID,
++      _verified_method: "gap-truc-tiep",
++    });
++  });
++
++  it("choosing 'Chưa xác minh' sends _verified_method: null", async () => {
++    setRows(appRow(), shopRow());
++    rpc.mockResolvedValue("active");
++    mount();
++    await findActivateButton();
++    fireEvent.change(screen.getByLabelText("Phương thức xác minh (tuỳ chọn)"), { target: { value: "" } });
++    fireEvent.click(screen.getByRole("button", { name: "Kích hoạt shop" }));
++    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
++    expect(rpc).toHaveBeenCalledWith("shop_activate", { _shop_id: SHOP_ID, _verified_method: null });
++  });
++
++  it("an RPC failure shows the mapped message, keeps the select value, and re-enables the button", async () => {
++    setRows(appRow(), shopRow());
++    rpc.mockRejectedValue(new Error("shop_not_activatable:suspended"));
++    mount();
++    await findActivateButton();
++    const select = screen.getByLabelText("Phương thức xác minh (tuỳ chọn)") as HTMLSelectElement;
++    fireEvent.change(select, { target: { value: "giay-phep-kinh-doanh" } });
++    fireEvent.click(screen.getByRole("button", { name: "Kích hoạt shop" }));
++
++    expect(await screen.findByText(/không còn ở trạng thái chờ kích hoạt/i)).toBeTruthy();
++    expect(select.value).toBe("giay-phep-kinh-doanh");
++    const btn = screen.getByRole("button", { name: "Kích hoạt shop" }) as HTMLButtonElement;
++    expect(btn.disabled).toBe(false);
++  });
++});
++
++describe("non-pending states", () => {
++  it("active: the button is GONE and the done notice links the live page", async () => {
++    setRows(appRow(), shopRow({ state: "active", verified_method: "gap-truc-tiep" }));
++    mount();
++    expect(await screen.findByText("Đã kích hoạt.")).toBeTruthy();
++    expect(screen.queryByRole("button", { name: "Kích hoạt shop" })).toBeNull();
++    const link = screen.getByRole("link", { name: /xem trang shop \(mở tab mới\)/i }) as HTMLAnchorElement;
++    expect(link.getAttribute("href")).toBe("/shop/store/shop-test");
++    // recorded method surfaces in the DefList
++    expect(screen.getByText("Gặp trực tiếp")).toBeTruthy();
++  });
++
++  it("suspended: runbook notice, no button", async () => {
++    setRows(appRow(), shopRow({ state: "suspended" }));
++    mount();
++    expect(await screen.findByText(/xử lý theo runbook/i)).toBeTruthy();
++    expect(screen.queryByRole("button", { name: "Kích hoạt shop" })).toBeNull();
++  });
++});
+diff --git a/src/pages/shop/ProductDetail.tsx b/src/pages/shop/ProductDetail.tsx
+index 14a786c9..dc797d50 100644
+--- a/src/pages/shop/ProductDetail.tsx
++++ b/src/pages/shop/ProductDetail.tsx
+@@ -257,7 +257,7 @@ export default function ProductDetail() {
+                 {product.shop.verified && (
+                   <>
+                     <BadgeCheck size={14} aria-hidden="true" className="tl-pcard-verified" />
+-                    <span className="tl-shop-sr">shop đã được xác minh giấy tờ</span>
++                    <span className="tl-shop-sr">shop đã được ThePickleHub xác minh</span>
+                   </>
+                 )}
+               </p>
+@@ -267,7 +267,7 @@ export default function ProductDetail() {
+               <p className="tl-shop-hint" style={{ marginBottom: 0 }}>
+                 Thông tin sản phẩm, giá và tình trạng hàng do shop tự khai và tự chịu trách nhiệm.
+                 ThePickleHub duyệt hồ sơ shop và kiểm duyệt nội dung sản phẩm trước khi hiển thị;
+-                tình trạng xác minh giấy tờ của shop (nếu có) xem trên trang shop.
++                tình trạng xác minh của shop (nếu có) xem trên trang shop.
+               </p>
+             </div>
+ 
+diff --git a/src/pages/shop/SellerHome.tsx b/src/pages/shop/SellerHome.tsx
+index 713c9e53..c03ca22e 100644
+--- a/src/pages/shop/SellerHome.tsx
++++ b/src/pages/shop/SellerHome.tsx
+@@ -14,14 +14,7 @@ import { DynamicMeta } from "@/components/seo/DynamicMeta";
+ import { ShopScrollShell, SellerShell, DefList } from "@/components/shop/ShopShell";
+ import { ErrorState, LoadingState } from "@/components/states/PageStates";
+ import { useMyApplication, useMyShop } from "@/hooks/shop/useSellerApplication";
+-
+-const STATE_LABEL: Record<string, string> = {
+-  pending_activation: "Chờ kích hoạt",
+-  active: "Đang hoạt động",
+-  restricted: "Bị hạn chế",
+-  suspended: "Tạm ngưng",
+-  closed: "Đã đóng",
+-};
++import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
+ 
+ export default function SellerHome() {
+   const shop = useMyShop();
+@@ -78,8 +71,8 @@ export default function SellerHome() {
+             <div className="tl-shop-notice tl-shop-notice--warn">
+               <AlertTriangle size={16} aria-hidden="true" />
+               <div>
+-                <strong>Shop đã mở nhưng chưa hoạt động.</strong> Chức năng đăng sản phẩm sẽ bật
+-                ở giai đoạn tiếp theo — chúng tôi sẽ báo anh/chị khi sẵn sàng.
++                <strong>Shop đã mở nhưng chưa hoạt động.</strong> Quản trị viên sẽ kích hoạt sau
++                khi xác minh với anh/chị — khi shop lên công khai, chúng tôi báo trực tiếp qua Zalo.
+               </div>
+             </div>
+           )}
+@@ -87,7 +80,13 @@ export default function SellerHome() {
+           {s.state === "active" && (
+             <div className="tl-shop-notice tl-shop-notice--info">
+               <Check size={16} aria-hidden="true" />
+-              <div>Shop đang hoạt động.</div>
++              <div>
++                <strong>Shop đang hoạt động</strong> — ai cũng xem được tại{" "}
++                <a href={`/shop/store/${s.slug}`} target="_blank" rel="noopener noreferrer">
++                  trang shop của anh/chị (mở tab mới)
++                </a>
++                . Bước tiếp theo: <Link to="/seller/products/new">đăng sản phẩm đầu tiên</Link>.
++              </div>
+             </div>
+           )}
+ 
+@@ -97,7 +96,7 @@ export default function SellerHome() {
+               <DefList
+                 rows={[
+                   ["Tên shop", s.name],
+-                  ["Trạng thái", STATE_LABEL[s.state] ?? s.state],
++                  ["Trạng thái", SHOP_STATE_LABEL[s.state] ?? s.state],
+                   ["Đường dẫn", `/shop/store/${s.slug}`],
+                   ["Gửi hàng từ", s.city ?? "—"],
+                   ["Mở shop", new Date(s.created_at).toLocaleDateString("vi-VN")],
+diff --git a/src/pages/shop/SellerShopSettings.tsx b/src/pages/shop/SellerShopSettings.tsx
+index 8784de8b..1127ade5 100644
+--- a/src/pages/shop/SellerShopSettings.tsx
++++ b/src/pages/shop/SellerShopSettings.tsx
+@@ -35,6 +35,7 @@ import {
+   useUpsertContact,
+   type ProfilePatch,
+ } from "@/hooks/shop/useShopProfile";
++import { SHOP_STATE_LABEL } from "@/lib/shop/applicationState";
+ import {
+   CHANNEL_LABEL,
+   CHANNEL_PLACEHOLDER,
+@@ -61,14 +62,6 @@ const FIELD_LABEL: Record<keyof ProfilePatch, string> = {
+   return_note: "Chính sách đổi trả",
+ };
+ 
+-const STATE_LABEL: Record<string, string> = {
+-  pending_activation: "Chờ kích hoạt",
+-  active: "Đang hoạt động",
+-  restricted: "Bị hạn chế",
+-  suspended: "Tạm ngưng",
+-  closed: "Đã đóng",
+-};
+-
+ const draftFromRow = (row: ShopRow): ProfilePatch => ({
+   name: row.name,
+   intro: row.intro ?? "",
+@@ -369,7 +362,7 @@ export default function SellerShopSettings() {
+         <h2 id="sec-status" className="tl-shop-h2">Trạng thái</h2>
+         <DefList
+           rows={[
+-            ["Trạng thái shop", STATE_LABEL[row.state] ?? row.state],
++            ["Trạng thái shop", SHOP_STATE_LABEL[row.state] ?? row.state],
+             [
+               "Xác minh",
+               row.verified_at
+diff --git a/src/pages/shop/ShopStore.tsx b/src/pages/shop/ShopStore.tsx
+index 707470ec..89116c08 100644
+--- a/src/pages/shop/ShopStore.tsx
++++ b/src/pages/shop/ShopStore.tsx
+@@ -87,7 +87,7 @@ export default function ShopStore() {
+             <>
+               {" "}
+               <BadgeCheck size={18} aria-hidden="true" className="tl-pcard-verified" />
+-              <span className="tl-shop-sr">đã được xác minh giấy tờ</span>
++              <span className="tl-shop-sr">đã được ThePickleHub xác minh</span>
+             </>
+           )}
+         </h1>
+@@ -103,8 +103,8 @@ export default function ShopStore() {
+               <dt>Xác minh</dt>
+               <dd>
+                 {shop.verified
+-                  ? "ThePickleHub đã xem giấy tờ kinh doanh của shop này."
+-                  : "Shop chưa gửi giấy tờ để xác minh."}
++                  ? "ThePickleHub đã xác minh shop này — đối chiếu giấy tờ hoặc gặp trực tiếp người bán."
++                  : "Shop chưa được ThePickleHub xác minh."}
+               </dd>
+             </div>
+             {shop.shipping_note && <div><dt>Giao hàng</dt><dd>{shop.shipping_note}</dd></div>}
+diff --git a/src/pages/shop/__tests__/SellerHome.copy.test.tsx b/src/pages/shop/__tests__/SellerHome.copy.test.tsx
+new file mode 100644
+index 00000000..acadd8a3
+--- /dev/null
++++ b/src/pages/shop/__tests__/SellerHome.copy.test.tsx
+@@ -0,0 +1,85 @@
++/** @vitest-environment jsdom */
++// SellerHome state copy after the activation button shipped: the pending
++// notice must stop promising "giai đoạn tiếp theo" (products are live), and
++// the active notice must link the public page + the first product.
++import { describe, expect, it, vi, afterEach } from "vitest";
++import { cleanup, render, screen } from "@testing-library/react";
++import { MemoryRouter } from "react-router-dom";
++import SellerHome from "../SellerHome";
++
++const myShop = vi.fn();
++const myApp = vi.fn();
++vi.mock("@/hooks/shop/useSellerApplication", () => ({
++  useMyShop: () => myShop(),
++  useMyApplication: () => myApp(),
++}));
++
++vi.mock("@/components/seo/DynamicMeta", () => ({ DynamicMeta: () => null }));
++vi.mock("@/components/states/PageStates", () => ({
++  LoadingState: () => <div>loading…</div>,
++  ErrorState: () => <div>error</div>,
++}));
++vi.mock("@/components/shop/ShopShell", () => ({
++  ShopScrollShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
++  SellerShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
++  DefList: ({ rows }: { rows: [string, React.ReactNode][] }) => (
++    <dl>{rows.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}</dl>
++  ),
++}));
++
++const shopRow = (state: string) => ({
++  id: "90010001-0000-4000-8000-000000000001",
++  slug: "shop-test",
++  name: "Shop Test",
++  state,
++  city: "Đà Nẵng",
++  created_at: "2026-08-10T00:00:00Z",
++});
++
++const mount = (state: string) => {
++  myShop.mockReturnValue({ data: shopRow(state), isLoading: false, isError: false });
++  myApp.mockReturnValue({ data: null, isLoading: false });
++  render(
++    <MemoryRouter>
++      <SellerHome />
++    </MemoryRouter>,
++  );
++};
++
++afterEach(cleanup);
++
++describe("pending_activation", () => {
++  it("says the admin will activate and Zalo will carry the news — no phase promise", () => {
++    mount("pending_activation");
++    expect(screen.getByText("Shop đã mở nhưng chưa hoạt động.")).toBeTruthy();
++    expect(screen.getByText(/quản trị viên sẽ kích hoạt sau khi xác minh/i)).toBeTruthy();
++    expect(screen.getByText(/báo trực tiếp qua zalo/i)).toBeTruthy();
++    // the retired sentence must be GONE
++    expect(screen.queryByText(/giai đoạn tiếp theo/i)).toBeNull();
++  });
++
++  it("renders the shared Vietnamese state label", () => {
++    mount("pending_activation");
++    expect(screen.getByText("Chờ kích hoạt")).toBeTruthy();
++  });
++});
++
++describe("active", () => {
++  it("links the public shop page (new tab) and the first-product step", () => {
++    mount("active");
++    expect(screen.getByText("Shop đang hoạt động")).toBeTruthy();
++
++    const shopLink = screen.getByRole("link", { name: /trang shop của anh\/chị \(mở tab mới\)/i }) as HTMLAnchorElement;
++    expect(shopLink.getAttribute("href")).toBe("/shop/store/shop-test");
++    expect(shopLink.getAttribute("target")).toBe("_blank");
++    expect(shopLink.getAttribute("rel")).toBe("noopener noreferrer");
++
++    const productLink = screen.getByRole("link", { name: "đăng sản phẩm đầu tiên" }) as HTMLAnchorElement;
++    expect(productLink.getAttribute("href")).toBe("/seller/products/new");
++  });
++
++  it("renders the shared Vietnamese state label", () => {
++    mount("active");
++    expect(screen.getByText("Đang hoạt động")).toBeTruthy();
++  });
++});
+diff --git a/supabase/functions/_shared/__tests__/shop-media-jpeg.test.ts b/supabase/functions/_shared/__tests__/shop-media-jpeg.test.ts
+new file mode 100644
+index 00000000..3e3bdbc6
+--- /dev/null
++++ b/supabase/functions/_shared/__tests__/shop-media-jpeg.test.ts
+@@ -0,0 +1,76 @@
++/**
++ * The APP1 check that stands between a seller's home coordinates and a public
++ * CDN, for the iOS Safari fallback path. A canvas-encoded JPEG never carries
++ * an APP1 segment; a file that does was renamed, not re-encoded.
++ */
++import { describe, expect, it } from "vitest";
++import { inspectJpeg } from "../../shop-media-lifecycle/jpeg.ts";
++
++/** One marker segment: FF <marker> <len_be16> <payload>. */
++function seg(marker: number, payload: number[]): number[] {
++  const len = payload.length + 2;
++  return [0xff, marker, (len >> 8) & 0xff, len & 0xff, ...payload];
++}
++
++/** SOF0 payload: precision, height be16, width be16, 1 grey component. */
++function sof0(width: number, height: number): number[] {
++  return seg(0xc0, [
++    8,
++    (height >> 8) & 0xff, height & 0xff,
++    (width >> 8) & 0xff, width & 0xff,
++    1, 0x11, 0x11, 0,
++  ]);
++}
++
++/** Minimal canvas-shaped JPEG: SOI, DQT, SOF0, SOS + a little scan data. */
++function jpeg(width: number, height: number, extra: number[] = []): Uint8Array {
++  return new Uint8Array([
++    0xff, 0xd8, // SOI
++    ...extra,
++    ...seg(0xdb, Array(65).fill(1)), // DQT
++    ...sof0(width, height),
++    ...seg(0xda, [1, 1, 0, 0, 63, 0]), // SOS — scan data follows
++    0x12, 0x34, 0x56,
++    0xff, 0xd9, // EOI
++  ]);
++}
++
++describe("inspectJpeg", () => {
++  it("accepts a canvas-shaped JPEG and reads its dimensions", () => {
++    expect(inspectJpeg(jpeg(1200, 900))).toEqual({ ok: true, width: 1200, height: 900 });
++  });
++
++  it("rejects a file that still carries APP1 — Exif or XMP, it was never re-encoded", () => {
++    const withExif = jpeg(800, 600, seg(0xe1, [..."Exif"].map((c) => c.charCodeAt(0)).concat([0, 0])));
++    expect(inspectJpeg(withExif)).toEqual({ ok: false, reason: "metadata_present" });
++  });
++
++  it("rejects a truncated upload rather than guessing", () => {
++    const cut = jpeg(100, 100).slice(0, 8); // mid-DQT: segment runs past the buffer
++    expect(inspectJpeg(cut)).toEqual({ ok: false, reason: "truncated" });
++  });
++
++  it("rejects something that is not a JPEG at all", () => {
++    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
++    expect(inspectJpeg(png)).toEqual({ ok: false, reason: "not_jpeg" });
++  });
++
++  it("rejects a JPEG with no SOF — there are no dimensions to trust", () => {
++    const noSof = new Uint8Array([0xff, 0xd8, ...seg(0xdb, Array(65).fill(1)), 0xff, 0xd9]);
++    expect(inspectJpeg(noSof)).toEqual({ ok: false, reason: "not_jpeg" });
++  });
++
++  it("rejects EOI before any scan, even with a valid SOF — no scan data, no photo", () => {
++    const noScan = new Uint8Array([0xff, 0xd8, ...sof0(800, 600), 0xff, 0xd9]);
++    expect(inspectJpeg(noScan)).toEqual({ ok: false, reason: "not_jpeg" });
++  });
++
++  it("skips fill bytes before a marker, as a real encoder may emit", () => {
++    const filled = new Uint8Array([
++      0xff, 0xd8,
++      0xff, // fill byte before the DQT marker
++      ...Array.from(jpeg(64, 32).slice(2)),
++    ]);
++    expect(inspectJpeg(filled)).toEqual({ ok: true, width: 64, height: 32 });
++  });
++});
+diff --git a/supabase/functions/shop-media-lifecycle/index.ts b/supabase/functions/shop-media-lifecycle/index.ts
+index 8d794001..db672e4b 100644
+--- a/supabase/functions/shop-media-lifecycle/index.ts
++++ b/supabase/functions/shop-media-lifecycle/index.ts
+@@ -27,6 +27,7 @@
+ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+ import { corsHeaders } from "../_shared/cors.ts";
+ import { requireCronRequest } from "../_shared/cron-auth.ts";
++import { inspectJpeg } from "./jpeg.ts";
+ import { inspectWebp } from "./webp.ts";
+ 
+ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+@@ -93,8 +94,20 @@ async function publish(req: Request, productId: string): Promise<Response> {
+ 
+     // Postgres checked the declared MIME type. This checks the actual bytes —
+     // including that no EXIF chunk survived, so a seller's home coordinates
+-    // cannot ride a "re-encoded" file onto a public CDN.
+-    const verdict = inspectWebp(bytes);
++    // cannot ride a "re-encoded" file onto a public CDN. Dispatch on the real
++    // signature, never on the object key: every rendition key ends .webp even
++    // when the bytes are JPEG (iOS Safari fallback) — extension is a claim;
++    // the MIME in storage.objects is the truth.
++    const isWebp =
++      bytes.length >= 12 &&
++      bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
++      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
++    const isJpeg = bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xd8;
++    if (!isWebp && !isJpeg) {
++      log({ event: "rendition_rejected", media_id: item.media_id, reason: "not_image" });
++      return json({ error: "rendition_not_image", media_id: item.media_id }, 422);
++    }
++    const verdict = isWebp ? inspectWebp(bytes) : inspectJpeg(bytes);
+     if (!verdict.ok) {
+       log({ event: "rendition_rejected", media_id: item.media_id, reason: verdict.reason });
+       return json({ error: `rendition_${verdict.reason}`, media_id: item.media_id }, 422);
+@@ -106,7 +119,7 @@ async function publish(req: Request, productId: string): Promise<Response> {
+     // upsert so a retried publish overwrites its own half-finished copy rather
+     // than failing forever on a key it wrote itself.
+     const { error: upError } = await svc.storage.from(PUBLIC_BUCKET).upload(item.target, bytes, {
+-      contentType: "image/webp",
++      contentType: isWebp ? "image/webp" : "image/jpeg",
+       upsert: true,
+       cacheControl: "3600",
+     });
+diff --git a/supabase/functions/shop-media-lifecycle/jpeg.ts b/supabase/functions/shop-media-lifecycle/jpeg.ts
+new file mode 100644
+index 00000000..abe43690
+--- /dev/null
++++ b/supabase/functions/shop-media-lifecycle/jpeg.ts
+@@ -0,0 +1,78 @@
++// ============================================================================
++// JPEG segment inspection — Deno-free, unit-tested from vitest.
++// ----------------------------------------------------------------------------
++// The iOS Safari fallback path: a canvas that cannot encode WebP produces a
++// JPEG instead, and a canvas-encoded JPEG carries no APP1 segment. A file that
++// still has one was not re-encoded — it was renamed, or produced by a tool
++// that preserves metadata — and APP1 (Exif or XMP) is where GPS rides.
++//
++// Mirrors webp.ts: the verdict, not an exception, and the same three reasons.
++// ============================================================================
++
++export type JpegVerdict =
++  | { ok: true; width: number; height: number }
++  | { ok: false; reason: "not_jpeg" | "metadata_present" | "truncated" };
++
++/**
++ * Walk the marker segments up to the scan. Returns the image size when the
++ * file is a metadata-free JPEG, otherwise says which check failed.
++ */
++export function inspectJpeg(bytes: Uint8Array): JpegVerdict {
++  if (bytes.length < 4) return { ok: false, reason: "truncated" };
++  // SOI: every JPEG starts FF D8.
++  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return { ok: false, reason: "not_jpeg" };
++
++  let width = 0;
++  let height = 0;
++  let at = 2;
++
++  while (at < bytes.length) {
++    if (bytes[at] !== 0xff) return { ok: false, reason: "not_jpeg" };
++    // FF FF … are fill bytes before a marker.
++    let m = at + 1;
++    while (m < bytes.length && bytes[m] === 0xff) m += 1;
++    if (m >= bytes.length) return { ok: false, reason: "truncated" };
++    const marker = bytes[m];
++
++    // Markers that carry no length: SOI (never repeats but harmless), TEM, RSTn.
++    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
++      at = m + 1;
++      continue;
++    }
++    // EOI before any SOS: a "JPEG" with no scan data. No encoder emits this;
++    // whatever it is, it is not a photo.
++    if (marker === 0xd9) return { ok: false, reason: "not_jpeg" };
++
++    if (m + 2 >= bytes.length) return { ok: false, reason: "truncated" };
++    const len = (bytes[m + 1] << 8) | bytes[m + 2];
++    if (len < 2) return { ok: false, reason: "not_jpeg" };
++    if (m + 1 + len > bytes.length) return { ok: false, reason: "truncated" };
++
++    // APP1 — Exif or XMP, either way a canvas never writes one, and either way
++    // it can carry the seller's coordinates.
++    if (marker === 0xe1) return { ok: false, reason: "metadata_present" };
++
++    // SOF0–SOF15 except DHT (C4), JPG (C8) and DAC (CC): height then width,
++    // big-endian, after the one-byte precision.
++    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
++      if (len >= 7) {
++        height = (bytes[m + 4] << 8) | bytes[m + 5];
++        width = (bytes[m + 6] << 8) | bytes[m + 7];
++      }
++    }
++
++    // SOS: entropy-coded data follows, which is not segment-structured, so the
++    // walk ends here. DELIBERATE blind spot: an APP1 crafted BETWEEN scans of
++    // a progressive JPEG would not be seen. Every real encoder and every
++    // metadata-preserving tool writes APP1 before SOF; only a hand-crafted
++    // file hides it mid-scan, and its author would be leaking their own
++    // coordinates. Same looseness as webp.ts, which trusts the declared chunk
++    // structure without walking the VP8 bitstream.
++    if (marker === 0xda) break;
++
++    at = m + 1 + len;
++  }
++
++  if (width === 0 || height === 0) return { ok: false, reason: "not_jpeg" };
++  return { ok: true, width, height };
++}
+diff --git a/supabase/migrations/20260816090000_shop_activate_rpc.sql b/supabase/migrations/20260816090000_shop_activate_rpc.sql
+new file mode 100644
+index 00000000..bdefbeca
+--- /dev/null
++++ b/supabase/migrations/20260816090000_shop_activate_rpc.sql
+@@ -0,0 +1,94 @@
++-- ============================================================================
++-- Shop marketplace — shop_activate RPC (nút kích hoạt shop).
++-- ----------------------------------------------------------------------------
++-- Until now activation was a hand-run script: approve creates the shop at
++-- pending_activation, and someone UPDATEs state='active' by hand. This RPC is
++-- the single sanctioned path so the admin UI gets real errors instead of the
++-- guard trigger's silent no-op (shops_guard_privileged_columns reverts
++-- privileged columns for non-admins WITHOUT erroring — a PATCH from a stale
++-- session would 200 and change nothing).
++--
++-- One transition only: pending_activation → active. Everything else is either
++-- idempotent (already active) or a stable, client-matchable error string.
++--
++-- Error strings are API. activateErrorMessage() in
++-- src/hooks/shop/useShopApplicationQueue.ts matches on them:
++--   admin_required · shop_not_found · invalid_verified_method
++--   · shop_not_activatable:<state>
++--
++-- IDEMPOTENT — replay-safe.
++-- ============================================================================
++
++CREATE OR REPLACE FUNCTION public.shop_activate(
++  _shop_id UUID,
++  _verified_method TEXT DEFAULT NULL
++)
++RETURNS TEXT
++LANGUAGE plpgsql
++SECURITY DEFINER
++SET search_path = public
++AS $$
++DECLARE
++  _row public.shops%ROWTYPE;
++BEGIN
++  IF NOT public.is_admin() THEN
++    RAISE EXCEPTION 'admin_required' USING ERRCODE = '42501';
++  END IF;
++
++  -- Same whitelist as CHECK shops_verified_method_check — validated up front
++  -- so the caller gets a nameable error, not a raw constraint violation.
++  IF _verified_method IS NOT NULL
++     AND _verified_method NOT IN ('gap-truc-tiep', 'giay-phep-kinh-doanh') THEN
++    RAISE EXCEPTION 'invalid_verified_method' USING ERRCODE = '22023';
++  END IF;
++
++  -- Lock the row: two admin tabs activating at once serialise here; the
++  -- second one sees state='active' and takes the idempotent branch.
++  SELECT * INTO _row FROM public.shops WHERE id = _shop_id FOR UPDATE;
++
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'shop_not_found' USING ERRCODE = 'P0002';
++  END IF;
++
++  IF _row.state = 'active' THEN
++    -- Idempotent replay: no second audit row, no overwrite of an existing
++    -- verified_method/verified_at pair.
++    RETURN _row.state::text;
++  END IF;
++
++  IF _row.state <> 'pending_activation' THEN
++    -- restricted / suspended / closed are runbook territory, not this button.
++    RAISE EXCEPTION 'shop_not_activatable:%', _row.state USING ERRCODE = '22023';
++  END IF;
++
++  -- verified_method and verified_at move as a PAIR (CHECK shops_verified_pair)
++  -- or not at all. The BEFORE UPDATE guard trigger fires here too, but the
++  -- caller is already proven admin, so is_admin() inside it returns true.
++  UPDATE public.shops
++  SET state           = 'active',
++      verified_method = CASE WHEN _verified_method IS NOT NULL
++                             THEN _verified_method ELSE verified_method END,
++      verified_at     = CASE WHEN _verified_method IS NOT NULL
++                             THEN now() ELSE verified_at END
++  WHERE id = _shop_id;
++
++  -- Explicit casts are load-bearing: public.log_audit_event has TWO overloads
++  -- (…text,jsonb,text) and (…text,jsonb,jsonb,jsonb). Untyped literals make
++  -- the call ambiguous — runtime 42725 "function is not unique". Same gotcha
++  -- that broke every shop_application_decide before the pgTAP run caught it.
++  PERFORM public.log_audit_event(
++    'shop_activated'::text,
++    'admin'::text,
++    'shop'::text,
++    _shop_id::text,
++    'info'::text,
++    jsonb_build_object('verified_method', _verified_method),
++    'user'::text
++  );
++
++  RETURN 'active';
++END $$;
++
++REVOKE ALL ON FUNCTION public.shop_activate(UUID, TEXT) FROM PUBLIC;
++GRANT EXECUTE ON FUNCTION public.shop_activate(UUID, TEXT) TO authenticated;
++GRANT EXECUTE ON FUNCTION public.shop_activate(UUID, TEXT) TO service_role;
+diff --git a/supabase/migrations/20260816120000_shop_media_jpeg_rendition_fallback.sql b/supabase/migrations/20260816120000_shop_media_jpeg_rendition_fallback.sql
+new file mode 100644
+index 00000000..1030a52b
+--- /dev/null
++++ b/supabase/migrations/20260816120000_shop_media_jpeg_rendition_fallback.sql
+@@ -0,0 +1,197 @@
++-- ============================================================================
++-- JPEG rendition fallback (Wave-1 blocker, 2026-08-16)
++-- ----------------------------------------------------------------------------
++-- iOS Safari cannot encode WebP through canvas.toBlob, so sellers on iPhone
++-- could not upload a single product photo. The client now retries its quality
++-- ladder as JPEG when the WebP encoder is missing; this migration widens the
++-- rendition MIME allowlist to match. Nothing else moves:
++--
++--   · the verify model is unchanged — finalize still reads the REAL mimetype
++--     back from storage.objects, which only the Storage API writes;
++--   · object keys keep their .webp suffix even when the bytes are JPEG
++--     (rendition.webp, <media_id>-v<n>.webp, profile/.../live.webp). The path
++--     lives in DB rows, clients build URLs only from those rows, browsers
++--     render by Content-Type — and shop_media_reconcile derives the expected
++--     public key with .webp hardcoded. Extension is a claim; the MIME in
++--     storage.objects is the truth.
++--
++-- Three CREATE OR REPLACE, no grant changes (replace keeps the originals from
++-- 20260811140000 / 20260811220000).
++-- ============================================================================
++
++-- ─── 1. Limits: the rendition MIME allowlist ────────────────────────────────
++-- 'rendition_content_type' (singular) stays as the PREFERRED type so any
++-- reader that predates the list keeps working; 'rendition_content_types' is
++-- what the finalize functions now check membership against.
++
++CREATE OR REPLACE FUNCTION public.shop_media_limits()
++RETURNS JSONB
++LANGUAGE sql
++IMMUTABLE
++AS $$
++  SELECT jsonb_build_object(
++    'max_per_product',        8,
++    'max_input_bytes',        8388608,      -- 8 MB: a phone photo is 3-5 MB
++    'max_rendition_bytes',    1048576,      -- 1 MB after re-encode
++    'max_dimension',          2048,
++    'input_content_types',    jsonb_build_array('image/jpeg', 'image/png', 'image/webp'),
++    'rendition_content_type', 'image/webp', -- preferred; canvas re-encode drops EXIF
++    -- image/jpeg: what iOS Safari's canvas produces instead of WebP. The
++    -- re-encode drops EXIF the same way; the format is not the privacy step.
++    'rendition_content_types', jsonb_build_array('image/webp', 'image/jpeg'),
++    'draft_bucket',           'shop-product-media-draft',
++    'public_bucket',          'shop-product-media'
++  )
++$$;
++
++-- ─── 2. product_media_finalize: equality check → membership check ───────────
++-- Byte-identical to 20260811140000 apart from the MIME check and its message.
++
++CREATE OR REPLACE FUNCTION public.product_media_finalize(
++  _media_id UUID,
++  _width    INTEGER DEFAULT NULL,
++  _height   INTEGER DEFAULT NULL
++)
++RETURNS JSONB
++LANGUAGE plpgsql
++SECURITY DEFINER
++SET search_path = public
++AS $$
++DECLARE
++  _lim       JSONB := public.shop_media_limits();
++  _media     public.product_media%ROWTYPE;
++  _orig_meta JSONB;
++  _rend_meta JSONB;
++  _rend_size BIGINT;
++BEGIN
++  SELECT * INTO _media FROM public.product_media WHERE id = _media_id FOR UPDATE;
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'media not found' USING ERRCODE = 'no_data_found';
++  END IF;
++  IF NOT public.is_shop_manager(_media.shop_id) THEN
++    RAISE EXCEPTION 'not a manager of this shop' USING ERRCODE = 'insufficient_privilege';
++  END IF;
++
++  -- Already verified: return the same answer instead of doing it twice.
++  IF _media.verified_at IS NOT NULL THEN
++    RETURN jsonb_build_object('media_id', _media.id, 'verified', true, 'reused', true);
++  END IF;
++
++  SELECT metadata INTO _orig_meta FROM storage.objects
++  WHERE bucket_id = (_lim ->> 'draft_bucket') AND name = _media.draft_path;
++  IF _orig_meta IS NULL THEN
++    RAISE EXCEPTION 'chưa thấy ảnh gốc trên máy chủ — tải lại ảnh' USING ERRCODE = 'no_data_found';
++  END IF;
++
++  SELECT metadata INTO _rend_meta FROM storage.objects
++  WHERE bucket_id = (_lim ->> 'draft_bucket') AND name = _media.rendition_source_path;
++  IF _rend_meta IS NULL THEN
++    RAISE EXCEPTION 'chưa thấy ảnh đã xử lý trên máy chủ — tải lại ảnh' USING ERRCODE = 'no_data_found';
++  END IF;
++
++  -- The client claimed it re-encoded. This is where the claim is checked —
++  -- against the MIME the Storage API recorded, never the object key's
++  -- extension: extension is a claim; the MIME in storage.objects is the truth.
++  IF NOT ((_lim -> 'rendition_content_types') ? coalesce(_rend_meta ->> 'mimetype', '')) THEN
++    RAISE EXCEPTION 'ảnh đã xử lý phải là WebP hoặc JPEG (nhận được %)',
++      coalesce(_rend_meta ->> 'mimetype', 'không rõ')
++      USING ERRCODE = 'invalid_parameter_value';
++  END IF;
++
++  _rend_size := coalesce((_rend_meta ->> 'size')::bigint, 0);
++  IF _rend_size <= 0 OR _rend_size > (_lim ->> 'max_rendition_bytes')::bigint THEN
++    RAISE EXCEPTION 'ảnh đã xử lý vượt quá % KB', (_lim ->> 'max_rendition_bytes')::int / 1024
++      USING ERRCODE = 'invalid_parameter_value';
++  END IF;
++  IF coalesce((_orig_meta ->> 'size')::bigint, 0) > (_lim ->> 'max_input_bytes')::bigint THEN
++    RAISE EXCEPTION 'ảnh gốc vượt quá giới hạn' USING ERRCODE = 'invalid_parameter_value';
++  END IF;
++  IF _width IS NOT NULL AND (_width > (_lim ->> 'max_dimension')::int
++                             OR _height > (_lim ->> 'max_dimension')::int) THEN
++    RAISE EXCEPTION 'ảnh vượt quá % px' , (_lim ->> 'max_dimension')
++      USING ERRCODE = 'invalid_parameter_value';
++  END IF;
++
++  PERFORM set_config('shop.privileged_write', 'on', true);
++  UPDATE public.product_media
++  SET verified_at = now(),
++      byte_size   = _rend_size::int,
++      width       = _width,
++      height      = _height,
++      updated_at  = now()
++  WHERE id = _media_id AND verified_at IS NULL;
++  PERFORM set_config('shop.privileged_write', 'off', true);
++
++  RETURN jsonb_build_object('media_id', _media_id, 'verified', true, 'reused', false);
++END $$;
++
++-- ─── 3. shop_profile_media_finalize: the same widening ──────────────────────
++-- Byte-identical to 20260811220000 apart from the MIME check and its message.
++
++CREATE OR REPLACE FUNCTION public.shop_profile_media_finalize(
++  _media_id UUID,
++  _width    INTEGER DEFAULT NULL,
++  _height   INTEGER DEFAULT NULL
++)
++RETURNS JSONB
++LANGUAGE plpgsql
++SECURITY DEFINER
++SET search_path = public
++AS $$
++DECLARE
++  _lim       JSONB := public.shop_media_limits();
++  _media     public.shop_profile_media%ROWTYPE;
++  _orig_meta JSONB;
++  _rend_meta JSONB;
++  _rend_size BIGINT;
++BEGIN
++  SELECT * INTO _media FROM public.shop_profile_media WHERE id = _media_id FOR UPDATE;
++  IF NOT FOUND THEN
++    RAISE EXCEPTION 'media not found' USING ERRCODE = 'no_data_found';
++  END IF;
++  IF NOT public.is_shop_manager(_media.shop_id) THEN
++    RAISE EXCEPTION 'not a manager of this shop' USING ERRCODE = 'insufficient_privilege';
++  END IF;
++
++  IF _media.verified_at IS NOT NULL THEN
++    RETURN jsonb_build_object('media_id', _media.id, 'verified', true, 'reused', true);
++  END IF;
++
++  -- Read back from storage.objects, which only the Storage API writes. A
++  -- client that lies about having re-encoded fails here, exactly as it does
++  -- for product media.
++  SELECT metadata INTO _orig_meta FROM storage.objects
++  WHERE bucket_id = (_lim ->> 'draft_bucket') AND name = _media.draft_path;
++  IF _orig_meta IS NULL THEN
++    RAISE EXCEPTION 'chưa thấy ảnh gốc trên máy chủ — tải lại ảnh' USING ERRCODE = 'no_data_found';
++  END IF;
++
++  SELECT metadata INTO _rend_meta FROM storage.objects
++  WHERE bucket_id = (_lim ->> 'draft_bucket') AND name = _media.rendition_source_path;
++  IF _rend_meta IS NULL THEN
++    RAISE EXCEPTION 'chưa thấy ảnh đã xử lý trên máy chủ — tải lại ảnh' USING ERRCODE = 'no_data_found';
++  END IF;
++
++  IF NOT ((_lim -> 'rendition_content_types') ? coalesce(_rend_meta ->> 'mimetype', '')) THEN
++    RAISE EXCEPTION 'ảnh đã xử lý phải là WebP hoặc JPEG (nhận được %)',
++      coalesce(_rend_meta ->> 'mimetype', 'không rõ')
++      USING ERRCODE = 'invalid_parameter_value';
++  END IF;
++  _rend_size := coalesce((_rend_meta ->> 'size')::bigint, 0);
++  IF _rend_size <= 0 OR _rend_size > (_lim ->> 'max_rendition_bytes')::bigint THEN
++    RAISE EXCEPTION 'ảnh đã xử lý vượt quá % KB', (_lim ->> 'max_rendition_bytes')::int / 1024
++      USING ERRCODE = 'invalid_parameter_value';
++  END IF;
++  IF _width IS NOT NULL AND (_width > (_lim ->> 'max_dimension')::int
++                             OR _height > (_lim ->> 'max_dimension')::int) THEN
++    RAISE EXCEPTION 'ảnh vượt quá % px', (_lim ->> 'max_dimension')
++      USING ERRCODE = 'invalid_parameter_value';
++  END IF;
++
++  UPDATE public.shop_profile_media
++  SET verified_at = now(), byte_size = _rend_size::int,
++      width = _width, height = _height, updated_at = now()
++  WHERE id = _media_id AND verified_at IS NULL;
++
++  RETURN jsonb_build_object('media_id', _media_id, 'verified', true, 'reused', false);
++END $$;
+diff --git a/supabase/tests/shop_activate.test.sql b/supabase/tests/shop_activate.test.sql
+new file mode 100644
+index 00000000..ceeca056
+--- /dev/null
++++ b/supabase/tests/shop_activate.test.sql
+@@ -0,0 +1,207 @@
++-- shop_activate() — the activation button's whole contract.
++--
++-- The error STRINGS are asserted verbatim, not just the errcodes:
++-- activateErrorMessage() on the client matches on the message text, so a
++-- reworded RAISE would silently break the admin UI copy while every
++-- errcode-only assertion stayed green.
++--
++-- Convention follows shop_phase1_rls.test.sql (fixtures as postgres,
++-- SET LOCAL role + request.jwt.claims for impersonation, rolled back).
++
++BEGIN;
++
++SELECT plan(22);
++
++-- ─── Fixture: admin, non-admin, one owner, five shops ───────────────────────
++
++INSERT INTO auth.users (
++  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
++  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
++) VALUES
++  ('50020001-0000-4000-8000-000000000001'::uuid, '00000000-0000-0000-0000-000000000000',
++   'authenticated', 'authenticated', 'activate-admin@thepicklehub.test', '', NOW(),
++   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Activate Admin"}'::jsonb, NOW(), NOW()),
++  ('50020002-0000-4000-8000-000000000002'::uuid, '00000000-0000-0000-0000-000000000000',
++   'authenticated', 'authenticated', 'activate-user@thepicklehub.test', '', NOW(),
++   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Plain User"}'::jsonb, NOW(), NOW()),
++  ('50020003-0000-4000-8000-000000000003'::uuid, '00000000-0000-0000-0000-000000000000',
++   'authenticated', 'authenticated', 'activate-owner@thepicklehub.test', '', NOW(),
++   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Shop Owner"}'::jsonb, NOW(), NOW());
++
++INSERT INTO public.user_roles (user_id, role)
++VALUES ('50020001-0000-4000-8000-000000000001'::uuid, 'admin')
++ON CONFLICT DO NOTHING;
++
++INSERT INTO public.shops (id, slug, name, state, owner_user_id) VALUES
++  ('50021001-0000-4000-8000-000000000001'::uuid, 'act-pending-a', 'Pending A', 'pending_activation', '50020003-0000-4000-8000-000000000003'::uuid),
++  ('50021002-0000-4000-8000-000000000002'::uuid, 'act-pending-b', 'Pending B', 'pending_activation', '50020003-0000-4000-8000-000000000003'::uuid),
++  ('50021003-0000-4000-8000-000000000003'::uuid, 'act-suspended', 'Suspended C', 'suspended', '50020003-0000-4000-8000-000000000003'::uuid),
++  ('50021004-0000-4000-8000-000000000004'::uuid, 'act-closed', 'Closed D', 'closed', '50020003-0000-4000-8000-000000000003'::uuid),
++  ('50021005-0000-4000-8000-000000000005'::uuid, 'act-pending-e', 'Pending E', 'pending_activation', '50020003-0000-4000-8000-000000000003'::uuid);
++
++-- ─── 1. Non-admin is refused with the exact string the client matches ───────
++
++SET LOCAL role authenticated;
++SET LOCAL request.jwt.claims TO '{"sub":"50020002-0000-4000-8000-000000000002","role":"authenticated","aal":"aal1"}';
++
++SELECT throws_ok(
++  $$ SELECT public.shop_activate('50021001-0000-4000-8000-000000000001'::uuid, 'gap-truc-tiep') $$,
++  '42501',
++  'admin_required',
++  'non-admin gets admin_required'
++);
++
++RESET role;
++SELECT is(
++  (SELECT state::text FROM public.shops WHERE id = '50021001-0000-4000-8000-000000000001'::uuid),
++  'pending_activation',
++  'shop untouched after refused call'
++);
++
++-- ─── 2. Admin session (aal2 — is_admin() requires it) ───────────────────────
++
++SET LOCAL role authenticated;
++SET LOCAL request.jwt.claims TO '{"sub":"50020001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
++
++-- Bogus method: refused BEFORE any row is touched.
++SELECT throws_ok(
++  $$ SELECT public.shop_activate('50021001-0000-4000-8000-000000000001'::uuid, 'cmnd-photo') $$,
++  '22023',
++  'invalid_verified_method',
++  'bogus verified_method gets invalid_verified_method'
++);
++SELECT is(
++  (SELECT state::text FROM public.shops WHERE id = '50021001-0000-4000-8000-000000000001'::uuid),
++  'pending_activation',
++  'shop unchanged after invalid method'
++);
++
++-- Happy path with 'gap-truc-tiep': state flips, verified pair set together.
++SELECT is(
++  public.shop_activate('50021001-0000-4000-8000-000000000001'::uuid, 'gap-truc-tiep'),
++  'active',
++  'admin activates a pending shop'
++);
++SELECT is(
++  (SELECT state::text FROM public.shops WHERE id = '50021001-0000-4000-8000-000000000001'::uuid),
++  'active',
++  'state is active'
++);
++SELECT is(
++  (SELECT verified_method FROM public.shops WHERE id = '50021001-0000-4000-8000-000000000001'::uuid),
++  'gap-truc-tiep',
++  'verified_method recorded'
++);
++SELECT ok(
++  (SELECT verified_at IS NOT NULL FROM public.shops WHERE id = '50021001-0000-4000-8000-000000000001'::uuid),
++  'verified_at set with its method (shops_verified_pair)'
++);
++
++-- Exactly one audit row — an ambiguous log_audit_event call (42725) would
++-- have aborted the activation above; zero or two rows would both be bugs.
++-- audit_logs has no SELECT grant for authenticated, so the count reads as
++-- postgres; the write under test already happened in the admin session.
++RESET role;
++SELECT is(
++  (SELECT count(*)::int FROM public.audit_logs
++   WHERE event_type = 'shop_activated'
++     AND resource_id = '50021001-0000-4000-8000-000000000001'),
++  1,
++  'exactly one shop_activated audit row'
++);
++SET LOCAL role authenticated;
++SET LOCAL request.jwt.claims TO '{"sub":"50020001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
++
++-- ─── 3. Idempotent replay: no error, no overwrite, no second audit row ──────
++
++SELECT is(
++  public.shop_activate('50021001-0000-4000-8000-000000000001'::uuid, NULL),
++  'active',
++  'replay on an active shop returns active without error'
++);
++SELECT is(
++  (SELECT verified_method FROM public.shops WHERE id = '50021001-0000-4000-8000-000000000001'::uuid),
++  'gap-truc-tiep',
++  'replay with NULL does not clear the recorded method'
++);
++SELECT is(
++  public.shop_activate('50021001-0000-4000-8000-000000000001'::uuid, 'giay-phep-kinh-doanh'),
++  'active',
++  'replay with a different method still succeeds'
++);
++SELECT is(
++  (SELECT verified_method FROM public.shops WHERE id = '50021001-0000-4000-8000-000000000001'::uuid),
++  'gap-truc-tiep',
++  'replay does NOT overwrite the original verified_method'
++);
++RESET role;
++SELECT is(
++  (SELECT count(*)::int FROM public.audit_logs
++   WHERE event_type = 'shop_activated'
++     AND resource_id = '50021001-0000-4000-8000-000000000001'),
++  1,
++  'replays write no additional audit rows'
++);
++SET LOCAL role authenticated;
++SET LOCAL request.jwt.claims TO '{"sub":"50020001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
++
++-- ─── 4. NULL method: activation without touching the verified pair ──────────
++
++SELECT is(
++  public.shop_activate('50021002-0000-4000-8000-000000000002'::uuid, NULL),
++  'active',
++  'activation with NULL method succeeds'
++);
++SELECT ok(
++  (SELECT verified_method IS NULL AND verified_at IS NULL
++   FROM public.shops WHERE id = '50021002-0000-4000-8000-000000000002'::uuid),
++  'verified pair stays NULL/NULL'
++);
++
++-- ─── 5. The other accepted method ──────────────────────────────────────────
++
++SELECT is(
++  public.shop_activate('50021005-0000-4000-8000-000000000005'::uuid, 'giay-phep-kinh-doanh'),
++  'active',
++  'giay-phep-kinh-doanh is accepted'
++);
++SELECT is(
++  (SELECT verified_method FROM public.shops WHERE id = '50021005-0000-4000-8000-000000000005'::uuid),
++  'giay-phep-kinh-doanh',
++  'giay-phep-kinh-doanh recorded'
++);
++
++-- ─── 6. Forbidden states carry the state in the error string ────────────────
++
++SELECT throws_ok(
++  $$ SELECT public.shop_activate('50021003-0000-4000-8000-000000000003'::uuid) $$,
++  '22023',
++  'shop_not_activatable:suspended',
++  'suspended shop is not activatable'
++);
++SELECT throws_ok(
++  $$ SELECT public.shop_activate('50021004-0000-4000-8000-000000000004'::uuid) $$,
++  '22023',
++  'shop_not_activatable:closed',
++  'closed shop is not activatable'
++);
++RESET role;
++SELECT ok(
++  (SELECT bool_and(state::text IN ('suspended','closed')) FROM public.shops
++   WHERE id IN ('50021003-0000-4000-8000-000000000003'::uuid, '50021004-0000-4000-8000-000000000004'::uuid)),
++  'forbidden-state shops untouched'
++);
++SET LOCAL role authenticated;
++SET LOCAL request.jwt.claims TO '{"sub":"50020001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
++
++-- ─── 7. Unknown id ─────────────────────────────────────────────────────────
++
++SELECT throws_ok(
++  $$ SELECT public.shop_activate('50029999-0000-4000-8000-000000000009'::uuid) $$,
++  'P0002',
++  'shop_not_found',
++  'unknown shop id gets shop_not_found'
++);
++
++SELECT * FROM finish();
++ROLLBACK;
+diff --git a/supabase/tests/shop_media_jpeg_rendition.test.sql b/supabase/tests/shop_media_jpeg_rendition.test.sql
+new file mode 100644
+index 00000000..71d8ce12
+--- /dev/null
++++ b/supabase/tests/shop_media_jpeg_rendition.test.sql
+@@ -0,0 +1,151 @@
++-- Shop media — JPEG rendition fallback (iOS Safari, 2026-08-16).
++--
++-- iOS Safari cannot encode WebP through a canvas, so the client falls back to
++-- JPEG. This file is the POSITIVE half of the widened contract: a rendition
++-- whose storage.objects mimetype is image/jpeg finalizes for both product and
++-- profile media, while everything outside the {webp, jpeg} allowlist is still
++-- refused. The negative "client lies about re-encoding" case stays in
++-- shop_phase2a_media_lifecycle.test.sql (now on image/png).
++--
++-- The object key keeps its .webp suffix even when the bytes are JPEG:
++-- extension is a claim; the MIME in storage.objects is the truth.
++
++BEGIN;
++
++SELECT plan(9);
++
++-- ─── Fixture ────────────────────────────────────────────────────────────────
++
++INSERT INTO auth.users (
++  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
++  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
++) VALUES
++  ('50040001-0000-4000-8000-000000000001'::uuid, '00000000-0000-0000-0000-000000000000',
++   'authenticated', 'authenticated', 'jpeg-owner@thepicklehub.test', '', NOW(),
++   '{"provider":"test","providers":["test"]}'::jsonb, '{"display_name":"Jpeg Owner"}'::jsonb, NOW(), NOW());
++
++INSERT INTO public.shop_pilot_members (user_id) VALUES
++  ('50040001-0000-4000-8000-000000000001'::uuid)
++ON CONFLICT DO NOTHING;
++
++INSERT INTO public.shops (id, slug, name, state, owner_user_id) VALUES
++  ('6c000001-0000-4000-8000-000000000001'::uuid, 'jpeg-shop', 'Jpeg Shop', 'active',
++   '50040001-0000-4000-8000-000000000001'::uuid);
++
++INSERT INTO public.shop_members (shop_id, user_id, role) VALUES
++  ('6c000001-0000-4000-8000-000000000001'::uuid, '50040001-0000-4000-8000-000000000001'::uuid, 'owner');
++
++INSERT INTO public.products (id, shop_id, slug, title, description, category_slug, status) VALUES
++  ('6d000001-0000-4000-8000-000000000001'::uuid, '6c000001-0000-4000-8000-000000000001'::uuid,
++   'jpeg-prod', 'Jpeg Prod', 'Mô tả JPEG', 'vot', 'draft');
++
++-- ─── The allowlist itself ───────────────────────────────────────────────────
++
++SELECT ok(
++  (public.shop_media_limits() -> 'rendition_content_types') ? 'image/webp'
++  AND (public.shop_media_limits() -> 'rendition_content_types') ? 'image/jpeg'
++  -- length too, or "exactly the two" would still pass with a third entry
++  AND jsonb_array_length(public.shop_media_limits() -> 'rendition_content_types') = 2,
++  'the rendition allowlist holds exactly the two canvas outputs: webp and jpeg'
++);
++SELECT is(
++  public.shop_media_limits() ->> 'rendition_content_type',
++  'image/webp',
++  'the singular preferred-type key survives for readers that predate the list'
++);
++
++-- ─── Product media: a JPEG rendition finalizes ──────────────────────────────
++
++SET LOCAL role authenticated;
++SET LOCAL request.jwt.claims TO '{"sub":"50040001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
++
++CREATE TEMP TABLE _initj AS SELECT public.product_media_upload_init(
++  '6d000001-0000-4000-8000-000000000001'::uuid, 'image/jpeg', 3000000,
++  'anh-iphone.jpg', 'tok-JPG') AS r;
++
++SELECT ok(
++  (SELECT (r ->> 'rendition_path') LIKE '%.webp' FROM _initj),
++  'the object key keeps its .webp suffix even though the bytes will be JPEG'
++);
++
++SET LOCAL role postgres;
++INSERT INTO storage.objects (bucket_id, name, metadata)
++SELECT 'shop-product-media-draft', draft_path,
++       jsonb_build_object('size', 3000000, 'mimetype', 'image/jpeg')
++FROM public.product_media WHERE client_token='tok-JPG';
++-- iOS Safari's canvas output: a JPEG under the .webp key, honestly declared.
++INSERT INTO storage.objects (bucket_id, name, metadata)
++SELECT 'shop-product-media-draft', rendition_source_path,
++       jsonb_build_object('size', 240000, 'mimetype', 'image/jpeg')
++FROM public.product_media WHERE client_token='tok-JPG';
++SET LOCAL role authenticated;
++
++SELECT ok(
++  (public.product_media_finalize(
++     (SELECT id FROM public.product_media WHERE client_token='tok-JPG'), 1200, 900) ->> 'verified')::boolean,
++  'a JPEG rendition finalizes — the iOS Safari seller can upload again'
++);
++SELECT is(
++  (SELECT byte_size FROM public.product_media WHERE client_token='tok-JPG'),
++  240000,
++  'byte_size is still read back from storage, never taken from the client'
++);
++
++-- ─── The allowlist is two entries, not a hole ───────────────────────────────
++
++CREATE TEMP TABLE _initg AS SELECT public.product_media_upload_init(
++  '6d000001-0000-4000-8000-000000000001'::uuid, 'image/jpeg', 3000000,
++  'anh-2.jpg', 'tok-GIF') AS r;
++
++SET LOCAL role postgres;
++INSERT INTO storage.objects (bucket_id, name, metadata)
++SELECT 'shop-product-media-draft', draft_path,
++       jsonb_build_object('size', 3000000, 'mimetype', 'image/jpeg')
++FROM public.product_media WHERE client_token='tok-GIF';
++INSERT INTO storage.objects (bucket_id, name, metadata)
++SELECT 'shop-product-media-draft', rendition_source_path,
++       jsonb_build_object('size', 240000, 'mimetype', 'image/gif')
++FROM public.product_media WHERE client_token='tok-GIF';
++SET LOCAL role authenticated;
++
++SELECT throws_ok(
++  $$ SELECT public.product_media_finalize((SELECT id FROM public.product_media WHERE client_token='tok-GIF')) $$,
++  '22023', NULL,
++  'a GIF rendition is still refused — widening to JPEG did not open the gate'
++);
++
++-- ─── Profile media: logo/cover takes the same fallback ──────────────────────
++
++CREATE TEMP TABLE _initp AS SELECT public.shop_profile_media_upload_init(
++  '6c000001-0000-4000-8000-000000000001'::uuid, 'logo', 'image/jpeg', 2000000,
++  'logo.jpg', 'tok-LOGO') AS r;
++
++SELECT ok(
++  (SELECT (r ->> 'rendition_path') LIKE '%.webp' FROM _initp),
++  'the profile rendition key keeps its .webp suffix too'
++);
++
++SET LOCAL role postgres;
++INSERT INTO storage.objects (bucket_id, name, metadata)
++SELECT 'shop-product-media-draft', draft_path,
++       jsonb_build_object('size', 2000000, 'mimetype', 'image/jpeg')
++FROM public.shop_profile_media WHERE client_token='tok-LOGO';
++INSERT INTO storage.objects (bucket_id, name, metadata)
++SELECT 'shop-product-media-draft', rendition_source_path,
++       jsonb_build_object('size', 180000, 'mimetype', 'image/jpeg')
++FROM public.shop_profile_media WHERE client_token='tok-LOGO';
++SET LOCAL role authenticated;
++
++SELECT ok(
++  (public.shop_profile_media_finalize(
++     (SELECT id FROM public.shop_profile_media WHERE client_token='tok-LOGO'), 512, 512) ->> 'verified')::boolean,
++  'a JPEG logo rendition finalizes'
++);
++SELECT is(
++  (SELECT byte_size FROM public.shop_profile_media WHERE client_token='tok-LOGO'),
++  180000,
++  'profile byte_size comes from storage as well'
++);
++
++SELECT * FROM finish();
++ROLLBACK;
+diff --git a/supabase/tests/shop_phase2a_media_lifecycle.test.sql b/supabase/tests/shop_phase2a_media_lifecycle.test.sql
+index da60dfbf..9cf2e537 100644
+--- a/supabase/tests/shop_phase2a_media_lifecycle.test.sql
++++ b/supabase/tests/shop_phase2a_media_lifecycle.test.sql
+@@ -182,10 +182,11 @@ INSERT INTO storage.objects (bucket_id, name, metadata)
+ SELECT 'shop-product-media-draft', draft_path,
+        jsonb_build_object('size', 3000000, 'mimetype', 'image/jpeg')
+ FROM public.product_media WHERE client_token='tok-A';
+--- The client says it re-encoded to WebP. It uploaded a JPEG.
++-- The client says it re-encoded. It uploaded a PNG — still outside the
++-- rendition allowlist now that JPEG is a legal fallback (iOS Safari).
+ INSERT INTO storage.objects (bucket_id, name, metadata)
+ SELECT 'shop-product-media-draft', rendition_source_path,
+-       jsonb_build_object('size', 240000, 'mimetype', 'image/jpeg')
++       jsonb_build_object('size', 240000, 'mimetype', 'image/png')
+ FROM public.product_media WHERE client_token='tok-A';
+ SET LOCAL role authenticated;
+ 

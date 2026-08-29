@@ -84,6 +84,48 @@ export interface ShopRow {
   updated_at: string;
 }
 
+export type ProductStatus =
+  | "draft"
+  | "pending_review"
+  | "active"
+  | "needs_changes"
+  | "archived";
+
+/** Row shape for public.products (existing production table + bulk-import columns). */
+export interface ShopProductRow {
+  id: string;
+  shop_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  category_slug: string | null;
+  status: ProductStatus;
+  is_published: boolean;
+  in_stock: boolean;
+  specs: Record<string, string>;
+  option_groups: Record<string, unknown> | null;
+  import_batch_id: string | null;
+  ai_enriched: boolean;
+  ai_confidence: number | null;
+  ai_source_urls: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductInsert {
+  shop_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  category_slug: string | null;
+  specs: Record<string, string>;
+  status: "draft";
+  import_batch_id: string | null;
+  ai_enriched: boolean;
+  ai_confidence: number | null;
+  ai_source_urls: string[];
+}
+
 /** Table + RPC names, exported so the parity test can compare them to the SQL. */
 export const SHOP_TABLES = [
   "shop_pilot_members",
@@ -91,6 +133,7 @@ export const SHOP_TABLES = [
   "shop_members",
   "shop_applications",
   "shop_application_events",
+  "products",
 ] as const;
 
 export const SHOP_VIEWS = ["my_shop_application"] as const;

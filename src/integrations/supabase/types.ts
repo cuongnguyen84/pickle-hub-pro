@@ -3683,13 +3683,16 @@ export type Database = {
           content_kind: string
           created_at: string
           en_news_id: string | null
+          failure_kind: string | null
           id: string
           last_error: string | null
+          next_retry_at: string | null
           pipeline_status: string
           published_at: string
           raw_body: string | null
           raw_summary: string
           raw_title: string
+          retryable: boolean
           source_id: string | null
           source_image_url: string | null
           source_name: string
@@ -3703,13 +3706,16 @@ export type Database = {
           content_kind?: string
           created_at?: string
           en_news_id?: string | null
+          failure_kind?: string | null
           id?: string
           last_error?: string | null
+          next_retry_at?: string | null
           pipeline_status?: string
           published_at: string
           raw_body?: string | null
           raw_summary?: string
           raw_title?: string
+          retryable?: boolean
           source_id?: string | null
           source_image_url?: string | null
           source_name: string
@@ -3723,13 +3729,16 @@ export type Database = {
           content_kind?: string
           created_at?: string
           en_news_id?: string | null
+          failure_kind?: string | null
           id?: string
           last_error?: string | null
+          next_retry_at?: string | null
           pipeline_status?: string
           published_at?: string
           raw_body?: string | null
           raw_summary?: string
           raw_title?: string
+          retryable?: boolean
           source_id?: string | null
           source_image_url?: string | null
           source_name?: string
@@ -7749,13 +7758,16 @@ export type Database = {
           content_kind: string
           created_at: string
           en_news_id: string | null
+          failure_kind: string | null
           id: string
           last_error: string | null
+          next_retry_at: string | null
           pipeline_status: string
           published_at: string
           raw_body: string | null
           raw_summary: string
           raw_title: string
+          retryable: boolean
           source_id: string | null
           source_name: string
           source_url: string

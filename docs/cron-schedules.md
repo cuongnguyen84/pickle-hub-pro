@@ -27,7 +27,7 @@ coordinated operation.
 
 | Function | Schedule (cron) | Frequency | Purpose | Last modified |
 |---|---|---|---|---|
-| `auto-archive-tournaments` | `0 3 * * *` | Daily 03:00 ICT | Move tournaments older than N days from `ongoing` → `completed` so the list views don't grow unbounded. Also clears stale `live_referee_id` on matches that have been "in progress" for >12h (orphaned scoring sessions). | 2026-04-22 |
+| `auto-archive-tournaments` | `0 3 * * *` | Daily 03:00 ICT | Move unfinished community tournaments created more than 30 days ago to `completed` across Quick Tables, Team Match, Flex, and Doubles Elimination. | 2026-08-13 |
 | `auto-cancel-unpaid-registrations` | `0 * * * *` | Hourly | Cancel registrations that have been in `pending_payment` status for >24h. Releases the seat back to the pool so a paying user can claim it. | 2026-07-15 |
 | `feed-embeds-sync` | `20 * * * *` | Hourly at :20 | Refresh curated Instagram embed metadata and ingest newly published reels. | 2026-07-15 |
 | `feed-generate` | `50 * * * *` | Hourly at :50 | Generate idempotent milestone, leaderboard, pro-tour, and recap cards. | 2026-07-15 |

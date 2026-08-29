@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// Primary tab shell mirroring the web `BottomNav` (Home, Live, Social, Feed,
-/// Tools). Rankings, Tournaments and Profile are reached from the Home toolbar,
+/// Primary tab shell mirroring the production Shop launch: five slots with a
+/// fixed Shop entry. Rankings, Tournaments and Profile are reached from the Home toolbar,
 /// like the web header — they are first-class, not behind a hamburger menu.
 struct AppTabView: View {
     enum Tab: String, Hashable {
-        case home, live, social, feed, tools
+        case home, live, shop, feed, tools
     }
 
     @State private var selection: Tab = Self.launchTab
@@ -20,9 +20,9 @@ struct AppTabView: View {
                 .tag(Tab.live)
                 .tabItem { Label("Trực tiếp", systemImage: "dot.radiowaves.up.forward") }
 
-            SocialHubView()
-                .tag(Tab.social)
-                .tabItem { Label("Social", systemImage: "calendar.badge.plus") }
+            NavigationStack { ShopHomeView() }
+                .tag(Tab.shop)
+                .tabItem { Label("Chợ", systemImage: "storefront.fill") }
 
             NavigationStack { FeedView() }
                 .tag(Tab.feed)
@@ -41,7 +41,7 @@ struct AppTabView: View {
         UserDefaults.standard.string(forKey: "startTab").flatMap(Tab.init) ?? .home
     }
 
-    @State private var homePath = NavigationPath()
+    @State private var homePath = Self.launchHomePath
     @State private var unreadCount = 0
     @State private var avatarURL: String?
     @State private var dupr: ProfileRepository.DuprChip?
@@ -53,6 +53,7 @@ struct AppTabView: View {
                 .navigationTitle("ThePickleHub")
                 .navigationDestination(for: HomeRoute.self) { route in
                     switch route {
+                    case .shop: ShopHomeView()
                     case .tournaments: TournamentsView()
                     case .rankings: RankingsView()
                     case .notifications: AuthenticationRequiredView { NotificationsView() }
@@ -74,6 +75,30 @@ struct AppTabView: View {
                     duprLoaded = true
                 }
         }
+    }
+
+    /// UI-review launch hook: `-startShop YES` opens the fixture-backed Shop
+    /// sample without automating taps. It lives in the argument domain only.
+    private static var launchHomePath: NavigationPath {
+        var path = NavigationPath()
+        guard ShopFeatureGate.isEnabled else { return path }
+        if UserDefaults.standard.bool(forKey: "startShop") || UserDefaults.standard.bool(forKey: "startShopSearch") {
+            path.append(HomeRoute.shop)
+        }
+        if UserDefaults.standard.bool(forKey: "startShopSearch") { path.append(ShopRoute.search) }
+        if UserDefaults.standard.bool(forKey: "startShopCategory") {
+            path.append(HomeRoute.shop)
+            path.append(ShopRoute.category(.paddles))
+        }
+        if UserDefaults.standard.bool(forKey: "startShopProduct") || UserDefaults.standard.bool(forKey: "startShopVariant") {
+            path.append(HomeRoute.shop)
+            path.append(ShopRoute.product(ShopFixtures.products[1].slug))
+        }
+        if UserDefaults.standard.bool(forKey: "startShopStore") {
+            path.append(HomeRoute.shop)
+            path.append(ShopRoute.store(ShopFixtures.gearSeller.slug))
+        }
+        return path
     }
 
     /// Full-width Home header: prominent lime "cup" (tournaments) on the left,

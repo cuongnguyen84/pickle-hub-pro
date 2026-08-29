@@ -124,6 +124,24 @@ describe("homepageThumbnailUrl", () => {
     ).toBe("https://i.ytimg.com/vi/video123/hqdefault.jpg");
   });
 
+  it("preserves the full image when contain mode is requested", () => {
+    const mux = homepageThumbnailUrl(
+      "https://image.mux.com/abc/thumbnail.jpg",
+      { width: 768, height: 432, fit: "contain" },
+    )!;
+    expect(new URL(mux).searchParams.get("width")).toBe("768");
+    expect(new URL(mux).searchParams.has("height")).toBe(false);
+    expect(new URL(mux).searchParams.has("fit_mode")).toBe(false);
+
+    expect(
+      homepageThumbnailUrl("https://drive.google.com/file/d/abc_123/view", {
+        width: 768,
+        height: 432,
+        fit: "contain",
+      }),
+    ).toBe("https://lh3.googleusercontent.com/d/abc_123=w768");
+  });
+
   it("rejects unbounded third-party originals and keeps controlled local assets", () => {
     expect(
       homepageThumbnailUrl("https://storage.ghost.io/content/images/huge.png", {
@@ -134,5 +152,50 @@ describe("homepageThumbnailUrl", () => {
     expect(
       homepageThumbnailUrl("/images/blog/local.webp", { width: 168, height: 168 }),
     ).toBe("/images/blog/local.webp");
+  });
+
+  it("uses Pickleball.com's bounded image optimizer", () => {
+    const result = homepageThumbnailUrl(
+      "https://cdn.pickleball.com/news/example.jpg?width=1320&height=528&optimizer=image",
+      { width: 168, height: 168 },
+    )!;
+
+    expect(new URL(result).searchParams.get("width")).toBe("168");
+    expect(new URL(result).searchParams.get("height")).toBe("168");
+  });
+
+  it("allows APP Webflow AVIF assets but rejects other Webflow originals", () => {
+    const thumbnail =
+      "https://cdn.prod.website-files.com/site/asset_MaddoxBatesWin-Thumb.avif";
+
+    expect(
+      homepageThumbnailUrl(thumbnail, { width: 168, height: 168 }),
+    ).toBe(thumbnail);
+    expect(
+      homepageThumbnailUrl(
+        "https://cdn.prod.website-files.com/site/asset_MaddoxBatesWin.png",
+        { width: 168, height: 168 },
+      ),
+    ).toBeUndefined();
+  });
+
+  it("allows generated WordPress images from trusted news publishers only", () => {
+    const pickleballUnion =
+      "https://pickleballunion.com/wp-content/uploads/2026/08/inside-foot-in-pickleball-1024x731.jpg";
+    const majorLeaguePickleball =
+      "https://majorleaguepickleball.co/wp-content/uploads/MLP-FINALS-1024x427.png";
+
+    expect(
+      homepageThumbnailUrl(pickleballUnion, { width: 168, height: 168 }),
+    ).toBe(pickleballUnion);
+    expect(
+      homepageThumbnailUrl(majorLeaguePickleball, { width: 168, height: 168 }),
+    ).toBe(majorLeaguePickleball);
+    expect(
+      homepageThumbnailUrl(
+        "https://unknown.example/wp-content/uploads/2026/08/news.jpg",
+        { width: 168, height: 168 },
+      ),
+    ).toBeUndefined();
   });
 });

@@ -88,20 +88,32 @@ struct ChatRepository {
         } catch { assertionFailure("ChatRepository.leaderboard: \(error)"); return [] }
     }
 
-    func profile(userID: String) async -> (displayName: String?, avatarURL: String?) {
-        struct Row: Decodable { let display_name: String?; let avatar_url: String? }
+    func profile(userID: String) async -> (displayName: String?, avatarURL: String?, displayNameUpdatedAt: String?) {
+        struct Row: Decodable {
+            let display_name: String?
+            let avatar_url: String?
+            let display_name_updated_at: String?
+        }
         do {
             let rows: [Row] = try await client
                 .from("profiles")
-                .select("display_name, avatar_url")
+                .select("display_name, avatar_url, display_name_updated_at")
                 .eq("id", value: userID)
                 .limit(1)
                 .execute().value
-            return (rows.first?.display_name, rows.first?.avatar_url)
-        } catch { assertionFailure("ChatRepository.profile: \(error)"); return (nil, nil) }
+            return (rows.first?.display_name, rows.first?.avatar_url, rows.first?.display_name_updated_at)
+        } catch { assertionFailure("ChatRepository.profile: \(error)"); return (nil, nil, nil) }
     }
 
     // MARK: Writes
+
+    func updateDisplayName(displayName: String) async throws {
+        struct Params: Encodable { let p_display_name: String }
+        try await client.rpc(
+            "update_chat_nickname",
+            params: Params(p_display_name: displayName)
+        ).execute()
+    }
 
     /// Insert a message. Slow-mode / mute are enforced server-side (RLS); a thrown
     /// error is surfaced so the UI can flag the optimistic row as failed.

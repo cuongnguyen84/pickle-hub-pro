@@ -919,6 +919,17 @@
         "cron.write.cron_secret.shared_secret"
       ],
       "status": "classified"
+    },
+    "product-import-enrich": {
+      "verify_jwt": false,
+      "service_role": {
+        "uses_client": true,
+        "accepts_bearer": false
+      },
+      "flows": [
+        "user.write.user_jwt.derived_identity"
+      ],
+      "status": "classified"
     }
   }
 }

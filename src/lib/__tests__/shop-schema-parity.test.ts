@@ -13,8 +13,16 @@ const SQL = readFileSync(
   "utf8",
 );
 
+const SQL_PHASE2 = readFileSync(
+  resolve(__dirname, "../../../supabase/migrations/20260824120000_shop_products_bulk_import.sql"),
+  "utf8",
+);
+
+/** Tables created in the phase-1 migration (products lives in a later migration). */
+const PHASE1_TABLES = SHOP_TABLES.filter((t) => t !== "products") as readonly (typeof SHOP_TABLES[number])[];
+
 describe("shop schema parity with migration 20260811090000", () => {
-  it.each(SHOP_TABLES)("migration creates table %s", (table) => {
+  it.each(PHASE1_TABLES)("migration creates table %s", (table) => {
     expect(SQL).toContain(`CREATE TABLE IF NOT EXISTS public.${table}`);
   });
 
@@ -26,14 +34,16 @@ describe("shop schema parity with migration 20260811090000", () => {
     expect(SQL).toContain(`CREATE OR REPLACE FUNCTION public.${fn}(`);
   });
 
-  it("every created table enables RLS", () => {
-    for (const table of SHOP_TABLES) {
-      expect(SQL).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
-    }
+  it("migration 20260824120000 creates shop_products", () => {
+    expect(SQL_PHASE2).toContain("ALTER TABLE public.products");
+    expect(SQL_PHASE2).toContain("import_batch_id");
+    expect(SQL_PHASE2).toContain("ai_enriched");
+    expect(SQL_PHASE2).toContain("ai_confidence");
   });
 
-  it("every created table has a GRANT — a policy without a grant is a 42501", () => {
-    for (const table of SHOP_TABLES) {
+  it("every phase-1 table has RLS and GRANT — policy without grant is a 42501", () => {
+    for (const table of PHASE1_TABLES) {
+      expect(SQL).toContain(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
       expect(SQL).toMatch(new RegExp(`GRANT[^;]*ON public\\.${table}\\s+TO`, "s"));
     }
   });

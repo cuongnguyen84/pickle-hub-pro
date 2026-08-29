@@ -25,3 +25,14 @@
 - `reports/YYYY-MM-DD.md` — báo cáo hằng ngày.
 
 ## 🧭 Behavioral (từ SKILL): Think → Simple → Surgical → Goal-driven trước mọi code.
+
+## 🛒 Shop closed pilot — checkpoint 14/08/2026
+- Branch `feat/shop-closed-pilot`, PR `#578`; checkpoint báo cáo gần nhất: HEAD `ea1ba75c`, CI 8/8 xanh. P2a + P2b + Product Owner acceptance đã hoàn thành local; coverage statements 84.31% (4726/5605).
+- Cloudflare staging riêng: `thepicklehub-shop-staging`, URL `https://thepicklehub-shop-staging.pages.dev`; Supabase staging ref `utokwfcljxjkpkaqgheo`. Không thay Pages project `pickle-hub-pro`.
+- Staging migration ledger 359; `shop-media-lifecycle` đã deploy; cleanup + reconcile cron đã chạy HTTP 200. B13 canary: logo/cover sống không bị xóa, orphan thật bị xóa, health stuck/failed = 0.
+- 16 cron ngoài Shop đang tạm inactive trên staging để giữ tín hiệu acceptance sạch; chỉ `shop-media-cleanup-every-5m` và `shop-media-reconcile-hourly` active. Rollback inventory nằm trong operations docs; không bật-tất-cả.
+- Seller Rules v1: effective `2026-08-14T00:00:00+07:00`, SHA-256 `fb62bd471d7b6b27c53d9eeded57dd636aa2f1f1f03db9a4a20abd49d7c70c98`, 33,568 bytes. Privacy Shop VI/EN đã duyệt.
+- Staging automated acceptance 6/6 và rollback drill PASS; còn 18 authenticated/manual journeys cần fixture admin TOTP AAL2 + seller/pilot/product/media. Chỉ merge PR sau tổng 24/24, responsive/axe trên dữ liệu thật, leakage scan và teardown sạch.
+- Quyết định PO: Claude được tạo fixture staging tổng hợp, TOTP thật, không PII/người bán thật; giữ 16 cron ngoài Shop inactive trong acceptance. `shops.owner_user_id` là privacy-hardening debt hậu pilot, không vá grant vội.
+- B14 vẫn là defect nền tảng: cleanup delete-account có thể lỗi nhưng endpoint báo success. Closed pilot an toàn nhờ shop owner bị chặn 409 trước cleanup; không mở lại self-delete và không cấp grant lẻ.
+- Chưa merge, chưa chạm production, indexing OFF, không sitemap/IndexNow, Wave 1 chưa được phép. Sau staging 24/24: merge → production preflight/deploy → Wave 0 nội bộ; B13 phải có trước cron và không rotate `CRON_SECRET` production.

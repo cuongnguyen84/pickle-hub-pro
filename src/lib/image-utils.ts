@@ -127,12 +127,18 @@ export function cmsHeroImageSources(
  */
 export function homepageThumbnailUrl(
   source: string | null | undefined,
-  options: { width: number; height: number; quality?: number },
+  options: { width: number; height: number; quality?: number; fit?: "cover" | "contain" },
 ): string | undefined {
   if (!source) return undefined;
 
   const normalized = normalizeImageUrl(source);
-  const transformed = optimizeImageUrl(normalized, options);
+  // Hero artwork often contains copy or subjects close to the edge. In
+  // `contain` mode, request a width-bounded derivative without asking the CDN
+  // to crop it to the destination ratio; CSS then letterboxes it if needed.
+  const transformOptions = options.fit === "contain"
+    ? { width: options.width, quality: options.quality }
+    : options;
+  const transformed = optimizeImageUrl(normalized, transformOptions);
   if (transformed && transformed !== normalized) return transformed;
 
   // Committed/local assets already have a controlled byte budget.
@@ -145,6 +151,7 @@ export function homepageThumbnailUrl(
     // Google Drive direct images use the Google Photos CDN transform suffix.
     if (host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")) {
       const base = url.toString().replace(/=w\d+(?:-h\d+)?(?:-[a-z]+)?$/i, "");
+      if (options.fit === "contain") return `${base}=w${options.width}`;
       return `${base}=w${options.width}-h${options.height}-c`;
     }
 
@@ -154,6 +161,47 @@ export function homepageThumbnailUrl(
       const match = url.pathname.match(/^\/vi\/([^/]+)\/[^/]+$/);
       if (!match) return undefined;
       return `https://i.ytimg.com/vi/${match[1]}/hqdefault.jpg`;
+    }
+
+    // Pickleball.com's image optimizer accepts bounded width/height values.
+    // Replace feed-provided hero dimensions so its 1320px images do not reach
+    // the homepage unchanged.
+    if (host === "cdn.pickleball.com" && url.searchParams.get("optimizer") === "image") {
+      url.searchParams.set("width", String(options.width));
+      if (options.fit !== "contain") {
+        url.searchParams.set("height", String(options.height));
+      } else {
+        url.searchParams.delete("height");
+      }
+      return url.toString();
+    }
+
+    // APP's Webflow feed serves pre-encoded AVIF editorial assets. The current
+    // corpus is bounded (all audited assets <= 74KB); keep the extension and
+    // exact-host guards so arbitrary Webflow originals remain blocked.
+    if (
+      host === "cdn.prod.website-files.com" &&
+      url.pathname.toLowerCase().endsWith(".avif")
+    ) {
+      return url.toString();
+    }
+
+    // The current Pickleball Union and MLP feeds publish their card artwork
+    // from WordPress' generated upload variants. Keep this deliberately
+    // limited to known editorial hosts + the uploads path: accepting every
+    // remote WordPress URL here would undo the homepage byte-budget guard.
+    const trustedWordPressNewsHosts = new Set([
+      "pickleballunion.com",
+      "www.pickleballunion.com",
+      "majorleaguepickleball.co",
+      "www.majorleaguepickleball.co",
+    ]);
+    if (
+      trustedWordPressNewsHosts.has(host) &&
+      url.pathname.startsWith("/wp-content/uploads/") &&
+      /\.(?:avif|jpe?g|png|webp)$/i.test(url.pathname)
+    ) {
+      return url.toString();
     }
 
     // Same-origin absolute URLs are as controlled as root-relative assets.

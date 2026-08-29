@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { suggestGroupConfigs, distributePlayersToGroups } from '@/hooks/useQuickTable';
 import type { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useI18n } from '@/i18n';
+import { Button } from '@/components/ui/button';
 
 // ─── W2.4d shared tokens ─────────────────────────────────────────────────
 const surfaceCard: React.CSSProperties = {
@@ -64,6 +65,7 @@ const FLY_MS = 950;
 
 type SubPhase = 'scan' | 'reveal' | 'fly';
 type Phase = 'config' | 'drawing' | 'done';
+type AssignmentMode = 'draw' | 'manual';
 
 interface DrawTeam {
   id: string;
@@ -121,6 +123,8 @@ export function GroupSetupDialog({
   const [fly, setFly] = useState<FlyState | null>(null);
   const [revealOrder, setRevealOrder] = useState<DrawPick[]>([]);
   const [randomizeGameOrder, setRandomizeGameOrder] = useState(false);
+  const [assignmentMode, setAssignmentMode] = useState<AssignmentMode>('draw');
+  const [manualAssignments, setManualAssignments] = useState<Record<string, number>>({});
   const { language, t } = useI18n();
   const c = t.teamMatchComponents;
   const vi = language === 'vi';
@@ -212,11 +216,19 @@ export function GroupSetupDialog({
     randomOrderHint: vi
       ? 'Mỗi trận sẽ có thứ tự các game (đôi nam / đôi nữ / đôi nam nữ) khác nhau, thay vì cố định theo lúc setup.'
       : 'Each match plays its games in a different order instead of the fixed setup order.',
+    assignmentMethod: vi ? 'Cách chia bảng' : 'Assignment method',
+    drawMode: vi ? 'Bốc thăm' : 'Draw',
+    manualMode: vi ? 'Xếp thủ công' : 'Manual',
+    manualHint: vi
+      ? 'Chọn bảng cho từng đội. Mỗi bảng phải đủ số đội trước khi xác nhận.'
+      : 'Choose a group for every team. Each group must be filled before confirming.',
+    unassigned: vi ? 'Chưa xếp' : 'Unassigned',
+    assignedProgress: (assigned: number, count: number) => vi ? `Đã xếp ${assigned}/${count} đội` : `Assigned ${assigned}/${count} teams`,
   };
 
   const groupSuggestions = useMemo(() => suggestGroupConfigs(teamCount), [teamCount]);
 
-  const distribution = useMemo(() => {
+  const automaticDistribution = useMemo(() => {
     if (!selectedGroupCount) return null;
     const teamsForDistribution = approvedTeams.map((tm) => ({
       id: tm.id,
@@ -226,6 +238,39 @@ export function GroupSetupDialog({
     }));
     return distributePlayersToGroups(teamsForDistribution, selectedGroupCount) as DrawTeam[][];
   }, [selectedGroupCount, approvedTeams]);
+
+  const manualDistribution = useMemo(() => {
+    if (!selectedGroupCount) return null;
+    const groups: DrawTeam[][] = Array.from({ length: selectedGroupCount }, () => []);
+    approvedTeams.forEach((team) => {
+      const groupIndex = manualAssignments[team.id];
+      if (groupIndex == null || groupIndex < 0 || groupIndex >= selectedGroupCount) return;
+      groups[groupIndex].push({ id: team.id, name: team.team_name, seed: team.seed || undefined });
+    });
+    return groups;
+  }, [selectedGroupCount, approvedTeams, manualAssignments]);
+
+  const distribution = assignmentMode === 'manual' ? manualDistribution : automaticDistribution;
+  const targetGroupSizes = automaticDistribution?.map((group) => group.length) ?? [];
+  const assignedCount = Object.keys(manualAssignments).filter((id) => approvedIds.includes(id)).length;
+  const manualComplete = !!selectedGroupCount
+    && assignedCount === teamCount
+    && !!manualDistribution
+    && manualDistribution.every((group, index) => group.length === targetGroupSizes[index]);
+
+  const assignTeam = (teamId: string, groupIndex: number) => {
+    setManualAssignments((current) => {
+      const currentGroup = current[teamId];
+      if (currentGroup === groupIndex) {
+        const next = { ...current };
+        delete next[teamId];
+        return next;
+      }
+      const occupied = Object.entries(current).filter(([id, gi]) => id !== teamId && gi === groupIndex).length;
+      if (occupied >= (targetGroupSizes[groupIndex] ?? 0)) return current;
+      return { ...current, [teamId]: groupIndex };
+    });
+  };
 
   // Canonical picks (every team + its snake-assigned group). Reveal ORDER is
   // shuffled at draw time so the ceremony looks random, while the actual group
@@ -271,6 +316,7 @@ export function GroupSetupDialog({
     setSpinName(null);
     setFly(null);
     setRevealOrder([]);
+    setManualAssignments({});
   }, [open, selectedGroupCount]);
 
   // Per-pick sequence: scan (flicker) → reveal (hold, scroll target into view)
@@ -475,6 +521,88 @@ export function GroupSetupDialog({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 'var(--tl-radius)', background: 'rgba(233, 182, 73, 0.08)', border: '1px solid rgba(233, 182, 73, 0.35)', color: 'var(--tl-fg-2)', fontSize: 13 }}>
                   <AlertCircle className="h-4 w-4" style={{ color: 'var(--tl-gold)' }} />
                   <p style={{ margin: 0 }}>{txt.notEnoughTeams}</p>
+                </div>
+              )}
+
+              {selectedGroupCount && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <h4 style={fieldLabel}>{txt.assignmentMethod}</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {([
+                      ['draw', txt.drawMode, Shuffle],
+                      ['manual', txt.manualMode, Users],
+                    ] as const).map(([value, label, Icon]) => {
+                      const selected = assignmentMode === value;
+                      return (
+                        <Button
+                          key={value}
+                          type="button"
+                          variant={selected ? 'default' : 'outline'}
+                          onClick={() => setAssignmentMode(value)}
+                          style={{ justifyContent: 'center', minHeight: 44 }}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {label}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selectedGroupCount && assignmentMode === 'manual' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12.5, color: 'var(--tl-fg-3)' }}>
+                    <span>{txt.manualHint}</span>
+                    <span style={tinyPill}>{txt.assignedProgress(assignedCount, teamCount)}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {approvedTeams.map((team) => {
+                      const assignedGroup = manualAssignments[team.id];
+                      return (
+                        <div key={team.id} style={{ ...surfaceCard, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                          <span style={{ flex: 1, minWidth: 140, color: 'var(--tl-fg)', fontSize: 13.5, fontWeight: 500 }}>{team.team_name}</span>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            {Array.from({ length: selectedGroupCount }).map((_, groupIndex) => {
+                              const selected = assignedGroup === groupIndex;
+                              const occupied = Object.entries(manualAssignments).filter(([id, gi]) => id !== team.id && gi === groupIndex).length;
+                              const full = !selected && occupied >= (targetGroupSizes[groupIndex] ?? 0);
+                              return (
+                                <Button
+                                  key={groupIndex}
+                                  type="button"
+                                  variant={selected ? 'default' : 'outline'}
+                                  size="sm"
+                                  disabled={full}
+                                  onClick={() => assignTeam(team.id, groupIndex)}
+                                  style={{ minWidth: 44, justifyContent: 'center', padding: '7px 10px', opacity: full ? 0.4 : 1 }}
+                                  aria-label={`${team.team_name} — ${txt.groupName(groupIndex)}`}
+                                >
+                                  {String.fromCharCode(65 + groupIndex)}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          {assignedGroup == null && <span style={{ fontSize: 11.5, color: 'var(--tl-gold)', width: '100%' }}>{txt.unassigned}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {manualDistribution && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                      {manualDistribution.map((group, groupIndex) => (
+                        <div key={groupIndex} style={{ ...surfaceCard, padding: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={tinyPill}>{txt.groupName(groupIndex)}</span>
+                            <span style={{ fontSize: 12, color: 'var(--tl-fg-3)' }}>{group.length}/{targetGroupSizes[groupIndex] ?? 0}</span>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            {group.map((team) => <span key={team.id} style={{ fontSize: 12.5, color: 'var(--tl-fg-2)' }}>{team.name}</span>)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -706,10 +834,15 @@ export function GroupSetupDialog({
           </button>
 
           {phase === 'config' && (
-            <button type="button" className="tl-btn green" onClick={startDraw} disabled={!selectedGroupCount || total === 0}>
-              <Shuffle className="h-4 w-4" />
-              {txt.startDraw}
-            </button>
+            <Button
+              type="button"
+              variant="default"
+              onClick={assignmentMode === 'manual' ? handleConfirm : startDraw}
+              disabled={!selectedGroupCount || (assignmentMode === 'manual' ? !manualComplete || isCreating : total === 0)}
+            >
+              {assignmentMode === 'manual' ? <Check className="h-4 w-4" /> : <Shuffle className="h-4 w-4" />}
+              {assignmentMode === 'manual' ? (isCreating ? txt.processing : txt.confirm) : txt.startDraw}
+            </Button>
           )}
 
           {phase === 'drawing' && (
