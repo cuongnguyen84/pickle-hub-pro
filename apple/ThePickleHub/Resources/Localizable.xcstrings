@@ -6488,6 +6488,16 @@
         }
       }
     },
+    "Đang tải bài viết" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading article"
+          }
+        }
+      }
+    },
     "Đang tải bảng tin…" : {
       "localizations" : {
         "en" : {
@@ -7096,6 +7106,7 @@
       }
     },
     "Đọc bài gốc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7116,11 +7127,22 @@
       }
     },
     "Đọc toàn bộ tại %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Read the full story at %@"
+          }
+        }
+      }
+    },
+    "Đọc trên ThePickleHub" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read on ThePickleHub"
           }
         }
       }
@@ -9097,16 +9119,6 @@
         }
       }
     },
-    "Hoàn tất & mở đăng ký" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Finish & open registration"
-          }
-        }
-      }
-    },
     "Hồ sơ" : {
       "localizations" : {
         "en" : {
@@ -9163,6 +9175,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Done"
+          }
+        }
+      }
+    },
+    "Hoàn tất & mở đăng ký" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Finish & open registration"
           }
         }
       }
