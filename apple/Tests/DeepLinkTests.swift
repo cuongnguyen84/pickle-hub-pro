@@ -82,4 +82,23 @@ struct DeepLinkTests {
             "entity_type": "tournament", "related_id": "not-a-uuid",
         ]) == nil)
     }
+
+    @Test func shopLinksOpenNativeBuyerSurfaces() {
+        #expect(parse("https://www.thepicklehub.net/shop") == .shopHome)
+        #expect(parse("https://www.thepicklehub.net/vi/shop/search?q=vot%20carbon") == .shopSearch(query: "vot carbon"))
+        #expect(parse("thepicklehub://shop/category/vot") == .shopCategory(.paddles))
+        #expect(parse("https://www.thepicklehub.net/shop/product/vot-carbon-16mm-control") == .shopProduct(slug: "vot-carbon-16mm-control"))
+        #expect(parse("https://www.thepicklehub.net/shop/store/pickle-gear-sai-gon") == .shopStore(slug: "pickle-gear-sai-gon"))
+        #expect(parse("https://www.thepicklehub.net/shop/order/TPH-260824-ABC") == .shopOrder(code: "TPH-260824-ABC"))
+        #expect(parse("https://www.thepicklehub.net/shop/category/khong-ton-tai") == nil)
+        #expect(parse("https://evil.com/shop") == nil)
+    }
+
+    @Test func shopStatusPushOpensBuyerOrder() {
+        #expect(RemoteNotificationRoute.deepLink(from: [
+            "type": "shop_order_status",
+            "order_code": "TPH-260824-ABC",
+            "url": "/shop/order/TPH-260824-ABC",
+        ]) == .shopOrder(code: "TPH-260824-ABC"))
+    }
 }

@@ -64,6 +64,7 @@ vi.mock("@/hooks/shop/useOrders", () => ({
 vi.mock("@/hooks/shop/useOrderPayment", () => ({
   useOrderPaymentInfo: () => ({ data: undefined, isPending: false, isError: false }),
   useConfirmPayment: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useMarkRefunded: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 const { default: SellerOrderDetail } = await import("../SellerOrderDetail");

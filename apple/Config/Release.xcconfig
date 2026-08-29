@@ -1,12 +1,12 @@
-// App Store configuration. This intentionally replaces the existing Capacitor
-// app identity and follows its current 1.0.1 (2) build with native 1.1.0 (3).
+// App Store configuration. This replaces the existing app identity and follows
+// the live 2.0.3 (8) build with the Shop MVP pilot candidate 2.1.0 (9).
 #include "Secrets.xcconfig"
 
 APP_ENVIRONMENT = production
 APS_ENVIRONMENT = production
 PRODUCT_BUNDLE_IDENTIFIER = net.thepicklehub.app
-MARKETING_VERSION = 2.0.3
-CURRENT_PROJECT_VERSION = 8
+MARKETING_VERSION = 2.1.0
+CURRENT_PROJECT_VERSION = 9
 
 // Native guest registration is active. A valid public Turnstile key remains
 // required because the production OTP endpoint rejects unverified requests.
@@ -15,6 +15,12 @@ NATIVE_EVENT_REGISTRATION_ENABLED = YES
 // Preserve Firebase Messaging parity with the production Capacitor app. Public
 // Firebase identifiers resolve from ignored Secrets.xcconfig.
 REMOTE_PUSH_ENABLED = YES
+
+// Shop MVP is compiled into the App Store candidate and opened as a controlled
+// pilot. Both flags are checked again at runtime; malformed/missing values fail
+// closed so a configuration mistake cannot expose an unfinished surface.
+SHOP_NATIVE_BUILT_IN = YES
+SHOP_NATIVE_PILOT_ENABLED = YES
 
 // Product approved the one-time sign-in reset for the Capacitor → native
 // upgrade on 2026-07-22. The native SDK persists the new session in Keychain.

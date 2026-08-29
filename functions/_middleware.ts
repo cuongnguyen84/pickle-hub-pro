@@ -371,7 +371,15 @@ const SECURITY_HEADERS: Record<string, string> = {
     // (34 csp_violation reports / 7d in client_errors). Google requires it in
     // script-src + frame-src. Kept in sync with public/_headers.
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com https://challenges.cloudflare.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    // 2026-08-29: Chrome's built-in Translate injects its stylesheet from
+    // www.gstatic.com into the main document, so it is subject to our page
+    // CSP. Without this the sheet is blocked (49 csp_violation reports / 3w)
+    // and Translate renders unstyled — visible to the ~95% Vietnamese
+    // audience whenever they translate an EN-only surface instead of using
+    // the language toggle. www.gstatic.com is already trusted in script-src
+    // above, a strictly higher-privilege directive, and style-src already
+    // carries 'unsafe-inline'. Kept in sync with public/_headers.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
     "media-src 'self' data: blob: https:; " +
@@ -1018,7 +1026,23 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v68 (2026-08-25) — the VI live hub links to /live/:id instead of
   // /vi/live/:id, so its cached body would otherwise keep pointing at URLs
   // that now 301.
-  const cacheKey = `pr:v68:${url.pathname}`;
+  // v69 (2026-08-28) — the Aug 20-23 PPA Asia stop is renamed from its
+  // placeholder "China Open 2" to the official "Skechers Shenzhen Open" on
+  // /tournaments + /vi/tournaments and in two blog bodies, and its status
+  // flips Upcoming -> Completed. Cached HTML would keep serving the wrong
+  // entity name and a finished event billed as upcoming.
+  // v70 (2026-08-28) — every news article changes shape: the related strip
+  // becomes prev/next neighbours instead of the same six newest items for all
+  // 843 URLs, and the source credit becomes a dateline naming ThePickleHub
+  // with a visible date. Cached HTML would keep serving the six-link version
+  // that produced the orphans.
+  // v72 (2026-08-29): follow-up — the "FPT Play requires a subscription" claim
+  // survived in the EN FAQ and both overview bullets; finals times added to the
+  // pillar post. v71 (2026-08-29): World Cup T-1 refresh — how-to-watch + schedule + overview
+  // now carry the Sep 6 final times, the withdrawn ticket link, current hotel
+  // rates and the confirmed 81-nation field. Old HTML would serve the stale
+  // "the Open final is not on the schedule" claim for the whole TTL.
+  const cacheKey = `pr:v72:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

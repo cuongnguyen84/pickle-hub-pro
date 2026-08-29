@@ -60,6 +60,14 @@
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "description": "IndexNow rejected the submission, or was unreachable. The body is still an IndexNowResult: indexnow_status > 0 means IndexNow answered and refused; indexnow_status 0 with indexnow_error means the ping never got through.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IndexNowResult" }
+              }
+            }
           }
         }
       },
@@ -120,6 +128,14 @@
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "description": "IndexNow rejected the submission, or was unreachable. The body is still an IndexNowResult: indexnow_status > 0 means IndexNow answered and refused; indexnow_status 0 with indexnow_error means the ping never got through.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IndexNowResult" }
+              }
+            }
           }
         }
       }
@@ -158,7 +174,11 @@
             "items": { "type": "string", "format": "uri" }
           },
           "indexnow_status": { "type": "integer" },
-          "indexnow_response": { "type": "string" }
+          "indexnow_response": { "type": "string" },
+          "indexnow_error": {
+            "type": "string",
+            "description": "Present only when we never reached api.indexnow.org (timeout / DNS / TLS). In that case indexnow_status is 0 and the HTTP status is 502."
+          }
         }
       },
       "Error": {

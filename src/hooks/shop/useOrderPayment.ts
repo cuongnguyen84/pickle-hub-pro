@@ -1,5 +1,5 @@
 // ============================================================================
-// P4b — the bank-transfer half of an order.
+// Shop payment projection — manual VietQR plus optional SePay gateway.
 // ----------------------------------------------------------------------------
 // Separate from useOrders because the shape it reads is not on the order at
 // all. `shops.bank_account_number` reaches nobody through a grant or a
@@ -8,14 +8,14 @@
 // and a stranger's code identically so it cannot be used to probe which order
 // codes exist.
 //
-// The QR is not fetched. img.vietqr.io renders one from (bank, account,
-// amount, memo) as a plain <img>, which is how event fees and team-match fees
-// have worked since 20260512130000 — this is the third caller of that helper,
-// not a new mechanism. No API key, no merchant account, no webhook.
+// Manual mode renders the existing seller VietQR. Gateway mode exposes only
+// provider + state; merchant credentials and IPN reconciliation stay in Edge
+// Functions/Postgres and never enter this client.
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { shopRpc } from "@/integrations/supabase/shop-client";
+import { startSePayCheckout } from "@/lib/payment/sepay";
 import { orderKeys } from "./useOrders";
 
 export interface OrderPaymentInfo {
@@ -28,6 +28,11 @@ export interface OrderPaymentInfo {
   memo?: string;
   claimed_at?: string | null;
   confirmed_at?: string | null;
+  gateway?: {
+    enabled: boolean;
+    provider: "sepay";
+    status: "not_started" | "initiated" | "paid" | "voided";
+  } | null;
   bank?: { code: string; account_number: string; account_name: string } | null;
 }
 
@@ -49,7 +54,26 @@ export const useOrderPaymentInfo = (code: string | null, enabled = true) =>
     // minutes. The two timestamps travel on the order itself.
     staleTime: 5 * 60_000,
     queryFn: () => shopRpc<OrderPaymentInfo>("shop_order_payment_info", { _code: code }),
+    // The redirect can beat the IPN by a few seconds. Poll only while an
+    // initiated gateway payment is waiting; manual VietQR never polls.
+    refetchInterval: (query) => {
+      const info = query.state.data;
+      return info?.gateway?.enabled && info.gateway.status === "initiated" && !info.confirmed_at
+        ? 3_000
+        : false;
+    },
   });
+
+export const useSePayCheckout = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: startSePayCheckout,
+    onSuccess: (_payment, code) => {
+      void qc.invalidateQueries({ queryKey: paymentKeys.one(code) });
+    },
+  });
+};
 
 /**
  * Both mutations are `retry: false`, for the reason recorded on
@@ -92,3 +116,25 @@ export const useClaimPayment = () => useMarkPayment("shop_order_claim_payment");
 /** owner | manager | fulfillment | admin. `support` can read an order and can
  *  move neither it nor its money. */
 export const useConfirmPayment = () => useMarkPayment("shop_order_confirm_payment");
+
+export interface RefundMarks {
+  code: string;
+  refund_due_vnd: number;
+  refunded_at: string | null;
+}
+
+/** Seller says the refund for a paid-then-cancelled order went back. Same
+ *  roles and the same idempotency as useConfirmPayment. */
+export const useMarkRefunded = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: (code: string) => shopRpc<RefundMarks>("shop_order_mark_refunded", { _code: code }),
+    onSuccess: (marks) => {
+      qc.setQueryData(orderKeys.one(marks.code), (prev: Record<string, unknown> | undefined) =>
+        prev ? { ...prev, refund_due_vnd: marks.refund_due_vnd, refunded_at: marks.refunded_at } : prev,
+      );
+      void qc.invalidateQueries({ queryKey: ["shop", "orders"] });
+    },
+  });
+};

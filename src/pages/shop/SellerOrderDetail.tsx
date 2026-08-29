@@ -36,9 +36,14 @@ import { OrderMoneyRows } from "@/components/shop/OrderMoneyRows";
 import { OrderStatusLine, type CancelActorKind } from "@/components/shop/OrderStatusLine";
 import { OrderTimeline } from "@/components/shop/OrderTimeline";
 import { OrderPaymentCard } from "@/components/shop/OrderPaymentCard";
+import { OrderRefundCard } from "@/components/shop/OrderRefundCard";
 import { useMyShopMembership, useShopProfile } from "@/hooks/shop/useShopProfile";
 import { useOrder, useOrderTransition } from "@/hooks/shop/useOrders";
-import { useConfirmPayment, useOrderPaymentInfo } from "@/hooks/shop/useOrderPayment";
+import {
+  useConfirmPayment,
+  useMarkRefunded,
+  useOrderPaymentInfo,
+} from "@/hooks/shop/useOrderPayment";
 import { shopErrorReason, shopReasonMessage } from "@/lib/shop/errors";
 import { formatVnd } from "@/lib/shop/publicCatalog";
 import { addressForClipboard, formatWhen, telHref } from "@/lib/shop/orderFormat";
@@ -130,6 +135,7 @@ export default function SellerOrderDetail() {
     q.data?.payment_method === "bank_transfer",
   );
   const confirmPayment = useConfirmPayment();
+  const markRefunded = useMarkRefunded();
 
   const [pending, setPending] = useState<Pending>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -302,6 +308,13 @@ export default function SellerOrderDetail() {
           cancelledAt={cancelEvent?.created_at ?? null}
         />
       )}
+
+      <OrderRefundCard
+        refundDueVnd={order.refund_due_vnd}
+        refundedAt={order.refunded_at}
+        side="seller"
+        onMark={canAct ? () => markRefunded.mutateAsync(order.code) : undefined}
+      />
 
       {/* ── 1. What to do ──────────────────────────────────────────────── */}
       <section aria-labelledby="sod-todo">

@@ -57,7 +57,39 @@ struct DeepLinkDestinationView: View {
                 TournamentDashboardPickerView()
             case .tournamentDashboard(let type, let id):
                 TournamentDashboardDeepLinkView(type: type, id: id)
+            case .shopHome:
+                ShopFeatureDestination { ShopHomeView() }
+            case .shopSearch(let query):
+                ShopFeatureDestination { ShopSearchView(initialQuery: query ?? "") }
+            case .shopCategory(let category):
+                ShopFeatureDestination { ShopSearchView(initialCategory: category) }
+            case .shopProduct(let slug):
+                ShopFeatureDestination { ShopProductDetailView(productSlug: slug) }
+            case .shopStore(let slug):
+                ShopFeatureDestination { ShopStoreView(storeSlug: slug) }
+            case .shopOrder(let code):
+                ShopFeatureDestination {
+                    AuthenticationRequiredView { ShopOrderDetailView(code: code) }
+                }
             }
+        }
+    }
+}
+
+private struct ShopFeatureDestination<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if ShopFeatureGate.isEnabled {
+            content()
+        } else {
+            TLEmptyState(
+                icon: "bag",
+                title: "Shop chưa được mở",
+                subtitle: "Tính năng đang trong giai đoạn thử nghiệm giới hạn."
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(TLColor.bg)
         }
     }
 }

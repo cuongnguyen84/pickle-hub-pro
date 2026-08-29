@@ -10,6 +10,7 @@ export interface SystemSettings {
   geo_block_enabled: boolean;
   blocked_countries: string[];
   require_login_tournament_detail: boolean;
+  shop_sepay_gateway_enabled: boolean;
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -19,6 +20,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   geo_block_enabled: true,
   blocked_countries: ["US"],
   require_login_tournament_detail: false,
+  shop_sepay_gateway_enabled: false,
 };
 
 async function fetchSystemSettings(): Promise<SystemSettings> {

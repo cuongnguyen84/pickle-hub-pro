@@ -428,6 +428,15 @@ verify_jwt = false
 [functions.shop-media-lifecycle]
 verify_jwt = false
 
+# Buyer JWT is verified inside the checkout function (ES256 workaround).
+# SePay bank webhooks use raw-body HMAC-SHA256; legacy Payment Gateway IPNs use
+# X-Secret-Key. The handler uses service_role for one reconciliation RPC.
+[functions.shop-sepay-checkout]
+verify_jwt = false
+
+[functions.shop-sepay-ipn]
+verify_jwt = false
+
 # ── Local auth: TOTP MFA ────────────────────────────────────────────────────
 # Admin routes sit behind AdminMFAGate, and is_admin() has required aal2 since
 # migration 20260730090000. The CLI's default local stack ships TOTP DISABLED,

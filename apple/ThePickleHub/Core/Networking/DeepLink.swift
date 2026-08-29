@@ -31,6 +31,12 @@ enum DeepLink: Identifiable, Equatable {
     case createFlexTournament
     case dashboardPicker
     case tournamentDashboard(type: String, id: String)
+    case shopHome
+    case shopSearch(query: String?)
+    case shopCategory(ShopCategory)
+    case shopProduct(slug: String)
+    case shopStore(slug: String)
+    case shopOrder(code: String)
 
     var id: String {
         switch self {
@@ -53,6 +59,12 @@ enum DeepLink: Identifiable, Equatable {
         case .createFlexTournament: "tools/flex-tournament/new"
         case .dashboardPicker: "tools/dashboard"
         case .tournamentDashboard(let type, let id): "tools/dashboard/\(type)/\(id)"
+        case .shopHome: "shop"
+        case .shopSearch(let query): "shop/search?query=\(query ?? "")"
+        case .shopCategory(let category): "shop/category/\(category.rawValue)"
+        case .shopProduct(let slug): "shop/product/\(slug)"
+        case .shopStore(let slug): "shop/store/\(slug)"
+        case .shopOrder(let code): "shop/order/\(code)"
         }
     }
 
@@ -75,6 +87,8 @@ enum DeepLink: Identifiable, Equatable {
         // Bỏ prefix /vi
         if segments.first == "vi" { segments.removeFirst() }
 
+        if segments.first == "shop" { return parseShop(segments, url: url) }
+
         switch (segments.first, segments.count) {
         case ("dang-ky", 2):
             let token = segments[1].lowercased()
@@ -90,6 +104,25 @@ enum DeepLink: Identifiable, Equatable {
             return .livestream(id: uuid)
         default:
             return parseTools(segments)
+        }
+    }
+
+    private static func parseShop(_ segments: [String], url: URL) -> DeepLink? {
+        if segments == ["shop"] { return .shopHome }
+        if segments == ["shop", "search"] {
+            let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "q" })?.value
+            return .shopSearch(query: query?.isEmpty == false ? query : nil)
+        }
+        guard segments.count == 3 else { return nil }
+        let slug = segments[2]
+        guard !slug.isEmpty else { return nil }
+        switch segments[1] {
+        case "category": return ShopCategory(rawValue: slug).map(DeepLink.shopCategory)
+        case "product": return .shopProduct(slug: slug)
+        case "store": return .shopStore(slug: slug)
+        case "order": return .shopOrder(code: slug)
+        default: return nil
         }
     }
 
