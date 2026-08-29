@@ -15,6 +15,7 @@ import {
   Upload,
   Download,
   Sparkles,
+  Search,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -31,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { compareAtFromPct } from "@/lib/shop/discount";
 import { useBulkProductImport } from "@/hooks/shop/useBulkProductImport";
 import { publishErrorMessage } from "@/lib/shop/publishRetry";
 import { specFieldsFor } from "@/lib/shop/productSpecs";
@@ -40,6 +42,20 @@ export default function BulkImport() {
   const [enriching, setEnriching] = useState(false);
   const [publishResult, setPublishResult] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [imageQuery, setImageQuery] = useState<Record<string, string>>({});
+  const [imageSearch, setImageSearch] = useState<Record<string, { busy: boolean; note: string | null }>>({});
+
+  const handleSearchImages = async (rowId: string, fallbackQuery: string) => {
+    const query = (imageQuery[rowId] ?? fallbackQuery).trim();
+    if (query.length < 2) return;
+    setImageSearch((s) => ({ ...s, [rowId]: { busy: true, note: null } }));
+    try {
+      const found = await searchMoreImages(rowId, query);
+      setImageSearch((s) => ({ ...s, [rowId]: { busy: false, note: found ? `Tìm thấy ${found} ảnh mới.` : "Không thấy ảnh mới cho từ khoá này — thử tên khác hoặc tải ảnh từ thiết bị." } }));
+    } catch (error) {
+      setImageSearch((s) => ({ ...s, [rowId]: { busy: false, note: error instanceof Error ? error.message : "Không tìm được ảnh." } }));
+    }
+  };
   const [backgroundJobs, setBackgroundJobs] = useState<Record<string, boolean>>({});
   const [backgroundError, setBackgroundError] = useState<string | null>(null);
   const {
@@ -53,6 +69,7 @@ export default function BulkImport() {
     reset,
     updateRow,
     removeImageBackground,
+    searchMoreImages,
     restoreImageBackground,
     shopId,
   } = useBulkProductImport();
@@ -330,6 +347,31 @@ export default function BulkImport() {
                             </p>
                           ) : null}
                         </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`discount-${row.rowId}`}>% giảm giá (không bắt buộc)</Label>
+                          <Input
+                            id={`discount-${row.rowId}`}
+                            inputMode="numeric"
+                            value={row.discountPct ?? ""}
+                            onChange={(event) => {
+                              const digits = event.target.value.replace(/\D/g, "").slice(0, 2);
+                              updateRow(row.rowId, { discountPct: digits ? Number(digits) : undefined });
+                            }}
+                            placeholder="vd. 50"
+                            aria-describedby={`discount-hint-${row.rowId}`}
+                            aria-invalid={row.discountPct != null && (row.discountPct < 1 || row.discountPct > 90)}
+                          />
+                          <p id={`discount-hint-${row.rowId}`} className="text-xs text-muted-foreground">
+                            {(() => {
+                              const price = row.priceOverride ?? row.aiData.price_estimate_vnd ?? 0;
+                              const compareAt = compareAtFromPct(price, row.discountPct);
+                              if (row.discountPct == null) return "Người mua thấy giá gốc gạch ngang và badge -N%.";
+                              if (!price) return "Nhập giá bán trước để tính giá gốc.";
+                              if (!compareAt) return "Chỉ nhận 1–90%.";
+                              return `Giá gốc hiển thị: ${formatPrice(compareAt)} · badge -${row.discountPct}%`;
+                            })()}
+                          </p>
+                        </div>
                         <div className="space-y-1.5 sm:col-span-2">
                           <Label htmlFor={`description-${row.rowId}`}>Mô tả</Label>
                           <Textarea
@@ -453,6 +495,35 @@ export default function BulkImport() {
                             />
                             <span className="text-xs text-muted-foreground">JPG, PNG hoặc WebP · tối đa 8 MB</span>
                           </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Label className="sr-only" htmlFor={`image-query-${row.rowId}`}>Từ khoá tìm ảnh</Label>
+                            <Input
+                              id={`image-query-${row.rowId}`}
+                              className="min-w-[200px] flex-1"
+                              value={imageQuery[row.rowId] ?? (row.aiData.name || row.name)}
+                              onChange={(event) => setImageQuery((q) => ({ ...q, [row.rowId]: event.target.value }))}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  void handleSearchImages(row.rowId, row.aiData?.name || row.name);
+                                }
+                              }}
+                              placeholder="Từ khoá tìm ảnh (tên, màu, hãng…)"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={imageSearch[row.rowId]?.busy}
+                              onClick={() => void handleSearchImages(row.rowId, row.aiData?.name || row.name)}
+                            >
+                              <Search className="mr-2 h-4 w-4" />
+                              {imageSearch[row.rowId]?.busy ? "Đang tìm…" : "Tìm ảnh khác"}
+                            </Button>
+                          </div>
+                          {imageSearch[row.rowId]?.note && (
+                            <p className="text-xs text-muted-foreground" role="status">{imageSearch[row.rowId]?.note}</p>
+                          )}
                           <Label className="sr-only" htmlFor={`image-url-${row.rowId}`}>URL ảnh sản phẩm</Label>
                           <Input
                             id={`image-url-${row.rowId}`}

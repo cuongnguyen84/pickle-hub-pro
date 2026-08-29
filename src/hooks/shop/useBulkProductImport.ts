@@ -26,6 +26,7 @@ import { invokePublishProduct } from "@/hooks/shop/useProductModeration";
 import { cleanSpecs } from "@/lib/shop/productSpecs";
 import { cartesian } from "@/lib/shop/variantMatrix";
 import { publishErrorMessage, withNetworkRetry } from "@/lib/shop/publishRetry";
+import { compareAtFromPct } from "@/lib/shop/discount";
 
 export interface EnrichedData {
   name: string;
@@ -59,6 +60,8 @@ export interface ProductRow {
   rowId: string;
   name: string;
   priceOverride: number | undefined;
+  /** % giảm seller nhập (1..90); giá gốc = price/(1-pct) khi xuất bản. */
+  discountPct: number | undefined;
   categoryOverride: string | undefined;
   versionOptions: string[];
   colorOptions: string[];
@@ -129,6 +132,7 @@ export function useBulkProductImport() {
           rowId: crypto.randomUUID(),
           name,
           priceOverride: price,
+          discountPct: undefined,
           categoryOverride: normalizeCategory(category) || undefined,
           versionOptions: versions,
           colorOptions: colors,
@@ -293,6 +297,30 @@ export function useBulkProductImport() {
     }));
   }, []);
 
+  /**
+   * "Tìm ảnh khác" — Brave-only mode of product-import-enrich (no Gemini):
+   * the seller's own query, minus what is already on the grid. Returns how
+   * many new candidates landed so the page can say "không thấy thêm".
+   */
+  const searchMoreImages = useCallback(async (rowId: string, query: string): Promise<number> => {
+    const row = rows.find((r) => r.rowId === rowId);
+    if (!row?.aiData) return 0;
+    const exclude = row.aiData.image_candidates.map((c) => c.url);
+    const { data, error } = await invokeWithBlobRetry<{ image_candidates?: ProductImageCandidate[] }>(
+      "product-import-enrich",
+      { body: { product_name: query.trim(), images_only: true, exclude } },
+    );
+    if (error) throw new Error(await enrichmentErrorMessage(error));
+    const fresh = (data?.image_candidates ?? []).filter((c) => !exclude.includes(c.url));
+    if (fresh.length) {
+      setRows((previous) => previous.map((r) => r.rowId === rowId && r.aiData ? {
+        ...r,
+        aiData: { ...r.aiData, image_candidates: [...r.aiData.image_candidates, ...fresh] },
+      } : r));
+    }
+    return fresh.length;
+  }, [rows]);
+
   const restoreImageBackground = useCallback((rowId: string, imageUrl: string) => {
     setRows((current) => current.map((row) => {
       if (row.rowId !== rowId) return row;
@@ -317,6 +345,7 @@ export function useBulkProductImport() {
     updateRow,
     removeImageBackground,
     restoreImageBackground,
+    searchMoreImages,
     setRows,
     shopId: shop.data?.id ?? null,
   };
@@ -349,6 +378,9 @@ function revokeRowPreviews(row: ProductRow): void {
   if (row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
   Object.values(row.backgroundRemovedImages).forEach((image) => URL.revokeObjectURL(image.previewUrl));
 }
+
+const rowPrice = (row: ProductRow): number =>
+  Number(row.priceOverride ?? row.aiData?.price_estimate_vnd ?? 0);
 
 function parsePrice(value: unknown): number | undefined {
   if (typeof value === "number") return value > 0 ? Math.round(value) : undefined;
@@ -486,6 +518,7 @@ async function publishRow(row: ProductRow, currentShopId: string, batchId: strin
       category_slug: normalizeCategory(row.categoryOverride ?? row.aiData!.category),
       condition: "new",
       price_vnd: String(row.priceOverride ?? row.aiData!.price_estimate_vnd),
+      compare_at_price_vnd: compareAtFromPct(rowPrice(row), row.discountPct),
       stock_on_hand: "",
     },
   });
@@ -518,6 +551,7 @@ async function publishRow(row: ProductRow, currentShopId: string, batchId: strin
       _rows: optionValues.map((values, index) => ({
         option_values: values,
         price_vnd: String(row.priceOverride ?? row.aiData!.price_estimate_vnd),
+        compare_at_price_vnd: compareAtFromPct(rowPrice(row), row.discountPct),
         stock_on_hand: null,
         sku: null,
         position: index,

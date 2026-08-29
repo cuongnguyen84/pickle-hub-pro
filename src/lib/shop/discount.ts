@@ -20,6 +20,16 @@ export function discountPct(price: number, compareAt: number | null | undefined)
   return pct < 1 ? null : pct;
 }
 
+/**
+ * Giá gốc suy ra từ % giảm seller nhập (import hàng loạt): price / (1 - pct/100),
+ * làm tròn lên để luôn thoả CHECK compare_at > price. pct ngoài 1..90 → null.
+ */
+export function compareAtFromPct(price: number, pct: number | null | undefined): number | null {
+  if (pct == null || !Number.isFinite(pct) || pct < 1 || pct > 90 || !(price > 0)) return null;
+  const compareAt = Math.ceil((price * 100) / (100 - pct));
+  return compareAt > price ? compareAt : null;
+}
+
 /** % giảm lớn nhất trong danh sách phiên bản (PDP chưa chọn phiên bản). */
 export function maxDiscountPct(
   variants: { price_vnd: number; compare_at_price_vnd?: number | null }[],

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COMPARE_AT_NOT_ABOVE,
+  compareAtFromPct,
   compareAtError,
   discountPct,
   maxDiscountPct,
@@ -82,5 +83,23 @@ describe("compareAtError", () => {
   it("giá bán chưa hợp lệ thì chưa so sánh", () => {
     expect(compareAtError("1000000", "", MSG)).toBeNull();
     expect(compareAtError("1000000", "x", MSG)).toBeNull();
+  });
+});
+
+describe("compareAtFromPct", () => {
+  it("50% → giá gốc gấp đôi, và badge tính lại đúng 50", () => {
+    expect(compareAtFromPct(1_900_000, 50)).toBe(3_800_000);
+    expect(discountPct(1_900_000, 3_800_000)).toBe(50);
+  });
+  it("làm tròn lên nên không bao giờ vi phạm CHECK, và badge không lệch quá 1%", () => {
+    const c = compareAtFromPct(1_000_000, 33)!;
+    expect(c).toBeGreaterThan(1_000_000);
+    expect(discountPct(1_000_000, c)).toBe(33);
+  });
+  it("ngoài 1..90 hoặc giá xấu → null", () => {
+    expect(compareAtFromPct(1_000_000, 0)).toBeNull();
+    expect(compareAtFromPct(1_000_000, 95)).toBeNull();
+    expect(compareAtFromPct(0, 50)).toBeNull();
+    expect(compareAtFromPct(1_000_000, undefined)).toBeNull();
   });
 });
