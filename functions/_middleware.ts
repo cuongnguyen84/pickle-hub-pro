@@ -1042,7 +1042,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // now carry the Sep 6 final times, the withdrawn ticket link, current hotel
   // rates and the confirmed 81-nation field. Old HTML would serve the stale
   // "the Open final is not on the schedule" claim for the whole TTL.
-  const cacheKey = `pr:v72:${url.pathname}`;
+  // v73 (2026-08-29): shop SEO audit — <img> gallery + card covers in bot HTML,
+  // price out of product <title>, x-default → VI, EN category names, Brand/sku
+  // in Product schema, Shop link in the shared <nav>.
+  const cacheKey = `pr:v73:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -1230,11 +1233,11 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string, accep
   // SHOP_PUBLIC_INDEXING=1 — otherwise `isNoindex` short-circuits to the
   // noindex shell long before here. /shop/search has no arm on purpose: it
   // is matched by NOINDEX_PATTERNS and never arrives.
-  if (path === "/shop") return await renderShopCatalog(supabase, siteUrl, lang);
+  if (path === "/shop") return await renderShopCatalog(supabase, siteUrl, lang, env.SUPABASE_URL);
   match = path.match(/^\/shop\/category\/([^/]+)$/);
-  if (match) return await renderShopCategory(supabase, match[1], siteUrl, lang);
+  if (match) return await renderShopCategory(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
   match = path.match(/^\/shop\/store\/([^/]+)$/);
-  if (match) return await renderShopStore(supabase, match[1], siteUrl, lang);
+  if (match) return await renderShopStore(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
   match = path.match(/^\/shop\/product\/([^/]+)$/);
   if (match) return await renderShopProduct(supabase, match[1], siteUrl, lang, env.SUPABASE_URL);
 

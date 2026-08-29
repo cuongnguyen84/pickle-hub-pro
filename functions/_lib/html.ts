@@ -44,6 +44,7 @@ function getHeaderHtml(lang: Lang, siteUrl: string): string {
   if (lang === "vi") {
     return `<header><nav>
 <a href="${siteUrl}${prefix}">Trang chủ</a>
+<a href="${siteUrl}${prefix}/shop">Chợ</a>
 <a href="${siteUrl}${prefix}/blog">Blog</a>
 <a href="${siteUrl}${prefix}/tools">Công cụ</a>
 <a href="${siteUrl}${prefix}/tournaments">Giải đấu</a>
@@ -55,6 +56,7 @@ function getHeaderHtml(lang: Lang, siteUrl: string): string {
   }
   return `<header><nav>
 <a href="${siteUrl}/">Home</a>
+<a href="${siteUrl}/shop">Shop</a>
 <a href="${siteUrl}/blog">Blog</a>
 <a href="${siteUrl}/tools">Tools</a>
 <a href="${siteUrl}/tournaments">Tournaments</a>
