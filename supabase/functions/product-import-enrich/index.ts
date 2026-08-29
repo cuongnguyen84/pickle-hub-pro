@@ -1,7 +1,8 @@
 // ============================================================================
 // product-import-enrich — AI enrichment for bulk product import (Shop Phase 2)
 // ----------------------------------------------------------------------------
-// POST { product_name: string }
+// POST { product_name: string }                       → full Gemini + image enrichment
+// POST { product_name, images_only: true, exclude? }  → Brave image search only ("Tìm ảnh khác")
 // Returns structured JSON with Gemini-enriched product fields.
 //
 // Auth: verify_jwt=false (ES256 workaround). getAuthUser() verifies bearer token
@@ -159,7 +160,10 @@ interface BraveImageResult {
   properties?: { url?: unknown; width?: unknown; height?: unknown };
 }
 
-async function searchBraveProductImages(productName: string): Promise<ProductImageCandidate[]> {
+async function searchBraveProductImages(
+  productName: string,
+  { limit = 4, exclude = [] as string[] } = {},
+): Promise<ProductImageCandidate[]> {
   if (!BRAVE_SEARCH_API_KEY) return [];
   try {
     const endpoint = new URL("https://api.search.brave.com/res/v1/images/search");
@@ -203,12 +207,12 @@ async function searchBraveProductImages(productName: string): Promise<ProductIma
       }];
     }).sort((a, b) => b.score - a.score);
 
-    const seen = new Set<string>();
+    const seen = new Set<string>(exclude);
     return ranked.flatMap(({ candidate }) => {
       if (seen.has(candidate.url)) return [];
       seen.add(candidate.url);
       return [candidate];
-    }).slice(0, 4);
+    }).slice(0, limit);
   } catch (error) {
     console.warn("[product-import-enrich] Brave image search skipped", error);
     return [];
@@ -458,6 +462,17 @@ Deno.serve(async (req: Request) => {
 
   if ((count ?? 0) >= 30) {
     return jsonResponse({ error: "rate_limited" }, 429);
+  }
+
+  // "Tìm ảnh khác": Brave image search only — no Gemini call. The seller
+  // types their own query (a colour, a retailer, the exact model) and we
+  // hand back up to 8 candidates not already on their grid.
+  if (body?.images_only === true) {
+    const exclude = Array.isArray(body.exclude)
+      ? body.exclude.filter((url: unknown): url is string => typeof url === "string").slice(0, 50)
+      : [];
+    const image_candidates = await searchBraveProductImages(productName, { limit: 8, exclude });
+    return jsonResponse({ image_candidates });
   }
 
   if (!GEMINI_API_KEY) {
