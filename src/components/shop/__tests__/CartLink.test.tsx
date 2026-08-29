@@ -113,7 +113,7 @@ describe("floating cluster (mobile FAB)", () => {
       /body:has\(\.tl-shop-buybar\[data-shown="true"\]\)\s*\.tl-shop-fab\s*\{\s*display:\s*none/,
     );
     expect(css).toMatch(
-      /\.tl-shop-page\.tl-shop-has-fab\s*\{\s*padding-bottom:\s*calc\(96px \+ 112px\)/,
+      /\.tl-shop-page\.tl-shop-has-fab\s*\{\s*padding-bottom:\s*calc\(96px \+ 132px\)/,
     );
   });
 });

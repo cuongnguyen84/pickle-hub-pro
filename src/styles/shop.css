@@ -1943,8 +1943,24 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
     border-radius: var(--tl-radius);
     box-shadow: var(--shop-shadow-2);
   }
-  .tl-shop-fab > .tl-shop-btn { min-height: var(--shop-tap); white-space: nowrap; }
-  .tl-shop-fab > .tl-shop-iconbtn { width: 48px; height: 48px; }
+  /* 56px: PO 29/08 — 48px nhìn nhỏ so với card; cả hai nút chỉ có icon. */
+  .tl-shop-fab > .tl-shop-iconbtn { width: 56px; height: 56px; }
+  /* Nút giỏ: màu nút "Tìm" (--tl-green) pha sáng hơn một bậc; icon dùng ink on-accent. */
+  .tl-shop-fab > .tl-shop-fab-cart {
+    background: color-mix(in srgb, var(--tl-green) 82%, white);
+    border-color: color-mix(in srgb, var(--tl-green) 82%, white);
+    color: var(--shop-on-accent);
+  }
+  .tl-shop-fab > .tl-shop-fab-cart:hover { background: var(--tl-green); color: var(--shop-on-accent); }
+  /* Badge trên nền xanh: đảo sang ink/bg để còn đọc được. */
+  .tl-shop-fab > .tl-shop-fab-cart .tl-shop-cart-count {
+    top: 6px;
+    right: 6px;
+    min-width: 20px;
+    height: 20px;
+    background: var(--tl-fg);
+    color: var(--tl-bg);
+  }
   /* "2 light" — 2 lớp sáng xanh tĩnh, chỉ khi có hàng trong giỏ */
   .tl-shop-fab > .tl-shop-iconbtn.is-lit {
     box-shadow:
@@ -1955,7 +1971,7 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   /* PDP: buybar hiện thì nhường chỗ */
   body:has(.tl-shop-buybar[data-shown="true"]) .tl-shop-fab { display: none; }
   /* Chừa đáy để card cuối không bị FAB che (cùng cơ chế .tl-shop-has-buybar) */
-  .tl-shop-page.tl-shop-has-fab { padding-bottom: calc(96px + 112px); }
+  .tl-shop-page.tl-shop-has-fab { padding-bottom: calc(96px + 132px); } /* 56 + 8 + 56 + 12 */
 }
 
 @media (min-width: 900px) {
