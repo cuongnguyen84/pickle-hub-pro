@@ -1420,15 +1420,13 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   font-variant-numeric: tabular-nums;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* Giá gạch trên card: chỉ đủ chỗ từ 414px; dưới đó badge % đã nói đủ. */
+/* Giá gạch trên card đứng DÒNG RIÊNG phía trên giá bán: cùng dòng thì giá bán
+   bị cắt "1.900…" ngay cả trên desktop (PO 29/08). 12.5px vừa mọi bề rộng
+   card, nên không cần gate theo viewport nữa. */
 .tl-pcard-price .tl-shop-price-was {
-  display: none;
-  margin-right: 6px;
-}
-@media (min-width: 414px) {
-  .tl-pcard-price .tl-shop-price-was {
-    display: inline;
-  }
+  display: block;
+  line-height: 1.2;
+  margin-bottom: 1px;
 }
 /* Two 138px cards at 320px leave the price ~80px next to the go circle. */
 @media (max-width: 359px) { .tl-pcard-price { font-size: 14.5px; } }

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 /**
  * Badge % và giá gạch trên card: chỉ in thứ server trả, không suy diễn.
- * Responsive (ẩn giá gạch dưới 414px) không test bằng jsdom — tester kiểm Chrome.
+ * Giá gạch đứng dòng riêng phía trên giá bán (CSS) — layout kiểm bằng Chrome, không jsdom.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
