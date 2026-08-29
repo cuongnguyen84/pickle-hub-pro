@@ -9,7 +9,7 @@
 
 BEGIN;
 
-SELECT plan(99);
+SELECT plan(101);
 
 -- ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -598,8 +598,10 @@ SELECT throws_ok(
 -- ─── % giảm trên sản phẩm ĐANG BÁN qua product_discount_set ────────────────
 -- Đặt p2 lên kệ như admin đã duyệt, rồi chủ shop đặt giảm giá không cần gỡ.
 SET LOCAL role postgres;
+SELECT set_config('shop.privileged_write', 'on', true); -- cột status bị trigger ghim, kể cả với postgres
 UPDATE public.products SET status = 'approved', is_published = true
  WHERE id = (SELECT v FROM t_var WHERE k='p2');
+SELECT set_config('shop.privileged_write', 'off', true);
 SET LOCAL role authenticated;
 SET LOCAL request.jwt.claims TO '{"sub":"50060001-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}';
 
