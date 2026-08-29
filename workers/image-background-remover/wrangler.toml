@@ -1,0 +1,9 @@
+name = "picklehub-image-background-remover"
+main = "src/index.ts"
+compatibility_date = "2026-08-27"
+
+[images]
+binding = "IMAGES"
+
+[vars]
+ALLOWED_ORIGINS = "https://thepicklehub.net,https://www.thepicklehub.net,https://fix-shop-publish-media-butto.pickle-hub-pro.pages.dev,https://feat-shop-unified.pickle-hub-pro.pages.dev"

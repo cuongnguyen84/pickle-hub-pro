@@ -672,6 +672,10 @@
     "element": "<RequireAuth><SellerProducts /></RequireAuth>"
   },
   {
+    "path": "/seller/products/import",
+    "element": "<RequireAuth><SellerBulkImport /></RequireAuth>"
+  },
+  {
     "path": "/seller/products/new",
     "element": "<RequireAuth><SellerProductForm /></RequireAuth>"
   },

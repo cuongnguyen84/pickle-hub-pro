@@ -10,3 +10,9 @@ declare const __BUILD_ID__: string;
 interface ImportMetaEnv {
   readonly VITE_PROTO_SHOP?: string;
 }
+
+// SheetJS mini build ships no types of its own; it exposes the same API
+// surface (read/utils/writeFile) as the full package.
+declare module "xlsx/dist/xlsx.mini.min.js" {
+  export * from "xlsx";
+}

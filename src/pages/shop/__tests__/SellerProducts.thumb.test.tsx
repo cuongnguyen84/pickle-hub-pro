@@ -24,6 +24,7 @@ vi.mock("@/hooks/shop/useSellerProducts", async (importOriginal) => {
     ...actual,
     useSellerProducts: () => listQuery(),
     useProductStatusCounts: () => ({ data: { approved: 1 }, isLoading: false, isError: false }),
+    useDeleteProducts: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };
 });
 
