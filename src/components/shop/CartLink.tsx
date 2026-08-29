@@ -30,19 +30,33 @@ const CART_ARIA = (count: number | null) =>
  * A null count (loading, or the query failed) renders the link WITHOUT the
  * number. A wrong badge is worse than no badge.
  */
-export function ShopCartLink() {
+export function ShopCartLink({ floating = false }: { floating?: boolean } = {}) {
   const { user } = useAuth();
   const count = useCartCount();
   if (!user) return null;
-  return (
+  const hasItems = count !== null && count > 0;
+  // `is-lit` là hook cho hiệu ứng "2 light" — chỉ trên FAB mobile, chỉ khi có hàng.
+  const cartClass = [
+    "tl-shop-iconbtn",
+    floating && "tl-shop-fab-cart",
+    floating && hasItems && "is-lit",
+  ].filter(Boolean).join(" ");
+  const links = (
     <>
-      <Link to="/shop/orders" className="tl-shop-btn tl-shop-btn--sm">
-        <ClipboardList size={17} aria-hidden="true" />
-        {ORDERS_LABEL}
-      </Link>
-      <Link to="/shop/cart" className="tl-shop-iconbtn" aria-label={CART_ARIA(count)}>
-        <ShoppingBag size={20} aria-hidden="true" />
-        {count !== null && count > 0 && (
+      {floating ? (
+        // FAB: icon-only, the label lives in aria (PO 29/08: chữ làm cụm rộng).
+        <Link to="/shop/orders" className="tl-shop-iconbtn" aria-label={ORDERS_LABEL}>
+          <ClipboardList size={24} aria-hidden="true" />
+        </Link>
+      ) : (
+        <Link to="/shop/orders" className="tl-shop-btn tl-shop-btn--sm">
+          <ClipboardList size={17} aria-hidden="true" />
+          {ORDERS_LABEL}
+        </Link>
+      )}
+      <Link to="/shop/cart" className={cartClass} aria-label={CART_ARIA(count)}>
+        <ShoppingBag size={floating ? 26 : 20} aria-hidden="true" />
+        {hasItems && (
           <span className="tl-shop-cart-count" aria-hidden="true">
             {count > 99 ? "99+" : count}
           </span>
@@ -50,6 +64,8 @@ export function ShopCartLink() {
       </Link>
     </>
   );
+  // Mobile (<900px): cụm nổi cố định trên BottomNav. Desktop: wrapper flex trong topline.
+  return floating ? <div className="tl-shop-fab">{links}</div> : links;
 }
 
 // EN: "Added to cart" / "View cart" / "Dismiss"

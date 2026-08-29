@@ -93,12 +93,12 @@ export default function ShopSearch() {
       <DynamicMeta title={q ? `Tìm: ${q}` : "Tìm sản phẩm"} noindex />
       <main className="tl-shop">
         {/* R5 #1 — the page frame: gutters + max-width + BottomNav clearance. */}
-        <div className="tl-shop-page">
+        <div className="tl-shop-page tl-shop-has-fab">
         {/* No breadcrumb on this screen, so the topline carries the cart badge
             alone. It must NOT go in TheLineLayout's tl-nav — that nav is
             shared with /live, /feed and /blog. */}
         <div className="tl-shop-topline">
-          <ShopCartLink />
+          <ShopCartLink floating />
         </div>
         <h1 className="tl-shop-h1">Tìm sản phẩm</h1>
 

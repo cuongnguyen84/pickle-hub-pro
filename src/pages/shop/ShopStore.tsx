@@ -101,13 +101,13 @@ export default function ShopStore() {
           loading and not-found branches above keep theirs. */}
       <DynamicMeta title={shop.name} description={shop.intro ?? undefined} />
       <main className="tl-shop">
-        <div className="tl-shop-page">
+        <div className="tl-shop-page tl-shop-has-fab">
         <div className="tl-shop-topline">
           {/* Last crumb = the <h1> below it, so it is dropped (R5 #14). */}
           <nav aria-label="Đường dẫn" className="tl-shop-crumbs">
             <Link to="/shop" className="tl-crumb">Chợ</Link>
           </nav>
-          <ShopCartLink />
+          <ShopCartLink floating />
         </div>
 
         <header className="tl-shop-storehead">

@@ -503,6 +503,7 @@
   position: relative;
 }
 .tl-shop-iconbtn:hover { background: var(--tl-surface-2); color: var(--tl-fg); }
+.tl-shop-iconbtn:active { transform: scale(0.96); }
 .tl-shop-cart-count {
   position: absolute;
   top: 4px;
@@ -1928,6 +1929,61 @@ a.tl-shop-seller { min-height: var(--shop-tap); }
   gap: 8px;
 }
 .tl-shop-topline > .tl-shop-crumbs { flex: 1; min-width: 0; }
+
+/* Cụm nổi mobile: Đơn của tôi + giỏ. Desktop: chỉ là wrapper flex ngang trong topline.
+   Mọi style riêng của FAB nằm trong max-width 899px — .tl-shop-btn gốc có nền/viền
+   riêng, reset ở desktop sẽ phá nút "Đơn của tôi". */
+.tl-shop-fab { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 899px) {
+  .tl-shop-fab {
+    position: fixed;
+    right: 12px;
+    bottom: calc(var(--shop-bottomnav) + var(--shop-safe-b) + 12px);
+    z-index: 44; /* buybar 60 > toast 45 > FAB 44 > header 40 */
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .tl-shop-fab > a {
+    background: var(--tl-bg-elev);
+    border: 1px solid var(--tl-border-2);
+    border-radius: var(--tl-radius);
+    box-shadow: var(--shop-shadow-2);
+  }
+  /* 56px: PO 29/08 — 48px nhìn nhỏ so với card; cả hai nút chỉ có icon. */
+  .tl-shop-fab > .tl-shop-iconbtn { width: 56px; height: 56px; }
+  /* Nút giỏ: màu nút "Tìm" (--tl-green) pha sáng hơn một bậc; icon dùng ink on-accent. */
+  .tl-shop-fab > .tl-shop-fab-cart {
+    background: color-mix(in srgb, var(--tl-green) 82%, white);
+    border-color: color-mix(in srgb, var(--tl-green) 82%, white);
+    color: var(--shop-on-accent);
+  }
+  .tl-shop-fab > .tl-shop-fab-cart:hover { background: var(--tl-green); color: var(--shop-on-accent); }
+  /* Badge trên nền xanh: đảo sang ink/bg để còn đọc được. */
+  .tl-shop-fab > .tl-shop-fab-cart .tl-shop-cart-count {
+    top: 6px;
+    right: 6px;
+    min-width: 20px;
+    height: 20px;
+    background: var(--tl-fg);
+    color: var(--tl-bg);
+  }
+  /* "2 light" — 2 lớp sáng xanh tĩnh, chỉ khi có hàng trong giỏ */
+  .tl-shop-fab > .tl-shop-iconbtn.is-lit {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--tl-green) 18%, transparent),
+      0 0 18px color-mix(in srgb, var(--tl-green) 35%, transparent),
+      var(--shop-shadow-2);
+  }
+  /* PDP: buybar hiện thì nhường chỗ */
+  body:has(.tl-shop-buybar[data-shown="true"]) .tl-shop-fab { display: none; }
+  /* Chừa đáy để card cuối không bị FAB che (cùng cơ chế .tl-shop-has-buybar) */
+  .tl-shop-page.tl-shop-has-fab { padding-bottom: calc(96px + 132px); } /* 56 + 8 + 56 + 12 */
+}
+
+@media (min-width: 900px) {
+  .tl-shop-fab { position: static; flex-direction: row; }
+}
 
 /* 5 · Phase 3 · an order past the deadline the seller promised themselves.
    Icon and words carry the meaning (see DueLine); this stripe is the third

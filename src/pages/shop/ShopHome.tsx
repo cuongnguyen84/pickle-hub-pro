@@ -39,11 +39,11 @@ export default function ShopHome() {
         {/* R5 #1: .tl-shop-page is the ONLY source of the page gutter and of
             the bottom clearance for BottomNav. Without it the hero card and
             every product touched the edge of the phone. */}
-        <div className="tl-shop-page">
+        <div className="tl-shop-page tl-shop-has-fab">
         {/* /shop has no breadcrumb, so the cart badge sits alone above the
             hero card (§4.2). Never in TheLineLayout's tl-nav. */}
         <div className="tl-shop-topline">
-          <ShopCartLink />
+          <ShopCartLink floating />
         </div>
         {/* R4 hero card — purely visual wrapper, no new behaviour. NOT
             .tl-shop-hero: that class belongs to the sell landing and its
