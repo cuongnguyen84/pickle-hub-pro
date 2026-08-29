@@ -44,4 +44,25 @@ describe("installStaleShellGuard", () => {
     history.pushState(null, "", "/tournaments");
     expect(reload).not.toHaveBeenCalled();
   });
+
+  it("trang đang giữ việc chưa lưu (body[data-unsaved-work]) → không auto-reload", async () => {
+    // Mỗi guard đã cài ở test trước cũng fetch; một Response dùng chung thì
+    // body chỉ đọc được một lần → guard của test này không bao giờ thấy stale.
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(new Response("newid123"))));
+    const reload = vi.fn();
+    installStaleShellGuard(reload);
+    document.body.dataset.unsavedWork = "bulk-import";
+
+    setVisibility("visible");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+
+    setVisibility("hidden"); // mở hộp chọn file / chuyển tab
+    history.pushState(null, "", "/live");
+    expect(reload).not.toHaveBeenCalled();
+    // Không được ghi cooldown khi bỏ qua — lần điều hướng sau (hết việc dở)
+    // phải reload được ngay. (Đường reload bình thường đã có test đầu.)
+    expect(sessionStorage.getItem("stale-shell-reload-ts")).toBeNull();
+    delete document.body.dataset.unsavedWork;
+  });
 });

@@ -57,6 +57,11 @@ export function installStaleShellGuard(
   };
 
   const guardedReload = (): void => {
+    // Một trang đang giữ việc chưa lưu (import hàng loạt: 20 sản phẩm AI đã
+    // điền, ảnh đã chọn) đánh dấu body[data-unsaved-work]. Reload "vô hình"
+    // lúc đó = xoá sạch việc của seller; 29/08 Cuong mở hộp chọn ảnh, tab
+    // ẩn, deploy mới vừa lên → trang reload, trắng. Đợi lần điều hướng sau.
+    if (document.body.dataset.unsavedWork) return;
     try {
       const last = Number(sessionStorage.getItem(RELOAD_TS_KEY) || "0");
       if (Date.now() - last < RELOAD_COOLDOWN_MS) return;

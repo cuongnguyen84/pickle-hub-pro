@@ -9,7 +9,7 @@
 // All Supabase calls live in the useBulkProductImport hook (ARCH-01 §3).
 // ============================================================================
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Upload,
@@ -107,15 +107,30 @@ export default function BulkImport() {
     }
   };
 
-  const setImageFile = (rowId: string, file: File | null) => {
+  const addImageFiles = (rowId: string, files: File[]) => {
     const row = rows.find((item) => item.rowId === rowId);
-    if (!row) return;
-    if (row.imagePreviewUrl) URL.revokeObjectURL(row.imagePreviewUrl);
+    if (!row || files.length === 0) return;
     updateRow(rowId, {
-      selectedImageFile: file,
-      imagePreviewUrl: file ? URL.createObjectURL(file) : null,
+      selectedImageFiles: [
+        ...row.selectedImageFiles,
+        ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
+      ],
     });
   };
+
+  const removeImageFile = (rowId: string, previewUrl: string) => {
+    const row = rows.find((item) => item.rowId === rowId);
+    if (!row) return;
+    URL.revokeObjectURL(previewUrl);
+    updateRow(rowId, { selectedImageFiles: row.selectedImageFiles.filter((image) => image.previewUrl !== previewUrl) });
+  };
+
+  // staleShell.ts đọc cờ này: đừng auto-reload khi seller đang giữ việc dở.
+  useEffect(() => {
+    if (rows.length) document.body.dataset.unsavedWork = "bulk-import";
+    else delete document.body.dataset.unsavedWork;
+    return () => { delete document.body.dataset.unsavedWork; };
+  }, [rows.length]);
 
   const updateAiField = <K extends "name" | "category" | "brand" | "description">(
     rowId: string,
@@ -455,23 +470,27 @@ export default function BulkImport() {
                               Chưa tìm thấy ảnh đáng tin cậy. Anh/chị có thể dán URL ảnh bên dưới.
                             </p>
                           )}
-                          {row.imagePreviewUrl && (
-                            <div className="relative w-36 overflow-hidden rounded-lg border-2 border-primary bg-muted">
-                              <img
-                                src={row.imagePreviewUrl}
-                                alt={`Ảnh tải lên cho ${row.aiData.name}`}
-                                className="aspect-square w-full object-contain"
-                              />
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="destructive"
-                                className="absolute right-1 top-1 h-7 w-7"
-                                onClick={() => setImageFile(row.rowId, null)}
-                                aria-label="Bỏ ảnh đã tải lên"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                          {row.selectedImageFiles.length > 0 && (
+                            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                              {row.selectedImageFiles.map((image, index) => (
+                                <div key={image.previewUrl} className="relative overflow-hidden rounded-lg border-2 border-primary bg-muted">
+                                  <img
+                                    src={image.previewUrl}
+                                    alt={`Ảnh tải lên ${index + 1} cho ${row.aiData!.name}`}
+                                    className="aspect-square w-full object-contain"
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="destructive"
+                                    className="absolute right-1 top-1 h-7 w-7"
+                                    onClick={() => removeImageFile(row.rowId, image.previewUrl)}
+                                    aria-label={`Bỏ ảnh tải lên ${index + 1}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-2">
@@ -480,20 +499,20 @@ export default function BulkImport() {
                               className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent"
                             >
                               <ImagePlus className="mr-2 h-4 w-4" />
-                              {row.selectedImageFile ? "Thay ảnh tải lên" : "Tải ảnh từ thiết bị"}
+                              Tải ảnh từ thiết bị
                             </Label>
                             <input
                               id={`image-file-${row.rowId}`}
                               type="file"
                               accept="image/jpeg,image/png,image/webp"
+                              multiple
                               className="sr-only"
                               onChange={(event) => {
-                                const file = event.target.files?.[0] ?? null;
-                                if (file) setImageFile(row.rowId, file);
+                                addImageFiles(row.rowId, Array.from(event.target.files ?? []));
                                 event.target.value = "";
                               }}
                             />
-                            <span className="text-xs text-muted-foreground">JPG, PNG hoặc WebP · tối đa 8 MB</span>
+                            <span className="text-xs text-muted-foreground">Chọn được nhiều ảnh · JPG, PNG hoặc WebP · tối đa 8 MB/ảnh</span>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             <Label className="sr-only" htmlFor={`image-query-${row.rowId}`}>Từ khoá tìm ảnh</Label>
@@ -525,16 +544,12 @@ export default function BulkImport() {
                             <p className="text-xs text-muted-foreground" role="status">{imageSearch[row.rowId]?.note}</p>
                           )}
                           <Label className="sr-only" htmlFor={`image-url-${row.rowId}`}>URL ảnh sản phẩm</Label>
-                          <Input
+                          <Textarea
                             id={`image-url-${row.rowId}`}
-                            type="url"
-                            value={row.manualImageUrl ?? ""}
-                            onChange={(event) => {
-                              updateRow(row.rowId, {
-                                manualImageUrl: event.target.value || null,
-                              });
-                            }}
-                            placeholder="Thêm một URL ảnh khác (không bắt buộc)"
+                            value={row.manualImageUrls}
+                            onChange={(event) => updateRow(row.rowId, { manualImageUrls: event.target.value })}
+                            rows={2}
+                            placeholder="Dán một hoặc nhiều URL ảnh — mỗi dòng một URL (không bắt buộc)"
                           />
                         </fieldset>
                         {row.status === "low_confidence" && (
