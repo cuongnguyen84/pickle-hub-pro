@@ -16,12 +16,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 
 const mutate = vi.fn();
+const createMutate = vi.fn();
 const navigate = vi.fn();
+/** undefined = /seller/products/new (ô giá + giá gốc chỉ hiện ở đây). */
+let paramId: string | undefined = "prod-1";
 
 let productRow: Record<string, unknown> | null = null;
 
 vi.mock("react-router-dom", () => ({
-  useParams: () => ({ id: "prod-1" }),
+  useParams: () => ({ id: paramId }),
   useNavigate: () => navigate,
   Link: ({ children, ...rest }: { children: React.ReactNode }) => <a {...rest}>{children}</a>,
 }));
@@ -47,7 +50,7 @@ vi.mock("@/hooks/shop/useSellerProducts", () => ({
     isError: false,
     refetch: vi.fn(),
   }),
-  useCreateProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateProduct: () => ({ mutateAsync: createMutate, isPending: false }),
   useUpdateProduct: () => ({ mutateAsync: mutate, isPending: false }),
   useUpdateProductSlug: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useArchiveProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -112,7 +115,9 @@ const editTitle = (value: string) => {
 const saveButton = () => screen.getByRole("button", { name: "Lưu thay đổi" });
 
 beforeEach(() => {
+  paramId = "prod-1";
   mutate.mockReset();
+  createMutate.mockReset();
   navigate.mockReset();
   window.localStorage.clear();
 });
@@ -257,5 +262,46 @@ describe("no save branch can strand the button on Đang lưu…", () => {
     expect(mutate).not.toHaveBeenCalled();
     expect(screen.queryByText("Đang lưu…")).toBeNull();
     expect(saveButton().hasAttribute("disabled")).toBe(false);
+  });
+});
+
+describe("giá gốc trên form tạo mới", () => {
+  const fillNew = (compare: string, price = "1000000") => {
+    paramId = undefined;
+    productRow = null;
+    createMutate.mockResolvedValue({ id: "prod-new" });
+    render(<SellerProductForm />);
+    fireEvent.change(screen.getByLabelText("Ngành hàng", { selector: "select" }), { target: { value: "giay" } });
+    editTitle("Giày Court Pro");
+    fireEvent.change(screen.getByLabelText("Giá (₫)"), { target: { value: price } });
+    fireEvent.change(screen.getByLabelText("Giá gốc (₫) — không bắt buộc"), { target: { value: compare } });
+  };
+  const saveDraft = () => fireEvent.click(screen.getByRole("button", { name: "Lưu nháp" }));
+
+  it("giá gốc bằng/thấp hơn giá bán → không gọi RPC, báo lỗi ngay ô", async () => {
+    fillNew("1000000");
+    saveDraft();
+
+    await waitFor(() => expect(screen.getByText("Giá gốc phải lớn hơn giá bán.")).toBeTruthy());
+    expect(createMutate).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Giá gốc (₫) — không bắt buộc").getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("hợp lệ → payload mang compare_at_price_vnd đúng số, hint nói % người mua thấy", async () => {
+    fillNew("1250000");
+    expect(screen.getByText("Người mua thấy: 1.250.000₫ gạch ngang · -20%")).toBeTruthy();
+    expect(screen.getByText(/Giá gốc đặt cho có sẽ bị gỡ/)).toBeTruthy();
+    saveDraft();
+
+    await waitFor(() => expect(createMutate).toHaveBeenCalledTimes(1));
+    expect(createMutate.mock.calls[0][0].draft.compare_at_price_vnd).toBe("1250000");
+  });
+
+  it("rỗng → draft gửi chuỗi rỗng (hook đổi thành null)", async () => {
+    fillNew("");
+    saveDraft();
+
+    await waitFor(() => expect(createMutate).toHaveBeenCalledTimes(1));
+    expect(createMutate.mock.calls[0][0].draft.compare_at_price_vnd).toBe("");
   });
 });

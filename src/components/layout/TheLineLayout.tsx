@@ -9,6 +9,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
+import { useMyApplication, useMyShop } from "@/hooks/shop/useSellerApplication";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
 import { ConnectDuprBanner } from "@/components/dupr/ConnectDuprBanner";
 import { HeaderDuprBadge } from "@/components/dupr/HeaderDuprBadge";
@@ -203,6 +204,17 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   // return false for signed-out viewers without an extra check.
   const { isAdmin } = useAdminAuth();
   const { isCreator } = useCreatorAuth(); // true for creator OR admin
+  // ponytail: owner-only (useMyShop); shop_members không owner chưa thấy
+  // Cả hai hook gate `enabled: !!user` — khách vãng lai không tạo query.
+  const myShop = useMyShop().data;
+  const applicationStatus = useMyApplication().data?.status;
+  const sellerLink = myShop
+    ? { to: "/seller", vi: "Kênh người bán", en: "Seller hub" }
+    : applicationStatus === "submitted" || applicationStatus === "under_review"
+      ? { to: "/seller/application/status", vi: "Đơn mở shop: đang chờ duyệt", en: "Shop application: under review" }
+      : applicationStatus === "needs_changes"
+        ? { to: "/seller/application/status", vi: "Đơn mở shop: cần bổ sung", en: "Shop application: needs changes" }
+        : null;
 
   // PR55: surface the viewer's own clubs in the avatar dropdown so they
   // can jump straight to /clb/<slug>/quan-ly. Limit 5 to keep the menu
@@ -686,6 +698,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                     <Link to="/account/my-tournaments" onClick={() => setAvatarOpen(false)}>
                       {language === "vi" ? "Giải đấu của tôi" : "My Tournaments"}
                     </Link>
+                    {sellerLink && (
+                      <Link to={sellerLink.to} onClick={() => setAvatarOpen(false)}>
+                        {language === "vi" ? sellerLink.vi : sellerLink.en}
+                      </Link>
+                    )}
                     {isCreator && (
                       <Link to="/creator" onClick={() => setAvatarOpen(false)}>
                         {language === "vi" ? "Bảng điều khiển Creator" : "Creator dashboard"}

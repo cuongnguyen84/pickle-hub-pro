@@ -18,6 +18,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePublicCategories, usePublicSearch } from "@/hooks/shop/usePublicShop";
 import { CategoryChips, ResultsGrid } from "@/components/shop/CatalogResults";
 import { ShopCartLink } from "@/components/shop/CartLink";
+import { useMyShop } from "@/hooks/shop/useSellerApplication";
 import "@/styles/shop.css";
 
 export default function ShopHome() {
@@ -26,6 +27,8 @@ export default function ShopHome() {
   const categories = usePublicCategories();
   // The home grid is the same query the search page runs, with no arguments.
   const latest = usePublicSearch({ limit: 12 });
+  // Gate `enabled: !!user` trong hook — khách không tạo query.
+  const myShop = useMyShop().data;
 
   return (
     <TheLineLayout title="Chợ đồ pickleball">
@@ -43,6 +46,13 @@ export default function ShopHome() {
         {/* /shop has no breadcrumb, so the cart badge sits alone above the
             hero card (§4.2). Never in TheLineLayout's tl-nav. */}
         <div className="tl-shop-topline">
+          {myShop && (
+            <nav className="tl-shop-crumbs" aria-label="Lối tắt người bán">
+              <Link to="/seller" className="tl-crumb">
+                Quản lý shop<span aria-hidden="true"> →</span>
+              </Link>
+            </nav>
+          )}
           <ShopCartLink floating />
         </div>
         {/* R4 hero card — purely visual wrapper, no new behaviour. NOT

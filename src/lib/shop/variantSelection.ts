@@ -28,6 +28,7 @@ export interface PublicVariant {
   option_key: string | null;
   sku: string | null;
   price_vnd: number;
+  compare_at_price_vnd?: number | null;
   availability: Availability;
   media_id: string | null;
 }

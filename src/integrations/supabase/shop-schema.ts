@@ -276,7 +276,7 @@ export interface ShopProfileMediaRow {
 export interface SellerProductRow extends ProductRow {
   product_variants: Pick<
     ProductVariantRow,
-    "id" | "price_vnd" | "stock_on_hand" | "position" | "sku" | "retired_at"
+    "id" | "price_vnd" | "compare_at_price_vnd" | "stock_on_hand" | "position" | "sku" | "retired_at"
   >[];
   product_media: Pick<ProductMediaRow, "id" | "position" | "public_path" | "draft_path">[];
 }
@@ -323,6 +323,8 @@ export interface ProductProjection {
     option_key: string | null;
     sku: string | null;
     price_vnd: number;
+    /** Giá gốc; null/vắng = không giảm. Migration 20260829120000. */
+    compare_at_price_vnd?: number | null;
     /** Derived by the server, so both surfaces agree what "còn hàng" means. */
     availability: "in_stock" | "out_of_stock" | "unknown";
     /** Seller-only; null for the public reader. */

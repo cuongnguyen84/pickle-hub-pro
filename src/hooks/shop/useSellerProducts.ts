@@ -20,6 +20,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { escapeLike, shopFrom, shopRpc } from "@/integrations/supabase/shop-client";
+import { parseCompareAt } from "@/lib/shop/discount";
 import type {
   ProductMediaRow,
   ProductRow,
@@ -81,7 +82,7 @@ const PRODUCT_COLUMNS =
   "requested_fields,version,client_token,option_groups,specs,created_at,updated_at";
 
 const LIST_COLUMNS =
-  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position,public_path,draft_path)`;
+  `${PRODUCT_COLUMNS},product_variants(id,price_vnd,compare_at_price_vnd,stock_on_hand,position,sku,retired_at),product_media(id,position,public_path,draft_path)`;
 
 export interface ProductListResult {
   rows: SellerProductRow[];
@@ -193,6 +194,8 @@ export interface ProductDraft {
   /** Kept as the seller typed it. Parsed and validated in Postgres, which is
    *  the only place that may decide what a price is. */
   price_vnd: string;
+  /** Giá gốc; "" gửi thành null. */
+  compare_at_price_vnd: string;
   stock_on_hand: string;
 }
 
@@ -218,6 +221,7 @@ export const useCreateProduct = (shopId: string | null) => {
           category_slug: input.draft.category_slug,
           condition: input.draft.condition,
           price_vnd: input.draft.price_vnd,
+          compare_at_price_vnd: parseCompareAt(input.draft.compare_at_price_vnd).value,
           stock_on_hand: input.draft.stock_on_hand,
         },
       }),

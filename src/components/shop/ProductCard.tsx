@@ -7,8 +7,9 @@
 // ambiguous tap target. The round "→" is a decorative span, not a control;
 // the action it suggests is the card's own navigation.
 //
-// Every claim comes from the server. There is no struck-out original price,
-// no "chỉ còn 2", no badge the data cannot support. "Còn hàng" is not printed
+// Every claim comes from the server. Giá gạch và badge % chỉ in khi
+// `compare_at_min`/`discount_pct_max` đến từ server; không suy diễn client.
+// No "chỉ còn 2", no badge the data cannot support. "Còn hàng" is not printed
 // either: in-stock is the default state of a shop, only "Hết hàng" is news.
 // ============================================================================
 
@@ -17,6 +18,7 @@ import { ArrowRight, BadgeCheck, ImageOff } from "lucide-react";
 import type { ProductCard as Card } from "@/hooks/shop/usePublicShop";
 import {
   CONDITION_LABEL,
+  formatVnd,
   isSoldOut,
   mediaBox,
   priceLabel,
@@ -33,6 +35,15 @@ export function ProductCard({ card, eager = false }: { card: Card; eager?: boole
   const price = priceLabel(card);
   const soldOut = isSoldOut(card.availability);
   const box = mediaBox(card.cover?.width ?? null, card.cover?.height ?? null, BOX_W);
+  const off = card.discount_pct_max ?? 0;
+  // Gạch giá chỉ khi một giá (không phải khoảng) và server có compare_at lớn hơn.
+  const was =
+    card.price_min != null &&
+    card.price_min === card.price_max &&
+    card.compare_at_min != null &&
+    card.compare_at_min > card.price_min
+      ? card.compare_at_min
+      : null;
 
   // R4: no aria-label on the link — it would OVERRIDE the accessible name and
   // hide the price/shop from screen readers. The name is the full text content.
@@ -57,6 +68,11 @@ export function ProductCard({ card, eager = false }: { card: Card; eager?: boole
           </span>
         )}
         {soldOut && <span className="tl-pcard-flag">Hết hàng</span>}
+        {off >= 1 && (
+          <span className="tl-pcard-off">
+            <span className="tl-shop-sr">giảm </span>-{off}%
+          </span>
+        )}
       </span>
 
       <span className="tl-pcard-body">
@@ -75,6 +91,12 @@ export function ProductCard({ card, eager = false }: { card: Card; eager?: boole
 
         <span className="tl-pcard-foot">
           <span className="tl-pcard-price">
+            {was != null && (
+              <span className="tl-shop-price-was">
+                <span className="tl-shop-sr">giá gốc </span>
+                {formatVnd(was)}
+              </span>
+            )}
             {price ?? <span className="tl-pcard-noprice">Chưa có giá</span>}
           </span>
           <span className="tl-pcard-go" aria-hidden="true">
