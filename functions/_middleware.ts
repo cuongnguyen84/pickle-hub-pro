@@ -371,7 +371,15 @@ const SECURITY_HEADERS: Record<string, string> = {
     // (34 csp_violation reports / 7d in client_errors). Google requires it in
     // script-src + frame-src. Kept in sync with public/_headers.
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://analytics.ahrefs.com https://challenges.cloudflare.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    // 2026-08-29: Chrome's built-in Translate injects its stylesheet from
+    // www.gstatic.com into the main document, so it is subject to our page
+    // CSP. Without this the sheet is blocked (49 csp_violation reports / 3w)
+    // and Translate renders unstyled — visible to the ~95% Vietnamese
+    // audience whenever they translate an EN-only surface instead of using
+    // the language toggle. www.gstatic.com is already trusted in script-src
+    // above, a strictly higher-privilege directive, and style-src already
+    // carries 'unsafe-inline'. Kept in sync with public/_headers.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
     "media-src 'self' data: blob: https:; " +
