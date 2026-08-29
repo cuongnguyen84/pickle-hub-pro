@@ -365,9 +365,11 @@ export async function renderShopCategory(
   const catVi = hasKeyword ? catName : `${catName} pickleball`;
   const catEn = hasKeyword ? catName : `Pickleball ${catName}`;
 
-  const title = lang === "vi"
-    ? `${catVi} — giá và nơi mua | ThePickleHub`
-    : `${catEn} — prices and sellers | ThePickleHub`;
+  const title = fitTitle(
+    lang === "vi"
+      ? [`${catVi} — giá và nơi mua | ThePickleHub`, `${catVi} | ThePickleHub`, catVi]
+      : [`${catEn} — prices and sellers | ThePickleHub`, `${catEn} | ThePickleHub`, catEn],
+  );
   const description = lang === "vi"
     ? `${total} sản phẩm ${catVi.toLowerCase()} đang bán trên ThePickleHub, giá niêm yết bằng VNĐ từ shop đã xác minh, giao hàng toàn quốc.`
     : `${total} ${catEn.toLowerCase()} listings on ThePickleHub with VND prices from verified Vietnamese sellers and nationwide delivery.`;
