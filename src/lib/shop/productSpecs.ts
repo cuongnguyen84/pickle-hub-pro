@@ -129,7 +129,12 @@ export function cleanSpecs(input: Specs | null | undefined): Specs {
   if (!input) return {};
   const out: Specs = {};
   for (const key of Object.keys(input).sort()) {
-    const value = (input[key] ?? "").trim().slice(0, SPEC_VALUE_MAX);
+    // Dữ liệu ngoài biên TypeScript (AI/JSON/Postgres cũ) vẫn có thể trả số
+    // hoặc boolean. Chuẩn hoá primitive tại đây để mọi luồng lưu đều an toàn.
+    const rawValue: unknown = input[key];
+    if (rawValue === null || rawValue === undefined) continue;
+    if (!["string", "number", "boolean"].includes(typeof rawValue)) continue;
+    const value = String(rawValue).trim().slice(0, SPEC_VALUE_MAX);
     if (value) out[key] = value;
     if (Object.keys(out).length >= SPEC_MAX_FIELDS) break;
   }

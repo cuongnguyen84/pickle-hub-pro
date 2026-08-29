@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang",
   publishedDate: "2026-04-23",
-  updatedDate: "2026-08-27",
+  updatedDate: "2026-08-29",
   author: "The PickleHub Team",
   tags: ["world cup pickleball", "da nang", "vietnam", "tournament", "asia", "2026", "guide"],
   ctaPath: "/tournaments",
@@ -87,7 +87,8 @@ const post: BlogPost = {
             "Official website: copamundialdepickleball.com",
             "Instagram: @pickleballworldcupofficial (bio: \"One World, One Game, One Champion\")",
             "GPF announcement: globalpickleballfederation.org",
-            "Vietnamese broadcast: FPT Play — co-organizer and exclusive broadcaster (subscription required)",
+            "Vietnamese broadcast: FPT Play — co-organizer, and confirmed on August 28 as the exclusive live broadcaster in Vietnam. Whether it sits in the free tier or behind a subscription has not been stated",
+            "Finals day: Sunday September 6 at Tien Son — the five OPEN Pro finals are timed 10:10 (women's singles), 11:20 (men's singles), 12:30 (women's doubles), 13:40 (men's doubles) and 14:50 (mixed), with three national-team matches at 08:00, 16:00 and 18:00 that the published schedule does not label by division",
             "ThePickleHub — bilingual English + Vietnamese coverage, schedules, and live updates"
           ],
           internalLinks: [
@@ -110,7 +111,7 @@ const post: BlogPost = {
           heading: "Three Things to Watch Between Now and August 2026",
           content: "Da Nang 2026 is the biggest international pickleball event ever staged in Asia and a tangible marker of Vietnam's sudden arrival as a pickleball power. Three questions will define whether it succeeds:",
           orderedList: [
-            "Whether the 80-nation, 4,000-participant target actually materializes — it would be a ~20% jump on Fort Lauderdale 2025",
+            "Answered as of August 29, 2026: Vietnamese state media (TTXVN, August 16) and FPT Play (August 28) both put the field at around 5,000 athletes from 81 countries and territories, so the 80-nation target has been met. Read that alongside a smaller number on the organizers' own site, which lists 66 national teams — the 81 counts countries with entries across both competitions, the 66 counts national teams in the team event",
             "Whether Phuc Huynh and Quang Duong elect to play for Vietnam, which could make the host genuinely competitive in the medal table",
             "Whether GPF's sanctioning plus Da Nang's execution pushes the Pickleball World Cup decisively ahead of rival \"world\" titles, or whether the UWPF and PPA responses in late 2026 keep the global crown contested"
           ]
@@ -139,7 +140,7 @@ const post: BlogPost = {
         },
         {
           question: "How many countries and athletes will compete?",
-          answer: "Organizers are targeting approximately 80 countries and about 4,000 participants, which would make Da Nang 2026 the largest Pickleball World Cup to date. Note the July 2026 announcement defines that 4,000 as total people — athletes plus coaches, referees, officials, business delegates, fans and families — not competitors alone. Fort Lauderdale 2025 had 68 countries and 3,000+ athletes."
+          answer: "The target was roughly 80 countries and 4,000 participants, and as of August 29, 2026 it has been met: TTXVN and FPT Play both report around 5,000 athletes from 81 countries and territories, making Da Nang 2026 the largest Pickleball World Cup to date. Two other counts circulate and mean different things — the organizers' own homepage lists 66 national teams in the team competition, and the July 2026 announcement's 4,000 figure counted total people including coaches, referees, officials, business delegates, fans and families. Fort Lauderdale 2025 had 68 countries and 3,000+ athletes."
         },
         {
           question: "Is the Pickleball World Cup the same as the PPA World Championships?",
@@ -242,7 +243,8 @@ const post: BlogPost = {
             "Website chính thức: copamundialdepickleball.com",
             "Instagram: @pickleballworldcupofficial (bio: \"One World, One Game, One Champion\")",
             "Thông báo GPF: globalpickleballfederation.org",
-            "Phát sóng tại Việt Nam: FPT Play — đồng tổ chức kiêm đơn vị phát sóng độc quyền (cần đăng ký)",
+            "Phát sóng tại Việt Nam: FPT Play — đồng tổ chức, và ngày 28/8 xác nhận là đơn vị phát trực tiếp độc quyền tại Việt Nam. Giải nằm trong gói miễn phí hay sau thuê bao thì chưa được nói rõ",
+            "Ngày chung kết: Chủ nhật 6/9 tại Tiên Sơn — 5 trận chung kết OPEN nhóm Pro có giờ 10:10 (đơn nữ), 11:20 (đơn nam), 12:30 (đôi nữ), 13:40 (đôi nam), 14:50 (đôi nam nữ); cùng ba trận Đồng đội lúc 08:00, 16:00 và 18:00 mà lịch công bố không ghi thuộc nội dung nào",
             "ThePickleHub — bài viết song ngữ Việt – Anh, lịch thi đấu và cập nhật trực tiếp"
           ],
           internalLinks: [
@@ -265,7 +267,7 @@ const post: BlogPost = {
           heading: "Ba điều đáng chờ đợi từ nay đến tháng 8/2026",
           content: "Đà Nẵng 2026 là sự kiện pickleball quốc tế lớn nhất từng được tổ chức tại châu Á và là dấu mốc cho sự trỗi dậy đột ngột của Việt Nam trong môn thể thao này. Ba câu hỏi sẽ quyết định thành bại của giải:",
           orderedList: [
-            "Mục tiêu 80 quốc gia và 4.000 người tham dự có thực hiện được không — con số này tăng ~20% so với Fort Lauderdale 2025",
+            "Đã có câu trả lời tính tới 29/8/2026: TTXVN (16/8) và FPT Play (28/8) đều ghi khoảng 5.000 VĐV đến từ 81 quốc gia và vùng lãnh thổ — tức mục tiêu 80 quốc gia đã đạt. Đọc kèm một con số nhỏ hơn trên chính trang của ban tổ chức: 66 đội tuyển quốc gia — 81 là số quốc gia có VĐV dự cả hai hệ thi đấu, còn 66 là số đội tuyển ở hệ Đồng đội",
             "Phúc Huỳnh và Quang Dương có chọn khoác áo Việt Nam hay không — điều có thể giúp đội chủ nhà cạnh tranh huy chương thực sự",
             "Liệu sự hậu thuẫn của GPF cùng năng lực vận hành của Đà Nẵng có giúp World Cup Pickleball vượt lên so với các giải \"thế giới\" cạnh tranh, hay phản ứng của UWPF và PPA cuối 2026 tiếp tục khiến ngôi vô địch toàn cầu bị tranh cãi"
           ]
@@ -294,7 +296,7 @@ const post: BlogPost = {
         },
         {
           question: "Có bao nhiêu quốc gia và VĐV tham dự?",
-          answer: "Ban tổ chức đặt mục tiêu khoảng 80 quốc gia và khoảng 4.000 người tham dự, dự kiến trở thành kỳ World Cup Pickleball lớn nhất từ trước đến nay. Lưu ý: thông báo tháng 7/2026 định nghĩa 4.000 là tổng số người — gồm VĐV, HLV, trọng tài, quan chức, doanh nghiệp, CĐV và người thân — chứ không phải riêng VĐV thi đấu. Fort Lauderdale 2025 có 68 quốc gia và hơn 3.000 VĐV."
+          answer: "Mục tiêu là khoảng 80 quốc gia và 4.000 người tham dự, và tính tới 29/8/2026 thì đã đạt: TTXVN và FPT Play đều đưa con số khoảng 5.000 VĐV từ 81 quốc gia và vùng lãnh thổ, đưa Đà Nẵng 2026 thành kỳ World Cup Pickleball lớn nhất từ trước đến nay. Có hai con số khác đang lưu hành và chúng đo những thứ khác nhau: trang chủ của ban tổ chức ghi 66 đội tuyển quốc gia ở hệ Đồng đội, còn con số 4.000 trong thông báo tháng 7/2026 là tổng số người gồm cả HLV, trọng tài, quan chức, doanh nghiệp, CĐV và người thân. Fort Lauderdale 2025 có 68 quốc gia và hơn 3.000 VĐV."
         },
         {
           question: "World Cup Pickleball có phải là Pickleball World Championships của PPA không?",

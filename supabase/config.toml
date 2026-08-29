@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.mux-create-livestream]
 verify_jwt = false
 
+[functions.product-import-enrich]
+verify_jwt = false
+
 [functions.send-auth-email]
 verify_jwt = false
 
