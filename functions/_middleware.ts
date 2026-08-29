@@ -1042,10 +1042,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // now carry the Sep 6 final times, the withdrawn ticket link, current hotel
   // rates and the confirmed 81-nation field. Old HTML would serve the stale
   // "the Open final is not on the schedule" claim for the whole TTL.
+  // v74 (2026-08-29): category <title> also goes through fitTitle.
   // v73 (2026-08-29): shop SEO audit — <img> gallery + card covers in bot HTML,
   // price out of product <title>, x-default → VI, EN category names, Brand/sku
   // in Product schema, Shop link in the shared <nav>.
-  const cacheKey = `pr:v73:${url.pathname}`;
+  const cacheKey = `pr:v74:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
