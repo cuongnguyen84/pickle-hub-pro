@@ -11,7 +11,7 @@
 // and the buyer would be the one to find out.
 // ============================================================================
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, type InfiniteData } from "@tanstack/react-query";
 import { shopRpc } from "@/integrations/supabase/shop-client";
 
 export type Availability = "in_stock" | "out_of_stock" | "unknown";
@@ -69,6 +69,19 @@ const searchKey = (a: SearchArgs) =>
  * search race safe: a response for "vo" cannot be written into the cache entry
  * for "vot", so a slow earlier keystroke can never overwrite a later one.
  */
+const fetchPublicSearch = (a: SearchArgs) =>
+  shopRpc<SearchPage>("shop_public_search", {
+    _q: a.q?.trim() || null,
+    _category_slug: a.categorySlug ?? null,
+    _shop_slug: a.shopSlug ?? null,
+    _condition: a.condition ?? null,
+    _in_stock_only: a.inStockOnly ?? false,
+    _sort: a.sort ?? "recent",
+    _cursor_at: a.cursorAt ?? null,
+    _cursor_id: a.cursorId ?? null,
+    _limit: a.limit ?? 24,
+  });
+
 export const usePublicSearch = (a: SearchArgs, enabled = true) =>
   useQuery({
     queryKey: searchKey(a),
@@ -76,18 +89,28 @@ export const usePublicSearch = (a: SearchArgs, enabled = true) =>
     // A buyer typing sees the previous page rather than a spinner flash on
     // every keystroke.
     placeholderData: (prev) => prev,
-    queryFn: () =>
-      shopRpc<SearchPage>("shop_public_search", {
-        _q: a.q?.trim() || null,
-        _category_slug: a.categorySlug ?? null,
-        _shop_slug: a.shopSlug ?? null,
-        _condition: a.condition ?? null,
-        _in_stock_only: a.inStockOnly ?? false,
-        _sort: a.sort ?? "recent",
-        _cursor_at: a.cursorAt ?? null,
-        _cursor_id: a.cursorId ?? null,
-        _limit: a.limit ?? 24,
-      }),
+    queryFn: () => fetchPublicSearch(a),
+  });
+
+/**
+ * "Xem thêm" APPENDS. The first version wrote the cursor into the URL and
+ * re-ran the single-page query, so page 2 REPLACED page 1 — a buyer with 26
+ * products saw 24, tapped "Xem thêm", and got a page of 2 (reported
+ * 2026-08-29, launch night). Pages accumulate here; the working set (query,
+ * filters, sort) still lives in the URL, the cursor no longer does.
+ */
+export const usePublicSearchPages = (a: Omit<SearchArgs, "cursorAt" | "cursorId">, enabled = true) =>
+  useInfiniteQuery<SearchPage, Error, InfiniteData<SearchPage>, readonly unknown[], { at: string; id: string } | null>({
+    queryKey: [...searchKey(a), "pages"],
+    enabled,
+    placeholderData: (prev) => prev,
+    initialPageParam: null,
+    queryFn: ({ pageParam }) =>
+      fetchPublicSearch({ ...a, cursorAt: pageParam?.at ?? null, cursorId: pageParam?.id ?? null }),
+    getNextPageParam: (last) => {
+      const tail = last.rows[last.rows.length - 1];
+      return last.has_more && tail ? { at: tail.created_at, id: tail.id } : undefined;
+    },
   });
 
 export interface PublicCategory {
