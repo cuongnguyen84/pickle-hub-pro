@@ -160,6 +160,25 @@ interface BraveImageResult {
   properties?: { url?: unknown; width?: unknown; height?: unknown };
 }
 
+/** Keep the candidates whose URL really serves an image over valid TLS, in rank order. */
+async function reachableImages(candidates: ProductImageCandidate[]): Promise<ProductImageCandidate[]> {
+  const checks = await Promise.all(candidates.map(async (candidate) => {
+    try {
+      const response = await fetch(candidate.url, {
+        headers: { Accept: "image/*" },
+        redirect: "follow",
+        signal: AbortSignal.timeout(5_000),
+      });
+      const ok = response.ok && (response.headers.get("content-type") ?? "").startsWith("image/");
+      await response.body?.cancel();
+      return ok;
+    } catch {
+      return false; // TLS error, timeout, DNS — the browser would fail the same way
+    }
+  }));
+  return candidates.filter((_, index) => checks[index]);
+}
+
 async function searchBraveProductImages(
   productName: string,
   { limit = 4, exclude = [] as string[] } = {},
@@ -208,11 +227,15 @@ async function searchBraveProductImages(
     }).sort((a, b) => b.score - a.score);
 
     const seen = new Set<string>(exclude);
-    return ranked.flatMap(({ candidate }) => {
+    const unique = ranked.flatMap(({ candidate }) => {
       if (seen.has(candidate.url)) return [];
       seen.add(candidate.url);
       return [candidate];
-    }).slice(0, limit);
+    });
+    // Only hand back images a browser can actually show: negin.vn served a
+    // self-signed certificate, so every candidate from it rendered as alt text
+    // and silently dropped out again at publish (29/08).
+    return (await reachableImages(unique.slice(0, limit * 3))).slice(0, limit);
   } catch (error) {
     console.warn("[product-import-enrich] Brave image search skipped", error);
     return [];
@@ -548,7 +571,7 @@ Deno.serve(async (req: Request) => {
         ? parsed.source_urls.filter((url): url is string => typeof url === "string")
         : [];
       const sourceUrls = [...new Set([...searchedUrls, ...aiSourceUrls])].slice(0, 8);
-      const fallbackCandidates = await findProductImages(sourceUrls, canonicalName);
+      const fallbackCandidates = await reachableImages(await findProductImages(sourceUrls, canonicalName));
       const seen = new Set(imageCandidates.map((candidate) => candidate.url));
       imageCandidates = [
         ...imageCandidates,
