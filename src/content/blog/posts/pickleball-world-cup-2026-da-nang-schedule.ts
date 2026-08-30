@@ -303,7 +303,7 @@ const post: BlogPost = {
         {
           heading: "Việt Nam thi đấu ngày nào?",
           content:
-            "Việt Nam là hạt giống số 1 bảng A ở bốn trong năm hạng mục — Open, Masters, Juniors và Kids — và không có đội ở Seniors. Nghĩa là giải của Việt Nam bắt đầu từ thứ Năm 3/9 với vòng bảng Open, và trận mở màn gặp Colombia. Đội hình Open do Đỗ Minh Quân làm đội trưởng, trong đó có Ken Tâm và Sophia Huỳnh Trần — hai người vừa vô địch đôi nữ Shenzhen Open đúng một ngày trước khi trang này được cập nhật.",
+            "Việt Nam là hạt giống số 1 bảng A ở bốn trong năm hạng mục — Open, Masters, Juniors và Kids — và không có đội ở Seniors. Nghĩa là giải của Việt Nam bắt đầu từ thứ Năm 3/9 với vòng bảng Open, và trận mở màn gặp Colombia. Đội hình Open do Đỗ Minh Quân làm đội trưởng, trong đó có Ken Tâm và Sophia Huỳnh Trần — hai người vừa vô địch đôi nữ Shenzhen Open ngày 23/8.",
           listItems: [
             "Open, bảng A: Việt Nam, Colombia, Quần đảo Cayman, Chile — vòng bảng từ 08:00 ngày 3/9",
             "Masters (60+), bảng A: Việt Nam, Brazil, Hồng Kông (Trung Quốc), Quần đảo Cayman — vòng bảng ngày 4/9",

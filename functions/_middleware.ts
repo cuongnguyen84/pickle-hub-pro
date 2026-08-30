@@ -1050,7 +1050,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // organizers' homepage after three days away, so the three posts no longer
   // say it "has gone"; all three openings carry an Aug 30 dateline, and the
   // pillar opening no longer frames the 80-nation target as still open.
-  const cacheKey = `pr:v75:${url.pathname}`;
+  // v76 (2026-08-30): follow-up to v75 — independent verify found three
+  // stale-dateline survivors the first pass missed: two "the day before
+  // play" lines in how-to-watch (EN+VI) and a VI relative date that the
+  // updatedDate bump made wrong ("the day before this page was updated").
+  const cacheKey = `pr:v76:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
