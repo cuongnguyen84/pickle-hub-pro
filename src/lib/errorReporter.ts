@@ -102,6 +102,41 @@ function isIgnored(message: string): boolean {
   return IGNORE_MESSAGES.some((m) => message.includes(m));
 }
 
+// Errors thrown by scripts that were injected INTO our document by something
+// other than our build.
+// ---------------------------------------------------------------------------
+// Cloudflare appends its bot-management probe as an inline <script> in every
+// HTML response (the `__CF$cv$params` snippet at the end of the document). On
+// iOS Safari it reads `iframe.contentDocument` on a frame that has gone
+// cross-origin and throws a SecurityError, which window.onerror hands to us as
+// if it were ours. 68 identical rows landed in client_errors in the week to
+// 2026-08-30 — the single largest js_error group, for code we cannot change,
+// on a page that keeps working.
+//
+// The guard is the FILENAME, not the message. Vite emits every line of our own
+// code under /assets/ in a build and under /src/ in dev, so an ErrorEvent
+// blaming the document URL itself did not come from a module we wrote. The
+// served HTML does carry three inline scripts of ours (theme restore, gtag
+// bootstrap, the deferred ad/analytics loader) — none of them touches an
+// iframe, so none of them can raise THIS message; if that ever changes, the
+// message list below is the thing to revisit, not the filename rule. The same
+// message from our own bundle still reports, which is the point: this hides a
+// third party's error, never our own.
+const INJECTED_SCRIPT_MESSAGES = [
+  // Cloudflare's challenge-platform probe, cross-origin iframe access.
+  "Blocked a frame with origin",
+];
+
+export function isInjectedScriptError(message: string, filename: string | undefined): boolean {
+  if (!INJECTED_SCRIPT_MESSAGES.some((m) => message.includes(m))) return false;
+  const source = filename ?? "";
+  // /src/ is not decoration: initErrorReporter() runs in `npm run dev` too,
+  // where our modules are served unbundled from /src/. Without it the filter
+  // would swallow a real cross-origin bug for the whole time it is easiest
+  // to find one.
+  return !source.includes("/assets/") && !source.includes("/src/");
+}
+
 // A rejected promise carries whatever the thrower passed, and BOTH obvious
 // ways to render that are hostile:
 //   * JSON.stringify returns undefined — not a string — for undefined, a
@@ -197,6 +232,9 @@ export function initErrorReporter(): void {
   window.addEventListener("error", (ev: ErrorEvent) => {
     const message = ev.message ?? ev.error?.message ?? "unknown_error";
     if (isIgnored(message)) return;
+    // Only here, where ev.filename can prove the script is not ours.
+    // reportCaughtError() has no filename to check with, so it keeps reporting.
+    if (isInjectedScriptError(message, ev.filename)) return;
     send("js_error", {
       message: truncate(message, 1000)!,
       stack: truncate(ev.error?.stack, 4000),
