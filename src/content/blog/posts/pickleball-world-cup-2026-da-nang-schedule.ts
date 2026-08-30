@@ -3,7 +3,7 @@ import type { BlogPost } from "@/content/blog/types";
 const post: BlogPost = {
   slug: "pickleball-world-cup-2026-da-nang-schedule",
   publishedDate: "2026-08-24",
-  updatedDate: "2026-08-29",
+  updatedDate: "2026-08-30",
   author: "Cuong Nguyen",
   tags: [
     "lịch thi đấu world cup pickleball",
@@ -34,7 +34,7 @@ const post: BlogPost = {
         {
           heading: "Every date that matters, in one place",
           content:
-            "Updated August 29, 2026 — play starts tomorrow. The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, and it is really two tournaments on one schedule. The individual tournament starts Sunday August 30 at 08:00, with 47 events across eight court clusters on day one. The Opening Ceremony is Wednesday September 2, on Vietnam's National Day. The national-team competition — the part with Vietnam in it — does not start until Thursday September 3, and the finals close the event on Sunday September 6 at Tien Son, where the five OPEN Pro finals are now timed 10:10 to 14:50. This ThePickleHub schedule page lists both competitions day by day and names the venues. All times are Vietnam time (GMT+7), and the organizers mark the schedule subject to change.",
+            "Updated August 30, 2026 — play starts this morning. The Heineken Pickleball World Cup 2026 runs August 30 to September 6, 2026 in Da Nang, Vietnam, and it is really two tournaments on one schedule. The individual tournament starts today, Sunday August 30, at 08:00, with 47 events across eight court clusters on day one. The Opening Ceremony is Wednesday September 2, on Vietnam's National Day. The national-team competition — the part with Vietnam in it — does not start until Thursday September 3, and the finals close the event on Sunday September 6 at Tien Son, where the five OPEN Pro finals are now timed 10:10 to 14:50. This ThePickleHub schedule page lists both competitions day by day and names the venues. All times are Vietnam time (GMT+7), and the organizers mark the schedule subject to change.",
           internalLinks: [
             {
               text: "Tickets, venues and how to watch on FPT Play",
@@ -91,7 +91,7 @@ const post: BlogPost = {
         {
           heading: "When does Vietnam play?",
           content:
-            "Vietnam is the top seed in Group A in four of the five categories — Open, Masters, Juniors and Kids — and has no team in Seniors. That means Vietnam's tournament starts on Thursday September 3 with the Open group stage, and the opening tie is against Colombia. The Open squad is captained by Quan Do and includes Ken Tam and Sophia Huynh Tran, who won women's doubles gold at the Shenzhen Open the day before this page was updated.",
+            "Vietnam is the top seed in Group A in four of the five categories — Open, Masters, Juniors and Kids — and has no team in Seniors. That means Vietnam's tournament starts on Thursday September 3 with the Open group stage, and the opening tie is against Colombia. The Open squad is captained by Quan Do and includes Ken Tam and Sophia Huynh Tran, who won women's doubles gold at the Shenzhen Open on August 23.",
           listItems: [
             "Open, Group A: Vietnam, Colombia, Cayman Islands, Chile — group stage from 08:00 on September 3",
             "Masters (60+), Group A: Vietnam, Brazil, Hong Kong (China), Cayman Islands — group stage September 4",
@@ -246,7 +246,7 @@ const post: BlogPost = {
         {
           heading: "Toàn bộ mốc thời gian, gom về một chỗ",
           content:
-            "Cập nhật 29/8/2026 — mai bóng lăn. Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng, và thực chất đây là hai giải chạy trên cùng một lịch. Giải Cá nhân khởi tranh Chủ nhật 30/8 lúc 08:00, ngày đầu có 47 nội dung trải trên 8 cụm sân. Lễ khai mạc thứ Tư 2/9, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia — phần có đội tuyển Việt Nam — tới thứ Năm 3/9 mới bắt đầu, và các trận chung kết khép lại giải Chủ nhật 6/9 tại Tiên Sơn, nơi 5 trận chung kết OPEN nhóm Pro nay đã có giờ từ 10:10 đến 14:50. Trang lịch này của ThePickleHub liệt kê cả hai giải theo từng ngày và nêu rõ sân thi đấu. Mọi giờ đều là giờ Việt Nam (GMT+7), và ban tổ chức ghi rõ lịch có thể thay đổi.",
+            "Cập nhật 30/8/2026 — sáng nay bóng lăn. Heineken Pickleball World Cup 2026 diễn ra từ 30/8 đến 6/9/2026 tại Đà Nẵng, và thực chất đây là hai giải chạy trên cùng một lịch. Giải Cá nhân khởi tranh sáng nay, Chủ nhật 30/8, lúc 08:00, ngày đầu có 47 nội dung trải trên 8 cụm sân. Lễ khai mạc thứ Tư 2/9, đúng ngày Quốc khánh. Giải Đồng đội Quốc gia — phần có đội tuyển Việt Nam — tới thứ Năm 3/9 mới bắt đầu, và các trận chung kết khép lại giải Chủ nhật 6/9 tại Tiên Sơn, nơi 5 trận chung kết OPEN nhóm Pro nay đã có giờ từ 10:10 đến 14:50. Trang lịch này của ThePickleHub liệt kê cả hai giải theo từng ngày và nêu rõ sân thi đấu. Mọi giờ đều là giờ Việt Nam (GMT+7), và ban tổ chức ghi rõ lịch có thể thay đổi.",
           internalLinks: [
             {
               text: "Vé, sân bãi và cách xem trên FPT Play",

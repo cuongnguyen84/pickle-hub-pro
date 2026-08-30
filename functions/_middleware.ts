@@ -1046,7 +1046,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // v73 (2026-08-29): shop SEO audit — <img> gallery + card covers in bot HTML,
   // price out of product <title>, x-default → VI, EN category names, Brand/sku
   // in Product schema, Shop link in the shared <nav>.
-  const cacheKey = `pr:v74:${url.pathname}`;
+  // v75 (2026-08-30): World Cup opening day — the ticket link is BACK on the
+  // organizers' homepage after three days away, so the three posts no longer
+  // say it "has gone"; all three openings carry an Aug 30 dateline, and the
+  // pillar opening no longer frames the 80-nation target as still open.
+  const cacheKey = `pr:v75:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
