@@ -48,7 +48,8 @@ export function vnDayKey(iso: string | null | undefined): string {
   return new Date(t + 7 * 3600 * 1000).toISOString().slice(0, 10);
 }
 
-async function fetchWcResults(): Promise<WcResultsFeed> {
+/** Exported for tests: the grouping is the part with rules in it. */
+export async function fetchWcResults(): Promise<WcResultsFeed> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const res = await (supabase as any)
     .from("wc_pro_matches")
