@@ -13,6 +13,14 @@ import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { cmsHeroImageSources, heroDimsProps } from "@/lib/image-utils";
+import { WorldCupResultsBoard } from "@/components/live/WorldCupResultsBoard";
+
+/** Marker a VI post puts in content_html where a live block belongs. Mirrors
+ *  WC_RESULTS_MARKER in functions/_lib/render/blog.ts. */
+const WC_RESULTS_MARKER = "[[WC_RESULTS]]";
+
+const PROSE_CLASS =
+  "prose prose-lg dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:opacity-80 prose-table:border prose-table:border-border prose-th:bg-muted prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-border prose-h2:mt-12 prose-h2:text-foreground prose-h3:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-tr:even:bg-muted/30";
 
 // App.tsx starts this route chunk during cold deep-link bootstrap. Begin the
 // public CMS read as soon as the module evaluates so React Query can consume
@@ -196,10 +204,29 @@ const ViBlogPost = () => {
           )}
 
           <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
-          <div
-            className="prose prose-lg dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:opacity-80 prose-table:border prose-table:border-border prose-th:bg-muted prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-border prose-h2:mt-12 prose-h2:text-foreground prose-h3:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-tr:even:bg-muted/30"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(normalizeImagesInHtml(post.content_html)) }}
-          />
+          {/* A VI post can mount a live data block by putting [[WC_RESULTS]] in
+              its content_html. Splitting on the marker keeps the rest of the
+              body on the existing sanitised-HTML path — the component is
+              rendered by React, never injected as a string, so nothing the
+              database holds can become markup. Bots get the same block from
+              functions/_lib/render/blog.ts. */}
+          {(() => {
+            const clean = DOMPurify.sanitize(normalizeImagesInHtml(post.content_html));
+            const parts = clean.split(WC_RESULTS_MARKER);
+            return parts.map((chunk, i) => (
+              <div key={i}>
+                <div
+                  className={PROSE_CLASS}
+                  dangerouslySetInnerHTML={{ __html: chunk }}
+                />
+                {i < parts.length - 1 && (
+                  <div className={PROSE_CLASS}>
+                    <WorldCupResultsBoard language="vi" />
+                  </div>
+                )}
+              </div>
+            ));
+          })()}
 
           {faqItems.length > 0 && (
             <section className="mt-12 border-t border-border pt-8">
