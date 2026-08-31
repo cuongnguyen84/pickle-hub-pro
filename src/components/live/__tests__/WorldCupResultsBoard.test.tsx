@@ -37,7 +37,7 @@ const match = (over: Partial<WcProMatchRow> = {}): WcProMatchRow => ({
   is_vietnam: true,
   venue_name: null,
   court_label: "1",
-  scheduled_at: null,
+  scheduled_at: "2026-08-31T09:00:00+00:00",
   ...over,
 });
 
@@ -85,11 +85,18 @@ describe("WorldCupResultsBoard", () => {
     expect(screen.getByText("Ngày 31/8/2026")).toBeTruthy();
   });
 
-  it("never presents a recorded score as an official final", () => {
+  it("states the table's scope rather than implying it holds every match", () => {
     resultsMock.mockReturnValue(ok(feed()));
     const { container } = render(<WorldCupResultsBoard language="vi" />);
-    expect(container.textContent).toContain("Tỉ số ghi nhận");
-    expect(container.textContent).toContain("không phải kết quả chính thức");
+    expect(container.textContent).toContain("không phải toàn bộ 33 nội dung cá nhân");
+    expect(container.textContent).toContain("trang nhánh đấu chính thức");
+  });
+
+  it("shows a dateline generated from the feed, in Vietnam time", () => {
+    resultsMock.mockReturnValue(ok(feed({ dataUpdatedAt: "2026-08-31T10:42:00Z" })));
+    const { container } = render(<WorldCupResultsBoard language="vi" />);
+    // 10:42 UTC is 17:42 in Da Nang.
+    expect(container.textContent).toContain("Cập nhật lần cuối: 17:42 · 31/8/2026");
   });
 
   it("distinguishes an outage from an empty draw", () => {
