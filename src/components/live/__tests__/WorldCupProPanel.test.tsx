@@ -86,4 +86,13 @@ describe("WorldCupProContent", () => {
     render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [{ a: 15, b: 8 }], current_a: 15, current_b: 8, leader_side: "A" })] })])} language="vi" />);
     expect(screen.getByText("15-8")).toBeTruthy();
   });
+
+  it("keeps a 0-0 game on a live match but drops it on a completed one", () => {
+    const { container: live } = render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", live: [match({ games_json: [], current_a: 0, current_b: 0 })] })], 1)} language="vi" />);
+    expect(within(live).getByText("0-0")).toBeTruthy();
+    cleanup();
+    const { container: done } = render(<WorldCupProContent feed={feed([evt({ event: "pro_singles_mens", vietnam: [match({ status: "completed", games_json: [{ a: 21, b: 15 }], current_a: 0, current_b: 0, leader_side: "A" })] })])} language="vi" />);
+    expect(within(done).getByText("21-15")).toBeTruthy();
+    expect(within(done).queryByText(/0-0/)).toBeNull();
+  });
 });

@@ -61,11 +61,13 @@ interface WcProRow {
 function wcScore(m: WcProRow): string {
   const games = m.games_json ?? [];
   const parts = games.map((g) => `${g.a}-${g.b}`);
-  const hasCurrent =
-    m.current_a != null && m.current_b != null && (m.current_a > 0 || m.current_b > 0);
-  const last = games[games.length - 1];
-  const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
-  if (hasCurrent && !dupOfLast) parts.push(`${m.current_a}-${m.current_b}`);
+  if (m.current_a != null && m.current_b != null) {
+    const last = games[games.length - 1];
+    const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
+    // Live 0-0 = game just starting (keep); completed 0-0 = source zeroed it (drop).
+    const emptyOnDone = m.status === "completed" && m.current_a === 0 && m.current_b === 0;
+    if (!dupOfLast && !emptyOnDone) parts.push(`${m.current_a}-${m.current_b}`);
+  }
   return parts.join(", ");
 }
 

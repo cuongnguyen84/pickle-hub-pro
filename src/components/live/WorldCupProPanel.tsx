@@ -37,12 +37,13 @@ const sideIsVietnam = (name: string | null): boolean => isVietnameseName(name);
 function scoreLine(m: WcProMatchRow): string {
   const games = m.games_json ?? [];
   const parts = games.map((g) => `${g.a}-${g.b}`);
-  const hasCurrent =
-    m.current_a != null && m.current_b != null && (m.current_a > 0 || m.current_b > 0);
-  const last = games[games.length - 1];
-  const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
-  if ((m.status === "in_progress" || m.status === "completed") && hasCurrent && !dupOfLast) {
-    parts.push(`${m.current_a}-${m.current_b}`);
+  if ((m.status === "in_progress" || m.status === "completed") && m.current_a != null && m.current_b != null) {
+    const last = games[games.length - 1];
+    const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
+    // A live match at 0-0 is the game just starting — keep it. On a completed
+    // match a trailing 0-0 is noise (the source zeroed the game as it dropped it).
+    const emptyOnDone = m.status === "completed" && m.current_a === 0 && m.current_b === 0;
+    if (!dupOfLast && !emptyOnDone) parts.push(`${m.current_a}-${m.current_b}`);
   }
   return parts.join(", ");
 }
