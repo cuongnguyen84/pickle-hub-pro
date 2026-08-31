@@ -97,14 +97,18 @@ describe("WorldCupLiveCard", () => {
     const { container } = wrap("vi");
     expect(container.querySelector(".wclc")).not.toBeNull();
     expect(screen.getByText(/Kết quả hôm nay/)).toBeTruthy();
-    // full per-game scoreline, not a single game
-    expect(screen.getByText("15-17, 15-10, 15-9")).toBeTruthy();
     expect(container.querySelector(".wclc-dot")).toBeNull(); // no live pulse in results mode
     // the winner (side A) is marked; colour never signals nationality here
     const winRow = container.querySelector(".wclc-r-row--win");
     expect(winRow?.textContent).toContain("Nguyễn Văn Linh");
     expect(container.querySelector(".wclc-r-tick")).not.toBeNull();
     expect(container.querySelector(".wclc-m-name--vn")).toBeNull();
+    // per-game scores sit next to each name (winner A: 15, 15, 15; loser B: 17, 10, 9)
+    const aCells = [...(winRow?.querySelectorAll(".wclc-r-g") ?? [])].map((n) => n.textContent);
+    expect(aCells).toEqual(["15", "15", "15"]);
+    const rows = container.querySelectorAll(".wclc-r-row");
+    const bCells = [...rows[1].querySelectorAll(".wclc-r-g")].map((n) => n.textContent);
+    expect(bCells).toEqual(["17", "10", "9"]);
   });
 
   it("does not count a result from another day as today", () => {

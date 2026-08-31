@@ -14,7 +14,7 @@
 import { Link } from "react-router-dom";
 import { useWcProLive, type WcProMatchRow } from "@/hooks/useWcProLive";
 import { isVietnameseName } from "@/lib/wc-open/parse-pro";
-import { scoreLine } from "./wc-score";
+import { scoreGames } from "./wc-score";
 
 const HIDE_AFTER = Date.UTC(2026, 8, 7, 17, 0, 0); // 2026-09-08 00:00 Vietnam time
 const LOGO = "/images/world-cup-2026-logo.jpg";
@@ -63,26 +63,28 @@ function LiveMatch({ m }: { m: WcProMatchRow }) {
   );
 }
 
-// A finished match. Colour carries one meaning only: who won. The winner is
-// bold in the foreground with a check; the loser is dimmed. (No Vietnam-red
-// here — every match on this card has a Vietnamese player, so red would mark
-// nearly every name and tell the reader nothing about the result.)
+// A finished match, read as a mini scoreboard: each name with its per-game
+// scores aligned on the right. Colour carries one meaning — who won: the
+// winner is bold in the foreground with a check, the loser dimmed. (No
+// Vietnam-red here — every match on this card has a Vietnamese player, so red
+// would mark nearly every name and tell the reader nothing about the result.)
 function ResultMatch({ m }: { m: WcProMatchRow }) {
-  const line = scoreLine(m);
+  const games = scoreGames(m);
   const aWon = m.leader_side === "A";
   const bWon = m.leader_side === "B";
   return (
     <div className="wclc-r">
       <div className="wclc-r-round">{m.round_name ?? ""}</div>
       <div className={`wclc-r-row${aWon ? " wclc-r-row--win" : ""}`}>
-        {aWon && <span className="wclc-r-tick" aria-hidden="true">✓</span>}
+        <span className="wclc-r-tick" aria-hidden="true">{aWon ? "✓" : ""}</span>
         <span className="wclc-r-name">{m.entry_a_name ?? "—"}</span>
+        <span className="wclc-r-games">{games.map((g, i) => <span key={i} className="wclc-r-g">{g.a}</span>)}</span>
       </div>
       <div className={`wclc-r-row${bWon ? " wclc-r-row--win" : ""}`}>
-        {bWon && <span className="wclc-r-tick" aria-hidden="true">✓</span>}
+        <span className="wclc-r-tick" aria-hidden="true">{bWon ? "✓" : ""}</span>
         <span className="wclc-r-name">{m.entry_b_name ?? "—"}</span>
+        <span className="wclc-r-games">{games.map((g, i) => <span key={i} className="wclc-r-g">{g.b}</span>)}</span>
       </div>
-      {line && <div className="wclc-r-line">{line}</div>}
     </div>
   );
 }
@@ -174,14 +176,16 @@ const WCLC_CSS = `
 @media (prefers-reduced-motion: reduce) { .wclc-dot { animation: none; } }
 .wclc-matches { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
 .wclc-m { border: 1px solid var(--tl-border); border-left: 3px solid var(--tl-live); border-radius: var(--tl-radius, 10px); background: var(--tl-bg-elev); padding: 10px 13px; }
-/* Result card (compact): win/loss is the only signal. */
-.wclc-r { border: 1px solid var(--tl-border); border-radius: var(--tl-radius, 10px); background: var(--tl-bg-elev); padding: 8px 11px; }
+/* Result card (compact scoreboard): win/loss is the only colour signal, and
+   the fill is translucent so the gold wash and wordmark read through it. */
+.wclc-r { border: 1px solid var(--tl-border); border-radius: var(--tl-radius, 10px); background: color-mix(in srgb, var(--tl-bg-elev) 42%, transparent); padding: 8px 11px; }
 .wclc-r-round { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-dim); margin-bottom: 4px; }
-.wclc-r-row { display: flex; align-items: baseline; gap: 6px; padding: 1px 0; color: var(--tl-dim); font-size: 14px; min-width: 0; }
+.wclc-r-row { display: flex; align-items: baseline; gap: 7px; padding: 1px 0; color: var(--tl-dim); font-size: 14px; min-width: 0; }
 .wclc-r-row--win { color: var(--tl-fg); font-weight: 700; }
-.wclc-r-tick { flex: none; color: var(--tl-gold); font-size: 11px; font-weight: 700; }
-.wclc-r-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.wclc-r-line { margin-top: 5px; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--tl-dim); letter-spacing: .02em; }
+.wclc-r-tick { flex: none; width: 11px; text-align: center; color: var(--tl-gold); font-size: 11px; font-weight: 700; }
+.wclc-r-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.wclc-r-games { flex: none; display: inline-flex; gap: 7px; font-variant-numeric: tabular-nums; }
+.wclc-r-g { min-width: 15px; text-align: right; }
 .wclc-m-round { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-dim); margin-bottom: 6px; }
 .wclc-m-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 2px 0; color: var(--tl-dim); font-size: 14.5px; }
 .wclc-m-row--win { color: var(--tl-fg); font-weight: 700; }

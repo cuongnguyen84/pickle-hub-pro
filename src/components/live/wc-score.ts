@@ -10,16 +10,23 @@
 
 import type { WcProMatchRow } from "@/hooks/useWcProLive";
 
-export function scoreLine(m: WcProMatchRow): string {
-  const games = m.games_json ?? [];
-  const parts = games.map((g) => `${g.a}-${g.b}`);
+/** The games to show for a match, per side. Finished games plus the last game
+ * still in view (the one being played when live, or the last one observed
+ * before a completed match was dropped). See scoreLine for the string form. */
+export function scoreGames(m: WcProMatchRow): { a: number; b: number }[] {
+  const games = (m.games_json ?? []).map((g) => ({ a: g.a, b: g.b }));
   if ((m.status === "in_progress" || m.status === "completed") && m.current_a != null && m.current_b != null) {
     const last = games[games.length - 1];
     const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
     // A live match at 0-0 is the game just starting — keep it. On a completed
     // match a trailing 0-0 is noise (the source zeroed the game as it dropped it).
     const emptyOnDone = m.status === "completed" && m.current_a === 0 && m.current_b === 0;
-    if (!dupOfLast && !emptyOnDone) parts.push(`${m.current_a}-${m.current_b}`);
+    if (!dupOfLast && !emptyOnDone) games.push({ a: m.current_a, b: m.current_b });
   }
-  return parts.join(", ");
+  return games;
+}
+
+/** The full scoreline as a string, e.g. "14-16, 16-14, 15-6". */
+export function scoreLine(m: WcProMatchRow): string {
+  return scoreGames(m).map((g) => `${g.a}-${g.b}`).join(", ");
 }
