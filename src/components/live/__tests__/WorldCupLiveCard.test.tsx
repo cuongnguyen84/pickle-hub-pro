@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The home-page livescore card: hides unless a match is live, shows the logo
-// banner + a "Livescore" header, renders up to two live matches with a score
+// beside a "Livescore" header, renders up to two live matches with a score
 // per side (Vietnamese players first and highlighted), and links to /live.
 
 import { describe, it, expect, afterEach, vi } from "vitest";
@@ -38,12 +38,12 @@ describe("WorldCupLiveCard", () => {
     expect(container.querySelector(".wclc")).toBeNull();
   });
 
-  it("shows the logo banner, the Livescore header and the live count", () => {
+  it("shows the logo, the Livescore header and the live count", () => {
     proMock.mockReturnValue({ data: feed([match({})], 4), isLoading: false, isError: false });
     const { container } = wrap("vi");
     expect(screen.getByText("Livescore")).toBeTruthy();
     expect(screen.getByText(/4 trận/)).toBeTruthy();
-    const img = container.querySelector(".wclc-banner img");
+    const img = container.querySelector(".wclc-logo img");
     expect(img?.getAttribute("src")).toBe("/images/world-cup-2026-logo.jpg");
   });
 

@@ -1,6 +1,6 @@
 // ============================================================================
 // WorldCupLiveCard — the World Cup livescore card at the top of the home page
-// during the tournament. A tournament-logo banner, a "Livescore" header with
+// during the tournament. The tournament logo beside a "Livescore" header with
 // the live-match count, one or two matches in progress (score by score, a
 // Vietnamese player's first), and a link to /live. Repaints over Supabase
 // Realtime as scores change.
@@ -72,13 +72,15 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
     <div className="tl-shell" style={{ marginTop: 12, marginBottom: 8 }}>
       <div className="wclc">
         <style>{WCLC_CSS}</style>
-        <Link to={href} className="wclc-banner" aria-label={language === "vi" ? "World Cup Đà Nẵng — xem trực tiếp" : "World Cup Da Nang — watch live"}>
-          <img src={LOGO} alt="Heineken Pickleball World Cup 2026" loading="lazy" width={690} height={645} />
-        </Link>
         <div className="wclc-content">
           <div className="wclc-header">
-            <span className="wclc-title">Livescore</span>
-            <span className="wclc-live"><span className="wclc-dot" aria-hidden="true" />{liveCount} {language === "vi" ? "trận đang đấu" : "live"}</span>
+            <Link to={href} className="wclc-logo" aria-label={language === "vi" ? "World Cup Đà Nẵng — xem trực tiếp" : "World Cup Da Nang — watch live"}>
+              <img src={LOGO} alt="Heineken Pickleball World Cup 2026" loading="lazy" width={690} height={645} />
+            </Link>
+            <div className="wclc-head-text">
+              <span className="wclc-title">Livescore</span>
+              <span className="wclc-live"><span className="wclc-dot" aria-hidden="true" />{liveCount} {language === "vi" ? "trận đang đấu" : "live"}</span>
+            </div>
           </div>
           <div className="wclc-matches">
             {featured.map((m) => (
@@ -96,11 +98,12 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
 
 const WCLC_CSS = `
 .wclc { border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg, 14px); background: var(--tl-surface); overflow: hidden; }
-.wclc-banner { display: block; line-height: 0; }
-.wclc-banner img { width: 100%; height: 150px; object-fit: cover; object-position: center 42%; display: block; }
-.wclc-content { padding: 16px 18px 18px; }
-.wclc-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-.wclc-title { font-family: inherit; font-size: 16px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-fg); }
+.wclc-content { padding: 15px 16px 16px; }
+.wclc-header { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+.wclc-logo { flex: none; display: block; width: 60px; height: 60px; border-radius: 12px; overflow: hidden; line-height: 0; border: 1px solid var(--tl-border); }
+.wclc-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wclc-head-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.wclc-title { font-family: inherit; font-size: 17px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-fg); line-height: 1.1; }
 .wclc-live { font-size: 12px; font-weight: 700; color: var(--tl-live); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .wclc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tl-live); animation: wclc-pulse 1.4s ease-in-out infinite; }
 @keyframes wclc-pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
