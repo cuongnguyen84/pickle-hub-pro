@@ -116,6 +116,7 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
     <div className="tl-shell" style={{ marginTop: 44, marginBottom: 8 }}>
       <div className="wclc">
         <style>{WCLC_CSS}</style>
+        <div className="wclc-wm" aria-hidden="true">{"PICKLEBALL\nWORLD CUP"}</div>
         <div className="wclc-content">
           <div className="wclc-header">
             <Link to={href} className="wclc-logo" aria-label={language === "vi" ? "Pickleball World Cup Đà Nẵng — xem trực tiếp" : "Pickleball World Cup Da Nang — watch live"}>
@@ -152,8 +153,15 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
 }
 
 const WCLC_CSS = `
-.wclc { border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg, 14px); background: var(--tl-surface); overflow: hidden; }
-.wclc-content { padding: 12px 14px 13px; }
+/* World Cup gold: the tournament's own accent, held constant across themes
+   at low opacity so the warm wash reads on cream and on dark alike. */
+.wclc { position: relative; border: 1px solid var(--tl-border); border-radius: var(--tl-radius-lg, 14px); background:
+    linear-gradient(135deg, rgba(201,162,74,.18), rgba(201,162,74,.05) 58%, rgba(201,162,74,.02)),
+    var(--tl-surface);
+  overflow: hidden; }
+/* Faint embossed wordmark behind the content — brand cue, not a label. */
+.wclc-wm { position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center; transform: rotate(-8deg) scale(1.08); font-weight: 900; font-size: 56px; line-height: .9; letter-spacing: .01em; text-transform: uppercase; text-align: center; white-space: pre; color: rgba(201,162,74,.13); pointer-events: none; user-select: none; }
+.wclc-content { position: relative; z-index: 1; padding: 12px 14px 13px; }
 .wclc-header { display: flex; align-items: center; gap: 11px; margin-bottom: 11px; }
 .wclc-logo { flex: none; display: block; width: 46px; height: 46px; border-radius: 10px; overflow: hidden; line-height: 0; border: 1px solid var(--tl-border); }
 .wclc-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
