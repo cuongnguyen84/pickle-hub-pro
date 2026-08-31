@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-// The home-page livescore card: hides unless a match is live, shows the logo
-// beside a "Livescore" header, renders up to two live matches with a score
-// per side (Vietnamese players first and highlighted), and links to /live.
+// The home-page World Cup card, two modes: "Livescore" (up to two live matches,
+// a score per side, Vietnamese first and highlighted) when a match is live, and
+// "Kết quả hôm nay" (today's finished Vietnamese matches with full scorelines)
+// when nothing is live. Hidden only when there is neither. Always links to /live.
 
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
@@ -77,5 +78,55 @@ describe("WorldCupLiveCard", () => {
     const { container } = wrap("en");
     const links = [...container.querySelectorAll("a")].map((a) => a.getAttribute("href"));
     expect(links).toContain("/live");
+  });
+
+  // ── Results mode: nothing live → today's finished Vietnamese matches ────────
+  const todayIso = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10) + "T05:00:00+00:00";
+  const resultsFeed = (vietnam: WcProMatchRow[]): WcProFeed => ({
+    events: [{ event: "pro_singles_mens", live: [], vietnam } as WcProEventGroup],
+    liveCount: 0,
+  });
+
+  it("falls back to today's results when nothing is live", () => {
+    proMock.mockReturnValue({
+      data: resultsFeed([
+        match({ match_id: "r1", status: "completed", current_a: null, current_b: null, games_json: [{ a: 15, b: 17 }, { a: 15, b: 10 }, { a: 15, b: 9 }], leader_side: "A", scheduled_at: todayIso }),
+      ]),
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).not.toBeNull();
+    expect(screen.getByText("Kết quả hôm nay")).toBeTruthy();
+    // full per-game scoreline, not a single game
+    expect(screen.getByText("15-17, 15-10, 15-9")).toBeTruthy();
+    expect(container.querySelector(".wclc-dot")).toBeNull(); // no live pulse in results mode
+  });
+
+  it("does not count a result from another day as today", () => {
+    proMock.mockReturnValue({
+      data: resultsFeed([
+        match({ match_id: "old", status: "completed", current_a: null, current_b: null, games_json: [{ a: 21, b: 10 }], leader_side: "A", scheduled_at: "2026-08-30T05:00:00+00:00" }),
+      ]),
+      isLoading: false, isError: false,
+    });
+    const { container } = wrap("vi");
+    expect(container.querySelector(".wclc")).toBeNull();
+  });
+
+  it("prefers live over results when a match is live", () => {
+    proMock.mockReturnValue({
+      data: {
+        events: [{
+          event: "pro_singles_mens",
+          live: [match({ match_id: "L", status: "in_progress" })],
+          vietnam: [match({ match_id: "r", status: "completed", current_a: null, current_b: null, games_json: [{ a: 15, b: 9 }], scheduled_at: todayIso })],
+        }],
+        liveCount: 1,
+      },
+      isLoading: false, isError: false,
+    });
+    wrap("vi");
+    expect(screen.getByText("Livescore")).toBeTruthy();
+    expect(screen.queryByText("Kết quả hôm nay")).toBeNull();
   });
 });

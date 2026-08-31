@@ -1,25 +1,41 @@
 // ============================================================================
-// WorldCupLiveCard — the World Cup livescore card at the top of the home page
-// during the tournament. The tournament logo beside a "Livescore" header with
-// the live-match count, one or two matches in progress (score by score, a
-// Vietnamese player's first), and a link to /live. Repaints over Supabase
-// Realtime as scores change.
+// WorldCupLiveCard — the World Cup card at the top of the home page during the
+// tournament. Two modes over the same shell (logo + header + up to a few match
+// cards + a link to /live), repainting over Supabase Realtime:
+//   * live now → "Livescore": one or two matches in progress, score by score,
+//     a Vietnamese player's first.
+//   * nothing live → "Kết quả hôm nay": today's finished Vietnamese matches
+//     with their full scorelines (winner in bold).
 //
-// Self-hides when nothing is live, and self-retires after Sep 7.
+// Shows nothing when there is neither a live match nor a result today, and
+// self-retires after Sep 7.
 // ============================================================================
 
 import { Link } from "react-router-dom";
 import { useWcProLive, type WcProMatchRow } from "@/hooks/useWcProLive";
 import { isVietnameseName } from "@/lib/wc-open/parse-pro";
+import { scoreLine } from "./wc-score";
 
 const HIDE_AFTER = Date.UTC(2026, 8, 7, 17, 0, 0); // 2026-09-08 00:00 Vietnam time
 const LOGO = "/images/world-cup-2026-logo.jpg";
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000; // UTC+7
 type Lang = "en" | "vi";
 
 const sideIsVietnam = (name: string | null): boolean => isVietnameseName(name);
 
-// The score to show against each side: the current game if in play, else the
-// last finished game. One number per side, the way a scoreboard reads.
+/** The Vietnam-local calendar date (YYYY-MM-DD) of an instant. */
+function vnDay(ms: number): string {
+  return new Date(ms + VN_OFFSET_MS).toISOString().slice(0, 10);
+}
+/** Was this match played today, Vietnam time? Uses its scheduled slot. */
+function isToday(m: WcProMatchRow): boolean {
+  if (!m.scheduled_at) return false;
+  const t = Date.parse(m.scheduled_at);
+  return !Number.isNaN(t) && vnDay(t) === vnDay(Date.now());
+}
+
+// The score to show against each side of a LIVE match: the current game if in
+// play, else the last finished game. One number per side, scoreboard-style.
 function sideScores(m: WcProMatchRow): { a: string; b: string } {
   if (m.current_a != null && m.current_b != null) {
     return { a: String(m.current_a), b: String(m.current_b) };
@@ -47,26 +63,49 @@ function LiveMatch({ m }: { m: WcProMatchRow }) {
   );
 }
 
+// A finished match: winner in bold, the full per-game scoreline beneath.
+function ResultMatch({ m }: { m: WcProMatchRow }) {
+  const aVN = sideIsVietnam(m.entry_a_name);
+  const bVN = sideIsVietnam(m.entry_b_name);
+  const line = scoreLine(m);
+  return (
+    <div className="wclc-m wclc-m--done">
+      <div className="wclc-m-round">{m.round_name ?? ""}</div>
+      <div className={`wclc-m-row${m.leader_side === "A" ? " wclc-m-row--win" : ""}`}>
+        <span className={`wclc-m-name${aVN ? " wclc-m-name--vn" : ""}`}>{m.entry_a_name ?? "—"}</span>
+      </div>
+      <div className={`wclc-m-row${m.leader_side === "B" ? " wclc-m-row--win" : ""}`}>
+        <span className={`wclc-m-name${bVN ? " wclc-m-name--vn" : ""}`}>{m.entry_b_name ?? "—"}</span>
+      </div>
+      {line && <div className="wclc-m-line">{line}</div>}
+    </div>
+  );
+}
+
 export function WorldCupLiveCard({ language }: { language: Lang }) {
   const { data } = useWcProLive();
 
   if (Date.now() > HIDE_AFTER) return null;
   if (!data || data.events.length === 0) return null;
 
-  const allLive = data.events.flatMap((e) => e.live);
-  if (allLive.length === 0) return null; // the card exists to show live scores
+  const isVn = (m: WcProMatchRow) => sideIsVietnam(m.entry_a_name) || sideIsVietnam(m.entry_b_name);
 
-  // Vietnamese matches first, then the rest; take up to two.
-  const featured = [...allLive]
-    .sort((x, y) => {
-      const xv = sideIsVietnam(x.entry_a_name) || sideIsVietnam(x.entry_b_name) ? 0 : 1;
-      const yv = sideIsVietnam(y.entry_a_name) || sideIsVietnam(y.entry_b_name) ? 0 : 1;
-      return xv - yv;
-    })
-    .slice(0, 2);
+  const allLive = data.events.flatMap((e) => e.live);
+  // Today's finished Vietnamese matches, latest first — the fallback when
+  // nothing is live so the card stays useful between sessions.
+  const todayResults = data.events
+    .flatMap((e) => e.vietnam)
+    .filter((m) => m.status === "completed" && isToday(m))
+    .sort((x, y) => (y.scheduled_at ?? "").localeCompare(x.scheduled_at ?? ""));
+
+  const live = allLive.length > 0;
+  if (!live && todayResults.length === 0) return null; // nothing live, no result today
+
+  const featured = live
+    ? [...allLive].sort((x, y) => (isVn(x) ? 0 : 1) - (isVn(y) ? 0 : 1)).slice(0, 2)
+    : todayResults.slice(0, 3);
 
   const href = language === "vi" ? "/vi/live" : "/live";
-  const liveCount = data.liveCount;
 
   return (
     <div className="tl-shell" style={{ marginTop: 12, marginBottom: 8 }}>
@@ -78,17 +117,28 @@ export function WorldCupLiveCard({ language }: { language: Lang }) {
               <img src={LOGO} alt="Heineken Pickleball World Cup 2026" loading="lazy" width={690} height={645} />
             </Link>
             <div className="wclc-head-text">
-              <span className="wclc-title">Livescore</span>
-              <span className="wclc-live"><span className="wclc-dot" aria-hidden="true" />{liveCount} {language === "vi" ? "trận đang đấu" : "live"}</span>
+              {live ? (
+                <>
+                  <span className="wclc-title">Livescore</span>
+                  <span className="wclc-live"><span className="wclc-dot" aria-hidden="true" />{data.liveCount} {language === "vi" ? "trận đang đấu" : "live"}</span>
+                </>
+              ) : (
+                <>
+                  <span className="wclc-title">{language === "vi" ? "Kết quả hôm nay" : "Today's results"}</span>
+                  <span className="wclc-sub">{language === "vi" ? `${todayResults.length} trận Việt Nam` : `${todayResults.length} Vietnam ${todayResults.length === 1 ? "match" : "matches"}`}</span>
+                </>
+              )}
             </div>
           </div>
           <div className="wclc-matches">
-            {featured.map((m) => (
-              <LiveMatch key={m.match_id} m={m} />
-            ))}
+            {featured.map((m) =>
+              live ? <LiveMatch key={m.match_id} m={m} /> : <ResultMatch key={m.match_id} m={m} />,
+            )}
           </div>
           <Link to={href} className="wclc-cta">
-            {language === "vi" ? "Xem tất cả trận" : "See all matches"} →
+            {live
+              ? language === "vi" ? "Xem tất cả trận" : "See all matches"
+              : language === "vi" ? "Xem tất cả kết quả" : "See all results"} →
           </Link>
         </div>
       </div>
@@ -105,11 +155,14 @@ const WCLC_CSS = `
 .wclc-head-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .wclc-title { font-family: inherit; font-size: 17px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-fg); line-height: 1.1; }
 .wclc-live { font-size: 12px; font-weight: 700; color: var(--tl-live); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.wclc-sub { font-size: 12px; font-weight: 700; color: var(--tl-dim); white-space: nowrap; }
 .wclc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tl-live); animation: wclc-pulse 1.4s ease-in-out infinite; }
 @keyframes wclc-pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .wclc-dot { animation: none; } }
 .wclc-matches { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
 .wclc-m { border: 1px solid var(--tl-border); border-left: 3px solid var(--tl-live); border-radius: var(--tl-radius, 10px); background: var(--tl-bg-elev); padding: 10px 13px; }
+.wclc-m--done { border-left-color: var(--tl-border); }
+.wclc-m-line { margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--tl-fg); letter-spacing: .02em; }
 .wclc-m-round { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--tl-dim); margin-bottom: 6px; }
 .wclc-m-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 2px 0; color: var(--tl-dim); font-size: 14.5px; }
 .wclc-m-row--win { color: var(--tl-fg); font-weight: 700; }

@@ -12,6 +12,7 @@
 import { useMemo, useState } from "react";
 import { PRO_EVENT_ORDER, type ProEvent, type WcProFeed, type WcProMatchRow } from "@/hooks/useWcProLive";
 import { isVietnameseName } from "@/lib/wc-open/parse-pro";
+import { scoreLine } from "./wc-score";
 
 type Lang = "en" | "vi";
 
@@ -26,27 +27,6 @@ const EVENT_LABEL: Record<ProEvent, { vi: string; en: string }> = {
 // Which side of a match is the Vietnamese one, so only that name lights up (a
 // VN-vs-VN match lights both). Uses the parser's detection — one source of truth.
 const sideIsVietnam = (name: string | null): boolean => isVietnameseName(name);
-
-// The full scoreline: every finished game, plus the last game still in view.
-// For a live match that trailing game is the one being played. For a completed
-// match it's the last game we observed before the source dropped it — the
-// source never server-renders a completed match's final, so a finished bo3 is
-// shown as "game1, game2, <last-seen decider>" rather than losing the decider,
-// and a single-game knockout that only ever had a current game (empty games_json)
-// still shows its last-recorded score instead of rendering blank.
-function scoreLine(m: WcProMatchRow): string {
-  const games = m.games_json ?? [];
-  const parts = games.map((g) => `${g.a}-${g.b}`);
-  if ((m.status === "in_progress" || m.status === "completed") && m.current_a != null && m.current_b != null) {
-    const last = games[games.length - 1];
-    const dupOfLast = last != null && last.a === m.current_a && last.b === m.current_b;
-    // A live match at 0-0 is the game just starting — keep it. On a completed
-    // match a trailing 0-0 is noise (the source zeroed the game as it dropped it).
-    const emptyOnDone = m.status === "completed" && m.current_a === 0 && m.current_b === 0;
-    if (!dupOfLast && !emptyOnDone) parts.push(`${m.current_a}-${m.current_b}`);
-  }
-  return parts.join(", ");
-}
 
 function MatchRow({ m, lang }: { m: WcProMatchRow; lang: Lang }) {
   const aVN = sideIsVietnam(m.entry_a_name);
