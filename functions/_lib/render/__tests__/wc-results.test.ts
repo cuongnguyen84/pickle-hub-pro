@@ -6,16 +6,28 @@
 
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "../../supabase";
-import { fetchWcResultsBlock, matchDayKey, vnDayFromUtc, vnStamp } from "../wc-results";
+import {
+  fetchWcResultsBlock,
+  matchDayKey,
+  selectDaysForDisplay,
+  vnDayFromUtc,
+  vnStamp,
+} from "../wc-results";
 
 type Row = Record<string, unknown>;
 
 /** Minimal stand-in for the PostgREST builder chain the module uses. */
 function fakeSupabase(rows: Row[] | null, error: unknown = null): SupabaseClient {
+  // The module pages with .range(); one short page ends the loop.
+  let served = false;
   const builder = {
     select: () => builder,
     order: () => builder,
-    limit: () => Promise.resolve({ data: rows, error }),
+    range: () => {
+      const payload = served ? { data: [], error } : { data: rows, error };
+      served = true;
+      return Promise.resolve(payload);
+    },
   };
   return { from: () => builder } as unknown as SupabaseClient;
 }
@@ -96,12 +108,12 @@ describe("fetchWcResultsBlock", () => {
       fakeSupabase([{ ...base, match_id: "m1", last_seen_at: "2026-08-31T12:00:00Z" }]),
       "vi",
     );
-    expect(vi.html).toContain("không phải toàn bộ 33 nội dung cá nhân");
+    expect(vi.html).toContain("mọi trận Pro đã kết thúc");
     const en = await fetchWcResultsBlock(
       fakeSupabase([{ ...base, match_id: "m1", last_seen_at: "2026-08-31T12:00:00Z" }]),
       "en",
     );
-    expect(en.html).toContain("not all 33 individual events");
+    expect(en.html).toContain("every completed match across the five Pro individual draws");
   });
 
   it("generates the dateline from the feed rather than the prose", async () => {
@@ -154,6 +166,35 @@ describe("fetchWcResultsBlock", () => {
     expect(matchDayKey({ scheduled_at: null, last_seen_at: "2026-08-31T18:00:00Z" })).toBe(
       "2026-09-01",
     );
+  });
+
+  it("spends the display budget newest-first and never drops a Vietnamese match", () => {
+    // Three days of five matches each, one Vietnamese per day. A budget of 10
+    // pays for the two newest days in full; the third may keep only its VN row.
+    const rows = ["2026-09-02", "2026-09-01", "2026-08-31"].flatMap((day, di) =>
+      Array.from({ length: 5 }, (_, i) => ({
+        ...base,
+        match_id: `d${di}m${i}`,
+        is_vietnam: i === 0,
+        scheduled_at: `${day}T09:00:00+00:00`,
+      })),
+    );
+    const { days, trimmed } = selectDaysForDisplay(rows, 10);
+    expect(days.map((d) => [d.day, d.matches.length])).toEqual([
+      ["2026-09-02", 5],
+      ["2026-09-01", 5],
+      ["2026-08-31", 1],
+    ]);
+    expect(trimmed).toBe(true);
+    // The survivor of the trimmed day is the Vietnamese one, not just the first.
+    expect(days[2].matches[0].is_vietnam).toBe(true);
+  });
+
+  it("does not report trimming when everything fits", () => {
+    const rows = Array.from({ length: 3 }, (_, i) => ({ ...base, match_id: `m${i}` }));
+    const { days, trimmed } = selectDaysForDisplay(rows, 10);
+    expect(trimmed).toBe(false);
+    expect(days[0].matches).toHaveLength(3);
   });
 
   it("formats the Vietnam stamp, and nothing for a missing one", () => {

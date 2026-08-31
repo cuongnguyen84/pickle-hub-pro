@@ -46,6 +46,7 @@ const feed = (over: Partial<WcResultsFeed> = {}): WcResultsFeed => ({
   days: [{ day: "2026-08-31", matches: [match()] }],
   completedCount: 1,
   vietnamCount: 1,
+  trimmed: false,
   dataUpdatedAt: "2026-08-31T12:00:00Z",
   ...over,
 });
@@ -88,8 +89,16 @@ describe("WorldCupResultsBoard", () => {
   it("states the table's scope rather than implying it holds every match", () => {
     resultsMock.mockReturnValue(ok(feed()));
     const { container } = render(<WorldCupResultsBoard language="vi" />);
-    expect(container.textContent).toContain("không phải toàn bộ 33 nội dung cá nhân");
+    expect(container.textContent).toContain("mọi trận Pro đã kết thúc");
     expect(container.textContent).toContain("trang nhánh đấu chính thức");
+    // No trimming in this fixture, so no explanation of a short day.
+    expect(container.textContent).not.toContain("Những ngày cũ hơn");
+  });
+
+  it("explains a short older day only when the budget actually trimmed one", () => {
+    resultsMock.mockReturnValue(ok(feed({ trimmed: true })));
+    const { container } = render(<WorldCupResultsBoard language="vi" />);
+    expect(container.textContent).toContain("Những ngày cũ hơn chỉ hiển thị các trận có vận động viên Việt Nam");
   });
 
   it("shows a dateline generated from the feed, in Vietnam time", () => {

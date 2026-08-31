@@ -212,19 +212,39 @@ interface ExistingProRow {
   is_vietnam: boolean;
 }
 
+// PostgREST caps a response at 1000 rows and says so only in Content-Range, so
+// an unpaginated read looks successful while silently returning a prefix. That
+// was harmless while the table held Vietnamese results alone (~90 rows); now
+// that every completed Pro match is stored the table passes 1000 mid-tournament,
+// and a truncated `existing` map would make the worker re-upsert every unseen
+// row on every single cron tick.
+const PAGE = 1000;
+
 async function sbSelectProMatches(env: Env): Promise<Map<string, ExistingProRow>> {
-  const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?select=match_id,status,current_a,current_b,games_json,leader_side,is_vietnam`,
-    {
-      headers: {
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+  const out = new Map<string, ExistingProRow>();
+  for (let from = 0; ; from += PAGE) {
+    const res = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?select=match_id,status,current_a,current_b,games_json,leader_side,is_vietnam&order=match_id.asc`,
+      {
+        headers: {
+          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+          Range: `${from}-${from + PAGE - 1}`,
+        },
       },
-    },
-  );
-  if (!res.ok) throw new Error(`select pro ${res.status}`);
-  const rows = (await res.json()) as ExistingProRow[];
-  return new Map(rows.map((r) => [r.match_id, r]));
+    );
+    if (!res.ok) throw new Error(`select pro ${res.status}`);
+    const rows = (await res.json()) as ExistingProRow[];
+    for (const r of rows) out.set(r.match_id, r);
+    if (rows.length < PAGE) return out;
+  }
+}
+
+/** Split work into request-sized batches. */
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
 
 function proRowChanged(next: WcProMatch, prev: ExistingProRow | undefined): boolean {
@@ -266,59 +286,70 @@ function proRowBody(m: WcProMatch, nowIso: string) {
   };
 }
 
+// Batched: the first tick after a redeploy writes every row it has never seen,
+// which is now the whole bracket rather than the Vietnamese slice of it.
+const UPSERT_BATCH = 200;
+
 async function sbUpsertProMatches(env: Env, rows: ReturnType<typeof proRowBody>[]): Promise<void> {
-  if (rows.length === 0) return;
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/wc_pro_matches?on_conflict=match_id`, {
-    method: "POST",
-    headers: {
-      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates,return=minimal",
-    },
-    body: JSON.stringify(rows),
-  });
-  if (!res.ok) throw new Error(`upsert pro ${res.status}: ${await res.text()}`);
+  for (const batch of chunk(rows, UPSERT_BATCH)) {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/wc_pro_matches?on_conflict=match_id`, {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(batch),
+    });
+    if (!res.ok) throw new Error(`upsert pro ${res.status}: ${await res.text()}`);
+  }
 }
 
 function idInList(matchIds: string[]): string {
   return matchIds.map((id) => `"${id}"`).join(",");
 }
 
+// A match id runs ~50 characters, so an unbounded in.() list would build a URL
+// past what Cloudflare will send once the table holds every completed match.
+const ID_BATCH = 100;
+
 /** Mark stored matches `completed`, keeping their last-observed score. */
 async function sbMarkProCompleted(env: Env, matchIds: string[], nowIso: string): Promise<void> {
-  if (matchIds.length === 0) return;
-  const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${idInList(matchIds)})`,
-    {
-      method: "PATCH",
-      headers: {
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
+  for (const batch of chunk(matchIds, ID_BATCH)) {
+    const res = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${idInList(batch)})`,
+      {
+        method: "PATCH",
+        headers: {
+          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({ status: "completed", updated_at: nowIso }),
       },
-      body: JSON.stringify({ status: "completed", updated_at: nowIso }),
-    },
-  );
-  if (!res.ok) throw new Error(`mark completed ${res.status}: ${await res.text()}`);
+    );
+    if (!res.ok) throw new Error(`mark completed ${res.status}: ${await res.text()}`);
+  }
 }
 
 /** Delete stored matches — used for scheduled ones that vanished unplayed. */
 async function sbDeleteProMatches(env: Env, matchIds: string[]): Promise<void> {
-  if (matchIds.length === 0) return;
-  const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${idInList(matchIds)})`,
-    {
-      method: "DELETE",
-      headers: {
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-        Prefer: "return=minimal",
+  for (const batch of chunk(matchIds, ID_BATCH)) {
+    const res = await fetch(
+      `${env.SUPABASE_URL}/rest/v1/wc_pro_matches?match_id=in.(${idInList(batch)})`,
+      {
+        method: "DELETE",
+        headers: {
+          apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+          Prefer: "return=minimal",
+        },
       },
-    },
-  );
-  if (!res.ok) throw new Error(`delete pro ${res.status}: ${await res.text()}`);
+    );
+    if (!res.ok) throw new Error(`delete pro ${res.status}: ${await res.text()}`);
+  }
 }
 
 /**
@@ -361,12 +392,17 @@ export interface ProScrapeResult {
  *   * /brackets (one page per event) — every COMPLETED match with its real
  *     per-game finals and winner. This is the source of results.
  *
- * We store the live + Vietnamese subset from /live and the Vietnamese completed
- * matches from /brackets (the board shows live + Vietnamese; keeping only VN
- * completed also bounds the table well under PostgREST's 1000-row cap). A row
- * the sources no longer justify is pruned: a finished VN match is replaced by
- * its real bracket result; everything else that vanished is deleted so scoreless
- * snapshots and foreign completed rows never accumulate.
+ * We store the live + scheduled rows from /live and EVERY completed match from
+ * /brackets. Until 2026-08-31 only Vietnamese finals were kept, which bounded
+ * the table under PostgREST's 1000-row cap for free but left the public results
+ * page unable to honestly claim it carried the tournament — a page that says
+ * "results" and holds one nation's is a page that has to explain itself. The
+ * cap is now handled where it belongs: paginated reads here, batched writes,
+ * and a display budget on the page rather than a hole in the data.
+ *
+ * A row the sources no longer justify is pruned: a finished match is replaced
+ * by its real bracket result; everything else that vanished is deleted so
+ * scoreless snapshots and never-played scheduled rows do not accumulate.
  */
 export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
   let parsed;
@@ -387,8 +423,6 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
   if (bracketErrors.length) await alert(env, `brackets: ${bracketErrors.join("; ")}`);
   const canPrune = bracketErrors.length === 0;
   const bracketDoneIds = new Set(bracketDone.map((m) => m.matchId));
-  const bracketVN = bracketDone.filter((m) => m.isVietnam);
-  const bracketVNIds = new Set(bracketVN.map((m) => m.matchId));
 
   const nowIso = new Date().toISOString();
   const existing = await sbSelectProMatches(env);
@@ -397,8 +431,9 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
   // report finished (brackets wins — no flip back to in_progress for a cycle).
   const liveStore = matchesToStore(parsed.matches).filter((m) => !bracketDoneIds.has(m.matchId));
   const liveChanged = liveStore.filter((m) => proRowChanged(m, existing.get(m.matchId)));
-  // Completed rows: the Vietnamese finals from the brackets, with real scores.
-  const bracketChanged = bracketVN.filter((m) => proRowChanged(m, existing.get(m.matchId)));
+  // Completed rows: every bracket final, with its real per-game score. Was the
+  // Vietnamese subset until 2026-08-31 — see the header for why that changed.
+  const bracketChanged = bracketDone.filter((m) => proRowChanged(m, existing.get(m.matchId)));
   await sbUpsertProMatches(
     env,
     [...liveChanged, ...bracketChanged].map((m) => proRowBody(m, nowIso)),
@@ -407,15 +442,21 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
   // Prune rows the sources no longer justify. `gone` = rows /live no longer
   // lists and the brackets did not keep as a VN result.
   const liveIds = new Set(parsed.matches.map((m) => m.matchId));
-  const gone = [...existing.values()].filter((r) => !liveIds.has(r.match_id) && !bracketVNIds.has(r.match_id));
-  // A vanished VN in_progress row whose bracket hasn't synced its final yet:
-  // freeze the last score as a stopgap; the next cycle replaces it with the
-  // real bracket result. Everything else gone is deleted — foreign in_progress
-  // and completed rows (never shown), and scheduled rows that never played.
-  // But never delete a completed row when a bracket page failed: it may be a VN
-  // result we simply couldn't re-fetch this cycle.
+  const gone = [...existing.values()].filter((r) => !liveIds.has(r.match_id) && !bracketDoneIds.has(r.match_id));
+  // A vanished in_progress row whose bracket hasn't synced its final yet: freeze
+  // the last score as a stopgap; the next cycle replaces it with the real
+  // bracket result. Everything else gone is deleted — scheduled rows that never
+  // played, and rows the brackets no longer carry at all. Never delete a
+  // completed row when a bracket page failed: it may be a real result we simply
+  // couldn't re-fetch this cycle.
+  //
+  // The freeze is no longer restricted to Vietnamese matches. It exists so a
+  // match that ends between the live feed dropping it and the bracket
+  // publishing it does not blink out of the results page for a minute; that
+  // reasoning never had anything to do with nationality, it was only scoped
+  // that way because nothing else was being kept.
   const isFreeze = (r: ExistingProRow) =>
-    r.status === "in_progress" && r.is_vietnam && !bracketDoneIds.has(r.match_id);
+    r.status === "in_progress" && !bracketDoneIds.has(r.match_id);
   const freeze = gone.filter(isFreeze).map((r) => r.match_id);
   const toDelete = gone
     .filter((r) => !isFreeze(r) && !(r.status === "completed" && !canPrune))
@@ -427,7 +468,7 @@ export async function runScrapePro(env: Env): Promise<ProScrapeResult> {
     ok: true,
     matchesSeen: parsed.matches.length,
     matchesWritten: liveChanged.length + bracketChanged.length,
-    completed: bracketVN.length,
+    completed: bracketDone.length,
   };
 }
 
