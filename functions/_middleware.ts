@@ -1054,7 +1054,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // stale-dateline survivors the first pass missed: two "the day before
   // play" lines in how-to-watch (EN+VI) and a VI relative date that the
   // updatedDate bump made wrong ("the day before this page was updated").
-  const cacheKey = `pr:v76:${url.pathname}`;
+  // v77 (2026-08-31): day two. All three World Cup openings said play starts
+  // "today, August 30" / "sáng nay bóng lăn" — true yesterday, wrong today, and
+  // the opening is the passage AI search extracts. Openings now carry an Aug 31
+  // dateline with absolute dates only, plus the first verified day-one outcome:
+  // 12 of 69 events already have champions (organizers' own site, amateur draws).
+  const cacheKey = `pr:v77:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
