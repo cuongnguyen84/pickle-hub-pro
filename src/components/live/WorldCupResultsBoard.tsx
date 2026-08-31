@@ -1,17 +1,15 @@
 // ============================================================================
-// WorldCupResultsBoard — the live results table embedded in the World Cup 2026
+// WorldCupResultsBoard — the live results table inside the World Cup 2026
 // results article, on both language twins.
 //
 // The article's prose is static; this is the part that has to be current. Bots
 // get the same tables server-rendered by functions/_lib/render/wc-results.ts —
-// keep the two in step: a fact visible here and absent there is a page that
-// tells Google less than it tells a reader.
+// keep the two in step.
 //
-// Scores are the last value the scraper observed before the match left the
-// organizers' live feed, not an official final (see the wc_pro_matches
-// migration header). The column is labelled "ghi nhận" / "as recorded" and the
-// footnote says so, because a wrong champion name is the one error on a results
-// page that gets screenshotted.
+// The dateline is generated from the feed rather than written into the prose. A
+// "cập nhật liên tục" claim carrying a hand-typed date is a promise nobody can
+// check, and it is the first line an AI answer quotes back when it cites this
+// page.
 // ============================================================================
 
 import { useWcResults } from "@/hooks/useWcResults";
@@ -34,9 +32,19 @@ function dayHeading(day: string, lang: Lang): string {
   return lang === "vi" ? `Ngày ${Number(d)}/${Number(m)}/${y}` : `${y}-${m}-${d}`;
 }
 
-/** The side the source last had in front. Never inferred from the score: a
- *  frozen last-observed game can read behind for the eventual winner. */
-function recordedWinner(m: WcProMatchRow): string {
+/** "17:42 · 31/8/2026" in Vietnam time, from a UTC instant. */
+export function vnStamp(iso: string | null): string {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const d = new Date(t + 7 * 3600 * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())} · ${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+}
+
+/** The winner the bracket declares. Never inferred from the score: a stopgap
+ *  row's last observed game can read behind for the side that went on to win. */
+function winnerName(m: WcProMatchRow): string {
   if (m.leader_side === "A") return m.entry_a_name ?? "";
   if (m.leader_side === "B") return m.entry_b_name ?? "";
   return "";
@@ -53,8 +61,8 @@ function MatchTable({ rows, lang }: { rows: WcProMatchRow[]; lang: Lang }) {
             <th>{vi ? "Nội dung" : "Event"}</th>
             <th>{vi ? "Vòng" : "Round"}</th>
             <th>{vi ? "Cặp đấu" : "Match"}</th>
-            <th>{vi ? "Tỉ số ghi nhận" : "Score as recorded"}</th>
-            <th>{vi ? "Dẫn/thắng" : "Ahead / won"}</th>
+            <th>{vi ? "Tỉ số" : "Score"}</th>
+            <th>{vi ? "Thắng" : "Winner"}</th>
           </tr>
         </thead>
         <tbody>
@@ -67,7 +75,7 @@ function MatchTable({ rows, lang }: { rows: WcProMatchRow[]; lang: Lang }) {
                 {m.is_vietnam && <span aria-hidden="true"> 🇻🇳</span>}
               </td>
               <td>{scoreLine(m) || dash}</td>
-              <td>{recordedWinner(m) || dash}</td>
+              <td>{winnerName(m) || dash}</td>
             </tr>
           ))}
         </tbody>
@@ -87,8 +95,8 @@ export function WorldCupResultsBoard({ language }: { language: Lang }) {
     return (
       <p>
         {vi
-          ? "Không tải được bảng kết quả trực tiếp lúc này. Phần lịch và bối cảnh phía trên vẫn đúng."
-          : "The live results table could not be loaded right now. The schedule and context above are unaffected."}
+          ? "Không tải được bảng kết quả trực tiếp lúc này. Phần lịch và bối cảnh phía dưới vẫn đúng."
+          : "The live results table could not be loaded right now. The schedule and context below are unaffected."}
       </p>
     );
   }
@@ -105,8 +113,18 @@ export function WorldCupResultsBoard({ language }: { language: Lang }) {
     );
   }
 
+  const stamp = vnStamp(data.dataUpdatedAt);
+
   return (
     <div className="wc-results-block">
+      {stamp && (
+        <p>
+          {vi
+            ? `Cập nhật lần cuối: ${stamp} (giờ Việt Nam). ${data.completedCount} trận đã có kết quả, ${data.live.length} trận đang thi đấu.`
+            : `Last updated ${stamp} Vietnam time. ${data.completedCount} matches have a result, ${data.live.length} on court now.`}
+        </p>
+      )}
+
       {data.live.length > 0 && (
         <>
           <h3>{vi ? "Đang thi đấu" : "On court now"}</h3>
@@ -123,8 +141,8 @@ export function WorldCupResultsBoard({ language }: { language: Lang }) {
 
       <p>
         {vi
-          ? `Tổng cộng ${data.completedCount} trận Pro đã ghi nhận kết quả, trong đó ${data.vietnamCount} trận có vận động viên Việt Nam. Tỉ số là giá trị cuối cùng ThePickleHub ghi nhận được từ hệ thống của ban tổ chức trước khi trận rời khỏi bảng trực tiếp — không phải kết quả chính thức, và cột cuối là bên đang dẫn ở thời điểm đó.`
-          : `${data.completedCount} Pro matches have a recorded result, ${data.vietnamCount} of them involving a Vietnamese player. Scores are the last value ThePickleHub observed in the organisers' live feed before the match left it — not an official final — and the last column is the side ahead at that moment.`}
+          ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro có vận động viên Việt Nam, không phải toàn bộ 33 nội dung cá nhân. Tỉ số các trận đã kết thúc lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận Việt Nam vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
+          : "This table covers every Pro match on court now plus every Pro match involving a Vietnamese player — not all 33 individual events. Completed scores come from the tournament's own bracket pages, with the winner the bracket declares. A Vietnamese match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."}
       </p>
     </div>
   );

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "../../supabase";
-import { fetchWcResultsBlock, vnDayKey } from "../wc-results";
+import { fetchWcResultsBlock, matchDayKey, vnDayFromUtc, vnStamp } from "../wc-results";
 
 type Row = Record<string, unknown>;
 
@@ -32,23 +32,23 @@ const base = {
   status: "completed",
   is_vietnam: true,
   court_label: "1",
-  scheduled_at: null,
+  scheduled_at: "2026-08-31T09:00:00+00:00",
 };
 
-describe("vnDayKey", () => {
+describe("vnDayFromUtc", () => {
   it("puts a late-evening Vietnam finish on that Vietnam day", () => {
     // 2026-08-31T16:30:00Z is 23:30 on Aug 31 in Vietnam, not Sep 1.
-    expect(vnDayKey("2026-08-31T16:30:00Z")).toBe("2026-08-31");
+    expect(vnDayFromUtc("2026-08-31T16:30:00Z")).toBe("2026-08-31");
   });
 
   it("rolls over at Vietnam midnight, not UTC midnight", () => {
     // 18:00Z is 01:00 the next day in Vietnam.
-    expect(vnDayKey("2026-08-31T18:00:00Z")).toBe("2026-09-01");
+    expect(vnDayFromUtc("2026-08-31T18:00:00Z")).toBe("2026-09-01");
   });
 
   it("returns empty for a missing or unparseable timestamp", () => {
-    expect(vnDayKey(null)).toBe("");
-    expect(vnDayKey("not a date")).toBe("");
+    expect(vnDayFromUtc(null)).toBe("");
+    expect(vnDayFromUtc("not a date")).toBe("");
   });
 });
 
@@ -56,8 +56,8 @@ describe("fetchWcResultsBlock", () => {
   it("groups completed matches by Vietnam day, newest day first", async () => {
     const block = await fetchWcResultsBlock(
       fakeSupabase([
-        { ...base, match_id: "m1", last_seen_at: "2026-08-30T12:00:00Z" },
-        { ...base, match_id: "m2", last_seen_at: "2026-08-31T12:00:00Z" },
+        { ...base, match_id: "m1", scheduled_at: "2026-08-30T09:00:00+00:00", last_seen_at: "2026-08-30T12:00:00Z" },
+        { ...base, match_id: "m2", scheduled_at: "2026-08-31T09:00:00+00:00", last_seen_at: "2026-08-31T12:00:00Z" },
       ]),
       "vi",
     );
@@ -91,18 +91,36 @@ describe("fetchWcResultsBlock", () => {
     expect(block.html).toContain("Đang thi đấu");
   });
 
-  it("never claims the score is official", async () => {
+  it("states the table's scope instead of implying it holds everything", async () => {
     const vi = await fetchWcResultsBlock(
       fakeSupabase([{ ...base, match_id: "m1", last_seen_at: "2026-08-31T12:00:00Z" }]),
       "vi",
     );
-    expect(vi.html).toContain("ghi nhận");
-    expect(vi.html).toContain("không phải kết quả chính thức");
+    expect(vi.html).toContain("không phải toàn bộ 33 nội dung cá nhân");
     const en = await fetchWcResultsBlock(
       fakeSupabase([{ ...base, match_id: "m1", last_seen_at: "2026-08-31T12:00:00Z" }]),
       "en",
     );
-    expect(en.html).toContain("not an official final");
+    expect(en.html).toContain("not all 33 individual events");
+  });
+
+  it("generates the dateline from the feed rather than the prose", async () => {
+    const block = await fetchWcResultsBlock(
+      fakeSupabase([{ ...base, match_id: "m1", last_seen_at: "2026-08-31T10:42:00Z" }]),
+      "vi",
+    );
+    // 10:42 UTC is 17:42 in Vietnam.
+    expect(block.html).toContain("17:42 · 31/8/2026");
+    expect(block.html).toContain("Cập nhật lần cuối");
+  });
+
+  it("names the bracket's winner as the winner, not a hedge", async () => {
+    const vi = await fetchWcResultsBlock(
+      fakeSupabase([{ ...base, match_id: "m1", last_seen_at: "2026-08-31T12:00:00Z" }]),
+      "vi",
+    );
+    expect(vi.html).toContain("Thắng");
+    expect(vi.html).toContain("trang nhánh đấu chính thức");
   });
 
   it("degrades to an empty block on a query error or empty feed", async () => {
@@ -126,5 +144,21 @@ describe("fetchWcResultsBlock", () => {
     );
     expect(block.html).not.toContain("<script>");
     expect(block.html).toContain("&lt;script&gt;");
+  });
+
+  it("takes the playing day from scheduled_at, which is already Vietnam time", () => {
+    // 20:00 on Aug 31 in Da Nang. A +7 shift would file it under September 1.
+    expect(matchDayKey({ scheduled_at: "2026-08-31T20:00:00+00:00", last_seen_at: null })).toBe(
+      "2026-08-31",
+    );
+    expect(matchDayKey({ scheduled_at: null, last_seen_at: "2026-08-31T18:00:00Z" })).toBe(
+      "2026-09-01",
+    );
+  });
+
+  it("formats the Vietnam stamp, and nothing for a missing one", () => {
+    expect(vnStamp("2026-08-31T10:42:00Z")).toBe("17:42 · 31/8/2026");
+    expect(vnStamp(null)).toBe("");
+    expect(vnStamp("nope")).toBe("");
   });
 });

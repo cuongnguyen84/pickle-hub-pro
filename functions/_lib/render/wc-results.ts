@@ -1,28 +1,39 @@
 // ============================================================================
 // World Cup 2026 results block — server-rendered from wc_pro_matches.
 //
-// The results page (/blog/pickleball-world-cup-2026-da-nang-results and its
-// Vietnamese twin) is prose + a table that must be current. Regenerating the
+// The results article is prose + a table that must be current. Regenerating the
 // prose on a cron would mean a commit and a Cloudflare deploy per update — 16
-// of them across the eight tournament days, each one a chance to break the
-// build for a table that the database already holds. So the prose is static
-// and only this block is live: the same wc_pro_matches rows the /live board
-// reads, rendered to HTML at request time for the bot path and mounted as a
-// React component for humans.
+// across the eight tournament days, each one a chance to break the build for a
+// table the database already holds. So the prose is static and only this block
+// is live: the same wc_pro_matches rows the /live board reads, rendered to HTML
+// at request time for the bot path and mounted as React for humans.
 //
-// ── Why the scores are labelled "ghi nhận" and not "chung cuộc" ─────────────
-// wc_pro_matches keeps a completed match's LAST OBSERVED score, not an
-// official final: the organizers' feed server-renders only scheduled and
-// in_progress matches, so a match that finishes drops out and the scraper
-// freezes what it last saw (see the migration header on 20260831140000).
-// `leader_side` is the closest thing to a winner the source gives us. Calling
-// that "chung cuộc" on a public results page would be a claim the data cannot
-// support, so every table here says ghi nhận / as recorded and carries the
-// footnote. This matters more than it looks: a wrong champion name is the one
-// error that gets screenshotted and shared.
+// ── What the table actually contains ───────────────────────────────────────
+// Not every Pro match at the tournament. wc-open-scraper stores the live and
+// scheduled rows from the organizers' /live feed plus the COMPLETED matches
+// involving a Vietnamese player, read off the bracket pages; a foreign match
+// that finishes is pruned so the table stays well under PostgREST's row cap.
+// The article says so in as many words — a page headlined "every match" that
+// silently holds only some is worse than one that states its scope.
 //
-// Cached like any other prerender, but the two results paths get the 5-minute
-// TTL from pathCacheTtl rather than the 6-hour default — see _middleware.ts.
+// ── Where a score comes from ───────────────────────────────────────────────
+// A completed row is the bracket page's own per-game final with the winner the
+// bracket declares, so it is a real result, not a frozen snapshot. The one
+// exception is the stopgap: a Vietnamese match that leaves the live feed before
+// its bracket syncs keeps its last observed score for a cycle or two. That is
+// rare and short-lived, so the page states the provenance once rather than
+// hedging every row into uselessness.
+//
+// ── Dates ──────────────────────────────────────────────────────────────────
+// Two different clocks, and mixing them puts an evening match on tomorrow:
+//   * scheduled_at is the organizers' Vietnam wall-clock stored verbatim (see
+//     the column comment on the migration) — take its date as-is, no shift.
+//   * last_seen_at is a real server timestamp in UTC — shift +7 for Vietnam.
+// scheduled_at wins when present because it is the day the match was PLAYED;
+// last_seen_at is only when we noticed.
+//
+// Cached like any other prerender, but both results paths get the 5-minute TTL
+// from pathCacheTtl rather than the 6-hour default — see _middleware.ts.
 // ============================================================================
 
 import type { SupabaseClient } from "../supabase";
@@ -53,6 +64,11 @@ const SELECT_COLS =
   "match_id,category_id,round_name,entry_a_name,entry_b_name,current_a,current_b," +
   "games_json,leader_side,status,is_vietnam,court_label,scheduled_at,last_seen_at";
 
+// 500 would have started dropping the earliest days around September 4: day one
+// alone produced 93 Vietnamese results, and the rows accumulate because the
+// bracket keeps re-confirming them. 1000 is PostgREST's own ceiling.
+const ROW_CAP = 1000;
+
 export const EVENT_LABEL: Record<string, { en: string; vi: string }> = {
   pro_singles_mens: { en: "Men's Pro Singles", vi: "Đơn Pro nam" },
   pro_singles_womens: { en: "Women's Pro Singles", vi: "Đơn Pro nữ" },
@@ -72,12 +88,34 @@ export interface WcResultsBlock {
   liveCount: number;
 }
 
-/** Vietnam-time calendar day (GMT+7, no DST) for an ISO timestamp. */
-export function vnDayKey(iso: string | null): string {
+/** Vietnam-time calendar day for a real UTC timestamp (GMT+7, no DST). */
+export function vnDayFromUtc(iso: string | null | undefined): string {
   if (!iso) return "";
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return "";
   return new Date(t + 7 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+/**
+ * The Vietnam day a match belongs to. scheduled_at is already Vietnam
+ * wall-clock, so its date is taken verbatim; shifting it by +7 would push every
+ * evening match onto the following day. last_seen_at is a genuine UTC instant
+ * and is only a fallback.
+ */
+export function matchDayKey(row: Pick<WcResultRow, "scheduled_at" | "last_seen_at">): string {
+  const sched = row.scheduled_at;
+  if (sched && !Number.isNaN(Date.parse(sched))) return sched.slice(0, 10);
+  return vnDayFromUtc(row.last_seen_at);
+}
+
+/** "17:42 · 31/8/2026" in Vietnam time, from a UTC instant. */
+export function vnStamp(iso: string | null): string {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const d = new Date(t + 7 * 3600 * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())} · ${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
 }
 
 function dayHeading(dayKey: string, lang: Lang): string {
@@ -86,9 +124,9 @@ function dayHeading(dayKey: string, lang: Lang): string {
   return lang === "vi" ? `Ngày ${Number(d)}/${Number(m)}/${y}` : `${y}-${m}-${d}`;
 }
 
-/** The side the source last had in front, as a name. Never inferred from the
- *  score: a frozen last-observed game can read 14-16 for the eventual winner. */
-function recordedWinner(m: WcResultRow): string {
+/** The winner the bracket declares. Never inferred from the score: a stopgap
+ *  row's last observed game can read behind for the side that went on to win. */
+function winnerName(m: WcResultRow): string {
   if (m.leader_side === "A") return m.entry_a_name ?? "";
   if (m.leader_side === "B") return m.entry_b_name ?? "";
   return "";
@@ -97,12 +135,13 @@ function recordedWinner(m: WcResultRow): string {
 function matchRowCells(m: WcResultRow, lang: Lang): string {
   const event = EVENT_LABEL[m.category_id]?.[lang] ?? m.category_id;
   const dash = lang === "vi" ? "chưa có" : "not recorded";
+  const flag = m.is_vietnam ? ' <span aria-hidden="true">🇻🇳</span>' : "";
   return (
     `<td>${escapeHtml(event)}</td>` +
     `<td>${escapeHtml(m.round_name ?? "")}</td>` +
-    `<td>${escapeHtml(m.entry_a_name ?? "")} — ${escapeHtml(m.entry_b_name ?? "")}</td>` +
+    `<td>${escapeHtml(m.entry_a_name ?? "")} — ${escapeHtml(m.entry_b_name ?? "")}${flag}</td>` +
     `<td>${escapeHtml(scoreLine(m as never) || dash)}</td>` +
-    `<td>${escapeHtml(recordedWinner(m) || dash)}</td>`
+    `<td>${escapeHtml(winnerName(m) || dash)}</td>`
   );
 }
 
@@ -130,7 +169,7 @@ export async function fetchWcResultsBlock(
       .from("wc_pro_matches")
       .select(SELECT_COLS)
       .order("last_seen_at", { ascending: false })
-      .limit(500);
+      .limit(ROW_CAP);
     if (res.error) return empty;
     rows = (res.data ?? []) as WcResultRow[];
   } catch {
@@ -145,21 +184,36 @@ export async function fetchWcResultsBlock(
 
   const vi = lang === "vi";
   const headers = vi
-    ? ["Nội dung", "Vòng", "Cặp đấu", "Tỉ số ghi nhận", "Dẫn/thắng"]
-    : ["Event", "Round", "Match", "Score as recorded", "Ahead / won"];
+    ? ["Nội dung", "Vòng", "Cặp đấu", "Tỉ số", "Thắng"]
+    : ["Event", "Round", "Match", "Score", "Winner"];
 
   const parts: string[] = [];
+
+  // Dateline. Generated, never typed: a "cập nhật liên tục" claim with a
+  // hand-written date is a promise nobody can check, and it is the first thing
+  // an AI answer quotes back when it cites the page.
+  const stamp = vnStamp(dataUpdatedAt);
+  if (stamp) {
+    parts.push(
+      `<p>${
+        vi
+          ? `Cập nhật lần cuối: ${escapeHtml(stamp)} (giờ Việt Nam). ${done.length} trận đã có kết quả, ${live.length} trận đang thi đấu.`
+          : `Last updated ${escapeHtml(stamp)} Vietnam time. ${done.length} matches have a result, ${live.length} on court now.`
+      }</p>`,
+    );
+  }
 
   if (live.length > 0) {
     parts.push(`<h3>${vi ? "Đang thi đấu" : "On court now"}</h3>`);
     parts.push(table(headers, live.map((m) => `<tr>${matchRowCells(m, lang)}</tr>`)));
   }
 
-  // Completed matches, newest calendar day first. Grouping by Vietnam-time day
-  // is what makes this a "results by day" page rather than one long list.
+  // Completed matches, newest playing day first. Grouping by the Vietnam day
+  // the match was played is what makes this a results-by-day page rather than
+  // one long list.
   const byDay = new Map<string, WcResultRow[]>();
   for (const m of done) {
-    const key = vnDayKey(m.last_seen_at ?? m.scheduled_at);
+    const key = matchDayKey(m);
     const bucket = byDay.get(key);
     if (bucket) bucket.push(m);
     else byDay.set(key, [m]);
@@ -171,12 +225,11 @@ export async function fetchWcResultsBlock(
     parts.push(table(headers, dayRows.map((m) => `<tr>${matchRowCells(m, lang)}</tr>`)));
   }
 
-  const vnCount = done.filter((m) => m.is_vietnam).length;
   parts.push(
     `<p>${
       vi
-        ? `Tổng cộng ${done.length} trận Pro đã ghi nhận kết quả, trong đó ${vnCount} trận có vận động viên Việt Nam. Tỉ số là giá trị cuối cùng ThePickleHub ghi nhận được từ hệ thống của ban tổ chức trước khi trận rời khỏi bảng trực tiếp — không phải kết quả chính thức, và cột cuối là bên đang dẫn ở thời điểm đó.`
-        : `${done.length} Pro matches have a recorded result, ${vnCount} of them involving a Vietnamese player. Scores are the last value ThePickleHub observed in the organisers' live feed before the match left it — not an official final — and the last column is the side ahead at that moment.`
+        ? "Bảng này gồm mọi trận Pro đang thi đấu và mọi trận Pro có vận động viên Việt Nam, không phải toàn bộ 33 nội dung cá nhân. Tỉ số các trận đã kết thúc lấy từ trang nhánh đấu chính thức của giải, kèm người thắng do nhánh đấu công bố. Một trận Việt Nam vừa rời bảng trực tiếp mà nhánh đấu chưa cập nhật sẽ tạm hiển thị tỉ số ThePickleHub ghi nhận cuối cùng, và được thay bằng kết quả chính thức ở lượt quét sau."
+        : "This table covers every Pro match on court now plus every Pro match involving a Vietnamese player — not all 33 individual events. Completed scores come from the tournament's own bracket pages, with the winner the bracket declares. A Vietnamese match that has just left the live feed before its bracket syncs shows the last score ThePickleHub observed, replaced by the official result on the next pass."
     }</p>`,
   );
 

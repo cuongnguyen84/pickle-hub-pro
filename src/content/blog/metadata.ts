@@ -15,8 +15,8 @@ export const blogMetadata: BlogPostMetadata[] = [
     updatedDate: "2026-08-31",
     author: "Cuong Nguyen",
     tags: [
-      "pickleball world cup 2026 results",
       "ket qua pickleball world cup 2026",
+      "pickleball world cup 2026 results",
       "world cup pickleball da nang",
       "heineken pickleball world cup",
       "pickleball da nang 2026",
@@ -32,14 +32,14 @@ export const blogMetadata: BlogPostMetadata[] = [
       src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
       alt: "Pickleball World Cup 2026 in Da Nang, Vietnam — two players at the net on a blue court with the Dragon Bridge behind them.",
     },
-    titleEn: "Pickleball World Cup 2026 Da Nang Results: Every Pro Match, Day by Day",
-    titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: từng trận, từng ngày",
-    metaTitleEn: "Pickleball World Cup 2026 Results: Da Nang, Day by Day",
+    titleEn: "Pickleball World Cup 2026 Results: Vietnam's Matches, Live from Da Nang",
+    titleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng: trận của Việt Nam, cập nhật từng phút",
+    metaTitleEn: "Pickleball World Cup 2026 Results: Vietnam Matches",
     metaTitleVi: "Kết quả Pickleball World Cup 2026 Đà Nẵng",
     metaDescriptionEn:
-      "Live Pickleball World Cup 2026 Da Nang results: every Pro match by day, scores as recorded, Vietnam's matches, and the finals on September 6.",
+      "Pickleball World Cup 2026 Da Nang results: every match with a Vietnamese player plus live scores from the five Pro draws, updated continuously.",
     metaDescriptionVi:
-      "Kết quả Pickleball World Cup 2026 Đà Nẵng: từng trận Pro theo ngày, tỉ số ghi nhận, trận có VĐV Việt Nam, chung kết 6/9.",
+      "Kết quả Pickleball World Cup 2026 Đà Nẵng: trận của Việt Nam và trận đang đấu, tỉ số từng ván, cập nhật liên tục.",
   },
   {
     slug: "pickleball-world-cup-2026-mens-pro-doubles-field",
